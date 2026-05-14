@@ -886,7 +886,16 @@
     try {
       // Load Angebote from Azure Function
       const angeboteResponse = await fetch(API + '/cms/angebote');
-      const angeboteData = await angeboteResponse.json();
+      
+      if (!angeboteResponse.ok) {
+        console.error('API request failed:', angeboteResponse.status, angeboteResponse.statusText);
+        return;
+      }
+      
+      const responseText = await angeboteResponse.text();
+      console.log('API Response:', responseText);
+      
+      const angeboteData = JSON.parse(responseText);
       
       if (angeboteData.success && angeboteData.data) {
         // Transform Angebote to Artikel format
@@ -898,10 +907,13 @@
           wg: 'angebot'
         }));
         
+        console.log('Transformed artikel data:', artikelData);
+        
         // Update cms-artikel-data script
         const artikelScript = document.getElementById('cms-artikel-data');
         if (artikelScript) {
           artikelScript.textContent = JSON.stringify(artikelData);
+          console.log('Updated cms-artikel-data script');
         }
       }
     } catch (error) {
