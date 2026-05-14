@@ -1,0 +1,80 @@
+{
+  "routes": [
+    {
+      "route": "/",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/aktuelles",
+      "rewrite": "/aktuelles.html"
+    },
+    {
+      "route": "/konzept",
+      "rewrite": "/konzept.html"
+    },
+    {
+      "route": "/sortiment",
+      "rewrite": "/sortiment.html"
+    },
+    {
+      "route": "/oeffnungszeiten",
+      "rewrite": "/oeffnungszeiten.html"
+    },
+    {
+      "route": "/bilder",
+      "rewrite": "/bilder.html"
+    },
+    {
+      "route": "/do-geh-i-hi",
+      "rewrite": "/do-geh-i-hi.html"
+    },
+    {
+      "route": "/essen-im-dorfladen",
+      "rewrite": "/essen-im-dorfladen.html"
+    },
+    {
+      "route": "/beirat",
+      "rewrite": "/beirat.html"
+    },
+    {
+      "route": "/geschaeftsfuehrung",
+      "rewrite": "/geschaeftsfuehrung.html"
+    },
+    {
+      "route": "/stille-gesellschafter",
+      "rewrite": "/stille-gesellschafter.html"
+    },
+    {
+      "route": "/roter-punkt",
+      "rewrite": "/roter-punkt.html"
+    },
+    {
+      "route": "/impressum",
+      "rewrite": "/impressum.html"
+    },
+    {
+      "route": "/datenschutzerklaerung",
+      "rewrite": "/datenschutzerklaerung.html"
+    },
+    {
+      "route": "/cms",
+      "rewrite": "/cms.html"
+    },
+    {
+      "route": "/css/*",
+      "rewrite": "/css/*"
+    },
+    {
+      "route": "/js/*",
+      "rewrite": "/js/*"
+    },
+    {
+      "route": "/img/*",
+      "rewrite": "/img/*"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/css/*", "/js/*", "/img/*"]
+  }
+}

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dorfladen Oberornau – Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
+  <meta name="description" content="Dorfladen Oberornau – regionale Nahversorgung, gemütlicher Treffpunkt, Postfiliale. Frühstück, Mittagessen, Brotzeit und mehr.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<!-- Skip to content (Accessibility) -->
+<a href="#main" class="skip">Zum Inhalt springen</a>
+
+<!-- TOPBAR: Contact + Legal links (hidden on mobile) -->
+<div class="tb" id="hp-topbar" role="complementary" aria-label="Kontaktleiste">
+  <div class="tb-in">
+    <span>Tel: <a href="tel:+4980826229991">08082 / 622 99 91</a> &middot; <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a></span>
+    <div class="tb-legal">
+      <a href="/impressum">Impressum</a>
+      <a href="/datenschutzerklaerung">Datenschutz</a>
+    </div>
+  </div>
+</div>
+
+<!-- NAVIGATION -->
+<nav class="nv" role="navigation" aria-label="Hauptnavigation">
+  <div class="nv-in">
+    <a href="/" class="nv-logo" aria-label="Dorfladen Oberornau Startseite">
+      <span>&#127793; Dorfladen Oberornau</span>
+    </a>
+    <button class="nv-burger" aria-label="Navigation ein-/ausklappen" aria-expanded="false" onclick="var n=this.nextElementSibling;var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+    <ul class="nv-links">
+      <li class="act"><a href="/" aria-current="page">Start</a></li>
+      <li><a href="/aktuelles">Aktuelles</a></li>
+      <li>
+        <a href="/konzept" aria-haspopup="true">Dorfladen</a>
+        <ul class="nv-dd">
+          <li><a href="/konzept">Konzept</a></li>
+          <li><a href="/sortiment">Sortiment</a></li>
+          <li><a href="/sortiment#preisliste" style="color:#2d7a5e">&#128203; Preisliste</a></li>
+          <li><a href="/oeffnungszeiten">&Ouml;ffnungszeiten</a></li>
+          <li><a href="/bilder">Bilder</a></li>
+          <li><a href="/do-geh-i-hi">Do geh i hi</a></li>
+        </ul>
+      </li>
+      <li><a href="/essen-im-dorfladen">Essen</a></li>
+      <li>
+        <a href="/beirat" aria-haspopup="true">&Uuml;ber uns</a>
+        <ul class="nv-dd">
+          <li><a href="/beirat">Beirat</a></li>
+          <li><a href="/geschaeftsfuehrung">Gesch&auml;ftsf&uuml;hrung</a></li>
+          <li><a href="/stille-gesellschafter">Stille Gesellschafter</a></li>
+        </ul>
+      </li>
+      <li><a href="/roter-punkt" style="color:var(--c-acc);font-weight:700">&#x1F534; Roter Punkt</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero" role="banner">
+  <div class="hero-in">
+    <div class="hero-text">
+      <h1>Ihr Dorfladen in Oberornau</h1>
+      <p>Nahversorger &middot; Treffpunkt &middot; Postfiliale &ndash; regional, frisch und mit Herz.</p>
+    </div>
+    <p class="hero-sub">&#x2615; Kleines Bistro mit Kaffee, Kuchen &amp; Snacks &middot; &#x2600;&#xFE0F; Im Sommer gem&uuml;tlich drau&szlig;en am Dorfplatz</p>
+    <div id="dl-open-status"></div>
+  </div>
+</div>
+
+<!-- PROMO BAR -->
+<div class="promo-bar" id="hp-promo-bar">
+  <div class="promo-bar-in">
+    <a href="#angebote" class="promo-item promo-ang" id="promo-ang-link" style="display:none">
+      <span class="promo-tag">&#9733; Sonderangebote</span>
+      <span class="promo-count" id="promo-ang-count">0</span>
+    </a>
+    <a href="/roter-punkt" class="promo-item promo-rp">
+      <span class="promo-dot"></span>
+      Roter Punkt &ndash; 169 Artikel g&uuml;nstiger als UVP
+      <span class="promo-pill">Ansehen</span>
+    </a>
+    <a href="/sortiment#preisliste" class="promo-item promo-pl">
+      <span class="promo-pl-icon">&#128203;</span>
+      Preisliste &ndash; alle Artikel mit Preisen
+      <span class="promo-pill" style="background:#5ea88a">Ansehen</span>
+    </a>
+  </div>
+</div>
+
+<!-- FLEISCH & WURST DAUERPREISAKTION (CMS: meatPct, meatTitle, meatSub, meatCta, meatTag, meatPhone, showMeatPromo) -->
+<div class="meat-promo" id="fleisch-aktion">
+  <div class="meat-promo-in">
+    <div class="meat-promo-badge" id="meat-badge">&#129385;</div>
+    <div class="meat-promo-text">
+      <div class="meat-promo-title" id="meat-title">Fleisch &amp; Wurst: <span class="meat-pct" id="meat-pct">15&thinsp;% Rabatt</span> bei Vorbestellung ab 1&thinsp;kg <span class="meat-promo-tag" id="meat-tag">Daueraktion</span></div>
+      <div class="meat-promo-sub" id="meat-sub">Auf alle Fleisch- und Wurstprodukte, die je Artikel mit mehr als 1&thinsp;kg vorbestellt werden, gew&auml;hren wir dauerhaft 15&thinsp;% Rabatt. Einfach im Laden oder telefonisch vorbestellen! &nbsp;<a href="tel:+4980826229991" class="meat-promo-cta" id="meat-cta">&#128222; Jetzt vorbestellen</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main id="main" class="mn">
+  <!-- ===== LEFT COLUMN ===== -->
+  <div>
+    <!-- ====== WOCHENPLAN MITTAGESSEN (prominent) ====== -->
+    <div class="wp-card" id="wp-card">
+      <div class="wp-header">
+        <div class="wp-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+        </div>
+        <div>
+          <div class="wp-title">Wochenplanung Mittagessen</div>
+          <div class="wp-subtitle" id="wp-subtitle">Wird geladen&hellip;</div>
+        </div>
+      </div>
+      <div class="wp-body" id="wp-body">
+        <div style="padding:30px;text-align:center"><div class="skeleton" style="height:200px"></div></div>
+      </div>
+    </div>
+
+    <!-- ====== WHATSAPP SPEISEPLAN INFO ====== -->
+    <div class="wa-info" id="wp-wa-info">
+      <div class="wa-info-text">
+        Das aktuelle Mittagsmen&uuml; und unsere Sonderaktionen erfahrt ihr immer auch &uuml;ber die
+        <strong>Dorfladen Oberornau WhatsApp Gruppe</strong> <em>mit Onlineshop!!!</em><br>
+        <a href="https://wa.me/message/U7VY4HZCPBR4N1" target="_blank" rel="noopener">Hier klicken f&uuml;r Anmeldung</a>
+        oder scanne den nachstehenden QR-Code mit deinem Smartphone und best&auml;tige mit deinem Namen im Chat.
+      </div>
+      <div class="wa-qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=64x64&amp;data=https://wa.me/message/U7VY4HZCPBR4N1" alt="WhatsApp QR-Code Dorfladen Oberornau" width="64" height="64" loading="lazy">
+        <div class="wa-qr-label">
+          <strong>Dorfladen Oberornau</strong>
+          <small>WhatsApp-Unternehmenskonto</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Angebote / Sonderangebote (dynamisch mit Wochenwechsel) -->
+    <div class="ang-card" id="angebote" style="display:none">
+      <div class="ang-header">
+        <svg viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
+        <span id="ang-title">Sonderangebote</span>
+        <span class="ang-sub" id="ang-sub"></span>
+      </div>
+      <div class="ang-week-nav">
+        <button class="ang-week-btn active" id="ang-btn-this" onclick="angSetWeek('this')">Diese Woche</button>
+        <button class="ang-week-btn" id="ang-btn-next" onclick="angSetWeek('next')">N&auml;chste Woche</button>
+        <span class="ang-week-label" id="ang-week-label"></span>
+      </div>
+      <div class="ang-grid" id="ang-grid"></div>
+      <div class="ang-empty" id="ang-empty" style="display:none">Keine Angebote in dieser Woche</div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="info-grid" id="hp-info-cards">
+      <div class="info-card">
+        <h3>&#x1F33F; Unser Konzept</h3>
+        <p>Regionale Nahversorgung &amp; gem&uuml;tlicher Treffpunkt f&uuml;r Jung und Alt. Fr&uuml;hst&uuml;ck, Brotzeit, Mittagessen und hausgemachte Torten.</p>
+        <a href="/konzept" class="more">Mehr erfahren &rarr;</a>
+      </div>
+      <div class="info-card">
+        <h3>&#x1F4E6; Postfiliale</h3>
+        <p>Alle g&auml;ngigen Postdienstleistungen direkt im Dorfladen. Briefe, Pakete, Einschreiben &ndash; ohne weite Wege.</p>
+        <a href="/oeffnungszeiten" class="more">&Ouml;ffnungszeiten &rarr;</a>
+      </div>
+      <div class="info-card">
+        <h3>&#x1F370; Catering &amp; Lieferung</h3>
+        <p>F&uuml;r Vereine und Familienfeiern liefern wir kalte und warme Speisen. Mittagessen auch per Nachbarschaftshilfe lieferbar.</p>
+        <a href="/essen-im-dorfladen" class="more">Details &rarr;</a>
+      </div>
+      <div class="info-card">
+        <h3>&#x267B;&#xFE0F; Nachhaltigkeit</h3>
+        <p>Regional &amp; saisonal einkaufen. Gerne eigene Beh&auml;lter mitbringen! Bio-Gem&uuml;se, Orangen direkt vom Erzeuger, Fleisch vom regionalen Metzger.</p>
+        <a href="/sortiment" class="more">Sortiment &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Do geh i hi – Infographic -->
+    <div class="dgih" id="hp-dgih">
+      <div class="dgih-h">
+        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        Do geh i hi! &ndash; Darum Dorfladen
+      </div>
+      <div class="dgih-body">
+        <div class="dgih-grid">
+          <div class="dgih-item"><span class="dgih-icon">&#x1F6D2;</span><span>Die Nahversorgung bleibt erhalten &ndash; auch f&uuml;r die, die nicht (mehr) Auto fahren</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F30D;</span><span>Kurze Wege schonen die Umwelt und sparen Zeit und Geld</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F373;</span><span>T&auml;glich frisch zubereitetes Mittagessen und selbst gebackene Kuchen</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F33E;</span><span>Regionale Erzeuger und Anbieter werden gest&auml;rkt</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x2615;</span><span>Gem&uuml;tliche Sitzecke f&uuml;r Fr&uuml;hst&uuml;ck, Mittagessen, Brotzeit, Kaffee &amp; Kuchen oder Eis</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F6CD;&#xFE0F;</span><span>Alles auch zum Mitnehmen</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x2600;&#xFE0F;</span><span>Bei gutem Wetter servieren wir drau&szlig;en am Dorfplatz auf Tischen und St&uuml;hlen</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F91D;</span><span>Sozialer Mittelpunkt f&uuml;r alle &ndash; regelm&auml;&szlig;ige Kaffee-Treffs f&uuml;r Jung und Alt</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F370;</span><span>Catering- und Back-Service f&uuml;r Vereine und privat</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F4E6;</span><span>Integrierte Postfiliale &ndash; Briefe, Pakete, Einschreiben ohne weite Wege</span></div>
+        </div>
+        <div class="dgih-cta">
+          <a href="/do-geh-i-hi">Mehr erfahren &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- News -->
+    <div class="cd news-section">
+      <div class="cd-h">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+        Aktuelles
+        <span style="font-size:.72rem;font-weight:400;color:var(--c-sec);margin-left:8px" id="news-count"></span>
+      </div>
+      <div class="cd-b" id="news-container">
+        <div class="skeleton" style="height:120px;margin-bottom:10px"></div>
+        <div class="skeleton" style="height:100px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RIGHT SIDEBAR ===== -->
+  <aside class="side" aria-label="Seitenleiste">
+    <!-- Opening Hours -->
+    <div class="cd">
+      <div class="cd-h">
+        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+        &Ouml;ffnungszeiten
+      </div>
+      <div class="cd-b">
+        <div class="hrs-g" id="hrs-grid">
+          <!-- Statische Öffnungszeiten als Fallback, wird per JS überschrieben -->
+          <div class="hrs-section">
+            <div class="hrs-label">&#x1F6D2; Dorfladen</div>
+            <table class="hrs">
+              <tr><td>Mo</td><td><span class="hrs-time">06:30&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+              <tr><td>Di</td><td><span class="hrs-time">06:30&ndash;14:00</span></td></tr>
+              <tr><td>Mi</td><td><span class="hrs-time">06:30&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+              <tr><td>Do</td><td><span class="hrs-time">06:30&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+              <tr><td>Fr</td><td><span class="hrs-time">06:30&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+              <tr><td>Sa</td><td><span class="hrs-time">07:00&ndash;13:00</span></td></tr>
+              <tr><td>So</td><td><span class="hrs-closed">Geschlossen</span></td></tr>
+            </table>
+          </div>
+          <div class="hrs-section">
+            <div class="hrs-label">&#x1F4E6; Postfiliale</div>
+            <table class="hrs">
+              <tr><td>Mo</td><td><span class="hrs-time">09:00&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+              <tr><td>Di</td><td><span class="hrs-time">09:00&ndash;14:00</span></td></tr>
+              <tr><td>Mi</td><td><span class="hrs-time">09:00&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+              <tr><td>Do</td><td><span class="hrs-time">09:00&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+              <tr><td>Fr</td><td><span class="hrs-time">09:00&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+              <tr><td>Sa</td><td><span class="hrs-time">09:00&ndash;13:00</span></td></tr>
+              <tr><td>So</td><td><span class="hrs-closed">Geschlossen</span></td></tr>
+            </table>
+          </div>
+        </div>
+        <p style="margin-top:10px;font-size:.75rem;color:var(--c-sec)">Au&szlig;er an gesetzlichen Feiertagen</p>
+      </div>
+    </div>
+
+    <!-- Contact Card -->
+    <div class="cd">
+      <div class="cd-h">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+        Kontakt &amp; Anfahrt
+      </div>
+      <div class="cd-b" style="font-size:.85rem;line-height:1.7">
+        <strong>Dorfladen Oberornau UG</strong><br>
+        Dorfplatz 1<br>
+        84419 Obertaufkirchen<br><br>
+        <strong>Tel:</strong> <a href="tel:+4980826229991">08082 / 622 99 91</a><br>
+        <strong>E-Mail:</strong> <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a>
+      </div>
+    </div>
+
+    <!-- WhatsApp CTA -->
+    <div class="cd">
+      <div class="cd-h" style="background:#e5f3ec;color:#5ea88a">
+        <svg viewBox="0 0 24 24" style="fill:#2e7d32"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18c-1.66 0-3.203-.503-4.489-1.363l-.313-.188-2.871.853.853-2.871-.188-.313A7.962 7.962 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/></svg>
+        Speiseplan per WhatsApp
+      </div>
+      <div class="cd-b" style="text-align:center">
+        <p style="font-size:.85rem;color:var(--c-sec);margin-bottom:10px">W&ouml;chentlichen Speiseplan bequem aufs Handy erhalten</p>
+        <a href="https://wa.me/message/U7VY4HZCPBR4N1" target="_blank" rel="noopener" style="display:inline-block;background:#25D366;color:#fff;padding:10px 22px;border-radius:var(--r);font-weight:600;font-size:.88rem;transition:background .15s">
+          Jetzt anmelden
+        </a>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- FOOTER -->
+<footer class="ft" role="contentinfo">
+  <div class="ft-in">
+    <div class="ft-addr">
+      <h4>Dorfladen Oberornau</h4>
+      <p>
+        Dorfladen Oberornau UG<br>(haftungsbeschr&auml;nkt)<br>
+        Dorfplatz 1<br>84419 Obertaufkirchen<br><br>
+        Tel: <a href="tel:+4980826229991">08082 / 622 99 91</a><br>
+        <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a>
+      </p>
+    </div>
+    <div>
+      <h4>Unser Angebot</h4>
+      <ul>
+        <li><a href="/konzept">Konzept</a></li>
+        <li><a href="/sortiment">Sortiment</a></li>
+        <li><a href="/essen-im-dorfladen">Essen im Dorfladen</a></li>
+        <li><a href="/oeffnungszeiten">&Ouml;ffnungszeiten</a></li>
+        <li><a href="/roter-punkt" style="color:#ef5350">&#x1F534; Roter Punkt</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>&Uuml;ber uns</h4>
+      <ul>
+        <li><a href="/beirat">Beirat</a></li>
+        <li><a href="/geschaeftsfuehrung">Gesch&auml;ftsf&uuml;hrung</a></li>
+        <li><a href="/stille-gesellschafter">Stille Gesellschafter</a></li>
+        <li><a href="/do-geh-i-hi">Do geh i hi</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Rechtliches</h4>
+      <ul>
+        <li><a href="/impressum">Impressum</a></li>
+        <li><a href="/datenschutzerklaerung">Datenschutzerkl&auml;rung</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    <span>&copy; <script>document.write(new Date().getFullYear())</script> Dorfladen Oberornau UG (haftungsbeschr&auml;nkt). Alle Rechte vorbehalten.</span>
+    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="https://dorfladen-oberornau.powerappsportals.com/cms" target="_blank" rel="noopener" style="opacity:.6">CMS</a></span>
+  </div>
+</footer>
+
+<!-- WHATSAPP FLOATING BUTTON -->
+<a href="https://wa.me/491714910935?text=Hallo%2C%20ich%20habe%20eine%20Frage%20zum%20Dorfladen%20%F0%9F%91%8B" target="_blank" rel="noopener" id="hp-wa-float" class="wa-float" aria-label="WhatsApp Chat &ouml;ffnen">
+  <span class="wa-float-label">Schreib uns!</span>
+  <span class="wa-float-bubble"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></span>
+</a>
+
+<!-- COOKIE CONSENT BANNER (DSGVO / TTDSG) -->
+<div class="cookie-bar" id="cookieBar" role="dialog" aria-label="Cookie-Hinweis">
+  <div class="cookie-inner">
+    <p>Diese Website verwendet ausschlie&szlig;lich technisch notwendige Cookies, um die einwandfreie Funktion zu gew&auml;hrleisten. Weitere Informationen finden Sie in unserer <a href="/datenschutzerklaerung">Datenschutzerkl&auml;rung</a>.</p>
+    <div class="cookie-btns">
+      <button class="ck-accept" onclick="document.getElementById('cookieBar').classList.remove('show');localStorage.setItem('dl_cookies','1')">Verstanden</button>
+      <button class="ck-decline" onclick="document.getElementById('cookieBar').classList.remove('show');sessionStorage.setItem('dl_cookies_declined','1')">Ablehnen</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dorfladen CMS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #8b1a1a 0%, #b71c1c 100%);
+        }
+
+        .login-box {
+            background: white;
+            padding: 48px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .login-box h2 {
+            text-align: center;
+            color: #8b1a1a;
+            margin-bottom: 32px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .login-box .logo {
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 48px;
+        }
+
+        /* CMS Dashboard */
+        .cms-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        .cms-sidebar {
+            background: white;
+            border-right: 1px solid #e9ecef;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cms-sidebar h1 {
+            color: #8b1a1a;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 32px;
+        }
+
+        .cms-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cms-nav button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .cms-nav button:hover {
+            background: #f8f9fa;
+            color: #8b1a1a;
+        }
+
+        .cms-nav button.active {
+            background: #8b1a1a;
+            color: white;
+        }
+
+        .cms-sidebar-footer {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .cms-main {
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .cms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .cms-header h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #212529;
+        }
+
+        /* Cards */
+        .cms-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .cms-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 20px;
+        }
+
+        /* Tables */
+        .cms-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .cms-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .cms-table th {
+            background: #f8f9fa;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .cms-table td {
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+            color: #495057;
+        }
+
+        .cms-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .cms-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Buttons */
+        .cms-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cms-btn-primary {
+            background: #8b1a1a;
+            color: white;
+        }
+
+        .cms-btn-primary:hover {
+            background: #6d1515;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 26, 26, 0.3);
+        }
+
+        .cms-btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .cms-btn-danger:hover {
+            background: #c82333;
+        }
+
+        .cms-btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .cms-btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Forms */
+        .cms-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .cms-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cms-form-group label {
+            font-weight: 500;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .cms-form-group input,
+        .cms-form-group textarea,
+        .cms-form-group select {
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .cms-form-group input:focus,
+        .cms-form-group textarea:focus,
+        .cms-form-group select:focus {
+            outline: none;
+            border-color: #8b1a1a;
+            box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+        }
+
+        .cms-form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .cms-form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        /* Sections */
+        .cms-section {
+            display: none;
+        }
+
+        .cms-section.active {
+            display: block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Status badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #dee2e6;
+            border-top-color: #8b1a1a;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cms-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .cms-sidebar {
+                display: none;
+            }
+
+            .cms-main {
+                padding: 16px;
+            }
+
+            .cms-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 24px;
+            color: #212529;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <div class="logo">🏪</div>
+            <h2>Dorfladen CMS</h2>
+            <div class="cms-form" style="grid-template-columns: 1fr;">
+                <div class="cms-form-group">
+                    <label>Benutzername</label>
+                    <input type="text" id="username" placeholder="admin">
+                </div>
+                <div class="cms-form-group">
+                    <label>Passwort</label>
+                    <input type="password" id="password" placeholder="••••••">
+                </div>
+                <button class="cms-btn cms-btn-primary" onclick="login()" style="justify-content: center;">Anmelden</button>
+            </div>
+            <p id="loginError" style="color: #dc3545; text-align: center; margin-top: 16px; display: none;"></p>
+        </div>
+    </div>
+
+    <!-- CMS Dashboard -->
+    <div id="cmsDashboard" class="hidden">
+        <div class="cms-layout">
+            <!-- Sidebar -->
+            <div class="cms-sidebar">
+                <h1>🏪 Dorfladen</h1>
+                <nav class="cms-nav">
+                    <button class="active" onclick="showSection('wochenplan')">📅 Wochenplan</button>
+                    <button onclick="showSection('news')">📰 News</button>
+                    <button onclick="showSection('layout')">🎨 Layout</button>
+                </nav>
+                <div class="cms-sidebar-footer">
+                    <button class="cms-btn cms-btn-secondary" onclick="logout()" style="width: 100%; justify-content: center;">Abmelden</button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="cms-main">
+                <!-- Wochenplan Section -->
+                <div id="wochenplanSection" class="cms-section active">
+                    <div class="cms-header">
+                        <h2>Wochenplan</h2>
+                        <button class="cms-btn cms-btn-primary" onclick="showWochenplanForm()">+ Neu erstellen</button>
+                    </div>
+                    <div class="cms-card">
+                        <div id="wochenplanForm" class="hidden">
+                            <h3>Neuen Wochenplan erstellen</h3>
+                            <div class="cms-form">
+                                <div class="cms-form-group">
+                                    <label>Gericht *</label>
+                                    <input type="text" id="wpGericht" placeholder="z.B. Schnitzel mit Pommes">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Wochentag *</label>
+                                    <select id="wpWochentag">
+                                        <option value="">Wählen...</option>
+                                        <option value="101000">Montag</option>
+                                        <option value="101001">Dienstag</option>
+                                        <option value="101002">Mittwoch</option>
+                                        <option value="101003">Donnerstag</option>
+                                        <option value="101004">Freitag</option>
+                                        <option value="101005">Samstag</option>
+                                        <option value="101006">Sonntag</option>
+                                    </select>
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Datum *</label>
+                                    <input type="date" id="wpDatum">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Preis (€)</label>
+                                    <input type="number" step="0.01" id="wpPreis" placeholder="z.B. 8.50">
+                                </div>
+                                <div class="cms-form-group" style="grid-column: 1 / -1;">
+                                    <label>Beschreibung</label>
+                                    <textarea id="wpBeschreibung" placeholder="z.B. Mit Beilagen und Salat"></textarea>
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Kalenderwoche</label>
+                                    <input type="number" id="wpKW" placeholder="z.B. 20">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Jahr</label>
+                                    <input type="number" id="wpJahr" placeholder="z.B. 2026">
+                                </div>
+                            </div>
+                            <div class="cms-form-actions">
+                                <button class="cms-btn cms-btn-primary" onclick="saveWochenplan()">Speichern</button>
+                                <button class="cms-btn cms-btn-secondary" onclick="hideWochenplanForm()">Abbrechen</button>
+                            </div>
+                        </div>
+                        <div class="cms-table-wrapper">
+                            <table class="cms-table">
+                                <thead>
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Wochentag</th>
+                                        <th>Gericht</th>
+                                        <th>Preis</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wochenplanTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News Section -->
+                <div id="newsSection" class="cms-section">
+                    <div class="cms-header">
+                        <h2>News</h2>
+                        <button class="cms-btn cms-btn-primary" onclick="showNewsForm()">+ Neu erstellen</button>
+                    </div>
+                    <div class="cms-card">
+                        <div id="newsForm" class="hidden">
+                            <h3>Neue News erstellen</h3>
+                            <div class="cms-form" style="grid-template-columns: 1fr;">
+                                <div class="cms-form-group">
+                                    <label>Titel *</label>
+                                    <input type="text" id="newsTitel" placeholder="z.B. Neue Eröffnungszeiten">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Datum *</label>
+                                    <input type="date" id="newsDatum">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Inhalt *</label>
+                                    <textarea id="newsInhalt" rows="5" placeholder="News-Inhalt hier eingeben..."></textarea>
+                                </div>
+                            </div>
+                            <div class="cms-form-actions">
+                                <button class="cms-btn cms-btn-primary" onclick="saveNews()">Speichern</button>
+                                <button class="cms-btn cms-btn-secondary" onclick="hideNewsForm()">Abbrechen</button>
+                            </div>
+                        </div>
+                        <div class="cms-table-wrapper">
+                            <table class="cms-table">
+                                <thead>
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Titel</th>
+                                        <th>Inhalt</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="newsTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layout Section -->
+                <div id="layoutSection" class="cms-section">
+                    <div class="cms-header">
+                        <h2>Layout-Konfiguration</h2>
+                        <button class="cms-btn cms-btn-primary" onclick="showLayoutForm()">+ Neu erstellen</button>
+                    </div>
+                    <div class="cms-card">
+                        <div id="layoutForm" class="hidden">
+                            <h3>Neue Layout-Konfiguration erstellen</h3>
+                            <div class="cms-form">
+                                <div class="cms-form-group">
+                                    <label>Name *</label>
+                                    <input type="text" id="layoutName" placeholder="z.B. home">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Template</label>
+                                    <input type="text" id="layoutTemplate" placeholder="z.B. default">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Layout</label>
+                                    <input type="text" id="layoutLayout" placeholder="z.B. standard">
+                                </div>
+                                <div class="cms-form-group" style="grid-column: 1 / -1;">
+                                    <label>Content</label>
+                                    <textarea id="layoutContent" placeholder="JSON-Content hier eingeben..."></textarea>
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Wochenplan anzeigen</label>
+                                    <select id="layoutShowWp">
+                                        <option value="true">Ja</option>
+                                        <option value="false">Nein</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="cms-form-actions">
+                                <button class="cms-btn cms-btn-primary" onclick="saveLayout()">Speichern</button>
+                                <button class="cms-btn cms-btn-secondary" onclick="hideLayoutForm()">Abbrechen</button>
+                            </div>
+                        </div>
+                        <div class="cms-table-wrapper">
+                            <table class="cms-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Template</th>
+                                        <th>Layout</th>
+                                        <th>Wochenplan</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="layoutTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://dorfladen-rebuild.azurewebsites.net/api';
+        let authToken = null;
+
+        // Check auth on load
+        window.onload = function() {
+            const token = localStorage.getItem('cmsToken');
+            if (token) {
+                authToken = token;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('cmsDashboard').classList.remove('hidden');
+                loadWochenplan();
+                loadNews();
+                loadLayout();
+            }
+        };
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                document.getElementById('loginError').textContent = 'Bitte alle Felder ausfüllen';
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+            
+            fetch(`${API_BASE}/cms/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    authToken = data.token;
+                    localStorage.setItem('cmsToken', authToken);
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('cmsDashboard').classList.remove('hidden');
+                    loadWochenplan();
+                    loadNews();
+                    loadLayout();
+                } else {
+                    document.getElementById('loginError').textContent = 'Falsche Anmeldedaten';
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            })
+            .catch(e => {
+                console.error('Login failed:', e);
+                document.getElementById('loginError').textContent = 'Login fehlgeschlagen';
+                document.getElementById('loginError').style.display = 'block';
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('cmsToken');
+            authToken = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('cmsDashboard').classList.add('hidden');
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.cms-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.cms-nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(section + 'Section').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            };
+        }
+
+        // Wochenplan
+        function loadWochenplan() {
+            const tbody = document.getElementById('wochenplanTable');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading">Laden...</td></tr>';
+            
+            fetch(`${API_BASE}/cms/wochenplan`, { headers: getHeaders() })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #6c757d;">Keine Einträge gefunden. Erstellen Sie den ersten Wochenplan-Eintrag.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.map(item => `
+                        <tr>
+                            <td>${item.datum ? formatDate(item.datum) : '-'}</td>
+                            <td>${getWochentagName(item.wochentag)}</td>
+                            <td><strong>${item.gericht || '-'}</strong>${item.beschreibung ? `<br><small style="color: #6c757d;">${item.beschreibung.substring(0, 50)}...</small>` : ''}</td>
+                            <td>${item.preis ? item.preis.toFixed(2) + ' €' : '-'}</td>
+                            <td>
+                                <button class="cms-btn cms-btn-danger" onclick="deleteWochenplan('${item.id}')">Löschen</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(e => {
+                    console.error('Load Wochenplan failed:', e);
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #dc3545;">Fehler beim Laden der Daten</td></tr>';
+                });
+        }
+
+        function showWochenplanForm() {
+            document.getElementById('wochenplanForm').classList.remove('hidden');
+            // Set default date to today
+            document.getElementById('wpDatum').valueAsDate = new Date();
+        }
+
+        function hideWochenplanForm() {
+            document.getElementById('wochenplanForm').classList.add('hidden');
+            // Clear form
+            document.getElementById('wpGericht').value = '';
+            document.getElementById('wpWochentag').value = '';
+            document.getElementById('wpDatum').value = '';
+            document.getElementById('wpPreis').value = '';
+            document.getElementById('wpBeschreibung').value = '';
+            document.getElementById('wpKW').value = '';
+            document.getElementById('wpJahr').value = '';
+        }
+
+        function saveWochenplan() {
+            const gericht = document.getElementById('wpGericht').value;
+            const wochentag = document.getElementById('wpWochentag').value;
+            const datum = document.getElementById('wpDatum').value;
+            
+            if (!gericht || !wochentag || !datum) {
+                alert('Bitte Pflichtfelder ausfüllen (Gericht, Wochentag, Datum)');
+                return;
+            }
+            
+            const data = {
+                gericht: gericht,
+                wochentag: parseInt(wochentag),
+                datum: datum,
+                preis: parseFloat(document.getElementById('wpPreis').value) || null,
+                beschreibung: document.getElementById('wpBeschreibung').value,
+                kalenderwoche: parseInt(document.getElementById('wpKW').value) || null,
+                jahr: parseInt(document.getElementById('wpJahr').value) || null,
+            };
+            
+            fetch(`${API_BASE}/cms/wochenplan`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideWochenplanForm();
+                loadWochenplan();
+            })
+            .catch(e => {
+                console.error('Save Wochenplan failed:', e);
+                alert('Fehler beim Speichern');
+            });
+        }
+
+        function deleteWochenplan(id) {
+            if (confirm('Wollen Sie diesen Wochenplan-Eintrag wirklich löschen?')) {
+                fetch(`${API_BASE}/cms/wochenplan/${id}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                })
+                .then(r => r.json())
+                .then(data => loadWochenplan())
+                .catch(e => {
+                    console.error('Delete Wochenplan failed:', e);
+                    alert('Fehler beim Löschen');
+                });
+            }
+        }
+
+        // News
+        function loadNews() {
+            const tbody = document.getElementById('newsTable');
+            tbody.innerHTML = '<tr><td colspan="4" class="loading">Laden...</td></tr>';
+            
+            fetch(`${API_BASE}/cms/news`, { headers: getHeaders() })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #6c757d;">Keine Einträge gefunden. Erstellen Sie die erste News.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.map(item => `
+                        <tr>
+                            <td>${item.datum ? formatDate(item.datum) : '-'}</td>
+                            <td><strong>${item.titel || '-'}</strong></td>
+                            <td>${item.inhalt ? item.inhalt.substring(0, 100) + '...' : '-'}</td>
+                            <td>
+                                <button class="cms-btn cms-btn-danger" onclick="deleteNews('${item.id}')">Löschen</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(e => {
+                    console.error('Load News failed:', e);
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #dc3545;">Fehler beim Laden der Daten</td></tr>';
+                });
+        }
+
+        function showNewsForm() {
+            document.getElementById('newsForm').classList.remove('hidden');
+            document.getElementById('newsDatum').valueAsDate = new Date();
+        }
+
+        function hideNewsForm() {
+            document.getElementById('newsForm').classList.add('hidden');
+            document.getElementById('newsTitel').value = '';
+            document.getElementById('newsDatum').value = '';
+            document.getElementById('newsInhalt').value = '';
+        }
+
+        function saveNews() {
+            const titel = document.getElementById('newsTitel').value;
+            const datum = document.getElementById('newsDatum').value;
+            const inhalt = document.getElementById('newsInhalt').value;
+            
+            if (!titel || !datum || !inhalt) {
+                alert('Bitte alle Felder ausfüllen');
+                return;
+            }
+            
+            const data = {
+                titel: titel,
+                datum: datum,
+                inhalt: inhalt,
+            };
+            
+            fetch(`${API_BASE}/cms/news`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideNewsForm();
+                loadNews();
+            })
+            .catch(e => {
+                console.error('Save News failed:', e);
+                alert('Fehler beim Speichern');
+            });
+        }
+
+        function deleteNews(id) {
+            if (confirm('Wollen Sie diese News wirklich löschen?')) {
+                fetch(`${API_BASE}/cms/news/${id}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                })
+                .then(r => r.json())
+                .then(data => loadNews())
+                .catch(e => {
+                    console.error('Delete News failed:', e);
+                    alert('Fehler beim Löschen');
+                });
+            }
+        }
+
+        // Layout
+        function loadLayout() {
+            const tbody = document.getElementById('layoutTable');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading">Laden...</td></tr>';
+            
+            fetch(`${API_BASE}/cms/layout`, { headers: getHeaders() })
+                .then(r => r.json())
+                .then(data => {
+                    const entries = Object.entries(data);
+                    if (entries.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #6c757d;">Keine Layout-Konfigurationen gefunden. Erstellen Sie die erste Konfiguration.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = entries.map(([name, item]) => `
+                        <tr>
+                            <td><strong>${name}</strong></td>
+                            <td>${item.template || '-'}</td>
+                            <td>${item.layout || '-'}</td>
+                            <td><span class="badge ${item.show_weeklyplan ? 'badge-success' : 'badge-warning'}">${item.show_weeklyplan ? 'Ja' : 'Nein'}</span></td>
+                            <td>
+                                <button class="cms-btn cms-btn-danger" onclick="deleteLayout('${item.id}')">Löschen</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(e => {
+                    console.error('Load Layout failed:', e);
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #dc3545;">Fehler beim Laden der Daten</td></tr>';
+                });
+        }
+
+        function showLayoutForm() {
+            document.getElementById('layoutForm').classList.remove('hidden');
+        }
+
+        function hideLayoutForm() {
+            document.getElementById('layoutForm').classList.add('hidden');
+            document.getElementById('layoutName').value = '';
+            document.getElementById('layoutTemplate').value = '';
+            document.getElementById('layoutLayout').value = '';
+            document.getElementById('layoutContent').value = '';
+            document.getElementById('layoutShowWp').value = 'true';
+        }
+
+        function saveLayout() {
+            const name = document.getElementById('layoutName').value;
+            
+            if (!name) {
+                alert('Bitte einen Namen angeben');
+                return;
+            }
+            
+            const data = {
+                name: name,
+                template: document.getElementById('layoutTemplate').value,
+                layout: document.getElementById('layoutLayout').value,
+                content: document.getElementById('layoutContent').value,
+                show_weeklyplan: document.getElementById('layoutShowWp').value === 'true',
+            };
+            
+            fetch(`${API_BASE}/cms/layout`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideLayoutForm();
+                loadLayout();
+            })
+            .catch(e => {
+                console.error('Save Layout failed:', e);
+                alert('Fehler beim Speichern');
+            });
+        }
+
+        function deleteLayout(id) {
+            if (confirm('Wollen Sie diese Layout-Konfiguration wirklich löschen?')) {
+                fetch(`${API_BASE}/cms/layout/${id}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                })
+                .then(r => r.json())
+                .then(data => loadLayout())
+                .catch(e => {
+                    console.error('Delete Layout failed:', e);
+                    alert('Fehler beim Löschen');
+                });
+            }
+        }
+
+        function getWochentagName(code) {
+            const names = {
+                101000: 'Montag',
+                101001: 'Dienstag',
+                101002: 'Mittwoch',
+                101003: 'Donnerstag',
+                101004: 'Freitag',
+                101005: 'Samstag',
+                101006: 'Sonntag'
+            };
+            return names[code] || '-';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+    </script>
+</body>
+</html>
