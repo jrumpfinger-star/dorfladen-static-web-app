@@ -403,6 +403,9 @@
                 <nav class="cms-nav">
                     <button class="active" onclick="showSection('wochenplan')">📅 Wochenplan</button>
                     <button onclick="showSection('news')">📰 News</button>
+                    <button onclick="showSection('oeffnungszeiten')">🕐 Öffnungszeiten</button>
+                    <button onclick="showSection('bilder')">🖼️ Bilder</button>
+                    <button onclick="showSection('angebote')">🏷️ Angebote</button>
                     <button onclick="showSection('layout')">🎨 Layout</button>
                 </nav>
                 <div class="cms-sidebar-footer">
@@ -581,6 +584,127 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Öffnungszeiten Section -->
+                <div id="oeffnungszeitenSection" class="cms-section">
+                    <div class="cms-header">
+                        <h2>Öffnungszeiten</h2>
+                    </div>
+                    <div class="cms-card">
+                        <div class="cms-table-wrapper">
+                            <table class="cms-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Wochentag</th>
+                                        <th>Vormittag</th>
+                                        <th>Nachmittag</th>
+                                        <th>Geschlossen</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="oeffnungszeitenTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bilder Section -->
+                <div id="bilderSection" class="cms-section">
+                    <div class="cms-header">
+                        <h2>Bilder</h2>
+                        <button class="cms-btn cms-btn-primary" onclick="showBildUpload()">+ Bild hochladen</button>
+                    </div>
+                    <div class="cms-card">
+                        <div id="bildUploadForm" class="hidden">
+                            <h3>Bild hochladen</h3>
+                            <div class="cms-form">
+                                <div class="cms-form-group">
+                                    <label>Slot *</label>
+                                    <select id="bildSlot">
+                                        <option value="logo-navbar">Logo Navbar</option>
+                                        <option value="logo-canvas">Logo Canvas</option>
+                                        <option value="logo-original">Logo Original</option>
+                                        <option value="hero">Hero-Bild</option>
+                                    </select>
+                                </div>
+                                <div class="cms-form-group" style="grid-column: 1 / -1;">
+                                    <label>Datei *</label>
+                                    <input type="file" id="bildFile" accept="image/*">
+                                </div>
+                            </div>
+                            <div class="cms-form-actions">
+                                <button class="cms-btn cms-btn-primary" onclick="uploadBild()">Hochladen</button>
+                                <button class="cms-btn cms-btn-secondary" onclick="hideBildUpload()">Abbrechen</button>
+                            </div>
+                        </div>
+                        <div class="cms-table-wrapper">
+                            <table class="cms-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Schlüssel</th>
+                                        <th>Breite</th>
+                                        <th>Höhe</th>
+                                        <th>Vorschau</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bilderTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Angebote Section -->
+                <div id="angeboteSection" class="cms-section">
+                    <div class="cms-header">
+                        <h2>Angebote</h2>
+                        <button class="cms-btn cms-btn-primary" onclick="showAktionForm()">+ Neue Aktion erstellen</button>
+                    </div>
+                    <div class="cms-card">
+                        <div id="aktionForm" class="hidden">
+                            <h3>Neue Aktion erstellen</h3>
+                            <div class="cms-form">
+                                <div class="cms-form-group">
+                                    <label>Titel *</label>
+                                    <input type="text" id="aktionTitel" placeholder="z.B. Saisonspecial">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Gültig von</label>
+                                    <input type="date" id="aktionVon">
+                                </div>
+                                <div class="cms-form-group">
+                                    <label>Gültig bis</label>
+                                    <input type="date" id="aktionBis">
+                                </div>
+                                <div class="cms-form-group" style="grid-column: 1 / -1;">
+                                    <label>Artikel (JSON-Array)</label>
+                                    <textarea id="aktionItems" placeholder='[{"produkt":"Nutella","details":"400g","preis":"1.25","statt_preis":"3.79"}]'></textarea>
+                                </div>
+                            </div>
+                            <div class="cms-form-actions">
+                                <button class="cms-btn cms-btn-primary" onclick="saveAktion()">Speichern</button>
+                                <button class="cms-btn cms-btn-secondary" onclick="hideAktionForm()">Abbrechen</button>
+                            </div>
+                        </div>
+                        <div class="cms-table-wrapper">
+                            <table class="cms-table">
+                                <thead>
+                                    <tr>
+                                        <th>Aktion ID</th>
+                                        <th>Titel</th>
+                                        <th>Gültig von</th>
+                                        <th>Gültig bis</th>
+                                        <th>Anzahl</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="aktionenTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -643,6 +767,14 @@
             document.querySelectorAll('.cms-nav button').forEach(b => b.classList.remove('active'));
             document.getElementById(section + 'Section').classList.add('active');
             event.target.classList.add('active');
+            
+            // Load data when switching sections
+            if (section === 'wochenplan') loadWochenplan();
+            if (section === 'news') loadNews();
+            if (section === 'layout') loadLayout();
+            if (section === 'oeffnungszeiten') loadOeffnungszeiten();
+            if (section === 'bilder') loadBilder();
+            if (section === 'angebote') loadAktionen();
         }
 
         function getHeaders() {
@@ -940,13 +1072,270 @@
                 101005: 'Samstag',
                 101006: 'Sonntag'
             };
-            return names[code] || '-';
+            return names[code] || code;
         }
 
         function formatDate(dateStr) {
             if (!dateStr) return '-';
             const date = new Date(dateStr);
             return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        // Öffnungszeiten
+        function loadOeffnungszeiten() {
+            fetch(`${API_BASE}/cms/oeffnungszeiten`, {
+                headers: getHeaders()
+            })
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.getElementById('oeffnungszeitenTable');
+                if (data.error) {
+                    tbody.innerHTML = `<tr><td colspan="6">${data.error}</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = data.map(item => `
+                    <tr>
+                        <td>${item.name || '-'}</td>
+                        <td>${getWochentagName(item.wochentag)}</td>
+                        <td>${item.vormittag_von || '-'} - ${item.vormittag_bis || '-'}</td>
+                        <td>${item.nachmittag_von || '-'} - ${item.nachmittag_bis || '-'}</td>
+                        <td>${item.geschlossen ? 'Ja' : 'Nein'}</td>
+                        <td>
+                            <button class="cms-btn cms-btn-sm" onclick="editOeffnungszeit('${item.id}')">Bearbeiten</button>
+                        </td>
+                    </tr>
+                `).join('');
+            })
+            .catch(e => {
+                console.error('Load Öffnungszeiten failed:', e);
+                document.getElementById('oeffnungszeitenTable').innerHTML = `<tr><td colspan="6">Fehler beim Laden</td></tr>`;
+            });
+        }
+
+        function editOeffnungszeit(id) {
+            const row = event.target.closest('tr');
+            const cells = row.querySelectorAll('td');
+            const name = cells[0].textContent;
+            const vormittagVon = cells[2].textContent.split(' - ')[0];
+            const vormittagBis = cells[2].textContent.split(' - ')[1];
+            const nachmittagVon = cells[3].textContent.split(' - ')[0];
+            const nachmittagBis = cells[3].textContent.split(' - ')[1];
+            const geschlossen = cells[4].textContent === 'Ja';
+
+            const newName = prompt('Name:', name);
+            if (newName === null) return;
+
+            const data = {
+                name: newName,
+                vormittag_von: vormittagVon === '-' ? '' : vormittagVon,
+                vormittag_bis: vormittagBis === '-' ? '' : vormittagBis,
+                nachmittag_von: nachmittagVon === '-' ? '' : nachmittagVon,
+                nachmittag_bis: nachmittagBis === '-' ? '' : nachmittagBis,
+                geschlossen: geschlossen
+            };
+
+            fetch(`${API_BASE}/cms/oeffnungszeiten/${id}`, {
+                method: 'PATCH',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => loadOeffnungszeiten())
+            .catch(e => {
+                console.error('Update Öffnungszeit failed:', e);
+                alert('Fehler beim Speichern');
+            });
+        }
+
+        // Bilder
+        function loadBilder() {
+            fetch(`${API_BASE}/cms/bilder`, {
+                headers: getHeaders()
+            })
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.getElementById('bilderTable');
+                if (data.error) {
+                    tbody.innerHTML = `<tr><td colspan="6">${data.error}</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = (data.items || []).map(item => `
+                    <tr>
+                        <td>${item.name || '-'}</td>
+                        <td>${item.schluessel || '-'}</td>
+                        <td>${item.breite || '-'}</td>
+                        <td>${item.hoehe || '-'}</td>
+                        <td>${item.vorschau ? `<img src="${item.vorschau}" style="width: 50px; height: auto;">` : '-'}</td>
+                        <td>
+                            <button class="cms-btn cms-btn-sm" onclick="deployBild('${item.schluessel}')">Deploy</button>
+                        </td>
+                    </tr>
+                `).join('');
+            })
+            .catch(e => {
+                console.error('Load Bilder failed:', e);
+                document.getElementById('bilderTable').innerHTML = `<tr><td colspan="6">Fehler beim Laden</td></tr>`;
+            });
+        }
+
+        function showBildUpload() {
+            document.getElementById('bildUploadForm').classList.remove('hidden');
+        }
+
+        function hideBildUpload() {
+            document.getElementById('bildUploadForm').classList.add('hidden');
+        }
+
+        function uploadBild() {
+            const slot = document.getElementById('bildSlot').value;
+            const fileInput = document.getElementById('bildFile');
+            
+            if (!fileInput.files.length) {
+                alert('Bitte eine Datei auswählen');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result.split(',')[1];
+                
+                const data = {
+                    schluessel: slot,
+                    name: slot,
+                    base64: base64
+                };
+
+                fetch(`${API_BASE}/cms/bilder/upload`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    hideBildUpload();
+                    loadBilder();
+                    alert('Bild erfolgreich hochgeladen');
+                })
+                .catch(e => {
+                    console.error('Upload Bild failed:', e);
+                    alert('Fehler beim Hochladen');
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function deployBild(schluessel) {
+            if (confirm(`Bild "${schluessel}" deployen?`)) {
+                fetch(`${API_BASE}/cms/bilder/${schluessel}/deploy`, {
+                    method: 'POST',
+                    headers: getHeaders()
+                })
+                .then(r => r.json())
+                .then(data => {
+                    alert('Bild deployed - Homepage Template muss aktualisiert werden');
+                })
+                .catch(e => {
+                    console.error('Deploy Bild failed:', e);
+                    alert('Fehler beim Deploy');
+                });
+            }
+        }
+
+        // Angebote
+        function loadAktionen() {
+            fetch(`${API_BASE}/cms/angebote/aktionen`, {
+                headers: getHeaders()
+            })
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.getElementById('aktionenTable');
+                if (data.error) {
+                    tbody.innerHTML = `<tr><td colspan="6">${data.error}</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = data.map(item => `
+                    <tr>
+                        <td>${item.aktion_id || '-'}</td>
+                        <td>${item.titel || '-'}</td>
+                        <td>${item.von || '-'}</td>
+                        <td>${item.bis || '-'}</td>
+                        <td>${item.count || 0}</td>
+                        <td>
+                            <button class="cms-btn cms-btn-sm" onclick="deleteAktion('${item.aktion_id}')">Löschen</button>
+                        </td>
+                    </tr>
+                `).join('');
+            })
+            .catch(e => {
+                console.error('Load Aktionen failed:', e);
+                document.getElementById('aktionenTable').innerHTML = `<tr><td colspan="6">Fehler beim Laden</td></tr>`;
+            });
+        }
+
+        function showAktionForm() {
+            document.getElementById('aktionForm').classList.remove('hidden');
+        }
+
+        function hideAktionForm() {
+            document.getElementById('aktionForm').classList.add('hidden');
+        }
+
+        function saveAktion() {
+            const titel = document.getElementById('aktionTitel').value;
+            const von = document.getElementById('aktionVon').value;
+            const bis = document.getElementById('aktionBis').value;
+            const itemsStr = document.getElementById('aktionItems').value;
+            
+            if (!titel) {
+                alert('Bitte einen Titel angeben');
+                return;
+            }
+
+            let items;
+            try {
+                items = JSON.parse(itemsStr || '[]');
+            } catch (e) {
+                alert('Ungültiges JSON-Format für Artikel');
+                return;
+            }
+
+            const data = {
+                titel,
+                gueltig_von: von,
+                gueltig_bis: bis,
+                items
+            };
+
+            fetch(`${API_BASE}/cms/angebote/aktion`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideAktionForm();
+                loadAktionen();
+            })
+            .catch(e => {
+                console.error('Save Aktion failed:', e);
+                alert('Fehler beim Speichern');
+            });
+        }
+
+        function deleteAktion(aktionId) {
+            if (confirm(`Aktion "${aktionId}" wirklich löschen?`)) {
+                fetch(`${API_BASE}/cms/angebote/aktion/${aktionId}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                })
+                .then(r => r.json())
+                .then(data => loadAktionen())
+                .catch(e => {
+                    console.error('Delete Aktion failed:', e);
+                    alert('Fehler beim Löschen');
+                });
+            }
         }
     </script>
 </body>
