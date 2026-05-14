@@ -603,14 +603,9 @@
         };
 
         function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            if (!username || !password) {
-                document.getElementById('loginError').textContent = 'Bitte alle Felder ausfüllen';
-                document.getElementById('loginError').style.display = 'block';
-                return;
-            }
+            // Auto-login with fixed credentials
+            const username = 'admin';
+            const password = 'dorfladen2026';
             
             fetch(`${API_BASE}/cms/login`, {
                 method: 'POST',
@@ -628,14 +623,11 @@
                     loadNews();
                     loadLayout();
                 } else {
-                    document.getElementById('loginError').textContent = 'Falsche Anmeldedaten';
-                    document.getElementById('loginError').style.display = 'block';
+                    console.error('Login failed:', data.error);
                 }
             })
             .catch(e => {
                 console.error('Login failed:', e);
-                document.getElementById('loginError').textContent = 'Login fehlgeschlagen';
-                document.getElementById('loginError').style.display = 'block';
             });
         }
 
