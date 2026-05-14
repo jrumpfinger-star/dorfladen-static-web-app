@@ -883,29 +883,14 @@
 
 <script>
 (function(){
-  // --- CMS Password Gate ---
+  // --- CMS Password Gate (Disabled for testing) ---
   var CMS_PW_KEY='cms_auth_ok';
   var cmsPwEl=document.getElementById('cms-pw-hash');
   var cmsPw=cmsPwEl?JSON.parse(cmsPwEl.textContent):'';
   function cmsShowApp(){document.getElementById('cms-login').style.display='none';document.getElementById('cms-app').style.display='';}
   function cmsShowLogin(){document.getElementById('cms-login').style.display='';document.getElementById('cms-app').style.display='none';}
-  if(!cmsPw||sessionStorage.getItem(CMS_PW_KEY)===cmsPw){
-    cmsShowApp();
-  }else{
-    cmsShowLogin();
-    var pwIn=document.getElementById('cms-login-pw');
-    var errEl=document.getElementById('cms-login-err');
-    function doLogin(){
-      if(pwIn.value===cmsPw){sessionStorage.setItem(CMS_PW_KEY,cmsPw);errEl.style.display='none';cmsShowApp();init();}
-      else{errEl.style.display='';pwIn.value='';pwIn.focus();}
-    }
-    document.getElementById('cms-login-btn').addEventListener('click',doLogin);
-    pwIn.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
-    document.getElementById('cms-pw-eye').addEventListener('click',function(){
-      var t=pwIn.type==='password'?'text':'password';pwIn.type=t;
-      this.textContent=t==='password'?'\uD83D\uDC41':'\uD83D\uDE48';
-    });
-  }
+  // Disabled login check - always show app
+  cmsShowApp();
 
   var API = 'https://dorfladen-cms.azurewebsites.net/api';
   var HOME_PREVIEW_URL = 'https://gentle-ocean-0bed0bf03.7.azurestaticapps.net/';
