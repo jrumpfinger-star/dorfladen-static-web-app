@@ -865,21 +865,8 @@
 <!-- Modal -->
 <div id="cms-modal-wrap" style="display:none"></div>
 
-{% fetchxml art_all %}
-<fetch version="1.0" mapping="logical" count="5000">
-  <entity name="dl_artikelstamm">
-    <attribute name="dl_bezeichnung" />
-    <attribute name="dl_bezeichnung_total" />
-    <attribute name="dl_artikelnummer" />
-    <attribute name="dl_vk_preis" />
-    <attribute name="dl_warengruppe" />
-    <order attribute="dl_bezeichnung" />
-  </entity>
-</fetch>
-{% endfetchxml %}
 <script id="cms-artikel-data" type="application/json">
-[{% for a in art_all.results.entities %}{% unless forloop.first %},{% endunless %}{"b":"{{ a.dl_bezeichnung | escape }}","bt":"{{ a.dl_bezeichnung_total | escape }}","nr":"{{ a.dl_artikelnummer | escape }}","p":{{ a.dl_vk_preis | default: 0 }},"wg":"{{ a.dl_warengruppe | escape }}"}{% endfor %}]
-</script>
+[]</script>
 
 <script>
 (function(){
@@ -893,6 +880,38 @@
   cmsShowApp();
 
   var API = 'https://dorfladen-cms-v2.azurewebsites.net/api';
+  
+  // --- Load Artikel Data from Azure Function API ---  
+  async function loadArtikelData() {
+    try {
+      // Load Angebote from Azure Function
+      const angeboteResponse = await fetch(API + '/cms/angebote');
+      const angeboteData = await angeboteResponse.json();
+      
+      if (angeboteData.success && angeboteData.data) {
+        // Transform Angebote to Artikel format
+        const artikelData = angeboteData.data.map(item => ({
+          b: item.name,
+          bt: item.name,
+          nr: item.aktion_id,
+          p: item.price,
+          wg: 'angebot'
+        }));
+        
+        // Update cms-artikel-data script
+        const artikelScript = document.getElementById('cms-artikel-data');
+        if (artikelScript) {
+          artikelScript.textContent = JSON.stringify(artikelData);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading artikel data:', error);
+    }
+  }
+  
+  // Load data on page load
+  loadArtikelData();
+
   var HOME_PREVIEW_URL = 'https://gentle-ocean-0bed0bf03.7.azurestaticapps.net/';
   var DAYS = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag'};
   var DAY_SHORT = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa',101006:'So'};
