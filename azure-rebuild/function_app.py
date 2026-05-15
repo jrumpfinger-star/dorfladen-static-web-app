@@ -154,8 +154,8 @@ def news(req: func.HttpRequest) -> func.HttpResponse:
     """News endpoint with Dataverse access."""
     try:
         headers = get_headers()
-        # Fetch active news from dl_news
-        url = f"{DATVERSE_URL}/api/data/v9.2/dl_news?$filter=dl_status eq 101001&$orderby=dl_datum desc"
+        # Fetch all news from dl_news without status filter to check field names
+        url = f"{DATVERSE_URL}/api/data/v9.2/dl_news?$orderby=dl_datum desc"
         r = requests.get(url, headers=headers)
         
         if r.status_code == 200:
