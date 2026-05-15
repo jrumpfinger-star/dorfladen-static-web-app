@@ -24,22 +24,6 @@
     "X-Frame-Options": "SAMEORIGIN",
     "Referrer-Policy": "strict-origin-when-cross-origin"
   },
-  "responseOverrides": {
-    "api/*.json": {
-      "responseHeaders": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization"
-      }
-    },
-    "api/*": {
-      "responseHeaders": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization"
-      }
-    }
-  },
   "mimeTypes": {
     ".json": "application/json",
     ".woff2": "font/woff2"
