@@ -8,7 +8,6 @@
 <body>
 <!-- Dorfladen CMS - Power Pages Web Template -->
 <!-- Deploy: python deploy-cms-template.py -->
-<!-- Version: 2026-05-16-v2 -->
 <script>
 // MSAL optional - load only if needed for SharePoint images
 window.msalLoaded = false;
@@ -1577,8 +1576,8 @@ document.head.appendChild(msalScript);
           dl_status:101001
         };
         var url,method;
-        if(item.id){url=API+'/dl_wochenplans('+item.id+')';method='PATCH';}
-        else{url=API+'/dl_wochenplans';method='POST';}
+        if(item.id){url=API+'/wochenplan/'+item.id;method='PATCH';}
+        else{url=API+'/wochenplan';method='POST';}
         return fetch(url,{method:method,headers:writeHeaders(),body:JSON.stringify(body)})
           .then(function(r){if(!r.ok) return r.json().then(function(e){throw new Error(e.error?e.error.message:'HTTP '+r.status);});});
       });
