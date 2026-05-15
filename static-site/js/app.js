@@ -4,7 +4,7 @@
    ======================================== */
 
 // API Base URL – Azure Function (SWA proxied via /api)
-var API_BASE = 'https://dorfladen-rebuild.azurewebsites.net/api';
+var API_BASE = 'https://dorfladen-cms-v2.azurewebsites.net/api';
 
 var DAYS = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag',101005:'Samstag',101006:'Sonntag'};
 var DAY_SHORT = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa',101006:'So'};
