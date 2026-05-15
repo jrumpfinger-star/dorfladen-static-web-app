@@ -185,7 +185,8 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 (function(){
   fetch(API_BASE+'/wochenplan')
     .then(function(r){return r.json();})
-    .then(function(items){
+    .then(function(response){
+      var items=response.success?response.data:[];
       if(!items||!items.length){
         document.getElementById('wp-subtitle').textContent='Kein aktueller Wochenplan';
         document.getElementById('wp-body').innerHTML='<div style="padding:20px;text-align:center;color:#888;font-style:italic">Aktuell kein Wochenplan verf\u00fcgbar. Unser Mittagstisch-Angebot findet ihr in der WhatsApp-Gruppe.</div>';
