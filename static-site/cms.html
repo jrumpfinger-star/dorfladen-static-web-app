@@ -1024,47 +1024,8 @@ document.head.appendChild(msalScript);
   }
 
   function loadImageFromSharePoint(artnr){
-    // Prefer Dataverse Custom API that returns original SharePoint download URL
-    return refreshToken().then(function(){
-      return fetch('/_api/dl_GetWerbebildUrl',{
-        method:'POST',
-        headers:{'Accept':'application/json','Content-Type':'application/json','__RequestVerificationToken':_csrfToken},
-        body:JSON.stringify({Artikelnummern:String(artnr||'')})
-      });
-    }).then(function(r){return r.ok?r.json():null;})
-    .then(function(resp){
-      // Expected response: { Urls: "{\"1085164007\":\"https://...\"}" }
-      var dlUrl=null;
-      try{
-        var urlsRaw=resp&&resp.Urls;
-        var map=urlsRaw?JSON.parse(urlsRaw):null;
-        dlUrl=map&&map[String(artnr||'')]||null;
-      }catch(e){dlUrl=null;}
-      if(dlUrl){
-        return fetch(dlUrl,{headers:{'Accept':'image/*'}}).then(function(r){return r.ok?r.blob():null;});
-      }
-      // Fallback: legacy server logic endpoint
-      return refreshToken().then(function(){
-        return fetch('/_api/serverlogics/getimage?artnr='+encodeURIComponent(artnr),{
-          headers:{'Accept':'application/json','__RequestVerificationToken':_csrfToken}
-        });
-      }).then(function(r){return r.ok?r.json():null;})
-      .then(function(resp2){
-        if(!resp2||!resp2.success)return null;
-        var data2;try{data2=JSON.parse(resp2.data);}catch(e){return null;}
-        if(!data2||!data2.success||!data2.downloadUrl)return null;
-        return fetch(data2.downloadUrl,{headers:{'Accept':'image/*'}}).then(function(r){return r.ok?r.blob():null;});
-      });
-    }).then(function(blob){
-      if(!blob)return null;
-      return new Promise(function(resolve){
-        // Keep original payload quality: no re-encoding here
-        var reader=new FileReader();
-        reader.onloadend=function(){resolve(reader.result||null);};
-        reader.onerror=function(){resolve(null);};
-        reader.readAsDataURL(blob);
-      });
-    });
+    // Disabled - Power Pages API endpoints not available in Azure Function App
+    return Promise.resolve(null);
   }
   var DAY_COLORS = {101000:'#ef4444',101001:'#f97316',101002:'#eab308',101003:'#22c55e',101004:'#3b82f6'};
   var meals = [], hours = [], kw, jahr;
