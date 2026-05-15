@@ -185,7 +185,8 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 (function(){
   fetch(API_BASE+'/wochenplan')
     .then(function(r){return r.json();})
-    .then(function(items){
+    .then(function(response){
+      var items=response.success?response.data:[];
       if(!items||!items.length){
         document.getElementById('wp-subtitle').textContent='Kein aktueller Wochenplan';
         document.getElementById('wp-body').innerHTML='<div style="padding:20px;text-align:center;color:#888;font-style:italic">Aktuell kein Wochenplan verf\u00fcgbar. Unser Mittagstisch-Angebot findet ihr in der WhatsApp-Gruppe.</div>';
@@ -200,7 +201,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       var curKw=1+Math.round((tmp-week1)/604800000);
       // Collect available KWs
       var kws={};
-      items.forEach(function(g){if(g.dl_kalenderwoche)kws[g.dl_kalenderwoche]=true;});
+      items.forEach(function(g){if(g.kalenderwoche)kws[g.kalenderwoche]=true;});
       // Pick best KW: prefer current week, then closest future, then highest available
       var bestKw=0;
       if(kws[curKw]){bestKw=curKw;}
@@ -210,12 +211,12 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         if(!bestKw&&sorted.length)bestKw=sorted[sorted.length-1];
       }
       // Filter to best KW
-      var meals=bestKw>0?items.filter(function(g){return g.dl_kalenderwoche===bestKw;}):items;
+      var meals=bestKw>0?items.filter(function(g){return g.kalenderwoche===bestKw;}):items;
       // Subtitle with date range
       var sub=document.getElementById('wp-subtitle');
       if(meals.length>0){
-        var first=new Date(meals[0].dl_datum);
-        var last=new Date(meals[meals.length-1].dl_datum);
+        var first=new Date(meals[0].datum);
+        var last=new Date(meals[meals.length-1].datum);
         var kwText=bestKw?'KW '+bestKw+' \u00B7 ':'';
         var y1=String(first.getFullYear()).slice(-2);
         var y2=String(last.getFullYear()).slice(-2);
@@ -224,7 +225,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       // Group by day
       var byDay={};var dayOrder=[];
       meals.forEach(function(g){
-        var dc=g.dl_wochentag;
+        var dc=g.wochentag;
         if(!byDay[dc]){byDay[dc]=[];dayOrder.push(dc);}
         byDay[dc].push(g);
       });
@@ -234,8 +235,8 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         var day=DAYS[dc]||'?';
         var grp=dIdx%2===0?'wp-grp-even':'wp-grp-odd';
         var notice='';
-        dayMeals.forEach(function(g){if(g.dl_beschreibung&&!notice) notice=g.dl_beschreibung;});
-        var realMeals=dayMeals.filter(function(g){return g.dl_gericht&&g.dl_gericht.trim();});
+        dayMeals.forEach(function(g){if(g.beschreibung&&!notice) notice=g.beschreibung;});
+        var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim();});
         if(realMeals.length===0&&notice){
           html+='<tr class="'+grp+' wp-day-first wp-day-last"><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2">'+esc(notice)+'</td></tr>';
         } else {
@@ -244,11 +245,11 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
             var isFirst=i===0;
             var isLast=i===realMeals.length-1;
             var cls=grp+(isFirst?' wp-day-first':'')+(isLast?' wp-day-last':'');
-            var price=g.dl_preis?(g.dl_preis.toFixed(2).replace('.',',')+' \u20AC'):'';
+            var price=g.preis?(g.preis.toFixed(2).replace('.',',')+' \u20AC'):'';
             var bullet=multi?' wp-dish-bullet':'';
             html+='<tr class="'+cls+'">';
             html+='<td class="'+(isFirst?'wp-day':'wp-day-empty')+'">'+(isFirst?day:'')+'</td>';
-            html+='<td class="wp-dish'+bullet+' wp-dish-a">'+esc(g.dl_gericht)+'</td>';
+            html+='<td class="wp-dish'+bullet+' wp-dish-a">'+esc(g.gericht)+'</td>';
             html+='<td class="wp-price wp-price-a">'+price+'</td></tr>';
           });
         }
