@@ -89,6 +89,21 @@ def angebote(req: func.HttpRequest) -> func.HttpResponse:
     """Angebote endpoint for public site (alias for cms/angebote)."""
     return cms_angebote(req)
 
+@app.route(route="dl_angebotes/{record_id}", methods=["DELETE"])
+def delete_angebot(req: func.HttpRequest, record_id: str) -> func.HttpResponse:
+    """Delete Angebot item."""
+    try:
+        headers = get_headers()
+        url = f"{DATVERSE_URL}/api/data/v9.2/dl_angebotes({record_id})"
+        r = requests.delete(url, headers=headers)
+        
+        if r.status_code == 204:
+            return create_response({"success": True}, 200)
+        else:
+            return create_response({"success": False, "error": f"Dataverse error: {r.status_code}", "details": r.text}, r.status_code)
+    except Exception as e:
+        return create_response({"success": False, "error": str(e)}, 500)
+
 @app.route(route="wochenplan", methods=["GET"])
 def wochenplan(req: func.HttpRequest) -> func.HttpResponse:
     """Wochenplan endpoint with Dataverse access."""
@@ -154,8 +169,8 @@ def news(req: func.HttpRequest) -> func.HttpResponse:
     """News endpoint with Dataverse access."""
     try:
         headers = get_headers()
-        # Fetch all news from dl_news without status filter to check field names
-        url = f"{DATVERSE_URL}/api/data/v9.2/dl_news?$orderby=dl_datum desc"
+        # Fetch active news from dl_news
+        url = f"{DATVERSE_URL}/api/data/v9.2/dl_news?$filter=dl_status eq 101001&$orderby=dl_datum desc"
         r = requests.get(url, headers=headers)
         
         if r.status_code == 200:
