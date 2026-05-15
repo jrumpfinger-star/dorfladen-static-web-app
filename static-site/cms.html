@@ -2692,7 +2692,7 @@
         ctx.fillStyle='#ffffff';rrect(x,y,colW,cardH,10);ctx.fill();
         ctx.strokeStyle='#e7e5e4';ctx.lineWidth=1;rrect(x,y,colW,cardH,10);ctx.stroke();
 
-        ctx.fillStyle='#44403c';ctx.font='900 15px Georgia, "Times New Roman", serif';ctx.textAlign='left';
+        ctx.fillStyle='#44403c';ctx.font='900 15px Arial, sans-serif';ctx.textAlign='left';
         ctx.fillText((grp.day||'').toUpperCase(),x+12,y+11);
         ctx.strokeStyle='#d6d3d1';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+12,y+34);ctx.lineTo(x+colW-12,y+34);ctx.stroke();
 
@@ -2704,7 +2704,7 @@
           var dl=wrap2(dt,colW-96);
           ctx.fillText(dl[0]||'',x+12,ry+4);
           if(dl[1])ctx.fillText(dl[1],x+12,ry+19);
-          if(m.price){ctx.fillStyle='#57534e';ctx.font='900 13px Georgia, "Times New Roman", serif';ctx.textAlign='right';ctx.fillText(m.price,x+colW-12,ry+7);ctx.textAlign='left';}
+          if(m.price){ctx.fillStyle='#57534e';ctx.font='900 13px Arial, sans-serif';ctx.textAlign='right';ctx.fillText(m.price,x+colW-12,ry+7);ctx.textAlign='left';}
           ry+=34;
         });
 
@@ -2743,11 +2743,11 @@
       ctx.globalAlpha=0.03;
       for(var ty=0;ty<H;ty+=3){for(var tx=0;tx<W;tx+=3){if(Math.random()>0.55){ctx.fillStyle=Math.random()>0.5?'#000':'#fff';ctx.fillRect(tx,ty,2,2);}}}
       ctx.globalAlpha=1;
-      ctx.textAlign='left';ctx.fillStyle='#355e3b';ctx.font='900 46px Georgia, "Times New Roman", serif';ctx.fillText('WOCHENPLAN',padL,24);
+      ctx.textAlign='left';ctx.fillStyle='#355e3b';ctx.font='900 46px Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
       ctx.fillStyle='#6b7280';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Mittagstisch | '+header,padL,82);
       ctx.strokeStyle='#5b7f5d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
       ctx.fillStyle='#7a6a55';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-2);ctx.textAlign='left';
-      drawRows(headerH+20,132,{cardBg:'#fffdf8',cardBorder:'#e9dfcf',radius:16,dayFill:'#769b6a',dayText:'#f8faf5',text:'#2f3d2f',price:'#8b1e3f',rowLine:'#dfd5c4',dash:[3,2],shadow:'rgba(53,94,59,0.08)',shadowBlur:3,fontDish:'bold 15px Georgia, serif'});
+      drawRows(headerH+20,132,{cardBg:'#fffdf8',cardBorder:'#e9dfcf',radius:16,dayFill:'#769b6a',dayText:'#f8faf5',text:'#2f3d2f',price:'#8b1e3f',rowLine:'#dfd5c4',dash:[3,2],shadow:'rgba(53,94,59,0.08)',shadowBlur:3,fontDish:'bold 15px Arial, sans-serif'});
       logoLoaded=drawCommonLogo('#355e3b');
       ctx.strokeStyle='#d8ccb8';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
       ctx.fillStyle='#7a6a55';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
@@ -2832,8 +2832,8 @@
       ctx.fillStyle='#134e4a';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
     }else if(tpl==='newspaper-list'){
       ctx.fillStyle='#fafaf9';ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#44403c';ctx.font='900 42px Georgia, "Times New Roman", serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#57534e';ctx.font='700 18px Georgia, "Times New Roman", serif';ctx.fillText('Zeitung | '+header,padL,82);
+      ctx.textAlign='left';ctx.fillStyle='#44403c';ctx.font='900 42px Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
+      ctx.fillStyle='#57534e';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Zeitung | '+header,padL,82);
       ctx.strokeStyle='#a8a29e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
       drawRowsNewspaper(headerH+18);
       logoLoaded=drawCommonLogo('#44403c');
@@ -3103,7 +3103,7 @@
       base.bgColor='#f7f2e7';base.titleColor='#355e3b';base.dateColor='#7a6a55';
       base.cardBg='#fffdf8';base.cardBorder='#e9dfcf';base.textColor='#2f3d2f';base.detailsColor='#6b5b48';
       base.footerColor='#6b5b48';base.tagColor='#8b1e3f';base.cardRadius=kind==='flyer'?36:30;
-      base.titleFont='900 58px Georgia, "Times New Roman", serif';
+      base.titleFont='900 58px Arial, sans-serif';
     }else if(tpl==='bold-poster'){
       base.bgColor='#fff7ed';base.titleColor='#b91c1c';base.dateColor='#7c2d12';
       base.cardBg='#fffaf2';base.cardBorder='#fdba74';base.tagColor='#ea580c';
