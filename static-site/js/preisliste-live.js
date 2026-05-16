@@ -5,7 +5,7 @@
   if(!wrap)return;
   wrap.innerHTML='<p style="text-align:center;padding:40px;color:#888">Preisliste wird geladen&hellip;</p>';
 
-  fetch(API+'/preisliste').then(function(r){return r.json()}).then(function(data){
+  fetch(API).then(function(r){return r.json()}).then(function(data){
     if(data.error){wrap.innerHTML='<p style="color:#c00">Fehler: '+data.error+'</p>';return;}
 
     var groups=data.groups||{};
