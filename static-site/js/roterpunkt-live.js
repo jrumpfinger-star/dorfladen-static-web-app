@@ -66,7 +66,7 @@
     console.error('RP load failed',e);
   });
 
-  function fmtPrice(p){return p.toFixed(2).replace('.',',');}
+  function fmtPrice(p){return p===null?'—':p.toFixed(2).replace('.',',');}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
   function initRP(){
