@@ -33,8 +33,14 @@
     wgNames.forEach(function(wg){
       var items=groups[wg];
       var avgDisc=0;
-      items.forEach(function(i){avgDisc+=i.discount});
-      avgDisc=Math.round(avgDisc/items.length);
+      var validItems=0;
+      items.forEach(function(i){
+        if(i.discount!==null){
+          avgDisc+=i.discount;
+          validItems++;
+        }
+      });
+      avgDisc=validItems>0?Math.round(avgDisc/validItems):0;
 
       var rows='';
       items.forEach(function(item){
