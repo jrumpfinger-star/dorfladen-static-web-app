@@ -895,7 +895,7 @@ document.head.appendChild(msalScript);
   // Disabled login check - always show app
   cmsShowApp();
 
-  var API = 'https://dorfladen-rebuild.azurewebsites.net/api';
+  var API = 'https://dorfladen-cms-v4.azurewebsites.net/api';
   
   // --- Load Artikel Data from Azure Function API ---  
   async function loadArtikelData() {
@@ -937,6 +937,68 @@ document.head.appendChild(msalScript);
     }
   }
   
+  function loadAngebote(){
+    var ldEl=document.getElementById('cms-ang-loading');
+    if(ldEl)ldEl.style.display='';
+    document.getElementById('cms-akt-list').innerHTML='';
+    document.getElementById('cms-ang-empty').style.display='none';
+    fetch(API+'/cms/angebote')
+      .then(function(r){return r.json();})
+      .then(function(data){
+        angebote=[];
+        (data.data||[]).forEach(function(a){
+          angebote.push({
+            id:a.id,
+            produkt:a.name||'',
+            details:'',
+            preis:a.price,
+            statt_preis:a.old_price,
+            artikelnummer:'',
+            bild_data:'',
+            aktion_titel:'',
+            aktion_id:'',
+            gueltig_von:a.valid_from?a.valid_from.substring(0,10):'',
+            gueltig_bis:a.valid_to?a.valid_to.substring(0,10):'',
+            sortierung:0,
+            status:101001
+          });
+        });
+        // Group by aktion_id
+        var map={};
+        angebote.forEach(function(a){
+          var key=a.aktion_id||a.id;
+          if(!map[key]) map[key]={aktion_id:a.aktion_id,titel:a.aktion_titel,von:a.gueltig_von,bis:a.gueltig_bis,items:[]};
+          map[key].items.push(a);
+        });
+        var groups=Object.keys(map).map(function(k){return map[k];});
+        var c=document.getElementById('cms-akt-list');
+        c.innerHTML='';
+        if(groups.length===0){
+          document.getElementById('cms-ang-empty').style.display='';
+          return;
+        }
+        groups.forEach(function(g){
+          var card=document.createElement('div');
+          card.className='cms-card';
+          var h='<div class="cms-card-header">'+(g.titel||'Angebot')+'</div>';
+          h+='<div class="cms-ang-meta">von '+g.von+' bis '+g.bis+'</div>';
+          h+='<div class="cms-ang-items">';
+          g.items.forEach(function(a){
+            h+='<div class="cms-ang-item">';
+            h+='<div class="cms-ang-name">'+esc(a.produkt)+'</div>';
+            h+='<div class="cms-ang-price">'+fmtP(a.preis)+'</div>';
+            if(a.statt_preis)h+='<div class="cms-ang-old">statt '+fmtP(a.statt_preis)+'</div>';
+            h+='</div>';
+          });
+          h+='</div>';
+          card.innerHTML=h;
+          c.appendChild(card);
+        });
+      })
+      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .then(function(){if(ldEl)ldEl.style.display='none';});
+  }
+
   // Load data on page load
   loadArtikelData();
   loadAngebote();
@@ -962,47 +1024,8 @@ document.head.appendChild(msalScript);
   }
 
   function loadImageFromSharePoint(artnr){
-    // Prefer Dataverse Custom API that returns original SharePoint download URL
-    return refreshToken().then(function(){
-      return fetch('/_api/dl_GetWerbebildUrl',{
-        method:'POST',
-        headers:{'Accept':'application/json','Content-Type':'application/json','__RequestVerificationToken':_csrfToken},
-        body:JSON.stringify({Artikelnummern:String(artnr||'')})
-      });
-    }).then(function(r){return r.ok?r.json():null;})
-    .then(function(resp){
-      // Expected response: { Urls: "{\"1085164007\":\"https://...\"}" }
-      var dlUrl=null;
-      try{
-        var urlsRaw=resp&&resp.Urls;
-        var map=urlsRaw?JSON.parse(urlsRaw):null;
-        dlUrl=map&&map[String(artnr||'')]||null;
-      }catch(e){dlUrl=null;}
-      if(dlUrl){
-        return fetch(dlUrl,{headers:{'Accept':'image/*'}}).then(function(r){return r.ok?r.blob():null;});
-      }
-      // Fallback: legacy server logic endpoint
-      return refreshToken().then(function(){
-        return fetch('/_api/serverlogics/getimage?artnr='+encodeURIComponent(artnr),{
-          headers:{'Accept':'application/json','__RequestVerificationToken':_csrfToken}
-        });
-      }).then(function(r){return r.ok?r.json():null;})
-      .then(function(resp2){
-        if(!resp2||!resp2.success)return null;
-        var data2;try{data2=JSON.parse(resp2.data);}catch(e){return null;}
-        if(!data2||!data2.success||!data2.downloadUrl)return null;
-        return fetch(data2.downloadUrl,{headers:{'Accept':'image/*'}}).then(function(r){return r.ok?r.blob():null;});
-      });
-    }).then(function(blob){
-      if(!blob)return null;
-      return new Promise(function(resolve){
-        // Keep original payload quality: no re-encoding here
-        var reader=new FileReader();
-        reader.onloadend=function(){resolve(reader.result||null);};
-        reader.onerror=function(){resolve(null);};
-        reader.readAsDataURL(blob);
-      });
-    });
+    // Disabled - Power Pages API endpoints not available in Azure Function App
+    return Promise.resolve(null);
   }
   var DAY_COLORS = {101000:'#ef4444',101001:'#f97316',101002:'#eab308',101003:'#22c55e',101004:'#3b82f6'};
   var meals = [], hours = [], kw, jahr;
@@ -1277,7 +1300,7 @@ document.head.appendChild(msalScript);
     if(bNxt)bNxt.className='cms-week-quick'+(kw===nxtKw&&jahr===nxtJahr?' active':'');
 
     var filter="dl_kalenderwoche eq "+kw+" and dl_jahr eq "+jahr;
-    fetch(API+'/dl_wochenplans?$filter='+encodeURIComponent(filter)+'&$orderby=dl_datum asc,dl_wochentag asc&$top=50')
+    fetch(API+'/wochenplan?$filter='+encodeURIComponent(filter)+'&$orderby=dl_datum asc,dl_wochentag asc&$top=50')
       .then(function(r){return r.json();})
       .then(function(data){
         meals=[];
@@ -1357,7 +1380,7 @@ document.head.appendChild(msalScript);
   // Gerichte history for autocomplete
   var gerichteHistory=[];
   function loadGerichteHistory(){
-    fetch(API+'/dl_wochenplans?$select=dl_gericht,dl_preis&$orderby=dl_datum desc&$top=200')
+    fetch(API+'/wochenplan?$select=dl_gericht,dl_preis&$orderby=dl_datum desc&$top=200')
       .then(function(r){return r.json();})
       .then(function(data){
         var seen={};
@@ -1514,8 +1537,8 @@ document.head.appendChild(msalScript);
           dl_status:101001
         };
         var url,method;
-        if(item.id){url=API+'/dl_wochenplans('+item.id+')';method='PATCH';}
-        else{url=API+'/dl_wochenplans';method='POST';}
+        if(item.id){url=API+'/wochenplan/'+item.id;method='PATCH';}
+        else{url=API+'/wochenplan';method='POST';}
         return fetch(url,{method:method,headers:writeHeaders(),body:JSON.stringify(body)})
           .then(function(r){if(!r.ok) return r.json().then(function(e){throw new Error(e.error?e.error.message:'HTTP '+r.status);});});
       });
@@ -1554,7 +1577,7 @@ document.head.appendChild(msalScript);
     var delBtn=document.querySelector('[data-action="confirmDeleteMeal"]');
     btnBusy(delBtn,'Löschen...');
     refreshToken().then(function(){
-      return fetch(API+'/dl_wochenplans('+id+')',{method:'DELETE',headers:deleteHeaders()});
+      return fetch(API+'/wochenplan/'+id,{method:'DELETE',headers:deleteHeaders()});
     })
       .then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
@@ -1568,7 +1591,7 @@ document.head.appendChild(msalScript);
 
   // --- Öffnungszeiten ---
   function loadHours(){
-    fetch(API+'/dl_oeffnungszeits?$orderby=dl_sortierung asc')
+    fetch(API+'/hours?$orderby=dl_sortierung asc&$top=50')
       .then(function(r){return r.json();})
       .then(function(data){
         hours=[];
@@ -1645,7 +1668,7 @@ document.head.appendChild(msalScript);
           dl_nachmittag_von:row.querySelector('.h-nm-von').value||null,
           dl_nachmittag_bis:row.querySelector('.h-nm-bis').value||null
         };
-        promises.push(fetch(API+'/dl_oeffnungszeits('+id+')',{method:'PATCH',headers:writeHeaders(),body:JSON.stringify(body)}));
+        promises.push(fetch(API+'/hours/'+id,{method:'PATCH',headers:writeHeaders(),body:JSON.stringify(body)}));
       });
       return Promise.all(promises);
     })
@@ -1657,853 +1680,6 @@ document.head.appendChild(msalScript);
   // --- Homepage Content ---
   var _hpLoaded = false;
   var _hpItems = [];
-
-  function loadHomepage(){
-    _hpLoaded = true;
-    var container = document.getElementById('cms-hp-fields');
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af">Lade...</div>';
-    fetch(API+'/dl_seiteninhalts?$filter=dl_seite eq \'home\'&$orderby=dl_schluessel asc')
-      .then(function(r){return r.json();})
-      .then(function(data){
-        _hpItems = data.value || [];
-        if(!_hpItems.length){
-          container.innerHTML='';
-          document.getElementById('cms-hp-empty').style.display='';
-          return;
-        }
-        document.getElementById('cms-hp-empty').style.display='none';
-        var html='';
-        _hpItems.forEach(function(item){
-          var label = item.dl_bezeichnung || item.dl_schluessel;
-          var val = (item.dl_wert||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-          var isLong = val.length > 80;
-          html += '<div class="cms-card"><div class="cms-card-header" style="background:#15803d">' + label + '</div><div class="cms-card-body">';
-          if(isLong){
-            html += '<textarea class="cms-input" rows="3" data-hp-id="'+item.dl_seiteninhaltid+'" data-hp-key="'+item.dl_schluessel+'" style="resize:vertical">'+val+'</textarea>';
-          } else {
-            html += '<input class="cms-input" type="text" data-hp-id="'+item.dl_seiteninhaltid+'" data-hp-key="'+item.dl_schluessel+'" value="'+val+'">';
-          }
-          html += '<div style="margin-top:4px;font-size:11px;color:#9ca3af">Schl&uuml;ssel: <code>'+item.dl_schluessel+'</code></div>';
-          html += '</div></div>';
-        });
-        container.innerHTML = html;
-      })
-      .catch(function(e){
-        container.innerHTML='<div style="color:#dc2626;padding:12px">Fehler beim Laden: '+e+'</div>';
-      });
-  }
-
-  function saveHomepage(){
-    var fields = document.querySelectorAll('[data-hp-id]');
-    if(!fields.length) return;
-    var btn = document.getElementById('cms-save-hp');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="cms-btn-spinner"></span>Speichern...';
-    var promises = [];
-    fields.forEach(function(el){
-      var id = el.getAttribute('data-hp-id');
-      var val = el.value;
-      promises.push(
-        refreshToken().then(function(){
-          return fetch(API+'/dl_seiteninhalts('+id+')',{
-            method:'PATCH',
-            headers:{'Content-Type':'application/json','__RequestVerificationToken':_csrfToken},
-            body:JSON.stringify({dl_wert:val})
-          });
-        })
-      );
-    });
-    Promise.all(promises).then(function(results){
-      var ok = results.every(function(r){return r.ok;});
-      if(ok){
-        toast('Homepage-Texte gespeichert!','ok');
-        // Purge cache so changes appear
-        fetch('/_services/cache/clear').catch(function(){});
-      } else {
-        toast('Fehler beim Speichern','error');
-      }
-      btn.disabled = false;
-      btn.innerHTML = 'Speichern';
-    }).catch(function(e){
-      toast('Fehler: '+e,'error');
-      btn.disabled = false;
-      btn.innerHTML = 'Speichern';
-    });
-  }
-
-  // --- Homepage Visual Config (localStorage) ---
-  var HP_CFG_KEY='dl_homepage_cfg';
-  var HP_CFG_DEFAULTS={
-    priColor:'#5ea88a',priHover:'#4a8e73',accColor:'#d32f2f',
-    bgColor:'#f4f6f4',textColor:'#16162a',
-    heroOverlay:82,heroFontSize:2,
-    showTopbar:true,showPromoBar:true,showMeatPromo:true,
-    showDoGehIHi:true,showInfoCards:true,showWhatsApp:true,showCookie:true,
-    baseFontSize:15,borderRadius:12,
-    wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',
-    wpPriceColor:'#2d7a5e',wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',
-    wpShowCard:true,wpShowOeko:true,wpShowVorbestell:true,
-    wpShowPhone:true,wpShowWaShare:true,wpShowWaInfo:true,
-    wpDishFontSize:0.92,wpPriceFontSize:0.92,
-    wpHomeTemplate:'classic-red',
-    wpFlyerTemplate:'classic-red'
-  };
-  function hpCfgGet(){
-    try{var s=localStorage.getItem(HP_CFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in HP_CFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:HP_CFG_DEFAULTS[k];return r;}}catch(e){}
-    return JSON.parse(JSON.stringify(HP_CFG_DEFAULTS));
-  }
-  function hpCfgSave(o){try{localStorage.setItem(HP_CFG_KEY,JSON.stringify(o));}catch(e){}}
-  function hpCfgLoadUI(){
-    var c=hpCfgGet();
-    var ids=['priColor','priHover','accColor','bgColor','textColor','wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'];
-    ids.forEach(function(k){var el=document.getElementById('hcfg-'+k);if(el)el.value=c[k];});
-    var ranges=['heroOverlay','heroFontSize','baseFontSize','borderRadius','wpDishFontSize','wpPriceFontSize'];
-    ranges.forEach(function(k){
-      var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k];var lbl=document.getElementById('hcfg-'+k+'-val');if(lbl)lbl.textContent=c[k];}
-    });
-    var checks=['showTopbar','showPromoBar','showMeatPromo','showDoGehIHi','showInfoCards','showWhatsApp','showCookie','wpShowCard','wpShowOeko','wpShowVorbestell','wpShowPhone','wpShowWaShare','wpShowWaInfo'];
-    checks.forEach(function(k){var el=document.getElementById('hcfg-'+k);if(el)el.checked=!!c[k];});
-    var homeTpl=document.getElementById('hcfg-wpHomeTemplate');
-    if(homeTpl)homeTpl.value=c.wpHomeTemplate||c.wpFlyerTemplate||'classic-red';
-    hpCfgSyncWpPreview();
-    var tpl=document.getElementById('hcfg-wpFlyerTemplate');
-    if(tpl)tpl.value=c.wpFlyerTemplate||'classic-red';
-    hpCfgSyncWpFlyerPreview();
-  }
-  function hpCfgSyncWpPreview(){
-    var sel=document.getElementById('hcfg-wpHomeTemplate');
-    if(!sel)return;
-    var v=(sel.value||'classic-red').toLowerCase();
-    var btns=document.querySelectorAll('#hcfg-wpHomeTemplate-preview .cms-wp-preview');
-    btns.forEach(function(b){
-      var on=(b.getAttribute('data-value')||'').toLowerCase()===v;
-      b.classList.toggle('active',on);
-    });
-  }
-  function hpCfgSyncWpFlyerPreview(){
-    var sel=document.getElementById('hcfg-wpFlyerTemplate');
-    if(!sel)return;
-    var v=(sel.value||'classic-red').toLowerCase();
-    var btns=document.querySelectorAll('#hcfg-wpFlyerTemplate-preview .cms-wp-preview');
-    btns.forEach(function(b){
-      var on=(b.getAttribute('data-value')||'').toLowerCase()===v;
-      b.classList.toggle('active',on);
-    });
-  }
-  function hpCfgReadUI(){
-    var c={};
-    ['priColor','priHover','accColor','bgColor','textColor','wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;});
-    ['heroOverlay','heroFontSize','baseFontSize','borderRadius','wpDishFontSize','wpPriceFontSize'].forEach(function(k){var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);});
-    ['showTopbar','showPromoBar','showMeatPromo','showDoGehIHi','showInfoCards','showWhatsApp','showCookie','wpShowCard','wpShowOeko','wpShowVorbestell','wpShowPhone','wpShowWaShare','wpShowWaInfo'].forEach(function(k){var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.checked;});
-    var homeTpl=document.getElementById('hcfg-wpHomeTemplate');
-    c.wpHomeTemplate=homeTpl?homeTpl.value:'classic-red';
-    var tpl=document.getElementById('hcfg-wpFlyerTemplate');
-    c.wpFlyerTemplate=tpl?tpl.value:'classic-red';
-    return c;
-  }
-  function saveHPCfg(){
-    var c=hpCfgReadUI();hpCfgSave(c);
-    toast('Homepage-Design gespeichert!','ok');
-  }
-  function resetHPCfg(){
-    localStorage.removeItem(HP_CFG_KEY);hpCfgLoadUI();
-    toast('Homepage-Design zurückgesetzt','ok');
-  }
-
-  // --- Aktuelles / News ---
-  var _newsLoaded = false;
-  var _newsItems = [];
-
-  function loadNews(){
-    _newsLoaded = true;
-    var list = document.getElementById('cms-news-list');
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af">Lade Beitr&auml;ge...</div>';
-    fetch(API+'/dl_newses?$orderby=dl_datum desc&$top=50')
-      .then(function(r){return r.json();})
-      .then(function(data){
-        _newsItems = data.value || [];
-        renderNewsList();
-      })
-      .catch(function(e){
-        list.innerHTML='<div style="color:#dc2626;padding:12px">Fehler: '+e+'</div>';
-      });
-  }
-
-  function renderNewsList(){
-    var list = document.getElementById('cms-news-list');
-    if(!_newsItems.length){
-      list.innerHTML='';
-      document.getElementById('cms-news-empty').style.display='';
-      return;
-    }
-    document.getElementById('cms-news-empty').style.display='none';
-    var html='';
-    _newsItems.forEach(function(n){
-      var isActive = n.dl_status === 101001;
-      var statusColor = isActive ? '#16a34a' : '#9ca3af';
-      var statusText = isActive ? 'Aktiv' : 'Inaktiv';
-      var d = n.dl_datum ? new Date(n.dl_datum) : null;
-      var dateStr = d ? (pad2(d.getDate())+'.'+pad2(d.getMonth()+1)+'.'+d.getFullYear()) : 'Kein Datum';
-      html += '<div class="cms-card" style="margin-bottom:10px">';
-      html += '<div class="cms-card-header" style="background:#0369a1;display:flex;justify-content:space-between;align-items:center">';
-      html += '<span>'+esc(n.dl_titel||'Ohne Titel')+'</span>';
-      html += '<span style="font-size:11px;opacity:.85">'+dateStr+'</span>';
-      html += '</div>';
-      html += '<div class="cms-card-body" style="padding:12px">';
-      if(n.dl_kurztext) html += '<div style="font-size:13px;color:#374151;margin-bottom:6px"><b>Kurztext:</b> '+esc(n.dl_kurztext)+'</div>';
-      if(n.dl_inhalt) html += '<div style="font-size:12px;color:#6b7280;max-height:60px;overflow:hidden;text-overflow:ellipsis">'+esc(n.dl_inhalt).substring(0,150)+(n.dl_inhalt.length>150?'...':'')+'</div>';
-      html += '<div style="display:flex;gap:8px;align-items:center;margin-top:10px;border-top:1px solid #f3f4f6;padding-top:10px">';
-      html += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:'+statusColor+'"><span style="width:8px;height:8px;border-radius:50%;background:'+statusColor+'"></span>'+statusText+'</span>';
-      html += '<button class="cms-btn cms-btn-sm" style="margin-left:auto;font-size:11px" data-action="toggleNewsStatus" data-id="'+n.dl_newsid+'">'+(isActive?'Deaktivieren':'Aktivieren')+'</button>';
-      html += '<button class="cms-btn cms-btn-sm" style="font-size:11px" data-action="editNews" data-id="'+n.dl_newsid+'">Bearbeiten</button>';
-      html += '<button class="cms-btn cms-btn-sm" style="font-size:11px;color:#dc2626" data-action="deleteNews" data-id="'+n.dl_newsid+'">L&ouml;schen</button>';
-      html += '</div></div></div>';
-    });
-    list.innerHTML = html;
-  }
-
-  function pad2(n){return n<10?'0'+n:''+n;}
-  function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-  function showNewsModal(title, body, action, actionLabel, actionId){
-    var html='<div class="cms-modal-bg">';
-    html+='<div class="cms-modal">';
-    html+='<h3>'+title+'</h3>';
-    html+=body;
-    html+='<div style="display:flex;gap:8px;margin-top:16px">';
-    html+='<button class="cms-btn cms-btn-primary" id="cms-modal-btn" data-action="'+action+'"'+(actionId?' data-id="'+actionId+'"':'')+'>'+actionLabel+'</button>';
-    html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>';
-    html+='</div></div></div>';
-    document.getElementById('cms-modal-wrap').innerHTML=html;
-    document.getElementById('cms-modal-wrap').style.display='';
-  }
-
-  function newsRichToolbar(){
-    return '<div style="display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px;background:#f3f4f6;border:1px solid #d1d5db;border-bottom:none;border-radius:8px 8px 0 0">'
-      +'<button type="button" class="cms-rte-btn" data-cmd="bold" title="Fett" style="font-weight:700">F</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="italic" title="Kursiv" style="font-style:italic">K</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="underline" title="Unterstrichen" style="text-decoration:underline">U</button>'
-      +'<span style="width:1px;background:#d1d5db;margin:2px 4px"></span>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="formatBlock" data-val="h2" title="\u00dcberschrift">H</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="formatBlock" data-val="h3" title="Unter\u00fcberschrift">h</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="formatBlock" data-val="p" title="Absatz">&para;</button>'
-      +'<span style="width:1px;background:#d1d5db;margin:2px 4px"></span>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="insertUnorderedList" title="Aufz\u00e4hlung">&#8226;</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="insertOrderedList" title="Nummerierung">1.</button>'
-      +'<span style="width:1px;background:#d1d5db;margin:2px 4px"></span>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="foreColor" data-val="#a51d2d" title="Rot" style="color:#a51d2d;font-weight:700">A</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="foreColor" data-val="#16a34a" title="Gr\u00fcn" style="color:#16a34a;font-weight:700">A</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="foreColor" data-val="#1a1a1a" title="Schwarz" style="color:#1a1a1a;font-weight:700">A</button>'
-      +'<span style="width:1px;background:#d1d5db;margin:2px 4px"></span>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="createLink" title="Link einf\u00fcgen">&#128279;</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="insertImage" title="Bild einf\u00fcgen">&#128247;</button>'
-      +'<button type="button" class="cms-rte-btn" data-cmd="removeFormat" title="Formatierung entfernen">&#10060;</button>'
-      +'</div>';
-  }
-  function newsRichEditor(content){
-    return newsRichToolbar()
-      +'<div class="cms-input" id="cms-news-inhalt" contenteditable="true" '
-      +'style="min-height:180px;max-height:400px;overflow-y:auto;border-radius:0 0 8px 8px;'
-      +'line-height:1.6;font-size:14px;padding:12px;outline:none" '
-      +'>'+(content||'')+'</div>';
-  }
-  function initRteToolbar(){
-    var wrap=document.getElementById('cms-modal-wrap');
-    wrap.addEventListener('click',function(e){
-      var btn=e.target.closest('.cms-rte-btn');if(!btn)return;
-      e.preventDefault();
-      var cmd=btn.getAttribute('data-cmd'),val=btn.getAttribute('data-val')||null;
-      var ed=document.getElementById('cms-news-inhalt');if(!ed)return;
-      ed.focus();
-      if(cmd==='createLink'){
-        val=prompt('URL eingeben:','https://');if(!val)return;
-      }
-      if(cmd==='insertImage'){
-        var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
-        inp.onchange=function(){
-          if(!inp.files||!inp.files[0])return;
-          var reader=new FileReader();
-          reader.onload=function(ev){
-            ed.focus();
-            document.execCommand('insertHTML',false,'<img src="'+ev.target.result+'" style="max-width:100%;height:auto;border-radius:8px;margin:8px 0">');
-          };
-          reader.readAsDataURL(inp.files[0]);
-        };inp.click();return;
-      }
-      document.execCommand(cmd,false,val);
-    });
-  }
-
-  function openNewNews(){
-    var today = new Date();
-    var dateVal = today.getFullYear()+'-'+pad2(today.getMonth()+1)+'-'+pad2(today.getDate());
-    var body = '<div style="display:flex;flex-direction:column;gap:14px">';
-    body += '<div><label class="cms-label">Titel *</label><input class="cms-input" id="cms-news-titel" placeholder="z.B. Neue Erdbeeren eingetroffen"></div>';
-    body += '<div><label class="cms-label">Datum *</label><input class="cms-input" id="cms-news-datum" type="date" value="'+dateVal+'"></div>';
-    body += '<div><label class="cms-label">Kurztext (wird in der &Uuml;bersicht angezeigt)</label><input class="cms-input" id="cms-news-kurztext" placeholder="Kurze Zusammenfassung (1-2 S&auml;tze)"></div>';
-    body += '<div><label class="cms-label">Volltext (wird bei &bdquo;Weiterlesen&ldquo; angezeigt)</label>'+newsRichEditor('')+'</div>';
-    body += '<div><label class="cms-label">Status</label><select class="cms-input" id="cms-news-status"><option value="101001">Aktiv (sichtbar)</option><option value="101002">Inaktiv (verborgen)</option></select></div>';
-    body += '</div>';
-    showNewsModal('Neuer Beitrag', body, 'saveNews', 'Speichern');
-    initRteToolbar();
-  }
-
-  function editNews(id){
-    var n = _newsItems.find(function(x){return x.dl_newsid===id;});
-    if(!n) return;
-    var d = n.dl_datum ? n.dl_datum.substring(0,10) : '';
-    var body = '<div style="display:flex;flex-direction:column;gap:14px">';
-    body += '<input type="hidden" id="cms-news-editid" value="'+id+'">';
-    body += '<div><label class="cms-label">Titel *</label><input class="cms-input" id="cms-news-titel" value="'+esc(n.dl_titel||'')+'"></div>';
-    body += '<div><label class="cms-label">Datum *</label><input class="cms-input" id="cms-news-datum" type="date" value="'+d+'"></div>';
-    body += '<div><label class="cms-label">Kurztext</label><input class="cms-input" id="cms-news-kurztext" value="'+esc(n.dl_kurztext||'')+'"></div>';
-    body += '<div><label class="cms-label">Volltext</label>'+newsRichEditor(n.dl_inhalt||'')+'</div>';
-    body += '<div><label class="cms-label">Status</label><select class="cms-input" id="cms-news-status"><option value="101001"'+(n.dl_status===101001?' selected':'')+'>Aktiv</option><option value="101002"'+(n.dl_status!==101001?' selected':'')+'>Inaktiv</option></select></div>';
-    body += '</div>';
-    showNewsModal('Beitrag bearbeiten', body, 'saveNews', 'Speichern');
-    initRteToolbar();
-  }
-
-  function saveNews(){
-    var editId = document.getElementById('cms-news-editid');
-    var isEdit = editId && editId.value;
-    var titel = document.getElementById('cms-news-titel').value.trim();
-    var datum = document.getElementById('cms-news-datum').value;
-    var kurztext = document.getElementById('cms-news-kurztext').value.trim();
-    var inhaltEl = document.getElementById('cms-news-inhalt');
-    var inhalt = inhaltEl ? (inhaltEl.innerHTML||'').trim() : '';
-    var status = parseInt(document.getElementById('cms-news-status').value);
-    if(!titel){toast('Bitte Titel eingeben','error');return;}
-    if(!datum){toast('Bitte Datum eingeben','error');return;}
-    var payload = {dl_titel:titel, dl_datum:datum, dl_kurztext:kurztext, dl_inhalt:inhalt, dl_status:status};
-    var url = isEdit ? API+'/dl_newses('+editId.value+')' : API+'/dl_newses';
-    var method = isEdit ? 'PATCH' : 'POST';
-    refreshToken().then(function(){
-      return fetch(url,{method:method,headers:{'Content-Type':'application/json','__RequestVerificationToken':_csrfToken},body:JSON.stringify(payload)});
-    }).then(function(r){
-      if(r.ok){
-        toast(isEdit?'Beitrag aktualisiert!':'Beitrag erstellt!','ok');
-        cmsCloseModal();
-        _newsLoaded=false; loadNews();
-        fetch('/_services/cache/clear').catch(function(){});
-      } else {
-        r.text().then(function(t){toast('Fehler: '+t.substring(0,100),'error');});
-      }
-    }).catch(function(e){toast('Fehler: '+e,'error');});
-  }
-
-  function deleteNews(id){
-    var n = _newsItems.find(function(x){return x.dl_newsid===id;});
-    var name = n ? n.dl_titel : 'Beitrag';
-    showNewsModal('Beitrag l&ouml;schen', '<p style="font-size:13px;color:#6b7280;margin-bottom:8px">Soll der Beitrag <b>&bdquo;'+esc(name)+'&ldquo;</b> wirklich gel&ouml;scht werden?</p>', 'confirmDeleteNews', 'L&ouml;schen', id);
-    document.getElementById('cms-modal-btn').style.background='#dc2626';
-  }
-
-  function confirmDeleteNews(id){
-    refreshToken().then(function(){
-      return fetch(API+'/dl_newses('+id+')',{method:'DELETE',headers:{'__RequestVerificationToken':_csrfToken}});
-    }).then(function(r){
-      if(r.ok){
-        toast('Beitrag gel&ouml;scht','ok');
-        cmsCloseModal();
-        _newsLoaded=false; loadNews();
-        fetch('/_services/cache/clear').catch(function(){});
-      } else {
-        toast('Fehler beim L&ouml;schen','error');
-      }
-    }).catch(function(e){toast('Fehler: '+e,'error');});
-  }
-
-  function toggleNewsStatus(id){
-    var n = _newsItems.find(function(x){return x.dl_newsid===id;});
-    if(!n) return;
-    var newStatus = n.dl_status === 101001 ? 101002 : 101001;
-    refreshToken().then(function(){
-      return fetch(API+'/dl_newses('+id+')',{method:'PATCH',headers:{'Content-Type':'application/json','__RequestVerificationToken':_csrfToken},body:JSON.stringify({dl_status:newStatus})});
-    }).then(function(r){
-      if(r.ok){
-        toast(newStatus===101001?'Beitrag aktiviert':'Beitrag deaktiviert','ok');
-        _newsLoaded=false; loadNews();
-        fetch('/_services/cache/clear').catch(function(){});
-      } else {
-        toast('Fehler beim Status-Wechsel','error');
-      }
-    }).catch(function(e){toast('Fehler: '+e,'error');});
-  }
-
-  // --- Angebote (Aktion-based) ---
-  var aktionen = [];
-
-  function loadAngebote(){
-    var ldEl=document.getElementById('cms-ang-loading');
-    if(ldEl)ldEl.style.display='';
-    document.getElementById('cms-akt-list').innerHTML='';
-    document.getElementById('cms-ang-empty').style.display='none';
-    fetch(API+'/cms/angebote')
-      .then(function(r){return r.json();})
-      .then(function(data){
-        angebote=[];
-        (data.data||[]).forEach(function(a){
-          angebote.push({
-            id:a.id,
-            produkt:a.name||'',
-            details:'',
-            preis:a.price,
-            statt_preis:a.old_price,
-            artikelnummer:'',
-            bild_data:'',
-            aktion_titel:'',
-            aktion_id:'',
-            gueltig_von:a.valid_from?a.valid_from.substring(0,10):'',
-            gueltig_bis:a.valid_to?a.valid_to.substring(0,10):'',
-            sortierung:0,
-            status:101001
-          });
-        });
-        // Group by aktion_id
-        var map={};
-        angebote.forEach(function(a){
-          var key=a.aktion_id||a.id;
-          if(!map[key]) map[key]={aktion_id:a.aktion_id,titel:a.aktion_titel,von:a.gueltig_von,bis:a.gueltig_bis,items:[]};
-          map[key].items.push(a);
-        });
-        aktionen=[];
-        Object.keys(map).forEach(function(k){aktionen.push(map[k]);});
-        aktionen.sort(function(a,b){return (b.von||'').localeCompare(a.von||'');});
-        renderAktionen();
-        // Auto-cleanup: delete actions older than 30 days
-        var cutoff=new Date(Date.now()-30*86400000).toISOString().substring(0,10);
-        aktionen.forEach(function(ak){
-          if(ak.bis&&ak.bis<cutoff){
-            ak.items.forEach(function(item){
-              fetch(API+'/dl_angebotes('+item.id+')',{method:'DELETE',headers:deleteHeaders()}).catch(function(){});
-            });
-          }
-        });
-        aktionen=aktionen.filter(function(ak){return !ak.bis||ak.bis>=cutoff;});
-        if(aktionen.length!==Object.keys(map).length) renderAktionen();
-      })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
-      .then(function(){if(ldEl)ldEl.style.display='none';});
-  }
-
-  var _angWeekFilter='this';
-  function getWeekRange(which){
-    var now=new Date();var dow=now.getDay()||7;
-    var mon=new Date(now);mon.setDate(mon.getDate()-dow+1);mon.setHours(0,0,0,0);
-    if(which==='next') mon.setDate(mon.getDate()+7);
-    var sat=new Date(mon);sat.setDate(sat.getDate()+5);
-    function isoD(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
-    return {mon:isoD(mon),sat:isoD(sat)};
-  }
-  window.cmsFilterWeek=function(w){
-    _angWeekFilter=w;
-    var nav=document.getElementById('cms-ang-week-nav');
-    if(nav){nav.querySelectorAll('button').forEach(function(b){
-      b.className=b.getAttribute('data-week')===w?'cms-btn cms-btn-sm cms-btn-primary':'cms-btn cms-btn-sm cms-btn-gray';
-    });}
-    renderAktionen();
-  };
-
-  function renderAktionen(){
-    var list=document.getElementById('cms-akt-list');
-    var empty=document.getElementById('cms-ang-empty');
-    list.innerHTML='';
-    var filtered=aktionen;
-    if(_angWeekFilter!=='all'){
-      var wr=getWeekRange(_angWeekFilter);
-      filtered=aktionen.filter(function(ak){
-        var von=ak.von||'';var bis=ak.bis||'';
-        return bis>=wr.mon&&von<=wr.sat;
-      });
-    }
-    if(filtered.length===0){empty.style.display='';return;}
-    empty.style.display='none';
-    filtered.forEach(function(ak){
-      var von=ak.von||'';var bis=ak.bis||'';
-      function fmtDE(d){if(!d)return '–';var p=d.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:d;}
-      var row=document.createElement('div');row.className='cms-akt-row';
-      row.innerHTML='<div class="cms-akt-info">'
-        +'<div class="cms-akt-title">'+esc(ak.titel||'Sonderangebote')+'</div>'
-        +'<div class="cms-akt-meta">'+fmtDE(von)+' – '+fmtDE(bis)+' &middot; '+ak.items.length+' Artikel</div>'
-        +'</div>'
-        +'<div class="cms-akt-btns">'
-        +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editAktion" data-id="'+esc(ak.aktion_id)+'">Bearbeiten</button>'
-        +'<button class="cms-btn-preview" style="padding:4px 10px;font-size:11px" data-action="previewAktion" data-id="'+esc(ak.aktion_id)+'"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button>'
-        +'<button class="cms-btn-wa" style="padding:4px 10px;font-size:11px" data-action="shareAktion" data-id="'+esc(ak.aktion_id)+'"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Teilen</button>'
-        +'<button class="cms-btn-trash" title="Angebot löschen" aria-label="Löschen" data-action="deleteAktion" data-id="'+esc(ak.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>'
-        +'</div>';
-      list.appendChild(row);
-    });
-  }
-
-  // --- Artikelstamm Autocomplete ---
-  function parseArtikelDetails(s){
-    if(!s) return {name:'',menge:'',extra:''};
-    var cleaned=s.replace(/^[A-Z]\d{2}\s+/,'');
-    var mm=cleaned.match(/\b(\d+[xX]\d+[,.]?\d*\s*[gGkKlLmM][lgLG]?)\b/);
-    if(!mm) mm=cleaned.match(/\b(\d+[,.]?\d*\s*[gGkKlLmM][lgLG]?)\b/);
-    if(!mm) mm=cleaned.match(/\b(\d+\s*ST(?:ück)?)\b/i);
-    if(!mm) mm=cleaned.match(/\b(\d+\s*(?:er|Stk?|Pack))\b/i);
-    var menge=mm?mm[1].trim():'';
-    var em=cleaned.match(/\b(\d+[,.]?\d*\s*%\s*(?:Fett)?)/i);
-    var extra=em?em[1].trim():'';
-    var name=cleaned;
-    if(menge) name=name.replace(menge,'').trim();
-    name=name.replace(/[\s,.-]+$/,'').replace(/^[\s,.-]+/,'').trim();
-    return {name:name,menge:menge,extra:extra};
-  }
-
-  // Load article cache from Web API if FetchXML didn't populate it
-  var _cacheLoading=false;
-  function ensureArtikelCache(cb){
-    if(_artikelCache.length>0) return cb();
-    if(_cacheLoading) return;
-    _cacheLoading=true;
-    fetch(API+'/dl_artikelstamms?$select=dl_bezeichnung,dl_bezeichnung_total,dl_artikelnummer,dl_vk_preis,dl_warengruppe&$orderby=dl_bezeichnung&$top=5000')
-      .then(function(r){return r.json();})
-      .then(function(data){
-        (data.value||[]).forEach(function(a){
-          _artikelCache.push({b:a.dl_bezeichnung||'',bt:a.dl_bezeichnung_total||'',nr:a.dl_artikelnummer||'',p:a.dl_vk_preis||0,wg:a.dl_warengruppe||''});
-        });
-        _cacheLoading=false;
-        cb();
-      })
-      .catch(function(){_cacheLoading=false;cb();});
-  }
-
-  function renderArtResults(items,dd){
-    if(!items.length){dd.className='cms-art-dd';dd.innerHTML='';return;}
-    dd.innerHTML=items.map(function(it){
-      var preis=it.p?' &middot; <b>'+Number(it.p).toFixed(2).replace('.',',')+' \u20AC</b>':'';
-      var wg=it.wg?' &middot; <span style="color:#9ca3af">'+esc(it.wg)+'</span>':'';
-      return '<div class="cms-art-opt" data-bez="'+esc(it.b||'')+'" data-beztotal="'+esc(it.bt||'')+'" data-vk="'+(it.p||'')+'" data-nr="'+esc(it.nr||'')+'" data-wg="'+esc(it.wg||'')+'">'
-        +'<div class="cms-art-opt-name">'+esc(it.b||'')+'</div>'
-        +'<div class="cms-art-opt-meta">'+esc(it.nr||'')+preis+wg+'</div></div>';
-    }).join('');
-    dd.className='cms-art-dd open';
-    flipDDIfNeeded(dd);
-  }
-
-  function flipDDIfNeeded(dd){
-    var modal=dd.closest('.cms-modal');
-    if(!modal)return;
-    var mr=modal.getBoundingClientRect();
-    var dr=dd.getBoundingClientRect();
-    if(dr.bottom>mr.bottom-10){dd.classList.add('flip');}else{dd.classList.remove('flip');}
-  }
-
-  function setArtImage(infoEl,hiddenEl,b64){
-    hiddenEl.value=b64;
-    infoEl.innerHTML='<img class="cms-ang-img-preview" src="'+b64+'"><span class="cms-ang-img-remove" title="Bild entfernen">&times;</span>';
-  }
-
-  function tryLoadArtImage(row,artnr,force){
-    if(!artnr)return;
-    var infoEl=row.querySelector('.cms-ang-img-info');
-    var hiddenEl=row.querySelector('[data-f="bild_data"]');
-    if(!infoEl||!hiddenEl)return;
-    if(hiddenEl.value&&!force)return;
-    infoEl.innerHTML='<span style="color:#9ca3af;font-size:11px">Lade...</span>';
-    // 1) Prefer direct SharePoint URL (higher quality)
-    loadImageFromSharePoint(artnr).then(function(spB64){
-      if(spB64){setArtImage(infoEl,hiddenEl,spB64);return;}
-      // 2) Fallback to Dataverse cache
-      fetch('/_api/dl_werbebilds?$select=dl_bild_base64&$filter=dl_artikelnummer eq \''+artnr+'\'',{headers:{'Accept':'application/json'}})
-        .then(function(r){return r.ok?r.json():null;})
-        .then(function(d){
-          var recs=d&&d.value||[];var b64=null;for(var i=0;i<recs.length;i++){if(recs[i].dl_bild_base64){b64=recs[i].dl_bild_base64;break;}}
-          if(b64){setArtImage(infoEl,hiddenEl,b64);}else{infoEl.innerHTML='Kein Bild';}
-        })
-        .catch(function(){infoEl.innerHTML='Kein Bild';});
-    }).catch(function(){infoEl.innerHTML='Kein Bild';});
-  }
-
-  function wireArtSearch(row){
-    var inp=row.querySelector('.cms-art-input');
-    var dd=row.querySelector('.cms-art-dd');
-    var spinner=row.querySelector('.cms-art-spinner');
-    if(!inp||!dd) return;
-    var timer=null;
-    inp.addEventListener('input',function(){
-      clearTimeout(timer);
-      var q=inp.value.trim().toLowerCase();
-      if(q.length<2){dd.className='cms-art-dd';dd.innerHTML='';return;}
-      if(spinner)spinner.className='cms-art-spinner on';
-      timer=setTimeout(function(){
-        ensureArtikelCache(function(){
-          if(spinner)spinner.className='cms-art-spinner';
-          var items=_artikelCache.filter(function(it){
-            return (it.b&&it.b.toLowerCase().indexOf(q)!==-1)||(it.bt&&it.bt.toLowerCase().indexOf(q)!==-1)||(it.nr&&it.nr.toLowerCase().indexOf(q)!==-1);
-          }).slice(0,30);
-          renderArtResults(items,dd);
-        });
-      },150);
-    });
-    dd.addEventListener('click',function(e){
-      var opt=e.target.closest('.cms-art-opt');
-      if(!opt) return;
-      var bez=opt.getAttribute('data-bez');
-      var bezTotal=opt.getAttribute('data-beztotal')||bez;
-      var vk=opt.getAttribute('data-vk');
-      var nr=opt.getAttribute('data-nr');
-      var wg=opt.getAttribute('data-wg')||'';
-      var parsed=parseArtikelDetails(bezTotal||bez);
-      inp.value=parsed.name;
-      row.querySelector('[data-f="artikelnummer"]').value=nr;
-      var parts=[];
-      if(parsed.menge) parts.push(parsed.menge);
-      if(parsed.extra) parts.push(parsed.extra);
-      if(wg) parts.push(wg);
-      row.querySelector('[data-f="details"]').value=parts.join(', ');
-      if(vk){
-        var stattInp=row.querySelector('[data-f="statt_preis"]');
-        stattInp.value=fmtDePrice(vk);
-        var aktInp=row.querySelector('[data-f="preis"]');
-        if(!aktInp.value){aktInp.style.border='2px solid #e53935';aktInp.addEventListener('input',function(){this.style.border='';},{once:true});}
-        aktInp.focus();
-      }
-      dd.className='cms-art-dd';dd.innerHTML='';
-      tryLoadArtImage(row,nr);
-    });
-  }
-
-  // --- Aktion Modal (multi-item) ---
-  var angRowCounter=0;
-  function addAngRow(data){
-    angRowCounter++;
-    var c=document.getElementById('cms-akt-items');
-    var d=document.createElement('div');d.className='cms-ang-row';d.id='cms-angr-'+angRowCounter;
-    d.innerHTML='<span class="cms-ang-row-num">Artikel '+angRowCounter+'</span><button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
-      +'<div class="cms-ang-fields">'
-      +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="&#128269; Artikel suchen..." autocomplete="off" value="'+esc(data&&data.produkt||'')+'">'
-      +'<span class="cms-art-spinner">&#9696;</span><div class="cms-art-dd"></div></div>'
-      +'<input class="cms-input cms-price" data-f="statt_preis" type="text" inputmode="decimal" placeholder="VK \u20AC" value="'+(data&&data.statt_preis!=null?fmtDePrice(data.statt_preis):'')+'">'
-      +'<input class="cms-input cms-price" data-f="preis" type="text" inputmode="decimal" placeholder="Aktionspreis" value="'+(data&&data.preis!=null?fmtDePrice(data.preis):'')+'">'
-      +'<input class="cms-input" data-f="details" placeholder="Details (z.B. 450g)" value="'+esc(data&&data.details||'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="Artikelnr." value="'+esc(data&&data.artikelnummer||'')+'">'+'</div>'
-      +'<div class="cms-ang-img-row"><label class="cms-ang-img-btn"><svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Bild<input type="file" accept="image/*" data-f="bild_file" style="display:none"></label>'
-      +'<span class="cms-ang-img-info">'+(data&&data.bild_data?'<img class="cms-ang-img-preview" src="'+data.bild_data+'"><span class="cms-ang-img-remove" title="Bild entfernen">&times;</span>':'Kein Bild')+'</span>'
-      +'<input type="hidden" data-f="bild_data" value="">'
-      +'</div>'
-      +'<input type="hidden" data-f="id" value="'+(data&&data.id||'')+'">';
-    // Restore bild_data from Dataverse record
-    if(data&&data.bild_data){
-      d.querySelector('[data-f="bild_data"]').value=data.bild_data;
-    }
-    c.appendChild(d);
-    // Wire image upload
-    var fileInput=d.querySelector('[data-f="bild_file"]');
-    fileInput.addEventListener('change',function(e){
-      var file=e.target.files[0];if(!file)return;
-      if(file.size>2*1024*1024){toast('Bild zu groß (max 2MB)','warn');return;}
-      var reader=new FileReader();
-      reader.onload=function(ev){
-        var b64=ev.target.result;
-        var row=e.target.closest('.cms-ang-row');
-        row.querySelector('[data-f="bild_data"]').value=b64;
-        row.querySelector('.cms-ang-img-info').innerHTML='<img class="cms-ang-img-preview" src="'+b64+'"><span class="cms-ang-img-remove" title="Bild entfernen">&times;</span>';
-        
-      };
-      reader.readAsDataURL(file);
-    });
-    // Wire image remove
-    d.addEventListener('click',function(e){
-      if(e.target.classList.contains('cms-ang-img-remove')){
-        var row=e.target.closest('.cms-ang-row');
-        row.querySelector('[data-f="bild_data"]').value='';
-        row.querySelector('.cms-ang-img-info').innerHTML='Kein Bild';
-        
-      }
-    });
-    wireArtSearch(d);
-    // Auto-load image when artikelnummer is entered manually
-    var artInp=d.querySelector('[data-f="artikelnummer"]');
-    if(artInp) artInp.addEventListener('blur',function(){var nr=artInp.value.trim();if(nr)tryLoadArtImage(d,nr);});
-    // Auto-load image for existing items with artikelnummer but no stored image
-    if(data&&data.artikelnummer){
-      tryLoadArtImage(d,data.artikelnummer,!!data.bild_data);
-    }
-  }
-
-  function showAktionModal(ak){
-    var isEdit=!!ak;
-    var title=isEdit?'Aktion bearbeiten':'Neue Aktion';
-    /* Defaults: Montag bis Samstag der NÄCHSTEN Woche (Folgewoche) */
-    var now=new Date();var dow=now.getDay()||7;
-    var mon=new Date(now);mon.setDate(mon.getDate()-dow+1+7);mon.setHours(0,0,0,0);
-    var sat=new Date(mon);sat.setDate(sat.getDate()+5);
-    function isoD(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
-    var defVon=isoD(mon),defBis=isoD(sat);
-    /* KW berechnen (ISO 8601) */
-    var kwDate=new Date(mon.getTime());kwDate.setDate(kwDate.getDate()+3);
-    var jan1=new Date(kwDate.getFullYear(),0,1);
-    var kw=Math.ceil(((kwDate-jan1)/86400000+jan1.getDay()+1)/7);
-    if(jan1.getDay()>4||jan1.getDay()===0) kw--;
-    var defTitel='Angebote KW '+kw;
-    var html='<div class="cms-modal-bg" >';
-    html+='<div class="cms-modal" style="max-width:900px">';
-    html+='<h3>'+title+'</h3>';
-    html+='<div class="cms-akt-header-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:12px">';
-    html+='<div><label style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:3px">Titel</label>';
-    html+='<input id="cms-akt-titel" class="cms-input" value="'+esc(ak?ak.titel:defTitel)+'" placeholder="Angebote KW"></div>';
-    html+='<div><label style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:3px">G\u00fcltig von</label>';
-    html+='<input id="cms-akt-von" type="date" class="cms-input" value="'+(ak?ak.von:defVon)+'"></div>';
-    html+='<div><label style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:3px">G\u00fcltig bis</label>';
-    html+='<input id="cms-akt-bis" type="date" class="cms-input" value="'+(ak?ak.bis:defBis)+'"></div>';
-    html+='</div>';
-    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
-    html+='<span style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Artikel</span>';
-    html+='<button class="cms-btn cms-btn-sm cms-btn-gray" type="button" data-action="addAngRow">+ Artikel</button>';
-    html+='</div>';
-    html+='<div id="cms-akt-items"></div>';
-    html+='<input type="hidden" id="cms-akt-edit-id" value="'+(ak?ak.aktion_id:'')+'">';
-    html+='<div style="display:flex;gap:8px;margin-top:12px">';
-    html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion">Speichern</button>';
-    html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>';
-    html+='</div></div></div>';
-    document.getElementById('cms-modal-wrap').innerHTML=html;
-    document.getElementById('cms-modal-wrap').style.display='';
-    angRowCounter=0;
-    if(ak&&ak.items){
-      ak.items.forEach(function(item){addAngRow(item);});
-    } else {
-      addAngRow();addAngRow();addAngRow();addAngRow();addAngRow();addAngRow();
-    }
-  }
-
-  function renumberAngRows(){
-    var rows=document.querySelectorAll('#cms-akt-items .cms-ang-row');
-    rows.forEach(function(r,i){var b=r.querySelector('.cms-ang-row-num');if(b)b.textContent='Artikel '+(i+1);});
-    angRowCounter=rows.length;
-  }
-  window.cmsAddAngRow=function(){addAngRow();};
-  window.cmsOpenNewAktion=function(){showAktionModal(null);};
-  window.cmsEditAktion=function(aktId){
-    var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
-    if(ak) showAktionModal(ak);
-  };
-
-  window.cmsSaveAktion=function(){
-    var editId=document.getElementById('cms-akt-edit-id').value;
-    var titel=document.getElementById('cms-akt-titel').value.trim()||'Sonderangebote';
-    var von=document.getElementById('cms-akt-von').value;
-    var bis=document.getElementById('cms-akt-bis').value;
-    var rows=document.querySelectorAll('.cms-ang-row');
-    var items=[];var hasError=false;
-    rows.forEach(function(row){
-      var produkt=(row.querySelector('[data-f="produkt"]').value||'').trim();
-      if(!produkt)return;
-      var preisInp=row.querySelector('[data-f="preis"]');
-      var stattInp=row.querySelector('[data-f="statt_preis"]');
-      var preisVal=(preisInp.value||'').trim();
-      var stattVal=(stattInp.value||'').trim();
-      if(!preisVal||!stattVal){
-        if(!preisVal){preisInp.style.border='2px solid #e53935';preisInp.addEventListener('input',function(){this.style.border='';},{once:true});}
-        if(!stattVal){stattInp.style.border='2px solid #e53935';stattInp.addEventListener('input',function(){this.style.border='';},{once:true});}
-        hasError=true;
-      }
-      items.push({
-        id:row.querySelector('[data-f="id"]').value||'',
-        produkt:produkt,
-        details:(row.querySelector('[data-f="details"]').value||'').trim(),
-        preis:parseDePrice(row.querySelector('[data-f="preis"]').value),
-        statt_preis:parseDePrice(row.querySelector('[data-f="statt_preis"]').value),
-        artikelnummer:(row.querySelector('[data-f="artikelnummer"]').value||'').trim(),
-        bild_data:(row.querySelector('[data-f="bild_data"]').value||'').trim()
-      });
-    });
-    if(hasError){toast('Bitte VK und Aktionspreis f\u00fcr alle Artikel eintragen','warn');return;}
-    if(items.length===0){toast('Bitte mind. 1 Artikel eintragen','warn');return;}
-
-    var aktId=editId||('AKT-'+Date.now());
-    var saveBtn=document.querySelector('[data-action="saveAktion"]');
-    btnBusy(saveBtn);
-
-    refreshToken().then(function(){
-      var promises=[];
-
-      // If editing, delete items that were removed
-      if(editId){
-        var ak=aktionen.find(function(a){return a.aktion_id===editId;});
-        if(ak){
-          var keepIds={};items.forEach(function(it){if(it.id)keepIds[it.id]=true;});
-          ak.items.forEach(function(old){
-            if(!keepIds[old.id]){
-              promises.push(fetch(API+'/dl_angebotes('+old.id+')',{method:'DELETE',headers:deleteHeaders()}));
-            }
-          });
-        }
-      }
-
-      // Create/update items
-      items.forEach(function(item,idx){
-        var body={
-          dl_produkt:item.produkt,
-          dl_details:item.details||null,
-          dl_preis:item.preis,
-          dl_statt_preis:item.statt_preis,
-          dl_aktion_id:aktId,
-          dl_aktion_titel:titel,
-          dl_gueltig_von:von||null,
-          dl_gueltig_bis:bis||null,
-          dl_sortierung:idx+1,
-          dl_status:101001
-        };
-        if(item.artikelnummer) body.dl_artikelnummer=item.artikelnummer;
-        if(item.bild_data) body.dl_bild_url=item.bild_data;
-        if(item.id){
-          promises.push(fetch(API+'/dl_angebotes('+item.id+')',{method:'PATCH',headers:writeHeaders(),body:JSON.stringify(body)}));
-        } else {
-          promises.push(fetch(API+'/dl_angebotes',{method:'POST',headers:writeHeaders(),body:JSON.stringify(body)}));
-        }
-        
-      });
-
-      return Promise.all(promises);
-    })
-      .then(function(results){
-        var ok=results.every(function(r){return r.ok||r.status===204;});
-        if(!ok) throw new Error('Einige Anfragen fehlgeschlagen');
-        toast(editId?'Aktion aktualisiert':'Aktion erstellt');
-        cmsCloseModal();
-        angebote=[];loadAngebote();
-      })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
-      .then(function(){btnDone(saveBtn);});
-  };
-
-  window.cmsDeleteAktion=function(aktId){
-    var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
-    if(!ak)return;
-    var html='<div class="cms-modal-bg" >';
-    html+='<div class="cms-modal" style="text-align:center">';
-    html+='<h3>Angebot löschen?</h3>';
-    html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(ak.titel)+'" mit '+ak.items.length+' Artikeln wirklich löschen?</p>';
-    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht rückgängig gemacht werden.</p>';
-    html+='<div style="display:flex;gap:8px">';
-    html+='<button class="cms-btn cms-btn-danger" style="flex:1;background:#dc2626;color:#fff" data-action="confirmDeleteAkt" data-id="'+esc(aktId)+'">Löschen</button>';
-    html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
-    html+='</div></div></div>';
-    document.getElementById('cms-modal-wrap').innerHTML=html;
-    document.getElementById('cms-modal-wrap').style.display='';
-  };
-
-  window.cmsConfirmDeleteAkt=function(aktId){
-    var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
-    if(!ak)return;
-    var delBtn=document.querySelector('[data-action="confirmDeleteAkt"]');
-    btnBusy(delBtn,'Löschen...');
-    refreshToken().then(function(){
-      var promises=ak.items.map(function(item){
-        return fetch(API+'/dl_angebotes('+item.id+')',{method:'DELETE',headers:deleteHeaders()});
-      });
-      return Promise.all(promises);
-    })
-      .then(function(){toast('Aktion gelöscht');cmsCloseModal();angebote=[];loadAngebote();})
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
-      .then(function(){btnDone(delBtn);});
-  };
 
   // --- WhatsApp Share ---
   function fmtPriceWA(v){return v?Number(v).toFixed(2).replace('.',',')+' \u20AC':'';}
