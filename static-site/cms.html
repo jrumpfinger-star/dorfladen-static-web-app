@@ -901,7 +901,7 @@ document.head.appendChild(msalScript);
   async function loadArtikelData() {
     try {
       // Load Angebote from Azure Function
-      const angeboteResponse = await fetch(API + '/cms/angebote');
+      const angeboteResponse = await fetch(API + '/angebote');
       
       if (!angeboteResponse.ok) {
         console.error('API request failed:', angeboteResponse.status, angeboteResponse.statusText);
