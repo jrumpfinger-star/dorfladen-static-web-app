@@ -1,6 +1,6 @@
 /* Live Preisliste - loads from /api/preisliste */
 (function(){
-  var API='https://dorfladen-cms-v4.azurewebsites.net/api';
+  var API='https://dorfladen-cms-v4.azurewebsites.net/api/preisliste';
   var wrap=document.getElementById('preisliste-live');
   if(!wrap)return;
   wrap.innerHTML='<p style="text-align:center;padding:40px;color:#888">Preisliste wird geladen&hellip;</p>';
