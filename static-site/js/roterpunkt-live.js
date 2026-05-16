@@ -1,6 +1,6 @@
 /* Live Roter Punkt - loads from /api/roterpunkt */
 (function(){
-  var API='https://dorfladen-rebuild.azurewebsites.net/api';
+  var API='https://dorfladen-cms-v4.azurewebsites.net/api';
   var wrap=document.getElementById('roterpunkt-live');
   if(!wrap)return;
   wrap.innerHTML='<p style="text-align:center;padding:40px;color:#888">Roter-Punkt-Artikel werden geladen&hellip;</p>';
@@ -12,11 +12,11 @@
     var wgNames=Object.keys(groups).sort();
     var html='';
 
-    // Dezenter Banner
-    html+='<div style="text-align:center;padding:18px 16px;background:#fff5f5;border:1px solid #e8c8c8;border-radius:10px;margin-bottom:20px">';
-    html+='<span style="font-size:1.5rem">&#x1F534;</span>';
-    html+='<h2 style="font-size:1.3rem;margin:6px 0 4px;font-weight:700;color:#c62828">Roter Punkt &ndash; G&uuml;nstiger als UVP</h2>';
-    html+='<p style="margin:0;font-size:.88rem;color:#666">'+data.total+' Artikel in '+data.warengruppen+' Warengruppen</p>';
+    // Dezenter Banner - rechts unten, weniger prominent
+    html+='<div style="text-align:right;padding:12px 16px;background:#fff5f5;border:1px solid #e8c8c8;border-radius:8px;margin-bottom:16px;font-size:.9rem">';
+    html+='<span style="font-size:1.1rem">&#x1F534;</span> ';
+    html+='<span style="font-weight:700;color:#c62828">Roter Punkt &ndash; G&uuml;nstiger als UVP</span> ';
+    html+='<span style="color:#666">('+data.total+' Artikel, '+data.warengruppen+' Warengruppen)</span>';
     html+='</div>';
 
     // Info
