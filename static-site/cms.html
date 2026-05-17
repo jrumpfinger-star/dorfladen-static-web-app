@@ -913,9 +913,9 @@ document.head.appendChild(msalScript);
       
       const angeboteData = JSON.parse(responseText);
       
-      if (angeboteData.success && angeboteData.data) {
+      if (angeboteData.success && (angeboteData.data||angeboteData.value)) {
         // Transform Angebote to Artikel format
-        const artikelData = angeboteData.data.map(item => ({
+        const artikelData = (angeboteData.data||angeboteData.value).map(item => ({
           b: item.name,
           bt: item.name,
           nr: item.aktion_id,
@@ -946,7 +946,7 @@ document.head.appendChild(msalScript);
       .then(function(r){return r.json();})
       .then(function(data){
         angebote=[];
-        (data.data||[]).forEach(function(a){
+        (data.data||data.value||[]).forEach(function(a){
           angebote.push({
             id:a.id,
             produkt:a.name||'',
@@ -1304,7 +1304,7 @@ document.head.appendChild(msalScript);
       .then(function(r){return r.json();})
       .then(function(data){
         meals=[];
-        (data.value||[]).forEach(function(m){
+        (data.data||data.value||[]).forEach(function(m){
           meals.push({
             id:m.dl_wochenplanid,
             gericht:m.dl_gericht||'',
@@ -1384,7 +1384,7 @@ document.head.appendChild(msalScript);
       .then(function(r){return r.json();})
       .then(function(data){
         var seen={};
-        (data.value||[]).forEach(function(m){
+        (data.data||data.value||[]).forEach(function(m){
           var g=(m.dl_gericht||'').trim();
           if(g&&!seen[g]){seen[g]=true;gerichteHistory.push({gericht:g,preis:m.dl_preis});}
         });
@@ -1595,7 +1595,7 @@ document.head.appendChild(msalScript);
       .then(function(r){return r.json();})
       .then(function(data){
         hours=[];
-        (data.value||[]).forEach(function(h){
+        (data.data||data.value||[]).forEach(function(h){
           hours.push({
             id:h.dl_oeffnungszeitid,
             name:h.dl_name||'',
