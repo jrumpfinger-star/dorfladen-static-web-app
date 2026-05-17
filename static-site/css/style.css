@@ -1,3 +1,29 @@
+/* Filigrane Platzierung rechts unten im Hero-Bereich */
+.filigran-rechts-unten {
+  position: absolute;
+  right: 2vw;
+  bottom: 2vw;
+  background: rgba(255,255,255,0.85);
+  border-radius: 1em;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 1.5em 2em;
+  max-width: 32em;
+  min-width: 18em;
+  text-align: right;
+  font-weight: 300;
+  z-index: 2;
+}
+.filigran-rechts-unten h1 {
+  font-size: 2.1em;
+  margin-bottom: 0.2em;
+  font-weight: 400;
+}
+.filigran-rechts-unten p,
+.filigran-rechts-unten .hero-sub {
+  font-size: 1.1em;
+  margin: 0.2em 0;
+  font-weight: 300;
+}
 /* ========================================
    Dorfladen Oberornau – Static Site Styles
    Migrated from home-template-v2.liquid
