@@ -6,6 +6,11 @@ import requests
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
+# --- CORS PREFLIGHT HANDLER ---
+@app.route(route="{*path}", methods=["OPTIONS"])
+def cors_preflight(req: func.HttpRequest) -> func.HttpResponse:
+    return func.HttpResponse(status_code=200, headers=get_cors_headers())
+
 # --- GLOBALE CONFIG & TOKENS ---
 def get_token(url_setting_name="DV_DEV_URL"):
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
@@ -251,20 +256,21 @@ def preisliste(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="roterpunkt", methods=["GET"])
 def roterpunkt(req: func.HttpRequest) -> func.HttpResponse:
     try:
-        headers = get_headers("DV_DEV_URL")
-        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
-        url = f"{dev_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez&$orderby=cr5d4_artikelbezeichnung asc"
+        headers = get_headers("DV_DEFAULT_URL")
+        default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$orderby=cr5d4_artikelbezeichnung asc"
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
             items = data.get("value", [])
             
-            # Gruppieren nach Warengruppen (basierend auf WarengruppeBez)
+            # Gruppieren nach Warengruppen (basierend auf cr5d4_warengruppebez)
             groups = {}
             for item in items:
                 artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
                 bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
                 preis = item.get("cr5d4_vk_dorf", 0)
+                uvp_preis = item.get("cr5d4_uvp_total")
                 warengruppe_bez = item.get("cr5d4_warengruppebez", "")
                 
                 # Warengruppe aus WarengruppeBez verwenden, falls vorhanden
@@ -295,40 +301,26 @@ def roterpunkt(req: func.HttpRequest) -> func.HttpResponse:
                         "Effektive Mikroorganismen": "Effektive Mikroorganismen",
                         "EM": "Effektive Mikroorganismen",
                         "EM Keramik": "Effektive Mikroorganismen",
-                        "Cafeteria": "Cafeteria",
-                        "Cafeteria 1": "Cafeteria",
-                        "Cafeteria 2": "Cafeteria"
+                        "Tabakwaren": "Tabakwaren"
                     }
                     warengruppe = wg_name_mapping.get(warengruppe_bez, warengruppe_bez)
-                # Fallback: Warengruppe aus Artikelnummer ableiten (erste 2-3 Ziffern)
-                elif artikelnummer and len(artikelnummer) >= 3:
-                    try:
-                        wg_num = int(artikelnummer[:3])
-                        wg_mapping = {
-                            100: "Getränke",
-                            200: "Molkerei",
-                            300: "Backwaren",
-                            400: "Fleisch",
-                            500: "Gemüse",
-                            600: "Obst",
-                            700: "Trockenwaren",
-                            800: "Süßwaren",
-                            900: "Gewürze"
-                        }
-                        warengruppe = wg_mapping.get(wg_num, "Sonstiges")
-                    except:
-                        warengruppe = "Sonstiges"
                 else:
                     warengruppe = "Sonstiges"
                 
                 if warengruppe not in groups:
                     groups[warengruppe] = []
                 
+                # Discount berechnen: ((uvp - vk) / uvp) * 100
+                discount = 0
+                if uvp_preis and uvp_preis > 0 and preis > 0:
+                    discount = ((uvp_preis - preis) / uvp_preis) * 100
+                
                 groups[warengruppe].append({
                     "artikelnummer": artikelnummer,
                     "bezeichnung": bezeichnung,
                     "vk": preis,
-                    "uvp": None,
+                    "uvp": uvp_preis,
+                    "discount": discount,
                     "angebot": False,
                     "angebot_statt": None,
                     "angebot_preis": None
