@@ -87,11 +87,13 @@ Received: true
   27 |     }
   28 |   });
   29 | 
-  30 |   await page.goto('https://kind-pebble-072605b03.7.azurestaticapps.net/cms');
-  31 |   await page.waitForTimeout(5000); // 5 Sekunden warten, damit alle Requests durchlaufen
-  32 | 
-> 33 |   expect(jsonError).toBe(false);
+  30 |   // Use the deployed static web app's hostname for all requests
+  31 |   const BASE_URL = 'https://kind-pebble-072605b03.7.azurestaticapps.net';
+  32 |   await page.goto(BASE_URL + '/cms');
+  33 |   await page.waitForTimeout(5000); // 5 Sekunden warten, damit alle Requests durchlaufen
+  34 | 
+> 35 |   expect(jsonError).toBe(false);
      |                     ^ Error: expect(received).toBe(expected) // Object.is equality
-  34 | });
-  35 | 
+  36 | });
+  37 | 
 ```

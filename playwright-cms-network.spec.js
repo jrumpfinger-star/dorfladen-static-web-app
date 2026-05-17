@@ -27,7 +27,9 @@ test('CMS Seite: JSON-Antworten prüfen', async ({ page }) => {
     }
   });
 
-  await page.goto('https://kind-pebble-072605b03.7.azurestaticapps.net/cms');
+  // Use the deployed static web app's hostname for all requests
+  const BASE_URL = 'https://kind-pebble-072605b03.7.azurestaticapps.net';
+  await page.goto(BASE_URL + '/cms');
   await page.waitForTimeout(5000); // 5 Sekunden warten, damit alle Requests durchlaufen
 
   expect(jsonError).toBe(false);
