@@ -7,6 +7,9 @@
 </head>
 <body>
 <!-- Dorfladen CMS - Power Pages Web Template -->
+<div style="position: absolute; top: 18px; left: 18px; z-index: 1000;">
+  <a href="/index.html" class="cms-btn cms-btn-gray" style="font-size:15px; padding:7px 18px; border-radius:8px; text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,0.04);"> Zurück zur Hauptseite</a>
+</div>
 <!-- Deploy: python deploy-cms-template.py -->
 <script>
 // MSAL optional - load only if needed for SharePoint images
@@ -942,7 +945,7 @@ document.head.appendChild(msalScript);
     if(ldEl)ldEl.style.display='';
     document.getElementById('cms-akt-list').innerHTML='';
     document.getElementById('cms-ang-empty').style.display='none';
-    fetch(API+'/cms/angebote')
+    fetch(API+'/angebote')
       .then(function(r){return r.json();})
       .then(function(data){
         angebote=[];
@@ -3180,7 +3183,7 @@ document.head.appendChild(msalScript);
 
   function ensureAngeboteForPreview(){
     if(angebote&&angebote.length) return Promise.resolve(angebote);
-    return fetch(API+'/cms/angebote')
+    return fetch(API+'/angebote')
       .then(function(r){return r.json();})
       .then(function(data){
         angebote=[];
