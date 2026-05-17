@@ -1,6 +1,6 @@
 /* Live Roter Punkt - loads from /api/roterpunkt */
 (function(){
-  var API='https://dorfladen-cms-v4.azurewebsites.net/api';
+  var API='https://dorfladen-cms-v2.azurewebsites.net/api';
   var wrap=document.getElementById('roterpunkt-live');
   if(!wrap)return;
   wrap.innerHTML='<p style="text-align:center;padding:40px;color:#888">Roter-Punkt-Artikel werden geladen&hellip;</p>';
@@ -33,8 +33,14 @@
     wgNames.forEach(function(wg){
       var items=groups[wg];
       var avgDisc=0;
-      items.forEach(function(i){avgDisc+=i.discount});
-      avgDisc=Math.round(avgDisc/items.length);
+      var validItems=0;
+      items.forEach(function(i){
+        if(i.discount!==null){
+          avgDisc+=i.discount;
+          validItems++;
+        }
+      });
+      avgDisc=validItems>0?Math.round(avgDisc/validItems):0;
 
       var rows='';
       items.forEach(function(item){
@@ -66,7 +72,7 @@
     console.error('RP load failed',e);
   });
 
-  function fmtPrice(p){return p.toFixed(2).replace('.',',');}
+  function fmtPrice(p){return p===null?'—':p.toFixed(2).replace('.',',');}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
   function initRP(){
