@@ -119,9 +119,9 @@ def news(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="cms-config", methods=["GET"])
 def cms_config(req: func.HttpRequest) -> func.HttpResponse:
     try:
-        headers = get_headers("DV_DEFAULT_URL")
-        default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/dl_seiteninhalts"
+        headers = get_headers("DV_DEV_URL")
+        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
+        url = f"{dev_url}/api/data/v9.2/dl_seiteninhalts"
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()

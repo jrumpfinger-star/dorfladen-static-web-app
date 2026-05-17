@@ -1,6 +1,6 @@
 /* Live Roter Punkt - loads from /api/roterpunkt */
 (function(){
-  var API='https://dorfladen-cms-v4.azurewebsites.net/api';
+  var API='/api';
   var wrap=document.getElementById('roterpunkt-live');
   if(!wrap)return;
   wrap.innerHTML='<p style="text-align:center;padding:40px;color:#888">Roter-Punkt-Artikel werden geladen&hellip;</p>';
