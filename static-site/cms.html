@@ -83,11 +83,19 @@ document.head.appendChild(msalScript);
   .cms-akt-meta{font-size:12px;color:#6b7280;letter-spacing:.2px}
   .cms-akt-btns{display:flex;gap:4px;flex-shrink:0}
   .cms-akt-btns .cms-btn-trash{margin-left:10px}
+  .cms-ang-meta{font-size:13px;color:#4b5563;margin-top:3px}
+  .cms-ang-items{padding:10px 12px 14px;display:flex;flex-direction:column;gap:8px}
+  .cms-ang-item{border:1px solid #e5e7eb;border-radius:9px;background:#fff;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'name price' 'old old';column-gap:12px;row-gap:2px}
+  .cms-ang-name{grid-area:name;font-size:15px;font-weight:600;color:#1f2937;line-height:1.25}
+  .cms-ang-price{grid-area:price;font-size:15px;font-weight:700;color:#15803d;white-space:nowrap}
+  .cms-ang-old{grid-area:old;font-size:13px;color:#6b7280}
+  .cms-akt-header-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px}
   .cms-ang-row{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #22c55e;border-radius:8px;padding:12px 10px 10px;margin-bottom:12px;position:relative}
   .cms-ang-row-num{position:absolute;top:-9px;left:10px;background:#22c55e;color:#fff;font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;line-height:16px}
   .cms-ang-row-close{position:absolute;top:4px;right:8px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px}
   .cms-ang-row-close:hover{color:#ef4444}
-  .cms-ang-fields{display:grid;grid-template-columns:3fr 1fr 1fr 2fr 2fr;gap:8px;align-items:start}
+  .cms-ang-fields{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,2fr) minmax(0,2fr);gap:8px;align-items:start}
+  .cms-ang-fields > *{min-width:0}
   .cms-ang-img-row{display:flex;align-items:center;gap:8px;margin-top:6px}
   .cms-ang-img-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:11px;color:#6b7280;background:#fff;border:1px dashed #d1d5db;border-radius:6px;cursor:pointer;transition:border-color .15s}
   .cms-ang-img-btn:hover{border-color:#558b2f;color:#558b2f}
@@ -251,6 +259,12 @@ document.head.appendChild(msalScript);
     .cms-hours-time{width:100px;font-size:12px;padding:4px 6px}
     /* ── Mobile: Meal modal grid ── */
     .cms-modal .cms-meal-grid{grid-template-columns:1fr!important}
+  }
+  @media(max-width:900px){
+    .cms-ang-fields{grid-template-columns:1fr 1fr;gap:6px}
+    .cms-ang-fields > :first-child{grid-column:1/-1}
+    .cms-ang-fields > :nth-child(4){grid-column:1/-1}
+    .cms-ang-fields > :nth-child(5){grid-column:1/-1}
   }
   .cms-login-box{max-width:360px;margin:80px auto;padding:32px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.12);text-align:center}
   .cms-login-box h2{font-size:20px;font-weight:700;color:#1f2937;margin:0 0 4px}
@@ -1071,16 +1085,16 @@ document.head.appendChild(msalScript);
     row.className='cms-ang-row';
     row.id='cms-ar-'+angRowCounter;
     row.innerHTML=''
-      +'<div class="cms-ang-row-num" style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:6px">Artikel '+angRowCounter+'</div>'
+      +'<div class="cms-ang-row-num">Artikel '+angRowCounter+'</div>'
       +'<button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
-      +'<div class="cms-ang-grid">'
+      +'<div class="cms-ang-fields">'
       +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
       +'<input class="cms-input" data-f="produkt" placeholder="Produkt" value="'+esc((item&&item.produkt)||'')+'">'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
       +'<input class="cms-input cms-price" data-f="preis" placeholder="VK" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
       +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktionspreis" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
       +'<input class="cms-input" data-f="artikelnummer" placeholder="Artikelnummer" value="'+esc((item&&item.artikelnummer)||'')+'">'
-      +'<input class="cms-input" data-f="bild_data" placeholder="Bild (base64/url, optional)" value="'+esc((item&&item.bild_data)||'')+'">'
+      +'<div style="grid-column:1/-1"><input class="cms-input" data-f="bild_data" placeholder="Bild (base64/url, optional)" value="'+esc((item&&item.bild_data)||'')+'"></div>'
       +'</div>';
     c.appendChild(row);
     renumberAngRows();
@@ -1097,9 +1111,9 @@ document.head.appendChild(msalScript);
 
   function showAktionModal(aktion){
     var isEdit=!!aktion;
-    var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:920px">';
+    var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:980px;overflow-x:hidden">';
     html+='<h3 style="margin-top:0">'+(isEdit?'Aktion bearbeiten':'Neue Aktion erstellen')+'</h3>';
-    html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px">';
+    html+='<div class="cms-akt-header-grid">';
     html+='<input id="cms-akt-titel" class="cms-input" placeholder="Titel" value="'+esc(isEdit?(aktion.titel||''):'Sonderangebote')+'">';
     html+='<input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):'')+'">';
     html+='<input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):'')+'">';
@@ -1109,7 +1123,7 @@ document.head.appendChild(msalScript);
     html+='<strong style="font-size:12px;color:#4b5563">Artikel</strong>';
     html+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button">+ Artikel</button>';
     html+='</div>';
-    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto"></div>';
+    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;overflow-x:hidden"></div>';
     html+='<div style="display:flex;gap:8px;margin-top:12px">';
     html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion">Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>';
