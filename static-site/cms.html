@@ -21,7 +21,7 @@ msalScript.onerror = function() { console.warn('MSAL script failed to load - Sha
 document.head.appendChild(msalScript);
 </script>
 <style>
-  .cms-wrap{font-family:Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px}
+  .cms-wrap{font-family:Georgia,"Segoe UI",serif;max-width:900px;margin:0 auto;padding:16px}
   .cms-tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:20px}
   .cms-tab{padding:10px 20px;font-size:14px;font-weight:600;color:#6b7280;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
   .cms-tab.active{color:#15803d;border-bottom-color:#16a34a}
@@ -90,12 +90,12 @@ document.head.appendChild(msalScript);
   .cms-ang-price{grid-area:price;font-size:15px;font-weight:700;color:#15803d;white-space:nowrap}
   .cms-ang-old{grid-area:old;font-size:13px;color:#6b7280}
   .cms-akt-header-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px}
-  .cms-ang-row{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #22c55e;border-radius:8px;padding:12px 10px 10px;margin-bottom:12px;position:relative}
+  .cms-ang-row{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #22c55e;border-radius:8px;padding:12px 10px 10px;margin-bottom:8px;position:relative;flex-shrink:0}
   .cms-ang-row-num{position:absolute;top:-9px;left:10px;background:#22c55e;color:#fff;font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;line-height:16px}
   .cms-ang-row-close{position:absolute;top:4px;right:8px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px}
   .cms-ang-row-close:hover{color:#ef4444}
-  .cms-ang-fields{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,2fr) minmax(0,2fr);gap:8px;align-items:start}
-  .cms-ang-fields > *{min-width:0}
+  .cms-ang-fields{display:grid;grid-template-columns:3fr 2fr 2fr 1.5fr 1.5fr;gap:6px;align-items:start}
+  .cms-ang-fields > *{min-width:0;box-sizing:border-box}
   .cms-ang-img-row{display:flex;align-items:center;gap:8px;margin-top:6px}
   .cms-ang-img-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:11px;color:#6b7280;background:#fff;border:1px dashed #d1d5db;border-radius:6px;cursor:pointer;transition:border-color .15s}
   .cms-ang-img-btn:hover{border-color:#558b2f;color:#558b2f}
@@ -1084,19 +1084,26 @@ document.head.appendChild(msalScript);
     var row=document.createElement('div');
     row.className='cms-ang-row';
     row.id='cms-ar-'+angRowCounter;
+    var produktVal=esc((item&&item.produkt)||'');
     row.innerHTML=''
       +'<div class="cms-ang-row-num">Artikel '+angRowCounter+'</div>'
       +'<button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
       +'<div class="cms-ang-fields">'
       +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
-      +'<input class="cms-input" data-f="produkt" placeholder="Produkt" value="'+esc((item&&item.produkt)||'')+'">'
+      +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt/Artikel" value="'+produktVal+'" autocomplete="off"><div class="cms-art-dd"></div></div>'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
       +'<input class="cms-input cms-price" data-f="preis" placeholder="VK" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
-      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktionspreis" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="Artikelnummer" value="'+esc((item&&item.artikelnummer)||'')+'">'
-      +'<div style="grid-column:1/-1"><input class="cms-input" data-f="bild_data" placeholder="Bild (base64/url, optional)" value="'+esc((item&&item.bild_data)||'')+'"></div>'
+      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
+      +'<input class="cms-input" data-f="artikelnummer" placeholder="Art.Nr." value="'+esc((item&&item.artikelnummer)||'')+'">'
+      +'<div style="grid-column:1/-1;display:flex;align-items:center;gap:6px"><input class="cms-input" data-f="bild_data" placeholder="Bild (optional)" value="'+esc((item&&item.bild_data)||'')+'"><button class="cms-btn cms-btn-sm cms-btn-gray" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" type="button" title="Bild von SharePoint laden">🔍</button></div>'
       +'</div>';
     c.appendChild(row);
+    var prodInp=row.querySelector('.cms-art-input');
+    if(prodInp){
+      prodInp.addEventListener('input',function(){artSearchFilter(this);});
+      prodInp.addEventListener('blur',function(){setTimeout(function(){var dd=prodInp.nextElementSibling;if(dd)dd.classList.remove('open');},100);});
+      prodInp.addEventListener('focus',function(){artSearchFilter(prodInp);});
+    }
     renumberAngRows();
   }
 
@@ -1111,7 +1118,7 @@ document.head.appendChild(msalScript);
 
   function showAktionModal(aktion){
     var isEdit=!!aktion;
-    var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:980px;overflow-x:hidden">';
+    var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:980px;overflow-x:hidden;max-height:95vh;display:flex;flex-direction:column">';
     html+='<h3 style="margin-top:0">'+(isEdit?'Aktion bearbeiten':'Neue Aktion erstellen')+'</h3>';
     html+='<div class="cms-akt-header-grid">';
     html+='<input id="cms-akt-titel" class="cms-input" placeholder="Titel" value="'+esc(isEdit?(aktion.titel||''):'Sonderangebote')+'">';
@@ -1123,8 +1130,8 @@ document.head.appendChild(msalScript);
     html+='<strong style="font-size:12px;color:#4b5563">Artikel</strong>';
     html+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button">+ Artikel</button>';
     html+='</div>';
-    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;overflow-x:hidden"></div>';
-    html+='<div style="display:flex;gap:8px;margin-top:12px">';
+    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;overflow-x:hidden;margin-bottom:12px;min-height:300px"></div>';
+    html+='<div style="display:flex;gap:8px;flex-shrink:0;padding-top:8px;border-top:1px solid #e5e7eb">';
     html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion">Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>';
     html+='</div></div></div>';
@@ -1134,7 +1141,7 @@ document.head.appendChild(msalScript);
     if(isEdit&&aktion.items&&aktion.items.length){
       aktion.items.forEach(function(it){addAngRow(it);});
     } else {
-      addAngRow();addAngRow();addAngRow();
+      addAngRow();addAngRow();addAngRow();addAngRow();addAngRow();addAngRow();
     }
   }
 
@@ -1142,6 +1149,53 @@ document.head.appendChild(msalScript);
   window.cmsEditAktion=function(aktId){
     var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
     if(ak)showAktionModal(ak);
+  };
+
+  function artSearchFilter(inp){
+    var val=(inp.value||'').trim().toLowerCase();
+    var dd=inp.nextElementSibling;
+    if(!dd || !dd.classList.contains('cms-art-dd')) dd=inp.parentElement.querySelector('.cms-art-dd');
+    if(!dd) return;
+    dd.innerHTML='';
+    if(val.length<1){dd.classList.remove('open');return;}
+    var matches=_artikelCache.filter(function(a){
+      var name=(a.b||a.name||'').toLowerCase(),nr=(a.nr||'').toLowerCase();
+      return name.indexOf(val)>=0 || nr.indexOf(val)>=0;
+    }).slice(0,10);
+    if(matches.length===0){dd.classList.remove('open');return;}
+    matches.forEach(function(m){
+      var opt=document.createElement('div');
+      opt.className='cms-art-opt';
+      opt.innerHTML='<div class="cms-art-opt-name">'+esc(m.b||m.name||'')+'</div><div class="cms-art-opt-meta">'+esc(m.nr||'')+'</div>';
+      opt.addEventListener('click',function(){
+        var row=inp.closest('.cms-ang-row');
+        if(row){
+          inp.value=m.b||m.name||'';
+          var nrInp=row.querySelector('[data-f="artikelnummer"]');
+          if(nrInp) nrInp.value=m.nr||'';
+        }
+        dd.classList.remove('open');
+      });
+      dd.appendChild(opt);
+    });
+    dd.classList.add('open');
+  }
+  
+  window.cmsLoadBildSharePoint=function(rowNum){
+    var row=document.getElementById('cms-ar-'+rowNum);
+    if(!row) return;
+    var nrInp=row.querySelector('[data-f="artikelnummer"]');
+    var bildInp=row.querySelector('[data-f="bild_data"]');
+    var artnr=(nrInp&&nrInp.value||'').trim();
+    if(!artnr){toast('Bitte Artikelnummer eintragen','warn');return;}
+    var btn=row.querySelector('[data-action="loadBildSharePoint"]');
+    if(btn){btn.disabled=true;btn.textContent='⏳';}
+    loadImageFromSharePoint(artnr).then(function(b64){
+      if(b64 && bildInp){bildInp.value=b64;toast('Bild geladen');}
+      else toast('Bild nicht gefunden','warn');
+    }).catch(function(e){toast('Fehler: '+e.message,'error');}).then(function(){
+      if(btn){btn.disabled=false;btn.textContent='🔍';}
+    });
   };
 
   window.cmsSaveAktion=function(){
@@ -1274,8 +1328,24 @@ document.head.appendChild(msalScript);
   }
 
   function loadImageFromSharePoint(artnr){
-    // Disabled - Power Pages API endpoints not available in Azure Function App
-    return Promise.resolve(null);
+    if(!artnr || !msalApp) return Promise.resolve(null);
+    return getGraphToken().then(function(token){
+      return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/root/children',{
+        headers:{'Authorization':'Bearer '+token}
+      }).then(function(r){return r.json();});
+    }).then(function(data){
+      var folder=data.value?data.value.find(function(f){return f.name===artnr||f.name===artnr+'.jpg'||f.name===artnr+'.png';}):null;
+      if(!folder || !folder.id) return null;
+      return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folder.id+'/content',{
+        headers:{'Authorization':'Bearer '+token}
+      }).then(function(r){return r.arrayBuffer();}).then(function(buf){
+        var b64='data:image/jpeg;base64,'+btoa(String.fromCharCode.apply(null,new Uint8Array(buf)));
+        return b64;
+      });
+    }).catch(function(e){
+      console.warn('SharePoint image load failed',artnr,e);
+      return null;
+    });
   }
   var DAY_COLORS = {101000:'#ef4444',101001:'#f97316',101002:'#eab308',101003:'#22c55e',101004:'#3b82f6'};
   var meals = [], hours = [], kw, jahr;
