@@ -940,6 +940,85 @@ document.head.appendChild(msalScript);
     }
   }
   
+  var aktionen = [];
+  var _angWeekFilter = 'this';
+  var angRowCounter = 0;
+
+  function toIsoDateOnly(v){
+    if(!v) return '';
+    var s=String(v);
+    return s.length>=10?s.substring(0,10):s;
+  }
+  function weekBounds(mode){
+    var d=new Date();
+    if(mode==='next') d.setDate(d.getDate()+7);
+    var day=(d.getDay()+6)%7;
+    var mon=new Date(d);mon.setDate(d.getDate()-day);mon.setHours(0,0,0,0);
+    var sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
+    return {mon:mon,sun:sun};
+  }
+  function parseIsoDateSafe(s){
+    if(!s) return null;
+    var p=String(s).substring(0,10).split('-');
+    if(p.length!==3) return null;
+    return new Date(+p[0],(+p[1])-1,+p[2]);
+  }
+  function isAktionInWeek(a,mode){
+    if(mode==='all') return true;
+    var w=weekBounds(mode);
+    var von=parseIsoDateSafe(a.von),bis=parseIsoDateSafe(a.bis);
+    if(!von||!bis) return true;
+    return von<=w.sun && bis>=w.mon;
+  }
+
+  function renderAktionenList(){
+    var c=document.getElementById('cms-akt-list');
+    c.innerHTML='';
+    var filtered=aktionen.filter(function(a){return isAktionInWeek(a,_angWeekFilter);});
+    if(filtered.length===0){
+      document.getElementById('cms-ang-empty').style.display='';
+      return;
+    }
+    document.getElementById('cms-ang-empty').style.display='none';
+
+    filtered.forEach(function(g){
+      var card=document.createElement('div');
+      card.className='cms-card';
+      var h='';
+      h+='<div class="cms-flex cms-between" style="padding:12px 12px 0 12px">';
+      h+='<div><div style="font-weight:700;color:#1f2937">'+esc(g.titel||'Angebot')+'</div>';
+      h+='<div class="cms-ang-meta">'+toIsoDateOnly(g.von)+' bis '+toIsoDateOnly(g.bis)+' · '+g.items.length+' Artikel</div></div>';
+      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
+      h+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editAktion" data-id="'+esc(g.aktion_id)+'">Bearbeiten</button>';
+      h+='<button class="cms-btn-preview" data-action="previewAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button>';
+      h+='<button class="cms-btn-wa" data-action="shareAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>Teilen</button>';
+      h+='<button class="cms-btn-trash" data-action="deleteAktion" data-id="'+esc(g.aktion_id)+'" title="Löschen"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
+      h+='</div></div>';
+      h+='<div class="cms-ang-items">';
+      g.items.forEach(function(a){
+        h+='<div class="cms-ang-item">';
+        h+='<div class="cms-ang-name">'+esc(a.produkt)+'</div>';
+        if(a.preis!=null)h+='<div class="cms-ang-price">'+fmtP(Number(a.preis)||0)+'</div>';
+        if(a.statt_preis!=null)h+='<div class="cms-ang-old">statt '+fmtP(Number(a.statt_preis)||0)+'</div>';
+        h+='</div>';
+      });
+      h+='</div>';
+      card.innerHTML=h;
+      c.appendChild(card);
+    });
+  }
+
+  window.cmsFilterWeek=function(mode){
+    _angWeekFilter=mode||'this';
+    var nav=document.getElementById('cms-ang-week-nav');
+    if(nav){
+      nav.querySelectorAll('button[data-week]').forEach(function(b){
+        b.className='cms-btn cms-btn-sm '+(b.getAttribute('data-week')===_angWeekFilter?'cms-btn-primary':'cms-btn-gray');
+      });
+    }
+    renderAktionenList();
+  };
+
   function loadAngebote(){
     var ldEl=document.getElementById('cms-ang-loading');
     if(ldEl)ldEl.style.display='';
@@ -951,56 +1030,210 @@ document.head.appendChild(msalScript);
         angebote=[];
         (data.data||data.value||[]).forEach(function(a){
           angebote.push({
-            id:a.id,
-            produkt:a.name||'',
-            details:'',
-            preis:a.price,
-            statt_preis:a.old_price,
-            artikelnummer:'',
-            bild_data:'',
-            aktion_titel:'',
-            aktion_id:'',
-            gueltig_von:a.valid_from?a.valid_from.substring(0,10):'',
-            gueltig_bis:a.valid_to?a.valid_to.substring(0,10):'',
-            sortierung:0,
-            status:101001
+            id:a.dl_angeboteid||a.id||'',
+            produkt:a.dl_produkt||a.name||a.produkt||'',
+            details:a.dl_details||a.details||'',
+            preis:(a.dl_preis!=null?a.dl_preis:a.price),
+            statt_preis:(a.dl_statt_preis!=null?a.dl_statt_preis:a.old_price),
+            artikelnummer:a.dl_artikelnummer||a.artikelnummer||'',
+            bild_data:a.dl_bild_base64||a.bild_data||'',
+            aktion_titel:a.dl_aktion_titel||a.aktion_titel||'',
+            aktion_id:a.dl_aktion_id||a.aktion_id||'',
+            gueltig_von:toIsoDateOnly(a.dl_gueltig_von||a.valid_from||a.gueltig_von||''),
+            gueltig_bis:toIsoDateOnly(a.dl_gueltig_bis||a.valid_to||a.gueltig_bis||''),
+            sortierung:a.dl_sortierung||a.sortierung||0,
+            status:a.dl_status||a.status||101001
           });
         });
         // Group by aktion_id
         var map={};
         angebote.forEach(function(a){
-          var key=a.aktion_id||a.id;
-          if(!map[key]) map[key]={aktion_id:a.aktion_id,titel:a.aktion_titel,von:a.gueltig_von,bis:a.gueltig_bis,items:[]};
+          var key=a.aktion_id||('AUTO-'+(a.gueltig_von||'')+'-'+(a.gueltig_bis||'')+'-'+(a.aktion_titel||a.produkt||''));
+          if(!map[key]) map[key]={aktion_id:key,titel:a.aktion_titel||'Angebot',von:a.gueltig_von,bis:a.gueltig_bis,items:[]};
           map[key].items.push(a);
         });
-        var groups=Object.keys(map).map(function(k){return map[k];});
-        var c=document.getElementById('cms-akt-list');
-        c.innerHTML='';
-        if(groups.length===0){
-          document.getElementById('cms-ang-empty').style.display='';
-          return;
-        }
-        groups.forEach(function(g){
-          var card=document.createElement('div');
-          card.className='cms-card';
-          var h='<div class="cms-card-header">'+(g.titel||'Angebot')+'</div>';
-          h+='<div class="cms-ang-meta">von '+g.von+' bis '+g.bis+'</div>';
-          h+='<div class="cms-ang-items">';
-          g.items.forEach(function(a){
-            h+='<div class="cms-ang-item">';
-            h+='<div class="cms-ang-name">'+esc(a.produkt)+'</div>';
-            h+='<div class="cms-ang-price">'+fmtP(a.preis)+'</div>';
-            if(a.statt_preis)h+='<div class="cms-ang-old">statt '+fmtP(a.statt_preis)+'</div>';
-            h+='</div>';
-          });
-          h+='</div>';
-          card.innerHTML=h;
-          c.appendChild(card);
-        });
+        aktionen=Object.keys(map).map(function(k){
+          var g=map[k];
+          g.items.sort(function(x,y){return (x.sortierung||0)-(y.sortierung||0);});
+          return g;
+        }).sort(function(a,b){return (b.von||'').localeCompare(a.von||'');});
+        renderAktionenList();
       })
       .catch(function(e){toast('Fehler: '+e.message,'error');})
       .then(function(){if(ldEl)ldEl.style.display='none';});
   }
+
+  function addAngRow(item){
+    angRowCounter++;
+    var c=document.getElementById('cms-akt-items');
+    if(!c) return;
+    var row=document.createElement('div');
+    row.className='cms-ang-row';
+    row.id='cms-ar-'+angRowCounter;
+    row.innerHTML=''
+      +'<div class="cms-ang-row-num" style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:6px">Artikel '+angRowCounter+'</div>'
+      +'<button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
+      +'<div class="cms-ang-grid">'
+      +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
+      +'<input class="cms-input" data-f="produkt" placeholder="Produkt" value="'+esc((item&&item.produkt)||'')+'">'
+      +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
+      +'<input class="cms-input cms-price" data-f="preis" placeholder="VK" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
+      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktionspreis" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
+      +'<input class="cms-input" data-f="artikelnummer" placeholder="Artikelnummer" value="'+esc((item&&item.artikelnummer)||'')+'">'
+      +'<input class="cms-input" data-f="bild_data" placeholder="Bild (base64/url, optional)" value="'+esc((item&&item.bild_data)||'')+'">'
+      +'</div>';
+    c.appendChild(row);
+    renumberAngRows();
+  }
+
+  function renumberAngRows(){
+    var rows=document.querySelectorAll('#cms-akt-items .cms-ang-row');
+    rows.forEach(function(r,i){
+      var b=r.querySelector('.cms-ang-row-num');
+      if(b)b.textContent='Artikel '+(i+1);
+    });
+    angRowCounter=rows.length;
+  }
+
+  function showAktionModal(aktion){
+    var isEdit=!!aktion;
+    var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:920px">';
+    html+='<h3 style="margin-top:0">'+(isEdit?'Aktion bearbeiten':'Neue Aktion erstellen')+'</h3>';
+    html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px">';
+    html+='<input id="cms-akt-titel" class="cms-input" placeholder="Titel" value="'+esc(isEdit?(aktion.titel||''):'Sonderangebote')+'">';
+    html+='<input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):'')+'">';
+    html+='<input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):'')+'">';
+    html+='</div>';
+    html+='<input type="hidden" id="cms-akt-edit-id" value="'+esc(isEdit?(aktion.aktion_id||''):'')+'">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">';
+    html+='<strong style="font-size:12px;color:#4b5563">Artikel</strong>';
+    html+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button">+ Artikel</button>';
+    html+='</div>';
+    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto"></div>';
+    html+='<div style="display:flex;gap:8px;margin-top:12px">';
+    html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion">Speichern</button>';
+    html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>';
+    html+='</div></div></div>';
+    document.getElementById('cms-modal-wrap').innerHTML=html;
+    document.getElementById('cms-modal-wrap').style.display='';
+    angRowCounter=0;
+    if(isEdit&&aktion.items&&aktion.items.length){
+      aktion.items.forEach(function(it){addAngRow(it);});
+    } else {
+      addAngRow();addAngRow();addAngRow();
+    }
+  }
+
+  window.cmsOpenNewAktion=function(){showAktionModal(null);};
+  window.cmsEditAktion=function(aktId){
+    var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
+    if(ak)showAktionModal(ak);
+  };
+
+  window.cmsSaveAktion=function(){
+    var editId=document.getElementById('cms-akt-edit-id').value;
+    var titel=(document.getElementById('cms-akt-titel').value||'').trim()||'Sonderangebote';
+    var von=document.getElementById('cms-akt-von').value;
+    var bis=document.getElementById('cms-akt-bis').value;
+    var rows=document.querySelectorAll('#cms-akt-items .cms-ang-row');
+    var items=[];var hasError=false;
+    rows.forEach(function(row){
+      var produkt=(row.querySelector('[data-f="produkt"]').value||'').trim();
+      if(!produkt) return;
+      var pInp=row.querySelector('[data-f="preis"]');
+      var sInp=row.querySelector('[data-f="statt_preis"]');
+      var preis=parseDePrice(pInp.value);
+      var statt=parseDePrice(sInp.value);
+      if(preis==null||statt==null){
+        if(preis==null){pInp.style.border='2px solid #e53935';pInp.addEventListener('input',function(){this.style.border='';},{once:true});}
+        if(statt==null){sInp.style.border='2px solid #e53935';sInp.addEventListener('input',function(){this.style.border='';},{once:true});}
+        hasError=true;
+      }
+      items.push({
+        id:(row.querySelector('[data-f="id"]').value||''),
+        produkt:produkt,
+        details:(row.querySelector('[data-f="details"]').value||'').trim(),
+        preis:preis,
+        statt_preis:statt,
+        artikelnummer:(row.querySelector('[data-f="artikelnummer"]').value||'').trim(),
+        bild_data:(row.querySelector('[data-f="bild_data"]').value||'').trim()
+      });
+    });
+    if(hasError){toast('Bitte VK und Aktionspreis für alle Artikel eintragen','warn');return;}
+    if(!items.length){toast('Bitte mindestens 1 Artikel eintragen','warn');return;}
+
+    var aktId=editId||('AKT-'+Date.now());
+    var saveBtn=document.querySelector('[data-action="saveAktion"]');
+    btnBusy(saveBtn);
+
+    refreshToken().then(function(){
+      var promises=[];
+      if(editId){
+        var old=aktionen.find(function(a){return a.aktion_id===editId;});
+        if(old){
+          var keep={};items.forEach(function(it){if(it.id)keep[it.id]=true;});
+          old.items.forEach(function(it){if(it.id&&!keep[it.id])promises.push(fetch(API+'/angebote/'+it.id,{method:'DELETE',headers:deleteHeaders()}));});
+        }
+      }
+
+      items.forEach(function(it,idx){
+        var body={
+          dl_produkt:it.produkt,
+          dl_details:it.details||null,
+          dl_preis:it.preis,
+          dl_statt_preis:it.statt_preis,
+          dl_aktion_id:aktId,
+          dl_aktion_titel:titel,
+          dl_gueltig_von:von||null,
+          dl_gueltig_bis:bis||null,
+          dl_artikelnummer:it.artikelnummer||null,
+          dl_bild_base64:it.bild_data||null,
+          dl_sortierung:idx+1,
+          dl_status:101001
+        };
+        if(it.id) promises.push(fetch(API+'/angebote/'+it.id,{method:'PATCH',headers:writeHeaders(),body:JSON.stringify(body)}));
+        else promises.push(fetch(API+'/angebote',{method:'POST',headers:writeHeaders(),body:JSON.stringify(body)}));
+      });
+      return Promise.all(promises);
+    }).then(function(results){
+      var ok=results.every(function(r){return r&&r.ok;});
+      if(!ok) throw new Error('Einige Anfragen fehlgeschlagen');
+      toast(editId?'Aktion aktualisiert':'Aktion erstellt');
+      cmsCloseModal();
+      loadAngebote();
+    }).catch(function(e){toast('Fehler: '+e.message,'error');})
+      .then(function(){btnDone(saveBtn);});
+  };
+
+  window.cmsDeleteAktion=function(aktId){
+    var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
+    if(!ak)return;
+    var html='<div class="cms-modal-bg"><div class="cms-modal" style="text-align:center">';
+    html+='<h3>Angebot löschen?</h3>';
+    html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(ak.titel)+'" mit '+ak.items.length+' Artikeln wirklich löschen?</p>';
+    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht rückgängig gemacht werden.</p>';
+    html+='<div style="display:flex;gap:8px">';
+    html+='<button class="cms-btn cms-btn-danger" style="flex:1;background:#dc2626;color:#fff" data-action="confirmDeleteAkt" data-id="'+esc(aktId)+'">Löschen</button>';
+    html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
+    html+='</div></div></div>';
+    document.getElementById('cms-modal-wrap').innerHTML=html;
+    document.getElementById('cms-modal-wrap').style.display='';
+  };
+
+  window.cmsConfirmDeleteAkt=function(aktId){
+    var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
+    if(!ak)return;
+    var delBtn=document.querySelector('[data-action="confirmDeleteAkt"]');
+    btnBusy(delBtn,'Löschen...');
+    refreshToken().then(function(){
+      var promises=ak.items.filter(function(it){return !!it.id;}).map(function(it){
+        return fetch(API+'/angebote/'+it.id,{method:'DELETE',headers:deleteHeaders()});
+      });
+      return Promise.all(promises);
+    }).then(function(){toast('Aktion gelöscht');cmsCloseModal();loadAngebote();})
+      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .then(function(){btnDone(delBtn);});
+  };
 
   // Load data on page load
   loadArtikelData();
