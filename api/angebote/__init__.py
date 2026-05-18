@@ -47,8 +47,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/dl_angebotes?$filter=dl_status eq 101001&$orderby=dl_produkt asc"
-        r = requests.get(url, headers=headers)
+        query = "?$filter=dl_status eq 101001&$orderby=dl_produkt asc"
+        entity_sets = ["dl_angebotes", "dl_angebots", "dl_angebotes", "dl_angebots", "dl_angebot"]
+        r = None
+        for entity_set in entity_sets:
+            url = f"{default_url}/api/data/v9.2/{entity_set}{query}"
+            r = requests.get(url, headers=headers)
+            if r.status_code == 200:
+                break
+            if r.status_code not in (404,):
+                break
+
+        if r is None:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Dataverse request failed"}, ensure_ascii=False),
+                status_code=500,
+                mimetype="application/json",
+                headers=get_cors_headers()
+            )
+
         if r.status_code == 200:
             data = r.json()
             angebote_list = []
