@@ -83,9 +83,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
         url = (
             f"{default_url}/api/data/v9.2/dl_oeffnungszeits"
-            f"?$select=dl_oeffnungszeitid,dl_name,dl_wochentag,dl_geschlossen,dl_vormittag_von,dl_vormittag_bis,"
-            f"dl_nachmittag_von,dl_nachmittag_bis,dl_sortierung,dl_hinweis"
-            f"&$orderby=dl_sortierung asc"
+            f"?$orderby=dl_sortierung asc"
         )
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
@@ -94,6 +92,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             for item in data.get("value", []):
                 wochentag = item.get("dl_wochentag")
                 record_id = item.get("dl_oeffnungszeitid") or item.get("dl_oeffnungszeitsid")
+                if not record_id:
+                    for key, value in item.items():
+                        lk = key.lower()
+                        if lk.startswith("dl_oeffnungszeit") and lk.endswith("id") and value:
+                            record_id = value
+                            break
                 hours_list.append({
                     "id": record_id,
                     "dl_oeffnungszeitsid": record_id,
