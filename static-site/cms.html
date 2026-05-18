@@ -85,7 +85,12 @@ document.head.appendChild(msalScript);
   .cms-akt-btns{display:flex;gap:4px;flex-shrink:0}
   .cms-akt-btns .cms-btn-trash{margin-left:10px}
   .cms-ang-meta{font-size:13px;color:#4b5563;margin-top:3px}
-  .cms-ang-items{padding:10px 12px 14px;display:flex;flex-direction:column;gap:8px}
+  .cms-ang-items{padding:10px 12px 14px;display:flex;flex-direction:column;gap:8px;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+  .cms-ang-items.collapsed{max-height:0!important;padding-top:0;padding-bottom:0}
+  .cms-ang-toggle{cursor:pointer;user-select:none;transition:background .15s}
+  .cms-ang-toggle:hover{background:#f9fafb}
+  .cms-ang-chevron{display:inline-block;transition:transform .3s ease;font-size:14px;color:#9ca3af;margin-left:6px}
+  .cms-ang-chevron.collapsed{transform:rotate(-90deg)}
   .cms-ang-item{border:1px solid #e5e7eb;border-radius:9px;background:#fff;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'name price' 'old old';column-gap:12px;row-gap:2px}
   .cms-ang-name{grid-area:name;font-size:15px;font-weight:600;color:#1f2937;line-height:1.25}
   .cms-ang-price{grid-area:price;font-size:15px;font-weight:700;color:#15803d;white-space:nowrap}
@@ -1000,10 +1005,11 @@ document.head.appendChild(msalScript);
       var card=document.createElement('div');
       card.className='cms-card';
       var h='';
-      h+='<div class="cms-flex cms-between" style="padding:12px 12px 0 12px">';
-      h+='<div><div style="font-weight:700;color:#1f2937">'+esc(g.titel||'Angebot')+'</div>';
+      h+='<div class="cms-flex cms-between cms-ang-toggle" style="padding:12px 12px 10px 12px" data-action="toggleAngItems">';
+      h+='<div style="display:flex;align-items:center"><div><div style="font-weight:700;color:#1f2937">'+esc(g.titel||'Angebot')+'</div>';
       h+='<div class="cms-ang-meta">'+toIsoDateOnly(g.von)+' bis '+toIsoDateOnly(g.bis)+' · '+g.items.length+' Artikel</div></div>';
-      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
+      h+='<span class="cms-ang-chevron">&#9660;</span></div>';
+      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end" onclick="event.stopPropagation()">';
       h+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editAktion" data-id="'+esc(g.aktion_id)+'">Bearbeiten</button>';
       h+='<button class="cms-btn-preview" data-action="previewAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button>';
       h+='<button class="cms-btn-wa" data-action="shareAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>Teilen</button>';
@@ -3656,6 +3662,17 @@ document.head.appendChild(msalScript);
       case 'closeModal':cmsCloseModal();break;
       case 'editAktion':cmsEditAktion(id);break;
       case 'deleteAktion':cmsDeleteAktion(id);break;
+      case 'toggleAngItems':
+        var card=t.closest('.cms-card');
+        if(card){
+          var items=card.querySelector('.cms-ang-items');
+          var chevron=card.querySelector('.cms-ang-chevron');
+          if(items){
+            items.classList.toggle('collapsed');
+            if(chevron) chevron.classList.toggle('collapsed');
+          }
+        }
+        break;
       case 'saveAktion':cmsSaveAktion();break;
       case 'confirmDeleteAkt':cmsConfirmDeleteAkt(id);break;
       case 'addAngRow':addAngRow();break;
