@@ -145,16 +145,18 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
 </script>
 <script>
 (function(){
-  fetch('https://dorfladen-rebuild.azurewebsites.net/api/hours')
+  fetch('/api/hours')
     .then(r=>r.json())
-    .then(function(data){
+    .then(function(payload){
+      var data=Array.isArray(payload)?payload:((payload&&payload.data)||[]);
       var container=document.getElementById('dyn-hours');
       if(!data||!data.length){container.innerHTML='<p>Keine Daten verf\u00fcgbar.</p>';return;}
       var section='',html='';
       data.forEach(function(h){
-        if(h.dl_name!==section){
+        var sectionName=h.dl_name||h.name||'';
+        if(sectionName!==section){
           if(section)html+='</table>';
-          section=h.dl_name;
+          section=sectionName;
           html+='<h3 style="color:var(--c-pri);margin:24px 0 8px;font-size:1.05rem">'+section+'</h3><table style="width:100%;border-collapse:collapse;margin-bottom:8px">';
         }
         var zeit='';

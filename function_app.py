@@ -6,6 +6,16 @@ import requests
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
+DAY_LABELS = {
+    101000: "Montag",
+    101001: "Dienstag",
+    101002: "Mittwoch",
+    101003: "Donnerstag",
+    101004: "Freitag",
+    101005: "Samstag",
+    101006: "Sonntag",
+}
+
 # --- CORS PREFLIGHT HANDLER ---
 @app.route(route="{*path}", methods=["OPTIONS"])
 def cors_preflight(req: func.HttpRequest) -> func.HttpResponse:
@@ -58,6 +68,22 @@ def create_response(data, status_code=200):
         headers=get_cors_headers()
     )
 
+def parse_config_value(value):
+    if not isinstance(value, str):
+        return value
+
+    stripped = value.strip()
+    if not stripped:
+        return ""
+
+    if stripped.startswith("{") or stripped.startswith("["):
+        try:
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            return value
+
+    return value
+
 # --- ROUTEN ---
 
 @app.route(route="test", methods=["GET"])
@@ -77,9 +103,25 @@ def wochenplan(req: func.HttpRequest) -> func.HttpResponse:
             for item in data.get("value", []):
                 wochenplan_list.append({
                     "id": item.get("dl_wochenplansid"),
+                    "dl_wochenplanid": item.get("dl_wochenplansid"),
+                    "dl_wochenplansid": item.get("dl_wochenplansid"),
                     "gericht": item.get("dl_gericht", ""),
+                    "dl_gericht": item.get("dl_gericht", ""),
                     "wochentag": item.get("dl_wochentag"),
-                    "preis": item.get("dl_preis", 0)
+                    "dl_wochentag": item.get("dl_wochentag"),
+                    "_dl_wochentag_label": DAY_LABELS.get(item.get("dl_wochentag"), ""),
+                    "preis": item.get("dl_preis", 0),
+                    "dl_preis": item.get("dl_preis", 0),
+                    "beschreibung": item.get("dl_beschreibung", ""),
+                    "dl_beschreibung": item.get("dl_beschreibung", ""),
+                    "datum": item.get("dl_datum"),
+                    "dl_datum": item.get("dl_datum"),
+                    "kalenderwoche": item.get("dl_kalenderwoche"),
+                    "dl_kalenderwoche": item.get("dl_kalenderwoche"),
+                    "jahr": item.get("dl_jahr"),
+                    "dl_jahr": item.get("dl_jahr"),
+                    "status": item.get("dl_status"),
+                    "dl_status": item.get("dl_status")
                 })
             return create_response({"success": True, "data": wochenplan_list}, 200)
         return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
@@ -91,11 +133,42 @@ def hours(req: func.HttpRequest) -> func.HttpResponse:
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/dl_oeffnungszeits?$orderby=dl_sortierung asc"
+        url = (
+            f"{default_url}/api/data/v9.2/dl_oeffnungszeits"
+            f"?$select=dl_name,dl_wochentag,dl_geschlossen,dl_vormittag_von,dl_vormittag_bis,"
+            f"dl_nachmittag_von,dl_nachmittag_bis,dl_sortierung,dl_hinweis"
+            f"&$orderby=dl_sortierung asc"
+        )
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
-            hours_list = [{"id": item.get("dl_oeffnungszeitsid"), "name": item.get("dl_name", "")} for item in data.get("value", [])]
+            hours_list = []
+            for item in data.get("value", []):
+                wochentag = item.get("dl_wochentag")
+                hours_list.append({
+                    "id": item.get("dl_oeffnungszeitsid"),
+                    "dl_oeffnungszeitsid": item.get("dl_oeffnungszeitsid"),
+                    "dl_oeffnungszeitid": item.get("dl_oeffnungszeitsid"),
+                    "name": item.get("dl_name", ""),
+                    "dl_name": item.get("dl_name", ""),
+                    "wochentag": wochentag,
+                    "dl_wochentag": wochentag,
+                    "_dl_wochentag_label": DAY_LABELS.get(wochentag, ""),
+                    "geschlossen": item.get("dl_geschlossen", False),
+                    "dl_geschlossen": item.get("dl_geschlossen", False),
+                    "vormittag_von": item.get("dl_vormittag_von") or "",
+                    "dl_vormittag_von": item.get("dl_vormittag_von") or "",
+                    "vormittag_bis": item.get("dl_vormittag_bis") or "",
+                    "dl_vormittag_bis": item.get("dl_vormittag_bis") or "",
+                    "nachmittag_von": item.get("dl_nachmittag_von") or "",
+                    "dl_nachmittag_von": item.get("dl_nachmittag_von") or "",
+                    "nachmittag_bis": item.get("dl_nachmittag_bis") or "",
+                    "dl_nachmittag_bis": item.get("dl_nachmittag_bis") or "",
+                    "sortierung": item.get("dl_sortierung"),
+                    "dl_sortierung": item.get("dl_sortierung"),
+                    "hinweis": item.get("dl_hinweis", ""),
+                    "dl_hinweis": item.get("dl_hinweis", "")
+                })
             return create_response({"success": True, "data": hours_list}, 200)
         return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
     except Exception as e:
@@ -106,11 +179,29 @@ def news(req: func.HttpRequest) -> func.HttpResponse:
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/dl_news?$filter=dl_status eq 101001&$orderby=dl_datum desc"
+        url = (
+            f"{default_url}/api/data/v9.2/dl_news"
+            f"?$select=dl_titel,dl_kurztext,dl_inhalt,dl_datum,createdon,dl_status"
+            f"&$filter=dl_status eq 101001"
+            f"&$orderby=dl_datum desc"
+        )
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
-            news_list = [{"id": item.get("dl_newsid"), "titel": item.get("dl_titel", "")} for item in data.get("value", [])]
+            news_list = []
+            for item in data.get("value", []):
+                news_list.append({
+                    "id": item.get("dl_newsid"),
+                    "dl_newsid": item.get("dl_newsid"),
+                    "titel": item.get("dl_titel", ""),
+                    "dl_titel": item.get("dl_titel", ""),
+                    "beschreibung": item.get("dl_kurztext", ""),
+                    "dl_kurztext": item.get("dl_kurztext", ""),
+                    "dl_inhalt": item.get("dl_inhalt", ""),
+                    "datum": item.get("dl_datum") or item.get("createdon"),
+                    "dl_datum": item.get("dl_datum"),
+                    "createdon": item.get("createdon")
+                })
             return create_response({"success": True, "data": news_list}, 200)
         return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
     except Exception as e:
@@ -125,7 +216,11 @@ def cms_config(req: func.HttpRequest) -> func.HttpResponse:
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
-            config = {item.get("dl_name", ""): item.get("dl_wert", "") for item in data.get("value", [])}
+            config = {
+                item.get("dl_name", ""): parse_config_value(item.get("dl_wert", ""))
+                for item in data.get("value", [])
+                if item.get("dl_name")
+            }
             return create_response({"success": True, "data": config}, 200)
         return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
     except Exception as e:
@@ -144,16 +239,42 @@ def angebote(req: func.HttpRequest) -> func.HttpResponse:
             for item in data.get("value", []):
                 angebote_list.append({
                     "id": item.get("dl_angeboteid"),
+                    "dl_angeboteid": item.get("dl_angeboteid"),
                     "name": item.get("dl_produkt", ""),
+                    "dl_produkt": item.get("dl_produkt", ""),
+                    "details": item.get("dl_details", "") or item.get("dl_beschreibung", ""),
+                    "dl_details": item.get("dl_details", "") or item.get("dl_beschreibung", ""),
                     "price": item.get("dl_preis", 0),
+                    "dl_preis": item.get("dl_preis", 0),
                     "old_price": item.get("dl_statt_preis", 0),
+                    "dl_statt_preis": item.get("dl_statt_preis", 0),
+                    "aktion_titel": item.get("dl_aktion_titel", ""),
+                    "dl_aktion_titel": item.get("dl_aktion_titel", ""),
+                    "aktion_id": item.get("dl_aktion_id", ""),
+                    "dl_aktion_id": item.get("dl_aktion_id", ""),
+                    "artikelnummer": item.get("dl_artikelnummer", ""),
+                    "dl_artikelnummer": item.get("dl_artikelnummer", ""),
                     "valid_from": item.get("dl_gueltig_von"),
-                    "valid_to": item.get("dl_gueltig_bis")
+                    "dl_gueltig_von": item.get("dl_gueltig_von"),
+                    "valid_to": item.get("dl_gueltig_bis"),
+                    "dl_gueltig_bis": item.get("dl_gueltig_bis"),
+                    "bild_data": item.get("dl_bild_base64", ""),
+                    "dl_bild_base64": item.get("dl_bild_base64", "")
                 })
             return create_response({"success": True, "data": angebote_list}, 200)
         return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
     except Exception as e:
         return create_response({"success": False, "error": str(e)}, 500)
+
+@app.route(route="werbebilder", methods=["GET"])
+def werbebilder(req: func.HttpRequest) -> func.HttpResponse:
+    artnrs = req.params.get("artnrs", "")
+    if not artnrs.strip():
+        return create_response([], 200)
+
+    # Fallback-endpoint: liefert bewusst leere Liste, wenn keine verlässliche Bildquelle
+    # innerhalb dieses Projekts konfiguriert ist. So bleibt das Frontend stabil.
+    return create_response([], 200)
 
 @app.route(route="preisliste", methods=["GET"])
 def preisliste(req: func.HttpRequest) -> func.HttpResponse:

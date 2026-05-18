@@ -142,9 +142,10 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
 </script>
 <script>
 (function(){
-  fetch('https://dorfladen-rebuild.azurewebsites.net/api/news')
+  fetch('/api/news')
     .then(r=>r.json())
-    .then(function(data){
+    .then(function(payload){
+      var data=Array.isArray(payload)?payload:((payload&&payload.data)||[]);
       var container=document.getElementById('news-grid');
       var countEl=document.getElementById('news-count');
       if(!data||!data.length){
@@ -154,11 +155,11 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
       if(countEl)countEl.textContent=data.length+' Beitr\u00e4ge';
       var html='';
       data.forEach(function(n,i){
-        var d=n.dl_datum?new Date(n.dl_datum):new Date(n.createdon);
+        var d=n.dl_datum?new Date(n.dl_datum):new Date(n.createdon||n.datum);
         var ds=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear();
         html+='<div class="news-card"><div class="news-card-top"><span class="news-date-badge"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>'+ds+'</span></div>';
-        html+='<div class="news-title">'+(n.dl_titel||'')+'</div>';
-        if(n.dl_kurztext)html+='<div class="news-excerpt">'+n.dl_kurztext+'</div>';
+        html+='<div class="news-title">'+(n.dl_titel||n.titel||'')+'</div>';
+        if(n.dl_kurztext||n.beschreibung)html+='<div class="news-excerpt">'+(n.dl_kurztext||n.beschreibung)+'</div>';
         if(n.dl_inhalt){
           html+='<div class="news-full" id="news-full-'+i+'">'+n.dl_inhalt+'</div>';
           html+='<button class="news-more" onclick="var el=document.getElementById(\'news-full-'+i+'\');var v=el.style.display===\'block\';el.style.display=v?\'none\':\'block\';this.textContent=v?\'Weiterlesen \u2192\':\'Weniger anzeigen \u2191\'">Weiterlesen \u2192</button>';

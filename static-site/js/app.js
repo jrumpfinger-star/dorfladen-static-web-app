@@ -10,6 +10,12 @@ var DAYS = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerst
 var DAY_SHORT = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa',101006:'So'};
 
 /* === Utility functions === */
+function unwrapApiData(payload){
+  if(Array.isArray(payload)) return payload;
+  if(payload&&Array.isArray(payload.data)) return payload.data;
+  if(payload&&Array.isArray(payload.value)) return payload.value;
+  return [];
+}
 function pad(n){return n<10?'0'+n:String(n);}
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function fmtTime(t){
@@ -30,7 +36,8 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 (function(){
   fetch(API_BASE+'/cms-config')
     .then(function(r){return r.json();})
-    .then(function(config){
+    .then(function(payload){
+      var config=(payload&&payload.data)?payload.data:payload;
       if(!config || Object.keys(config).length===0) return;
       console.log('CMS Config loaded:', config);
       
@@ -186,7 +193,17 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
   fetch(API_BASE+'/wochenplan')
     .then(function(r){return r.json();})
     .then(function(response){
-      var items=response.success?response.data:[];
+      var items=unwrapApiData(response).map(function(item){
+        return {
+          id:item.id||item.dl_wochenplanid||item.dl_wochenplansid||'',
+          gericht:item.dl_gericht||item.gericht||'',
+          wochentag:item.dl_wochentag!=null?item.dl_wochentag:item.wochentag,
+          preis:item.dl_preis!=null?item.dl_preis:item.preis,
+          beschreibung:item.dl_beschreibung||item.beschreibung||'',
+          datum:item.dl_datum||item.datum||'',
+          kalenderwoche:item.dl_kalenderwoche!=null?item.dl_kalenderwoche:item.kalenderwoche
+        };
+      });
       if(!items||!items.length){
         document.getElementById('wp-subtitle').textContent='Kein aktueller Wochenplan';
         document.getElementById('wp-body').innerHTML='<div style="padding:20px;text-align:center;color:#888;font-style:italic">Aktuell kein Wochenplan verf\u00fcgbar. Unser Mittagstisch-Angebot findet ihr in der WhatsApp-Gruppe.</div>';
@@ -273,13 +290,14 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 (function(){
   fetch(API_BASE+'/hours')
     .then(function(r){return r.json();})
-    .then(function(items){
+    .then(function(payload){
+      var items=unwrapApiData(payload);
       if(!items||!items.length) return;
       var hrsGrid=document.getElementById('hrs-grid');
       if(!hrsGrid) return;
       var sections={};var secOrder=[];
       items.forEach(function(item){
-        var sec=item.dl_name||'Allgemein';
+        var sec=item.dl_name||item.name||'Allgemein';
         if(!sections[sec]){sections[sec]=[];secOrder.push(sec);}
         sections[sec].push(item);
       });
@@ -288,17 +306,23 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         var icon=sec==='Dorfladen'?'\uD83D\uDED2':sec==='Postfiliale'?'\uD83D\uDCE6':'';
         html+='<div class="hrs-section"><div class="hrs-label">'+icon+' '+esc(sec)+'</div><table class="hrs">';
         sections[sec].forEach(function(item){
-          var day=DAY_SHORT[item.dl_wochentag]||DAYS[item.dl_wochentag]||'?';
-          if(item.dl_geschlossen){
+          var dayCode=item.dl_wochentag!=null?item.dl_wochentag:item.wochentag;
+          var day=DAY_SHORT[dayCode]||DAYS[dayCode]||item._dl_wochentag_label||'?';
+          if(item.dl_geschlossen||item.geschlossen){
             html+='<tr><td>'+day+'</td><td><span class="hrs-closed">Geschlossen</span></td></tr>';
           } else {
             var times='';
-            if(item.dl_vormittag_von) times+='<span class="hrs-time">'+fmtTime(item.dl_vormittag_von)+'\u2013'+fmtTime(item.dl_vormittag_bis)+'</span>';
-            if(item.dl_nachmittag_von){
+            var vmVon=item.dl_vormittag_von||item.vormittag_von;
+            var vmBis=item.dl_vormittag_bis||item.vormittag_bis;
+            var nmVon=item.dl_nachmittag_von||item.nachmittag_von;
+            var nmBis=item.dl_nachmittag_bis||item.nachmittag_bis;
+            var hinweis=item.dl_hinweis||item.hinweis;
+            if(vmVon) times+='<span class="hrs-time">'+fmtTime(vmVon)+'\u2013'+fmtTime(vmBis)+'</span>';
+            if(nmVon){
               if(times) times+=' <span class="hrs-sep">&amp;</span> ';
-              times+='<span class="hrs-time">'+fmtTime(item.dl_nachmittag_von)+'\u2013'+fmtTime(item.dl_nachmittag_bis)+'</span>';
+              times+='<span class="hrs-time">'+fmtTime(nmVon)+'\u2013'+fmtTime(nmBis)+'</span>';
             }
-            if(item.dl_hinweis) times+=' <small>('+esc(item.dl_hinweis)+')</small>';
+            if(hinweis) times+=' <small>('+esc(hinweis)+')</small>';
             html+='<tr><td>'+day+'</td><td>'+times+'</td></tr>';
           }
         });
@@ -313,7 +337,8 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 (function(){
   fetch(API_BASE+'/news')
     .then(function(r){return r.json();})
-    .then(function(items){
+    .then(function(payload){
+      var items=unwrapApiData(payload);
       var container=document.getElementById('news-container');
       var countEl=document.getElementById('news-count');
       if(!items||!items.length){
@@ -323,17 +348,15 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       countEl.textContent=items.length+' Beitr\u00E4ge';
       var html='<div class="news-grid">';
       items.forEach(function(artikel,idx){
+        var datumRaw=artikel.dl_datum||artikel.datum||artikel.createdon;
         var datum='';
-        if(artikel.dl_datum){
-          var d=new Date(artikel.dl_datum);
+        if(datumRaw){
+          var d=new Date(datumRaw);
           datum=pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear();
-        } else if(artikel.createdon){
-          var d2=new Date(artikel.createdon);
-          datum=pad(d2.getDate())+'.'+pad(d2.getMonth()+1)+'.'+d2.getFullYear();
         }
         html+='<div class="news-card"><div class="news-card-top"><span class="news-date-badge"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>'+datum+'</span></div>';
-        html+='<div class="news-title">'+esc(artikel.dl_titel||'')+'</div>';
-        if(artikel.dl_kurztext) html+='<div class="news-excerpt">'+esc(artikel.dl_kurztext)+'</div>';
+        html+='<div class="news-title">'+esc(artikel.dl_titel||artikel.titel||'')+'</div>';
+        if(artikel.dl_kurztext||artikel.beschreibung) html+='<div class="news-excerpt">'+esc(artikel.dl_kurztext||artikel.beschreibung)+'</div>';
         if(artikel.dl_inhalt){
           html+='<div class="news-full" id="news-'+idx+'">'+artikel.dl_inhalt+'</div>';
           html+='<button class="news-more" onclick="var el=document.getElementById(\'news-'+idx+'\');var v=el.style.display===\'block\';el.style.display=v?\'none\':\'block\';this.innerHTML=v?\'Weiterlesen\':\'Weniger\'">Weiterlesen</button>';
@@ -355,20 +378,21 @@ var allAngebote = [];
 (function(){
   fetch(API_BASE+'/angebote')
     .then(function(r){return r.json();})
-    .then(function(items){
+    .then(function(payload){
+      var items=unwrapApiData(payload);
       if(!items||!items.length) return;
       allAngebote = items.map(function(item){
         return {
-          id: item.dl_angeboteid||'',
-          produkt: item.dl_produkt||'',
-          details: item.dl_details||'',
-          preis: item.dl_preis||0,
-          statt: item.dl_statt_preis||0,
-          titel: item.dl_aktion_titel||'',
-          aktion: item.dl_aktion_id||'',
-          artnr: item.dl_artikelnummer||'',
-          von: item.dl_gueltig_von?(item.dl_gueltig_von.substring(0,10)):'',
-          bis: item.dl_gueltig_bis?(item.dl_gueltig_bis.substring(0,10)):''
+          id: item.dl_angeboteid||item.id||'',
+          produkt: item.dl_produkt||item.name||'',
+          details: item.dl_details||item.details||'',
+          preis: item.dl_preis||item.price||0,
+          statt: item.dl_statt_preis||item.old_price||0,
+          titel: item.dl_aktion_titel||item.aktion_titel||'',
+          aktion: item.dl_aktion_id||item.aktion_id||'',
+          artnr: item.dl_artikelnummer||item.artikelnummer||'',
+          von: (item.dl_gueltig_von||item.valid_from)?((item.dl_gueltig_von||item.valid_from).substring(0,10)):'',
+          bis: (item.dl_gueltig_bis||item.valid_to)?((item.dl_gueltig_bis||item.valid_to).substring(0,10)):''
         };
       });
       // Show promo bar link
