@@ -66,8 +66,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "bezeichnung": bezeichnung,
                         "preis": preis
                     })
+            from datetime import datetime
+            result = {
+                "generated": datetime.now().isoformat(),
+                **groups
+            }
             return func.HttpResponse(
-                json.dumps({"success": True, "data": groups}, ensure_ascii=False),
+                json.dumps(result, ensure_ascii=False),
                 status_code=200,
                 mimetype="application/json",
                 headers=get_cors_headers()
