@@ -3,6 +3,7 @@ import json
 import os
 import msal
 import requests
+from datetime import datetime
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
@@ -47,39 +48,91 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/cr5d4_roterpunkts?$orderby=createdon desc&$top=1"
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$orderby=cr5d4_artikelbezeichnung asc"
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
             items = data.get("value", [])
-            if items:
-                item = items[0]
-                result = {
-                    "titel": item.get("cr5d4_titel", ""),
-                    "beschreibung": item.get("cr5d4_beschreibung", ""),
-                    "datum": item.get("createdon", "")
-                }
-                return func.HttpResponse(
-                    json.dumps({"success": True, "data": result}, ensure_ascii=False),
-                    status_code=200,
-                    mimetype="application/json",
-                    headers=get_cors_headers()
-                )
+            
+            groups = {}
+            for item in items:
+                artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
+                bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
+                preis = item.get("cr5d4_vk_dorf", 0)
+                uvp_preis = item.get("cr5d4_uvp_total")
+                warengruppe_bez = item.get("cr5d4_warengruppebez", "")
+                
+                if warengruppe_bez:
+                    wg_name_mapping = {
+                        "Obst": "Obst",
+                        "Gemüse": "Gemüse",
+                        "Obst & Gemüse": "Obst",
+                        "Gemüse & Obst": "Obst",
+                        "Sonstiges": "Sonstiges",
+                        "Sonstiges 19%": "Sonstiges",
+                        "Sonstiges 7%": "Sonstiges",
+                        "Mittagessen": "Mittagessen",
+                        "Mittagessen 7%": "Mittagessen",
+                        "Mittagessen 7% MwSt": "Mittagessen",
+                        "Kuchen": "Kuchen",
+                        "Honig & Marmelade": "Honig & Marmelade",
+                        "Papier & Schreibwaren": "Papier & Schreibwaren",
+                        "Haushalt": "Haushalt",
+                        "Getränke": "Getränke",
+                        "Molkerei": "Molkerei",
+                        "Backwaren": "Backwaren",
+                        "Fleisch": "Fleisch",
+                        "Trockenwaren": "Trockenwaren",
+                        "Süßwaren": "Süßwaren",
+                        "Gewürze": "Gewürze",
+                        "Effektive Mikroorganismen": "Effektive Mikroorganismen",
+                        "EM": "Effektive Mikroorganismen",
+                        "EM Keramik": "Effektive Mikroorganismen",
+                        "Tabakwaren": "Tabakwaren"
+                    }
+                    warengruppe = wg_name_mapping.get(warengruppe_bez, warengruppe_bez)
+                else:
+                    warengruppe = "Sonstiges"
+                
+                if warengruppe not in groups:
+                    groups[warengruppe] = []
+                
+                discount = 0
+                if uvp_preis and uvp_preis > 0 and preis > 0:
+                    discount = ((uvp_preis - preis) / uvp_preis) * 100
+                
+                groups[warengruppe].append({
+                    "artikelnummer": artikelnummer,
+                    "bezeichnung": bezeichnung,
+                    "vk": preis,
+                    "uvp": uvp_preis,
+                    "discount": discount,
+                    "angebot": False,
+                    "angebot_statt": None,
+                    "angebot_preis": None
+                })
+            
+            result = {
+                "groups": groups,
+                "total": len(items),
+                "warengruppen": len(groups),
+                "generated": datetime.now().isoformat()
+            }
             return func.HttpResponse(
-                json.dumps({"success": False, "error": "Kein Eintrag gefunden"}, ensure_ascii=False),
-                status_code=404,
+                json.dumps(result, ensure_ascii=False),
+                status_code=200,
                 mimetype="application/json",
                 headers=get_cors_headers()
             )
         return func.HttpResponse(
-            json.dumps({"success": False, "error": f"Dataverse error: {r.status_code}"}, ensure_ascii=False),
+            json.dumps({"error": f"Dataverse error: {r.status_code}"}, ensure_ascii=False),
             status_code=r.status_code,
             mimetype="application/json",
             headers=get_cors_headers()
         )
     except Exception as e:
         return func.HttpResponse(
-            json.dumps({"success": False, "error": str(e)}, ensure_ascii=False),
+            json.dumps({"error": str(e)}, ensure_ascii=False),
             status_code=500,
             mimetype="application/json",
             headers=get_cors_headers()

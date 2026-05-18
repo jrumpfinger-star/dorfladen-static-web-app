@@ -41,6 +41,8 @@ def get_cors_headers():
         "Content-Type": "application/json; charset=utf-8"
     }
 
+DAY_LABELS = {101000: "Montag", 101001: "Dienstag", 101002: "Mittwoch", 101003: "Donnerstag", 101004: "Freitag", 101005: "Samstag", 101006: "Sonntag"}
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -55,9 +57,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             for item in data.get("value", []):
                 wochenplan_list.append({
                     "id": item.get("dl_wochenplansid"),
+                    "dl_wochenplanid": item.get("dl_wochenplansid"),
+                    "dl_wochenplansid": item.get("dl_wochenplansid"),
                     "gericht": item.get("dl_gericht", ""),
+                    "dl_gericht": item.get("dl_gericht", ""),
                     "wochentag": item.get("dl_wochentag"),
-                    "preis": item.get("dl_preis", 0)
+                    "dl_wochentag": item.get("dl_wochentag"),
+                    "_dl_wochentag_label": DAY_LABELS.get(item.get("dl_wochentag"), ""),
+                    "preis": item.get("dl_preis", 0),
+                    "dl_preis": item.get("dl_preis", 0),
+                    "beschreibung": item.get("dl_beschreibung", ""),
+                    "dl_beschreibung": item.get("dl_beschreibung", ""),
+                    "datum": item.get("dl_datum"),
+                    "dl_datum": item.get("dl_datum"),
+                    "kalenderwoche": item.get("dl_kalenderwoche"),
+                    "dl_kalenderwoche": item.get("dl_kalenderwoche"),
+                    "jahr": item.get("dl_jahr"),
+                    "dl_jahr": item.get("dl_jahr"),
+                    "status": item.get("dl_status"),
+                    "dl_status": item.get("dl_status")
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "data": wochenplan_list}, ensure_ascii=False),

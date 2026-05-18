@@ -41,27 +41,52 @@ def get_cors_headers():
         "Content-Type": "application/json; charset=utf-8"
     }
 
+DAY_LABELS = {101000: "Montag", 101001: "Dienstag", 101002: "Mittwoch", 101003: "Donnerstag", 101004: "Freitag", 101005: "Samstag", 101006: "Sonntag"}
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
     try:
-        headers = get_headers("DV_DEV_URL")
-        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
-        url = f"{dev_url}/api/data/v9.2/cr5d4_oeffnungszeiten?$orderby=cr5d4_wochentag asc"
+        headers = get_headers("DV_DEFAULT_URL")
+        default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
+        url = (
+            f"{default_url}/api/data/v9.2/dl_oeffnungszeits"
+            f"?$select=dl_name,dl_wochentag,dl_geschlossen,dl_vormittag_von,dl_vormittag_bis,"
+            f"dl_nachmittag_von,dl_nachmittag_bis,dl_sortierung,dl_hinweis"
+            f"&$orderby=dl_sortierung asc"
+        )
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
-            items = data.get("value", [])
-            result = [
-                {
-                    "wochentag": item.get("cr5d4_wochentag", ""),
-                    "von": item.get("cr5d4_von", ""),
-                    "bis": item.get("cr5d4_bis", "")
-                }
-                for item in items
-            ]
+            hours_list = []
+            for item in data.get("value", []):
+                wochentag = item.get("dl_wochentag")
+                hours_list.append({
+                    "id": item.get("dl_oeffnungszeitsid"),
+                    "dl_oeffnungszeitsid": item.get("dl_oeffnungszeitsid"),
+                    "dl_oeffnungszeitid": item.get("dl_oeffnungszeitsid"),
+                    "name": item.get("dl_name", ""),
+                    "dl_name": item.get("dl_name", ""),
+                    "wochentag": wochentag,
+                    "dl_wochentag": wochentag,
+                    "_dl_wochentag_label": DAY_LABELS.get(wochentag, ""),
+                    "geschlossen": item.get("dl_geschlossen", False),
+                    "dl_geschlossen": item.get("dl_geschlossen", False),
+                    "vormittag_von": item.get("dl_vormittag_von") or "",
+                    "dl_vormittag_von": item.get("dl_vormittag_von") or "",
+                    "vormittag_bis": item.get("dl_vormittag_bis") or "",
+                    "dl_vormittag_bis": item.get("dl_vormittag_bis") or "",
+                    "nachmittag_von": item.get("dl_nachmittag_von") or "",
+                    "dl_nachmittag_von": item.get("dl_nachmittag_von") or "",
+                    "nachmittag_bis": item.get("dl_nachmittag_bis") or "",
+                    "dl_nachmittag_bis": item.get("dl_nachmittag_bis") or "",
+                    "sortierung": item.get("dl_sortierung"),
+                    "dl_sortierung": item.get("dl_sortierung"),
+                    "hinweis": item.get("dl_hinweis", ""),
+                    "dl_hinweis": item.get("dl_hinweis", "")
+                })
             return func.HttpResponse(
-                json.dumps({"success": True, "data": result}, ensure_ascii=False),
+                json.dumps({"success": True, "data": hours_list}, ensure_ascii=False),
                 status_code=200,
                 mimetype="application/json",
                 headers=get_cors_headers()

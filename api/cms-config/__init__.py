@@ -41,27 +41,37 @@ def get_cors_headers():
         "Content-Type": "application/json; charset=utf-8"
     }
 
+def parse_config_value(value):
+    if not isinstance(value, str):
+        return value
+    stripped = value.strip()
+    if not stripped:
+        return ""
+    if stripped.startswith("{") or stripped.startswith("["):
+        try:
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            return value
+    return value
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
     try:
         headers = get_headers("DV_DEV_URL")
         dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
-        url = f"{dev_url}/api/data/v9.2/cr5d4_cmsconfigs?$top=1"
+        url = f"{dev_url}/api/data/v9.2/dl_seiteninhalts"
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
-            items = data.get("value", [])
-            if items:
-                return func.HttpResponse(
-                    json.dumps({"success": True, "data": items[0]}, ensure_ascii=False),
-                    status_code=200,
-                    mimetype="application/json",
-                    headers=get_cors_headers()
-                )
+            config = {
+                item.get("dl_name", ""): parse_config_value(item.get("dl_wert", ""))
+                for item in data.get("value", [])
+                if item.get("dl_name")
+            }
             return func.HttpResponse(
-                json.dumps({"success": False, "error": "Kein Eintrag gefunden"}, ensure_ascii=False),
-                status_code=404,
+                json.dumps({"success": True, "data": config}, ensure_ascii=False),
+                status_code=200,
                 mimetype="application/json",
                 headers=get_cors_headers()
             )

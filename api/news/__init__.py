@@ -45,23 +45,33 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
     try:
-        headers = get_headers("DV_DEV_URL")
-        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
-        url = f"{dev_url}/api/data/v9.2/cr5d4_news?$orderby=createdon desc&$top=10"
+        headers = get_headers("DV_DEFAULT_URL")
+        default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
+        url = (
+            f"{default_url}/api/data/v9.2/dl_news"
+            f"?$select=dl_titel,dl_kurztext,dl_inhalt,dl_datum,createdon,dl_status"
+            f"&$filter=dl_status eq 101001"
+            f"&$orderby=dl_datum desc"
+        )
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
-            items = data.get("value", [])
-            result = [
-                {
-                    "titel": item.get("cr5d4_titel", ""),
-                    "beschreibung": item.get("cr5d4_beschreibung", ""),
-                    "datum": item.get("createdon", "")
-                }
-                for item in items
-            ]
+            news_list = []
+            for item in data.get("value", []):
+                news_list.append({
+                    "id": item.get("dl_newsid"),
+                    "dl_newsid": item.get("dl_newsid"),
+                    "titel": item.get("dl_titel", ""),
+                    "dl_titel": item.get("dl_titel", ""),
+                    "beschreibung": item.get("dl_kurztext", ""),
+                    "dl_kurztext": item.get("dl_kurztext", ""),
+                    "dl_inhalt": item.get("dl_inhalt", ""),
+                    "datum": item.get("dl_datum") or item.get("createdon"),
+                    "dl_datum": item.get("dl_datum"),
+                    "createdon": item.get("createdon")
+                })
             return func.HttpResponse(
-                json.dumps({"success": True, "data": result}, ensure_ascii=False),
+                json.dumps({"success": True, "data": news_list}, ensure_ascii=False),
                 status_code=200,
                 mimetype="application/json",
                 headers=get_cors_headers()
