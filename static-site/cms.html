@@ -1008,14 +1008,14 @@ document.head.appendChild(msalScript);
       h+='<div class="cms-flex cms-between cms-ang-toggle" style="padding:12px 12px 10px 12px" data-action="toggleAngItems">';
       h+='<div style="display:flex;align-items:center"><div><div style="font-weight:700;color:#1f2937">'+esc(g.titel||'Angebot')+'</div>';
       h+='<div class="cms-ang-meta">'+toIsoDateOnly(g.von)+' bis '+toIsoDateOnly(g.bis)+' · '+g.items.length+' Artikel</div></div>';
-      h+='<span class="cms-ang-chevron">&#9660;</span></div>';
+      h+='<span class="cms-ang-chevron collapsed">&#9660;</span></div>';
       h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end" onclick="event.stopPropagation()">';
       h+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editAktion" data-id="'+esc(g.aktion_id)+'">Bearbeiten</button>';
       h+='<button class="cms-btn-preview" data-action="previewAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button>';
       h+='<button class="cms-btn-wa" data-action="shareAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>Teilen</button>';
       h+='<button class="cms-btn-trash" data-action="deleteAktion" data-id="'+esc(g.aktion_id)+'" title="Löschen"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
       h+='</div></div>';
-      h+='<div class="cms-ang-items">';
+      h+='<div class="cms-ang-items collapsed">';
       g.items.forEach(function(a){
         h+='<div class="cms-ang-item">';
         h+='<div class="cms-ang-name">'+esc(a.produkt)+'</div>';
