@@ -53,6 +53,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             data = r.json()
             items = data.get("value", [])
             groups = {}
+            total = 0
             for item in items:
                 artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
                 bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
@@ -66,10 +67,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "bezeichnung": bezeichnung,
                         "preis": preis
                     })
+                    total += 1
             from datetime import datetime
             result = {
                 "generated": datetime.now().isoformat(),
-                **groups
+                "total": total,
+                "warengruppen": len(groups),
+                "groups": groups
             }
             return func.HttpResponse(
                 json.dumps(result, ensure_ascii=False),
