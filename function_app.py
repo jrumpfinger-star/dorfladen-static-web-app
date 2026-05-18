@@ -379,83 +379,94 @@ def roterpunkt(req: func.HttpRequest) -> func.HttpResponse:
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$orderby=cr5d4_artikelbezeichnung asc"
-        r = requests.get(url, headers=headers)
-        if r.status_code == 200:
+        # Filter: nur Artikel mit UVP > 0 und VK > 0
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$filter=cr5d4_uvp_total gt 0 and cr5d4_vk_dorf gt 0&$orderby=cr5d4_artikelbezeichnung asc"
+
+        # Paging: alle Ergebnisse laden
+        all_items = []
+        while url:
+            r = requests.get(url, headers=headers)
+            if r.status_code != 200:
+                return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
             data = r.json()
-            items = data.get("value", [])
-            
-            # Gruppieren nach Warengruppen (basierend auf cr5d4_warengruppebez)
-            groups = {}
-            for item in items:
-                artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
-                bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
-                preis = item.get("cr5d4_vk_dorf", 0)
-                uvp_preis = item.get("cr5d4_uvp_total")
-                warengruppe_bez = item.get("cr5d4_warengruppebez", "")
-                
-                # Warengruppe aus WarengruppeBez verwenden, falls vorhanden
-                if warengruppe_bez:
-                    # Warengruppen-Namen normalisieren und zusammenfassen
-                    wg_name_mapping = {
-                        "Obst": "Obst",
-                        "Gemüse": "Gemüse",
-                        "Obst & Gemüse": "Obst",
-                        "Gemüse & Obst": "Obst",
-                        "Sonstiges": "Sonstiges",
-                        "Sonstiges 19%": "Sonstiges",
-                        "Sonstiges 7%": "Sonstiges",
-                        "Mittagessen": "Mittagessen",
-                        "Mittagessen 7%": "Mittagessen",
-                        "Mittagessen 7% MwSt": "Mittagessen",
-                        "Kuchen": "Kuchen",
-                        "Honig & Marmelade": "Honig & Marmelade",
-                        "Papier & Schreibwaren": "Papier & Schreibwaren",
-                        "Haushalt": "Haushalt",
-                        "Getränke": "Getränke",
-                        "Molkerei": "Molkerei",
-                        "Backwaren": "Backwaren",
-                        "Fleisch": "Fleisch",
-                        "Trockenwaren": "Trockenwaren",
-                        "Süßwaren": "Süßwaren",
-                        "Gewürze": "Gewürze",
-                        "Effektive Mikroorganismen": "Effektive Mikroorganismen",
-                        "EM": "Effektive Mikroorganismen",
-                        "EM Keramik": "Effektive Mikroorganismen",
-                        "Tabakwaren": "Tabakwaren"
-                    }
-                    warengruppe = wg_name_mapping.get(warengruppe_bez, warengruppe_bez)
-                else:
-                    warengruppe = "Sonstiges"
-                
-                if warengruppe not in groups:
-                    groups[warengruppe] = []
-                
-                # Discount berechnen: ((uvp - vk) / uvp) * 100
-                discount = 0
-                if uvp_preis and uvp_preis > 0 and preis > 0:
-                    discount = ((uvp_preis - preis) / uvp_preis) * 100
-                
-                groups[warengruppe].append({
-                    "artikelnummer": artikelnummer,
-                    "bezeichnung": bezeichnung,
-                    "vk": preis,
-                    "uvp": uvp_preis,
-                    "discount": discount,
-                    "angebot": False,
-                    "angebot_statt": None,
-                    "angebot_preis": None
-                })
-            
-            from datetime import datetime
-            result = {
-                "groups": groups,
-                "total": len(items),
-                "warengruppen": len(groups),
-                "generated": datetime.now().isoformat()
-            }
-            return create_response(result, 200)
-        return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
+            all_items.extend(data.get("value", []))
+            url = data.get("@odata.nextLink", None)
+
+        # Gruppieren nach Warengruppen (basierend auf cr5d4_warengruppebez)
+        groups = {}
+        wg_name_mapping = {
+            "Obst": "Obst",
+            "Gemüse": "Gemüse",
+            "Obst & Gemüse": "Obst",
+            "Gemüse & Obst": "Obst",
+            "Sonstiges": "Sonstiges",
+            "Sonstiges 19%": "Sonstiges",
+            "Sonstiges 7%": "Sonstiges",
+            "Mittagessen": "Mittagessen",
+            "Mittagessen 7%": "Mittagessen",
+            "Mittagessen 7% MwSt": "Mittagessen",
+            "Kuchen": "Kuchen",
+            "Honig & Marmelade": "Honig & Marmelade",
+            "Papier & Schreibwaren": "Papier & Schreibwaren",
+            "Haushalt": "Haushalt",
+            "Getränke": "Getränke",
+            "Molkerei": "Molkerei",
+            "Backwaren": "Backwaren",
+            "Fleisch": "Fleisch",
+            "Trockenwaren": "Trockenwaren",
+            "Süßwaren": "Süßwaren",
+            "Gewürze": "Gewürze",
+            "Effektive Mikroorganismen": "Effektive Mikroorganismen",
+            "EM": "Effektive Mikroorganismen",
+            "EM Keramik": "Effektive Mikroorganismen",
+            "Tabakwaren": "Tabakwaren"
+        }
+
+        for item in all_items:
+            artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
+            bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
+            preis = item.get("cr5d4_vk_dorf", 0)
+            uvp_preis = item.get("cr5d4_uvp_total")
+            warengruppe_bez = item.get("cr5d4_warengruppebez", "")
+
+            # Warengruppe aus WarengruppeBez verwenden, falls vorhanden
+            if warengruppe_bez:
+                warengruppe = wg_name_mapping.get(warengruppe_bez, warengruppe_bez)
+            else:
+                warengruppe = "Sonstiges"
+
+            # Discount berechnen: ((uvp - vk) / uvp) * 100
+            discount = 0
+            if uvp_preis and uvp_preis > 0 and preis > 0:
+                discount = ((uvp_preis - preis) / uvp_preis) * 100
+
+            # Nur Artikel mit mindestens 5% Ersparnis aufnehmen
+            if discount < 5:
+                continue
+
+            if warengruppe not in groups:
+                groups[warengruppe] = []
+
+            groups[warengruppe].append({
+                "artikelnummer": artikelnummer,
+                "bezeichnung": bezeichnung,
+                "vk": preis,
+                "uvp": uvp_preis,
+                "discount": discount,
+                "angebot": False,
+                "angebot_statt": None,
+                "angebot_preis": None
+            })
+
+        total_items = sum(len(v) for v in groups.values())
+        from datetime import datetime
+        result = {
+            "groups": groups,
+            "total": total_items,
+            "warengruppen": len(groups),
+            "generated": datetime.now().isoformat()
+        }
+        return create_response(result, 200)
     except Exception as e:
         return create_response({"success": False, "error": str(e)}, 500)
 
