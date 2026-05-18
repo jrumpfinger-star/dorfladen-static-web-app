@@ -65,7 +65,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     groups[warengruppe_bez].append({
                         "artikelnummer": artikelnummer,
                         "bezeichnung": bezeichnung,
-                        "preis": preis
+                        "vk": preis
                     })
                     total += 1
             from datetime import datetime
