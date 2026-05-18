@@ -67,7 +67,7 @@ document.head.appendChild(msalScript);
   .cms-btn-preview svg{width:16px;height:16px;fill:#fff}
   @keyframes cmsFadeIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
   .cms-modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}
-  .cms-modal{background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.22);width:100%;max-width:1000px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;padding:28px;animation:cmsFadeIn .2s;font-family:"Segoe UI",Verdana,Arial,sans-serif}
+  .cms-modal{background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.22);width:100%;max-width:1000px;max-height:92vh;display:flex;flex-direction:column;overflow-y:auto;padding:28px;animation:cmsFadeIn .2s;font-family:"Segoe UI",Verdana,Arial,sans-serif}
   .cms-modal h3{font-size:18px;font-weight:700;margin:0 0 18px;color:#111827;letter-spacing:-.2px}
   .cms-hours-row{display:flex;align-items:center;gap:8px;padding:8px 16px;flex-wrap:wrap;border-bottom:1px solid #f3f4f6}
   .cms-hours-row:last-child{border-bottom:none}
@@ -1137,7 +1137,7 @@ document.head.appendChild(msalScript);
     html+='<strong style="font-size:13px;color:#374151;font-family:Segoe UI,Verdana,Arial,sans-serif">Artikel</strong>';
     html+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button" style="font-family:Segoe UI,Verdana,Arial,sans-serif">+ Artikel</button>';
     html+='</div>';
-    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto;overflow-x:hidden;margin-bottom:14px;min-height:300px;padding:4px 2px"></div>';
+    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:8px;flex:1;overflow:visible;margin-bottom:14px;min-height:300px;padding:4px 2px"></div>';
     html+='<div style="display:flex;gap:10px;flex-shrink:0;padding-top:12px;border-top:1px solid #e5e7eb">';
     html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion" style="padding:10px 24px;font-size:14px">💾 Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal" style="padding:10px 20px;font-size:14px">Abbrechen</button>';
