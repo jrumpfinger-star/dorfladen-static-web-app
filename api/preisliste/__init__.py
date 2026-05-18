@@ -1,8 +1,15 @@
 import azure.functions as func
 import json
 import os
+import re
 import msal
 import requests
+
+def normalize_warengruppe(name):
+    """Merge groups that differ only by MwSt rate or date suffix."""
+    name = re.sub(r'\s*\(?\d+%\)?', '', name)   # remove 7%, 19%, (7%), (19%)
+    name = re.sub(r'\s+Bis\s+\d{4}.*$', '', name, flags=re.IGNORECASE)  # remove 'Bis 2025'
+    return name.strip()
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
@@ -60,6 +67,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 preis = item.get("cr5d4_vk_dorf", 0)
                 warengruppe_bez = item.get("cr5d4_warengruppebez", "")
                 if warengruppe_bez:
+                    warengruppe_bez = normalize_warengruppe(warengruppe_bez) or warengruppe_bez
                     if warengruppe_bez not in groups:
                         groups[warengruppe_bez] = []
                     groups[warengruppe_bez].append({
