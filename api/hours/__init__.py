@@ -35,7 +35,7 @@ def get_headers(url_setting_name="DV_DEFAULT_URL"):
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS, DELETE",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS, DELETE",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
         "Content-Type": "application/json; charset=utf-8"
@@ -49,12 +49,45 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     record_id = req.route_params.get("id")
 
-    if req.method == "PATCH" and record_id:
+    if req.method == "PATCH":
         try:
             headers = get_headers("DV_DEFAULT_URL")
             default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
             body = req.get_json()
-            patch_url = f"{default_url}/api/data/v9.2/dl_oeffnungszeits({record_id})"
+            resolved_id = record_id
+
+            if not resolved_id:
+                day = body.get("dl_wochentag")
+                name = body.get("dl_name")
+                if day is not None and name:
+                    safe_name = str(name).replace("'", "''")
+                    lookup_url = (
+                        f"{default_url}/api/data/v9.2/dl_oeffnungszeits"
+                        f"?$filter=dl_wochentag eq {int(day)} and dl_name eq '{safe_name}'"
+                        f"&$top=1"
+                    )
+                    lr = requests.get(lookup_url, headers=headers)
+                    if lr.status_code == 200:
+                        vals = lr.json().get("value", [])
+                        if vals:
+                            rec = vals[0]
+                            resolved_id = rec.get("dl_oeffnungszeitid") or rec.get("dl_oeffnungszeitsid")
+                            if not resolved_id:
+                                for key, value in rec.items():
+                                    lk = key.lower()
+                                    if lk.startswith("dl_oeffnungszeit") and lk.endswith("id") and value:
+                                        resolved_id = value
+                                        break
+
+            if not resolved_id:
+                return func.HttpResponse(
+                    json.dumps({"success": False, "error": "No record id resolved for opening hours update"}, ensure_ascii=False),
+                    status_code=400,
+                    mimetype="application/json",
+                    headers=get_cors_headers()
+                )
+
+            patch_url = f"{default_url}/api/data/v9.2/dl_oeffnungszeits({resolved_id})"
             patch_headers = {**headers, "If-Match": "*"}
             r = requests.patch(patch_url, headers=patch_headers, json=body)
             if r.status_code in (200, 204):

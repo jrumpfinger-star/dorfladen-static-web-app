@@ -1600,7 +1600,7 @@ document.head.appendChild(msalScript);
         hours=[];
         (data.data||data.value||[]).forEach(function(h){
           hours.push({
-            id:h.dl_oeffnungszeitid,
+            id:h.id||h.dl_oeffnungszeitid||h.dl_oeffnungszeitsid||'',
             name:h.dl_name||'',
             wochentag:h.dl_wochentag,
             vormittag_von:h.dl_vormittag_von||'',
@@ -1665,6 +1665,8 @@ document.head.appendChild(msalScript);
       rows.forEach(function(row){
         var id=row.dataset.hid;
         var body={
+          dl_name:(row.closest('.cms-card')&&row.closest('.cms-card').querySelector('.cms-card-header')?row.closest('.cms-card').querySelector('.cms-card-header').textContent.trim():null),
+          dl_wochentag:(function(){var d=row.querySelector('.cms-hours-day');var m={'Mo':101000,'Di':101001,'Mi':101002,'Do':101003,'Fr':101004,'Sa':101005,'So':101006};return d&&m[d.textContent]?m[d.textContent]:null;})(),
           dl_geschlossen:row.querySelector('.h-closed').checked,
           dl_vormittag_von:row.querySelector('.h-vm-von').value||null,
           dl_vormittag_bis:row.querySelector('.h-vm-bis').value||null,

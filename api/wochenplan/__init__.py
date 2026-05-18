@@ -46,9 +46,9 @@ DAY_LABELS = {101000: "Montag", 101001: "Dienstag", 101002: "Mittwoch", 101003: 
 
 def _serialize_item(item):
     return {
-        "id": item.get("dl_wochenplansid"),
-        "dl_wochenplanid": item.get("dl_wochenplansid"),
-        "dl_wochenplansid": item.get("dl_wochenplansid"),
+        "id": item.get("dl_wochenplanid"),
+        "dl_wochenplanid": item.get("dl_wochenplanid"),
+        "dl_wochenplansid": item.get("dl_wochenplanid"),
         "gericht": item.get("dl_gericht", ""),
         "dl_gericht": item.get("dl_gericht", ""),
         "wochentag": item.get("dl_wochentag"),
@@ -86,7 +86,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     params[key] = value
 
             if "$select" not in params:
-                params["$select"] = "dl_wochenplansid,dl_gericht,dl_wochentag,dl_datum,dl_preis,dl_beschreibung,dl_kalenderwoche,dl_jahr,dl_status"
+                params["$select"] = "dl_wochenplanid,dl_gericht,dl_wochentag,dl_datum,dl_preis,dl_beschreibung,dl_kalenderwoche,dl_jahr,dl_status"
             if "$orderby" not in params:
                 params["$orderby"] = "dl_datum asc"
             if "$filter" not in params:
