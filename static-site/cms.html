@@ -15,7 +15,7 @@
 // MSAL optional - load only if needed for SharePoint images
 window.msalLoaded = false;
 var msalScript = document.createElement('script');
-msalScript.src = 'https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js';
+msalScript.src = 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.0/lib/msal-browser.min.js';
 msalScript.onload = function() { window.msalLoaded = true; };
 msalScript.onerror = function() { console.warn('MSAL script failed to load - SharePoint images will not work'); };
 document.head.appendChild(msalScript);
@@ -1365,7 +1365,7 @@ document.head.appendChild(msalScript);
     console.log('[CMS] Fetching image for article:',artnr);
     return getGraphToken().then(function(token){
       console.log('[CMS] Got Graph token');
-      return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/root/children',{
+      return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+SP_FOLDER+'/children',{
         headers:{'Authorization':'Bearer '+token}
       }).then(function(r){
         if(!r.ok) throw new Error('Drive query failed: '+r.status);
