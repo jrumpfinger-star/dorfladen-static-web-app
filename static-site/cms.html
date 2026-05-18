@@ -21,7 +21,7 @@ msalScript.onerror = function() { console.warn('MSAL script failed to load - Sha
 document.head.appendChild(msalScript);
 </script>
 <style>
-  .cms-wrap{font-family:Georgia,"Segoe UI",serif;max-width:900px;margin:0 auto;padding:16px}
+  .cms-wrap{font-family:"Segoe UI",Verdana,Arial,sans-serif;max-width:1000px;margin:0 auto;padding:16px}
   .cms-tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:20px}
   .cms-tab{padding:10px 20px;font-size:14px;font-weight:600;color:#6b7280;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
   .cms-tab.active{color:#15803d;border-bottom-color:#16a34a}
@@ -42,7 +42,8 @@ document.head.appendChild(msalScript);
   .cms-btn .cms-btn-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:cms-spin .6s linear infinite;margin-right:2px}
   .cms-rte-btn{background:#fff;border:1px solid #d1d5db;border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;font-family:inherit}
   .cms-rte-btn:hover{background:#e5e7eb}
-  .cms-input{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit}
+  .cms-input{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:"Segoe UI",Verdana,Arial,sans-serif;background:#fff}
+  .cms-input::placeholder{color:#9ca3af}
   .cms-input:focus{outline:none;border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.15)}
   .cms-grid{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:12px}
   .cms-meal{border:1px solid #e5e7eb;border-radius:10px;background:#fff;overflow:hidden}
@@ -66,7 +67,7 @@ document.head.appendChild(msalScript);
   .cms-btn-preview svg{width:16px;height:16px;fill:#fff}
   @keyframes cmsFadeIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
   .cms-modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}
-  .cms-modal{background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px;animation:cmsFadeIn .2s}
+  .cms-modal{background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:1000px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;padding:24px;animation:cmsFadeIn .2s}
   .cms-modal h3{font-size:16px;font-weight:700;margin:0 0 16px;color:#1f2937}
   .cms-hours-row{display:flex;align-items:center;gap:8px;padding:8px 16px;flex-wrap:wrap;border-bottom:1px solid #f3f4f6}
   .cms-hours-row:last-child{border-bottom:none}
@@ -94,8 +95,10 @@ document.head.appendChild(msalScript);
   .cms-ang-row-num{position:absolute;top:-9px;left:10px;background:#22c55e;color:#fff;font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;line-height:16px}
   .cms-ang-row-close{position:absolute;top:4px;right:8px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px}
   .cms-ang-row-close:hover{color:#ef4444}
-  .cms-ang-fields{display:grid;grid-template-columns:3fr 2fr 2fr 1.5fr 1.5fr;gap:6px;align-items:start}
+  .cms-ang-fields{display:grid;grid-template-columns:2.5fr 1.8fr 1.2fr 1.2fr 1fr;gap:8px;align-items:start;margin-bottom:8px}
   .cms-ang-fields > *{min-width:0;box-sizing:border-box}
+  .cms-ang-row-img{grid-column:1/-1;display:flex;align-items:center;gap:8px}
+  .cms-ang-row-img input{flex:1}
   .cms-ang-img-row{display:flex;align-items:center;gap:8px;margin-top:6px}
   .cms-ang-img-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:11px;color:#6b7280;background:#fff;border:1px dashed #d1d5db;border-radius:6px;cursor:pointer;transition:border-color .15s}
   .cms-ang-img-btn:hover{border-color:#558b2f;color:#558b2f}
@@ -104,9 +107,9 @@ document.head.appendChild(msalScript);
   .cms-ang-img-remove{font-size:14px;color:#9ca3af;cursor:pointer;line-height:1;padding:2px}
   .cms-ang-img-remove:hover{color:#ef4444}
   .cms-ang-fields-2{display:none}
-  .cms-art-wrap{position:relative}
-  .cms-art-dd{display:none;position:absolute;z-index:50;left:0;right:0;top:100%;margin-top:2px;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:250px;overflow-y:auto}
-  .cms-art-dd.flip{top:auto;bottom:100%;margin-top:0;margin-bottom:2px}
+  .cms-art-wrap{position:relative;width:100%}
+  .cms-art-input{position:relative}
+  .cms-art-dd{display:none;position:absolute;z-index:99;left:0;right:0;top:calc(100% + 2px);background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:220px;overflow-y:auto}
   .cms-art-dd.open{display:block}
   .cms-art-opt{padding:8px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px}
   .cms-art-opt:last-child{border-bottom:none}
@@ -917,32 +920,26 @@ document.head.appendChild(msalScript);
   // --- Load Artikel Data from Azure Function API ---  
   async function loadArtikelData() {
     try {
-      // Load Angebote from Azure Function
       const angeboteResponse = await fetch(API + '/angebote');
-      
       if (!angeboteResponse.ok) {
         console.error('API request failed:', angeboteResponse.status, angeboteResponse.statusText);
         return;
       }
-      
       const responseText = await angeboteResponse.text();
       console.log('API Response:', responseText);
-      
       const angeboteData = JSON.parse(responseText);
-      
       if (angeboteData.success && (angeboteData.data||angeboteData.value)) {
-        // Transform Angebote to Artikel format
-        const artikelData = (angeboteData.data||angeboteData.value).map(item => ({
-          b: item.name,
-          bt: item.name,
-          nr: item.aktion_id,
-          p: item.price,
-          wg: 'angebot'
-        }));
-        
-        console.log('Transformed artikel data:', artikelData);
-        
-        // Update cms-artikel-data script
+        const items = angeboteData.data||angeboteData.value;
+        const artikelData = items.map(item => ({
+          b: item.name || item.produkt || '',
+          bt: item.name || item.produkt || '',
+          nr: item.aktion_id || item.artikelnummer || '',
+          p: item.price || 0,
+          wg: 'angebot',
+          produktVal: item.name || item.produkt || ''
+        })).filter(a => a.b.length > 0);
+        _artikelCache = artikelData;
+        console.log('[CMS] Artikel cache loaded:', _artikelCache.length, 'items', _artikelCache);
         const artikelScript = document.getElementById('cms-artikel-data');
         if (artikelScript) {
           artikelScript.textContent = JSON.stringify(artikelData);
@@ -1090,19 +1087,19 @@ document.head.appendChild(msalScript);
       +'<button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
       +'<div class="cms-ang-fields">'
       +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
-      +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt/Artikel" value="'+produktVal+'" autocomplete="off"><div class="cms-art-dd"></div></div>'
-      +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
-      +'<input class="cms-input cms-price" data-f="preis" placeholder="VK" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
-      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="Art.Nr." value="'+esc((item&&item.artikelnummer)||'')+'">'
-      +'<div style="grid-column:1/-1;display:flex;align-items:center;gap:6px"><input class="cms-input" data-f="bild_data" placeholder="Bild (optional)" value="'+esc((item&&item.bild_data)||'')+'"><button class="cms-btn cms-btn-sm cms-btn-gray" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" type="button" title="Bild von SharePoint laden">🔍</button></div>'
+      +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt/Artikel eingeben..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
+      +'<input class="cms-input" data-f="details" placeholder="Details/Beschr." value="'+esc((item&&item.details)||'')+'">'
+      +'<input class="cms-input cms-price" data-f="preis" placeholder="VK €" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
+      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion €" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
+      +'<input class="cms-input" data-f="artikelnummer" placeholder="Nr." value="'+esc((item&&item.artikelnummer)||'')+'">'
+      +'<div class="cms-ang-row-img"><input class="cms-input" data-f="bild_data" placeholder="Bild (optional)" value="'+esc((item&&item.bild_data)||'')+'" readonly><button class="cms-btn cms-btn-sm cms-btn-gray" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" type="button" title="Bild von SharePoint laden (nach Art.Nr.)">🔍</button></div>'
       +'</div>';
     c.appendChild(row);
     var prodInp=row.querySelector('.cms-art-input');
     if(prodInp){
-      prodInp.addEventListener('input',function(){artSearchFilter(this);});
-      prodInp.addEventListener('blur',function(){setTimeout(function(){var dd=prodInp.nextElementSibling;if(dd)dd.classList.remove('open');},100);});
-      prodInp.addEventListener('focus',function(){artSearchFilter(prodInp);});
+      prodInp.addEventListener('input',function(e){console.log('[CMS] Input:',this.value);artSearchFilter(this);});
+      prodInp.addEventListener('focus',function(){artSearchFilter(this);});
+      prodInp.addEventListener('blur',function(){setTimeout(function(){var wrap=prodInp.parentElement;if(wrap){var dd=wrap.querySelector('.cms-art-dd');if(dd)dd.classList.remove('open');}},150);});
     }
     renumberAngRows();
   }
@@ -1152,27 +1149,31 @@ document.head.appendChild(msalScript);
   };
 
   function artSearchFilter(inp){
+    if(!inp) return;
     var val=(inp.value||'').trim().toLowerCase();
-    var dd=inp.nextElementSibling;
-    if(!dd || !dd.classList.contains('cms-art-dd')) dd=inp.parentElement.querySelector('.cms-art-dd');
+    var wrap=inp.parentElement;
+    if(!wrap || !wrap.classList.contains('cms-art-wrap')) return;
+    var dd=wrap.querySelector('.cms-art-dd');
     if(!dd) return;
     dd.innerHTML='';
     if(val.length<1){dd.classList.remove('open');return;}
     var matches=_artikelCache.filter(function(a){
-      var name=(a.b||a.name||'').toLowerCase(),nr=(a.nr||'').toLowerCase();
+      var name=(a.b||a.produktVal||'').toLowerCase(),nr=(a.nr||'').toLowerCase();
       return name.indexOf(val)>=0 || nr.indexOf(val)>=0;
-    }).slice(0,10);
-    if(matches.length===0){dd.classList.remove('open');return;}
+    }).slice(0,12);
+    if(matches.length===0){dd.classList.remove('open');console.log('[CMS] No matches for:',val);return;}
+    console.log('[CMS] Search matches for',val,': found',matches.length);
     matches.forEach(function(m){
       var opt=document.createElement('div');
       opt.className='cms-art-opt';
-      opt.innerHTML='<div class="cms-art-opt-name">'+esc(m.b||m.name||'')+'</div><div class="cms-art-opt-meta">'+esc(m.nr||'')+'</div>';
+      opt.innerHTML='<div class="cms-art-opt-name">'+esc(m.b||m.produktVal||'')+'</div><div class="cms-art-opt-meta">'+esc(m.nr||'')+'</div>';
       opt.addEventListener('click',function(){
         var row=inp.closest('.cms-ang-row');
         if(row){
-          inp.value=m.b||m.name||'';
+          inp.value=m.b||m.produktVal||'';
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
           if(nrInp) nrInp.value=m.nr||'';
+          console.log('[CMS] Selected article:',m.b,'Nr:',m.nr);
         }
         dd.classList.remove('open');
       });
@@ -1186,14 +1187,21 @@ document.head.appendChild(msalScript);
     if(!row) return;
     var nrInp=row.querySelector('[data-f="artikelnummer"]');
     var bildInp=row.querySelector('[data-f="bild_data"]');
-    var artnr=(nrInp&&nrInp.value||'').trim();
-    if(!artnr){toast('Bitte Artikelnummer eintragen','warn');return;}
+    var prodInp=row.querySelector('[data-f="produkt"]');
+    var artnr=((nrInp&&nrInp.value)||'').trim();
+    if(!artnr && prodInp){
+      var prod=prodInp.value.trim().toLowerCase();
+      var match=_artikelCache.find(function(a){return (a.b||a.produktVal||'').toLowerCase()===prod;});
+      if(match) artnr=match.nr||'';
+    }
+    if(!artnr){toast('Bitte Artikelnummer oder Produkt ausfüllen','warn');return;}
     var btn=row.querySelector('[data-action="loadBildSharePoint"]');
     if(btn){btn.disabled=true;btn.textContent='⏳';}
+    console.log('[CMS] Loading image for article:',artnr);
     loadImageFromSharePoint(artnr).then(function(b64){
-      if(b64 && bildInp){bildInp.value=b64;toast('Bild geladen');}
-      else toast('Bild nicht gefunden','warn');
-    }).catch(function(e){toast('Fehler: '+e.message,'error');}).then(function(){
+      if(b64 && bildInp){bildInp.value=b64;toast('Bild von SharePoint geladen!');console.log('[CMS] Image set to input field');}
+      else {toast('Bild nicht in SharePoint gefunden','warn');console.log('[CMS] No image found');}
+    }).catch(function(e){toast('Fehler beim Laden: '+e.message,'error');console.error(e);}).then(function(){
       if(btn){btn.disabled=false;btn.textContent='🔍';}
     });
   };
@@ -1329,21 +1337,45 @@ document.head.appendChild(msalScript);
 
   function loadImageFromSharePoint(artnr){
     if(!artnr || !msalApp) return Promise.resolve(null);
+    console.log('[CMS] Fetching image for article:',artnr);
     return getGraphToken().then(function(token){
+      console.log('[CMS] Got Graph token');
       return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/root/children',{
         headers:{'Authorization':'Bearer '+token}
-      }).then(function(r){return r.json();});
+      }).then(function(r){
+        if(!r.ok) throw new Error('Drive query failed: '+r.status);
+        return r.json();
+      });
     }).then(function(data){
-      var folder=data.value?data.value.find(function(f){return f.name===artnr||f.name===artnr+'.jpg'||f.name===artnr+'.png';}):null;
-      if(!folder || !folder.id) return null;
+      if(!data || !data.value || data.value.length===0) {
+        console.warn('[CMS] No items found in SharePoint drive');
+        return null;
+      }
+      var fname=artnr.toLowerCase();
+      var folder=data.value.find(function(f){
+        var name=(f.name||'').toLowerCase();
+        return name===fname || name===fname+'.jpg' || name===fname+'.png' || name===fname+'.jpeg';
+      });
+      if(!folder || !folder.id) {
+        console.warn('[CMS] Image file not found for',artnr,' in',data.value.map(f=>f.name));
+        return null;
+      }
+      console.log('[CMS] Found image file:',folder.name);
       return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folder.id+'/content',{
         headers:{'Authorization':'Bearer '+token}
-      }).then(function(r){return r.arrayBuffer();}).then(function(buf){
-        var b64='data:image/jpeg;base64,'+btoa(String.fromCharCode.apply(null,new Uint8Array(buf)));
+      }).then(function(r){
+        if(!r.ok) throw new Error('File download failed: '+r.status);
+        return r.arrayBuffer();
+      }).then(function(buf){
+        var arr=new Uint8Array(buf);
+        var binaryStr='';
+        for(var i=0;i<arr.length;i++) binaryStr+=String.fromCharCode(arr[i]);
+        var b64='data:image/jpeg;base64,'+btoa(binaryStr);
+        console.log('[CMS] Image loaded successfully,',buf.byteLength,'bytes');
         return b64;
       });
     }).catch(function(e){
-      console.warn('SharePoint image load failed',artnr,e);
+      console.error('[CMS] SharePoint image load error for '+artnr,e);
       return null;
     });
   }
