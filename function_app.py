@@ -54,7 +54,7 @@ def get_headers(url_setting_name="DV_DEV_URL"):
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS, DELETE",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS, DELETE, PATCH",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
         "Content-Type": "application/json; charset=utf-8"
@@ -179,10 +179,13 @@ def news(req: func.HttpRequest) -> func.HttpResponse:
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
+        # CMS passes ?all=true to get all news including inactive
+        show_all = req.params.get("all", "").lower() == "true"
+        filter_clause = "" if show_all else "&$filter=dl_status eq 101001"
         url = (
             f"{default_url}/api/data/v9.2/dl_news"
             f"?$select=dl_titel,dl_kurztext,dl_inhalt,dl_datum,createdon,dl_status"
-            f"&$filter=dl_status eq 101001"
+            f"{filter_clause}"
             f"&$orderby=dl_datum desc"
         )
         r = requests.get(url, headers=headers)
@@ -200,10 +203,105 @@ def news(req: func.HttpRequest) -> func.HttpResponse:
                     "dl_inhalt": item.get("dl_inhalt", ""),
                     "datum": item.get("dl_datum") or item.get("createdon"),
                     "dl_datum": item.get("dl_datum"),
-                    "createdon": item.get("createdon")
+                    "createdon": item.get("createdon"),
+                    "status": item.get("dl_status")
                 })
             return create_response({"success": True, "data": news_list}, 200)
         return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
+    except Exception as e:
+        return create_response({"success": False, "error": str(e)}, 500)
+
+@app.route(route="news-save", methods=["POST", "OPTIONS"])
+def news_save(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=get_cors_headers())
+    try:
+        body = req.get_json()
+        headers = get_headers("DV_DEFAULT_URL")
+        default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
+        record_id = body.get("id")
+        payload = {
+            "dl_titel": body.get("titel", ""),
+            "dl_kurztext": body.get("kurztext", ""),
+            "dl_inhalt": body.get("inhalt", ""),
+            "dl_status": body.get("status", 101001)
+        }
+        if body.get("datum"):
+            payload["dl_datum"] = body["datum"]
+        if record_id:
+            # Update existing
+            url = f"{default_url}/api/data/v9.2/dl_news({record_id})"
+            r = requests.patch(url, headers=headers, json=payload)
+            if r.status_code == 204:
+                return create_response({"success": True, "id": record_id}, 200)
+            return create_response({"success": False, "error": f"Dataverse error: {r.status_code} {r.text}"}, r.status_code)
+        else:
+            # Create new
+            from datetime import date
+            if "dl_datum" not in payload:
+                payload["dl_datum"] = date.today().isoformat()
+            url = f"{default_url}/api/data/v9.2/dl_news"
+            r = requests.post(url, headers=headers, json=payload)
+            if r.status_code in (200, 201, 204):
+                new_id = None
+                if r.headers.get("OData-EntityId"):
+                    import re
+                    m = re.search(r'\(([^)]+)\)', r.headers["OData-EntityId"])
+                    if m:
+                        new_id = m.group(1)
+                return create_response({"success": True, "id": new_id}, 200)
+            return create_response({"success": False, "error": f"Dataverse error: {r.status_code} {r.text}"}, r.status_code)
+    except Exception as e:
+        return create_response({"success": False, "error": str(e)}, 500)
+
+@app.route(route="news-delete", methods=["DELETE", "OPTIONS"])
+def news_delete(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=get_cors_headers())
+    try:
+        record_id = req.params.get("id")
+        if not record_id:
+            return create_response({"success": False, "error": "Fehlender Parameter 'id'"}, 400)
+        headers = get_headers("DV_DEFAULT_URL")
+        default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
+        url = f"{default_url}/api/data/v9.2/dl_news({record_id})"
+        r = requests.delete(url, headers=headers)
+        if r.status_code == 204:
+            return create_response({"success": True}, 200)
+        return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
+    except Exception as e:
+        return create_response({"success": False, "error": str(e)}, 500)
+
+@app.route(route="cms-config-save", methods=["POST", "OPTIONS"])
+def cms_config_save(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=get_cors_headers())
+    try:
+        body = req.get_json()
+        items = body.get("items", [])
+        headers = get_headers("DV_DEV_URL")
+        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
+        errors = []
+        for item in items:
+            record_id = item.get("id")
+            wert = item.get("wert", "")
+            if isinstance(wert, (dict, list)):
+                wert = json.dumps(wert, ensure_ascii=False)
+            payload = {"dl_wert": str(wert)}
+            if record_id:
+                url = f"{dev_url}/api/data/v9.2/dl_seiteninhalts({record_id})"
+                r = requests.patch(url, headers=headers, json=payload)
+                if r.status_code != 204:
+                    errors.append(f"{item.get('name','?')}: {r.status_code}")
+            else:
+                payload["dl_name"] = item.get("name", "")
+                url = f"{dev_url}/api/data/v9.2/dl_seiteninhalts"
+                r = requests.post(url, headers=headers, json=payload)
+                if r.status_code not in (200, 201, 204):
+                    errors.append(f"{item.get('name','?')}: {r.status_code}")
+        if errors:
+            return create_response({"success": False, "error": "; ".join(errors)}, 500)
+        return create_response({"success": True}, 200)
     except Exception as e:
         return create_response({"success": False, "error": str(e)}, 500)
 
@@ -216,6 +314,17 @@ def cms_config(req: func.HttpRequest) -> func.HttpResponse:
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
+            # If ?full=true, return items with IDs for editing
+            if req.params.get("full", "").lower() == "true":
+                items = []
+                for item in data.get("value", []):
+                    if item.get("dl_name"):
+                        items.append({
+                            "id": item.get("dl_seiteninhaltsid") or item.get("dl_seiteninhaltheid"),
+                            "name": item.get("dl_name", ""),
+                            "wert": parse_config_value(item.get("dl_wert", ""))
+                        })
+                return create_response({"success": True, "data": items}, 200)
             config = {
                 item.get("dl_name", ""): parse_config_value(item.get("dl_wert", ""))
                 for item in data.get("value", [])
@@ -281,96 +390,108 @@ def preisliste(req: func.HttpRequest) -> func.HttpResponse:
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez&$orderby=cr5d4_artikelbezeichnung asc"
-        r = requests.get(url, headers=headers)
-        if r.status_code == 200:
+        
+        # ArtikelStamm mit UVP laden (mit Paging)
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$orderby=cr5d4_artikelbezeichnung asc"
+        all_items = []
+        while url:
+            r = requests.get(url, headers=headers)
+            if r.status_code != 200:
+                return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
             data = r.json()
-            items = data.get("value", [])
-            
-            # Gruppieren nach Warengruppen (basierend auf WarengruppeBez)
-            groups = {}
-            for item in items:
-                artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
-                bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
-                preis = item.get("cr5d4_vk_dorf", 0)
-                warengruppe_bez = item.get("cr5d4_warengruppebez", "")
-                
-                # Warengruppe aus WarengruppeBez verwenden, falls vorhanden
-                if warengruppe_bez:
-                    # Warengruppen-Namen normalisieren und zusammenfassen
-                    wg_name_mapping = {
-                        "Obst": "Obst",
-                        "Gemüse": "Gemüse",
-                        "Obst & Gemüse": "Obst",
-                        "Gemüse & Obst": "Obst",
-                        "Sonstiges": "Sonstiges",
-                        "Sonstiges 19%": "Sonstiges",
-                        "Sonstiges 7%": "Sonstiges",
-                        "Mittagessen": "Mittagessen",
-                        "Mittagessen 7%": "Mittagessen",
-                        "Mittagessen 7% MwSt": "Mittagessen",
-                        "Kuchen": "Kuchen",
-                        "Honig & Marmelade": "Honig & Marmelade",
-                        "Papier & Schreibwaren": "Papier & Schreibwaren",
-                        "Haushalt": "Haushalt",
-                        "Getränke": "Getränke",
-                        "Molkerei": "Molkerei",
-                        "Backwaren": "Backwaren",
-                        "Fleisch": "Fleisch",
-                        "Trockenwaren": "Trockenwaren",
-                        "Süßwaren": "Süßwaren",
-                        "Gewürze": "Gewürze",
-                        "Effektive Mikroorganismen": "Effektive Mikroorganismen",
-                        "EM": "Effektive Mikroorganismen",
-                        "EM Keramik": "Effektive Mikroorganismen",
-                        "Cafeteria": "Cafeteria",
-                        "Cafeteria 1": "Cafeteria",
-                        "Cafeteria 2": "Cafeteria"
-                    }
-                    warengruppe = wg_name_mapping.get(warengruppe_bez, warengruppe_bez)
-                # Fallback: Warengruppe aus Artikelnummer ableiten (erste 2-3 Ziffern)
-                elif artikelnummer and len(artikelnummer) >= 3:
-                    try:
-                        wg_num = int(artikelnummer[:3])
-                        wg_mapping = {
-                            100: "Getränke",
-                            200: "Molkerei",
-                            300: "Backwaren",
-                            400: "Fleisch",
-                            500: "Gemüse",
-                            600: "Obst",
-                            700: "Trockenwaren",
-                            800: "Süßwaren",
-                            900: "Gewürze"
+            all_items.extend(data.get("value", []))
+            url = data.get("@odata.nextLink", None)
+        
+        # Aktive Angebote laden
+        ang_url = f"{default_url}/api/data/v9.2/dl_angebotes?$filter=dl_status eq 101001&$select=dl_artikelnummer,dl_produkt,dl_preis,dl_statt_preis"
+        angebote_map = {}
+        try:
+            ar = requests.get(ang_url, headers=headers)
+            if ar.status_code == 200:
+                for ang in ar.json().get("value", []):
+                    artnr = ang.get("dl_artikelnummer", "")
+                    if artnr:
+                        angebote_map[artnr] = {
+                            "preis": ang.get("dl_preis", 0),
+                            "statt": ang.get("dl_statt_preis", 0)
                         }
-                        warengruppe = wg_mapping.get(wg_num, "Sonstiges")
-                    except:
-                        warengruppe = "Sonstiges"
-                else:
-                    warengruppe = "Sonstiges"
-                
-                if warengruppe not in groups:
-                    groups[warengruppe] = []
-                
-                groups[warengruppe].append({
-                    "artikelnummer": artikelnummer,
-                    "bezeichnung": bezeichnung,
-                    "vk": preis,
-                    "uvp": None,
-                    "angebot": False,
-                    "angebot_statt": None,
-                    "angebot_preis": None
-                })
+        except:
+            pass
+        
+        # Warengruppen-Mapping
+        wg_name_mapping = {
+            "Obst": "Obst",
+            "Gemüse": "Gemüse",
+            "Obst & Gemüse": "Obst",
+            "Gemüse & Obst": "Obst",
+            "Sonstiges": "Sonstiges",
+            "Sonstiges 19%": "Sonstiges",
+            "Sonstiges 7%": "Sonstiges",
+            "Mittagessen": "Mittagessen",
+            "Mittagessen 7%": "Mittagessen",
+            "Mittagessen 7% MwSt": "Mittagessen",
+            "Kuchen": "Kuchen",
+            "Honig & Marmelade": "Honig & Marmelade",
+            "Papier & Schreibwaren": "Papier & Schreibwaren",
+            "Haushalt": "Haushalt",
+            "Getränke": "Getränke",
+            "Molkerei": "Molkerei",
+            "Backwaren": "Backwaren",
+            "Fleisch": "Fleisch",
+            "Trockenwaren": "Trockenwaren",
+            "Süßwaren": "Süßwaren",
+            "Gewürze": "Gewürze",
+            "Effektive Mikroorganismen": "Effektive Mikroorganismen",
+            "EM": "Effektive Mikroorganismen",
+            "EM Keramik": "Effektive Mikroorganismen",
+            "Cafeteria": "Cafeteria",
+            "Cafeteria 1": "Cafeteria",
+            "Cafeteria 2": "Cafeteria",
+            "Tabakwaren": "Tabakwaren"
+        }
             
-            from datetime import datetime
-            result = {
-                "groups": groups,
-                "total": len(items),
-                "warengruppen": len(groups),
-                "generated": datetime.now().isoformat()
-            }
-            return create_response(result, 200)
-        return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
+        # Gruppieren nach Warengruppen
+        groups = {}
+        for item in all_items:
+            artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
+            bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
+            preis = item.get("cr5d4_vk_dorf", 0)
+            uvp_preis = item.get("cr5d4_uvp_total")
+            warengruppe_bez = item.get("cr5d4_warengruppebez", "")
+            
+            if warengruppe_bez:
+                warengruppe = wg_name_mapping.get(warengruppe_bez, warengruppe_bez)
+            else:
+                warengruppe = "Sonstiges"
+            
+            if warengruppe not in groups:
+                groups[warengruppe] = []
+            
+            # Angebot-Status prüfen
+            ang_info = angebote_map.get(artikelnummer)
+            is_angebot = ang_info is not None
+            ang_preis = ang_info["preis"] if ang_info else None
+            ang_statt = ang_info["statt"] if ang_info else None
+            
+            groups[warengruppe].append({
+                "artikelnummer": artikelnummer,
+                "bezeichnung": bezeichnung,
+                "vk": preis,
+                "uvp": uvp_preis,
+                "angebot": is_angebot,
+                "angebot_statt": ang_statt,
+                "angebot_preis": ang_preis
+            })
+        
+        total_items = sum(len(v) for v in groups.values())
+        from datetime import datetime
+        result = {
+            "groups": groups,
+            "total": total_items,
+            "warengruppen": len(groups),
+            "generated": datetime.now().isoformat()
+        }
+        return create_response(result, 200)
     except Exception as e:
         return create_response({"success": False, "error": str(e)}, 500)
 

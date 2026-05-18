@@ -101,7 +101,7 @@ document.head.appendChild(msalScript);
   .cms-ang-row-num{position:absolute;top:-9px;left:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;line-height:16px;letter-spacing:.3px;font-family:"Segoe UI",Verdana,Arial,sans-serif}
   .cms-ang-row-close{position:absolute;top:6px;right:10px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;line-height:1;transition:color .15s}
   .cms-ang-row-close:hover{color:#ef4444}
-  .cms-ang-fields{display:grid;grid-template-columns:2.5fr 1.8fr 1fr 1fr 1fr;gap:10px;align-items:start;margin-bottom:8px}
+  .cms-ang-fields{display:grid;grid-template-columns:2.5fr 1.8fr 1fr 1fr 1fr;gap:16px;align-items:start;margin-bottom:12px}
   .cms-ang-fields > *{min-width:0;box-sizing:border-box}
   .cms-ang-row-img{grid-column:1/-1;display:flex;align-items:center;gap:8px}
   .cms-ang-row-img input{flex:1}
@@ -1365,39 +1365,59 @@ document.head.appendChild(msalScript);
     console.log('[CMS] Fetching image for article:',artnr);
     return getGraphToken().then(function(token){
       console.log('[CMS] Got Graph token');
-      return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+SP_FOLDER+'/children',{
-        headers:{'Authorization':'Bearer '+token}
+      // Search for file by article number in the folder
+      var searchUrl='https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+SP_FOLDER+'/children?$filter=startswith(name,\''+artnr+'\')&$top=5';
+      return fetch(searchUrl,{
+        headers:{'Authorization':'Bearer '+token.accessToken}
       }).then(function(r){
-        if(!r.ok) throw new Error('Drive query failed: '+r.status);
+        if(!r.ok){
+          // Fallback: list all children if $filter not supported
+          console.log('[CMS] Filter not supported, listing all children');
+          return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+SP_FOLDER+'/children?$top=999',{
+            headers:{'Authorization':'Bearer '+token.accessToken}
+          }).then(function(r2){
+            if(!r2.ok) throw new Error('Drive query failed: '+r2.status);
+            return r2.json();
+          });
+        }
         return r.json();
-      });
-    }).then(function(data){
-      if(!data || !data.value || data.value.length===0) {
-        console.warn('[CMS] No items found in SharePoint drive');
-        return null;
-      }
-      var fname=artnr.toLowerCase();
-      var folder=data.value.find(function(f){
-        var name=(f.name||'').toLowerCase();
-        return name===fname || name===fname+'.jpg' || name===fname+'.png' || name===fname+'.jpeg';
-      });
-      if(!folder || !folder.id) {
-        console.warn('[CMS] Image file not found for',artnr,' in',data.value.map(f=>f.name));
-        return null;
-      }
-      console.log('[CMS] Found image file:',folder.name);
-      return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folder.id+'/content',{
-        headers:{'Authorization':'Bearer '+token}
-      }).then(function(r){
-        if(!r.ok) throw new Error('File download failed: '+r.status);
-        return r.arrayBuffer();
-      }).then(function(buf){
-        var arr=new Uint8Array(buf);
-        var binaryStr='';
-        for(var i=0;i<arr.length;i++) binaryStr+=String.fromCharCode(arr[i]);
-        var b64='data:image/jpeg;base64,'+btoa(binaryStr);
-        console.log('[CMS] Image loaded successfully,',buf.byteLength,'bytes');
-        return b64;
+      }).then(function(data){
+        if(!data || !data.value || data.value.length===0) {
+          console.warn('[CMS] No items found in SharePoint drive for',artnr);
+          return null;
+        }
+        var fname=artnr.toLowerCase();
+        var folder=data.value.find(function(f){
+          var name=(f.name||'').toLowerCase().replace(/\.[^.]+$/,'');
+          return name===fname;
+        });
+        if(!folder){
+          // Try partial match
+          folder=data.value.find(function(f){
+            var name=(f.name||'').toLowerCase();
+            return name.indexOf(fname)!==-1;
+          });
+        }
+        if(!folder || !folder.id) {
+          console.warn('[CMS] Image file not found for',artnr,' in',data.value.map(function(f){return f.name;}));
+          return null;
+        }
+        console.log('[CMS] Found image file:',folder.name);
+        return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folder.id+'/content',{
+          headers:{'Authorization':'Bearer '+token.accessToken}
+        }).then(function(r){
+          if(!r.ok) throw new Error('File download failed: '+r.status);
+          return r.arrayBuffer();
+        }).then(function(buf){
+          var arr=new Uint8Array(buf);
+          var binaryStr='';
+          for(var i=0;i<arr.length;i++) binaryStr+=String.fromCharCode(arr[i]);
+          var ext=(folder.name||'').split('.').pop().toLowerCase();
+          var mime=ext==='png'?'image/png':ext==='gif'?'image/gif':'image/jpeg';
+          var b64='data:'+mime+';base64,'+btoa(binaryStr);
+          console.log('[CMS] Image loaded successfully,',buf.byteLength,'bytes');
+          return b64;
+        });
       });
     }).catch(function(e){
       console.error('[CMS] SharePoint image load error for '+artnr,e);
@@ -2059,6 +2079,191 @@ document.head.appendChild(msalScript);
   // --- Homepage Content ---
   var _hpLoaded = false;
   var _hpItems = [];
+
+  function loadHomepage(){
+    var container = document.getElementById('cms-hp-fields');
+    var empty = document.getElementById('cms-hp-empty');
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280">Lade Homepage-Inhalte&hellip;</div>';
+    fetch(API+'/cms-config?full=true')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
+        _hpItems = res.data || [];
+        _hpLoaded = true;
+        if(_hpItems.length===0){container.innerHTML='';empty.style.display='';return;}
+        empty.style.display='none';
+        container.innerHTML = _hpItems.map(function(item){
+          var val = typeof item.wert==='object'?JSON.stringify(item.wert,null,2):String(item.wert||'');
+          var isLong = val.length>100 || val.indexOf('\n')>-1;
+          return '<div class="cms-card"><div class="cms-card-header">'+esc(item.name)+'</div>'
+            +'<div class="cms-card-body">'
+            +(isLong
+              ?'<textarea class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" rows="4" style="width:100%;font-family:monospace;font-size:12px">'+esc(val)+'</textarea>'
+              :'<input class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'" style="width:100%">')
+            +'</div></div>';
+        }).join('');
+      })
+      .catch(function(e){container.innerHTML='<p style="color:#dc2626">Fehler: '+e.message+'</p>';});
+  }
+
+  function saveHomepage(){
+    var fields = document.querySelectorAll('[data-hp-id]');
+    var items = [];
+    fields.forEach(function(el){
+      items.push({id:el.getAttribute('data-hp-id'),name:el.getAttribute('data-hp-name'),wert:el.value});
+    });
+    if(items.length===0){toast('Keine Felder zum Speichern','warning');return;}
+    var btn = document.getElementById('cms-save-hp');
+    if(btn)btn.disabled=true;
+    fetch(API+'/cms-config-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:items})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){toast('Homepage gespeichert!','success');}
+        else{toast('Fehler: '+res.error,'error');}
+      })
+      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .then(function(){if(btn)btn.disabled=false;});
+  }
+
+  // --- Aktuelles / News ---
+  var _newsLoaded = false;
+  var _newsItems = [];
+  var _editingNewsId = null;
+
+  function loadNews(){
+    var container = document.getElementById('cms-news-list');
+    var empty = document.getElementById('cms-news-empty');
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280">Lade Beitr&auml;ge&hellip;</div>';
+    fetch(API+'/news?all=true')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
+        _newsItems = res.data || [];
+        _newsLoaded = true;
+        renderNewsList();
+      })
+      .catch(function(e){container.innerHTML='<p style="color:#dc2626">Fehler: '+e.message+'</p>';});
+  }
+
+  function renderNewsList(){
+    var container = document.getElementById('cms-news-list');
+    var empty = document.getElementById('cms-news-empty');
+    if(_newsItems.length===0){container.innerHTML='';empty.style.display='';return;}
+    empty.style.display='none';
+    container.innerHTML = _newsItems.map(function(n){
+      var isActive = n.status===101001;
+      var dateStr = n.datum?new Date(n.datum).toLocaleDateString('de-DE'):'–';
+      return '<div class="cms-card" style="margin-bottom:10px;opacity:'+(isActive?'1':'0.6')+'">'
+        +'<div class="cms-card-header" style="display:flex;justify-content:space-between;align-items:center">'
+        +'<div><strong>'+esc(n.titel)+'</strong><span style="margin-left:10px;font-size:11px;color:#6b7280">'+dateStr+'</span>'
+        +'<span style="margin-left:8px;font-size:10px;padding:2px 6px;border-radius:4px;background:'+(isActive?'#dcfce7':'#fee2e2')+';color:'+(isActive?'#166534':'#991b1b')+'">'+(isActive?'Aktiv':'Inaktiv')+'</span></div>'
+        +'<div style="display:flex;gap:6px">'
+        +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="toggleNewsStatus" data-id="'+n.id+'">'+(isActive?'Deaktivieren':'Aktivieren')+'</button>'
+        +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editNews" data-id="'+n.id+'">Bearbeiten</button>'
+        +'<button class="cms-btn cms-btn-sm" style="color:#dc2626" data-action="deleteNews" data-id="'+n.id+'">L&ouml;schen</button>'
+        +'</div></div>'
+        +'<div class="cms-card-body"><p style="margin:0;font-size:13px;color:#4b5563">'+esc(n.beschreibung||n.dl_kurztext||'')+'</p></div>'
+        +'</div>';
+    }).join('');
+  }
+
+  function openNewNews(){
+    _editingNewsId = null;
+    showNewsModal('Neuer Beitrag','','','');
+  }
+
+  function editNews(id){
+    var item = _newsItems.find(function(n){return n.id===id;});
+    if(!item){toast('Beitrag nicht gefunden','error');return;}
+    _editingNewsId = id;
+    showNewsModal('Beitrag bearbeiten',item.titel,item.dl_kurztext||item.beschreibung||'',item.dl_inhalt||'');
+  }
+
+  function showNewsModal(title,titel,kurztext,inhalt){
+    var overlay = document.createElement('div');
+    overlay.id='cms-news-modal';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+    overlay.innerHTML='<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto">'
+      +'<h3 style="margin:0 0 16px;font-size:16px;font-weight:700">'+title+'</h3>'
+      +'<label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Titel</label>'
+      +'<input class="cms-input" id="news-edit-titel" value="'+esc(titel)+'" style="width:100%;margin-bottom:12px">'
+      +'<label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Kurztext (Vorschau)</label>'
+      +'<textarea class="cms-input" id="news-edit-kurztext" rows="2" style="width:100%;margin-bottom:12px">'+esc(kurztext)+'</textarea>'
+      +'<label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Inhalt (HTML erlaubt)</label>'
+      +'<textarea class="cms-input" id="news-edit-inhalt" rows="6" style="width:100%;margin-bottom:16px;font-family:monospace;font-size:12px">'+esc(inhalt)+'</textarea>'
+      +'<div style="display:flex;gap:8px;justify-content:flex-end">'
+      +'<button class="cms-btn cms-btn-gray" onclick="document.getElementById(\'cms-news-modal\').remove()">Abbrechen</button>'
+      +'<button class="cms-btn cms-btn-primary" data-action="saveNews">Speichern</button>'
+      +'</div></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  }
+
+  function saveNews(){
+    var titel = document.getElementById('news-edit-titel').value.trim();
+    var kurztext = document.getElementById('news-edit-kurztext').value.trim();
+    var inhalt = document.getElementById('news-edit-inhalt').value.trim();
+    if(!titel){toast('Bitte Titel eingeben','warning');return;}
+    var payload = {titel:titel,kurztext:kurztext,inhalt:inhalt,status:101001};
+    if(_editingNewsId) payload.id = _editingNewsId;
+    fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          toast(_editingNewsId?'Beitrag aktualisiert!':'Beitrag erstellt!','success');
+          var modal=document.getElementById('cms-news-modal');if(modal)modal.remove();
+          _newsLoaded=false;loadNews();
+        } else {toast('Fehler: '+res.error,'error');}
+      })
+      .catch(function(e){toast('Fehler: '+e.message,'error');});
+  }
+
+  function deleteNews(id){
+    var item = _newsItems.find(function(n){return n.id===id;});
+    var name = item?item.titel:'';
+    var overlay = document.createElement('div');
+    overlay.id='cms-news-del-modal';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+    overlay.innerHTML='<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:400px">'
+      +'<h3 style="margin:0 0 12px;font-size:15px">Beitrag l&ouml;schen?</h3>'
+      +'<p style="margin:0 0 16px;font-size:13px;color:#4b5563">&bdquo;'+esc(name)+'&ldquo; wird unwiderruflich gel&ouml;scht.</p>'
+      +'<div style="display:flex;gap:8px;justify-content:flex-end">'
+      +'<button class="cms-btn cms-btn-gray" onclick="document.getElementById(\'cms-news-del-modal\').remove()">Abbrechen</button>'
+      +'<button class="cms-btn" style="background:#dc2626;color:#fff" data-action="confirmDeleteNews" data-id="'+id+'">L&ouml;schen</button>'
+      +'</div></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  }
+
+  function confirmDeleteNews(id){
+    fetch(API+'/news-delete?id='+id,{method:'DELETE'})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          toast('Beitrag gel&ouml;scht','success');
+          var modal=document.getElementById('cms-news-del-modal');if(modal)modal.remove();
+          _newsItems=_newsItems.filter(function(n){return n.id!==id;});
+          renderNewsList();
+        } else {toast('Fehler: '+res.error,'error');}
+      })
+      .catch(function(e){toast('Fehler: '+e.message,'error');});
+  }
+
+  function toggleNewsStatus(id){
+    var item = _newsItems.find(function(n){return n.id===id;});
+    if(!item){toast('Beitrag nicht gefunden','error');return;}
+    var newStatus = item.status===101001?101002:101001;
+    fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,titel:item.titel,kurztext:item.beschreibung||item.dl_kurztext||'',inhalt:item.dl_inhalt||'',status:newStatus})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          item.status=newStatus;
+          toast(newStatus===101001?'Beitrag aktiviert':'Beitrag deaktiviert','success');
+          renderNewsList();
+        } else {toast('Fehler: '+res.error,'error');}
+      })
+      .catch(function(e){toast('Fehler: '+e.message,'error');});
+  }
 
   // --- WhatsApp Share ---
   function fmtPriceWA(v){return v?Number(v).toFixed(2).replace('.',',')+' \u20AC':'';}
