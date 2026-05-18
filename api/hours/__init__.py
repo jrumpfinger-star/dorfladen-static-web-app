@@ -46,6 +46,38 @@ DAY_LABELS = {101000: "Montag", 101001: "Dienstag", 101002: "Mittwoch", 101003: 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
+
+    record_id = req.route_params.get("id")
+
+    if req.method == "PATCH" and record_id:
+        try:
+            headers = get_headers("DV_DEFAULT_URL")
+            default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
+            body = req.get_json()
+            patch_url = f"{default_url}/api/data/v9.2/dl_oeffnungszeits({record_id})"
+            patch_headers = {**headers, "If-Match": "*"}
+            r = requests.patch(patch_url, headers=patch_headers, json=body)
+            if r.status_code in (200, 204):
+                return func.HttpResponse(
+                    json.dumps({"success": True}, ensure_ascii=False),
+                    status_code=200,
+                    mimetype="application/json",
+                    headers=get_cors_headers()
+                )
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": f"Dataverse error: {r.status_code}", "detail": r.text}, ensure_ascii=False),
+                status_code=r.status_code,
+                mimetype="application/json",
+                headers=get_cors_headers()
+            )
+        except Exception as e:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": str(e)}, ensure_ascii=False),
+                status_code=500,
+                mimetype="application/json",
+                headers=get_cors_headers()
+            )
+
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
