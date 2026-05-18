@@ -67,8 +67,8 @@ document.head.appendChild(msalScript);
   .cms-btn-preview svg{width:16px;height:16px;fill:#fff}
   @keyframes cmsFadeIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
   .cms-modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}
-  .cms-modal{background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:1000px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;padding:24px;animation:cmsFadeIn .2s}
-  .cms-modal h3{font-size:16px;font-weight:700;margin:0 0 16px;color:#1f2937}
+  .cms-modal{background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.22);width:100%;max-width:1000px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;padding:28px;animation:cmsFadeIn .2s;font-family:"Segoe UI",Verdana,Arial,sans-serif}
+  .cms-modal h3{font-size:18px;font-weight:700;margin:0 0 18px;color:#111827;letter-spacing:-.2px}
   .cms-hours-row{display:flex;align-items:center;gap:8px;padding:8px 16px;flex-wrap:wrap;border-bottom:1px solid #f3f4f6}
   .cms-hours-row:last-child{border-bottom:none}
   .cms-hours-day{width:32px;font-weight:600;font-size:13px;color:#4b5563}
@@ -90,12 +90,13 @@ document.head.appendChild(msalScript);
   .cms-ang-name{grid-area:name;font-size:15px;font-weight:600;color:#1f2937;line-height:1.25}
   .cms-ang-price{grid-area:price;font-size:15px;font-weight:700;color:#15803d;white-space:nowrap}
   .cms-ang-old{grid-area:old;font-size:13px;color:#6b7280}
-  .cms-akt-header-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px}
-  .cms-ang-row{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #22c55e;border-radius:8px;padding:12px 10px 10px;margin-bottom:8px;position:relative;flex-shrink:0}
-  .cms-ang-row-num{position:absolute;top:-9px;left:10px;background:#22c55e;color:#fff;font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;line-height:16px}
-  .cms-ang-row-close{position:absolute;top:4px;right:8px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px}
+  .cms-akt-header-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:14px}
+  .cms-ang-row{background:#f8fdf9;border:1px solid #d1e7dd;border-left:4px solid #22c55e;border-radius:10px;padding:14px 12px 12px;margin-bottom:10px;position:relative;flex-shrink:0;transition:box-shadow .15s}
+  .cms-ang-row:hover{box-shadow:0 2px 8px rgba(34,197,94,.1)}
+  .cms-ang-row-num{position:absolute;top:-9px;left:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;line-height:16px;letter-spacing:.3px;font-family:"Segoe UI",Verdana,Arial,sans-serif}
+  .cms-ang-row-close{position:absolute;top:6px;right:10px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;line-height:1;transition:color .15s}
   .cms-ang-row-close:hover{color:#ef4444}
-  .cms-ang-fields{display:grid;grid-template-columns:2.5fr 1.8fr 1.2fr 1.2fr 1fr;gap:8px;align-items:start;margin-bottom:8px}
+  .cms-ang-fields{display:grid;grid-template-columns:2.5fr 1.8fr 1fr 1fr 1fr;gap:10px;align-items:start;margin-bottom:8px}
   .cms-ang-fields > *{min-width:0;box-sizing:border-box}
   .cms-ang-row-img{grid-column:1/-1;display:flex;align-items:center;gap:8px}
   .cms-ang-row-img input{flex:1}
@@ -109,13 +110,13 @@ document.head.appendChild(msalScript);
   .cms-ang-fields-2{display:none}
   .cms-art-wrap{position:relative;width:100%}
   .cms-art-input{position:relative}
-  .cms-art-dd{display:none;position:absolute;z-index:99;left:0;right:0;top:calc(100% + 2px);background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:220px;overflow-y:auto}
+  .cms-art-dd{display:none;position:absolute;z-index:99;left:0;right:0;top:calc(100% + 2px);background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:240px;overflow-y:auto;font-family:"Segoe UI",Verdana,Arial,sans-serif}
   .cms-art-dd.open{display:block}
-  .cms-art-opt{padding:8px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px}
+  .cms-art-opt{padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .12s}
   .cms-art-opt:last-child{border-bottom:none}
   .cms-art-opt:hover{background:#f0fdf4}
-  .cms-art-opt-name{font-weight:600;color:#1f2937}
-  .cms-art-opt-meta{font-size:11px;color:#9ca3af}
+  .cms-art-opt-name{font-weight:600;color:#1f2937;font-family:"Segoe UI",Verdana,Arial,sans-serif}
+  .cms-art-opt-meta{font-size:11px;color:#6b7280;font-family:"Segoe UI",Verdana,Arial,sans-serif;margin-top:2px}
   .cms-art-spinner{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#16a34a;font-size:12px;display:none}
   .cms-art-spinner.on{display:inline}
   .cms-week-nav{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
@@ -933,8 +934,11 @@ document.head.appendChild(msalScript);
         const artikelData = items.map(item => ({
           b: item.name || item.produkt || '',
           bt: item.name || item.produkt || '',
-          nr: item.aktion_id || item.artikelnummer || '',
-          p: item.price || 0,
+          nr: item.artikelnummer || item.dl_artikelnummer || '',
+          p: item.price || item.preis || 0,
+          details: item.details || item.dl_details || '',
+          preis: item.price || item.preis || 0,
+          statt_preis: item.old_price || item.statt_preis || 0,
           wg: 'angebot',
           produktVal: item.name || item.produkt || ''
         })).filter(a => a.b.length > 0);
@@ -1116,21 +1120,21 @@ document.head.appendChild(msalScript);
   function showAktionModal(aktion){
     var isEdit=!!aktion;
     var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:980px;overflow-x:hidden;max-height:95vh;display:flex;flex-direction:column">';
-    html+='<h3 style="margin-top:0">'+(isEdit?'Aktion bearbeiten':'Neue Aktion erstellen')+'</h3>';
+    html+='<h3 style="margin-top:0;padding-bottom:12px;border-bottom:1px solid #e5e7eb">'+(isEdit?'✏️ Aktion bearbeiten':'🆕 Neue Aktion erstellen')+'</h3>';
     html+='<div class="cms-akt-header-grid">';
-    html+='<input id="cms-akt-titel" class="cms-input" placeholder="Titel" value="'+esc(isEdit?(aktion.titel||''):'Sonderangebote')+'">';
-    html+='<input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):'')+'">';
-    html+='<input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):'')+'">';
+    html+='<input id="cms-akt-titel" class="cms-input" placeholder="Titel der Aktion" value="'+esc(isEdit?(aktion.titel||''):'Sonderangebote')+'">';
+    html+='<input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):'')+'" title="Gültig von">';
+    html+='<input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):'')+'" title="Gültig bis">';
     html+='</div>';
     html+='<input type="hidden" id="cms-akt-edit-id" value="'+esc(isEdit?(aktion.aktion_id||''):'')+'">';
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">';
-    html+='<strong style="font-size:12px;color:#4b5563">Artikel</strong>';
-    html+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button">+ Artikel</button>';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px">';
+    html+='<strong style="font-size:13px;color:#374151;font-family:Segoe UI,Verdana,Arial,sans-serif">Artikel</strong>';
+    html+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button" style="font-family:Segoe UI,Verdana,Arial,sans-serif">+ Artikel</button>';
     html+='</div>';
-    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;overflow-x:hidden;margin-bottom:12px;min-height:300px"></div>';
-    html+='<div style="display:flex;gap:8px;flex-shrink:0;padding-top:8px;border-top:1px solid #e5e7eb">';
-    html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion">Speichern</button>';
-    html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>';
+    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto;overflow-x:hidden;margin-bottom:14px;min-height:300px;padding:4px 2px"></div>';
+    html+='<div style="display:flex;gap:10px;flex-shrink:0;padding-top:12px;border-top:1px solid #e5e7eb">';
+    html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion" style="padding:10px 24px;font-size:14px">💾 Speichern</button>';
+    html+='<button class="cms-btn cms-btn-gray" data-action="closeModal" style="padding:10px 20px;font-size:14px">Abbrechen</button>';
     html+='</div></div></div>';
     document.getElementById('cms-modal-wrap').innerHTML=html;
     document.getElementById('cms-modal-wrap').style.display='';
@@ -1166,14 +1170,29 @@ document.head.appendChild(msalScript);
     matches.forEach(function(m){
       var opt=document.createElement('div');
       opt.className='cms-art-opt';
-      opt.innerHTML='<div class="cms-art-opt-name">'+esc(m.b||m.produktVal||'')+'</div><div class="cms-art-opt-meta">'+esc(m.nr||'')+'</div>';
+      var metaParts=[];
+      if(m.nr) metaParts.push('Nr: '+m.nr);
+      if(m.preis) metaParts.push('VK: '+Number(m.preis).toFixed(2).replace('.',',')+' €');
+      if(m.statt_preis) metaParts.push('Aktion: '+Number(m.statt_preis).toFixed(2).replace('.',',')+' €');
+      opt.innerHTML='<div class="cms-art-opt-name">'+esc(m.b||m.produktVal||'')+'</div><div class="cms-art-opt-meta">'+esc(metaParts.join(' · '))+'</div>';
       opt.addEventListener('click',function(){
         var row=inp.closest('.cms-ang-row');
         if(row){
           inp.value=m.b||m.produktVal||'';
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
           if(nrInp) nrInp.value=m.nr||'';
-          console.log('[CMS] Selected article:',m.b,'Nr:',m.nr);
+          var detInp=row.querySelector('[data-f="details"]');
+          if(detInp && m.details) detInp.value=m.details;
+          var preisInp=row.querySelector('[data-f="preis"]');
+          if(preisInp && m.preis) preisInp.value=Number(m.preis).toFixed(2).replace('.',',');
+          var stattInp=row.querySelector('[data-f="statt_preis"]');
+          if(stattInp && m.statt_preis) stattInp.value=Number(m.statt_preis).toFixed(2).replace('.',',');
+          console.log('[CMS] Selected article:',m.b,'Nr:',m.nr,'Details:',m.details,'Preis:',m.preis,'Statt:',m.statt_preis);
+          // Auto-load image from SharePoint
+          if(m.nr && typeof cmsLoadBildSharePoint==='function'){
+            var rowId=row.id.replace('cms-ar-','');
+            setTimeout(function(){cmsLoadBildSharePoint(parseInt(rowId));},100);
+          }
         }
         dd.classList.remove('open');
       });
