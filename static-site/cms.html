@@ -95,7 +95,9 @@ document.head.appendChild(msalScript);
   .cms-ang-name{grid-area:name;font-size:15px;font-weight:600;color:#1f2937;line-height:1.25}
   .cms-ang-price{grid-area:price;font-size:15px;font-weight:700;color:#15803d;white-space:nowrap}
   .cms-ang-old{grid-area:old;font-size:13px;color:#6b7280}
-  .cms-akt-header-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:14px}
+  .cms-akt-header-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:16px;align-items:end}
+  .cms-akt-header-grid label{display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .cms-akt-header-grid .cms-input{width:100%;box-sizing:border-box}
   .cms-ang-row{background:#f8fdf9;border:1px solid #d1e7dd;border-left:3px solid #22c55e;border-radius:8px;padding:6px 8px 6px 8px;margin-bottom:4px;position:relative;flex-shrink:0;transition:box-shadow .15s;overflow:visible}
   .cms-ang-row:hover{box-shadow:0 1px 6px rgba(34,197,94,.12)}
   .cms-ang-row-num{position:absolute;top:-8px;left:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:9px;font-weight:700;padding:1px 8px;border-radius:8px;line-height:14px;letter-spacing:.3px;font-family:"Segoe UI",Verdana,Arial,sans-serif}
@@ -1167,9 +1169,9 @@ document.head.appendChild(msalScript);
     var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:980px;overflow-x:hidden;max-height:95vh;display:flex;flex-direction:column">';
     html+='<h3 style="margin-top:0;padding-bottom:12px;border-bottom:1px solid #e5e7eb">'+(isEdit?'✏️ Aktion bearbeiten':'🆕 Neue Aktion erstellen')+'</h3>';
     html+='<div class="cms-akt-header-grid">';
-    html+='<input id="cms-akt-titel" class="cms-input" placeholder="Titel der Aktion" value="'+esc(isEdit?(aktion.titel||''):'Sonderangebote')+'">';
-    html+='<input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):'')+'" title="Gültig von">';
-    html+='<input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):'')+'" title="Gültig bis">';
+    html+='<div><label for="cms-akt-titel">Titel</label><input id="cms-akt-titel" class="cms-input" placeholder="Titel der Aktion" value="'+esc(isEdit?(aktion.titel||''):'Sonderangebote')+'"></div>';
+    html+='<div><label for="cms-akt-von">Gültig von</label><input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):'')+'"></div>';
+    html+='<div><label for="cms-akt-bis">Gültig bis</label><input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):'')+'"></div>';
     html+='</div>';
     html+='<input type="hidden" id="cms-akt-edit-id" value="'+esc(isEdit?(aktion.aktion_id||''):'')+'">';
     html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px">';
