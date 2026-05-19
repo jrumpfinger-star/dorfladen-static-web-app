@@ -2750,7 +2750,7 @@ document.head.appendChild(msalScript);
   function toggleNewsStatus(id){
     var item = _newsItems.find(function(n){return n.id===id;});
     if(!item){toast('Beitrag nicht gefunden','error');return;}
-    var newStatus = item.status===101001?101002:101001;
+    var newStatus = item.status===101001?101000:101001;
     fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,titel:item.titel,kurztext:item.beschreibung||item.dl_kurztext||'',inhalt:item.dl_inhalt||'',status:newStatus})})
       .then(function(r){return r.json();})
       .then(function(res){

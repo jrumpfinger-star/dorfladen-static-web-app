@@ -133,14 +133,21 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Create new record — also set datum to now
             payload["dl_datum"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
             create_url = f"{base_url}/api/data/v9.2/{entity_set}"
-            r = requests.post(create_url, headers=headers, json=payload, timeout=30)
+            create_headers = {**headers, "Prefer": "return=representation"}
+            r = requests.post(create_url, headers=create_headers, json=payload, timeout=30)
             if r.status_code in (200, 201, 204):
                 new_id = ""
+                # Try response body first
                 if r.status_code != 204:
                     try:
                         new_id = (r.json() or {}).get("dl_newsid", "")
                     except Exception:
                         pass
+                # Fallback: extract from OData-EntityId header
+                if not new_id:
+                    eid = r.headers.get("OData-EntityId", "")
+                    if "(" in eid and ")" in eid:
+                        new_id = eid.split("(")[-1].rstrip(")")
                 return func.HttpResponse(
                     json.dumps({"success": True, "action": "created", "id": new_id}, ensure_ascii=False),
                     status_code=200, mimetype="application/json", headers=get_cors_headers()
