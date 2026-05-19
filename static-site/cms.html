@@ -2120,8 +2120,10 @@ document.head.appendChild(msalScript);
       var name=(row.querySelector('[data-f="name"]').value||'').trim();
       var price=parseDePrice(row.querySelector('[data-f="price"]').value);
       var mid=row.dataset.mealId||'';
-      if(name) mealData.push({gericht:name,preis:price,id:mid});
+      if(name) mealData.push({gericht:name,preis:price,id:mid,priceInput:row.querySelector('[data-f="price"]')});
     });
+
+    for(var mi=0;mi<mealData.length;mi++){if(mealData[mi].preis==null||isNaN(mealData[mi].preis)){mealData[mi].priceInput.style.border='2px solid #ef4444';mealData[mi].priceInput.focus();toast('Bitte Preis f\u00fcr "'+mealData[mi].gericht+'" eingeben','warn');return;} else {mealData[mi].priceInput.style.border='';}}
 
     if(!mealData.length&&!beschreibung){toast('Bitte mindestens ein Gericht oder einen Hinweis eingeben','warn');return;}
     if(!mealData.length&&beschreibung){mealData.push({gericht:'',preis:null,id:''});}
