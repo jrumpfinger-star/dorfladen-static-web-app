@@ -76,7 +76,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
     try:
         show_all = req.params.get("all", "").lower() in ("true", "1", "yes")
-        status_filter = "" if show_all else "&$filter=dl_status eq 101001"
+        status_filter = "" if show_all else "&$filter=(dl_status eq 101001 or dl_status eq null)"
         query = (
             "?$select=dl_newsid,dl_titel,dl_kurztext,dl_inhalt,dl_datum,createdon,dl_status"
             f"{status_filter}"
