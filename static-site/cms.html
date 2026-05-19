@@ -2111,7 +2111,7 @@ document.head.appendChild(msalScript);
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
-        _hpItems = res.data || [];
+        _hpItems = Array.isArray(res.data) ? res.data : [];
         _hpLoaded = true;
         if(_hpItems.length===0){container.innerHTML='';empty.style.display='';return;}
         empty.style.display='none';

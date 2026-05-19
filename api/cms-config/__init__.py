@@ -112,17 +112,36 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         if r is not None and r.status_code == 200:
             data = r.json()
-            config = {
-                item.get("dl_name", ""): parse_config_value(item.get("dl_wert", ""))
-                for item in data.get("value", [])
-                if item.get("dl_name")
-            }
-            return func.HttpResponse(
-                json.dumps({"success": True, "data": config}, ensure_ascii=False),
-                status_code=200,
-                mimetype="application/json",
-                headers=get_cors_headers()
-            )
+            full = req.params.get("full", "").lower() in ("true", "1", "yes")
+            if full:
+                items = []
+                for item in data.get("value", []):
+                    name = item.get("dl_name", "")
+                    if not name:
+                        continue
+                    items.append({
+                        "id": item.get("dl_seiteninhaltid", item.get("dl_seiteninhalt", "")),
+                        "name": name,
+                        "wert": parse_config_value(item.get("dl_wert", ""))
+                    })
+                return func.HttpResponse(
+                    json.dumps({"success": True, "data": items}, ensure_ascii=False),
+                    status_code=200,
+                    mimetype="application/json",
+                    headers=get_cors_headers()
+                )
+            else:
+                config = {
+                    item.get("dl_name", ""): parse_config_value(item.get("dl_wert", ""))
+                    for item in data.get("value", [])
+                    if item.get("dl_name")
+                }
+                return func.HttpResponse(
+                    json.dumps({"success": True, "data": config}, ensure_ascii=False),
+                    status_code=200,
+                    mimetype="application/json",
+                    headers=get_cors_headers()
+                )
 
         if r is None:
             return func.HttpResponse(
