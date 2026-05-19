@@ -1281,9 +1281,18 @@ document.head.appendChild(msalScript);
 
   window.cmsSaveAktion=function(){
     var editId=document.getElementById('cms-akt-edit-id').value;
-    var titel=(document.getElementById('cms-akt-titel').value||'').trim()||'Sonderangebote';
-    var von=document.getElementById('cms-akt-von').value;
-    var bis=document.getElementById('cms-akt-bis').value;
+    var titelInp=document.getElementById('cms-akt-titel');
+    var vonInp=document.getElementById('cms-akt-von');
+    var bisInp=document.getElementById('cms-akt-bis');
+    var titel=(titelInp.value||'').trim();
+    var von=vonInp.value;
+    var bis=bisInp.value;
+    var headerOk=true;
+    [titelInp,vonInp,bisInp].forEach(function(inp){inp.style.border='';});
+    if(!titel){titelInp.style.border='2px solid #e53935';titelInp.addEventListener('input',function(){this.style.border='';},{once:true});headerOk=false;}
+    if(!von){vonInp.style.border='2px solid #e53935';vonInp.addEventListener('change',function(){this.style.border='';},{once:true});headerOk=false;}
+    if(!bis){bisInp.style.border='2px solid #e53935';bisInp.addEventListener('change',function(){this.style.border='';},{once:true});headerOk=false;}
+    if(!headerOk){toast('Bitte Titel und Gültigkeitszeitraum ausfüllen','warn');return;}
     var rows=document.querySelectorAll('#cms-akt-items .cms-ang-row');
     var items=[];var hasError=false;
     rows.forEach(function(row){

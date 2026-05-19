@@ -85,7 +85,7 @@ def _build_offer_payload(body):
         "dl_artikelnummer": body.get("dl_artikelnummer") or body.get("artikelnummer"),
         "dl_gueltig_von": body.get("dl_gueltig_von") or body.get("valid_from") or body.get("gueltig_von"),
         "dl_gueltig_bis": body.get("dl_gueltig_bis") or body.get("valid_to") or body.get("gueltig_bis"),
-        "dl_bild_base64": body.get("dl_bild_base64") or body.get("bild_data") or body.get("dl_bild_url"),
+        # dl_bild_base64 field does not exist in Dataverse dl_angebote table - skip it
         "dl_sortierung": body.get("dl_sortierung") if body.get("dl_sortierung") is not None else body.get("sortierung"),
         "dl_status": body.get("dl_status") if body.get("dl_status") is not None else body.get("status")
     }
