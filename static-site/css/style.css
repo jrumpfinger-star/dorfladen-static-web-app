@@ -136,7 +136,7 @@ img{max-width:100%;display:block}
 .promo-pill{display:none}
 .promo-pl{}
 .promo-pl-icon{font-size:1rem}
-@media(max-width:640px){.promo-bar-in{gap:6px;padding:8px 12px}.promo-item{padding:5px 12px;font-size:.78rem}}
+@media(max-width:640px){.promo-bar-in{flex-wrap:wrap;overflow-x:visible;gap:6px;padding:8px 12px}.promo-item{padding:5px 12px;font-size:.78rem;white-space:normal;flex-shrink:1;min-width:0}}
 
 /* === FLEISCH PROMO === */
 .meat-promo{max-width:var(--max);margin:0 auto;padding:0 20px}
