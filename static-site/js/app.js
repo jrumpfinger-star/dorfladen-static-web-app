@@ -41,6 +41,17 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       if(!config || Object.keys(config).length===0) return;
       console.log('CMS Config loaded:', config);
       
+      // Apply Hero texts from Dataverse CMS
+      var heroH1=document.querySelector('.hero-text h1');
+      var heroP=document.querySelector('.hero-text > p:not(.hero-sub)');
+      var heroSub=document.querySelector('.hero-text .hero-sub');
+      var titel=config['Hero \u00dcberschrift']||config['hero_titel'];
+      var untertitel=config['Hero Untertitel']||config['hero_untertitel'];
+      var zusatz=config['Hero Zusatztext']||config['hero_sub'];
+      if(titel && heroH1) heroH1.textContent=titel;
+      if(untertitel && heroP) heroP.textContent=untertitel;
+      if(zusatz && heroSub) heroSub.textContent=zusatz;
+
       // Apply homepage layout configuration
       var homeCfg = config['home'] || config['homepage'] || {};
       if(homeCfg.show_weeklyplan!==undefined){
