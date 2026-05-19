@@ -106,7 +106,6 @@ def _handle_get(base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    # Read record to get dl_logo_url (full image) and dl_logo (thumbnail b64)
     rec_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
     r = requests.get(rec_url, headers=headers, timeout=30)
     if r.status_code != 200:
@@ -115,54 +114,19 @@ def _handle_get(base_url, headers, entity_set):
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
     data = r.json()
-    logo_url = data.get("dl_logo_url") or ""
-    if not logo_url:
-        return func.HttpResponse(
-            json.dumps({"success": True, "logo": ""}),
-            status_code=200, mimetype="application/json", headers=get_cors_headers()
-        )
-    # Download full image via dl_logo_url
-    full_url = f"{base_url}{logo_url}"
-    img_r = requests.get(full_url, headers={"Authorization": headers["Authorization"]}, timeout=30)
-    if img_r.status_code == 200 and len(img_r.content) > 100:
-        content = img_r.content
-        if content[:4] == b'\x89PNG':
-            ct = "image/png"
-        elif content[:3] == b'\xff\xd8\xff':
-            ct = "image/jpeg"
-        elif content[:4] == b'RIFF':
-            ct = "image/webp"
-        elif b'<svg' in content[:200]:
-            ct = "image/svg+xml"
-        else:
-            ct = "image/png"
-        b64 = base64.b64encode(content).decode("ascii")
-        return func.HttpResponse(
-            json.dumps({"success": True, "logo": f"data:{ct};base64,{b64}"}),
-            status_code=200, mimetype="application/json", headers=get_cors_headers()
-        )
+    logo_data = data.get("dl_wert") or ""
     return func.HttpResponse(
-        json.dumps({"success": True, "logo": ""}),
+        json.dumps({"success": True, "logo": logo_data}),
         status_code=200, mimetype="application/json", headers=get_cors_headers()
     )
 
 
 def _handle_post(req, base_url, headers, entity_set):
     body = req.get_json()
-    data_b64 = body.get("data", "")
-    filename = body.get("filename", "logo.png")
-    if not data_b64:
+    data_url = body.get("data", "")
+    if not data_url:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "No image data provided"}),
-            status_code=400, mimetype="application/json", headers=get_cors_headers()
-        )
-    if "," in data_b64 and data_b64.startswith("data:"):
-        data_b64 = data_b64.split(",", 1)[1]
-    try:
-        image_bytes = base64.b64decode(data_b64)
-    except Exception as e:
-        return func.HttpResponse(
-            json.dumps({"success": False, "error": f"Invalid base64: {str(e)}"}),
             status_code=400, mimetype="application/json", headers=get_cors_headers()
         )
     rec_id = _find_or_create_logo_record(base_url, headers, entity_set)
@@ -171,20 +135,17 @@ def _handle_post(req, base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    upload_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}"
-    upload_headers = {
-        "Authorization": headers["Authorization"],
-        "Content-Type": "application/octet-stream",
-        "x-ms-file-name": filename,
-    }
-    r = requests.put(upload_url, headers=upload_headers, data=image_bytes, timeout=60)
+    patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+    patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
+    payload = {"dl_wert": data_url}
+    r = requests.patch(patch_url, headers=patch_headers, json=payload, timeout=30)
     if r.status_code in (200, 204):
         return func.HttpResponse(
-            json.dumps({"success": True, "size": len(image_bytes)}),
+            json.dumps({"success": True, "size": len(data_url)}),
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
     return func.HttpResponse(
-        json.dumps({"success": False, "error": f"Upload failed: {r.status_code} {r.text[:300]}"}),
+        json.dumps({"success": False, "error": f"Save failed: {r.status_code} {r.text[:300]}"}),
         status_code=r.status_code, mimetype="application/json", headers=get_cors_headers()
     )
 
@@ -193,8 +154,9 @@ def _handle_delete(base_url, headers, entity_set):
     rec_id = _find_or_create_logo_record(base_url, headers, entity_set)
     if not rec_id:
         return func.HttpResponse(json.dumps({"success": True}), status_code=200, mimetype="application/json", headers=get_cors_headers())
-    del_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}"
-    requests.delete(del_url, headers=headers, timeout=30)
+    patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+    patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
+    requests.patch(patch_url, headers=patch_headers, json={"dl_wert": ""}, timeout=30)
     return func.HttpResponse(json.dumps({"success": True}), status_code=200, mimetype="application/json", headers=get_cors_headers())
 
 
