@@ -16,10 +16,11 @@
 
     // Header
     html+='<div class="so-header"><h2>Preisliste</h2>';
-    html+='<p>'+data.total+' Artikel in '+data.warengruppen+' Warengruppen &mdash; Live-Daten</p>';
-    html+='<div class="so-legend">';
-    html+='<span class="so-filter-btn" data-filter="rp"><span class="so-dot-rp"></span> Roter Punkt &ndash; g&uuml;nstiger als UVP <small>('+rpCount+')</small></span>';
-    html+='<span class="so-filter-btn" data-filter="ang"><span class="so-star-ang">&#9733;</span> Sonderangebot <small>('+angCount+')</small></span>';
+    html+='<p class="so-subtitle">'+data.total+' Artikel in '+data.warengruppen+' Warengruppen &mdash; Stand '+data.generated.substring(0,10)+'</p>';
+    // Filter buttons
+    html+='<div class="so-filters">';
+    html+='<span class="so-filter-btn" data-filter="rp">&#x1F534; G&uuml;nstiger als UVP ('+rpCount+')</span>';
+    if(angCount>0) html+='<span class="so-filter-btn" data-filter="ang">&#9733; Sonderangebot ('+angCount+')</span>';
     html+='</div></div>';
 
     // Search
@@ -30,71 +31,52 @@
     // Groups
     wgNames.forEach(function(wg){
       var items=groups[wg];
-      var wgRp=0,wgAng=0,wgDiscSum=0,wgDiscCount=0;
+      var wgRp=0,wgAng=0;
       var rows='';
-
-      // Table header
-      rows+='<tr class="so-thead"><th class="so-th-name">ARTIKEL</th><th class="so-th-vk">VK DORF</th><th class="so-th-uvp">UVP</th><th class="so-th-save">ERSPARNIS</th></tr>';
 
       items.forEach(function(item){
         var cls='';
         var nameHtml=esc(item.bezeichnung);
-        var vkHtml=fmtPrice(item.vk)+'&nbsp;&euro;';
-        var uvpHtml='&mdash;';
-        var saveHtml='';
+        var vkStr=fmtPrice(item.vk);
+        var extraHtml='';
 
-        // Roter Punkt: use backend flag
+        // Roter Punkt
         if(item.rp){
           cls='so-row-rp';
-          nameHtml='<span class="so-dot-rp" title="Roter Punkt"></span> '+esc(item.bezeichnung);
           wgRp++;
-          if(item.uvp){
-            uvpHtml='<span class="so-uvp-strike">'+fmtPrice(item.uvp)+'&nbsp;&euro;</span>';
+          if(item.discount>0 && item.uvp){
+            extraHtml='<span class="so-discount">-'+item.discount+'%</span>';
           }
-          if(item.discount>0){
-            saveHtml='<span class="so-save-badge">-'+item.discount+'%</span>';
-            wgDiscSum+=item.discount;
-            wgDiscCount++;
-          }
-        } else if(item.uvp && item.uvp>0){
-          uvpHtml=fmtPrice(item.uvp)+'&nbsp;&euro;';
         }
 
-        // Sonderangebot: use backend flag
+        // Sonderangebot
         if(item.angebot){
           cls+=(cls?' ':'')+'so-row-ang';
-          nameHtml='<span class="so-star-ang">&#9733;</span> '+esc(item.bezeichnung);
           wgAng++;
           if(item.angebot_statt && item.angebot_preis){
-            vkHtml='<span class="so-price-old">'+fmtPrice(item.angebot_statt)+'&nbsp;&euro;</span> <span class="so-price-new">'+fmtPrice(item.angebot_preis)+'&nbsp;&euro;</span>';
+            vkStr=fmtPrice(item.angebot_preis);
+            extraHtml='<span class="so-statt">statt '+fmtPrice(item.angebot_statt)+'&nbsp;&euro;</span>';
           } else if(item.angebot_preis){
-            vkHtml='<span class="so-price-new">'+fmtPrice(item.angebot_preis)+'&nbsp;&euro;</span>';
+            vkStr=fmtPrice(item.angebot_preis);
           }
         }
 
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" class="'+cls.trim()+'">';
-        rows+='<td class="so-name">'+nameHtml+'</td>';
-        rows+='<td class="so-vk">'+vkHtml+'</td>';
-        rows+='<td class="so-uvp">'+uvpHtml+'</td>';
-        rows+='<td class="so-save">'+saveHtml+'</td></tr>';
+        rows+='<td class="so-td-name">'+nameHtml+'</td>';
+        rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;'+extraHtml+'</td></tr>';
       });
 
-      // Group header with badges
-      var avgDisc=wgDiscCount>0?Math.round(wgDiscSum/wgDiscCount):0;
+      // Group header
+      var rpInfo=wgRp>0?' <span class="so-rp-info">'+wgRp+'&times;&#x1F534;</span>':'';
       html+='<div class="so-group" data-wg="'+esc(wg.toLowerCase())+'">';
       html+='<button class="so-toggle" aria-expanded="false">';
-      if(wgRp>0) html+='<span class="so-dot-rp"></span> ';
       html+='<span class="so-wg-name">'+esc(wg)+'</span>';
-      html+='<span class="so-count" data-total="'+items.length+'">'+items.length+' Artikel</span>';
-      if(avgDisc>0) html+=' <span class="so-wg-disc">&Oslash; -'+avgDisc+'%</span>';
+      html+='<span class="so-wg-meta">'+items.length+rpInfo+'</span>';
       html+='<span class="so-arrow">&#9660;</span></button>';
       html+='<div class="so-panel" style="display:none"><table class="so-table"><tbody>'+rows+'</tbody></table></div></div>';
     });
 
-    html+='<div class="so-foot"><p>Stand: '+data.generated.substring(0,10)+'</p></div>';
     wrap.innerHTML=html;
-
-    // Init filter & search after render
     initFilterSearch();
   }).catch(function(e){
     wrap.innerHTML='<p style="color:#c00;text-align:center;padding:40px">Preisliste konnte nicht geladen werden.</p>';
@@ -121,6 +103,7 @@
         var open=p.style.display==='none';
         p.style.display=open?'block':'none';
         a.innerHTML=open?'&#9650;':'&#9660;';
+        btn.setAttribute('aria-expanded',open?'true':'false');
       });
     });
 
@@ -137,8 +120,12 @@
         });
         g.style.display=(vis>0||(!q&&!activeFilter))?'':'none';
         if(vis>0||(!q&&!activeFilter))any=true;
-        var badge=g.querySelector('.so-count');
-        if(badge)badge.textContent=(q||activeFilter)?vis:badge.getAttribute('data-total');
+        // Update count in header
+        var meta=g.querySelector('.so-wg-meta');
+        if(meta){
+          var total=g.querySelectorAll('tr[data-art]').length;
+          meta.firstChild.textContent=(q||activeFilter)?vis:total;
+        }
         var panel=g.querySelector('.so-panel');
         if((q||activeFilter)&&vis>0){panel.style.display='block';g.querySelector('.so-arrow').innerHTML='&#9650;';}
         else if(!q&&!activeFilter){panel.style.display='none';g.querySelector('.so-arrow').innerHTML='&#9660;';}
@@ -148,7 +135,7 @@
 
     input.addEventListener('input',applyFilter);
 
-    // Legend filter buttons
+    // Filter buttons
     document.querySelectorAll('.so-filter-btn').forEach(function(el){
       var type=el.getAttribute('data-filter');
       if(!type)return;
