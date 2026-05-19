@@ -400,7 +400,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         tickerContent.innerHTML=spacer+singleHtml+spacer+singleHtml;
         var totalW=tickerContent.scrollWidth;
         var halfW=totalW/2;
-        var speed=80;
+        var speed=40;
         var dur=halfW/speed;
         tickerContent.style.setProperty('--ticker-dur',dur+'s');
         tickerContent.classList.add('running');
