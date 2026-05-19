@@ -73,27 +73,44 @@
 }
 </style>
 
-<!-- Original Sortiment content (compact) -->
+<!-- Sortiment content — loaded dynamically from CMS, static fallback below -->
 <div class="sort-orig">
-<p>Neben den g&auml;ngigen Produkten des t&auml;glichen Bedarfs findet ihr bei uns vor allem <strong>regionale und spezielle Angebote</strong>:</p>
+<p id="sort-intro">Neben den g&auml;ngigen Produkten des t&auml;glichen Bedarfs findet ihr bei uns vor allem <strong>regionale und spezielle Angebote</strong>:</p>
 
-<div class="sort-gallery">
+<div class="sort-gallery" id="sort-gallery">
 <img src="https://www.dorfladen-oberornau.de/wp-content/uploads/2019/12/Gem%C3%BCse-2.jpg" alt="Frisches Biogemüse">
 <img src="https://www.dorfladen-oberornau.de/wp-content/uploads/2019/12/Orangen.jpg" alt="Orangen und Mandarinen">
 <img src="https://www.dorfladen-oberornau.de/wp-content/uploads/2019/12/wurst-1024x558.jpg" alt="Fleisch und Wurstwaren">
 </div>
 
-<div class="sort-highlights">
-<p>&#129388; Jeden Mittwoch <strong>frisches Biogem&uuml;se</strong> von <strong>Chiemgauer Naturkost</strong>, montags <strong>Steiner</strong> aus Kirchweidach</p>
-<p>&#127818; Spanische <strong>Orangen</strong> und <strong>Mandarinen</strong> direkt vom Erzeuger, Fam. <strong>Bernauer</strong> aus Reitmehring</p>
-<p>&#129385; <strong>Fleisch- und Wurstwaren</strong> von der <strong>Metzgerei Mayr</strong> aus Haag i. OB &ndash; dienstags und freitags</p>
-<p>&#127869; <strong>Montag bis Freitag</strong> warmes <strong>Mittagessen</strong>, auch zum Mitnehmen. Freitag: Schnitzeltag!</p>
-<p>&#127856; T&auml;glich selbst gebackene <strong>Kuchen und Torten</strong></p>
-<p>&#9742;&#65039; Vorbestellung: <a href="tel:+4980826229991">08082-6229991</a></p>
+<div class="sort-highlights" id="sort-highlights">
+<p>🥬 Jeden Mittwoch <strong>frisches Biogemüse</strong> von <strong>Chiemgauer Naturkost</strong>, montags <strong>Steiner</strong> aus Kirchweidach</p>
+<p>🍊 Spanische <strong>Orangen</strong> und <strong>Mandarinen</strong> direkt vom Erzeuger, Fam. <strong>Bernauer</strong> aus Reitmehring</p>
+<p>🥩 <strong>Fleisch- und Wurstwaren</strong> von der <strong>Metzgerei Mayr</strong> aus Haag i. OB – dienstags und freitags</p>
+<p>🍽 <strong>Montag bis Freitag</strong> warmes <strong>Mittagessen</strong>, auch zum Mitnehmen. Freitag: Schnitzeltag!</p>
+<p>🍰 Täglich selbst gebackene <strong>Kuchen und Torten</strong></p>
+<p>☎️ Vorbestellung: <a href="tel:+4980826229991">08082-6229991</a></p>
 </div>
 
-<div class="sort-eco">&#9981;&#65039; Zur M&uuml;llvermeidung k&ouml;nnt ihr gerne geeignete Beh&auml;lter von zuhause mitbringen!</div>
+<div class="sort-eco" id="sort-eco">♻️ Zur Müllvermeidung könnt ihr gerne geeignete Behälter von zuhause mitbringen!</div>
 </div>
+<script>
+(function(){
+  fetch('/api/cms-config')
+    .then(function(r){return r.json()})
+    .then(function(payload){
+      var cfg=(payload&&payload.data)?payload.data:payload;
+      if(!cfg) return;
+      var hl=cfg['sortiment_highlights'];
+      if(hl){document.getElementById('sort-highlights').innerHTML=hl;}
+      var intro=cfg['sortiment_intro'];
+      if(intro){document.getElementById('sort-intro').innerHTML=intro;}
+      var eco=cfg['sortiment_eco'];
+      if(eco){document.getElementById('sort-eco').innerHTML=eco;}
+    })
+    .catch(function(){});
+})();
+</script>
 
 <hr class="sort-divider">
 

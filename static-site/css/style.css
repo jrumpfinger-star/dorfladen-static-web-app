@@ -234,6 +234,7 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .wa-qr-label small{color:var(--c-sec);font-size:.72rem}
 @media(max-width:640px){
   .wa-qr-box{display:none}
+  .wa-qr-hint{display:none}
 }
 @media(max-width:640px){
   .wp-header{padding:5px 10px;gap:5px}

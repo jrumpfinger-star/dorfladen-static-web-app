@@ -357,6 +357,7 @@ document.head.appendChild(msalScript);
     <button class="cms-tab" data-action="tab" data-id="ang" id="cms-tab-ang">Angebote</button>
     <button class="cms-tab" data-action="tab" data-id="hp" id="cms-tab-hp">Homepage</button>
     <button class="cms-tab" data-action="tab" data-id="news" id="cms-tab-news">Aktuelles</button>
+    <button class="cms-tab" data-action="tab" data-id="sort" id="cms-tab-sort">Sortiment</button>
     <button class="cms-tab" data-action="tab" data-id="cfg" id="cms-tab-cfg" style="margin-left:auto;color:#9ca3af">&#9881; Design</button>
   </div>
 
@@ -449,6 +450,44 @@ document.head.appendChild(msalScript);
     <div id="cms-hp-fields" style="display:flex;flex-direction:column;gap:16px"></div>
     <div class="cms-empty" id="cms-hp-empty" style="display:none">Keine bearbeitbaren Felder gefunden.</div>
   </div>
+  <!-- Sortiment-Texte -->
+  <div id="cms-panel-sort" style="display:none">
+    <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0 0 12px">Sortiment-Seite bearbeiten</h3>
+    <p style="font-size:12px;color:#6b7280;margin:0 0 16px">Texte mit Emojis und <strong>fetten Wörtern</strong> bearbeiten. HTML ist erlaubt: <code>&lt;strong&gt;Fett&lt;/strong&gt;</code>, <code>&lt;a href=&quot;...&quot;&gt;Link&lt;/a&gt;</code></p>
+
+    <div class="cms-card">
+      <div class="cms-card-header" style="background:#2d7a5e">Einleitungstext</div>
+      <div class="cms-card-body">
+        <textarea id="sort-cms-intro" class="cms-input" rows="2" style="width:100%;box-sizing:border-box;font-size:13px"></textarea>
+      </div>
+    </div>
+
+    <div class="cms-card">
+      <div class="cms-card-header" style="background:#2d7a5e">Highlights (mit Emojis und Fettdruck)</div>
+      <div class="cms-card-body">
+        <div id="sort-cms-lines"></div>
+        <button class="cms-btn cms-btn-gray" style="margin-top:8px" onclick="sortAddLine()">+ Zeile hinzufügen</button>
+      </div>
+    </div>
+
+    <div class="cms-card">
+      <div class="cms-card-header" style="background:#7d6608">Hinweisbox (gelbe Box unten)</div>
+      <div class="cms-card-body">
+        <textarea id="sort-cms-eco" class="cms-input" rows="2" style="width:100%;box-sizing:border-box;font-size:13px"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="cms-btn cms-btn-primary" onclick="sortSave()">💾 Speichern</button>
+      <span id="sort-cms-status" style="font-size:12px;color:#6b7280;line-height:32px"></span>
+    </div>
+
+    <div class="cms-card" style="margin-top:16px">
+      <div class="cms-card-header" style="background:#6b7280">Vorschau</div>
+      <div class="cms-card-body" id="sort-cms-preview" style="font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6"></div>
+    </div>
+  </div>
+
   <!-- Design-Einstellungen mit Sub-Tabs -->
   <div id="cms-panel-cfg" style="display:none">
     <div class="cms-flex cms-between" style="margin-bottom:12px">
@@ -1636,7 +1675,7 @@ document.head.appendChild(msalScript);
   // --- Tabs ---
   var angebote = [];
   window.cmsTab = function(name){
-    ['wp','hours','ang','hp','news','cfg'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','cfg'].forEach(function(t){
       document.getElementById('cms-panel-'+t).style.display = t===name?'':'none';
       document.getElementById('cms-tab-'+t).className = 'cms-tab'+(t===name?' active':'');
     });
@@ -1644,6 +1683,7 @@ document.head.appendChild(msalScript);
     if(name==='ang' && angebote.length===0) loadAngebote();
     if(name==='hp'){ if(!_hpLoaded) loadHomepage(); loadLogo(); }
     if(name==='news' && !_newsLoaded) loadNews();
+    if(name==='sort' && !_sortLoaded) loadSortiment();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
   };
 
@@ -4379,6 +4419,128 @@ document.head.appendChild(msalScript);
 
   // --- Force German locale for date/time pickers ---
   document.documentElement.setAttribute('lang','de');
+
+  // --- Sortiment CMS ---
+  var _sortLoaded=false;
+  var _sortLines=[];
+
+  var SORT_DEFAULTS={
+    intro:'Neben den gängigen Produkten des täglichen Bedarfs findet ihr bei uns vor allem <strong>regionale und spezielle Angebote</strong>:',
+    highlights:[
+      '🥬 Jeden Mittwoch <strong>frisches Biogemüse</strong> von <strong>Chiemgauer Naturkost</strong>, montags <strong>Steiner</strong> aus Kirchweidach',
+      '🍊 Spanische <strong>Orangen</strong> und <strong>Mandarinen</strong> direkt vom Erzeuger, Fam. <strong>Bernauer</strong> aus Reitmehring',
+      '🥩 <strong>Fleisch- und Wurstwaren</strong> von der <strong>Metzgerei Mayr</strong> aus Haag i. OB – dienstags und freitags',
+      '🍽 <strong>Montag bis Freitag</strong> warmes <strong>Mittagessen</strong>, auch zum Mitnehmen. Freitag: Schnitzeltag!',
+      '🍰 Täglich selbst gebackene <strong>Kuchen und Torten</strong>',
+      '☎️ Vorbestellung: <a href="tel:+4980826229991">08082-6229991</a>'
+    ],
+    eco:'♻️ Zur Müllvermeidung könnt ihr gerne geeignete Behälter von zuhause mitbringen!'
+  };
+
+  function loadSortiment(){
+    _sortLoaded=true;
+    fetch('/api/cms-config')
+      .then(function(r){return r.json()})
+      .then(function(payload){
+        var cfg=(payload&&payload.data)?payload.data:payload;
+        var intro=cfg['sortiment_intro']||SORT_DEFAULTS.intro;
+        var hl=cfg['sortiment_highlights']||'';
+        var eco=cfg['sortiment_eco']||SORT_DEFAULTS.eco;
+
+        document.getElementById('sort-cms-intro').value=intro;
+        document.getElementById('sort-cms-eco').value=eco;
+
+        // Parse highlights: split by <p> tags
+        if(hl){
+          var tmp=document.createElement('div');tmp.innerHTML=hl;
+          var ps=tmp.querySelectorAll('p');
+          _sortLines=[];
+          ps.forEach(function(p){if(p.innerHTML.trim())_sortLines.push(p.innerHTML.trim());});
+        }else{
+          _sortLines=SORT_DEFAULTS.highlights.slice();
+        }
+        sortRenderLines();
+        sortUpdatePreview();
+      })
+      .catch(function(){
+        document.getElementById('sort-cms-intro').value=SORT_DEFAULTS.intro;
+        document.getElementById('sort-cms-eco').value=SORT_DEFAULTS.eco;
+        _sortLines=SORT_DEFAULTS.highlights.slice();
+        sortRenderLines();
+        sortUpdatePreview();
+      });
+  }
+
+  function sortRenderLines(){
+    var container=document.getElementById('sort-cms-lines');
+    var html='';
+    _sortLines.forEach(function(line,i){
+      html+='<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">';
+      html+='<input class="cms-input" style="flex:1;font-size:13px" value="'+line.replace(/"/g,'&quot;')+'" oninput="_sortLines['+i+']=this.value;sortUpdatePreview()">';
+      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="flex-shrink:0;padding:4px 8px" onclick="sortRemoveLine('+i+')" title="Zeile entfernen">✕</button>';
+      html+='</div>';
+    });
+    container.innerHTML=html;
+  }
+
+  window.sortAddLine=function(){
+    _sortLines.push('🔹 Neuer Eintrag mit <strong>Fettdruck</strong>');
+    sortRenderLines();
+    sortUpdatePreview();
+    var inputs=document.querySelectorAll('#sort-cms-lines input');
+    if(inputs.length)inputs[inputs.length-1].select();
+  };
+
+  window.sortRemoveLine=function(i){
+    _sortLines.splice(i,1);
+    sortRenderLines();
+    sortUpdatePreview();
+  };
+
+  function sortUpdatePreview(){
+    var intro=document.getElementById('sort-cms-intro').value;
+    var eco=document.getElementById('sort-cms-eco').value;
+    var html='<p>'+intro+'</p><div style="background:#f9faf9;border-radius:10px;padding:12px 16px;margin:10px 0">';
+    _sortLines.forEach(function(l){html+='<p style="margin:6px 0">'+l+'</p>';});
+    html+='</div>';
+    html+='<div style="text-align:center;background:#fef9e7;border-radius:8px;padding:8px;font-size:13px;color:#7d6608;border:1px solid #f5e6a3">'+eco+'</div>';
+    document.getElementById('sort-cms-preview').innerHTML=html;
+  }
+
+  window.sortSave=function(){
+    var status=document.getElementById('sort-cms-status');
+    status.textContent='Speichert…';status.style.color='#6b7280';
+
+    var intro=document.getElementById('sort-cms-intro').value.trim();
+    var eco=document.getElementById('sort-cms-eco').value.trim();
+    var hlHtml='';
+    _sortLines.forEach(function(l){if(l.trim())hlHtml+='<p>'+l.trim()+'</p>';});
+
+    var saves=[
+      fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_intro',wert:intro})}),
+      fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_highlights',wert:hlHtml})}),
+      fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_eco',wert:eco})})
+    ];
+
+    Promise.all(saves).then(function(results){
+      var allOk=results.every(function(r){return r.ok;});
+      if(allOk){
+        status.textContent='✅ Gespeichert!';status.style.color='#16a34a';
+        toast('Sortiment-Texte gespeichert');
+      }else{
+        status.textContent='⚠️ Fehler beim Speichern';status.style.color='#dc2626';
+        toast('Speichern teilweise fehlgeschlagen','error');
+      }
+    }).catch(function(){
+      status.textContent='⚠️ Netzwerkfehler';status.style.color='#dc2626';
+      toast('Netzwerkfehler beim Speichern','error');
+    });
+  };
+
+  // Update preview on intro/eco change
+  document.addEventListener('input',function(e){
+    if(e.target.id==='sort-cms-intro'||e.target.id==='sort-cms-eco') sortUpdatePreview();
+  });
 
   // --- Init (always run – login gate is disabled for SWA) ---
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
