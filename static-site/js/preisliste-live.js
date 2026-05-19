@@ -66,12 +66,11 @@
         rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;'+extraHtml+'</td></tr>';
       });
 
-      // Group header
-      var rpInfo=wgRp>0?' <span class="so-rp-info">'+wgRp+'&times;&#x1F534;</span>':'';
+      // Group header — clean, no markers
       html+='<div class="so-group" data-wg="'+esc(wg.toLowerCase())+'">';
       html+='<button class="so-toggle" aria-expanded="false">';
       html+='<span class="so-wg-name">'+esc(wg)+'</span>';
-      html+='<span class="so-wg-meta">'+items.length+rpInfo+'</span>';
+      html+='<span class="so-wg-meta">'+items.length+'</span>';
       html+='<span class="so-arrow">&#9660;</span></button>';
       html+='<div class="so-panel" style="display:none"><table class="so-table"><tbody>'+rows+'</tbody></table></div></div>';
     });
