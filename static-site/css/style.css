@@ -237,7 +237,7 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
   .wp-table,.wp-table tbody,.wp-table tr,.wp-table td{display:block}
   .wp-table tr{padding:4px 10px;border-bottom:1px solid #f0f0f0}
   .wp-day{padding:0 0 1px;font-size:.65rem}
-  .wp-dish{padding:0;font-size:.68rem;max-height:1.4em}
+  .wp-dish{padding:0;font-size:.68rem}
   .wp-price{padding:1px 0 0;text-align:left;font-size:.65rem}
   .wp-footer{padding:6px 10px;font-size:.6rem}
   .wp-actions{flex-direction:column;align-items:flex-start;padding:6px 10px;gap:4px}
