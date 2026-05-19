@@ -1506,15 +1506,21 @@ document.head.appendChild(msalScript);
   }
 
   function init(){
-    refreshToken();
-    var d = new Date();
-    // Ab Samstag (6) die nächste Woche anzeigen
-    if(d.getDay()>=6){d.setDate(d.getDate()+(d.getDay()===6?2:1));}
-    jahr = d.getFullYear();
-    kw = isoWeek(d);
-    loadWP();
-    document.getElementById('cms-status').textContent = 'Verbunden';
-    document.getElementById('cms-status').style.color = '#16a34a';
+    try{
+      refreshToken();
+      var d = new Date();
+      // Ab Samstag (6) die nächste Woche anzeigen
+      if(d.getDay()>=6){d.setDate(d.getDate()+(d.getDay()===6?2:1));}
+      jahr = d.getFullYear();
+      kw = isoWeek(d);
+      loadWP();
+      document.getElementById('cms-status').textContent = 'Verbunden';
+      document.getElementById('cms-status').style.color = '#16a34a';
+    }catch(e){
+      console.error('CMS init error',e);
+      document.getElementById('cms-status').textContent = 'Fehler: '+e.message;
+      document.getElementById('cms-status').style.color = '#dc2626';
+    }
   }
 
   function isoWeek(d){
