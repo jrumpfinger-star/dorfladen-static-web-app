@@ -474,20 +474,40 @@ document.head.appendChild(msalScript);
     </div>
 
     <!-- === EDIT MODE (hidden by default) === -->
+    <style>
+    .rte-wrap{border:1px solid #d1d5db;border-radius:8px;overflow:hidden;margin-bottom:12px}
+    .rte-toolbar{display:flex;gap:2px;padding:4px 6px;background:#f3f4f6;border-bottom:1px solid #e5e7eb;flex-wrap:wrap}
+    .rte-btn{background:none;border:1px solid transparent;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:13px;color:#374151;line-height:1.2;transition:all .15s}
+    .rte-btn:hover{background:#e5e7eb;border-color:#d1d5db}
+    .rte-btn.active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8}
+    .rte-editor{min-height:60px;padding:10px 12px;font-size:14px;line-height:1.6;outline:none;font-family:'Segoe UI',system-ui,sans-serif;color:#1f2937}
+    .rte-editor:focus{box-shadow:inset 0 0 0 2px #93c5fd}
+    .rte-editor p{margin:4px 0}
+    .rte-editor a{color:#2563eb;text-decoration:underline}
+    .rte-sep{width:1px;background:#d1d5db;margin:2px 4px;align-self:stretch}
+    </style>
     <div id="sort-edit-mode" style="display:none">
-      <p style="font-size:11px;color:#6b7280;margin:0 0 12px">HTML erlaubt: <code>&lt;strong&gt;Fett&lt;/strong&gt;</code>, <code>&lt;a href=&quot;...&quot;&gt;Link&lt;/a&gt;</code>. Emojis direkt einfügen.</p>
 
       <div class="cms-card">
         <div class="cms-card-header" style="background:#2d7a5e">Einleitungstext</div>
         <div class="cms-card-body">
-          <textarea id="sort-cms-intro" class="cms-input" rows="2" style="width:100%;box-sizing:border-box;font-size:13px"></textarea>
+          <div class="rte-wrap">
+            <div class="rte-toolbar" data-rte="sort-rte-intro">
+              <button class="rte-btn" onclick="sortRteCmd('sort-rte-intro','bold')" title="Fett"><b>F</b></button>
+              <button class="rte-btn" onclick="sortRteCmd('sort-rte-intro','italic')" title="Kursiv"><i>K</i></button>
+              <span class="rte-sep"></span>
+              <button class="rte-btn" onclick="sortRteLink('sort-rte-intro')" title="Link einfügen">🔗</button>
+              <button class="rte-btn" onclick="sortRteUnlink('sort-rte-intro')" title="Link entfernen">🚫</button>
+            </div>
+            <div class="rte-editor" id="sort-rte-intro" contenteditable="true"></div>
+          </div>
         </div>
       </div>
 
       <div class="cms-card">
-        <div class="cms-card-header" style="background:#2d7a5e">Highlights (Zeilen bearbeiten)</div>
+        <div class="cms-card-header" style="background:#2d7a5e">Highlights</div>
         <div class="cms-card-body">
-          <div id="sort-cms-lines"></div>
+          <div id="sort-rte-lines"></div>
           <button class="cms-btn cms-btn-gray" style="margin-top:8px" onclick="sortAddLine()">+ Zeile hinzufügen</button>
         </div>
       </div>
@@ -495,16 +515,19 @@ document.head.appendChild(msalScript);
       <div class="cms-card">
         <div class="cms-card-header" style="background:#7d6608">Hinweisbox (gelbe Box)</div>
         <div class="cms-card-body">
-          <textarea id="sort-cms-eco" class="cms-input" rows="2" style="width:100%;box-sizing:border-box;font-size:13px"></textarea>
+          <div class="rte-wrap">
+            <div class="rte-toolbar" data-rte="sort-rte-eco">
+              <button class="rte-btn" onclick="sortRteCmd('sort-rte-eco','bold')" title="Fett"><b>F</b></button>
+              <button class="rte-btn" onclick="sortRteCmd('sort-rte-eco','italic')" title="Kursiv"><i>K</i></button>
+              <span class="rte-sep"></span>
+              <button class="rte-btn" onclick="sortRteLink('sort-rte-eco')" title="Link einfügen">🔗</button>
+            </div>
+            <div class="rte-editor" id="sort-rte-eco" contenteditable="true"></div>
+          </div>
         </div>
       </div>
 
-      <div class="cms-card" style="margin-top:12px">
-        <div class="cms-card-header" style="background:#6b7280">Vorschau</div>
-        <div class="cms-card-body" id="sort-cms-preview" style="font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6"></div>
-      </div>
-
-      <div style="display:flex;gap:8px;margin-top:14px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
         <button class="cms-btn cms-btn-primary" onclick="sortSave()">💾 Speichern</button>
         <button class="cms-btn cms-btn-gray" onclick="sortToggleEdit()">Abbrechen</button>
         <span id="sort-cms-status" style="font-size:12px;color:#6b7280;line-height:32px"></span>
@@ -4444,7 +4467,7 @@ document.head.appendChild(msalScript);
   // --- Force German locale for date/time pickers ---
   document.documentElement.setAttribute('lang','de');
 
-  // --- Sortiment CMS ---
+  // --- Sortiment CMS (WYSIWYG) ---
   var _sortLoaded=false;
   var _sortLines=[];
   var _sortEditing=false;
@@ -4463,6 +4486,27 @@ document.head.appendChild(msalScript);
     ],
     eco:'♻️ Zur Müllvermeidung könnt ihr gerne geeignete Behälter von zuhause mitbringen!'
   };
+
+  // --- RTE helpers (execCommand-based) ---
+  window.sortRteCmd=function(editorId,cmd){
+    document.getElementById(editorId).focus();
+    document.execCommand(cmd,false,null);
+  };
+  window.sortRteLink=function(editorId){
+    var url=prompt('Link-URL eingeben (z.B. tel:+49... oder https://...)','');
+    if(!url)return;
+    document.getElementById(editorId).focus();
+    document.execCommand('createLink',false,url);
+  };
+  window.sortRteUnlink=function(editorId){
+    document.getElementById(editorId).focus();
+    document.execCommand('unlink',false,null);
+  };
+
+  function _rteGetHtml(id){
+    var el=document.getElementById(id);
+    return el?el.innerHTML.trim():'';
+  }
 
   function loadSortiment(){
     _sortLoaded=true;
@@ -4506,61 +4550,71 @@ document.head.appendChild(msalScript);
     document.getElementById('sort-edit-mode').style.display=_sortEditing?'':'none';
     document.getElementById('sort-edit-toggle').innerHTML=_sortEditing?'← Zurück':'✏️ Bearbeiten';
     if(_sortEditing){
-      document.getElementById('sort-cms-intro').value=_sortIntro;
-      document.getElementById('sort-cms-eco').value=_sortEco;
+      document.getElementById('sort-rte-intro').innerHTML=_sortIntro;
+      document.getElementById('sort-rte-eco').innerHTML=_sortEco;
       sortRenderLines();
-      sortUpdatePreview();
     }
     document.getElementById('sort-cms-status').textContent='';
   };
 
   function sortRenderLines(){
-    var container=document.getElementById('sort-cms-lines');
+    var container=document.getElementById('sort-rte-lines');
     var html='';
     _sortLines.forEach(function(line,i){
-      html+='<div style="display:flex;gap:6px;align-items:start;margin-bottom:6px">';
-      html+='<textarea class="cms-input" rows="2" style="flex:1;font-size:13px;resize:vertical" oninput="_sortLines['+i+']=this.value;sortUpdatePreview()">'+line.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</textarea>';
-      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="flex-shrink:0;padding:4px 8px;margin-top:4px" onclick="sortRemoveLine('+i+')" title="Zeile entfernen">✕</button>';
+      var uid='sort-rte-hl-'+i;
+      html+='<div class="rte-wrap" style="margin-bottom:8px">';
+      html+='<div class="rte-toolbar">';
+      html+='<button class="rte-btn" onclick="sortRteCmd(\''+uid+'\',\'bold\')" title="Fett"><b>F</b></button>';
+      html+='<button class="rte-btn" onclick="sortRteCmd(\''+uid+'\',\'italic\')" title="Kursiv"><i>K</i></button>';
+      html+='<span class="rte-sep"></span>';
+      html+='<button class="rte-btn" onclick="sortRteLink(\''+uid+'\')" title="Link">🔗</button>';
+      html+='<span style="flex:1"></span>';
+      html+='<button class="rte-btn" onclick="sortRemoveLine('+i+')" title="Zeile entfernen" style="color:#dc2626">✕</button>';
+      html+='</div>';
+      html+='<div class="rte-editor" id="'+uid+'" contenteditable="true"></div>';
       html+='</div>';
     });
     container.innerHTML=html;
-    // Restore actual HTML values (textarea.value doesn't interpret entities)
-    var areas=container.querySelectorAll('textarea');
-    areas.forEach(function(ta,i){ta.value=_sortLines[i];});
+    // Set innerHTML after DOM is created (to preserve HTML)
+    _sortLines.forEach(function(line,i){
+      var el=document.getElementById('sort-rte-hl-'+i);
+      if(el) el.innerHTML=line;
+    });
   }
 
   window.sortAddLine=function(){
     _sortLines.push('🔹 Neuer Eintrag mit <strong>Fettdruck</strong>');
     sortRenderLines();
-    sortUpdatePreview();
-    var areas=document.querySelectorAll('#sort-cms-lines textarea');
-    if(areas.length){areas[areas.length-1].focus();areas[areas.length-1].select();}
+    var last=document.getElementById('sort-rte-hl-'+(_sortLines.length-1));
+    if(last) last.focus();
   };
 
   window.sortRemoveLine=function(i){
     _sortLines.splice(i,1);
     sortRenderLines();
-    sortUpdatePreview();
   };
 
-  function sortUpdatePreview(){
-    var intro=document.getElementById('sort-cms-intro').value;
-    var eco=document.getElementById('sort-cms-eco').value;
-    var html='<p>'+intro+'</p><div style="background:#f9faf9;border-radius:10px;padding:12px 16px;margin:10px 0">';
-    _sortLines.forEach(function(l){html+='<p style="margin:6px 0">'+l+'</p>';});
-    html+='</div>';
-    html+='<div style="text-align:center;background:#fef9e7;border-radius:8px;padding:8px;font-size:13px;color:#7d6608;border:1px solid #f5e6a3">'+eco+'</div>';
-    document.getElementById('sort-cms-preview').innerHTML=html;
+  function _sortCollectLines(){
+    var lines=[];
+    _sortLines.forEach(function(_,i){
+      var el=document.getElementById('sort-rte-hl-'+i);
+      if(el){
+        var h=el.innerHTML.trim();
+        if(h&&h!=='<br>') lines.push(h);
+      }
+    });
+    return lines;
   }
 
   window.sortSave=function(){
     var status=document.getElementById('sort-cms-status');
     status.textContent='Speichert…';status.style.color='#6b7280';
 
-    _sortIntro=document.getElementById('sort-cms-intro').value.trim();
-    _sortEco=document.getElementById('sort-cms-eco').value.trim();
+    _sortIntro=_rteGetHtml('sort-rte-intro');
+    _sortEco=_rteGetHtml('sort-rte-eco');
+    _sortLines=_sortCollectLines();
     var hlHtml='';
-    _sortLines.forEach(function(l){if(l.trim())hlHtml+='<p>'+l.trim()+'</p>';});
+    _sortLines.forEach(function(l){hlHtml+='<p>'+l+'</p>';});
 
     var saves=[
       fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_intro',wert:_sortIntro})}),
@@ -4574,7 +4628,6 @@ document.head.appendChild(msalScript);
         status.textContent='✅ Gespeichert!';status.style.color='#16a34a';
         toast('Sortiment-Texte gespeichert');
         sortRenderView();
-        // Switch back to view mode after short delay
         setTimeout(function(){sortToggleEdit();},800);
       }else{
         status.textContent='⚠️ Fehler beim Speichern';status.style.color='#dc2626';
@@ -4585,11 +4638,6 @@ document.head.appendChild(msalScript);
       toast('Netzwerkfehler beim Speichern','error');
     });
   };
-
-  // Update preview on intro/eco change
-  document.addEventListener('input',function(e){
-    if(e.target.id==='sort-cms-intro'||e.target.id==='sort-cms-eco') sortUpdatePreview();
-  });
 
   // --- Init (always run – login gate is disabled for SWA) ---
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
