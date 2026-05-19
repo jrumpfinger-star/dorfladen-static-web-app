@@ -526,3 +526,15 @@ function loadAngBilder(container){
     })
     .catch(function(e){console.log('BILDER-API:',e);});
 }
+
+/* === Logo loader === */
+(function(){
+  fetch(API_BASE+'/cms-config')
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res.success||!res.data||!res.data.logo)return;
+      var el=document.getElementById('nv-logo');
+      if(el) el.innerHTML='<img src="'+res.data.logo+'" alt="Dorfladen Oberornau" style="height:36px;width:auto">';
+    })
+    .catch(function(){});
+})();

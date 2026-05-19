@@ -418,6 +418,25 @@ document.head.appendChild(msalScript);
     </div>
     <p style="font-size:12px;color:#6b7280;margin:0 0 8px">&Auml;nderungen werden sofort auf der Startseite sichtbar (nach Cache-Aktualisierung).</p>
     <p style="font-size:12px;color:#6b7280;margin:0 0 16px"><strong>Wochenplan-Layout:</strong> im Tab <strong>Design &rarr; Wochenplan</strong> bei <strong>&bdquo;Wochenplan-Layout (Homepage Karte)&ldquo;</strong>.</p>
+    <!-- Logo Upload -->
+    <div class="cms-card" style="margin-bottom:16px">
+      <div class="cms-card-header" style="font-size:13px">&#127912; Logo</div>
+      <div class="cms-card-body" style="padding:12px 16px">
+        <p style="font-size:11px;color:#9ca3af;margin:0 0 8px">Logo im Header der Website. Empfohlen: PNG mit transparentem Hintergrund.</p>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div id="cms-logo-preview" style="background:#f9fafb;border:1px dashed #d1d5db;border-radius:8px;padding:12px;min-width:160px;min-height:50px;display:flex;align-items:center;justify-content:center">
+            <span style="color:#9ca3af;font-size:12px">Kein Logo</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label class="cms-btn cms-btn-primary cms-btn-sm" style="cursor:pointer">
+              &#128247; Logo hochladen
+              <input type="file" id="cms-logo-file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display:none" data-action="logoUpload">
+            </label>
+            <button class="cms-btn cms-btn-gray cms-btn-sm" data-action="logoRemove" style="font-size:11px">&#10005; Logo entfernen</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="cms-hp-fields" style="display:flex;flex-direction:column;gap:16px"></div>
     <div class="cms-empty" id="cms-hp-empty" style="display:none">Keine bearbeitbaren Felder gefunden.</div>
   </div>
@@ -1596,7 +1615,7 @@ document.head.appendChild(msalScript);
     });
     if(name==='hours' && hours.length===0) loadHours();
     if(name==='ang' && angebote.length===0) loadAngebote();
-    if(name==='hp'){ if(!_hpLoaded) loadHomepage(); }
+    if(name==='hp'){ if(!_hpLoaded) loadHomepage(); loadLogo(); }
     if(name==='news' && !_newsLoaded) loadNews();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
   };
@@ -2352,6 +2371,67 @@ document.head.appendChild(msalScript);
     }).catch(function(e){toast('Fehler: '+e.message,'error');})
     .then(function(){if(btn)btn.disabled=false;});
   }
+
+  // --- Logo Upload ---
+  function loadLogo(){
+    var preview=document.getElementById('cms-logo-preview');
+    if(!preview)return;
+    fetch(API+'/cms-config')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success||!res.data)return;
+        var logo=res.data.logo;
+        if(logo){
+          preview.innerHTML='<img src="'+logo+'" style="max-height:60px;max-width:200px">';
+        }
+      }).catch(function(){});
+  }
+
+  window.cmsLogoUpload=function(){
+    var input=document.getElementById('cms-logo-file');
+    if(!input)return;
+    input.addEventListener('change',function(){
+      var file=input.files[0];
+      if(!file)return;
+      if(file.size>500000){toast('Logo zu gro\u00df (max 500 KB)','warn');return;}
+      var reader=new FileReader();
+      reader.onload=function(e){
+        var dataUrl=e.target.result;
+        document.getElementById('cms-logo-preview').innerHTML='<img src="'+dataUrl+'" style="max-height:60px;max-width:200px">';
+        fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'logo',wert:dataUrl})})
+          .then(function(r){return r.json();})
+          .then(function(res){if(res.success)toast('Logo gespeichert!','ok');else toast('Fehler: '+res.error,'error');})
+          .catch(function(err){toast('Fehler: '+err.message,'error');});
+      };
+      reader.readAsDataURL(file);
+    });
+    input.click();
+  };
+
+  window.cmsLogoRemove=function(){
+    document.getElementById('cms-logo-preview').innerHTML='<span style="color:#9ca3af;font-size:12px">Kein Logo</span>';
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'logo',wert:''})})
+      .then(function(r){return r.json();})
+      .then(function(res){if(res.success)toast('Logo entfernt','ok');else toast('Fehler: '+res.error,'error');})
+      .catch(function(err){toast('Fehler: '+err.message,'error');});
+  };
+
+  // Wire logo upload button
+  document.getElementById('cms-logo-file').addEventListener('change',function(){
+    var file=this.files[0];
+    if(!file)return;
+    if(file.size>500000){toast('Logo zu gro\u00df (max 500 KB)','warn');this.value='';return;}
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var dataUrl=e.target.result;
+      document.getElementById('cms-logo-preview').innerHTML='<img src="'+dataUrl+'" style="max-height:60px;max-width:200px">';
+      fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'logo',wert:dataUrl})})
+        .then(function(r){return r.json();})
+        .then(function(res){if(res.success)toast('Logo gespeichert!','ok');else toast('Fehler: '+res.error,'error');})
+        .catch(function(err){toast('Fehler: '+err.message,'error');});
+    };
+    reader.readAsDataURL(file);
+  });
 
   // --- Aktuelles / News ---
   var _newsLoaded = false;
@@ -4166,6 +4246,7 @@ document.head.appendChild(msalScript);
       case 'saveHP':saveHomepage();break;
       case 'saveHPCfg':saveHPCfg();break;
       case 'resetHPCfg':resetHPCfg();break;
+      case 'logoRemove':cmsLogoRemove();break;
       case 'pickWpHomeTpl':
         var tpl=t.getAttribute('data-value')||'classic-red';
         var sel=document.getElementById('hcfg-wpHomeTemplate');
