@@ -47,8 +47,8 @@
   --ease:cubic-bezier(.4,0,.2,1); --ease-out:cubic-bezier(0,0,.2,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
 }
 
-html{font-size:15px;scroll-behavior:smooth}
-body{font-family:var(--f);color:var(--c-text);background:linear-gradient(180deg,#f4f6f4 0%,#eef2ee 40%,#f5f3f0 100%) fixed;min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased}
+html{font-size:15px;scroll-behavior:smooth;overflow-x:hidden}
+body{font-family:var(--f);color:var(--c-text);background:linear-gradient(180deg,#f4f6f4 0%,#eef2ee 40%,#f5f3f0 100%) fixed;min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:var(--c-pri);text-decoration:none}
 a:hover{color:var(--c-pri-h)}
 img{max-width:100%;display:block}
@@ -122,7 +122,7 @@ img{max-width:100%;display:block}
 
 /* === PROMO BAR === */
 .promo-bar{background:var(--c-bg);border-bottom:1px solid var(--c-brd)}
-.promo-bar-in{max-width:var(--max);margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 20px;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
+.promo-bar-in{max-width:var(--max);margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 20px}
 .promo-bar-in::-webkit-scrollbar{display:none}
 .promo-item{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r-btn);font-size:.82rem;font-weight:600;white-space:nowrap;transition:all .2s var(--ease);text-decoration:none;flex-shrink:0;background:var(--c-surf);color:var(--c-text);border:1px solid var(--c-brd)}
 .promo-item:hover{background:var(--c-pri);color:#fff;border-color:var(--c-pri)}
