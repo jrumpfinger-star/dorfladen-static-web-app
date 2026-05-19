@@ -20,7 +20,7 @@
     // Filter buttons
     html+='<div class="so-filters">';
     html+='<span class="so-filter-btn" data-filter="rp">&#x1F534; G&uuml;nstiger als UVP ('+rpCount+')</span>';
-    if(angCount>0) html+='<span class="so-filter-btn" data-filter="ang">&#9733; Sonderangebot ('+angCount+')</span>';
+    html+='<span class="so-filter-btn" data-filter="ang">&#9733; Sonderangebot ('+angCount+')</span>';
     html+='</div></div>';
 
     // Search
@@ -61,9 +61,11 @@
           }
         }
 
+        var discHtml=extraHtml||'&nbsp;';
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" class="'+cls.trim()+'">';
         rows+='<td class="so-td-name">'+nameHtml+'</td>';
-        rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;'+extraHtml+'</td></tr>';
+        rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;</td>';
+        rows+='<td class="so-td-disc">'+discHtml+'</td></tr>';
       });
 
       // Group header — clean, no markers
