@@ -290,8 +290,8 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .ang-item{background:#fff;border:1px solid #e8e5de;border-radius:16px;padding:14px 14px 14px 14px;position:relative;transition:all .35s var(--ease-spring);box-shadow:0 2px 8px rgba(0,0,0,.06);display:grid;grid-template-columns:100px 1fr auto;grid-template-rows:auto auto;gap:0 14px;overflow:visible;min-height:110px}
 .ang-item:hover{box-shadow:0 6px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
 .ang-badge{position:absolute;top:-4px;left:6px;background:#a51d2d;color:#fff;font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:0 0 8px 8px;letter-spacing:.3px;z-index:3}
-.ang-img{width:100px;height:100px;overflow:visible;border-radius:10px;background:#faf9f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .35s var(--ease);position:relative;grid-row:1/3}
-.ang-img img{max-width:92px;max-height:92px;object-fit:contain;transform:rotate(-3deg);filter:drop-shadow(3px 4px 4px rgba(0,0,0,.15));transition:transform .35s var(--ease);mix-blend-mode:multiply}
+.ang-img{width:100px;height:100px;overflow:hidden;border-radius:10px;background:#faf9f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .35s var(--ease);position:relative;grid-row:1/3}
+.ang-img img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(3px 4px 4px rgba(0,0,0,.15));transition:transform .35s var(--ease);mix-blend-mode:multiply}
 .ang-item:hover .ang-img img{transform:rotate(0deg) scale(1.05)}
 .ang-img.loaded{opacity:1}
 .ang-info{min-width:0;display:flex;flex-direction:column;justify-content:flex-start;grid-column:2;grid-row:1/3;padding-top:4px}
@@ -307,7 +307,7 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .ang-tag-inner .ang-euro{font-size:.5em;vertical-align:super;margin-left:1px}
 .ang-leaf{position:absolute;top:6px;right:6px;opacity:.15;font-size:1.4rem;pointer-events:none;z-index:1}
 .ang-basket{position:absolute;bottom:4px;right:12px;opacity:.12;font-size:1.6rem;pointer-events:none}
-@media(max-width:480px){.ang-grid{grid-template-columns:1fr}.ang-item{grid-template-columns:80px 1fr auto}.ang-tag-inner{font-size:1.2rem;padding:10px 12px}}
+@media(max-width:480px){.ang-grid{grid-template-columns:1fr;padding:10px}.ang-item{grid-template-columns:70px 1fr auto;gap:0 10px;padding:10px;min-height:90px}.ang-img{width:70px;height:70px}.ang-name{font-size:1rem}.ang-tag{min-width:75px}.ang-tag-inner{font-size:1.2rem;padding:10px 12px}}
 
 /* === INFO CARDS === */
 .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px}
