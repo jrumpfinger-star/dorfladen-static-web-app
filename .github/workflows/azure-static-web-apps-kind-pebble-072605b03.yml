@@ -22,14 +22,16 @@ jobs:
       - name: Bump version
         run: |
           FILE="static-site/version.json"
+          cat "$FILE"
           BUILD=$(jq '.build' "$FILE")
           NEW_BUILD=$((BUILD + 1))
           MAJOR=1
           MINOR=$((NEW_BUILD / 100))
           PATCH=$((NEW_BUILD % 100))
           VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          jq --arg v "$VERSION" --argjson b "$NEW_BUILD" '.version=$v | .build=$b' "$FILE" > tmp.json && mv tmp.json "$FILE"
-          echo "Version: $VERSION (Build $NEW_BUILD)"
+          echo "{\"version\":\"${VERSION}\",\"build\":${NEW_BUILD}}" > "$FILE"
+          echo "Updated to: Version ${VERSION} (Build ${NEW_BUILD})"
+          cat "$FILE"
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1

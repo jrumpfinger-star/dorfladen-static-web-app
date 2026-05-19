@@ -47,7 +47,6 @@ def get_headers(url_setting_name="DV_DEFAULT_URL"):
         "OData-MaxVersion": "4.0",
         "OData-Version": "4.0",
         "Accept": "application/json",
-        "Content-Type": "application/json; charset=utf-8",
     }
 
 
@@ -63,10 +62,13 @@ def get_cors_headers():
 
 def _resolve_entity_set(base_url, headers):
     for es in ["dl_seiteninhalts", "dl_seiteninhalt"]:
-        probe = f"{base_url}/api/data/v9.2/{es}?$select=dl_schluessel&$top=1"
-        r = requests.get(probe, headers=headers, timeout=30)
-        if r.status_code == 200:
-            return es
+        probe = f"{base_url}/api/data/v9.2/{es}?$top=1"
+        try:
+            r = requests.get(probe, headers=headers, timeout=30)
+            if r.status_code == 200:
+                return es
+        except Exception:
+            pass
     return None
 
 
@@ -80,13 +82,14 @@ def _find_env():
 
 
 def _find_or_create_logo_record(base_url, headers, entity_set):
-    filter_url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_schluessel eq '{LOGO_KEY}'&$select=dl_seiteninhaltid"
+    filter_url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_schluessel eq '{LOGO_KEY}'"
     r = requests.get(filter_url, headers=headers, timeout=30)
     items = (r.json() or {}).get("value", []) if r.status_code == 200 else []
     if items:
         return items[0].get("dl_seiteninhaltid")
     payload = {"dl_schluessel": LOGO_KEY, "dl_bezeichnung": "Site Logo"}
-    cr = requests.post(f"{base_url}/api/data/v9.2/{entity_set}", headers=headers, json=payload, timeout=30)
+    post_headers = {**headers, "Content-Type": "application/json"}
+    cr = requests.post(f"{base_url}/api/data/v9.2/{entity_set}", headers=post_headers, json=payload, timeout=30)
     if cr.status_code in (200, 201):
         return (cr.json() or {}).get("dl_seiteninhaltid")
     if cr.status_code == 204:
