@@ -131,6 +131,18 @@ document.head.appendChild(msalScript);
   .cms-news-abtn{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px;transition:background .12s}
   .cms-news-abtn:hover{background:#f3f4f6}
   .cms-news-del:hover{background:#fee2e2}
+  .cms-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .cms-modal{background:#fff;border-radius:12px;padding:24px;width:92%;max-width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+  .cms-news-lbl{font-size:11px;font-weight:600;color:#374151;display:block;margin:10px 0 3px;text-transform:uppercase;letter-spacing:.3px}
+  .cms-rte-toolbar{display:flex;gap:2px;padding:4px 6px;background:#f9fafb;border:1px solid #e5e7eb;border-bottom:none;border-radius:8px 8px 0 0;flex-wrap:wrap}
+  .cms-rte-btn{background:none;border:1px solid transparent;cursor:pointer;padding:3px 7px;border-radius:4px;font-size:13px;color:#374151;line-height:1.2;transition:all .12s}
+  .cms-rte-btn:hover{background:#e5e7eb;border-color:#d1d5db}
+  .cms-rte-sep{width:1px;background:#d1d5db;margin:2px 4px;align-self:stretch}
+  .cms-rte-editor{border:1px solid #e5e7eb;border-radius:0 0 8px 8px;min-height:160px;max-height:300px;overflow-y:auto;padding:10px 12px;font-size:13px;line-height:1.5;color:#1f2937;outline:none;background:#fff}
+  .cms-rte-editor:focus{border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.15)}
+  .cms-rte-editor img{max-width:100%;height:auto;border-radius:4px;margin:6px 0}
+  .cms-news-img-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+  .cms-news-img-preview{width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb}
   .cms-art-wrap{position:relative;width:100%}
   .cms-art-input{position:relative}
   .cms-art-dd{display:none;position:absolute;z-index:99;left:0;right:0;top:calc(100% + 2px);background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:240px;overflow-y:auto;font-family:"Segoe UI",Verdana,Arial,sans-serif}
@@ -1120,7 +1132,7 @@ document.head.appendChild(msalScript);
       +'<div class="cms-ang-row-img">'
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
       +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
-      +'<button class="cms-bild-search" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" type="button" title="Bild von SharePoint laden" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">🔍</button>'
+      +'<button class="cms-bild-search" data-action="uploadBild" data-row="'+angRowCounter+'" type="button" title="Bild hochladen" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">📁</button>'
       +'</div>'
       +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
@@ -2220,27 +2232,70 @@ document.head.appendChild(msalScript);
   function showNewsModal(title,titel,kurztext,inhalt){
     var overlay = document.createElement('div');
     overlay.id='cms-news-modal';
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
-    overlay.innerHTML='<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto">'
-      +'<h3 style="margin:0 0 16px;font-size:16px;font-weight:700">'+title+'</h3>'
-      +'<label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Titel</label>'
-      +'<input class="cms-input" id="news-edit-titel" value="'+esc(titel)+'" style="width:100%;margin-bottom:12px">'
-      +'<label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Kurztext (Vorschau)</label>'
-      +'<textarea class="cms-input" id="news-edit-kurztext" rows="2" style="width:100%;margin-bottom:12px">'+esc(kurztext)+'</textarea>'
-      +'<label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Inhalt (HTML erlaubt)</label>'
-      +'<textarea class="cms-input" id="news-edit-inhalt" rows="6" style="width:100%;margin-bottom:16px;font-family:monospace;font-size:12px">'+esc(inhalt)+'</textarea>'
-      +'<div style="display:flex;gap:8px;justify-content:flex-end">'
-      +'<button class="cms-btn cms-btn-gray" onclick="document.getElementById(\'cms-news-modal\').remove()">Abbrechen</button>'
-      +'<button class="cms-btn cms-btn-primary" data-action="saveNews">Speichern</button>'
+    overlay.className='cms-modal-bg';
+    overlay.innerHTML='<div class="cms-modal" style="max-width:720px">'
+      +'<h3 style="margin:0 0 14px;font-size:15px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:10px">'+title+'</h3>'
+      +'<label class="cms-news-lbl">Titel</label>'
+      +'<input class="cms-input" id="news-edit-titel" value="'+esc(titel)+'" placeholder="Überschrift des Beitrags">'
+      +'<label class="cms-news-lbl">Kurztext (Vorschau auf Startseite)</label>'
+      +'<textarea class="cms-input" id="news-edit-kurztext" rows="2" placeholder="Kurzbeschreibung…">'+esc(kurztext)+'</textarea>'
+      +'<label class="cms-news-lbl">Inhalt</label>'
+      +'<div class="cms-rte-toolbar">'
+      +'<button type="button" class="cms-rte-btn" data-rte="bold" title="Fett"><b>F</b></button>'
+      +'<button type="button" class="cms-rte-btn" data-rte="italic" title="Kursiv"><i>K</i></button>'
+      +'<button type="button" class="cms-rte-btn" data-rte="underline" title="Unterstrichen"><u>U</u></button>'
+      +'<span class="cms-rte-sep"></span>'
+      +'<button type="button" class="cms-rte-btn" data-rte="insertUnorderedList" title="Liste">☰</button>'
+      +'<button type="button" class="cms-rte-btn" data-rte="createLink" title="Link einfügen">🔗</button>'
+      +'<button type="button" class="cms-rte-btn" data-rte="insertImage" title="Bild einfügen">🖼️</button>'
+      +'<span class="cms-rte-sep"></span>'
+      +'<button type="button" class="cms-rte-btn" data-rte="removeFormat" title="Formatierung entfernen">✖</button>'
+      +'</div>'
+      +'<div class="cms-rte-editor" id="news-edit-inhalt" contenteditable="true">'+inhalt+'</div>'
+      +'<label class="cms-news-lbl">Beitragsbild (optional)</label>'
+      +'<div class="cms-news-img-row">'
+      +'<img id="news-edit-img-preview" class="cms-news-img-preview" style="display:none">'
+      +'<button type="button" class="cms-btn cms-btn-sm cms-btn-gray" id="news-edit-img-btn">📁 Bild auswählen</button>'
+      +'<button type="button" class="cms-btn cms-btn-sm cms-btn-gray" id="news-edit-img-clear" style="display:none">✕ Entfernen</button>'
+      +'<input type="hidden" id="news-edit-img-data">'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #e5e7eb">'
+      +'<button class="cms-btn cms-btn-gray" data-action="closeNewsModal">Abbrechen</button>'
+      +'<button class="cms-btn cms-btn-primary" data-action="saveNews">💾 Speichern</button>'
       +'</div></div>';
     document.body.appendChild(overlay);
     overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+    // RTE toolbar handlers
+    overlay.querySelectorAll('.cms-rte-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var cmd=btn.getAttribute('data-rte');
+        if(cmd==='createLink'){var url=prompt('URL eingeben:','https://');if(url)document.execCommand('createLink',false,url);}
+        else if(cmd==='insertImage'){
+          var fi=document.createElement('input');fi.type='file';fi.accept='image/*';
+          fi.onchange=function(){var f=fi.files[0];if(!f)return;var r=new FileReader();r.onload=function(){document.execCommand('insertImage',false,r.result);};r.readAsDataURL(f);};
+          fi.click();
+        }
+        else{document.execCommand(cmd,false,null);}
+      });
+    });
+    // Image upload for Beitragsbild
+    var imgBtn=document.getElementById('news-edit-img-btn');
+    var imgClr=document.getElementById('news-edit-img-clear');
+    var imgPv=document.getElementById('news-edit-img-preview');
+    var imgData=document.getElementById('news-edit-img-data');
+    imgBtn.addEventListener('click',function(){
+      var fi=document.createElement('input');fi.type='file';fi.accept='image/*';
+      fi.onchange=function(){var f=fi.files[0];if(!f)return;var r=new FileReader();r.onload=function(){imgPv.src=r.result;imgPv.style.display='';imgClr.style.display='';imgData.value=r.result;};r.readAsDataURL(f);};
+      fi.click();
+    });
+    imgClr.addEventListener('click',function(){imgPv.src='';imgPv.style.display='none';imgClr.style.display='none';imgData.value='';});
   }
 
   function saveNews(){
     var titel = document.getElementById('news-edit-titel').value.trim();
     var kurztext = document.getElementById('news-edit-kurztext').value.trim();
-    var inhalt = document.getElementById('news-edit-inhalt').value.trim();
+    var inhaltEl = document.getElementById('news-edit-inhalt');
+    var inhalt = (inhaltEl.innerHTML||'').trim();
     if(!titel){toast('Bitte Titel eingeben','warning');return;}
     var payload = {titel:titel,kurztext:kurztext,inhalt:inhalt,status:101001};
     if(_editingNewsId) payload.id = _editingNewsId;
@@ -3961,13 +4016,30 @@ document.head.appendChild(msalScript);
       case 'deleteNews':deleteNews(id);break;
       case 'confirmDeleteNews':confirmDeleteNews(id);break;
       case 'saveNews':saveNews();break;
+      case 'closeNewsModal':var nm=document.getElementById('cms-news-modal');if(nm)nm.remove();break;
       case 'toggleNewsStatus':toggleNewsStatus(id);break;
       case 'clearBild':
         var imgRow=t.closest('.cms-ang-row-img');
         if(imgRow){var hi=imgRow.querySelector('[data-f="bild_data"]');if(hi)hi.value='';var pv=imgRow.querySelector('.cms-bild-preview');if(pv){pv.src='';pv.style.display='none';}t.style.display='none';}
         break;
-      case 'loadBildSharePoint':
-        var rn=t.getAttribute('data-row');if(rn)cmsLoadBildSharePoint(parseInt(rn));
+      case 'uploadBild':
+        (function(){
+          var rn=t.getAttribute('data-row');if(!rn)return;
+          var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+          inp.onchange=function(){
+            var f=inp.files[0];if(!f)return;
+            var reader=new FileReader();
+            reader.onload=function(){
+              var row=document.getElementById('cms-ar-'+rn);if(!row)return;
+              var hi=row.querySelector('[data-f="bild_data"]');if(hi)hi.value=reader.result;
+              var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=reader.result;pv.style.display='';}
+              var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
+              toast('Bild geladen');
+            };
+            reader.readAsDataURL(f);
+          };
+          inp.click();
+        })();
         break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
@@ -4010,10 +4082,8 @@ document.head.appendChild(msalScript);
   // --- Force German locale for date/time pickers ---
   document.documentElement.setAttribute('lang','de');
 
-  // --- Init (skip if login screen is showing) ---
-  if(!cmsPw||sessionStorage.getItem(CMS_PW_KEY)===cmsPw){
-    if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
-  }
+  // --- Init (always run – login gate is disabled for SWA) ---
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
 })();
 </script>
 </body>
