@@ -14,6 +14,8 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
@@ -30,13 +32,6 @@ jobs:
           VERSION="${MAJOR}.${MINOR}.${PATCH}"
           echo "{\"version\":\"${VERSION}\",\"build\":${NEW_BUILD}}" > "$FILE"
           echo "Updated to: Version ${VERSION} (Build ${NEW_BUILD})"
-      - name: Commit version bump
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add static-site/version.json
-          git diff --cached --quiet || git commit -m "chore: bump version to $(jq -r '.version' static-site/version.json) (Build $(jq '.build' static-site/version.json)) [skip ci]"
-          git push
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -50,6 +45,14 @@ jobs:
           api_location: "api" # Api source code path - now set to 'api'
           output_location: "" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
+      - name: Commit version bump
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add static-site/version.json
+          git diff --cached --quiet || git commit -m "chore: bump to v$(jq -r '.version' static-site/version.json) [skip ci]"
+          git push || true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
