@@ -2258,7 +2258,7 @@ document.head.appendChild(msalScript);
       var isActive = n.status===101001;
       var dateStr = n.datum?new Date(n.datum).toLocaleDateString('de-DE',{day:'numeric',month:'numeric',year:'2-digit'}):'–';
       var desc = n.beschreibung||n.dl_kurztext||'';
-      html+='<tr style="opacity:'+(isActive?'1':'0.85')+'">'
+      html+='<tr style="opacity:1">'
         +'<td class="cms-news-date">'+dateStr+'</td>'
         +'<td><div class="cms-news-title">'+esc(n.titel)+'</div>'+(desc?'<div class="cms-news-desc">'+esc(desc.length>80?desc.substring(0,80)+'…':desc)+'</div>':'')+'</td>'
         +'<td><span class="cms-news-badge'+(isActive?' active':'')+'">'+(isActive?'Aktiv':'Inaktiv')+'</span></td>'
