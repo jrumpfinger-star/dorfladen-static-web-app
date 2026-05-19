@@ -85,12 +85,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
     try:
-        from datetime import datetime
+        from datetime import datetime, timedelta
         hdrs = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
 
         # Fetch ALL articles with pagination (incl. UVP)
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$orderby=cr5d4_artikelbezeichnung asc"
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf&$orderby=cr5d4_artikelbezeichnung asc"
         items, status = _fetch_all_pages(url, hdrs)
         if items is None:
             return func.HttpResponse(
@@ -109,8 +109,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 if k not in angebote_map:
                     angebote_map[k] = v
 
+        # Cutoff: 6 months ago
+        cutoff_date = datetime.utcnow() - timedelta(days=183)
+        FLEISCH_WURST_KEYWORDS = ["fleisch", "wurst", "metzger", "aufschnitt", "schinken", "salami"]
+
+        def is_fleisch_wurst(wg):
+            wg_lower = wg.lower()
+            return any(kw in wg_lower for kw in FLEISCH_WURST_KEYWORDS)
+
         groups = {}
         total = 0
+        skipped = 0
         rp_count = 0
         ang_count = 0
         for item in items:
@@ -119,11 +128,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             preis = item.get("cr5d4_vk_dorf") or 0
             uvp_preis = item.get("cr5d4_uvp_total")
             warengruppe_bez = item.get("cr5d4_warengruppebez", "")
+            letzter_verkauf = item.get("cr5d4_artikelletzterverkauf")
 
             if not warengruppe_bez:
                 warengruppe_bez = "Sonstiges"
             else:
                 warengruppe_bez = normalize_warengruppe(warengruppe_bez) or warengruppe_bez
+
+            # Filter: skip articles not sold in last 6 months, except Fleisch & Wurst
+            if not is_fleisch_wurst(warengruppe_bez):
+                if not letzter_verkauf:
+                    skipped += 1
+                    continue
+                try:
+                    lv = datetime.fromisoformat(letzter_verkauf.replace("Z", "+00:00")).replace(tzinfo=None)
+                    if lv < cutoff_date:
+                        skipped += 1
+                        continue
+                except (ValueError, AttributeError):
+                    skipped += 1
+                    continue
 
             if warengruppe_bez not in groups:
                 groups[warengruppe_bez] = []
@@ -160,6 +184,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         result = {
             "generated": datetime.now().isoformat(),
             "total": total,
+            "skipped_old": skipped,
             "warengruppen": len(groups),
             "rp_count": rp_count,
             "ang_count": ang_count,
