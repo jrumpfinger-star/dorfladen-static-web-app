@@ -6,10 +6,27 @@ import msal
 import requests
 
 def normalize_warengruppe(name):
-    """Merge groups that differ only by MwSt rate or date suffix."""
+    """Merge groups that differ only by MwSt rate or date suffix, rename/merge display names."""
     name = re.sub(r'\s*\(?\d+%\)?', '', name)   # remove 7%, 19%, (7%), (19%)
     name = re.sub(r'\s+Bis\s+\d{4}.*$', '', name, flags=re.IGNORECASE)  # remove 'Bis 2025'
-    return name.strip()
+    name = name.strip()
+
+    # Rename specific groups
+    RENAME_MAP = {
+        "Mopro": "Molkereiprodukte",
+    }
+    if name in RENAME_MAP:
+        return RENAME_MAP[name]
+
+    # Merge groups into one
+    MERGE_MAP = {
+        "Obst und Gemüse Stück": "Obst und Gemüse",
+        "Waage Gemüse Obst": "Obst und Gemüse",
+    }
+    if name in MERGE_MAP:
+        return MERGE_MAP[name]
+
+    return name
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
