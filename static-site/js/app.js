@@ -274,7 +274,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
             var isLast=i===realMeals.length-1;
             var cls=grp+(isFirst?' wp-day-first':'')+(isLast?' wp-day-last':'');
             var price=g.preis?(g.preis.toFixed(2).replace('.',',')+' \u20AC'):'';
-            var bullet=multi?' wp-dish-bullet':'';
+            var bullet='';
             html+='<tr class="'+cls+'">';
             html+='<td class="'+(isFirst?'wp-day':'wp-day-empty')+'">'+(isFirst?day:'')+'</td>';
             html+='<td class="wp-dish'+bullet+' wp-dish-a">'+esc(g.gericht)+'</td>';
@@ -357,6 +357,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         return;
       }
       countEl.textContent=items.length+' Beitr\u00E4ge';
+      items=items.slice(0,5);
       var html='<div class="news-grid">';
       items.forEach(function(artikel,idx){
         var datumRaw=artikel.dl_datum||artikel.datum||artikel.createdon;
