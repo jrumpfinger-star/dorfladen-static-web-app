@@ -96,14 +96,19 @@ document.head.appendChild(msalScript);
   .cms-ang-price{grid-area:price;font-size:15px;font-weight:700;color:#15803d;white-space:nowrap}
   .cms-ang-old{grid-area:old;font-size:13px;color:#6b7280}
   .cms-akt-header-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:14px}
-  .cms-ang-row{background:#f8fdf9;border:1px solid #d1e7dd;border-left:4px solid #22c55e;border-radius:10px;padding:14px 12px 12px;margin-bottom:10px;position:relative;flex-shrink:0;transition:box-shadow .15s}
-  .cms-ang-row:hover{box-shadow:0 2px 8px rgba(34,197,94,.1)}
-  .cms-ang-row-num{position:absolute;top:-9px;left:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;line-height:16px;letter-spacing:.3px;font-family:"Segoe UI",Verdana,Arial,sans-serif}
-  .cms-ang-row-close{position:absolute;top:6px;right:10px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;line-height:1;transition:color .15s}
+  .cms-ang-row{background:#f8fdf9;border:1px solid #d1e7dd;border-left:3px solid #22c55e;border-radius:8px;padding:6px 8px 6px 8px;margin-bottom:4px;position:relative;flex-shrink:0;transition:box-shadow .15s}
+  .cms-ang-row:hover{box-shadow:0 1px 6px rgba(34,197,94,.12)}
+  .cms-ang-row-num{position:absolute;top:-8px;left:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:9px;font-weight:700;padding:1px 8px;border-radius:8px;line-height:14px;letter-spacing:.3px;font-family:"Segoe UI",Verdana,Arial,sans-serif}
+  .cms-ang-row-close{position:absolute;top:2px;right:4px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:15px;line-height:1;transition:color .15s;z-index:1}
   .cms-ang-row-close:hover{color:#ef4444}
-  .cms-ang-fields{display:grid;grid-template-columns:2.5fr 1.8fr 1fr 1fr 1fr;gap:16px;align-items:start;margin-bottom:12px}
+  .cms-ang-fields{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
   .cms-ang-fields > *{min-width:0;box-sizing:border-box}
-  .cms-ang-row-img{grid-column:1/-1;display:flex;align-items:center;gap:8px}
+  .cms-ang-fields .cms-input{padding:4px 6px;font-size:12px;height:30px}
+  .cms-ang-fields .cms-art-wrap{flex:2.2;min-width:0}
+  .cms-ang-fields [data-f="details"]{flex:1.5;min-width:0}
+  .cms-ang-fields .cms-price{flex:0 0 58px;text-align:right}
+  .cms-ang-fields [data-f="artikelnummer"]{flex:0 0 72px;font-size:11px}
+  .cms-ang-row-img{display:flex;align-items:center;gap:4px;flex:0 0 auto}
   .cms-ang-row-img input{flex:1}
   .cms-ang-img-row{display:flex;align-items:center;gap:8px;margin-top:6px}
   .cms-ang-img-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:11px;color:#6b7280;background:#fff;border:1px dashed #d1d5db;border-radius:6px;cursor:pointer;transition:border-color .15s}
@@ -1092,19 +1097,23 @@ document.head.appendChild(msalScript);
     row.className='cms-ang-row';
     row.id='cms-ar-'+angRowCounter;
     var produktVal=esc((item&&item.produkt)||'');
+    var hasBild=!!(item&&item.bild_data);
     row.innerHTML=''
-      +'<div class="cms-ang-row-num">Artikel '+angRowCounter+'</div>'
+      +'<div class="cms-ang-row-num">'+angRowCounter+'</div>'
       +'<button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
       +'<div class="cms-ang-fields">'
       +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
-      +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt/Artikel eingeben..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
-      +'<input class="cms-input" data-f="details" placeholder="Details/Beschr." value="'+esc((item&&item.details)||'')+'">'
-      +'<input class="cms-input cms-price" data-f="preis" placeholder="VK €" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
-      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion €" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="Nr." value="'+esc((item&&item.artikelnummer)||'')+'">'
-      +'<div class="cms-ang-row-img"><input type="hidden" data-f="bild_data" value="'+esc((item&&item.bild_data)||'')+'">'
-      +'<img class="cms-bild-preview" src="'+esc((item&&item.bild_data)||'')+'" style="max-height:48px;max-width:80px;border-radius:6px;border:1px solid #e5e7eb;'+(!(item&&item.bild_data)?'display:none':'')+'"><button class="cms-btn cms-btn-sm cms-btn-gray cms-bild-clear" type="button" title="Bild entfernen" style="'+(!(item&&item.bild_data)?'display:none':'')+'" data-action="clearBild">✕</button>'
-      +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" type="button" title="Bild von SharePoint laden (nach Art.Nr.)">🔍</button></div>'
+      +'<input type="hidden" data-f="bild_data" value="'+esc((item&&item.bild_data)||'')+'">'
+      +'<div class="cms-ang-row-img">'
+      +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
+      +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
+      +'<button class="cms-bild-search" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" type="button" title="Bild von SharePoint laden" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">🔍</button>'
+      +'</div>'
+      +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
+      +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
+      +'<input class="cms-input cms-price" data-f="preis" placeholder="VK" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
+      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
+      +'<input class="cms-input" data-f="artikelnummer" placeholder="ArtNr" value="'+esc((item&&item.artikelnummer)||'')+'">'
       +'</div>';
     c.appendChild(row);
     var prodInp=row.querySelector('.cms-art-input');
@@ -1120,7 +1129,7 @@ document.head.appendChild(msalScript);
     var rows=document.querySelectorAll('#cms-akt-items .cms-ang-row');
     rows.forEach(function(r,i){
       var b=r.querySelector('.cms-ang-row-num');
-      if(b)b.textContent='Artikel '+(i+1);
+      if(b)b.textContent=''+(i+1);
     });
     angRowCounter=rows.length;
   }
@@ -1139,7 +1148,7 @@ document.head.appendChild(msalScript);
     html+='<strong style="font-size:13px;color:#374151;font-family:Segoe UI,Verdana,Arial,sans-serif">Artikel</strong>';
     html+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button" style="font-family:Segoe UI,Verdana,Arial,sans-serif">+ Artikel</button>';
     html+='</div>';
-    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:8px;flex:1;overflow:visible;margin-bottom:14px;min-height:300px;padding:4px 2px"></div>';
+    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:2px;flex:1;overflow:visible;margin-bottom:8px;min-height:0;padding:4px 0"></div>';
     html+='<div style="display:flex;gap:10px;flex-shrink:0;padding-top:12px;border-top:1px solid #e5e7eb">';
     html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion" style="padding:10px 24px;font-size:14px">💾 Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal" style="padding:10px 20px;font-size:14px">Abbrechen</button>';
