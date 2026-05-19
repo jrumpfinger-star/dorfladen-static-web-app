@@ -2163,6 +2163,16 @@ document.head.appendChild(msalScript);
   var _hpLoaded = false;
   var _hpItems = [];
 
+  // Field descriptions for Homepage tab
+  var HP_FIELD_META = {
+    'hero_titel':     {icon:'&#127968;', desc:'Gro&szlig;e &Uuml;berschrift im Hero-Bereich der Startseite'},
+    'hero_untertitel': {icon:'&#9998;',  desc:'Kleinerer Text unter der &Uuml;berschrift'},
+    'hero_sub':       {icon:'&#9749;',  desc:'Zusatzzeile mit Icons (z.B. Bistro, Sommer)'},
+    'Hero \u00dcberschrift':     {icon:'&#127968;', desc:'Gro&szlig;e &Uuml;berschrift im Hero-Bereich der Startseite'},
+    'Hero Untertitel': {icon:'&#9998;',  desc:'Kleinerer Text unter der &Uuml;berschrift'},
+    'Hero Zusatztext': {icon:'&#9749;',  desc:'Zusatzzeile mit Icons (z.B. Bistro, Sommer)'}
+  };
+
   function loadHomepage(){
     var container = document.getElementById('cms-hp-fields');
     var empty = document.getElementById('cms-hp-empty');
@@ -2173,16 +2183,20 @@ document.head.appendChild(msalScript);
         if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
         _hpItems = Array.isArray(res.data) ? res.data : [];
         _hpLoaded = true;
-        if(_hpItems.length===0){container.innerHTML='';empty.style.display='';return;}
+        // Filter out design_config (belongs in Design tab)
+        var textItems = _hpItems.filter(function(item){ return typeof item.wert !== 'object' && item.name !== 'design_config'; });
+        if(textItems.length===0){container.innerHTML='';empty.style.display='';return;}
         empty.style.display='none';
-        container.innerHTML = _hpItems.map(function(item){
-          var val = typeof item.wert==='object'?JSON.stringify(item.wert,null,2):String(item.wert||'');
-          var isLong = val.length>100 || val.indexOf('\n')>-1;
-          return '<div class="cms-card"><div class="cms-card-header">'+esc(item.name)+'</div>'
-            +'<div class="cms-card-body">'
-            +(isLong
-              ?'<textarea class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" rows="4" style="width:100%;font-family:monospace;font-size:12px">'+esc(val)+'</textarea>'
-              :'<input class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'" style="width:100%">')
+        container.innerHTML = textItems.map(function(item){
+          var val = String(item.wert||'');
+          var meta = HP_FIELD_META[item.name] || HP_FIELD_META[item.key] || {icon:'&#128221;', desc:''};
+          var descHtml = meta.desc ? '<p style="font-size:11px;color:#9ca3af;margin:2px 0 8px">'+meta.desc+'</p>' : '';
+          return '<div class="cms-card" style="margin-bottom:12px">'
+            +'<div class="cms-card-header" style="font-size:13px">'+meta.icon+' '+esc(item.name)+'</div>'
+            +'<div class="cms-card-body" style="padding:12px 16px">'
+            +descHtml
+            +'<input class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px">'
+            +'<div style="margin-top:6px;font-size:11px;color:#d1d5db">ID: '+item.id+'</div>'
             +'</div></div>';
         }).join('');
       })
