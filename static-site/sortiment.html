@@ -139,8 +139,11 @@
 .so-noresult{display:none;text-align:center;padding:20px;color:#999;font-size:.88rem}
 .so-lightbox{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);align-items:center;justify-content:center;cursor:zoom-out}.so-lightbox.so-lb-open{display:flex}.so-lightbox img{max-width:90vw;max-height:90vh;border-radius:8px}
 @media(max-width:600px){
-  .so-table{font-size:.78rem}
+  .so-table{font-size:.78rem;table-layout:auto}
   .so-table td{padding:6px 8px}
+  .so-td-name{white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word}
+  .so-td-price{width:70px}
+  .so-td-disc{width:55px}
   .so-toggle{padding:8px 10px;font-size:.8rem}
   .so-filter-btn{padding:5px 10px;font-size:.74rem}
   .sort-gallery img{height:90px}
@@ -208,5 +211,6 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
 </script>
 
 <script src="/js/preisliste-live.js"></script>
+<script src="/js/logo-loader.js"></script>
 </body>
 </html>

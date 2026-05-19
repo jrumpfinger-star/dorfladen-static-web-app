@@ -107,8 +107,14 @@ img{max-width:100%;display:block}
 .dl-status-closed .dl-status-dot{background:#ef9a9a;box-shadow:0 0 10px rgba(239,154,154,.8)}
 .dl-status-next{font-weight:400;opacity:.95;font-size:.8rem}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* === HERO NEWS BADGE === */
+.hero-news-badge{position:absolute;top:16px;left:20px;z-index:3;display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(198,40,40,.92);color:#fff;border-radius:var(--r-btn);font-size:.85rem;font-weight:700;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:all .3s var(--ease);animation:newsPulse 2.5s ease infinite}
+.hero-news-badge:hover{background:#c62828;transform:translateY(-2px);box-shadow:0 6px 20px rgba(198,40,40,.35);color:#fff}
+.hero-news-icon{font-size:1.2rem}
+.hero-news-label{letter-spacing:.3px}
+@keyframes newsPulse{0%,100%{box-shadow:0 4px 14px rgba(198,40,40,.25)}50%{box-shadow:0 4px 20px rgba(198,40,40,.5)}}
 @media(max-width:640px){
-.hero{min-height:0;padding:0;flex-direction:column;align-items:stretch;background:none;overflow:visible}
+.hero{min-height:0;padding:0;flex-direction:column;align-items:stretch;background:none;overflow:visible;position:relative}
 .hero::before{content:'';position:static;display:block;width:100%;height:55vw;background:url('../images/hero.jpg') center top/cover no-repeat}
 .hero-in{background:#1b5e20;padding:6px 12px 2px;color:#fff;text-align:left;margin:0;max-width:none;position:static}
 .hero-text h1{font-size:.95rem;font-weight:700;text-shadow:none;margin-bottom:1px;color:#fff}
@@ -118,6 +124,8 @@ img{max-width:100%;display:block}
 .dl-status{display:inline;margin:0;padding:0;font-size:.4rem;font-weight:400;gap:0;text-shadow:none;background:none!important;border:none!important;box-shadow:none!important;color:rgba(255,255,255,.4);white-space:nowrap}
 .dl-status-next{font-size:.4rem;opacity:.5}
 .dl-status-dot{display:none}
+.hero-news-badge{top:8px;left:8px;padding:5px 10px;font-size:.72rem;gap:4px}
+.hero-news-icon{font-size:.9rem}
 }
 
 /* === PROMO BAR === */

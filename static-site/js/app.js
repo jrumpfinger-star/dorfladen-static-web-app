@@ -377,6 +377,16 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       });
       html+='</div>';
       container.innerHTML=html;
+
+      /* Show hero news badge if any news < 2 weeks old */
+      var twoWeeksAgo=new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
+      var hasRecent=items.some(function(n){
+        var d=n.dl_datum||n.datum||n.createdon;
+        return d&&new Date(d)>=twoWeeksAgo;
+      });
+      var badge=document.getElementById('hero-news-badge');
+      if(badge&&hasRecent) badge.style.display='flex';
     })
     .catch(function(e){
       console.log('NEWS-API:',e);
