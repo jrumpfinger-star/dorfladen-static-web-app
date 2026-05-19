@@ -84,31 +84,90 @@ def parse_config_value(value):
             return value
     return value
 
+def _find_env_and_entity_set():
+    """Find working environment and entity set, return (env_name, base_url, headers, entity_set) or None."""
+    logical_names = ["dl_seiteninhalt"]
+    fallback_entity_sets = ["dl_seiteninhalts", "dl_seiteninhalt"]
+    for env_name, base_url in _env_candidates():
+        headers = get_headers(env_name)
+        entity_set = _resolve_entity_set(base_url, headers, logical_names, fallback_entity_sets)
+        if entity_set:
+            return env_name, base_url, headers, entity_set
+    return None
+
+
+def _handle_post(req):
+    """Save a config entry: {name, wert} → upsert in dl_seiteninhalt."""
+    body = req.get_json()
+    name = body.get("name", "").strip()
+    wert = body.get("wert", "")
+    if not name:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "name is required"}, ensure_ascii=False),
+            status_code=400, mimetype="application/json", headers=get_cors_headers()
+        )
+    wert_str = json.dumps(wert, ensure_ascii=False) if isinstance(wert, (dict, list)) else str(wert)
+
+    env = _find_env_and_entity_set()
+    if not env:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "No Dataverse environment found"}, ensure_ascii=False),
+            status_code=500, mimetype="application/json", headers=get_cors_headers()
+        )
+    env_name, base_url, headers, entity_set = env
+
+    # Check if entry with this name already exists
+    filter_url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_name eq '{name}'&$select=dl_seiteninhaltid,dl_name"
+    existing = requests.get(filter_url, headers=headers, timeout=30)
+    existing_items = (existing.json() or {}).get("value", []) if existing.status_code == 200 else []
+
+    payload = {"dl_name": name, "dl_wert": wert_str}
+
+    if existing_items:
+        # Update existing record
+        rec_id = existing_items[0].get("dl_seiteninhaltid", "")
+        patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+        patch_headers = {**headers, "If-Match": "*"}
+        r = requests.patch(patch_url, headers=patch_headers, json=payload, timeout=30)
+        if r.status_code in (200, 204):
+            return func.HttpResponse(
+                json.dumps({"success": True, "action": "updated", "id": rec_id}, ensure_ascii=False),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"PATCH failed: {r.status_code} {r.text[:200]}"}, ensure_ascii=False),
+            status_code=r.status_code, mimetype="application/json", headers=get_cors_headers()
+        )
+    else:
+        # Create new record
+        create_url = f"{base_url}/api/data/v9.2/{entity_set}"
+        r = requests.post(create_url, headers=headers, json=payload, timeout=30)
+        if r.status_code in (200, 201, 204):
+            new_id = (r.json() or {}).get("dl_seiteninhaltid", "") if r.status_code != 204 else ""
+            return func.HttpResponse(
+                json.dumps({"success": True, "action": "created", "id": new_id}, ensure_ascii=False),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"POST failed: {r.status_code} {r.text[:200]}"}, ensure_ascii=False),
+            status_code=r.status_code, mimetype="application/json", headers=get_cors_headers()
+        )
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
     try:
-        logical_names = ["dl_seiteninhalt"]
-        fallback_entity_sets = ["dl_seiteninhalts", "dl_seiteninhalt"]
+        if req.method == "POST":
+            return _handle_post(req)
+
+        # GET
         r = None
-
-        for env_name, base_url in _env_candidates():
-            headers = get_headers(env_name)
-            entity_set = _resolve_entity_set(base_url, headers, logical_names, fallback_entity_sets)
-            if not entity_set:
-                continue
-
+        env = _find_env_and_entity_set()
+        if env:
+            env_name, base_url, headers, entity_set = env
             url = f"{base_url}/api/data/v9.2/{entity_set}"
-            candidate = requests.get(url, headers=headers, timeout=30)
-            if candidate.status_code == 200:
-                if (candidate.json() or {}).get("value"):
-                    r = candidate
-                    break
-                if r is None:
-                    r = candidate
-            elif candidate.status_code not in (404,):
-                if r is None:
-                    r = candidate
+            r = requests.get(url, headers=headers, timeout=30)
 
         if r is not None and r.status_code == 200:
             data = r.json()
