@@ -2659,6 +2659,11 @@ document.head.appendChild(msalScript);
       +'</div></div>';
     document.body.appendChild(overlay);
     overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+    // Wire save/cancel buttons directly (delegation can fail on mobile with contenteditable)
+    var saveBtn=overlay.querySelector('[data-action="saveNews"]');
+    var cancelBtn=overlay.querySelector('[data-action="closeNewsModal"]');
+    if(saveBtn) saveBtn.addEventListener('click',function(e){e.stopPropagation();saveNews();});
+    if(cancelBtn) cancelBtn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();});
     // RTE toolbar handlers
     overlay.querySelectorAll('.cms-rte-btn').forEach(function(btn){
       btn.addEventListener('click',function(){
