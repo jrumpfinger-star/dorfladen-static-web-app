@@ -452,39 +452,63 @@ document.head.appendChild(msalScript);
   </div>
   <!-- Sortiment-Texte -->
   <div id="cms-panel-sort" style="display:none">
-    <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0 0 12px">Sortiment-Seite bearbeiten</h3>
-    <p style="font-size:12px;color:#6b7280;margin:0 0 16px">Texte mit Emojis und <strong>fetten Wörtern</strong> bearbeiten. HTML ist erlaubt: <code>&lt;strong&gt;Fett&lt;/strong&gt;</code>, <code>&lt;a href=&quot;...&quot;&gt;Link&lt;/a&gt;</code></p>
+    <div class="cms-flex cms-between" style="margin-bottom:12px">
+      <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0">Sortiment-Seite</h3>
+      <button class="cms-btn cms-btn-gray" id="sort-edit-toggle" onclick="sortToggleEdit()">✏️ Bearbeiten</button>
+    </div>
 
-    <div class="cms-card">
-      <div class="cms-card-header" style="background:#2d7a5e">Einleitungstext</div>
-      <div class="cms-card-body">
-        <textarea id="sort-cms-intro" class="cms-input" rows="2" style="width:100%;box-sizing:border-box;font-size:13px"></textarea>
+    <!-- === VIEW MODE (rendered HTML) === -->
+    <div id="sort-view-mode">
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#2d7a5e">Einleitungstext</div>
+        <div class="cms-card-body" id="sort-view-intro" style="font-size:14px;line-height:1.6"></div>
+      </div>
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#2d7a5e">Highlights</div>
+        <div class="cms-card-body" id="sort-view-highlights" style="font-size:14px;line-height:1.7"></div>
+      </div>
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#7d6608">Hinweisbox</div>
+        <div class="cms-card-body" id="sort-view-eco" style="font-size:14px;line-height:1.6;text-align:center;background:#fef9e7;color:#7d6608"></div>
       </div>
     </div>
 
-    <div class="cms-card">
-      <div class="cms-card-header" style="background:#2d7a5e">Highlights (mit Emojis und Fettdruck)</div>
-      <div class="cms-card-body">
-        <div id="sort-cms-lines"></div>
-        <button class="cms-btn cms-btn-gray" style="margin-top:8px" onclick="sortAddLine()">+ Zeile hinzufügen</button>
+    <!-- === EDIT MODE (hidden by default) === -->
+    <div id="sort-edit-mode" style="display:none">
+      <p style="font-size:11px;color:#6b7280;margin:0 0 12px">HTML erlaubt: <code>&lt;strong&gt;Fett&lt;/strong&gt;</code>, <code>&lt;a href=&quot;...&quot;&gt;Link&lt;/a&gt;</code>. Emojis direkt einfügen.</p>
+
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#2d7a5e">Einleitungstext</div>
+        <div class="cms-card-body">
+          <textarea id="sort-cms-intro" class="cms-input" rows="2" style="width:100%;box-sizing:border-box;font-size:13px"></textarea>
+        </div>
       </div>
-    </div>
 
-    <div class="cms-card">
-      <div class="cms-card-header" style="background:#7d6608">Hinweisbox (gelbe Box unten)</div>
-      <div class="cms-card-body">
-        <textarea id="sort-cms-eco" class="cms-input" rows="2" style="width:100%;box-sizing:border-box;font-size:13px"></textarea>
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#2d7a5e">Highlights (Zeilen bearbeiten)</div>
+        <div class="cms-card-body">
+          <div id="sort-cms-lines"></div>
+          <button class="cms-btn cms-btn-gray" style="margin-top:8px" onclick="sortAddLine()">+ Zeile hinzufügen</button>
+        </div>
       </div>
-    </div>
 
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="cms-btn cms-btn-primary" onclick="sortSave()">💾 Speichern</button>
-      <span id="sort-cms-status" style="font-size:12px;color:#6b7280;line-height:32px"></span>
-    </div>
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#7d6608">Hinweisbox (gelbe Box)</div>
+        <div class="cms-card-body">
+          <textarea id="sort-cms-eco" class="cms-input" rows="2" style="width:100%;box-sizing:border-box;font-size:13px"></textarea>
+        </div>
+      </div>
 
-    <div class="cms-card" style="margin-top:16px">
-      <div class="cms-card-header" style="background:#6b7280">Vorschau</div>
-      <div class="cms-card-body" id="sort-cms-preview" style="font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6"></div>
+      <div class="cms-card" style="margin-top:12px">
+        <div class="cms-card-header" style="background:#6b7280">Vorschau</div>
+        <div class="cms-card-body" id="sort-cms-preview" style="font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="cms-btn cms-btn-primary" onclick="sortSave()">💾 Speichern</button>
+        <button class="cms-btn cms-btn-gray" onclick="sortToggleEdit()">Abbrechen</button>
+        <span id="sort-cms-status" style="font-size:12px;color:#6b7280;line-height:32px"></span>
+      </div>
     </div>
   </div>
 
@@ -4423,6 +4447,9 @@ document.head.appendChild(msalScript);
   // --- Sortiment CMS ---
   var _sortLoaded=false;
   var _sortLines=[];
+  var _sortEditing=false;
+  var _sortIntro='';
+  var _sortEco='';
 
   var SORT_DEFAULTS={
     intro:'Neben den gängigen Produkten des täglichen Bedarfs findet ihr bei uns vor allem <strong>regionale und spezielle Angebote</strong>:',
@@ -4443,14 +4470,10 @@ document.head.appendChild(msalScript);
       .then(function(r){return r.json()})
       .then(function(payload){
         var cfg=(payload&&payload.data)?payload.data:payload;
-        var intro=cfg['sortiment_intro']||SORT_DEFAULTS.intro;
+        _sortIntro=cfg['sortiment_intro']||SORT_DEFAULTS.intro;
         var hl=cfg['sortiment_highlights']||'';
-        var eco=cfg['sortiment_eco']||SORT_DEFAULTS.eco;
+        _sortEco=cfg['sortiment_eco']||SORT_DEFAULTS.eco;
 
-        document.getElementById('sort-cms-intro').value=intro;
-        document.getElementById('sort-cms-eco').value=eco;
-
-        // Parse highlights: split by <p> tags
         if(hl){
           var tmp=document.createElement('div');tmp.innerHTML=hl;
           var ps=tmp.querySelectorAll('p');
@@ -4459,36 +4482,59 @@ document.head.appendChild(msalScript);
         }else{
           _sortLines=SORT_DEFAULTS.highlights.slice();
         }
-        sortRenderLines();
-        sortUpdatePreview();
+        sortRenderView();
       })
       .catch(function(){
-        document.getElementById('sort-cms-intro').value=SORT_DEFAULTS.intro;
-        document.getElementById('sort-cms-eco').value=SORT_DEFAULTS.eco;
+        _sortIntro=SORT_DEFAULTS.intro;
+        _sortEco=SORT_DEFAULTS.eco;
         _sortLines=SORT_DEFAULTS.highlights.slice();
-        sortRenderLines();
-        sortUpdatePreview();
+        sortRenderView();
       });
   }
+
+  function sortRenderView(){
+    document.getElementById('sort-view-intro').innerHTML=_sortIntro;
+    var hlHtml='';
+    _sortLines.forEach(function(l){hlHtml+='<p style="margin:6px 0">'+l+'</p>';});
+    document.getElementById('sort-view-highlights').innerHTML=hlHtml;
+    document.getElementById('sort-view-eco').innerHTML=_sortEco;
+  }
+
+  window.sortToggleEdit=function(){
+    _sortEditing=!_sortEditing;
+    document.getElementById('sort-view-mode').style.display=_sortEditing?'none':'';
+    document.getElementById('sort-edit-mode').style.display=_sortEditing?'':'none';
+    document.getElementById('sort-edit-toggle').innerHTML=_sortEditing?'← Zurück':'✏️ Bearbeiten';
+    if(_sortEditing){
+      document.getElementById('sort-cms-intro').value=_sortIntro;
+      document.getElementById('sort-cms-eco').value=_sortEco;
+      sortRenderLines();
+      sortUpdatePreview();
+    }
+    document.getElementById('sort-cms-status').textContent='';
+  };
 
   function sortRenderLines(){
     var container=document.getElementById('sort-cms-lines');
     var html='';
     _sortLines.forEach(function(line,i){
-      html+='<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">';
-      html+='<input class="cms-input" style="flex:1;font-size:13px" value="'+line.replace(/"/g,'&quot;')+'" oninput="_sortLines['+i+']=this.value;sortUpdatePreview()">';
-      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="flex-shrink:0;padding:4px 8px" onclick="sortRemoveLine('+i+')" title="Zeile entfernen">✕</button>';
+      html+='<div style="display:flex;gap:6px;align-items:start;margin-bottom:6px">';
+      html+='<textarea class="cms-input" rows="2" style="flex:1;font-size:13px;resize:vertical" oninput="_sortLines['+i+']=this.value;sortUpdatePreview()">'+line.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</textarea>';
+      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="flex-shrink:0;padding:4px 8px;margin-top:4px" onclick="sortRemoveLine('+i+')" title="Zeile entfernen">✕</button>';
       html+='</div>';
     });
     container.innerHTML=html;
+    // Restore actual HTML values (textarea.value doesn't interpret entities)
+    var areas=container.querySelectorAll('textarea');
+    areas.forEach(function(ta,i){ta.value=_sortLines[i];});
   }
 
   window.sortAddLine=function(){
     _sortLines.push('🔹 Neuer Eintrag mit <strong>Fettdruck</strong>');
     sortRenderLines();
     sortUpdatePreview();
-    var inputs=document.querySelectorAll('#sort-cms-lines input');
-    if(inputs.length)inputs[inputs.length-1].select();
+    var areas=document.querySelectorAll('#sort-cms-lines textarea');
+    if(areas.length){areas[areas.length-1].focus();areas[areas.length-1].select();}
   };
 
   window.sortRemoveLine=function(i){
@@ -4511,15 +4557,15 @@ document.head.appendChild(msalScript);
     var status=document.getElementById('sort-cms-status');
     status.textContent='Speichert…';status.style.color='#6b7280';
 
-    var intro=document.getElementById('sort-cms-intro').value.trim();
-    var eco=document.getElementById('sort-cms-eco').value.trim();
+    _sortIntro=document.getElementById('sort-cms-intro').value.trim();
+    _sortEco=document.getElementById('sort-cms-eco').value.trim();
     var hlHtml='';
     _sortLines.forEach(function(l){if(l.trim())hlHtml+='<p>'+l.trim()+'</p>';});
 
     var saves=[
-      fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_intro',wert:intro})}),
+      fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_intro',wert:_sortIntro})}),
       fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_highlights',wert:hlHtml})}),
-      fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_eco',wert:eco})})
+      fetch('/api/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'sortiment_eco',wert:_sortEco})})
     ];
 
     Promise.all(saves).then(function(results){
@@ -4527,6 +4573,9 @@ document.head.appendChild(msalScript);
       if(allOk){
         status.textContent='✅ Gespeichert!';status.style.color='#16a34a';
         toast('Sortiment-Texte gespeichert');
+        sortRenderView();
+        // Switch back to view mode after short delay
+        setTimeout(function(){sortToggleEdit();},800);
       }else{
         status.textContent='⚠️ Fehler beim Speichern';status.style.color='#dc2626';
         toast('Speichern teilweise fehlgeschlagen','error');
