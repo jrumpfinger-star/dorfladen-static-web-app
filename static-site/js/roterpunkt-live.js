@@ -12,7 +12,7 @@
     var wgNames=Object.keys(groups).sort();
     var html='';
 
-    // Dezenter Banner - rechts unten, weniger prominent
+    // Banner
     html+='<div style="text-align:right;padding:12px 16px;background:#fff5f5;border:1px solid #e8c8c8;border-radius:8px;margin-bottom:16px;font-size:.9rem">';
     html+='<span style="font-size:1.1rem">&#x1F534;</span> ';
     html+='<span style="font-weight:700;color:#c62828">Roter Punkt &ndash; G&uuml;nstiger als UVP</span> ';
@@ -35,7 +35,7 @@
       var avgDisc=0;
       var validItems=0;
       items.forEach(function(i){
-        if(i.discount!==null){
+        if(i.discount>0){
           avgDisc+=i.discount;
           validItems++;
         }
@@ -44,11 +44,14 @@
 
       var rows='';
       items.forEach(function(item){
+        var saving=item.uvp&&item.uvp>0&&item.vk>0?(item.uvp-item.vk):0;
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'">';
         rows+='<td class="rp-name">'+esc(item.bezeichnung)+'</td>';
         rows+='<td class="rp-vk">'+fmtPrice(item.vk)+'&nbsp;&euro;</td>';
-        rows+='<td class="rp-uvp" style="text-decoration:line-through;color:#999">'+fmtPrice(item.uvp)+'&nbsp;&euro;</td>';
-        rows+='<td class="rp-disc"><span style="background:#c62828;color:#fff;padding:2px 7px;border-radius:8px;font-weight:700;font-size:.72rem">-'+Math.round(item.discount)+'%</span></td></tr>';
+        rows+='<td class="rp-uvp">'+fmtPrice(item.uvp)+'&nbsp;&euro;</td>';
+        rows+='<td class="rp-disc"><span class="rp-badge">-'+Math.round(item.discount)+'%</span>';
+        if(saving>0.004) rows+='<span class="rp-saving">('+ fmtPrice(saving)+'&nbsp;&euro;)</span>';
+        rows+='</td></tr>';
       });
 
       html+='<div class="rp-group">';
@@ -58,7 +61,12 @@
       html+='<span class="rp-count" data-total="'+items.length+'">'+items.length+' Artikel</span>';
       html+='<span class="rp-avg">&Oslash; -'+avgDisc+'%</span>';
       html+='<span class="rp-arrow">&#9660;</span></button>';
-      html+='<div class="rp-panel" style="display:none"><table class="rp-table"><thead><tr><th>Artikel</th><th>VK Dorf</th><th>UVP</th><th>Ersparnis</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+      html+='<div class="rp-panel" style="display:none"><table class="rp-table"><thead><tr>';
+      html+='<th class="rp-th-name">Artikel</th>';
+      html+='<th class="rp-th-vk">Unser Preis</th>';
+      html+='<th class="rp-th-uvp">UVP</th>';
+      html+='<th class="rp-th-disc">Ersparnis</th>';
+      html+='</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
     });
 
     html+='<div style="text-align:center;margin-top:24px;font-size:.82rem;color:#aaa">';
@@ -72,7 +80,7 @@
     console.error('RP load failed',e);
   });
 
-  function fmtPrice(p){return p===null?'—':p.toFixed(2).replace('.',',');}
+  function fmtPrice(p){return p===null||p===undefined?'—':p.toFixed(2).replace('.',',');}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
   function initRP(){
