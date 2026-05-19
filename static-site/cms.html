@@ -2207,19 +2207,25 @@ document.head.appendChild(msalScript);
     var fields = document.querySelectorAll('[data-hp-id]');
     var items = [];
     fields.forEach(function(el){
-      items.push({id:el.getAttribute('data-hp-id'),name:el.getAttribute('data-hp-name'),wert:el.value});
+      items.push({name:el.getAttribute('data-hp-name'),wert:el.value});
     });
     if(items.length===0){toast('Keine Felder zum Speichern','warning');return;}
     var btn = document.getElementById('cms-save-hp');
     if(btn)btn.disabled=true;
-    fetch(API+'/cms-config-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:items})})
-      .then(function(r){return r.json();})
-      .then(function(res){
-        if(res.success){toast('Homepage gespeichert!','success');}
-        else{toast('Fehler: '+res.error,'error');}
-      })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
-      .then(function(){if(btn)btn.disabled=false;});
+    var saved=0,errors=[];
+    var chain=Promise.resolve();
+    items.forEach(function(item){
+      chain=chain.then(function(){
+        return fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item)})
+          .then(function(r){return r.json();})
+          .then(function(res){if(res.success)saved++;else errors.push(item.name+': '+res.error);});
+      });
+    });
+    chain.then(function(){
+      if(errors.length)toast('Fehler: '+errors.join('; '),'error');
+      else toast(saved+' Felder gespeichert!','success');
+    }).catch(function(e){toast('Fehler: '+e.message,'error');})
+    .then(function(){if(btn)btn.disabled=false;});
   }
 
   // --- Aktuelles / News ---
