@@ -60,14 +60,6 @@
   </div>
 </nav>
 
-<!-- NEWS TICKER -->
-<div class="news-ticker" id="news-ticker" style="display:none" role="marquee" aria-label="Aktuelle Nachrichten">
-  <a href="/aktuelles" class="news-ticker-label">&#128240; Aktuelles</a>
-  <div class="news-ticker-track">
-    <div class="news-ticker-content" id="news-ticker-content"></div>
-  </div>
-</div>
-
 <!-- HERO -->
 <div class="hero" role="banner">
   <div class="hero-in">
@@ -359,6 +351,14 @@
       <button class="ck-accept" onclick="document.getElementById('cookieBar').classList.remove('show');localStorage.setItem('dl_cookies','1')">Verstanden</button>
       <button class="ck-decline" onclick="document.getElementById('cookieBar').classList.remove('show');sessionStorage.setItem('dl_cookies_declined','1')">Ablehnen</button>
     </div>
+  </div>
+</div>
+
+<!-- NEWS TICKER (fixed footer) -->
+<div class="news-ticker" id="news-ticker" style="display:none" role="marquee" aria-label="Aktuelle Nachrichten">
+  <a href="/aktuelles" class="news-ticker-label">&#128240; Aktuelles</a>
+  <div class="news-ticker-track">
+    <div class="news-ticker-content" id="news-ticker-content"></div>
   </div>
 </div>
 
