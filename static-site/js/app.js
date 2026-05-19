@@ -385,16 +385,16 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       var recentItems=items.filter(function(n){var d=n.dl_datum||n.datum||n.createdon;return d&&new Date(d)>=twoWeeksAgo;});
       if(ticker&&tickerContent&&recentItems.length){
         window._tickerNews=recentItems;
-        var tickerHtml='';
+        var singleHtml='';
         recentItems.forEach(function(n,i){
           var title=esc(n.dl_titel||n.titel||'');
           var datumR=n.dl_datum||n.datum||n.createdon;
           var dateStr='';
           if(datumR){var dd=new Date(datumR);dateStr=pad(dd.getDate())+'.'+pad(dd.getMonth()+1)+'. ';}
-          if(i>0) tickerHtml+='<span class="news-ticker-sep">&bull;</span>';
-          tickerHtml+='<span class="news-ticker-item"><a href="#" data-newsidx="'+i+'">'+dateStr+title+'</a></span>';
+          if(i>0) singleHtml+='<span class="news-ticker-sep">&bull;</span>';
+          singleHtml+='<span class="news-ticker-item"><a href="#" data-newsidx="'+i+'">'+dateStr+title+'</a></span>';
         });
-        tickerContent.innerHTML=tickerHtml+tickerHtml;
+        tickerContent.innerHTML='<span class="news-ticker-half">'+singleHtml+'</span><span class="news-ticker-half">'+singleHtml+'</span>';
         var dur=Math.max(20,recentItems.length*8);
         tickerContent.style.setProperty('--ticker-dur',dur+'s');
         ticker.style.display='flex';
