@@ -1759,6 +1759,95 @@ document.head.appendChild(msalScript);
     if(id==='cfg-savingsScalePlakat'||id==='cfg-savingsScaleFlyer'||id==='cfg-tagColor')cfgRenderSavingsPreview();
   });
 
+  // --- Homepage/Wochenplan Config (hpCfg) ---
+  var HPCFG_KEY='dl_hp_design_config';
+  var HPCFG_DEFAULTS={
+    wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',
+    wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',
+    wpShowCard:true,wpShowOeko:true,wpShowVorbestell:true,wpShowPhone:true,wpShowWaShare:true,wpShowWaInfo:true,
+    wpDishFontSize:0.92,wpPriceFontSize:0.92,
+    wpHomeTemplate:'classic-red',wpFlyerTemplate:'classic-red'
+  };
+  function hpCfgGet(){
+    try{var s=localStorage.getItem(HPCFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in HPCFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:HPCFG_DEFAULTS[k];return r;}}catch(e){}
+    return JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
+  }
+  function hpCfgSave(o){
+    try{localStorage.setItem(HPCFG_KEY,JSON.stringify(o));}catch(e){}
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'hp_design_config',wert:o})})
+      .then(function(r){return r.json();})
+      .then(function(res){if(!res.success)console.warn('HP Design save to Dataverse failed',res.error);})
+      .catch(function(e){console.warn('HP Design save error',e);});
+  }
+  function hpCfgReadUI(){
+    var c={};
+    ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;
+    });
+    ['wpShowCard','wpShowOeko','wpShowVorbestell','wpShowPhone','wpShowWaShare','wpShowWaInfo'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.checked;
+    });
+    ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);
+    });
+    var ht=document.getElementById('hcfg-wpHomeTemplate');if(ht)c.wpHomeTemplate=ht.value;
+    var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)c.wpFlyerTemplate=ft.value;
+    return c;
+  }
+  function hpCfgApplyUI(c){
+    ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)el.value=c[k]||HPCFG_DEFAULTS[k];
+    });
+    ['wpShowCard','wpShowOeko','wpShowVorbestell','wpShowPhone','wpShowWaShare','wpShowWaInfo'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)el.checked=c.hasOwnProperty(k)?c[k]:HPCFG_DEFAULTS[k];
+    });
+    ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]||HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
+    });
+    var ht=document.getElementById('hcfg-wpHomeTemplate');if(ht)ht.value=c.wpHomeTemplate||'classic-red';
+    var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)ft.value=c.wpFlyerTemplate||'classic-red';
+    hpCfgSyncWpPreview();
+    hpCfgSyncWpFlyerPreview();
+  }
+  function hpCfgLoadUI(){
+    var c=hpCfgGet();
+    hpCfgApplyUI(c);
+    fetch(API+'/cms-config')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success||!res.data)return;
+        var dvCfg=res.data['hp_design_config'];
+        if(dvCfg&&typeof dvCfg==='object'){
+          var merged={};for(var k in HPCFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:HPCFG_DEFAULTS[k];
+          try{localStorage.setItem(HPCFG_KEY,JSON.stringify(merged));}catch(e){}
+          hpCfgApplyUI(merged);
+        }
+      })
+      .catch(function(e){console.warn('HP Design load from Dataverse failed',e);});
+  }
+  function hpCfgSyncWpPreview(){
+    var sel=document.getElementById('hcfg-wpHomeTemplate');if(!sel)return;
+    var v=(sel.value||'classic-red').toLowerCase();
+    var btns=document.querySelectorAll('#hcfg-wpHomeTemplate-preview .cms-wp-preview');
+    btns.forEach(function(b){b.classList.toggle('active',((b.getAttribute('data-value')||'').toLowerCase()===v));});
+  }
+  function hpCfgSyncWpFlyerPreview(){
+    var sel=document.getElementById('hcfg-wpFlyerTemplate');if(!sel)return;
+    var v=(sel.value||'classic-red').toLowerCase();
+    var btns=document.querySelectorAll('#hcfg-wpFlyerTemplate-preview .cms-wp-preview');
+    btns.forEach(function(b){b.classList.toggle('active',((b.getAttribute('data-value')||'').toLowerCase()===v));});
+  }
+  window.saveHPCfg=function(){
+    var c=hpCfgReadUI();
+    hpCfgSave(c);
+    toast('Wochenplan-Design gespeichert','ok');
+  };
+  window.resetHPCfg=function(){
+    localStorage.removeItem(HPCFG_KEY);
+    hpCfgApplyUI(JSON.parse(JSON.stringify(HPCFG_DEFAULTS)));
+    toast('Wochenplan-Design zur\u00fcckgesetzt','ok');
+  };
+
   // --- Wochenplan ---
   window.cmsWeek = function(delta){
     kw+=delta; if(kw<1){jahr--;kw=52;} if(kw>52){jahr++;kw=1;} loadWP();
