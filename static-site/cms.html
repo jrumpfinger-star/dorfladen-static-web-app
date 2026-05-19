@@ -1348,9 +1348,14 @@ document.head.appendChild(msalScript);
   var SP_DRIVE='b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A';
   var SP_FOLDER='01USAQ6ERA5Q2V5M2I2BCKYOFVH2WWICOC';
   var msalApp=null;
-  try{
-    msalApp=new msal.PublicClientApplication({auth:{clientId:'64b027b2-aa1c-4d2a-824d-8ad4b2a4231d',authority:'https://login.microsoftonline.com/acfaedd4-c403-43b7-9544-fdb2b150124e',redirectUri:window.location.origin+'/cms/'},cache:{cacheLocation:'localStorage'}});
-  }catch(e){console.warn('MSAL init failed',e);}
+  function initMsal(){
+    if(msalApp) return;
+    try{
+      msalApp=new msal.PublicClientApplication({auth:{clientId:'64b027b2-aa1c-4d2a-824d-8ad4b2a4231d',authority:'https://login.microsoftonline.com/acfaedd4-c403-43b7-9544-fdb2b150124e',redirectUri:window.location.origin+'/cms/'},cache:{cacheLocation:'localStorage'}});
+    }catch(e){console.warn('MSAL init failed',e);}
+  }
+  if(typeof msal!=='undefined'){initMsal();}
+  else{var _msalWait=setInterval(function(){if(typeof msal!=='undefined'){clearInterval(_msalWait);initMsal();}},200);setTimeout(function(){clearInterval(_msalWait);},10000);}
 
   function getGraphToken(){
     if(!msalApp)return Promise.reject('no msal');
