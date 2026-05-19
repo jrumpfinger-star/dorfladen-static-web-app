@@ -106,8 +106,8 @@ def _handle_get(base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}/$value?size=full"
-    img_headers = {**headers, "Accept": "application/octet-stream", "Content-Type": "application/octet-stream"}
+    img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}/$value"
+    img_headers = {**headers, "Accept": "application/octet-stream"}
     r = requests.get(img_url, headers=img_headers, timeout=30)
     if r.status_code == 200 and len(r.content) > 100:
         content = r.content
