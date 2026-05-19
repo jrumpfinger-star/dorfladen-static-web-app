@@ -1102,7 +1102,9 @@ document.head.appendChild(msalScript);
       +'<input class="cms-input cms-price" data-f="preis" placeholder="VK €" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
       +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion €" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
       +'<input class="cms-input" data-f="artikelnummer" placeholder="Nr." value="'+esc((item&&item.artikelnummer)||'')+'">'
-      +'<div class="cms-ang-row-img"><input class="cms-input" data-f="bild_data" placeholder="Bild (optional)" value="'+esc((item&&item.bild_data)||'')+'" readonly><button class="cms-btn cms-btn-sm cms-btn-gray" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" type="button" title="Bild von SharePoint laden (nach Art.Nr.)">🔍</button></div>'
+      +'<div class="cms-ang-row-img"><input type="hidden" data-f="bild_data" value="'+esc((item&&item.bild_data)||'')+'">'
+      +'<img class="cms-bild-preview" src="'+esc((item&&item.bild_data)||'')+'" style="max-height:48px;max-width:80px;border-radius:6px;border:1px solid #e5e7eb;'+(!(item&&item.bild_data)?'display:none':'')+'"><button class="cms-btn cms-btn-sm cms-btn-gray cms-bild-clear" type="button" title="Bild entfernen" style="'+(!(item&&item.bild_data)?'display:none':'')+'" data-action="clearBild">✕</button>'
+      +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" type="button" title="Bild von SharePoint laden (nach Art.Nr.)">🔍</button></div>'
       +'</div>';
     c.appendChild(row);
     var prodInp=row.querySelector('.cms-art-input');
@@ -1224,8 +1226,15 @@ document.head.appendChild(msalScript);
     if(btn){btn.disabled=true;btn.textContent='⏳';}
     console.log('[CMS] Loading image for article:',artnr);
     loadImageFromSharePoint(artnr).then(function(b64){
-      if(b64 && bildInp){bildInp.value=b64;toast('Bild von SharePoint geladen!');console.log('[CMS] Image set to input field');}
-      else {toast('Bild nicht in SharePoint gefunden','warn');console.log('[CMS] No image found');}
+      if(b64 && bildInp){
+        bildInp.value=b64;
+        var prev=row.querySelector('.cms-bild-preview');
+        var clr=row.querySelector('.cms-bild-clear');
+        if(prev){prev.src=b64;prev.style.display='';}
+        if(clr){clr.style.display='';}
+        toast('Bild von SharePoint geladen!');
+      }
+      else {toast('Bild nicht in SharePoint gefunden','warn');}
     }).catch(function(e){toast('Fehler beim Laden: '+e.message,'error');console.error(e);}).then(function(){
       if(btn){btn.disabled=false;btn.textContent='🔍';}
     });
@@ -3929,6 +3938,13 @@ document.head.appendChild(msalScript);
       case 'confirmDeleteNews':confirmDeleteNews(id);break;
       case 'saveNews':saveNews();break;
       case 'toggleNewsStatus':toggleNewsStatus(id);break;
+      case 'clearBild':
+        var imgRow=t.closest('.cms-ang-row-img');
+        if(imgRow){var hi=imgRow.querySelector('[data-f="bild_data"]');if(hi)hi.value='';var pv=imgRow.querySelector('.cms-bild-preview');if(pv){pv.src='';pv.style.display='none';}t.style.display='none';}
+        break;
+      case 'loadBildSharePoint':
+        var rn=t.getAttribute('data-row');if(rn)cmsLoadBildSharePoint(parseInt(rn));
+        break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
       case 'toggleCfgCompact':cfgSetCompact(!!t.checked);break;
