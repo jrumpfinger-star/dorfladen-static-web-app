@@ -527,6 +527,16 @@ function loadAngBilder(container){
     .catch(function(e){console.log('BILDER-API:',e);});
 }
 
+/* === Version loader === */
+(function(){
+  fetch('/version.json?t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(v){
+      var el=document.getElementById('site-version');
+      if(el) el.textContent='v'+v.version+' (Build '+v.build+')';
+    }).catch(function(){});
+})();
+
 /* === Logo loader === */
 (function(){
   fetch(API_BASE+'/logo')

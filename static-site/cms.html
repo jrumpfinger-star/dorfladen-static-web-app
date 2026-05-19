@@ -339,7 +339,7 @@ document.head.appendChild(msalScript);
 <div class="cms-wrap" id="cms-app" lang="de" style="display:none">
   <div class="cms-flex cms-between cms-mb">
     <div style="display:flex;align-items:center;gap:10px"><img id="cms-header-logo" src="" alt="Dorfladen Oberornau" style="height:36px;border-radius:6px"><h2 style="font-size:18px;font-weight:700;color:#1f2937;margin:0">Dorfladen CMS</h2></div>
-    <span id="cms-status" style="font-size:12px;color:#9ca3af">Lade...</span>
+    <span style="display:flex;align-items:center;gap:12px"><span id="cms-status" style="font-size:12px;color:#9ca3af">Lade...</span><span id="cms-version" style="font-size:10px;color:#d1d5db"></span></span>
   </div>
 
   <div class="cms-tabs">
@@ -978,6 +978,15 @@ document.head.appendChild(msalScript);
   cmsShowApp();
 
   var API = '/api';
+
+  // --- Load Version ---
+  (function(){
+    var el=document.getElementById('cms-version');
+    if(!el)return;
+    fetch('/version.json?t='+Date.now()).then(function(r){return r.json();}).then(function(v){
+      el.textContent='v'+v.version+' (Build '+v.build+')';
+    }).catch(function(){});
+  })();
 
   // --- Load CMS Header Logo from Dataverse ---
   (function(){
