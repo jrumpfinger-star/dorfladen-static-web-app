@@ -2604,7 +2604,7 @@ document.head.appendChild(msalScript);
   function openNewNews(){
     _editingNewsId = null;
     _editingNewsStatus = 101001;
-    showNewsModal('Neuer Beitrag','','','');
+    showNewsModal('Neuer Beitrag','','');
   }
 
   function editNews(id){
@@ -2612,10 +2612,10 @@ document.head.appendChild(msalScript);
     if(!item){toast('Beitrag nicht gefunden','error');return;}
     _editingNewsId = id;
     _editingNewsStatus = item.status||101001;
-    showNewsModal('Beitrag bearbeiten',item.titel,item.dl_kurztext||item.beschreibung||'',item.dl_inhalt||'');
+    showNewsModal('Beitrag bearbeiten',item.titel,item.dl_inhalt||'');
   }
 
-  function showNewsModal(title,titel,kurztext,inhalt){
+  function showNewsModal(title,titel,inhalt){
     // Extract existing beitragsbild from inhalt
     var existingImg = '';
     var cleanInhalt = inhalt.replace(/<div class="news-beitragsbild">.*?<\/div>/gi, function(m){
@@ -2631,8 +2631,6 @@ document.head.appendChild(msalScript);
       +'<h3 style="margin:0 0 14px;font-size:15px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:10px">'+title+'</h3>'
       +'<label class="cms-news-lbl">Titel</label>'
       +'<input class="cms-input" id="news-edit-titel" value="'+esc(titel)+'" placeholder="Überschrift des Beitrags">'
-      +'<label class="cms-news-lbl">Kurztext (Vorschau auf Startseite)</label>'
-      +'<textarea class="cms-input" id="news-edit-kurztext" rows="2" placeholder="Kurzbeschreibung…">'+esc(kurztext)+'</textarea>'
       +'<label class="cms-news-lbl">Inhalt</label>'
       +'<div class="cms-rte-toolbar">'
       +'<button type="button" class="cms-rte-btn" data-rte="bold" title="Fett"><b>F</b></button>'
@@ -2694,7 +2692,6 @@ document.head.appendChild(msalScript);
 
   function saveNews(){
     var titel = document.getElementById('news-edit-titel').value.trim();
-    var kurztext = document.getElementById('news-edit-kurztext').value.trim();
     var inhaltEl = document.getElementById('news-edit-inhalt');
     var inhalt = (inhaltEl.innerHTML||'').trim();
     if(!titel){toast('Bitte Titel eingeben','warning');return;}
@@ -2702,7 +2699,7 @@ document.head.appendChild(msalScript);
     if(imgD && imgD.value){
       inhalt += '<div class="news-beitragsbild"><img src="'+imgD.value+'" alt="Beitragsbild" style="max-width:100%;border-radius:8px;margin-top:12px"></div>';
     }
-    var payload = {titel:titel,kurztext:kurztext,inhalt:inhalt,status:_editingNewsStatus||101001};
+    var payload = {titel:titel,inhalt:inhalt,status:_editingNewsStatus||101001};
     if(_editingNewsId) payload.id = _editingNewsId;
     fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json();})
@@ -2751,7 +2748,7 @@ document.head.appendChild(msalScript);
     var item = _newsItems.find(function(n){return n.id===id;});
     if(!item){toast('Beitrag nicht gefunden','error');return;}
     var newStatus = item.status===101001?101000:101001;
-    fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,titel:item.titel,kurztext:item.beschreibung||item.dl_kurztext||'',inhalt:item.dl_inhalt||'',status:newStatus})})
+    fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,titel:item.titel,inhalt:item.dl_inhalt||'',status:newStatus})})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
