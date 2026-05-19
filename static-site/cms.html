@@ -1618,33 +1618,29 @@ document.head.appendChild(msalScript);
     if(cb)cb.checked=!!on;
     try{localStorage.setItem(CFG_COMPACT_KEY,on?'1':'0');}catch(e){}
   }
-  var _cfgLoadedFromDV=false;
   function cfgLoadFromDataverse(){
-    if(_cfgLoadedFromDV)return;
-    fetch(API+'/cms-config')
+    return fetch(API+'/cms-config')
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.data)return;
         var dvCfg=res.data['design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
-          // Merge: Dataverse wins if localStorage is default
-          var local=cfgGet(),hasLocal=false;
-          try{hasLocal=!!localStorage.getItem(CFG_KEY);}catch(e){}
-          if(!hasLocal){
-            // No local config → use Dataverse values
-            var merged={};for(var k in CFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:CFG_DEFAULTS[k];
-            try{localStorage.setItem(CFG_KEY,JSON.stringify(merged));}catch(e){}
-            cfgLoadUI();
-          }
+          // Dataverse is always the source of truth
+          var merged={};for(var k in CFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:CFG_DEFAULTS[k];
+          try{localStorage.setItem(CFG_KEY,JSON.stringify(merged));}catch(e){}
+          cfgApplyUI(merged);
         }
-        _cfgLoadedFromDV=true;
       })
       .catch(function(e){console.warn('Design load from Dataverse failed',e);});
   }
   function cfgLoadUI(){
     var c=cfgGet();
     cfgSetCompact(cfgGetCompact());
-    if(!_cfgLoadedFromDV)cfgLoadFromDataverse();
+    cfgApplyUI(c);
+    // Always refresh from Dataverse (source of truth)
+    cfgLoadFromDataverse();
+  }
+  function cfgApplyUI(c){
     ['bgColor','tagColor','leafColor','titleColor','stattColor'].forEach(function(k){
       var el=document.getElementById('cfg-'+k);if(el)el.value=c[k];
     });
