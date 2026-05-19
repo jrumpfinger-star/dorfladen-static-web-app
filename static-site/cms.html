@@ -1319,7 +1319,7 @@ document.head.appendChild(msalScript);
         var old=aktionen.find(function(a){return a.aktion_id===editId;});
         if(old){
           var keep={};items.forEach(function(it){if(it.id)keep[it.id]=true;});
-          old.items.forEach(function(it){if(it.id&&!keep[it.id])promises.push(fetch(API+'/angebote-delete?id='+it.id,{method:'DELETE'}));});
+          old.items.forEach(function(it){if(it.id&&!keep[it.id])promises.push(fetch(API+'/angebote/'+it.id,{method:'DELETE'}));});
         }
       }
 
@@ -1338,8 +1338,8 @@ document.head.appendChild(msalScript);
           dl_sortierung:idx+1,
           dl_status:101001
         };
-        if(it.id) promises.push(fetch(API+'/angebote-update?id='+it.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
-        else promises.push(fetch(API+'/angebote-write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
+        if(it.id) promises.push(fetch(API+'/angebote/'+it.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
+        else promises.push(fetch(API+'/angebote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
       });
       return Promise.all(promises);
     }).then(function(results){
@@ -1374,7 +1374,7 @@ document.head.appendChild(msalScript);
     btnBusy(delBtn,'Löschen...');
     refreshToken().then(function(){
       var promises=ak.items.filter(function(it){return !!it.id;}).map(function(it){
-        return fetch(API+'/angebote-delete?id='+it.id,{method:'DELETE'});
+        return fetch(API+'/angebote/'+it.id,{method:'DELETE'});
       });
       return Promise.all(promises);
     }).then(function(){toast('Aktion gelöscht');cmsCloseModal();loadAngebote();})
