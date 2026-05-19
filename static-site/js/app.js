@@ -539,12 +539,13 @@ function loadAngBilder(container){
 
 /* === Logo loader === */
 (function(){
+  var fb=document.getElementById('nv-logo-fallback');
   fetch(API_BASE+'/logo')
     .then(function(r){return r.json();})
     .then(function(res){
-      if(!res.success||!res.logo)return;
+      if(!res.success||!res.logo){if(fb)fb.style.display='';return;}
       var el=document.getElementById('nv-logo');
       if(el) el.innerHTML='<img src="'+res.logo+'" alt="Dorfladen Oberornau" style="height:36px;width:auto">';
     })
-    .catch(function(){});
+    .catch(function(){if(fb)fb.style.display='';});
 })();
