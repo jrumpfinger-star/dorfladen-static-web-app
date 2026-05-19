@@ -2402,27 +2402,6 @@ document.head.appendChild(msalScript);
       }).catch(function(){});
   }
 
-  window.cmsLogoUpload=function(){
-    var input=document.getElementById('cms-logo-file');
-    if(!input)return;
-    input.addEventListener('change',function(){
-      var file=input.files[0];
-      if(!file)return;
-      if(file.size>500000){toast('Logo zu gro\u00df (max 500 KB)','warn');return;}
-      var reader=new FileReader();
-      reader.onload=function(e){
-        var dataUrl=e.target.result;
-        document.getElementById('cms-logo-preview').innerHTML='<img src="'+dataUrl+'" style="max-height:60px;max-width:200px">';
-        fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'logo',wert:dataUrl})})
-          .then(function(r){return r.json();})
-          .then(function(res){if(res.success)toast('Logo gespeichert!','ok');else toast('Fehler: '+res.error,'error');})
-          .catch(function(err){toast('Fehler: '+err.message,'error');});
-      };
-      reader.readAsDataURL(file);
-    });
-    input.click();
-  };
-
   window.cmsLogoRemove=function(){
     document.getElementById('cms-logo-preview').innerHTML='<span style="color:#9ca3af;font-size:12px">Kein Logo</span>';
     fetch(API+'/logo',{method:'DELETE'})
