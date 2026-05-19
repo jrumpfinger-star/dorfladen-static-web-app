@@ -1164,14 +1164,36 @@ document.head.appendChild(msalScript);
     angRowCounter=rows.length;
   }
 
+  function nextWeekMonSat(){
+    var now=new Date();
+    var day=now.getDay(); // 0=So,1=Mo,...6=Sa
+    var daysUntilNextMon=(day===0?1:8-day);
+    var mon=new Date(now);mon.setDate(now.getDate()+daysUntilNextMon);mon.setHours(0,0,0,0);
+    var sat=new Date(mon);sat.setDate(mon.getDate()+5);
+    return {mon:mon,sat:sat};
+  }
+  function getISOWeek(d){
+    var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    t.setUTCDate(t.getUTCDate()+4-(t.getUTCDay()||7));
+    var y=new Date(Date.UTC(t.getUTCFullYear(),0,1));
+    return Math.ceil(((t-y)/86400000+1)/7);
+  }
+
   function showAktionModal(aktion){
     var isEdit=!!aktion;
+    var defVon='',defBis='',defTitel='Sonderangebote';
+    if(!isEdit){
+      var nw=nextWeekMonSat();
+      defVon=fmtISO(nw.mon);
+      defBis=fmtISO(nw.sat);
+      defTitel='Sonderangebote KW'+getISOWeek(nw.mon);
+    }
     var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:980px;overflow-x:hidden;max-height:95vh;display:flex;flex-direction:column">';
     html+='<h3 style="margin-top:0;padding-bottom:12px;border-bottom:1px solid #e5e7eb">'+(isEdit?'✏️ Aktion bearbeiten':'🆕 Neue Aktion erstellen')+'</h3>';
     html+='<div class="cms-akt-header-grid">';
-    html+='<div><label for="cms-akt-titel">Titel</label><input id="cms-akt-titel" class="cms-input" placeholder="Titel der Aktion" value="'+esc(isEdit?(aktion.titel||''):'Sonderangebote')+'"></div>';
-    html+='<div><label for="cms-akt-von">Gültig von</label><input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):'')+'"></div>';
-    html+='<div><label for="cms-akt-bis">Gültig bis</label><input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):'')+'"></div>';
+    html+='<div><label for="cms-akt-titel">Titel</label><input id="cms-akt-titel" class="cms-input" placeholder="Titel der Aktion" value="'+esc(isEdit?(aktion.titel||''):defTitel)+'"></div>';
+    html+='<div><label for="cms-akt-von">Gültig von</label><input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):defVon)+'"></div>';
+    html+='<div><label for="cms-akt-bis">Gültig bis</label><input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):defBis)+'"></div>';
     html+='</div>';
     html+='<input type="hidden" id="cms-akt-edit-id" value="'+esc(isEdit?(aktion.aktion_id||''):'')+'">';
     html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px">';
