@@ -106,23 +106,36 @@ def _handle_get(base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}/$value"
-    img_headers = {**headers, "Accept": "application/octet-stream"}
-    r = requests.get(img_url, headers=img_headers, timeout=30)
-    if r.status_code == 200 and len(r.content) > 100:
-        content = r.content
-        ct = r.headers.get("Content-Type", "image/png")
-        if ct == "application/octet-stream":
-            if content[:4] == b'\x89PNG':
-                ct = "image/png"
-            elif content[:3] == b'\xff\xd8\xff':
-                ct = "image/jpeg"
-            elif content[:4] == b'RIFF':
-                ct = "image/webp"
-            elif b'<svg' in content[:200]:
-                ct = "image/svg+xml"
-            else:
-                ct = "image/png"
+    # Read record to get dl_logo_url (full image) and dl_logo (thumbnail b64)
+    rec_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+    r = requests.get(rec_url, headers=headers, timeout=30)
+    if r.status_code != 200:
+        return func.HttpResponse(
+            json.dumps({"success": True, "logo": ""}),
+            status_code=200, mimetype="application/json", headers=get_cors_headers()
+        )
+    data = r.json()
+    logo_url = data.get("dl_logo_url") or ""
+    if not logo_url:
+        return func.HttpResponse(
+            json.dumps({"success": True, "logo": ""}),
+            status_code=200, mimetype="application/json", headers=get_cors_headers()
+        )
+    # Download full image via dl_logo_url
+    full_url = f"{base_url}{logo_url}"
+    img_r = requests.get(full_url, headers={"Authorization": headers["Authorization"]}, timeout=30)
+    if img_r.status_code == 200 and len(img_r.content) > 100:
+        content = img_r.content
+        if content[:4] == b'\x89PNG':
+            ct = "image/png"
+        elif content[:3] == b'\xff\xd8\xff':
+            ct = "image/jpeg"
+        elif content[:4] == b'RIFF':
+            ct = "image/webp"
+        elif b'<svg' in content[:200]:
+            ct = "image/svg+xml"
+        else:
+            ct = "image/png"
         b64 = base64.b64encode(content).decode("ascii")
         return func.HttpResponse(
             json.dumps({"success": True, "logo": f"data:{ct};base64,{b64}"}),
