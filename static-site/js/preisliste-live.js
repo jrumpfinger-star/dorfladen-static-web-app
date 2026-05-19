@@ -10,14 +10,16 @@
 
     var groups=data.groups||{};
     var wgNames=Object.keys(groups).sort();
+    var rpCount=data.rp_count||0;
+    var angCount=data.ang_count||0;
     var html='';
 
     // Header
     html+='<div class="so-header"><h2>Preisliste</h2>';
     html+='<p>'+data.total+' Artikel in '+data.warengruppen+' Warengruppen &mdash; Live-Daten</p>';
     html+='<div class="so-legend">';
-    html+='<span class="so-filter-btn" data-filter="rp">&#x1F534; Roter Punkt &ndash; g&uuml;nstiger als UVP</span>';
-    html+='<span class="so-filter-btn" data-filter="ang"><span style="color:#e65100;font-size:1.1em">&#9733;</span> Sonderangebot</span>';
+    html+='<span class="so-filter-btn" data-filter="rp"><span class="so-dot-rp"></span> Roter Punkt &ndash; g&uuml;nstiger als UVP <small>('+rpCount+')</small></span>';
+    html+='<span class="so-filter-btn" data-filter="ang"><span class="so-star-ang">&#9733;</span> Sonderangebot <small>('+angCount+')</small></span>';
     html+='</div></div>';
 
     // Search
@@ -28,42 +30,63 @@
     // Groups
     wgNames.forEach(function(wg){
       var items=groups[wg];
+      var wgRp=0,wgAng=0,wgDiscSum=0,wgDiscCount=0;
       var rows='';
+
+      // Table header
+      rows+='<tr class="so-thead"><th class="so-th-name">ARTIKEL</th><th class="so-th-vk">VK DORF</th><th class="so-th-uvp">UVP</th><th class="so-th-save">ERSPARNIS</th></tr>';
+
       items.forEach(function(item){
         var cls='';
-        var namePrefix='';
+        var nameHtml=esc(item.bezeichnung);
         var vkHtml=fmtPrice(item.vk)+'&nbsp;&euro;';
-        var uvpHtml='';
+        var uvpHtml='&mdash;';
         var saveHtml='';
 
-        if(item.uvp && item.vk < item.uvp){
-          var disc=Math.round((item.uvp-item.vk)/item.uvp*100);
-          if(disc>5 && disc<=60){
-            cls='so-row-rp';
-            namePrefix='<span class="so-rp-dot" title="Roter Punkt">&#x1F534;</span> ';
-            uvpHtml='<span style="text-decoration:line-through;color:#999">'+fmtPrice(item.uvp)+'&nbsp;&euro;</span>';
-            saveHtml='<span class="rp-badge" style="background:#c62828;color:#fff;padding:2px 7px;border-radius:8px;font-weight:700;font-size:.72rem">-'+disc+'%</span>';
+        // Roter Punkt: use backend flag
+        if(item.rp){
+          cls='so-row-rp';
+          nameHtml='<span class="so-dot-rp" title="Roter Punkt"></span> '+esc(item.bezeichnung);
+          wgRp++;
+          if(item.uvp){
+            uvpHtml='<span class="so-uvp-strike">'+fmtPrice(item.uvp)+'&nbsp;&euro;</span>';
           }
+          if(item.discount>0){
+            saveHtml='<span class="so-save-badge">-'+item.discount+'%</span>';
+            wgDiscSum+=item.discount;
+            wgDiscCount++;
+          }
+        } else if(item.uvp && item.uvp>0){
+          uvpHtml=fmtPrice(item.uvp)+'&nbsp;&euro;';
         }
+
+        // Sonderangebot: use backend flag
         if(item.angebot){
-          cls='so-row-ang';
-          namePrefix='<span style="color:#e65100;font-size:.9em">&#9733;</span> ';
-          if(item.angebot_statt){
-            vkHtml='<span style="text-decoration:line-through;color:#999;font-size:.75rem;margin-right:4px">'+fmtPrice(item.angebot_statt)+'&nbsp;&euro;</span> '+fmtPrice(item.angebot_preis)+'&nbsp;&euro;';
+          cls+=(cls?' ':'')+'so-row-ang';
+          nameHtml='<span class="so-star-ang">&#9733;</span> '+esc(item.bezeichnung);
+          wgAng++;
+          if(item.angebot_statt && item.angebot_preis){
+            vkHtml='<span class="so-price-old">'+fmtPrice(item.angebot_statt)+'&nbsp;&euro;</span> <span class="so-price-new">'+fmtPrice(item.angebot_preis)+'&nbsp;&euro;</span>';
+          } else if(item.angebot_preis){
+            vkHtml='<span class="so-price-new">'+fmtPrice(item.angebot_preis)+'&nbsp;&euro;</span>';
           }
         }
 
-        rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" class="'+cls+'">';
-        rows+='<td class="so-name">'+namePrefix+esc(item.bezeichnung)+'</td>';
+        rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" class="'+cls.trim()+'">';
+        rows+='<td class="so-name">'+nameHtml+'</td>';
         rows+='<td class="so-vk">'+vkHtml+'</td>';
         rows+='<td class="so-uvp">'+uvpHtml+'</td>';
         rows+='<td class="so-save">'+saveHtml+'</td></tr>';
       });
 
+      // Group header with badges
+      var avgDisc=wgDiscCount>0?Math.round(wgDiscSum/wgDiscCount):0;
       html+='<div class="so-group" data-wg="'+esc(wg.toLowerCase())+'">';
       html+='<button class="so-toggle" aria-expanded="false">';
+      if(wgRp>0) html+='<span class="so-dot-rp"></span> ';
       html+='<span class="so-wg-name">'+esc(wg)+'</span>';
-      html+='<span class="so-count" data-total="'+items.length+'">'+items.length+'</span>';
+      html+='<span class="so-count" data-total="'+items.length+'">'+items.length+' Artikel</span>';
+      if(avgDisc>0) html+=' <span class="so-wg-disc">&Oslash; -'+avgDisc+'%</span>';
       html+='<span class="so-arrow">&#9660;</span></button>';
       html+='<div class="so-panel" style="display:none"><table class="so-table"><tbody>'+rows+'</tbody></table></div></div>';
     });
@@ -78,7 +101,7 @@
     console.error('Preisliste load failed',e);
   });
 
-  function fmtPrice(p){return p.toFixed(2).replace('.',',');}
+  function fmtPrice(p){if(p===null||p===undefined)return '0,00';return p.toFixed(2).replace('.',',');}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
   function initFilterSearch(){
@@ -129,7 +152,6 @@
     document.querySelectorAll('.so-filter-btn').forEach(function(el){
       var type=el.getAttribute('data-filter');
       if(!type)return;
-      el.style.cursor='pointer';
       el.addEventListener('click',function(){
         if(activeFilter===type){
           activeFilter='';this.classList.remove('so-filter-active');

@@ -48,50 +48,118 @@ def get_cors_headers():
         "Content-Type": "application/json; charset=utf-8"
     }
 
+def _fetch_all_pages(url, headers, max_pages=20):
+    """Fetch all pages from a Dataverse OData query (handles @odata.nextLink)."""
+    all_items = []
+    page = 0
+    while url and page < max_pages:
+        r = requests.get(url, headers=headers, timeout=60)
+        if r.status_code != 200:
+            return None, r.status_code
+        data = r.json()
+        all_items.extend(data.get("value", []))
+        url = data.get("@odata.nextLink")
+        page += 1
+    return all_items, 200
+
+
+def _load_active_angebote(base_url, headers):
+    """Load active Sonderangebote from dl_angebot table, return dict keyed by artikelnummer."""
+    angebote = {}
+    for entity_set in ["dl_angebotes", "dl_angebots", "dl_angebot"]:
+        url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_status eq 101001&$select=dl_artikelnummer,dl_produkt,dl_preis,dl_statt_preis"
+        r = requests.get(url, headers=headers, timeout=30)
+        if r.status_code == 200:
+            for item in r.json().get("value", []):
+                artnr = item.get("dl_artikelnummer", "")
+                if artnr:
+                    angebote[artnr] = {
+                        "preis": item.get("dl_preis"),
+                        "statt": item.get("dl_statt_preis")
+                    }
+            return angebote
+    return angebote
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
     try:
-        headers = get_headers("DV_DEFAULT_URL")
+        from datetime import datetime
+        hdrs = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez&$orderby=cr5d4_artikelbezeichnung asc"
-        r = requests.get(url, headers=headers)
-        if r.status_code == 200:
-            data = r.json()
-            items = data.get("value", [])
-            groups = {}
-            total = 0
-            for item in items:
-                artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
-                bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
-                preis = item.get("cr5d4_vk_dorf", 0)
-                warengruppe_bez = item.get("cr5d4_warengruppebez", "")
-                if warengruppe_bez:
-                    warengruppe_bez = normalize_warengruppe(warengruppe_bez) or warengruppe_bez
-                    if warengruppe_bez not in groups:
-                        groups[warengruppe_bez] = []
-                    groups[warengruppe_bez].append({
-                        "artikelnummer": artikelnummer,
-                        "bezeichnung": bezeichnung,
-                        "vk": preis
-                    })
-                    total += 1
-            from datetime import datetime
-            result = {
-                "generated": datetime.now().isoformat(),
-                "total": total,
-                "warengruppen": len(groups),
-                "groups": groups
-            }
+
+        # Fetch ALL articles with pagination (incl. UVP)
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$orderby=cr5d4_artikelbezeichnung asc"
+        items, status = _fetch_all_pages(url, hdrs)
+        if items is None:
             return func.HttpResponse(
-                json.dumps(result, ensure_ascii=False),
-                status_code=200,
-                mimetype="application/json",
-                headers=get_cors_headers()
+                json.dumps({"success": False, "error": f"Dataverse error: {status}"}, ensure_ascii=False),
+                status_code=status, mimetype="application/json", headers=get_cors_headers()
             )
+
+        # Load active Sonderangebote
+        angebote_map = _load_active_angebote(default_url, hdrs)
+
+        groups = {}
+        total = 0
+        rp_count = 0
+        ang_count = 0
+        for item in items:
+            artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
+            bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
+            preis = item.get("cr5d4_vk_dorf") or 0
+            uvp_preis = item.get("cr5d4_uvp_total")
+            warengruppe_bez = item.get("cr5d4_warengruppebez", "")
+
+            if not warengruppe_bez:
+                warengruppe_bez = "Sonstiges"
+            else:
+                warengruppe_bez = normalize_warengruppe(warengruppe_bez) or warengruppe_bez
+
+            if warengruppe_bez not in groups:
+                groups[warengruppe_bez] = []
+
+            # Roter Punkt: VK < UVP with meaningful discount
+            is_rp = False
+            discount = 0
+            if uvp_preis and uvp_preis > 0 and preis > 0 and preis < uvp_preis:
+                discount = round((uvp_preis - preis) / uvp_preis * 100)
+                if discount >= 1:
+                    is_rp = True
+                    rp_count += 1
+
+            # Sonderangebot check
+            ang = angebote_map.get(artikelnummer)
+            is_ang = ang is not None
+            if is_ang:
+                ang_count += 1
+
+            entry = {
+                "artikelnummer": artikelnummer,
+                "bezeichnung": bezeichnung,
+                "vk": preis,
+                "uvp": uvp_preis,
+                "discount": discount,
+                "rp": is_rp,
+                "angebot": is_ang,
+                "angebot_preis": ang["preis"] if ang else None,
+                "angebot_statt": ang["statt"] if ang else None
+            }
+            groups[warengruppe_bez].append(entry)
+            total += 1
+
+        result = {
+            "generated": datetime.now().isoformat(),
+            "total": total,
+            "warengruppen": len(groups),
+            "rp_count": rp_count,
+            "ang_count": ang_count,
+            "groups": groups
+        }
         return func.HttpResponse(
-            json.dumps({"success": False, "error": f"Dataverse error: {r.status_code}"}, ensure_ascii=False),
-            status_code=r.status_code,
+            json.dumps(result, ensure_ascii=False),
+            status_code=200,
             mimetype="application/json",
             headers=get_cors_headers()
         )
