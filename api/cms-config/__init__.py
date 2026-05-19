@@ -169,6 +169,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             url = f"{base_url}/api/data/v9.2/{entity_set}"
             r = requests.get(url, headers=headers, timeout=30)
 
+        # Debug mode: return raw Dataverse response
+        if req.params.get("debug", "").lower() in ("true", "1"):
+            raw = r.json() if r and r.status_code == 200 else None
+            env_info = {"env": env_name, "entity_set": entity_set, "url": url} if env else {"env": None}
+            return func.HttpResponse(
+                json.dumps({"env_info": env_info, "status": r.status_code if r else None, "raw_count": len((raw or {}).get("value", [])), "raw_sample": (raw or {}).get("value", [])[:3]}, ensure_ascii=False, default=str),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+
         if r is not None and r.status_code == 200:
             data = r.json()
             full = req.params.get("full", "").lower() in ("true", "1", "yes")
