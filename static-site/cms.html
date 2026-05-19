@@ -2427,16 +2427,24 @@ document.head.appendChild(msalScript);
         canvas.width=w; canvas.height=h;
         var ctx=canvas.getContext('2d');
         ctx.drawImage(img,0,0,w,h);
-        var dataUrl=canvas.toDataURL('image/jpeg',0.8);
-        var qualities=[0.65,0.5,0.35,0.25];
-        for(var qi=0;qi<qualities.length && dataUrl.length>MAX_LEN;qi++){
-          dataUrl=canvas.toDataURL('image/jpeg',qualities[qi]);
+        var isPng=file.type==='image/png';
+        var dataUrl=isPng?canvas.toDataURL('image/png'):canvas.toDataURL('image/jpeg',0.8);
+        if(dataUrl.length>MAX_LEN && isPng){
+          var s=0.7; canvas.width=Math.round(w*s);canvas.height=Math.round(h*s);
+          ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          dataUrl=canvas.toDataURL('image/png');
+        }
+        if(dataUrl.length>MAX_LEN && isPng){
+          var s2=0.5; canvas.width=Math.round(w*s2);canvas.height=Math.round(h*s2);
+          ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          dataUrl=canvas.toDataURL('image/png');
         }
         if(dataUrl.length>MAX_LEN){
-          var scale=0.7;
-          canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);
-          ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);
-          dataUrl=canvas.toDataURL('image/jpeg',0.5);
+          dataUrl=canvas.toDataURL('image/jpeg',0.7);
+        }
+        var qualities=[0.5,0.35,0.25];
+        for(var qi=0;qi<qualities.length && dataUrl.length>MAX_LEN;qi++){
+          dataUrl=canvas.toDataURL('image/jpeg',qualities[qi]);
         }
         if(dataUrl.length>MAX_LEN){toast('Logo zu groß – bitte kleineres Bild verwenden','warn');return;}
         document.getElementById('cms-logo-preview').innerHTML='<img src="'+dataUrl+'" style="max-height:60px;max-width:200px">';
