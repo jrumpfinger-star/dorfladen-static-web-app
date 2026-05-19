@@ -394,10 +394,16 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
           if(i>0) singleHtml+='<span class="news-ticker-sep">&bull;</span>';
           singleHtml+='<span class="news-ticker-item"><a href="#" data-newsidx="'+i+'">'+dateStr+title+'</a></span>';
         });
-        tickerContent.innerHTML='<span class="news-ticker-half">'+singleHtml+'</span><span class="news-ticker-half">'+singleHtml+'</span>';
-        var dur=Math.max(20,recentItems.length*8);
-        tickerContent.style.setProperty('--ticker-dur',dur+'s');
         ticker.style.display='flex';
+        var trackW=document.querySelector('.news-ticker-track').offsetWidth;
+        var spacer='<span class="news-ticker-spacer" style="width:'+trackW+'px"></span>';
+        tickerContent.innerHTML=spacer+singleHtml+spacer+singleHtml;
+        var totalW=tickerContent.scrollWidth;
+        var halfW=totalW/2;
+        var speed=80;
+        var dur=halfW/speed;
+        tickerContent.style.setProperty('--ticker-dur',dur+'s');
+        tickerContent.classList.add('running');
         ticker.addEventListener('click',function(e){
           var link=e.target.closest('[data-newsidx]');
           if(!link) return;
