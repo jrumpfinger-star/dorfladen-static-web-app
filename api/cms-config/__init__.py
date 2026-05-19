@@ -116,12 +116,12 @@ def _handle_post(req):
         )
     env_name, base_url, headers, entity_set = env
 
-    # Check if entry with this name already exists
-    filter_url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_name eq '{name}'&$select=dl_seiteninhaltid,dl_name"
+    # Check if entry with this key already exists
+    filter_url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_schluessel eq '{name}'&$select=dl_seiteninhaltid,dl_schluessel"
     existing = requests.get(filter_url, headers=headers, timeout=30)
     existing_items = (existing.json() or {}).get("value", []) if existing.status_code == 200 else []
 
-    payload = {"dl_name": name, "dl_wert": wert_str}
+    payload = {"dl_schluessel": name, "dl_bezeichnung": name, "dl_wert": wert_str}
 
     if existing_items:
         # Update existing record
@@ -181,15 +181,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if r is not None and r.status_code == 200:
             data = r.json()
             full = req.params.get("full", "").lower() in ("true", "1", "yes")
+
+            def _item_name(item):
+                """Get the display/key name from whichever field exists."""
+                return item.get("dl_bezeichnung") or item.get("dl_name") or item.get("dl_schluessel") or ""
+
+            def _item_key(item):
+                """Get the unique key (slug) from whichever field exists."""
+                return item.get("dl_schluessel") or item.get("dl_name") or ""
+
             if full:
                 items = []
                 for item in data.get("value", []):
-                    name = item.get("dl_name", "")
+                    name = _item_name(item)
                     if not name:
                         continue
                     items.append({
-                        "id": item.get("dl_seiteninhaltid", item.get("dl_seiteninhalt", "")),
+                        "id": item.get("dl_seiteninhaltid", ""),
                         "name": name,
+                        "key": _item_key(item),
+                        "seite": item.get("dl_seite", ""),
                         "wert": parse_config_value(item.get("dl_wert", ""))
                     })
                 return func.HttpResponse(
@@ -199,11 +210,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     headers=get_cors_headers()
                 )
             else:
-                config = {
-                    item.get("dl_name", ""): parse_config_value(item.get("dl_wert", ""))
-                    for item in data.get("value", [])
-                    if item.get("dl_name")
-                }
+                config = {}
+                for item in data.get("value", []):
+                    key = _item_key(item)
+                    if key:
+                        config[key] = parse_config_value(item.get("dl_wert", ""))
                 return func.HttpResponse(
                     json.dumps({"success": True, "data": config}, ensure_ascii=False),
                     status_code=200,
