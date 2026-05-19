@@ -75,9 +75,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
     try:
+        show_all = req.params.get("all", "").lower() in ("true", "1", "yes")
+        status_filter = "" if show_all else "&$filter=dl_status eq 101001"
         query = (
             "?$select=dl_newsid,dl_titel,dl_kurztext,dl_inhalt,dl_datum,createdon,dl_status"
-            "&$filter=dl_status eq 101001"
+            f"{status_filter}"
             "&$orderby=dl_datum desc"
         )
         logical_names = ["dl_news"]
@@ -124,7 +126,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "dl_inhalt": item.get("dl_inhalt", ""),
                     "datum": item.get("dl_datum") or item.get("createdon"),
                     "dl_datum": item.get("dl_datum"),
-                    "createdon": item.get("createdon")
+                    "createdon": item.get("createdon"),
+                    "status": item.get("dl_status")
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "data": news_list}, ensure_ascii=False),
