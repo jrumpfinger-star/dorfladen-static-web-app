@@ -338,9 +338,9 @@ def cms_config(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="angebote", methods=["GET"])
 def angebote(req: func.HttpRequest) -> func.HttpResponse:
     try:
-        headers = get_headers("DV_DEFAULT_URL")
-        default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        url = f"{default_url}/api/data/v9.2/dl_angebotes?$filter=dl_status eq 101001&$orderby=dl_produkt asc"
+        headers = get_headers("DV_DEV_URL")
+        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
+        url = f"{dev_url}/api/data/v9.2/dl_angebotes?$filter=dl_status eq 101001&$orderby=dl_produkt asc"
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = r.json()
@@ -371,6 +371,59 @@ def angebote(req: func.HttpRequest) -> func.HttpResponse:
                     "dl_bild_base64": item.get("dl_bild_base64", "")
                 })
             return create_response({"success": True, "data": angebote_list}, 200)
+        return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
+    except Exception as e:
+        return create_response({"success": False, "error": str(e)}, 500)
+
+@app.route(route="angebote-write", methods=["POST", "OPTIONS"])
+def angebote_write(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=get_cors_headers())
+    try:
+        body = req.get_json()
+        headers = get_headers("DV_DEV_URL")
+        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
+        url = f"{dev_url}/api/data/v9.2/dl_angebotes"
+        r = requests.post(url, headers=headers, json=body)
+        if r.status_code in (200, 201, 204):
+            return create_response({"success": True}, 200)
+        return create_response({"success": False, "error": f"Dataverse error: {r.status_code} {r.text[:500]}"}, r.status_code)
+    except Exception as e:
+        return create_response({"success": False, "error": str(e)}, 500)
+
+@app.route(route="angebote-update", methods=["PATCH", "OPTIONS"])
+def angebote_update(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=get_cors_headers())
+    try:
+        record_id = req.params.get("id")
+        if not record_id:
+            return create_response({"success": False, "error": "Fehlender Parameter 'id'"}, 400)
+        body = req.get_json()
+        headers = get_headers("DV_DEV_URL")
+        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
+        url = f"{dev_url}/api/data/v9.2/dl_angebotes({record_id})"
+        r = requests.patch(url, headers=headers, json=body)
+        if r.status_code in (200, 204):
+            return create_response({"success": True}, 200)
+        return create_response({"success": False, "error": f"Dataverse error: {r.status_code} {r.text[:500]}"}, r.status_code)
+    except Exception as e:
+        return create_response({"success": False, "error": str(e)}, 500)
+
+@app.route(route="angebote-delete", methods=["DELETE", "OPTIONS"])
+def angebote_delete(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=get_cors_headers())
+    try:
+        record_id = req.params.get("id")
+        if not record_id:
+            return create_response({"success": False, "error": "Fehlender Parameter 'id'"}, 400)
+        headers = get_headers("DV_DEV_URL")
+        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
+        url = f"{dev_url}/api/data/v9.2/dl_angebotes({record_id})"
+        r = requests.delete(url, headers=headers)
+        if r.status_code == 204:
+            return create_response({"success": True}, 200)
         return create_response({"success": False, "error": f"Dataverse error: {r.status_code}"}, r.status_code)
     except Exception as e:
         return create_response({"success": False, "error": str(e)}, 500)

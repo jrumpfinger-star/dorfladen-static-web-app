@@ -961,34 +961,32 @@ document.head.appendChild(msalScript);
   // --- Load Artikel Data from Azure Function API ---  
   async function loadArtikelData() {
     try {
-      const angeboteResponse = await fetch(API + '/angebote');
-      if (!angeboteResponse.ok) {
-        console.error('API request failed:', angeboteResponse.status, angeboteResponse.statusText);
+      const response = await fetch(API + '/preisliste');
+      if (!response.ok) {
+        console.error('Preisliste API failed:', response.status, response.statusText);
         return;
       }
-      const responseText = await angeboteResponse.text();
-      console.log('API Response:', responseText);
-      const angeboteData = JSON.parse(responseText);
-      if (angeboteData.success && (angeboteData.data||angeboteData.value)) {
-        const items = angeboteData.data||angeboteData.value;
-        const artikelData = items.map(item => ({
-          b: item.name || item.produkt || '',
-          bt: item.name || item.produkt || '',
-          nr: item.artikelnummer || item.dl_artikelnummer || '',
-          p: item.price || item.preis || 0,
-          details: item.details || item.dl_details || '',
-          preis: item.price || item.preis || 0,
-          statt_preis: item.old_price || item.statt_preis || 0,
-          wg: 'angebot',
-          produktVal: item.name || item.produkt || ''
-        })).filter(a => a.b.length > 0);
+      const data = await response.json();
+      if (data && data.groups) {
+        const artikelData = [];
+        Object.keys(data.groups).forEach(function(wg){
+          (data.groups[wg]||[]).forEach(function(item){
+            if(!item.bezeichnung) return;
+            artikelData.push({
+              b: item.bezeichnung,
+              bt: item.bezeichnung,
+              nr: item.artikelnummer || '',
+              p: item.vk || 0,
+              details: '',
+              preis: item.vk || 0,
+              statt_preis: item.angebot_statt || item.uvp || 0,
+              wg: wg,
+              produktVal: item.bezeichnung
+            });
+          });
+        });
         _artikelCache = artikelData;
-        console.log('[CMS] Artikel cache loaded:', _artikelCache.length, 'items', _artikelCache);
-        const artikelScript = document.getElementById('cms-artikel-data');
-        if (artikelScript) {
-          artikelScript.textContent = JSON.stringify(artikelData);
-          console.log('Updated cms-artikel-data script');
-        }
+        console.log('[CMS] Artikel cache loaded from Preisliste:', _artikelCache.length, 'items');
       }
     } catch (error) {
       console.error('Error loading artikel data:', error);
@@ -1321,7 +1319,7 @@ document.head.appendChild(msalScript);
         var old=aktionen.find(function(a){return a.aktion_id===editId;});
         if(old){
           var keep={};items.forEach(function(it){if(it.id)keep[it.id]=true;});
-          old.items.forEach(function(it){if(it.id&&!keep[it.id])promises.push(fetch(API+'/angebote/'+it.id,{method:'DELETE',headers:deleteHeaders()}));});
+          old.items.forEach(function(it){if(it.id&&!keep[it.id])promises.push(fetch(API+'/angebote-delete?id='+it.id,{method:'DELETE'}));});
         }
       }
 
@@ -1340,8 +1338,8 @@ document.head.appendChild(msalScript);
           dl_sortierung:idx+1,
           dl_status:101001
         };
-        if(it.id) promises.push(fetch(API+'/angebote/'+it.id,{method:'PATCH',headers:writeHeaders(),body:JSON.stringify(body)}));
-        else promises.push(fetch(API+'/angebote',{method:'POST',headers:writeHeaders(),body:JSON.stringify(body)}));
+        if(it.id) promises.push(fetch(API+'/angebote-update?id='+it.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
+        else promises.push(fetch(API+'/angebote-write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
       });
       return Promise.all(promises);
     }).then(function(results){
@@ -1376,7 +1374,7 @@ document.head.appendChild(msalScript);
     btnBusy(delBtn,'Löschen...');
     refreshToken().then(function(){
       var promises=ak.items.filter(function(it){return !!it.id;}).map(function(it){
-        return fetch(API+'/angebote/'+it.id,{method:'DELETE',headers:deleteHeaders()});
+        return fetch(API+'/angebote-delete?id='+it.id,{method:'DELETE'});
       });
       return Promise.all(promises);
     }).then(function(){toast('Aktion gelöscht');cmsCloseModal();loadAngebote();})
