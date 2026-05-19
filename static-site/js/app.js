@@ -378,13 +378,15 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       html+='</div>';
       container.innerHTML=html;
 
-      /* News ticker above hero */
+      /* News ticker above hero – only if recent news (< 14 days) exist */
       var ticker=document.getElementById('news-ticker');
       var tickerContent=document.getElementById('news-ticker-content');
-      if(ticker&&tickerContent&&items.length){
-        window._tickerNews=items;
+      var twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
+      var recentItems=items.filter(function(n){var d=n.dl_datum||n.datum||n.createdon;return d&&new Date(d)>=twoWeeksAgo;});
+      if(ticker&&tickerContent&&recentItems.length){
+        window._tickerNews=recentItems;
         var tickerHtml='';
-        items.forEach(function(n,i){
+        recentItems.forEach(function(n,i){
           var title=esc(n.dl_titel||n.titel||'');
           var datumR=n.dl_datum||n.datum||n.createdon;
           var dateStr='';
@@ -393,7 +395,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
           tickerHtml+='<span class="news-ticker-item"><a href="#" data-newsidx="'+i+'">'+dateStr+title+'</a></span>';
         });
         tickerContent.innerHTML=tickerHtml+tickerHtml;
-        var dur=Math.max(20,items.length*8);
+        var dur=Math.max(20,recentItems.length*8);
         tickerContent.style.setProperty('--ticker-dur',dur+'s');
         ticker.style.display='flex';
         ticker.addEventListener('click',function(e){
