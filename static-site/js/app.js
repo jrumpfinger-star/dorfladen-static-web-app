@@ -257,22 +257,27 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         if(!byDay[dc]){byDay[dc]=[];dayOrder.push(dc);}
         byDay[dc].push(g);
       });
+      var todayIdx = new Date().getDay(); // 0=So, 1=Mo, ..., 6=Sa
+      var todayDc = 101000 + (todayIdx === 0 ? 6 : todayIdx - 1); // map to 101000-101006
+
       var html='<table class="wp-table"><thead><tr><th class="wp-th-day"></th><th></th><th class="wp-th-price">Verzehr im Laden<br><small>oder zum Mitnehmen</small></th></tr></thead><tbody>';
       dayOrder.forEach(function(dc,dIdx){
         var dayMeals=byDay[dc];
         var day=DAYS[dc]||'?';
         var grp=dIdx%2===0?'wp-grp-even':'wp-grp-odd';
+        var isToday=dc===todayDc;
         var notice='';
         dayMeals.forEach(function(g){if(g.beschreibung&&!notice) notice=g.beschreibung;});
         var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim();});
         if(realMeals.length===0&&notice){
-          html+='<tr class="'+grp+' wp-day-first wp-day-last"><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2">'+esc(notice)+'</td></tr>';
+          var cls=grp+(isToday?' wp-today wp-day-first wp-day-last':' wp-day-first wp-day-last');
+          html+='<tr class="'+cls+'"><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2">'+esc(notice)+'</td></tr>';
         } else {
           var multi=realMeals.length>1;
           realMeals.forEach(function(g,i){
             var isFirst=i===0;
             var isLast=i===realMeals.length-1;
-            var cls=grp+(isFirst?' wp-day-first':'')+(isLast?' wp-day-last':'');
+            var cls=grp+(isFirst?' wp-day-first':'')+(isLast?' wp-day-last':'')+(isToday?' wp-today':'');
             var price=g.preis?(g.preis.toFixed(2).replace('.',',')+' \u20AC'):'';
             var bullet='';
             html+='<tr class="'+cls+'">';

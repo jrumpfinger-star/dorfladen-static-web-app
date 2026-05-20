@@ -247,6 +247,8 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .wp-notice{font-style:italic;color:#888}
 .wp-grp-even td{background:#fafafa}
 .wp-grp-odd td{background:#fff}
+.wp-table tr.wp-today td{background:var(--c-pri-l)!important;font-weight:600}
+.wp-table tr.wp-today .wp-day{color:var(--c-pri);position:relative;border-left:4px solid var(--c-pri);padding-left:12px!important}
 .wp-day-first td{border-top:1px solid #f0f0f0}
 .wp-footer{padding:14px 18px;background:#fafafa;border-top:1px solid var(--c-brd);font-size:.82rem;color:var(--c-sec);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .wp-footer p{display:flex;align-items:center;gap:4px}
