@@ -6,162 +6,10 @@
   <title>Dorfladen Oberornau – Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
   <meta name="description" content="Dorfladen Oberornau – regionale Nahversorgung, gemütlicher Treffpunkt, Postfiliale. Frühstück, Mittagessen, Brotzeit und mehr.">
   <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/mobile.css">
 </head>
 <body>
 <!-- Skip to content (Accessibility) -->
 <a href="#main" class="skip">Zum Inhalt springen</a>
-
-<!-- ====== MOBILE-ONLY: Ticker + Header + Drawer ====== -->
-<div class="mob-only mob-ticker" id="mob-ticker">
-  <a href="/aktuelles" class="mob-ticker-label" style="text-decoration:none;color:#fff">&#128240; Aktuelles</a>
-  <div class="mob-ticker-track"><span class="mob-ticker-content" id="mob-ticker-content">Neuigkeiten werden geladen&hellip;</span></div>
-</div>
-
-<header class="mob-only mob-header">
-  <a href="/" class="mob-header-logo">
-    <img src="" alt="Dorfladen" id="mob-logo-img" style="display:none">
-    <span class="logo-text" id="mob-logo-text">&#127793; Dorfladen Oberornau</span>
-  </a>
-  <button class="mob-header-menu" aria-label="Men&uuml;" onclick="document.getElementById('mob-nav').classList.add('open');document.getElementById('mob-nav-ov').classList.add('open')">&#9776;</button>
-</header>
-
-<div class="mob-only mob-nav-overlay" id="mob-nav-ov" onclick="document.getElementById('mob-nav').classList.remove('open');this.classList.remove('open')"></div>
-<nav class="mob-only mob-nav" id="mob-nav">
-  <div class="mob-nav-close"><button onclick="document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-nav-ov').classList.remove('open')">&times;</button></div>
-  <a href="/" class="active">&#127968; Start</a>
-  <a href="/aktuelles">&#128240; Aktuelles</a>
-  <a href="/essen-im-dorfladen">&#127869;&#65039; Essen</a>
-  <a href="/konzept">&#127807; Konzept</a>
-  <a href="/sortiment">&#128722; Sortiment &amp; Preisliste</a>
-  <a href="/oeffnungszeiten">&#128336; &Ouml;ffnungszeiten</a>
-  <a href="/bilder">&#128247; Bilder</a>
-  <a href="/roter-punkt" class="acc">&#128308; Roter Punkt</a>
-  <a href="/beirat">&#128101; Beirat</a>
-  <a href="/geschaeftsfuehrung">&#128188; Gesch&auml;ftsf&uuml;hrung</a>
-  <a href="/impressum" style="margin-top:12px;font-size:.88rem;color:#999">Impressum</a>
-  <a href="/datenschutzerklaerung" style="font-size:.88rem;color:#999">Datenschutz</a>
-</nav>
-
-<!-- MOBILE: Status bar (open/closed) -->
-<div class="mob-only mob-status" id="mob-status" onclick="mobOpenPopup('hours')">
-  <span class="mob-status-dot"></span>
-  <span id="mob-status-text">Wird gepr&uuml;ft&hellip;</span>
-  <span class="mob-status-hint">&#9656; &Ouml;ffnungszeiten</span>
-</div>
-
-<!-- MOBILE: Hero -->
-<div class="mob-only mob-hero">
-  <h1>Ihr Nahversorger in Oberornau</h1>
-  <p>Frisch &middot; Regional &middot; Mit Herz &#10084;&#65039;</p>
-</div>
-
-<!-- MOBILE: Quick Actions -->
-<div class="mob-only mob-actions-full">
-  <div class="mob-action-wide" onclick="mobOpenPopup('lunch')">
-    <span class="mob-action-icon">&#127869;&#65039;</span>
-    <div class="mob-action-wide-text">
-      <span class="mob-action-label">Mittagstisch</span>
-      <span class="mob-action-sub" id="mob-lunch-sub">Wochenplan</span>
-    </div>
-  </div>
-</div>
-<div class="mob-only mob-actions-row">
-  <div class="mob-action" onclick="mobOpenPopup('meat')">
-    <span class="mob-action-icon">&#129385;</span>
-    <span class="mob-action-label">Fleisch &amp; Wurst</span>
-    <span class="mob-action-sub">15% ab 1kg</span>
-  </div>
-  <div class="mob-action" onclick="mobOpenPopup('offers')">
-    <span class="mob-action-icon">&#11088;</span>
-    <span class="mob-action-label">Angebote</span>
-    <span class="mob-action-sub" id="mob-offers-sub">Sonderangebote</span>
-  </div>
-  <div class="mob-action" onclick="mobOpenPopup('preisliste')">
-    <span class="mob-action-icon">&#128203;</span>
-    <span class="mob-action-label">Preisliste</span>
-    <span class="mob-action-sub">Alle Artikel</span>
-  </div>
-</div>
-
-<!-- ====== MOBILE POPUPS (bottom-sheets) ====== -->
-<!-- POPUP: Preisliste -->
-<div class="mob-only mob-popup-bg" id="mob-popup-preisliste" onclick="if(event.target===this)mobClosePopup('preisliste')">
-  <div class="mob-popup">
-    <div class="mob-popup-handle"></div>
-    <div class="mob-popup-top"><h2>&#128203; Preisliste</h2><button class="mob-popup-x" onclick="mobClosePopup('preisliste')">&times;</button></div>
-    <div style="position:relative;margin-bottom:10px">
-      <input type="text" id="mob-pl-search" placeholder="Artikel suchen..." style="width:100%;padding:10px 14px 10px 36px;border:1px solid #ddd;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box">
-      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999">&#128270;</span>
-    </div>
-    <div class="mob-pl-filters" id="mob-pl-filters">
-      <button class="mob-pl-filter active" data-filter="all">Alle</button>
-      <button class="mob-pl-filter" data-filter="rp">&#128308; Roter Punkt</button>
-      <button class="mob-pl-filter" data-filter="ang">&#11088; Angebote</button>
-    </div>
-    <div id="mob-pl-grid" style="font-size:.85rem">Lade Preisliste...</div>
-  </div>
-</div>
-
-<!-- POPUP: Öffnungszeiten -->
-<div class="mob-only mob-popup-bg" id="mob-popup-hours" onclick="if(event.target===this)mobClosePopup('hours')">
-  <div class="mob-popup">
-    <div class="mob-popup-handle"></div>
-    <div class="mob-popup-top"><h2>&#128336; &Ouml;ffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('hours')">&times;</button></div>
-    <h3>&#128722; Dorfladen</h3>
-    <table id="mob-hrs-laden"></table>
-    <h3>&#128230; Postfiliale</h3>
-    <table id="mob-hrs-post"></table>
-    <p style="margin-top:12px;font-size:.8rem">Au&szlig;er an gesetzlichen Feiertagen</p>
-  </div>
-</div>
-
-<!-- POPUP: Post-Öffnungszeiten -->
-<div class="mob-only mob-popup-bg" id="mob-popup-post-hours" onclick="if(event.target===this)mobClosePopup('post-hours')">
-  <div class="mob-popup">
-    <div class="mob-popup-handle"></div>
-    <div class="mob-popup-top"><h2>&#128230; Postfiliale &Ouml;ffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('post-hours')">&times;</button></div>
-    <table id="mob-hrs-post2"></table>
-    <p style="margin-top:12px;font-size:.8rem">Au&szlig;er an gesetzlichen Feiertagen</p>
-  </div>
-</div>
-
-<!-- POPUP: Wochenplan Mittagessen -->
-<div class="mob-only mob-popup-bg" id="mob-popup-lunch" onclick="if(event.target===this)mobClosePopup('lunch')">
-  <div class="mob-popup">
-    <div class="mob-popup-handle"></div>
-    <div class="mob-popup-top"><h2>&#127869;&#65039; Mittagstisch</h2><button class="mob-popup-x" onclick="mobClosePopup('lunch')">&times;</button></div>
-    <p style="font-size:.85rem;color:#6b7280;margin-bottom:12px" id="mob-wp-kw"></p>
-    <div id="mob-wp-days"></div>
-  </div>
-</div>
-
-<!-- POPUP: Fleisch & Wurst -->
-<div class="mob-only mob-popup-bg" id="mob-popup-meat" onclick="if(event.target===this)mobClosePopup('meat')">
-  <div class="mob-popup">
-    <div class="mob-popup-handle"></div>
-    <div class="mob-popup-top"><h2>&#129385; Fleisch &amp; Wurst</h2><button class="mob-popup-x" onclick="mobClosePopup('meat')">&times;</button></div>
-    <div style="background:#fff5f5;border-radius:14px;padding:16px;margin-bottom:16px;border:1.5px solid #ffcdd2">
-      <p style="font-size:1.15rem;font-weight:800;color:#c62828;margin-bottom:6px" id="mob-meat-pct">15&thinsp;% Rabatt</p>
-      <p style="font-size:.92rem;color:#1a1a1a;margin:0" id="mob-meat-sub">Auf alle Fleisch- und Wurstprodukte bei Vorbestellung ab 1&thinsp;kg. Einfach im Laden oder telefonisch vorbestellen!</p>
-    </div>
-    <a href="tel:+4980826229991" style="display:block;text-align:center;background:#2e7d4f;color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:1rem" id="mob-meat-cta">&#128222; Jetzt vorbestellen</a>
-  </div>
-</div>
-
-<!-- POPUP: Sonderangebote -->
-<div class="mob-only mob-popup-bg" id="mob-popup-offers" onclick="if(event.target===this)mobClosePopup('offers')">
-  <div class="mob-popup">
-    <div class="mob-popup-handle"></div>
-    <div class="mob-popup-top"><h2>&#11088; Sonderangebote</h2><button class="mob-popup-x" onclick="mobClosePopup('offers')">&times;</button></div>
-    <p style="font-size:.82rem;color:#6b7280;margin-bottom:16px" id="mob-ang-kw"></p>
-    <div class="mob-ang-grid" id="mob-ang-grid"></div>
-    <div style="text-align:center;margin-top:20px">
-      <a href="/roter-punkt" style="display:inline-block;background:#fff5f5;color:#c62828;padding:12px 24px;border-radius:14px;font-weight:700;font-size:.92rem;text-decoration:none;border:1.5px solid #c62828">&#128308; Roter Punkt Angebote</a>
-    </div>
-  </div>
-</div>
-<!-- ====== END MOBILE-ONLY ====== -->
 
 <!-- TOPBAR: Contact + Legal links (hidden on mobile) -->
 <div class="tb" id="hp-topbar" role="complementary" aria-label="Kontaktleiste">
@@ -194,6 +42,7 @@
           <li><a href="/sortiment#preisliste" style="color:#2d7a5e">&#128203; Preisliste</a></li>
           <li><a href="/oeffnungszeiten">&Ouml;ffnungszeiten</a></li>
           <li><a href="/bilder">Bilder</a></li>
+          <li><a href="/do-geh-i-hi">Do geh i hi</a></li>
         </ul>
       </li>
       <li><a href="/essen-im-dorfladen">Essen</a></li>
@@ -329,6 +178,30 @@
       </div>
     </div>
 
+    <!-- Do geh i hi – Infographic -->
+    <div class="dgih" id="hp-dgih">
+      <div class="dgih-h">
+        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        Do geh i hi! &ndash; Darum Dorfladen
+      </div>
+      <div class="dgih-body">
+        <div class="dgih-grid">
+          <div class="dgih-item"><span class="dgih-icon">&#x1F6D2;</span><span>Die Nahversorgung bleibt erhalten &ndash; auch f&uuml;r die, die nicht (mehr) Auto fahren</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F30D;</span><span>Kurze Wege schonen die Umwelt und sparen Zeit und Geld</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F373;</span><span>T&auml;glich frisch zubereitetes Mittagessen und selbst gebackene Kuchen</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F33E;</span><span>Regionale Erzeuger und Anbieter werden gest&auml;rkt</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x2615;</span><span>Gem&uuml;tliche Sitzecke f&uuml;r Fr&uuml;hst&uuml;ck, Mittagessen, Brotzeit, Kaffee &amp; Kuchen oder Eis</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F6CD;&#xFE0F;</span><span>Alles auch zum Mitnehmen</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x2600;&#xFE0F;</span><span>Bei gutem Wetter servieren wir drau&szlig;en am Dorfplatz auf Tischen und St&uuml;hlen</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F91D;</span><span>Sozialer Mittelpunkt f&uuml;r alle &ndash; regelm&auml;&szlig;ige Kaffee-Treffs f&uuml;r Jung und Alt</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F370;</span><span>Catering- und Back-Service f&uuml;r Vereine und privat</span></div>
+          <div class="dgih-item"><span class="dgih-icon">&#x1F4E6;</span><span>Integrierte Postfiliale &ndash; Briefe, Pakete, Einschreiben ohne weite Wege</span></div>
+        </div>
+        <div class="dgih-cta">
+          <a href="/do-geh-i-hi">Mehr erfahren &rarr;</a>
+        </div>
+      </div>
+    </div>
 
     <!-- News -->
     <div class="cd news-section">
@@ -416,56 +289,6 @@
       </div>
     </div>
   </aside>
-
-  <!-- ====== MOBILE CONTENT (below quick actions) ====== -->
-  <div class="mob-only mob-cards">
-    <div class="mob-card">
-      <div class="mob-card-header">
-        <span class="mob-card-icon">&#128230;</span>
-        <span class="mob-card-title">Postfiliale</span>
-      </div>
-      <div class="mob-card-body">
-        Briefe, Pakete, Einschreiben &ndash; alles im Laden.<br>
-        <a href="javascript:void(0)" onclick="mobOpenPopup('post-hours')">&#128336; &Ouml;ffnungszeiten Post &#9656;</a>
-      </div>
-    </div>
-
-    <div class="mob-card">
-      <div class="mob-card-header">
-        <span class="mob-card-icon">&#9749;</span>
-        <span class="mob-card-title">Bistro</span>
-      </div>
-      <div class="mob-card-body">
-        Fr&uuml;hst&uuml;ck &middot; Mittagessen &middot; Kaffee &amp; Kuchen<br>
-        Im Sommer drau&szlig;en am Dorfplatz &#9728;&#65039;
-      </div>
-    </div>
-
-  </div>
-
-  <!-- MOBILE: Contact + Map -->
-  <div class="mob-only mob-contact">
-    <span class="mob-contact-icon">&#128205;</span>
-    <div class="mob-contact-info">
-      <strong>Dorfladen Oberornau</strong><br>
-      Dorfplatz 1, 84419 Obertaufkirchen<br>
-      <a href="tel:+4980826229991">&#128222; 08082 / 622 99 91</a><br>
-      <a href="mailto:info@dorfladen-oberornau.de">&#9993;&#65039; info@dorfladen-oberornau.de</a>
-    </div>
-    <div class="mob-contact-map">
-      <iframe src="https://www.google.com/maps?q=Dorfladen+Oberornau,+Dorfplatz+1,+84419+Obertaufkirchen&output=embed&z=15" width="100%" height="180" style="border:0;border-radius:12px;margin-top:12px" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      <a href="https://www.google.com/maps/dir/?api=1&destination=Dorfplatz+1,+84419+Obertaufkirchen" target="_blank" rel="noopener" class="mob-route-btn">&#128663; Route planen</a>
-    </div>
-  </div>
-
-  <!-- MOBILE: WhatsApp CTA -->
-  <div class="mob-only mob-wa">
-    <a href="https://wa.me/message/U7VY4HZCPBR4N1" target="_blank" rel="noopener">
-      &#128172; Speiseplan per WhatsApp
-    </a>
-  </div>
-  <!-- ====== END MOBILE CONTENT ====== -->
-
 </main>
 
 <!-- FOOTER -->
@@ -496,6 +319,7 @@
         <li><a href="/beirat">Beirat</a></li>
         <li><a href="/geschaeftsfuehrung">Gesch&auml;ftsf&uuml;hrung</a></li>
         <li><a href="/stille-gesellschafter">Stille Gesellschafter</a></li>
+        <li><a href="/do-geh-i-hi">Do geh i hi</a></li>
       </ul>
     </div>
     <div>
@@ -539,6 +363,5 @@
 </div>
 
 <script src="/js/app.js"></script>
-<script src="/js/mobile.js"></script>
 </body>
 </html>

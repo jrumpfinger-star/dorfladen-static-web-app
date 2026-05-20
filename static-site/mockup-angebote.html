@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonderangebote – Dorfladen Oberornau</title>
+<link rel="stylesheet" href="/css/mockup.css">
+</head>
+<body>
+<div id="mockup-header"></div>
+
+<div class="m-page-header" style="background:linear-gradient(135deg,#e65100,#bf360c)">
+  <h1>⭐ Sonderangebote</h1>
+  <p>Aktuelle Wochenangebote</p>
+</div>
+
+<div class="m-content">
+  <p style="font-size:.88rem;color:var(--text-sec);margin-bottom:16px" id="angebote-kw"></p>
+
+  <div class="m-ang-grid">
+    <div class="m-ang-item">
+      <div class="m-ang-badge">-24%</div>
+      <span class="m-ang-leaf">🌿</span>
+      <div class="m-ang-img"><span>🥛</span></div>
+      <div class="m-ang-info">
+        <div class="m-ang-name">Bergbauern Milch 1L</div>
+        <div class="m-ang-det">Frische Alpenmilch</div>
+      </div>
+      <div class="m-ang-tag">
+        <div class="m-ang-price">1,29<span class="euro">€</span></div>
+        <span class="m-ang-statt">€ 1,69</span>
+      </div>
+      <span class="m-ang-basket">🛒</span>
+    </div>
+
+    <div class="m-ang-item">
+      <div class="m-ang-badge">-34%</div>
+      <span class="m-ang-leaf">🌿</span>
+      <div class="m-ang-img"><span>🥛</span></div>
+      <div class="m-ang-info">
+        <div class="m-ang-name">Müller Joghurt 500g</div>
+        <div class="m-ang-det">Natur, cremig gerührt</div>
+      </div>
+      <div class="m-ang-tag">
+        <div class="m-ang-price">0,99<span class="euro">€</span></div>
+        <span class="m-ang-statt">€ 1,49</span>
+      </div>
+      <span class="m-ang-basket">🛒</span>
+    </div>
+
+    <div class="m-ang-item">
+      <div class="m-ang-badge">-17%</div>
+      <span class="m-ang-leaf">🌿</span>
+      <div class="m-ang-img"><span>🍞</span></div>
+      <div class="m-ang-info">
+        <div class="m-ang-name">Landbrot Roggen 750g</div>
+        <div class="m-ang-det">Vom regionalen Bäcker</div>
+      </div>
+      <div class="m-ang-tag">
+        <div class="m-ang-price">2,89<span class="euro">€</span></div>
+        <span class="m-ang-statt">€ 3,49</span>
+      </div>
+      <span class="m-ang-basket">🛒</span>
+    </div>
+
+    <div class="m-ang-item">
+      <div class="m-ang-badge">-20%</div>
+      <span class="m-ang-leaf">🌿</span>
+      <div class="m-ang-img"><span>🧀</span></div>
+      <div class="m-ang-info">
+        <div class="m-ang-name">Emmentaler 200g</div>
+        <div class="m-ang-det">Am Stück, mild-nussig</div>
+      </div>
+      <div class="m-ang-tag">
+        <div class="m-ang-price">2,39<span class="euro">€</span></div>
+        <span class="m-ang-statt">€ 2,99</span>
+      </div>
+      <span class="m-ang-basket">🛒</span>
+    </div>
+
+    <div class="m-ang-item">
+      <div class="m-ang-badge">-16%</div>
+      <span class="m-ang-leaf">🌿</span>
+      <div class="m-ang-img"><span>🍌</span></div>
+      <div class="m-ang-info">
+        <div class="m-ang-name">Bio-Bananen 1kg</div>
+        <div class="m-ang-det">Fairtrade, Bio-Qualität</div>
+      </div>
+      <div class="m-ang-tag">
+        <div class="m-ang-price">2,09<span class="euro">€</span></div>
+        <span class="m-ang-statt">€ 2,49</span>
+      </div>
+      <span class="m-ang-basket">🛒</span>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:24px">
+    <a href="/mockup-roter-punkt.html" class="m-btn m-btn-outline" style="display:inline-block">🔴 Roter Punkt Angebote ansehen</a>
+  </div>
+</div>
+
+<div id="mockup-footer"></div>
+<script src="/js/mockup-shared.js"></script>
+<script>
+initMockupPage('angebote');
+(function(){
+  var now=new Date();
+  var d=new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()));
+  d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
+  var kw=Math.ceil((((d-new Date(Date.UTC(d.getUTCFullYear(),0,1)))/86400000)+1)/7);
+  var el=document.getElementById('angebote-kw');
+  if(el) el.textContent='Diese Woche · KW '+kw;
+})();
+</script>
+</body>
+</html>

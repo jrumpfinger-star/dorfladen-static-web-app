@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Essen im Dorfladen – Dorfladen Oberornau</title>
+<link rel="stylesheet" href="/css/mockup.css">
+</head>
+<body>
+<div id="mockup-header"></div>
+
+<div class="m-page-header">
+  <h1>🍽️ Essen im Dorfladen</h1>
+  <p>Frühstück · Mittagessen · Kaffee & Kuchen</p>
+</div>
+
+<div class="m-content">
+  <div class="m-highlight">
+    <div class="m-highlight-title">☀️ Heutiges Mittagessen</div>
+    <p style="font-size:1.1rem;font-weight:600;margin:4px 0" id="essen-today-menu">–</p>
+    <p style="font-size:.95rem;color:var(--pri);font-weight:700;margin:0" id="essen-today-price"></p>
+  </div>
+
+  <h2>📅 Wochenplan</h2>
+  <div id="essen-wp-container"></div>
+
+  <h2 style="margin-top:24px">☕ Bistro</h2>
+  <div class="m-card">
+    <p style="margin:0">Unser Bistro bietet täglich frisches Frühstück, warmes Mittagessen und nachmittags Kaffee & Kuchen. Im Sommer auch draußen am Dorfplatz.</p>
+  </div>
+
+  <h2>🕐 Essenszeiten</h2>
+  <div class="m-card">
+    <ul class="m-info-list" style="margin:0">
+      <li><span class="li-icon">🥐</span> <div><strong>Frühstück</strong><br>Mo–Sa ab Ladenöffnung bis 10:30 Uhr</div></li>
+      <li><span class="li-icon">🍽️</span> <div><strong>Mittagessen</strong><br>Mo–Fr 11:30–13:30 Uhr</div></li>
+      <li><span class="li-icon">☕</span> <div><strong>Kaffee & Kuchen</strong><br>Mo, Mi–Fr 14:30–17:30 Uhr</div></li>
+    </ul>
+  </div>
+
+  <div style="margin-top:20px">
+    <a href="tel:+4980826229991" class="m-btn m-btn-pri">📞 Essen vorbestellen</a>
+  </div>
+</div>
+
+<div id="mockup-footer"></div>
+<script src="/js/mockup-shared.js"></script>
+<script>
+initMockupPage('essen');
+// Dynamic weekplan
+(function(){
+  var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var menu=[null,
+    {name:'Fleischpflanzerl mit Kartoffelpüree',price:'8,50'},
+    {name:'Wiener Schnitzel mit Kartoffelsalat',price:'8,90'},
+    {name:'Gulaschsuppe mit Semmel',price:'6,90'},
+    {name:'Schweinebraten mit Knödel & Krautsalat',price:'9,50'},
+    {name:'Backfisch mit Remoulade & Pommes',price:'8,90'},
+    {name:'Leberkässemmel',price:'4,50'}
+  ];
+  var todayIdx=new Date().getDay();
+  var html='';
+  for(var i=1;i<=6;i++){
+    var isToday=i===todayIdx;
+    html+='<div style="padding:12px 0;border-bottom:1px solid #f0f0f0;'+(isToday?'background:var(--pri-light);padding:12px;border-radius:14px;border:1.5px solid var(--pri);margin:4px 0':'')+'\">';
+    html+='<div style="font-weight:700;font-size:.9rem;color:var(--pri)">'+days[i]+(isToday?' · Heute':'')+'</div>';
+    html+='<div style="font-size:.95rem;font-weight:500">'+(menu[i]?menu[i].name:'–')+'</div>';
+    html+='<div style="font-size:.85rem;color:var(--text-sec)">'+(menu[i]?'€ '+menu[i].price:'')+'</div>';
+    html+='</div>';
+  }
+  document.getElementById('essen-wp-container').innerHTML=html;
+  if(menu[todayIdx]){
+    document.getElementById('essen-today-menu').textContent=menu[todayIdx].name;
+    document.getElementById('essen-today-price').textContent='€ '+menu[todayIdx].price;
+  }
+})();
+</script>
+</body>
+</html>
