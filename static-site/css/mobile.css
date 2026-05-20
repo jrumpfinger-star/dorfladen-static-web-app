@@ -102,7 +102,7 @@ main{padding:0!important;margin:0!important}
 
 /* === MOBILE QUICK ACTIONS === */
 .mob-only.mob-actions-full{display:block!important;padding:12px 16px 0}
-.mob-only.mob-actions-row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px;padding:10px 16px}
+.mob-only.mob-actions-row{display:grid!important;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:10px 16px}
 .mob-action-wide{display:flex;align-items:center;gap:14px;background:#fff;border-radius:16px;padding:14px 18px;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;border:1.5px solid #e5e7eb}
 .mob-action-wide:active{transform:scale(.98);background:#f9fafb}
 .mob-action-wide .mob-action-icon{margin:0;flex-shrink:0}
