@@ -425,6 +425,7 @@ document.head.appendChild(msalScript);
     <div class="cms-flex cms-between cms-mb">
       <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0">Homepage-Texte bearbeiten</h3>
       <button class="cms-btn cms-btn-primary" id="cms-save-hp" data-action="saveHP">Speichern</button>
+      <button class="cms-btn cms-btn-gray" onclick="cmsAddHpField()" style="margin-left:6px">+ Neues Feld</button>
     </div>
     <p style="font-size:12px;color:#6b7280;margin:0 0 8px">&Auml;nderungen werden sofort auf der Startseite sichtbar (nach Cache-Aktualisierung).</p>
     <p style="font-size:12px;color:#6b7280;margin:0 0 16px"><strong>Wochenplan-Layout:</strong> im Tab <strong>Design &rarr; Wochenplan</strong> bei <strong>&bdquo;Wochenplan-Layout (Homepage Karte)&ldquo;</strong>.</p>
@@ -2513,6 +2514,26 @@ document.head.appendChild(msalScript);
     }).catch(function(e){toast('Fehler: '+e.message,'error');})
     .then(function(){if(btn)btn.disabled=false;});
   }
+
+  // --- Add new HP field ---
+  window.cmsAddHpField=function(){
+    var suggestions=Object.keys(HP_FIELD_META).filter(function(k){
+      var exists=false;
+      document.querySelectorAll('[data-hp-name]').forEach(function(el){if(el.getAttribute('data-hp-name')===k)exists=true;});
+      return !exists;
+    });
+    var msg='Feldname eingeben';
+    if(suggestions.length>0) msg+='\n\nVorschläge:\n'+suggestions.join('\n');
+    var name=prompt(msg);
+    if(!name||!name.trim())return;
+    name=name.trim();
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,wert:''})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){toast('Feld "'+name+'" angelegt!','success');_hpLoaded=false;loadHomepage();}
+        else toast('Fehler: '+res.error,'error');
+      }).catch(function(e){toast('Fehler: '+e.message,'error');});
+  };
 
   // --- Logo Upload ---
   function loadLogo(){
