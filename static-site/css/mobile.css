@@ -203,11 +203,15 @@ main{padding:0!important;margin:0!important}
 .mob-price-tbl th.col-vk,.mob-price-tbl th.col-uvp,.mob-price-tbl th.col-save{text-align:right}
 
 /* === MOBILE CONTACT === */
-.mob-contact{display:flex;align-items:flex-start;gap:12px;padding:16px 20px;background:#fff;margin:0 16px 12px;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #e5e7eb}
+.mob-contact{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;padding:16px 20px;background:#fff;margin:0 16px 12px;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #e5e7eb}
 .mob-contact-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px}
 .mob-contact-info{font-size:.9rem;line-height:1.7;color:#374151}
 .mob-contact-info strong{color:#1a1a1a;font-size:.95rem}
 .mob-contact-info a{color:#2e7d4f;font-weight:600;text-decoration:none}
+.mob-contact-map{width:100%;flex-basis:100%}
+.mob-contact-map iframe{border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+.mob-route-btn{display:block;text-align:center;margin-top:10px;padding:10px 16px;background:#2e7d4f;color:#fff;font-weight:700;font-size:.88rem;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(46,125,79,.25);transition:background .15s}
+.mob-route-btn:active{background:#246b43}
 
 /* === MOBILE WHATSAPP CTA === */
 .mob-wa{text-align:center;padding:0 16px 16px}
