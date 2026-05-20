@@ -94,6 +94,11 @@ main{padding:0!important;margin:0!important}
 .mob-action-label{display:block;font-size:.88rem;font-weight:700;color:#1a1a1a}
 .mob-action-sub{display:block;font-size:.75rem;color:#6b7280;margin-top:2px}
 
+/* === MOBILE PREISLISTE LINK === */
+.mob-only.mob-preislink{display:block!important;text-align:center;padding:0 16px 16px}
+.mob-preislink a{display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;color:#2e7d4f;font-weight:600;font-size:.9rem;padding:10px 20px;border-radius:10px;text-decoration:none;border:1px solid #bbf7d0;transition:background .15s}
+.mob-preislink a:active{background:#dcfce7}
+
 /* === MAIN: collapse for mobile (content hidden above) === */
 
 /* === MOBILE POPUPS (bottom-sheet style) === */
