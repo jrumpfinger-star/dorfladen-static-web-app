@@ -343,10 +343,18 @@ main{padding:0!important;margin:0!important}
 .mob-hero{
   display:block!important;
   text-align:left;
-  padding:36px 20px 24px;
-  background: linear-gradient(135deg, #e4ecdf 0%, #faf9f6 100%)!important;
+  padding:44px 20px 36px;
+  background: url('../images/hero.jpg') center/cover no-repeat!important;
   position:relative;
+  overflow: hidden;
   border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+.mob-hero::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background: linear-gradient(to right, rgba(250, 249, 246, 0.95) 45%, rgba(250, 249, 246, 0.3) 100%);
+  z-index: 1;
 }
 .mob-hero h1{
   position:relative;
@@ -356,6 +364,7 @@ main{padding:0!important;margin:0!important}
   margin-bottom:6px;
   letter-spacing:-0.3px;
   line-height: 1.25;
+  z-index: 2;
 }
 .mob-hero p{
   position:relative;
@@ -366,6 +375,7 @@ main{padding:0!important;margin:0!important}
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  z-index: 2;
 }
 .mob-hero p svg {
   animation: heartbeat 1.5s infinite;
