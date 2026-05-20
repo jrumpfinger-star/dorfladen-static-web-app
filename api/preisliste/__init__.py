@@ -218,6 +218,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "ang_count": ang_count,
             "ang_map_size": len(angebote_map),
             "ang_map_keys_sample": list(angebote_map.keys())[:10],
+            "pl_artnr_sample": [item.get("cr5d4_artikelnummeredeka","") for item in (items or [])[:10]],
             "groups": groups
         }
         return func.HttpResponse(
