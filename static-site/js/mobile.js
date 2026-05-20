@@ -307,14 +307,14 @@
         html+='<div class="mob-pl-items" style="display:none">';
         items.forEach(function(item){
           var cls=item.rp?'mob-pl-rp':'';
-          if(item.ang) cls+=' mob-pl-ang';
+          if(item.angebot) cls+=' mob-pl-ang';
           var priceHtml=fmtP(item.vk)+' €';
           if(item.rp&&item.discount>0&&item.uvp){
             priceHtml+=' <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.uvp)+'€</span>';
             priceHtml+=' <span style="background:#c62828;color:#fff;padding:1px 5px;border-radius:6px;font-size:.65rem;font-weight:700">-'+item.discount+'%</span>';
           }
-          if(item.ang&&item.ang_preis){
-            priceHtml=fmtP(item.ang_preis)+' € <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.vk)+'€</span>';
+          if(item.angebot&&item.angebot_preis){
+            priceHtml=fmtP(item.angebot_preis)+' € <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.vk)+'€</span>';
           }
           html+='<div class="mob-pl-row '+cls+'" data-name="'+esc(item.bezeichnung).toLowerCase()+'">';
           html+='<span class="mob-pl-name">'+esc(item.bezeichnung)+'</span>';
