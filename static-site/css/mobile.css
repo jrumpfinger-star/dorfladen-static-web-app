@@ -118,14 +118,14 @@ main{padding:0!important;margin:0!important}
 .mob-pl-wg-name{font-weight:700;color:#2e7d4f;flex:1}
 .mob-pl-count{background:#2e7d4f;color:#fff;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:600}
 .mob-pl-arrow{color:#999;font-size:.7rem;flex-shrink:0}
-.mob-pl-items{padding:0 4px}
+.mob-pl-items{padding:0 10px 0 4px}
 .mob-pl-filters{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .mob-pl-filter{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid #d1d5db;background:#fff;font-size:.78rem;font-weight:600;color:#374151;cursor:pointer;transition:all .15s}
 .mob-pl-filter.active{background:#2e7d4f;color:#fff;border-color:#2e7d4f}
 .mob-pl-filter:active{transform:scale(.95)}
 .mob-pl-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid #f0f0f0;gap:8px}
 .mob-pl-name{flex:1;color:#333;font-size:.82rem}
-.mob-pl-price{flex-shrink:0;text-align:right;font-weight:600;color:#2d6a30;font-size:.82rem;white-space:nowrap}
+.mob-pl-price{flex-shrink:0;text-align:right;font-weight:600;color:#2d6a30;font-size:.82rem;white-space:nowrap;margin-left:auto}
 .mob-pl-rp .mob-pl-name{border-left:3px solid #e53935;padding-left:6px}
 .mob-pl-ang .mob-pl-name{border-left:3px solid #ef6c00;padding-left:6px}
 
