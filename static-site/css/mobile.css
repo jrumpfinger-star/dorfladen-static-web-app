@@ -76,11 +76,22 @@ body{padding-bottom:0!important;padding-top:108px!important;font-family:'Segoe U
 .mn > aside.side{display:none!important}
 
 /* === ROTER PUNKT table fix === */
-.rp-table{table-layout:auto!important;font-size:.85rem!important}
-.rp-table th,.rp-table td{padding:6px 8px!important}
-.rp-th-name,.rp-name{width:auto!important}
-.rp-th-vk,.rp-th-uvp,.rp-th-disc{width:auto!important}
 .rp-wrap{padding:0 8px!important}
+.rp-table{table-layout:fixed!important;font-size:.9rem!important;width:100%!important}
+.rp-table th{font-size:.78rem!important;padding:8px 6px!important}
+.rp-table td{padding:8px 6px!important}
+.rp-th-name,.rp-name{width:42%!important;white-space:normal!important;word-break:break-word!important;overflow:visible!important}
+.rp-th-vk{width:18%!important;text-align:right!important}
+.rp-th-uvp{width:16%!important;text-align:right!important}
+.rp-th-disc{width:24%!important;text-align:right!important}
+.rp-vk{text-align:right!important;font-size:.9rem!important}
+.rp-uvp{text-align:right!important;font-size:.85rem!important}
+.rp-disc{text-align:right!important;font-size:.85rem!important}
+.rp-badge{font-size:.78rem!important}
+.rp-saving{font-size:.78rem!important;display:block!important;margin-left:0!important;margin-top:2px!important}
+.rp-toggle{font-size:.95rem!important;padding:12px 14px!important}
+.rp-count{font-size:.78rem!important}
+.rp-avg{font-size:.85rem!important}
 
 /* === HIDE SIDEBAR on subpages === */
 .sb{display:none!important}
