@@ -77,7 +77,17 @@
 <main id="main" class="ct-wrap">
   <article class="ct">
     <h1>Geschäftsführung</h1>
-<h2>Geschäftsführung</h2><p>Der Dorfladen Oberornau UG ist eine Unternehmergesellschaft, die rechtlich mit einer kleinen GmbH vergleichbar ist. Jede Unternehmergesellschaft benötigt entsprechend Gesellschafter, die die Unternehmung in deren Namen gründen und als Geschäftsführer führen.</p><p>Aktuell fungieren folgende Personen als Gesellschafter und Geschäftsführer:</p><p><em>Gesellschafter:</em></p><ul><li>Dieter Mücke</li><li>Andrea Reithmeier</li><li>N.N.</li></ul><p><em>Geschäftsführer:</em></p><ul><li>Andreas Waltl</li></ul>
+<div id="gf-content"><p style="color:#6b7280">Lade Inhalt&hellip;</p></div>
+<script>
+(function(){
+  var el=document.getElementById('gf-content');
+  var fallback='<h2>Geschäftsführung</h2><p>Der Dorfladen Oberornau UG ist eine Unternehmergesellschaft, die rechtlich mit einer kleinen GmbH vergleichbar ist. Jede Unternehmergesellschaft benötigt entsprechend Gesellschafter, die die Unternehmung in deren Namen gründen und als Geschäftsführer führen.</p><p>Aktuell fungieren folgende Personen als Gesellschafter und Geschäftsführer:</p><p><em>Gesellschafter:</em></p><ul><li>Dieter Mücke</li><li>Andrea Reithmeier</li><li>N.N.</li></ul><p><em>Geschäftsführer:</em></p><ul><li>Andreas Waltl</li></ul>';
+  fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
+    var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
+    el.innerHTML=map['gf_inhalt']||fallback;
+  }).catch(function(){el.innerHTML=fallback;});
+})();
+</script>
   </article>
   <aside class="sb" aria-label="Seitenleiste">
     <div class="cd">
@@ -85,12 +95,28 @@
         <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
         Kontakt
       </div>
-      <div class="cd-b">
+      <div class="cd-b" id="kontakt-box">
         <strong>Dorfladen Oberornau</strong><br>
         Dorfplatz 1, 84419 Obertaufkirchen<br><br>
         <a href="tel:+4980826229991">08082 / 622 99 91</a><br>
         <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a>
       </div>
+<script>
+(function(){
+  var box=document.getElementById('kontakt-box');
+  if(!box) return;
+  fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
+    var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
+    if(map['kontakt_name']||map['kontakt_adresse']||map['kontakt_telefon']||map['kontakt_email']){
+      var h='<strong>'+(map['kontakt_name']||'Dorfladen Oberornau')+'</strong><br>'
+        +(map['kontakt_adresse']||'Dorfplatz 1, 84419 Obertaufkirchen')+'<br><br>';
+      if(map['kontakt_telefon']) h+='<a href="tel:'+map['kontakt_telefon'].replace(/[^+0-9]/g,'')+'">'+map['kontakt_telefon']+'</a><br>';
+      if(map['kontakt_email']) h+='<a href="mailto:'+map['kontakt_email']+'">'+map['kontakt_email']+'</a>';
+      box.innerHTML=h;
+    }
+  }).catch(function(){});
+})();
+</script>
     </div>
     <div class="cd">
       <div class="cd-h">

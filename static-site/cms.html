@@ -2428,8 +2428,18 @@ document.head.appendChild(msalScript);
     'hero_sub':       {icon:'&#9749;',  desc:'Zusatzzeile mit Icons (z.B. Bistro, Sommer)'},
     'Hero \u00dcberschrift':     {icon:'&#127968;', desc:'Gro&szlig;e &Uuml;berschrift im Hero-Bereich der Startseite'},
     'Hero Untertitel': {icon:'&#9998;',  desc:'Kleinerer Text unter der &Uuml;berschrift'},
-    'Hero Zusatztext': {icon:'&#9749;',  desc:'Zusatzzeile mit Icons (z.B. Bistro, Sommer)'}
+    'Hero Zusatztext': {icon:'&#9749;',  desc:'Zusatzzeile mit Icons (z.B. Bistro, Sommer)'},
+    'gf_inhalt':      {icon:'&#128188;', desc:'Inhalt der Seite Gesch&auml;ftsf&uuml;hrung (HTML)', html:true},
+    'kontakt_adresse': {icon:'&#128205;', desc:'Adresse f&uuml;r Kontaktbereich (z.B. Dorfplatz 1, 84419 Obertaufkirchen)'},
+    'kontakt_telefon': {icon:'&#128222;', desc:'Telefonnummer f&uuml;r Kontaktbereich'},
+    'kontakt_email':  {icon:'&#9993;', desc:'E-Mail-Adresse f&uuml;r Kontaktbereich'},
+    'kontakt_name':   {icon:'&#127793;', desc:'Name des Ladens (z.B. Dorfladen Oberornau)'},
+    'sort_intro':     {icon:'&#128722;', desc:'Einleitungstext Sortiment-Seite (HTML)', html:true},
+    'sort_highlights':{icon:'&#11088;', desc:'Highlights Sortiment-Seite (HTML)', html:true},
+    'sort_eco':       {icon:'&#9851;', desc:'Hinweisbox Sortiment-Seite (HTML)', html:true}
   };
+  // Fields that use HTML rich-text editor
+  function isHtmlField(name){ var m=HP_FIELD_META[name]; return m && m.html; }
 
   function loadHomepage(){
     var container = document.getElementById('cms-hp-fields');
@@ -2449,11 +2459,28 @@ document.head.appendChild(msalScript);
           var val = String(item.wert||'');
           var meta = HP_FIELD_META[item.name] || HP_FIELD_META[item.key] || {icon:'&#128221;', desc:''};
           var descHtml = meta.desc ? '<p style="font-size:11px;color:#9ca3af;margin:2px 0 8px">'+meta.desc+'</p>' : '';
+          var fieldHtml;
+          if(isHtmlField(item.name)){
+            fieldHtml='<div class="cms-rte-toolbar">'
+              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'bold\')" title="Fett"><b>B</b></button>'
+              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'italic\')" title="Kursiv"><i>I</i></button>'
+              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'underline\')" title="Unterstrichen"><u>U</u></button>'
+              +'<span class="cms-rte-sep"></span>'
+              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'insertUnorderedList\')" title="Liste">&#8226;</button>'
+              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'insertOrderedList\')" title="Num. Liste">1.</button>'
+              +'<span class="cms-rte-sep"></span>'
+              +'<button type="button" class="cms-rte-btn" onclick="var u=prompt(\'Link-URL:\');if(u)document.execCommand(\'createLink\',false,u)" title="Link">&#128279;</button>'
+              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'removeFormat\')" title="Format entfernen">&#10006;</button>'
+              +'</div>'
+              +'<div class="cms-rte-editor" contenteditable="true" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" data-hp-html="1">'+val+'</div>';
+          } else {
+            fieldHtml='<input class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px">';
+          }
           return '<div class="cms-card" style="margin-bottom:12px">'
             +'<div class="cms-card-header" style="font-size:13px">'+meta.icon+' '+esc(item.name)+'</div>'
             +'<div class="cms-card-body" style="padding:12px 16px">'
             +descHtml
-            +'<input class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px">'
+            +fieldHtml
             +'<div style="margin-top:6px;font-size:11px;color:#d1d5db">ID: '+item.id+'</div>'
             +'</div></div>';
         }).join('');
@@ -2465,7 +2492,8 @@ document.head.appendChild(msalScript);
     var fields = document.querySelectorAll('[data-hp-id]');
     var items = [];
     fields.forEach(function(el){
-      items.push({name:el.getAttribute('data-hp-name'),wert:el.value});
+      var val = el.hasAttribute('data-hp-html') ? el.innerHTML : el.value;
+      items.push({name:el.getAttribute('data-hp-name'),wert:val});
     });
     if(items.length===0){toast('Keine Felder zum Speichern','warning');return;}
     var btn = document.getElementById('cms-save-hp');
