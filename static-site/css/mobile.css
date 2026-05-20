@@ -109,7 +109,7 @@ main{padding:0!important;margin:0!important}
 .mob-action-wide .mob-action-icon{margin:0;flex-shrink:0}
 .mob-action-wide-text{flex:1;min-width:0}
 .mob-action-wide-text .mob-action-label{font-size:.95rem}
-.mob-action-wide-text .mob-action-sub{text-align:left;-webkit-line-clamp:3}
+.mob-action-wide-text .mob-action-sub{text-align:left;display:block;-webkit-line-clamp:unset;overflow:visible}
 .mob-action{background:#fff;border-radius:16px;padding:16px 10px 14px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;border:1.5px solid #e5e7eb}
 .mob-action:active{transform:scale(.96);background:#f9fafb}
 .mob-action.highlight{border-color:#c62828;background:#fff5f5}
