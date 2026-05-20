@@ -341,7 +341,7 @@
           var cls=item.rp?'mob-pl-rp':'';
           if(item.angebot) cls+=' mob-pl-ang';
           var priceHtml=fmtP(item.vk)+' €';
-          if(item.rp&&item.discount>0&&item.uvp){
+          if(item.rp&&item.discount>0&&item.discount<=70&&item.uvp){
             priceHtml+=' <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.uvp)+'€</span>';
             priceHtml+=' <span style="background:#c62828;color:#fff;padding:1px 5px;border-radius:6px;font-size:.65rem;font-weight:700">-'+item.discount+'%</span>';
           }

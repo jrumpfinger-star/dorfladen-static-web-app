@@ -44,7 +44,7 @@
         if(item.rp){
           cls='so-row-rp';
           wgRp++;
-          if(item.discount>0 && item.uvp){
+          if(item.discount>0 && item.discount<=70 && item.uvp){
             extraHtml='<span class="so-discount">-'+item.discount+'%</span>';
             extraHtml+='<span class="so-statt">UVP '+fmtPrice(item.uvp)+'&nbsp;&euro;</span>';
           }
