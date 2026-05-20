@@ -2437,10 +2437,18 @@ document.head.appendChild(msalScript);
     'kontakt_name':   {icon:'&#127793;', desc:'Name des Ladens (z.B. Dorfladen Oberornau)'},
     'sort_intro':     {icon:'&#128722;', desc:'Einleitungstext Sortiment-Seite (HTML)', html:true},
     'sort_highlights':{icon:'&#11088;', desc:'Highlights Sortiment-Seite (HTML)', html:true},
-    'sort_eco':       {icon:'&#9851;', desc:'Hinweisbox Sortiment-Seite (HTML)', html:true}
+    'sort_eco':       {icon:'&#9851;', desc:'Hinweisbox Sortiment-Seite (HTML)', html:true},
+    'sortiment_intro':     {icon:'&#128722;', desc:'Einleitungstext Sortiment-Seite (HTML)', html:true},
+    'sortiment_highlights':{icon:'&#11088;', desc:'Highlights Sortiment-Seite (HTML)', html:true},
+    'sortiment_eco':       {icon:'&#9851;', desc:'Hinweisbox Sortiment-Seite (HTML)', html:true}
   };
   // Fields that use HTML rich-text editor
-  function isHtmlField(name){ var m=HP_FIELD_META[name]; return m && m.html; }
+  function isHtmlField(name){
+    var m=HP_FIELD_META[name]; if(m && m.html) return true;
+    return false;
+  }
+  // Detect if value is a base64 image
+  function isImageValue(val){ return typeof val==='string' && val.indexOf('data:image/')===0; }
 
   function loadHomepage(){
     var container = document.getElementById('cms-hp-fields');
@@ -2452,27 +2460,41 @@ document.head.appendChild(msalScript);
         if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
         _hpItems = Array.isArray(res.data) ? res.data : [];
         _hpLoaded = true;
-        // Filter out design_config (belongs in Design tab)
-        var textItems = _hpItems.filter(function(item){ return typeof item.wert !== 'object' && item.name !== 'design_config'; });
+        // Filter out design_config and logo object (belongs in Design tab / Logo section)
+        var textItems = _hpItems.filter(function(item){ return typeof item.wert !== 'object' && item.name !== 'design_config' && item.name !== 'logo'; });
+        // Deduplicate by name (keep first occurrence)
+        var seen={};
+        textItems = textItems.filter(function(item){ if(seen[item.name]) return false; seen[item.name]=true; return true; });
         if(textItems.length===0){container.innerHTML='';empty.style.display='';return;}
         empty.style.display='none';
+        // Build RTE toolbar HTML helper
+        function rteToolbar(itemId){
+          return '<div class="cms-rte-toolbar">'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsRteFocus(\''+itemId+'\');document.execCommand(\'bold\')" title="Fett"><b>B</b></button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsRteFocus(\''+itemId+'\');document.execCommand(\'italic\')" title="Kursiv"><i>I</i></button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsRteFocus(\''+itemId+'\');document.execCommand(\'underline\')" title="Unterstrichen"><u>U</u></button>'
+            +'<span class="cms-rte-sep"></span>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsRteFocus(\''+itemId+'\');document.execCommand(\'insertUnorderedList\')" title="Liste">&#8226;</button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsRteFocus(\''+itemId+'\');document.execCommand(\'insertOrderedList\')" title="Num. Liste">1.</button>'
+            +'<span class="cms-rte-sep"></span>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsRteFocus(\''+itemId+'\');var u=prompt(\'Link-URL:\');if(u)document.execCommand(\'createLink\',false,u)" title="Link">&#128279;</button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsRteFocus(\''+itemId+'\');document.execCommand(\'removeFormat\')" title="Format entfernen">&#10006;</button>'
+            +'</div>';
+        }
         container.innerHTML = textItems.map(function(item){
           var val = String(item.wert||'');
           var meta = HP_FIELD_META[item.name] || HP_FIELD_META[item.key] || {icon:'&#128221;', desc:''};
           var descHtml = meta.desc ? '<p style="font-size:11px;color:#9ca3af;margin:2px 0 8px">'+meta.desc+'</p>' : '';
           var fieldHtml;
-          if(isHtmlField(item.name)){
-            fieldHtml='<div class="cms-rte-toolbar">'
-              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'bold\')" title="Fett"><b>B</b></button>'
-              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'italic\')" title="Kursiv"><i>I</i></button>'
-              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'underline\')" title="Unterstrichen"><u>U</u></button>'
-              +'<span class="cms-rte-sep"></span>'
-              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'insertUnorderedList\')" title="Liste">&#8226;</button>'
-              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'insertOrderedList\')" title="Num. Liste">1.</button>'
-              +'<span class="cms-rte-sep"></span>'
-              +'<button type="button" class="cms-rte-btn" onclick="var u=prompt(\'Link-URL:\');if(u)document.execCommand(\'createLink\',false,u)" title="Link">&#128279;</button>'
-              +'<button type="button" class="cms-rte-btn" onclick="document.execCommand(\'removeFormat\')" title="Format entfernen">&#10006;</button>'
-              +'</div>'
+          var useHtml = isHtmlField(item.name);
+          // Auto-detect HTML content in value
+          if(!useHtml && /<[a-z][\s\S]*>/i.test(val)) useHtml = true;
+          if(isImageValue(val)){
+            // Show image preview (read-only display, editable via textarea)
+            fieldHtml='<div style="margin-bottom:8px"><img src="'+val+'" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb" alt="Bild-Vorschau"></div>'
+              +'<textarea class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" rows="2" style="width:100%;font-size:11px;font-family:monospace;color:#9ca3af">'+esc(val)+'</textarea>';
+          } else if(useHtml){
+            fieldHtml=rteToolbar(item.id)
               +'<div class="cms-rte-editor" contenteditable="true" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" data-hp-html="1">'+val+'</div>';
           } else {
             fieldHtml='<input class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px">';
@@ -2488,6 +2510,12 @@ document.head.appendChild(msalScript);
       })
       .catch(function(e){container.innerHTML='<p style="color:#dc2626">Fehler: '+e.message+'</p>';});
   }
+
+  // Focus RTE editor before toolbar command
+  window.cmsRteFocus=function(itemId){
+    var el=document.querySelector('[data-hp-id="'+itemId+'"]');
+    if(el && el.getAttribute('data-hp-html')) el.focus();
+  };
 
   function saveHomepage(){
     var fields = document.querySelectorAll('[data-hp-id]');
