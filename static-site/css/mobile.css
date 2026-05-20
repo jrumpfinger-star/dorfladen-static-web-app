@@ -37,11 +37,14 @@
 /* === RESET body for mobile === */
 body{
   padding-bottom:0!important;
-  padding-top:98px!important; /* reduced from 118px */
+  padding-top:98px!important; /* standard for subpages without status bar */
   font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--m-bg);
   color: var(--m-text);
   overflow-x: hidden;
+}
+body.mob-home {
+  padding-top: 138px!important; /* extra padding for fixed status bar on homepage */
 }
 
 /* === MOBILE TICKER (top) === */
@@ -409,6 +412,13 @@ main{padding:0!important;margin:0!important}
   color: var(--m-primary);
   border-bottom:1px solid rgba(30, 70, 58, 0.08);
   margin: 0;
+  position: fixed; /* fix it! */
+  top: 90px; /* 40px ticker + 50px header */
+  left: 0;
+  right: 0;
+  z-index: 180;
+  height: 40px;
+  box-sizing: border-box;
 }
 .mob-status-dot{
   width:8px;
