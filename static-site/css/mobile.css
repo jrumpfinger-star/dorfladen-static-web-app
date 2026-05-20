@@ -18,10 +18,10 @@
 .desk-only{display:none!important}
 
 /* === RESET body for mobile === */
-body{padding-bottom:0!important;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f3f4f6}
+body{padding-bottom:0!important;padding-top:108px!important;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f3f4f6}
 
 /* === MOBILE TICKER (top) === */
-.mob-only.mob-ticker{display:flex!important;background:#1b5e20;color:#fff;align-items:center;font-size:.82rem;position:sticky;top:0;z-index:200}
+.mob-only.mob-ticker{display:flex!important;background:#1b5e20;color:#fff;align-items:center;font-size:.82rem;position:fixed;top:0;left:0;right:0;z-index:200}
 .mob-ticker-label{flex-shrink:0;padding:10px 14px;font-weight:700;background:#c62828;font-size:.78rem}
 .mob-ticker-track{flex:1;overflow:hidden;padding:10px 0}
 .mob-ticker-content{display:inline-block;white-space:nowrap;animation:mob-scroll 25s linear infinite}
@@ -29,7 +29,7 @@ body{padding-bottom:0!important;font-family:'Segoe UI',system-ui,-apple-system,s
 @keyframes mob-scroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
 /* === MOBILE HEADER === */
-.mob-only.mob-header{display:flex!important;position:sticky;top:0;z-index:100;background:#fff;color:#1a1a1a;padding:14px 16px;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.08);border-bottom:1px solid #e5e7eb}
+.mob-only.mob-header{display:flex!important;position:fixed;top:38px;left:0;right:0;z-index:190;background:#fff;color:#1a1a1a;padding:14px 16px;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.08);border-bottom:1px solid #e5e7eb}
 .mob-header-logo{font-size:1.15rem;font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:10px;text-decoration:none;color:#2e7d4f}
 .mob-header-logo img{height:42px;width:auto}
 .mob-header-logo img[src]:not([src='']){display:inline-block}
