@@ -696,129 +696,89 @@ document.head.appendChild(msalScript);
               </label>
               <label style="font-size:12px;font-weight:600;color:#374151">Wochenplan-Layout (Homepage Karte)
                 <select id="hcfg-wpHomeTemplate" class="cms-input" style="margin-top:6px">
-                  <option value="classic-red">Layout 1 – Tabelle (Classic)</option>
-                  <option value="minimal-clean">Layout 2 – Tagesliste (Minimal)</option>
-                  <option value="dark-modern">Layout 3 – 2-Spalten Board (Dark)</option>
-                  <option value="organic-market">Layout 4 – Editorial Linien (Organic)</option>
-                  <option value="bold-poster">Layout 5 – Kartenraster (Poster)</option>
-                  <option value="magazine-split">Layout 6 – Magazin Split</option>
-                  <option value="timeline-stripe">Layout 7 – Timeline Stripe</option>
-                  <option value="compact-chips">Layout 8 – Compact Chips</option>
-                  <option value="bento-cards">Layout 9 – Bento Cards</option>
-                  <option value="rail-menu">Layout 10 – Rail Menu</option>
-                  <option value="newspaper-list">Layout 11 – Zeitung</option>
+                  <option value="classic-red">Klassik (Rot/Beige)</option>
+                  <option value="clean-white">Clean White</option>
+                  <option value="dark-modern">Dark Modern</option>
+                  <option value="tafel">Tafel (Kreide)</option>
+                  <option value="bento">Bento (2-Spalten)</option>
+                  <option value="timeline">Timeline</option>
+                  <option value="zeitung">Zeitung</option>
                 </select>
                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px">
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="previewWpTpl" data-target="home-image">Bild-Vorschau (alt)</button>
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="previewWpTpl" data-target="home-live">Echte Homepage öffnen</button>
                 </div>
                 <div id="hcfg-wpHomeTemplate-preview" class="cms-wp-preview-grid cms-wp-preview-grid-home">
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="classic-red" title="Layout 1 – Tabelle (Classic)">
-                    <div class="cms-wp-thumb cms-wp-thumb-classic"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">Tabelle</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="classic-red" title="Klassik – Rot/Beige Tabelle">
+                    <div class="cms-wp-thumb" style="background:#fdf8f0;border:1px solid #fecdd3"><div style="height:8px;background:#9f1239;border-radius:3px 3px 0 0"></div><div style="padding:4px"><div style="height:3px;background:#9f1239;width:50%;border-radius:2px;margin-bottom:3px"></div><div style="height:2px;background:#e5e7eb;width:90%;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:80%;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:90%"></div></div></div>
+                    <div class="cms-wp-preview-name">Klassik</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="minimal-clean" title="Layout 2 – Tagesliste (Minimal)">
-                    <div class="cms-wp-thumb cms-wp-thumb-min"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">Tagesliste</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="clean-white" title="Clean White – Minimalistisch">
+                    <div class="cms-wp-thumb" style="background:#ffffff;border:1px solid #e5e7eb"><div style="height:8px;background:#f3f4f6;border-radius:3px 3px 0 0"></div><div style="padding:4px"><div style="height:3px;background:#111827;width:55%;border-radius:2px;margin-bottom:3px"></div><div style="height:2px;background:#e5e7eb;width:90%;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:85%;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:90%"></div></div></div>
+                    <div class="cms-wp-preview-name">Clean</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="dark-modern" title="Layout 3 – 2-Spalten Board (Dark)">
-                    <div class="cms-wp-thumb cms-wp-thumb-dark"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">2-Spalten</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="dark-modern" title="Dark Modern – Dunkler Hintergrund">
+                    <div class="cms-wp-thumb" style="background:#0f172a;border:1px solid #334155"><div style="height:8px;background:#1e40af;border-radius:3px 3px 0 0"></div><div style="padding:4px"><div style="height:3px;background:#f1f5f9;width:55%;border-radius:2px;margin-bottom:3px"></div><div style="height:2px;background:#334155;width:90%;margin-bottom:2px"></div><div style="height:2px;background:#334155;width:80%;margin-bottom:2px"></div><div style="height:2px;background:#334155;width:90%"></div></div></div>
+                    <div class="cms-wp-preview-name">Dark</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="organic-market" title="Layout 4 – Editorial Linien (Organic)">
-                    <div class="cms-wp-thumb cms-wp-thumb-organic"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line s"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">Editorial</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="tafel" title="Tafel – Kreidetafel-Look">
+                    <div class="cms-wp-thumb" style="background:#1a3c28;border:2px solid #8b7355"><div style="padding:4px"><div style="height:3px;background:#ffffff;width:55%;border-radius:2px;margin-bottom:3px"></div><div style="height:2px;background:rgba(255,255,255,0.2);width:90%;margin-bottom:2px"></div><div style="height:2px;background:rgba(255,255,255,0.15);width:85%;margin-bottom:2px"></div><div style="height:2px;background:rgba(255,255,255,0.2);width:90%"></div></div></div>
+                    <div class="cms-wp-preview-name">Tafel</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="bold-poster" title="Layout 5 – Kartenraster (Poster)">
-                    <div class="cms-wp-thumb cms-wp-thumb-poster"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
-                    <div class="cms-wp-preview-name">Kartenraster</div>
-                  </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="magazine-split" title="Layout 6 – Magazin Split">
-                    <div class="cms-wp-thumb cms-wp-thumb-mag"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line s"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">Magazin</div>
-                  </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="timeline-stripe" title="Layout 7 – Timeline Stripe">
-                    <div class="cms-wp-thumb cms-wp-thumb-time"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line s"></div></div></div>
-                    <div class="cms-wp-preview-name">Timeline</div>
-                  </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="compact-chips" title="Layout 8 – Compact Chips">
-                    <div class="cms-wp-thumb cms-wp-thumb-chip"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
-                    <div class="cms-wp-preview-name">Chips</div>
-                  </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="bento-cards" title="Layout 9 – Bento Cards">
-                    <div class="cms-wp-thumb cms-wp-thumb-bento"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="bento" title="Bento – 2-Spalten Karten">
+                    <div class="cms-wp-thumb" style="background:#f8fafc;border:1px solid #e2e8f0"><div style="padding:4px;display:grid;grid-template-columns:1fr 1fr;gap:3px"><div style="background:#fff;border-radius:3px;padding:2px"><div style="height:2px;background:#2563eb;width:70%;border-radius:2px;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:90%"></div></div><div style="background:#fff;border-radius:3px;padding:2px"><div style="height:2px;background:#059669;width:70%;border-radius:2px;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:90%"></div></div><div style="background:#fff;border-radius:3px;padding:2px"><div style="height:2px;background:#d97706;width:70%;border-radius:2px;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:90%"></div></div><div style="background:#fff;border-radius:3px;padding:2px"><div style="height:2px;background:#dc2626;width:70%;border-radius:2px;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:90%"></div></div></div></div>
                     <div class="cms-wp-preview-name">Bento</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="rail-menu" title="Layout 10 – Rail Menu">
-                    <div class="cms-wp-thumb cms-wp-thumb-rail"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line s"></div></div></div>
-                    <div class="cms-wp-preview-name">Rail</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="timeline" title="Timeline – Vertikale Leiste">
+                    <div class="cms-wp-thumb" style="background:#f0f9ff;border:1px solid #bae6fd"><div style="padding:4px;display:flex;gap:3px"><div style="width:4px;background:#0284c7;border-radius:2px;position:relative"><div style="width:6px;height:6px;background:#0284c7;border-radius:50%;position:absolute;top:2px;left:-1px"></div><div style="width:6px;height:6px;background:#0284c7;border-radius:50%;position:absolute;top:14px;left:-1px"></div></div><div style="flex:1"><div style="background:#fff;border-radius:3px;padding:2px;margin-bottom:3px"><div style="height:2px;background:#0369a1;width:50%;border-radius:2px;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:80%"></div></div><div style="background:#fff;border-radius:3px;padding:2px"><div style="height:2px;background:#0369a1;width:60%;border-radius:2px;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:75%"></div></div></div></div></div>
+                    <div class="cms-wp-preview-name">Timeline</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="newspaper-list" title="Layout 11 – Zeitung">
-                    <div class="cms-wp-thumb cms-wp-thumb-news"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpHomeTpl" data-value="zeitung" title="Zeitung – 2-Spalten elegant">
+                    <div class="cms-wp-thumb" style="background:#fafaf9;border:1px solid #d6d3d1"><div style="border-top:2px solid #292524;border-bottom:1px solid #292524;padding:2px 0;margin:0 4px"><div style="height:3px;background:#1c1917;width:50%;margin:0 auto;border-radius:2px"></div></div><div style="padding:3px 4px;display:grid;grid-template-columns:1fr 1px 1fr;gap:2px"><div><div style="height:2px;background:#44403c;width:70%;margin-bottom:2px"></div><div style="height:2px;background:#d6d3d1;width:90%;margin-bottom:2px"></div><div style="height:2px;background:#d6d3d1;width:80%"></div></div><div style="background:#d6d3d1"></div><div><div style="height:2px;background:#44403c;width:65%;margin-bottom:2px"></div><div style="height:2px;background:#d6d3d1;width:85%;margin-bottom:2px"></div><div style="height:2px;background:#d6d3d1;width:90%"></div></div></div></div>
                     <div class="cms-wp-preview-name">Zeitung</div>
                   </button>
                 </div>
               </label>
               <label style="font-size:12px;font-weight:600;color:#374151">Wochenplan-Layout (Vorschau/Teilen/Druck)
                 <select id="hcfg-wpFlyerTemplate" class="cms-input" style="margin-top:6px">
-                  <option value="classic-red">Classic Red (aktuell)</option>
-                  <option value="minimal-clean">Minimal Clean</option>
+                  <option value="classic-red">Klassik (Rot/Beige)</option>
+                  <option value="clean-white">Clean White</option>
                   <option value="dark-modern">Dark Modern</option>
-                  <option value="organic-market">Organic Market</option>
-                  <option value="bold-poster">Bold Poster</option>
-                  <option value="magazine-split">Magazin Split</option>
-                  <option value="timeline-stripe">Timeline Stripe</option>
-                  <option value="compact-chips">Compact Chips</option>
-                  <option value="bento-cards">Bento Cards</option>
-                  <option value="rail-menu">Rail Menu</option>
-                  <option value="newspaper-list">Zeitung</option>
+                  <option value="tafel">Tafel (Kreide)</option>
+                  <option value="bento">Bento (2-Spalten)</option>
+                  <option value="timeline">Timeline</option>
+                  <option value="zeitung">Zeitung</option>
                 </select>
                 <div style="display:flex;justify-content:flex-end;margin-top:6px">
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="previewWpTpl" data-target="flyer">Live-Vorschau</button>
                 </div>
                 <div id="hcfg-wpFlyerTemplate-preview" class="cms-wp-preview-grid">
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="classic-red" title="Classic Red">
-                    <div class="cms-wp-thumb cms-wp-thumb-classic"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">Classic</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="classic-red" title="Klassik – Rot/Beige">
+                    <div class="cms-wp-thumb" style="background:#fdf8f0;border:1px solid #fecdd3"><div style="height:8px;background:#9f1239;border-radius:3px 3px 0 0"></div><div style="padding:4px"><div style="height:2px;background:#e5e7eb;width:90%;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:80%"></div></div></div>
+                    <div class="cms-wp-preview-name">Klassik</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="minimal-clean" title="Minimal Clean">
-                    <div class="cms-wp-thumb cms-wp-thumb-min"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">Minimal</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="clean-white" title="Clean White">
+                    <div class="cms-wp-thumb" style="background:#ffffff;border:1px solid #e5e7eb"><div style="height:8px;background:#f3f4f6;border-radius:3px 3px 0 0"></div><div style="padding:4px"><div style="height:2px;background:#e5e7eb;width:90%;margin-bottom:2px"></div><div style="height:2px;background:#e5e7eb;width:85%"></div></div></div>
+                    <div class="cms-wp-preview-name">Clean</div>
                   </button>
                   <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="dark-modern" title="Dark Modern">
-                    <div class="cms-wp-thumb cms-wp-thumb-dark"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line l"></div></div></div>
+                    <div class="cms-wp-thumb" style="background:#0f172a;border:1px solid #334155"><div style="height:8px;background:#1e40af;border-radius:3px 3px 0 0"></div><div style="padding:4px"><div style="height:2px;background:#334155;width:90%;margin-bottom:2px"></div><div style="height:2px;background:#334155;width:80%"></div></div></div>
                     <div class="cms-wp-preview-name">Dark</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="organic-market" title="Organic Market">
-                    <div class="cms-wp-thumb cms-wp-thumb-organic"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line s"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">Organic</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="tafel" title="Tafel – Kreide">
+                    <div class="cms-wp-thumb" style="background:#1a3c28;border:2px solid #8b7355"><div style="padding:4px"><div style="height:2px;background:rgba(255,255,255,0.2);width:90%;margin-bottom:2px"></div><div style="height:2px;background:rgba(255,255,255,0.15);width:85%"></div></div></div>
+                    <div class="cms-wp-preview-name">Tafel</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="bold-poster" title="Bold Poster">
-                    <div class="cms-wp-thumb cms-wp-thumb-poster"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
-                    <div class="cms-wp-preview-name">Poster</div>
-                  </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="magazine-split" title="Magazin Split">
-                    <div class="cms-wp-thumb cms-wp-thumb-mag"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line s"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line l"></div></div></div>
-                    <div class="cms-wp-preview-name">Magazin</div>
-                  </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="timeline-stripe" title="Timeline Stripe">
-                    <div class="cms-wp-thumb cms-wp-thumb-time"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line s"></div></div></div>
-                    <div class="cms-wp-preview-name">Timeline</div>
-                  </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="compact-chips" title="Compact Chips">
-                    <div class="cms-wp-thumb cms-wp-thumb-chip"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
-                    <div class="cms-wp-preview-name">Chips</div>
-                  </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="bento-cards" title="Bento Cards">
-                    <div class="cms-wp-thumb cms-wp-thumb-bento"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="bento" title="Bento – 2-Spalten">
+                    <div class="cms-wp-thumb" style="background:#f8fafc;border:1px solid #e2e8f0"><div style="padding:4px;display:grid;grid-template-columns:1fr 1fr;gap:2px"><div style="background:#fff;border-radius:2px;height:10px;border-top:2px solid #2563eb"></div><div style="background:#fff;border-radius:2px;height:10px;border-top:2px solid #059669"></div></div></div>
                     <div class="cms-wp-preview-name">Bento</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="rail-menu" title="Rail Menu">
-                    <div class="cms-wp-thumb cms-wp-thumb-rail"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line l"></div><div class="cms-wp-thumb-line m"></div><div class="cms-wp-thumb-line s"></div></div></div>
-                    <div class="cms-wp-preview-name">Rail</div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="timeline" title="Timeline">
+                    <div class="cms-wp-thumb" style="background:#f0f9ff;border:1px solid #bae6fd"><div style="padding:4px;display:flex;gap:3px"><div style="width:3px;background:#0284c7;border-radius:2px"></div><div style="flex:1"><div style="background:#fff;border-radius:2px;height:8px;margin-bottom:2px"></div><div style="background:#fff;border-radius:2px;height:8px"></div></div></div></div>
+                    <div class="cms-wp-preview-name">Timeline</div>
                   </button>
-                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="newspaper-list" title="Zeitung">
-                    <div class="cms-wp-thumb cms-wp-thumb-news"><div class="cms-wp-thumb-h"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
+                  <button type="button" class="cms-wp-preview" data-action="pickWpFlyerTpl" data-value="zeitung" title="Zeitung">
+                    <div class="cms-wp-thumb" style="background:#fafaf9;border:1px solid #d6d3d1"><div style="border-top:2px solid #292524;margin:0 4px"></div><div style="padding:3px 4px;display:grid;grid-template-columns:1fr 1px 1fr;gap:2px"><div><div style="height:2px;background:#d6d3d1;width:90%"></div></div><div style="background:#d6d3d1"></div><div><div style="height:2px;background:#d6d3d1;width:85%"></div></div></div></div>
                     <div class="cms-wp-preview-name">Zeitung</div>
                   </button>
                 </div>
@@ -2851,17 +2811,38 @@ document.head.appendChild(msalScript);
   function fmtPriceWA(v){return v?Number(v).toFixed(2).replace('.',',')+' \u20AC':'';}
 
   function generateMenuImage(mealRows, header, callback, tplOverride){
+    var SF='Segoe UI, sans-serif';
     var W=794,padL=30,padR=30;
-    var headerH=140,rowH=52,gapBetweenDays=12,footerH=52;
+    var headerH=130,rowH=52,gapBetweenDays=12,footerH=44;
     var groups=[];var curGrp=null;
     mealRows.forEach(function(m){
       if(m.day){if(curGrp)groups.push(curGrp);curGrp={day:m.day,items:[m]};}
       else if(curGrp){curGrp.items.push(m);}
     });
     if(curGrp)groups.push(curGrp);
+    // Pre-resolve template so height calc can be template-aware
+    var hp=hpCfgGet();
+    var tpl=((tplOverride||hp.wpFlyerTemplate||'classic-red')+'').toLowerCase();
+    var tplMap={'minimal-clean':'clean-white','organic-market':'clean-white','bold-poster':'tafel','magazine-split':'bento','compact-chips':'bento','rail-menu':'timeline','newspaper-list':'zeitung','timeline-stripe':'timeline','bento-cards':'bento'};
+    if(tplMap[tpl])tpl=tplMap[tpl];
+
     var totalGroupH=0;
-    groups.forEach(function(g){totalGroupH+=Math.max(g.items.length*rowH,rowH);});
-    var H=headerH+20+totalGroupH+(groups.length-1)*gapBetweenDays+footerH+20;
+    if(tpl==='tafel'){
+      groups.forEach(function(g){totalGroupH+=36+Math.max(g.items.length,1)*rowH+gapBetweenDays;});
+    }else if(tpl==='bento'){
+      var colH=[0,0];
+      groups.forEach(function(g,i){colH[i%2]+=44+Math.max(1,g.items.length)*38+10+12;});
+      totalGroupH=Math.max(colH[0],colH[1]);
+    }else if(tpl==='timeline'){
+      groups.forEach(function(g){totalGroupH+=38+Math.max(1,g.items.length)*40+8+12;});
+    }else if(tpl==='zeitung'){
+      var colH2=[0,0];
+      groups.forEach(function(g,i){colH2[i%2]+=38+Math.max(1,g.items.length)*36+8+12;});
+      totalGroupH=Math.max(colH2[0],colH2[1]);
+    }else{
+      groups.forEach(function(g){totalGroupH+=Math.max(g.items.length*rowH,rowH)+gapBetweenDays;});
+    }
+    var H=headerH+20+totalGroupH+footerH+30;
     var c=document.createElement('canvas');c.width=W;c.height=H;
     var ctx=c.getContext('2d');ctx.textBaseline='top';
 
@@ -2890,11 +2871,11 @@ document.head.appendChild(msalScript);
       return lines.slice(0,2);
     }
 
-    function drawCommonLogo(fallbackColor){
+    function drawCommonLogo(){
       var logoImg=new Image();
       return new Promise(function(res){
         logoImg.onload=function(){
-          var lh=80,lw=lh*(logoImg.width/logoImg.height);
+          var lh=72,lw=lh*(logoImg.width/logoImg.height);
           ctx.drawImage(logoImg,W-lw-padR,18,lw,lh);res();
         };
         logoImg.onerror=function(){res();};
@@ -2903,304 +2884,246 @@ document.head.appendChild(msalScript);
       });
     }
 
-    function drawRows(yStart,dayLabelW,style){
+    function drawFooter(color){
+      ctx.fillStyle=color||'#6b7280';ctx.font='11px '+SF;ctx.textAlign='center';
+      ctx.fillText('Dorfladen Oberornau \u00b7 Dorfplatz 1 \u00b7 84419 Obertaufkirchen \u00b7 Tel: 08082 622 99 91',W/2,H-footerH+10);
+      ctx.textAlign='left';
+    }
+
+    // ── Shared row-drawing: Day label left, dishes right ──
+    function drawRows(yStart,dayLabelW,s){
       var y=yStart,cardW=W-padL-padR;
       groups.forEach(function(grp){
         var grpH=Math.max(grp.items.length*rowH,rowH);
         ctx.save();
-        ctx.shadowColor=style.shadow||'transparent';ctx.shadowBlur=style.shadowBlur||0;ctx.shadowOffsetX=4;ctx.shadowOffsetY=4;
-        ctx.fillStyle=style.cardBg;
-        rrect(padL,y,cardW,grpH,style.radius||12);ctx.fill();ctx.restore();
-        if(style.cardBorder){ctx.strokeStyle=style.cardBorder;ctx.lineWidth=1;rrect(padL,y,cardW,grpH,style.radius||12);ctx.stroke();}
-
-        if(style.fullDayRow){
-          ctx.fillStyle=style.dayFill;
-          rrect(padL+2,y+2,cardW-4,grpH-4,style.radius||10);ctx.fill();
-          ctx.fillStyle=style.dayText;ctx.font='900 16px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-          ctx.fillText(grp.day.toUpperCase(),padL+16,y+11);
-          var dy=y+11;
-          grp.items.forEach(function(m,di){
-            var rowY=dy+di*rowH;
-            if(di>0){ctx.strokeStyle=style.rowLine;ctx.beginPath();ctx.moveTo(padL+16,rowY);ctx.lineTo(W-padR-16,rowY);ctx.stroke();}
-            ctx.fillStyle=style.text;ctx.font='bold 15px Arial, sans-serif';
-            var dt=m.dish||'';
-            var dl=wrap2(dt,cardW-32-(m.price?120:10));
-            ctx.fillText(dl[0]||'',padL+16,rowY+10);
-            if(dl[1])ctx.fillText(dl[1],padL+16,rowY+28);
-            if(m.price){ctx.fillStyle=style.price;ctx.font='900 17px Arial, sans-serif';ctx.textAlign='right';ctx.fillText(m.price,W-padR-16,rowY+18);ctx.textAlign='left';}
-          });
-        }else{
-          ctx.fillStyle=style.dayFill;
-          rrect(padL,y,dayLabelW,grpH,style.radius||12);ctx.fill();
-          ctx.fillRect(padL+dayLabelW-(style.radius||12),y,style.radius||12,grpH);
-          ctx.fillStyle=style.dayText;ctx.font='900 16px Arial Black, Arial, sans-serif';ctx.textAlign='center';
-          ctx.fillText(grp.day.toUpperCase(),padL+dayLabelW/2,y+grpH/2-8);ctx.textAlign='left';
-
-          var dishX=padL+dayLabelW+18,priceX=W-padR-16;
-          grp.items.forEach(function(m,di){
-            var ry=y+di*rowH;
-            if(di>0){ctx.strokeStyle=style.rowLine;ctx.lineWidth=1;ctx.setLineDash(style.dash||[]);ctx.beginPath();ctx.moveTo(dishX,ry);ctx.lineTo(priceX,ry);ctx.stroke();ctx.setLineDash([]);}
-            ctx.fillStyle=style.text;ctx.font=style.fontDish||'bold 16px Arial, sans-serif';
-            var dt=m.dish||'';
-            var dl=wrap2(dt,Math.max(80,priceX-dishX-(m.price?64:8)));
-            ctx.fillText(dl[0]||'',dishX,ry+10);
-            if(dl[1])ctx.fillText(dl[1],dishX,ry+30);
-            if(m.price){ctx.fillStyle=style.price;ctx.font=style.fontPrice||'900 18px Arial, sans-serif';ctx.textAlign='right';ctx.fillText(m.price,priceX,ry+16);ctx.textAlign='left';}
-          });
-        }
+        if(s.shadow){ctx.shadowColor=s.shadow;ctx.shadowBlur=s.shadowBlur||0;ctx.shadowOffsetX=3;ctx.shadowOffsetY=3;}
+        ctx.fillStyle=s.cardBg;rrect(padL,y,cardW,grpH,s.radius||10);ctx.fill();ctx.restore();
+        if(s.cardBorder){ctx.strokeStyle=s.cardBorder;ctx.lineWidth=1;rrect(padL,y,cardW,grpH,s.radius||10);ctx.stroke();}
+        // Day label
+        ctx.fillStyle=s.dayFill;rrect(padL,y,dayLabelW,grpH,s.radius||10);ctx.fill();
+        ctx.fillRect(padL+dayLabelW-(s.radius||10),y,s.radius||10,grpH);
+        ctx.fillStyle=s.dayText;ctx.font='700 15px '+SF;ctx.textAlign='center';
+        ctx.fillText(grp.day.toUpperCase(),padL+dayLabelW/2,y+grpH/2-8);ctx.textAlign='left';
+        var dishX=padL+dayLabelW+16,priceX=W-padR-14;
+        grp.items.forEach(function(m,di){
+          var ry=y+di*rowH;
+          if(di>0){ctx.strokeStyle=s.rowLine;ctx.lineWidth=1;ctx.setLineDash(s.dash||[]);ctx.beginPath();ctx.moveTo(dishX,ry);ctx.lineTo(priceX,ry);ctx.stroke();ctx.setLineDash([]);}
+          ctx.fillStyle=s.text;ctx.font='600 15px '+SF;
+          var dl=wrap2(m.dish||'',Math.max(80,priceX-dishX-(m.price?60:8)));
+          ctx.fillText(dl[0]||'',dishX,ry+10);if(dl[1])ctx.fillText(dl[1],dishX,ry+30);
+          if(m.price){ctx.fillStyle=s.price;ctx.font='700 16px '+SF;ctx.textAlign='right';ctx.fillText(m.price,priceX,ry+14);ctx.textAlign='left';}
+        });
         y+=grpH+gapBetweenDays;
       });
       return y;
     }
 
-    function drawRowsBento(yStart){
-      var colGap=12;
-      var cardW=(W-padL-padR-colGap)/2;
+    // ── Stacked rows: full-width day header bar, then dishes below ──
+    function drawRowsStacked(yStart,s){
+      var y=yStart,cardW=W-padL-padR;
+      groups.forEach(function(grp){
+        var grpH=36+Math.max(grp.items.length,1)*rowH;
+        if(s.cardBg){ctx.fillStyle=s.cardBg;rrect(padL,y,cardW,grpH,s.radius||10);ctx.fill();}
+        if(s.cardBorder){ctx.strokeStyle=s.cardBorder;ctx.lineWidth=1;rrect(padL,y,cardW,grpH,s.radius||10);ctx.stroke();}
+        // Day header strip
+        ctx.fillStyle=s.dayFill;rrect(padL,y,cardW,34,s.radius||10);ctx.fill();
+        ctx.fillRect(padL,y+24,cardW,10);
+        ctx.fillStyle=s.dayText;ctx.font='700 14px '+SF;ctx.textAlign='left';
+        ctx.fillText(grp.day.toUpperCase(),padL+14,y+10);
+        var ry=y+38;
+        grp.items.forEach(function(m,di){
+          if(di>0){ctx.strokeStyle=s.rowLine||'#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL+14,ry);ctx.lineTo(W-padR-14,ry);ctx.stroke();}
+          ctx.fillStyle=s.text;ctx.font='600 15px '+SF;
+          var dl=wrap2(m.dish||'',cardW-40-(m.price?70:10));
+          ctx.fillText(dl[0]||'',padL+14,ry+10);if(dl[1])ctx.fillText(dl[1],padL+14,ry+28);
+          if(m.price){ctx.fillStyle=s.price;ctx.font='700 16px '+SF;ctx.textAlign='right';ctx.fillText(m.price,W-padR-14,ry+14);ctx.textAlign='left';}
+          ry+=rowH;
+        });
+        y+=grpH+gapBetweenDays;
+      });
+      return y;
+    }
+
+    // ── Bento: 2-column masonry cards ──
+    function drawRowsBento(yStart,s){
+      var colGap=14,cardW=(W-padL-padR-colGap)/2;
       var leftY=yStart,rightY=yStart;
+      var dayColors=s.dayColors||['#2563eb','#059669','#d97706','#dc2626','#7c3aed'];
       groups.forEach(function(grp,idx){
         var isRight=idx%2===1;
         var x=isRight?(padL+cardW+colGap):padL;
         var y=isRight?rightY:leftY;
         var rows=Math.max(1,grp.items.length);
-        var cardH=44+rows*36+10;
-
-        ctx.save();
-        ctx.shadowColor='rgba(194,65,12,0.10)';ctx.shadowBlur=4;ctx.shadowOffsetX=3;ctx.shadowOffsetY=4;
-        ctx.fillStyle='#ffffff';rrect(x,y,cardW,cardH,14);ctx.fill();ctx.restore();
-        ctx.strokeStyle='#fed7aa';ctx.lineWidth=1;rrect(x,y,cardW,cardH,14);ctx.stroke();
-
-        ctx.fillStyle='#ffedd5';rrect(x+8,y+8,cardW-16,28,8);ctx.fill();
-        ctx.fillStyle='#9a3412';ctx.font='900 14px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-        ctx.fillText((grp.day||'').toUpperCase(),x+16,y+15);
-
+        var cardH=44+rows*38+10;
+        var dc=dayColors[idx%dayColors.length];
+        ctx.save();ctx.shadowColor='rgba(0,0,0,0.06)';ctx.shadowBlur=6;ctx.shadowOffsetY=3;
+        ctx.fillStyle=s.cardBg||'#ffffff';rrect(x,y,cardW,cardH,12);ctx.fill();ctx.restore();
+        ctx.strokeStyle=s.cardBorder||'#e5e7eb';ctx.lineWidth=1;rrect(x,y,cardW,cardH,12);ctx.stroke();
+        // Colored top bar
+        ctx.fillStyle=dc;rrect(x,y,cardW,4,12);ctx.fill();ctx.fillRect(x,y+4,cardW,0);
+        ctx.fillStyle=dc;ctx.font='700 14px '+SF;ctx.textAlign='left';
+        ctx.fillText((grp.day||'').toUpperCase(),x+14,y+16);
         var ry=y+42;
         grp.items.forEach(function(m,ri){
-          if(ri>0){ctx.strokeStyle='#ffedd5';ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+cardW-12,ry);ctx.stroke();}
-          var dt=m.dish||'';
-          ctx.fillStyle='#7c2d12';ctx.font='bold 13px Arial, sans-serif';
-          var dl=wrap2(dt,cardW-96);
-          ctx.fillText(dl[0]||'',x+14,ry+3);
-          if(dl[1])ctx.fillText(dl[1],x+14,ry+18);
-          if(m.price){ctx.fillStyle='#ea580c';ctx.font='900 13px Arial Black, Arial, sans-serif';ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+6);ctx.textAlign='left';}
-          ry+=36;
+          if(ri>0){ctx.strokeStyle='#f3f4f6';ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+cardW-12,ry);ctx.stroke();}
+          ctx.fillStyle=s.text||'#1f2937';ctx.font='600 13px '+SF;
+          var dl=wrap2(m.dish||'',cardW-90);
+          ctx.fillText(dl[0]||'',x+14,ry+4);if(dl[1])ctx.fillText(dl[1],x+14,ry+20);
+          if(m.price){ctx.fillStyle=dc;ctx.font='700 14px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+7);ctx.textAlign='left';}
+          ry+=38;
         });
-
-        if(isRight)rightY+=cardH+10;else leftY+=cardH+10;
+        if(isRight)rightY+=cardH+12;else leftY+=cardH+12;
       });
       return Math.max(leftY,rightY);
     }
 
-    function drawRowsRail(yStart){
-      var railX=padL+14;
-      var railTop=yStart+4;
-      var railBottom=H-footerH-10;
-      ctx.strokeStyle='#14b8a6';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(railX,railTop);ctx.lineTo(railX,railBottom);ctx.stroke();
-
+    // ── Timeline: vertical line with dots ──
+    function drawRowsTimeline(yStart,s){
+      var railX=padL+16;
       var y=yStart;
       groups.forEach(function(grp){
         var rows=Math.max(1,grp.items.length);
-        var cardH=40+rows*36+8;
-        var x=padL+30,cardW=W-padR-x;
-
-        ctx.fillStyle='#ffffff';rrect(x,y,cardW,cardH,12);ctx.fill();
-        ctx.strokeStyle='#99f6e4';ctx.lineWidth=1;rrect(x,y,cardW,cardH,12);ctx.stroke();
-
-        ctx.fillStyle='#0f766e';ctx.beginPath();ctx.arc(railX,y+18,5,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle='#ccfbf1';rrect(x+10,y+8,130,24,8);ctx.fill();
-        ctx.fillStyle='#115e59';ctx.font='900 13px Arial Black, Arial, sans-serif';ctx.fillText((grp.day||'').toUpperCase(),x+16,y+13);
-
+        var cardH=38+rows*40+8;
+        var x=padL+36,cardW=W-padR-x;
+        // Rail segment
+        ctx.strokeStyle=s.railColor||'#3b82f6';ctx.lineWidth=3;
+        ctx.beginPath();ctx.moveTo(railX,y);ctx.lineTo(railX,y+cardH);ctx.stroke();
+        // Dot
+        ctx.fillStyle=s.railColor||'#3b82f6';ctx.beginPath();ctx.arc(railX,y+18,6,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(railX,y+18,3,0,Math.PI*2);ctx.fill();
+        // Card
+        ctx.save();ctx.shadowColor='rgba(0,0,0,0.05)';ctx.shadowBlur=4;ctx.shadowOffsetY=2;
+        ctx.fillStyle=s.cardBg||'#ffffff';rrect(x,y,cardW,cardH,10);ctx.fill();ctx.restore();
+        if(s.cardBorder){ctx.strokeStyle=s.cardBorder;ctx.lineWidth=1;rrect(x,y,cardW,cardH,10);ctx.stroke();}
+        // Day name pill
+        ctx.fillStyle=s.dayFill||'#eff6ff';rrect(x+10,y+8,110,24,8);ctx.fill();
+        ctx.fillStyle=s.dayText||'#1d4ed8';ctx.font='700 13px '+SF;ctx.textAlign='left';
+        ctx.fillText((grp.day||'').toUpperCase(),x+18,y+13);
         var ry=y+38;
         grp.items.forEach(function(m,ri){
-          if(ri>0){ctx.setLineDash([3,2]);ctx.strokeStyle='#ccfbf1';ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+cardW-12,ry);ctx.stroke();ctx.setLineDash([]);}
-          var dt=m.dish||'';
-          ctx.fillStyle='#134e4a';ctx.font='bold 14px Arial, sans-serif';
-          var dl=wrap2(dt,cardW-110);
-          ctx.fillText(dl[0]||'',x+14,ry+4);
-          if(dl[1])ctx.fillText(dl[1],x+14,ry+21);
-          if(m.price){ctx.fillStyle='#0f766e';ctx.font='900 14px Arial Black, Arial, sans-serif';ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+7);ctx.textAlign='left';}
-          ry+=36;
+          if(ri>0){ctx.strokeStyle=s.rowLine||'#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+cardW-12,ry);ctx.stroke();}
+          ctx.fillStyle=s.text||'#1e293b';ctx.font='600 14px '+SF;
+          var dl=wrap2(m.dish||'',cardW-100);
+          ctx.fillText(dl[0]||'',x+14,ry+5);if(dl[1])ctx.fillText(dl[1],x+14,ry+22);
+          if(m.price){ctx.fillStyle=s.price||'#2563eb';ctx.font='700 15px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+8);ctx.textAlign='left';}
+          ry+=40;
         });
-        y+=cardH+10;
+        y+=cardH+12;
       });
       return y;
     }
 
-    function drawRowsNewspaper(yStart){
-      var colGap=14;
-      var colW=(W-padL-padR-colGap)/2;
+    // ── Newspaper: 2-column elegant ──
+    function drawRowsNewspaper(yStart,s){
+      var colGap=16,colW=(W-padL-padR-colGap)/2;
       var leftY=yStart,rightY=yStart;
       groups.forEach(function(grp,idx){
         var right=idx%2===1;
         var x=right?(padL+colW+colGap):padL;
         var y=right?rightY:leftY;
         var rows=Math.max(1,grp.items.length);
-        var cardH=40+rows*34+8;
-
-        ctx.fillStyle='#ffffff';rrect(x,y,colW,cardH,10);ctx.fill();
-        ctx.strokeStyle='#e7e5e4';ctx.lineWidth=1;rrect(x,y,colW,cardH,10);ctx.stroke();
-
-        ctx.fillStyle='#44403c';ctx.font='900 15px Arial, sans-serif';ctx.textAlign='left';
-        ctx.fillText((grp.day||'').toUpperCase(),x+12,y+11);
-        ctx.strokeStyle='#d6d3d1';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+12,y+34);ctx.lineTo(x+colW-12,y+34);ctx.stroke();
-
-        var ry=y+36;
+        var cardH=38+rows*36+8;
+        ctx.fillStyle=s.cardBg||'#ffffff';rrect(x,y,colW,cardH,8);ctx.fill();
+        if(s.cardBorder){ctx.strokeStyle=s.cardBorder;ctx.lineWidth=1;rrect(x,y,colW,cardH,8);ctx.stroke();}
+        // Day name + underline
+        ctx.fillStyle=s.dayText||'#1f2937';ctx.font='700 15px '+SF;ctx.textAlign='left';
+        ctx.fillText((grp.day||'').toUpperCase(),x+12,y+10);
+        ctx.strokeStyle=s.accent||'#1f2937';ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(x+12,y+32);ctx.lineTo(x+colW-12,y+32);ctx.stroke();
+        var ry=y+38;
         grp.items.forEach(function(m,ri){
-          if(ri>0){ctx.setLineDash([2,2]);ctx.strokeStyle='#d6d3d1';ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+colW-12,ry);ctx.stroke();ctx.setLineDash([]);}
-          var dt=m.dish||'';
-          ctx.fillStyle='#292524';ctx.font='bold 13px Arial, sans-serif';
-          var dl=wrap2(dt,colW-96);
-          ctx.fillText(dl[0]||'',x+12,ry+4);
-          if(dl[1])ctx.fillText(dl[1],x+12,ry+19);
-          if(m.price){ctx.fillStyle='#57534e';ctx.font='900 13px Arial, sans-serif';ctx.textAlign='right';ctx.fillText(m.price,x+colW-12,ry+7);ctx.textAlign='left';}
-          ry+=34;
+          if(ri>0){ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+colW-12,ry);ctx.stroke();ctx.setLineDash([]);}
+          ctx.fillStyle=s.text||'#374151';ctx.font='600 13px '+SF;
+          var dl=wrap2(m.dish||'',colW-90);
+          ctx.fillText(dl[0]||'',x+12,ry+4);if(dl[1])ctx.fillText(dl[1],x+12,ry+20);
+          if(m.price){ctx.fillStyle=s.price||'#1f2937';ctx.font='700 14px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+colW-12,ry+7);ctx.textAlign='left';}
+          ry+=36;
         });
-
-        if(right)rightY+=cardH+10;else leftY+=cardH+10;
+        if(right)rightY+=cardH+12;else leftY+=cardH+12;
       });
       return Math.max(leftY,rightY);
     }
 
-    var hp=hpCfgGet();
-    var tpl=((tplOverride||hp.wpFlyerTemplate||'classic-red')+'').toLowerCase();
     var logoLoaded;
 
-    if(tpl==='minimal-clean'){
+    if(tpl==='clean-white'){
+      // ── 1. CLEAN WHITE: Pure white, gray tones, ultra-clean ──
       ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#111827';ctx.font='900 44px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#4b5563';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Mittagstisch | '+header,padL,82);
-      ctx.strokeStyle='#d1d5db';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
-      ctx.fillStyle='#6b7280';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-2);ctx.textAlign='left';
-      drawRows(headerH+20,118,{cardBg:'#ffffff',cardBorder:'#e5e7eb',radius:8,dayFill:'#f3f4f6',dayText:'#111827',text:'#111827',price:'#047857',rowLine:'#e5e7eb',dash:[]});
-      logoLoaded=drawCommonLogo('#111827');
-      ctx.strokeStyle='#e5e7eb';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#6b7280';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
+      ctx.textAlign='left';ctx.fillStyle='#111827';ctx.font='700 42px '+SF;ctx.fillText('Wochenplan',padL,28);
+      ctx.fillStyle='#6b7280';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
+      ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
+      drawRows(headerH+14,120,{cardBg:'#f9fafb',cardBorder:'#e5e7eb',radius:8,dayFill:'#f3f4f6',dayText:'#374151',text:'#1f2937',price:'#059669',rowLine:'#e5e7eb',dash:[]});
+      logoLoaded=drawCommonLogo();drawFooter('#9ca3af');
+
     }else if(tpl==='dark-modern'){
-      var bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0f172a');bg.addColorStop(1,'#1f2937');
+      // ── 2. DARK MODERN: Dark slate background, bright accents ──
+      var bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0f172a');bg.addColorStop(1,'#1e293b');
       ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#e5e7eb';ctx.font='900 44px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#93c5fd';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Mittagstisch | '+header,padL,82);
-      ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
-      ctx.fillStyle='#94a3b8';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-2);ctx.textAlign='left';
-      drawRows(headerH+20,126,{cardBg:'rgba(255,255,255,0.06)',cardBorder:'rgba(148,163,184,0.35)',radius:12,dayFill:'#0ea5e9',dayText:'#082f49',text:'#e5e7eb',price:'#67e8f9',rowLine:'rgba(148,163,184,0.35)',dash:[4,3]});
-      logoLoaded=drawCommonLogo('#e5e7eb');
-      ctx.strokeStyle='rgba(148,163,184,0.35)';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#94a3b8';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-    }else if(tpl==='organic-market'){
-      ctx.fillStyle='#f7f2e7';ctx.fillRect(0,0,W,H);
+      ctx.textAlign='left';ctx.fillStyle='#f1f5f9';ctx.font='700 42px '+SF;ctx.fillText('Wochenplan',padL,28);
+      ctx.fillStyle='#94a3b8';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
+      ctx.strokeStyle='#334155';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
+      drawRows(headerH+14,120,{cardBg:'rgba(255,255,255,0.05)',cardBorder:'#334155',radius:10,dayFill:'#1e40af',dayText:'#e0e7ff',text:'#e2e8f0',price:'#38bdf8',rowLine:'#334155',dash:[]});
+      logoLoaded=drawCommonLogo();drawFooter('#64748b');
+
+    }else if(tpl==='tafel'){
+      // ── 3. TAFEL: Chalkboard green, white text, handwritten feel ──
+      ctx.fillStyle='#1a3c28';ctx.fillRect(0,0,W,H);
+      // Subtle chalk dust texture
       ctx.globalAlpha=0.03;
-      for(var ty=0;ty<H;ty+=3){for(var tx=0;tx<W;tx+=3){if(Math.random()>0.55){ctx.fillStyle=Math.random()>0.5?'#000':'#fff';ctx.fillRect(tx,ty,2,2);}}}
+      for(var ty=0;ty<H;ty+=2){for(var tx=0;tx<W;tx+=2){if(Math.random()>0.6){ctx.fillStyle='#fff';ctx.fillRect(tx,ty,1,1);}}}
       ctx.globalAlpha=1;
-      ctx.textAlign='left';ctx.fillStyle='#355e3b';ctx.font='900 46px Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#6b7280';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Mittagstisch | '+header,padL,82);
-      ctx.strokeStyle='#5b7f5d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
-      ctx.fillStyle='#7a6a55';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-2);ctx.textAlign='left';
-      drawRows(headerH+20,132,{cardBg:'#fffdf8',cardBorder:'#e9dfcf',radius:16,dayFill:'#769b6a',dayText:'#f8faf5',text:'#2f3d2f',price:'#8b1e3f',rowLine:'#dfd5c4',dash:[3,2],shadow:'rgba(53,94,59,0.08)',shadowBlur:3,fontDish:'bold 15px Arial, sans-serif'});
-      logoLoaded=drawCommonLogo('#355e3b');
-      ctx.strokeStyle='#d8ccb8';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#7a6a55';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-    }else if(tpl==='bold-poster'){
-      // New idea: "Bistro Board" (clean, elegant, high readability)
-      var bg2=ctx.createLinearGradient(0,0,0,H);bg2.addColorStop(0,'#f8faf7');bg2.addColorStop(1,'#eef4ee');
-      ctx.fillStyle=bg2;ctx.fillRect(0,0,W,H);
+      // Double border like a real blackboard frame
+      ctx.strokeStyle='#8b7355';ctx.lineWidth=6;ctx.strokeRect(8,8,W-16,H-16);
+      ctx.strokeStyle='#a08968';ctx.lineWidth=2;ctx.strokeRect(14,14,W-28,H-28);
+      ctx.textAlign='left';ctx.fillStyle='#ffffff';ctx.font='700 44px '+SF;ctx.fillText('Wochenplan',padL+10,32);
+      ctx.fillStyle='#a3d9a5';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL+10,78);
+      ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL+10,headerH-4);ctx.lineTo(W-padR-10,headerH-4);ctx.stroke();
+      drawRowsStacked(headerH+10,{cardBg:'rgba(255,255,255,0.06)',radius:6,dayFill:'rgba(255,255,255,0.12)',dayText:'#a3d9a5',text:'#e8e8e8',price:'#fbbf24',rowLine:'rgba(255,255,255,0.1)'});
+      logoLoaded=drawCommonLogo();drawFooter('rgba(255,255,255,0.5)');
 
-      // Top board/header
-      var headGrad=ctx.createLinearGradient(padL,18,W-padR,118);
-      headGrad.addColorStop(0,'#1f4d3a');headGrad.addColorStop(1,'#2f6b50');
-      ctx.fillStyle=headGrad;rrect(padL,18,W-padL-padR,102,18);ctx.fill();
-      ctx.strokeStyle='rgba(255,255,255,0.28)';ctx.lineWidth=1;rrect(padL+1,19,W-padL-padR-2,100,17);ctx.stroke();
-
-      ctx.textAlign='left';ctx.fillStyle='#ffffff';ctx.font='900 46px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL+22,36);
-      ctx.fillStyle='#d1fae5';ctx.font='800 19px Arial, sans-serif';ctx.fillText('Mittagstisch | '+header,padL+22,86);
-      ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,126);ctx.textAlign='left';
-
-      // Rows as calm bistro cards with strong day labels
-      drawRows(headerH+22,142,{
-        cardBg:'#ffffff',
-        cardBorder:'#d8e3da',
-        radius:14,
-        dayFill:'#2f6b50',
-        dayText:'#ecfdf5',
-        text:'#1f2937',
-        price:'#0f766e',
-        rowLine:'#e5e7eb',
-        dash:[],
-        shadow:'rgba(31,77,58,0.10)',
-        shadowBlur:3,
-        fontDish:'bold 15px Arial, sans-serif',
-        fontPrice:'900 18px Arial Black, Arial, sans-serif'
-      });
-
-      logoLoaded=drawCommonLogo('#1f4d3a');
-      ctx.strokeStyle='#d1d5db';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#4b5563';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-    }else if(tpl==='magazine-split'){
+    }else if(tpl==='bento'){
+      // ── 4. BENTO: 2-column masonry, colorful day accents ──
       ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#3730a3';ctx.font='900 44px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#4338ca';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Magazin Split | '+header,padL,82);
-      ctx.strokeStyle='#a5b4fc';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
-      drawRows(headerH+20,128,{cardBg:'#ffffff',cardBorder:'#dbe2ea',radius:12,dayFill:'#eef2ff',dayText:'#4338ca',text:'#111827',price:'#3730a3',rowLine:'#e5e7eb',dash:[]});
-      logoLoaded=drawCommonLogo('#3730a3');
-      ctx.strokeStyle='#dbe2ea';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#64748b';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-    }else if(tpl==='timeline-stripe'){
-      ctx.fillStyle='#eef2ff';ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#1d4ed8';ctx.font='900 44px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#2563eb';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Timeline Stripe | '+header,padL,82);
-      ctx.strokeStyle='#93c5fd';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(padL+6,headerH+18);ctx.lineTo(padL+6,H-footerH-12);ctx.stroke();
-      drawRows(headerH+20,140,{cardBg:'#ffffff',cardBorder:'#bfdbfe',radius:12,dayFill:'#dbeafe',dayText:'#1d4ed8',text:'#1e293b',price:'#1d4ed8',rowLine:'#dbeafe',dash:[2,3]});
-      logoLoaded=drawCommonLogo('#1d4ed8');
-      ctx.strokeStyle='#c7d2fe';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#334155';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-    }else if(tpl==='compact-chips'){
-      ctx.fillStyle='#ecfeff';ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#0e7490';ctx.font='900 44px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#155e75';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Compact Chips | '+header,padL,82);
-      ctx.strokeStyle='#67e8f9';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
-      drawRows(headerH+20,120,{cardBg:'#ffffff',cardBorder:'#a5f3fc',radius:12,dayFill:'#cffafe',dayText:'#0e7490',text:'#0f172a',price:'#0e7490',rowLine:'#d5f5f7',dash:[1,0]});
-      logoLoaded=drawCommonLogo('#0e7490');
-      ctx.strokeStyle='#a5f3fc';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#155e75';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-    }else if(tpl==='bento-cards'){
-      ctx.fillStyle='#fff7ed';ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#9a3412';ctx.font='900 44px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#c2410c';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Bento Cards | '+header,padL,82);
-      ctx.strokeStyle='#fdba74';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
-      drawRowsBento(headerH+18);
-      logoLoaded=drawCommonLogo('#9a3412');
-      ctx.strokeStyle='#fed7aa';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#9a3412';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-    }else if(tpl==='rail-menu'){
-      ctx.fillStyle='#ecfeff';ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#155e75';ctx.font='900 44px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#0f766e';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Rail Menu | '+header,padL,82);
-      drawRowsRail(headerH+18);
-      logoLoaded=drawCommonLogo('#115e59');
-      ctx.strokeStyle='#99f6e4';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#134e4a';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-    }else if(tpl==='newspaper-list'){
+      ctx.textAlign='left';ctx.fillStyle='#0f172a';ctx.font='700 42px '+SF;ctx.fillText('Wochenplan',padL,28);
+      ctx.fillStyle='#64748b';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
+      ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
+      drawRowsBento(headerH+14,{cardBg:'#ffffff',cardBorder:'#e2e8f0',text:'#1e293b',dayColors:['#2563eb','#059669','#d97706','#dc2626','#7c3aed']});
+      logoLoaded=drawCommonLogo();drawFooter('#94a3b8');
+
+    }else if(tpl==='timeline'){
+      // ── 5. TIMELINE: Vertical line with dots, card per day ──
+      ctx.fillStyle='#f0f9ff';ctx.fillRect(0,0,W,H);
+      ctx.textAlign='left';ctx.fillStyle='#0c4a6e';ctx.font='700 42px '+SF;ctx.fillText('Wochenplan',padL,28);
+      ctx.fillStyle='#64748b';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
+      ctx.strokeStyle='#bae6fd';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
+      drawRowsTimeline(headerH+14,{railColor:'#0284c7',cardBg:'#ffffff',cardBorder:'#e0f2fe',dayFill:'#e0f2fe',dayText:'#0369a1',text:'#1e293b',price:'#0284c7',rowLine:'#f0f9ff'});
+      logoLoaded=drawCommonLogo();drawFooter('#94a3b8');
+
+    }else if(tpl==='zeitung'){
+      // ── 6. ZEITUNG: 2-column newspaper, elegant, warm gray ──
       ctx.fillStyle='#fafaf9';ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle='#44403c';ctx.font='900 42px Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#57534e';ctx.font='700 18px Arial, sans-serif';ctx.fillText('Zeitung | '+header,padL,82);
-      ctx.strokeStyle='#a8a29e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
-      drawRowsNewspaper(headerH+18);
-      logoLoaded=drawCommonLogo('#44403c');
-      ctx.strokeStyle='#e7e5e4';ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#57534e';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
+      // Double rule at top
+      ctx.strokeStyle='#292524';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,10);ctx.lineTo(W-padR,10);ctx.stroke();
+      ctx.strokeStyle='#292524';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,16);ctx.lineTo(W-padR,16);ctx.stroke();
+      ctx.textAlign='center';ctx.fillStyle='#1c1917';ctx.font='700 40px '+SF;ctx.fillText('Wochenplan',W/2,28);
+      ctx.fillStyle='#78716c';ctx.font='400 16px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,W/2,72);
+      ctx.strokeStyle='#292524';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-8);ctx.lineTo(W-padR,headerH-8);ctx.stroke();
+      ctx.strokeStyle='#292524';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-4);ctx.lineTo(W-padR,headerH-4);ctx.stroke();
+      ctx.textAlign='left';
+      // Vertical divider in center
+      ctx.strokeStyle='#d6d3d1';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W/2,headerH+6);ctx.lineTo(W/2,H-footerH-8);ctx.stroke();
+      drawRowsNewspaper(headerH+14,{cardBg:'#fafaf9',dayText:'#1c1917',accent:'#292524',text:'#44403c',price:'#57534e'});
+      logoLoaded=drawCommonLogo();drawFooter('#a8a29e');
+
     }else{
-      // classic-red (current default)
-      ctx.fillStyle='#fdfbf7';ctx.fillRect(0,0,W,H);
-      ctx.globalAlpha=0.03;
-      for(var tty=0;tty<H;tty+=3){for(var ttx=0;ttx<W;ttx+=3){if(Math.random()>0.5){ctx.fillStyle=Math.random()>0.5?'#000':'#fff';ctx.fillRect(ttx,tty,2,2);}}}
-      ctx.globalAlpha=1;
-      ctx.textAlign='left';ctx.fillStyle='#a31d2d';ctx.font='900 48px Arial Black, Arial, sans-serif';ctx.fillText('WOCHENPLAN',padL,24);
-      ctx.fillStyle='#444';ctx.font='900 20px Arial, sans-serif';ctx.fillText('Mittagstisch | '+header,padL,80);
-      ctx.strokeStyle='#a31d2d';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(padL,headerH-10);ctx.lineTo(W-padR,headerH-10);ctx.stroke();
-      ctx.fillStyle='#777';ctx.font='13px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-2);ctx.textAlign='left';
-      drawRows(headerH+20,130,{cardBg:'#ffffff',cardBorder:'#eee',radius:12,dayFill:'#a31d2d',dayText:'#ffffff',text:'#1a1a1a',price:'#a31d2d',rowLine:'#ddd',dash:[4,3],shadow:'rgba(163,29,45,0.08)',shadowBlur:2});
-      logoLoaded=drawCommonLogo('#a31d2d');
-      ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,H-footerH);ctx.lineTo(W-padR,H-footerH);ctx.stroke();
-      ctx.fillStyle='#777';ctx.font='12px Arial, sans-serif';ctx.textAlign='center';ctx.fillText('Dorfladen Oberornau · Dorfplatz 1 · 84419 Obertaufkirchen · Tel: 08082 622 99 91',W/2,H-footerH+14);
-      ctx.fillText('♻️ 0,50 € Öko-Rabatt mit eigenem Behälter',W/2,H-footerH+30);
+      // ── DEFAULT / KLASSIK: Warm beige, red accents, traditional ──
+      ctx.fillStyle='#fdf8f0';ctx.fillRect(0,0,W,H);
+      ctx.textAlign='left';ctx.fillStyle='#9f1239';ctx.font='700 44px '+SF;ctx.fillText('Wochenplan',padL,28);
+      ctx.fillStyle='#6b7280';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
+      ctx.strokeStyle='#9f1239';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
+      ctx.fillStyle='#9ca3af';ctx.font='400 12px '+SF;ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-1);ctx.textAlign='left';
+      drawRows(headerH+14,124,{cardBg:'#ffffff',cardBorder:'#fecdd3',radius:10,dayFill:'#9f1239',dayText:'#ffffff',text:'#1f2937',price:'#9f1239',rowLine:'#fce7f3',dash:[],shadow:'rgba(159,18,57,0.06)',shadowBlur:2});
+      logoLoaded=drawCommonLogo();drawFooter('#9ca3af');
     }
 
     ctx.textAlign='left';
