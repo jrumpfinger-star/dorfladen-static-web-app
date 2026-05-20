@@ -168,7 +168,14 @@
       if(showDishes.length===1){
         sub.textContent=label+': '+showDishes[0].name;
       }else{
-        sub.innerHTML=label+':<br>'+showDishes.map(function(d){return '• '+esc(d.name);}).join('<br>');
+        sub.innerHTML='<span style="font-weight:800;display:block;margin-bottom:4px;color:rgba(255,255,255,0.9);font-size:0.85rem;text-transform:uppercase;letter-spacing:0.3px;">' + label + ':</span>' + 
+          '<div style="display:flex;flex-direction:column;gap:4px;">' + 
+          showDishes.map(function(d){
+            return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:0.8rem;line-height:1.25;">' + 
+                   '<span style="color:#bd8b5c;font-size:1.1rem;line-height:1;margin-top:-4px;">&bull;</span>' + 
+                   '<span style="flex:1;text-align:left;font-weight:600;color:rgba(255,255,255,0.95);white-space:normal;overflow:visible;">' + esc(d.name) + '</span>' + 
+                   '</div>';
+          }).join('') + '</div>';
       }
     }else if(sub&&hour>=14){
       sub.textContent='Morgen: Kein Gericht eingetragen';
