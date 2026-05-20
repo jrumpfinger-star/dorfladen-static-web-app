@@ -152,14 +152,26 @@
     }
     container.innerHTML=html;
     // Update quick-action subtitle
+    // After 14:00, show tomorrow's dishes instead
     var sub=document.getElementById('mob-lunch-sub');
-    var todayDishes=menu[todayIdx]||[];
-    if(sub&&todayDishes.length>0){
-      if(todayDishes.length===1){
-        sub.textContent='Heute: '+todayDishes[0].name;
+    var now=new Date();
+    var hour=now.getHours();
+    var showIdx=todayIdx;
+    var label='Heute';
+    if(hour>=14){
+      // Next weekday (Mon-Sat): Sun=0→Mon=1, Mon=1→Tue=2, ..., Fri=5→Sat=6, Sat=6→Mon=1
+      showIdx=todayIdx>=6?1:todayIdx+1;
+      label='Morgen';
+    }
+    var showDishes=menu[showIdx]||[];
+    if(sub&&showDishes.length>0){
+      if(showDishes.length===1){
+        sub.textContent=label+': '+showDishes[0].name;
       }else{
-        sub.innerHTML='Heute:<br>'+todayDishes.map(function(d){return '• '+esc(d.name);}).join('<br>');
+        sub.innerHTML=label+':<br>'+showDishes.map(function(d){return '• '+esc(d.name);}).join('<br>');
       }
+    }else if(sub&&hour>=14){
+      sub.textContent='Morgen: Kein Gericht eingetragen';
     }
   }
 
