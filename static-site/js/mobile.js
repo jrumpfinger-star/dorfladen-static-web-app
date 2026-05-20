@@ -26,12 +26,16 @@
   });
 
   /* === LOGO LOADER (mobile header) === */
+  var logoText=document.getElementById('mob-logo-text');
+  if(logoText) logoText.style.opacity='0';
   fetch(API_BASE+'/logo').then(function(r){return r.json();}).then(function(res){
     if(res.success&&res.logo){
       var img=document.getElementById('mob-logo-img');
-      if(img){img.src=res.logo;img.style.display='';document.getElementById('mob-logo-text').style.display='none';}
+      if(img){img.src=res.logo;img.style.display='';if(logoText) logoText.style.display='none';}
+    }else{
+      if(logoText) logoText.style.opacity='1';
     }
-  }).catch(function(){});
+  }).catch(function(){if(logoText) logoText.style.opacity='1';});
 
   /* === OPEN/CLOSED STATUS === */
   function updateMobStatus(){

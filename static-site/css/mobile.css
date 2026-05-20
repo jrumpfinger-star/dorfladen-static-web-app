@@ -29,10 +29,12 @@ body{padding-bottom:0!important;font-family:'Segoe UI',system-ui,-apple-system,s
 @keyframes mob-scroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
 /* === MOBILE HEADER === */
-.mob-only.mob-header{display:flex!important;position:sticky;top:0;z-index:100;background:#2e7d4f;color:#fff;padding:12px 16px;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.mob-only.mob-header{display:flex!important;position:sticky;top:0;z-index:100;background:#2e7d4f;color:#fff;padding:12px 16px;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .mob-header-logo{font-size:1.15rem;font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}
 .mob-header-logo img{height:38px;width:auto}
-.mob-header-logo .logo-text{font-size:1rem;font-weight:700;line-height:1.2}
+.mob-header-logo img[src]:not([src='']){display:inline-block}
+.mob-header-logo .logo-text{font-size:1rem;font-weight:700;line-height:1.2;transition:opacity .2s}
+.mob-header-menu{position:absolute;right:16px}
 .mob-header-menu{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:4px;z-index:310}
 
 /* === MOBILE NAV DRAWER === */
@@ -87,10 +89,10 @@ main{padding:0!important;margin:0!important}
 .mob-status-hint{margin-left:auto;font-size:.78rem;font-weight:400;color:#6b7280}
 @keyframes mob-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-/* === MOBILE HERO (green, part of header area) === */
-.mob-hero{display:block!important;text-align:center;padding:24px 20px 20px;background:#2e7d4f}
-.mob-hero h1{font-size:1.3rem;font-weight:800;color:#fff;margin-bottom:6px}
-.mob-hero p{font-size:.92rem;color:rgba(255,255,255,.8)}
+/* === MOBILE HERO === */
+.mob-hero{display:block!important;text-align:center;padding:24px 20px 20px;background:#fff}
+.mob-hero h1{font-size:1.3rem;font-weight:800;color:#2e7d4f;margin-bottom:6px}
+.mob-hero p{font-size:.92rem;color:#6b7280}
 
 /* === MOBILE QUICK ACTIONS === */
 .mob-only.mob-actions{display:grid!important;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:16px 16px}
