@@ -37,7 +37,7 @@
 /* === RESET body for mobile === */
 body{
   padding-bottom:0!important;
-  padding-top:118px!important;
+  padding-top:98px!important; /* reduced from 118px */
   font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--m-bg);
   color: var(--m-text);
@@ -97,12 +97,12 @@ body{
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--m-text);
-  padding:12px 18px;
+  padding:8px 16px; /* reduced from 12px 18px */
   align-items:center;
   justify-content:center;
   box-shadow: 0 2px 10px rgba(0,0,0,.02);
   border-bottom: 1px solid rgba(30, 70, 58, 0.08);
-  height: 60px;
+  height: 50px; /* reduced from 60px */
   box-sizing: border-box;
 }
 .mob-header-logo{
@@ -116,12 +116,12 @@ body{
   color: var(--m-primary);
 }
 .mob-header-logo img{
-  height:36px;
+  height:30px; /* reduced from 36px */
   width:auto;
 }
 .mob-header-logo img[src]:not([src='']){display:inline-block}
 .mob-header-logo .logo-text{
-  font-size:1.02rem;
+  font-size:0.95rem; /* slightly tighter */
   font-weight:800;
   line-height:1.2;
   color: var(--m-primary);
@@ -138,11 +138,11 @@ body{
   background: var(--m-primary-light);
   border:none;
   color: var(--m-primary);
-  font-size:1.5rem;
+  font-size:1.3rem; /* slightly tighter */
   cursor:pointer;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px; /* reduced from 36px */
+  height: 32px; /* reduced from 36px */
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,7 +304,7 @@ main{padding:0!important;margin:0!important}
   display:flex!important;
   align-items:center;
   gap:10px;
-  padding:14px 20px;
+  padding:10px 16px; /* reduced from 14px 20px */
   font-size:.88rem;
   font-weight:700;
   cursor:pointer;
