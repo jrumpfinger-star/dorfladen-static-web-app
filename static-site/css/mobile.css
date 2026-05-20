@@ -96,18 +96,19 @@ main{padding:0!important;margin:0!important}
 @keyframes mob-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* === MOBILE HERO === */
-.mob-hero{display:block!important;text-align:center;padding:28px 20px 22px;background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);border-bottom:1px solid #bbf7d0}
-.mob-hero h1{font-size:1.3rem;font-weight:800;color:#166534;margin-bottom:6px}
-.mob-hero p{font-size:.92rem;color:#4b5563}
+.mob-hero{display:block!important;text-align:center;padding:30px 20px 24px;background:linear-gradient(160deg,#ecfdf5 0%,#d1fae5 50%,#fef9c3 100%);border-bottom:1px solid #bbf7d0}
+.mob-hero h1{font-size:1.35rem;font-weight:800;color:#166534;margin-bottom:8px;letter-spacing:-.3px}
+.mob-hero p{font-size:.9rem;color:#4b5563;font-weight:500}
 
 /* === MOBILE QUICK ACTIONS === */
 .mob-only.mob-actions{display:grid!important;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:16px 16px}
-.mob-action{background:#fff;border-radius:14px;padding:18px 10px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;border:1.5px solid #e5e7eb}
+.mob-action{background:#fff;border-radius:16px;padding:16px 8px 14px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;border:1.5px solid #e5e7eb}
 .mob-action:active{transform:scale(.96);background:#f9fafb}
 .mob-action.highlight{border-color:#c62828;background:#fff5f5}
-.mob-action-icon{display:block;font-size:1.8rem;margin-bottom:6px}
-.mob-action-label{display:block;font-size:.88rem;font-weight:700;color:#1a1a1a}
-.mob-action-sub{display:block;font-size:.75rem;color:#4b5563;margin-top:2px}
+.mob-action-icon{display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;margin:0 auto 8px;font-size:1.5rem;background:#f0fdf4}
+.mob-action.highlight .mob-action-icon{background:#fff0f0}
+.mob-action-label{display:block;font-size:.82rem;font-weight:700;color:#1a1a1a;line-height:1.2}
+.mob-action-sub{display:block;font-size:.7rem;color:#6b7280;margin-top:3px;line-height:1.2}
 
 /* === MOBILE PREISLISTE POPUP === */
 .mob-pl-group{margin-bottom:4px;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
@@ -180,7 +181,7 @@ main{padding:0!important;margin:0!important}
 
 /* === MOBILE CONTENT CARDS === */
 .mob-cards{padding:0 16px 12px}
-.mob-card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:12px;border:1px solid #e5e7eb}
+.mob-card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:12px;border:1px solid #e5e7eb;border-left:4px solid #2e7d4f}
 .mob-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .mob-card-icon{font-size:1.3rem;width:36px;height:36px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center}
 .mob-card-title{font-weight:700;font-size:1rem;color:#1a1a1a}
