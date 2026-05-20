@@ -49,6 +49,68 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
 
+    # --- POST: upsert a werbebild for a given artikelnummer ---
+    if req.method == "POST":
+        try:
+            body = req.get_json()
+        except:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Invalid JSON"}),
+                status_code=400, headers=get_cors_headers()
+            )
+        artnr = (body.get("dl_artikelnummer") or "").strip()
+        bild = (body.get("dl_bild_base64") or "").strip()
+        if not artnr or not bild:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "dl_artikelnummer and dl_bild_base64 required"}),
+                status_code=400, headers=get_cors_headers()
+            )
+
+        entity_set = "dl_werbebilds"
+        for env_name in ("DV_DEFAULT_URL", "DV_DEV_URL"):
+            base_url = os.environ.get(env_name, "").strip()
+            if not base_url:
+                continue
+            headers = get_headers(env_name)
+
+            # Check if record already exists for this artikelnummer
+            check_url = f"{base_url}/api/data/v9.2/{entity_set}?$select=dl_werbebildid,dl_artikelnummer&$filter=dl_artikelnummer eq '{artnr}'"
+            try:
+                check = requests.get(check_url, headers=headers, timeout=30)
+                if check.status_code != 200:
+                    continue
+                existing = check.json().get("value", [])
+                payload = {"dl_artikelnummer": artnr, "dl_bild_base64": bild}
+
+                if existing:
+                    # PATCH existing record
+                    record_id = existing[0]["dl_werbebildid"]
+                    patch_url = f"{base_url}/api/data/v9.2/{entity_set}({record_id})"
+                    r = requests.patch(patch_url, headers=headers, json=payload, timeout=30)
+                else:
+                    # POST new record
+                    post_url = f"{base_url}/api/data/v9.2/{entity_set}"
+                    r = requests.post(post_url, headers=headers, json=payload, timeout=30)
+
+                if r.status_code in (200, 201, 204):
+                    return func.HttpResponse(
+                        body=json.dumps({"success": True}),
+                        status_code=200, headers=get_cors_headers()
+                    )
+                else:
+                    return func.HttpResponse(
+                        body=json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "details": r.text}),
+                        status_code=r.status_code, headers=get_cors_headers()
+                    )
+            except Exception as e:
+                continue
+
+        return func.HttpResponse(
+            body=json.dumps({"success": False, "error": "No Dataverse environment available"}),
+            status_code=500, headers=get_cors_headers()
+        )
+
+    # --- GET: fetch werbebilder by artikelnummern ---
     artnrs = req.params.get("artnrs", "").strip()
     if not artnrs:
         return func.HttpResponse(

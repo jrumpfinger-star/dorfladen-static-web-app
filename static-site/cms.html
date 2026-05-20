@@ -1595,6 +1595,10 @@ document.head.appendChild(msalScript);
         };
         if(it.id) promises.push(fetch(API+'/angebote/'+it.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
         else promises.push(fetch(API+'/angebote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
+        // Persist image to werbebilder table so it shows in popup/website
+        if(it.bild_data && it.artikelnummer){
+          promises.push(fetch(API+'/werbebilder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dl_artikelnummer:it.artikelnummer,dl_bild_base64:it.bild_data})}));
+        }
       });
       return Promise.all(promises);
     }).then(function(results){
