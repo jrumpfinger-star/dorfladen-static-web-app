@@ -79,6 +79,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
 
         if req.method == "GET":
+            from datetime import datetime
             params = {}
             for key in ["$select", "$filter", "$orderby", "$top", "$skip", "$expand"]:
                 value = req.params.get(key)
@@ -90,7 +91,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if "$orderby" not in params:
                 params["$orderby"] = "dl_datum asc"
             if "$filter" not in params:
-                params["$filter"] = "dl_status eq 101001"
+                # Default: only active items for current calendar week
+                now = datetime.utcnow()
+                kw = now.isocalendar()[1]
+                jahr = now.isocalendar()[0]
+                params["$filter"] = f"dl_status eq 101001 and dl_kalenderwoche eq {kw} and dl_jahr eq {jahr}"
 
             url = f"{dev_url}/api/data/v9.2/dl_wochenplans"
             r = requests.get(url, headers=headers, params=params)

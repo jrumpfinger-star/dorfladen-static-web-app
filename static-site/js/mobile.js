@@ -110,14 +110,14 @@
 
   /* === WOCHENPLAN (dynamic, from API or fallback) === */
   var wpDays=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-  var wpFallback=[null,
-    {name:'Fleischpflanzerl mit Kartoffelpüree',price:'8,50'},
-    {name:'Wiener Schnitzel mit Kartoffelsalat',price:'8,90'},
-    {name:'Gulaschsuppe mit Semmel',price:'6,90'},
-    {name:'Schweinebraten mit Knödel & Krautsalat',price:'9,50'},
-    {name:'Backfisch mit Remoulade & Pommes',price:'8,90'},
-    {name:'Leberkässemmel',price:'4,50'}
-  ];
+  var wpFallback={
+    1:[{name:'Fleischpflanzerl mit Kartoffelpüree',price:'8,50'}],
+    2:[{name:'Wiener Schnitzel mit Kartoffelsalat',price:'8,90'}],
+    3:[{name:'Gulaschsuppe mit Semmel',price:'6,90'}],
+    4:[{name:'Schweinebraten mit Knödel & Krautsalat',price:'9,50'}],
+    5:[{name:'Backfisch mit Remoulade & Pommes',price:'8,90'}],
+    6:[{name:'Leberkässemmel',price:'4,50'}]
+  };
 
   function getKW(){
     var now=new Date();
@@ -135,28 +135,42 @@
     var html='';
     for(var i=1;i<=6;i++){
       var isToday=i===todayIdx;
+      var dishes=menu[i]||[];
       html+='<div class="mob-wp-day'+(isToday?' today':'')+'">';
       html+='<div class="mob-wp-day-name">'+wpDays[i]+(isToday?' · Heute':'')+'</div>';
-      html+='<div class="mob-wp-day-menu">'+(menu[i]?menu[i].name:'–')+'</div>';
-      html+='<div class="mob-wp-day-price">'+(menu[i]?'€ '+menu[i].price:'')+'</div>';
+      if(dishes.length===0){
+        html+='<div class="mob-wp-day-menu">–</div>';
+      }else{
+        dishes.forEach(function(d){
+          html+='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">';
+          html+='<div class="mob-wp-day-menu" style="flex:1">'+esc(d.name)+'</div>';
+          html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+esc(d.price)+'</div>';
+          html+='</div>';
+        });
+      }
       html+='</div>';
     }
     container.innerHTML=html;
     // Update quick-action subtitle
     var sub=document.getElementById('mob-lunch-sub');
-    if(sub&&menu[todayIdx]){
-      sub.textContent='Heute: '+menu[todayIdx].name;
+    var todayDishes=menu[todayIdx]||[];
+    if(sub&&todayDishes.length>0){
+      sub.textContent='Heute: '+todayDishes.map(function(d){return d.name;}).join(' · ');
     }
   }
 
   // Try API first, fallback to static
+  // dayMap: supports both string labels and Dataverse choice integers
+  var wpDayMap={montag:1,dienstag:2,mittwoch:3,donnerstag:4,freitag:5,samstag:6,
+    101000:1,101001:2,101002:3,101003:4,101004:5,101005:6};
   fetch(API_BASE+'/wochenplan').then(function(r){return r.json();}).then(function(data){
-    if(data&&data.success&&data.data){
-      var menu=[null];
-      var dayMap={montag:1,dienstag:2,mittwoch:3,donnerstag:4,freitag:5,samstag:6};
+    if(data&&data.success&&data.data&&data.data.length>0){
+      var menu={1:[],2:[],3:[],4:[],5:[],6:[]};
       (data.data||[]).forEach(function(item){
-        var dIdx=dayMap[(item.dl_wochentag||'').toLowerCase()];
-        if(dIdx) menu[dIdx]={name:item.dl_gericht||'',price:item.dl_preis||''};
+        var wt=item.dl_wochentag;
+        var label=item._dl_wochentag_label;
+        var dIdx=wpDayMap[wt]||wpDayMap[(label||'').toLowerCase()]||wpDayMap[(String(wt)||'').toLowerCase()];
+        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||'')});
       });
       renderWP(menu);
     }else{
