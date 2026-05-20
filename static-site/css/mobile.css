@@ -37,6 +37,11 @@ body{padding-bottom:0!important;font-family:'Segoe UI',system-ui,-apple-system,s
 .mob-header-menu{position:absolute;right:16px}
 .mob-header-menu{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:4px;z-index:310}
 
+/* === MOBILE BACK/HOME BUTTON (subpages) === */
+.mob-back{position:absolute;left:12px;display:flex;align-items:center;gap:4px;color:#fff;text-decoration:none;font-size:.85rem;font-weight:600;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.15);transition:background .15s}
+.mob-back:active{background:rgba(255,255,255,.25)}
+.mob-back svg{width:18px;height:18px;fill:#fff}
+
 /* === MOBILE NAV DRAWER === */
 .mob-nav-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:299;display:none}
 .mob-nav-overlay.open{display:block}
