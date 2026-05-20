@@ -378,11 +378,10 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       html+='</div>';
       container.innerHTML=html;
 
-      /* News ticker above hero – only if recent news (< 14 days) exist */
+      /* News ticker above hero – only items marked as Laufband */
       var ticker=document.getElementById('news-ticker');
       var tickerContent=document.getElementById('news-ticker-content');
-      var twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
-      var recentItems=items.filter(function(n){var d=n.dl_datum||n.datum||n.createdon;return d&&new Date(d)>=twoWeeksAgo;});
+      var recentItems=items.filter(function(n){return !!n.dl_laufband;});
       if(ticker&&tickerContent&&recentItems.length){
         window._tickerNews=recentItems;
         var singleHtml='';

@@ -78,7 +78,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         show_all = req.params.get("all", "").lower() in ("true", "1", "yes")
         status_filter = "" if show_all else "&$filter=(dl_status eq 101001 or dl_status eq null)"
         query = (
-            "?$select=dl_newsid,dl_titel,dl_kurztext,dl_inhalt,dl_datum,createdon,dl_status"
+            "?$select=dl_newsid,dl_titel,dl_kurztext,dl_inhalt,dl_datum,createdon,dl_status,dl_laufband"
             f"{status_filter}"
             "&$orderby=dl_datum desc"
         )
@@ -127,7 +127,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "datum": item.get("dl_datum") or item.get("createdon"),
                     "dl_datum": item.get("dl_datum"),
                     "createdon": item.get("createdon"),
-                    "status": item.get("dl_status")
+                    "status": item.get("dl_status"),
+                    "dl_laufband": item.get("dl_laufband", False)
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "data": news_list}, ensure_ascii=False),

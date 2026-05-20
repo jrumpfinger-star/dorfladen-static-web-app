@@ -293,14 +293,16 @@
   // Wait a bit for app.js to load angebote first
   setTimeout(tryLoadAngebote,1500);
 
-  /* === NEWS TICKER (mobile top) === */
+  /* === NEWS TICKER (mobile top) – only items marked as Laufband === */
   fetch(API_BASE+'/news').then(function(r){return r.json();}).then(function(data){
     var items=data;
     if(data&&data.data) items=data.data;
     if(!Array.isArray(items)||!items.length) return;
+    var laufband=items.filter(function(n){return !!n.dl_laufband;});
+    if(!laufband.length) return;
     var tickerEl=document.getElementById('mob-ticker-content');
     if(!tickerEl) return;
-    var txt=items.map(function(n){
+    var txt=laufband.map(function(n){
       var d=n.dl_datum||n.date||'';
       var t=n.dl_titel||n.title||'';
       return(d?d.substring(8,10)+'.'+d.substring(5,7)+'. ':'')+t;
