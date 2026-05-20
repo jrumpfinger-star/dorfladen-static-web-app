@@ -3529,123 +3529,138 @@ document.head.appendChild(msalScript);
       });
 
       if(theme.tpl==='modern-magazine'){
-        // Background composition
-        ctx.fillStyle='#dfead9';ctx.fillRect(0,0,W,240);
-        ctx.fillStyle='#f2ecdf';ctx.fillRect(W*0.62,240,W*0.38,H-240);
+        // ── Modern Magazine Einzelflyer: clean centered card layout ──
+        ctx.fillStyle='#edf4ea';ctx.fillRect(0,0,W,H);
+        // Header bar
+        ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
+        ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
 
-        // Oval logo frame at top
-        ctx.save();
-        ctx.strokeStyle='#6a7f62';ctx.lineWidth=3;
-        ctx.beginPath();ctx.ellipse(W*0.52,95,165,62,0,0,Math.PI*2);ctx.stroke();
-        ctx.fillStyle='#435640';ctx.font='900 46px Arial Black, Arial, sans-serif';ctx.textAlign='center';
-        ctx.fillText('Dorfladen',W*0.52,66);
-        ctx.font='700 30px Arial, sans-serif';ctx.fillText('Oberornau',W*0.52,118);
-        ctx.restore();
+        // Logo + store name
+        var mgLogoEl=document.querySelector('#cms-app img[src^="data:image"]');
+        var mgLogoP=new Promise(function(rl){
+          if(!mgLogoEl){rl();return;}
+          var li=new Image();li.onload=function(){
+            var lh=80,lw=lh*(li.width/li.height);
+            ctx.drawImage(li,28,30,lw,lh);
+            ctx.fillStyle='#2e4528';ctx.textAlign='left';
+            ctx.font='900 36px Arial Black, Arial, sans-serif';
+            ctx.fillText('Dorfladen Oberornau',28+lw+16,62);
+            ctx.fillStyle='#5b7552';ctx.font='600 18px Arial, sans-serif';
+            ctx.fillText('Angebot der Woche',28+lw+16,90);
+            rl();
+          };li.onerror=function(){rl();};li.src=mgLogoEl.src;
+        });
 
-        // Validity top-right
-        ctx.fillStyle='#445544';ctx.font='700 24px Arial, sans-serif';ctx.textAlign='right';
-        ctx.fillText('Gültig:',W-42,62);
-        ctx.font='700 30px Arial, sans-serif';
-        ctx.fillText(von+' – '+bis,W-42,96);
+        // Date right
+        ctx.fillStyle='#3a5232';ctx.font='700 18px Arial, sans-serif';ctx.textAlign='right';
+        ctx.fillText('Gültig:',W-42,52);
+        ctx.font='900 24px Arial Black, Arial, sans-serif';
+        ctx.fillText(von+' \u2013 '+bis,W-42,82);
+        ctx.textAlign='left';
 
-        var bigCX=280,bigCY=620,bigR=315;
-        var topCX=610,topCY=380,topR=170;
-        var midCX=620,midCY=640,midR=170;
-        var lowCX=520,lowCY=845,lowR=125;
+        // ── Main product card ──
+        var cardMX=40, cardMY=170, cardMW=W-80, cardMH=H-170-80;
+        var cardMR=20;
+        function mgFlyerRR(rx,ry,rw,rh,r){
+          ctx.beginPath();ctx.moveTo(rx+r,ry);ctx.lineTo(rx+rw-r,ry);ctx.quadraticCurveTo(rx+rw,ry,rx+rw,ry+r);
+          ctx.lineTo(rx+rw,ry+rh-r);ctx.quadraticCurveTo(rx+rw,ry+rh,rx+rw-r,ry+rh);
+          ctx.lineTo(rx+r,ry+rh);ctx.quadraticCurveTo(rx,ry+rh,rx,ry+rh-r);
+          ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
+        }
+        // Card shadow + fill
+        ctx.save();ctx.shadowColor='rgba(0,0,0,0.1)';ctx.shadowBlur=12;ctx.shadowOffsetY=6;
+        ctx.fillStyle='#ffffff';mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.fill();ctx.restore();
+        ctx.strokeStyle='#d2e0cf';ctx.lineWidth=1;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.stroke();
 
-        function drawCircleFill(cx,cy,r,col){ctx.fillStyle=col;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();}
-        drawCircleFill(bigCX,bigCY,bigR,'#ffffff');
-        drawCircleFill(topCX,topCY,topR,'rgba(255,255,255,0.92)');
-        drawCircleFill(midCX,midCY,midR,'rgba(255,255,255,0.90)');
-        drawCircleFill(lowCX,lowCY,lowR,'rgba(255,255,255,0.86)');
-
-        var magazineImgPromise=Promise.resolve();
+        // Image area (top 55% of card)
+        var imgZoneH=Math.floor(cardMH*0.55);
+        var mgImgPromise=Promise.resolve();
         if(item.bild_data){
-          magazineImgPromise=new Promise(function(resImg){
+          mgImgPromise=new Promise(function(resImg){
             var img=new Image();
             img.onload=function(){
               var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
               var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
               if(cfg.imgFreistellen){
-                try{
-                  var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-                  for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
-                  ox.putImageData(id,0,0);
-                }catch(e){}
+                try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
+                for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
+                ox.putImageData(id,0,0);}catch(e){}
               }
-              function drawImgInCircle(cx,cy,r,scaleF){
-                var maxW=r*2*scaleF,maxH=r*2*scaleF;
-                var sc=Math.min(maxW/ofc.width,maxH/ofc.height,cfg.imgMaxScale);
-                var iw=ofc.width*sc,ih=ofc.height*sc;
-                ctx.save();ctx.beginPath();ctx.arc(cx,cy,r-3,0,Math.PI*2);ctx.clip();
-                ctx.drawImage(ofc,cx-iw/2,cy-ih/2,iw,ih);ctx.restore();
-              }
-              drawImgInCircle(bigCX,bigCY,bigR,1.05);
-              drawImgInCircle(midCX,midCY,midR,0.8);
-              drawImgInCircle(lowCX,lowCY,lowR,0.9);
+              var maxIW=cardMW-40, maxIH=imgZoneH-20;
+              var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3);
+              var iw=ofc.width*scI,ih=ofc.height*scI;
+              var imgX=cardMX+cardMW/2-iw/2, imgY=cardMY+10+(imgZoneH-ih)/2;
+              ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
+              ctx.drawImage(ofc,imgX,imgY,iw,ih);ctx.restore();
               resImg();
-            };
-            img.onerror=function(){resImg();};
-            img.src=item.bild_data;
+            };img.onerror=function(){resImg();};img.src=item.bild_data;
           });
         }
 
-        magazineImgPromise.then(function(){
-          function euro(v){return Number(v).toFixed(2).replace('.',',')+' €';}
+        mgImgPromise.then(function(){
+          // Savings badge top-right
           var savePct=getSavingsPercent(item);
-          // Product bubble content
-          ctx.fillStyle='#2c362a';ctx.textAlign='center';
-          ctx.font='700 44px Arial, sans-serif';
+          if(savePct){
+            var bR=34;
+            ctx.fillStyle='#5e8a4a';
+            ctx.beginPath();ctx.arc(cardMX+cardMW-28-bR,cardMY+28+bR,bR,0,Math.PI*2);ctx.fill();
+            ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 26px Arial Black, Arial, sans-serif';
+            ctx.fillText('-'+savePct+'%',cardMX+cardMW-28-bR,cardMY+28+bR+8);
+            ctx.textAlign='left';
+          }
+
+          // Divider line
+          var divY=cardMY+imgZoneH+4;
+          ctx.strokeStyle='#e2eade';ctx.lineWidth=1;
+          ctx.beginPath();ctx.moveTo(cardMX+24,divY);ctx.lineTo(cardMX+cardMW-24,divY);ctx.stroke();
+
+          // Text area
+          var tPad=32, tY=divY+36;
+
+          // Product name
+          ctx.fillStyle='#1e2d1a';ctx.font='900 42px Arial Black, Arial, sans-serif';ctx.textAlign='left';
           var pName=(item.produkt||'Produkt').trim();
-          var pLines=wrapTextCMS(ctx,pName,topR*1.5).slice(0,2);
-          var py=topCY-55;
-          pLines.forEach(function(l){ctx.fillText(l,topCX,py);py+=48;});
+          var pLines=wrapTextCMS(ctx,pName,cardMW-tPad*2).slice(0,2);
+          pLines.forEach(function(l){ctx.fillText(l,cardMX+tPad,tY);tY+=50;});
+
+          // Details
+          if(item.details){
+            tY+=4;
+            ctx.fillStyle='#5b7552';ctx.font='600 24px Arial, sans-serif';
+            var dLines=wrapTextCMS(ctx,item.details,cardMW-tPad*2).slice(0,2);
+            dLines.forEach(function(l){ctx.fillText(l,cardMX+tPad,tY);tY+=30;});
+          }
+
+          // Price section at bottom of card
+          var priceBarY=cardMY+cardMH-100;
+          ctx.fillStyle='#eaf3e6';mgFlyerRR(cardMX+24,priceBarY,cardMW-48,72,14);ctx.fill();
+          ctx.strokeStyle='#c5dbbe';ctx.lineWidth=1;mgFlyerRR(cardMX+24,priceBarY,cardMW-48,72,14);ctx.stroke();
 
           if(item.preis){
-            var parts=Number(item.preis).toFixed(2).split('.');
-            ctx.fillStyle='#5b6d54';ctx.font='700 26px Arial, sans-serif';
-            ctx.fillText('VK',topCX,topCY-8);
-            ctx.fillStyle='#2f3f2d';ctx.font='900 74px Arial Black, Arial, sans-serif';
-            ctx.fillText(parts[0]+','+parts[1],topCX,topCY+28);
-            ctx.fillStyle='#5b6d54';ctx.font='700 26px Arial, sans-serif';
-            ctx.fillText('€',topCX+88,topCY+22);
+            var pp=Number(item.preis).toFixed(2).split('.');
+            ctx.fillStyle='#2a5218';ctx.font='900 52px Arial Black, Arial, sans-serif';
+            ctx.fillText(pp[0]+','+pp[1],cardMX+40,priceBarY+52);
+            var mw=ctx.measureText(pp[0]+','+pp[1]).width;
+            ctx.font='700 30px Arial, sans-serif';
+            ctx.fillText('\u20AC',cardMX+40+mw+6,priceBarY+48);
           }
-
           if(item.statt_preis){
-            ctx.fillStyle='#5b6d54';ctx.font='700 28px Arial, sans-serif';
-            ctx.fillText('UVP',midCX,midCY-14);
-            var uvp=euro(item.statt_preis);
-            ctx.fillStyle='#2f3f2d';ctx.font='700 44px Arial, sans-serif';
-            ctx.fillText(uvp,midCX,midCY+34);
-            var uw=ctx.measureText(uvp).width;
-            ctx.strokeStyle='#6f835f';ctx.lineWidth=3;
-            ctx.beginPath();ctx.moveTo(midCX-uw/2-4,midCY+10);ctx.lineTo(midCX+uw/2+4,midCY+10);ctx.stroke();
+            var uvp='statt '+Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
+            ctx.textAlign='right';ctx.fillStyle='#8a9e80';ctx.font='600 24px Arial, sans-serif';
+            ctx.fillText(uvp,cardMX+cardMW-40,priceBarY+48);
+            var uvpW=ctx.measureText(uvp).width;
+            ctx.strokeStyle='#8a9e80';ctx.lineWidth=2;
+            ctx.beginPath();ctx.moveTo(cardMX+cardMW-40-uvpW,priceBarY+40);ctx.lineTo(cardMX+cardMW-40,priceBarY+40);ctx.stroke();
+            ctx.textAlign='left';
           }
 
-          if(savePct){
-            ctx.fillStyle='#6f835f';
-            ctx.beginPath();ctx.arc(midCX,midCY+90,42,0,Math.PI*2);ctx.fill();
-            ctx.fillStyle='#ffffff';ctx.font='900 30px Arial Black, Arial, sans-serif';
-            ctx.fillText('-'+savePct+'%',midCX,midCY+102);
-            ctx.fillStyle='#ecf7ea';ctx.font='700 18px Arial, sans-serif';
-            ctx.fillText('Ersparnis',midCX,midCY+128);
-          }
-
-          if(item.details){
-            ctx.fillStyle='#5b6d54';ctx.font='700 30px Arial, sans-serif';
-            var dLines=wrapTextCMS(ctx,item.details,lowR*1.5).slice(0,2);
-            var dy=lowCY-10;
-            dLines.forEach(function(l){ctx.fillText(l,lowCX,dy);dy+=34;});
-          }
-
+          // Footer
+          ctx.fillStyle='#8aad7e';ctx.fillRect(0,H-36,W,36);
+          ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
+          ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-12);
           ctx.textAlign='left';
-          ctx.fillStyle='#f5f8f0';ctx.font='700 56px Arial, sans-serif';
-          ctx.fillText('Design 1:',42,H-180);
-          ctx.font='700 62px Arial, sans-serif';
-          ctx.fillText('Der Moderne',42,H-120);
-          ctx.fillText('Magazin-Look',42,H-60);
 
-          return logoLoaded;
+          return mgLogoP.then(function(){return logoLoaded;});
         }).then(function(){
           resolve(c);
         });
@@ -4026,133 +4041,162 @@ document.head.appendChild(msalScript);
     var ctx=c.getContext('2d');
 
     if(theme.tpl==='modern-magazine'){
+      // ── Modern Magazine: Clean grid card layout ──
       ctx.fillStyle='#edf4ea';ctx.fillRect(0,0,W,H);
-      ctx.fillStyle='#dfead9';ctx.fillRect(0,0,W,220);
-      ctx.fillStyle='#f2ecdf';ctx.fillRect(W*0.64,220,W*0.36,H-220);
 
-      // Oval logo frame and text
-      ctx.save();
-      ctx.strokeStyle='#6a7f62';ctx.lineWidth=3;
-      ctx.beginPath();ctx.ellipse(W*0.50,88,150,56,0,0,Math.PI*2);ctx.stroke();
-      ctx.fillStyle='#435640';ctx.textAlign='center';
-      ctx.font='900 40px Arial Black, Arial, sans-serif';ctx.fillText('Dorfladen',W*0.50,58);
-      ctx.font='700 26px Arial, sans-serif';ctx.fillText('Oberornau',W*0.50,104);
-      ctx.restore();
+      // Header bar
+      ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
+      // Thin accent line
+      ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
 
+      // Logo + store name left
+      var logoEl=document.querySelector('#cms-app img[src^="data:image"]');
+      var logoP=new Promise(function(rl){
+        if(!logoEl){rl();return;}
+        var li=new Image();li.onload=function(){
+          var lh=80,lw=lh*(li.width/li.height);
+          ctx.drawImage(li,28,30,lw,lh);
+          // Store name next to logo
+          ctx.fillStyle='#2e4528';ctx.textAlign='left';
+          ctx.font='900 36px Arial Black, Arial, sans-serif';
+          ctx.fillText('Dorfladen Oberornau',28+lw+16,62);
+          // Subtitle
+          ctx.fillStyle='#5b7552';ctx.font='600 18px Arial, sans-serif';
+          ctx.fillText('Wochenangebote',28+lw+16,90);
+          rl();
+        };
+        li.onerror=function(){rl();};
+        li.src=logoEl.src;
+      });
+
+      // Date right
       var vonTxt=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
       var bisTxt=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      ctx.fillStyle='#445544';ctx.font='700 20px Arial, sans-serif';ctx.textAlign='right';
-      ctx.fillText('Gültig:',W-30,54);
-      ctx.font='700 24px Arial, sans-serif';ctx.fillText(vonTxt+' – '+bisTxt,W-30,86);
+      ctx.fillStyle='#3a5232';ctx.font='700 18px Arial, sans-serif';ctx.textAlign='right';
+      ctx.fillText('Gültig:',W-30,52);
+      ctx.font='900 24px Arial Black, Arial, sans-serif';
+      ctx.fillText(vonTxt+' \u2013 '+bisTxt,W-30,82);
+      ctx.textAlign='left';
 
-      function drawCircle(cx,cy,r,col){ctx.fillStyle=col;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();}
-      function drawImageCircle(img,cx,cy,r){
-        if(!img)return;
-        var maxW=r*2*1.05,maxH=r*2*1.05;
-        var sc=Math.min(maxW/img.width,maxH/img.height,cfg.imgMaxScale);
-        var iw=img.width*sc,ih=img.height*sc;
-        ctx.save();ctx.beginPath();ctx.arc(cx,cy,r-3,0,Math.PI*2);ctx.clip();
-        ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.restore();
-      }
-
+      // ── Prepare items (sort by savings, max 6) ──
       var renderPairs=(items||[]).map(function(it,idx){
         var sp=getSavingsPercent(it);
         return {it:it,img:(images&&images[idx])?images[idx]:null,sp:(sp==null?-1:sp),idx:idx};
       });
-      renderPairs.sort(function(a,b){
-        if(b.sp!==a.sp) return b.sp-a.sp;
-        return a.idx-b.idx;
-      });
+      renderPairs.sort(function(a,b){return b.sp!==a.sp?b.sp-a.sp:a.idx-b.idx;});
       renderPairs=renderPairs.slice(0,6);
-
       var renderItems=renderPairs.map(function(p){return p.it;});
       var renderImages=renderPairs.map(function(p){return p.img;});
 
-      if(!renderItems.length){
-        renderItems=[
-          {produkt:'Beispielprodukt 1',preis:2.99,details:'500g'},
-          {produkt:'Beispielprodukt 2',preis:3.49,details:'450g'},
-          {produkt:'Beispielprodukt 3',preis:1.99,details:'250g'},
-          {produkt:'Beispielprodukt 4',preis:4.29,details:'1kg'},
-          {produkt:'Beispielprodukt 5',preis:2.49,details:'300g'},
-          {produkt:'Beispielprodukt 6',preis:5.99,details:'750g'}
-        ];
-        renderImages=[null,null,null,null,null,null];
+      // ── 2x3 Grid cards ──
+      var mgCols=2, mgRows=3;
+      var mgGap=16, mgPadX=24, mgPadTop=156, mgPadBot=50;
+      var mgCellW=Math.floor((W-mgPadX*2-mgGap)/mgCols);
+      var mgCellH=Math.floor((H-mgPadTop-mgPadBot-(mgRows-1)*mgGap)/mgRows);
+      var mgRad=16;
+
+      function mgRRect(rx,ry,rw,rh,r){
+        ctx.beginPath();ctx.moveTo(rx+r,ry);ctx.lineTo(rx+rw-r,ry);ctx.quadraticCurveTo(rx+rw,ry,rx+rw,ry+r);
+        ctx.lineTo(rx+rw,ry+rh-r);ctx.quadraticCurveTo(rx+rw,ry+rh,rx+rw-r,ry+rh);
+        ctx.lineTo(rx+r,ry+rh);ctx.quadraticCurveTo(rx,ry+rh,rx,ry+rh-r);
+        ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
       }
 
-      var bubbles=[
-        {cx:250,cy:610,r:270,alpha:1.00},
-        {cx:610,cy:320,r:145,alpha:0.94},
-        {cx:635,cy:540,r:138,alpha:0.92},
-        {cx:585,cy:740,r:128,alpha:0.90},
-        {cx:500,cy:900,r:110,alpha:0.88},
-        {cx:360,cy:960,r:98,alpha:0.86}
-      ];
+      for(var ci=0;ci<Math.min(mgCols*mgRows,renderItems.length);ci++){
+        var col=ci%mgCols, row=Math.floor(ci/mgCols);
+        var cx=mgPadX+col*(mgCellW+mgGap);
+        var cy=mgPadTop+row*(mgCellH+mgGap);
+        var it=renderItems[ci], img=renderImages[ci];
 
-      function drawBubbleItem(it,img,b,idx){
-        drawCircle(b.cx,b.cy,b.r,'rgba(255,255,255,'+b.alpha+')');
-        if(img)drawImageCircle(img,b.cx,b.cy,b.r*(idx===0?1.03:0.88));
+        // Card shadow
+        ctx.save();ctx.shadowColor='rgba(0,0,0,0.08)';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
+        ctx.fillStyle='#ffffff';mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.fill();ctx.restore();
+        // Card border
+        ctx.strokeStyle='#d2e0cf';ctx.lineWidth=1;mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.stroke();
 
-        var nameSize=idx===0?32:24;
-        var priceSize=idx===0?58:42;
-        var detailSize=idx===0?20:16;
-        var maxNameW=Math.max(80,b.r*1.35);
-
-        ctx.fillStyle='#2c362a';ctx.textAlign='center';
-        ctx.font='700 '+nameSize+'px Arial, sans-serif';
-        var nm=wrapTextCMS(ctx,(it&&it.produkt)||('Artikel '+(idx+1)),maxNameW).slice(0,2);
-        var ny=b.cy-(idx===0?52:40);
-        nm.forEach(function(l){ctx.fillText(l,b.cx,ny);ny+=Math.round(nameSize*1.08);});
-
-        if(it&&it.details){
-          ctx.fillStyle='#5b6d54';ctx.font='600 '+detailSize+'px Arial, sans-serif';
-          ctx.fillText(it.details,b.cx,ny+4);
-          ny+=Math.round(detailSize*1.1)+8;
+        var cardPadI=14;
+        // Image area (top half of card)
+        var imgAreaH=Math.floor(mgCellH*0.48);
+        if(img){
+          var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
+          var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
+          if(cfg.imgFreistellen){
+            try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
+            for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
+            ox.putImageData(id,0,0);}catch(e){}
+          }
+          var maxIW=mgCellW-cardPadI*2, maxIH=imgAreaH-10;
+          var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3);
+          var iw=ofc.width*scI,ih=ofc.height*scI;
+          var imgX=cx+mgCellW/2-iw/2, imgY=cy+cardPadI+(imgAreaH-ih)/2;
+          ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
+          ctx.drawImage(ofc,imgX,imgY,iw,ih);ctx.restore();
         }
 
+        // Savings badge top-right
+        var sp=getSavingsPercent(it);
+        if(sp){
+          var badgeR=22;
+          ctx.fillStyle='#5e8a4a';
+          ctx.beginPath();ctx.arc(cx+mgCellW-cardPadI-badgeR+4,cy+cardPadI+badgeR-4,badgeR,0,Math.PI*2);ctx.fill();
+          ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 18px Arial Black, Arial, sans-serif';
+          ctx.fillText('-'+sp+'%',cx+mgCellW-cardPadI-badgeR+4,cy+cardPadI+badgeR+2);
+          ctx.textAlign='left';
+        }
+
+        // Text area (bottom half)
+        var textTop=cy+imgAreaH+8;
+
+        // Product name
+        ctx.fillStyle='#1e2d1a';ctx.font='700 20px Arial, sans-serif';
+        var nameLines=wrapTextCMS(ctx,(it&&it.produkt)||'Produkt',mgCellW-cardPadI*2).slice(0,2);
+        var ny=textTop+20;
+        nameLines.forEach(function(l){ctx.fillText(l,cx+cardPadI,ny);ny+=24;});
+
+        // Details
+        if(it&&it.details){
+          ctx.fillStyle='#6b8560';ctx.font='600 15px Arial, sans-serif';
+          ctx.fillText(truncText(ctx,it.details,mgCellW-cardPadI*2),cx+cardPadI,ny+2);
+          ny+=22;
+        }
+
+        // Price area at bottom of card
+        var priceY=cy+mgCellH-cardPadI;
         if(it&&it.preis!=null){
           var p=Number(it.preis);
           if(isFinite(p)){
-            ctx.fillStyle='#5b6d54';ctx.font='700 '+Math.max(12,Math.round(priceSize*0.34))+'px Arial, sans-serif';
-            ctx.fillText('VK',b.cx,ny+Math.round(priceSize*0.14));
             var pp=p.toFixed(2).split('.');
-            ctx.fillStyle='#2f3f2d';ctx.font='900 '+priceSize+'px Arial Black, Arial, sans-serif';
-            ctx.fillText(pp[0]+','+pp[1],b.cx,ny+Math.round(priceSize*0.72));
-            ctx.fillStyle='#5b6d54';ctx.font='700 '+Math.max(12,Math.round(priceSize*0.3))+'px Arial, sans-serif';
-            ctx.fillText('€',b.cx+Math.round(priceSize*0.95),ny+Math.round(priceSize*0.56));
-
+            // Green price tag area
+            ctx.fillStyle='#eaf3e6';mgRRect(cx+cardPadI-4,priceY-42,mgCellW-cardPadI*2+8,46,10);ctx.fill();
+            ctx.strokeStyle='#c5dbbe';ctx.lineWidth=1;mgRRect(cx+cardPadI-4,priceY-42,mgCellW-cardPadI*2+8,46,10);ctx.stroke();
+            // Main price
+            ctx.fillStyle='#2a5218';ctx.font='900 34px Arial Black, Arial, sans-serif';
+            ctx.fillText(pp[0]+','+pp[1],cx+cardPadI+4,priceY-6);
+            ctx.font='700 20px Arial, sans-serif';
+            var mw=ctx.measureText(pp[0]+','+pp[1]).width;
+            ctx.fillText('\u20AC',cx+cardPadI+4+mw+4,priceY-8);
+            // Statt-Preis right-aligned
             if(it.statt_preis!=null){
-              var uvp='UVP '+Number(it.statt_preis).toFixed(2).replace('.',',')+' €';
-              var uvpY=ny+Math.round(priceSize*1.02);
-              ctx.fillStyle='#5f6f59';ctx.font='700 '+Math.max(12,Math.round(priceSize*0.32))+'px Arial, sans-serif';
-              ctx.fillText(uvp,b.cx,uvpY);
-              var uw=ctx.measureText(uvp).width;
-              ctx.strokeStyle='#6f835f';ctx.lineWidth=2;
-              ctx.beginPath();ctx.moveTo(b.cx-uw/2-2,uvpY-8);ctx.lineTo(b.cx+uw/2+2,uvpY-8);ctx.stroke();
-            }
-
-            var sp=getSavingsPercent(it);
-            if(sp){
-              var badge='-'+sp+'%';
-              ctx.fillStyle='#6f835f';
-              ctx.beginPath();ctx.arc(b.cx+b.r*0.48,b.cy-b.r*0.42,Math.max(16,Math.round(b.r*0.17)),0,Math.PI*2);ctx.fill();
-              ctx.fillStyle='#fff';
-              ctx.font='900 '+Math.max(10,Math.round(b.r*0.14))+'px Arial Black, Arial, sans-serif';
-              ctx.fillText(badge,b.cx+b.r*0.48,b.cy-b.r*0.39);
+              var uvp=Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
+              ctx.textAlign='right';ctx.fillStyle='#8a9e80';ctx.font='600 17px Arial, sans-serif';
+              ctx.fillText('statt '+uvp,cx+mgCellW-cardPadI,priceY-18);
+              // Strikethrough
+              var uvpW=ctx.measureText('statt '+uvp).width;
+              ctx.strokeStyle='#8a9e80';ctx.lineWidth=1.5;
+              ctx.beginPath();ctx.moveTo(cx+mgCellW-cardPadI-uvpW,priceY-23);ctx.lineTo(cx+mgCellW-cardPadI,priceY-23);ctx.stroke();
+              ctx.textAlign='left';
             }
           }
         }
       }
 
-      for(var bi=0;bi<Math.min(bubbles.length,renderItems.length);bi++){
-        drawBubbleItem(renderItems[bi],renderImages[bi],bubbles[bi],bi);
-      }
+      // Footer
+      ctx.fillStyle='#8aad7e';ctx.fillRect(0,H-36,W,36);
+      ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
+      ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-12);
+      ctx.textAlign='left';
 
-      ctx.textAlign='left';ctx.fillStyle='#f5f8f0';
-      ctx.font='700 44px Arial, sans-serif';ctx.fillText('Design 1:',36,H-170);
-      ctx.font='700 52px Arial, sans-serif';ctx.fillText('Der Moderne',36,H-110);ctx.fillText('Magazin-Look',36,H-52);
-
-      c.toBlob(function(blob){callback(blob);},'image/png');
+      logoP.then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
       return;
     }
     // ── Papier-Hintergrund (warm beige) ──
