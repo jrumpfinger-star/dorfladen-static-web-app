@@ -78,9 +78,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         show_all = req.params.get("all", "").lower() in ("true", "1", "yes")
         status_filter = "" if show_all else "&$filter=(dl_status eq 101001 or dl_status eq null)"
         query = (
-            "?$select=dl_newsid,dl_titel,dl_kurztext,dl_inhalt,dl_datum,createdon,dl_status,dl_laufband"
+            "?$orderby=dl_datum desc"
             f"{status_filter}"
-            "&$orderby=dl_datum desc"
         )
         logical_names = ["dl_news"]
         fallback_entity_sets = ["dl_news", "dl_newses"]
