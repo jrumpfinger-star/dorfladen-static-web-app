@@ -278,6 +278,78 @@
     tickerEl.textContent=txt;
   }).catch(function(){});
 
+  /* === PREISLISTE POPUP === */
+  var plLoaded=false;
+  var plAllItems=[];
+  window.mobOpenPopup_preisliste_orig=window.mobOpenPopup;
+  // Hook into popup open to lazy-load preisliste
+  var origOpen=window.mobOpenPopup;
+  window.mobOpenPopup=function(id){
+    origOpen(id);
+    if(id==='preisliste'&&!plLoaded){
+      plLoaded=true;
+      loadMobPreisliste();
+    }
+  };
+  function loadMobPreisliste(){
+    var grid=document.getElementById('mob-pl-grid');
+    if(!grid) return;
+    fetch(API_BASE+'/preisliste').then(function(r){return r.json();}).then(function(data){
+      if(data.error){grid.innerHTML='<p style="color:#c00">Fehler: '+esc(data.error)+'</p>';return;}
+      var groups=data.groups||{};
+      var wgNames=Object.keys(groups).sort();
+      plAllItems=[];
+      var html='<p style="color:#6b7280;font-size:.8rem;margin-bottom:12px">'+data.total+' Artikel in '+data.warengruppen+' Warengruppen</p>';
+      wgNames.forEach(function(wg){
+        var items=groups[wg];
+        html+='<div class="mob-pl-group">';
+        html+='<div class="mob-pl-wg">'+esc(wg)+' <span style="color:#888;font-size:.75rem">('+items.length+')</span></div>';
+        items.forEach(function(item){
+          var cls=item.rp?'mob-pl-rp':'';
+          if(item.ang) cls+=' mob-pl-ang';
+          var priceHtml=fmtP(item.vk)+' €';
+          if(item.rp&&item.discount>0&&item.uvp){
+            priceHtml+=' <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.uvp)+'€</span>';
+            priceHtml+=' <span style="background:#c62828;color:#fff;padding:1px 5px;border-radius:6px;font-size:.65rem;font-weight:700">-'+item.discount+'%</span>';
+          }
+          if(item.ang&&item.ang_preis){
+            priceHtml=fmtP(item.ang_preis)+' € <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.vk)+'€</span>';
+          }
+          html+='<div class="mob-pl-row '+cls+'" data-name="'+esc(item.bezeichnung).toLowerCase()+'">';
+          html+='<span class="mob-pl-name">'+esc(item.bezeichnung)+'</span>';
+          html+='<span class="mob-pl-price">'+priceHtml+'</span>';
+          html+='</div>';
+          plAllItems.push({el:null,name:(item.bezeichnung||'').toLowerCase()});
+        });
+        html+='</div>';
+      });
+      grid.innerHTML=html;
+      // Wire up search
+      var searchInput=document.getElementById('mob-pl-search');
+      var rows=grid.querySelectorAll('.mob-pl-row');
+      if(searchInput){
+        searchInput.addEventListener('input',function(){
+          var q=this.value.toLowerCase().trim();
+          var found=0;
+          rows.forEach(function(row){
+            var match=!q||row.getAttribute('data-name').indexOf(q)!==-1;
+            row.style.display=match?'':'none';
+            if(match) found++;
+          });
+          // Hide empty group headers
+          grid.querySelectorAll('.mob-pl-group').forEach(function(g){
+            var visible=g.querySelectorAll('.mob-pl-row[style=""], .mob-pl-row:not([style])');
+            var hasVisible=false;
+            g.querySelectorAll('.mob-pl-row').forEach(function(r){if(r.style.display!=='none') hasVisible=true;});
+            g.style.display=hasVisible?'':'none';
+          });
+        });
+      }
+    }).catch(function(e){
+      grid.innerHTML='<p style="color:#c00">Preisliste konnte nicht geladen werden.</p>';
+    });
+  }
+
   /* === CMS CONFIG (meat promo overrides) === */
   fetch(API_BASE+'/cms-config').then(function(r){return r.json();}).then(function(cfg){
     if(!cfg) return;

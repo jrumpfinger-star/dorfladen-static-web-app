@@ -78,10 +78,23 @@
 
 <!-- MOBILE: Preisliste Button -->
 <div class="mob-only mob-preislink">
-  <a href="/sortiment#preisliste">&#128203; Preisliste ansehen &rarr;</a>
+  <a href="javascript:void(0)" onclick="mobOpenPopup('preisliste')">&#128203; Preisliste ansehen &rarr;</a>
 </div>
 
 <!-- ====== MOBILE POPUPS (bottom-sheets) ====== -->
+<!-- POPUP: Preisliste -->
+<div class="mob-only mob-popup-bg" id="mob-popup-preisliste" onclick="if(event.target===this)mobClosePopup('preisliste')">
+  <div class="mob-popup">
+    <div class="mob-popup-handle"></div>
+    <h2>&#128203; Preisliste</h2>
+    <div style="position:relative;margin-bottom:12px">
+      <input type="text" id="mob-pl-search" placeholder="Artikel suchen..." style="width:100%;padding:10px 14px 10px 36px;border:1px solid #ddd;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box">
+      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999">&#128270;</span>
+    </div>
+    <div id="mob-pl-grid" style="font-size:.85rem">Lade Preisliste...</div>
+  </div>
+</div>
+
 <!-- POPUP: Öffnungszeiten -->
 <div class="mob-only mob-popup-bg" id="mob-popup-hours" onclick="if(event.target===this)mobClosePopup('hours')">
   <div class="mob-popup">
