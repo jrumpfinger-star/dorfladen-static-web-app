@@ -41,13 +41,16 @@
         var extraHtml='';
 
         // Roter Punkt
-        if(item.rp){
+        var disc = item.discount || 0;
+        if(item.uvp && item.uvp > 0 && item.vk > 0 && !disc){
+          disc = Math.round((item.uvp - item.vk) / item.uvp * 100);
+        }
+        var is_rp = item.rp && disc >= 5 && disc <= 70;
+        if(is_rp){
           cls='so-row-rp';
           wgRp++;
-          if(item.discount>0 && item.discount<=70 && item.uvp){
-            extraHtml='<span class="so-discount">-'+item.discount+'%</span>';
-            extraHtml+='<span class="so-statt">UVP '+fmtPrice(item.uvp)+'&nbsp;&euro;</span>';
-          }
+          extraHtml='<span class="so-discount">-'+disc+'%</span>';
+          extraHtml+='<span class="so-statt">UVP '+fmtPrice(item.uvp)+'&nbsp;&euro;</span>';
         }
 
         // Sonderangebot

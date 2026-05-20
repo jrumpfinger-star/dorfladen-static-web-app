@@ -345,12 +345,17 @@
         html+='<button class="mob-pl-toggle" type="button"><span class="mob-pl-wg-name">'+esc(wg)+'</span><span class="mob-pl-count">'+items.length+'</span><span class="mob-pl-arrow">&#9660;</span></button>';
         html+='<div class="mob-pl-items" style="display:none">';
         items.forEach(function(item){
-          var cls=item.rp?'mob-pl-rp':'';
+          var disc = item.discount || 0;
+          if(item.uvp && item.uvp > 0 && item.vk > 0 && !disc){
+            disc = Math.round((item.uvp - item.vk) / item.uvp * 100);
+          }
+          var is_rp = item.rp && disc >= 5 && disc <= 70;
+          var cls=is_rp?'mob-pl-rp':'';
           if(item.angebot) cls+=' mob-pl-ang';
           var priceHtml=fmtP(item.vk)+' €';
-          if(item.rp&&item.discount>0&&item.discount<=70&&item.uvp){
+          if(is_rp&&item.uvp){
             priceHtml+=' <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.uvp)+'€</span>';
-            priceHtml+=' <span style="background:#c62828;color:#fff;padding:1px 5px;border-radius:6px;font-size:.65rem;font-weight:700">-'+item.discount+'%</span>';
+            priceHtml+=' <span style="background:#c62828;color:#fff;padding:1px 5px;border-radius:6px;font-size:.65rem;font-weight:700">-'+disc+'%</span>';
           }
           if(item.angebot&&item.angebot_preis){
             priceHtml=fmtP(item.angebot_preis)+' € <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.vk)+'€</span>';

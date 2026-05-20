@@ -505,6 +505,9 @@ def preisliste(req: func.HttpRequest) -> func.HttpResponse:
             
         # Gruppieren nach Warengruppen
         groups = {}
+        rp_count = 0
+        ang_count = 0
+        
         for item in all_items:
             artikelnummer = item.get("cr5d4_artikelnummeredeka", "")
             bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
@@ -520,17 +523,30 @@ def preisliste(req: func.HttpRequest) -> func.HttpResponse:
             if warengruppe not in groups:
                 groups[warengruppe] = []
             
+            # Roter Punkt: VK < UVP with meaningful discount (>= 5% and <= 70%)
+            is_rp = False
+            discount = 0
+            if uvp_preis and uvp_preis > 0 and preis > 0 and preis < uvp_preis:
+                discount = round((uvp_preis - preis) / uvp_preis * 100)
+                if discount >= 5 and discount <= 70:
+                    is_rp = True
+                    rp_count += 1
+            
             # Angebot-Status prüfen
             ang_info = angebote_map.get(artikelnummer)
             is_angebot = ang_info is not None
             ang_preis = ang_info["preis"] if ang_info else None
             ang_statt = ang_info["statt"] if ang_info else None
+            if is_angebot:
+                ang_count += 1
             
             groups[warengruppe].append({
                 "artikelnummer": artikelnummer,
                 "bezeichnung": bezeichnung,
                 "vk": preis,
                 "uvp": uvp_preis,
+                "discount": discount,
+                "rp": is_rp,
                 "angebot": is_angebot,
                 "angebot_statt": ang_statt,
                 "angebot_preis": ang_preis
@@ -542,6 +558,8 @@ def preisliste(req: func.HttpRequest) -> func.HttpResponse:
             "groups": groups,
             "total": total_items,
             "warengruppen": len(groups),
+            "rp_count": rp_count,
+            "ang_count": ang_count,
             "generated": datetime.now().isoformat()
         }
         return create_response(result, 200)
