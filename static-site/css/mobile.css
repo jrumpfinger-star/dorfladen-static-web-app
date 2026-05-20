@@ -96,9 +96,10 @@ main{padding:0!important;margin:0!important}
 @keyframes mob-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* === MOBILE HERO === */
-.mob-hero{display:block!important;text-align:center;padding:30px 20px 24px;background:linear-gradient(160deg,#ecfdf5 0%,#d1fae5 50%,#fef9c3 100%);border-bottom:1px solid #bbf7d0}
-.mob-hero h1{font-size:1.35rem;font-weight:800;color:#166534;margin-bottom:8px;letter-spacing:-.3px}
-.mob-hero p{font-size:.9rem;color:#4b5563;font-weight:500}
+.mob-hero{display:block!important;text-align:center;padding:40px 20px 32px;background:url('../images/hero.jpg') center/cover no-repeat;position:relative;border-bottom:1px solid #bbf7d0}
+.mob-hero::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.7);backdrop-filter:blur(2px)}
+.mob-hero h1{position:relative;font-size:1.35rem;font-weight:800;color:#166534;margin-bottom:8px;letter-spacing:-.3px;text-shadow:0 1px 3px rgba(255,255,255,.6)}
+.mob-hero p{position:relative;font-size:.9rem;color:#2d4a35;font-weight:600}
 
 /* === MOBILE QUICK ACTIONS === */
 .mob-only.mob-actions-full{display:block!important;padding:12px 16px 0}
