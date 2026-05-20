@@ -6,10 +6,136 @@
   <title>Dorfladen Oberornau – Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
   <meta name="description" content="Dorfladen Oberornau – regionale Nahversorgung, gemütlicher Treffpunkt, Postfiliale. Frühstück, Mittagessen, Brotzeit und mehr.">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/mobile.css">
 </head>
 <body>
 <!-- Skip to content (Accessibility) -->
 <a href="#main" class="skip">Zum Inhalt springen</a>
+
+<!-- ====== MOBILE-ONLY: Ticker + Header + Drawer ====== -->
+<div class="mob-only mob-ticker" id="mob-ticker">
+  <span class="mob-ticker-label">&#128240; Aktuelles</span>
+  <div class="mob-ticker-track"><span class="mob-ticker-content" id="mob-ticker-content">Neuigkeiten werden geladen&hellip;</span></div>
+</div>
+
+<header class="mob-only mob-header">
+  <a href="/" class="mob-header-logo">
+    <img src="" alt="Dorfladen" id="mob-logo-img" style="display:none">
+    <span class="logo-text" id="mob-logo-text">&#127793; Dorfladen Oberornau</span>
+  </a>
+  <button class="mob-header-menu" aria-label="Men&uuml;" onclick="document.getElementById('mob-nav').classList.add('open');document.getElementById('mob-nav-ov').classList.add('open')">&#9776;</button>
+</header>
+
+<div class="mob-only mob-nav-overlay" id="mob-nav-ov" onclick="document.getElementById('mob-nav').classList.remove('open');this.classList.remove('open')"></div>
+<nav class="mob-only mob-nav" id="mob-nav">
+  <div class="mob-nav-close"><button onclick="document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-nav-ov').classList.remove('open')">&times;</button></div>
+  <a href="/" class="active">&#127968; Start</a>
+  <a href="/aktuelles">&#128240; Aktuelles</a>
+  <a href="/essen-im-dorfladen">&#127869;&#65039; Essen</a>
+  <a href="/konzept">&#127807; Konzept</a>
+  <a href="/sortiment">&#128722; Sortiment &amp; Preisliste</a>
+  <a href="/oeffnungszeiten">&#128336; &Ouml;ffnungszeiten</a>
+  <a href="/bilder">&#128247; Bilder</a>
+  <a href="/roter-punkt" class="acc">&#128308; Roter Punkt</a>
+  <a href="/do-geh-i-hi">&#10084;&#65039; Do geh i hi</a>
+  <a href="/beirat">&#128101; Beirat</a>
+  <a href="/geschaeftsfuehrung">&#128188; Gesch&auml;ftsf&uuml;hrung</a>
+  <a href="/impressum" style="margin-top:12px;font-size:.88rem;color:#999">Impressum</a>
+  <a href="/datenschutzerklaerung" style="font-size:.88rem;color:#999">Datenschutz</a>
+</nav>
+
+<!-- MOBILE: Status bar (open/closed) -->
+<div class="mob-only mob-status" id="mob-status" onclick="mobOpenPopup('hours')">
+  <span class="mob-status-dot"></span>
+  <span id="mob-status-text">Wird gepr&uuml;ft&hellip;</span>
+  <span class="mob-status-hint">&#9656; &Ouml;ffnungszeiten</span>
+</div>
+
+<!-- MOBILE: Hero -->
+<div class="mob-only mob-hero">
+  <h1>Ihr Nahversorger in Oberornau</h1>
+  <p>Frisch &middot; Regional &middot; Mit Herz &#10084;&#65039;</p>
+</div>
+
+<!-- MOBILE: Quick Actions (2x2 grid) -->
+<div class="mob-only mob-actions">
+  <div class="mob-action" onclick="mobOpenPopup('lunch')">
+    <span class="mob-action-icon">&#127869;&#65039;</span>
+    <span class="mob-action-label">Mittagstisch</span>
+    <span class="mob-action-sub" id="mob-lunch-sub">Wochenplan</span>
+  </div>
+  <div class="mob-action highlight" onclick="mobOpenPopup('meat')">
+    <span class="mob-action-icon">&#129385;</span>
+    <span class="mob-action-label">Fleisch &amp; Wurst</span>
+    <span class="mob-action-sub">15% ab 1kg</span>
+  </div>
+  <div class="mob-action" onclick="mobOpenPopup('offers')">
+    <span class="mob-action-icon">&#11088;</span>
+    <span class="mob-action-label">Angebote</span>
+    <span class="mob-action-sub" id="mob-offers-sub">Sonderangebote</span>
+  </div>
+</div>
+
+<!-- ====== MOBILE POPUPS (bottom-sheets) ====== -->
+<!-- POPUP: Öffnungszeiten -->
+<div class="mob-only mob-popup-bg" id="mob-popup-hours" onclick="if(event.target===this)mobClosePopup('hours')">
+  <div class="mob-popup">
+    <div class="mob-popup-handle"></div>
+    <h2>&#128336; &Ouml;ffnungszeiten</h2>
+    <h3>&#128722; Dorfladen</h3>
+    <table id="mob-hrs-laden"></table>
+    <h3>&#128230; Postfiliale</h3>
+    <table id="mob-hrs-post"></table>
+    <p style="margin-top:12px;font-size:.8rem">Au&szlig;er an gesetzlichen Feiertagen</p>
+  </div>
+</div>
+
+<!-- POPUP: Post-Öffnungszeiten -->
+<div class="mob-only mob-popup-bg" id="mob-popup-post-hours" onclick="if(event.target===this)mobClosePopup('post-hours')">
+  <div class="mob-popup">
+    <div class="mob-popup-handle"></div>
+    <h2>&#128230; Postfiliale &Ouml;ffnungszeiten</h2>
+    <table id="mob-hrs-post2"></table>
+    <p style="margin-top:12px;font-size:.8rem">Au&szlig;er an gesetzlichen Feiertagen</p>
+  </div>
+</div>
+
+<!-- POPUP: Wochenplan Mittagessen -->
+<div class="mob-only mob-popup-bg" id="mob-popup-lunch" onclick="if(event.target===this)mobClosePopup('lunch')">
+  <div class="mob-popup">
+    <div class="mob-popup-handle"></div>
+    <h2>&#127869;&#65039; Mittagstisch</h2>
+    <p style="font-size:.85rem;color:#6b7280;margin-bottom:12px" id="mob-wp-kw"></p>
+    <div id="mob-wp-days"></div>
+  </div>
+</div>
+
+<!-- POPUP: Fleisch & Wurst -->
+<div class="mob-only mob-popup-bg" id="mob-popup-meat" onclick="if(event.target===this)mobClosePopup('meat')">
+  <div class="mob-popup">
+    <div class="mob-popup-handle"></div>
+    <h2>&#129385; Fleisch &amp; Wurst</h2>
+    <div style="background:#fff5f5;border-radius:14px;padding:16px;margin-bottom:16px;border:1.5px solid #ffcdd2">
+      <p style="font-size:1.15rem;font-weight:800;color:#c62828;margin-bottom:6px" id="mob-meat-pct">15&thinsp;% Rabatt</p>
+      <p style="font-size:.92rem;color:#1a1a1a;margin:0" id="mob-meat-sub">Auf alle Fleisch- und Wurstprodukte bei Vorbestellung ab 1&thinsp;kg. Einfach im Laden oder telefonisch vorbestellen!</p>
+    </div>
+    <a href="tel:+4980826229991" style="display:block;text-align:center;background:#2e7d4f;color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:1rem" id="mob-meat-cta">&#128222; Jetzt vorbestellen</a>
+  </div>
+</div>
+
+<!-- POPUP: Sonderangebote -->
+<div class="mob-only mob-popup-bg" id="mob-popup-offers" onclick="if(event.target===this)mobClosePopup('offers')">
+  <div class="mob-popup">
+    <div class="mob-popup-handle"></div>
+    <h2>&#11088; Sonderangebote</h2>
+    <p style="font-size:.82rem;color:#6b7280;margin-bottom:16px" id="mob-ang-kw"></p>
+    <div class="mob-ang-grid" id="mob-ang-grid"></div>
+    <div style="text-align:center;margin-top:20px">
+      <a href="/roter-punkt" style="display:inline-block;background:#fff5f5;color:#c62828;padding:12px 24px;border-radius:14px;font-weight:700;font-size:.92rem;text-decoration:none;border:1.5px solid #c62828">&#128308; Roter Punkt Angebote</a>
+    </div>
+  </div>
+</div>
+<!-- ====== END MOBILE-ONLY ====== -->
 
 <!-- TOPBAR: Contact + Legal links (hidden on mobile) -->
 <div class="tb" id="hp-topbar" role="complementary" aria-label="Kontaktleiste">
@@ -289,6 +415,76 @@
       </div>
     </div>
   </aside>
+
+  <!-- ====== MOBILE CONTENT (below quick actions) ====== -->
+  <div class="mob-only mob-cards">
+    <div class="mob-card">
+      <div class="mob-card-header">
+        <span class="mob-card-icon">&#128230;</span>
+        <span class="mob-card-title">Postfiliale</span>
+      </div>
+      <div class="mob-card-body">
+        Briefe, Pakete, Einschreiben &ndash; alles im Laden.<br>
+        <a href="javascript:void(0)" onclick="mobOpenPopup('post-hours')">&#128336; &Ouml;ffnungszeiten Post &#9656;</a>
+      </div>
+    </div>
+
+    <div class="mob-card">
+      <div class="mob-card-header">
+        <span class="mob-card-icon">&#9749;</span>
+        <span class="mob-card-title">Bistro</span>
+      </div>
+      <div class="mob-card-body">
+        Fr&uuml;hst&uuml;ck &middot; Mittagessen &middot; Kaffee &amp; Kuchen<br>
+        Im Sommer drau&szlig;en am Dorfplatz &#9728;&#65039;
+      </div>
+    </div>
+
+    <div class="mob-card">
+      <div class="mob-card-header">
+        <span class="mob-card-icon">&#128203;</span>
+        <span class="mob-card-title">Preisliste (Auszug)</span>
+      </div>
+      <table class="mob-price-tbl">
+        <thead>
+          <tr>
+            <th>Produkt</th>
+            <th class="col-uvp">UVP</th>
+            <th class="col-save">Ersparnis</th>
+            <th class="col-vk">VK-Preis</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-name">Bio-Vollmilch 1L</td><td class="col-uvp">&euro; 1,79</td><td class="col-save">&minus;17%</td><td class="col-vk">&euro; 1,49</td></tr>
+          <tr><td class="col-name">Bauernbrot 500g</td><td class="col-uvp">&ndash;</td><td class="col-save">&ndash;</td><td class="col-vk">&euro; 3,20</td></tr>
+          <tr><td class="col-name">Freilandeier 6 Stk</td><td class="col-uvp">&euro; 2,99</td><td class="col-save">&minus;13%</td><td class="col-vk">&euro; 2,60</td></tr>
+        </tbody>
+      </table>
+      <div style="text-align:center;margin-top:10px">
+        <a href="/sortiment#preisliste" style="color:#2e7d4f;font-weight:600;font-size:.88rem">Gesamte Preisliste &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE: Contact -->
+  <div class="mob-only mob-contact">
+    <span class="mob-contact-icon">&#128205;</span>
+    <div class="mob-contact-info">
+      <strong>Dorfladen Oberornau</strong><br>
+      Dorfplatz 1, 84419 Obertaufkirchen<br>
+      <a href="tel:+4980826229991">&#128222; 08082 / 622 99 91</a><br>
+      <a href="mailto:info@dorfladen-oberornau.de">&#9993;&#65039; info@dorfladen-oberornau.de</a>
+    </div>
+  </div>
+
+  <!-- MOBILE: WhatsApp CTA -->
+  <div class="mob-only mob-wa">
+    <a href="https://wa.me/message/U7VY4HZCPBR4N1" target="_blank" rel="noopener">
+      &#128172; Speiseplan per WhatsApp
+    </a>
+  </div>
+  <!-- ====== END MOBILE CONTENT ====== -->
+
 </main>
 
 <!-- FOOTER -->
@@ -363,5 +559,6 @@
 </div>
 
 <script src="/js/app.js"></script>
+<script src="/js/mobile.js"></script>
 </body>
 </html>

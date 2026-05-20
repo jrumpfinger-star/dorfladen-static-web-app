@@ -5,9 +5,31 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Beirat – Dorfladen Oberornau</title>
 <link rel="stylesheet" href="/css/content.css">
+<link rel="stylesheet" href="/css/mobile.css">
 <link rel="icon" href="/favicon.ico">
 </head>
 <body>
+<!-- MOBILE HEADER -->
+<div class="mob-only mob-ticker"><span class="mob-ticker-label">&#128240; Aktuelles</span><div class="mob-ticker-track"><span class="mob-ticker-content" id="mob-ticker-content"></span></div></div>
+<header class="mob-only mob-header">
+  <a href="/" class="mob-header-logo"><img src="" alt="Dorfladen" id="mob-logo-img" style="display:none"><span class="logo-text" id="mob-logo-text">&#127793; Dorfladen Oberornau</span></a>
+  <button class="mob-header-menu" aria-label="Men&#252;" onclick="document.getElementById('mob-nav').classList.add('open');document.getElementById('mob-nav-ov').classList.add('open')">&#9776;</button>
+</header>
+<div class="mob-only mob-nav-overlay" id="mob-nav-ov" onclick="this.classList.remove('open');document.getElementById('mob-nav').classList.remove('open')"></div>
+<nav class="mob-only mob-nav" id="mob-nav">
+  <div class="mob-nav-close"><button onclick="document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-nav-ov').classList.remove('open')">&times;</button></div>
+  <a href="/">&#127968; Start</a>
+  <a href="/aktuelles">&#128240; Aktuelles</a>
+  <a href="/essen-im-dorfladen">&#127869;&#65039; Essen</a>
+  <a href="/konzept">&#127807; Konzept</a>
+  <a href="/sortiment">&#128722; Sortiment</a>
+  <a href="/oeffnungszeiten">&#128336; &#214;ffnungszeiten</a>
+  <a href="/bilder">&#128247; Bilder</a>
+  <a href="/roter-punkt" class="acc">&#128308; Roter Punkt</a>
+  <a href="/do-geh-i-hi">&#10084;&#65039; Do geh i hi</a>
+  <a href="/beirat">&#128101; Beirat</a>
+  <a href="/geschaeftsfuehrung">&#128188; Gesch&#228;ftsf&#252;hrung</a>
+</nav>
 <a href="#main" class="skip">Zum Inhalt springen</a>
 <div class="tb" role="complementary" aria-label="Kontaktleiste">
   <div class="tb-in">
@@ -142,5 +164,6 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
 </script>
 
 <script src="/js/logo-loader.js"></script>
+<script src="/js/mobile.js"></script>
 </body>
 </html>
