@@ -4549,8 +4549,14 @@ document.head.appendChild(msalScript);
       case 'closeNewsModal':var nm=document.getElementById('cms-news-modal');if(nm)nm.remove();break;
       case 'toggleNewsStatus':toggleNewsStatus(id);break;
       case 'clearBild':
-        var imgRow=t.closest('.cms-ang-row-img');
-        if(imgRow){var hi=imgRow.querySelector('[data-f="bild_data"]');if(hi)hi.value='';var pv=imgRow.querySelector('.cms-bild-preview');if(pv){pv.src='';pv.style.display='none';}t.style.display='none';}
+        var row=t.closest('.cms-ang-row');
+        if(row){
+          var hi=row.querySelector('[data-f="bild_data"]');
+          if(hi)hi.value='';
+          var pv=row.querySelector('.cms-bild-preview');
+          if(pv){pv.src='';pv.style.display='none';}
+          t.style.display='none';
+        }
         break;
       case 'uploadBild':
         (function(){
