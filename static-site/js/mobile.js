@@ -155,7 +155,11 @@
     var sub=document.getElementById('mob-lunch-sub');
     var todayDishes=menu[todayIdx]||[];
     if(sub&&todayDishes.length>0){
-      sub.textContent='Heute: '+todayDishes.map(function(d){return d.name;}).join(' · ');
+      if(todayDishes.length===1){
+        sub.textContent='Heute: '+todayDishes[0].name;
+      }else{
+        sub.innerHTML='Heute:<br>'+todayDishes.map(function(d){return '• '+esc(d.name);}).join('<br>');
+      }
     }
   }
 
