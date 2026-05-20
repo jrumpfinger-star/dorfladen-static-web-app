@@ -1385,6 +1385,18 @@ document.head.appendChild(msalScript);
     angRowCounter=0;
     if(isEdit&&aktion.items&&aktion.items.length){
       aktion.items.forEach(function(it){addAngRow(it);});
+      // Automatically pre-load missing images from SharePoint for perfect editing UX
+      setTimeout(function(){
+        var rows=document.querySelectorAll('#cms-akt-items .cms-ang-row');
+        rows.forEach(function(row){
+          var bildInp=row.querySelector('[data-f="bild_data"]');
+          var nrInp=row.querySelector('[data-f="artikelnummer"]');
+          if(bildInp && !bildInp.value && nrInp && nrInp.value.trim()){
+            var rowId=row.id.replace('cms-ar-','');
+            cmsLoadBildSharePoint(parseInt(rowId));
+          }
+        });
+      }, 300);
     } else {
       addAngRow();addAngRow();addAngRow();addAngRow();addAngRow();addAngRow();
     }
@@ -1446,8 +1458,11 @@ document.head.appendChild(msalScript);
   }
   
   function cmsCompressImage(base64Str, maxWidth, maxHeight, callback) {
+    if (!base64Str) {
+      callback('');
+      return;
+    }
     var img = new Image();
-    img.src = base64Str;
     img.onload = function() {
       var width = img.width;
       var height = img.height;
@@ -1473,6 +1488,7 @@ document.head.appendChild(msalScript);
     img.onerror = function() {
       callback(base64Str); // Fallback to original
     };
+    img.src = base64Str;
   }
 
   window.cmsLoadBildSharePoint=function(rowNum){
@@ -1574,7 +1590,6 @@ document.head.appendChild(msalScript);
           dl_gueltig_von:von||null,
           dl_gueltig_bis:bis||null,
           dl_artikelnummer:it.artikelnummer||null,
-          dl_bild_base64:it.bild_data||null,
           dl_sortierung:idx+1,
           dl_status:101001
         };
