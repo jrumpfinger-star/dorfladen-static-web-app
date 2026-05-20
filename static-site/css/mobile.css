@@ -720,31 +720,31 @@ main{padding:0!important;margin:0!important}
   padding:12px;
   position:relative;
   display:grid;
-  grid-template-columns:60px 1fr auto; /* 60px instead of 75px */
+  grid-template-columns:48px 1fr auto; /* 48px instead of 60px */
   gap:0 12px;
-  min-height:80px;
+  min-height:70px; /* reduced from 80px */
   overflow:visible;
   align-items: center;
 }
 .mob-ang-badge{
   position:absolute;
-  top:-6px;
-  left:8px;
+  top:-5px;
+  left:4px;
   background: var(--m-red);
   color:#fff;
-  font-size:.62rem;
+  font-size:.58rem; /* slightly smaller badge */
   font-weight:800;
-  padding:3px 6px;
+  padding:2px 5px; /* tighter padding */
   border-radius:4px;
-  letter-spacing: .5px;
+  letter-spacing: .3px;
   z-index:3;
   text-transform: uppercase;
 }
 .mob-ang-img{
-  width:60px; /* 60px instead of 75px */
-  height:60px; /* 60px instead of 75px */
+  width:48px; /* 48px instead of 60px */
+  height:48px; /* 48px instead of 60px */
   overflow:hidden;
-  border-radius:10px;
+  border-radius:8px;
   background:#faf9f6;
   display:flex;
   align-items:center;
