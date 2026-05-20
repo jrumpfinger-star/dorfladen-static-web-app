@@ -90,7 +90,7 @@
 <div class="mob-only mob-popup-bg" id="mob-popup-preisliste" onclick="if(event.target===this)mobClosePopup('preisliste')">
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
-    <h2>&#128203; Preisliste</h2>
+    <div class="mob-popup-top"><h2>&#128203; Preisliste</h2><button class="mob-popup-x" onclick="mobClosePopup('preisliste')">&times;</button></div>
     <div style="position:relative;margin-bottom:10px">
       <input type="text" id="mob-pl-search" placeholder="Artikel suchen..." style="width:100%;padding:10px 14px 10px 36px;border:1px solid #ddd;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box">
       <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999">&#128270;</span>
@@ -108,7 +108,7 @@
 <div class="mob-only mob-popup-bg" id="mob-popup-hours" onclick="if(event.target===this)mobClosePopup('hours')">
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
-    <h2>&#128336; &Ouml;ffnungszeiten</h2>
+    <div class="mob-popup-top"><h2>&#128336; &Ouml;ffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('hours')">&times;</button></div>
     <h3>&#128722; Dorfladen</h3>
     <table id="mob-hrs-laden"></table>
     <h3>&#128230; Postfiliale</h3>
@@ -121,7 +121,7 @@
 <div class="mob-only mob-popup-bg" id="mob-popup-post-hours" onclick="if(event.target===this)mobClosePopup('post-hours')">
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
-    <h2>&#128230; Postfiliale &Ouml;ffnungszeiten</h2>
+    <div class="mob-popup-top"><h2>&#128230; Postfiliale &Ouml;ffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('post-hours')">&times;</button></div>
     <table id="mob-hrs-post2"></table>
     <p style="margin-top:12px;font-size:.8rem">Au&szlig;er an gesetzlichen Feiertagen</p>
   </div>
@@ -131,7 +131,7 @@
 <div class="mob-only mob-popup-bg" id="mob-popup-lunch" onclick="if(event.target===this)mobClosePopup('lunch')">
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
-    <h2>&#127869;&#65039; Mittagstisch</h2>
+    <div class="mob-popup-top"><h2>&#127869;&#65039; Mittagstisch</h2><button class="mob-popup-x" onclick="mobClosePopup('lunch')">&times;</button></div>
     <p style="font-size:.85rem;color:#6b7280;margin-bottom:12px" id="mob-wp-kw"></p>
     <div id="mob-wp-days"></div>
   </div>
@@ -141,7 +141,7 @@
 <div class="mob-only mob-popup-bg" id="mob-popup-meat" onclick="if(event.target===this)mobClosePopup('meat')">
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
-    <h2>&#129385; Fleisch &amp; Wurst</h2>
+    <div class="mob-popup-top"><h2>&#129385; Fleisch &amp; Wurst</h2><button class="mob-popup-x" onclick="mobClosePopup('meat')">&times;</button></div>
     <div style="background:#fff5f5;border-radius:14px;padding:16px;margin-bottom:16px;border:1.5px solid #ffcdd2">
       <p style="font-size:1.15rem;font-weight:800;color:#c62828;margin-bottom:6px" id="mob-meat-pct">15&thinsp;% Rabatt</p>
       <p style="font-size:.92rem;color:#1a1a1a;margin:0" id="mob-meat-sub">Auf alle Fleisch- und Wurstprodukte bei Vorbestellung ab 1&thinsp;kg. Einfach im Laden oder telefonisch vorbestellen!</p>
@@ -154,7 +154,7 @@
 <div class="mob-only mob-popup-bg" id="mob-popup-offers" onclick="if(event.target===this)mobClosePopup('offers')">
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
-    <h2>&#11088; Sonderangebote</h2>
+    <div class="mob-popup-top"><h2>&#11088; Sonderangebote</h2><button class="mob-popup-x" onclick="mobClosePopup('offers')">&times;</button></div>
     <p style="font-size:.82rem;color:#6b7280;margin-bottom:16px" id="mob-ang-kw"></p>
     <div class="mob-ang-grid" id="mob-ang-grid"></div>
     <div style="text-align:center;margin-top:20px">
