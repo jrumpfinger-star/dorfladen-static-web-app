@@ -12,14 +12,14 @@
     var wgNames=Object.keys(groups).sort();
     var html='';
 
-    // Banner + Info compact
-    html+='<div style="background:#fff5f5;border-left:4px solid #c62828;padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:10px;font-size:.88rem;line-height:1.5;color:#444">';
-    html+='<span style="font-size:1rem">&#x1F534;</span> ';
-    html+='<strong style="color:#c62828">'+data.total+' Artikel</strong> dauerhaft g&uuml;nstiger als UVP';
+    // Banner + Info compact (Modern Country & Sage red theme)
+    html+='<div style="background:#fef2f2;border-left:4px solid #b91c1c;padding:12px 16px;border-radius:12px;margin-bottom:16px;font-size:.9rem;line-height:1.5;color:#1f2521;font-weight:600;display:flex;align-items:center;gap:10px">';
+    html+='<svg width="14" height="14" viewBox="0 0 24 24" fill="#b91c1c" stroke="none"><circle cx="12" cy="12" r="10"/></svg>';
+    html+='<span><strong style="color:#b91c1c">'+data.total+' Artikel</strong> dauerhaft g&uuml;nstiger als UVP</span>';
     html+='</div>';
 
     // Search
-    html+='<div class="so-search"><span class="so-search-icon">&#128269;</span>';
+    html+='<div class="so-search" style="margin-bottom:16px"><span class="so-search-icon">&#128269;</span>';
     html+='<input type="text" id="rpSearch" placeholder="Artikel suchen&hellip;" autocomplete="off"></div>';
     html+='<div id="rpNoResult" style="display:none;text-align:center;padding:20px;color:#999;font-size:.88rem">Kein Artikel gefunden.</div>';
 
@@ -51,7 +51,7 @@
 
       html+='<div class="rp-group">';
       html+='<button class="rp-toggle" aria-expanded="false">';
-      html+='<span class="rp-dot">&#x1F534;</span>';
+      html+='<svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="none" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/></svg>';
       html+='<span class="rp-wg-name">'+esc(wg)+'</span>';
       html+='<span class="rp-count" data-total="'+items.length+'">'+items.length+' Artikel</span>';
       html+='<span class="rp-avg">&Oslash; -'+avgDisc+'%</span>';

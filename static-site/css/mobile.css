@@ -277,22 +277,119 @@ body{
 .bc{font-size:.82rem!important;padding:6px 12px!important;margin:0!important}
 
 /* === ROTER PUNKT table fix === */
-.rp-wrap{padding:0 8px!important}
-.rp-table{table-layout:fixed!important;font-size:.9rem!important;width:100%!important}
-.rp-table th{font-size:.78rem!important;padding:8px 6px!important}
-.rp-table td{padding:8px 6px!important}
-.rp-th-name,.rp-name{width:38%!important;white-space:normal!important;word-break:break-word!important;overflow:visible!important}
-.rp-th-vk{width:20%!important;text-align:right!important}
+.rp-wrap{padding:0 12px!important}
+.rp-group{
+  background:#fff;
+  border-radius:14px;
+  border:1px solid rgba(0,0,0,0.03);
+  margin-bottom:12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+  overflow:hidden;
+}
+.rp-toggle{
+  width:100%;
+  display:flex!important;
+  align-items:center;
+  gap:10px;
+  padding:14px 16px!important;
+  background:#fff!important;
+  border:none!important;
+  cursor:pointer;
+  font-size:.92rem!important;
+  font-weight:750!important;
+  color: var(--m-text);
+  text-align:left;
+  transition: background 0.15s ease;
+}
+.rp-toggle:active{
+  background: var(--m-primary-light)!important;
+}
+.rp-wg-name{
+  flex:1;
+  font-weight:800;
+  color: var(--m-text);
+}
+.rp-count{
+  background: var(--m-primary-light)!important;
+  color: var(--m-primary)!important;
+  padding:3px 8px;
+  border-radius:6px;
+  font-size:.72rem!important;
+  font-weight:750;
+}
+.rp-avg{
+  background: var(--m-red-light)!important;
+  color: var(--m-red)!important;
+  padding:3px 8px;
+  border-radius:6px;
+  font-size:.72rem!important;
+  font-weight:750;
+  margin-left:4px;
+}
+.rp-arrow{
+  color: var(--m-muted);
+  font-size:.7rem;
+  flex-shrink:0;
+  margin-left: 4px;
+}
+.rp-panel{
+  padding:0 14px 12px;
+}
+.rp-table{
+  table-layout:fixed!important;
+  font-size:.85rem!important;
+  width:100%!important;
+  border-collapse:collapse;
+}
+.rp-table th{
+  font-size:.72rem!important;
+  font-weight:800!important;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  color: var(--m-muted)!important;
+  padding:10px 4px!important;
+  background:transparent!important; /* Removed teal background! */
+  border-bottom:2px solid #e5e7eb!important;
+}
+.rp-table td{
+  padding:10px 4px!important;
+  border-bottom:1px solid rgba(0,0,0,0.03)!important;
+  vertical-align:middle!important;
+}
+.rp-table tr:last-child td{
+  border-bottom:none!important;
+}
+.rp-th-name,.rp-name{
+  width:42%!important;
+  white-space:normal!important;
+  word-break:break-word!important;
+  overflow:visible!important;
+  font-weight:600;
+  color: var(--m-text);
+}
+.rp-th-vk{width:22%!important;text-align:right!important}
 .rp-th-uvp{width:16%!important;text-align:right!important}
-.rp-th-disc{width:26%!important;text-align:right!important}
-.rp-vk{text-align:right!important;font-size:.9rem!important}
-.rp-uvp{text-align:right!important;font-size:.85rem!important}
-.rp-disc{text-align:right!important;font-size:.85rem!important}
-.rp-badge{font-size:.78rem!important}
-.rp-saving{font-size:.78rem!important;display:block!important;margin-left:0!important;margin-top:2px!important}
-.rp-toggle{font-size:.95rem!important;padding:12px 14px!important}
-.rp-count{font-size:.78rem!important}
-.rp-avg{font-size:.85rem!important}
+.rp-th-disc{width:20%!important;text-align:right!important}
+.rp-vk{text-align:right!important;font-size:.88rem!important;font-weight:750;color: var(--m-primary)!important}
+.rp-uvp{text-align:right!important;font-size:.82rem!important;color: var(--m-muted)!important;text-decoration:line-through!important}
+.rp-disc{text-align:right!important;font-size:.82rem!important}
+.rp-badge{
+  background: var(--m-red)!important;
+  color:#fff!important;
+  padding:2px 6px!important;
+  border-radius:4px!important;
+  font-size:.72rem!important;
+  font-weight:800!important;
+  display:inline-block!important;
+}
+.rp-saving{
+  font-size:.72rem!important;
+  color: var(--m-muted)!important;
+  font-weight:600;
+  display:block!important;
+  margin-left:0!important;
+  margin-top:2px!important;
+}
 
 /* === HIDE SIDEBAR on subpages === */
 .sb{display:none!important}
