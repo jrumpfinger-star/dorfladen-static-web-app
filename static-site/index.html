@@ -87,9 +87,14 @@
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
     <h2>&#128203; Preisliste</h2>
-    <div style="position:relative;margin-bottom:12px">
+    <div style="position:relative;margin-bottom:10px">
       <input type="text" id="mob-pl-search" placeholder="Artikel suchen..." style="width:100%;padding:10px 14px 10px 36px;border:1px solid #ddd;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box">
       <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999">&#128270;</span>
+    </div>
+    <div class="mob-pl-filters" id="mob-pl-filters">
+      <button class="mob-pl-filter active" data-filter="all">Alle</button>
+      <button class="mob-pl-filter" data-filter="rp">&#128308; Roter Punkt</button>
+      <button class="mob-pl-filter" data-filter="ang">&#11088; Angebote</button>
     </div>
     <div id="mob-pl-grid" style="font-size:.85rem">Lade Preisliste...</div>
   </div>
@@ -458,30 +463,6 @@
       </div>
     </div>
 
-    <div class="mob-card">
-      <div class="mob-card-header">
-        <span class="mob-card-icon">&#128203;</span>
-        <span class="mob-card-title">Preisliste (Auszug)</span>
-      </div>
-      <table class="mob-price-tbl">
-        <thead>
-          <tr>
-            <th>Produkt</th>
-            <th class="col-uvp">UVP</th>
-            <th class="col-save">Ersparnis</th>
-            <th class="col-vk">VK-Preis</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td class="col-name">Bio-Vollmilch 1L</td><td class="col-uvp">&euro; 1,79</td><td class="col-save">&minus;17%</td><td class="col-vk">&euro; 1,49</td></tr>
-          <tr><td class="col-name">Bauernbrot 500g</td><td class="col-uvp">&ndash;</td><td class="col-save">&ndash;</td><td class="col-vk">&euro; 3,20</td></tr>
-          <tr><td class="col-name">Freilandeier 6 Stk</td><td class="col-uvp">&euro; 2,99</td><td class="col-save">&minus;13%</td><td class="col-vk">&euro; 2,60</td></tr>
-        </tbody>
-      </table>
-      <div style="text-align:center;margin-top:10px">
-        <a href="/sortiment#preisliste" style="color:#2e7d4f;font-weight:600;font-size:.88rem">Gesamte Preisliste &rarr;</a>
-      </div>
-    </div>
   </div>
 
   <!-- MOBILE: Contact -->

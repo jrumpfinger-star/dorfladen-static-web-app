@@ -335,32 +335,42 @@
           this.classList.toggle('open',!open);
         });
       });
-      // Wire up search
+      // Wire up search + filter
       var searchInput=document.getElementById('mob-pl-search');
       var rows=grid.querySelectorAll('.mob-pl-row');
-      if(searchInput){
-        searchInput.addEventListener('input',function(){
-          var q=this.value.toLowerCase().trim();
-          rows.forEach(function(row){
-            var match=!q||row.getAttribute('data-name').indexOf(q)!==-1;
-            row.style.display=match?'':'none';
-          });
-          grid.querySelectorAll('.mob-pl-group').forEach(function(g){
-            var hasVisible=false;
-            g.querySelectorAll('.mob-pl-row').forEach(function(r){if(r.style.display!=='none') hasVisible=true;});
-            g.style.display=hasVisible?'':'none';
-            var itemsDiv=g.querySelector('.mob-pl-items');
-            var arrow=g.querySelector('.mob-pl-arrow');
-            if(q&&hasVisible){
-              if(itemsDiv) itemsDiv.style.display='';
-              if(arrow) arrow.textContent='\u25B2';
-            }else if(!q){
-              if(itemsDiv) itemsDiv.style.display='none';
-              if(arrow) arrow.textContent='\u25BC';
-            }
-          });
+      var currentFilter='all';
+      function applyPlFilters(){
+        var q=searchInput?searchInput.value.toLowerCase().trim():'';
+        rows.forEach(function(row){
+          var nameMatch=!q||row.getAttribute('data-name').indexOf(q)!==-1;
+          var filterMatch=currentFilter==='all'||(currentFilter==='rp'&&row.classList.contains('mob-pl-rp'))||(currentFilter==='ang'&&row.classList.contains('mob-pl-ang'));
+          row.style.display=(nameMatch&&filterMatch)?'':'none';
+        });
+        grid.querySelectorAll('.mob-pl-group').forEach(function(g){
+          var hasVisible=false;
+          g.querySelectorAll('.mob-pl-row').forEach(function(r){if(r.style.display!=='none') hasVisible=true;});
+          g.style.display=hasVisible?'':'none';
+          var itemsDiv=g.querySelector('.mob-pl-items');
+          var arrow=g.querySelector('.mob-pl-arrow');
+          if((q||currentFilter!=='all')&&hasVisible){
+            if(itemsDiv) itemsDiv.style.display='';
+            if(arrow) arrow.textContent='\u25B2';
+          }else if(!q&&currentFilter==='all'){
+            if(itemsDiv) itemsDiv.style.display='none';
+            if(arrow) arrow.textContent='\u25BC';
+          }
         });
       }
+      if(searchInput) searchInput.addEventListener('input',applyPlFilters);
+      // Filter buttons
+      document.querySelectorAll('.mob-pl-filter').forEach(function(btn){
+        btn.addEventListener('click',function(){
+          document.querySelectorAll('.mob-pl-filter').forEach(function(b){b.classList.remove('active');});
+          this.classList.add('active');
+          currentFilter=this.getAttribute('data-filter');
+          applyPlFilters();
+        });
+      });
     }).catch(function(e){
       grid.innerHTML='<p style="color:#c00">Preisliste konnte nicht geladen werden.</p>';
     });
