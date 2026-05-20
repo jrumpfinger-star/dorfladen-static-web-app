@@ -206,6 +206,77 @@ img{max-width:100%;display:block}
 .mn{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:24px;padding:24px 20px}
 @media(max-width:1024px){.mn{grid-template-columns:1fr}}
 
+/* === DESKTOP MODALS (Modern Country & Sage Style) === */
+.dt-modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 34, 30, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: dtFadeIn 0.2s ease-out;
+}
+.dt-modal-bg.open {
+  display: flex !important;
+}
+.dt-modal {
+  background: #ffffff;
+  border-radius: 24px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 32px;
+  position: relative;
+  box-shadow: 0 20px 48px rgba(27,70,58,0.08);
+  border: 1px solid rgba(0,0,0,0.02);
+}
+.dt-modal h2 {
+  font-size: 1.5rem;
+  font-weight: 850;
+  color: var(--c-pri);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dt-modal p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--c-sec);
+  margin-bottom: 12px;
+}
+.dt-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--c-pri-l);
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--c-pri);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+.dt-modal-close:hover {
+  background: rgba(30,70,58,0.12);
+  transform: scale(1.05);
+}
+@keyframes dtFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* === CARDS (generic) === */
 .cd{background:var(--c-surf);border:1px solid var(--c-brd);border-radius:var(--r);box-shadow:var(--sh-s);overflow:hidden;transition:box-shadow .4s var(--ease)}
 .cd:hover{box-shadow:var(--sh-m)}

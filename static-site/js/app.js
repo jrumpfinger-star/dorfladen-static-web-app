@@ -302,6 +302,24 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
     });
 })();
 
+/* === DESKTOP MODAL CONTROL === */
+window.openDtModal = function(id) {
+  if (window.innerWidth <= 768) {
+    // If mobile viewport, fallback to open the corresponding mobile popup instead!
+    var mobPopupMap = {'concept': 'concept', 'post': 'post-hours', 'catering': 'lunch', 'sortiment': 'preisliste'};
+    var mobId = mobPopupMap[id] || id;
+    if (window.mobOpenPopup) window.mobOpenPopup(mobId);
+    return;
+  }
+  var el = document.getElementById('dt-modal-' + id);
+  if(el) el.classList.add('open');
+};
+window.closeDtModal = function(id) {
+  var el = document.getElementById('dt-modal-' + id);
+  if(el) el.classList.remove('open');
+};
+
+
 /* === Öffnungszeiten loader === */
 (function(){
   fetch(API_BASE+'/hours')

@@ -325,24 +325,24 @@
     <!-- Info Cards -->
     <div class="info-grid" id="hp-info-cards">
       <div class="info-card">
-        <h3>&#x1F33F; Unser Konzept</h3>
+        <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:#2e7d4f;"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> Unser Konzept</h3>
         <p>Regionale Nahversorgung &amp; gem&uuml;tlicher Treffpunkt f&uuml;r Jung und Alt. Fr&uuml;hst&uuml;ck, Brotzeit, Mittagessen und hausgemachte Torten.</p>
-        <a href="/konzept" class="more">Mehr erfahren &rarr;</a>
+        <a href="javascript:void(0)" onclick="openDtModal('concept')" class="more">Mehr erfahren &rarr;</a>
       </div>
       <div class="info-card">
-        <h3>&#x1F4E6; Postfiliale</h3>
+        <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bd8b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:#bd8b5c;"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Postfiliale</h3>
         <p>Alle g&auml;ngigen Postdienstleistungen direkt im Dorfladen. Briefe, Pakete, Einschreiben &ndash; ohne weite Wege.</p>
-        <a href="/oeffnungszeiten" class="more">&Ouml;ffnungszeiten &rarr;</a>
+        <a href="javascript:void(0)" onclick="openDtModal('post')" class="more">&Ouml;ffnungszeiten &rarr;</a>
       </div>
       <div class="info-card">
-        <h3>&#x1F370; Catering &amp; Lieferung</h3>
+        <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8242a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:#a8242a;"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"/></svg> Catering &amp; Lieferung</h3>
         <p>F&uuml;r Vereine und Familienfeiern liefern wir kalte und warme Speisen. Mittagessen auch per Nachbarschaftshilfe lieferbar.</p>
-        <a href="/essen-im-dorfladen" class="more">Details &rarr;</a>
+        <a href="javascript:void(0)" onclick="openDtModal('catering')" class="more">Details &rarr;</a>
       </div>
       <div class="info-card">
-        <h3>&#x267B;&#xFE0F; Nachhaltigkeit</h3>
+        <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e463a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:#1e463a;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Nachhaltigkeit</h3>
         <p>Regional &amp; saisonal einkaufen. Gerne eigene Beh&auml;lter mitbringen! Bio-Gem&uuml;se, Orangen direkt vom Erzeuger, Fleisch vom regionalen Metzger.</p>
-        <a href="/sortiment" class="more">Sortiment &rarr;</a>
+        <a href="javascript:void(0)" onclick="openDtModal('sustainability')" class="more">Sortiment &rarr;</a>
       </div>
     </div>
 
@@ -558,5 +558,70 @@
 <script src="/js/app.js"></script>
 <script src="/js/mobile.js"></script>
 <script src="/js/roterpunkt-live.js"></script>
+
+<!-- ====== DESKTOP MODALS ====== -->
+<!-- MODAL: Konzept -->
+<div class="dt-modal-bg" id="dt-modal-concept" onclick="if(event.target===this)closeDtModal('concept')">
+  <div class="dt-modal">
+    <button class="dt-modal-close" onclick="closeDtModal('concept')">&times;</button>
+    <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> Unser Konzept</h2>
+    <p>Der Dorfladen Oberornau ist mehr als nur ein Lebensmittelgeschäft – er ist die soziale und vitale Mitte unserer Dorfgemeinschaft. Unser genossenschaftlich getragenes Konzept sichert die Nahversorgung direkt vor Ort und bietet zugleich einen gemütlichen Treffpunkt.</p>
+    <p><strong>Regionale Partnerschaft:</strong> Wir arbeiten eng mit Erzeugern aus der Region zusammen, um frische, gesunde und nachvollziehbar produzierte Lebensmittel anzubieten. Ob Backwaren, Metzgerei-Spezialitäten oder erntefrisches Biogemüse – die Wege zu uns sind kurz.</p>
+    <p><strong>Gemeinschaft leben:</strong> In unserem Bistro-Bereich treffen sich Jung und Alt zum gemütlichen Plausch bei einer Tasse Kaffee, einem leckeren Frühstück oder unserem täglich frisch zubereiteten Mittagstisch.</p>
+  </div>
+</div>
+
+<!-- MODAL: Postfiliale -->
+<div class="dt-modal-bg" id="dt-modal-post" onclick="if(event.target===this)closeDtModal('post')">
+  <div class="dt-modal">
+    <button class="dt-modal-close" onclick="closeDtModal('post')">&times;</button>
+    <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Postfiliale im Dorfladen</h2>
+    <p>Erledigen Sie Ihre Postgeschäfte direkt bei uns im Laden – bequem, schnell und ohne weite Wege nach Haag oder Buchbach.</p>
+    <div style="background:var(--c-pri-l); padding:16px; border-radius:12px; margin:16px 0; border:1px solid rgba(30,70,58,0.06);">
+      <h3 style="margin:0 0 10px; font-size:14px; font-weight:800; color:var(--c-pri); text-transform:uppercase; letter-spacing:0.5px;">Öffnungszeiten Post</h3>
+      <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Mo, Mi, Do, Fr</td><td style="padding:6px 0; text-align:right;">09:00–14:00 &amp; 16:30–19:00 Uhr</td></tr>
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Dienstag</td><td style="padding:6px 0; text-align:right;">09:00–14:00 Uhr</td></tr>
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Samstag</td><td style="padding:6px 0; text-align:right;">09:00–13:00 Uhr</td></tr>
+        <tr><td style="padding:6px 0; font-weight:700; color:var(--c-acc);">Sonntag</td><td style="padding:6px 0; text-align:right; color:var(--c-acc); font-weight:700;">Geschlossen</td></tr>
+      </table>
+    </div>
+    <p><strong>Unser Service für Sie:</strong> Brief- und Paketmarkenverkauf, Paketannahme &amp; -ausgabe (DHL), Einschreiben, Retouren und vieles mehr.</p>
+  </div>
+</div>
+
+<!-- MODAL: Catering & Lieferung -->
+<div class="dt-modal-bg" id="dt-modal-catering" onclick="if(event.target===this)closeDtModal('catering')">
+  <div class="dt-modal">
+    <button class="dt-modal-close" onclick="closeDtModal('catering')">&times;</button>
+    <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"/></svg> Catering &amp; Lieferservice</h2>
+    <p>Wir machen Ihre Feier oder Veranstaltung kulinarisch unvergesslich! Unser eingespieltes Küchenteam bereitet kalte und warme Platten mit Liebe zu.</p>
+    <p><strong>Unser Angebot für Ihre Veranstaltung:</strong></p>
+    <ul style="padding-left:20px; font-size:0.92rem; color:var(--c-sec); line-height:1.6; margin-bottom:14px;">
+      <li>Frische, reich belegte Wurst- und Käseplatten</li>
+      <li>Traditionelle bayerische Schmankerl (z.B. Schweinsbraten, Leberkäs)</li>
+      <li>Feine Salate und Beilagen nach Wahl</li>
+      <li>Hausgemachte Kuchen- und Tortenplatten für festliche Kaffeerunden</li>
+    </ul>
+    <p><strong>Nachbarschaftshilfe &amp; Lieferung:</strong> Für Senioren und hilfsbedürftige Bürger liefern wir das frisch zubereitete Mittagsmenü auf Wunsch auch im Rahmen unserer organisierten Nachbarschaftshilfe direkt ins Haus.</p>
+    <p><strong>Vorbestellung und Beratung:</strong> Gerne beraten wir Sie persönlich oder telefonisch unter <a href="tel:+4980826229991" style="font-weight:700; color:var(--c-pri);">08082-6229991</a>.</p>
+  </div>
+</div>
+
+<!-- MODAL: Nachhaltigkeit -->
+<div class="dt-modal-bg" id="dt-modal-sustainability" onclick="if(event.target===this)closeDtModal('sustainability')">
+  <div class="dt-modal">
+    <button class="dt-modal-close" onclick="closeDtModal('sustainability')">&times;</button>
+    <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Nachhaltigkeit &amp; Region</h2>
+    <p>Nachhaltiges Handeln und regionaler Konsum sind fest in den Genossenschafts-Genen unseres Dorfladens verankert. Wir möchten Müll vermeiden und kurze Transportwege garantieren.</p>
+    <p><strong>Unverpackt &amp; Plastikfrei:</strong> Um unnötigen Verpackungsmüll zu vermeiden, dürfen Sie sehr gerne **eigene, saubere Behältnisse** für Wurst, Käse, Brotzeit oder Ihr warmes Mittagessen mitbringen. Wir befüllen diese unter Einhaltung aller Hygienevorschriften an unserer Theke.</p>
+    <p><strong>Unsere regionalen Helden:</strong></p>
+    <ul style="padding-left:20px; font-size:0.92rem; color:var(--c-sec); line-height:1.6;">
+      <li>Frisches Biogemüse von der renommierten <strong>Chiemgauer Naturkost (Ökoring)</strong> und <strong>Steiner</strong> aus Kirchweidach</li>
+      <li>Spanische Zitrusfrüchte direkt importiert von Familie <strong>Bernauer</strong> aus Reitmehring</li>
+      <li>Beste Fleisch- und Wurstwaren von der Handwerks-<strong>Metzgerei Mayr</strong> aus Haag i. OB</li>
+    </ul>
+  </div>
+</div>
 </body>
 </html>
