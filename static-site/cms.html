@@ -2460,8 +2460,8 @@ document.head.appendChild(msalScript);
         if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
         _hpItems = Array.isArray(res.data) ? res.data : [];
         _hpLoaded = true;
-        // Filter out design_config and logo object (belongs in Design tab / Logo section)
-        var textItems = _hpItems.filter(function(item){ return typeof item.wert !== 'object' && item.name !== 'design_config' && item.name !== 'logo'; });
+        // Filter out design_config, logo fields and image data (belongs in Design tab / Logo section)
+        var textItems = _hpItems.filter(function(item){ return typeof item.wert !== 'object' && item.name !== 'design_config' && item.name !== 'logo' && item.name !== 'Site Logo' && item.key !== 'site_logo' && !isImageValue(String(item.wert||'')); });
         // Deduplicate by name (keep first occurrence)
         var seen={};
         textItems = textItems.filter(function(item){ if(seen[item.name]) return false; seen[item.name]=true; return true; });
