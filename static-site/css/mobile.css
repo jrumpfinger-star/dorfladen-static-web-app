@@ -109,8 +109,14 @@ main{padding:0!important;margin:0!important}
 .mob-action-sub{display:block;font-size:.75rem;color:#6b7280;margin-top:2px}
 
 /* === MOBILE PREISLISTE POPUP === */
-.mob-pl-group{margin-bottom:8px}
-.mob-pl-wg{font-weight:700;font-size:.9rem;color:#2e7d4f;padding:8px 0 4px;border-bottom:2px solid #e5e7eb}
+.mob-pl-group{margin-bottom:4px;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
+.mob-pl-toggle{width:100%;display:flex;align-items:center;gap:8px;padding:12px 14px;background:#f9fafb;border:none;cursor:pointer;font-size:.88rem;text-align:left}
+.mob-pl-toggle:active{background:#f0f0f0}
+.mob-pl-toggle.open{background:#f0fdf4}
+.mob-pl-wg-name{font-weight:700;color:#2e7d4f;flex:1}
+.mob-pl-count{background:#2e7d4f;color:#fff;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:600}
+.mob-pl-arrow{color:#999;font-size:.7rem;flex-shrink:0}
+.mob-pl-items{padding:0 4px}
 .mob-pl-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid #f0f0f0;gap:8px}
 .mob-pl-name{flex:1;color:#333;font-size:.82rem}
 .mob-pl-price{flex-shrink:0;text-align:right;font-weight:600;color:#2d6a30;font-size:.82rem;white-space:nowrap}
