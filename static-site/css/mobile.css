@@ -21,8 +21,8 @@
 body{padding-bottom:0!important;padding-top:108px!important;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f3f4f6}
 
 /* === MOBILE TICKER (top) === */
-.mob-only.mob-ticker{display:flex!important;background:#1b5e20;color:#fff;align-items:center;font-size:.82rem;position:fixed;top:0;left:0;right:0;z-index:200}
-.mob-ticker-label{flex-shrink:0;padding:10px 14px;font-weight:700;background:#c62828;font-size:.78rem}
+.mob-only.mob-ticker{display:flex!important;background:#1b5e20;color:#fff;align-items:center;font-size:.9rem;position:fixed;top:0;left:0;right:0;z-index:200}
+.mob-ticker-label{flex-shrink:0;padding:10px 14px;font-weight:700;background:#c62828;font-size:.88rem}
 .mob-ticker-track{flex:1;overflow:hidden;padding:10px 0}
 .mob-ticker-content{display:inline-block;white-space:nowrap;animation:mob-scroll 25s linear infinite}
 .mob-ticker-content:hover,.mob-ticker-content:active{animation-play-state:paused}
