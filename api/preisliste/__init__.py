@@ -216,6 +216,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "warengruppen": len(groups),
             "rp_count": rp_count,
             "ang_count": ang_count,
+            "ang_map_size": len(angebote_map),
+            "ang_map_keys_sample": list(angebote_map.keys())[:10],
             "groups": groups
         }
         return func.HttpResponse(
