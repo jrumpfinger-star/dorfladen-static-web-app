@@ -235,7 +235,7 @@
     if(window.allAngebote&&window.allAngebote.length){
       renderMobAngebote(window.allAngebote);
     }else{
-      fetch(API_BASE+'/angebote').then(function(r){return r.json();}).then(function(payload){
+      fetch(API_BASE+'/angebote?filter=today').then(function(r){return r.json();}).then(function(payload){
         var raw=payload;
         if(payload.data) raw=payload.data;
         if(!Array.isArray(raw)) raw=[raw];

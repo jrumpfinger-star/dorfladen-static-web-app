@@ -185,6 +185,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "bild_data": item.get("dl_bild_base64", "") or item.get("dl_bild_url", ""),
                         "dl_bild_base64": item.get("dl_bild_base64", "") or item.get("dl_bild_url", "")
                     })
+                # Optional date filter: ?filter=today returns only currently valid offers
+                filter_param = req.params.get("filter", "").lower()
+                if filter_param == "today":
+                    from datetime import datetime, timedelta, timezone
+                    cet = timezone(timedelta(hours=2))
+                    today = datetime.now(cet).strftime("%Y-%m-%d")
+                    filtered = []
+                    for a in angebote_list:
+                        von = (a.get("dl_gueltig_von") or "")[:10]
+                        bis = (a.get("dl_gueltig_bis") or "")[:10]
+                        if von and von > today:
+                            continue  # not yet valid
+                        if bis and bis < today:
+                            continue  # expired
+                        filtered.append(a)
+                    angebote_list = filtered
+
                 return func.HttpResponse(
                     json.dumps({"success": True, "data": angebote_list}, ensure_ascii=False),
                     status_code=200,
