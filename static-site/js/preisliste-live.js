@@ -65,8 +65,8 @@
         var discHtml=extraHtml||'&nbsp;';
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" class="'+cls.trim()+'">';
         rows+='<td class="so-td-name">'+nameHtml+'</td>';
-        rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;</td>';
-        rows+='<td class="so-td-disc">'+discHtml+'</td></tr>';
+        rows+='<td class="so-td-disc">'+discHtml+'</td>';
+        rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;</td></tr>';
       });
 
       // Group header — clean, no markers

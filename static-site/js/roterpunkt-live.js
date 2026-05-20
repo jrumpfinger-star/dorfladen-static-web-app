@@ -41,8 +41,8 @@
         var saving=item.uvp&&item.uvp>0&&item.vk>0?(item.uvp-item.vk):0;
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'">';
         rows+='<td class="rp-name">'+esc(item.bezeichnung)+'</td>';
-        rows+='<td class="rp-vk">'+fmtPrice(item.vk)+'&nbsp;&euro;</td>';
         rows+='<td class="rp-uvp">'+fmtPrice(item.uvp)+'&nbsp;&euro;</td>';
+        rows+='<td class="rp-vk">'+fmtPrice(item.vk)+'&nbsp;&euro;</td>';
         rows+='<td class="rp-disc"><span class="rp-badge">-'+Math.round(item.discount)+'%</span>';
         if(saving>0.004) rows+='<span class="rp-saving">('+ fmtPrice(saving)+'&nbsp;&euro;)</span>';
         rows+='</td></tr>';
@@ -57,8 +57,8 @@
       html+='<span class="rp-arrow">&#9660;</span></button>';
       html+='<div class="rp-panel" style="display:none"><table class="rp-table"><thead><tr>';
       html+='<th class="rp-th-name">Artikel</th>';
-      html+='<th class="rp-th-vk">Unser Preis</th>';
       html+='<th class="rp-th-uvp">UVP</th>';
+      html+='<th class="rp-th-vk">Unser Preis</th>';
       html+='<th class="rp-th-disc">Ersparnis</th>';
       html+='</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
     });
