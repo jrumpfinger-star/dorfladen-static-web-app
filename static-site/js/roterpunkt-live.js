@@ -36,6 +36,9 @@
       });
       avgDisc=validItems>0?Math.round(avgDisc/validItems):0;
 
+      // HIDE GROUPS WITH 0% SAVINGS
+      if (avgDisc === 0) return;
+
       var rows='';
       items.forEach(function(item){
         if(item.discount>70) return;
@@ -51,10 +54,9 @@
 
       html+='<div class="rp-group">';
       html+='<button class="rp-toggle" aria-expanded="false">';
-      html+='<svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="none" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/></svg>';
       html+='<span class="rp-wg-name">'+esc(wg)+'</span>';
       html+='<span class="rp-count" data-total="'+items.length+'">'+items.length+' Artikel</span>';
-      html+='<span class="rp-avg">&Oslash; -'+avgDisc+'%</span>';
+      html+='<span class="rp-avg">im Schnitt -'+avgDisc+'%</span>';
       html+='<span class="rp-arrow">&#9660;</span></button>';
       html+='<div class="rp-panel" style="display:none"><table class="rp-table"><thead><tr>';
       html+='<th class="rp-th-name">Artikel</th>';

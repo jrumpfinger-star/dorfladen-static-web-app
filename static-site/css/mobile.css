@@ -317,17 +317,18 @@ body.mob-home {
   color: var(--m-primary)!important;
   padding:3px 8px;
   border-radius:6px;
-  font-size:.72rem!important;
+  font-size:.75rem!important;
   font-weight:750;
 }
 .rp-avg{
-  background: var(--m-red-light)!important;
-  color: var(--m-red)!important;
-  padding:3px 8px;
-  border-radius:6px;
-  font-size:.72rem!important;
-  font-weight:750;
-  margin-left:4px;
+  background: #fbf9f4 !important;
+  color: #bd8b5c !important;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: .75rem !important;
+  font-weight: 750;
+  margin-left: 6px;
+  border: 1px solid #e4dfd5;
 }
 .rp-arrow{
   color: var(--m-muted);
