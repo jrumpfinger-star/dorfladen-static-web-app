@@ -57,13 +57,17 @@
   <p>Frisch &middot; Regional &middot; Mit Herz &#10084;&#65039;</p>
 </div>
 
-<!-- MOBILE: Quick Actions (2x2 grid) -->
-<div class="mob-only mob-actions">
-  <div class="mob-action" onclick="mobOpenPopup('lunch')">
+<!-- MOBILE: Quick Actions -->
+<div class="mob-only mob-actions-full">
+  <div class="mob-action-wide" onclick="mobOpenPopup('lunch')">
     <span class="mob-action-icon">&#127869;&#65039;</span>
-    <span class="mob-action-label">Mittagstisch</span>
-    <span class="mob-action-sub" id="mob-lunch-sub">Wochenplan</span>
+    <div class="mob-action-wide-text">
+      <span class="mob-action-label">Mittagstisch</span>
+      <span class="mob-action-sub" id="mob-lunch-sub">Wochenplan</span>
+    </div>
   </div>
+</div>
+<div class="mob-only mob-actions-row">
   <div class="mob-action highlight" onclick="mobOpenPopup('meat')">
     <span class="mob-action-icon">&#129385;</span>
     <span class="mob-action-label">Fleisch &amp; Wurst</span>

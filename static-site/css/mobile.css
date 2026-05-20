@@ -101,14 +101,21 @@ main{padding:0!important;margin:0!important}
 .mob-hero p{font-size:.9rem;color:#4b5563;font-weight:500}
 
 /* === MOBILE QUICK ACTIONS === */
-.mob-only.mob-actions{display:grid!important;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:16px 16px;align-items:start}
-.mob-action{background:#fff;border-radius:16px;padding:16px 8px 14px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;border:1.5px solid #e5e7eb}
+.mob-only.mob-actions-full{display:block!important;padding:12px 16px 0}
+.mob-only.mob-actions-row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px;padding:10px 16px}
+.mob-action-wide{display:flex;align-items:center;gap:14px;background:#fff;border-radius:16px;padding:14px 18px;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;border:1.5px solid #e5e7eb}
+.mob-action-wide:active{transform:scale(.98);background:#f9fafb}
+.mob-action-wide .mob-action-icon{margin:0;flex-shrink:0}
+.mob-action-wide-text{flex:1;min-width:0}
+.mob-action-wide-text .mob-action-label{font-size:.95rem}
+.mob-action-wide-text .mob-action-sub{text-align:left;-webkit-line-clamp:3}
+.mob-action{background:#fff;border-radius:16px;padding:16px 10px 14px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;border:1.5px solid #e5e7eb}
 .mob-action:active{transform:scale(.96);background:#f9fafb}
 .mob-action.highlight{border-color:#c62828;background:#fff5f5}
 .mob-action-icon{display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;margin:0 auto 8px;font-size:1.5rem;background:#f0fdf4}
 .mob-action.highlight .mob-action-icon{background:#fff0f0}
-.mob-action-label{display:block;font-size:.82rem;font-weight:700;color:#1a1a1a;line-height:1.2}
-.mob-action-sub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.68rem;color:#6b7280;margin-top:3px;line-height:1.3;text-align:left;padding:0 2px}
+.mob-action-label{display:block;font-size:.88rem;font-weight:700;color:#1a1a1a;line-height:1.2}
+.mob-action-sub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.75rem;color:#6b7280;margin-top:3px;line-height:1.3;text-align:center;padding:0 2px}
 
 /* === MOBILE PREISLISTE POPUP === */
 .mob-pl-group{margin-bottom:4px;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
