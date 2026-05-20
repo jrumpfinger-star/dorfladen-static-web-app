@@ -347,9 +347,11 @@
           row.style.display=(nameMatch&&filterMatch)?'':'none';
         });
         grid.querySelectorAll('.mob-pl-group').forEach(function(g){
-          var hasVisible=false;
-          g.querySelectorAll('.mob-pl-row').forEach(function(r){if(r.style.display!=='none') hasVisible=true;});
+          var hasVisible=false;var visCount=0;
+          g.querySelectorAll('.mob-pl-row').forEach(function(r){if(r.style.display!=='none'){hasVisible=true;visCount++;}});
           g.style.display=hasVisible?'':'none';
+          var countBadge=g.querySelector('.mob-pl-count');
+          if(countBadge) countBadge.textContent=visCount;
           var itemsDiv=g.querySelector('.mob-pl-items');
           var arrow=g.querySelector('.mob-pl-arrow');
           if((q||currentFilter!=='all')&&hasVisible){
