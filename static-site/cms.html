@@ -1445,6 +1445,36 @@ document.head.appendChild(msalScript);
     dd.classList.add('open');
   }
   
+  function cmsCompressImage(base64Str, maxWidth, maxHeight, callback) {
+    var img = new Image();
+    img.src = base64Str;
+    img.onload = function() {
+      var width = img.width;
+      var height = img.height;
+      if (width > height) {
+        if (width > maxWidth) {
+          height *= maxWidth / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width *= maxHeight / height;
+          height = maxHeight;
+        }
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      var compressed = canvas.toDataURL('image/jpeg', 0.75); // 75% quality JPEG for ultra light size
+      callback(compressed);
+    };
+    img.onerror = function() {
+      callback(base64Str); // Fallback to original
+    };
+  }
+
   window.cmsLoadBildSharePoint=function(rowNum){
     var row=document.getElementById('cms-ar-'+rowNum);
     if(!row) return;
@@ -1463,12 +1493,14 @@ document.head.appendChild(msalScript);
     console.log('[CMS] Loading image for article:',artnr);
     loadImageFromSharePoint(artnr).then(function(b64){
       if(b64 && bildInp){
-        bildInp.value=b64;
-        var prev=row.querySelector('.cms-bild-preview');
-        var clr=row.querySelector('.cms-bild-clear');
-        if(prev){prev.src=b64;prev.style.display='';}
-        if(clr){clr.style.display='';}
-        toast('Bild von SharePoint geladen!');
+        cmsCompressImage(b64, 500, 500, function(compressedB64){
+          bildInp.value=compressedB64;
+          var prev=row.querySelector('.cms-bild-preview');
+          var clr=row.querySelector('.cms-bild-clear');
+          if(prev){prev.src=compressedB64;prev.style.display='';}
+          if(clr){clr.style.display='';}
+          toast('Bild geladen & für Mobile optimiert!');
+        });
       }
       else {toast('Bild nicht in SharePoint gefunden','warn');}
     }).catch(function(e){toast('Fehler beim Laden: '+e.message,'error');console.error(e);}).then(function(){
@@ -4566,11 +4598,14 @@ document.head.appendChild(msalScript);
             var f=inp.files[0];if(!f)return;
             var reader=new FileReader();
             reader.onload=function(){
-              var row=document.getElementById('cms-ar-'+rn);if(!row)return;
-              var hi=row.querySelector('[data-f="bild_data"]');if(hi)hi.value=reader.result;
-              var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=reader.result;pv.style.display='';}
-              var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
-              toast('Bild geladen');
+              var originalB64 = reader.result;
+              cmsCompressImage(originalB64, 500, 500, function(compressedB64){
+                var row=document.getElementById('cms-ar-'+rn);if(!row)return;
+                var hi=row.querySelector('[data-f="bild_data"]');if(hi)hi.value=compressedB64;
+                var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=compressedB64;pv.style.display='';}
+                var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
+                toast('Bild geladen & für Mobile komprimiert');
+              });
             };
             reader.readAsDataURL(f);
           };
