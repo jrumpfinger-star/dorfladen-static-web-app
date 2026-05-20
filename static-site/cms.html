@@ -1357,23 +1357,29 @@ document.head.appendChild(msalScript);
       defBis=fmtISO(nw.sat);
       defTitel='Sonderangebote KW'+getISOWeek(nw.mon);
     }
-    var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:980px;overflow-x:hidden;max-height:95vh;display:flex;flex-direction:column">';
-    html+='<h3 style="margin-top:0;padding-bottom:12px;border-bottom:1px solid #e5e7eb">'+(isEdit?'✏️ Aktion bearbeiten':'🆕 Neue Aktion erstellen')+'</h3>';
-    html+='<div class="cms-akt-header-grid">';
-    html+='<div><label for="cms-akt-titel">Titel</label><input id="cms-akt-titel" class="cms-input" placeholder="Titel der Aktion" value="'+esc(isEdit?(aktion.titel||''):defTitel)+'"></div>';
-    html+='<div><label for="cms-akt-von">Gültig von</label><input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):defVon)+'"></div>';
-    html+='<div><label for="cms-akt-bis">Gültig bis</label><input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):defBis)+'"></div>';
-    html+='</div>';
-    html+='<input type="hidden" id="cms-akt-edit-id" value="'+esc(isEdit?(aktion.aktion_id||''):'')+'">';
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px">';
-    html+='<strong style="font-size:13px;color:#374151;font-family:Segoe UI,Verdana,Arial,sans-serif">Artikel</strong>';
-    html+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button" style="font-family:Segoe UI,Verdana,Arial,sans-serif">+ Artikel</button>';
-    html+='</div>';
-    html+='<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:2px;flex:1;overflow:visible;margin-bottom:8px;min-height:0;padding:4px 0"></div>';
-    html+='<div style="display:flex;gap:10px;flex-shrink:0;padding-top:12px;border-top:1px solid #e5e7eb">';
-    html+='<button class="cms-btn cms-btn-primary" data-action="saveAktion" style="padding:10px 24px;font-size:14px">💾 Speichern</button>';
-    html+='<button class="cms-btn cms-btn-gray" data-action="closeModal" style="padding:10px 20px;font-size:14px">Abbrechen</button>';
-    html+='</div></div></div>';
+    var html='<div class="cms-modal-bg" style="align-items:flex-start;overflow-y:auto;padding:12px 6px">'
+      +'<div class="cms-modal" style="max-width:980px;max-height:92vh;height:auto;display:flex;flex-direction:column;position:relative;margin:10px auto;overflow:hidden;padding:0;border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,0.18)">'
+      +'<div class="cms-modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#f9fafb;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100;flex-shrink:0;width:100%;box-sizing:border-box">'
+        +'<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--c-m-pri);text-transform:uppercase;letter-spacing:0.5px;">'+(isEdit?'✏️ Aktion bearbeiten':'🆕 Neue Aktion erstellen')+'</h3>'
+        +'<div style="display:flex;gap:8px;">'
+          +'<button class="cms-btn cms-btn-primary" data-action="saveAktion" style="padding:8px 18px;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(22,163,74,0.25)">💾 Speichern</button>'
+          +'<button class="cms-btn cms-btn-gray" data-action="closeModal" style="padding:8px 14px;font-size:13px;font-weight:600">Abbrechen</button>'
+        +'</div>'
+      +'</div>'
+      +'<div class="cms-modal-body" style="padding:20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:12px;box-sizing:border-box;width:100%">'
+        +'<div class="cms-akt-header-grid">'
+          +'<div><label for="cms-akt-titel">Titel</label><input id="cms-akt-titel" class="cms-input" placeholder="Titel der Aktion" value="'+esc(isEdit?(aktion.titel||''):defTitel)+'"></div>'
+          +'<div><label for="cms-akt-von">Gültig von</label><input id="cms-akt-von" class="cms-input" type="date" value="'+esc(isEdit?(aktion.von||''):defVon)+'"></div>'
+          +'<div><label for="cms-akt-bis">Gültig bis</label><input id="cms-akt-bis" class="cms-input" type="date" value="'+esc(isEdit?(aktion.bis||''):defBis)+'"></div>'
+        +'</div>'
+        +'<input type="hidden" id="cms-akt-edit-id" value="'+esc(isEdit?(aktion.aktion_id||''):'')+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 2px">'
+          +'<strong style="font-size:13px;color:#374151;font-family:Segoe UI,Verdana,Arial,sans-serif">Artikel</strong>'
+          +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button" style="font-family:Segoe UI,Verdana,Arial,sans-serif">+ Artikel</button>'
+        +'</div>'
+        +'<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:10px;min-height:0;padding:4px 0"></div>'
+      +'</div>'
+      +'</div></div>';
     document.getElementById('cms-modal-wrap').innerHTML=html;
     document.getElementById('cms-modal-wrap').style.display='';
     angRowCounter=0;
