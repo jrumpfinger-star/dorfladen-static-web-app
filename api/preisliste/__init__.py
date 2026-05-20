@@ -83,8 +83,10 @@ def _fetch_all_pages(url, headers, max_pages=20):
 def _load_active_angebote(base_url, headers):
     """Load active Sonderangebote from dl_angebot table, return dict keyed by artikelnummer.
     Only includes offers valid today (dl_gueltig_von <= today <= dl_gueltig_bis)."""
-    from datetime import datetime
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    from datetime import datetime, timedelta, timezone
+    # Use German timezone (UTC+1/+2) for date comparison
+    cet = timezone(timedelta(hours=2))
+    today = datetime.now(cet).strftime("%Y-%m-%d")
     angebote = {}
     for entity_set in ["dl_angebotes", "dl_angebots", "dl_angebot"]:
         url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_status eq 101001&$select=dl_artikelnummer,dl_produkt,dl_preis,dl_statt_preis,dl_gueltig_von,dl_gueltig_bis"
@@ -95,12 +97,19 @@ def _load_active_angebote(base_url, headers):
                 if not artnr:
                     continue
                 # Filter by date: only include if valid today
+                # Add 1 day tolerance for bis to handle UTC vs CET offset
                 von = item.get("dl_gueltig_von") or ""
                 bis = item.get("dl_gueltig_bis") or ""
                 if von and von[:10] > today:
                     continue  # not yet valid
-                if bis and bis[:10] < today:
-                    continue  # expired
+                if bis:
+                    try:
+                        bis_date = datetime.strptime(bis[:10], "%Y-%m-%d") + timedelta(days=1)
+                        today_date = datetime.strptime(today, "%Y-%m-%d")
+                        if bis_date < today_date:
+                            continue  # expired (with 1 day tolerance)
+                    except ValueError:
+                        pass
                 angebote[artnr] = {
                     "preis": item.get("dl_preis"),
                     "statt": item.get("dl_statt_preis")
