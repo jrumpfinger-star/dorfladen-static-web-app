@@ -553,8 +553,8 @@ def roterpunkt(req: func.HttpRequest) -> func.HttpResponse:
     try:
         headers = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
-        # Filter: nur Artikel mit UVP > 0 und VK > 0
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$filter=cr5d4_uvp_total gt 0 and cr5d4_vk_dorf gt 0&$orderby=cr5d4_artikelbezeichnung asc"
+        # Load all items from table (exactly like the working 'preisliste' endpoint to prevent OData filter errors)
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$orderby=cr5d4_artikelbezeichnung asc"
 
         # Paging: alle Ergebnisse laden
         all_items = []
