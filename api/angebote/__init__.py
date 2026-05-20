@@ -149,9 +149,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 )
 
             if r.status_code == 200:
+                from datetime import datetime
+                today = datetime.utcnow().strftime("%Y-%m-%d")
                 data = r.json()
                 angebote_list = []
                 for item in data.get("value", []):
+                    # Filter by date: only include if valid today
+                    von = (item.get("dl_gueltig_von") or "")[:10]
+                    bis = (item.get("dl_gueltig_bis") or "")[:10]
+                    if von and von > today:
+                        continue
+                    if bis and bis < today:
+                        continue
                     angebote_list.append({
                         "id": item.get("dl_angeboteid"),
                         "dl_angeboteid": item.get("dl_angeboteid"),
