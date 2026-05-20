@@ -144,7 +144,7 @@
         dishes.forEach(function(d){
           html+='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">';
           html+='<div class="mob-wp-day-menu" style="flex:1">'+esc(d.name)+'</div>';
-          html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+esc(d.price)+'</div>';
+          html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
           html+='</div>';
         });
       }
