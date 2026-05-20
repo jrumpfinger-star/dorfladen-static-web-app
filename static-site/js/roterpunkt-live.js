@@ -12,17 +12,11 @@
     var wgNames=Object.keys(groups).sort();
     var html='';
 
-    // Banner
-    html+='<div style="text-align:right;padding:12px 16px;background:#fff5f5;border:1px solid #e8c8c8;border-radius:8px;margin-bottom:16px;font-size:.9rem">';
-    html+='<span style="font-size:1.1rem">&#x1F534;</span> ';
-    html+='<span style="font-weight:700;color:#c62828">Roter Punkt &ndash; G&uuml;nstiger als UVP</span> ';
-    html+='<span style="color:#666">('+data.total+' Artikel, '+data.warengruppen+' Warengruppen)</span>';
+    // Banner + Info compact
+    html+='<div style="background:#fff5f5;border-left:4px solid #c62828;padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:10px;font-size:.88rem;line-height:1.5;color:#444">';
+    html+='<span style="font-size:1rem">&#x1F534;</span> ';
+    html+='<strong style="color:#c62828">'+data.total+' Artikel</strong> dauerhaft g&uuml;nstiger als UVP';
     html+='</div>';
-
-    // Info
-    html+='<div style="background:#fff5f5;border-left:4px solid #c62828;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:20px;font-size:.85rem;line-height:1.5;color:#444">';
-    html+='<strong>Roter Punkt</strong> bedeutet: Der Dorfladen-Preis liegt <strong>dauerhaft unter der UVP</strong>. ';
-    html+='Kein Sonderangebot, sondern unser Beitrag zu fairen Preisen.</div>';
 
     // Search
     html+='<div class="so-search"><span class="so-search-icon">&#128269;</span>';

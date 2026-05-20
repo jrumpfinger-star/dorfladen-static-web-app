@@ -75,6 +75,11 @@ body{padding-bottom:0!important;padding-top:108px!important;font-family:'Segoe U
 .mn > div:first-child{display:none!important}
 .mn > aside.side{display:none!important}
 
+/* === ROTER PUNKT page compact === */
+.ct-full .ct{padding:10px 12px!important}
+.ct-full .ct h1{font-size:1.2rem!important;margin:0 0 8px!important}
+.bc{font-size:.82rem!important;padding:6px 12px!important;margin:0!important}
+
 /* === ROTER PUNKT table fix === */
 .rp-wrap{padding:0 8px!important}
 .rp-table{table-layout:fixed!important;font-size:.9rem!important;width:100%!important}
