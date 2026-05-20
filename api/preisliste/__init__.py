@@ -81,39 +81,19 @@ def _fetch_all_pages(url, headers, max_pages=20):
 
 
 def _load_active_angebote(base_url, headers):
-    """Load active Sonderangebote from dl_angebot table, return dict keyed by artikelnummer.
-    Only includes offers valid today (dl_gueltig_von <= today <= dl_gueltig_bis)."""
-    from datetime import datetime, timedelta, timezone
-    # Use German timezone (UTC+1/+2) for date comparison
-    cet = timezone(timedelta(hours=2))
-    today = datetime.now(cet).strftime("%Y-%m-%d")
+    """Load active Sonderangebote from dl_angebot table, return dict keyed by artikelnummer."""
     angebote = {}
     for entity_set in ["dl_angebotes", "dl_angebots", "dl_angebot"]:
-        url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_status eq 101001&$select=dl_artikelnummer,dl_produkt,dl_preis,dl_statt_preis,dl_gueltig_von,dl_gueltig_bis"
+        url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_status eq 101001&$select=dl_artikelnummer,dl_produkt,dl_preis,dl_statt_preis"
         r = requests.get(url, headers=headers, timeout=30)
         if r.status_code == 200:
             for item in r.json().get("value", []):
                 artnr = item.get("dl_artikelnummer", "")
-                if not artnr:
-                    continue
-                # Filter by date: only include if valid today
-                # Add 1 day tolerance for bis to handle UTC vs CET offset
-                von = item.get("dl_gueltig_von") or ""
-                bis = item.get("dl_gueltig_bis") or ""
-                if von and von[:10] > today:
-                    continue  # not yet valid
-                if bis:
-                    try:
-                        bis_date = datetime.strptime(bis[:10], "%Y-%m-%d") + timedelta(days=1)
-                        today_date = datetime.strptime(today, "%Y-%m-%d")
-                        if bis_date < today_date:
-                            continue  # expired (with 1 day tolerance)
-                    except ValueError:
-                        pass
-                angebote[artnr] = {
-                    "preis": item.get("dl_preis"),
-                    "statt": item.get("dl_statt_preis")
-                }
+                if artnr:
+                    angebote[artnr] = {
+                        "preis": item.get("dl_preis"),
+                        "statt": item.get("dl_statt_preis")
+                    }
             return angebote
     return angebote
 
@@ -226,8 +206,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "rp_count": rp_count,
             "ang_count": ang_count,
             "ang_map_size": len(angebote_map),
-            "ang_map_keys_sample": list(angebote_map.keys())[:10],
-            "pl_artnr_sample": [item.get("cr5d4_artikelnummeredeka","") for item in (items or [])[:10]],
             "groups": groups
         }
         return func.HttpResponse(

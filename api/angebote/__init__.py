@@ -149,26 +149,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 )
 
             if r.status_code == 200:
-                from datetime import datetime, timedelta, timezone
-                cet = timezone(timedelta(hours=2))
-                today = datetime.now(cet).strftime("%Y-%m-%d")
                 data = r.json()
                 angebote_list = []
                 for item in data.get("value", []):
-                    # Filter by date: only include if valid today
-                    # Add 1 day tolerance for bis to handle UTC vs CET offset
-                    von = (item.get("dl_gueltig_von") or "")[:10]
-                    bis = (item.get("dl_gueltig_bis") or "")[:10]
-                    if von and von > today:
-                        continue
-                    if bis:
-                        try:
-                            bis_date = datetime.strptime(bis, "%Y-%m-%d") + timedelta(days=1)
-                            today_date = datetime.strptime(today, "%Y-%m-%d")
-                            if bis_date < today_date:
-                                continue
-                        except ValueError:
-                            pass
                     angebote_list.append({
                         "id": item.get("dl_angeboteid"),
                         "dl_angeboteid": item.get("dl_angeboteid"),
