@@ -2897,10 +2897,7 @@ document.head.appendChild(msalScript);
           var lh=80,lw=lh*(logoImg.width/logoImg.height);
           ctx.drawImage(logoImg,W-lw-padR,18,lw,lh);res();
         };
-        logoImg.onerror=function(){
-          ctx.fillStyle=fallbackColor||'#a31d2d';ctx.font='bold 18px Arial, sans-serif';ctx.textAlign='right';
-          ctx.fillText('Dorfladen',W-padR,30);ctx.fillText('Oberornau',W-padR,52);ctx.textAlign='left';res();
-        };
+        logoImg.onerror=function(){res();};
         var hdrLogo=document.querySelector('#cms-app img[src^="data:image"]');
         logoImg.src=hdrLogo?hdrLogo.src:'/Logo-sm-64.png';
       });
@@ -3535,18 +3532,17 @@ document.head.appendChild(msalScript);
         ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
         ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
 
-        // Logo + store name
+        // Logo + 'Angebote' dominant
         var mgLogoEl=document.querySelector('#cms-app img[src^="data:image"]');
         var mgLogoP=new Promise(function(rl){
           if(!mgLogoEl){rl();return;}
           var li=new Image();li.onload=function(){
             var lh=80,lw=lh*(li.width/li.height);
             ctx.drawImage(li,28,30,lw,lh);
+            // 'Angebote' dominant next to logo
             ctx.fillStyle='#2e4528';ctx.textAlign='left';
-            ctx.font='900 36px Arial Black, Arial, sans-serif';
-            ctx.fillText('Dorfladen Oberornau',28+lw+16,62);
-            ctx.fillStyle='#5b7552';ctx.font='600 18px Arial, sans-serif';
-            ctx.fillText('Angebot der Woche',28+lw+16,90);
+            ctx.font='900 44px Arial Black, Arial, sans-serif';
+            ctx.fillText('Angebote',28+lw+16,78);
             rl();
           };li.onerror=function(){rl();};li.src=mgLogoEl.src;
         });
@@ -4223,10 +4219,7 @@ document.head.appendChild(msalScript);
         var lh=90,lw=lh*(logoImg.width/logoImg.height);
         ctx.drawImage(logoImg,W-lw-30,14,lw,lh);res();
       };
-      logoImg.onerror=function(){
-        ctx.fillStyle=theme.titleColor;ctx.font='bold 22px Arial, sans-serif';ctx.textAlign='right';
-        ctx.fillText('Dorfladen',W-30,50);ctx.fillText('Oberornau',W-30,76);ctx.textAlign='left';res();
-      };
+      logoImg.onerror=function(){res();};
       var hdrLogo=document.querySelector('#cms-app img[src^="data:image"]');
       logoImg.src=hdrLogo?hdrLogo.src:'/Logo-sm-64.png';
     });
