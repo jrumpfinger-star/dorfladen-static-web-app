@@ -81,19 +81,30 @@ def _fetch_all_pages(url, headers, max_pages=20):
 
 
 def _load_active_angebote(base_url, headers):
-    """Load active Sonderangebote from dl_angebot table, return dict keyed by artikelnummer."""
+    """Load active Sonderangebote from dl_angebot table, return dict keyed by artikelnummer.
+    Only includes offers valid today (dl_gueltig_von <= today <= dl_gueltig_bis)."""
+    from datetime import datetime
+    today = datetime.utcnow().strftime("%Y-%m-%d")
     angebote = {}
     for entity_set in ["dl_angebotes", "dl_angebots", "dl_angebot"]:
-        url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_status eq 101001&$select=dl_artikelnummer,dl_produkt,dl_preis,dl_statt_preis"
+        url = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_status eq 101001&$select=dl_artikelnummer,dl_produkt,dl_preis,dl_statt_preis,dl_gueltig_von,dl_gueltig_bis"
         r = requests.get(url, headers=headers, timeout=30)
         if r.status_code == 200:
             for item in r.json().get("value", []):
                 artnr = item.get("dl_artikelnummer", "")
-                if artnr:
-                    angebote[artnr] = {
-                        "preis": item.get("dl_preis"),
-                        "statt": item.get("dl_statt_preis")
-                    }
+                if not artnr:
+                    continue
+                # Filter by date: only include if valid today
+                von = item.get("dl_gueltig_von") or ""
+                bis = item.get("dl_gueltig_bis") or ""
+                if von and von[:10] > today:
+                    continue  # not yet valid
+                if bis and bis[:10] < today:
+                    continue  # expired
+                angebote[artnr] = {
+                    "preis": item.get("dl_preis"),
+                    "statt": item.get("dl_statt_preis")
+                }
             return angebote
     return angebote
 
