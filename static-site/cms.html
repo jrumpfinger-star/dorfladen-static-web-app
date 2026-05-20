@@ -288,12 +288,60 @@ document.head.appendChild(msalScript);
     .cms-modal{padding:16px 12px;max-width:100%!important}
     .cms-modal-bg{padding:8px}
     .cms-modal .cms-akt-header-grid{grid-template-columns:1fr!important;gap:8px!important}
-    /* ── Mobile: Artikel-Felder 2-spaltig ── */
-    .cms-ang-fields{grid-template-columns:1fr 1fr!important;gap:6px!important}
-    .cms-ang-fields>:first-child{grid-column:1/-1}
-    .cms-ang-fields>:nth-child(4){grid-column:1/-1}
-    .cms-ang-fields>:nth-child(5){grid-column:1/-1}
-    .cms-ang-row{padding:10px 8px}
+    /* ── Mobile: Artikel-Felder hochauflösend & benutzbar ── */
+    .cms-ang-fields {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      width: 100% !important;
+    }
+    .cms-ang-fields .cms-ang-row-img {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      background: rgba(30,70,58,0.04) !important;
+      padding: 6px 10px !important;
+      border-radius: 8px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .cms-ang-fields .cms-art-wrap {
+      grid-column: 1 / -1 !important;
+      width: 100% !important;
+    }
+    .cms-ang-fields .cms-art-input {
+      font-size: 14px !important;
+      height: 38px !important;
+      padding: 6px 12px !important;
+    }
+    .cms-ang-fields [data-f="details"] {
+      grid-column: 1 / -1 !important;
+      font-size: 13px !important;
+      height: 36px !important;
+      padding: 6px 10px !important;
+    }
+    .cms-ang-fields [data-f="preis"] {
+      grid-column: 1 / 2 !important;
+      font-size: 13px !important;
+      height: 36px !important;
+      text-align: left !important;
+      padding: 6px 10px !important;
+    }
+    .cms-ang-fields [data-f="statt_preis"] {
+      grid-column: 2 / 3 !important;
+      font-size: 13px !important;
+      height: 36px !important;
+      text-align: left !important;
+      padding: 6px 10px !important;
+    }
+    .cms-ang-fields [data-f="artikelnummer"] {
+      grid-column: 1 / -1 !important;
+      font-size: 12px !important;
+      height: 34px !important;
+      padding: 6px 10px !important;
+    }
+    .cms-ang-row{padding:14px 10px 10px 10px !important}
     .cms-ang-img-row{flex-wrap:wrap}
     /* ── Mobile: Tabs ── */
     .cms-tabs{gap:0;flex-wrap:wrap;overflow-x:visible}
@@ -324,12 +372,6 @@ document.head.appendChild(msalScript);
     .cms-wrap{padding:8px!important}
     .cms-wrap>.cms-flex.cms-between.cms-mb{gap:4px}
     .cms-wrap>.cms-flex.cms-between.cms-mb h2{font-size:14px!important}
-  }
-  @media(max-width:900px){
-    .cms-ang-fields{grid-template-columns:1fr 1fr;gap:6px}
-    .cms-ang-fields > :first-child{grid-column:1/-1}
-    .cms-ang-fields > :nth-child(4){grid-column:1/-1}
-    .cms-ang-fields > :nth-child(5){grid-column:1/-1}
   }
   .cms-login-box{max-width:360px;margin:80px auto;padding:32px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.12);text-align:center}
   .cms-login-box h2{font-size:20px;font-weight:700;color:#1f2937;margin:0 0 4px}
