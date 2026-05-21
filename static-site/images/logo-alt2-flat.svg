@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 90" width="100%" height="100%">
+  <!-- ── ALTERNATIVE 2: GEOMETRIC ABSTRACT / FLAT MINIMAL ── -->
+  <!-- Puristisch, nordisch klar, plakativ. Perfekte Geometrie ohne Verläufe. -->
+
+  <!-- ── DIE 5 BLÜTENBLÄTTER (Flat Minimal) ── -->
+  <!-- Genutzte Farben: Ein weiches Salbei, ein sattes Moosgrün und ein tiefes Waldgrün. -->
+  <g transform="translate(10, 0)">
+    <g transform="translate(48, 45)">
+      <!-- Jedes Blatt ist eine exakt definierte, flache Geometrie -->
+      <!-- Blatt 1 (oben) - Deep Forest Green -->
+      <path d="M 0 0 C -11 -15, -11 -34, 0 -36 C 11 -34, 11 -15, 0 0 Z" 
+            fill="#1e463a" />
+      
+      <!-- Blatt 2 (rotiert um 72°) - Soft Sage Green -->
+      <g transform="rotate(72)">
+        <path d="M 0 0 C -11 -15, -11 -34, 0 -36 C 11 -34, 11 -15, 0 0 Z" 
+              fill="#5ea88a" />
+      </g>
+      
+      <!-- Blatt 3 (rotiert um 144°) - Warm Moss Green -->
+      <g transform="rotate(144)">
+        <path d="M 0 0 C -11 -15, -11 -34, 0 -36 C 11 -34, 11 -15, 0 0 Z" 
+              fill="#3d7e6a" />
+      </g>
+      
+      <!-- Blatt 4 (rotiert um 216°) - Deep Forest Green -->
+      <g transform="rotate(216)">
+        <path d="M 0 0 C -11 -15, -11 -34, 0 -36 C 11 -34, 11 -15, 0 0 Z" 
+              fill="#1e463a" />
+      </g>
+      
+      <!-- Blatt 5 (rotiert um 288°) - Soft Sage Green -->
+      <g transform="rotate(288)">
+        <path d="M 0 0 C -11 -15, -11 -34, 0 -36 C 11 -34, 11 -15, 0 0 Z" 
+              fill="#5ea88a" />
+      </g>
+      
+      <!-- Flaches, zentriertes Kontrastelement -->
+      <circle cx="0" cy="0" r="3" fill="#ffffff" />
+    </g>
+  </g>
+
+  <!-- ── TYPOGRAFIE (Modern, geometrisch, ausbalanciert) ── -->
+  <g transform="translate(118, 0)">
+    <!-- Hauptmarke "DORFLADEN" (Sehr clean) -->
+    <text x="0" y="44" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif" 
+          font-size="25" 
+          font-weight="900" 
+          fill="#1e463a" 
+          letter-spacing="3.5">DORFLADEN</text>
+          
+    <!-- "OBERORNAU" (Komplett in der Hauptfarbe für minimalistische Einheit) -->
+    <text x="1" y="61" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif" 
+          font-size="12" 
+          font-weight="700" 
+          fill="#bd8b5c" 
+          letter-spacing="5">OBERORNAU</text>
+  </g>
+</svg>

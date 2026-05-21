@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 90" width="100%" height="100%">
+  <!-- ── ALTERNATIVE 1: MINIMALIST LINE-ART CONCEPT ── -->
+  <!-- Hochmodern, filigran, exklusiv. Die Blütenblätter als feine Linien. -->
+
+  <!-- ── DIE 5 BLÜTENBLÄTTER (Line-Art) ── -->
+  <!-- Zentriert bei x=48, y=45. Feine, geschwungene Linien. -->
+  <g transform="translate(10, 0)">
+    <g transform="translate(48, 45)">
+      <!-- Jedes der 5 Blätter besteht aus einer eleganten Außenlinie mit feiner Strichstärke -->
+      <!-- Blatt 1 (oben) -->
+      <path d="M 0 0 C -10 -15, -10 -35, 0 -38 C 10 -35, 10 -15, 0 0" 
+            fill="none" stroke="#1e463a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      
+      <!-- Blatt 2 (rotiert um 72°) -->
+      <g transform="rotate(72)">
+        <path d="M 0 0 C -10 -15, -10 -35, 0 -38 C 10 -35, 10 -15, 0 0" 
+              fill="none" stroke="#1e463a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+      
+      <!-- Blatt 3 (rotiert um 144°) -->
+      <g transform="rotate(144)">
+        <path d="M 0 0 C -10 -15, -10 -35, 0 -38 C 10 -35, 10 -15, 0 0" 
+              fill="none" stroke="#1e463a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+      
+      <!-- Blatt 4 (rotiert um 216°) -->
+      <g transform="rotate(216)">
+        <path d="M 0 0 C -10 -15, -10 -35, 0 -38 C 10 -35, 10 -15, 0 0" 
+              fill="none" stroke="#1e463a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+      
+      <!-- Blatt 5 (rotiert um 288°) -->
+      <g transform="rotate(288)">
+        <path d="M 0 0 C -10 -15, -10 -35, 0 -38 C 10 -35, 10 -15, 0 0" 
+              fill="none" stroke="#1e463a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+      
+      <!-- Minimalistischer Mittelpunkt -->
+      <circle cx="0" cy="0" r="2.5" fill="#bd8b5c" />
+    </g>
+  </g>
+
+  <!-- ── TYPOGRAFIE (Elegant, schlank, progressiv) ── -->
+  <g transform="translate(118, 0)">
+    <!-- Hauptmarke "DORFLADEN" (Clean & Modern) -->
+    <text x="0" y="44" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif" 
+          font-size="24" 
+          font-weight="700" 
+          fill="#1e463a" 
+          letter-spacing="5">DORFLADEN</text>
+          
+    <!-- "OBERORNAU" (Gleicht den minimalistischen Stil perfekt aus) -->
+    <text x="2" y="60" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif" 
+          font-size="11" 
+          font-weight="500" 
+          fill="#bd8b5c" 
+          letter-spacing="7.5">OBERORNAU</text>
+  </g>
+</svg>
