@@ -314,7 +314,7 @@
     var txt=laufband.map(function(n){
       var t=n.dl_titel||n.title||'';
       return t;
-    }).join('  \u2605  ');
+    }).join('     \u2605     ');
     tickerEl.textContent=txt;
   }).catch(function(){});
 
