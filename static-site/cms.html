@@ -2715,11 +2715,14 @@ document.head.appendChild(msalScript);
         var px=idata.data;
         var changed=false;
         for(var i=0;i<px.length;i+=4){
-          var r=px[i],g=px[i+1],b=px[i+2];
-          var gray=Math.abs(r-g)<20&&Math.abs(g-b)<20;
+          var r=px[i],g=px[i+1],b=px[i+2],a=px[i+3];
+          if(a===0) continue;
+          var gray=Math.abs(r-g)<25&&Math.abs(g-b)<25;
           var bright=(r+g+b)/3;
-          if(gray&&bright>190){
-            px[i+3]=Math.min(px[i+3],Math.round(Math.max(0,(255-bright)*4)));
+          if(gray&&bright>160){
+            /* bright>195: fully transparent; 160-195: soft edge */
+            var newA=bright>195?0:Math.round((195-bright)/35*255);
+            px[i+3]=Math.min(a,newA);
             changed=true;
           }
         }
