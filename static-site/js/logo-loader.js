@@ -12,7 +12,7 @@
     .then(function(res){
       if(!res.success||!res.logo){showFallback();return;}
       if(fb) fb.style.display='none';
-      el.innerHTML='<img src="'+res.logo+'" alt="Dorfladen Oberornau" style="height:36px;width:auto">';
+      el.innerHTML='<img src="'+res.logo+'" alt="Dorfladen Oberornau" style="height:52px;width:auto">';
     })
     .catch(showFallback);
 })();

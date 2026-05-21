@@ -119,7 +119,7 @@ body.mob-home {
   color: var(--m-primary);
 }
 .mob-header-logo img{
-  height:30px; /* reduced from 36px */
+  height:44px;
   width:auto;
   background:transparent;
   border-radius:0;

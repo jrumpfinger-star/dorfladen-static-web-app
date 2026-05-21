@@ -67,7 +67,7 @@ img{max-width:100%;display:block}
 .nv-logo{font-size:1.2rem;font-weight:700;color:var(--c-pri);display:flex;align-items:center;gap:10px;white-space:nowrap;transition:transform .3s var(--ease-spring)}
 .nv-logo>span{visibility:hidden}
 .nv-logo:hover{transform:scale(1.03)}
-.nv-logo img{height:40px;width:auto;border-radius:0;background:transparent}
+.nv-logo img{height:52px;width:auto;border-radius:0;background:transparent}
 .nv-links{display:flex;list-style:none;gap:4px;align-items:center}
 .nv-links a{padding:8px 14px;border-radius:var(--r-sm);font-size:.88rem;font-weight:500;color:var(--c-text);transition:all .25s var(--ease);display:block;white-space:nowrap}
 .nv-links a:hover{background:var(--c-pri-l);color:var(--c-pri)}

@@ -400,7 +400,7 @@ document.head.appendChild(msalScript);
 <div class="cms-wrap" id="cms-app" lang="de" style="display:none">
   <div class="cms-flex cms-between cms-mb" style="align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 14px; margin-bottom: 18px;">
     <div style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="location.href='/index.html'" title="Zurück zur Website">
-      <img id="cms-header-logo" src="" alt="Dorfladen Oberornau" style="height:36px;border-radius:6px; transition: opacity 0.15s ease;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+      <img id="cms-header-logo" src="" alt="Dorfladen Oberornau" style="height:52px;border-radius:6px; transition: opacity 0.15s ease;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
       <h2 style="font-size:18px;font-weight:800;color:var(--c-m-pri);margin:0; transition: color 0.15s ease;" onmouseover="this.style.color='var(--c-m-sec)'" onmouseout="this.style.color='var(--c-m-pri)'">Dorfladen CMS</h2>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
@@ -2680,7 +2680,7 @@ document.head.appendChild(msalScript);
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.logo)return;
-        preview.innerHTML='<img src="'+res.logo+'" style="max-height:60px;max-width:200px">';
+        preview.innerHTML='<img src="'+res.logo+'" style="max-height:120px;max-width:300px">';
       }).catch(function(){});
   }
 
@@ -2712,21 +2712,46 @@ document.head.appendChild(msalScript);
         var ctx=canvas.getContext('2d',{willReadFrequently:true});
         ctx.clearRect(0,0,w,h);
         ctx.drawImage(img,0,0,w,h);
-        /* Auto-Freistellung: helle/graue Hintergrund-Pixel transparent machen */
+        /* Auto-Freistellung: Flood-Fill vom Rand – nur zusammenhängende helle Pixel entfernen */
         var idata=ctx.getImageData(0,0,w,h);
         var px=idata.data;
+        var visited=new Uint8Array(w*h);
         var changed=false;
-        for(var i=0;i<px.length;i+=4){
-          var r=px[i],g=px[i+1],b=px[i+2],a=px[i+3];
-          if(a===0) continue;
-          var gray=Math.abs(r-g)<25&&Math.abs(g-b)<25;
+        function isBg(idx){
+          var r=px[idx],g=px[idx+1],b=px[idx+2],a=px[idx+3];
+          if(a===0) return true;
+          /* Nur wirklich helle, nahezu weiße Pixel als Hintergrund */
           var bright=(r+g+b)/3;
-          if(gray&&bright>160){
-            /* bright>195: fully transparent; 160-195: soft edge */
-            var newA=bright>195?0:Math.round((195-bright)/35*255);
-            px[i+3]=Math.min(a,newA);
-            changed=true;
-          }
+          var maxDiff=Math.max(Math.abs(r-g),Math.abs(g-b),Math.abs(r-b));
+          return bright>210 && maxDiff<20;
+        }
+        /* Flood-fill queue from all border pixels */
+        var queue=[];
+        for(var x=0;x<w;x++){
+          queue.push(x);queue.push(0);
+          queue.push(x);queue.push(h-1);
+        }
+        for(var y=1;y<h-1;y++){
+          queue.push(0);queue.push(y);
+          queue.push(w-1);queue.push(y);
+        }
+        while(queue.length>0){
+          var qy=queue.pop(),qx=queue.pop();
+          if(qx<0||qx>=w||qy<0||qy>=h) continue;
+          var pi=qy*w+qx;
+          if(visited[pi]) continue;
+          visited[pi]=1;
+          var idx=pi*4;
+          if(!isBg(idx)) continue;
+          /* Soft edge: bright 210-230 gets partial alpha, >230 fully transparent */
+          var bright2=(px[idx]+px[idx+1]+px[idx+2])/3;
+          if(bright2>230) px[idx+3]=0;
+          else px[idx+3]=Math.round((230-bright2)/20*255);
+          changed=true;
+          queue.push(qx-1);queue.push(qy);
+          queue.push(qx+1);queue.push(qy);
+          queue.push(qx);queue.push(qy-1);
+          queue.push(qx);queue.push(qy+1);
         }
         if(changed){ctx.putImageData(idata,0,0);}
         /* Use cleaned canvas as source for all subsequent scaling */
@@ -2751,7 +2776,7 @@ document.head.appendChild(msalScript);
           }
         }
         if(dataUrl.length>MAX_LEN){toast('Logo zu groß – bitte kleineres Bild verwenden','warn');return;}
-        document.getElementById('cms-logo-preview').innerHTML='<img src="'+dataUrl+'" style="max-height:60px;max-width:200px">';
+        document.getElementById('cms-logo-preview').innerHTML='<img src="'+dataUrl+'" style="max-height:120px;max-width:300px">';
         var sizeKB=Math.round(dataUrl.length/1024);
         fetch(API+'/logo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:dataUrl})})
           .then(function(r){return r.json();})
