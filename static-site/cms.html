@@ -2701,7 +2701,7 @@ document.head.appendChild(msalScript);
     reader.onload=function(e){
       var img=new Image();
       img.onload=function(){
-        var MAX_LEN=500000;
+        var MAX_LEN=10000;
         /* Scale to 3x retina of display size (36px → 108px) for sharp logos */
         var DISPLAY_H=36, RETINA=3;
         var targetH=DISPLAY_H*RETINA;
