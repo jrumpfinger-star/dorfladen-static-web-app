@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 90" width="100%" height="100%">
+  <!-- ── ALTERNATIVE 4: LUXURY GOLD & FOREST GREEN CONCEPT ── -->
+  <!-- Hochgradig lesbar und exklusiv. Extrem kontraststarke Typografie für kleine Einbindungen. -->
+
+  <defs>
+    <!-- Edler Gold-Farbverlauf für die Blütenblätter -->
+    <linearGradient id="goldGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#bd8b5c" />
+      <stop offset="50%" stop-color="#e0b880" />
+      <stop offset="100%" stop-color="#bd8b5c" />
+    </linearGradient>
+    
+    <!-- Tiefes, sattes Waldgrün-Verlauf für Kontrastblätter -->
+    <linearGradient id="darkForestGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0a1d17" />
+      <stop offset="100%" stop-color="#1e463a" />
+    </linearGradient>
+
+    <!-- Subtiler Schatten für verbesserte Plastizität und Abhebung -->
+    <filter id="softChicShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="1" dy="1.5" stdDeviation="1" flood-color="#000" flood-opacity="0.1" />
+    </filter>
+  </defs>
+
+  <!-- ── DIE 5 BLÜTENBLÄTTER (Gold & Deep Forest Wechselspiel) ── -->
+  <!-- Platziert links im Koordinatensystem (Zentrum bei x=50, y=45) -->
+  <g transform="translate(10, 0)" filter="url(#softChicShadow)">
+    <g transform="translate(48, 45)">
+      <!-- Blatt 1 (oben) - Gold -->
+      <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+            fill="url(#goldGrad)" />
+      
+      <!-- Blatt 2 (oben rechts, rotiert um 72°) - Deep Forest -->
+      <g transform="rotate(72)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+              fill="url(#darkForestGrad)" />
+      </g>
+      
+      <!-- Blatt 3 (unten rechts, rotiert um 144°) - Gold -->
+      <g transform="rotate(144)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+              fill="url(#goldGrad)" />
+      </g>
+      
+      <!-- Blatt 4 (unten links, rotiert um 216°) - Deep Forest -->
+      <g transform="rotate(216)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+              fill="url(#darkForestGrad)" />
+      </g>
+      
+      <!-- Blatt 5 (oben links, rotiert um 288°) - Gold -->
+      <g transform="rotate(288)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+              fill="url(#goldGrad)" />
+      </g>
+      
+      <!-- Edler, weißer Glanzpunkt im Zentrum -->
+      <circle cx="0" cy="0" r="3.2" fill="#ffffff" />
+    </g>
+  </g>
+
+  <!-- ── TYPOGRAFIE (Maximale Kontraststärke & Lesbarkeit bei kleiner Skalierung) ── -->
+  <g transform="translate(118, 0)">
+    <!-- Hauptmarke "DORFLADEN" (Bolderer Schriftschnitt in tiefstem Waldgrün für kompromisslose Lesbarkeit) -->
+    <text x="0" y="44" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif" 
+          font-size="26" 
+          font-weight="900" 
+          fill="#0a221b" 
+          letter-spacing="3.5">DORFLADEN</text>
+          
+    <!-- "OBERORNAU" (Deutliches, hochlesbares Goldgelb) -->
+    <text x="1" y="62" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif" 
+          font-size="12" 
+          font-weight="750" 
+          fill="#bd8b5c" 
+          letter-spacing="5.5">OBERORNAU</text>
+  </g>
+</svg>
