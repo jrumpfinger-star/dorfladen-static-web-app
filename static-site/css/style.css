@@ -405,20 +405,20 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .ang-week-label{font-size:.82rem;font-weight:600;color:var(--c-text)}
 .ang-empty{padding:30px 20px;text-align:center;color:var(--c-sec);font-size:.9rem}
 .ang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:18px;background:#f4f1ea;border-radius:0 0 var(--r) var(--r)}
-.ang-item{background:#fff;border:1px solid #e8e5de;border-radius:16px;padding:14px 14px 14px 14px;position:relative;transition:all .35s var(--ease-spring);box-shadow:0 2px 8px rgba(0,0,0,.06);display:grid;grid-template-columns:100px 1fr auto;grid-template-rows:auto auto;gap:0 14px;overflow:visible;min-height:110px}
+.ang-item{background:#fff;border:1px solid #e8e5de;border-radius:16px;padding:14px 12px 14px 12px;position:relative;transition:all .35s var(--ease-spring);box-shadow:0 2px 8px rgba(0,0,0,.06);display:grid;grid-template-columns:95px 1fr auto;grid-template-rows:auto auto;gap:0 10px;overflow:visible;min-height:110px}
 .ang-item:hover{box-shadow:0 6px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
 .ang-badge{position:absolute;top:-4px;left:6px;background:#a51d2d;color:#fff;font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:0 0 8px 8px;letter-spacing:.3px;z-index:3}
-.ang-img{width:100px;height:100px;overflow:hidden;border-radius:10px;background:#faf9f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .35s var(--ease);position:relative;grid-row:1/3}
+.ang-img{width:95px;height:95px;overflow:hidden;border-radius:10px;background:#faf9f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .35s var(--ease);position:relative;grid-row:1/3}
 .ang-img img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(3px 4px 4px rgba(0,0,0,.15));transition:transform .35s var(--ease);mix-blend-mode:multiply}
 .ang-item:hover .ang-img img{transform:rotate(0deg) scale(1.05)}
 .ang-img.loaded{opacity:1}
-.ang-info{min-width:0;display:flex;flex-direction:column;justify-content:flex-start;grid-column:2;grid-row:1/3;padding-top:4px}
-.ang-name{font-weight:700;font-size:1.15rem;color:#1a1a1a;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-clamp:2;overflow:hidden;line-height:1.25}
-.ang-det{font-size:.92rem;color:#555;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
+.ang-info{min-width:0;display:flex;flex-direction:column;justify-content:flex-start;grid-column:2;grid-row:1/3;padding-top:2px}
+.ang-name{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-weight:800;font-size:1.02rem;letter-spacing:-0.015em;color:#111;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-clamp:3;overflow:hidden;line-height:1.22;word-break:break-word;overflow-wrap:break-word;-webkit-hyphens:auto;hyphens:auto}
+.ang-det{font-size:.88rem;color:#555;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;letter-spacing:-0.01em}
 .ang-prices{display:flex;align-items:baseline;gap:0}
 .ang-was{font-size:.82rem;color:#666;text-decoration:line-through;font-weight:400;font-style:italic}
 .ang-save{font-size:.62rem;font-weight:700;color:#fff;background:#5ea88a;padding:1px 6px;border-radius:var(--r-sm)}
-.ang-tag{grid-column:3;grid-row:1/3;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:90px;position:relative;margin-right:-6px;gap:6px}
+.ang-tag{grid-column:3;grid-row:1/3;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:82px;position:relative;margin-right:-2px;gap:6px}
 .ang-tag-inner{background:#a51d2d;color:#fff;font-weight:900;font-size:1.6rem;padding:14px 18px;border-radius:5px;transform:rotate(-4deg) skewY(-3deg);box-shadow:5px 5px 0 rgba(80,0,0,.35);text-align:center;line-height:1;white-space:nowrap;position:relative}
 .ang-statt{font-size:.78rem;color:#666;text-decoration:line-through;font-weight:400;font-style:italic;transform:rotate(-2deg)}
 .ang-tag-inner::after{content:'';position:absolute;top:0;left:0;right:0;bottom:50%;background:linear-gradient(to bottom,rgba(255,255,255,.15),transparent);border-radius:5px 5px 0 0}
