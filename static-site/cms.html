@@ -2702,12 +2702,11 @@ document.head.appendChild(msalScript);
       var img=new Image();
       img.onload=function(){
         var MAX_LEN=500000;
-        /* Scale to 3x retina of display size (36px → 108px) for sharp logos */
-        var DISPLAY_H=36, RETINA=3;
-        var targetH=DISPLAY_H*RETINA;
+        /* Scale to high-res for sharp logos (up to 300px height, 1200px width) */
+        var MAX_H=300, MAX_W=1200;
         var w=img.width, h=img.height;
-        if(h>targetH){w=Math.round(w*(targetH/h));h=targetH;}
-        if(w>500){h=Math.round(h*(500/w));w=500;}
+        if(h>MAX_H){w=Math.round(w*(MAX_H/h));h=MAX_H;}
+        if(w>MAX_W){h=Math.round(h*(MAX_W/w));w=MAX_W;}
         var canvas=document.createElement('canvas');
         canvas.width=w; canvas.height=h;
         var ctx=canvas.getContext('2d',{willReadFrequently:true});
