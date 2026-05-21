@@ -250,7 +250,9 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         return;
       }
       // Find current ISO 8601 week number
+      // Ab Samstag: nächste Woche anzeigen
       var now=new Date();
+      if(now.getDay()>=6){now.setDate(now.getDate()+(now.getDay()===6?2:1));}
       var tmp=new Date(now.getFullYear(),now.getMonth(),now.getDate());
       tmp.setDate(tmp.getDate()+3-(tmp.getDay()+6)%7);
       var week1=new Date(tmp.getFullYear(),0,4);
