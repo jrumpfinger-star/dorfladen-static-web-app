@@ -2692,7 +2692,7 @@ document.head.appendChild(msalScript);
       .catch(function(err){toast('Fehler: '+err.message,'error');});
   };
 
-  // Wire logo upload – resizes to max 200px height, stores as data URL in dl_wert
+  // Wire logo upload – resizes to 3x retina, auto-removes background, stores via Image Column
   document.getElementById('cms-logo-file').addEventListener('change',function(){
     var file=this.files[0];
     if(!file)return;
@@ -2701,13 +2701,13 @@ document.head.appendChild(msalScript);
     reader.onload=function(e){
       var img=new Image();
       img.onload=function(){
-        var MAX_LEN=9500;
-        /* Scale to 2x retina of display size (36px → 72px) for sharpness */
-        var DISPLAY_H=36, RETINA=2;
+        var MAX_LEN=500000;
+        /* Scale to 3x retina of display size (36px → 108px) for sharp logos */
+        var DISPLAY_H=36, RETINA=3;
         var targetH=DISPLAY_H*RETINA;
         var w=img.width, h=img.height;
         if(h>targetH){w=Math.round(w*(targetH/h));h=targetH;}
-        if(w>200){h=Math.round(h*(200/w));w=200;}
+        if(w>500){h=Math.round(h*(500/w));w=500;}
         var canvas=document.createElement('canvas');
         canvas.width=w; canvas.height=h;
         var ctx=canvas.getContext('2d',{willReadFrequently:true});
