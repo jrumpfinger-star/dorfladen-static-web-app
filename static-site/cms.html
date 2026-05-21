@@ -1431,7 +1431,8 @@ document.head.appendChild(msalScript);
       if(m.preis) metaParts.push('VK: '+Number(m.preis).toFixed(2).replace('.',',')+' €');
       if(m.statt_preis) metaParts.push('Aktion: '+Number(m.statt_preis).toFixed(2).replace('.',',')+' €');
       opt.innerHTML='<div class="cms-art-opt-name">'+esc(m.b||m.produktVal||'')+'</div><div class="cms-art-opt-meta">'+esc(metaParts.join(' · '))+'</div>';
-      opt.addEventListener('click',function(){
+      opt.addEventListener('mousedown',function(e){
+        e.preventDefault(); // Prevent blur from firing before selection completes
         var row=inp.closest('.cms-ang-row');
         if(row){
           inp.value=m.b||m.produktVal||'';
