@@ -311,11 +311,12 @@
     if(!laufband.length) return;
     var tickerEl=document.getElementById('mob-ticker-content');
     if(!tickerEl) return;
-    var txt=laufband.map(function(n){
+    var sep='<span style="color:#f59e0b;margin:0 1.5em;font-size:14px">\u2605</span>';
+    var html=laufband.map(function(n){
       var t=n.dl_titel||n.title||'';
-      return t;
-    }).join('     \u2605     ');
-    tickerEl.textContent=txt;
+      return '<span>'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
+    }).join(sep);
+    tickerEl.innerHTML=html;
   }).catch(function(){});
 
   /* === PREISLISTE POPUP === */
