@@ -116,14 +116,14 @@ document.head.appendChild(msalScript);
   .cms-ang-row-num{position:absolute;top:-8px;left:10px;background:var(--c-m-pri);color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;line-height:12px;letter-spacing:.3px;text-transform:uppercase}
   .cms-ang-row-close{position:absolute;top:2px;right:4px;background:none;border:none;color:#a1a1aa;cursor:pointer;font-size:15px;line-height:1;transition:color .15s;z-index:1}
   .cms-ang-row-close:hover{color:var(--m-red)}
-  .cms-ang-fields{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+  .cms-ang-fields{display:grid;grid-template-columns:auto minmax(180px, 2.5fr) minmax(120px, 1.5fr) 60px 60px 85px;align-items:center;gap:8px;width:100%}
   .cms-ang-fields > *{min-width:0;box-sizing:border-box}
-  .cms-ang-fields .cms-input{padding:4px 6px;font-size:12px;height:30px}
-  .cms-ang-fields .cms-art-wrap{flex:2.2;min-width:0}
-  .cms-ang-fields [data-f="details"]{flex:1.5;min-width:0}
-  .cms-ang-fields .cms-price{flex:0 0 58px;text-align:right}
-  .cms-ang-fields [data-f="artikelnummer"]{flex:0 0 72px;font-size:11px}
-  .cms-ang-row-img{display:flex;align-items:center;gap:4px;flex:0 0 auto}
+  .cms-ang-fields .cms-input{padding:4px 6px;font-size:12px;height:30px;width:100%;box-sizing:border-box}
+  .cms-ang-fields .cms-art-wrap{width:100%;min-width:0}
+  .cms-ang-fields [data-f="details"]{width:100%;min-width:0}
+  .cms-ang-fields .cms-price{text-align:right;width:100%}
+  .cms-ang-fields [data-f="artikelnummer"]{font-size:11px;width:100%}
+  .cms-ang-row-img{display:flex;align-items:center;gap:4px;flex-shrink:0}
   .cms-ang-row-img input{flex:1}
   .cms-ang-img-row{display:flex;align-items:center;gap:8px;margin-top:6px}
   .cms-ang-img-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:11px;color:var(--c-m-muted);background:#fff;border:1px dashed #d1d5db;border-radius:6px;cursor:pointer;transition:all .15s}
