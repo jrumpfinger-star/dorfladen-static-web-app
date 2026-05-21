@@ -111,6 +111,36 @@ def _parse_data_url(data_url):
         return None, None
 
 
+def _extract_b64(data_url):
+    """Extract (mime, base64_string) from a data URL without decoding."""
+    if not data_url or not data_url.startswith("data:"):
+        return None, None
+    header, _, b64 = data_url.partition(",")
+    mime = header.split(":")[1].split(";")[0] if ":" in header else "image/png"
+    return mime, b64 if b64 else None
+
+
+def _b64_to_data_url(b64_str):
+    """Convert a raw base64 string from Image Column to a data URL.
+    Detects image format from the base64 header bytes."""
+    if not b64_str:
+        return ""
+    # Detect format from first bytes
+    try:
+        header_bytes = base64.b64decode(b64_str[:24])
+        if header_bytes[:4] == b"RIFF" and b"WEBP" in header_bytes[:12]:
+            mime = "image/webp"
+        elif header_bytes[:8] == b"\x89PNG\r\n\x1a\n":
+            mime = "image/png"
+        elif header_bytes[:2] == b"\xff\xd8":
+            mime = "image/jpeg"
+        else:
+            mime = "image/png"
+    except Exception:
+        mime = "image/png"
+    return f"data:{mime};base64,{b64_str}"
+
+
 def _handle_get(base_url, headers, entity_set):
     rec_id = _find_or_create_logo_record(base_url, headers, entity_set)
     if not rec_id:
@@ -118,31 +148,7 @@ def _handle_get(base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    # Try Image Column first (high quality, no size limit)
-    img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}/$value?size=full"
-    img_headers = {**headers, "Accept": "application/octet-stream"}
-    try:
-        ir = requests.get(img_url, headers=img_headers, timeout=30)
-        if ir.status_code == 200 and len(ir.content) > 100:
-            ct = ir.headers.get("Content-Type", "image/png")
-            if "webp" in ct:
-                mime = "image/webp"
-            elif "png" in ct:
-                mime = "image/png"
-            elif "jpeg" in ct or "jpg" in ct:
-                mime = "image/jpeg"
-            else:
-                mime = "image/png"
-            b64 = base64.b64encode(ir.content).decode()
-            logo_data = f"data:{mime};base64,{b64}"
-            return func.HttpResponse(
-                json.dumps({"success": True, "logo": logo_data}),
-                status_code=200, mimetype="application/json", headers=get_cors_headers()
-            )
-    except Exception:
-        pass
-    # Fallback: read from dl_wert text column (legacy)
-    rec_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+    rec_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})?$select=dl_wert,{IMAGE_COL}"
     r = requests.get(rec_url, headers=headers, timeout=30)
     if r.status_code != 200:
         return func.HttpResponse(
@@ -150,7 +156,14 @@ def _handle_get(base_url, headers, entity_set):
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
     data = r.json()
-    logo_data = data.get("dl_wert") or ""
+    # Prefer Image Column (base64 string, no size limit)
+    logo_b64 = data.get(IMAGE_COL) or ""
+    if logo_b64:
+        # Image Column stores raw base64 — detect format and build data URL
+        logo_data = _b64_to_data_url(logo_b64)
+    else:
+        # Fallback: dl_wert text column (legacy, already a data URL)
+        logo_data = data.get("dl_wert") or ""
     return func.HttpResponse(
         json.dumps({"success": True, "logo": logo_data}),
         status_code=200, mimetype="application/json", headers=get_cors_headers()
@@ -171,27 +184,24 @@ def _handle_post(req, base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    # Upload to Image Column (binary, up to 10 MB)
-    mime, raw_bytes = _parse_data_url(data_url)
-    if raw_bytes:
-        img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}"
-        upload_ct = mime or "image/png"
-        img_headers = {**headers, "Content-Type": upload_ct, "If-Match": "*",
-                       "x-ms-file-name": f"logo.{upload_ct.split('/')[-1]}"}
-        ir = requests.patch(img_url, headers=img_headers, data=raw_bytes, timeout=60)
-        if ir.status_code in (200, 204):
+    # Extract base64 from data URL and save to Image Column (JSON field)
+    _, b64_str = _extract_b64(data_url)
+    patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+    patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
+    if b64_str:
+        # Save to Image Column (base64 as JSON string, up to 10 MB)
+        payload = {IMAGE_COL: b64_str, "dl_wert": data_url[:10000] if len(data_url) <= 10000 else ""}
+        r = requests.patch(patch_url, headers=patch_headers, json=payload, timeout=60)
+        if r.status_code in (200, 204):
             return func.HttpResponse(
-                json.dumps({"success": True, "size": len(raw_bytes), "storage": "image_column"}),
+                json.dumps({"success": True, "size": len(b64_str), "storage": "image_column"}),
                 status_code=200, mimetype="application/json", headers=get_cors_headers()
             )
-        # Image Column failed — fall back to dl_wert
-        err_detail = f"Image column: {ir.status_code} {ir.text[:200]}"
+        err_detail = f"Image column: {r.status_code} {r.text[:200]}"
     else:
         err_detail = "Could not parse data URL"
     # Fallback: save to dl_wert (limited to ~10K chars)
     if len(data_url) <= 10000:
-        patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
-        patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
         r = requests.patch(patch_url, headers=patch_headers, json={"dl_wert": data_url}, timeout=30)
         if r.status_code in (200, 204):
             return func.HttpResponse(
