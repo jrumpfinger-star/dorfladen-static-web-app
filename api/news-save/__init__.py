@@ -6,15 +6,13 @@ import requests
 from datetime import datetime
 
 
+DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
+DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
+
+
 def _env_candidates():
-    items = []
-    for setting_name in ("DV_DEFAULT_URL", "DV_DEV_URL"):
-        url = os.environ.get(setting_name, "").strip()
-        if url and not any(x[1] == url for x in items):
-            items.append((setting_name, url))
-    if not items:
-        items.append(("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com"))
-    return items
+    url = os.environ.get(DEFAULT_URL_SETTING, "").strip() or DEFAULT_URL_FALLBACK
+    return [(DEFAULT_URL_SETTING, url)]
 
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):

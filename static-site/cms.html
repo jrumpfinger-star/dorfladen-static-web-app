@@ -1262,6 +1262,7 @@ document.head.appendChild(msalScript);
             statt_preis:(a.dl_statt_preis!=null?a.dl_statt_preis:a.old_price),
             artikelnummer:a.dl_artikelnummer||a.artikelnummer||'',
             bild_data:a.dl_bild_base64||a.bild_data||'',
+            dl_werbebildid:a.dl_werbebildid||'',
             aktion_titel:a.dl_aktion_titel||a.aktion_titel||'',
             aktion_id:a.dl_aktion_id||a.aktion_id||'',
             gueltig_von:toIsoDateOnly(a.dl_gueltig_von||a.valid_from||a.gueltig_von||''),
@@ -1303,6 +1304,7 @@ document.head.appendChild(msalScript);
       +'<div class="cms-ang-fields">'
       +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
       +'<input type="hidden" data-f="bild_data" value="'+esc((item&&item.bild_data)||'')+'">'
+      +'<input type="hidden" data-f="dl_werbebildid" value="'+esc((item&&item.dl_werbebildid)||'')+'">'
       +'<div class="cms-ang-row-img">'
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
       +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
@@ -1565,7 +1567,8 @@ document.head.appendChild(msalScript);
         preis:preis,
         statt_preis:statt,
         artikelnummer:(row.querySelector('[data-f="artikelnummer"]').value||'').trim(),
-        bild_data:(row.querySelector('[data-f="bild_data"]').value||'').trim()
+        bild_data:(row.querySelector('[data-f="bild_data"]').value||'').trim(),
+        dl_werbebildid:(row.querySelector('[data-f="dl_werbebildid"]').value||'').trim()
       });
     });
     if(hasError){toast('Bitte VK und Aktionspreis für alle Artikel eintragen','warn');return;}
@@ -1585,28 +1588,42 @@ document.head.appendChild(msalScript);
         }
       }
 
-      items.forEach(function(it,idx){
-        var body={
-          dl_produkt:it.produkt,
-          dl_details:it.details||null,
-          dl_preis:it.preis,
-          dl_statt_preis:it.statt_preis,
-          dl_aktion_id:aktId,
-          dl_aktion_titel:titel,
-          dl_gueltig_von:von||null,
-          dl_gueltig_bis:bis||null,
-          dl_artikelnummer:it.artikelnummer||null,
-          dl_sortierung:idx+1,
-          dl_status:101001
-        };
-        if(it.id) promises.push(fetch(API+'/angebote/'+it.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
-        else promises.push(fetch(API+'/angebote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
-        // Persist image to werbebilder table so it shows in popup/website
+      // Step 1: Upsert werbebilder first to get IDs, then save angebote with relation
+      var bildPromises=[];
+      items.forEach(function(it){
         if(it.bild_data && it.artikelnummer){
-          promises.push(fetch(API+'/werbebilder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dl_artikelnummer:it.artikelnummer,dl_bild_base64:it.bild_data})}));
+          bildPromises.push(
+            fetch(API+'/werbebilder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dl_artikelnummer:it.artikelnummer,dl_bild_base64:it.bild_data})})
+            .then(function(r){return r.json();})
+            .then(function(j){it._werbebildid=j.id||'';})
+            .catch(function(){it._werbebildid='';})
+          );
+        } else if(it.dl_werbebildid){
+          it._werbebildid=it.dl_werbebildid;
         }
       });
-      return Promise.all(promises);
+      return Promise.all(bildPromises).then(function(){
+        // Step 2: Save angebote with werbebild relation
+        items.forEach(function(it,idx){
+          var body={
+            dl_produkt:it.produkt,
+            dl_details:it.details||null,
+            dl_preis:it.preis,
+            dl_statt_preis:it.statt_preis,
+            dl_aktion_id:aktId,
+            dl_aktion_titel:titel,
+            dl_gueltig_von:von||null,
+            dl_gueltig_bis:bis||null,
+            dl_artikelnummer:it.artikelnummer||null,
+            dl_sortierung:idx+1,
+            dl_status:101001
+          };
+          if(it._werbebildid) body.dl_werbebildid=it._werbebildid;
+          if(it.id) promises.push(fetch(API+'/angebote/'+it.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
+          else promises.push(fetch(API+'/angebote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
+        });
+        return Promise.all(promises);
+      });
     }).then(function(results){
       var ok=results.every(function(r){return r&&r.ok;});
       if(!ok) throw new Error('Einige Anfragen fehlgeschlagen');

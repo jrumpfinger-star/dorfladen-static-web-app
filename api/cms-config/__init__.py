@@ -5,21 +5,19 @@ import msal
 import requests
 
 
+DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
+DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
+
+
 def _env_candidates():
-    items = []
-    for setting_name in ("DV_DEFAULT_URL", "DV_DEV_URL"):
-        url = os.environ.get(setting_name, "").strip()
-        if url and not any(x[1] == url for x in items):
-            items.append((setting_name, url))
-    if not items:
-        items.append(("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com"))
-    return items
+    url = os.environ.get(DEFAULT_URL_SETTING, "").strip() or DEFAULT_URL_FALLBACK
+    return [(DEFAULT_URL_SETTING, url)]
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
     client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
-    target_url = os.environ.get(url_setting_name, "https://org392a4789.crm16.dynamics.com")
+    target_url = os.environ.get(url_setting_name, DEFAULT_URL_FALLBACK)
     if not client_secret:
         return "FEHLER_SECRET_FEHLT"
     try:

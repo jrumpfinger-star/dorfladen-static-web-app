@@ -5,21 +5,16 @@ import msal
 import requests
 
 
-def _env_candidates():
-    items = []
-    for setting_name in ("DV_DEFAULT_URL", "DV_DEV_URL"):
-        url = os.environ.get(setting_name, "").strip()
-        if url and not any(x[1] == url for x in items):
-            items.append((setting_name, url))
-    if not items:
-        items.append(("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com"))
-    return items
+DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
+DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
+ENTITY_SET = "dl_angebotes"
 
-def get_token(url_setting_name="DV_DEFAULT_URL"):
+
+def get_token():
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
     client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
-    target_url = os.environ.get(url_setting_name, "https://org392a4789.crm16.dynamics.com")
+    target_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
     if not client_secret:
         return "FEHLER_SECRET_FEHLT"
     try:
@@ -33,8 +28,13 @@ def get_token(url_setting_name="DV_DEFAULT_URL"):
     except Exception as e:
         return f"FEHLER: {str(e)}"
 
-def get_headers(url_setting_name="DV_DEFAULT_URL"):
-    token = get_token(url_setting_name)
+
+def _base_url():
+    return os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
+
+
+def get_headers():
+    token = get_token()
     return {
         "Authorization": f"Bearer {token}",
         "OData-MaxVersion": "4.0",
@@ -42,36 +42,6 @@ def get_headers(url_setting_name="DV_DEFAULT_URL"):
         "Accept": "application/json",
         "Content-Type": "application/json; charset=utf-8"
     }
-
-
-def _resolve_entity_set(base_url, headers, logical_names, fallback_entity_sets):
-    for logical_name in logical_names:
-        meta_url = f"{base_url}/api/data/v9.2/EntityDefinitions(LogicalName='{logical_name}')?$select=EntitySetName"
-        r = requests.get(meta_url, headers=headers, timeout=30)
-        if r.status_code == 200:
-            entity_set = (r.json() or {}).get("EntitySetName")
-            if entity_set:
-                return entity_set
-        elif r.status_code not in (404,):
-            break
-
-    for entity_set in fallback_entity_sets:
-        probe_url = f"{base_url}/api/data/v9.2/{entity_set}?$select={logical_names[0]}id&$top=1"
-        r = requests.get(probe_url, headers=headers, timeout=30)
-        if r.status_code == 200:
-            return entity_set
-    return None
-
-
-def _pick_env_and_entity_set():
-    logical_names = ["dl_angebot", "dl_angebote"]
-    fallback_entity_sets = ["dl_angebotes", "dl_angebots", "dl_angebot"]
-    for env_name, base_url in _env_candidates():
-        headers = get_headers(env_name)
-        entity_set = _resolve_entity_set(base_url, headers, logical_names, fallback_entity_sets)
-        if entity_set:
-            return env_name, base_url, headers, entity_set
-    return None, None, None, None
 
 
 def _build_offer_payload(body):
@@ -114,44 +84,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         method = req.method.upper()
         offer_id = req.route_params.get("id")
+        base_url = _base_url()
+        headers = get_headers()
 
         if method == "GET":
-            query = "?$filter=dl_status eq 101001&$orderby=dl_aktion_id desc,dl_sortierung asc,dl_produkt asc"
-            logical_names = ["dl_angebot", "dl_angebote"]
-            fallback_entity_sets = ["dl_angebotes", "dl_angebots", "dl_angebot"]
-            r = None
-
-            for env_name, base_url in _env_candidates():
-                headers = get_headers(env_name)
-                entity_set = _resolve_entity_set(base_url, headers, logical_names, fallback_entity_sets)
-                if not entity_set:
-                    continue
-
-                url = f"{base_url}/api/data/v9.2/{entity_set}{query}"
-                candidate = requests.get(url, headers=headers, timeout=30)
-                if candidate.status_code == 200:
-                    # Bevorzuge eine Umgebung mit echten Datensätzen
-                    if (candidate.json() or {}).get("value"):
-                        r = candidate
-                        break
-                    if r is None:
-                        r = candidate
-                elif candidate.status_code not in (404,):
-                    if r is None:
-                        r = candidate
-
-            if r is None:
-                return func.HttpResponse(
-                    json.dumps({"success": False, "error": "Dataverse request failed"}, ensure_ascii=False),
-                    status_code=500,
-                    mimetype="application/json",
-                    headers=get_cors_headers()
-                )
+            # Expand linked werbebild to include image data
+            expand = "&$expand=dl_WerbebildId($select=dl_werbebildid,dl_artikelnummer,dl_bild_base64,dl_download_url)"
+            url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_status eq 101001&$orderby=dl_aktion_id desc,dl_sortierung asc,dl_produkt asc{expand}"
+            r = requests.get(url, headers=headers, timeout=30)
 
             if r.status_code == 200:
                 data = r.json()
                 angebote_list = []
                 for item in data.get("value", []):
+                    wb = item.get("dl_WerbebildId") or {}
                     angebote_list.append({
                         "id": item.get("dl_angeboteid"),
                         "dl_angeboteid": item.get("dl_angeboteid"),
@@ -182,8 +128,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "dl_sortierung": item.get("dl_sortierung", 0),
                         "status": item.get("dl_status"),
                         "dl_status": item.get("dl_status"),
-                        "bild_data": item.get("dl_bild_base64", "") or item.get("dl_bild_url", ""),
-                        "dl_bild_base64": item.get("dl_bild_base64", "") or item.get("dl_bild_url", "")
+                        "bild_data": wb.get("dl_bild_base64", "") or wb.get("dl_download_url", ""),
+                        "dl_bild_base64": wb.get("dl_bild_base64", ""),
+                        "dl_download_url": wb.get("dl_download_url", ""),
+                        "dl_werbebildid": wb.get("dl_werbebildid", "") or item.get("_dl_werbebildid_value", ""),
                     })
                 # Optional date filter: ?filter=today returns only currently valid offers
                 filter_param = req.params.get("filter", "").lower()
@@ -196,9 +144,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         von = (a.get("dl_gueltig_von") or "")[:10]
                         bis = (a.get("dl_gueltig_bis") or "")[:10]
                         if von and von > today:
-                            continue  # not yet valid
+                            continue
                         if bis and bis < today:
-                            continue  # expired
+                            continue
                         filtered.append(a)
                     angebote_list = filtered
 
@@ -220,31 +168,38 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             body = req.get_json()
             payload = _build_offer_payload(body)
 
-            env_name, base_url, headers, entity_set = _pick_env_and_entity_set()
-            if not entity_set:
-                return func.HttpResponse(
-                    json.dumps({"success": False, "error": "Dataverse entity set not found"}, ensure_ascii=False),
-                    status_code=500,
-                    mimetype="application/json",
-                    headers=get_cors_headers()
-                )
+            # Optionally bind werbebild lookup
+            werbebild_id = body.get("dl_werbebildid") or body.get("werbebildid")
+            if werbebild_id:
+                payload["dl_WerbebildId@odata.bind"] = f"/dl_werbebilds({werbebild_id})"
 
+            post_headers = {**headers, "Prefer": "return=representation"}
             r = requests.post(
-                f"{base_url}/api/data/v9.2/{entity_set}",
-                headers=headers,
+                f"{base_url}/api/data/v9.2/{ENTITY_SET}",
+                headers=post_headers,
                 json=payload,
                 timeout=30
             )
             if r.status_code in (200, 201, 204):
+                new_id = ""
+                if r.status_code != 204:
+                    try:
+                        new_id = r.json().get("dl_angeboteid", "")
+                    except:
+                        pass
+                if not new_id:
+                    eid = r.headers.get("OData-EntityId", "")
+                    if "(" in eid:
+                        new_id = eid.split("(")[-1].rstrip(")")
                 return func.HttpResponse(
-                    json.dumps({"success": True}, ensure_ascii=False),
+                    json.dumps({"success": True, "id": new_id}, ensure_ascii=False),
                     status_code=200,
                     mimetype="application/json",
                     headers=get_cors_headers()
                 )
 
             return func.HttpResponse(
-                json.dumps({"success": False, "error": f"Dataverse error: {r.status_code}", "details": r.text}, ensure_ascii=False),
+                json.dumps({"success": False, "error": f"Dataverse error: {r.status_code}", "details": r.text[:300]}, ensure_ascii=False),
                 status_code=r.status_code,
                 mimetype="application/json",
                 headers=get_cors_headers()
@@ -262,36 +217,29 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             body = req.get_json()
             payload = _build_offer_payload(body)
 
-            logical_names = ["dl_angebot", "dl_angebote"]
-            fallback_entity_sets = ["dl_angebotes", "dl_angebots", "dl_angebot"]
-            last_response = None
-            for env_name, base_url in _env_candidates():
-                headers = get_headers(env_name)
-                entity_set = _resolve_entity_set(base_url, headers, logical_names, fallback_entity_sets)
-                if not entity_set:
-                    continue
-                r = requests.patch(
-                    f"{base_url}/api/data/v9.2/{entity_set}({offer_id})",
-                    headers=headers,
-                    json=payload,
-                    timeout=30
-                )
-                last_response = r
-                if r.status_code in (200, 204):
-                    return func.HttpResponse(
-                        json.dumps({"success": True}, ensure_ascii=False),
-                        status_code=200,
-                        mimetype="application/json",
-                        headers=get_cors_headers()
-                    )
-                if r.status_code not in (404,):
-                    break
+            # Optionally bind or unbind werbebild lookup
+            werbebild_id = body.get("dl_werbebildid") or body.get("werbebildid")
+            if werbebild_id:
+                payload["dl_WerbebildId@odata.bind"] = f"/dl_werbebilds({werbebild_id})"
 
-            code = last_response.status_code if last_response is not None else 500
-            txt = last_response.text if last_response is not None else "Dataverse request failed"
+            patch_headers = {**headers, "If-Match": "*"}
+            r = requests.patch(
+                f"{base_url}/api/data/v9.2/{ENTITY_SET}({offer_id})",
+                headers=patch_headers,
+                json=payload,
+                timeout=30
+            )
+            if r.status_code in (200, 204):
+                return func.HttpResponse(
+                    json.dumps({"success": True}, ensure_ascii=False),
+                    status_code=200,
+                    mimetype="application/json",
+                    headers=get_cors_headers()
+                )
+
             return func.HttpResponse(
-                json.dumps({"success": False, "error": f"Dataverse error: {code}", "details": txt}, ensure_ascii=False),
-                status_code=code,
+                json.dumps({"success": False, "error": f"Dataverse error: {r.status_code}", "details": r.text[:300]}, ensure_ascii=False),
+                status_code=r.status_code,
                 mimetype="application/json",
                 headers=get_cors_headers()
             )
@@ -305,35 +253,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     headers=get_cors_headers()
                 )
 
-            logical_names = ["dl_angebot", "dl_angebote"]
-            fallback_entity_sets = ["dl_angebotes", "dl_angebots", "dl_angebot"]
-            last_response = None
-            for env_name, base_url in _env_candidates():
-                headers = get_headers(env_name)
-                entity_set = _resolve_entity_set(base_url, headers, logical_names, fallback_entity_sets)
-                if not entity_set:
-                    continue
-                r = requests.delete(
-                    f"{base_url}/api/data/v9.2/{entity_set}({offer_id})",
-                    headers=headers,
-                    timeout=30
+            del_headers = {**headers, "If-Match": "*"}
+            r = requests.delete(
+                f"{base_url}/api/data/v9.2/{ENTITY_SET}({offer_id})",
+                headers=del_headers,
+                timeout=30
+            )
+            if r.status_code in (200, 204):
+                return func.HttpResponse(
+                    json.dumps({"success": True}, ensure_ascii=False),
+                    status_code=200,
+                    mimetype="application/json",
+                    headers=get_cors_headers()
                 )
-                last_response = r
-                if r.status_code in (200, 204):
-                    return func.HttpResponse(
-                        json.dumps({"success": True}, ensure_ascii=False),
-                        status_code=200,
-                        mimetype="application/json",
-                        headers=get_cors_headers()
-                    )
-                if r.status_code not in (404,):
-                    break
 
-            code = last_response.status_code if last_response is not None else 500
-            txt = last_response.text if last_response is not None else "Dataverse request failed"
             return func.HttpResponse(
-                json.dumps({"success": False, "error": f"Dataverse error: {code}", "details": txt}, ensure_ascii=False),
-                status_code=code,
+                json.dumps({"success": False, "error": f"Dataverse error: {r.status_code}", "details": r.text[:300]}, ensure_ascii=False),
+                status_code=r.status_code,
                 mimetype="application/json",
                 headers=get_cors_headers()
             )

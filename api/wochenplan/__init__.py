@@ -4,11 +4,11 @@ import os
 import msal
 import requests
 
-def get_token(url_setting_name="DV_DEV_URL"):
+def get_token(url_setting_name="DV_DEFAULT_URL"):
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
     client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
-    target_url = os.environ.get(url_setting_name, "https://org392a4789.crm16.dynamics.com")
+    target_url = os.environ.get(url_setting_name, "https://orgab4e2f00.crm16.dynamics.com")
     if not client_secret:
         return "FEHLER_SECRET_FEHLT"
     try:
@@ -22,7 +22,7 @@ def get_token(url_setting_name="DV_DEV_URL"):
     except Exception as e:
         return f"FEHLER: {str(e)}"
 
-def get_headers(url_setting_name="DV_DEV_URL"):
+def get_headers(url_setting_name="DV_DEFAULT_URL"):
     token = get_token(url_setting_name)
     return {
         "Authorization": f"Bearer {token}",
@@ -75,8 +75,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     record_id = req.route_params.get("id")
 
     try:
-        headers = get_headers("DV_DEV_URL")
-        dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
+        headers = get_headers("DV_DEFAULT_URL")
+        dev_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
 
         if req.method == "GET":
             from datetime import datetime

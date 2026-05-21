@@ -126,16 +126,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 status_code=status, mimetype="application/json", headers=get_cors_headers()
             )
 
-        # Load active Sonderangebote from ALL environments
+        # Load active Sonderangebote from Default environment
         angebote_map = _load_active_angebote(default_url, hdrs)
-        # Also check DEV environment (offers are often stored there)
-        dev_url = os.environ.get("DV_DEV_URL", "").strip()
-        if dev_url and dev_url != default_url:
-            dev_hdrs = get_headers("DV_DEV_URL")
-            dev_angebote = _load_active_angebote(dev_url, dev_hdrs)
-            for k, v in dev_angebote.items():
-                if k not in angebote_map:
-                    angebote_map[k] = v
 
         # Cutoff: 6 months ago
         cutoff_date = datetime.utcnow() - timedelta(days=183)
