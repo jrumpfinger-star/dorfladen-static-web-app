@@ -654,8 +654,8 @@ document.head.appendChild(msalScript);
           <div class="cms-card" style="margin-top:14px">
             <div class="cms-card-header" style="background:#1e40af">&#128247; Hero-Banner</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
-              <label style="font-size:12px;font-weight:600;color:#374151">Hero Overlay-Abdunklung: <span id="hcfg-heroOverlay-val">82</span>%
-                <input type="range" id="hcfg-heroOverlay" min="20" max="100" value="82" style="width:100%" oninput="document.getElementById('hcfg-heroOverlay-val').textContent=this.value">
+              <label style="font-size:12px;font-weight:600;color:#374151">Hero Overlay-Abdunklung: <span id="hcfg-heroOverlay-val">50</span>%
+                <input type="range" id="hcfg-heroOverlay" min="0" max="100" value="50" style="width:100%" oninput="document.getElementById('hcfg-heroOverlay-val').textContent=this.value">
               </label>
               <label style="font-size:12px;font-weight:600;color:#374151">&Uuml;berschrift-Schriftgr&ouml;&szlig;e: <span id="hcfg-heroFontSize-val">2</span>rem
                 <input type="range" id="hcfg-heroFontSize" min="1.2" max="3.5" step="0.1" value="2" style="width:100%" oninput="document.getElementById('hcfg-heroFontSize-val').textContent=this.value">
@@ -2030,7 +2030,8 @@ document.head.appendChild(msalScript);
     wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',
     wpShowCard:true,wpShowOeko:true,wpShowVorbestell:true,wpShowPhone:true,wpShowWaShare:true,wpShowWaInfo:true,
     wpDishFontSize:0.92,wpPriceFontSize:0.92,
-    wpHomeTemplate:'classic-red',wpFlyerTemplate:'classic-red'
+    wpHomeTemplate:'classic-red',wpFlyerTemplate:'classic-red',
+    heroOverlay:50,heroFontSize:2
   };
   function hpCfgGet(){
     try{var s=localStorage.getItem(HPCFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in HPCFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:HPCFG_DEFAULTS[k];return r;}}catch(e){}
@@ -2054,6 +2055,9 @@ document.head.appendChild(msalScript);
     ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);
     });
+    ['heroOverlay','heroFontSize'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);
+    });
     var ht=document.getElementById('hcfg-wpHomeTemplate');if(ht)c.wpHomeTemplate=ht.value;
     var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)c.wpFlyerTemplate=ft.value;
     return c;
@@ -2067,6 +2071,9 @@ document.head.appendChild(msalScript);
     });
     ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]||HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
+    });
+    ['heroOverlay','heroFontSize'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]!=null?c[k]:HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
     });
     var ht=document.getElementById('hcfg-wpHomeTemplate');if(ht)ht.value=c.wpHomeTemplate||'classic-red';
     var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)ft.value=c.wpFlyerTemplate||'classic-red';

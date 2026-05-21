@@ -110,6 +110,35 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
   }catch(e){}
 })();
 
+/* === Hero Overlay from CMS Design Config === */
+(function(){
+  function applyHeroCfg(c){
+    if(!c) return;
+    var ov=c.heroOverlay!=null?c.heroOverlay:50;
+    var leftOp=(ov/100).toFixed(2);
+    var rightOp=Math.max(0,(ov/100-0.45)).toFixed(2);
+    var css='.mob-hero::before{background:linear-gradient(to right,rgba(250,249,246,'+leftOp+') 40%,rgba(250,249,246,'+rightOp+') 100%)!important}';
+    if(c.heroFontSize&&c.heroFontSize!==2) css+='.mob-hero h1{font-size:'+c.heroFontSize+'rem!important}';
+    var s=document.getElementById('hero-overlay-style');
+    if(!s){s=document.createElement('style');s.id='hero-overlay-style';document.head.appendChild(s);}
+    s.textContent=css;
+  }
+  try{
+    var raw=localStorage.getItem('dl_hp_design_config');
+    if(raw) applyHeroCfg(JSON.parse(raw));
+  }catch(e){}
+  fetch(API_BASE+'/cms-config')
+    .then(function(r){return r.json();})
+    .then(function(res){
+      var d=(res&&res.data)?res.data:res;
+      var hc=d&&d['hp_design_config'];
+      if(hc&&typeof hc==='object'){
+        applyHeroCfg(hc);
+        try{localStorage.setItem('dl_hp_design_config',JSON.stringify(hc));}catch(e){}
+      }
+    }).catch(function(){});
+})();
+
 /* === Öffnungsstatus: Jetzt geöffnet / geschlossen === */
 (function(){
   var schedule = {
