@@ -2701,10 +2701,13 @@ document.head.appendChild(msalScript);
     reader.onload=function(e){
       var img=new Image();
       img.onload=function(){
-        var MAX_H=120, MAX_W=400, MAX_LEN=9500;
+        var MAX_LEN=9500;
+        /* Scale to 2x retina of display size (36px → 72px) for sharpness */
+        var DISPLAY_H=36, RETINA=2;
+        var targetH=DISPLAY_H*RETINA;
         var w=img.width, h=img.height;
-        if(h>MAX_H){w=Math.round(w*(MAX_H/h));h=MAX_H;}
-        if(w>MAX_W){h=Math.round(h*(MAX_W/w));w=MAX_W;}
+        if(h>targetH){w=Math.round(w*(targetH/h));h=targetH;}
+        if(w>200){h=Math.round(h*(200/w));w=200;}
         var canvas=document.createElement('canvas');
         canvas.width=w; canvas.height=h;
         var ctx=canvas.getContext('2d',{willReadFrequently:true});
@@ -2732,24 +2735,15 @@ document.head.appendChild(msalScript);
         srcCanvas.width=w;srcCanvas.height=h;
         var srcCtx=srcCanvas.getContext('2d');
         srcCtx.drawImage(canvas,0,0);
-        var dataUrl=canvas.toDataURL('image/png');
-        /* PNG too large? Try scaling down while keeping transparency */
-        var pngScales=[0.7,0.5,0.35];
-        for(var pi=0;pi<pngScales.length && dataUrl.length>MAX_LEN;pi++){
-          canvas.width=Math.round(w*pngScales[pi]);canvas.height=Math.round(h*pngScales[pi]);
-          ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(srcCanvas,0,0,canvas.width,canvas.height);
-          dataUrl=canvas.toDataURL('image/png');
+        /* Try WebP at full size first (best quality) */
+        var dataUrl;
+        var webpQualities=[0.9,0.8,0.7,0.6,0.5,0.4,0.25];
+        for(var wq=0;wq<webpQualities.length;wq++){
+          dataUrl=canvas.toDataURL('image/webp',webpQualities[wq]);
+          if(dataUrl.length<=MAX_LEN) break;
         }
-        /* Still too large? Try WebP with decreasing quality at full size */
-        var webpQualities=[0.8,0.6,0.4,0.25,0.15];
-        if(dataUrl.length>MAX_LEN){
-          canvas.width=w;canvas.height=h;ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.clearRect(0,0,w,h);ctx.drawImage(srcCanvas,0,0,w,h);
-          for(var wq=0;wq<webpQualities.length && dataUrl.length>MAX_LEN;wq++){
-            dataUrl=canvas.toDataURL('image/webp',webpQualities[wq]);
-          }
-        }
-        /* WebP still too large? Scale down + try qualities */
-        var webpScales=[0.7,0.5,0.35];
+        /* WebP still too large? Scale down slightly + try qualities */
+        var webpScales=[0.85,0.7,0.55];
         for(var wi=0;wi<webpScales.length && dataUrl.length>MAX_LEN;wi++){
           canvas.width=Math.round(w*webpScales[wi]);canvas.height=Math.round(h*webpScales[wi]);
           ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(srcCanvas,0,0,canvas.width,canvas.height);
