@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 90" width="100%" height="100%">
+  <!-- ── REBUILD 2: MINIMALIST BOTANICAL CIRCLE (Inspiration Image 2 / Option 1) ── -->
+  <!-- Puristisch, hochmodern, skandinavisch clean. -->
+  <!-- Kontraststarke, fette, elfenbeinfarbene Typografie für kompromisslose Lesbarkeit. -->
+
+  <!-- ── DAS MINIMAL-ICON (Zentrum bei x=48, y=45) ── -->
+  <g transform="translate(10, 0)">
+    <g transform="translate(48, 45)">
+      <!-- Filigraner, heller Begrenzungskreis -->
+      <circle cx="0" cy="0" r="32" fill="none" stroke="#e0b880" stroke-width="1.5" />
+      
+      <!-- 5 stilisierte Blätter in harmonischer, moderner Fächerform (Kein Propeller) -->
+      <!-- Mittleres Blatt (Smaragdgrün) -->
+      <path d="M 0 5 C -4 -5, -4 -18, 0 -22 C 4 -18, 4 -5, 0 5 Z" fill="#5ea88a" />
+      
+      <!-- Blätter links (Salbeigrün & Mint) -->
+      <path d="M -2 7 C -10 1, -12 -8, -6 -13 C -2 -10, -2 -2, -2 7 Z" fill="#3d7e6a" transform="rotate(-30, -2, 7)" />
+      <path d="M -3 9 C -14 7, -15 0, -9 -4 C -4 -3, -3 3, -3 9 Z" fill="#a2dbbe" transform="rotate(-60, -3, 9)" opacity="0.9" />
+      
+      <!-- Blätter rechts (Salbeigrün & Mint) -->
+      <path d="M 2 7 C 10 1, 12 -8, 6 -13 C 2 -10, 2 -2, 2 7 Z" fill="#3d7e6a" transform="rotate(30, 2, 7)" />
+      <path d="M 3 9 C 14 7, 15 0, 9 -4 C 4 -3, 3 3, 3 9 Z" fill="#a2dbbe" transform="rotate(60, 3, 9)" opacity="0.9" />
+
+      <!-- Minimaler, feiner Blütenpunkt unten -->
+      <circle cx="0" cy="12" r="2.2" fill="#e0b880" />
+    </g>
+  </g>
+
+  <!-- ── TYPOGRAFIE IN ELFENBEIN & WEICHGOLD ── -->
+  <g transform="translate(112, 0)">
+    <!-- DORFLADEN in fettem, warmem Elfenbein-Weiß -->
+    <text x="0" y="44" 
+          font-family="system-ui, -apple-system, sans-serif" 
+          font-size="28" 
+          font-weight="900" 
+          fill="#faf9f6" 
+          letter-spacing="0.5">DORFLADEN</text>
+          
+    <!-- OBERORNAU in harmonischem Weichgold -->
+    <text x="2" y="62" 
+          font-family="system-ui, -apple-system, sans-serif" 
+          font-size="13" 
+          font-weight="800" 
+          fill="#e0b880" 
+          letter-spacing="4">OBERORNAU</text>
+  </g>
+</svg>
