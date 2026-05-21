@@ -2753,6 +2753,20 @@ document.head.appendChild(msalScript);
           queue.push(qx);queue.push(qy-1);
           queue.push(qx);queue.push(qy+1);
         }
+        
+        /* Zweiter Durchlauf: geschlossene weiße Löcher (z.B. in O, R, A, D) transparent machen */
+        for(var i=0;i<px.length;i+=4){
+          var r=px[i],g=px[i+1],b=px[i+2],a=px[i+3];
+          if(a===0) continue;
+          var bright=(r+g+b)/3;
+          var maxDiff=Math.max(Math.abs(r-g),Math.abs(g-b),Math.abs(r-b));
+          /* Wenn der Pixel fast reinweiß ist (>240) und keine Farbe hat, machen wir ihn transparent */
+          if(bright>240 && maxDiff<10){
+            px[i+3]=0;
+            changed=true;
+          }
+        }
+        
         if(changed){ctx.putImageData(idata,0,0);}
         /* Use cleaned canvas as source for all subsequent scaling */
         var srcCanvas=document.createElement('canvas');
