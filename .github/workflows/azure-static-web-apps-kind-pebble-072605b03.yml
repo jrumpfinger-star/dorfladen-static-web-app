@@ -54,6 +54,24 @@ jobs:
           git diff --cached --quiet || git commit -m "chore: bump to v$(jq -r '.version' static-site/version.json) [skip ci]"
           git push || true
 
+  set_preview_env_settings:
+    needs: build_and_deploy_job
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    name: Set Preview Dev-DB Settings
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Set DV_DEFAULT_URL to Dev environment
+        run: |
+          az staticwebapp appsettings set \
+            --name dorfladen-website \
+            --environment-name ${{ github.event.pull_request.number }} \
+            --setting-names "DV_DEFAULT_URL=https://org392a4789.crm16.dynamics.com"
+          echo "Preview environment configured to use DEV Dataverse"
+
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
