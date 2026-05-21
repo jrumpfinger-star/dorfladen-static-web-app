@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 90" width="100%" height="100%">
+  <!-- ── ALTERNATIVE 14: DUOTONE MINT-PASTELL ── -->
+  <!-- Das Blütenblatt als "O". Schrift in leuchtend sanftem Mint-Pastell. -->
+  <!-- Sehr modern, schick und 100% kontrastreich auf dunklem Grund. -->
+
+  <defs>
+    <linearGradient id="duoPetalGrad1" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e463a" />
+      <stop offset="100%" stop-color="#3d7e6a" />
+    </linearGradient>
+    <linearGradient id="duoPetalGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3d7e6a" />
+      <stop offset="100%" stop-color="#5ea88a" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(10, 5)">
+    <!-- ── TEXT "D" ── -->
+    <text x="5" y="46" font-family="system-ui, -apple-system, sans-serif" font-size="34" font-weight="900" fill="#dcfce7" letter-spacing="1">D</text>
+
+    <!-- ── DAS "O" ALS INTEGRATIVE 5-BLATT-BLÜTE (Zentrum bei x=50, y=34) ── -->
+    <g transform="translate(48, 34)" scale="0.8">
+      <!-- Blatt 1 -->
+      <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" fill="url(#duoPetalGrad1)" />
+      <!-- Blatt 2 -->
+      <g transform="rotate(72)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" fill="url(#duoPetalGrad2)" />
+      </g>
+      <!-- Blatt 3 -->
+      <g transform="rotate(144)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" fill="url(#duoPetalGrad1)" />
+      </g>
+      <!-- Blatt 4 -->
+      <g transform="rotate(216)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" fill="url(#duoPetalGrad2)" />
+      </g>
+      <!-- Blatt 5 -->
+      <g transform="rotate(288)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" fill="url(#duoPetalGrad1)" />
+      </g>
+      <circle cx="0" cy="0" r="3" fill="#ffffff" />
+    </g>
+
+    <!-- ── RESTLICHER TEXT "RFLADEN" (Startet nach der Blüte bei x=72) ── -->
+    <text x="72" y="46" font-family="system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="34" font-weight="900" fill="#dcfce7" letter-spacing="1">RFLADEN</text>
+
+    <!-- ── "OBERORNAU" ── -->
+    <text x="76" y="68" font-family="system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="800" fill="#bd8b5c" letter-spacing="7">OBERORNAU</text>
+  </g>
+</svg>
