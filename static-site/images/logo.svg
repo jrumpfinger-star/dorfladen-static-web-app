@@ -1,69 +1,84 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 90" width="100%" height="100%">
   <defs>
-    <!-- Premium Farbverlauf für die Blütenblätter -->
-    <linearGradient id="leafGrad1" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#123026" />
-      <stop offset="100%" stop-color="#1e463a" />
-    </linearGradient>
-    <linearGradient id="leafGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#1e463a" />
-      <stop offset="100%" stop-color="#3d7e6a" />
-    </linearGradient>
-    <linearGradient id="leafGrad3" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#3d7e6a" />
+    <!-- Premium Farbverlauf 1 (Warmes, frisches Maigrün zu Smaragd) -->
+    <linearGradient id="petalGrad1" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2d7a5e" />
       <stop offset="100%" stop-color="#5ea88a" />
     </linearGradient>
     
-    <!-- Subtiler Schatten für Tiefenwirkung -->
-    <filter id="gentleShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.12" />
+    <!-- Premium Farbverlauf 2 (Tiefes Tannengrün zu frischem Salbeigrün) -->
+    <linearGradient id="petalGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#123026" />
+      <stop offset="100%" stop-color="#3d7e6a" />
+    </linearGradient>
+
+    <!-- Subtiler Schatten für plastische Tiefenwirkung (State-of-the-Art) -->
+    <filter id="modernShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="1" dy="1.5" stdDeviation="1.5" flood-color="#0e241d" flood-opacity="0.15" />
     </filter>
   </defs>
 
-  <g transform="translate(10, 5)">
-    <!-- ── BLÜTENBLÄTTER / LEAF ICON (Modern Line- & Shape-Art) ── -->
-    <g id="flower- petals" filter="url(#gentleShadow)">
-      <!-- Linkes Blütenblatt -->
-      <path d="M 32 60 C 15 54, 8 35, 20 22 C 28 14, 38 24, 38 38 C 38 48, 36 56, 32 60 Z" 
-            fill="url(#leafGrad1)" />
+  <!-- ── DIE 5 BLÜTENBLÄTTER (Präzise Rekonstruktion & Veredelung) ── -->
+  <!-- Platziert links im Koordinatensystem (Zentrum bei x=50, y=45) -->
+  <g transform="translate(10, 0)" filter="url(#modernShadow)">
+    <g transform="translate(48, 45)">
+      <!-- Blatt 1 (oben) -->
+      <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+            fill="url(#petalGrad1)" />
       
-      <!-- Mittleres Blütenblatt (Hauptblatt, elegant nach oben gestreckt) -->
-      <path d="M 38 64 C 28 44, 25 15, 39 8 C 48 4, 52 25, 48 45 C 45 55, 42 62, 38 64 Z" 
-            fill="url(#leafGrad3)" />
+      <!-- Blatt 2 (oben rechts, rotiert um 72°) -->
+      <g transform="rotate(72)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+              fill="url(#petalGrad2)" />
+      </g>
       
-      <!-- Rechtes Blütenblatt -->
-      <path d="M 44 60 C 58 52, 64 32, 54 20 C 46 12, 40 25, 40 38 C 40 48, 41 56, 44 60 Z" 
-            fill="url(#leafGrad2)" />
-            
-      <!-- Organischer Verbindungsstiel unten -->
-      <path d="M 32 60 C 35 63, 41 63, 44 60 C 41 68, 35 68, 32 60 Z" 
-            fill="#123026" />
+      <!-- Blatt 3 (unten rechts, rotiert um 144°) -->
+      <g transform="rotate(144)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+              fill="url(#petalGrad1)" />
+      </g>
+      
+      <!-- Blatt 4 (unten links, rotiert um 216°) -->
+      <g transform="rotate(216)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+              fill="url(#petalGrad2)" />
+      </g>
+      
+      <!-- Blatt 5 (oben links, rotiert um 288°) -->
+      <g transform="rotate(288)">
+        <path d="M 0 0 C -12 -18, -12 -38, 0 -42 C 12 -38, 12 -18, 0 0 Z" 
+              fill="url(#petalGrad1)" />
+      </g>
+      
+      <!-- Edler, glänzender Kern im Zentrum für modernsten Schliff -->
+      <circle cx="0" cy="0" r="3" fill="#ffffff" opacity="0.9" />
     </g>
+  </g>
 
-    <!-- ── TYPOGRAFIE (Edler, geometrischer Marken-Schriftzug) ── -->
-    <!-- "DORFLADEN" in moderner Grotesk-Anmutung mit feinen letter-spacings -->
-    <text x="82" y="38" 
-          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Montserrat', 'Inter', sans-serif" 
-          font-size="24" 
-          font-weight="800" 
+  <!-- ── EDLE TYPOGRAFIE (Modern, zeitlos und charakterstark) ── -->
+  <g transform="translate(118, 0)">
+    <!-- Hauptmarke "DORFLADEN" (Breiter, moderner Schriftschnitt) -->
+    <text x="0" y="42" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', 'Montserrat', sans-serif" 
+          font-size="26" 
+          font-weight="850" 
           fill="#1e463a" 
-          letter-spacing="4">DORFLADEN</text>
+          letter-spacing="4.5">DORFLADEN</text>
           
-    <!-- "OBERORNAU" als schlanke, weite Subline -->
-    <text x="84" y="56" 
-          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Montserrat', 'Inter', sans-serif" 
-          font-size="11" 
+    <!-- "OBERORNAU" (Dezentes Bronze/Gold-Detail für Premium-Anspruch) -->
+    <text x="2" y="60" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', 'Montserrat', sans-serif" 
+          font-size="11.5" 
           font-weight="600" 
           fill="#bd8b5c" 
-          letter-spacing="5.5">OBERORNAU</text>
+          letter-spacing="6.5">OBERORNAU</text>
           
-    <!-- Slogan oder Zusatz "Mit Herz &amp; Hand" (subtil, elegant) -->
-    <text x="84" y="68" 
+    <!-- Slogan (Fein ausgeglichener, sympathischer Markenclaim) -->
+    <text x="2" y="73" 
           font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif" 
-          font-size="8" 
-          font-style="italic"
+          font-size="8.5" 
           font-weight="500" 
           fill="#7c8b82" 
-          letter-spacing="1">Frisch. Regional. Mit Herz.</text>
+          letter-spacing="0.8">Frisch. Regional. Mit Herz.</text>
   </g>
 </svg>
