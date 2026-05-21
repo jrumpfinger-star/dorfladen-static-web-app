@@ -148,22 +148,6 @@ def _handle_get(base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    # Try Image Column first (binary endpoint, full-size)
-    try:
-        img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}/$value?size=full"
-        ir = requests.get(img_url, headers={**headers, "Accept": "application/octet-stream"}, timeout=30)
-        if ir.status_code == 200 and len(ir.content) > 100:
-            b64 = base64.b64encode(ir.content).decode()
-            ct = ir.headers.get("Content-Type", "image/png")
-            mime = "image/webp" if "webp" in ct else "image/jpeg" if "jpeg" in ct or "jpg" in ct else "image/png"
-            logo_data = f"data:{mime};base64,{b64}"
-            return func.HttpResponse(
-                json.dumps({"success": True, "logo": logo_data}),
-                status_code=200, mimetype="application/json", headers=get_cors_headers()
-            )
-    except Exception:
-        pass
-    # Fallback: dl_wert text column (legacy)
     rec_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})?$select=dl_wert"
     r = requests.get(rec_url, headers=headers, timeout=30)
     logo_data = ""
@@ -189,38 +173,17 @@ def _handle_post(req, base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    # Upload to Image Column via binary endpoint (application/octet-stream)
-    mime, raw_bytes = _parse_data_url(data_url)
-    if raw_bytes:
-        img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}"
-        img_headers = {**headers, "Content-Type": "application/octet-stream",
-                       "If-Match": "*", "x-ms-file-name": "logo.png"}
-        ir = requests.patch(img_url, headers=img_headers, data=raw_bytes, timeout=60)
-        if ir.status_code in (200, 204):
-            # Also save to dl_wert as backup if small enough
-            if len(data_url) <= 500000:
-                patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
-                requests.patch(patch_url, headers={**headers, "Content-Type": "application/json", "If-Match": "*"},
-                               json={"dl_wert": data_url}, timeout=30)
-            return func.HttpResponse(
-                json.dumps({"success": True, "size": len(raw_bytes), "storage": "image_column"}),
-                status_code=200, mimetype="application/json", headers=get_cors_headers()
-            )
-        err_detail = f"Image column: {ir.status_code} {ir.text[:200]}"
-    else:
-        err_detail = "Could not parse data URL"
-    # Fallback: save to dl_wert only
-    if len(data_url) <= 500000:
-        patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
-        patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
-        r = requests.patch(patch_url, headers=patch_headers, json={"dl_wert": data_url}, timeout=30)
-        if r.status_code in (200, 204):
-            return func.HttpResponse(
-                json.dumps({"success": True, "size": len(data_url), "storage": "dl_wert_fallback"}),
-                status_code=200, mimetype="application/json", headers=get_cors_headers()
-            )
+    # Save logo as data URL in dl_wert text field
+    patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+    patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
+    r = requests.patch(patch_url, headers=patch_headers, json={"dl_wert": data_url}, timeout=30)
+    if r.status_code in (200, 204):
+        return func.HttpResponse(
+            json.dumps({"success": True, "size": len(data_url)}),
+            status_code=200, mimetype="application/json", headers=get_cors_headers()
+        )
     return func.HttpResponse(
-        json.dumps({"success": False, "error": f"Save failed. {err_detail}"}),
+        json.dumps({"success": False, "error": f"Save failed: {r.status_code} {r.text[:200]}"}),
         status_code=500, mimetype="application/json", headers=get_cors_headers()
     )
 
@@ -229,16 +192,9 @@ def _handle_delete(base_url, headers, entity_set):
     rec_id = _find_or_create_logo_record(base_url, headers, entity_set)
     if not rec_id:
         return func.HttpResponse(json.dumps({"success": True}), status_code=200, mimetype="application/json", headers=get_cors_headers())
-    # Clear both Image Column and dl_wert
     patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
     patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
     requests.patch(patch_url, headers=patch_headers, json={"dl_wert": ""}, timeout=30)
-    # Delete image column content
-    img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}"
-    try:
-        requests.delete(img_url, headers={**headers, "If-Match": "*"}, timeout=30)
-    except Exception:
-        pass
     return func.HttpResponse(json.dumps({"success": True}), status_code=200, mimetype="application/json", headers=get_cors_headers())
 
 
