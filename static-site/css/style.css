@@ -103,7 +103,7 @@ img{max-width:100%;display:block}
 .news-ticker-item{display:inline;margin-right:3em}
 .news-ticker-item a{color:#fff;text-decoration:none;transition:opacity .2s}
 .news-ticker-item a:hover{opacity:.75;text-decoration:underline}
-.news-ticker-sep{display:inline;margin:0 1em;opacity:.4}
+.news-ticker-sep{display:inline;margin:0 .5em;opacity:.7;color:#f59e0b;font-size:12px}
 .news-ticker-spacer{display:inline-block}
 @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 /* News overlay */

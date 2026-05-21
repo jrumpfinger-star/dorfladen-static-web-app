@@ -312,10 +312,9 @@
     var tickerEl=document.getElementById('mob-ticker-content');
     if(!tickerEl) return;
     var txt=laufband.map(function(n){
-      var d=n.dl_datum||n.date||'';
       var t=n.dl_titel||n.title||'';
-      return(d?d.substring(8,10)+'.'+d.substring(5,7)+'. ':'')+t;
-    }).join(' \u00a0•\u00a0 ');
+      return t;
+    }).join('  \u2605  ');
     tickerEl.textContent=txt;
   }).catch(function(){});
 

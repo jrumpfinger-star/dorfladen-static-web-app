@@ -441,11 +441,8 @@ window.closeDtModal = function(id) {
         var singleHtml='';
         recentItems.forEach(function(n,i){
           var title=esc(n.dl_titel||n.titel||'');
-          var datumR=n.dl_datum||n.datum||n.createdon;
-          var dateStr='';
-          if(datumR){var dd=new Date(datumR);dateStr=pad(dd.getDate())+'.'+pad(dd.getMonth()+1)+'. ';}
-          if(i>0) singleHtml+='<span class="news-ticker-sep">&bull;</span>';
-          singleHtml+='<span class="news-ticker-item"><a href="#" data-newsidx="'+i+'">'+dateStr+title+'</a></span>';
+          if(i>0) singleHtml+='<span class="news-ticker-sep"> &nbsp;&#9733;&nbsp; </span>';
+          singleHtml+='<span class="news-ticker-item"><a href="#" data-newsidx="'+i+'">'+title+'</a></span>';
         });
         ticker.style.display='flex';
         var trackW=document.querySelector('.news-ticker-track').offsetWidth;
