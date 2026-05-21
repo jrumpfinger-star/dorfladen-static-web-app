@@ -121,6 +121,8 @@ body.mob-home {
 .mob-header-logo img{
   height:30px; /* reduced from 36px */
   width:auto;
+  background:transparent;
+  border-radius:0;
 }
 .mob-header-logo img[src]:not([src='']){display:inline-block}
 .mob-header-logo .logo-text{
