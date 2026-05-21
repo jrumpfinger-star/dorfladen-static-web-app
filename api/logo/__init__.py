@@ -148,22 +148,27 @@ def _handle_get(base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    rec_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})?$select=dl_wert,{IMAGE_COL}"
+    # Try Image Column first (binary endpoint, full-size)
+    try:
+        img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}/$value?size=full"
+        ir = requests.get(img_url, headers={**headers, "Accept": "application/octet-stream"}, timeout=30)
+        if ir.status_code == 200 and len(ir.content) > 100:
+            b64 = base64.b64encode(ir.content).decode()
+            ct = ir.headers.get("Content-Type", "image/png")
+            mime = "image/webp" if "webp" in ct else "image/jpeg" if "jpeg" in ct or "jpg" in ct else "image/png"
+            logo_data = f"data:{mime};base64,{b64}"
+            return func.HttpResponse(
+                json.dumps({"success": True, "logo": logo_data}),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+    except Exception:
+        pass
+    # Fallback: dl_wert text column (legacy)
+    rec_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})?$select=dl_wert"
     r = requests.get(rec_url, headers=headers, timeout=30)
-    if r.status_code != 200:
-        return func.HttpResponse(
-            json.dumps({"success": True, "logo": ""}),
-            status_code=200, mimetype="application/json", headers=get_cors_headers()
-        )
-    data = r.json()
-    # Prefer Image Column (base64 string, no size limit)
-    logo_b64 = data.get(IMAGE_COL) or ""
-    if logo_b64:
-        # Image Column stores raw base64 — detect format and build data URL
-        logo_data = _b64_to_data_url(logo_b64)
-    else:
-        # Fallback: dl_wert text column (legacy, already a data URL)
-        logo_data = data.get("dl_wert") or ""
+    logo_data = ""
+    if r.status_code == 200:
+        logo_data = (r.json() or {}).get("dl_wert") or ""
     return func.HttpResponse(
         json.dumps({"success": True, "logo": logo_data}),
         status_code=200, mimetype="application/json", headers=get_cors_headers()
@@ -184,24 +189,30 @@ def _handle_post(req, base_url, headers, entity_set):
             json.dumps({"success": False, "error": "Could not find/create logo record"}),
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
-    # Extract base64 from data URL and save to Image Column (JSON field)
-    _, b64_str = _extract_b64(data_url)
-    patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
-    patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
-    if b64_str:
-        # Save to Image Column (base64 as JSON string, up to 10 MB)
-        payload = {IMAGE_COL: b64_str, "dl_wert": data_url[:10000] if len(data_url) <= 10000 else ""}
-        r = requests.patch(patch_url, headers=patch_headers, json=payload, timeout=60)
-        if r.status_code in (200, 204):
+    # Upload to Image Column via binary endpoint (application/octet-stream)
+    mime, raw_bytes = _parse_data_url(data_url)
+    if raw_bytes:
+        img_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})/{IMAGE_COL}"
+        img_headers = {**headers, "Content-Type": "application/octet-stream",
+                       "If-Match": "*", "x-ms-file-name": "logo.png"}
+        ir = requests.patch(img_url, headers=img_headers, data=raw_bytes, timeout=60)
+        if ir.status_code in (200, 204):
+            # Also save to dl_wert as backup if small enough
+            if len(data_url) <= 500000:
+                patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+                requests.patch(patch_url, headers={**headers, "Content-Type": "application/json", "If-Match": "*"},
+                               json={"dl_wert": data_url}, timeout=30)
             return func.HttpResponse(
-                json.dumps({"success": True, "size": len(b64_str), "storage": "image_column"}),
+                json.dumps({"success": True, "size": len(raw_bytes), "storage": "image_column"}),
                 status_code=200, mimetype="application/json", headers=get_cors_headers()
             )
-        err_detail = f"Image column: {r.status_code} {r.text[:200]}"
+        err_detail = f"Image column: {ir.status_code} {ir.text[:200]}"
     else:
         err_detail = "Could not parse data URL"
-    # Fallback: save to dl_wert (limited to ~10K chars)
-    if len(data_url) <= 10000:
+    # Fallback: save to dl_wert only
+    if len(data_url) <= 500000:
+        patch_url = f"{base_url}/api/data/v9.2/{entity_set}({rec_id})"
+        patch_headers = {**headers, "Content-Type": "application/json", "If-Match": "*"}
         r = requests.patch(patch_url, headers=patch_headers, json={"dl_wert": data_url}, timeout=30)
         if r.status_code in (200, 204):
             return func.HttpResponse(
