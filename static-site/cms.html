@@ -2705,23 +2705,24 @@ document.head.appendChild(msalScript);
         var w=img.width, h=img.height;
         if(h>MAX_H){w=Math.round(w*(MAX_H/h));h=MAX_H;}
         if(w>MAX_W){h=Math.round(h*(MAX_W/w));w=MAX_W;}
+        var hasAlpha=(file.type==='image/png'||file.type==='image/webp'||file.type==='image/svg+xml');
         var canvas=document.createElement('canvas');
         canvas.width=w; canvas.height=h;
-        var ctx=canvas.getContext('2d');
+        var ctx=canvas.getContext('2d',{willReadFrequently:true});
+        ctx.clearRect(0,0,w,h);
         ctx.drawImage(img,0,0,w,h);
-        var hasAlpha=(file.type==='image/png'||file.type==='image/webp'||file.type==='image/svg+xml');
         var dataUrl=hasAlpha?canvas.toDataURL('image/png'):canvas.toDataURL('image/jpeg',0.8);
         /* PNG too large? Try scaling down while keeping transparency */
         var pngScales=[0.7,0.5,0.35];
         for(var pi=0;pi<pngScales.length && dataUrl.length>MAX_LEN && hasAlpha;pi++){
           canvas.width=Math.round(w*pngScales[pi]);canvas.height=Math.round(h*pngScales[pi]);
-          ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
           dataUrl=canvas.toDataURL('image/png');
         }
         /* Still too large? Try WebP with decreasing quality at full size (keeps sharpness) */
         var webpQualities=[0.8,0.6,0.4,0.25,0.15];
         if(dataUrl.length>MAX_LEN && hasAlpha){
-          canvas.width=w;canvas.height=h;ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);
+          canvas.width=w;canvas.height=h;ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.clearRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);
           for(var wq=0;wq<webpQualities.length && dataUrl.length>MAX_LEN;wq++){
             dataUrl=canvas.toDataURL('image/webp',webpQualities[wq]);
           }
@@ -2730,7 +2731,7 @@ document.head.appendChild(msalScript);
         var webpScales=[0.7,0.5,0.35];
         for(var wi=0;wi<webpScales.length && dataUrl.length>MAX_LEN && hasAlpha;wi++){
           canvas.width=Math.round(w*webpScales[wi]);canvas.height=Math.round(h*webpScales[wi]);
-          ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
           for(var wq2=0;wq2<webpQualities.length && dataUrl.length>MAX_LEN;wq2++){
             dataUrl=canvas.toDataURL('image/webp',webpQualities[wq2]);
           }
