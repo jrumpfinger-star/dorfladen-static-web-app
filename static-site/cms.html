@@ -395,12 +395,12 @@ document.head.appendChild(msalScript);
     <button class="cms-btn-login" id="cms-login-btn">Anmelden</button>
   </div>
 </div>
-<script id="cms-pw-hash" type="application/json">"{{ settings['CMS_PASSWORD'] | escape }}"</script>
+<script id="cms-pw-hash" type="application/json">"d324fb3c8c3a1ef449e1f776b2f29fd718d00e7967adbb0bbe8326c2452bea93"</script>
 
 <div class="cms-wrap" id="cms-app" lang="de" style="display:none">
   <div class="cms-flex cms-between cms-mb" style="align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 14px; margin-bottom: 18px;">
     <div style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="location.href='/index.html'" title="Zurück zur Website">
-      <img id="cms-header-logo" src="" alt="Dorfladen Oberornau" style="height:52px;border-radius:6px; transition: opacity 0.15s ease;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+      <img id="cms-header-logo" src="" alt="Dorfladen Oberornau" style="height:52px;width:auto;flex-shrink:0;border-radius:6px; transition: opacity 0.15s ease;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
       <h2 style="font-size:18px;font-weight:800;color:var(--c-m-pri);margin:0; transition: color 0.15s ease;" onmouseover="this.style.color='var(--c-m-sec)'" onmouseout="this.style.color='var(--c-m-pri)'">Dorfladen CMS</h2>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
@@ -1100,14 +1100,52 @@ document.head.appendChild(msalScript);
 
 <script>
 (function(){
-  // --- CMS Password Gate (Disabled for testing) ---
+  // --- CMS Password Gate ---
   var CMS_PW_KEY='cms_auth_ok';
   var cmsPwEl=document.getElementById('cms-pw-hash');
-  var cmsPw=cmsPwEl?JSON.parse(cmsPwEl.textContent):'';
+  var cmsPwHash=cmsPwEl?JSON.parse(cmsPwEl.textContent):'';
   function cmsShowApp(){document.getElementById('cms-login').style.display='none';document.getElementById('cms-app').style.display='';}
   function cmsShowLogin(){document.getElementById('cms-login').style.display='';document.getElementById('cms-app').style.display='none';}
-  // Disabled login check - always show app
-  cmsShowApp();
+
+  function sha256(str){
+    var buf=new TextEncoder().encode(str);
+    return crypto.subtle.digest('SHA-256',buf).then(function(h){
+      return Array.from(new Uint8Array(h)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+    });
+  }
+
+  // Check session
+  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
+    cmsShowApp();
+  } else {
+    cmsShowLogin();
+  }
+
+  // Login button
+  document.getElementById('cms-login-btn').addEventListener('click',function(){
+    var pw=document.getElementById('cms-login-pw').value;
+    sha256(pw).then(function(hash){
+      if(hash===cmsPwHash){
+        sessionStorage.setItem(CMS_PW_KEY,hash);
+        document.getElementById('cms-login-err').style.display='none';
+        cmsShowApp();
+        init();
+      } else {
+        document.getElementById('cms-login-err').style.display='block';
+        document.getElementById('cms-login-pw').value='';
+        document.getElementById('cms-login-pw').focus();
+      }
+    });
+  });
+  // Enter key
+  document.getElementById('cms-login-pw').addEventListener('keydown',function(e){
+    if(e.key==='Enter') document.getElementById('cms-login-btn').click();
+  });
+  // Password eye toggle
+  document.getElementById('cms-pw-eye').addEventListener('click',function(){
+    var inp=document.getElementById('cms-login-pw');
+    inp.type=inp.type==='password'?'text':'password';
+  });
 
   var API = '/api';
 
@@ -4940,8 +4978,10 @@ document.head.appendChild(msalScript);
     });
   };
 
-  // --- Init (always run – login gate is disabled for SWA) ---
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+  // --- Init (only if already authenticated via session) ---
+  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
+    if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+  }
 })();
 </script>
 </body>
