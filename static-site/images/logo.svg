@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="100%" height="100%">
+  <defs>
+    <!-- Premium Farbverlauf für die Blütenblätter -->
+    <linearGradient id="leafGrad1" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#123026" />
+      <stop offset="100%" stop-color="#1e463a" />
+    </linearGradient>
+    <linearGradient id="leafGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e463a" />
+      <stop offset="100%" stop-color="#3d7e6a" />
+    </linearGradient>
+    <linearGradient id="leafGrad3" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3d7e6a" />
+      <stop offset="100%" stop-color="#5ea88a" />
+    </linearGradient>
+    
+    <!-- Subtiler Schatten für Tiefenwirkung -->
+    <filter id="gentleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <g transform="translate(10, 5)">
+    <!-- ── BLÜTENBLÄTTER / LEAF ICON (Modern Line- & Shape-Art) ── -->
+    <g id="flower- petals" filter="url(#gentleShadow)">
+      <!-- Linkes Blütenblatt -->
+      <path d="M 32 60 C 15 54, 8 35, 20 22 C 28 14, 38 24, 38 38 C 38 48, 36 56, 32 60 Z" 
+            fill="url(#leafGrad1)" />
+      
+      <!-- Mittleres Blütenblatt (Hauptblatt, elegant nach oben gestreckt) -->
+      <path d="M 38 64 C 28 44, 25 15, 39 8 C 48 4, 52 25, 48 45 C 45 55, 42 62, 38 64 Z" 
+            fill="url(#leafGrad3)" />
+      
+      <!-- Rechtes Blütenblatt -->
+      <path d="M 44 60 C 58 52, 64 32, 54 20 C 46 12, 40 25, 40 38 C 40 48, 41 56, 44 60 Z" 
+            fill="url(#leafGrad2)" />
+            
+      <!-- Organischer Verbindungsstiel unten -->
+      <path d="M 32 60 C 35 63, 41 63, 44 60 C 41 68, 35 68, 32 60 Z" 
+            fill="#123026" />
+    </g>
+
+    <!-- ── TYPOGRAFIE (Edler, geometrischer Marken-Schriftzug) ── -->
+    <!-- "DORFLADEN" in moderner Grotesk-Anmutung mit feinen letter-spacings -->
+    <text x="82" y="38" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Montserrat', 'Inter', sans-serif" 
+          font-size="24" 
+          font-weight="800" 
+          fill="#1e463a" 
+          letter-spacing="4">DORFLADEN</text>
+          
+    <!-- "OBERORNAU" als schlanke, weite Subline -->
+    <text x="84" y="56" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Montserrat', 'Inter', sans-serif" 
+          font-size="11" 
+          font-weight="600" 
+          fill="#bd8b5c" 
+          letter-spacing="5.5">OBERORNAU</text>
+          
+    <!-- Slogan oder Zusatz "Mit Herz &amp; Hand" (subtil, elegant) -->
+    <text x="84" y="68" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif" 
+          font-size="8" 
+          font-style="italic"
+          font-weight="500" 
+          fill="#7c8b82" 
+          letter-spacing="1">Frisch. Regional. Mit Herz.</text>
+  </g>
+</svg>

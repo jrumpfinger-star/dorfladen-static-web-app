@@ -27,15 +27,26 @@
 
   /* === LOGO LOADER (mobile header) === */
   var logoText=document.getElementById('mob-logo-text');
+  var img=document.getElementById('mob-logo-img');
   if(logoText) logoText.style.opacity='0';
+  
+  function showMobFallback(){
+    if(img){
+      img.src='/images/logo.svg';
+      img.style.display='block';
+      img.style.height='28px';
+      img.style.width='auto';
+      if(logoText) logoText.style.display='none';
+    }
+  }
+  
   fetch(API_BASE+'/logo').then(function(r){return r.json();}).then(function(res){
     if(res.success&&res.logo){
-      var img=document.getElementById('mob-logo-img');
       if(img){img.src=res.logo;img.style.display='';if(logoText) logoText.style.display='none';}
     }else{
-      if(logoText) logoText.style.opacity='1';
+      showMobFallback();
     }
-  }).catch(function(){if(logoText) logoText.style.opacity='1';});
+  }).catch(showMobFallback);
 
   /* === OPEN/CLOSED STATUS === */
   function updateMobStatus(){
