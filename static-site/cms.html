@@ -163,7 +163,7 @@ document.head.appendChild(msalScript);
   .cms-meal-grid{overflow:visible}
   .cms-meal-grid>*{min-width:0;box-sizing:border-box}
   .cms-art-input{position:relative}
-  .cms-art-dd{display:none;position:absolute;z-index:9999;left:0;right:0;top:calc(100% + 2px);background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:300px;min-height:0;overflow-y:auto;font-family:"Segoe UI",Verdana,Arial,sans-serif;min-width:280px}
+  .cms-art-dd{display:none;position:fixed;z-index:99999;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:340px;min-height:0;overflow-y:auto;font-family:"Segoe UI",Verdana,Arial,sans-serif;min-width:280px}
   .cms-art-dd.open{display:block}
   .cms-art-opt{padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .12s}
   .cms-art-opt:last-child{border-bottom:none}
@@ -1456,6 +1456,11 @@ document.head.appendChild(msalScript);
       dd.appendChild(opt);
     });
     dd.classList.add('open');
+    // Position fixed dropdown below the input
+    var inpRect=inp.getBoundingClientRect();
+    dd.style.left=inpRect.left+'px';
+    dd.style.top=(inpRect.bottom+2)+'px';
+    dd.style.width=Math.max(inpRect.width,280)+'px';
   }
   
   function cmsCompressImage(base64Str, maxWidth, maxHeight, callback) {
@@ -4665,9 +4670,14 @@ document.head.appendChild(msalScript);
 
   // Close autocomplete dropdowns on outside click
   document.addEventListener('click',function(e){
-    if(!e.target.closest('.cms-art-wrap')){
+    if(!e.target.closest('.cms-art-wrap') && !e.target.closest('.cms-art-dd')){
       document.querySelectorAll('.cms-art-dd.open').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
     }
+  },true);
+
+  // Close fixed dropdowns on scroll (they don't follow the scroll)
+  document.addEventListener('scroll',function(){
+    document.querySelectorAll('.cms-art-dd.open').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
   },true);
 
   // --- Force German locale for date/time pickers ---
