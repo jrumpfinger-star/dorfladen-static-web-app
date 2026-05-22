@@ -164,3 +164,84 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     b.style.display='';
   },3000);
 }
+
+// === PUSH NOTIFICATIONS ===
+(function(){
+  var pushBtn=document.getElementById('mob-push-toggle');
+  var pushBtnDt=document.getElementById('dt-push-toggle');
+
+  function updatePushUI(subscribed){
+    [pushBtn,pushBtnDt].forEach(function(btn){
+      if(!btn)return;
+      if(subscribed){
+        btn.textContent='\uD83D\uDD14 Benachrichtigungen aktiv';
+        btn.setAttribute('data-subscribed','1');
+      }else{
+        btn.textContent='\uD83D\uDD14 Benachrichtigungen aktivieren';
+        btn.removeAttribute('data-subscribed');
+      }
+    });
+  }
+
+  function showPushButtons(){
+    if(pushBtn)pushBtn.style.display='';
+    if(pushBtnDt)pushBtnDt.style.display='';
+  }
+
+  // Check if push is supported
+  if(!('PushManager' in window)||!('serviceWorker' in navigator)){return;}
+  showPushButtons();
+
+  // Check current subscription state
+  navigator.serviceWorker.ready.then(function(reg){
+    return reg.pushManager.getSubscription();
+  }).then(function(sub){
+    updatePushUI(!!sub);
+  });
+
+  function urlBase64ToUint8Array(base64String){
+    var padding='='.repeat((4-base64String.length%4)%4);
+    var base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+    var raw=atob(base64);
+    var arr=new Uint8Array(raw.length);
+    for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+    return arr;
+  }
+
+  window.pushToggle=function(){
+    navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription().then(function(sub){
+        if(sub){
+          // Unsubscribe
+          return sub.unsubscribe().then(function(){
+            fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});
+            updatePushUI(false);
+          });
+        }
+        // Subscribe
+        return fetch('/api/push-vapid-key').then(function(r){return r.json()}).then(function(data){
+          if(!data.publicKey){alert('Push-Konfiguration fehlt.');return;}
+          return reg.pushManager.subscribe({
+            userVisibleOnly:true,
+            applicationServerKey:urlBase64ToUint8Array(data.publicKey)
+          });
+        }).then(function(newSub){
+          if(!newSub)return;
+          return fetch('/api/push-subscribe',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({subscription:newSub.toJSON()})
+          }).then(function(){
+            updatePushUI(true);
+          });
+        });
+      });
+    }).catch(function(err){
+      if(Notification.permission==='denied'){
+        alert('Benachrichtigungen sind im Browser blockiert. Bitte in den Einstellungen erlauben.');
+      }else{
+        console.error('Push toggle error',err);
+      }
+    });
+  };
+})();

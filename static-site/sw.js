@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v1';
+var CACHE_NAME='dorfladen-v2';
 var PRECACHE=[
   '/',
   '/css/style.css',
@@ -50,6 +50,38 @@ self.addEventListener('fetch',function(e){
         return response;
       }).catch(function(){return cached;});
       return cached||fetched;
+    })
+  );
+});
+
+// Push Notifications
+self.addEventListener('push',function(e){
+  var data={title:'Dorfladen Oberornau',body:'',url:'/',icon:'/images/icon-192.png',badge:'/images/icon-192.png',tag:'dorfladen'};
+  if(e.data){
+    try{var d=e.data.json();Object.assign(data,d);}catch(ex){data.body=e.data.text();}
+  }
+  e.waitUntil(
+    self.registration.showNotification(data.title,{
+      body:data.body,
+      icon:data.icon,
+      badge:data.badge,
+      tag:data.tag,
+      data:{url:data.url},
+      vibrate:[200,100,200],
+      requireInteraction:false
+    })
+  );
+});
+
+self.addEventListener('notificationclick',function(e){
+  e.notification.close();
+  var url=e.notification.data&&e.notification.data.url?e.notification.data.url:'/';
+  e.waitUntil(
+    clients.matchAll({type:'window',includeUncontrolled:true}).then(function(cl){
+      for(var i=0;i<cl.length;i++){
+        if(cl[i].url.indexOf(url)!==-1&&'focus' in cl[i])return cl[i].focus();
+      }
+      if(clients.openWindow)return clients.openWindow(url);
     })
   );
 });
