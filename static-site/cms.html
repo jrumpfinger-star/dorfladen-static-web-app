@@ -745,9 +745,27 @@ document.head.appendChild(msalScript);
             <option value="/roter-punkt">Roter Punkt</option>
           </select>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="cms-btn cms-btn-primary" id="push-send-btn" onclick="pushSendNow()" style="background:#7c3aed">&#128276; Push senden</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="cms-btn cms-btn-primary" id="push-send-btn" onclick="pushSendNow()" style="background:#7c3aed">&#128276; Sofort senden</button>
+          <button class="cms-btn" id="push-queue-btn" onclick="pushAddToQueue()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db">&#128203; Zur Warteschlange</button>
           <span id="push-status" style="font-size:13px;color:#6b7280"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cms-card" id="push-queue-card" style="margin-bottom:16px;display:none">
+      <div class="cms-card-header" style="background:#4f46e5">&#128203; Warteschlange <span id="push-queue-count" style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:10px;font-size:12px;margin-left:6px">0</span></div>
+      <div class="cms-card-body">
+        <div id="push-queue-list" style="margin-bottom:12px"></div>
+        <div id="push-queue-preview" style="display:none;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px">VORSCHAU: Kombinierte Nachricht</div>
+          <div style="font-weight:700;font-size:14px;color:#1f2937" id="push-queue-preview-title"></div>
+          <div style="font-size:13px;color:#374151;white-space:pre-line;margin-top:4px" id="push-queue-preview-body"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="cms-btn cms-btn-primary" onclick="pushSendQueue()" style="background:#4f46e5">&#128276; Alle gesammelt senden</button>
+          <button class="cms-btn" onclick="pushClearQueue()" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;font-size:12px">&#128465; Leeren</button>
+          <span id="push-queue-status" style="font-size:13px;color:#6b7280"></span>
         </div>
       </div>
     </div>
@@ -5372,6 +5390,132 @@ document.head.appendChild(msalScript);
     }
     uploadNext(0);
   };
+
+  // --- Push Notifications: Queue ---
+  var PUSH_QUEUE_KEY='push_queue';
+  function pushGetQueue(){try{return JSON.parse(localStorage.getItem(PUSH_QUEUE_KEY)||'[]');}catch(e){return [];}}
+  function pushSaveQueue(q){localStorage.setItem(PUSH_QUEUE_KEY,JSON.stringify(q));pushRenderQueue();}
+  var CAT_ICONS={mittagstisch:'\uD83C\uDF7D',angebote:'\uD83C\uDF81',news:'\uD83D\uDCF0'};
+  var CAT_NAMES={mittagstisch:'Mittagstisch',angebote:'Angebote',news:'News'};
+
+  function pushRenderQueue(){
+    var q=pushGetQueue();
+    var card=document.getElementById('push-queue-card');
+    var list=document.getElementById('push-queue-list');
+    var cnt=document.getElementById('push-queue-count');
+    var prev=document.getElementById('push-queue-preview');
+    cnt.textContent=q.length;
+    if(!q.length){card.style.display='none';return;}
+    card.style.display='';
+    var html='';
+    q.forEach(function(item,i){
+      var icon=CAT_ICONS[item.category]||'\uD83D\uDD14';
+      var catName=CAT_NAMES[item.category]||'Alle';
+      html+='<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #f3f4f6">';
+      html+='<span style="font-size:18px">'+icon+'</span>';
+      html+='<div style="flex:1;min-width:0">';
+      html+='<div style="font-weight:600;font-size:13px;color:#1f2937">'+item.title+'</div>';
+      html+='<div style="font-size:12px;color:#6b7280;white-space:pre-line;overflow:hidden;text-overflow:ellipsis">'+item.message+'</div>';
+      html+='<div style="font-size:11px;color:#9ca3af;margin-top:2px">'+catName+'</div>';
+      html+='</div>';
+      html+='<button onclick="pushRemoveFromQueue('+i+')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;padding:2px 6px" title="Entfernen">&times;</button>';
+      html+='</div>';
+    });
+    list.innerHTML=html;
+    // Build combined preview
+    if(q.length>1){
+      prev.style.display='';
+      document.getElementById('push-queue-preview-title').textContent='Dorfladen Oberornau';
+      var body=q.map(function(item){
+        var icon=CAT_ICONS[item.category]||'\u2022';
+        return icon+' '+item.message;
+      }).join('\n');
+      document.getElementById('push-queue-preview-body').textContent=body;
+    }else{
+      prev.style.display='none';
+    }
+  }
+
+  window.pushAddToQueue=function(){
+    var title=document.getElementById('push-title').value.trim();
+    var message=document.getElementById('push-message').value.trim();
+    var url=document.getElementById('push-url').value;
+    var category=document.getElementById('push-category').value;
+    if(!message){toast('Bitte Nachricht eingeben','warn');return;}
+    var q=pushGetQueue();
+    q.push({title:title,message:message,url:url,category:category});
+    pushSaveQueue(q);
+    document.getElementById('push-message').value='';
+    toast('Zur Warteschlange hinzugef\u00fcgt ('+q.length+')','ok');
+  };
+
+  window.pushRemoveFromQueue=function(idx){
+    var q=pushGetQueue();
+    q.splice(idx,1);
+    pushSaveQueue(q);
+  };
+
+  window.pushClearQueue=function(){
+    if(!confirm('Warteschlange wirklich leeren?'))return;
+    pushSaveQueue([]);
+    toast('Warteschlange geleert','ok');
+  };
+
+  window.pushSendQueue=function(){
+    var q=pushGetQueue();
+    if(!q.length){toast('Warteschlange ist leer','warn');return;}
+    // Build combined message
+    var title='Dorfladen Oberornau';
+    var body,url='/',category='';
+    if(q.length===1){
+      title=q[0].title;
+      body=q[0].message;
+      url=q[0].url;
+      category=q[0].category;
+    }else{
+      body=q.map(function(item){
+        var icon=CAT_ICONS[item.category]||'\u2022';
+        return icon+' '+item.message;
+      }).join('\n');
+    }
+    var catInfo=category?(CAT_NAMES[category]||category):'Alle Abonnenten';
+    if(!confirm('\u26a0\ufe0f Gesammelte Push senden ('+q.length+' Nachricht'+(q.length>1?'en':'')+')?'+
+      '\n\nEmpf\u00e4nger: '+catInfo+
+      '\nTitel: '+title+
+      '\nNachricht: '+body+
+      '\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!'))return;
+    var status=document.getElementById('push-queue-status');
+    status.textContent='Wird gesendet...';
+    status.style.color='#6b7280';
+    var payload={title:title,message:body,url:url,tag:'dorfladen-cms'};
+    if(category)payload.category=category;
+    fetch(API+'/push-send',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    }).then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        var info='Gesendet: '+res.sent;
+        if(res.failed)info+=', Fehler: '+res.failed;
+        status.textContent='\u2705 '+info;
+        status.style.color=res.failed?'#d97706':'#16a34a';
+        toast(res.sent>0?'Gesammelte Push gesendet! ('+res.sent+' Empf\u00e4nger)':'Keine Empf\u00e4nger',res.sent>0?'ok':'warn');
+        pushSaveQueue([]);
+      }else{
+        status.textContent='\u274c '+res.error;
+        status.style.color='#dc2626';
+        toast('Fehler: '+res.error,'error');
+      }
+    }).catch(function(e){
+      status.textContent='\u274c Netzwerkfehler';
+      status.style.color='#dc2626';
+      toast('Fehler: '+e.message,'error');
+    });
+  };
+
+  // Render queue on load
+  pushRenderQueue();
 
   // --- Push Notifications ---
   window.pushTemplate = function(type){
