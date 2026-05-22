@@ -1,21 +1,103 @@
 // PWA Install – shared across all pages
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
 
-// Standalone PWA: prevent Android back gesture from closing the app on start page
+// PWA: Android back gesture – close popups/overlays first, then navigate
 (function(){
   var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
-  if(!isStandalone)return;
-  // On the start page, push a guard state so back doesn't close the app
-  if(window.location.pathname==='/'&&!history.state){
+
+  // Try to close any open popup/overlay. Returns true if something was closed.
+  function closeAnyPopup(){
+    // Mobile popups
+    var mobPopups=document.querySelectorAll('.mob-popup-bg.open');
+    if(mobPopups.length){mobPopups.forEach(function(el){el.classList.remove('open');});return true;}
+    // Mobile nav drawer
+    var mobNav=document.getElementById('mob-nav');
+    if(mobNav&&mobNav.classList.contains('open')){
+      mobNav.classList.remove('open');
+      var ov=document.getElementById('mob-nav-ov');if(ov)ov.classList.remove('open');
+      return true;
+    }
+    // Lightbox
+    var lb=document.getElementById('lightbox-overlay');
+    if(lb&&lb.classList.contains('active')){
+      if(typeof closeLightbox==='function')closeLightbox();
+      else{lb.classList.remove('active');document.body.style.overflow='';}
+      return true;
+    }
+    // News overlay
+    var nOv=document.querySelector('.news-overlay.open');
+    if(nOv){nOv.classList.remove('open');setTimeout(function(){if(nOv.parentNode)nOv.remove();},300);return true;}
+    // Desktop modals
+    var dtModal=document.querySelector('[id^="dt-modal-"].open');
+    if(dtModal){dtModal.classList.remove('open');return true;}
+    // PWA install banner
+    var pwaBanner=document.getElementById('pwa-install-banner');
+    if(pwaBanner&&pwaBanner.style.display!=='none'&&pwaBanner.offsetParent){
+      pwaBanner.style.display='none';return true;
+    }
+    return false;
+  }
+
+  // When a popup opens, push a history state so Android back can close it
+  function pushPopupState(){
+    if(!history.state||!history.state.pwaPopup){
+      history.pushState({pwaPopup:true},'','');
+    }
+  }
+
+  // Hook into popup/overlay open functions to push history state
+  function hookOpeners(){
+    // Mobile popups
+    if(window.mobOpenPopup){
+      var origMobOpen=window.mobOpenPopup;
+      window.mobOpenPopup=function(id){origMobOpen(id);pushPopupState();};
+    }
+    // Mobile nav
+    var menuBtn=document.querySelector('.mob-header-menu');
+    if(menuBtn){
+      menuBtn.addEventListener('click',function(){setTimeout(pushPopupState,50);});
+    }
+    // Lightbox
+    if(window.openLightbox){
+      var origLB=window.openLightbox;
+      window.openLightbox=function(idx){origLB(idx);pushPopupState();};
+    }
+    // Desktop modals
+    if(window.openDtModal){
+      var origDtM=window.openDtModal;
+      window.openDtModal=function(id){origDtM(id);pushPopupState();};
+    }
+  }
+  // Hook after DOM is ready
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',hookOpeners);}
+  else{setTimeout(hookOpeners,0);}
+
+  // Handle back gesture
+  window.addEventListener('popstate',function(e){
+    if(e.state&&e.state.pwaPopup){
+      // We're going back from a popup state – close it
+      closeAnyPopup();
+      return;
+    }
+    // Try to close popup even without explicit state
+    if(closeAnyPopup()){
+      // Something was closed – push current URL back to prevent actual navigation
+      history.pushState(null,'',window.location.href);
+      return;
+    }
+    // On start page in standalone mode: prevent app from closing
+    if(isStandalone&&window.location.pathname==='/'){
+      if(e.state&&e.state.pwaGuard){
+        history.pushState({pwaMain:true},'','/');
+      }
+    }
+  });
+
+  // Standalone: guard against closing on start page
+  if(isStandalone&&window.location.pathname==='/'&&(!history.state||!history.state.pwaMain)){
     history.replaceState({pwaGuard:true},'','/');
     history.pushState({pwaMain:true},'','/');
   }
-  window.addEventListener('popstate',function(e){
-    if(e.state&&e.state.pwaGuard){
-      // User pressed back on start page – push main state again instead of closing
-      history.pushState({pwaMain:true},'','/');
-    }
-  });
 })();
 
 var _pwaPrompt=null;
