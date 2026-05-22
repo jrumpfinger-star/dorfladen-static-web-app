@@ -38,12 +38,12 @@ def get_cors_headers():
     }
 
 
-def get_download_url(drive_id, item_id, token):
-    """Get a temporary download URL for a drive item."""
-    url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}"
-    r = requests.get(url, headers={"Authorization": f"Bearer {token}", "Accept": "application/json"}, timeout=15)
-    if r.status_code == 200:
-        return r.json().get("@microsoft.graph.downloadUrl", "")
+def get_content_url(drive_id, item_id, token):
+    """Get a public download URL via /content redirect."""
+    url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/content"
+    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=15, allow_redirects=False)
+    if r.status_code == 302:
+        return r.headers.get("Location", "")
     return ""
 
 
@@ -82,7 +82,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     item_id = item.get("id", "")
 
     # List children (subfolders = categories, or loose images)
-    children_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/children?$select=id,name,size,file,folder,image,@microsoft.graph.downloadUrl&$orderby=name"
+    children_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/children?$select=id,name,size,file,folder,image&$expand=thumbnails&$orderby=name"
     r2 = requests.get(children_url, headers=headers, timeout=30)
     if r2.status_code != 200:
         return func.HttpResponse(
@@ -100,7 +100,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Subfolder = category
         if c.get("folder"):
-            cat_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{c['id']}/children?$select=id,name,size,file,image,@microsoft.graph.downloadUrl&$orderby=name&$top=200"
+            cat_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{c['id']}/children?$select=id,name,size,file,image&$expand=thumbnails&$orderby=name&$top=200"
             r3 = requests.get(cat_url, headers=headers, timeout=30)
             if r3.status_code != 200:
                 continue
@@ -110,13 +110,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 if ext not in IMAGE_EXTENSIONS:
                     continue
                 image_meta = img.get("image", {})
-                img_url = img.get("@microsoft.graph.downloadUrl", "")
-                if not img_url:
-                    img_url = get_download_url(drive_id, img["id"], token)
+                # Use thumbnail URL for grid (fast, CDN-cached)
+                thumbs = img.get("thumbnails", [])
+                thumb_url = ""
+                if thumbs:
+                    thumb_url = thumbs[0].get("large", {}).get("url", "")
+                # Full-size URL via /content redirect
+                full_url = get_content_url(drive_id, img["id"], token) if not thumb_url else ""
                 cat_images.append({
                     "id": img.get("id", ""),
                     "name": img.get("name", ""),
-                    "url": img_url,
+                    "url": thumb_url or full_url,
+                    "thumb": thumb_url,
                     "size": img.get("size", 0),
                     "width": image_meta.get("width", 0),
                     "height": image_meta.get("height", 0),
@@ -130,13 +135,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if ext not in IMAGE_EXTENSIONS:
                 continue
             image_meta = c.get("image", {})
-            img_url = c.get("@microsoft.graph.downloadUrl", "")
-            if not img_url:
-                img_url = get_download_url(drive_id, c["id"], token)
+            thumbs = c.get("thumbnails", [])
+            thumb_url = thumbs[0].get("large", {}).get("url", "") if thumbs else ""
+            img_url = thumb_url or get_content_url(drive_id, c["id"], token)
             loose_images.append({
                 "id": c.get("id", ""),
                 "name": name,
                 "url": img_url,
+                "thumb": thumb_url,
                 "size": c.get("size", 0),
                 "width": image_meta.get("width", 0),
                 "height": image_meta.get("height", 0),
