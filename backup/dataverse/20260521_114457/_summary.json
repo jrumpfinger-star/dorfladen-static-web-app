@@ -1,0 +1,66 @@
+{
+  "default": {
+    "wochenplan": {
+      "entity_set": "dl_wochenplans",
+      "count": 0,
+      "file": "default_wochenplan_dl_wochenplans.json"
+    },
+    "seiteninhalt": {
+      "entity_set": null,
+      "count": 0,
+      "file": null
+    },
+    "angebote": {
+      "entity_set": null,
+      "count": 0,
+      "file": null
+    },
+    "news": {
+      "entity_set": "dl_newses",
+      "count": 3,
+      "file": "default_news_dl_newses.json"
+    },
+    "oeffnungszeiten": {
+      "entity_set": "dl_oeffnungszeits",
+      "count": 14,
+      "file": "default_oeffnungszeiten_dl_oeffnungszeits.json"
+    },
+    "werbebilder": {
+      "entity_set": null,
+      "count": 0,
+      "file": null
+    }
+  },
+  "dev": {
+    "wochenplan": {
+      "entity_set": "dl_wochenplans",
+      "count": 27,
+      "file": "dev_wochenplan_dl_wochenplans.json"
+    },
+    "seiteninhalt": {
+      "entity_set": "dl_seiteninhalts",
+      "count": 15,
+      "file": "dev_seiteninhalt_dl_seiteninhalts.json"
+    },
+    "angebote": {
+      "entity_set": "dl_angebotes",
+      "count": 16,
+      "file": "dev_angebote_dl_angebotes.json"
+    },
+    "news": {
+      "entity_set": "dl_newses",
+      "count": 7,
+      "file": "dev_news_dl_newses.json"
+    },
+    "oeffnungszeiten": {
+      "entity_set": "dl_oeffnungszeits",
+      "count": 14,
+      "file": "dev_oeffnungszeiten_dl_oeffnungszeits.json"
+    },
+    "werbebilder": {
+      "entity_set": "dl_werbebilds",
+      "count": 1938,
+      "file": "dev_werbebilder_dl_werbebilds.json"
+    }
+  }
+}
