@@ -166,6 +166,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     sent = 0
     failed = 0
     removed = 0
+    errors_detail = []
 
     for entry in all_subs:
         sub = entry["subscription"]
@@ -186,8 +187,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 removed += 1
             else:
                 failed += 1
-        except Exception:
+                errors_detail.append(f"WebPush {status}: {str(ex)[:200]}")
+        except Exception as ex:
             failed += 1
+            errors_detail.append(f"Error: {str(ex)[:200]}")
 
     return func.HttpResponse(
         json.dumps({
@@ -195,7 +198,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "sent": sent,
             "failed": failed,
             "removed": removed,
-            "total": len(all_subs)
+            "total": len(all_subs),
+            "errors": errors_detail[:5]
         }),
         status_code=200, mimetype="application/json", headers=get_cors_headers()
     )

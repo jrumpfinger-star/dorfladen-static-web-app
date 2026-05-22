@@ -5391,9 +5391,10 @@ document.head.appendChild(msalScript);
         var info='Gesendet: '+res.sent;
         if(res.failed)info+=', Fehler: '+res.failed;
         if(res.removed)info+=', Entfernt: '+res.removed;
+        if(res.errors&&res.errors.length)info+='\n'+res.errors.join('\n');
         status.textContent='\u2705 '+info;
-        status.style.color='#16a34a';
-        toast('Push gesendet! ('+res.sent+' Empf\u00e4nger)','ok');
+        status.style.color=res.failed?'#d97706':'#16a34a';
+        toast(res.sent>0?'Push gesendet! ('+res.sent+' Empf\u00e4nger)':'Fehler beim Senden ('+res.failed+' fehlgeschlagen)',res.sent>0?'ok':'error');
       }else{
         status.textContent='\u274c '+res.error;
         status.style.color='#dc2626';
