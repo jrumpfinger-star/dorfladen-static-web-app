@@ -218,6 +218,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       var cb=document.getElementById('push-cat-'+c);
       if(cb&&cb.checked)cats.push(c);
     });
+    // First try PATCH, if subscription not found re-register via POST
     fetch('/api/push-subscribe',{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
@@ -231,9 +232,31 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
           btn.textContent='\u2705 Einstellungen gespeichert';
           setTimeout(function(){btn.textContent=old;},2000);
         });
-      }else{
-        alert('Fehler beim Speichern: '+(res.error||'Unbekannt'));
+        return;
       }
+      // Subscription not found in Dataverse – re-register it
+      return navigator.serviceWorker.ready.then(function(reg){
+        return reg.pushManager.getSubscription();
+      }).then(function(sub){
+        if(!sub)return;
+        return fetch('/api/push-subscribe',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({subscription:sub.toJSON(),categories:cats})
+        }).then(function(r2){return r2.json();}).then(function(res2){
+          if(res2.success){
+            closePushSettings();
+            [pushBtn,pushBtnDt].forEach(function(btn){
+              if(!btn)return;
+              var old=btn.textContent;
+              btn.textContent='\u2705 Einstellungen gespeichert';
+              setTimeout(function(){btn.textContent=old;},2000);
+            });
+          }else{
+            alert('Fehler beim Speichern: '+(res2.error||'Unbekannt'));
+          }
+        });
+      });
     }).catch(function(e){
       console.error('Save categories error',e);
       alert('Netzwerkfehler beim Speichern: '+e.message);
@@ -311,12 +334,21 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.getSubscription();
     }).then(function(sub){
-      if(!sub)return;
+      if(!sub){
+        updatePushUI(false);
+        return;
+      }
       var ep=sub.endpoint;
       return sub.unsubscribe().then(function(){
-        fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:ep})});
         updatePushUI(false);
+        return fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:ep})});
+      }).then(function(){
+        alert('Benachrichtigungen deaktiviert.');
       });
+    }).catch(function(err){
+      console.error('Unsubscribe error',err);
+      updatePushUI(false);
+      alert('Benachrichtigungen deaktiviert.');
     });
   }
 
