@@ -126,6 +126,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     message = body.get("message", "")
     url = body.get("url", "/")
     tag = body.get("tag", "dorfladen")
+    image = body.get("image", "")
 
     if not message:
         return func.HttpResponse(
@@ -150,14 +151,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
-    notification_payload = json.dumps({
+    payload_data = {
         "title": title,
         "body": message,
         "url": url,
         "tag": tag,
         "icon": "/images/icon-192.png",
         "badge": "/images/icon-192.png"
-    }, ensure_ascii=False)
+    }
+    if image:
+        payload_data["image"] = image
+    notification_payload = json.dumps(payload_data, ensure_ascii=False)
 
     vapid_claims = {
         "sub": vapid_contact

@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v2';
+var CACHE_NAME='dorfladen-v3';
 var PRECACHE=[
   '/',
   '/css/style.css',
@@ -60,17 +60,17 @@ self.addEventListener('push',function(e){
   if(e.data){
     try{var d=e.data.json();Object.assign(data,d);}catch(ex){data.body=e.data.text();}
   }
-  e.waitUntil(
-    self.registration.showNotification(data.title,{
-      body:data.body,
-      icon:data.icon,
-      badge:data.badge,
-      tag:data.tag,
-      data:{url:data.url},
-      vibrate:[200,100,200],
-      requireInteraction:false
-    })
-  );
+  var opts={
+    body:data.body,
+    icon:data.icon,
+    badge:data.badge,
+    tag:data.tag,
+    data:{url:data.url},
+    vibrate:[200,100,200],
+    requireInteraction:false
+  };
+  if(data.image)opts.image=data.image;
+  e.waitUntil(self.registration.showNotification(data.title,opts));
 });
 
 self.addEventListener('notificationclick',function(e){

@@ -712,6 +712,21 @@ document.head.appendChild(msalScript);
           <textarea id="push-message" class="cms-input" rows="3" style="width:100%;resize:vertical" placeholder="z.B. Heute: Schweinebraten mit Kn&ouml;del und Salat!"></textarea>
         </div>
         <div style="margin-bottom:10px">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Bild (optional, wird auf Android/Chrome angezeigt)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label class="cms-btn cms-btn-gray" style="cursor:pointer;font-size:12px;padding:6px 12px">
+              &#128247; Bild w&auml;hlen
+              <input type="file" id="push-image-file" accept="image/*" style="display:none" onchange="pushImagePreview(this)">
+            </label>
+            <span id="push-image-name" style="font-size:12px;color:#6b7280">Kein Bild</span>
+            <button id="push-image-remove" style="display:none;background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px" onclick="pushImageRemove()">&times;</button>
+          </div>
+          <div id="push-image-preview" style="display:none;margin-top:8px">
+            <img id="push-image-thumb" style="max-width:200px;max-height:120px;border-radius:6px;border:1px solid #e5e7eb">
+          </div>
+          <input type="hidden" id="push-image-url" value="">
+        </div>
+        <div style="margin-bottom:10px">
           <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Link (optional)</label>
           <select id="push-url" class="cms-input" style="width:100%">
             <option value="/">Startseite</option>
@@ -5369,6 +5384,47 @@ document.head.appendChild(msalScript);
       msg.focus();
     }
   };
+  window.pushImagePreview = function(input){
+    if(!input.files||!input.files[0])return;
+    var file=input.files[0];
+    document.getElementById('push-image-name').textContent=file.name;
+    document.getElementById('push-image-remove').style.display='';
+    var reader=new FileReader();
+    reader.onload=function(e){
+      document.getElementById('push-image-thumb').src=e.target.result;
+      document.getElementById('push-image-preview').style.display='';
+      // Store base64 for upload
+      input.setAttribute('data-base64',e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+  window.pushImageRemove = function(){
+    document.getElementById('push-image-file').value='';
+    document.getElementById('push-image-file').removeAttribute('data-base64');
+    document.getElementById('push-image-name').textContent='Kein Bild';
+    document.getElementById('push-image-remove').style.display='none';
+    document.getElementById('push-image-preview').style.display='none';
+    document.getElementById('push-image-url').value='';
+  };
+  function pushUploadImage(){
+    var fileInput=document.getElementById('push-image-file');
+    var b64=fileInput.getAttribute('data-base64');
+    if(!b64)return Promise.resolve('');
+    // Check if already uploaded
+    var cachedUrl=document.getElementById('push-image-url').value;
+    if(cachedUrl)return Promise.resolve(cachedUrl);
+    return fetch(API+'/push-image',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({data:b64})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res.success&&res.url){
+        document.getElementById('push-image-url').value=res.url;
+        return res.url;
+      }
+      throw new Error(res.error||'Bild-Upload fehlgeschlagen');
+    });
+  }
   window.pushSendNow = function(){
     var title=document.getElementById('push-title').value.trim();
     var message=document.getElementById('push-message').value.trim();
@@ -5378,12 +5434,17 @@ document.head.appendChild(msalScript);
     if(!message){toast('Bitte Nachricht eingeben','warn');return;}
     if(!confirm('Push-Nachricht an ALLE Abonnenten senden?\n\nTitel: '+title+'\nNachricht: '+message))return;
     btn.disabled=true;
-    status.textContent='Wird gesendet...';
+    status.textContent='Bild wird hochgeladen...';
     status.style.color='#6b7280';
-    fetch(API+'/push-send',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({title:title,message:message,url:url,tag:'dorfladen-cms'})
+    pushUploadImage().then(function(imageUrl){
+      status.textContent='Wird gesendet...';
+      var payload={title:title,message:message,url:url,tag:'dorfladen-cms'};
+      if(imageUrl)payload.image=imageUrl;
+      return fetch(API+'/push-send',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
     })
     .then(function(r){return r.json();})
     .then(function(res){
@@ -5406,7 +5467,7 @@ document.head.appendChild(msalScript);
       status.style.color='#dc2626';
       toast('Fehler: '+e.message,'error');
     })
-    .then(function(){btn.disabled=false;});
+    .then(function(){btn.disabled=false;pushImageRemove();});
   };
 
   // --- Init (only if already authenticated via session) ---
