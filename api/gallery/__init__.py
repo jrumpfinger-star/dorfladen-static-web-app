@@ -72,39 +72,88 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     drive_id = item.get("parentReference", {}).get("driveId", "")
     item_id = item.get("id", "")
 
-    # List children (images)
-    children_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/children?$select=id,name,size,file,image,@microsoft.graph.downloadUrl&$orderby=name"
+    # List children (subfolders = categories, or loose images)
+    children_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/children?$select=id,name,size,file,folder,image,@microsoft.graph.downloadUrl&$orderby=name"
     r2 = requests.get(children_url, headers=headers, timeout=30)
     if r2.status_code != 200:
         return func.HttpResponse(
-            body=json.dumps({"success": False, "error": f"Could not list images: {r2.status_code}"}),
+            body=json.dumps({"success": False, "error": f"Could not list items: {r2.status_code}"}),
             status_code=500,
             headers=get_cors_headers(),
         )
 
     children = r2.json().get("value", [])
-    images = []
+    categories = []
+    loose_images = []
+
     for c in children:
         name = c.get("name", "")
-        ext = os.path.splitext(name)[1].lower()
-        if ext not in IMAGE_EXTENSIONS:
-            continue
 
-        download_url = c.get("@microsoft.graph.downloadUrl", "")
-        image_meta = c.get("image", {})
+        # Subfolder = category
+        if c.get("folder"):
+            cat_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{c['id']}/children?$select=id,name,size,file,image,@microsoft.graph.downloadUrl&$orderby=name&$top=200"
+            r3 = requests.get(cat_url, headers=headers, timeout=30)
+            if r3.status_code != 200:
+                continue
+            cat_images = []
+            for img in r3.json().get("value", []):
+                ext = os.path.splitext(img.get("name", ""))[1].lower()
+                if ext not in IMAGE_EXTENSIONS:
+                    continue
+                image_meta = img.get("image", {})
+                cat_images.append({
+                    "id": img.get("id", ""),
+                    "name": img.get("name", ""),
+                    "url": img.get("@microsoft.graph.downloadUrl", ""),
+                    "size": img.get("size", 0),
+                    "width": image_meta.get("width", 0),
+                    "height": image_meta.get("height", 0),
+                    "mime": img.get("file", {}).get("mimeType", ""),
+                })
+            if cat_images:
+                categories.append({"name": name, "images": cat_images, "count": len(cat_images)})
+        else:
+            # Loose image at root level
+            ext = os.path.splitext(name)[1].lower()
+            if ext not in IMAGE_EXTENSIONS:
+                continue
+            image_meta = c.get("image", {})
+            loose_images.append({
+                "id": c.get("id", ""),
+                "name": name,
+                "url": c.get("@microsoft.graph.downloadUrl", ""),
+                "size": c.get("size", 0),
+                "width": image_meta.get("width", 0),
+                "height": image_meta.get("height", 0),
+                "mime": c.get("file", {}).get("mimeType", ""),
+            })
 
-        images.append({
-            "id": c.get("id", ""),
-            "name": name,
-            "url": download_url,
-            "size": c.get("size", 0),
-            "width": image_meta.get("width", 0),
-            "height": image_meta.get("height", 0),
-            "mime": c.get("file", {}).get("mimeType", ""),
-        })
+    # Add loose images as "Sonstiges" if not already a category
+    if loose_images:
+        has_sonstiges = any(cat["name"] == "Sonstiges" for cat in categories)
+        if has_sonstiges:
+            for cat in categories:
+                if cat["name"] == "Sonstiges":
+                    cat["images"].extend(loose_images)
+                    cat["count"] = len(cat["images"])
+        else:
+            categories.append({"name": "Sonstiges", "images": loose_images, "count": len(loose_images)})
+
+    # Build flat list of all images for backwards compatibility
+    all_images = []
+    for cat in categories:
+        for img in cat["images"]:
+            all_images.append({**img, "category": cat["name"]})
+
+    total = sum(cat["count"] for cat in categories)
 
     return func.HttpResponse(
-        body=json.dumps({"success": True, "images": images, "count": len(images)}),
+        body=json.dumps({
+            "success": True,
+            "categories": categories,
+            "images": all_images,
+            "count": total,
+        }),
         status_code=200,
         headers=get_cors_headers(),
     )

@@ -658,7 +658,10 @@ function loadAngBilder(container){
 
 /* === Gallery === */
 var _galleryImages=[];
+var _galleryAllImages=[];
+var _galleryCategories=[];
 var _galleryIdx=0;
+var _galleryFilter='Alle';
 function openLightbox(idx){
   _galleryIdx=idx;
   var overlay=document.getElementById('lightbox-overlay');
@@ -666,7 +669,9 @@ function openLightbox(idx){
   var cap=document.getElementById('lightbox-caption');
   if(!overlay||!_galleryImages[idx])return;
   img.src=_galleryImages[idx].url;
-  cap.textContent=_galleryImages[idx].name.replace(/\.[^.]+$/,'');
+  var label=_galleryImages[idx].name.replace(/\.[^.]+$/,'');
+  if(_galleryImages[idx].category)label=_galleryImages[idx].category+' – '+label;
+  cap.textContent=label;
   overlay.classList.add('active');
   document.body.style.overflow='hidden';
 }
@@ -681,6 +686,26 @@ function navLightbox(dir){
   if(newIdx>=_galleryImages.length)newIdx=0;
   openLightbox(newIdx);
 }
+function renderGallery(filter){
+  _galleryFilter=filter||'Alle';
+  var grid=document.getElementById('gallery-grid');
+  if(!grid)return;
+  _galleryImages=_galleryFilter==='Alle'?_galleryAllImages:_galleryAllImages.filter(function(img){return img.category===_galleryFilter;});
+  if(!_galleryImages.length){grid.innerHTML='<div class="gallery-empty">Keine Bilder in dieser Kategorie</div>';return;}
+  var html='';
+  for(var i=0;i<_galleryImages.length;i++){
+    var img=_galleryImages[i];
+    html+='<div class="gallery-item" onclick="openLightbox('+i+')">';
+    html+='<img src="'+img.url+'" alt="'+img.name.replace(/"/g,'&quot;')+'" loading="lazy" class="loading" onload="this.classList.remove(\'loading\')">';
+    html+='</div>';
+  }
+  grid.innerHTML=html;
+  // Update active filter button
+  var btns=document.querySelectorAll('.gallery-filter-btn');
+  for(var j=0;j<btns.length;j++){
+    btns[j].classList.toggle('active',btns[j].getAttribute('data-cat')===_galleryFilter);
+  }
+}
 document.addEventListener('keydown',function(e){
   var overlay=document.getElementById('lightbox-overlay');
   if(!overlay||!overlay.classList.contains('active'))return;
@@ -690,6 +715,7 @@ document.addEventListener('keydown',function(e){
 });
 (function(){
   var grid=document.getElementById('gallery-grid');
+  var filters=document.getElementById('gallery-filters');
   if(!grid)return;
   fetch(API_BASE+'/gallery')
     .then(function(r){return r.json();})
@@ -698,15 +724,19 @@ document.addEventListener('keydown',function(e){
         grid.innerHTML='<div class="gallery-empty">Noch keine Bilder vorhanden</div>';
         return;
       }
-      _galleryImages=res.images;
-      var html='';
-      for(var i=0;i<res.images.length;i++){
-        var img=res.images[i];
-        html+='<div class="gallery-item" onclick="openLightbox('+i+')">';
-        html+='<img src="'+img.url+'" alt="'+img.name.replace(/"/g,'&quot;')+'" loading="lazy" class="loading" onload="this.classList.remove(\'loading\')">';
-        html+='</div>';
+      _galleryAllImages=res.images;
+      _galleryCategories=res.categories||[];
+      // Build filter tabs
+      if(filters&&_galleryCategories.length>1){
+        var fhtml='<button class="gallery-filter-btn active" data-cat="Alle" onclick="renderGallery(\'Alle\')">Alle<span class="gf-count">('+res.count+')</span></button>';
+        for(var c=0;c<_galleryCategories.length;c++){
+          var cat=_galleryCategories[c];
+          if(cat.name==='Sonstiges'&&cat.count<2)continue;
+          fhtml+='<button class="gallery-filter-btn" data-cat="'+cat.name+'" onclick="renderGallery(\''+cat.name+'\')">'+cat.name+'<span class="gf-count">('+cat.count+')</span></button>';
+        }
+        filters.innerHTML=fhtml;
       }
-      grid.innerHTML=html;
+      renderGallery('Alle');
     })
     .catch(function(){
       grid.innerHTML='<div class="gallery-empty">Galerie konnte nicht geladen werden</div>';

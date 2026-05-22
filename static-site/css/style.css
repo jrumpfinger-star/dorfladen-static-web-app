@@ -532,6 +532,11 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 /* merged into main .cookie-bar.show above */
 
 /* === GALLERY === */
+.gallery-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.gallery-filter-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d1d5db;background:#fff;color:var(--c-txt);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s}
+.gallery-filter-btn:hover{border-color:var(--c-pri);color:var(--c-pri)}
+.gallery-filter-btn.active{background:var(--c-pri);color:#fff;border-color:var(--c-pri)}
+.gallery-filter-btn .gf-count{font-weight:400;opacity:.7;margin-left:4px;font-size:.72rem}
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
 .gallery-item{position:relative;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;aspect-ratio:4/3;background:#f3f4f6;transition:transform .2s,box-shadow .2s}
 .gallery-item:hover{transform:scale(1.03);box-shadow:0 4px 16px rgba(0,0,0,.15)}
