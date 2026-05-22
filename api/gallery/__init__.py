@@ -31,11 +31,177 @@ def get_graph_token():
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
         "Content-Type": "application/json; charset=utf-8",
     }
+
+
+def resolve_gallery_folder(token):
+    """Resolve the sharing link to drive_id and item_id."""
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    encoded = base64.urlsafe_b64encode(SHARE_URL.encode()).decode().rstrip("=")
+    share_token = f"u!{encoded}"
+    r = requests.get(
+        f"https://graph.microsoft.com/v1.0/shares/{share_token}/driveItem",
+        headers=headers, timeout=30,
+    )
+    if r.status_code != 200:
+        return None, None
+    item = r.json()
+    return item.get("parentReference", {}).get("driveId", ""), item.get("id", "")
+
+
+def ensure_category_folder(drive_id, parent_id, category, token):
+    """Find or create a category subfolder. Returns folder item id."""
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    # Check if folder exists
+    url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{parent_id}/children?$filter=name eq '{category}'&$select=id,name,folder"
+    r = requests.get(url, headers=headers, timeout=15)
+    if r.status_code == 200:
+        for child in r.json().get("value", []):
+            if child.get("folder") is not None and child.get("name") == category:
+                return child["id"]
+    # Create folder
+    r2 = requests.post(
+        f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{parent_id}/children",
+        headers={**headers, "Content-Type": "application/json"},
+        json={"name": category, "folder": {}, "@microsoft.graph.conflictBehavior": "fail"},
+        timeout=15,
+    )
+    if r2.status_code in (200, 201):
+        return r2.json().get("id")
+    return None
+
+
+def handle_upload(req, token):
+    """POST: Upload image to SharePoint gallery. Expects multipart/form-data with 'file' and 'category'."""
+    try:
+        # Parse form data
+        files = req.files
+        if not files or "file" not in files:
+            # Try raw body with JSON metadata
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "No file provided. Use multipart/form-data with 'file' field."}),
+                status_code=400, headers=get_cors_headers(),
+            )
+
+        file = files["file"]
+        filename = file.filename or "image.jpg"
+        content = file.read()
+
+        if not content or len(content) == 0:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Empty file"}),
+                status_code=400, headers=get_cors_headers(),
+            )
+
+        # Check extension
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in IMAGE_EXTENSIONS:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": f"Invalid file type: {ext}"}),
+                status_code=400, headers=get_cors_headers(),
+            )
+
+        category = req.form.get("category", "").strip()
+
+        drive_id, root_id = resolve_gallery_folder(token)
+        if not drive_id:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Could not resolve gallery folder"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+
+        # Determine upload target folder
+        if category:
+            target_id = ensure_category_folder(drive_id, root_id, category, token)
+            if not target_id:
+                return func.HttpResponse(
+                    body=json.dumps({"success": False, "error": f"Could not create/find category folder: {category}"}),
+                    status_code=500, headers=get_cors_headers(),
+                )
+        else:
+            target_id = root_id
+
+        # Upload file via Graph API
+        upload_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{target_id}:/{filename}:/content"
+        mime = file.content_type or "application/octet-stream"
+        r = requests.put(
+            upload_url,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": mime,
+            },
+            data=content,
+            timeout=60,
+        )
+
+        if r.status_code in (200, 201):
+            item = r.json()
+            return func.HttpResponse(
+                body=json.dumps({
+                    "success": True,
+                    "id": item.get("id", ""),
+                    "name": item.get("name", ""),
+                    "size": item.get("size", 0),
+                    "category": category or "Sonstiges",
+                }),
+                status_code=200, headers=get_cors_headers(),
+            )
+        else:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": f"Upload failed: {r.status_code} {r.text[:200]}"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+    except Exception as e:
+        return func.HttpResponse(
+            body=json.dumps({"success": False, "error": str(e)}),
+            status_code=500, headers=get_cors_headers(),
+        )
+
+
+def handle_delete(req, token):
+    """DELETE: Delete image from SharePoint gallery. Expects JSON body with 'id' (driveItem id)."""
+    try:
+        body = req.get_json()
+        item_id = body.get("id", "")
+        if not item_id:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Missing 'id' parameter"}),
+                status_code=400, headers=get_cors_headers(),
+            )
+
+        drive_id, _ = resolve_gallery_folder(token)
+        if not drive_id:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Could not resolve gallery folder"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+
+        delete_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}"
+        r = requests.delete(
+            delete_url,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=15,
+        )
+
+        if r.status_code == 204:
+            return func.HttpResponse(
+                body=json.dumps({"success": True}),
+                status_code=200, headers=get_cors_headers(),
+            )
+        else:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": f"Delete failed: {r.status_code}"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+    except Exception as e:
+        return func.HttpResponse(
+            body=json.dumps({"success": False, "error": str(e)}),
+            status_code=500, headers=get_cors_headers(),
+        )
 
 
 def get_content_url(drive_id, item_id, token):
@@ -59,27 +225,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             headers=get_cors_headers(),
         )
 
+    # Route POST and DELETE to their handlers
+    if req.method == "POST":
+        return handle_upload(req, token)
+    if req.method == "DELETE":
+        return handle_delete(req, token)
+
+    # GET: list gallery images
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",
     }
 
-    # Resolve sharing link to driveItem
-    encoded = base64.urlsafe_b64encode(SHARE_URL.encode()).decode().rstrip("=")
-    share_token = f"u!{encoded}"
-
-    resolve_url = f"https://graph.microsoft.com/v1.0/shares/{share_token}/driveItem"
-    r = requests.get(resolve_url, headers=headers, timeout=30)
-    if r.status_code != 200:
+    drive_id, item_id = resolve_gallery_folder(token)
+    if not drive_id:
         return func.HttpResponse(
-            body=json.dumps({"success": False, "error": f"Could not resolve folder: {r.status_code}"}),
+            body=json.dumps({"success": False, "error": "Could not resolve folder"}),
             status_code=500,
             headers=get_cors_headers(),
         )
-
-    item = r.json()
-    drive_id = item.get("parentReference", {}).get("driveId", "")
-    item_id = item.get("id", "")
 
     # List children (subfolders = categories, or loose images)
     children_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/children?$select=id,name,size,file,folder,image&$expand=thumbnails&$orderby=name"

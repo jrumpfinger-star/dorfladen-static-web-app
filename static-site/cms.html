@@ -432,6 +432,9 @@ document.head.appendChild(msalScript);
     <button class="cms-tab" data-action="tab" data-id="sort" id="cms-tab-sort">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Sortiment
     </button>
+    <button class="cms-tab" data-action="tab" data-id="gallery" id="cms-tab-gallery">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Bilder
+    </button>
     <button class="cms-tab" data-action="tab" data-id="cfg" id="cms-tab-cfg" style="margin-left:auto;color:#bd8b5c;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Design
     </button>
@@ -610,6 +613,56 @@ document.head.appendChild(msalScript);
         <span id="sort-cms-status" style="font-size:12px;color:#6b7280;line-height:32px"></span>
       </div>
     </div>
+  </div>
+
+  <!-- Bilder / Galerie -->
+  <div id="cms-panel-gallery" style="display:none">
+    <div class="cms-flex cms-between cms-mb">
+      <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0">Bilder-Galerie verwalten</h3>
+      <div class="cms-flex" style="gap:6px">
+        <button class="cms-btn cms-btn-gray" onclick="loadGalleryAdmin()" title="Neu laden">&#x21bb; Aktualisieren</button>
+      </div>
+    </div>
+    <!-- Upload Area -->
+    <div class="cms-card" style="margin-bottom:16px">
+      <div class="cms-card-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+        Bilder hochladen
+      </div>
+      <div class="cms-card-body">
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label style="font-size:11px;font-weight:700;color:var(--c-m-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Kategorie</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select id="gal-upload-cat" class="cms-input" style="flex:1">
+                <option value="">-- Kategorie wählen --</option>
+              </select>
+              <input id="gal-new-cat" class="cms-input" placeholder="Neue Kategorie..." style="flex:1;display:none">
+              <button class="cms-btn cms-btn-sm cms-btn-gray" onclick="var ni=document.getElementById('gal-new-cat');var sel=document.getElementById('gal-upload-cat');if(ni.style.display==='none'){ni.style.display='';sel.style.display='none';this.textContent='Auswählen'}else{ni.style.display='none';sel.style.display='';this.textContent='+ Neu'}">+ Neu</button>
+            </div>
+          </div>
+          <div style="flex:2;min-width:260px">
+            <label style="font-size:11px;font-weight:700;color:var(--c-m-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Bilder auswählen</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="file" id="gal-upload-files" accept="image/*" multiple class="cms-input" style="flex:1">
+              <button class="cms-btn cms-btn-primary" id="gal-upload-btn" onclick="galUpload()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                Hochladen
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="gal-upload-progress" style="margin-top:10px;display:none">
+          <div style="background:#e5e7eb;border-radius:8px;height:6px;overflow:hidden">
+            <div id="gal-upload-bar" style="background:var(--c-m-pri);height:100%;width:0%;transition:width .3s"></div>
+          </div>
+          <div id="gal-upload-status" style="font-size:12px;color:var(--c-m-muted);margin-top:4px"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Gallery Grid -->
+    <div id="gal-admin-grid"></div>
+    <div class="cms-empty" id="gal-admin-empty" style="display:none">Noch keine Bilder in der Galerie.</div>
   </div>
 
   <!-- Design-Einstellungen mit Sub-Tabs -->
@@ -1877,7 +1930,7 @@ document.head.appendChild(msalScript);
   // --- Tabs ---
   var angebote = [];
   window.cmsTab = function(name){
-    ['wp','hours','ang','hp','news','sort','cfg'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','gallery','cfg'].forEach(function(t){
       document.getElementById('cms-panel-'+t).style.display = t===name?'':'none';
       document.getElementById('cms-tab-'+t).className = 'cms-tab'+(t===name?' active':'');
     });
@@ -1886,6 +1939,7 @@ document.head.appendChild(msalScript);
     if(name==='hp'){ if(!_hpLoaded) loadHomepage(); loadLogo(); }
     if(name==='news' && !_newsLoaded) loadNews();
     if(name==='sort' && !_sortLoaded) loadSortiment();
+    if(name==='gallery' && !_galLoaded) loadGalleryAdmin();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
   };
 
@@ -4976,6 +5030,155 @@ document.head.appendChild(msalScript);
       status.textContent='⚠️ Netzwerkfehler';status.style.color='#dc2626';
       toast('Netzwerkfehler beim Speichern','error');
     });
+  };
+
+  // ═══════════════ GALLERY ADMIN ═══════════════
+  var _galLoaded=false;
+  var _galData=null;
+
+  window.loadGalleryAdmin=function(){
+    var grid=document.getElementById('gal-admin-grid');
+    var empty=document.getElementById('gal-admin-empty');
+    if(!grid)return;
+    grid.innerHTML='<div style="text-align:center;padding:24px;color:var(--c-m-muted)">Lade Galerie...</div>';
+    empty.style.display='none';
+
+    fetch(API+'/gallery')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        _galLoaded=true;
+        if(!res.success||!res.images||!res.images.length){
+          grid.innerHTML='';
+          empty.style.display='';
+          _galData={categories:[],images:[]};
+          galUpdateCatSelect();
+          return;
+        }
+        _galData=res;
+        galUpdateCatSelect();
+        galRenderGrid();
+      })
+      .catch(function(e){
+        grid.innerHTML='<div style="text-align:center;padding:24px;color:#dc2626">Fehler beim Laden: '+e.message+'</div>';
+      });
+  };
+
+  function galUpdateCatSelect(){
+    var sel=document.getElementById('gal-upload-cat');
+    if(!sel||!_galData)return;
+    var cats=(_galData.categories||[]).map(function(c){return c.name;});
+    var html='<option value="">-- Kategorie wählen --</option>';
+    cats.forEach(function(c){
+      html+='<option value="'+c+'">'+c+'</option>';
+    });
+    sel.innerHTML=html;
+  }
+
+  function galRenderGrid(){
+    var grid=document.getElementById('gal-admin-grid');
+    var empty=document.getElementById('gal-admin-empty');
+    if(!grid||!_galData)return;
+    var cats=_galData.categories||[];
+    if(!cats.length){grid.innerHTML='';empty.style.display='';return;}
+    empty.style.display='none';
+
+    var html='';
+    cats.forEach(function(cat){
+      html+='<div class="cms-card" style="margin-bottom:12px">';
+      html+='<div class="cms-card-header" style="display:flex;justify-content:space-between;align-items:center">';
+      html+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> '+cat.name+' <span style="opacity:.7;font-weight:400;margin-left:4px">('+cat.count+' Bilder)</span></span>';
+      html+='</div>';
+      html+='<div class="cms-card-body" style="padding:10px">';
+      html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">';
+      (cat.images||[]).forEach(function(img){
+        html+='<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:#f3f4f6;border:1px solid #e5e7eb">';
+        html+='<img src="'+(img.thumb||img.url)+'" alt="'+img.name.replace(/"/g,'&quot;')+'" style="width:100%;height:100%;object-fit:cover;display:block">';
+        html+='<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:4px 6px;color:#fff;font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+img.name+'</div>';
+        html+='<button onclick="galDelete(\''+img.id+'\',\''+img.name.replace(/'/g,"\\'")+'\')" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:6px;border:none;background:rgba(220,38,38,.85);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s" title="Löschen">&times;</button>';
+        html+='</div>';
+      });
+      html+='</div></div></div>';
+    });
+    grid.innerHTML=html;
+  }
+
+  window.galDelete=function(id,name){
+    if(!confirm('Bild "'+name+'" wirklich löschen?'))return;
+    fetch(API+'/gallery',{
+      method:'DELETE',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('Bild gelöscht: '+name);
+        loadGalleryAdmin();
+      }else{
+        toast('Fehler: '+(res.error||'Unbekannt'),'error');
+      }
+    })
+    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+  };
+
+  window.galUpload=function(){
+    var fileInput=document.getElementById('gal-upload-files');
+    var files=fileInput.files;
+    if(!files||!files.length){toast('Bitte Bilder auswählen','warn');return;}
+
+    var sel=document.getElementById('gal-upload-cat');
+    var newCat=document.getElementById('gal-new-cat');
+    var category='';
+    if(newCat&&newCat.style.display!=='none'&&newCat.value.trim()){
+      category=newCat.value.trim();
+    }else if(sel&&sel.value){
+      category=sel.value;
+    }
+
+    var btn=document.getElementById('gal-upload-btn');
+    var progress=document.getElementById('gal-upload-progress');
+    var bar=document.getElementById('gal-upload-bar');
+    var status=document.getElementById('gal-upload-status');
+    btn.disabled=true;
+    progress.style.display='';
+    bar.style.width='0%';
+
+    var total=files.length;
+    var done=0;
+    var errors=0;
+
+    function uploadNext(idx){
+      if(idx>=total){
+        btn.disabled=false;
+        var msg=done+' von '+total+' Bild'+(total>1?'ern':'')+' hochgeladen';
+        if(errors>0) msg+=', '+errors+' Fehler';
+        status.textContent=msg;
+        toast(msg, errors>0?'warn':'success');
+        fileInput.value='';
+        if(newCat)newCat.value='';
+        loadGalleryAdmin();
+        return;
+      }
+      status.textContent='Lade hoch: '+(idx+1)+' / '+total+' – '+files[idx].name;
+      var fd=new FormData();
+      fd.append('file',files[idx]);
+      if(category) fd.append('category',category);
+
+      fetch(API+'/gallery',{method:'POST',body:fd})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){done++;}else{errors++;toast('Fehler bei '+files[idx].name+': '+(res.error||''),'error');}
+          bar.style.width=Math.round(((idx+1)/total)*100)+'%';
+          uploadNext(idx+1);
+        })
+        .catch(function(e){
+          errors++;
+          toast('Fehler bei '+files[idx].name+': '+e.message,'error');
+          bar.style.width=Math.round(((idx+1)/total)*100)+'%';
+          uploadNext(idx+1);
+        });
+    }
+    uploadNext(0);
   };
 
   // --- Init (only if already authenticated via session) ---
