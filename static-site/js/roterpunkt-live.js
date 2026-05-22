@@ -29,7 +29,7 @@
       var avgDisc=0;
       var validItems=0;
       items.forEach(function(i){
-        if(i.discount>0&&i.discount<=70){
+        if(i.discount>=5&&i.discount<=70){
           avgDisc+=i.discount;
           validItems++;
         }
@@ -41,7 +41,7 @@
 
       var rows='';
       items.forEach(function(item){
-        if(item.discount>70) return;
+        if(item.discount<5||item.discount>70) return;
         var saving=item.uvp&&item.uvp>0&&item.vk>0?(item.uvp-item.vk):0;
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'">';
         rows+='<td class="rp-name">'+esc(item.bezeichnung)+'</td>';

@@ -153,7 +153,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 continue
 
             discount = round((uvp_preis - preis) / uvp_preis * 100)
-            if discount < 1:
+            if discount < 5 or discount > 70:
                 continue
 
             if warengruppe_bez not in groups:
