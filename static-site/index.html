@@ -363,11 +363,11 @@
 
     <!-- Galerie -->
     <div class="cd gallery-section">
-      <div class="cd-h">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>
-        Impressionen
+      <div class="cd-h" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between" onclick="var b=this.nextElementSibling;var open=b.style.display!=='none';b.style.display=open?'none':'';this.querySelector('.gallery-toggle').textContent=open?'▸':'▾'">
+        <span><svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>Impressionen</span>
+        <span class="gallery-toggle" style="font-size:1.1rem;color:var(--c-sec,#666)">▸</span>
       </div>
-      <div class="cd-b">
+      <div class="cd-b" style="display:none">
         <div class="gallery-filters" id="gallery-filters"></div>
         <div class="gallery-grid" id="gallery-grid">
           <div class="skeleton" style="height:200px"></div>
