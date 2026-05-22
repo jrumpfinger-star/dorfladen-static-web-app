@@ -238,23 +238,56 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 
   function showPushSettings(endpoint){
     closePushSettings();
+    // Overlay
     var ov=document.createElement('div');
     ov.id='push-settings-overlay';
     ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px';
-    ov.onclick=function(e){if(e.target===ov)closePushSettings();};
-    var box='<div style="background:#fff;border-radius:14px;max-width:340px;width:100%;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.2)">';
-    box+='<div style="font-weight:700;font-size:1rem;margin-bottom:4px">\uD83D\uDD14 Push-Einstellungen</div>';
-    box+='<div style="font-size:.82rem;color:#6b7280;margin-bottom:14px">W\u00e4hle, welche Benachrichtigungen du erhalten m\u00f6chtest:</div>';
+
+    // Inner dialog box (built with DOM, not innerHTML)
+    var dialog=document.createElement('div');
+    dialog.style.cssText='background:#fff;border-radius:14px;max-width:340px;width:100%;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.2)';
+    dialog.onclick=function(e){e.stopPropagation();};
+
+    var h=document.createElement('div');
+    h.style.cssText='font-weight:700;font-size:1rem;margin-bottom:4px';
+    h.textContent='\uD83D\uDD14 Push-Einstellungen';
+    dialog.appendChild(h);
+
+    var desc=document.createElement('div');
+    desc.style.cssText='font-size:.82rem;color:#6b7280;margin-bottom:14px';
+    desc.textContent='W\u00e4hle, welche Benachrichtigungen du erhalten m\u00f6chtest:';
+    dialog.appendChild(desc);
+
     ['mittagstisch','angebote','news'].forEach(function(c){
-      box+='<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;cursor:pointer;font-size:.9rem">';
-      box+='<input type="checkbox" id="push-cat-'+c+'" checked style="width:18px;height:18px;accent-color:#2d7a5e"> ';
-      box+=CAT_LABELS[c]+'</label>';
+      var lbl=document.createElement('label');
+      lbl.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;cursor:pointer;font-size:.9rem';
+      var cb=document.createElement('input');
+      cb.type='checkbox';cb.id='push-cat-'+c;cb.checked=true;
+      cb.style.cssText='width:18px;height:18px;accent-color:#2d7a5e';
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(CAT_LABELS[c]));
+      dialog.appendChild(lbl);
     });
-    box+='<div style="display:flex;gap:8px;margin-top:16px">';
-    box+='<button id="push-settings-save" style="flex:1;padding:10px;border:none;border-radius:8px;background:#2d7a5e;color:#fff;font-weight:600;font-size:.88rem;cursor:pointer">Speichern</button>';
-    box+='<button id="push-settings-unsub" style="flex:1;padding:10px;border:none;border-radius:8px;background:#fee2e2;color:#dc2626;font-weight:600;font-size:.88rem;cursor:pointer">Deaktivieren</button>';
-    box+='</div></div>';
-    ov.innerHTML=box;
+
+    var btnRow=document.createElement('div');
+    btnRow.style.cssText='display:flex;gap:8px;margin-top:16px';
+
+    var saveBtn=document.createElement('button');
+    saveBtn.style.cssText='flex:1;padding:10px;border:none;border-radius:8px;background:#2d7a5e;color:#fff;font-weight:600;font-size:.88rem;cursor:pointer';
+    saveBtn.textContent='Speichern';
+    saveBtn.addEventListener('click',function(e){e.stopPropagation();savePushCategories(endpoint);});
+
+    var unsubBtn=document.createElement('button');
+    unsubBtn.style.cssText='flex:1;padding:10px;border:none;border-radius:8px;background:#fee2e2;color:#dc2626;font-weight:600;font-size:.88rem;cursor:pointer';
+    unsubBtn.textContent='Deaktivieren';
+    unsubBtn.addEventListener('click',function(e){e.stopPropagation();closePushSettings();doUnsubscribe();});
+
+    btnRow.appendChild(saveBtn);
+    btnRow.appendChild(unsubBtn);
+    dialog.appendChild(btnRow);
+
+    ov.appendChild(dialog);
+    ov.addEventListener('click',function(e){if(e.target===ov)closePushSettings();});
     document.body.appendChild(ov);
 
     // Load current categories
@@ -268,12 +301,6 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
           });
         }
       }).catch(function(){});
-
-    document.getElementById('push-settings-save').onclick=function(){savePushCategories(endpoint);};
-    document.getElementById('push-settings-unsub').onclick=function(){
-      closePushSettings();
-      doUnsubscribe();
-    };
   }
 
   function doUnsubscribe(){
