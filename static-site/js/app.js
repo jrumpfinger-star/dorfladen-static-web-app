@@ -669,8 +669,9 @@ function openLightbox(idx){
   var cap=document.getElementById('lightbox-caption');
   if(!overlay||!_galleryImages[idx])return;
   img.src=_galleryImages[idx].url;
-  var label=_galleryImages[idx].name.replace(/\.[^.]+$/,'');
-  if(_galleryImages[idx].category)label=_galleryImages[idx].category+' – '+label;
+  var gi=_galleryImages[idx];
+  var label=gi.description||gi.name.replace(/\.[^.]+$/,'');
+  if(!gi.description&&gi.category)label=gi.category+' – '+label;
   cap.textContent=label;
   overlay.classList.add('active');
   document.body.style.overflow='hidden';
@@ -695,8 +696,10 @@ function renderGallery(filter){
   var html='';
   for(var i=0;i<_galleryImages.length;i++){
     var img=_galleryImages[i];
+    var alt=img.description||img.name.replace(/\.[^.]+$/,'');
     html+='<div class="gallery-item" onclick="openLightbox('+i+')">';
-    html+='<img src="'+img.url+'" alt="'+img.name.replace(/"/g,'&quot;')+'" loading="lazy" class="loading" onload="this.classList.remove(\'loading\')">';
+    html+='<img src="'+img.url+'" alt="'+alt.replace(/"/g,'&quot;')+'" loading="lazy" class="loading" onload="this.classList.remove(\'loading\')">';
+    if(img.description){html+='<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:6px 8px 5px;color:#fff;font-size:.75rem;line-height:1.3">'+img.description.replace(/</g,'&lt;')+'</div>';}
     html+='</div>';
   }
   grid.innerHTML=html;

@@ -31,7 +31,7 @@ def get_graph_token():
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
         "Content-Type": "application/json; charset=utf-8",
@@ -163,7 +163,7 @@ def handle_upload(req, token):
 
 
 def handle_delete(req, token):
-    """DELETE: Delete image from SharePoint gallery. Expects JSON body with 'id' (driveItem id)."""
+    """DELETE: Delete image or folder from SharePoint gallery. Expects JSON body with 'id' (driveItem id)."""
     try:
         body = req.get_json()
         item_id = body.get("id", "")
@@ -204,6 +204,116 @@ def handle_delete(req, token):
         )
 
 
+def handle_put(req, token):
+    """PUT: Folder management. Actions: 'create_folder', 'delete_folder'."""
+    try:
+        body = req.get_json()
+        action = body.get("action", "")
+        drive_id, root_id = resolve_gallery_folder(token)
+        if not drive_id:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Could not resolve gallery folder"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+
+        if action == "create_folder":
+            name = body.get("name", "").strip()
+            if not name:
+                return func.HttpResponse(
+                    body=json.dumps({"success": False, "error": "Missing folder name"}),
+                    status_code=400, headers=get_cors_headers(),
+                )
+            folder_id = ensure_category_folder(drive_id, root_id, name, token)
+            if folder_id:
+                return func.HttpResponse(
+                    body=json.dumps({"success": True, "id": folder_id, "name": name}),
+                    status_code=200, headers=get_cors_headers(),
+                )
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Could not create folder"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+
+        elif action == "delete_folder":
+            folder_id = body.get("id", "")
+            if not folder_id:
+                return func.HttpResponse(
+                    body=json.dumps({"success": False, "error": "Missing folder id"}),
+                    status_code=400, headers=get_cors_headers(),
+                )
+            r = requests.delete(
+                f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{folder_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15,
+            )
+            if r.status_code == 204:
+                return func.HttpResponse(
+                    body=json.dumps({"success": True}),
+                    status_code=200, headers=get_cors_headers(),
+                )
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": f"Delete folder failed: {r.status_code}"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+
+        return func.HttpResponse(
+            body=json.dumps({"success": False, "error": f"Unknown action: {action}"}),
+            status_code=400, headers=get_cors_headers(),
+        )
+    except Exception as e:
+        return func.HttpResponse(
+            body=json.dumps({"success": False, "error": str(e)}),
+            status_code=500, headers=get_cors_headers(),
+        )
+
+
+def handle_patch(req, token):
+    """PATCH: Update image description/subtitle. Expects JSON with 'id' and 'description'."""
+    try:
+        body = req.get_json()
+        item_id = body.get("id", "")
+        description = body.get("description", "")
+        if not item_id:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Missing 'id' parameter"}),
+                status_code=400, headers=get_cors_headers(),
+            )
+
+        drive_id, _ = resolve_gallery_folder(token)
+        if not drive_id:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": "Could not resolve gallery folder"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+
+        patch_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}"
+        r = requests.patch(
+            patch_url,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            json={"description": description},
+            timeout=15,
+        )
+
+        if r.status_code == 200:
+            return func.HttpResponse(
+                body=json.dumps({"success": True, "description": description}),
+                status_code=200, headers=get_cors_headers(),
+            )
+        else:
+            return func.HttpResponse(
+                body=json.dumps({"success": False, "error": f"Update failed: {r.status_code} {r.text[:200]}"}),
+                status_code=500, headers=get_cors_headers(),
+            )
+    except Exception as e:
+        return func.HttpResponse(
+            body=json.dumps({"success": False, "error": str(e)}),
+            status_code=500, headers=get_cors_headers(),
+        )
+
+
 def get_content_url(drive_id, item_id, token):
     """Get a public download URL via /content redirect."""
     url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/content"
@@ -225,9 +335,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             headers=get_cors_headers(),
         )
 
-    # Route POST and DELETE to their handlers
+    # Route POST, PUT, PATCH, DELETE to their handlers
     if req.method == "POST":
         return handle_upload(req, token)
+    if req.method == "PUT":
+        return handle_put(req, token)
+    if req.method == "PATCH":
+        return handle_patch(req, token)
     if req.method == "DELETE":
         return handle_delete(req, token)
 
@@ -246,7 +360,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     # List children (subfolders = categories, or loose images)
-    children_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/children?$select=id,name,size,file,folder,image&$expand=thumbnails&$orderby=name"
+    children_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/children?$select=id,name,size,description,file,folder,image&$expand=thumbnails&$orderby=name"
     r2 = requests.get(children_url, headers=headers, timeout=30)
     if r2.status_code != 200:
         return func.HttpResponse(
@@ -264,7 +378,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Subfolder = category
         if c.get("folder"):
-            cat_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{c['id']}/children?$select=id,name,size,file,image&$expand=thumbnails&$orderby=name&$top=200"
+            cat_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{c['id']}/children?$select=id,name,size,description,file,image&$expand=thumbnails&$orderby=name&$top=200"
             r3 = requests.get(cat_url, headers=headers, timeout=30)
             if r3.status_code != 200:
                 continue
@@ -284,6 +398,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 cat_images.append({
                     "id": img.get("id", ""),
                     "name": img.get("name", ""),
+                    "description": img.get("description", "") or "",
                     "url": thumb_url or full_url,
                     "thumb": thumb_url,
                     "size": img.get("size", 0),
@@ -292,7 +407,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "mime": img.get("file", {}).get("mimeType", ""),
                 })
             if cat_images:
-                categories.append({"name": name, "images": cat_images, "count": len(cat_images)})
+                categories.append({"name": name, "id": c["id"], "images": cat_images, "count": len(cat_images)})
+            else:
+                categories.append({"name": name, "id": c["id"], "images": [], "count": 0})
         else:
             # Loose image at root level
             ext = os.path.splitext(name)[1].lower()
@@ -305,6 +422,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             loose_images.append({
                 "id": c.get("id", ""),
                 "name": name,
+                "description": c.get("description", "") or "",
                 "url": img_url,
                 "thumb": thumb_url,
                 "size": c.get("size", 0),

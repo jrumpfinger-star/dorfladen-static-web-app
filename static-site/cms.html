@@ -623,6 +623,20 @@ document.head.appendChild(msalScript);
         <button class="cms-btn cms-btn-gray" onclick="loadGalleryAdmin()" title="Neu laden">&#x21bb; Aktualisieren</button>
       </div>
     </div>
+    <!-- Folder Management -->
+    <div class="cms-card" style="margin-bottom:12px">
+      <div class="cms-card-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Kategorien / Ordner
+      </div>
+      <div class="cms-card-body">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="gal-folder-name" class="cms-input" placeholder="Neuer Ordnername..." style="flex:1;min-width:180px">
+          <button class="cms-btn cms-btn-primary cms-btn-sm" onclick="galCreateFolder()">+ Ordner anlegen</button>
+        </div>
+        <div id="gal-folder-list" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
     <!-- Upload Area -->
     <div class="cms-card" style="margin-bottom:16px">
       <div class="cms-card-header">
@@ -633,13 +647,9 @@ document.head.appendChild(msalScript);
         <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
           <div style="flex:1;min-width:200px">
             <label style="font-size:11px;font-weight:700;color:var(--c-m-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Kategorie</label>
-            <div style="display:flex;gap:6px;align-items:center">
-              <select id="gal-upload-cat" class="cms-input" style="flex:1">
-                <option value="">-- Kategorie wählen --</option>
-              </select>
-              <input id="gal-new-cat" class="cms-input" placeholder="Neue Kategorie..." style="flex:1;display:none">
-              <button class="cms-btn cms-btn-sm cms-btn-gray" onclick="var ni=document.getElementById('gal-new-cat');var sel=document.getElementById('gal-upload-cat');if(ni.style.display==='none'){ni.style.display='';sel.style.display='none';this.textContent='Auswählen'}else{ni.style.display='none';sel.style.display='';this.textContent='+ Neu'}">+ Neu</button>
-            </div>
+            <select id="gal-upload-cat" class="cms-input" style="width:100%">
+              <option value="">-- Kategorie wählen --</option>
+            </select>
           </div>
           <div style="flex:2;min-width:260px">
             <label style="font-size:11px;font-weight:700;color:var(--c-m-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Bilder auswählen</label>
@@ -5047,15 +5057,16 @@ document.head.appendChild(msalScript);
       .then(function(r){return r.json();})
       .then(function(res){
         _galLoaded=true;
-        if(!res.success||!res.images||!res.images.length){
-          grid.innerHTML='';
-          empty.style.display='';
+        if(!res.success){
+          grid.innerHTML='<div style="text-align:center;padding:24px;color:#dc2626">Fehler: '+(res.error||'')+'</div>';
           _galData={categories:[],images:[]};
           galUpdateCatSelect();
+          galRenderFolderList();
           return;
         }
         _galData=res;
         galUpdateCatSelect();
+        galRenderFolderList();
         galRenderGrid();
       })
       .catch(function(e){
@@ -5074,11 +5085,27 @@ document.head.appendChild(msalScript);
     sel.innerHTML=html;
   }
 
+  function galRenderFolderList(){
+    var container=document.getElementById('gal-folder-list');
+    if(!container||!_galData)return;
+    var cats=(_galData.categories||[]).filter(function(c){return c.id;});
+    if(!cats.length){container.innerHTML='<span style="font-size:12px;color:var(--c-m-muted)">Keine Ordner vorhanden</span>';return;}
+    var html='';
+    cats.forEach(function(cat){
+      html+='<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;background:#f3f4f6;border:1px solid #e5e7eb;font-size:12px;font-weight:600">';
+      html+='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> ';
+      html+=cat.name+' <span style="opacity:.6">('+cat.count+')</span>';
+      html+=' <button onclick="galDeleteFolder(\''+cat.id+'\',\''+cat.name.replace(/'/g,"\\'")+'\','+cat.count+')" style="width:16px;height:16px;border-radius:50%;border:none;background:transparent;color:#9ca3af;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s" title="Ordner löschen" onmouseover="this.style.background=\'#fecaca\';this.style.color=\'#dc2626\'" onmouseout="this.style.background=\'transparent\';this.style.color=\'#9ca3af\'">&times;</button>';
+      html+='</span>';
+    });
+    container.innerHTML=html;
+  }
+
   function galRenderGrid(){
     var grid=document.getElementById('gal-admin-grid');
     var empty=document.getElementById('gal-admin-empty');
     if(!grid||!_galData)return;
-    var cats=_galData.categories||[];
+    var cats=(_galData.categories||[]).filter(function(c){return c.images&&c.images.length;});
     if(!cats.length){grid.innerHTML='';empty.style.display='';return;}
     empty.style.display='none';
 
@@ -5089,20 +5116,75 @@ document.head.appendChild(msalScript);
       html+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> '+cat.name+' <span style="opacity:.7;font-weight:400;margin-left:4px">('+cat.count+' Bilder)</span></span>';
       html+='</div>';
       html+='<div class="cms-card-body" style="padding:10px">';
-      html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">';
+      html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px">';
       (cat.images||[]).forEach(function(img){
-        html+='<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:#f3f4f6;border:1px solid #e5e7eb">';
+        var desc=img.description||'';
+        var descEsc=desc.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        html+='<div style="border-radius:8px;overflow:hidden;background:#f3f4f6;border:1px solid #e5e7eb">';
+        html+='<div style="position:relative;aspect-ratio:4/3">';
         html+='<img src="'+(img.thumb||img.url)+'" alt="'+img.name.replace(/"/g,'&quot;')+'" style="width:100%;height:100%;object-fit:cover;display:block">';
-        html+='<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:4px 6px;color:#fff;font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+img.name+'</div>';
-        html+='<button onclick="galDelete(\''+img.id+'\',\''+img.name.replace(/'/g,"\\'")+'\')" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:6px;border:none;background:rgba(220,38,38,.85);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s" title="Löschen">&times;</button>';
+        html+='<button onclick="galDelete(\''+img.id+'\',\''+img.name.replace(/'/g,"\\'")+'\',event)" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:6px;border:none;background:rgba(220,38,38,.85);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s" title="Bild löschen">&times;</button>';
         html+='</div>';
+        html+='<div style="padding:6px 8px">';
+        html+='<div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px" title="'+img.name.replace(/"/g,'&quot;')+'">'+img.name+'</div>';
+        html+='<input class="cms-input" value="'+descEsc+'" placeholder="Untertitel..." style="width:100%;font-size:11px;padding:3px 6px;box-sizing:border-box" onchange="galSaveDesc(\''+img.id+'\',this.value)" title="Untertitel / Beschreibung">';
+        html+='</div></div>';
       });
       html+='</div></div></div>';
     });
     grid.innerHTML=html;
   }
 
-  window.galDelete=function(id,name){
+  window.galSaveDesc=function(id,desc){
+    fetch(API+'/gallery',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id,description:desc})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){toast('Untertitel gespeichert');}
+      else{toast('Fehler: '+(res.error||''),'error');}
+    })
+    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+  };
+
+  window.galCreateFolder=function(){
+    var inp=document.getElementById('gal-folder-name');
+    var name=(inp&&inp.value||'').trim();
+    if(!name){toast('Bitte Ordnernamen eingeben','warn');return;}
+    fetch(API+'/gallery',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'create_folder',name:name})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){toast('Ordner "'+name+'" angelegt');inp.value='';loadGalleryAdmin();}
+      else{toast('Fehler: '+(res.error||''),'error');}
+    })
+    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+  };
+
+  window.galDeleteFolder=function(id,name,count){
+    var msg='Ordner "'+name+'" wirklich löschen?';
+    if(count>0) msg+='\n\nACHTUNG: Alle '+count+' Bilder im Ordner werden ebenfalls gelöscht!';
+    if(!confirm(msg))return;
+    fetch(API+'/gallery',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'delete_folder',id:id})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){toast('Ordner "'+name+'" gelöscht');loadGalleryAdmin();}
+      else{toast('Fehler: '+(res.error||''),'error');}
+    })
+    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+  };
+
+  window.galDelete=function(id,name,evt){
+    if(evt)evt.stopPropagation();
     if(!confirm('Bild "'+name+'" wirklich löschen?'))return;
     fetch(API+'/gallery',{
       method:'DELETE',
@@ -5111,12 +5193,8 @@ document.head.appendChild(msalScript);
     })
     .then(function(r){return r.json();})
     .then(function(res){
-      if(res.success){
-        toast('Bild gelöscht: '+name);
-        loadGalleryAdmin();
-      }else{
-        toast('Fehler: '+(res.error||'Unbekannt'),'error');
-      }
+      if(res.success){toast('Bild gelöscht: '+name);loadGalleryAdmin();}
+      else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
     })
     .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
   };
@@ -5127,13 +5205,7 @@ document.head.appendChild(msalScript);
     if(!files||!files.length){toast('Bitte Bilder auswählen','warn');return;}
 
     var sel=document.getElementById('gal-upload-cat');
-    var newCat=document.getElementById('gal-new-cat');
-    var category='';
-    if(newCat&&newCat.style.display!=='none'&&newCat.value.trim()){
-      category=newCat.value.trim();
-    }else if(sel&&sel.value){
-      category=sel.value;
-    }
+    var category=sel&&sel.value||'';
 
     var btn=document.getElementById('gal-upload-btn');
     var progress=document.getElementById('gal-upload-progress');
@@ -5155,7 +5227,6 @@ document.head.appendChild(msalScript);
         status.textContent=msg;
         toast(msg, errors>0?'warn':'success');
         fileInput.value='';
-        if(newCat)newCat.value='';
         loadGalleryAdmin();
         return;
       }
