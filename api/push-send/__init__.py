@@ -151,15 +151,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
+    # Build absolute base URL from request
+    req_url = req.url or ""
+    # e.g. https://host/api/push-send -> https://host
+    site_origin = ""
+    if "/api/" in req_url:
+        site_origin = req_url.split("/api/")[0]
+
     payload_data = {
         "title": title,
         "body": message,
         "url": url,
         "tag": tag,
-        "icon": "/images/icon-192.png",
-        "badge": "/images/icon-192.png"
+        "icon": site_origin + "/images/icon-192.png",
+        "badge": site_origin + "/images/icon-192.png"
     }
     if image:
+        # Make image URL absolute if relative
+        if image.startswith("/"):
+            image = site_origin + image
         payload_data["image"] = image
     notification_payload = json.dumps(payload_data, ensure_ascii=False)
 
@@ -185,13 +195,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except WebPushException as ex:
             resp = getattr(ex, "response", None)
             status = resp.status_code if resp else 0
+            # pywebpush may not expose status_code on response; parse from string
+            ex_str = str(ex)
+            if status == 0:
+                for code in (404, 410, 401, 403):
+                    if str(code) in ex_str:
+                        status = code
+                        break
             if status in (404, 410):
                 # Subscription expired or unsubscribed – clean up
                 _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
                 removed += 1
             else:
                 failed += 1
-                errors_detail.append(f"WebPush {status}: {str(ex)[:200]}")
+                errors_detail.append(f"WebPush {status}: {ex_str[:200]}")
         except Exception as ex:
             failed += 1
             errors_detail.append(f"Error: {str(ex)[:200]}")
