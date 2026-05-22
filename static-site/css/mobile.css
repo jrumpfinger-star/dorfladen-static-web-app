@@ -164,9 +164,11 @@ body.mob-home {
 
 /* === MOBILE BACK/HOME BUTTON (subpages) === */
 .mob-back{
-  position:absolute;
-  left:14px;
+  position:relative;
+  left:0;
   display:flex;
+  flex-shrink:0;
+  margin-right:8px;
   align-items:center;
   gap:6px;
   color: var(--m-primary);
