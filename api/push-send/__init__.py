@@ -113,6 +113,33 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
 
+    # GET = debug: show subscriber count
+    if req.method == "GET":
+        try:
+            base_url = os.environ.get(DEFAULT_URL_SETTING, "").strip() or DEFAULT_URL_FALLBACK
+            hdrs = get_headers(DEFAULT_URL_SETTING)
+            entity_set = _resolve_entity_set(base_url, hdrs)
+            if not entity_set:
+                return func.HttpResponse(
+                    json.dumps({"error": "Dataverse not reachable"}),
+                    status_code=500, mimetype="application/json", headers=get_cors_headers()
+                )
+            all_subs = _fetch_all_subscriptions(base_url, hdrs, entity_set)
+            info = []
+            for s in all_subs:
+                ep = s["subscription"].get("endpoint", "")
+                cats = s.get("categories", [])
+                info.append({"endpoint_short": ep[-40:] if len(ep) > 40 else ep, "categories": cats})
+            return func.HttpResponse(
+                json.dumps({"total": len(all_subs), "subscribers": info}),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+        except Exception as ex:
+            return func.HttpResponse(
+                json.dumps({"error": str(ex)}),
+                status_code=500, mimetype="application/json", headers=get_cors_headers()
+            )
+
     # Read VAPID keys
     vapid_private_key = os.environ.get("VAPID_PRIVATE_KEY", "")
     vapid_public_key = os.environ.get("VAPID_PUBLIC_KEY", "")
