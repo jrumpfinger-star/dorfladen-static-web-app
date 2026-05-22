@@ -218,7 +218,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       var cb=document.getElementById('push-cat-'+c);
       if(cb&&cb.checked)cats.push(c);
     });
-    // First try PATCH, if subscription not found re-register via POST
+    // Try PATCH first; if subscription not found, do full re-subscribe
     fetch('/api/push-subscribe',{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
@@ -234,28 +234,20 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
         });
         return;
       }
-      // Subscription not found in Dataverse – re-register it
-      return navigator.serviceWorker.ready.then(function(reg){
-        return reg.pushManager.getSubscription();
-      }).then(function(sub){
-        if(!sub)return;
-        return fetch('/api/push-subscribe',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({subscription:sub.toJSON(),categories:cats})
-        }).then(function(r2){return r2.json();}).then(function(res2){
-          if(res2.success){
-            closePushSettings();
-            [pushBtn,pushBtnDt].forEach(function(btn){
-              if(!btn)return;
-              var old=btn.textContent;
-              btn.textContent='\u2705 Einstellungen gespeichert';
-              setTimeout(function(){btn.textContent=old;},2000);
-            });
-          }else{
-            alert('Fehler beim Speichern: '+(res2.error||'Unbekannt'));
-          }
-        });
+      // Subscription not found – create fresh subscription + save categories
+      return doResubscribe(cats).then(function(res2){
+        if(res2&&res2.success){
+          closePushSettings();
+          updatePushUI(true);
+          [pushBtn,pushBtnDt].forEach(function(btn){
+            if(!btn)return;
+            var old=btn.textContent;
+            btn.textContent='\u2705 Neu registriert & gespeichert';
+            setTimeout(function(){btn.textContent=old;},2000);
+          });
+        }else{
+          alert('Fehler beim Speichern: '+((res2&&res2.error)||'Unbekannt'));
+        }
       });
     }).catch(function(e){
       console.error('Save categories error',e);
@@ -332,23 +324,49 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 
   function doUnsubscribe(){
     navigator.serviceWorker.ready.then(function(reg){
-      return reg.pushManager.getSubscription();
-    }).then(function(sub){
-      if(!sub){
-        updatePushUI(false);
-        return;
-      }
-      var ep=sub.endpoint;
-      return sub.unsubscribe().then(function(){
-        updatePushUI(false);
-        return fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:ep})});
-      }).then(function(){
-        alert('Benachrichtigungen deaktiviert.');
+      return reg.pushManager.getSubscription().then(function(sub){
+        if(!sub){
+          updatePushUI(false);
+          alert('Benachrichtigungen deaktiviert.');
+          return;
+        }
+        var ep=sub.endpoint;
+        return sub.unsubscribe().then(function(){
+          updatePushUI(false);
+          return fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:ep})});
+        }).then(function(){
+          alert('Benachrichtigungen deaktiviert.');
+        });
       });
     }).catch(function(err){
       console.error('Unsubscribe error',err);
+      // Force UI update even on error
       updatePushUI(false);
       alert('Benachrichtigungen deaktiviert.');
+    });
+  }
+
+  function doResubscribe(cats){
+    // Unsubscribe old, then create fresh subscription
+    return navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription().then(function(oldSub){
+        var p=oldSub?oldSub.unsubscribe():Promise.resolve();
+        return p.then(function(){
+          return fetch('/api/push-vapid-key').then(function(r){return r.json();});
+        }).then(function(data){
+          if(!data.publicKey){throw new Error('VAPID key missing');}
+          return reg.pushManager.subscribe({
+            userVisibleOnly:true,
+            applicationServerKey:urlBase64ToUint8Array(data.publicKey)
+          });
+        }).then(function(newSub){
+          return fetch('/api/push-subscribe',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({subscription:newSub.toJSON(),categories:cats||['mittagstisch','angebote','news']})
+          }).then(function(r){return r.json();});
+        });
+      });
     });
   }
 

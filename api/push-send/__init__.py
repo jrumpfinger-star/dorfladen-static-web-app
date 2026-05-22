@@ -245,13 +245,27 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     resp_text = resp.text[:300] if hasattr(resp, "text") else ""
                 except Exception:
                     pass
+            # pywebpush sometimes has status=0 but the real code is in the response body
+            if status == 0 and resp_text:
+                try:
+                    resp_json = json.loads(resp_text)
+                    status = resp_json.get("code", 0)
+                except Exception:
+                    pass
+            # Also try to extract from exception string as last resort
+            if status == 0:
+                ex_str_check = str(ex)
+                if "410" in ex_str_check and "Gone" in ex_str_check:
+                    status = 410
+                elif "404" in ex_str_check and ("Not Found" in ex_str_check or "not found" in ex_str_check):
+                    status = 404
             ex_str = str(ex)
-            errors_detail.append(f"WebPush status={status} resp={resp_text} ex={ex_str[:300]}")
             if status in (404, 410):
                 _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
                 removed += 1
             else:
                 failed += 1
+                errors_detail.append(f"WebPush status={status}: {ex_str[:300]}")
         except Exception as ex:
             failed += 1
             errors_detail.append(f"Error: {str(ex)[:200]}")
