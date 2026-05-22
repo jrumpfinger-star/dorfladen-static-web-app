@@ -6,6 +6,28 @@
 <title>Bilder – Dorfladen Oberornau</title>
 <link rel="stylesheet" href="/css/content.css">
 <link rel="stylesheet" href="/css/mobile.css">
+<style>
+.gallery-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.gallery-filter-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d1d5db;background:#fff;color:var(--c-txt);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s}
+.gallery-filter-btn:hover{border-color:var(--c-pri);color:var(--c-pri)}
+.gallery-filter-btn.active{background:var(--c-pri);color:#fff;border-color:var(--c-pri)}
+.gallery-filter-btn .gf-count{font-weight:400;opacity:.7;margin-left:4px;font-size:.72rem}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.gallery-item{position:relative;border-radius:var(--r-sm,6px);overflow:hidden;cursor:pointer;aspect-ratio:4/3;background:#f3f4f6;transition:transform .2s,box-shadow .2s}
+.gallery-item:hover{transform:scale(1.03);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.gallery-item img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s}
+.gallery-item img.loading{opacity:0}
+.gallery-empty{text-align:center;color:var(--c-sec);padding:24px;font-size:.9rem}
+.lightbox-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10000;align-items:center;justify-content:center;flex-direction:column}
+.lightbox-overlay.active{display:flex}
+.lightbox-img{max-width:90vw;max-height:80vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.lightbox-close{position:absolute;top:18px;right:24px;background:none;border:none;color:#fff;font-size:2.5rem;cursor:pointer;z-index:10001}
+.lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:2rem;padding:12px 16px;cursor:pointer;border-radius:8px;backdrop-filter:blur(4px);transition:background .2s}
+.lightbox-nav:hover{background:rgba(255,255,255,.3)}
+.lightbox-prev{left:16px}
+.lightbox-next{right:16px}
+.lightbox-caption{color:#fff;margin-top:16px;font-size:.95rem;text-align:center;max-width:80vw}
+</style>
 <link rel="icon" href="/favicon.ico">
 </head>
 <body>
@@ -75,7 +97,11 @@
 <main id="main" class="ct-wrap">
   <article class="ct">
     <h1>Bilder</h1>
-<h2>Bilder</h2><p>Impressionen aus dem Dorfladen Oberornau</p>
+    <p>Impressionen aus dem Dorfladen Oberornau</p>
+    <div class="gallery-filters" id="gallery-filters"></div>
+    <div class="gallery-grid" id="gallery-grid">
+      <div class="skeleton" style="height:200px"></div>
+    </div>
   </article>
   <aside class="sb" aria-label="Seitenleiste">
     <div class="cd">
@@ -163,6 +189,16 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
 }
 </script>
 
+<!-- LIGHTBOX -->
+<div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();navLightbox(-1)">&#10094;</button>
+  <img class="lightbox-img" id="lightbox-img" alt="" onclick="event.stopPropagation()">
+  <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation();navLightbox(1)">&#10095;</button>
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+</div>
+
+<script src="/js/app.js"></script>
 <script src="/js/logo-loader.js"></script>
 <script src="/js/mobile.js"></script>
 </body>
