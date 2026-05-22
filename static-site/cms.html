@@ -651,6 +651,10 @@ document.head.appendChild(msalScript);
               <option value="">-- Kategorie wählen --</option>
             </select>
           </div>
+          <div style="flex:1;min-width:200px">
+            <label style="font-size:11px;font-weight:700;color:var(--c-m-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Untertitel (optional)</label>
+            <input id="gal-upload-desc" class="cms-input" placeholder="Wird unter dem Bild angezeigt..." style="width:100%">
+          </div>
           <div style="flex:2;min-width:260px">
             <label style="font-size:11px;font-weight:700;color:var(--c-m-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Bilder auswählen</label>
             <div style="display:flex;gap:8px;align-items:center">
@@ -5206,6 +5210,8 @@ document.head.appendChild(msalScript);
 
     var sel=document.getElementById('gal-upload-cat');
     var category=sel&&sel.value||'';
+    var descInput=document.getElementById('gal-upload-desc');
+    var description=descInput&&descInput.value.trim()||'';
 
     var btn=document.getElementById('gal-upload-btn');
     var progress=document.getElementById('gal-upload-progress');
@@ -5227,6 +5233,7 @@ document.head.appendChild(msalScript);
         status.textContent=msg;
         toast(msg, errors>0?'warn':'success');
         fileInput.value='';
+        if(descInput)descInput.value='';
         loadGalleryAdmin();
         return;
       }
@@ -5234,6 +5241,7 @@ document.head.appendChild(msalScript);
       var fd=new FormData();
       fd.append('file',files[idx]);
       if(category) fd.append('category',category);
+      if(description) fd.append('description',description);
 
       fetch(API+'/gallery',{method:'POST',body:fd})
         .then(function(r){return r.json();})

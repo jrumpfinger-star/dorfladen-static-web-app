@@ -106,6 +106,7 @@ def handle_upload(req, token):
             )
 
         category = req.form.get("category", "").strip()
+        description = req.form.get("description", "").strip()
 
         drive_id, root_id = resolve_gallery_folder(token)
         if not drive_id:
@@ -140,13 +141,28 @@ def handle_upload(req, token):
 
         if r.status_code in (200, 201):
             item = r.json()
+            item_id = item.get("id", "")
+
+            # Set description if provided
+            if description and item_id:
+                requests.patch(
+                    f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Content-Type": "application/json",
+                    },
+                    json={"description": description},
+                    timeout=15,
+                )
+
             return func.HttpResponse(
                 body=json.dumps({
                     "success": True,
-                    "id": item.get("id", ""),
+                    "id": item_id,
                     "name": item.get("name", ""),
                     "size": item.get("size", 0),
                     "category": category or "Sonstiges",
+                    "description": description,
                 }),
                 status_code=200, headers=get_cors_headers(),
             )
