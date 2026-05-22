@@ -290,6 +290,11 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
   }
 
   window.pushToggle=function(){
+    // Close mobile nav if open
+    var mn=document.getElementById('mob-nav');
+    var mo=document.getElementById('mob-nav-ov');
+    if(mn)mn.classList.remove('open');
+    if(mo)mo.classList.remove('open');
     navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.getSubscription().then(function(sub){
         if(sub){
