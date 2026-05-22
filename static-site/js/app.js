@@ -655,3 +655,60 @@ function loadAngBilder(container){
     })
     .catch(function(){if(fb)fb.style.display='';});
 })();
+
+/* === Gallery === */
+var _galleryImages=[];
+var _galleryIdx=0;
+function openLightbox(idx){
+  _galleryIdx=idx;
+  var overlay=document.getElementById('lightbox-overlay');
+  var img=document.getElementById('lightbox-img');
+  var cap=document.getElementById('lightbox-caption');
+  if(!overlay||!_galleryImages[idx])return;
+  img.src=_galleryImages[idx].url;
+  cap.textContent=_galleryImages[idx].name.replace(/\.[^.]+$/,'');
+  overlay.classList.add('active');
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(){
+  var overlay=document.getElementById('lightbox-overlay');
+  if(overlay)overlay.classList.remove('active');
+  document.body.style.overflow='';
+}
+function navLightbox(dir){
+  var newIdx=_galleryIdx+dir;
+  if(newIdx<0)newIdx=_galleryImages.length-1;
+  if(newIdx>=_galleryImages.length)newIdx=0;
+  openLightbox(newIdx);
+}
+document.addEventListener('keydown',function(e){
+  var overlay=document.getElementById('lightbox-overlay');
+  if(!overlay||!overlay.classList.contains('active'))return;
+  if(e.key==='Escape')closeLightbox();
+  if(e.key==='ArrowLeft')navLightbox(-1);
+  if(e.key==='ArrowRight')navLightbox(1);
+});
+(function(){
+  var grid=document.getElementById('gallery-grid');
+  if(!grid)return;
+  fetch(API_BASE+'/gallery')
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res.success||!res.images||!res.images.length){
+        grid.innerHTML='<div class="gallery-empty">Noch keine Bilder vorhanden</div>';
+        return;
+      }
+      _galleryImages=res.images;
+      var html='';
+      for(var i=0;i<res.images.length;i++){
+        var img=res.images[i];
+        html+='<div class="gallery-item" onclick="openLightbox('+i+')">';
+        html+='<img src="'+img.url+'" alt="'+img.name.replace(/"/g,'&quot;')+'" loading="lazy" class="loading" onload="this.classList.remove(\'loading\')">';
+        html+='</div>';
+      }
+      grid.innerHTML=html;
+    })
+    .catch(function(){
+      grid.innerHTML='<div class="gallery-empty">Galerie konnte nicht geladen werden</div>';
+    });
+})();

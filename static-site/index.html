@@ -360,6 +360,19 @@
         <div class="skeleton" style="height:100px"></div>
       </div>
     </div>
+
+    <!-- Galerie -->
+    <div class="cd gallery-section">
+      <div class="cd-h">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>
+        Impressionen
+      </div>
+      <div class="cd-b">
+        <div class="gallery-grid" id="gallery-grid">
+          <div class="skeleton" style="height:200px"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ===== RIGHT SIDEBAR ===== -->
@@ -554,6 +567,15 @@
   <div class="news-ticker-track">
     <div class="news-ticker-content" id="news-ticker-content"></div>
   </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();navLightbox(-1)">&#10094;</button>
+  <img class="lightbox-img" id="lightbox-img" alt="" onclick="event.stopPropagation()">
+  <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation();navLightbox(1)">&#10095;</button>
+  <div class="lightbox-caption" id="lightbox-caption"></div>
 </div>
 
 <script src="/js/app.js"></script>
