@@ -1,10 +1,11 @@
-var CACHE_NAME='dorfladen-v4';
+var CACHE_NAME='dorfladen-v5';
 var PRECACHE=[
   '/',
   '/css/style.css',
   '/css/mobile.css',
   '/js/app.js',
   '/js/mobile.js',
+  '/js/pwa.js',
   '/images/icon-192.png',
   '/images/icon-512.png',
   '/favicon.ico'

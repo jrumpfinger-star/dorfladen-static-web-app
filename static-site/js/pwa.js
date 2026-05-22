@@ -225,15 +225,19 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     }).then(function(r){return r.json();}).then(function(res){
       if(res.success){
         closePushSettings();
-        // Brief visual feedback
         [pushBtn,pushBtnDt].forEach(function(btn){
           if(!btn)return;
           var old=btn.textContent;
           btn.textContent='\u2705 Einstellungen gespeichert';
           setTimeout(function(){btn.textContent=old;},2000);
         });
+      }else{
+        alert('Fehler beim Speichern: '+(res.error||'Unbekannt'));
       }
-    }).catch(function(e){console.error('Save categories error',e);});
+    }).catch(function(e){
+      console.error('Save categories error',e);
+      alert('Netzwerkfehler beim Speichern: '+e.message);
+    });
   }
 
   function showPushSettings(endpoint){
@@ -325,11 +329,9 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.getSubscription().then(function(sub){
         if(sub){
-          // Already subscribed – show settings dialog
           showPushSettings(sub.endpoint);
           return;
         }
-        // Subscribe with all categories
         return fetch('/api/push-vapid-key').then(function(r){return r.json()}).then(function(data){
           if(!data.publicKey){alert('Push-Konfiguration fehlt.');return;}
           return reg.pushManager.subscribe({
@@ -342,16 +344,22 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({subscription:newSub.toJSON(),categories:['mittagstisch','angebote','news']})
-          }).then(function(){
-            updatePushUI(true);
+          }).then(function(r){return r.json();}).then(function(res){
+            if(res.success){
+              updatePushUI(true);
+              alert('Benachrichtigungen aktiviert!');
+            }else{
+              alert('Fehler beim Speichern: '+(res.error||'Unbekannt'));
+            }
           });
         });
       });
     }).catch(function(err){
       if(Notification.permission==='denied'){
-        alert('Benachrichtigungen sind im Browser blockiert. Bitte in den Einstellungen erlauben.');
+        alert('Benachrichtigungen sind im Browser blockiert.\nBitte in den Browser-Einstellungen erlauben.');
       }else{
         console.error('Push toggle error',err);
+        alert('Fehler: '+err.message);
       }
     });
   };
