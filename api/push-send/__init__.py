@@ -239,20 +239,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except WebPushException as ex:
             resp = getattr(ex, "response", None)
             status = resp.status_code if resp else 0
+            resp_text = ""
+            if resp is not None:
+                try:
+                    resp_text = resp.text[:300] if hasattr(resp, "text") else ""
+                except Exception:
+                    pass
             ex_str = str(ex)
-            # Only parse status from string if response object has no status
-            if status == 0 and resp is not None:
-                status = getattr(resp, "status_code", 0)
+            errors_detail.append(f"WebPush status={status} resp={resp_text} ex={ex_str[:300]}")
             if status in (404, 410):
                 _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
                 removed += 1
-            elif status == 201 or status == 0:
-                # 201 = success for some push services, 0 = unknown
-                failed += 1
-                errors_detail.append(f"WebPush {status}: {ex_str[:300]}")
             else:
                 failed += 1
-                errors_detail.append(f"WebPush {status}: {ex_str[:300]}")
         except Exception as ex:
             failed += 1
             errors_detail.append(f"Error: {str(ex)[:200]}")
