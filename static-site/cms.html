@@ -727,6 +727,15 @@ document.head.appendChild(msalScript);
           <input type="hidden" id="push-image-url" value="">
         </div>
         <div style="margin-bottom:10px">
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Kategorie (nur Nutzer mit dieser Auswahl erhalten die Nachricht)</label>
+          <select id="push-category" class="cms-input" style="width:100%">
+            <option value="">Alle Abonnenten</option>
+            <option value="mittagstisch">&#127869; Mittagstisch</option>
+            <option value="angebote">&#127873; Angebote</option>
+            <option value="news">&#128240; News / Aktuelles</option>
+          </select>
+        </div>
+        <div style="margin-bottom:10px">
           <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Link (optional)</label>
           <select id="push-url" class="cms-input" style="width:100%">
             <option value="/">Startseite</option>
@@ -5369,18 +5378,22 @@ document.head.appendChild(msalScript);
     var title=document.getElementById('push-title');
     var msg=document.getElementById('push-message');
     var url=document.getElementById('push-url');
+    var cat=document.getElementById('push-category');
     if(type==='mittagstisch'){
       title.value='Mittagstisch heute';
       msg.value='Der heutige Mittagstisch ist da! Schaut vorbei.';
       url.value='/essen-im-dorfladen';
+      cat.value='mittagstisch';
     }else if(type==='angebote'){
       title.value='Neue Angebote';
       msg.value='Neue Angebote im Dorfladen! Jetzt entdecken.';
       url.value='/sortiment';
+      cat.value='angebote';
     }else if(type==='news'){
       title.value='Neuigkeit vom Dorfladen';
       msg.value='';
       url.value='/aktuelles';
+      cat.value='news';
       msg.focus();
     }
   };
@@ -5429,16 +5442,20 @@ document.head.appendChild(msalScript);
     var title=document.getElementById('push-title').value.trim();
     var message=document.getElementById('push-message').value.trim();
     var url=document.getElementById('push-url').value;
+    var category=document.getElementById('push-category').value;
+    var catLabels={mittagstisch:'Mittagstisch',angebote:'Angebote',news:'News / Aktuelles'};
+    var catInfo=category?(catLabels[category]||category):'Alle Abonnenten';
     var btn=document.getElementById('push-send-btn');
     var status=document.getElementById('push-status');
     if(!message){toast('Bitte Nachricht eingeben','warn');return;}
-    if(!confirm('\u26a0\ufe0f Push-Nachricht an ALLE Abonnenten senden?\n\nTitel: '+title+'\nNachricht: '+message+'\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!'))return;
+    if(!confirm('\u26a0\ufe0f Push-Nachricht senden?\n\nEmpf\u00e4nger: '+catInfo+'\nTitel: '+title+'\nNachricht: '+message+'\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!'))return;
     btn.disabled=true;
     status.textContent='Bild wird hochgeladen...';
     status.style.color='#6b7280';
     pushUploadImage().then(function(imageUrl){
       status.textContent='Wird gesendet...';
       var payload={title:title,message:message,url:url,tag:'dorfladen-cms'};
+      if(category)payload.category=category;
       if(imageUrl)payload.image=imageUrl;
       return fetch(API+'/push-send',{
         method:'POST',

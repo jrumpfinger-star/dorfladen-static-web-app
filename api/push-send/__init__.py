@@ -76,12 +76,22 @@ def _fetch_all_subscriptions(base_url, hdrs, entity_set):
         data = r.json()
         for item in data.get("value", []):
             try:
-                sub = json.loads(item.get("dl_wert", "{}"))
-                if sub.get("endpoint"):
-                    subs.append({
-                        "record_id": item.get("dl_seiteninhaltid"),
-                        "subscription": sub
-                    })
+                raw = json.loads(item.get("dl_wert", "{}"))
+                # New format: {"subscription": {...}, "categories": [...]}
+                # Old format: {"endpoint": "...", "keys": {...}}
+                if "subscription" in raw:
+                    sub = raw["subscription"]
+                    cats = raw.get("categories", ["mittagstisch", "angebote", "news"])
+                elif raw.get("endpoint"):
+                    sub = raw
+                    cats = ["mittagstisch", "angebote", "news"]
+                else:
+                    continue
+                subs.append({
+                    "record_id": item.get("dl_seiteninhaltid"),
+                    "subscription": sub,
+                    "categories": cats
+                })
             except (json.JSONDecodeError, TypeError):
                 pass
         url = data.get("@odata.nextLink")
@@ -127,6 +137,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     url = body.get("url", "/")
     tag = body.get("tag", "dorfladen")
     image = body.get("image", "")
+    category = body.get("category", "")
 
     if not message:
         return func.HttpResponse(
@@ -145,9 +156,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     all_subs = _fetch_all_subscriptions(base_url, hdrs, entity_set)
+
+    # Filter by category if specified
+    if category:
+        all_subs = [s for s in all_subs if category in s.get("categories", [])]
+
     if not all_subs:
         return func.HttpResponse(
-            json.dumps({"success": True, "sent": 0, "failed": 0, "removed": 0, "message": "No subscribers"}),
+            json.dumps({"success": True, "sent": 0, "failed": 0, "removed": 0, "total": 0,
+                         "message": "No subscribers" + (f" for category '{category}'" if category else "")}),
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 

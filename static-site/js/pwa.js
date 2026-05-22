@@ -169,6 +169,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 (function(){
   var pushBtn=document.getElementById('mob-push-toggle');
   var pushBtnDt=document.getElementById('dt-push-toggle');
+  var CAT_LABELS={mittagstisch:'Mittagstisch',angebote:'Angebote',news:'News / Aktuelles'};
 
   function updatePushUI(subscribed){
     [pushBtn,pushBtnDt].forEach(function(btn){
@@ -188,11 +189,9 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     if(pushBtnDt)pushBtnDt.style.display='';
   }
 
-  // Check if push is supported
   if(!('PushManager' in window)||!('serviceWorker' in navigator)){return;}
   showPushButtons();
 
-  // Check current subscription state
   navigator.serviceWorker.ready.then(function(reg){
     return reg.pushManager.getSubscription();
   }).then(function(sub){
@@ -208,17 +207,97 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     return arr;
   }
 
+  function closePushSettings(){
+    var el=document.getElementById('push-settings-overlay');
+    if(el)el.remove();
+  }
+
+  function savePushCategories(endpoint){
+    var cats=[];
+    ['mittagstisch','angebote','news'].forEach(function(c){
+      var cb=document.getElementById('push-cat-'+c);
+      if(cb&&cb.checked)cats.push(c);
+    });
+    fetch('/api/push-subscribe',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({endpoint:endpoint,categories:cats})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res.success){
+        closePushSettings();
+        // Brief visual feedback
+        [pushBtn,pushBtnDt].forEach(function(btn){
+          if(!btn)return;
+          var old=btn.textContent;
+          btn.textContent='\u2705 Einstellungen gespeichert';
+          setTimeout(function(){btn.textContent=old;},2000);
+        });
+      }
+    }).catch(function(e){console.error('Save categories error',e);});
+  }
+
+  function showPushSettings(endpoint){
+    closePushSettings();
+    var ov=document.createElement('div');
+    ov.id='push-settings-overlay';
+    ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.onclick=function(e){if(e.target===ov)closePushSettings();};
+    var box='<div style="background:#fff;border-radius:14px;max-width:340px;width:100%;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.2)">';
+    box+='<div style="font-weight:700;font-size:1rem;margin-bottom:4px">\uD83D\uDD14 Push-Einstellungen</div>';
+    box+='<div style="font-size:.82rem;color:#6b7280;margin-bottom:14px">W\u00e4hle, welche Benachrichtigungen du erhalten m\u00f6chtest:</div>';
+    ['mittagstisch','angebote','news'].forEach(function(c){
+      box+='<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;cursor:pointer;font-size:.9rem">';
+      box+='<input type="checkbox" id="push-cat-'+c+'" checked style="width:18px;height:18px;accent-color:#2d7a5e"> ';
+      box+=CAT_LABELS[c]+'</label>';
+    });
+    box+='<div style="display:flex;gap:8px;margin-top:16px">';
+    box+='<button id="push-settings-save" style="flex:1;padding:10px;border:none;border-radius:8px;background:#2d7a5e;color:#fff;font-weight:600;font-size:.88rem;cursor:pointer">Speichern</button>';
+    box+='<button id="push-settings-unsub" style="flex:1;padding:10px;border:none;border-radius:8px;background:#fee2e2;color:#dc2626;font-weight:600;font-size:.88rem;cursor:pointer">Deaktivieren</button>';
+    box+='</div></div>';
+    ov.innerHTML=box;
+    document.body.appendChild(ov);
+
+    // Load current categories
+    fetch('/api/push-subscribe?endpoint='+encodeURIComponent(endpoint))
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.categories){
+          ['mittagstisch','angebote','news'].forEach(function(c){
+            var cb=document.getElementById('push-cat-'+c);
+            if(cb)cb.checked=res.categories.indexOf(c)!==-1;
+          });
+        }
+      }).catch(function(){});
+
+    document.getElementById('push-settings-save').onclick=function(){savePushCategories(endpoint);};
+    document.getElementById('push-settings-unsub').onclick=function(){
+      closePushSettings();
+      doUnsubscribe();
+    };
+  }
+
+  function doUnsubscribe(){
+    navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription();
+    }).then(function(sub){
+      if(!sub)return;
+      var ep=sub.endpoint;
+      return sub.unsubscribe().then(function(){
+        fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:ep})});
+        updatePushUI(false);
+      });
+    });
+  }
+
   window.pushToggle=function(){
     navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.getSubscription().then(function(sub){
         if(sub){
-          // Unsubscribe
-          return sub.unsubscribe().then(function(){
-            fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});
-            updatePushUI(false);
-          });
+          // Already subscribed – show settings dialog
+          showPushSettings(sub.endpoint);
+          return;
         }
-        // Subscribe
+        // Subscribe with all categories
         return fetch('/api/push-vapid-key').then(function(r){return r.json()}).then(function(data){
           if(!data.publicKey){alert('Push-Konfiguration fehlt.');return;}
           return reg.pushManager.subscribe({
@@ -230,7 +309,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
           return fetch('/api/push-subscribe',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({subscription:newSub.toJSON()})
+            body:JSON.stringify({subscription:newSub.toJSON(),categories:['mittagstisch','angebote','news']})
           }).then(function(){
             updatePushUI(true);
           });

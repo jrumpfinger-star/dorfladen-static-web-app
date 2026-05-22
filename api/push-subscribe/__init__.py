@@ -45,7 +45,7 @@ def get_headers(url_setting_name="DV_DEFAULT_URL"):
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
         "Content-Type": "application/json; charset=utf-8"
@@ -64,25 +64,12 @@ def _sub_hash(endpoint):
     return hashlib.sha256(endpoint.encode()).hexdigest()[:16]
 
 
+ALL_CATEGORIES = ["mittagstisch", "angebote", "news"]
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
-
-    try:
-        body = req.get_json()
-    except Exception:
-        return func.HttpResponse(
-            json.dumps({"success": False, "error": "Invalid JSON"}),
-            status_code=400, mimetype="application/json", headers=get_cors_headers()
-        )
-
-    subscription = body.get("subscription", body)
-    endpoint = subscription.get("endpoint", "")
-    if not endpoint:
-        return func.HttpResponse(
-            json.dumps({"success": False, "error": "endpoint required"}),
-            status_code=400, mimetype="application/json", headers=get_cors_headers()
-        )
 
     base_url = os.environ.get(DEFAULT_URL_SETTING, "").strip() or DEFAULT_URL_FALLBACK
     hdrs = get_headers(DEFAULT_URL_SETTING)
@@ -93,10 +80,102 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
 
+    # GET – return current categories for an endpoint
+    if req.method == "GET":
+        endpoint = req.params.get("endpoint", "")
+        if not endpoint:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "endpoint required"}),
+                status_code=400, mimetype="application/json", headers=get_cors_headers()
+            )
+        sub_key = PUSH_KEY_PREFIX + _sub_hash(endpoint)
+        filter_url = (
+            f"{base_url}/api/data/v9.2/{entity_set}"
+            f"?$filter=dl_schluessel eq '{sub_key}'"
+            f"&$select=dl_wert"
+        )
+        r = requests.get(filter_url, headers=hdrs, timeout=30)
+        items = (r.json() or {}).get("value", []) if r.status_code == 200 else []
+        if not items:
+            return func.HttpResponse(
+                json.dumps({"success": True, "categories": ALL_CATEGORIES[:]}),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+        try:
+            data = json.loads(items[0].get("dl_wert", "{}"))
+            cats = data.get("categories", ALL_CATEGORIES[:])
+        except Exception:
+            cats = ALL_CATEGORIES[:]
+        return func.HttpResponse(
+            json.dumps({"success": True, "categories": cats}),
+            status_code=200, mimetype="application/json", headers=get_cors_headers()
+        )
+
+    try:
+        body = req.get_json()
+    except Exception:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "Invalid JSON"}),
+            status_code=400, mimetype="application/json", headers=get_cors_headers()
+        )
+
+    # PATCH – update categories only
+    if req.method == "PATCH":
+        endpoint = body.get("endpoint", "")
+        categories = body.get("categories", ALL_CATEGORIES[:])
+        if not endpoint:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "endpoint required"}),
+                status_code=400, mimetype="application/json", headers=get_cors_headers()
+            )
+        sub_key = PUSH_KEY_PREFIX + _sub_hash(endpoint)
+        filter_url = (
+            f"{base_url}/api/data/v9.2/{entity_set}"
+            f"?$filter=dl_schluessel eq '{sub_key}'"
+            f"&$select=dl_seiteninhaltid,dl_wert"
+        )
+        r = requests.get(filter_url, headers=hdrs, timeout=30)
+        items = (r.json() or {}).get("value", []) if r.status_code == 200 else []
+        if not items:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Subscription not found"}),
+                status_code=404, mimetype="application/json", headers=get_cors_headers()
+            )
+        rec_id = items[0].get("dl_seiteninhaltid", "")
+        try:
+            data = json.loads(items[0].get("dl_wert", "{}"))
+        except Exception:
+            data = {}
+        data["categories"] = categories
+        patch_hdrs = {**hdrs, "If-Match": "*"}
+        r = requests.patch(
+            f"{base_url}/api/data/v9.2/{entity_set}({rec_id})",
+            headers=patch_hdrs,
+            json={"dl_wert": json.dumps(data, ensure_ascii=False)},
+            timeout=30
+        )
+        if r.status_code in (200, 204):
+            return func.HttpResponse(
+                json.dumps({"success": True, "categories": categories}),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}),
+            status_code=500, mimetype="application/json", headers=get_cors_headers()
+        )
+
+    subscription = body.get("subscription", body)
+    endpoint = subscription.get("endpoint", "")
+    categories = body.get("categories", ALL_CATEGORIES[:])
+    if not endpoint:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "endpoint required"}),
+            status_code=400, mimetype="application/json", headers=get_cors_headers()
+        )
+
     sub_key = PUSH_KEY_PREFIX + _sub_hash(endpoint)
 
     if req.method == "DELETE":
-        # Find and delete the subscription record
         filter_url = (
             f"{base_url}/api/data/v9.2/{entity_set}"
             f"?$filter=dl_schluessel eq '{sub_key}'"
@@ -115,10 +194,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
-    # POST – save subscription
-    sub_json = json.dumps(subscription, ensure_ascii=False)
+    # POST – save subscription with categories
+    sub_data = {
+        "subscription": subscription,
+        "categories": categories
+    }
+    sub_json = json.dumps(sub_data, ensure_ascii=False)
 
-    # Check if already exists
     filter_url = (
         f"{base_url}/api/data/v9.2/{entity_set}"
         f"?$filter=dl_schluessel eq '{sub_key}'"
@@ -150,7 +232,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     if r.status_code in (200, 201, 204):
         return func.HttpResponse(
-            json.dumps({"success": True, "action": action}),
+            json.dumps({"success": True, "action": action, "categories": categories}),
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
