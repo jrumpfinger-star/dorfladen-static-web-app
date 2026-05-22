@@ -1,6 +1,23 @@
 // PWA Install – shared across all pages
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
 
+// Standalone PWA: prevent Android back gesture from closing the app on start page
+(function(){
+  var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+  if(!isStandalone)return;
+  // On the start page, push a guard state so back doesn't close the app
+  if(window.location.pathname==='/'&&!history.state){
+    history.replaceState({pwaGuard:true},'','/');
+    history.pushState({pwaMain:true},'','/');
+  }
+  window.addEventListener('popstate',function(e){
+    if(e.state&&e.state.pwaGuard){
+      // User pressed back on start page – push main state again instead of closing
+      history.pushState({pwaMain:true},'','/');
+    }
+  });
+})();
+
 var _pwaPrompt=null;
 var _pwaIsStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
 
