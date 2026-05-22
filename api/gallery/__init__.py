@@ -38,6 +38,15 @@ def get_cors_headers():
     }
 
 
+def get_download_url(drive_id, item_id, token):
+    """Get a temporary download URL for a drive item."""
+    url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}"
+    r = requests.get(url, headers={"Authorization": f"Bearer {token}", "Accept": "application/json"}, timeout=15)
+    if r.status_code == 200:
+        return r.json().get("@microsoft.graph.downloadUrl", "")
+    return ""
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -101,10 +110,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 if ext not in IMAGE_EXTENSIONS:
                     continue
                 image_meta = img.get("image", {})
+                img_url = img.get("@microsoft.graph.downloadUrl", "")
+                if not img_url:
+                    img_url = get_download_url(drive_id, img["id"], token)
                 cat_images.append({
                     "id": img.get("id", ""),
                     "name": img.get("name", ""),
-                    "url": img.get("@microsoft.graph.downloadUrl", ""),
+                    "url": img_url,
                     "size": img.get("size", 0),
                     "width": image_meta.get("width", 0),
                     "height": image_meta.get("height", 0),
@@ -118,10 +130,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if ext not in IMAGE_EXTENSIONS:
                 continue
             image_meta = c.get("image", {})
+            img_url = c.get("@microsoft.graph.downloadUrl", "")
+            if not img_url:
+                img_url = get_download_url(drive_id, c["id"], token)
             loose_images.append({
                 "id": c.get("id", ""),
                 "name": name,
-                "url": c.get("@microsoft.graph.downloadUrl", ""),
+                "url": img_url,
                 "size": c.get("size", 0),
                 "width": image_meta.get("width", 0),
                 "height": image_meta.get("height", 0),
