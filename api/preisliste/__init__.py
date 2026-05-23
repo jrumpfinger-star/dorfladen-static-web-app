@@ -118,7 +118,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
 
         # Fetch ALL articles with pagination (incl. UVP)
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf&$orderby=cr5d4_artikelbezeichnung asc"
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode&$orderby=cr5d4_artikelbezeichnung asc"
         items, status = _fetch_all_pages(url, hdrs)
         if items is None:
             return func.HttpResponse(
@@ -196,7 +196,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "rp": is_rp,
                 "angebot": is_ang,
                 "angebot_preis": ang["preis"] if ang else None,
-                "angebot_statt": ang["statt"] if ang else None
+                "angebot_statt": ang["statt"] if ang else None,
+                "strichcode": item.get("cr5d4_strichcode", "")
             }
             groups[warengruppe_bez].append(entry)
             total += 1
