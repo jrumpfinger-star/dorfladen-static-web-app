@@ -154,16 +154,21 @@
     }
     container.innerHTML=html;
     // Update quick-action subtitle
-    // After 14:00, show tomorrow's dishes instead
+    // After 14:00 or on Sunday, show next business day's dishes
     var sub=document.getElementById('mob-lunch-sub');
     var now=new Date();
     var hour=now.getHours();
     var showIdx=todayIdx;
     var label='Heute';
-    if(hour>=14){
-      // Next weekday (Mon-Sat): Sun=0→Mon=1, Mon=1→Tue=2, ..., Fri=5→Sat=6, Sat=6→Mon=1
-      showIdx=todayIdx>=6?1:todayIdx+1;
-      label='Morgen';
+    var dayLabels=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    if(todayIdx===0||(todayIdx===6&&hour>=14)||hour>=14){
+      // Next business day (Mon-Sat, skip Sunday)
+      var next=todayIdx;
+      do{next=next>=6?1:next+1;}while(next===0);
+      showIdx=next;
+      // Label: "Morgen" only if truly tomorrow, else day name
+      var tomorrow=todayIdx>=6?(todayIdx===6?0:1):todayIdx+1;
+      label=(next===tomorrow)?'Morgen':dayLabels[next];
     }
     var showDishes=menu[showIdx]||[];
     if(sub&&showDishes.length>0){
