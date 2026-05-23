@@ -218,36 +218,35 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       var cb=document.getElementById('push-cat-'+c);
       if(cb&&cb.checked)cats.push(c);
     });
-    // Try PATCH first; if subscription not found, do full re-subscribe
+    function onSaved(){
+      closePushSettings();
+      [pushBtn,pushBtnDt].forEach(function(btn){
+        if(!btn)return;
+        var old=btn.textContent;
+        btn.textContent='\u2705 Einstellungen gespeichert';
+        setTimeout(function(){btn.textContent=old;},2000);
+      });
+    }
+    // Try PATCH first; if not found, re-save existing subscription via POST
     fetch('/api/push-subscribe',{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({endpoint:endpoint,categories:cats})
     }).then(function(r){return r.json();}).then(function(res){
-      if(res.success){
-        closePushSettings();
-        [pushBtn,pushBtnDt].forEach(function(btn){
-          if(!btn)return;
-          var old=btn.textContent;
-          btn.textContent='\u2705 Einstellungen gespeichert';
-          setTimeout(function(){btn.textContent=old;},2000);
+      if(res.success){onSaved();return;}
+      // Subscription not in Dataverse – re-save current browser subscription via POST (no new push registration needed)
+      return navigator.serviceWorker.ready.then(function(reg){
+        return reg.pushManager.getSubscription();
+      }).then(function(sub){
+        if(!sub){alert('Keine aktive Push-Subscription gefunden.');return;}
+        return fetch('/api/push-subscribe',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({subscription:sub.toJSON(),categories:cats})
+        }).then(function(r2){return r2.json();}).then(function(res2){
+          if(res2.success){onSaved();}
+          else{alert('Fehler beim Speichern: '+(res2.error||'Unbekannt'));}
         });
-        return;
-      }
-      // Subscription not found – create fresh subscription + save categories
-      return doResubscribe(cats).then(function(res2){
-        if(res2&&res2.success){
-          closePushSettings();
-          updatePushUI(true);
-          [pushBtn,pushBtnDt].forEach(function(btn){
-            if(!btn)return;
-            var old=btn.textContent;
-            btn.textContent='\u2705 Neu registriert & gespeichert';
-            setTimeout(function(){btn.textContent=old;},2000);
-          });
-        }else{
-          alert('Fehler beim Speichern: '+((res2&&res2.error)||'Unbekannt'));
-        }
       });
     }).catch(function(e){
       console.error('Save categories error',e);
