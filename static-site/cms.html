@@ -1723,16 +1723,21 @@ document.head.appendChild(msalScript);
     var bildInp=row.querySelector('[data-f="bild_data"]');
     var prodInp=row.querySelector('[data-f="produkt"]');
     var artnr=((nrInp&&nrInp.value)||'').trim();
+    var strichcode='';
+    if(artnr){
+      var c=_artikelCache.find(function(a){return a.nr===artnr;});
+      if(c && c.sc) strichcode=c.sc;
+    }
     if(!artnr && prodInp){
       var prod=prodInp.value.trim().toLowerCase();
       var match=_artikelCache.find(function(a){return (a.b||a.produktVal||'').toLowerCase()===prod;});
-      if(match) artnr=match.nr||'';
+      if(match){artnr=match.nr||'';strichcode=match.sc||'';}
     }
-    if(!artnr){toast('Bitte Artikelnummer oder Produkt ausfüllen','warn');return;}
+    if(!artnr && !strichcode){toast('Bitte Artikelnummer oder Produkt ausfüllen','warn');return;}
     var btn=row.querySelector('[data-action="loadBildSharePoint"]');
     if(btn){btn.disabled=true;btn.textContent='⏳';}
-    console.log('[CMS] Loading image for article:',artnr);
-    loadImageFromSharePoint(artnr).then(function(b64){
+    console.log('[CMS] Loading image for article:',artnr,'strichcode:',strichcode);
+    loadImageFromSharePoint(artnr, strichcode).then(function(b64){
       if(b64 && bildInp){
         cmsCompressImage(b64, 500, 500, function(compressedB64){
           bildInp.value=compressedB64;
@@ -1960,24 +1965,28 @@ document.head.appendChild(msalScript);
     });
   }
 
-  function loadImageFromSharePoint(artnr){
-    if(!artnr || !msalApp) return Promise.resolve(null);
-    console.log('[CMS] Fetching image for article:',artnr);
-    // Look up strichcode from artikel cache for barcode folder search
-    var strichcode='';
-    var cached=_artikelCache.find(function(a){return a.nr===artnr;});
-    if(cached && cached.sc) strichcode=cached.sc;
+  function loadImageFromSharePoint(artnr, strichcode){
+    // Accept artnr and/or strichcode – at least one must be provided
+    if((!artnr && !strichcode) || !msalApp) return Promise.resolve(null);
+    console.log('[CMS] Fetching image for article:',artnr,'strichcode:',strichcode);
+    // If strichcode not passed, look it up from artikel cache
+    if(!strichcode && artnr){
+      var cached=_artikelCache.find(function(a){return a.nr===artnr;});
+      if(cached && cached.sc) strichcode=cached.sc;
+    }
     return getGraphToken().then(function(token){
-      // 1. Search in main product images folder by artikelnummer
-      return _searchFolderForImage(token, SP_FOLDER, artnr).then(function(b64){
+      // 1. Search in main product images folder by artikelnummer (if available)
+      var mainSearch=artnr?_searchFolderForImage(token, SP_FOLDER, artnr):Promise.resolve(null);
+      return mainSearch.then(function(b64){
         if(b64) return b64;
         // 2. Fallback: search in StrichcodeBilder folder by strichcode
         var barcodeSearch=strichcode||artnr;
+        if(!barcodeSearch) return null;
         console.log('[CMS] Not found in main folder, trying StrichcodeBilder with',barcodeSearch,'...');
         return _searchFolderForImage(token, SP_BARCODE_FOLDER, barcodeSearch);
       });
     }).catch(function(e){
-      console.error('[CMS] SharePoint image load error for '+artnr,e);
+      console.error('[CMS] SharePoint image load error for '+(artnr||strichcode),e);
       return null;
     });
   }
@@ -4179,8 +4188,11 @@ document.head.appendChild(msalScript);
     toast('Einzelflyer werden erstellt...','ok');
     // Fetch missing images first
     var fetchPromises=items.map(function(it){
-      if(it.bild_data||!it.artikelnummer)return Promise.resolve();
-      return loadImageFromSharePoint(it.artikelnummer).then(function(b64){if(b64)it.bild_data=b64;}).catch(function(){});
+      if(it.bild_data)return Promise.resolve();
+      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer;});if(cc)sc=cc.sc||'';}
+      if(!sc&&it.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===it.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
+      if(!it.artikelnummer&&!sc)return Promise.resolve();
+      return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){if(b64)it.bild_data=b64;}).catch(function(){});
     });
     Promise.all(fetchPromises).then(function(){
       return Promise.all(items.map(function(item){return generateEinzelflyer(item,data);}));
@@ -4408,8 +4420,11 @@ document.head.appendChild(msalScript);
     var items=data.items||[];
     // Fetch missing images via Server Logic before drawing
     var fetchPromises=items.map(function(it){
-      if(it.bild_data||!it.artikelnummer) return Promise.resolve();
-      return loadImageFromSharePoint(it.artikelnummer).then(function(b64){
+      if(it.bild_data) return Promise.resolve();
+      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer;});if(cc)sc=cc.sc||'';}
+      if(!sc&&it.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===it.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
+      if(!it.artikelnummer&&!sc) return Promise.resolve();
+      return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){
         if(b64) it.bild_data=b64;
       }).catch(function(){});
     });
@@ -4839,8 +4854,10 @@ document.head.appendChild(msalScript);
       var sample=data.items[0]||fallback[0];
       if(target==='flyer'){
         var p=Promise.resolve();
-        if(!sample.bild_data&&sample.artikelnummer){
-          p=loadImageFromSharePoint(sample.artikelnummer).then(function(b64){if(b64)sample.bild_data=b64;});
+        if(!sample.bild_data){
+          var sc='';if(sample.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===sample.artikelnummer;});if(cc)sc=cc.sc||'';}
+          if(!sc&&sample.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===sample.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
+          if(sample.artikelnummer||sc) p=loadImageFromSharePoint(sample.artikelnummer,sc).then(function(b64){if(b64)sample.bild_data=b64;});
         }
         p.then(function(){
           return generateEinzelflyer(sample,data,cfg).then(function(canvas){
