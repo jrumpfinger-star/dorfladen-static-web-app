@@ -411,56 +411,37 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.getSubscription().then(function(sub){
         if(sub){
-          // Check if subscription exists in Dataverse
+          // Browser has a subscription – check if it exists in Dataverse
           return fetch('/api/push-subscribe?endpoint='+encodeURIComponent(sub.endpoint))
             .then(function(r){return r.json();})
             .then(function(res){
               if(res.success){
-                // Subscription valid in backend – show settings
                 showPushSettings(sub.endpoint);
               }else{
-                // Subscription NOT in Dataverse – try fresh first, fallback to re-register existing
-                return sub.unsubscribe().then(function(){
-                  return freshSubscribe(reg);
-                }).then(function(){
-                  alert('Benachrichtigungen neu aktiviert!');
-                }).catch(function(){
-                  // Push service unreachable – re-register existing subscription as-is
-                  return reg.pushManager.getSubscription().then(function(existingSub){
-                    if(existingSub) return registerExisting(existingSub);
-                    // unsubscribe already removed it, try subscribe
-                    return freshSubscribe(reg);
-                  }).then(function(){
-                    alert('Benachrichtigungen aktiviert!');
-                  });
+                // Not in Dataverse – just re-register the EXISTING subscription
+                // NEVER unsubscribe() – Firefox recycles endpoints and push service may be unreachable
+                return registerExisting(sub).then(function(){
+                  alert('Benachrichtigungen aktiviert!');
                 });
               }
             });
         }
-        // No subscription – create new, fallback to prompt
+        // No subscription at all – create fresh
         return freshSubscribe(reg).then(function(){
           alert('Benachrichtigungen aktiviert!');
+        }).catch(function(err){
+          var msg=(err&&err.message)||String(err);
+          if(msg.toLowerCase().indexOf('unreachable')!==-1||msg.toLowerCase().indexOf('network')!==-1){
+            alert('Push-Dienst nicht erreichbar.\nBitte sp\u00e4ter nochmal versuchen.');
+          }else{
+            throw err;
+          }
         });
       });
     }).catch(function(err){
       var msg=(err&&err.message)||String(err);
       if(Notification.permission==='denied'){
         alert('Benachrichtigungen sind im Browser blockiert.\nBitte in den Browser-Einstellungen erlauben.');
-      }else if(msg.toLowerCase().indexOf('unreachable')!==-1||msg.toLowerCase().indexOf('network')!==-1){
-        // Last resort: check if there's still a subscription in the browser we can use
-        navigator.serviceWorker.ready.then(function(reg){
-          return reg.pushManager.getSubscription();
-        }).then(function(sub){
-          if(sub){
-            return registerExisting(sub).then(function(){
-              alert('Benachrichtigungen aktiviert!\n(Bestehende Subscription wiederverwendet)');
-            });
-          }else{
-            alert('Push-Dienst nicht erreichbar.\n\nBitte sp\u00e4ter nochmal versuchen.');
-          }
-        }).catch(function(){
-          alert('Push-Dienst nicht erreichbar.\n\nBitte sp\u00e4ter nochmal versuchen.');
-        });
       }else{
         console.error('Push toggle error',err);
         alert('Fehler: '+msg);

@@ -338,10 +338,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 elif "404" in ex_str_check and ("Not Found" in ex_str_check or "not found" in ex_str_check):
                     status = 404
             ex_str = str(ex)
-            errors_detail.append(f"status={status} resp={resp_text[:200]} endpoint_domain={entry['subscription'].get('endpoint','')[:80]}")
-            if status in (404, 410):
+            ep_short = entry['subscription'].get('endpoint','')[:80]
+            errors_detail.append(f"status={status} resp={resp_text[:200]} endpoint_domain={ep_short}")
+            if status == 404:
                 _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
                 removed += 1
+            elif status == 410:
+                # 410 Gone – subscription expired at push service
+                # Don't delete immediately – user may re-activate and Firefox recycles endpoints
+                # Mark as failed but keep in Dataverse
+                failed += 1
             else:
                 failed += 1
         except Exception as ex:
