@@ -140,6 +140,35 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "has_auth": has_auth,
                     "categories": cats
                 })
+            # If ?test=1, try sending a test push without deleting on failure
+            if req.params.get("test") == "1" and all_subs:
+                vapid_priv = os.environ.get("VAPID_PRIVATE_KEY", "")
+                vapid_contact_val = os.environ.get("VAPID_CONTACT", "mailto:info@dorfladen-oberornau.de")
+                test_results = []
+                for s in all_subs:
+                    try:
+                        webpush(
+                            subscription_info=s["subscription"],
+                            data=json.dumps({"title": "Test", "body": "Diagnose-Push", "url": "/"}),
+                            vapid_private_key=vapid_priv,
+                            vapid_claims={"sub": vapid_contact_val}
+                        )
+                        test_results.append({"status": "OK"})
+                    except WebPushException as wex:
+                        resp_obj = getattr(wex, "response", None)
+                        st = resp_obj.status_code if resp_obj else 0
+                        rt = ""
+                        if resp_obj:
+                            try: rt = resp_obj.text[:500]
+                            except: pass
+                        test_results.append({"status": st, "response": rt, "exception": str(wex)[:500]})
+                    except Exception as ex2:
+                        test_results.append({"status": "error", "exception": str(ex2)[:300]})
+                return func.HttpResponse(
+                    json.dumps({"total": len(all_subs), "test_results": test_results, "vapid_key_len": len(vapid_priv)}),
+                    status_code=200, mimetype="application/json", headers=get_cors_headers()
+                )
+
             return func.HttpResponse(
                 json.dumps({"total": len(all_subs), "subscribers": info}),
                 status_code=200, mimetype="application/json", headers=get_cors_headers()
