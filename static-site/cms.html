@@ -1524,7 +1524,7 @@ document.head.appendChild(msalScript);
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
       +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
       +'<button class="cms-bild-search" data-action="uploadBild" data-row="'+angRowCounter+'" type="button" title="Bild hochladen" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">📁</button>'
-      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild in StrichcodeBilder hochladen" style="font-size:13px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280;'+(hasBild?'':'display:none')+'">⬆️</button>'
+      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild in StrichcodeBilder hochladen" style="font-size:13px;background:none;border:none;cursor:pointer;padding:0 2px;color:'+(hasBild?'#6b7280':'#d1d5db')+'">⬆️</button>'
       +'</div>'
       +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
@@ -1745,7 +1745,7 @@ document.head.appendChild(msalScript);
           var clr=row.querySelector('.cms-bild-clear');
           if(prev){prev.src=compressedB64;prev.style.display='';}
           if(clr){clr.style.display='';}
-          var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.display='';
+          var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.color='#6b7280';
           toast('Bild geladen & für Mobile optimiert!');
         });
       }
@@ -4967,7 +4967,7 @@ document.head.appendChild(msalScript);
           var pv=row.querySelector('.cms-bild-preview');
           if(pv){pv.src='';pv.style.display='none';}
           t.style.display='none';
-          var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.display='none';
+          var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.color='#d1d5db';
         }
         break;
       case 'uploadBild':
@@ -4984,7 +4984,7 @@ document.head.appendChild(msalScript);
                 var hi=row.querySelector('[data-f="bild_data"]');if(hi)hi.value=compressedB64;
                 var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=compressedB64;pv.style.display='';}
                 var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
-                var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.display='';
+                var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.color='#6b7280';
                 toast('Bild geladen & für Mobile komprimiert');
               });
             };
