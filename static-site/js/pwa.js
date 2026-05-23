@@ -405,11 +405,14 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
         });
       });
     }).catch(function(err){
+      var msg=(err&&err.message)||String(err);
       if(Notification.permission==='denied'){
         alert('Benachrichtigungen sind im Browser blockiert.\nBitte in den Browser-Einstellungen erlauben.');
+      }else if(msg.toLowerCase().indexOf('unreachable')!==-1||msg.toLowerCase().indexOf('network')!==-1){
+        alert('Der Push-Dienst ist gerade nicht erreichbar.\n\nBitte versuche es erneut:\n1. Stelle sicher, dass du eine stabile Internetverbindung hast\n2. Falls du im Firmen-WLAN bist, versuche es mit mobilen Daten\n3. Lade die Seite neu und versuche es nochmal');
       }else{
         console.error('Push toggle error',err);
-        alert('Fehler: '+err.message);
+        alert('Fehler bei Push-Aktivierung:\n'+msg+'\n\nBitte Seite neu laden und nochmal versuchen.');
       }
     });
   };
