@@ -1,695 +1,1390 @@
 <!DOCTYPE html>
+
 <html lang="de">
+
 <head>
+
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dorfladen Oberornau � Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
-  <meta name="description" content="Dorfladen Oberornau � regionale Nahversorgung, gem�tlicher Treffpunkt, Postfiliale. Fr�hst�ck, Mittagessen, Brotzeit und mehr.">
+
+  <title>Dorfladen Oberornau – Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
+
+  <meta name="description" content="Dorfladen Oberornau – regionale Nahversorgung, gemütlicher Treffpunkt, Postfiliale. Frühstück, Mittagessen, Brotzeit und mehr.">
+
   <link rel="stylesheet" href="/css/style.css">
+
   <link rel="stylesheet" href="/css/mobile.css">
+
   <link rel="manifest" href="/manifest.json">
+
   <meta name="theme-color" content="#2d5016">
+
   <meta name="apple-mobile-web-app-capable" content="yes">
+
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
   <meta name="apple-mobile-web-app-title" content="Dorfladen">
+
   <link rel="apple-touch-icon" href="/images/icon-192.png">
+
 </head>
+
 <body class="mob-home">
+
 <!-- Skip to content (Accessibility) -->
+
 <a href="#main" class="skip">Zum Inhalt springen</a>
 
+
+
 <!-- ====== MOBILE-ONLY: Ticker + Header + Drawer ====== -->
+
 <div class="mob-only mob-ticker" id="mob-ticker">
+
   <a href="/aktuelles" class="mob-ticker-label" style="text-decoration:none;color:#fff"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg> Aktuelles</a>
+
   <div class="mob-ticker-track"><span class="mob-ticker-content" id="mob-ticker-content">Neuigkeiten werden geladen&hellip;</span></div>
+
 </div>
+
+
 
 <header class="mob-only mob-header">
+
   <a href="/" class="mob-header-logo" aria-label="Startseite">
+
     <img src="" alt="Dorfladen" id="mob-logo-img" style="display:none">
+
     <span class="logo-text-fallback" id="mob-logo-text"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg></span>
+
   </a>
+
   <span class="mob-header-title">Dorfladen Oberornau</span>
+
   <button class="mob-header-menu" aria-label="Men&uuml;" onclick="document.getElementById('mob-nav').classList.add('open');document.getElementById('mob-nav-ov').classList.add('open')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+
 </header>
 
+
+
 <div class="mob-only mob-nav-overlay" id="mob-nav-ov" onclick="document.getElementById('mob-nav').classList.remove('open');this.classList.remove('open')"></div>
+
 <nav class="mob-only mob-nav" id="mob-nav">
+
   <div class="mob-nav-close"><button onclick="document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-nav-ov').classList.remove('open')">&times;</button></div>
+
   <a href="/" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Start</a>
+
   <a href="/aktuelles"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg> Aktuelles</a>
+
   <a href="/essen-im-dorfladen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Essen</a>
+
   <a href="/konzept"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg> Konzept</a>
+
   <a href="/sortiment"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Sortiment &amp; Preisliste</a>
+
   <a href="/oeffnungszeiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> &Ouml;ffnungszeiten</a>
+
   <a href="/bilder"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Impressionen</a>
+
   <a href="javascript:void(0)" onclick="document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-nav-ov').classList.remove('open');mobOpenPopup('roterpunkt')" class="acc"><svg width="18" height="18" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a>
+
   <a href="/beirat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Beirat</a>
+
   <a href="/geschaeftsfuehrung"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg> Gesch&auml;ftsf&uuml;hrung</a>
+
   <a href="javascript:void(0)" id="mob-pwa-install" onclick="pwaInstall()" style="margin-top:12px;display:none;background:linear-gradient(135deg,#2d5016,#3a6b1e);color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;font-size:.88rem;text-align:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Als App installieren</a>
+
   <a href="javascript:void(0)" id="mob-push-toggle" onclick="pushToggle()" style="display:none;background:#f0fdf4;color:#2d5016;border-radius:10px;padding:10px 14px;font-weight:600;font-size:.88rem;text-align:center">&#128276; Benachrichtigungen aktivieren</a>
+
   <a href="/impressum" style="margin-top:12px;font-size:.88rem;color:#999">Impressum</a>
+
   <a href="/datenschutzerklaerung" style="font-size:.88rem;color:#999">Datenschutz</a>
+
 </nav>
+
+
 
 <!-- MOBILE: Status bar (open/closed) -->
+
 <div class="mob-only mob-status" id="mob-status" onclick="mobOpenPopup('hours')">
+
   <span class="mob-status-dot"></span>
+
   <span id="mob-status-text">Wird gepr&uuml;ft&hellip;</span>
+
   <span class="mob-status-hint">&#9656; &Ouml;ffnungszeiten</span>
+
 </div>
+
+
 
 <!-- MOBILE: Hero -->
+
 <div class="mob-only mob-hero">
+
   <h1>Ihr Nahversorger in Oberornau</h1>
+
   <p>Frisch &middot; Regional &middot; Mit Herz <svg width="16" height="16" viewBox="0 0 24 24" fill="#e11d48" stroke="none" style="vertical-align:middle"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></p>
+
 </div>
+
+
 
 <!-- MOBILE: Quick Actions -->
+
 <div class="mob-only mob-actions-full">
+
   <div class="mob-action-wide" onclick="mobOpenPopup('lunch')">
+
     <span class="mob-action-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg></span>
+
     <div class="mob-action-wide-text">
+
       <span class="mob-action-label">Mittagstisch</span>
+
       <span class="mob-action-sub" id="mob-lunch-sub">Wochenplan</span>
+
     </div>
+
   </div>
+
 </div>
+
 <div class="mob-only mob-actions-row">
+
   <div class="mob-action" onclick="mobOpenPopup('meat')">
+
     <span class="mob-action-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/><path d="M6 22v-3c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v3"/></svg></span>
+
     <span class="mob-action-label">Fleisch &amp; Wurst</span>
+
     <span class="mob-action-sub">15% ab 1kg</span>
+
   </div>
+
   <div class="mob-action" onclick="mobOpenPopup('offers')">
+
     <span class="mob-action-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg></span>
+
     <span class="mob-action-label">Angebote</span>
+
     <span class="mob-action-sub" id="mob-offers-sub">Sonderangebote</span>
+
   </div>
+
   <div class="mob-action" onclick="mobOpenPopup('preisliste')">
+
     <span class="mob-action-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>
+
     <span class="mob-action-label">Preisliste</span>
+
     <span class="mob-action-sub">Alle Artikel</span>
+
   </div>
+
   <div class="mob-action highlight" onclick="mobOpenPopup('roterpunkt')">
+
     <span class="mob-action-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></span>
+
     <span class="mob-action-label" style="color: var(--m-red);">Roter Punkt</span>
-    <span class="mob-action-sub">Dauerhaft g�nstig</span>
+
+    <span class="mob-action-sub">Dauerhaft g&uuml;nstig</span>
+
   </div>
+
 </div>
+
+
 
 <!-- ====== MOBILE POPUPS (bottom-sheets) ====== -->
+
 <!-- POPUP: Preisliste -->
+
 <div class="mob-only mob-popup-bg" id="mob-popup-preisliste" onclick="if(event.target===this)mobClosePopup('preisliste')">
+
   <div class="mob-popup">
+
     <div class="mob-popup-handle"></div>
+
     <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Preisliste</h2><button class="mob-popup-x" onclick="mobClosePopup('preisliste')">&times;</button></div>
+
     <div style="position:relative;margin-bottom:10px">
+
       <input type="text" id="mob-pl-search" placeholder="Artikel suchen..." style="width:100%;padding:10px 14px 10px 36px;border:1px solid #ddd;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box;padding-right:44px">
+
       <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+
       <button type="button" id="mob-pl-barcode-btn" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;color:#555;border-radius:6px" title="Barcode scannen">&#x1F4F7;</button>
+
     </div>
+
     <div id="mob-pl-barcode-scanner" style="display:none;margin:0 0 12px;border-radius:10px;overflow:hidden;border:2px solid #5ea88a">
+
       <div id="mob-pl-barcode-reader" style="width:100%;min-height:250px"></div>
+
       <button type="button" id="mob-pl-barcode-close" style="display:block;width:100%;padding:10px;background:#f44336;color:#fff;border:none;font-size:.9rem;font-weight:600;cursor:pointer">&times; Scanner schlie&szlig;en</button>
+
     </div>
+
     <div id="mob-pl-barcode-result" style="display:none;margin:0 0 12px"></div>
+
     <div class="mob-pl-filters" id="mob-pl-filters">
+
       <button class="mob-pl-filter active" data-filter="all">Alle</button>
+
       <button class="mob-pl-filter" data-filter="rp"><svg width="14" height="14" viewBox="0 0 24 24" fill="#c62828" stroke="none"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</button>
+
       <button class="mob-pl-filter" data-filter="ang"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg> Angebote</button>
+
     </div>
+
     <div id="mob-pl-grid" style="font-size:.85rem">Lade Preisliste...</div>
+
   </div>
+
 </div>
 
-<!-- POPUP: �ffnungszeiten -->
+
+
+<!-- POPUP: Öffnungszeiten -->
+
 <div class="mob-only mob-popup-bg" id="mob-popup-hours" onclick="if(event.target===this)mobClosePopup('hours')">
+
   <div class="mob-popup">
+
     <div class="mob-popup-handle"></div>
-    <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> �ffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('hours')">&times;</button></div>
+
+    <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Öffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('hours')">&times;</button></div>
+
     <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:var(--m-secondary);"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Dorfladen</h3>
+
     <table id="mob-hrs-laden"></table>
+
     <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:var(--m-secondary);"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Postfiliale</h3>
+
     <table id="mob-hrs-post"></table>
-    <p style="margin-top:12px;font-size:.8rem">Au�er an gesetzlichen Feiertagen</p>
+
+    <p style="margin-top:12px;font-size:.8rem">Außer an gesetzlichen Feiertagen</p>
+
   </div>
+
 </div>
 
-<!-- POPUP: Post-�ffnungszeiten -->
+
+
+<!-- POPUP: Post-Öffnungszeiten -->
+
 <div class="mob-only mob-popup-bg" id="mob-popup-post-hours" onclick="if(event.target===this)mobClosePopup('post-hours')">
+
   <div class="mob-popup">
+
     <div class="mob-popup-handle"></div>
+
     <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Postfiliale &Ouml;ffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('post-hours')">&times;</button></div>
+
     <table id="mob-hrs-post2"></table>
+
     <p style="margin-top:12px;font-size:.8rem">Au&szlig;er an gesetzlichen Feiertagen</p>
+
   </div>
+
 </div>
+
+
 
 <!-- POPUP: Wochenplan Mittagessen -->
+
 <div class="mob-only mob-popup-bg" id="mob-popup-lunch" onclick="if(event.target===this)mobClosePopup('lunch')">
+
   <div class="mob-popup">
+
     <div class="mob-popup-handle"></div>
+
     <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Mittagstisch</h2><button class="mob-popup-x" onclick="mobClosePopup('lunch')">&times;</button></div>
+
     <p style="font-size:.85rem;color:#6b7280;margin-bottom:12px" id="mob-wp-kw"></p>
+
     <div id="mob-wp-days"></div>
+
   </div>
+
 </div>
+
+
 
 <!-- POPUP: Fleisch & Wurst -->
+
 <div class="mob-only mob-popup-bg" id="mob-popup-meat" onclick="if(event.target===this)mobClosePopup('meat')">
+
   <div class="mob-popup">
+
     <div class="mob-popup-handle"></div>
+
     <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/><path d="M6 22v-3c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v3"/></svg> Fleisch &amp; Wurst</h2><button class="mob-popup-x" onclick="mobClosePopup('meat')">&times;</button></div>
+
     <div style="background:#fff5f5;border-radius:14px;padding:16px;margin-bottom:16px;border:1.5px solid #ffcdd2">
+
       <p style="font-size:1.15rem;font-weight:800;color:#c62828;margin-bottom:6px" id="mob-meat-pct">15&thinsp;% Rabatt</p>
+
       <p style="font-size:.92rem;color:#1a1a1a;margin:0" id="mob-meat-sub">Auf alle Fleisch- und Wurstprodukte bei Vorbestellung ab 1&thinsp;kg. Einfach im Laden oder telefonisch vorbestellen!</p>
+
     </div>
+
     <a href="tel:+4980826229991" style="display:block;text-align:center;background:#2e7d4f;color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:1rem" id="mob-meat-cta"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Jetzt vorbestellen</a>
+
   </div>
+
 </div>
+
+
 
 <!-- POPUP: Sonderangebote -->
+
 <div class="mob-only mob-popup-bg" id="mob-popup-offers" onclick="if(event.target===this)mobClosePopup('offers')">
+
   <div class="mob-popup">
+
     <div class="mob-popup-handle"></div>
+
     <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg> Sonderangebote</h2><button class="mob-popup-x" onclick="mobClosePopup('offers')">&times;</button></div>
+
     <p style="font-size:.82rem;color:#6b7280;margin-bottom:16px" id="mob-ang-kw"></p>
+
     <div class="mob-ang-grid" id="mob-ang-grid"></div>
+
     <div style="text-align:center;margin-top:20px">
+
       <a href="javascript:void(0)" onclick="mobClosePopup('offers'); mobOpenPopup('roterpunkt')" style="display:inline-block;background:#fff5f5;color:#c62828;padding:12px 24px;border-radius:14px;font-weight:700;font-size:.92rem;text-decoration:none;border:1.5px solid #c62828"><svg width="16" height="16" viewBox="0 0 24 24" fill="#c62828" stroke="none" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt Angebote</a>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <!-- POPUP: Roter Punkt (Rote Liste) -->
+
 <div class="mob-only mob-popup-bg" id="mob-popup-roterpunkt" onclick="if(event.target===this)mobClosePopup('roterpunkt')">
+
   <div class="mob-popup">
+
     <div class="mob-popup-handle"></div>
+
     <div class="mob-popup-top">
+
       <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2" style="vertical-align:middle;margin-right:6px"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</h2>
+
       <button class="mob-popup-x" onclick="mobClosePopup('roterpunkt')">&times;</button>
+
     </div>
+
     <div class="rp-wrap" id="roterpunkt-live" style="font-size:.85rem">Lade Roter-Punkt-Artikel...</div>
+
   </div>
+
 </div>
+
 <!-- ====== END MOBILE-ONLY ====== -->
 
+
+
 <!-- TOPBAR: Contact + Legal links (hidden on mobile) -->
+
 <div class="tb" id="hp-topbar" role="complementary" aria-label="Kontaktleiste">
+
   <div class="tb-in">
+
     <span>Tel: <a href="tel:+4980826229991">08082 / 622 99 91</a> &middot; <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a></span>
+
     <div class="tb-legal">
+
       <a href="/impressum">Impressum</a>
+
       <a href="/datenschutzerklaerung">Datenschutz</a>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <!-- NAVIGATION -->
+
 <nav class="nv" role="navigation" aria-label="Hauptnavigation">
+
   <div class="nv-in">
+
     <a href="/" class="nv-logo" aria-label="Dorfladen Oberornau Startseite" id="nv-logo">
+
       <span id="nv-logo-fallback" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> Dorfladen Oberornau</span>
+
     </a>
+
     <button class="nv-burger" aria-label="Navigation ein-/ausklappen" aria-expanded="false" onclick="var n=this.nextElementSibling;var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)">
+
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+
     </button>
+
     <ul class="nv-links">
+
       <li class="act"><a href="/" aria-current="page">Start</a></li>
+
       <li><a href="/aktuelles">Aktuelles</a></li>
+
       <li>
+
         <a href="/konzept" aria-haspopup="true">Dorfladen</a>
+
         <ul class="nv-dd">
+
           <li><a href="/konzept">Konzept</a></li>
+
           <li><a href="/sortiment">Sortiment</a></li>
+
           <li><a href="/sortiment#preisliste" style="color:#2d7a5e"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Preisliste</a></li>
+
           <li><a href="/oeffnungszeiten">&Ouml;ffnungszeiten</a></li>
+
           <li><a href="/bilder">Impressionen</a></li>
+
         </ul>
+
       </li>
+
       <li><a href="/essen-im-dorfladen">Essen</a></li>
+
       <li>
+
         <a href="/beirat" aria-haspopup="true">&Uuml;ber uns</a>
+
         <ul class="nv-dd">
+
           <li><a href="/beirat">Beirat</a></li>
+
           <li><a href="/geschaeftsfuehrung">Gesch&auml;ftsf&uuml;hrung</a></li>
+
           <li><a href="/stille-gesellschafter">Stille Gesellschafter</a></li>
+
         </ul>
+
       </li>
+
       <li><a href="/roter-punkt" style="color:var(--c-acc);font-weight:700"><svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a></li>
+
       <li id="dt-pwa-install" style="display:none"><a href="javascript:void(0)" onclick="pwaInstall()" style="color:#2d5016;font-weight:700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> App</a></li>
+
       <li id="dt-push-toggle" style="display:none"><a href="javascript:void(0)" onclick="pushToggle()" style="color:#2d5016;font-weight:600">&#128276; Push</a></li>
+
       <li><a href="/cms" style="color:var(--c-acc);font-weight:700">&#x1F680; CMS</a></li>
+
     </ul>
+
   </div>
+
 </nav>
 
+
+
 <!-- HERO -->
+
 <div class="hero" role="banner">
+
   <div class="hero-in">
+
     <div class="hero-text">
+
       <h1>Ihr Dorfladen in Oberornau</h1>
+
       <p>Nahversorger &middot; Treffpunkt &middot; Postfiliale &ndash; regional, frisch und mit Herz.</p>
+
     </div>
+
     <p class="hero-sub"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px;color:var(--c-pri);"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"/></svg> Kleines Bistro mit Mittagstisch, Kaffee, Kuchen &amp; Snacks &middot; <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px;color:#bd8b5c;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> Im Sommer gem&uuml;tlich drau&szlig;en sitzen am Dorfplatz</p>
+
   </div>
+
   <div id="dl-open-status"></div>
+
 </div>
+
+
 
 <!-- PROMO BAR -->
+
 <div class="promo-bar" id="hp-promo-bar">
+
   <div class="promo-bar-in">
+
     <a href="#angebote" class="promo-item promo-ang" id="promo-ang-link" style="display:none">
+
       <span class="promo-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg> Sonderangebote</span>
+
       <span class="promo-count" id="promo-ang-count">0</span>
+
     </a>
+
     <a href="/roter-punkt" class="promo-item promo-rp">
+
       <span class="promo-dot"></span>
+
       Roter Punkt
+
     </a>
+
     <a href="/sortiment#preisliste" class="promo-item promo-pl">
+
       <span class="promo-pl-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span>
+
       Preisliste
+
     </a>
+
   </div>
+
 </div>
+
+
 
 <!-- FLEISCH & WURST DAUERPREISAKTION (CMS: meatPct, meatTitle, meatSub, meatCta, meatTag, meatPhone, showMeatPromo) -->
+
 <div class="meat-promo" id="fleisch-aktion">
+
   <div class="meat-promo-in">
+
     <div class="meat-promo-badge" id="meat-badge"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/><path d="M6 22v-3c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v3"/></svg></div>
+
     <div class="meat-promo-text">
+
       <div class="meat-promo-title" id="meat-title">Fleisch &amp; Wurst: <span class="meat-pct" id="meat-pct">15&thinsp;% Rabatt</span> bei Vorbestellung ab 1&thinsp;kg <span class="meat-promo-tag" id="meat-tag">Daueraktion</span></div>
+
       <div class="meat-promo-sub" id="meat-sub">Auf alle Fleisch- und Wurstprodukte, die je Artikel mit mehr als 1&thinsp;kg vorbestellt werden, gew&auml;hren wir dauerhaft 15&thinsp;% Rabatt. Einfach im Laden oder telefonisch vorbestellen! &nbsp;<a href="tel:+4980826229991" class="meat-promo-cta" id="meat-cta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Jetzt vorbestellen</a></div>
+
     </div>
+
   </div>
+
 </div>
 
+
+
 <!-- MAIN -->
+
 <main id="main" class="mn">
+
   <!-- ===== LEFT COLUMN ===== -->
+
   <div>
+
     <!-- ====== WOCHENPLAN MITTAGESSEN (prominent) ====== -->
+
     <div class="wp-card" id="wp-card">
+
       <div class="wp-header">
+
         <div class="wp-icon">
+
           <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+
         </div>
+
         <div>
+
           <div class="wp-title">Wochenplanung Mittagessen</div>
+
           <div class="wp-subtitle" id="wp-subtitle">Wird geladen&hellip;</div>
+
         </div>
+
       </div>
+
       <div class="wp-body" id="wp-body">
+
         <div style="padding:30px;text-align:center"><div class="skeleton" style="height:200px"></div></div>
+
       </div>
+
     </div>
+
+
 
     <!-- ====== WHATSAPP SPEISEPLAN INFO ====== -->
+
     <div class="wa-info" id="wp-wa-info">
+
       <div class="wa-info-text">
+
         Das aktuelle Mittagsmen&uuml; und unsere Sonderaktionen erfahrt ihr immer auch &uuml;ber die
+
         <strong>Dorfladen Oberornau WhatsApp Gruppe</strong> <em>mit Onlineshop!!!</em><br>
+
         <a href="https://wa.me/message/U7VY4HZCPBR4N1" target="_blank" rel="noopener">Hier klicken f&uuml;r Anmeldung</a>
+
         <span class="wa-qr-hint">oder scanne den nachstehenden QR-Code mit deinem Smartphone und best&auml;tige mit deinem Namen im Chat.</span>
+
       </div>
+
       <div class="wa-qr-box">
+
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=64x64&amp;data=https://wa.me/message/U7VY4HZCPBR4N1" alt="WhatsApp QR-Code Dorfladen Oberornau" width="64" height="64" loading="lazy">
+
         <div class="wa-qr-label">
+
           <strong>Dorfladen Oberornau</strong>
+
           <small>WhatsApp-Unternehmenskonto</small>
+
         </div>
+
       </div>
+
     </div>
+
+
 
     <!-- Angebote / Sonderangebote (dynamisch mit Wochenwechsel) -->
+
     <div class="ang-card" id="angebote" style="display:none">
+
       <div class="ang-header">
+
         <svg viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
+
         <span id="ang-title">Sonderangebote</span>
+
         <span class="ang-sub" id="ang-sub"></span>
+
       </div>
+
       <div class="ang-week-nav">
+
         <button class="ang-week-btn active" id="ang-btn-this" onclick="angSetWeek('this')">Diese Woche</button>
+
         <button class="ang-week-btn" id="ang-btn-next" onclick="angSetWeek('next')">N&auml;chste Woche</button>
+
         <span class="ang-week-label" id="ang-week-label"></span>
+
       </div>
+
       <div class="ang-grid" id="ang-grid"></div>
+
       <div class="ang-empty" id="ang-empty" style="display:none">Keine Angebote in dieser Woche</div>
+
     </div>
 
+
+
     <!-- Info Cards -->
+
     <div class="info-grid" id="hp-info-cards">
+
       <div class="info-card">
+
         <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:#2e7d4f;"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> Unser Konzept</h3>
+
         <p>Regionale Nahversorgung &amp; gem&uuml;tlicher Treffpunkt f&uuml;r Jung und Alt. Fr&uuml;hst&uuml;ck, Brotzeit, Mittagessen und hausgemachte Torten.</p>
+
         <a href="javascript:void(0)" onclick="openDtModal('concept')" class="more">Mehr erfahren &rarr;</a>
+
       </div>
+
       <div class="info-card">
+
         <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bd8b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:#bd8b5c;"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Postfiliale</h3>
+
         <p>Alle g&auml;ngigen Postdienstleistungen direkt im Dorfladen. Briefe, Pakete, Einschreiben &ndash; ohne weite Wege.</p>
+
         <a href="javascript:void(0)" onclick="openDtModal('post')" class="more">&Ouml;ffnungszeiten &rarr;</a>
+
       </div>
+
       <div class="info-card">
+
         <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8242a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:#a8242a;"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"/></svg> Catering &amp; Lieferung</h3>
+
         <p>F&uuml;r Vereine und Familienfeiern liefern wir kalte und warme Speisen. Mittagessen auch per Nachbarschaftshilfe lieferbar.</p>
+
         <a href="javascript:void(0)" onclick="openDtModal('catering')" class="more">Details &rarr;</a>
+
       </div>
+
       <div class="info-card">
+
         <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e463a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:#1e463a;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Nachhaltigkeit</h3>
+
         <p>Regional &amp; saisonal einkaufen. Gerne eigene Beh&auml;lter mitbringen! Bio-Gem&uuml;se, Orangen direkt vom Erzeuger, Fleisch vom regionalen Metzger.</p>
+
         <a href="javascript:void(0)" onclick="openDtModal('sustainability')" class="more">Sortiment &rarr;</a>
+
       </div>
+
     </div>
+
+
+
 
 
     <!-- News -->
+
     <div class="cd news-section">
+
       <div class="cd-h">
+
         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+
         Aktuelles
+
         <span style="font-size:.72rem;font-weight:400;color:var(--c-sec);margin-left:8px" id="news-count"></span>
+
       </div>
+
       <div class="cd-b" id="news-container">
+
         <div class="skeleton" style="height:120px;margin-bottom:10px"></div>
+
         <div class="skeleton" style="height:100px"></div>
+
       </div>
+
     </div>
+
+
 
     <!-- Galerie -->
+
     <div class="cd gallery-section">
+
       <div class="cd-h" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between" onclick="var b=this.nextElementSibling;var open=b.style.display!=='none';b.style.display=open?'none':'';this.querySelector('.gallery-toggle').textContent=open?'?':'?'">
+
         <span><svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>Impressionen</span>
+
         <span class="gallery-toggle" style="font-size:1.1rem;color:var(--c-sec,#666)">?</span>
+
       </div>
+
       <div class="cd-b">
+
         <div class="gallery-filters" id="gallery-filters"></div>
+
         <div class="gallery-grid" id="gallery-grid">
+
           <div class="skeleton" style="height:200px"></div>
+
         </div>
+
       </div>
+
     </div>
+
   </div>
+
+
 
   <!-- ===== RIGHT SIDEBAR ===== -->
+
   <aside class="side" aria-label="Seitenleiste">
+
     <!-- Opening Hours -->
+
     <div class="cd">
+
       <div class="cd-h">
+
         <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+
         &Ouml;ffnungszeiten
+
       </div>
+
       <div class="cd-b">
+
         <div class="hrs-g" id="hrs-grid">
-          <!-- Statische �ffnungszeiten als Fallback, wird per JS �berschrieben -->
+
+          <!-- Statische Öffnungszeiten als Fallback, wird per JS überschrieben -->
+
           <div class="hrs-section">
+
             <div class="hrs-label">&#x1F6D2; Dorfladen</div>
+
             <table class="hrs">
+
               <tr><td>Mo</td><td><span class="hrs-time">06:30&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+
               <tr><td>Di</td><td><span class="hrs-time">06:30&ndash;14:00</span></td></tr>
+
               <tr><td>Mi</td><td><span class="hrs-time">06:30&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+
               <tr><td>Do</td><td><span class="hrs-time">06:30&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+
               <tr><td>Fr</td><td><span class="hrs-time">06:30&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+
               <tr><td>Sa</td><td><span class="hrs-time">07:00&ndash;13:00</span></td></tr>
+
               <tr><td>So</td><td><span class="hrs-closed">Geschlossen</span></td></tr>
+
             </table>
+
           </div>
+
           <div class="hrs-section">
+
             <div class="hrs-label">&#x1F4E6; Postfiliale</div>
+
             <table class="hrs">
+
               <tr><td>Mo</td><td><span class="hrs-time">09:00&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+
               <tr><td>Di</td><td><span class="hrs-time">09:00&ndash;14:00</span></td></tr>
+
               <tr><td>Mi</td><td><span class="hrs-time">09:00&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+
               <tr><td>Do</td><td><span class="hrs-time">09:00&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+
               <tr><td>Fr</td><td><span class="hrs-time">09:00&ndash;14:00</span> <span class="hrs-sep">&amp;</span> <span class="hrs-time">16:30&ndash;19:00</span></td></tr>
+
               <tr><td>Sa</td><td><span class="hrs-time">09:00&ndash;13:00</span></td></tr>
+
               <tr><td>So</td><td><span class="hrs-closed">Geschlossen</span></td></tr>
+
             </table>
+
           </div>
+
         </div>
+
         <p style="margin-top:10px;font-size:.75rem;color:var(--c-sec)">Au&szlig;er an gesetzlichen Feiertagen</p>
+
       </div>
+
     </div>
+
+
 
     <!-- Contact Card -->
+
     <div class="cd">
+
       <div class="cd-h">
+
         <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+
         Kontakt &amp; Adresse
+
       </div>
+
       <div class="cd-b" style="font-size:.85rem;line-height:1.7">
+
         <strong>Dorfladen Oberornau UG</strong><br>
+
         Dorfplatz 1<br>
+
         84419 Obertaufkirchen<br><br>
+
         <strong>Tel:</strong> <a href="tel:+4980826229991">08082 / 622 99 91</a><br>
+
         <strong>E-Mail:</strong> <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a>
+
         <div style="margin-top:12px;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb">
+
           <iframe src="https://maps.google.com/maps?q=Dorfplatz+1,+84419+Obertaufkirchen,+Germany&hl=de&z=15&output=embed" width="100%" height="180" style="border:0;display:block" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+
         </div>
+
       </div>
+
     </div>
+
+
 
     <!-- WhatsApp CTA -->
+
     <div class="cd">
+
       <div class="cd-h" style="background:#e5f3ec;color:#5ea88a">
+
         <svg viewBox="0 0 24 24" style="fill:#2e7d32"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18c-1.66 0-3.203-.503-4.489-1.363l-.313-.188-2.871.853.853-2.871-.188-.313A7.962 7.962 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/></svg>
+
         Speiseplan per WhatsApp
+
       </div>
+
       <div class="cd-b" style="text-align:center">
+
         <p style="font-size:.85rem;color:var(--c-sec);margin-bottom:10px">W&ouml;chentlichen Speiseplan bequem aufs Handy erhalten</p>
+
         <a href="https://wa.me/message/U7VY4HZCPBR4N1" target="_blank" rel="noopener" style="display:inline-block;background:#25D366;color:#fff;padding:10px 22px;border-radius:var(--r);font-weight:600;font-size:.88rem;transition:background .15s">
+
           Jetzt anmelden
+
         </a>
+
       </div>
+
     </div>
+
   </aside>
 
+
+
   <!-- ====== MOBILE CONTENT (below quick actions) ====== -->
+
   <div class="mob-only mob-cards">
-    <div class="mob-card">
-      <div class="mob-card-header">
-        <span class="mob-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
-        <span class="mob-card-title">Postfiliale</span>
-      </div>
-      <div class="mob-card-body">
-        Briefe, Pakete, Einschreiben &ndash; alles im Laden.<br>
-        <a href="javascript:void(0)" onclick="mobOpenPopup('post-hours')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> &Ouml;ffnungszeiten Post &#9656;</a>
-      </div>
-    </div>
 
     <div class="mob-card">
+
       <div class="mob-card-header">
-        <span class="mob-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"/></svg></span>
-        <span class="mob-card-title">Bistro</span>
+
+        <span class="mob-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
+
+        <span class="mob-card-title">Postfiliale</span>
+
       </div>
+
       <div class="mob-card-body">
-        Fr&uuml;hst&uuml;ck &middot; Mittagessen &middot; Kaffee &amp; Kuchen<br>
-        Im Sommer drau&szlig;en am Dorfplatz <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+
+        Briefe, Pakete, Einschreiben &ndash; alles im Laden.<br>
+
+        <a href="javascript:void(0)" onclick="mobOpenPopup('post-hours')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> &Ouml;ffnungszeiten Post &#9656;</a>
+
       </div>
+
     </div>
+
+
+
+    <div class="mob-card">
+
+      <div class="mob-card-header">
+
+        <span class="mob-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"/></svg></span>
+
+        <span class="mob-card-title">Bistro</span>
+
+      </div>
+
+      <div class="mob-card-body">
+
+        Fr&uuml;hst&uuml;ck &middot; Mittagessen &middot; Kaffee &amp; Kuchen<br>
+
+        Im Sommer drau&szlig;en am Dorfplatz <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+
+      </div>
+
+    </div>
+
+
 
     <a href="/bilder" class="mob-card" style="text-decoration:none;color:inherit;display:block">
+
       <div class="mob-card-header">
+
         <span class="mob-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span>
+
         <span class="mob-card-title">Impressionen</span>
+
       </div>
+
       <div class="mob-card-body">
+
         Eindr&uuml;cke aus dem Dorfladen &ndash; unsere Bildergalerie<br>
+
         <span style="color:var(--c-pri);font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Galerie ansehen &#9656;</span>
+
       </div>
+
     </a>
 
+
+
   </div>
+
+
 
   <!-- MOBILE: Contact + Map -->
+
   <div class="mob-only mob-contact">
+
     <span class="mob-contact-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+
     <div class="mob-contact-info">
+
       <strong>Dorfladen Oberornau</strong><br>
+
       Dorfplatz 1, 84419 Obertaufkirchen<br>
+
       <a href="tel:+4980826229991"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> 08082 / 622 99 91</a><br>
+
       <a href="mailto:info@dorfladen-oberornau.de"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> info@dorfladen-oberornau.de</a>
+
     </div>
+
     <div class="mob-contact-map">
+
       <iframe src="https://www.google.com/maps?q=Dorfladen+Oberornau,+Dorfplatz+1,+84419+Obertaufkirchen&output=embed&z=15" width="100%" height="180" style="border:0;border-radius:12px;margin-top:12px" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+
       <a href="https://www.google.com/maps/dir/?api=1&destination=Dorfplatz+1,+84419+Obertaufkirchen" target="_blank" rel="noopener" class="mob-route-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg> Route planen</a>
+
     </div>
+
   </div>
 
+
+
   <!-- MOBILE: WhatsApp CTA -->
+
   <div class="mob-only mob-wa">
+
     <a href="https://wa.me/message/U7VY4HZCPBR4N1" target="_blank" rel="noopener">
+
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Speiseplan per WhatsApp
+
     </a>
+
   </div>
+
   <!-- ====== END MOBILE CONTENT ====== -->
+
+
 
 </main>
 
+
+
 <!-- FOOTER -->
+
 <footer class="ft" role="contentinfo">
+
   <div class="ft-in">
+
     <div class="ft-addr">
+
       <h4>Dorfladen Oberornau</h4>
+
       <p>
+
         Dorfladen Oberornau UG<br>(haftungsbeschr&auml;nkt)<br>
+
         Dorfplatz 1<br>84419 Obertaufkirchen<br><br>
+
         Tel: <a href="tel:+4980826229991">08082 / 622 99 91</a><br>
+
         <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a>
+
       </p>
+
     </div>
+
     <div>
+
       <h4>Unser Angebot</h4>
+
       <ul>
+
         <li><a href="/konzept">Konzept</a></li>
+
         <li><a href="/sortiment">Sortiment</a></li>
+
         <li><a href="/essen-im-dorfladen">Essen im Dorfladen</a></li>
+
         <li><a href="/oeffnungszeiten">&Ouml;ffnungszeiten</a></li>
+
         <li><a href="/roter-punkt" style="color:#ef5350"><svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a></li>
+
       </ul>
+
     </div>
+
     <div>
+
       <h4>&Uuml;ber uns</h4>
+
       <ul>
+
         <li><a href="/beirat">Beirat</a></li>
+
         <li><a href="/geschaeftsfuehrung">Gesch&auml;ftsf&uuml;hrung</a></li>
+
         <li><a href="/stille-gesellschafter">Stille Gesellschafter</a></li>
+
       </ul>
+
     </div>
+
     <div>
+
       <h4>Rechtliches</h4>
+
       <ul>
+
         <li><a href="/impressum">Impressum</a></li>
+
         <li><a href="/datenschutzerklaerung">Datenschutzerkl&auml;rung</a></li>
+
       </ul>
+
     </div>
+
   </div>
+
   <div class="ft-bottom">
+
     <span>&copy; <script>document.write(new Date().getFullYear())</script> Dorfladen Oberornau UG (haftungsbeschr&auml;nkt). Alle Rechte vorbehalten.</span>
+
     <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="/cms">CMS</a></span>
+
     <span id="site-version" style="font-size:10px;color:#9ca3af"></span>
+
   </div>
+
 </footer>
 
+
+
 <!-- WHATSAPP FLOATING BUTTON -->
+
 <a href="https://wa.me/491714910935?text=Hallo%2C%20ich%20habe%20eine%20Frage%20zum%20Dorfladen%20%F0%9F%91%8B" target="_blank" rel="noopener" id="hp-wa-float" class="wa-float" aria-label="WhatsApp Chat &ouml;ffnen">
+
   <span class="wa-float-label">Schreib uns!</span>
+
   <span class="wa-float-bubble"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></span>
+
 </a>
 
+
+
 <!-- COOKIE CONSENT BANNER (DSGVO / TTDSG) -->
+
 <div class="cookie-bar" id="cookieBar" role="dialog" aria-label="Cookie-Hinweis">
+
   <div class="cookie-inner">
+
     <p>Diese Website verwendet ausschlie&szlig;lich technisch notwendige Cookies, um die einwandfreie Funktion zu gew&auml;hrleisten. Weitere Informationen finden Sie in unserer <a href="/datenschutzerklaerung">Datenschutzerkl&auml;rung</a>.</p>
+
     <div class="cookie-btns">
+
       <button class="ck-accept" onclick="document.getElementById('cookieBar').classList.remove('show');localStorage.setItem('dl_cookies','1')">Verstanden</button>
+
       <button class="ck-decline" onclick="document.getElementById('cookieBar').classList.remove('show');sessionStorage.setItem('dl_cookies_declined','1')">Ablehnen</button>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <!-- NEWS TICKER (fixed footer) -->
+
 <div class="news-ticker" id="news-ticker" style="display:none" role="marquee" aria-label="Aktuelle Nachrichten">
+
   <a href="/aktuelles" class="news-ticker-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg> Aktuelles</a>
+
   <div class="news-ticker-track">
+
     <div class="news-ticker-content" id="news-ticker-content"></div>
+
   </div>
+
 </div>
+
+
 
 <!-- LIGHTBOX -->
+
 <div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox()">
+
   <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+
   <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();navLightbox(-1)">&#10094;</button>
+
   <img class="lightbox-img" id="lightbox-img" alt="" onclick="event.stopPropagation()">
+
   <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation();navLightbox(1)">&#10095;</button>
+
   <div class="lightbox-caption" id="lightbox-caption"></div>
+
 </div>
+
+
 
 <script src="/js/app.js"></script>
+
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <script src="/js/mobile.js"></script>
+
 <script src="/js/roterpunkt-live.js"></script>
 
+
+
 <!-- ====== DESKTOP MODALS ====== -->
+
 <!-- MODAL: Konzept -->
+
 <div class="dt-modal-bg" id="dt-modal-concept" onclick="if(event.target===this)closeDtModal('concept')">
+
   <div class="dt-modal">
+
     <button class="dt-modal-close" onclick="closeDtModal('concept')">&times;</button>
+
     <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> Unser Konzept</h2>
-    <p>Der Dorfladen Oberornau ist mehr als nur ein Lebensmittelgesch�ft � er ist die soziale und vitale Mitte unserer Dorfgemeinschaft. Unser genossenschaftlich getragenes Konzept sichert die Nahversorgung direkt vor Ort und bietet zugleich einen gem�tlichen Treffpunkt.</p>
-    <p><strong>Regionale Partnerschaft:</strong> Wir arbeiten eng mit Erzeugern aus der Region zusammen, um frische, gesunde und nachvollziehbar produzierte Lebensmittel anzubieten. Ob Backwaren, Metzgerei-Spezialit�ten oder erntefrisches Biogem�se � die Wege zu uns sind kurz.</p>
-    <p><strong>Gemeinschaft leben:</strong> In unserem Bistro-Bereich treffen sich Jung und Alt zum gem�tlichen Plausch bei einer Tasse Kaffee, einem leckeren Fr�hst�ck oder unserem t�glich frisch zubereiteten Mittagstisch.</p>
+
+    <p>Der Dorfladen Oberornau ist mehr als nur ein Lebensmittelgeschft – er ist die soziale und vitale Mitte unserer Dorfgemeinschaft. Unser genossenschaftlich getragenes Konzept sichert die Nahversorgung direkt vor Ort und bietet zugleich einen gemütlichen Treffpunkt.</p>
+
+    <p><strong>Regionale Partnerschaft:</strong> Wir arbeiten eng mit Erzeugern aus der Region zusammen, um frische, gesunde und nachvollziehbar produzierte Lebensmittel anzubieten. Ob Backwaren, Metzgerei-Spezialitäten oder erntefrisches Biogemüse – die Wege zu uns sind kurz.</p>
+
+    <p><strong>Gemeinschaft leben:</strong> In unserem Bistro-Bereich treffen sich Jung und Alt zum gemütlichen Plausch bei einer Tasse Kaffee, einem leckeren Frühstück oder unserem täglich frisch zubereiteten Mittagstisch.</p>
+
   </div>
+
 </div>
+
+
 
 <!-- MODAL: Postfiliale -->
+
 <div class="dt-modal-bg" id="dt-modal-post" onclick="if(event.target===this)closeDtModal('post')">
+
   <div class="dt-modal">
+
     <button class="dt-modal-close" onclick="closeDtModal('post')">&times;</button>
+
     <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Postfiliale im Dorfladen</h2>
-    <p>Erledigen Sie Ihre Postgesch�fte direkt bei uns im Laden � bequem, schnell und ohne weite Wege nach Haag oder Buchbach.</p>
+
+    <p>Erledigen Sie Ihre Postgeschäfte direkt bei uns im Laden – bequem, schnell und ohne weite Wege nach Haag oder Buchbach.</p>
+
     <div style="background:var(--c-pri-l); padding:16px; border-radius:12px; margin:16px 0; border:1px solid rgba(30,70,58,0.06);">
-      <h3 style="margin:0 0 10px; font-size:14px; font-weight:800; color:var(--c-pri); text-transform:uppercase; letter-spacing:0.5px;">�ffnungszeiten Post</h3>
+
+      <h3 style="margin:0 0 10px; font-size:14px; font-weight:800; color:var(--c-pri); text-transform:uppercase; letter-spacing:0.5px;">Öffnungszeiten Post</h3>
+
       <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
-        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Mo, Mi, Do, Fr</td><td style="padding:6px 0; text-align:right;">09:00�14:00 &amp; 16:30�19:00 Uhr</td></tr>
-        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Dienstag</td><td style="padding:6px 0; text-align:right;">09:00�14:00 Uhr</td></tr>
-        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Samstag</td><td style="padding:6px 0; text-align:right;">09:00�13:00 Uhr</td></tr>
+
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Mo, Mi, Do, Fr</td><td style="padding:6px 0; text-align:right;">09:00–14:00 &amp; 16:30–19:00 Uhr</td></tr>
+
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Dienstag</td><td style="padding:6px 0; text-align:right;">09:00–14:00 Uhr</td></tr>
+
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Samstag</td><td style="padding:6px 0; text-align:right;">09:00–13:00 Uhr</td></tr>
+
         <tr><td style="padding:6px 0; font-weight:700; color:var(--c-acc);">Sonntag</td><td style="padding:6px 0; text-align:right; color:var(--c-acc); font-weight:700;">Geschlossen</td></tr>
+
       </table>
+
     </div>
-    <p><strong>Unser Service f�r Sie:</strong> Brief- und Paketmarkenverkauf, Paketannahme &amp; -ausgabe (DHL), Einschreiben, Retouren und vieles mehr.</p>
+
+    <p><strong>Unser Service für Sie:</strong> Brief- und Paketmarkenverkauf, Paketannahme &amp; -ausgabe (DHL), Einschreiben, Retouren und vieles mehr.</p>
+
   </div>
+
 </div>
+
+
 
 <!-- MODAL: Catering & Lieferung -->
+
 <div class="dt-modal-bg" id="dt-modal-catering" onclick="if(event.target===this)closeDtModal('catering')">
+
   <div class="dt-modal">
+
     <button class="dt-modal-close" onclick="closeDtModal('catering')">&times;</button>
+
     <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"/></svg> Catering &amp; Lieferservice</h2>
-    <p>Wir machen Ihre Feier oder Veranstaltung kulinarisch unvergesslich! Unser eingespieltes K�chenteam bereitet kalte und warme Platten mit Liebe zu.</p>
-    <p><strong>Unser Angebot f�r Ihre Veranstaltung:</strong></p>
+
+    <p>Wir machen Ihre Feier oder Veranstaltung kulinarisch unvergesslich! Unser eingespieltes Küchenteam bereitet kalte und warme Platten mit Liebe zu.</p>
+
+    <p><strong>Unser Angebot für Ihre Veranstaltung:</strong></p>
+
     <ul style="padding-left:20px; font-size:0.92rem; color:var(--c-sec); line-height:1.6; margin-bottom:14px;">
-      <li>Frische, reich belegte Wurst- und K�seplatten</li>
-      <li>Traditionelle bayerische Schmankerl (z.B. Schweinsbraten, Leberk�s)</li>
+
+      <li>Frische, reich belegte Wurst- und Käseplatten</li>
+
+      <li>Traditionelle bayerische Schmankerl (z.B. Schweinsbraten, Leberkäs)</li>
+
       <li>Feine Salate und Beilagen nach Wahl</li>
-      <li>Hausgemachte Kuchen- und Tortenplatten f�r festliche Kaffeerunden</li>
+
+      <li>Hausgemachte Kuchen- und Tortenplatten für festliche Kaffeerunden</li>
+
     </ul>
-    <p><strong>Nachbarschaftshilfe &amp; Lieferung:</strong> F�r Senioren und hilfsbed�rftige B�rger liefern wir das frisch zubereitete Mittagsmen� auf Wunsch auch im Rahmen unserer organisierten Nachbarschaftshilfe direkt ins Haus.</p>
-    <p><strong>Vorbestellung und Beratung:</strong> Gerne beraten wir Sie pers�nlich oder telefonisch unter <a href="tel:+4980826229991" style="font-weight:700; color:var(--c-pri);">08082-6229991</a>.</p>
+
+    <p><strong>Nachbarschaftshilfe &amp; Lieferung:</strong> Für Senioren und hilfsbedürftige Bürger liefern wir das frisch zubereitete Mittagsmenü auf Wunsch auch im Rahmen unserer organisierten Nachbarschaftshilfe direkt ins Haus.</p>
+
+    <p><strong>Vorbestellung und Beratung:</strong> Gerne beraten wir Sie persönlich oder telefonisch unter <a href="tel:+4980826229991" style="font-weight:700; color:var(--c-pri);">08082-6229991</a>.</p>
+
   </div>
+
 </div>
 
+
+
 <!-- MODAL: Nachhaltigkeit -->
+
 <div class="dt-modal-bg" id="dt-modal-sustainability" onclick="if(event.target===this)closeDtModal('sustainability')">
+
   <div class="dt-modal">
+
     <button class="dt-modal-close" onclick="closeDtModal('sustainability')">&times;</button>
+
     <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Nachhaltigkeit &amp; Region</h2>
-    <p>Nachhaltiges Handeln und regionaler Konsum sind fest in den Genossenschafts-Genen unseres Dorfladens verankert. Wir m�chten M�ll vermeiden und kurze Transportwege garantieren.</p>
-    <p><strong>Unverpackt &amp; Plastikfrei:</strong> Um unn�tigen Verpackungsm�ll zu vermeiden, d�rfen Sie sehr gerne **eigene, saubere Beh�ltnisse** f�r Wurst, K�se, Brotzeit oder Ihr warmes Mittagessen mitbringen. Wir bef�llen diese unter Einhaltung aller Hygienevorschriften an unserer Theke.</p>
+
+    <p>Nachhaltiges Handeln und regionaler Konsum sind fest in den Genossenschafts-Genen unseres Dorfladens verankert. Wir möchten Müll vermeiden und kurze Transportwege garantieren.</p>
+
+    <p><strong>Unverpackt &amp; Plastikfrei:</strong> Um unnötigen Verpackungsmüll zu vermeiden, dürfen Sie sehr gerne **eigene, saubere Behältnisse** für Wurst, Käse, Brotzeit oder Ihr warmes Mittagessen mitbringen. Wir befüllen diese unter Einhaltung aller Hygienevorschriften an unserer Theke.</p>
+
     <p><strong>Unsere regionalen Helden:</strong></p>
+
     <ul style="padding-left:20px; font-size:0.92rem; color:var(--c-sec); line-height:1.6;">
-      <li>Frisches Biogem�se von der renommierten <strong>Chiemgauer Naturkost (�koring)</strong> und <strong>Steiner</strong> aus Kirchweidach</li>
-      <li>Spanische Zitrusfr�chte direkt importiert von Familie <strong>Bernauer</strong> aus Reitmehring</li>
+
+      <li>Frisches Biogemüse von der renommierten <strong>Chiemgauer Naturkost (Ökoring)</strong> und <strong>Steiner</strong> aus Kirchweidach</li>
+
+      <li>Spanische Zitrusfrüchte direkt importiert von Familie <strong>Bernauer</strong> aus Reitmehring</li>
+
       <li>Beste Fleisch- und Wurstwaren von der Handwerks-<strong>Metzgerei Mayr</strong> aus Haag i. OB</li>
+
     </ul>
+
   </div>
+
 </div>
+
 <!-- PWA Install Banner (mobile) -->
+
 <div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#2d5016,#3a6b1e);color:#fff;padding:14px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.25);animation:pwa-slide-up .4s ease-out">
+
   <div style="display:flex;align-items:center;gap:12px;max-width:600px;margin:0 auto">
+
     <img src="/images/icon-192.png" alt="" style="width:44px;height:44px;border-radius:10px;flex-shrink:0">
+
     <div style="flex:1;min-width:0">
+
       <div style="font-weight:700;font-size:.95rem">Dorfladen als App</div>
+
       <div style="font-size:.78rem;opacity:.85;margin-top:2px">Zum Startbildschirm hinzuf&uuml;gen &ndash; schneller Zugriff!</div>
+
     </div>
+
     <button onclick="pwaInstall()" style="background:#fff;color:#2d5016;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:.85rem;cursor:pointer;white-space:nowrap;flex-shrink:0">Installieren</button>
+
     <button onclick="pwaCloseBanner()" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px;opacity:.7;flex-shrink:0">&times;</button>
+
   </div>
+
 </div>
+
 <style>
+
 @keyframes pwa-slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
 </style>
+
 <script src="/js/pwa.js?v=12"></script>
+
 </body>
+
 </html>
+
