@@ -1050,20 +1050,15 @@ document.head.appendChild(msalScript);
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
           <div class="cms-card">
-            <div class="cms-card-header" style="background:#374151">&#127912; Farben</div>
+            <div class="cms-card-header" style="background:#374151">&#127912; Globale Farben</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
-              <label style="font-size:12px;font-weight:600;color:#374151">Hintergrund
-                <input type="color" id="cfg-bgColor" value="#f4f1ea" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Preisschild-Rot
-                <input type="color" id="cfg-tagColor" value="#a51d2d" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
-              </label>
+              <p style="font-size:11px;color:#6b7280;margin:0">Weitere Farben k&ouml;nnen pro Template unter Preisschild &rarr; Plakat/Flyer-Farben angepasst werden.</p>
               <label style="font-size:12px;font-weight:600;color:#374151">Blatt/Icon-Gr&uuml;n
                 <input type="color" id="cfg-leafColor" value="#4a7c3f" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
               </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Titel-Farbe
-                <input type="color" id="cfg-titleColor" value="#a51d2d" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
-              </label>
+              <input type="hidden" id="cfg-bgColor" value="#f4f1ea">
+              <input type="hidden" id="cfg-tagColor" value="#a51d2d">
+              <input type="hidden" id="cfg-titleColor" value="#a51d2d">
             </div>
           </div>
           <div class="cms-card" style="margin-top:12px">
@@ -1157,6 +1152,19 @@ document.head.appendChild(msalScript);
                   </button>
                 </div>
               </label>
+              <div id="cfg-tpl-plakat-colors" style="margin-top:8px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Plakat-Farben anpassen</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <label style="font-size:11px;color:#374151">Hintergrund<input type="color" id="cfg-tpl-plakat-bgColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Titel<input type="color" id="cfg-tpl-plakat-titleColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Preisschild<input type="color" id="cfg-tpl-plakat-tagColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Karte<input type="color" id="cfg-tpl-plakat-cardBg" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Kartenrahmen<input type="color" id="cfg-tpl-plakat-cardBorder" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Text<input type="color" id="cfg-tpl-plakat-textColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Details<input type="color" id="cfg-tpl-plakat-detailsColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetTplColors" data-kind="plakat" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
+                </div>
+              </div>
               <label style="font-size:12px;font-weight:600;color:#374151">Einzelflyer-Template
                 <select id="cfg-flyerTemplate" class="cms-input" style="margin-top:6px">
                   <option value="classic-red">Classic Red (aktuell)</option>
@@ -1196,6 +1204,19 @@ document.head.appendChild(msalScript);
                   </button>
                 </div>
               </label>
+              <div id="cfg-tpl-flyer-colors" style="margin-top:8px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Flyer-Farben anpassen</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <label style="font-size:11px;color:#374151">Hintergrund<input type="color" id="cfg-tpl-flyer-bgColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Titel<input type="color" id="cfg-tpl-flyer-titleColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Preisschild<input type="color" id="cfg-tpl-flyer-tagColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Karte<input type="color" id="cfg-tpl-flyer-cardBg" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Kartenrahmen<input type="color" id="cfg-tpl-flyer-cardBorder" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Text<input type="color" id="cfg-tpl-flyer-textColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Details<input type="color" id="cfg-tpl-flyer-detailsColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetTplColors" data-kind="flyer" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="cms-card" style="margin-top:12px">
@@ -2129,6 +2150,7 @@ document.head.appendChild(msalScript);
         if(!o.hasOwnProperty('savingsScalePlakat'))r.savingsScalePlakat=o.savingsScale;
         if(!o.hasOwnProperty('savingsScaleFlyer'))r.savingsScaleFlyer=o.savingsScale;
       }
+      if(o.tplColors)r.tplColors=o.tplColors;
       return r;}}catch(e){}
     return JSON.parse(JSON.stringify(CFG_DEFAULTS));
   }
@@ -2159,6 +2181,7 @@ document.head.appendChild(msalScript);
         if(dvCfg&&typeof dvCfg==='object'){
           // Dataverse is always the source of truth
           var merged={};for(var k in CFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:CFG_DEFAULTS[k];
+          if(dvCfg.tplColors)merged.tplColors=dvCfg.tplColors;
           try{localStorage.setItem(CFG_KEY,JSON.stringify(merged));}catch(e){}
           cfgApplyUI(merged);
         }
@@ -2187,6 +2210,7 @@ document.head.appendChild(msalScript);
     var pt=document.getElementById('cfg-plakatTemplate');if(pt)pt.value=c.plakatTemplate||'classic-red';
     var ft=document.getElementById('cfg-flyerTemplate');if(ft)ft.value=c.flyerTemplate||'classic-red';
     cfgSyncOfferTplPreviews();
+    cfgSyncAllTplColors();
     var ssEl=document.getElementById('cfg-savingsStarStyle');
     if(ssEl){
       var ss='harmonie';
@@ -2218,6 +2242,20 @@ document.head.appendChild(msalScript);
     var ft=document.getElementById('cfg-flyerTemplate');c.flyerTemplate=ft?ft.value:'classic-red';
     var ssEl=document.getElementById('cfg-savingsStarStyle');
     c.savingsStarStyle=ssEl?ssEl.value:'harmonie';
+    // Read per-template color overrides
+    var tc={};
+    ['plakatTemplate','flyerTemplate'].forEach(function(tKey){
+      var tpl=c[tKey]||'classic-red';
+      if(!tc[tpl])tc[tpl]={};
+      TPL_COLOR_KEYS.forEach(function(ck){
+        var el=document.getElementById('cfg-tpl-'+tKey.replace('Template','')+'-'+ck);
+        if(el)tc[tpl][ck]=el.value;
+      });
+    });
+    // Preserve existing overrides for other templates
+    var existing=cfgGet().tplColors||{};
+    for(var tk in existing){if(!tc[tk])tc[tk]=existing[tk];}
+    c.tplColors=tc;
     return c;
   }
   function cfgSyncOfferTplPreviews(){
@@ -2230,6 +2268,19 @@ document.head.appendChild(msalScript);
     sync('cfg-plakatTemplate','cfg-plakatTemplate-preview');
     sync('cfg-flyerTemplate','cfg-flyerTemplate-preview');
   }
+  function cfgSyncTplColors(kind){
+    // kind = 'plakat' or 'flyer'
+    var selId=kind==='flyer'?'cfg-flyerTemplate':'cfg-plakatTemplate';
+    var sel=document.getElementById(selId);if(!sel)return;
+    var tpl=sel.value||'classic-red';
+    var cfg=cfgGet();
+    var colors=getTplColors(tpl,cfg);
+    TPL_COLOR_KEYS.forEach(function(ck){
+      var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
+      if(el)el.value=colors[ck]||'#000000';
+    });
+  }
+  function cfgSyncAllTplColors(){cfgSyncTplColors('plakat');cfgSyncTplColors('flyer');}
   function cfgRenderSavingsPreview(){
     var cv=document.getElementById('cfg-savingsPreviewCanvas');if(!cv)return;
     var ctx=cv.getContext('2d');if(!ctx)return;
@@ -2284,6 +2335,10 @@ document.head.appendChild(msalScript);
     var id=e.target.id;if(!id||id.indexOf('cfg-')!==0)return;
     var k=id.replace('cfg-','');cfgUpdateVal(k,e.target.value);
     if(id==='cfg-savingsScalePlakat'||id==='cfg-savingsScaleFlyer'||id==='cfg-tagColor')cfgRenderSavingsPreview();
+  });
+  document.addEventListener('change',function(e){
+    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');}
+    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');}
   });
 
   // --- Homepage/Wochenplan Config (hpCfg) ---
@@ -3811,48 +3866,59 @@ document.head.appendChild(msalScript);
     return ok[tpl]?tpl:'classic-red';
   }
 
+  // Template color defaults – used as base, can be overridden per template in config
+  var TPL_COLOR_DEFAULTS={
+    'classic-red':{bgColor:'#f4f1ea',titleColor:'#a51d2d',tagColor:'#a51d2d',cardBg:'#ffffff',cardBorder:'#eeeeee',textColor:'#1a1a1a',detailsColor:'#444444'},
+    'minimal-clean':{bgColor:'#ffffff',titleColor:'#111827',tagColor:'#047857',cardBg:'#ffffff',cardBorder:'#e5e7eb',textColor:'#1a1a1a',detailsColor:'#444444'},
+    'dark-modern':{bgColor:'#0f172a',titleColor:'#e5e7eb',tagColor:'#0ea5e9',cardBg:'#f5f5f5',cardBorder:'#94a3b8',textColor:'#111827',detailsColor:'#334155'},
+    'organic-market':{bgColor:'#f7f2e7',titleColor:'#355e3b',tagColor:'#8b1e3f',cardBg:'#fffdf8',cardBorder:'#e9dfcf',textColor:'#2f3d2f',detailsColor:'#6b5b48'},
+    'bold-poster':{bgColor:'#fff7ed',titleColor:'#b91c1c',tagColor:'#ea580c',cardBg:'#fffaf2',cardBorder:'#fdba74',textColor:'#7c2d12',detailsColor:'#9a3412'},
+    'modern-magazine':{bgColor:'#edf4ea',titleColor:'#5e7057',tagColor:'#6f835f',cardBg:'#f6fbf5',cardBorder:'#d2e0cf',textColor:'#2c3a2a',detailsColor:'#5b6d54'}
+  };
+  var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor'];
+
+  function getTplColors(tplName,cfg){
+    var defaults=TPL_COLOR_DEFAULTS[tplName]||TPL_COLOR_DEFAULTS['classic-red'];
+    var overrides=(cfg.tplColors&&cfg.tplColors[tplName])||{};
+    var result={};
+    TPL_COLOR_KEYS.forEach(function(k){result[k]=overrides[k]||defaults[k];});
+    return result;
+  }
+
   function getOfferTheme(kind,cfg){
     var tpl=getOfferTemplate(kind,cfg);
+    var colors=getTplColors(tpl,cfg);
     var base={
       tpl:tpl,
-      bgColor:cfg.bgColor,
-      titleColor:cfg.titleColor,
+      bgColor:colors.bgColor,
+      titleColor:colors.titleColor,
       titleFont:'900 60px Arial Black, Arial, sans-serif',
       titleY:72,
       dateColor:'#1a1a1a',
       dateFont:'900 22px Arial, sans-serif',
-      cardBg:'#ffffff',
-      cardBorder:'#eee',
+      cardBg:colors.cardBg,
+      cardBorder:colors.cardBorder,
       cardRadius:kind==='flyer'?32:28,
-      textColor:'#1a1a1a',
-      detailsColor:'#444',
+      textColor:colors.textColor,
+      detailsColor:colors.detailsColor,
       footerColor:'#1a1a1a',
-      tagColor:cfg.tagColor,
+      tagColor:colors.tagColor,
       showTexture:cfg.showTexture
     };
     if(tpl==='minimal-clean'){
-      base.bgColor='#ffffff';base.titleColor='#111827';base.dateColor='#374151';
-      base.cardBorder='#e5e7eb';base.cardRadius=kind==='flyer'?20:18;base.tagColor='#047857';
+      base.dateColor='#374151';base.cardRadius=kind==='flyer'?20:18;
       base.showTexture=false;base.titleFont='900 54px Arial Black, Arial, sans-serif';
     }else if(tpl==='dark-modern'){
-      base.bgColor='#0f172a';base.titleColor='#e5e7eb';base.dateColor='#93c5fd';
-      base.cardBg='rgba(255,255,255,0.96)';base.cardBorder='rgba(148,163,184,0.65)';
-      base.textColor='#111827';base.detailsColor='#334155';base.footerColor='#e5e7eb';
-      base.tagColor='#0ea5e9';base.showTexture=false;base.titleFont='900 56px Arial Black, Arial, sans-serif';
+      base.dateColor='#93c5fd';base.footerColor='#e5e7eb';
+      base.showTexture=false;base.titleFont='900 56px Arial Black, Arial, sans-serif';
     }else if(tpl==='organic-market'){
-      base.bgColor='#f7f2e7';base.titleColor='#355e3b';base.dateColor='#7a6a55';
-      base.cardBg='#fffdf8';base.cardBorder='#e9dfcf';base.textColor='#2f3d2f';base.detailsColor='#6b5b48';
-      base.footerColor='#6b5b48';base.tagColor='#8b1e3f';base.cardRadius=kind==='flyer'?36:30;
-      base.titleFont='900 58px Arial, sans-serif';
+      base.dateColor='#7a6a55';base.footerColor='#6b5b48';
+      base.cardRadius=kind==='flyer'?36:30;base.titleFont='900 58px Arial, sans-serif';
     }else if(tpl==='bold-poster'){
-      base.bgColor='#fff7ed';base.titleColor='#b91c1c';base.dateColor='#7c2d12';
-      base.cardBg='#fffaf2';base.cardBorder='#fdba74';base.tagColor='#ea580c';
-      base.textColor='#7c2d12';base.detailsColor='#9a3412';base.footerColor='#7c2d12';
+      base.dateColor='#7c2d12';base.footerColor='#7c2d12';
       base.cardRadius=kind==='flyer'?24:22;base.titleFont='900 62px Arial Black, Arial, sans-serif';
     }else if(tpl==='modern-magazine'){
-      base.bgColor='#edf4ea';base.titleColor='#5e7057';base.dateColor='#4b5f45';
-      base.cardBg='#f6fbf5';base.cardBorder='#d2e0cf';base.tagColor='#6f835f';
-      base.textColor='#2c3a2a';base.detailsColor='#5b6d54';base.footerColor='#4e5f47';
+      base.dateColor='#4b5f45';base.footerColor='#4e5f47';
       base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
       base.showTexture=false;
     }
@@ -4928,12 +4994,23 @@ document.head.appendChild(msalScript);
       case 'pickPlakatTpl':
         var pt=t.getAttribute('data-value')||'classic-red';
         var psel=document.getElementById('cfg-plakatTemplate');
-        if(psel){psel.value=pt;cfgSyncOfferTplPreviews();}
+        if(psel){psel.value=pt;cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');}
         break;
       case 'pickFlyerTpl':
         var ft=t.getAttribute('data-value')||'classic-red';
         var fsel=document.getElementById('cfg-flyerTemplate');
-        if(fsel){fsel.value=ft;cfgSyncOfferTplPreviews();}
+        if(fsel){fsel.value=ft;cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');}
+        break;
+      case 'resetTplColors':
+        var rKind=t.getAttribute('data-kind')||'plakat';
+        var rSelId=rKind==='flyer'?'cfg-flyerTemplate':'cfg-plakatTemplate';
+        var rSel=document.getElementById(rSelId);
+        var rTpl=rSel?rSel.value:'classic-red';
+        var rDefaults=TPL_COLOR_DEFAULTS[rTpl]||TPL_COLOR_DEFAULTS['classic-red'];
+        TPL_COLOR_KEYS.forEach(function(ck){
+          var el=document.getElementById('cfg-tpl-'+rKind+'-'+ck);
+          if(el)el.value=rDefaults[ck]||'#000000';
+        });
         break;
       case 'previewOfferTpl':
         cmsPreviewOfferTpl(t.getAttribute('data-target')||'plakat');
