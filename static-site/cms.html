@@ -1529,7 +1529,7 @@ document.head.appendChild(msalScript);
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
       +'<input class="cms-input cms-price" data-f="preis" placeholder="VK" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
       +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="ArtNr" value="'+esc((item&&item.artikelnummer)||'')+'">'
+      +'<input class="cms-input" data-f="artikelnummer" placeholder="ArtNr/SC" value="'+esc((item&&item.artikelnummer)||'')+'">'
       +'</div>';
     c.appendChild(row);
     var prodInp=row.querySelector('.cms-art-input');
@@ -1655,7 +1655,7 @@ document.head.appendChild(msalScript);
         if(row){
           inp.value=m.b||m.produktVal||'';
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
-          if(nrInp) nrInp.value=m.nr||'';
+          if(nrInp) nrInp.value=m.nr||m.sc||'';
           var detInp=row.querySelector('[data-f="details"]');
           if(detInp && m.details) detInp.value=m.details;
           var preisInp=row.querySelector('[data-f="preis"]');
