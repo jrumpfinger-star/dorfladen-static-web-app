@@ -1,9 +1,9 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GeschÃ¤ftsfÃ¼hrung â€“ Dorfladen Oberornau</title>
+<title>Geschäftsführung – Dorfladen Oberornau</title>
 <link rel="stylesheet" href="/css/content.css">
 <link rel="stylesheet" href="/css/mobile.css">
 <link rel="icon" href="/favicon.ico">
@@ -73,15 +73,15 @@
     </ul>
   </div>
 </nav>
-<div class="bc" role="navigation" aria-label="Breadcrumb"><a href="/">Start</a> &rsaquo; GeschÃ¤ftsfÃ¼hrung</div>
+<div class="bc" role="navigation" aria-label="Breadcrumb"><a href="/">Start</a> &rsaquo; Geschäftsführung</div>
 <main id="main" class="ct-wrap">
   <article class="ct">
-    <h1>GeschÃ¤ftsfÃ¼hrung</h1>
+    <h1>Geschäftsführung</h1>
 <div id="gf-content"><p style="color:#6b7280">Lade Inhalt&hellip;</p></div>
 <script>
 (function(){
   var el=document.getElementById('gf-content');
-  var fallback='<h2>GeschÃ¤ftsfÃ¼hrung</h2><p>Der Dorfladen Oberornau UG ist eine Unternehmergesellschaft, die rechtlich mit einer kleinen GmbH vergleichbar ist. Jede Unternehmergesellschaft benÃ¶tigt entsprechend Gesellschafter, die die Unternehmung in deren Namen grÃ¼nden und als GeschÃ¤ftsfÃ¼hrer fÃ¼hren.</p><p>Aktuell fungieren folgende Personen als Gesellschafter und GeschÃ¤ftsfÃ¼hrer:</p><p><em>Gesellschafter:</em></p><ul><li>Dieter MÃ¼cke</li><li>Andrea Reithmeier</li><li>N.N.</li></ul><p><em>GeschÃ¤ftsfÃ¼hrer:</em></p><ul><li>Andreas Waltl</li></ul>';
+  var fallback='<h2>Geschäftsführung</h2><p>Der Dorfladen Oberornau UG ist eine Unternehmergesellschaft, die rechtlich mit einer kleinen GmbH vergleichbar ist. Jede Unternehmergesellschaft benötigt entsprechend Gesellschafter, die die Unternehmung in deren Namen gründen und als Geschäftsführer führen.</p><p>Aktuell fungieren folgende Personen als Gesellschafter und Geschäftsführer:</p><p><em>Gesellschafter:</em></p><ul><li>Dieter Mücke</li><li>Andrea Reithmeier</li><li>N.N.</li></ul><p><em>Geschäftsführer:</em></p><ul><li>Andreas Waltl</li></ul>';
   fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
     var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
     el.innerHTML=map['gf_inhalt']||fallback;
@@ -195,6 +195,6 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
 
 <script src="/js/logo-loader.js"></script>
 <script src="/js/mobile.js"></script>
-<script src="/js/pwa.js"></script>
+<script src="/js/pwa.js?v=7"></script>
 </body>
 </html>
