@@ -195,8 +195,21 @@
     101000:1,101001:2,101002:3,101003:4,101004:5,101005:6};
   fetch(API_BASE+'/wochenplan').then(function(r){return r.json();}).then(function(data){
     if(data&&data.success&&data.data&&data.data.length>0){
+      var items=data.data;
+      // Filter by KW (ab Samstag: nächste Woche)
+      var targetKw=getKW();
+      var kws={};
+      items.forEach(function(it){var k=it.dl_kalenderwoche;if(k)kws[k]=true;});
+      var bestKw=0;
+      if(kws[targetKw]){bestKw=targetKw;}
+      else{
+        var sorted=Object.keys(kws).map(Number).sort(function(a,b){return a-b;});
+        for(var si=0;si<sorted.length;si++){if(sorted[si]>=targetKw){bestKw=sorted[si];break;}}
+        if(!bestKw&&sorted.length)bestKw=sorted[sorted.length-1];
+      }
+      if(bestKw>0) items=items.filter(function(it){return it.dl_kalenderwoche===bestKw;});
       var menu={1:[],2:[],3:[],4:[],5:[],6:[]};
-      (data.data||[]).forEach(function(item){
+      items.forEach(function(item){
         var wt=item.dl_wochentag;
         var label=item._dl_wochentag_label;
         var dIdx=wpDayMap[wt]||wpDayMap[(label||'').toLowerCase()]||wpDayMap[(String(wt)||'').toLowerCase()];
