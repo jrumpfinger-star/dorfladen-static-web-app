@@ -407,14 +407,13 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
                 // Subscription valid in backend – show settings
                 showPushSettings(sub.endpoint);
               }else{
-                // Subscription NOT in Dataverse – re-register it silently then show settings
-                return fetch('/api/push-subscribe',{
-                  method:'POST',
-                  headers:{'Content-Type':'application/json'},
-                  body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news']})
-                }).then(function(r2){return r2.json();}).then(function(res2){
+                // Subscription NOT in Dataverse – old subscription is likely dead (410 Gone)
+                // Unsubscribe old one and create completely fresh subscription
+                return sub.unsubscribe().then(function(){
+                  return freshSubscribe(reg);
+                }).then(function(newSub){
                   updatePushUI(true);
-                  showPushSettings(sub.endpoint);
+                  alert('Benachrichtigungen neu aktiviert!');
                 });
               }
             });
