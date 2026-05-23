@@ -148,11 +148,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 test_results = []
                 for s in all_subs:
                     try:
+                        ep_test = s["subscription"].get("endpoint", "")
+                        from urllib.parse import urlparse
+                        parsed_test = urlparse(ep_test)
+                        aud_test = f"{parsed_test.scheme}://{parsed_test.netloc}"
+                        claims_test = {"sub": vapid_contact_val}
+                        if aud_test:
+                            claims_test["aud"] = aud_test
                         webpush(
                             subscription_info=s["subscription"],
                             data=json.dumps({"title": "Test", "body": "Diagnose-Push", "url": "/"}),
                             vapid_private_key=vapid_priv,
-                            vapid_claims={"sub": vapid_contact_val}
+                            vapid_claims=claims_test
                         )
                         test_results.append({"status": "OK"})
                     except WebPushException as wex:
@@ -281,10 +288,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         payload_data["image"] = image
     notification_payload = json.dumps(payload_data, ensure_ascii=False)
 
-    vapid_claims = {
-        "sub": vapid_contact
-    }
-
     sent = 0
     failed = 0
     removed = 0
@@ -292,6 +295,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     for entry in all_subs:
         sub = entry["subscription"]
+        ep = sub.get("endpoint", "")
+        # Build aud (audience) from endpoint origin – required by push services
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(ep)
+            aud = f"{parsed.scheme}://{parsed.netloc}"
+        except Exception:
+            aud = ""
+        vapid_claims = {"sub": vapid_contact}
+        if aud:
+            vapid_claims["aud"] = aud
         try:
             webpush(
                 subscription_info=sub,
