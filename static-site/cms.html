@@ -1119,6 +1119,11 @@ document.head.appendChild(msalScript);
                   <option value="circle">Kreis / Badge</option>
                   <option value="banner">Fahne / Banner</option>
                   <option value="star">Stern</option>
+                  <option value="hexagon">Hexagon</option>
+                  <option value="diamond">Diamant / Raute</option>
+                  <option value="ticket">Ticket / Coupon</option>
+                  <option value="explosion">Explosion / Burst</option>
+                  <option value="trapez">Trapez</option>
                 </select>
               </label>
               <label style="font-size:12px;font-weight:600;color:#374151">Ecken-Rundung
@@ -4058,6 +4063,31 @@ document.head.appendChild(msalScript);
         ctx.lineTo(Math.cos(rot)*outerR,Math.sin(rot)*outerR);rot+=step;
         ctx.lineTo(Math.cos(rot)*innerR,Math.sin(rot)*innerR);rot+=step;
       }
+    }else if(shape==='hexagon'){
+      for(var hi=0;hi<6;hi++){
+        var ha=Math.PI/3*hi-Math.PI/6;
+        var hx=hw*Math.cos(ha),hy=hh*Math.sin(ha);
+        if(hi===0)ctx.moveTo(hx,hy);else ctx.lineTo(hx,hy);
+      }
+    }else if(shape==='diamond'){
+      ctx.moveTo(0,-hh);ctx.lineTo(hw,0);ctx.lineTo(0,hh);ctx.lineTo(-hw,0);
+    }else if(shape==='ticket'){
+      var tn=hh*0.22;
+      ctx.moveTo(-hw,-hh);ctx.lineTo(hw,-hh);ctx.lineTo(hw,-tn);
+      ctx.arc(hw,0,tn,Math.PI*1.5,Math.PI*0.5,true);
+      ctx.lineTo(hw,hh);ctx.lineTo(-hw,hh);ctx.lineTo(-hw,tn);
+      ctx.arc(-hw,0,tn,Math.PI*0.5,Math.PI*1.5,true);
+    }else if(shape==='explosion'){
+      var eSpikes=12,eOuter=Math.max(hw,hh),eInner=eOuter*0.72;
+      var eRot=-Math.PI/2,eStep=Math.PI/eSpikes;
+      ctx.moveTo(Math.cos(eRot)*eOuter,Math.sin(eRot)*eOuter);
+      for(var ei=0;ei<eSpikes;ei++){
+        eRot+=eStep;ctx.lineTo(Math.cos(eRot)*eInner,Math.sin(eRot)*eInner);
+        eRot+=eStep;ctx.lineTo(Math.cos(eRot)*eOuter,Math.sin(eRot)*eOuter);
+      }
+    }else if(shape==='trapez'){
+      var tInset=hw*0.22;
+      ctx.moveTo(-hw,-hh);ctx.lineTo(hw,-hh);ctx.lineTo(hw-tInset,hh);ctx.lineTo(-hw+tInset,hh);
     }else if(shape==='rounded'||r>0){
       var rr=shape==='rounded'?Math.min(16,hw,hh):r;
       ctx.moveTo(-hw+rr,-hh);ctx.lineTo(hw-rr,-hh);ctx.quadraticCurveTo(hw,-hh,hw,-hh+rr);
@@ -4105,25 +4135,9 @@ document.head.appendChild(msalScript);
         ctx.strokeStyle=cfg.leafColor;ctx.lineWidth=1;ctx.globalAlpha=0.6;
         ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(sz*0.9,0);ctx.stroke();ctx.restore();
       }
-      // ── Header: ANGEBOT + Datum + Logo ──
-      ctx.textAlign='left';
-      ctx.fillStyle=theme.titleColor;ctx.font=theme.titleFont;
-      ctx.fillText('ANGEBOT',40,theme.titleY);
       var von=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
       var bis=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      ctx.fillStyle=theme.dateColor;ctx.font=theme.dateFont;
-      ctx.fillText(von+' \u2013 '+bis,44,104);
-      // Logo oben rechts
-      var logoImg=new Image();
-      var logoLoaded=new Promise(function(resLogo){
-        logoImg.onload=function(){
-          var lh=90,lw=lh*(logoImg.width/logoImg.height);
-          ctx.drawImage(logoImg,W-lw-30,14,lw,lh);resLogo();
-        };
-        logoImg.onerror=function(){resLogo();};
-        var hdrLogo=document.querySelector('#cms-app img[src^="data:image"]');
-        logoImg.src=hdrLogo?hdrLogo.src:'/Logo-sm-64.png';
-      });
+      var logoLoaded=Promise.resolve();
 
       if(theme.tpl==='modern-magazine'){
         // ── Modern Magazine Einzelflyer: clean centered card layout ──
@@ -4132,27 +4146,39 @@ document.head.appendChild(msalScript);
         ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
         ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
 
-        // Logo + 'Angebote' dominant
+        // Date right (draw first so we know its width)
+        ctx.fillStyle=theme.dateColor;ctx.font='900 24px Arial Black, Arial, sans-serif';
+        var dateStr=von+' \u2013 '+bis;
+        var dateW=ctx.measureText(dateStr).width;
+        var dateRight=W-42;
+        ctx.textAlign='right';
+        ctx.fillText(dateStr,dateRight,82);
+        ctx.font='700 18px Arial, sans-serif';
+        ctx.fillText('Gültig:',dateRight,52);
+        ctx.textAlign='left';
+        var dateLeftEdge=dateRight-Math.max(dateW,ctx.measureText('Gültig:').width)-16;
+
+        // Logo + 'Angebote' dominant (capped to not overlap date)
         var mgLogoEl=document.querySelector('#cms-app img[src^="data:image"]');
         var mgLogoP=new Promise(function(rl){
           if(!mgLogoEl){rl();return;}
           var li=new Image();li.onload=function(){
             var lh=80,lw=lh*(li.width/li.height);
+            var maxLogoW=180;
+            if(lw>maxLogoW){lh=lh*(maxLogoW/lw);lw=maxLogoW;}
             ctx.drawImage(li,28,30,lw,lh);
-            // 'Angebote' dominant next to logo
+            // 'Angebote' dominant next to logo, capped before date
+            var titleX=28+lw+16;
             ctx.fillStyle=theme.titleColor;ctx.textAlign='left';
-            ctx.font='900 44px Arial Black, Arial, sans-serif';
-            ctx.fillText('Angebote',28+lw+16,78);
+            var fontSize=44;
+            ctx.font='900 '+fontSize+'px Arial Black, Arial, sans-serif';
+            while(fontSize>24&&titleX+ctx.measureText('Angebote').width>dateLeftEdge){
+              fontSize-=2;ctx.font='900 '+fontSize+'px Arial Black, Arial, sans-serif';
+            }
+            ctx.fillText('Angebote',titleX,78);
             rl();
           };li.onerror=function(){rl();};li.src=mgLogoEl.src;
         });
-
-        // Date right
-        ctx.fillStyle=theme.dateColor;ctx.font='700 18px Arial, sans-serif';ctx.textAlign='right';
-        ctx.fillText('Gültig:',W-42,52);
-        ctx.font='900 24px Arial Black, Arial, sans-serif';
-        ctx.fillText(von+' \u2013 '+bis,W-42,82);
-        ctx.textAlign='left';
 
         // ── Main product card ──
         var cardMX=40, cardMY=170, cardMW=W-80, cardMH=H-170-80;
@@ -4262,6 +4288,25 @@ document.head.appendChild(msalScript);
         });
         return;
       }
+      // ── Header: ANGEBOT + Datum + Logo (default templates only) ──
+      ctx.textAlign='left';
+      ctx.fillStyle=theme.titleColor;ctx.font=theme.titleFont;
+      ctx.fillText('ANGEBOT',40,theme.titleY);
+      ctx.fillStyle=theme.dateColor;ctx.font=theme.dateFont;
+      ctx.fillText(von+' \u2013 '+bis,44,104);
+      // Logo oben rechts (capped width to avoid overlap with title)
+      var logoImg=new Image();
+      logoLoaded=new Promise(function(resLogo){
+        logoImg.onload=function(){
+          var lh=90,lw=lh*(logoImg.width/logoImg.height);
+          var maxLw=W*0.35;
+          if(lw>maxLw){lh=lh*(maxLw/lw);lw=maxLw;}
+          ctx.drawImage(logoImg,W-lw-30,14,lw,lh);resLogo();
+        };
+        logoImg.onerror=function(){resLogo();};
+        var hdrLogo=document.querySelector('#cms-app img[src^="data:image"]');
+        logoImg.src=hdrLogo?hdrLogo.src:'/Logo-sm-64.png';
+      });
       // ── Weisse Karte (grosser Bereich für Produkt) ──
       var cardX=30,cardY=130,cardW=W-60,cardH=H-130-60;
       ctx.save();
@@ -4653,31 +4698,43 @@ document.head.appendChild(msalScript);
       // Thin accent line
       ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
 
-      // Logo + store name left
+      // Date right (draw first so we know its width)
+      var vonTxt=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+      var bisTxt=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+      ctx.fillStyle=theme.dateColor;ctx.font='900 24px Arial Black, Arial, sans-serif';
+      var mgDateStr=vonTxt+' \u2013 '+bisTxt;
+      var mgDateW=ctx.measureText(mgDateStr).width;
+      var mgDateRight=W-30;
+      ctx.textAlign='right';
+      ctx.fillText(mgDateStr,mgDateRight,82);
+      ctx.font='700 18px Arial, sans-serif';
+      ctx.fillText('G\u00fcltig:',mgDateRight,52);
+      ctx.textAlign='left';
+      var mgDateLeftEdge=mgDateRight-Math.max(mgDateW,ctx.measureText('G\u00fcltig:').width)-16;
+
+      // Logo + store name left (capped to not overlap date)
       var logoEl=document.querySelector('#cms-app img[src^="data:image"]');
       var logoP=new Promise(function(rl){
         if(!logoEl){rl();return;}
         var li=new Image();li.onload=function(){
           var lh=80,lw=lh*(li.width/li.height);
+          var maxLogoW=180;
+          if(lw>maxLogoW){lh=lh*(maxLogoW/lw);lw=maxLogoW;}
           ctx.drawImage(li,28,30,lw,lh);
-          // 'Angebote' dominant next to logo
+          // 'Angebote' dominant next to logo, capped before date
+          var titleX=28+lw+16;
           ctx.fillStyle=theme.titleColor;ctx.textAlign='left';
-          ctx.font='900 44px Arial Black, Arial, sans-serif';
-          ctx.fillText('Angebote',28+lw+16,78);
+          var fontSize=44;
+          ctx.font='900 '+fontSize+'px Arial Black, Arial, sans-serif';
+          while(fontSize>24&&titleX+ctx.measureText('Angebote').width>mgDateLeftEdge){
+            fontSize-=2;ctx.font='900 '+fontSize+'px Arial Black, Arial, sans-serif';
+          }
+          ctx.fillText('Angebote',titleX,78);
           rl();
         };
         li.onerror=function(){rl();};
         li.src=logoEl.src;
       });
-
-      // Date right
-      var vonTxt=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      var bisTxt=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      ctx.fillStyle=theme.dateColor;ctx.font='700 18px Arial, sans-serif';ctx.textAlign='right';
-      ctx.fillText('Gültig:',W-30,52);
-      ctx.font='900 24px Arial Black, Arial, sans-serif';
-      ctx.fillText(vonTxt+' – '+bisTxt,W-30,82);
-      ctx.textAlign='left';
 
       // ── Prepare items (sort by savings, max 6) ──
       var renderPairs=(items||[]).map(function(it,idx){
@@ -4817,11 +4874,13 @@ document.head.appendChild(msalScript);
     var bis=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
     ctx.fillStyle=theme.dateColor;ctx.font=theme.dateFont;
     ctx.fillText(von+' \u2013 '+bis,34,100);
-    // ── Logo oben rechts ──
+    // ── Logo oben rechts (capped width to avoid overlap with title) ──
     var logoImg=new Image();
     var logoLoaded=new Promise(function(res){
       logoImg.onload=function(){
         var lh=90,lw=lh*(logoImg.width/logoImg.height);
+        var maxLw=W*0.35;
+        if(lw>maxLw){lh=lh*(maxLw/lw);lw=maxLw;}
         ctx.drawImage(logoImg,W-lw-30,14,lw,lh);res();
       };
       logoImg.onerror=function(){res();};
