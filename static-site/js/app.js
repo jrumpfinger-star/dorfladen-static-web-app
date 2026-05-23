@@ -258,28 +258,21 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       var week1=new Date(tmp.getFullYear(),0,4);
       week1.setDate(week1.getDate()+3-(week1.getDay()+6)%7);
       var curKw=1+Math.round((tmp-week1)/604800000);
-      // Collect available KWs
-      var kws={};
-      items.forEach(function(g){if(g.kalenderwoche)kws[g.kalenderwoche]=true;});
-      // Pick best KW: prefer current week, then closest future, then highest available
-      var bestKw=0;
-      if(kws[curKw]){bestKw=curKw;}
-      else{
-        var sorted=Object.keys(kws).map(Number).sort(function(a,b){return a-b;});
-        for(var i=0;i<sorted.length;i++){if(sorted[i]>=curKw){bestKw=sorted[i];break;}}
-        if(!bestKw&&sorted.length)bestKw=sorted[sorted.length-1];
-      }
-      // Filter to best KW
-      var meals=bestKw>0?items.filter(function(g){return g.kalenderwoche===bestKw;}):items;
+      // Filter strictly to target KW (no fallback to older weeks)
+      var meals=items.filter(function(g){return g.kalenderwoche===curKw;});
       // Subtitle with date range
       var sub=document.getElementById('wp-subtitle');
       if(meals.length>0){
         var first=new Date(meals[0].datum);
         var last=new Date(meals[meals.length-1].datum);
-        var kwText=bestKw?'KW '+bestKw+' \u00B7 ':'';
+        var kwText='KW '+curKw+' \u00B7 ';
         var y1=String(first.getFullYear()).slice(-2);
         var y2=String(last.getFullYear()).slice(-2);
         sub.textContent=kwText+pad(first.getDate())+'.'+pad(first.getMonth()+1)+'.'+y1+' \u2013 '+pad(last.getDate())+'.'+pad(last.getMonth()+1)+'.'+y2;
+      }else{
+        sub.textContent='KW '+curKw+' \u2013 noch keine Eintr\u00E4ge';
+        document.getElementById('wp-body').innerHTML='<div style="padding:20px;text-align:center;color:#888;font-style:italic">F\u00fcr KW '+curKw+' ist noch kein Wochenplan eingetragen.</div>';
+        return;
       }
       // Group by day
       var byDay={};var dayOrder=[];

@@ -2178,7 +2178,9 @@ document.head.appendChild(msalScript);
 
   // --- Tabs ---
   var angebote = [];
-  window.cmsTab = function(name){
+  var _cmsCurrentTab='wp';
+  window.cmsTab = function(name, skipHistory){
+    _cmsCurrentTab=name;
     ['wp','hours','ang','hp','news','sort','gallery','push','cfg'].forEach(function(t){
       document.getElementById('cms-panel-'+t).style.display = t===name?'':'none';
       document.getElementById('cms-tab-'+t).className = 'cms-tab'+(t===name?' active':'');
@@ -2190,7 +2192,25 @@ document.head.appendChild(msalScript);
     if(name==='sort' && !_sortLoaded) loadSortiment();
     if(name==='gallery' && !_galLoaded) loadGalleryAdmin();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
+    if(!skipHistory) history.pushState({cmsTab:name},'','');
   };
+
+  // PWA back button support for CMS tabs
+  (function(){
+    var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+    history.replaceState({cmsTab:'wp'},'','');
+    window.addEventListener('popstate',function(e){
+      if(e.state&&e.state.cmsTab){
+        cmsTab(e.state.cmsTab,true);
+        return;
+      }
+      // Standalone: prevent app from closing, go back to first tab
+      if(isStandalone){
+        cmsTab('wp',true);
+        history.pushState({cmsTab:'wp'},'','');
+      }
+    });
+  })();
 
   // ── Design Sub-Tabs ──
   window.cmsCfgSubTab = function(id){

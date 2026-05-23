@@ -91,8 +91,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if "$orderby" not in params:
                 params["$orderby"] = "dl_datum asc"
             if "$filter" not in params:
-                # Default: only active items for current calendar week
+                # Default: only active items for current/next calendar week
+                # Ab Samstag: nächste Woche anzeigen
+                from datetime import timedelta
                 now = datetime.utcnow()
+                if now.weekday() >= 5:  # 5=Saturday, 6=Sunday
+                    now = now + timedelta(days=(7 - now.weekday()))  # shift to next Monday
                 kw = now.isocalendar()[1]
                 jahr = now.isocalendar()[0]
                 params["$filter"] = f"dl_status eq 101001 and dl_kalenderwoche eq {kw} and dl_jahr eq {jahr}"
