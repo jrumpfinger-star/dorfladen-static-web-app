@@ -439,7 +439,6 @@
     var closeBtn=document.getElementById('mob-pl-barcode-close');
     var resultDiv=document.getElementById('mob-pl-barcode-result');
     if(!scanBtn||!scannerDiv)return;
-    var scanner=null;
 
     function findByBarcode(code){
       code=code.trim();
@@ -467,8 +466,13 @@
       resultDiv.innerHTML=h;resultDiv.style.display='block';
     }
 
+    var _scanActive=false;
     function stopScanner(){
-      if(scanner){scanner.stop().then(function(){scanner.clear();}).catch(function(){});scanner=null;}
+      if(_scanActive){
+        Quagga.stop();
+        _scanActive=false;
+      }
+      readerDiv.innerHTML='';
       scannerDiv.style.display='none';
     }
 
@@ -490,21 +494,33 @@
     }
 
     scanBtn.addEventListener('click',function(){
-      if(typeof Html5Qrcode==='undefined'){alert('Barcode-Scanner Library nicht geladen.');return;}
+      if(typeof Quagga==='undefined'){alert('Barcode-Scanner Library nicht geladen.');return;}
       resultDiv.style.display='none';resultDiv.innerHTML='';
       scannerDiv.style.display='block';
-      scanner=new Html5Qrcode('mob-pl-barcode-reader');
-      scanner.start(
-        {facingMode:'environment'},
-        {fps:10,qrbox:{width:280,height:150},formatsToSupport:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
-        function(decodedText){
-          stopScanner();
-          onBarcodeScanned(decodedText);
-        },
-        function(){}
-      ).catch(function(err){
+      Quagga.init({
+        inputStream:{name:'Live',type:'LiveStream',target:readerDiv,
+          constraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}},
+        locator:{patchSize:'medium',halfSample:true},
+        decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader']},
+        locate:true,
+        frequency:15
+      },function(err){
+        if(err){stopScanner();alert('Kamera konnte nicht ge\u00f6ffnet werden.\n'+err);return;}
+        Quagga.start();
+        _scanActive=true;
+      });
+      Quagga.offDetected();
+      Quagga.onDetected(function(result){
+        if(!result||!result.codeResult||!result.codeResult.code)return;
+        // Confidence check: reject low-quality reads
+        var errs=result.codeResult.decodedCodes;
+        if(errs&&errs.length){
+          var sumErr=0,cnt=0;
+          errs.forEach(function(d){if(typeof d.error==='number'){sumErr+=d.error;cnt++;}});
+          if(cnt>0&&(sumErr/cnt)>0.15)return; // avg error > 15% → skip
+        }
         stopScanner();
-        alert('Kamera konnte nicht ge\u00f6ffnet werden.\n'+err);
+        onBarcodeScanned(result.codeResult.code);
       });
     });
 
