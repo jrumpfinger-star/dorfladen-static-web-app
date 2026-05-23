@@ -1953,12 +1953,37 @@ document.head.appendChild(msalScript);
   if(typeof msal!=='undefined'){initMsal();}
   else{var _msalWait=setInterval(function(){if(typeof msal!=='undefined'){clearInterval(_msalWait);initMsal();}},200);setTimeout(function(){clearInterval(_msalWait);},10000);}
 
+  var _graphTokenPromise=null;
   function getGraphToken(){
     if(!msalApp)return Promise.reject('no msal');
+    // Serialize token requests to prevent "interaction_in_progress" errors
+    if(_graphTokenPromise) return _graphTokenPromise;
     var accounts=msalApp.getAllAccounts();
     var req={scopes:['Files.ReadWrite.All']};
-    if(accounts.length>0){req.account=accounts[0];return msalApp.acquireTokenSilent(req).catch(function(){return msalApp.acquireTokenPopup(req);});}
-    return msalApp.acquireTokenPopup(req);
+    var p;
+    if(accounts.length>0){
+      req.account=accounts[0];
+      p=msalApp.acquireTokenSilent(req).catch(function(e){
+        // If interaction already in progress, wait and retry silently
+        if(e&&e.errorCode==='interaction_in_progress'){
+          return new Promise(function(res){setTimeout(res,1500);}).then(function(){
+            return msalApp.acquireTokenSilent(req);
+          });
+        }
+        return msalApp.acquireTokenPopup(req).catch(function(e2){
+          if(e2&&e2.errorCode==='interaction_in_progress'){
+            return new Promise(function(res){setTimeout(res,1500);}).then(function(){
+              return msalApp.acquireTokenSilent(req);
+            });
+          }
+          throw e2;
+        });
+      });
+    }else{
+      p=msalApp.acquireTokenPopup(req);
+    }
+    _graphTokenPromise=p.then(function(tok){_graphTokenPromise=null;return tok;},function(err){_graphTokenPromise=null;throw err;});
+    return _graphTokenPromise;
   }
 
   function _searchFolderForImage(token, folderId, artnr){
@@ -5141,8 +5166,12 @@ document.head.appendChild(msalScript);
                 t.disabled=true;t.textContent='\u23F3';
                 uploadImageToSharePoint(scNr, compressedB64).then(function(){
                   toast('Bild als '+scNr+' in StrichcodeBilder hochgeladen!');
-                }).catch(function(e){toast('Upload-Fehler: '+e.message,'error');console.error(e);})
-                .then(function(){t.disabled=false;t.textContent='\u2B06\uFE0F';});
+                }).catch(function(e){
+                  var msg=e&&e.message||String(e);
+                  if(msg.indexOf('interaction_in_progress')!==-1) msg='Anmeldung läuft noch – bitte kurz warten und erneut versuchen';
+                  toast('Upload-Fehler: '+msg,'error');console.error(e);
+                })
+                .then(function(){t.disabled=false;t.textContent='\uD83D\uDCC1';});
               });
             };
             reader.readAsDataURL(f);
