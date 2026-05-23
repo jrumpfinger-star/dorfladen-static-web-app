@@ -1939,12 +1939,6 @@ document.head.appendChild(msalScript);
         var name=(f.name||'').toLowerCase().replace(/\.[^.]+$/,'');
         return name===fname;
       });
-      if(!found){
-        found=data.value.find(function(f){
-          var name=(f.name||'').toLowerCase();
-          return name.indexOf(fname)!==-1;
-        });
-      }
       if(!found || !found.id) return null;
       console.log('[CMS] Found image file:',found.name,'in folder',folderId);
       return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+found.id+'/content',{
@@ -1977,9 +1971,9 @@ document.head.appendChild(msalScript);
       var mainSearch=artnr?_searchFolderForImage(token, SP_FOLDER, artnr):Promise.resolve(null);
       return mainSearch.then(function(b64){
         if(b64) return b64;
-        // 2. Fallback: search in StrichcodeBilder folder by strichcode
+        // 2. Fallback: search in StrichcodeBilder folder by strichcode (min 5 chars)
         var barcodeSearch=strichcode||artnr;
-        if(!barcodeSearch) return null;
+        if(!barcodeSearch || barcodeSearch.length<5) return null;
         console.log('[CMS] Not found in main folder, trying StrichcodeBilder with',barcodeSearch,'...');
         return _searchFolderForImage(token, SP_BARCODE_FOLDER, barcodeSearch);
       });
