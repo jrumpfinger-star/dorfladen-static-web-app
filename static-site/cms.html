@@ -1944,44 +1944,73 @@ document.head.appendChild(msalScript);
   var SP_FOLDER='01USAQ6ERA5Q2V5M2I2BCKYOFVH2WWICOC';
   var SP_BARCODE_FOLDER='01USAQ6ESD7NCQ4ZM6GRHK5IRCMJMSRSVH';
   var msalApp=null;
+  var _msalReady=false;
+  var _isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   function initMsal(){
     if(msalApp) return;
     try{
       msalApp=new msal.PublicClientApplication({auth:{clientId:'64b027b2-aa1c-4d2a-824d-8ad4b2a4231d',authority:'https://login.microsoftonline.com/acfaedd4-c403-43b7-9544-fdb2b150124e',redirectUri:window.location.origin+'/cms/'},cache:{cacheLocation:'localStorage'}});
+      // Handle redirect returns (mobile auth flow)
+      msalApp.handleRedirectPromise().then(function(resp){
+        _msalReady=true;
+        if(resp)console.log('[MSAL] Redirect login success',resp.account.username);
+      }).catch(function(e){
+        _msalReady=true;
+        console.warn('[MSAL] handleRedirectPromise error',e);
+      });
     }catch(e){console.warn('MSAL init failed',e);}
   }
   if(typeof msal!=='undefined'){initMsal();}
   else{var _msalWait=setInterval(function(){if(typeof msal!=='undefined'){clearInterval(_msalWait);initMsal();}},200);setTimeout(function(){clearInterval(_msalWait);},10000);}
 
   var _graphTokenPromise=null;
+  function _waitMsalReady(){
+    if(_msalReady) return Promise.resolve();
+    return new Promise(function(res){
+      var tries=0;
+      var iv=setInterval(function(){
+        tries++;
+        if(_msalReady||tries>20){clearInterval(iv);res();}
+      },250);
+    });
+  }
   function getGraphToken(){
     if(!msalApp)return Promise.reject('no msal');
     // Serialize token requests to prevent "interaction_in_progress" errors
     if(_graphTokenPromise) return _graphTokenPromise;
-    var accounts=msalApp.getAllAccounts();
-    var req={scopes:['Files.ReadWrite.All']};
-    var p;
-    if(accounts.length>0){
-      req.account=accounts[0];
-      p=msalApp.acquireTokenSilent(req).catch(function(e){
-        // If interaction already in progress, wait and retry silently
-        if(e&&e.errorCode==='interaction_in_progress'){
-          return new Promise(function(res){setTimeout(res,1500);}).then(function(){
-            return msalApp.acquireTokenSilent(req);
-          });
-        }
-        return msalApp.acquireTokenPopup(req).catch(function(e2){
-          if(e2&&e2.errorCode==='interaction_in_progress'){
-            return new Promise(function(res){setTimeout(res,1500);}).then(function(){
+    var p=_waitMsalReady().then(function(){
+      var accounts=msalApp.getAllAccounts();
+      var req={scopes:['Files.ReadWrite.All']};
+      if(accounts.length>0){
+        req.account=accounts[0];
+        return msalApp.acquireTokenSilent(req).catch(function(e){
+          if(e&&e.errorCode==='interaction_in_progress'){
+            return new Promise(function(res){setTimeout(res,2000);}).then(function(){
               return msalApp.acquireTokenSilent(req);
             });
           }
-          throw e2;
+          // On mobile use redirect (popups are blocked), on desktop use popup
+          if(_isMobile){
+            msalApp.acquireTokenRedirect(req);
+            return new Promise(function(){}); // page will redirect
+          }
+          return msalApp.acquireTokenPopup(req).catch(function(e2){
+            if(e2&&e2.errorCode==='interaction_in_progress'){
+              return new Promise(function(res){setTimeout(res,2000);}).then(function(){
+                return msalApp.acquireTokenSilent(req);
+              });
+            }
+            throw e2;
+          });
         });
-      });
-    }else{
-      p=msalApp.acquireTokenPopup(req);
-    }
+      }else{
+        if(_isMobile){
+          msalApp.loginRedirect({scopes:['Files.ReadWrite.All']});
+          return new Promise(function(){}); // page will redirect
+        }
+        return msalApp.acquireTokenPopup(req);
+      }
+    });
     _graphTokenPromise=p.then(function(tok){_graphTokenPromise=null;return tok;},function(err){_graphTokenPromise=null;throw err;});
     return _graphTokenPromise;
   }
