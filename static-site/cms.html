@@ -770,6 +770,16 @@ document.head.appendChild(msalScript);
       </div>
     </div>
 
+    <div class="cms-card" style="margin-bottom:16px">
+      <div class="cms-card-header" style="background:#059669">&#128101; Subscriber <span id="push-sub-count" style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:10px;font-size:12px;margin-left:6px">-</span></div>
+      <div class="cms-card-body">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="cms-btn" onclick="pushLoadSubscribers()" style="background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;font-size:12px">&#128260; Aktualisieren</button>
+        </div>
+        <div id="push-sub-list" style="font-size:13px;color:#6b7280">Klicke &bdquo;Aktualisieren&ldquo; um Subscriber zu laden.</div>
+      </div>
+    </div>
+
     <div class="cms-card">
       <div class="cms-card-header" style="background:#374151">&#128202; Info</div>
       <div class="cms-card-body">
@@ -5582,6 +5592,39 @@ document.head.appendChild(msalScript);
       throw new Error(res.error||'Bild-Upload fehlgeschlagen');
     });
   }
+  window.pushLoadSubscribers = function(){
+    var list=document.getElementById('push-sub-list');
+    var count=document.getElementById('push-sub-count');
+    list.textContent='Lade...';
+    fetch(API+'/push-send').then(function(r){return r.json();}).then(function(res){
+      count.textContent=res.total||0;
+      if(!res.subscribers||res.subscribers.length===0){list.innerHTML='<em>Keine Subscriber vorhanden.</em>';return;}
+      var html='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;border-bottom:2px solid #e5e7eb">'
+        +'<th style="padding:4px 6px">#</th><th style="padding:4px 6px">Domain</th><th style="padding:4px 6px">Kategorien</th><th style="padding:4px 6px">Keys</th><th style="padding:4px 6px"></th></tr></thead><tbody>';
+      res.subscribers.forEach(function(s,i){
+        var keyOk=s.has_p256dh&&s.has_auth;
+        html+='<tr style="border-bottom:1px solid #f3f4f6">'
+          +'<td style="padding:4px 6px">'+(i+1)+'</td>'
+          +'<td style="padding:4px 6px;word-break:break-all">'+((s.endpoint_domain||'?').replace(/</g,'&lt;'))+'</td>'
+          +'<td style="padding:4px 6px">'+(s.categories||[]).join(', ')+'</td>'
+          +'<td style="padding:4px 6px;color:'+(keyOk?'#16a34a':'#dc2626')+'">'+(keyOk?'&#10003;':'&#10007;')+'</td>'
+          +'<td style="padding:4px 6px"><button onclick="pushDeleteSub(\''+s.record_id+'\')" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">&#128465;</button></td>'
+          +'</tr>';
+      });
+      html+='</tbody></table>';
+      list.innerHTML=html;
+    }).catch(function(e){list.textContent='Fehler: '+e.message;});
+  };
+  window.pushDeleteSub = function(recordId){
+    if(!confirm('Subscriber wirklich l\u00f6schen?'))return;
+    fetch(API+'/push-send',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_id:recordId})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){toast('Subscriber gel\u00f6scht','ok');pushLoadSubscribers();}
+        else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
+      }).catch(function(e){toast('Fehler: '+e.message,'error');});
+  };
+
   window.pushSendNow = function(){
     var title=document.getElementById('push-title').value.trim();
     var message=document.getElementById('push-message').value.trim();

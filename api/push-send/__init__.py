@@ -134,6 +134,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 has_p256dh = bool(keys.get("p256dh", ""))
                 has_auth = bool(keys.get("auth", ""))
                 info.append({
+                    "record_id": s.get("record_id", ""),
                     "endpoint_short": ep[-60:] if len(ep) > 60 else ep,
                     "endpoint_domain": ep.split("/")[2] if ep.count("/") >= 2 else "",
                     "has_p256dh": has_p256dh,
@@ -176,6 +177,30 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except Exception as ex:
             return func.HttpResponse(
                 json.dumps({"error": str(ex)}),
+                status_code=500, mimetype="application/json", headers=get_cors_headers()
+            )
+
+    # DELETE – remove a subscription by record_id
+    if req.method == "DELETE":
+        try:
+            body_del = req.get_json()
+            record_id = body_del.get("record_id", "")
+            if not record_id:
+                return func.HttpResponse(
+                    json.dumps({"success": False, "error": "record_id required"}),
+                    status_code=400, mimetype="application/json", headers=get_cors_headers()
+                )
+            base_url = os.environ.get(DEFAULT_URL_SETTING, "").strip() or DEFAULT_URL_FALLBACK
+            hdrs = get_headers(DEFAULT_URL_SETTING)
+            entity_set = _resolve_entity_set(base_url, hdrs)
+            _delete_subscription(base_url, hdrs, entity_set, record_id)
+            return func.HttpResponse(
+                json.dumps({"success": True}),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+        except Exception as ex:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": str(ex)}),
                 status_code=500, mimetype="application/json", headers=get_cors_headers()
             )
 
