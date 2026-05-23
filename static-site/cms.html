@@ -5000,9 +5000,7 @@ document.head.appendChild(msalScript);
           var bildInp=row.querySelector('[data-f="bild_data"]');
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
           var prodInp=row.querySelector('[data-f="produkt"]');
-          var b64=(bildInp&&bildInp.value||'').trim();
-          if(!b64){toast('Bitte zuerst ein Bild laden','warn');return;}
-          // Resolve strichcode: prefer cached barcode, fallback to artikelnummer
+          // Resolve strichcode first
           var artnr=(nrInp&&nrInp.value||'').trim();
           var scNr='';
           if(artnr){
@@ -5016,12 +5014,36 @@ document.head.appendChild(msalScript);
             if(!scNr && match && match.nr) scNr=match.nr;
           }
           if(!scNr) scNr=artnr;
-          if(!scNr){toast('Bitte Artikelnummer eingeben f\u00fcr den Dateinamen','warn');return;}
-          t.disabled=true;t.textContent='\u23F3';
-          uploadImageToSharePoint(scNr, b64).then(function(){
-            toast('Bild als '+scNr+' in StrichcodeBilder hochgeladen!');
-          }).catch(function(e){toast('Upload-Fehler: '+e.message,'error');console.error(e);})
-          .then(function(){t.disabled=false;t.textContent='\u2B06\uFE0F';});
+          if(!scNr){toast('Bitte zuerst einen Artikel ausw\u00e4hlen','warn');return;}
+          var b64=(bildInp&&bildInp.value||'').trim();
+          function doUpload(data){
+            t.disabled=true;t.textContent='\u23F3';
+            uploadImageToSharePoint(scNr, data).then(function(){
+              toast('Bild als '+scNr+' in StrichcodeBilder hochgeladen!');
+            }).catch(function(e){toast('Upload-Fehler: '+e.message,'error');console.error(e);})
+            .then(function(){t.disabled=false;t.textContent='\u2B06\uFE0F';});
+          }
+          if(b64){
+            doUpload(b64);
+          } else {
+            // No image loaded yet – open file picker, load+compress, set preview, then upload
+            var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+            inp.onchange=function(){
+              var f=inp.files[0];if(!f)return;
+              var reader=new FileReader();
+              reader.onload=function(){
+                cmsCompressImage(reader.result, 500, 500, function(compressedB64){
+                  if(bildInp) bildInp.value=compressedB64;
+                  var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=compressedB64;pv.style.display='';}
+                  var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
+                  t.style.color='#6b7280';
+                  doUpload(compressedB64);
+                });
+              };
+              reader.readAsDataURL(f);
+            };
+            inp.click();
+          }
         })();
         break;
       case 'saveCfg':cmsSaveCfg();break;
