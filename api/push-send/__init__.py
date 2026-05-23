@@ -344,9 +344,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
                 removed += 1
             elif status == 410:
-                # 410 Gone – subscription expired at push service, remove dead endpoint
-                _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
-                removed += 1
+                # 410 Gone – do NOT delete; Firefox recycles dead endpoints
+                # and would lose the subscription permanently
+                failed += 1
             else:
                 failed += 1
         except Exception as ex:

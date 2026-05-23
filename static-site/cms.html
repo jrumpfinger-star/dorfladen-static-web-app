@@ -5659,7 +5659,7 @@ document.head.appendChild(msalScript);
         if(res.errors&&res.errors.length)info+='\n'+res.errors.join('\n');
         status.textContent='\u2705 '+info;
         status.style.color=res.failed?'#d97706':'#16a34a';
-        toast(res.sent>0?'Push gesendet! ('+res.sent+' Empf\u00e4nger)':(res.total==0?'Keine Abonnenten vorhanden':'Fehler beim Senden ('+res.failed+' fehlgeschlagen)'),res.sent>0?'ok':(res.total==0?'warn':'error'));
+        var toastMsg=res.sent>0?'Push gesendet! ('+res.sent+' Empf\u00e4nger)':(res.total==0?'Keine Abonnenten vorhanden':(res.sent==0&&res.failed>0?'Push konnte nicht zugestellt werden (Firefox-Push evtl. abgelaufen). Bitte Abo erneuern.':'Fehler beim Senden ('+res.failed+' fehlgeschlagen)'));toast(toastMsg,res.sent>0?'ok':'warn');
       }else{
         status.textContent='\u274c '+res.error;
         status.style.color='#dc2626';
