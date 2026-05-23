@@ -1361,6 +1361,7 @@ document.head.appendChild(msalScript);
               b: item.bezeichnung,
               bt: item.bezeichnung,
               nr: item.artikelnummer || '',
+              sc: item.strichcode || '',
               p: item.vk || 0,
               details: '',
               preis: item.vk || 0,
@@ -1635,8 +1636,8 @@ document.head.appendChild(msalScript);
     dd.innerHTML='';
     if(val.length<1){dd.classList.remove('open');return;}
     var matches=_artikelCache.filter(function(a){
-      var name=(a.b||a.produktVal||'').toLowerCase(),nr=(a.nr||'').toLowerCase();
-      return name.indexOf(val)>=0 || nr.indexOf(val)>=0;
+      var name=(a.b||a.produktVal||'').toLowerCase(),nr=(a.nr||'').toLowerCase(),sc=(a.sc||'').toLowerCase();
+      return name.indexOf(val)>=0 || nr.indexOf(val)>=0 || sc.indexOf(val)>=0;
     }).slice(0,12);
     if(matches.length===0){dd.classList.remove('open');console.log('[CMS] No matches for:',val);return;}
     console.log('[CMS] Search matches for',val,': found',matches.length);
@@ -1645,6 +1646,7 @@ document.head.appendChild(msalScript);
       opt.className='cms-art-opt';
       var metaParts=[];
       if(m.nr) metaParts.push('Nr: '+m.nr);
+      if(m.sc) metaParts.push('SC: '+m.sc);
       if(m.preis) metaParts.push('VK: '+Number(m.preis).toFixed(2).replace('.',',')+' €');
       if(m.statt_preis) metaParts.push('Aktion: '+Number(m.statt_preis).toFixed(2).replace('.',',')+' €');
       opt.innerHTML='<div class="cms-art-opt-name">'+esc(m.b||m.produktVal||'')+'</div><div class="cms-art-opt-meta">'+esc(metaParts.join(' · '))+'</div>';
@@ -1961,13 +1963,18 @@ document.head.appendChild(msalScript);
   function loadImageFromSharePoint(artnr){
     if(!artnr || !msalApp) return Promise.resolve(null);
     console.log('[CMS] Fetching image for article:',artnr);
+    // Look up strichcode from artikel cache for barcode folder search
+    var strichcode='';
+    var cached=_artikelCache.find(function(a){return a.nr===artnr;});
+    if(cached && cached.sc) strichcode=cached.sc;
     return getGraphToken().then(function(token){
-      // 1. Search in main product images folder
+      // 1. Search in main product images folder by artikelnummer
       return _searchFolderForImage(token, SP_FOLDER, artnr).then(function(b64){
         if(b64) return b64;
-        // 2. Fallback: search in StrichcodeBilder folder
-        console.log('[CMS] Not found in main folder, trying StrichcodeBilder...');
-        return _searchFolderForImage(token, SP_BARCODE_FOLDER, artnr);
+        // 2. Fallback: search in StrichcodeBilder folder by strichcode
+        var barcodeSearch=strichcode||artnr;
+        console.log('[CMS] Not found in main folder, trying StrichcodeBilder with',barcodeSearch,'...');
+        return _searchFolderForImage(token, SP_BARCODE_FOLDER, barcodeSearch);
       });
     }).catch(function(e){
       console.error('[CMS] SharePoint image load error for '+artnr,e);
@@ -4978,16 +4985,24 @@ document.head.appendChild(msalScript);
           var prodInp=row.querySelector('[data-f="produkt"]');
           var b64=(bildInp&&bildInp.value||'').trim();
           if(!b64){toast('Bitte zuerst ein Bild laden','warn');return;}
+          // Resolve strichcode: prefer cached barcode, fallback to artikelnummer
           var artnr=(nrInp&&nrInp.value||'').trim();
-          if(!artnr && prodInp){
+          var scNr='';
+          if(artnr){
+            var cached=_artikelCache.find(function(a){return a.nr===artnr;});
+            if(cached && cached.sc) scNr=cached.sc;
+          }
+          if(!scNr && prodInp){
             var prod=prodInp.value.trim().toLowerCase();
             var match=_artikelCache.find(function(a){return (a.b||a.produktVal||'').toLowerCase()===prod;});
-            if(match) artnr=match.nr||'';
+            if(match && match.sc) scNr=match.sc;
+            if(!scNr && match && match.nr) scNr=match.nr;
           }
-          if(!artnr){toast('Bitte Artikelnummer eingeben f\u00fcr den Dateinamen','warn');return;}
+          if(!scNr) scNr=artnr;
+          if(!scNr){toast('Bitte Artikelnummer eingeben f\u00fcr den Dateinamen','warn');return;}
           t.disabled=true;t.textContent='\u23F3';
-          uploadImageToSharePoint(artnr, b64).then(function(){
-            toast('Bild als '+artnr+' in StrichcodeBilder hochgeladen!');
+          uploadImageToSharePoint(scNr, b64).then(function(){
+            toast('Bild als '+scNr+' in StrichcodeBilder hochgeladen!');
           }).catch(function(e){toast('Upload-Fehler: '+e.message,'error');console.error(e);})
           .then(function(){t.disabled=false;t.textContent='\u2B06\uFE0F';});
         })();
