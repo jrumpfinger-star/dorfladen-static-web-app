@@ -195,13 +195,12 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
   function updatePushUI(subscribed){
     [pushBtn,pushBtnDt].forEach(function(btn){
       if(!btn)return;
-      if(subscribed){
-        btn.textContent='\uD83D\uDD14 Benachrichtigungen aktiv';
-        btn.setAttribute('data-subscribed','1');
-      }else{
-        btn.textContent='\uD83D\uDD14 Benachrichtigungen aktivieren';
-        btn.removeAttribute('data-subscribed');
-      }
+      var label=subscribed?'\uD83D\uDD14 Benachrichtigungen aktiv':'\uD83D\uDD14 Benachrichtigungen aktivieren';
+      // For desktop: the <li> contains an <a> – update the <a> text, not the <li>
+      var a=btn.querySelector('a');
+      if(a){a.textContent=label;}else{btn.textContent=label;}
+      if(subscribed){btn.setAttribute('data-subscribed','1');}
+      else{btn.removeAttribute('data-subscribed');}
     });
   }
 
