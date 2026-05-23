@@ -231,6 +231,36 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         action = "created"
 
     if r.status_code in (200, 201, 204):
+        # If validate=true, test if endpoint is actually alive
+        validate = body.get("validate", False)
+        if validate:
+            try:
+                from pywebpush import webpush, WebPushException
+                from urllib.parse import urlparse
+                vapid_priv = os.environ.get("VAPID_PRIVATE_KEY", "")
+                vapid_contact_val = os.environ.get("VAPID_CONTACT", "mailto:info@dorfladen-oberornau.de")
+                if vapid_priv:
+                    parsed = urlparse(endpoint)
+                    aud = f"{parsed.scheme}://{parsed.netloc}"
+                    webpush(
+                        subscription_info=subscription,
+                        data=json.dumps({"title": "Dorfladen Oberornau", "body": "Push aktiviert! \u2705", "url": "/"}),
+                        vapid_private_key=vapid_priv,
+                        vapid_claims={"sub": vapid_contact_val, "aud": aud}
+                    )
+            except Exception as ve:
+                resp_obj = getattr(ve, "response", None)
+                st = resp_obj.status_code if resp_obj else 0
+                if st in (404, 410):
+                    # Endpoint dead – delete from Dataverse, tell frontend
+                    filt = f"{base_url}/api/data/v9.2/{entity_set}?$filter=dl_schluessel eq '{sub_key}'&$select=dl_seiteninhaltid"
+                    dr = requests.get(filt, headers=hdrs, timeout=30)
+                    for di in (dr.json() or {}).get("value", []):
+                        requests.delete(f"{base_url}/api/data/v9.2/{entity_set}({di['dl_seiteninhaltid']})", headers=hdrs, timeout=30)
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "endpoint_invalid": True, "error": f"Push endpoint dead ({st})"}),
+                        status_code=200, mimetype="application/json", headers=get_cors_headers()
+                    )
         return func.HttpResponse(
             json.dumps({"success": True, "action": action, "categories": categories}),
             status_code=200, mimetype="application/json", headers=get_cors_headers()

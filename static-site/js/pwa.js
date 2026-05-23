@@ -446,6 +446,29 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     });
   }
 
+  // Force a completely new push subscription by unregistering the service worker
+  function nukeAndResubscribe(){
+    showToast('Push wird erneuert...','info',3000);
+    return navigator.serviceWorker.getRegistration().then(function(reg){
+      // Kill old subscription
+      return (reg?reg.pushManager.getSubscription():Promise.resolve(null)).then(function(sub){
+        return sub?sub.unsubscribe():true;
+      }).then(function(){
+        // Unregister service worker to force Firefox to drop cached endpoint
+        return reg?reg.unregister():true;
+      });
+    }).then(function(){
+      // Re-register service worker
+      return navigator.serviceWorker.register('/sw.js');
+    }).then(function(){
+      return navigator.serviceWorker.ready;
+    }).then(function(newReg){
+      return freshSubscribe(newReg);
+    }).then(function(newSub){
+      showPushSettings(newSub.endpoint,true);
+    });
+  }
+
   window.pushToggle=function(){
     // Close mobile nav if open
     var mn=document.getElementById('mob-nav');
@@ -463,8 +486,17 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
                 // Already registered – show settings
                 showPushSettings(sub.endpoint,false);
               }else{
-                // Not in Dataverse – register existing, then show settings dialog immediately
-                return registerExisting(sub).then(function(){
+                // Not in Dataverse – register existing and validate via test push
+                return fetch('/api/push-subscribe',{
+                  method:'POST',
+                  headers:{'Content-Type':'application/json'},
+                  body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news'],validate:true})
+                }).then(function(r){return r.json();}).then(function(res2){
+                  if(res2.endpoint_invalid){
+                    // Dead endpoint – nuke service worker and get fresh one
+                    return nukeAndResubscribe();
+                  }
+                  updatePushUI(true);
                   showPushSettings(sub.endpoint,true);
                 });
               }
