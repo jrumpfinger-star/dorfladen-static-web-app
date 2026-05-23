@@ -98,8 +98,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         items = (r.json() or {}).get("value", []) if r.status_code == 200 else []
         if not items:
             return func.HttpResponse(
-                json.dumps({"success": True, "categories": ALL_CATEGORIES[:]}),
-                status_code=200, mimetype="application/json", headers=get_cors_headers()
+                json.dumps({"success": False, "error": "Subscription not found"}),
+                status_code=404, mimetype="application/json", headers=get_cors_headers()
             )
         try:
             data = json.loads(items[0].get("dl_wert", "{}"))

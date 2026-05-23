@@ -369,6 +369,27 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     });
   }
 
+  function freshSubscribe(reg,cats){
+    return fetch('/api/push-vapid-key').then(function(r){return r.json()}).then(function(data){
+      if(!data.publicKey){throw new Error('Push-Konfiguration fehlt');}
+      return reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:urlBase64ToUint8Array(data.publicKey)
+      });
+    }).then(function(newSub){
+      if(!newSub)throw new Error('Subscription fehlgeschlagen');
+      return fetch('/api/push-subscribe',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({subscription:newSub.toJSON(),categories:cats||['mittagstisch','angebote','news']})
+      }).then(function(r){return r.json();}).then(function(res){
+        if(!res.success)throw new Error(res.error||'Server-Fehler');
+        updatePushUI(true);
+        return newSub;
+      });
+    });
+  }
+
   window.pushToggle=function(){
     // Close mobile nav if open
     var mn=document.getElementById('mob-nav');
@@ -378,29 +399,29 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.getSubscription().then(function(sub){
         if(sub){
-          showPushSettings(sub.endpoint);
-          return;
+          // Check if subscription exists in Dataverse
+          return fetch('/api/push-subscribe?endpoint='+encodeURIComponent(sub.endpoint))
+            .then(function(r){return r.json();})
+            .then(function(res){
+              if(res.success){
+                // Subscription valid in backend – show settings
+                showPushSettings(sub.endpoint);
+              }else{
+                // Subscription NOT in Dataverse – re-register it silently then show settings
+                return fetch('/api/push-subscribe',{
+                  method:'POST',
+                  headers:{'Content-Type':'application/json'},
+                  body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news']})
+                }).then(function(r2){return r2.json();}).then(function(res2){
+                  updatePushUI(true);
+                  showPushSettings(sub.endpoint);
+                });
+              }
+            });
         }
-        return fetch('/api/push-vapid-key').then(function(r){return r.json()}).then(function(data){
-          if(!data.publicKey){alert('Push-Konfiguration fehlt.');return;}
-          return reg.pushManager.subscribe({
-            userVisibleOnly:true,
-            applicationServerKey:urlBase64ToUint8Array(data.publicKey)
-          });
-        }).then(function(newSub){
-          if(!newSub)return;
-          return fetch('/api/push-subscribe',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({subscription:newSub.toJSON(),categories:['mittagstisch','angebote','news']})
-          }).then(function(r){return r.json();}).then(function(res){
-            if(res.success){
-              updatePushUI(true);
-              alert('Benachrichtigungen aktiviert!');
-            }else{
-              alert('Fehler beim Speichern: '+(res.error||'Unbekannt'));
-            }
-          });
+        // No subscription – create new
+        return freshSubscribe(reg).then(function(){
+          alert('Benachrichtigungen aktiviert!');
         });
       });
     }).catch(function(err){
@@ -408,10 +429,10 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       if(Notification.permission==='denied'){
         alert('Benachrichtigungen sind im Browser blockiert.\nBitte in den Browser-Einstellungen erlauben.');
       }else if(msg.toLowerCase().indexOf('unreachable')!==-1||msg.toLowerCase().indexOf('network')!==-1){
-        alert('Der Push-Dienst ist gerade nicht erreichbar.\n\nBitte versuche es erneut:\n1. Stelle sicher, dass du eine stabile Internetverbindung hast\n2. Falls du im Firmen-WLAN bist, versuche es mit mobilen Daten\n3. Lade die Seite neu und versuche es nochmal');
+        alert('Push-Dienst nicht erreichbar.\n\nBitte mit mobilen Daten (WLAN aus) versuchen.');
       }else{
         console.error('Push toggle error',err);
-        alert('Fehler bei Push-Aktivierung:\n'+msg+'\n\nBitte Seite neu laden und nochmal versuchen.');
+        alert('Fehler: '+msg);
       }
     });
   };
