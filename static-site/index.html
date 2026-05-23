@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dorfladen Oberornau – Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
-  <meta name="description" content="Dorfladen Oberornau – regionale Nahversorgung, gemütlicher Treffpunkt, Postfiliale. Frühstück, Mittagessen, Brotzeit und mehr.">
+  <title>Dorfladen Oberornau ï¿½ Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
+  <meta name="description" content="Dorfladen Oberornau ï¿½ regionale Nahversorgung, gemï¿½tlicher Treffpunkt, Postfiliale. Frï¿½hstï¿½ck, Mittagessen, Brotzeit und mehr.">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/mobile.css">
   <link rel="manifest" href="/manifest.json">
@@ -94,7 +94,7 @@
   <div class="mob-action highlight" onclick="mobOpenPopup('roterpunkt')">
     <span class="mob-action-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></span>
     <span class="mob-action-label" style="color: var(--m-red);">Roter Punkt</span>
-    <span class="mob-action-sub">Dauerhaft günstig</span>
+    <span class="mob-action-sub">Dauerhaft gï¿½nstig</span>
   </div>
 </div>
 
@@ -105,9 +105,15 @@
     <div class="mob-popup-handle"></div>
     <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Preisliste</h2><button class="mob-popup-x" onclick="mobClosePopup('preisliste')">&times;</button></div>
     <div style="position:relative;margin-bottom:10px">
-      <input type="text" id="mob-pl-search" placeholder="Artikel suchen..." style="width:100%;padding:10px 14px 10px 36px;border:1px solid #ddd;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box">
+      <input type="text" id="mob-pl-search" placeholder="Artikel suchen..." style="width:100%;padding:10px 14px 10px 36px;border:1px solid #ddd;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box;padding-right:44px">
       <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+      <button type="button" id="mob-pl-barcode-btn" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;color:#555;border-radius:6px" title="Barcode scannen">&#x1F4F7;</button>
     </div>
+    <div id="mob-pl-barcode-scanner" style="display:none;margin:0 0 12px;border-radius:10px;overflow:hidden;border:2px solid #5ea88a">
+      <div id="mob-pl-barcode-reader" style="width:100%;min-height:250px"></div>
+      <button type="button" id="mob-pl-barcode-close" style="display:block;width:100%;padding:10px;background:#f44336;color:#fff;border:none;font-size:.9rem;font-weight:600;cursor:pointer">&times; Scanner schlie&szlig;en</button>
+    </div>
+    <div id="mob-pl-barcode-result" style="display:none;margin:0 0 12px"></div>
     <div class="mob-pl-filters" id="mob-pl-filters">
       <button class="mob-pl-filter active" data-filter="all">Alle</button>
       <button class="mob-pl-filter" data-filter="rp"><svg width="14" height="14" viewBox="0 0 24 24" fill="#c62828" stroke="none"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</button>
@@ -117,20 +123,20 @@
   </div>
 </div>
 
-<!-- POPUP: Öffnungszeiten -->
+<!-- POPUP: ï¿½ffnungszeiten -->
 <div class="mob-only mob-popup-bg" id="mob-popup-hours" onclick="if(event.target===this)mobClosePopup('hours')">
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
-    <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Öffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('hours')">&times;</button></div>
+    <div class="mob-popup-top"><h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ï¿½ffnungszeiten</h2><button class="mob-popup-x" onclick="mobClosePopup('hours')">&times;</button></div>
     <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:var(--m-secondary);"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Dorfladen</h3>
     <table id="mob-hrs-laden"></table>
     <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;color:var(--m-secondary);"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Postfiliale</h3>
     <table id="mob-hrs-post"></table>
-    <p style="margin-top:12px;font-size:.8rem">Außer an gesetzlichen Feiertagen</p>
+    <p style="margin-top:12px;font-size:.8rem">Auï¿½er an gesetzlichen Feiertagen</p>
   </div>
 </div>
 
-<!-- POPUP: Post-Öffnungszeiten -->
+<!-- POPUP: Post-ï¿½ffnungszeiten -->
 <div class="mob-only mob-popup-bg" id="mob-popup-post-hours" onclick="if(event.target===this)mobClosePopup('post-hours')">
   <div class="mob-popup">
     <div class="mob-popup-handle"></div>
@@ -396,7 +402,7 @@
       </div>
       <div class="cd-b">
         <div class="hrs-g" id="hrs-grid">
-          <!-- Statische Öffnungszeiten als Fallback, wird per JS überschrieben -->
+          <!-- Statische ï¿½ffnungszeiten als Fallback, wird per JS ï¿½berschrieben -->
           <div class="hrs-section">
             <div class="hrs-label">&#x1F6D2; Dorfladen</div>
             <table class="hrs">
@@ -601,6 +607,7 @@
 </div>
 
 <script src="/js/app.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="/js/mobile.js"></script>
 <script src="/js/roterpunkt-live.js"></script>
 
@@ -610,9 +617,9 @@
   <div class="dt-modal">
     <button class="dt-modal-close" onclick="closeDtModal('concept')">&times;</button>
     <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> Unser Konzept</h2>
-    <p>Der Dorfladen Oberornau ist mehr als nur ein Lebensmittelgeschäft – er ist die soziale und vitale Mitte unserer Dorfgemeinschaft. Unser genossenschaftlich getragenes Konzept sichert die Nahversorgung direkt vor Ort und bietet zugleich einen gemütlichen Treffpunkt.</p>
-    <p><strong>Regionale Partnerschaft:</strong> Wir arbeiten eng mit Erzeugern aus der Region zusammen, um frische, gesunde und nachvollziehbar produzierte Lebensmittel anzubieten. Ob Backwaren, Metzgerei-Spezialitäten oder erntefrisches Biogemüse – die Wege zu uns sind kurz.</p>
-    <p><strong>Gemeinschaft leben:</strong> In unserem Bistro-Bereich treffen sich Jung und Alt zum gemütlichen Plausch bei einer Tasse Kaffee, einem leckeren Frühstück oder unserem täglich frisch zubereiteten Mittagstisch.</p>
+    <p>Der Dorfladen Oberornau ist mehr als nur ein Lebensmittelgeschï¿½ft ï¿½ er ist die soziale und vitale Mitte unserer Dorfgemeinschaft. Unser genossenschaftlich getragenes Konzept sichert die Nahversorgung direkt vor Ort und bietet zugleich einen gemï¿½tlichen Treffpunkt.</p>
+    <p><strong>Regionale Partnerschaft:</strong> Wir arbeiten eng mit Erzeugern aus der Region zusammen, um frische, gesunde und nachvollziehbar produzierte Lebensmittel anzubieten. Ob Backwaren, Metzgerei-Spezialitï¿½ten oder erntefrisches Biogemï¿½se ï¿½ die Wege zu uns sind kurz.</p>
+    <p><strong>Gemeinschaft leben:</strong> In unserem Bistro-Bereich treffen sich Jung und Alt zum gemï¿½tlichen Plausch bei einer Tasse Kaffee, einem leckeren Frï¿½hstï¿½ck oder unserem tï¿½glich frisch zubereiteten Mittagstisch.</p>
   </div>
 </div>
 
@@ -621,17 +628,17 @@
   <div class="dt-modal">
     <button class="dt-modal-close" onclick="closeDtModal('post')">&times;</button>
     <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Postfiliale im Dorfladen</h2>
-    <p>Erledigen Sie Ihre Postgeschäfte direkt bei uns im Laden – bequem, schnell und ohne weite Wege nach Haag oder Buchbach.</p>
+    <p>Erledigen Sie Ihre Postgeschï¿½fte direkt bei uns im Laden ï¿½ bequem, schnell und ohne weite Wege nach Haag oder Buchbach.</p>
     <div style="background:var(--c-pri-l); padding:16px; border-radius:12px; margin:16px 0; border:1px solid rgba(30,70,58,0.06);">
-      <h3 style="margin:0 0 10px; font-size:14px; font-weight:800; color:var(--c-pri); text-transform:uppercase; letter-spacing:0.5px;">Öffnungszeiten Post</h3>
+      <h3 style="margin:0 0 10px; font-size:14px; font-weight:800; color:var(--c-pri); text-transform:uppercase; letter-spacing:0.5px;">ï¿½ffnungszeiten Post</h3>
       <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
-        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Mo, Mi, Do, Fr</td><td style="padding:6px 0; text-align:right;">09:00–14:00 &amp; 16:30–19:00 Uhr</td></tr>
-        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Dienstag</td><td style="padding:6px 0; text-align:right;">09:00–14:00 Uhr</td></tr>
-        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Samstag</td><td style="padding:6px 0; text-align:right;">09:00–13:00 Uhr</td></tr>
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Mo, Mi, Do, Fr</td><td style="padding:6px 0; text-align:right;">09:00ï¿½14:00 &amp; 16:30ï¿½19:00 Uhr</td></tr>
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Dienstag</td><td style="padding:6px 0; text-align:right;">09:00ï¿½14:00 Uhr</td></tr>
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.03);"><td style="padding:6px 0; font-weight:700;">Samstag</td><td style="padding:6px 0; text-align:right;">09:00ï¿½13:00 Uhr</td></tr>
         <tr><td style="padding:6px 0; font-weight:700; color:var(--c-acc);">Sonntag</td><td style="padding:6px 0; text-align:right; color:var(--c-acc); font-weight:700;">Geschlossen</td></tr>
       </table>
     </div>
-    <p><strong>Unser Service für Sie:</strong> Brief- und Paketmarkenverkauf, Paketannahme &amp; -ausgabe (DHL), Einschreiben, Retouren und vieles mehr.</p>
+    <p><strong>Unser Service fï¿½r Sie:</strong> Brief- und Paketmarkenverkauf, Paketannahme &amp; -ausgabe (DHL), Einschreiben, Retouren und vieles mehr.</p>
   </div>
 </div>
 
@@ -640,16 +647,16 @@
   <div class="dt-modal">
     <button class="dt-modal-close" onclick="closeDtModal('catering')">&times;</button>
     <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"/></svg> Catering &amp; Lieferservice</h2>
-    <p>Wir machen Ihre Feier oder Veranstaltung kulinarisch unvergesslich! Unser eingespieltes Küchenteam bereitet kalte und warme Platten mit Liebe zu.</p>
-    <p><strong>Unser Angebot für Ihre Veranstaltung:</strong></p>
+    <p>Wir machen Ihre Feier oder Veranstaltung kulinarisch unvergesslich! Unser eingespieltes Kï¿½chenteam bereitet kalte und warme Platten mit Liebe zu.</p>
+    <p><strong>Unser Angebot fï¿½r Ihre Veranstaltung:</strong></p>
     <ul style="padding-left:20px; font-size:0.92rem; color:var(--c-sec); line-height:1.6; margin-bottom:14px;">
-      <li>Frische, reich belegte Wurst- und Käseplatten</li>
-      <li>Traditionelle bayerische Schmankerl (z.B. Schweinsbraten, Leberkäs)</li>
+      <li>Frische, reich belegte Wurst- und Kï¿½seplatten</li>
+      <li>Traditionelle bayerische Schmankerl (z.B. Schweinsbraten, Leberkï¿½s)</li>
       <li>Feine Salate und Beilagen nach Wahl</li>
-      <li>Hausgemachte Kuchen- und Tortenplatten für festliche Kaffeerunden</li>
+      <li>Hausgemachte Kuchen- und Tortenplatten fï¿½r festliche Kaffeerunden</li>
     </ul>
-    <p><strong>Nachbarschaftshilfe &amp; Lieferung:</strong> Für Senioren und hilfsbedürftige Bürger liefern wir das frisch zubereitete Mittagsmenü auf Wunsch auch im Rahmen unserer organisierten Nachbarschaftshilfe direkt ins Haus.</p>
-    <p><strong>Vorbestellung und Beratung:</strong> Gerne beraten wir Sie persönlich oder telefonisch unter <a href="tel:+4980826229991" style="font-weight:700; color:var(--c-pri);">08082-6229991</a>.</p>
+    <p><strong>Nachbarschaftshilfe &amp; Lieferung:</strong> Fï¿½r Senioren und hilfsbedï¿½rftige Bï¿½rger liefern wir das frisch zubereitete Mittagsmenï¿½ auf Wunsch auch im Rahmen unserer organisierten Nachbarschaftshilfe direkt ins Haus.</p>
+    <p><strong>Vorbestellung und Beratung:</strong> Gerne beraten wir Sie persï¿½nlich oder telefonisch unter <a href="tel:+4980826229991" style="font-weight:700; color:var(--c-pri);">08082-6229991</a>.</p>
   </div>
 </div>
 
@@ -658,12 +665,12 @@
   <div class="dt-modal">
     <button class="dt-modal-close" onclick="closeDtModal('sustainability')">&times;</button>
     <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--c-pri);"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Nachhaltigkeit &amp; Region</h2>
-    <p>Nachhaltiges Handeln und regionaler Konsum sind fest in den Genossenschafts-Genen unseres Dorfladens verankert. Wir möchten Müll vermeiden und kurze Transportwege garantieren.</p>
-    <p><strong>Unverpackt &amp; Plastikfrei:</strong> Um unnötigen Verpackungsmüll zu vermeiden, dürfen Sie sehr gerne **eigene, saubere Behältnisse** für Wurst, Käse, Brotzeit oder Ihr warmes Mittagessen mitbringen. Wir befüllen diese unter Einhaltung aller Hygienevorschriften an unserer Theke.</p>
+    <p>Nachhaltiges Handeln und regionaler Konsum sind fest in den Genossenschafts-Genen unseres Dorfladens verankert. Wir mï¿½chten Mï¿½ll vermeiden und kurze Transportwege garantieren.</p>
+    <p><strong>Unverpackt &amp; Plastikfrei:</strong> Um unnï¿½tigen Verpackungsmï¿½ll zu vermeiden, dï¿½rfen Sie sehr gerne **eigene, saubere Behï¿½ltnisse** fï¿½r Wurst, Kï¿½se, Brotzeit oder Ihr warmes Mittagessen mitbringen. Wir befï¿½llen diese unter Einhaltung aller Hygienevorschriften an unserer Theke.</p>
     <p><strong>Unsere regionalen Helden:</strong></p>
     <ul style="padding-left:20px; font-size:0.92rem; color:var(--c-sec); line-height:1.6;">
-      <li>Frisches Biogemüse von der renommierten <strong>Chiemgauer Naturkost (Ökoring)</strong> und <strong>Steiner</strong> aus Kirchweidach</li>
-      <li>Spanische Zitrusfrüchte direkt importiert von Familie <strong>Bernauer</strong> aus Reitmehring</li>
+      <li>Frisches Biogemï¿½se von der renommierten <strong>Chiemgauer Naturkost (ï¿½koring)</strong> und <strong>Steiner</strong> aus Kirchweidach</li>
+      <li>Spanische Zitrusfrï¿½chte direkt importiert von Familie <strong>Bernauer</strong> aus Reitmehring</li>
       <li>Beste Fleisch- und Wurstwaren von der Handwerks-<strong>Metzgerei Mayr</strong> aus Haag i. OB</li>
     </ul>
   </div>

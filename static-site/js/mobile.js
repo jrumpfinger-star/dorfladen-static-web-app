@@ -362,11 +362,12 @@
           if(item.angebot&&item.angebot_preis){
             priceHtml=fmtP(item.angebot_preis)+' € <span style="text-decoration:line-through;color:#999;font-size:.75rem">'+fmtP(item.vk)+'€</span>';
           }
-          html+='<div class="mob-pl-row '+cls+'" data-name="'+esc(item.bezeichnung).toLowerCase()+'">';
+          var bc=item.strichcode||'';
+          html+='<div class="mob-pl-row '+cls+'" data-name="'+esc(item.bezeichnung).toLowerCase()+'" data-barcode="'+esc(bc)+'">';
           html+='<span class="mob-pl-name">'+esc(item.bezeichnung)+'</span>';
           html+='<span class="mob-pl-price">'+priceHtml+'</span>';
           html+='</div>';
-          plAllItems.push({el:null,name:(item.bezeichnung||'').toLowerCase()});
+          plAllItems.push({el:null,name:(item.bezeichnung||'').toLowerCase(),strichcode:item.strichcode||'',bezeichnung:item.bezeichnung||'',vk:item.vk,uvp:item.uvp,angebot:item.angebot,angebot_preis:item.angebot_preis,wg:wg});
         });
         html+='</div></div>';
       });
@@ -419,9 +420,73 @@
           applyPlFilters();
         });
       });
+      initMobBarcodeScanner();
     }).catch(function(e){
       grid.innerHTML='<p style="color:#c00">Preisliste konnte nicht geladen werden.</p>';
     });
+  }
+
+  function initMobBarcodeScanner(){
+    var scanBtn=document.getElementById('mob-pl-barcode-btn');
+    var scannerDiv=document.getElementById('mob-pl-barcode-scanner');
+    var readerDiv=document.getElementById('mob-pl-barcode-reader');
+    var closeBtn=document.getElementById('mob-pl-barcode-close');
+    var resultDiv=document.getElementById('mob-pl-barcode-result');
+    if(!scanBtn||!scannerDiv)return;
+    var scanner=null;
+
+    function findByBarcode(code){
+      code=code.trim();
+      var found=[];
+      plAllItems.forEach(function(entry){
+        if(entry.strichcode&&entry.strichcode.indexOf(code)!==-1)found.push(entry);
+      });
+      return found;
+    }
+
+    function showResult(code,matches){
+      if(!matches.length){
+        resultDiv.innerHTML='<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px;font-size:.88rem;color:#856404;text-align:center">&#x26A0; Artikel mit EAN <b>'+esc(code)+'</b> nicht im Sortiment gefunden.</div>';
+        resultDiv.style.display='block';return;
+      }
+      var h='<div style="background:#d4edda;border:1px solid #28a745;border-radius:8px;padding:14px;font-size:.88rem;color:#155724">';
+      h+='<p style="margin:0 0 8px">&#x2705; '+matches.length+' Artikel f\u00fcr EAN <b>'+esc(code)+'</b> gefunden:</p>';
+      matches.forEach(function(m){
+        var preis=m.angebot&&m.angebot_preis?m.angebot_preis:m.vk;
+        h+='<div style="background:#fff;border-radius:6px;padding:10px;margin-top:6px;display:flex;justify-content:space-between;align-items:center">';
+        h+='<div><b>'+esc(m.bezeichnung)+'</b><br><small style="color:#888">'+esc(m.wg)+'</small></div>';
+        h+='<div style="font-weight:700;white-space:nowrap">'+fmtP(preis)+' &euro;</div></div>';
+      });
+      h+='</div>';
+      resultDiv.innerHTML=h;resultDiv.style.display='block';
+    }
+
+    function stopScanner(){
+      if(scanner){scanner.stop().then(function(){scanner.clear();}).catch(function(){});scanner=null;}
+      scannerDiv.style.display='none';
+    }
+
+    scanBtn.addEventListener('click',function(){
+      if(typeof Html5Qrcode==='undefined'){alert('Barcode-Scanner Library nicht geladen.');return;}
+      resultDiv.style.display='none';resultDiv.innerHTML='';
+      scannerDiv.style.display='block';
+      scanner=new Html5Qrcode('mob-pl-barcode-reader');
+      scanner.start(
+        {facingMode:'environment'},
+        {fps:10,qrbox:{width:280,height:150},formatsToSupport:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
+        function(decodedText){
+          stopScanner();
+          var matches=findByBarcode(decodedText);
+          showResult(decodedText,matches);
+        },
+        function(){}
+      ).catch(function(err){
+        stopScanner();
+        alert('Kamera konnte nicht ge\u00f6ffnet werden.\n'+err);
+      });
+    });
+
+    closeBtn.addEventListener('click',function(){stopScanner();});
   }
 
   /* === CMS CONFIG (meat promo overrides) === */
