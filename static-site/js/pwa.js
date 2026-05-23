@@ -390,6 +390,18 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     });
   }
 
+  function registerExisting(sub){
+    // Save existing browser subscription to Dataverse without contacting push service
+    return fetch('/api/push-subscribe',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news']})
+    }).then(function(r){return r.json();}).then(function(res){
+      updatePushUI(true);
+      return res;
+    });
+  }
+
   window.pushToggle=function(){
     // Close mobile nav if open
     var mn=document.getElementById('mob-nav');
@@ -407,18 +419,25 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
                 // Subscription valid in backend – show settings
                 showPushSettings(sub.endpoint);
               }else{
-                // Subscription NOT in Dataverse – old subscription is likely dead (410 Gone)
-                // Unsubscribe old one and create completely fresh subscription
+                // Subscription NOT in Dataverse – try fresh first, fallback to re-register existing
                 return sub.unsubscribe().then(function(){
                   return freshSubscribe(reg);
-                }).then(function(newSub){
-                  updatePushUI(true);
+                }).then(function(){
                   alert('Benachrichtigungen neu aktiviert!');
+                }).catch(function(){
+                  // Push service unreachable – re-register existing subscription as-is
+                  return reg.pushManager.getSubscription().then(function(existingSub){
+                    if(existingSub) return registerExisting(existingSub);
+                    // unsubscribe already removed it, try subscribe
+                    return freshSubscribe(reg);
+                  }).then(function(){
+                    alert('Benachrichtigungen aktiviert!');
+                  });
                 });
               }
             });
         }
-        // No subscription – create new
+        // No subscription – create new, fallback to prompt
         return freshSubscribe(reg).then(function(){
           alert('Benachrichtigungen aktiviert!');
         });
@@ -428,7 +447,20 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       if(Notification.permission==='denied'){
         alert('Benachrichtigungen sind im Browser blockiert.\nBitte in den Browser-Einstellungen erlauben.');
       }else if(msg.toLowerCase().indexOf('unreachable')!==-1||msg.toLowerCase().indexOf('network')!==-1){
-        alert('Push-Dienst nicht erreichbar.\n\nBitte mit mobilen Daten (WLAN aus) versuchen.');
+        // Last resort: check if there's still a subscription in the browser we can use
+        navigator.serviceWorker.ready.then(function(reg){
+          return reg.pushManager.getSubscription();
+        }).then(function(sub){
+          if(sub){
+            return registerExisting(sub).then(function(){
+              alert('Benachrichtigungen aktiviert!\n(Bestehende Subscription wiederverwendet)');
+            });
+          }else{
+            alert('Push-Dienst nicht erreichbar.\n\nBitte sp\u00e4ter nochmal versuchen.');
+          }
+        }).catch(function(){
+          alert('Push-Dienst nicht erreichbar.\n\nBitte sp\u00e4ter nochmal versuchen.');
+        });
       }else{
         console.error('Push toggle error',err);
         alert('Fehler: '+msg);
