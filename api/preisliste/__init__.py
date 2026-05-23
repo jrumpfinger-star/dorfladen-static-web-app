@@ -117,6 +117,27 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         hdrs = get_headers("DV_DEFAULT_URL")
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
 
+        # Barcode lookup: ?barcode=EAN – searches ALL articles (no 6-month filter)
+        barcode_q = req.params.get("barcode", "").strip()
+        if barcode_q:
+            bc_url = f"{default_url}/api/data/v9.2/cr5d4_tables?$filter=cr5d4_strichcode eq '{barcode_q}'&$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_strichcode"
+            r = requests.get(bc_url, headers=hdrs, timeout=30)
+            results = []
+            if r.status_code == 200:
+                for item in r.json().get("value", []):
+                    results.append({
+                        "artikelnummer": item.get("cr5d4_artikelnummeredeka", ""),
+                        "bezeichnung": item.get("cr5d4_artikelbezeichnung", ""),
+                        "vk": item.get("cr5d4_vk_dorf") or 0,
+                        "uvp": item.get("cr5d4_uvp_total"),
+                        "warengruppe": item.get("cr5d4_warengruppebez", ""),
+                        "strichcode": item.get("cr5d4_strichcode", "")
+                    })
+            return func.HttpResponse(
+                json.dumps({"success": True, "barcode": barcode_q, "results": results}, ensure_ascii=False),
+                status_code=200, mimetype="application/json", headers=get_cors_headers()
+            )
+
         # Fetch ALL articles with pagination (incl. UVP)
         url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode&$orderby=cr5d4_artikelbezeichnung asc"
         items, status = _fetch_all_pages(url, hdrs)

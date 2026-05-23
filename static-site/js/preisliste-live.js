@@ -146,6 +146,23 @@
       scannerDiv.style.display='none';
     }
 
+    function onBarcodeScanned(code){
+      var matches=findByBarcode(code);
+      if(matches.length){showResult(code,matches);return;}
+      // Fallback: API lookup (bypasses 6-month filter)
+      resultDiv.innerHTML='<div style="text-align:center;padding:14px;color:#666">Suche EAN '+esc(code)+' in Datenbank...</div>';
+      resultDiv.style.display='block';
+      fetch('/api/preisliste?barcode='+encodeURIComponent(code))
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d.results&&d.results.length){
+            var apiMatches=[];
+            d.results.forEach(function(r){apiMatches.push({wg:r.warengruppe,item:{bezeichnung:r.bezeichnung,vk:r.vk,strichcode:r.strichcode}});});
+            showResult(code,apiMatches);
+          }else{showResult(code,[]);}
+        }).catch(function(){showResult(code,[]);});
+    }
+
     scanBtn.addEventListener('click',function(){
       if(typeof Html5Qrcode==='undefined'){alert('Barcode-Scanner Library nicht geladen.');return;}
       resultDiv.style.display='none';
@@ -157,8 +174,7 @@
         {fps:10,qrbox:{width:280,height:150},formatsToSupport:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
         function(decodedText){
           stopScanner();
-          var matches=findByBarcode(decodedText);
-          showResult(decodedText,matches);
+          onBarcodeScanned(decodedText);
         },
         function(){}
       ).catch(function(err){
