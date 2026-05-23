@@ -1523,6 +1523,7 @@ document.head.appendChild(msalScript);
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
       +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
       +'<button class="cms-bild-search" data-action="uploadBild" data-row="'+angRowCounter+'" type="button" title="Bild hochladen" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">📁</button>'
+      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild in StrichcodeBilder hochladen" style="font-size:13px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280;'+(hasBild?'':'display:none')+'">⬆️</button>'
       +'</div>'
       +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
@@ -1737,6 +1738,7 @@ document.head.appendChild(msalScript);
           var clr=row.querySelector('.cms-bild-clear');
           if(prev){prev.src=compressedB64;prev.style.display='';}
           if(clr){clr.style.display='';}
+          var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.display='';
           toast('Bild geladen & für Mobile optimiert!');
         });
       }
@@ -1892,6 +1894,7 @@ document.head.appendChild(msalScript);
   // --- MSAL.js: Graph API access for SharePoint images ---
   var SP_DRIVE='b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A';
   var SP_FOLDER='01USAQ6ERA5Q2V5M2I2BCKYOFVH2WWICOC';
+  var SP_BARCODE_FOLDER='01USAQ6ESD7NCQ4ZM6GRHK5IRCMJMSRSVH';
   var msalApp=null;
   function initMsal(){
     if(msalApp) return;
@@ -1905,73 +1908,97 @@ document.head.appendChild(msalScript);
   function getGraphToken(){
     if(!msalApp)return Promise.reject('no msal');
     var accounts=msalApp.getAllAccounts();
-    var req={scopes:['Files.Read.All']};
+    var req={scopes:['Files.ReadWrite.All']};
     if(accounts.length>0){req.account=accounts[0];return msalApp.acquireTokenSilent(req).catch(function(){return msalApp.acquireTokenPopup(req);});}
     return msalApp.acquireTokenPopup(req);
+  }
+
+  function _searchFolderForImage(token, folderId, artnr){
+    var searchUrl='https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folderId+'/children?$filter=startswith(name,\''+artnr+'\')&$top=5';
+    return fetch(searchUrl,{
+      headers:{'Authorization':'Bearer '+token.accessToken}
+    }).then(function(r){
+      if(!r.ok){
+        return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folderId+'/children?$top=999',{
+          headers:{'Authorization':'Bearer '+token.accessToken}
+        }).then(function(r2){
+          if(!r2.ok) throw new Error('Drive query failed: '+r2.status);
+          return r2.json();
+        });
+      }
+      return r.json();
+    }).then(function(data){
+      if(!data || !data.value || data.value.length===0) return null;
+      var fname=artnr.toLowerCase();
+      var found=data.value.find(function(f){
+        var name=(f.name||'').toLowerCase().replace(/\.[^.]+$/,'');
+        return name===fname;
+      });
+      if(!found){
+        found=data.value.find(function(f){
+          var name=(f.name||'').toLowerCase();
+          return name.indexOf(fname)!==-1;
+        });
+      }
+      if(!found || !found.id) return null;
+      console.log('[CMS] Found image file:',found.name,'in folder',folderId);
+      return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+found.id+'/content',{
+        headers:{'Authorization':'Bearer '+token.accessToken}
+      }).then(function(r){
+        if(!r.ok) throw new Error('File download failed: '+r.status);
+        return r.arrayBuffer();
+      }).then(function(buf){
+        var arr=new Uint8Array(buf);
+        var binaryStr='';
+        for(var i=0;i<arr.length;i++) binaryStr+=String.fromCharCode(arr[i]);
+        var ext=(found.name||'').split('.').pop().toLowerCase();
+        var mime=ext==='png'?'image/png':ext==='gif'?'image/gif':'image/jpeg';
+        return 'data:'+mime+';base64,'+btoa(binaryStr);
+      });
+    });
   }
 
   function loadImageFromSharePoint(artnr){
     if(!artnr || !msalApp) return Promise.resolve(null);
     console.log('[CMS] Fetching image for article:',artnr);
     return getGraphToken().then(function(token){
-      console.log('[CMS] Got Graph token');
-      // Search for file by article number in the folder
-      var searchUrl='https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+SP_FOLDER+'/children?$filter=startswith(name,\''+artnr+'\')&$top=5';
-      return fetch(searchUrl,{
-        headers:{'Authorization':'Bearer '+token.accessToken}
-      }).then(function(r){
-        if(!r.ok){
-          // Fallback: list all children if $filter not supported
-          console.log('[CMS] Filter not supported, listing all children');
-          return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+SP_FOLDER+'/children?$top=999',{
-            headers:{'Authorization':'Bearer '+token.accessToken}
-          }).then(function(r2){
-            if(!r2.ok) throw new Error('Drive query failed: '+r2.status);
-            return r2.json();
-          });
-        }
-        return r.json();
-      }).then(function(data){
-        if(!data || !data.value || data.value.length===0) {
-          console.warn('[CMS] No items found in SharePoint drive for',artnr);
-          return null;
-        }
-        var fname=artnr.toLowerCase();
-        var folder=data.value.find(function(f){
-          var name=(f.name||'').toLowerCase().replace(/\.[^.]+$/,'');
-          return name===fname;
-        });
-        if(!folder){
-          // Try partial match
-          folder=data.value.find(function(f){
-            var name=(f.name||'').toLowerCase();
-            return name.indexOf(fname)!==-1;
-          });
-        }
-        if(!folder || !folder.id) {
-          console.warn('[CMS] Image file not found for',artnr,' in',data.value.map(function(f){return f.name;}));
-          return null;
-        }
-        console.log('[CMS] Found image file:',folder.name);
-        return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folder.id+'/content',{
-          headers:{'Authorization':'Bearer '+token.accessToken}
-        }).then(function(r){
-          if(!r.ok) throw new Error('File download failed: '+r.status);
-          return r.arrayBuffer();
-        }).then(function(buf){
-          var arr=new Uint8Array(buf);
-          var binaryStr='';
-          for(var i=0;i<arr.length;i++) binaryStr+=String.fromCharCode(arr[i]);
-          var ext=(folder.name||'').split('.').pop().toLowerCase();
-          var mime=ext==='png'?'image/png':ext==='gif'?'image/gif':'image/jpeg';
-          var b64='data:'+mime+';base64,'+btoa(binaryStr);
-          console.log('[CMS] Image loaded successfully,',buf.byteLength,'bytes');
-          return b64;
-        });
+      // 1. Search in main product images folder
+      return _searchFolderForImage(token, SP_FOLDER, artnr).then(function(b64){
+        if(b64) return b64;
+        // 2. Fallback: search in StrichcodeBilder folder
+        console.log('[CMS] Not found in main folder, trying StrichcodeBilder...');
+        return _searchFolderForImage(token, SP_BARCODE_FOLDER, artnr);
       });
     }).catch(function(e){
       console.error('[CMS] SharePoint image load error for '+artnr,e);
       return null;
+    });
+  }
+
+  function uploadImageToSharePoint(artnr, base64Data){
+    if(!artnr || !base64Data || !msalApp) return Promise.reject('Artikelnummer und Bild benötigt');
+    return getGraphToken().then(function(token){
+      // Convert base64 data URL to binary
+      var parts=base64Data.split(',');
+      var mime=(parts[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
+      var ext=mime==='image/png'?'png':mime==='image/gif'?'gif':'jpg';
+      var raw=atob(parts[1]);
+      var arr=new Uint8Array(raw.length);
+      for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+      var blob=new Blob([arr],{type:mime});
+      var fileName=artnr+'.'+ext;
+      var uploadUrl='https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+SP_BARCODE_FOLDER+':/'+fileName+':/content';
+      return fetch(uploadUrl,{
+        method:'PUT',
+        headers:{'Authorization':'Bearer '+token.accessToken,'Content-Type':mime},
+        body:blob
+      }).then(function(r){
+        if(!r.ok) throw new Error('Upload fehlgeschlagen: '+r.status);
+        return r.json();
+      }).then(function(item){
+        console.log('[CMS] Uploaded to StrichcodeBilder:',item.name);
+        return item;
+      });
     });
   }
   var DAY_COLORS = {101000:'#ef4444',101001:'#f97316',101002:'#eab308',101003:'#22c55e',101004:'#3b82f6'};
@@ -4916,6 +4943,7 @@ document.head.appendChild(msalScript);
           var pv=row.querySelector('.cms-bild-preview');
           if(pv){pv.src='';pv.style.display='none';}
           t.style.display='none';
+          var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.display='none';
         }
         break;
       case 'uploadBild':
@@ -4932,12 +4960,36 @@ document.head.appendChild(msalScript);
                 var hi=row.querySelector('[data-f="bild_data"]');if(hi)hi.value=compressedB64;
                 var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=compressedB64;pv.style.display='';}
                 var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
+                var ub=row.querySelector('.cms-bild-upload-sp');if(ub)ub.style.display='';
                 toast('Bild geladen & für Mobile komprimiert');
               });
             };
             reader.readAsDataURL(f);
           };
           inp.click();
+        })();
+        break;
+      case 'uploadBildSP':
+        (function(){
+          var rn=t.getAttribute('data-row');if(!rn)return;
+          var row=document.getElementById('cms-ar-'+rn);if(!row)return;
+          var bildInp=row.querySelector('[data-f="bild_data"]');
+          var nrInp=row.querySelector('[data-f="artikelnummer"]');
+          var prodInp=row.querySelector('[data-f="produkt"]');
+          var b64=(bildInp&&bildInp.value||'').trim();
+          if(!b64){toast('Bitte zuerst ein Bild laden','warn');return;}
+          var artnr=(nrInp&&nrInp.value||'').trim();
+          if(!artnr && prodInp){
+            var prod=prodInp.value.trim().toLowerCase();
+            var match=_artikelCache.find(function(a){return (a.b||a.produktVal||'').toLowerCase()===prod;});
+            if(match) artnr=match.nr||'';
+          }
+          if(!artnr){toast('Bitte Artikelnummer eingeben f\u00fcr den Dateinamen','warn');return;}
+          t.disabled=true;t.textContent='\u23F3';
+          uploadImageToSharePoint(artnr, b64).then(function(){
+            toast('Bild als '+artnr+' in StrichcodeBilder hochgeladen!');
+          }).catch(function(e){toast('Upload-Fehler: '+e.message,'error');console.error(e);})
+          .then(function(){t.disabled=false;t.textContent='\u2B06\uFE0F';});
         })();
         break;
       case 'saveCfg':cmsSaveCfg();break;
