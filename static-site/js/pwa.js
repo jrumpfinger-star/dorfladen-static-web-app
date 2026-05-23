@@ -170,6 +170,27 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
   var pushBtn=document.getElementById('mob-push-toggle');
   var pushBtnDt=document.getElementById('dt-push-toggle');
   var CAT_LABELS={mittagstisch:'Mittagstisch',angebote:'Angebote',news:'News / Aktuelles'};
+  var CAT_ICONS={mittagstisch:'\uD83C\uDF7D\uFE0F',angebote:'\uD83C\uDF1F',news:'\uD83D\uDCE2'};
+  var CAT_DESC={mittagstisch:'T\u00e4glicher Mittagstisch & Speisekarte',angebote:'Sonderangebote & Aktionen',news:'Neuigkeiten & Infos'};
+
+  // --- Toast system (replaces ugly alert()) ---
+  function showToast(msg,type,duration){
+    type=type||'success';duration=duration||3500;
+    var existing=document.getElementById('dl-toast');if(existing)existing.remove();
+    var t=document.createElement('div');t.id='dl-toast';
+    var bg=type==='success'?'linear-gradient(135deg,#2d7a5e,#3a9b6e)':type==='error'?'linear-gradient(135deg,#dc2626,#ef4444)':'linear-gradient(135deg,#d97706,#f59e0b)';
+    var icon=type==='success'?'\u2705':type==='error'?'\u274C':'\u26A0\uFE0F';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);z-index:100000;padding:14px 22px;border-radius:14px;background:'+bg+';color:#fff;font-size:.9rem;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;max-width:340px;width:calc(100% - 32px);opacity:0;transition:all .4s cubic-bezier(.4,0,.2,1);font-family:"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(8px)';
+    t.innerHTML='<span style="font-size:1.3rem;flex-shrink:0">'+icon+'</span><span>'+msg+'</span>';
+    document.body.appendChild(t);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+    });});
+    setTimeout(function(){
+      t.style.opacity='0';t.style.transform='translateX(-50%) translateY(80px)';
+      setTimeout(function(){if(t.parentNode)t.remove();},400);
+    },duration);
+  }
 
   function updatePushUI(subscribed){
     [pushBtn,pushBtnDt].forEach(function(btn){
@@ -207,9 +228,10 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     return arr;
   }
 
+  // --- Settings Dialog ---
   function closePushSettings(){
     var el=document.getElementById('push-settings-overlay');
-    if(el)el.remove();
+    if(el){el.style.opacity='0';setTimeout(function(){if(el.parentNode)el.remove();},300);}
   }
 
   function savePushCategories(endpoint){
@@ -220,84 +242,123 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     });
     function onSaved(){
       closePushSettings();
-      [pushBtn,pushBtnDt].forEach(function(btn){
-        if(!btn)return;
-        var old=btn.textContent;
-        btn.textContent='\u2705 Einstellungen gespeichert';
-        setTimeout(function(){btn.textContent=old;},2000);
-      });
+      showToast('Einstellungen gespeichert!','success');
+      updatePushUI(true);
     }
-    // Try PATCH first; if not found, re-save existing subscription via POST
     fetch('/api/push-subscribe',{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({endpoint:endpoint,categories:cats})
     }).then(function(r){return r.json();}).then(function(res){
       if(res.success){onSaved();return;}
-      // Subscription not in Dataverse – re-save current browser subscription via POST (no new push registration needed)
       return navigator.serviceWorker.ready.then(function(reg){
         return reg.pushManager.getSubscription();
       }).then(function(sub){
-        if(!sub){alert('Keine aktive Push-Subscription gefunden.');return;}
+        if(!sub){showToast('Keine aktive Subscription gefunden.','error');return;}
         return fetch('/api/push-subscribe',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({subscription:sub.toJSON(),categories:cats})
         }).then(function(r2){return r2.json();}).then(function(res2){
           if(res2.success){onSaved();}
-          else{alert('Fehler beim Speichern: '+(res2.error||'Unbekannt'));}
+          else{showToast('Fehler beim Speichern','error');}
         });
       });
     }).catch(function(e){
       console.error('Save categories error',e);
-      alert('Netzwerkfehler beim Speichern: '+e.message);
+      showToast('Netzwerkfehler beim Speichern','error');
     });
   }
 
-  function showPushSettings(endpoint){
+  function showPushSettings(endpoint,isNew){
     closePushSettings();
-    // Overlay
+    // Overlay with animation
     var ov=document.createElement('div');
     ov.id='push-settings-overlay';
-    ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,0);display:flex;align-items:flex-end;justify-content:center;padding:0;transition:background .3s ease;font-family:"Segoe UI",system-ui,sans-serif';
 
-    // Inner dialog box (built with DOM, not innerHTML)
     var dialog=document.createElement('div');
-    dialog.style.cssText='background:#fff;border-radius:14px;max-width:340px;width:100%;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.2)';
+    dialog.style.cssText='background:#fff;border-radius:20px 20px 0 0;max-width:400px;width:100%;padding:24px 20px env(safe-area-inset-bottom,16px);box-shadow:0 -8px 40px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1)';
     dialog.onclick=function(e){e.stopPropagation();};
 
-    var h=document.createElement('div');
-    h.style.cssText='font-weight:700;font-size:1rem;margin-bottom:4px';
-    h.textContent='\uD83D\uDD14 Push-Einstellungen';
-    dialog.appendChild(h);
+    // Handle / grip
+    var grip=document.createElement('div');
+    grip.style.cssText='width:36px;height:4px;background:#d1d5db;border-radius:4px;margin:0 auto 16px';
+    dialog.appendChild(grip);
 
+    // Header
+    var hdr=document.createElement('div');
+    hdr.style.cssText='text-align:center;margin-bottom:20px';
+    var iconCircle=document.createElement('div');
+    iconCircle.style.cssText='width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:1.5rem';
+    iconCircle.textContent=isNew?'\uD83C\uDF89':'\uD83D\uDD14';
+    hdr.appendChild(iconCircle);
+    var title=document.createElement('div');
+    title.style.cssText='font-weight:700;font-size:1.1rem;color:#1a1a1a;margin-bottom:4px';
+    title.textContent=isNew?'Benachrichtigungen aktiviert!':'Benachrichtigungen';
+    hdr.appendChild(title);
     var desc=document.createElement('div');
-    desc.style.cssText='font-size:.82rem;color:#6b7280;margin-bottom:14px';
-    desc.textContent='W\u00e4hle, welche Benachrichtigungen du erhalten m\u00f6chtest:';
-    dialog.appendChild(desc);
+    desc.style.cssText='font-size:.82rem;color:#6b7280;line-height:1.4';
+    desc.textContent=isNew?'W\u00e4hle, wor\u00fcber du informiert werden m\u00f6chtest:':'W\u00e4hle, welche Benachrichtigungen du erhalten m\u00f6chtest:';
+    hdr.appendChild(desc);
+    dialog.appendChild(hdr);
 
+    // Category cards
     ['mittagstisch','angebote','news'].forEach(function(c){
-      var lbl=document.createElement('label');
-      lbl.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;cursor:pointer;font-size:.9rem';
+      var card=document.createElement('label');
+      card.style.cssText='display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px;border-radius:12px;border:2px solid #f0f0f0;cursor:pointer;transition:all .15s ease;background:#fafafa';
+      card.onmouseover=function(){card.style.borderColor='#5ea88a';card.style.background='#f0faf4';};
+      card.onmouseout=function(){var cb=card.querySelector('input');card.style.borderColor=cb&&cb.checked?'#5ea88a':'#f0f0f0';card.style.background=cb&&cb.checked?'#f0faf4':'#fafafa';};
+      var iconWrap=document.createElement('span');
+      iconWrap.style.cssText='font-size:1.4rem;flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)';
+      iconWrap.textContent=CAT_ICONS[c];
+      card.appendChild(iconWrap);
+      var textWrap=document.createElement('div');
+      textWrap.style.cssText='flex:1;min-width:0';
+      var catName=document.createElement('div');
+      catName.style.cssText='font-weight:600;font-size:.9rem;color:#1a1a1a';
+      catName.textContent=CAT_LABELS[c];
+      textWrap.appendChild(catName);
+      var catDesc=document.createElement('div');
+      catDesc.style.cssText='font-size:.75rem;color:#9ca3af;margin-top:1px';
+      catDesc.textContent=CAT_DESC[c];
+      textWrap.appendChild(catDesc);
+      card.appendChild(textWrap);
+      var toggle=document.createElement('div');
+      toggle.style.cssText='position:relative;width:44px;height:24px;flex-shrink:0';
       var cb=document.createElement('input');
       cb.type='checkbox';cb.id='push-cat-'+c;cb.checked=true;
-      cb.style.cssText='width:18px;height:18px;accent-color:#2d7a5e';
-      lbl.appendChild(cb);
-      lbl.appendChild(document.createTextNode(CAT_LABELS[c]));
-      dialog.appendChild(lbl);
+      cb.style.cssText='position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2';
+      var track=document.createElement('div');
+      track.style.cssText='position:absolute;inset:0;border-radius:12px;background:#5ea88a;transition:background .2s';
+      var knob=document.createElement('div');
+      knob.style.cssText='position:absolute;top:2px;left:22px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s';
+      toggle.appendChild(cb);toggle.appendChild(track);toggle.appendChild(knob);
+      function syncToggle(){
+        if(cb.checked){track.style.background='#5ea88a';knob.style.left='22px';card.style.borderColor='#5ea88a';card.style.background='#f0faf4';}
+        else{track.style.background='#d1d5db';knob.style.left='2px';card.style.borderColor='#f0f0f0';card.style.background='#fafafa';}
+      }
+      cb.addEventListener('change',syncToggle);
+      card.appendChild(toggle);
+      dialog.appendChild(card);
     });
 
+    // Buttons
     var btnRow=document.createElement('div');
-    btnRow.style.cssText='display:flex;gap:8px;margin-top:16px';
+    btnRow.style.cssText='display:flex;gap:10px;margin-top:20px';
 
     var saveBtn=document.createElement('button');
-    saveBtn.style.cssText='flex:1;padding:10px;border:none;border-radius:8px;background:#2d7a5e;color:#fff;font-weight:600;font-size:.88rem;cursor:pointer';
-    saveBtn.textContent='Speichern';
+    saveBtn.style.cssText='flex:2;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#2d7a5e,#3a9b6e);color:#fff;font-weight:700;font-size:.92rem;cursor:pointer;transition:transform .1s;box-shadow:0 4px 12px rgba(45,122,94,.3)';
+    saveBtn.textContent=isNew?'\u2705 Fertig':'Speichern';
+    saveBtn.onmousedown=function(){saveBtn.style.transform='scale(.97)';};
+    saveBtn.onmouseup=function(){saveBtn.style.transform='';};
     saveBtn.addEventListener('click',function(e){e.stopPropagation();savePushCategories(endpoint);});
 
     var unsubBtn=document.createElement('button');
-    unsubBtn.style.cssText='flex:1;padding:10px;border:none;border-radius:8px;background:#fee2e2;color:#dc2626;font-weight:600;font-size:.88rem;cursor:pointer';
+    unsubBtn.style.cssText='flex:1;padding:14px;border:2px solid #fecaca;border-radius:12px;background:#fff;color:#dc2626;font-weight:600;font-size:.85rem;cursor:pointer;transition:all .15s';
     unsubBtn.textContent='Deaktivieren';
+    unsubBtn.onmouseover=function(){unsubBtn.style.background='#fef2f2';};
+    unsubBtn.onmouseout=function(){unsubBtn.style.background='#fff';};
     unsubBtn.addEventListener('click',function(e){e.stopPropagation();closePushSettings();doUnsubscribe();});
 
     btnRow.appendChild(saveBtn);
@@ -308,6 +369,12 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     ov.addEventListener('click',function(e){if(e.target===ov)closePushSettings();});
     document.body.appendChild(ov);
 
+    // Animate in
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      ov.style.background='rgba(0,0,0,.45)';
+      dialog.style.transform='translateY(0)';
+    });});
+
     // Load current categories
     fetch('/api/push-subscribe?endpoint='+encodeURIComponent(endpoint))
       .then(function(r){return r.json();})
@@ -315,7 +382,10 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
         if(res.categories){
           ['mittagstisch','angebote','news'].forEach(function(c){
             var cb=document.getElementById('push-cat-'+c);
-            if(cb)cb.checked=res.categories.indexOf(c)!==-1;
+            if(cb){
+              cb.checked=res.categories.indexOf(c)!==-1;
+              cb.dispatchEvent(new Event('change'));
+            }
           });
         }
       }).catch(function(){});
@@ -326,7 +396,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       return reg.pushManager.getSubscription().then(function(sub){
         if(!sub){
           updatePushUI(false);
-          alert('Benachrichtigungen deaktiviert.');
+          showToast('Benachrichtigungen deaktiviert.','success');
           return;
         }
         var ep=sub.endpoint;
@@ -334,38 +404,13 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
           updatePushUI(false);
           return fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:ep})});
         }).then(function(){
-          alert('Benachrichtigungen deaktiviert.');
+          showToast('Benachrichtigungen deaktiviert.','success');
         });
       });
     }).catch(function(err){
       console.error('Unsubscribe error',err);
-      // Force UI update even on error
       updatePushUI(false);
-      alert('Benachrichtigungen deaktiviert.');
-    });
-  }
-
-  function doResubscribe(cats){
-    // Unsubscribe old, then create fresh subscription
-    return navigator.serviceWorker.ready.then(function(reg){
-      return reg.pushManager.getSubscription().then(function(oldSub){
-        var p=oldSub?oldSub.unsubscribe():Promise.resolve();
-        return p.then(function(){
-          return fetch('/api/push-vapid-key').then(function(r){return r.json();});
-        }).then(function(data){
-          if(!data.publicKey){throw new Error('VAPID key missing');}
-          return reg.pushManager.subscribe({
-            userVisibleOnly:true,
-            applicationServerKey:urlBase64ToUint8Array(data.publicKey)
-          });
-        }).then(function(newSub){
-          return fetch('/api/push-subscribe',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({subscription:newSub.toJSON(),categories:cats||['mittagstisch','angebote','news']})
-          }).then(function(r){return r.json();});
-        });
-      });
+      showToast('Benachrichtigungen deaktiviert.','success');
     });
   }
 
@@ -391,14 +436,13 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
   }
 
   function registerExisting(sub){
-    // Save existing browser subscription to Dataverse without contacting push service
     return fetch('/api/push-subscribe',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news']})
     }).then(function(r){return r.json();}).then(function(res){
       updatePushUI(true);
-      return res;
+      return sub;
     });
   }
 
@@ -416,23 +460,23 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
             .then(function(r){return r.json();})
             .then(function(res){
               if(res.success){
-                showPushSettings(sub.endpoint);
+                // Already registered – show settings
+                showPushSettings(sub.endpoint,false);
               }else{
-                // Not in Dataverse – just re-register the EXISTING subscription
-                // NEVER unsubscribe() – Firefox recycles endpoints and push service may be unreachable
+                // Not in Dataverse – register existing, then show settings dialog immediately
                 return registerExisting(sub).then(function(){
-                  alert('Benachrichtigungen aktiviert!');
+                  showPushSettings(sub.endpoint,true);
                 });
               }
             });
         }
-        // No subscription at all – create fresh
-        return freshSubscribe(reg).then(function(){
-          alert('Benachrichtigungen aktiviert!');
+        // No subscription at all – create fresh, then show settings dialog
+        return freshSubscribe(reg).then(function(newSub){
+          showPushSettings(newSub.endpoint,true);
         }).catch(function(err){
           var msg=(err&&err.message)||String(err);
           if(msg.toLowerCase().indexOf('unreachable')!==-1||msg.toLowerCase().indexOf('network')!==-1){
-            alert('Push-Dienst nicht erreichbar.\nBitte sp\u00e4ter nochmal versuchen.');
+            showToast('Push-Dienst nicht erreichbar. Bitte sp\u00e4ter nochmal versuchen.','warn',5000);
           }else{
             throw err;
           }
@@ -441,10 +485,10 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     }).catch(function(err){
       var msg=(err&&err.message)||String(err);
       if(Notification.permission==='denied'){
-        alert('Benachrichtigungen sind im Browser blockiert.\nBitte in den Browser-Einstellungen erlauben.');
+        showToast('Benachrichtigungen sind im Browser blockiert. Bitte in den Einstellungen erlauben.','error',5000);
       }else{
         console.error('Push toggle error',err);
-        alert('Fehler: '+msg);
+        showToast('Fehler: '+msg,'error',4000);
       }
     });
   };
