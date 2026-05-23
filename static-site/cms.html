@@ -1536,7 +1536,7 @@ document.head.appendChild(msalScript);
     if(prodInp){
       prodInp.addEventListener('input',function(e){console.log('[CMS] Input:',this.value);artSearchFilter(this);});
       prodInp.addEventListener('focus',function(){artSearchFilter(this);});
-      prodInp.addEventListener('blur',function(){setTimeout(function(){var wrap=prodInp.parentElement;if(wrap){var dd=wrap.querySelector('.cms-art-dd');if(dd)dd.classList.remove('open');}},150);});
+      prodInp.addEventListener('blur',function(){setTimeout(function(){var wrap=prodInp.parentElement;if(wrap){var dd=wrap.querySelector('.cms-art-dd');if(dd&&!dd.contains(document.activeElement)&&!dd.matches(':hover'))dd.classList.remove('open');}},200);});
     }
     renumberAngRows();
   }
@@ -1674,6 +1674,8 @@ document.head.appendChild(msalScript);
       dd.appendChild(opt);
     });
     dd.classList.add('open');
+    // Prevent scrolling/clicking in dropdown from stealing focus and closing it
+    dd.onmousedown=function(e){if(!e.target.classList.contains('cms-art-opt')&&!e.target.closest('.cms-art-opt'))e.preventDefault();};
     // Position fixed dropdown below the input
     var inpRect=inp.getBoundingClientRect();
     dd.style.left=inpRect.left+'px';
