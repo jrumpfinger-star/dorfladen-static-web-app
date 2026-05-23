@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v17';
+var CACHE_NAME='dorfladen-v18';
 var PRECACHE=[
   '/',
   '/css/style.css',
@@ -72,6 +72,31 @@ self.addEventListener('push',function(e){
   };
   if(data.image)opts.image=data.image;
   e.waitUntil(self.registration.showNotification(data.title,opts));
+});
+
+// Auto-renew expired push subscriptions (Firefox lets them expire)
+self.addEventListener('pushsubscriptionchange',function(e){
+  e.waitUntil(
+    fetch('/api/push-vapid-key').then(function(r){return r.json();}).then(function(data){
+      if(!data.publicKey)throw new Error('no key');
+      var raw=self.atob(data.publicKey.replace(/-/g,'+').replace(/_/g,'/'));
+      var arr=new Uint8Array(raw.length);
+      for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+      return self.registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr});
+    }).then(function(newSub){
+      // Delete old subscription from server
+      var oldEp=e.oldSubscription&&e.oldSubscription.endpoint;
+      var p=oldEp?fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:oldEp})}):Promise.resolve();
+      return p.then(function(){
+        // Save new subscription
+        return fetch('/api/push-subscribe',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({subscription:newSub.toJSON(),categories:['mittagstisch','angebote','news']})
+        });
+      });
+    })
+  );
 });
 
 self.addEventListener('notificationclick',function(e){
