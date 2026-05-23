@@ -127,9 +127,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             all_subs = _fetch_all_subscriptions(base_url, hdrs, entity_set)
             info = []
             for s in all_subs:
-                ep = s["subscription"].get("endpoint", "")
+                sub = s["subscription"]
+                ep = sub.get("endpoint", "")
+                keys = sub.get("keys", {})
                 cats = s.get("categories", [])
-                info.append({"endpoint_short": ep[-40:] if len(ep) > 40 else ep, "categories": cats})
+                has_p256dh = bool(keys.get("p256dh", ""))
+                has_auth = bool(keys.get("auth", ""))
+                info.append({
+                    "endpoint_short": ep[-60:] if len(ep) > 60 else ep,
+                    "endpoint_domain": ep.split("/")[2] if ep.count("/") >= 2 else "",
+                    "has_p256dh": has_p256dh,
+                    "has_auth": has_auth,
+                    "categories": cats
+                })
             return func.HttpResponse(
                 json.dumps({"total": len(all_subs), "subscribers": info}),
                 status_code=200, mimetype="application/json", headers=get_cors_headers()
@@ -260,12 +270,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 elif "404" in ex_str_check and ("Not Found" in ex_str_check or "not found" in ex_str_check):
                     status = 404
             ex_str = str(ex)
+            errors_detail.append(f"status={status} resp={resp_text[:200]} endpoint_domain={entry['subscription'].get('endpoint','')[:80]}")
             if status in (404, 410):
                 _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
                 removed += 1
             else:
                 failed += 1
-                errors_detail.append(f"WebPush status={status}: {ex_str[:300]}")
         except Exception as ex:
             failed += 1
             errors_detail.append(f"Error: {str(ex)[:200]}")
