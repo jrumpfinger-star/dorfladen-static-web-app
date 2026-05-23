@@ -249,8 +249,9 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         document.getElementById('wp-body').innerHTML='<div style="padding:20px;text-align:center;color:#888;font-style:italic">Aktuell kein Wochenplan verf\u00fcgbar. Unser Mittagstisch-Angebot findet ihr in der WhatsApp-Gruppe.</div>';
         return;
       }
-      // Find current ISO 8601 week number
-      // Ab Samstag: nächste Woche anzeigen
+      // API already filters by target week (ab Samstag: nächste Woche)
+      var meals=items;
+      // Compute KW for display
       var now=new Date();
       if(now.getDay()>=6){now.setDate(now.getDate()+(now.getDay()===6?2:1));}
       var tmp=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -258,8 +259,6 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       var week1=new Date(tmp.getFullYear(),0,4);
       week1.setDate(week1.getDate()+3-(week1.getDay()+6)%7);
       var curKw=1+Math.round((tmp-week1)/604800000);
-      // Filter strictly to target KW (no fallback to older weeks)
-      var meals=items.filter(function(g){return g.kalenderwoche===curKw;});
       // Subtitle with date range
       var sub=document.getElementById('wp-subtitle');
       if(meals.length>0){
