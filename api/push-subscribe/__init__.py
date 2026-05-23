@@ -246,7 +246,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         subscription_info=subscription,
                         data=json.dumps({"title": "Dorfladen Oberornau", "body": "Push aktiviert! \u2705", "url": "/"}),
                         vapid_private_key=vapid_priv,
-                        vapid_claims={"sub": vapid_contact_val, "aud": aud}
+                        vapid_claims={"sub": vapid_contact_val, "aud": aud},
+                        ttl=86400
                     )
             except Exception as ve:
                 resp_obj = getattr(ve, "response", None)

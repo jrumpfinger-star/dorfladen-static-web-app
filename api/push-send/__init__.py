@@ -311,7 +311,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 subscription_info=sub,
                 data=notification_payload,
                 vapid_private_key=vapid_private_key,
-                vapid_claims=vapid_claims
+                vapid_claims=vapid_claims,
+                ttl=86400
             )
             sent += 1
         except WebPushException as ex:
@@ -344,9 +345,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
                 removed += 1
             elif status == 410:
-                # 410 Gone – do NOT delete; Firefox recycles dead endpoints
-                # and would lose the subscription permanently
-                failed += 1
+                # 410 Gone – endpoint confirmed dead, delete
+                _delete_subscription(base_url, hdrs, entity_set, entry["record_id"])
+                removed += 1
             else:
                 failed += 1
         except Exception as ex:
