@@ -445,7 +445,7 @@ def preisliste(req: func.HttpRequest) -> func.HttpResponse:
         default_url = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
         
         # ArtikelStamm mit UVP laden (mit Paging)
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total&$orderby=cr5d4_artikelbezeichnung asc"
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_strichcode&$orderby=cr5d4_artikelbezeichnung asc"
         all_items = []
         while url:
             r = requests.get(url, headers=headers)
@@ -540,6 +540,7 @@ def preisliste(req: func.HttpRequest) -> func.HttpResponse:
             if is_angebot:
                 ang_count += 1
             
+            strichcode = item.get("cr5d4_strichcode", "")
             groups[warengruppe].append({
                 "artikelnummer": artikelnummer,
                 "bezeichnung": bezeichnung,
@@ -549,7 +550,8 @@ def preisliste(req: func.HttpRequest) -> func.HttpResponse:
                 "rp": is_rp,
                 "angebot": is_angebot,
                 "angebot_statt": ang_statt,
-                "angebot_preis": ang_preis
+                "angebot_preis": ang_preis,
+                "strichcode": strichcode
             })
         
         total_items = sum(len(v) for v in groups.values())

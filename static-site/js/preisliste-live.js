@@ -23,9 +23,12 @@
     html+='<span class="so-filter-btn" data-filter="ang">&#9733; Sonderangebot ('+angCount+')</span>';
     html+='</div></div>';
 
-    // Search
+    // Search + Barcode
     html+='<div class="so-search"><span class="so-search-icon">&#128269;</span>';
-    html+='<input type="text" id="soSearch" placeholder="Artikel suchen&hellip;" autocomplete="off"></div>';
+    html+='<input type="text" id="soSearch" placeholder="Artikel suchen&hellip;" autocomplete="off">';
+    html+='<button type="button" id="soBarcodeBtn" class="so-barcode-btn" title="Barcode scannen">&#x1F4F7;</button></div>';
+    html+='<div id="soBarcodeScanner" style="display:none"><div id="soBarcodeReader"></div><button type="button" id="soBarcodeClose" class="so-barcode-close">&times; Scanner schlie&szlig;en</button></div>';
+    html+='<div id="soBarcodeResult" class="so-barcode-result" style="display:none"></div>';
     html+='<div class="so-noresult" id="soNoResult" style="display:none">Kein Artikel gefunden.</div>';
 
     // Groups
@@ -66,7 +69,8 @@
         }
 
         var discHtml=extraHtml||'&nbsp;';
-        rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" class="'+cls.trim()+'">';
+        var bc=item.strichcode||'';
+        rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" data-barcode="'+esc(bc)+'" class="'+cls.trim()+'">';
         rows+='<td class="so-td-name">'+nameHtml+'</td>';
         rows+='<td class="so-td-disc">'+discHtml+'</td>';
         rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;</td></tr>';
@@ -83,6 +87,7 @@
 
     wrap.innerHTML=html;
     initFilterSearch();
+    initBarcodeScanner(data);
   }).catch(function(e){
     wrap.innerHTML='<p style="color:#c00;text-align:center;padding:40px">Preisliste konnte nicht geladen werden.</p>';
     console.error('Preisliste load failed',e);
@@ -90,6 +95,80 @@
 
   function fmtPrice(p){if(p===null||p===undefined)return '0,00';return p.toFixed(2).replace('.',',');}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+  function initBarcodeScanner(data){
+    var scanBtn=document.getElementById('soBarcodeBtn');
+    var scannerDiv=document.getElementById('soBarcodeScanner');
+    var readerDiv=document.getElementById('soBarcodeReader');
+    var closeBtn=document.getElementById('soBarcodeClose');
+    var resultDiv=document.getElementById('soBarcodeResult');
+    if(!scanBtn||!scannerDiv)return;
+    var scanner=null;
+    var allItems=[];
+    var gs=data.groups||{};
+    Object.keys(gs).forEach(function(wg){
+      gs[wg].forEach(function(it){allItems.push({wg:wg,item:it});});
+    });
+
+    function findByBarcode(code){
+      code=code.trim();
+      var found=[];
+      allItems.forEach(function(entry){
+        var bc=entry.item.strichcode||'';
+        if(bc&&bc.indexOf(code)!==-1)found.push(entry);
+      });
+      return found;
+    }
+
+    function showResult(code,matches){
+      if(!matches.length){
+        resultDiv.innerHTML='<div class="so-bc-notfound">&#x26A0; Artikel mit EAN <b>'+esc(code)+'</b> nicht im Sortiment gefunden.</div>';
+        resultDiv.style.display='block';
+        return;
+      }
+      var h='<div class="so-bc-found"><p>&#x2705; '+matches.length+' Artikel f&uuml;r EAN <b>'+esc(code)+'</b> gefunden:</p><table class="so-table">';
+      matches.forEach(function(m){
+        var it=m.item;
+        var preis=it.angebot&&it.angebot_preis?it.angebot_preis:it.vk;
+        h+='<tr><td class="so-td-name">'+esc(it.bezeichnung)+'<br><small style="color:#888">'+esc(m.wg)+'</small></td>';
+        h+='<td class="so-td-price">'+fmtPrice(preis)+'&nbsp;&euro;</td></tr>';
+      });
+      h+='</table></div>';
+      resultDiv.innerHTML=h;
+      resultDiv.style.display='block';
+    }
+
+    function stopScanner(){
+      if(scanner){
+        scanner.stop().then(function(){scanner.clear();}).catch(function(){});
+        scanner=null;
+      }
+      scannerDiv.style.display='none';
+    }
+
+    scanBtn.addEventListener('click',function(){
+      if(typeof Html5Qrcode==='undefined'){alert('Barcode-Scanner Library nicht geladen.');return;}
+      resultDiv.style.display='none';
+      resultDiv.innerHTML='';
+      scannerDiv.style.display='block';
+      scanner=new Html5Qrcode('soBarcodeReader');
+      scanner.start(
+        {facingMode:'environment'},
+        {fps:10,qrbox:{width:280,height:150},formatsToSupport:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
+        function(decodedText){
+          stopScanner();
+          var matches=findByBarcode(decodedText);
+          showResult(decodedText,matches);
+        },
+        function(){}
+      ).catch(function(err){
+        stopScanner();
+        alert('Kamera konnte nicht ge\u00f6ffnet werden.\n'+err);
+      });
+    });
+
+    closeBtn.addEventListener('click',function(){stopScanner();});
+  }
 
   function initFilterSearch(){
     var input=document.getElementById('soSearch');
