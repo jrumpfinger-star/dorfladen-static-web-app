@@ -1919,26 +1919,17 @@ document.head.appendChild(msalScript);
   }
 
   function _searchFolderForImage(token, folderId, artnr){
-    var searchUrl='https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folderId+'/children?$filter=startswith(name,\''+artnr+'\')&$top=5';
-    return fetch(searchUrl,{
-      headers:{'Authorization':'Bearer '+token.accessToken}
-    }).then(function(r){
-      if(!r.ok){
-        return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folderId+'/children?$top=999',{
-          headers:{'Authorization':'Bearer '+token.accessToken}
-        }).then(function(r2){
-          if(!r2.ok) throw new Error('Drive query failed: '+r2.status);
-          return r2.json();
-        });
-      }
-      return r.json();
-    }).then(function(data){
-      if(!data || !data.value || data.value.length===0) return null;
-      var fname=artnr.toLowerCase();
-      var found=data.value.find(function(f){
-        var name=(f.name||'').toLowerCase().replace(/\.[^.]+$/,'');
-        return name===fname;
+    // Try exact filename matches: artnr.jpg, artnr.png, artnr.gif
+    var exts=['jpg','png','gif','jpeg'];
+    var tryNext=function(i){
+      if(i>=exts.length) return Promise.resolve(null);
+      var url='https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folderId+':/'+artnr+'.'+exts[i];
+      return fetch(url,{headers:{'Authorization':'Bearer '+token.accessToken}}).then(function(r){
+        if(r.ok) return r.json();
+        return tryNext(i+1);
       });
+    };
+    return tryNext(0).then(function(found){
       if(!found || !found.id) return null;
       console.log('[CMS] Found image file:',found.name,'in folder',folderId);
       return fetch('https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+found.id+'/content',{
@@ -1973,7 +1964,7 @@ document.head.appendChild(msalScript);
         if(b64) return b64;
         // 2. Fallback: search in StrichcodeBilder folder by strichcode (min 5 chars)
         var barcodeSearch=strichcode||artnr;
-        if(!barcodeSearch || barcodeSearch.length<5) return null;
+        if(!barcodeSearch) return null;
         console.log('[CMS] Not found in main folder, trying StrichcodeBilder with',barcodeSearch,'...');
         return _searchFolderForImage(token, SP_BARCODE_FOLDER, barcodeSearch);
       });
