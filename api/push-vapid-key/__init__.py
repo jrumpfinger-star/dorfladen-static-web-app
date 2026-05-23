@@ -24,7 +24,32 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=500, mimetype="application/json", headers=get_cors_headers()
         )
 
+    # Debug: verify key pair matches
+    vapid_private_key = os.environ.get("VAPID_PRIVATE_KEY", "")
+    key_match = "unknown"
+    derived_pub = ""
+    try:
+        from cryptography.hazmat.primitives.asymmetric import ec
+        from cryptography.hazmat.primitives import serialization
+        import base64
+        # Decode private key from URL-safe base64
+        priv_bytes = base64.urlsafe_b64decode(vapid_private_key + '==')
+        priv_key = ec.derive_private_key(int.from_bytes(priv_bytes, 'big'), ec.SECP256R1())
+        pub_bytes = priv_key.public_key().public_bytes(
+            serialization.Encoding.X962,
+            serialization.PublicFormat.UncompressedPoint
+        )
+        derived_pub = base64.urlsafe_b64encode(pub_bytes).rstrip(b'=').decode()
+        key_match = (derived_pub == vapid_public_key)
+    except Exception as e:
+        key_match = f"error: {str(e)[:100]}"
+
     return func.HttpResponse(
-        json.dumps({"publicKey": vapid_public_key}),
+        json.dumps({
+            "publicKey": vapid_public_key,
+            "privateKeyLen": len(vapid_private_key),
+            "keyPairMatch": key_match,
+            "derivedPublicKey": derived_pub[:20] + "..." if derived_pub else ""
+        }),
         status_code=200, mimetype="application/json", headers=get_cors_headers()
     )
