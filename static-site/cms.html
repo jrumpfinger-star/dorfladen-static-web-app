@@ -2335,10 +2335,12 @@ document.head.appendChild(msalScript);
     var id=e.target.id;if(!id||id.indexOf('cfg-')!==0)return;
     var k=id.replace('cfg-','');cfgUpdateVal(k,e.target.value);
     if(id==='cfg-savingsScalePlakat'||id==='cfg-savingsScaleFlyer'||id==='cfg-tagColor')cfgRenderSavingsPreview();
+    // Auto-save when template color pickers change
+    if(id.indexOf('cfg-tpl-')===0){cfgSave(cfgReadUI());}
   });
   document.addEventListener('change',function(e){
-    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');}
-    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');}
+    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');cfgSave(cfgReadUI());}
+    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');cfgSave(cfgReadUI());}
   });
 
   // --- Homepage/Wochenplan Config (hpCfg) ---
@@ -3986,7 +3988,7 @@ document.head.appendChild(msalScript);
 
       if(theme.tpl==='modern-magazine'){
         // ── Modern Magazine Einzelflyer: clean centered card layout ──
-        ctx.fillStyle='#edf4ea';ctx.fillRect(0,0,W,H);
+        ctx.fillStyle=theme.bgColor;ctx.fillRect(0,0,W,H);
         // Header bar
         ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
         ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
@@ -3999,7 +4001,7 @@ document.head.appendChild(msalScript);
             var lh=80,lw=lh*(li.width/li.height);
             ctx.drawImage(li,28,30,lw,lh);
             // 'Angebote' dominant next to logo
-            ctx.fillStyle='#2e4528';ctx.textAlign='left';
+            ctx.fillStyle=theme.titleColor;ctx.textAlign='left';
             ctx.font='900 44px Arial Black, Arial, sans-serif';
             ctx.fillText('Angebote',28+lw+16,78);
             rl();
@@ -4007,7 +4009,7 @@ document.head.appendChild(msalScript);
         });
 
         // Date right
-        ctx.fillStyle='#3a5232';ctx.font='700 18px Arial, sans-serif';ctx.textAlign='right';
+        ctx.fillStyle=theme.dateColor;ctx.font='700 18px Arial, sans-serif';ctx.textAlign='right';
         ctx.fillText('Gültig:',W-42,52);
         ctx.font='900 24px Arial Black, Arial, sans-serif';
         ctx.fillText(von+' \u2013 '+bis,W-42,82);
@@ -4024,8 +4026,8 @@ document.head.appendChild(msalScript);
         }
         // Card shadow + fill
         ctx.save();ctx.shadowColor='rgba(0,0,0,0.1)';ctx.shadowBlur=12;ctx.shadowOffsetY=6;
-        ctx.fillStyle='#ffffff';mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.fill();ctx.restore();
-        ctx.strokeStyle='#d2e0cf';ctx.lineWidth=1;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.stroke();
+        ctx.fillStyle=theme.cardBg;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.fill();ctx.restore();
+        ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.stroke();
 
         // Image area (top 55% of card)
         var imgZoneH=Math.floor(cardMH*0.55);
@@ -4057,7 +4059,7 @@ document.head.appendChild(msalScript);
           var savePct=getSavingsPercent(item);
           if(savePct){
             var bR=34;
-            ctx.fillStyle='#5e8a4a';
+            ctx.fillStyle=theme.tagColor;
             ctx.beginPath();ctx.arc(cardMX+cardMW-28-bR,cardMY+28+bR,bR,0,Math.PI*2);ctx.fill();
             ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 26px Arial Black, Arial, sans-serif';
             ctx.fillText('-'+savePct+'%',cardMX+cardMW-28-bR,cardMY+28+bR+8);
@@ -4073,7 +4075,7 @@ document.head.appendChild(msalScript);
           var tPad=32, tY=divY+36;
 
           // Product name
-          ctx.fillStyle='#1e2d1a';ctx.font='900 42px Arial Black, Arial, sans-serif';ctx.textAlign='left';
+          ctx.fillStyle=theme.textColor;ctx.font='900 42px Arial Black, Arial, sans-serif';ctx.textAlign='left';
           var pName=(item.produkt||'Produkt').trim();
           var pLines=wrapTextCMS(ctx,pName,cardMW-tPad*2).slice(0,2);
           pLines.forEach(function(l){ctx.fillText(l,cardMX+tPad,tY);tY+=50;});
@@ -4081,7 +4083,7 @@ document.head.appendChild(msalScript);
           // Details
           if(item.details){
             tY+=4;
-            ctx.fillStyle='#5b7552';ctx.font='600 24px Arial, sans-serif';
+            ctx.fillStyle=theme.detailsColor;ctx.font='600 24px Arial, sans-serif';
             var dLines=wrapTextCMS(ctx,item.details,cardMW-tPad*2).slice(0,2);
             dLines.forEach(function(l){ctx.fillText(l,cardMX+tPad,tY);tY+=30;});
           }
@@ -4093,7 +4095,7 @@ document.head.appendChild(msalScript);
 
           if(item.preis){
             var pp=Number(item.preis).toFixed(2).split('.');
-            ctx.fillStyle='#2a5218';ctx.font='900 52px Arial Black, Arial, sans-serif';
+            ctx.fillStyle=theme.tagColor;ctx.font='900 52px Arial Black, Arial, sans-serif';
             ctx.fillText(pp[0]+','+pp[1],cardMX+40,priceBarY+52);
             var mw=ctx.measureText(pp[0]+','+pp[1]).width;
             ctx.font='700 30px Arial, sans-serif';
@@ -4236,6 +4238,10 @@ document.head.appendChild(msalScript);
     if(!_currentPreviewAktion||!_currentPreviewAktion.items)return;
     var items=_currentPreviewAktion.items,data=_currentPreviewAktion;
     if(items.length===0){toast('Keine Artikel vorhanden','warn');return;}
+    // Open window IMMEDIATELY (synchronous, in user-click context) so mobile browsers don't block it
+    var win=window.open('','_blank');
+    if(!win){toast('Popup-Blocker aktiv \u2013 bitte erlauben','warn');return;}
+    win.document.write('<html><head><title>Einzelflyer</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial,sans-serif;color:#888"><div style="text-align:center"><div style="font-size:2rem;margin-bottom:12px">\u23f3</div>Einzelflyer werden erstellt\u2026</div></body></html>');
     toast('Einzelflyer werden erstellt...','ok');
     // Fetch missing images first
     var fetchPromises=items.map(function(it){
@@ -4248,8 +4254,6 @@ document.head.appendChild(msalScript);
     Promise.all(fetchPromises).then(function(){
       return Promise.all(items.map(function(item){return generateEinzelflyer(item,data);}));
     }).then(function(canvases){
-      var win=window.open('','_blank');
-      if(!win){toast('Popup-Blocker aktiv \u2013 bitte erlauben','warn');return;}
       var html='<html><head><title>Einzelflyer</title><style>'
         +'@page{margin:0;size:A4 portrait}'
         +'@media print{.no-print{display:none!important}.flyer-page{page-break-after:always;page-break-inside:avoid}}'
@@ -4503,7 +4507,7 @@ document.head.appendChild(msalScript);
 
     if(theme.tpl==='modern-magazine'){
       // ── Modern Magazine: Clean grid card layout ──
-      ctx.fillStyle='#edf4ea';ctx.fillRect(0,0,W,H);
+      ctx.fillStyle=theme.bgColor;ctx.fillRect(0,0,W,H);
 
       // Header bar
       ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
@@ -4518,7 +4522,7 @@ document.head.appendChild(msalScript);
           var lh=80,lw=lh*(li.width/li.height);
           ctx.drawImage(li,28,30,lw,lh);
           // 'Angebote' dominant next to logo
-          ctx.fillStyle='#2e4528';ctx.textAlign='left';
+          ctx.fillStyle=theme.titleColor;ctx.textAlign='left';
           ctx.font='900 44px Arial Black, Arial, sans-serif';
           ctx.fillText('Angebote',28+lw+16,78);
           rl();
@@ -4530,7 +4534,7 @@ document.head.appendChild(msalScript);
       // Date right
       var vonTxt=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
       var bisTxt=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      ctx.fillStyle='#3a5232';ctx.font='700 18px Arial, sans-serif';ctx.textAlign='right';
+      ctx.fillStyle=theme.dateColor;ctx.font='700 18px Arial, sans-serif';ctx.textAlign='right';
       ctx.fillText('Gültig:',W-30,52);
       ctx.font='900 24px Arial Black, Arial, sans-serif';
       ctx.fillText(vonTxt+' – '+bisTxt,W-30,82);
@@ -4568,9 +4572,9 @@ document.head.appendChild(msalScript);
 
         // Card shadow
         ctx.save();ctx.shadowColor='rgba(0,0,0,0.08)';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
-        ctx.fillStyle='#ffffff';mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.fill();ctx.restore();
+        ctx.fillStyle=theme.cardBg;mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.fill();ctx.restore();
         // Card border
-        ctx.strokeStyle='#d2e0cf';ctx.lineWidth=1;mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.stroke();
+        ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.stroke();
 
         var cardPadI=14;
         // Image area (top half of card)
@@ -4595,7 +4599,7 @@ document.head.appendChild(msalScript);
         var sp=getSavingsPercent(it);
         if(sp){
           var badgeR=22;
-          ctx.fillStyle='#5e8a4a';
+          ctx.fillStyle=theme.tagColor;
           ctx.beginPath();ctx.arc(cx+mgCellW-cardPadI-badgeR+4,cy+cardPadI+badgeR-4,badgeR,0,Math.PI*2);ctx.fill();
           ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 18px Arial Black, Arial, sans-serif';
           ctx.fillText('-'+sp+'%',cx+mgCellW-cardPadI-badgeR+4,cy+cardPadI+badgeR+2);
@@ -4606,14 +4610,14 @@ document.head.appendChild(msalScript);
         var textTop=cy+imgAreaH+8;
 
         // Product name
-        ctx.fillStyle='#1e2d1a';ctx.font='700 20px Arial, sans-serif';
+        ctx.fillStyle=theme.textColor;ctx.font='700 20px Arial, sans-serif';
         var nameLines=wrapTextCMS(ctx,(it&&it.produkt)||'Produkt',mgCellW-cardPadI*2).slice(0,2);
         var ny=textTop+20;
         nameLines.forEach(function(l){ctx.fillText(l,cx+cardPadI,ny);ny+=24;});
 
         // Details
         if(it&&it.details){
-          ctx.fillStyle='#6b8560';ctx.font='600 15px Arial, sans-serif';
+          ctx.fillStyle=theme.detailsColor;ctx.font='600 15px Arial, sans-serif';
           ctx.fillText(truncText(ctx,it.details,mgCellW-cardPadI*2),cx+cardPadI,ny+2);
           ny+=22;
         }
@@ -4628,7 +4632,7 @@ document.head.appendChild(msalScript);
             ctx.fillStyle='#eaf3e6';mgRRect(cx+cardPadI-4,priceY-42,mgCellW-cardPadI*2+8,46,10);ctx.fill();
             ctx.strokeStyle='#c5dbbe';ctx.lineWidth=1;mgRRect(cx+cardPadI-4,priceY-42,mgCellW-cardPadI*2+8,46,10);ctx.stroke();
             // Main price
-            ctx.fillStyle='#2a5218';ctx.font='900 34px Arial Black, Arial, sans-serif';
+            ctx.fillStyle=theme.tagColor;ctx.font='900 34px Arial Black, Arial, sans-serif';
             ctx.fillText(pp[0]+','+pp[1],cx+cardPadI+4,priceY-6);
             ctx.font='700 20px Arial, sans-serif';
             var mw=ctx.measureText(pp[0]+','+pp[1]).width;
