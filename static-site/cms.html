@@ -4077,7 +4077,7 @@ document.head.appendChild(msalScript);
       // ── Bild + Preisschild: Bild zuerst (volle Fläche), dann Tag darüber ──
       var imgAreaTop=textY+6;
       var imgAreaH=cardH-(imgAreaTop-cardY)-pad-10;
-      var tagW=250,tagH=115;
+      var tagW=280,tagH=130;
       var tagCX=cardX+cardW-pad-tagW/2+10;
       var tagCY=imgAreaTop+tagH/2+20;
       // Bild zuerst zeichnen (nutzt gesamten verfügbaren Bereich, am unteren Rand verankert)
@@ -4133,7 +4133,7 @@ document.head.appendChild(msalScript);
         ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';var cw=ctx.measureText(centStr).width;
         ctx.font='bold '+es+'px Arial, sans-serif';var ew=ctx.measureText('\u20AC').width;
         var tw=mw+cw+ew+4;
-        if(tw>tagW-24){var sc2=(tagW-24)/tw;fs=Math.round(fs*sc2);cs=Math.round(cs*sc2);es=Math.round(es*sc2);
+        if(tw>tagW-40){var sc2=(tagW-40)/tw;fs=Math.round(fs*sc2);cs=Math.round(cs*sc2);es=Math.round(es*sc2);
           ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';mw=ctx.measureText(mainStr).width;
           ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';cw=ctx.measureText(centStr).width;
           ctx.font='bold '+es+'px Arial, sans-serif';ew=ctx.measureText('\u20AC').width;tw=mw+cw+ew+4;}
@@ -4691,7 +4691,7 @@ document.head.appendChild(msalScript);
       if(item.preis){
         var cardSavingsPct=getSavingsPercent(item);
         var preisStr=Number(item.preis).toFixed(2).split('.');
-        var tagW=115,tagH=52;
+        var tagW=130,tagH=58;
         var tagCX=cx+cellW-cardPad-tagW/2-10;
         var tagCY=imgAreaTop+imgAreaH*0.4;
         ctx.save();
@@ -4722,10 +4722,14 @@ document.head.appendChild(msalScript);
         ctx.font='bold '+es+'px Arial, sans-serif';
         var ew=ctx.measureText('\u20AC').width;
         var tw=mw+cw+ew+3;
+        if(tw>tagW-20){var sc2=(tagW-20)/tw;fs=Math.round(fs*sc2);cs=Math.round(cs*sc2);es=Math.round(es*sc2);
+          ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';mw=ctx.measureText(mainStr).width;
+          ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';cw=ctx.measureText(centStr).width;
+          ctx.font='bold '+es+'px Arial, sans-serif';ew=ctx.measureText('\u20AC').width;tw=mw+cw+ew+3;}
         var px=-tw/2,py=fs*0.15;
         ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';ctx.fillText(mainStr,px,py);
         ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';ctx.fillText(centStr,px+mw+2,py-fs*0.3);
-        ctx.font='bold '+es+'px Arial, sans-serif';ctx.fillText(euroSign='\u20AC',px+mw+cw+3,py-fs*0.28);
+        ctx.font='bold '+es+'px Arial, sans-serif';ctx.fillText('\u20AC',px+mw+cw+3,py-fs*0.28);
         ctx.restore();
         // Statt-Preis unter dem Tag
         if(item.statt_preis){
