@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v16';
+var CACHE_NAME='dorfladen-v17';
 var PRECACHE=[
   '/',
   '/css/style.css',

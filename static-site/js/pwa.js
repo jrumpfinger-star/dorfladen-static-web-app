@@ -414,7 +414,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     });
   }
 
-  function freshSubscribe(reg,cats){
+  function freshSubscribe(reg,cats,retried){
     return fetch('/api/push-vapid-key').then(function(r){return r.json()}).then(function(data){
       if(!data.publicKey){throw new Error('Push-Konfiguration fehlt');}
       return reg.pushManager.subscribe({
@@ -428,6 +428,12 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({subscription:newSub.toJSON(),categories:cats||['mittagstisch','angebote','news']})
       }).then(function(r){return r.json();}).then(function(res){
+        if(res.endpoint_invalid&&!retried){
+          // Endpoint was dead – unsubscribe and retry once
+          return newSub.unsubscribe().then(function(){
+            return freshSubscribe(reg,cats,true);
+          });
+        }
         if(!res.success)throw new Error(res.error||'Server-Fehler');
         updatePushUI(true);
         return newSub;
@@ -435,12 +441,18 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     });
   }
 
-  function registerExisting(sub){
+  function registerExisting(sub,reg){
     return fetch('/api/push-subscribe',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news']})
     }).then(function(r){return r.json();}).then(function(res){
+      if(res.endpoint_invalid&&reg){
+        // Endpoint dead – unsubscribe old, get fresh one
+        return sub.unsubscribe().then(function(){
+          return freshSubscribe(reg);
+        });
+      }
       updatePushUI(true);
       return sub;
     });
@@ -464,7 +476,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
                 showPushSettings(sub.endpoint,false);
               }else{
                 // Not in Dataverse – register existing, then show settings dialog immediately
-                return registerExisting(sub).then(function(){
+                return registerExisting(sub,reg).then(function(){
                   showPushSettings(sub.endpoint,true);
                 });
               }
