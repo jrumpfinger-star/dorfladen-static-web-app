@@ -3000,7 +3000,7 @@ document.head.appendChild(msalScript);
   // Gerichte history for autocomplete
   var gerichteHistory=[];
   function loadGerichteHistory(){
-    fetch(API+'/wochenplan?$select=dl_gericht,dl_preis&$orderby=dl_datum desc&$top=200')
+    fetch(API+'/wochenplan?$select=dl_gericht,dl_preis&$orderby=dl_datum desc&$top=500&$filter=dl_status eq 101001')
       .then(function(r){return r.json();})
       .then(function(data){
         var seen={};
