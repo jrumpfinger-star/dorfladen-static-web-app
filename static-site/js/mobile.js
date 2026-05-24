@@ -122,7 +122,7 @@
   function getKW(){
     var now=new Date();
     // Ab Samstag: nächste Woche anzeigen
-    if(now.getDay()>=6){now.setDate(now.getDate()+(now.getDay()===6?2:1));}
+    if(now.getDay()===0||now.getDay()===6){now.setDate(now.getDate()+(now.getDay()===0?1:2));}
     var d=new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()));
     d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
     return Math.ceil((((d-new Date(Date.UTC(d.getUTCFullYear(),0,1)))/86400000)+1)/7);

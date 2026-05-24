@@ -1533,7 +1533,7 @@ document.head.appendChild(msalScript);
   function weekBounds(mode){
     var d=new Date();
     // Ab Samstag: "Diese Woche" = nächste KW
-    if(d.getDay()>=6) d.setDate(d.getDate()+(d.getDay()===6?2:1));
+    if(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+(d.getDay()===0?1:2));
     if(mode==='next') d.setDate(d.getDate()+7);
     var day=(d.getDay()+6)%7;
     var mon=new Date(d);mon.setDate(d.getDate()-day);mon.setHours(0,0,0,0);
@@ -2238,7 +2238,7 @@ document.head.appendChild(msalScript);
       refreshToken();
       var d = new Date();
       // Ab Samstag (6) die nächste Woche anzeigen
-      if(d.getDay()>=6){d.setDate(d.getDate()+(d.getDay()===6?2:1));}
+      if(d.getDay()===0||d.getDay()===6){d.setDate(d.getDate()+(d.getDay()===0?1:2));}
       jahr = d.getFullYear();
       kw = isoWeek(d);
       loadWP();
@@ -2665,7 +2665,7 @@ document.head.appendChild(msalScript);
   window.cmsWeekJump = function(offset){
     var d=new Date();
     // Ab Samstag: "Diese Woche" = nächste KW, "Nächste Woche" = übernächste KW
-    if(d.getDay()>=6) d.setDate(d.getDate()+(d.getDay()===6?2:1));
+    if(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+(d.getDay()===0?1:2));
     d.setDate(d.getDate()+offset*7);
     jahr=d.getFullYear();kw=isoWeek(d);loadWP();
   };
@@ -2680,7 +2680,7 @@ document.head.appendChild(msalScript);
     document.getElementById('cms-wp-range').textContent=fmtD(r.start)+' \u2013 '+fmtD(r.end);
     var now=new Date();
     // Ab Samstag: "Diese Woche" ist bereits die nächste KW
-    if(now.getDay()>=6) now.setDate(now.getDate()+(now.getDay()===6?2:1));
+    if(now.getDay()===0||now.getDay()===6) now.setDate(now.getDate()+(now.getDay()===0?1:2));
     var thisKw=isoWeek(now),thisJahr=now.getFullYear();
     var nxt=new Date(now.getTime());nxt.setDate(nxt.getDate()+7);var nxtKw=isoWeek(nxt),nxtJahr=nxt.getFullYear();
     var bThis=document.querySelector('[data-action="weekThis"]'),bNxt=document.querySelector('[data-action="weekNxt"]');

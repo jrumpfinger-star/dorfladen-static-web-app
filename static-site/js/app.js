@@ -253,7 +253,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       var meals=items;
       // Compute target week Monday (same logic as API)
       var now=new Date();
-      if(now.getDay()>=6){now.setDate(now.getDate()+(now.getDay()===6?2:1));}
+      if(now.getDay()===0||now.getDay()===6){now.setDate(now.getDate()+(now.getDay()===0?1:2));}
       // Monday of target week
       var dayOfWeek=(now.getDay()+6)%7; // 0=Mo,1=Di,...,6=So
       var monday=new Date(now.getFullYear(),now.getMonth(),now.getDate()-dayOfWeek);
