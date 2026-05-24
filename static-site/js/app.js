@@ -562,22 +562,22 @@ var allAngebote = [];
     .catch(function(e){console.log('ANG-API:',e);});
 })();
 
-function getMonday(d){var dt=new Date(d);var day=dt.getDay()||7;dt.setDate(dt.getDate()-day+1);dt.setHours(0,0,0,0);return dt;}
-function getSunday(d){var m=getMonday(d);m.setDate(m.getDate()+6);m.setHours(23,59,59);return m;}
+function getWeekStart(d){var dt=new Date(d);dt.setDate(dt.getDate()-dt.getDay());dt.setHours(0,0,0,0);return dt;}
+function getWeekEnd(d){var s=getWeekStart(d);s.setDate(s.getDate()+6);s.setHours(23,59,59);return s;}
 function isoDate(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
-function rangesOverlap(aVon,aBis,wMon,wSun){return aVon<=wSun && aBis>=wMon;}
+function rangesOverlap(aVon,aBis,wStart,wEnd){return aVon<=wEnd && aBis>=wStart;}
 
 function filterByWeek(mode){
   var now=new Date();
   var ref=new Date(now);
   if(mode==='next') ref.setDate(ref.getDate()+7);
-  var wMon=getMonday(ref), wSun=getSunday(ref);
+  var wStart=getWeekStart(ref), wEnd=getWeekEnd(ref);
   var filtered=allAngebote.filter(function(a){
     if(!a.von||!a.bis) return true;
     var aVon=isoDate(a.von), aBis=isoDate(a.bis);
-    return rangesOverlap(aVon,aBis,wMon,wSun);
+    return rangesOverlap(aVon,aBis,wStart,wEnd);
   });
-  return {items:filtered, mon:wMon, sun:wSun};
+  return {items:filtered, mon:wStart, sun:wEnd};
 }
 
 function renderAngebote(mode){

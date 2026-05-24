@@ -252,18 +252,17 @@
   function fmtP(v){var n=Number(v);if(isNaN(n))return v;return n.toFixed(2).replace('.',',');}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-  // Filter angebote by current week (same logic as desktop filterByWeek)
+  // Filter angebote by current week (So-Sa, matching desktop filterByWeek)
   function filterMobByWeek(items){
     var now=new Date();
-    var dt=new Date(now);var day=dt.getDay()||7;dt.setDate(dt.getDate()-day+1);dt.setHours(0,0,0,0);
-    var wMon=dt;
-    var wSun=new Date(wMon);wSun.setDate(wSun.getDate()+6);wSun.setHours(23,59,59);
+    var wStart=new Date(now);wStart.setDate(wStart.getDate()-wStart.getDay());wStart.setHours(0,0,0,0);
+    var wEnd=new Date(wStart);wEnd.setDate(wEnd.getDate()+6);wEnd.setHours(23,59,59);
     return items.filter(function(a){
       if(!a.von||!a.bis) return true;
       var p1=a.von.split('-'),p2=a.bis.split('-');
       var aVon=new Date(+p1[0],+p1[1]-1,+p1[2]);
       var aBis=new Date(+p2[0],+p2[1]-1,+p2[2]);
-      return aVon<=wSun && aBis>=wMon;
+      return aVon<=wEnd && aBis>=wStart;
     });
   }
 
