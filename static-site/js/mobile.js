@@ -9,19 +9,27 @@
   var API_BASE=window.API_BASE||'/api';
 
   /* === POPUP OPEN / CLOSE === */
+  function mobLockScroll(){document.body.style.overflow='hidden';document.body.style.position='fixed';document.body.style.width='100%';document.body.style.top='-'+window.scrollY+'px';}
+  function mobUnlockScroll(){
+    var top=document.body.style.top;document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';
+    if(top) window.scrollTo(0,parseInt(top||'0')*-1);
+  }
+  function mobAnyPopupOpen(){return document.querySelectorAll('.mob-popup-bg.open').length>0;}
   window.mobOpenPopup=function(id){
     var el=document.getElementById('mob-popup-'+id);
-    if(el) el.classList.add('open');
+    if(el){el.classList.add('open');mobLockScroll();}
   };
   window.mobClosePopup=function(id){
     var el=document.getElementById('mob-popup-'+id);
     if(el) el.classList.remove('open');
+    if(!mobAnyPopupOpen()) mobUnlockScroll();
   };
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){
       document.querySelectorAll('.mob-popup-bg.open').forEach(function(el){el.classList.remove('open');});
       document.getElementById('mob-nav').classList.remove('open');
       document.getElementById('mob-nav-ov').classList.remove('open');
+      mobUnlockScroll();
     }
   });
 
