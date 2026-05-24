@@ -296,7 +296,8 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         var isToday=dc===todayDc;
         var notice='';
         dayMeals.forEach(function(g){if(g.beschreibung&&!notice) notice=g.beschreibung;});
-        var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim();});
+        var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim()&&g.preis;});
+        if(!notice){dayMeals.forEach(function(g){if(g.gericht&&g.gericht.trim()&&!g.preis&&!notice) notice=g.gericht;});}
         if(realMeals.length===0){
           var cls=grp+(isToday?' wp-today wp-day-first wp-day-last':' wp-day-first wp-day-last');
           if(notice){
