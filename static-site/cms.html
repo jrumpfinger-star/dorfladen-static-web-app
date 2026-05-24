@@ -546,6 +546,12 @@ document.head.appendChild(msalScript);
     </div>
     <div id="cms-hp-fields" style="display:flex;flex-direction:column;gap:16px"></div>
     <div class="cms-empty" id="cms-hp-empty" style="display:none">Keine bearbeitbaren Felder gefunden.</div>
+    <!-- Seiteninhalte (Unterseiten) -->
+    <div style="margin-top:24px;border-top:2px solid #e5e7eb;padding-top:16px">
+      <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0 0 8px">&#128196; Seiteninhalte (Unterseiten)</h3>
+      <p style="font-size:12px;color:#6b7280;margin:0 0 12px">Texte der Unterseiten bearbeiten. Klicken Sie auf eine Seite, um den Inhalt zu &ouml;ffnen.</p>
+      <div id="cms-seiten-fields" style="display:flex;flex-direction:column;gap:4px"></div>
+    </div>
   </div>
   <!-- Sortiment-Texte -->
   <div id="cms-panel-sort" style="display:none">
@@ -857,7 +863,6 @@ document.head.appendChild(msalScript);
       <button class="cms-subtab active" data-action="cfgSubTab" data-id="cfg-hp" style="padding:8px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid #5ea88a;margin-bottom:-2px;color:#5ea88a">&#127968; Homepage</button>
       <button class="cms-subtab" data-action="cfgSubTab" data-id="cfg-wp" style="padding:8px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280">&#127869; Wochenplan</button>
       <button class="cms-subtab" data-action="cfgSubTab" data-id="cfg-plakat" style="padding:8px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280">&#128444; Plakate &amp; Flyer</button>
-      <button class="cms-subtab" data-action="cfgSubTab" data-id="cfg-seiten" style="padding:8px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280">&#128196; Seiteninhalte</button>
     </div>
     <!-- ============ SUB-TAB: Homepage ============ -->
     <div id="cms-cfg-hp">
@@ -1431,13 +1436,6 @@ document.head.appendChild(msalScript);
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">Zur&uuml;cksetzen</button>
           </div>
         </div>
-      </div>
-    </div>
-    <!-- ============ SUB-TAB: Seiteninhalte ============ -->
-    <div id="cms-cfg-seiten" style="display:none">
-      <p style="font-size:12px;color:#6b7280;margin:0 0 14px">Texte der Unterseiten bearbeiten. &Auml;nderungen werden nach Speichern sofort auf der jeweiligen Seite sichtbar.</p>
-      <div id="cms-seiten-fields" style="display:flex;flex-direction:column;gap:16px">
-        <div style="text-align:center;padding:20px;color:#6b7280">Lade Seiteninhalte&hellip;</div>
       </div>
     </div>
   </div>
@@ -2323,7 +2321,7 @@ document.head.appendChild(msalScript);
     });
     if(name==='hours' && hours.length===0) loadHours();
     if(name==='ang' && angebote.length===0) loadAngebote();
-    if(name==='hp'){ if(!_hpLoaded) loadHomepage(); loadLogo(); }
+    if(name==='hp'){ if(!_hpLoaded) loadHomepage(); loadLogo(); if(!window._seitenLoaded) loadSeiteninhalte(); }
     if(name==='news' && !_newsLoaded) loadNews();
     if(name==='sort' && !_sortLoaded) loadSortiment();
     if(name==='gallery' && !_galLoaded) loadGalleryAdmin();
@@ -2351,7 +2349,7 @@ document.head.appendChild(msalScript);
 
   // ── Design Sub-Tabs ──
   window.cmsCfgSubTab = function(id){
-    ['cfg-hp','cfg-wp','cfg-plakat','cfg-seiten'].forEach(function(t){
+    ['cfg-hp','cfg-wp','cfg-plakat'].forEach(function(t){
       var panel=document.getElementById('cms-'+t);
       if(panel) panel.style.display = t===id?'':'none';
     });
@@ -2361,7 +2359,6 @@ document.head.appendChild(msalScript);
       btn.style.borderBottomColor = active?'#5ea88a':'transparent';
       btn.style.color = active?'#5ea88a':'#6b7280';
     });
-    if(id==='cfg-seiten' && !window._seitenLoaded) loadSeiteninhalte();
   };
 
   // ── Seiteninhalte Tab ──

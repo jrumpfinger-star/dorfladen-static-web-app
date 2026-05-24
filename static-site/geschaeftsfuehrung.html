@@ -81,7 +81,9 @@
   var el=document.getElementById('gf-content');
   var fallback='<h2>Geschäftsführung</h2><p>Der Dorfladen Oberornau UG ist eine Unternehmergesellschaft, die rechtlich mit einer kleinen GmbH vergleichbar ist. Jede Unternehmergesellschaft benötigt entsprechend Gesellschafter, die die Unternehmung in deren Namen gründen und als Geschäftsführer führen.</p><p>Aktuell fungieren folgende Personen als Gesellschafter und Geschäftsführer:</p><p><em>Gesellschafter:</em></p><ul><li>Dieter Mücke</li><li>Andrea Reithmeier</li><li>N.N.</li></ul><p><em>Geschäftsführer:</em></p><ul><li>Andreas Waltl</li></ul>';
   fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
-    var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
+    var d=cfg.data||cfg,map={};
+    if(d&&typeof d==='object'&&!Array.isArray(d)){map=d;}
+    else if(Array.isArray(d)){d.forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});}
     el.innerHTML=map['gf_inhalt']||fallback;
   }).catch(function(){el.innerHTML=fallback;});
 })();

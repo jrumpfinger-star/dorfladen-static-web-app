@@ -83,7 +83,9 @@
   var el=document.getElementById('sg-content');
   var fallback='<h2>Stille Gesellschafter</h2><p>Der Dorfladen Oberornau wird getragen von einer starken Gemeinschaft stiller Gesellschafter aus dem Dorf und der Region. Durch ihre finanzielle Beteiligung erm&ouml;glichen sie den Betrieb unseres Dorfladens und sichern die Nahversorgung vor Ort.</p><p>Als stiller Gesellschafter leisten Sie einen wichtigen Beitrag zum Erhalt unseres Dorfladens. Sie beteiligen sich mit einer Einlage und unterst&uuml;tzen damit direkt die Nahversorgung in Oberornau.</p><h3>Vorteile einer stillen Beteiligung</h3><ul><li>Sicherung der Nahversorgung im eigenen Ort</li><li>Mitspracherecht bei der Gesellschafterversammlung</li><li>Aktive Mitgestaltung des Dorflebens</li><li>Wahl des Beirats als Ihre Vertretung</li></ul><h3>Interesse?</h3><p>Wenn Sie sich als stiller Gesellschafter beteiligen m&ouml;chten, sprechen Sie uns gerne an:</p><p>Telefon: <a href="tel:+4980826229991">08082 / 622 99 91</a><br>E-Mail: <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a></p>';
   fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
-    var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
+    var d=cfg.data||cfg,map={};
+    if(d&&typeof d==='object'&&!Array.isArray(d)){map=d;}
+    else if(Array.isArray(d)){d.forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});}
     el.innerHTML=map['stille_gesellschafter_inhalt']||fallback;
   }).catch(function(){el.innerHTML=fallback;});
 })();

@@ -81,7 +81,9 @@
   var el=document.getElementById('beirat-content');
   var fallback='<h2>Beirat</h2><p>Die Beiratsmitglieder sind die Vertreter der stillen Gesellschafter und sind auf 3 Jahre von der stillen Gesellschafterversammlung gew&auml;hlt. Aktuell besteht der Beirat aus 8 Personen. Eine Wiederwahl ist auf unbestimmte Zeit m&ouml;glich.</p><p>Am 23.07.2022 wurde ein neuer Beirat gew&auml;hlt, der sich wie folgt zusammensetzt:</p><ul><li>Cornelia Byzio</li><li>Markus Eberl</li><li>Josef Gartner (seit 13.06.2023)</li><li>Christine Kastler</li><li>Andreas Maier</li><li>Dieter M&uuml;cke</li><li>Andrea Reithmeier</li><li>Christian Strasser</li></ul>';
   fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
-    var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
+    var d=cfg.data||cfg,map={};
+    if(d&&typeof d==='object'&&!Array.isArray(d)){map=d;}
+    else if(Array.isArray(d)){d.forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});}
     el.innerHTML=map['beirat_inhalt']||fallback;
   }).catch(function(){el.innerHTML=fallback;});
 })();

@@ -83,7 +83,9 @@
   var el=document.getElementById('essen-content');
   var fallback='<h2>Essen im Dorfladen</h2><p>Unser Dorfladen bietet t&auml;glich frisch zubereitetes <strong>Mittagessen</strong> an. Dazu gibt es eine gem&uuml;tliche Sitzecke, in der Sie Ihr Essen genie&szlig;en k&ouml;nnen &ndash; oder Sie nehmen es einfach mit!</p><h3>Unser Angebot</h3><ul><li><strong>Fr&uuml;hst&uuml;ck</strong> &ndash; verschiedene Fr&uuml;hst&uuml;cksvariationen</li><li><strong>Brotzeit</strong> &ndash; deftige bayerische Brotzeiten</li><li><strong>Mittagessen</strong> &ndash; t&auml;glich wechselndes Men&uuml; (Mo-Fr)</li><li><strong>Kuchen &amp; Torten</strong> &ndash; t&auml;glich hausgemacht</li><li><strong>Freitags: Schnitzeltag!</strong></li></ul><p>Beim Essen zum Mitnehmen gibt&rsquo;s <strong>0,50 &euro; &Ouml;ko-Rabatt</strong>, wenn ihr euren eigenen Beh&auml;lter mitbringt!</p><p style="text-align:center;margin:24px 0"><span style="color:#c0392b;font-size:1.3em;font-weight:bold">Gerne auch vorbestellen</span><br><span style="font-size:1.15em">Tel: <a href="tel:+4980826229991" style="color:#c0392b;font-weight:bold;text-decoration:none">08082 622 99 91</a></span></p><h3>Catering &amp; Lieferung</h3><p>F&uuml;r Vereine und Familienfeiern liefern wir gerne kalte und warme Speisen, Backwaren und hausgemachte Torten. F&uuml;r Mitb&uuml;rger mit Mobilit&auml;tseinschr&auml;nkung kann unser Mittagessen &uuml;ber die <strong>Nachbarschaftshilfe Obertaufkirchen</strong> sogar nach Hause geliefert werden.</p><p>Telefon: <a href="tel:+4980826229991">08082 / 622 99 91</a></p>';
   fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
-    var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
+    var d=cfg.data||cfg,map={};
+    if(d&&typeof d==='object'&&!Array.isArray(d)){map=d;}
+    else if(Array.isArray(d)){d.forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});}
     el.innerHTML=map['essen_inhalt']||fallback;
   }).catch(function(){el.innerHTML=fallback;});
 })();
