@@ -2379,9 +2379,13 @@ document.head.appendChild(msalScript);
     fetch(API+'/cms-config')
       .then(function(r){return r.json();})
       .then(function(cfg){
-        var items=Array.isArray(cfg)?cfg:(cfg.data||[]);
         var map={};
-        items.forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert||'';});
+        var d=cfg.data||cfg;
+        if(Array.isArray(d)){
+          d.forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert||'';});
+        } else if(d && typeof d==='object'){
+          Object.keys(d).forEach(function(k){map[k]=typeof d[k]==='string'?d[k]:JSON.stringify(d[k]);});
+        }
         function rteBar(id){
           return '<div class="cms-rte-toolbar">'
             +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'bold\')" title="Fett"><b>B</b></button>'
