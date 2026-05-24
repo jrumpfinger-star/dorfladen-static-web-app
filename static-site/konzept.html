@@ -75,7 +75,17 @@
 <main id="main" class="ct-wrap">
   <article class="ct">
     <h1>Konzept</h1>
-<h2>Unser Konzept</h2><p>Das Hauptziel des Dorfladens ist die Verbesserung der Nahversorgung, mit einem Sortiment so regional und saisonal wie möglich. Die andere wesentliche Funktion ist die einer Begegnungsstätte. Unser Laden mit seiner gemütlichen Sitzecke ist ein zentraler Treffpunkt im Dorf für Jung und Alt, wo man sich bei hausgemachten Köstlichkeiten zusammen setzen kann.</p><p>Wir bieten verschiedene Frühstücke, Brotzeiten und als besonderes Highlight hausgemachte Kuchen und Torten sowie ein täglich frisch zubereitetes Mittagessen. Alles auch gerne zum Mitnehmen!</p><p>Für Vereine und Familienfeiern liefern wir gerne kalte und warme Speisen, Backwaren und hausgemachte Torten. Für Mitbürger mit Mobilitätseinschränkung kann unser Mittagessen über die Nachbarschaftshilfe Obertaufkirchen sogar nach Hause geliefert werden. Sprechen Sie uns an!</p>
+<div id="konzept-content"><p style="color:#6b7280">Lade Inhalt&hellip;</p></div>
+<script>
+(function(){
+  var el=document.getElementById('konzept-content');
+  var fallback='<h2>Unser Konzept</h2><p>Das Hauptziel des Dorfladens ist die Verbesserung der Nahversorgung, mit einem Sortiment so regional und saisonal wie m&ouml;glich. Die andere wesentliche Funktion ist die einer Begegnungsst&auml;tte. Unser Laden mit seiner gem&uuml;tlichen Sitzecke ist ein zentraler Treffpunkt im Dorf f&uuml;r Jung und Alt, wo man sich bei hausgemachten K&ouml;stlichkeiten zusammen setzen kann.</p><p>Wir bieten verschiedene Fr&uuml;hst&uuml;cke, Brotzeiten und als besonderes Highlight hausgemachte Kuchen und Torten sowie ein t&auml;glich frisch zubereitetes Mittagessen. Alles auch gerne zum Mitnehmen!</p><p>F&uuml;r Vereine und Familienfeiern liefern wir gerne kalte und warme Speisen, Backwaren und hausgemachte Torten. F&uuml;r Mitb&uuml;rger mit Mobilit&auml;tseinschr&auml;nkung kann unser Mittagessen &uuml;ber die Nachbarschaftshilfe Obertaufkirchen sogar nach Hause geliefert werden. Sprechen Sie uns an!</p>';
+  fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
+    var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
+    el.innerHTML=map['konzept_inhalt']||fallback;
+  }).catch(function(){el.innerHTML=fallback;});
+})();
+</script>
   </article>
   <aside class="sb" aria-label="Seitenleiste">
     <div class="cd">

@@ -75,7 +75,17 @@
 <main id="main" class="ct-wrap">
   <article class="ct">
     <h1>Beirat</h1>
-<h2>Beirat</h2><p>Die Beiratsmitglieder sind die Vertreter der stillen Gesellschafter und sind auf 3 Jahre von der stillen Gesellschafterversammlung gewählt. Aktuell besteht der Beirat aus 8 Personen. Eine Wiederwahl ist auf unbestimmte Zeit möglich.</p><p>Am 23.07.2022 wurde ein neuer Beirat gewählt, der sich wie folgt zusammensetzt:</p><ul><li>Cornelia Byzio</li><li>Markus Eberl</li><li>Josef Gartner (seit 13.06.2023)</li><li>Christine Kastler</li><li>Andreas Maier</li><li>Dieter Mücke</li><li>Andrea Reithmeier</li><li>Christian Strasser</li></ul>
+<div id="beirat-content"><p style="color:#6b7280">Lade Inhalt&hellip;</p></div>
+<script>
+(function(){
+  var el=document.getElementById('beirat-content');
+  var fallback='<h2>Beirat</h2><p>Die Beiratsmitglieder sind die Vertreter der stillen Gesellschafter und sind auf 3 Jahre von der stillen Gesellschafterversammlung gew&auml;hlt. Aktuell besteht der Beirat aus 8 Personen. Eine Wiederwahl ist auf unbestimmte Zeit m&ouml;glich.</p><p>Am 23.07.2022 wurde ein neuer Beirat gew&auml;hlt, der sich wie folgt zusammensetzt:</p><ul><li>Cornelia Byzio</li><li>Markus Eberl</li><li>Josef Gartner (seit 13.06.2023)</li><li>Christine Kastler</li><li>Andreas Maier</li><li>Dieter M&uuml;cke</li><li>Andrea Reithmeier</li><li>Christian Strasser</li></ul>';
+  fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfg){
+    var map={};(Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert;});
+    el.innerHTML=map['beirat_inhalt']||fallback;
+  }).catch(function(){el.innerHTML=fallback;});
+})();
+</script>
   </article>
   <aside class="sb" aria-label="Seitenleiste">
     <div class="cd">

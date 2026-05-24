@@ -857,6 +857,7 @@ document.head.appendChild(msalScript);
       <button class="cms-subtab active" data-action="cfgSubTab" data-id="cfg-hp" style="padding:8px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid #5ea88a;margin-bottom:-2px;color:#5ea88a">&#127968; Homepage</button>
       <button class="cms-subtab" data-action="cfgSubTab" data-id="cfg-wp" style="padding:8px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280">&#127869; Wochenplan</button>
       <button class="cms-subtab" data-action="cfgSubTab" data-id="cfg-plakat" style="padding:8px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280">&#128444; Plakate &amp; Flyer</button>
+      <button class="cms-subtab" data-action="cfgSubTab" data-id="cfg-seiten" style="padding:8px 18px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280">&#128196; Seiteninhalte</button>
     </div>
     <!-- ============ SUB-TAB: Homepage ============ -->
     <div id="cms-cfg-hp">
@@ -1430,6 +1431,13 @@ document.head.appendChild(msalScript);
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">Zur&uuml;cksetzen</button>
           </div>
         </div>
+      </div>
+    </div>
+    <!-- ============ SUB-TAB: Seiteninhalte ============ -->
+    <div id="cms-cfg-seiten" style="display:none">
+      <p style="font-size:12px;color:#6b7280;margin:0 0 14px">Texte der Unterseiten bearbeiten. &Auml;nderungen werden nach Speichern sofort auf der jeweiligen Seite sichtbar.</p>
+      <div id="cms-seiten-fields" style="display:flex;flex-direction:column;gap:16px">
+        <div style="text-align:center;padding:20px;color:#6b7280">Lade Seiteninhalte&hellip;</div>
       </div>
     </div>
   </div>
@@ -2343,7 +2351,7 @@ document.head.appendChild(msalScript);
 
   // ── Design Sub-Tabs ──
   window.cmsCfgSubTab = function(id){
-    ['cfg-hp','cfg-wp','cfg-plakat'].forEach(function(t){
+    ['cfg-hp','cfg-wp','cfg-plakat','cfg-seiten'].forEach(function(t){
       var panel=document.getElementById('cms-'+t);
       if(panel) panel.style.display = t===id?'':'none';
     });
@@ -2353,6 +2361,119 @@ document.head.appendChild(msalScript);
       btn.style.borderBottomColor = active?'#5ea88a':'transparent';
       btn.style.color = active?'#5ea88a':'#6b7280';
     });
+    if(id==='cfg-seiten' && !window._seitenLoaded) loadSeiteninhalte();
+  };
+
+  // ── Seiteninhalte Tab ──
+  var SEITEN_KEYS = [
+    {key:'gf_inhalt', label:'Gesch&auml;ftsf&uuml;hrung', icon:'&#128188;', page:'/geschaeftsfuehrung'},
+    {key:'beirat_inhalt', label:'Beirat', icon:'&#128101;', page:'/beirat'},
+    {key:'konzept_inhalt', label:'Konzept', icon:'&#128161;', page:'/konzept'},
+    {key:'stille_gesellschafter_inhalt', label:'Stille Gesellschafter', icon:'&#129309;', page:'/stille-gesellschafter'},
+    {key:'essen_inhalt', label:'Essen im Dorfladen', icon:'&#127869;', page:'/essen-im-dorfladen'}
+  ];
+
+  function loadSeiteninhalte(){
+    var container=document.getElementById('cms-seiten-fields');
+    container.innerHTML='<div style="text-align:center;padding:20px;color:#6b7280">Lade Seiteninhalte&hellip;</div>';
+    fetch(API+'/cms-config')
+      .then(function(r){return r.json();})
+      .then(function(cfg){
+        var items=Array.isArray(cfg)?cfg:(cfg.data||[]);
+        var map={};
+        items.forEach(function(c){map[c.dl_schluessel||c.key||c.name]=c.dl_wert||c.value||c.wert||'';});
+        function rteBar(id){
+          return '<div class="cms-rte-toolbar">'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'bold\')" title="Fett"><b>B</b></button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'italic\')" title="Kursiv"><i>I</i></button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'underline\')" title="Unterstrichen"><u>U</u></button>'
+            +'<span class="cms-rte-sep"></span>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'formatBlock\',false,\'h2\')" title="&Uuml;berschrift">H2</button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'formatBlock\',false,\'h3\')" title="Unter&uuml;berschrift">H3</button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'formatBlock\',false,\'p\')" title="Absatz">P</button>'
+            +'<span class="cms-rte-sep"></span>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'insertUnorderedList\')" title="Liste">&#8226;</button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'insertOrderedList\')" title="Num. Liste">1.</button>'
+            +'<span class="cms-rte-sep"></span>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');var u=prompt(\'Link-URL:\');if(u)document.execCommand(\'createLink\',false,u)" title="Link">&#128279;</button>'
+            +'<button type="button" class="cms-rte-btn" onclick="cmsSeitenFocus(\''+id+'\');document.execCommand(\'removeFormat\')" title="Format entfernen">&#10006;</button>'
+            +'</div>';
+        }
+        container.innerHTML=SEITEN_KEYS.map(function(s){
+          var val=map[s.key]||'';
+          var statusDot=val?'<span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-left:6px" title="Inhalt vorhanden"></span>'
+                           :'<span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-left:6px" title="Noch kein Inhalt"></span>';
+          var hint=val?'':'<p style="font-size:11px;color:#d97706;margin:4px 0 0">&#9888; Noch kein Inhalt in Dataverse. Bitte Text eingeben und speichern.</p>';
+          return '<div class="cms-card" data-seiten-key="'+s.key+'" style="margin-bottom:2px">'
+            +'<div class="cms-card-header" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none" onclick="cmsSeitenToggle(\''+s.key+'\')">'
+            +'<span>'+s.icon+' '+s.label+statusDot+'</span>'
+            +'<span style="display:flex;align-items:center;gap:8px">'
+            +'<a href="'+s.page+'" target="_blank" style="font-size:11px;color:#5ea88a;text-decoration:none" title="Seite anzeigen" onclick="event.stopPropagation()">&#128065;</a>'
+            +'<span class="cms-seiten-arrow" id="seiten-arrow-'+s.key+'" style="font-size:16px;transition:transform .2s">&#9654;</span>'
+            +'</span></div>'
+            +'<div class="cms-card-body" id="seiten-body-'+s.key+'" style="display:none">'
+            +rteBar('seiten-'+s.key)
+            +'<div class="cms-rte-editor" contenteditable="true" id="seiten-'+s.key+'" data-seiten-key="'+s.key+'" style="min-height:120px;max-height:400px;overflow-y:auto">'+val+'</div>'
+            +hint
+            +'<div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">'
+            +'<button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsSeitenSave(\''+s.key+'\')">&#128190; Speichern</button>'
+            +'</div>'
+            +'</div></div>';
+        }).join('');
+        window._seitenLoaded=true;
+      })
+      .catch(function(e){
+        container.innerHTML='<p style="color:#dc2626">Fehler beim Laden: '+e.message+'</p>';
+      });
+  }
+
+  window.cmsSeitenToggle=function(key){
+    var body=document.getElementById('seiten-body-'+key);
+    var arrow=document.getElementById('seiten-arrow-'+key);
+    var isOpen=body.style.display!=='none';
+    // Close all
+    SEITEN_KEYS.forEach(function(s){
+      var b=document.getElementById('seiten-body-'+s.key);
+      var a=document.getElementById('seiten-arrow-'+s.key);
+      if(b){b.style.display='none';}
+      if(a){a.style.transform='rotate(0deg)';}
+    });
+    // Open clicked (if it was closed)
+    if(!isOpen){
+      body.style.display='';
+      arrow.style.transform='rotate(90deg)';
+    }
+  };
+
+  window.cmsSeitenFocus=function(id){
+    var el=document.getElementById(id);
+    if(el) el.focus();
+  };
+
+  window.cmsSeitenSave=function(key){
+    var el=document.getElementById('seiten-'+key);
+    if(!el) return;
+    var html=el.innerHTML;
+    var btn=el.closest('.cms-card').querySelector('.cms-btn-primary');
+    var origText=btn.innerHTML;
+    btn.innerHTML='&#8987; Speichern&hellip;';btn.disabled=true;
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:key,wert:html})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          btn.innerHTML='&#9989; Gespeichert!';
+          setTimeout(function(){btn.innerHTML=origText;btn.disabled=false;},2000);
+        } else {
+          btn.innerHTML='&#10060; Fehler';btn.disabled=false;
+          alert('Speichern fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
+          setTimeout(function(){btn.innerHTML=origText;},2000);
+        }
+      })
+      .catch(function(e){
+        btn.innerHTML='&#10060; Fehler';btn.disabled=false;
+        alert('Netzwerkfehler: '+e.message);
+        setTimeout(function(){btn.innerHTML=origText;},2000);
+      });
   };
 
   // ── Design Config ──
@@ -3188,6 +3309,10 @@ document.head.appendChild(msalScript);
     'Hero Untertitel': {icon:'&#9998;',  desc:'Kleinerer Text unter der &Uuml;berschrift'},
     'Hero Zusatztext': {icon:'&#9749;',  desc:'Zusatzzeile mit Icons (z.B. Bistro, Sommer)'},
     'gf_inhalt':      {icon:'&#128188;', desc:'Inhalt der Seite Gesch&auml;ftsf&uuml;hrung (HTML)', html:true},
+    'beirat_inhalt':  {icon:'&#128101;', desc:'Inhalt der Seite Beirat (HTML)', html:true},
+    'konzept_inhalt': {icon:'&#128161;', desc:'Inhalt der Seite Konzept (HTML)', html:true},
+    'stille_gesellschafter_inhalt': {icon:'&#129309;', desc:'Inhalt der Seite Stille Gesellschafter (HTML)', html:true},
+    'essen_inhalt':   {icon:'&#127869;', desc:'Inhalt der Seite Essen im Dorfladen (HTML)', html:true},
     'kontakt_adresse': {icon:'&#128205;', desc:'Adresse f&uuml;r Kontaktbereich (z.B. Dorfplatz 1, 84419 Obertaufkirchen)'},
     'kontakt_telefon': {icon:'&#128222;', desc:'Telefonnummer f&uuml;r Kontaktbereich'},
     'kontakt_email':  {icon:'&#9993;', desc:'E-Mail-Adresse f&uuml;r Kontaktbereich'},
