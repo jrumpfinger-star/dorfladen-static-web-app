@@ -135,13 +135,20 @@
     var container=document.getElementById('mob-wp-days');
     if(!container) return;
     var html='';
-    for(var i=1;i<=6;i++){
+    for(var i=1;i<=5;i++){
       var isToday=i===todayIdx;
-      var dishes=menu[i]||[];
+      var dayData=menu[i]||[];
+      var dishes=dayData.filter?dayData.filter(function(d){return d.name&&d.name.trim();}):dayData;
+      var notice='';
+      (menu[i]||[]).forEach(function(d){if(d.notice&&!notice) notice=d.notice;});
       html+='<div class="mob-wp-day'+(isToday?' today':'')+'">';
       html+='<div class="mob-wp-day-name">'+wpDays[i]+(isToday?' · Heute':'')+'</div>';
       if(dishes.length===0){
-        html+='<div class="mob-wp-day-menu">–</div>';
+        if(notice){
+          html+='<div class="mob-wp-day-menu" style="color:#888;font-style:italic">'+esc(notice)+'</div>';
+        }else{
+          html+='<div class="mob-wp-day-menu" style="color:#aaa">–</div>';
+        }
       }else{
         dishes.forEach(function(d){
           html+='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">';
@@ -170,7 +177,7 @@
       var tomorrow=todayIdx>=6?(todayIdx===6?0:1):todayIdx+1;
       label=(next===tomorrow)?'Morgen':dayLabels[next];
     }
-    var showDishes=menu[showIdx]||[];
+    var showDishes=(menu[showIdx]||[]).filter(function(d){return d.name&&d.name.trim();});
     if(sub&&showDishes.length>0){
       if(showDishes.length===1){
         sub.textContent=label+': '+showDishes[0].name;
@@ -201,7 +208,7 @@
         var wt=item.dl_wochentag;
         var label=item._dl_wochentag_label;
         var dIdx=wpDayMap[wt]||wpDayMap[(label||'').toLowerCase()]||wpDayMap[(String(wt)||'').toLowerCase()];
-        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||'')});
+        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||''),notice:item.dl_beschreibung||''});
       });
       renderWP(menu);
     }else{
@@ -373,7 +380,7 @@
           html+='<span class="mob-pl-name">'+esc(item.bezeichnung)+'</span>';
           html+='<span class="mob-pl-price">'+priceHtml+'</span>';
           html+='</div>';
-          plAllItems.push({el:null,name:(item.bezeichnung||'').toLowerCase(),strichcode:item.strichcode||'',bezeichnung:item.bezeichnung||'',vk:item.vk,uvp:item.uvp,angebot:item.angebot,angebot_preis:item.angebot_preis,wg:wg});
+          plAllItems.push({el:null,name:(item.bezeichnung||'').toLowerCase(),strichcode:item.strichcode||'',bezeichnung:item.bezeichnung||'',vk:item.vk,uvp:item.uvp,discount:item.discount||0,rp:item.rp,angebot:item.angebot,angebot_preis:item.angebot_preis,wg:wg});
         });
         html+='</div></div>';
       });
@@ -439,6 +446,7 @@
     var closeBtn=document.getElementById('mob-pl-barcode-close');
     var resultDiv=document.getElementById('mob-pl-barcode-result');
     if(!scanBtn||!scannerDiv)return;
+    if(window._dlFeatScanner===false){scanBtn.style.display='none';return;}
 
     function findByBarcode(code){
       code=code.trim();
@@ -458,9 +466,27 @@
       h+='<p style="margin:0 0 8px">&#x2705; '+matches.length+' Artikel f\u00fcr EAN <b>'+esc(code)+'</b> gefunden:</p>';
       matches.forEach(function(m){
         var preis=m.angebot&&m.angebot_preis?m.angebot_preis:m.vk;
-        h+='<div style="background:#fff;border-radius:6px;padding:10px;margin-top:6px;display:flex;justify-content:space-between;align-items:center">';
-        h+='<div><b>'+esc(m.bezeichnung)+'</b><br><small style="color:#888">'+esc(m.wg)+'</small></div>';
-        h+='<div style="font-weight:700;white-space:nowrap">'+fmtP(preis)+' &euro;</div></div>';
+        var disc=m.discount||0;
+        if(m.uvp&&m.uvp>0&&m.vk>0&&!disc) disc=Math.round((m.uvp-m.vk)/m.uvp*100);
+        var savingsHtml='';
+        if(m.uvp&&m.uvp>0&&disc>5&&disc<=70){
+          var saving=(m.uvp-m.vk);
+          savingsHtml='<div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+          savingsHtml+='<span style="background:#c62828;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700">-'+disc+'%</span>';
+          savingsHtml+='<span style="color:#999;font-size:.78rem;text-decoration:line-through">UVP '+fmtP(m.uvp)+' &euro;</span>';
+          if(saving>0.004) savingsHtml+='<span style="color:#2e7d32;font-size:.78rem;font-weight:600">Sie sparen '+fmtP(saving)+' &euro;</span>';
+          savingsHtml+='</div>';
+        }
+        var badges='';
+        if(m.angebot) badges+='<span style="background:#ff6f00;color:#fff;padding:1px 6px;border-radius:6px;font-size:.7rem;font-weight:700;margin-right:4px">\u2B50 Angebot</span>';
+        if(disc>5&&disc<=70) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.7rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
+        var badgesHtml=badges?'<div style="margin-top:3px">'+badges+'</div>':'';
+        h+='<div style="background:#fff;border-radius:6px;padding:10px;margin-top:6px;display:flex;justify-content:space-between;align-items:start">';
+        h+='<div><b>'+esc(m.bezeichnung)+'</b><br><small style="color:#888">'+esc(m.wg)+'</small>'+badgesHtml+savingsHtml+'</div>';
+        var preisHtml='<div style="font-weight:700;white-space:nowrap;padding-top:2px;text-align:right">'+fmtP(preis)+' &euro;';
+        if(m.angebot&&m.angebot_preis&&m.vk&&m.angebot_preis<m.vk) preisHtml+='<br><span style="text-decoration:line-through;color:#999;font-size:.75rem;font-weight:400">'+fmtP(m.vk)+' &euro;</span>';
+        preisHtml+='</div>';
+        h+=preisHtml+'</div>';
       });
       h+='</div>';
       resultDiv.innerHTML=h;resultDiv.style.display='block';
@@ -487,7 +513,7 @@
         .then(function(data){
           if(data.results&&data.results.length){
             var apiMatches=[];
-            data.results.forEach(function(r){apiMatches.push({bezeichnung:r.bezeichnung,vk:r.vk,wg:r.warengruppe,strichcode:r.strichcode});});
+            data.results.forEach(function(r){apiMatches.push({bezeichnung:r.bezeichnung,vk:r.vk,wg:r.warengruppe,strichcode:r.strichcode,uvp:r.uvp||0,discount:r.discount||0,rp:r.rp,angebot:r.angebot,angebot_preis:r.angebot_preis});});
             showResult(code,apiMatches);
           }else{showResult(code,[]);}
         }).catch(function(){showResult(code,[]);});

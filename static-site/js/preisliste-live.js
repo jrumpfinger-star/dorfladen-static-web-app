@@ -103,6 +103,7 @@
     var closeBtn=document.getElementById('soBarcodeClose');
     var resultDiv=document.getElementById('soBarcodeResult');
     if(!scanBtn||!scannerDiv)return;
+    if(window._dlFeatScanner===false){scanBtn.style.display='none';return;}
     var allItems=[];
     var gs=data.groups||{};
     Object.keys(gs).forEach(function(wg){
@@ -129,8 +130,25 @@
       matches.forEach(function(m){
         var it=m.item;
         var preis=it.angebot&&it.angebot_preis?it.angebot_preis:it.vk;
-        h+='<tr><td class="so-td-name">'+esc(it.bezeichnung)+'<br><small style="color:#888">'+esc(m.wg)+'</small></td>';
-        h+='<td class="so-td-price">'+fmtPrice(preis)+'&nbsp;&euro;</td></tr>';
+        var savingsHtml='';
+        var disc=it.discount||0;
+        if(it.uvp&&it.uvp>0&&it.vk>0&&!disc) disc=Math.round((it.uvp-it.vk)/it.uvp*100);
+        if(it.uvp&&it.uvp>0&&disc>5&&disc<=70){
+          var saving=(it.uvp-it.vk);
+          savingsHtml='<div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+          savingsHtml+='<span style="background:#c62828;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700">-'+disc+'%</span>';
+          savingsHtml+='<span style="color:#999;font-size:.78rem;text-decoration:line-through">UVP '+fmtPrice(it.uvp)+'&nbsp;&euro;</span>';
+          if(saving>0.004) savingsHtml+='<span style="color:#2e7d32;font-size:.78rem;font-weight:600">Sie sparen '+fmtPrice(saving)+'&nbsp;&euro;</span>';
+          savingsHtml+='</div>';
+        }
+        var badges='';
+        if(it.angebot) badges+='<span style="background:#ff6f00;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700;margin-right:4px">\u2B50 Angebot</span>';
+        if(disc>5&&disc<=70) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
+        var badgesHtml=badges?'<div style="margin-top:3px">'+badges+'</div>':'';
+        h+='<tr><td class="so-td-name">'+esc(it.bezeichnung)+'<br><small style="color:#888">'+esc(m.wg)+'</small>'+badgesHtml+savingsHtml+'</td>';
+        var preisCell=fmtPrice(preis)+'&nbsp;&euro;';
+        if(it.angebot&&it.angebot_preis&&it.vk&&it.angebot_preis<it.vk) preisCell+='<br><span style="text-decoration:line-through;color:#999;font-size:.75rem;font-weight:400">'+fmtPrice(it.vk)+'&nbsp;&euro;</span>';
+        h+='<td class="so-td-price">'+preisCell+'</td></tr>';
       });
       h+='</table></div>';
       resultDiv.innerHTML=h;
@@ -158,7 +176,7 @@
         .then(function(d){
           if(d.results&&d.results.length){
             var apiMatches=[];
-            d.results.forEach(function(r){apiMatches.push({wg:r.warengruppe,item:{bezeichnung:r.bezeichnung,vk:r.vk,strichcode:r.strichcode}});});
+            d.results.forEach(function(r){apiMatches.push({wg:r.warengruppe,item:{bezeichnung:r.bezeichnung,vk:r.vk,strichcode:r.strichcode,uvp:r.uvp||0,discount:r.discount||0,rp:r.rp,angebot:r.angebot,angebot_preis:r.angebot_preis}});});
             showResult(code,apiMatches);
           }else{showResult(code,[]);}
         }).catch(function(){showResult(code,[]);});

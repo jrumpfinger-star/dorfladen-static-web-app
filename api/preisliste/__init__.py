@@ -123,13 +123,29 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             bc_url = f"{default_url}/api/data/v9.2/cr5d4_tables?$filter=cr5d4_strichcode eq '{barcode_q}'&$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_strichcode"
             r = requests.get(bc_url, headers=hdrs, timeout=30)
             results = []
+            # Load active Angebote to enrich barcode results
+            angebote_map = _load_active_angebote(default_url, hdrs)
             if r.status_code == 200:
                 for item in r.json().get("value", []):
+                    artnr = item.get("cr5d4_artikelnummeredeka", "")
+                    preis = item.get("cr5d4_vk_dorf") or 0
+                    uvp = item.get("cr5d4_uvp_total")
+                    discount = 0
+                    is_rp = False
+                    if uvp and uvp > 0 and preis > 0 and preis < uvp:
+                        discount = round((uvp - preis) / uvp * 100)
+                        if discount >= 5 and discount <= 70:
+                            is_rp = True
+                    ang = angebote_map.get(artnr)
                     results.append({
-                        "artikelnummer": item.get("cr5d4_artikelnummeredeka", ""),
+                        "artikelnummer": artnr,
                         "bezeichnung": item.get("cr5d4_artikelbezeichnung", ""),
-                        "vk": item.get("cr5d4_vk_dorf") or 0,
-                        "uvp": item.get("cr5d4_uvp_total"),
+                        "vk": preis,
+                        "uvp": uvp,
+                        "discount": discount,
+                        "rp": is_rp,
+                        "angebot": ang is not None,
+                        "angebot_preis": ang["preis"] if ang else None,
                         "warengruppe": item.get("cr5d4_warengruppebez", ""),
                         "strichcode": item.get("cr5d4_strichcode", "")
                     })

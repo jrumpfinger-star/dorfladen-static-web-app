@@ -557,9 +557,9 @@ main{padding:0!important;margin:0!important}
 .mob-pl-name{
   flex:1;
   min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  white-space:normal;
+  word-break:break-word;
+  overflow-wrap:break-word;
   color: var(--m-text);
   font-weight: 600;
   font-size:.85rem;

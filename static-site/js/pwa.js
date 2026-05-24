@@ -210,7 +210,33 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
   }
 
   if(!('PushManager' in window)||!('serviceWorker' in navigator)){return;}
-  showPushButtons();
+
+  // Check feature flags before showing push buttons
+  (function(){
+    var flagsUrl='/api/cms-config';
+    try{
+      fetch(flagsUrl).then(function(r){return r.json();}).then(function(res){
+        if(res.success&&res.data){
+          var ff=res.data.feature_flags;
+          if(typeof ff==='string'){try{ff=JSON.parse(ff);}catch(e){ff={};}}
+          if(ff&&ff.push===false){
+            if(pushBtn)pushBtn.style.display='none';
+            if(pushBtnDt)pushBtnDt.style.display='none';
+            return;
+          }
+          // Scanner feature flag
+          if(ff&&ff.scanner===false){
+            window._dlFeatScanner=false;
+            var sb=document.getElementById('mob-pl-barcode-btn');if(sb)sb.style.display='none';
+            var sbd=document.querySelector('.so-barcode-btn');if(sbd)sbd.style.display='none';
+          }else{
+            window._dlFeatScanner=true;
+          }
+        }
+        showPushButtons();
+      }).catch(function(){showPushButtons();});
+    }catch(e){showPushButtons();}
+  })();
 
   navigator.serviceWorker.ready.then(function(reg){
     return reg.pushManager.getSubscription();

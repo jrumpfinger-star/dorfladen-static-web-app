@@ -33,6 +33,7 @@ document.head.appendChild(msalScript);
     color: var(--c-m-text);
   }
   .cms-wrap{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;max-width:1000px;margin:0 auto;padding:16px;box-sizing:border-box}
+  .cms-wrap input,.cms-wrap textarea,.cms-wrap select,.cms-wrap button,.cms-modal input,.cms-modal textarea,.cms-modal select,.cms-modal button,.cms-modal-bg input,.cms-modal-bg textarea,.cms-modal-bg select,.cms-modal-bg button,.cms-btn,.cms-input{font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
   .cms-tabs{display:flex;gap:4px;border-bottom:2px solid #e5e7eb;margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
   .cms-tab{padding:10px 18px;font-size:13px;font-weight:700;color:var(--c-m-muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.15s ease-in-out;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0}
   .cms-tab.active{color:var(--c-m-pri);border-bottom-color:var(--c-m-pri)}
@@ -163,13 +164,13 @@ document.head.appendChild(msalScript);
   .cms-meal-grid{overflow:visible}
   .cms-meal-grid>*{min-width:0;box-sizing:border-box}
   .cms-art-input{position:relative}
-  .cms-art-dd{display:none;position:fixed;z-index:99999;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:340px;min-height:0;overflow-y:auto;font-family:"Segoe UI",Verdana,Arial,sans-serif;min-width:280px}
+  .cms-art-dd{display:none;position:fixed;z-index:99999;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:340px;min-height:0;overflow-y:auto;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;min-width:280px}
   .cms-art-dd.open{display:block}
-  .cms-art-opt{padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .12s}
+  .cms-art-opt{padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;transition:background .12s}
   .cms-art-opt:last-child{border-bottom:none}
   .cms-art-opt:hover{background:#f0fdf4}
-  .cms-art-opt-name{font-weight:600;color:#1f2937;font-family:"Segoe UI",Verdana,Arial,sans-serif}
-  .cms-art-opt-meta{font-size:11px;color:#6b7280;font-family:"Segoe UI",Verdana,Arial,sans-serif;margin-top:2px}
+  .cms-art-opt-name{font-weight:600;color:#1f2937;font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
+  .cms-art-opt-meta{font-size:11px;color:#6b7280;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;margin-top:2px}
   .cms-art-spinner{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#16a34a;font-size:12px;display:none}
   .cms-art-spinner.on{display:inline}
   .cms-week-nav{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
@@ -272,6 +273,9 @@ document.head.appendChild(msalScript);
   #cms-panel-cfg.cms-compact-on .cms-wp-preview-name{font-size:8.5px}
   #cms-panel-cfg.cms-compact-on .cms-savings-preview{padding:6px}
   #cms-panel-cfg.cms-compact-on .cms-savings-preview-canvas{max-height:60px}
+  .feat-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  input:checked+.feat-slider{background:#6366f1}
+  input:checked+.feat-slider:before{transform:translateX(22px)}
   .cms-switch{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;user-select:none;cursor:pointer}
   .cms-switch input{margin:0}
   @media(max-width:960px){.cms-grid{grid-template-columns:repeat(3,1fr)}.cms-hours-row{flex-wrap:wrap}}
@@ -442,6 +446,9 @@ document.head.appendChild(msalScript);
     <button class="cms-tab" data-action="tab" data-id="push" id="cms-tab-push" style="color:#7c3aed;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> Push
     </button>
+    <button class="cms-tab" data-action="tab" data-id="settings" id="cms-tab-settings" style="color:#6366f1;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Settings
+    </button>
     <button class="cms-tab" data-action="tab" data-id="cfg" id="cms-tab-cfg" style="margin-left:auto;color:#bd8b5c;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Design
     </button>
@@ -567,7 +574,7 @@ document.head.appendChild(msalScript);
     .rte-btn{background:none;border:1px solid transparent;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:13px;color:#374151;line-height:1.2;transition:all .15s}
     .rte-btn:hover{background:#e5e7eb;border-color:#d1d5db}
     .rte-btn.active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8}
-    .rte-editor{min-height:60px;padding:10px 12px;font-size:14px;line-height:1.6;outline:none;font-family:'Segoe UI',system-ui,sans-serif;color:#1f2937}
+    .rte-editor{min-height:60px;padding:10px 12px;font-size:14px;line-height:1.6;outline:none;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:#1f2937}
     .rte-editor:focus{box-shadow:inset 0 0 0 2px #93c5fd}
     .rte-editor p{margin:4px 0}
     .rte-editor a{color:#2563eb;text-decoration:underline}
@@ -789,6 +796,48 @@ document.head.appendChild(msalScript);
       <div class="cms-card-body">
         <p style="font-size:12px;color:#6b7280;margin:0">Push-Benachrichtigungen werden an alle Nutzer gesendet, die auf der Dorfladen-Webseite oder in der App &bdquo;Benachrichtigungen aktivieren&ldquo; geklickt haben. Abgelaufene Abonnements werden automatisch entfernt.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- Settings / Feature-Flags -->
+  <div id="cms-panel-settings" style="display:none">
+    <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0 0 6px">&#9881; Feature-Einstellungen</h3>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 18px">Funktionen f&uuml;r alle Besucher der Website ein- oder ausschalten. &Auml;nderungen werden sofort wirksam.</p>
+
+    <div id="settings-status" style="display:none;padding:10px 14px;border-radius:8px;font-size:.85rem;margin-bottom:14px"></div>
+
+    <div class="cms-card">
+      <div class="cms-card-header" style="background:#6366f1!important">&#9881; Features</div>
+      <div class="cms-card-body" style="display:flex;flex-direction:column;gap:0">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f3f4f6">
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128276; Push-Benachrichtigungen</div>
+            <div style="font-size:.78rem;color:#6b7280;margin-top:2px">Zeigt den &bdquo;Benachrichtigungen aktivieren&ldquo;-Button im Men&uuml; an</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-push" checked style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f3f4f6">
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128247; Barcode-Scanner</div>
+            <div style="font-size:.78rem;color:#6b7280;margin-top:2px">Zeigt den Barcode-Scan-Button in Preisliste &amp; Sortiment an</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-scanner" checked style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="cms-btn cms-btn-primary" id="settings-save" data-action="settingsSave">&#128190; Speichern</button>
+      <span id="settings-saved-hint" style="display:none;font-size:.82rem;color:#16a34a;font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
     </div>
   </div>
 
@@ -1061,7 +1110,6 @@ document.head.appendChild(msalScript);
                 <input type="color" id="cfg-leafColor" value="#4a7c3f" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
               </label>
               <input type="hidden" id="cfg-bgColor" value="#f4f1ea">
-              <input type="hidden" id="cfg-tagColor" value="#a51d2d">
               <input type="hidden" id="cfg-titleColor" value="#a51d2d">
             </div>
           </div>
@@ -1108,8 +1156,26 @@ document.head.appendChild(msalScript);
                   <span id="cfg-priceFontPlakat-val" style="font-size:13px;min-width:32px;text-align:right">36px</span>
                 </div>
               </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">Preisschild-Farbe
+                <input type="color" id="cfg-tagColor" value="#a51d2d" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
+              </label>
               <label style="font-size:12px;font-weight:600;color:#374151">Statt-Preis Farbe
                 <input type="color" id="cfg-stattColor" value="#555555" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">Preisschild-Vorlage
+                <select id="cfg-tagPreset" class="cms-input" style="margin-top:4px">
+                  <option value="">— Manuell —</option>
+                  <option value="classic-red-rect">Classic Rot (Rechteck)</option>
+                  <option value="green-rounded">Naturgrün (Abgerundet)</option>
+                  <option value="dark-pill">Dark Elegance (Pill)</option>
+                  <option value="gold-banner">Gold Banner (Fahne)</option>
+                  <option value="blue-circle">Ocean Badge (Kreis)</option>
+                  <option value="orange-star">Sunrise Stern</option>
+                  <option value="purple-hexagon">Berry Hexagon</option>
+                  <option value="teal-ticket">Teal Coupon (Ticket)</option>
+                  <option value="rose-diamond">Rosé Diamant</option>
+                  <option value="copper-explosion">Copper Burst (Explosion)</option>
+                </select>
               </label>
               <label style="font-size:12px;font-weight:600;color:#374151">Preisschild-Form
                 <select id="cfg-tagShape" class="cms-input" style="margin-top:4px">
@@ -1247,6 +1313,15 @@ document.head.appendChild(msalScript);
           <div class="cms-card" style="margin-top:12px">
             <div class="cms-card-header">&#127807; Dekoration</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
+              <div style="padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Deko-Farben</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <label style="font-size:11px;color:#374151">Blatt/Icon-Gr&uuml;n<input type="color" id="cfg-decoLeafColor" value="#4a7c3f" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Titel-Farbe<input type="color" id="cfg-decoTitleColor" value="#a51d2d" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Hintergrund<input type="color" id="cfg-decoBgColor" value="#f4f1ea" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Footer-Farbe<input type="color" id="cfg-decoFooterColor" value="#8aad7e" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                </div>
+              </div>
               <label style="font-size:12px;font-weight:600;color:#374151">
                 <input type="checkbox" id="cfg-showLeaf"> Blatt-Deko anzeigen
               </label>
@@ -1267,14 +1342,27 @@ document.head.appendChild(msalScript);
                   <option value="harmonie">Harmonie (Grün, Standard)</option>
                   <option value="classic-red">Classic Red (SALE Rot)</option>
                   <option value="warm-copper">Warm Copper (Edel)</option>
+                  <option value="berry-purple">Berry Purple</option>
+                  <option value="ocean-blue">Ocean Blue</option>
+                  <option value="sunset-orange">Sunset Orange</option>
+                  <option value="fresh-lime">Fresh Lime</option>
+                  <option value="deep-rose">Deep Rose</option>
+                  <option value="midnight-gold">Midnight Gold</option>
+                  <option value="arctic-teal">Arctic Teal</option>
                 </select>
               </label>
               <label style="font-size:12px;font-weight:600;color:#374151">Ersparnis-Marker Typ
                 <select id="cfg-savingsMarkerType" class="cms-input" style="margin-top:6px">
-                  <option value="starburst">Stern</option>
+                  <option value="starburst">Stern (Zacken)</option>
                   <option value="badge">Badge (rund)</option>
                   <option value="pill">Pill (oval)</option>
                   <option value="flag">Flag (schräg)</option>
+                  <option value="hexburst">Hex-Burst (6-Zacken)</option>
+                  <option value="diamond">Diamant</option>
+                  <option value="shield">Schild / Shield</option>
+                  <option value="ribbon">Ribbon / Band</option>
+                  <option value="explosion">Explosion (viele Zacken)</option>
+                  <option value="heart">Herz</option>
                 </select>
               </label>
               <label style="font-size:12px;font-weight:600;color:#374151">Ersparnis-Farbwelt
@@ -1284,6 +1372,11 @@ document.head.appendChild(msalScript);
                   <option value="warm-copper">Warm Copper</option>
                   <option value="berry-purple">Berry Purple</option>
                   <option value="ocean-blue">Ocean Blue</option>
+                  <option value="sunset-orange">Sunset Orange</option>
+                  <option value="fresh-lime">Fresh Lime</option>
+                  <option value="deep-rose">Deep Rose</option>
+                  <option value="midnight-gold">Midnight Gold</option>
+                  <option value="arctic-teal">Arctic Teal</option>
                 </select>
               </label>
               <label style="font-size:12px;font-weight:600;color:#374151">Ersparnis-Marker Größe (Plakat)
@@ -1436,6 +1529,8 @@ document.head.appendChild(msalScript);
   }
   function weekBounds(mode){
     var d=new Date();
+    // Ab Samstag: "Diese Woche" = nächste KW
+    if(d.getDay()>=6) d.setDate(d.getDate()+(d.getDay()===6?2:1));
     if(mode==='next') d.setDate(d.getDate()+7);
     var day=(d.getDay()+6)%7;
     var mon=new Date(d);mon.setDate(d.getDate()-day);mon.setHours(0,0,0,0);
@@ -1637,8 +1732,8 @@ document.head.appendChild(msalScript);
         +'</div>'
         +'<input type="hidden" id="cms-akt-edit-id" value="'+esc(isEdit?(aktion.aktion_id||''):'')+'">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 2px">'
-          +'<strong style="font-size:13px;color:#374151;font-family:Segoe UI,Verdana,Arial,sans-serif">Artikel</strong>'
-          +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button" style="font-family:Segoe UI,Verdana,Arial,sans-serif">+ Artikel</button>'
+          +'<strong style="font-size:13px;color:#374151">Artikel</strong>'
+          +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button">+ Artikel</button>'
         +'</div>'
         +'<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:10px;min-height:0;padding:4px 0"></div>'
       +'</div>'
@@ -2186,7 +2281,7 @@ document.head.appendChild(msalScript);
   var _cmsCurrentTab='wp';
   window.cmsTab = function(name, skipHistory){
     _cmsCurrentTab=name;
-    ['wp','hours','ang','hp','news','sort','gallery','push','cfg'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg'].forEach(function(t){
       document.getElementById('cms-panel-'+t).style.display = t===name?'':'none';
       document.getElementById('cms-tab-'+t).className = 'cms-tab'+(t===name?' active':'');
     });
@@ -2196,6 +2291,7 @@ document.head.appendChild(msalScript);
     if(name==='news' && !_newsLoaded) loadNews();
     if(name==='sort' && !_sortLoaded) loadSortiment();
     if(name==='gallery' && !_galLoaded) loadGalleryAdmin();
+    if(name==='settings' && !_settingsLoaded) loadFeatureFlags();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(!skipHistory) history.pushState({cmsTab:name},'','');
   };
@@ -2235,9 +2331,9 @@ document.head.appendChild(msalScript);
   var CFG_KEY='dl_design_cfg';
   var CFG_COMPACT_KEY='dl_cms_cfg_compact';
   var CFG_DEFAULTS={
-    bgColor:'#f4f1ea',tagColor:'#a51d2d',leafColor:'#4a7c3f',titleColor:'#a51d2d',
+    bgColor:'#f4f1ea',tagColor:'#a51d2d',leafColor:'#4a7c3f',titleColor:'#a51d2d',decoFooterColor:'#8aad7e',
     imgRotation:15,imgFreistellen:true,imgThreshold:230,imgMaxScale:4,
-    priceFontFlyer:72,priceFontPlakat:36,stattColor:'#555555',tagSkew:18,tagShape:'rect',tagRadius:0,
+    priceFontFlyer:72,priceFontPlakat:36,stattColor:'#555555',tagSkew:18,tagShape:'rect',tagRadius:0,tagPreset:'',
     showLeaf:false,leafSize:34,showBag:false,showTexture:true,
     savingsMarkerType:'starburst',savingsPalette:'harmonie',
     savingsScalePlakat:95,savingsScaleFlyer:120,
@@ -2295,8 +2391,13 @@ document.head.appendChild(msalScript);
     cfgLoadFromDataverse();
   }
   function cfgApplyUI(c){
-    ['bgColor','tagColor','leafColor','titleColor','stattColor'].forEach(function(k){
+    ['bgColor','tagColor','leafColor','titleColor','stattColor','decoFooterColor'].forEach(function(k){
       var el=document.getElementById('cfg-'+k);if(el)el.value=c[k];
+    });
+    // Sync deco color pickers with main config values
+    var decoMap={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
+    Object.keys(decoMap).forEach(function(dk){
+      var el=document.getElementById('cfg-'+dk);if(el)el.value=c[decoMap[dk]]||el.defaultValue;
     });
     ['imgRotation','imgThreshold','imgMaxScale','priceFontFlyer','priceFontPlakat','tagSkew','tagRadius','leafSize','savingsScalePlakat','savingsScaleFlyer'].forEach(function(k){
       var el=document.getElementById('cfg-'+k);if(el){el.value=c[k];cfgUpdateVal(k,c[k]);}
@@ -2305,6 +2406,7 @@ document.head.appendChild(msalScript);
       var el=document.getElementById('cfg-'+k);if(el)el.checked=c[k];
     });
     var ts=document.getElementById('cfg-tagShape');if(ts)ts.value=c.tagShape||'rect';
+    var tp=document.getElementById('cfg-tagPreset');if(tp)tp.value=c.tagPreset||'';
     var mt=document.getElementById('cfg-savingsMarkerType');if(mt)mt.value=c.savingsMarkerType||'starburst';
     var pl=document.getElementById('cfg-savingsPalette');if(pl)pl.value=c.savingsPalette||'harmonie';
     var pt=document.getElementById('cfg-plakatTemplate');if(pt)pt.value=c.plakatTemplate||'classic-red';
@@ -2326,8 +2428,13 @@ document.head.appendChild(msalScript);
   }
   function cfgReadUI(){
     var c={};
-    ['bgColor','tagColor','leafColor','titleColor','stattColor'].forEach(function(k){
+    ['bgColor','tagColor','leafColor','titleColor','stattColor','decoFooterColor'].forEach(function(k){
       var el=document.getElementById('cfg-'+k);if(el)c[k]=el.value;
+    });
+    // Read deco color pickers and sync back to main config keys
+    var decoMap={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
+    Object.keys(decoMap).forEach(function(dk){
+      var el=document.getElementById('cfg-'+dk);if(el)c[decoMap[dk]]=el.value;
     });
     ['imgRotation','imgThreshold','priceFontFlyer','priceFontPlakat','tagSkew','tagRadius','leafSize','savingsScalePlakat','savingsScaleFlyer'].forEach(function(k){
       var el=document.getElementById('cfg-'+k);if(el)c[k]=parseInt(el.value);
@@ -2337,6 +2444,7 @@ document.head.appendChild(msalScript);
       var el=document.getElementById('cfg-'+k);if(el)c[k]=el.checked;
     });
     var ts2=document.getElementById('cfg-tagShape');c.tagShape=ts2?ts2.value:'rect';
+    var tpEl=document.getElementById('cfg-tagPreset');c.tagPreset=tpEl?tpEl.value:'';
     var mt=document.getElementById('cfg-savingsMarkerType');c.savingsMarkerType=mt?mt.value:'starburst';
     var pl=document.getElementById('cfg-savingsPalette');c.savingsPalette=pl?pl.value:'harmonie';
     var pt=document.getElementById('cfg-plakatTemplate');c.plakatTemplate=pt?pt.value:'classic-red';
@@ -2437,6 +2545,11 @@ document.head.appendChild(msalScript);
     var id=e.target.id;if(!id||id.indexOf('cfg-')!==0)return;
     var k=id.replace('cfg-','');cfgUpdateVal(k,e.target.value);
     if(id==='cfg-savingsScalePlakat'||id==='cfg-savingsScaleFlyer'||id==='cfg-tagColor'||id==='cfg-tagRadius')cfgRenderSavingsPreview();
+    // Sync deco color pickers ↔ global config pickers
+    var _decoSync={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor'};
+    var _decoSyncRev={leafColor:'decoLeafColor',titleColor:'decoTitleColor',bgColor:'decoBgColor'};
+    if(_decoSync[k]){var g=document.getElementById('cfg-'+_decoSync[k]);if(g)g.value=e.target.value;}
+    if(_decoSyncRev[k]){var d=document.getElementById('cfg-'+_decoSyncRev[k]);if(d)d.value=e.target.value;}
     // Auto-save when template color pickers change
     if(id.indexOf('cfg-tpl-')===0){cfgSave(cfgReadUI());}
   });
@@ -2547,7 +2660,10 @@ document.head.appendChild(msalScript);
     kw+=delta; if(kw<1){jahr--;kw=52;} if(kw>52){jahr++;kw=1;} loadWP();
   };
   window.cmsWeekJump = function(offset){
-    var d=new Date();d.setDate(d.getDate()+offset*7);
+    var d=new Date();
+    // Ab Samstag: "Diese Woche" = nächste KW, "Nächste Woche" = übernächste KW
+    if(d.getDay()>=6) d.setDate(d.getDate()+(d.getDay()===6?2:1));
+    d.setDate(d.getDate()+offset*7);
     jahr=d.getFullYear();kw=isoWeek(d);loadWP();
   };
 
@@ -2559,8 +2675,11 @@ document.head.appendChild(msalScript);
     var r=weekRange(kw,jahr);
     document.getElementById('cms-wp-title').textContent='KW '+kw+' / '+jahr;
     document.getElementById('cms-wp-range').textContent=fmtD(r.start)+' \u2013 '+fmtD(r.end);
-    var now=new Date(),thisKw=isoWeek(now),thisJahr=now.getFullYear();
-    var nxt=new Date();nxt.setDate(nxt.getDate()+7);var nxtKw=isoWeek(nxt),nxtJahr=nxt.getFullYear();
+    var now=new Date();
+    // Ab Samstag: "Diese Woche" ist bereits die nächste KW
+    if(now.getDay()>=6) now.setDate(now.getDate()+(now.getDay()===6?2:1));
+    var thisKw=isoWeek(now),thisJahr=now.getFullYear();
+    var nxt=new Date(now.getTime());nxt.setDate(nxt.getDate()+7);var nxtKw=isoWeek(nxt),nxtJahr=nxt.getFullYear();
     var bThis=document.querySelector('[data-action="weekThis"]'),bNxt=document.querySelector('[data-action="weekNxt"]');
     if(bThis)bThis.className='cms-week-quick'+(kw===thisKw&&jahr===thisJahr?' active':'');
     if(bNxt)bNxt.className='cms-week-quick'+(kw===nxtKw&&jahr===nxtJahr?' active':'');
@@ -4561,6 +4680,21 @@ document.head.appendChild(msalScript);
     if(style==='ocean-blue'||style==='blue'||style==='ocean'){
       return {name:'ocean-blue',g1:'#38bdf8',g2:'#0369a1',stroke:'rgba(224,242,254,0.8)',text:'#ffffff',textStroke:'rgba(8,47,73,0.38)'};
     }
+    if(style==='sunset-orange'||style==='orange'||style==='sunset'){
+      return {name:'sunset-orange',g1:'#fb923c',g2:'#c2410c',stroke:'rgba(255,237,213,0.8)',text:'#ffffff',textStroke:'rgba(67,20,7,0.35)'};
+    }
+    if(style==='fresh-lime'||style==='lime'||style==='fresh'){
+      return {name:'fresh-lime',g1:'#a3e635',g2:'#4d7c0f',stroke:'rgba(236,252,203,0.8)',text:'#ffffff',textStroke:'rgba(26,46,5,0.38)'};
+    }
+    if(style==='deep-rose'||style==='rose'||style==='deep'){
+      return {name:'deep-rose',g1:'#fb7185',g2:'#be123c',stroke:'rgba(255,228,230,0.8)',text:'#ffffff',textStroke:'rgba(76,5,25,0.35)'};
+    }
+    if(style==='midnight-gold'||style==='gold'||style==='midnight'){
+      return {name:'midnight-gold',g1:'#fbbf24',g2:'#b45309',stroke:'rgba(254,243,199,0.8)',text:'#ffffff',textStroke:'rgba(69,26,3,0.4)'};
+    }
+    if(style==='arctic-teal'||style==='teal'||style==='arctic'){
+      return {name:'arctic-teal',g1:'#2dd4bf',g2:'#0f766e',stroke:'rgba(204,251,241,0.8)',text:'#ffffff',textStroke:'rgba(4,47,46,0.38)'};
+    }
     return {name:'harmonie',g1:'#72b38b',g2:'#3e7f61',stroke:'rgba(255,255,255,0.65)',text:'#ffffff',textStroke:'rgba(0,0,0,0.28)'};
   }
 
@@ -4569,8 +4703,8 @@ document.head.appendChild(msalScript);
   }
 
   window.cmsSetSavingsStarStyle=function(style){
-    var allowed={'harmonie':1,'classic-red':1,'warm-copper':1};
-    if(!allowed[style]){toast('Ungültiger Stil. Erlaubt: harmonie, classic-red, warm-copper','warn');return;}
+    var allowed={'harmonie':1,'classic-red':1,'warm-copper':1,'berry-purple':1,'ocean-blue':1,'sunset-orange':1,'fresh-lime':1,'deep-rose':1,'midnight-gold':1,'arctic-teal':1};
+    if(!allowed[style]){toast('Ungültiger Stil.','warn');return;}
     try{localStorage.setItem('dl_savings_star_style',style);}catch(e){}
     var sel=document.getElementById('cfg-savingsStarStyle');if(sel)sel.value=style;
     var sel2=document.getElementById('cfg-savingsPalette');if(sel2)sel2.value=style;
@@ -4618,6 +4752,56 @@ document.head.appendChild(msalScript);
       ctx.lineTo(fw/2,0);
       ctx.lineTo(fw/2-10,fh/2);
       ctx.lineTo(-fw/2,fh/2);
+      ctx.closePath();
+      cx=0;cy=0;
+    }else if(markerType==='hexburst'){
+      var hSpikes=6,hRot=-Math.PI/2,hStep=Math.PI/hSpikes,hInner=outerR*0.7;
+      ctx.beginPath();
+      for(var hi=0;hi<hSpikes;hi++){
+        ctx.lineTo(cx+Math.cos(hRot)*outerR,cy+Math.sin(hRot)*outerR);hRot+=hStep;
+        ctx.lineTo(cx+Math.cos(hRot)*hInner,cy+Math.sin(hRot)*hInner);hRot+=hStep;
+      }
+      ctx.closePath();
+    }else if(markerType==='diamond'){
+      ctx.beginPath();
+      ctx.moveTo(cx,cy-outerR);ctx.lineTo(cx+outerR*0.75,cy);
+      ctx.lineTo(cx,cy+outerR);ctx.lineTo(cx-outerR*0.75,cy);
+      ctx.closePath();
+    }else if(markerType==='shield'){
+      ctx.beginPath();
+      ctx.moveTo(cx-outerR*0.8,cy-outerR*0.85);
+      ctx.lineTo(cx+outerR*0.8,cy-outerR*0.85);
+      ctx.lineTo(cx+outerR*0.8,cy+outerR*0.15);
+      ctx.quadraticCurveTo(cx+outerR*0.8,cy+outerR*0.7,cx,cy+outerR);
+      ctx.quadraticCurveTo(cx-outerR*0.8,cy+outerR*0.7,cx-outerR*0.8,cy+outerR*0.15);
+      ctx.closePath();
+    }else if(markerType==='ribbon'){
+      var rw=outerR*2.4,rh=outerR*1.1,rNotch=outerR*0.25;
+      ctx.translate(cx,cy);
+      ctx.beginPath();
+      ctx.moveTo(-rw/2,  -rh/2);
+      ctx.lineTo( rw/2,  -rh/2);
+      ctx.lineTo( rw/2,   rh/2);
+      ctx.lineTo( 0,      rh/2-rNotch);
+      ctx.lineTo(-rw/2,   rh/2);
+      ctx.closePath();
+      cx=0;cy=0;
+    }else if(markerType==='explosion'){
+      var eSpikes=16,eRot=-Math.PI/2,eStep=Math.PI/eSpikes,eInner=outerR*0.78;
+      ctx.beginPath();
+      for(var ei=0;ei<eSpikes;ei++){
+        ctx.lineTo(cx+Math.cos(eRot)*outerR,cy+Math.sin(eRot)*outerR);eRot+=eStep;
+        ctx.lineTo(cx+Math.cos(eRot)*eInner,cy+Math.sin(eRot)*eInner);eRot+=eStep;
+      }
+      ctx.closePath();
+    }else if(markerType==='heart'){
+      ctx.translate(cx,cy);
+      var hs=outerR*0.62;
+      ctx.beginPath();
+      ctx.moveTo(0,hs*0.6);
+      ctx.bezierCurveTo(-hs*0.1,hs*0.3,-hs*1.1,-hs*0.3,-hs*0.0,-hs*0.85);
+      ctx.bezierCurveTo(hs*0.5,-hs*1.3,hs*0.8,-hs*0.7,hs*0.5,-hs*0.2);
+      ctx.bezierCurveTo(hs*0.5,-hs*0.2,hs*0.2,hs*0.2,0,hs*0.6);
       ctx.closePath();
       cx=0;cy=0;
     }else{
@@ -5287,6 +5471,7 @@ document.head.appendChild(msalScript);
           inp.click();
         })();
         break;
+      case 'settingsSave':saveFeatureFlags();break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
       case 'toggleCfgCompact':cfgSetCompact(!!t.checked);break;
@@ -5303,6 +5488,27 @@ document.head.appendChild(msalScript);
       if(sp&&sp.querySelector('option[value="'+e.target.value+'"]'))sp.value=e.target.value;
     }
     if(e.target&&(e.target.id==='cfg-savingsMarkerType'||e.target.id==='cfg-savingsPalette'||e.target.id==='cfg-savingsStarStyle'||e.target.id==='cfg-tagShape'))cfgRenderSavingsPreview();
+    if(e.target&&e.target.id==='cfg-tagPreset'){
+      var TAG_PRESETS={
+        'classic-red-rect':{tagColor:'#a51d2d',tagShape:'rect',tagRadius:0},
+        'green-rounded':{tagColor:'#3d7a4a',tagShape:'rounded',tagRadius:16},
+        'dark-pill':{tagColor:'#1e293b',tagShape:'pill',tagRadius:0},
+        'gold-banner':{tagColor:'#b8860b',tagShape:'banner',tagRadius:0},
+        'blue-circle':{tagColor:'#1d4ed8',tagShape:'circle',tagRadius:0},
+        'orange-star':{tagColor:'#ea580c',tagShape:'star',tagRadius:0},
+        'purple-hexagon':{tagColor:'#7c3aed',tagShape:'hexagon',tagRadius:0},
+        'teal-ticket':{tagColor:'#0d9488',tagShape:'ticket',tagRadius:0},
+        'rose-diamond':{tagColor:'#e11d48',tagShape:'diamond',tagRadius:0},
+        'copper-explosion':{tagColor:'#b45309',tagShape:'explosion',tagRadius:0}
+      };
+      var preset=TAG_PRESETS[e.target.value];
+      if(preset){
+        var tc=document.getElementById('cfg-tagColor');if(tc)tc.value=preset.tagColor;
+        var ts=document.getElementById('cfg-tagShape');if(ts)ts.value=preset.tagShape;
+        var tr=document.getElementById('cfg-tagRadius');if(tr){tr.value=preset.tagRadius;cfgUpdateVal('tagRadius',preset.tagRadius);}
+        cfgRenderSavingsPreview();
+      }
+    }
     if(act==='noticeSelChange'){
       var sel=e.target,ci=document.getElementById('cms-meal-notice-custom');
       if(ci){if(sel.value==='__custom__'){ci.style.display='';ci.focus();}else{ci.style.display='none';ci.value='';}}
@@ -6023,6 +6229,58 @@ document.head.appendChild(msalScript);
     })
     .then(function(){btn.disabled=false;pushImageRemove();});
   };
+
+  // --- Feature Flags (Settings tab) ---
+  var _settingsLoaded=false;
+  function loadFeatureFlags(){
+    _settingsLoaded=true;
+    var statusEl=document.getElementById('settings-status');
+    statusEl.style.display='block';statusEl.style.background='#f0f4ff';statusEl.style.color='#4338ca';
+    statusEl.textContent='\u23F3 Lade Feature-Einstellungen\u2026';
+    fetch('/api/cms-config').then(function(r){return r.json();}).then(function(res){
+      statusEl.style.display='none';
+      if(res.success&&res.data){
+        var flags=res.data.feature_flags;
+        if(typeof flags==='string'){try{flags=JSON.parse(flags);}catch(e){flags={};}}
+        if(!flags)flags={};
+        var fp=document.getElementById('feat-push');
+        var fs=document.getElementById('feat-scanner');
+        if(fp)fp.checked=flags.push!==false;
+        if(fs)fs.checked=flags.scanner!==false;
+      }
+    }).catch(function(e){
+      statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
+      statusEl.textContent='\u274c Fehler beim Laden: '+e.message;
+    });
+  }
+  function saveFeatureFlags(){
+    var fp=document.getElementById('feat-push');
+    var fs=document.getElementById('feat-scanner');
+    var flags={push:fp?fp.checked:true,scanner:fs?fs.checked:true};
+    var btn=document.getElementById('settings-save');
+    var hint=document.getElementById('settings-saved-hint');
+    var statusEl=document.getElementById('settings-status');
+    if(btn){btn.disabled=true;btn.textContent='\u23F3 Speichern\u2026';}
+    fetch('/api/cms-config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:'feature_flags',wert:flags})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res.success){
+        statusEl.style.display='none';
+        toast('Feature-Einstellungen gespeichert!');
+        if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
+      }else{
+        statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
+        statusEl.textContent='\u274c '+res.error;
+        toast('Fehler: '+res.error,'error');
+      }
+    }).catch(function(e){
+      statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
+      statusEl.textContent='\u274c Netzwerkfehler';
+      toast('Fehler: '+e.message,'error');
+    }).then(function(){if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Speichern';}});
+  }
 
   // --- Init (only if already authenticated via session) ---
   if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
