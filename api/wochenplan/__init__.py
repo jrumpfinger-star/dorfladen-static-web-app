@@ -91,18 +91,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if "$orderby" not in params:
                 params["$orderby"] = "dl_datum asc"
             if "$filter" not in params:
-                # Default: active items for target week (Mon-Sun), based on dl_datum
-                # Ab Samstag: nächste Woche anzeigen
+                # Default: active items for target week, based on dl_kalenderwoche/dl_jahr
+                # Ab Samstag/Sonntag: nächste Woche anzeigen
                 from datetime import timedelta
                 now = datetime.utcnow()
                 if now.weekday() >= 5:  # 5=Saturday, 6=Sunday
                     now = now + timedelta(days=(7 - now.weekday()))  # shift to next Monday
-                # Calculate Monday of target week
-                monday = now - timedelta(days=now.weekday())
-                sunday = monday + timedelta(days=6)
-                mon_str = monday.strftime("%Y-%m-%d")
-                sun_str = sunday.strftime("%Y-%m-%d")
-                params["$filter"] = f"dl_status eq 101001 and dl_datum ge {mon_str} and dl_datum le {sun_str}"
+                # ISO week number
+                iso_kw = now.isocalendar()[1]
+                iso_year = now.isocalendar()[0]
+                params["$filter"] = f"dl_status eq 101001 and dl_kalenderwoche eq {iso_kw} and dl_jahr eq {iso_year}"
 
             url = f"{dev_url}/api/data/v9.2/dl_wochenplans"
             r = requests.get(url, headers=headers, params=params)
