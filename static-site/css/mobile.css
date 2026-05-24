@@ -759,8 +759,12 @@ main{padding:0!important;margin:0!important}
   width:36px;
   height:4px;
   border-radius:10px;
-  background:#e5e7eb;
-  margin:10px auto 10px; /* compact margin */
+  background:#d1d5db;
+  margin:0 auto 0;
+  padding:12px 0;
+  background-clip:content-box;
+  cursor:grab;
+  touch-action:none;
 }
 .mob-popup-top{
   display:flex;
