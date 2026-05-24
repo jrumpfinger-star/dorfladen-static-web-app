@@ -548,12 +548,16 @@ var allAngebote = [];
           bis: (item.dl_gueltig_bis||item.valid_to)?((item.dl_gueltig_bis||item.valid_to).substring(0,10)):''
         };
       });
-      // Show promo bar link
+      // Show promo bar link (only count valid-this-week items)
       var promoLink=document.getElementById('promo-ang-link');
-      if(promoLink){promoLink.style.display='';document.getElementById('promo-ang-count').textContent=allAngebote.length;}
-      // Show angebote card
-      document.getElementById('angebote').style.display='';
       renderAngebote('this');
+      var thisWeek=filterByWeek('this');
+      if(promoLink){
+        if(thisWeek.items.length>0){promoLink.style.display='';document.getElementById('promo-ang-count').textContent=thisWeek.items.length;}
+        else{promoLink.style.display='none';}
+      }
+      // Show angebote card
+      document.getElementById('angebote').style.display=thisWeek.items.length>0?'':'none';
     })
     .catch(function(e){console.log('ANG-API:',e);});
 })();
