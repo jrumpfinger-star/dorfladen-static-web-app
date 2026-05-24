@@ -3309,11 +3309,6 @@ document.head.appendChild(msalScript);
     'Hero \u00dcberschrift':     {icon:'&#127968;', desc:'Gro&szlig;e &Uuml;berschrift im Hero-Bereich der Startseite'},
     'Hero Untertitel': {icon:'&#9998;',  desc:'Kleinerer Text unter der &Uuml;berschrift'},
     'Hero Zusatztext': {icon:'&#9749;',  desc:'Zusatzzeile mit Icons (z.B. Bistro, Sommer)'},
-    'gf_inhalt':      {icon:'&#128188;', desc:'Inhalt der Seite Gesch&auml;ftsf&uuml;hrung (HTML)', html:true},
-    'beirat_inhalt':  {icon:'&#128101;', desc:'Inhalt der Seite Beirat (HTML)', html:true},
-    'konzept_inhalt': {icon:'&#128161;', desc:'Inhalt der Seite Konzept (HTML)', html:true},
-    'stille_gesellschafter_inhalt': {icon:'&#129309;', desc:'Inhalt der Seite Stille Gesellschafter (HTML)', html:true},
-    'essen_inhalt':   {icon:'&#127869;', desc:'Inhalt der Seite Essen im Dorfladen (HTML)', html:true},
     'kontakt_adresse': {icon:'&#128205;', desc:'Adresse f&uuml;r Kontaktbereich (z.B. Dorfplatz 1, 84419 Obertaufkirchen)'},
     'kontakt_telefon': {icon:'&#128222;', desc:'Telefonnummer f&uuml;r Kontaktbereich'},
     'kontakt_email':  {icon:'&#9993;', desc:'E-Mail-Adresse f&uuml;r Kontaktbereich'},
@@ -3343,8 +3338,9 @@ document.head.appendChild(msalScript);
         if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
         _hpItems = Array.isArray(res.data) ? res.data : [];
         _hpLoaded = true;
-        // Filter out design_config, logo fields and image data (belongs in Design tab / Logo section)
-        var textItems = _hpItems.filter(function(item){ return typeof item.wert !== 'object' && item.name !== 'design_config' && item.name !== 'logo' && item.name !== 'Site Logo' && item.key !== 'site_logo' && !isImageValue(String(item.wert||'')); });
+        // Filter out design_config, logo fields, image data, and Seiteninhalte keys (shown in accordion below)
+        var _seitenKeys={'gf_inhalt':1,'beirat_inhalt':1,'konzept_inhalt':1,'stille_gesellschafter_inhalt':1,'essen_inhalt':1};
+        var textItems = _hpItems.filter(function(item){ return typeof item.wert !== 'object' && item.name !== 'design_config' && item.name !== 'logo' && item.name !== 'Site Logo' && item.key !== 'site_logo' && !isImageValue(String(item.wert||'')) && !_seitenKeys[item.key||item.name]; });
         // Deduplicate by name (keep first occurrence)
         var seen={};
         textItems = textItems.filter(function(item){ if(seen[item.name]) return false; seen[item.name]=true; return true; });
@@ -4748,7 +4744,7 @@ document.head.appendChild(msalScript);
     if(!isMobile){
       win=window.open('','_blank');
       if(!win){toast('Popup-Blocker aktiv \u2013 bitte erlauben','warn');return;}
-      win.document.write('<html><head><title>Einzelflyer</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#888"><div style="text-align:center"><div style="font-size:2rem;margin-bottom:12px">\u23f3</div>Einzelflyer werden erstellt\u2026</div></body></html>');
+      win.document.write('<html><head><title>Einzelflyer</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Segoe UI,system-ui,-apple-system,sans-serif;color:#888"><div style="text-align:center"><div style="font-size:2rem;margin-bottom:12px">\u23f3</div>Einzelflyer werden erstellt\u2026</div></body></html>');
     }
     toast('Einzelflyer werden erstellt...','ok');
     // Fetch missing images first
