@@ -1442,7 +1442,7 @@ document.head.appendChild(msalScript);
 </div>
 
 <!-- Modal -->
-<div id="cms-modal-wrap" style="display:none"></div>
+<div id="cms-modal-wrap" style="display:none;font-family:'Segoe UI',system-ui,-apple-system,sans-serif"></div>
 
 <script id="cms-artikel-data" type="application/json">
 []</script>
@@ -4748,7 +4748,7 @@ document.head.appendChild(msalScript);
     if(!isMobile){
       win=window.open('','_blank');
       if(!win){toast('Popup-Blocker aktiv \u2013 bitte erlauben','warn');return;}
-      win.document.write('<html><head><title>Einzelflyer</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial,sans-serif;color:#888"><div style="text-align:center"><div style="font-size:2rem;margin-bottom:12px">\u23f3</div>Einzelflyer werden erstellt\u2026</div></body></html>');
+      win.document.write('<html><head><title>Einzelflyer</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#888"><div style="text-align:center"><div style="font-size:2rem;margin-bottom:12px">\u23f3</div>Einzelflyer werden erstellt\u2026</div></body></html>');
     }
     toast('Einzelflyer werden erstellt...','ok');
     // Fetch missing images first
@@ -4789,7 +4789,7 @@ document.head.appendChild(msalScript);
         var html='<html><head><title>Einzelflyer</title><style>'
           +'@page{margin:0;size:A4 portrait}'
           +'@media print{.no-print{display:none!important}.flyer-page{page-break-after:always;page-break-inside:avoid}}'
-          +'body{margin:0;font-family:Arial,sans-serif;background:#f5f5f5}'
+          +'body{margin:0;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif;background:#f5f5f5}'
           +'.toolbar{position:sticky;top:0;background:#fff;padding:12px 24px;border-bottom:1px solid #e0e0e0;display:flex;gap:12px;z-index:10;align-items:center}'
           +'.toolbar button{padding:8px 20px;border-radius:8px;border:none;font-weight:600;cursor:pointer;font-size:14px}'
           +'.btn-print{background:#2e7d32;color:#fff}'
