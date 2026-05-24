@@ -1047,6 +1047,19 @@ document.head.appendChild(msalScript);
                   </button>
                 </div>
               </label>
+              <div id="hcfg-wpHome-colors" style="margin-top:8px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Homepage-Layout-Farben anpassen</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <label style="font-size:11px;color:#374151">Header-Gradient Start<input type="color" id="hcfg-wpTpl-home-wpHeaderFrom" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Header-Gradient Ende<input type="color" id="hcfg-wpTpl-home-wpHeaderTo" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Gericht-Textfarbe<input type="color" id="hcfg-wpTpl-home-wpDishColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Preis-Farbe<input type="color" id="hcfg-wpTpl-home-wpPriceColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Zebrastreifen<input type="color" id="hcfg-wpTpl-home-wpStripeColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Wochentag-Farbe<input type="color" id="hcfg-wpTpl-home-wpDayColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Hintergrund<input type="color" id="hcfg-wpTpl-home-wpBgColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetWpTplColors" data-kind="home" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
+                </div>
+              </div>
               <label style="font-size:12px;font-weight:600;color:#374151">Wochenplan-Layout (Vorschau/Teilen/Druck)
                 <select id="hcfg-wpFlyerTemplate" class="cms-input" style="margin-top:6px">
                   <option value="classic-red">Klassik (Rot/Beige)</option>
@@ -1091,6 +1104,19 @@ document.head.appendChild(msalScript);
                   </button>
                 </div>
               </label>
+              <div id="hcfg-wpFlyer-colors" style="margin-top:8px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Vorschau/Flyer-Layout-Farben anpassen</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <label style="font-size:11px;color:#374151">Header-Gradient Start<input type="color" id="hcfg-wpTpl-flyer-wpHeaderFrom" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Header-Gradient Ende<input type="color" id="hcfg-wpTpl-flyer-wpHeaderTo" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Gericht-Textfarbe<input type="color" id="hcfg-wpTpl-flyer-wpDishColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Preis-Farbe<input type="color" id="hcfg-wpTpl-flyer-wpPriceColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Zebrastreifen<input type="color" id="hcfg-wpTpl-flyer-wpStripeColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Wochentag-Farbe<input type="color" id="hcfg-wpTpl-flyer-wpDayColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Hintergrund<input type="color" id="hcfg-wpTpl-flyer-wpBgColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetWpTplColors" data-kind="flyer" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2571,8 +2597,26 @@ document.head.appendChild(msalScript);
     wpHomeTemplate:'classic-red',wpFlyerTemplate:'classic-red',
     heroOverlay:50,heroFontSize:2
   };
+  // Wochenplan template color defaults per template
+  var WP_TPL_COLOR_DEFAULTS={
+    'classic-red':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',wpBgColor:'#ffffff'},
+    'clean-white':{wpHeaderFrom:'#f3f4f6',wpHeaderTo:'#e5e7eb',wpDishColor:'#111827',wpPriceColor:'#374151',wpStripeColor:'#f9fafb',wpDayColor:'#111827',wpBgColor:'#ffffff'},
+    'dark-modern':{wpHeaderFrom:'#1e40af',wpHeaderTo:'#1e3a8a',wpDishColor:'#f1f5f9',wpPriceColor:'#93c5fd',wpStripeColor:'#1e293b',wpDayColor:'#60a5fa',wpBgColor:'#0f172a'},
+    'tafel':{wpHeaderFrom:'#2d5a3f',wpHeaderTo:'#1a3c28',wpDishColor:'#e8e0d0',wpPriceColor:'#c8b898',wpStripeColor:'#1e4430',wpDayColor:'#e8e0d0',wpBgColor:'#1a3c28'},
+    'bento':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1e293b',wpPriceColor:'#059669',wpStripeColor:'#f0fdf4',wpDayColor:'#059669',wpBgColor:'#f8fafc'},
+    'timeline':{wpHeaderFrom:'#0284c7',wpHeaderTo:'#0369a1',wpDishColor:'#0f172a',wpPriceColor:'#0284c7',wpStripeColor:'#f0f9ff',wpDayColor:'#0284c7',wpBgColor:'#f0f9ff'},
+    'zeitung':{wpHeaderFrom:'#292524',wpHeaderTo:'#1c1917',wpDishColor:'#1c1917',wpPriceColor:'#44403c',wpStripeColor:'#fafaf9',wpDayColor:'#44403c',wpBgColor:'#fafaf9'}
+  };
+  var WP_TPL_COLOR_KEYS=['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor','wpBgColor'];
+  function getWpTplColors(tplName,cfg){
+    var defaults=WP_TPL_COLOR_DEFAULTS[tplName]||WP_TPL_COLOR_DEFAULTS['classic-red'];
+    var overrides=(cfg.wpTplColors&&cfg.wpTplColors[tplName])||{};
+    var result={};
+    WP_TPL_COLOR_KEYS.forEach(function(k){result[k]=overrides[k]||defaults[k];});
+    return result;
+  }
   function hpCfgGet(){
-    try{var s=localStorage.getItem(HPCFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in HPCFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:HPCFG_DEFAULTS[k];return r;}}catch(e){}
+    try{var s=localStorage.getItem(HPCFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in HPCFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:HPCFG_DEFAULTS[k];if(o.wpTplColors)r.wpTplColors=o.wpTplColors;return r;}}catch(e){}
     return JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
   }
   function hpCfgSave(o){
@@ -2598,6 +2642,29 @@ document.head.appendChild(msalScript);
     });
     var ht=document.getElementById('hcfg-wpHomeTemplate');if(ht)c.wpHomeTemplate=ht.value;
     var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)c.wpFlyerTemplate=ft.value;
+    // Read per-template color overrides
+    var tplColors={};
+    ['home','flyer'].forEach(function(kind){
+      var selId=kind==='flyer'?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
+      var sel=document.getElementById(selId);if(!sel)return;
+      var tpl=sel.value||'classic-red';
+      var defaults=WP_TPL_COLOR_DEFAULTS[tpl]||WP_TPL_COLOR_DEFAULTS['classic-red'];
+      var overrides={};
+      var changed=false;
+      WP_TPL_COLOR_KEYS.forEach(function(ck){
+        var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
+        if(el&&el.value&&el.value!==defaults[ck]){overrides[ck]=el.value;changed=true;}
+      });
+      if(changed){if(!tplColors[tpl])tplColors[tpl]={};for(var k in overrides)tplColors[tpl][k]=overrides[k];}
+    });
+    // Merge with existing stored overrides for other templates
+    var existing=hpCfgGet();
+    if(existing.wpTplColors){
+      for(var t in existing.wpTplColors){
+        if(!tplColors[t])tplColors[t]=existing.wpTplColors[t];
+      }
+    }
+    if(Object.keys(tplColors).length)c.wpTplColors=tplColors;
     return c;
   }
   function hpCfgApplyUI(c){
@@ -2617,6 +2684,8 @@ document.head.appendChild(msalScript);
     var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)ft.value=c.wpFlyerTemplate||'classic-red';
     hpCfgSyncWpPreview();
     hpCfgSyncWpFlyerPreview();
+    hpCfgSyncWpTplColors('home',c);
+    hpCfgSyncWpTplColors('flyer',c);
   }
   function hpCfgLoadUI(){
     var c=hpCfgGet();
@@ -2628,6 +2697,7 @@ document.head.appendChild(msalScript);
         var dvCfg=res.data['hp_design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
           var merged={};for(var k in HPCFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:HPCFG_DEFAULTS[k];
+          if(dvCfg.wpTplColors)merged.wpTplColors=dvCfg.wpTplColors;
           try{localStorage.setItem(HPCFG_KEY,JSON.stringify(merged));}catch(e){}
           hpCfgApplyUI(merged);
         }
@@ -2646,17 +2716,54 @@ document.head.appendChild(msalScript);
     var btns=document.querySelectorAll('#hcfg-wpFlyerTemplate-preview .cms-wp-preview');
     btns.forEach(function(b){b.classList.toggle('active',((b.getAttribute('data-value')||'').toLowerCase()===v));});
   }
+  function hpCfgSyncWpTplColors(kind,cfg){
+    if(!cfg)cfg=hpCfgGet();
+    var selId=kind==='flyer'?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
+    var sel=document.getElementById(selId);if(!sel)return;
+    var tpl=sel.value||'classic-red';
+    var colors=getWpTplColors(tpl,cfg);
+    WP_TPL_COLOR_KEYS.forEach(function(ck){
+      var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
+      if(el)el.value=colors[ck]||'#000000';
+    });
+  }
   window.saveHPCfg=function(){
     var c=hpCfgReadUI();
     hpCfgSave(c);
+    hpCfgSyncWpTplColors('home',c);
+    hpCfgSyncWpTplColors('flyer',c);
     toast('Wochenplan-Design gespeichert','ok');
   };
   window.resetHPCfg=function(){
     var defaults=JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
+    defaults.wpTplColors={};
     hpCfgSave(defaults);
     hpCfgApplyUI(defaults);
     toast('Wochenplan-Design zur\u00fcckgesetzt','ok');
   };
+  window.resetWpTplColors=function(kind){
+    kind=kind||'home';
+    var selId=kind==='flyer'?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
+    var sel=document.getElementById(selId);if(!sel)return;
+    var tpl=sel.value||'classic-red';
+    var cfg=hpCfgGet();
+    if(cfg.wpTplColors&&cfg.wpTplColors[tpl])delete cfg.wpTplColors[tpl];
+    hpCfgSave(cfg);
+    hpCfgSyncWpTplColors(kind,cfg);
+    toast('Farben f\u00fcr '+tpl+' zur\u00fcckgesetzt','ok');
+  };
+  // Sync WP template colors when dropdown changes
+  document.addEventListener('change',function(e){
+    if(e.target.id==='hcfg-wpHomeTemplate'){hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');}
+    if(e.target.id==='hcfg-wpFlyerTemplate'){hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');}
+  });
+  // Auto-save WP template color pickers on input
+  document.addEventListener('input',function(e){
+    var id=e.target.id;if(!id||id.indexOf('hcfg-wpTpl-')!==0)return;
+    // debounced auto-save
+    clearTimeout(window._wpTplColorTimer);
+    window._wpTplColorTimer=setTimeout(function(){var c=hpCfgReadUI();hpCfgSave(c);},800);
+  });
 
   // --- Wochenplan ---
   window.cmsWeek = function(delta){
@@ -5373,12 +5480,15 @@ document.head.appendChild(msalScript);
       case 'pickWpHomeTpl':
         var tpl=t.getAttribute('data-value')||'classic-red';
         var sel=document.getElementById('hcfg-wpHomeTemplate');
-        if(sel){sel.value=tpl;hpCfgSyncWpPreview();}
+        if(sel){sel.value=tpl;hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');}
         break;
       case 'pickWpFlyerTpl':
         var tpl2=t.getAttribute('data-value')||'classic-red';
         var sel2=document.getElementById('hcfg-wpFlyerTemplate');
-        if(sel2){sel2.value=tpl2;hpCfgSyncWpFlyerPreview();}
+        if(sel2){sel2.value=tpl2;hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');}
+        break;
+      case 'resetWpTplColors':
+        resetWpTplColors(t.getAttribute('data-kind')||'home');
         break;
       case 'pickPlakatTpl':
         var pt=t.getAttribute('data-value')||'classic-red';
