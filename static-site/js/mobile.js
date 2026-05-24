@@ -43,40 +43,47 @@
 
   /* === SWIPE-DOWN TO CLOSE POPUPS === */
   (function(){
-    var startY=0,curY=0,dragging=false,activePopup=null,activeSheet=null;
+    var startY=0,curY=0,dragging=false,popupId='',activeSheet=null,activeBg=null;
     document.addEventListener('touchstart',function(e){
       var handle=e.target.closest('.mob-popup-handle');
       if(!handle) return;
       activeSheet=handle.closest('.mob-popup');
-      activePopup=handle.closest('.mob-popup-bg');
-      if(!activeSheet||!activePopup) return;
+      activeBg=handle.closest('.mob-popup-bg');
+      if(!activeSheet||!activeBg) return;
+      popupId=(activeBg.id||'').replace('mob-popup-','');
       startY=e.touches[0].clientY;curY=startY;dragging=true;
       activeSheet.style.transition='none';
+      activeBg.style.transition='none';
     },{passive:true});
     document.addEventListener('touchmove',function(e){
       if(!dragging||!activeSheet) return;
       curY=e.touches[0].clientY;
       var dy=Math.max(0,curY-startY);
       activeSheet.style.transform='translateY('+dy+'px)';
-      activeSheet.style.opacity=String(Math.max(0.4,1-dy/400));
+      // Fade out the dark overlay as user drags down
+      var bgOpacity=Math.max(0,1-dy/200);
+      activeBg.style.background='rgba(0,0,0,'+(.4*bgOpacity)+')';
     },{passive:true});
     document.addEventListener('touchend',function(){
-      if(!dragging||!activeSheet||!activePopup) {dragging=false;return;}
+      if(!dragging||!activeSheet||!activeBg){dragging=false;return;}
       var dy=curY-startY;
-      activeSheet.style.transition='transform .25s ease,opacity .25s ease';
       if(dy>80){
-        activeSheet.style.transform='translateY(100%)';
-        activeSheet.style.opacity='0';
-        setTimeout(function(){
-          var id=(activePopup.id||'').replace('mob-popup-','');
-          if(id) mobClosePopup(id);
-          activeSheet.style.transform='';activeSheet.style.opacity='';activeSheet.style.transition='';
-        },260);
+        // Close immediately – no delay
+        activeSheet.style.transform='';activeSheet.style.opacity='';activeSheet.style.transition='';
+        activeBg.style.background='';activeBg.style.transition='';
+        if(popupId) mobClosePopup(popupId);
       }else{
-        activeSheet.style.transform='translateY(0)';activeSheet.style.opacity='1';
-        setTimeout(function(){activeSheet.style.transition='';},260);
+        // Snap back
+        activeSheet.style.transition='transform .2s ease';
+        activeSheet.style.transform='translateY(0)';
+        activeBg.style.transition='background .2s ease';
+        activeBg.style.background='';
+        setTimeout(function(){
+          if(activeSheet){activeSheet.style.transition='';activeSheet.style.transform='';}
+          if(activeBg){activeBg.style.transition='';}
+        },220);
       }
-      dragging=false;activePopup=null;activeSheet=null;
+      dragging=false;popupId='';activeSheet=null;activeBg=null;
     },{passive:true});
   })();
 
