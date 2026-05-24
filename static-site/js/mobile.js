@@ -17,11 +17,19 @@
   function mobAnyPopupOpen(){return document.querySelectorAll('.mob-popup-bg.open').length>0;}
   window.mobOpenPopup=function(id){
     var el=document.getElementById('mob-popup-'+id);
-    if(el){el.classList.add('open');mobLockScroll();}
+    if(el){
+      var sheet=el.querySelector('.mob-popup');
+      if(sheet){sheet.style.transform='';sheet.style.opacity='';sheet.style.transition='';}
+      el.classList.add('open');mobLockScroll();
+    }
   };
   window.mobClosePopup=function(id){
     var el=document.getElementById('mob-popup-'+id);
-    if(el) el.classList.remove('open');
+    if(el){
+      var sheet=el.querySelector('.mob-popup');
+      if(sheet){sheet.style.transform='';sheet.style.opacity='';sheet.style.transition='';}
+      el.classList.remove('open');
+    }
     if(!mobAnyPopupOpen()) mobUnlockScroll();
   };
   document.addEventListener('keydown',function(e){

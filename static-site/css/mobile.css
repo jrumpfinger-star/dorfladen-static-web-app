@@ -756,15 +756,21 @@ main{padding:0!important;margin:0!important}
 }
 .mob-popup-bg.open .mob-popup{transform:translateY(0)}
 .mob-popup-handle{
+  width:100%;
+  height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:grab;
+  touch-action:none;
+  flex-shrink:0;
+}
+.mob-popup-handle::after{
+  content:'';
   width:36px;
   height:4px;
   border-radius:10px;
   background:#d1d5db;
-  margin:0 auto 0;
-  padding:12px 0;
-  background-clip:content-box;
-  cursor:grab;
-  touch-action:none;
 }
 .mob-popup-top{
   display:flex;
