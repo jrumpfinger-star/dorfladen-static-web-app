@@ -705,9 +705,8 @@ function openLightbox(idx){
   if(!overlay||!_galleryImages[idx])return;
   img.src=_galleryImages[idx].url;
   var gi=_galleryImages[idx];
-  var label=gi.description||gi.name.replace(/\.[^.]+$/,'');
-  if(!gi.description&&gi.category)label=gi.category+' – '+label;
-  cap.textContent=label;
+  if(gi.description){cap.textContent=gi.description;cap.style.display='';}
+  else{cap.textContent='';cap.style.display='none';}
   overlay.classList.add('active');
   document.body.style.overflow='hidden';
 }
