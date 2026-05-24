@@ -213,10 +213,16 @@
         }
       }else{
         dishes.forEach(function(d){
-          html+='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">';
-          html+='<div class="mob-wp-day-menu" style="flex:1">'+esc(d.name)+'</div>';
-          html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
-          html+='</div>';
+          var p=parseFloat(String(d.price||'0').replace(',','.'));
+          var isNotice=!p||p<=0||d.notice;
+          if(isNotice&&!p){
+            html+='<div class="mob-wp-day-menu" style="color:#888;font-style:italic">'+esc(d.name)+'</div>';
+          }else{
+            html+='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">';
+            html+='<div class="mob-wp-day-menu" style="flex:1'+(d.notice?';font-style:italic;color:#888':'')+'">'+esc(d.name)+'</div>';
+            html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
+            html+='</div>';
+          }
         });
       }
       html+='</div>';

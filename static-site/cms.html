@@ -165,11 +165,13 @@ document.head.appendChild(msalScript);
   .cms-meal-grid{overflow:visible}
   .cms-meal-grid>*{min-width:0;box-sizing:border-box}
   .cms-art-input{position:relative}
-  .cms-art-dd{display:none;position:fixed;z-index:99999;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:340px;min-height:0;overflow-y:auto;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;min-width:280px}
+  .cms-art-dd{display:none;position:fixed;z-index:99999;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:50vh;min-height:0;overflow-y:auto;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;min-width:280px}
   .cms-art-dd.open{display:block}
-  .cms-art-opt{padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;transition:background .12s}
+  .cms-art-opt{padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;transition:background .12s;display:flex;align-items:center;gap:8px}
   .cms-art-opt:last-child{border-bottom:none}
   .cms-art-opt:hover{background:#f0fdf4}
+  .cms-art-opt-del{margin-left:auto;flex-shrink:0;width:22px;height:22px;border-radius:50%;border:none;background:#fee2e2;color:#dc2626;font-size:14px;line-height:22px;text-align:center;cursor:pointer;opacity:.6;transition:opacity .15s}
+  .cms-art-opt-del:hover{opacity:1;background:#fecaca}
   .cms-art-opt-name{font-weight:600;color:#1f2937;font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
   .cms-art-opt-meta{font-size:11px;color:#6b7280;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;margin-top:2px}
   .cms-art-spinner{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#16a34a;font-size:12px;display:none}
@@ -2367,7 +2369,9 @@ document.head.appendChild(msalScript);
     {key:'beirat_inhalt', label:'Beirat', icon:'&#128101;', page:'/beirat'},
     {key:'konzept_inhalt', label:'Konzept', icon:'&#128161;', page:'/konzept'},
     {key:'stille_gesellschafter_inhalt', label:'Stille Gesellschafter', icon:'&#129309;', page:'/stille-gesellschafter'},
-    {key:'essen_inhalt', label:'Essen im Dorfladen', icon:'&#127869;', page:'/essen-im-dorfladen'}
+    {key:'essen_inhalt', label:'Essen im Dorfladen', icon:'&#127869;', page:'/essen-im-dorfladen'},
+    {key:'impressum_inhalt', label:'Impressum', icon:'&#9878;', page:'/impressum'},
+    {key:'datenschutz_inhalt', label:'Datenschutzerkl&auml;rung', icon:'&#128274;', page:'/datenschutzerklaerung'}
   ];
 
   function loadSeiteninhalte(){
@@ -3041,13 +3045,28 @@ document.head.appendChild(msalScript);
       dd.innerHTML=matches.map(function(g){
         return '<div class="cms-art-opt" data-g="'+esc(g.gericht)+'" data-p="'+(g.preis||'')+'">'
           +'<span class="cms-art-opt-name">'+esc(g.gericht)+'</span>'
-          +(g.preis?'<span class="cms-art-opt-meta">'+fmtP(g.preis)+'</span>':'')+'</div>';
+          +(g.preis?'<span class="cms-art-opt-meta">'+fmtP(g.preis)+'</span>':'')
+          +'<button type="button" class="cms-art-opt-del" data-del-g="'+esc(g.gericht)+'" title="Vorbelegung l\u00f6schen">&times;</button></div>';
       }).join('');
       dd.className='cms-art-dd open';
       flipDDIfNeeded(dd);
     });
     inp.addEventListener('focus',function(){inp.dispatchEvent(new Event('input'));});
     dd.addEventListener('click',function(e){
+      // Delete button clicked
+      var delBtn=e.target.closest('.cms-art-opt-del');
+      if(delBtn){
+        e.stopPropagation();
+        var gName=delBtn.getAttribute('data-del-g');
+        if(gName&&confirm('Vorbelegung "'+gName+'" wirklich l\u00f6schen?')){
+          gerichteHistory=gerichteHistory.filter(function(g){return g.gericht!==gName;});
+          delBtn.closest('.cms-art-opt').remove();
+          if(!dd.querySelector('.cms-art-opt')){dd.className='cms-art-dd';dd.innerHTML='';}
+          toast('Vorbelegung gel\u00f6scht','ok');
+        }
+        return;
+      }
+      // Normal selection
       var opt=e.target.closest('.cms-art-opt');
       if(!opt) return;
       inp.value=opt.getAttribute('data-g');
@@ -3339,7 +3358,7 @@ document.head.appendChild(msalScript);
         _hpItems = Array.isArray(res.data) ? res.data : [];
         _hpLoaded = true;
         // Filter out design_config, logo fields, image data, and Seiteninhalte keys (shown in accordion below)
-        var _seitenKeys={'gf_inhalt':1,'beirat_inhalt':1,'konzept_inhalt':1,'stille_gesellschafter_inhalt':1,'essen_inhalt':1};
+        var _seitenKeys={'gf_inhalt':1,'beirat_inhalt':1,'konzept_inhalt':1,'stille_gesellschafter_inhalt':1,'essen_inhalt':1,'impressum_inhalt':1,'datenschutz_inhalt':1};
         var textItems = _hpItems.filter(function(item){ return typeof item.wert !== 'object' && item.name !== 'design_config' && item.name !== 'logo' && item.name !== 'Site Logo' && item.key !== 'site_logo' && !isImageValue(String(item.wert||'')) && !_seitenKeys[item.key||item.name]; });
         // Deduplicate by name (keep first occurrence)
         var seen={};
