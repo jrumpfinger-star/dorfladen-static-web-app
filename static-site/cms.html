@@ -4759,27 +4759,59 @@ document.head.appendChild(msalScript);
       return Promise.all(items.map(function(item){return generateEinzelflyer(item,data);}));
     }).then(function(canvases){
       if(isMobile){
-        // ── Mobile: render in CMS modal ──
-        var mhtml='<div class="cms-modal-bg">';
-        mhtml+='<div class="cms-modal" style="max-width:95vw;max-height:90vh;overflow-y:auto;padding:12px;text-align:center">';
-        mhtml+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;position:sticky;top:0;background:#fff;padding:8px 0;z-index:2">';
-        mhtml+='<span style="color:#888;font-size:13px;align-self:center">'+canvases.length+' Flyer</span>';
-        mhtml+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Schlie\u00dfen</button>';
+        // ── Mobile: render in CMS modal with print+save per flyer ──
+        var mhtml='<div class="cms-modal-bg" style="align-items:flex-start;padding:0">';
+        mhtml+='<div class="cms-modal" style="max-width:100%;width:100%;max-height:100vh;height:100vh;overflow-y:auto;padding:0;border-radius:0;text-align:center;font-family:Segoe UI,system-ui,-apple-system,sans-serif">';
+        // Sticky toolbar
+        mhtml+='<div style="position:sticky;top:0;background:#fff;padding:10px 12px;border-bottom:1px solid #e0e0e0;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;z-index:10">';
+        mhtml+='<button class="cms-btn cms-btn-primary cms-btn-sm" id="mob-flyer-print-all" style="font-size:12px">\ud83d\udda8\ufe0f Alle drucken</button>';
+        mhtml+='<button class="cms-btn cms-btn-sm" id="mob-flyer-dl-all" style="font-size:12px;background:#1565c0;color:#fff;border:none">\u2b07\ufe0f Alle speichern</button>';
+        mhtml+='<span style="color:#888;font-size:12px">'+canvases.length+' Flyer</span>';
+        mhtml+='<button class="cms-btn cms-btn-gray cms-btn-sm" data-action="closeModal" style="font-size:12px">Schlie\u00dfen</button>';
         mhtml+='</div>';
+        mhtml+='<div style="padding:8px">';
         canvases.forEach(function(cv,i){
           var dataUrl=cv.toDataURL('image/png');
           var name=items[i]?items[i].produkt||('Artikel '+(i+1)):'Artikel '+(i+1);
           var safeName=(name+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-          mhtml+='<div style="margin-bottom:16px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden">';
-          mhtml+='<img src="'+dataUrl+'" alt="'+safeName+'" style="width:100%;display:block">';
-          mhtml+='<div style="padding:8px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap">';
-          mhtml+='<a href="'+dataUrl+'" download="Flyer_'+safeName.replace(/[^a-zA-Z0-9_-]/g,'_')+'.png" style="padding:6px 16px;border-radius:6px;border:none;background:#1565c0;color:#fff;font-size:13px;text-decoration:none;font-weight:600">\u2b07\ufe0f Speichern</a>';
-          mhtml+='<span style="color:#888;font-size:12px">'+safeName+'</span>';
+          mhtml+='<div class="mob-flyer-page" style="margin-bottom:16px;background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.12);overflow:hidden">';
+          mhtml+='<img src="'+dataUrl+'" alt="'+safeName+'" style="width:100%;display:block" data-flyer-idx="'+i+'">';
+          mhtml+='<div style="padding:8px 10px;display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;background:#f9fafb;border-top:1px solid #e5e7eb">';
+          mhtml+='<button class="cms-btn cms-btn-sm" data-mob-print="'+i+'" style="font-size:11px;background:#2e7d32;color:#fff;border:none;padding:5px 12px;border-radius:6px">\ud83d\udda8\ufe0f Drucken</button>';
+          mhtml+='<a href="'+dataUrl+'" download="Flyer_'+safeName.replace(/[^a-zA-Z0-9_-]/g,'_')+'.png" class="cms-btn cms-btn-sm" style="font-size:11px;background:#1565c0;color:#fff;border:none;padding:5px 12px;border-radius:6px;text-decoration:none">\u2b07\ufe0f Speichern</a>';
+          mhtml+='<span style="color:#666;font-size:11px;font-weight:600">'+safeName+'</span>';
           mhtml+='</div></div>';
         });
-        mhtml+='</div></div>';
+        mhtml+='</div></div></div>';
         document.getElementById('cms-modal-wrap').innerHTML=mhtml;
         document.getElementById('cms-modal-wrap').style.display='';
+        // Mobile event handlers
+        document.getElementById('mob-flyer-print-all').onclick=function(){
+          var w=window.open('','_blank');
+          if(!w){toast('Popup-Blocker aktiv','warn');return;}
+          var ph='<html><head><title>Einzelflyer</title><style>@page{margin:0;size:A4 portrait}img{width:100%;page-break-after:always}body{margin:0}</style></head><body>';
+          canvases.forEach(function(cv){ph+='<img src="'+cv.toDataURL('image/png')+'">';});
+          ph+='</body></html>';
+          w.document.write(ph);w.document.close();
+          setTimeout(function(){w.print();},500);
+        };
+        document.getElementById('mob-flyer-dl-all').onclick=function(){
+          canvases.forEach(function(cv,i){
+            var nm=items[i]?items[i].produkt||('Artikel_'+(i+1)):'Artikel_'+(i+1);
+            var a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='Flyer_'+nm.replace(/[^a-zA-Z0-9_-]/g,'_')+'.png';a.click();
+          });
+          toast(canvases.length+' Flyer heruntergeladen','ok');
+        };
+        document.querySelectorAll('[data-mob-print]').forEach(function(btn){
+          btn.onclick=function(){
+            var idx=parseInt(btn.getAttribute('data-mob-print'));
+            var w=window.open('','_blank');
+            if(!w){toast('Popup-Blocker aktiv','warn');return;}
+            w.document.write('<html><head><title>Einzelflyer</title><style>@page{margin:0;size:A4 portrait}img{width:100%}body{margin:0}</style></head><body><img src="'+canvases[idx].toDataURL('image/png')+'"></body></html>');
+            w.document.close();
+            setTimeout(function(){w.print();},500);
+          };
+        });
       }else{
         // ── Desktop: write to popup window ──
         var html='<html><head><title>Einzelflyer</title><style>'
