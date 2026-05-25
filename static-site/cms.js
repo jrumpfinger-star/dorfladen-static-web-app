@@ -3969,7 +3969,8 @@
         if(item.statt_preis){
           var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
           ctx.fillStyle=cfg.stattColor;ctx.font='bold 26px Arial, sans-serif';ctx.textAlign='center';
-          var stattX=tagCX,stattY=tagCY+tagH/2+42;
+          var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
+          var stattX=tagCX,stattY=tagCY+tagBottom+42;
           ctx.fillText(stattStr,stattX,stattY);
           var stW=ctx.measureText(stattStr).width;
           ctx.strokeStyle=theme.tagColor;ctx.lineWidth=2.5;ctx.beginPath();
@@ -4705,7 +4706,8 @@
         if(item.statt_preis){
           var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
           ctx.fillStyle=cfg.stattColor;ctx.font='bold 16px Arial, sans-serif';ctx.textAlign='center';
-          var stattX=tagCX,stattY=tagCY+tagH/2+30;
+          var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
+          var stattX=tagCX,stattY=tagCY+tagBottom+30;
           ctx.fillText(stattStr,stattX,stattY);
           var stW=ctx.measureText(stattStr).width;
           ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1.5;ctx.beginPath();
