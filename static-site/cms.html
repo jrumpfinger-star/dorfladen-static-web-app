@@ -1076,9 +1076,13 @@ document.head.appendChild(msalScript);
           </div>
         </div>
       </div>
-      <div style="margin-top:16px;display:flex;gap:8px">
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Alles speichern</button>
-        <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">Zur&uuml;cksetzen</button>
+        <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        <button class="cms-btn cms-btn-gray" onclick="hpSaveAsDefault()" title="Aktuelle HP-Werte als neuen Standard definieren" style="font-size:11px">&#9733; Als Standard speichern</button>
+        <button class="cms-btn cms-btn-gray" onclick="hpClearCustomDefault()" title="Eigene HP-Standards l&ouml;schen" style="font-size:11px;color:#dc2626">&#10005; Werkseinstellungen</button>
       </div>
     </div>
     <!-- ============ SUB-TAB: Wochenplan (REDESIGNED) ============ -->
@@ -1386,7 +1390,11 @@ document.head.appendChild(msalScript);
           <!-- Actions -->
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Speichern</button>
-            <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">Zur&uuml;cksetzen</button>
+            <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            <button class="cms-btn cms-btn-gray" onclick="hpSaveAsDefault()" style="font-size:11px">&#9733; Als Standard speichern</button>
+            <button class="cms-btn cms-btn-gray" onclick="hpClearCustomDefault()" style="font-size:11px;color:#dc2626">&#10005; Werkseinstellungen</button>
           </div>
         </div>
       </div>
@@ -1630,7 +1638,11 @@ document.head.appendChild(msalScript);
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
             <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
-            <button class="cms-btn cms-btn-gray" data-action="resetCfg">Auf Defaults zur&uuml;cksetzen</button>
+            <button class="cms-btn cms-btn-gray" data-action="resetCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            <button class="cms-btn cms-btn-gray" onclick="cmsSaveAsDefault()" title="Aktuelle Werte als neuen Standard definieren" style="font-size:11px">&#9733; Als Standard speichern</button>
+            <button class="cms-btn cms-btn-gray" onclick="cmsClearCustomDefault()" title="Eigene Standards l&ouml;schen" style="font-size:11px;color:#dc2626">&#10005; Werkseinstellungen</button>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
@@ -1905,7 +1917,11 @@ document.head.appendChild(msalScript);
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
             <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
-            <button class="cms-btn cms-btn-gray" data-action="resetCfg">Auf Defaults zur&uuml;cksetzen</button>
+            <button class="cms-btn cms-btn-gray" data-action="resetCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            <button class="cms-btn cms-btn-gray" onclick="cmsSaveAsDefault()" title="Aktuelle Werte als neuen Standard definieren" style="font-size:11px">&#9733; Als Standard speichern</button>
+            <button class="cms-btn cms-btn-gray" onclick="cmsClearCustomDefault()" title="Eigene Standards l&ouml;schen" style="font-size:11px;color:#dc2626">&#10005; Werkseinstellungen</button>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">

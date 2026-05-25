@@ -1110,6 +1110,24 @@
       .then(function(res){if(!res.success)console.warn('Design save to Dataverse failed',res.error);})
       .catch(function(e){console.warn('Design save error',e);});
   }
+  var CFG_CUSTOM_DEFAULTS_KEY='dl_design_cfg_custom_defaults';
+  var _cfgCustomDefaults=null;
+  function cfgGetCustomDefaults(){
+    if(_cfgCustomDefaults)return _cfgCustomDefaults;
+    try{var s=localStorage.getItem(CFG_CUSTOM_DEFAULTS_KEY);if(s){_cfgCustomDefaults=JSON.parse(s);return _cfgCustomDefaults;}}catch(e){}
+    return null;
+  }
+  function cfgGetEffectiveDefaults(){
+    return cfgGetCustomDefaults()||CFG_DEFAULTS;
+  }
+  function cfgSaveCustomDefaults(o){
+    _cfgCustomDefaults=JSON.parse(JSON.stringify(o));
+    try{localStorage.setItem(CFG_CUSTOM_DEFAULTS_KEY,JSON.stringify(o));}catch(e){}
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'design_config_defaults',wert:o})})
+      .then(function(r){return r.json();})
+      .then(function(res){if(!res.success)console.warn('Custom defaults save failed',res.error);})
+      .catch(function(e){console.warn('Custom defaults save error',e);});
+  }
   function cfgGetCompact(){
     try{return localStorage.getItem(CFG_COMPACT_KEY)==='1';}catch(e){return false;}
   }
@@ -1125,6 +1143,12 @@
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.data)return;
+        // Load custom defaults if stored
+        var dvCustomDef=res.data['design_config_defaults'];
+        if(dvCustomDef&&typeof dvCustomDef==='object'){
+          _cfgCustomDefaults=dvCustomDef;
+          try{localStorage.setItem(CFG_CUSTOM_DEFAULTS_KEY,JSON.stringify(dvCustomDef));}catch(e){}
+        }
         var dvCfg=res.data['design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
           // Dataverse is always the source of truth
@@ -1374,11 +1398,25 @@
     toast('Design-Einstellungen gespeichert','ok');
   };
   window.cmsResetCfg=function(){
-    var defaults=JSON.parse(JSON.stringify(CFG_DEFAULTS));
+    var defaults=JSON.parse(JSON.stringify(cfgGetEffectiveDefaults()));
     cfgSave(defaults);
     try{localStorage.removeItem('dl_savings_star_style');}catch(e){}
     cfgApplyUI(defaults);
-    toast('Auf Standardwerte zur\u00fcckgesetzt','ok');
+    var hasCustom=!!cfgGetCustomDefaults();
+    toast(hasCustom?'Auf eigene Standardwerte zur\u00fcckgesetzt':'Auf Werks-Standardwerte zur\u00fcckgesetzt','ok');
+  };
+  window.cmsSaveAsDefault=function(){
+    if(!confirm('Aktuelle Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.'))return;
+    var c=cfgReadUI();
+    cfgSaveCustomDefaults(c);
+    toast('\u2705 Aktuelle Einstellungen als Standard gespeichert','ok');
+  };
+  window.cmsClearCustomDefault=function(){
+    if(!confirm('Eigene Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?'))return;
+    _cfgCustomDefaults=null;
+    try{localStorage.removeItem(CFG_CUSTOM_DEFAULTS_KEY);}catch(e){}
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'design_config_defaults',wert:null})}).catch(function(){});
+    toast('Eigene Standards gel\u00f6scht \u2013 Werkseinstellungen aktiv','ok');
   };
 
   // ── Section Navigation (Plakat / Flyer / Gemeinsam) ──
@@ -1876,6 +1914,20 @@
     WP_TPL_COLOR_KEYS.forEach(function(k){result[k]=overrides[k]||defaults[k];});
     return result;
   }
+  var HPCFG_CUSTOM_DEFAULTS_KEY='dl_hp_design_cfg_custom_defaults';
+  var _hpCfgCustomDefaults=null;
+  function hpCfgGetCustomDefaults(){
+    if(_hpCfgCustomDefaults)return _hpCfgCustomDefaults;
+    try{var s=localStorage.getItem(HPCFG_CUSTOM_DEFAULTS_KEY);if(s){_hpCfgCustomDefaults=JSON.parse(s);return _hpCfgCustomDefaults;}}catch(e){}
+    return null;
+  }
+  function hpCfgGetEffectiveDefaults(){return hpCfgGetCustomDefaults()||HPCFG_DEFAULTS;}
+  function hpCfgSaveCustomDefaults(o){
+    _hpCfgCustomDefaults=JSON.parse(JSON.stringify(o));
+    try{localStorage.setItem(HPCFG_CUSTOM_DEFAULTS_KEY,JSON.stringify(o));}catch(e){}
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'hp_design_config_defaults',wert:o})})
+      .then(function(r){return r.json();}).then(function(res){if(!res.success)console.warn('HP custom defaults save failed',res.error);}).catch(function(){});
+  }
   function hpCfgGet(){
     try{var s=localStorage.getItem(HPCFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in HPCFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:HPCFG_DEFAULTS[k];if(o.wpTplColors)r.wpTplColors=o.wpTplColors;return r;}}catch(e){}
     return JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
@@ -2043,6 +2095,11 @@
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.data)return;
+        var dvHpDef=res.data['hp_design_config_defaults'];
+        if(dvHpDef&&typeof dvHpDef==='object'){
+          _hpCfgCustomDefaults=dvHpDef;
+          try{localStorage.setItem(HPCFG_CUSTOM_DEFAULTS_KEY,JSON.stringify(dvHpDef));}catch(e){}
+        }
         var dvCfg=res.data['hp_design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
           var merged={};for(var k in HPCFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:HPCFG_DEFAULTS[k];
@@ -2104,11 +2161,25 @@
     toast('Design gespeichert','ok');
   };
   window.resetHPCfg=function(){
-    var defaults=JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
-    defaults.wpTplColors={};
+    var defaults=JSON.parse(JSON.stringify(hpCfgGetEffectiveDefaults()));
+    if(!defaults.wpTplColors)defaults.wpTplColors={};
     hpCfgSave(defaults);
     hpCfgApplyUI(defaults);
-    toast('Wochenplan-Design zur\u00fcckgesetzt','ok');
+    var hasCustom=!!hpCfgGetCustomDefaults();
+    toast(hasCustom?'Auf eigene Standards zur\u00fcckgesetzt':'Auf Werks-Standards zur\u00fcckgesetzt','ok');
+  };
+  window.hpSaveAsDefault=function(){
+    if(!confirm('Aktuelle HP-Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.'))return;
+    var c=hpCfgReadUI();
+    hpCfgSaveCustomDefaults(c);
+    toast('\u2705 HP-Einstellungen als Standard gespeichert','ok');
+  };
+  window.hpClearCustomDefault=function(){
+    if(!confirm('Eigene HP-Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?'))return;
+    _hpCfgCustomDefaults=null;
+    try{localStorage.removeItem(HPCFG_CUSTOM_DEFAULTS_KEY);}catch(e){}
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'hp_design_config_defaults',wert:null})}).catch(function(){});
+    toast('Eigene HP-Standards gel\u00f6scht','ok');
   };
   window.resetWpTplColors=function(kind){
     kind=kind||'home';
