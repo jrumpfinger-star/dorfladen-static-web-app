@@ -885,22 +885,110 @@ document.head.appendChild(msalScript);
         <div>
           <div class="cms-card">
             <div class="cms-card-header">&#127912; Farben</div>
-            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
-              <label style="font-size:12px;font-weight:600;color:#374151">Prim&auml;rfarbe (Gr&uuml;n)
-                <input type="color" id="hcfg-priColor" value="#5ea88a" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Prim&auml;rfarbe Hover
-                <input type="color" id="hcfg-priHover" value="#4a8e73" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Akzentfarbe (Rot)
-                <input type="color" id="hcfg-accColor" value="#d32f2f" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Hintergrund
-                <input type="color" id="hcfg-bgColor" value="#f4f6f4" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Textfarbe
-                <input type="color" id="hcfg-textColor" value="#16162a" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
-              </label>
+            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:8px">
+              <div class="hcfg-grad-row" data-key="priColor">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:12px;font-weight:600;color:#374151;flex:1">Prim&auml;rfarbe (Gr&uuml;n)</span>
+                  <label style="font-size:10px;color:#6b7280;cursor:pointer;white-space:nowrap"><input type="checkbox" class="hcfg-grad-toggle" data-key="priColor" style="margin-right:2px">Verlauf</label>
+                </div>
+                <div style="display:flex;gap:4px;align-items:center">
+                  <input type="color" id="hcfg-priColor" value="#5ea88a" style="flex:1;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
+                  <input type="color" id="hcfg-priColor2" value="#4a8e73" style="flex:1;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;display:none" class="hcfg-grad-c2">
+                </div>
+                <div class="hcfg-grad-opts" style="display:none;margin-top:4px;padding:6px;background:#f3f4f6;border-radius:6px">
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <span style="font-size:10px;color:#6b7280">Richtung:</span>
+                    <select id="hcfg-priColorDir" class="cms-input" style="font-size:10px;padding:2px 4px;width:auto;min-width:0">
+                      <option value="to bottom">&darr; nach unten</option>
+                      <option value="to right">&rarr; nach rechts</option>
+                      <option value="to bottom right">&searr; diagonal</option>
+                      <option value="135deg">&#8600; 135&deg;</option>
+                    </select>
+                    <span style="font-size:10px;color:#6b7280">Mitte: <span id="hcfg-priColorPct-val">50</span>%</span>
+                    <input type="range" id="hcfg-priColorPct" min="10" max="90" value="50" style="width:60px" oninput="document.getElementById('hcfg-priColorPct-val').textContent=this.value">
+                  </div>
+                  <div class="hcfg-grad-preview" id="hcfg-priColor-preview" style="height:18px;border-radius:4px;margin-top:4px;border:1px solid #d1d5db"></div>
+                </div>
+              </div>
+              <div class="hcfg-grad-row" data-key="priHover">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:12px;font-weight:600;color:#374151;flex:1">Prim&auml;rfarbe Hover</span>
+                  <label style="font-size:10px;color:#6b7280;cursor:pointer;white-space:nowrap"><input type="checkbox" class="hcfg-grad-toggle" data-key="priHover" style="margin-right:2px">Verlauf</label>
+                </div>
+                <div style="display:flex;gap:4px;align-items:center">
+                  <input type="color" id="hcfg-priHover" value="#4a8e73" style="flex:1;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
+                  <input type="color" id="hcfg-priHover2" value="#3a7e63" style="flex:1;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;display:none" class="hcfg-grad-c2">
+                </div>
+                <div class="hcfg-grad-opts" style="display:none;margin-top:4px;padding:6px;background:#f3f4f6;border-radius:6px">
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <span style="font-size:10px;color:#6b7280">Richtung:</span>
+                    <select id="hcfg-priHoverDir" class="cms-input" style="font-size:10px;padding:2px 4px;width:auto;min-width:0">
+                      <option value="to bottom">&darr; nach unten</option>
+                      <option value="to right">&rarr; nach rechts</option>
+                      <option value="to bottom right">&searr; diagonal</option>
+                      <option value="135deg">&#8600; 135&deg;</option>
+                    </select>
+                    <span style="font-size:10px;color:#6b7280">Mitte: <span id="hcfg-priHoverPct-val">50</span>%</span>
+                    <input type="range" id="hcfg-priHoverPct" min="10" max="90" value="50" style="width:60px" oninput="document.getElementById('hcfg-priHoverPct-val').textContent=this.value">
+                  </div>
+                  <div class="hcfg-grad-preview" id="hcfg-priHover-preview" style="height:18px;border-radius:4px;margin-top:4px;border:1px solid #d1d5db"></div>
+                </div>
+              </div>
+              <div class="hcfg-grad-row" data-key="accColor">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:12px;font-weight:600;color:#374151;flex:1">Akzentfarbe (Rot)</span>
+                  <label style="font-size:10px;color:#6b7280;cursor:pointer;white-space:nowrap"><input type="checkbox" class="hcfg-grad-toggle" data-key="accColor" style="margin-right:2px">Verlauf</label>
+                </div>
+                <div style="display:flex;gap:4px;align-items:center">
+                  <input type="color" id="hcfg-accColor" value="#d32f2f" style="flex:1;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
+                  <input type="color" id="hcfg-accColor2" value="#b71c1c" style="flex:1;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;display:none" class="hcfg-grad-c2">
+                </div>
+                <div class="hcfg-grad-opts" style="display:none;margin-top:4px;padding:6px;background:#f3f4f6;border-radius:6px">
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <span style="font-size:10px;color:#6b7280">Richtung:</span>
+                    <select id="hcfg-accColorDir" class="cms-input" style="font-size:10px;padding:2px 4px;width:auto;min-width:0">
+                      <option value="to bottom">&darr; nach unten</option>
+                      <option value="to right">&rarr; nach rechts</option>
+                      <option value="to bottom right">&searr; diagonal</option>
+                      <option value="135deg">&#8600; 135&deg;</option>
+                    </select>
+                    <span style="font-size:10px;color:#6b7280">Mitte: <span id="hcfg-accColorPct-val">50</span>%</span>
+                    <input type="range" id="hcfg-accColorPct" min="10" max="90" value="50" style="width:60px" oninput="document.getElementById('hcfg-accColorPct-val').textContent=this.value">
+                  </div>
+                  <div class="hcfg-grad-preview" id="hcfg-accColor-preview" style="height:18px;border-radius:4px;margin-top:4px;border:1px solid #d1d5db"></div>
+                </div>
+              </div>
+              <div class="hcfg-grad-row" data-key="bgColor">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:12px;font-weight:600;color:#374151;flex:1">Hintergrund</span>
+                  <label style="font-size:10px;color:#6b7280;cursor:pointer;white-space:nowrap"><input type="checkbox" class="hcfg-grad-toggle" data-key="bgColor" style="margin-right:2px">Verlauf</label>
+                </div>
+                <div style="display:flex;gap:4px;align-items:center">
+                  <input type="color" id="hcfg-bgColor" value="#f4f6f4" style="flex:1;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
+                  <input type="color" id="hcfg-bgColor2" value="#e8ece8" style="flex:1;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;display:none" class="hcfg-grad-c2">
+                </div>
+                <div class="hcfg-grad-opts" style="display:none;margin-top:4px;padding:6px;background:#f3f4f6;border-radius:6px">
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <span style="font-size:10px;color:#6b7280">Richtung:</span>
+                    <select id="hcfg-bgColorDir" class="cms-input" style="font-size:10px;padding:2px 4px;width:auto;min-width:0">
+                      <option value="to bottom">&darr; nach unten</option>
+                      <option value="to right">&rarr; nach rechts</option>
+                      <option value="to bottom right">&searr; diagonal</option>
+                      <option value="135deg">&#8600; 135&deg;</option>
+                    </select>
+                    <span style="font-size:10px;color:#6b7280">Mitte: <span id="hcfg-bgColorPct-val">50</span>%</span>
+                    <input type="range" id="hcfg-bgColorPct" min="10" max="90" value="50" style="width:60px" oninput="document.getElementById('hcfg-bgColorPct-val').textContent=this.value">
+                  </div>
+                  <div class="hcfg-grad-preview" id="hcfg-bgColor-preview" style="height:18px;border-radius:4px;margin-top:4px;border:1px solid #d1d5db"></div>
+                </div>
+              </div>
+              <div class="hcfg-grad-row" data-key="textColor">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:12px;font-weight:600;color:#374151;flex:1">Textfarbe</span>
+                </div>
+                <input type="color" id="hcfg-textColor" value="#16162a" style="width:100%;height:30px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
+              </div>
+              <button class="cms-btn cms-btn-primary cms-btn-sm" data-action="saveHPCfgSection" style="margin-top:4px">&#128190; Farben speichern</button>
             </div>
           </div>
           <div class="cms-card" style="margin-top:14px">
@@ -912,6 +1000,7 @@ document.head.appendChild(msalScript);
               <label style="font-size:12px;font-weight:600;color:#374151">&Uuml;berschrift-Schriftgr&ouml;&szlig;e: <span id="hcfg-heroFontSize-val">2</span>rem
                 <input type="range" id="hcfg-heroFontSize" min="1.2" max="3.5" step="0.1" value="2" style="width:100%" oninput="document.getElementById('hcfg-heroFontSize-val').textContent=this.value">
               </label>
+              <button class="cms-btn cms-btn-primary cms-btn-sm" data-action="saveHPCfgSection" style="margin-top:4px">&#128190; Hero speichern</button>
             </div>
           </div>
         </div>
@@ -940,6 +1029,7 @@ document.head.appendChild(msalScript);
               <label style="font-size:12px;font-weight:600;color:#374151">
                 <input type="checkbox" id="hcfg-showCookie" checked> Cookie-Banner
               </label>
+              <button class="cms-btn cms-btn-primary cms-btn-sm" data-action="saveHPCfgSection" style="margin-top:4px">&#128190; Sektionen speichern</button>
             </div>
           </div>
           <div class="cms-card" style="margin-top:14px">
@@ -951,12 +1041,13 @@ document.head.appendChild(msalScript);
               <label style="font-size:12px;font-weight:600;color:#374151">Eckenradius: <span id="hcfg-borderRadius-val">12</span>px
                 <input type="range" id="hcfg-borderRadius" min="0" max="24" value="12" style="width:100%" oninput="document.getElementById('hcfg-borderRadius-val').textContent=this.value">
               </label>
+              <button class="cms-btn cms-btn-primary cms-btn-sm" data-action="saveHPCfgSection" style="margin-top:4px">&#128190; Schriften speichern</button>
             </div>
           </div>
         </div>
       </div>
       <div style="margin-top:16px;display:flex;gap:8px">
-        <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Homepage-Design speichern</button>
+        <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Alles speichern</button>
         <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">Zur&uuml;cksetzen</button>
       </div>
     </div>
@@ -986,6 +1077,7 @@ document.head.appendChild(msalScript);
               <label style="font-size:12px;font-weight:600;color:#374151">Wochentag-Farbe
                 <input type="color" id="hcfg-wpDayColor" value="#5ea88a" style="width:100%;height:32px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">
               </label>
+              <button class="cms-btn cms-btn-primary cms-btn-sm" data-action="saveHPCfgSection" style="margin-top:4px">&#128190; Farben speichern</button>
             </div>
           </div>
         </div>
@@ -1011,6 +1103,7 @@ document.head.appendChild(msalScript);
               <label style="font-size:12px;font-weight:600;color:#374151">
                 <input type="checkbox" id="hcfg-wpShowWaInfo" checked> WhatsApp-Info Box (unter Plan)
               </label>
+              <button class="cms-btn cms-btn-primary cms-btn-sm" data-action="saveHPCfgSection" style="margin-top:4px">&#128190; Elemente speichern</button>
             </div>
           </div>
           <div class="cms-card" style="margin-top:14px">
@@ -1136,12 +1229,13 @@ document.head.appendChild(msalScript);
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetWpTplColors" data-kind="flyer" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
                 </div>
               </div>
+              <button class="cms-btn cms-btn-primary cms-btn-sm" data-action="saveHPCfgSection" style="margin-top:8px">&#128190; Layout &amp; Farben speichern</button>
             </div>
           </div>
         </div>
       </div>
       <div style="margin-top:16px;display:flex;gap:8px">
-        <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Wochenplan-Design speichern</button>
+        <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Alles speichern</button>
         <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">Zur&uuml;cksetzen</button>
       </div>
     </div>
@@ -2754,8 +2848,13 @@ document.head.appendChild(msalScript);
 
   // --- Homepage/Wochenplan Config (hpCfg) ---
   var HPCFG_KEY='dl_hp_design_config';
+  var HPCFG_GRAD_KEYS=['priColor','priHover','accColor','bgColor'];
   var HPCFG_DEFAULTS={
-    priColor:'#5ea88a',priHover:'#4a8e73',accColor:'#d32f2f',bgColor:'#f4f6f4',textColor:'#16162a',
+    priColor:'#5ea88a',priColor_grad:false,priColor_c2:'#4a8e73',priColor_dir:'to bottom',priColor_pct:50,
+    priHover:'#4a8e73',priHover_grad:false,priHover_c2:'#3a7e63',priHover_dir:'to bottom',priHover_pct:50,
+    accColor:'#d32f2f',accColor_grad:false,accColor_c2:'#b71c1c',accColor_dir:'to bottom',accColor_pct:50,
+    bgColor:'#f4f6f4',bgColor_grad:false,bgColor_c2:'#e8ece8',bgColor_dir:'to bottom',bgColor_pct:50,
+    textColor:'#16162a',
     showTopbar:true,showPromoBar:true,showMeatPromo:true,showDoGehIHi:true,showInfoCards:true,showWhatsApp:true,showCookie:true,
     baseFontSize:15,borderRadius:12,
     wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',
@@ -2799,6 +2898,13 @@ document.head.appendChild(msalScript);
     ['priColor','priHover','accColor','bgColor','textColor'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;
     });
+    HPCFG_GRAD_KEYS.forEach(function(k){
+      var tgl=document.querySelector('.hcfg-grad-toggle[data-key="'+k+'"]');
+      if(tgl)c[k+'_grad']=tgl.checked;
+      var c2=document.getElementById('hcfg-'+k+'2');if(c2)c[k+'_c2']=c2.value;
+      var dir=document.getElementById('hcfg-'+k+'Dir');if(dir)c[k+'_dir']=dir.value;
+      var pct=document.getElementById('hcfg-'+k+'Pct');if(pct)c[k+'_pct']=parseInt(pct.value);
+    });
     ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;
     });
@@ -2820,15 +2926,24 @@ document.head.appendChild(msalScript);
     var ht=document.getElementById('hcfg-wpHomeTemplate');if(ht)c.wpHomeTemplate=ht.value;
     var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)c.wpFlyerTemplate=ft.value;
     // Read per-template color overrides (always save all current values)
+    // First: collect global WP input values as authoritative source
+    var globalWpVals={};
+    ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor','wpBgColor'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)globalWpVals[k]=el.value;
+    });
+    // Build tplColors: prefer global inputs over uninitialized (#000000) template inputs
     var tplColors={};
-    ['home','flyer'].forEach(function(kind){
+    ['flyer','home'].forEach(function(kind){
       var selId=kind==='flyer'?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
       var sel=document.getElementById(selId);if(!sel)return;
       var tpl=sel.value||'classic-red';
       if(!tplColors[tpl])tplColors[tpl]={};
       WP_TPL_COLOR_KEYS.forEach(function(ck){
         var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
-        if(el&&el.value)tplColors[tpl][ck]=el.value;
+        var v=el?el.value:'';
+        // If template input is uninitialized (#000000) or empty, use global input value
+        if(!v||v==='#000000'){v=globalWpVals[ck]||v;}
+        if(v)tplColors[tpl][ck]=v;
       });
     });
     // Preserve existing overrides for other templates not currently displayed
@@ -2839,7 +2954,7 @@ document.head.appendChild(msalScript);
       }
     }
     c.wpTplColors=tplColors;
-    // Sync old flat color keys from current home template so they stay consistent
+    // Sync flat color keys from current home template for backward compat
     var homeTpl=c.wpHomeTemplate||'classic-red';
     var htd=WP_TPL_COLOR_DEFAULTS[homeTpl]||WP_TPL_COLOR_DEFAULTS['classic-red'];
     var hto=(tplColors[homeTpl])||{};
@@ -2851,6 +2966,15 @@ document.head.appendChild(msalScript);
   function hpCfgApplyUI(c){
     ['priColor','priHover','accColor','bgColor','textColor'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)el.value=c[k]||HPCFG_DEFAULTS[k];
+    });
+    HPCFG_GRAD_KEYS.forEach(function(k){
+      var tgl=document.querySelector('.hcfg-grad-toggle[data-key="'+k+'"]');
+      var isGrad=c[k+'_grad']||false;
+      if(tgl){tgl.checked=isGrad;hpCfgToggleGrad(k,isGrad);}
+      var c2=document.getElementById('hcfg-'+k+'2');if(c2)c2.value=c[k+'_c2']||HPCFG_DEFAULTS[k+'_c2'];
+      var dir=document.getElementById('hcfg-'+k+'Dir');if(dir)dir.value=c[k+'_dir']||HPCFG_DEFAULTS[k+'_dir'];
+      var pct=document.getElementById('hcfg-'+k+'Pct');if(pct){pct.value=c[k+'_pct']!=null?c[k+'_pct']:HPCFG_DEFAULTS[k+'_pct'];var pv=document.getElementById('hcfg-'+k+'Pct-val');if(pv)pv.textContent=pct.value;}
+      hpCfgUpdateGradPreview(k);
     });
     // Sync old global WP color inputs with current home template colors
     var _tpl=c.wpHomeTemplate||'classic-red';
@@ -2881,6 +3005,45 @@ document.head.appendChild(msalScript);
     hpCfgSyncWpTplColors('home',c);
     hpCfgSyncWpTplColors('flyer',c);
   }
+  function hpCfgToggleGrad(k,on){
+    var row=document.querySelector('.hcfg-grad-row[data-key="'+k+'"]');if(!row)return;
+    var c2=row.querySelector('.hcfg-grad-c2');if(c2)c2.style.display=on?'':'none';
+    var opts=row.querySelector('.hcfg-grad-opts');if(opts)opts.style.display=on?'':'none';
+  }
+  function hpCfgUpdateGradPreview(k){
+    var prev=document.getElementById('hcfg-'+k+'-preview');if(!prev)return;
+    var c1El=document.getElementById('hcfg-'+k);
+    var c2El=document.getElementById('hcfg-'+k+'2');
+    var dirEl=document.getElementById('hcfg-'+k+'Dir');
+    var pctEl=document.getElementById('hcfg-'+k+'Pct');
+    if(!c1El||!c2El)return;
+    var c1=c1El.value,c2=c2El.value,dir=dirEl?dirEl.value:'to bottom',pct=pctEl?pctEl.value:'50';
+    prev.style.background='linear-gradient('+dir+', '+c1+' 0%, '+c1+' '+pct+'%, '+c2+' 100%)';
+  }
+  function hpCfgBuildGradCSS(c,k){
+    if(!c[k+'_grad'])return c[k]||HPCFG_DEFAULTS[k];
+    var c1=c[k]||HPCFG_DEFAULTS[k];
+    var c2=c[k+'_c2']||HPCFG_DEFAULTS[k+'_c2'];
+    var dir=c[k+'_dir']||'to bottom';
+    var pct=c[k+'_pct']!=null?c[k+'_pct']:50;
+    return 'linear-gradient('+dir+', '+c1+' 0%, '+c1+' '+pct+'%, '+c2+' 100%)';
+  }
+  // Gradient toggle event listener
+  document.addEventListener('change',function(e){
+    if(!e.target.classList.contains('hcfg-grad-toggle'))return;
+    var k=e.target.getAttribute('data-key');if(!k)return;
+    hpCfgToggleGrad(k,e.target.checked);
+    hpCfgUpdateGradPreview(k);
+  });
+  // Gradient live-preview on color/slider/select change
+  document.addEventListener('input',function(e){
+    var id=e.target.id;if(!id||id.indexOf('hcfg-')!==0)return;
+    HPCFG_GRAD_KEYS.forEach(function(k){
+      if(id==='hcfg-'+k||id==='hcfg-'+k+'2'||id==='hcfg-'+k+'Dir'||id==='hcfg-'+k+'Pct'){
+        hpCfgUpdateGradPreview(k);
+      }
+    });
+  });
   function hpCfgLoadUI(){
     var c=hpCfgGet();
     hpCfgApplyUI(c);
@@ -2926,7 +3089,7 @@ document.head.appendChild(msalScript);
     hpCfgSave(c);
     hpCfgSyncWpTplColors('home',c);
     hpCfgSyncWpTplColors('flyer',c);
-    toast('Wochenplan-Design gespeichert','ok');
+    toast('Design gespeichert','ok');
   };
   window.resetHPCfg=function(){
     var defaults=JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
@@ -5723,6 +5886,7 @@ document.head.appendChild(msalScript);
       case 'previewAktion':cmsPreviewAktion(id);break;
       case 'saveHP':saveHomepage();break;
       case 'saveHPCfg':saveHPCfg();break;
+      case 'saveHPCfgSection':saveHPCfg();break;
       case 'resetHPCfg':resetHPCfg();break;
       case 'logoRemove':cmsLogoRemove();break;
       case 'pickWpHomeTpl':

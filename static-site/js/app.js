@@ -75,6 +75,40 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
     if(!raw) raw=localStorage.getItem('dl_hp_design_config');
     if(!raw) return;
     var c=JSON.parse(raw);
+    // Apply gradient colors as CSS custom properties
+    var gradKeys=['priColor','priHover','accColor','bgColor'];
+    var gradCss=[];
+    function buildGrad(k){
+      if(!c[k+'_grad'])return c[k]||'';
+      var c1=c[k],c2=c[k+'_c2']||c1,dir=c[k+'_dir']||'to bottom',pct=c[k+'_pct']!=null?c[k+'_pct']:50;
+      return 'linear-gradient('+dir+', '+c1+' 0%, '+c1+' '+pct+'%, '+c2+' 100%)';
+    }
+    var priGrad=buildGrad('priColor');
+    var hoverGrad=buildGrad('priHover');
+    var accGrad=buildGrad('accColor');
+    var bgGrad=buildGrad('bgColor');
+    if(priGrad){
+      var isPriG=c.priColor_grad;
+      gradCss.push(':root{--pri-color:'+c.priColor+';--pri-bg:'+(isPriG?priGrad:c.priColor)+'}');
+      gradCss.push('.btn-primary,.cms-btn-primary{background:'+(isPriG?priGrad:c.priColor)+'!important;border-color:'+c.priColor+'!important}');
+      gradCss.push('.navbar,.wp-header,.info-section-header{background:'+(isPriG?priGrad:c.priColor)+'!important}');
+    }
+    if(hoverGrad){
+      var isHovG=c.priHover_grad;
+      gradCss.push(':root{--pri-hover:'+(isHovG?hoverGrad:c.priHover)+'}');
+      gradCss.push('.btn-primary:hover,.cms-btn-primary:hover{background:'+(isHovG?hoverGrad:c.priHover)+'!important}');
+    }
+    if(accGrad){
+      var isAccG=c.accColor_grad;
+      gradCss.push(':root{--acc-color:'+c.accColor+';--acc-bg:'+(isAccG?accGrad:c.accColor)+'}');
+      gradCss.push('.badge-accent,.tag-aktion,.promo-badge{background:'+(isAccG?accGrad:c.accColor)+'!important}');
+    }
+    if(bgGrad){
+      var isBgG=c.bgColor_grad;
+      gradCss.push('body{background:'+(isBgG?bgGrad:c.bgColor)+'!important}');
+    }
+    if(c.textColor)gradCss.push('body{color:'+c.textColor+'!important}');
+    if(gradCss.length){var gs=document.createElement('style');gs.id='hp-grad-colors';gs.textContent=gradCss.join('');document.head.appendChild(gs);}
     var wpCss=[];
     // Template-specific colors: resolve from wpTplColors or fallback to flat values
     var tpl=c.wpHomeTemplate||'classic-red';
