@@ -1214,22 +1214,23 @@
     var ft=document.getElementById('cfg-flyerTemplate');c.flyerTemplate=ft?ft.value:'classic-red';
     var ssEl=document.getElementById('cfg-savingsStarStyle');
     c.savingsStarStyle=ssEl?ssEl.value:'harmonie';
-    // Read per-template color overrides
+    // Read per-template color overrides (keyed as kind:tpl e.g. 'plakat:classic-red')
     var tc={};
     ['plakatTemplate','flyerTemplate'].forEach(function(tKey){
       var tpl=c[tKey]||'classic-red';
       var kind=tKey.replace('Template','');
-      if(!tc[tpl])tc[tpl]={};
+      var storeKey=kind+':'+tpl;
+      if(!tc[storeKey])tc[storeKey]={};
       TPL_COLOR_KEYS.forEach(function(ck){
         var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
-        if(el)tc[tpl][ck]=el.value;
+        if(el)tc[storeKey][ck]=el.value;
       });
       TPL_GRAD_KEYS.forEach(function(gk){
         var tgl=document.querySelector('.cfg-tpl-grad-toggle[data-kind="'+kind+'"][data-key="'+gk+'"]');
-        tc[tpl][gk+'_grad']=tgl?tgl.checked:false;
-        var c2=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_c2');if(c2)tc[tpl][gk+'_c2']=c2.value;
-        var dir=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_dir');if(dir)tc[tpl][gk+'_dir']=dir.value;
-        var pct=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_pct');if(pct)tc[tpl][gk+'_pct']=parseInt(pct.value);
+        tc[storeKey][gk+'_grad']=tgl?tgl.checked:false;
+        var c2=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_c2');if(c2)tc[storeKey][gk+'_c2']=c2.value;
+        var dir=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_dir');if(dir)tc[storeKey][gk+'_dir']=dir.value;
+        var pct=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_pct');if(pct)tc[storeKey][gk+'_pct']=parseInt(pct.value);
       });
     });
     // Preserve existing overrides for other templates
@@ -1284,7 +1285,7 @@
     var sel=document.getElementById(selId);if(!sel)return;
     var tpl=sel.value||'classic-red';
     var cfg=cfgGet();
-    var colors=getTplColors(tpl,cfg);
+    var colors=getTplColors(tpl,cfg,kind);
     TPL_COLOR_KEYS.forEach(function(ck){
       var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
       if(el)el.value=colors[ck]||'#000000';
@@ -3505,9 +3506,11 @@
   var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor','imgBg'];
   var TPL_GRAD_KEYS=['bgColor','imgBg'];
 
-  function getTplColors(tplName,cfg){
+  function getTplColors(tplName,cfg,kind){
     var defaults=TPL_COLOR_DEFAULTS[tplName]||TPL_COLOR_DEFAULTS['classic-red'];
-    var overrides=(cfg.tplColors&&cfg.tplColors[tplName])||{};
+    // Look up kind-prefixed key first (e.g. 'plakat:classic-red'), fall back to legacy non-prefixed key
+    var tc=cfg.tplColors||{};
+    var overrides=(kind&&tc[kind+':'+tplName])||tc[tplName]||{};
     var result={};
     TPL_COLOR_KEYS.forEach(function(k){result[k]=overrides[k]||defaults[k];});
     TPL_GRAD_KEYS.forEach(function(k){
@@ -3533,7 +3536,7 @@
 
   function getOfferTheme(kind,cfg){
     var tpl=getOfferTemplate(kind,cfg);
-    var colors=getTplColors(tpl,cfg);
+    var colors=getTplColors(tpl,cfg,kind);
     var base={
       tpl:tpl,
       bgColor:colors.bgColor,
