@@ -310,15 +310,17 @@ document.head.appendChild(msalScript);
     .cfg-section-btn{padding:6px 8px!important;font-size:10px!important;letter-spacing:0!important}
     .cfg-section-nav{gap:0!important}
   }
-  /* ── Split-Panel: Settings left, Live-Preview right (sticky) ── */
-  .cfg-split{display:flex;gap:16px;align-items:flex-start}
-  .cfg-split-left{flex:1;min-width:0}
-  .cfg-split-right{width:320px;flex-shrink:0;position:sticky;top:8px;max-height:calc(100vh - 80px);overflow-y:auto}
-  .cfg-split-right .cfg-lp-inner{border:1px solid #e5e7eb;border-radius:10px;background:#fff;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  /* ── Split-Panel: Settings left (scrollable), Live-Preview right (fixed) ── */
+  .cfg-split{display:flex;gap:16px;align-items:stretch;height:calc(100vh - 260px);min-height:400px}
+  .cfg-split-left{flex:1;min-width:0;overflow-y:auto;padding-right:4px}
+  .cfg-split-right{width:320px;flex-shrink:0;overflow-y:auto}
+  .cfg-split-right .cfg-lp-inner{border:1px solid #e5e7eb;border-radius:10px;background:#fff;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);position:sticky;top:0}
   .cfg-split-right .cfg-lp-inner img{max-width:100%;border-radius:6px;cursor:pointer}
   @media(max-width:900px){
-    .cfg-split{flex-direction:column}
-    .cfg-split-right{width:100%;position:static;max-height:none}
+    .cfg-split{flex-direction:column;height:auto;min-height:0}
+    .cfg-split-left{overflow-y:visible;padding-right:0}
+    .cfg-split-right{width:100%;overflow-y:visible}
+    .cfg-split-right .cfg-lp-inner{position:static}
   }
   /* ── Mobile: Aktionen-Liste ── */
   @media(max-width:600px){
