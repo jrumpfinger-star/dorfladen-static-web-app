@@ -1507,6 +1507,124 @@
     }
   });
 
+  // ── Live Preview System (Angebote + Wochenplan) ──
+  var _livePreviewTimers={};
+  var _livePreviewGen=0;
+  function cfgLivePreview(target){
+    target=(target||'plakat').toLowerCase();
+    var container=document.getElementById('cfg-live-preview-'+target);
+    if(!container)return;
+    container.innerHTML='<span style="font-size:12px;color:#6b7280">Wird generiert\u2026</span>';
+    var gen=++_livePreviewGen;
+    ensureAngeboteForPreview().then(function(){
+      if(gen!==_livePreviewGen)return;
+      var cfg=Object.assign({},cfgGet(),cfgReadUI());
+      var now=new Date();var plus6=new Date(now.getTime()+6*86400000);
+      var fallback=[
+        {produkt:'Beispielprodukt 1',details:'500g',preis:2.99,statt_preis:3.99,artikelnummer:'',bild_data:''},
+        {produkt:'Beispielprodukt 2',details:'450g',preis:3.49,statt_preis:4.29,artikelnummer:'',bild_data:''},
+        {produkt:'Beispielprodukt 3',details:'250g',preis:1.99,statt_preis:2.49,artikelnummer:'',bild_data:''},
+        {produkt:'Beispielprodukt 4',details:'1kg',preis:4.29,statt_preis:5.29,artikelnummer:'',bild_data:''},
+        {produkt:'Beispielprodukt 5',details:'300g',preis:2.49,statt_preis:2.99,artikelnummer:'',bild_data:''},
+        {produkt:'Beispielprodukt 6',details:'750g',preis:5.99,statt_preis:6.99,artikelnummer:'',bild_data:''}
+      ];
+      var src=(angebote&&angebote.length)?angebote.slice(0,6):fallback;
+      var previewItems=src.map(function(a,i){var f=fallback[i]||fallback[0];return{produkt:(a&&a.produkt)||f.produkt,details:(a&&a.details)||f.details,preis:(a&&a.preis!=null)?a.preis:f.preis,statt_preis:(a&&a.statt_preis!=null)?a.statt_preis:f.statt_preis,artikelnummer:(a&&a.artikelnummer)||'',bild_data:(a&&a.bild_data)||''};});
+      var data={von:now.toISOString().slice(0,10),bis:plus6.toISOString().slice(0,10),items:previewItems};
+      if(target==='flyer'){
+        var sample=data.items[0]||fallback[0];
+        generateEinzelflyer(sample,data,cfg).then(function(canvas){
+          if(gen!==_livePreviewGen)return;
+          canvas.toBlob(function(blob){
+            if(!blob||gen!==_livePreviewGen)return;
+            var url=URL.createObjectURL(blob);
+            container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:6px" alt="Flyer-Vorschau">';
+          },'image/png');
+        }).catch(function(){container.innerHTML='<span style="font-size:11px;color:#dc2626">Fehler</span>';});
+      }else{
+        generateAngebotPlakat(data,function(blob){
+          if(!blob||gen!==_livePreviewGen)return;
+          var url=URL.createObjectURL(blob);
+          container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:6px" alt="Plakat-Vorschau">';
+        },cfg);
+      }
+    });
+  }
+  window.cfgLivePreview=cfgLivePreview;
+
+  function _scheduleAutoPreview(key,fn,delay){
+    if(_livePreviewTimers[key])clearTimeout(_livePreviewTimers[key]);
+    _livePreviewTimers[key]=setTimeout(fn,delay||400);
+  }
+  function _autoCheckEnabled(id){var cb=document.getElementById(id);return cb?cb.checked:false;}
+
+  // Determine which Angebote section is active
+  function _activeCfgSection(){
+    var p=document.getElementById('cfg-sec-plakat');
+    if(p&&p.style.display!=='none')return 'plakat';
+    var f=document.getElementById('cfg-sec-flyer');
+    if(f&&f.style.display!=='none')return 'flyer';
+    return null;
+  }
+  // Determine which WP section is active
+  function _activeWpSection(){
+    var h=document.getElementById('wp-sec-home');
+    if(h&&h.style.display!=='none')return 'home';
+    var f=document.getElementById('wp-sec-flyer');
+    if(f&&f.style.display!=='none')return 'flyer';
+    return null;
+  }
+
+  // Auto-trigger for Angebote design panel
+  function _triggerCfgAutoPreview(){
+    var sec=_activeCfgSection();
+    if(!sec)return;
+    if(!_autoCheckEnabled('cfg-live-auto-'+sec))return;
+    _scheduleAutoPreview('cfg-'+sec,function(){cfgLivePreview(sec);});
+  }
+  // Auto-trigger for WP design panel
+  function _triggerWpAutoPreview(){
+    var sec=_activeWpSection();
+    if(!sec)return;
+    if(!_autoCheckEnabled('cfg-live-auto-wp-'+sec))return;
+    _scheduleAutoPreview('wp-'+sec,function(){wpLivePreview(sec);});
+  }
+
+  // Hook into input/change events on the two design panels
+  var _cfgPlakatPanel=document.getElementById('cms-cfg-plakat');
+  var _cfgWpPanel=document.getElementById('cms-cfg-wp');
+  if(_cfgPlakatPanel){
+    _cfgPlakatPanel.addEventListener('input',function(){_triggerCfgAutoPreview();});
+    _cfgPlakatPanel.addEventListener('change',function(){_triggerCfgAutoPreview();});
+  }
+  if(_cfgWpPanel){
+    _cfgWpPanel.addEventListener('input',function(){_triggerWpAutoPreview();});
+    _cfgWpPanel.addEventListener('change',function(){_triggerWpAutoPreview();});
+  }
+
+  // Click on preview container → open large modal
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    if(t.tagName==='IMG'&&t.parentElement&&/^(cfg-live-preview-|wp-.*-live-preview)/.test(t.parentElement.id)){
+      var blob;
+      var url=t.src;
+      var fn=t.alt||'Vorschau.png';
+      // Show in modal
+      var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:90vw;max-height:90vh;text-align:center;overflow:auto">';
+      html+='<h3 style="margin:0 0 12px;font-size:15px">Vorschau (Gro\u00df)</h3>';
+      html+='<img src="'+url+'" style="max-width:100%;max-height:75vh;border-radius:8px;border:1px solid #e5e7eb">';
+      html+='<div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap">';
+      html+='<button class="cms-btn cms-btn-gray" id="cfg-lp-dl">\u2b07\ufe0f Download</button>';
+      html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Schlie\u00dfen</button>';
+      html+='</div></div></div>';
+      var wrap=document.getElementById('cms-modal-wrap');
+      wrap.innerHTML=html;wrap.style.display='';
+      document.getElementById('cfg-lp-dl').onclick=function(){
+        var a=document.createElement('a');a.href=url;a.download=fn;a.click();
+      };
+    }
+  });
+
   // --- HP-Sonderangebote Card Design ---
   var HPANG_KEY='dl_hpang_design';
   var HPANG_DEFAULTS={
@@ -5005,6 +5123,7 @@
       case 'cfgRevertUnsaved':cfgRevertUnsaved();break;
       case 'cfgSection':cfgSwitchSection(t.getAttribute('data-id'));break;
       case 'wpCfgSection':wpCfgSwitchSection(t.getAttribute('data-id'));break;
+      case 'cfgLivePreview':cfgLivePreview(t.getAttribute('data-target')||'plakat');break;
       case 'wpLivePreview':wpLivePreview(t.getAttribute('data-kind')||'home');break;
       case 'wpRevertSection':wpRevertSection(t.getAttribute('data-kind')||'home');break;
       case 'wpPresetSave':wpPresetSave(t.getAttribute('data-section'));break;

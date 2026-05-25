@@ -1177,10 +1177,13 @@ document.head.appendChild(msalScript);
           <div class="cms-card" style="margin-bottom:8px">
             <div class="cms-card-header" style="background:#5ea88a">&#128065; Live-Vorschau</div>
             <div class="cms-card-body" style="text-align:center">
-              <div id="wp-home-live-preview" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:120px;display:flex;align-items:center;justify-content:center">
-                <span style="font-size:12px;color:#9ca3af">Klicke &bdquo;Vorschau aktualisieren&ldquo; um eine Vorschau zu sehen</span>
+              <div id="wp-home-live-preview" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:120px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Klicken f&uuml;r gro&szlig;e Ansicht">
+                <span style="font-size:12px;color:#9ca3af">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
               </div>
-              <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="wpLivePreview" data-kind="home" style="margin-top:8px">&#128260; Vorschau aktualisieren</button>
+              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap">
+                <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="wpLivePreview" data-kind="home">&#128260; Aktualisieren</button>
+                <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-wp-home" checked style="margin:0"> Auto</label>
+              </div>
             </div>
           </div>
 
@@ -1303,10 +1306,13 @@ document.head.appendChild(msalScript);
           <div class="cms-card" style="margin-bottom:8px">
             <div class="cms-card-header" style="background:#4338ca">&#128065; Live-Vorschau</div>
             <div class="cms-card-body" style="text-align:center">
-              <div id="wp-flyer-live-preview" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:120px;display:flex;align-items:center;justify-content:center">
-                <span style="font-size:12px;color:#9ca3af">Klicke &bdquo;Vorschau aktualisieren&ldquo; um eine Vorschau zu sehen</span>
+              <div id="wp-flyer-live-preview" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:120px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Klicken f&uuml;r gro&szlig;e Ansicht">
+                <span style="font-size:12px;color:#9ca3af">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
               </div>
-              <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="wpLivePreview" data-kind="flyer" style="margin-top:8px">&#128260; Vorschau aktualisieren</button>
+              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap">
+                <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="wpLivePreview" data-kind="flyer">&#128260; Aktualisieren</button>
+                <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-wp-flyer" checked style="margin:0"> Auto</label>
+              </div>
             </div>
           </div>
 
@@ -1601,6 +1607,19 @@ document.head.appendChild(msalScript);
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">Auf Defaults zur&uuml;cksetzen</button>
           </div>
+          <!-- Live-Vorschau -->
+          <div class="cms-card" style="margin-bottom:8px">
+            <div class="cms-card-header" style="background:#5ea88a">&#128065; Live-Vorschau</div>
+            <div class="cms-card-body" style="text-align:center">
+              <div id="cfg-live-preview-plakat" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:80px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Klicken f&uuml;r gro&szlig;e Ansicht">
+                <span style="font-size:12px;color:#9ca3af">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
+              </div>
+              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap">
+                <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="cfgLivePreview" data-target="plakat">&#128260; Aktualisieren</button>
+                <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-plakat" checked style="margin:0"> Auto</label>
+              </div>
+            </div>
+          </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -1811,6 +1830,19 @@ document.head.appendChild(msalScript);
             <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">Auf Defaults zur&uuml;cksetzen</button>
+          </div>
+          <!-- Live-Vorschau -->
+          <div class="cms-card" style="margin-bottom:8px">
+            <div class="cms-card-header" style="background:#6d28d9">&#128065; Live-Vorschau</div>
+            <div class="cms-card-body" style="text-align:center">
+              <div id="cfg-live-preview-flyer" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:80px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Klicken f&uuml;r gro&szlig;e Ansicht">
+                <span style="font-size:12px;color:#9ca3af">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
+              </div>
+              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap">
+                <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="cfgLivePreview" data-target="flyer">&#128260; Aktualisieren</button>
+                <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-flyer" checked style="margin:0"> Auto</label>
+              </div>
+            </div>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
