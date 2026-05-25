@@ -4042,13 +4042,17 @@
       // ── Bild + Preisschild: Bild zuerst (volle Fläche), dann Tag darüber ──
       var imgAreaTop=textY+6;
       var imgAreaH=cardH-(imgAreaTop-cardY)-pad-10;
+      // Ensure image area is at least 55% of card height
+      var minImgH=Math.round(cardH*0.55);
+      if(imgAreaH<minImgH){imgAreaTop=cardY+cardH-pad-10-minImgH;imgAreaH=minImgH;}
       // Fill image area with imgBg color
       ctx.save();rrect(cardX,imgAreaTop,cardW,imgAreaH+pad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.fillRect(cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.restore();
       var tagSc=(cfg.tagScale||100)/100;
       var tagW=Math.round(280*tagSc),tagH=Math.round(130*tagSc);
+      // Position tag: right side, vertically centered in image area
       var tagCX=cardX+cardW-pad-tagW/2+10;
-      var tagCY=imgAreaTop+tagH/2+20;
+      var tagCY=imgAreaTop+imgAreaH*0.45;
       // Bild zuerst zeichnen (nutzt gesamten verfügbaren Bereich, am unteren Rand verankert)
       var imgPromise;
       if(item.bild_data){
@@ -4056,11 +4060,13 @@
           var img=new Image();
           img.onload=function(){
             var imgSc=(cfg.imgScale||100)/100;
-            var maxImgW=cardW*0.82,maxImgH=imgAreaH*0.82;
+            // Image fits left ~60% of card width, full image area height
+            var maxImgW=cardW*0.55,maxImgH=imgAreaH*0.85;
             var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale)*imgSc;
             var iw=img.width*scale,ih=img.height*scale;
-            var cx=cardX+cardW*0.38;
-            var cy=imgAreaTop+imgAreaH*0.55;
+            // Center image in left portion of image area, vertically centered
+            var cx=cardX+pad+maxImgW*0.5;
+            var cy=imgAreaTop+imgAreaH*0.52;
             // Freistellen: weissen Hintergrund entfernen
             var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
             var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
@@ -4125,7 +4131,10 @@
           ctx.moveTo(stattX-stW/2-4,stattY-Math.round(7*tagSc));ctx.lineTo(stattX+stW/2+4,stattY-Math.round(7*tagSc));ctx.stroke();
         }
         if(savingsPct){
-          drawSavingsBurst(ctx,tagCX-tagW/2+8,tagCY-tagH/2-14,Math.round(36*tagSc),Math.round(22*tagSc),'-'+savingsPct+'%','flyer');
+          // Savings burst: top-left of the price tag, clamped to stay inside image area
+          var burstX=tagCX-tagW/2+8;
+          var burstY=Math.max(tagCY-tagH/2-Math.round(14*tagSc), imgAreaTop+Math.round(16*tagSc));
+          drawSavingsBurst(ctx,burstX,burstY,Math.round(36*tagSc),Math.round(22*tagSc),'-'+savingsPct+'%','flyer');
         }
       }
         ctx.textAlign='left';
