@@ -2755,6 +2755,9 @@ document.head.appendChild(msalScript);
   // --- Homepage/Wochenplan Config (hpCfg) ---
   var HPCFG_KEY='dl_hp_design_config';
   var HPCFG_DEFAULTS={
+    priColor:'#5ea88a',priHover:'#4a8e73',accColor:'#d32f2f',bgColor:'#f4f6f4',textColor:'#16162a',
+    showTopbar:true,showPromoBar:true,showMeatPromo:true,showDoGehIHi:true,showInfoCards:true,showWhatsApp:true,showCookie:true,
+    baseFontSize:15,borderRadius:12,
     wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',
     wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',
     wpShowCard:true,wpShowOeko:true,wpShowVorbestell:true,wpShowPhone:true,wpShowWaShare:true,wpShowWaInfo:true,
@@ -2793,11 +2796,20 @@ document.head.appendChild(msalScript);
   }
   function hpCfgReadUI(){
     var c={};
+    ['priColor','priHover','accColor','bgColor','textColor'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;
+    });
     ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;
     });
+    ['showTopbar','showPromoBar','showMeatPromo','showDoGehIHi','showInfoCards','showWhatsApp','showCookie'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.checked;
+    });
     ['wpShowCard','wpShowOeko','wpShowVorbestell','wpShowPhone','wpShowWaShare','wpShowWaInfo'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.checked;
+    });
+    ['baseFontSize','borderRadius'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseInt(el.value);
     });
     ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);
@@ -2807,37 +2819,54 @@ document.head.appendChild(msalScript);
     });
     var ht=document.getElementById('hcfg-wpHomeTemplate');if(ht)c.wpHomeTemplate=ht.value;
     var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)c.wpFlyerTemplate=ft.value;
-    // Read per-template color overrides
+    // Read per-template color overrides (always save all current values)
     var tplColors={};
     ['home','flyer'].forEach(function(kind){
       var selId=kind==='flyer'?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
       var sel=document.getElementById(selId);if(!sel)return;
       var tpl=sel.value||'classic-red';
-      var defaults=WP_TPL_COLOR_DEFAULTS[tpl]||WP_TPL_COLOR_DEFAULTS['classic-red'];
-      var overrides={};
-      var changed=false;
+      if(!tplColors[tpl])tplColors[tpl]={};
       WP_TPL_COLOR_KEYS.forEach(function(ck){
         var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
-        if(el&&el.value&&el.value!==defaults[ck]){overrides[ck]=el.value;changed=true;}
+        if(el&&el.value)tplColors[tpl][ck]=el.value;
       });
-      if(changed){if(!tplColors[tpl])tplColors[tpl]={};for(var k in overrides)tplColors[tpl][k]=overrides[k];}
     });
-    // Merge with existing stored overrides for other templates
+    // Preserve existing overrides for other templates not currently displayed
     var existing=hpCfgGet();
     if(existing.wpTplColors){
       for(var t in existing.wpTplColors){
         if(!tplColors[t])tplColors[t]=existing.wpTplColors[t];
       }
     }
-    if(Object.keys(tplColors).length)c.wpTplColors=tplColors;
+    c.wpTplColors=tplColors;
+    // Sync old flat color keys from current home template so they stay consistent
+    var homeTpl=c.wpHomeTemplate||'classic-red';
+    var htd=WP_TPL_COLOR_DEFAULTS[homeTpl]||WP_TPL_COLOR_DEFAULTS['classic-red'];
+    var hto=(tplColors[homeTpl])||{};
+    ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
+      c[k]=hto[k]||htd[k];
+    });
     return c;
   }
   function hpCfgApplyUI(c){
-    ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
+    ['priColor','priHover','accColor','bgColor','textColor'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)el.value=c[k]||HPCFG_DEFAULTS[k];
+    });
+    // Sync old global WP color inputs with current home template colors
+    var _tpl=c.wpHomeTemplate||'classic-red';
+    var _td=WP_TPL_COLOR_DEFAULTS[_tpl]||WP_TPL_COLOR_DEFAULTS['classic-red'];
+    var _to=(c.wpTplColors&&c.wpTplColors[_tpl])||{};
+    ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)el.value=_to[k]||_td[k]||c[k]||HPCFG_DEFAULTS[k];
+    });
+    ['showTopbar','showPromoBar','showMeatPromo','showDoGehIHi','showInfoCards','showWhatsApp','showCookie'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)el.checked=c.hasOwnProperty(k)?c[k]:HPCFG_DEFAULTS[k];
     });
     ['wpShowCard','wpShowOeko','wpShowVorbestell','wpShowPhone','wpShowWaShare','wpShowWaInfo'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)el.checked=c.hasOwnProperty(k)?c[k]:HPCFG_DEFAULTS[k];
+    });
+    ['baseFontSize','borderRadius'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]!=null?c[k]:HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
     });
     ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]||HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
