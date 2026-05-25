@@ -162,6 +162,29 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
     var raw=localStorage.getItem('dl_hp_design_config');
     if(raw) applyHeroCfg(JSON.parse(raw));
   }catch(e){}
+  var angTplDefaults={
+    'classic-red':{cardBg:'#ffffff',imgBg:'#faf9f6'},
+    'minimal-clean':{cardBg:'#ffffff',imgBg:'#f9fafb'},
+    'dark-modern':{cardBg:'#f5f5f5',imgBg:'#e2e8f0'},
+    'organic-market':{cardBg:'#fffdf8',imgBg:'#faf5eb'},
+    'bold-poster':{cardBg:'#fffaf2',imgBg:'#fff5e6'},
+    'modern-magazine':{cardBg:'#f6fbf5',imgBg:'#eef5eb'}
+  };
+  function applyOfferTileColors(dc){
+    if(!dc)return;
+    var tpl=dc.plakatTemplate||'classic-red';
+    var ad=angTplDefaults[tpl]||angTplDefaults['classic-red'];
+    var ov=(dc.tplColors&&dc.tplColors[tpl])||{};
+    var imgBg=ov.imgBg||ad.imgBg;
+    var cardBg=ov.cardBg||ad.cardBg;
+    var s=document.getElementById('ang-tile-colors');
+    if(!s){s=document.createElement('style');s.id='ang-tile-colors';document.head.appendChild(s);}
+    s.textContent='.ang-img{background:'+imgBg+'!important}.ang-item{background:'+cardBg+'!important}';
+  }
+  try{
+    var dcRaw=localStorage.getItem('dl_design_config');
+    if(dcRaw) applyOfferTileColors(JSON.parse(dcRaw));
+  }catch(e){}
   fetch(API_BASE+'/cms-config')
     .then(function(r){return r.json();})
     .then(function(res){
@@ -170,6 +193,11 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       if(hc&&typeof hc==='object'){
         applyHeroCfg(hc);
         try{localStorage.setItem('dl_hp_design_config',JSON.stringify(hc));}catch(e){}
+      }
+      var dc=d&&d['design_config'];
+      if(dc&&typeof dc==='object'){
+        applyOfferTileColors(dc);
+        try{localStorage.setItem('dl_design_config',JSON.stringify(dc));}catch(e){}
       }
     }).catch(function(){});
 })();

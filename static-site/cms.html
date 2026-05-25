@@ -1289,6 +1289,7 @@ document.head.appendChild(msalScript);
                   <label style="font-size:11px;color:#374151">Kartenrahmen<input type="color" id="cfg-tpl-plakat-cardBorder" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Text<input type="color" id="cfg-tpl-plakat-textColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Details<input type="color" id="cfg-tpl-plakat-detailsColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Bild-HG<input type="color" id="cfg-tpl-plakat-imgBg" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetTplColors" data-kind="plakat" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
                 </div>
               </div>
@@ -1341,6 +1342,7 @@ document.head.appendChild(msalScript);
                   <label style="font-size:11px;color:#374151">Kartenrahmen<input type="color" id="cfg-tpl-flyer-cardBorder" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Text<input type="color" id="cfg-tpl-flyer-textColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Details<input type="color" id="cfg-tpl-flyer-detailsColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Bild-HG<input type="color" id="cfg-tpl-flyer-imgBg" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetTplColors" data-kind="flyer" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
                 </div>
               </div>
@@ -4308,14 +4310,14 @@ document.head.appendChild(msalScript);
 
   // Template color defaults – used as base, can be overridden per template in config
   var TPL_COLOR_DEFAULTS={
-    'classic-red':{bgColor:'#f4f1ea',titleColor:'#a51d2d',tagColor:'#a51d2d',cardBg:'#ffffff',cardBorder:'#eeeeee',textColor:'#1a1a1a',detailsColor:'#444444'},
-    'minimal-clean':{bgColor:'#ffffff',titleColor:'#111827',tagColor:'#047857',cardBg:'#ffffff',cardBorder:'#e5e7eb',textColor:'#1a1a1a',detailsColor:'#444444'},
-    'dark-modern':{bgColor:'#0f172a',titleColor:'#e5e7eb',tagColor:'#0ea5e9',cardBg:'#f5f5f5',cardBorder:'#94a3b8',textColor:'#111827',detailsColor:'#334155'},
-    'organic-market':{bgColor:'#f7f2e7',titleColor:'#355e3b',tagColor:'#8b1e3f',cardBg:'#fffdf8',cardBorder:'#e9dfcf',textColor:'#2f3d2f',detailsColor:'#6b5b48'},
-    'bold-poster':{bgColor:'#fff7ed',titleColor:'#b91c1c',tagColor:'#ea580c',cardBg:'#fffaf2',cardBorder:'#fdba74',textColor:'#7c2d12',detailsColor:'#9a3412'},
-    'modern-magazine':{bgColor:'#edf4ea',titleColor:'#5e7057',tagColor:'#6f835f',cardBg:'#f6fbf5',cardBorder:'#d2e0cf',textColor:'#2c3a2a',detailsColor:'#5b6d54'}
+    'classic-red':{bgColor:'#f4f1ea',titleColor:'#a51d2d',tagColor:'#a51d2d',cardBg:'#ffffff',cardBorder:'#eeeeee',textColor:'#1a1a1a',detailsColor:'#444444',imgBg:'#faf9f6'},
+    'minimal-clean':{bgColor:'#ffffff',titleColor:'#111827',tagColor:'#047857',cardBg:'#ffffff',cardBorder:'#e5e7eb',textColor:'#1a1a1a',detailsColor:'#444444',imgBg:'#f9fafb'},
+    'dark-modern':{bgColor:'#0f172a',titleColor:'#e5e7eb',tagColor:'#0ea5e9',cardBg:'#f5f5f5',cardBorder:'#94a3b8',textColor:'#111827',detailsColor:'#334155',imgBg:'#e2e8f0'},
+    'organic-market':{bgColor:'#f7f2e7',titleColor:'#355e3b',tagColor:'#8b1e3f',cardBg:'#fffdf8',cardBorder:'#e9dfcf',textColor:'#2f3d2f',detailsColor:'#6b5b48',imgBg:'#faf5eb'},
+    'bold-poster':{bgColor:'#fff7ed',titleColor:'#b91c1c',tagColor:'#ea580c',cardBg:'#fffaf2',cardBorder:'#fdba74',textColor:'#7c2d12',detailsColor:'#9a3412',imgBg:'#fff5e6'},
+    'modern-magazine':{bgColor:'#edf4ea',titleColor:'#5e7057',tagColor:'#6f835f',cardBg:'#f6fbf5',cardBorder:'#d2e0cf',textColor:'#2c3a2a',detailsColor:'#5b6d54',imgBg:'#eef5eb'}
   };
-  var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor'];
+  var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor','imgBg'];
 
   function getTplColors(tplName,cfg){
     var defaults=TPL_COLOR_DEFAULTS[tplName]||TPL_COLOR_DEFAULTS['classic-red'];
@@ -4343,6 +4345,7 @@ document.head.appendChild(msalScript);
       detailsColor:colors.detailsColor,
       footerColor:'#1a1a1a',
       tagColor:colors.tagColor,
+      imgBg:colors.imgBg||colors.cardBg,
       showTexture:cfg.showTexture
     };
     if(tpl==='minimal-clean'){
@@ -4529,8 +4532,10 @@ document.head.appendChild(msalScript);
         ctx.fillStyle=theme.cardBg;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.fill();ctx.restore();
         ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.stroke();
 
-        // Image area (top 55% of card)
+        // Image area (top 55% of card) – fill with imgBg color
         var imgZoneH=Math.floor(cardMH*0.55);
+        ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
+        ctx.fillStyle=theme.imgBg;ctx.fillRect(cardMX,cardMY,cardMW,imgZoneH);ctx.restore();
         var mgImgPromise=Promise.resolve();
         if(item.bild_data){
           mgImgPromise=new Promise(function(resImg){
@@ -4664,6 +4669,9 @@ document.head.appendChild(msalScript);
       // ── Bild + Preisschild: Bild zuerst (volle Fläche), dann Tag darüber ──
       var imgAreaTop=textY+6;
       var imgAreaH=cardH-(imgAreaTop-cardY)-pad-10;
+      // Fill image area with imgBg color
+      ctx.save();rrect(cardX,imgAreaTop,cardW,imgAreaH+pad,theme.cardRadius);ctx.clip();
+      ctx.fillStyle=theme.imgBg;ctx.fillRect(cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.restore();
       var tagW=280,tagH=130;
       var tagCX=cardX+cardW-pad-tagW/2+10;
       var tagCY=imgAreaTop+tagH/2+20;
@@ -5234,8 +5242,10 @@ document.head.appendChild(msalScript);
         ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.stroke();
 
         var cardPadI=14;
-        // Image area (top half of card)
+        // Image area (top half of card) – fill with imgBg
         var imgAreaH=Math.floor(mgCellH*0.48);
+        ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
+        ctx.fillStyle=theme.imgBg;ctx.fillRect(cx,cy,mgCellW,imgAreaH);ctx.restore();
         if(img){
           var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
           var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
@@ -5379,7 +5389,7 @@ document.head.appendChild(msalScript);
       // Weisse Karte mit runden Ecken + Schatten
       ctx.save();
       ctx.shadowColor='rgba(0,0,0,0.06)';ctx.shadowBlur=2;ctx.shadowOffsetX=8;ctx.shadowOffsetY=8;
-      ctx.fillStyle='#ffffff';
+      ctx.fillStyle=theme.cardBg;
       roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.fill();ctx.restore();
       // Rand
       ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.stroke();
@@ -5398,6 +5408,9 @@ document.head.appendChild(msalScript);
       var img=images[i];
       var imgAreaTop=textY+8;
       var imgAreaH=cellH-imgAreaTop+cy-cardPad;
+      // Fill image area with imgBg color
+      ctx.save();roundRect(cx,imgAreaTop,cellW,imgAreaH+cardPad,theme.cardRadius);ctx.clip();
+      ctx.fillStyle=theme.imgBg;ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
       if(img){
         var maxImgW=cellW*0.52,maxImgH=imgAreaH*0.88;
         var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale);
