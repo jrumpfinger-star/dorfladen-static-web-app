@@ -1143,8 +1143,20 @@ document.head.appendChild(msalScript);
               <div id="hcfg-wpHome-colors" style="margin-top:8px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
                 <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Homepage-Layout-Farben anpassen</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-                  <label style="font-size:11px;color:#374151">Header-Gradient Start<input type="color" id="hcfg-wpTpl-home-wpHeaderFrom" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
-                  <label style="font-size:11px;color:#374151">Header-Gradient Ende<input type="color" id="hcfg-wpTpl-home-wpHeaderTo" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Header-Gradient Start<input type="color" id="hcfg-wpTpl-home-wpHeaderFrom" class="wpTpl-grad-input" data-kind="home" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Header-Gradient Ende<input type="color" id="hcfg-wpTpl-home-wpHeaderTo" class="wpTpl-grad-input" data-kind="home" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151;grid-column:1/-1">Verlaufsrichtung
+                    <select id="hcfg-wpTpl-home-wpHeaderDir" class="cms-input wpTpl-grad-input" data-kind="home" style="font-size:11px;padding:4px 6px;margin-top:2px">
+                      <option value="135deg">&#8600; 135&deg; (diagonal)</option>
+                      <option value="to right">&rarr; nach rechts</option>
+                      <option value="to bottom">&darr; nach unten</option>
+                      <option value="to bottom right">&#8600; nach rechts-unten</option>
+                      <option value="45deg">&#8599; 45&deg;</option>
+                      <option value="90deg">&rarr; 90&deg;</option>
+                      <option value="180deg">&darr; 180&deg;</option>
+                    </select>
+                  </label>
+                  <div style="grid-column:1/-1;height:20px;border-radius:4px;border:1px solid #d1d5db" id="hcfg-wpTpl-home-gradPreview"></div>
                   <label style="font-size:11px;color:#374151">Gericht-Textfarbe<input type="color" id="hcfg-wpTpl-home-wpDishColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Preis-Farbe<input type="color" id="hcfg-wpTpl-home-wpPriceColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Zebrastreifen<input type="color" id="hcfg-wpTpl-home-wpStripeColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
@@ -1200,8 +1212,20 @@ document.head.appendChild(msalScript);
               <div id="hcfg-wpFlyer-colors" style="margin-top:8px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
                 <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Vorschau/Flyer-Layout-Farben anpassen</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-                  <label style="font-size:11px;color:#374151">Header-Gradient Start<input type="color" id="hcfg-wpTpl-flyer-wpHeaderFrom" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
-                  <label style="font-size:11px;color:#374151">Header-Gradient Ende<input type="color" id="hcfg-wpTpl-flyer-wpHeaderTo" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Header-Gradient Start<input type="color" id="hcfg-wpTpl-flyer-wpHeaderFrom" class="wpTpl-grad-input" data-kind="flyer" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151">Header-Gradient Ende<input type="color" id="hcfg-wpTpl-flyer-wpHeaderTo" class="wpTpl-grad-input" data-kind="flyer" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <label style="font-size:11px;color:#374151;grid-column:1/-1">Verlaufsrichtung
+                    <select id="hcfg-wpTpl-flyer-wpHeaderDir" class="cms-input wpTpl-grad-input" data-kind="flyer" style="font-size:11px;padding:4px 6px;margin-top:2px">
+                      <option value="135deg">&#8600; 135&deg; (diagonal)</option>
+                      <option value="to right">&rarr; nach rechts</option>
+                      <option value="to bottom">&darr; nach unten</option>
+                      <option value="to bottom right">&#8600; nach rechts-unten</option>
+                      <option value="45deg">&#8599; 45&deg;</option>
+                      <option value="90deg">&rarr; 90&deg;</option>
+                      <option value="180deg">&darr; 180&deg;</option>
+                    </select>
+                  </label>
+                  <div style="grid-column:1/-1;height:20px;border-radius:4px;border:1px solid #d1d5db" id="hcfg-wpTpl-flyer-gradPreview"></div>
                   <label style="font-size:11px;color:#374151">Gericht-Textfarbe<input type="color" id="hcfg-wpTpl-flyer-wpDishColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Preis-Farbe<input type="color" id="hcfg-wpTpl-flyer-wpPriceColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Zebrastreifen<input type="color" id="hcfg-wpTpl-flyer-wpStripeColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
@@ -2847,15 +2871,15 @@ document.head.appendChild(msalScript);
   };
   // Wochenplan template color defaults per template
   var WP_TPL_COLOR_DEFAULTS={
-    'classic-red':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',wpBgColor:'#ffffff'},
-    'clean-white':{wpHeaderFrom:'#f3f4f6',wpHeaderTo:'#e5e7eb',wpDishColor:'#111827',wpPriceColor:'#374151',wpStripeColor:'#f9fafb',wpDayColor:'#111827',wpBgColor:'#ffffff'},
-    'dark-modern':{wpHeaderFrom:'#1e40af',wpHeaderTo:'#1e3a8a',wpDishColor:'#f1f5f9',wpPriceColor:'#93c5fd',wpStripeColor:'#1e293b',wpDayColor:'#60a5fa',wpBgColor:'#0f172a'},
-    'tafel':{wpHeaderFrom:'#2d5a3f',wpHeaderTo:'#1a3c28',wpDishColor:'#e8e0d0',wpPriceColor:'#c8b898',wpStripeColor:'#1e4430',wpDayColor:'#e8e0d0',wpBgColor:'#1a3c28'},
-    'bento':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1e293b',wpPriceColor:'#059669',wpStripeColor:'#f0fdf4',wpDayColor:'#059669',wpBgColor:'#f8fafc'},
-    'timeline':{wpHeaderFrom:'#0284c7',wpHeaderTo:'#0369a1',wpDishColor:'#0f172a',wpPriceColor:'#0284c7',wpStripeColor:'#f0f9ff',wpDayColor:'#0284c7',wpBgColor:'#f0f9ff'},
-    'zeitung':{wpHeaderFrom:'#292524',wpHeaderTo:'#1c1917',wpDishColor:'#1c1917',wpPriceColor:'#44403c',wpStripeColor:'#fafaf9',wpDayColor:'#44403c',wpBgColor:'#fafaf9'}
+    'classic-red':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',wpBgColor:'#ffffff',wpHeaderDir:'135deg'},
+    'clean-white':{wpHeaderFrom:'#f3f4f6',wpHeaderTo:'#e5e7eb',wpDishColor:'#111827',wpPriceColor:'#374151',wpStripeColor:'#f9fafb',wpDayColor:'#111827',wpBgColor:'#ffffff',wpHeaderDir:'135deg'},
+    'dark-modern':{wpHeaderFrom:'#1e40af',wpHeaderTo:'#1e3a8a',wpDishColor:'#f1f5f9',wpPriceColor:'#93c5fd',wpStripeColor:'#1e293b',wpDayColor:'#60a5fa',wpBgColor:'#0f172a',wpHeaderDir:'135deg'},
+    'tafel':{wpHeaderFrom:'#2d5a3f',wpHeaderTo:'#1a3c28',wpDishColor:'#e8e0d0',wpPriceColor:'#c8b898',wpStripeColor:'#1e4430',wpDayColor:'#e8e0d0',wpBgColor:'#1a3c28',wpHeaderDir:'135deg'},
+    'bento':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1e293b',wpPriceColor:'#059669',wpStripeColor:'#f0fdf4',wpDayColor:'#059669',wpBgColor:'#f8fafc',wpHeaderDir:'135deg'},
+    'timeline':{wpHeaderFrom:'#0284c7',wpHeaderTo:'#0369a1',wpDishColor:'#0f172a',wpPriceColor:'#0284c7',wpStripeColor:'#f0f9ff',wpDayColor:'#0284c7',wpBgColor:'#f0f9ff',wpHeaderDir:'135deg'},
+    'zeitung':{wpHeaderFrom:'#292524',wpHeaderTo:'#1c1917',wpDishColor:'#1c1917',wpPriceColor:'#44403c',wpStripeColor:'#fafaf9',wpDayColor:'#44403c',wpBgColor:'#fafaf9',wpHeaderDir:'to right'}
   };
-  var WP_TPL_COLOR_KEYS=['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor','wpBgColor'];
+  var WP_TPL_COLOR_KEYS=['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor','wpBgColor','wpHeaderDir'];
   function getWpTplColors(tplName,cfg){
     var defaults=WP_TPL_COLOR_DEFAULTS[tplName]||WP_TPL_COLOR_DEFAULTS['classic-red'];
     var overrides=(cfg.wpTplColors&&cfg.wpTplColors[tplName])||{};
@@ -3050,6 +3074,14 @@ document.head.appendChild(msalScript);
     var btns=document.querySelectorAll('#hcfg-wpFlyerTemplate-preview .cms-wp-preview');
     btns.forEach(function(b){b.classList.toggle('active',((b.getAttribute('data-value')||'').toLowerCase()===v));});
   }
+  function wpTplGradPreview(kind){
+    var c1=document.getElementById('hcfg-wpTpl-'+kind+'-wpHeaderFrom');
+    var c2=document.getElementById('hcfg-wpTpl-'+kind+'-wpHeaderTo');
+    var dir=document.getElementById('hcfg-wpTpl-'+kind+'-wpHeaderDir');
+    var prev=document.getElementById('hcfg-wpTpl-'+kind+'-gradPreview');
+    if(!c1||!c2||!dir||!prev)return;
+    prev.style.background='linear-gradient('+dir.value+', '+c1.value+' 0%, '+c2.value+' 100%)';
+  }
   function hpCfgSyncWpTplColors(kind,cfg){
     if(!cfg)cfg=hpCfgGet();
     var selId=kind==='flyer'?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
@@ -3058,9 +3090,21 @@ document.head.appendChild(msalScript);
     var colors=getWpTplColors(tpl,cfg);
     WP_TPL_COLOR_KEYS.forEach(function(ck){
       var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
-      if(el)el.value=colors[ck]||'#000000';
+      if(!el)return;
+      if(el.tagName==='SELECT'){el.value=colors[ck]||'135deg';}
+      else{el.value=colors[ck]||'#000000';}
     });
+    wpTplGradPreview(kind);
   }
+  // Live-preview for WP template gradient inputs
+  document.addEventListener('input',function(e){
+    if(!e.target.classList.contains('wpTpl-grad-input'))return;
+    var kind=e.target.getAttribute('data-kind');if(kind)wpTplGradPreview(kind);
+  });
+  document.addEventListener('change',function(e){
+    if(!e.target.classList.contains('wpTpl-grad-input'))return;
+    var kind=e.target.getAttribute('data-kind');if(kind)wpTplGradPreview(kind);
+  });
   window.saveHPCfg=function(){
     var c=hpCfgReadUI();
     hpCfgSave(c);
