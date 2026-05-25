@@ -1066,19 +1066,19 @@
     savingsMarkerType:'starburst',savingsPalette:'harmonie',
     savingsScalePlakat:95,savingsScaleFlyer:120,
     plakatTemplate:'classic-red',flyerTemplate:'classic-red',
-    plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,
+    plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,plakat_tagScale:100,
     plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',
     plakat_showLeaf:false,plakat_leafSize:34,plakat_showBag:false,plakat_showTexture:true,
-    flyer_tagPreset:'',flyer_tagShape:'rect',flyer_tagRadius:0,flyer_tagSkew:18,
+    flyer_tagPreset:'',flyer_tagShape:'rect',flyer_tagRadius:0,flyer_tagSkew:18,flyer_tagScale:100,
     flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',
     flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true
   };
   var PERSEC_SECTIONS=['plakat','flyer'];
   var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor'];
-  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize'];
+  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale'];
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
   var PERSEC_SELECTS=['tagPreset','tagShape'];
-  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px'};
+  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%'};
   // Merge per-section values into global keys for rendering (e.g. cfg.flyer_tagShape → cfg.tagShape)
   var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
   function cfgForKind(cfg,kind){
@@ -1196,8 +1196,8 @@
   function cfgUpdateVal(k,v){
     var el=document.getElementById('cfg-'+k+'-val');if(!el)return;
     var u={'imgRotation':'\u00B0','imgThreshold':'','imgMaxScale':'x','priceFontFlyer':'px','priceFontPlakat':'px','tagSkew':'%','tagRadius':'px','leafSize':'px','savingsScalePlakat':'%','savingsScaleFlyer':'%',
-      'plakat-tagRadius':'px','plakat-tagSkew':'%','plakat-leafSize':'px',
-      'flyer-tagRadius':'px','flyer-tagSkew':'%','flyer-leafSize':'px'};
+      'plakat-tagRadius':'px','plakat-tagSkew':'%','plakat-leafSize':'px','plakat-tagScale':'%',
+      'flyer-tagRadius':'px','flyer-tagSkew':'%','flyer-leafSize':'px','flyer-tagScale':'%'};
     el.textContent=v+(u[k]||'');
   }
   function cfgReadUI(){
@@ -3900,7 +3900,8 @@
       // Fill image area with imgBg color
       ctx.save();rrect(cardX,imgAreaTop,cardW,imgAreaH+pad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.fillRect(cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.restore();
-      var tagW=280,tagH=130;
+      var tagSc=(cfg.tagScale||100)/100;
+      var tagW=Math.round(280*tagSc),tagH=Math.round(130*tagSc);
       var tagCX=cardX+cardW-pad-tagW/2+10;
       var tagCY=imgAreaTop+tagH/2+20;
       // Bild zuerst zeichnen (nutzt gesamten verfügbaren Bereich, am unteren Rand verankert)
@@ -3968,16 +3969,17 @@
         // Statt-Preis unter dem Tag
         if(item.statt_preis){
           var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-          ctx.fillStyle=cfg.stattColor;ctx.font='bold 26px Arial, sans-serif';ctx.textAlign='center';
+          var stFs=Math.round(26*tagSc);
+          ctx.fillStyle=cfg.stattColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
           var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
-          var stattX=tagCX,stattY=tagCY+tagBottom+42;
+          var stattX=tagCX,stattY=tagCY+tagBottom+Math.round(42*tagSc);
           ctx.fillText(stattStr,stattX,stattY);
           var stW=ctx.measureText(stattStr).width;
           ctx.strokeStyle=theme.tagColor;ctx.lineWidth=2.5;ctx.beginPath();
-          ctx.moveTo(stattX-stW/2-4,stattY-7);ctx.lineTo(stattX+stW/2+4,stattY-7);ctx.stroke();
+          ctx.moveTo(stattX-stW/2-4,stattY-Math.round(7*tagSc));ctx.lineTo(stattX+stW/2+4,stattY-Math.round(7*tagSc));ctx.stroke();
         }
         if(savingsPct){
-          drawSavingsBurst(ctx,tagCX-tagW/2+8,tagCY-tagH/2-14,36,22,'-'+savingsPct+'%','flyer');
+          drawSavingsBurst(ctx,tagCX-tagW/2+8,tagCY-tagH/2-14,Math.round(36*tagSc),Math.round(22*tagSc),'-'+savingsPct+'%','flyer');
         }
       }
         ctx.textAlign='left';
@@ -4662,7 +4664,8 @@
       if(item.preis){
         var cardSavingsPct=getSavingsPercent(item);
         var preisStr=Number(item.preis).toFixed(2).split('.');
-        var tagW=130,tagH=58;
+        var tagSc=(cfg.tagScale||100)/100;
+        var tagW=Math.round(130*tagSc),tagH=Math.round(58*tagSc);
         var tagCX=cx+cellW-cardPad-tagW/2-10;
         var tagCY=imgAreaTop+imgAreaH*0.4;
         ctx.save();
@@ -4705,16 +4708,17 @@
         // Statt-Preis unter dem Tag
         if(item.statt_preis){
           var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-          ctx.fillStyle=cfg.stattColor;ctx.font='bold 16px Arial, sans-serif';ctx.textAlign='center';
+          var stFs=Math.round(16*tagSc);
+          ctx.fillStyle=cfg.stattColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
           var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
-          var stattX=tagCX,stattY=tagCY+tagBottom+30;
+          var stattX=tagCX,stattY=tagCY+tagBottom+Math.round(30*tagSc);
           ctx.fillText(stattStr,stattX,stattY);
           var stW=ctx.measureText(stattStr).width;
           ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1.5;ctx.beginPath();
-          ctx.moveTo(stattX-stW/2-2,stattY-5);ctx.lineTo(stattX+stW/2+2,stattY-5);ctx.stroke();
+          ctx.moveTo(stattX-stW/2-2,stattY-Math.round(5*tagSc));ctx.lineTo(stattX+stW/2+2,stattY-Math.round(5*tagSc));ctx.stroke();
         }
         if(cardSavingsPct){
-          drawSavingsBurst(ctx,tagCX-tagW/2+6,tagCY-tagH/2-12,24,15,'-'+cardSavingsPct+'%','plakat');
+          drawSavingsBurst(ctx,tagCX-tagW/2+6,tagCY-tagH/2-12,Math.round(24*tagSc),Math.round(15*tagSc),'-'+cardSavingsPct+'%','plakat');
         }
       }
       // Einkaufstaschen-Deko unten rechts
