@@ -1393,14 +1393,22 @@ document.head.appendChild(msalScript);
               <div id="cfg-tpl-plakat-colors" style="margin-top:8px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
                 <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Plakat-Farben anpassen</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-                  <label style="font-size:11px;color:#374151">Hintergrund<input type="color" id="cfg-tpl-plakat-bgColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <div class="cfg-tpl-grad-row" data-kind="plakat" data-key="bgColor">
+                    <div style="display:flex;align-items:center;gap:4px"><span style="font-size:11px;color:#374151;flex:1">Hintergrund</span><label style="font-size:9px;color:#6b7280;cursor:pointer;white-space:nowrap"><input type="checkbox" class="cfg-tpl-grad-toggle" data-kind="plakat" data-key="bgColor" style="margin-right:2px">Verlauf</label></div>
+                    <div style="display:flex;gap:3px"><input type="color" id="cfg-tpl-plakat-bgColor" style="flex:1;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"><input type="color" id="cfg-tpl-plakat-bgColor_c2" class="cfg-tpl-grad-c2" style="flex:1;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;display:none"></div>
+                    <div class="cfg-tpl-grad-opts" style="display:none;margin-top:3px;padding:4px;background:#f3f4f6;border-radius:4px"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#6b7280">Richtung:</span><select id="cfg-tpl-plakat-bgColor_dir" class="cms-input" style="font-size:9px;padding:1px 3px;width:auto;min-width:0"><option value="to bottom">&darr; unten</option><option value="to right">&rarr; rechts</option><option value="to bottom right">&searr; diagonal</option><option value="135deg">135&deg;</option></select><span style="font-size:9px;color:#6b7280"><span id="cfg-tpl-plakat-bgColor_pct-val">50</span>%</span><input type="range" id="cfg-tpl-plakat-bgColor_pct" min="10" max="90" value="50" style="width:50px"></div><div class="cfg-tpl-grad-preview" id="cfg-tpl-plakat-bgColor-preview" style="height:14px;border-radius:3px;margin-top:3px;border:1px solid #d1d5db"></div></div>
+                  </div>
                   <label style="font-size:11px;color:#374151">Titel<input type="color" id="cfg-tpl-plakat-titleColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Preisschild<input type="color" id="cfg-tpl-plakat-tagColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Karte<input type="color" id="cfg-tpl-plakat-cardBg" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Kartenrahmen<input type="color" id="cfg-tpl-plakat-cardBorder" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Text<input type="color" id="cfg-tpl-plakat-textColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Details<input type="color" id="cfg-tpl-plakat-detailsColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
-                  <label style="font-size:11px;color:#374151">Bild-HG<input type="color" id="cfg-tpl-plakat-imgBg" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <div class="cfg-tpl-grad-row" data-kind="plakat" data-key="imgBg">
+                    <div style="display:flex;align-items:center;gap:4px"><span style="font-size:11px;color:#374151;flex:1">Bild-HG</span><label style="font-size:9px;color:#6b7280;cursor:pointer;white-space:nowrap"><input type="checkbox" class="cfg-tpl-grad-toggle" data-kind="plakat" data-key="imgBg" style="margin-right:2px">Verlauf</label></div>
+                    <div style="display:flex;gap:3px"><input type="color" id="cfg-tpl-plakat-imgBg" style="flex:1;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"><input type="color" id="cfg-tpl-plakat-imgBg_c2" class="cfg-tpl-grad-c2" style="flex:1;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;display:none"></div>
+                    <div class="cfg-tpl-grad-opts" style="display:none;margin-top:3px;padding:4px;background:#f3f4f6;border-radius:4px"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#6b7280">Richtung:</span><select id="cfg-tpl-plakat-imgBg_dir" class="cms-input" style="font-size:9px;padding:1px 3px;width:auto;min-width:0"><option value="to bottom">&darr; unten</option><option value="to right">&rarr; rechts</option><option value="to bottom right">&searr; diagonal</option><option value="135deg">135&deg;</option></select><span style="font-size:9px;color:#6b7280"><span id="cfg-tpl-plakat-imgBg_pct-val">50</span>%</span><input type="range" id="cfg-tpl-plakat-imgBg_pct" min="10" max="90" value="50" style="width:50px"></div><div class="cfg-tpl-grad-preview" id="cfg-tpl-plakat-imgBg-preview" style="height:14px;border-radius:3px;margin-top:3px;border:1px solid #d1d5db"></div></div>
+                  </div>
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetTplColors" data-kind="plakat" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
                 </div>
               </div>
@@ -1446,14 +1454,22 @@ document.head.appendChild(msalScript);
               <div id="cfg-tpl-flyer-colors" style="margin-top:8px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
                 <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">&#127912; Flyer-Farben anpassen</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-                  <label style="font-size:11px;color:#374151">Hintergrund<input type="color" id="cfg-tpl-flyer-bgColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <div class="cfg-tpl-grad-row" data-kind="flyer" data-key="bgColor">
+                    <div style="display:flex;align-items:center;gap:4px"><span style="font-size:11px;color:#374151;flex:1">Hintergrund</span><label style="font-size:9px;color:#6b7280;cursor:pointer;white-space:nowrap"><input type="checkbox" class="cfg-tpl-grad-toggle" data-kind="flyer" data-key="bgColor" style="margin-right:2px">Verlauf</label></div>
+                    <div style="display:flex;gap:3px"><input type="color" id="cfg-tpl-flyer-bgColor" style="flex:1;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"><input type="color" id="cfg-tpl-flyer-bgColor_c2" class="cfg-tpl-grad-c2" style="flex:1;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;display:none"></div>
+                    <div class="cfg-tpl-grad-opts" style="display:none;margin-top:3px;padding:4px;background:#f3f4f6;border-radius:4px"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#6b7280">Richtung:</span><select id="cfg-tpl-flyer-bgColor_dir" class="cms-input" style="font-size:9px;padding:1px 3px;width:auto;min-width:0"><option value="to bottom">&darr; unten</option><option value="to right">&rarr; rechts</option><option value="to bottom right">&searr; diagonal</option><option value="135deg">135&deg;</option></select><span style="font-size:9px;color:#6b7280"><span id="cfg-tpl-flyer-bgColor_pct-val">50</span>%</span><input type="range" id="cfg-tpl-flyer-bgColor_pct" min="10" max="90" value="50" style="width:50px"></div><div class="cfg-tpl-grad-preview" id="cfg-tpl-flyer-bgColor-preview" style="height:14px;border-radius:3px;margin-top:3px;border:1px solid #d1d5db"></div></div>
+                  </div>
                   <label style="font-size:11px;color:#374151">Titel<input type="color" id="cfg-tpl-flyer-titleColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Preisschild<input type="color" id="cfg-tpl-flyer-tagColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Karte<input type="color" id="cfg-tpl-flyer-cardBg" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Kartenrahmen<input type="color" id="cfg-tpl-flyer-cardBorder" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Text<input type="color" id="cfg-tpl-flyer-textColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <label style="font-size:11px;color:#374151">Details<input type="color" id="cfg-tpl-flyer-detailsColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
-                  <label style="font-size:11px;color:#374151">Bild-HG<input type="color" id="cfg-tpl-flyer-imgBg" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
+                  <div class="cfg-tpl-grad-row" data-kind="flyer" data-key="imgBg">
+                    <div style="display:flex;align-items:center;gap:4px"><span style="font-size:11px;color:#374151;flex:1">Bild-HG</span><label style="font-size:9px;color:#6b7280;cursor:pointer;white-space:nowrap"><input type="checkbox" class="cfg-tpl-grad-toggle" data-kind="flyer" data-key="imgBg" style="margin-right:2px">Verlauf</label></div>
+                    <div style="display:flex;gap:3px"><input type="color" id="cfg-tpl-flyer-imgBg" style="flex:1;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"><input type="color" id="cfg-tpl-flyer-imgBg_c2" class="cfg-tpl-grad-c2" style="flex:1;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;display:none"></div>
+                    <div class="cfg-tpl-grad-opts" style="display:none;margin-top:3px;padding:4px;background:#f3f4f6;border-radius:4px"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#6b7280">Richtung:</span><select id="cfg-tpl-flyer-imgBg_dir" class="cms-input" style="font-size:9px;padding:1px 3px;width:auto;min-width:0"><option value="to bottom">&darr; unten</option><option value="to right">&rarr; rechts</option><option value="to bottom right">&searr; diagonal</option><option value="135deg">135&deg;</option></select><span style="font-size:9px;color:#6b7280"><span id="cfg-tpl-flyer-imgBg_pct-val">50</span>%</span><input type="range" id="cfg-tpl-flyer-imgBg_pct" min="10" max="90" value="50" style="width:50px"></div><div class="cfg-tpl-grad-preview" id="cfg-tpl-flyer-imgBg-preview" style="height:14px;border-radius:3px;margin-top:3px;border:1px solid #d1d5db"></div></div>
+                  </div>
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetTplColors" data-kind="flyer" style="font-size:10px;padding:2px 6px">Zur&uuml;cksetzen</button>
                 </div>
               </div>
@@ -2706,6 +2722,10 @@ document.head.appendChild(msalScript);
     var ft=document.getElementById('cfg-flyerTemplate');if(ft)ft.value=c.flyerTemplate||'classic-red';
     cfgSyncOfferTplPreviews();
     cfgSyncAllTplColors();
+    // Sync global tagColor from the active flyer template tagColor
+    var _ftcEl=document.getElementById('cfg-tpl-flyer-tagColor');
+    var _gtcEl=document.getElementById('cfg-tagColor');
+    if(_ftcEl&&_gtcEl&&_ftcEl.value&&_ftcEl.value!=='#000000')_gtcEl.value=_ftcEl.value;
     var ssEl=document.getElementById('cfg-savingsStarStyle');
     if(ssEl){
       var ss='harmonie';
@@ -2748,10 +2768,18 @@ document.head.appendChild(msalScript);
     var tc={};
     ['plakatTemplate','flyerTemplate'].forEach(function(tKey){
       var tpl=c[tKey]||'classic-red';
+      var kind=tKey.replace('Template','');
       if(!tc[tpl])tc[tpl]={};
       TPL_COLOR_KEYS.forEach(function(ck){
-        var el=document.getElementById('cfg-tpl-'+tKey.replace('Template','')+'-'+ck);
+        var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
         if(el)tc[tpl][ck]=el.value;
+      });
+      TPL_GRAD_KEYS.forEach(function(gk){
+        var tgl=document.querySelector('.cfg-tpl-grad-toggle[data-kind="'+kind+'"][data-key="'+gk+'"]');
+        tc[tpl][gk+'_grad']=tgl?tgl.checked:false;
+        var c2=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_c2');if(c2)tc[tpl][gk+'_c2']=c2.value;
+        var dir=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_dir');if(dir)tc[tpl][gk+'_dir']=dir.value;
+        var pct=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_pct');if(pct)tc[tpl][gk+'_pct']=parseInt(pct.value);
       });
     });
     // Preserve existing overrides for other templates
@@ -2770,6 +2798,21 @@ document.head.appendChild(msalScript);
     sync('cfg-plakatTemplate','cfg-plakatTemplate-preview');
     sync('cfg-flyerTemplate','cfg-flyerTemplate-preview');
   }
+  function cfgTplToggleGrad(kind,k,on){
+    var row=document.querySelector('.cfg-tpl-grad-row[data-kind="'+kind+'"][data-key="'+k+'"]');if(!row)return;
+    var c2=row.querySelector('.cfg-tpl-grad-c2');if(c2)c2.style.display=on?'':'none';
+    var opts=row.querySelector('.cfg-tpl-grad-opts');if(opts)opts.style.display=on?'':'none';
+  }
+  function cfgTplUpdateGradPreview(kind,k){
+    var c1El=document.getElementById('cfg-tpl-'+kind+'-'+k);
+    var c2El=document.getElementById('cfg-tpl-'+kind+'-'+k+'_c2');
+    var dirEl=document.getElementById('cfg-tpl-'+kind+'-'+k+'_dir');
+    var pctEl=document.getElementById('cfg-tpl-'+kind+'-'+k+'_pct');
+    var prev=document.getElementById('cfg-tpl-'+kind+'-'+k+'-preview');
+    if(!c1El||!c2El||!prev)return;
+    var c1=c1El.value,c2=c2El.value,dir=dirEl?dirEl.value:'to bottom',pct=pctEl?pctEl.value:50;
+    prev.style.background='linear-gradient('+dir+','+c1+' 0%,'+c1+' '+pct+'%,'+c2+' 100%)';
+  }
   function cfgSyncTplColors(kind){
     // kind = 'plakat' or 'flyer'
     var selId=kind==='flyer'?'cfg-flyerTemplate':'cfg-plakatTemplate';
@@ -2780,6 +2823,16 @@ document.head.appendChild(msalScript);
     TPL_COLOR_KEYS.forEach(function(ck){
       var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
       if(el)el.value=colors[ck]||'#000000';
+    });
+    TPL_GRAD_KEYS.forEach(function(gk){
+      var isGrad=colors[gk+'_grad']||false;
+      var tgl=document.querySelector('.cfg-tpl-grad-toggle[data-kind="'+kind+'"][data-key="'+gk+'"]');
+      if(tgl){tgl.checked=isGrad;cfgTplToggleGrad(kind,gk,isGrad);}
+      var c2=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_c2');if(c2)c2.value=colors[gk+'_c2']||colors[gk];
+      var dir=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_dir');if(dir)dir.value=colors[gk+'_dir']||'to bottom';
+      var pct=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_pct');
+      if(pct){pct.value=colors[gk+'_pct']!=null?colors[gk+'_pct']:50;var pv=document.getElementById('cfg-tpl-'+kind+'-'+gk+'_pct-val');if(pv)pv.textContent=pct.value;}
+      if(isGrad)cfgTplUpdateGradPreview(kind,gk);
     });
   }
   function cfgSyncAllTplColors(){cfgSyncTplColors('plakat');cfgSyncTplColors('flyer');}
@@ -2843,12 +2896,37 @@ document.head.appendChild(msalScript);
     var _decoSyncRev={leafColor:'decoLeafColor',titleColor:'decoTitleColor',bgColor:'decoBgColor'};
     if(_decoSync[k]){var g=document.getElementById('cfg-'+_decoSync[k]);if(g)g.value=e.target.value;}
     if(_decoSyncRev[k]){var d=document.getElementById('cfg-'+_decoSyncRev[k]);if(d)d.value=e.target.value;}
+    // Sync global tagColor → template-specific tagColor inputs
+    if(id==='cfg-tagColor'){
+      var v=e.target.value;
+      ['cfg-tpl-plakat-tagColor','cfg-tpl-flyer-tagColor'].forEach(function(tid){var t=document.getElementById(tid);if(t)t.value=v;});
+    }
     // Auto-save when template color pickers change
     if(id.indexOf('cfg-tpl-')===0){cfgSave(cfgReadUI());}
   });
   document.addEventListener('change',function(e){
     if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');cfgSave(cfgReadUI());}
     if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');cfgSave(cfgReadUI());}
+    // Offer template gradient toggle
+    if(e.target.classList.contains('cfg-tpl-grad-toggle')){
+      var gk=e.target.getAttribute('data-key'),gkind=e.target.getAttribute('data-kind');
+      if(gk&&gkind){cfgTplToggleGrad(gkind,gk,e.target.checked);cfgTplUpdateGradPreview(gkind,gk);cfgSave(cfgReadUI());}
+    }
+    // Offer template gradient direction change
+    if(e.target.id&&e.target.id.indexOf('cfg-tpl-')===0&&e.target.id.indexOf('_dir')>0){
+      var m=e.target.id.match(/^cfg-tpl-(plakat|flyer)-(\w+)_dir$/);
+      if(m){cfgTplUpdateGradPreview(m[1],m[2]);cfgSave(cfgReadUI());}
+    }
+  });
+  // Live gradient preview for offer template color/range changes
+  document.addEventListener('input',function(e){
+    if(!e.target.id||e.target.id.indexOf('cfg-tpl-')!==0)return;
+    var m=e.target.id.match(/^cfg-tpl-(plakat|flyer)-(\w+?)(?:_c2|_pct)?$/);
+    if(m){
+      var kind=m[1],gk=m[2];
+      if(TPL_GRAD_KEYS&&TPL_GRAD_KEYS.indexOf(gk)>=0)cfgTplUpdateGradPreview(kind,gk);
+      var pv=document.getElementById(e.target.id+'-val');if(pv)pv.textContent=e.target.value;
+    }
   });
 
   // --- Homepage/Wochenplan Config (hpCfg) ---
@@ -4570,13 +4648,32 @@ document.head.appendChild(msalScript);
     'modern-magazine':{bgColor:'#edf4ea',titleColor:'#5e7057',tagColor:'#6f835f',cardBg:'#f6fbf5',cardBorder:'#d2e0cf',textColor:'#2c3a2a',detailsColor:'#5b6d54',imgBg:'#eef5eb'}
   };
   var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor','imgBg'];
+  var TPL_GRAD_KEYS=['bgColor','imgBg'];
 
   function getTplColors(tplName,cfg){
     var defaults=TPL_COLOR_DEFAULTS[tplName]||TPL_COLOR_DEFAULTS['classic-red'];
     var overrides=(cfg.tplColors&&cfg.tplColors[tplName])||{};
     var result={};
     TPL_COLOR_KEYS.forEach(function(k){result[k]=overrides[k]||defaults[k];});
+    TPL_GRAD_KEYS.forEach(function(k){
+      result[k+'_grad']=overrides[k+'_grad']||false;
+      result[k+'_c2']=overrides[k+'_c2']||defaults[k];
+      result[k+'_dir']=overrides[k+'_dir']||'to bottom';
+      result[k+'_pct']=overrides[k+'_pct']!=null?overrides[k+'_pct']:50;
+    });
     return result;
+  }
+
+  // Canvas gradient helper: returns a CanvasGradient or solid color string
+  function tplGradFill(ctx,theme,key,x,y,w,h){
+    if(!theme[key+'_grad'])return theme[key];
+    var dir=theme[key+'_dir']||'to bottom',c1=theme[key],c2=theme[key+'_c2']||c1,pct=theme[key+'_pct']!=null?theme[key+'_pct']:50;
+    var x0=x,y0=y,x1=x,y1=y+h;
+    if(dir==='to right'){x1=x+w;y1=y;}
+    else if(dir==='to bottom right'||dir==='135deg'){x1=x+w;y1=y+h;}
+    var g=ctx.createLinearGradient(x0,y0,x1,y1);
+    g.addColorStop(0,c1);g.addColorStop(pct/100,c1);g.addColorStop(1,c2);
+    return g;
   }
 
   function getOfferTheme(kind,cfg){
@@ -4598,6 +4695,8 @@ document.head.appendChild(msalScript);
       footerColor:'#1a1a1a',
       tagColor:colors.tagColor,
       imgBg:colors.imgBg||colors.cardBg,
+      bgColor_grad:colors.bgColor_grad,bgColor_c2:colors.bgColor_c2,bgColor_dir:colors.bgColor_dir,bgColor_pct:colors.bgColor_pct,
+      imgBg_grad:colors.imgBg_grad,imgBg_c2:colors.imgBg_c2,imgBg_dir:colors.imgBg_dir,imgBg_pct:colors.imgBg_pct,
       showTexture:cfg.showTexture
     };
     if(tpl==='minimal-clean'){
@@ -4702,7 +4801,7 @@ document.head.appendChild(msalScript);
       var c=document.createElement('canvas');c.width=W;c.height=H;
       var ctx=c.getContext('2d');
       // ── Papier-Hintergrund (gleicher Stil wie Plakat) ──
-      ctx.fillStyle=theme.bgColor;ctx.fillRect(0,0,794,1123);
+      ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
       if(theme.showTexture){ctx.globalAlpha=0.04;
       for(var ty=0;ty<1123;ty+=3){for(var tx=0;tx<794;tx+=3){
         if(Math.random()>0.5){ctx.fillStyle=Math.random()>0.5?'#000':'#fff';ctx.fillRect(tx,ty,2,2);}
@@ -4731,7 +4830,7 @@ document.head.appendChild(msalScript);
 
       if(theme.tpl==='modern-magazine'){
         // ── Modern Magazine Einzelflyer: clean centered card layout ──
-        ctx.fillStyle=theme.bgColor;ctx.fillRect(0,0,W,H);
+        ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
         // Header bar
         ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
         ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
@@ -4787,7 +4886,7 @@ document.head.appendChild(msalScript);
         // Image area (top 55% of card) – fill with imgBg color
         var imgZoneH=Math.floor(cardMH*0.55);
         ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
-        ctx.fillStyle=theme.imgBg;ctx.fillRect(cardMX,cardMY,cardMW,imgZoneH);ctx.restore();
+        ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardMX,cardMY,cardMW,imgZoneH);ctx.fillRect(cardMX,cardMY,cardMW,imgZoneH);ctx.restore();
         var mgImgPromise=Promise.resolve();
         if(item.bild_data){
           mgImgPromise=new Promise(function(resImg){
@@ -4923,7 +5022,7 @@ document.head.appendChild(msalScript);
       var imgAreaH=cardH-(imgAreaTop-cardY)-pad-10;
       // Fill image area with imgBg color
       ctx.save();rrect(cardX,imgAreaTop,cardW,imgAreaH+pad,theme.cardRadius);ctx.clip();
-      ctx.fillStyle=theme.imgBg;ctx.fillRect(cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.restore();
+      ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.fillRect(cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.restore();
       var tagW=280,tagH=130;
       var tagCX=cardX+cardW-pad-tagW/2+10;
       var tagCY=imgAreaTop+tagH/2+20;
@@ -5412,7 +5511,7 @@ document.head.appendChild(msalScript);
 
     if(theme.tpl==='modern-magazine'){
       // ── Modern Magazine: Clean grid card layout ──
-      ctx.fillStyle=theme.bgColor;ctx.fillRect(0,0,W,H);
+      ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
 
       // Header bar
       ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
@@ -5497,7 +5596,7 @@ document.head.appendChild(msalScript);
         // Image area (top half of card) – fill with imgBg
         var imgAreaH=Math.floor(mgCellH*0.48);
         ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-        ctx.fillStyle=theme.imgBg;ctx.fillRect(cx,cy,mgCellW,imgAreaH);ctx.restore();
+        ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,cy,mgCellW,imgAreaH);ctx.fillRect(cx,cy,mgCellW,imgAreaH);ctx.restore();
         if(img){
           var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
           var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
@@ -5581,7 +5680,7 @@ document.head.appendChild(msalScript);
       return;
     }
     // ── Papier-Hintergrund (warm beige) ──
-    ctx.fillStyle=theme.bgColor;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
     // Subtile Papierstruktur simulieren
     if(theme.showTexture){ctx.globalAlpha=0.04;
     for(var ty=0;ty<H;ty+=3){for(var tx=0;tx<W;tx+=3){
@@ -5662,7 +5761,7 @@ document.head.appendChild(msalScript);
       var imgAreaH=cellH-imgAreaTop+cy-cardPad;
       // Fill image area with imgBg color
       ctx.save();roundRect(cx,imgAreaTop,cellW,imgAreaH+cardPad,theme.cardRadius);ctx.clip();
-      ctx.fillStyle=theme.imgBg;ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
+      ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
       if(img){
         var maxImgW=cellW*0.52,maxImgH=imgAreaH*0.88;
         var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale);
