@@ -1358,7 +1358,23 @@
       var panel=document.getElementById('cfg-'+s);
       if(panel)panel.style.display=s===secId?'':'none';
     });
-    document.querySelectorAll('.cfg-section-btn').forEach(function(btn){
+    var nav=document.querySelector('#cms-cfg-plakat .cfg-section-nav');
+    if(nav)nav.querySelectorAll('.cfg-section-btn').forEach(function(btn){
+      var active=btn.getAttribute('data-id')===secId;
+      btn.classList.toggle('active',active);
+      btn.style.borderBottomColor=active?'var(--c-m-pri)':'transparent';
+      btn.style.color=active?'var(--c-m-pri)':'#6b7280';
+    });
+  };
+
+  // ── WP Section Navigation (Homepage / Flyer / Elemente) ──
+  window.wpCfgSwitchSection=function(secId){
+    ['wp-sec-home','wp-sec-flyer','wp-sec-elemente'].forEach(function(s){
+      var panel=document.getElementById(s);
+      if(panel)panel.style.display=s===secId?'':'none';
+    });
+    var nav=document.querySelector('#cms-cfg-wp .cfg-section-nav');
+    if(nav)nav.querySelectorAll('.cfg-section-btn').forEach(function(btn){
       var active=btn.getAttribute('data-id')===secId;
       btn.classList.toggle('active',active);
       btn.style.borderBottomColor=active?'var(--c-m-pri)':'transparent';
@@ -1846,6 +1862,7 @@
   function hpCfgLoadUI(){
     var c=hpCfgGet();
     hpCfgApplyUI(c);
+    if(typeof wpPresetsRenderAll==='function')wpPresetsRenderAll();
     fetch(API+'/cms-config')
       .then(function(r){return r.json();})
       .then(function(res){
@@ -1928,6 +1945,124 @@
     hpCfgSyncWpTplColors(kind,cfg);
     toast('Farben f\u00fcr '+tpl+' zur\u00fcckgesetzt','ok');
   };
+
+  // ── WP Revert Section (discard unsaved changes) ──
+  window.wpRevertSection=function(kind){
+    var saved=hpCfgGet();
+    hpCfgApplyUI(saved);
+    toast('\u00c4nderungen verworfen \u2013 gespeicherter Stand wiederhergestellt','ok');
+  };
+
+  // ── WP Live Preview (inline) ──
+  window.wpLivePreview=function(kind){
+    kind=kind||'home';
+    var uiCfg=hpCfgReadUI();
+    try{localStorage.setItem(HPCFG_KEY,JSON.stringify(uiCfg));}catch(e){}
+    var selId=(kind==='flyer')?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
+    var sel=document.getElementById(selId);
+    var tpl=(sel&&sel.value)?sel.value:'classic-red';
+    var mealRows=[];
+    var byDay={};
+    [101000,101001,101002,101003,101004].forEach(function(d){byDay[d]=[];});
+    if(typeof meals!=='undefined')meals.forEach(function(m){if(byDay[m.wochentag])byDay[m.wochentag].push(m);});
+    var hasMeals=false;
+    [101000,101001,101002,101003,101004].forEach(function(dc){
+      var items=byDay[dc]||[];
+      if(items.length===0){mealRows.push({day:DAYS[dc],dish:'\u2014',price:'',alt:''});return;}
+      hasMeals=true;
+      items.forEach(function(m,idx){
+        mealRows.push({day:idx===0?DAYS[dc]:'',dish:m.gericht||m.beschreibung||'\u2014',price:m.preis?fmtPriceWA(m.preis):'',alt:''});
+      });
+    });
+    if(!hasMeals){
+      mealRows=[
+        {day:'Montag',dish:'Wiener Schnitzel mit Kartoffelsalat',price:'8,50 \u20ac',alt:''},
+        {day:'Dienstag',dish:'Gem\u00fcse-Curry mit Reis',price:'7,90 \u20ac',alt:''},
+        {day:'Mittwoch',dish:'Schweinebraten mit Kn\u00f6del',price:'9,20 \u20ac',alt:''},
+        {day:'Donnerstag',dish:'Pasta Bolognese',price:'7,50 \u20ac',alt:''},
+        {day:'Freitag',dish:'Backfisch mit Remoulade',price:'8,80 \u20ac',alt:''}
+      ];
+    }
+    var r=(typeof weekRange==='function'&&typeof kw!=='undefined')?weekRange(kw,jahr):null;
+    var header=r?('KW '+kw+' \u00b7 '+fmtD(r.start)+' \u2013 '+fmtD(r.end)):'KW 21 \u00b7 19.05. \u2013 23.05.2025';
+    var containerId=kind==='flyer'?'wp-flyer-live-preview':'wp-home-live-preview';
+    var container=document.getElementById(containerId);
+    if(!container)return;
+    container.innerHTML='<span style="font-size:12px;color:#6b7280">Wird generiert\u2026</span>';
+    if(typeof generateMenuImage==='function'){
+      generateMenuImage(mealRows,header,function(blob){
+        var url=URL.createObjectURL(blob);
+        container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:6px" alt="Vorschau">';
+      },tpl);
+    }else{
+      container.innerHTML='<span style="font-size:12px;color:#dc2626">generateMenuImage nicht verf\u00fcgbar</span>';
+    }
+  };
+
+  // ── WP Preset/Vorlagen System ──
+  var WP_PRESETS_KEY='dl_wp_design_presets';
+  function wpPresetsGet(){
+    try{var s=localStorage.getItem(WP_PRESETS_KEY);if(s)return JSON.parse(s);}catch(e){}
+    return {'wp-home':[],'wp-flyer':[]};
+  }
+  function wpPresetsSave(all){
+    try{localStorage.setItem(WP_PRESETS_KEY,JSON.stringify(all));}catch(e){}
+  }
+  window.wpPresetSave=function(section){
+    var name=prompt('Name f\u00fcr die Vorlage:');
+    if(!name||!name.trim())return;
+    var c=hpCfgReadUI();
+    var all=wpPresetsGet();
+    if(!all[section])all[section]=[];
+    all[section].push({name:name.trim(),data:JSON.parse(JSON.stringify(c)),ts:Date.now()});
+    wpPresetsSave(all);
+    wpPresetsRenderAll();
+    toast('Vorlage "'+name.trim()+'" gespeichert','ok');
+  };
+  window.wpPresetLoad=function(section,idx){
+    var all=wpPresetsGet();
+    if(!all[section]||!all[section][idx])return;
+    var preset=all[section][idx].data;
+    hpCfgApplyUI(preset);
+    toast('Vorlage "'+all[section][idx].name+'" geladen','ok');
+  };
+  window.wpPresetDelete=function(section,idx){
+    var all=wpPresetsGet();
+    if(!all[section]||!all[section][idx])return;
+    var name=all[section][idx].name;
+    if(!confirm('Vorlage "'+name+'" l\u00f6schen?'))return;
+    all[section].splice(idx,1);
+    wpPresetsSave(all);
+    wpPresetsRenderAll();
+    toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+  };
+  function wpPresetsRenderAll(){
+    ['wp-home','wp-flyer'].forEach(function(sec){wpPresetsRender(sec);});
+  }
+  function wpPresetsRender(section){
+    var shortKey=section.replace('wp-','');
+    var container=document.getElementById('wp-presets-'+shortKey);
+    if(!container)return;
+    var all=wpPresetsGet();
+    var list=all[section]||[];
+    if(!list.length){
+      container.innerHTML='<span style="font-size:11px;color:#9ca3af;font-style:italic">Noch keine Vorlagen gespeichert.</span>';
+      return;
+    }
+    var html='';
+    list.forEach(function(p,i){
+      var d=new Date(p.ts);
+      var dateStr=d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+      html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:#fff;border:1px solid #e5e7eb;border-radius:6px">';
+      html+='<span style="flex:1;font-size:11px;font-weight:600;color:#374151" title="'+dateStr+'">'+p.name+'</span>';
+      html+='<span style="font-size:9px;color:#9ca3af">'+dateStr+'</span>';
+      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px" data-action="wpPresetLoad" data-section="'+section+'" data-idx="'+i+'">Laden</button>';
+      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px;color:#dc2626" data-action="wpPresetDelete" data-section="'+section+'" data-idx="'+i+'">&times;</button>';
+      html+='</div>';
+    });
+    container.innerHTML=html;
+  }
+
   // Sync WP template colors when dropdown changes
   document.addEventListener('change',function(e){
     if(e.target.id==='hcfg-wpHomeTemplate'){hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');}
@@ -4841,6 +4976,12 @@
       case 'resetCfg':cmsResetCfg();break;
       case 'cfgRevertUnsaved':cfgRevertUnsaved();break;
       case 'cfgSection':cfgSwitchSection(t.getAttribute('data-id'));break;
+      case 'wpCfgSection':wpCfgSwitchSection(t.getAttribute('data-id'));break;
+      case 'wpLivePreview':wpLivePreview(t.getAttribute('data-kind')||'home');break;
+      case 'wpRevertSection':wpRevertSection(t.getAttribute('data-kind')||'home');break;
+      case 'wpPresetSave':wpPresetSave(t.getAttribute('data-section'));break;
+      case 'wpPresetLoad':wpPresetLoad(t.getAttribute('data-section'),t.getAttribute('data-idx'));break;
+      case 'wpPresetDelete':wpPresetDelete(t.getAttribute('data-section'),t.getAttribute('data-idx'));break;
       case 'cfgPresetSave':cfgPresetSave(t.getAttribute('data-section'));break;
       case 'cfgPresetLoad':cfgPresetLoad(t.getAttribute('data-section'),t.getAttribute('data-idx'));break;
       case 'cfgPresetDelete':cfgPresetDelete(t.getAttribute('data-section'),t.getAttribute('data-idx'));break;
