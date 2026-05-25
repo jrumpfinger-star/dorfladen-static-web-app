@@ -1695,9 +1695,11 @@
     'zeitung':{wpHeaderFrom:'#292524',wpHeaderTo:'#1c1917',wpDishColor:'#1c1917',wpPriceColor:'#44403c',wpStripeColor:'#fafaf9',wpDayColor:'#44403c',wpBgColor:'#fafaf9',wpHeaderDir:'to right'}
   };
   var WP_TPL_COLOR_KEYS=['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor','wpBgColor','wpHeaderDir'];
-  function getWpTplColors(tplName,cfg){
+  function getWpTplColors(tplName,cfg,kind){
     var defaults=WP_TPL_COLOR_DEFAULTS[tplName]||WP_TPL_COLOR_DEFAULTS['classic-red'];
-    var overrides=(cfg.wpTplColors&&cfg.wpTplColors[tplName])||{};
+    // Look up kind-prefixed key first (e.g. 'home:classic-red'), fall back to legacy non-prefixed key
+    var tc=cfg.wpTplColors||{};
+    var overrides=(kind&&tc[kind+':'+tplName])||tc[tplName]||{};
     var result={};
     WP_TPL_COLOR_KEYS.forEach(function(k){result[k]=overrides[k]||defaults[k];});
     return result;
@@ -1745,20 +1747,21 @@
     });
     var ht=document.getElementById('hcfg-wpHomeTemplate');if(ht)c.wpHomeTemplate=ht.value;
     var ft=document.getElementById('hcfg-wpFlyerTemplate');if(ft)c.wpFlyerTemplate=ft.value;
-    // Read per-template color overrides from the template-specific inputs
+    // Read per-template color overrides from the template-specific inputs (keyed as kind:tpl)
     var tplColors={};
     ['flyer','home'].forEach(function(kind){
       var selId=kind==='flyer'?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
       var sel=document.getElementById(selId);if(!sel)return;
       var tpl=sel.value||'classic-red';
       var tplDef=WP_TPL_COLOR_DEFAULTS[tpl]||WP_TPL_COLOR_DEFAULTS['classic-red'];
-      if(!tplColors[tpl])tplColors[tpl]={};
+      var storeKey=kind+':'+tpl;
+      if(!tplColors[storeKey])tplColors[storeKey]={};
       WP_TPL_COLOR_KEYS.forEach(function(ck){
         var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
         var v=el?el.value:'';
         // If input is uninitialized (#000000), use template default
         if(!v||v==='#000000')v=tplDef[ck]||'';
-        if(v)tplColors[tpl][ck]=v;
+        if(v)tplColors[storeKey][ck]=v;
       });
     });
     // Preserve existing overrides for other templates not currently displayed
@@ -1772,7 +1775,7 @@
     // Sync flat color keys + hidden inputs from current home template for backward compat
     var homeTpl=c.wpHomeTemplate||'classic-red';
     var htd=WP_TPL_COLOR_DEFAULTS[homeTpl]||WP_TPL_COLOR_DEFAULTS['classic-red'];
-    var hto=(tplColors[homeTpl])||{};
+    var hto=(tplColors['home:'+homeTpl])||{};
     ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
       c[k]=hto[k]||htd[k];
       var el=document.getElementById('hcfg-'+k);if(el)el.value=c[k];
@@ -1795,7 +1798,7 @@
     // Sync old global WP color inputs with current home template colors
     var _tpl=c.wpHomeTemplate||'classic-red';
     var _td=WP_TPL_COLOR_DEFAULTS[_tpl]||WP_TPL_COLOR_DEFAULTS['classic-red'];
-    var _to=(c.wpTplColors&&c.wpTplColors[_tpl])||{};
+    var _to=(c.wpTplColors&&(c.wpTplColors['home:'+_tpl]||c.wpTplColors[_tpl]))||{};
     ['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)el.value=_to[k]||_td[k]||c[k]||HPCFG_DEFAULTS[k];
     });
@@ -1903,7 +1906,7 @@
     var selId=kind==='flyer'?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
     var sel=document.getElementById(selId);if(!sel)return;
     var tpl=sel.value||'classic-red';
-    var colors=getWpTplColors(tpl,cfg);
+    var colors=getWpTplColors(tpl,cfg,kind);
     WP_TPL_COLOR_KEYS.forEach(function(ck){
       var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
       if(!el)return;
@@ -1941,7 +1944,11 @@
     var sel=document.getElementById(selId);if(!sel)return;
     var tpl=sel.value||'classic-red';
     var cfg=hpCfgGet();
-    if(cfg.wpTplColors&&cfg.wpTplColors[tpl])delete cfg.wpTplColors[tpl];
+    if(cfg.wpTplColors){
+      // Delete kind-prefixed key and legacy key
+      delete cfg.wpTplColors[kind+':'+tpl];
+      delete cfg.wpTplColors[tpl];
+    }
     hpCfgSave(cfg);
     hpCfgSyncWpTplColors(kind,cfg);
     toast('Farben f\u00fcr '+tpl+' zur\u00fcckgesetzt','ok');
@@ -1994,7 +2001,7 @@
       generateMenuImage(mealRows,header,function(blob){
         var url=URL.createObjectURL(blob);
         container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:6px" alt="Vorschau">';
-      },tpl);
+      },tpl,kind);
     }else{
       container.innerHTML='<span style="font-size:12px;color:#dc2626">generateMenuImage nicht verf\u00fcgbar</span>';
     }
@@ -2997,7 +3004,7 @@
   // --- WhatsApp Share ---
   function fmtPriceWA(v){return v?Number(v).toFixed(2).replace('.',',')+' \u20AC':'';}
 
-  function generateMenuImage(mealRows, header, callback, tplOverride){
+  function generateMenuImage(mealRows, header, callback, tplOverride, kindOverride){
     var SF='Segoe UI, sans-serif';
     var W=794,padL=30,padR=30;
     var headerH=130,rowH=52,gapBetweenDays=12,footerH=44;
@@ -3009,11 +3016,12 @@
     if(curGrp)groups.push(curGrp);
     // Pre-resolve template so height calc can be template-aware
     var hp=hpCfgGet();
+    var wpKind=kindOverride||'flyer';
     var tpl=((tplOverride||hp.wpFlyerTemplate||'classic-red')+'').toLowerCase();
     var tplMap={'minimal-clean':'clean-white','organic-market':'clean-white','bold-poster':'tafel','magazine-split':'bento','compact-chips':'bento','rail-menu':'timeline','newspaper-list':'zeitung','timeline-stripe':'timeline','bento-cards':'bento'};
     if(tplMap[tpl])tpl=tplMap[tpl];
     // Read custom color overrides for this template
-    var cc=getWpTplColors(tpl,hp);
+    var cc=getWpTplColors(tpl,hp,wpKind);
 
     var totalGroupH=0;
     if(tpl==='tafel'){
@@ -3394,7 +3402,7 @@
     var header='KW '+kw+' · '+fmtD(r.start)+' – '+fmtD(r.end);
     generateMenuImage(mealRows,header,function(blob){
       showSharePreview(blob,'Wochenplan-Template-Vorschau.png');
-    },tpl);
+    },tpl,target);
   };
 
   window.cmsPrintWP=function(){
