@@ -4104,7 +4104,7 @@
             var aspectRatio=img.width/img.height;
             // Flat images (aspect > 1.3): draw ghost copy diagonally above to fill space
             if(aspectRatio>1.3 && ih<imgAreaH*0.55){
-              var ghostCx=cx+iw*0.35, ghostCy=cy-ih*0.8;
+              var ghostCx=cx+iw*0.20, ghostCy=cy-ih*0.8;
               // Clamp ghost so it doesn't go above image area
               if(ghostCy-ih/2<imgAreaTop) ghostCy=imgAreaTop+ih/2+4;
               ctx.save();ctx.globalAlpha=0.45;
