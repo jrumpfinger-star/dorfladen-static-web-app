@@ -4101,6 +4101,18 @@
             ctx.save();rrect(cardX,cardY,cardW,cardH,theme.cardRadius);ctx.clip();
             var rotRad=cfg.imgRotation*Math.PI/180;
             var cx=imgLeft+iw/2, cy=imgBot-ih/2;
+            var aspectRatio=img.width/img.height;
+            // Flat images (aspect > 1.3): draw ghost copy diagonally above to fill space
+            if(aspectRatio>1.3 && ih<imgAreaH*0.55){
+              var ghostCx=cx+iw*0.35, ghostCy=cy-ih*0.8;
+              // Clamp ghost so it doesn't go above image area
+              if(ghostCy-ih/2<imgAreaTop) ghostCy=imgAreaTop+ih/2+4;
+              ctx.save();ctx.globalAlpha=0.45;
+              ctx.translate(ghostCx,ghostCy);ctx.rotate(-rotRad*0.6);
+              ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);
+              ctx.restore();
+            }
+            // Draw main image
             ctx.translate(cx,cy);ctx.rotate(-rotRad);
             ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();resImg();
           };
