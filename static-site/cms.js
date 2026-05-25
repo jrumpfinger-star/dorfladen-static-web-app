@@ -1079,6 +1079,17 @@
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
   var PERSEC_SELECTS=['tagPreset','tagShape'];
   var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px'};
+  // Merge per-section values into global keys for rendering (e.g. cfg.flyer_tagShape → cfg.tagShape)
+  var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
+  function cfgForKind(cfg,kind){
+    if(!kind)return cfg;
+    var c=Object.assign({},cfg);
+    PERSEC_COLORS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[PERSEC_COLOR_MAP[k]||k]=v;});
+    PERSEC_RANGES.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
+    PERSEC_CHECKS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
+    PERSEC_SELECTS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
+    return c;
+  }
   function cfgGet(){
     try{var s=localStorage.getItem(CFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in CFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:CFG_DEFAULTS[k];
       if(o.hasOwnProperty('savingsScale')){
@@ -3662,7 +3673,7 @@
   function generateEinzelflyer(item,data,cfgOverride){
     return new Promise(function(resolve){
       var W=794,H=1123;
-      var cfg=cfgOverride||cfgGet();
+      var cfg=cfgForKind(cfgOverride||cfgGet(),'flyer');
       var theme=getOfferTheme('flyer',cfg);
       var c=document.createElement('canvas');c.width=W;c.height=H;
       var ctx=c.getContext('2d');
@@ -4365,7 +4376,7 @@
   function drawAngebotPlakat(data,items,images,callback,cfgOverride){
     var cols=2,maxRows=3,perPage=maxRows*cols;
     var W=794,H=1123;
-    var cfg=cfgOverride||cfgGet();
+    var cfg=cfgForKind(cfgOverride||cfgGet(),'plakat');
     var theme=getOfferTheme('plakat',cfg);
     var headerH=130,footerH=36,cardGap=18,cardPad=22;
     var gridTop=headerH+10,gridBot=H-footerH-10;
