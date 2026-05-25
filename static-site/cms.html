@@ -310,6 +310,16 @@ document.head.appendChild(msalScript);
     .cfg-section-btn{padding:6px 8px!important;font-size:10px!important;letter-spacing:0!important}
     .cfg-section-nav{gap:0!important}
   }
+  /* ── Split-Panel: Settings left, Live-Preview right (sticky) ── */
+  .cfg-split{display:flex;gap:16px;align-items:flex-start}
+  .cfg-split-left{flex:1;min-width:0}
+  .cfg-split-right{width:320px;flex-shrink:0;position:sticky;top:8px;max-height:calc(100vh - 80px);overflow-y:auto}
+  .cfg-split-right .cfg-lp-inner{border:1px solid #e5e7eb;border-radius:10px;background:#fff;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .cfg-split-right .cfg-lp-inner img{max-width:100%;border-radius:6px;cursor:pointer}
+  @media(max-width:900px){
+    .cfg-split{flex-direction:column}
+    .cfg-split-right{width:100%;position:static;max-height:none}
+  }
   /* ── Mobile: Aktionen-Liste ── */
   @media(max-width:600px){
     .cms-akt-row{flex-direction:column;align-items:stretch;gap:6px}
@@ -1078,6 +1088,9 @@ document.head.appendChild(msalScript);
         <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-elemente" style="padding:8px 16px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">&#128065; Elemente &amp; Schriften</button>
       </div>
 
+      <div class="cfg-split">
+      <div class="cfg-split-left">
+
       <!-- ════════════════════════════════════════════════ -->
       <!--  WP SECTION 1: HOMEPAGE-LAYOUT                  -->
       <!-- ════════════════════════════════════════════════ -->
@@ -1169,20 +1182,6 @@ document.head.appendChild(msalScript);
                   <label style="font-size:11px;color:#374151">Hintergrund<input type="color" id="hcfg-wpTpl-home-wpBgColor" style="width:100%;height:24px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer"></label>
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetWpTplColors" data-kind="home" style="font-size:10px;padding:2px 6px">Farben zur&uuml;cksetzen</button>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Live Preview -->
-          <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#5ea88a">&#128065; Live-Vorschau</div>
-            <div class="cms-card-body" style="text-align:center">
-              <div id="wp-home-live-preview" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:120px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Klicken f&uuml;r gro&szlig;e Ansicht">
-                <span style="font-size:12px;color:#9ca3af">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
-              </div>
-              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap">
-                <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="wpLivePreview" data-kind="home">&#128260; Aktualisieren</button>
-                <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-wp-home" checked style="margin:0"> Auto</label>
               </div>
             </div>
           </div>
@@ -1302,20 +1301,6 @@ document.head.appendChild(msalScript);
             </div>
           </div>
 
-          <!-- Live Preview -->
-          <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#4338ca">&#128065; Live-Vorschau</div>
-            <div class="cms-card-body" style="text-align:center">
-              <div id="wp-flyer-live-preview" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:120px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Klicken f&uuml;r gro&szlig;e Ansicht">
-                <span style="font-size:12px;color:#9ca3af">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
-              </div>
-              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap">
-                <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="wpLivePreview" data-kind="flyer">&#128260; Aktualisieren</button>
-                <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-wp-flyer" checked style="margin:0"> Auto</label>
-              </div>
-            </div>
-          </div>
-
           <!-- Actions -->
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Speichern</button>
@@ -1394,6 +1379,26 @@ document.head.appendChild(msalScript);
           </div>
         </div>
       </div>
+      </div><!-- /cfg-split-left (WP) -->
+
+      <div class="cfg-split-right">
+        <div class="cfg-lp-inner">
+          <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;text-align:center">&#128065; Live-Vorschau</div>
+          <div id="wp-home-live-preview" style="min-height:80px;display:flex;align-items:center;justify-content:center;background:#f9fafb;border-radius:6px">
+            <span style="font-size:11px;color:#9ca3af;text-align:center;padding:8px">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
+          </div>
+          <div id="wp-flyer-live-preview" style="min-height:80px;display:none;align-items:center;justify-content:center;background:#f9fafb;border-radius:6px">
+            <span style="font-size:11px;color:#9ca3af;text-align:center;padding:8px">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap">
+            <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" id="wp-lp-refresh-btn" data-action="wpLivePreview" data-kind="home">&#128260; Aktualisieren</button>
+            <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-wp-home" checked style="margin:0"> Auto</label>
+            <input type="checkbox" id="cfg-live-auto-wp-flyer" checked style="display:none">
+          </div>
+        </div>
+      </div><!-- /cfg-split-right (WP) -->
+
+      </div><!-- /cfg-split (WP) -->
     </div>
     <!-- ============ SUB-TAB: Plakate & Flyer (REDESIGNED) ============ -->
     <div id="cms-cfg-plakat" style="display:none">
@@ -1408,6 +1413,9 @@ document.head.appendChild(msalScript);
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-flyer" style="padding:8px 16px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">&#128196; Einzelflyer</button>
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-shared" style="padding:8px 16px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">&#9881; Gemeinsame Einstellungen</button>
       </div>
+
+      <div class="cfg-split">
+      <div class="cfg-split-left">
 
       <!-- ════════════════════════════════════════════════ -->
       <!--  SECTION 1: PLAKAT                              -->
@@ -1606,19 +1614,6 @@ document.head.appendChild(msalScript);
             <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">Auf Defaults zur&uuml;cksetzen</button>
-          </div>
-          <!-- Live-Vorschau -->
-          <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#5ea88a">&#128065; Live-Vorschau</div>
-            <div class="cms-card-body" style="text-align:center">
-              <div id="cfg-live-preview-plakat" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:80px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Klicken f&uuml;r gro&szlig;e Ansicht">
-                <span style="font-size:12px;color:#9ca3af">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
-              </div>
-              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap">
-                <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="cfgLivePreview" data-target="plakat">&#128260; Aktualisieren</button>
-                <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-plakat" checked style="margin:0"> Auto</label>
-              </div>
-            </div>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
@@ -1830,19 +1825,6 @@ document.head.appendChild(msalScript);
             <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">Auf Defaults zur&uuml;cksetzen</button>
-          </div>
-          <!-- Live-Vorschau -->
-          <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#6d28d9">&#128065; Live-Vorschau</div>
-            <div class="cms-card-body" style="text-align:center">
-              <div id="cfg-live-preview-flyer" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb;min-height:80px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Klicken f&uuml;r gro&szlig;e Ansicht">
-                <span style="font-size:12px;color:#9ca3af">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
-              </div>
-              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap">
-                <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="cfgLivePreview" data-target="flyer">&#128260; Aktualisieren</button>
-                <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-flyer" checked style="margin:0"> Auto</label>
-              </div>
-            </div>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px">
@@ -2071,6 +2053,26 @@ document.head.appendChild(msalScript);
           </div>
         </div>
       </div>
+      </div><!-- /cfg-split-left -->
+
+      <div class="cfg-split-right">
+        <div class="cfg-lp-inner">
+          <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;text-align:center">&#128065; Live-Vorschau</div>
+          <div id="cfg-live-preview-plakat" style="min-height:80px;display:flex;align-items:center;justify-content:center;background:#f9fafb;border-radius:6px">
+            <span style="font-size:11px;color:#9ca3af;text-align:center;padding:8px">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
+          </div>
+          <div id="cfg-live-preview-flyer" style="min-height:80px;display:none;align-items:center;justify-content:center;background:#f9fafb;border-radius:6px">
+            <span style="font-size:11px;color:#9ca3af;text-align:center;padding:8px">Vorschau wird beim &Auml;ndern automatisch aktualisiert</span>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap">
+            <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" id="cfg-lp-refresh-btn" data-action="cfgLivePreview" data-target="plakat">&#128260; Aktualisieren</button>
+            <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="cfg-live-auto-plakat" checked style="margin:0"> Auto</label>
+            <input type="checkbox" id="cfg-live-auto-flyer" checked style="display:none">
+          </div>
+        </div>
+      </div><!-- /cfg-split-right -->
+
+      </div><!-- /cfg-split -->
     </div>
 
     <!-- ============ SUB-TAB: HP-Sonderangebote ============ -->

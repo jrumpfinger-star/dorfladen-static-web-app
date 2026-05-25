@@ -1377,6 +1377,19 @@
       btn.style.borderBottomColor=active?'var(--c-m-pri)':'transparent';
       btn.style.color=active?'var(--c-m-pri)':'#6b7280';
     });
+    // Toggle sticky sidebar preview container
+    var lpPlakat=document.getElementById('cfg-live-preview-plakat');
+    var lpFlyer=document.getElementById('cfg-live-preview-flyer');
+    var refreshBtn=document.getElementById('cfg-lp-refresh-btn');
+    if(secId==='sec-flyer'){
+      if(lpPlakat)lpPlakat.style.display='none';
+      if(lpFlyer)lpFlyer.style.display='flex';
+      if(refreshBtn)refreshBtn.setAttribute('data-target','flyer');
+    }else{
+      if(lpPlakat)lpPlakat.style.display='flex';
+      if(lpFlyer)lpFlyer.style.display='none';
+      if(refreshBtn)refreshBtn.setAttribute('data-target','plakat');
+    }
   };
 
   // ── WP Section Navigation (Homepage / Flyer / Elemente) ──
@@ -1392,6 +1405,19 @@
       btn.style.borderBottomColor=active?'var(--c-m-pri)':'transparent';
       btn.style.color=active?'var(--c-m-pri)':'#6b7280';
     });
+    // Toggle sticky sidebar WP preview container
+    var lpHome=document.getElementById('wp-home-live-preview');
+    var lpFlyer=document.getElementById('wp-flyer-live-preview');
+    var refreshBtn=document.getElementById('wp-lp-refresh-btn');
+    if(secId==='wp-sec-flyer'){
+      if(lpHome)lpHome.style.display='none';
+      if(lpFlyer)lpFlyer.style.display='flex';
+      if(refreshBtn)refreshBtn.setAttribute('data-kind','flyer');
+    }else{
+      if(lpHome)lpHome.style.display='flex';
+      if(lpFlyer)lpFlyer.style.display='none';
+      if(refreshBtn)refreshBtn.setAttribute('data-kind','home');
+    }
   };
 
   // ── Revert Unsaved Changes ──
