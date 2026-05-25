@@ -1071,14 +1071,15 @@
     plakat_showLeaf:false,plakat_leafSize:34,plakat_showBag:false,plakat_showTexture:true,plakat_imgScale:100,
     flyer_tagPreset:'',flyer_tagShape:'rect',flyer_tagRadius:0,flyer_tagSkew:18,flyer_tagScale:100,
     flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',
-    flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true,flyer_imgScale:100
+    flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true,flyer_imgScale:100,
+    flyer_imgAnchorX:10,flyer_imgAnchorY:10,flyer_priceAnchorX:10,flyer_priceAnchorY:10
   };
   var PERSEC_SECTIONS=['plakat','flyer'];
   var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor'];
-  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale'];
+  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY'];
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
   var PERSEC_SELECTS=['tagPreset','tagShape'];
-  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%',imgScale:'%'};
+  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%',imgScale:'%',imgAnchorX:'px',imgAnchorY:'px',priceAnchorX:'px',priceAnchorY:'px'};
   // Merge per-section values into global keys for rendering (e.g. cfg.flyer_tagShape → cfg.tagShape)
   var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
   function cfgForKind(cfg,kind){
@@ -1197,7 +1198,8 @@
     var el=document.getElementById('cfg-'+k+'-val');if(!el)return;
     var u={'imgRotation':'\u00B0','imgThreshold':'','imgMaxScale':'x','priceFontFlyer':'px','priceFontPlakat':'px','tagSkew':'%','tagRadius':'px','leafSize':'px','savingsScalePlakat':'%','savingsScaleFlyer':'%',
       'plakat-tagRadius':'px','plakat-tagSkew':'%','plakat-leafSize':'px','plakat-tagScale':'%','plakat-imgScale':'%',
-      'flyer-tagRadius':'px','flyer-tagSkew':'%','flyer-leafSize':'px','flyer-tagScale':'%','flyer-imgScale':'%'};
+      'flyer-tagRadius':'px','flyer-tagSkew':'%','flyer-leafSize':'px','flyer-tagScale':'%','flyer-imgScale':'%',
+      'flyer-imgAnchorX':'px','flyer-imgAnchorY':'px','flyer-priceAnchorX':'px','flyer-priceAnchorY':'px'};
     el.textContent=v+(u[k]||'');
   }
   function cfgReadUI(){
@@ -4048,41 +4050,48 @@
       // Fill image area with imgBg color
       ctx.save();rrect(cardX,imgAreaTop,cardW,imgAreaH+pad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.fillRect(cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.restore();
+      // ── Anchor-based layout: image bottom-left, price block top-right ──
+      var imgAncX=cfg.imgAnchorX||10, imgAncY=cfg.imgAnchorY||10;
+      var priceAncX=cfg.priceAnchorX||10, priceAncY=cfg.priceAnchorY||10;
+      var imgAreaBot=imgAreaTop+imgAreaH;
       var tagSc=(cfg.tagScale||100)/100;
       var tagW=Math.round(280*tagSc),tagH=Math.round(130*tagSc);
-      // Position tag: right side, vertically centered in image area
-      var tagCX=cardX+cardW-pad-tagW/2+10;
-      var tagCY=imgAreaTop+imgAreaH*0.45;
-      // Bild zuerst zeichnen (nutzt gesamten verfügbaren Bereich, am unteren Rand verankert)
+      // Price block anchor: top-right corner of tag at (cardRight - priceAncX, imgAreaTop + priceAncY)
+      var tagCX=cardX+cardW-priceAncX-tagW/2;
+      var tagCY=imgAreaTop+priceAncY+tagH/2;
+      // Image: scale to 50% of card width, anchor bottom-left
       var imgPromise;
       if(item.bild_data){
         imgPromise=new Promise(function(resImg){
           var img=new Image();
           img.onload=function(){
             var imgSc=(cfg.imgScale||100)/100;
-            // Image fits left ~60% of card width, full image area height
-            var maxImgW=cardW*0.55,maxImgH=imgAreaH*0.85;
-            var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale)*imgSc;
+            var targetImgW=cardW*0.50*imgSc;
+            var scale=targetImgW/img.width;
+            // Clamp height so image stays in image area
+            if(img.height*scale>imgAreaH*0.92){scale=imgAreaH*0.92/img.height;}
+            scale=Math.min(scale,cfg.imgMaxScale);
             var iw=img.width*scale,ih=img.height*scale;
-            // Center image in left portion of image area, vertically centered
-            var cx=cardX+pad+maxImgW*0.5;
-            var cy=imgAreaTop+imgAreaH*0.52;
+            // Anchor: bottom-left corner of image at (cardX + imgAncX, imgAreaBot - imgAncY)
+            var imgLeft=cardX+imgAncX;
+            var imgBot=imgAreaBot-imgAncY;
             // Freistellen: weissen Hintergrund entfernen
             var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
             var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
             if(cfg.imgFreistellen){var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
             for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
             ox.putImageData(id,0,0);}
-            // Clip auf Karte damit Bild nicht überragt
+            // Clip to card so image does not overflow
             ctx.save();rrect(cardX,cardY,cardW,cardH,theme.cardRadius);ctx.clip();
             var rotRad=cfg.imgRotation*Math.PI/180;
+            var cx=imgLeft+iw/2, cy=imgBot-ih/2;
             ctx.translate(cx,cy);ctx.rotate(-rotRad);
             ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();resImg();
           };
           img.onerror=function(){resImg();};img.src=item.bild_data;
         });
       }else{imgPromise=Promise.resolve();}
-      // Preisschild ÜBER dem Bild zeichnen (rechts oben im Bildbereich)
+      // Price block OVER the image (anchored top-right in image area)
       imgPromise.then(function(){
       if(item.preis){
         var savingsPct=getSavingsPercent(item);
@@ -4131,7 +4140,7 @@
           ctx.moveTo(stattX-stW/2-4,stattY-Math.round(7*tagSc));ctx.lineTo(stattX+stW/2+4,stattY-Math.round(7*tagSc));ctx.stroke();
         }
         if(savingsPct){
-          // Savings burst: top-left of the price tag, clamped to stay inside image area
+          // Savings burst: top-left of the price tag, clamped inside image area
           var burstX=tagCX-tagW/2+8;
           var burstY=Math.max(tagCY-tagH/2-Math.round(14*tagSc), imgAreaTop+Math.round(16*tagSc));
           drawSavingsBurst(ctx,burstX,burstY,Math.round(36*tagSc),Math.round(22*tagSc),'-'+savingsPct+'%','flyer');

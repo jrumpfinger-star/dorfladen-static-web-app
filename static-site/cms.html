@@ -1803,6 +1803,40 @@ document.head.appendChild(msalScript);
             </div>
           </div>
 
+          <!-- Flyer Bild- & Preis-Anker -->
+          <div class="cms-card" style="margin-bottom:8px">
+            <div class="cms-card-header" style="background:#0d9488">&#128204; Bild- &amp; Preis-Position</div>
+            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:11px;color:#6b7280;margin-bottom:2px">Bild-Anker (unten links im Bildbereich)</div>
+              <label style="font-size:12px;font-weight:600;color:#374151">Bild: Abstand von links
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="range" id="cfg-flyer-imgAnchorX" min="0" max="200" value="10" class="cfg-persec-ctl" data-sec="flyer" style="flex:1">
+                  <span id="cfg-flyer-imgAnchorX-val" style="font-size:13px;min-width:32px;text-align:right">10px</span>
+                </div>
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">Bild: Abstand von unten
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="range" id="cfg-flyer-imgAnchorY" min="0" max="200" value="10" class="cfg-persec-ctl" data-sec="flyer" style="flex:1">
+                  <span id="cfg-flyer-imgAnchorY-val" style="font-size:13px;min-width:32px;text-align:right">10px</span>
+                </div>
+              </label>
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:4px 0">
+              <div style="font-size:11px;color:#6b7280;margin-bottom:2px">Preis-Anker (oben rechts im Bildbereich)</div>
+              <label style="font-size:12px;font-weight:600;color:#374151">Preis: Abstand von rechts
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="range" id="cfg-flyer-priceAnchorX" min="0" max="200" value="10" class="cfg-persec-ctl" data-sec="flyer" style="flex:1">
+                  <span id="cfg-flyer-priceAnchorX-val" style="font-size:13px;min-width:32px;text-align:right">10px</span>
+                </div>
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">Preis: Abstand von oben
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="range" id="cfg-flyer-priceAnchorY" min="0" max="200" value="10" class="cfg-persec-ctl" data-sec="flyer" style="flex:1">
+                  <span id="cfg-flyer-priceAnchorY-val" style="font-size:13px;min-width:32px;text-align:right">10px</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <!-- Flyer Dekoration -->
           <div class="cms-card" style="margin-bottom:8px">
             <div class="cms-card-header" style="background:#6d28d9">&#127807; Dekoration</div>
