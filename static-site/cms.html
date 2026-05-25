@@ -73,6 +73,18 @@ document.head.appendChild(msalScript);
   .cms-between{justify-content:space-between}
   .cms-mb{margin-bottom:16px}
   .cms-toast{position:fixed;top:80px;right:16px;z-index:9999;padding:10px 16px;border-radius:10px;color:#fff;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.12);animation:cmsFadeIn .3s}
+  .cms-confirm-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;animation:cmsFadeIn .2s}
+  .cms-confirm-box{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-width:380px;width:calc(100% - 32px);overflow:hidden;animation:cmsSlideUp .25s ease-out}
+  .cms-confirm-icon{text-align:center;padding:24px 24px 8px;font-size:40px}
+  .cms-confirm-msg{padding:0 24px 20px;text-align:center;font-size:14px;line-height:1.5;color:#1f2937;white-space:pre-line;word-break:break-word}
+  .cms-confirm-btns{display:flex;border-top:1px solid #e5e7eb}
+  .cms-confirm-btns button{flex:1;padding:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s}
+  .cms-confirm-btn-cancel{background:#f9fafb;color:#6b7280;border-right:1px solid #e5e7eb!important}
+  .cms-confirm-btn-cancel:hover{background:#f3f4f6}
+  .cms-confirm-btn-ok{background:#fff;color:#a51d2d}
+  .cms-confirm-btn-ok:hover{background:#fef2f2}
+  .cms-confirm-btn-ok.cms-confirm-warn{color:#dc2626}
+  @keyframes cmsSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
   .cms-btn-wa{background:#25D366;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.3px}
   .cms-btn-wa:hover{background:#1da851}
   .cms-btn-wa svg{width:14px;height:14px;fill:#fff}
@@ -2314,6 +2326,32 @@ document.head.appendChild(msalScript);
     setTimeout(function(){el.remove();},3000);
   }
 
+  function cmsConfirm(msg,opts){
+    opts=opts||{};
+    var icon=opts.icon||'\u2753';
+    var warn=opts.warn||false;
+    var okText=opts.ok||'OK';
+    var cancelText=opts.cancel||'Abbrechen';
+    return new Promise(function(resolve){
+      var ov=document.createElement('div');
+      ov.className='cms-confirm-overlay';
+      ov.innerHTML='<div class="cms-confirm-box">'
+        +'<div class="cms-confirm-icon">'+icon+'</div>'
+        +'<div class="cms-confirm-msg"></div>'
+        +'<div class="cms-confirm-btns">'
+        +'<button class="cms-confirm-btn-cancel">'+esc(cancelText)+'</button>'
+        +'<button class="cms-confirm-btn-ok'+(warn?' cms-confirm-warn':'')+'">'+esc(okText)+'</button>'
+        +'</div></div>';
+      ov.querySelector('.cms-confirm-msg').textContent=msg;
+      function close(val){ov.remove();resolve(val);}
+      ov.querySelector('.cms-confirm-btn-cancel').onclick=function(){close(false);};
+      ov.querySelector('.cms-confirm-btn-ok').onclick=function(){close(true);};
+      ov.addEventListener('click',function(e){if(e.target===ov)close(false);});
+      document.body.appendChild(ov);
+      ov.querySelector('.cms-confirm-btn-ok').focus();
+    });
+  }
+
   // --- Tabs ---
   var angebote = [];
   var _cmsCurrentTab='wp';
@@ -3060,12 +3098,13 @@ document.head.appendChild(msalScript);
       if(delBtn){
         e.stopPropagation();
         var gName=delBtn.getAttribute('data-del-g');
-        if(gName&&confirm('Vorbelegung "'+gName+'" wirklich l\u00f6schen?')){
+        if(gName) cmsConfirm('Vorbelegung "'+gName+'" wirklich l\u00f6schen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'L\u00f6schen',warn:true}).then(function(ok){
+          if(!ok) return;
           gerichteHistory=gerichteHistory.filter(function(g){return g.gericht!==gName;});
           delBtn.closest('.cms-art-opt').remove();
           if(!dd.querySelector('.cms-art-opt')){dd.className='cms-art-dd';dd.innerHTML='';}
           toast('Vorbelegung gel\u00f6scht','ok');
-        }
+        });
         return;
       }
       // Normal selection
@@ -6131,34 +6170,38 @@ document.head.appendChild(msalScript);
   window.galDeleteFolder=function(id,name,count){
     var msg='Ordner "'+name+'" wirklich löschen?';
     if(count>0) msg+='\n\nACHTUNG: Alle '+count+' Bilder im Ordner werden ebenfalls gelöscht!';
-    if(!confirm(msg))return;
-    fetch(API+'/gallery',{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'delete_folder',id:id})
-    })
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.success){toast('Ordner "'+name+'" gelöscht');loadGalleryAdmin();}
-      else{toast('Fehler: '+(res.error||''),'error');}
-    })
-    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+    cmsConfirm(msg,{icon:'🗑️',ok:'L\u00f6schen',warn:true}).then(function(ok){
+      if(!ok)return;
+      fetch(API+'/gallery',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'delete_folder',id:id})
+      })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){toast('Ordner "'+name+'" gelöscht');loadGalleryAdmin();}
+        else{toast('Fehler: '+(res.error||''),'error');}
+      })
+      .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+    });
   };
 
   window.galDelete=function(id,name,evt){
     if(evt)evt.stopPropagation();
-    if(!confirm('Bild "'+name+'" wirklich löschen?'))return;
-    fetch(API+'/gallery',{
-      method:'DELETE',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({id:id})
-    })
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.success){toast('Bild gelöscht: '+name);loadGalleryAdmin();}
-      else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
-    })
-    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+    cmsConfirm('Bild "'+name+'" wirklich löschen?',{icon:'🗑️',ok:'L\u00f6schen',warn:true}).then(function(ok){
+      if(!ok)return;
+      fetch(API+'/gallery',{
+        method:'DELETE',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:id})
+      })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){toast('Bild gelöscht: '+name);loadGalleryAdmin();}
+        else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
+      })
+      .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+    });
   };
 
   window.galPreviewFiles=function(input){
@@ -6315,9 +6358,11 @@ document.head.appendChild(msalScript);
   };
 
   window.pushClearQueue=function(){
-    if(!confirm('Warteschlange wirklich leeren?'))return;
-    pushSaveQueue([]);
-    toast('Warteschlange geleert','ok');
+    cmsConfirm('Warteschlange wirklich leeren?',{icon:'\uD83D\uDDD1\uFE0F',ok:'Leeren',warn:true}).then(function(ok){
+      if(!ok)return;
+      pushSaveQueue([]);
+      toast('Warteschlange geleert','ok');
+    });
   };
 
   window.pushSendQueue=function(){
@@ -6338,11 +6383,12 @@ document.head.appendChild(msalScript);
       }).join('\n');
     }
     var catInfo=category?(CAT_NAMES[category]||category):'Alle Abonnenten';
-    if(!confirm('\u26a0\ufe0f Gesammelte Push senden ('+q.length+' Nachricht'+(q.length>1?'en':'')+')?'+
+    cmsConfirm('Gesammelte Push senden ('+q.length+' Nachricht'+(q.length>1?'en':'')+')?'+
       '\n\nEmpf\u00e4nger: '+catInfo+
       '\nTitel: '+title+
       '\nNachricht: '+body+
-      '\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!'))return;
+      '\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!',{icon:'\u26a0\ufe0f',ok:'Jetzt senden',warn:true}).then(function(ok){
+    if(!ok)return;
     var status=document.getElementById('push-queue-status');
     status.textContent='Wird gesendet...';
     status.style.color='#6b7280';
@@ -6370,6 +6416,7 @@ document.head.appendChild(msalScript);
       status.textContent='\u274c Netzwerkfehler';
       status.style.color='#dc2626';
       toast('Fehler: '+e.message,'error');
+    });
     });
   };
 
@@ -6465,13 +6512,15 @@ document.head.appendChild(msalScript);
     }).catch(function(e){list.textContent='Fehler: '+e.message;});
   };
   window.pushDeleteSub = function(recordId){
-    if(!confirm('Subscriber wirklich l\u00f6schen?'))return;
-    fetch(API+'/push-send',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_id:recordId})})
-      .then(function(r){return r.json();})
-      .then(function(res){
-        if(res.success){toast('Subscriber gel\u00f6scht','ok');pushLoadSubscribers();}
-        else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
-      }).catch(function(e){toast('Fehler: '+e.message,'error');});
+    cmsConfirm('Subscriber wirklich l\u00f6schen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'L\u00f6schen',warn:true}).then(function(ok){
+      if(!ok)return;
+      fetch(API+'/push-send',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_id:recordId})})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){toast('Subscriber gel\u00f6scht','ok');pushLoadSubscribers();}
+          else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
+        }).catch(function(e){toast('Fehler: '+e.message,'error');});
+    });
   };
 
   window.pushSendNow = function(){
@@ -6484,7 +6533,8 @@ document.head.appendChild(msalScript);
     var btn=document.getElementById('push-send-btn');
     var status=document.getElementById('push-status');
     if(!message){toast('Bitte Nachricht eingeben','warn');return;}
-    if(!confirm('\u26a0\ufe0f Push-Nachricht senden?\n\nEmpf\u00e4nger: '+catInfo+'\nTitel: '+title+'\nNachricht: '+message+'\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!'))return;
+    cmsConfirm('Push-Nachricht senden?\n\nEmpf\u00e4nger: '+catInfo+'\nTitel: '+title+'\nNachricht: '+message+'\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!',{icon:'\u26a0\ufe0f',ok:'Jetzt senden',warn:true}).then(function(ok){
+    if(!ok)return;
     btn.disabled=true;
     status.textContent='Bild wird hochgeladen...';
     status.style.color='#6b7280';
@@ -6521,6 +6571,7 @@ document.head.appendChild(msalScript);
       toast('Fehler: '+e.message,'error');
     })
     .then(function(){btn.disabled=false;pushImageRemove();});
+    });
   };
 
   // --- Feature Flags (Settings tab) ---
