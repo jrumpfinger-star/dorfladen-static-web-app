@@ -1072,14 +1072,15 @@
     flyer_tagPreset:'',flyer_tagShape:'rect',flyer_tagRadius:0,flyer_tagSkew:18,flyer_tagScale:100,
     flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',
     flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true,flyer_imgScale:100,
-    flyer_imgAnchorX:10,flyer_imgAnchorY:10,flyer_priceAnchorX:10,flyer_priceAnchorY:10
+    flyer_imgAnchorX:10,flyer_imgAnchorY:10,flyer_priceAnchorX:10,flyer_priceAnchorY:10,
+    flyer_imgWidthPct:50
   };
   var PERSEC_SECTIONS=['plakat','flyer'];
   var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor'];
-  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY'];
+  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY','imgWidthPct'];
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
   var PERSEC_SELECTS=['tagPreset','tagShape'];
-  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%',imgScale:'%',imgAnchorX:'px',imgAnchorY:'px',priceAnchorX:'px',priceAnchorY:'px'};
+  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%',imgScale:'%',imgAnchorX:'px',imgAnchorY:'px',priceAnchorX:'px',priceAnchorY:'px',imgWidthPct:'%'};
   // Merge per-section values into global keys for rendering (e.g. cfg.flyer_tagShape → cfg.tagShape)
   var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
   function cfgForKind(cfg,kind){
@@ -1199,9 +1200,23 @@
     var u={'imgRotation':'\u00B0','imgThreshold':'','imgMaxScale':'x','priceFontFlyer':'px','priceFontPlakat':'px','tagSkew':'%','tagRadius':'px','leafSize':'px','savingsScalePlakat':'%','savingsScaleFlyer':'%',
       'plakat-tagRadius':'px','plakat-tagSkew':'%','plakat-leafSize':'px','plakat-tagScale':'%','plakat-imgScale':'%',
       'flyer-tagRadius':'px','flyer-tagSkew':'%','flyer-leafSize':'px','flyer-tagScale':'%','flyer-imgScale':'%',
-      'flyer-imgAnchorX':'px','flyer-imgAnchorY':'px','flyer-priceAnchorX':'px','flyer-priceAnchorY':'px'};
+      'flyer-imgAnchorX':'px','flyer-imgAnchorY':'px','flyer-priceAnchorX':'px','flyer-priceAnchorY':'px',
+      'flyer-imgWidthPct':'%'};
     el.textContent=v+(u[k]||'');
   }
+  window.cfgAnchorStep=function(sec,prefix,dx,dy){
+    var xEl=document.getElementById('cfg-'+sec+'-'+prefix+'X');
+    var yEl=document.getElementById('cfg-'+sec+'-'+prefix+'Y');
+    if(!xEl||!yEl)return;
+    var nx=Math.max(0,Math.min(200,parseInt(xEl.value||0)+dx));
+    var ny=Math.max(0,Math.min(200,parseInt(yEl.value||0)+dy));
+    xEl.value=nx;yEl.value=ny;
+    cfgUpdateVal(sec+'-'+prefix+'X',nx);
+    cfgUpdateVal(sec+'-'+prefix+'Y',ny);
+    xEl.dispatchEvent(new Event('input',{bubbles:true}));
+    yEl.dispatchEvent(new Event('input',{bubbles:true}));
+    xEl.dispatchEvent(new Event('change',{bubbles:true}));
+  };
   function cfgReadUI(){
     var c={};
     ['bgColor','tagColor','leafColor','titleColor','stattColor','decoFooterColor'].forEach(function(k){
@@ -4059,14 +4074,15 @@
       // Price block anchor: top-right corner of tag at (cardRight - priceAncX, imgAreaTop + priceAncY)
       var tagCX=cardX+cardW-priceAncX-tagW/2;
       var tagCY=imgAreaTop+priceAncY+tagH/2;
-      // Image: scale to 50% of card width, anchor bottom-left
+      // Image: scale to imgWidthPct% of card width, anchor bottom-left
+      var imgWidthFrac=(cfg.imgWidthPct||50)/100;
       var imgPromise;
       if(item.bild_data){
         imgPromise=new Promise(function(resImg){
           var img=new Image();
           img.onload=function(){
             var imgSc=(cfg.imgScale||100)/100;
-            var targetImgW=cardW*0.50*imgSc;
+            var targetImgW=cardW*imgWidthFrac*imgSc;
             var scale=targetImgW/img.width;
             // Clamp height so image stays in image area
             if(img.height*scale>imgAreaH*0.92){scale=imgAreaH*0.92/img.height;}
