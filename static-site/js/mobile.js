@@ -100,17 +100,48 @@
   }).catch(function(){if(logoText) logoText.style.opacity='1';});
 
   /* === OPEN/CLOSED STATUS === */
+  function getBayernHolidays(y){
+    var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4;
+    var f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30;
+    var i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7;
+    var m=Math.floor((a+11*h+22*l)/451),month=Math.floor((h+l-7*m+114)/31),day=(h+l-7*m+114)%31+1;
+    var easter=new Date(y,month-1,day);
+    function addDays(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r;}
+    function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();}
+    return [
+      fmt(new Date(y,0,1)),   // Neujahr
+      fmt(new Date(y,0,6)),   // Heilige Drei Könige
+      fmt(addDays(easter,-2)),// Karfreitag
+      fmt(easter),            // Ostersonntag
+      fmt(addDays(easter,1)), // Ostermontag
+      fmt(new Date(y,4,1)),   // Tag der Arbeit
+      fmt(addDays(easter,39)),// Christi Himmelfahrt
+      fmt(addDays(easter,49)),// Pfingstsonntag
+      fmt(addDays(easter,50)),// Pfingstmontag
+      fmt(addDays(easter,60)),// Fronleichnam
+      fmt(new Date(y,7,15)),  // Mariä Himmelfahrt
+      fmt(new Date(y,9,3)),   // Tag der Deutschen Einheit
+      fmt(new Date(y,10,1)),  // Allerheiligen
+      fmt(new Date(y,11,25)), // 1. Weihnachtsfeiertag
+      fmt(new Date(y,11,26))  // 2. Weihnachtsfeiertag
+    ];
+  }
   function updateMobStatus(){
     var now=new Date();
     var day=now.getDay(); // 0=So
     var h=now.getHours(),m=now.getMinutes(),t=h*60+m;
+    var y=now.getFullYear();
+    var todayStr=y+'-'+(now.getMonth()+1<10?'0':'')+(now.getMonth()+1)+'-'+(now.getDate()<10?'0':'')+now.getDate();
+    var isHoliday=getBayernHolidays(y).indexOf(todayStr)!==-1;
     var open=false,closeAt='';
     // Mo=1,Di=2,Mi=3,Do=4,Fr=5,Sa=6,So=0
-    if(day>=1&&day<=5){
-      if(t>=390&&t<840){open=true;closeAt='14:00';}   // 6:30-14:00
-      if(day!==2&&t>=990&&t<1140){open=true;closeAt='19:00';} // 16:30-19:00 (not Di)
-    }else if(day===6){
-      if(t>=420&&t<780){open=true;closeAt='13:00';} // 7:00-13:00
+    if(!isHoliday){
+      if(day>=1&&day<=5){
+        if(t>=390&&t<840){open=true;closeAt='14:00';}   // 6:30-14:00
+        if(day!==2&&t>=990&&t<1140){open=true;closeAt='19:00';} // 16:30-19:00 (not Di)
+      }else if(day===6){
+        if(t>=420&&t<780){open=true;closeAt='13:00';} // 7:00-13:00
+      }
     }
     var el=document.getElementById('mob-status');
     var txt=document.getElementById('mob-status-text');
@@ -119,7 +150,7 @@
       txt.textContent='Jetzt geöffnet · bis '+closeAt+' Uhr';
     }else{
       el.className='mob-only mob-status closed';
-      txt.textContent='Aktuell geschlossen';
+      txt.textContent=isHoliday?'Heute Feiertag – geschlossen':'Aktuell geschlossen';
     }
   }
   updateMobStatus();
