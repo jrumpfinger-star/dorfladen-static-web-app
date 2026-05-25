@@ -1068,17 +1068,17 @@
     plakatTemplate:'classic-red',flyerTemplate:'classic-red',
     plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,plakat_tagScale:100,
     plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',
-    plakat_showLeaf:false,plakat_leafSize:34,plakat_showBag:false,plakat_showTexture:true,
+    plakat_showLeaf:false,plakat_leafSize:34,plakat_showBag:false,plakat_showTexture:true,plakat_imgScale:100,
     flyer_tagPreset:'',flyer_tagShape:'rect',flyer_tagRadius:0,flyer_tagSkew:18,flyer_tagScale:100,
     flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',
-    flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true
+    flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true,flyer_imgScale:100
   };
   var PERSEC_SECTIONS=['plakat','flyer'];
   var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor'];
-  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale'];
+  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale'];
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
   var PERSEC_SELECTS=['tagPreset','tagShape'];
-  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%'};
+  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%',imgScale:'%'};
   // Merge per-section values into global keys for rendering (e.g. cfg.flyer_tagShape → cfg.tagShape)
   var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
   function cfgForKind(cfg,kind){
@@ -1196,8 +1196,8 @@
   function cfgUpdateVal(k,v){
     var el=document.getElementById('cfg-'+k+'-val');if(!el)return;
     var u={'imgRotation':'\u00B0','imgThreshold':'','imgMaxScale':'x','priceFontFlyer':'px','priceFontPlakat':'px','tagSkew':'%','tagRadius':'px','leafSize':'px','savingsScalePlakat':'%','savingsScaleFlyer':'%',
-      'plakat-tagRadius':'px','plakat-tagSkew':'%','plakat-leafSize':'px','plakat-tagScale':'%',
-      'flyer-tagRadius':'px','flyer-tagSkew':'%','flyer-leafSize':'px','flyer-tagScale':'%'};
+      'plakat-tagRadius':'px','plakat-tagSkew':'%','plakat-leafSize':'px','plakat-tagScale':'%','plakat-imgScale':'%',
+      'flyer-tagRadius':'px','flyer-tagSkew':'%','flyer-leafSize':'px','flyer-tagScale':'%','flyer-imgScale':'%'};
     el.textContent=v+(u[k]||'');
   }
   function cfgReadUI(){
@@ -3920,8 +3920,9 @@
                 for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
                 ox.putImageData(id,0,0);}catch(e){}
               }
+              var fImgSc=(cfg.imgScale||100)/100;
               var maxIW=cardMW-40, maxIH=imgZoneH-20;
-              var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3);
+              var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc;
               var iw=ofc.width*scI,ih=ofc.height*scI;
               var imgX=cardMX+cardMW/2-iw/2, imgY=cardMY+10+(imgZoneH-ih)/2;
               ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
@@ -4054,8 +4055,9 @@
         imgPromise=new Promise(function(resImg){
           var img=new Image();
           img.onload=function(){
+            var imgSc=(cfg.imgScale||100)/100;
             var maxImgW=cardW*0.82,maxImgH=imgAreaH*0.82;
-            var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale);
+            var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale)*imgSc;
             var iw=img.width*scale,ih=img.height*scale;
             var cx=cardX+cardW*0.38;
             var cy=imgAreaTop+imgAreaH*0.55;
@@ -4629,8 +4631,9 @@
             for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
             ox.putImageData(id,0,0);}catch(e){}
           }
+          var fImgSc2=(cfg.imgScale||100)/100;
           var maxIW=mgCellW-cardPadI*2, maxIH=imgAreaH-10;
-          var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3);
+          var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc2;
           var iw=ofc.width*scI,ih=ofc.height*scI;
           var imgX=cx+mgCellW/2-iw/2, imgY=cy+cardPadI+(imgAreaH-ih)/2;
           ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
@@ -4787,8 +4790,9 @@
       ctx.save();roundRect(cx,imgAreaTop,cellW,imgAreaH+cardPad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
       if(img){
+        var pImgSc=(cfg.imgScale||100)/100;
         var maxImgW=cellW*0.52,maxImgH=imgAreaH*0.88;
-        var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale);
+        var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale)*pImgSc;
         var iw=img.width*scale,ih=img.height*scale;
         var imgCX=cx+cardPad+maxImgW*0.45;
         var imgCY=imgAreaTop+imgAreaH*0.5;
