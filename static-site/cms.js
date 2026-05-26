@@ -3890,12 +3890,21 @@
     var html='<div class="cms-modal-bg">';
     html+='<div class="cms-modal" style="max-width:440px;text-align:center">';
     html+='<h3 style="margin:0 0 4px;font-size:15px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+'</h3>';
-    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">Element ziehen, Mausrad = Gr\u00f6\u00dfe, Rechtsklick = Men\u00fc</p>';
+    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">Element ziehen, Rechtsklick = Men\u00fc</p>';
     html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
     html+='<div id="pce-wrap" style="position:relative;display:inline-block;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab">';
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'"></canvas>';
     html+='</div>';
-    html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px">';
+    html+='<span style="font-size:12px;color:#6b7280">\ud83d\udd0d Gr\u00f6\u00dfe</span>';
+    html+='<input type="range" id="pce-scale" min="20" max="300" value="'+(ov.imgScale||100)+'" style="width:160px;accent-color:#e65100">';
+    html+='<span id="pce-scale-val" style="font-size:12px;font-weight:600;min-width:36px">'+(ov.imgScale||100)+'%</span>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px">';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-ghost" style="font-size:12px">\ud83d\udc7b Ghost '+(ov.ghost?'AUS':'EIN')+'</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-dup" style="font-size:12px">\ud83d\udd04 Duplikat</button>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">';
     html+='<button class="cms-btn" id="pce-save" style="background:#e65100;color:#fff">\u2714 Schlie\u00dfen</button>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-reset">\u21ba Zur\u00fccksetzen</button>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-close">\u21a9 Verwerfen</button>';
@@ -3965,9 +3974,10 @@
           var imgX=CARD_W/2-iw/2+(ov.imgDx||0),imgY=cardPadI+(imgAreaH-ih)/2+(ov.imgDy||0);
           var pRotRad=(ov.imgRot||0)*Math.PI/180;
           ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
+          if(ov.ghost) ctx.globalAlpha=0.35;
           if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
           else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
-          ctx.restore();
+          ctx.globalAlpha=1.0;ctx.restore();
           _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgX,y:imgY,w:iw,h:ih,ovKey:'img'});
         }
         // Savings badge
@@ -4054,8 +4064,9 @@
           var imgCY=imgAreaTop+imgAreaH*0.5+(ov.imgDy||0);
           var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(ov.imgRot||0)*Math.PI/180;
           ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
+          if(ov.ghost) ctx.globalAlpha=0.35;
           ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
-          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
+          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.globalAlpha=1.0;ctx.restore();
           _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgCX-iw/2,y:imgCY-ih/2,w:iw,h:ih,ovKey:'img'});
         }
         // Skewed price tag (right side)
@@ -4146,11 +4157,12 @@
       return _activeEl; // keep current if no hit
     }
 
-    // Load image
-    if(item.bild_data){
+    // Load image (dupSrc overrides original bild_data)
+    var imgSrc=ov.dupSrc||item.bild_data;
+    if(imgSrc){
       imgObj=new Image();
       imgObj.onload=function(){renderCard();updateActiveLabel();};
-      imgObj.src=item.bild_data;
+      imgObj.src=imgSrc;
     }else{renderCard();updateActiveLabel();}
 
     // ── Drag to move active element ──
@@ -4186,13 +4198,27 @@
     document.addEventListener('mousemove',pceMove);
     document.addEventListener('mouseup',pceUp);
 
+    // ── Scale slider ──
+    var scaleSlider=document.getElementById('pce-scale');
+    var scaleValEl=document.getElementById('pce-scale-val');
+    function syncScaleSlider(){
+      if(scaleSlider){scaleSlider.value=ov.imgScale||100;}
+      if(scaleValEl){scaleValEl.textContent=(ov.imgScale||100)+'%';}
+    }
+    if(scaleSlider){
+      scaleSlider.addEventListener('input',function(){
+        ov.imgScale=parseInt(scaleSlider.value,10);
+        syncScaleSlider();renderCard();autoSave();
+      });
+    }
+
     // ── Mouse wheel to scale image ──
     cvs.addEventListener('wheel',function(ev){
       ev.preventDefault();
       if(_activeEl==='img'){
         var delta=ev.deltaY<0?5:-5;
         ov.imgScale=Math.max(20,Math.min(300,(ov.imgScale||100)+delta));
-        renderCard();autoSave();
+        syncScaleSlider();renderCard();autoSave();
       }
     });
 
@@ -4262,7 +4288,48 @@
     document.getElementById('pce-close').onclick=function(){closeEditor(true);};
     document.getElementById('pce-reset').onclick=function(){
       ov=plakatArtOverrideDefault();
-      _activeEl='img';updateActiveLabel();renderCard();autoSave();
+      _activeEl='img';syncScaleSlider();updateActiveLabel();renderCard();autoSave();
+    };
+    // ── Ghost toggle ──
+    var ghostBtn=document.getElementById('pce-ghost');
+    function updateGhostBtn(){ghostBtn.innerHTML='\ud83d\udc7b Ghost '+(ov.ghost?'AUS':'EIN');ghostBtn.style.background=ov.ghost?'#fef3c7':'';ghostBtn.style.borderColor=ov.ghost?'#f59e0b':'';}
+    updateGhostBtn();
+    ghostBtn.onclick=function(){
+      ov.ghost=!ov.ghost;updateGhostBtn();renderCard();autoSave();
+    };
+    // ── Duplikat: copy bild_data from another article ──
+    document.getElementById('pce-dup').onclick=function(){
+      var items=(_currentPreviewAktion&&_currentPreviewAktion.items)||[];
+      if(!items.length){toast('Keine Artikel verf\u00fcgbar','warn');return;}
+      var old=document.getElementById('pce-dup-panel');if(old){old.remove();return;}
+      var panel=document.createElement('div');panel.id='pce-dup-panel';
+      panel.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.2);padding:16px;z-index:10001;max-width:320px;max-height:60vh;overflow-y:auto';
+      var title=document.createElement('div');title.style.cssText='font-weight:700;font-size:14px;margin-bottom:8px';title.textContent='Bild von Artikel \u00fcbernehmen:';
+      panel.appendChild(title);
+      items.forEach(function(it){
+        if(it===item) return;
+        if(!it.bild_data) return;
+        var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-radius:6px';
+        row.onmouseenter=function(){row.style.background='#f3f4f6';};
+        row.onmouseleave=function(){row.style.background='none';};
+        var thumb=document.createElement('img');thumb.src=it.bild_data;thumb.style.cssText='width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb';
+        var lbl=document.createElement('span');lbl.style.cssText='font-size:13px';lbl.textContent=it.produkt||'Artikel';
+        row.appendChild(thumb);row.appendChild(lbl);
+        row.onclick=function(){
+          ov.dupSrc=it.bild_data;
+          imgObj=new Image();imgObj.onload=function(){renderCard();autoSave();};imgObj.src=it.bild_data;
+          panel.remove();toast('Bild \u00fcbernommen','ok');
+        };
+        panel.appendChild(row);
+      });
+      if(!panel.querySelectorAll('div[style]').length||panel.children.length<=1){
+        var empty=document.createElement('div');empty.style.cssText='font-size:12px;color:#9ca3af;padding:8px';empty.textContent='Keine anderen Artikel mit Bild verf\u00fcgbar.';
+        panel.appendChild(empty);
+      }
+      var closeRow=document.createElement('div');closeRow.style.cssText='text-align:center;margin-top:8px';
+      var closeBtn=document.createElement('button');closeBtn.className='cms-btn cms-btn-gray';closeBtn.style.fontSize='12px';closeBtn.textContent='Abbrechen';
+      closeBtn.onclick=function(){panel.remove();};closeRow.appendChild(closeBtn);panel.appendChild(closeRow);
+      document.body.appendChild(panel);
     };
   }
 
@@ -4542,7 +4609,7 @@
   var PLAKAT_ART_OVERRIDES_KEY='dl_plakat_article_overrides';
   var _plakatArtOverrides=null;
   function plakatArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghost:false,dupSrc:''};
   }
   function plakatArtOverridesGetAll(){
     if(_plakatArtOverrides)return _plakatArtOverrides;
@@ -5793,8 +5860,11 @@
       }).catch(function(){});
     });
     Promise.all(fetchPromises).then(function(){
-      // Pre-load all images into Image objects for canvas drawing
-      var imgPromises=items.map(function(it){return loadItemImage(it.bild_data);});
+      // Pre-load all images into Image objects for canvas drawing (dupSrc overrides bild_data)
+      var imgPromises=items.map(function(it){
+        var pOv=plakatArtOverrideGet(it)||plakatArtOverrideDefault();
+        return loadItemImage(pOv.dupSrc||it.bild_data);
+      });
       return Promise.all(imgPromises);
     }).then(function(images){
       drawAngebotPlakat(data,items,images,callback,cfgOverride);
@@ -5921,9 +5991,10 @@
           var imgX=cx+mgCellW/2-iw/2+(pOv.imgDx||0), imgY=cy+cardPadI+(imgAreaH-ih)/2+(pOv.imgDy||0);
           var pRotRad=(pOv.imgRot||0)*Math.PI/180;
           ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
+          if(pOv.ghost) ctx.globalAlpha=0.35;
           if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
           else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
-          ctx.restore();
+          ctx.globalAlpha=1.0;ctx.restore();
         }
 
         // Savings badge top-right
@@ -6097,8 +6168,9 @@
         // Clip auf Karte, drehen, zeichnen
         var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(pOv.imgRot||0)*Math.PI/180;
         ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
+        if(pOv.ghost) ctx.globalAlpha=0.35;
         ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
-        ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
+        ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.globalAlpha=1.0;ctx.restore();
       }
       // ── Schräges rotes Preisschild rechts (with override offsets) ──
       var clPDx=pOv.priceDx||0,clPDy=pOv.priceDy||0;
