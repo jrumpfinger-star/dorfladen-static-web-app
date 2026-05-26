@@ -986,6 +986,11 @@
       btn.style.borderBottomColor = active?'#5ea88a':'transparent';
       btn.style.color = active?'#5ea88a':'#6b7280';
     });
+    // Auto-trigger live preview when switching to Plakate & Flyer tab
+    if(id==='cfg-plakat'){
+      var sec=_activeCfgSection?_activeCfgSection():null;
+      if(sec)_scheduleAutoPreview('cfg-subtab',function(){cfgLivePreview(sec);},300);
+    }
   };
 
   // ── Seiteninhalte Tab ──
@@ -1623,20 +1628,20 @@
       ['cfg-tpl-plakat-tagColor','cfg-tpl-flyer-tagColor'].forEach(function(tid){var t=document.getElementById(tid);if(t)t.value=v;});
     }
     // Auto-save when template color pickers change
-    if(id.indexOf('cfg-tpl-')===0){cfgSave(cfgReadUI());}
+    if(id.indexOf('cfg-tpl-')===0){cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
   });
   document.addEventListener('change',function(e){
-    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');cfgSave(cfgReadUI());}
-    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');cfgSave(cfgReadUI());}
+    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
+    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
     // Offer template gradient toggle
     if(e.target.classList.contains('cfg-tpl-grad-toggle')){
       var gk=e.target.getAttribute('data-key'),gkind=e.target.getAttribute('data-kind');
-      if(gk&&gkind){cfgTplToggleGrad(gkind,gk,e.target.checked);cfgTplUpdateGradPreview(gkind,gk);cfgSave(cfgReadUI());}
+      if(gk&&gkind){cfgTplToggleGrad(gkind,gk,e.target.checked);cfgTplUpdateGradPreview(gkind,gk);cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
     }
     // Offer template gradient direction change
     if(e.target.id&&e.target.id.indexOf('cfg-tpl-')===0&&e.target.id.indexOf('_dir')>0){
       var m=e.target.id.match(/^cfg-tpl-(plakat|flyer)-(\w+)_dir$/);
-      if(m){cfgTplUpdateGradPreview(m[1],m[2]);cfgSave(cfgReadUI());}
+      if(m){cfgTplUpdateGradPreview(m[1],m[2]);cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
     }
   });
   // Live gradient preview for offer template color/range changes
@@ -5491,12 +5496,12 @@
       case 'pickPlakatTpl':
         var pt=t.getAttribute('data-value')||'classic-red';
         var psel=document.getElementById('cfg-plakatTemplate');
-        if(psel){psel.value=pt;cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');}
+        if(psel){psel.value=pt;cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
         break;
       case 'pickFlyerTpl':
         var ft=t.getAttribute('data-value')||'classic-red';
         var fsel=document.getElementById('cfg-flyerTemplate');
-        if(fsel){fsel.value=ft;cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');}
+        if(fsel){fsel.value=ft;cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
         break;
       case 'resetTplColors':
         var rKind=t.getAttribute('data-kind')||'plakat';
