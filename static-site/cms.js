@@ -4311,12 +4311,12 @@
       for(var bi=0;bi<menuBtns.length;bi++){(function(btn){
         function openMenu(e){
           e.preventDefault();e.stopPropagation();
+          var r=btn.getBoundingClientRect();
           var elId=btn.getAttribute('data-el');
           _activeEl=elId;
           updateActiveLabel();renderCard();
           _pceCtxJustOpened=true;
           setTimeout(function(){_pceCtxJustOpened=false;},400);
-          var r=btn.getBoundingClientRect();
           openPceCtxMenu(r.left, r.bottom+4);
         }
         btn.addEventListener('click',openMenu);
