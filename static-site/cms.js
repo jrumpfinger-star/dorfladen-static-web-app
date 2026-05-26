@@ -3877,6 +3877,7 @@
   // Full card editor with draggable image and price elements, like the Einzelflyer editor
   function showPlakatCardEditor(item,onDone){
     var ov=plakatArtOverrideGet(item)||plakatArtOverrideDefault();
+    var _initOv=JSON.parse(JSON.stringify(ov)); // snapshot for revert
     // Use Magazine-layout card proportions (2:3 aspect)
     var CARD_W=380,CARD_H=480;
     var cfg=cfgForKind(cfgGet(),'plakat');
@@ -3892,9 +3893,9 @@
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'"></canvas>';
     html+='</div>';
     html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">';
-    html+='<button class="cms-btn" id="pce-save" style="background:#e65100;color:#fff">\ud83d\udcbe Speichern & Schlie\u00dfen</button>';
+    html+='<button class="cms-btn" id="pce-save" style="background:#e65100;color:#fff">\u2714 Schlie\u00dfen</button>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-reset">\u21ba Zur\u00fccksetzen</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-close">Abbrechen</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-close">\u21a9 Verwerfen</button>';
     html+='</div>';
     html+='</div></div>';
 
@@ -3917,6 +3918,13 @@
       ctx.lineTo(rx+rw,ry+rh-r);ctx.quadraticCurveTo(rx+rw,ry+rh,rx+rw-r,ry+rh);
       ctx.lineTo(rx+r,ry+rh);ctx.quadraticCurveTo(rx,ry+rh,rx,ry+rh-r);
       ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
+    }
+
+    // Autosave: persist overrides after each visual change (debounced)
+    var _autoSaveTimer=null;
+    function autoSave(){
+      clearTimeout(_autoSaveTimer);
+      _autoSaveTimer=setTimeout(function(){plakatArtOverrideSave(item,ov);},300);
     }
 
     function renderCard(){
@@ -4075,7 +4083,7 @@
       var scX=CARD_W/rect.width,scY=CARD_H/rect.height;
       if(_activeEl==='img'){ov.imgDx=Math.round(startDx+dx*scX);ov.imgDy=Math.round(startDy+dy*scY);}
       else if(_activeEl==='price'){ov.priceDx=Math.round(startDx+dx*scX);ov.priceDy=Math.round(startDy+dy*scY);}
-      renderCard();
+      renderCard();autoSave();
     }
     function pceUp(){
       if(dragging){dragging=false;cvs.style.cursor='grab';}
@@ -4089,7 +4097,7 @@
       if(_activeEl==='img'){
         var delta=ev.deltaY<0?5:-5;
         ov.imgScale=Math.max(20,Math.min(300,(ov.imgScale||100)+delta));
-        renderCard();
+        renderCard();autoSave();
       }
     });
 
@@ -4109,17 +4117,17 @@
       var menuItems=[];
       if(_activeEl==='img'){
         var curRot=ov.imgRot||0;
-        menuItems.push({icon:'\u21bb',text:'Bild drehen +15\u00b0 ('+curRot+'\u00b0)',action:function(){ov.imgRot=(ov.imgRot||0)+15;renderCard();}});
-        menuItems.push({icon:'\u21ba',text:'Bild drehen \u221215\u00b0',action:function(){ov.imgRot=(ov.imgRot||0)-15;renderCard();}});
-        if(curRot!==0) menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov.imgRot=0;renderCard();}});
+        menuItems.push({icon:'\u21bb',text:'Bild drehen +15\u00b0 ('+curRot+'\u00b0)',action:function(){ov.imgRot=(ov.imgRot||0)+15;renderCard();autoSave();}});
+        menuItems.push({icon:'\u21ba',text:'Bild drehen \u221215\u00b0',action:function(){ov.imgRot=(ov.imgRot||0)-15;renderCard();autoSave();}});
+        if(curRot!==0) menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov.imgRot=0;renderCard();autoSave();}});
         menuItems.push('hr');
-        menuItems.push({icon:'\u21ba',text:'Bild-Position zur\u00fccksetzen',action:function(){ov.imgDx=0;ov.imgDy=0;renderCard();}});
-        menuItems.push({icon:'\ud83d\udd0d',text:'Bild-Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.imgScale||100)+'%)',action:function(){ov.imgScale=100;renderCard();}});
+        menuItems.push({icon:'\u21ba',text:'Bild-Position zur\u00fccksetzen',action:function(){ov.imgDx=0;ov.imgDy=0;renderCard();autoSave();}});
+        menuItems.push({icon:'\ud83d\udd0d',text:'Bild-Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.imgScale||100)+'%)',action:function(){ov.imgScale=100;renderCard();autoSave();}});
       }else if(_activeEl==='price'){
-        menuItems.push({icon:'\u21ba',text:'Preis-Position zur\u00fccksetzen',action:function(){ov.priceDx=0;ov.priceDy=0;renderCard();}});
+        menuItems.push({icon:'\u21ba',text:'Preis-Position zur\u00fccksetzen',action:function(){ov.priceDx=0;ov.priceDy=0;renderCard();autoSave();}});
       }
       menuItems.push('hr');
-      menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Alles zur\u00fccksetzen',action:function(){ov=plakatArtOverrideDefault();renderCard();}});
+      menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Alles zur\u00fccksetzen',action:function(){ov=plakatArtOverrideDefault();renderCard();autoSave();}});
       menuItems.forEach(function(mi){
         if(mi==='hr'){menu.appendChild(document.createElement('hr'));return;}
         var d=document.createElement('div');
@@ -4136,22 +4144,27 @@
     });
 
     // ── Buttons ──
-    function closeEditor(save){
+    function closeEditor(revert){
+      clearTimeout(_autoSaveTimer);
       document.removeEventListener('mousemove',pceMove);
       document.removeEventListener('mouseup',pceUp);
       var cm=document.getElementById('pce-ctx-menu');if(cm)cm.remove();
-      if(save){
+      if(revert){
+        // Restore initial state
+        plakatArtOverrideSave(item,_initOv);
+        toast('Kachel-\u00c4nderungen verworfen','info');
+      }else{
+        // Ensure latest state is saved
         plakatArtOverrideSave(item,ov);
-        toast('Kachel-\u00c4nderungen gespeichert','ok');
       }
       mw.innerHTML=prevContent;mw.style.display=prevDisplay;
-      if(onDone) onDone(save);
+      if(onDone) onDone(!revert);
     }
-    document.getElementById('pce-save').onclick=function(){closeEditor(true);};
-    document.getElementById('pce-close').onclick=function(){closeEditor(false);};
+    document.getElementById('pce-save').onclick=function(){closeEditor(false);};
+    document.getElementById('pce-close').onclick=function(){closeEditor(true);};
     document.getElementById('pce-reset').onclick=function(){
       ov=plakatArtOverrideDefault();
-      _activeEl='img';updateActiveLabel();renderCard();
+      _activeEl='img';updateActiveLabel();renderCard();autoSave();
     };
   }
 
@@ -4962,6 +4975,13 @@
         // ── Desktop: write to popup window with interactive per-article controls ──
         // Build per-article overrides array (mutable, synced on save)
         var artOvs=items.map(function(it){return flyerArtOverrideGet(it)||flyerArtOverrideDefault();});
+        var _initArtOvs=artOvs.map(function(o){return JSON.parse(JSON.stringify(o));}); // snapshot for revert
+        // Autosave: persist override after each change (debounced per index)
+        var _flyerAutoTimers={};
+        function flyerAutoSave(idx){
+          clearTimeout(_flyerAutoTimers[idx]);
+          _flyerAutoTimers[idx]=setTimeout(function(){flyerArtOverrideSave(items[idx],artOvs[idx]);},300);
+        }
         var STEP=10; // px per arrow click
         // Helper: build overlay zone HTML from element metadata
         function _buildZoneHtml(elMeta,idx){
@@ -5075,7 +5095,7 @@
             +'<div class="no-print" style="text-align:center;padding:8px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap">'
             +'<button class="btn-print" data-act="print" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:none;background:#2e7d32;color:#fff;font-size:13px;cursor:pointer">\ud83d\udda8\ufe0f</button>'
             +'<button class="btn-dl" data-act="dl" data-idx="'+i+'" data-name="'+safeName+'" style="padding:6px 16px;border-radius:6px;border:none;background:#1565c0;color:#fff;font-size:13px;cursor:pointer">\u2b07\ufe0f</button>'
-            +'<button data-act="art-save" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:none;background:#e65100;color:#fff;font-size:13px;cursor:pointer;font-weight:600">\ud83d\udcbe Speichern</button>'
+            +'<button data-act="art-revert" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:1px solid #e65100;background:#fff7ed;color:#e65100;font-size:13px;cursor:pointer;font-weight:600">\u21a9 Verwerfen</button>'
             +'<button data-act="art-reset" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:12px;cursor:pointer">\u21ba Reset</button>'
             +'<label style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild<input type="file" accept="image/*" data-act="add-custom-img" data-idx="'+i+'" style="display:none"></label>'
             +'<span style="color:#888;font-size:12px;font-weight:600">'+safeName+'</span>'
@@ -5160,7 +5180,7 @@
               var idx=parseInt(t.getAttribute('data-idx'),10);
               artOvs[idx].ghostAlpha=parseInt(t.value,10)/100;
               var sp=doc.getElementById('ga-'+idx);if(sp)sp.textContent=t.value+'%';
-              regenFlyer(idx);
+              regenFlyer(idx);flyerAutoSave(idx);
             }
           });
           doc.addEventListener('click',function(ev){
@@ -5181,7 +5201,7 @@
                 else if(dir==='right')ov[dxKey]=(ov[dxKey]||0)+STEP;
                 else if(dir==='up')ov[dyKey]=(ov[dyKey]||0)-STEP;
                 else if(dir==='down')ov[dyKey]=(ov[dyKey]||0)+STEP;
-                regenFlyer(idx);
+                regenFlyer(idx);flyerAutoSave(idx);
               }
               return;
             }
@@ -5190,11 +5210,14 @@
             else if(act==='close'){win.close();}
             else if(act==='print'){printOne(parseInt(t.getAttribute('data-idx'),10)||0);}
             else if(act==='dl'){dlOne(parseInt(t.getAttribute('data-idx'),10)||0,t.getAttribute('data-name'));}
-            else if(act==='art-save'){
+            else if(act==='art-revert'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
+              artOvs[idx]=JSON.parse(JSON.stringify(_initArtOvs[idx]));
               flyerArtOverrideSave(items[idx],artOvs[idx]);
-              t.textContent='\u2705 Gespeichert';
-              setTimeout(function(){t.textContent='\ud83d\udcbe Speichern';},1500);
+              rebuildCtlBar(idx);
+              regenFlyer(idx);
+              t.textContent='\u2705 Verworfen';
+              setTimeout(function(){t.textContent='\u21a9 Verwerfen';},1500);
             }
             else if(act==='art-reset'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
@@ -5209,7 +5232,7 @@
               if(ov.ghostMode==='on'){ov.ghostMode='auto';ov.ghostDx=0;ov.ghostDy=0;}
               else{ov.ghostMode='on';}
               rebuildCtlBar(idx);
-              regenFlyer(idx);
+              regenFlyer(idx);flyerAutoSave(idx);
             }
             else if(act==='toggle-dup'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
@@ -5217,7 +5240,7 @@
               ov.dupOn=!ov.dupOn;
               if(!ov.dupOn){ov.dupDx=0;ov.dupDy=0;}
               rebuildCtlBar(idx);
-              regenFlyer(idx);
+              regenFlyer(idx);flyerAutoSave(idx);
             }
           });
 
@@ -5238,7 +5261,7 @@
               ov.customImgDx=0;ov.customImgDy=0;
               ov.customImgScale=100;
               if(ov.customImgAlpha==null)ov.customImgAlpha=100;
-              regenFlyer(idx);
+              regenFlyer(idx);flyerAutoSave(idx);
             };
             reader.readAsDataURL(file);
           }
@@ -5293,7 +5316,7 @@
                 doc.removeEventListener('mousemove',rzMove);
                 doc.removeEventListener('mouseup',rzUp);
                 z.style.transform='';z.style.transformOrigin='';
-                regenFlyer(rIdx);
+                regenFlyer(rIdx);flyerAutoSave(rIdx);
               }
               doc.addEventListener('mousemove',rzMove);
               doc.addEventListener('mouseup',rzUp);
@@ -5328,7 +5351,7 @@
             function onUp(){
               doc.removeEventListener('mousemove',onMove);
               doc.removeEventListener('mouseup',onUp);
-              if(moved)regenFlyer(idx);
+              if(moved){regenFlyer(idx);flyerAutoSave(idx);}
             }
             doc.addEventListener('mousemove',onMove);
             doc.addEventListener('mouseup',onUp);
@@ -5354,56 +5377,56 @@
             menu.className='ctx-menu';menu.id='fly-ctx-menu';
             menu.style.left=ev.clientX+'px';menu.style.top=ev.clientY+'px';
             var menuItems=[
-              {icon:'\ud83d\udcbe',text:'Speichern',action:function(){flyerArtOverrideSave(items[idx],ov);}},
-              {icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){ov[ovKey+'Dx']=0;ov[ovKey+'Dy']=0;regenFlyer(idx);}},
+              {icon:'\u21a9',text:'Verwerfen (Laden-Stand)',action:function(){artOvs[idx]=JSON.parse(JSON.stringify(_initArtOvs[idx]));flyerArtOverrideSave(items[idx],artOvs[idx]);rebuildCtlBar(idx);regenFlyer(idx);}},
+              {icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){ov[ovKey+'Dx']=0;ov[ovKey+'Dy']=0;regenFlyer(idx);flyerAutoSave(idx);}},
               {icon:'\ud83d\uddd1\ufe0f',text:'Alle Overrides zur\u00fccksetzen',action:function(){artOvs[idx]=flyerArtOverrideDefault();flyerArtOverrideDelete(items[idx]);rebuildCtlBar(idx);regenFlyer(idx);}},
               'hr'
             ];
             // Element-specific options
             if(elId==='img'||elId==='price'){
               var scKey=elId==='img'?'imgScale':'priceScale';
-              menuItems.splice(2,0,{icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov[scKey]||100)+'%)',action:function(){ov[scKey]=100;regenFlyer(idx);}});
+              menuItems.splice(2,0,{icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov[scKey]||100)+'%)',action:function(){ov[scKey]=100;regenFlyer(idx);flyerAutoSave(idx);}});
             }
             // ── Rotation menu for img, ghost, dup, customImg ──
             var rotKeyMap={img:'imgRot',ghost:'ghostRot',dup:'dupRot',customImg:'customImgRot'};
             if(rotKeyMap[elId]){
               var rk=rotKeyMap[elId];
               var curRot=ov[rk]||0;
-              menuItems.push({icon:'\u21bb',text:'Drehen +15\u00b0 ('+curRot+'\u00b0)',action:function(){ov[rk]=(ov[rk]||0)+15;regenFlyer(idx);}});
-              menuItems.push({icon:'\u21ba',text:'Drehen \u221215\u00b0',action:function(){ov[rk]=(ov[rk]||0)-15;regenFlyer(idx);}});
+              menuItems.push({icon:'\u21bb',text:'Drehen +15\u00b0 ('+curRot+'\u00b0)',action:function(){ov[rk]=(ov[rk]||0)+15;regenFlyer(idx);flyerAutoSave(idx);}});
+              menuItems.push({icon:'\u21ba',text:'Drehen \u221215\u00b0',action:function(){ov[rk]=(ov[rk]||0)-15;regenFlyer(idx);flyerAutoSave(idx);}});
               if(curRot!==0){
-                menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov[rk]=0;regenFlyer(idx);}});
+                menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov[rk]=0;regenFlyer(idx);flyerAutoSave(idx);}});
               }
             }
             if(elId==='img'){
               menuItems.push({icon:'\ud83d\udc7b',text:ov.ghostMode==='on'?'Ghost AUS':'Ghost AN',action:function(){
                 if(ov.ghostMode==='on'){ov.ghostMode='auto';ov.ghostDx=0;ov.ghostDy=0;}
                 else{ov.ghostMode='on';ov.ghostDx=ov.ghostDx||60;ov.ghostDy=ov.ghostDy||-80;}
-                rebuildCtlBar(idx);regenFlyer(idx);
+                rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
               menuItems.push({icon:'\ud83d\udcdd',text:ov.dupOn?'Duplikat AUS':'Duplikat AN',action:function(){
                 ov.dupOn=!ov.dupOn;
                 if(ov.dupOn){ov.dupDx=ov.dupDx||80;ov.dupDy=ov.dupDy||-60;}
                 else{ov.dupDx=0;ov.dupDy=0;}
-                rebuildCtlBar(idx);regenFlyer(idx);
+                rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
             }
             if(elId==='ghost'){
               menuItems.push({icon:'\ud83d\udc7b',text:'Ghost ausschalten',action:function(){
                 ov.ghostMode='auto';ov.ghostDx=0;ov.ghostDy=0;ov.ghostRot=0;
-                rebuildCtlBar(idx);regenFlyer(idx);
+                rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
               menuItems.push({icon:'\ud83d\udd06',text:'Transparenz: '+Math.round((ov.ghostAlpha!=null?ov.ghostAlpha:0.45)*100)+'%',action:function(){
                 var cur=ov.ghostAlpha!=null?ov.ghostAlpha:0.45;
                 cur=cur>=0.7?0.15:cur+0.15;
                 ov.ghostAlpha=Math.round(cur*100)/100;
-                regenFlyer(idx);
+                regenFlyer(idx);flyerAutoSave(idx);
               }});
             }
             if(elId==='dup'){
               menuItems.push({icon:'\ud83d\udcdd',text:'Duplikat ausschalten',action:function(){
                 ov.dupOn=false;ov.dupDx=0;ov.dupDy=0;ov.dupRot=0;
-                rebuildCtlBar(idx);regenFlyer(idx);
+                rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
             }
             if(elId==='customImg'){
@@ -5411,12 +5434,12 @@
                 var cur=ov.customImgAlpha!=null?ov.customImgAlpha:100;
                 cur=cur<=20?100:cur-20;
                 ov.customImgAlpha=cur;
-                regenFlyer(idx);
+                regenFlyer(idx);flyerAutoSave(idx);
               }});
-              menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.customImgScale||100)+'%)',action:function(){ov.customImgScale=100;regenFlyer(idx);}});
+              menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.customImgScale||100)+'%)',action:function(){ov.customImgScale=100;regenFlyer(idx);flyerAutoSave(idx);}});
               menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Bild entfernen',action:function(){
                 ov.customImg=null;ov.customImgDx=0;ov.customImgDy=0;ov.customImgScale=100;ov.customImgAlpha=100;ov.customImgRot=0;
-                rebuildCtlBar(idx);regenFlyer(idx);
+                rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
             }
             menuItems.push('hr');
@@ -5940,19 +5963,20 @@
       ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.stroke();
       // Blatt-Deko oben rechts
       if(cfg.showLeaf) drawLeaf(cx+cellW-45,cy+30,cfg.leafSize);
-      // ── Produktname + Details oben ──
+      // ── Produktname + Details oben (fixed height: 2 lines name + 1 line details) ──
       var textX=cx+cardPad,textY=cy+cardPad+20;
+      var fixedTextH=28*2+26; // 2 name lines (28px each) + 1 detail line (26px)
       ctx.fillStyle=theme.textColor;ctx.font='900 24px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-      var nameLines=wrapTextCMS(ctx,item.produkt||'',cellW-cardPad*2-30);
+      var nameLines=wrapTextCMS(ctx,item.produkt||'',cellW-cardPad*2-30).slice(0,2);
       nameLines.forEach(function(ln){ctx.fillText(ln,textX,textY);textY+=28;});
       if(item.details){
         ctx.fillStyle=theme.detailsColor;ctx.font='16px Arial, sans-serif';
-        ctx.fillText(truncText(ctx,item.details,cellW-cardPad*2),textX,textY+4);textY+=22;
+        ctx.fillText(truncText(ctx,item.details,cellW-cardPad*2),textX,textY+4);
       }
       // ── Bild links (freigestellt, gedreht, geclippt) ──
       var img=images[i];
-      var imgAreaTop=textY+8;
-      var imgAreaH=cellH-imgAreaTop+cy-cardPad;
+      var imgAreaTop=cy+cardPad+fixedTextH+8;
+      var imgAreaH=cellH-fixedTextH-cardPad*2-8;
       // Fill image area with imgBg color
       ctx.save();roundRect(cx,imgAreaTop,cellW,imgAreaH+cardPad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
