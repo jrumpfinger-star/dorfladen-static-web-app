@@ -3762,15 +3762,22 @@
     var html='<div class="cms-modal-bg">';
     html+='<div class="cms-modal" style="max-width:520px;text-align:center">';
     html+='<h3 style="margin:0 0 12px;font-size:15px">Vorschau</h3>';
-    html+='<img src="'+url+'" style="max-width:100%;max-height:55vh;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:12px">';
+    // Wrap image in relative container for clickable card zones
+    html+='<div id="cms-share-img-wrap" style="position:relative;display:inline-block;margin-bottom:12px">';
+    html+='<img id="cms-share-img" src="'+url+'" style="max-width:100%;max-height:55vh;border-radius:8px;border:1px solid #e5e7eb;display:block">';
+    html+='</div>';
     html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-dl">\u2b07\ufe0f Download</button>';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-print">\ud83d\udda8\ufe0f Drucken</button>';
     if(opts.showEinzelflyer){
-      html+='<button class="cms-btn" id="cms-share-flyer" style="background:#e65100;color:#fff">\ud83d\udccb Einzelflyer</button>';
+      html+='<button class="cms-btn" id="cms-share-flyer" style="background:#e65100;color:#fff">\ud83d\udccb Alle Einzelflyer</button>';
     }
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Schlie\u00dfen</button>';
-    html+='</div></div></div>';
+    html+='</div>';
+    if(opts.showEinzelflyer){
+      html+='<p style="margin:8px 0 0;font-size:11px;color:#9ca3af">\ud83d\udc46 Auf eine Karte klicken \u2192 Einzelflyer bearbeiten</p>';
+    }
+    html+='</div></div>';
     document.getElementById('cms-modal-wrap').innerHTML=html;
     document.getElementById('cms-modal-wrap').style.display='';
     document.getElementById('cms-share-dl').onclick=function(){
@@ -3784,6 +3791,74 @@
       document.getElementById('cms-share-flyer').onclick=function(){
         showEinzelflyer();
       };
+    }
+    // ── Clickable card zones on preview image ──
+    if(opts.showEinzelflyer && _currentPreviewAktion && _currentPreviewAktion.items){
+      var shareImg=document.getElementById('cms-share-img');
+      var wrap=document.getElementById('cms-share-img-wrap');
+      function buildCardZones(){
+        // Remove old zones
+        wrap.querySelectorAll('.pv-card-zone').forEach(function(z){z.remove();});
+        var imgEl=shareImg;
+        if(!imgEl.naturalWidth)return;
+        var W=794,H=1123;
+        var scaleX=imgEl.clientWidth/W, scaleY=imgEl.clientHeight/H;
+        var items=_currentPreviewAktion.items||[];
+        var cfg=cfgForKind(cfgGet(),'plakat');
+        var theme=getOfferTheme('plakat',cfg);
+        var isMag=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
+        // Sort items same way as drawAngebotPlakat (by savings desc)
+        var sorted=items.map(function(it,idx){
+          var sp=getSavingsPercent(it);
+          return {it:it,sp:(sp==null?-1:sp),idx:idx};
+        });
+        sorted.sort(function(a,b){return b.sp!==a.sp?b.sp-a.sp:a.idx-b.idx;});
+        sorted=sorted.slice(0,6);
+        var cols=2,rows=3;
+        var cards;
+        if(isMag){
+          var mgGap=16,mgPadX=24,mgPadTop=156,mgPadBot=50;
+          var mgCellW=Math.floor((W-mgPadX*2-mgGap)/cols);
+          var mgCellH=Math.floor((H-mgPadTop-mgPadBot-(rows-1)*mgGap)/rows);
+          cards=sorted.map(function(s,ci){
+            var col=ci%cols, row=Math.floor(ci/cols);
+            return {x:mgPadX+col*(mgCellW+mgGap),y:mgPadTop+row*(mgCellH+mgGap),w:mgCellW,h:mgCellH,origIdx:s.idx};
+          });
+        }else{
+          var headerH=130,footerH=36,cardGap=18;
+          var gridTop=headerH+10,gridBot=H-footerH-10;
+          var gridW=W-40;
+          var cellW=Math.floor((gridW-cardGap)/cols);
+          var cellH=Math.floor(((gridBot-gridTop)-(rows-1)*cardGap)/rows);
+          cards=sorted.map(function(s,ci){
+            var col=ci%cols, row=Math.floor(ci/cols);
+            return {x:20+col*(cellW+cardGap),y:gridTop+row*(cellH+cardGap),w:cellW,h:cellH,origIdx:s.idx};
+          });
+        }
+        cards.forEach(function(card){
+          var zone=document.createElement('div');
+          zone.className='pv-card-zone';
+          zone.style.cssText='position:absolute;left:'+Math.round(card.x*scaleX)+'px;top:'+Math.round(card.y*scaleY)+'px;width:'+Math.round(card.w*scaleX)+'px;height:'+Math.round(card.h*scaleY)+'px;cursor:pointer;border:2px solid transparent;border-radius:8px;transition:all 0.15s;z-index:2';
+          zone.title='Klicken \u2192 Einzelflyer bearbeiten';
+          zone.setAttribute('data-art-idx',card.origIdx);
+          zone.onmouseenter=function(){zone.style.borderColor='rgba(230,81,0,0.6)';zone.style.background='rgba(230,81,0,0.06)';};
+          zone.onmouseleave=function(){zone.style.borderColor='transparent';zone.style.background='none';};
+          zone.onclick=function(){
+            // Close modal and open Einzelflyer for this article
+            document.getElementById('cms-modal-wrap').innerHTML='';
+            document.getElementById('cms-modal-wrap').style.display='none';
+            showEinzelflyer(card.origIdx);
+          };
+          wrap.appendChild(zone);
+        });
+      }
+      if(shareImg.complete&&shareImg.naturalWidth) buildCardZones();
+      else shareImg.onload=buildCardZones;
+      // Rebuild zones on resize
+      window.addEventListener('resize',function pvResize(){
+        if(!document.getElementById('cms-share-img')){window.removeEventListener('resize',pvResize);return;}
+        buildCardZones();
+      });
     }
   }
 
@@ -4472,10 +4547,12 @@
     });
   }
 
-  function showEinzelflyer(){
+  function showEinzelflyer(focusIdx){
     if(!_currentPreviewAktion||!_currentPreviewAktion.items)return;
-    var items=_currentPreviewAktion.items,data=_currentPreviewAktion;
-    if(items.length===0){toast('Keine Artikel vorhanden','warn');return;}
+    var allItems=_currentPreviewAktion.items,data=_currentPreviewAktion;
+    if(allItems.length===0){toast('Keine Artikel vorhanden','warn');return;}
+    // If focusIdx given, show only that article; otherwise show all
+    var items=(focusIdx!=null&&focusIdx>=0&&focusIdx<allItems.length)?[allItems[focusIdx]]:allItems;
     var isMobile=window.innerWidth<=768;
     // Desktop: open in new window; Mobile: use inline modal (window.open+document.write fails on mobile)
     var win=null;
