@@ -128,6 +128,9 @@ document.head.appendChild(msalScript);
   .cms-ang-row{background:var(--c-m-pri-light);border:1px solid rgba(30,70,58,0.08);border-left:3px solid var(--c-m-pri);border-radius:10px;padding:6px 8px 6px 8px;margin-bottom:6px;position:relative;flex-shrink:0;transition:box-shadow .15s;overflow:visible}
   .cms-ang-row:hover{box-shadow:0 4px 12px rgba(30,70,58,.08)}
   .cms-ang-row-num{position:absolute;top:-8px;left:10px;background:var(--c-m-pri);color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;line-height:12px;letter-spacing:.3px;text-transform:uppercase}
+  .cms-ang-drag{position:absolute;top:50%;left:-2px;transform:translateY(-50%);cursor:grab;color:#b0b8c1;font-size:16px;line-height:1;padding:4px 2px;user-select:none;transition:color .15s}
+  .cms-ang-drag:hover{color:var(--c-m-pri)}
+  .cms-ang-row[draggable="true"]:active .cms-ang-drag{cursor:grabbing}
   .cms-ang-row-close{position:absolute;top:2px;right:4px;background:none;border:none;color:#a1a1aa;cursor:pointer;font-size:15px;line-height:1;transition:color .15s;z-index:1}
   .cms-ang-row-close:hover{color:var(--m-red)}
   .cms-ang-fields{display:grid;grid-template-columns:auto minmax(180px, 2.5fr) minmax(120px, 1.5fr) 60px 60px 85px;align-items:center;gap:8px;width:100%}
