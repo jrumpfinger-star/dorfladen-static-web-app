@@ -3901,8 +3901,8 @@
     html+='<span id="pce-scale-val" style="font-size:12px;font-weight:600;min-width:36px">'+(ov.imgScale||100)+'%</span>';
     html+='</div>';
     html+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px">';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-ghost" style="font-size:12px">\ud83d\udc7b Ghost '+(ov.ghost?'AUS':'EIN')+'</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-dup" style="font-size:12px">\ud83d\udd04 Duplikat</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-ghost" style="font-size:12px">\ud83d\udc7b Ghost</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-dup" style="font-size:12px">\ud83d\udcdd Duplikat</button>';
     html+='</div>';
     html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">';
     html+='<button class="cms-btn" id="pce-save" style="background:#e65100;color:#fff">\u2714 Schlie\u00dfen</button>';
@@ -3973,11 +3973,32 @@
           var iw=ofc.width*scI,ih=ofc.height*scI;
           var imgX=CARD_W/2-iw/2+(ov.imgDx||0),imgY=cardPadI+(imgAreaH-ih)/2+(ov.imgDy||0);
           var pRotRad=(ov.imgRot||0)*Math.PI/180;
+          // Ghost overlay (behind main image)
+          if(ov.ghostMode==='on'){
+            var gx=imgX+(ov.ghostDx||0),gy=imgY+(ov.ghostDy||0);
+            var gRot=pRotRad+((ov.ghostRot||0)*Math.PI/180);
+            ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
+            ctx.globalAlpha=ov.ghostAlpha||0.35;
+            if(gRot){ctx.translate(gx+iw/2,gy+ih/2);ctx.rotate(gRot);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
+            else{ctx.drawImage(ofc,gx,gy,iw,ih);}
+            ctx.globalAlpha=1.0;ctx.restore();
+            _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:gx,y:gy,w:iw,h:ih,ovKey:'ghost'});
+          }
+          // Duplicate overlay (behind main image)
+          if(ov.dupOn){
+            var dx2=imgX+(ov.dupDx||0),dy2=imgY+(ov.dupDy||0);
+            var dRot=pRotRad+((ov.dupRot||0)*Math.PI/180);
+            ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
+            if(dRot){ctx.translate(dx2+iw/2,dy2+ih/2);ctx.rotate(dRot);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
+            else{ctx.drawImage(ofc,dx2,dy2,iw,ih);}
+            ctx.restore();
+            _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2,y:dy2,w:iw,h:ih,ovKey:'dup'});
+          }
+          // Main image
           ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
-          if(ov.ghost) ctx.globalAlpha=0.35;
           if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
           else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
-          ctx.globalAlpha=1.0;ctx.restore();
+          ctx.restore();
           _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgX,y:imgY,w:iw,h:ih,ovKey:'img'});
         }
         // Savings badge
@@ -4063,10 +4084,29 @@
           var imgCX=cardPad+maxImgW*0.45+(ov.imgDx||0);
           var imgCY=imgAreaTop+imgAreaH*0.5+(ov.imgDy||0);
           var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(ov.imgRot||0)*Math.PI/180;
+          // Ghost overlay (behind main image)
+          if(ov.ghostMode==='on'){
+            var gx=imgCX+(ov.ghostDx||0),gy=imgCY+(ov.ghostDy||0);
+            var gRot=-pRotRad+((ov.ghostRot||0)*Math.PI/180);
+            ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
+            ctx.globalAlpha=ov.ghostAlpha||0.35;
+            ctx.translate(gx,gy);ctx.rotate(gRot);
+            ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.globalAlpha=1.0;ctx.restore();
+            _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:gx-iw/2,y:gy-ih/2,w:iw,h:ih,ovKey:'ghost'});
+          }
+          // Duplicate overlay (behind main image)
+          if(ov.dupOn){
+            var dx2=imgCX+(ov.dupDx||0),dy2=imgCY+(ov.dupDy||0);
+            var dRot=-pRotRad+((ov.dupRot||0)*Math.PI/180);
+            ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
+            ctx.translate(dx2,dy2);ctx.rotate(dRot);
+            ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
+            _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2-iw/2,y:dy2-ih/2,w:iw,h:ih,ovKey:'dup'});
+          }
+          // Main image
           ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
-          if(ov.ghost) ctx.globalAlpha=0.35;
           ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
-          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.globalAlpha=1.0;ctx.restore();
+          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
           _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgCX-iw/2,y:imgCY-ih/2,w:iw,h:ih,ovKey:'img'});
         }
         // Skewed price tag (right side)
@@ -4157,8 +4197,8 @@
       return _activeEl; // keep current if no hit
     }
 
-    // Load image (dupSrc overrides original bild_data)
-    var imgSrc=ov.dupSrc||item.bild_data;
+    // Load image
+    var imgSrc=item.bild_data;
     if(imgSrc){
       imgObj=new Image();
       imgObj.onload=function(){renderCard();updateActiveLabel();};
@@ -4181,6 +4221,8 @@
       dragStartX=ev.clientX;dragStartY=ev.clientY;
       if(_activeEl==='img'){startDx=ov.imgDx||0;startDy=ov.imgDy||0;}
       else if(_activeEl==='price'){startDx=ov.priceDx||0;startDy=ov.priceDy||0;}
+      else if(_activeEl==='ghost'){startDx=ov.ghostDx||0;startDy=ov.ghostDy||0;}
+      else if(_activeEl==='dup'){startDx=ov.dupDx||0;startDy=ov.dupDy||0;}
       cvs.style.cursor='grabbing';
     });
     function pceMove(ev){
@@ -4190,6 +4232,8 @@
       var scX=CARD_W/rect.width,scY=CARD_H/rect.height;
       if(_activeEl==='img'){ov.imgDx=Math.round(startDx+dx*scX);ov.imgDy=Math.round(startDy+dy*scY);}
       else if(_activeEl==='price'){ov.priceDx=Math.round(startDx+dx*scX);ov.priceDy=Math.round(startDy+dy*scY);}
+      else if(_activeEl==='ghost'){ov.ghostDx=Math.round(startDx+dx*scX);ov.ghostDy=Math.round(startDy+dy*scY);}
+      else if(_activeEl==='dup'){ov.dupDx=Math.round(startDx+dx*scX);ov.dupDy=Math.round(startDy+dy*scY);}
       renderCard();autoSave();
     }
     function pceUp(){
@@ -4243,9 +4287,34 @@
         if(curRot!==0) menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov.imgRot=0;renderCard();autoSave();}});
         menuItems.push('hr');
         menuItems.push({icon:'\u21ba',text:'Bild-Position zur\u00fccksetzen',action:function(){ov.imgDx=0;ov.imgDy=0;renderCard();autoSave();}});
-        menuItems.push({icon:'\ud83d\udd0d',text:'Bild-Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.imgScale||100)+'%)',action:function(){ov.imgScale=100;renderCard();autoSave();}});
+        menuItems.push({icon:'\ud83d\udd0d',text:'Bild-Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.imgScale||100)+'%)',action:function(){ov.imgScale=100;syncScaleSlider();renderCard();autoSave();}});
+        menuItems.push('hr');
+        menuItems.push({icon:'\ud83d\udc7b',text:ov.ghostMode==='on'?'Ghost AUS':'Ghost EIN',action:function(){
+          if(ov.ghostMode==='on'){ov.ghostMode='off';}else{ov.ghostMode='on';}
+          updateGhostBtn();renderCard();autoSave();
+        }});
+        menuItems.push({icon:'\ud83d\udcdd',text:ov.dupOn?'Duplikat AUS':'Duplikat EIN',action:function(){
+          ov.dupOn=!ov.dupOn;if(!ov.dupOn){ov.dupDx=-50;ov.dupDy=30;ov.dupRot=0;}
+          updateDupBtn();renderCard();autoSave();
+        }});
       }else if(_activeEl==='price'){
         menuItems.push({icon:'\u21ba',text:'Preis-Position zur\u00fccksetzen',action:function(){ov.priceDx=0;ov.priceDy=0;renderCard();autoSave();}});
+      }else if(_activeEl==='ghost'){
+        menuItems.push({icon:'\u21bb',text:'Ghost drehen +15\u00b0',action:function(){ov.ghostRot=(ov.ghostRot||0)+15;renderCard();autoSave();}});
+        menuItems.push({icon:'\u21ba',text:'Ghost drehen \u221215\u00b0',action:function(){ov.ghostRot=(ov.ghostRot||0)-15;renderCard();autoSave();}});
+        menuItems.push({icon:'\u21ba',text:'Ghost-Position zur\u00fccksetzen',action:function(){ov.ghostDx=60;ov.ghostDy=-40;ov.ghostRot=0;renderCard();autoSave();}});
+        menuItems.push({icon:'\ud83d\udd06',text:'Deckkraft: '+Math.round((ov.ghostAlpha||0.35)*100)+'%',action:function(){
+          var v=parseFloat(prompt('Ghost-Deckkraft in % (10\u201390):',Math.round((ov.ghostAlpha||0.35)*100)));
+          if(isNaN(v))return;ov.ghostAlpha=Math.max(0.1,Math.min(0.9,v/100));renderCard();autoSave();
+        }});
+        menuItems.push('hr');
+        menuItems.push({icon:'\ud83d\udc7b',text:'Ghost ausschalten',action:function(){ov.ghostMode='off';updateGhostBtn();renderCard();autoSave();}});
+      }else if(_activeEl==='dup'){
+        menuItems.push({icon:'\u21bb',text:'Duplikat drehen +15\u00b0',action:function(){ov.dupRot=(ov.dupRot||0)+15;renderCard();autoSave();}});
+        menuItems.push({icon:'\u21ba',text:'Duplikat drehen \u221215\u00b0',action:function(){ov.dupRot=(ov.dupRot||0)-15;renderCard();autoSave();}});
+        menuItems.push({icon:'\u21ba',text:'Duplikat-Position zur\u00fccksetzen',action:function(){ov.dupDx=-50;ov.dupDy=30;ov.dupRot=0;renderCard();autoSave();}});
+        menuItems.push('hr');
+        menuItems.push({icon:'\ud83d\udcdd',text:'Duplikat ausschalten',action:function(){ov.dupOn=false;updateDupBtn();renderCard();autoSave();}});
       }
       menuItems.push('hr');
       menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Alles zur\u00fccksetzen',action:function(){ov=plakatArtOverrideDefault();renderCard();autoSave();}});
@@ -4288,48 +4357,33 @@
     document.getElementById('pce-close').onclick=function(){closeEditor(true);};
     document.getElementById('pce-reset').onclick=function(){
       ov=plakatArtOverrideDefault();
-      _activeEl='img';syncScaleSlider();updateActiveLabel();renderCard();autoSave();
+      _activeEl='img';syncScaleSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();autoSave();
     };
-    // ── Ghost toggle ──
+    // ── Ghost toggle: adds a semi-transparent copy of the image ──
     var ghostBtn=document.getElementById('pce-ghost');
-    function updateGhostBtn(){ghostBtn.innerHTML='\ud83d\udc7b Ghost '+(ov.ghost?'AUS':'EIN');ghostBtn.style.background=ov.ghost?'#fef3c7':'';ghostBtn.style.borderColor=ov.ghost?'#f59e0b':'';}
+    function updateGhostBtn(){
+      var on=ov.ghostMode==='on';
+      ghostBtn.innerHTML='\ud83d\udc7b Ghost '+(on?'AUS':'EIN');
+      ghostBtn.style.background=on?'#fef3c7':'';ghostBtn.style.borderColor=on?'#f59e0b':'';
+    }
     updateGhostBtn();
     ghostBtn.onclick=function(){
-      ov.ghost=!ov.ghost;updateGhostBtn();renderCard();autoSave();
+      if(ov.ghostMode==='on'){ov.ghostMode='off';ov.ghostDx=60;ov.ghostDy=-40;}
+      else{ov.ghostMode='on';}
+      updateGhostBtn();renderCard();autoSave();
     };
-    // ── Duplikat: copy bild_data from another article ──
-    document.getElementById('pce-dup').onclick=function(){
-      var items=(_currentPreviewAktion&&_currentPreviewAktion.items)||[];
-      if(!items.length){toast('Keine Artikel verf\u00fcgbar','warn');return;}
-      var old=document.getElementById('pce-dup-panel');if(old){old.remove();return;}
-      var panel=document.createElement('div');panel.id='pce-dup-panel';
-      panel.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.2);padding:16px;z-index:10001;max-width:320px;max-height:60vh;overflow-y:auto';
-      var title=document.createElement('div');title.style.cssText='font-weight:700;font-size:14px;margin-bottom:8px';title.textContent='Bild von Artikel \u00fcbernehmen:';
-      panel.appendChild(title);
-      items.forEach(function(it){
-        if(it===item) return;
-        if(!it.bild_data) return;
-        var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-radius:6px';
-        row.onmouseenter=function(){row.style.background='#f3f4f6';};
-        row.onmouseleave=function(){row.style.background='none';};
-        var thumb=document.createElement('img');thumb.src=it.bild_data;thumb.style.cssText='width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb';
-        var lbl=document.createElement('span');lbl.style.cssText='font-size:13px';lbl.textContent=it.produkt||'Artikel';
-        row.appendChild(thumb);row.appendChild(lbl);
-        row.onclick=function(){
-          ov.dupSrc=it.bild_data;
-          imgObj=new Image();imgObj.onload=function(){renderCard();autoSave();};imgObj.src=it.bild_data;
-          panel.remove();toast('Bild \u00fcbernommen','ok');
-        };
-        panel.appendChild(row);
-      });
-      if(!panel.querySelectorAll('div[style]').length||panel.children.length<=1){
-        var empty=document.createElement('div');empty.style.cssText='font-size:12px;color:#9ca3af;padding:8px';empty.textContent='Keine anderen Artikel mit Bild verf\u00fcgbar.';
-        panel.appendChild(empty);
-      }
-      var closeRow=document.createElement('div');closeRow.style.cssText='text-align:center;margin-top:8px';
-      var closeBtn=document.createElement('button');closeBtn.className='cms-btn cms-btn-gray';closeBtn.style.fontSize='12px';closeBtn.textContent='Abbrechen';
-      closeBtn.onclick=function(){panel.remove();};closeRow.appendChild(closeBtn);panel.appendChild(closeRow);
-      document.body.appendChild(panel);
+    // ── Duplikat toggle: adds a full-opacity copy of the image ──
+    var dupBtn=document.getElementById('pce-dup');
+    function updateDupBtn(){
+      var on=!!ov.dupOn;
+      dupBtn.innerHTML='\ud83d\udcdd Duplikat '+(on?'AUS':'EIN');
+      dupBtn.style.background=on?'#dbeafe':'';dupBtn.style.borderColor=on?'#3b82f6':'';
+    }
+    updateDupBtn();
+    dupBtn.onclick=function(){
+      ov.dupOn=!ov.dupOn;
+      if(!ov.dupOn){ov.dupDx=-50;ov.dupDy=30;ov.dupRot=0;}
+      updateDupBtn();renderCard();autoSave();
     };
   }
 
@@ -4609,7 +4663,7 @@
   var PLAKAT_ART_OVERRIDES_KEY='dl_plakat_article_overrides';
   var _plakatArtOverrides=null;
   function plakatArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghost:false,dupSrc:''};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:60,ghostDy:-40,ghostAlpha:0.35,ghostRot:0,dupOn:false,dupDx:-50,dupDy:30,dupRot:0};
   }
   function plakatArtOverridesGetAll(){
     if(_plakatArtOverrides)return _plakatArtOverrides;
@@ -5861,11 +5915,8 @@
       }).catch(function(){});
     });
     Promise.all(fetchPromises).then(function(){
-      // Pre-load all images into Image objects for canvas drawing (dupSrc overrides bild_data)
-      var imgPromises=items.map(function(it){
-        var pOv=plakatArtOverrideGet(it)||plakatArtOverrideDefault();
-        return loadItemImage(pOv.dupSrc||it.bild_data);
-      });
+      // Pre-load all images into Image objects for canvas drawing
+      var imgPromises=items.map(function(it){return loadItemImage(it.bild_data);});
       return Promise.all(imgPromises);
     }).then(function(images){
       drawAngebotPlakat(data,items,images,callback,cfgOverride);
@@ -5991,11 +6042,30 @@
           var iw=ofc.width*scI,ih=ofc.height*scI;
           var imgX=cx+mgCellW/2-iw/2+(pOv.imgDx||0), imgY=cy+cardPadI+(imgAreaH-ih)/2+(pOv.imgDy||0);
           var pRotRad=(pOv.imgRot||0)*Math.PI/180;
+          // Ghost overlay
+          if(pOv.ghostMode==='on'){
+            var gx=imgX+(pOv.ghostDx||0),gy=imgY+(pOv.ghostDy||0);
+            var gRot=pRotRad+((pOv.ghostRot||0)*Math.PI/180);
+            ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
+            ctx.globalAlpha=pOv.ghostAlpha||0.35;
+            if(gRot){ctx.translate(gx+iw/2,gy+ih/2);ctx.rotate(gRot);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
+            else{ctx.drawImage(ofc,gx,gy,iw,ih);}
+            ctx.globalAlpha=1.0;ctx.restore();
+          }
+          // Duplicate overlay
+          if(pOv.dupOn){
+            var dx2=imgX+(pOv.dupDx||0),dy2=imgY+(pOv.dupDy||0);
+            var dRot=pRotRad+((pOv.dupRot||0)*Math.PI/180);
+            ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
+            if(dRot){ctx.translate(dx2+iw/2,dy2+ih/2);ctx.rotate(dRot);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
+            else{ctx.drawImage(ofc,dx2,dy2,iw,ih);}
+            ctx.restore();
+          }
+          // Main image
           ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-          if(pOv.ghost) ctx.globalAlpha=0.35;
           if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
           else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
-          ctx.globalAlpha=1.0;ctx.restore();
+          ctx.restore();
         }
 
         // Savings badge top-right
@@ -6168,10 +6238,27 @@
         ox.putImageData(idat,0,0);}catch(e){}}
         // Clip auf Karte, drehen, zeichnen
         var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(pOv.imgRot||0)*Math.PI/180;
+        // Ghost overlay
+        if(pOv.ghostMode==='on'){
+          var gx=imgCX+(pOv.ghostDx||0),gy=imgCY+(pOv.ghostDy||0);
+          var gRot=-pRotRad+((pOv.ghostRot||0)*Math.PI/180);
+          ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
+          ctx.globalAlpha=pOv.ghostAlpha||0.35;
+          ctx.translate(gx,gy);ctx.rotate(gRot);
+          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.globalAlpha=1.0;ctx.restore();
+        }
+        // Duplicate overlay
+        if(pOv.dupOn){
+          var dx2=imgCX+(pOv.dupDx||0),dy2=imgCY+(pOv.dupDy||0);
+          var dRot=-pRotRad+((pOv.dupRot||0)*Math.PI/180);
+          ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
+          ctx.translate(dx2,dy2);ctx.rotate(dRot);
+          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
+        }
+        // Main image
         ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
-        if(pOv.ghost) ctx.globalAlpha=0.35;
         ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
-        ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.globalAlpha=1.0;ctx.restore();
+        ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
       }
       // ── Schräges rotes Preisschild rechts (with override offsets) ──
       var clPDx=pOv.priceDx||0,clPDy=pOv.priceDy||0;
