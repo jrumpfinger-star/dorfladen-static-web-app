@@ -5559,19 +5559,40 @@
             if(!imgs[idx])return;
             var src=imgs[idx].src;
             if(isMobile){
-              // Mobile: use hidden iframe to trigger print dialog
-              var oldFrame=document.getElementById('_flyPrintFrame');
-              if(oldFrame)oldFrame.remove();
-              var iframe=document.createElement('iframe');
-              iframe.id='_flyPrintFrame';
-              iframe.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:99999;background:#fff';
-              document.body.appendChild(iframe);
-              var iDoc=iframe.contentDocument||iframe.contentWindow.document;
-              iDoc.open();
-              iDoc.write('<html><head><title>Flyer drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"><br><button onclick="window.print()" style="margin:16px auto;display:block;padding:12px 32px;font-size:16px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer">\uD83D\uDDA8\uFE0F Drucken</button><button onclick="parent.document.getElementById(\'_flyPrintFrame\').remove()" style="margin:8px auto;display:block;padding:8px 24px;font-size:14px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer">Zur\u00fcck</button></body></html>');
-              iDoc.close();
-              var pi=iDoc.getElementById('pi');
-              pi.src=src;
+              // Mobile: fullscreen print overlay with explicit buttons
+              var oldPo=document.getElementById('_flyPrintOverlay');
+              if(oldPo)oldPo.remove();
+              // Inject print-only CSS if not already present
+              if(!document.getElementById('_flyPrintCSS')){
+                var pCss=document.createElement('style');pCss.id='_flyPrintCSS';
+                pCss.textContent='@media print{body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay img{max-width:100%;height:auto}}';
+                document.head.appendChild(pCss);
+              }
+              var po=document.createElement('div');
+              po.id='_flyPrintOverlay';
+              po.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:#fff;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px';
+              var pImg=document.createElement('img');
+              pImg.style.cssText='max-width:100%;height:auto;margin-bottom:16px';
+              pImg.src=src;
+              po.appendChild(pImg);
+              var btnRow=document.createElement('div');
+              btnRow.style.cssText='display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px';
+              var printBtn=document.createElement('button');
+              printBtn.textContent='\uD83D\uDDA8\uFE0F Drucken';
+              printBtn.style.cssText='padding:12px 32px;font-size:16px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer';
+              printBtn.onclick=function(){
+                // Hide buttons during print, show only image
+                btnRow.style.display='none';
+                setTimeout(function(){window.print();btnRow.style.display='';},100);
+              };
+              var backBtn=document.createElement('button');
+              backBtn.textContent='Zur\u00fcck';
+              backBtn.style.cssText='padding:12px 24px;font-size:16px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer';
+              backBtn.onclick=function(){po.remove();};
+              btnRow.appendChild(printBtn);
+              btnRow.appendChild(backBtn);
+              po.appendChild(btnRow);
+              document.body.appendChild(po);
             }else{
               var w=window.open('','_blank');
               if(!w){alert('Popup-Blocker aktiv! Bitte Popups erlauben.');return;}
