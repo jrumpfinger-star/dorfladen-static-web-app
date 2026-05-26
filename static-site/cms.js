@@ -3880,10 +3880,11 @@
     html+='<div class="cms-modal" style="max-width:440px;text-align:center">';
     html+='<h3 style="margin:0 0 4px;font-size:15px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+'</h3>';
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element ziehen \u2022 Lang dr\u00fccken = Men\u00fc':'Element ziehen, Rechtsklick = Men\u00fc')+'</p>';
+    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen, Rechtsklick = Men\u00fc')+'</p>';
     html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
     html+='<div id="pce-wrap" style="position:relative;display:inline-block;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab">';
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'"></canvas>';
+    if(_pceIsMobile) html+='<div id="pce-ctx-btn" style="position:absolute;top:6px;right:6px;width:34px;height:34px;background:#e65100;color:#fff;border:2px solid #fff;border-radius:50%;font-size:18px;line-height:30px;text-align:center;cursor:pointer;z-index:10;box-shadow:0 2px 6px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent">\u22EF</div>';
     html+='</div>';
     html+='<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px">';
     html+='<span style="font-size:12px;color:#6b7280">\ud83d\udd0d Gr\u00f6\u00dfe</span>';
@@ -4372,18 +4373,17 @@
     });
 
     // ── Context menu ──
-    cvs.addEventListener('contextmenu',function(ev){
-      ev.preventDefault();
+    function openPceCtxMenu(clientX,clientY){
       var old=document.getElementById('pce-ctx-menu');if(old)old.remove();
       // Hit-test to select element under cursor
       var rect=cvs.getBoundingClientRect();
-      var mx=(ev.clientX-rect.left)*(CARD_W/rect.width);
-      var my=(ev.clientY-rect.top)*(CARD_H/rect.height);
+      var mx=(clientX-rect.left)*(CARD_W/rect.width);
+      var my=(clientY-rect.top)*(CARD_H/rect.height);
       var hit=hitTest(mx,my);
       if(hit){_activeEl=hit;updateActiveLabel();renderCard();}
       var menu=document.createElement('div');
       menu.className='ctx-menu';menu.id='pce-ctx-menu';
-      menu.style.cssText='position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:4px 0;z-index:10000;min-width:180px;font-size:13px;left:'+ev.clientX+'px;top:'+ev.clientY+'px';
+      menu.style.cssText='position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:4px 0;z-index:10000;min-width:180px;font-size:13px;left:'+clientX+'px;top:'+clientY+'px';
       var menuItems=[];
       if(_activeEl==='img'){
         var curRot=ov.imgRot||0;
@@ -4470,7 +4470,25 @@
       if(mr.bottom>window.innerHeight) menu.style.top=(window.innerHeight-mr.height-4)+'px';
       function closeCtx(){menu.remove();document.removeEventListener('click',closeCtx);}
       setTimeout(function(){document.addEventListener('click',closeCtx);},0);
+    }
+    cvs.addEventListener('contextmenu',function(ev){
+      ev.preventDefault();
+      openPceCtxMenu(ev.clientX, ev.clientY);
     });
+    // ── ⋯ button for mobile context menu ──
+    var pceCtxBtn=document.getElementById('pce-ctx-btn');
+    if(pceCtxBtn){
+      pceCtxBtn.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        var r=pceCtxBtn.getBoundingClientRect();
+        openPceCtxMenu(r.left, r.bottom+4);
+      });
+      pceCtxBtn.addEventListener('touchend',function(e){
+        e.preventDefault();e.stopPropagation();
+        var r=pceCtxBtn.getBoundingClientRect();
+        openPceCtxMenu(r.left, r.bottom+4);
+      });
+    }
 
     // ── Buttons ──
     function closeEditor(revert){
@@ -5479,9 +5497,11 @@
             if(pimg)pimg.src=src;
             // Rebuild overlay zones
             var ovDiv=doc.getElementById('ov-'+idx);
-            if(ovDiv) ovDiv.innerHTML=_buildZoneHtml(cv._elMeta||[],idx);
+            if(ovDiv){ ovDiv.innerHTML=_buildZoneHtml(cv._elMeta||[],idx); bindTouchMenuBtns(); }
           });
         }
+        // bindTouchMenuBtns is defined inside attach() where showCtxMenuForZone is available
+        var bindTouchMenuBtns=function(){};
         // Arrow cross HTML builder
         function arrowCross(prefix,idx,label){
           return '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:1px">'
@@ -6109,13 +6129,11 @@
             var touch=ev.touches[0];
             var _tsX=touch.clientX,_tsY=touch.clientY;
 
-            // ── Touch menu button tap → open context menu immediately ──
+            // ── Touch menu button → ignore here, handled by direct onclick/touchend binding ──
             var _isTouchMenu=tgt.classList&&tgt.classList.contains('el-touch-menu');
             if(!_isTouchMenu&&tgt.closest)_isTouchMenu=!!tgt.closest('.el-touch-menu');
             if(_isTouchMenu){
-              ev.preventDefault();ev.stopPropagation();
-              showCtxMenuForZone(z, _tsX, _tsY);
-              return;
+              return; // let the direct handler on the button fire instead
             }
 
             // ── Touch resize handle ──
@@ -6198,19 +6216,31 @@
             doc.addEventListener('touchend',onTouchEnd);
           },{passive:false});
 
-          // ── Click fallback for touch-menu button (some mobile browsers use click instead of touch) ──
-          if(isMobile){
-            doc.addEventListener('click',function(ev){
-              var tgt=ev.target;
-              var isMenu=tgt.classList&&tgt.classList.contains('el-touch-menu');
-              if(!isMenu&&tgt.closest)isMenu=!!tgt.closest('.el-touch-menu');
-              if(!isMenu)return;
-              var z=tgt.closest?tgt.closest('.el-zone'):null;
-              if(!z)return;
-              ev.preventDefault();ev.stopPropagation();
-              showCtxMenuForZone(z, ev.clientX||ev.pageX, ev.clientY||ev.pageY);
-            },true);
-          }
+          // ── Direct onclick binding for ⋯ menu buttons (mobile) ──
+          // This is the most reliable approach: direct handlers on each button element
+          bindTouchMenuBtns=function(){
+            if(!isMobile)return;
+            var btns=doc.querySelectorAll('.el-touch-menu');
+            for(var bi=0;bi<btns.length;bi++){(function(btn){
+              if(btn._menuBound)return;
+              btn._menuBound=true;
+              btn.addEventListener('click',function(e){
+                e.preventDefault();e.stopPropagation();
+                var z=btn.closest('.el-zone');
+                if(!z)return;
+                var rect=btn.getBoundingClientRect();
+                showCtxMenuForZone(z, rect.left, rect.bottom+4);
+              });
+              btn.addEventListener('touchend',function(e){
+                e.preventDefault();e.stopPropagation();
+                var z=btn.closest('.el-zone');
+                if(!z)return;
+                var rect=btn.getBoundingClientRect();
+                showCtxMenuForZone(z, rect.left, rect.bottom+4);
+              });
+            })(btns[bi]);}
+          };
+          bindTouchMenuBtns();
 
           // ── Print style: show print images, hide interactive wraps ──
           if(!isMobile){
