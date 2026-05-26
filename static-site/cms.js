@@ -3692,10 +3692,13 @@
     var msg='\ud83c\udf7d\ufe0f *Mittagsmen\u00fc '+header+'*';
     // Generate image + share directly
     var hp=hpCfgGet();
-    var tpl=hp.wpFlyerTemplate||'classic-red';
+    var flyerTpl=hp.wpFlyerTemplate||'classic-red';
+    var homeTpl=hp.wpHomeTemplate||'classic-red';
+    var tpl=(flyerTpl!=='classic-red')?flyerTpl:(homeTpl!=='classic-red')?homeTpl:flyerTpl;
+    var wpKind=(flyerTpl!=='classic-red')?'flyer':'home';
     generateMenuImage(mealRows,header,function(blob){
       shareBlob(blob,'Wochenplan_KW'+kw+'.png',msg);
-    },tpl,'flyer');
+    },tpl,wpKind);
   };
 
   window.cmsPreviewWP=function(){
@@ -3713,10 +3716,13 @@
       });
     });
     var hp=hpCfgGet();
-    var tpl=hp.wpFlyerTemplate||'classic-red';
+    var flyerTpl=hp.wpFlyerTemplate||'classic-red';
+    var homeTpl=hp.wpHomeTemplate||'classic-red';
+    var tpl=(flyerTpl!=='classic-red')?flyerTpl:(homeTpl!=='classic-red')?homeTpl:flyerTpl;
+    var wpKind=(flyerTpl!=='classic-red')?'flyer':'home';
     generateMenuImage(mealRows,header,function(blob){
       showSharePreview(blob,'Wochenplan_KW'+kw+'.png');
-    },tpl,'flyer');
+    },tpl,wpKind);
   };
 
   window.cmsPreviewWpTpl=function(target){
@@ -3765,10 +3771,13 @@
       });
     });
     var hp=hpCfgGet();
-    var tpl=hp.wpFlyerTemplate||'classic-red';
+    var flyerTpl=hp.wpFlyerTemplate||'classic-red';
+    var homeTpl=hp.wpHomeTemplate||'classic-red';
+    var tpl=(flyerTpl!=='classic-red')?flyerTpl:(homeTpl!=='classic-red')?homeTpl:flyerTpl;
+    var wpKind=(flyerTpl!=='classic-red')?'flyer':'home';
     generateMenuImage(mealRows,header,function(blob){
       printFromBlob(blob);
-    },tpl,'flyer');
+    },tpl,wpKind);
   };
 
   function shareBlob(blob,filename,msg){
