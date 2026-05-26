@@ -54,7 +54,7 @@ jobs:
           deployment_environment: ${{ github.ref == 'refs/heads/main' && '' || github.head_ref || github.ref_name }}
           ###### End of Repository/Build Configurations ######
       - name: Commit version bump
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
