@@ -4046,7 +4046,8 @@
               var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
               if(cfg.imgFreistellen){
                 try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-                for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
+                var thr=cfg.imgThreshold,fade=30;
+                for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
                 ox.putImageData(id,0,0);}catch(e){}
               }
               var fImgSc=(cfg.imgScale||100)/100;
@@ -4204,11 +4205,16 @@
             // Anchor: bottom-left corner of image + per-article offset
             var imgLeft=cardX+imgAncX+(artOv.imgDx||0);
             var imgBot=imgAreaBot-imgAncY+(artOv.imgDy||0);
-            // Freistellen: weissen Hintergrund entfernen
+            // Freistellen: weissen Hintergrund entfernen (soft-edge feathering)
             var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
             var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
             if(cfg.imgFreistellen){var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-            for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
+            var thr=cfg.imgThreshold, fade=30;
+            for(var pi=0;pi<d.length;pi+=4){
+              var mn=Math.min(d[pi],d[pi+1],d[pi+2]);
+              if(mn>thr)d[pi+3]=0;
+              else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);
+            }
             ox.putImageData(id,0,0);}
             // Clip to card so image does not overflow
             ctx.save();rrect(cardX,cardY,cardW,cardH,theme.cardRadius);ctx.clip();
@@ -4931,7 +4937,8 @@
           var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
           if(cfg.imgFreistellen){
             try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-            for(var pi=0;pi<d.length;pi+=4){if(d[pi]>cfg.imgThreshold&&d[pi+1]>cfg.imgThreshold&&d[pi+2]>cfg.imgThreshold)d[pi+3]=0;}
+            var thr=cfg.imgThreshold,fade=30;
+            for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
             ox.putImageData(id,0,0);}catch(e){}
           }
           var fImgSc2=(cfg.imgScale||100)/100;
@@ -5103,7 +5110,8 @@
         var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
         var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
         if(cfg.imgFreistellen){try{var idat=ox.getImageData(0,0,ofc.width,ofc.height),dd=idat.data;
-        for(var pp=0;pp<dd.length;pp+=4){if(dd[pp]>cfg.imgThreshold&&dd[pp+1]>cfg.imgThreshold&&dd[pp+2]>cfg.imgThreshold)dd[pp+3]=0;}
+        var thr=cfg.imgThreshold,fade=30;
+        for(var pp=0;pp<dd.length;pp+=4){var mn=Math.min(dd[pp],dd[pp+1],dd[pp+2]);if(mn>thr)dd[pp+3]=0;else if(mn>thr-fade)dd[pp+3]=Math.round(255*(thr-mn)/fade);}
         ox.putImageData(idat,0,0);}catch(e){}}
         // Clip auf Karte, drehen, zeichnen
         var pRotRad=cfg.imgRotation*Math.PI/180*0.85;
