@@ -5526,6 +5526,25 @@
             +(ov.dupOn?arrowCross('dup',i,'Position'):'')
             +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+i+'"><span id="ds-'+i+'">'+(ov.dupScale||100)+'%</span></label>':'')
             +'</div>'
+            // ── Weitere Kopien (Multi-Ghost/Dup) ──
+            +'<div class="abtn-grp">'
+            +'<span style="font-size:10px;font-weight:700;color:#555">Weitere Kopien</span>'
+            +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
+            +'<button class="tog" data-act="add-ghost-copy" data-idx="'+i+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udc7b Ghost</button>'
+            +'<button class="tog" data-act="add-dup-copy" data-idx="'+i+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udcdd Duplikat</button>'
+            +'</div>';
+          if(ov.copies&&ov.copies.length){
+            html+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
+            ov.copies.forEach(function(cp,ci){
+              var icon=cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd';
+              html+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:#f3f4f6;border:1px solid #d1d5db">'
+                +icon+(ci+1)
+                +' <span data-act="del-copy" data-idx="'+i+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:bold;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
+                +'</span>';
+            });
+            html+='</div>';
+          }
+          html+='</div>'
             +'</div>'
             +'</div>';
         });
