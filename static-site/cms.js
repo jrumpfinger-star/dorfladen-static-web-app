@@ -5974,11 +5974,20 @@
             var m=doc.getElementById('fly-ctx-menu');
             if(m)m.remove();
           }
-          doc.addEventListener('click',function(){hideCtxMenu();});
-          if(isMobile) document.addEventListener('click',function(){hideCtxMenu();});
+          var _ctxJustOpened=false;
+          doc.addEventListener('click',function(ev){
+            if(_ctxJustOpened){_ctxJustOpened=false;return;}
+            hideCtxMenu();
+          });
+          if(isMobile) document.addEventListener('click',function(ev){
+            if(_ctxJustOpened){_ctxJustOpened=false;return;}
+            hideCtxMenu();
+          });
           function showCtxMenuForZone(z, clientX, clientY){
             selectZone(z);
             hideCtxMenu();
+            _ctxJustOpened=true;
+            setTimeout(function(){_ctxJustOpened=false;},400);
             var idx=parseInt(z.getAttribute('data-idx'),10);
             var ovKey=z.getAttribute('data-ov');
             var elId=z.getAttribute('data-el');
