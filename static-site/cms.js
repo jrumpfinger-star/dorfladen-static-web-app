@@ -4680,6 +4680,7 @@
           ctx.strokeRect(bw/2,bw/2,W-bw,H-bw);ctx.restore();
         }
       }
+      var artOv=flyerArtOverrideGet(item)||flyerArtOverrideDefault();
       var isMagLayout=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
       if(isMagLayout){
         // ── Modern Magazine Einzelflyer: clean centered card layout ──
