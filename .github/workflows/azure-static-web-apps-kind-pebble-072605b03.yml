@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-      - 'feature/**'
-      - 'test/**'
-      - 'fix/**'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
@@ -15,8 +12,6 @@ on:
 jobs:
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-    env:
-      IS_PREVIEW: ${{ github.ref != 'refs/heads/main' && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     permissions:
@@ -27,7 +22,6 @@ jobs:
           submodules: true
           lfs: false
       - name: Bump version
-        if: github.ref == 'refs/heads/main'
         run: |
           FILE="static-site/version.json"
           BUILD=$(jq '.build' "$FILE")
@@ -50,11 +44,9 @@ jobs:
           app_location: "static-site" # App source code path
           api_location: "api" # Api source code path - now set to 'api'
           output_location: "" # Built app content directory - optional
-          production_branch: "main"
-          deployment_environment: ${{ github.ref == 'refs/heads/main' && '' || github.head_ref || github.ref_name }}
           ###### End of Repository/Build Configurations ######
       - name: Commit version bump
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -64,9 +56,7 @@ jobs:
 
   set_preview_env_settings:
     needs: build_and_deploy_job
-    if: >
-      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
-      (github.event_name == 'push' && github.ref != 'refs/heads/main')
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     name: Set Preview Dev-DB Settings
     steps:
@@ -76,11 +66,9 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Set DV_DEFAULT_URL to Dev environment
         run: |
-          ENV_NAME="${{ github.event.pull_request.number || github.ref_name }}"
-          echo "Setting Dev-DB for preview environment: $ENV_NAME"
           az staticwebapp appsettings set \
             --name dorfladen-website \
-            --environment-name "$ENV_NAME" \
+            --environment-name ${{ github.event.pull_request.number }} \
             --setting-names "DV_DEFAULT_URL=https://org392a4789.crm16.dynamics.com"
           echo "Preview environment configured to use DEV Dataverse"
 
@@ -95,4 +83,3 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_KIND_PEBBLE_072605B03 }}
           action: "close"
-          app_location: "static-site"
