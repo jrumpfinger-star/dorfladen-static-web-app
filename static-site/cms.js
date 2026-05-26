@@ -5395,8 +5395,9 @@
           elMeta.forEach(function(el){
             var pctL=(el.x/794*100).toFixed(2),pctT=(el.y/1123*100).toFixed(2);
             var pctW=(el.w/794*100).toFixed(2),pctH=(el.h/1123*100).toFixed(2);
-            var isSecondary=(el.id==='ghost'||el.id==='dup'||el.id==='customImg');
-            var noResize=(el.id==='ghost'||el.id==='dup');
+            var isCopy=el.id.indexOf('copy-')===0;
+            var isSecondary=(el.id==='ghost'||el.id==='dup'||el.id==='customImg'||isCopy);
+            var noResize=(el.id==='ghost'||el.id==='dup'||isCopy);
             var extraCls=isSecondary?' el-secondary':'';
             if(el.id==='customImg') extraCls=' el-custom';
             zh+='<div class="el-zone'+extraCls+'" data-el="'+el.id+'" data-idx="'+idx+'" data-ov="'+el.ovKey+'"'
@@ -5580,7 +5581,25 @@
               +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+idx+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
               +(ov.dupOn?arrowCross('dup',idx,'Position'):'')
               +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+idx+'"><span id="ds-'+idx+'">'+(ov.dupScale||100)+'%</span></label>':'')
+              +'</div>'
+              +'<div class="abtn-grp">'
+              +'<span style="font-size:10px;font-weight:700;color:#555">Weitere Kopien</span>'
+              +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
+              +'<button class="tog" data-act="add-ghost-copy" data-idx="'+idx+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udc7b Ghost</button>'
+              +'<button class="tog" data-act="add-dup-copy" data-idx="'+idx+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udcdd Duplikat</button>'
               +'</div>';
+            if(ov.copies&&ov.copies.length){
+              nh+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
+              ov.copies.forEach(function(cp,ci){
+                var icon=cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd';
+                nh+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:#f3f4f6;border:1px solid #d1d5db">'
+                  +icon+(ci+1)
+                  +' <span data-act="del-copy" data-idx="'+idx+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:bold;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
+                  +'</span>';
+              });
+              nh+='</div>';
+            }
+            nh+='</div>';
             bar.innerHTML=nh;
           }
           doc.addEventListener('input',function(ev){
@@ -5659,6 +5678,23 @@
               var ov=artOvs[idx];
               ov.dupOn=!ov.dupOn;
               if(ov.dupOn&&!ov.dupDx&&!ov.dupDy){ov.dupDx=-150;ov.dupDy=100;}
+              rebuildCtlBar(idx);
+              regenFlyer(idx);flyerAutoSave(idx);
+            }
+            else if(act==='add-ghost-copy'||act==='add-dup-copy'){
+              var idx=parseInt(t.getAttribute('data-idx'),10);
+              var ov=artOvs[idx];
+              if(!ov.copies)ov.copies=[];
+              var cpType=act==='add-ghost-copy'?'ghost':'dup';
+              ov.copies.push(newCopy(cpType,ov.copies.length));
+              rebuildCtlBar(idx);
+              regenFlyer(idx);flyerAutoSave(idx);
+            }
+            else if(act==='del-copy'){
+              var idx=parseInt(t.getAttribute('data-idx'),10);
+              var ci=parseInt(t.getAttribute('data-ci'),10);
+              var ov=artOvs[idx];
+              if(ov.copies){ov.copies.splice(ci,1);}
               rebuildCtlBar(idx);
               regenFlyer(idx);flyerAutoSave(idx);
             }
@@ -5748,24 +5784,33 @@
             // Start drag
             var idx=parseInt(z.getAttribute('data-idx'),10);
             var ovKey=z.getAttribute('data-ov');
+            var elId=z.getAttribute('data-el');
             var ov=artOvs[idx];
             var wrap=doc.getElementById('fw-'+idx);
             if(!wrap)return;
             var wrapRect=wrap.getBoundingClientRect();
             var scale=794/wrapRect.width; // canvas px per CSS px
             var startX=ev.clientX,startY=ev.clientY;
-            var startDx=ov[ovKey+'Dx']||0, startDy=ov[ovKey+'Dy']||0;
+            // Resolve drag target: for copies use the copies array element
+            var _dragCopy=null;
+            if(ovKey==='copy'&&elId&&elId.indexOf('copy-')===0){
+              var _dci=parseInt(elId.split('-')[1],10);
+              _dragCopy=ov.copies&&ov.copies[_dci];
+            }
+            var startDx=_dragCopy?(_dragCopy.dx||0):(ov[ovKey+'Dx']||0);
+            var startDy=_dragCopy?(_dragCopy.dy||0):(ov[ovKey+'Dy']||0);
             var moved=false;
             function onMove(e){
               var dx=(e.clientX-startX)*scale, dy=(e.clientY-startY)*scale;
               if(Math.abs(dx)>2||Math.abs(dy)>2)moved=true;
-              ov[ovKey+'Dx']=Math.round(startDx+dx);
-              ov[ovKey+'Dy']=Math.round(startDy+dy);
+              if(_dragCopy){_dragCopy.dx=Math.round(startDx+dx);_dragCopy.dy=Math.round(startDy+dy);}
+              else{ov[ovKey+'Dx']=Math.round(startDx+dx);ov[ovKey+'Dy']=Math.round(startDy+dy);}
               // Live update zone position (lightweight, no re-render)
-              var el=(canvases[idx]._elMeta||[]).find(function(m){return m.ovKey===ovKey;});
-              if(el){
-                z.style.left=((el.x+ov[ovKey+'Dx']-startDx+ dx)/794*100).toFixed(2)+'%';
-                z.style.top=((el.y+ov[ovKey+'Dy']-startDy+ dy)/1123*100).toFixed(2)+'%';
+              z.style.left=(parseFloat(z.style.left)+(dx*scale/794*100)*0).toFixed(2)+'%';
+              var curEl=(canvases[idx]._elMeta||[]).find(function(m){return m.id===elId;});
+              if(curEl){
+                z.style.left=((curEl.x+Math.round(startDx+dx)-startDx+dx)/794*100).toFixed(2)+'%';
+                z.style.top=((curEl.y+Math.round(startDy+dy)-startDy+dy)/1123*100).toFixed(2)+'%';
               }
             }
             function onUp(){
@@ -5798,7 +5843,11 @@
             menu.style.left=ev.clientX+'px';menu.style.top=ev.clientY+'px';
             var menuItems=[
               {icon:'\u21a9',text:'Verwerfen (Laden-Stand)',action:function(){artOvs[idx]=JSON.parse(JSON.stringify(_initArtOvs[idx]));flyerArtOverrideSave(items[idx],artOvs[idx]);rebuildCtlBar(idx);regenFlyer(idx);}},
-              {icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){ov[ovKey+'Dx']=0;ov[ovKey+'Dy']=0;regenFlyer(idx);flyerAutoSave(idx);}},
+              {icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){
+                if(ovKey==='copy'&&elId&&elId.indexOf('copy-')===0){var ci2=parseInt(elId.split('-')[1],10);var cp2=ov.copies&&ov.copies[ci2];if(cp2){cp2.dx=0;cp2.dy=0;}}
+                else{ov[ovKey+'Dx']=0;ov[ovKey+'Dy']=0;}
+                regenFlyer(idx);flyerAutoSave(idx);
+              }},
               {icon:'\ud83d\uddd1\ufe0f',text:'Alle Overrides zur\u00fccksetzen',action:function(){artOvs[idx]=flyerArtOverrideDefault();flyerArtOverrideDelete(items[idx]);rebuildCtlBar(idx);regenFlyer(idx);}},
               'hr'
             ];
@@ -5847,6 +5896,28 @@
                 ov.dupOn=false;ov.dupDx=0;ov.dupDy=0;ov.dupRot=0;
                 rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
+            }
+            if(elId&&elId.indexOf('copy-')===0){
+              var _ctxCi=parseInt(elId.split('-')[1],10);
+              var _ctxCp=ov.copies&&ov.copies[_ctxCi];
+              if(_ctxCp){
+                menuItems.push({icon:'\u21bb',text:'Drehen +15\u00b0',action:function(){_ctxCp.rot=(_ctxCp.rot||0)+15;regenFlyer(idx);flyerAutoSave(idx);}});
+                menuItems.push({icon:'\u21ba',text:'Drehen \u221215\u00b0',action:function(){_ctxCp.rot=(_ctxCp.rot||0)-15;regenFlyer(idx);flyerAutoSave(idx);}});
+                if(_ctxCp.type==='ghost'){
+                  menuItems.push({icon:'\ud83d\udd06',text:'Deckkraft: '+Math.round((_ctxCp.alpha!=null?_ctxCp.alpha:0.35)*100)+'%',action:function(){
+                    var cur=_ctxCp.alpha!=null?_ctxCp.alpha:0.35;cur=cur>=0.7?0.15:cur+0.15;
+                    _ctxCp.alpha=Math.round(cur*100)/100;regenFlyer(idx);flyerAutoSave(idx);
+                  }});
+                }
+                menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe: '+(_ctxCp.scale||100)+'%',action:function(){
+                  var v=prompt('Kopie-Gr\u00f6\u00dfe in % (10\u2013300):',(_ctxCp.scale||100));
+                  v=parseInt(v,10);if(isNaN(v))return;_ctxCp.scale=Math.max(10,Math.min(300,v));regenFlyer(idx);flyerAutoSave(idx);
+                }});
+                menuItems.push('hr');
+                menuItems.push({icon:'\u00d7',text:'Kopie l\u00f6schen',action:function(){
+                  ov.copies.splice(_ctxCi,1);rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
+                }});
+              }
             }
             if(elId==='customImg'){
               menuItems.push({icon:'\ud83d\udd06',text:'Deckkraft: '+(ov.customImgAlpha!=null?ov.customImgAlpha:100)+'%',action:function(){
