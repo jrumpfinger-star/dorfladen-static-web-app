@@ -3896,6 +3896,16 @@
     html+='<button class="cms-btn cms-btn-gray" id="pce-add-ghost" style="font-size:11px;padding:3px 8px" title="Weitere Ghost-Kopie hinzuf\u00fcgen">+ \ud83d\udc7b</button>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-add-dup" style="font-size:11px;padding:3px 8px" title="Weitere Duplikat-Kopie hinzuf\u00fcgen">+ \ud83d\udcdd</button>';
     html+='</div>';
+    html+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px">';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-rot-cw" style="font-size:12px;padding:3px 10px" title="Bild drehen +15\u00b0">\u21bb +15\u00b0</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-rot-ccw" style="font-size:12px;padding:3px 10px" title="Bild drehen -15\u00b0">\u21ba -15\u00b0</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-rot-reset" style="font-size:11px;padding:3px 8px" title="Rotation zur\u00fccksetzen">\u2b6f 0\u00b0</button>';
+    html+='<label class="cms-btn cms-btn-gray" id="pce-custom-img-label" style="font-size:12px;padding:3px 10px;cursor:pointer">\ud83d\uddbc+ Bild<input type="file" accept="image/*" id="pce-custom-img" style="display:none"></label>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px">';
+    html+='<button class="cms-btn" id="pce-print" style="font-size:12px;padding:3px 14px;background:#2e7d32;color:#fff">\ud83d\udda8\ufe0f Drucken</button>';
+    html+='<button class="cms-btn" id="pce-download" style="font-size:12px;padding:3px 14px;background:#1565c0;color:#fff">\u2b07\ufe0f Download</button>';
+    html+='</div>';
     html+='<div id="pce-copies-list" style="display:none;text-align:center;margin-top:4px;gap:4px;flex-wrap:wrap;justify-content:center"></div>';
     html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">';
     html+='<button class="cms-btn" id="pce-save" style="background:#e65100;color:#fff">\u2714 Schlie\u00dfen</button>';
@@ -4565,6 +4575,70 @@
         updateCopiesLabel();updateActiveLabel();syncScaleSlider();renderCard();
       }
     });
+    // ── Rotation buttons ──
+    var rotCwBtn=document.getElementById('pce-rot-cw');
+    var rotCcwBtn=document.getElementById('pce-rot-ccw');
+    var rotResetBtn=document.getElementById('pce-rot-reset');
+    if(rotCwBtn)rotCwBtn.onclick=function(){ov.imgRot=(ov.imgRot||0)+15;renderCard();autoSave();};
+    if(rotCcwBtn)rotCcwBtn.onclick=function(){ov.imgRot=(ov.imgRot||0)-15;renderCard();autoSave();};
+    if(rotResetBtn)rotResetBtn.onclick=function(){ov.imgRot=0;renderCard();autoSave();};
+    // ── Custom image upload ──
+    var customImgInput=document.getElementById('pce-custom-img');
+    if(customImgInput)customImgInput.addEventListener('change',function(){
+      if(!customImgInput.files||!customImgInput.files[0])return;
+      var reader=new FileReader();
+      reader.onload=function(e){
+        var img=new Image();
+        img.onload=function(){
+          ov.customImg=e.target.result;
+          if(!ov.customImgDx)ov.customImgDx=0;if(!ov.customImgDy)ov.customImgDy=0;
+          if(!ov.customImgScale)ov.customImgScale=100;
+          renderCard();autoSave();
+        };
+        img.src=e.target.result;
+      };
+      reader.readAsDataURL(customImgInput.files[0]);
+      customImgInput.value='';
+    });
+    // ── Print & Download ──
+    var pcePrintBtn=document.getElementById('pce-print');
+    var pceDlBtn=document.getElementById('pce-download');
+    if(pcePrintBtn)pcePrintBtn.onclick=function(){
+      var dataUrl=cvs.toDataURL('image/png');
+      var _pceIsMob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)||window.innerWidth<=768;
+      if(_pceIsMob){
+        var oldPo=document.getElementById('_pcePrintOverlay');if(oldPo)oldPo.remove();
+        if(!document.getElementById('_pcePrintCSS')){
+          var pCss=document.createElement('style');pCss.id='_pcePrintCSS';
+          pCss.textContent='@media print{body>*:not(#_pcePrintOverlay){display:none!important}#_pcePrintOverlay{position:static!important;padding:0!important}#_pcePrintOverlay button{display:none!important}#_pcePrintOverlay img{max-width:100%;height:auto}}';
+          document.head.appendChild(pCss);
+        }
+        var po=document.createElement('div');po.id='_pcePrintOverlay';
+        po.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:#fff;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px';
+        var pImg=document.createElement('img');pImg.style.cssText='max-width:100%;height:auto;margin-bottom:16px';pImg.src=dataUrl;
+        po.appendChild(pImg);
+        var br=document.createElement('div');br.style.cssText='display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px';
+        var pb=document.createElement('button');pb.textContent='\ud83d\udda8\ufe0f Drucken';pb.style.cssText='padding:12px 32px;font-size:16px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer';
+        pb.onclick=function(){br.style.display='none';setTimeout(function(){window.print();br.style.display='';},100);};
+        var bb=document.createElement('button');bb.textContent='Zur\u00fcck';bb.style.cssText='padding:12px 24px;font-size:16px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer';
+        bb.onclick=function(){po.remove();};
+        br.appendChild(pb);br.appendChild(bb);po.appendChild(br);document.body.appendChild(po);
+      }else{
+        var w=window.open('','_blank');
+        if(!w){alert('Popup-Blocker aktiv!');return;}
+        w.document.write('<html><head><title>Kachel drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"></body></html>');
+        w.document.close();
+        var pi=w.document.getElementById('pi');
+        pi.onload=function(){setTimeout(function(){try{w.focus();w.print();}catch(e){}},300);};
+        pi.src=dataUrl;
+      }
+    };
+    if(pceDlBtn)pceDlBtn.onclick=function(){
+      var dataUrl=cvs.toDataURL('image/png');
+      var a=document.createElement('a');a.href=dataUrl;
+      a.download='Kachel_'+((item.produkt||'Produkt').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_').substring(0,60))+'.png';
+      document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},100);
+    };
     updateCopiesLabel();
   }
 
@@ -6036,7 +6110,9 @@
             var _tsX=touch.clientX,_tsY=touch.clientY;
 
             // ── Touch menu button tap → open context menu immediately ──
-            if(tgt.classList.contains('el-touch-menu')){
+            var _isTouchMenu=tgt.classList&&tgt.classList.contains('el-touch-menu');
+            if(!_isTouchMenu&&tgt.closest)_isTouchMenu=!!tgt.closest('.el-touch-menu');
+            if(_isTouchMenu){
               ev.preventDefault();ev.stopPropagation();
               showCtxMenuForZone(z, _tsX, _tsY);
               return;
@@ -6121,6 +6197,20 @@
             doc.addEventListener('touchmove',onTouchMove,{passive:false});
             doc.addEventListener('touchend',onTouchEnd);
           },{passive:false});
+
+          // ── Click fallback for touch-menu button (some mobile browsers use click instead of touch) ──
+          if(isMobile){
+            doc.addEventListener('click',function(ev){
+              var tgt=ev.target;
+              var isMenu=tgt.classList&&tgt.classList.contains('el-touch-menu');
+              if(!isMenu&&tgt.closest)isMenu=!!tgt.closest('.el-touch-menu');
+              if(!isMenu)return;
+              var z=tgt.closest?tgt.closest('.el-zone'):null;
+              if(!z)return;
+              ev.preventDefault();ev.stopPropagation();
+              showCtxMenuForZone(z, ev.clientX||ev.pageX, ev.clientY||ev.pageY);
+            },true);
+          }
 
           // ── Print style: show print images, hide interactive wraps ──
           if(!isMobile){
