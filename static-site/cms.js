@@ -739,15 +739,15 @@
       if(cached && cached.sc) strichcode=cached.sc;
     }
     return getGraphToken().then(function(token){
-      // 1. Search in main product images folder by artikelnummer (if available)
-      var mainSearch=artnr?_searchFolderForImage(token, SP_FOLDER, artnr):Promise.resolve(null);
-      return mainSearch.then(function(b64){
+      // 1. Search in StrichcodeBilder folder first (by strichcode or artikelnummer)
+      var barcodeKey=strichcode||artnr;
+      var barcodeSearch=barcodeKey?_searchFolderForImage(token, SP_BARCODE_FOLDER, barcodeKey):Promise.resolve(null);
+      return barcodeSearch.then(function(b64){
         if(b64) return b64;
-        // 2. Fallback: search in StrichcodeBilder folder by strichcode (min 5 chars)
-        var barcodeSearch=strichcode||artnr;
-        if(!barcodeSearch) return null;
-        console.log('[CMS] Not found in main folder, trying StrichcodeBilder with',barcodeSearch,'...');
-        return _searchFolderForImage(token, SP_BARCODE_FOLDER, barcodeSearch);
+        // 2. Fallback: search in Werbebilder folder by artikelnummer
+        if(!artnr) return null;
+        console.log('[CMS] Not found in StrichcodeBilder, trying Werbebilder with',artnr,'...');
+        return _searchFolderForImage(token, SP_FOLDER, artnr);
       });
     }).catch(function(e){
       console.error('[CMS] SharePoint image load error for '+(artnr||strichcode),e);
@@ -1073,14 +1073,16 @@
     flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',
     flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true,flyer_imgScale:100,
     flyer_imgAnchorX:10,flyer_imgAnchorY:10,flyer_priceAnchorX:10,flyer_priceAnchorY:10,
-    flyer_imgWidthPct:50
+    flyer_imgWidthPct:50,
+    plakat_borderWidth:0,plakat_borderColor:'#2e7d32',
+    flyer_borderWidth:0,flyer_borderColor:'#2e7d32'
   };
   var PERSEC_SECTIONS=['plakat','flyer'];
-  var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor'];
-  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY','imgWidthPct'];
+  var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor','borderColor'];
+  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY','imgWidthPct','borderWidth'];
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
   var PERSEC_SELECTS=['tagPreset','tagShape'];
-  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%',imgScale:'%',imgAnchorX:'px',imgAnchorY:'px',priceAnchorX:'px',priceAnchorY:'px',imgWidthPct:'%'};
+  var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%',imgScale:'%',imgAnchorX:'px',imgAnchorY:'px',priceAnchorX:'px',priceAnchorY:'px',imgWidthPct:'%',borderWidth:'px'};
   // Merge per-section values into global keys for rendering (e.g. cfg.flyer_tagShape → cfg.tagShape)
   var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
   function cfgForKind(cfg,kind){
@@ -1451,6 +1453,9 @@
       if(lpFlyer)lpFlyer.style.display='none';
       if(refreshBtn)refreshBtn.setAttribute('data-target','plakat');
     }
+    // Auto-trigger preview for the newly activated section
+    var target=secId==='sec-flyer'?'flyer':'plakat';
+    _scheduleAutoPreview('cfg-switch',function(){cfgLivePreview(target);},200);
   };
 
   // ── WP Section Navigation (Homepage / Flyer / Elemente) ──
@@ -3746,7 +3751,10 @@
       'dark-modern':1,
       'organic-market':1,
       'bold-poster':1,
-      'modern-magazine':1
+      'modern-magazine':1,
+      'modern-mag-fresh':1,
+      'modern-mag-bold':1,
+      'modern-mag-xl':1
     };
     return ok[tpl]?tpl:'classic-red';
   }
@@ -3758,7 +3766,10 @@
     'dark-modern':{bgColor:'#0f172a',titleColor:'#e5e7eb',tagColor:'#0ea5e9',cardBg:'#f5f5f5',cardBorder:'#94a3b8',textColor:'#111827',detailsColor:'#334155',imgBg:'#e2e8f0'},
     'organic-market':{bgColor:'#f7f2e7',titleColor:'#355e3b',tagColor:'#8b1e3f',cardBg:'#fffdf8',cardBorder:'#e9dfcf',textColor:'#2f3d2f',detailsColor:'#6b5b48',imgBg:'#faf5eb'},
     'bold-poster':{bgColor:'#fff7ed',titleColor:'#b91c1c',tagColor:'#ea580c',cardBg:'#fffaf2',cardBorder:'#fdba74',textColor:'#7c2d12',detailsColor:'#9a3412',imgBg:'#fff5e6'},
-    'modern-magazine':{bgColor:'#edf4ea',titleColor:'#5e7057',tagColor:'#6f835f',cardBg:'#f6fbf5',cardBorder:'#d2e0cf',textColor:'#2c3a2a',detailsColor:'#5b6d54',imgBg:'#eef5eb'}
+    'modern-magazine':{bgColor:'#edf4ea',titleColor:'#5e7057',tagColor:'#6f835f',cardBg:'#f6fbf5',cardBorder:'#d2e0cf',textColor:'#2c3a2a',detailsColor:'#5b6d54',imgBg:'#eef5eb'},
+    'modern-mag-fresh':{bgColor:'#e8f6f8',titleColor:'#0e7490',tagColor:'#0891b2',cardBg:'#f0fdfa',cardBorder:'#a7f3d0',textColor:'#134e4a',detailsColor:'#4d7c6e',imgBg:'#ecfdf5'},
+    'modern-mag-bold':{bgColor:'#faf5ff',titleColor:'#7c3aed',tagColor:'#db2777',cardBg:'#fefcff',cardBorder:'#e9d5ff',textColor:'#1e1b4b',detailsColor:'#6b21a8',imgBg:'#f5f3ff'},
+    'modern-mag-xl':{bgColor:'#f0f4f8',titleColor:'#1e40af',tagColor:'#2563eb',cardBg:'#ffffff',cardBorder:'#bfdbfe',textColor:'#1e293b',detailsColor:'#475569',imgBg:'#eff6ff'}
   };
   var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor','imgBg'];
   var TPL_GRAD_KEYS=['bgColor','imgBg'];
@@ -3812,7 +3823,11 @@
       imgBg:colors.imgBg||colors.cardBg,
       bgColor_grad:colors.bgColor_grad,bgColor_c2:colors.bgColor_c2,bgColor_dir:colors.bgColor_dir,bgColor_pct:colors.bgColor_pct,
       imgBg_grad:colors.imgBg_grad,imgBg_c2:colors.imgBg_c2,imgBg_dir:colors.imgBg_dir,imgBg_pct:colors.imgBg_pct,
-      showTexture:cfg.showTexture
+      showTexture:cfg.showTexture,
+      // Extended theme keys for full configurability
+      headerBg:null, headerAccent:null, dividerColor:null,
+      priceBarBg:null, priceBarBorder:null, stattColor:null,
+      borderWidth:cfg.borderWidth||0, borderColor:cfg.borderColor||'#000000'
     };
     if(tpl==='minimal-clean'){
       base.dateColor='#374151';base.cardRadius=kind==='flyer'?20:18;
@@ -3830,6 +3845,51 @@
       base.dateColor='#4b5f45';base.footerColor='#4e5f47';
       base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
       base.showTexture=false;
+      base.headerBg='#d6e5d0';base.headerAccent='#8aad7e';
+      base.dividerColor='#e2eade';
+      base.priceBarBg='#eaf3e6';base.priceBarBorder='#c5dbbe';
+      base.stattColor='#8a9e80';
+    }else if(tpl==='modern-mag-fresh'){
+      base.dateColor='#155e75';base.footerColor='#0e7490';
+      base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
+      base.showTexture=false;
+      base.headerBg='#cffafe';base.headerAccent='#06b6d4';
+      base.dividerColor='#a5f3fc';
+      base.priceBarBg='#ecfeff';base.priceBarBorder='#67e8f9';
+      base.stattColor='#0891b2';
+    }else if(tpl==='modern-mag-bold'){
+      base.dateColor='#581c87';base.footerColor='#7c3aed';
+      base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
+      base.showTexture=false;
+      base.headerBg='#ede9fe';base.headerAccent='#8b5cf6';
+      base.dividerColor='#ddd6fe';
+      base.priceBarBg='#f5f3ff';base.priceBarBorder='#c4b5fd';
+      base.stattColor='#7c3aed';
+    }else if(tpl==='modern-mag-xl'){
+      base.dateColor='#1e3a5f';base.footerColor='#1e40af';
+      base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
+      base.showTexture=false;
+      base.headerBg='#dbeafe';base.headerAccent='#3b82f6';
+      base.dividerColor='#bfdbfe';
+      base.priceBarBg='#eff6ff';base.priceBarBorder='#93c5fd';
+      base.stattColor='#2563eb';
+      base.imgZonePct=0.65;
+    }
+    // ── Apply per-section deco color overrides on top of template defaults ──
+    // cfg already has per-section values merged by cfgForKind, check against per-section defaults
+    var secPfx=kind?kind+'_':'';
+    var rawBg=cfg[secPfx+'decoBgColor']||cfg.bgColor;
+    var rawTitle=cfg[secPfx+'decoTitleColor']||cfg.titleColor;
+    var rawFooter=cfg[secPfx+'decoFooterColor']||cfg.decoFooterColor;
+    var defBg=CFG_DEFAULTS[secPfx+'decoBgColor']||CFG_DEFAULTS.bgColor;
+    var defTitle=CFG_DEFAULTS[secPfx+'decoTitleColor']||CFG_DEFAULTS.titleColor;
+    var defFooter=CFG_DEFAULTS[secPfx+'decoFooterColor']||CFG_DEFAULTS.decoFooterColor;
+    if(rawBg && rawBg!==defBg){base.bgColor=rawBg;if(base.headerBg)base.headerBg=rawBg;}
+    if(rawTitle && rawTitle!==defTitle) base.titleColor=rawTitle;
+    if(cfg.leafColor) base.leafColor=cfg.leafColor;
+    if(rawFooter && rawFooter!==defFooter){
+      base.footerColor=rawFooter;
+      if(base.headerAccent) base.headerAccent=rawFooter;
     }
     return base;
   }
@@ -3978,12 +4038,21 @@
       var bis=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
       var logoLoaded=Promise.resolve();
 
-      if(theme.tpl==='modern-magazine'){
+      // ── Border helper (drawn last, on top of everything) ──
+      function drawFlyerBorder(){
+        var bw=theme.borderWidth;
+        if(bw&&bw>0){
+          ctx.save();ctx.strokeStyle=theme.borderColor||'#000';ctx.lineWidth=bw;
+          ctx.strokeRect(bw/2,bw/2,W-bw,H-bw);ctx.restore();
+        }
+      }
+      var isMagLayout=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
+      if(isMagLayout){
         // ── Modern Magazine Einzelflyer: clean centered card layout ──
         ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
         // Header bar
-        ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
-        ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
+        ctx.fillStyle=theme.headerBg||'#d6e5d0';ctx.fillRect(0,0,W,140);
+        ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,138,W,3);
 
         // Date right (draw first so we know its width)
         ctx.fillStyle=theme.dateColor;ctx.font='900 24px Arial Black, Arial, sans-serif';
@@ -4033,8 +4102,8 @@
         ctx.fillStyle=theme.cardBg;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.fill();ctx.restore();
         ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.stroke();
 
-        // Image area (top 55% of card) – fill with imgBg color
-        var imgZoneH=Math.floor(cardMH*0.55);
+        // Image area (top portion of card) – fill with imgBg color
+        var imgZoneH=Math.floor(cardMH*(theme.imgZonePct||0.55));
         ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
         ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardMX,cardMY,cardMW,imgZoneH);ctx.fillRect(cardMX,cardMY,cardMW,imgZoneH);ctx.restore();
         var mgImgPromise=Promise.resolve();
@@ -4076,7 +4145,7 @@
 
           // Divider line
           var divY=cardMY+imgZoneH+4;
-          ctx.strokeStyle='#e2eade';ctx.lineWidth=1;
+          ctx.strokeStyle=theme.dividerColor||'#e2eade';ctx.lineWidth=1;
           ctx.beginPath();ctx.moveTo(cardMX+24,divY);ctx.lineTo(cardMX+cardMW-24,divY);ctx.stroke();
 
           // Text area
@@ -4098,8 +4167,8 @@
 
           // Price section at bottom of card
           var priceBarY=cardMY+cardMH-100;
-          ctx.fillStyle='#eaf3e6';mgFlyerRR(cardMX+24,priceBarY,cardMW-48,72,14);ctx.fill();
-          ctx.strokeStyle='#c5dbbe';ctx.lineWidth=1;mgFlyerRR(cardMX+24,priceBarY,cardMW-48,72,14);ctx.stroke();
+          ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgFlyerRR(cardMX+24,priceBarY,cardMW-48,72,14);ctx.fill();
+          ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgFlyerRR(cardMX+24,priceBarY,cardMW-48,72,14);ctx.stroke();
 
           if(item.preis){
             var pp=Number(item.preis).toFixed(2).split('.');
@@ -4111,22 +4180,24 @@
           }
           if(item.statt_preis){
             var uvp='statt '+Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-            ctx.textAlign='right';ctx.fillStyle='#8a9e80';ctx.font='600 24px Arial, sans-serif';
+            var stc=theme.stattColor||'#8a9e80';
+            ctx.textAlign='right';ctx.fillStyle=stc;ctx.font='600 24px Arial, sans-serif';
             ctx.fillText(uvp,cardMX+cardMW-40,priceBarY+48);
             var uvpW=ctx.measureText(uvp).width;
-            ctx.strokeStyle='#8a9e80';ctx.lineWidth=2;
+            ctx.strokeStyle=stc;ctx.lineWidth=2;
             ctx.beginPath();ctx.moveTo(cardMX+cardMW-40-uvpW,priceBarY+40);ctx.lineTo(cardMX+cardMW-40,priceBarY+40);ctx.stroke();
             ctx.textAlign='left';
           }
 
           // Footer
-          ctx.fillStyle='#8aad7e';ctx.fillRect(0,H-36,W,36);
+          ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
           ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
           ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-12);
           ctx.textAlign='left';
 
           return mgLogoP.then(function(){return logoLoaded;});
         }).then(function(){
+          drawFlyerBorder();
           resolve(c);
         });
         return;
@@ -4310,7 +4381,7 @@
         ctx.fillText('*Solange Vorrat reicht',W/2,H-24);
         ctx.globalAlpha=1.0;ctx.textAlign='left';
         return logoLoaded;
-      }).then(function(){resolve(c);});
+      }).then(function(){drawFlyerBorder();resolve(c);});
     });
   }
 
@@ -4844,14 +4915,15 @@
     var c=document.createElement('canvas');c.width=W;c.height=H;
     var ctx=c.getContext('2d');
 
-    if(theme.tpl==='modern-magazine'){
+    var isMagPlakat=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
+    if(isMagPlakat){
       // ── Modern Magazine: Clean grid card layout ──
       ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
 
       // Header bar
-      ctx.fillStyle='#d6e5d0';ctx.fillRect(0,0,W,140);
+      ctx.fillStyle=theme.headerBg||'#d6e5d0';ctx.fillRect(0,0,W,140);
       // Thin accent line
-      ctx.fillStyle='#8aad7e';ctx.fillRect(0,138,W,3);
+      ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,138,W,3);
 
       // Date right (draw first so we know its width)
       var vonTxt=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
@@ -4983,9 +5055,9 @@
           var p=Number(it.preis);
           if(isFinite(p)){
             var pp=p.toFixed(2).split('.');
-            // Green price tag area
-            ctx.fillStyle='#eaf3e6';mgRRect(cx+cardPadI-4,priceY-42,mgCellW-cardPadI*2+8,46,10);ctx.fill();
-            ctx.strokeStyle='#c5dbbe';ctx.lineWidth=1;mgRRect(cx+cardPadI-4,priceY-42,mgCellW-cardPadI*2+8,46,10);ctx.stroke();
+            // Price tag area
+            ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgRRect(cx+cardPadI-4,priceY-42,mgCellW-cardPadI*2+8,46,10);ctx.fill();
+            ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgRRect(cx+cardPadI-4,priceY-42,mgCellW-cardPadI*2+8,46,10);ctx.stroke();
             // Main price
             ctx.fillStyle=theme.tagColor;ctx.font='900 34px Arial Black, Arial, sans-serif';
             ctx.fillText(pp[0]+','+pp[1],cx+cardPadI+4,priceY-6);
@@ -4995,11 +5067,12 @@
             // Statt-Preis right-aligned
             if(it.statt_preis!=null){
               var uvp=Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-              ctx.textAlign='right';ctx.fillStyle='#8a9e80';ctx.font='600 17px Arial, sans-serif';
+              var stcP=theme.stattColor||'#8a9e80';
+              ctx.textAlign='right';ctx.fillStyle=stcP;ctx.font='600 17px Arial, sans-serif';
               ctx.fillText('statt '+uvp,cx+mgCellW-cardPadI,priceY-18);
               // Strikethrough
               var uvpW=ctx.measureText('statt '+uvp).width;
-              ctx.strokeStyle='#8a9e80';ctx.lineWidth=1.5;
+              ctx.strokeStyle=stcP;ctx.lineWidth=1.5;
               ctx.beginPath();ctx.moveTo(cx+mgCellW-cardPadI-uvpW,priceY-23);ctx.lineTo(cx+mgCellW-cardPadI,priceY-23);ctx.stroke();
               ctx.textAlign='left';
             }
@@ -5008,7 +5081,7 @@
       }
 
       // Footer
-      ctx.fillStyle='#8aad7e';ctx.fillRect(0,H-36,W,36);
+      ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
       ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
       ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-12);
       ctx.textAlign='left';
