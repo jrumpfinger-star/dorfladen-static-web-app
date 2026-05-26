@@ -4169,9 +4169,27 @@
       // Active element highlight
       var ae=_elMeta.find(function(e){return e.id===_activeEl;});
       if(ae){
-        ctx.save();ctx.strokeStyle='#e65100';ctx.lineWidth=2;ctx.setLineDash([6,4]);
-        ctx.strokeRect(ae.x,ae.y,ae.w,ae.h);ctx.restore();
+        var hlColor=_activeEl==='ghost'?'#9333ea':_activeEl==='dup'?'#2563eb':'#e65100';
+        ctx.save();ctx.strokeStyle=hlColor;ctx.lineWidth=2.5;ctx.setLineDash([6,4]);
+        ctx.strokeRect(ae.x,ae.y,ae.w,ae.h);
+        // Label badge
+        if(_activeEl==='ghost'||_activeEl==='dup'){
+          var lbl=_activeEl==='ghost'?'\ud83d\udc7b Ghost':'\ud83d\udcdd Duplikat';
+          ctx.font='bold 11px Arial, sans-serif';var tw=ctx.measureText(lbl).width;
+          ctx.fillStyle=hlColor;ctx.globalAlpha=0.85;
+          ctx.fillRect(ae.x,ae.y-18,tw+10,18);ctx.globalAlpha=1;
+          ctx.fillStyle='#fff';ctx.textAlign='left';ctx.fillText(lbl,ae.x+5,ae.y-5);
+        }
+        ctx.restore();
       }
+      // Always show faint outlines for inactive ghost/dup so user knows they exist
+      _elMeta.forEach(function(em){
+        if(em.id===_activeEl) return;
+        if(em.id==='ghost'||em.id==='dup'){
+          ctx.save();ctx.strokeStyle=em.id==='ghost'?'rgba(147,51,234,0.4)':'rgba(37,99,235,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+          ctx.strokeRect(em.x,em.y,em.w,em.h);ctx.restore();
+        }
+      });
 
       // Info overlays
       ctx.textAlign='left';
@@ -4368,9 +4386,11 @@
     }
     updateGhostBtn();
     ghostBtn.onclick=function(){
-      if(ov.ghostMode==='on'){ov.ghostMode='off';ov.ghostDx=60;ov.ghostDy=-40;}
-      else{ov.ghostMode='on';}
-      updateGhostBtn();renderCard();autoSave();
+      if(ov.ghostMode==='on'){
+        if(_activeEl==='ghost'){ov.ghostMode='off';ov.ghostDx=80;ov.ghostDy=-60;_activeEl='img';}
+        else{_activeEl='ghost';}
+      }else{ov.ghostMode='on';_activeEl='ghost';}
+      updateGhostBtn();updateActiveLabel();renderCard();autoSave();
     };
     // ── Duplikat toggle: adds a full-opacity copy of the image ──
     var dupBtn=document.getElementById('pce-dup');
@@ -4381,9 +4401,11 @@
     }
     updateDupBtn();
     dupBtn.onclick=function(){
-      ov.dupOn=!ov.dupOn;
-      if(!ov.dupOn){ov.dupDx=-50;ov.dupDy=30;ov.dupRot=0;}
-      updateDupBtn();renderCard();autoSave();
+      if(ov.dupOn){
+        if(_activeEl==='dup'){ov.dupOn=false;ov.dupDx=-70;ov.dupDy=50;ov.dupRot=0;_activeEl='img';}
+        else{_activeEl='dup';}
+      }else{ov.dupOn=true;_activeEl='dup';}
+      updateDupBtn();updateActiveLabel();renderCard();autoSave();
     };
   }
 
@@ -4663,7 +4685,7 @@
   var PLAKAT_ART_OVERRIDES_KEY='dl_plakat_article_overrides';
   var _plakatArtOverrides=null;
   function plakatArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:60,ghostDy:-40,ghostAlpha:0.35,ghostRot:0,dupOn:false,dupDx:-50,dupDy:30,dupRot:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.35,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupRot:0};
   }
   function plakatArtOverridesGetAll(){
     if(_plakatArtOverrides)return _plakatArtOverrides;
