@@ -4322,11 +4322,11 @@
         menuItems.push({icon:'\ud83d\udd0d',text:'Bild-Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.imgScale||100)+'%)',action:function(){ov.imgScale=100;syncScaleSlider();renderCard();autoSave();}});
         menuItems.push('hr');
         menuItems.push({icon:'\ud83d\udc7b',text:ov.ghostMode==='on'?'Ghost AUS':'Ghost EIN',action:function(){
-          if(ov.ghostMode==='on'){ov.ghostMode='off';}else{ov.ghostMode='on';}
+          if(ov.ghostMode==='on'){ov.ghostMode='off';}else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=80;ov.ghostDy=-60;}}
           updateGhostBtn();renderCard();autoSave();
         }});
         menuItems.push({icon:'\ud83d\udcdd',text:ov.dupOn?'Duplikat AUS':'Duplikat EIN',action:function(){
-          ov.dupOn=!ov.dupOn;if(!ov.dupOn){ov.dupDx=-50;ov.dupDy=30;ov.dupRot=0;}
+          ov.dupOn=!ov.dupOn;if(ov.dupOn&&!ov.dupDx&&!ov.dupDy){ov.dupDx=-70;ov.dupDy=50;}
           updateDupBtn();renderCard();autoSave();
         }});
       }else if(_activeEl==='price'){
@@ -4701,7 +4701,7 @@
   }
   // Default per-article override object
   function flyerArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:0,ghostDy:0,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:0,dupDy:0,dupOn:false,dupScale:100,dupRot:0,customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:80,ghostDy:-80,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:-80,dupDy:60,dupOn:false,dupScale:100,dupRot:0,customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
   }
 
   // ── Per-Article PLAKAT (Kachel) Layout Overrides ──
@@ -5510,8 +5510,8 @@
             else if(act==='toggle-ghost'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
               var ov=artOvs[idx];
-              if(ov.ghostMode==='on'){ov.ghostMode='auto';ov.ghostDx=0;ov.ghostDy=0;}
-              else{ov.ghostMode='on';}
+              if(ov.ghostMode==='on'){ov.ghostMode='auto';}
+              else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=80;ov.ghostDy=-80;}}
               rebuildCtlBar(idx);
               regenFlyer(idx);flyerAutoSave(idx);
             }
@@ -5519,7 +5519,7 @@
               var idx=parseInt(t.getAttribute('data-idx'),10);
               var ov=artOvs[idx];
               ov.dupOn=!ov.dupOn;
-              if(!ov.dupOn){ov.dupDx=0;ov.dupDy=0;}
+              if(ov.dupOn&&!ov.dupDx&&!ov.dupDy){ov.dupDx=-80;ov.dupDy=60;}
               rebuildCtlBar(idx);
               regenFlyer(idx);flyerAutoSave(idx);
             }
@@ -5681,14 +5681,13 @@
             }
             if(elId==='img'){
               menuItems.push({icon:'\ud83d\udc7b',text:ov.ghostMode==='on'?'Ghost AUS':'Ghost AN',action:function(){
-                if(ov.ghostMode==='on'){ov.ghostMode='auto';ov.ghostDx=0;ov.ghostDy=0;}
-                else{ov.ghostMode='on';ov.ghostDx=ov.ghostDx||60;ov.ghostDy=ov.ghostDy||-80;}
+                if(ov.ghostMode==='on'){ov.ghostMode='auto';}
+                else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=80;ov.ghostDy=-80;}}
                 rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
               menuItems.push({icon:'\ud83d\udcdd',text:ov.dupOn?'Duplikat AUS':'Duplikat AN',action:function(){
                 ov.dupOn=!ov.dupOn;
-                if(ov.dupOn){ov.dupDx=ov.dupDx||80;ov.dupDy=ov.dupDy||-60;}
-                else{ov.dupDx=0;ov.dupDy=0;}
+                if(ov.dupOn&&!ov.dupDx&&!ov.dupDy){ov.dupDx=-80;ov.dupDy=60;}
                 rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
             }
