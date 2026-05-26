@@ -874,6 +874,8 @@
       jahr = d.getFullYear();
       kw = isoWeek(d);
       loadWP();
+      // Pre-load design overrides from Dataverse so they're ready when Design tab opens
+      if(typeof cfgLoadFromDataverse==='function') cfgLoadFromDataverse();
       document.getElementById('cms-status').textContent = 'Verbunden';
       document.getElementById('cms-status').style.color = '#16a34a';
     }catch(e){
@@ -1196,8 +1198,9 @@
     if(cb)cb.checked=!!on;
     try{localStorage.setItem(CFG_COMPACT_KEY,on?'1':'0');}catch(e){}
   }
+  var _dvConfigReady=null; // Promise that resolves when Dataverse config is loaded
   function cfgLoadFromDataverse(){
-    return fetch(API+'/cms-config')
+    _dvConfigReady=fetch(API+'/cms-config')
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.data)return;
@@ -5321,6 +5324,9 @@
       return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){if(b64)it.bild_data=b64;}).catch(function(){});
     });
     Promise.all(fetchPromises).then(function(){
+      // Ensure Dataverse overrides are loaded before building flyers (fixes cross-PC sync)
+      return (_dvConfigReady||Promise.resolve());
+    }).then(function(){
       return Promise.all(items.map(function(item){return generateEinzelflyer(item,data);}));
     }).then(function(canvases){
       if(isMobile){
