@@ -1235,6 +1235,17 @@
           _cfgCurrent=merged;
           cfgApplyUI(merged);
         }
+        // Pre-load HP design config (Wochenplan colors) so previews work without opening Design tab
+        var dvHpDef=res.data['hp_design_config_defaults'];
+        if(dvHpDef&&typeof dvHpDef==='object'){
+          _hpCfgCustomDefaults=dvHpDef;
+        }
+        var dvHpCfg=res.data['hp_design_config'];
+        if(dvHpCfg&&typeof dvHpCfg==='object'){
+          var hpMerged={};for(var hk in HPCFG_DEFAULTS)hpMerged[hk]=dvHpCfg.hasOwnProperty(hk)?dvHpCfg[hk]:HPCFG_DEFAULTS[hk];
+          if(dvHpCfg.wpTplColors)hpMerged.wpTplColors=dvHpCfg.wpTplColors;
+          _hpCfgCurrent=hpMerged;
+        }
       })
       .catch(function(e){console.warn('Design load from Dataverse failed',e);});
   }
@@ -1976,15 +1987,15 @@
   };
   // Wochenplan template color defaults per template
   var WP_TPL_COLOR_DEFAULTS={
-    'classic-red':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',wpBgColor:'#ffffff',wpHeaderDir:'135deg'},
-    'clean-white':{wpHeaderFrom:'#f3f4f6',wpHeaderTo:'#e5e7eb',wpDishColor:'#111827',wpPriceColor:'#374151',wpStripeColor:'#f9fafb',wpDayColor:'#111827',wpBgColor:'#ffffff',wpHeaderDir:'135deg'},
-    'dark-modern':{wpHeaderFrom:'#1e40af',wpHeaderTo:'#1e3a8a',wpDishColor:'#f1f5f9',wpPriceColor:'#93c5fd',wpStripeColor:'#1e293b',wpDayColor:'#60a5fa',wpBgColor:'#0f172a',wpHeaderDir:'135deg'},
-    'tafel':{wpHeaderFrom:'#2d5a3f',wpHeaderTo:'#1a3c28',wpDishColor:'#e8e0d0',wpPriceColor:'#c8b898',wpStripeColor:'#1e4430',wpDayColor:'#e8e0d0',wpBgColor:'#1a3c28',wpHeaderDir:'135deg'},
-    'bento':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1e293b',wpPriceColor:'#059669',wpStripeColor:'#f0fdf4',wpDayColor:'#059669',wpBgColor:'#f8fafc',wpHeaderDir:'135deg'},
-    'timeline':{wpHeaderFrom:'#0284c7',wpHeaderTo:'#0369a1',wpDishColor:'#0f172a',wpPriceColor:'#0284c7',wpStripeColor:'#f0f9ff',wpDayColor:'#0284c7',wpBgColor:'#f0f9ff',wpHeaderDir:'135deg'},
-    'zeitung':{wpHeaderFrom:'#292524',wpHeaderTo:'#1c1917',wpDishColor:'#1c1917',wpPriceColor:'#44403c',wpStripeColor:'#fafaf9',wpDayColor:'#44403c',wpBgColor:'#fafaf9',wpHeaderDir:'to right'}
+    'classic-red':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',wpDayBg:'#e8f5e9',wpBgColor:'#ffffff',wpHeaderDir:'135deg'},
+    'clean-white':{wpHeaderFrom:'#f3f4f6',wpHeaderTo:'#e5e7eb',wpDishColor:'#111827',wpPriceColor:'#374151',wpStripeColor:'#f9fafb',wpDayColor:'#111827',wpDayBg:'#f3f4f6',wpBgColor:'#ffffff',wpHeaderDir:'135deg'},
+    'dark-modern':{wpHeaderFrom:'#1e40af',wpHeaderTo:'#1e3a8a',wpDishColor:'#f1f5f9',wpPriceColor:'#93c5fd',wpStripeColor:'#1e293b',wpDayColor:'#60a5fa',wpDayBg:'#1e3a8a',wpBgColor:'#0f172a',wpHeaderDir:'135deg'},
+    'tafel':{wpHeaderFrom:'#2d5a3f',wpHeaderTo:'#1a3c28',wpDishColor:'#e8e0d0',wpPriceColor:'#c8b898',wpStripeColor:'#1e4430',wpDayColor:'#e8e0d0',wpDayBg:'#2a5840',wpBgColor:'#1a3c28',wpHeaderDir:'135deg'},
+    'bento':{wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1e293b',wpPriceColor:'#059669',wpStripeColor:'#f0fdf4',wpDayColor:'#059669',wpDayBg:'#ecfdf5',wpBgColor:'#f8fafc',wpHeaderDir:'135deg'},
+    'timeline':{wpHeaderFrom:'#0284c7',wpHeaderTo:'#0369a1',wpDishColor:'#0f172a',wpPriceColor:'#0284c7',wpStripeColor:'#f0f9ff',wpDayColor:'#0284c7',wpDayBg:'#e0f2fe',wpBgColor:'#f0f9ff',wpHeaderDir:'135deg'},
+    'zeitung':{wpHeaderFrom:'#292524',wpHeaderTo:'#1c1917',wpDishColor:'#1c1917',wpPriceColor:'#44403c',wpStripeColor:'#fafaf9',wpDayColor:'#44403c',wpDayBg:'#f5f5f4',wpBgColor:'#fafaf9',wpHeaderDir:'to right'}
   };
-  var WP_TPL_COLOR_KEYS=['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor','wpBgColor','wpHeaderDir'];
+  var WP_TPL_COLOR_KEYS=['wpHeaderFrom','wpHeaderTo','wpDishColor','wpPriceColor','wpStripeColor','wpDayColor','wpDayBg','wpBgColor','wpHeaderDir'];
   function getWpTplColors(tplName,cfg,kind){
     var defaults=WP_TPL_COLOR_DEFAULTS[tplName]||WP_TPL_COLOR_DEFAULTS['classic-red'];
     // Look up kind-prefixed key first (e.g. 'home:classic-red'), fall back to legacy non-prefixed key
@@ -3579,7 +3590,7 @@
       ctx.textAlign='left';ctx.fillStyle=cc.wpDishColor;ctx.font='700 42px '+SF;ctx.fillText('Wochenplan',padL,28);
       ctx.fillStyle='#6b7280';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
-      drawRows(headerH+14,120,{cardBg:cc.wpStripeColor,cardBorder:'#e5e7eb',radius:8,dayFill:cc.wpHeaderFrom,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#e5e7eb',dash:[]});
+      drawRows(headerH+14,120,{cardBg:cc.wpStripeColor,cardBorder:'#e5e7eb',radius:8,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#e5e7eb',dash:[]});
       logoLoaded=drawCommonLogo();drawFooter('#9ca3af');
 
     }else if(tpl==='dark-modern'){
@@ -3589,7 +3600,7 @@
       ctx.textAlign='left';ctx.fillStyle=cc.wpDishColor;ctx.font='700 42px '+SF;ctx.fillText('Wochenplan',padL,28);
       ctx.fillStyle='#94a3b8';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle='#334155';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
-      drawRows(headerH+14,120,{cardBg:cc.wpStripeColor,cardBorder:'#334155',radius:10,dayFill:cc.wpHeaderFrom,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#334155',dash:[]});
+      drawRows(headerH+14,120,{cardBg:cc.wpStripeColor,cardBorder:'#334155',radius:10,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#334155',dash:[]});
       logoLoaded=drawCommonLogo();drawFooter('#64748b');
 
     }else if(tpl==='tafel'){
@@ -3605,7 +3616,7 @@
       ctx.textAlign='left';ctx.fillStyle='#ffffff';ctx.font='700 44px '+SF;ctx.fillText('Wochenplan',padL+10,32);
       ctx.fillStyle='#a3d9a5';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL+10,78);
       ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL+10,headerH-4);ctx.lineTo(W-padR-10,headerH-4);ctx.stroke();
-      drawRowsStacked(headerH+10,{cardBg:cc.wpStripeColor,radius:6,dayFill:'rgba(255,255,255,0.12)',dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'rgba(255,255,255,0.1)'});
+      drawRowsStacked(headerH+10,{cardBg:cc.wpStripeColor,radius:6,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'rgba(255,255,255,0.1)'});
       logoLoaded=drawCommonLogo();drawFooter('rgba(255,255,255,0.5)');
 
     }else if(tpl==='bento'){
@@ -3620,10 +3631,10 @@
     }else if(tpl==='timeline'){
       // ── 5. TIMELINE: Vertical line with dots, card per day ──
       ctx.fillStyle=cc.wpBgColor;ctx.fillRect(0,0,W,H);
-      ctx.textAlign='left';ctx.fillStyle=cc.wpDayColor;ctx.font='700 42px '+SF;ctx.fillText('Wochenplan',padL,28);
+      ctx.textAlign='left';ctx.fillStyle=cc.wpDishColor;ctx.font='700 42px '+SF;ctx.fillText('Wochenplan',padL,28);
       ctx.fillStyle='#64748b';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle='#bae6fd';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
-      drawRowsTimeline(headerH+14,{railColor:cc.wpHeaderFrom,cardBg:cc.wpStripeColor,cardBorder:'#e0f2fe',dayFill:cc.wpHeaderTo,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:cc.wpBgColor});
+      drawRowsTimeline(headerH+14,{railColor:cc.wpHeaderFrom,cardBg:cc.wpStripeColor,cardBorder:'#e0f2fe',dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:cc.wpBgColor});
       logoLoaded=drawCommonLogo();drawFooter('#94a3b8');
 
     }else if(tpl==='zeitung'){
@@ -3649,7 +3660,7 @@
       ctx.fillStyle='#6b7280';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle=cc.wpHeaderFrom;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
       ctx.fillStyle='#9ca3af';ctx.font='400 12px '+SF;ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-1);ctx.textAlign='left';
-      drawRows(headerH+14,124,{cardBg:cc.wpStripeColor,cardBorder:'#fecdd3',radius:10,dayFill:cc.wpHeaderFrom,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#fce7f3',dash:[],shadow:'rgba(159,18,57,0.06)',shadowBlur:2});
+      drawRows(headerH+14,124,{cardBg:cc.wpStripeColor,cardBorder:'#fecdd3',radius:10,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#fce7f3',dash:[],shadow:'rgba(159,18,57,0.06)',shadowBlur:2});
       logoLoaded=drawCommonLogo();drawFooter('#9ca3af');
     }
 
