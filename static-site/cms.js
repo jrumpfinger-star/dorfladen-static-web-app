@@ -6203,19 +6203,20 @@
         angebote=[];
         (data.data||[]).forEach(function(a){
           angebote.push({
-            id:a.id,
-            produkt:a.name||'',
-            details:'',
-            preis:a.price,
-            statt_preis:a.old_price,
-            artikelnummer:'',
-            bild_data:'',
-            aktion_titel:'',
-            aktion_id:'',
-            gueltig_von:a.valid_from?a.valid_from.substring(0,10):'',
-            gueltig_bis:a.valid_to?a.valid_to.substring(0,10):'',
-            sortierung:0,
-            status:101001
+            id:a.id||a.dl_angeboteid||'',
+            produkt:a.produkt||a.name||a.dl_produkt||'',
+            details:a.details||a.dl_details||'',
+            preis:a.preis!=null?a.preis:(a.price!=null?a.price:(a.dl_preis||0)),
+            statt_preis:a.statt_preis!=null?a.statt_preis:(a.old_price!=null?a.old_price:(a.dl_statt_preis||0)),
+            artikelnummer:a.artikelnummer||a.dl_artikelnummer||'',
+            bild_data:a.bild_data||a.dl_bild_base64||a.dl_download_url||'',
+            dl_werbebildid:a.dl_werbebildid||'',
+            aktion_titel:a.aktion_titel||a.dl_aktion_titel||'',
+            aktion_id:a.aktion_id||a.dl_aktion_id||'',
+            gueltig_von:(a.gueltig_von||a.valid_from||a.dl_gueltig_von||'').substring(0,10),
+            gueltig_bis:(a.gueltig_bis||a.valid_to||a.dl_gueltig_bis||'').substring(0,10),
+            sortierung:a.sortierung||a.dl_sortierung||0,
+            status:a.status||a.dl_status||101001
           });
         });
         return angebote;
