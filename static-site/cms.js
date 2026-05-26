@@ -3813,16 +3813,16 @@
         var cfg=cfgForKind(cfgGet(),'plakat');
         var theme=getOfferTheme('plakat',cfg);
         var isMag=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
-        // Sort items same way as drawAngebotPlakat (by savings desc)
-        var sorted=items.map(function(it,idx){
-          var sp=getSavingsPercent(it);
-          return {it:it,sp:(sp==null?-1:sp),idx:idx};
-        });
-        sorted.sort(function(a,b){return b.sp!==a.sp?b.sp-a.sp:a.idx-b.idx;});
-        sorted=sorted.slice(0,6);
-        var cols=2,rows=3;
+        var cols=2,rows=3,perPage=cols*rows;
         var cards;
         if(isMag){
+          // Magazine layout sorts items by savings desc (same as drawAngebotPlakat)
+          var sorted=items.map(function(it,idx){
+            var sp=getSavingsPercent(it);
+            return {it:it,sp:(sp==null?-1:sp),idx:idx};
+          });
+          sorted.sort(function(a,b){return b.sp!==a.sp?b.sp-a.sp:a.idx-b.idx;});
+          sorted=sorted.slice(0,perPage);
           var mgGap=16,mgPadX=24,mgPadTop=156,mgPadBot=50;
           var mgCellW=Math.floor((W-mgPadX*2-mgGap)/cols);
           var mgCellH=Math.floor((H-mgPadTop-mgPadBot-(rows-1)*mgGap)/rows);
@@ -3831,15 +3831,17 @@
             return {x:mgPadX+col*(mgCellW+mgGap),y:mgPadTop+row*(mgCellH+mgGap),w:mgCellW,h:mgCellH,origIdx:s.idx};
           });
         }else{
+          // Classic layout uses original item order (no sorting!)
           var headerH=130,footerH=36,cardGap=18;
           var gridTop=headerH+10,gridBot=H-footerH-10;
           var gridW=W-40;
           var cellW=Math.floor((gridW-cardGap)/cols);
           var cellH=Math.floor(((gridBot-gridTop)-(rows-1)*cardGap)/rows);
-          cards=sorted.map(function(s,ci){
+          cards=[];
+          for(var ci=0;ci<Math.min(perPage,items.length);ci++){
             var col=ci%cols, row=Math.floor(ci/cols);
-            return {x:20+col*(cellW+cardGap),y:gridTop+row*(cellH+cardGap),w:cellW,h:cellH,origIdx:s.idx};
-          });
+            cards.push({x:20+col*(cellW+cardGap),y:gridTop+row*(cellH+cardGap),w:cellW,h:cellH,origIdx:ci});
+          }
         }
         cards.forEach(function(card){
           var zone=document.createElement('div');
@@ -3878,11 +3880,12 @@
   function showPlakatCardEditor(item,onDone){
     var ov=plakatArtOverrideGet(item)||plakatArtOverrideDefault();
     var _initOv=JSON.parse(JSON.stringify(ov)); // snapshot for revert
-    // Use Magazine-layout card proportions (2:3 aspect)
-    var CARD_W=380,CARD_H=480;
     var cfg=cfgForKind(cfgGet(),'plakat');
     var theme=getOfferTheme('plakat',cfg);
-    var cardPadI=14,mgRad=14;
+    var isMag=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
+    // Card proportions match actual layout
+    var CARD_W=isMag?380:380,CARD_H=isMag?480:320;
+    var cardPadI=14,mgRad=isMag?14:theme.cardRadius||10;
 
     var html='<div class="cms-modal-bg">';
     html+='<div class="cms-modal" style="max-width:440px;text-align:center">';
@@ -3935,12 +3938,8 @@
       mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.fill();
       ctx.strokeStyle=theme.cardBorder||'#e0e0e0';ctx.lineWidth=1;mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.stroke();
 
-      // Image area (top ~48%)
-      var imgAreaH=Math.floor(CARD_H*0.48);
-      ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
-      ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',0,0,CARD_W,imgAreaH);ctx.fillRect(0,0,CARD_W,imgAreaH);ctx.restore();
-
-      if(imgObj){
+      // Freistellen helper
+      function freistellImg(){
         var ofc=document.createElement('canvas');ofc.width=imgObj.width;ofc.height=imgObj.height;
         var ox=ofc.getContext('2d');ox.drawImage(imgObj,0,0);
         if(cfg.imgFreistellen){
@@ -3949,74 +3948,170 @@
           for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
           ox.putImageData(id,0,0);}catch(e){}
         }
-        var fImgSc=(cfg.imgScale||100)/100*((ov.imgScale||100)/100);
-        var maxIW=CARD_W-cardPadI*2,maxIH=imgAreaH-10;
-        var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc;
-        var iw=ofc.width*scI,ih=ofc.height*scI;
-        var imgX=CARD_W/2-iw/2+(ov.imgDx||0);
-        var imgY=cardPadI+(imgAreaH-ih)/2+(ov.imgDy||0);
-        var pRotRad=(ov.imgRot||0)*Math.PI/180;
+        return ofc;
+      }
+
+      if(isMag){
+        // ── Magazine layout card ──
+        var imgAreaH=Math.floor(CARD_H*0.48);
         ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
-        if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
-        else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
-        ctx.restore();
-        _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgX,y:imgY,w:iw,h:ih,ovKey:'img'});
-      }
-
-      // Savings badge top-right
-      var sp=getSavingsPercent(item);
-      if(sp){
-        var badgeR=22;
-        ctx.fillStyle=theme.tagColor;
-        ctx.beginPath();ctx.arc(CARD_W-cardPadI-badgeR+4,cardPadI+badgeR-4,badgeR,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 18px Arial Black, Arial, sans-serif';
-        ctx.fillText('-'+sp+'%',CARD_W-cardPadI-badgeR+4,cardPadI+badgeR+2);
-        ctx.textAlign='left';
-      }
-
-      // Text area (bottom half)
-      var textTop=imgAreaH+8;
-      // Product name
-      ctx.fillStyle=theme.textColor;ctx.font='700 20px Arial, sans-serif';
-      var nameLines=wrapTextCMS(ctx,(item&&item.produkt)||'Produkt',CARD_W-cardPadI*2).slice(0,2);
-      var ny=textTop+20;
-      nameLines.forEach(function(l){ctx.fillText(l,cardPadI,ny);ny+=24;});
-      // Details
-      if(item&&item.details){
-        ctx.fillStyle=theme.detailsColor;ctx.font='600 15px Arial, sans-serif';
-        ctx.fillText(truncText(ctx,item.details,CARD_W-cardPadI*2),cardPadI,ny+2);
-        ny+=22;
-      }
-
-      // Price area at bottom of card
-      var priceY=CARD_H-cardPadI;
-      var pDx=ov.priceDx||0,pDy=ov.priceDy||0;
-      if(item&&item.preis!=null){
-        var p=Number(item.preis);
-        if(isFinite(p)){
-          var pp=p.toFixed(2).split('.');
-          var priceBarX=cardPadI-4+pDx,priceBarY=priceY-42+pDy,priceBarW=CARD_W-cardPadI*2+8,priceBarH=46;
-          // Price tag area
-          ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgRRect(priceBarX,priceBarY,priceBarW,priceBarH,10);ctx.fill();
-          ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgRRect(priceBarX,priceBarY,priceBarW,priceBarH,10);ctx.stroke();
-          // Main price
-          ctx.fillStyle=theme.tagColor;ctx.font='900 34px Arial Black, Arial, sans-serif';
-          ctx.fillText(pp[0]+','+pp[1],priceBarX+8,priceY-6+pDy);
-          ctx.font='700 20px Arial, sans-serif';
-          var pmw=ctx.measureText(pp[0]+','+pp[1]).width;
-          ctx.fillText('\u20AC',priceBarX+8+pmw+4,priceY-8+pDy);
-          // Statt-Preis right-aligned
-          if(item.statt_preis!=null){
-            var uvp=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-            var stcP=theme.stattColor||'#8a9e80';
-            ctx.textAlign='right';ctx.fillStyle=stcP;ctx.font='600 17px Arial, sans-serif';
-            ctx.fillText('statt '+uvp,priceBarX+priceBarW-4,priceY-18+pDy);
-            var uvpW=ctx.measureText('statt '+uvp).width;
-            ctx.strokeStyle=stcP;ctx.lineWidth=1.5;
-            ctx.beginPath();ctx.moveTo(priceBarX+priceBarW-4-uvpW,priceY-23+pDy);ctx.lineTo(priceBarX+priceBarW-4,priceY-23+pDy);ctx.stroke();
+        ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',0,0,CARD_W,imgAreaH);ctx.fillRect(0,0,CARD_W,imgAreaH);ctx.restore();
+        if(imgObj){
+          var ofc=freistellImg();
+          var fImgSc=(cfg.imgScale||100)/100*((ov.imgScale||100)/100);
+          var maxIW=CARD_W-cardPadI*2,maxIH=imgAreaH-10;
+          var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc;
+          var iw=ofc.width*scI,ih=ofc.height*scI;
+          var imgX=CARD_W/2-iw/2+(ov.imgDx||0),imgY=cardPadI+(imgAreaH-ih)/2+(ov.imgDy||0);
+          var pRotRad=(ov.imgRot||0)*Math.PI/180;
+          ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
+          if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
+          else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
+          ctx.restore();
+          _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgX,y:imgY,w:iw,h:ih,ovKey:'img'});
+        }
+        // Savings badge
+        var sp=getSavingsPercent(item);
+        if(sp){
+          var badgeR=22;
+          ctx.fillStyle=theme.tagColor;
+          ctx.beginPath();ctx.arc(CARD_W-cardPadI-badgeR+4,cardPadI+badgeR-4,badgeR,0,Math.PI*2);ctx.fill();
+          ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 18px Arial Black, Arial, sans-serif';
+          ctx.fillText('-'+sp+'%',CARD_W-cardPadI-badgeR+4,cardPadI+badgeR+2);ctx.textAlign='left';
+        }
+        // Text area
+        var textTop=imgAreaH+8;
+        ctx.fillStyle=theme.textColor;ctx.font='700 20px Arial, sans-serif';
+        var nameLines=wrapTextCMS(ctx,(item&&item.produkt)||'Produkt',CARD_W-cardPadI*2).slice(0,2);
+        var ny=textTop+20;
+        nameLines.forEach(function(l){ctx.fillText(l,cardPadI,ny);ny+=24;});
+        if(item&&item.details){
+          ctx.fillStyle=theme.detailsColor;ctx.font='600 15px Arial, sans-serif';
+          ctx.fillText(truncText(ctx,item.details,CARD_W-cardPadI*2),cardPadI,ny+2);ny+=22;
+        }
+        // Price bar
+        var priceY=CARD_H-cardPadI,pDx=ov.priceDx||0,pDy=ov.priceDy||0;
+        if(item&&item.preis!=null){
+          var p=Number(item.preis);
+          if(isFinite(p)){
+            var pp=p.toFixed(2).split('.');
+            var priceBarX=cardPadI-4+pDx,priceBarY=priceY-42+pDy,priceBarW=CARD_W-cardPadI*2+8,priceBarH=46;
+            ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgRRect(priceBarX,priceBarY,priceBarW,priceBarH,10);ctx.fill();
+            ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgRRect(priceBarX,priceBarY,priceBarW,priceBarH,10);ctx.stroke();
+            ctx.fillStyle=theme.tagColor;ctx.font='900 34px Arial Black, Arial, sans-serif';
+            ctx.fillText(pp[0]+','+pp[1],priceBarX+8,priceY-6+pDy);
+            ctx.font='700 20px Arial, sans-serif';
+            var pmw=ctx.measureText(pp[0]+','+pp[1]).width;
+            ctx.fillText('\u20AC',priceBarX+8+pmw+4,priceY-8+pDy);
+            if(item.statt_preis!=null){
+              var uvp=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
+              var stcP=theme.stattColor||'#8a9e80';
+              ctx.textAlign='right';ctx.fillStyle=stcP;ctx.font='600 17px Arial, sans-serif';
+              ctx.fillText('statt '+uvp,priceBarX+priceBarW-4,priceY-18+pDy);
+              var uvpW=ctx.measureText('statt '+uvp).width;
+              ctx.strokeStyle=stcP;ctx.lineWidth=1.5;
+              ctx.beginPath();ctx.moveTo(priceBarX+priceBarW-4-uvpW,priceY-23+pDy);ctx.lineTo(priceBarX+priceBarW-4,priceY-23+pDy);ctx.stroke();
+              ctx.textAlign='left';
+            }
+            _elMeta.push({id:'price',label:'\ud83d\udcb0 Preis',x:priceBarX,y:priceBarY,w:priceBarW,h:priceBarH,ovKey:'price'});
+          }
+        }
+      }else{
+        // ── Classic layout card (text top, image left, skewed price tag right) ──
+        var cardPad=cardPadI;
+        // Leaf decoration
+        if(cfg.showLeaf){
+          ctx.save();ctx.globalAlpha=1.0;ctx.fillStyle=cfg.leafColor;
+          ctx.translate(CARD_W-45,30);ctx.rotate(-0.4);
+          ctx.beginPath();ctx.moveTo(0,0);var lsz=cfg.leafSize;
+          ctx.bezierCurveTo(lsz*0.3,-lsz*0.6,lsz*0.7,-lsz*0.6,lsz,0);
+          ctx.bezierCurveTo(lsz*0.7,lsz*0.6,lsz*0.3,lsz*0.6,0,0);
+          ctx.fill();ctx.strokeStyle=cfg.leafColor;ctx.lineWidth=1.5;ctx.globalAlpha=0.6;
+          ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(lsz*0.9,0);ctx.stroke();ctx.restore();
+        }
+        // Product name + details (fixed height)
+        var textX=cardPad,textY=cardPad+20;
+        var fixedTextH=28*2+26;
+        ctx.fillStyle=theme.textColor;ctx.font='900 24px Arial Black, Arial, sans-serif';ctx.textAlign='left';
+        var nameLines=wrapTextCMS(ctx,item.produkt||'',CARD_W-cardPad*2-30).slice(0,2);
+        nameLines.forEach(function(ln){ctx.fillText(ln,textX,textY);textY+=28;});
+        if(item.details){
+          ctx.fillStyle=theme.detailsColor;ctx.font='16px Arial, sans-serif';
+          ctx.fillText(truncText(ctx,item.details,CARD_W-cardPad*2),textX,textY+4);
+        }
+        // Image area
+        var imgAreaTop=cardPad+fixedTextH+8;
+        var imgAreaH=CARD_H-fixedTextH-cardPad*2-8;
+        ctx.save();mgRRect(0,imgAreaTop,CARD_W,imgAreaH+cardPad,mgRad);ctx.clip();
+        ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',0,imgAreaTop,CARD_W,imgAreaH+cardPad);ctx.fillRect(0,imgAreaTop,CARD_W,imgAreaH+cardPad);ctx.restore();
+        if(imgObj){
+          var ofc=freistellImg();
+          var pImgSc=(cfg.imgScale||100)/100*((ov.imgScale||100)/100);
+          var maxImgW=CARD_W*0.52,maxImgH=imgAreaH*0.88;
+          var scl=Math.min(maxImgW/ofc.width,maxImgH/ofc.height,cfg.imgMaxScale)*pImgSc;
+          var iw=ofc.width*scl,ih=ofc.height*scl;
+          var imgCX=cardPad+maxImgW*0.45+(ov.imgDx||0);
+          var imgCY=imgAreaTop+imgAreaH*0.5+(ov.imgDy||0);
+          var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(ov.imgRot||0)*Math.PI/180;
+          ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
+          ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
+          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
+          _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgCX-iw/2,y:imgCY-ih/2,w:iw,h:ih,ovKey:'img'});
+        }
+        // Skewed price tag (right side)
+        var pDx=ov.priceDx||0,pDy=ov.priceDy||0;
+        if(item.preis){
+          var preisStr=Number(item.preis).toFixed(2).split('.');
+          var tagSc=(cfg.tagScale||100)/100;
+          var tagW=Math.round(130*tagSc),tagH=Math.round(58*tagSc);
+          var tagCX=CARD_W-cardPad-tagW/2-10+pDx;
+          var tagCY=imgAreaTop+imgAreaH*0.4+pDy;
+          var pSkew=cfg.tagSkew/100;
+          ctx.save();ctx.translate(tagCX,tagCY);ctx.rotate(-0.05);ctx.transform(1,-pSkew,0,1,0,0);
+          ctx.shadowColor='rgba(100,0,0,0.4)';ctx.shadowBlur=2;ctx.shadowOffsetX=6;ctx.shadowOffsetY=6;
+          ctx.fillStyle=theme.tagColor;fillTagShape(ctx,tagW,tagH,cfg);ctx.restore();
+          // Gloss + text
+          ctx.save();ctx.translate(tagCX,tagCY);ctx.rotate(-0.05);ctx.transform(1,-pSkew,0,1,0,0);
+          var glanz=ctx.createLinearGradient(-tagW/2,-tagH/2,tagW/2,tagH/2);
+          glanz.addColorStop(0,'rgba(255,255,255,0.12)');glanz.addColorStop(0.5,'rgba(255,255,255,0)');
+          ctx.fillStyle=glanz;fillTagShape(ctx,tagW,tagH,cfg);
+          ctx.fillStyle='#ffffff';ctx.textAlign='left';ctx.transform(1,pSkew,0,1,0,0);
+          var fs=cfg.priceFontPlakat,cs=Math.round(fs*0.55),es=Math.round(fs*0.35);
+          ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';
+          var mainStr=preisStr[0]+',';var mw2=ctx.measureText(mainStr).width;
+          ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';var cw2=ctx.measureText(preisStr[1]).width;
+          ctx.font='bold '+es+'px Arial, sans-serif';var ew2=ctx.measureText('\u20AC').width;
+          var tw=mw2+cw2+ew2+3;
+          if(tw>tagW-20){var sc2=(tagW-20)/tw;fs=Math.round(fs*sc2);cs=Math.round(cs*sc2);es=Math.round(es*sc2);
+            ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';mw2=ctx.measureText(mainStr).width;
+            ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';cw2=ctx.measureText(preisStr[1]).width;
+            ctx.font='bold '+es+'px Arial, sans-serif';ew2=ctx.measureText('\u20AC').width;tw=mw2+cw2+ew2+3;}
+          var px=-tw/2,py=fs*0.35;
+          ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';ctx.fillText(mainStr,px,py);
+          ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';ctx.fillText(preisStr[1],px+mw2+2,py-fs*0.3);
+          ctx.font='bold '+es+'px Arial, sans-serif';ctx.fillText('\u20AC',px+mw2+cw2+3,py-fs*0.28);
+          ctx.restore();
+          // Hit area for price tag
+          _elMeta.push({id:'price',label:'\ud83c\udff7 Preis',x:tagCX-tagW/2,y:tagCY-tagH/2,w:tagW,h:tagH,ovKey:'price'});
+          // Statt-Preis
+          if(item.statt_preis){
+            var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
+            var stFs=Math.round(16*tagSc);
+            ctx.fillStyle=cfg.stattColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
+            var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
+            ctx.fillText(stattStr,tagCX,tagCY+tagBottom+Math.round(30*tagSc));
+            var stW=ctx.measureText(stattStr).width;
+            ctx.strokeStyle=cfg.stattColor;ctx.lineWidth=1.5;
+            ctx.beginPath();ctx.moveTo(tagCX-stW/2,tagCY+tagBottom+Math.round(30*tagSc)-stFs*0.35);
+            ctx.lineTo(tagCX+stW/2,tagCY+tagBottom+Math.round(30*tagSc)-stFs*0.35);ctx.stroke();
             ctx.textAlign='left';
           }
-          _elMeta.push({id:'price',label:'\ud83d\udcb0 Preis',x:priceBarX,y:priceBarY,w:priceBarW,h:priceBarH,ovKey:'price'});
+          // Savings badge
+          var sp=getSavingsPercent(item);
+          if(sp){
+            ctx.fillStyle=theme.tagColor;ctx.font='bold '+Math.round(14*tagSc)+'px Arial, sans-serif';ctx.textAlign='center';
+            ctx.fillText('-'+sp+'%',tagCX,tagCY-tagH/2-Math.round(12*tagSc));ctx.textAlign='left';
+          }
         }
       }
 
