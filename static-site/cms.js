@@ -964,6 +964,20 @@
     var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
     history.replaceState({cmsTab:'wp'},'','');
     window.addEventListener('popstate',function(e){
+      // Close any open modal on back button
+      if(e.state&&e.state.cmsModal) return; // just consumed the modal-open pushState
+      var modalWrap=document.getElementById('cms-modal-wrap');
+      if(modalWrap&&modalWrap.style.display!=='none'&&modalWrap.innerHTML!==''){
+        // Try Kachel-Editor close first (has revert logic)
+        var pceSave=document.getElementById('pce-save');
+        if(pceSave){pceSave.click();return;}
+        if(typeof window.cmsCloseModal==='function') window.cmsCloseModal();
+        return;
+      }
+      // Close Einzelflyer mobile overlay
+      var mobRoot=document.getElementById('einzelflyer-mob-root');
+      if(mobRoot){mobRoot.remove();return;}
+
       if(e.state&&e.state.cmsTab){
         cmsTab(e.state.cmsTab,true);
         return;
@@ -2628,6 +2642,17 @@
     document.getElementById('cms-modal-wrap').style.display='none';
     document.getElementById('cms-modal-wrap').innerHTML='';
   };
+  // Auto-push history state when a modal opens, so mobile back button can close it
+  (function(){
+    var mw=document.getElementById('cms-modal-wrap');
+    if(!mw)return;
+    var obs=new MutationObserver(function(){
+      if(mw.style.display!=='none'&&mw.innerHTML!==''){
+        history.pushState({cmsModal:true},'','');
+      }
+    });
+    obs.observe(mw,{attributes:true,childList:true});
+  })();
 
   function getNoticeValue(){
     var sel=document.getElementById('cms-meal-notice-sel');
@@ -3880,11 +3905,11 @@
     html+='<div class="cms-modal" style="max-width:440px;text-align:center">';
     html+='<h3 style="margin:0 0 4px;font-size:15px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+'</h3>';
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen, Rechtsklick = Men\u00fc')+'</p>';
+    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc</p>';
     html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
     html+='<div id="pce-wrap" style="position:relative;display:inline-block;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab">';
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'"></canvas>';
-    if(_pceIsMobile) html+='<div id="pce-ctx-btn" style="position:absolute;top:6px;right:6px;width:34px;height:34px;background:#e65100;color:#fff;border:2px solid #fff;border-radius:50%;font-size:18px;line-height:30px;text-align:center;cursor:pointer;z-index:10;box-shadow:0 2px 6px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent">\u22EF</div>';
+    html+='<div id="pce-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5"></div>';
     html+='</div>';
     html+='<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px">';
     html+='<span style="font-size:12px;color:#6b7280">\ud83d\udd0d Gr\u00f6\u00dfe</span>';
@@ -3937,7 +3962,7 @@
     }
 
     // Autosave: persist overrides after each visual change (debounced)
-    var _autoSaveTimer=null;
+    var _autoSaveTimer=null,_rebuildingOverlay=false;
     function autoSave(){
       clearTimeout(_autoSaveTimer);
       _autoSaveTimer=setTimeout(function(){plakatArtOverrideSave(item,ov);},300);
@@ -4218,6 +4243,73 @@
       if(ov.imgRot){ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='right';ctx.fillText(ov.imgRot+'\u00b0',CARD_W-8,CARD_H-8);}
       if(ov.imgScale!==100){ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='left';ctx.fillText((ov.imgScale||100)+'%',8,CARD_H-8);}
       ctx.textAlign='left';
+      // Rebuild overlay zones after render (guard against recursion)
+      if(!_rebuildingOverlay&&typeof rebuildPceOverlay==='function'){_rebuildingOverlay=true;rebuildPceOverlay();_rebuildingOverlay=false;}
+    }
+
+    // ── Rebuild HTML overlay zones from _elMeta ──
+    function rebuildPceOverlay(){
+      var ovDiv=document.getElementById('pce-overlay');
+      if(!ovDiv)return;
+      var wrap=document.getElementById('pce-wrap');
+      if(!wrap)return;
+      var wW=wrap.offsetWidth,wH=wrap.offsetHeight;
+      if(!wW||!wH)return;
+      var zh='';
+      _elMeta.forEach(function(el){
+        var pctL=(el.x/CARD_W*100).toFixed(2),pctT=(el.y/CARD_H*100).toFixed(2);
+        var pctW=(el.w/CARD_W*100).toFixed(2),pctH=(el.h/CARD_H*100).toFixed(2);
+        var isCopy=el.id.indexOf('copy-')===0;
+        var isActive=(el.id===_activeEl);
+        var borderColor=el.id==='ghost'?'#9333ea':el.id==='dup'?'#2563eb':isCopy?'#d97706':'#e65100';
+        var bgAlpha=isActive?'0.08':'0.02';
+        zh+='<div class="pce-zone" data-el="'+el.id+'" data-ov="'+(el.ovKey||'')+'"'
+          +' style="position:absolute;left:'+pctL+'%;top:'+pctT+'%;width:'+pctW+'%;height:'+pctH+'%;'
+          +'border:2px '+(isActive?'solid':'dashed')+' '+borderColor+';'
+          +'background:rgba('+(_hexToRgb(borderColor)||'230,81,0')+','+bgAlpha+');'
+          +'border-radius:4px;pointer-events:auto;cursor:grab;box-sizing:border-box;'
+          +'transition:border-color 0.15s">'
+          +'<span style="position:absolute;top:0;left:0;background:'+borderColor+';color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:0 0 4px 0;line-height:1.2;white-space:nowrap;pointer-events:none">'+el.label+'</span>'
+          +'<div class="pce-el-menu" data-el="'+el.id+'" style="position:absolute;top:2px;right:2px;width:22px;height:22px;background:'+borderColor+';color:#fff;border:1.5px solid #fff;border-radius:50%;font-size:13px;line-height:19px;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 1px 3px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent">\u22EF</div>'
+          +'</div>';
+      });
+      ovDiv.innerHTML=zh;
+      // Bind ⋯ buttons
+      var menuBtns=ovDiv.querySelectorAll('.pce-el-menu');
+      for(var bi=0;bi<menuBtns.length;bi++){(function(btn){
+        function openMenu(e){
+          e.preventDefault();e.stopPropagation();
+          var elId=btn.getAttribute('data-el');
+          _activeEl=elId;
+          updateActiveLabel();renderCard();
+          _pceCtxJustOpened=true;
+          setTimeout(function(){_pceCtxJustOpened=false;},400);
+          var r=btn.getBoundingClientRect();
+          openPceCtxMenu(r.left, r.bottom+4);
+        }
+        btn.addEventListener('click',openMenu);
+        btn.addEventListener('touchend',openMenu);
+      })(menuBtns[bi]);}
+      // Bind zone click = select element
+      var zones=ovDiv.querySelectorAll('.pce-zone');
+      for(var zi=0;zi<zones.length;zi++){(function(z){
+        z.addEventListener('mousedown',function(e){
+          if(e.target.classList.contains('pce-el-menu'))return;
+          var elId=z.getAttribute('data-el');
+          _activeEl=elId;
+          updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();renderCard();
+        });
+        z.addEventListener('touchstart',function(e){
+          if(e.target.classList.contains('pce-el-menu'))return;
+          var elId=z.getAttribute('data-el');
+          _activeEl=elId;
+          updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();renderCard();
+        },{passive:true});
+      })(zones[zi]);}
+    }
+    function _hexToRgb(hex){
+      var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+      return r+','+g+','+b;
     }
 
     // Update active element label
@@ -4468,27 +4560,18 @@
       var mr=menu.getBoundingClientRect();
       if(mr.right>window.innerWidth) menu.style.left=(window.innerWidth-mr.width-4)+'px';
       if(mr.bottom>window.innerHeight) menu.style.top=(window.innerHeight-mr.height-4)+'px';
-      function closeCtx(){menu.remove();document.removeEventListener('click',closeCtx);}
-      setTimeout(function(){document.addEventListener('click',closeCtx);},0);
+      function closeCtx(){
+        if(_pceCtxJustOpened){_pceCtxJustOpened=false;return;}
+        menu.remove();document.removeEventListener('click',closeCtx);
+      }
+      setTimeout(function(){document.addEventListener('click',closeCtx);},50);
     }
+    var _pceCtxJustOpened=false;
     cvs.addEventListener('contextmenu',function(ev){
       ev.preventDefault();
       openPceCtxMenu(ev.clientX, ev.clientY);
     });
-    // ── ⋯ button for mobile context menu ──
-    var pceCtxBtn=document.getElementById('pce-ctx-btn');
-    if(pceCtxBtn){
-      pceCtxBtn.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        var r=pceCtxBtn.getBoundingClientRect();
-        openPceCtxMenu(r.left, r.bottom+4);
-      });
-      pceCtxBtn.addEventListener('touchend',function(e){
-        e.preventDefault();e.stopPropagation();
-        var r=pceCtxBtn.getBoundingClientRect();
-        openPceCtxMenu(r.left, r.bottom+4);
-      });
-    }
+    // ⋯ buttons are now in the per-element overlay zones (rebuildPceOverlay)
 
     // ── Buttons ──
     function closeEditor(revert){
