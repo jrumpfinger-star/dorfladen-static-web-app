@@ -4592,18 +4592,26 @@
         d.innerHTML='<span>'+mi.icon+'</span><span>'+mi.text+'</span>';
         d.onmouseenter=function(){d.style.background='#f3f4f6';};
         d.onmouseleave=function(){d.style.background='none';};
-        d.addEventListener('click',function(e){e.stopPropagation();menu.remove();mi.action();});
+        function doAction(e){e.preventDefault();e.stopPropagation();menu.remove();document.removeEventListener('click',closeCtx);document.removeEventListener('touchstart',closeCtx);mi.action();}
+        d.addEventListener('click',doAction);
+        d.addEventListener('touchend',doAction);
         menu.appendChild(d);
       });
       document.body.appendChild(menu);
       var mr=menu.getBoundingClientRect();
       if(mr.right>window.innerWidth) menu.style.left=(window.innerWidth-mr.width-4)+'px';
       if(mr.bottom>window.innerHeight) menu.style.top=(window.innerHeight-mr.height-4)+'px';
-      function closeCtx(){
+      function closeCtx(ev){
         if(_pceCtxJustOpened){_pceCtxJustOpened=false;return;}
-        menu.remove();document.removeEventListener('click',closeCtx);
+        if(ev&&ev.target&&ev.target.closest&&ev.target.closest('#pce-ctx-menu'))return;
+        menu.remove();
+        document.removeEventListener('click',closeCtx);
+        document.removeEventListener('touchstart',closeCtx);
       }
-      setTimeout(function(){document.addEventListener('click',closeCtx);},50);
+      setTimeout(function(){
+        document.addEventListener('click',closeCtx);
+        document.addEventListener('touchstart',closeCtx,{passive:true});
+      },50);
     }
     var _pceCtxJustOpened=false;
     cvs.addEventListener('contextmenu',function(ev){
@@ -6119,14 +6127,19 @@
           }
           var _ctxJustOpenedAt=0;
           function _ctxGuard(){return (Date.now()-_ctxJustOpenedAt)<500;}
-          doc.addEventListener('click',function(ev){
+          // Close menu on click or touchstart anywhere
+          function _dismissCtx(ev){
             if(_ctxGuard())return;
+            // Don't close if clicking inside the menu itself
+            if(ev.target.closest&&ev.target.closest('#fly-ctx-menu'))return;
             hideCtxMenu();
-          });
-          if(isMobile) document.addEventListener('click',function(ev){
-            if(_ctxGuard())return;
-            hideCtxMenu();
-          });
+          }
+          doc.addEventListener('click',_dismissCtx);
+          doc.addEventListener('touchstart',_dismissCtx,{passive:true});
+          if(isMobile&&doc!==document){
+            document.addEventListener('click',_dismissCtx);
+            document.addEventListener('touchstart',_dismissCtx,{passive:true});
+          }
           function showCtxMenuForZone(z, clientX, clientY){
             selectZone(z);
             hideCtxMenu();
