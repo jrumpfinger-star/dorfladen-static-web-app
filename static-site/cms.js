@@ -1123,10 +1123,10 @@
     savingsScalePlakat:95,savingsScaleFlyer:120,
     plakatTemplate:'classic-red',flyerTemplate:'classic-red',
     plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,plakat_tagScale:100,
-    plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',
+    plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',plakat_vorratColor:'#888888',
     plakat_showLeaf:false,plakat_leafSize:34,plakat_showBag:false,plakat_showTexture:true,plakat_imgScale:100,
     flyer_tagPreset:'',flyer_tagShape:'rect',flyer_tagRadius:0,flyer_tagSkew:18,flyer_tagScale:100,
-    flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',
+    flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',flyer_vorratColor:'#888888',
     flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true,flyer_imgScale:100,
     flyer_imgAnchorX:10,flyer_imgAnchorY:10,flyer_priceAnchorX:10,flyer_priceAnchorY:10,
     flyer_imgWidthPct:50,
@@ -1134,7 +1134,7 @@
     flyer_borderWidth:0,flyer_borderColor:'#2e7d32'
   };
   var PERSEC_SECTIONS=['plakat','flyer'];
-  var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor','borderColor'];
+  var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor','vorratColor','borderColor'];
   var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY','imgWidthPct','borderWidth'];
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
   var PERSEC_SELECTS=['tagPreset','tagShape'];
@@ -3975,24 +3975,26 @@
           var pRotRad=(ov.imgRot||0)*Math.PI/180;
           // Ghost overlay (behind main image)
           if(ov.ghostMode==='on'){
+            var gSc=(ov.ghostScale||100)/100;var giw=iw*gSc,gih=ih*gSc;
             var gx=imgX+(ov.ghostDx||0),gy=imgY+(ov.ghostDy||0);
             var gRot=pRotRad+((ov.ghostRot||0)*Math.PI/180);
             ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
             ctx.globalAlpha=ov.ghostAlpha||0.35;
-            if(gRot){ctx.translate(gx+iw/2,gy+ih/2);ctx.rotate(gRot);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
-            else{ctx.drawImage(ofc,gx,gy,iw,ih);}
+            if(gRot){ctx.translate(gx+giw/2,gy+gih/2);ctx.rotate(gRot);ctx.drawImage(ofc,-giw/2,-gih/2,giw,gih);}
+            else{ctx.drawImage(ofc,gx,gy,giw,gih);}
             ctx.globalAlpha=1.0;ctx.restore();
-            _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:gx,y:gy,w:iw,h:ih,ovKey:'ghost'});
+            _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:gx,y:gy,w:giw,h:gih,ovKey:'ghost'});
           }
           // Duplicate overlay (behind main image)
           if(ov.dupOn){
+            var dSc=(ov.dupScale||100)/100;var diw=iw*dSc,dih=ih*dSc;
             var dx2=imgX+(ov.dupDx||0),dy2=imgY+(ov.dupDy||0);
             var dRot=pRotRad+((ov.dupRot||0)*Math.PI/180);
             ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
-            if(dRot){ctx.translate(dx2+iw/2,dy2+ih/2);ctx.rotate(dRot);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
-            else{ctx.drawImage(ofc,dx2,dy2,iw,ih);}
+            if(dRot){ctx.translate(dx2+diw/2,dy2+dih/2);ctx.rotate(dRot);ctx.drawImage(ofc,-diw/2,-dih/2,diw,dih);}
+            else{ctx.drawImage(ofc,dx2,dy2,diw,dih);}
             ctx.restore();
-            _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2,y:dy2,w:iw,h:ih,ovKey:'dup'});
+            _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2,y:dy2,w:diw,h:dih,ovKey:'dup'});
           }
           // Main image
           ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
@@ -4086,22 +4088,24 @@
           var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(ov.imgRot||0)*Math.PI/180;
           // Ghost overlay (behind main image)
           if(ov.ghostMode==='on'){
+            var gSc2=(ov.ghostScale||100)/100;var giw2=iw*gSc2,gih2=ih*gSc2;
             var gx=imgCX+(ov.ghostDx||0),gy=imgCY+(ov.ghostDy||0);
             var gRot=-pRotRad+((ov.ghostRot||0)*Math.PI/180);
             ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
             ctx.globalAlpha=ov.ghostAlpha||0.35;
             ctx.translate(gx,gy);ctx.rotate(gRot);
-            ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.globalAlpha=1.0;ctx.restore();
-            _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:gx-iw/2,y:gy-ih/2,w:iw,h:ih,ovKey:'ghost'});
+            ctx.drawImage(ofc,-giw2/2,-gih2/2,giw2,gih2);ctx.globalAlpha=1.0;ctx.restore();
+            _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:gx-giw2/2,y:gy-gih2/2,w:giw2,h:gih2,ovKey:'ghost'});
           }
           // Duplicate overlay (behind main image)
           if(ov.dupOn){
+            var dSc2=(ov.dupScale||100)/100;var diw2=iw*dSc2,dih2=ih*dSc2;
             var dx2=imgCX+(ov.dupDx||0),dy2=imgCY+(ov.dupDy||0);
             var dRot=-pRotRad+((ov.dupRot||0)*Math.PI/180);
             ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
             ctx.translate(dx2,dy2);ctx.rotate(dRot);
-            ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
-            _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2-iw/2,y:dy2-ih/2,w:iw,h:ih,ovKey:'dup'});
+            ctx.drawImage(ofc,-diw2/2,-dih2/2,diw2,dih2);ctx.restore();
+            _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2-diw2/2,y:dy2-dih2/2,w:diw2,h:dih2,ovKey:'dup'});
           }
           // Main image
           ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
@@ -4234,7 +4238,7 @@
       var my=(ev.clientY-rect.top)*(CARD_H/rect.height);
       var hit=hitTest(mx,my);
       if(hit) _activeEl=hit;
-      updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();renderCard();
+      updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();renderCard();
       dragging=true;
       dragStartX=ev.clientX;dragStartY=ev.clientY;
       if(_activeEl==='img'){startDx=ov.imgDx||0;startDy=ov.imgDy||0;}
@@ -4263,13 +4267,22 @@
     // ── Scale slider ──
     var scaleSlider=document.getElementById('pce-scale');
     var scaleValEl=document.getElementById('pce-scale-val');
+    function _curScale(){
+      if(_activeEl==='ghost') return ov.ghostScale||100;
+      if(_activeEl==='dup') return ov.dupScale||100;
+      return ov.imgScale||100;
+    }
     function syncScaleSlider(){
-      if(scaleSlider){scaleSlider.value=ov.imgScale||100;}
-      if(scaleValEl){scaleValEl.textContent=(ov.imgScale||100)+'%';}
+      var v=_curScale();
+      if(scaleSlider){scaleSlider.value=v;}
+      if(scaleValEl){scaleValEl.textContent=v+'%';}
     }
     if(scaleSlider){
       scaleSlider.addEventListener('input',function(){
-        ov.imgScale=parseInt(scaleSlider.value,10);
+        var v=parseInt(scaleSlider.value,10);
+        if(_activeEl==='ghost'){ov.ghostScale=v;}
+        else if(_activeEl==='dup'){ov.dupScale=v;}
+        else{ov.imgScale=v;}
         syncScaleSlider();renderCard();autoSave();
       });
     }
@@ -4277,11 +4290,12 @@
     // ── Mouse wheel to scale image ──
     cvs.addEventListener('wheel',function(ev){
       ev.preventDefault();
-      if(_activeEl==='img'){
-        var delta=ev.deltaY<0?5:-5;
-        ov.imgScale=Math.max(20,Math.min(300,(ov.imgScale||100)+delta));
-        syncScaleSlider();renderCard();autoSave();
-      }
+      var delta=ev.deltaY<0?5:-5;
+      if(_activeEl==='ghost'){ov.ghostScale=Math.max(10,Math.min(300,(ov.ghostScale||100)+delta));}
+      else if(_activeEl==='dup'){ov.dupScale=Math.max(10,Math.min(300,(ov.dupScale||100)+delta));}
+      else if(_activeEl==='img'){ov.imgScale=Math.max(20,Math.min(300,(ov.imgScale||100)+delta));}
+      else{return;}
+      syncScaleSlider();renderCard();autoSave();
     });
 
     // ── Context menu ──
@@ -4325,12 +4339,20 @@
           var v=parseFloat(prompt('Ghost-Deckkraft in % (10\u201390):',Math.round((ov.ghostAlpha||0.35)*100)));
           if(isNaN(v))return;ov.ghostAlpha=Math.max(0.1,Math.min(0.9,v/100));renderCard();autoSave();
         }});
+        menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe: '+(ov.ghostScale||100)+'%',action:function(){
+          var v=parseInt(prompt('Ghost-Gr\u00f6\u00dfe in % (10\u2013300):',(ov.ghostScale||100)),10);
+          if(isNaN(v))return;ov.ghostScale=Math.max(10,Math.min(300,v));syncScaleSlider();renderCard();autoSave();
+        }});
         menuItems.push('hr');
         menuItems.push({icon:'\ud83d\udc7b',text:'Ghost ausschalten',action:function(){ov.ghostMode='off';updateGhostBtn();renderCard();autoSave();}});
       }else if(_activeEl==='dup'){
         menuItems.push({icon:'\u21bb',text:'Duplikat drehen +15\u00b0',action:function(){ov.dupRot=(ov.dupRot||0)+15;renderCard();autoSave();}});
         menuItems.push({icon:'\u21ba',text:'Duplikat drehen \u221215\u00b0',action:function(){ov.dupRot=(ov.dupRot||0)-15;renderCard();autoSave();}});
         menuItems.push({icon:'\u21ba',text:'Duplikat-Position zur\u00fccksetzen',action:function(){ov.dupDx=-50;ov.dupDy=30;ov.dupRot=0;renderCard();autoSave();}});
+        menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe: '+(ov.dupScale||100)+'%',action:function(){
+          var v=parseInt(prompt('Duplikat-Gr\u00f6\u00dfe in % (10\u2013300):',(ov.dupScale||100)),10);
+          if(isNaN(v))return;ov.dupScale=Math.max(10,Math.min(300,v));syncScaleSlider();renderCard();autoSave();
+        }});
         menuItems.push('hr');
         menuItems.push({icon:'\ud83d\udcdd',text:'Duplikat ausschalten',action:function(){ov.dupOn=false;updateDupBtn();renderCard();autoSave();}});
       }
@@ -4505,7 +4527,8 @@
       // Extended theme keys for full configurability
       headerBg:null, headerAccent:null, dividerColor:null,
       priceBarBg:null, priceBarBorder:null, stattColor:null,
-      borderWidth:cfg.borderWidth||0, borderColor:cfg.borderColor||'#000000'
+      borderWidth:cfg.borderWidth||0, borderColor:cfg.borderColor||'#000000',
+      vorratColor:cfg.vorratColor||'#888888'
     };
     if(tpl==='minimal-clean'){
       base.dateColor='#374151';base.cardRadius=kind==='flyer'?20:18;
@@ -4678,14 +4701,14 @@
   }
   // Default per-article override object
   function flyerArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:0,ghostDy:0,ghostAlpha:0.45,ghostRot:0,dupDx:0,dupDy:0,dupOn:false,dupRot:0,customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:0,ghostDy:0,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:0,dupDy:0,dupOn:false,dupScale:100,dupRot:0,customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
   }
 
   // ── Per-Article PLAKAT (Kachel) Layout Overrides ──
   var PLAKAT_ART_OVERRIDES_KEY='dl_plakat_article_overrides';
   var _plakatArtOverrides=null;
   function plakatArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupRot:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostScale:100,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupScale:100,dupRot:0};
   }
   function plakatArtOverridesGetAll(){
     if(_plakatArtOverrides)return _plakatArtOverrides;
@@ -5015,26 +5038,28 @@
             if(gm==='on'||(gm==='auto'&&aspectRatio>1.8&&ih<imgAreaH*0.45)){
               _ghostActive=true;
               var gAlpha=(artOv.ghostAlpha!=null)?artOv.ghostAlpha:0.45;
+              var gSc=(artOv.ghostScale||100)/100;var giw=iw*gSc,gih=ih*gSc;
               var ghostCx,ghostCy;
               if(gm==='on'){ghostCx=cx+(artOv.ghostDx||0);ghostCy=cy+(artOv.ghostDy||0);}
               else{ghostCx=cx+iw*0.20;ghostCy=cy-ih*0.55;}
-              if(ghostCy-ih/2<imgAreaTop) ghostCy=imgAreaTop+ih/2+4;
+              if(ghostCy-gih/2<imgAreaTop) ghostCy=imgAreaTop+gih/2+4;
               var ghostRotRad=(artOv.ghostRot||0)*Math.PI/180;
               ctx.save();ctx.globalAlpha=gAlpha;
               ctx.translate(ghostCx,ghostCy);ctx.rotate(-rotRad*0.6-ghostRotRad);
-              ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);
+              ctx.drawImage(ofc,-giw/2,-gih/2,giw,gih);
               ctx.restore();
-              _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:ghostCx-iw/2,y:ghostCy-ih/2,w:iw,h:ih,ovKey:'ghost'});
+              _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:ghostCx-giw/2,y:ghostCy-gih/2,w:giw,h:gih,ovKey:'ghost'});
             }
             // ── Full duplicate (100% opacity) ──
             if(artOv.dupOn){
+              var dSc=(artOv.dupScale||100)/100;var diw=iw*dSc,dih=ih*dSc;
               var dupCx=cx+(artOv.dupDx||0), dupCy=cy+(artOv.dupDy||0);
               var dupRotRad=(artOv.dupRot||0)*Math.PI/180;
               ctx.save();ctx.globalAlpha=1.0;
               ctx.translate(dupCx,dupCy);ctx.rotate(-rotRad-dupRotRad);
-              ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);
+              ctx.drawImage(ofc,-diw/2,-dih/2,diw,dih);
               ctx.restore();
-              _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dupCx-iw/2,y:dupCy-ih/2,w:iw,h:ih,ovKey:'dup'});
+              _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dupCx-diw/2,y:dupCy-dih/2,w:diw,h:dih,ovKey:'dup'});
             }
             // Draw main image
             ctx.translate(cx,cy);ctx.rotate(-rotRad);
@@ -5124,9 +5149,9 @@
         }else{ciPromise=Promise.resolve();}
         return ciPromise.then(function(){
         // Footer
-        ctx.fillStyle=theme.footerColor;ctx.globalAlpha=0.4;ctx.font='14px Arial, sans-serif';ctx.textAlign='center';
+        ctx.fillStyle=theme.vorratColor||'#888888';ctx.globalAlpha=1.0;ctx.font='600 14px Arial, sans-serif';ctx.textAlign='center';
         ctx.fillText('*Solange Vorrat reicht',W/2,H-24);
-        ctx.globalAlpha=1.0;ctx.textAlign='left';
+        ctx.textAlign='left';
         return logoLoaded;
         });
       }).then(function(){drawFlyerBorder();c._elMeta=_elMeta;resolve(c);});
@@ -5352,12 +5377,14 @@
             +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+i+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
             +(ov.ghostMode==='on'?arrowCross('ghost',i,'Position'):'')
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+i+'"><span id="ga-'+i+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
+            +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+i+'"><span id="gs-'+i+'">'+(ov.ghostScale||100)+'%</span></label>'
             +'</div>'
             // Duplicate controls
             +'<div class="abtn-grp">'
             +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udcdd Duplikat</span>'
             +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+i+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
             +(ov.dupOn?arrowCross('dup',i,'Position'):'')
+            +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+i+'"><span id="ds-'+i+'">'+(ov.dupScale||100)+'%</span></label>':'')
             +'</div>'
             +'</div>'
             +'</div>';
@@ -5407,11 +5434,13 @@
               +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+idx+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
               +(ov.ghostMode==='on'?arrowCross('ghost',idx,'Position'):'')
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+idx+'"><span id="ga-'+idx+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
+              +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+idx+'"><span id="gs-'+idx+'">'+(ov.ghostScale||100)+'%</span></label>'
               +'</div>'
               +'<div class="abtn-grp">'
               +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udcdd Duplikat</span>'
               +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+idx+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
               +(ov.dupOn?arrowCross('dup',idx,'Position'):'')
+              +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+idx+'"><span id="ds-'+idx+'">'+(ov.dupScale||100)+'%</span></label>':'')
               +'</div>';
             bar.innerHTML=nh;
           }
@@ -5422,6 +5451,16 @@
               var idx=parseInt(t.getAttribute('data-idx'),10);
               artOvs[idx].ghostAlpha=parseInt(t.value,10)/100;
               var sp=doc.getElementById('ga-'+idx);if(sp)sp.textContent=t.value+'%';
+              regenFlyer(idx);flyerAutoSave(idx);
+            }else if(act==='ghost-scale'){
+              var idx=parseInt(t.getAttribute('data-idx'),10);
+              artOvs[idx].ghostScale=parseInt(t.value,10);
+              var sp=doc.getElementById('gs-'+idx);if(sp)sp.textContent=t.value+'%';
+              regenFlyer(idx);flyerAutoSave(idx);
+            }else if(act==='dup-scale'){
+              var idx=parseInt(t.getAttribute('data-idx'),10);
+              artOvs[idx].dupScale=parseInt(t.value,10);
+              var sp=doc.getElementById('ds-'+idx);if(sp)sp.textContent=t.value+'%';
               regenFlyer(idx);flyerAutoSave(idx);
             }
           });
@@ -6066,21 +6105,23 @@
           var pRotRad=(pOv.imgRot||0)*Math.PI/180;
           // Ghost overlay
           if(pOv.ghostMode==='on'){
+            var gSc3=(pOv.ghostScale||100)/100;var giw3=iw*gSc3,gih3=ih*gSc3;
             var gx=imgX+(pOv.ghostDx||0),gy=imgY+(pOv.ghostDy||0);
             var gRot=pRotRad+((pOv.ghostRot||0)*Math.PI/180);
             ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
             ctx.globalAlpha=pOv.ghostAlpha||0.35;
-            if(gRot){ctx.translate(gx+iw/2,gy+ih/2);ctx.rotate(gRot);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
-            else{ctx.drawImage(ofc,gx,gy,iw,ih);}
+            if(gRot){ctx.translate(gx+giw3/2,gy+gih3/2);ctx.rotate(gRot);ctx.drawImage(ofc,-giw3/2,-gih3/2,giw3,gih3);}
+            else{ctx.drawImage(ofc,gx,gy,giw3,gih3);}
             ctx.globalAlpha=1.0;ctx.restore();
           }
           // Duplicate overlay
           if(pOv.dupOn){
+            var dSc3=(pOv.dupScale||100)/100;var diw3=iw*dSc3,dih3=ih*dSc3;
             var dx2=imgX+(pOv.dupDx||0),dy2=imgY+(pOv.dupDy||0);
             var dRot=pRotRad+((pOv.dupRot||0)*Math.PI/180);
             ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-            if(dRot){ctx.translate(dx2+iw/2,dy2+ih/2);ctx.rotate(dRot);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
-            else{ctx.drawImage(ofc,dx2,dy2,iw,ih);}
+            if(dRot){ctx.translate(dx2+diw3/2,dy2+dih3/2);ctx.rotate(dRot);ctx.drawImage(ofc,-diw3/2,-dih3/2,diw3,dih3);}
+            else{ctx.drawImage(ofc,dx2,dy2,diw3,dih3);}
             ctx.restore();
           }
           // Main image
@@ -6262,20 +6303,22 @@
         var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(pOv.imgRot||0)*Math.PI/180;
         // Ghost overlay
         if(pOv.ghostMode==='on'){
+          var gSc4=(pOv.ghostScale||100)/100;var giw4=iw*gSc4,gih4=ih*gSc4;
           var gx=imgCX+(pOv.ghostDx||0),gy=imgCY+(pOv.ghostDy||0);
           var gRot=-pRotRad+((pOv.ghostRot||0)*Math.PI/180);
           ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
           ctx.globalAlpha=pOv.ghostAlpha||0.35;
           ctx.translate(gx,gy);ctx.rotate(gRot);
-          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.globalAlpha=1.0;ctx.restore();
+          ctx.drawImage(ofc,-giw4/2,-gih4/2,giw4,gih4);ctx.globalAlpha=1.0;ctx.restore();
         }
         // Duplicate overlay
         if(pOv.dupOn){
+          var dSc4=(pOv.dupScale||100)/100;var diw4=iw*dSc4,dih4=ih*dSc4;
           var dx2=imgCX+(pOv.dupDx||0),dy2=imgCY+(pOv.dupDy||0);
           var dRot=-pRotRad+((pOv.dupRot||0)*Math.PI/180);
           ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
           ctx.translate(dx2,dy2);ctx.rotate(dRot);
-          ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
+          ctx.drawImage(ofc,-diw4/2,-dih4/2,diw4,dih4);ctx.restore();
         }
         // Main image
         ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
