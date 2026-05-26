@@ -3855,9 +3855,9 @@
             // Open card editor for this article's tile
             var cardItem=items[card.origIdx];
             if(!cardItem) return;
-            showPlakatCardEditor(cardItem,function(saved){
-              if(saved && _currentPreviewAktion && _currentPreviewAktion.aktion_id){
-                // Re-generate the plakat and refresh the preview image
+            showPlakatCardEditor(cardItem,function(){
+              // Always re-generate preview to rebuild card zones (innerHTML restore kills event listeners)
+              if(_currentPreviewAktion && _currentPreviewAktion.aktion_id){
                 cmsPreviewAktion(_currentPreviewAktion.aktion_id);
               }
             });
@@ -4208,7 +4208,7 @@
       if(hit){_activeEl=hit;updateActiveLabel();renderCard();}
       var menu=document.createElement('div');
       menu.className='ctx-menu';menu.id='pce-ctx-menu';
-      menu.style.left=ev.clientX+'px';menu.style.top=ev.clientY+'px';
+      menu.style.cssText='position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:4px 0;z-index:10000;min-width:180px;font-size:13px;left:'+ev.clientX+'px;top:'+ev.clientY+'px';
       var menuItems=[];
       if(_activeEl==='img'){
         var curRot=ov.imgRot||0;
@@ -4224,9 +4224,12 @@
       menuItems.push('hr');
       menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Alles zur\u00fccksetzen',action:function(){ov=plakatArtOverrideDefault();renderCard();autoSave();}});
       menuItems.forEach(function(mi){
-        if(mi==='hr'){menu.appendChild(document.createElement('hr'));return;}
+        if(mi==='hr'){var hr=document.createElement('hr');hr.style.cssText='margin:2px 0;border:none;border-top:1px solid #e5e7eb';menu.appendChild(hr);return;}
         var d=document.createElement('div');
+        d.style.cssText='padding:7px 16px;cursor:pointer;display:flex;align-items:center;gap:8px';
         d.innerHTML='<span>'+mi.icon+'</span><span>'+mi.text+'</span>';
+        d.onmouseenter=function(){d.style.background='#f3f4f6';};
+        d.onmouseleave=function(){d.style.background='none';};
         d.addEventListener('click',function(e){e.stopPropagation();menu.remove();mi.action();});
         menu.appendChild(d);
       });
