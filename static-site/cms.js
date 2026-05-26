@@ -3879,7 +3879,8 @@
     var html='<div class="cms-modal-bg">';
     html+='<div class="cms-modal" style="max-width:440px;text-align:center">';
     html+='<h3 style="margin:0 0 4px;font-size:15px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+'</h3>';
-    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">Element ziehen, Rechtsklick = Men\u00fc</p>';
+    var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element ziehen \u2022 Lang dr\u00fccken = Men\u00fc':'Element ziehen, Rechtsklick = Men\u00fc')+'</p>';
     html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
     html+='<div id="pce-wrap" style="position:relative;display:inline-block;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab">';
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'"></canvas>';
@@ -4272,6 +4273,57 @@
     document.addEventListener('mousemove',pceMove);
     document.addEventListener('mouseup',pceUp);
 
+    // ── Touch support for Kachel-Editor (mobile) ──
+    var _pceTouchTimer=null;
+    cvs.addEventListener('touchstart',function(ev){
+      var touch=ev.touches[0];
+      var _tsX=touch.clientX,_tsY=touch.clientY;
+      var _tsMoved=false;
+      // Hit-test
+      var rect=cvs.getBoundingClientRect();
+      var mx=(_tsX-rect.left)*(CARD_W/rect.width);
+      var my=(_tsY-rect.top)*(CARD_H/rect.height);
+      var hit=hitTest(mx,my);
+      if(hit) _activeEl=hit;
+      updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();renderCard();
+      // Start values
+      var _tdStartDx=0,_tdStartDy=0;
+      if(_activeEl==='img'){_tdStartDx=ov.imgDx||0;_tdStartDy=ov.imgDy||0;}
+      else if(_activeEl==='price'){_tdStartDx=ov.priceDx||0;_tdStartDy=ov.priceDy||0;}
+      else if(_activeEl==='ghost'){_tdStartDx=ov.ghostDx||0;_tdStartDy=ov.ghostDy||0;}
+      else if(_activeEl==='dup'){_tdStartDx=ov.dupDx||0;_tdStartDy=ov.dupDy||0;}
+      else if(_activeEl.indexOf('copy-')===0){var _ci3=parseInt(_activeEl.split('-')[1],10);var _cp3=ov.copies&&ov.copies[_ci3];if(_cp3){_tdStartDx=_cp3.dx||0;_tdStartDy=_cp3.dy||0;}}
+      // Long-press → context menu
+      _pceTouchTimer=setTimeout(function(){
+        if(!_tsMoved){
+          cvs.dispatchEvent(new MouseEvent('contextmenu',{clientX:_tsX,clientY:_tsY,bubbles:true}));
+        }
+        _pceTouchTimer=null;
+      },600);
+      ev.preventDefault();
+      function onTM(e2){
+        var t2=e2.touches[0];
+        var dx=t2.clientX-_tsX,dy=t2.clientY-_tsY;
+        if(Math.abs(dx)>4||Math.abs(dy)>4){_tsMoved=true;if(_pceTouchTimer){clearTimeout(_pceTouchTimer);_pceTouchTimer=null;}}
+        var scX=CARD_W/rect.width,scY=CARD_H/rect.height;
+        if(_activeEl==='img'){ov.imgDx=Math.round(_tdStartDx+dx*scX);ov.imgDy=Math.round(_tdStartDy+dy*scY);}
+        else if(_activeEl==='price'){ov.priceDx=Math.round(_tdStartDx+dx*scX);ov.priceDy=Math.round(_tdStartDy+dy*scY);}
+        else if(_activeEl==='ghost'){ov.ghostDx=Math.round(_tdStartDx+dx*scX);ov.ghostDy=Math.round(_tdStartDy+dy*scY);}
+        else if(_activeEl==='dup'){ov.dupDx=Math.round(_tdStartDx+dx*scX);ov.dupDy=Math.round(_tdStartDy+dy*scY);}
+        else if(_activeEl.indexOf('copy-')===0){var _ci4=parseInt(_activeEl.split('-')[1],10);var _cp4=ov.copies&&ov.copies[_ci4];if(_cp4){_cp4.dx=Math.round(_tdStartDx+dx*scX);_cp4.dy=Math.round(_tdStartDy+dy*scY);}}
+        renderCard();autoSave();
+      }
+      function onTE(){
+        document.removeEventListener('touchmove',onTM);
+        document.removeEventListener('touchend',onTE);
+        if(_pceTouchTimer){clearTimeout(_pceTouchTimer);_pceTouchTimer=null;}
+      }
+      document.addEventListener('touchmove',onTM,{passive:false});
+      document.addEventListener('touchend',onTE);
+    },{passive:false});
+    // Suppress native context menu on canvas for touch
+    cvs.style.webkitTouchCallout='none';cvs.style.webkitUserSelect='none';cvs.style.userSelect='none';
+
     // ── Scale slider ──
     var scaleSlider=document.getElementById('pce-scale');
     var scaleValEl=document.getElementById('pce-scale-val');
@@ -4413,6 +4465,7 @@
     // ── Buttons ──
     function closeEditor(revert){
       clearTimeout(_autoSaveTimer);
+      if(_pceTouchTimer){clearTimeout(_pceTouchTimer);_pceTouchTimer=null;}
       document.removeEventListener('mousemove',pceMove);
       document.removeEventListener('mouseup',pceUp);
       var cm=document.getElementById('pce-ctx-menu');if(cm)cm.remove();
@@ -5505,15 +5558,31 @@
             var imgs=doc.querySelectorAll('.flyer-page img');
             if(!imgs[idx])return;
             var src=imgs[idx].src;
-            var w=window.open('','_blank');
-            if(!w){alert('Popup-Blocker aktiv! Bitte Popups erlauben.');return;}
-            var d=w.document;
-            d.open();
-            d.write('<html><head><title>Flyer drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"></body></html>');
-            d.close();
-            var pi=d.getElementById('pi');
-            pi.onload=function(){setTimeout(function(){try{w.focus();w.print();}catch(e){}},300);};
-            pi.src=src;
+            if(isMobile){
+              // Mobile: use hidden iframe to trigger print dialog
+              var oldFrame=document.getElementById('_flyPrintFrame');
+              if(oldFrame)oldFrame.remove();
+              var iframe=document.createElement('iframe');
+              iframe.id='_flyPrintFrame';
+              iframe.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:99999;background:#fff';
+              document.body.appendChild(iframe);
+              var iDoc=iframe.contentDocument||iframe.contentWindow.document;
+              iDoc.open();
+              iDoc.write('<html><head><title>Flyer drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"><br><button onclick="window.print()" style="margin:16px auto;display:block;padding:12px 32px;font-size:16px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer">\uD83D\uDDA8\uFE0F Drucken</button><button onclick="parent.document.getElementById(\'_flyPrintFrame\').remove()" style="margin:8px auto;display:block;padding:8px 24px;font-size:14px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer">Zur\u00fcck</button></body></html>');
+              iDoc.close();
+              var pi=iDoc.getElementById('pi');
+              pi.src=src;
+            }else{
+              var w=window.open('','_blank');
+              if(!w){alert('Popup-Blocker aktiv! Bitte Popups erlauben.');return;}
+              var d=w.document;
+              d.open();
+              d.write('<html><head><title>Flyer drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"></body></html>');
+              d.close();
+              var pi2=d.getElementById('pi');
+              pi2.onload=function(){setTimeout(function(){try{w.focus();w.print();}catch(e){}},300);};
+              pi2.src=src;
+            }
           }
           function dlOne(idx,name){
             var imgs=doc.querySelectorAll('.flyer-page img');
@@ -5608,7 +5677,7 @@
               return;
             }
             ev.preventDefault();
-            if(act==='print-all'){try{win.focus();win.print();}catch(e){}}
+            if(act==='print-all'){if(isMobile){printOne(0);}else{try{win.focus();win.print();}catch(e){}}}
             else if(act==='close'){win.close();}
             else if(act==='print'){printOne(parseInt(t.getAttribute('data-idx'),10)||0);}
             else if(act==='dl'){dlOne(parseInt(t.getAttribute('data-idx'),10)||0,t.getAttribute('data-name'));}
@@ -5791,10 +5860,8 @@
             if(m)m.remove();
           }
           doc.addEventListener('click',function(){hideCtxMenu();});
-          doc.addEventListener('contextmenu',function(ev){
-            var z=ev.target.closest?ev.target.closest('.el-zone'):null;
-            if(!z)return;
-            ev.preventDefault();
+          if(isMobile) document.addEventListener('click',function(){hideCtxMenu();});
+          function showCtxMenuForZone(z, clientX, clientY){
             selectZone(z);
             hideCtxMenu();
             var idx=parseInt(z.getAttribute('data-idx'),10);
@@ -5803,7 +5870,7 @@
             var ov=artOvs[idx];
             var menu=doc.createElement('div');
             menu.className='ctx-menu';menu.id='fly-ctx-menu';
-            menu.style.left=ev.clientX+'px';menu.style.top=ev.clientY+'px';
+            menu.style.left=clientX+'px';menu.style.top=clientY+'px';
             var menuItems=[
               {icon:'\u21a9',text:'Verwerfen (Laden-Stand)',action:function(){artOvs[idx]=JSON.parse(JSON.stringify(_initArtOvs[idx]));flyerArtOverrideSave(items[idx],artOvs[idx]);rebuildCtlBar(idx);regenFlyer(idx);}},
               {icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){
@@ -5930,6 +5997,12 @@
               if(r.right>window.innerWidth)menu.style.left=(window.innerWidth-r.width-8)+'px';
               if(r.bottom>window.innerHeight)menu.style.top=(window.innerHeight-r.height-8)+'px';
             },0);
+          }
+          doc.addEventListener('contextmenu',function(ev){
+            var z=ev.target.closest?ev.target.closest('.el-zone'):null;
+            if(!z)return;
+            ev.preventDefault();
+            showCtxMenuForZone(z, ev.clientX, ev.clientY);
           });
 
           // ── Touch support for mobile: drag, resize, long-press context menu, menu button ──
@@ -5944,8 +6017,7 @@
             // ── Touch menu button tap → open context menu immediately ──
             if(tgt.classList.contains('el-touch-menu')){
               ev.preventDefault();ev.stopPropagation();
-              selectZone(z);
-              z.dispatchEvent(new MouseEvent('contextmenu',{clientX:_tsX,clientY:_tsY,bubbles:true}));
+              showCtxMenuForZone(z, _tsX, _tsY);
               return;
             }
 
@@ -5986,7 +6058,7 @@
             var _tsMoved=false;
             _touchTimer=setTimeout(function(){
               if(!_tsMoved){
-                z.dispatchEvent(new MouseEvent('contextmenu',{clientX:_tsX,clientY:_tsY,bubbles:true}));
+                showCtxMenuForZone(z, _tsX, _tsY);
               }
               _touchTimer=null;
             },600);
