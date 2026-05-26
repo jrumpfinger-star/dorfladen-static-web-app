@@ -4234,7 +4234,7 @@
       var my=(ev.clientY-rect.top)*(CARD_H/rect.height);
       var hit=hitTest(mx,my);
       if(hit) _activeEl=hit;
-      updateActiveLabel();renderCard();
+      updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();renderCard();
       dragging=true;
       dragStartX=ev.clientX;dragStartY=ev.clientY;
       if(_activeEl==='img'){startDx=ov.imgDx||0;startDy=ov.imgDy||0;}
@@ -4380,9 +4380,9 @@
     // ── Ghost toggle: adds a semi-transparent copy of the image ──
     var ghostBtn=document.getElementById('pce-ghost');
     function updateGhostBtn(){
-      var on=ov.ghostMode==='on';
-      ghostBtn.innerHTML='\ud83d\udc7b Ghost '+(on?'AUS':'EIN');
-      ghostBtn.style.background=on?'#fef3c7':'';ghostBtn.style.borderColor=on?'#f59e0b':'';
+      var on=ov.ghostMode==='on';var sel=on&&_activeEl==='ghost';
+      ghostBtn.innerHTML='\ud83d\udc7b Ghost: '+(on?'<b style="color:#b45309">AN</b>':'AUS');
+      ghostBtn.style.background=on?(sel?'#fde68a':'#fef3c7'):'';ghostBtn.style.borderColor=on?'#f59e0b':'';
     }
     updateGhostBtn();
     ghostBtn.onclick=function(){
@@ -4395,9 +4395,9 @@
     // ── Duplikat toggle: adds a full-opacity copy of the image ──
     var dupBtn=document.getElementById('pce-dup');
     function updateDupBtn(){
-      var on=!!ov.dupOn;
-      dupBtn.innerHTML='\ud83d\udcdd Duplikat '+(on?'AUS':'EIN');
-      dupBtn.style.background=on?'#dbeafe':'';dupBtn.style.borderColor=on?'#3b82f6':'';
+      var on=!!ov.dupOn;var sel=on&&_activeEl==='dup';
+      dupBtn.innerHTML='\ud83d\udcdd Duplikat: '+(on?'<b style="color:#1d4ed8">AN</b>':'AUS');
+      dupBtn.style.background=on?(sel?'#bfdbfe':'#dbeafe'):'';dupBtn.style.borderColor=on?'#3b82f6':'';
     }
     updateDupBtn();
     dupBtn.onclick=function(){
@@ -4685,7 +4685,7 @@
   var PLAKAT_ART_OVERRIDES_KEY='dl_plakat_article_overrides';
   var _plakatArtOverrides=null;
   function plakatArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.35,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupRot:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupRot:0};
   }
   function plakatArtOverridesGetAll(){
     if(_plakatArtOverrides)return _plakatArtOverrides;
