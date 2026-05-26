@@ -3691,9 +3691,11 @@
     // Build WhatsApp text (kurz)
     var msg='\ud83c\udf7d\ufe0f *Mittagsmen\u00fc '+header+'*';
     // Generate image + share directly
+    var hp=hpCfgGet();
+    var tpl=hp.wpFlyerTemplate||'classic-red';
     generateMenuImage(mealRows,header,function(blob){
       shareBlob(blob,'Wochenplan_KW'+kw+'.png',msg);
-    });
+    },tpl,'flyer');
   };
 
   window.cmsPreviewWP=function(){
@@ -3710,9 +3712,11 @@
         mealRows.push({day:idx===0?DAYS[dc]:'',dish:m.gericht||m.beschreibung||'\u2014',price:m.preis?fmtPriceWA(m.preis):'',alt:''});
       });
     });
+    var hp=hpCfgGet();
+    var tpl=hp.wpFlyerTemplate||'classic-red';
     generateMenuImage(mealRows,header,function(blob){
       showSharePreview(blob,'Wochenplan_KW'+kw+'.png');
-    });
+    },tpl,'flyer');
   };
 
   window.cmsPreviewWpTpl=function(target){
@@ -3760,9 +3764,11 @@
         mealRows.push({day:idx===0?DAYS[dc]:'',dish:m.gericht||m.beschreibung||'\u2014',price:m.preis?fmtPriceWA(m.preis):'',alt:''});
       });
     });
+    var hp=hpCfgGet();
+    var tpl=hp.wpFlyerTemplate||'classic-red';
     generateMenuImage(mealRows,header,function(blob){
       printFromBlob(blob);
-    });
+    },tpl,'flyer');
   };
 
   function shareBlob(blob,filename,msg){
