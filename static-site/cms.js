@@ -1152,18 +1152,14 @@
     PERSEC_SELECTS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
     return c;
   }
+  var _cfgCurrent=null;
   function cfgGet(){
-    try{var s=localStorage.getItem(CFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in CFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:CFG_DEFAULTS[k];
-      if(o.hasOwnProperty('savingsScale')){
-        if(!o.hasOwnProperty('savingsScalePlakat'))r.savingsScalePlakat=o.savingsScale;
-        if(!o.hasOwnProperty('savingsScaleFlyer'))r.savingsScaleFlyer=o.savingsScale;
-      }
-      if(o.tplColors)r.tplColors=o.tplColors;
-      return r;}}catch(e){}
+    if(_cfgCurrent){var r2={};for(var k2 in CFG_DEFAULTS)r2[k2]=_cfgCurrent.hasOwnProperty(k2)?_cfgCurrent[k2]:CFG_DEFAULTS[k2];
+      if(_cfgCurrent.tplColors)r2.tplColors=_cfgCurrent.tplColors;return r2;}
     return JSON.parse(JSON.stringify(CFG_DEFAULTS));
   }
   function cfgSave(o){
-    try{localStorage.setItem(CFG_KEY,JSON.stringify(o));}catch(e){}
+    _cfgCurrent=JSON.parse(JSON.stringify(o));
     // Persist to Dataverse
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'design_config',wert:o})})
       .then(function(r){return r.json();})
@@ -1173,30 +1169,28 @@
   var CFG_CUSTOM_DEFAULTS_KEY='dl_design_cfg_custom_defaults';
   var _cfgCustomDefaults=null;
   function cfgGetCustomDefaults(){
-    if(_cfgCustomDefaults)return _cfgCustomDefaults;
-    try{var s=localStorage.getItem(CFG_CUSTOM_DEFAULTS_KEY);if(s){_cfgCustomDefaults=JSON.parse(s);return _cfgCustomDefaults;}}catch(e){}
-    return null;
+    return _cfgCustomDefaults||null;
   }
   function cfgGetEffectiveDefaults(){
     return cfgGetCustomDefaults()||CFG_DEFAULTS;
   }
   function cfgSaveCustomDefaults(o){
     _cfgCustomDefaults=JSON.parse(JSON.stringify(o));
-    try{localStorage.setItem(CFG_CUSTOM_DEFAULTS_KEY,JSON.stringify(o));}catch(e){}
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'design_config_defaults',wert:o})})
       .then(function(r){return r.json();})
       .then(function(res){if(!res.success)console.warn('Custom defaults save failed',res.error);})
       .catch(function(e){console.warn('Custom defaults save error',e);});
   }
+  var _cfgCompact=false;
   function cfgGetCompact(){
-    try{return localStorage.getItem(CFG_COMPACT_KEY)==='1';}catch(e){return false;}
+    return _cfgCompact;
   }
   function cfgSetCompact(on){
+    _cfgCompact=!!on;
     var panel=document.getElementById('cms-panel-cfg');
     if(panel)panel.classList.toggle('cms-compact-on',!!on);
     var cb=document.getElementById('cfg-compactMode');
     if(cb)cb.checked=!!on;
-    try{localStorage.setItem(CFG_COMPACT_KEY,on?'1':'0');}catch(e){}
   }
   var _dvConfigReady=null; // Promise that resolves when Dataverse config is loaded
   function cfgLoadFromDataverse(){
@@ -1208,26 +1202,23 @@
         var dvCustomDef=res.data['design_config_defaults'];
         if(dvCustomDef&&typeof dvCustomDef==='object'){
           _cfgCustomDefaults=dvCustomDef;
-          try{localStorage.setItem(CFG_CUSTOM_DEFAULTS_KEY,JSON.stringify(dvCustomDef));}catch(e){}
         }
         // Load per-article flyer overrides
         var dvArtOv=res.data['flyer_article_overrides'];
         if(dvArtOv&&typeof dvArtOv==='object'){
           _flyerArtOverrides=dvArtOv;
-          try{localStorage.setItem(FLYER_ART_OVERRIDES_KEY,JSON.stringify(dvArtOv));}catch(e){}
         }
         // Load per-article plakat (Kachel) overrides
         var dvPlakatOv=res.data['plakat_article_overrides'];
         if(dvPlakatOv&&typeof dvPlakatOv==='object'){
           _plakatArtOverrides=dvPlakatOv;
-          try{localStorage.setItem(PLAKAT_ART_OVERRIDES_KEY,JSON.stringify(dvPlakatOv));}catch(e){}
         }
         var dvCfg=res.data['design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
           // Dataverse is always the source of truth
           var merged={};for(var k in CFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:CFG_DEFAULTS[k];
           if(dvCfg.tplColors)merged.tplColors=dvCfg.tplColors;
-          try{localStorage.setItem(CFG_KEY,JSON.stringify(merged));}catch(e){}
+          _cfgCurrent=merged;
           cfgApplyUI(merged);
         }
       })
@@ -1271,8 +1262,7 @@
     if(_ftcEl&&_gtcEl&&_ftcEl.value&&_ftcEl.value!=='#000000')_gtcEl.value=_ftcEl.value;
     var ssEl=document.getElementById('cfg-savingsStarStyle');
     if(ssEl){
-      var ss='harmonie';
-      try{ss=localStorage.getItem('dl_savings_star_style')||'harmonie';}catch(e){}
+      var ss=(c.savingsStarStyle)||'harmonie';
       ssEl.value=ss;
     }
     cfgRenderSavingsPreview();
@@ -1467,13 +1457,13 @@
   window.cmsSaveCfg=function(){
     var c=cfgReadUI();
     cfgSave(c);
-    try{localStorage.setItem('dl_savings_star_style',c.savingsStarStyle||'harmonie');}catch(e){}
+    // savingsStarStyle is persisted as part of cfgSave to Dataverse
     toast('Design-Einstellungen gespeichert','ok');
   };
   window.cmsResetCfg=function(){
     var defaults=JSON.parse(JSON.stringify(cfgGetEffectiveDefaults()));
     cfgSave(defaults);
-    try{localStorage.removeItem('dl_savings_star_style');}catch(e){}
+    // savingsStarStyle reset through cfgSave
     cfgApplyUI(defaults);
     var hasCustom=!!cfgGetCustomDefaults();
     toast(hasCustom?'Auf eigene Standardwerte zur\u00fcckgesetzt':'Auf Werks-Standardwerte zur\u00fcckgesetzt','ok');
@@ -1487,7 +1477,6 @@
   window.cmsClearCustomDefault=function(){
     if(!confirm('Eigene Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?'))return;
     _cfgCustomDefaults=null;
-    try{localStorage.removeItem(CFG_CUSTOM_DEFAULTS_KEY);}catch(e){}
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'design_config_defaults',wert:null})}).catch(function(){});
     toast('Eigene Standards gel\u00f6scht \u2013 Werkseinstellungen aktiv','ok');
   };
@@ -1560,12 +1549,12 @@
 
   // ── Preset/Vorlagen System ──
   var CFG_PRESETS_KEY='dl_design_presets';
+  var _cfgPresets=null;
   function cfgPresetsGet(){
-    try{var s=localStorage.getItem(CFG_PRESETS_KEY);if(s)return JSON.parse(s);}catch(e){}
-    return {plakat:[],flyer:[],shared:[]};
+    return _cfgPresets||{plakat:[],flyer:[],shared:[]};
   }
   function cfgPresetsSave(all){
-    try{localStorage.setItem(CFG_PRESETS_KEY,JSON.stringify(all));}catch(e){}
+    _cfgPresets=JSON.parse(JSON.stringify(all));
   }
   window.cfgPresetSave=function(section){
     var name=prompt('Name f\u00fcr die Vorlage:');
@@ -1792,11 +1781,12 @@
   };
   var _hpangViewMode='desktop';
 
+  var _hpangCurrent=null;
   function hpangGet(){
-    try{var s=localStorage.getItem(HPANG_KEY);if(s){var p=JSON.parse(s);var r={};for(var k in HPANG_DEFAULTS)r[k]=p[k]!=null?p[k]:HPANG_DEFAULTS[k];return r;}}catch(e){}
+    if(_hpangCurrent){var r2={};for(var k2 in HPANG_DEFAULTS)r2[k2]=_hpangCurrent[k2]!=null?_hpangCurrent[k2]:HPANG_DEFAULTS[k2];return r2;}
     return JSON.parse(JSON.stringify(HPANG_DEFAULTS));
   }
-  function hpangSave(cfg){try{localStorage.setItem(HPANG_KEY,JSON.stringify(cfg));}catch(e){}}
+  function hpangSave(cfg){_hpangCurrent=JSON.parse(JSON.stringify(cfg));}
 
   function hpangReadUI(){
     var c={};
@@ -1993,23 +1983,21 @@
   var HPCFG_CUSTOM_DEFAULTS_KEY='dl_hp_design_cfg_custom_defaults';
   var _hpCfgCustomDefaults=null;
   function hpCfgGetCustomDefaults(){
-    if(_hpCfgCustomDefaults)return _hpCfgCustomDefaults;
-    try{var s=localStorage.getItem(HPCFG_CUSTOM_DEFAULTS_KEY);if(s){_hpCfgCustomDefaults=JSON.parse(s);return _hpCfgCustomDefaults;}}catch(e){}
-    return null;
+    return _hpCfgCustomDefaults||null;
   }
   function hpCfgGetEffectiveDefaults(){return hpCfgGetCustomDefaults()||HPCFG_DEFAULTS;}
   function hpCfgSaveCustomDefaults(o){
     _hpCfgCustomDefaults=JSON.parse(JSON.stringify(o));
-    try{localStorage.setItem(HPCFG_CUSTOM_DEFAULTS_KEY,JSON.stringify(o));}catch(e){}
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'hp_design_config_defaults',wert:o})})
       .then(function(r){return r.json();}).then(function(res){if(!res.success)console.warn('HP custom defaults save failed',res.error);}).catch(function(){});
   }
+  var _hpCfgCurrent=null;
   function hpCfgGet(){
-    try{var s=localStorage.getItem(HPCFG_KEY);if(s){var o=JSON.parse(s);var r={};for(var k in HPCFG_DEFAULTS)r[k]=o.hasOwnProperty(k)?o[k]:HPCFG_DEFAULTS[k];if(o.wpTplColors)r.wpTplColors=o.wpTplColors;return r;}}catch(e){}
+    if(_hpCfgCurrent){var r2={};for(var k2 in HPCFG_DEFAULTS)r2[k2]=_hpCfgCurrent.hasOwnProperty(k2)?_hpCfgCurrent[k2]:HPCFG_DEFAULTS[k2];if(_hpCfgCurrent.wpTplColors)r2.wpTplColors=_hpCfgCurrent.wpTplColors;return r2;}
     return JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
   }
   function hpCfgSave(o){
-    try{localStorage.setItem(HPCFG_KEY,JSON.stringify(o));}catch(e){}
+    _hpCfgCurrent=JSON.parse(JSON.stringify(o));
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'hp_design_config',wert:o})})
       .then(function(r){return r.json();})
       .then(function(res){if(!res.success)console.warn('HP Design save to Dataverse failed',res.error);})
@@ -2174,13 +2162,12 @@
         var dvHpDef=res.data['hp_design_config_defaults'];
         if(dvHpDef&&typeof dvHpDef==='object'){
           _hpCfgCustomDefaults=dvHpDef;
-          try{localStorage.setItem(HPCFG_CUSTOM_DEFAULTS_KEY,JSON.stringify(dvHpDef));}catch(e){}
         }
         var dvCfg=res.data['hp_design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
           var merged={};for(var k in HPCFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:HPCFG_DEFAULTS[k];
           if(dvCfg.wpTplColors)merged.wpTplColors=dvCfg.wpTplColors;
-          try{localStorage.setItem(HPCFG_KEY,JSON.stringify(merged));}catch(e){}
+          _hpCfgCurrent=merged;
           hpCfgApplyUI(merged);
         }
       })
@@ -2253,7 +2240,6 @@
   window.hpClearCustomDefault=function(){
     if(!confirm('Eigene HP-Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?'))return;
     _hpCfgCustomDefaults=null;
-    try{localStorage.removeItem(HPCFG_CUSTOM_DEFAULTS_KEY);}catch(e){}
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'hp_design_config_defaults',wert:null})}).catch(function(){});
     toast('Eigene HP-Standards gel\u00f6scht','ok');
   };
@@ -2284,7 +2270,7 @@
   window.wpLivePreview=function(kind){
     kind=kind||'home';
     var uiCfg=hpCfgReadUI();
-    try{localStorage.setItem(HPCFG_KEY,JSON.stringify(uiCfg));}catch(e){}
+    _hpCfgCurrent=JSON.parse(JSON.stringify(uiCfg));
     var selId=(kind==='flyer')?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
     var sel=document.getElementById(selId);
     var tpl=(sel&&sel.value)?sel.value:'classic-red';
@@ -2328,12 +2314,12 @@
 
   // ── WP Preset/Vorlagen System ──
   var WP_PRESETS_KEY='dl_wp_design_presets';
+  var _wpPresets=null;
   function wpPresetsGet(){
-    try{var s=localStorage.getItem(WP_PRESETS_KEY);if(s)return JSON.parse(s);}catch(e){}
-    return {'wp-home':[],'wp-flyer':[]};
+    return _wpPresets||{'wp-home':[],'wp-flyer':[]};
   }
   function wpPresetsSave(all){
-    try{localStorage.setItem(WP_PRESETS_KEY,JSON.stringify(all));}catch(e){}
+    _wpPresets=JSON.parse(JSON.stringify(all));
   }
   window.wpPresetSave=function(section){
     var name=prompt('Name f\u00fcr die Vorlage:');
@@ -3699,7 +3685,7 @@
 
     // Save current UI color values so generateMenuImage picks them up
     var uiCfg=hpCfgReadUI();
-    try{localStorage.setItem(HPCFG_KEY,JSON.stringify(uiCfg));}catch(e){}
+    _hpCfgCurrent=JSON.parse(JSON.stringify(uiCfg));
 
     var selId=(target==='flyer')?'hcfg-wpFlyerTemplate':'hcfg-wpHomeTemplate';
     var sel=document.getElementById(selId);
@@ -4768,15 +4754,13 @@
   }
 
   // ── Per-Article Flyer Layout Overrides ──
-  var FLYER_ART_OVERRIDES_KEY='dl_flyer_article_overrides';
   var _flyerArtOverrides=null;
   function _flyerArtKey(item){
     return (item.artikelnummer||'').trim()||(item.produkt||'').trim().toLowerCase().replace(/\s+/g,'_');
   }
   function flyerArtOverridesGetAll(){
-    if(_flyerArtOverrides)return _flyerArtOverrides;
-    try{var s=localStorage.getItem(FLYER_ART_OVERRIDES_KEY);if(s){_flyerArtOverrides=JSON.parse(s);return _flyerArtOverrides;}}catch(e){}
-    _flyerArtOverrides={};return _flyerArtOverrides;
+    if(!_flyerArtOverrides)_flyerArtOverrides={};
+    return _flyerArtOverrides;
   }
   function flyerArtOverrideGet(item){
     var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);
@@ -4786,14 +4770,12 @@
     var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
     all[k]=JSON.parse(JSON.stringify(ov));
     _flyerArtOverrides=all;
-    try{localStorage.setItem(FLYER_ART_OVERRIDES_KEY,JSON.stringify(all));}catch(e){}
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'flyer_article_overrides',wert:all})})
       .then(function(r){return r.json();}).then(function(res){if(!res.success)console.warn('Article overrides save failed',res.error);}).catch(function(){});
   }
   function flyerArtOverrideDelete(item){
     var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
     delete all[k];_flyerArtOverrides=all;
-    try{localStorage.setItem(FLYER_ART_OVERRIDES_KEY,JSON.stringify(all));}catch(e){}
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'flyer_article_overrides',wert:all})})
       .then(function(r){return r.json();}).catch(function(){});
   }
@@ -4803,7 +4785,6 @@
   }
 
   // ── Per-Article PLAKAT (Kachel) Layout Overrides ──
-  var PLAKAT_ART_OVERRIDES_KEY='dl_plakat_article_overrides';
   var _plakatArtOverrides=null;
   function plakatArtOverrideDefault(){
     return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostScale:100,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupScale:100,dupRot:0,copies:[]};
@@ -4846,9 +4827,8 @@
     });
   }
   function plakatArtOverridesGetAll(){
-    if(_plakatArtOverrides)return _plakatArtOverrides;
-    try{var s=localStorage.getItem(PLAKAT_ART_OVERRIDES_KEY);if(s){_plakatArtOverrides=JSON.parse(s);return _plakatArtOverrides;}}catch(e){}
-    _plakatArtOverrides={};return _plakatArtOverrides;
+    if(!_plakatArtOverrides)_plakatArtOverrides={};
+    return _plakatArtOverrides;
   }
   function plakatArtOverrideGet(item){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);
@@ -4858,14 +4838,12 @@
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
     all[k]=JSON.parse(JSON.stringify(ov));
     _plakatArtOverrides=all;
-    try{localStorage.setItem(PLAKAT_ART_OVERRIDES_KEY,JSON.stringify(all));}catch(e){}
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'plakat_article_overrides',wert:all})})
       .then(function(r){return r.json();}).catch(function(){});
   }
   function plakatArtOverrideDelete(item){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
     delete all[k];_plakatArtOverrides=all;
-    try{localStorage.setItem(PLAKAT_ART_OVERRIDES_KEY,JSON.stringify(all));}catch(e){}
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'plakat_article_overrides',wert:all})})
       .then(function(r){return r.json();}).catch(function(){});
   }
@@ -5329,66 +5307,10 @@
     }).then(function(){
       return Promise.all(items.map(function(item){return generateEinzelflyer(item,data);}));
     }).then(function(canvases){
-      if(isMobile){
-        // ── Mobile: render in CMS modal with print+save per flyer ──
-        var mhtml='<div class="cms-modal-bg" style="align-items:flex-start;padding:0">';
-        mhtml+='<div class="cms-modal" style="max-width:100%;width:100%;max-height:100vh;height:100vh;overflow-y:auto;padding:0;border-radius:0;text-align:center;font-family:Segoe UI,system-ui,-apple-system,sans-serif">';
-        // Sticky toolbar
-        mhtml+='<div style="position:sticky;top:0;background:#fff;padding:10px 12px;border-bottom:1px solid #e0e0e0;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;z-index:10">';
-        mhtml+='<button class="cms-btn cms-btn-primary cms-btn-sm" id="mob-flyer-print-all" style="font-size:12px">\ud83d\udda8\ufe0f Alle drucken</button>';
-        mhtml+='<button class="cms-btn cms-btn-sm" id="mob-flyer-dl-all" style="font-size:12px;background:#1565c0;color:#fff;border:none">\u2b07\ufe0f Alle speichern</button>';
-        mhtml+='<span style="color:#888;font-size:12px">'+canvases.length+' Flyer</span>';
-        mhtml+='<button class="cms-btn cms-btn-gray cms-btn-sm" data-action="closeModal" style="font-size:12px">Schlie\u00dfen</button>';
-        mhtml+='</div>';
-        mhtml+='<div style="padding:8px">';
-        canvases.forEach(function(cv,i){
-          var dataUrl=cv.toDataURL('image/png');
-          var name=items[i]?items[i].produkt||('Artikel '+(i+1)):'Artikel '+(i+1);
-          var safeName=(name+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-          mhtml+='<div class="mob-flyer-page" style="margin-bottom:16px;background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.12);overflow:hidden">';
-          mhtml+='<img src="'+dataUrl+'" alt="'+safeName+'" style="width:100%;display:block" data-flyer-idx="'+i+'">';
-          mhtml+='<div style="padding:8px 10px;display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;background:#f9fafb;border-top:1px solid #e5e7eb">';
-          mhtml+='<button class="cms-btn cms-btn-sm" data-mob-print="'+i+'" style="font-size:11px;background:#2e7d32;color:#fff;border:none;padding:5px 12px;border-radius:6px">\ud83d\udda8\ufe0f Drucken</button>';
-          mhtml+='<a href="'+dataUrl+'" download="Flyer_'+safeName.replace(/[^a-zA-Z0-9_-]/g,'_')+'.png" class="cms-btn cms-btn-sm" style="font-size:11px;background:#1565c0;color:#fff;border:none;padding:5px 12px;border-radius:6px;text-decoration:none">\u2b07\ufe0f Speichern</a>';
-          mhtml+='<span style="color:#666;font-size:11px;font-weight:600">'+safeName+'</span>';
-          mhtml+='</div></div>';
-        });
-        mhtml+='</div></div></div>';
-        document.getElementById('cms-modal-wrap').innerHTML=mhtml;
-        document.getElementById('cms-modal-wrap').style.display='';
-        // Mobile event handlers
-        document.getElementById('mob-flyer-print-all').onclick=function(){
-          var w=window.open('','_blank');
-          if(!w){toast('Popup-Blocker aktiv','warn');return;}
-          var ph='<html><head><title>Einzelflyer</title><style>@page{margin:0;size:A4 portrait}img{width:100%;page-break-after:always}body{margin:0}</style></head><body>';
-          canvases.forEach(function(cv){ph+='<img src="'+cv.toDataURL('image/png')+'">';});
-          ph+='</body></html>';
-          w.document.write(ph);w.document.close();
-          setTimeout(function(){w.print();},500);
-        };
-        document.getElementById('mob-flyer-dl-all').onclick=function(){
-          canvases.forEach(function(cv,i){
-            var nm=items[i]?items[i].produkt||('Artikel_'+(i+1)):'Artikel_'+(i+1);
-            var a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='Flyer_'+nm.replace(/[^a-zA-Z0-9_-]/g,'_')+'.png';a.click();
-          });
-          toast(canvases.length+' Flyer heruntergeladen','ok');
-        };
-        document.querySelectorAll('[data-mob-print]').forEach(function(btn){
-          btn.onclick=function(){
-            var idx=parseInt(btn.getAttribute('data-mob-print'));
-            var w=window.open('','_blank');
-            if(!w){toast('Popup-Blocker aktiv','warn');return;}
-            w.document.write('<html><head><title>Einzelflyer</title><style>@page{margin:0;size:A4 portrait}img{width:100%}body{margin:0}</style></head><body><img src="'+canvases[idx].toDataURL('image/png')+'"></body></html>');
-            w.document.close();
-            setTimeout(function(){w.print();},500);
-          };
-        });
-      }else{
-        // ── Desktop: write to popup window with interactive per-article controls ──
-        // Build per-article overrides array (mutable, synced on save)
+      {
+        // ── Interactive Einzelflyer Editor (Desktop popup OR Mobile fullscreen modal) ──
         var artOvs=items.map(function(it){return flyerArtOverrideGet(it)||flyerArtOverrideDefault();});
         var _initArtOvs=artOvs.map(function(o){return JSON.parse(JSON.stringify(o));}); // snapshot for revert
-        // Autosave: persist override after each change (debounced per index)
         var _flyerAutoTimers={};
         function flyerAutoSave(idx){
           clearTimeout(_flyerAutoTimers[idx]);
@@ -5423,12 +5345,12 @@
           generateEinzelflyer(it,data).then(function(cv){
             canvases[idx]=cv;
             var src=cv.toDataURL('image/png');
-            var img=win.document.getElementById('fimg-'+idx);
+            var img=doc.getElementById('fimg-'+idx);
             if(img)img.src=src;
-            var pimg=win.document.getElementById('fimg-print-'+idx);
+            var pimg=doc.getElementById('fimg-print-'+idx);
             if(pimg)pimg.src=src;
             // Rebuild overlay zones
-            var ovDiv=win.document.getElementById('ov-'+idx);
+            var ovDiv=doc.getElementById('ov-'+idx);
             if(ovDiv) ovDiv.innerHTML=_buildZoneHtml(cv._elMeta||[],idx);
           });
         }
@@ -5444,10 +5366,9 @@
             +'<button data-ov="'+prefix+'" data-dir="down" data-idx="'+idx+'" class="abtn" title="runter">\u25BC</button>'
             +'</div>';
         }
-        var html='<html><head><title>Einzelflyer</title><style>'
-          +'@page{margin:0;size:A4 portrait}'
+        var _flyerEdCss='@page{margin:0;size:A4 portrait}'
           +'@media print{.no-print{display:none!important}.flyer-page{page-break-after:always;page-break-inside:avoid}}'
-          +'body{margin:0;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif;background:#f5f5f5}'
+          +'.fe-root{margin:0;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif;background:#f5f5f5}'
           +'.toolbar{position:sticky;top:0;background:#fff;padding:12px 24px;border-bottom:1px solid #e0e0e0;display:flex;gap:12px;z-index:10;align-items:center;flex-wrap:wrap}'
           +'.toolbar button{padding:8px 20px;border-radius:8px;border:none;font-weight:600;cursor:pointer;font-size:14px}'
           +'.btn-print{background:#2e7d32;color:#fff}'
@@ -5486,22 +5407,21 @@
           +'.tog:hover{background:#e8f5e9}'
           +'.tog.on:hover{background:#1b5e20}'
           +'.abtn-grp{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;border:1px solid #e0e0e0;border-radius:8px;background:#fff}'
-          +'.sld{width:80px}'
-          +'</style></head><body>'
-          +'<div class="toolbar no-print">'
+          +'.sld{width:80px}';
+        var _flyerEdToolbar='<div class="toolbar no-print">'
           +'<button class="btn-print" data-act="print-all">\ud83d\udda8\ufe0f Alle drucken</button>'
           +'<span style="color:#888;font-size:13px">'+canvases.length+' Flyer</span>'
-          +'<span style="color:#2563eb;font-size:12px;font-weight:600">\ud83d\udd79\ufe0f Elemente anklicken & verschieben \u2022 Rechtsklick = Men\u00fc</span>'
+          +'<span style="color:#2563eb;font-size:12px;font-weight:600">'+(isMobile?'\ud83d\udc46 Tippen & ziehen \u2022 Lang dr\u00fccken = Men\u00fc':'\ud83d\udd79\ufe0f Elemente anklicken & verschieben \u2022 Rechtsklick = Men\u00fc')+'</span>'
           +'<button class="btn-close" data-act="close">Schlie\u00dfen</button>'
           +'</div>';
+        var _bodyHtml='';
         canvases.forEach(function(cv,i){
           var dataUrl=cv.toDataURL('image/png');
           var name=items[i]?items[i].produkt||('Artikel '+(i+1)):'Artikel '+(i+1);
           var safeName=(name+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
           var ov=artOvs[i];
-          // Build overlay zones from element metadata
           var overlayHtml=_buildZoneHtml(cv._elMeta||[],i);
-          html+='<div class="flyer-page" id="fp-'+i+'">'
+          _bodyHtml+='<div class="flyer-page" id="fp-'+i+'">'
             +'<div class="flyer-wrap no-print" id="fw-'+i+'"><img id="fimg-'+i+'" src="'+dataUrl+'" alt="'+safeName+'">'
             +'<div class="el-overlay" id="ov-'+i+'">'+overlayHtml+'</div></div>'
             +'<img id="fimg-print-'+i+'" src="'+dataUrl+'" class="print-only" style="display:none;width:100%">'
@@ -5513,11 +5433,9 @@
             +'<label style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild<input type="file" accept="image/*" data-act="add-custom-img" data-idx="'+i+'" style="display:none"></label>'
             +'<span style="color:#888;font-size:12px;font-weight:600">'+safeName+'</span>'
             +'</div>'
-            // ── Control bar ──
             +'<div class="ctl-bar no-print">'
             +'<div class="abtn-grp">'+arrowCross('img',i,'\ud83d\uddbc Bild')+'</div>'
             +'<div class="abtn-grp">'+arrowCross('price',i,'\ud83c\udff7 Preis')+'</div>'
-            // Ghost controls
             +'<div class="abtn-grp">'
             +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udc7b Ghost</span>'
             +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+i+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
@@ -5525,14 +5443,12 @@
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+i+'"><span id="ga-'+i+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+i+'"><span id="gs-'+i+'">'+(ov.ghostScale||100)+'%</span></label>'
             +'</div>'
-            // Duplicate controls
             +'<div class="abtn-grp">'
             +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udcdd Duplikat</span>'
             +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+i+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
             +(ov.dupOn?arrowCross('dup',i,'Position'):'')
             +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+i+'"><span id="ds-'+i+'">'+(ov.dupScale||100)+'%</span></label>':'')
             +'</div>'
-            // ── Weitere Kopien (Multi-Ghost/Dup) ──
             +'<div class="abtn-grp">'
             +'<span style="font-size:10px;font-weight:700;color:#555">Weitere Kopien</span>'
             +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
@@ -5540,35 +5456,54 @@
             +'<button class="tog" data-act="add-dup-copy" data-idx="'+i+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udcdd Duplikat</button>'
             +'</div>';
           if(ov.copies&&ov.copies.length){
-            html+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
+            _bodyHtml+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
             ov.copies.forEach(function(cp,ci){
               var icon=cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd';
-              html+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:#f3f4f6;border:1px solid #d1d5db">'
+              _bodyHtml+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:#f3f4f6;border:1px solid #d1d5db">'
                 +icon+(ci+1)
                 +' <span data-act="del-copy" data-idx="'+i+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:bold;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
                 +'</span>';
             });
-            html+='</div>';
+            _bodyHtml+='</div>';
           }
-          html+='</div>'
+          _bodyHtml+='</div>'
             +'</div>'
             +'</div>';
         });
-        html+='</body></html>';
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
 
-        // Handlers im Popup-Fenster registrieren
+        // ── Inject into popup (desktop) or CMS modal (mobile) ──
+        var doc; // document reference used by all event handlers
+        if(isMobile){
+          // Mobile: fullscreen overlay inside the CMS page
+          var mobRoot=document.createElement('div');
+          mobRoot.id='mob-flyer-editor';
+          mobRoot.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;overflow-y:auto;background:#f5f5f5';
+          var styleEl=document.createElement('style');styleEl.textContent=_flyerEdCss;
+          mobRoot.appendChild(styleEl);
+          var inner=document.createElement('div');inner.className='fe-root';
+          inner.innerHTML=_flyerEdToolbar+_bodyHtml;
+          mobRoot.appendChild(inner);
+          document.body.appendChild(mobRoot);
+          doc=document;
+          // Fake win for close/print compatibility
+          win={close:function(){mobRoot.remove();},focus:function(){},print:function(){window.print();},open:function(u,t){return window.open(u,t);},alert:function(m){alert(m);},innerWidth:window.innerWidth,innerHeight:window.innerHeight,document:document};
+        }else{
+          var fullHtml='<html><head><title>Einzelflyer</title><style>'+_flyerEdCss+'body{margin:0;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif;background:#f5f5f5}</style></head><body>'+_flyerEdToolbar+_bodyHtml+'</body></html>';
+          win.document.open();
+          win.document.write(fullHtml);
+          win.document.close();
+          doc=win.document;
+        }
+
+        // Handlers registrieren
         var attach=function(){
-          var doc=win.document;
           function sanitize(s){return (s||'flyer').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_').substring(0,80);}
           function printOne(idx){
             var imgs=doc.querySelectorAll('.flyer-page img');
             if(!imgs[idx])return;
             var src=imgs[idx].src;
-            var w=win.open('','_blank');
-            if(!w){win.alert('Popup-Blocker aktiv! Bitte Popups erlauben.');return;}
+            var w=window.open('','_blank');
+            if(!w){alert('Popup-Blocker aktiv! Bitte Popups erlauben.');return;}
             var d=w.document;
             d.open();
             d.write('<html><head><title>Flyer drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"></body></html>');
@@ -5985,21 +5920,79 @@
               d.addEventListener('click',function(e){e.stopPropagation();hideCtxMenu();mi.action();});
               menu.appendChild(d);
             });
-            doc.body.appendChild(menu);
+            (isMobile?document.body:doc.body).appendChild(menu);
             // Keep menu in viewport
             setTimeout(function(){
               var r=menu.getBoundingClientRect();
-              if(r.right>win.innerWidth)menu.style.left=(win.innerWidth-r.width-8)+'px';
-              if(r.bottom>win.innerHeight)menu.style.top=(win.innerHeight-r.height-8)+'px';
+              if(r.right>window.innerWidth)menu.style.left=(window.innerWidth-r.width-8)+'px';
+              if(r.bottom>window.innerHeight)menu.style.top=(window.innerHeight-r.height-8)+'px';
             },0);
           });
 
+          // ── Touch support for mobile: drag + long-press context menu ──
+          var _touchTimer=null;
+          doc.addEventListener('touchstart',function(ev){
+            var z=ev.target.closest?ev.target.closest('.el-zone'):null;
+            if(!z)return;
+            var touch=ev.touches[0];
+            var _tsX=touch.clientX,_tsY=touch.clientY;
+            var _tsMoved=false;
+            _touchTimer=setTimeout(function(){
+              // Long press = context menu
+              if(!_tsMoved){
+                var ctxEv={target:z,clientX:_tsX,clientY:_tsY,preventDefault:function(){}};
+                z.dispatchEvent(new MouseEvent('contextmenu',{clientX:_tsX,clientY:_tsY,bubbles:true}));
+              }
+              _touchTimer=null;
+            },600);
+            ev.preventDefault();
+            selectZone(z);
+            var idx=parseInt(z.getAttribute('data-idx'),10);
+            var ovKey=z.getAttribute('data-ov');
+            var elId=z.getAttribute('data-el');
+            var ov=artOvs[idx];
+            var wrap=doc.getElementById('fw-'+idx);
+            if(!wrap)return;
+            var wrapRect=wrap.getBoundingClientRect();
+            var scale=794/wrapRect.width;
+            var _dragCopy=null;
+            if(ovKey==='copy'&&elId&&elId.indexOf('copy-')===0){
+              var _dci=parseInt(elId.split('-')[1],10);
+              _dragCopy=ov.copies&&ov.copies[_dci];
+            }
+            var startDx=_dragCopy?(_dragCopy.dx||0):(ov[ovKey+'Dx']||0);
+            var startDy=_dragCopy?(_dragCopy.dy||0):(ov[ovKey+'Dy']||0);
+            function onTouchMove(e){
+              var t2=e.touches[0];
+              var dx=(t2.clientX-_tsX)*scale,dy=(t2.clientY-_tsY)*scale;
+              if(Math.abs(dx)>4||Math.abs(dy)>4){_tsMoved=true;if(_touchTimer){clearTimeout(_touchTimer);_touchTimer=null;}}
+              if(_dragCopy){_dragCopy.dx=Math.round(startDx+dx);_dragCopy.dy=Math.round(startDy+dy);}
+              else{ov[ovKey+'Dx']=Math.round(startDx+dx);ov[ovKey+'Dy']=Math.round(startDy+dy);}
+              var curEl=(canvases[idx]._elMeta||[]).find(function(m){return m.id===elId;});
+              if(curEl){
+                z.style.left=((curEl.x+Math.round(startDx+dx)-startDx+dx)/794*100).toFixed(2)+'%';
+                z.style.top=((curEl.y+Math.round(startDy+dy)-startDy+dy)/1123*100).toFixed(2)+'%';
+              }
+            }
+            function onTouchEnd(){
+              doc.removeEventListener('touchmove',onTouchMove);
+              doc.removeEventListener('touchend',onTouchEnd);
+              if(_touchTimer){clearTimeout(_touchTimer);_touchTimer=null;}
+              if(_tsMoved){regenFlyer(idx);flyerAutoSave(idx);}
+            }
+            doc.addEventListener('touchmove',onTouchMove,{passive:false});
+            doc.addEventListener('touchend',onTouchEnd);
+          },{passive:false});
+
           // ── Print style: show print images, hide interactive wraps ──
-          var printStyle=doc.createElement('style');
-          printStyle.textContent='@media print{.flyer-wrap{display:none!important}.print-only{display:block!important}}';
-          doc.head.appendChild(printStyle);
+          if(!isMobile){
+            var printStyle=doc.createElement('style');
+            printStyle.textContent='@media print{.flyer-wrap{display:none!important}.print-only{display:block!important}}';
+            doc.head.appendChild(printStyle);
+          }
         };
-        if(win.document.readyState==='complete'){attach();}
+        if(isMobile){attach();}
+        else if(win.document.readyState==='complete'){attach();}
         else{win.addEventListener('load',attach);setTimeout(attach,500);}
       }
     }).catch(function(e){toast('Fehler: '+e.message,'error');});
@@ -6033,9 +6026,9 @@
     var style='harmonie';
     try{
       var cfg=cfgOverride||cfgGet();
-      style=(cfg&&cfg.savingsPalette?cfg.savingsPalette:(cfg&&cfg.savingsStarStyle?cfg.savingsStarStyle:(localStorage.getItem('dl_savings_star_style')||'harmonie'))).toLowerCase();
+      style=(cfg&&cfg.savingsPalette?cfg.savingsPalette:(cfg&&cfg.savingsStarStyle?cfg.savingsStarStyle:'harmonie')).toLowerCase();
     }catch(e){
-      try{style=(localStorage.getItem('dl_savings_star_style')||'harmonie').toLowerCase();}catch(_e){}
+      style='harmonie';
     }
     if(style==='classic-red'||style==='red'||style==='classic'){
       return {name:'classic-red',g1:'#ff4b3a',g2:'#e11d1d',stroke:'rgba(255,255,255,0.65)',text:'#ffffff',textStroke:'rgba(0,0,0,0.3)'};
@@ -6074,7 +6067,6 @@
   window.cmsSetSavingsStarStyle=function(style){
     var allowed={'harmonie':1,'classic-red':1,'warm-copper':1,'berry-purple':1,'ocean-blue':1,'sunset-orange':1,'fresh-lime':1,'deep-rose':1,'midnight-gold':1,'arctic-teal':1};
     if(!allowed[style]){toast('Ungültiger Stil.','warn');return;}
-    try{localStorage.setItem('dl_savings_star_style',style);}catch(e){}
     var sel=document.getElementById('cfg-savingsStarStyle');if(sel)sel.value=style;
     var sel2=document.getElementById('cfg-savingsPalette');if(sel2)sel2.value=style;
     toast('Stern-Stil gesetzt: '+style,'ok');
@@ -7436,8 +7428,9 @@
 
   // --- Push Notifications: Queue ---
   var PUSH_QUEUE_KEY='push_queue';
-  function pushGetQueue(){try{return JSON.parse(localStorage.getItem(PUSH_QUEUE_KEY)||'[]');}catch(e){return [];}}
-  function pushSaveQueue(q){localStorage.setItem(PUSH_QUEUE_KEY,JSON.stringify(q));pushRenderQueue();}
+  var _pushQueue=[];
+  function pushGetQueue(){return _pushQueue;}
+  function pushSaveQueue(q){_pushQueue=q||[];pushRenderQueue();}
   var CAT_ICONS={mittagstisch:'\uD83C\uDF7D',angebote:'\uD83C\uDF81',news:'\uD83D\uDCF0'};
   var CAT_NAMES={mittagstisch:'Mittagstisch',angebote:'Angebote',news:'News'};
 
