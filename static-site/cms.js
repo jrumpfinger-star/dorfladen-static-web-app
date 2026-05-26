@@ -263,7 +263,7 @@
     if(prodInp){
       prodInp.addEventListener('input',function(e){console.log('[CMS] Input:',this.value);artSearchFilter(this);});
       prodInp.addEventListener('focus',function(){artSearchFilter(this);});
-      prodInp.addEventListener('blur',function(){setTimeout(function(){var wrap=prodInp.parentElement;if(wrap){var dd=wrap.querySelector('.cms-art-dd');if(dd&&!dd.contains(document.activeElement)&&!dd.matches(':hover'))dd.classList.remove('open');}},200);});
+      prodInp.addEventListener('blur',function(){setTimeout(function(){var wrap=prodInp.parentElement;if(wrap){var dd=wrap.querySelector('.cms-art-dd');if(dd&&!dd.contains(document.activeElement)&&!dd.matches(':hover')&&!dd.matches(':active'))dd.classList.remove('open');}},300);});
     }
     renumberAngRows();
   }
@@ -1212,6 +1212,12 @@
         if(dvArtOv&&typeof dvArtOv==='object'){
           _flyerArtOverrides=dvArtOv;
           try{localStorage.setItem(FLYER_ART_OVERRIDES_KEY,JSON.stringify(dvArtOv));}catch(e){}
+        }
+        // Load per-article plakat (Kachel) overrides
+        var dvPlakatOv=res.data['plakat_article_overrides'];
+        if(dvPlakatOv&&typeof dvPlakatOv==='object'){
+          _plakatArtOverrides=dvPlakatOv;
+          try{localStorage.setItem(PLAKAT_ART_OVERRIDES_KEY,JSON.stringify(dvPlakatOv));}catch(e){}
         }
         var dvCfg=res.data['design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
@@ -3775,7 +3781,7 @@
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Schlie\u00dfen</button>';
     html+='</div>';
     if(opts.showEinzelflyer){
-      html+='<p style="margin:8px 0 0;font-size:11px;color:#9ca3af">\ud83d\udc46 Auf eine Karte klicken \u2192 Einzelflyer bearbeiten</p>';
+      html+='<p style="margin:8px 0 0;font-size:11px;color:#9ca3af">\ud83d\udc46 Auf eine Karte klicken \u2192 Kachel-Bild bearbeiten</p>';
     }
     html+='</div></div>';
     document.getElementById('cms-modal-wrap').innerHTML=html;
@@ -3839,15 +3845,20 @@
           var zone=document.createElement('div');
           zone.className='pv-card-zone';
           zone.style.cssText='position:absolute;left:'+Math.round(card.x*scaleX)+'px;top:'+Math.round(card.y*scaleY)+'px;width:'+Math.round(card.w*scaleX)+'px;height:'+Math.round(card.h*scaleY)+'px;cursor:pointer;border:2px solid transparent;border-radius:8px;transition:all 0.15s;z-index:2';
-          zone.title='Klicken \u2192 Einzelflyer bearbeiten';
+          zone.title='Klicken \u2192 Kachel-Bild bearbeiten';
           zone.setAttribute('data-art-idx',card.origIdx);
           zone.onmouseenter=function(){zone.style.borderColor='rgba(230,81,0,0.6)';zone.style.background='rgba(230,81,0,0.06)';};
           zone.onmouseleave=function(){zone.style.borderColor='transparent';zone.style.background='none';};
           zone.onclick=function(){
-            // Close modal and open Einzelflyer for this article
-            document.getElementById('cms-modal-wrap').innerHTML='';
-            document.getElementById('cms-modal-wrap').style.display='none';
-            showEinzelflyer(card.origIdx);
+            // Open card editor for this article's tile
+            var cardItem=items[card.origIdx];
+            if(!cardItem) return;
+            showPlakatCardEditor(cardItem,function(saved){
+              if(saved && _currentPreviewAktion && _currentPreviewAktion.aktion_id){
+                // Re-generate the plakat and refresh the preview image
+                cmsPreviewAktion(_currentPreviewAktion.aktion_id);
+              }
+            });
           };
           wrap.appendChild(zone);
         });
@@ -3860,6 +3871,190 @@
         buildCardZones();
       });
     }
+  }
+
+  // ── Plakat Kachel-Editor ──
+  // Opens a modal that shows one card from the Plakat, allowing drag/resize/rotate of the image
+  function showPlakatCardEditor(item,onDone){
+    var ov=plakatArtOverrideGet(item)||plakatArtOverrideDefault();
+    var CARD_W=380,CARD_H=300;
+    var cfg=cfgForKind(cfgGet(),'plakat');
+    var theme=getOfferTheme('plakat',cfg);
+
+    var html='<div class="cms-modal-bg">';
+    html+='<div class="cms-modal" style="max-width:440px;text-align:center">';
+    html+='<h3 style="margin:0 0 8px;font-size:15px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+'</h3>';
+    html+='<p style="margin:0 0 8px;font-size:11px;color:#9ca3af">Bild ziehen, Mausrad = Gr\u00f6\u00dfe, Rechtsklick = Men\u00fc</p>';
+    html+='<div id="pce-wrap" style="position:relative;display:inline-block;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;cursor:grab">';
+    html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'"></canvas>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">';
+    html+='<button class="cms-btn" id="pce-save" style="background:#e65100;color:#fff">\ud83d\udcbe Speichern & Schlie\u00dfen</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-reset">\u21ba Zur\u00fccksetzen</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-close">Abbrechen</button>';
+    html+='</div>';
+    html+='</div></div>';
+
+    var mw=document.getElementById('cms-modal-wrap');
+    // Store previous modal content to restore on close
+    var prevContent=mw.innerHTML;
+    var prevDisplay=mw.style.display;
+    mw.innerHTML=html;mw.style.display='';
+
+    var cvs=document.getElementById('pce-canvas');
+    var ctx=cvs.getContext('2d');
+    var imgObj=null;
+
+    function renderCard(){
+      ctx.clearRect(0,0,CARD_W,CARD_H);
+      // Card background
+      ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',0,0,CARD_W,CARD_H);
+      ctx.fillRect(0,0,CARD_W,CARD_H);
+      // Card border
+      ctx.strokeStyle=theme.cardBorder||'#e0e0e0';ctx.lineWidth=1;ctx.strokeRect(0,0,CARD_W,CARD_H);
+
+      if(!imgObj) return;
+      // Freistellen
+      var ofc=document.createElement('canvas');ofc.width=imgObj.width;ofc.height=imgObj.height;
+      var ox=ofc.getContext('2d');ox.drawImage(imgObj,0,0);
+      if(cfg.imgFreistellen){
+        try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
+        var thr=cfg.imgThreshold,fade=30;
+        for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
+        ox.putImageData(id,0,0);}catch(e){}
+      }
+      var fSc=(cfg.imgScale||100)/100*((ov.imgScale||100)/100);
+      var maxIW=CARD_W-30, maxIH=CARD_H-30;
+      var sc=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fSc;
+      var iw=ofc.width*sc, ih=ofc.height*sc;
+      var imgX=CARD_W/2-iw/2+(ov.imgDx||0)*CARD_W/380;
+      var imgY=CARD_H/2-ih/2+(ov.imgDy||0)*CARD_H/300;
+      var rotRad=(ov.imgRot||0)*Math.PI/180;
+
+      ctx.save();
+      ctx.beginPath();ctx.rect(0,0,CARD_W,CARD_H);ctx.clip();
+      if(rotRad){
+        ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(rotRad);
+        ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);
+      }else{
+        ctx.drawImage(ofc,imgX,imgY,iw,ih);
+      }
+      ctx.restore();
+
+      // Product name overlay at top
+      ctx.fillStyle='rgba(255,255,255,0.85)';ctx.fillRect(0,0,CARD_W,32);
+      ctx.fillStyle=theme.textColor||'#333';ctx.font='700 14px Arial, sans-serif';ctx.textAlign='left';
+      ctx.fillText(item.produkt||'',8,22);
+
+      // Rotation info bottom-right
+      if(ov.imgRot){
+        ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='right';
+        ctx.fillText(ov.imgRot+'\u00b0',CARD_W-8,CARD_H-8);
+      }
+      // Scale info bottom-left
+      if(ov.imgScale!==100){
+        ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='left';
+        ctx.fillText((ov.imgScale||100)+'%',8,CARD_H-8);
+      }
+      ctx.textAlign='left';
+    }
+
+    // Load image
+    if(item.bild_data){
+      imgObj=new Image();
+      imgObj.onload=function(){renderCard();};
+      imgObj.src=item.bild_data;
+    }else{renderCard();}
+
+    // ── Drag to move image ──
+    var dragging=false,dragStartX,dragStartY,startDx,startDy;
+    cvs.addEventListener('mousedown',function(ev){
+      if(ev.button!==0) return;
+      ev.preventDefault();
+      dragging=true;
+      dragStartX=ev.clientX;dragStartY=ev.clientY;
+      startDx=ov.imgDx||0;startDy=ov.imgDy||0;
+      cvs.style.cursor='grabbing';
+    });
+    function pceMove(ev){
+      if(!dragging) return;
+      var dx=ev.clientX-dragStartX, dy=ev.clientY-dragStartY;
+      var rect=cvs.getBoundingClientRect();
+      var scX=CARD_W/rect.width, scY=CARD_H/rect.height;
+      ov.imgDx=Math.round(startDx+dx*scX);
+      ov.imgDy=Math.round(startDy+dy*scY);
+      renderCard();
+    }
+    function pceUp(){
+      if(dragging){dragging=false;cvs.style.cursor='grab';}
+    }
+    document.addEventListener('mousemove',pceMove);
+    document.addEventListener('mouseup',pceUp);
+
+    // ── Mouse wheel to scale ──
+    cvs.addEventListener('wheel',function(ev){
+      ev.preventDefault();
+      var delta=ev.deltaY<0?5:-5;
+      ov.imgScale=Math.max(20,Math.min(300,(ov.imgScale||100)+delta));
+      renderCard();
+    });
+
+    // ── Context menu ──
+    cvs.addEventListener('contextmenu',function(ev){
+      ev.preventDefault();
+      // Remove old menu
+      var old=document.getElementById('pce-ctx-menu');if(old)old.remove();
+      var menu=document.createElement('div');
+      menu.className='ctx-menu';menu.id='pce-ctx-menu';
+      menu.style.left=ev.clientX+'px';menu.style.top=ev.clientY+'px';
+      var curRot=ov.imgRot||0;
+      var menuItems=[
+        {icon:'\u21bb',text:'Drehen +15\u00b0 ('+curRot+'\u00b0)',action:function(){ov.imgRot=(ov.imgRot||0)+15;renderCard();}},
+        {icon:'\u21ba',text:'Drehen \u221215\u00b0',action:function(){ov.imgRot=(ov.imgRot||0)-15;renderCard();}},
+      ];
+      if(curRot!==0) menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov.imgRot=0;renderCard();}});
+      menuItems.push('hr');
+      menuItems.push({icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){ov.imgDx=0;ov.imgDy=0;renderCard();}});
+      menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.imgScale||100)+'%)',action:function(){ov.imgScale=100;renderCard();}});
+      menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Alles zur\u00fccksetzen',action:function(){ov.imgDx=0;ov.imgDy=0;ov.imgScale=100;ov.imgRot=0;renderCard();}});
+      menuItems.forEach(function(mi){
+        if(mi==='hr'){menu.appendChild(document.createElement('hr'));return;}
+        var d=document.createElement('div');
+        d.innerHTML='<span>'+mi.icon+'</span><span>'+mi.text+'</span>';
+        d.addEventListener('click',function(e){e.stopPropagation();menu.remove();mi.action();});
+        menu.appendChild(d);
+      });
+      document.body.appendChild(menu);
+      // Keep menu in viewport
+      var mr=menu.getBoundingClientRect();
+      if(mr.right>window.innerWidth) menu.style.left=(window.innerWidth-mr.width-4)+'px';
+      if(mr.bottom>window.innerHeight) menu.style.top=(window.innerHeight-mr.height-4)+'px';
+      // Auto-close on click elsewhere
+      function closeCtx(){menu.remove();document.removeEventListener('click',closeCtx);}
+      setTimeout(function(){document.addEventListener('click',closeCtx);},0);
+    });
+
+    // ── Buttons ──
+    function closeEditor(save){
+      // Cleanup event listeners
+      document.removeEventListener('mousemove',pceMove);
+      document.removeEventListener('mouseup',pceUp);
+      // Remove any leftover context menus
+      var cm=document.getElementById('pce-ctx-menu');if(cm)cm.remove();
+      if(save){
+        plakatArtOverrideSave(item,ov);
+        toast('Kachel-\u00c4nderungen gespeichert','ok');
+      }
+      // Restore previous modal
+      mw.innerHTML=prevContent;mw.style.display=prevDisplay;
+      if(onDone) onDone(save);
+    }
+    document.getElementById('pce-save').onclick=function(){closeEditor(true);};
+    document.getElementById('pce-close').onclick=function(){closeEditor(false);};
+    document.getElementById('pce-reset').onclick=function(){
+      ov=plakatArtOverrideDefault();
+      renderCard();
+    };
   }
 
   function printFromBlob(blob){
@@ -4131,7 +4326,38 @@
   }
   // Default per-article override object
   function flyerArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:0,ghostDy:0,ghostAlpha:0.45,dupDx:0,dupDy:0,dupOn:false,customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:0,ghostDy:0,ghostAlpha:0.45,ghostRot:0,dupDx:0,dupDy:0,dupOn:false,dupRot:0,customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
+  }
+
+  // ── Per-Article PLAKAT (Kachel) Layout Overrides ──
+  var PLAKAT_ART_OVERRIDES_KEY='dl_plakat_article_overrides';
+  var _plakatArtOverrides=null;
+  function plakatArtOverrideDefault(){
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0};
+  }
+  function plakatArtOverridesGetAll(){
+    if(_plakatArtOverrides)return _plakatArtOverrides;
+    try{var s=localStorage.getItem(PLAKAT_ART_OVERRIDES_KEY);if(s){_plakatArtOverrides=JSON.parse(s);return _plakatArtOverrides;}}catch(e){}
+    _plakatArtOverrides={};return _plakatArtOverrides;
+  }
+  function plakatArtOverrideGet(item){
+    var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);
+    return (k&&all[k])?JSON.parse(JSON.stringify(all[k])):null;
+  }
+  function plakatArtOverrideSave(item,ov){
+    var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
+    all[k]=JSON.parse(JSON.stringify(ov));
+    _plakatArtOverrides=all;
+    try{localStorage.setItem(PLAKAT_ART_OVERRIDES_KEY,JSON.stringify(all));}catch(e){}
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'plakat_article_overrides',wert:all})})
+      .then(function(r){return r.json();}).catch(function(){});
+  }
+  function plakatArtOverrideDelete(item){
+    var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
+    delete all[k];_plakatArtOverrides=all;
+    try{localStorage.setItem(PLAKAT_ART_OVERRIDES_KEY,JSON.stringify(all));}catch(e){}
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'plakat_article_overrides',wert:all})})
+      .then(function(r){return r.json();}).catch(function(){});
   }
 
   function generateEinzelflyer(item,data,cfgOverride){
@@ -4256,8 +4482,11 @@
               var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc;
               var iw=ofc.width*scI,ih=ofc.height*scI;
               var imgX=cardMX+cardMW/2-iw/2, imgY=cardMY+10+(imgZoneH-ih)/2;
+              var mgImgRotRad=(artOv.imgRot||0)*Math.PI/180;
               ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
-              ctx.drawImage(ofc,imgX,imgY,iw,ih);ctx.restore();
+              if(mgImgRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(mgImgRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
+              else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
+              ctx.restore();
               _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgX,y:imgY,w:iw,h:ih,ovKey:'img'});
               resImg();
             };img.onerror=function(){resImg();};img.src=item.bild_data;
@@ -4424,7 +4653,7 @@
             ox.putImageData(id,0,0);}
             // Clip to card so image does not overflow
             ctx.save();rrect(cardX,cardY,cardW,cardH,theme.cardRadius);ctx.clip();
-            var rotRad=cfg.imgRotation*Math.PI/180;
+            var rotRad=(cfg.imgRotation+(artOv.imgRot||0))*Math.PI/180;
             var cx=imgLeft+iw/2, cy=imgBot-ih/2;
             var aspectRatio=img.width/img.height;
             // ── Ghost: auto (flat images) or manual ──
@@ -4437,8 +4666,9 @@
               if(gm==='on'){ghostCx=cx+(artOv.ghostDx||0);ghostCy=cy+(artOv.ghostDy||0);}
               else{ghostCx=cx+iw*0.20;ghostCy=cy-ih*0.55;}
               if(ghostCy-ih/2<imgAreaTop) ghostCy=imgAreaTop+ih/2+4;
+              var ghostRotRad=(artOv.ghostRot||0)*Math.PI/180;
               ctx.save();ctx.globalAlpha=gAlpha;
-              ctx.translate(ghostCx,ghostCy);ctx.rotate(-rotRad*0.6);
+              ctx.translate(ghostCx,ghostCy);ctx.rotate(-rotRad*0.6-ghostRotRad);
               ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);
               ctx.restore();
               _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:ghostCx-iw/2,y:ghostCy-ih/2,w:iw,h:ih,ovKey:'ghost'});
@@ -4446,8 +4676,9 @@
             // ── Full duplicate (100% opacity) ──
             if(artOv.dupOn){
               var dupCx=cx+(artOv.dupDx||0), dupCy=cy+(artOv.dupDy||0);
+              var dupRotRad=(artOv.dupRot||0)*Math.PI/180;
               ctx.save();ctx.globalAlpha=1.0;
-              ctx.translate(dupCx,dupCy);ctx.rotate(-rotRad);
+              ctx.translate(dupCx,dupCy);ctx.rotate(-rotRad-dupRotRad);
               ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);
               ctx.restore();
               _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dupCx-iw/2,y:dupCy-ih/2,w:iw,h:ih,ovKey:'dup'});
@@ -4529,8 +4760,10 @@
               if(ciH>H*0.6){var f3=H*0.6/ciH;ciW*=f3;ciH*=f3;}
               var ciX=W/2-ciW/2+(artOv.customImgDx||0);
               var ciY=H/2-ciH/2+(artOv.customImgDy||0);
+              var ciRotRad=(artOv.customImgRot||0)*Math.PI/180;
               ctx.save();ctx.globalAlpha=(artOv.customImgAlpha!=null?artOv.customImgAlpha:100)/100;
-              ctx.drawImage(ci,ciX,ciY,ciW,ciH);ctx.restore();
+              ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);
+              ctx.drawImage(ci,-ciW/2,-ciH/2,ciW,ciH);ctx.restore();
               _elMeta.push({id:'customImg',label:'\ud83d\uddbc Eigenes Bild',x:ciX,y:ciY,w:ciW,h:ciH,ovKey:'customImg'});
               resCI();
             };ci.onerror=function(){resCI();};ci.src=artOv.customImg;
@@ -5033,6 +5266,17 @@
               var scKey=elId==='img'?'imgScale':'priceScale';
               menuItems.splice(2,0,{icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov[scKey]||100)+'%)',action:function(){ov[scKey]=100;regenFlyer(idx);}});
             }
+            // ── Rotation menu for img, ghost, dup, customImg ──
+            var rotKeyMap={img:'imgRot',ghost:'ghostRot',dup:'dupRot',customImg:'customImgRot'};
+            if(rotKeyMap[elId]){
+              var rk=rotKeyMap[elId];
+              var curRot=ov[rk]||0;
+              menuItems.push({icon:'\u21bb',text:'Drehen +15\u00b0 ('+curRot+'\u00b0)',action:function(){ov[rk]=(ov[rk]||0)+15;regenFlyer(idx);}});
+              menuItems.push({icon:'\u21ba',text:'Drehen \u221215\u00b0',action:function(){ov[rk]=(ov[rk]||0)-15;regenFlyer(idx);}});
+              if(curRot!==0){
+                menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov[rk]=0;regenFlyer(idx);}});
+              }
+            }
             if(elId==='img'){
               menuItems.push({icon:'\ud83d\udc7b',text:ov.ghostMode==='on'?'Ghost AUS':'Ghost AN',action:function(){
                 if(ov.ghostMode==='on'){ov.ghostMode='auto';ov.ghostDx=0;ov.ghostDy=0;}
@@ -5048,7 +5292,7 @@
             }
             if(elId==='ghost'){
               menuItems.push({icon:'\ud83d\udc7b',text:'Ghost ausschalten',action:function(){
-                ov.ghostMode='auto';ov.ghostDx=0;ov.ghostDy=0;
+                ov.ghostMode='auto';ov.ghostDx=0;ov.ghostDy=0;ov.ghostRot=0;
                 rebuildCtlBar(idx);regenFlyer(idx);
               }});
               menuItems.push({icon:'\ud83d\udd06',text:'Transparenz: '+Math.round((ov.ghostAlpha!=null?ov.ghostAlpha:0.45)*100)+'%',action:function(){
@@ -5060,7 +5304,7 @@
             }
             if(elId==='dup'){
               menuItems.push({icon:'\ud83d\udcdd',text:'Duplikat ausschalten',action:function(){
-                ov.dupOn=false;ov.dupDx=0;ov.dupDy=0;
+                ov.dupOn=false;ov.dupDx=0;ov.dupDy=0;ov.dupRot=0;
                 rebuildCtlBar(idx);regenFlyer(idx);
               }});
             }
@@ -5073,7 +5317,7 @@
               }});
               menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.customImgScale||100)+'%)',action:function(){ov.customImgScale=100;regenFlyer(idx);}});
               menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Bild entfernen',action:function(){
-                ov.customImg=null;ov.customImgDx=0;ov.customImgDy=0;ov.customImgScale=100;ov.customImgAlpha=100;
+                ov.customImg=null;ov.customImgDx=0;ov.customImgDy=0;ov.customImgScale=100;ov.customImgAlpha=100;ov.customImgRot=0;
                 rebuildCtlBar(idx);regenFlyer(idx);
               }});
             }
@@ -5440,6 +5684,8 @@
         var imgAreaH=Math.floor(mgCellH*0.48);
         ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
         ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,cy,mgCellW,imgAreaH);ctx.fillRect(cx,cy,mgCellW,imgAreaH);ctx.restore();
+        // Per-card overrides
+        var pOv=plakatArtOverrideGet(it)||plakatArtOverrideDefault();
         if(img){
           var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
           var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
@@ -5449,13 +5695,16 @@
             for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
             ox.putImageData(id,0,0);}catch(e){}
           }
-          var fImgSc2=(cfg.imgScale||100)/100;
+          var fImgSc2=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
           var maxIW=mgCellW-cardPadI*2, maxIH=imgAreaH-10;
           var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc2;
           var iw=ofc.width*scI,ih=ofc.height*scI;
-          var imgX=cx+mgCellW/2-iw/2, imgY=cy+cardPadI+(imgAreaH-ih)/2;
+          var imgX=cx+mgCellW/2-iw/2+(pOv.imgDx||0), imgY=cy+cardPadI+(imgAreaH-ih)/2+(pOv.imgDy||0);
+          var pRotRad=(pOv.imgRot||0)*Math.PI/180;
           ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-          ctx.drawImage(ofc,imgX,imgY,iw,ih);ctx.restore();
+          if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
+          else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
+          ctx.restore();
         }
 
         // Savings badge top-right
@@ -5608,13 +5857,15 @@
       // Fill image area with imgBg color
       ctx.save();roundRect(cx,imgAreaTop,cellW,imgAreaH+cardPad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
+      // Per-card overrides
+      var pOv=plakatArtOverrideGet(item)||plakatArtOverrideDefault();
       if(img){
-        var pImgSc=(cfg.imgScale||100)/100;
+        var pImgSc=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
         var maxImgW=cellW*0.52,maxImgH=imgAreaH*0.88;
         var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale)*pImgSc;
         var iw=img.width*scale,ih=img.height*scale;
-        var imgCX=cx+cardPad+maxImgW*0.45;
-        var imgCY=imgAreaTop+imgAreaH*0.5;
+        var imgCX=cx+cardPad+maxImgW*0.45+(pOv.imgDx||0);
+        var imgCY=imgAreaTop+imgAreaH*0.5+(pOv.imgDy||0);
         // Freistellen: weissen Hintergrund entfernen
         var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
         var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
@@ -5623,7 +5874,7 @@
         for(var pp=0;pp<dd.length;pp+=4){var mn=Math.min(dd[pp],dd[pp+1],dd[pp+2]);if(mn>thr)dd[pp+3]=0;else if(mn>thr-fade)dd[pp+3]=Math.round(255*(thr-mn)/fade);}
         ox.putImageData(idat,0,0);}catch(e){}}
         // Clip auf Karte, drehen, zeichnen
-        var pRotRad=cfg.imgRotation*Math.PI/180*0.85;
+        var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(pOv.imgRot||0)*Math.PI/180;
         ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
         ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
         ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
@@ -6054,7 +6305,9 @@
   },true);
 
   // Close fixed dropdowns on scroll (they don't follow the scroll)
-  document.addEventListener('scroll',function(){
+  // But ignore scroll events originating from inside the dropdown itself
+  document.addEventListener('scroll',function(e){
+    if(e.target && (e.target.classList && e.target.classList.contains('cms-art-dd') || e.target.closest && e.target.closest('.cms-art-dd'))) return;
     document.querySelectorAll('.cms-art-dd.open').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
   },true);
 
