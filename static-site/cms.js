@@ -5331,6 +5331,7 @@
             zh+='<div class="el-zone'+extraCls+'" data-el="'+el.id+'" data-idx="'+idx+'" data-ov="'+el.ovKey+'"'
               +' style="left:'+pctL+'%;top:'+pctT+'%;width:'+pctW+'%;height:'+pctH+'%">'
               +'<span class="el-label">'+el.label+'</span>'
+              +'<div class="el-touch-menu" data-el="'+el.id+'" data-idx="'+idx+'">\u22EF</div>'
               +(noResize?'':'<div class="rz-handle br">\u21F2</div>')
               +'</div>';
           });
@@ -5392,6 +5393,7 @@
           +'.el-zone.el-custom .rz-handle{background:#ea580c}'
           +'.el-zone .el-label{position:absolute;top:-22px;left:0;font-size:10px;font-weight:700;color:#fff;background:#2563eb;padding:1px 6px;border-radius:3px 3px 0 0;white-space:nowrap;display:none}'
           +'.el-zone.selected .el-label{display:block}'
+          +'.el-zone .el-touch-menu{display:none;position:absolute;top:-2px;right:-2px;width:28px;height:28px;background:#2563eb;color:#fff;border:2px solid #fff;border-radius:50%;font-size:16px;line-height:24px;text-align:center;cursor:pointer;z-index:6;box-shadow:0 1px 4px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent}'
           +'.el-zone .rz-handle{position:absolute;width:20px;height:20px;background:#2563eb;border:2px solid #fff;border-radius:4px;pointer-events:all;cursor:nwse-resize;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);z-index:5;font-size:10px;line-height:16px;text-align:center;color:#fff}'
           +'.el-zone:hover .rz-handle,.el-zone.selected .rz-handle{display:block}'
           +'.rz-handle.br{bottom:-10px;right:-10px}'
@@ -5407,11 +5409,12 @@
           +'.tog:hover{background:#e8f5e9}'
           +'.tog.on:hover{background:#1b5e20}'
           +'.abtn-grp{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;border:1px solid #e0e0e0;border-radius:8px;background:#fff}'
-          +'.sld{width:80px}';
+          +'.sld{width:80px}'
+          +(isMobile?'.el-zone{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.el-zone .el-touch-menu{display:block}.el-zone .rz-handle{display:block}':'');
         var _flyerEdToolbar='<div class="toolbar no-print">'
           +'<button class="btn-print" data-act="print-all">\ud83d\udda8\ufe0f Alle drucken</button>'
           +'<span style="color:#888;font-size:13px">'+canvases.length+' Flyer</span>'
-          +'<span style="color:#2563eb;font-size:12px;font-weight:600">'+(isMobile?'\ud83d\udc46 Tippen & ziehen \u2022 Lang dr\u00fccken = Men\u00fc':'\ud83d\udd79\ufe0f Elemente anklicken & verschieben \u2022 Rechtsklick = Men\u00fc')+'</span>'
+          +'<span style="color:#2563eb;font-size:12px;font-weight:600">'+(isMobile?'\ud83d\udc46 Ziehen = Verschieben \u2022 \u22EF = Men\u00fc \u2022 \u21F2 = Gr\u00f6\u00dfe':'\ud83d\udd79\ufe0f Elemente anklicken & verschieben \u2022 Rechtsklick = Men\u00fc')+'</span>'
           +'<button class="btn-close" data-act="close">Schlie\u00dfen</button>'
           +'</div>';
         var _bodyHtml='';
@@ -5929,18 +5932,60 @@
             },0);
           });
 
-          // ── Touch support for mobile: drag + long-press context menu ──
+          // ── Touch support for mobile: drag, resize, long-press context menu, menu button ──
           var _touchTimer=null;
           doc.addEventListener('touchstart',function(ev){
-            var z=ev.target.closest?ev.target.closest('.el-zone'):null;
+            var tgt=ev.target;
+            var z=tgt.closest?tgt.closest('.el-zone'):null;
             if(!z)return;
             var touch=ev.touches[0];
             var _tsX=touch.clientX,_tsY=touch.clientY;
+
+            // ── Touch menu button tap → open context menu immediately ──
+            if(tgt.classList.contains('el-touch-menu')){
+              ev.preventDefault();ev.stopPropagation();
+              selectZone(z);
+              z.dispatchEvent(new MouseEvent('contextmenu',{clientX:_tsX,clientY:_tsY,bubbles:true}));
+              return;
+            }
+
+            // ── Touch resize handle ──
+            if(tgt.classList.contains('rz-handle')){
+              ev.preventDefault();ev.stopPropagation();
+              selectZone(z);
+              var rIdx=parseInt(z.getAttribute('data-idx'),10);
+              var rOvKey=z.getAttribute('data-ov');
+              var rOv=artOvs[rIdx];
+              var scaleKey=rOvKey==='img'?'imgScale':rOvKey==='customImg'?'customImgScale':'priceScale';
+              var startScale=rOv[scaleKey]||100;
+              var startRY=_tsY;
+              var rwrap=doc.getElementById('fw-'+rIdx);
+              var rwrapRect=rwrap?rwrap.getBoundingClientRect():{height:1};
+              var pxPerPct=rwrapRect.height/100;
+              function rzTouchMove(e2){
+                var t2=e2.touches[0];
+                var dy=t2.clientY-startRY;
+                var deltaPct=Math.round(dy/pxPerPct*2);
+                rOv[scaleKey]=Math.max(20,Math.min(300,startScale+deltaPct));
+                var scFactor=rOv[scaleKey]/startScale;
+                z.style.transform='scale('+scFactor.toFixed(2)+')';
+                z.style.transformOrigin='top left';
+              }
+              function rzTouchEnd(){
+                doc.removeEventListener('touchmove',rzTouchMove);
+                doc.removeEventListener('touchend',rzTouchEnd);
+                z.style.transform='';z.style.transformOrigin='';
+                regenFlyer(rIdx);flyerAutoSave(rIdx);
+              }
+              doc.addEventListener('touchmove',rzTouchMove,{passive:false});
+              doc.addEventListener('touchend',rzTouchEnd);
+              return;
+            }
+
+            // ── Touch drag + long-press context menu ──
             var _tsMoved=false;
             _touchTimer=setTimeout(function(){
-              // Long press = context menu
               if(!_tsMoved){
-                var ctxEv={target:z,clientX:_tsX,clientY:_tsY,preventDefault:function(){}};
                 z.dispatchEvent(new MouseEvent('contextmenu',{clientX:_tsX,clientY:_tsY,bubbles:true}));
               }
               _touchTimer=null;
