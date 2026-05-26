@@ -4056,7 +4056,7 @@
   }
   // Default per-article override object
   function flyerArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:0,ghostDy:0,ghostAlpha:0.45,dupDx:0,dupDy:0,dupOn:false};
+    return {imgDx:0,imgDy:0,imgScale:100,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:0,ghostDy:0,ghostAlpha:0.45,dupDx:0,dupDy:0,dupOn:false,customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100};
   }
 
   function generateEinzelflyer(item,data,cfgOverride){
@@ -4443,11 +4443,31 @@
         }
       }
         ctx.textAlign='left';
+        // ── Custom overlay image ──
+        var ciPromise;
+        if(artOv.customImg){
+          ciPromise=new Promise(function(resCI){
+            var ci=new Image();ci.onload=function(){
+              var ciSc=(artOv.customImgScale||100)/100;
+              var ciW=ci.width*ciSc,ciH=ci.height*ciSc;
+              if(ciW>W*0.8){var f2=W*0.8/ciW;ciW*=f2;ciH*=f2;}
+              if(ciH>H*0.6){var f3=H*0.6/ciH;ciW*=f3;ciH*=f3;}
+              var ciX=W/2-ciW/2+(artOv.customImgDx||0);
+              var ciY=H/2-ciH/2+(artOv.customImgDy||0);
+              ctx.save();ctx.globalAlpha=(artOv.customImgAlpha!=null?artOv.customImgAlpha:100)/100;
+              ctx.drawImage(ci,ciX,ciY,ciW,ciH);ctx.restore();
+              _elMeta.push({id:'customImg',label:'\ud83d\uddbc Eigenes Bild',x:ciX,y:ciY,w:ciW,h:ciH,ovKey:'customImg'});
+              resCI();
+            };ci.onerror=function(){resCI();};ci.src=artOv.customImg;
+          });
+        }else{ciPromise=Promise.resolve();}
+        return ciPromise.then(function(){
         // Footer
         ctx.fillStyle=theme.footerColor;ctx.globalAlpha=0.4;ctx.font='14px Arial, sans-serif';ctx.textAlign='center';
         ctx.fillText('*Solange Vorrat reicht',W/2,H-24);
         ctx.globalAlpha=1.0;ctx.textAlign='left';
         return logoLoaded;
+        });
       }).then(function(){drawFlyerBorder();c._elMeta=_elMeta;resolve(c);});
     });
   }
@@ -4541,12 +4561,14 @@
           elMeta.forEach(function(el){
             var pctL=(el.x/794*100).toFixed(2),pctT=(el.y/1123*100).toFixed(2);
             var pctW=(el.w/794*100).toFixed(2),pctH=(el.h/1123*100).toFixed(2);
-            var isSecondary=(el.id==='ghost'||el.id==='dup');
+            var isSecondary=(el.id==='ghost'||el.id==='dup'||el.id==='customImg');
+            var noResize=(el.id==='ghost'||el.id==='dup');
             var extraCls=isSecondary?' el-secondary':'';
+            if(el.id==='customImg') extraCls=' el-custom';
             zh+='<div class="el-zone'+extraCls+'" data-el="'+el.id+'" data-idx="'+idx+'" data-ov="'+el.ovKey+'"'
               +' style="left:'+pctL+'%;top:'+pctT+'%;width:'+pctW+'%;height:'+pctH+'%">'
               +'<span class="el-label">'+el.label+'</span>'
-              +(isSecondary?'':'<div class="rz-handle br"></div>')
+              +(noResize?'':'<div class="rz-handle br">\u21F2</div>')
               +'</div>';
           });
           return zh;
@@ -4601,12 +4623,16 @@
           +'.el-zone.el-secondary:hover{border-color:rgba(147,51,234,0.5)}'
           +'.el-zone.el-secondary.selected{border-color:#9333ea;background:rgba(147,51,234,0.08)}'
           +'.el-zone.el-secondary .el-label{background:#9333ea}'
+          +'.el-zone.el-custom{border-style:dashed}'
+          +'.el-zone.el-custom:hover{border-color:rgba(234,88,12,0.6)}'
+          +'.el-zone.el-custom.selected{border-color:#ea580c;background:rgba(234,88,12,0.08)}'
+          +'.el-zone.el-custom .el-label{background:#ea580c}'
+          +'.el-zone.el-custom .rz-handle{background:#ea580c}'
           +'.el-zone .el-label{position:absolute;top:-22px;left:0;font-size:10px;font-weight:700;color:#fff;background:#2563eb;padding:1px 6px;border-radius:3px 3px 0 0;white-space:nowrap;display:none}'
           +'.el-zone.selected .el-label{display:block}'
-          +'.el-zone .rz-handle{position:absolute;width:10px;height:10px;background:#2563eb;border:1px solid #fff;border-radius:2px;pointer-events:all;cursor:nwse-resize;display:none}'
-          +'.el-zone.selected .rz-handle{display:block}'
-          +'.rz-handle.br{bottom:-5px;right:-5px}'
-          +'.rz-handle.bl{bottom:-5px;left:-5px;cursor:nesw-resize}'
+          +'.el-zone .rz-handle{position:absolute;width:20px;height:20px;background:#2563eb;border:2px solid #fff;border-radius:4px;pointer-events:all;cursor:nwse-resize;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);z-index:5;font-size:10px;line-height:16px;text-align:center;color:#fff}'
+          +'.el-zone:hover .rz-handle,.el-zone.selected .rz-handle{display:block}'
+          +'.rz-handle.br{bottom:-10px;right:-10px}'
           +'.ctx-menu{position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:4px 0;z-index:1000;min-width:180px;font-size:13px}'
           +'.ctx-menu div{padding:7px 16px;cursor:pointer;display:flex;align-items:center;gap:8px}'
           +'.ctx-menu div:hover{background:#f3f4f6}'
@@ -4643,6 +4669,7 @@
             +'<button class="btn-dl" data-act="dl" data-idx="'+i+'" data-name="'+safeName+'" style="padding:6px 16px;border-radius:6px;border:none;background:#1565c0;color:#fff;font-size:13px;cursor:pointer">\u2b07\ufe0f</button>'
             +'<button data-act="art-save" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:none;background:#e65100;color:#fff;font-size:13px;cursor:pointer;font-weight:600">\ud83d\udcbe Speichern</button>'
             +'<button data-act="art-reset" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:12px;cursor:pointer">\u21ba Reset</button>'
+            +'<label style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild<input type="file" accept="image/*" data-act="add-custom-img" data-idx="'+i+'" style="display:none"></label>'
             +'<span style="color:#888;font-size:12px;font-weight:600">'+safeName+'</span>'
             +'</div>'
             // ── Control bar ──
@@ -4793,6 +4820,41 @@
             _selZone=z;
             if(z)z.classList.add('selected');
           }
+          // ── Custom image: load file into overlay ──
+          function addCustomImg(idx,file){
+            if(!file||!file.type.startsWith('image/'))return;
+            var reader=new FileReader();
+            reader.onload=function(e){
+              var ov=artOvs[idx];
+              ov.customImg=e.target.result;
+              ov.customImgDx=0;ov.customImgDy=0;
+              ov.customImgScale=100;
+              if(ov.customImgAlpha==null)ov.customImgAlpha=100;
+              regenFlyer(idx);
+            };
+            reader.readAsDataURL(file);
+          }
+          // File input change handler
+          doc.addEventListener('change',function(ev){
+            var t=ev.target;
+            if(t.getAttribute('data-act')==='add-custom-img'){
+              var idx=parseInt(t.getAttribute('data-idx'),10);
+              if(t.files&&t.files[0])addCustomImg(idx,t.files[0]);
+              t.value=''; // reset so same file can be re-selected
+            }
+          });
+          // Drag & drop on flyer wraps
+          doc.addEventListener('dragover',function(ev){
+            if(ev.target.closest&&ev.target.closest('.flyer-wrap'))ev.preventDefault();
+          });
+          doc.addEventListener('drop',function(ev){
+            var wrap=ev.target.closest?ev.target.closest('.flyer-wrap'):null;
+            if(!wrap)return;
+            ev.preventDefault();
+            var idx=parseInt(wrap.id.replace('fw-',''),10);
+            var files=ev.dataTransfer&&ev.dataTransfer.files;
+            if(files&&files[0])addCustomImg(idx,files[0]);
+          });
           // Click on overlay zone = select
           doc.addEventListener('mousedown',function(ev){
             var z=ev.target.closest?ev.target.closest('.el-zone'):null;
@@ -4804,7 +4866,7 @@
               var rIdx=parseInt(z.getAttribute('data-idx'),10);
               var rOvKey=z.getAttribute('data-ov');
               var rOv=artOvs[rIdx];
-              var scaleKey=rOvKey==='img'?'imgScale':'priceScale';
+              var scaleKey=rOvKey==='img'?'imgScale':rOvKey==='customImg'?'customImgScale':'priceScale';
               var startScale=rOv[scaleKey]||100;
               var startY=ev.clientY;
               var wrap=doc.getElementById('fw-'+rIdx);
@@ -4925,6 +4987,26 @@
                 rebuildCtlBar(idx);regenFlyer(idx);
               }});
             }
+            if(elId==='customImg'){
+              menuItems.push({icon:'\ud83d\udd06',text:'Deckkraft: '+(ov.customImgAlpha!=null?ov.customImgAlpha:100)+'%',action:function(){
+                var cur=ov.customImgAlpha!=null?ov.customImgAlpha:100;
+                cur=cur<=20?100:cur-20;
+                ov.customImgAlpha=cur;
+                regenFlyer(idx);
+              }});
+              menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.customImgScale||100)+'%)',action:function(){ov.customImgScale=100;regenFlyer(idx);}});
+              menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Bild entfernen',action:function(){
+                ov.customImg=null;ov.customImgDx=0;ov.customImgDy=0;ov.customImgScale=100;ov.customImgAlpha=100;
+                rebuildCtlBar(idx);regenFlyer(idx);
+              }});
+            }
+            menuItems.push('hr');
+            var ciLabel=ov.customImg?'\ud83d\uddbc Eigenes Bild austauschen':'\ud83d\uddbc+ Eigenes Bild einf\u00fcgen';
+            menuItems.push({icon:'',text:ciLabel,action:function(){
+              var inp=doc.createElement('input');inp.type='file';inp.accept='image/*';
+              inp.addEventListener('change',function(){if(inp.files&&inp.files[0])addCustomImg(idx,inp.files[0]);});
+              inp.click();
+            }});
             menuItems.push('hr');
             menuItems.push({icon:'\ud83d\udda8\ufe0f',text:'Drucken',action:function(){printOne(idx);}});
             menuItems.push({icon:'\u2b07\ufe0f',text:'Download',action:function(){dlOne(idx,items[idx]?items[idx].produkt:'Flyer');}});
