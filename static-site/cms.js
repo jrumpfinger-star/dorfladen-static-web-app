@@ -6137,7 +6137,7 @@
             var ov=artOvs[idx];
             var menu=doc.createElement('div');
             menu.className='ctx-menu';menu.id='fly-ctx-menu';
-            menu.style.left=clientX+'px';menu.style.top=clientY+'px';
+            menu.style.cssText='position:fixed;left:'+clientX+'px;top:'+clientY+'px;z-index:100000';
             var menuItems=[
               {icon:'\u21a9',text:'Verwerfen (Laden-Stand)',action:function(){artOvs[idx]=JSON.parse(JSON.stringify(_initArtOvs[idx]));flyerArtOverrideSave(items[idx],artOvs[idx]);rebuildCtlBar(idx);regenFlyer(idx);}},
               {icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){
@@ -6371,25 +6371,20 @@
           // ── Direct onclick binding for ⋯ menu buttons (mobile) ──
           // This is the most reliable approach: direct handlers on each button element
           bindTouchMenuBtns=function(){
-            if(!isMobile)return;
             var btns=doc.querySelectorAll('.el-touch-menu');
             for(var bi=0;bi<btns.length;bi++){(function(btn){
               if(btn._menuBound)return;
               btn._menuBound=true;
-              btn.addEventListener('click',function(e){
+              function openMenu(e){
                 e.preventDefault();e.stopPropagation();
+                _ctxJustOpenedAt=Date.now();
                 var z=btn.closest('.el-zone');
                 if(!z)return;
                 var rect=btn.getBoundingClientRect();
                 showCtxMenuForZone(z, rect.left, rect.bottom+4);
-              });
-              btn.addEventListener('touchend',function(e){
-                e.preventDefault();e.stopPropagation();
-                var z=btn.closest('.el-zone');
-                if(!z)return;
-                var rect=btn.getBoundingClientRect();
-                showCtxMenuForZone(z, rect.left, rect.bottom+4);
-              });
+              }
+              btn.addEventListener('click',openMenu);
+              btn.addEventListener('touchend',openMenu);
             })(btns[bi]);}
           };
           bindTouchMenuBtns();
