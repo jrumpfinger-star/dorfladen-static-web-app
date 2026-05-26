@@ -5952,6 +5952,17 @@
               }});
             }
             menuItems.push('hr');
+            menuItems.push({icon:'\ud83d\udc7b+',text:'Ghost-Kopie hinzuf\u00fcgen',action:function(){
+              if(!ov.copies)ov.copies=[];
+              ov.copies.push(newCopy('ghost',ov.copies.length));
+              rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
+            }});
+            menuItems.push({icon:'\ud83d\udcdd+',text:'Duplikat-Kopie hinzuf\u00fcgen',action:function(){
+              if(!ov.copies)ov.copies=[];
+              ov.copies.push(newCopy('dup',ov.copies.length));
+              rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
+            }});
+            menuItems.push('hr');
             var ciLabel=ov.customImg?'\ud83d\uddbc Eigenes Bild austauschen':'\ud83d\uddbc+ Eigenes Bild einf\u00fcgen';
             menuItems.push({icon:'',text:ciLabel,action:function(){
               var inp=doc.createElement('input');inp.type='file';inp.accept='image/*';

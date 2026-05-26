@@ -14,3 +14,7 @@ static-site/backup-vor-mobile-redesign/
 static-site/mockup-*.html
 static-site/css/mockup.css
 static-site/js/mockup-shared.js
+
+# Handbuch: nur benannte Screenshots, keine Playwright-Artefakte
+static-site/handbuch/page-*.png
+static-site/handbuch/element-*.png
