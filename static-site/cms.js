@@ -3903,7 +3903,10 @@
     html+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px">';
     html+='<button class="cms-btn cms-btn-gray" id="pce-ghost" style="font-size:12px">\ud83d\udc7b Ghost</button>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-dup" style="font-size:12px">\ud83d\udcdd Duplikat</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-add-ghost" style="font-size:11px;padding:3px 8px" title="Weitere Ghost-Kopie hinzuf\u00fcgen">+ \ud83d\udc7b</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-add-dup" style="font-size:11px;padding:3px 8px" title="Weitere Duplikat-Kopie hinzuf\u00fcgen">+ \ud83d\udcdd</button>';
     html+='</div>';
+    html+='<div id="pce-copies-list" style="display:none;text-align:center;margin-top:4px;gap:4px;flex-wrap:wrap;justify-content:center"></div>';
     html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">';
     html+='<button class="cms-btn" id="pce-save" style="background:#e65100;color:#fff">\u2714 Schlie\u00dfen</button>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-reset">\u21ba Zur\u00fccksetzen</button>';
@@ -3996,6 +3999,12 @@
             ctx.restore();
             _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2,y:dy2,w:diw,h:dih,ovKey:'dup'});
           }
+          // Extra copies (multi-ghost/dup)
+          drawExtraCopies(ctx,ov.copies,ofc,imgX,imgY,iw,ih,pRotRad,function(){mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();});
+          if(ov.copies&&ov.copies.length){ov.copies.forEach(function(cp,ci){
+            var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
+            _elMeta.push({id:'copy-'+ci,label:(cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd')+' Kopie '+(ci+1),x:imgX+(cp.dx||0),y:imgY+(cp.dy||0),w:cw,h:ch,ovKey:'copy',copyIdx:ci});
+          });}
           // Main image
           ctx.save();mgRRect(2,2,CARD_W-4,imgAreaH,mgRad);ctx.clip();
           if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
@@ -4107,6 +4116,13 @@
             ctx.drawImage(ofc,-diw2/2,-dih2/2,diw2,dih2);ctx.restore();
             _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2-diw2/2,y:dy2-dih2/2,w:diw2,h:dih2,ovKey:'dup'});
           }
+          // Extra copies (multi-ghost/dup)
+          drawExtraCopiesCenter(ctx,ov.copies,ofc,imgCX,imgCY,iw,ih,-pRotRad,function(){mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();});
+          if(ov.copies&&ov.copies.length){ov.copies.forEach(function(cp,ci){
+            var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
+            var cpx=imgCX+(cp.dx||0),cpy=imgCY+(cp.dy||0);
+            _elMeta.push({id:'copy-'+ci,label:(cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd')+' Kopie '+(ci+1),x:cpx-cw/2,y:cpy-ch/2,w:cw,h:ch,ovKey:'copy',copyIdx:ci});
+          });}
           // Main image
           ctx.save();mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.clip();
           ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
@@ -4173,12 +4189,13 @@
       // Active element highlight
       var ae=_elMeta.find(function(e){return e.id===_activeEl;});
       if(ae){
-        var hlColor=_activeEl==='ghost'?'#9333ea':_activeEl==='dup'?'#2563eb':'#e65100';
+        var isCopy=_activeEl.indexOf('copy-')===0;
+        var hlColor=_activeEl==='ghost'?'#9333ea':_activeEl==='dup'?'#2563eb':isCopy?'#d97706':'#e65100';
         ctx.save();ctx.strokeStyle=hlColor;ctx.lineWidth=2.5;ctx.setLineDash([6,4]);
         ctx.strokeRect(ae.x,ae.y,ae.w,ae.h);
         // Label badge
-        if(_activeEl==='ghost'||_activeEl==='dup'){
-          var lbl=_activeEl==='ghost'?'\ud83d\udc7b Ghost':'\ud83d\udcdd Duplikat';
+        if(_activeEl==='ghost'||_activeEl==='dup'||isCopy){
+          var lbl=ae.label||_activeEl;
           ctx.font='bold 11px Arial, sans-serif';var tw=ctx.measureText(lbl).width;
           ctx.fillStyle=hlColor;ctx.globalAlpha=0.85;
           ctx.fillRect(ae.x,ae.y-18,tw+10,18);ctx.globalAlpha=1;
@@ -4189,8 +4206,8 @@
       // Always show faint outlines for inactive ghost/dup so user knows they exist
       _elMeta.forEach(function(em){
         if(em.id===_activeEl) return;
-        if(em.id==='ghost'||em.id==='dup'){
-          ctx.save();ctx.strokeStyle=em.id==='ghost'?'rgba(147,51,234,0.4)':'rgba(37,99,235,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+        if(em.id==='ghost'||em.id==='dup'||em.id.indexOf('copy-')===0){
+          ctx.save();ctx.strokeStyle=em.id==='ghost'?'rgba(147,51,234,0.4)':em.id==='dup'?'rgba(37,99,235,0.4)':'rgba(217,119,6,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
           ctx.strokeRect(em.x,em.y,em.w,em.h);ctx.restore();
         }
       });
@@ -4245,6 +4262,7 @@
       else if(_activeEl==='price'){startDx=ov.priceDx||0;startDy=ov.priceDy||0;}
       else if(_activeEl==='ghost'){startDx=ov.ghostDx||0;startDy=ov.ghostDy||0;}
       else if(_activeEl==='dup'){startDx=ov.dupDx||0;startDy=ov.dupDy||0;}
+      else if(_activeEl.indexOf('copy-')===0){var _ci=parseInt(_activeEl.split('-')[1],10);var _cp=ov.copies&&ov.copies[_ci];if(_cp){startDx=_cp.dx||0;startDy=_cp.dy||0;}}
       cvs.style.cursor='grabbing';
     });
     function pceMove(ev){
@@ -4256,6 +4274,7 @@
       else if(_activeEl==='price'){ov.priceDx=Math.round(startDx+dx*scX);ov.priceDy=Math.round(startDy+dy*scY);}
       else if(_activeEl==='ghost'){ov.ghostDx=Math.round(startDx+dx*scX);ov.ghostDy=Math.round(startDy+dy*scY);}
       else if(_activeEl==='dup'){ov.dupDx=Math.round(startDx+dx*scX);ov.dupDy=Math.round(startDy+dy*scY);}
+      else if(_activeEl.indexOf('copy-')===0){var _ci2=parseInt(_activeEl.split('-')[1],10);var _cp2=ov.copies&&ov.copies[_ci2];if(_cp2){_cp2.dx=Math.round(startDx+dx*scX);_cp2.dy=Math.round(startDy+dy*scY);}}
       renderCard();autoSave();
     }
     function pceUp(){
@@ -4270,6 +4289,7 @@
     function _curScale(){
       if(_activeEl==='ghost') return ov.ghostScale||100;
       if(_activeEl==='dup') return ov.dupScale||100;
+      if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);var cp=ov.copies&&ov.copies[ci];return cp?(cp.scale||100):100;}
       return ov.imgScale||100;
     }
     function syncScaleSlider(){
@@ -4282,6 +4302,7 @@
         var v=parseInt(scaleSlider.value,10);
         if(_activeEl==='ghost'){ov.ghostScale=v;}
         else if(_activeEl==='dup'){ov.dupScale=v;}
+        else if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);if(ov.copies&&ov.copies[ci])ov.copies[ci].scale=v;}
         else{ov.imgScale=v;}
         syncScaleSlider();renderCard();autoSave();
       });
@@ -4293,6 +4314,7 @@
       var delta=ev.deltaY<0?5:-5;
       if(_activeEl==='ghost'){ov.ghostScale=Math.max(10,Math.min(300,(ov.ghostScale||100)+delta));}
       else if(_activeEl==='dup'){ov.dupScale=Math.max(10,Math.min(300,(ov.dupScale||100)+delta));}
+      else if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);if(ov.copies&&ov.copies[ci]){ov.copies[ci].scale=Math.max(10,Math.min(300,(ov.copies[ci].scale||100)+delta));}}
       else if(_activeEl==='img'){ov.imgScale=Math.max(20,Math.min(300,(ov.imgScale||100)+delta));}
       else{return;}
       syncScaleSlider();renderCard();autoSave();
@@ -4355,6 +4377,29 @@
         }});
         menuItems.push('hr');
         menuItems.push({icon:'\ud83d\udcdd',text:'Duplikat ausschalten',action:function(){ov.dupOn=false;updateDupBtn();renderCard();autoSave();}});
+      }else if(_activeEl.indexOf('copy-')===0){
+        var _copyIdx=parseInt(_activeEl.split('-')[1],10);
+        var _cpObj=ov.copies&&ov.copies[_copyIdx];
+        if(_cpObj){
+          menuItems.push({icon:'\u21bb',text:'Drehen +15\u00b0',action:function(){_cpObj.rot=(_cpObj.rot||0)+15;renderCard();autoSave();}});
+          menuItems.push({icon:'\u21ba',text:'Drehen \u221215\u00b0',action:function(){_cpObj.rot=(_cpObj.rot||0)-15;renderCard();autoSave();}});
+          menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe: '+(_cpObj.scale||100)+'%',action:function(){
+            var v=parseInt(prompt('Kopie-Gr\u00f6\u00dfe in % (10\u2013300):',(_cpObj.scale||100)),10);
+            if(isNaN(v))return;_cpObj.scale=Math.max(10,Math.min(300,v));syncScaleSlider();renderCard();autoSave();
+          }});
+          if(_cpObj.type==='ghost'){
+            menuItems.push({icon:'\ud83d\udd06',text:'Deckkraft: '+Math.round((_cpObj.alpha!=null?_cpObj.alpha:0.35)*100)+'%',action:function(){
+              var v=parseFloat(prompt('Deckkraft in % (10\u201390):',Math.round((_cpObj.alpha!=null?_cpObj.alpha:0.35)*100)));
+              if(isNaN(v))return;_cpObj.alpha=Math.max(0.1,Math.min(0.9,v/100));renderCard();autoSave();
+            }});
+          }
+          menuItems.push('hr');
+          menuItems.push({icon:'\u00d7',text:'Kopie l\u00f6schen',action:function(){
+            ov.copies.splice(_copyIdx,1);_activeEl='img';
+            if(typeof updateCopiesLabel==='function')updateCopiesLabel();
+            updateActiveLabel();renderCard();autoSave();
+          }});
+        }
       }
       menuItems.push('hr');
       menuItems.push({icon:'\ud83d\uddd1\ufe0f',text:'Alles zur\u00fccksetzen',action:function(){ov=plakatArtOverrideDefault();renderCard();autoSave();}});
@@ -4409,10 +4454,10 @@
     updateGhostBtn();
     ghostBtn.onclick=function(){
       if(ov.ghostMode==='on'){
-        if(_activeEl==='ghost'){ov.ghostMode='off';ov.ghostDx=80;ov.ghostDy=-60;_activeEl='img';}
+        if(_activeEl==='ghost'){ov.ghostMode='off';_activeEl='img';}
         else{_activeEl='ghost';}
-      }else{ov.ghostMode='on';_activeEl='ghost';}
-      updateGhostBtn();updateActiveLabel();renderCard();autoSave();
+      }else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=80;ov.ghostDy=-60;}_activeEl='ghost';}
+      updateGhostBtn();updateDupBtn();updateActiveLabel();syncScaleSlider();renderCard();autoSave();
     };
     // ── Duplikat toggle: adds a full-opacity copy of the image ──
     var dupBtn=document.getElementById('pce-dup');
@@ -4424,11 +4469,61 @@
     updateDupBtn();
     dupBtn.onclick=function(){
       if(ov.dupOn){
-        if(_activeEl==='dup'){ov.dupOn=false;ov.dupDx=-70;ov.dupDy=50;ov.dupRot=0;_activeEl='img';}
+        if(_activeEl==='dup'){ov.dupOn=false;_activeEl='img';}
         else{_activeEl='dup';}
-      }else{ov.dupOn=true;_activeEl='dup';}
-      updateDupBtn();updateActiveLabel();renderCard();autoSave();
+      }else{ov.dupOn=true;if(!ov.dupDx&&!ov.dupDy){ov.dupDx=-70;ov.dupDy=50;}_activeEl='dup';}
+      updateGhostBtn();updateDupBtn();updateActiveLabel();syncScaleSlider();renderCard();autoSave();
     };
+    // ── Extra copies: + Ghost / + Duplikat buttons ──
+    var addGhostBtn=document.getElementById('pce-add-ghost');
+    var addDupBtn=document.getElementById('pce-add-dup');
+    function updateCopiesLabel(){
+      var cList=document.getElementById('pce-copies-list');
+      if(!cList)return;
+      if(!ov.copies||!ov.copies.length){cList.innerHTML='';cList.style.display='none';return;}
+      cList.style.display='';
+      var h='';
+      ov.copies.forEach(function(cp,ci){
+        var icon=cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd';
+        var sel=_activeEl==='copy-'+ci;
+        h+='<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid '+(sel?'#f59e0b':'#d1d5db')+';background:'+(sel?'#fef3c7':'#f9fafb')+'" data-copy-sel="'+ci+'">'
+          +icon+' '+(ci+1)
+          +' <span data-copy-del="'+ci+'" style="color:#ef4444;font-weight:bold;cursor:pointer;margin-left:2px" title="L\u00f6schen">\u00d7</span>'
+          +'</span> ';
+      });
+      cList.innerHTML=h;
+    }
+    if(addGhostBtn){addGhostBtn.onclick=function(){
+      if(!ov.copies)ov.copies=[];
+      ov.copies.push(newCopy('ghost',ov.copies.length));
+      _activeEl='copy-'+(ov.copies.length-1);
+      updateCopiesLabel();updateActiveLabel();renderCard();autoSave();
+    };}
+    if(addDupBtn){addDupBtn.onclick=function(){
+      if(!ov.copies)ov.copies=[];
+      ov.copies.push(newCopy('dup',ov.copies.length));
+      _activeEl='copy-'+(ov.copies.length-1);
+      updateCopiesLabel();updateActiveLabel();renderCard();autoSave();
+    };}
+    // Handle copy selection and deletion clicks
+    var copiesListEl=document.getElementById('pce-copies-list');
+    if(copiesListEl)copiesListEl.addEventListener('click',function(ev){
+      var t=ev.target;
+      var delIdx=t.getAttribute('data-copy-del');
+      if(delIdx!=null){
+        var idx=parseInt(delIdx,10);
+        ov.copies.splice(idx,1);
+        if(_activeEl==='copy-'+idx)_activeEl='img';
+        updateCopiesLabel();updateActiveLabel();renderCard();autoSave();
+        return;
+      }
+      var selIdx=t.getAttribute('data-copy-sel');
+      if(selIdx!=null){
+        _activeEl='copy-'+parseInt(selIdx,10);
+        updateCopiesLabel();updateActiveLabel();syncScaleSlider();renderCard();
+      }
+    });
+    updateCopiesLabel();
   }
 
   function printFromBlob(blob){
@@ -4701,14 +4796,51 @@
   }
   // Default per-article override object
   function flyerArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:80,ghostDy:-80,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:-80,dupDy:60,dupOn:false,dupScale:100,dupRot:0,customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:150,ghostDy:-120,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:-150,dupDy:100,dupOn:false,dupScale:100,dupRot:0,copies:[],customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
   }
 
   // ── Per-Article PLAKAT (Kachel) Layout Overrides ──
   var PLAKAT_ART_OVERRIDES_KEY='dl_plakat_article_overrides';
   var _plakatArtOverrides=null;
   function plakatArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostScale:100,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupScale:100,dupRot:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostScale:100,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupScale:100,dupRot:0,copies:[]};
+  }
+  // Create a new extra copy object (ghost or dup)
+  var _copyIdCounter=0;
+  function newCopy(type,existingCount){
+    _copyIdCounter++;
+    var spread=(existingCount||0)*30;
+    return {id:_copyIdCounter,type:type||'ghost',dx:(type==='dup'?-60-spread:60+spread),dy:(type==='dup'?40+spread:-40-spread),scale:100,alpha:type==='ghost'?0.35:1.0,rot:0};
+  }
+  // Render all extra copies on a canvas context (shared helper for all layouts)
+  function drawExtraCopies(ctx,copies,ofc,imgX,imgY,iw,ih,baseRotRad,clipFn){
+    if(!copies||!copies.length)return;
+    copies.forEach(function(cp){
+      var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
+      var cx2=imgX+(cp.dx||0),cy2=imgY+(cp.dy||0);
+      var cRot=baseRotRad+((cp.rot||0)*Math.PI/180);
+      ctx.save();
+      if(clipFn)clipFn();
+      if(cp.type==='ghost')ctx.globalAlpha=cp.alpha!=null?cp.alpha:0.35;
+      if(cRot){ctx.translate(cx2+cw/2,cy2+ch/2);ctx.rotate(cRot);ctx.drawImage(ofc,-cw/2,-ch/2,cw,ch);}
+      else{ctx.drawImage(ofc,cx2,cy2,cw,ch);}
+      ctx.globalAlpha=1.0;ctx.restore();
+    });
+  }
+  // Same but for center-based rendering (classic layout)
+  function drawExtraCopiesCenter(ctx,copies,ofc,imgCX,imgCY,iw,ih,baseRotRad,clipFn){
+    if(!copies||!copies.length)return;
+    copies.forEach(function(cp){
+      var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
+      var cx2=imgCX+(cp.dx||0),cy2=imgCY+(cp.dy||0);
+      var cRot=baseRotRad+((cp.rot||0)*Math.PI/180);
+      ctx.save();
+      if(clipFn)clipFn();
+      if(cp.type==='ghost')ctx.globalAlpha=cp.alpha!=null?cp.alpha:0.35;
+      ctx.translate(cx2,cy2);ctx.rotate(cRot);
+      ctx.drawImage(ofc,-cw/2,-ch/2,cw,ch);
+      ctx.globalAlpha=1.0;ctx.restore();
+    });
   }
   function plakatArtOverridesGetAll(){
     if(_plakatArtOverrides)return _plakatArtOverrides;
@@ -5061,6 +5193,13 @@
               ctx.restore();
               _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dupCx-diw/2,y:dupCy-dih/2,w:diw,h:dih,ovKey:'dup'});
             }
+            // Extra copies (multi-ghost/dup)
+            drawExtraCopiesCenter(ctx,artOv.copies,ofc,cx,cy,iw,ih,-rotRad,null);
+            if(artOv.copies&&artOv.copies.length){artOv.copies.forEach(function(cp,ci){
+              var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
+              var cpx=cx+(cp.dx||0),cpy=cy+(cp.dy||0);
+              _elMeta.push({id:'copy-'+ci,label:(cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd')+' Kopie '+(ci+1),x:cpx-cw/2,y:cpy-ch/2,w:cw,h:ch,ovKey:'copy',copyIdx:ci});
+            });}
             // Draw main image
             ctx.translate(cx,cy);ctx.rotate(-rotRad);
             ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
@@ -5249,7 +5388,7 @@
           clearTimeout(_flyerAutoTimers[idx]);
           _flyerAutoTimers[idx]=setTimeout(function(){flyerArtOverrideSave(items[idx],artOvs[idx]);},300);
         }
-        var STEP=10; // px per arrow click
+        var STEP=20; // px per arrow click (Einzelflyer is 794x1123)
         // Helper: build overlay zone HTML from element metadata
         function _buildZoneHtml(elMeta,idx){
           var zh='';
@@ -5511,7 +5650,7 @@
               var idx=parseInt(t.getAttribute('data-idx'),10);
               var ov=artOvs[idx];
               if(ov.ghostMode==='on'){ov.ghostMode='auto';}
-              else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=80;ov.ghostDy=-80;}}
+              else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=150;ov.ghostDy=-120;}}
               rebuildCtlBar(idx);
               regenFlyer(idx);flyerAutoSave(idx);
             }
@@ -5519,7 +5658,7 @@
               var idx=parseInt(t.getAttribute('data-idx'),10);
               var ov=artOvs[idx];
               ov.dupOn=!ov.dupOn;
-              if(ov.dupOn&&!ov.dupDx&&!ov.dupDy){ov.dupDx=-80;ov.dupDy=60;}
+              if(ov.dupOn&&!ov.dupDx&&!ov.dupDy){ov.dupDx=-150;ov.dupDy=100;}
               rebuildCtlBar(idx);
               regenFlyer(idx);flyerAutoSave(idx);
             }
@@ -5682,12 +5821,12 @@
             if(elId==='img'){
               menuItems.push({icon:'\ud83d\udc7b',text:ov.ghostMode==='on'?'Ghost AUS':'Ghost AN',action:function(){
                 if(ov.ghostMode==='on'){ov.ghostMode='auto';}
-                else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=80;ov.ghostDy=-80;}}
+                else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=150;ov.ghostDy=-120;}}
                 rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
               menuItems.push({icon:'\ud83d\udcdd',text:ov.dupOn?'Duplikat AUS':'Duplikat AN',action:function(){
                 ov.dupOn=!ov.dupOn;
-                if(ov.dupOn&&!ov.dupDx&&!ov.dupDy){ov.dupDx=-80;ov.dupDy=60;}
+                if(ov.dupOn&&!ov.dupDx&&!ov.dupDy){ov.dupDx=-150;ov.dupDy=100;}
                 rebuildCtlBar(idx);regenFlyer(idx);flyerAutoSave(idx);
               }});
             }
@@ -6123,6 +6262,8 @@
             else{ctx.drawImage(ofc,dx2,dy2,diw3,dih3);}
             ctx.restore();
           }
+          // Extra copies (multi-ghost/dup)
+          drawExtraCopies(ctx,pOv.copies,ofc,imgX,imgY,iw,ih,pRotRad,function(){mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();});
           // Main image
           ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
           if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
@@ -6319,6 +6460,8 @@
           ctx.translate(dx2,dy2);ctx.rotate(dRot);
           ctx.drawImage(ofc,-diw4/2,-dih4/2,diw4,dih4);ctx.restore();
         }
+        // Extra copies (multi-ghost/dup)
+        drawExtraCopiesCenter(ctx,pOv.copies,ofc,imgCX,imgCY,iw,ih,-pRotRad,function(){roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();});
         // Main image
         ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
         ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
