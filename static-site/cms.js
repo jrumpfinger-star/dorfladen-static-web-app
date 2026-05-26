@@ -6168,10 +6168,11 @@
       ctx.textAlign='left';
     });
     // ── Footer ──
-    ctx.fillStyle=theme.footerColor;ctx.globalAlpha=0.5;ctx.font='11px Arial, sans-serif';ctx.textAlign='left';
-    ctx.fillText('*Solange Vorrat reicht',20,H-14);ctx.textAlign='right';
-    ctx.fillText('Dorfladen Oberornau \u00B7 Dorfplatz 1 \u00B7 84419 Obertaufkirchen',W-20,H-14);
-    ctx.textAlign='left';ctx.globalAlpha=1.0;
+    ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.globalAlpha=0.85;ctx.fillRect(0,H-32,W,32);ctx.globalAlpha=1.0;
+    ctx.fillStyle='#ffffff';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='left';
+    ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',20,H-12);ctx.textAlign='right';
+    ctx.fillText('Dorfladen Oberornau \u00B7 Dorfplatz 1 \u00B7 84419 Obertaufkirchen',W-20,H-12);
+    ctx.textAlign='left';
     logoLoaded.then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
   }
 
