@@ -6321,6 +6321,8 @@
             var z=ev.target.closest?ev.target.closest('.el-zone'):null;
             if(!z)return;
             ev.preventDefault();
+            // On mobile, do not open context menu (use ⋯ buttons instead)
+            if(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return;
             showCtxMenuForZone(z, ev.clientX, ev.clientY);
           });
 
