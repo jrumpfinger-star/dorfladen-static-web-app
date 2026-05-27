@@ -5747,7 +5747,7 @@
           +'.tog.on:hover{background:#1b5e20}'
           +'.abtn-grp{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;border:1px solid #e0e0e0;border-radius:8px;background:#fff}'
           +'.sld{width:80px}'
-          +(isMobile?'.el-zone{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.el-zone .el-touch-menu{display:block}.el-zone .rz-handle{display:block}':'');
+          +(isMobile?'.el-zone{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.el-zone.selected .el-touch-menu{display:block}.el-zone.selected .rz-handle{display:block}':'');
         var _flyerEdToolbar='<div class="toolbar no-print">'
           +'<button class="btn-print" data-act="print-all">\ud83d\udda8\ufe0f Alle drucken</button>'
           +'<span style="color:#888;font-size:13px">'+canvases.length+' Flyer</span>'
