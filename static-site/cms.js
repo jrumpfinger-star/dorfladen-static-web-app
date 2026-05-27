@@ -968,9 +968,9 @@
       if(e.state&&e.state.cmsModal) return; // just consumed the modal-open pushState
       var modalWrap=document.getElementById('cms-modal-wrap');
       if(modalWrap&&modalWrap.style.display!=='none'&&modalWrap.innerHTML!==''){
-        // Try Kachel-Editor close first (has revert logic)
-        var pceSave=document.getElementById('pce-save');
-        if(pceSave){pceSave.click();return;}
+        // Try Kachel-Editor close (X button = discard)
+        var pceClose=document.getElementById('pce-close');
+        if(pceClose){pceClose.click();return;}
         if(typeof window.cmsCloseModal==='function') window.cmsCloseModal();
         return;
       }
@@ -3928,10 +3928,11 @@
     var cardPadI=14,mgRad=isMag?14:theme.cardRadius||10;
 
     var html='<div class="cms-modal-bg">';
-    html+='<div class="cms-modal" style="max-width:440px;text-align:center">';
+    html+='<div class="cms-modal" style="max-width:440px;text-align:center;position:relative">';
+    html+='<button id="pce-close" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;line-height:1;padding:2px 6px;z-index:10" title="Schlie\u00dfen ohne Speichern">\u2715</button>';
     html+='<h3 style="margin:0 0 4px;font-size:15px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+'</h3>';
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc</p>';
+    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element horizontal ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc')+'</p>';
     html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
     html+='<div id="pce-wrap" style="position:relative;display:inline-block;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab">';
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'"></canvas>';
@@ -3960,9 +3961,8 @@
     html+='</div>';
     html+='<div id="pce-copies-list" style="display:none;text-align:center;margin-top:4px;gap:4px;flex-wrap:wrap;justify-content:center"></div>';
     html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">';
-    html+='<button class="cms-btn" id="pce-save" style="background:#e65100;color:#fff">\u2714 Schlie\u00dfen</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-reset">\u21ba Zur\u00fccksetzen</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-close">\u21a9 Verwerfen</button>';
+    html+='<button class="cms-btn" id="pce-save" style="background:#16a34a;color:#fff;font-size:14px;padding:8px 24px">\ud83d\udcbe Speichern</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-reset" style="font-size:12px">\u21ba Zur\u00fccksetzen</button>';
     html+='</div>';
     html+='</div></div>';
 
@@ -4296,9 +4296,11 @@
             +'<div class="pce-rz-handle" data-el="'+el.id+'" style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:'+borderColor+';color:#fff;border-radius:4px 0 4px 0;font-size:14px;line-height:22px;text-align:center;cursor:nwse-resize;pointer-events:auto;box-shadow:0 1px 3px rgba(0,0,0,0.3)">\u21F2</div>'
             +'</div>';
         }else{
+          // On mobile: let non-active zones pass through so canvas handles drag
+          var _isMob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
           zh+='<div class="pce-zone" data-el="'+el.id+'" data-ov="'+(el.ovKey||'')+'"'
             +' style="position:absolute;left:'+pctL+'%;top:'+pctT+'%;width:'+pctW+'%;height:'+pctH+'%;'
-            +'border:none;background:transparent;pointer-events:auto;cursor:pointer;box-sizing:border-box">'
+            +'border:none;background:transparent;pointer-events:'+(_isMob?'none':'auto')+';cursor:pointer;box-sizing:border-box">'
             +'</div>';
         }
       });
@@ -4651,6 +4653,8 @@
     var _pceCtxJustOpened=false;
     cvs.addEventListener('contextmenu',function(ev){
       ev.preventDefault();
+      // On mobile, do not open context menu (use ⋯ buttons instead)
+      if(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return;
       openPceCtxMenu(ev.clientX, ev.clientY);
     });
     // ⋯ buttons are now in the per-element overlay zones (rebuildPceOverlay)
