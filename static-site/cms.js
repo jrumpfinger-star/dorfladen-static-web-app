@@ -1245,6 +1245,7 @@
           var hpMerged={};for(var hk in HPCFG_DEFAULTS)hpMerged[hk]=dvHpCfg.hasOwnProperty(hk)?dvHpCfg[hk]:HPCFG_DEFAULTS[hk];
           if(dvHpCfg.wpTplColors)hpMerged.wpTplColors=dvHpCfg.wpTplColors;
           _hpCfgCurrent=hpMerged;
+          _hpCfgSaved=JSON.parse(JSON.stringify(hpMerged));
         }
       })
       .catch(function(e){console.warn('Design load from Dataverse failed',e);});
@@ -2017,12 +2018,14 @@
       .then(function(r){return r.json();}).then(function(res){if(!res.success)console.warn('HP custom defaults save failed',res.error);}).catch(function(){});
   }
   var _hpCfgCurrent=null;
+  var _hpCfgSaved=null;
   function hpCfgGet(){
     if(_hpCfgCurrent){var r2={};for(var k2 in HPCFG_DEFAULTS)r2[k2]=_hpCfgCurrent.hasOwnProperty(k2)?_hpCfgCurrent[k2]:HPCFG_DEFAULTS[k2];if(_hpCfgCurrent.wpTplColors)r2.wpTplColors=_hpCfgCurrent.wpTplColors;return r2;}
     return JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
   }
   function hpCfgSave(o){
     _hpCfgCurrent=JSON.parse(JSON.stringify(o));
+    _hpCfgSaved=JSON.parse(JSON.stringify(o));
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'hp_design_config',wert:o})})
       .then(function(r){return r.json();})
       .then(function(res){if(!res.success)console.warn('HP Design save to Dataverse failed',res.error);})
@@ -2193,6 +2196,7 @@
           var merged={};for(var k in HPCFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:HPCFG_DEFAULTS[k];
           if(dvCfg.wpTplColors)merged.wpTplColors=dvCfg.wpTplColors;
           _hpCfgCurrent=merged;
+          _hpCfgSaved=JSON.parse(JSON.stringify(merged));
           hpCfgApplyUI(merged);
         }
       })
@@ -2286,7 +2290,8 @@
 
   // ── WP Revert Section (discard unsaved changes) ──
   window.wpRevertSection=function(kind){
-    var saved=hpCfgGet();
+    var saved=_hpCfgSaved?JSON.parse(JSON.stringify(_hpCfgSaved)):JSON.parse(JSON.stringify(HPCFG_DEFAULTS));
+    _hpCfgCurrent=JSON.parse(JSON.stringify(saved));
     hpCfgApplyUI(saved);
     toast('\u00c4nderungen verworfen \u2013 gespeicherter Stand wiederhergestellt','ok');
   };
@@ -3959,9 +3964,10 @@
     html+='<button class="cms-btn cms-btn-gray" id="pce-add-ghost" style="font-size:11px;padding:3px 8px" title="Weitere Ghost-Kopie hinzuf\u00fcgen">+ \ud83d\udc7b</button>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-add-dup" style="font-size:11px;padding:3px 8px" title="Weitere Duplikat-Kopie hinzuf\u00fcgen">+ \ud83d\udcdd</button>';
     html+='</div>';
-    html+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px">';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-rot-cw" style="font-size:12px;padding:3px 10px" title="Bild drehen +15\u00b0">\u21bb +15\u00b0</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-rot-ccw" style="font-size:12px;padding:3px 10px" title="Bild drehen -15\u00b0">\u21ba -15\u00b0</button>';
+    html+='<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:4px">';
+    html+='<span style="font-size:12px;color:#6b7280">\u21bb Drehung</span>';
+    html+='<input type="range" id="pce-rot" min="-180" max="180" value="'+(ov.imgRot||0)+'" style="width:140px;accent-color:#7c3aed">';
+    html+='<span id="pce-rot-val" style="font-size:12px;font-weight:600;min-width:36px">'+(ov.imgRot||0)+'\u00b0</span>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-rot-reset" style="font-size:11px;padding:3px 8px" title="Rotation zur\u00fccksetzen">\u2b6f 0\u00b0</button>';
     html+='<label class="cms-btn cms-btn-gray" id="pce-custom-img-label" style="font-size:12px;padding:3px 10px;cursor:pointer">\ud83d\uddbc+ Bild<input type="file" accept="image/*" id="pce-custom-img" style="display:none"></label>';
     html+='</div>';
@@ -4276,6 +4282,18 @@
       if(ov.imgRot){ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='right';ctx.fillText(ov.imgRot+'\u00b0',CARD_W-8,CARD_H-8);}
       if(ov.imgScale!==100){ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='left';ctx.fillText((ov.imgScale||100)+'%',8,CARD_H-8);}
       ctx.textAlign='left';
+      // Unsaved-changes watermark
+      if(JSON.stringify(ov)!==JSON.stringify(_initOv)){
+        ctx.save();
+        ctx.translate(CARD_W/2,CARD_H/2);
+        ctx.rotate(-Math.PI/6);
+        ctx.font='600 28px Arial, sans-serif';
+        ctx.fillStyle='rgba(239,68,68,0.18)';
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText('UNGESPEICHERT',0,0);
+        ctx.restore();
+      }
       // Rebuild overlay zones after render (guard against recursion)
       if(!_rebuildingOverlay&&typeof rebuildPceOverlay==='function'){_rebuildingOverlay=true;rebuildPceOverlay();_rebuildingOverlay=false;}
     }
@@ -4371,13 +4389,13 @@
           if(e.target.classList.contains('pce-el-menu')||e.target.classList.contains('pce-rz-handle'))return;
           var elId=z.getAttribute('data-el');
           _activeEl=elId;
-          updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();renderCard();
+          updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();if(typeof syncRotSlider==='function')syncRotSlider();renderCard();
         });
         z.addEventListener('touchstart',function(e){
           if(e.target.classList.contains('pce-el-menu')||e.target.classList.contains('pce-rz-handle'))return;
           var elId=z.getAttribute('data-el');
           _activeEl=elId;
-          updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();renderCard();
+          updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();if(typeof syncRotSlider==='function')syncRotSlider();renderCard();
         },{passive:true});
       })(zones[zi]);}
     }
@@ -4424,7 +4442,7 @@
       var my=(ev.clientY-rect.top)*(CARD_H/rect.height);
       var hit=hitTest(mx,my);
       if(hit) _activeEl=hit;
-      updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();renderCard();
+      updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();if(typeof syncRotSlider==='function')syncRotSlider();renderCard();
       dragging=true;
       dragStartX=ev.clientX;dragStartY=ev.clientY;
       if(_activeEl==='img'){startDx=ov.imgDx||0;startDy=ov.imgDy||0;}
@@ -4466,7 +4484,7 @@
       var my=(_tsY-rect.top)*(CARD_H/rect.height);
       var hit=hitTest(mx,my);
       if(hit) _activeEl=hit;
-      updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();renderCard();
+      updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();if(typeof syncRotSlider==='function')syncRotSlider();renderCard();
       // Start values
       var _tdStartDx=0,_tdStartDy=0;
       if(_activeEl==='img'){_tdStartDx=ov.imgDx||0;_tdStartDy=ov.imgDy||0;}
@@ -4567,9 +4585,9 @@
       var menuItems=[];
       if(_activeEl==='img'){
         var curRot=ov.imgRot||0;
-        menuItems.push({icon:'\u21bb',text:'Bild drehen +15\u00b0 ('+curRot+'\u00b0)',action:function(){ov.imgRot=(ov.imgRot||0)+15;renderCard();autoSave();}});
-        menuItems.push({icon:'\u21ba',text:'Bild drehen \u221215\u00b0',action:function(){ov.imgRot=(ov.imgRot||0)-15;renderCard();autoSave();}});
-        if(curRot!==0) menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov.imgRot=0;renderCard();autoSave();}});
+        menuItems.push({icon:'\u21bb',text:'Bild drehen +15\u00b0 ('+curRot+'\u00b0)',action:function(){ov.imgRot=(ov.imgRot||0)+15;syncRotSlider();renderCard();autoSave();}});
+        menuItems.push({icon:'\u21ba',text:'Bild drehen \u221215\u00b0',action:function(){ov.imgRot=(ov.imgRot||0)-15;syncRotSlider();renderCard();autoSave();}});
+        if(curRot!==0) menuItems.push({icon:'\u2b6f',text:'Rotation zur\u00fccksetzen',action:function(){ov.imgRot=0;syncRotSlider();renderCard();autoSave();}});
         menuItems.push('hr');
         menuItems.push({icon:'\u21ba',text:'Bild-Position zur\u00fccksetzen',action:function(){ov.imgDx=0;ov.imgDy=0;renderCard();autoSave();}});
         menuItems.push({icon:'\ud83d\udd0d',text:'Bild-Gr\u00f6\u00dfe zur\u00fccksetzen ('+(ov.imgScale||100)+'%)',action:function(){ov.imgScale=100;syncScaleSlider();renderCard();autoSave();}});
@@ -4585,8 +4603,8 @@
       }else if(_activeEl==='price'){
         menuItems.push({icon:'\u21ba',text:'Preis-Position zur\u00fccksetzen',action:function(){ov.priceDx=0;ov.priceDy=0;renderCard();autoSave();}});
       }else if(_activeEl==='ghost'){
-        menuItems.push({icon:'\u21bb',text:'Ghost drehen +15\u00b0',action:function(){ov.ghostRot=(ov.ghostRot||0)+15;renderCard();autoSave();}});
-        menuItems.push({icon:'\u21ba',text:'Ghost drehen \u221215\u00b0',action:function(){ov.ghostRot=(ov.ghostRot||0)-15;renderCard();autoSave();}});
+        menuItems.push({icon:'\u21bb',text:'Ghost drehen +15\u00b0',action:function(){ov.ghostRot=(ov.ghostRot||0)+15;syncRotSlider();renderCard();autoSave();}});
+        menuItems.push({icon:'\u21ba',text:'Ghost drehen \u221215\u00b0',action:function(){ov.ghostRot=(ov.ghostRot||0)-15;syncRotSlider();renderCard();autoSave();}});
         menuItems.push({icon:'\u21ba',text:'Ghost-Position zur\u00fccksetzen',action:function(){ov.ghostDx=60;ov.ghostDy=-40;ov.ghostRot=0;renderCard();autoSave();}});
         menuItems.push({icon:'\ud83d\udd06',text:'Deckkraft: '+Math.round((ov.ghostAlpha||0.35)*100)+'%',action:function(){
           var v=parseFloat(prompt('Ghost-Deckkraft in % (10\u201390):',Math.round((ov.ghostAlpha||0.35)*100)));
@@ -4599,8 +4617,8 @@
         menuItems.push('hr');
         menuItems.push({icon:'\ud83d\udc7b',text:'Ghost ausschalten',action:function(){ov.ghostMode='off';updateGhostBtn();renderCard();autoSave();}});
       }else if(_activeEl==='dup'){
-        menuItems.push({icon:'\u21bb',text:'Duplikat drehen +15\u00b0',action:function(){ov.dupRot=(ov.dupRot||0)+15;renderCard();autoSave();}});
-        menuItems.push({icon:'\u21ba',text:'Duplikat drehen \u221215\u00b0',action:function(){ov.dupRot=(ov.dupRot||0)-15;renderCard();autoSave();}});
+        menuItems.push({icon:'\u21bb',text:'Duplikat drehen +15\u00b0',action:function(){ov.dupRot=(ov.dupRot||0)+15;syncRotSlider();renderCard();autoSave();}});
+        menuItems.push({icon:'\u21ba',text:'Duplikat drehen \u221215\u00b0',action:function(){ov.dupRot=(ov.dupRot||0)-15;syncRotSlider();renderCard();autoSave();}});
         menuItems.push({icon:'\u21ba',text:'Duplikat-Position zur\u00fccksetzen',action:function(){ov.dupDx=-50;ov.dupDy=30;ov.dupRot=0;renderCard();autoSave();}});
         menuItems.push({icon:'\ud83d\udd0d',text:'Gr\u00f6\u00dfe: '+(ov.dupScale||100)+'%',action:function(){
           var v=parseInt(prompt('Duplikat-Gr\u00f6\u00dfe in % (10\u2013300):',(ov.dupScale||100)),10);
@@ -4693,7 +4711,7 @@
     document.getElementById('pce-close').onclick=function(){closeEditor(true);};
     document.getElementById('pce-reset').onclick=function(){
       ov=plakatArtOverrideDefault();
-      _activeEl='img';syncScaleSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();autoSave();
+      _activeEl='img';syncScaleSlider();syncRotSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();autoSave();
     };
     // ── D-Pad nudge buttons ──
     var PCE_NUDGE_STEP=5;
@@ -4739,7 +4757,7 @@
         if(_activeEl==='ghost'){ov.ghostMode='off';_activeEl='img';}
         else{_activeEl='ghost';}
       }else{ov.ghostMode='on';if(!ov.ghostDx&&!ov.ghostDy){ov.ghostDx=80;ov.ghostDy=-60;}_activeEl='ghost';}
-      updateGhostBtn();updateDupBtn();updateActiveLabel();syncScaleSlider();renderCard();autoSave();
+      updateGhostBtn();updateDupBtn();updateActiveLabel();syncScaleSlider();syncRotSlider();renderCard();autoSave();
     };
     // ── Duplikat toggle: adds a full-opacity copy of the image ──
     var dupBtn=document.getElementById('pce-dup');
@@ -4754,7 +4772,7 @@
         if(_activeEl==='dup'){ov.dupOn=false;_activeEl='img';}
         else{_activeEl='dup';}
       }else{ov.dupOn=true;if(!ov.dupDx&&!ov.dupDy){ov.dupDx=-70;ov.dupDy=50;}_activeEl='dup';}
-      updateGhostBtn();updateDupBtn();updateActiveLabel();syncScaleSlider();renderCard();autoSave();
+      updateGhostBtn();updateDupBtn();updateActiveLabel();syncScaleSlider();syncRotSlider();renderCard();autoSave();
     };
     // ── Extra copies: + Ghost / + Duplikat buttons ──
     var addGhostBtn=document.getElementById('pce-add-ghost');
@@ -4802,16 +4820,39 @@
       var selIdx=t.getAttribute('data-copy-sel');
       if(selIdx!=null){
         _activeEl='copy-'+parseInt(selIdx,10);
-        updateCopiesLabel();updateActiveLabel();syncScaleSlider();renderCard();
+        updateCopiesLabel();updateActiveLabel();syncScaleSlider();syncRotSlider();renderCard();
       }
     });
-    // ── Rotation buttons ──
-    var rotCwBtn=document.getElementById('pce-rot-cw');
-    var rotCcwBtn=document.getElementById('pce-rot-ccw');
+    // ── Rotation slider ──
+    var rotSlider=document.getElementById('pce-rot');
+    var rotValEl=document.getElementById('pce-rot-val');
     var rotResetBtn=document.getElementById('pce-rot-reset');
-    if(rotCwBtn)rotCwBtn.onclick=function(){ov.imgRot=(ov.imgRot||0)+15;renderCard();autoSave();};
-    if(rotCcwBtn)rotCcwBtn.onclick=function(){ov.imgRot=(ov.imgRot||0)-15;renderCard();autoSave();};
-    if(rotResetBtn)rotResetBtn.onclick=function(){ov.imgRot=0;renderCard();autoSave();};
+    function _curRot(){
+      if(_activeEl==='ghost') return ov.ghostRot||0;
+      if(_activeEl==='dup') return ov.dupRot||0;
+      if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);var cp=ov.copies&&ov.copies[ci];return cp?(cp.rot||0):0;}
+      return ov.imgRot||0;
+    }
+    function syncRotSlider(){
+      var v=_curRot();
+      if(rotSlider){rotSlider.value=Math.max(-180,Math.min(180,v));}
+      if(rotValEl){rotValEl.textContent=v+'\u00b0';}
+    }
+    if(rotSlider)rotSlider.addEventListener('input',function(){
+      var v=parseInt(rotSlider.value,10);
+      if(_activeEl==='ghost'){ov.ghostRot=v;}
+      else if(_activeEl==='dup'){ov.dupRot=v;}
+      else if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);if(ov.copies&&ov.copies[ci])ov.copies[ci].rot=v;}
+      else{ov.imgRot=v;}
+      syncRotSlider();renderCard();autoSave();
+    });
+    if(rotResetBtn)rotResetBtn.onclick=function(){
+      if(_activeEl==='ghost'){ov.ghostRot=0;}
+      else if(_activeEl==='dup'){ov.dupRot=0;}
+      else if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);if(ov.copies&&ov.copies[ci])ov.copies[ci].rot=0;}
+      else{ov.imgRot=0;}
+      syncRotSlider();renderCard();autoSave();
+    };
     // ── Custom image upload ──
     var customImgInput=document.getElementById('pce-custom-img');
     if(customImgInput)customImgInput.addEventListener('change',function(){
@@ -5731,6 +5772,18 @@
             // Rebuild overlay zones
             var ovDiv=doc.getElementById('ov-'+idx);
             if(ovDiv){ ovDiv.innerHTML=_buildZoneHtml(cv._elMeta||[],idx); bindTouchMenuBtns(); }
+            // Unsaved-changes watermark overlay
+            var fw=doc.getElementById('fw-'+idx);
+            if(fw){
+              var wm=fw.querySelector('.unsaved-wm');
+              var dirty=JSON.stringify(artOvs[idx])!==JSON.stringify(_initArtOvs[idx]);
+              if(dirty&&!wm){
+                wm=doc.createElement('div');wm.className='unsaved-wm no-print';
+                wm.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3';
+                wm.innerHTML='<span style="transform:rotate(-25deg);font-size:24px;font-weight:700;color:rgba(239,68,68,0.18);white-space:nowrap">UNGESPEICHERT</span>';
+                fw.appendChild(wm);
+              }else if(!dirty&&wm){wm.remove();}
+            }
           });
         }
         // bindTouchMenuBtns is defined inside attach() where showCtxMenuForZone is available
@@ -5810,8 +5863,8 @@
             +'<div class="el-overlay" id="ov-'+i+'">'+overlayHtml+'</div></div>'
             +'<img id="fimg-print-'+i+'" src="'+dataUrl+'" class="print-only" style="display:none;width:100%">'
             +'<div class="no-print" style="text-align:center;padding:8px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap">'
-            +'<button class="btn-print" data-act="print" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:none;background:#2e7d32;color:#fff;font-size:13px;cursor:pointer">\ud83d\udda8\ufe0f</button>'
-            +'<button class="btn-dl" data-act="dl" data-idx="'+i+'" data-name="'+safeName+'" style="padding:6px 16px;border-radius:6px;border:none;background:#1565c0;color:#fff;font-size:13px;cursor:pointer">\u2b07\ufe0f</button>'
+            +'<button class="btn-print" data-act="print" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:none;background:#2e7d32;color:#fff;font-size:13px;cursor:pointer;font-weight:600">\ud83d\udda8\ufe0f'+(isMobile?'':' Drucken')+'</button>'
+            +'<button class="btn-dl" data-act="dl" data-idx="'+i+'" data-name="'+safeName+'" style="padding:6px 16px;border-radius:6px;border:none;background:#1565c0;color:#fff;font-size:13px;cursor:pointer;font-weight:600">\u2b07\ufe0f'+(isMobile?'':' Speichern')+'</button>'
             +'<button data-act="art-revert" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:1px solid #e65100;background:#fff7ed;color:#e65100;font-size:13px;cursor:pointer;font-weight:600">\u21a9 Verwerfen</button>'
             +'<button data-act="art-reset" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:12px;cursor:pointer">\u21ba Reset</button>'
             +'<label style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild<input type="file" accept="image/*" data-act="add-custom-img" data-idx="'+i+'" style="display:none"></label>'
@@ -5819,6 +5872,11 @@
             +'</div>'
             +'<div class="ctl-bar no-print">'
             +'<div class="abtn-grp">'+arrowCross('sel',i,'\u2b05\u27a1 Selektiertes Element')+'</div>'
+            +'<div class="abtn-grp">'
+            +'<span style="font-size:10px;font-weight:700;color:#555">\u21bb Drehung</span>'
+            +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+i+'"><span id="sr-'+i+'">0\u00b0</span></label>'
+            +'<button class="tog" data-act="sel-rot-reset" data-idx="'+i+'" style="font-size:9px;padding:1px 6px">\u2b6f 0\u00b0</button>'
+            +'</div>'
             +'<div class="abtn-grp">'
             +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udc7b Ghost</span>'
             +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+i+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
@@ -5947,6 +6005,11 @@
             var bar=fp.querySelector('.ctl-bar');if(!bar)return;
             var nh='<div class="abtn-grp">'+arrowCross('sel',idx,'\u2b05\u27a1 Selektiertes Element')+'</div>'
               +'<div class="abtn-grp">'
+              +'<span style="font-size:10px;font-weight:700;color:#555">\u21bb Drehung</span>'
+              +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+idx+'"><span id="sr-'+idx+'">0\u00b0</span></label>'
+              +'<button class="tog" data-act="sel-rot-reset" data-idx="'+idx+'" style="font-size:9px;padding:1px 6px">\u2b6f 0\u00b0</button>'
+              +'</div>'
+              +'<div class="abtn-grp">'
               +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udc7b Ghost</span>'
               +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+idx+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+idx+'"><span id="ga-'+idx+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
@@ -5994,6 +6057,17 @@
               var idx=parseInt(t.getAttribute('data-idx'),10);
               artOvs[idx].dupScale=parseInt(t.value,10);
               var sp=doc.getElementById('ds-'+idx);if(sp)sp.textContent=t.value+'%';
+              regenFlyer(idx);flyerAutoSave(idx);
+            }else if(act==='sel-rot'){
+              var idx=parseInt(t.getAttribute('data-idx'),10);
+              var v=parseInt(t.value,10);
+              var ov=artOvs[idx];
+              var ovType=_selZone?(_selZone.getAttribute('data-ov')||'img'):'img';
+              if(ovType==='ghost'){ov.ghostRot=v;}
+              else if(ovType==='dup'){ov.dupRot=v;}
+              else if(ovType==='copy'){var elId=_selZone?_selZone.getAttribute('data-el'):'';if(elId&&elId.indexOf('copy-')===0){var ci=parseInt(elId.split('-')[1],10);if(ov.copies&&ov.copies[ci])ov.copies[ci].rot=v;}}
+              else{ov.imgRot=v;}
+              var sp=doc.getElementById('sr-'+idx);if(sp)sp.textContent=v+'\u00b0';
               regenFlyer(idx);flyerAutoSave(idx);
             }
           });
@@ -6077,6 +6151,18 @@
               rebuildCtlBar(idx);
               regenFlyer(idx);flyerAutoSave(idx);
             }
+            else if(act==='sel-rot-reset'){
+              var idx=parseInt(t.getAttribute('data-idx'),10);
+              var ov=artOvs[idx];
+              var ovType=_selZone?(_selZone.getAttribute('data-ov')||'img'):'img';
+              if(ovType==='ghost'){ov.ghostRot=0;}
+              else if(ovType==='dup'){ov.dupRot=0;}
+              else if(ovType==='copy'){var elId=_selZone?_selZone.getAttribute('data-el'):'';if(elId&&elId.indexOf('copy-')===0){var ci2=parseInt(elId.split('-')[1],10);if(ov.copies&&ov.copies[ci2])ov.copies[ci2].rot=0;}}
+              else{ov.imgRot=0;}
+              var sld=doc.querySelector('[data-act="sel-rot"][data-idx="'+idx+'"]');if(sld)sld.value=0;
+              var sp=doc.getElementById('sr-'+idx);if(sp)sp.textContent='0\u00b0';
+              regenFlyer(idx);flyerAutoSave(idx);
+            }
           });
 
           // ── Interactive Flyer Editor: Drag, Resize, Context Menu ──
@@ -6095,6 +6181,17 @@
                 // Find the label span above the arrows
                 var grp=fp.querySelector('.abtn-grp');
                 if(grp){var sp=grp.querySelector('span');if(sp&&sp.style.fontWeight)sp.textContent='\u2b05\u27a1 '+labelText;}
+                // Sync rotation slider to newly selected element
+                var flyIdx=fp.id.replace('fp-','');
+                var ov=artOvs[parseInt(flyIdx,10)];
+                var ovType=z.getAttribute('data-ov')||'img';
+                var curRot=0;
+                if(ovType==='ghost'){curRot=ov.ghostRot||0;}
+                else if(ovType==='dup'){curRot=ov.dupRot||0;}
+                else if(ovType==='copy'){var elId=z.getAttribute('data-el')||'';if(elId.indexOf('copy-')===0){var ci=parseInt(elId.split('-')[1],10);if(ov.copies&&ov.copies[ci])curRot=ov.copies[ci].rot||0;}}
+                else{curRot=ov.imgRot||0;}
+                var rotSld=fp.querySelector('[data-act="sel-rot"]');if(rotSld)rotSld.value=Math.max(-180,Math.min(180,curRot));
+                var rotLbl=doc.getElementById('sr-'+flyIdx);if(rotLbl)rotLbl.textContent=curRot+'\u00b0';
               }
             }
           }
