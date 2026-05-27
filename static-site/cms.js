@@ -3934,8 +3934,8 @@
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element horizontal ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc')+'</p>';
     html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
-    html+='<div id="pce-wrap" style="position:relative;display:inline-block;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab">';
-    html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'"></canvas>';
+    html+='<div id="pce-wrap" style="position:relative;display:inline-block;max-width:100%;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab">';
+    html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'" style="display:block;width:100%;height:auto"></canvas>';
     html+='<div id="pce-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5"></div>';
     html+='</div>';
     html+='<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px">';
