@@ -4439,11 +4439,13 @@
     document.addEventListener('mouseup',pceUp);
 
     // ── Touch support for Kachel-Editor (mobile) ──
+    // Uses a deadzone so that a quick vertical swipe scrolls instead of dragging.
     var _pceTouchTimer=null;
+    var PCE_DRAG_THRESHOLD=10; // px before deciding drag vs scroll
     cvs.addEventListener('touchstart',function(ev){
       var touch=ev.touches[0];
       var _tsX=touch.clientX,_tsY=touch.clientY;
-      var _tsMoved=false;
+      var _tsMoved=false,_dragging=false,_scrolling=false;
       // Hit-test
       var rect=cvs.getBoundingClientRect();
       var mx=(_tsX-rect.left)*(CARD_W/rect.width);
@@ -4461,15 +4463,32 @@
       // Long-press → context menu
       _pceTouchTimer=setTimeout(function(){
         if(!_tsMoved){
+          _dragging=true; // lock into drag mode so touchend doesn't scroll
           cvs.dispatchEvent(new MouseEvent('contextmenu',{clientX:_tsX,clientY:_tsY,bubbles:true}));
         }
         _pceTouchTimer=null;
       },600);
-      ev.preventDefault();
+      // Do NOT call ev.preventDefault() here — allow scroll until deadzone decision
       function onTM(e2){
+        if(_scrolling) return; // let browser handle scroll
         var t2=e2.touches[0];
         var dx=t2.clientX-_tsX,dy=t2.clientY-_tsY;
-        if(Math.abs(dx)>4||Math.abs(dy)>4){_tsMoved=true;if(_pceTouchTimer){clearTimeout(_pceTouchTimer);_pceTouchTimer=null;}}
+        var absDx=Math.abs(dx),absDy=Math.abs(dy);
+        // Still in deadzone?
+        if(!_dragging&&!_tsMoved){
+          if(absDx<PCE_DRAG_THRESHOLD&&absDy<PCE_DRAG_THRESHOLD) return; // wait
+          _tsMoved=true;
+          if(_pceTouchTimer){clearTimeout(_pceTouchTimer);_pceTouchTimer=null;}
+          // Decide: if vertical movement dominates, let browser scroll
+          if(absDy>absDx*1.2){
+            _scrolling=true;
+            return;
+          }
+          // Otherwise → drag
+          _dragging=true;
+        }
+        if(!_dragging) return;
+        e2.preventDefault();
         var scX=CARD_W/rect.width,scY=CARD_H/rect.height;
         if(_activeEl==='img'){ov.imgDx=Math.round(_tdStartDx+dx*scX);ov.imgDy=Math.round(_tdStartDy+dy*scY);}
         else if(_activeEl==='price'){ov.priceDx=Math.round(_tdStartDx+dx*scX);ov.priceDy=Math.round(_tdStartDy+dy*scY);}
@@ -6358,14 +6377,17 @@
             }
 
             // ── Touch drag + long-press context menu ──
-            var _tsMoved=false;
+            // Uses a deadzone so vertical swipes scroll instead of dragging elements.
+            var FLYER_DRAG_THRESHOLD=10;
+            var _tsMoved=false,_fDragging=false,_fScrolling=false;
             _touchTimer=setTimeout(function(){
               if(!_tsMoved){
+                _fDragging=true;
                 showCtxMenuForZone(z, _tsX, _tsY);
               }
               _touchTimer=null;
             },600);
-            ev.preventDefault();
+            // Do NOT call ev.preventDefault() here — allow scroll until deadzone decision
             selectZone(z);
             var idx=parseInt(z.getAttribute('data-idx'),10);
             var ovKey=z.getAttribute('data-ov');
@@ -6383,9 +6405,20 @@
             var startDx=_dragCopy?(_dragCopy.dx||0):(ov[ovKey+'Dx']||0);
             var startDy=_dragCopy?(_dragCopy.dy||0):(ov[ovKey+'Dy']||0);
             function onTouchMove(e){
+              if(_fScrolling) return; // let browser handle scroll
               var t2=e.touches[0];
               var dx=(t2.clientX-_tsX)*scale,dy=(t2.clientY-_tsY)*scale;
-              if(Math.abs(dx)>4||Math.abs(dy)>4){_tsMoved=true;if(_touchTimer){clearTimeout(_touchTimer);_touchTimer=null;}}
+              var absDx=Math.abs(t2.clientX-_tsX),absDy=Math.abs(t2.clientY-_tsY);
+              // Still in deadzone?
+              if(!_fDragging&&!_tsMoved){
+                if(absDx<FLYER_DRAG_THRESHOLD&&absDy<FLYER_DRAG_THRESHOLD) return;
+                _tsMoved=true;
+                if(_touchTimer){clearTimeout(_touchTimer);_touchTimer=null;}
+                if(absDy>absDx*1.2){_fScrolling=true;return;}
+                _fDragging=true;
+              }
+              if(!_fDragging) return;
+              e.preventDefault();
               if(_dragCopy){_dragCopy.dx=Math.round(startDx+dx);_dragCopy.dy=Math.round(startDy+dy);}
               else{ov[ovKey+'Dx']=Math.round(startDx+dx);ov[ovKey+'Dy']=Math.round(startDy+dy);}
               var curEl=(canvases[idx]._elMeta||[]).find(function(m){return m.id===elId;});
@@ -6398,7 +6431,7 @@
               doc.removeEventListener('touchmove',onTouchMove);
               doc.removeEventListener('touchend',onTouchEnd);
               if(_touchTimer){clearTimeout(_touchTimer);_touchTimer=null;}
-              if(_tsMoved){regenFlyer(idx);flyerAutoSave(idx);}
+              if(_tsMoved&&_fDragging){regenFlyer(idx);flyerAutoSave(idx);}
             }
             doc.addEventListener('touchmove',onTouchMove,{passive:false});
             doc.addEventListener('touchend',onTouchEnd);
