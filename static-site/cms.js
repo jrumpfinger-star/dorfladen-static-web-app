@@ -6150,8 +6150,8 @@
               flyerArtOverrideSave(items[idx],artOvs[idx]);
               _initArtOvs[idx]=JSON.parse(JSON.stringify(artOvs[idx]));
               regenFlyer(idx);
-              t.textContent='\u2705 Gespeichert';
-              setTimeout(function(){t.textContent='\ud83d\udcbe Speichern';},1500);
+              t.textContent='\u2705';
+              setTimeout(function(){t.textContent=isMobile?'\ud83d\udcbe':'\ud83d\udcbe Speichern';},1500);
             }
             else if(act==='dl'){dlOne(parseInt(t.getAttribute('data-idx'),10)||0,t.getAttribute('data-name'));}
             else if(act==='art-revert'){
@@ -6292,7 +6292,7 @@
                 doc.removeEventListener('mousemove',rzMove);
                 doc.removeEventListener('mouseup',rzUp);
                 z.style.transform='';z.style.transformOrigin='';
-                regenFlyer(rIdx);flyerAutoSave(rIdx);
+                regenFlyer(rIdx);
               }
               doc.addEventListener('mousemove',rzMove);
               doc.addEventListener('mouseup',rzUp);
@@ -6551,7 +6551,7 @@
                 doc.removeEventListener('touchmove',rzTouchMove);
                 doc.removeEventListener('touchend',rzTouchEnd);
                 z.style.transform='';z.style.transformOrigin='';
-                regenFlyer(rIdx);flyerAutoSave(rIdx);
+                regenFlyer(rIdx);
               }
               doc.addEventListener('touchmove',rzTouchMove,{passive:false});
               doc.addEventListener('touchend',rzTouchEnd);
