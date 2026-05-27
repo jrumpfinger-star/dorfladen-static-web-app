@@ -3938,6 +3938,16 @@
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'" style="display:block;width:100%;height:auto"></canvas>';
     html+='<div id="pce-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5"></div>';
     html+='</div>';
+    // ── D-Pad: arrow cross to nudge selected element ──
+    html+='<div id="pce-dpad" style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin-top:8px">';
+    html+='<span id="pce-dpad-label" style="font-size:10px;font-weight:700;color:#e65100">Verschieben: \ud83d\uddbc Bild</span>';
+    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="up" style="font-size:14px;padding:4px 14px;line-height:1">\u25B2</button>';
+    html+='<div style="display:flex;gap:2px">';
+    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="left" style="font-size:14px;padding:4px 14px;line-height:1">\u25C0</button>';
+    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="right" style="font-size:14px;padding:4px 14px;line-height:1">\u25B6</button>';
+    html+='</div>';
+    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="down" style="font-size:14px;padding:4px 14px;line-height:1">\u25BC</button>';
+    html+='</div>';
     html+='<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px">';
     html+='<span style="font-size:12px;color:#6b7280">\ud83d\udd0d Gr\u00f6\u00dfe</span>';
     html+='<input type="range" id="pce-scale" min="20" max="300" value="'+(ov.imgScale||100)+'" style="width:160px;accent-color:#e65100">';
@@ -4382,6 +4392,8 @@
       if(!el) return;
       var ae=_elMeta.find(function(e){return e.id===_activeEl;});
       el.textContent='Aktiv: '+(ae?ae.label:_activeEl);
+      var dpl=document.getElementById('pce-dpad-label');
+      if(dpl) dpl.textContent='Verschieben: '+(ae?ae.label:_activeEl);
     }
 
     // Hit-test: find element under mouse position
@@ -4683,6 +4695,37 @@
       ov=plakatArtOverrideDefault();
       _activeEl='img';syncScaleSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();autoSave();
     };
+    // ── D-Pad nudge buttons ──
+    var PCE_NUDGE_STEP=5;
+    var nudgeBtns=document.querySelectorAll('.pce-nudge');
+    for(var ni=0;ni<nudgeBtns.length;ni++){(function(btn){
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        var dir=btn.getAttribute('data-dir');
+        var dxKey,dyKey;
+        if(_activeEl==='img'){dxKey='imgDx';dyKey='imgDy';}
+        else if(_activeEl==='price'){dxKey='priceDx';dyKey='priceDy';}
+        else if(_activeEl==='ghost'){dxKey='ghostDx';dyKey='ghostDy';}
+        else if(_activeEl==='dup'){dxKey='dupDx';dyKey='dupDy';}
+        else if(_activeEl.indexOf('copy-')===0){
+          var ci=parseInt(_activeEl.split('-')[1],10);
+          var cp=ov.copies&&ov.copies[ci];
+          if(cp){
+            if(dir==='left')cp.dx=(cp.dx||0)-PCE_NUDGE_STEP;
+            else if(dir==='right')cp.dx=(cp.dx||0)+PCE_NUDGE_STEP;
+            else if(dir==='up')cp.dy=(cp.dy||0)-PCE_NUDGE_STEP;
+            else if(dir==='down')cp.dy=(cp.dy||0)+PCE_NUDGE_STEP;
+          }
+          renderCard();autoSave();return;
+        }
+        if(!dxKey)return;
+        if(dir==='left')ov[dxKey]=(ov[dxKey]||0)-PCE_NUDGE_STEP;
+        else if(dir==='right')ov[dxKey]=(ov[dxKey]||0)+PCE_NUDGE_STEP;
+        else if(dir==='up')ov[dyKey]=(ov[dyKey]||0)-PCE_NUDGE_STEP;
+        else if(dir==='down')ov[dyKey]=(ov[dyKey]||0)+PCE_NUDGE_STEP;
+        renderCard();autoSave();
+      });
+    })(nudgeBtns[ni]);}
     // ── Ghost toggle: adds a semi-transparent copy of the image ──
     var ghostBtn=document.getElementById('pce-ghost');
     function updateGhostBtn(){
@@ -5717,14 +5760,14 @@
           +'.flyer-wrap img{width:100%;display:block}'
           +'.el-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2}'
           +'.el-zone{position:absolute;pointer-events:all;cursor:move;border:2px solid transparent;border-radius:4px;transition:border-color 0.15s}'
-          +'.el-zone:hover{border-color:rgba(37,99,235,0.5)}'
+          +'@media(hover:hover){.el-zone:hover{border-color:rgba(37,99,235,0.5)}}'
           +'.el-zone.selected{border-color:#2563eb;background:rgba(37,99,235,0.08)}'
           +'.el-zone.el-secondary{border-style:dashed}'
-          +'.el-zone.el-secondary:hover{border-color:rgba(147,51,234,0.5)}'
+          +'@media(hover:hover){.el-zone.el-secondary:hover{border-color:rgba(147,51,234,0.5)}}'
           +'.el-zone.el-secondary.selected{border-color:#9333ea;background:rgba(147,51,234,0.08)}'
           +'.el-zone.el-secondary .el-label{background:#9333ea}'
           +'.el-zone.el-custom{border-style:dashed}'
-          +'.el-zone.el-custom:hover{border-color:rgba(234,88,12,0.6)}'
+          +'@media(hover:hover){.el-zone.el-custom:hover{border-color:rgba(234,88,12,0.6)}}'
           +'.el-zone.el-custom.selected{border-color:#ea580c;background:rgba(234,88,12,0.08)}'
           +'.el-zone.el-custom .el-label{background:#ea580c}'
           +'.el-zone.el-custom .rz-handle{background:#ea580c}'
@@ -5732,7 +5775,8 @@
           +'.el-zone.selected .el-label{display:block}'
           +'.el-zone .el-touch-menu{display:none;position:absolute;top:-2px;right:-2px;width:28px;height:28px;background:#2563eb;color:#fff;border:2px solid #fff;border-radius:50%;font-size:16px;line-height:24px;text-align:center;cursor:pointer;z-index:6;box-shadow:0 1px 4px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent}'
           +'.el-zone .rz-handle{position:absolute;width:20px;height:20px;background:#2563eb;border:2px solid #fff;border-radius:4px;pointer-events:all;cursor:nwse-resize;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);z-index:5;font-size:10px;line-height:16px;text-align:center;color:#fff}'
-          +'.el-zone:hover .rz-handle,.el-zone.selected .rz-handle{display:block}'
+          +'.el-zone.selected .rz-handle{display:block}'
++'@media(hover:hover){.el-zone:hover .rz-handle{display:block}}'
           +'.rz-handle.br{bottom:-10px;right:-10px}'
           +'.ctx-menu{position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:4px 0;z-index:1000;min-width:180px;font-size:13px}'
           +'.ctx-menu div{padding:7px 16px;cursor:pointer;display:flex;align-items:center;gap:8px}'
