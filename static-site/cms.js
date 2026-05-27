@@ -4282,16 +4282,16 @@
       if(ov.imgRot){ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='right';ctx.fillText(ov.imgRot+'\u00b0',CARD_W-8,CARD_H-8);}
       if(ov.imgScale!==100){ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='left';ctx.fillText((ov.imgScale||100)+'%',8,CARD_H-8);}
       ctx.textAlign='left';
-      // Unsaved-changes watermark
+      // Unsaved-changes banner at bottom edge
       if(JSON.stringify(ov)!==JSON.stringify(_initOv)){
         ctx.save();
-        ctx.translate(CARD_W/2,CARD_H/2);
-        ctx.rotate(-Math.PI/6);
-        ctx.font='600 28px Arial, sans-serif';
-        ctx.fillStyle='rgba(239,68,68,0.18)';
+        ctx.fillStyle='rgba(239,68,68,0.75)';
+        ctx.fillRect(0,CARD_H-26,CARD_W,26);
+        ctx.font='700 13px Arial, sans-serif';
+        ctx.fillStyle='#fff';
         ctx.textAlign='center';
         ctx.textBaseline='middle';
-        ctx.fillText('UNGESPEICHERT',0,0);
+        ctx.fillText('\u26a0 UNGESPEICHERT',CARD_W/2,CARD_H-13);
         ctx.restore();
       }
       // Rebuild overlay zones after render (guard against recursion)
@@ -5779,8 +5779,8 @@
               var dirty=JSON.stringify(artOvs[idx])!==JSON.stringify(_initArtOvs[idx]);
               if(dirty&&!wm){
                 wm=doc.createElement('div');wm.className='unsaved-wm no-print';
-                wm.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3';
-                wm.innerHTML='<span style="transform:rotate(-25deg);font-size:24px;font-weight:700;color:rgba(239,68,68,0.18);white-space:nowrap">UNGESPEICHERT</span>';
+                wm.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:24px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3;background:rgba(239,68,68,0.75)';
+                wm.innerHTML='<span style="font-size:12px;font-weight:700;color:#fff;letter-spacing:1px">\u26a0 UNGESPEICHERT</span>';
                 fw.appendChild(wm);
               }else if(!dirty&&wm){wm.remove();}
             }
