@@ -5864,9 +5864,12 @@
         // Helper: build overlay zone HTML from element metadata
         function _buildZoneHtml(elMeta,idx){
           var zh='';
+          var canvas=canvases[idx];
+          var canvasW=canvas?canvas.width:794;
+          var canvasH=canvas?canvas.height:1123;
           elMeta.forEach(function(el){
-            var pctL=(el.x/794*100).toFixed(2),pctT=(el.y/1123*100).toFixed(2);
-            var pctW=(el.w/794*100).toFixed(2),pctH=(el.h/1123*100).toFixed(2);
+            var pctL=(el.x/canvasW*100).toFixed(2),pctT=(el.y/canvasH*100).toFixed(2);
+            var pctW=(el.w/canvasW*100).toFixed(2),pctH=(el.h/canvasH*100).toFixed(2);
             var isCopy=el.id.indexOf('copy-')===0;
             var isSecondary=(el.id==='ghost'||el.id==='dup'||el.id==='customImg'||isCopy);
             var noResize=(el.id==='ghost'||el.id==='dup'||isCopy);
