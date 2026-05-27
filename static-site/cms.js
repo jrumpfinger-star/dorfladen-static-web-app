@@ -4034,17 +4034,7 @@
       ctx.strokeStyle=theme.cardBorder||'#e0e0e0';ctx.lineWidth=1;mgRRect(0,0,CARD_W,CARD_H,mgRad);ctx.stroke();
 
       // Freistellen helper
-      function freistellImg(){
-        var ofc=document.createElement('canvas');ofc.width=imgObj.width;ofc.height=imgObj.height;
-        var ox=ofc.getContext('2d');ox.drawImage(imgObj,0,0);
-        if(cfg.imgFreistellen){
-          try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-          var thr=cfg.imgThreshold,fade=30;
-          for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
-          ox.putImageData(id,0,0);}catch(e){}
-        }
-        return ofc;
-      }
+      function freistellImg(){return _freistellCanvas(imgObj,cfg);}
 
       if(isMag){
         // ── Magazine layout card ──
@@ -4273,14 +4263,7 @@
       if(ov.customImg){
         var ciImg=new Image();
         ciImg.onload=function(){
-          var ciOfc=document.createElement('canvas');ciOfc.width=ciImg.width;ciOfc.height=ciImg.height;
-          var ciOx=ciOfc.getContext('2d');ciOx.drawImage(ciImg,0,0);
-          if(cfg.imgFreistellen){
-            try{var cid=ciOx.getImageData(0,0,ciOfc.width,ciOfc.height),cd=cid.data;
-            var ciThr=cfg.imgThreshold,ciFade=30;
-            for(var cpi=0;cpi<cd.length;cpi+=4){var cmn=Math.min(cd[cpi],cd[cpi+1],cd[cpi+2]);if(cmn>ciThr)cd[cpi+3]=0;else if(cmn>ciThr-ciFade)cd[cpi+3]=Math.round(255*(ciThr-cmn)/ciFade);}
-            ciOx.putImageData(cid,0,0);}catch(e){}
-          }
+          var ciOfc=_freistellCanvas(ciImg,cfg);
           var ciSc=(ov.customImgScale||100)/100;
           var ciW=ciOfc.width*ciSc,ciH=ciOfc.height*ciSc;
           if(ciW>CARD_W*0.8){var f2=CARD_W*0.8/ciW;ciW*=f2;ciH*=f2;}
@@ -4443,12 +4426,7 @@
           updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();if(typeof syncRotSlider==='function')syncRotSlider();renderCard();
           // Start drag on canvas from zone click
           dragging=true;dragStartX=e.clientX;dragStartY=e.clientY;
-          if(_activeEl==='img'){startDx=ov.imgDx||0;startDy=ov.imgDy||0;}
-          else if(_activeEl==='price'){startDx=ov.priceDx||0;startDy=ov.priceDy||0;}
-          else if(_activeEl==='ghost'){startDx=ov.ghostDx||0;startDy=ov.ghostDy||0;}
-          else if(_activeEl==='dup'){startDx=ov.dupDx||0;startDy=ov.dupDy||0;}
-          else if(_activeEl==='customImg'){startDx=ov.customImgDx||0;startDy=ov.customImgDy||0;}
-          else if(_activeEl.indexOf('copy-')===0){var _ci=parseInt(_activeEl.split('-')[1],10);var _cp=ov.copies&&ov.copies[_ci];if(_cp){startDx=_cp.dx||0;startDy=_cp.dy||0;}}
+          var _ds=_getElDxDy(_activeEl,ov);startDx=_ds.dx;startDy=_ds.dy;
           cvs.style.cursor='grabbing';
         });
         z.addEventListener('touchstart',function(e){
@@ -4507,12 +4485,7 @@
       updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();if(typeof syncRotSlider==='function')syncRotSlider();renderCard();
       dragging=true;
       dragStartX=ev.clientX;dragStartY=ev.clientY;
-      if(_activeEl==='img'){startDx=ov.imgDx||0;startDy=ov.imgDy||0;}
-      else if(_activeEl==='price'){startDx=ov.priceDx||0;startDy=ov.priceDy||0;}
-      else if(_activeEl==='ghost'){startDx=ov.ghostDx||0;startDy=ov.ghostDy||0;}
-      else if(_activeEl==='dup'){startDx=ov.dupDx||0;startDy=ov.dupDy||0;}
-      else if(_activeEl==='customImg'){startDx=ov.customImgDx||0;startDy=ov.customImgDy||0;}
-      else if(_activeEl.indexOf('copy-')===0){var _ci=parseInt(_activeEl.split('-')[1],10);var _cp=ov.copies&&ov.copies[_ci];if(_cp){startDx=_cp.dx||0;startDy=_cp.dy||0;}}
+      var _ds2=_getElDxDy(_activeEl,ov);startDx=_ds2.dx;startDy=_ds2.dy;
       cvs.style.cursor='grabbing';
     });
     function pceMove(ev){
@@ -4520,12 +4493,7 @@
       var dx=ev.clientX-dragStartX,dy=ev.clientY-dragStartY;
       var rect=cvs.getBoundingClientRect();
       var scX=CARD_W/rect.width,scY=CARD_H/rect.height;
-      if(_activeEl==='img'){ov.imgDx=Math.round(startDx+dx*scX);ov.imgDy=Math.round(startDy+dy*scY);}
-      else if(_activeEl==='price'){ov.priceDx=Math.round(startDx+dx*scX);ov.priceDy=Math.round(startDy+dy*scY);}
-      else if(_activeEl==='ghost'){ov.ghostDx=Math.round(startDx+dx*scX);ov.ghostDy=Math.round(startDy+dy*scY);}
-      else if(_activeEl==='dup'){ov.dupDx=Math.round(startDx+dx*scX);ov.dupDy=Math.round(startDy+dy*scY);}
-      else if(_activeEl==='customImg'){ov.customImgDx=Math.round(startDx+dx*scX);ov.customImgDy=Math.round(startDy+dy*scY);}
-      else if(_activeEl.indexOf('copy-')===0){var _ci2=parseInt(_activeEl.split('-')[1],10);var _cp2=ov.copies&&ov.copies[_ci2];if(_cp2){_cp2.dx=Math.round(startDx+dx*scX);_cp2.dy=Math.round(startDy+dy*scY);}}
+      _setElDxDy(_activeEl,ov,Math.round(startDx+dx*scX),Math.round(startDy+dy*scY));
       renderCard();autoSave();
     }
     function pceUp(){
@@ -4551,12 +4519,7 @@
       updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();if(typeof syncRotSlider==='function')syncRotSlider();renderCard();
       // Start values
       var _tdStartDx=0,_tdStartDy=0;
-      if(_activeEl==='img'){_tdStartDx=ov.imgDx||0;_tdStartDy=ov.imgDy||0;}
-      else if(_activeEl==='price'){_tdStartDx=ov.priceDx||0;_tdStartDy=ov.priceDy||0;}
-      else if(_activeEl==='ghost'){_tdStartDx=ov.ghostDx||0;_tdStartDy=ov.ghostDy||0;}
-      else if(_activeEl==='dup'){_tdStartDx=ov.dupDx||0;_tdStartDy=ov.dupDy||0;}
-      else if(_activeEl==='customImg'){_tdStartDx=ov.customImgDx||0;_tdStartDy=ov.customImgDy||0;}
-      else if(_activeEl.indexOf('copy-')===0){var _ci3=parseInt(_activeEl.split('-')[1],10);var _cp3=ov.copies&&ov.copies[_ci3];if(_cp3){_tdStartDx=_cp3.dx||0;_tdStartDy=_cp3.dy||0;}}
+      var _ds3=_getElDxDy(_activeEl,ov);_tdStartDx=_ds3.dx;_tdStartDy=_ds3.dy;
       // No long-press context menu on touch — use the ⋯ menu buttons instead
       // Do NOT call ev.preventDefault() here — allow scroll until deadzone decision
       function onTM(e2){
@@ -4580,12 +4543,7 @@
         if(!_dragging) return;
         e2.preventDefault();
         var scX=CARD_W/rect.width,scY=CARD_H/rect.height;
-        if(_activeEl==='img'){ov.imgDx=Math.round(_tdStartDx+dx*scX);ov.imgDy=Math.round(_tdStartDy+dy*scY);}
-        else if(_activeEl==='price'){ov.priceDx=Math.round(_tdStartDx+dx*scX);ov.priceDy=Math.round(_tdStartDy+dy*scY);}
-        else if(_activeEl==='ghost'){ov.ghostDx=Math.round(_tdStartDx+dx*scX);ov.ghostDy=Math.round(_tdStartDy+dy*scY);}
-        else if(_activeEl==='dup'){ov.dupDx=Math.round(_tdStartDx+dx*scX);ov.dupDy=Math.round(_tdStartDy+dy*scY);}
-        else if(_activeEl==='customImg'){ov.customImgDx=Math.round(_tdStartDx+dx*scX);ov.customImgDy=Math.round(_tdStartDy+dy*scY);}
-        else if(_activeEl.indexOf('copy-')===0){var _ci4=parseInt(_activeEl.split('-')[1],10);var _cp4=ov.copies&&ov.copies[_ci4];if(_cp4){_cp4.dx=Math.round(_tdStartDx+dx*scX);_cp4.dy=Math.round(_tdStartDy+dy*scY);}}
+        _setElDxDy(_activeEl,ov,Math.round(_tdStartDx+dx*scX),Math.round(_tdStartDy+dy*scY));
         renderCard();autoSave();
       }
       function onTE(){
@@ -4602,13 +4560,7 @@
     // ── Scale slider ──
     var scaleSlider=document.getElementById('pce-scale');
     var scaleValEl=document.getElementById('pce-scale-val');
-    function _curScale(){
-      if(_activeEl==='ghost') return ov.ghostScale||100;
-      if(_activeEl==='dup') return ov.dupScale||100;
-      if(_activeEl==='customImg') return ov.customImgScale||100;
-      if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);var cp=ov.copies&&ov.copies[ci];return cp?(cp.scale||100):100;}
-      return ov.imgScale||100;
-    }
+    function _curScale(){return _getElScale(_activeEl,ov);}
     function syncScaleSlider(){
       var v=_curScale();
       if(scaleSlider){scaleSlider.value=v;}
@@ -4617,11 +4569,7 @@
     if(scaleSlider){
       scaleSlider.addEventListener('input',function(){
         var v=parseInt(scaleSlider.value,10);
-        if(_activeEl==='ghost'){ov.ghostScale=v;}
-        else if(_activeEl==='dup'){ov.dupScale=v;}
-        else if(_activeEl==='customImg'){ov.customImgScale=v;}
-        else if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);if(ov.copies&&ov.copies[ci])ov.copies[ci].scale=v;}
-        else{ov.imgScale=v;}
+        _setElScale(_activeEl,ov,v);
         syncScaleSlider();renderCard();autoSave();
       });
     }
@@ -4630,12 +4578,9 @@
     cvs.addEventListener('wheel',function(ev){
       ev.preventDefault();
       var delta=ev.deltaY<0?5:-5;
-      if(_activeEl==='ghost'){ov.ghostScale=Math.max(10,Math.min(300,(ov.ghostScale||100)+delta));}
-      else if(_activeEl==='dup'){ov.dupScale=Math.max(10,Math.min(300,(ov.dupScale||100)+delta));}
-      else if(_activeEl==='customImg'){ov.customImgScale=Math.max(10,Math.min(300,(ov.customImgScale||100)+delta));}
-      else if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);if(ov.copies&&ov.copies[ci]){ov.copies[ci].scale=Math.max(10,Math.min(300,(ov.copies[ci].scale||100)+delta));}}
-      else if(_activeEl==='img'){ov.imgScale=Math.max(20,Math.min(300,(ov.imgScale||100)+delta));}
-      else{return;}
+      var cur=_getElScale(_activeEl,ov);
+      var minV=_activeEl==='img'?20:10;
+      _setElScale(_activeEl,ov,Math.max(minV,Math.min(300,cur+delta)));
       syncScaleSlider();renderCard();autoSave();
     });
 
@@ -4804,28 +4749,13 @@
       btn.addEventListener('click',function(e){
         e.preventDefault();
         var dir=btn.getAttribute('data-dir');
-        var dxKey,dyKey;
-        if(_activeEl==='img'){dxKey='imgDx';dyKey='imgDy';}
-        else if(_activeEl==='price'){dxKey='priceDx';dyKey='priceDy';}
-        else if(_activeEl==='ghost'){dxKey='ghostDx';dyKey='ghostDy';}
-        else if(_activeEl==='dup'){dxKey='dupDx';dyKey='dupDy';}
-        else if(_activeEl==='customImg'){dxKey='customImgDx';dyKey='customImgDy';}
-        else if(_activeEl.indexOf('copy-')===0){
-          var ci=parseInt(_activeEl.split('-')[1],10);
-          var cp=ov.copies&&ov.copies[ci];
-          if(cp){
-            if(dir==='left')cp.dx=(cp.dx||0)-PCE_NUDGE_STEP;
-            else if(dir==='right')cp.dx=(cp.dx||0)+PCE_NUDGE_STEP;
-            else if(dir==='up')cp.dy=(cp.dy||0)-PCE_NUDGE_STEP;
-            else if(dir==='down')cp.dy=(cp.dy||0)+PCE_NUDGE_STEP;
-          }
-          renderCard();autoSave();return;
-        }
-        if(!dxKey)return;
-        if(dir==='left')ov[dxKey]=(ov[dxKey]||0)-PCE_NUDGE_STEP;
-        else if(dir==='right')ov[dxKey]=(ov[dxKey]||0)+PCE_NUDGE_STEP;
-        else if(dir==='up')ov[dyKey]=(ov[dyKey]||0)-PCE_NUDGE_STEP;
-        else if(dir==='down')ov[dyKey]=(ov[dyKey]||0)+PCE_NUDGE_STEP;
+        var r=_resolveElKeys(_activeEl,ov);
+        if(!r)return;
+        var curDx=r.obj[r.dxKey]||0, curDy=r.obj[r.dyKey]||0;
+        if(dir==='left')r.obj[r.dxKey]=curDx-PCE_NUDGE_STEP;
+        else if(dir==='right')r.obj[r.dxKey]=curDx+PCE_NUDGE_STEP;
+        else if(dir==='up')r.obj[r.dyKey]=curDy-PCE_NUDGE_STEP;
+        else if(dir==='down')r.obj[r.dyKey]=curDy+PCE_NUDGE_STEP;
         renderCard();autoSave();
       });
     })(nudgeBtns[ni]);}
@@ -4912,13 +4842,7 @@
     var rotSlider=document.getElementById('pce-rot');
     var rotValEl=document.getElementById('pce-rot-val');
     var rotResetBtn=document.getElementById('pce-rot-reset');
-    function _curRot(){
-      if(_activeEl==='ghost') return ov.ghostRot||0;
-      if(_activeEl==='dup') return ov.dupRot||0;
-      if(_activeEl==='customImg') return ov.customImgRot||0;
-      if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);var cp=ov.copies&&ov.copies[ci];return cp?(cp.rot||0):0;}
-      return ov.imgRot||0;
-    }
+    function _curRot(){return _getElRot(_activeEl,ov);}
     function syncRotSlider(){
       var v=_curRot();
       if(rotSlider){rotSlider.value=Math.max(-180,Math.min(180,v));}
@@ -4926,19 +4850,11 @@
     }
     if(rotSlider)rotSlider.addEventListener('input',function(){
       var v=parseInt(rotSlider.value,10);
-      if(_activeEl==='ghost'){ov.ghostRot=v;}
-      else if(_activeEl==='dup'){ov.dupRot=v;}
-      else if(_activeEl==='customImg'){ov.customImgRot=v;}
-      else if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);if(ov.copies&&ov.copies[ci])ov.copies[ci].rot=v;}
-      else{ov.imgRot=v;}
+      _setElRot(_activeEl,ov,v);
       syncRotSlider();renderCard();autoSave();
     });
     if(rotResetBtn)rotResetBtn.onclick=function(){
-      if(_activeEl==='ghost'){ov.ghostRot=0;}
-      else if(_activeEl==='dup'){ov.dupRot=0;}
-      else if(_activeEl==='customImg'){ov.customImgRot=0;}
-      else if(_activeEl.indexOf('copy-')===0){var ci=parseInt(_activeEl.split('-')[1],10);if(ov.copies&&ov.copies[ci])ov.copies[ci].rot=0;}
-      else{ov.imgRot=0;}
+      _setElRot(_activeEl,ov,0);
       syncRotSlider();renderCard();autoSave();
     };
     // ── Custom image upload ──
@@ -5286,6 +5202,76 @@
     fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'flyer_article_overrides',wert:all})})
       .then(function(r){return r.json();}).catch(function(){});
   }
+  // ── Shared helpers for element property dispatch ──
+  // Resolves activeEl (or ovType) to the property keys on an override object.
+  // Returns {dxKey, dyKey, scaleKey, rotKey, obj} where obj is ov itself or ov.copies[i].
+  function _resolveElKeys(activeEl, ov){
+    if(activeEl==='img')   return {dxKey:'imgDx',dyKey:'imgDy',scaleKey:'imgScale',rotKey:'imgRot',obj:ov};
+    if(activeEl==='price') return {dxKey:'priceDx',dyKey:'priceDy',scaleKey:'priceScale',rotKey:null,obj:ov};
+    if(activeEl==='ghost') return {dxKey:'ghostDx',dyKey:'ghostDy',scaleKey:'ghostScale',rotKey:'ghostRot',obj:ov};
+    if(activeEl==='dup')   return {dxKey:'dupDx',dyKey:'dupDy',scaleKey:'dupScale',rotKey:'dupRot',obj:ov};
+    if(activeEl==='customImg') return {dxKey:'customImgDx',dyKey:'customImgDy',scaleKey:'customImgScale',rotKey:'customImgRot',obj:ov};
+    if(activeEl.indexOf('copy-')===0){
+      var ci=parseInt(activeEl.split('-')[1],10);
+      var cp=ov.copies&&ov.copies[ci];
+      if(cp) return {dxKey:'dx',dyKey:'dy',scaleKey:'scale',rotKey:'rot',obj:cp};
+    }
+    return null;
+  }
+  // Read current dx/dy for the active element
+  function _getElDxDy(activeEl, ov){
+    var r=_resolveElKeys(activeEl,ov);
+    return r?{dx:r.obj[r.dxKey]||0, dy:r.obj[r.dyKey]||0}:{dx:0,dy:0};
+  }
+  // Write dx/dy for the active element
+  function _setElDxDy(activeEl, ov, dx, dy){
+    var r=_resolveElKeys(activeEl,ov);
+    if(r){r.obj[r.dxKey]=dx;r.obj[r.dyKey]=dy;}
+  }
+  // Read current scale
+  function _getElScale(activeEl, ov){
+    var r=_resolveElKeys(activeEl,ov);
+    return r?(r.obj[r.scaleKey]||100):100;
+  }
+  // Write scale
+  function _setElScale(activeEl, ov, v){
+    var r=_resolveElKeys(activeEl,ov);
+    if(r) r.obj[r.scaleKey]=v;
+  }
+  // Read current rotation
+  function _getElRot(activeEl, ov){
+    var r=_resolveElKeys(activeEl,ov);
+    return r&&r.rotKey?(r.obj[r.rotKey]||0):0;
+  }
+  // Write rotation
+  function _setElRot(activeEl, ov, v){
+    var r=_resolveElKeys(activeEl,ov);
+    if(r&&r.rotKey) r.obj[r.rotKey]=v;
+  }
+
+  // Convert a zone DOM element's data-ov/data-el to the activeEl key format
+  function _zoneToElKey(z){
+    if(!z) return 'img';
+    var ov=z.getAttribute('data-ov')||'img';
+    if(ov==='copy'){var elId=z.getAttribute('data-el')||'';return elId.indexOf('copy-')===0?elId:'img';}
+    return ov;
+  }
+  // Shorthand for _selZone (Einzelflyer selected zone)
+  function _selZoneToElKey(){return _zoneToElKey(_selZone);}
+
+  // ── Shared Freistellen (white background removal) ──
+  function _freistellCanvas(imgEl, cfg){
+    var ofc=document.createElement('canvas');ofc.width=imgEl.width;ofc.height=imgEl.height;
+    var ox=ofc.getContext('2d');ox.drawImage(imgEl,0,0);
+    if(cfg.imgFreistellen){
+      try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
+      var thr=cfg.imgThreshold,fade=30;
+      for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
+      ox.putImageData(id,0,0);}catch(e){}
+    }
+    return ofc;
+  }
+
   // Default per-article override object
   function flyerArtOverrideDefault(){
     return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:150,ghostDy:-120,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:-150,dupDy:100,dupOn:false,dupScale:100,dupRot:0,copies:[],customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
@@ -5465,14 +5451,7 @@
           mgImgPromise=new Promise(function(resImg){
             var img=new Image();
             img.onload=function(){
-              var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
-              var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
-              if(cfg.imgFreistellen){
-                try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-                var thr=cfg.imgThreshold,fade=30;
-                for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
-                ox.putImageData(id,0,0);}catch(e){}
-              }
+              var ofc=_freistellCanvas(img,cfg);
               var fImgSc=(cfg.imgScale||100)/100*((artOv.imgScale||100)/100);
               var maxIW=cardMW-40, maxIH=imgZoneH-20;
               var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc;
@@ -5637,16 +5616,7 @@
             var imgLeft=cardX+imgAncX+(artOv.imgDx||0);
             var imgBot=imgAreaBot-imgAncY+(artOv.imgDy||0);
             // Freistellen: weissen Hintergrund entfernen (soft-edge feathering)
-            var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
-            var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
-            if(cfg.imgFreistellen){var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-            var thr=cfg.imgThreshold, fade=30;
-            for(var pi=0;pi<d.length;pi+=4){
-              var mn=Math.min(d[pi],d[pi+1],d[pi+2]);
-              if(mn>thr)d[pi+3]=0;
-              else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);
-            }
-            ox.putImageData(id,0,0);}
+            var ofc=_freistellCanvas(img,cfg);
             // Clip to card so image does not overflow
             ctx.save();rrect(cardX,cardY,cardW,cardH,theme.cardRadius);ctx.clip();
             var rotRad=(cfg.imgRotation+(artOv.imgRot||0))*Math.PI/180;
@@ -5759,15 +5729,7 @@
         if(artOv.customImg){
           ciPromise=new Promise(function(resCI){
             var ci=new Image();ci.onload=function(){
-              // Freistellen (remove white background) like main image
-              var ciOfc=document.createElement('canvas');ciOfc.width=ci.width;ciOfc.height=ci.height;
-              var ciOx=ciOfc.getContext('2d');ciOx.drawImage(ci,0,0);
-              if(cfg.imgFreistellen){
-                try{var cid=ciOx.getImageData(0,0,ciOfc.width,ciOfc.height),cd=cid.data;
-                var ciThr=cfg.imgThreshold,ciFade=30;
-                for(var cpi=0;cpi<cd.length;cpi+=4){var cmn=Math.min(cd[cpi],cd[cpi+1],cd[cpi+2]);if(cmn>ciThr)cd[cpi+3]=0;else if(cmn>ciThr-ciFade)cd[cpi+3]=Math.round(255*(ciThr-cmn)/ciFade);}
-                ciOx.putImageData(cid,0,0);}catch(e){}
-              }
+              var ciOfc=_freistellCanvas(ci,cfg);
               var ciSc=(artOv.customImgScale||100)/100;
               var ciW=ciOfc.width*ciSc,ciH=ciOfc.height*ciSc;
               if(ciW>W*0.8){var f2=W*0.8/ciW;ciW*=f2;ciH*=f2;}
@@ -5906,13 +5868,8 @@
               if(grp){var sp=grp.querySelector('span');if(sp&&sp.style.fontWeight)sp.textContent='\u2b05\u27a1 '+labelText;}
               var flyIdx=fp.id.replace('fp-','');
               var ov=artOvs[parseInt(flyIdx,10)];
-              var ovType=z.getAttribute('data-ov')||'img';
-              var curRot=0;
-              if(ovType==='ghost'){curRot=ov.ghostRot||0;}
-              else if(ovType==='dup'){curRot=ov.dupRot||0;}
-              else if(ovType==='customImg'){curRot=ov.customImgRot||0;}
-              else if(ovType==='copy'){var elId=z.getAttribute('data-el')||'';if(elId.indexOf('copy-')===0){var ci=parseInt(elId.split('-')[1],10);if(ov.copies&&ov.copies[ci])curRot=ov.copies[ci].rot||0;}}
-              else{curRot=ov.imgRot||0;}
+              var _zElKey=_zoneToElKey(z);
+              var curRot=_getElRot(_zElKey,ov);
               var rotSld=fp.querySelector('[data-act="sel-rot"]');if(rotSld)rotSld.value=Math.max(-180,Math.min(180,curRot));
               var rotLbl=doc.getElementById('sr-'+flyIdx);if(rotLbl)rotLbl.textContent=curRot+'\u00b0';
             }
@@ -6193,12 +6150,8 @@
               var idx=parseInt(t.getAttribute('data-idx'),10);
               var v=parseInt(t.value,10);
               var ov=artOvs[idx];
-              var ovType=_selZone?(_selZone.getAttribute('data-ov')||'img'):'img';
-              if(ovType==='ghost'){ov.ghostRot=v;}
-              else if(ovType==='dup'){ov.dupRot=v;}
-              else if(ovType==='customImg'){ov.customImgRot=v;}
-              else if(ovType==='copy'){var elId=_selZone?_selZone.getAttribute('data-el'):'';if(elId&&elId.indexOf('copy-')===0){var ci=parseInt(elId.split('-')[1],10);if(ov.copies&&ov.copies[ci])ov.copies[ci].rot=v;}}
-              else{ov.imgRot=v;}
+              var elKey=_selZoneToElKey();
+              _setElRot(elKey,ov,v);
               var sp=doc.getElementById('sr-'+idx);if(sp)sp.textContent=v+'\u00b0';
               regenFlyer(idx);
             }
@@ -6300,12 +6253,8 @@
             else if(act==='sel-rot-reset'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
               var ov=artOvs[idx];
-              var ovType=_selZone?(_selZone.getAttribute('data-ov')||'img'):'img';
-              if(ovType==='ghost'){ov.ghostRot=0;}
-              else if(ovType==='dup'){ov.dupRot=0;}
-              else if(ovType==='customImg'){ov.customImgRot=0;}
-              else if(ovType==='copy'){var elId=_selZone?_selZone.getAttribute('data-el'):'';if(elId&&elId.indexOf('copy-')===0){var ci2=parseInt(elId.split('-')[1],10);if(ov.copies&&ov.copies[ci2])ov.copies[ci2].rot=0;}}
-              else{ov.imgRot=0;}
+              var elKey=_selZoneToElKey();
+              _setElRot(elKey,ov,0);
               var sld=doc.querySelector('[data-act="sel-rot"][data-idx="'+idx+'"]');if(sld)sld.value=0;
               var sp=doc.getElementById('sr-'+idx);if(sp)sp.textContent='0\u00b0';
               regenFlyer(idx);
@@ -7063,14 +7012,7 @@
         // Per-card overrides
         var pOv=plakatArtOverrideGet(it)||plakatArtOverrideDefault();
         if(img){
-          var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
-          var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
-          if(cfg.imgFreistellen){
-            try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-            var thr=cfg.imgThreshold,fade=30;
-            for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
-            ox.putImageData(id,0,0);}catch(e){}
-          }
+          var ofc=_freistellCanvas(img,cfg);
           var fImgSc2=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
           var maxIW=mgCellW-cardPadI*2, maxIH=imgAreaH-10;
           var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc2;
@@ -7269,12 +7211,7 @@
         var imgCX=cx+cardPad+maxImgW*0.45+(pOv.imgDx||0);
         var imgCY=imgAreaTop+imgAreaH*0.5+(pOv.imgDy||0);
         // Freistellen: weissen Hintergrund entfernen
-        var ofc=document.createElement('canvas');ofc.width=img.width;ofc.height=img.height;
-        var ox=ofc.getContext('2d');ox.drawImage(img,0,0);
-        if(cfg.imgFreistellen){try{var idat=ox.getImageData(0,0,ofc.width,ofc.height),dd=idat.data;
-        var thr=cfg.imgThreshold,fade=30;
-        for(var pp=0;pp<dd.length;pp+=4){var mn=Math.min(dd[pp],dd[pp+1],dd[pp+2]);if(mn>thr)dd[pp+3]=0;else if(mn>thr-fade)dd[pp+3]=Math.round(255*(thr-mn)/fade);}
-        ox.putImageData(idat,0,0);}catch(e){}}
+        var ofc=_freistellCanvas(img,cfg);
         // Clip auf Karte, drehen, zeichnen
         var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(pOv.imgRot||0)*Math.PI/180;
         // Ghost overlay
