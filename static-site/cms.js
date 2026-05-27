@@ -5816,8 +5816,13 @@
           var it=items[idx];
           // Temporarily inject current overrides so generateEinzelflyer picks them up
           var k=_flyerArtKey(it);
-          var all=flyerArtOverridesGetAll();all[k]=artOvs[idx];_flyerArtOverrides=all;
+          var all=flyerArtOverridesGetAll();
+          var prev=all[k];// remember previous (saved) state
+          all[k]=artOvs[idx];_flyerArtOverrides=all;
           generateEinzelflyer(it,data).then(function(cv){
+            // Restore previous state so unsaved changes don't leak into global store
+            if(prev!==undefined){all[k]=prev;}else{delete all[k];}
+            _flyerArtOverrides=all;
             canvases[idx]=cv;
             var src=cv.toDataURL('image/png');
             var img=doc.getElementById('fimg-'+idx);
@@ -6184,7 +6189,12 @@
             }
             ev.preventDefault();
             if(act==='print-all'){if(isMobile){printOne(0);}else{try{win.focus();win.print();}catch(e){}}}
-            else if(act==='close'){win.close();}
+            else if(act==='close'){
+              var hasUnsaved=false;
+              for(var ui=0;ui<artOvs.length;ui++){if(JSON.stringify(artOvs[ui])!==JSON.stringify(_initArtOvs[ui])){hasUnsaved=true;break;}}
+              if(hasUnsaved&&!confirm('Es gibt ungespeicherte \u00c4nderungen.\nTrotzdem schlie\u00dfen? (Nicht gespeicherte \u00c4nderungen gehen verloren)'))return;
+              win.close();
+            }
             else if(act==='print'){printOne(parseInt(t.getAttribute('data-idx'),10)||0);}
             else if(act==='art-save'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
