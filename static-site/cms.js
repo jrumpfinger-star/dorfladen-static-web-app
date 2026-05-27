@@ -3987,12 +3987,9 @@
       ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
     }
 
-    // Autosave: persist overrides after each visual change (debounced)
+    // No auto-save; changes are persisted only when user clicks "Schliessen" (save button)
     var _autoSaveTimer=null,_rebuildingOverlay=false;
-    function autoSave(){
-      clearTimeout(_autoSaveTimer);
-      _autoSaveTimer=setTimeout(function(){plakatArtOverrideSave(item,ov);},300);
-    }
+    function autoSave(){}
 
     function renderCard(){
       _elMeta=[];
