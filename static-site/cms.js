@@ -4731,14 +4731,18 @@
       var cm=document.getElementById('pce-ctx-menu');if(cm)cm.remove();
       if(revert){
         // Restore initial state
-        plakatArtOverrideSave(item,_initOv);
-        toast('Kachel-\u00c4nderungen verworfen','info');
+        plakatArtOverrideSave(item,_initOv).then(function(){
+          toast('Kachel-\u00c4nderungen verworfen','info');
+          mw.innerHTML=prevContent;mw.style.display=prevDisplay;
+          if(onDone) onDone(!revert);
+        });
       }else{
         // Ensure latest state is saved
-        plakatArtOverrideSave(item,ov);
+        plakatArtOverrideSave(item,ov).then(function(){
+          mw.innerHTML=prevContent;mw.style.display=prevDisplay;
+          if(onDone) onDone(!revert);
+        });
       }
-      mw.innerHTML=prevContent;mw.style.display=prevDisplay;
-      if(onDone) onDone(!revert);
     }
     document.getElementById('pce-save').onclick=function(){closeEditor(false);};
     document.getElementById('pce-close').onclick=function(){closeEditor(true);};
@@ -6274,11 +6278,12 @@
             else if(act==='art-revert'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
               artOvs[idx]=_clone(_initArtOvs[idx]);
-              flyerArtOverrideSave(items[idx],artOvs[idx]);
-              rebuildCtlBar(idx);
-              regenFlyer(idx);
-              t.textContent='\u2705 Verworfen';
-              setTimeout(function(){t.textContent='\u21a9 Verwerfen';},1500);
+              flyerArtOverrideSave(items[idx],artOvs[idx]).then(function(){
+                rebuildCtlBar(idx);
+                regenFlyer(idx);
+                t.textContent='\u2705 Verworfen';
+                setTimeout(function(){t.textContent='\u21a9 Verwerfen';},1500);
+              });
             }
             else if(act==='art-reset'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
@@ -6486,7 +6491,7 @@
             menu.className='ctx-menu';menu.id='fly-ctx-menu';
             menu.style.cssText='position:fixed;left:'+clientX+'px;top:'+clientY+'px;z-index:100000';
             var menuItems=[
-              {icon:'\u21a9',text:'Verwerfen (Laden-Stand)',action:function(){artOvs[idx]=_clone(_initArtOvs[idx]);flyerArtOverrideSave(items[idx],artOvs[idx]);rebuildCtlBar(idx);regenFlyer(idx);}},
+              {icon:'\u21a9',text:'Verwerfen (Laden-Stand)',action:function(){artOvs[idx]=_clone(_initArtOvs[idx]);flyerArtOverrideSave(items[idx],artOvs[idx]).then(function(){rebuildCtlBar(idx);regenFlyer(idx);});}},
               {icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){
                 if(ovKey==='copy'&&elId&&elId.indexOf('copy-')===0){var ci2=parseInt(elId.split('-')[1],10);var cp2=ov.copies&&ov.copies[ci2];if(cp2){cp2.dx=0;cp2.dy=0;}}
                 else{ov[ovKey+'Dx']=0;ov[ovKey+'Dy']=0;}
