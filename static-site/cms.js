@@ -4460,14 +4460,7 @@
       else if(_activeEl==='ghost'){_tdStartDx=ov.ghostDx||0;_tdStartDy=ov.ghostDy||0;}
       else if(_activeEl==='dup'){_tdStartDx=ov.dupDx||0;_tdStartDy=ov.dupDy||0;}
       else if(_activeEl.indexOf('copy-')===0){var _ci3=parseInt(_activeEl.split('-')[1],10);var _cp3=ov.copies&&ov.copies[_ci3];if(_cp3){_tdStartDx=_cp3.dx||0;_tdStartDy=_cp3.dy||0;}}
-      // Long-press → context menu
-      _pceTouchTimer=setTimeout(function(){
-        if(!_tsMoved){
-          _dragging=true; // lock into drag mode so touchend doesn't scroll
-          cvs.dispatchEvent(new MouseEvent('contextmenu',{clientX:_tsX,clientY:_tsY,bubbles:true}));
-        }
-        _pceTouchTimer=null;
-      },600);
+      // No long-press context menu on touch — use the ⋯ menu buttons instead
       // Do NOT call ev.preventDefault() here — allow scroll until deadzone decision
       function onTM(e2){
         if(_scrolling) return; // let browser handle scroll
@@ -6380,13 +6373,7 @@
             // Uses a deadzone so vertical swipes scroll instead of dragging elements.
             var FLYER_DRAG_THRESHOLD=10;
             var _tsMoved=false,_fDragging=false,_fScrolling=false;
-            _touchTimer=setTimeout(function(){
-              if(!_tsMoved){
-                _fDragging=true;
-                showCtxMenuForZone(z, _tsX, _tsY);
-              }
-              _touchTimer=null;
-            },600);
+            // No long-press context menu on touch — use the ⋯ menu buttons instead
             // Do NOT call ev.preventDefault() here — allow scroll until deadzone decision
             selectZone(z);
             var idx=parseInt(z.getAttribute('data-idx'),10);
