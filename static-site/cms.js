@@ -5893,7 +5893,7 @@
           +'.el-zone.selected .rz-handle{display:block}'
 +'@media(hover:hover){.el-zone:hover .rz-handle{display:block}}'
           +'.rz-handle.br{bottom:-10px;right:-10px}'
-          +'.ctx-menu{position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:4px 0;z-index:1000;min-width:180px;font-size:13px}'
+          +'.ctx-menu{position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:4px 0;z-index:1000;min-width:180px;font-size:13px;font-family:"Segoe UI",system-ui,-apple-system,sans-serif}'
           +'.ctx-menu div{padding:7px 16px;cursor:pointer;display:flex;align-items:center;gap:8px}'
           +'.ctx-menu div:hover{background:#f3f4f6}'
           +'.ctx-menu hr{margin:2px 0;border:none;border-top:1px solid #e5e7eb}'
@@ -5930,7 +5930,7 @@
             +'<button class="btn-dl" data-act="dl" data-idx="'+i+'" data-name="'+safeName+'" style="padding:6px 16px;border-radius:6px;border:none;background:#6d28d9;color:#fff;font-size:13px;cursor:pointer;font-weight:600">\u2b07\ufe0f'+(isMobile?'':' Download')+'</button>'
             +'<button data-act="art-revert" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:1px solid #e65100;background:#fff7ed;color:#e65100;font-size:13px;cursor:pointer;font-weight:600">\u21a9 Verwerfen</button>'
             +'<button data-act="art-reset" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:12px;cursor:pointer">\u21ba Reset</button>'
-            +'<label style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild<input type="file" accept="image/*" data-act="add-custom-img" data-idx="'+i+'" style="display:none"></label>'
+            +'<button data-act="add-custom-img" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild</button>'
             +'<span style="color:#888;font-size:12px;font-weight:600">'+safeName+'</span>'
             +'</div>'
             +'<div class="ctl-bar no-print">'
@@ -6189,6 +6189,12 @@
               rebuildCtlBar(idx);
               regenFlyer(idx);
             }
+            else if(act==='add-custom-img'){
+              var idx=parseInt(t.getAttribute('data-idx'),10);
+              var inp=doc.createElement('input');inp.type='file';inp.accept='image/*';
+              inp.addEventListener('change',function(){if(inp.files&&inp.files[0])addCustomImg(idx,inp.files[0]);});
+              inp.click();
+            }
             else if(act==='toggle-ghost'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
               var ov=artOvs[idx];
@@ -6252,15 +6258,7 @@
             };
             reader.readAsDataURL(file);
           }
-          // File input change handler
-          doc.addEventListener('change',function(ev){
-            var t=ev.target;
-            if(t.getAttribute('data-act')==='add-custom-img'){
-              var idx=parseInt(t.getAttribute('data-idx'),10);
-              if(t.files&&t.files[0])addCustomImg(idx,t.files[0]);
-              t.value=''; // reset so same file can be re-selected
-            }
-          });
+          // File input: no longer label+hidden-input; handled via data-act click below
           // Prevent native browser drag on flyer images (avoids accidental self-drop)
           doc.addEventListener('dragstart',function(ev){
             if(ev.target.closest&&ev.target.closest('.flyer-wrap'))ev.preventDefault();
