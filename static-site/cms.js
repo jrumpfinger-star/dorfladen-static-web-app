@@ -6254,8 +6254,11 @@
             // Only handle real external file drops (not internal browser image drags)
             if(files&&files.length>0&&files[0].size>0)addCustomImg(idx,files[0]);
           });
-          // Click on overlay zone = select
+          // Click on overlay zone = select (only within flyer-wrap area)
           doc.addEventListener('mousedown',function(ev){
+            // Ignore clicks outside flyer-wrap (controls, sliders, buttons) to preserve selection
+            var inWrap=ev.target.closest?ev.target.closest('.flyer-wrap'):null;
+            if(!inWrap)return;
             var z=ev.target.closest?ev.target.closest('.el-zone'):null;
             if(!z){selectZone(null);return;}
             if(ev.target.classList.contains('rz-handle')){
