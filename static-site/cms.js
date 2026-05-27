@@ -3993,8 +3993,9 @@
     html+='<button class="cms-btn" id="pce-download" style="font-size:12px;padding:3px 14px;background:#1565c0;color:#fff">\u2b07\ufe0f Download</button>';
     html+='</div>';
     html+='<div id="pce-copies-list" style="display:none;text-align:center;margin-top:4px;gap:4px;flex-wrap:wrap;justify-content:center"></div>';
-    html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">';
+    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb;margin-top:8px">';
     html+='<button class="cms-btn" id="pce-save" style="background:#16a34a;color:#fff;font-size:14px;padding:8px 24px">\ud83d\udcbe Speichern</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-close-discard" style="font-size:12px">\u274c Verwerfen</button>';
     html+='<button class="cms-btn cms-btn-gray" id="pce-reset" style="font-size:12px">\u21ba Zur\u00fccksetzen</button>';
     html+='</div>';
     html+='</div></div>';
@@ -4737,6 +4738,7 @@
     }
     document.getElementById('pce-save').onclick=function(){closeEditor(false);};
     document.getElementById('pce-close').onclick=function(){closeEditor(true);};
+    document.getElementById('pce-close-discard').onclick=function(){closeEditor(true);};
     document.getElementById('pce-reset').onclick=function(){
       ov=plakatArtOverrideDefault();
       _activeEl='img';syncScaleSlider();syncRotSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();autoSave();
