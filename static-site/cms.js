@@ -3939,7 +3939,7 @@
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element horizontal ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc')+'</p>';
     html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
-    html+='<div id="pce-wrap" style="position:relative;display:inline-block;max-width:100%;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab">';
+    html+='<div id="pce-wrap" style="position:relative;display:inline-block;max-width:100%;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none">';
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'" style="display:block;width:100%;height:auto"></canvas>';
     html+='<div id="pce-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5"></div>';
     html+='</div>';
@@ -4318,7 +4318,7 @@
             +' style="position:absolute;left:'+pctL+'%;top:'+pctT+'%;width:'+pctW+'%;height:'+pctH+'%;'
             +'border:2px solid '+borderColor+';'
             +'background:rgba('+(_hexToRgb(borderColor)||'230,81,0')+',0.06);'
-            +'border-radius:4px;pointer-events:auto;cursor:grab;box-sizing:border-box">'
+            +'border-radius:4px;pointer-events:auto;cursor:grab;box-sizing:border-box;z-index:10">'
             +'<span style="position:absolute;top:0;left:0;background:'+borderColor+';color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:0 0 4px 0;line-height:1.2;white-space:nowrap;pointer-events:none">'+el.label+'</span>'
             +'<div class="pce-el-menu" data-el="'+el.id+'" style="position:absolute;top:2px;right:2px;width:22px;height:22px;background:'+borderColor+';color:#fff;border:1.5px solid #fff;border-radius:50%;font-size:13px;line-height:19px;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 1px 3px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent">\u22EF</div>'
             +'<div class="pce-rz-handle" data-el="'+el.id+'" style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:'+borderColor+';color:#fff;border-radius:4px 0 4px 0;font-size:14px;line-height:22px;text-align:center;cursor:nwse-resize;pointer-events:auto;box-shadow:0 1px 3px rgba(0,0,0,0.3)">\u21F2</div>'
@@ -4387,9 +4387,18 @@
       for(var zi=0;zi<zones.length;zi++){(function(z){
         z.addEventListener('mousedown',function(e){
           if(e.target.classList.contains('pce-el-menu')||e.target.classList.contains('pce-rz-handle'))return;
+          e.stopPropagation();e.preventDefault();
           var elId=z.getAttribute('data-el');
           _activeEl=elId;
           updateActiveLabel();if(typeof updateGhostBtn==='function')updateGhostBtn();if(typeof updateDupBtn==='function')updateDupBtn();if(typeof syncScaleSlider==='function')syncScaleSlider();if(typeof syncRotSlider==='function')syncRotSlider();renderCard();
+          // Start drag on canvas from zone click
+          dragging=true;dragStartX=e.clientX;dragStartY=e.clientY;
+          if(_activeEl==='img'){startDx=ov.imgDx||0;startDy=ov.imgDy||0;}
+          else if(_activeEl==='price'){startDx=ov.priceDx||0;startDy=ov.priceDy||0;}
+          else if(_activeEl==='ghost'){startDx=ov.ghostDx||0;startDy=ov.ghostDy||0;}
+          else if(_activeEl==='dup'){startDx=ov.dupDx||0;startDy=ov.dupDy||0;}
+          else if(_activeEl.indexOf('copy-')===0){var _ci=parseInt(_activeEl.split('-')[1],10);var _cp=ov.copies&&ov.copies[_ci];if(_cp){startDx=_cp.dx||0;startDy=_cp.dy||0;}}
+          cvs.style.cursor='grabbing';
         });
         z.addEventListener('touchstart',function(e){
           if(e.target.classList.contains('pce-el-menu')||e.target.classList.contains('pce-rz-handle'))return;
@@ -4431,6 +4440,8 @@
       imgObj.src=imgSrc;
     }else{renderCard();updateActiveLabel();}
 
+    // ── Prevent double-click zoom / text-selection on canvas ──
+    cvs.addEventListener('dblclick',function(ev){ev.preventDefault();ev.stopPropagation();});
     // ── Drag to move active element ──
     var dragging=false,dragStartX,dragStartY,startDx,startDy;
     cvs.addEventListener('mousedown',function(ev){
