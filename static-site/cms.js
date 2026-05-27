@@ -4269,6 +4269,38 @@
         }
       }
 
+      // ── Custom overlay image ──
+      if(ov.customImg){
+        var ciImg=new Image();
+        ciImg.onload=function(){
+          var ciOfc=document.createElement('canvas');ciOfc.width=ciImg.width;ciOfc.height=ciImg.height;
+          var ciOx=ciOfc.getContext('2d');ciOx.drawImage(ciImg,0,0);
+          if(cfg.imgFreistellen){
+            try{var cid=ciOx.getImageData(0,0,ciOfc.width,ciOfc.height),cd=cid.data;
+            var ciThr=cfg.imgThreshold,ciFade=30;
+            for(var cpi=0;cpi<cd.length;cpi+=4){var cmn=Math.min(cd[cpi],cd[cpi+1],cd[cpi+2]);if(cmn>ciThr)cd[cpi+3]=0;else if(cmn>ciThr-ciFade)cd[cpi+3]=Math.round(255*(ciThr-cmn)/ciFade);}
+            ciOx.putImageData(cid,0,0);}catch(e){}
+          }
+          var ciSc=(ov.customImgScale||100)/100;
+          var ciW=ciOfc.width*ciSc,ciH=ciOfc.height*ciSc;
+          if(ciW>CARD_W*0.8){var f2=CARD_W*0.8/ciW;ciW*=f2;ciH*=f2;}
+          if(ciH>CARD_H*0.7){var f3=CARD_H*0.7/ciH;ciW*=f3;ciH*=f3;}
+          var ciX=CARD_W/2-ciW/2+(ov.customImgDx||0);
+          var ciY=CARD_H/2-ciH/2+(ov.customImgDy||0);
+          var ciRotRad=(ov.customImgRot||0)*Math.PI/180;
+          ctx.save();ctx.globalAlpha=(ov.customImgAlpha!=null?ov.customImgAlpha:100)/100;
+          ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);
+          ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);ctx.restore();
+          _elMeta.push({id:'customImg',label:'\ud83d\uddbc Eigenes Bild',x:ciX,y:ciY,w:ciW,h:ciH,ovKey:'customImg'});
+          renderHighlights();
+        };
+        ciImg.src=ov.customImg;
+        return; // async path — renderHighlights called after image loads
+      }
+      renderHighlights();
+    }
+
+    function renderHighlights(){
       // Active element highlight
       var ae=_elMeta.find(function(e){return e.id===_activeEl;});
       if(ae){
@@ -5701,8 +5733,17 @@
         if(artOv.customImg){
           ciPromise=new Promise(function(resCI){
             var ci=new Image();ci.onload=function(){
+              // Freistellen (remove white background) like main image
+              var ciOfc=document.createElement('canvas');ciOfc.width=ci.width;ciOfc.height=ci.height;
+              var ciOx=ciOfc.getContext('2d');ciOx.drawImage(ci,0,0);
+              if(cfg.imgFreistellen){
+                try{var cid=ciOx.getImageData(0,0,ciOfc.width,ciOfc.height),cd=cid.data;
+                var ciThr=cfg.imgThreshold,ciFade=30;
+                for(var cpi=0;cpi<cd.length;cpi+=4){var cmn=Math.min(cd[cpi],cd[cpi+1],cd[cpi+2]);if(cmn>ciThr)cd[cpi+3]=0;else if(cmn>ciThr-ciFade)cd[cpi+3]=Math.round(255*(ciThr-cmn)/ciFade);}
+                ciOx.putImageData(cid,0,0);}catch(e){}
+              }
               var ciSc=(artOv.customImgScale||100)/100;
-              var ciW=ci.width*ciSc,ciH=ci.height*ciSc;
+              var ciW=ciOfc.width*ciSc,ciH=ciOfc.height*ciSc;
               if(ciW>W*0.8){var f2=W*0.8/ciW;ciW*=f2;ciH*=f2;}
               if(ciH>H*0.6){var f3=H*0.6/ciH;ciW*=f3;ciH*=f3;}
               var ciX=W/2-ciW/2+(artOv.customImgDx||0);
@@ -5710,7 +5751,7 @@
               var ciRotRad=(artOv.customImgRot||0)*Math.PI/180;
               ctx.save();ctx.globalAlpha=(artOv.customImgAlpha!=null?artOv.customImgAlpha:100)/100;
               ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);
-              ctx.drawImage(ci,-ciW/2,-ciH/2,ciW,ciH);ctx.restore();
+              ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);ctx.restore();
               _elMeta.push({id:'customImg',label:'\ud83d\uddbc Eigenes Bild',x:ciX,y:ciY,w:ciW,h:ciH,ovKey:'customImg'});
               resCI();
             };ci.onerror=function(){resCI();};ci.src=artOv.customImg;
