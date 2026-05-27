@@ -5468,12 +5468,73 @@
               else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
               ctx.restore();
               _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgX,y:imgY,w:iw,h:ih,ovKey:'img'});
+              
+              // Ghost overlay (behind main image)
+              if(artOv.ghostMode==='on'){
+                var gSc=(artOv.ghostScale||100)/100;var giw=iw*gSc,gih=ih*gSc;
+                var gx=imgX+(artOv.ghostDx||0),gy=imgY+(artOv.ghostDy||0);
+                var gRot=mgImgRotRad+((artOv.ghostRot||0)*Math.PI/180);
+                ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
+                ctx.globalAlpha=artOv.ghostAlpha||0.35;
+                if(gRot){ctx.translate(gx+giw/2,gy+gih/2);ctx.rotate(gRot);ctx.drawImage(ofc,-giw/2,-gih/2,giw,gih);}
+                else{ctx.drawImage(ofc,gx,gy,giw,gih);}
+                ctx.globalAlpha=1.0;ctx.restore();
+                _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:gx,y:gy,w:giw,h:gih,ovKey:'ghost'});
+              }
+              // Duplicate overlay (behind main image)
+              if(artOv.dupOn){
+                var dSc=(artOv.dupScale||100)/100;var diw=iw*dSc,dih=ih*dSc;
+                var dx2=imgX+(artOv.dupDx||0),dy2=imgY+(artOv.dupDy||0);
+                var dRot=mgImgRotRad+((artOv.dupRot||0)*Math.PI/180);
+                ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
+                if(dRot){ctx.translate(dx2+diw/2,dy2+dih/2);ctx.rotate(dRot);ctx.drawImage(ofc,-diw/2,-dih/2,diw,dih);}
+                else{ctx.drawImage(ofc,dx2,dy2,diw,dih);}
+                ctx.restore();
+                _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2,y:dy2,w:diw,h:dih,ovKey:'dup'});
+              }
+              // Extra copies (multi-ghost/dup)
+              drawExtraCopies(ctx,artOv.copies,ofc,imgX,imgY,iw,ih,mgImgRotRad,function(){mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();});
+              if(artOv.copies&&artOv.copies.length){artOv.copies.forEach(function(cp,ci){
+                var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
+                _elMeta.push({id:'copy-'+ci,label:(cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd')+' Kopie '+(ci+1),x:imgX+(cp.dx||0),y:imgY+(cp.dy||0),w:cw,h:ch,ovKey:'copy',copyIdx:ci});
+              });}
+              
               resImg();
             };img.onerror=function(){resImg();};img.src=item.bild_data;
           });
         }
 
-        mgImgPromise.then(function(){
+        // Custom image overlay
+        var ciPromise=Promise.resolve();
+        if(artOv.customImg){
+          ciPromise=new Promise(function(resCI){
+            var ci=new Image();ci.onload=function(){
+              var ciOfc=document.createElement('canvas');ciOfc.width=ci.width;ciOfc.height=ci.height;
+              var cio=ciOfc.getContext('2d');cio.drawImage(ci,0,0);
+              if(cfg.imgFreistellen){
+                try{var id=cio.getImageData(0,0,ciOfc.width,ciOfc.height),d=id.data;
+                var thr=cfg.imgThreshold,fade=30;
+                for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
+                cio.putImageData(id,0,0);}catch(e){}
+              }
+              var ciSc=(artOv.customImgScale||100)/100;
+              var maxCIW=cardMW-40, maxCIH=imgZoneH-20;
+              var ciScI=Math.min(maxCIW/ciOfc.width,maxCIH/ciOfc.height,cfg.imgMaxScale||3)*ciSc;
+              var ciW=ciOfc.width*ciScI,ciH=ciOfc.height*ciScI;
+              var ciX=cardMX+cardMW/2-ciW/2+(artOv.customImgDx||0),ciY=cardMY+10+(imgZoneH-ciH)/2+(artOv.customImgDy||0);
+              var ciRotRad=(artOv.customImgRot||0)*Math.PI/180;
+              ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
+              ctx.globalAlpha=(artOv.customImgAlpha!=null?artOv.customImgAlpha:100)/100;
+              if(ciRotRad){ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);}
+              else{ctx.drawImage(ciOfc,ciX,ciY,ciW,ciH);}
+              ctx.globalAlpha=1.0;ctx.restore();
+              _elMeta.push({id:'customImg',label:'\ud83d\uddbc Eigenes Bild',x:ciX,y:ciY,w:ciW,h:ciH,ovKey:'customImg'});
+              resCI();
+            };ci.onerror=function(){resCI();};ci.src=artOv.customImg;
+          });
+        }
+
+        Promise.all([mgImgPromise,ciPromise]).then(function(){
           // Savings badge top-right
           var savePct=getSavingsPercent(item);
           if(savePct){
@@ -5535,7 +5596,7 @@
           // Footer
           ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
           ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
-          ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-12);
+          ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
           ctx.textAlign='left';
 
           return mgLogoP.then(function(){return logoLoaded;});
@@ -7062,6 +7123,31 @@
           if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
           else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
           ctx.restore();
+          
+          // Custom image overlay
+          if(pOv.customImg){
+            var ci=new Image();ci.onload=function(){
+              var ciOfc=document.createElement('canvas');ciOfc.width=ci.width;ciOfc.height=ci.height;
+              var cio=ciOfc.getContext('2d');cio.drawImage(ci,0,0);
+              if(cfg.imgFreistellen){
+                try{var id=cio.getImageData(0,0,ciOfc.width,ciOfc.height),d=id.data;
+                var thr=cfg.imgThreshold,fade=30;
+                for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
+                cio.putImageData(id,0,0);}catch(e){}
+              }
+              var ciSc=(pOv.customImgScale||100)/100;
+              var maxCIW=mgCellW-cardPadI*2, maxCIH=imgAreaH-10;
+              var ciScI=Math.min(maxCIW/ciOfc.width,maxCIH/ciOfc.height,cfg.imgMaxScale||3)*ciSc;
+              var ciW=ciOfc.width*ciScI,ciH=ciOfc.height*ciScI;
+              var ciX=cx+mgCellW/2-ciW/2+(pOv.customImgDx||0),ciY=cy+cardPadI+(imgAreaH-ciH)/2+(pOv.customImgDy||0);
+              var ciRotRad=(pOv.customImgRot||0)*Math.PI/180;
+              ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
+              ctx.globalAlpha=(pOv.customImgAlpha!=null?pOv.customImgAlpha:100)/100;
+              if(ciRotRad){ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);}
+              else{ctx.drawImage(ciOfc,ciX,ciY,ciW,ciH);}
+              ctx.globalAlpha=1.0;ctx.restore();
+            };ci.src=pOv.customImg;
+          }
         }
 
         // Savings badge top-right
@@ -7126,7 +7212,7 @@
       // Footer
       ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
       ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
-      ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-12);
+      ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
       ctx.textAlign='left';
 
       logoP.then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
@@ -7325,8 +7411,8 @@
     // ── Footer ──
     ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.globalAlpha=0.85;ctx.fillRect(0,H-32,W,32);ctx.globalAlpha=1.0;
     ctx.fillStyle='#ffffff';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='left';
-    ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',20,H-12);ctx.textAlign='right';
-    ctx.fillText('Dorfladen Oberornau \u00B7 Dorfplatz 1 \u00B7 84419 Obertaufkirchen',W-20,H-12);
+    ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',20,H-24);ctx.textAlign='right';
+    ctx.fillText('Dorfladen Oberornau \u00B7 Dorfplatz 1 \u00B7 84419 Obertaufkirchen',W-20,H-24);
     ctx.textAlign='left';
     logoLoaded.then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
   }
