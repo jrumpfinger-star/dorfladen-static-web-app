@@ -5818,19 +5818,16 @@
             +'<span style="color:#888;font-size:12px;font-weight:600">'+safeName+'</span>'
             +'</div>'
             +'<div class="ctl-bar no-print">'
-            +'<div class="abtn-grp">'+arrowCross('img',i,'\ud83d\uddbc Bild')+'</div>'
-            +'<div class="abtn-grp">'+arrowCross('price',i,'\ud83c\udff7 Preis')+'</div>'
+            +'<div class="abtn-grp">'+arrowCross('sel',i,'\u2b05\u27a1 Selektiertes Element')+'</div>'
             +'<div class="abtn-grp">'
             +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udc7b Ghost</span>'
             +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+i+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
-            +(ov.ghostMode==='on'?arrowCross('ghost',i,'Position'):'')
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+i+'"><span id="ga-'+i+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+i+'"><span id="gs-'+i+'">'+(ov.ghostScale||100)+'%</span></label>'
             +'</div>'
             +'<div class="abtn-grp">'
             +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udcdd Duplikat</span>'
             +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+i+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
-            +(ov.dupOn?arrowCross('dup',i,'Position'):'')
             +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+i+'"><span id="ds-'+i+'">'+(ov.dupScale||100)+'%</span></label>':'')
             +'</div>'
             +'<div class="abtn-grp">'
@@ -5948,19 +5945,16 @@
             var fp=doc.getElementById('fp-'+idx);if(!fp)return;
             var ov=artOvs[idx];
             var bar=fp.querySelector('.ctl-bar');if(!bar)return;
-            var nh='<div class="abtn-grp">'+arrowCross('img',idx,'\ud83d\uddbc Bild')+'</div>'
-              +'<div class="abtn-grp">'+arrowCross('price',idx,'\ud83c\udff7 Preis')+'</div>'
+            var nh='<div class="abtn-grp">'+arrowCross('sel',idx,'\u2b05\u27a1 Selektiertes Element')+'</div>'
               +'<div class="abtn-grp">'
               +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udc7b Ghost</span>'
               +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+idx+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
-              +(ov.ghostMode==='on'?arrowCross('ghost',idx,'Position'):'')
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+idx+'"><span id="ga-'+idx+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+idx+'"><span id="gs-'+idx+'">'+(ov.ghostScale||100)+'%</span></label>'
               +'</div>'
               +'<div class="abtn-grp">'
               +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udcdd Duplikat</span>'
               +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+idx+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
-              +(ov.dupOn?arrowCross('dup',idx,'Position'):'')
               +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+idx+'"><span id="ds-'+idx+'">'+(ov.dupScale||100)+'%</span></label>':'')
               +'</div>'
               +'<div class="abtn-grp">'
@@ -6016,6 +6010,10 @@
                 var idx=parseInt(t.getAttribute('data-idx'),10);
                 var dir=t.getAttribute('data-dir');
                 var ov=artOvs[idx];
+                // Unified D-Pad: resolve 'sel' to the currently selected zone's ovKey
+                if(ovType==='sel'){
+                  ovType=_selZone?(_selZone.getAttribute('data-ov')||'img'):'img';
+                }
                 var dxKey=ovType+'Dx', dyKey=ovType+'Dy';
                 if(dir==='left')ov[dxKey]=(ov[dxKey]||0)-STEP;
                 else if(dir==='right')ov[dxKey]=(ov[dxKey]||0)+STEP;
@@ -6086,7 +6084,19 @@
           function selectZone(z){
             if(_selZone)_selZone.classList.remove('selected');
             _selZone=z;
-            if(z)z.classList.add('selected');
+            if(z){
+              z.classList.add('selected');
+              // Update the unified D-Pad label in the same flyer page
+              var fp=z.closest('.flyer-page');
+              if(fp){
+                var lbl=z.querySelector('.el-label');
+                var dpadLabels=fp.querySelectorAll('[data-ov="sel"]');
+                var labelText=lbl?lbl.textContent:'Element';
+                // Find the label span above the arrows
+                var grp=fp.querySelector('.abtn-grp');
+                if(grp){var sp=grp.querySelector('span');if(sp&&sp.style.fontWeight)sp.textContent='\u2b05\u27a1 '+labelText;}
+              }
+            }
           }
           // ── Custom image: load file into overlay ──
           function addCustomImg(idx,file){
