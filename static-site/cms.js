@@ -5780,9 +5780,19 @@
             if(img)img.src=src;
             var pimg=doc.getElementById('fimg-print-'+idx);
             if(pimg)pimg.src=src;
-            // Rebuild overlay zones
+            // Rebuild overlay zones (preserve selection)
             var ovDiv=doc.getElementById('ov-'+idx);
-            if(ovDiv){ ovDiv.innerHTML=_buildZoneHtml(cv._elMeta||[],idx); bindTouchMenuBtns(); }
+            if(ovDiv){
+              var selElId=_selZone?_selZone.getAttribute('data-el'):null;
+              var selIdx=_selZone?_selZone.getAttribute('data-idx'):null;
+              ovDiv.innerHTML=_buildZoneHtml(cv._elMeta||[],idx);
+              bindTouchMenuBtns();
+              // Re-select the previously selected zone after DOM rebuild
+              if(selElId!=null&&selIdx!=null&&parseInt(selIdx,10)===idx){
+                var newZ=ovDiv.querySelector('.el-zone[data-el="'+selElId+'"]');
+                if(newZ)selectZone(newZ);
+              }
+            }
             // Unsaved-changes watermark overlay
             var fw=doc.getElementById('fw-'+idx);
             if(fw){
@@ -5799,6 +5809,32 @@
         }
         // bindTouchMenuBtns is defined inside attach() where showCtxMenuForZone is available
         var bindTouchMenuBtns=function(){};
+        // _selZone and selectZone hoisted here so regenFlyer() can access them
+        var _selZone=null;
+        function selectZone(z){
+          if(_selZone)_selZone.classList.remove('selected');
+          _selZone=z;
+          if(z){
+            z.classList.add('selected');
+            var fp=z.closest('.flyer-page');
+            if(fp){
+              var lbl=z.querySelector('.el-label');
+              var labelText=lbl?lbl.textContent:'Element';
+              var grp=fp.querySelector('.abtn-grp');
+              if(grp){var sp=grp.querySelector('span');if(sp&&sp.style.fontWeight)sp.textContent='\u2b05\u27a1 '+labelText;}
+              var flyIdx=fp.id.replace('fp-','');
+              var ov=artOvs[parseInt(flyIdx,10)];
+              var ovType=z.getAttribute('data-ov')||'img';
+              var curRot=0;
+              if(ovType==='ghost'){curRot=ov.ghostRot||0;}
+              else if(ovType==='dup'){curRot=ov.dupRot||0;}
+              else if(ovType==='copy'){var elId=z.getAttribute('data-el')||'';if(elId.indexOf('copy-')===0){var ci=parseInt(elId.split('-')[1],10);if(ov.copies&&ov.copies[ci])curRot=ov.copies[ci].rot||0;}}
+              else{curRot=ov.imgRot||0;}
+              var rotSld=fp.querySelector('[data-act="sel-rot"]');if(rotSld)rotSld.value=Math.max(-180,Math.min(180,curRot));
+              var rotLbl=doc.getElementById('sr-'+flyIdx);if(rotLbl)rotLbl.textContent=curRot+'\u00b0';
+            }
+          }
+        }
         // Arrow cross HTML builder
         function arrowCross(prefix,idx,label){
           return '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:1px">'
@@ -5870,7 +5906,7 @@
           var ov=artOvs[i];
           var overlayHtml=_buildZoneHtml(cv._elMeta||[],i);
           _bodyHtml+='<div class="flyer-page" id="fp-'+i+'">'
-            +'<div class="flyer-wrap no-print" id="fw-'+i+'"><img id="fimg-'+i+'" src="'+dataUrl+'" alt="'+safeName+'">'
+            +'<div class="flyer-wrap no-print" id="fw-'+i+'"><img id="fimg-'+i+'" src="'+dataUrl+'" alt="'+safeName+'" draggable="false">'
             +'<div class="el-overlay" id="ov-'+i+'">'+overlayHtml+'</div></div>'
             +'<img id="fimg-print-'+i+'" src="'+dataUrl+'" class="print-only" style="display:none;width:100%">'
             +'<div class="no-print" style="text-align:center;padding:8px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap">'
@@ -6177,35 +6213,7 @@
           });
 
           // ── Interactive Flyer Editor: Drag, Resize, Context Menu ──
-          var _selZone=null;
-          function selectZone(z){
-            if(_selZone)_selZone.classList.remove('selected');
-            _selZone=z;
-            if(z){
-              z.classList.add('selected');
-              // Update the unified D-Pad label in the same flyer page
-              var fp=z.closest('.flyer-page');
-              if(fp){
-                var lbl=z.querySelector('.el-label');
-                var dpadLabels=fp.querySelectorAll('[data-ov="sel"]');
-                var labelText=lbl?lbl.textContent:'Element';
-                // Find the label span above the arrows
-                var grp=fp.querySelector('.abtn-grp');
-                if(grp){var sp=grp.querySelector('span');if(sp&&sp.style.fontWeight)sp.textContent='\u2b05\u27a1 '+labelText;}
-                // Sync rotation slider to newly selected element
-                var flyIdx=fp.id.replace('fp-','');
-                var ov=artOvs[parseInt(flyIdx,10)];
-                var ovType=z.getAttribute('data-ov')||'img';
-                var curRot=0;
-                if(ovType==='ghost'){curRot=ov.ghostRot||0;}
-                else if(ovType==='dup'){curRot=ov.dupRot||0;}
-                else if(ovType==='copy'){var elId=z.getAttribute('data-el')||'';if(elId.indexOf('copy-')===0){var ci=parseInt(elId.split('-')[1],10);if(ov.copies&&ov.copies[ci])curRot=ov.copies[ci].rot||0;}}
-                else{curRot=ov.imgRot||0;}
-                var rotSld=fp.querySelector('[data-act="sel-rot"]');if(rotSld)rotSld.value=Math.max(-180,Math.min(180,curRot));
-                var rotLbl=doc.getElementById('sr-'+flyIdx);if(rotLbl)rotLbl.textContent=curRot+'\u00b0';
-              }
-            }
-          }
+          // (_selZone and selectZone are hoisted outside attach() so regenFlyer() can access them)
           // ── Custom image: load file into overlay ──
           function addCustomImg(idx,file){
             if(!file||!file.type.startsWith('image/'))return;
@@ -6229,6 +6237,10 @@
               t.value=''; // reset so same file can be re-selected
             }
           });
+          // Prevent native browser drag on flyer images (avoids accidental self-drop)
+          doc.addEventListener('dragstart',function(ev){
+            if(ev.target.closest&&ev.target.closest('.flyer-wrap'))ev.preventDefault();
+          });
           // Drag & drop on flyer wraps
           doc.addEventListener('dragover',function(ev){
             if(ev.target.closest&&ev.target.closest('.flyer-wrap'))ev.preventDefault();
@@ -6239,7 +6251,8 @@
             ev.preventDefault();
             var idx=parseInt(wrap.id.replace('fw-',''),10);
             var files=ev.dataTransfer&&ev.dataTransfer.files;
-            if(files&&files[0])addCustomImg(idx,files[0]);
+            // Only handle real external file drops (not internal browser image drags)
+            if(files&&files.length>0&&files[0].size>0)addCustomImg(idx,files[0]);
           });
           // Click on overlay zone = select
           doc.addEventListener('mousedown',function(ev){
