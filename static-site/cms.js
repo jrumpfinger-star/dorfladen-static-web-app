@@ -352,11 +352,12 @@
     }
     var html='<div class="cms-modal-bg" style="align-items:flex-start;overflow-y:auto;padding:12px 6px">'
       +'<div class="cms-modal" style="max-width:980px;max-height:92vh;height:auto;display:flex;flex-direction:column;position:relative;margin:10px auto;overflow:hidden;padding:0;border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,0.18)">'
-      +'<div class="cms-modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#f9fafb;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:100;flex-shrink:0;width:100%;box-sizing:border-box">'
-        +'<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--c-m-pri);text-transform:uppercase;letter-spacing:0.5px;">'+(isEdit?'✏️ Aktion bearbeiten':'🆕 Neue Aktion erstellen')+'</h3>'
-        +'<div style="display:flex;gap:8px;">'
-          +'<button class="cms-btn cms-btn-primary" data-action="saveAktion" style="padding:8px 18px;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(22,163,74,0.25)">💾 Speichern</button>'
-          +'<button class="cms-btn cms-btn-gray" data-action="closeModal" style="padding:8px 14px;font-size:13px;font-weight:600">Abbrechen</button>'
+      +'<div class="cms-modal-header" style="position:sticky;top:0;z-index:100;width:100%">'
+        +'<h3>'+(isEdit?'\u270f\ufe0f Aktion bearbeiten':'\ud83c\udd95 Neue Aktion erstellen')+'</h3>'
+        +'<div style="display:flex;gap:8px;align-items:center">'
+          +'<button class="cms-btn cms-btn-primary" data-action="saveAktion">\ud83d\udcbe Speichern</button>'
+          +'<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>'
+          +'<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen" style="position:static;font-size:18px;padding:2px 6px">\u2715</button>'
         +'</div>'
       +'</div>'
       +'<div class="cms-modal-body" style="padding:20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:12px;box-sizing:border-box;width:100%">'
@@ -639,12 +640,14 @@
   window.cmsDeleteAktion=function(aktId){
     var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
     if(!ak)return;
-    var html='<div class="cms-modal-bg"><div class="cms-modal" style="text-align:center">';
-    html+='<h3>Angebot löschen?</h3>';
-    html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(ak.titel)+'" mit '+ak.items.length+' Artikeln wirklich löschen?</p>';
-    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht rückgängig gemacht werden.</p>';
-    html+='<div style="display:flex;gap:8px">';
-    html+='<button class="cms-btn cms-btn-danger" style="flex:1;background:#dc2626;color:#fff" data-action="confirmDeleteAkt" data-id="'+esc(aktId)+'">Löschen</button>';
+    var html='<div class="cms-modal-bg">';
+    html+='<div class="cms-modal" style="max-width:420px;text-align:center;position:relative">';
+    html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
+    html+='<h3>\u26a0\ufe0f Angebot l\u00f6schen?</h3>';
+    html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(ak.titel)+'" mit '+ak.items.length+' Artikeln wirklich l\u00f6schen?</p>';
+    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</p>';
+    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
+    html+='<button class="cms-btn cms-btn-del" style="flex:1" data-action="confirmDeleteAkt" data-id="'+esc(aktId)+'">\ud83d\uddd1\ufe0f L\u00f6schen</button>';
     html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
     html+='</div></div></div>';
     document.getElementById('cms-modal-wrap').innerHTML=html;
@@ -1782,10 +1785,12 @@
       var url=t.src;
       var fn=t.alt||'Vorschau.png';
       // Show in modal
-      var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:90vw;max-height:90vh;text-align:center;overflow:auto">';
+      var html='<div class="cms-modal-bg">';
+      html+='<div class="cms-modal" style="max-width:90vw;max-height:90vh;text-align:center;overflow:auto;position:relative">';
+      html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
       html+='<h3 style="margin:0 0 12px;font-size:15px">Vorschau (Gro\u00df)</h3>';
       html+='<img src="'+url+'" style="max-width:100%;max-height:75vh;border-radius:8px;border:1px solid #e5e7eb">';
-      html+='<div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap">';
+      html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb;margin-top:12px">';
       html+='<button class="cms-btn cms-btn-gray" id="cfg-lp-dl">\u2b07\ufe0f Download</button>';
       html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Schlie\u00dfen</button>';
       html+='</div></div></div>';
@@ -2626,8 +2631,9 @@
     if(noticeVal&&NOTICE_PRESETS.indexOf(noticeVal)===-1) isCustom=true;
     noticeOpts+='<option value="__custom__"'+(isCustom?' selected':'')+'>Eigener Text...</option>';
 
-    var html='<div class="cms-modal-bg" >';
-    html+='<div class="cms-modal">';
+    var html='<div class="cms-modal-bg">';
+    html+='<div class="cms-modal" style="max-width:600px;position:relative">';
+    html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3>'+title+'</h3>';
     html+='<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">Wochentag</label>';
     html+='<select id="cms-meal-day" class="cms-input">'+dayOpts+'</select></div>';
@@ -2640,8 +2646,8 @@
     html+='</div>';
     html+='<div id="cms-meal-rows"></div>';
     html+='<input type="hidden" id="cms-meal-id" value="'+(meal?meal.id:'')+'">';
-    html+='<div style="display:flex;gap:8px;margin-top:12px">';
-    html+='<button class="cms-btn cms-btn-primary" data-action="saveMeal">Speichern</button>';
+    html+='<div class="cms-modal-footer" style="padding:14px 0 0;border-top:1px solid #e5e7eb;margin-top:12px">';
+    html+='<button class="cms-btn cms-btn-primary" data-action="saveMeal">\ud83d\udcbe Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>';
     html+='</div></div></div>';
     document.getElementById('cms-modal-wrap').innerHTML=html;
@@ -2658,6 +2664,12 @@
     document.getElementById('cms-modal-wrap').style.display='none';
     document.getElementById('cms-modal-wrap').innerHTML='';
   };
+  // Backdrop click closes modal (unless Kachel-Editor is open — it has save/discard semantics)
+  document.getElementById('cms-modal-wrap').addEventListener('click',function(e){
+    if(e.target.classList.contains('cms-modal-bg')&&!document.getElementById('pce-close')){
+      cmsCloseModal();
+    }
+  });
   // Auto-push history state when a modal opens, so mobile back button can close it
   (function(){
     var mw=document.getElementById('cms-modal-wrap');
@@ -2738,13 +2750,14 @@
   window.cmsDeleteMeal = function(id){
     var m=meals.find(function(x){return x.id===id;});
     if(!m)return;
-    var html='<div class="cms-modal-bg" >';
-    html+='<div class="cms-modal" style="text-align:center">';
-    html+='<h3>Wochenplan-Eintrag löschen?</h3>';
-    html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(m.gericht||'Eintrag')+'" am '+m.wochentag_name+' wirklich löschen?</p>';
-    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht rückgängig gemacht werden.</p>';
-    html+='<div style="display:flex;gap:8px">';
-    html+='<button class="cms-btn cms-btn-danger" style="flex:1;background:#dc2626;color:#fff" data-action="confirmDeleteMeal" data-id="'+id+'">Löschen</button>';
+    var html='<div class="cms-modal-bg">';
+    html+='<div class="cms-modal" style="max-width:420px;text-align:center;position:relative">';
+    html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
+    html+='<h3>\u26a0\ufe0f Wochenplan-Eintrag l\u00f6schen?</h3>';
+    html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(m.gericht||'Eintrag')+'" am '+m.wochentag_name+' wirklich l\u00f6schen?</p>';
+    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</p>';
+    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
+    html+='<button class="cms-btn cms-btn-del" style="flex:1" data-action="confirmDeleteMeal" data-id="'+id+'">\ud83d\uddd1\ufe0f L\u00f6schen</button>';
     html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
     html+='</div></div></div>';
     document.getElementById('cms-modal-wrap').innerHTML=html;
@@ -3209,7 +3222,8 @@
     var overlay = document.createElement('div');
     overlay.id='cms-news-modal';
     overlay.className='cms-modal-bg';
-    overlay.innerHTML='<div class="cms-modal" style="max-width:720px">'
+    overlay.innerHTML='<div class="cms-modal" style="max-width:720px;position:relative">'
+      +'<button class="cms-modal-close" data-action="closeNewsModal" title="Schlie\u00dfen">\u2715</button>'
       +'<h3 style="margin:0 0 14px;font-size:15px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:10px">'+title+'</h3>'
       +'<label class="cms-news-lbl">Titel</label>'
       +'<input class="cms-input" id="news-edit-titel" value="'+esc(titel)+'" placeholder="Überschrift des Beitrags">'
@@ -3234,9 +3248,9 @@
       +'<input type="hidden" id="news-edit-img-data">'
       +'</div>'
       +'<label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:#2e7d4f"> <span style="font-size:13px;font-weight:600;color:#374151">Im Laufband anzeigen</span></label>'
-      +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #e5e7eb">'
+      +'<div class="cms-modal-footer" style="padding:14px 0 0;margin-top:16px">'
+      +'<button class="cms-btn cms-btn-primary" data-action="saveNews">\ud83d\udcbe Speichern</button>'
       +'<button class="cms-btn cms-btn-gray" data-action="closeNewsModal">Abbrechen</button>'
-      +'<button class="cms-btn cms-btn-primary" data-action="saveNews">💾 Speichern</button>'
       +'</div></div>';
     document.body.appendChild(overlay);
     overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
@@ -3245,6 +3259,8 @@
     var cancelBtn=overlay.querySelector('[data-action="closeNewsModal"]');
     if(saveBtn) saveBtn.addEventListener('click',function(e){e.stopPropagation();saveNews();});
     if(cancelBtn) cancelBtn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();});
+    var xBtn=overlay.querySelector('.cms-modal-close');
+    if(xBtn) xBtn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();});
     // RTE toolbar handlers
     overlay.querySelectorAll('.cms-rte-btn').forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -3811,13 +3827,14 @@
     opts=opts||{};
     var url=URL.createObjectURL(blob);
     var html='<div class="cms-modal-bg">';
-    html+='<div class="cms-modal" style="max-width:520px;text-align:center">';
+    html+='<div class="cms-modal" style="max-width:520px;text-align:center;position:relative">';
+    html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3 style="margin:0 0 12px;font-size:15px">Vorschau</h3>';
     // Wrap image in relative container for clickable card zones
     html+='<div id="cms-share-img-wrap" style="position:relative;display:inline-block;margin-bottom:12px">';
     html+='<img id="cms-share-img" src="'+url+'" style="max-width:100%;max-height:55vh;border-radius:8px;border:1px solid #e5e7eb;display:block">';
     html+='</div>';
-    html+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
+    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-dl">\u2b07\ufe0f Download</button>';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-print">\ud83d\udda8\ufe0f Drucken</button>';
     if(opts.showEinzelflyer){
@@ -3934,7 +3951,7 @@
 
     var html='<div class="cms-modal-bg">';
     html+='<div class="cms-modal" style="max-width:440px;text-align:center;position:relative">';
-    html+='<button id="pce-close" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;line-height:1;padding:2px 6px;z-index:10" title="Schlie\u00dfen ohne Speichern">\u2715</button>';
+    html+='<button class="cms-modal-close" id="pce-close" title="Schlie\u00dfen ohne Speichern">\u2715</button>';
     html+='<h3 style="margin:0 0 4px;font-size:15px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+'</h3>';
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element horizontal ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc')+'</p>';
