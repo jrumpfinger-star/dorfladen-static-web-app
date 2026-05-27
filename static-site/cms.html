@@ -1426,7 +1426,7 @@ document.head.appendChild(msalScript);
     </div>
     <!-- ============ SUB-TAB: Plakate & Flyer (REDESIGNED) ============ -->
     <div id="cms-cfg-plakat" style="display:none">
-      <p style="font-size:12px;color:#6b7280;margin:0 0 10px">&Auml;nderungen wirken sich sofort auf neu erstellte Plakate und Flyer aus.</p>
+      <p style="font-size:12px;color:#6b7280;margin:0 0 10px">&Auml;nderungen werden erst nach Klick auf &bdquo;Speichern&ldquo; &uuml;bernommen.</p>
       <!-- Hidden fields for backward compat -->
       <input type="hidden" id="cfg-bgColor" value="#f4f1ea">
       <input type="hidden" id="cfg-titleColor" value="#a51d2d">
@@ -2219,6 +2219,10 @@ document.head.appendChild(msalScript);
       </div><!-- /cfg-split-right -->
 
       </div><!-- /cfg-split -->
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="cms-btn cms-btn-primary" id="cfg-plakat-save" data-action="savePlakatCfg">&#128190; Speichern</button>
+        <span id="cfg-plakat-saved-hint" style="display:none;font-size:.82rem;color:#16a34a;font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
+      </div>
     </div>
 
     <!-- ============ SUB-TAB: HP-Sonderangebote ============ -->

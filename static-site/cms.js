@@ -1650,21 +1650,21 @@
       var v=e.target.value;
       ['cfg-tpl-plakat-tagColor','cfg-tpl-flyer-tagColor'].forEach(function(tid){var t=document.getElementById(tid);if(t)t.value=v;});
     }
-    // Auto-save when template color pickers change
-    if(id.indexOf('cfg-tpl-')===0){cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
+    // Live-preview when template color pickers change (no auto-save)
+    if(id.indexOf('cfg-tpl-')===0){_triggerCfgAutoPreview();}
   });
   document.addEventListener('change',function(e){
-    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
-    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
+    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');_triggerCfgAutoPreview();}
+    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');_triggerCfgAutoPreview();}
     // Offer template gradient toggle
     if(e.target.classList.contains('cfg-tpl-grad-toggle')){
       var gk=e.target.getAttribute('data-key'),gkind=e.target.getAttribute('data-kind');
-      if(gk&&gkind){cfgTplToggleGrad(gkind,gk,e.target.checked);cfgTplUpdateGradPreview(gkind,gk);cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
+      if(gk&&gkind){cfgTplToggleGrad(gkind,gk,e.target.checked);cfgTplUpdateGradPreview(gkind,gk);_triggerCfgAutoPreview();}
     }
     // Offer template gradient direction change
     if(e.target.id&&e.target.id.indexOf('cfg-tpl-')===0&&e.target.id.indexOf('_dir')>0){
       var m=e.target.id.match(/^cfg-tpl-(plakat|flyer)-(\w+)_dir$/);
-      if(m){cfgTplUpdateGradPreview(m[1],m[2]);cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
+      if(m){cfgTplUpdateGradPreview(m[1],m[2]);_triggerCfgAutoPreview();}
     }
   });
   // Live gradient preview for offer template color/range changes
@@ -2406,12 +2406,12 @@
     if(e.target.id==='hcfg-wpHomeTemplate'){hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');}
     if(e.target.id==='hcfg-wpFlyerTemplate'){hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');}
   });
-  // Auto-save WP template color pickers on input
+  // WP template color pickers: live-preview only, no auto-save (user must click Speichern)
   document.addEventListener('input',function(e){
     var id=e.target.id;if(!id||id.indexOf('hcfg-wpTpl-')!==0)return;
-    // debounced auto-save
+    // trigger live preview only
     clearTimeout(window._wpTplColorTimer);
-    window._wpTplColorTimer=setTimeout(function(){var c=hpCfgReadUI();hpCfgSave(c);},800);
+    window._wpTplColorTimer=setTimeout(function(){wpLivePreview&&wpLivePreview();},200);
   });
 
   // --- Wochenplan ---
@@ -7261,12 +7261,12 @@
       case 'pickPlakatTpl':
         var pt=t.getAttribute('data-value')||'classic-red';
         var psel=document.getElementById('cfg-plakatTemplate');
-        if(psel){psel.value=pt;cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
+        if(psel){psel.value=pt;cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');_triggerCfgAutoPreview();}
         break;
       case 'pickFlyerTpl':
         var ft=t.getAttribute('data-value')||'classic-red';
         var fsel=document.getElementById('cfg-flyerTemplate');
-        if(fsel){fsel.value=ft;cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');cfgSave(cfgReadUI());_triggerCfgAutoPreview();}
+        if(fsel){fsel.value=ft;cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');_triggerCfgAutoPreview();}
         break;
       case 'resetTplColors':
         var rKind=t.getAttribute('data-kind')||'plakat';
@@ -7278,8 +7278,14 @@
           var el=document.getElementById('cfg-tpl-'+rKind+'-'+ck);
           if(el)el.value=rDefaults[ck]||'#000000';
         });
+        _triggerCfgAutoPreview();
+        toast('Farben zur\u00fcckgesetzt (Speichern nicht vergessen)','info');
+        break;
+      case 'savePlakatCfg':
         cfgSave(cfgReadUI());
-        toast('Farben zur\u00fcckgesetzt','ok');
+        var _hint=document.getElementById('cfg-plakat-saved-hint');
+        if(_hint){_hint.style.display='inline';setTimeout(function(){_hint.style.display='none';},2500);}
+        toast('Plakat-Design gespeichert','ok');
         break;
       case 'previewOfferTpl':
         cmsPreviewOfferTpl(t.getAttribute('data-target')||'plakat');
