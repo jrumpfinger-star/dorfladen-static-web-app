@@ -5888,12 +5888,14 @@
         }
         // Helper: regenerate one flyer and update the <img> + overlay zones
         function regenFlyer(idx){
+          console.log('[regenFlyer] idx='+idx);
           var it=items[idx];
           // Temporarily inject current overrides so generateEinzelflyer picks them up
           var k=_flyerArtKey(it);
           var all=flyerArtOverridesGetAll();
           var prev=all[k];// remember previous (saved) state
           all[k]=artOvs[idx];_flyerArtOverrides=all;
+          console.log('[regenFlyer] artOvs['+idx+']=',JSON.stringify(artOvs[idx]));
           generateEinzelflyer(it,data).then(function(cv){
             // Restore previous state so unsaved changes don't leak into global store
             if(prev!==undefined){all[k]=prev;}else{delete all[k];}
@@ -6231,7 +6233,9 @@
               var v=parseInt(t.value,10);
               var ov=artOvs[idx];
               var elKey=_selZoneToElKey();
+              console.log('[sel-rot] idx='+idx+' v='+v+' elKey='+elKey+' ov before=',JSON.stringify({imgRot:ov.imgRot,ghostRot:ov.ghostRot,dupRot:ov.dupRot}));
               _setElRot(elKey,ov,v);
+              console.log('[sel-rot] ov after=',JSON.stringify({imgRot:ov.imgRot,ghostRot:ov.ghostRot,dupRot:ov.dupRot}));
               var sp=doc.getElementById('sr-'+idx);if(sp)sp.textContent=v+'\u00b0';
               regenFlyer(idx);
             }
@@ -6282,8 +6286,12 @@
             else if(act==='dl'){dlOne(parseInt(t.getAttribute('data-idx'),10)||0,t.getAttribute('data-name'));}
             else if(act==='art-revert'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
+              console.log('[art-revert] idx='+idx+' item=',items[idx]&&items[idx].produkt,' key=',_flyerArtKey(items[idx]));
               artOvs[idx]=_clone(_initArtOvs[idx]);
-              flyerArtOverrideSave(items[idx],artOvs[idx]).then(function(){
+              var saveResult=flyerArtOverrideSave(items[idx],artOvs[idx]);
+              console.log('[art-revert] saveResult=',saveResult,' isPromise=',(saveResult&&typeof saveResult.then==='function'));
+              saveResult.then(function(){
+                console.log('[art-revert] .then fired, calling rebuildCtlBar + regenFlyer');
                 rebuildCtlBar(idx);
                 regenFlyer(idx);
                 t.textContent='\u2705 Verworfen';
