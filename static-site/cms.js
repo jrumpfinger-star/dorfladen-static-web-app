@@ -5259,6 +5259,7 @@
   }
 
   // Convert a zone DOM element's data-ov/data-el to the activeEl key format
+  var _selZone=null; // hoisted here so _selZoneToElKey is accessible at module level
   function _zoneToElKey(z){
     if(!z) return 'img';
     var ov=z.getAttribute('data-ov')||'img';
@@ -5935,8 +5936,8 @@
         }
         // bindTouchMenuBtns is defined inside attach() where showCtxMenuForZone is available
         var bindTouchMenuBtns=function(){};
-        // _selZone and selectZone hoisted here so regenFlyer() can access them
-        var _selZone=null;
+        // _selZone is declared at module level so _selZoneToElKey() can access it
+        _selZone=null;
         function selectZone(z){
           if(_selZone)_selZone.classList.remove('selected');
           _selZone=z;
