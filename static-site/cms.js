@@ -2420,8 +2420,8 @@
 
   // Sync WP template colors when dropdown changes
   document.addEventListener('change',function(e){
-    if(e.target.id==='hcfg-wpHomeTemplate'){hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');}
-    if(e.target.id==='hcfg-wpFlyerTemplate'){hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');}
+    if(e.target.id==='hcfg-wpHomeTemplate'){hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');_triggerWpAutoPreview();}
+    if(e.target.id==='hcfg-wpFlyerTemplate'){hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');_triggerWpAutoPreview();}
   });
   // WP template color pickers: live-preview only, no auto-save (user must click Speichern)
   document.addEventListener('input',function(e){
@@ -7651,14 +7651,17 @@
         var tpl=t.getAttribute('data-value')||'classic-red';
         var sel=document.getElementById('hcfg-wpHomeTemplate');
         if(sel){sel.value=tpl;hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');}
+        _triggerWpAutoPreview();
         break;
       case 'pickWpFlyerTpl':
         var tpl2=t.getAttribute('data-value')||'classic-red';
         var sel2=document.getElementById('hcfg-wpFlyerTemplate');
         if(sel2){sel2.value=tpl2;hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');}
+        _triggerWpAutoPreview();
         break;
       case 'resetWpTplColors':
         resetWpTplColors(t.getAttribute('data-kind')||'home');
+        _triggerWpAutoPreview();
         break;
       case 'pickPlakatTpl':
         var pt=t.getAttribute('data-value')||'classic-red';
@@ -7768,9 +7771,9 @@
       case 'wpCfgSection':wpCfgSwitchSection(t.getAttribute('data-id'));break;
       case 'cfgLivePreview':cfgLivePreview(t.getAttribute('data-target')||'plakat');break;
       case 'wpLivePreview':wpLivePreview(t.getAttribute('data-kind')||'home');break;
-      case 'wpRevertSection':wpRevertSection(t.getAttribute('data-kind')||'home');break;
+      case 'wpRevertSection':wpRevertSection(t.getAttribute('data-kind')||'home');_triggerWpAutoPreview();break;
       case 'wpPresetSave':wpPresetSave(t.getAttribute('data-section'));break;
-      case 'wpPresetLoad':wpPresetLoad(t.getAttribute('data-section'),t.getAttribute('data-idx'));break;
+      case 'wpPresetLoad':wpPresetLoad(t.getAttribute('data-section'),t.getAttribute('data-idx'));_triggerWpAutoPreview();break;
       case 'wpPresetDelete':wpPresetDelete(t.getAttribute('data-section'),t.getAttribute('data-idx'));break;
       case 'cfgPresetSave':cfgPresetSave(t.getAttribute('data-section'));break;
       case 'cfgPresetLoad':cfgPresetLoad(t.getAttribute('data-section'),t.getAttribute('data-idx'));break;
