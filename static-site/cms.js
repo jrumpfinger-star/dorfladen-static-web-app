@@ -6148,7 +6148,41 @@
               document.body.appendChild(po);
             }else{
               var w=window.open('','_blank');
-              if(!w){alert('Popup-Blocker aktiv! Bitte Popups erlauben.');return;}
+              if(!w){
+                // Popup blocked – fall back to in-page print overlay (same as mobile)
+                var oldPo2=doc.getElementById('_flyPrintOverlay');
+                if(oldPo2)oldPo2.remove();
+                if(!doc.getElementById('_flyPrintCSS')){
+                  var pCss2=doc.createElement('style');pCss2.id='_flyPrintCSS';
+                  pCss2.textContent='@media print{body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay img{max-width:100%;height:auto}}';
+                  doc.head.appendChild(pCss2);
+                }
+                var po2=doc.createElement('div');
+                po2.id='_flyPrintOverlay';
+                po2.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:#fff;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px';
+                var pImg2=doc.createElement('img');
+                pImg2.style.cssText='max-width:100%;height:auto;margin-bottom:16px';
+                pImg2.src=src;
+                po2.appendChild(pImg2);
+                var btnRow2=doc.createElement('div');
+                btnRow2.style.cssText='display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px';
+                var printBtn2=doc.createElement('button');
+                printBtn2.textContent='\uD83D\uDDA8\uFE0F Drucken';
+                printBtn2.style.cssText='padding:12px 32px;font-size:16px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer';
+                printBtn2.onclick=function(){
+                  btnRow2.style.display='none';
+                  setTimeout(function(){win.print();btnRow2.style.display='';},100);
+                };
+                var backBtn2=doc.createElement('button');
+                backBtn2.textContent='Zur\u00fcck';
+                backBtn2.style.cssText='padding:12px 24px;font-size:16px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer';
+                backBtn2.onclick=function(){po2.remove();};
+                btnRow2.appendChild(printBtn2);
+                btnRow2.appendChild(backBtn2);
+                po2.appendChild(btnRow2);
+                doc.body.appendChild(po2);
+                return;
+              }
               var d=w.document;
               d.open();
               d.write('<html><head><title>Flyer drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"></body></html>');
