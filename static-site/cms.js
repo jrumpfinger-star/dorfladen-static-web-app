@@ -6044,7 +6044,7 @@
             +'<div class="abtn-grp">'+arrowCross('sel',i,'\u2b05\u27a1 Selektiertes Element')+'</div>'
             +'<div class="abtn-grp">'
             +'<span style="font-size:10px;font-weight:700;color:#555">\u21bb Drehung</span>'
-            +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+i+'"><span id="sr-'+i+'">0\u00b0</span></label>'
+            +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" id="sld-rot-'+i+'" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+i+'"><span id="sr-'+i+'">0\u00b0</span></label>'
             +'<button class="tog" data-act="sel-rot-reset" data-idx="'+i+'" style="font-size:9px;padding:1px 6px">\u2b6f 0\u00b0</button>'
             +'</div>'
             +'<div class="abtn-grp">'
@@ -6176,7 +6176,7 @@
             var nh='<div class="abtn-grp">'+arrowCross('sel',idx,'\u2b05\u27a1 Selektiertes Element')+'</div>'
               +'<div class="abtn-grp">'
               +'<span style="font-size:10px;font-weight:700;color:#555">\u21bb Drehung</span>'
-              +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+idx+'"><span id="sr-'+idx+'">0\u00b0</span></label>'
+              +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" id="sld-rot-'+idx+'" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+idx+'"><span id="sr-'+idx+'">0\u00b0</span></label>'
               +'<button class="tog" data-act="sel-rot-reset" data-idx="'+idx+'" style="font-size:9px;padding:1px 6px">\u2b6f 0\u00b0</button>'
               +'</div>'
               +'<div class="abtn-grp">'
@@ -6209,10 +6209,31 @@
             }
             nh+='</div>';
             bar.innerHTML=nh;
+            // Re-bind rotation slider after innerHTML replacement
+            bindRotSlider(idx);
           }
+          // Direct-bind rotation slider for a specific index
+          function bindRotSlider(ridx){
+            var rs=doc.getElementById('sld-rot-'+ridx);
+            if(rs){
+              console.log('[bindRotSlider] Direct-binding sld-rot-'+ridx);
+              rs.addEventListener('input',function(){
+                var v=parseInt(rs.value,10);
+                var ov=artOvs[ridx];
+                var elKey=_selZoneToElKey();
+                console.log('[direct-rot] ridx='+ridx+' v='+v+' elKey='+elKey);
+                _setElRot(elKey,ov,v);
+                var sp=doc.getElementById('sr-'+ridx);if(sp)sp.textContent=v+'\u00b0';
+                regenFlyer(ridx);
+              });
+            }else{console.warn('[bindRotSlider] sld-rot-'+ridx+' NOT found in doc');}
+          }
+          // Bind all rotation sliders initially
+          for(var ri=0;ri<items.length;ri++){bindRotSlider(ri);}
           doc.addEventListener('input',function(ev){
             var t=ev.target;if(!t)return;
             var act=t.getAttribute('data-act');
+            console.log('[doc input] target=',t.tagName,'act=',act,'value=',t.value);
             if(act==='ghost-alpha'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
               artOvs[idx].ghostAlpha=parseInt(t.value,10)/100;
@@ -6288,15 +6309,12 @@
               var idx=parseInt(t.getAttribute('data-idx'),10);
               console.log('[art-revert] idx='+idx+' item=',items[idx]&&items[idx].produkt,' key=',_flyerArtKey(items[idx]));
               artOvs[idx]=_clone(_initArtOvs[idx]);
-              var saveResult=flyerArtOverrideSave(items[idx],artOvs[idx]);
-              console.log('[art-revert] saveResult=',saveResult,' isPromise=',(saveResult&&typeof saveResult.then==='function'));
-              saveResult.then(function(){
-                console.log('[art-revert] .then fired, calling rebuildCtlBar + regenFlyer');
-                rebuildCtlBar(idx);
-                regenFlyer(idx);
-                t.textContent='\u2705 Verworfen';
-                setTimeout(function(){t.textContent='\u21a9 Verwerfen';},1500);
-              });
+              // Save + regenerate; do NOT gate on save success — always update UI
+              flyerArtOverrideSave(items[idx],artOvs[idx]);
+              rebuildCtlBar(idx);
+              regenFlyer(idx);
+              t.textContent='\u2705 Verworfen';
+              setTimeout(function(){t.textContent='\u21a9 Verwerfen';},1500);
             }
             else if(act==='art-reset'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
@@ -6504,7 +6522,7 @@
             menu.className='ctx-menu';menu.id='fly-ctx-menu';
             menu.style.cssText='position:fixed;left:'+clientX+'px;top:'+clientY+'px;z-index:100000';
             var menuItems=[
-              {icon:'\u21a9',text:'Verwerfen (Laden-Stand)',action:function(){artOvs[idx]=_clone(_initArtOvs[idx]);flyerArtOverrideSave(items[idx],artOvs[idx]).then(function(){rebuildCtlBar(idx);regenFlyer(idx);});}},
+              {icon:'\u21a9',text:'Verwerfen (Laden-Stand)',action:function(){artOvs[idx]=_clone(_initArtOvs[idx]);flyerArtOverrideSave(items[idx],artOvs[idx]);rebuildCtlBar(idx);regenFlyer(idx);}},
               {icon:'\u21ba',text:'Position zur\u00fccksetzen',action:function(){
                 if(ovKey==='copy'&&elId&&elId.indexOf('copy-')===0){var ci2=parseInt(elId.split('-')[1],10);var cp2=ov.copies&&ov.copies[ci2];if(cp2){cp2.dx=0;cp2.dy=0;}}
                 else{ov[ovKey+'Dx']=0;ov[ovKey+'Dy']=0;}
