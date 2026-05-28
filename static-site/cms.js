@@ -5199,10 +5199,10 @@
     return (k&&all[k])?_clone(all[k]):null;
   }
   function flyerArtOverrideSave(item,ov){
-    var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
+    var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
     all[k]=_clone(ov);
     _flyerArtOverrides=all;
-    _dvSave('flyer_article_overrides',all)
+    return _dvSave('flyer_article_overrides',all)
       .then(function(res){if(!res.success)console.warn('Article overrides save failed',res.error);}).catch(function(){});
   }
   function flyerArtOverrideDelete(item){
@@ -5337,10 +5337,10 @@
     return (k&&all[k])?_clone(all[k]):null;
   }
   function plakatArtOverrideSave(item,ov){
-    var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
+    var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
     all[k]=_clone(ov);
     _plakatArtOverrides=all;
-    _dvSave('plakat_article_overrides',all)
+    return _dvSave('plakat_article_overrides',all)
       .then(function(r){return r.json();}).catch(function(){});
   }
   function plakatArtOverrideDelete(item){
@@ -5465,7 +5465,7 @@
               var maxIW=cardMW-40, maxIH=imgZoneH-20;
               var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc;
               var iw=ofc.width*scI,ih=ofc.height*scI;
-              var imgX=cardMX+cardMW/2-iw/2, imgY=cardMY+10+(imgZoneH-ih)/2;
+              var imgX=cardMX+cardMW/2-iw/2+(artOv.imgDx||0), imgY=cardMY+10+(imgZoneH-ih)/2+(artOv.imgDy||0);
               var mgImgRotRad=(artOv.imgRot||0)*Math.PI/180;
               ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
               if(mgImgRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(mgImgRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
@@ -5573,27 +5573,29 @@
           }
 
           // Price section at bottom of card
-          var priceBarY=cardMY+cardMH-100;
-          ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgFlyerRR(cardMX+24,priceBarY,cardMW-48,72,14);ctx.fill();
-          ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgFlyerRR(cardMX+24,priceBarY,cardMW-48,72,14);ctx.stroke();
-          _elMeta.push({id:'price',label:'\ud83c\udff7 Preis',x:cardMX+24,y:priceBarY,w:cardMW-48,h:72,ovKey:'price'});
+          var pDx=artOv.priceDx||0, pDy=artOv.priceDy||0;
+          var priceBarY=cardMY+cardMH-100+pDy;
+          var priceBarX=cardMX+24+pDx;
+          ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.fill();
+          ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.stroke();
+          _elMeta.push({id:'price',label:'\ud83c\udff7 Preis',x:priceBarX,y:priceBarY,w:cardMW-48,h:72,ovKey:'price'});
 
           if(item.preis){
             var pp=Number(item.preis).toFixed(2).split('.');
             ctx.fillStyle=theme.tagColor;ctx.font='900 52px Arial Black, Arial, sans-serif';
-            ctx.fillText(pp[0]+','+pp[1],cardMX+40,priceBarY+52);
+            ctx.fillText(pp[0]+','+pp[1],priceBarX+16,priceBarY+52);
             var mw=ctx.measureText(pp[0]+','+pp[1]).width;
             ctx.font='700 30px Arial, sans-serif';
-            ctx.fillText('\u20AC',cardMX+40+mw+6,priceBarY+48);
+            ctx.fillText('\u20AC',priceBarX+16+mw+6,priceBarY+48);
           }
           if(item.statt_preis){
             var uvp='statt '+Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
             var stc=theme.stattColor||'#8a9e80';
             ctx.textAlign='right';ctx.fillStyle=stc;ctx.font='600 24px Arial, sans-serif';
-            ctx.fillText(uvp,cardMX+cardMW-40,priceBarY+48);
+            ctx.fillText(uvp,cardMX+cardMW-40+pDx,priceBarY+48);
             var uvpW=ctx.measureText(uvp).width;
             ctx.strokeStyle=stc;ctx.lineWidth=2;
-            ctx.beginPath();ctx.moveTo(cardMX+cardMW-40-uvpW,priceBarY+40);ctx.lineTo(cardMX+cardMW-40,priceBarY+40);ctx.stroke();
+            ctx.beginPath();ctx.moveTo(cardMX+cardMW-40+pDx-uvpW,priceBarY+40);ctx.lineTo(cardMX+cardMW-40+pDx,priceBarY+40);ctx.stroke();
             ctx.textAlign='left';
           }
 
