@@ -73,6 +73,11 @@
   .cover .subtitle { font-size: 18pt; color: #555; margin-top: 8px; font-weight: 300; }
   .cover .version { font-size: 12pt; color: #888; margin-top: 24px; font-family: monospace; }
   .shortcut { display: inline-block; background: #f4f4f4; border: 1px solid #ccc; border-radius: 4px; padding: 1px 7px; font-family: Consolas, monospace; font-size: 0.85em; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .btn-table { width:100%; border-collapse:collapse; margin:10px 0 18px; font-size:0.93em; }
+  .btn-table th { background:#fff3e0; color:#bf360c; text-align:left; padding:7px 10px; border:1px solid #ffe0b2; }
+  .btn-table td { padding:6px 10px; border:1px solid #ffe0b2; vertical-align:top; }
+  .btn-table tr:nth-child(even) td { background:#fff8f0; }
+  .btn-table td:first-child { white-space:nowrap; font-size:0.88em; }
 </style>
 </head>
 <body>
@@ -179,6 +184,22 @@
   <li><strong>Gericht entfernen:</strong> Über die rote Mülltonne 🗑 neben einem Eintrag löschen Sie ein Gericht unwiderruflich.</li>
 </ol>
 
+<h3>🔘 Schaltflächen im Wochenplan-Tab</h3>
+<table class="btn-table">
+  <tr><th>Schaltfläche</th><th>Was sie bewirkt</th></tr>
+  <tr><td><strong>← / →</strong></td><td>Blättert eine Woche vor oder zurück. Die angezeigte Kalenderwoche und der Zeitraum aktualisieren sich sofort.</td></tr>
+  <tr><td><strong>Diese Woche</strong></td><td>Springt direkt zur aktuellen Kalenderwoche – egal wo Sie sich in der Navigation befinden.</td></tr>
+  <tr><td><strong>Nächste Woche</strong></td><td>Springt direkt zur kommenden Kalenderwoche für die Vorplanung.</td></tr>
+  <tr><td><strong>+ Gericht</strong></td><td>Öffnet die Eingabemaske für ein neues Tagesgericht. Wochentag, Gerichtsname, Zusatzinfo und Preis können eingetragen werden.</td></tr>
+  <tr><td><strong>✏️ Bearbeiten</strong></td><td>Öffnet ein bestehendes Gericht zum Ändern.</td></tr>
+  <tr><td><strong>🗑 Löschen</strong></td><td>Entfernt ein Gericht aus dem Wochenplan nach Bestätigungsdialog dauerhaft.</td></tr>
+  <tr><td><strong>💾 Speichern</strong></td><td>Sichert das neue oder bearbeitete Gericht dauerhaft in der Datenbank und aktualisiert die Homepage sofort.</td></tr>
+  <tr><td><strong>Abbrechen</strong></td><td>Schließt die Eingabemaske ohne zu speichern.</td></tr>
+  <tr><td><strong>🖨️ Drucken</strong></td><td>Generiert ein A4-Wochenplan-Plakat und öffnet den Druckdialog – ideal für den Aushang im Laden.</td></tr>
+  <tr><td><strong>📲 Teilen</strong></td><td>Erstellt ein hochauflösendes PNG-Bild des Wochenplans, lädt es herunter und öffnet WhatsApp mit einem vorbereiteten Werbetext für den Versand an Kunden.</td></tr>
+  <tr><td><strong>↩ Verwerfen</strong></td><td>Macht alle ungespeicherten Änderungen rückgängig und stellt den letzten gespeicherten Zustand aus der Datenbank wieder her.</td></tr>
+</table>
+
 <h3>Die „Verwerfen“-Funktion</h3>
 <p>
   Wenn Sie Änderungen im Wochenplan-Design oder bei Gerichten vornehmen, erzeugt das CMS im Hintergrund automatische Live-Previews für die Homepage. Sollten Sie sich umentscheiden oder Fehler gemacht haben, können Sie alle ungespeicherten Entwürfe über die Schaltfläche <strong>„↩ Verwerfen“</strong> rückgängig machen. 
@@ -227,6 +248,12 @@
   <li><strong>Ruhetage:</strong> Lassen Sie bei geschlossenen Tagen (z. B. Sonntag) die Zeile einfach leer oder schreiben Sie <code>geschlossen</code> hinein. Das System erkennt dies automatisch.</li>
 </ul>
 
+<h3>🔘 Schaltflächen im Öffnungszeiten-Tab</h3>
+<table class="btn-table">
+  <tr><th>Schaltfläche</th><th>Was sie bewirkt</th></tr>
+  <tr><td><strong>💾 Speichern</strong></td><td>Schreibt alle Öffnungszeiten dauerhaft in die Datenbank. Die Homepage zeigt den aktuellen Öffnungsstatus (<em>Geöffnet / Geschlossen</em> inkl. Countdown) sofort aktualisiert.</td></tr>
+</table>
+
 <div class="warn">
   Feiertage oder kurzfristige Änderungen (z. B. Betriebsausflug) sollten Sie rechtzeitig anpassen, da die Live-Berechnung der Homepage direkt auf diese Daten zugreift!
 </div>
@@ -265,6 +292,22 @@
   <li><strong>Gleichzeitige Planung:</strong> Sie können in der Regel schon während der laufenden Woche die Angebote der nächsten Woche anlegen. Kunden sehen diese automatisch unter dem Tab „Nächste Woche", ohne dass Sie manuell umschalten müssen.</li>
   <li><strong>Abgelaufene Angebote:</strong> Aktionen, deren Enddatum in der Vergangenheit liegt, werden auf der Homepage automatisch ausgeblendet. Im CMS bleiben sie als Archiv erhalten.</li>
 </ul>
+
+<h3>🔘 Schaltflächen im Angebote-Tab</h3>
+<table class="btn-table">
+  <tr><th>Schaltfläche</th><th>Was sie bewirkt</th></tr>
+  <tr><td><strong>+ Neue Aktion erstellen</strong></td><td>Öffnet die Eingabemaske für eine neue Werbekampagne. Sie vergeben einen Titel, ein Start- und Enddatum sowie beliebig viele Artikel mit Aktions- und Statt-Preis.</td></tr>
+  <tr><td><strong>✏️ Bearbeiten</strong></td><td>Öffnet eine bestehende Aktion zur Bearbeitung. Artikel können hinzugefügt, geändert oder entfernt werden.</td></tr>
+  <tr><td><strong>🗑 Löschen</strong></td><td>Löscht eine gesamte Aktion mit allen zugehörigen Artikeln nach Bestätigung dauerhaft aus der Datenbank.</td></tr>
+  <tr><td><strong>💾 Speichern</strong></td><td>Sichert alle Eingaben der Aktion. Die Artikel werden einzeln in Dataverse gespeichert und sind sofort auf der Homepage sichtbar.</td></tr>
+  <tr><td><strong>Abbrechen</strong></td><td>Schließt das Formular ohne Speichern. Alle Eingaben in der aktuellen Maske gehen verloren.</td></tr>
+  <tr><td><strong>+ Artikel hinzufügen</strong></td><td>Fügt eine neue Zeile für einen weiteren Angebotsartikel in der Maske hinzu.</td></tr>
+  <tr><td><strong>✕ (Artikelzeile)</strong></td><td>Entfernt eine einzelne Artikelzeile aus der Aktionsmaske.</td></tr>
+  <tr><td><strong>🔍 (Artikelsuche)</strong></td><td>Sucht den Artikel in der Preisliste anhand der eingetippten Artikelnummer oder des Namens und befüllt Preis und Bild automatisch.</td></tr>
+  <tr><td><strong>📷 Bild hochladen</strong></td><td>Öffnet den Datei-Auswahldialog für ein Artikelfoto. Das Bild wird automatisch auf 500×500 Pixel komprimiert (75% JPEG) und in der Datenbank gespeichert.</td></tr>
+  <tr><td><strong>🔗 Teilen</strong></td><td>Erstellt ein WhatsApp-taugliches Angebots-Bild und öffnet WhatsApp mit vorbereiteter Nachricht.</td></tr>
+  <tr><td><strong>👁 Vorschau</strong></td><td>Zeigt das Angebot als Plakat-Vorschau an, exakt so wie es auf dem gedruckten Flyer erscheinen würde.</td></tr>
+</table>
 
 <h3>Automatische Bildoptimierung</h3>
 <p>
@@ -312,6 +355,17 @@
   <li>Fügen Sie optional ein aussagekräftiges Foto hinzu.</li>
   <li>Das Veröffentlichungsdatum wird automatisch auf den aktuellen Tag gesetzt. Sie können es bei Bedarf jedoch manuell anpassen, um Beiträge vorzudatieren oder im Archiv zu verschieben.</li>
 </ol>
+
+<h3>🔘 Schaltflächen im Aktuelles-Tab</h3>
+<table class="btn-table">
+  <tr><th>Schaltfläche</th><th>Was sie bewirkt</th></tr>
+  <tr><td><strong>+ Neuer Beitrag</strong></td><td>Öffnet die Eingabemaske für einen neuen News-Beitrag mit Titel, Text, optionalem Foto und Datum.</td></tr>
+  <tr><td><strong>✏️ Bearbeiten</strong></td><td>Öffnet einen bestehenden Beitrag zur Änderung von Text, Bild oder Datum.</td></tr>
+  <tr><td><strong>🗑 Löschen</strong></td><td>Entfernt den Beitrag dauerhaft aus der Datenbank und vom News-Archiv der Homepage.</td></tr>
+  <tr><td><strong>💾 Speichern</strong></td><td>Veröffentlicht den Beitrag sofort auf der Homepage. Der neuste Beitrag wird automatisch auf der Startseite hervorgehoben.</td></tr>
+  <tr><td><strong>Abbrechen</strong></td><td>Schließt die Eingabemaske ohne zu speichern.</td></tr>
+  <tr><td><strong>🔄 Status umschalten</strong></td><td>Wechselt zwischen „Veröffentlicht“ und „Entwurf“. Entwürfe sind nur im CMS sichtbar, nicht auf der öffentlichen Website.</td></tr>
+</table>
 
 <div class="info">
   Auf der Startseite der Homepage wird immer der aktuellste News-Beitrag prominent angeteasert. Ältere Artikel wandern automatisch in das chronologische News-Archiv unter <code>/aktuelles.html</code>.
@@ -371,6 +425,10 @@
 <!-- ═══════════════════════════════════════════ -->
 <h2 id="push">9. Push-Benachrichtigungen &amp; Abonnenten-Verwaltung</h2>
 
+<div class="warn">
+  ⚠️ <strong>Hinweis – Funktion in der Testphase:</strong> Die Push-Benachrichtigungen befinden sich derzeit noch in der optionalen Testphase und stehen noch nicht offiziell im Live-Betrieb zur Verfügung. Das CMS-Tab ist sichtbar und technisch nutzbar, jedoch können Benachrichtigungen noch eingeschränkt verfügbar sein oder vorübergehend nicht zuverlässig zugestellt werden. Sobald der offizielle Regelbetrieb startet, wird diese Dokumentation entsprechend aktualisiert.
+</div>
+
 <img src="08-push.png" alt="Push" class="screenshot">
 <div class="image-caption">Abb. 9: Erstellung und Versand von Push-Mitteilungen an Smartphones</div>
 
@@ -385,6 +443,17 @@
   <li><strong>🎁 Neue Angebote:</strong> Erstellt eine Nachricht: <i>„Frische Angebote! Sparen Sie diese Woche bei unseren ausgewählten Aktionsartikeln...“</i></li>
   <li><strong>📰 Neuigkeit:</strong> Weist auf den neuesten News-Eintrag hin.</li>
 </ul>
+
+<h3>🔘 Schaltflächen im Push-Tab</h3>
+<table class="btn-table">
+  <tr><th>Schaltfläche</th><th>Was sie bewirkt</th></tr>
+  <tr><td><strong>🍽 Mittagstisch</strong></td><td>Befüllt Titel und Text automatisch mit einer fertigen Vorlage für den neuen Wochenplan. Spart Tipparbeit.</td></tr>
+  <tr><td><strong>🎁 Neue Angebote</strong></td><td>Befüllt das Formular mit einer Vorlage für frische Sonderangebote.</td></tr>
+  <tr><td><strong>📰 Neuigkeit</strong></td><td>Befüllt das Formular mit einer Vorlage für einen neuen News-Beitrag.</td></tr>
+  <tr><td><strong>🔔 Sofort senden</strong></td><td>Sendet die Push-Nachricht sofort an alle aktiven Abonnenten. Der Versand läuft im Hintergrund – Sie sehen eine Bestätigung mit Anzahl erreichter Geräte.</td></tr>
+  <tr><td><strong>Aktualisieren (Subscriber)</strong></td><td>Lädt die aktuelle Abonnenten-Liste frisch aus der Datenbank und zeigt Geräte-ID, Browser-Typ und Anmeldezeitpunkt.</td></tr>
+  <tr><td><strong>🗑 Löschen (Subscriber)</strong></td><td>Entfernt einen einzelnen Abonnenten sofort aus der Datenbank. Er erhält keine weiteren Push-Mitteilungen mehr.</td></tr>
+</table>
 
 <h3>Eigene Nachrichten verfassen</h3>
 <p>
@@ -417,6 +486,12 @@
 
 <img src="09-settings.png" alt="Settings" class="screenshot">
 <div class="image-caption">Abb. 10: Globale Metadaten und Kontaktinformationen des Dorfladens</div>
+
+<h3>🔘 Schaltflächen in System-Einstellungen</h3>
+<table class="btn-table">
+  <tr><th>Schaltfläche</th><th>Was sie bewirkt</th></tr>
+  <tr><td><strong>💾 Speichern</strong></td><td>Sichert alle Stammdaten (Name, Adresse, Kontakt, Social Media) dauerhaft. Die Änderungen erscheinen sofort im Impressum und Footer der Homepage.</td></tr>
+</table>
 
 <h3>Globale Ladeninformationen</h3>
 <p>
@@ -455,6 +530,18 @@
   </li>
 </ol>
 
+<h3>🔘 Schaltflächen im Design-Editor</h3>
+<table class="btn-table">
+  <tr><th>Schaltfläche</th><th>Was sie bewirkt</th></tr>
+  <tr><td><strong>💾 Alles speichern</strong></td><td>Schreibt <em>alle</em> aktuellen Design-Einstellungen dauerhaft in die Datenbank. Erst nach diesem Klick sind die Änderungen auf der Live-Homepage sichtbar.</td></tr>
+  <tr><td><strong>↺ Auf Default zurücksetzen</strong></td><td>Verwirft alle ungespeicherten Änderungen und lädt die zuletzt gespeicherten Werte zurück. Hat jemand eigene Standards gespeichert, werden diese zurückgeladen – sonst die Werksvoreinstellungen.</td></tr>
+  <tr><td><strong>★ Als Standard speichern</strong></td><td>Speichert die <em>aktuellen</em> Einstellungen als neuen persönlichen Standard. Dieser Standard wird künftig beim „Auf Default zurücksetzen" als Ausgangspunkt verwendet – ideal wenn Sie Ihr Corporate-Design einmalig festgelegt haben.</td></tr>
+  <tr><td><strong>✕ Werkseinstellungen</strong></td><td>Löscht Ihren gespeicherten persönlichen Standard vollständig und setzt das System auf die Original-Werksfarben zurück. Achtung: dieser Schritt kann nicht rückgängig gemacht werden!</td></tr>
+  <tr><td><strong>↺ Verwerfen</strong></td><td>Bricht alle Änderungen seit dem letzten Speichern ab und stellt den vorherigen Zustand wieder her – ohne zu speichern.</td></tr>
+  <tr><td><strong>+ Vorlage speichern</strong></td><td>Legt die aktuellen Plakat- oder Flyer-Einstellungen als benannte Vorlage ab. Vorlagen erscheinen in der Liste unterhalb und können jederzeit per Klick wieder angewendet werden.</td></tr>
+  <tr><td><strong>↺ Farben zurücksetzen</strong></td><td>Setzt nur die Template-Farben des aktuell gewählten Designs (z.&nbsp;B. Classic Red) auf die Ursprungsfarben des Templates zurück, ohne andere Einstellungen zu berühren.</td></tr>
+</table>
+
 <h3>⚡ Kompaktmodus für Power-User (Compact Mode)</h3>
 <p>
   Um die Benutzeroberfläche des Design-Tabs übersichtlich zu halten – besonders auf kleineren Monitoren oder Laptops – wurde ein intelligenter <strong>Kompaktmodus</strong> integriert:
@@ -476,6 +563,21 @@
 
 <img src="12-kachel-editor.png" alt="Kachel-Editor" class="screenshot">
 <div class="image-caption">Abb. 12: Der Kachel-Editor mit Rotations-Slider, D-Pad und Ghost-Steuerungen</div>
+
+<h3>🔘 Schaltflächen im Kachel-Editor</h3>
+<table class="btn-table">
+  <tr><th>Schaltfläche</th><th>Was sie bewirkt</th></tr>
+  <tr><td><strong>💾 Speichern</strong></td><td>Sichert alle Positionen, Größen, Drehungen und Effekte der aktuellen Kachel dauerhaft. Die Kachel wird für den Flyer-Druck und die Homepage-Anzeige übernommen.</td></tr>
+  <tr><td><strong>↩ Verwerfen</strong></td><td>Macht alle Änderungen seit dem letzten Speichern rückgängig und stellt den vorherigen Zustand der Kachel wieder her.</td></tr>
+  <tr><td><strong>⭐ Ghost: AUS / AN</strong></td><td>Schaltet den Ghost-Effekt (halbtransparente Produktbild-Kopie im Hintergrund) ein oder aus. Erzeugt einen plastischen 3D-Eindruck auf dem Plakat.</td></tr>
+  <tr><td><strong>📄 Duplikat</strong></td><td>Erstellt eine volldeckende (100% Deckkraft) Kopie des Produktbilds zusätzlich zur Ghostkopie.</td></tr>
+  <tr><td><strong>+ 👻 / + 📝</strong></td><td>Fügt eine weitere Ghost- bzw. Textkopie zur Kachel hinzu. Jede Kopie ist unabhängig verschiebbar, drehbar und skalierbar.</td></tr>
+  <tr><td><strong>✕ (Kopienliste)</strong></td><td>Löscht eine einzelne Kopie (Ghost oder Duplikat) von der Kachel.</td></tr>
+  <tr><td><strong>⫠ 0°</strong></td><td>Setzt die Drehung des aktuell gewählten Elements sofort auf 0° zurück – gerade ausrichten per Klick.</td></tr>
+  <tr><td><strong>↑ ↓ ← → (D-Pad)</strong></td><td>Verschiebt das aktive Element pixelgenau in die jeweilige Richtung. Das D-Pad beschriftet sich automatisch mit dem Namen des gerade gewählten Elements.</td></tr>
+  <tr><td><strong>⊕ Overlay</strong></td><td>Öffnet den Datei-Dialog um ein eigenes Bild (z. B. Bio-Siegel, Stern-Grafik) als Overlay auf die Kachel zu legen.</td></tr>
+  <tr><td><strong>⋯ Kontextmenü</strong></td><td>Öffnet per Rechtsklick (Desktop) oder langem Tippen (Mobil) ein Menü mit weiteren Aktionen: Overlay hinzufügen, Kopie löschen, Element in Vordergrund / Hintergrund schieben.</td></tr>
+</table>
 
 <h3>1. Selektion &amp; Aktives Element</h3>
 <p>
