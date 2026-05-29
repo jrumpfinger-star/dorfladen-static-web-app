@@ -105,7 +105,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"{default_url}/api/data/v9.2/cr5d4_tables"
             f"?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,"
             f"cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,"
-            f"cr5d4_artikelletzterverkauf"
+            f"cr5d4_artikelletzterverkauf,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor"
             f"&$orderby=cr5d4_artikelbezeichnung asc"
         )
         items, status = _fetch_all_pages(url, hdrs)
@@ -128,6 +128,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             uvp_preis = item.get("cr5d4_uvp_total")
             warengruppe_bez = item.get("cr5d4_warengruppebez", "")
             letzter_verkauf = item.get("cr5d4_artikelletzterverkauf")
+            mengentyp = (item.get("cr5d4_mengentyp") or "").strip().lower()
+            mengeneinheit = item.get("cr5d4_mengeneinheit")
+            gpfaktor = item.get("cr5d4_gpfaktor") or 1
+            vk_korr = preis
+            menge_str = ""
+            if mengentyp in ("g", "kg") and gpfaktor and gpfaktor != 1:
+                vk_korr = round(preis * gpfaktor, 2)
+            if mengentyp == "g" and mengeneinheit:
+                menge_str = f"{int(mengeneinheit)} g"
+            elif mengentyp == "kg" and mengeneinheit:
+                menge_str = f"{mengeneinheit:g} kg"
 
             if not warengruppe_bez:
                 warengruppe_bez = "Sonstiges"
@@ -162,9 +173,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             groups[warengruppe_bez].append({
                 "artikelnummer": artikelnummer,
                 "bezeichnung": bezeichnung,
-                "vk": preis,
+                "vk": vk_korr,
+                "vk_base": preis,
                 "uvp": uvp_preis,
-                "discount": discount
+                "discount": discount,
+                "menge": menge_str
             })
             total += 1
 

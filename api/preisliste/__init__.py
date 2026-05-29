@@ -120,7 +120,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Barcode lookup: ?barcode=EAN – searches ALL articles (no 6-month filter)
         barcode_q = req.params.get("barcode", "").strip()
         if barcode_q:
-            bc_url = f"{default_url}/api/data/v9.2/cr5d4_tables?$filter=cr5d4_strichcode eq '{barcode_q}'&$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_strichcode"
+            bc_url = f"{default_url}/api/data/v9.2/cr5d4_tables?$filter=cr5d4_strichcode eq '{barcode_q}'&$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor"
             r = requests.get(bc_url, headers=hdrs, timeout=30)
             results = []
             # Load active Angebote to enrich barcode results
@@ -137,17 +137,30 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         if discount >= 5 and discount <= 70:
                             is_rp = True
                     ang = angebote_map.get(artnr)
+                    mengentyp = (item.get("cr5d4_mengentyp") or "").strip().lower()
+                    mengeneinheit = item.get("cr5d4_mengeneinheit")
+                    gpfaktor = item.get("cr5d4_gpfaktor") or 1
+                    vk_korr = preis
+                    menge_str = ""
+                    if mengentyp in ("g", "kg") and gpfaktor and gpfaktor != 1:
+                        vk_korr = round(preis * gpfaktor, 2)
+                    if mengentyp == "g" and mengeneinheit:
+                        menge_str = f"{int(mengeneinheit)} g"
+                    elif mengentyp == "kg" and mengeneinheit:
+                        menge_str = f"{mengeneinheit:g} kg"
                     results.append({
                         "artikelnummer": artnr,
                         "bezeichnung": item.get("cr5d4_artikelbezeichnung", ""),
-                        "vk": preis,
+                        "vk": vk_korr,
+                        "vk_base": preis,
                         "uvp": uvp,
                         "discount": discount,
                         "rp": is_rp,
                         "angebot": ang is not None,
                         "angebot_preis": ang["preis"] if ang else None,
                         "warengruppe": item.get("cr5d4_warengruppebez", ""),
-                        "strichcode": item.get("cr5d4_strichcode", "")
+                        "strichcode": item.get("cr5d4_strichcode", ""),
+                        "menge": menge_str
                     })
             return func.HttpResponse(
                 json.dumps({"success": True, "barcode": barcode_q, "results": results}, ensure_ascii=False),
@@ -155,7 +168,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
 
         # Fetch ALL articles with pagination (incl. UVP)
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode&$orderby=cr5d4_artikelbezeichnung asc"
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor&$orderby=cr5d4_artikelbezeichnung asc"
         items, status = _fetch_all_pages(url, hdrs)
         if items is None:
             return func.HttpResponse(
@@ -186,6 +199,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             uvp_preis = item.get("cr5d4_uvp_total")
             warengruppe_bez = item.get("cr5d4_warengruppebez", "")
             letzter_verkauf = item.get("cr5d4_artikelletzterverkauf")
+            mengentyp = (item.get("cr5d4_mengentyp") or "").strip().lower()
+            mengeneinheit = item.get("cr5d4_mengeneinheit")
+            gpfaktor = item.get("cr5d4_gpfaktor") or 1
+            vk_korr = preis
+            menge_str = ""
+            if mengentyp in ("g", "kg") and gpfaktor and gpfaktor != 1:
+                vk_korr = round(preis * gpfaktor, 2)
+            if mengentyp == "g" and mengeneinheit:
+                menge_str = f"{int(mengeneinheit)} g"
+            elif mengentyp == "kg" and mengeneinheit:
+                menge_str = f"{mengeneinheit:g} kg"
 
             if not warengruppe_bez:
                 warengruppe_bez = "Sonstiges"
@@ -227,14 +251,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             entry = {
                 "artikelnummer": artikelnummer,
                 "bezeichnung": bezeichnung,
-                "vk": preis,
+                "vk": vk_korr,
+                "vk_base": preis,
                 "uvp": uvp_preis,
                 "discount": discount,
                 "rp": is_rp,
                 "angebot": is_ang,
                 "angebot_preis": ang["preis"] if ang else None,
                 "angebot_statt": ang["statt"] if ang else None,
-                "strichcode": item.get("cr5d4_strichcode", "")
+                "strichcode": item.get("cr5d4_strichcode", ""),
+                "menge": menge_str
             }
             groups[warengruppe_bez].append(entry)
             total += 1

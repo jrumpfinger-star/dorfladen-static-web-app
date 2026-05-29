@@ -70,10 +70,11 @@
 
         var discHtml=extraHtml||'&nbsp;';
         var bc=item.strichcode||'';
+        var mengeHtml=item.menge?'<span class="so-menge">'+esc(item.menge)+'</span>':'';
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" data-barcode="'+esc(bc)+'" class="'+cls.trim()+'">';
-        rows+='<td class="so-td-name">'+nameHtml+'</td>';
+        rows+='<td class="so-td-name">'+nameHtml+mengeHtml+'</td>';
         rows+='<td class="so-td-disc">'+discHtml+'</td>';
-        rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;</td></tr>';
+        rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;</td></tr>'
       });
 
       // Group header — clean, no markers
@@ -94,6 +95,13 @@
   });
 
   function fmtPrice(p){if(p===null||p===undefined)return '0,00';return p.toFixed(2).replace('.',',');}
+  /* inject so-menge style once */
+  (function(){
+    if(document.getElementById('so-menge-style'))return;
+    var s=document.createElement('style');s.id='so-menge-style';
+    s.textContent='.so-menge{display:inline-block;margin-left:6px;padding:1px 7px;background:#e8f5e9;color:#2e7d32;border-radius:10px;font-size:.72rem;font-weight:600;white-space:nowrap}';
+    document.head.appendChild(s);
+  })();
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
   function initBarcodeScanner(data){

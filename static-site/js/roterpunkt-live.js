@@ -43,8 +43,9 @@
       items.forEach(function(item){
         if(item.discount<5||item.discount>70) return;
         var saving=item.uvp&&item.uvp>0&&item.vk>0?(item.uvp-item.vk):0;
+        var mengeHtml=item.menge?'<span class="rp-menge">'+esc(item.menge)+'</span>':'';
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'">';
-        rows+='<td class="rp-name">'+esc(item.bezeichnung)+'</td>';
+        rows+='<td class="rp-name">'+esc(item.bezeichnung)+mengeHtml+'</td>';
         rows+='<td class="rp-uvp">'+fmtPrice(item.uvp)+'&nbsp;&euro;</td>';
         rows+='<td class="rp-vk">'+fmtPrice(item.vk)+'&nbsp;&euro;</td>';
         rows+='<td class="rp-disc"><span class="rp-badge">-'+Math.round(item.discount)+'%</span>';
@@ -79,6 +80,13 @@
 
   function fmtPrice(p){return p===null||p===undefined?'—':p.toFixed(2).replace('.',',');}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  /* inject rp-menge style once */
+  (function(){
+    if(document.getElementById('rp-menge-style'))return;
+    var s=document.createElement('style');s.id='rp-menge-style';
+    s.textContent='.rp-menge{display:inline-block;margin-left:6px;padding:1px 7px;background:#e8f5e9;color:#2e7d32;border-radius:10px;font-size:.72rem;font-weight:600;white-space:nowrap}';
+    document.head.appendChild(s);
+  })();
 
   function initRP(){
     var input=document.getElementById('rpSearch');
