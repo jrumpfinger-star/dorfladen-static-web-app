@@ -283,10 +283,19 @@
 <!-- ═══════════════════════════════════════════ -->
 <!-- 6. QUICKACTIONS -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="quickactions">6. Die Schnellwahl-Aktionen (Popups)</h2>
+<h2 id="quickactions">6. Die Schnellwahl-Aktionen (Popups &amp; Bottom-Sheets)</h2>
 <p>
-  Auf dem Smartphone-Display müssen die wichtigsten Infos mit nur einem Daumen-Tipp erreichbar sein. Dafür wurden die <strong>Schnellwahl-Aktionen</strong> entwickelt:
+  Auf dem Smartphone-Display müssen die wichtigsten Infos mit nur einem Daumen-Tipp erreichbar sein. Dafür wurden die <strong>Schnellwahl-Aktionen</strong> entwickelt. Sie sind als moderne Bottom-Sheets (Einschub-Karten von unten) konzipiert, die über herausragende native Steuerungs-Gesten verfügen:
 </p>
+
+<!-- GESTURES COMPONENT -->
+<div style="background:#f4f6f9; border-left:4px solid #475569; border-radius:4px; padding:12px; margin-bottom:16px; font-size:13px; line-height:1.5">
+  <strong style="color:#1e293b; font-size:1.05em">📱 High-End-Gestensteuerung auf Mobilgeräten:</strong>
+  <ul style="margin:6px 0 0; padding-left:20px; font-size:12px; line-height:1.5">
+    <li><strong>Wischgeste nach unten (Swipe-down-to-dismiss):</strong> Jedes mobile Popup besitzt oben einen schmalen, abgerundeten **Haltegriff (Handlebar)**. Sie können das Popup ganz natürlich mit dem Daumen am Griff packen und nach unten ziehen, um es zu schließen. Die Abdunkelung des Hintergrunds verblasst dabei stufenlos mitsamt Ihrer Zugbewegung. Bei über 80 Pixeln Zugweg schließt sich das Fenster komplett; andernfalls federt es elastisch (Bounce-Effekt) in seine Ausgangsposition zurück.</li>
+    <li><strong>Physische Zurück-Taste (Android Back-Gesture Integration):</strong> PWAs schlossen sich bisher beim Drücken der physischen Zurück-Taste des Handys unschön komplett. Unsere Seite integriert einen intelligenten **History-Guard**! Das Öffnen eines Popups erzeugt eine unsichtbare Zwischenstation im Browserverlauf. Wischen Sie auf Ihrem Handy „Zurück“, wird nur das geöffnete Popup geschlossen, und Sie bleiben ohne App-Absturz sicher auf der Startseite!</li>
+  </ul>
+</div>
 
 <h3>🍽️ Mittagstisch (Wochenplan)</h3>
 <p>

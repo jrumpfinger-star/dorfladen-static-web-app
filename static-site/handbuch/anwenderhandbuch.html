@@ -186,7 +186,23 @@
 </p>
 
 <div class="tip">
-  Nutzen Sie die Schaltfläche <strong>„🖨️ Drucken“</strong> im Wochenplan-Reiter, um einen für A4-Druck optimierten Speiseplan zum Aufhängen im Laden zu erzeugen. Der <strong>„Teilen“-Button</strong> generiert einen praktischen WhatsApp-Link für Ihre Kunden.
+  <h4 style="margin:0 0 6px; color:#1b5e20">🖨️ A4-Druck- &amp; Print-Layout-Steuerung</h4>
+  <p style="margin:0 0 8px">
+    Wenn Sie im Wochenplan-Reiter auf die Schaltfläche <strong>„🖨️ Drucken“</strong> klicken, passiert Folgendes im Hintergrund:
+  </p>
+  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5; font-size:12px">
+    <li><strong>Automatisches Render-Template:</strong> Das CMS generiert anhand Ihres aktuellen Wochenplan-Designs ein bildstarkes A4-Wochenplan-Plakat.</li>
+    <li><strong>Spezielle CSS-Print-Direktive:</strong> Es wird eine temporäre Druck-Überlagerung (Overlay) mitsamt einer maßgeschneiderten Druck-CSS-Regel (<code>@media print</code>) im Dokument erzeugt. Diese schaltet alle Navigationselemente, Knöpfe, Statusleisten und Hintergründe des Webbrowsers vollständig stumm, skaliert das Wochenplakat auf exakt 100% Breite und öffnet direkt das systemeigene Druckmenü Ihres Rechners oder Handys zum unkomplizierten A4-Ausdruck für das Ladenregal.</li>
+  </ul>
+
+  <h4 style="margin:12px 0 6px; color:#1b5e20">📲 Integrierter WhatsApp Speiseplan-Publisher (Teilen-Funktion)</h4>
+  <p style="margin:0 0 8px">
+    Klicken Sie auf <strong>„Teilen“</strong>, um den Mittagstisch blitzschnell an Kunden oder Gruppenchats zu senden:
+  </p>
+  <ul style="margin:0; padding-left:20px; line-height:1.5; font-size:12px">
+    <li><strong>Poster-Generierung &amp; Download:</strong> Das CMS zeichnet im Hintergrund ein hochauflösendes Wochenplan-Plakat als PNG-Bilddatei auf einem HTML5-Canvas und stößt einen automatischen lokalen Datei-Download mitsamt passendem Dateinamen (z. B. <code>mittagstisch-kw23.png</code>) an.</li>
+    <li><strong>Texterstellung &amp; Weiterleitung:</strong> Gleichzeitig wird ein strukturierter, ansprechender Werbetext mitsamt Emojis (z. B. <i>„🍽️ Mittagstisch KW 23 ist da!“</i> mitsamt Tagesgerichten und Preisen) generiert. Das CMS öffnet im Anschluss automatisch die WhatsApp-Webschnittstelle (<code>https://wa.me/</code>), fügt den vorbereiteten Text ein und ermöglicht es Ihnen, diesen mitsamt dem heruntergeladenen Plakatbild direkt mit einem Fingertipp an Ihre Kunden zu senden!</li>
+  </ul>
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
@@ -404,6 +420,16 @@
   </li>
 </ol>
 
+<h3>⚡ Kompaktmodus für Power-User (Compact Mode)</h3>
+<p>
+  Um die Benutzeroberfläche des Design-Tabs übersichtlich zu halten – besonders auf kleineren Monitoren oder Laptops – wurde ein intelligenter <strong>Kompaktmodus</strong> integriert:
+</p>
+<ul>
+  <li><strong>Auslösung:</strong> Aktivieren Sie ganz oben im Reiter „Design“ rechts neben der Überschrift die Checkbox <strong>„Kompaktmodus“</strong>.</li>
+  <li><strong>Ablauf &amp; Aussehen:</strong> Das CMS zieht alle Karten, Abstände und Steuerblöcke im Hintergrund über eine spezielle CSS-Kompakt-Klasse (<code>.cms-compact-on</code>) stark zusammen. Ausführliche Beschreibungen und Hilfetexte werden sanft ausgeblendet.</li>
+  <li><strong>Ihr Vorteil:</strong> Sie sehen alle wichtigen Farbwähler, Schieberegler und Template-Schaltflächen auf einen Blick ohne langes Scrollen (Scroll-fatigue wird eliminiert). Das Arbeiten fühlt sich dadurch extrem schnell und direkt an.</li>
+</ul>
+
 <!-- ═══════════════════════════════════════════ -->
 <!-- 12. FLYER- & KACHEL-EDITOR IM DETAIL -->
 <!-- ═══════════════════════════════════════════ -->
@@ -488,6 +514,15 @@
 <ul>
   <li><strong>Aktionssiegel:</strong> z. B. <i>„Bio“</i>, <i>„Regional“</i> oder <i>„Saison-Hit“</i>.</li>
   <li><strong>Störer-Grafiken:</strong> z. B. dekorative Sterne, Rabattsymbole oder saisonalen Schmuck.</li>
+</ul>
+
+<h3>⚡ 8. Automatische Bildkompression &amp; Mobile Optimierung</h3>
+<p>
+  Beim Hochladen von eigenen Bildern (für Artikel, Overlays oder Beitragsfotos) sorgt ein integrierter Algorithmus vollautomatisch für beste Ladezeiten im ländlichen Mobilfunknetz:
+</p>
+<ul>
+  <li><strong>Hintergrund-Skalierung:</strong> Große Kamerafotos (oft 4 bis 10 Megabyte groß) werden im Hintergrund über ein temporäres HTML5 Canvas-Element auf eine websichere Maximalgröße von 500 x 500 Pixeln herunterskaliert.</li>
+  <li><strong>75% JPEG-Kompression:</strong> Das Bild wird in ein performantes JPEG-Format mit exakt <strong>75% Bildqualität</strong> konvertiert. Dies reduziert die Datenlast eines Bildes um über <strong>95%</strong> (von mehreren Megabytes auf winzige 20 bis 45 Kilobytes), ohne dass für das menschliche Auge auf dem Plakat oder Smartphone ein Qualitätsverlust sichtbar wäre.</li>
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
