@@ -28,6 +28,32 @@ def normalize_warengruppe(name):
 
     return name
 
+def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung):
+    """Berechne korrigierten VK-Preis und Mengenanzeige-String.
+    Sonderfall: mengenerfassung=3 + mengentyp=kg → VK/10, Menge='100 g'
+    Sonst: mengentyp g/kg + gpfaktor != 1 → VK * gpfaktor, Menge aus Mengeneinheit.
+    """
+    mt = (mengentyp or "").strip().lower()
+    me_val = str(mengenerfassung or "").strip()
+    vk_korr = preis
+    menge_str = ""
+    if mt == "kg" and me_val == "3":
+        # Spezialfall: Preis gilt für 100g (Basis 1kg / 10)
+        vk_korr = round(preis / 10, 2)
+        menge_str = "100 g"
+    elif mt in ("g", "kg") and gpfaktor and gpfaktor != 1:
+        vk_korr = round(preis * gpfaktor, 2)
+        if mt == "g" and mengeneinheit:
+            menge_str = f"{int(mengeneinheit)} g"
+        elif mt == "kg" and mengeneinheit:
+            menge_str = f"{mengeneinheit:g} kg"
+    elif mt == "g" and mengeneinheit:
+        menge_str = f"{int(mengeneinheit)} g"
+    elif mt == "kg" and mengeneinheit:
+        menge_str = f"{mengeneinheit:g} kg"
+    return vk_korr, menge_str
+
+
 def get_token(url_setting_name="DV_DEFAULT_URL"):
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
     client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
@@ -120,7 +146,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Barcode lookup: ?barcode=EAN – searches ALL articles (no 6-month filter)
         barcode_q = req.params.get("barcode", "").strip()
         if barcode_q:
-            bc_url = f"{default_url}/api/data/v9.2/cr5d4_tables?$filter=cr5d4_strichcode eq '{barcode_q}'&$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor"
+            bc_url = f"{default_url}/api/data/v9.2/cr5d4_tables?$filter=cr5d4_strichcode eq '{barcode_q}'&$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung"
             r = requests.get(bc_url, headers=hdrs, timeout=30)
             results = []
             # Load active Angebote to enrich barcode results
@@ -137,17 +163,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         if discount >= 5 and discount <= 70:
                             is_rp = True
                     ang = angebote_map.get(artnr)
-                    mengentyp = (item.get("cr5d4_mengentyp") or "").strip().lower()
+                    mengentyp = item.get("cr5d4_mengentyp")
                     mengeneinheit = item.get("cr5d4_mengeneinheit")
                     gpfaktor = item.get("cr5d4_gpfaktor") or 1
-                    vk_korr = preis
-                    menge_str = ""
-                    if mengentyp in ("g", "kg") and gpfaktor and gpfaktor != 1:
-                        vk_korr = round(preis * gpfaktor, 2)
-                    if mengentyp == "g" and mengeneinheit:
-                        menge_str = f"{int(mengeneinheit)} g"
-                    elif mengentyp == "kg" and mengeneinheit:
-                        menge_str = f"{mengeneinheit:g} kg"
+                    mengenerfassung = item.get("cr5d4_mengenerfassung")
+                    vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung)
                     results.append({
                         "artikelnummer": artnr,
                         "bezeichnung": item.get("cr5d4_artikelbezeichnung", ""),
@@ -168,7 +188,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
 
         # Fetch ALL articles with pagination (incl. UVP)
-        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor&$orderby=cr5d4_artikelbezeichnung asc"
+        url = f"{default_url}/api/data/v9.2/cr5d4_tables?$select=cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung&$orderby=cr5d4_artikelbezeichnung asc"
         items, status = _fetch_all_pages(url, hdrs)
         if items is None:
             return func.HttpResponse(
@@ -199,17 +219,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             uvp_preis = item.get("cr5d4_uvp_total")
             warengruppe_bez = item.get("cr5d4_warengruppebez", "")
             letzter_verkauf = item.get("cr5d4_artikelletzterverkauf")
-            mengentyp = (item.get("cr5d4_mengentyp") or "").strip().lower()
+            mengentyp = item.get("cr5d4_mengentyp")
             mengeneinheit = item.get("cr5d4_mengeneinheit")
             gpfaktor = item.get("cr5d4_gpfaktor") or 1
-            vk_korr = preis
-            menge_str = ""
-            if mengentyp in ("g", "kg") and gpfaktor and gpfaktor != 1:
-                vk_korr = round(preis * gpfaktor, 2)
-            if mengentyp == "g" and mengeneinheit:
-                menge_str = f"{int(mengeneinheit)} g"
-            elif mengentyp == "kg" and mengeneinheit:
-                menge_str = f"{mengeneinheit:g} kg"
+            mengenerfassung = item.get("cr5d4_mengenerfassung")
+            vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung)
 
             if not warengruppe_bez:
                 warengruppe_bez = "Sonstiges"
