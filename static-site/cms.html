@@ -2690,11 +2690,131 @@ document.head.appendChild(msalScript);
               </ol>
             </div>
 
-            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
               <strong style="color:#b91c1c">&#128204; Design-Farben versehentlich ge&#228;ndert &#8211; Reset</strong>
               <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
                 <li>Tab <strong>Design</strong> &#8594; <strong>&#8222;&#10005; Werkseinstellungen&#8220;</strong> klicken &#8594; best&#228;tigen.</li>
                 <li><strong>&#8222;&#128190; Alles speichern&#8220;</strong> klicken um Reset dauerhaft zu &#252;bernehmen.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Artikel-Bild erscheint nicht in der Kachel</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Kachel-Editor &#246;ffnen &#8594; Schaltfl&#228;che <strong>&#128269; Bild suchen</strong> neben der Artikelzeile klicken.</li>
+                <li>Falls kein Bild gefunden: Bild manuell &#252;ber <strong>&#128193; Hochladen</strong> einf&#252;gen.</li>
+                <li>Bild-Aufl&#246;sung mind. 400&#215;400 px f&#252;r scharfe Darstellung.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; News-Beitrag erscheint nicht auf der Homepage</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Tab <strong>Aktuelles</strong> &#8594; Status des Beitrags pr&#252;fen: muss <strong>Ver&#246;ffentlicht</strong> sein.</li>
+                <li>Datum pr&#252;fen &#8211; Beitr&#228;ge mit zuk&#252;nftigem Datum werden noch nicht angezeigt.</li>
+                <li>Hard-Refresh: <kbd>Strg</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Logo wird auf der Homepage nicht angezeigt</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Tab <strong>Homepage</strong> &#8594; Abschnitt <strong>Logo</strong> &#8594; pr&#252;fen ob ein Bild hochgeladen ist.</li>
+                <li>Dateiformat muss PNG oder JPG sein, max. 2 MB.</li>
+                <li>Nach dem Speichern Seite neu laden (F5).</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Preisliste zeigt keine Artikel</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Seite neu laden &#8594; Daten kommen direkt aus dem Warenwirtschaftssystem.</li>
+                <li>Falls nach 30 Sekunden noch leer: Internetverbindung pr&#252;fen.</li>
+                <li>Roter-Punkt-Liste wird nur bef&#252;llt wenn Artikel in den letzten 6 Wochen verkauft wurden.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; &#214;ffnungszeiten-Eintrag l&#228;sst sich nicht speichern</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Uhrzeiten im Format <code>HH:MM</code> (z.B. <code>08:00</code>) eintragen.</li>
+                <li>Mehrere Zeitr&#228;ume mit Semikolon trennen: <code>08:00&#8211;12:00;14:00&#8211;18:00</code>.</li>
+                <li>Sonderzeichen pr&#252;fen &#8211; keine Anf&#252;hrungszeichen oder Schr&#228;gstriche.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Wochenplan-Plakat hat falsches Datum</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Tab <strong>Wochenplan</strong> &#8594; Woche mit den Pfeil-Schaltfl&#228;chen w&#228;hlen.</li>
+                <li>Sicherstellen dass die richtige KW ausgew&#228;hlt ist, bevor das Plakat gedruckt wird.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Push-Nachricht kommt nicht bei Android an</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Systemeinstellungen &#8594; Apps &#8594; Chrome/Browser &#8594; Benachrichtigungen &#8594; <strong>Erlaubt</strong>.</li>
+                <li>Energiesparmodus deaktivieren &#8211; dieser kann Push blockieren.</li>
+                <li>Im CMS: Tab <strong>Push &#8594; Subscriber</strong> &#8594; pr&#252;fen ob das Ger&#228;t eingetragen ist.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Kachel-Text l&#228;sst sich nicht klicken / bearbeiten</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Ein Bild liegt m&#246;glicherweise &#252;ber dem Textfeld &#8594; Bild zuerst verschieben oder verkleinern.</li>
+                <li>Kachel-Editor scrollt nach oben &#8594; ggf. Zoom des Browsers reduzieren (<kbd>Strg</kbd>+<kbd>&#8722;</kbd>).</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Flyer-Vorschau weicht vom Ausdruck ab</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Im Druckdialog <strong>&#8222;Hintergrundgrafiken drucken&#8220;</strong> aktivieren.</li>
+                <li>Skalierung auf <strong>100%</strong> belassen &#8211; keine Auto-Anpassung.</li>
+                <li>Chrome/Edge liefert genauere Druckergebnisse als Firefox.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Aktion hat falschen Zeitraum nach dem Speichern</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Tab <strong>Sonderangebote</strong> &#8594; Aktion &#8594; <strong>Bearbeiten</strong>.</li>
+                <li><strong>G&#252;ltig von</strong> und <strong>G&#252;ltig bis</strong> korrigieren.</li>
+                <li>Auf <strong>&#128190; Speichern</strong> klicken &#8594; Homepage per Hard-Refresh pr&#252;fen.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Galerie-Bild wird in falscher Kategorie angezeigt</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Tab <strong>Impressionen</strong> &#8594; Bild anklicken &#8594; Kategorie-Dropdown &#228;ndern.</li>
+                <li>Speichern &#8594; kurz warten bis die Galerie aktualisiert ist.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; CMS-Passwort vergessen</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Das Passwort steht im Dorfladen-Betreiberhandbuch (bei der Einrichtung ausgh&#228;ndigt).</li>
+                <li>Zur Zur&#252;cksetzung: technischen Betreuer kontaktieren.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px">
+              <strong style="color:#b91c1c">&#128204; Beitrag im &#8222;Aktuelles&#8220;-Ticker l&#228;uft zu schnell / zu langsam</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Die Geschwindigkeit h&#228;ngt von der Textl&#228;nge ab &#8211; k&#252;rzere Texte = schnellerer Durchlauf.</li>
+                <li>Sehr kurze Meldungen ruhig etwas l&#228;nger formulieren f&#252;r eine angenehme Lesegeschwindigkeit.</li>
+              </ol>
+            </div>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
+              <strong style="color:#b91c1c">&#128204; WhatsApp-Teilen sendet falschen Link / Text</strong>
+              <ol style="margin:6px 0 0;padding-left:20px;font-size:12px">
+                <li>Der Teilen-Button erzeugt den Text automatisch aus Titel und G&#252;ltigkeitszeitraum der Aktion.</li>
+                <li>Titel und Datum der Aktion korrigieren &#8594; danach erneut auf <strong>Teilen</strong> klicken.</li>
               </ol>
             </div>
 
@@ -2767,7 +2887,7 @@ document.head.appendChild(msalScript);
     {id:'push-help',    kw:'push benachrichtigung abonnent subscriber senden vorlage mittagstisch angebote'},
     {id:'sort-help',    kw:'sortiment preisliste warengruppe produkt artikel zeile eintrag'},
     {id:'gallery-help', kw:'galerie impressionen foto bild lightbox kategorie filter hochladen'},
-    {id:'howto-help',   kw:'problemlöser freistellen weißer hintergrund verwerfen undo kachel überlager siegel ghost push iphone angebot farbe reset'},
+    {id:'howto-help',   kw:'problemlöser freistellen weißer hintergrund verwerfen undo kachel überlager siegel ghost push iphone angebot farbe reset artikelbild news logo preisliste öffnungszeiten wochenplan datum android kachel text flyer drucken aktion zeitraum galerie kategorie passwort ticker whatsapp teilen'},
     {id:'faq-help',     kw:'faq fragen verbindungsfehler unscharf bild rotation drucken langsam abonnent standard werkseinstellungen'},
   ];
 
