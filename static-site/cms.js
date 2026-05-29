@@ -97,9 +97,10 @@
               nr: item.artikelnummer || '',
               sc: item.strichcode || '',
               p: item.vk || 0,
-              details: '',
+              details: item.menge || '',
               preis: item.vk || 0,
               statt_preis: item.angebot_statt || item.uvp || 0,
+              menge: item.menge || '',
               wg: wg,
               produktVal: item.bezeichnung
             });
@@ -434,7 +435,7 @@
       var metaParts=[];
       if(m.nr) metaParts.push('Nr: '+m.nr);
       if(m.sc) metaParts.push('SC: '+m.sc);
-      if(m.preis) metaParts.push('VK: '+Number(m.preis).toFixed(2).replace('.',',')+' €');
+      if(m.preis) metaParts.push('VK: '+Number(m.preis).toFixed(2).replace('.',',')+' €'+(m.menge?' / '+m.menge:''));
       if(m.statt_preis) metaParts.push('Aktion: '+Number(m.statt_preis).toFixed(2).replace('.',',')+' €');
       opt.innerHTML='<div class="cms-art-opt-name">'+esc(m.b||m.produktVal||'')+'</div><div class="cms-art-opt-meta">'+esc(metaParts.join(' · '))+'</div>';
       opt.addEventListener('mousedown',function(e){
@@ -445,12 +446,12 @@
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
           if(nrInp) nrInp.value=m.nr||m.sc||'';
           var detInp=row.querySelector('[data-f="details"]');
-          if(detInp && m.details) detInp.value=m.details;
+          if(detInp) detInp.value=m.menge||m.details||'';
           var preisInp=row.querySelector('[data-f="preis"]');
           if(preisInp && m.preis) preisInp.value=Number(m.preis).toFixed(2).replace('.',',');
           var stattInp=row.querySelector('[data-f="statt_preis"]');
           if(stattInp && m.statt_preis) stattInp.value=Number(m.statt_preis).toFixed(2).replace('.',',');
-          console.log('[CMS] Selected article:',m.b,'Nr:',m.nr,'Details:',m.details,'Preis:',m.preis,'Statt:',m.statt_preis);
+          console.log('[CMS] Selected article:',m.b,'Nr:',m.nr,'Menge:',m.menge,'Preis:',m.preis,'Statt:',m.statt_preis);
           // Auto-load image from SharePoint (by artikelnummer or strichcode)
           if((m.nr || m.sc) && typeof cmsLoadBildSharePoint==='function'){
             var rowId=row.id.replace('cms-ar-','');
