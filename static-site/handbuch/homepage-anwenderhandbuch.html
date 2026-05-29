@@ -96,6 +96,7 @@
   <ol>
     <li><a href="#einleitung">Einleitung &amp; Zielsetzung</a></li>
     <li><a href="#oberflaeche">Die Benutzeroberfläche: Desktop vs. Mobile</a></li>
+    <li><a href="#menustruktur">Menüstruktur &amp; Unterseiten der Homepage</a></li>
     <li><a href="#status">Echtzeit-Öffnungszeiten &amp; Statusanzeige</a></li>
     <li><a href="#ticker">Der Aktuelles-Ticker &amp; News-Archiv</a></li>
     <li><a href="#quickactions">Die Schnellwahl-Aktionen (Popups)</a></li>
@@ -150,9 +151,85 @@
 <div class="image-caption">Abb. 2: Die für Mobilgeräte optimierte PWA-Ansicht mit Newsticker</div>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 3. STATUS -->
+<!-- 3. MENUSTRUKTUR -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="status">3. Echtzeit-Öffnungszeiten &amp; Statusanzeige</h2>
+<h2 id="menustruktur">3. Menüstruktur &amp; Unterseiten der Homepage</h2>
+<p>
+  Die Homepage des Dorfladens Oberornau bietet eine klare und gut strukturierte Navigation, um Besuchern, Genossen und Kunden schnellen Zugriff auf alle relevanten Informationen zu ermöglichen.
+</p>
+
+<h3>Das Navigationskonzept</h3>
+<ul>
+  <li><strong>Desktop-Ansicht:</strong> Auf der linken Seite befindet sich eine feste, stets sichtbare Menüleiste (Sidebar). Mit nur einem Klick wechseln Sie zwischen den Hauptthemen.</li>
+  <li><strong>Mobile-Ansicht:</strong> Um wertvollen Platz zu sparen, wird die Navigation hinter der Hamburger-Schaltfläche (Symbol mit den drei Strichen <code>☰</code>) links oben verborgen. Ein Tippen öffnet das Seitenmenü (Navigation Drawer), das alle Bereiche sauber auflistet.</li>
+</ul>
+
+<h3>Das Hauptmenü (Kernseiten)</h3>
+<p>
+  Das Hauptmenü führt zu den am häufigsten genutzten Informationsbereichen:
+</p>
+<ul>
+  <li>
+    <strong>Startseite (<code>index.html</code>):</strong> 
+    Die Schaltzentrale für Besucher. Sie zeigt sofort den aktuellen Öffnungsstatus (Grün/Rot) an, lässt den Newsticker mit den neuesten Eilnachrichten durchlaufen und bietet direkten Zugriff auf die Schnellwahl-Kacheln (Mittagstisch, Angebote, Roter Punkt).
+  </li>
+  <li>
+    <strong>Öffnungszeiten (<code>oeffnungszeiten.html</code>):</strong> 
+    Hier sind alle regulären Ladenöffnungszeiten von Montag bis Sonntag übersichtlich in einer großen Wochentabelle aufgeführt, ergänzt durch eventuelle Feiertagsregelungen oder Sonder-Öffnungszeiten.
+  </li>
+  <li>
+    <strong>Aktuelles (<code>aktuelles.html</code>):</strong> 
+    Das digitale schwarze Brett unseres Dorfes. Hier erscheinen alle wichtigen Neuigkeiten chronologisch sortiert mit ansprechenden Bildern und ausführlichen Texten.
+  </li>
+  <li>
+    <strong>Sortiment &amp; Preise (<code>sortiment.html</code>):</strong> 
+    Ein moderner, durchsuchbarer Produktkatalog. Kunden können gezielt nach Produkten suchen (z.B. „Milch“ eintippen) oder Kategorien filtern (Tiefkühl, Obst &amp; Gemüse, etc.), um Preise und Füllmengen vorab zu prüfen.
+  </li>
+  <li>
+    <strong>Impressionen (<code>bilder.html</code>):</strong> 
+    Eine interaktive Galerie mit hochauflösenden Fotos unseres Dorfladens. Sie zeigt das Geschäft von innen, die Frischetheke, das Team und das lebendige Miteinander vor Ort.
+  </li>
+</ul>
+
+<h3>Das Genossenschafts-Untermenü (Submenüs)</h3>
+<p>
+  Da der Dorfladen ein genossenschaftlich getragenes Gemeinschaftsprojekt der Bürger ist, widmet sich ein eigener Bereich der Organisation und den Beteiligungsmöglichkeiten:
+</p>
+<ul>
+  <li>
+    <strong>Geschäftsführung (<code>geschaeftsfuehrung.html</code>):</strong> 
+    Stellt die Personen vor, die den Dorfladen ehrenamtlich und hauptberuflich leiten. Es beschreibt deren Aufgabenbereiche, Verantwortungen und Kontaktdaten.
+  </li>
+  <li>
+    <strong>Beirat (<code>beirat.html</code>):</strong> 
+    Zeigt die Mitglieder des Beirats, die die Geschäftsführung beratend unterstützen und die Interessen der Genossen im täglichen Ladenbetrieb vertreten.
+  </li>
+  <li>
+    <strong>Stille Gesellschafter (<code>stille-gesellschafter.html</code>):</strong> 
+    Erklärt detailliert das Beteiligungsmodell für stille Gesellschafter. Bürger erfahren hier, wie sie Anteile zeichnen können, wie das Genossenschaftskapital verwendet wird und welche Rechte und Pflichten damit verbunden sind.
+  </li>
+  <li>
+    <strong>Konzept &amp; Entstehung (<code>konzept.html</code>):</strong> 
+    Die spannende Gründungsgeschichte unseres Dorfladens – von der ersten Bürgerversammlung über die Planungsphasen bis hin zur Eröffnung. Zudem wird hier das dahinterstehende Nahversorgungskonzept erläutert.
+  </li>
+</ul>
+
+<h3>Kulinarische Sonderseiten</h3>
+<ul>
+  <li>
+    <strong>Essen im Dorfladen (<code>essen-im-dorfladen.html</code>):</strong> 
+    Beschreibt unser gemütliches Bistro-Café im Herzen des Ladens. Besucher erfahren alles über den Mittagstisch, die angebotenen Kaffeespezialitäten, Kuchen und Snack-Möglichkeiten sowie Vorbestellungsoptionen für Mittagessen.
+  </li>
+  <li>
+    <strong>Roter Punkt (<code>roter-punkt.html</code>):</strong> 
+    Unter dem Slogan „Roter Punkt“ werden Grundnahrungsmittel und Drogerieartikel des täglichen Bedarfs dauerhaft extrem günstig angeboten, um eine bezahlbare Grundversorgung im ländlichen Raum abzusichern. Diese Seite listet all diese Eckartikel und deren Preise auf.
+  </li>
+</ul>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 4. STATUS -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="status">4. Echtzeit-Öffnungszeiten &amp; Statusanzeige</h2>
 <p>
   Das Herzstück der Startseite ist das dynamische Öffnungszeiten-System.
 </p>
@@ -171,9 +248,9 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 4. TICKER -->
+<!-- 5. TICKER -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="ticker">4. Der Aktuelles-Ticker &amp; News-Archiv</h2>
+<h2 id="ticker">5. Der Aktuelles-Ticker &amp; News-Archiv</h2>
 <p>
   Der News-Bereich hält Kunden über Neuigkeiten auf dem Laufenden.
 </p>
@@ -183,9 +260,9 @@
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 5. QUICKACTIONS -->
+<!-- 6. QUICKACTIONS -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="quickactions">5. Die Schnellwahl-Aktionen (Popups)</h2>
+<h2 id="quickactions">6. Die Schnellwahl-Aktionen (Popups)</h2>
 <p>
   Auf dem Smartphone-Display müssen die wichtigsten Infos mit nur einem Daumen-Tipp erreichbar sein. Dafür wurden die <strong>Schnellwahl-Aktionen</strong> entwickelt:
 </p>
@@ -216,9 +293,9 @@
 </p>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 6. PREISLISTE -->
+<!-- 7. PREISLISTE -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="preisliste">6. Interaktive Sortiments- und Preisliste</h2>
+<h2 id="preisliste">7. Interaktive Sortiments- und Preisliste</h2>
 <p>
   Die Preisliste (erreichbar über die Navigation oder die Kachel „Preisliste“ auf dem Smartphone) ist ein digitaler Katalog des Gesamtsortiments.
 </p>
@@ -229,9 +306,9 @@
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 7. PWA -->
+<!-- 8. PWA -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="pwa">7. PWA: Die Homepage als App auf dem Smartphone installieren</h2>
+<h2 id="pwa">8. PWA: Die Homepage als App auf dem Smartphone installieren</h2>
 <p>
   Da die Dorfladen-Homepage eine Progressive Web App ist, können Sie diese wie eine vollwertige App auf Ihrem Mobiltelefon installieren – ohne den Google Play Store oder Apple App Store aufrufen zu müssen!
 </p>
@@ -267,9 +344,9 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 8. PUSH -->
+<!-- 9. PUSH -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="push">8. Push-Benachrichtigungen aktivieren</h2>
+<h2 id="push">9. Push-Benachrichtigungen aktivieren</h2>
 <p>
   Wenn Sie immer sofort informiert werden möchten, sobald der Mittagstisch für die neue Woche bereitsteht oder frische Sonderangebote eintreffen, können Sie die Push-Benachrichtigungen aktivieren.
 </p>
@@ -292,9 +369,9 @@
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 9. DATENSCHUTZ -->
+<!-- 10. DATENSCHUTZ -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="datenschutz">9. Impressum, Datenschutz &amp; Cookie-Richtlinien</h2>
+<h2 id="datenschutz">10. Impressum, Datenschutz &amp; Cookie-Richtlinien</h2>
 <p>
   Als Genossenschaft legt der Dorfladen Oberornau höchsten Wert auf Datensparsamkeit und Rechtskonformität.
 </p>
@@ -305,9 +382,9 @@
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 10. FAQ -->
+<!-- 11. FAQ -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="faq">10. Häufige Fragen &amp; Problemlösungen (FAQ)</h2>
+<h2 id="faq">11. Häufige Fragen &amp; Problemlösungen (FAQ)</h2>
 
 <h4>Die Mittagstisch-Preise auf der Seite weichen von den Flyern ab – woran liegt das?</h4>
 <p>
