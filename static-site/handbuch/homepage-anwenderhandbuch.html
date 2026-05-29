@@ -158,11 +158,32 @@
   Die Homepage des Dorfladens Oberornau bietet eine klare und gut strukturierte Navigation, um Besuchern, Genossen und Kunden schnellen Zugriff auf alle relevanten Informationen zu ermöglichen.
 </p>
 
-<h3>Das Navigationskonzept</h3>
-<ul>
-  <li><strong>Desktop-Ansicht:</strong> Auf der linken Seite befindet sich eine feste, stets sichtbare Menüleiste (Sidebar). Mit nur einem Klick wechseln Sie zwischen den Hauptthemen.</li>
-  <li><strong>Mobile-Ansicht:</strong> Um wertvollen Platz zu sparen, wird die Navigation hinter der Hamburger-Schaltfläche (Symbol mit den drei Strichen <code>☰</code>) links oben verborgen. Ein Tippen öffnet das Seitenmenü (Navigation Drawer), das alle Bereiche sauber auflistet.</li>
-</ul>
+<h3>Das Navigationskonzept: Desktop vs. Mobile</h3>
+<p>
+  Die Navigation auf der Homepage unterscheidet sich grundlegend zwischen Desktop- und Mobile-Endgeräten, um für beide Bildschirmgrößen das bestmögliche Nutzererlebnis zu bieten:
+</p>
+
+<!-- DESKTOP NAV -->
+<div style="background:#e8f5e9; border-left:4px solid #2e7d32; border-radius:4px; padding:12px; margin-bottom:16px">
+  <strong style="color:#1b5e20; font-size:1.1em">💻 Desktop-Version (Computer, Laptop &amp; große Tablets)</strong>
+  <ul style="margin:8px 0 0; padding-left:20px; line-height:1.5; font-size:13px">
+    <li><strong>Aussehen (Look):</strong> Eine feste, vertikale Sidebar am linken Bildschirmrand. Sie zeigt oben das Dorfladen-Logo und darunter die Navigationsschaltflächen mitsamt eingerückten Submenüs unter „Genossenschaft“ und „Kulinarisches“.</li>
+    <li><strong>Funktionsweise (Function):</strong> Das Menü bleibt beim Scrollen permanent links im Bild fixiert (sticky), so dass die Navigation zu jeder Zeit sofort erreichbar ist.</li>
+    <li><strong>Ausführung (Execution):</strong> Ein einfacher Linksklick auf einen Menüpunkt wechselt augenblicklich zur entsprechenden Seite.</li>
+    <li><strong>Angezeigte Inhalte (Displayed Content):</strong> Der Hauptinhalt wird rechts daneben großflächig dargestellt. Alle Menüpunkte und ihre Unterseiten sind direkt sichtbar, ohne dass vorher ein Menü geöffnet werden muss.</li>
+  </ul>
+</div>
+
+<!-- MOBILE NAV -->
+<div style="background:#fff3e0; border-left:4px solid #ef6c00; border-radius:4px; padding:12px; margin-bottom:16px">
+  <strong style="color:#e65100; font-size:1.1em">📱 Mobile-Version (Smartphones &amp; schmale Tablets)</strong>
+  <ul style="margin:8px 0 0; padding-left:20px; line-height:1.5; font-size:13px">
+    <li><strong>Aussehen (Look):</strong> Am oberen Rand befindet sich eine schlanke, grüne Header-Bar mit dem Laden-Schriftzug und dem Hamburger-Symbol (drei waagerechte Striche <code>☰</code>) in der linken Ecke. Die Navigation selbst ist unsichtbar.</li>
+    <li><strong>Funktionsweise (Function):</strong> Das Menü ist in einem platzsparenden, linksseitig ausziehbaren Seitenmenü (Navigation Drawer) verborgen, um den gesamten Bildschirm für den eigentlichen Inhalt freizuhalten.</li>
+    <li><strong>Ausführung (Execution):</strong> Der Anwender tippt auf das Hamburger-Symbol <code>☰</code> (oder wischt vom linken Bildschirmrand nach rechts). Daraufhin schiebt sich das Menü elegant über den Inhalt. Ein Fingertipp auf eine Seite lädt den Inhalt und schließt das Menü vollkommen automatisch.</li>
+    <li><strong>Angezeigte Inhalte (Displayed Content):</strong> Im ausgezogenen Drawer sind alle Hauptmenüpunkte sowie ausklappbare Akkordeon-Untermenüs für die Genossenschafts-Seiten sauber vertikal untereinander gelistet.</li>
+  </ul>
+</div>
 
 <h3>Das Hauptmenü (Kernseiten)</h3>
 <p>
@@ -358,15 +379,22 @@
   </table>
 </div>
 
-<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📱 4. Mobile Optimierung (Responsive Viewport)</h4>
-  <p style="margin:0 0 8px">
-    Die Tabellen-Darstellung passt sich vollkommen flüssig an die Displaygröße des genutzten Endgeräts an.
-  </p>
-  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
-    <li><strong>Desktop-Darstellung:</strong> Breite, übersichtliche Spalten mit klaren Gitterlinien und perfektem Kontrast.</li>
-    <li><strong>Smartphone-Darstellung:</strong> Die Spaltenbreiten schrumpfen flexibel zusammen. Füllmengen werden platzsparend unter dem Produktnamen platziert, und der Preis wandert an den rechten Rand, um die Lesbarkeit auch auf kleinsten Displays optimal zu gewährleisten.</li>
-    <li><strong>Schnittstelle:</strong> Es gibt keine unleserlichen Miniatur-Schriften. Alle Bedienelemente sind fingerfreundlich gestaltet.</li>
+<!-- COMPARISON PORTION -->
+<div style="background:#e8f5e9; border-left:4px solid #2e7d32; border-radius:4px; padding:12px; margin-bottom:12px">
+  <strong style="color:#1b5e20; font-size:13px">� Die Preisliste in der Desktop-Version</strong>
+  <ul style="margin:6px 0 0; padding-left:20px; font-size:12px; line-height:1.5">
+    <li><strong>Aussehen (Look):</strong> Große, breite und glasklar strukturierte Tabelle. Jede Abteilung bildet einen eigenen Block mit einer dunkelgrünen Überschrift.</li>
+    <li><strong>Funktionen &amp; Ausführung (Functions &amp; Execution):</strong> Die Kategorie-Schaltflächen oben sind nebeneinander aufgereiht. Ein Mausklick löst einen flüssigen Bildlauf direkt zum entsprechenden Block aus. Die Textsuche ist eine breite, markante Eingabezeile.</li>
+    <li><strong>Angezeigte Inhalte (Displayed Content):</strong> Der Produktname, die exakte Füllmenge und der Preis stehen sauber nebeneinander in separaten, hochauflösenden Tabellenspalten. Die Preise sind mitsamt grüner Plaketten-Hintergründe hervorgehoben.</li>
+  </ul>
+</div>
+
+<div style="background:#fff3e0; border-left:4px solid #ef6c00; border-radius:4px; padding:12px; margin-bottom:16px">
+  <strong style="color:#e65100; font-size:13px">📱 Die Preisliste in der Mobile-Version (Smartphone)</strong>
+  <ul style="margin:6px 0 0; padding-left:20px; font-size:12px; line-height:1.5">
+    <li><strong>Aussehen (Look):</strong> Platzsparendes, kompaktes Ein-Spalten-Listenlayout. Die Zeilen gehen fließend ineinander über, um horizontales Scrollen vollständig zu vermeiden.</li>
+    <li><strong>Funktionen &amp; Ausführung (Functions &amp; Execution):</strong> Die Kategorie-Schnellwahlknöpfe über der Liste sind als **horizontales, swipebares Karussell** angeordnet. Der Nutzer kann die Leiste einfach mit dem Daumen nach links/rechts schieben und Kategorien anwählen. Die Suche nimmt die gesamte Breite ein und blendet Tastaturen auf Mobilgeräten fehlerfrei ein.</li>
+    <li><strong>Angezeigte Inhalte (Displayed Content):</strong> Die Spalten werden vertikal gestapelt: Der Produktname steht oben in fetter Schrift. Direkt darunter steht eingerückt und kleiner die Füllmenge (z. B. <code>500g Becher</code>) in dezentem Grau. Der Preis steht rechtsbündig in einer für die Daumenbedienung vergrößerten, auffälligen grünen Preisbox.</li>
   </ul>
 </div>
 
