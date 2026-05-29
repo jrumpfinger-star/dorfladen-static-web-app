@@ -308,9 +308,59 @@
 <img src="hp-angebote.png" alt="Angebote Popup" class="screenshot" style="max-width:390px; margin:16px auto; display:block">
 <div class="image-caption">Abb. 4: Das wöchentliche Sonderangebote-Popup auf dem Smartphone</div>
 
-<h3>🔴 Roter Punkt</h3>
+<h3>🔴 Roter Punkt (Dauertiefpreise zur sozialen Nahversorgung)</h3>
 <p>
-  Unter dieser Rubrik finden Besucher eine Liste von Grundnahrungsmitteln und Produkten des täglichen Bedarfs, die dauerhaft extrem günstig angeboten werden. Dies sichert die preiswerte Grundversorgung im Ort.
+  Die Rubrik <strong>„Roter Punkt“</strong> (erreichbar über die rote Kachel auf der Startseite, die Menüleiste oder direkt unter <code>/roter-punkt.html</code>) ist ein zentraler Eckpfeiler unseres genossenschaftlichen Versorgungsauftrags. Hier listen wir Grundnahrungsmittel, Hygiene- und Haushaltsartikel des täglichen Bedarfs, die dauerhaft extrem günstig – oft auf Discounter-Niveau oder knapp über Selbstkosten – angeboten werden, um allen Bürgern im ländlichen Raum eine preisgünstige Grundversorgung zu sichern.
+</p>
+
+<h4>Die 3 Kernfunktionen der interaktiven Liste</h4>
+<p>
+  Die Rote-Punkt-Seite arbeitet mit einer hochmodernen, live-synchronisierten Client-Schnittstelle, die folgende Steuerungs- und Informationsfunktionen bietet:
+</p>
+
+<div style="background:#fff5f5; border-left:4px solid #c62828; border-radius:4px; padding:12px; margin-bottom:16px">
+  <strong style="color:#c62828; font-size:1.1em">📂 1. Interaktive Akkordeon-Gruppierung nach Warengruppen</strong>
+  <p style="margin:6px 0 0; font-size:13px; line-height:1.5">
+    Um die Vielzahl an Dauertiefpreis-Artikeln übersichtlich zu gliedern, sind alle Produkte nach ihren Warengruppen (z. B. <i>Teigwaren, Milchprodukte, Hygieneartikel</i>) sortiert.
+  </p>
+  <ul style="margin:6px 0 12px; padding-left:20px; line-height:1.5; font-size:12px">
+    <li><strong>Aussehen (Look):</strong> Jede Warengruppe bildet eine graue, abgerundete Kopfzeile. Diese zeigt links den Kategorienamen, in der Mitte ein rotes Abzeichen mit der Artikelanzahl (z. B. <span style="background:#c62828; color:#fff; padding:1px 6px; border-radius:10px; font-size:10px">12 Artikel</span>), rechts die durchschnittliche Ersparnis (z. B. <span style="color:#c62828; font-weight:700">im Schnitt -23%</span>) und ganz außen ein Pfeilsymbol <code>▼</code>.</li>
+    <li><strong>Funktionsweise &amp; Ausführung (Function &amp; Execution):</strong> Die Liste startet standardmäßig im eingeklappten Zustand, um scrollfreundlich zu bleiben. Ein einfacher Klick oder Fingertipp auf die Gruppen-Kopfzeile klappt die Tabelle mit den Produkten weich nach unten auf. Das Pfeilsymbol wechselt dabei dynamisch auf <code>▲</code>.</li>
+  </ul>
+  <img src="rp-accordion-header.png" alt="Akkordeon Kopfzeile" class="screenshot" style="max-width:100%; width:500px; margin:4px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+</div>
+
+<div style="background:#fff5f5; border-left:4px solid #c62828; border-radius:4px; padding:12px; margin-bottom:16px">
+  <strong style="color:#c62828; font-size:1.1em">⚡ 2. Echtzeit-Volltextsuche mit Auto-Expand (Suchfilter)</strong>
+  <p style="margin:6px 0 0; font-size:13px; line-height:1.5">
+    Ein leistungsstarkes Suchfeld am Kopf der Seite ermöglicht die sofortige Filterung aller gelisteten Artikel.
+  </p>
+  <ul style="margin:6px 0 12px; padding-left:20px; line-height:1.5; font-size:12px">
+    <li><strong>Ausführung (Execution):</strong> Tippen Sie einfach einen Suchbegriff (z. B. <code>Zuck</code> oder <code>Nud</code>) in die Suchleiste ein.</li>
+    <li><strong>Intelligente Auto-Ausklappung (Auto-Expand):</strong> Sobald Sie tippen, werden alle Warengruppen, die einen passenden Treffer enthalten, **vollkommen automatisch im Vollbild aufgeklappt**, damit Sie die Suchergebnisse sofort im Blick haben, ohne mühsam alle Akkordeons einzeln anklicken zu müssen!</li>
+    <li><strong>Dynamische Badge-Aktualisierung:</strong> Die rote Badge mit der Artikelanzahl im Akkordeon-Kopf ändert sich in Echtzeit und zeigt live nur noch die Anzahl der Treffer an (z. B. von *12 Artikel* auf *2 Artikel*).</li>
+    <li><strong>No-Results-Logik:</strong> Sollte kein Artikel auf den Suchbegriff passen, wird eine dezente Meldung <i>„Kein Artikel gefunden“</i> eingeblendet.</li>
+  </ul>
+  <img src="rp-search.png" alt="Echtzeit-Volltextsuche" class="screenshot" style="max-width:100%; width:400px; margin:4px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+</div>
+
+<div style="background:#fff5f5; border-left:4px solid #c62828; border-radius:4px; padding:12px; margin-bottom:16px">
+  <strong style="color:#c62828; font-size:1.1em">💰 3. Transparenter Preisvergleich (Unser Preis vs. UVP)</strong>
+  <p style="margin:6px 0 0; font-size:13px; line-height:1.5">
+    Jedes Produkt in der Tabelle bietet Kunden einen glasklaren, ehrlichen Preisvergleich auf einen Blick.
+  </p>
+  <ul style="margin:6px 0 12px; padding-left:20px; line-height:1.5; font-size:12px">
+    <li><strong>UVP-Anzeige (Durchgestrichen):</strong> Zeigt die unverbindliche Preisempfehlung des Herstellers an (grau und durchgestrichen, z. B. <span style="text-decoration:line-through; color:#999">1,89 €</span>).</li>
+    <li><strong>Unser Preis (Fett Grün):</strong> Zeigt den dauerhaft reduzierten Dorfladen-Verkaufspreis an (z. B. <strong style="color:#2d6a30">1,39 €</strong>).</li>
+    <li><strong>Prozentualer Rabatt:</strong> Ein auffälliges rotes Abzeichen am rechten Rand zeigt die Ersparnis in Prozent an (z. B. <span style="background:#c62828; color:#fff; font-weight:700; padding:2px 6px; border-radius:4px">-26%</span>).</li>
+    <li><strong>Absolute Ersparnis:</strong> Direkt neben dem Rabatt-Badge wird zusätzlich der exakte Euro-Betrag angezeigt, den Sie einsparen (z. B. <code>(0,50 €)</code>).</li>
+  </ul>
+  <img src="rp-row.png" alt="Preisvergleich Tabellenzeile" class="screenshot" style="max-width:100%; width:500px; margin:4px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+</div>
+
+<h4>Datenqualität &amp; Filtermechanismus</h4>
+<p>
+  Um Datenübertragungsfehler aus der Microsoft Dataverse Warenwirtschaft (ERP) auszuschließen, ist das System mit einem automatischen Filtermechanismus ausgestattet: Rabatte unter 5% (keine echte Ersparnis) oder über 70% (Anomalie/Eingabefehler) werden automatisch ausgeblendet, so dass nur seriöse Dauertiefpreise dargestellt werden.
 </p>
 
 <!-- ═══════════════════════════════════════════ -->
