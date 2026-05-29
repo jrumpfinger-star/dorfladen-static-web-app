@@ -41,13 +41,12 @@ def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung):
         # Spezialfall: Preis gilt für 100g (Basis 1kg / 10)
         vk_korr = round(preis / 10, 2)
         menge_str = "100 g"
-    elif mt in ("g", "kg") and gpfaktor and gpfaktor != 1:
+    elif mt == "kg" and gpfaktor and gpfaktor != 1:
         vk_korr = round(preis * gpfaktor, 2)
-        if mt == "g" and mengeneinheit:
-            menge_str = f"{int(mengeneinheit)} g"
-        elif mt == "kg" and mengeneinheit:
+        if mengeneinheit:
             menge_str = f"{mengeneinheit:g} kg"
     elif mt == "g" and mengeneinheit:
+        # Preis bleibt wie in Dataverse hinterlegt
         menge_str = f"{int(mengeneinheit)} g"
     elif mt == "kg" and mengeneinheit:
         menge_str = f"{mengeneinheit:g} kg"
