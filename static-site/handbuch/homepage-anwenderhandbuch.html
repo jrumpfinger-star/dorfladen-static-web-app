@@ -100,7 +100,8 @@
     <li><a href="#status">Echtzeit-Öffnungszeiten &amp; Statusanzeige</a></li>
     <li><a href="#ticker">Der Aktuelles-Ticker &amp; News-Archiv</a></li>
     <li><a href="#quickactions">Die Schnellwahl-Aktionen (Popups)</a></li>
-    <li><a href="#preisliste">Interaktive Sortiments- und Preisliste</a></li>
+    <li><a href="#preisliste">Interaktive Sortiments- und Preisliste (inkl. Barcode-Scanner)</a></li>
+    <li><a href="#galerie">Foto-Galerie &amp; Impressionen (mit Lightbox)</a></li>
     <li><a href="#pwa">PWA: Die Homepage als App auf dem Smartphone installieren</a></li>
     <li><a href="#push">Push-Benachrichtigungen aktivieren (Abendangebote/Mittagstisch)</a></li>
     <li><a href="#datenschutz">Impressum, Datenschutz &amp; Cookie-Richtlinien</a></li>
@@ -268,6 +269,20 @@
   Die Zeitzonen- und Feiertagsberechnungen basieren vollautomatisch auf der lokalen Systemzeit des Dorfladens Oberornau, um Fehlberechnungen bei Zeitumstellungen zuverlässig zu vermeiden.
 </div>
 
+<div style="background:#f0f9ff; border-left:4px solid #0284c7; border-radius:4px; padding:12px; margin:12px 0 0">
+  <strong style="color:#0369a1">🗓️ Automatische Bayern-Feiertagsberechnung</strong>
+  <p style="margin:6px 0 0; font-size:13px; line-height:1.5">
+    Die Statusanzeige berücksichtigt vollautomatisch alle <strong>bayerischen gesetzlichen Feiertage</strong> – ohne manuelle Pflege! Das System berechnet die beweglichen Feiertage (Ostern, Pfingsten, Fronleichnam usw.) mathematisch korrekt aus dem aktuellen Kalenderjahr. Folgende Feiertage werden erkannt:
+  </p>
+  <ul style="margin:6px 0 0; padding-left:20px; font-size:12px; line-height:1.5">
+    <li>Neujahr, Heilige Drei Könige (6.1.), Karfreitag, Ostersonntag &amp; -montag</li>
+    <li>Tag der Arbeit (1.5.), Christi Himmelfahrt, Pfingstsonntag &amp; -montag, Fronleichnam</li>
+    <li>Mariä Himmelfahrt (15.8.), Tag der Deutschen Einheit (3.10.), Allerheiligen (1.11.)</li>
+    <li>1. und 2. Weihnachtstag (25./26.12.)</li>
+  </ul>
+  <p style="margin:6px 0 0; font-size:12px; color:#555">An Feiertagen zeigt die Statusleiste <span style="background:#fee2e2; color:#991b1b; padding:1px 6px; border-radius:4px; font-size:11px">● Geschlossen – Feiertag</span> an, anstatt wie sonst den nächsten Öffnungszeitpunkt zu berechnen.</p>
+</div>
+
 <!-- ═══════════════════════════════════════════ -->
 <!-- 5. TICKER -->
 <!-- ═══════════════════════════════════════════ -->
@@ -276,9 +291,13 @@
   Der News-Bereich hält Kunden über Neuigkeiten auf dem Laufenden.
 </p>
 <ul>
-  <li><strong>Der Ticker (nur Mobile):</strong> Direkt unter dem oberen Bildschirmrand schiebt sich die Schlagzeile der neuesten Meldung langsam von rechts nach links durch das Feld. Ein Tippen auf den Ticker bringt den Besucher direkt zum ausführlichen Artikel.</li>
-  <li><strong>News-Archiv (<code>/aktuelles.html</code>):</strong> Auf dieser Unterseite sind alle Beiträge chronologisch sortiert aufgelistet. Jeder Post verfügt über ein scharfes Vorschaubild, das Datum der Veröffentlichung sowie einen liebevoll gestalteten Textkörper.</li>
+  <li><strong>Der Laufband-Ticker (Scrolling Ticker):</strong> Wenn Neuigkeiten als „Laufband" markiert sind, erscheint oberhalb des Startseiten-Heroes ein animiertes Laufband. Die Schlagzeilen gleiten kontinuierlich von rechts nach links. Ein Klick auf einen Titel öffnet sofort den vollständigen Artikel als Overlay – ohne Seitenwechsel.</li>
+  <li><strong>News-Overlay (Artikel-Vollansicht):</strong> Ein Klick auf einen Ticker-Eintrag öffnet einen eleganten, halbtransparenten Overlay-Dialog mit dem vollständigen Artikel inkl. Datum, Titel und formatiertem Inhalt. Ein Klick außerhalb des Dialogs oder auf das &times;-Symbol schließt ihn. Unten befindet sich ein Link <i>„Alle Neuigkeiten →"</i> zur vollständigen Archivseite.</li>
+  <li><strong>News-Karten auf der Startseite:</strong> Die letzten fünf Beiträge werden als Karten mit Datum, Titel und Kurztext dargestellt. Hat ein Beitrag einen längeren Inhalt, erscheint eine <strong>„Weiterlesen"</strong>-Schaltfläche, die den vollständigen Text direkt in der Karte aufklappt – kein extra Seitenaufruf nötig.</li>
+  <li><strong>News-Archiv (<code>/aktuelles.html</code>):</strong> Alle Beiträge chronologisch sortiert. Jeder Post verfügt über Datum und ausführlichen Textkörper.</li>
 </ul>
+<img src="hp-news-section.png" alt="News-Bereich Startseite" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+<div class="image-caption">Abb.: News-Karten auf der Startseite mit Datum, Titel, Kurztext und „Weiterlesen"-Schaltfläche</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 6. QUICKACTIONS -->
@@ -311,11 +330,17 @@
 
 <h3>🏷️ Angebote (Aktions-Flyer)</h3>
 <p>
-  Dieses Popup lädt die aktuellen Wochen-Sonderangebote direkt auf das Display. Jedes Produkt wird als bildstarke Karte mit rotem Preis-Aktionsschild (z. B. <code>1,35 € statt 1,65 €</code>) und dem berechneten Rabatt (z. B. <code>-18%</code>) dargestellt.
+  Dieses Popup lädt die aktuellen Wochen-Sonderangebote direkt auf das Display. Jedes Produkt wird als bildstarke Karte mit rotem Preis-Aktionsschild (z.&nbsp;B. <code>1,35 € statt 1,65 €</code>) und dem berechneten Rabatt (z.&nbsp;B. <code>-18%</code>) dargestellt.
 </p>
-
+<ul>
+  <li><strong>Wochenumschalter (Diese Woche / Nächste Woche):</strong> Über der Angebotsliste befinden sich zwei Schaltflächen <code>Diese Woche</code> und <code>Nächste Woche</code>. So können Kunden bereits vorab die Aktionen der kommenden Woche einsehen und ihre Einkäufe planen. Darunter erscheint der genaue Zeitraum (z.&nbsp;B. <i>02.06. – 08.06.</i>).</li>
+  <li><strong>Produktbild automatisch nachgeladen:</strong> Für Aktionsartikel mit Artikelnummer werden Produktbilder automatisch aus der Dataverse-Datenbank nachgeladen und als visuelle Kacheln angezeigt. Ist kein Bild vorhanden, bleibt der Bildplatzhalter dezent leer.</li>
+  <li><strong>Rabatt-Badge:</strong> Bei Artikeln mit bekanntem Statt-Preis wird automatisch der prozentuale Rabatt berechnet und als farbiges Abzeichen (z.&nbsp;B. <span style="background:#c62828;color:#fff;padding:1px 6px;border-radius:4px;font-size:11px">-18%</span>) oben links auf der Karte angezeigt.</li>
+</ul>
 <img src="hp-angebote.png" alt="Angebote Popup" class="screenshot" style="max-width:390px; margin:16px auto; display:block">
 <div class="image-caption">Abb. 4: Das wöchentliche Sonderangebote-Popup auf dem Smartphone</div>
+<img src="hp-angebote-week.png" alt="Angebote Wochenumschalter" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+<div class="image-caption">Abb.: Angebote-Kacheln auf der Startseite mit Wochenumschalter „Diese Woche / Nächste Woche"</div>
 
 <h3>🔴 Roter Punkt (Dauertiefpreise zur sozialen Nahversorgung)</h3>
 <p>
@@ -398,15 +423,17 @@
 </div>
 
 <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📂 2. Abteilungs- &amp; Kategorie-Schnellwahl (Quick-Buttons)</h4>
+  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📂 2. Akkordeon-Warengruppen mit Live-Zähler</h4>
   <p style="margin:0 0 8px">
-    Unter dem Suchfeld sind die Hauptabteilungen des Dorfladens als flache, farbige Schaltflächen (z. B. <i>🍎 Obst &amp; Gemüse, 🥛 Molkereiprodukte, ❄️ Tiefkühl, 🧼 Drogerie</i>) angeordnet.
+    Das gesamte Sortiment ist in Warengruppen (z.&nbsp;B. <i>Backwaren, Molkereiprodukte, Drogerie</i>) aufgeteilt. Jede Gruppe wird als klickbarer Akkordeon-Kopf angezeigt.
   </p>
   <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
-    <li><strong>Ausführung:</strong> Ein einfacher Klick oder Fingertipp auf eine der Abteilungsschaltflächen.</li>
-    <li><strong>Ablauf im Hintergrund:</strong> Der Webbrowser führt einen sanften, automatischen Bildlauf (Smooth Scroll) direkt zur entsprechenden Überschrift des gewählten Fachbereichs aus.</li>
-    <li><strong>Inhaltsanzeige:</strong> Die Ansicht springt augenblicklich zum gewünschten Sortimentsbereich, was mühsames Scrollen durch lange Listen überflüssig macht.</li>
+    <li><strong>Aussehen:</strong> Der Kopf zeigt den Gruppenname, die Artikelanzahl sowie einen Pfeil <code>▼</code>. Beim Klick öffnet/schließt sich die Produkttabelle, der Pfeil wechselt auf <code>▲</code>.</li>
+    <li><strong>Live-Zähler:</strong> Sobald eine Suche oder ein Filter aktiv ist, aktualisiert sich die Zahl in der Kopfzeile sofort und zeigt nur noch die Anzahl der sichtbaren Treffer an – nicht mehr die Gesamtmenge.</li>
+    <li><strong>Auto-Aufklappen bei Suche:</strong> Wenn Sie im Suchfeld tippen, klappen alle Gruppen mit passenden Treffern automatisch auf. Gruppen ohne Treffer werden vollständig ausgeblendet.</li>
   </ul>
+  <img src="so-accordion-open.png" alt="Akkordeon offen" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+  <div style="font-size:0.82em; color:#666; font-style:italic">Abb.: Eine geöffnete Warengruppe – Tabellenzeilen mit Preis, UVP-Vergleich und Rabatt-Badge</div>
 </div>
 
 <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
@@ -438,6 +465,40 @@
   </table>
 </div>
 
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">🏷️ 4. Schnellfilter: Roter Punkt &amp; Sonderangebote</h4>
+  <p style="margin:0 0 8px">
+    Direkt unter der Preislisten-Überschrift befinden sich zwei Filterknöpfe, die das gesamte Sortiment blitzschnell auf Sparangebote reduzieren:
+  </p>
+  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
+    <li><strong>🔴 Günstiger als UVP (Anzahl):</strong> Ein Klick zeigt ausschließlich alle Artikel, deren Verkaufspreis unter der unverbindlichen Preisempfehlung des Herstellers liegt. Die Zahl in der Klammer zeigt die aktuelle Anzahl solcher Artikel (z.&nbsp;B. 207). Alle passenden Warengruppen klappen sich automatisch auf.</li>
+    <li><strong>★ Sonderangebot (Anzahl):</strong> Filtert auf alle aktuell als Wochenaktion ausgezeichneten Artikel – mit reduziertem Aktionspreis und durchgestrichenem Statt-Preis.</li>
+    <li><strong>Kombinierbar mit Suche:</strong> Filter und Freitextsuche arbeiten gleichzeitig. Z.&nbsp;B. „Bio" eintippen bei aktivem Roter-Punkt-Filter zeigt nur Bio-Artikel unterhalb der UVP.</li>
+    <li><strong>Deaktivieren:</strong> Erneuter Klick auf den aktiven Filterknopf hebt ihn wieder auf und zeigt das vollständige Sortiment.</li>
+  </ul>
+  <img src="so-filter-rp-active.png" alt="Roter-Punkt-Filter aktiv" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+  <div style="font-size:0.82em; color:#666; font-style:italic">Abb.: Aktiver Roter-Punkt-Filter – nur UVP-günstigere Artikel mit auto-ausgeklappten Gruppen und Live-Zähler</div>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📷 5. Barcode-Scanner (EAN-Suche per Smartphone-Kamera)</h4>
+  <p style="margin:0 0 8px">
+    Rechts neben dem Suchfeld befindet sich ein kleines <strong>Kamera-Symbol 📷</strong>. Dahinter verbirgt sich ein vollwertiger Barcode-Scanner direkt im Browser – ohne App-Installation!
+  </p>
+  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
+    <li><strong>Ausführung:</strong> Tippen Sie auf das Kamera-Symbol 📷. Der Browser fragt einmalig nach der Kamera-Erlaubnis. Nach Bestätigung öffnet sich ein Live-Kamera-Sucher direkt auf der Seite.</li>
+    <li><strong>Ablauf:</strong> Halten Sie die Kamera auf den EAN-Strichcode eines Produkts (z.&nbsp;B. Joghurtbecher, Nudelpackung). Das System scannt mit 15 Bildern/Sekunde und erkennt EAN-13, EAN-8, UPC-A, UPC-E und Code-128 Codes. Nur Scans mit über 85% Erkennungssicherheit werden ausgewertet – das verhindert Fehllesungen.</li>
+    <li><strong>Ergebnis:</strong> Sobald ein Code erkannt wird, schließt sich der Scanner automatisch. Das Ergebnis erscheint sofort darunter: Produktname, Warengruppe, aktueller Preis, und falls vorhanden Rabatt-Badge und UVP-Vergleich.</li>
+    <li><strong>Fallback-API:</strong> Findet die Seite einen EAN-Code nicht im angezeigten Sortiment, fragt sie automatisch die Cloud-Datenbank ab und zeigt das Ergebnis trotzdem an.</li>
+    <li><strong>Scanner schließen:</strong> Klick auf <code>× Scanner schließen</code> beendet die Kamera sofort.</li>
+  </ul>
+  <img src="so-preisliste-header.png" alt="Preisliste Suchleiste mit Barcode-Scanner" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+  <div style="font-size:0.82em; color:#666; font-style:italic">Abb.: Die Suchleiste der Preisliste – Suchfeld, Filter-Buttons und das Barcode-Scanner-Symbol 📷 rechts außen</div>
+</div>
+
+<img src="so-search-active.png" alt="Volltextsuche aktiv" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+<div class="image-caption">Abb.: Echtzeit-Suche nach „Butter" – passende Gruppen klappen automatisch auf, Artikelzähler aktualisieren sich live</div>
+
 <!-- COMPARISON PORTION -->
 <div style="background:#e8f5e9; border-left:4px solid #2e7d32; border-radius:4px; padding:12px; margin-bottom:12px">
   <strong style="color:#1b5e20; font-size:13px">� Die Preisliste in der Desktop-Version</strong>
@@ -467,9 +528,43 @@
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 8. PWA -->
+<!-- 8. GALERIE -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="pwa">8. PWA: Die Homepage als App auf dem Smartphone installieren</h2>
+<h2 id="galerie">8. Foto-Galerie &amp; Impressionen (mit Lightbox)</h2>
+<p>
+  Die Seite <strong>Impressionen</strong> (<code>/bilder.html</code>) zeigt eine lebendige Bildergalerie aus dem Dorfladen-Alltag. Sie ist mit zwei hochwertigen Funktionen ausgestattet:
+</p>
+
+<h3>🗂️ Kategorie-Filter</h3>
+<p>
+  Wenn Bilder verschiedenen Kategorien (z.&nbsp;B. <i>Laden, Mittagstisch, Veranstaltungen</i>) zugeordnet sind, erscheint oberhalb der Galerie eine Reihe von Filter-Schaltflächen.
+</p>
+<ul>
+  <li><strong>Ausführung:</strong> Klicken/tippen Sie auf eine Kategorie-Schaltfläche (z.&nbsp;B. <code>Mittagstisch (12)</code>). Sofort werden nur noch die Bilder dieser Kategorie angezeigt. Die Zahl in Klammern zeigt immer die genaue Anzahl der Bilder je Kategorie.</li>
+  <li><strong>Alle:</strong> Mit der Schaltfläche <code>Alle</code> sehen Sie wieder das vollständige Bildarchiv. Die aktive Kategorie ist optisch hervorgehoben.</li>
+  <li>Gibt es nur eine Kategorie oder weniger als zwei Kategorien, werden die Filter-Tabs automatisch ausgeblendet.</li>
+</ul>
+<img src="gallery-filters.png" alt="Galerie mit Kategorie-Filter" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+<div class="image-caption">Abb.: Die Impressionen-Galerie mit Kategorie-Filter-Tabs oben und Bildraster darunter</div>
+
+<h3>🔍 Lightbox (Vollbild-Bildbetrachtung)</h3>
+<p>
+  Ein Klick auf ein beliebiges Bild in der Galerie öffnet es als elegante <strong>Vollbild-Lightbox</strong>.
+</p>
+<ul>
+  <li><strong>Ausführung:</strong> Klicken oder tippen Sie auf ein Bild.</li>
+  <li><strong>Navigation:</strong> Mit den Pfeiltasten <code>←</code> / <code>→</code> der Tastatur (Desktop) oder den Pfeil-Schaltflächen in der Lightbox können Sie bequem durch alle Bilder der aktuellen Kategorie blättern. Am Ende der Galerie springt die Ansicht automatisch zum ersten Bild zurück.</li>
+  <li><strong>Bildunterschrift:</strong> Wenn für ein Bild eine Beschreibung hinterlegt ist, erscheint sie als halbtransparenter Text am unteren Bildrand.</li>
+  <li><strong>Schließen:</strong> Klicken Sie außerhalb des Bilds, auf das <code>×</code>-Symbol oder drücken Sie die <code>Escape</code>-Taste.</li>
+  <li><strong>Lazy Loading:</strong> Bilder werden erst geladen wenn sie im sichtbaren Bereich erscheinen – das hält die Seite auch bei vielen Fotos schnell.</li>
+</ul>
+<img src="gallery-lightbox.png" alt="Galerie Lightbox" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
+<div class="image-caption">Abb.: Lightbox-Vollansicht eines Galeriebildes mit Navigationspfeilen</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 9. PWA -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="pwa">9. PWA: Die Homepage als App auf dem Smartphone installieren</h2>
 <p>
   Da die Dorfladen-Homepage eine Progressive Web App ist, können Sie diese wie eine vollwertige App auf Ihrem Mobiltelefon installieren – ohne den Google Play Store oder Apple App Store aufrufen zu müssen!
 </p>
@@ -505,9 +600,9 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 9. PUSH -->
+<!-- 10. PUSH -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="push">9. Push-Benachrichtigungen aktivieren</h2>
+<h2 id="push">10. Push-Benachrichtigungen aktivieren</h2>
 <p>
   Wenn Sie immer sofort informiert werden möchten, sobald der Mittagstisch für die neue Woche bereitsteht oder frische Sonderangebote eintreffen, können Sie die Push-Benachrichtigungen aktivieren.
 </p>
@@ -530,9 +625,9 @@
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 10. DATENSCHUTZ -->
+<!-- 11. DATENSCHUTZ -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="datenschutz">10. Impressum, Datenschutz &amp; Cookie-Richtlinien</h2>
+<h2 id="datenschutz">11. Impressum, Datenschutz &amp; Cookie-Richtlinien</h2>
 <p>
   Als Genossenschaft legt der Dorfladen Oberornau höchsten Wert auf Datensparsamkeit und Rechtskonformität.
 </p>
@@ -543,9 +638,9 @@
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 11. FAQ -->
+<!-- 12. FAQ -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="faq">11. Häufige Fragen &amp; Problemlösungen (FAQ)</h2>
+<h2 id="faq">12. Häufige Fragen &amp; Problemlösungen (FAQ)</h2>
 
 <h4>Die Mittagstisch-Preise auf der Seite weichen von den Flyern ab – woran liegt das?</h4>
 <p>

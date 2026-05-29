@@ -254,6 +254,16 @@
   </li>
 </ol>
 
+<h3>📅 Wochenzuordnung &amp; Vorschau-Funktion</h3>
+<p>
+  Das Angebote-System unterscheidet zwischen <strong>„Diese Woche"</strong> und <strong>„Nächste Woche"</strong>. Kunden sehen auf der Homepage einen Umschalter und können bereits vorab die Aktionen der kommenden Woche einsehen.
+</p>
+<ul>
+  <li><strong>Woche bestimmen:</strong> Das Start- und Enddatum der Kampagne legt automatisch fest, ob ein Angebot als „Diese Woche" oder „Nächste Woche" angezeigt wird. Das System ermittelt dies aus der aktuellen Kalenderwoche (ISO-Standard).</li>
+  <li><strong>Gleichzeitige Planung:</strong> Sie können in der Regel schon während der laufenden Woche die Angebote der nächsten Woche anlegen. Kunden sehen diese automatisch unter dem Tab „Nächste Woche", ohne dass Sie manuell umschalten müssen.</li>
+  <li><strong>Abgelaufene Angebote:</strong> Aktionen, deren Enddatum in der Vergangenheit liegt, werden auf der Homepage automatisch ausgeblendet. Im CMS bleiben sie als Archiv erhalten.</li>
+</ul>
+
 <h3>Automatische Bildoptimierung</h3>
 <p>
   Sobald Sie ein Artikelfoto hochladen, optimiert das CMS das Bild im Hintergrund: Es wird herunterskaliert, um Speicherplatz zu sparen, behält dabei jedoch eine knackige Kantenschärfe für den Flyer-Druck.
@@ -341,6 +351,19 @@
   <li><strong>Texte pflegen:</strong> Fügen Sie jedem Foto eine kurze, charmante Bildunterschrift hinzu. Diese wird beim Anklicken des Bildes auf der Website vergrößert eingeblendet.</li>
 </ol>
 
+<h3>🗂️ Kategorie-Verwaltung</h3>
+<p>
+  Jedes Bild kann einer Kategorie zugeordnet werden. Auf der Impressionen-Seite erscheinen dann automatisch Kategorie-Filter-Tabs (z.&nbsp;B. <i>Laden, Mittagstisch, Team, Veranstaltungen</i>), damit Kunden gezielt nur Bilder einer Kategorie sehen.
+</p>
+<ul>
+  <li><strong>Kategorie zuweisen:</strong> Klicken Sie beim Hochladen oder nachträglich beim Bild auf das Kategorie-Feld und tragen Sie den Namen ein (z.&nbsp;B. <code>Mittagstisch</code>). Mehrere Bilder können dieselbe Kategorie erhalten.</li>
+  <li><strong>Kategorie umbenennen:</strong> Ändern Sie den Kategorienamen direkt im Bild-Panel. Alle Bilder dieser Kategorie werden dadurch automatisch umbenannt.</li>
+  <li><strong>Ohne Kategorie:</strong> Bilder ohne Kategoriezuweisung erscheinen immer unter dem Tab <code>Alle</code>. Hat die Galerie weniger als zwei Kategorien, werden die Filter-Tabs auf der Homepage automatisch ausgeblendet.</li>
+</ul>
+<div class="tip">
+  Benennen Sie Kategorien konsistent, z.&nbsp;B. immer <code>Mittagstisch</code> – nicht mal <code>Mittagessen</code>. Unterschiedliche Schreibweisen erzeugen separate Tabs auf der Homepage.
+</div>
+
 <!-- ═══════════════════════════════════════════ -->
 <!-- 9. PUSH -->
 <!-- ═══════════════════════════════════════════ -->
@@ -368,8 +391,18 @@
 
 <h3>Abonnenten-Verwaltung (Subscriber)</h3>
 <p>
-  Das System speichert die Push-Empfänger anonymisiert in einer Datenbank. Im unteren Bereich sehen Sie die aktuelle Anzahl der aktiven Abonnenten. Sollten ungültige Empfänger-Tokens vom Browser-Push-Dienst zurückgemeldet werden, reinigt das System die Liste automatisch im Hintergrund.
+  Das System speichert alle Push-Empfänger anonymisiert in der Dataverse-Datenbank. Die Abonnenten-Verwaltung ist direkt im Push-Tab zugänglich:
 </p>
+<ul>
+  <li><strong>Liste anzeigen:</strong> Klicken Sie auf den Unterreiter <strong>„Subscriber"</strong> und dann auf <strong>„Aktualisieren"</strong>. Es erscheint eine Liste aller aktiven Abonnenten mit der anonymen Geräte-ID (Hash), dem Browser-Typ (Chrome/Firefox) und dem Registrierungszeitpunkt.</li>
+  <li><strong>Abonnent löschen:</strong> Neben jedem Eintrag in der Liste befindet sich ein rotes <strong>🗑 Löschen</strong>-Symbol. Ein Klick darauf entfernt diesen Abonnenten sofort aus der Datenbank – er empfängt keine weiteren Push-Mitteilungen von Ihrem Dorfladen.</li>
+  <li><strong>Automatische Bereinigung:</strong> Wenn beim Senden ein Abonnent-Token als ungültig zurückgemeldet wird (z.&nbsp;B. weil der Nutzer den Browser deinstalliert hat), entfernt das System diesen Eintrag automatisch aus der Datenbank. Die Liste bleibt dadurch stets aktuell.</li>
+  <li><strong>Abonnenten-Zahl:</strong> Die Gesamtzahl der aktiven Abonnenten wird prominent im oberen Bereich des Push-Tabs angezeigt.</li>
+</ul>
+
+<div class="info">
+  Aus Datenschutzgründen werden keinerlei personenbezogene Daten gespeichert. Das System kennt nur einen kryptografischen Hash des Browser-Endpoints – keine Namen, E-Mail-Adressen oder Standortdaten.
+</div>
 
 <div class="warn">
   Senden Sie maximal 1–2 Push-Nachrichten pro Woche! Zu häufiges Aufblinken nervt Kunden und führt zu sofortigen Abmeldungen.
