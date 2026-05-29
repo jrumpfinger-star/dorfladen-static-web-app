@@ -2675,8 +2675,10 @@
     document.getElementById('cms-modal-wrap').innerHTML='';
   };
   // Backdrop click closes modal (unless Kachel-Editor is open — it has save/discard semantics)
+  // Also skip if an autocomplete dropdown is currently open (user may be clicking an item)
   document.getElementById('cms-modal-wrap').addEventListener('click',function(e){
     if(e.target.classList.contains('cms-modal-bg')&&!document.getElementById('pce-close')){
+      if(document.querySelector('.cms-art-dd.open')) return;
       cmsCloseModal();
     }
   });
