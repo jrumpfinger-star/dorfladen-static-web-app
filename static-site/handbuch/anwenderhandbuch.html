@@ -108,6 +108,7 @@
     <li><a href="#flyereditor">Detaillierte Anleitung: Flyer- &amp; Kachel-Editor</a></li>
     <li><a href="#website">Die Dorfladen-Website im Zusammenspiel</a></li>
     <li><a href="#faq">Häufige Fragen &amp; Fehlerbehebung (FAQ)</a></li>
+    <li><a href="#problemloeser">Problemlöser &amp; Schritt-für-Schritt-Anleitungen (How-To)</a></li>
   </ol>
 </div>
 
@@ -539,6 +540,77 @@
   <li>Die Benachrichtigungen dürfen in den Systemeinstellungen des Smartphones (iOS / Android) für den jeweiligen Browser (z. B. Chrome, Safari) nicht blockiert sein.</li>
   <li>Das Gerät darf sich nicht im Energiespar- oder „Nicht stören“-Modus befinden.</li>
 </ol>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 13. HOW-TO / PROBLEMLÖSER -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="problemloeser">13. Problemlöser &amp; Schritt-für-Schritt-Anleitungen (How-To)</h2>
+<p>
+  Hier finden Sie praktische, problemorientierte Hilfestellungen für typische alltägliche Aufgaben im CMS:
+</p>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ein Produktbild hat einen störenden weißen Hintergrund. Wie mache ich ihn transparent?</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Aktivieren Sie die automatische Bildfreistellung des CMS.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>Navigieren Sie im CMS zum Tab <strong>Design</strong> &rarr; Unterreiter <strong>Plakate &amp; Flyer</strong>.</li>
+    <li>Prüfen Sie im Abschnitt <strong>⚙️ Gemeinsame Einstellungen</strong>, ob das Kontrollkästchen <strong>„Bilder freistellen (Weißer Hintergrund entfernen)“</strong> aktiv ist.</li>
+    <li>Das System filtert daraufhin rein weiße Hintergrundpixel (RGB 255,255,255) automatisch beim Zeichnen heraus, wodurch das Produkt freigestellt auf Ihrem Plakat erscheint.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ich habe mich beim Mittagstisch vertippt und möchte alle ungespeicherten Eingaben rückgängig machen.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Nutzen Sie die Snapshot-basierte Verwerfen-Funktion.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>Wenn Sie Gerichte fälschlicherweise geändert oder Zeilen gelöscht haben, klicken Sie <strong>auf keinen Fall</strong> auf Speichern.</li>
+    <li>Klicken Sie stattdessen oben rechts in der Wochenleiste auf die Schaltfläche <strong>„↩ Verwerfen“</strong>.</li>
+    <li>Das System verwirft alle flüchtigen Änderungen im Browser und stellt das exakte Abbild (Snapshot) aus Microsoft Dataverse wieder her. Ihr Speiseplan ist sofort wieder auf dem letzten sicheren Stand.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ein Artikelfoto überlagert den Preis oder den Beschreibungstext auf einer Kachel.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Verschieben oder skalieren Sie das Foto im Kachel-Editor.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>Öffnen Sie die Kachel-Vorschau der Aktion im Tab <strong>Angebote</strong> und klicken Sie direkt auf die betroffene Kachel, um den **Kachel-Editor** zu öffnen.</li>
+    <li>Klicken Sie das überlagernde Element (z. B. das Hauptbild) an. Es erhält einen farbigen, gestrichelten Rahmen und rückt automatisch in den Vordergrund (höchste z-index Priorität).</li>
+    <li>Ziehen Sie das Element mit der Maus oder dem Finger an die gewünschte Stelle, oder justieren Sie es pixelgenau mithilfe des **Dynamic D-Pads** (Verschiebekreuz) am unteren Rand.</li>
+    <li>Nutzen Sie den Schieberegler <strong>🔍 Größe</strong>, um das Bild zu verkleinern, falls es zu viel Platz einnimmt.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ich möchte ein Werbesiegel („Bio“, „Regional“) schräg auf das Produktbild legen.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Laden Sie ein Custom Overlay Image hoch und drehen Sie es stufenlos.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>Öffnen Sie den **Kachel-Editor** des Produkts.</li>
+    <li>Führen Sie einen Rechtsklick auf die Vorschau aus (oder tippen Sie auf <code>⋯</code> auf Mobilgeräten) und wählen Sie <strong>„Overlay-Bild hochladen“</strong>.</li>
+    <li>Wählen Sie Ihr gewünschtes Siegel (z. B. im transparenten PNG-Format). Das Bild erscheint auf der Kachel.</li>
+    <li>Selektieren Sie das Overlay-Bild und nutzen Sie den stufenlosen **🔄 Drehung-Slider**, um das Siegel dekorativ schräg zu stellen (z. B. <code>-15°</code>). Klicken Sie auf <code>⮯ 0°</code>, um es wieder geradezurichten.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Wie erzeuge ich einen coolen, plastischen Bildschatten („Geist“) im Hintergrund?</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Aktivieren Sie den Ghost-Effekt im Kachel-Editor.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>Klicken Sie im Kachel-Editor auf den Button <strong>👻 Ghost: AUS</strong>. Er wechselt zu <strong>👻 Ghost: AN</strong>.</li>
+    <li>Klicken Sie auf den neu erschienenen Geist auf der Kachel, um ihn zu aktivieren (violetter Rahmen).</li>
+    <li>Nutzen Sie den Regler <strong>Größe</strong> und das Verschiebe-Pad, um den Geist vergrößert und leicht versetzt hinter dem Hauptprodukt zu platzieren.</li>
+    <li>Regulieren Sie den Regler <strong>Deckkraft (Opacity)</strong> auf etwa <code>30%</code>. Der Geist wirkt nun wie ein plastischer, räumlicher Schatten.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Wie helfe ich einem iPhone-Nutzer, der keine Push-Nachrichten erhält?</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Führen Sie ihn durch die PWA-Installation.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>Erklären Sie dem Kunden, dass iOS Push-Nachrichten für Web-Apps nur dann zulässt, wenn die Seite auf dem Startbildschirm installiert ist.</li>
+    <li>Der Kunde öffnet die Webseite in Safari, tippt auf das <strong>Teilen-Symbol 📤</strong> und wählt <strong>„Zum Home-Bildschirm“</strong>.</li>
+    <li>Er öffnet die installierte App vom Startbildschirm, öffnet das Menü, tippt auf <strong>„Benachrichtigungen aktivieren“</strong> und erlaubt den Dialog. Jetzt kommen alle Benachrichtigungen zuverlässig an.</li>
+  </ol>
+</div>
 
 <hr style="margin-top:60px; border:none; border-top:2px solid #e65100">
 <p style="text-align:center; color:#888; font-size:0.9em">

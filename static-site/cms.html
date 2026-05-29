@@ -2397,6 +2397,7 @@ document.head.appendChild(msalScript);
           <button class="cms-subtab" onclick="cmsSwitchHelpTopic('editor-help')" id="tab-editor-help" style="text-align:left; border:none; border-bottom:1px solid #f3f4f6; padding:10px 14px; background:none; cursor:pointer; font-weight:600; font-size:12px; color:#4b5563">🎨 Kachel- & Flyer-Editor</button>
           <button class="cms-subtab" onclick="cmsSwitchHelpTopic('push-help')" id="tab-push-help" style="text-align:left; border:none; border-bottom:1px solid #f3f4f6; padding:10px 14px; background:none; cursor:pointer; font-weight:600; font-size:12px; color:#4b5563">🔔 Push-Nachrichten</button>
           <button class="cms-subtab" onclick="cmsSwitchHelpTopic('sort-help')" id="tab-sort-help" style="text-align:left; border:none; border-bottom:1px solid #f3f4f6; padding:10px 14px; background:none; cursor:pointer; font-weight:600; font-size:12px; color:#4b5563">📦 Sortiment & Preisliste</button>
+          <button class="cms-subtab" onclick="cmsSwitchHelpTopic('howto-help')" id="tab-howto-help" style="text-align:left; border:none; border-bottom:1px solid #f3f4f6; padding:10px 14px; background:none; cursor:pointer; font-weight:600; font-size:12px; color:#4b5563">💡 Problemlöser (How-To)</button>
         </div>
       </div>
 
@@ -2488,6 +2489,86 @@ document.head.appendChild(msalScript);
               <li><strong>Sortierung:</strong> Nutzen Sie die Pfeiltasten an den Rändern, um Produkte nach oben oder unten zu verschieben.</li>
               <li><strong>Bearbeitungs-Modus:</strong> Klicken Sie auf <code>✏️ Bearbeiten</code> oben rechts, um Änderungen vornehmen zu können. Ein Klick auf <code>Speichern</code> sichert den Stand.</li>
             </ul>
+          </div>
+        </div>
+
+        <!-- Problemlöser / How-To (Problem-oriented) -->
+        <div id="help-howto-help" class="cms-card help-content-section" style="display:none">
+          <div class="cms-card-header">💡 Problemlöser (Schritt-für-Schritt-Anleitungen)</div>
+          <div class="cms-card-body" style="font-size:13px; line-height:1.6; color:#374151">
+            <h4 style="margin:0 0 12px; color:#1b5e20; border-bottom:1px solid #c8e6c9; padding-bottom:4px">⚠️ Typische Aufgaben & Problemstellungen lösen</h4>
+
+            <!-- Fall 1 -->
+            <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:12px">
+              <strong style="color:#b91c1c; font-size:13px">📌 Aufgabe: Ein Produktbild hat einen störenden weißen Hintergrund. Wie mache ich ihn transparent?</strong>
+              <p style="margin:6px 0 0; font-size:12px"><strong>Lösung:</strong> Verwenden Sie das integrierte, vollautomatische Freistell-Werkzeug.</p>
+              <ol style="margin:6px 0 0; padding-left:20px; font-size:12px">
+                <li>Navigieren Sie zum Tab <strong>Design</strong> &rarr; <strong>Plakate &amp; Flyer</strong>.</li>
+                <li>Prüfen Sie im Unterreiter <strong>⚙️ Gemeinsame Einstellungen</strong>, ob das Kontrollkästchen <strong>„Bilder freistellen (Weißer Hintergrund entfernen)“</strong> aktiviert ist.</li>
+                <li>Das CMS filtert nun beim Rendern alle rein weißen Hintergrundpixel des Bildes heraus und fügt das Produkt nahtlos und ohne weiße Ränder in das Plakat ein.</li>
+              </ol>
+            </div>
+
+            <!-- Fall 2 -->
+            <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:12px">
+              <strong style="color:#b91c1c; font-size:13px">📌 Aufgabe: Ich habe mich beim Mittagstisch vertippt und möchte alle ungespeicherten Änderungen verwerfen.</strong>
+              <p style="margin:6px 0 0; font-size:12px"><strong>Lösung:</strong> Nutzen Sie die Snapshot-basierte Verwerfen-Leiste.</p>
+              <ol style="margin:6px 0 0; padding-left:20px; font-size:12px">
+                <li>Sollten Sie falsche Gerichte eingetragen oder aus Versehen Zeilen gelöscht haben, klicken Sie <strong>auf keinen Fall</strong> auf Speichern.</li>
+                <li>Suchen Sie in der oberen Aktionsleiste des Wochenplans nach der Schaltfläche <strong>„↩ Verwerfen“</strong>.</li>
+                <li>Das CMS löscht alle flüchtigen Entwürfe im Browser-Speicher und lädt das exakte Abbild (Snapshot) Ihres letzten, permanent in Microsoft Dataverse gesicherten Zustands neu. Ihr Wochenplan ist sofort wieder fehlerfrei hergestellt.</li>
+              </ol>
+            </div>
+
+            <!-- Fall 3 -->
+            <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:12px">
+              <strong style="color:#b91c1c; font-size:13px">📌 Aufgabe: Ein Artikelfoto überdeckt den Preis oder den Text auf dem Plakat.</strong>
+              <p style="margin:6px 0 0; font-size:12px"><strong>Lösung:</strong> Nutzen Sie den Kachel-Editor mit Drag &amp; Drop und z-index Priorität.</p>
+              <ol style="margin:6px 0 0; padding-left:20px; font-size:12px">
+                <li>Öffnen Sie die Plakat-Vorschau der Aktion im Tab <strong>Angebote</strong> &rarr; <strong>Vorschau</strong>.</li>
+                <li>Klicken Sie direkt auf die betroffene Kachel. Der **Kachel-Editor** öffnet sich.</li>
+                <li>Klicken Sie das Element an, das Sie verschieben möchten (z. B. das Hauptbild). Es erhält einen gestrichelten Rahmen und rückt automatisch nach oben (höchste z-index Priorität).</li>
+                <li>Ziehen Sie das Element mit der Maus/dem Finger zur Seite, oder nutzen Sie die feinen Richtungspfeile im **Dynamic D-Pad** (Verschiebekreuz) zur Pixel-Justierung.</li>
+                <li>Verwenden Sie den Schieberegler **🔍 Größe**, um das Bild bei Bedarf zu verkleinern, damit Text und Preis wieder genügend Freiraum erhalten.</li>
+              </ol>
+            </div>
+
+            <!-- Fall 4 -->
+            <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:12px">
+              <strong style="color:#b91c1c; font-size:13px">📌 Aufgabe: Ich möchte ein Siegel („Bio“, „Regional“) schräg als Störer auf das Produktbild legen.</strong>
+              <p style="margin:6px 0 0; font-size:12px"><strong>Lösung:</strong> Laden Sie ein Custom Overlay Image hoch und drehen Sie es stufenlos.</p>
+              <ol style="margin:6px 0 0; padding-left:20px; font-size:12px">
+                <li>Öffnen Sie den **Kachel-Editor** für das jeweilige Produkt.</li>
+                <li>Klicken Sie mit der rechten Maustaste auf die Kachel (bzw. tippen Sie auf die Drei-Punkte-Schaltfläche <code>⋯</code> auf Mobilgeräten) und wählen Sie <strong>„Overlay-Bild hochladen“</strong>.</li>
+                <li>Wählen Sie Ihre Grafik (z. B. ein rundes Bio-Siegel). Es wird als neues Element eingefügt und erhält einen gestrichelten Rahmen.</li>
+                <li>Nutzen Sie den stufenlosen **🔄 Drehung-Slider**, um das Siegel dekorativ schräg zu stellen (z. B. <code>-15°</code>). Ein Klick auf <code>⮯ 0°</code> setzt die Neigung sofort zurück.</li>
+                <li>Verschieben Sie das Siegel über das D-Pad an den oberen Rand des Produktes.</li>
+              </ol>
+            </div>
+
+            <!-- Fall 5 -->
+            <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:12px">
+              <strong style="color:#b91c1c; font-size:13px">📌 Aufgabe: Wie erzeuge ich einen coolen, plastischen Bildschatten („Geist“) im Hintergrund?</strong>
+              <p style="margin:6px 0 0; font-size:12px"><strong>Lösung:</strong> Aktivieren Sie den Ghost-Effekt mit Deckkraft und Skalierung.</p>
+              <ol style="margin:6px 0 0; padding-left:20px; font-size:12px">
+                <li>Klicken Sie im Kachel-Editor auf den Button **👻 Ghost: AUS** (er ändert sich auf **👻 Ghost: AN**).</li>
+                <li>In der Element-Kopienliste erscheint nun eine Zeile für den Geisteintrag. Klicken Sie den Geist auf der Kachel an, um ihn zu aktivieren.</li>
+                <li>Nutzen Sie den Schieberegler **Größe** und das Verschiebe-Pad, um den Geist etwas vergrößert und schräg versetzt hinter dem Hauptprodukt zu platzieren.</li>
+                <li>Ziehen Sie den Regler **Deckkraft (Opacity)** auf etwa <code>30%</code>. Dadurch verschmilzt der Geist elegant mit dem Hintergrund und erzeugt eine sensationelle räumliche Tiefe!</li>
+              </ol>
+            </div>
+
+            <!-- Fall 6 -->
+            <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px;">
+              <strong style="color:#b91c1c; font-size:13px">📌 Aufgabe: Ein iPhone-Nutzer beschwert sich, keine Push-Nachrichten zu erhalten.</strong>
+              <p style="margin:6px 0 0; font-size:12px"><strong>Lösung:</strong> Führen Sie den Kunden durch die PWA-Installation.</p>
+              <ol style="margin:6px 0 0; padding-left:20px; font-size:12px">
+                <li>Erklären Sie dem Kunden, dass Apple-Geräte (iOS) Push-Nachrichten von Webseiten ausschließlich dann zulassen, wenn die Seite als **Homescreen-App** installiert ist.</li>
+                <li>Der Kunde muss die Homepage in Safari öffnen, auf das **Teilen-Symbol 📤** tippen und **„Zum Home-Bildschirm“** auswählen.</li>
+                <li>Nach dem Öffnen der neu installierten App vom Startbildschirm aus muss der Kunde im Menü auf **„Benachrichtigungen aktivieren“** tippen und den Dialog mit **„Erlauben“** bestätigen. Nun erhält er zuverlässig alle Mittagstisch- und Angebots-Remindere.</li>
+              </ol>
+            </div>
+
           </div>
         </div>
 
