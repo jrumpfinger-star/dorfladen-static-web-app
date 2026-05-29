@@ -114,8 +114,8 @@
     <li><a href="#design">Design-Editor (Layout-Steuerung)</a></li>
     <li><a href="#flyereditor">Detaillierte Anleitung: Flyer- &amp; Kachel-Editor</a></li>
     <li><a href="#website">Die Dorfladen-Website im Zusammenspiel</a></li>
-    <li><a href="#faq">Häufige Fragen &amp; Fehlerbehebung (FAQ)</a></li>
     <li><a href="#problemloeser">Problemlöser &amp; Schritt-für-Schritt-Anleitungen (How-To)</a></li>
+    <li><a href="#faq">Häufige Fragen &amp; Fehlerbehebung (FAQ)</a></li>
   </ol>
 </div>
 
@@ -684,37 +684,7 @@
 </table>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 14. FAQ -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="faq">14. Häufige Fragen &amp; Fehlerbehebung (FAQ)</h2>
-
-<h4>Warum wird mein hochgeladenes Bild nicht scharf dargestellt?</h4>
-<p>
-  Für perfekte Druckergebnisse auf A4-Flyern sollten Ihre Produktbilder eine Mindestauflösung von <code>800x800 Pixeln</code> aufweisen. Das System komprimiert Bilder zwar für die Web-Vorschau, nutzt beim PDF-Druck jedoch die maximale Auflösung.
-</p>
-
-<h4>Der stufenlose Rotations-Slider springt zurück auf 0° – warum?</h4>
-<p>
-  Wenn Sie den stufenlosen Slider bewegen, wird der Wert live gespeichert. Wenn Sie jedoch die Schaltfläche <strong>„⮯ 0°“</strong> anklicken, wird der Wert absichtlich sofort genullt. Achten Sie darauf, welches Element gerade aktiv ist (gestrichelter Rahmen), da sich der Slider immer auf das aktuell selektierte Element bezieht.
-</p>
-
-<h4>Wie verwerfe ich Änderungen an einer Kachel im Kachel-Editor?</h4>
-<p>
-  Wenn Sie mit Ihren Anpassungen unzufrieden sind, klicken Sie einfach auf die rote Schaltfläche <strong>„↩ Verwerfen“</strong> (oder das rote Kreuz <code>✕</code> oben rechts). Der Kachel-Editor schließt sich und stellt den Zustand vor dem Öffnen des Editors wieder her. Der rote Warnbanner <code>⚠️ UNGESPEICHERT</code> verschwindet.
-</p>
-
-<h4>Die Push-Nachricht wird auf meinem Smartphone nicht angezeigt.</h4>
-<p>
-  Damit Push-Nachrichten ankommen, müssen folgende Voraussetzungen erfüllt sein:
-</p>
-<ol>
-  <li>Der Kunde muss beim ersten Laden der Website im Browser-Popup auf <strong>„Erlauben“</strong> geklickt haben.</li>
-  <li>Die Benachrichtigungen dürfen in den Systemeinstellungen des Smartphones (iOS / Android) für den jeweiligen Browser (z. B. Chrome, Safari) nicht blockiert sein.</li>
-  <li>Das Gerät darf sich nicht im Energiespar- oder „Nicht stören“-Modus befinden.</li>
-</ol>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- 13. HOW-TO / PROBLEMLÖSER -->
+<!-- 13. HOW-TO / PROBLEMLOESER -->
 <!-- ═══════════════════════════════════════════ -->
 <h2 id="problemloeser">13. Problemlöser &amp; Schritt-für-Schritt-Anleitungen (How-To)</h2>
 <p>
@@ -726,63 +696,215 @@
   <p style="margin:0 0 10px"><strong>Lösung:</strong> Aktivieren Sie die automatische Bildfreistellung des CMS.</p>
   <ol style="margin:0; padding-left:20px; line-height:1.6">
     <li>Navigieren Sie im CMS zum Tab <strong>Design</strong> &rarr; Unterreiter <strong>Plakate &amp; Flyer</strong>.</li>
-    <li>Prüfen Sie im Abschnitt <strong>⚙️ Gemeinsame Einstellungen</strong>, ob das Kontrollkästchen <strong>„Bilder freistellen (Weißer Hintergrund entfernen)“</strong> aktiv ist.</li>
-    <li>Das System filtert daraufhin rein weiße Hintergrundpixel (RGB 255,255,255) automatisch beim Zeichnen heraus, wodurch das Produkt freigestellt auf Ihrem Plakat erscheint.</li>
+    <li>Prüfen Sie im Abschnitt <strong>⚙️ Gemeinsame Einstellungen</strong>, ob das Kontrollkästchen <strong>„Bilder freistellen (Weißer Hintergrund entfernen)"</strong> aktiv ist.</li>
+    <li>Das System filtert daraufhin rein weiße Hintergrundpixel automatisch beim Zeichnen heraus.</li>
   </ol>
 </div>
 
 <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ich habe mich beim Mittagstisch vertippt und möchte alle ungespeicherten Eingaben rückgängig machen.</h4>
-  <p style="margin:0 0 10px"><strong>Lösung:</strong> Nutzen Sie die Snapshot-basierte Verwerfen-Funktion.</p>
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ich habe mich beim Mittagstisch vertippt – alle ungespeicherten Eingaben rückgängig machen.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Snapshot-basierte Verwerfen-Funktion nutzen.</p>
   <ol style="margin:0; padding-left:20px; line-height:1.6">
-    <li>Wenn Sie Gerichte fälschlicherweise geändert oder Zeilen gelöscht haben, klicken Sie <strong>auf keinen Fall</strong> auf Speichern.</li>
-    <li>Klicken Sie stattdessen oben rechts in der Wochenleiste auf die Schaltfläche <strong>„↩ Verwerfen“</strong>.</li>
-    <li>Das System verwirft alle flüchtigen Änderungen im Browser und stellt das exakte Abbild (Snapshot) aus Microsoft Dataverse wieder her. Ihr Speiseplan ist sofort wieder auf dem letzten sicheren Stand.</li>
+    <li>Klicken Sie <strong>auf keinen Fall</strong> auf Speichern.</li>
+    <li>Klicken Sie stattdessen auf <strong>„↩ Verwerfen"</strong> oben rechts in der Wochenleiste.</li>
+    <li>Das System stellt den letzten sicheren Stand aus Microsoft Dataverse wieder her.</li>
   </ol>
 </div>
 
 <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ein Artikelfoto überlagert den Preis oder den Beschreibungstext auf einer Kachel.</h4>
-  <p style="margin:0 0 10px"><strong>Lösung:</strong> Verschieben oder skalieren Sie das Foto im Kachel-Editor.</p>
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ein Artikelfoto überlagert den Preis oder Beschreibungstext auf einer Kachel.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Foto im Kachel-Editor verschieben oder skalieren.</p>
   <ol style="margin:0; padding-left:20px; line-height:1.6">
-    <li>Öffnen Sie die Kachel-Vorschau der Aktion im Tab <strong>Angebote</strong> und klicken Sie direkt auf die betroffene Kachel, um den **Kachel-Editor** zu öffnen.</li>
-    <li>Klicken Sie das überlagernde Element (z. B. das Hauptbild) an. Es erhält einen farbigen, gestrichelten Rahmen und rückt automatisch in den Vordergrund (höchste z-index Priorität).</li>
-    <li>Ziehen Sie das Element mit der Maus oder dem Finger an die gewünschte Stelle, oder justieren Sie es pixelgenau mithilfe des **Dynamic D-Pads** (Verschiebekreuz) am unteren Rand.</li>
-    <li>Nutzen Sie den Schieberegler <strong>🔍 Größe</strong>, um das Bild zu verkleinern, falls es zu viel Platz einnimmt.</li>
+    <li>Kachel-Editor im Tab <strong>Angebote</strong> öffnen, das überlagernde Element anklicken (farbiger Rahmen).</li>
+    <li>Per Drag &amp; Drop oder D-Pad an die richtige Stelle verschieben.</li>
+    <li>Regler <strong>Größe</strong> nutzen, um das Bild zu verkleinern.</li>
   </ol>
 </div>
 
 <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Ich möchte ein Werbesiegel („Bio“, „Regional“) schräg auf das Produktbild legen.</h4>
-  <p style="margin:0 0 10px"><strong>Lösung:</strong> Laden Sie ein Custom Overlay Image hoch und drehen Sie es stufenlos.</p>
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Werbesiegel („Bio", „Regional") schräg auf das Produktbild legen.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Custom Overlay Image hochladen und stufenlos drehen.</p>
   <ol style="margin:0; padding-left:20px; line-height:1.6">
-    <li>Öffnen Sie den **Kachel-Editor** des Produkts.</li>
-    <li>Führen Sie einen Rechtsklick auf die Vorschau aus (oder tippen Sie auf <code>⋯</code> auf Mobilgeräten) und wählen Sie <strong>„Overlay-Bild hochladen“</strong>.</li>
-    <li>Wählen Sie Ihr gewünschtes Siegel (z. B. im transparenten PNG-Format). Das Bild erscheint auf der Kachel.</li>
-    <li>Selektieren Sie das Overlay-Bild und nutzen Sie den stufenlosen **🔄 Drehung-Slider**, um das Siegel dekorativ schräg zu stellen (z. B. <code>-15°</code>). Klicken Sie auf <code>⮯ 0°</code>, um es wieder geradezurichten.</li>
+    <li>Kachel-Editor öffnen &rarr; Rechtsklick auf Vorschau &rarr; <strong>„Overlay-Bild hochladen"</strong>.</li>
+    <li>Transparentes PNG-Siegel wählen. Es erscheint auf der Kachel.</li>
+    <li>Overlay selektieren und den Drehung-Slider auf z.&nbsp;B. <code>-15°</code> ziehen.</li>
   </ol>
 </div>
 
 <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Wie erzeuge ich einen coolen, plastischen Bildschatten („Geist“) im Hintergrund?</h4>
-  <p style="margin:0 0 10px"><strong>Lösung:</strong> Aktivieren Sie den Ghost-Effekt im Kachel-Editor.</p>
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Plastischen Bildschatten (Ghost-Effekt) im Hintergrund erzeugen.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Ghost-Effekt im Kachel-Editor aktivieren.</p>
   <ol style="margin:0; padding-left:20px; line-height:1.6">
-    <li>Klicken Sie im Kachel-Editor auf den Button <strong>👻 Ghost: AUS</strong>. Er wechselt zu <strong>👻 Ghost: AN</strong>.</li>
-    <li>Klicken Sie auf den neu erschienenen Geist auf der Kachel, um ihn zu aktivieren (violetter Rahmen).</li>
-    <li>Nutzen Sie den Regler <strong>Größe</strong> und das Verschiebe-Pad, um den Geist vergrößert und leicht versetzt hinter dem Hauptprodukt zu platzieren.</li>
-    <li>Regulieren Sie den Regler <strong>Deckkraft (Opacity)</strong> auf etwa <code>30%</code>. Der Geist wirkt nun wie ein plastischer, räumlicher Schatten.</li>
+    <li>Im Kachel-Editor auf <strong>👻 Ghost: AUS</strong> klicken – wechselt zu <strong>Ghost: AN</strong>.</li>
+    <li>Den Geist anklicken (violetter Rahmen), mit Größenregler &amp; D-Pad vergrößert und versetzt platzieren.</li>
+    <li>Deckkraft auf ca. <code>30%</code> senken für einen räumlichen Schatteneffekt.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: iPhone-Nutzer erhält keine Push-Nachrichten.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> PWA auf Startbildschirm installieren.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>iOS erlaubt Push nur nach App-Installation: Safari öffnen &rarr; Teilen 📤 &rarr; <strong>„Zum Home-Bildschirm"</strong>.</li>
+    <li>App vom Startbildschirm öffnen &rarr; Menü &rarr; <strong>„Benachrichtigungen aktivieren"</strong> &rarr; Erlauben.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Angebote der nächsten Woche heute anlegen, ohne dass sie bereits sichtbar sind.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Startdatum in der Zukunft setzen.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>Aktion im Tab <strong>Angebote</strong> wie gewohnt anlegen.</li>
+    <li><strong>Startdatum</strong> auf den ersten Tag der nächsten Woche (kommenden Montag) setzen.</li>
+    <li>Homepage blendet die Aktion automatisch aus bis das Datum erreicht ist. Im CMS bleibt sie sichtbar.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Neues Logo erscheint auf der Homepage nicht.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Browser-Cache leeren.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li><kbd>Strg</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> (Windows) bzw. <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> (Mac) für Hard-Refresh.</li>
+    <li>Alternativ: Inkognito-Fenster öffnen – kein Cache, neues Logo erscheint sofort.</li>
+    <li>Auf Smartphones: Browser-App komplett schließen, warten, neu öffnen.</li>
+  </ol>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Alle Design-Farben versehentlich verändert – alles zurücksetzen.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Werkseinstellungen im Design-Tab aufrufen.</p>
+  <ol style="margin:0; padding-left:20px; line-height:1.6">
+    <li>Tab <strong>Design</strong> öffnen &rarr; auf <strong>„✕ Werkseinstellungen"</strong> klicken.</li>
+    <li>Bestätigungsdialog bestätigen – alle Farben auf Werksvorgaben zurückgesetzt.</li>
+    <li>Auf <strong>„💾 Alles speichern"</strong> klicken um den Reset dauerhaft zu übernehmen.</li>
   </ol>
 </div>
 
 <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px">
-  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Wie helfe ich einem iPhone-Nutzer, der keine Push-Nachrichten erhält?</h4>
-  <p style="margin:0 0 10px"><strong>Lösung:</strong> Führen Sie ihn durch die PWA-Installation.</p>
+  <h4 style="margin:0 0 8px; color:#c62828; font-size:1.15em">📌 Aufgabe: Kunde hat den Wochenplan nicht als Bild in WhatsApp empfangen.</h4>
+  <p style="margin:0 0 10px"><strong>Lösung:</strong> Teilen-Workflow korrekt ausführen.</p>
   <ol style="margin:0; padding-left:20px; line-height:1.6">
-    <li>Erklären Sie dem Kunden, dass iOS Push-Nachrichten für Web-Apps nur dann zulässt, wenn die Seite auf dem Startbildschirm installiert ist.</li>
-    <li>Der Kunde öffnet die Webseite in Safari, tippt auf das <strong>Teilen-Symbol 📤</strong> und wählt <strong>„Zum Home-Bildschirm“</strong>.</li>
-    <li>Er öffnet die installierte App vom Startbildschirm, öffnet das Menü, tippt auf <strong>„Benachrichtigungen aktivieren“</strong> und erlaubt den Dialog. Jetzt kommen alle Benachrichtigungen zuverlässig an.</li>
+    <li>Im CMS Tab <strong>Wochenplan</strong> auf <strong>„📲 Teilen"</strong> klicken.</li>
+    <li>Das PNG-Bild wird automatisch heruntergeladen (<code>mittagstisch-kwXX.png</code>).</li>
+    <li>WhatsApp öffnet sich mit vorbereiteten Text – das Bild muss <em>manuell</em> aus dem Download-Ordner als Anhang hinzugefügt werden.</li>
   </ol>
 </div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 14. FAQ -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="faq">14. Häufige Fragen &amp; Fehlerbehebung (FAQ)</h2>
+
+<h4>1. Warum wird mein hochgeladenes Bild nicht scharf dargestellt?</h4>
+<p>Das CMS komprimiert Bilder beim Upload automatisch auf 500×500&nbsp;Pixel / 75%&nbsp;JPEG für optimale Ladezeiten. Für scharfen A4-Druck empfehlen sich Originalbilder mit mindestens <code>800×800&nbsp;Pixeln</code>. Laden Sie ein höher aufgelöstes Ausgangsbild hoch.</p>
+
+<h4>2. Der Rotations-Slider springt auf 0° zurück – warum?</h4>
+<p>Der Slider wirkt immer auf das aktuell <em>selektierte</em> Element (gestrichelter Rahmen). Zuerst das gewünschte Element anklicken, dann den Slider bewegen. Die Schaltfläche <strong>„⫠ 0°"</strong> setzt die Rotation absichtlich sofort auf null – das ist kein Fehler.</p>
+
+<h4>3. Wie verwerfe ich Änderungen im Kachel-Editor?</h4>
+<p>Klicken Sie auf <strong>„↩ Verwerfen"</strong>. Der Editor schließt sich und stellt den Zustand vor dem Öffnen wieder her. Der rote Banner <code>⚠️ UNGESPEICHERT</code> verschwindet.</p>
+
+<h4>4. Push-Nachrichten kommen auf dem Smartphone nicht an.</h4>
+<ul>
+  <li><strong>Berechtigung nicht erteilt:</strong> Kunden müssen im Browser-Popup auf <strong>„Erlauben"</strong> tippen.</li>
+  <li><strong>iOS ohne PWA-Installation:</strong> Auf iPhone funktioniert Push nur nach App-Installation über Safari &rarr; Teilen &rarr; Zum Home-Bildschirm.</li>
+  <li><strong>„Nicht stören"-Modus aktiv:</strong> Systemeinstellungen des Geräts prüfen.</li>
+  <li><strong>Benachrichtigungen blockiert:</strong> Einstellungen &rarr; Browser &rarr; Benachrichtigungen &rarr; Dorfladen-URL auf „Erlaubt" setzen.</li>
+  <li><strong>Funktion in Testphase:</strong> Push befindet sich noch im optionalen Testbetrieb und steht noch nicht offiziell live zur Verfügung.</li>
+</ul>
+
+<h4>5. Das CMS zeigt „Verbindungsfehler".</h4>
+<ul>
+  <li>Internetverbindung prüfen (anderen Tab öffnen).</li>
+  <li>Seite neu laden (<kbd>F5</kbd>) – Azure-Dienste brauchen gelegentlich einen Moment.</li>
+  <li>CMS-Passwort prüfen: Groß-/Kleinschreibung &amp; Sonderzeichen beachten.</li>
+</ul>
+
+<h4>6. Ich habe ein Angebot gespeichert, aber auf der Homepage ist nichts zu sehen.</h4>
+<ol>
+  <li>Ist das <strong>Startdatum</strong> bereits erreicht? Zukünftige Aktionen werden ausgeblendet.</li>
+  <li>Ist das <strong>Enddatum</strong> noch nicht abgelaufen? Abgelaufene Aktionen verschwinden automatisch.</li>
+  <li>Hard-Refresh (<kbd>Strg</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>) durchführen – Browser-Cache kann veraltete Daten zeigen.</li>
+  <li>Erschien nach dem Speichern eine grüne Erfolgsmeldung im CMS?</li>
+</ol>
+
+<h4>7. Wie lösche ich einen versehentlich veröffentlichten News-Beitrag?</h4>
+<p>Tab <strong>Aktuelles</strong> &rarr; <strong>🗑 Löschen</strong> neben dem Beitrag &rarr; Dialog bestätigen. Alternativ: <strong>🔄 Status umschalten</strong> &rarr; „Entwurf" – der Beitrag bleibt erhalten, ist aber öffentlich unsichtbar.</p>
+
+<h4>8. Kann ich mehrere Aktionen gleichzeitig laufen lassen?</h4>
+<p>Ja. Das System unterstützt beliebig viele parallele Aktionen. Empfehlung: pro Woche eine Haupt-Aktion mit allen Artikeln statt vieler kleiner Aktionen für bessere Übersicht.</p>
+
+<h4>9. Das Wochenplan-Plakat wird beim Drucken abgeschnitten.</h4>
+<p>Im Browser-Druckdialog prüfen: Papierformat <strong>A4</strong>, Seitenränder <strong>Keine / Minimal</strong>, Option <strong>„Hintergrundgrafiken drucken"</strong> aktiviert.</p>
+
+<h4>10. Wie ändere ich Öffnungszeiten für einen Feiertag?</h4>
+<p>Tab <strong>Öffnungszeiten</strong> &rarr; betreffenden Wochentag auf Feiertagszeiten ändern &rarr; <strong>💾 Speichern</strong>. Am Folgetag Normalzeiten wieder eintragen. Ein dediziertes Ausnahmedatum-Feld ist für eine zukünftige Version geplant.</p>
+
+<h4>11. Das Logo erscheint auf Flyern und Plakaten nicht.</h4>
+<p>Das Logo muss im Tab <strong>Homepage</strong> unter <strong>„Logo-Verwaltung"</strong> hochgeladen und gespeichert werden. Unterstützte Formate: PNG (mit Transparenz empfohlen), JPG, WebP.</p>
+
+<h4>12. Die Preisliste wird auf der Website nicht aktualisiert.</h4>
+<p>Sicherstellen, dass im Tab <strong>Sortiment</strong> nach jeder Änderung auf <strong>💾 Speichern</strong> geklickt wurde. Danach Hard-Refresh auf der Preislisten-Seite (<kbd>Strg</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>).</p>
+
+<h4>13. Wie entferne ich ein Bild aus der Galerie?</h4>
+<p>Tab <strong>Impressionen</strong> &rarr; <strong>🗑</strong>-Symbol unter dem Bild &rarr; Dialog bestätigen. Das Bild wird sofort aus Datenbank und öffentlicher Galerie entfernt.</p>
+
+<h4>14. Kann ich Galerie-Bilder Kategorien zuordnen?</h4>
+<p>Ja. Beim Hochladen oder nachträglich im Bild-Panel das Feld <strong>„Kategorie"</strong> ausfüllen (z.&nbsp;B. <code>Team</code>, <code>Produkte</code>, <code>Laden</code>). Filter-Tabs erscheinen erst wenn mindestens <strong>zwei verschiedene Kategorien</strong> mit je mindestens einem Bild belegt sind.</p>
+
+<h4>15. Die WhatsApp-Teilen-Funktion öffnet sich nicht.</h4>
+<p>Browser blockiert möglicherweise Pop-ups: Adressleiste &rarr; Seiteneinstellungen &rarr; Pop-ups für CMS-Seite erlauben. Auf Mobilgeräten muss WhatsApp installiert sein.</p>
+
+<h4>16. Kann ich den Mittagstisch für mehrere Wochen im Voraus planen?</h4>
+<p>Ja. Wochennavigation im Wochenplan-Tab nutzen (<strong>&rarr; Nächste Woche</strong>) und Gerichte für beliebige Zukunftswochen eintragen. Die Homepage zeigt automatisch immer die aktuelle Kalenderwoche.</p>
+
+<h4>17. Das CMS-Passwort wird nicht akzeptiert.</h4>
+<p>Groß-/Kleinschreibung und Sonderzeichen prüfen – Augensymbol 👁 neben dem Feld nutzen. Falls Browser-Autofill einen falschen Wert einträgt: Feld manuell leeren und Passwort neu eintippen.</p>
+
+<h4>18. Kann ich CMS-Inhalte auf mehreren Geräten gleichzeitig bearbeiten?</h4>
+<p>Grundsätzlich ja. Wenn aber zwei Personen <em>denselben</em> Datensatz gleichzeitig bearbeiten und speichern, gewinnt das zuletzt gespeicherte Ergebnis. Es gibt keinen Sperrmechanismus – Bearbeitung im Team koordinieren.</p>
+
+<h4>19. Wie erkenne ich ob das CMS mit dem Internet verbunden ist?</h4>
+<p>Oben rechts im CMS-Kopf: <span style="color:#2d7a5e">●</span> <strong style="color:#2d7a5e">grüner Kreis + „Verbunden"</strong> = aktive Dataverse-Verbindung. Roter Warnhinweis = Verbindungsproblem, Speichern schlägt fehl.</p>
+
+<h4>20. Ich habe versehentlich einen Push-Abonnenten gelöscht. Kann ich das rückgängig machen?</h4>
+<p>Nein – das Löschen ist unwiderruflich. Der Nutzer muss den Push-Button auf der Homepage erneut antippen, um wieder in die Abonnenten-Liste aufgenommen zu werden.</p>
+
+<h4>21. Galerie-Filter erscheinen nicht, obwohl Kategorien vergeben wurden.</h4>
+<p>Filter-Tabs erscheinen erst wenn mindestens <strong>zwei verschiedene Kategorien</strong> mit je mindestens einem Bild belegt sind. Bei nur einer Kategorie werden sie automatisch ausgeblendet.</p>
+
+<h4>22. Wie aktualisiere ich Social-Media-Links (Facebook, Instagram, WhatsApp)?</h4>
+<p>Tab <strong>Settings</strong> &rarr; vollständige URLs eintragen (z.&nbsp;B. <code>https://www.facebook.com/DorfladenOberornau</code>) &rarr; <strong>💾 Speichern</strong>. Symbole erscheinen sofort in Header und Footer.</p>
+
+<h4>23. Was passiert wenn ich zuerst „Als Standard speichern" und dann „Werkseinstellungen" aufrufe?</h4>
+<p><strong>„★ Als Standard speichern"</strong> legt Ihre Einstellungen als persönlichen Standard ab. <strong>„✕ Werkseinstellungen"</strong> löscht diesen Standard und kehrt zu den Original-Werksvorgaben zurück. Ein anschließendes <strong>„↺ Auf Default zurücksetzen"</strong> lädt dann die Werksvorgaben, nicht mehr Ihren persönlichen Standard.</p>
+
+<h4>24. Das Design-Template sieht in der Vorschau anders aus als beim Druck.</h4>
+<p>Im Druckdialog die Option <strong>„Hintergrundgrafiken drucken"</strong> aktivieren. In Chrome: Druckmenü &rarr; Weitere Einstellungen &rarr; Hintergrundgrafiken einschalten.</p>
+
+<h4>25. Der Barcode-Scanner in der Preisliste funktioniert nicht.</h4>
+<p>Der Scanner (Quagga.js) benötigt Kamerazugriff. Prüfen: Browser hat Kamera erlaubt? Ausreichende Beleuchtung vorhanden? EAN-/UPC-Strichcode vollständig im Rahmen? Auf Desktop-Browsern ohne Kamera ist der Scanner nicht verfügbar.</p>
+
+<h4>26. Ein Artikel erscheint doppelt in der Preisliste.</h4>
+<p>Tab <strong>Sortiment</strong> &rarr; betreffende Kategorie suchen &rarr; beim doppelten Eintrag auf <strong>🗑 Löschen</strong> klicken und Dialog bestätigen. Danach den verbleibenden Eintrag auf korrekten Preis prüfen.</p>
+
+<h4>27. Ich sehe einen roten „UNGESPEICHERT"-Banner im CMS. Was bedeutet das?</h4>
+<p>Dieser Banner erscheint im Kachel-Editor sobald Änderungen an einer Kachel noch nicht mit <strong>💾 Speichern</strong> gesichert wurden. Verlassen Sie den Editor nicht ohne vorher zu speichern oder <strong>„↩ Verwerfen"</strong> zu klicken – sonst gehen Änderungen verloren.</p>
+
+<h4>28. Wie finde ich heraus, wie viele Push-Abonnenten der Dorfladen aktuell hat?</h4>
+<p>Tab <strong>Push</strong> &rarr; Unterreiter <strong>Subscriber</strong> &rarr; <strong>„Aktualisieren"</strong> klicken. Die Gesamtzahl aktiver Abonnenten wird oben in der Subscriber-Ansicht prominent angezeigt.</p>
+
+<h4>29. Kann ich einen gelöschten News-Beitrag wiederherstellen?</h4>
+<p>Nein – einmal gelöschte Beiträge sind dauerhaft aus der Datenbank entfernt. Empfehlung: Beiträge lieber über <strong>🔄 Status umschalten</strong> in den Entwurfsmodus versetzen statt zu löschen.</p>
+
+<h4>30. Das CMS lädt sehr langsam. Was kann ich tun?</h4>
+<ul>
+  <li><strong>Langsame Verbindung:</strong> Speedtest durchführen. Mindestens 5&nbsp;Mbit/s empfohlen.</li>
+  <li><strong>Große Bilder:</strong> Bilder vor dem Upload auf unter 1&nbsp;MB komprimieren.</li>
+  <li><strong>Browser-Cache voll:</strong> Cache und Cookies leeren, CMS neu laden.</li>
+  <li><strong>Alter Browser:</strong> Aktuellen Chrome, Edge oder Firefox verwenden.</li>
+</ul>
+
 
 <hr style="margin-top:60px; border:none; border-top:2px solid #e65100">
 <p style="text-align:center; color:#888; font-size:0.9em">
