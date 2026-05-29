@@ -131,6 +131,10 @@
       <a href="#" onclick="openFaq('faq-app')">📱 App installieren</a>
       <a href="#" onclick="openFaq('faq-push')">🔔 Push-Benachrichtigungen</a>
       <a href="#" onclick="openFaq('faq-galerie')">🖼️ Galerie</a>
+      <a href="#" onclick="openFaq('faq-preisabweichung')">💬 Preisabweichung</a>
+      <a href="#" onclick="openFaq('faq-drucken')">🖨️ Drucken</a>
+      <a href="#" onclick="openFaq('faq-datenschutz')">🔒 Datenschutz</a>
+      <a href="#" onclick="openFaq('faq-laden-fehler')">⚠️ Fehler beheben</a>
     </div>
 
     <div class="sh">📖 Alle Hilfethemen</div>
@@ -147,6 +151,14 @@
       <div class="hcard" onclick="openFaq('faq-news')"><span class="ci">📰</span><span class="ct">Neuigkeiten &amp; News-Ticker</span><span class="cd">Aktuelle Meldungen lesen, Laufband-Ticker, Artikel-Overlay.</span></div>
       <div class="hcard" onclick="openFaq('faq-gestures')"><span class="ci">👆</span><span class="ct">Wischgesten &amp; Navigation</span><span class="cd">Popups wegwischen, Android Zurück-Geste, Scroll-Verhalten.</span></div>
       <div class="hcard" onclick="openFaq('faq-offline')"><span class="ci">📶</span><span class="ct">Offline &amp; schlechtes WLAN</span><span class="cd">Was funktioniert ohne Internet? Caching, Service Worker.</span></div>
+      <div class="hcard" onclick="openFaq('faq-preisabweichung')"><span class="ci">💬</span><span class="ct">Preisabweichung Flyer/Website</span><span class="cd">Warum weicht der Mittagstisch-Preis auf der Website vom Flyer ab?</span></div>
+      <div class="hcard" onclick="openFaq('faq-sortiment-veraltet')"><span class="ci">🛒</span><span class="ct">Artikel im Laden nicht da</span><span class="cd">Preisliste zeigt Artikel, der im Regal fehlt – was stimmt?</span></div>
+      <div class="hcard" onclick="openFaq('faq-datenschutz')"><span class="ci">🔒</span><span class="ct">Datenschutz &amp; Cookies</span><span class="cd">Welche Daten werden gespeichert? Tracking, Push, Kamera.</span></div>
+      <div class="hcard" onclick="openFaq('faq-whatsapp')"><span class="ci">📲</span><span class="ct">Per WhatsApp teilen</span><span class="cd">Wochenplan oder Angebote direkt per WhatsApp weiterleiten.</span></div>
+      <div class="hcard" onclick="openFaq('faq-kamera-gesperrt')"><span class="ci">🚫</span><span class="ct">Kamera gesperrt (Scanner)</span><span class="cd">Barcode-Scanner zeigt „Kamera gesperrt" – Berechtigung freigeben.</span></div>
+      <div class="hcard" onclick="openFaq('faq-laden-fehler')"><span class="ci">⚠️</span><span class="ct">Seite lädt nicht / Fehler</span><span class="cd">Weiße Fläche, Absturz oder Ladefehler beheben.</span></div>
+      <div class="hcard" onclick="openFaq('faq-drucken')"><span class="ci">🖨️</span><span class="ct">Drucken (Wochenplan / Flyer)</span><span class="cd">Wochenplan oder Angebotsflyer sauber auf A4 ausdrucken.</span></div>
+      <div class="hcard" onclick="openFaq('faq-schrift')"><span class="ci">🔎</span><span class="ct">Text zu klein – Zoom</span><span class="cd">Schriftgröße und Darstellung im Browser oder Smartphone anpassen.</span></div>
     </div>
 
     <!-- ═══════════════════════════════ FAQ ═══════════════════════════════ -->
@@ -304,6 +316,129 @@
       </div>
     </div>
 
+    <div class="faq" id="faq-preisabweichung" data-kw="preis abweichung flyer plakat mittagstisch website unterschied falsch veraltet stimmt nicht">
+      <button class="faq-q" onclick="toggleFaq(this)">💬 Die Mittagstisch-Preise auf der Website weichen vom Flyer ab – warum?<span class="arr">▼</span></button>
+      <div class="faq-a">
+        Es gibt zwei häufige Ursachen:<br><br>
+        <strong>1. Der Flyer wurde vor einer Preiskorrektur gedruckt.</strong><br>
+        Gedruckte Flyer spiegeln immer den Stand zum Druckzeitpunkt wider. Die Website wird danach noch aktiv vom CMS-Team gepflegt – daher kann die Website-Version aktueller sein als der Papierflyer.<br><br>
+        <strong>2. Kurzfristige Preisanpassung nach Lieferantennachkalkulation.</strong><br>
+        Lieferkostenänderungen können nach dem Druckdatum zu einer Preiskorrektur führen. In diesem Fall gilt stets <strong>der auf der Website angezeigte Preis</strong> als verbindlich.<br><br>
+        <strong>Was gilt an der Kasse?</strong> Sprechen Sie im Zweifelsfall das Kassenpersonal direkt an – im Dorfladen Oberornau wird immer kulant entschieden. In der Regel gilt der günstigere Preis für Sie.
+        <div class="tip-box" style="margin-top:10px">💡 Die Website ist stets aktueller als gedruckte Materialien. Bei Unsicherheiten einfach vor Ort nachfragen.</div>
+      </div>
+    </div>
+
+    <div class="faq" id="faq-sortiment-veraltet" data-kw="sortiment preisliste veraltet artikel nicht mehr da ausverkauft neu fehlt">
+      <button class="faq-q" onclick="toggleFaq(this)">🛒 Ein Artikel aus der Preisliste ist im Laden nicht erhältlich – was stimmt?<span class="arr">▼</span></button>
+      <div class="faq-a">
+        Die Online-Preisliste wird manuell gepflegt. Es kann vorkommen, dass:<br><br>
+        <ul>
+          <li>Ein Artikel <strong>vorübergehend ausverkauft</strong> ist – noch in der Liste, aber nicht im Regal.</li>
+          <li>Ein Artikel <strong>dauerhaft ausgelistet</strong> wurde – die Liste wird regelmäßig bereinigt, aber mit leichter Verzögerung.</li>
+          <li>Ein <strong>Neuzugang</strong> noch nicht eingetragen ist – neue Produkte erscheinen meist innerhalb weniger Tage.</li>
+        </ul>
+        Sprechen Sie das Kassenpersonal an – die aktuellste Bestandsinfo ist immer im Laden selbst vorhanden.
+      </div>
+    </div>
+
+    <div class="faq" id="faq-datenschutz" data-kw="datenschutz dsgvo daten speichern tracking cookie personenbezogen anonym sicher">
+      <button class="faq-q" onclick="toggleFaq(this)">🔒 Welche Daten speichert die Website über mich?<span class="arr">▼</span></button>
+      <div class="faq-a">
+        Die Dorfladen-Homepage ist bewusst <strong>datenschutzfreundlich</strong> konzipiert:<br><br>
+        <ul>
+          <li><strong>Kein Tracking:</strong> Keine Analyse-Tools (Google Analytics, Facebook-Pixel o.&nbsp;ä.).</li>
+          <li><strong>Kein Login:</strong> Keine Registrierung oder Anmeldung erforderlich.</li>
+          <li><strong>Push (optional):</strong> Nur eine anonyme Browser-ID – kein Name, keine E-Mail. Jederzeit abbestellbar.</li>
+          <li><strong>Barcode-Scanner:</strong> Kamera wird nur lokal genutzt – kein Bild verlässt Ihr Gerät.</li>
+          <li><strong>Service Worker / Cache:</strong> Seiteninhalte für schnelles Laden – keine personenbezogenen Daten.</li>
+        </ul>
+        Weitere Details: <a href="/datenschutzerklaerung">Datenschutzerklärung</a>.
+      </div>
+    </div>
+
+    <div class="faq" id="faq-whatsapp" data-kw="whatsapp teilen wochenplan mittagstisch link freunde senden weitergeben">
+      <button class="faq-q" onclick="toggleFaq(this)">📲 Wie teile ich den Wochenplan oder ein Angebot per WhatsApp?<span class="arr">▼</span></button>
+      <div class="faq-a">
+        An mehreren Stellen gibt es direkte <strong>„Teilen"-Buttons</strong>:<br><br>
+        <ul>
+          <li><strong>Wochenplan-Popup:</strong> Button <code>📲 Teilen</code> öffnet WhatsApp mit fertig formuliertem Nachrichtentext inkl. Gerichte und Preise.</li>
+          <li><strong>Angebotsflyer:</strong> Teilen-Button gibt den Flyer als Bild + Link weiter.</li>
+          <li><strong>Allgemein:</strong> Browser-Teilen-Symbol 📤 in der Adressleiste → WhatsApp, SMS oder E-Mail wählen.</li>
+        </ul>
+        <div class="tip-box">💡 Auf dem iPhone funktioniert WhatsApp-Teilen am besten, wenn die WhatsApp-App installiert ist.</div>
+      </div>
+    </div>
+
+    <div class="faq" id="faq-kamera-gesperrt" data-kw="kamera gesperrt barcode scanner erlauben berechtigung zugriff verweigert blockiert">
+      <button class="faq-q" onclick="toggleFaq(this)">📷 Der Barcode-Scanner sagt „Kamera gesperrt" – wie behebe ich das?<span class="arr">▼</span></button>
+      <div class="faq-a">
+        Die Kameraberechtigung wurde versehentlich <strong>blockiert</strong>. So setzen Sie sie zurück:<br><br>
+        <strong>Chrome / Edge (Android &amp; Desktop):</strong>
+        <ul>
+          <li>Adressleiste antippen → <strong>🔒 Schloss-Symbol</strong> → <strong>„Berechtigungen"</strong> → Kamera → <strong>„Zulassen"</strong>.</li>
+          <li>Seite neu laden (F5 / Pull-to-Refresh).</li>
+        </ul>
+        <strong>Safari (iPhone / iPad):</strong>
+        <ul>
+          <li>Einstellungen → Safari → Datenschutz → <strong>„Kamera"</strong> → <strong>„Fragen"</strong> oder <strong>„Erlauben"</strong>.</li>
+          <li>Dorfladen-Seite neu laden und Scanner erneut öffnen.</li>
+        </ul>
+        <div class="tip-box">💡 Der Scanner fragt nur einmalig nach Berechtigung – danach bleibt die Einstellung gespeichert.</div>
+      </div>
+    </div>
+
+    <div class="faq" id="faq-laden-fehler" data-kw="seite lädt nicht fehler weiß leer kaputt absturz funktioniert nicht neu laden cache leeren">
+      <button class="faq-q" onclick="toggleFaq(this)">⚠️ Die Seite lädt nicht richtig oder zeigt eine weiße Fläche – was tun?<span class="arr">▼</span></button>
+      <div class="faq-a">
+        Schnelle Lösungen Schritt für Schritt:<br><br>
+        <ol>
+          <li><strong>Harter Neu-Laden:</strong> <code>Strg&nbsp;+&nbsp;Shift&nbsp;+&nbsp;R</code> (Windows) bzw. <code>Cmd&nbsp;+&nbsp;Shift&nbsp;+&nbsp;R</code> (Mac/iPhone).</li>
+          <li><strong>Cache leeren:</strong> Browser-Menü → Verlauf → Browserdaten löschen → „Bilder und Dateien im Cache".</li>
+          <li><strong>Browser aktualisieren:</strong> Chrome, Edge oder Firefox auf aktuelle Version bringen.</li>
+          <li><strong>Internetverbindung prüfen:</strong> Andere Website aufrufen – wenn die auch nicht lädt, liegt es am Netz.</li>
+          <li><strong>PWA neu installieren:</strong> App vom Homescreen löschen, aus Browser neu hinzufügen.</li>
+        </ol>
+        <div class="tip-box">⚠️ Wenn nichts hilft – einfach kurz im Laden Bescheid geben!</div>
+      </div>
+    </div>
+
+    <div class="faq" id="faq-drucken" data-kw="drucken ausdrucken wochenplan angebot pdf a4 drucker papier hintergrundgrafiken">
+      <button class="faq-q" onclick="toggleFaq(this)">🖨️ Wie drucke ich den Wochenplan oder den Angebotsflyer aus?<span class="arr">▼</span></button>
+      <div class="faq-a">
+        <strong>Wochenplan drucken:</strong>
+        <ol>
+          <li>Kachel <strong>„Mittagstisch"</strong> antippen → Popup öffnet sich.</li>
+          <li>Button <code>🖨️ Drucken</code> klicken → Browser-Druckdialog erscheint.</li>
+          <li>Papierformat A4, Hochformat, Ränder Minimal/Keine.</li>
+          <li><strong>„Hintergrundgrafiken drucken"</strong> aktivieren – sonst fehlen Farben und Logos!</li>
+        </ol>
+        <strong>Angebotsflyer drucken:</strong>
+        <ol>
+          <li>Angebote öffnen → Plakat-Button → <code>⬇️ PNG herunterladen</code>.</li>
+          <li>Heruntergeladenes PNG im Bildbetrachtungsprogramm öffnen und von dort drucken.</li>
+        </ol>
+        <div class="tip-box">💡 PNG-Export empfohlen für Aushänge – beste Druckqualität auf A4.</div>
+      </div>
+    </div>
+
+    <div class="faq" id="faq-schrift" data-kw="schrift schriftgröße text klein groß lesbarkeit zoom vergrößern barrierefreiheit">
+      <button class="faq-q" onclick="toggleFaq(this)">🔎 Der Text ist zu klein – wie vergrößere ich die Darstellung?<span class="arr">▼</span></button>
+      <div class="faq-a">
+        <strong>Desktop (Windows/Mac):</strong>
+        <ul>
+          <li><code>Strg&nbsp;+&nbsp;+</code> vergrößert, <code>Strg&nbsp;+&nbsp;−</code> verkleinert, <code>Strg&nbsp;+&nbsp;0</code> setzt zurück.</li>
+          <li>Oder: Browser-Menü (⋮ / ☰) → <strong>„Zoom"</strong> → Prozent wählen.</li>
+        </ul>
+        <strong>Smartphone:</strong>
+        <ul>
+          <li><strong>Zwei-Finger-Spreiz-Geste</strong> (Pinch-to-Zoom) direkt auf der Seite.</li>
+          <li>Geräte-Einstellungen → <strong>Barrierefreiheit → Schriftgröße</strong> systemweit anpassen.</li>
+        </ul>
+        <div class="tip-box">💡 Zoom bis 150 % beeinträchtigt die Navigation nicht.</div>
+      </div>
+    </div>
+
     <!-- HANDBÜCHER -->
     <div class="sh">📄 Ausführliche Handbücher</div>
     <p style="font-size:.92em;color:var(--muted);margin-bottom:14px">Für detaillierte Beschreibungen aller Funktionen stehen die vollständigen Handbücher zur Verfügung:</p>
@@ -337,7 +472,15 @@ const DATA = [
   {id:'faq-galerie',tag:'Galerie',      title:'Galerie in Vollbild & Kategorien filtern',             kw:'galerie impressionen bilder fotos lightbox vollbild kategorie filter bild anzeigen blättern pfeil'},
   {id:'faq-news',  tag:'News',          title:'News-Ticker & Artikel als Overlay lesen',               kw:'news neuigkeit ticker laufband aktuelles beitrag meldung artikel lesen overlay schlagzeile'},
   {id:'faq-gestures',tag:'Navigation',  title:'Popups wischen & Android Zurück-Geste',                kw:'wischen swipe geste popup schließen zurück android back button navigation touch mobile handlebar'},
-  {id:'faq-offline',tag:'Offline',      title:'Was funktioniert ohne Internet / schlechtes WLAN?',    kw:'offline kein internet verbindung langsam cache laden fehler service worker netz funkloch pull refresh'},
+  {id:'faq-offline',     tag:'Offline',          title:'Was funktioniert ohne Internet / schlechtes WLAN?',         kw:'offline kein internet verbindung langsam cache laden fehler service worker netz funkloch pull refresh'},
+  {id:'faq-preisabweichung', tag:'Preise',       title:'Mittagstisch-Preise weichen vom Flyer ab – warum?',         kw:'preis abweichung flyer plakat mittagstisch website unterschied falsch veraltet stimmt nicht kasse kulant'},
+  {id:'faq-sortiment-veraltet', tag:'Sortiment', title:'Artikel aus Preisliste im Laden nicht erhältlich',          kw:'sortiment preisliste veraltet artikel nicht mehr da ausverkauft neu fehlt regal'},
+  {id:'faq-datenschutz', tag:'Datenschutz',      title:'Welche Daten speichert die Website über mich?',             kw:'datenschutz dsgvo daten speichern tracking cookie personenbezogen anonym sicher push kamera'},
+  {id:'faq-whatsapp',    tag:'Teilen',           title:'Wochenplan oder Angebot per WhatsApp teilen',               kw:'whatsapp teilen wochenplan mittagstisch link freunde senden weitergeben angebot flyer'},
+  {id:'faq-kamera-gesperrt', tag:'Barcode',      title:'Barcode-Scanner: Kamera gesperrt – Berechtigung freigeben', kw:'kamera gesperrt barcode scanner erlauben berechtigung zugriff verweigert blockiert safari chrome'},
+  {id:'faq-laden-fehler',tag:'Fehler',           title:'Seite lädt nicht / weiße Fläche – Schnellhilfe',           kw:'seite lädt nicht fehler weiß leer kaputt absturz funktioniert nicht neu laden cache leeren pwa'},
+  {id:'faq-drucken',     tag:'Drucken',          title:'Wochenplan oder Angebotsflyer ausdrucken',                  kw:'drucken ausdrucken wochenplan angebot pdf a4 drucker papier hintergrundgrafiken png export'},
+  {id:'faq-schrift',     tag:'Barrierefreiheit', title:'Text zu klein – Darstellung vergrößern (Zoom)',             kw:'schrift schriftgröße text klein groß lesbarkeit zoom vergrößern barrierefreiheit pinch strg'},
 ];
 
 const inp = document.getElementById('hs');
