@@ -13,59 +13,64 @@
     h2:first-of-type { page-break-before: auto; }
     h3 { font-size: 13pt; }
     img.screenshot { max-width: 100%; border: 1px solid #ccc; page-break-inside: avoid; }
-    .tip, .info { page-break-inside: avoid; }
+    .tip, .info, .warn { page-break-inside: avoid; }
   }
   * { box-sizing: border-box; }
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 900px; margin: 0 auto; padding: 24px;
+    max-width: 950px; margin: 0 auto; padding: 24px;
     color: #1a1a1a; line-height: 1.6;
   }
-  h1 { color: #e65100; border-bottom: 3px solid #e65100; padding-bottom: 8px; }
-  h2 { color: #bf360c; border-bottom: 2px solid #ffcc80; padding-bottom: 6px; margin-top: 40px; }
-  h3 { color: #4e342e; margin-top: 24px; }
+  h1 { color: #e65100; border-bottom: 3px solid #e65100; padding-bottom: 8px; margin-top: 30px; }
+  h2 { color: #bf360c; border-bottom: 2px solid #ffcc80; padding-bottom: 6px; margin-top: 45px; }
+  h3 { color: #4e342e; margin-top: 28px; border-left: 3px solid #ff9800; padding-left: 10px; }
   img.screenshot {
-    max-width: 100%; border: 1px solid #ddd; border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 12px 0;
+    display: block; max-width: 100%; height: auto;
+    border: 1.5px solid #ddd; border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin: 16px 0;
+  }
+  .image-caption {
+    font-size: 0.9em; color: #555; font-style: italic; text-align: center; margin-top: -8px; margin-bottom: 24px;
   }
   .tip {
     background: #fff3e0; border-left: 4px solid #ff9800; padding: 12px 16px;
-    border-radius: 4px; margin: 16px 0; font-size: 0.95em;
+    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
   }
-  .tip::before { content: "💡 Tipp: "; font-weight: 700; }
+  .tip::before { content: "💡 Tipp: "; font-weight: 700; color: #e65100; }
   .info {
     background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px 16px;
-    border-radius: 4px; margin: 16px 0; font-size: 0.95em;
+    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
   }
-  .info::before { content: "ℹ️ Hinweis: "; font-weight: 700; }
+  .info::before { content: "ℹ️ Hinweis: "; font-weight: 700; color: #0d47a1; }
   .warn {
     background: #fce4ec; border-left: 4px solid #e53935; padding: 12px 16px;
-    border-radius: 4px; margin: 16px 0; font-size: 0.95em;
+    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
   }
-  .warn::before { content: "⚠️ Wichtig: "; font-weight: 700; }
-  code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
-  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-  th { background: #f5f5f5; font-weight: 600; }
+  .warn::before { content: "⚠️ Wichtig: "; font-weight: 700; color: #b71c1c; }
+  code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; font-family: Consolas, monospace; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  th, td { border: 1px solid #e0e0e0; padding: 10px 14px; text-align: left; }
+  th { background: #f8f9fa; font-weight: 600; color: #333; }
   ol, ul { padding-left: 24px; }
-  li { margin-bottom: 6px; }
-  .toc { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px 28px; margin: 20px 0; }
-  .toc a { text-decoration: none; color: #bf360c; }
+  li { margin-bottom: 8px; }
+  .toc { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px 28px; margin: 24px 0; }
+  .toc h3 { border: none; padding: 0; margin-bottom: 12px; }
+  .toc a { text-decoration: none; color: #bf360c; font-weight: 500; }
   .toc a:hover { text-decoration: underline; }
   .toc ol { counter-reset: toc-counter; list-style: none; padding-left: 0; }
-  .toc li { counter-increment: toc-counter; margin-bottom: 4px; }
+  .toc li { counter-increment: toc-counter; margin-bottom: 6px; }
   .toc li::before { content: counter(toc-counter) ". "; font-weight: 600; color: #e65100; }
   .print-btn {
     position: fixed; bottom: 20px; right: 20px; background: #e65100; color: #fff;
     border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px;
-    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; transition: all 0.2s;
   }
-  .print-btn:hover { background: #bf360c; }
-  .cover { text-align: center; padding: 60px 0 30px; }
-  .cover h1 { font-size: 32pt; border: none; }
-  .cover .subtitle { font-size: 16pt; color: #666; margin-top: 8px; }
-  .cover .version { font-size: 12pt; color: #999; margin-top: 20px; }
-  .shortcut { display: inline-block; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 1px 7px; font-family: monospace; font-size: 0.85em; }
+  .print-btn:hover { background: #bf360c; transform: translateY(-2px); }
+  .cover { text-align: center; padding: 60px 0 40px; border-bottom: 2px solid #eaeaea; }
+  .cover h1 { font-size: 34pt; border: none; margin-bottom: 10px; }
+  .cover .subtitle { font-size: 18pt; color: #555; margin-top: 8px; font-weight: 300; }
+  .cover .version { font-size: 12pt; color: #888; margin-top: 24px; font-family: monospace; }
+  .shortcut { display: inline-block; background: #f4f4f4; border: 1px solid #ccc; border-radius: 4px; padding: 1px 7px; font-family: Consolas, monospace; font-size: 0.85em; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 </style>
 </head>
 <body>
@@ -77,31 +82,32 @@
 <!-- ═══════════════════════════════════════════ -->
 <div class="cover">
   <h1>🏪 Dorfladen CMS</h1>
-  <div class="subtitle">Anwenderhandbuch</div>
-  <div class="version">Version 1.3 · Stand Mai 2026</div>
-  <p style="margin-top:30px;color:#888">Dorfladen Oberornau · Content-Management-System</p>
+  <div class="subtitle">Detailliertes Anwenderhandbuch</div>
+  <div class="version">System-Version 1.3.43 • Stand: Mai 2026</div>
+  <p style="margin-top:35px; color:#666; font-size:1.1em">Content-Management-System zur Vollverwaltung der Dorfladen-Homepage und Werbemedien</p>
+  <p style="color:#888; font-size:0.9em">Dorfladen Oberornau Genossenschaft • Alle Rechte vorbehalten</p>
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- INHALTSVERZEICHNIS -->
 <!-- ═══════════════════════════════════════════ -->
 <div class="toc">
-  <h3 style="margin-top:0">Inhaltsverzeichnis</h3>
+  <h3 style="margin-top:0; color:#bf360c">📑 Inhaltsverzeichnis</h3>
   <ol>
     <li><a href="#ueberblick">Überblick &amp; Einstieg</a></li>
-    <li><a href="#wochenplan">Wochenplan (Mittagstisch)</a></li>
-    <li><a href="#oeffnungszeiten">Öffnungszeiten</a></li>
-    <li><a href="#angebote">Sonderangebote / Aktionen</a></li>
-    <li><a href="#homepage">Homepage-Inhalte</a></li>
-    <li><a href="#aktuelles">Aktuelles (News)</a></li>
-    <li><a href="#sortiment">Sortiment / Preisliste</a></li>
-    <li><a href="#impressionen">Impressionen (Bildergalerie)</a></li>
-    <li><a href="#push">Push-Benachrichtigungen</a></li>
-    <li><a href="#settings">Einstellungen</a></li>
-    <li><a href="#design">Design-Editor (Flyer &amp; Plakat)</a></li>
-    <li><a href="#flyereditor">Flyer- &amp; Kachel-Editor im Detail</a></li>
-    <li><a href="#website">Die Dorfladen-Website</a></li>
-    <li><a href="#faq">Häufige Fragen (FAQ)</a></li>
+    <li><a href="#wochenplan">Wochenplan (Mittagstisch) &amp; Revert-Funktion</a></li>
+    <li><a href="#oeffnungszeiten">Öffnungszeiten pflegen</a></li>
+    <li><a href="#angebote">Sonderangebote &amp; Aktionen erstellen</a></li>
+    <li><a href="#homepage">Homepage-Inhalte synchronisieren</a></li>
+    <li><a href="#aktuelles">Aktuelles (News-Beiträge)</a></li>
+    <li><a href="#sortiment">Sortiment &amp; Preisliste pflegen</a></li>
+    <li><a href="#impressionen">Bildergalerie (Impressionen)</a></li>
+    <li><a href="#push">Push-Benachrichtigungen &amp; Abonnenten-Verwaltung</a></li>
+    <li><a href="#settings">System-Einstellungen</a></li>
+    <li><a href="#design">Design-Editor (Layout-Steuerung)</a></li>
+    <li><a href="#flyereditor">Detaillierte Anleitung: Flyer- &amp; Kachel-Editor</a></li>
+    <li><a href="#website">Die Dorfladen-Website im Zusammenspiel</a></li>
+    <li><a href="#faq">Häufige Fragen &amp; Fehlerbehebung (FAQ)</a></li>
   </ol>
 </div>
 
@@ -110,549 +116,434 @@
 <!-- ═══════════════════════════════════════════ -->
 <h2 id="ueberblick">1. Überblick &amp; Einstieg</h2>
 
-<h3>Was ist das Dorfladen CMS?</h3>
+<h3>Einführung</h3>
 <p>
-  Das Dorfladen CMS ist eine webbasierte Verwaltungsoberfläche für den Dorfladen Oberornau. 
-  Damit verwalten Sie alle Inhalte Ihrer Website – vom Wochenplan über Angebote bis hin zu 
-  Flyern und Push-Benachrichtigungen – direkt im Browser.
+  Das Dorfladen CMS ist eine maßgeschneiderte, webbasierte Steuerzentrale. Mit dieser Webanwendung verwalten Sie alle Inhalte Ihres digitalen Schaufensters – von aktuellen Neuigkeiten über Sonderangebote bis hin zu automatisierten Druckmedien wie Plakaten und Handzetteln. Durch die direkte Cloud-Anbindung an Microsoft Dataverse werden alle Daten in Echtzeit ohne Verzögerung an die Homepage übertragen.
 </p>
 
-<h3>Zugang</h3>
+<h3>Zugang &amp; Anmeldung</h3>
 <p>
-  Öffnen Sie das CMS unter: <code>https://kind-pebble-072605b03.7.azurestaticapps.net/cms.html</code>
+  Das CMS ist über jeden modernen Webbrowser (empfohlen: Google Chrome, Microsoft Edge oder Apple Safari) erreichbar unter:
+  <br>
+  <code>https://kind-pebble-072605b03.7.azurestaticapps.net/cms.html</code>
 </p>
 <p>
-  Oben rechts sehen Sie den Verbindungsstatus und die aktuelle Version. 
-  Über den Link <strong>„Website"</strong> gelangen Sie zur öffentlichen Seite.
+  Geben Sie beim Start das CMS-Sicherheitspasswort ein und klicken Sie auf <strong>„Anmelden“</strong>. Über das Augensymbol 👁 im Passwortfeld können Sie Ihre Eingabe überprüfen.
 </p>
 
 <img src="01-cms-startseite.png" alt="CMS Startseite" class="screenshot">
-<p><em>Abb. 1: Die CMS-Startseite mit der Tab-Navigation am linken Rand</em></p>
+<div class="image-caption">Abb. 1: Die CMS-Startseite nach erfolgreicher Anmeldung</div>
 
-<h3>Navigation</h3>
-<p>Die Navigation besteht aus Tabs am linken Rand:</p>
-<table>
-  <tr><th>Tab</th><th>Funktion</th></tr>
-  <tr><td>📋 Wochenplan</td><td>Mittagstisch der Woche verwalten</td></tr>
-  <tr><td>🕐 Öffnungszeiten</td><td>Tägliche Öffnungszeiten pflegen</td></tr>
-  <tr><td>🏷️ Angebote</td><td>Sonderaktionen mit Bildern &amp; Preisen</td></tr>
-  <tr><td>🏠 Homepage</td><td>Texte, Banner, Logo der Startseite</td></tr>
-  <tr><td>📰 Aktuelles</td><td>News-Beiträge erstellen &amp; verwalten</td></tr>
-  <tr><td>🛒 Sortiment</td><td>Preisliste / Sortiment bearbeiten</td></tr>
-  <tr><td>🖼️ Impressionen</td><td>Bildergalerie verwalten</td></tr>
-  <tr><td>🔔 Push</td><td>Push-Nachrichten an Kunden senden</td></tr>
-  <tr><td>⚙️ Settings</td><td>Systemeinstellungen</td></tr>
-  <tr><td>🎨 Design</td><td>Flyer &amp; Plakat gestalten</td></tr>
-</table>
+<h3>System-Zustand</h3>
+<p>
+  Oben rechts im CMS-Kopf befindet sich das Status- und Informationsfeld:
+</p>
+<ul>
+  <li><strong>Verbindungsanzeige:</strong> Ein grüner Kreis und der Text <strong>„Verbunden“</strong> signalisieren eine aktive Verbindung zu den Cloud-Datenbanken. Bei Verbindungsabbrüchen erscheint ein roter Warnhinweis.</li>
+  <li><strong>Versionsnummer:</strong> Zeigt den aktuellen Systemstand (z. B. <code>v1.3.43 (Build 343)</code>) an.</li>
+  <li><strong>Link zur Homepage:</strong> Ein Klick auf <strong>„Website“</strong> (mit Verknüpfungssymbol) öffnet die öffentliche Internetpräsenz im neuen Tab.</li>
+</ul>
 
-<div class="tip">Alle Änderungen werden automatisch gespeichert. Es gibt keinen separaten „Speichern"-Button – Ihre Eingaben werden sofort übernommen.</div>
-
+<div class="info">
+  Die Navigation im CMS erfolgt komfortabel über die oben angeordneten Reiter-Schaltflächen (Tabs). Jedes Panel blendet sich nahtlos ein, ohne die Seite neu laden zu müssen.
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 2. WOCHENPLAN -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="wochenplan">2. Wochenplan (Mittagstisch)</h2>
+<h2 id="wochenplan">2. Wochenplan (Mittagstisch) &amp; Revert-Funktion</h2>
 
 <img src="11-wochenplan.png" alt="Wochenplan" class="screenshot">
-<p><em>Abb. 2: Der Wochenplan-Tab mit Kalendernavigation</em></p>
+<div class="image-caption">Abb. 2: Der Wochenplan-Tab mit Kalendernavigation und Gerichte-Übersicht</div>
 
-<h3>Übersicht</h3>
+<h3>Übersicht Mittagstisch</h3>
 <p>
-  Im Wochenplan pflegen Sie den Mittagstisch für die aktuelle oder kommende Woche. 
-  Die Kalenderwoche und der Zeitraum werden oben angezeigt.
+  In diesem Bereich planen Sie den täglichen Mittagstisch (Montag bis Freitag) für Ihre Kunden. Jedes eingetragene Gericht wird sofort dekorativ auf der Website dargestellt.
 </p>
 
-<h3>Bedienung</h3>
+<h3>Bedienung &amp; Wochensteuerung</h3>
 <ol>
-  <li><strong>Woche wählen:</strong> Nutzen Sie die Pfeile ← → oder die Buttons „Diese Woche" / „Nächste Woche"</li>
-  <li><strong>Gericht hinzufügen:</strong> Klicken Sie auf <strong>„+ Gericht"</strong></li>
-  <li><strong>Gericht bearbeiten:</strong> Klicken Sie auf ein bestehendes Gericht, um Name, Beschreibung und Preis zu ändern</li>
-  <li><strong>Gericht löschen:</strong> Im Bearbeitungsmodus gibt es einen Löschen-Button</li>
-  <li><strong>Vorschau:</strong> Über den Button „Vorschau" sehen Sie, wie der Plan auf der Website aussieht</li>
-  <li><strong>Drucken:</strong> Der Button „🖨️ Drucken" erzeugt eine druckoptimierte Version</li>
-  <li><strong>Teilen:</strong> Der „Teilen"-Button erstellt einen Link zum Verschicken</li>
+  <li><strong>Woche wählen:</strong> Über die Navigationsleiste steuern Sie die Kalenderwochen (KW). Nutzen Sie die Schaltflächen <code>←</code> und <code>→</code>, um wochenweise vor- oder zurückzublättern. Die Schnellwahlschaltflächen <strong>„Diese Woche“</strong> und <strong>„Nächste Woche“</strong> bringen Sie sofort zum gewünschten Zeitraum.</li>
+  <li><strong>Gericht eintragen:</strong> Klicken Sie auf <strong>„+ Gericht“</strong>, um eine neue Mahlzeit hinzuzufügen.</li>
+  <li><strong>Daten bearbeiten:</strong> Wählen Sie das Gericht aus. Es öffnet sich die Bearbeitungsmaske:
+    <ul>
+      <li><strong>Tag:</strong> Wochentag zuordnen (z. B. Montag, Dienstag).</li>
+      <li><strong>Titel / Name:</strong> z. B. <code>Schweinsbraten mit Kartoffelknödel</code>.</li>
+      <li><strong>Zusatzinfos (Beschreibung):</strong> z. B. <code>mit hausgemachter Biersauce und Blaukraut</code>.</li>
+      <li><strong>Preis:</strong> Geben Sie den Verkaufspreis ein (z. B. <code>9,80</code>).</li>
+    </ul>
+  </li>
+  <li><strong>Gericht entfernen:</strong> Über die rote Mülltonne 🗑 neben einem Eintrag löschen Sie ein Gericht unwiderruflich.</li>
 </ol>
 
-<div class="tip">Der Wochenplan wird automatisch auf der Website aktualisiert, sobald Sie Änderungen vornehmen.</div>
+<h3>NEU: Die „Verwerfen“-Funktion</h3>
+<p>
+  Wenn Sie Änderungen im Wochenplan-Design oder bei Gerichten vornehmen, erzeugt das CMS im Hintergrund automatische Live-Previews für die Homepage. Sollten Sie sich umentscheiden oder Fehler gemacht haben, können Sie alle ungespeicherten Entwürfe über die Schaltfläche <strong>„↩ Verwerfen“</strong> rückgängig machen. 
+</p>
+<p>
+  Das System greift hierbei auf ein sicheres Abbild (Snapshot) des letzten persistently in Microsoft Dataverse gespeicherten Zustands zurück und stellt diesen exakt wieder her. Alle flüchtigen Live-Änderungen werden sicher verworfen.
+</p>
 
+<div class="tip">
+  Nutzen Sie die Schaltfläche <strong>„🖨️ Drucken“</strong> im Wochenplan-Reiter, um einen für A4-Druck optimierten Speiseplan zum Aufhängen im Laden zu erzeugen. Der <strong>„Teilen“-Button</strong> generiert einen praktischen WhatsApp-Link für Ihre Kunden.
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 3. ÖFFNUNGSZEITEN -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="oeffnungszeiten">3. Öffnungszeiten</h2>
+<h2 id="oeffnungszeiten">3. Öffnungszeiten pflegen</h2>
 
 <img src="02-oeffnungszeiten.png" alt="Öffnungszeiten" class="screenshot">
-<p><em>Abb. 3: Verwaltung der Öffnungszeiten</em></p>
+<div class="image-caption">Abb. 3: Verwaltung der regulären und abweichenden Öffnungszeiten</div>
 
-<h3>Bedienung</h3>
-<ol>
-  <li>Für jeden Wochentag können Sie die <strong>Öffnungs- und Schließzeit</strong> eintragen</li>
-  <li>Bei geschlossenen Tagen lassen Sie das Feld leer oder tragen „geschlossen" ein</li>
-  <li>Änderungen werden sofort gespeichert und auf der Website angezeigt</li>
-</ol>
+<h3>Steuerung der Geschäftszeiten</h3>
+<p>
+  Die korrekte Anzeige der Öffnungszeiten ist essenziell für Ihre Kunden. Die Website berechnet aus diesen Daten in Echtzeit, ob der Laden aktuell <strong>„GEÖFFNET“</strong> oder <strong>„GESCHLOSSEN“</strong> hat, inklusive eines Countdowns (z. B. <i>„Schließt in 45 Minuten“</i>).
+</p>
 
-<div class="info">Die Öffnungszeiten werden prominent auf der Homepage und der Detailseite dargestellt.</div>
+<h3>Eintragung und Sonderzeiten</h3>
+<ul>
+  <li>Geben Sie für jeden Wochentag (Montag bis Sonntag) die genauen Zeiten im Format <code>HH:MM</code> ein (z. B. <code>07:30</code> bis <code>18:00</code>).</li>
+  <li><strong>Pausenzeiten:</strong> Falls Sie mittags schließen, tragen Sie geteilte Zeiten durch ein Semikolon getrennt ein (z. B. <code>07:30 - 12:30; 14:00 - 18:00</code>).</li>
+  <li><strong>Ruhetage:</strong> Lassen Sie bei geschlossenen Tagen (z. B. Sonntag) die Zeile einfach leer oder schreiben Sie <code>geschlossen</code> hinein. Das System erkennt dies automatisch.</li>
+</ul>
 
+<div class="warn">
+  Feiertage oder kurzfristige Änderungen (z. B. Betriebsausflug) sollten Sie rechtzeitig anpassen, da die Live-Berechnung der Homepage direkt auf diese Daten zugreift!
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 4. ANGEBOTE -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="angebote">4. Sonderangebote / Aktionen</h2>
+<h2 id="angebote">4. Sonderangebote &amp; Aktionen erstellen</h2>
 
 <img src="03-angebote.png" alt="Angebote" class="screenshot">
-<p><em>Abb. 4: Die Angebote-Übersicht</em></p>
+<div class="image-caption">Abb. 4: Übersicht der Wochen-Angebote mit Bearbeitungswerkzeugen</div>
 
-<h3>Neue Aktion erstellen</h3>
+<h3>Sonderaktionen anlegen</h3>
+<p>
+  Hier steuern Sie die wöchentlich wechselnden Rabatte und Aktionen.
+</p>
 <ol>
-  <li>Klicken Sie auf <strong>„+ Neue Aktion erstellen"</strong></li>
-  <li>Füllen Sie die Felder aus:
+  <li>Klicken Sie auf <strong>„+ Neue Aktion erstellen“</strong>.</li>
+  <li>Tragen Sie den Namen der Werbekampagne ein (z. B. <code>Angebote KW 23</code>) und definieren Sie das Start- und Enddatum.</li>
+  <li>Fügen Sie Artikel zur Kampagne hinzu:
     <ul>
-      <li><strong>Produktname:</strong> z. B. „Bio-Äpfel aus der Region"</li>
-      <li><strong>Preis:</strong> Angebotspreis in Euro</li>
-      <li><strong>Originalpreis:</strong> (optional) für die Ersparnis-Anzeige</li>
-      <li><strong>Gültig von/bis:</strong> Aktionszeitraum</li>
-      <li><strong>Artikelnummer:</strong> (optional) für interne Zuordnung</li>
-      <li><strong>Bild:</strong> Produktfoto hochladen (wird automatisch optimiert)</li>
+      <li><strong>Produktname:</strong> Präzise Bezeichnung, z. B. <code>Goldsteig Butter 250g</code>.</li>
+      <li><strong>Aktionspreis:</strong> Der reduzierte Verkaufspreis (z. B. <code>1,65</code>).</li>
+      <li><strong>Statt-Preis:</strong> Der Normalpreis zur Berechnung des Ersparnis-Prozentsatzes (z. B. <code>1,99</code>). Das System ermittelt daraus vollautomatisch den Rabatt (z. B. <code>-17%</code>).</li>
+      <li><strong>Bild-Upload:</strong> Wählen Sie ein ansprechendes Artikelfoto aus.</li>
     </ul>
   </li>
-  <li>Speichern – die Aktion erscheint sofort auf der Website</li>
 </ol>
 
-<h3>Filter</h3>
-<p>Mit den Buttons <strong>„Diese Woche"</strong>, <strong>„Nächste Woche"</strong> und <strong>„Alle"</strong> können Sie die Ansicht filtern.</p>
+<h3>Automatische Bildoptimierung</h3>
+<p>
+  Sobald Sie ein Artikelfoto hochladen, optimiert das CMS das Bild im Hintergrund: Es wird herunterskaliert, um Speicherplatz zu sparen, behält dabei jedoch eine knackige Kantenschärfe für den Flyer-Druck.
+</p>
 
-<div class="tip">Angebote mit Bild werden automatisch für den Flyer- und Plakat-Export berücksichtigt (siehe Kapitel Design).</div>
-
+<div class="tip">
+  Verwenden Sie nach Möglichkeit Bilder mit transparentem Hintergrund (PNG oder WebP-Format). Diese integrieren sich besonders edel in Ihre Plakate und Flyer, da sie keine störenden weißen Ränder aufweisen!
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 5. HOMEPAGE -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="homepage">5. Homepage-Inhalte</h2>
+<h2 id="homepage">5. Homepage-Inhalte synchronisieren</h2>
 
 <img src="04-homepage.png" alt="Homepage" class="screenshot">
-<p><em>Abb. 5: Bearbeitung der Homepage-Inhalte</em></p>
+<div class="image-caption">Abb. 5: Echtzeit-Bearbeitung des Startseiten-Inhalts</div>
 
-<h3>Bearbeitbare Bereiche</h3>
+<h3>Einfache Inhaltspflege</h3>
+<p>
+  Sie benötigen keine Programmierkenntnisse, um die Texte Ihrer Startseite aufzufrischen. Im Reiter <strong>„Homepage“</strong> verwalten Sie die zentralen Elemente:
+</p>
 <ul>
-  <li><strong>Logo:</strong> Das Dorfladen-Logo hochladen oder austauschen</li>
-  <li><strong>Begrüßungstext:</strong> Der Haupttext auf der Startseite</li>
-  <li><strong>Banner-Bild:</strong> Das große Headerbild der Website</li>
-  <li><strong>Slogan / Untertitel:</strong> Wird unter dem Logo angezeigt</li>
+  <li><strong>Begrüßungstext:</strong> Ein einladendes Editorial an Ihre Kunden. Nutzen Sie den integrierten Editor für Formatierungen (Fettgedruckt <b>F</b>, Kursiv <i>K</i> oder Links 🔗).</li>
+  <li><strong>Slogan &amp; Untertitel:</strong> Diese erscheinen direkt im großen Kopfbereich unter dem Ladenlogo.</li>
+  <li><strong>Header-Banner:</strong> Tauschen Sie das große Hero-Hintergrundbild der Website mit einem Klick aus (z. B. passend zur Jahreszeit: Frühling, Erntedank, Weihnachten).</li>
+  <li><strong>Logo-Verwaltung:</strong> Laden Sie das Genossenschaftslogo hoch. Es wird automatisch im Kopfbereich, in den Flyern und im Footer skaliert platziert.</li>
 </ul>
-
-<div class="info">Das Logo wird auch in der Navigation, im Footer und auf den Flyern/Plakaten verwendet.</div>
-
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 6. AKTUELLES -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="aktuelles">6. Aktuelles (News)</h2>
+<h2 id="aktuelles">6. Aktuelles (News-Beiträge)</h2>
 
 <img src="05-aktuelles.png" alt="Aktuelles" class="screenshot">
-<p><em>Abb. 6: Der Aktuelles/News-Bereich</em></p>
+<div class="image-caption">Abb. 6: Erstellung und Archivierung chronologischer Mitteilungen</div>
 
-<h3>News erstellen</h3>
+<h3>Das schwarze Brett des Dorfladens</h3>
+<p>
+  Nutzen Sie diesen Bereich für Ankündigungen, Termine von genossenschaftlichen Versammlungen, neue Lieferanten oder Urlaubsankündigungen.
+</p>
 <ol>
-  <li>Klicken Sie auf <strong>„+ Neuer Beitrag"</strong></li>
-  <li>Geben Sie <strong>Titel</strong>, <strong>Text</strong> und optional ein <strong>Bild</strong> ein</li>
-  <li>Das Datum wird automatisch gesetzt</li>
-  <li>Der Beitrag erscheint chronologisch auf der „Aktuelles"-Seite</li>
+  <li>Klicken Sie auf <strong>„+ Neuer Beitrag“</strong>.</li>
+  <li>Schreiben Sie eine prägnante Überschrift und den Haupttext.</li>
+  <li>Fügen Sie optional ein aussagekräftiges Foto hinzu.</li>
+  <li>Das Veröffentlichungsdatum wird automatisch auf den aktuellen Tag gesetzt. Sie können es bei Bedarf jedoch manuell anpassen, um Beiträge vorzudatieren oder im Archiv zu verschieben.</li>
 </ol>
 
-<div class="tip">News-Beiträge eignen sich ideal für saisonale Hinweise, Veranstaltungen oder allgemeine Mitteilungen.</div>
-
+<div class="info">
+  Auf der Startseite der Homepage wird immer der aktuellste News-Beitrag prominent angeteasert. Ältere Artikel wandern automatisch in das chronologische News-Archiv unter <code>/aktuelles.html</code>.
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 7. SORTIMENT -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="sortiment">7. Sortiment / Preisliste</h2>
+<h2 id="sortiment">7. Sortiment &amp; Preisliste pflegen</h2>
 
 <img src="06-sortiment.png" alt="Sortiment" class="screenshot">
-<p><em>Abb. 7: Das Sortiment / die Preisliste</em></p>
+<div class="image-caption">Abb. 7: Kategorisierte Verwaltung aller Standardartikel</div>
 
-<h3>Bedienung</h3>
+<h3>Das gesamte Warenangebot im Überblick</h3>
+<p>
+  Die Preisliste ist in logische Sektionen unterteilt (z. B. <i>Milchprodukte, Backwaren, Getränke, Obst &amp; Gemüse</i>). Kunden können auf der Website das Sortiment durchsuchen und gezielt filtern.
+</p>
 <ul>
-  <li>Produkte mit Name, Preis und Kategorie anlegen</li>
-  <li>Sortiment-Kategorien zur besseren Übersicht nutzen</li>
-  <li>Preise und Verfügbarkeit jederzeit aktualisieren</li>
+  <li><strong>Artikel hinzufügen:</strong> Wählen Sie eine Kategorie, klicken Sie auf <strong>„+ Zeile hinzufügen“</strong> und tragen Sie Name, Einheit (z. B. <code>500g</code>) und Preis ein.</li>
+  <li><strong>Umsortieren:</strong> Verwenden Sie die Pfeiltasten an den Zeilenrändern, um Artikel innerhalb einer Kategorie logisch anzuordnen.</li>
+  <li><strong>Kategorie-Pflege:</strong> Neue Abteilungen können über <strong>„+ Ordner / Kategorie anlegen“</strong> erstellt werden.</li>
 </ul>
-
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 8. IMPRESSIONEN -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="impressionen">8. Impressionen (Bildergalerie)</h2>
+<h2 id="impressionen">8. Bildergalerie (Impressionen)</h2>
 
 <img src="07-impressionen.png" alt="Impressionen" class="screenshot">
-<p><em>Abb. 8: Die Bildergalerie-Verwaltung</em></p>
+<div class="image-caption">Abb. 8: Bildverwaltung für die Galerie der Dorfladen-Impressionen</div>
 
-<h3>Bilder verwalten</h3>
+<h3>Visuelle Eindrücke vermitteln</h3>
+<p>
+  Bilder von regionalen Erzeugern, dem freundlichen Team oder gemütlichen Kaffeeecken laden Kunden ein.
+</p>
 <ol>
-  <li><strong>Bilder hochladen:</strong> Über den Upload-Button können Sie mehrere Bilder gleichzeitig auswählen</li>
-  <li><strong>Beschriftung:</strong> Jedes Bild kann einen Titel und eine Beschreibung erhalten</li>
-  <li><strong>Reihenfolge:</strong> Per Drag &amp; Drop können Bilder umsortiert werden</li>
-  <li><strong>Löschen:</strong> Unerwünschte Bilder über den Löschen-Button entfernen</li>
+  <li><strong>Massen-Upload:</strong> Über die Schaltfläche <strong>„Hochladen“</strong> können Sie bequem mehrere Fotos gleichzeitig von Ihrer Kamera oder Festplatte auswählen.</li>
+  <li><strong>Reihenfolge bestimmen:</strong> Ziehen Sie die Bilder einfach per Drag &amp; Drop an die gewünschte Stelle, um die Reihenfolge der Galerie anzupassen.</li>
+  <li><strong>Texte pflegen:</strong> Fügen Sie jedem Foto eine kurze, charmante Bildunterschrift hinzu. Diese wird beim Anklicken des Bildes auf der Website vergrößert eingeblendet.</li>
 </ol>
-
-<div class="tip">Verwenden Sie aussagekräftige, helle Bilder. Diese werden auf der „Impressionen"-Seite der Website in einer Galerie angezeigt.</div>
-
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 9. PUSH -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="push">9. Push-Benachrichtigungen</h2>
+<h2 id="push">9. Push-Benachrichtigungen &amp; Abonnenten-Verwaltung</h2>
 
 <img src="08-push.png" alt="Push" class="screenshot">
-<p><em>Abb. 9: Push-Benachrichtigungen verwalten und senden</em></p>
+<div class="image-caption">Abb. 9: Erstellung und Versand von Push-Mitteilungen an Smartphones</div>
 
-<h3>Was sind Push-Benachrichtigungen?</h3>
+<h3>Direkter Kundendraht ohne App-Stores</h3>
 <p>
-  Push-Nachrichten werden direkt auf das Smartphone oder den Computer Ihrer Kunden gesendet – 
-  auch wenn die Website gerade nicht geöffnet ist. Kunden müssen dafür einmalig zustimmen.
+  Push-Mitteilungen sind ein mächtiges Marketing-Instrument. Sie poppen direkt auf dem Startbildschirm des Kunden auf, sofern dieser den Benachrichtigungen auf der Homepage einmalig zugestimmt hat.
 </p>
 
-<h3>Push-Nachricht senden</h3>
-<ol>
-  <li>Wählen Sie eine <strong>Schnellvorlage</strong> (Mittagstisch, Angebote, News) oder erstellen Sie eine eigene Nachricht</li>
-  <li>Geben Sie <strong>Titel</strong> und <strong>Text</strong> ein</li>
-  <li>Klicken Sie auf <strong>„Senden"</strong></li>
-  <li>Die Nachricht wird an alle angemeldeten Kunden gesendet</li>
-</ol>
+<h3>Schnellvorlagen nutzen</h3>
+<ul>
+  <li><strong>🍽 Mittagstisch:</strong> Generiert automatisch eine Nachricht mit dem Text: <i>„Unser neuer Wochenplan ist online! Entdecken Sie die Mittagsgerichte für diese Woche...“</i></li>
+  <li><strong>🎁 Neue Angebote:</strong> Erstellt eine Nachricht: <i>„Frische Angebote! Sparen Sie diese Woche bei unseren ausgewählten Aktionsartikeln...“</i></li>
+  <li><strong>📰 Neuigkeit:</strong> Weist auf den neuesten News-Eintrag hin.</li>
+</ul>
 
-<h3>Schnellvorlagen</h3>
-<table>
-  <tr><th>Vorlage</th><th>Verwendung</th></tr>
-  <tr><td>🍽️ Mittagstisch</td><td>Neuen Wochenplan ankündigen</td></tr>
-  <tr><td>🏷️ Angebote</td><td>Neue Sonderaktionen bewerben</td></tr>
-  <tr><td>📰 News</td><td>Auf neue Beiträge hinweisen</td></tr>
-</table>
+<h3>Eigene Nachrichten verfassen</h3>
+<p>
+  Sie können den Titel (max. 50 Zeichen) und den Text (max. 150 Zeichen) auch komplett frei schreiben. Klicken Sie anschließend auf <strong>„🔔 Sofort senden“</strong>.
+</p>
 
-<h3>Subscriber verwalten</h3>
-<p>Im Bereich <strong>„Subscriber"</strong> sehen Sie, wie viele Kunden angemeldet sind. Einzelne Abonnements können dort auch gelöscht werden.</p>
+<h3>Abonnenten-Verwaltung (Subscriber)</h3>
+<p>
+  Das System speichert die Push-Empfänger anonymisiert in einer Datenbank. Im unteren Bereich sehen Sie die aktuelle Anzahl der aktiven Abonnenten. Sollten ungültige Empfänger-Tokens vom Browser-Push-Dienst zurückgemeldet werden, reinigt das System die Liste automatisch im Hintergrund.
+</p>
 
-<div class="warn">Push-Nachrichten sollten sparsam eingesetzt werden (max. 1–2 pro Woche), damit Kunden sich nicht abmelden.</div>
-
+<div class="warn">
+  Senden Sie maximal 1–2 Push-Nachrichten pro Woche! Zu häufiges Aufblinken nervt Kunden und führt zu sofortigen Abmeldungen.
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 10. SETTINGS -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="settings">10. Einstellungen</h2>
+<h2 id="settings">10. System-Einstellungen</h2>
 
 <img src="09-settings.png" alt="Settings" class="screenshot">
-<p><em>Abb. 10: Systemeinstellungen</em></p>
+<div class="image-caption">Abb. 10: Globale Metadaten und Kontaktinformationen des Dorfladens</div>
 
-<h3>Verfügbare Einstellungen</h3>
+<h3>Globale Ladeninformationen</h3>
+<p>
+  Im Reiter <strong>„Settings“</strong> pflegen Sie die grundlegenden Stammdaten des Dorfladens. Diese werden an unzähligen Stellen der Website verwendet (z. B. im Impressum, auf der Kontaktseite, im Fußbereich und im Header):
+</p>
 <ul>
-  <li><strong>Ladenname:</strong> Wird in der gesamten Website verwendet</li>
-  <li><strong>Adresse:</strong> Adressdaten für Kontaktseite und Footer</li>
-  <li><strong>Telefon / E-Mail:</strong> Kontaktinformationen</li>
-  <li><strong>Social Media:</strong> Links zu Facebook, Instagram etc.</li>
+  <li><strong>Ladenname &amp; Genossenschaft:</strong> Offizieller Firmenwortlaut.</li>
+  <li><strong>Adresse:</strong> Straße, Hausnummer, Postleitzahl und Ort für die Routenplanung.</li>
+  <li><strong>Kommunikation:</strong> Telefonnummer und E-Mail-Adresse für direkte Klick-Anrufe vom Smartphone.</li>
+  <li><strong>Social Media:</strong> Tragen Sie Ihre Links zu Facebook, Instagram oder WhatsApp ein. Die Symbole erscheinen automatisch im Kopf- und Fußbereich der Website.</li>
 </ul>
-
-<div class="info">Änderungen in den Settings wirken sich auf alle Seiten der Website aus.</div>
-
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 11. DESIGN -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="design">11. Design-Editor (Flyer &amp; Plakat)</h2>
+<h2 id="design">11. Design-Editor (Layout-Steuerung)</h2>
 
-<img src="10-design.png" alt="Design Editor" class="screenshot">
-<p><em>Abb. 11: Der Design-Editor für Flyer und Plakate</em></p>
+<img src="10-design.png" alt="Design" class="screenshot">
+<div class="image-caption">Abb. 11: Globale Gestaltungsparameter für Flyer und Plakate</div>
 
-<h3>Übersicht</h3>
+<h3>Das visuelle Corporate Design</h3>
 <p>
-  Der Design-Editor ist eines der mächtigsten Werkzeuge im CMS. Damit erstellen Sie 
-  professionelle <strong>Angebotsflyer</strong> und <strong>Plakate</strong> direkt aus Ihren 
-  Angebotsdaten – komplett automatisch.
+  Im Reiter <strong>„Design“</strong> passen Sie die globalen Design-Richtlinien für Ihre Druckmedien an. Das System generiert daraus vollautomatisch druckreife Flyer und Plakate.
 </p>
 
-<h3>Layouts</h3>
-<table>
-  <tr><th>Layout</th><th>Beschreibung</th></tr>
-  <tr><td>Magazin</td><td>Modernes Layout mit abgerundeten Karten</td></tr>
-  <tr><td>Classic</td><td>Traditionelles Layout mit klaren Linien</td></tr>
-</table>
-
-<h3>Ausgabeformate</h3>
-<ul>
-  <li><strong>Einzelflyer:</strong> Ein A4-Blatt pro Angebot mit großem Produktbild</li>
-  <li><strong>Plakat:</strong> Alle Angebote auf einem großen Poster (A2/A3)</li>
-  <li><strong>Kachel-Vorschau:</strong> Kleine Vorschaukarten für die Bildschirmansicht</li>
-</ul>
-
-<h3>Anpassungsmöglichkeiten</h3>
-<ul>
-  <li><strong>Farben:</strong> Hintergrund, Text, Akzentfarben individuell wählbar</li>
-  <li><strong>Schriftart:</strong> Verschiedene Schriftarten verfügbar</li>
-  <li><strong>Logo:</strong> Automatische Einbindung des Laden-Logos</li>
-  <li><strong>Hintergrundbild:</strong> Optional ein Hintergrundbild für das gesamte Layout</li>
-</ul>
-
+<h3>Die Unterreiter</h3>
+<ol>
+  <li><strong>🏠 Homepage-Layout:</strong> Hier steuern Sie die Schriftgrößen, Eckenrundungen aller Karten auf der Website sowie globale Farbeinstellungen.</li>
+  <li><strong>🍽 Wochenplan-Layout:</strong> Wählen Sie aus verschiedenen Design-Templates (Klassisch, Bento-Grid, Tafel-Optik) das passende Layout für Ihren Mittagstisch-Ausdruck.</li>
+  <li><strong>🖼 Plakate &amp; Flyer:</strong> Dies ist die Steuerzentrale für Ihre Printwerbung.
+    <ul>
+      <li><strong>Plakat-Template:</strong> Wählen Sie den Grundstil (z. B. <i>Classic Red, Modern Magazine, Dark Modern, Organic Market</i>).</li>
+      <li><strong>Template-Vorschau:</strong> Auf der rechten Seite sehen Sie in Echtzeit ein gerendertes Plakat-Vorschaubild.</li>
+      <li><strong>Detaileinstellungen:</strong> Passen Sie Farben des Hintergrunds, der Preisschilder, Kartenrahmen und Schriftarten an. Verwenden Sie den Schieberegler für den Eckenradius oder die Neigung der Preisschilder.</li>
+    </ul>
+  </li>
+</ol>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- 12. FLYER-EDITOR IM DETAIL -->
+<!-- 12. FLYER- & KACHEL-EDITOR IM DETAIL -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="flyereditor">12. Flyer- &amp; Kachel-Editor im Detail</h2>
+<h2 id="flyereditor">12. Detaillierte Anleitung: Flyer- &amp; Kachel-Editor</h2>
 
-<h3>Kachel-Editor (Angebotskarten)</h3>
 <p>
-  Jede Angebotskarte kann individuell angepasst werden. Klicken Sie auf eine Karte in der 
-  Design-Vorschau, um den <strong>Kachel-Editor</strong> zu öffnen.
+  Der Kachel- und Einzelflyer-Editor ermöglicht Ihnen die zentimetergenaue Gestaltung einzelner Aktionskarten. Jedes Element (Hauptbild, Preis, Text, Hintergrund-Ghost, Logos) lässt sich individuell arrangieren.
 </p>
 
-<h4>Bild positionieren</h4>
+<img src="12-kachel-editor.png" alt="Kachel-Editor" class="screenshot">
+<div class="image-caption">Abb. 12: Der Kachel-Editor mit Rotations-Slider, D-Pad und Ghost-Steuerungen</div>
+
+<h3>1. Selektion &amp; Aktives Element</h3>
+<p>
+  Um ein Element zu bearbeiten, müssen Sie es anklicken oder antippen.
+</p>
 <ul>
-  <li><strong>Ziehen:</strong> Klicken und Ziehen, um das Bild zu verschieben</li>
-  <li><strong>Größe:</strong> Nutzen Sie den Schieberegler „🔍 Größe" oder das Mausrad</li>
-  <li><strong>Drehen:</strong> Rechtsklick → „Bild drehen +15°" / „−15°"</li>
+  <li><strong>Visuelle Markierung:</strong> Das selektierte Element wird mit einer gestrichelten, farbigen Umrandung hervorgehoben (z. B. Violett für Ghost, Blau für Duplikat, Orange für Kopien, Rot für das Hauptbild).</li>
+  <li><strong>Sichere Schichtung (z-index):</strong> Das aktuell ausgewählte Element rückt automatisch in den Vordergrund (höchster z-index), sodass Sie es mühelos greifen und verschieben können, selbst wenn es von anderen Grafiken überlagert wird.</li>
+  <li><strong>Aktive Beschriftung:</strong> Ein Text-Badge oben im Editor (z. B. <code>Aktiv: 👻 Ghost</code>) zeigt Ihnen unmissverständlich an, was Sie gerade steuern.</li>
 </ul>
 
-<h4>Ghost-Effekt (Schattenkopie)</h4>
+<h3>2. Drag &amp; Drop und Touch-Steuerung</h3>
 <p>
-  Der Ghost-Effekt erzeugt eine halbtransparente Kopie des Produktbilds im Hintergrund – 
-  ideal für einen professionellen Look.
+  Sie können Elemente direkt mit der Maus oder dem Finger auf dem Vorschaubild verschieben.
 </p>
-<ol>
-  <li>Klicken Sie auf <strong>„👻 Ghost"</strong> um den Effekt einzuschalten</li>
-  <li>Der Ghost wird automatisch versetzt dargestellt</li>
-  <li><strong>Position:</strong> Ghost anklicken und ziehen</li>
-  <li><strong>Transparenz:</strong> Rechtsklick → Deckkraft anpassen (10–90%)</li>
-  <li><strong>Größe:</strong> Mausrad über dem Ghost oder Rechtsklick → Größe</li>
-  <li><strong>Drehen:</strong> Rechtsklick → Drehen</li>
-</ol>
-
-<h4>Duplikat-Effekt</h4>
-<p>
-  Das Duplikat erzeugt eine vollständig sichtbare (100% Deckkraft) Kopie des Bilds.
-</p>
-<ol>
-  <li>Klicken Sie auf <strong>„📝 Duplikat"</strong></li>
-  <li>Positionierung und Anpassung funktionieren wie beim Ghost</li>
-</ol>
-
-<h4>Weitere Kopien (Multi-Ghost/Duplikat)</h4>
-<p>
-  Sie können <strong>unbegrenzt viele</strong> zusätzliche Ghost- oder Duplikat-Kopien hinzufügen:
-</p>
-<ol>
-  <li>Klicken Sie auf <strong>„+ 👻"</strong> für eine weitere Ghost-Kopie</li>
-  <li>Klicken Sie auf <strong>„+ 📝"</strong> für eine weitere Duplikat-Kopie</li>
-  <li>Jede Kopie kann unabhängig positioniert, skaliert und gedreht werden</li>
-  <li>Zum Löschen: Rechtsklick auf die Kopie → „Kopie löschen" oder <strong>×</strong>-Button in der Liste</li>
-</ol>
-
-<div class="tip">Mit mehreren Ghost-Kopien in verschiedenen Größen und Transparenzen erzeugen Sie einen attraktiven „Wasserzeichen"-Effekt.</div>
-
-<h4>Kontextmenü (Rechtsklick)</h4>
-<p>
-  Ein Rechtsklick auf jedes Element öffnet ein Kontextmenü mit erweiterten Optionen:
-</p>
-<table>
-  <tr><th>Aktion</th><th>Beschreibung</th></tr>
-  <tr><td>↻ Drehen +15° / −15°</td><td>Element in 15°-Schritten drehen</td></tr>
-  <tr><td>🔍 Größe</td><td>Größe prozentual anpassen (10–300%)</td></tr>
-  <tr><td>🔆 Deckkraft</td><td>Transparenz anpassen (nur Ghost)</td></tr>
-  <tr><td>↩ Position zurücksetzen</td><td>Element an Standardposition zurücksetzen</td></tr>
-  <tr><td>🗑️ Alles zurücksetzen</td><td>Alle Anpassungen verwerfen</td></tr>
-  <tr><td>👻+ Ghost-Kopie hinzufügen</td><td>Neue halbtransparente Kopie erstellen</td></tr>
-  <tr><td>📝+ Duplikat-Kopie hinzufügen</td><td>Neue volldeckende Kopie erstellen</td></tr>
-  <tr><td>🖼+ Eigenes Bild einfügen</td><td>Eigenes Overlay-Bild hochladen (Siegel, Störer etc.)</td></tr>
-</table>
-
-<h4>Aktives Element</h4>
-<p>
-  Oben wird angezeigt, welches Element gerade aktiv ist (z. B. „🖼 Bild", „👻 Ghost", „📝 Duplikat"). 
-  Das aktive Element wird mit einer gestrichelten Umrandung hervorgehoben. 
-  Klicken Sie auf ein anderes Element, um es auszuwählen.
-</p>
-
-<h3>Einzelflyer-Editor</h3>
-<p>
-  Der Einzelflyer-Editor öffnet sich in einem neuen Fenster und bietet erweiterte Kontrolle 
-  für jedes Angebotsblatt:
-</p>
-
-<h4>Steuerelemente</h4>
-<p>Unter jedem Flyer befindet sich eine Kontrollleiste mit:</p>
 <ul>
-  <li><strong>🖼 Bild:</strong> Pfeilkreuz zum Verschieben des Produktbilds</li>
-  <li><strong>🏷 Preis:</strong> Pfeilkreuz zum Verschieben des Preisschilds</li>
-  <li><strong>👻 Ghost:</strong> Ein-/Ausschalten + Positions-Pfeile + Deckkraft + Größe</li>
-  <li><strong>📝 Duplikat:</strong> Ein-/Ausschalten + Positions-Pfeile + Größe</li>
-  <li><strong>Weitere Kopien:</strong> „+ 👻 Ghost" und „+ 📝 Duplikat" Buttons für zusätzliche Kopien</li>
+  <li><strong>Präzise Bewegung:</strong> Einfach anklicken und ziehen. Die Bewegung wird in Echtzeit flüssig auf dem Canvas mitgezeichnet.</li>
+  <li><strong>Touchscreen-Deadzone (Scroll-Schutz):</strong> Auf mobilen Geräten verhindert eine intelligente Deadzone-Logik, dass Elemente versehentlich verschoben werden, wenn Sie eigentlich nur durch die Seite scrollen wollten. Erst bei einer bewussten, längeren Haltegeste auf dem Element oder durch Drücken des D-Pads wird der Drag-Modus aktiviert.</li>
+  <li><strong>Verhinderung von Selektionsverlust:</strong> Durch Event-Abfangung (<code>stopPropagation</code>) bleibt Ihre Auswahl absolut stabil, selbst wenn Sie mit der Maus den Editierbereich kurzzeitig verlassen.</li>
+  <li><strong>Kein Kontextmenü-Fehlstart:</strong> Das lästige Standard-Kontextmenü des Smartphones bei längerem Drücken wurde deaktiviert. Menüs öffnen sich auf Mobilgeräten ausschließlich durch Tippen auf die Drei-Punkte-Schaltfläche <code>⋯</code>.</li>
+  <li><strong>Doppelklick-Schutz:</strong> Doppelklicks auf den Canvas wurden blockiert, um störendes automatisches Hineinzoomen des Webbrowsers zu unterbinden.</li>
 </ul>
 
-<h4>Drag &amp; Drop</h4>
+<h3>3. NEU: Stufenloser Rotations-Slider</h3>
 <p>
-  Alle Overlay-Elemente (Bild, Preis, Ghost, Duplikat, Kopien) können direkt auf dem 
-  Flyer-Vorschaubild per Drag &amp; Drop verschoben werden.
+  Bisher konnten Bilder nur in groben 15°-Schritten gedreht werden. Jetzt steht Ihnen ein hochpräziser Rotations-Slider zur Verfügung:
 </p>
-
-<h4>Eigenes Bild einfügen</h4>
-<p>
-  Über das Kontextmenü (Rechtsklick) können Sie ein <strong>eigenes Bild</strong> als 
-  zusätzliches Overlay einfügen – z. B. ein Siegel, einen Störer oder ein Dekorationselement.
-</p>
-
-<h4>Export</h4>
 <ul>
-  <li><strong>🖨️ Drucken:</strong> Direkt aus dem Browser drucken</li>
-  <li><strong>⬇️ Download:</strong> Als PNG-Bild speichern</li>
+  <li><strong>Drehbereich:</strong> Stufenlose Rotation von <strong>-180° bis +180°</strong> per Schieberegler (Slider).</li>
+  <li><strong>Echtzeit-Anzeige:</strong> Die genaue Gradzahl wird rechts neben dem Regler live angezeigt (z. B. <code>-15°</code>).</li>
+  <li><strong>Blitz-Reset:</strong> Mit der Schaltfläche <strong>„⮯ 0°“</strong> setzen Sie die Drehung des aktiven Elements sofort wieder auf die vollkommen gerade Ausgangsposition zurück.</li>
 </ul>
 
-<h3>Tastenkürzel</h3>
-<table>
-  <tr><th>Kürzel</th><th>Aktion</th></tr>
-  <tr><td><span class="shortcut">Mausrad</span></td><td>Aktives Element skalieren</td></tr>
-  <tr><td><span class="shortcut">Ziehen</span></td><td>Aktives Element verschieben</td></tr>
-  <tr><td><span class="shortcut">Rechtsklick</span></td><td>Kontextmenü öffnen</td></tr>
-  <tr><td><span class="shortcut">▲▼◀▶ Pfeile</span></td><td>Feinpositionierung (in der Kontrollleiste)</td></tr>
-</table>
+<h3>4. NEU: Dynamisches, kombiniertes D-Pad (Verschiebekreuz)</h3>
+<p>
+  Um die Benutzeroberfläche aufzuräumen und Platz zu sparen, wurden die separaten Verschiebekreuze für Hauptbild, Preise und Geister zu einem einzigen, intelligenten D-Pad verschmolzen:
+</p>
+<ul>
+  <li><strong>Echtzeit-Anpassung:</strong> Das D-Pad steuert automatisch dasjenige Element, das Sie gerade selektiert haben.</li>
+  <li><strong>Dynamischer Titel:</strong> Die Überschrift des D-Pads ändert sich live mit Ihrer Auswahl (z. B. <code>Verschieben: 🖼️ Bild</code> oder <code>Verschieben: 👻 Ghost</code>). Sie wissen sofort, welches Element Sie mit den Richtungspfeilen feinjustieren.</li>
+</ul>
 
-<div class="info">Alle Änderungen im Flyer-Editor werden automatisch gespeichert und bleiben erhalten, wenn Sie den Editor schließen und erneut öffnen.</div>
+<img src="13-einzelflyer-editor.png" alt="Einzelflyer-Editor" class="screenshot">
+<div class="image-caption">Abb. 13: Der Einzelflyer-Editor im mobilen Hochformat mit Steuerelementen</div>
 
+<h3>5. Ghost- &amp; Duplikat-Kopien (Multi-Geister)</h3>
+<p>
+  Der Ghost-Effekt erzeugt eine halbtransparente Kopie des Produktbilds im Hintergrund – ideal für plastische, dreidimensionale Effekte.
+</p>
+<ul>
+  <li><strong>Ghost aktivieren:</strong> Klicken Sie auf <code>👻 Ghost</code>. Es wird eine schattierte Kopie erzeugt. Nutzen Sie den Deckkraft-Regler (10% bis 90%), um die Transparenz anzupassen.</li>
+  <li><strong>Duplikat aktivieren:</strong> Der Duplikat-Button erzeugt eine Kopie mit voller Deckkraft (100%).</li>
+  <li><strong>Unbegrenzte Kopien:</strong> Über die Buttons <code>+ 👻</code> und <code>+ 📝</code> können Sie beliebig viele weitere Kopien auf die Kachel werfen. Jede Kopie erhält eine eigene Zeile in der Kopienliste und lässt sich eigenständig drehen, skalieren und verschieben.</li>
+  <li><strong>Kopien löschen:</strong> Ein Klick auf das rote Kreuz <code>✕</code> in der Liste oder via Rechtsklick-Kontextmenü entfernt die Kopie sofort.</li>
+</ul>
+
+<h3>6. NEU: Roter Warnbanner bei ungespeicherten Änderungen</h3>
+<p>
+  Um zu verhindern, dass Sie mühevoll gestaltete Kacheln versehentlich ohne Speichern schließen, wurde ein visueller Warnhinweis integriert:
+</p>
+<ul>
+  <li><strong>Dezente Platzierung:</strong> Ein schmaler, roter Banner am unteren Bildrand der Kachel signalisiert unmissverständlich <code>⚠️ UNGESPEICHERT</code>.</li>
+  <li><strong>Automatische Ausblendung:</strong> Der Banner verschwindet sofort, wenn Sie auf <strong>„💾 Speichern“</strong> klicken oder die Änderungen über <strong>„↩ Verwerfen“</strong> zurücksetzen.</li>
+  <li><strong>Keine Sorge beim Export:</strong> Beim finalen Drucken oder hochauflösenden PNG-Download wird dieser rote Warnbanner selbstverständlich vollkommen automatisch ausgeblendet!</li>
+</ul>
+
+<h3>7. Eigenes Overlay-Bild einfügen</h3>
+<p>
+  Über das Kontextmenü (Rechtsklick oder <code>⋯</code>) können Sie eine eigene Grafik als Overlay hochladen. Dies eignet sich hervorragend für:
+</p>
+<ul>
+  <li><strong>Aktionssiegel:</strong> z. B. <i>„Bio“</i>, <i>„Regional“</i> oder <i>„Saison-Hit“</i>.</li>
+  <li><strong>Störer-Grafiken:</strong> z. B. dekorative Sterne, Rabattsymbole oder saisonalen Schmuck.</li>
+</ul>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 13. WEBSITE -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="website">13. Die Dorfladen-Website</h2>
+<h2 id="website">13. Die Dorfladen-Website im Zusammenspiel</h2>
 
-<h3>Aufbau der Website</h3>
+<h3>Echtzeit-Generierung</h3>
 <p>
-  Die Dorfladen-Website wird automatisch aus den CMS-Daten generiert und besteht aus folgenden Seiten:
+  Die Dorfladen-Homepage ist eine moderne, blitzschnelle Single-Page-Anwendung. Sobald Sie im CMS Daten speichern, speist das System diese in die Microsoft-Cloud ein. Beim nächsten Aufrufen der Website durch einen Kunden lädt diese die aktuellen Datensätze und baut die Seiten dynamisch auf.
 </p>
+
+<h3>Die Unterseiten</h3>
 <table>
-  <tr><th>Seite</th><th>Inhalt</th><th>URL-Pfad</th></tr>
-  <tr><td>Startseite</td><td>Logo, Begrüßung, Öffnungszeiten, aktuelle Angebote</td><td><code>/</code></td></tr>
-  <tr><td>Angebote</td><td>Alle aktuellen Sonderangebote mit Bildern</td><td><code>/angebote.html</code></td></tr>
-  <tr><td>Mittagstisch</td><td>Aktueller Wochenplan</td><td><code>/wochenplan.html</code></td></tr>
-  <tr><td>Aktuelles</td><td>News-Beiträge chronologisch</td><td><code>/aktuelles.html</code></td></tr>
-  <tr><td>Sortiment</td><td>Preisliste / Produktübersicht</td><td><code>/preisliste.html</code></td></tr>
-  <tr><td>Impressionen</td><td>Bildergalerie</td><td><code>/impressionen.html</code></td></tr>
+  <tr><th>Seite</th><th>Inhalt</th><th>Aktualisierungsintervall</th></tr>
+  <tr><td>Startseite (<code>/index.html</code>)</td><td>Laden-Begrüßung, Header-Banner, aktuelle Sonderangebote, Live-Öffnungszeitensystem</td><td>Sofort bei Laden</td></tr>
+  <tr><td>Angebote (<code>/angebote.html</code>)</td><td>Große, bildstarke Übersicht aller wöchentlichen Sonderangebote mit Ersparnisanzeige</td><td>Sofort bei Laden</td></tr>
+  <tr><td>Mittagstisch (<code>/wochenplan.html</code>)</td><td>Der wöchentliche Speiseplan mit Kalenderauswahl und Preisen</td><td>Sofort bei Laden</td></tr>
+  <tr><td>Aktuelles (<code>/aktuelles.html</code>)</td><td>Alle verfassten News-Beiträge in chronologischer Reihenfolge</td><td>Sofort bei Laden</td></tr>
+  <tr><td>Preisliste (<code>/preisliste.html</code>)</td><td>Filterbares, durchsuchbares Sortimentsverzeichnis des Dorfladens</td><td>Sofort bei Laden</td></tr>
+  <tr><td>Impressionen (<code>/bilder.html</code>)</td><td>Bildergalerie mit stimmungsvollen Aufnahmen und Textbeschreibungen</td><td>Sofort bei Laden</td></tr>
 </table>
-
-<h3>Progressive Web App (PWA)</h3>
-<p>
-  Die Website ist als <strong>Progressive Web App</strong> installierbar. Das bedeutet:
-</p>
-<ul>
-  <li>Kunden können die Website auf ihrem <strong>Startbildschirm</strong> ablegen (wie eine App)</li>
-  <li>Die Seite funktioniert auch bei <strong>schlechter Internetverbindung</strong> (Caching)</li>
-  <li><strong>Push-Benachrichtigungen</strong> können empfangen werden (siehe Kapitel 9)</li>
-</ul>
-
-<h3>Responsive Design</h3>
-<p>
-  Die Website passt sich automatisch an alle Bildschirmgrößen an:
-</p>
-<ul>
-  <li><strong>Desktop:</strong> Breite Darstellung mit Sidebar-Navigation</li>
-  <li><strong>Tablet:</strong> Angepasstes Layout mit Touch-Optimierung</li>
-  <li><strong>Smartphone:</strong> Mobile Navigation mit Hamburger-Menü und optimierten Bildergrößen</li>
-</ul>
-
-<div class="tip">Testen Sie die Website regelmäßig auf Ihrem Smartphone, um sicherzustellen, dass alles gut aussieht.</div>
-
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- 14. FAQ -->
 <!-- ═══════════════════════════════════════════ -->
-<h2 id="faq">14. Häufige Fragen (FAQ)</h2>
+<h2 id="faq">14. Häufige Fragen &amp; Fehlerbehebung (FAQ)</h2>
 
-<h3>Allgemein</h3>
-
-<h4>Wie öffne ich das CMS?</h4>
+<h4>Warum wird mein hochgeladenes Bild nicht scharf dargestellt?</h4>
 <p>
-  Rufen Sie <code>https://kind-pebble-072605b03.7.azurestaticapps.net/cms.html</code> in Ihrem Browser auf. 
-  Es wird Chrome oder Edge empfohlen.
+  Für perfekte Druckergebnisse auf A4-Flyern sollten Ihre Produktbilder eine Mindestauflösung von <code>800x800 Pixeln</code> aufweisen. Das System komprimiert Bilder zwar für die Web-Vorschau, nutzt beim PDF-Druck jedoch die maximale Auflösung.
 </p>
 
-<h4>Muss ich meine Änderungen speichern?</h4>
+<h4>Der stufenlose Rotations-Slider springt zurück auf 0° – warum?</h4>
 <p>
-  Nein – alle Änderungen werden <strong>automatisch gespeichert</strong>, sobald Sie ein Feld verlassen 
-  oder einen Button klicken. Es gibt keinen separaten Speichern-Button.
+  Wenn Sie den stufenlosen Slider bewegen, wird der Wert live gespeichert. Wenn Sie jedoch die Schaltfläche <strong>„⮯ 0°“</strong> anklicken, wird der Wert absichtlich sofort genullt. Achten Sie darauf, welches Element gerade aktiv ist (gestrichelter Rahmen), da sich der Slider immer auf das aktuell selektierte Element bezieht.
 </p>
 
-<h4>Warum sehe ich „Verbindungsfehler"?</h4>
+<h4>Wie verwerfe ich Änderungen an einer Kachel im Kachel-Editor?</h4>
 <p>
-  Prüfen Sie Ihre Internetverbindung. Das CMS benötigt eine aktive Verbindung zum Server.
-  Der Verbindungsstatus wird oben rechts im CMS angezeigt.
+  Wenn Sie mit Ihren Anpassungen unzufrieden sind, klicken Sie einfach auf die rote Schaltfläche <strong>„↩ Verwerfen“</strong> (oder das rote Kreuz <code>✕</code> oben rechts). Der Kachel-Editor schließt sich und stellt den Zustand vor dem Öffnen des Editors wieder her. Der rote Warnbanner <code>⚠️ UNGESPEICHERT</code> verschwindet.
 </p>
 
-<h3>Angebote &amp; Flyer</h3>
-
-<h4>Wie erstelle ich einen Flyer?</h4>
+<h4>Die Push-Nachricht wird auf meinem Smartphone nicht angezeigt.</h4>
+<p>
+  Damit Push-Nachrichten ankommen, müssen folgende Voraussetzungen erfüllt sein:
+</p>
 <ol>
-  <li>Erstellen Sie zunächst Angebote im <strong>Angebote-Tab</strong> (mit Bildern)</li>
-  <li>Wechseln Sie zum <strong>Design-Tab</strong></li>
-  <li>Wählen Sie das gewünschte <strong>Layout</strong> (Magazin oder Classic)</li>
-  <li>Klicken Sie auf <strong>„Einzelflyer"</strong> für A4-Blätter oder <strong>„Plakat"</strong> für ein Poster</li>
-  <li>Passen Sie bei Bedarf Bilder, Positionen und Effekte an</li>
-  <li>Drucken oder downloaden Sie das Ergebnis</li>
+  <li>Der Kunde muss beim ersten Laden der Website im Browser-Popup auf <strong>„Erlauben“</strong> geklickt haben.</li>
+  <li>Die Benachrichtigungen dürfen in den Systemeinstellungen des Smartphones (iOS / Android) für den jeweiligen Browser (z. B. Chrome, Safari) nicht blockiert sein.</li>
+  <li>Das Gerät darf sich nicht im Energiespar- oder „Nicht stören“-Modus befinden.</li>
 </ol>
 
-<h4>Wie füge ich zusätzliche Ghost-Kopien hinzu?</h4>
-<p>Es gibt zwei Wege:</p>
-<ol>
-  <li><strong>Kontrollleiste:</strong> Unter dem Flyer finden Sie rechts die Sektion „Weitere Kopien" mit den Buttons <strong>„+ 👻 Ghost"</strong> und <strong>„+ 📝 Duplikat"</strong></li>
-  <li><strong>Kontextmenü:</strong> Rechtsklick auf den Flyer → <strong>„👻+ Ghost-Kopie hinzufügen"</strong> oder <strong>„📝+ Duplikat-Kopie hinzufügen"</strong></li>
-</ol>
-
-<h4>Wie lösche ich eine Kopie wieder?</h4>
-<p>
-  Entweder über den <strong>×-Button</strong> in der Kopien-Liste unter dem Flyer, oder per 
-  <strong>Rechtsklick</strong> auf die Kopie → <strong>„Kopie löschen"</strong>.
-</p>
-
-<h4>Welche Bildformate werden unterstützt?</h4>
-<p>
-  JPG, PNG und WebP. Bilder werden automatisch skaliert. Für beste Qualität verwenden Sie 
-  Bilder mit mindestens <strong>800×800 Pixeln</strong>.
-</p>
-
-<h3>Push-Benachrichtigungen</h3>
-
-<h4>Warum kommen manche Push-Nachrichten nicht an?</h4>
-<ul>
-  <li>Der Kunde hat die Benachrichtigungen im Browser <strong>deaktiviert</strong></li>
-  <li>Das Gerät war zum Zeitpunkt des Sendens <strong>offline</strong></li>
-  <li>Bei Firefox auf Android kann es zu Verzögerungen kommen</li>
-</ul>
-
-<h4>Wie oft sollte ich Push-Nachrichten senden?</h4>
-<p>
-  Maximal <strong>1–2 Mal pro Woche</strong>. Zu häufige Nachrichten führen dazu, dass Kunden 
-  die Benachrichtigungen deaktivieren.
-</p>
-
-<h3>Tipps &amp; Tricks</h3>
-
-<h4>Beste Ergebnisse für Flyer-Bilder</h4>
-<ul>
-  <li>Verwenden Sie <strong>freigestellte Produktbilder</strong> (transparenter Hintergrund) für den besten Effekt</li>
-  <li>Helle, farbenfrohe Bilder wirken am besten auf Flyern</li>
-  <li>Der <strong>Ghost-Effekt</strong> wirkt besonders gut bei Bildern mit klaren Konturen</li>
-  <li>Nutzen Sie die <strong>Mausrad-Skalierung</strong> für schnelle Größenanpassungen</li>
-</ul>
-
-<h4>Workflow für die wöchentliche Aktualisierung</h4>
-<ol>
-  <li><strong>Montag:</strong> Wochenplan für die nächste Woche anlegen</li>
-  <li><strong>Neue Angebote</strong> mit Bildern erstellen</li>
-  <li><strong>Design-Tab:</strong> Flyer/Plakat prüfen und drucken</li>
-  <li><strong>Push-Nachricht</strong> an Kunden senden</li>
-  <li>Optional: News-Beitrag auf „Aktuelles" veröffentlichen</li>
-</ol>
-
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- FOOTER -->
-<!-- ═══════════════════════════════════════════ -->
-<hr style="margin-top:60px;border:none;border-top:2px solid #e65100">
-<p style="text-align:center;color:#888;font-size:0.9em">
-  Dorfladen CMS Anwenderhandbuch · Version 1.3 · Mai 2026<br>
-  Bei Fragen wenden Sie sich an den Administrator.
+<hr style="margin-top:60px; border:none; border-top:2px solid #e65100">
+<p style="text-align:center; color:#888; font-size:0.9em">
+  Dorfladen CMS – Offizielles Anwenderhandbuch • Version 1.3.43 • Stand: Mai 2026<br>
+  Bei technischen Fragen wenden Sie sich an Ihren Administrator.
 </p>
 
 </body>

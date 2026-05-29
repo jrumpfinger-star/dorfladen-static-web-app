@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Dorfladen Homepage – Anwenderhandbuch für Besucher</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  @media print {
+    .no-print { display: none !important; }
+    body { font-size: 11pt; }
+    h1 { font-size: 22pt; }
+    h2 { font-size: 16pt; page-break-before: always; }
+    h2:first-of-type { page-break-before: auto; }
+    h3 { font-size: 13pt; }
+    img.screenshot { max-width: 100%; border: 1px solid #ccc; page-break-inside: avoid; }
+    .tip, .info, .warn { page-break-inside: avoid; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 950px; margin: 0 auto; padding: 24px;
+    color: #1a1a1a; line-height: 1.6;
+  }
+  h1 { color: #2d5016; border-bottom: 3px solid #2d5016; padding-bottom: 8px; margin-top: 30px; }
+  h2 { color: #3a6b1e; border-bottom: 2px solid #a3e635; padding-bottom: 6px; margin-top: 45px; }
+  h3 { color: #1e3a1e; margin-top: 28px; border-left: 3px solid #3a6b1e; padding-left: 10px; }
+  img.screenshot {
+    display: block; max-width: 100%; height: auto;
+    border: 1.5px solid #ddd; border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin: 16px 0;
+  }
+  .image-caption {
+    font-size: 0.9em; color: #555; font-style: italic; text-align: center; margin-top: -8px; margin-bottom: 24px;
+  }
+  .tip {
+    background: #f0fdf4; border-left: 4px solid #4ade80; padding: 12px 16px;
+    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
+  }
+  .tip::before { content: "💡 Tipp: "; font-weight: 700; color: #166534; }
+  .info {
+    background: #e0f2fe; border-left: 4px solid #38bdf8; padding: 12px 16px;
+    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
+  }
+  .info::before { content: "ℹ️ Hinweis: "; font-weight: 700; color: #0369a1; }
+  .warn {
+    background: #fef2f2; border-left: 4px solid #f87171; padding: 12px 16px;
+    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
+  }
+  .warn::before { content: "⚠️ Wichtig: "; font-weight: 700; color: #991b1b; }
+  code { background: #f4f4f5; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; font-family: Consolas, monospace; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; }
+  th { background: #f1f5f9; font-weight: 600; color: #334155; }
+  ol, ul { padding-left: 24px; }
+  li { margin-bottom: 8px; }
+  .toc { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px 28px; margin: 24px 0; }
+  .toc h3 { border: none; padding: 0; margin-bottom: 12px; }
+  .toc a { text-decoration: none; color: #3a6b1e; font-weight: 500; }
+  .toc a:hover { text-decoration: underline; }
+  .toc ol { counter-reset: toc-counter; list-style: none; padding-left: 0; }
+  .toc li { counter-increment: toc-counter; margin-bottom: 6px; }
+  .toc li::before { content: counter(toc-counter) ". "; font-weight: 600; color: #2d5016; }
+  .print-btn {
+    position: fixed; bottom: 20px; right: 20px; background: #2d5016; color: #fff;
+    border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; transition: all 0.2s;
+  }
+  .print-btn:hover { background: #3a6b1e; transform: translateY(-2px); }
+  .cover { text-align: center; padding: 60px 0 40px; border-bottom: 2px solid #eaeaea; }
+  .cover h1 { font-size: 34pt; border: none; margin-bottom: 10px; }
+  .cover .subtitle { font-size: 18pt; color: #555; margin-top: 8px; font-weight: 300; }
+  .cover .version { font-size: 12pt; color: #888; margin-top: 24px; font-family: monospace; }
+  .badge-icon { vertical-align: middle; margin-right: 4px; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">🖨️ Als PDF drucken</button>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- DECKBLATT -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="cover">
+  <h1>🌿 Dorfladen Homepage</h1>
+  <div class="subtitle">Anwenderhandbuch für die Homepage &amp; PWA</div>
+  <div class="version">System-Version 1.3 • Stand: Mai 2026</div>
+  <p style="margin-top:35px; color:#555; font-size:1.1em">Erläuterung aller Funktionen für Bürger, Genossen und das Ladenpersonal auf der Webseite</p>
+  <p style="color:#888; font-size:0.9em">Dorfladen Oberornau • https://kind-pebble-072605b03.7.azurestaticapps.net</p>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- INHALTSVERZEICHNIS -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="toc">
+  <h3 style="margin-top:0; color:#2d5016">📑 Inhaltsverzeichnis</h3>
+  <ol>
+    <li><a href="#einleitung">Einleitung &amp; Zielsetzung</a></li>
+    <li><a href="#oberflaeche">Die Benutzeroberfläche: Desktop vs. Mobile</a></li>
+    <li><a href="#status">Echtzeit-Öffnungszeiten &amp; Statusanzeige</a></li>
+    <li><a href="#ticker">Der Aktuelles-Ticker &amp; News-Archiv</a></li>
+    <li><a href="#quickactions">Die Schnellwahl-Aktionen (Popups)</a></li>
+    <li><a href="#preisliste">Interaktive Sortiments- und Preisliste</a></li>
+    <li><a href="#pwa">PWA: Die Homepage als App auf dem Smartphone installieren</a></li>
+    <li><a href="#push">Push-Benachrichtigungen aktivieren (Abendangebote/Mittagstisch)</a></li>
+    <li><a href="#datenschutz">Impressum, Datenschutz &amp; Cookie-Richtlinien</a></li>
+    <li><a href="#faq">Häufige Fragen &amp; Problemlösungen (FAQ)</a></li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 1. EINLEITUNG -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="einleitung">1. Einleitung &amp; Zielsetzung</h2>
+<p>
+  Die Webseite des Dorfladens Oberornau ist nicht nur eine schlichte Informationsseite, sondern eine interaktive Informationsplattform, die auf modernsten Webtechnologien basiert. Sie wurde als **Progressive Web App (PWA)** entwickelt, um Bürgern und Kunden der Genossenschaft ein App-ähnliches Erlebnis auf ihren Mobilgeräten zu bieten. 
+</p>
+<p>
+  Dieses Handbuch beschreibt ausführlich die Funktionen der Webseite aus Sicht der Besucher und erklärt Schritt für Schritt, wie man die Seite auf dem Smartphone installiert, Benachrichtigungen empfängt und alle digitalen Services wie den Wochen-Mittagstisch oder die Sonderpreisliste optimal nutzt.
+</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 2. OBERFLAECHE -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="oberflaeche">2. Die Benutzeroberfläche: Desktop vs. Mobile</h2>
+<p>
+  Die Webseite wurde nach dem Prinzip des <strong>Responsive Designs</strong> entwickelt, passt sich also vollkommen automatisch an das genutzte Endgerät an.
+</p>
+
+<h3>Desktop-Ansicht (Computer &amp; Laptop)</h3>
+<ul>
+  <li><strong>Sidebar-Navigation:</strong> Am linken Bildschirmrand befindet sich die feste Menüleiste. Diese ermöglicht den blitzschnellen Wechsel zwischen Startseite, Angeboten, Mittagstisch, Aktuelles, Sortiment und Impressionen.</li>
+  <li><strong>Offene Statusanzeige:</strong> Oben rechts wird stets gut sichtbar angezeigt, ob das Geschäft im Moment geöffnet hat, inklusive eines detaillierten Blicks auf die regulären Zeiten des Tages.</li>
+  <li><strong>Zwei-Spalten-Layout:</strong> Große Bildflächen und strukturierte Tabellen sorgen für beste Übersicht auf breiten Monitoren.</li>
+</ul>
+
+<h3>Mobile-Ansicht (Smartphones &amp; Tablets)</h3>
+<p>
+  Da über 85% der täglichen Zugriffe von mobilen Endgeräten erfolgen, wurde die mobile Ansicht extrem optimiert:
+</p>
+<ul>
+  <li><strong>Headerbar mit Hamburger-Menü:</strong> Ein platzsparendes Kopfelement zeigt den Ladenamen und öffnet über das Symbol mit den drei Strichen <code>☰</code> (Hamburger-Menü) eine ausziehbare Navigationsleiste (Navigation Drawer).</li>
+  <li><strong>News-Ticker:</strong> Ganz oben läuft ein dezent schiebendes Band mit den aktuellsten Schlagzeilen durchs Bild.</li>
+  <li><strong>Quick-Actions:</strong> Auf der Startseite befinden sich große, fingerfreundliche Kacheln, die Popups öffnen – ideal für die Einhandbedienung unterwegs.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 3. STATUS -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="status">3. Echtzeit-Öffnungszeiten &amp; Statusanzeige</h2>
+<p>
+  Das Herzstück der Startseite ist das dynamische Öffnungszeiten-System.
+</p>
+<ul>
+  <li><strong>Die Statusleiste:</strong> Ein farbiger Punkt signalisiert auf einen Blick den aktuellen Zustand:
+    <ul>
+      <li>🟢 <strong style="color:#166534">GEÖFFNET:</strong> Der Laden ist geöffnet. Zusätzlich erscheint eine Anzeige wie: <i>„Schließt um 18:00 Uhr • Schließt in 2 Stunden“</i>.</li>
+      <li>🔴 <strong style="color:#991b1b">GESCHLOSSEN:</strong> Das Geschäft hat geschlossen. Es erscheint z. B.: <i>„Öffnet morgen um 07:30 Uhr“</i>.</li>
+    </ul>
+  </li>
+  <li><strong>Interaktive Klick-Funktion:</strong> Tippt der Besucher auf die Statusleiste, öffnet sich ein übersichtliches Popup-Fenster mit der detaillierten Wochentabelle aller regulären Öffnungszeiten von Montag bis Sonntag.</li>
+</ul>
+
+<div class="info">
+  Die Zeitzonen- und Feiertagsberechnungen basieren vollautomatisch auf der lokalen Systemzeit des Dorfladens Oberornau, um Fehlberechnungen bei Zeitumstellungen zuverlässig zu vermeiden.
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 4. TICKER -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="ticker">4. Der Aktuelles-Ticker &amp; News-Archiv</h2>
+<p>
+  Der News-Bereich hält Kunden über Neuigkeiten auf dem Laufenden.
+</p>
+<ul>
+  <li><strong>Der Ticker (nur Mobile):</strong> Direkt unter dem oberen Bildschirmrand schiebt sich die Schlagzeile der neuesten Meldung langsam von rechts nach links durch das Feld. Ein Tippen auf den Ticker bringt den Besucher direkt zum ausführlichen Artikel.</li>
+  <li><strong>News-Archiv (<code>/aktuelles.html</code>):</strong> Auf dieser Unterseite sind alle Beiträge chronologisch sortiert aufgelistet. Jeder Post verfügt über ein scharfes Vorschaubild, das Datum der Veröffentlichung sowie einen liebevoll gestalteten Textkörper.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 5. QUICKACTIONS -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="quickactions">5. Die Schnellwahl-Aktionen (Popups)</h2>
+<p>
+  Auf dem Smartphone-Display müssen die wichtigsten Infos mit nur einem Daumen-Tipp erreichbar sein. Dafür wurden die <strong>Schnellwahl-Aktionen</strong> entwickelt:
+</p>
+
+<h3>🍽️ Mittagstisch (Wochenplan)</h3>
+<p>
+  Öffnet den aktuellen Mittagstisch-Plan als elegantes, mobiles Popup-Fenster.
+</p>
+<ul>
+  <li>Es zeigt den Plan wochentagsweise an (z. B. Montag: <i>Spargel im Knuspermantel mit Pommes • 9,80 €</i>).</li>
+  <li><strong>Schnittstellen:</strong> Über den Button <strong>„🖨️ Drucken“</strong> kann das Dokument direkt an einen heimischen AirPrint- oder Google-Print-Drucker gesendet werden. Der Button <strong>„Teilen“</strong> öffnet WhatsApp, um das Gericht des Tages mit Freunden oder Kollegen zu teilen.</li>
+</ul>
+
+<h3>🏷️ Angebote (Aktions-Flyer)</h3>
+<p>
+  Dieses Popup lädt die aktuellen Wochen-Sonderangebote direkt auf das Display. Jedes Produkt wird als bildstarke Karte mit rotem Preis-Aktionsschild (z. B. <code>1,35 € statt 1,65 €</code>) und dem berechneten Rabatt (z. B. <code>-18%</code>) dargestellt.
+</p>
+
+<h3>🔴 Roter Punkt</h3>
+<p>
+  Unter dieser Rubrik finden Besucher eine Liste von Grundnahrungsmitteln und Produkten des täglichen Bedarfs, die dauerhaft extrem günstig angeboten werden. Dies sichert die preiswerte Grundversorgung im Ort.
+</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 6. PREISLISTE -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="preisliste">6. Interaktive Sortiments- und Preisliste</h2>
+<p>
+  Die Preisliste (erreichbar über die Navigation oder die Kachel „Preisliste“ auf dem Smartphone) ist ein digitaler Katalog des Gesamtsortiments.
+</p>
+<ul>
+  <li><strong>Echtzeit-Suche:</strong> Über das Suchfeld kann der Kunde sofort nach Produkten filtern (z. B. Eintippen von <code>Milch</code> zeigt ausschließlich Treffer an, die „Milch“ im Namen tragen).</li>
+  <li><strong>Abteilungsfilter:</strong> Besucher können Kategorien direkt anwählen (z. B. <i>Obst &amp; Gemüse, Getreide, Tiefkühl, Drogerie</i>), um nur relevante Waren anzuzeigen.</li>
+  <li><strong>Preistransparenz:</strong> Jede Zeile listet das Produkt, die genaue Füllmenge (z. B. <code>500 g</code> oder <code>1 Flasche</code>) und den exakten Ladenpreis transparent auf.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 7. PWA -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="pwa">7. PWA: Die Homepage als App auf dem Smartphone installieren</h2>
+<p>
+  Da die Dorfladen-Homepage eine Progressive Web App ist, können Sie diese wie eine vollwertige App auf Ihrem Mobiltelefon installieren – ohne den Google Play Store oder Apple App Store aufrufen zu müssen!
+</p>
+
+<h3>Vorteile der Installation</h3>
+<ol>
+  <li>Ein schickes <strong>Dorfladen-App-Icon</strong> erscheint direkt auf Ihrem Startbildschirm.</li>
+  <li>Die Seite öffnet sich im Vollbildmodus (ohne die störende Adresszeile des Webbrowsers).</li>
+  <li>Die App lädt durch fortschrittliche Zwischenspeicherung (Caching) auch bei sehr schlechter Internetverbindung im ländlichen Raum blitzschnell.</li>
+</ol>
+
+<h3>Anleitung für Android (Samsung, Xiaomi, Google Pixel, etc.)</h3>
+<p>
+  Öffnen Sie die Homepage im <strong>Google Chrome Browser</strong>.
+</p>
+<ul>
+  <li>In der Regel erscheint am unteren Bildschirmrand automatisch ein Banner: <strong>„Dorfladen zum Startbildschirm hinzufügen“</strong>. Tippen Sie darauf.</li>
+  <li>Sollte das Banner nicht erscheinen: Öffnen Sie das Menü des Browsers (die drei Punkte <code>⋮</code> oben rechts) und wählen Sie <strong>„App installieren“</strong> oder <strong>„Zum Startbildschirm hinzufügen“</strong>.</li>
+</ul>
+
+<h3>Anleitung für iOS (Apple iPhone &amp; iPad)</h3>
+<p>
+  Öffnen Sie die Homepage im integrierten <strong>Safari Webbrowser</strong>.
+</p>
+<ul>
+  <li>Tippen Sie in der unteren Funktionsleiste auf das <strong>„Teilen“-Symbol</strong> (ein Viereck mit einem Pfeil, der nach oben zeigt: <span style="font-size:1.1em">📤</span>).</li>
+  <li>Scrollen Sie im sich öffnenden Menü nach unten und tippen Sie auf den Eintrag: <strong>„Zum Home-Bildschirm“</strong>.</li>
+  <li>Bestätigen Sie den Namen mit „Dorfladen“ und tippen Sie oben rechts auf <strong>„Hinzufügen“</strong>.</li>
+</ul>
+
+<div class="tip">
+  Sobald Sie die App installiert haben, verhält sie sich exakt wie eine klassische App aus dem App-Store, benötigt aber nahezu keinen Speicherplatz auf Ihrem Telefon!
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 8. PUSH -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="push">8. Push-Benachrichtigungen aktivieren</h2>
+<p>
+  Wenn Sie immer sofort informiert werden möchten, sobald der Mittagstisch für die neue Woche bereitsteht oder frische Sonderangebote eintreffen, können Sie die Push-Benachrichtigungen aktivieren.
+</p>
+
+<h3>Aktivierungsschritte</h3>
+<ol>
+  <li>Öffnen Sie das Menü (Hamburger-Menü) auf dem Smartphone oder betrachten Sie das Desktop-Menü.</li>
+  <li>Klicken Sie auf den Button: <strong>„🔔 Benachrichtigungen aktivieren“</strong>.</li>
+  <li>Es öffnet sich ein systemseitiges Browserfenster, das Sie fragt: <i>„kind-pebble-... möchte Ihnen Benachrichtigungen senden“</i>. Wählen Sie unbedingt <strong>„Erlauben“</strong>.</li>
+  <li>Der Button im Menü ändert sich daraufhin zu: <strong>„🔔 Benachrichtigungen aktiv“</strong> (oder <strong>„Deaktivieren“</strong>). Sie sind nun erfolgreich angemeldet!</li>
+</ol>
+
+<h3>Fehlerbehebung bei Blockierung</h3>
+<p>
+  Sollten Sie versehentlich einmal auf „Blockieren“ geklickt haben, sendet der Browser keine Benachrichtigungen mehr. Um dies zu korrigieren:
+</p>
+<ul>
+  <li><strong>Am Smartphone:</strong> Tippen Sie auf das Schloss-Symbol 🔒 links neben der Internetadresse (URL) im Browser. Wählen Sie „Berechtigungen“ und setzen Sie den Schalter bei „Benachrichtigungen“ wieder auf „Zulassen“.</li>
+  <li><strong>Am PC:</strong> Klicken Sie ebenfalls auf das Schloss-Symbol in der Adresszeile und schalten Sie die Berechtigung für Benachrichtigungen wieder ein.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 9. DATENSCHUTZ -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="datenschutz">9. Impressum, Datenschutz &amp; Cookie-Richtlinien</h2>
+<p>
+  Als Genossenschaft legt der Dorfladen Oberornau höchsten Wert auf Datensparsamkeit und Rechtskonformität.
+</p>
+<ul>
+  <li><strong>Rechtssicherheit:</strong> Impressum (<code>/impressum.html</code>) und Datenschutzerklärung (<code>/datenschutzerklaerung.html</code>) sind jederzeit mit einem Klick erreichbar.</li>
+  <li><strong>Anonymes Push:</strong> Für den Empfang von Push-Benachrichtigungen werden keinerlei persönliche Daten wie E-Mail-Adressen, Namen oder Standorte erfasst. Das System registriert lediglich eine anonyme, kryptografische Geräte-ID des Webbrowsers.</li>
+  <li><strong>Cookie-Banner:</strong> Die Seite nutzt ausschließlich technisch notwendige Cookies, um Ihre Einstellungen (wie das gewählte Design-Template oder den Push-Zustand) lokal auf Ihrem Gerät zu speichern. Es findet kein Tracking durch Drittanbieter statt.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 10. FAQ -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="faq">10. Häufige Fragen &amp; Problemlösungen (FAQ)</h2>
+
+<h4>Die Mittagstisch-Preise auf der Seite weichen von den Flyern ab – woran liegt das?</h4>
+<p>
+  Das System synchronisiert sich in Echtzeit. Sollte das Ladenpersonal gerade Änderungen im CMS vornehmen, laden Sie die Seite einfach kurz neu (Zieh-Geste nach unten am Smartphone oder Taste <code>F5</code> am PC), um den allerneuesten, verbindlichen Stand zu erhalten.
+</p>
+
+<h4>Funktioniert die PWA auch ohne Internetverbindung?</h4>
+<p>
+  Ja, teilweise! Bereits geladene Seiten, wie die regulären Öffnungszeiten oder die Preisliste, können Sie dank des integrierten Service Workers auch dann aufrufen, wenn Sie im Funkloch stehen. Für frische Wochenpläne oder Neuigkeiten ist jedoch eine kurze Internetverbindung zur Synchronisation erforderlich.
+</p>
+
+<h4>Kostet der Push-Service Geld?</h4>
+<p>
+  Nein. Die Benachrichtigungen sind ein vollkommen kostenloser Service der Genossenschaft Dorfladen Oberornau für alle Bürger und Kunden.
+</p>
+
+<hr style="margin-top:60px; border:none; border-top:2px solid #2d5016">
+<p style="text-align:center; color:#888; font-size:0.9em">
+  Offizielles Homepage-Anwenderhandbuch für Besucher • Version 1.3 • Dorfladen Oberornau Genossenschaft<br>
+  Besuchen Sie uns online unter: <code>https://kind-pebble-072605b03.7.azurestaticapps.net</code>
+</p>
+
+</body>
+</html>
