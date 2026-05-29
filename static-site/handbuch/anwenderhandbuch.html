@@ -9,11 +9,13 @@
     .no-print { display: none !important; }
     body { font-size: 11pt; }
     h1 { font-size: 22pt; }
-    h2 { font-size: 16pt; page-break-before: always; }
-    h2:first-of-type { page-break-before: auto; }
-    h3 { font-size: 13pt; }
-    img.screenshot { max-width: 100%; border: 1px solid #ccc; page-break-inside: avoid; }
-    .tip, .info, .warn { page-break-inside: avoid; }
+    h2 { font-size: 16pt; break-before: page; break-after: avoid; page-break-before: always; page-break-after: avoid; }
+    h2:first-of-type { break-before: auto; page-break-before: auto; }
+    h3 { font-size: 13pt; break-after: avoid; page-break-after: avoid; }
+    h2 + *, h3 + * { break-before: avoid; page-break-before: avoid; }
+    img.screenshot { max-width: 100%; border: 1px solid #ccc; page-break-inside: avoid; break-inside: avoid; }
+    .tip, .info, .warn { page-break-inside: avoid; break-inside: avoid; }
+    table { page-break-inside: avoid; break-inside: avoid; }
   }
   * { box-sizing: border-box; }
   body {
