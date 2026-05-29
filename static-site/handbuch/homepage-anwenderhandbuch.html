@@ -297,12 +297,86 @@
 <!-- ═══════════════════════════════════════════ -->
 <h2 id="preisliste">7. Interaktive Sortiments- und Preisliste</h2>
 <p>
-  Die Preisliste (erreichbar über die Navigation oder die Kachel „Preisliste“ auf dem Smartphone) ist ein digitaler Katalog des Gesamtsortiments.
+  Die digitale Preisliste (erreichbar über die Sidebar-Navigation am PC, das Hamburger-Menü am Smartphone oder direkt über die Kachel <strong>„Sortiment &amp; Preise“</strong> auf der Startseite) ist ein interaktiver Produktkatalog des gesamten Dorfladens. Sie dient Kunden als tagesaktuelle Informationsquelle zur Einkaufsplanung.
 </p>
-<ul>
-  <li><strong>Echtzeit-Suche:</strong> Über das Suchfeld kann der Kunde sofort nach Produkten filtern (z. B. Eintippen von <code>Milch</code> zeigt ausschließlich Treffer an, die „Milch“ im Namen tragen).</li>
-  <li><strong>Abteilungsfilter:</strong> Besucher können Kategorien direkt anwählen (z. B. <i>Obst &amp; Gemüse, Getreide, Tiefkühl, Drogerie</i>), um nur relevante Waren anzuzeigen.</li>
-  <li><strong>Preistransparenz:</strong> Jede Zeile listet das Produkt, die genaue Füllmenge (z. B. <code>500 g</code> oder <code>1 Flasche</code>) und den exakten Ladenpreis transparent auf.</li>
+
+<h3>Funktionsweise &amp; interaktive Steuerung</h3>
+<p>
+  Der Katalog ist mit hochentwickelten Filter- und Suchfunktionen ausgestattet, die komplett lokal im Browser ausgeführt werden. Dadurch reagiert die Seite blitzschnell und ohne jegliche Ladeverzögerung.
+</p>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">🔍 1. Dynamische Echtzeit-Textsuche (Filterfeld)</h4>
+  <p style="margin:0 0 8px">
+    Das Suchfeld befindet sich prominent ganz oben auf der Sortimentsseite. Es ermöglicht das sofortige Auffinden von bestimmten Artikeln aus Hunderten von Einträgen.
+  </p>
+  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
+    <li><strong>Ausführung:</strong> Klicken oder tippen Sie in das Eingabefeld <i>„Produkt suchen...“</i> und beginnen Sie mit der Eingabe (z. B. <code>Butt</code> oder <code>Apf</code>).</li>
+    <li><strong>Ablauf im Hintergrund:</strong> Auf jeden Tastendruck (Keyup-Event) filtert ein optimierter Suchalgorithmus die Produktliste sofort. Es ist kein Klick auf eine Lupe und kein Drücken der Eingabetaste erforderlich.</li>
+    <li><strong>Inhaltsanzeige:</strong> Alle nicht zutreffenden Produktzeilen werden weich ausgeblendet. Nur Zeilen, bei denen der Name den eingegebenen Begriff enthält, bleiben sichtbar. Wird das Suchfeld geleert, erscheint augenblicklich wieder das vollständige Sortiment.</li>
+  </ul>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📂 2. Abteilungs- &amp; Kategorie-Schnellwahl (Quick-Buttons)</h4>
+  <p style="margin:0 0 8px">
+    Unter dem Suchfeld sind die Hauptabteilungen des Dorfladens als flache, farbige Schaltflächen (z. B. <i>🍎 Obst &amp; Gemüse, 🥛 Molkereiprodukte, ❄️ Tiefkühl, 🧼 Drogerie</i>) angeordnet.
+  </p>
+  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
+    <li><strong>Ausführung:</strong> Ein einfacher Klick oder Fingertipp auf eine der Abteilungsschaltflächen.</li>
+    <li><strong>Ablauf im Hintergrund:</strong> Der Webbrowser führt einen sanften, automatischen Bildlauf (Smooth Scroll) direkt zur entsprechenden Überschrift des gewählten Fachbereichs aus.</li>
+    <li><strong>Inhaltsanzeige:</strong> Die Ansicht springt augenblicklich zum gewünschten Sortimentsbereich, was mühsames Scrollen durch lange Listen überflüssig macht.</li>
+  </ul>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📊 3. Strukturierte Tabellen- &amp; Zeilenanzeige</h4>
+  <p style="margin:0 0 8px">
+    Jedes Produkt wird als separate Zeile innerhalb seiner Abteilung dargestellt. Die Darstellung ist tabellarisch aufgebaut, um maximale Übersichtlichkeit zu garantieren.
+  </p>
+  <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px">
+    <thead>
+      <tr style="background:#e8f5e9; border-bottom:2px solid #b2dfdb">
+        <th style="padding:6px; text-align:left; color:#1b5e20">Spalte / Inhalt</th>
+        <th style="padding:6px; text-align:left; color:#1b5e20">Bedeutung &amp; Anzeige</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #e0e0e0">
+        <td style="padding:6px; font-weight:700">🛒 Produktname</td>
+        <td style="padding:6px">Die genaue, verständliche Artikelbezeichnung (z. B. <code>Frische Vollmilch 3,5%</code>).</td>
+      </tr>
+      <tr style="border-bottom:1px solid #e0e0e0">
+        <td style="padding:6px; font-weight:700">📏 Füllmenge / Einheit</td>
+        <td style="padding:6px">Die Packungsgröße oder Verkaufseinheit (z. B. <code>1,0 Liter</code>, <code>500 g Becher</code> oder <code>1 Stück</code>).</td>
+      </tr>
+      <tr style="border-bottom:1px solid #e0e0e0">
+        <td style="padding:6px; font-weight:700">🏷️ Preis</td>
+        <td style="padding:6px">Der exakte, verbindliche Bruttopreis mitsamt grünem Preisschild-Hintergrund (z. B. <code>1,49 €</code>).</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
+  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📱 4. Mobile Optimierung (Responsive Viewport)</h4>
+  <p style="margin:0 0 8px">
+    Die Tabellen-Darstellung passt sich vollkommen flüssig an die Displaygröße des genutzten Endgeräts an.
+  </p>
+  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
+    <li><strong>Desktop-Darstellung:</strong> Breite, übersichtliche Spalten mit klaren Gitterlinien und perfektem Kontrast.</li>
+    <li><strong>Smartphone-Darstellung:</strong> Die Spaltenbreiten schrumpfen flexibel zusammen. Füllmengen werden platzsparend unter dem Produktnamen platziert, und der Preis wandert an den rechten Rand, um die Lesbarkeit auch auf kleinsten Displays optimal zu gewährleisten.</li>
+    <li><strong>Schnittstelle:</strong> Es gibt keine unleserlichen Miniatur-Schriften. Alle Bedienelemente sind fingerfreundlich gestaltet.</li>
+  </ul>
+</div>
+
+<h3>Datenpflege &amp; Echtzeit-Aktualisierung</h3>
+<p>
+  Die Preisliste ist direkt mit dem Cloud-Datenbestand des Dorfladens verknüpft:
+</p>
+<ul style="line-height:1.6">
+  <li><strong>Kein manueller Export nötig:</strong> Jede Änderung, die das Ladenpersonal im CMS im Reiter <strong>„Sortiment“</strong> vornimmt und speichert, aktualisiert sofort die zentrale Microsoft Dataverse Cloud.</li>
+  <li><strong>Echtzeit-Synchronisation:</strong> Die Homepage liest diese Daten beim Laden der Seite direkt als JSON-Datenstruktur ein. Kunden sehen somit immer haargenau dieselben Preise wie an den physischen Ladenregalen.</li>
 </ul>
 
 <!-- ═══════════════════════════════════════════ -->
