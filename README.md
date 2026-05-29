@@ -149,6 +149,104 @@ git push origin main
 
 ---
 
+## CMS-Architektur (cms.js – wichtige Bereiche)
+
+`cms.js` ist ~8600 Zeilen groß und enthält alle CMS-Logik. Wichtige Funktionen:
+
+| Funktion | Bedeutung |
+|---|---|
+| `showAktionModal(aktion)` | Modal für Neue/Bearbeiten Aktion öffnen |
+| `addAngRow(item)` | Artikel-Zeile im Aktions-Modal hinzufügen |
+| `artSearchFilter(inp)` | Artikel-Autocomplete-Dropdown |
+| `cmsCloseModal()` | Modal schließen (`window.cmsCloseModal`) |
+| `cmsConfirm(msg, cb)` | Gestylte Confirm-Dialoge (kein nativer `confirm()`) |
+| `renumberAngRows()` | Nummerierung der Artikel-Zeilen aktualisieren |
+| `loadArtikelData()` | Artikeldaten von `/api/preisliste` laden → `_artikelCache` |
+| `cmsSwitchHelpTopic(id)` | Hilfe-Tabs umschalten |
+| `cmsHelpSearch(q)` | Hilfe-Volltext-Suche |
+
+### Artikel-Cache (`_artikelCache`)
+Jeder Eintrag enthält: `{b: bezeichnung, nr: artikelnummer, sc: strichcode, preis: vk, statt_preis: uvp, menge: mengeString, details: ...}`
+
+---
+
+## Kachel-Editor / Flyer-Editor
+
+- **Kachel-Editor:** Canvas-basiert, `position:fixed` über dem Modal, Touch+Mouse
+- **Einzelflyer-Editor:** Eigener Canvas, Drag/Drop, D-Pad, Rotation-Slider
+- **MAG-Templates:** Eigene Canvas-Dimensionen – NICHT hardcoded 794×1123!
+- **Ghost-Feature:** Halbtransparenter Bildschatten (📦 Ghost AN/AUS)
+- **Overlay-Bild:** Siegel/Logo schräg auf Produktbild via Rechtsklick → "Overlay-Bild hochladen"
+- **Freistellen:** Weißen Hintergrund entfernen → Design → Gemeinsame Einstellungen → "Bilder freistellen"
+- **Unsaved-Watermark:** Roter Banner am unteren Bildrand wenn nicht gespeichert
+- **Verwerfen-Button:** Stellt letzten gespeicherten Stand wieder her (warnt bei ungespeicherten Änderungen)
+- **Resize-Handle:** Skaliert das selektierte Element (customImg etc.)
+- **Rotation/Controls:** Behalten Element-Selektion bei (Ghost, Dup etc.)
+- **D-Pad:** Verschiebt selektiertes Element (Kachel + Einzelflyer)
+- **Auto-Save wurde ENTFERNT** → Speichern + Download sind zwei getrennte Buttons
+- **flyerAutoSave komplett entfernt** (war fehleranfällig)
+
+### Shared Helper-Funktionen (Refactoring Mai 2026)
+`_resolveElKeys`, `_getElDxDy/_setElDxDy`, `_getElScale/_setElScale`, `_getElRot/_setElRot`, `_freistellCanvas`, `_zoneToElKey/_selZoneToElKey` – eliminieren if-else-Ketten
+
+---
+
+## Design-System (CMS → Design-Tab)
+
+- **Pro-Section-Einstellungen:** Plakat und Flyer haben getrennte Farben/Settings (nicht geteilt!)
+- **Preisschild-Form:** Pro Section wählbar (explosion, rund, eckig, …)
+- **Tag-Scale:** Preisschild-Größe 50–150% pro Section
+- **Bildgröße (imgScale):** 50–200% für Plakat und Flyer
+- **Farbverläufe:** Für `bgColor` und `imgBg` bei Plakat/Flyer
+- **Wochenplan-Farben:** Pro Section (Home/Flyer) getrennt gespeichert
+- **Live-Vorschau:** Auto-Update bei allen Design-Änderungen, Sticky Sidebar
+- **Werkseinstellungen:** Reset-Button → danach "💾 Alles speichern" nötig!
+- **`cmsConfirm()`** statt `confirm()` für alle Bestätigungs-Dialoge
+
+---
+
+## Öffnungszeiten-Besonderheiten
+
+- Bayerische Feiertage werden beim Mobile-Öffnungsstatus berücksichtigt
+- Format: `HH:MM–HH:MM` mit Semikolon für mehrere Zeiträume: `08:00–12:00;14:00–18:00`
+- Ruhetage und Sondertage möglich
+
+---
+
+## UI / Modal-System
+
+- Alle Modals haben X-Button + Backdrop-Click zum Schließen
+- **Ausnahme:** Kachel-Editor (hat eigene Speichern/Verwerfen-Semantik → kein Backdrop-Close)
+- **History-Guard:** Mobile Back-Button schließt offene Modals (pushState)
+- **Bottom-Sheets:** Mobile-optimierte Darstellung für bestimmte Panels
+- **`#cms-modal-wrap`:** Einziger Modal-Container für alle CMS-Modals
+- Backdrop-Click-Handler prüft ob Dropdown offen (`'.cms-art-dd.open'`) bevor Modal geschlossen wird
+
+---
+
+## WhatsApp / Teilen
+
+- Teilen-Button bei Aktionen erzeugt Text automatisch aus Titel + Gültigkeitszeitraum
+- WhatsApp-API: `https://wa.me/?text=...` (URL-encodiert)
+- Wochenplan kann ebenfalls per WhatsApp geteilt werden
+
+---
+
+## Handbücher / Dokumentation (static-site/handbuch/)
+
+| Datei | Inhalt |
+|---|---|
+| `anwenderhandbuch.html` | CMS-Handbuch für Betreiber |
+| `homepage-anwenderhandbuch.html` | Besucher-Handbuch (öffentlich) |
+| `hilfe.html` | Online-Hilfe mit Suche, Themen-Tabs, 22 Problemlöser, 8 FAQ |
+
+- PDFs werden mit Playwright generiert (`emulateMedia: print`)
+- Keine leeren Seiten nach h2 (CSS `page-break` Fix)
+- CMS-Handbuch-Links aus `hilfe.html` entfernt (nicht für Endanwender)
+- Hilfe-Link in Navigation + Footer aller Seiten vorhanden
+
+---
+
 ## CMS-Hilfe (cms.html)
 
 - **Problemlöser-Abschnitt:** 22 Einträge (Stand Mai 2026)
