@@ -958,9 +958,11 @@
   var _cmsCurrentTab='wp';
   window.cmsTab = function(name, skipHistory){
     _cmsCurrentTab=name;
-    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg'].forEach(function(t){
-      document.getElementById('cms-panel-'+t).style.display = t===name?'':'none';
-      document.getElementById('cms-tab-'+t).className = 'cms-tab'+(t===name?' active':'');
+    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','help'].forEach(function(t){
+      var panel=document.getElementById('cms-panel-'+t);
+      if(panel) panel.style.display = t===name?'':'none';
+      var tab=document.getElementById('cms-tab-'+t);
+      if(tab) tab.className = 'cms-tab'+(t===name?' active':'');
     });
     if(name==='hours' && hours.length===0) loadHours();
     if(name==='ang' && angebote.length===0) loadAngebote();
@@ -3957,7 +3959,7 @@
     var html='<div class="cms-modal-bg">';
     html+='<div class="cms-modal" style="max-width:440px;text-align:center;position:relative">';
     html+='<button class="cms-modal-close" id="pce-close" title="Schlie\u00dfen ohne Speichern">\u2715</button>';
-    html+='<h3 style="margin:0 0 4px;font-size:15px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+'</h3>';
+    html+='<h3 style="margin:0 0 4px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+' <span onclick="document.getElementById(\'pce-close\')?.click(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700">?</span></h3>';
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element horizontal ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc')+'</p>';
     html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
@@ -6039,7 +6041,7 @@
             +'<button data-act="art-revert" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:1px solid #e65100;background:#fff7ed;color:#e65100;font-size:13px;cursor:pointer;font-weight:600">\u21a9 Verwerfen</button>'
             +'<button data-act="art-reset" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:12px;cursor:pointer">\u21ba Reset</button>'
             +'<button data-act="add-custom-img" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild</button>'
-            +'<span style="color:#888;font-size:12px;font-weight:600">'+safeName+'</span>'
+            +'<span style="color:#888;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px">'+safeName+' <span onclick="if(typeof window.cmsCloseModal===\'function\') window.cmsCloseModal(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700">?</span></span>'
             +'</div>'
             +'<div class="ctl-bar no-print">'
             +'<div class="abtn-grp">'+arrowCross('sel',i,'\u2b05\u27a1 Selektiertes Element')+'</div>'
