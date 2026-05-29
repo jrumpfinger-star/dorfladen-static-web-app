@@ -98,7 +98,7 @@
 
   <a href="javascript:void(0)" id="mob-push-toggle" onclick="pushToggle()" style="display:none;background:#f0fdf4;color:#2d5016;border-radius:10px;padding:10px 14px;font-weight:600;font-size:.88rem;text-align:center">&#128276; Benachrichtigungen aktivieren</a>
 
-  <a href="/handbuch/hilfe.html" style="font-size:.88rem;color:#2d5016;font-weight:600">&#10067; Hilfe</a>
+  <a href="javascript:void(0)" onclick="openHilfePopup()" style="font-size:.88rem;color:#2d5016;font-weight:600">&#10067; Hilfe</a>
 
   <a href="/impressum" style="margin-top:12px;font-size:.88rem;color:#999">Impressum</a>
 
@@ -1140,7 +1140,7 @@
 
     <span>&copy; <script>document.write(new Date().getFullYear())</script> Dorfladen Oberornau UG (haftungsbeschr&auml;nkt). Alle Rechte vorbehalten.</span>
 
-    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="/handbuch/hilfe.html" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a> &middot; <a href="/cms">CMS</a></span>
+    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a> &middot; <a href="/cms">CMS</a></span>
 
     <span id="site-version" style="font-size:10px;color:#9ca3af"></span>
 
@@ -1387,6 +1387,7 @@
 </style>
 
 <script src="/js/pwa.js?v=12"></script>
+<script src="/hilfe-popup.js"></script>
 
 </body>
 
