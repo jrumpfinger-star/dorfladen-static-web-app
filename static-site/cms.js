@@ -1998,8 +1998,9 @@
     wpHeaderFrom:'#5ea88a',wpHeaderTo:'#4a8e73',wpDishColor:'#1a1a1a',wpPriceColor:'#2d7a5e',
     wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',
     wpShowCard:true,wpShowOeko:true,wpShowVorbestell:true,wpShowPhone:true,wpShowWaShare:true,wpShowWaInfo:true,
-    wpDishFontSize:0.92,wpPriceFontSize:0.92,
+    wpDishFontSize:14,wpPriceFontSize:14,
     wpCanvasDaySize:15,wpCanvasDishSize:15,wpCanvasPriceSize:16,
+    wpHintColor:'#9ca3af',wpFooterColor:'#6b7280',
     wpHintOpacity:40,wpFooterOpacity:50,
     wpHomeTemplate:'classic-red',wpFlyerTemplate:'classic-red',
     heroOverlay:50,heroFontSize:2
@@ -2073,10 +2074,13 @@
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseInt(el.value);
     });
     ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
-      var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseInt(el.value);
     });
     ['wpCanvasDaySize','wpCanvasDishSize','wpCanvasPriceSize','wpHintOpacity','wpFooterOpacity'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseInt(el.value);
+    });
+    ['wpHintColor','wpFooterColor'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;
     });
     ['heroOverlay','heroFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);
@@ -2152,6 +2156,9 @@
     });
     ['wpCanvasDaySize','wpCanvasDishSize','wpCanvasPriceSize','wpHintOpacity','wpFooterOpacity'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]!=null?c[k]:HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
+    });
+    ['wpHintColor','wpFooterColor'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)el.value=c[k]||HPCFG_DEFAULTS[k];
     });
     ['heroOverlay','heroFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]!=null?c[k]:HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
@@ -3401,6 +3408,8 @@
     var fsPricePx=hp.wpCanvasPriceSize||16;
     var hintAlpha=(hp.wpHintOpacity!=null?hp.wpHintOpacity:40)/100;
     var footAlpha=(hp.wpFooterOpacity!=null?hp.wpFooterOpacity:50)/100;
+    var hintColor=hp.wpHintColor||'#9ca3af';
+    var footerColor=hp.wpFooterColor||'#6b7280';
     var wpKind=kindOverride||'flyer';
     var tpl=((tplOverride||hp.wpFlyerTemplate||'classic-red')+'').toLowerCase();
     var tplMap={'minimal-clean':'clean-white','organic-market':'clean-white','bold-poster':'tafel','magazine-split':'bento','compact-chips':'bento','rail-menu':'timeline','newspaper-list':'zeitung','timeline-stripe':'timeline','bento-cards':'bento'};
@@ -3646,7 +3655,7 @@
       ctx.fillStyle='#6b7280';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
       drawRows(headerH+14,120,{cardBg:cc.wpStripeColor,cardBorder:'#e5e7eb',radius:8,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#e5e7eb',dash:[]});
-      logoLoaded=drawCommonLogo();drawFooter('#9ca3af');
+      logoLoaded=drawCommonLogo();drawFooter(footerColor);
 
     }else if(tpl==='dark-modern'){
       // ── 2. DARK MODERN: Dark slate background, bright accents ──
@@ -3656,7 +3665,7 @@
       ctx.fillStyle='#94a3b8';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle='#334155';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
       drawRows(headerH+14,120,{cardBg:cc.wpStripeColor,cardBorder:'#334155',radius:10,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#334155',dash:[]});
-      logoLoaded=drawCommonLogo();drawFooter('#64748b');
+      logoLoaded=drawCommonLogo();drawFooter(footerColor);
 
     }else if(tpl==='tafel'){
       // ── 3. TAFEL: Chalkboard green, white text, handwritten feel ──
@@ -3672,7 +3681,7 @@
       ctx.fillStyle='#a3d9a5';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL+10,78);
       ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL+10,headerH-4);ctx.lineTo(W-padR-10,headerH-4);ctx.stroke();
       drawRowsStacked(headerH+10,{cardBg:cc.wpStripeColor,radius:6,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'rgba(255,255,255,0.1)'});
-      logoLoaded=drawCommonLogo();drawFooter('rgba(255,255,255,0.5)');
+      logoLoaded=drawCommonLogo();drawFooter(footerColor);
 
     }else if(tpl==='bento'){
       // ── 4. BENTO: 2-column masonry, colorful day accents ──
@@ -3681,7 +3690,7 @@
       ctx.fillStyle='#64748b';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
       drawRowsBento(headerH+14,{cardBg:cc.wpStripeColor,cardBorder:'#e2e8f0',text:cc.wpDishColor,dayColors:[cc.wpDayColor,cc.wpPriceColor,'#d97706','#dc2626','#7c3aed']});
-      logoLoaded=drawCommonLogo();drawFooter('#94a3b8');
+      logoLoaded=drawCommonLogo();drawFooter(footerColor);
 
     }else if(tpl==='timeline'){
       // ── 5. TIMELINE: Vertical line with dots, card per day ──
@@ -3690,7 +3699,7 @@
       ctx.fillStyle='#64748b';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle='#bae6fd';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
       drawRowsTimeline(headerH+14,{railColor:cc.wpHeaderFrom,cardBg:cc.wpStripeColor,cardBorder:'#e0f2fe',dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:cc.wpBgColor});
-      logoLoaded=drawCommonLogo();drawFooter('#94a3b8');
+      logoLoaded=drawCommonLogo();drawFooter(footerColor);
 
     }else if(tpl==='zeitung'){
       // ── 6. ZEITUNG: 2-column newspaper, elegant, warm gray ──
@@ -3706,7 +3715,7 @@
       // Vertical divider in center
       ctx.strokeStyle='#d6d3d1';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W/2,headerH+6);ctx.lineTo(W/2,H-footerH-8);ctx.stroke();
       drawRowsNewspaper(headerH+14,{cardBg:cc.wpBgColor,dayText:cc.wpDayColor,accent:cc.wpHeaderFrom,text:cc.wpDishColor,price:cc.wpPriceColor});
-      logoLoaded=drawCommonLogo();drawFooter('#a8a29e');
+      logoLoaded=drawCommonLogo();drawFooter(footerColor);
 
     }else{
       // ── DEFAULT / KLASSIK: Warm beige, red accents, traditional ──
@@ -3714,9 +3723,9 @@
       ctx.textAlign='left';ctx.fillStyle=cc.wpHeaderFrom;ctx.font='700 44px '+SF;ctx.fillText('Wochenplan',padL,28);
       ctx.fillStyle='#6b7280';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle=cc.wpHeaderFrom;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
-      ctx.save();ctx.globalAlpha=hintAlpha;ctx.fillStyle='#9ca3af';ctx.font='400 12px '+SF;ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-1);ctx.textAlign='left';ctx.restore();
+      ctx.save();ctx.globalAlpha=hintAlpha;ctx.fillStyle=hintColor;ctx.font='400 12px '+SF;ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-1);ctx.textAlign='left';ctx.restore();
       drawRows(headerH+14,124,{cardBg:cc.wpStripeColor,cardBorder:'#fecdd3',radius:10,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#fce7f3',dash:[],shadow:'rgba(159,18,57,0.06)',shadowBlur:2});
-      logoLoaded=drawCommonLogo();drawFooter('#9ca3af');
+      logoLoaded=drawCommonLogo();drawFooter(footerColor);
     }
 
     ctx.textAlign='left';
