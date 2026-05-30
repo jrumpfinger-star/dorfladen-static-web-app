@@ -63,10 +63,14 @@
     position: fixed; inset: 0; z-index: -1;
     cursor: pointer;
   }
-  @media (max-width:640px) {
+  @media (max-width:768px) {
     #hilfe-dialog-inner {
       margin: 0; width: 100vw;
-      max-height: 100vh; border-radius: 0;
+      max-height: 100vh; max-height: 100dvh;
+      border-radius: 0;
+    }
+    #hilfe-dialog-frame {
+      width: 100%; min-width: 0;
     }
   }
   `;

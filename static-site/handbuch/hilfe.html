@@ -86,10 +86,15 @@
 
   footer{text-align:center;color:var(--muted);font-size:.83em;padding:22px 16px;border-top:1px solid var(--border)}
 
-  @media(max-width:600px){
+  /* Prevent horizontal overflow in iframe */
+  html,body{max-width:100%;overflow-x:hidden}
+
+  @media(max-width:768px){
     .hdr h1{font-size:1.35em}
     .grid{grid-template-columns:1fr}
     .mbts{flex-direction:column}
+    .wrap{padding:24px 12px 50px}
+    .search-wrap{padding:0 12px}
   }
 </style>
 </head>
