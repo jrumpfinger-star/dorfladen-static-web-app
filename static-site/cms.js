@@ -3479,8 +3479,9 @@
           if(di>0){ctx.strokeStyle=s.rowLine;ctx.lineWidth=1;ctx.setLineDash(s.dash||[]);ctx.beginPath();ctx.moveTo(dishX,ry);ctx.lineTo(priceX,ry);ctx.stroke();ctx.setLineDash([]);}
           ctx.fillStyle=s.text;ctx.font='600 15px '+SF;
           var dl=wrap2(m.dish||'',Math.max(80,priceX-dishX-(m.price?60:8)));
-          ctx.fillText(dl[0]||'',dishX,ry+10);if(dl[1])ctx.fillText(dl[1],dishX,ry+30);
-          if(m.price){ctx.fillStyle=s.price;ctx.font='700 16px '+SF;ctx.textAlign='right';ctx.fillText(m.price,priceX,ry+14);ctx.textAlign='left';}
+          var dishYOff=dl.length>1?8:18;
+          ctx.fillText(dl[0]||'',dishX,ry+dishYOff);if(dl[1])ctx.fillText(dl[1],dishX,ry+dishYOff+20);
+          if(m.price){ctx.fillStyle=s.price;ctx.font='700 16px '+SF;ctx.textAlign='right';ctx.fillText(m.price,priceX,ry+18);ctx.textAlign='left';}
         });
         y+=grpH+gapBetweenDays;
       });
@@ -3504,8 +3505,9 @@
           if(di>0){ctx.strokeStyle=s.rowLine||'#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL+14,ry);ctx.lineTo(W-padR-14,ry);ctx.stroke();}
           ctx.fillStyle=s.text;ctx.font='600 15px '+SF;
           var dl=wrap2(m.dish||'',cardW-40-(m.price?70:10));
-          ctx.fillText(dl[0]||'',padL+14,ry+10);if(dl[1])ctx.fillText(dl[1],padL+14,ry+28);
-          if(m.price){ctx.fillStyle=s.price;ctx.font='700 16px '+SF;ctx.textAlign='right';ctx.fillText(m.price,W-padR-14,ry+14);ctx.textAlign='left';}
+          var dOff=dl.length>1?8:18;
+          ctx.fillText(dl[0]||'',padL+14,ry+dOff);if(dl[1])ctx.fillText(dl[1],padL+14,ry+dOff+20);
+          if(m.price){ctx.fillStyle=s.price;ctx.font='700 16px '+SF;ctx.textAlign='right';ctx.fillText(m.price,W-padR-14,ry+18);ctx.textAlign='left';}
           ry+=rowH;
         });
         y+=grpH+gapBetweenDays;
@@ -3537,8 +3539,9 @@
           if(ri>0){ctx.strokeStyle='#f3f4f6';ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+cardW-12,ry);ctx.stroke();}
           ctx.fillStyle=s.text||'#1f2937';ctx.font='600 13px '+SF;
           var dl=wrap2(m.dish||'',cardW-90);
-          ctx.fillText(dl[0]||'',x+14,ry+4);if(dl[1])ctx.fillText(dl[1],x+14,ry+20);
-          if(m.price){ctx.fillStyle=dc;ctx.font='700 14px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+7);ctx.textAlign='left';}
+          var bOff=dl.length>1?3:12;
+          ctx.fillText(dl[0]||'',x+14,ry+bOff);if(dl[1])ctx.fillText(dl[1],x+14,ry+bOff+16);
+          if(m.price){ctx.fillStyle=dc;ctx.font='700 14px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+12);ctx.textAlign='left';}
           ry+=38;
         });
         if(isRight)rightY+=cardH+12;else leftY+=cardH+12;
@@ -3573,8 +3576,9 @@
           if(ri>0){ctx.strokeStyle=s.rowLine||'#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+cardW-12,ry);ctx.stroke();}
           ctx.fillStyle=s.text||'#1e293b';ctx.font='600 14px '+SF;
           var dl=wrap2(m.dish||'',cardW-100);
-          ctx.fillText(dl[0]||'',x+14,ry+5);if(dl[1])ctx.fillText(dl[1],x+14,ry+22);
-          if(m.price){ctx.fillStyle=s.price||'#2563eb';ctx.font='700 15px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+8);ctx.textAlign='left';}
+          var tOff=dl.length>1?4:13;
+          ctx.fillText(dl[0]||'',x+14,ry+tOff);if(dl[1])ctx.fillText(dl[1],x+14,ry+tOff+18);
+          if(m.price){ctx.fillStyle=s.price||'#2563eb';ctx.font='700 15px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+13);ctx.textAlign='left';}
           ry+=40;
         });
         y+=cardH+12;
@@ -3604,8 +3608,9 @@
           if(ri>0){ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+colW-12,ry);ctx.stroke();ctx.setLineDash([]);}
           ctx.fillStyle=s.text||'#374151';ctx.font='600 13px '+SF;
           var dl=wrap2(m.dish||'',colW-90);
-          ctx.fillText(dl[0]||'',x+12,ry+4);if(dl[1])ctx.fillText(dl[1],x+12,ry+20);
-          if(m.price){ctx.fillStyle=s.price||'#1f2937';ctx.font='700 14px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+colW-12,ry+7);ctx.textAlign='left';}
+          var nOff=dl.length>1?2:11;
+          ctx.fillText(dl[0]||'',x+12,ry+nOff);if(dl[1])ctx.fillText(dl[1],x+12,ry+nOff+16);
+          if(m.price){ctx.fillStyle=s.price||'#1f2937';ctx.font='700 14px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+colW-12,ry+11);ctx.textAlign='left';}
           ry+=36;
         });
         if(right)rightY+=cardH+12;else leftY+=cardH+12;
