@@ -1999,6 +1999,8 @@
     wpStripeColor:'#f0f7f0',wpDayColor:'#5ea88a',
     wpShowCard:true,wpShowOeko:true,wpShowVorbestell:true,wpShowPhone:true,wpShowWaShare:true,wpShowWaInfo:true,
     wpDishFontSize:0.92,wpPriceFontSize:0.92,
+    wpCanvasDaySize:15,wpCanvasDishSize:15,wpCanvasPriceSize:16,
+    wpHintOpacity:40,wpFooterOpacity:50,
     wpHomeTemplate:'classic-red',wpFlyerTemplate:'classic-red',
     heroOverlay:50,heroFontSize:2
   };
@@ -2073,6 +2075,9 @@
     ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);
     });
+    ['wpCanvasDaySize','wpCanvasDishSize','wpCanvasPriceSize','wpHintOpacity','wpFooterOpacity'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseInt(el.value);
+    });
     ['heroOverlay','heroFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=parseFloat(el.value);
     });
@@ -2144,6 +2149,9 @@
     });
     ['wpDishFontSize','wpPriceFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]||HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
+    });
+    ['wpCanvasDaySize','wpCanvasDishSize','wpCanvasPriceSize','wpHintOpacity','wpFooterOpacity'].forEach(function(k){
+      var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]!=null?c[k]:HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
     });
     ['heroOverlay','heroFontSize'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el){el.value=c[k]!=null?c[k]:HPCFG_DEFAULTS[k];var v=document.getElementById('hcfg-'+k+'-val');if(v)v.textContent=el.value;}
@@ -3379,7 +3387,7 @@
   function generateMenuImage(mealRows, header, callback, tplOverride, kindOverride){
     var SF='Segoe UI, sans-serif';
     var W=794,padL=30,padR=30;
-    var headerH=130,rowH=52,gapBetweenDays=12,footerH=44;
+    var headerH=130,rowH=40,gapBetweenDays=12,footerH=44;
     var groups=[];var curGrp=null;
     mealRows.forEach(function(m){
       if(m.day){if(curGrp)groups.push(curGrp);curGrp={day:m.day,items:[m]};}
@@ -3388,6 +3396,11 @@
     if(curGrp)groups.push(curGrp);
     // Pre-resolve template so height calc can be template-aware
     var hp=hpCfgGet();
+    var fsDayPx=hp.wpCanvasDaySize||15;
+    var fsDishPx=hp.wpCanvasDishSize||15;
+    var fsPricePx=hp.wpCanvasPriceSize||16;
+    var hintAlpha=(hp.wpHintOpacity!=null?hp.wpHintOpacity:40)/100;
+    var footAlpha=(hp.wpFooterOpacity!=null?hp.wpFooterOpacity:50)/100;
     var wpKind=kindOverride||'flyer';
     var tpl=((tplOverride||hp.wpFlyerTemplate||'classic-red')+'').toLowerCase();
     var tplMap={'minimal-clean':'clean-white','organic-market':'clean-white','bold-poster':'tafel','magazine-split':'bento','compact-chips':'bento','rail-menu':'timeline','newspaper-list':'zeitung','timeline-stripe':'timeline','bento-cards':'bento'};
@@ -3454,9 +3467,10 @@
     }
 
     function drawFooter(color){
+      ctx.save();ctx.globalAlpha=footAlpha;
       ctx.fillStyle=color||'#6b7280';ctx.font='11px '+SF;ctx.textAlign='center';
       ctx.fillText('Dorfladen Oberornau \u00b7 Dorfplatz 1 \u00b7 84419 Obertaufkirchen \u00b7 Tel: 08082 622 99 91',W/2,H-footerH+10);
-      ctx.textAlign='left';
+      ctx.textAlign='left';ctx.restore();
     }
 
     // ── Shared row-drawing: Day label left, dishes right ──
@@ -3471,17 +3485,18 @@
         // Day label
         ctx.fillStyle=s.dayFill;rrect(padL,y,dayLabelW,grpH,s.radius||10);ctx.fill();
         ctx.fillRect(padL+dayLabelW-(s.radius||10),y,s.radius||10,grpH);
-        ctx.fillStyle=s.dayText;ctx.font='700 15px '+SF;ctx.textAlign='center';
-        ctx.fillText(grp.day.toUpperCase(),padL+dayLabelW/2,y+grpH/2-8);ctx.textAlign='left';
+        ctx.fillStyle=s.dayText;ctx.font='700 '+fsDayPx+'px '+SF;ctx.textAlign='center';
+        ctx.fillText(grp.day.toUpperCase(),padL+dayLabelW/2,y+grpH/2-Math.round(fsDayPx/2));ctx.textAlign='left';
         var dishX=padL+dayLabelW+16,priceX=W-padR-14;
         grp.items.forEach(function(m,di){
           var ry=y+di*rowH;
           if(di>0){ctx.strokeStyle=s.rowLine;ctx.lineWidth=1;ctx.setLineDash(s.dash||[]);ctx.beginPath();ctx.moveTo(dishX,ry);ctx.lineTo(priceX,ry);ctx.stroke();ctx.setLineDash([]);}
-          ctx.fillStyle=s.text;ctx.font='600 15px '+SF;
+          var isHint=!m.price;
+          ctx.fillStyle=isHint?(s.hint||'#6b7280'):s.text;ctx.font=(isHint?'italic 400 ':'600 ')+fsDishPx+'px '+SF;
           var dl=wrap2(m.dish||'',Math.max(80,priceX-dishX-(m.price?60:8)));
-          var dishYOff=dl.length>1?8:18;
-          ctx.fillText(dl[0]||'',dishX,ry+dishYOff);if(dl[1])ctx.fillText(dl[1],dishX,ry+dishYOff+20);
-          if(m.price){ctx.fillStyle=s.price;ctx.font='700 16px '+SF;ctx.textAlign='right';ctx.fillText(m.price,priceX,ry+18);ctx.textAlign='left';}
+          var dishYOff=dl.length>1?Math.round((rowH-fsDishPx*2-4)/2):Math.round((rowH-fsDishPx)/2);
+          ctx.fillText(dl[0]||'',dishX,ry+dishYOff);if(dl[1])ctx.fillText(dl[1],dishX,ry+dishYOff+fsDishPx+4);
+          if(m.price){ctx.fillStyle=s.price;ctx.font='700 '+fsPricePx+'px '+SF;ctx.textAlign='right';ctx.fillText(m.price,priceX,ry+Math.round((rowH-fsPricePx)/2));ctx.textAlign='left';}
         });
         y+=grpH+gapBetweenDays;
       });
@@ -3498,16 +3513,17 @@
         // Day header strip
         ctx.fillStyle=s.dayFill;rrect(padL,y,cardW,34,s.radius||10);ctx.fill();
         ctx.fillRect(padL,y+24,cardW,10);
-        ctx.fillStyle=s.dayText;ctx.font='700 14px '+SF;ctx.textAlign='left';
+        ctx.fillStyle=s.dayText;ctx.font='700 '+fsDayPx+'px '+SF;ctx.textAlign='left';
         ctx.fillText(grp.day.toUpperCase(),padL+14,y+10);
         var ry=y+38;
         grp.items.forEach(function(m,di){
           if(di>0){ctx.strokeStyle=s.rowLine||'#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL+14,ry);ctx.lineTo(W-padR-14,ry);ctx.stroke();}
-          ctx.fillStyle=s.text;ctx.font='600 15px '+SF;
+          var isHint=!m.price;
+          ctx.fillStyle=isHint?(s.hint||'#6b7280'):s.text;ctx.font=(isHint?'italic 400 ':'600 ')+fsDishPx+'px '+SF;
           var dl=wrap2(m.dish||'',cardW-40-(m.price?70:10));
-          var dOff=dl.length>1?8:18;
-          ctx.fillText(dl[0]||'',padL+14,ry+dOff);if(dl[1])ctx.fillText(dl[1],padL+14,ry+dOff+20);
-          if(m.price){ctx.fillStyle=s.price;ctx.font='700 16px '+SF;ctx.textAlign='right';ctx.fillText(m.price,W-padR-14,ry+18);ctx.textAlign='left';}
+          var dOff=dl.length>1?Math.round((rowH-fsDishPx*2-4)/2):Math.round((rowH-fsDishPx)/2);
+          ctx.fillText(dl[0]||'',padL+14,ry+dOff);if(dl[1])ctx.fillText(dl[1],padL+14,ry+dOff+fsDishPx+4);
+          if(m.price){ctx.fillStyle=s.price;ctx.font='700 '+fsPricePx+'px '+SF;ctx.textAlign='right';ctx.fillText(m.price,W-padR-14,ry+Math.round((rowH-fsPricePx)/2));ctx.textAlign='left';}
           ry+=rowH;
         });
         y+=grpH+gapBetweenDays;
@@ -3537,11 +3553,12 @@
         var ry=y+42;
         grp.items.forEach(function(m,ri){
           if(ri>0){ctx.strokeStyle='#f3f4f6';ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+cardW-12,ry);ctx.stroke();}
-          ctx.fillStyle=s.text||'#1f2937';ctx.font='600 13px '+SF;
+          var isHint=!m.price;
+          ctx.fillStyle=isHint?(s.hint||'#6b7280'):(s.text||'#1f2937');ctx.font=(isHint?'italic 400 ':'600 ')+Math.max(fsDishPx-2,10)+'px '+SF;
           var dl=wrap2(m.dish||'',cardW-90);
           var bOff=dl.length>1?3:12;
           ctx.fillText(dl[0]||'',x+14,ry+bOff);if(dl[1])ctx.fillText(dl[1],x+14,ry+bOff+16);
-          if(m.price){ctx.fillStyle=dc;ctx.font='700 14px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+12);ctx.textAlign='left';}
+          if(m.price){ctx.fillStyle=dc;ctx.font='700 '+Math.max(fsPricePx-2,10)+'px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+12);ctx.textAlign='left';}
           ry+=38;
         });
         if(isRight)rightY+=cardH+12;else leftY+=cardH+12;
@@ -3574,11 +3591,12 @@
         var ry=y+38;
         grp.items.forEach(function(m,ri){
           if(ri>0){ctx.strokeStyle=s.rowLine||'#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+cardW-12,ry);ctx.stroke();}
-          ctx.fillStyle=s.text||'#1e293b';ctx.font='600 14px '+SF;
+          var isHint=!m.price;
+          ctx.fillStyle=isHint?(s.hint||'#6b7280'):(s.text||'#1e293b');ctx.font=(isHint?'italic 400 ':'600 ')+Math.max(fsDishPx-1,10)+'px '+SF;
           var dl=wrap2(m.dish||'',cardW-100);
           var tOff=dl.length>1?4:13;
           ctx.fillText(dl[0]||'',x+14,ry+tOff);if(dl[1])ctx.fillText(dl[1],x+14,ry+tOff+18);
-          if(m.price){ctx.fillStyle=s.price||'#2563eb';ctx.font='700 15px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+13);ctx.textAlign='left';}
+          if(m.price){ctx.fillStyle=s.price||'#2563eb';ctx.font='700 '+Math.max(fsPricePx-1,10)+'px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+cardW-14,ry+13);ctx.textAlign='left';}
           ry+=40;
         });
         y+=cardH+12;
@@ -3606,11 +3624,12 @@
         var ry=y+38;
         grp.items.forEach(function(m,ri){
           if(ri>0){ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(x+12,ry);ctx.lineTo(x+colW-12,ry);ctx.stroke();ctx.setLineDash([]);}
-          ctx.fillStyle=s.text||'#374151';ctx.font='600 13px '+SF;
+          var isHint=!m.price;
+          ctx.fillStyle=isHint?(s.hint||'#6b7280'):(s.text||'#374151');ctx.font=(isHint?'italic 400 ':'600 ')+Math.max(fsDishPx-2,10)+'px '+SF;
           var dl=wrap2(m.dish||'',colW-90);
           var nOff=dl.length>1?2:11;
           ctx.fillText(dl[0]||'',x+12,ry+nOff);if(dl[1])ctx.fillText(dl[1],x+12,ry+nOff+16);
-          if(m.price){ctx.fillStyle=s.price||'#1f2937';ctx.font='700 14px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+colW-12,ry+11);ctx.textAlign='left';}
+          if(m.price){ctx.fillStyle=s.price||'#1f2937';ctx.font='700 '+Math.max(fsPricePx-2,10)+'px '+SF;ctx.textAlign='right';ctx.fillText(m.price,x+colW-12,ry+11);ctx.textAlign='left';}
           ry+=36;
         });
         if(right)rightY+=cardH+12;else leftY+=cardH+12;
@@ -3695,7 +3714,7 @@
       ctx.textAlign='left';ctx.fillStyle=cc.wpHeaderFrom;ctx.font='700 44px '+SF;ctx.fillText('Wochenplan',padL,28);
       ctx.fillStyle='#6b7280';ctx.font='400 17px '+SF;ctx.fillText('Mittagstisch  \u00b7  '+header,padL,74);
       ctx.strokeStyle=cc.wpHeaderFrom;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(padL,headerH-6);ctx.lineTo(W-padR,headerH-6);ctx.stroke();
-      ctx.fillStyle='#9ca3af';ctx.font='400 12px '+SF;ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-1);ctx.textAlign='left';
+      ctx.save();ctx.globalAlpha=hintAlpha;ctx.fillStyle='#9ca3af';ctx.font='400 12px '+SF;ctx.textAlign='center';ctx.fillText('Vorbestellung bis 10:00 Uhr erbeten!',W/2,headerH-1);ctx.textAlign='left';ctx.restore();
       drawRows(headerH+14,124,{cardBg:cc.wpStripeColor,cardBorder:'#fecdd3',radius:10,dayFill:cc.wpDayBg,dayText:cc.wpDayColor,text:cc.wpDishColor,price:cc.wpPriceColor,rowLine:'#fce7f3',dash:[],shadow:'rgba(159,18,57,0.06)',shadowBlur:2});
       logoLoaded=drawCommonLogo();drawFooter('#9ca3af');
     }
