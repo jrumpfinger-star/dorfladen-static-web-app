@@ -650,19 +650,128 @@
 <!-- ═══════════════════════════════════════════ -->
 <h2 id="faq">12. Häufige Fragen &amp; Problemlösungen (FAQ)</h2>
 
-<h4>Die Mittagstisch-Preise auf der Seite weichen von den Flyern ab – woran liegt das?</h4>
+<!-- 1 -->
+<h4>Die Mittagstisch-Preise auf der Seite weichen von den Flyern ab &ndash; woran liegt das?</h4>
 <p>
-  Das System synchronisiert sich in Echtzeit. Sollte das Ladenpersonal gerade Änderungen im CMS vornehmen, laden Sie die Seite einfach kurz neu (Zieh-Geste nach unten am Smartphone oder Taste <code>F5</code> am PC), um den allerneuesten, verbindlichen Stand zu erhalten.
+  Gedruckte Flyer spiegeln immer den Stand zum Druckzeitpunkt wider. Die Website wird danach noch aktiv vom CMS-Team gepflegt &ndash; daher kann die Website-Version aktueller sein als der Papierflyer. Kurzfristige Preisanpassungen nach Lieferantennachkalkulation sind ebenfalls m&ouml;glich. Es gilt stets der auf der Website angezeigte Preis als verbindlich. Sprechen Sie im Zweifelsfall das Kassenpersonal an &ndash; im Dorfladen wird immer kulant entschieden.
 </p>
 
+<!-- 2 -->
 <h4>Funktioniert die PWA auch ohne Internetverbindung?</h4>
 <p>
-  Ja, teilweise! Bereits geladene Seiten, wie die regulären Öffnungszeiten oder die Preisliste, können Sie dank des integrierten Service Workers auch dann aufrufen, wenn Sie im Funkloch stehen. Für frische Wochenpläne oder Neuigkeiten ist jedoch eine kurze Internetverbindung zur Synchronisation erforderlich.
+  Ja, teilweise! Bereits geladene Seiten, wie die regul&auml;ren &Ouml;ffnungszeiten oder die Preisliste, k&ouml;nnen Sie dank des integrierten Service Workers auch dann aufrufen, wenn Sie im Funkloch stehen. F&uuml;r frische Wochenpl&auml;ne oder Neuigkeiten ist jedoch eine kurze Internetverbindung zur Synchronisation erforderlich.
 </p>
 
+<!-- 3 -->
 <h4>Kostet der Push-Service Geld?</h4>
 <p>
-  Nein. Die Benachrichtigungen sind ein vollkommen kostenloser Service der Genossenschaft Dorfladen Oberornau für alle Bürger und Kunden.
+  Nein. Die Benachrichtigungen sind ein vollkommen kostenloser Service der Genossenschaft Dorfladen Oberornau f&uuml;r alle B&uuml;rger und Kunden. Es werden keine pers&ouml;nlichen Daten gespeichert &ndash; nur eine anonyme Browser-ID.
+</p>
+
+<!-- 4 -->
+<h4>Wie sehe ich, ob der Dorfladen gerade ge&ouml;ffnet hat?</h4>
+<p>
+  Auf der Startseite zeigt die farbige Statusleiste direkt an: <strong>&bdquo;GE&Ouml;FFNET&ldquo;</strong> (gr&uuml;n) oder <strong>&bdquo;GESCHLOSSEN&ldquo;</strong> (rot). Bei ge&ouml;ffnet sehen Sie die Restzeit bis zur Schlie&szlig;ung. Tippen Sie auf die Statusleiste &ndash; es &ouml;ffnet sich eine vollst&auml;ndige Wochentabelle mit allen regul&auml;ren &Ouml;ffnungszeiten. Feiertage werden automatisch erkannt.
+</p>
+
+<!-- 5 -->
+<h4>Wie installiere ich die Dorfladen-App auf meinem Smartphone?</h4>
+<p>
+  <strong>Android (Chrome):</strong> Am unteren Rand erscheint automatisch ein Banner &bdquo;Zum Startbildschirm hinzuf&uuml;gen&ldquo;. Alternativ: Chrome-Men&uuml; (&vellip;) &rarr; &bdquo;App installieren&ldquo;.<br>
+  <strong>iPhone/iPad (Safari):</strong> Teilen-Symbol (&#x1F4E4;) in der unteren Leiste &rarr; &bdquo;Zum Home-Bildschirm&ldquo; &rarr; &bdquo;Hinzuf&uuml;gen&ldquo;.<br>
+  Nach der Installation &ouml;ffnet die App im Vollbild und l&auml;dt dank Caching auch bei schwacher Verbindung schnell.
+</p>
+
+<!-- 6 -->
+<h4>Wie funktioniert der Barcode-Scanner?</h4>
+<p>
+  Auf der Sortimentsseite befindet sich rechts neben dem Suchfeld ein Kamera-Symbol. Tippen Sie darauf und erlauben Sie den Kamerazugriff. Halten Sie die Kamera auf den EAN-Strichcode eines Produkts &ndash; der Scanner erkennt EAN-13, EAN-8, UPC-A und Code-128 automatisch. Bei Erkennung wird sofort Produktname, Preis und ggf. ein Rabattbadge angezeigt.
+</p>
+
+<!-- 7 -->
+<h4>Der Barcode-Scanner sagt &bdquo;Kamera gesperrt&ldquo; &ndash; was tun?</h4>
+<p>
+  <strong>Chrome/Edge (Android &amp; Desktop):</strong> Adressleiste antippen &rarr; Schloss-Symbol &rarr; &bdquo;Berechtigungen&ldquo; &rarr; Kamera &rarr; &bdquo;Zulassen&ldquo;. Seite neu laden.<br>
+  <strong>Safari (iPhone/iPad):</strong> Einstellungen &rarr; Safari &rarr; Datenschutz &rarr; &bdquo;Kamera&ldquo; &rarr; &bdquo;Erlauben&ldquo;. Seite neu laden und Scanner erneut &ouml;ffnen.
+</p>
+
+<!-- 8 -->
+<h4>Wie teile ich den Wochenplan per WhatsApp?</h4>
+<p>
+  &Ouml;ffnen Sie den Wochenplan &uuml;ber die Kachel &bdquo;Mittagstisch&ldquo; auf der Startseite. Im Popup finden Sie den Button &bdquo;Teilen&ldquo;, der WhatsApp mit einem fertig formulierten Nachrichtentext inkl. Gerichte und Preise &ouml;ffnet. Auf dem iPhone funktioniert dies am besten, wenn die WhatsApp-App installiert ist.
+</p>
+
+<!-- 9 -->
+<h4>Wie drucke ich den Wochenplan aus?</h4>
+<p>
+  Kachel &bdquo;Mittagstisch&ldquo; antippen &rarr; Popup &ouml;ffnet sich &rarr; Button &bdquo;Drucken&ldquo; klicken. Im Browser-Druckdialog: Papierformat A4, Hochformat, R&auml;nder Minimal/Keine. <strong>Wichtig:</strong> &bdquo;Hintergrundgrafiken drucken&ldquo; aktivieren &ndash; sonst fehlen Farben und Logos!
+</p>
+
+<!-- 10 -->
+<h4>Wie drucke ich den Angebotsflyer aus?</h4>
+<p>
+  Angebote &ouml;ffnen &rarr; Plakat-Button &rarr; &bdquo;PNG herunterladen&ldquo;. Das heruntergeladene PNG im Bildbetrachtungsprogramm &ouml;ffnen und von dort drucken. PNG-Export wird empfohlen f&uuml;r Aush&auml;nge &ndash; beste Druckqualit&auml;t auf A4.
+</p>
+
+<!-- 11 -->
+<h4>Kann ich auch die Angebote der n&auml;chsten Woche sehen?</h4>
+<p>
+  Ja! &Ouml;ffnen Sie die Angebote und nutzen Sie die Schaltfl&auml;chen &bdquo;Diese Woche&ldquo; / &bdquo;N&auml;chste Woche&ldquo; oben im Popup. Der genaue Zeitraum (z.&thinsp;B. 02.06.&ndash;08.06.) wird dabei angezeigt.
+</p>
+
+<!-- 12 -->
+<h4>Was bedeutet der &bdquo;Rote Punkt&ldquo;?</h4>
+<p>
+  Der Rote Punkt ist ein Programm des Dorfladens f&uuml;r dauerhaft extrem g&uuml;nstige Grundnahrungsmittel und Drogerieartikel &ndash; oft auf Discounter-Niveau. Die Roter-Punkt-Liste finden Sie &uuml;ber die rote Kachel auf der Startseite oder im Men&uuml; unter &bdquo;Roter Punkt&ldquo;. Dort sehen Sie den aktuellen Preis, den UVP-Vergleich und die Ersparnis.
+</p>
+
+<!-- 13 -->
+<h4>Wie schlie&szlig;e ich Popups auf dem Smartphone?</h4>
+<p>
+  Sie haben drei M&ouml;glichkeiten: (1) Nach unten wischen am oberen Rand des Popups. (2) Die Android-Zur&uuml;ck-Geste verwenden. (3) Auf den abgedunkelten Hintergrund tippen. Alle Popups lassen sich so schnell schlie&szlig;en, ohne die App zu verlassen.
+</p>
+
+<!-- 14 -->
+<h4>Die Seite l&auml;dt nicht richtig oder zeigt eine wei&szlig;e Fl&auml;che &ndash; was tun?</h4>
+<p>
+  Probieren Sie folgende Schritte der Reihe nach: (1) Harter Neu-Laden mit <code>Strg+Shift+R</code> (Windows) bzw. <code>Cmd+Shift+R</code> (Mac). (2) Browser-Cache leeren: Men&uuml; &rarr; Verlauf &rarr; Browserdaten l&ouml;schen &rarr; &bdquo;Bilder und Dateien im Cache&ldquo;. (3) Browser aktualisieren. (4) Internetverbindung pr&uuml;fen. (5) PWA vom Homescreen l&ouml;schen und neu hinzuf&uuml;gen. Wenn nichts hilft &ndash; einfach kurz im Laden Bescheid geben!
+</p>
+
+<!-- 15 -->
+<h4>Der Text ist zu klein &ndash; wie vergr&ouml;&szlig;ere ich die Darstellung?</h4>
+<p>
+  <strong>Desktop:</strong> <code>Strg + +</code> vergr&ouml;&szlig;ert, <code>Strg + &minus;</code> verkleinert, <code>Strg + 0</code> setzt zur&uuml;ck.<br>
+  <strong>Smartphone:</strong> Zwei-Finger-Spreiz-Geste (Pinch-to-Zoom) direkt auf der Seite. Alternativ: Ger&auml;te-Einstellungen &rarr; Barrierefreiheit &rarr; Schriftgr&ouml;&szlig;e systemweit anpassen. Zoom bis 150&thinsp;% beeintr&auml;chtigt die Navigation nicht.
+</p>
+
+<!-- 16 -->
+<h4>Welche Daten speichert die Website &uuml;ber mich?</h4>
+<p>
+  Die Dorfladen-Homepage ist bewusst datenschutzfreundlich konzipiert: Kein Tracking (kein Google Analytics, kein Facebook-Pixel), kein Login erforderlich. Push-Benachrichtigungen nutzen nur eine anonyme Browser-ID &ndash; kein Name, keine E-Mail. Der Barcode-Scanner verwendet die Kamera nur lokal, kein Bild verl&auml;sst Ihr Ger&auml;t. Weitere Details finden Sie in der <a href="/datenschutzerklaerung">Datenschutzerkl&auml;rung</a>.
+</p>
+
+<!-- 17 -->
+<h4>Ein Artikel aus der Preisliste ist im Laden nicht erh&auml;ltlich &ndash; was stimmt?</h4>
+<p>
+  Die Online-Preisliste wird manuell gepflegt. Es kann vorkommen, dass ein Artikel vor&uuml;bergehend ausverkauft, dauerhaft ausgelistet oder ein Neuzugang noch nicht eingetragen ist. Sprechen Sie das Kassenpersonal an &ndash; die aktuellste Bestandsinfo ist immer im Laden selbst vorhanden.
+</p>
+
+<!-- 18 -->
+<h4>Wie aktiviere ich Push-Benachrichtigungen?</h4>
+<p>
+  Men&uuml; &ouml;ffnen &rarr; Button &bdquo;Benachrichtigungen aktivieren&ldquo; antippen. Der Browser fragt: &bdquo;Darf die Seite Benachrichtigungen senden?&ldquo; &rarr; &bdquo;Erlauben&ldquo; w&auml;hlen. Der Button wechselt auf &bdquo;Benachrichtigungen aktiv&ldquo;. Falls versehentlich blockiert: Schloss-Symbol in der Adressleiste &rarr; Berechtigungen &rarr; Benachrichtigungen &rarr; &bdquo;Zulassen&ldquo;.
+</p>
+
+<!-- 19 -->
+<h4>Wie betrachte ich die Galerie in Vollbild?</h4>
+<p>
+  Die Galerie finden Sie unter &bdquo;Impressionen&ldquo;. Tippen Sie auf ein Bild f&uuml;r die Vollbild-Ansicht (Lightbox). Weiterbl&auml;ttern mit Pfeiltasten oder den Pfeil-Buttons. Schlie&szlig;en: Au&szlig;erhalb des Bilds klicken, das &times;-Symbol oder <code>Escape</code>-Taste. Falls vorhanden, k&ouml;nnen Sie oben nach Kategorien filtern.
+</p>
+
+<!-- 20 -->
+<h4>Warum sehe ich auf dem Smartphone eine andere Darstellung als am PC?</h4>
+<p>
+  Die Dorfladen-Homepage ist eine responsive Webanwendung und passt sich automatisch an die Bildschirmgr&ouml;&szlig;e an. Auf dem Smartphone werden Inhalte als Popups und Bottom-Sheets dargestellt, am PC als modale Dialoge. Die Funktionalit&auml;t ist identisch &ndash; nur die Darstellung ist f&uuml;r das jeweilige Ger&auml;t optimiert. Sollte etwas abgeschnitten wirken, versuchen Sie die Seite im Hochformat zu nutzen oder zoomen Sie mit der Zwei-Finger-Geste.
 </p>
 
 <hr style="margin-top:60px; border:none; border-top:2px solid #2d5016">
