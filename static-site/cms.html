@@ -1113,7 +1113,6 @@ document.head.appendChild(msalScript);
       <div class="cfg-section-nav" style="display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:16px;flex-wrap:wrap">
         <button class="cfg-section-btn active" data-action="wpCfgSection" data-id="wp-sec-home" style="padding:8px 16px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--c-m-pri);margin-bottom:-2px;color:var(--c-m-pri);text-transform:uppercase;letter-spacing:.3px">&#127968; Homepage-Layout</button>
         <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-flyer" style="padding:8px 16px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">&#128196; Flyer / Druck</button>
-        <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-elemente" style="padding:8px 16px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">&#128065; Elemente &amp; Schriften</button>
       </div>
 
       <div class="cfg-split">
@@ -1212,6 +1211,31 @@ document.head.appendChild(msalScript);
                   <button type="button" class="cms-btn cms-btn-gray cms-btn-sm" data-action="resetWpTplColors" data-kind="home" style="font-size:10px;padding:2px 6px">Farben zur&uuml;cksetzen</button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Sichtbarkeit (Homepage-Elemente) -->
+          <div class="cms-card" style="margin-bottom:8px">
+            <div class="cms-card-header" style="background:#5ea88a">&#128065; Sichtbarkeit</div>
+            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
+              <label style="font-size:12px;font-weight:600;color:#374151">
+                <input type="checkbox" id="hcfg-wpShowCard" checked> Wochenplan anzeigen
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">
+                <input type="checkbox" id="hcfg-wpShowOeko" checked> &Ouml;ko-Rabatt-Hinweis
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">
+                <input type="checkbox" id="hcfg-wpShowVorbestell" checked> Vorbestell-Hinweis
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">
+                <input type="checkbox" id="hcfg-wpShowPhone" checked> Telefonnummer im Footer
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">
+                <input type="checkbox" id="hcfg-wpShowWaShare" checked> WhatsApp-Teilen Button
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">
+                <input type="checkbox" id="hcfg-wpShowWaInfo" checked> WhatsApp-Info Box (unter Plan)
+              </label>
             </div>
           </div>
 
@@ -1344,6 +1368,35 @@ document.head.appendChild(msalScript);
             </div>
           </div>
 
+          <!-- Schriften (Bild/Canvas) -->
+          <div class="cms-card" style="margin-bottom:8px">
+            <div class="cms-card-header" style="background:#4338ca">&#127912; Schriften (Bild / Vorschau)</div>
+            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
+              <label style="font-size:12px;font-weight:600;color:#374151">Wochentag: <span id="hcfg-wpCanvasDaySize-val">15</span>px
+                <input type="range" id="hcfg-wpCanvasDaySize" min="10" max="22" step="1" value="15" style="width:100%" oninput="document.getElementById('hcfg-wpCanvasDaySize-val').textContent=this.value">
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">Gericht: <span id="hcfg-wpCanvasDishSize-val">15</span>px
+                <input type="range" id="hcfg-wpCanvasDishSize" min="10" max="22" step="1" value="15" style="width:100%" oninput="document.getElementById('hcfg-wpCanvasDishSize-val').textContent=this.value">
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">Preis: <span id="hcfg-wpCanvasPriceSize-val">16</span>px
+                <input type="range" id="hcfg-wpCanvasPriceSize" min="10" max="22" step="1" value="16" style="width:100%" oninput="document.getElementById('hcfg-wpCanvasPriceSize-val').textContent=this.value">
+              </label>
+            </div>
+          </div>
+
+          <!-- Transparenz -->
+          <div class="cms-card" style="margin-bottom:8px">
+            <div class="cms-card-header" style="background:#4338ca">&#128065; Transparenz (Hinweis &amp; Footer)</div>
+            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
+              <label style="font-size:12px;font-weight:600;color:#374151">Hinweistext-Deckkraft: <span id="hcfg-wpHintOpacity-val">40</span>%
+                <input type="range" id="hcfg-wpHintOpacity" min="10" max="100" step="5" value="40" style="width:100%" oninput="document.getElementById('hcfg-wpHintOpacity-val').textContent=this.value">
+              </label>
+              <label style="font-size:12px;font-weight:600;color:#374151">Footer-Deckkraft: <span id="hcfg-wpFooterOpacity-val">50</span>%
+                <input type="range" id="hcfg-wpFooterOpacity" min="10" max="100" step="5" value="50" style="width:100%" oninput="document.getElementById('hcfg-wpFooterOpacity-val').textContent=this.value">
+              </label>
+            </div>
+          </div>
+
           <!-- Actions -->
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Speichern</button>
@@ -1364,84 +1417,6 @@ document.head.appendChild(msalScript);
         </div>
       </div>
 
-      <!-- ════════════════════════════════════════════════ -->
-      <!--  WP SECTION 3: ELEMENTE & SCHRIFTEN             -->
-      <!-- ════════════════════════════════════════════════ -->
-      <div id="wp-sec-elemente" style="display:none">
-        <div style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1px solid #e9d5ff;border-radius:12px;padding:16px;margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <span style="font-size:18px">&#128065;</span>
-            <div>
-              <div style="font-size:14px;font-weight:800;color:#7c3aed">Elemente &amp; Schriften</div>
-              <div style="font-size:11px;color:#6b7280">Sichtbarkeit von Elementen und Schriftgr&ouml;&szlig;en im Wochenplan</div>
-            </div>
-          </div>
-
-          <!-- Sichtbarkeit -->
-          <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#7c3aed">&#128065; Sichtbarkeit</div>
-            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
-              <label style="font-size:12px;font-weight:600;color:#374151">
-                <input type="checkbox" id="hcfg-wpShowCard" checked> Wochenplan anzeigen
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">
-                <input type="checkbox" id="hcfg-wpShowOeko" checked> &Ouml;ko-Rabatt-Hinweis
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">
-                <input type="checkbox" id="hcfg-wpShowVorbestell" checked> Vorbestell-Hinweis
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">
-                <input type="checkbox" id="hcfg-wpShowPhone" checked> Telefonnummer im Footer
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">
-                <input type="checkbox" id="hcfg-wpShowWaShare" checked> WhatsApp-Teilen Button
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">
-                <input type="checkbox" id="hcfg-wpShowWaInfo" checked> WhatsApp-Info Box (unter Plan)
-              </label>
-            </div>
-          </div>
-
-          <!-- Schriften (Bild/Canvas) -->
-          <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#7c3aed">&#127912; Schriften (Bild / Vorschau)</div>
-            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
-              <label style="font-size:12px;font-weight:600;color:#374151">Wochentag: <span id="hcfg-wpCanvasDaySize-val">15</span>px
-                <input type="range" id="hcfg-wpCanvasDaySize" min="10" max="22" step="1" value="15" style="width:100%" oninput="document.getElementById('hcfg-wpCanvasDaySize-val').textContent=this.value">
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Gericht: <span id="hcfg-wpCanvasDishSize-val">15</span>px
-                <input type="range" id="hcfg-wpCanvasDishSize" min="10" max="22" step="1" value="15" style="width:100%" oninput="document.getElementById('hcfg-wpCanvasDishSize-val').textContent=this.value">
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Preis: <span id="hcfg-wpCanvasPriceSize-val">16</span>px
-                <input type="range" id="hcfg-wpCanvasPriceSize" min="10" max="22" step="1" value="16" style="width:100%" oninput="document.getElementById('hcfg-wpCanvasPriceSize-val').textContent=this.value">
-              </label>
-            </div>
-          </div>
-
-          <!-- Transparenz -->
-          <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#7c3aed">&#128065; Transparenz (Hinweis &amp; Footer)</div>
-            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
-              <label style="font-size:12px;font-weight:600;color:#374151">Hinweistext-Deckkraft: <span id="hcfg-wpHintOpacity-val">40</span>%
-                <input type="range" id="hcfg-wpHintOpacity" min="10" max="100" step="5" value="40" style="width:100%" oninput="document.getElementById('hcfg-wpHintOpacity-val').textContent=this.value">
-              </label>
-              <label style="font-size:12px;font-weight:600;color:#374151">Footer-Deckkraft: <span id="hcfg-wpFooterOpacity-val">50</span>%
-                <input type="range" id="hcfg-wpFooterOpacity" min="10" max="100" step="5" value="50" style="width:100%" oninput="document.getElementById('hcfg-wpFooterOpacity-val').textContent=this.value">
-              </label>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Speichern</button>
-            <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-            <button class="cms-btn cms-btn-gray" onclick="hpSaveAsDefault()" style="font-size:11px">&#9733; Als Standard speichern</button>
-            <button class="cms-btn cms-btn-gray" onclick="hpClearCustomDefault()" style="font-size:11px;color:#dc2626">&#10005; Werkseinstellungen</button>
-          </div>
-        </div>
-      </div>
       </div><!-- /cfg-split-left (WP) -->
 
       <div class="cfg-split-right">
