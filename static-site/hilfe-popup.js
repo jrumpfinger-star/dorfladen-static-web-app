@@ -12,11 +12,13 @@
   style.textContent = `
   #hilfe-dialog {
     position: fixed; inset: 0; z-index: 99999;
-    margin: 0; padding: 0; border: none;
-    background: transparent; width: 100%; height: 100%;
-    max-width: 100%; max-height: 100%;
+    margin: 0 !important; padding: 0 !important; border: none;
+    background: transparent;
+    width: 100% !important; height: 100% !important;
+    max-width: none !important; max-height: none !important;
     overflow: hidden;
     display: flex; align-items: flex-start; justify-content: center;
+    box-sizing: border-box;
   }
   #hilfe-dialog[open] { display: flex; }
   #hilfe-dialog::backdrop {
@@ -34,6 +36,7 @@
     display: flex; flex-direction: column;
     overflow: hidden;
     animation: hilfeSlideUp .25s ease-out;
+    box-sizing: border-box;
   }
   @keyframes hilfeSlideUp {
     from { opacity:0; transform:translateY(30px); }
@@ -65,12 +68,13 @@
   }
   @media (max-width:768px) {
     #hilfe-dialog-inner {
-      margin: 0; width: 100vw;
-      max-height: 100vh; max-height: 100dvh;
+      margin: 0 !important;
+      width: 100% !important; max-width: 100% !important;
+      height: 100% !important; max-height: 100dvh !important;
       border-radius: 0;
     }
     #hilfe-dialog-frame {
-      width: 100%; min-width: 0;
+      width: 100% !important; min-width: 0;
     }
   }
   `;
