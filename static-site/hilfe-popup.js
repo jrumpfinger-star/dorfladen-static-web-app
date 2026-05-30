@@ -14,7 +14,7 @@
     position: fixed; inset: 0; z-index: 99999;
     margin: 0 !important; padding: 0 !important; border: none;
     background: transparent;
-    width: 100% !important; height: 100% !important;
+    width: 100vw !important; height: 100vh !important;
     max-width: none !important; max-height: none !important;
     overflow: hidden;
     display: flex; align-items: flex-start; justify-content: center;
@@ -69,8 +69,8 @@
   @media (max-width:768px) {
     #hilfe-dialog-inner {
       margin: 0 !important;
-      width: 100% !important; max-width: 100% !important;
-      height: 100% !important; max-height: 100dvh !important;
+      width: 100vw !important; max-width: none !important;
+      height: 100vh !important; height: 100dvh !important; max-height: none !important;
       border-radius: 0;
     }
     #hilfe-dialog-frame {
