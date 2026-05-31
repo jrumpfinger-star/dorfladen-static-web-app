@@ -52,13 +52,13 @@ if('serviceWorker' in navigator){
     if(dtModal){dtModal.classList.remove('open');return true;}
     // Push settings overlay
     var pushOv=document.getElementById('push-settings-overlay');
-    if(pushOv){
+    if(pushOv&&pushOv.offsetParent!==null){
       if(typeof closePushSettings==='function')closePushSettings();
       else{pushOv.style.opacity='0';setTimeout(function(){if(pushOv.parentNode)pushOv.remove();},300);}
       return true;
     }
     // CMS confirm overlay
-    var confirmOv=document.querySelector('.cms-confirm-overlay');
+    var confirmOv=document.querySelector('.cms-confirm-overlay.open');
     if(confirmOv){
       var cancelBtn=confirmOv.querySelector('[data-action="cancel"],.cms-confirm-cancel');
       if(cancelBtn)cancelBtn.click();
