@@ -125,11 +125,7 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA: prevent about:blank black screen on exit
-    if(isStandalone){
-      // Redirect to home instead of showing black screen
-      window.location.replace('/');
-    }
+    // Standalone PWA: let app close naturally via back button
   });
 })();
 
