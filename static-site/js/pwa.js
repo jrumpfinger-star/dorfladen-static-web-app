@@ -126,13 +126,7 @@ if('serviceWorker' in navigator){
       _closingViaBack=false;
       return;
     }
-    // Standalone PWA on homepage: navigate to exit page which auto-closes
-    var onHome=window.location.pathname==='/'||window.location.pathname==='/index.html';
-    if(isStandalone&&onHome){
-      window.location.replace('/pwa-exit.html');
-      return;
-    }
-    // Otherwise let browser handle (sub-page back navigation)
+    // No popup open – let browser handle (navigate back or close app)
   });
 
 })();
