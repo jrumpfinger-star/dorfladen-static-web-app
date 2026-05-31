@@ -105,10 +105,11 @@ if('serviceWorker' in navigator){
       closeAnyPopup();
       return;
     }
-    // No popup: Firefox PWA shows black/grey screens on back from homepage.
-    // Block only on Firefox standalone to prevent this.
-    var isFirefox=/Firefox/.test(navigator.userAgent);
-    if(isStandalone&&isFirefox){
+    // No popup: Firefox Android PWA (Custom Tab) shows black/grey screens
+    // on back from homepage. Block back on homepage for Firefox Android.
+    // Firefox doesn't report standalone even for installed PWAs.
+    var isFirefoxAndroid=/Firefox/.test(navigator.userAgent)&&/Android/.test(navigator.userAgent);
+    if(isFirefoxAndroid){
       var p=window.location.pathname;
       if(p==='/'||p==='/index.html'){
         history.pushState({guard:1},'',window.location.href);
