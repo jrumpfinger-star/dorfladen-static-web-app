@@ -490,7 +490,8 @@
           }
           var bc=item.strichcode||'';
           html+='<div class="mob-pl-row '+cls+'" data-name="'+esc(item.bezeichnung).toLowerCase()+'" data-barcode="'+esc(bc)+'">';
-          html+='<span class="mob-pl-name">'+esc(item.bezeichnung)+'</span>';
+          var mengeHtml=item.menge?'<span class="mob-pl-menge">'+esc(item.menge)+'</span>':'';
+          html+='<span class="mob-pl-name">'+esc(item.bezeichnung)+mengeHtml+'</span>';
           html+='<span class="mob-pl-price">'+priceHtml+'</span>';
           html+='</div>';
           plAllItems.push({el:null,name:(item.bezeichnung||'').toLowerCase(),strichcode:item.strichcode||'',bezeichnung:item.bezeichnung||'',vk:item.vk,uvp:item.uvp,discount:item.discount||0,rp:item.rp,angebot:item.angebot,angebot_preis:item.angebot_preis,wg:wg});

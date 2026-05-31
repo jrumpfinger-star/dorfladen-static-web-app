@@ -703,6 +703,7 @@ main{padding:0!important;margin:0!important}
   font-size:.85rem;
   white-space:nowrap;
 }
+.mob-pl-menge{display:inline-block;margin-left:6px;padding:1px 7px;background:#e8f5e9;color:#2e7d32;border-radius:10px;font-size:.68rem;font-weight:600;white-space:nowrap;vertical-align:middle}
 .mob-pl-rp .mob-pl-name{border-left:2px solid var(--m-red);padding-left:8px}
 .mob-pl-ang .mob-pl-name{border-left:2px solid var(--m-secondary);padding-left:8px}
 
