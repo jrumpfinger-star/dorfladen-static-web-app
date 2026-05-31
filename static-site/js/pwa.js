@@ -78,11 +78,23 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Handle back gesture – close popups, nothing else
+  // Track initial history length to detect when we're at the start
+  var _startHistLen=history.length;
+
+  // Handle back gesture
   window.addEventListener('popstate',function(e){
-    // If a popup is open, close it. The back navigation already happened,
-    // which is fine – no pushState needed.
-    closeAnyPopup();
+    // Close any open popup
+    if(closeAnyPopup()){
+      history.pushState(null,'',window.location.href);
+      return;
+    }
+    // In standalone PWA: if we're at the start, navigate to exit page
+    // (green background matches theme_color so no black flash)
+    // then a second back press closes the custom tab naturally
+    if(isStandalone&&history.length<=_startHistLen){
+      window.location.replace('/pwa-exit.html');
+      return;
+    }
   });
 
 })();
