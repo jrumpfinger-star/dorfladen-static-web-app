@@ -78,57 +78,15 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Push a history entry when any overlay opens so back button has
-  // something to consume (instead of closing the app)
-  var _popupOpen=false;
-  function markPopupOpen(){
-    if(!_popupOpen){
-      _popupOpen=true;
-      history.pushState({popup:true},'',window.location.href);
-    }
-  }
-  var _closingViaBack=false;
-  function markPopupClosed(){
-    if(_popupOpen&&!_closingViaBack){
-      // Popup was closed via X button (not back) – remove the history entry
-      _popupOpen=false;
-      history.back(); // consumes the {popup:true} entry silently
-    }
-    _popupOpen=false;
-  }
-
-  // Observe DOM for popups opening/closing
-  function watchPopups(){
-    var observer=new MutationObserver(function(){
-      var pso=document.getElementById('push-settings-overlay');
-      var anyOpen=
-        document.querySelector('.mob-popup-bg.open')||
-        (document.getElementById('mob-nav')&&document.getElementById('mob-nav').classList.contains('open'))||
-        (document.getElementById('lightbox-overlay')&&document.getElementById('lightbox-overlay').classList.contains('active'))||
-        document.querySelector('.news-overlay.open')||
-        document.querySelector('[id^="dt-modal-"].open')||
-        (pso&&pso.offsetParent!==null)||
-        document.querySelector('.cms-confirm-overlay.open')||
-        (document.getElementById('hilfe-overlay')&&document.getElementById('hilfe-overlay').classList.contains('open'));
-      if(anyOpen&&!_popupOpen) markPopupOpen();
-      if(!anyOpen&&_popupOpen) markPopupClosed();
-    });
-    observer.observe(document.body,{attributes:true,childList:true,subtree:true,attributeFilter:['class','style']});
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',watchPopups);
-  else setTimeout(watchPopups,0);
-
   // Handle back gesture
   window.addEventListener('popstate',function(e){
-    if(_popupOpen){
-      _closingViaBack=true;
-      closeAnyPopup();
-      _popupOpen=false;
-      // Reset async – MutationObserver fires after current task
-      setTimeout(function(){_closingViaBack=false;},0);
+    // Try closing any visible popup/overlay
+    if(closeAnyPopup()){
+      // Popup was closed. Push state so user stays on current page.
+      history.pushState(null,'',window.location.href);
       return;
     }
-    // No popup open – let browser handle (navigate back or close app)
+    // Nothing to close – let browser handle naturally
   });
 
 })();
