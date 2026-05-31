@@ -123,8 +123,6 @@ if('serviceWorker' in navigator){
     }
     // Try to close popup even without explicit state
     if(closeAnyPopup()){
-      // Something was closed – push current URL back to prevent actual navigation
-      history.pushState(null,'',window.location.href);
       return;
     }
     // Standalone PWA exit handling – browser-specific
