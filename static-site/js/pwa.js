@@ -78,9 +78,20 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Handle back gesture – close popups, nothing else
+  // Push ONE guard entry at startup so first back press hits us
+  // instead of immediately leaving the page
+  history.pushState({guard:1},'',window.location.href);
+
+  // Handle back gesture
   window.addEventListener('popstate',function(e){
-    closeAnyPopup();
+    // If a popup is open, close it and re-push the guard
+    if(closeAnyPopup()){
+      history.pushState({guard:1},'',window.location.href);
+      return;
+    }
+    // No popup open. The guard was consumed.
+    // Next back press will be handled by browser (navigate back or close app).
+    // Do NOT re-push the guard here – let the app close.
   });
 })();
 
