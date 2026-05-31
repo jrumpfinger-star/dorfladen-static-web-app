@@ -80,7 +80,8 @@ if('serviceWorker' in navigator){
 
   // Push ONE guard entry only on homepage so back press hits us first
   var loc=window.location.pathname;
-  if(loc==='/'||loc==='/index.html'){
+  var isHome=loc==='/'||loc==='/index.html';
+  if(isHome){
     history.pushState({guard:1},'',window.location.href);
   }
 
@@ -91,9 +92,13 @@ if('serviceWorker' in navigator){
       history.pushState({guard:1},'',window.location.href);
       return;
     }
-    // No popup open. The guard was consumed.
-    // Next back press will be handled by browser (navigate back or close app).
-    // Do NOT re-push the guard here – let the app close.
+    // No popup open on homepage: re-push guard so app doesn't close.
+    // The app will only close when browser history is truly empty
+    // (e.g. after navigating back past the start_url).
+    var p=window.location.pathname;
+    if(p==='/'||p==='/index.html'){
+      history.pushState({guard:1},'',window.location.href);
+    }
   });
 })();
 
