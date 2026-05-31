@@ -78,9 +78,11 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Push ONE guard entry at startup so first back press hits us
-  // instead of immediately leaving the page
-  history.pushState({guard:1},'',window.location.href);
+  // Push ONE guard entry only on homepage so back press hits us first
+  var loc=window.location.pathname;
+  if(loc==='/'||loc==='/index.html'){
+    history.pushState({guard:1},'',window.location.href);
+  }
 
   // Handle back gesture
   window.addEventListener('popstate',function(e){
