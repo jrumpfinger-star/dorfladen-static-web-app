@@ -105,9 +105,10 @@ if('serviceWorker' in navigator){
       closeAnyPopup();
       return;
     }
-    // No popup: if on homepage in standalone mode, re-push to prevent
-    // navigating to empty Custom Tab pages (black/grey screens in Firefox)
-    if(isStandalone){
+    // No popup: Firefox PWA shows black/grey screens on back from homepage.
+    // Block only on Firefox standalone to prevent this.
+    var isFirefox=/Firefox/.test(navigator.userAgent);
+    if(isStandalone&&isFirefox){
       var p=window.location.pathname;
       if(p==='/'||p==='/index.html'){
         history.pushState({guard:1},'',window.location.href);
