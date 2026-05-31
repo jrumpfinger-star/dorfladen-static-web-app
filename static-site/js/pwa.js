@@ -125,24 +125,19 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA on start page: prevent app from closing
-    if(isStandalone){
-      var p=window.location.pathname;
-      var isHome=(p==='/'||p==='/index.html');
-      if(isHome){
-        // Re-push guard so next back still won't close
-        history.pushState({pwaGuard:true},'',window.location.href);
-      }
-      // On sub-pages: let normal back-navigation happen (no guard)
+    // Standalone PWA: prevent black screen / app close
+    if(isStandalone&&e.state&&e.state.pwaGuard){
+      // We landed on our guard state – re-push so we never run out of history
+      history.pushState({pwaGuard:true},'',window.location.href);
     }
   });
 
-  // Standalone on start page: initial guard so first back doesn't close
+  // Standalone: always set guard so back doesn't close app or go to about:blank
   if(isStandalone){
-    var p=window.location.pathname;
-    if(p==='/'||p==='/index.html'){
-      history.replaceState({pwaGuard:true},'',window.location.href);
-    }
+    // Replace current state with guard marker
+    history.replaceState({pwaGuard:true},'',window.location.href);
+    // Push a duplicate so first back press lands on our guard
+    history.pushState({pwaGuard:true},'',window.location.href);
   }
 })();
 
