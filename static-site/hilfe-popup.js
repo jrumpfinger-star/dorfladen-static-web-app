@@ -61,11 +61,9 @@
     flex: 1; border: none; overflow: auto;
     min-height: 0;
   }
-  /* Backdrop-Klick-Fläche */
-  #hilfe-dialog-backdrop {
-    position: fixed; inset: 0; z-index: -1;
-    cursor: pointer;
-  }
+  /* Klick-Bereich auf dem Dialog (außerhalb von inner) schließt */
+  #hilfe-dialog { cursor: pointer; }
+  #hilfe-dialog-inner { cursor: default; }
   @media (max-width:768px) {
     #hilfe-dialog-inner {
       margin: 0 !important;
@@ -88,10 +86,6 @@
     dialog = document.createElement('dialog');
     dialog.id = 'hilfe-dialog';
 
-    const backdrop = document.createElement('div');
-    backdrop.id = 'hilfe-dialog-backdrop';
-    backdrop.addEventListener('click', closeDialog);
-
     inner = document.createElement('div');
     inner.id = 'hilfe-dialog-inner';
 
@@ -100,8 +94,18 @@
     topbar.innerHTML = `
       <span style="font-size:1.4em">❓</span>
       <h2>Online-Hilfe – Dorfladen Oberornau</h2>
-      <button id="hilfe-close-btn" onclick="closeHilfePopup()" title="Schließen">✕</button>
     `;
+
+    /* Schließen-Button — direkter addEventListener statt inline onclick */
+    const closeBtn = document.createElement('button');
+    closeBtn.id = 'hilfe-close-btn';
+    closeBtn.title = 'Schließen';
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeDialog();
+    });
+    topbar.appendChild(closeBtn);
 
     frame = document.createElement('iframe');
     frame.id = 'hilfe-dialog-frame';
@@ -110,13 +114,33 @@
 
     inner.appendChild(topbar);
     inner.appendChild(frame);
-    dialog.appendChild(backdrop);
     dialog.appendChild(inner);
     document.body.appendChild(dialog);
 
-    /* Escape-Taste schließt Dialog */
+    /* 1) Native dialog cancel-Event (Escape-Taste + Android Back in manchen Browsern) */
+    dialog.addEventListener('cancel', function (e) {
+      e.preventDefault();
+      closeDialog();
+    });
+
+    /* 2) Escape-Taste als Fallback */
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && dialog.open) closeDialog();
+    });
+
+    /* 3) Klick auf Backdrop (::backdrop ist Pseudo-Element, daher Klick auf dialog selbst prüfen) */
+    dialog.addEventListener('click', function (e) {
+      if (e.target === dialog) closeDialog();
+    });
+
+    /* 4) Android Back-Button / Browser-Zurück via popstate */
+    window.addEventListener('popstate', function () {
+      if (dialog && dialog.open) {
+        _closing = true;
+        if (dialog.close) dialog.close();
+        else dialog.open = false;
+        _closing = false;
+      }
     });
   }
 
@@ -137,7 +161,11 @@
     let url = hilfeBaseUrl();
     if (anchor) url += '#' + anchor;
     if (frame.src !== url) frame.src = url;
-    if (!dialog.open) dialog.showModal ? dialog.showModal() : (dialog.open = true);
+    if (!dialog.open) {
+      /* History-Eintrag für Android-Zurück-Button */
+      history.pushState({ hilfeOpen: true }, '');
+      dialog.showModal ? dialog.showModal() : (dialog.open = true);
+    }
     /* Scrolle im iframe nach dem Laden zum Anker */
     if (anchor) {
       frame.onload = function () {
@@ -151,9 +179,17 @@
 
   window.closeHilfePopup = function () { closeDialog(); };
 
+  var _closing = false;
   function closeDialog() {
-    if (!dialog) return;
+    if (!dialog || !dialog.open || _closing) return;
+    _closing = true;
+    /* Dialog schließen */
     if (dialog.close) dialog.close();
     else dialog.open = false;
+    /* History-Eintrag entfernen, wenn wir nicht schon durch popstate geschlossen haben */
+    if (history.state && history.state.hilfeOpen) {
+      history.back();
+    }
+    _closing = false;
   }
 })();
