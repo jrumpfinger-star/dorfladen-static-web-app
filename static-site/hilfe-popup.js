@@ -102,8 +102,7 @@
     closeBtn.id = 'hilfe-close-btn';
     closeBtn.title = 'Schließen';
     closeBtn.textContent = '✕';
-    closeBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
+    closeBtn.addEventListener('click', function () {
       closeDialog();
     });
     topbar.appendChild(closeBtn);
@@ -119,9 +118,13 @@
     document.body.appendChild(dialog);
 
     /* 1) Native dialog cancel-Event (Escape-Taste + Android Back in manchen Browsern) */
-    dialog.addEventListener('cancel', function (e) {
-      e.preventDefault();
-      closeDialog();
+    dialog.addEventListener('cancel', function () {
+      /* Firefox: NICHT preventDefault() – das blockiert dialog.close()! */
+      _closing = true;
+      setTimeout(function () { _closing = false; }, 100);
+      /* Dialog wird durch cancel-default bereits geschlossen,
+         wir müssen nur noch den History-Eintrag aufräumen */
+      if (history.state && history.state.hilfeOpen) history.back();
     });
 
     /* 2) Escape-Taste als Fallback */
@@ -140,8 +143,9 @@
     window.addEventListener('popstate', function () {
       if (dialog && dialog.open && !_closing) {
         _closing = true;
-        try { dialog.close(); } catch (_) { dialog.open = false; }
-        setTimeout(function () { _closing = false; }, 50);
+        try { dialog.close(); } catch (ex) {}
+        if (dialog.open) { dialog.open = false; dialog.removeAttribute('open'); }
+        setTimeout(function () { _closing = false; }, 100);
       }
     });
   }
@@ -184,20 +188,15 @@
   function closeDialog() {
     if (!dialog || !dialog.open || _closing) return;
     _closing = true;
-    try {
-      /* Dialog schließen */
-      if (dialog.close) dialog.close();
-      else dialog.open = false;
-    } catch (_) { dialog.open = false; }
+    /* Dialog schließen */
+    try { dialog.close(); } catch (ex) {}
+    /* Fallback: falls close() nicht wirkt (Firefox-Edge-Cases) */
+    if (dialog.open) { dialog.open = false; dialog.removeAttribute('open'); }
     /* History-Eintrag entfernen, wenn wir nicht schon durch popstate geschlossen haben */
     var needBack = history.state && history.state.hilfeOpen;
-    /* _closing erst NACH history.back zurücksetzen (setTimeout), damit
-       ein synchron gefeuerten popstate-Event in Firefox nicht re-entered */
     if (needBack) {
       history.back();
-      setTimeout(function () { _closing = false; }, 50);
-    } else {
-      _closing = false;
     }
+    setTimeout(function () { _closing = false; }, 100);
   }
 })();
