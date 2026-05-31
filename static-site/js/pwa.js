@@ -125,25 +125,8 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA: close when landing on exit guard or bottom of stack
-    if(isStandalone&&(!e.state||e.state.pwaExit)){
-      window.close();
-      // If close() didn't work, go back again to let the OS handle it
-      setTimeout(function(){history.back();},50);
-      return;
-    }
+    // Let the browser/OS handle closing naturally
   });
-
-  // Homepage: exit guard below, page marker on top. Sub-pages: page marker only.
-  if(isStandalone){
-    var isHome=window.location.pathname==='/'||window.location.pathname==='/index.html';
-    if(isHome){
-      history.replaceState({pwaExit:true},'',window.location.href);
-      history.pushState({pwaPage:true},'',window.location.href);
-    } else {
-      history.replaceState({pwaPage:true},'',window.location.href);
-    }
-  }
 })();
 
 var _pwaPrompt=null;
