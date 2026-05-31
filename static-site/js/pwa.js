@@ -128,6 +128,8 @@ if('serviceWorker' in navigator){
     // Standalone PWA: close when landing on exit guard or bottom of stack
     if(isStandalone&&(!e.state||e.state.pwaExit)){
       window.close();
+      // If close() didn't work, go back again to let the OS handle it
+      setTimeout(function(){history.back();},50);
       return;
     }
   });
