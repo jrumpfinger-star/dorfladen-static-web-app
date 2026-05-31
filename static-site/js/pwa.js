@@ -124,7 +124,8 @@ if('serviceWorker' in navigator){
       _closingViaBack=true;
       closeAnyPopup();
       _popupOpen=false;
-      _closingViaBack=false;
+      // Reset async – MutationObserver fires after current task
+      setTimeout(function(){_closingViaBack=false;},0);
       return;
     }
     // No popup open – let browser handle (navigate back or close app)
