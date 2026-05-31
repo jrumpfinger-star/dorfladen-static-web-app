@@ -100,14 +100,15 @@ if('serviceWorker' in navigator){
   // Observe DOM for popups opening/closing
   function watchPopups(){
     var observer=new MutationObserver(function(){
+      var pso=document.getElementById('push-settings-overlay');
       var anyOpen=
         document.querySelector('.mob-popup-bg.open')||
         (document.getElementById('mob-nav')&&document.getElementById('mob-nav').classList.contains('open'))||
         (document.getElementById('lightbox-overlay')&&document.getElementById('lightbox-overlay').classList.contains('active'))||
         document.querySelector('.news-overlay.open')||
         document.querySelector('[id^="dt-modal-"].open')||
-        document.getElementById('push-settings-overlay')||
-        document.querySelector('.cms-confirm-overlay')||
+        (pso&&pso.offsetParent!==null)||
+        document.querySelector('.cms-confirm-overlay.open')||
         (document.getElementById('hilfe-overlay')&&document.getElementById('hilfe-overlay').classList.contains('open'));
       if(anyOpen&&!_popupOpen) markPopupOpen();
       if(!anyOpen&&_popupOpen) markPopupClosed();
