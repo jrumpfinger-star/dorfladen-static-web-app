@@ -645,7 +645,7 @@ main{padding:0!important;margin:0!important}
   font-weight:700;
 }
 .mob-pl-arrow{color: var(--m-muted);font-size:.7rem;flex-shrink:0}
-.mob-pl-items{padding:0 12px 4px}
+.mob-pl-items{padding:0 12px 4px;max-height:70vh;overflow-y:auto}
 .mob-pl-filters{
   display:flex;
   gap:8px;
