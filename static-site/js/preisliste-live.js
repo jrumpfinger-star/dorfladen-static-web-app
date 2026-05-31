@@ -72,6 +72,7 @@
         var bc=item.strichcode||'';
         var mengeHtml=item.menge?'<span class="so-menge">'+esc(item.menge)+'</span>':'';
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'" data-barcode="'+esc(bc)+'" class="'+cls.trim()+'">';
+        rows+='<td class="so-td-bc">'+(bc?esc(bc):'')+'</td>';
         rows+='<td class="so-td-name">'+nameHtml+mengeHtml+'</td>';
         rows+='<td class="so-td-disc">'+discHtml+'</td>';
         rows+='<td class="so-td-price">'+vkStr+'&nbsp;&euro;</td></tr>'

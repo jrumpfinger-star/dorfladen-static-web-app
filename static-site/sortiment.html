@@ -192,14 +192,15 @@
 .so-wg-name{font-weight:600;color:#333;flex:1}
 .so-wg-meta{font-size:.72rem;color:#888;white-space:nowrap}
 .so-arrow{color:#bbb;font-size:.55rem;flex-shrink:0;margin-left:4px}
-/* Table – 3 clean columns */
+/* Table – 4 columns: barcode, name, discount, price */
 .so-panel{padding:0}
 .so-table{width:100%;border-collapse:collapse;font-size:.84rem;table-layout:fixed}
 .so-table td{padding:7px 12px;border-top:1px solid #f2f2f2;vertical-align:middle}
 .so-table tr:hover{background:#f7faf7}
-.so-td-name{width:50%;color:#444;white-space:normal;word-break:break-word;overflow-wrap:break-word}
-.so-td-price{width:25%;text-align:right;white-space:nowrap;font-weight:600;color:#2d7a5e;font-variant-numeric:tabular-nums}
-.so-td-disc{width:25%;text-align:right;white-space:nowrap}
+.so-td-bc{width:14%;color:#999;font-size:.78rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.so-td-name{width:40%;color:#444;white-space:normal;word-break:break-word;overflow-wrap:break-word}
+.so-td-price{width:23%;text-align:right;white-space:nowrap;font-weight:600;color:#2d7a5e;font-variant-numeric:tabular-nums}
+.so-td-disc{width:23%;text-align:right;white-space:nowrap}
 /* RP row: subtle left accent */
 .so-row-rp td:first-child{border-left:3px solid #e53935;padding-left:10px}
 .so-row-rp:hover{background:#fef5f5!important}
@@ -212,6 +213,7 @@
 .so-noresult{display:none;text-align:center;padding:20px;color:#999;font-size:.88rem}
 .so-lightbox{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);align-items:center;justify-content:center;cursor:zoom-out}.so-lightbox.so-lb-open{display:flex}.so-lightbox img{max-width:90vw;max-height:90vh;border-radius:8px}
 @media(max-width:600px){
+  .so-td-bc{display:none}
   .so-table{font-size:.78rem;table-layout:auto}
   .so-table td{padding:6px 8px}
   .so-td-name{width:44%;white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word}
