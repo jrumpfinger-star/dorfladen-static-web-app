@@ -125,20 +125,23 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA: prevent app from closing on ANY page
+    // Standalone PWA on start page: prevent app from closing
     if(isStandalone){
-      // If we are at the very bottom of the history stack, push a guard
-      // to prevent the next back press from closing the app
-      if(!e.state||!e.state.pwaGuard){
+      var p=window.location.pathname;
+      var isHome=(p==='/'||p==='/index.html');
+      if(isHome){
+        // Re-push guard so next back still won't close
         history.pushState({pwaGuard:true},'',window.location.href);
       }
+      // On sub-pages: let normal back-navigation happen (no guard)
     }
   });
 
-  // Standalone: push initial guard state so first back press doesn't close app
+  // Standalone on start page: initial guard so first back doesn't close
   if(isStandalone){
-    if(!history.state||!history.state.pwaGuard){
-      history.pushState({pwaGuard:true},'',window.location.href);
+    var p=window.location.pathname;
+    if(p==='/'||p==='/index.html'){
+      history.replaceState({pwaGuard:true},'',window.location.href);
     }
   }
 })();
