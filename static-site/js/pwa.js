@@ -78,15 +78,32 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Handle back gesture – only intercept if a popup is open
+  // On homepage in standalone PWA: keep one guard entry so back doesn't
+  // go to an empty page. Instead, we catch it and minimize the app.
+  var isHome=window.location.pathname==='/'||window.location.pathname==='/index.html';
+  if(isStandalone&&isHome&&!history.state){
+    history.replaceState({pwaHome:true},'',window.location.href);
+  }
+
+  // Handle back gesture
   window.addEventListener('popstate',function(e){
+    // 1. Close any open popup
     if(closeAnyPopup()){
-      // Popup was closed by back press. The back already consumed one
-      // history entry, so re-push to stay on the current page.
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Nothing to close – let browser handle (navigate back or exit app)
+    // 2. On homepage with no more history: minimize app instead of showing blank page
+    var onHome=window.location.pathname==='/'||window.location.pathname==='/index.html';
+    if(isStandalone&&onHome){
+      // Prevent blank screen: push state back so we stay on our page
+      history.pushState({pwaHome:true},'',window.location.href);
+      // Try to close/minimize the app
+      window.close();
+      // If close didn't work, blur to send app to background
+      window.blur();
+      // Last resort: move focus away from the PWA
+      if(document.activeElement)document.activeElement.blur();
+    }
   });
 
 })();
