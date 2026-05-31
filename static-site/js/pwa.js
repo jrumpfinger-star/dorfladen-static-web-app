@@ -63,11 +63,11 @@ if('serviceWorker' in navigator){
       else{confirmOv.remove();}
       return true;
     }
-    // Hilfe-Dialog (from hilfe-popup.js)
-    var hilfeDialog=document.getElementById('hilfe-dialog');
-    if(hilfeDialog&&hilfeDialog.open){
+    // Hilfe-Overlay (from hilfe-popup.js)
+    var hilfeOv=document.getElementById('hilfe-overlay');
+    if(hilfeOv&&hilfeOv.classList.contains('open')){
       if(typeof closeHilfePopup==='function')closeHilfePopup();
-      else if(hilfeDialog.close)hilfeDialog.close();
+      else{hilfeOv.classList.remove('open');document.body.style.overflow='';}
       return true;
     }
     // PWA install banner
