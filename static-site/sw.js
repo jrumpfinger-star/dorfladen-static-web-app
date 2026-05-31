@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v20';
+var CACHE_NAME='dorfladen-v21';
 var PRECACHE=[
   '/',
   '/css/style.css',
@@ -6,6 +6,7 @@ var PRECACHE=[
   '/js/app.js',
   '/js/mobile.js',
   '/js/pwa.js',
+  '/hilfe-popup.js',
   '/images/icon-192.png',
   '/images/icon-512.png',
   '/favicon.ico'
@@ -33,24 +34,35 @@ self.addEventListener('activate',function(e){
 });
 
 self.addEventListener('fetch',function(e){
+  var url=e.request.url;
   // Network-first for API calls
-  if(e.request.url.indexOf('/api/')!==-1){
+  if(url.indexOf('/api/')!==-1){
     e.respondWith(
       fetch(e.request).catch(function(){return caches.match(e.request);})
     );
     return;
   }
-  // Stale-while-revalidate for everything else
+  // Network-first for HTML, JS, CSS (always get fresh code)
+  if(e.request.destination==='document'||e.request.destination==='script'||e.request.destination==='style'
+     ||url.endsWith('.html')||url.endsWith('.js')||url.endsWith('.css')||url.indexOf('/handbuch/')!==-1){
+    e.respondWith(
+      fetch(e.request).then(function(response){
+        var clone=response.clone();
+        caches.open(CACHE_NAME).then(function(cache){cache.put(e.request,clone);});
+        return response;
+      }).catch(function(){return caches.match(e.request);})
+    );
+    return;
+  }
+  // Cache-first for images, fonts, icons (rarely change)
   e.respondWith(
     caches.match(e.request).then(function(cached){
-      var fetched=fetch(e.request).then(function(response){
+      if(cached)return cached;
+      return fetch(e.request).then(function(response){
         var clone=response.clone();
-        caches.open(CACHE_NAME).then(function(cache){
-          cache.put(e.request,clone);
-        });
+        caches.open(CACHE_NAME).then(function(cache){cache.put(e.request,clone);});
         return response;
-      }).catch(function(){return cached;});
-      return cached||fetched;
+      });
     })
   );
 });
