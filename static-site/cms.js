@@ -999,10 +999,13 @@
         cmsTab(e.state.cmsTab,true);
         return;
       }
-      // Standalone: prevent app from closing, go back to first tab
+      // No more tab history – navigate to homepage instead of closing
       if(isStandalone){
         cmsTab('wp',true);
         history.pushState({cmsTab:'wp'},'','');
+      } else {
+        // In regular browser: go to homepage
+        window.location.href='/';
       }
     });
   })();

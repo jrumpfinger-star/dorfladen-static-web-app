@@ -30,6 +30,28 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catc
     // Desktop modals
     var dtModal=document.querySelector('[id^="dt-modal-"].open');
     if(dtModal){dtModal.classList.remove('open');return true;}
+    // Push settings overlay
+    var pushOv=document.getElementById('push-settings-overlay');
+    if(pushOv){
+      if(typeof closePushSettings==='function')closePushSettings();
+      else{pushOv.style.opacity='0';setTimeout(function(){if(pushOv.parentNode)pushOv.remove();},300);}
+      return true;
+    }
+    // CMS confirm overlay
+    var confirmOv=document.querySelector('.cms-confirm-overlay');
+    if(confirmOv){
+      var cancelBtn=confirmOv.querySelector('[data-action="cancel"],.cms-confirm-cancel');
+      if(cancelBtn)cancelBtn.click();
+      else{confirmOv.remove();}
+      return true;
+    }
+    // Hilfe-Dialog (from hilfe-popup.js)
+    var hilfeDialog=document.getElementById('hilfe-dialog');
+    if(hilfeDialog&&hilfeDialog.open){
+      if(typeof closeHilfePopup==='function')closeHilfePopup();
+      else if(hilfeDialog.close)hilfeDialog.close();
+      return true;
+    }
     // PWA install banner
     var pwaBanner=document.getElementById('pwa-install-banner');
     if(pwaBanner&&pwaBanner.style.display!=='none'&&pwaBanner.offsetParent){
