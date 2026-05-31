@@ -97,11 +97,21 @@ if('serviceWorker' in navigator){
     }
   };
 
-  // Back button pressed: if popup state, close popup (state auto-consumed)
+  // Back button pressed
   window.addEventListener('popstate',function(e){
+    // If popup state active, close popup (fake entry auto-consumed)
     if(_popupStateActive){
       _popupStateActive=false;
       closeAnyPopup();
+      return;
+    }
+    // No popup: if on homepage in standalone mode, re-push to prevent
+    // navigating to empty Custom Tab pages (black/grey screens in Firefox)
+    if(isStandalone){
+      var p=window.location.pathname;
+      if(p==='/'||p==='/index.html'){
+        history.pushState({guard:1},'',window.location.href);
+      }
     }
   });
 })();
