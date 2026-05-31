@@ -125,8 +125,11 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA: no extra guard – let Android close the app naturally
-    // when there is no more history. Popups are already handled above.
+    // Standalone PWA: prevent about:blank black screen on exit
+    if(isStandalone){
+      // Redirect to home instead of showing black screen
+      window.location.replace('/');
+    }
   });
 })();
 
