@@ -78,10 +78,30 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Handle back gesture: close popups, then forward() to undo navigation
+  // === Standard pattern: pushState when popup opens, consume on back ===
+  var _popupStateActive=false;
+
+  // Push fake history entry when any popup opens
+  window.pushPopupState=function(){
+    if(!_popupStateActive){
+      _popupStateActive=true;
+      history.pushState({popup:true},'',window.location.href);
+    }
+  };
+
+  // Remove fake history entry when popup is closed normally (not via back)
+  window.removePopupState=function(){
+    if(_popupStateActive){
+      _popupStateActive=false;
+      history.back();
+    }
+  };
+
+  // Back button pressed: if popup state, close popup (state auto-consumed)
   window.addEventListener('popstate',function(e){
-    if(closeAnyPopup()){
-      history.forward();
+    if(_popupStateActive){
+      _popupStateActive=false;
+      closeAnyPopup();
     }
   });
 })();
