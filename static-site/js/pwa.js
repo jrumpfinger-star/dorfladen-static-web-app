@@ -78,26 +78,10 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Push ONE guard entry only on homepage so back press hits us first
-  var loc=window.location.pathname;
-  var isHome=loc==='/'||loc==='/index.html';
-  if(isHome){
-    history.pushState({guard:1},'',window.location.href);
-  }
-
-  // Handle back gesture
+  // Handle back gesture: close popups, then forward() to undo navigation
   window.addEventListener('popstate',function(e){
-    // If a popup is open, close it and re-push the guard
     if(closeAnyPopup()){
-      history.pushState({guard:1},'',window.location.href);
-      return;
-    }
-    // No popup open on homepage: re-push guard so app doesn't close.
-    // The app will only close when browser history is truly empty
-    // (e.g. after navigating back past the start_url).
-    var p=window.location.pathname;
-    if(p==='/'||p==='/index.html'){
-      history.pushState({guard:1},'',window.location.href);
+      history.forward();
     }
   });
 })();
