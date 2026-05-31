@@ -119,8 +119,7 @@ if('serviceWorker' in navigator){
 
   // Handle back gesture
   window.addEventListener('popstate',function(e){
-    if(e.state&&e.state.popup){
-      // Back consumed our popup marker – close the popup
+    if(_popupOpen){
       _closingViaBack=true;
       closeAnyPopup();
       _popupOpen=false;
