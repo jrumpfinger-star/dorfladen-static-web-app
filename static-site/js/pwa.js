@@ -21,7 +21,7 @@ if('serviceWorker' in navigator){
 
 // PWA: Android back gesture – close popups/overlays first, then navigate
 (function(){
-  var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+  var isStandalone=window.matchMedia('(display-mode:standalone)').matches||window.matchMedia('(display-mode:minimal-ui)').matches||navigator.standalone;
 
   // Try to close any open popup/overlay. Returns true if something was closed.
   function closeAnyPopup(){
@@ -126,7 +126,13 @@ if('serviceWorker' in navigator){
       _closingViaBack=false;
       return;
     }
-    // Nothing to close – let browser navigate/close naturally
+    // Standalone PWA on homepage: navigate to exit page which auto-closes
+    var onHome=window.location.pathname==='/'||window.location.pathname==='/index.html';
+    if(isStandalone&&onHome){
+      window.location.replace('/pwa-exit.html');
+      return;
+    }
+    // Otherwise let browser handle (sub-page back navigation)
   });
 
 })();
