@@ -80,7 +80,12 @@ if('serviceWorker' in navigator){
 
   // Handle back gesture – close popups, browser handles the rest
   window.addEventListener('popstate',function(e){
-    closeAnyPopup();
+    if(closeAnyPopup()){
+      // Popup was closed – push state to undo the back navigation
+      // so the user stays on the current page
+      history.pushState(null,'',window.location.href);
+    }
+    // If no popup was open: do nothing, let browser navigate/close naturally
   });
 
 })();
