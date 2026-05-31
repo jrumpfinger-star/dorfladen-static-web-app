@@ -125,8 +125,17 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // No guard – let browser handle back navigation naturally
+    // Standalone PWA: close when history is exhausted (state=null)
+    if(isStandalone&&!e.state){
+      window.close();
+      return;
+    }
   });
+
+  // Mark current history entry so we can detect bottom of stack
+  if(isStandalone){
+    history.replaceState({pwaGuard:true},'',window.location.href);
+  }
 })();
 
 var _pwaPrompt=null;
