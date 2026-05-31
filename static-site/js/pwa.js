@@ -80,14 +80,7 @@ if('serviceWorker' in navigator){
 
   // Handle back gesture
   window.addEventListener('popstate',function(e){
-    // Try closing any visible popup/overlay
-    if(closeAnyPopup()){
-      // Popup was closed. Go forward to undo the back navigation.
-      // forward() does NOT create a new entry (unlike pushState).
-      history.forward();
-      return;
-    }
-    // Nothing to close – let browser handle naturally
+    closeAnyPopup();
   });
 
 })();
