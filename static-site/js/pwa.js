@@ -22,6 +22,8 @@ if('serviceWorker' in navigator){
 // PWA: Android back gesture – close popups/overlays first, then navigate
 (function(){
   var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+  var isChrome=/Chrome/.test(navigator.userAgent)&&!/Edg/.test(navigator.userAgent);
+  var isFirefox=/Firefox/.test(navigator.userAgent);
 
   // Try to close any open popup/overlay. Returns true if something was closed.
   function closeAnyPopup(){
@@ -121,19 +123,25 @@ if('serviceWorker' in navigator){
     }
     // Try to close popup even without explicit state
     if(closeAnyPopup()){
-      // Something was closed – push current URL back to prevent actual navigation
-      history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA on start page: prevent app from closing
-    if(isStandalone&&(window.location.pathname==='/'||window.location.pathname==='/index.html')){
-      history.pushState({pwaMain:true},'',window.location.href);
+    // Standalone PWA exit handling – browser-specific
+    if(isStandalone){
+      if(isFirefox){
+        // Firefox: navigate forward to home so user never sees empty page
+        history.forward();
+      } else {
+        // Chrome & others: close the app window
+        window.close();
+      }
     }
   });
 
-  // Standalone: single guard state (no extra blank entry)
-  if(isStandalone&&(window.location.pathname==='/'||window.location.pathname==='/index.html')){
-    history.replaceState({pwaMain:true},'',window.location.href);
+  // Firefox PWA: detect empty page (about:blank) and redirect to home
+  if(isStandalone&&isFirefox){
+    if(!document.querySelector('body')||!document.body.children.length){
+      window.location.replace('/');
+    }
   }
 })();
 
