@@ -81,7 +81,7 @@ if('serviceWorker' in navigator){
   // When a popup opens, push a history state so Android back can close it
   function pushPopupState(){
     if(!history.state||!history.state.pwaPopup){
-      history.pushState({pwaPopup:true},'','');
+      history.pushState({pwaPopup:true},'',window.location.href);
     }
   }
 

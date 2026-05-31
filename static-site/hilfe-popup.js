@@ -163,7 +163,7 @@
     if (frame.src !== url) frame.src = url;
     if (!dialog.open) {
       /* History-Eintrag für Android-Zurück-Button */
-      history.pushState({ hilfeOpen: true }, '');
+      history.pushState({ hilfeOpen: true }, '', window.location.href);
       dialog.showModal ? dialog.showModal() : (dialog.open = true);
     }
     /* Scrolle im iframe nach dem Laden zum Anker */

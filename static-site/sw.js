@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v21';
+var CACHE_NAME='dorfladen-v22';
 var PRECACHE=[
   '/',
   '/css/style.css',
@@ -48,8 +48,12 @@ self.addEventListener('fetch',function(e){
     return;
   }
   // Network-first for HTML, JS, CSS (always get fresh code)
-  if(e.request.destination==='document'||e.request.destination==='script'||e.request.destination==='style'
-     ||url.endsWith('.html')||url.endsWith('.js')||url.endsWith('.css')||url.indexOf('/handbuch/')!==-1){
+  // Note: Firefox may leave request.destination empty, so also check URL extensions
+  var dest=e.request.destination;
+  var isCode=dest==='document'||dest==='script'||dest==='style'||dest==='worker'
+     ||url.endsWith('.html')||url.endsWith('.js')||url.endsWith('.css')||url.endsWith('.json')
+     ||url.indexOf('/handbuch/')!==-1;
+  if(isCode){
     e.respondWith(
       fetch(e.request).then(function(response){
         var clone=response.clone();
