@@ -128,8 +128,11 @@ if('serviceWorker' in navigator){
     // Standalone PWA exit handling – browser-specific
     if(isStandalone){
       if(isFirefox){
-        // Firefox: navigate forward to home so user never sees empty page
-        history.forward();
+        // Firefox: no window.close(), minimize via blur or let OS handle
+        window.open('','_self','');
+        window.close();
+        // Fallback: navigate away so Firefox closes the PWA tab
+        setTimeout(function(){window.location.href='about:blank';},100);
       } else {
         // Chrome & others: close the app window
         window.close();
@@ -137,12 +140,6 @@ if('serviceWorker' in navigator){
     }
   });
 
-  // Firefox PWA: detect empty page (about:blank) and redirect to home
-  if(isStandalone&&isFirefox){
-    if(!document.querySelector('body')||!document.body.children.length){
-      window.location.replace('/');
-    }
-  }
 })();
 
 var _pwaPrompt=null;
