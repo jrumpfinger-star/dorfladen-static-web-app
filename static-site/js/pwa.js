@@ -22,6 +22,8 @@ if('serviceWorker' in navigator){
 // PWA: Android back gesture – close popups/overlays first, then navigate
 (function(){
   var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+  var isChrome=/Chrome/.test(navigator.userAgent)&&!/Edg/.test(navigator.userAgent);
+  var isFirefox=/Firefox/.test(navigator.userAgent);
 
   // Try to close any open popup/overlay. Returns true if something was closed.
   function closeAnyPopup(){
@@ -125,7 +127,14 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Let the browser/OS handle closing naturally
+    // Standalone PWA exit handling – browser-specific
+    if(isStandalone){
+      if(isChrome){
+        // Chrome: window.close() works in standalone mode
+        window.close();
+      }
+      // Firefox & others: do nothing, let browser handle exit naturally
+    }
   });
 })();
 
