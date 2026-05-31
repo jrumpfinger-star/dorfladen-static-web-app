@@ -80,6 +80,7 @@
 
   /* ── Dialog aufbauen ──────────────────────────────────────────── */
   let dialog, inner, frame;
+  var _closing = false;
 
   function buildDialog() {
     if (dialog) return;
@@ -133,13 +134,14 @@
       if (e.target === dialog) closeDialog();
     });
 
-    /* 4) Android Back-Button / Browser-Zurück via popstate */
+    /* 4) Android Back-Button / Browser-Zurück via popstate
+       popstate hat den History-Eintrag bereits entfernt,
+       daher direkt schließen ohne history.back() */
     window.addEventListener('popstate', function () {
-      if (dialog && dialog.open) {
+      if (dialog && dialog.open && !_closing) {
         _closing = true;
-        if (dialog.close) dialog.close();
-        else dialog.open = false;
-        _closing = false;
+        try { dialog.close(); } catch (_) { dialog.open = false; }
+        setTimeout(function () { _closing = false; }, 50);
       }
     });
   }
@@ -179,17 +181,23 @@
 
   window.closeHilfePopup = function () { closeDialog(); };
 
-  var _closing = false;
   function closeDialog() {
     if (!dialog || !dialog.open || _closing) return;
     _closing = true;
-    /* Dialog schließen */
-    if (dialog.close) dialog.close();
-    else dialog.open = false;
+    try {
+      /* Dialog schließen */
+      if (dialog.close) dialog.close();
+      else dialog.open = false;
+    } catch (_) { dialog.open = false; }
     /* History-Eintrag entfernen, wenn wir nicht schon durch popstate geschlossen haben */
-    if (history.state && history.state.hilfeOpen) {
+    var needBack = history.state && history.state.hilfeOpen;
+    /* _closing erst NACH history.back zurücksetzen (setTimeout), damit
+       ein synchron gefeuerten popstate-Event in Firefox nicht re-entered */
+    if (needBack) {
       history.back();
+      setTimeout(function () { _closing = false; }, 50);
+    } else {
+      _closing = false;
     }
-    _closing = false;
   }
 })();
