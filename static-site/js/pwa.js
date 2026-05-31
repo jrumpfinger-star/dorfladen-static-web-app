@@ -21,7 +21,7 @@ if('serviceWorker' in navigator){
 
 // PWA: Android back gesture – close popups/overlays first, then navigate
 (function(){
-  var isStandalone=window.matchMedia('(display-mode:standalone)').matches||window.matchMedia('(display-mode:minimal-ui)').matches||navigator.standalone;
+  var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
 
   // Try to close any open popup/overlay. Returns true if something was closed.
   function closeAnyPopup(){
@@ -78,11 +78,63 @@ if('serviceWorker' in navigator){
     return false;
   }
 
+  // When a popup opens, push a history state so Android back can close it
+  function pushPopupState(){
+    if(!history.state||!history.state.pwaPopup){
+      history.pushState({pwaPopup:true},'',window.location.href);
+    }
+  }
+
+  // Hook into popup/overlay open functions to push history state
+  function hookOpeners(){
+    // Mobile popups
+    if(window.mobOpenPopup){
+      var origMobOpen=window.mobOpenPopup;
+      window.mobOpenPopup=function(id){origMobOpen(id);pushPopupState();};
+    }
+    // Mobile nav
+    var menuBtn=document.querySelector('.mob-header-menu');
+    if(menuBtn){
+      menuBtn.addEventListener('click',function(){setTimeout(pushPopupState,50);});
+    }
+    // Lightbox
+    if(window.openLightbox){
+      var origLB=window.openLightbox;
+      window.openLightbox=function(idx){origLB(idx);pushPopupState();};
+    }
+    // Desktop modals
+    if(window.openDtModal){
+      var origDtM=window.openDtModal;
+      window.openDtModal=function(id){origDtM(id);pushPopupState();};
+    }
+  }
+  // Hook after DOM is ready
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',hookOpeners);}
+  else{setTimeout(hookOpeners,0);}
+
   // Handle back gesture
   window.addEventListener('popstate',function(e){
-    closeAnyPopup();
+    if(e.state&&e.state.pwaPopup){
+      // We're going back from a popup state – close it
+      closeAnyPopup();
+      return;
+    }
+    // Try to close popup even without explicit state
+    if(closeAnyPopup()){
+      // Something was closed – push current URL back to prevent actual navigation
+      history.pushState(null,'',window.location.href);
+      return;
+    }
+    // Standalone PWA on start page: prevent app from closing
+    if(isStandalone&&(window.location.pathname==='/'||window.location.pathname==='/index.html')){
+      history.pushState({pwaMain:true},'',window.location.href);
+    }
   });
 
+  // Standalone: single guard state (no extra blank entry)
+  if(isStandalone&&(window.location.pathname==='/'||window.location.pathname==='/index.html')){
+    history.replaceState({pwaMain:true},'',window.location.href);
+  }
 })();
 
 var _pwaPrompt=null;
