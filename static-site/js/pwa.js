@@ -130,7 +130,9 @@ if('serviceWorker' in navigator){
     if(isStandalone){
       var now=Date.now();
       if(now-_backTimer<2000){
-        // Second press within 2s → let app close naturally
+        // Second press within 2s → close PWA cleanly
+        window.close();          // works in standalone PWA
+        navigator.app&&navigator.app.exitApp&&navigator.app.exitApp(); // Cordova fallback
         return;
       }
       // First press → show toast, push guard to prevent immediate close
