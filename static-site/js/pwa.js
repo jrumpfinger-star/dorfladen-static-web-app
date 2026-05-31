@@ -125,16 +125,22 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA: close when history is exhausted (state=null)
-    if(isStandalone&&!e.state){
+    // Standalone PWA: close when landing on exit guard or bottom of stack
+    if(isStandalone&&(!e.state||e.state.pwaExit)){
       window.close();
       return;
     }
   });
 
-  // Mark current history entry so we can detect bottom of stack
+  // Homepage: exit guard below, page marker on top. Sub-pages: page marker only.
   if(isStandalone){
-    history.replaceState({pwaGuard:true},'',window.location.href);
+    var isHome=window.location.pathname==='/'||window.location.pathname==='/index.html';
+    if(isHome){
+      history.replaceState({pwaExit:true},'',window.location.href);
+      history.pushState({pwaPage:true},'',window.location.href);
+    } else {
+      history.replaceState({pwaPage:true},'',window.location.href);
+    }
   }
 })();
 
