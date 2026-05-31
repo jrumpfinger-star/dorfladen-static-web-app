@@ -78,6 +78,15 @@ if('serviceWorker' in navigator){
     return false;
   }
 
+  // Firefox Android: push guard on homepage load to prevent black screen
+  var _isFirefoxAndroid=/Firefox/.test(navigator.userAgent)&&/Android/.test(navigator.userAgent);
+  if(_isFirefoxAndroid){
+    var loc=window.location.pathname;
+    if((loc==='/'||loc==='/index.html')&&!(history.state&&history.state.guard)){
+      history.pushState({guard:1},'',window.location.href);
+    }
+  }
+
   // === Standard pattern: pushState when popup opens, consume on back ===
   var _popupStateActive=false;
 
