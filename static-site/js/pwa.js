@@ -78,9 +78,6 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Track initial history length to detect when we're at the start
-  var _startHistLen=history.length;
-
   // Handle back gesture
   window.addEventListener('popstate',function(e){
     // Close any open popup
@@ -88,12 +85,11 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // In standalone PWA: if we're at the start, navigate to exit page
-    // (green background matches theme_color so no black flash)
-    // then a second back press closes the custom tab naturally
-    if(isStandalone&&history.length<=_startHistLen){
+    // Nothing was closed, no sub-page navigation happened.
+    // In standalone PWA on homepage: exit via green page (no black flash)
+    var onHome=window.location.pathname==='/'||window.location.pathname==='/index.html';
+    if(isStandalone&&onHome){
       window.location.replace('/pwa-exit.html');
-      return;
     }
   });
 
