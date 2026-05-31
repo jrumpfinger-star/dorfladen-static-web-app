@@ -78,14 +78,56 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Handle back gesture – close popups, browser handles the rest
-  window.addEventListener('popstate',function(e){
-    if(closeAnyPopup()){
-      // Popup was closed – push state to undo the back navigation
-      // so the user stays on the current page
-      history.pushState(null,'',window.location.href);
+  // Push a history entry when any overlay opens so back button has
+  // something to consume (instead of closing the app)
+  var _popupOpen=false;
+  function markPopupOpen(){
+    if(!_popupOpen){
+      _popupOpen=true;
+      history.pushState({popup:true},'',window.location.href);
     }
-    // If no popup was open: do nothing, let browser navigate/close naturally
+  }
+  var _closingViaBack=false;
+  function markPopupClosed(){
+    if(_popupOpen&&!_closingViaBack){
+      // Popup was closed via X button (not back) – remove the history entry
+      _popupOpen=false;
+      history.back(); // consumes the {popup:true} entry silently
+    }
+    _popupOpen=false;
+  }
+
+  // Observe DOM for popups opening/closing
+  function watchPopups(){
+    var observer=new MutationObserver(function(){
+      var anyOpen=
+        document.querySelector('.mob-popup-bg.open')||
+        (document.getElementById('mob-nav')&&document.getElementById('mob-nav').classList.contains('open'))||
+        (document.getElementById('lightbox-overlay')&&document.getElementById('lightbox-overlay').classList.contains('active'))||
+        document.querySelector('.news-overlay.open')||
+        document.querySelector('[id^="dt-modal-"].open')||
+        document.getElementById('push-settings-overlay')||
+        document.querySelector('.cms-confirm-overlay')||
+        (document.getElementById('hilfe-overlay')&&document.getElementById('hilfe-overlay').classList.contains('open'));
+      if(anyOpen&&!_popupOpen) markPopupOpen();
+      if(!anyOpen&&_popupOpen) markPopupClosed();
+    });
+    observer.observe(document.body,{attributes:true,childList:true,subtree:true,attributeFilter:['class','style']});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',watchPopups);
+  else setTimeout(watchPopups,0);
+
+  // Handle back gesture
+  window.addEventListener('popstate',function(e){
+    if(e.state&&e.state.popup){
+      // Back consumed our popup marker – close the popup
+      _closingViaBack=true;
+      closeAnyPopup();
+      _popupOpen=false;
+      _closingViaBack=false;
+      return;
+    }
+    // Nothing to close – let browser navigate/close naturally
   });
 
 })();
