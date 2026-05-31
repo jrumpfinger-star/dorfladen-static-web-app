@@ -125,18 +125,15 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // On start page in standalone mode: prevent app from closing
-    if(isStandalone&&window.location.pathname==='/'){
-      if(e.state&&e.state.pwaGuard){
-        history.pushState({pwaMain:true},'','/');
-      }
+    // Standalone PWA on start page: prevent app from closing
+    if(isStandalone&&(window.location.pathname==='/'||window.location.pathname==='/index.html')){
+      history.pushState({pwaMain:true},'',window.location.href);
     }
   });
 
-  // Standalone: guard against closing on start page
-  if(isStandalone&&window.location.pathname==='/'&&(!history.state||!history.state.pwaMain)){
-    history.replaceState({pwaGuard:true},'','/');
-    history.pushState({pwaMain:true},'','/');
+  // Standalone: single guard state (no extra blank entry)
+  if(isStandalone&&(window.location.pathname==='/'||window.location.pathname==='/index.html')){
+    history.replaceState({pwaMain:true},'',window.location.href);
   }
 })();
 
