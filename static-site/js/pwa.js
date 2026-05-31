@@ -22,7 +22,6 @@ if('serviceWorker' in navigator){
 // PWA: Android back gesture – close popups/overlays first, then navigate
 (function(){
   var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
-  var _backTimer=0;   // timestamp of first back press (for double-back-to-exit)
 
   // Try to close any open popup/overlay. Returns true if something was closed.
   function closeAnyPopup(){
@@ -126,33 +125,7 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA: double-back-to-exit (like native Android apps)
-    if(isStandalone){
-      var now=Date.now();
-      if(now-_backTimer<2000){
-        // Second press within 2s → close PWA cleanly
-        window.close();          // works in standalone PWA
-        navigator.app&&navigator.app.exitApp&&navigator.app.exitApp(); // Cordova fallback
-        return;
-      }
-      // First press → show toast, push guard to prevent immediate close
-      _backTimer=now;
-      history.pushState({pwaGuard:true},'',window.location.href);
-      // Show toast
-      var toast=document.getElementById('pwa-exit-toast');
-      if(!toast){
-        toast=document.createElement('div');
-        toast.id='pwa-exit-toast';
-        toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);'+
-          'background:rgba(0,0,0,.8);color:#fff;padding:10px 24px;border-radius:24px;'+
-          'font-size:.85rem;z-index:99999;opacity:0;transition:opacity .3s;pointer-events:none;'+
-          'white-space:nowrap;';
-        document.body.appendChild(toast);
-      }
-      toast.textContent='Nochmal dr\u00fccken zum Beenden';
-      toast.style.opacity='1';
-      setTimeout(function(){toast.style.opacity='0';},1800);
-    }
+    // No guard – let browser handle back navigation naturally
   });
 })();
 
