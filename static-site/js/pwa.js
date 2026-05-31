@@ -125,20 +125,9 @@ if('serviceWorker' in navigator){
       history.pushState(null,'',window.location.href);
       return;
     }
-    // Standalone PWA: prevent black screen / app close
-    if(isStandalone&&e.state&&e.state.pwaGuard){
-      // We landed on our guard state – re-push so we never run out of history
-      history.pushState({pwaGuard:true},'',window.location.href);
-    }
+    // Standalone PWA: no extra guard – let Android close the app naturally
+    // when there is no more history. Popups are already handled above.
   });
-
-  // Standalone: always set guard so back doesn't close app or go to about:blank
-  if(isStandalone){
-    // Replace current state with guard marker
-    history.replaceState({pwaGuard:true},'',window.location.href);
-    // Push a duplicate so first back press lands on our guard
-    history.pushState({pwaGuard:true},'',window.location.href);
-  }
 })();
 
 var _pwaPrompt=null;
