@@ -685,6 +685,19 @@ main{padding:0!important;margin:0!important}
 .mob-pl-row:last-child {
   border-bottom: none;
 }
+.mob-pl-header{
+  position:sticky;top:0;z-index:1;
+  background:#f5f5f5;
+  padding:8px 0;
+  border-bottom:2px solid #e5e7eb;
+  font-size:.72rem;
+  font-weight:600;
+  color:#666;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.mob-pl-header .mob-pl-name{font-weight:600;color:#666}
+.mob-pl-header .mob-pl-price{font-weight:600;color:#666}
 .mob-pl-name{
   flex:1;
   min-width:0;

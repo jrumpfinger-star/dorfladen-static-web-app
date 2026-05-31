@@ -84,7 +84,12 @@
       html+='<span class="so-wg-name">'+esc(wg)+'</span>';
       html+='<span class="so-wg-meta">'+items.length+'</span>';
       html+='<span class="so-arrow">&#9660;</span></button>';
-      html+='<div class="so-panel" style="display:none"><table class="so-table"><tbody>'+rows+'</tbody></table></div></div>';
+      html+='<div class="so-panel" style="display:none"><table class="so-table"><thead><tr>';
+      html+='<th class="so-td-bc">Strichcode</th>';
+      html+='<th class="so-td-name">Artikel</th>';
+      html+='<th class="so-td-disc">&nbsp;</th>';
+      html+='<th class="so-td-price">Preis</th>';
+      html+='</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
     });
 
     wrap.innerHTML=html;

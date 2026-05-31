@@ -472,6 +472,7 @@
         html+='<div class="mob-pl-group">';
         html+='<button class="mob-pl-toggle" type="button"><span class="mob-pl-wg-name">'+esc(wg)+'</span><span class="mob-pl-count">'+items.length+'</span><span class="mob-pl-arrow">&#9660;</span></button>';
         html+='<div class="mob-pl-items" style="display:none">';
+        html+='<div class="mob-pl-row mob-pl-header"><span class="mob-pl-name">Artikel</span><span class="mob-pl-price">Preis</span></div>';
         items.forEach(function(item){
           var disc = item.discount || 0;
           if(item.uvp && item.uvp > 0 && item.vk > 0 && !disc){
