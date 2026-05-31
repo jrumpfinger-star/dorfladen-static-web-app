@@ -87,6 +87,17 @@
     },{passive:true});
   })();
 
+  /* === AUTO-CLOSE NAV ON LINK CLICK === */
+  var mobNavEl=document.getElementById('mob-nav');
+  if(mobNavEl){
+    mobNavEl.querySelectorAll('a[href]').forEach(function(a){
+      a.addEventListener('click',function(){
+        mobNavEl.classList.remove('open');
+        var ov=document.getElementById('mob-nav-ov');if(ov)ov.classList.remove('open');
+      });
+    });
+  }
+
   /* === LOGO LOADER (mobile header) === */
   var logoText=document.getElementById('mob-logo-text');
   if(logoText) logoText.style.opacity='0';
