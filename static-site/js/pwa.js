@@ -78,19 +78,9 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Handle back gesture
+  // Handle back gesture – close popups, browser handles the rest
   window.addEventListener('popstate',function(e){
-    // Close any open popup
-    if(closeAnyPopup()){
-      history.pushState(null,'',window.location.href);
-      return;
-    }
-    // Nothing was closed, no sub-page navigation happened.
-    // In standalone PWA on homepage: exit via green page (no black flash)
-    var onHome=window.location.pathname==='/'||window.location.pathname==='/index.html';
-    if(isStandalone&&onHome){
-      window.location.replace('/pwa-exit.html');
-    }
+    closeAnyPopup();
   });
 
 })();
