@@ -78,15 +78,6 @@ if('serviceWorker' in navigator){
     return false;
   }
 
-  // Firefox Android: push guard on homepage load to prevent black screen
-  var _isFirefoxAndroid=/Firefox/.test(navigator.userAgent)&&/Android/.test(navigator.userAgent);
-  if(_isFirefoxAndroid){
-    var loc=window.location.pathname;
-    if((loc==='/'||loc==='/index.html')&&!(history.state&&history.state.guard)){
-      history.pushState({guard:1},'',window.location.href);
-    }
-  }
-
   // === Standard pattern: pushState when popup opens, consume on back ===
   var _popupStateActive=false;
 
@@ -114,16 +105,8 @@ if('serviceWorker' in navigator){
       closeAnyPopup();
       return;
     }
-    // No popup: Firefox Android PWA (Custom Tab) shows black/grey screens
-    // on back from homepage. Block back on homepage for Firefox Android.
-    // Firefox doesn't report standalone even for installed PWAs.
-    var isFirefoxAndroid=/Firefox/.test(navigator.userAgent)&&/Android/.test(navigator.userAgent);
-    if(isFirefoxAndroid){
-      var p=window.location.pathname;
-      if(p==='/'||p==='/index.html'){
-        history.pushState({guard:1},'',window.location.href);
-      }
-    }
+    // No popup: let browser/PWA history continue normally.
+    // Important: do not push a homepage guard here; Firefox Android would require extra Back clicks.
   });
 })();
 
