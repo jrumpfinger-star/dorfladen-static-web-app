@@ -507,6 +507,9 @@ document.head.appendChild(msalScript);
     <button class="cms-tab" data-action="tab" data-id="cfg" id="cms-tab-cfg" style="color:#bd8b5c;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Design
     </button>
+    <button class="cms-tab" data-action="tab" data-id="stats" id="cms-tab-stats" style="color:#0ea5e9;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> Statistik
+    </button>
     <button class="cms-tab" data-action="tab" data-id="help" id="cms-tab-help" style="color:#16a34a;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Hilfe
     </button>
@@ -903,6 +906,98 @@ document.head.appendChild(msalScript);
     <div style="margin-top:14px;display:flex;gap:8px">
       <button class="cms-btn cms-btn-primary" id="settings-save" data-action="settingsSave">&#128190; Speichern</button>
       <span id="settings-saved-hint" style="display:none;font-size:.82rem;color:#16a34a;font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
+    </div>
+  </div>
+
+  <!-- Statistik / Analytics -->
+  <div id="cms-panel-stats" style="display:none">
+    <div class="cms-flex cms-between cms-mb">
+      <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0">&#128202; Website-Statistik</h3>
+      <div class="cms-flex" style="gap:6px">
+        <select id="stats-period" class="cms-input" style="width:auto;padding:6px 10px;font-size:12px" onchange="statsLoad()">
+          <option value="7">Letzte 7 Tage</option>
+          <option value="30" selected>Letzte 30 Tage</option>
+          <option value="90">Letzte 90 Tage</option>
+        </select>
+        <button class="cms-btn cms-btn-gray" onclick="statsLoad()">&#x21bb; Aktualisieren</button>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px">
+      <div class="cms-card" style="margin-bottom:0">
+        <div class="cms-card-body" style="text-align:center;padding:16px">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Heute</div>
+          <div id="stats-today-views" style="font-size:28px;font-weight:800;color:#0ea5e9;margin:4px 0">-</div>
+          <div style="font-size:11px;color:#9ca3af">Seitenaufrufe</div>
+        </div>
+      </div>
+      <div class="cms-card" style="margin-bottom:0">
+        <div class="cms-card-body" style="text-align:center;padding:16px">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Heute</div>
+          <div id="stats-today-visitors" style="font-size:28px;font-weight:800;color:#10b981;margin:4px 0">-</div>
+          <div style="font-size:11px;color:#9ca3af">Besucher</div>
+        </div>
+      </div>
+      <div class="cms-card" style="margin-bottom:0">
+        <div class="cms-card-body" style="text-align:center;padding:16px">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Zeitraum</div>
+          <div id="stats-total-views" style="font-size:28px;font-weight:800;color:#6366f1;margin:4px 0">-</div>
+          <div style="font-size:11px;color:#9ca3af">Seitenaufrufe</div>
+        </div>
+      </div>
+      <div class="cms-card" style="margin-bottom:0">
+        <div class="cms-card-body" style="text-align:center;padding:16px">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Zeitraum</div>
+          <div id="stats-total-visitors" style="font-size:28px;font-weight:800;color:#f59e0b;margin:4px 0">-</div>
+          <div style="font-size:11px;color:#9ca3af">Unique Besucher</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline Chart -->
+    <div class="cms-card">
+      <div class="cms-card-header" style="background:#0ea5e9!important">&#128200; Verlauf</div>
+      <div class="cms-card-body" style="padding:12px">
+        <canvas id="stats-chart" style="width:100%;height:220px"></canvas>
+      </div>
+    </div>
+
+    <!-- Hourly + Devices row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#6366f1!important">&#128340; Uhrzeiten</div>
+        <div class="cms-card-body" style="padding:12px">
+          <canvas id="stats-hourly-chart" style="width:100%;height:160px"></canvas>
+        </div>
+      </div>
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#f59e0b!important">&#128241; Ger&auml;te</div>
+        <div class="cms-card-body" style="padding:12px">
+          <canvas id="stats-device-chart" style="width:100%;height:160px"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Pages + Referrers -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#10b981!important">&#128196; Top Seiten</div>
+        <div class="cms-card-body" id="stats-top-pages" style="padding:0">
+          <div class="cms-empty">Lade...</div>
+        </div>
+      </div>
+      <div class="cms-card">
+        <div class="cms-card-header" style="background:#8b5cf6!important">&#128279; Herkunft</div>
+        <div class="cms-card-body" id="stats-referrers" style="padding:0">
+          <div class="cms-empty">Lade...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="stats-loading" style="text-align:center;padding:40px;display:none">
+      <div style="display:inline-block;width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:#0ea5e9;border-radius:50%;animation:cms-spin .6s linear infinite"></div>
+      <div style="font-size:13px;color:#6b7280;margin-top:8px">Statistik wird geladen...</div>
     </div>
   </div>
 

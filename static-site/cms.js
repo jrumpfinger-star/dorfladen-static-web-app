@@ -959,7 +959,7 @@
   var _cmsCurrentTab='wp';
   window.cmsTab = function(name, skipHistory){
     _cmsCurrentTab=name;
-    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','help'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','help'].forEach(function(t){
       var panel=document.getElementById('cms-panel-'+t);
       if(panel) panel.style.display = t===name?'':'none';
       var tab=document.getElementById('cms-tab-'+t);
@@ -973,6 +973,7 @@
     if(name==='gallery' && !_galLoaded) loadGalleryAdmin();
     if(name==='settings' && !_settingsLoaded) loadFeatureFlags();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
+    if(name==='stats' && !_statsLoaded) statsLoad();
     if(!skipHistory) history.pushState({cmsTab:name},'','');
   };
 
@@ -8654,6 +8655,233 @@
       statusEl.textContent='\u274c Netzwerkfehler';
       toast('Fehler: '+e.message,'error');
     }).then(function(){if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Speichern';}});
+  }
+
+  // === ANALYTICS DASHBOARD ===
+  var _statsLoaded=false;
+  window.statsLoad=function(){
+    var days=document.getElementById('stats-period');
+    var d=days?days.value:'30';
+    var loading=document.getElementById('stats-loading');
+    if(loading)loading.style.display='';
+    fetch(API+'/analytics?days='+d).then(function(r){return r.json();}).then(function(data){
+      _statsLoaded=true;
+      if(loading)loading.style.display='none';
+      // KPI cards
+      var el;
+      el=document.getElementById('stats-today-views');if(el)el.textContent=data.today.views.toLocaleString('de-DE');
+      el=document.getElementById('stats-today-visitors');if(el)el.textContent=data.today.visitors.toLocaleString('de-DE');
+      el=document.getElementById('stats-total-views');if(el)el.textContent=data.totals.views.toLocaleString('de-DE');
+      el=document.getElementById('stats-total-visitors');if(el)el.textContent=data.totals.visitors.toLocaleString('de-DE');
+      // Timeline chart
+      statsDrawTimeline(data.timeline);
+      // Hourly chart
+      statsDrawHourly(data.hourly);
+      // Device chart
+      statsDrawDevices(data.devices);
+      // Top pages
+      statsDrawTopPages(data.topPages);
+      // Referrers
+      statsDrawReferrers(data.topReferrers);
+    }).catch(function(e){
+      if(loading)loading.style.display='none';
+      console.error('Analytics load error',e);
+    });
+  };
+
+  // Mini canvas chart helper
+  function _statsBar(canvas,labels,values,color,maxBarWidth){
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    var dpr=window.devicePixelRatio||1;
+    var w=canvas.parentElement.clientWidth||canvas.clientWidth||400;
+    var h=parseInt(canvas.style.height)||180;
+    canvas.width=w*dpr;canvas.height=h*dpr;
+    canvas.style.width=w+'px';canvas.style.height=h+'px';
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,w,h);
+    var max=Math.max.apply(null,values)||1;
+    var n=values.length;
+    var pad=36;var padBot=28;var padTop=10;
+    var chartW=w-pad-8;var chartH=h-padBot-padTop;
+    var barW=maxBarWidth||Math.max(2,Math.min(20,(chartW/n)-2));
+    var gap=Math.max(1,(chartW-barW*n)/(n-1||1));
+    // Grid lines
+    ctx.strokeStyle='#f0f0f0';ctx.lineWidth=1;
+    for(var g=0;g<=4;g++){
+      var gy=padTop+chartH-chartH*(g/4);
+      ctx.beginPath();ctx.moveTo(pad,gy);ctx.lineTo(w-8,gy);ctx.stroke();
+      ctx.fillStyle='#9ca3af';ctx.font='10px sans-serif';ctx.textAlign='right';
+      ctx.fillText(Math.round(max*g/4),pad-4,gy+4);
+    }
+    // Bars
+    for(var i=0;i<n;i++){
+      var bh=values[i]/max*chartH;
+      var x=pad+i*(barW+gap);
+      var y=padTop+chartH-bh;
+      ctx.fillStyle=color;
+      ctx.beginPath();
+      var r=Math.min(3,barW/2);
+      ctx.moveTo(x,y+r);ctx.arcTo(x,y,x+barW,y,r);ctx.arcTo(x+barW,y,x+barW,y+bh,r);ctx.lineTo(x+barW,padTop+chartH);ctx.lineTo(x,padTop+chartH);ctx.closePath();ctx.fill();
+      // Label
+      if(labels[i]&&(n<=31||i%Math.ceil(n/10)===0)){
+        ctx.fillStyle='#6b7280';ctx.font='9px sans-serif';ctx.textAlign='center';
+        ctx.fillText(labels[i],x+barW/2,h-6);
+      }
+    }
+  }
+
+  function _statsLine(canvas,labels,datasets){
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    var dpr=window.devicePixelRatio||1;
+    var w=canvas.parentElement.clientWidth||canvas.clientWidth||400;
+    var h=parseInt(canvas.style.height)||220;
+    canvas.width=w*dpr;canvas.height=h*dpr;
+    canvas.style.width=w+'px';canvas.style.height=h+'px';
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,w,h);
+    var pad=40;var padBot=28;var padTop=10;
+    var chartW=w-pad-8;var chartH=h-padBot-padTop;
+    var n=labels.length;if(n<2)return;
+    var allMax=0;
+    datasets.forEach(function(ds){ds.values.forEach(function(v){if(v>allMax)allMax=v;});});
+    if(!allMax)allMax=1;
+    // Grid
+    ctx.strokeStyle='#f0f0f0';ctx.lineWidth=1;
+    for(var g=0;g<=4;g++){
+      var gy=padTop+chartH-chartH*(g/4);
+      ctx.beginPath();ctx.moveTo(pad,gy);ctx.lineTo(w-8,gy);ctx.stroke();
+      ctx.fillStyle='#9ca3af';ctx.font='10px sans-serif';ctx.textAlign='right';
+      ctx.fillText(Math.round(allMax*g/4),pad-4,gy+4);
+    }
+    // Lines
+    datasets.forEach(function(ds){
+      ctx.strokeStyle=ds.color;ctx.lineWidth=2;ctx.lineJoin='round';
+      ctx.beginPath();
+      for(var i=0;i<n;i++){
+        var x=pad+i/(n-1)*chartW;
+        var y=padTop+chartH-ds.values[i]/allMax*chartH;
+        if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      // Fill area
+      ctx.globalAlpha=0.08;ctx.fillStyle=ds.color;
+      ctx.lineTo(pad+(n-1)/(n-1)*chartW,padTop+chartH);ctx.lineTo(pad,padTop+chartH);ctx.closePath();ctx.fill();
+      ctx.globalAlpha=1;
+      // Dots
+      for(var j=0;j<n;j++){
+        if(n>60&&j%Math.ceil(n/30)!==0)continue;
+        var dx=pad+j/(n-1)*chartW;
+        var dy=padTop+chartH-ds.values[j]/allMax*chartH;
+        ctx.fillStyle=ds.color;ctx.beginPath();ctx.arc(dx,dy,2.5,0,Math.PI*2);ctx.fill();
+      }
+    });
+    // X labels
+    ctx.fillStyle='#6b7280';ctx.font='9px sans-serif';ctx.textAlign='center';
+    var step=Math.ceil(n/10);
+    for(var k=0;k<n;k++){
+      if(k%step===0||k===n-1){
+        var lx=pad+k/(n-1)*chartW;
+        ctx.fillText(labels[k],lx,h-6);
+      }
+    }
+    // Legend
+    var lx2=pad;
+    datasets.forEach(function(ds){
+      ctx.fillStyle=ds.color;ctx.fillRect(lx2,2,10,10);
+      ctx.fillStyle='#374151';ctx.font='bold 10px sans-serif';ctx.textAlign='left';
+      ctx.fillText(ds.label,lx2+14,11);
+      lx2+=ctx.measureText(ds.label).width+28;
+    });
+  }
+
+  function statsDrawTimeline(timeline){
+    var canvas=document.getElementById('stats-chart');
+    var labels=[];var views=[];var visitors=[];
+    timeline.forEach(function(d){
+      var parts=d.date.split('-');
+      labels.push(parts[2]+'.'+parts[1]);
+      views.push(d.views);
+      visitors.push(d.visitors);
+    });
+    _statsLine(canvas,labels,[
+      {label:'Seitenaufrufe',values:views,color:'#0ea5e9'},
+      {label:'Besucher',values:visitors,color:'#10b981'}
+    ]);
+  }
+
+  function statsDrawHourly(hourly){
+    var canvas=document.getElementById('stats-hourly-chart');
+    var labels=[];for(var i=0;i<24;i++)labels.push(i+'h');
+    _statsBar(canvas,labels,hourly,'#6366f1');
+  }
+
+  function statsDrawDevices(devices){
+    var canvas=document.getElementById('stats-device-chart');
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    var dpr=window.devicePixelRatio||1;
+    var w=canvas.parentElement.clientWidth||200;
+    var h=parseInt(canvas.style.height)||160;
+    canvas.width=w*dpr;canvas.height=h*dpr;
+    canvas.style.width=w+'px';canvas.style.height=h+'px';
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,w,h);
+    var total=devices.mobile+devices.desktop;
+    if(!total){ctx.fillStyle='#9ca3af';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('Keine Daten',w/2,h/2);return;}
+    var mobPct=Math.round(devices.mobile/total*100);
+    var deskPct=100-mobPct;
+    var cx=w/2;var cy=h/2-5;var r=Math.min(cx,cy)-10;
+    // Desktop arc
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+Math.PI*2*deskPct/100);
+    ctx.closePath();ctx.fillStyle='#6366f1';ctx.fill();
+    // Mobile arc
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,-Math.PI/2+Math.PI*2*deskPct/100,-Math.PI/2+Math.PI*2);
+    ctx.closePath();ctx.fillStyle='#f59e0b';ctx.fill();
+    // Inner circle (donut)
+    ctx.beginPath();ctx.arc(cx,cy,r*0.55,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+    // Labels
+    ctx.fillStyle='#374151';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+    ctx.fillText(total+' Aufrufe',cx,cy+4);
+    ctx.font='10px sans-serif';
+    // Legend below
+    var ly=h-8;
+    ctx.fillStyle='#6366f1';ctx.fillRect(cx-60,ly-8,8,8);
+    ctx.fillStyle='#374151';ctx.textAlign='left';ctx.fillText('Desktop '+deskPct+'%',cx-48,ly);
+    ctx.fillStyle='#f59e0b';ctx.fillRect(cx+10,ly-8,8,8);
+    ctx.fillStyle='#374151';ctx.fillText('Mobil '+mobPct+'%',cx+22,ly);
+  }
+
+  function statsDrawTopPages(pages){
+    var el=document.getElementById('stats-top-pages');
+    if(!el)return;
+    if(!pages||!pages.length){el.innerHTML='<div class="cms-empty">Noch keine Daten</div>';return;}
+    var html='<table style="width:100%;font-size:12px;border-collapse:collapse">';
+    html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px;font-weight:700;color:#6b7280;font-size:11px">SEITE</th><th style="text-align:right;padding:8px 12px;font-weight:700;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+    pages.forEach(function(p,i){
+      var name=p.page==='/'?'Startseite':p.page.replace(/^\//,'').replace(/\.html$/,'');
+      var bg=i%2===0?'#fff':'#fafbfc';
+      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+name+'</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0ea5e9">'+p.views.toLocaleString('de-DE')+'</td></tr>';
+    });
+    html+='</table>';
+    el.innerHTML=html;
+  }
+
+  function statsDrawReferrers(refs){
+    var el=document.getElementById('stats-referrers');
+    if(!el)return;
+    if(!refs||!refs.length){el.innerHTML='<div class="cms-empty">Keine externen Quellen</div>';return;}
+    var html='<table style="width:100%;font-size:12px;border-collapse:collapse">';
+    html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px;font-weight:700;color:#6b7280;font-size:11px">QUELLE</th><th style="text-align:right;padding:8px 12px;font-weight:700;color:#6b7280;font-size:11px">BESUCHE</th></tr>';
+    refs.forEach(function(r,i){
+      var bg=i%2===0?'#fff':'#fafbfc';
+      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+r.domain+'</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#8b5cf6">'+r.views.toLocaleString('de-DE')+'</td></tr>';
+    });
+    html+='</table>';
+    el.innerHTML=html;
   }
 
   // --- Init (only if already authenticated via session) ---
