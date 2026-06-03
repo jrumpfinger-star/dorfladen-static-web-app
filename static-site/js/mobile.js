@@ -526,18 +526,18 @@
       });
       // Wire up search + filter
       var searchInput=document.getElementById('mob-pl-search');
-      var rows=grid.querySelectorAll('.mob-pl-row');
+      var rows=grid.querySelectorAll('.mob-pl-row:not(.mob-pl-header)');
       var currentFilter='all';
       function applyPlFilters(){
         var q=searchInput?searchInput.value.toLowerCase().trim():'';
         rows.forEach(function(row){
-          var nameMatch=!q||row.getAttribute('data-name').indexOf(q)!==-1;
+          var nameMatch=!q||(row.getAttribute('data-name')||'').indexOf(q)!==-1;
           var filterMatch=currentFilter==='all'||(currentFilter==='rp'&&row.classList.contains('mob-pl-rp'))||(currentFilter==='ang'&&row.classList.contains('mob-pl-ang'));
           row.style.display=(nameMatch&&filterMatch)?'':'none';
         });
         grid.querySelectorAll('.mob-pl-group').forEach(function(g){
           var hasVisible=false;var visCount=0;
-          g.querySelectorAll('.mob-pl-row').forEach(function(r){if(r.style.display!=='none'){hasVisible=true;visCount++;}});
+          g.querySelectorAll('.mob-pl-row:not(.mob-pl-header)').forEach(function(r){if(r.style.display!=='none'){hasVisible=true;visCount++;}});
           g.style.display=hasVisible?'':'none';
           var countBadge=g.querySelector('.mob-pl-count');
           if(countBadge) countBadge.textContent=visCount;
