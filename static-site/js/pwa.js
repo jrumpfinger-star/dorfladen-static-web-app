@@ -577,3 +577,12 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     });
   };
 })();
+
+// === LIGHTWEIGHT ANALYTICS ===
+(function(){
+  if(window.location.pathname.indexOf('/cms')===0)return; // Don't track CMS
+  try{
+    var data={page:window.location.pathname,referrer:document.referrer||'',sw:window.screen?window.screen.width:0};
+    navigator.sendBeacon('/api/track',JSON.stringify(data));
+  }catch(e){}
+})();
