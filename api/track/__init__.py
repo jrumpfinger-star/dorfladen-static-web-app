@@ -2,8 +2,10 @@ import azure.functions as func
 import json
 import os
 import hashlib
+import logging
 from datetime import datetime, timezone
 from azure.data.tables import TableServiceClient
+import requests as http_requests
 
 
 def _cors(status=200, body="", ct="text/plain"):
@@ -14,6 +16,28 @@ def _cors(status=200, body="", ct="text/plain"):
         "Content-Type": ct,
     }
     return func.HttpResponse(body, status_code=status, headers=headers)
+
+
+def _geo_lookup(ip):
+    """Lookup city/region/country from IP via ip-api.com (free, no key, 45 req/min)."""
+    try:
+        if ip in ("0.0.0.0", "127.0.0.1", "::1") or ip.startswith("10.") or ip.startswith("192.168."):
+            return {"city": "Lokal", "region": "", "country": "DE"}
+        r = http_requests.get(
+            f"http://ip-api.com/json/{ip}?fields=status,city,regionName,country,countryCode",
+            timeout=2,
+        )
+        if r.status_code == 200:
+            data = r.json()
+            if data.get("status") == "success":
+                return {
+                    "city": data.get("city", ""),
+                    "region": data.get("regionName", ""),
+                    "country": data.get("countryCode", ""),
+                }
+    except Exception as e:
+        logging.warning(f"GeoIP lookup failed: {e}")
+    return {"city": "", "region": "", "country": ""}
 
 
 def _get_table_client(table_name="analytics"):
@@ -44,6 +68,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     visitor_hash = hashlib.sha256(f"{ip}:{ua}:{today}".encode()).hexdigest()[:16]
 
+    # GeoIP lookup – city/region/country (IP is NOT stored)
+    geo = _geo_lookup(ip)
+
     now = datetime.now(timezone.utc)
     hour = now.strftime("%H")
 
@@ -60,6 +87,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "screenW": int(screen_w) if screen_w else 0,
         "ua": ua[:200],
         "ts": now.isoformat(),
+        "city": geo.get("city", "")[:100],
+        "region": geo.get("region", "")[:100],
+        "country": geo.get("country", "")[:10],
     }
 
     tc = _get_table_client()
