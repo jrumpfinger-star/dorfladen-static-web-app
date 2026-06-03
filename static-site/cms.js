@@ -8683,6 +8683,8 @@
       statsDrawTopPages(data.topPages);
       // Referrers
       statsDrawReferrers(data.topReferrers);
+      // Locations
+      statsDrawLocations(data.topCities, data.topRegions);
     }).catch(function(e){
       if(loading)loading.style.display='none';
       console.error('Analytics load error',e);
@@ -8881,6 +8883,34 @@
       html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+r.domain+'</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#8b5cf6">'+r.views.toLocaleString('de-DE')+'</td></tr>';
     });
     html+='</table>';
+    el.innerHTML=html;
+  }
+
+  function statsDrawLocations(cities, regions){
+    var el=document.getElementById('stats-locations');
+    if(!el)return;
+    if((!cities||!cities.length)&&(!regions||!regions.length)){el.innerHTML='<div class="cms-empty">Noch keine Standort-Daten</div>';return;}
+    var html='';
+    if(cities&&cities.length){
+      html+='<h4 style="margin:0 0 8px;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">\uD83D\uDCCD Städte</h4>';
+      html+='<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:16px">';
+      html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:6px 12px;font-weight:700;color:#6b7280;font-size:11px">STANDORT</th><th style="text-align:right;padding:6px 12px;font-weight:700;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+      cities.forEach(function(c,i){
+        var bg=i%2===0?'#fff':'#fafbfc';
+        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:#374151">'+esc(c.city)+'</td><td style="padding:6px 12px;text-align:right;font-weight:700;color:#e53e3e">'+c.views.toLocaleString('de-DE')+'</td></tr>';
+      });
+      html+='</table>';
+    }
+    if(regions&&regions.length){
+      html+='<h4 style="margin:0 0 8px;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">\uD83C\uDFD7 Regionen</h4>';
+      html+='<table style="width:100%;font-size:12px;border-collapse:collapse">';
+      html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:6px 12px;font-weight:700;color:#6b7280;font-size:11px">REGION</th><th style="text-align:right;padding:6px 12px;font-weight:700;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+      regions.forEach(function(r,i){
+        var bg=i%2===0?'#fff':'#fafbfc';
+        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:#374151">'+esc(r.region)+'</td><td style="padding:6px 12px;text-align:right;font-weight:700;color:#e53e3e">'+r.views.toLocaleString('de-DE')+'</td></tr>';
+      });
+      html+='</table>';
+    }
     el.innerHTML=html;
   }
 

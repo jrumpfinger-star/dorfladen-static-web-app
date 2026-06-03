@@ -48,6 +48,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     total_views = 0
     hourly = [0] * 24
     devices = {"mobile": 0, "desktop": 0}
+    cities = {}
+    regions = {}
 
     for d in range(days + 1):
         day = (start_date + timedelta(days=d)).strftime("%Y-%m-%d")
@@ -92,6 +94,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     devices["mobile"] += 1
                 else:
                     devices["desktop"] += 1
+
+                # Location
+                city = e.get("city", "")
+                region = e.get("region", "")
+                country = e.get("country", "")
+                if city:
+                    loc_key = f"{city}, {region}" if region else city
+                    cities[loc_key] = cities.get(loc_key, 0) + 1
+                if region:
+                    regions[region] = regions.get(region, 0) + 1
         except Exception:
             pass
 
@@ -129,6 +141,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "topReferrers": [{"domain": d, "views": v} for d, v in top_referrers],
         "hourly": hourly,
         "devices": devices,
+        "topCities": sorted([{"city": c, "views": v} for c, v in cities.items()], key=lambda x: -x["views"])[:20],
+        "topRegions": sorted([{"region": r, "views": v} for r, v in regions.items()], key=lambda x: -x["views"])[:10],
     }
 
     return _cors(200, json.dumps(result))
