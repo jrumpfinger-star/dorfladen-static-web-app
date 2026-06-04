@@ -3251,7 +3251,7 @@
     var overlay = document.createElement('div');
     overlay.id='cms-news-modal';
     overlay.className='cms-modal-bg';
-    overlay.innerHTML='<div class="cms-modal" style="max-width:720px;position:relative">'
+    overlay.innerHTML='<div class="cms-modal" style="max-width:720px;position:relative;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif">'
       +'<button class="cms-modal-close" data-action="closeNewsModal" title="Schlie\u00dfen">\u2715</button>'
       +'<h3 style="margin:0 0 14px;font-size:15px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:10px">'+title+'</h3>'
       +'<label class="cms-news-lbl">Titel</label>'
@@ -3276,8 +3276,7 @@
       +'<button type="button" class="cms-btn cms-btn-sm cms-btn-gray" id="news-edit-img-clear" style="display:none">✕ Entfernen</button>'
       +'<input type="hidden" id="news-edit-img-data">'
       +'</div>'
-      +'<label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:#2e7d4f"> <span style="font-size:13px;font-weight:600;color:#374151">Im Laufband anzeigen</span></label>'
-      +'<div id="news-laufband-bis-row" style="margin-top:8px;display:none"><label class="cms-news-lbl">Laufband anzeigen bis</label><input type="date" class="cms-input" id="news-edit-laufband-bis" style="max-width:200px"></div>'
+      +'<div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:#2e7d4f"> <span style="font-size:13px;font-weight:600;color:#374151">Im Laufband anzeigen</span></label><div id="news-laufband-bis-row" style="display:none;align-items:center;gap:6px"><span style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">bis</span><input type="date" class="cms-input" id="news-edit-laufband-bis" style="max-width:170px;padding:5px 8px;font-size:13px"></div></div>'
       +'<div class="cms-modal-footer" style="padding:14px 0 0;margin-top:16px">'
       +'<button class="cms-btn cms-btn-primary" data-action="saveNews">\ud83d\udcbe Speichern</button>'
       +'<button class="cms-btn cms-btn-gray" data-action="closeNewsModal">Abbrechen</button>'
@@ -3322,8 +3321,8 @@
     var bisInput=document.getElementById('news-edit-laufband-bis');
     if(lbCb){
       lbCb.checked=!!laufband;
-      if(bisRow) bisRow.style.display=lbCb.checked?'':'none';
-      lbCb.addEventListener('change',function(){if(bisRow) bisRow.style.display=lbCb.checked?'':'none';});
+      if(bisRow) bisRow.style.display=lbCb.checked?'flex':'none';
+      lbCb.addEventListener('change',function(){if(bisRow) bisRow.style.display=lbCb.checked?'flex':'none';});
     }
     if(bisInput&&laufbandBis){
       var d=new Date(laufbandBis);
