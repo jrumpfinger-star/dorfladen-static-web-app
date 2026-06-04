@@ -959,7 +959,7 @@
   var _cmsCurrentTab='wp';
   window.cmsTab = function(name, skipHistory){
     _cmsCurrentTab=name;
-    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','help'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','help'].forEach(function(t){
       var panel=document.getElementById('cms-panel-'+t);
       if(panel) panel.style.display = t===name?'':'none';
       var tab=document.getElementById('cms-tab-'+t);
@@ -974,6 +974,7 @@
     if(name==='settings' && !_settingsLoaded) loadFeatureFlags();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
+    if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
     if(!skipHistory) history.pushState({cmsTab:name},'','');
   };
 
@@ -8931,6 +8932,180 @@
     }
     el.innerHTML=html;
   }
+
+  // ═══════════════════════════════════════════
+  // ── BESTELLUNGEN TAB ──
+  // ═══════════════════════════════════════════
+  var _ordersLoaded=false;
+  var _ordersData=[];
+  var STATUS_LABELS={0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt',4:'Storniert'};
+  var STATUS_COLORS={0:'#f59e0b',1:'#3b82f6',2:'#10b981',3:'#6b7280',4:'#ef4444'};
+
+  window.cmsLoadOrders=function(){
+    _ordersLoaded=true;
+    var list=document.getElementById('cms-orders-list');
+    if(!list) return;
+    list.innerHTML='<p style="text-align:center;padding:20px;color:#6b7280">⏳ Bestellungen werden geladen…</p>';
+    fetch(API_BASE+'/shop-order?mode=cms')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success||!res.orders){list.innerHTML='<p style="color:#ef4444">Fehler beim Laden</p>';return;}
+        _ordersData=res.orders;
+        cmsRenderOrders();
+      })
+      .catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+esc(e.message)+'</p>';});
+  };
+
+  function cmsRenderOrders(){
+    var list=document.getElementById('cms-orders-list');
+    var filterVal=document.getElementById('cms-orders-filter').value;
+    var orders=_ordersData;
+    if(filterVal!=='all') orders=orders.filter(function(o){return String(o.status)===filterVal;});
+    if(!orders.length){list.innerHTML='<p style="text-align:center;color:#6b7280;padding:20px">Keine Bestellungen '+(filterVal!=='all'?'mit Status "'+STATUS_LABELS[+filterVal]+'"':'')+'</p>';return;}
+
+    var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">NR.</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">KUNDE</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">BESTELLT</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">ABHOLUNG</th>';
+    html+='<th style="text-align:right;padding:8px;font-weight:700;color:#6b7280">SUMME</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">STATUS</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">AKTION</th>';
+    html+='</tr></thead><tbody>';
+    orders.forEach(function(o,i){
+      var bg=i%2===0?'#fff':'#fafbfc';
+      var col=STATUS_COLORS[o.status]||'#6b7280';
+      var posCount=o.positionen?o.positionen.length:0;
+      html+='<tr style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
+      html+='<td style="padding:8px;font-weight:700">'+esc(o.bestellnummer)+'</td>';
+      html+='<td style="padding:8px">'+esc(o.kunde_name)+'<br><span style="font-size:10px;color:#9ca3af">'+esc(o.kunde_email)+'</span></td>';
+      html+='<td style="padding:8px">'+esc(o.bestelldatum)+'</td>';
+      html+='<td style="padding:8px;font-weight:600">'+esc(o.abholdatum)+'</td>';
+      html+='<td style="padding:8px;text-align:right;font-weight:700">'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td>';
+      html+='<td style="padding:8px;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+col+'">'+esc(o.status_text)+'</span></td>';
+      html+='<td style="padding:8px;text-align:center">';
+      if(o.status===0) html+='<button class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af" onclick="cmsOrderStatus(\''+o.id+'\',1,\''+esc(o.bestellnummer)+'\')">→ Bearbeiten</button>';
+      if(o.status===1) html+='<button class="cms-btn cms-btn-sm" style="background:#d1fae5;color:#065f46" onclick="cmsOrderStatus(\''+o.id+'\',2,\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\',\''+esc(o.kunde_name)+'\',\''+esc(o.abholdatum)+'\')">✓ Abholbereit</button>';
+      if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')">📦 Abgeholt</button>';
+      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsOrderStatus(\''+o.id+'\',4,\''+esc(o.bestellnummer)+'\')">✕</button>';
+      html+='</td></tr>';
+      // Expandable positions row
+      if(posCount){
+        html+='<tr style="background:#fefce8"><td colspan="7" style="padding:4px 8px 8px 24px;font-size:11px">';
+        html+='<strong>'+posCount+' Position(en):</strong> ';
+        o.positionen.forEach(function(p){html+=esc(p.bezeichnung)+' ('+p.menge+' '+esc(p.einheit)+') '+((+p.positionspreis).toFixed(2).replace('.',','))+'€, ';});
+        if(o.anmerkungen) html+='<br><em style="color:#92400e">📝 '+esc(o.anmerkungen)+'</em>';
+        html+='</td></tr>';
+      }
+    });
+    html+='</tbody></table>';
+    list.innerHTML=html;
+  }
+
+  // Filter change
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='cms-orders-filter')cmsRenderOrders();});
+
+  window.cmsOrderStatus=function(id,status,bestellnr,email,name,abholdatum){
+    var label=STATUS_LABELS[status]||'';
+    if(!confirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?')) return;
+    fetch(API_BASE+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:status})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          // Update local data
+          var o=_ordersData.find(function(x){return x.id===id;});
+          if(o){o.status=status;o.status_text=STATUS_LABELS[status];}
+          cmsRenderOrders();
+          // Send notification when order is ready for pickup
+          if(status===2&&email){
+            fetch(API_BASE+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:bestellnr,kunde_email:email,kunde_name:name||'',abholdatum:abholdatum||''})}).catch(function(){});
+            cmsToast('✅ '+bestellnr+': Status → Abholbereit. Kunde wird benachrichtigt!');
+          } else {
+            cmsToast('✅ '+bestellnr+': Status → '+label);
+          }
+        } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+      })
+      .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+  };
+
+  // ── Kommissionierliste Drucken ──
+  window.cmsPrintOrders=function(){
+    var filterVal=document.getElementById('cms-orders-filter').value;
+    var orders=_ordersData;
+    if(filterVal!=='all') orders=orders.filter(function(o){return String(o.status)===filterVal;});
+    var open=orders.filter(function(o){return o.status<=2;});
+    if(!open.length){cmsToast('Keine offenen Bestellungen zum Drucken','error');return;}
+
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kommissionierliste</title>';
+    html+='<style>body{font-family:Arial,sans-serif;font-size:12px;margin:20px}h1{font-size:18px;margin-bottom:4px}';
+    html+='.meta{color:#666;margin-bottom:16px;font-size:11px}';
+    html+='table{width:100%;border-collapse:collapse;margin-bottom:20px}';
+    html+='th{background:#f3f4f6;padding:6px 8px;text-align:left;font-size:11px;font-weight:700;border-bottom:2px solid #ddd}';
+    html+='td{padding:6px 8px;border-bottom:1px solid #eee}';
+    html+='.order-header{background:#e5e7eb;padding:8px;font-weight:700;font-size:13px;margin-top:16px;border-radius:4px}';
+    html+='.check{width:20px;height:20px;border:2px solid #999;display:inline-block;border-radius:3px;vertical-align:middle}';
+    html+='@media print{.no-print{display:none}}</style></head><body>';
+    html+='<h1>🏪 Dorfladen Oberornau – Kommissionierliste</h1>';
+    html+='<div class="meta">Erstellt: '+new Date().toLocaleString('de-DE')+' · '+open.length+' Bestellung(en)</div>';
+
+    open.forEach(function(o){
+      html+='<div class="order-header">'+esc(o.bestellnummer)+' · '+esc(o.kunde_name)+' · Abholung: '+esc(o.abholdatum)+'</div>';
+      if(o.anmerkungen) html+='<div style="padding:4px 8px;color:#92400e;font-style:italic">📝 '+esc(o.anmerkungen)+'</div>';
+      html+='<table><thead><tr><th style="width:30px">✓</th><th>ARTIKEL</th><th>MENGE</th><th>EINHEIT</th><th>PREIS</th></tr></thead><tbody>';
+      (o.positionen||[]).forEach(function(p){
+        html+='<tr><td><span class="check"></span></td>';
+        html+='<td><strong>'+esc(p.bezeichnung)+'</strong></td>';
+        html+='<td>'+p.menge+'</td>';
+        html+='<td>'+esc(p.einheit)+'</td>';
+        html+='<td>'+((+p.positionspreis).toFixed(2).replace('.',','))+' €</td></tr>';
+      });
+      html+='<tr style="font-weight:700"><td colspan="4" style="text-align:right">Gesamt (ca.):</td><td>'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td></tr>';
+      html+='</tbody></table>';
+    });
+
+    html+='</body></html>';
+    var w=window.open('','_blank','width=800,height=600');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(function(){w.print();},500);
+  };
+
+  // ── Kunden laden ──
+  window.cmsLoadKunden=function(){
+    var list=document.getElementById('cms-kunden-list');
+    list.innerHTML='<p style="text-align:center;color:#6b7280">⏳ Kunden werden geladen…</p>';
+    // Use Dataverse query via a proxy endpoint or direct
+    fetch(API_BASE+'/shop-order?mode=cms')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
+        // Extract unique customers from orders
+        var kundenMap={};
+        (res.orders||[]).forEach(function(o){
+          if(!kundenMap[o.kunde_email]) kundenMap[o.kunde_email]={email:o.kunde_email,name:o.kunde_name,orders:0,total:0};
+          kundenMap[o.kunde_email].orders++;
+          kundenMap[o.kunde_email].total+=(+o.gesamtsumme)||0;
+        });
+        var kunden=Object.values(kundenMap);
+        kunden.sort(function(a,b){return b.orders-a.orders;});
+        if(!kunden.length){list.innerHTML='<p style="text-align:center;color:#6b7280">Noch keine Kunden mit Bestellungen</p>';return;}
+        var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+        html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
+        html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">KUNDE</th>';
+        html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">E-MAIL</th>';
+        html+='<th style="text-align:right;padding:8px;font-weight:700;color:#6b7280">BESTELLUNGEN</th>';
+        html+='<th style="text-align:right;padding:8px;font-weight:700;color:#6b7280">UMSATZ (CA.)</th>';
+        html+='</tr></thead><tbody>';
+        kunden.forEach(function(k,i){
+          var bg=i%2===0?'#fff':'#fafbfc';
+          html+='<tr style="background:'+bg+'"><td style="padding:8px;font-weight:600">'+esc(k.name)+'</td><td style="padding:8px">'+esc(k.email)+'</td><td style="padding:8px;text-align:right;font-weight:700">'+k.orders+'</td><td style="padding:8px;text-align:right;font-weight:700">'+(k.total.toFixed(2).replace('.',','))+' €</td></tr>';
+        });
+        html+='</tbody></table>';
+        list.innerHTML=html;
+      })
+      .catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+esc(e.message)+'</p>';});
+  };
 
   // --- Init (only if already authenticated via session) ---
   if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
