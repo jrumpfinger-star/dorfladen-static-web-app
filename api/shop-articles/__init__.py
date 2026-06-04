@@ -234,7 +234,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             mt = (mengentyp or "").strip().lower()
             if bestelleinheit:
                 einheit = bestelleinheit
-            elif mt in ("kg", "g"):
+            elif mt == "kg" and str(mengenerfassung or "").strip() == "3":
                 einheit = "kg"
             else:
                 einheit = "Stück"
