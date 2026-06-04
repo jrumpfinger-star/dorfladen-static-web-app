@@ -1,27 +1,92 @@
 {
   "routes": [
-    { "route": "/api/*", "allowedRoles": ["anonymous"] },
-    { "route": "/konzept", "rewrite": "/konzept.html" },
-    { "route": "/sortiment", "rewrite": "/sortiment.html" },
-    { "route": "/oeffnungszeiten", "rewrite": "/oeffnungszeiten.html" },
-    { "route": "/essen-im-dorfladen", "rewrite": "/essen-im-dorfladen.html" },
-    { "route": "/bilder", "rewrite": "/bilder.html" },
-    { "route": "/do-geh-i-hi", "rewrite": "/do-geh-i-hi.html" },
-    { "route": "/roter-punkt", "rewrite": "/roter-punkt.html" },
-    { "route": "/beirat", "rewrite": "/beirat.html" },
-    { "route": "/geschaeftsfuehrung", "rewrite": "/geschaeftsfuehrung.html" },
-    { "route": "/stille-gesellschafter", "rewrite": "/stille-gesellschafter.html" },
-    { "route": "/impressum", "rewrite": "/impressum.html" },
-    { "route": "/datenschutzerklaerung", "rewrite": "/datenschutzerklaerung.html" },
-    { "route": "/aktuelles", "rewrite": "/aktuelles.html" },
-    { "route": "/shop", "rewrite": "/shop.html" },
-    { "route": "/pack", "rewrite": "/pack.html" },
-    { "route": "/bestellungen", "rewrite": "/bestellungen.html" },
-    { "route": "/portal", "rewrite": "/portal.html" }
+    {
+      "route": "/api/*",
+      "allowedRoles": [
+        "anonymous"
+      ]
+    },
+    {
+      "route": "/konzept",
+      "rewrite": "/konzept.html"
+    },
+    {
+      "route": "/sortiment",
+      "rewrite": "/sortiment.html"
+    },
+    {
+      "route": "/oeffnungszeiten",
+      "rewrite": "/oeffnungszeiten.html"
+    },
+    {
+      "route": "/essen-im-dorfladen",
+      "rewrite": "/essen-im-dorfladen.html"
+    },
+    {
+      "route": "/bilder",
+      "rewrite": "/bilder.html"
+    },
+    {
+      "route": "/do-geh-i-hi",
+      "rewrite": "/do-geh-i-hi.html"
+    },
+    {
+      "route": "/roter-punkt",
+      "rewrite": "/roter-punkt.html"
+    },
+    {
+      "route": "/beirat",
+      "rewrite": "/beirat.html"
+    },
+    {
+      "route": "/geschaeftsfuehrung",
+      "rewrite": "/geschaeftsfuehrung.html"
+    },
+    {
+      "route": "/stille-gesellschafter",
+      "rewrite": "/stille-gesellschafter.html"
+    },
+    {
+      "route": "/impressum",
+      "rewrite": "/impressum.html"
+    },
+    {
+      "route": "/datenschutzerklaerung",
+      "rewrite": "/datenschutzerklaerung.html"
+    },
+    {
+      "route": "/aktuelles",
+      "rewrite": "/aktuelles.html"
+    },
+    {
+      "route": "/shop",
+      "rewrite": "/shop.html"
+    },
+    {
+      "route": "/shop-admin",
+      "rewrite": "/shop-admin.html"
+    },
+    {
+      "route": "/pack",
+      "rewrite": "/pack.html"
+    },
+    {
+      "route": "/bestellungen",
+      "rewrite": "/bestellungen.html"
+    },
+    {
+      "route": "/portal",
+      "rewrite": "/portal.html"
+    }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/css/*", "/js/*", "/images/*", "*.{css,js,png,jpg,gif,ico,svg,woff,woff2,html}"]
+    "exclude": [
+      "/css/*",
+      "/js/*",
+      "/images/*",
+      "*.{css,js,png,jpg,gif,ico,svg,woff,woff2,html}"
+    ]
   },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
