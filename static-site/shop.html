@@ -848,22 +848,33 @@
   }
 
   function loadWerbebilderFallback(items){
-    var artnrs=items.map(function(a){return a.artikelnummer;}).filter(function(nr){return nr&&!imageCache[nr];});
-    if(!artnrs.length) return;
-    for(var i=0;i<artnrs.length;i+=30){
-      var batch=artnrs.slice(i,i+30);
+    var keys=[];
+    var keyToArticle={};
+    items.forEach(function(a){
+      if(!a||!a.artikelnummer||imageCache[a.artikelnummer]) return;
+      [a.artikelnummer,a.strichcode].forEach(function(k){
+        k=(k||'').toString().trim();
+        if(k&&keys.indexOf(k)===-1){keys.push(k);keyToArticle[k]=a.artikelnummer;}
+      });
+    });
+    if(!keys.length) return;
+    for(var i=0;i<keys.length;i+=30){
+      var batch=keys.slice(i,i+30);
       fetch(API+'/werbebilder?artnrs='+encodeURIComponent(batch.join(',')))
         .then(function(r){return r.json();})
         .then(function(data){
           (data||[]).forEach(function(r){
-            if(r.dl_artikelnummer&&r.dl_bild_base64){
+            var foundKey=(r.dl_artikelnummer||'').toString().trim();
+            var targetArtNr=keyToArticle[foundKey]||foundKey;
+            if(targetArtNr&&r.dl_bild_base64){
               var src=r.dl_bild_base64.startsWith('data:')?r.dl_bild_base64:'data:image/jpeg;base64,'+r.dl_bild_base64;
-              setArticleImage(r.dl_artikelnummer,src);
+              setArticleImage(targetArtNr,src);
             }
           });
         }).catch(function(){});
     }
   }
+
 
   function tryStaticBarcodeImage(article,done){
     var barcode=(article.strichcode||'').toString().trim();
