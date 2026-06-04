@@ -377,28 +377,23 @@
 
 
   function getShopGroup(name){
-    var n=(name||'').toString().toLowerCase();
+    var n=(name||'').toString();
+    n=n.replace(/\s*\(?\d+%\)?/g,'');
+    n=n.replace(/\s+Bis\s+\d{4}.*$/i,'');
+    n=n.trim();
     if(!n) return 'Sonstiges';
-    if(n.indexOf('back')!==-1||n.indexOf('brot')!==-1||n.indexOf('baeck')!==-1||n.indexOf('baeck')!==-1) return 'Backwaren';
-    if(n.indexOf('mopro')!==-1||n.indexOf('molkerei')!==-1||n.indexOf('milch')!==-1||n.indexOf('kaese')!==-1||n.indexOf('kaese')!==-1||n.indexOf('butter')!==-1||n.indexOf('margarine')!==-1||n.indexOf('eier')!==-1) return 'Molkerei & Eier';
-    if(n.indexOf('obst')!==-1||n.indexOf('gemuese')!==-1||n.indexOf('gemuese')!==-1||n.indexOf('gemuse')!==-1) return 'Obst & Gemuese';
-    if(n.indexOf('fleisch')!==-1||n.indexOf('wurst')!==-1||n.indexOf('aufschnitt')!==-1||n.indexOf('metzger')!==-1||n.indexOf('schinken')!==-1||n.indexOf('salami')!==-1) return 'Fleisch & Wurst';
-    if(n.indexOf('bier')!==-1||n.indexOf('wein')!==-1||n.indexOf('spirit')!==-1||n.indexOf('getraenk')!==-1||n.indexOf('getraenk')!==-1||n.indexOf('saft')!==-1||n.indexOf('wasser')!==-1) return 'Getraenke';
-    if(n.indexOf('drogerie')!==-1||n.indexOf('haushalt')!==-1||n.indexOf('elektro')!==-1||n.indexOf('heimwerk')!==-1) return 'Haushalt & Drogerie';
-    if(n.indexOf('suess')!==-1||n.indexOf('suess')!==-1||n.indexOf('suss')!==-1||n.indexOf('snack')!==-1||n.indexOf('schoko')!==-1||n.indexOf('eis')!==-1) return 'Suesswaren & Snacks';
-    if(n.indexOf('tief')!==-1||n.indexOf('tk')!==-1) return 'Tiefkuehl';
-    if(n.indexOf('nudel')!==-1||n.indexOf('reis')!==-1||n.indexOf('konserve')!==-1||n.indexOf('fertig')!==-1||n.indexOf('sauce')!==-1||n.indexOf('sosse')!==-1||n.indexOf('sosse')!==-1) return 'Vorrat & Kueche';
-    if(n.indexOf('kaffee')!==-1||n.indexOf('tee')!==-1||n.indexOf('cafe')!==-1||n.indexOf('cafeteria')!==-1) return 'Kaffee & Tee';
-    if(n.indexOf('diaet')!==-1||n.indexOf('kind')!==-1||n.indexOf('baby')!==-1||n.indexOf('effektive')!==-1||n.indexOf('mikro')!==-1) return 'Spezial & Gesundheit';
-    return 'Sonstiges';
+    var k=n.toLowerCase().replace(/?/g,'ae').replace(/?/g,'oe').replace(/?/g,'ue').replace(/?/g,'ss');
+    if(k==='mopro') return 'Molkereiprodukte';
+    if(k==='obst und gemuese stueck'||k==='waage gemuese obst') return 'Obst und Gemuese';
+    return n;
   }
 
   function buildShopGroups(){
     var seen={};
     allArticles.forEach(function(a){seen[getShopGroup(a.warengruppe)]=true;});
-    var order=['Backwaren','Molkerei & Eier','Obst & Gemuese','Fleisch & Wurst','Getraenke','Vorrat & Kueche','Suesswaren & Snacks','Tiefkuehl','Kaffee & Tee','Haushalt & Drogerie','Spezial & Gesundheit','Sonstiges'];
-    return order.filter(function(g){return seen[g];});
+    return Object.keys(seen).sort(function(a,b){return a.localeCompare(b,'de');});
   }
+
 
   function updateBanner(){
     var abhol=calcAbholdatum();
