@@ -218,7 +218,7 @@
 
 <!-- ── Search ── -->
 <div class="shop-search">
-  <input type="search" class="shop-search-input" id="shop-search" name="artikel-suche" placeholder="Artikel suchen..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <input type="search" class="shop-search-input" id="shop-search" name="dl-artikel-suche" placeholder="Artikel suchen..." autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" readonly>
 </div>
 
 <!-- ── Category Pills ── -->
@@ -513,6 +513,14 @@
   // ── Auth ──
   function isLoggedIn(){return !!authToken&&!!authUser;}
 
+
+  function clearSearchAutofill(){
+    var search=document.getElementById('shop-search');
+    if(!search) return;
+    if((search.value||'').indexOf('@')!==-1) search.value='';
+    search.removeAttribute('readonly');
+  }
+
   function loadPreviousArticles(){
     if(!isLoggedIn()||!allArticles.length){previousArticles=[];return Promise.resolve([]);}
     return fetch(API+'/shop-order?mode=customer',{headers:{'Authorization':'Bearer '+authToken}})
@@ -548,8 +556,7 @@
   }
 
   function updateUserUI(){
-    var search=document.getElementById('shop-search');
-    if(search&&(search.value||'').indexOf('@')!==-1) search.value='';
+    clearSearchAutofill();
     var btn=document.getElementById('shop-user-btn');
     if(isLoggedIn()){
       btn.innerHTML='👤';
@@ -918,6 +925,7 @@
   updateBanner();
   updateCartBadge();
   updateUserUI();
+  [100,400,1000,2000].forEach(function(ms){setTimeout(clearSearchAutofill,ms);});
 
   // Load articles
   fetch(API+'/shop-articles')
@@ -980,6 +988,7 @@
 
   // Search
   var searchTimer;
+  document.getElementById('shop-search').addEventListener('focus',clearSearchAutofill);
   document.getElementById('shop-search').addEventListener('input',function(){
     clearTimeout(searchTimer);
     var q=this.value.trim();
