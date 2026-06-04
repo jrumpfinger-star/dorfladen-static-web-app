@@ -58,6 +58,22 @@
     .shop-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
     .shop-card-img{width:100%;aspect-ratio:1;object-fit:cover;background:#f3f4f6}
     .shop-card-noimg{width:100%;aspect-ratio:1;background:linear-gradient(135deg,#f3f4f6,#e5e7eb);display:flex;align-items:center;justify-content:center;font-size:40px;color:#d1d5db}
+
+    /* ── Category Tiles ── */
+    .shop-cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px 16px}
+    @media(min-width:600px){.shop-cat-grid{grid-template-columns:repeat(3,1fr);gap:14px;padding:12px 24px}}
+    @media(min-width:900px){.shop-cat-grid{grid-template-columns:repeat(4,1fr);max-width:1000px;margin:0 auto}}
+    .shop-cat-tile{background:#fff;border-radius:14px;border:1px solid var(--shop-border);padding:18px 12px;text-align:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+    .shop-cat-tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+    .shop-cat-tile:active{transform:scale(.97)}
+    .shop-cat-tile-icon{font-size:36px;margin-bottom:8px;display:block}
+    .shop-cat-tile-name{font-size:13px;font-weight:700;line-height:1.3;color:var(--shop-text)}
+    .shop-cat-tile-count{font-size:11px;color:var(--shop-muted);margin-top:2px}
+    .shop-cat-tile.highlight{background:linear-gradient(135deg,#fff3e0,#ffe0b2);border-color:#ff9800}
+    .shop-cat-tile.green{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-color:#66bb6a}
+    .shop-breadcrumb{padding:8px 16px;font-size:12px;color:var(--shop-muted);display:flex;align-items:center;gap:4px;background:#fff;border-bottom:1px solid var(--shop-border)}
+    .shop-breadcrumb a{color:var(--shop-green);font-weight:600;text-decoration:none;cursor:pointer}
+    .shop-breadcrumb a:hover{text-decoration:underline}
     .shop-card-body{padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:4px}
     .shop-card-name{font-size:13px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .shop-card-meta{font-size:11px;color:var(--shop-muted)}
@@ -612,7 +628,86 @@
     return html;
   }
 
+  var CAT_ICONS={'Backwaren':'🥨','Fleisch':'🥩','Mopro':'🧀','Obst & Gemüse':'🥬','Getränke':'🥤','Süßwaren':'🍫','Konserven':'🥫','Tiefkühl':'🧊','Haushalt':'🧹','Drogerie':'🧴','Wein & Spirituosen':'🍷','Bier':'🍺','Molkereiprodukte':'🧀','Brot & Backwaren':'🥖','Wurst & Aufschnitt':'🥓','Käse':'🧀','Eier':'🥚','Nudeln & Reis':'🍝','Gewürze':'🌿','Öle & Essig':'🫒','Snacks':'🍿','Kaffee & Tee':'☕','Müsli & Cerealien':'🥣','Babynahrung':'🍼','Tiernahrung':'🐾','Tabak':'🚬'};
+  var DEFAULT_CAT_ICON='📦';
+  var viewMode='categories'; // 'categories' or 'articles'
+
+  function getCatIcon(cat){
+    if(CAT_ICONS[cat]) return CAT_ICONS[cat];
+    // Partial match
+    var keys=Object.keys(CAT_ICONS);
+    for(var i=0;i<keys.length;i++){if(cat.toLowerCase().indexOf(keys[i].toLowerCase())!==-1||keys[i].toLowerCase().indexOf(cat.toLowerCase())!==-1) return CAT_ICONS[keys[i]];}
+    return DEFAULT_CAT_ICON;
+  }
+
+  function countByCat(cat){return allArticles.filter(function(a){return a.warengruppe===cat;}).length;}
+
+  function showCategoryOverview(){
+    viewMode='categories';
+    activeCat='all';
+    var content=document.getElementById('shop-content');
+    var html='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title"><span class="emoji">🔥</span> Beliebt <span class="shop-section-count">('+bestsellers.length+')</span></div></div>';
+    html+='<div class="shop-grid">';
+    bestsellers.slice(0,6).forEach(function(a){
+      var badges='';
+      if(a.popularity>=70) badges+='<span class="shop-badge shop-badge-bestseller">🔥 Beliebt</span>';
+      if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
+      var priceHtml=fmtP(a.vk)+' €';
+      if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
+      if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
+      html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
+      html+='<div class="shop-card-badges">'+badges+'</div>';
+      html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
+      html+='<div class="shop-card-body"><div class="shop-card-name">'+esc(a.bezeichnung)+'</div><div class="shop-card-meta">'+esc(a.warengruppe)+'</div><div class="shop-card-price">'+priceHtml+'</div></div>';
+      html+='<div class="shop-card-footer">';
+      if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="0.5" min="0.1" max="10" step="0.1"> <span style="font-size:11px;color:#6b7280">kg</span> ';
+      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
+    });
+    html+='</div>';
+
+    html+='<div class="shop-section" style="padding:16px 16px 4px"><div class="shop-section-title"><span class="emoji">🏪</span> Sortiment <span class="shop-section-count">('+categories.length+' Kategorien)</span></div></div>';
+    html+='<div class="shop-cat-grid">';
+    categories.forEach(function(cat){
+      var cnt=countByCat(cat);
+      var icon=getCatIcon(cat);
+      html+='<div class="shop-cat-tile" data-cat-tile="'+esc(cat)+'">';
+      html+='<span class="shop-cat-tile-icon">'+icon+'</span>';
+      html+='<div class="shop-cat-tile-name">'+esc(cat)+'</div>';
+      html+='<div class="shop-cat-tile-count">'+cnt+' Artikel</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+
+    // "Alle Artikel" tile at bottom
+    html+='<div style="padding:12px 16px 24px;text-align:center"><button onclick="showAllArticles()" style="padding:10px 24px;border:1px solid #2e7d4f;border-radius:10px;background:#fff;color:#2e7d4f;font-size:13px;font-weight:700;cursor:pointer">Alle '+allArticles.length+' Artikel anzeigen →</button></div>';
+
+    content.innerHTML=html;
+    wireAddButtons();
+    wireCatTiles();
+    loadImages(bestsellers.slice(0,6));
+    // Update pills
+    document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')==='all');});
+  }
+
+  function wireCatTiles(){
+    document.querySelectorAll('[data-cat-tile]').forEach(function(tile){
+      tile.addEventListener('click',function(){
+        var cat=tile.getAttribute('data-cat-tile');
+        activeCat=cat;
+        showArticles();
+        window.scrollTo(0,0);
+      });
+    });
+  }
+
+  function showAllArticles(){
+    activeCat='all';
+    showArticles();
+    window.scrollTo(0,0);
+  }
+
   function showArticles(){
+    viewMode='articles';
     var content=document.getElementById('shop-content');
     var items=allArticles;
     var title='Alle Artikel';
@@ -622,13 +717,13 @@
       items=bestsellers;title='Beliebteste Artikel';emoji='🔥';
     } else if(activeCat!=='all'){
       items=allArticles.filter(function(a){return a.warengruppe===activeCat;});
-      title=activeCat;emoji='📦';
+      title=activeCat;emoji=getCatIcon(activeCat);
     }
 
     // Search filter
     var q=(document.getElementById('shop-search').value||'').trim().toLowerCase();
     if(q){
-      items=items.filter(function(a){
+      items=(activeCat!=='all'&&activeCat!=='bestseller'?items:allArticles).filter(function(a){
         return a.bezeichnung.toLowerCase().indexOf(q)!==-1||
                a.warengruppe.toLowerCase().indexOf(q)!==-1||
                (a.strichcode||'').indexOf(q)!==-1;
@@ -636,9 +731,17 @@
       title='Suchergebnis';emoji='🔍';
     }
 
-    content.innerHTML=renderArticles(items,title,emoji);
+    // Breadcrumb
+    var bc='<div class="shop-breadcrumb"><a id="bc-home">🏪 Sortiment</a> <span>›</span> <span>'+esc(title)+'</span></div>';
+
+    content.innerHTML=bc+renderArticles(items,title,emoji);
     wireAddButtons();
     loadImages(items);
+    // Breadcrumb click
+    var bcHome=document.getElementById('bc-home');
+    if(bcHome) bcHome.addEventListener('click',function(){showCategoryOverview();window.scrollTo(0,0);});
+    // Update pills
+    document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')===activeCat);});
   }
 
   function wireAddButtons(){
@@ -714,7 +817,7 @@
         catsEl.appendChild(pill);
       });
 
-      showArticles();
+      showCategoryOverview();
     })
     .catch(function(e){
       document.getElementById('shop-loading').innerHTML='<p>Fehler: '+esc(e.message)+'</p>';
@@ -744,17 +847,24 @@
   document.getElementById('shop-cats').addEventListener('click',function(e){
     var pill=e.target.closest('.shop-cat-pill');
     if(!pill) return;
-    activeCat=pill.getAttribute('data-cat');
+    var cat=pill.getAttribute('data-cat');
+    activeCat=cat;
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.remove('active');});
     pill.classList.add('active');
-    showArticles();
+    if(cat==='all'){showCategoryOverview();}
+    else{showArticles();}
+    window.scrollTo(0,0);
   });
 
   // Search
   var searchTimer;
   document.getElementById('shop-search').addEventListener('input',function(){
     clearTimeout(searchTimer);
-    searchTimer=setTimeout(showArticles,300);
+    var q=this.value.trim();
+    searchTimer=setTimeout(function(){
+      if(!q&&viewMode==='categories'){showCategoryOverview();}
+      else{showArticles();}
+    },300);
   });
 
   // Order history
