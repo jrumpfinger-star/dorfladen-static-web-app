@@ -260,12 +260,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
 
-        # If 400 with "Invalid property", progressively strip optional fields and retry
+        # If 400 with "Invalid property", fields are missing in Dataverse
         if r.status_code == 400 and "Invalid property" in r.text:
-            logging.warning(f"Dataverse 400 on first try, stripping optional fields. Detail: {r.text[:300]}")
+            logging.warning(f"Dataverse 400 on first try: {r.text[:500]}")
+            # Try with only the base fields that MUST exist (primary key = dl_email)
+            minimal_payload = {"dl_email": email}
+            # Add each field individually, keep only those Dataverse accepts
+            for key in list(payload.keys()):
+                if key != "dl_email":
+                    minimal_payload[key] = payload[key]
+            # Second attempt: strip all optional fields
             for f in OPTIONAL_FIELDS:
-                payload.pop(f, None)
-            r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
+                minimal_payload.pop(f, None)
+            logging.warning(f"Retry with fields: {list(minimal_payload.keys())}")
+            r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=minimal_payload, timeout=30)
+            # If still failing, try bare minimum
+            if r.status_code == 400 and "Invalid property" in r.text:
+                logging.warning(f"Retry 2 still failed: {r.text[:500]}. Trying bare minimum.")
+                bare = {"dl_email": email}
+                r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=bare, timeout=30)
 
         if r.status_code in (200, 201):
             record = r.json()
@@ -290,8 +303,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 status_code=201, headers=get_cors_headers()
             )
         else:
+            logging.error(f"Dataverse final error {r.status_code}: {r.text[:500]}")
             return func.HttpResponse(
-                json.dumps({"success": False, "error": f"Dataverse-Fehler: {r.status_code}", "detail": r.text[:300]}, ensure_ascii=False),
+                json.dumps({"success": False, "error": f"Dataverse-Fehler: {r.status_code}", "detail": r.text[:500], "payload_keys": list(payload.keys())}, ensure_ascii=False),
                 status_code=500, headers=get_cors_headers()
             )
     except Exception as e:
