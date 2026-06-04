@@ -1012,15 +1012,17 @@
         }
         var todayStr=new Date().toISOString().slice(0,10);
         var html='<div class="shop-orders"><h2 style="font-size:18px;margin-bottom:16px">Meine Bestellungen</h2>';
-        res.orders.forEach(function(o){
+        res.orders.forEach(function(o,idx){
           var canCancel=o.status<2&&(!o.abholdatum||todayStr<o.abholdatum);
+          var open=idx===0;
           html+='<div class="shop-order-card">';
-          html+='<div class="shop-order-header"><span class="shop-order-nr">'+esc(o.bestellnummer)+'</span><span class="shop-order-status s'+o.status+'">'+esc(o.status_text)+'</span></div>';
-          html+='<div class="shop-order-body">';
-          html+='<div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><span>Bestellt: '+esc(o.bestelldatum)+'</span><span>Abholung: '+esc(o.abholdatum)+'</span></div>';
-          html+='<div style="font-weight:700;margin-bottom:4px">'+fmtP(o.gesamtsumme)+' EUR (ca.)</div>';
+          html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:0;cursor:pointer;text-align:left">';
+          html+='<div class="shop-order-header"><span class="shop-order-nr">'+esc(o.bestellnummer)+'</span><span style="display:flex;align-items:center;gap:8px"><span style="font-weight:800;color:#2e7d4f">'+fmtP(o.gesamtsumme)+' EUR</span><span class="shop-order-status s'+o.status+'">'+esc(o.status_text)+'</span><span data-order-arrow="'+idx+'" style="font-size:16px;font-weight:900;color:#6b7280">'+(open?'v':'>')+'</span></span></div>';
+          html+='<div style="padding:0 16px 12px;color:#6b7280;font-size:12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>Bestellt: '+esc(o.bestelldatum)+'</span><span>Abholung: '+esc(o.abholdatum)+'</span></div>';
+          html+='</button>';
+          html+='<div class="shop-order-body" data-order-body="'+idx+'" style="display:'+(open?'':'none')+'">';
           if(o.positionen&&o.positionen.length){
-            html+='<div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fff">';
+            html+='<div style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fff">';
             o.positionen.forEach(function(p){
               var preis=p.positionspreis!=null?fmtP(p.positionspreis)+' EUR':(p.einzelpreis!=null?fmtP((Number(p.einzelpreis)||0)*(Number(p.menge)||0))+' EUR':'');
               html+='<div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #f3f4f6">';
@@ -1040,6 +1042,17 @@
         });
         html+='<button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;border:none;border-radius:8px;background:#2e7d4f;color:#fff;font-size:14px;cursor:pointer;width:100%">Zurueck zum Shop</button></div>';
         content.innerHTML=html;
+        document.querySelectorAll('[data-order-toggle]').forEach(function(btn){
+          btn.addEventListener('click',function(){
+            var idx=btn.getAttribute('data-order-toggle');
+            var body=document.querySelector('[data-order-body="'+idx+'"]');
+            var arrow=document.querySelector('[data-order-arrow="'+idx+'"]');
+            if(!body) return;
+            var open=body.style.display==='none';
+            body.style.display=open?'':'none';
+            if(arrow) arrow.textContent=open?'v':'>';
+          });
+        });
         document.querySelectorAll('[data-cancel-order]').forEach(function(btn){
           btn.addEventListener('click',function(){
             if(!confirm('Diese Bestellung wirklich stornieren?')) return;
