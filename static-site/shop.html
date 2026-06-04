@@ -217,9 +217,7 @@
 </div>
 
 <!-- ── Search ── -->
-<div class="shop-search">
-  <input type="search" class="shop-search-input" id="shop-search" name="dl-artikel-suche" placeholder="Artikel suchen..." autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" readonly>
-</div>
+<div class="shop-search" id="shop-search-wrap"></div>
 
 <!-- ── Category Pills ── -->
 <div class="shop-cats" id="shop-cats">
@@ -514,6 +512,24 @@
     if(!search) return;
     if((search.value||'').indexOf('@')!==-1) search.value='';
     search.removeAttribute('readonly');
+  }
+
+
+  function createSearchInput(){
+    var wrap=document.getElementById('shop-search-wrap');
+    if(!wrap||document.getElementById('shop-search')) return;
+    wrap.innerHTML='<input type="search" class="shop-search-input" id="shop-search" name="shop-query-'+Date.now()+'" placeholder="Artikel suchen..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
+    var input=document.getElementById('shop-search');
+    input.addEventListener('focus',clearSearchAutofill);
+    input.addEventListener('input',function(){
+      clearTimeout(searchTimer);
+      if((this.value||'').indexOf('@')!==-1){this.value='';return;}
+      var q=this.value.trim();
+      searchTimer=setTimeout(function(){
+        if(!q&&viewMode==='categories'){showCategoryOverview();}
+        else{showArticles();}
+      },300);
+    });
   }
 
   function loadPreviousArticles(){
@@ -920,7 +936,7 @@
   updateBanner();
   updateCartBadge();
   updateUserUI();
-  [100,400,1000,2000].forEach(function(ms){setTimeout(clearSearchAutofill,ms);});
+  setTimeout(createSearchInput,300);
 
   // Load articles
   fetch(API+'/shop-articles')
@@ -983,15 +999,6 @@
 
   // Search
   var searchTimer;
-  document.getElementById('shop-search').addEventListener('focus',clearSearchAutofill);
-  document.getElementById('shop-search').addEventListener('input',function(){
-    clearTimeout(searchTimer);
-    var q=this.value.trim();
-    searchTimer=setTimeout(function(){
-      if(!q&&viewMode==='categories'){showCategoryOverview();}
-      else{showArticles();}
-    },300);
-  });
 
   // Order history
   document.getElementById('shop-history-btn').addEventListener('click',function(){
