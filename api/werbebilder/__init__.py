@@ -1,6 +1,7 @@
 import azure.functions as func
 import json
 import os
+import logging
 import msal
 import requests
 import base64
@@ -37,80 +38,77 @@ def _base_url():
     return os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
 
 
+_graph_msal_app = None
+
 def get_graph_token():
+    global _graph_msal_app
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
     client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     if not client_secret:
         return None
     try:
-        a = msal.ConfidentialClientApplication(
-            client_id,
-            authority=f"https://login.microsoftonline.com/{tenant_id}",
-            client_credential=client_secret,
-        )
-        r = a.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
+        if not _graph_msal_app:
+            _graph_msal_app = msal.ConfidentialClientApplication(
+                client_id,
+                authority=f"https://login.microsoftonline.com/{tenant_id}",
+                client_credential=client_secret,
+            )
+        r = _graph_msal_app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
         return r.get("access_token")
     except:
         return None
 
 
-def _list_folder_files(token, folder_id):
-    """List all files in a SharePoint folder (cached per request)."""
-    gh = {"Authorization": f"Bearer {token}"}
-    files = {}
-    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}/children?$select=id,name&$top=999"
-    while url:
-        r = requests.get(url, headers=gh, timeout=30)
-        if r.status_code != 200:
-            break
-        data = r.json()
-        for item in data.get("value", []):
-            name = item.get("name", "")
-            stem = name.rsplit(".", 1)[0] if "." in name else name
-            ext = name.rsplit(".", 1)[1].lower() if "." in name else ""
-            if ext in ("jpg", "jpeg", "png", "gif", "webp"):
-                files[stem] = item.get("id")
-        url = data.get("@odata.nextLink")
-    return files
-
-
-def _download_sp_image(token, item_id, name):
-    """Download a single SharePoint image and return base64 data URI."""
-    gh = {"Authorization": f"Bearer {token}"}
-    r = requests.get(f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{item_id}/content", headers=gh, timeout=20)
-    if r.status_code != 200:
-        return None
-    ext = name.rsplit(".", 1)[1].lower() if "." in name else "jpg"
-    mime = "image/png" if ext == "png" else "image/gif" if ext == "gif" else "image/jpeg"
-    return "data:" + mime + ";base64," + base64.b64encode(r.content).decode("ascii")
-
-
-def _load_sharepoint_images(keys):
+def _load_sharepoint_urls(article_infos):
+    """Get SharePoint download URLs via Graph $batch API.
+    Werbebilder folder uses edeka_nr, StrichcodeBilder uses strichcode.
+    Graph allows max 20 subrequests per $batch, so larger visible sets are chunked."""
     token = get_graph_token()
     if not token:
         return []
+    batch_requests = []
+    id_to_artnr = {}
+    idx = 0
+    for info in article_infos[:24]:
+        enr = (info.get("edeka_nr") or "").strip()
+        sc = (info.get("strichcode") or "").strip()
+        artnr = info.get("artikelnummer", enr or sc)
+        if enr:
+            idx += 1
+            rid = str(idx)
+            batch_requests.append({"id": rid, "method": "GET", "url": f"/drives/{SP_DRIVE}/items/{SP_FOLDER}:/{enr}.jpg"})
+            id_to_artnr[rid] = artnr
+        if sc:
+            idx += 1
+            rid = str(idx)
+            batch_requests.append({"id": rid, "method": "GET", "url": f"/drives/{SP_DRIVE}/items/{SP_BARCODE_FOLDER}:/{sc}.jpg"})
+            id_to_artnr[rid] = artnr
+    if not batch_requests:
+        return []
     result = []
-    remaining = set(keys[:50])
-    for folder_id in (SP_BARCODE_FOLDER, SP_FOLDER):
-        if not remaining:
-            break
-        folder_files = _list_folder_files(token, folder_id)
-        for key in list(remaining):
-            if key in folder_files:
-                img = _download_sp_image(token, folder_files[key], key)
-                if img:
-                    result.append({
-                        "id": "sharepoint:" + key,
-                        "dl_werbebildid": "",
-                        "dl_artikelnummer": key,
-                        "dl_bild_base64": img,
-                        "dl_download_url": "",
-                        "source": "sharepoint"
-                    })
-                    remaining.discard(key)
+    found = set()
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    for start in range(0, len(batch_requests), 20):
+        chunk = batch_requests[start:start + 20]
+        r = requests.post(
+            "https://graph.microsoft.com/v1.0/$batch",
+            headers=headers,
+            json={"requests": chunk},
+            timeout=30
+        )
+        if r.status_code != 200:
+            logging.warning(f"[werbebilder] $batch failed: {r.status_code}")
+            continue
+        for resp in r.json().get("responses", []):
+            if resp.get("status") == 200:
+                artnr = id_to_artnr.get(resp.get("id", ""))
+                dl = resp.get("body", {}).get("@microsoft.graph.downloadUrl", "")
+                if artnr and dl and artnr not in found:
+                    found.add(artnr)
+                    result.append({"dl_artikelnummer": artnr, "dl_download_url": dl, "source": "sharepoint"})
+    logging.info(f"[werbebilder] SP batch: {len(result)}/{len(article_infos)} found")
     return result
-
 
 def get_headers():
     token = get_token()
@@ -140,7 +138,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     base_url = _base_url()
     headers = get_headers()
 
-    # --- POST: upsert a werbebild for a given artikelnummer, return record id ---
+    # --- POST: shop image lookup or CMS upsert ---
     if req.method == "POST":
         try:
             body = req.get_json()
@@ -149,6 +147,33 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 body=json.dumps({"success": False, "error": "Invalid JSON"}),
                 status_code=400, headers=get_cors_headers()
             )
+
+        # Shop image lookup: POST {articles: [{artikelnummer, edeka_nr, strichcode}, ...]}
+        if "articles" in body:
+            article_infos = body["articles"][:20]
+            nr_list = [a.get("artikelnummer", "") for a in article_infos if a.get("artikelnummer")]
+            result = []
+            if nr_list:
+                filter_parts = [f"dl_artikelnummer eq '{nr}'" for nr in nr_list]
+                odata_filter = " or ".join(filter_parts)
+                url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_werbebildid,dl_artikelnummer,dl_bild_base64,dl_download_url&$filter={odata_filter}"
+                r = requests.get(url, headers=headers, timeout=30)
+                if r.status_code == 200:
+                    for item in r.json().get("value", []):
+                        result.append({
+                            "dl_artikelnummer": item.get("dl_artikelnummer", ""),
+                            "dl_bild_base64": item.get("dl_bild_base64", ""),
+                            "dl_download_url": item.get("dl_download_url", "")
+                        })
+            include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
+            if include_sp:
+                found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_bild_base64") or x.get("dl_download_url")}
+                missing = [a for a in article_infos if a.get("artikelnummer") and a["artikelnummer"] not in found_keys]
+                if missing:
+                    result.extend(_load_sharepoint_urls(missing))
+            return func.HttpResponse(body=json.dumps(result), status_code=200, headers=get_cors_headers())
+
+        # CMS upsert: POST {dl_artikelnummer, dl_bild_base64}
         artnr = (body.get("dl_artikelnummer") or "").strip()
         bild = (body.get("dl_bild_base64") or "").strip()
         if not artnr:
@@ -243,10 +268,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 })
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
-                found_keys = {x.get("dl_artikelnummer", "") for x in result}
+                found_keys = {x.get("dl_artikelnummer", "") for x in result if x.get("dl_bild_base64") or x.get("dl_download_url")}
                 missing = [x for x in nr_list if x not in found_keys]
                 if missing:
-                    result.extend(_load_sharepoint_images(missing))
+                    result.extend(_load_sharepoint_urls(missing))
             return func.HttpResponse(
                 body=json.dumps(result),
                 status_code=200,

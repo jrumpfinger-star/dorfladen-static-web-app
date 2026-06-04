@@ -15,6 +15,14 @@ import re
 import msal
 import requests
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+import threading
+import time as _time
+
+# ── In-memory cache (5 min TTL) ──
+_cache_lock = threading.Lock()
+_cache = {"data": None, "ts": 0}
+_CACHE_TTL = 300  # seconds
 
 
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
@@ -173,10 +181,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 status_code=500, headers=get_cors_headers()
             )
 
+        # Return cached response if fresh
+        with _cache_lock:
+            if _cache["data"] and (_time.time() - _cache["ts"]) < _CACHE_TTL:
+                return func.HttpResponse(_cache["data"], status_code=200, headers=get_cors_headers())
+
         base_url = _base_url()
         headers = _headers(token)
 
-        # Fetch all articles. Some Dataverse environments do not have the extended quantity/order fields yet.
+        cutoff_date = datetime.utcnow() - timedelta(days=183)
+        cutoff_iso = cutoff_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        # Fetch articles with server-side 6-month filter + load Angebote in parallel
         base_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_tableid"
         extended_fields = base_fields + ",cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung"
         select_attempts = [
@@ -185,28 +201,33 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             base_fields + ",cr5d4_bestellbar,cr5d4_bestelleinheit",
             base_fields,
         ]
-        items = []
-        for select_fields in select_attempts:
-            url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$orderby=cr5d4_artikelbezeichnung asc"
-            items = _fetch_all_pages(url, headers)
-            if items:
-                break
+        date_filter = f"cr5d4_artikelletzterverkauf ge {cutoff_iso}"
 
-        # Load Angebote
-        angebote_map = _load_angebote(base_url, headers)
+        def _load_articles():
+            for select_fields in select_attempts:
+                url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$filter={date_filter}&$orderby=cr5d4_artikelbezeichnung asc"
+                result = _fetch_all_pages(url, headers)
+                if result:
+                    return result
+            return []
 
-        cutoff_date = datetime.utcnow() - timedelta(days=183)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            fut_articles = pool.submit(_load_articles)
+            fut_angebote = pool.submit(_load_angebote, base_url, headers)
+            items = fut_articles.result()
+            angebote_map = fut_angebote.result()
         articles = []
         categories = {}
         bestseller_candidates = []
 
         for item in items:
-            artnr = item.get("cr5d4_artikelnummeredeka") or item.get("cr5d4_strichcode") or item.get("cr5d4_tableid", "")
+            edeka_nr = (item.get("cr5d4_artikelnummeredeka") or "").strip()
+            strichcode = (item.get("cr5d4_strichcode") or "").strip()
+            artnr = edeka_nr or strichcode or item.get("cr5d4_tableid", "")
             bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
             preis = _num(item.get("cr5d4_vk_dorf"))
             warengruppe = normalize_warengruppe(item.get("cr5d4_warengruppebez", ""))
             letzter_verkauf = item.get("cr5d4_artikelletzterverkauf")
-            strichcode = item.get("cr5d4_strichcode", "")
             bestellbar = item.get("cr5d4_bestellbar")
             bestelleinheit = item.get("cr5d4_bestelleinheit", "")
 
@@ -214,8 +235,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if not bezeichnung or preis <= 0:
                 continue
 
-            # Keep shop responsive even when bestellbar flags are not maintained in Dataverse.
-            # Articles are filtered by valid name and price; optional recency/bestellbar fields must not hide the full assortment.
+            # Server-side OData filter already limits to last 6 months
 
             # Calculate price/unit
             mengentyp = item.get("cr5d4_mengentyp")
@@ -248,6 +268,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             article = {
                 "artikelnummer": artnr,
+                "edeka_nr": edeka_nr,
                 "bezeichnung": bezeichnung,
                 "vk": vk_korr,
                 "vk_base": preis,
@@ -270,11 +291,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     categories[warengruppe] = 0
                 categories[warengruppe] += 1
 
-            # Bestseller candidate
-            if pop_score >= 50:
+            # Bestseller candidate: any article with a recent sale
+            if pop_score > 0:
                 bestseller_candidates.append(article)
 
-        # Sort bestsellers by popularity (highest first), limit to top 20
+        # Sort bestsellers by popularity (highest first = most recent sale), limit to top 20
         bestseller_candidates.sort(key=lambda x: x["popularity"], reverse=True)
         bestsellers = bestseller_candidates[:20]
 
@@ -289,16 +310,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         other_cats = sorted([c for c in categories.keys() if c not in PRIORITY_CATEGORIES])
         cat_list = prio_cats + other_cats
 
-        return func.HttpResponse(
-            json.dumps({
-                "success": True,
-                "total": len(articles),
-                "articles": articles,
-                "categories": cat_list,
-                "bestsellers": bestsellers
-            }, ensure_ascii=False),
-            status_code=200, headers=get_cors_headers()
-        )
+        response_body = json.dumps({
+            "success": True,
+            "total": len(articles),
+            "articles": articles,
+            "categories": cat_list,
+            "bestsellers": bestsellers
+        }, ensure_ascii=False)
+
+        # Cache the response
+        with _cache_lock:
+            _cache["data"] = response_body
+            _cache["ts"] = _time.time()
+
+        return func.HttpResponse(response_body, status_code=200, headers=get_cors_headers())
     except Exception as e:
         logging.exception("shop-articles failed")
         return func.HttpResponse(

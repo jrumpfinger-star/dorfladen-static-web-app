@@ -30,12 +30,11 @@
     .shop-search-input:focus{border-color:var(--shop-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
 
     /* ── Category Pills ── */
-    .shop-cats{padding:8px 16px;display:flex;gap:6px;background:#fff;border-bottom:1px solid var(--shop-border);flex-wrap:nowrap;align-items:center;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative}
-    .shop-cats::-webkit-scrollbar{display:none}
-    .shop-cat-pill{display:inline-flex;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--shop-border);background:#fff;color:var(--shop-text);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+    .shop-cats{padding:8px 16px;display:flex;gap:8px;background:#fff;border-bottom:1px solid var(--shop-border);align-items:center}
+    .shop-cat-pill{display:inline-flex;padding:7px 12px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid var(--shop-border);background:#fff;color:var(--shop-text);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
     .shop-cat-pill:hover,.shop-cat-pill.active{background:var(--shop-green);color:#fff;border-color:var(--shop-green)}
-    .shop-cat-pill.highlight{background:#fff3e0;border-color:#ff9800;color:#e65100}
-    .shop-cat-pill.highlight.active{background:#ff9800;color:#fff;border-color:#ff9800}
+    .shop-cat-select{min-width:220px;max-width:360px;flex:1;padding:8px 12px;border:1px solid var(--shop-border);border-radius:10px;background:#f9fafb;color:var(--shop-text);font-size:13px;font-weight:600;outline:none}
+    .shop-cat-select:focus{border-color:var(--shop-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
 
     /* ── Info Banner ── */
     .shop-banner{margin:12px 16px;padding:12px 16px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:var(--shop-radius);font-size:13px;color:#1b5e20;display:flex;align-items:center;gap:10px}
@@ -57,7 +56,9 @@
     /* ── Product Card ── */
     .shop-card{background:#fff;border-radius:var(--shop-radius);border:1px solid var(--shop-border);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;position:relative}
     .shop-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
-    .shop-card-img{width:100%;height:110px;object-fit:cover;background:#f3f4f6}
+    .shop-card.in-cart{border-color:#2e7d4f;box-shadow:0 0 0 2px rgba(46,125,79,.18);background:#f0faf3}
+    .shop-card.in-cart .shop-add-btn{display:none}
+    .shop-card-img{width:100%;height:110px;object-fit:contain;object-position:center;background:#f3f4f6;padding:8px;box-sizing:border-box}
     .shop-card-noimg{width:100%;height:110px;background:linear-gradient(135deg,#f3f4f6,#e5e7eb);display:flex;align-items:center;justify-content:center;font-size:30px;color:#d1d5db}
 
     /* ── Category Tiles ── */
@@ -89,8 +90,8 @@
 
     /* ── Add to Cart Button ── */
     .shop-card-footer{padding:0 10px 10px;display:flex;align-items:center;gap:5px}
-    .shop-add-btn{flex:1;padding:7px;border:none;border-radius:8px;background:var(--shop-green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:4px}
-    .shop-add-btn:hover{background:#256b42}
+    .shop-add-btn{padding:5px 10px;border:1px solid var(--shop-green);border-radius:8px;background:#fff;color:var(--shop-green);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
+    .shop-add-btn:hover{background:var(--shop-green);color:#fff}
     .shop-add-btn:active{transform:scale(.97)}
     .shop-qty-ctrl{display:flex;align-items:center;gap:0;border:1px solid var(--shop-border);border-radius:8px;overflow:hidden}
     .shop-qty-btn{width:32px;height:32px;border:none;background:#f3f4f6;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -178,14 +179,22 @@
     @media(min-width:768px){
       .shop-topbar{padding:12px 24px}
       .shop-search{padding:12px 24px}
-      .shop-cats{padding:10px 24px}
+    .shop-cats{padding:8px 16px;display:flex;gap:8px;background:#fff;border-bottom:1px solid var(--shop-border);align-items:center}
+    .shop-cat-pill{display:inline-flex;padding:7px 12px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid var(--shop-border);background:#fff;color:var(--shop-text);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+    .shop-cat-pill:hover,.shop-cat-pill.active{background:var(--shop-green);color:#fff;border-color:var(--shop-green)}
+    .shop-cat-select{min-width:220px;max-width:360px;flex:1;padding:8px 12px;border:1px solid var(--shop-border);border-radius:10px;background:#f9fafb;color:var(--shop-text);font-size:13px;font-weight:600;outline:none}
+    .shop-cat-select:focus{border-color:var(--shop-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
       .shop-banner{margin:16px 24px}
       .shop-section{padding:12px 24px 4px}
     }
     @media(min-width:1200px){
       .shop-topbar{padding:12px 40px}
       .shop-search{padding:12px 40px}
-      .shop-cats{padding:10px 40px}
+    .shop-cats{padding:8px 16px;display:flex;gap:8px;background:#fff;border-bottom:1px solid var(--shop-border);align-items:center}
+    .shop-cat-pill{display:inline-flex;padding:7px 12px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid var(--shop-border);background:#fff;color:var(--shop-text);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+    .shop-cat-pill:hover,.shop-cat-pill.active{background:var(--shop-green);color:#fff;border-color:var(--shop-green)}
+    .shop-cat-select{min-width:220px;max-width:360px;flex:1;padding:8px 12px;border:1px solid var(--shop-border);border-radius:10px;background:#f9fafb;color:var(--shop-text);font-size:13px;font-weight:600;outline:none}
+    .shop-cat-select:focus{border-color:var(--shop-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
       .shop-banner{margin:16px 40px;max-width:1400px;margin-left:auto;margin-right:auto}
       .shop-section{padding:12px 40px 4px;max-width:1400px;margin-left:auto;margin-right:auto}
       .shop-grid{padding:8px 40px 24px;max-width:1440px;margin:0 auto}
@@ -222,8 +231,10 @@
 
 <!-- ── Category Pills ── -->
 <div class="shop-cats" id="shop-cats">
-  <span class="shop-cat-pill active" data-cat="all">Alle</span>
-  <span class="shop-cat-pill highlight" data-cat="bestseller">🔥 Beliebt</span>
+  <span class="shop-cat-pill active" data-cat="bestseller">🔥 Beliebt</span>
+  <select class="shop-cat-select" id="shop-cat-select" aria-label="Warengruppe auswählen">
+    <option value="">Warengruppe auswählen?</option>
+  </select>
 </div>
 
 <!-- ── Cutoff Banner ── -->
@@ -353,7 +364,8 @@
   var authToken=localStorage.getItem('dl_shop_token')||'';
   var authUser=JSON.parse(localStorage.getItem('dl_shop_user')||'null');
   var imageCache={};
-  var activeCat='all';
+  var imageLoadRun=0;
+  var activeCat='bestseller';
 
   // ── Helpers ──
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -419,18 +431,26 @@
     else{badge.style.display='none';}
   }
 
+  function markCartItems(){
+    var inCart={};
+    cart.forEach(function(c){inCart[c.artikelnummer]=true;});
+    document.querySelectorAll('.shop-card[data-artnr]').forEach(function(card){
+      card.classList.toggle('in-cart',!!inCart[card.getAttribute('data-artnr')]);
+    });
+  }
+
   function addToCart(article,menge){
     var existing=cart.find(function(c){return c.artikelnummer===article.artikelnummer;});
     if(existing){existing.menge+=menge;}
     else{cart.push({artikelnummer:article.artikelnummer,bezeichnung:article.bezeichnung,vk:article.vk,einheit:article.einheit,menge:menge,gewichtsware:article.gewichtsware,strichcode:article.strichcode||''});}
-    saveCart();updateCartBadge();renderCart();
+    saveCart();updateCartBadge();renderCart();markCartItems();
     // Toast
     showToast('✓ '+article.bezeichnung+' hinzugefügt');
   }
 
   function removeFromCart(artnr){
     cart=cart.filter(function(c){return c.artikelnummer!==artnr;});
-    saveCart();updateCartBadge();renderCart();
+    saveCart();updateCartBadge();renderCart();markCartItems();
   }
 
   function updateCartQty(artnr,menge){
@@ -439,7 +459,7 @@
     menge=Number(menge)||0;
     if(menge<=0){removeFromCart(artnr);return;}
     item.menge=Math.round(menge*1000)/1000;
-    saveCart();updateCartBadge();renderCart();
+    saveCart();updateCartBadge();renderCart();markCartItems();
   }
 
   function cartTotal(){return cart.reduce(function(s,c){return s+c.vk*c.menge;},0);}
@@ -455,11 +475,11 @@
     var html='';
     cart.forEach(function(item){
       var price=fmtP(item.vk*item.menge);
-      var step=item.gewichtsware?'0.1':'1';
-      var unit=item.gewichtsware?'kg':'Stueck';
-      var detail=item.gewichtsware?item.menge+' kg x '+fmtP(item.vk)+' EUR/kg':item.menge+' Stueck x '+fmtP(item.vk)+' EUR';
+      var step=item.gewichtsware?'50':'1';
+      var unit=item.gewichtsware?'g':'Stueck';
+      var detail=item.gewichtsware?Math.round(item.menge*1000)+' g x '+fmtP(item.vk)+' EUR/kg':item.menge+' Stueck x '+fmtP(item.vk)+' EUR';
       html+='<div class="shop-cart-item">';
-      html+='<div class="shop-cart-item-info"><div class="shop-cart-item-name">'+esc(item.bezeichnung)+'</div><div class="shop-cart-item-detail">'+detail+'</div><div style="margin-top:6px"><input type="number" class="shop-qty-input" data-cart-qty="'+esc(item.artikelnummer)+'" value="'+item.menge+'" min="'+step+'" step="'+step+'"> <span style="font-size:11px;color:#6b7280">'+unit+'</span></div></div>';
+      html+='<div class="shop-cart-item-info"><div class="shop-cart-item-name">'+esc(item.bezeichnung)+'</div><div class="shop-cart-item-detail">'+detail+'</div><div style="margin-top:6px"><input type="number" class="shop-qty-input" data-cart-qty="'+esc(item.artikelnummer)+'" value="'+(item.gewichtsware?Math.round(item.menge*1000):item.menge)+'" min="'+step+'" step="'+step+'"> <span style="font-size:11px;color:#6b7280">'+unit+'</span></div></div>';
       html+='<div class="shop-cart-item-price">'+price+' EUR</div>';
       html+='<button class="shop-cart-item-remove" data-remove="'+esc(item.artikelnummer)+'" title="Entfernen">x</button>';
       html+='</div>';
@@ -490,7 +510,7 @@
       btn.addEventListener('click',function(){removeFromCart(btn.getAttribute('data-remove'));});
     });
     body.querySelectorAll('[data-cart-qty]').forEach(function(inp){
-      inp.addEventListener('change',function(){updateCartQty(inp.getAttribute('data-cart-qty'),parseFloat(inp.value));});
+      inp.addEventListener('change',function(){var artnr=inp.getAttribute('data-cart-qty');var ci=cart.find(function(c){return c.artikelnummer===artnr;});var val=parseFloat(inp.value)||0;if(ci&&ci.gewichtsware) val=val/1000;updateCartQty(artnr,val);});
     });
   }
 
@@ -526,9 +546,8 @@
       clearTimeout(searchTimer);
       if((this.value||'').indexOf('@')!==-1){this.value='';return;}
       searchTimer=setTimeout(function(){
-        if(!this.value.trim()&&viewMode==='categories'){showCategoryOverview();}
-        else{showArticles();}
-      }.bind(this),300);
+        showArticles();
+      }.bind(this),120);
     });
   }
 
@@ -560,8 +579,8 @@
       prevPill.className='shop-cat-pill';
       prevPill.setAttribute('data-cat','previous');
       prevPill.textContent='Schon bestellt';
-      var firstCat=catsEl.querySelector('[data-cat]:not([data-cat="all"]):not([data-cat="bestseller"])');
-      catsEl.insertBefore(prevPill,firstCat||null);
+      var select=catsEl.querySelector('#shop-cat-select');
+      catsEl.insertBefore(prevPill,select||null);
     }
     if(!isLoggedIn()&&existing) existing.remove();
   }
@@ -705,7 +724,9 @@
       html+='</div>';
       html+='<div class="shop-card-footer">';
       if(a.gewichtsware){
-        html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="0.5" min="0.1" max="10" step="0.1"> <span style="font-size:11px;color:#6b7280">kg</span> ';
+        html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
+      } else {
+        html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
       }
       html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button>';
       html+='</div></div>';
@@ -746,7 +767,8 @@
       html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
       html+='<div class="shop-card-body"><div class="shop-card-name">'+esc(a.bezeichnung)+'</div><div class="shop-card-meta">'+esc(a.warengruppe)+'</div><div class="shop-card-price">'+priceHtml+'</div></div>';
       html+='<div class="shop-card-footer">';
-      if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="0.5" min="0.1" max="10" step="0.1"> <span style="font-size:11px;color:#6b7280">kg</span> ';
+      if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
+      else html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
       html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
     });
     html+='</div>';
@@ -803,7 +825,7 @@
       if(!isLoggedIn()){showAuth('login');return;}
       items=previousArticles;title='Schon bestellt';emoji='Historie';
     } else if(activeCat==='bestseller'){
-      items=bestsellers;title='Beliebteste Artikel';emoji='Beliebt';
+      items=bestsellers;title='Beliebt';emoji='';
     } else if(activeCat!=='all'){
       items=allArticles.filter(function(a){return getShopGroup(a.warengruppe)===activeCat;});
       title=activeCat;emoji=getCatIcon(activeCat);
@@ -812,12 +834,7 @@
     // Search filter
     var q=(document.getElementById('shop-search').value||'').trim().toLowerCase();
     if(q){
-      items=items.filter(function(a){
-        return (a.bezeichnung||'').toLowerCase().indexOf(q)!==-1||
-               (a.warengruppe||'').toLowerCase().indexOf(q)!==-1||
-               (a.artikelnummer||'').toString().toLowerCase().indexOf(q)!==-1||
-               (a.strichcode||'').toString().toLowerCase().indexOf(q)!==-1;
-      });
+      items=allArticles.filter(function(a){return (a._search||'').indexOf(q)!==-1;});
       title='Suchergebnis';emoji='🔍';
     }
 
@@ -829,12 +846,29 @@
     loadImages(items);
     // Breadcrumb click
     var bcHome=document.getElementById('bc-home');
-    if(bcHome) bcHome.addEventListener('click',function(){showCategoryOverview();window.scrollTo(0,0);});
+    if(bcHome) bcHome.addEventListener('click',function(){activeCat='bestseller';var sel=document.getElementById('shop-cat-select');if(sel)sel.value='';showArticles();window.scrollTo(0,0);});
     // Update pills
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')===activeCat);});
+    var sel=document.getElementById('shop-cat-select');if(sel)sel.value=(categories.indexOf(activeCat)!==-1?activeCat:'');
   }
 
   function wireAddButtons(){
+    document.querySelectorAll('[data-qty-dec]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var artnr=btn.getAttribute('data-qty-dec');
+        var qty=document.querySelector('[data-artnr-qty="'+artnr+'"]');
+        if(!qty) return;
+        qty.value=Math.max(1,(parseInt(qty.value,10)||1)-1);
+      });
+    });
+    document.querySelectorAll('[data-qty-inc]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var artnr=btn.getAttribute('data-qty-inc');
+        var qty=document.querySelector('[data-artnr-qty="'+artnr+'"]');
+        if(!qty) return;
+        qty.value=Math.min(99,(parseInt(qty.value,10)||1)+1);
+      });
+    });
     document.querySelectorAll('[data-add]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var artnr=btn.getAttribute('data-add');
@@ -843,7 +877,7 @@
         var menge=1;
         if(article.gewichtsware){
           var inp=document.querySelector('[data-artnr-wt="'+artnr+'"]');
-          menge=inp?parseFloat(inp.value)||0.5:0.5;
+          menge=inp?Math.round((parseFloat(inp.value)||500)/1000*1000)/1000:0.5;
         } else {
           var qty=document.querySelector('[data-artnr-qty="'+artnr+'"]');
           menge=qty?parseInt(qty.value,10)||1:1;
@@ -852,7 +886,6 @@
       });
     });
   }
-
   function setArticleImage(artnr,src){
     imageCache[artnr]=src;
     var el=document.getElementById('simg-'+artnr);
@@ -865,64 +898,82 @@
     }
   }
 
-  function loadWerbebilderFallback(items){
-    var keys=[];
-    var keyToArticle={};
+  async function loadWerbebilderFallback(items,runId){
+    var infos=[];
     items.forEach(function(a){
       if(!a||!a.artikelnummer||imageCache[a.artikelnummer]) return;
-      [a.artikelnummer,a.strichcode].forEach(function(k){
-        k=(k||'').toString().trim();
-        if(k&&keys.indexOf(k)===-1){keys.push(k);keyToArticle[k]=a.artikelnummer;}
-      });
+      infos.push({artikelnummer:a.artikelnummer,edeka_nr:(a.edeka_nr||'').toString().trim(),strichcode:(a.strichcode||'').toString().trim()});
     });
-    if(!keys.length) return;
-    for(var i=0;i<keys.length;i+=30){
-      var batch=keys.slice(i,i+30);
-      fetch(API+'/werbebilder?sharepoint=1&artnrs='+encodeURIComponent(batch.join(',')))
-        .then(function(r){return r.json();})
-        .then(function(data){
-          (data||[]).forEach(function(r){
-            var foundKey=(r.dl_artikelnummer||'').toString().trim();
-            var targetArtNr=keyToArticle[foundKey]||foundKey;
-            if(targetArtNr&&r.dl_bild_base64){
-              var src=r.dl_bild_base64.startsWith('data:')?r.dl_bild_base64:'data:image/jpeg;base64,'+r.dl_bild_base64;
-              setArticleImage(targetArtNr,src);
-            }
-          });
-        }).catch(function(err){console.warn('[Shop] Werbebilder fetch error',err);});
+    if(!infos.length) return;
+    var batchSize=24;
+    for(var i=0;i<infos.length;i+=batchSize){
+      if(runId!==imageLoadRun) return;
+      var batch=infos.slice(i,i+batchSize).filter(function(info){return !imageCache[info.artikelnummer];});
+      if(!batch.length) continue;
+      try{
+        var r=await fetch(API+'/werbebilder?sharepoint=1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({articles:batch})});
+        var data=await r.json();
+        (data||[]).forEach(function(row){
+          var artNr=(row.dl_artikelnummer||'').toString().trim();
+          if(!artNr) return;
+          var src=row.dl_download_url||'';
+          if(!src&&row.dl_bild_base64){
+            src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
+          }
+          if(src&&runId===imageLoadRun) setArticleImage(artNr,src);
+        });
+      }catch(err){
+        console.warn('[Shop] Werbebilder batch fetch error',err);
+      }
+      await new Promise(function(resolve){setTimeout(resolve,20);});
     }
   }
 
-
-  function tryStaticBarcodeImage(article,done){
-    var barcode=(article.strichcode||'').toString().trim();
-    if(!barcode){done(false);return;}
-    var exts=['jpg','jpeg','png','webp'];
+  function tryStaticBarcodeImage(article,done,runId){
+    var codes=[];
+    var ek=(article.edeka_nr||'').toString().trim();
+    var sc=(article.strichcode||'').toString().trim();
+    if(ek) codes.push(ek);
+    if(sc&&sc!==ek) codes.push(sc);
+    if(!codes.length){done(false);return;}
+    var attempts=[];
+    codes.forEach(function(c){['jpg','png'].forEach(function(e){attempts.push(c+'.'+e);});});
     var idx=0;
     function next(){
-      if(idx>=exts.length){done(false);return;}
-      var src='/images/sortiment/'+encodeURIComponent(barcode)+'.'+exts[idx++];
+      if(idx>=attempts.length){done(false);return;}
+      var src='/images/sortiment/'+encodeURIComponent(attempts[idx++]);
       var img=new Image();
-      img.onload=function(){setArticleImage(article.artikelnummer,src);done(true);};
+      img.onload=function(){if(runId===imageLoadRun)setArticleImage(article.artikelnummer,src);done(true);};
       img.onerror=next;
       img.src=src;
     }
     next();
   }
 
-  function loadImages(items){
-    var pending=[];
+  async function loadImages(items){
+    var runId=++imageLoadRun;
+    var toCheck=[];
     items.forEach(function(a){
       if(!a||!a.artikelnummer) return;
       if(imageCache[a.artikelnummer]){setArticleImage(a.artikelnummer,imageCache[a.artikelnummer]);return;}
-      pending.push(new Promise(function(resolve){
-        tryStaticBarcodeImage(a,function(found){resolve({article:a,found:found});});
-      }));
+      toCheck.push(a);
     });
-    if(!pending.length) return;
-    Promise.all(pending).then(function(results){
-      loadWerbebilderFallback(results.filter(function(r){return !r.found;}).map(function(r){return r.article;}));
-    });
+    if(!toCheck.length) return;
+    // First batch small (6) for instant above-the-fold images, then 24
+    var sizes=[10,20];
+    var offset=0;
+    for(var s=0;s<sizes.length;s++){
+      var batchSize=sizes[s];
+      var limit=(s===0)?batchSize:toCheck.length;
+      while(offset<limit&&offset<toCheck.length){
+        if(runId!==imageLoadRun) return;
+        var end=Math.min(offset+batchSize,toCheck.length);
+        var batch=toCheck.slice(offset,end);
+        offset=end;
+        // Skip static check, go straight to SharePoint API (faster, avoids 404 cascades)
+        await loadWerbebilderFallback(batch,runId);
+      }
+    }
   }
 
   function toggleCart(open){
@@ -943,22 +994,39 @@
     .then(function(r){return r.json();})
     .then(function(data){
       if(!data.success){document.getElementById('shop-loading').innerHTML='<p>Fehler beim Laden</p>';return;}
-      allArticles=data.articles||[];
-      bestsellers=data.bestsellers||[];
-      categories=buildShopGroups();
-
-      // Build category pills
-      var catsEl=document.getElementById('shop-cats');
+      // 1) Populate categories dropdown immediately
+      categories=data.categories||[];
+      var catSelect=document.getElementById('shop-cat-select');
+      catSelect.innerHTML='<option value="">Warengruppe wählen…</option>';
       categories.forEach(function(cat){
-        var pill=document.createElement('span');
-        pill.className='shop-cat-pill';
-        pill.setAttribute('data-cat',cat);
-        pill.textContent=cat;
-        catsEl.appendChild(pill);
+        var opt=document.createElement('option');
+        opt.value=cat;
+        opt.textContent=cat;
+        catSelect.appendChild(opt);
       });
 
-      ensurePreviousPill();
-      loadPreviousArticles().then(showCategoryOverview);
+      // 2) Process articles
+      allArticles=data.articles||[];
+      allArticles.forEach(function(a){a._search=((a.bezeichnung||'')+' '+(a.warengruppe||'')+' '+(a.artikelnummer||'')+' '+(a.strichcode||'')).toLowerCase();});
+      bestsellers=data.bestsellers||[];
+
+      // Update category counts now that articles are available
+      categories.forEach(function(cat){
+        var opt=catSelect.querySelector('option[value="'+cat+'"]');
+        if(opt) opt.textContent=cat+' ('+countByCat(cat)+')';
+      });
+
+      // 3) Show default view: "Schon bestellt" if logged in, else category overview
+      loadPreviousArticles().then(function(prev){
+        ensurePreviousPill();
+        if(prev&&prev.length){
+          activeCat='previous';
+          showArticles();
+        } else {
+          activeCat='bestseller';
+          showCategoryOverview();
+        }
+      });
     })
     .catch(function(e){
       document.getElementById('shop-loading').innerHTML='<p>Fehler: '+esc(e.message)+'</p>';
@@ -984,16 +1052,21 @@
   document.getElementById('register-submit').addEventListener('click',doRegister);
   document.getElementById('login-passwort').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
-  // Category pills
+  // Category selector
   document.getElementById('shop-cats').addEventListener('click',function(e){
     var pill=e.target.closest('.shop-cat-pill');
     if(!pill) return;
-    var cat=pill.getAttribute('data-cat');
-    activeCat=cat;
+    activeCat=pill.getAttribute('data-cat');
+    document.getElementById('shop-cat-select').value='';
+    document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')===activeCat);});
+    showArticles();
+    window.scrollTo(0,0);
+  });
+  document.getElementById('shop-cat-select').addEventListener('change',function(){
+    if(!this.value) return;
+    activeCat=this.value;
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.remove('active');});
-    pill.classList.add('active');
-    if(cat==='all'){showCategoryOverview();}
-    else{showArticles();}
+    showArticles();
     window.scrollTo(0,0);
   });
 
