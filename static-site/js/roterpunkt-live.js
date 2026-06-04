@@ -1,6 +1,7 @@
 /* Live Roter Punkt - loads from /api/roterpunkt */
 (function(){
   var API='/api';
+  var DISC_MIN=5, DISC_MAX=60;
   var wrap=document.getElementById('roterpunkt-live');
   if(!wrap)return;
   wrap.innerHTML='<p style="text-align:center;padding:40px;color:#888">Roter-Punkt-Artikel werden geladen&hellip;</p>';
@@ -41,7 +42,7 @@
 
       var rows='';
       items.forEach(function(item){
-        if(item.discount<5||item.discount>60) return;
+        if(item.discount<DISC_MIN||item.discount>DISC_MAX) return;
         var saving=item.uvp&&item.uvp>0&&item.vk>0?(item.uvp-item.vk):0;
         var mengeHtml=item.menge?'<span class="rp-menge">'+esc(item.menge)+'</span>':'';
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'">';

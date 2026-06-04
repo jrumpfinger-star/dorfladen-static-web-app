@@ -1,6 +1,7 @@
 /* Live Preisliste - loads from /api/preisliste */
 (function(){
   var API='/api/preisliste';
+  var DISC_MIN=5, DISC_MAX=60;
   var wrap=document.getElementById('preisliste-live');
   if(!wrap)return;
   wrap.innerHTML='<p style="text-align:center;padding:40px;color:#888">Preisliste wird geladen&hellip;</p>';
@@ -48,7 +49,7 @@
         if(item.uvp && item.uvp > 0 && item.vk > 0 && !disc){
           disc = Math.round((item.uvp - item.vk) / item.uvp * 100);
         }
-        var is_rp = item.rp && disc >= 5 && disc <= 60;
+        var is_rp = item.rp && disc >= DISC_MIN && disc <= DISC_MAX;
         if(is_rp){
           cls='so-row-rp';
           wgRp++;
@@ -147,7 +148,7 @@
         var savingsHtml='';
         var disc=it.discount||0;
         if(it.uvp&&it.uvp>0&&it.vk>0&&!disc) disc=Math.round((it.uvp-it.vk)/it.uvp*100);
-        if(it.uvp&&it.uvp>0&&disc>5&&disc<=60){
+        if(it.uvp&&it.uvp>0&&disc>DISC_MIN&&disc<=DISC_MAX){
           var saving=(it.uvp-it.vk);
           savingsHtml='<div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
           savingsHtml+='<span style="background:#c62828;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700">-'+disc+'%</span>';
@@ -157,7 +158,7 @@
         }
         var badges='';
         if(it.angebot) badges+='<span style="background:#ff6f00;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700;margin-right:4px">\u2B50 Angebot</span>';
-        if(disc>5&&disc<=60) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
+        if(disc>DISC_MIN&&disc<=DISC_MAX) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
         var badgesHtml=badges?'<div style="margin-top:3px">'+badges+'</div>':'';
         h+='<tr><td class="so-td-name">'+esc(it.bezeichnung)+'<br><small style="color:#888">'+esc(m.wg)+'</small>'+badgesHtml+savingsHtml+'</td>';
         var preisCell=fmtPrice(preis)+'&nbsp;&euro;';

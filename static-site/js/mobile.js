@@ -7,6 +7,7 @@
   if(window.innerWidth>768) return; // Skip on desktop
 
   var API_BASE=window.API_BASE||'/api';
+  var DISC_MIN=5, DISC_MAX=60;
 
   /* === POPUP OPEN / CLOSE === */
   function mobLockScroll(){document.body.style.overflow='hidden';document.body.style.position='fixed';document.body.style.width='100%';document.body.style.top='-'+window.scrollY+'px';}
@@ -496,7 +497,7 @@
           if(item.uvp && item.uvp > 0 && item.vk > 0 && !disc){
             disc = Math.round((item.uvp - item.vk) / item.uvp * 100);
           }
-          var is_rp = item.rp && disc >= 5 && disc <= 60;
+          var is_rp = item.rp && disc >= DISC_MIN && disc <= DISC_MAX;
           var cls=is_rp?'mob-pl-rp':'';
           if(item.angebot) cls+=' mob-pl-ang';
           var priceHtml=fmtP(item.vk)+' €';
@@ -602,7 +603,7 @@
         var disc=m.discount||0;
         if(m.uvp&&m.uvp>0&&m.vk>0&&!disc) disc=Math.round((m.uvp-m.vk)/m.uvp*100);
         var savingsHtml='';
-        if(m.uvp&&m.uvp>0&&disc>5&&disc<=70){
+        if(m.uvp&&m.uvp>0&&disc>DISC_MIN&&disc<=DISC_MAX){
           var saving=(m.uvp-m.vk);
           savingsHtml='<div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
           savingsHtml+='<span style="background:#c62828;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700">-'+disc+'%</span>';
@@ -612,7 +613,7 @@
         }
         var badges='';
         if(m.angebot) badges+='<span style="background:#ff6f00;color:#fff;padding:1px 6px;border-radius:6px;font-size:.7rem;font-weight:700;margin-right:4px">\u2B50 Angebot</span>';
-        if(disc>5&&disc<=70) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.7rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
+        if(disc>DISC_MIN&&disc<=DISC_MAX) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.7rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
         var badgesHtml=badges?'<div style="margin-top:3px">'+badges+'</div>':'';
         h+='<div style="background:#fff;border-radius:6px;padding:10px;margin-top:6px;display:flex;justify-content:space-between;align-items:start">';
         h+='<div><b>'+esc(m.bezeichnung)+'</b><br><small style="color:#888">'+esc(m.wg)+'</small>'+badgesHtml+savingsHtml+'</div>';
