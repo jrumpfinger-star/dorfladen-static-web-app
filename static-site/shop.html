@@ -973,8 +973,15 @@
           html+='<div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><span>Bestellt: '+esc(o.bestelldatum)+'</span><span>Abholung: '+esc(o.abholdatum)+'</span></div>';
           html+='<div style="font-weight:700;margin-bottom:4px">'+fmtP(o.gesamtsumme)+' EUR (ca.)</div>';
           if(o.positionen&&o.positionen.length){
-            html+='<div style="font-size:12px;color:#6b7280">';
-            o.positionen.forEach(function(p){html+=esc(p.bezeichnung)+' ('+p.menge+' '+esc(p.einheit)+') - ';});
+            html+='<div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fff">';
+            o.positionen.forEach(function(p){
+              var preis=p.positionspreis!=null?fmtP(p.positionspreis)+' EUR':(p.einzelpreis!=null?fmtP((Number(p.einzelpreis)||0)*(Number(p.menge)||0))+' EUR':'');
+              html+='<div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #f3f4f6">';
+              html+='<div><div style="font-weight:700;color:#1f2937">'+esc(p.bezeichnung)+'</div><div style="font-size:11px;color:#6b7280">'+esc(p.artikelnummer||p.strichcode||'')+'</div></div>';
+              html+='<div style="font-size:12px;color:#374151;white-space:nowrap">'+esc(p.menge)+' '+esc(p.einheit||'')+'</div>';
+              html+='<div style="font-size:12px;font-weight:700;color:#2e7d4f;white-space:nowrap;text-align:right">'+preis+'</div>';
+              html+='</div>';
+            });
             html+='</div>';
           }
           if(canCancel){
