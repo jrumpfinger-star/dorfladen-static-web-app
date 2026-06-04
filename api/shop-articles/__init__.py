@@ -176,16 +176,21 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         base_url = _base_url()
         headers = _headers(token)
 
-        # Fetch all articles (with bestellbar flag if available)
-        select_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung,cr5d4_tableid"
-        # Try to include bestellbar field
-        url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields},cr5d4_bestellbar,cr5d4_bestelleinheit&$orderby=cr5d4_artikelbezeichnung asc"
-        items = _fetch_all_pages(url, headers)
-
-        # If bestellbar field doesn't exist yet, fetch without it
-        if not items:
+        # Fetch all articles. Some Dataverse environments do not have the extended quantity/order fields yet.
+        base_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_tableid"
+        extended_fields = base_fields + ",cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung"
+        select_attempts = [
+            extended_fields + ",cr5d4_bestellbar,cr5d4_bestelleinheit",
+            extended_fields,
+            base_fields + ",cr5d4_bestellbar,cr5d4_bestelleinheit",
+            base_fields,
+        ]
+        items = []
+        for select_fields in select_attempts:
             url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$orderby=cr5d4_artikelbezeichnung asc"
             items = _fetch_all_pages(url, headers)
+            if items:
+                break
 
         # Load Angebote
         angebote_map = _load_angebote(base_url, headers)
@@ -209,19 +214,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if not bezeichnung or preis <= 0:
                 continue
 
-            # Skip old articles (not sold in 6 months) unless explicitly marked bestellbar
-            if bestellbar is not None and not bestellbar:
-                continue
-            if bestellbar is None:
-                # No bestellbar field yet: use recency filter
-                if not letzter_verkauf:
-                    continue
-                try:
-                    lv = datetime.fromisoformat(letzter_verkauf.replace("Z", "+00:00")).replace(tzinfo=None)
-                    if lv < cutoff_date:
-                        continue
-                except:
-                    continue
+            # Keep shop responsive even when bestellbar flags are not maintained in Dataverse.
+            # Articles are filtered by valid name and price; optional recency/bestellbar fields must not hide the full assortment.
 
             # Calculate price/unit
             mengentyp = item.get("cr5d4_mengentyp")

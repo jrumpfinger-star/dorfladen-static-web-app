@@ -380,7 +380,7 @@
     n=n.replace(/\s+Bis\s+\d{4}.*$/i,'');
     n=n.trim();
     if(!n) return 'Sonstiges';
-    var k=n.toLowerCase().replace(/?/g,'ae').replace(/?/g,'oe').replace(/?/g,'ue').replace(/?/g,'ss');
+    var k=n.toLowerCase().replace(/\u00e4/g,'ae').replace(/\u00f6/g,'oe').replace(/\u00fc/g,'ue').replace(/\u00df/g,'ss');
     if(k==='mopro') return 'Molkereiprodukte';
     if(k==='obst und gemuese stueck'||k==='waage gemuese obst') return 'Obst und Gemuese';
     return n;
