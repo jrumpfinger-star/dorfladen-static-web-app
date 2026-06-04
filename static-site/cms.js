@@ -8985,6 +8985,7 @@
       html+='<td style="padding:8px;text-align:right;font-weight:700">'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td>';
       html+='<td style="padding:8px;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+col+'">'+esc(o.status_text)+'</span></td>';
       html+='<td style="padding:8px;text-align:center">';
+      if(o.status<=1) html+='<button class="cms-btn cms-btn-sm" style="background:#fef3c7;color:#92400e" onclick="cmsOpenPack(\''+o.id+'\')">📦 Packen</button> ';
       if(o.status===0) html+='<button class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af" onclick="cmsOrderStatus(\''+o.id+'\',1,\''+esc(o.bestellnummer)+'\')">→ Bearbeiten</button>';
       if(o.status===1) html+='<button class="cms-btn cms-btn-sm" style="background:#d1fae5;color:#065f46" onclick="cmsOrderStatus(\''+o.id+'\',2,\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\',\''+esc(o.kunde_name)+'\',\''+esc(o.abholdatum)+'\')">✓ Abholbereit</button>';
       if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')">📦 Abgeholt</button>';
@@ -9027,6 +9028,18 @@
         } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
       })
       .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+  };
+
+  // ── Pack-Seite öffnen ──
+  window.cmsOpenPack=function(orderId){
+    // Set status to "In Bearbeitung" if still "Neu"
+    var o=_ordersData.find(function(x){return x.id===orderId;});
+    if(o&&o.status===0){
+      fetch(API_BASE+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,status:1})})
+        .then(function(){if(o){o.status=1;o.status_text='In Bearbeitung';}cmsRenderOrders();})
+        .catch(function(){});
+    }
+    window.open('/pack.html?id='+encodeURIComponent(orderId),'_blank');
   };
 
   // ── Kommissionierliste Drucken ──

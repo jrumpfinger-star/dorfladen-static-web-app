@@ -371,7 +371,7 @@
   function addToCart(article,menge){
     var existing=cart.find(function(c){return c.artikelnummer===article.artikelnummer;});
     if(existing){existing.menge+=menge;}
-    else{cart.push({artikelnummer:article.artikelnummer,bezeichnung:article.bezeichnung,vk:article.vk,einheit:article.einheit,menge:menge,gewichtsware:article.gewichtsware});}
+    else{cart.push({artikelnummer:article.artikelnummer,bezeichnung:article.bezeichnung,vk:article.vk,einheit:article.einheit,menge:menge,gewichtsware:article.gewichtsware,strichcode:article.strichcode||''});}
     saveCart();updateCartBadge();renderCart();
     // Toast
     showToast('✓ '+article.bezeichnung+' hinzugefügt');
@@ -516,7 +516,7 @@
     if(!cart.length){showToast('Warenkorb ist leer');return;}
     var note=document.getElementById('shop-cart-note').value.trim();
     var positionen=cart.map(function(c){
-      return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.vk};
+      return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.vk,strichcode:c.strichcode||''};
     });
     var btn=document.getElementById('shop-checkout-btn');
     btn.disabled=true;btn.textContent='Wird bestellt…';

@@ -156,13 +156,17 @@ def _handle_post(req, dv_token, base_url, headers):
 
         positionspreis = round(einzelpreis * menge, 2)
         gesamtsumme += positionspreis
+        strichcode = (pos.get("strichcode") or "").strip()
         clean_positionen.append({
             "artikelnummer": artnr,
             "bezeichnung": bezeichnung,
             "menge": menge,
             "einheit": einheit,
             "einzelpreis": einzelpreis,
-            "positionspreis": positionspreis
+            "positionspreis": positionspreis,
+            "strichcode": strichcode,
+            "gepackt": False,
+            "gepackt_menge": 0
         })
 
     if not clean_positionen:
@@ -232,9 +236,49 @@ def _handle_get(req, dv_token, base_url, headers):
     mode = req.params.get("mode", "")
     user = _verify_jwt(req)
 
+    if mode == "pack":
+        # Pack mode: single order for packing
+        order_id = req.params.get("id", "")
+        if not order_id:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Bestell-ID erforderlich"}),
+                status_code=400, headers=get_cors_headers()
+            )
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
+        try:
+            r = requests.get(url, headers=headers, timeout=30)
+            if r.status_code == 200:
+                item = r.json()
+                positionen = json.loads(item.get("dl_positionen_json", "[]"))
+                pack_data = json.loads(item.get("dl_pack_json") or "{}")
+                return func.HttpResponse(
+                    json.dumps({"success": True, "order": {
+                        "id": item.get("dl_shopbestellungid", ""),
+                        "bestellnummer": item.get("dl_bestellnummer", ""),
+                        "kunde_name": item.get("dl_kunde_name", ""),
+                        "kunde_email": item.get("dl_kunde_email", ""),
+                        "abholdatum": item.get("dl_abholdatum", ""),
+                        "status": item.get("dl_status", 0),
+                        "gesamtsumme": item.get("dl_gesamtsumme", 0),
+                        "anmerkungen": item.get("dl_anmerkungen", ""),
+                        "positionen": positionen,
+                        "pack_data": pack_data
+                    }}, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers()
+                )
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}),
+                status_code=r.status_code, headers=get_cors_headers()
+            )
+        except Exception as e:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": str(e)}),
+                status_code=500, headers=get_cors_headers()
+            )
+
     if mode == "cms":
         # CMS mode: return all orders (no JWT required for now, add admin check later)
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=200"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json&$orderby=createdon desc&$top=200"
     elif user:
         # Customer mode: own orders
         email = user["email"]
@@ -297,14 +341,28 @@ def _handle_patch(req, dv_token, base_url, headers):
     order_id = (body.get("id") or "").strip()
     new_status = body.get("status")
 
-    if not order_id or new_status is None:
+    pack_json_input = body.get("pack_json")
+
+    if not order_id or (new_status is None and pack_json_input is None):
         return func.HttpResponse(
             json.dumps({"success": False, "error": "id und status erforderlich"}),
             status_code=400, headers=get_cors_headers()
         )
 
+    # Pack data update
+    pack_json = body.get("pack_json")
+
     patch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})"
-    patch_payload = {"dl_status": new_status}
+    patch_payload = {}
+    if new_status is not None:
+        patch_payload["dl_status"] = new_status
+    if pack_json is not None:
+        patch_payload["dl_pack_json"] = json.dumps(pack_json, ensure_ascii=False) if isinstance(pack_json, dict) else str(pack_json)
+    if not patch_payload:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "Nichts zu aktualisieren"}),
+            status_code=400, headers=get_cors_headers()
+        )
     patch_headers = {**headers, "If-Match": "*"}
 
     try:

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dorfladen – Bestellung packen</title>
+  <meta name="theme-color" content="#1e3a2f">
+  <style>
+    :root{--pk-green:#1e3a2f;--pk-green-light:#d1fae5;--pk-orange:#ea580c;--pk-red:#dc2626;--pk-blue:#2563eb;--pk-gray:#f3f4f6;--pk-border:#e5e7eb;--pk-text:#1f2937;--pk-muted:#6b7280}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:var(--pk-text);-webkit-font-smoothing:antialiased;min-height:100vh}
+
+    /* ── Header ── */
+    .pk-header{position:sticky;top:0;z-index:100;background:var(--pk-green);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    .pk-header h1{font-size:16px;font-weight:700;flex:1}
+    .pk-header small{font-size:11px;opacity:.8;display:block}
+    .pk-header-btn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px}
+    .pk-header-btn:hover{background:rgba(255,255,255,.25)}
+
+    /* ── Progress Bar ── */
+    .pk-progress{background:#fff;padding:12px 16px;border-bottom:1px solid var(--pk-border)}
+    .pk-progress-bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:6px}
+    .pk-progress-fill{height:100%;background:linear-gradient(90deg,#10b981,#059669);border-radius:4px;transition:width .4s ease}
+    .pk-progress-text{font-size:12px;color:var(--pk-muted);display:flex;justify-content:space-between}
+    .pk-progress-text strong{color:var(--pk-text)}
+
+    /* ── Order Info ── */
+    .pk-info{background:#fff;padding:12px 16px;border-bottom:1px solid var(--pk-border);display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px}
+    .pk-info-item{display:flex;flex-direction:column;gap:2px}
+    .pk-info-label{color:var(--pk-muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+    .pk-info-val{font-weight:600;font-size:13px}
+    .pk-note{grid-column:1/-1;background:#fef3c7;padding:8px 10px;border-radius:6px;font-size:12px;color:#92400e;font-style:italic}
+
+    /* ── Scanner Section ── */
+    .pk-scanner{background:#fff;padding:12px 16px;border-bottom:1px solid var(--pk-border)}
+    .pk-scanner-title{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .pk-scanner-row{display:flex;gap:8px}
+    .pk-scanner-input{flex:1;padding:10px 12px;border:2px solid var(--pk-border);border-radius:8px;font-size:15px;font-family:monospace;outline:none;transition:border-color .2s}
+    .pk-scanner-input:focus{border-color:var(--pk-blue)}
+    .pk-scanner-input.success{border-color:#10b981;background:#f0fdf4}
+    .pk-scanner-input.error{border-color:var(--pk-red);background:#fef2f2}
+    .pk-scan-btn{padding:10px 16px;border:none;border-radius:8px;background:var(--pk-blue);color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
+    .pk-scan-btn:hover{background:#1d4ed8}
+    .pk-cam-btn{padding:10px 14px;border:none;border-radius:8px;background:#7c3aed;color:#fff;font-size:16px;cursor:pointer}
+    .pk-cam-btn:hover{background:#6d28d9}
+    .pk-scanner-feedback{font-size:12px;margin-top:6px;min-height:18px;font-weight:600}
+    .pk-scanner-feedback.ok{color:#059669}
+    .pk-scanner-feedback.err{color:var(--pk-red)}
+
+    /* ── Camera Overlay ── */
+    .pk-cam-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center}
+    .pk-cam-overlay.open{display:flex}
+    .pk-cam-video{width:90%;max-width:400px;border-radius:12px;border:3px solid #fff}
+    .pk-cam-hint{color:#fff;font-size:14px;margin-top:12px;text-align:center}
+    .pk-cam-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:44px;height:44px;border-radius:22px;cursor:pointer}
+    .pk-cam-target{position:absolute;width:70%;max-width:350px;height:100px;border:2px dashed rgba(255,255,255,.5);border-radius:8px;pointer-events:none}
+
+    /* ── Item List ── */
+    .pk-items{padding:8px 16px 100px}
+    .pk-item{background:#fff;border:1px solid var(--pk-border);border-radius:10px;margin-bottom:8px;overflow:hidden;transition:all .2s}
+    .pk-item.packed{border-color:#10b981;background:#f0fdf4}
+    .pk-item.packed .pk-item-check{background:#10b981;color:#fff;border-color:#10b981}
+    .pk-item-row{display:flex;align-items:center;gap:10px;padding:12px}
+    .pk-item-check{width:36px;height:36px;border:2px solid #d1d5db;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;transition:all .15s;background:#fff}
+    .pk-item-check:hover{border-color:var(--pk-green)}
+    .pk-item-body{flex:1;min-width:0}
+    .pk-item-name{font-size:14px;font-weight:600;line-height:1.3}
+    .pk-item.packed .pk-item-name{text-decoration:line-through;opacity:.6}
+    .pk-item-meta{font-size:11px;color:var(--pk-muted);margin-top:2px}
+    .pk-item-barcode{font-family:monospace;font-size:11px;color:var(--pk-blue);background:#eff6ff;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:2px}
+    .pk-item-qty{text-align:right;flex-shrink:0}
+    .pk-item-qty-val{font-size:18px;font-weight:700}
+    .pk-item-qty-unit{font-size:11px;color:var(--pk-muted)}
+    .pk-item-weight{display:flex;align-items:center;gap:4px;margin-top:4px}
+    .pk-item-weight input{width:60px;padding:4px 6px;border:1px solid var(--pk-border);border-radius:6px;font-size:13px;text-align:center;font-family:inherit}
+    .pk-item-weight span{font-size:11px;color:var(--pk-muted)}
+
+    /* ── Bottom Action Bar ── */
+    .pk-actions{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--pk-border);padding:12px 16px;display:flex;gap:8px;z-index:50;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+    .pk-action-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+    .pk-btn-save{background:#f3f4f6;color:var(--pk-text)}
+    .pk-btn-save:hover{background:#e5e7eb}
+    .pk-btn-kasse{background:var(--pk-orange);color:#fff}
+    .pk-btn-kasse:hover{background:#c2410c}
+    .pk-btn-done{background:var(--pk-green);color:#fff}
+    .pk-btn-done:hover{background:#15352c}
+    .pk-btn-done:disabled{background:#ccc;cursor:not-allowed}
+
+    /* ── Kassen-Modus ── */
+    .pk-kasse-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+    .pk-kasse-overlay.open{display:flex}
+    .pk-kasse-modal{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+    .pk-kasse-header{padding:16px 20px;border-bottom:1px solid var(--pk-border);display:flex;align-items:center;justify-content:space-between}
+    .pk-kasse-header h2{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .pk-kasse-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--pk-muted)}
+    .pk-kasse-body{padding:16px 20px}
+    .pk-kasse-hint{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e40af;margin-bottom:12px}
+    .pk-kasse-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6}
+    .pk-kasse-barcode{font-family:monospace;font-size:16px;font-weight:700;letter-spacing:1px;background:#f8fafc;padding:6px 10px;border-radius:6px;border:1px solid var(--pk-border);cursor:pointer;transition:background .2s}
+    .pk-kasse-barcode:hover{background:#e0f2fe}
+    .pk-kasse-barcode.copied{background:#d1fae5;border-color:#10b981}
+    .pk-kasse-info{flex:1;font-size:12px}
+    .pk-kasse-info strong{display:block;font-size:13px}
+    .pk-kasse-qty{font-weight:700;font-size:14px;white-space:nowrap}
+    .pk-kasse-footer{padding:12px 20px;border-top:1px solid var(--pk-border);display:flex;gap:8px}
+    .pk-kasse-footer button{flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+    .pk-kasse-copy-all{background:var(--pk-blue);color:#fff}
+    .pk-kasse-print{background:var(--pk-green);color:#fff}
+
+    /* ── Toast ── */
+    .pk-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+    .pk-toast.show{opacity:1}
+
+    /* ── Loading ── */
+    .pk-loading{text-align:center;padding:60px 20px;color:var(--pk-muted)}
+    .pk-loading .spinner{display:inline-block;width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--pk-green);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Print ── */
+    @media print{
+      .pk-header,.pk-scanner,.pk-actions,.pk-cam-overlay,.pk-kasse-overlay{display:none!important}
+      body{background:#fff;font-size:12px}
+      .pk-items{padding:0}
+      .pk-item{break-inside:avoid;page-break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="pk-header">
+  <div>
+    <h1>📦 Bestellung packen</h1>
+    <small id="pk-order-nr">Wird geladen…</small>
+  </div>
+  <button class="pk-header-btn" id="pk-back-btn">← Zurück</button>
+</div>
+
+<!-- ── Progress ── -->
+<div class="pk-progress">
+  <div class="pk-progress-bar"><div class="pk-progress-fill" id="pk-progress-fill" style="width:0%"></div></div>
+  <div class="pk-progress-text">
+    <span><strong id="pk-packed-count">0</strong> von <strong id="pk-total-count">0</strong> gepackt</span>
+    <span id="pk-progress-pct">0%</span>
+  </div>
+</div>
+
+<!-- ── Order Info ── -->
+<div class="pk-info" id="pk-info">
+  <div class="pk-info-item"><span class="pk-info-label">Kunde</span><span class="pk-info-val" id="pk-kunde">—</span></div>
+  <div class="pk-info-item"><span class="pk-info-label">Abholung</span><span class="pk-info-val" id="pk-abhol">—</span></div>
+  <div class="pk-info-item"><span class="pk-info-label">Summe (ca.)</span><span class="pk-info-val" id="pk-summe">—</span></div>
+  <div class="pk-info-item"><span class="pk-info-label">Positionen</span><span class="pk-info-val" id="pk-pos-count">—</span></div>
+</div>
+
+<!-- ── Scanner ── -->
+<div class="pk-scanner">
+  <div class="pk-scanner-title">📷 Barcode scannen oder eingeben</div>
+  <div class="pk-scanner-row">
+    <input type="text" class="pk-scanner-input" id="pk-barcode-input" placeholder="Barcode hier scannen…" inputmode="numeric" autocomplete="off">
+    <button class="pk-scan-btn" id="pk-scan-btn">✓ Scan</button>
+    <button class="pk-cam-btn" id="pk-cam-btn" title="Kamera-Scanner">📷</button>
+  </div>
+  <div class="pk-scanner-feedback" id="pk-scan-feedback"></div>
+</div>
+
+<!-- ── Items ── -->
+<div class="pk-items" id="pk-items">
+  <div class="pk-loading"><div class="spinner"></div><p style="margin-top:12px">Bestellung wird geladen…</p></div>
+</div>
+
+<!-- ── Bottom Actions ── -->
+<div class="pk-actions">
+  <button class="pk-action-btn pk-btn-save" id="pk-save-btn">💾 Speichern</button>
+  <button class="pk-action-btn pk-btn-kasse" id="pk-kasse-btn">🏪 Kasse</button>
+  <button class="pk-action-btn pk-btn-done" id="pk-done-btn" disabled>✅ Fertig</button>
+</div>
+
+<!-- ── Camera Overlay ── -->
+<div class="pk-cam-overlay" id="pk-cam-overlay">
+  <button class="pk-cam-close" id="pk-cam-close">✕</button>
+  <video class="pk-cam-video" id="pk-cam-video" autoplay playsinline></video>
+  <div class="pk-cam-target"></div>
+  <div class="pk-cam-hint">Barcode in den Rahmen halten</div>
+</div>
+
+<!-- ── Kassen-Modus ── -->
+<div class="pk-kasse-overlay" id="pk-kasse-overlay">
+  <div class="pk-kasse-modal">
+    <div class="pk-kasse-header">
+      <h2>🏪 Kassen-Übergabe</h2>
+      <button class="pk-kasse-close" id="pk-kasse-close">✕</button>
+    </div>
+    <div class="pk-kasse-body" id="pk-kasse-body">
+      <div class="pk-kasse-hint">
+        💡 <strong>Tipp:</strong> Klicken Sie auf einen Barcode zum Kopieren.<br>
+        Oder nutzen Sie "Alle kopieren" um die gesamte Barcode-Liste in die Zwischenablage zu kopieren und im Kassensystem einzufügen.
+      </div>
+    </div>
+    <div class="pk-kasse-footer">
+      <button class="pk-kasse-copy-all" id="pk-kasse-copy">📋 Alle kopieren</button>
+      <button class="pk-kasse-print" id="pk-kasse-print">🖨 Drucken</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="pk-toast" id="pk-toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var API=window.location.hostname==='localhost'?'http://localhost:7071/api':'/api';
+
+  // ── State ──
+  var order=null;
+  var packState={}; // {artikelnummer: {gepackt:bool, gepackt_menge:num, scan_zeit:str}}
+  var orderId=new URLSearchParams(window.location.search).get('id')||'';
+
+  // ── Helpers ──
+  function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+  function fmtP(v){return(+v).toFixed(2).replace('.',',');}
+  function toast(msg){
+    var t=document.getElementById('pk-toast');
+    t.textContent=msg;t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show');},2500);
+  }
+
+  // ── Load Order ──
+  function loadOrder(){
+    if(!orderId){
+      document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>⚠️ Keine Bestell-ID angegeben.<br>Bitte über CMS → Bestellungen → Packen starten.</p></div>';
+      return;
+    }
+    fetch(API+'/shop-order?mode=pack&id='+encodeURIComponent(orderId))
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success||!res.order){
+          document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>⚠️ Bestellung nicht gefunden</p></div>';
+          return;
+        }
+        order=res.order;
+        // Restore pack state from server
+        if(order.pack_data&&order.pack_data.items){
+          order.pack_data.items.forEach(function(p){
+            packState[p.artikelnummer]={gepackt:p.gepackt,gepackt_menge:p.gepackt_menge||0,scan_zeit:p.scan_zeit||''};
+          });
+        }
+        renderOrder();
+      })
+      .catch(function(e){
+        document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>⚠️ Fehler: '+esc(e.message)+'</p></div>';
+      });
+  }
+
+  // ── Render ──
+  function renderOrder(){
+    if(!order) return;
+    document.getElementById('pk-order-nr').textContent=order.bestellnummer+' · '+order.kunde_name;
+    document.getElementById('pk-kunde').textContent=order.kunde_name;
+    document.getElementById('pk-abhol').textContent=order.abholdatum;
+    document.getElementById('pk-summe').textContent=fmtP(order.gesamtsumme)+' €';
+    document.getElementById('pk-pos-count').textContent=(order.positionen||[]).length+' Artikel';
+
+    if(order.anmerkungen){
+      var noteDiv=document.createElement('div');
+      noteDiv.className='pk-note';
+      noteDiv.textContent='📝 '+order.anmerkungen;
+      document.getElementById('pk-info').appendChild(noteDiv);
+    }
+
+    renderItems();
+  }
+
+  function renderItems(){
+    var items=order.positionen||[];
+    var html='';
+    items.forEach(function(p,idx){
+      var st=packState[p.artikelnummer];
+      var packed=st&&st.gepackt;
+      var cls=packed?'pk-item packed':'pk-item';
+
+      html+='<div class="'+cls+'" data-idx="'+idx+'" data-artnr="'+esc(p.artikelnummer)+'" data-barcode="'+esc(p.strichcode||'')+'">';
+      html+='<div class="pk-item-row">';
+      html+='<div class="pk-item-check" data-check="'+idx+'">'+(packed?'✓':'')+'</div>';
+      html+='<div class="pk-item-body">';
+      html+='<div class="pk-item-name">'+esc(p.bezeichnung)+'</div>';
+      html+='<div class="pk-item-meta">Art.-Nr: '+esc(p.artikelnummer)+'</div>';
+      if(p.strichcode) html+='<span class="pk-item-barcode">'+esc(p.strichcode)+'</span>';
+      html+='</div>';
+      html+='<div class="pk-item-qty">';
+      html+='<div class="pk-item-qty-val">'+p.menge+'</div>';
+      html+='<div class="pk-item-qty-unit">'+esc(p.einheit)+'</div>';
+      html+='</div>';
+      html+='</div>';
+
+      // Weight input for kg items
+      if(p.einheit==='kg'){
+        var wt=st?st.gepackt_menge:p.menge;
+        html+='<div class="pk-item-weight" style="padding:0 12px 10px 58px">';
+        html+='<span>Tatsächliches Gewicht:</span>';
+        html+='<input type="number" data-weight="'+idx+'" value="'+wt+'" min="0" max="99" step="0.01"> <span>kg</span>';
+        html+='</div>';
+      }
+      html+='</div>';
+    });
+    document.getElementById('pk-items').innerHTML=html;
+    updateProgress();
+    wireEvents();
+  }
+
+  function wireEvents(){
+    // Check/uncheck items
+    document.querySelectorAll('[data-check]').forEach(function(el){
+      el.addEventListener('click',function(){
+        var idx=parseInt(el.getAttribute('data-check'));
+        togglePacked(idx);
+      });
+    });
+    // Weight inputs
+    document.querySelectorAll('[data-weight]').forEach(function(inp){
+      inp.addEventListener('change',function(){
+        var idx=parseInt(inp.getAttribute('data-weight'));
+        var p=order.positionen[idx];
+        if(!p) return;
+        if(!packState[p.artikelnummer]) packState[p.artikelnummer]={gepackt:false,gepackt_menge:0,scan_zeit:''};
+        packState[p.artikelnummer].gepackt_menge=parseFloat(inp.value)||0;
+      });
+    });
+  }
+
+  function togglePacked(idx){
+    var p=order.positionen[idx];
+    if(!p) return;
+    var artnr=p.artikelnummer;
+    if(!packState[artnr]) packState[artnr]={gepackt:false,gepackt_menge:p.menge,scan_zeit:''};
+    packState[artnr].gepackt=!packState[artnr].gepackt;
+    if(packState[artnr].gepackt){
+      packState[artnr].scan_zeit=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      if(!packState[artnr].gepackt_menge) packState[artnr].gepackt_menge=p.menge;
+    }
+    renderItems();
+  }
+
+  function updateProgress(){
+    var items=order.positionen||[];
+    var total=items.length;
+    var packed=0;
+    items.forEach(function(p){
+      if(packState[p.artikelnummer]&&packState[p.artikelnummer].gepackt) packed++;
+    });
+    var pct=total>0?Math.round(packed/total*100):0;
+    document.getElementById('pk-packed-count').textContent=packed;
+    document.getElementById('pk-total-count').textContent=total;
+    document.getElementById('pk-progress-fill').style.width=pct+'%';
+    document.getElementById('pk-progress-pct').textContent=pct+'%';
+
+    var doneBtn=document.getElementById('pk-done-btn');
+    doneBtn.disabled=packed<total;
+  }
+
+  // ── Barcode Scanner (manual input + camera) ──
+  function processScan(barcode){
+    barcode=(barcode||'').trim();
+    var feedback=document.getElementById('pk-scan-feedback');
+    var input=document.getElementById('pk-barcode-input');
+    if(!barcode){feedback.textContent='';feedback.className='pk-scanner-feedback';return;}
+
+    // Find matching item
+    var found=false;
+    (order.positionen||[]).forEach(function(p,idx){
+      if(p.strichcode===barcode||p.artikelnummer===barcode){
+        if(!packState[p.artikelnummer]||!packState[p.artikelnummer].gepackt){
+          togglePacked(idx);
+          feedback.textContent='✓ '+p.bezeichnung+' gepackt!';
+          feedback.className='pk-scanner-feedback ok';
+          input.className='pk-scanner-input success';
+          found=true;
+          toast('✓ '+p.bezeichnung);
+        } else {
+          feedback.textContent='ℹ '+p.bezeichnung+' bereits gepackt';
+          feedback.className='pk-scanner-feedback ok';
+          input.className='pk-scanner-input success';
+          found=true;
+        }
+      }
+    });
+
+    if(!found){
+      feedback.textContent='⚠️ Barcode '+barcode+' nicht in dieser Bestellung';
+      feedback.className='pk-scanner-feedback err';
+      input.className='pk-scanner-input error';
+      // Vibrate on error (mobile)
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+    }
+
+    input.value='';
+    setTimeout(function(){
+      input.className='pk-scanner-input';
+      input.focus();
+    },2000);
+  }
+
+  // Barcode input handler (external scanners send keystrokes ending with Enter)
+  var barcodeBuffer='';
+  var barcodeTimer=null;
+  document.getElementById('pk-barcode-input').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+      e.preventDefault();
+      processScan(this.value||barcodeBuffer);
+      barcodeBuffer='';
+      return;
+    }
+  });
+
+  document.getElementById('pk-scan-btn').addEventListener('click',function(){
+    processScan(document.getElementById('pk-barcode-input').value);
+  });
+
+  // ── Camera Scanner (via getUserMedia + BarcodeDetector API) ──
+  var cameraStream=null;
+  var scanInterval=null;
+
+  document.getElementById('pk-cam-btn').addEventListener('click',function(){
+    openCamera();
+  });
+
+  document.getElementById('pk-cam-close').addEventListener('click',function(){
+    closeCamera();
+  });
+
+  function openCamera(){
+    var overlay=document.getElementById('pk-cam-overlay');
+    var video=document.getElementById('pk-cam-video');
+    overlay.classList.add('open');
+
+    // Check if BarcodeDetector is available
+    if(!('BarcodeDetector' in window)){
+      toast('⚠️ Kamera-Scanner wird nicht unterstützt. Nutzen Sie die manuelle Eingabe.');
+      overlay.classList.remove('open');
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}
+    }).then(function(stream){
+      cameraStream=stream;
+      video.srcObject=stream;
+
+      var detector=new BarcodeDetector({formats:['ean_13','ean_8','code_128','code_39','upc_a','upc_e']});
+      scanInterval=setInterval(function(){
+        if(video.readyState>=2){
+          detector.detect(video).then(function(barcodes){
+            if(barcodes.length>0){
+              var bc=barcodes[0].rawValue;
+              closeCamera();
+              processScan(bc);
+              if(navigator.vibrate) navigator.vibrate(100);
+            }
+          }).catch(function(){});
+        }
+      },300);
+    }).catch(function(e){
+      toast('📷 Kamera nicht verfügbar: '+e.message);
+      overlay.classList.remove('open');
+    });
+  }
+
+  function closeCamera(){
+    document.getElementById('pk-cam-overlay').classList.remove('open');
+    if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
+    if(cameraStream){cameraStream.getTracks().forEach(function(t){t.stop();});cameraStream=null;}
+  }
+
+  // ── Save Pack State ──
+  function savePackState(callback){
+    if(!order) return;
+    var packItems=[];
+    (order.positionen||[]).forEach(function(p){
+      var st=packState[p.artikelnummer];
+      packItems.push({
+        artikelnummer:p.artikelnummer,
+        bezeichnung:p.bezeichnung,
+        strichcode:p.strichcode||'',
+        gepackt:st?st.gepackt:false,
+        gepackt_menge:st?st.gepackt_menge:0,
+        scan_zeit:st?st.scan_zeit:''
+      });
+    });
+    var packJson={
+      gepackt_von:'CMS-Mitarbeiter',
+      gepackt_um:new Date().toLocaleString('de-DE'),
+      items:packItems,
+      alle_gepackt:packItems.every(function(i){return i.gepackt;})
+    };
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:order.id,pack_json:packJson})
+    }).then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){toast('💾 Pack-Status gespeichert');if(callback)callback();}
+        else toast('Fehler beim Speichern');
+      })
+      .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  document.getElementById('pk-save-btn').addEventListener('click',function(){savePackState();});
+
+  // ── Done Button ──
+  document.getElementById('pk-done-btn').addEventListener('click',function(){
+    if(!confirm('Bestellung als "Abholbereit" markieren?')) return;
+    savePackState(function(){
+      // Set order status to Abholbereit (2)
+      fetch(API+'/shop-order',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:order.id,status:2})
+      }).then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){
+            toast('✅ Bestellung abholbereit!');
+            // Trigger notification
+            fetch(API+'/shop-notify',{
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({bestellnummer:order.bestellnummer,kunde_email:order.kunde_email,kunde_name:order.kunde_name,abholdatum:order.abholdatum})
+            }).catch(function(){});
+            setTimeout(function(){window.close();},1500);
+          }
+        });
+    });
+  });
+
+  // ── Kassen-Modus ──
+  document.getElementById('pk-kasse-btn').addEventListener('click',function(){
+    showKasseModal();
+  });
+
+  document.getElementById('pk-kasse-close').addEventListener('click',function(){
+    document.getElementById('pk-kasse-overlay').classList.remove('open');
+  });
+
+  function showKasseModal(){
+    var body=document.getElementById('pk-kasse-body');
+    var items=order.positionen||[];
+    var packedItems=items.filter(function(p){
+      var st=packState[p.artikelnummer];
+      return st&&st.gepackt;
+    });
+
+    if(!packedItems.length){toast('⚠️ Noch keine Artikel gepackt');return;}
+
+    var html='<div class="pk-kasse-hint">💡 <strong>Tipp:</strong> Klicken Sie auf einen Barcode zum Kopieren. Oder nutzen Sie "Alle kopieren" für das Kassensystem.</div>';
+
+    packedItems.forEach(function(p){
+      var st=packState[p.artikelnummer];
+      var bc=p.strichcode||p.artikelnummer;
+      var menge=st?st.gepackt_menge||p.menge:p.menge;
+      html+='<div class="pk-kasse-item">';
+      html+='<div class="pk-kasse-barcode" data-copy="'+esc(bc)+'" title="Zum Kopieren klicken">'+esc(bc)+'</div>';
+      html+='<div class="pk-kasse-info"><strong>'+esc(p.bezeichnung)+'</strong>'+esc(p.einheit)+'</div>';
+      html+='<div class="pk-kasse-qty">'+menge+' '+esc(p.einheit)+'</div>';
+      html+='</div>';
+    });
+
+    body.innerHTML=html;
+    document.getElementById('pk-kasse-overlay').classList.add('open');
+
+    // Wire copy events
+    body.querySelectorAll('[data-copy]').forEach(function(el){
+      el.addEventListener('click',function(){
+        var text=el.getAttribute('data-copy');
+        navigator.clipboard.writeText(text).then(function(){
+          el.classList.add('copied');
+          toast('📋 '+text+' kopiert');
+          setTimeout(function(){el.classList.remove('copied');},1500);
+        });
+      });
+    });
+  }
+
+  // Copy all barcodes
+  document.getElementById('pk-kasse-copy').addEventListener('click',function(){
+    var items=order.positionen||[];
+    var lines=[];
+    items.forEach(function(p){
+      var st=packState[p.artikelnummer];
+      if(!st||!st.gepackt) return;
+      var bc=p.strichcode||p.artikelnummer;
+      var menge=st.gepackt_menge||p.menge;
+      // For Stückware: repeat barcode per item
+      if(p.einheit!=='kg'){
+        for(var i=0;i<menge;i++) lines.push(bc);
+      } else {
+        lines.push(bc+'\t'+menge+'kg');
+      }
+    });
+    if(!lines.length){toast('Keine Barcodes');return;}
+    navigator.clipboard.writeText(lines.join('\n')).then(function(){
+      toast('📋 '+lines.length+' Barcode(s) kopiert!');
+    });
+  });
+
+  // Print Kassen-Bon
+  document.getElementById('pk-kasse-print').addEventListener('click',function(){
+    var items=order.positionen||[];
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kassenliste '+esc(order.bestellnummer)+'</title>';
+    html+='<style>body{font-family:monospace;font-size:14px;margin:20px;max-width:400px}';
+    html+='h2{font-size:16px;margin-bottom:4px}';
+    html+='.meta{font-size:11px;color:#666;margin-bottom:12px;border-bottom:1px dashed #ccc;padding-bottom:8px}';
+    html+='.item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dotted #ddd}';
+    html+='.bc{font-size:16px;font-weight:700;letter-spacing:1px}';
+    html+='.info{font-size:11px;color:#666}';
+    html+='.total{font-weight:700;font-size:16px;margin-top:12px;padding-top:8px;border-top:2px solid #333}';
+    html+='</style></head><body>';
+    html+='<h2>🏪 '+esc(order.bestellnummer)+'</h2>';
+    html+='<div class="meta">'+esc(order.kunde_name)+' · Abholung: '+esc(order.abholdatum)+'</div>';
+
+    var total=0;
+    items.forEach(function(p){
+      var st=packState[p.artikelnummer];
+      if(!st||!st.gepackt) return;
+      var bc=p.strichcode||p.artikelnummer;
+      var menge=st.gepackt_menge||p.menge;
+      var preis=p.einzelpreis*menge;
+      total+=preis;
+      html+='<div class="item"><div><div class="bc">'+esc(bc)+'</div><div class="info">'+esc(p.bezeichnung)+' · '+menge+' '+esc(p.einheit)+'</div></div><div>'+fmtP(preis)+' €</div></div>';
+    });
+
+    html+='<div class="total">Gesamt: '+fmtP(total)+' €</div>';
+    html+='</body></html>';
+
+    var w=window.open('','_blank','width=450,height=600');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(function(){w.print();},400);
+  });
+
+  // ── Back Button ──
+  document.getElementById('pk-back-btn').addEventListener('click',function(){
+    if(Object.keys(packState).length>0){
+      if(confirm('Pack-Status speichern vor dem Verlassen?')){
+        savePackState(function(){history.back();});
+        return;
+      }
+    }
+    history.back();
+  });
+
+  // ── Auto-focus barcode input ──
+  setTimeout(function(){
+    var inp=document.getElementById('pk-barcode-input');
+    if(inp) inp.focus();
+  },500);
+
+  // ── Init ──
+  loadOrder();
+
+})();
+</script>
+
+</body>
+</html>
