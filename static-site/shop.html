@@ -218,7 +218,7 @@
 
 <!-- ── Search ── -->
 <div class="shop-search">
-  <input type="search" class="shop-search-input" id="shop-search" placeholder="Artikel suchen…" autocomplete="off">
+  <input type="search" class="shop-search-input" id="shop-search" name="artikel-suche" placeholder="Artikel suchen..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 </div>
 
 <!-- ── Category Pills ── -->
@@ -523,6 +523,8 @@
   }
 
   function updateUserUI(){
+    var search=document.getElementById('shop-search');
+    if(search&&(search.value||'').indexOf('@')!==-1) search.value='';
     var btn=document.getElementById('shop-user-btn');
     if(isLoggedIn()){
       btn.innerHTML='👤';
