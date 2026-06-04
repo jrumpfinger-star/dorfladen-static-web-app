@@ -508,6 +508,11 @@ window.closeDtModal = function(id) {
     .then(function(r){return r.json();})
     .then(function(payload){
       var items=unwrapApiData(payload);
+      var nowDate=new Date();
+      if(items&&items.length) items=items.filter(function(n){
+        if(n.dl_aktiv_bis){var ab=new Date(n.dl_aktiv_bis);ab.setHours(23,59,59,999);if(ab<nowDate) return false;}
+        return true;
+      });
       var container=document.getElementById('news-container');
       var countEl=document.getElementById('news-count');
       if(!items||!items.length){

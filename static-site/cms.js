@@ -3204,7 +3204,7 @@
     var empty = document.getElementById('cms-news-empty');
     if(_newsItems.length===0){container.innerHTML='';empty.style.display='';return;}
     empty.style.display='none';
-    var html='<table class="cms-news-tbl"><thead><tr><th style="width:76px">Datum</th><th>Titel</th><th style="width:56px">Status</th><th style="width:60px">Laufband</th><th style="width:140px;text-align:right">Aktionen</th></tr></thead><tbody>';
+    var html='<table class="cms-news-tbl"><thead><tr><th style="width:76px">Datum</th><th>Titel</th><th style="width:56px">Status</th><th style="width:80px">Aktiv bis</th><th style="width:60px">Laufband</th><th style="width:140px;text-align:right">Aktionen</th></tr></thead><tbody>';
     _newsItems.forEach(function(n){
       var isActive = n.status===101001;
       var isLaufband = !!n.dl_laufband;
@@ -3214,6 +3214,7 @@
         +'<td class="cms-news-date">'+dateStr+'</td>'
         +'<td><div class="cms-news-title">'+esc(n.titel)+'</div>'+(desc?'<div class="cms-news-desc">'+esc(desc.length>80?desc.substring(0,80)+'…':desc)+'</div>':'')+'</td>'
         +'<td><span class="cms-news-badge'+(isActive?' active':'')+'">'+(isActive?'Aktiv':'Inaktiv')+'</span></td>'
+        +'<td style="font-size:11px;color:#6b7280">'+(n.dl_aktiv_bis?new Date(n.dl_aktiv_bis).toLocaleDateString('de-DE',{day:'numeric',month:'numeric',year:'2-digit'}):'∞')+'</td>'
         +'<td style="text-align:center">'+(isLaufband?'<span class="cms-news-badge active" style="background:#dbeafe;color:#1e40af">📢</span>':'–')+'</td>'
         +'<td class="cms-news-actions">'
         +'<button class="cms-news-abtn" data-action="toggleNewsStatus" data-id="'+n.id+'" title="'+(isActive?'Deaktivieren':'Aktivieren')+'">'+(isActive?'⏸':'▶')+'</button>'
@@ -3236,10 +3237,10 @@
     if(!item){toast('Beitrag nicht gefunden','error');return;}
     _editingNewsId = id;
     _editingNewsStatus = item.status||101001;
-    showNewsModal('Beitrag bearbeiten',item.titel,item.dl_inhalt||'',item.dl_laufband,item.dl_laufband_bis);
+    showNewsModal('Beitrag bearbeiten',item.titel,item.dl_inhalt||'',item.dl_laufband,item.dl_laufband_bis,item.dl_aktiv_bis);
   }
 
-  function showNewsModal(title,titel,inhalt,laufband,laufbandBis){
+  function showNewsModal(title,titel,inhalt,laufband,laufbandBis,aktivBis){
     // Extract existing beitragsbild from inhalt
     var existingImg = '';
     var cleanInhalt = inhalt.replace(/<div class="news-beitragsbild">.*?<\/div>/gi, function(m){
@@ -3277,6 +3278,7 @@
       +'<input type="hidden" id="news-edit-img-data">'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:#2e7d4f"> <span style="font-size:13px;font-weight:600;color:#374151">Im Laufband anzeigen</span></label><div id="news-laufband-bis-row" style="display:none;align-items:center;gap:6px"><span style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">bis</span><input type="date" class="cms-input" id="news-edit-laufband-bis" style="max-width:170px;padding:5px 8px;font-size:13px"></div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span style="font-size:13px;font-weight:600;color:#374151">Aktiv bis</span><input type="date" class="cms-input" id="news-edit-aktiv-bis" style="max-width:170px;padding:5px 8px;font-size:13px"><span style="font-size:11px;color:#9ca3af">(leer = unbegrenzt)</span></div>'
       +'<div class="cms-modal-footer" style="padding:14px 0 0;margin-top:16px">'
       +'<button class="cms-btn cms-btn-primary" data-action="saveNews">\ud83d\udcbe Speichern</button>'
       +'<button class="cms-btn cms-btn-gray" data-action="closeNewsModal">Abbrechen</button>'
@@ -3328,6 +3330,11 @@
       var d=new Date(laufbandBis);
       if(!isNaN(d.getTime())) bisInput.value=d.toISOString().slice(0,10);
     }
+    var abInput=document.getElementById('news-edit-aktiv-bis');
+    if(abInput&&aktivBis){
+      var da=new Date(aktivBis);
+      if(!isNaN(da.getTime())) abInput.value=da.toISOString().slice(0,10);
+    }
   }
 
   function saveNews(){
@@ -3341,7 +3348,8 @@
     }
     var lbCb = document.getElementById('news-edit-laufband');
     var lbBis = document.getElementById('news-edit-laufband-bis');
-    var payload = {titel:titel,inhalt:inhalt,status:_editingNewsStatus||101001,dl_laufband:lbCb?lbCb.checked:false,dl_laufband_bis:(lbCb&&lbCb.checked&&lbBis&&lbBis.value)?lbBis.value:''};
+    var abBis = document.getElementById('news-edit-aktiv-bis');
+    var payload = {titel:titel,inhalt:inhalt,status:_editingNewsStatus||101001,dl_laufband:lbCb?lbCb.checked:false,dl_laufband_bis:(lbCb&&lbCb.checked&&lbBis&&lbBis.value)?lbBis.value:'',dl_aktiv_bis:(abBis&&abBis.value)?abBis.value:''};
     if(_editingNewsId) payload.id = _editingNewsId;
     fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json();})
