@@ -9,6 +9,7 @@ GET /api/shop-articles
 """
 import azure.functions as func
 import json
+import logging
 import os
 import re
 import msal
@@ -79,6 +80,15 @@ def _fetch_all_pages(url, headers, max_pages=20):
     return items
 
 
+def _num(value, default=0):
+    try:
+        if value is None or value == "":
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def normalize_warengruppe(name):
     """Clean up category names."""
     name = re.sub(r'\s*\(?\d+%\)?', '', name)
@@ -97,6 +107,8 @@ def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung):
     """Calculate corrected price and unit display string."""
     mt = (mengentyp or "").strip().lower()
     me_val = str(mengenerfassung or "").strip()
+    preis = _num(preis)
+    gpfaktor = _num(gpfaktor, 1)
     vk_korr = preis
     menge_str = ""
     if mt == "kg" and me_val == "3":
@@ -152,142 +164,149 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
 
-    token = get_token()
-    if not token:
-        return func.HttpResponse(
-            json.dumps({"success": False, "error": "Auth failed"}),
-            status_code=500, headers=get_cors_headers()
-        )
+    try:
+        token = get_token()
+        if not token:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Auth failed"}),
+                status_code=500, headers=get_cors_headers()
+            )
 
-    base_url = _base_url()
-    headers = _headers(token)
+        base_url = _base_url()
+        headers = _headers(token)
 
-    # Fetch all articles (with bestellbar flag if available)
-    select_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung"
-    # Try to include bestellbar field
-    url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields},cr5d4_bestellbar,cr5d4_bestelleinheit&$orderby=cr5d4_artikelbezeichnung asc"
-    items = _fetch_all_pages(url, headers)
-
-    # If bestellbar field doesn't exist yet, fetch without it
-    if not items:
-        url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$orderby=cr5d4_artikelbezeichnung asc"
+        # Fetch all articles (with bestellbar flag if available)
+        select_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung"
+        # Try to include bestellbar field
+        url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields},cr5d4_bestellbar,cr5d4_bestelleinheit&$orderby=cr5d4_artikelbezeichnung asc"
         items = _fetch_all_pages(url, headers)
 
-    # Load Angebote
-    angebote_map = _load_angebote(base_url, headers)
+        # If bestellbar field doesn't exist yet, fetch without it
+        if not items:
+            url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$orderby=cr5d4_artikelbezeichnung asc"
+            items = _fetch_all_pages(url, headers)
 
-    cutoff_date = datetime.utcnow() - timedelta(days=183)
-    articles = []
-    categories = {}
-    bestseller_candidates = []
+        # Load Angebote
+        angebote_map = _load_angebote(base_url, headers)
 
-    for item in items:
-        artnr = item.get("cr5d4_artikelnummeredeka", "")
-        bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
-        preis = item.get("cr5d4_vk_dorf") or 0
-        warengruppe = normalize_warengruppe(item.get("cr5d4_warengruppebez", ""))
-        letzter_verkauf = item.get("cr5d4_artikelletzterverkauf")
-        strichcode = item.get("cr5d4_strichcode", "")
-        bestellbar = item.get("cr5d4_bestellbar")
-        bestelleinheit = item.get("cr5d4_bestelleinheit", "")
+        cutoff_date = datetime.utcnow() - timedelta(days=183)
+        articles = []
+        categories = {}
+        bestseller_candidates = []
 
-        # Skip if no name or price
-        if not bezeichnung or preis <= 0:
-            continue
+        for item in items:
+            artnr = item.get("cr5d4_artikelnummeredeka", "")
+            bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
+            preis = _num(item.get("cr5d4_vk_dorf"))
+            warengruppe = normalize_warengruppe(item.get("cr5d4_warengruppebez", ""))
+            letzter_verkauf = item.get("cr5d4_artikelletzterverkauf")
+            strichcode = item.get("cr5d4_strichcode", "")
+            bestellbar = item.get("cr5d4_bestellbar")
+            bestelleinheit = item.get("cr5d4_bestelleinheit", "")
 
-        # Skip old articles (not sold in 6 months) unless explicitly marked bestellbar
-        if bestellbar is not None and not bestellbar:
-            continue
-        if bestellbar is None:
-            # No bestellbar field yet: use recency filter
-            if not letzter_verkauf:
+            # Skip if no name or price
+            if not bezeichnung or preis <= 0:
                 continue
-            try:
-                lv = datetime.fromisoformat(letzter_verkauf.replace("Z", "+00:00")).replace(tzinfo=None)
-                if lv < cutoff_date:
+
+            # Skip old articles (not sold in 6 months) unless explicitly marked bestellbar
+            if bestellbar is not None and not bestellbar:
+                continue
+            if bestellbar is None:
+                # No bestellbar field yet: use recency filter
+                if not letzter_verkauf:
                     continue
-            except:
-                continue
+                try:
+                    lv = datetime.fromisoformat(letzter_verkauf.replace("Z", "+00:00")).replace(tzinfo=None)
+                    if lv < cutoff_date:
+                        continue
+                except:
+                    continue
 
-        # Calculate price/unit
-        mengentyp = item.get("cr5d4_mengentyp")
-        mengeneinheit = item.get("cr5d4_mengeneinheit")
-        gpfaktor = item.get("cr5d4_gpfaktor") or 1
-        mengenerfassung = item.get("cr5d4_mengenerfassung")
-        vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung)
+            # Calculate price/unit
+            mengentyp = item.get("cr5d4_mengentyp")
+            mengeneinheit = item.get("cr5d4_mengeneinheit")
+            gpfaktor = _num(item.get("cr5d4_gpfaktor"), 1)
+            mengenerfassung = item.get("cr5d4_mengenerfassung")
+            vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung)
 
-        # Determine order unit type
-        mt = (mengentyp or "").strip().lower()
-        if bestelleinheit:
-            einheit = bestelleinheit
-        elif mt in ("kg", "g"):
-            einheit = "kg"
-        else:
-            einheit = "Stück"
+            # Determine order unit type
+            mt = (mengentyp or "").strip().lower()
+            if bestelleinheit:
+                einheit = bestelleinheit
+            elif mt in ("kg", "g"):
+                einheit = "kg"
+            else:
+                einheit = "Stück"
 
-        # Popularity score
-        pop_score = _popularity_score(letzter_verkauf)
+            # Popularity score
+            pop_score = _popularity_score(letzter_verkauf)
 
-        # Angebot check
-        ang = angebote_map.get(artnr)
-        uvp = item.get("cr5d4_uvp_total")
-        discount = 0
-        is_rp = False
-        if uvp and uvp > 0 and preis > 0 and preis < uvp:
-            discount = round((1 - preis / uvp) * 100)
-            if 5 <= discount <= 70:
-                is_rp = True
+            # Angebot check
+            ang = angebote_map.get(artnr)
+            uvp = _num(item.get("cr5d4_uvp_total"))
+            discount = 0
+            is_rp = False
+            if uvp and uvp > 0 and preis > 0 and preis < uvp:
+                discount = round((1 - preis / uvp) * 100)
+                if 5 <= discount <= 70:
+                    is_rp = True
 
-        article = {
-            "artikelnummer": artnr,
-            "bezeichnung": bezeichnung,
-            "vk": vk_korr,
-            "vk_base": preis,
-            "warengruppe": warengruppe,
-            "strichcode": strichcode,
-            "menge": menge_str,
-            "einheit": einheit,
-            "gewichtsware": einheit == "kg",
-            "popularity": pop_score,
-            "angebot": ang is not None,
-            "angebot_preis": ang["preis"] if ang else None,
-            "rp": is_rp,
-            "discount": discount
-        }
-        articles.append(article)
+            article = {
+                "artikelnummer": artnr,
+                "bezeichnung": bezeichnung,
+                "vk": vk_korr,
+                "vk_base": preis,
+                "warengruppe": warengruppe,
+                "strichcode": strichcode,
+                "menge": menge_str,
+                "einheit": einheit,
+                "gewichtsware": einheit == "kg",
+                "popularity": pop_score,
+                "angebot": ang is not None,
+                "angebot_preis": ang["preis"] if ang else None,
+                "rp": is_rp,
+                "discount": discount
+            }
+            articles.append(article)
 
-        # Track categories
-        if warengruppe:
-            if warengruppe not in categories:
-                categories[warengruppe] = 0
-            categories[warengruppe] += 1
+            # Track categories
+            if warengruppe:
+                if warengruppe not in categories:
+                    categories[warengruppe] = 0
+                categories[warengruppe] += 1
 
-        # Bestseller candidate
-        if pop_score >= 50:
-            bestseller_candidates.append(article)
+            # Bestseller candidate
+            if pop_score >= 50:
+                bestseller_candidates.append(article)
 
-    # Sort bestsellers by popularity (highest first), limit to top 20
-    bestseller_candidates.sort(key=lambda x: x["popularity"], reverse=True)
-    bestsellers = bestseller_candidates[:20]
+        # Sort bestsellers by popularity (highest first), limit to top 20
+        bestseller_candidates.sort(key=lambda x: x["popularity"], reverse=True)
+        bestsellers = bestseller_candidates[:20]
 
-    # Sort categories: prioritize key categories, then alphabetical
-    PRIORITY_CATEGORIES = [
-        "Backwaren",
-        "Fleisch & Wurst",
-        "Molkereiprodukte",
-        "Obst und Gemüse",
-    ]
-    prio_cats = [c for c in PRIORITY_CATEGORIES if c in categories]
-    other_cats = sorted([c for c in categories.keys() if c not in PRIORITY_CATEGORIES])
-    cat_list = prio_cats + other_cats
+        # Sort categories: prioritize key categories, then alphabetical
+        PRIORITY_CATEGORIES = [
+            "Backwaren",
+            "Fleisch & Wurst",
+            "Molkereiprodukte",
+            "Obst und Gemüse",
+        ]
+        prio_cats = [c for c in PRIORITY_CATEGORIES if c in categories]
+        other_cats = sorted([c for c in categories.keys() if c not in PRIORITY_CATEGORIES])
+        cat_list = prio_cats + other_cats
 
-    return func.HttpResponse(
-        json.dumps({
-            "success": True,
-            "total": len(articles),
-            "articles": articles,
-            "categories": cat_list,
-            "bestsellers": bestsellers
-        }, ensure_ascii=False),
-        status_code=200, headers=get_cors_headers()
-    )
+        return func.HttpResponse(
+            json.dumps({
+                "success": True,
+                "total": len(articles),
+                "articles": articles,
+                "categories": cat_list,
+                "bestsellers": bestsellers
+            }, ensure_ascii=False),
+            status_code=200, headers=get_cors_headers()
+        )
+    except Exception as e:
+        logging.exception("shop-articles failed")
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "Server-Fehler beim Laden der Artikel", "detail": str(e)}, ensure_ascii=False),
+            status_code=500, headers=get_cors_headers()
+        )
