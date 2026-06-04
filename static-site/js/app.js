@@ -543,10 +543,14 @@ window.closeDtModal = function(id) {
       if(ticker&&tickerContent&&recentItems.length){
         window._tickerNews=recentItems;
         var singleHtml='';
+        var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
         recentItems.forEach(function(n,i){
           var title=esc(n.dl_titel||n.titel||'');
+          var dRaw=n.dl_datum||n.datum||n.createdon;
+          var isNew=dRaw&&new Date(dRaw)>=sevenDaysAgo;
+          var newBadge=isNew?'<span class="news-ticker-new">NEU</span> ':'';
           if(i>0) singleHtml+='<span class="news-ticker-sep"> &nbsp;&#9733;&nbsp; </span>';
-          singleHtml+='<span class="news-ticker-item"><a href="#" data-newsidx="'+i+'">'+title+'</a></span>';
+          singleHtml+='<span class="news-ticker-item'+(isNew?' news-ticker-blink':'')+'"><a href="#" data-newsidx="'+i+'">'+newBadge+title+'</a></span>';
         });
         ticker.style.display='flex';
         var trackW=document.querySelector('.news-ticker-track').offsetWidth;
