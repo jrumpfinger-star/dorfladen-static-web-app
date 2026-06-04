@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Dorfladen – Mitarbeiter-Portal</title>
+<meta name="theme-color" content="#1e3a2f">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f2937;min-height:100vh}
+.hd{background:#1e3a2f;color:#fff;padding:20px 16px 16px;text-align:center}
+.hd-logo{font-size:32px;margin-bottom:4px}
+.hd h1{font-size:20px;font-weight:800}
+.hd p{font-size:12px;opacity:.7;margin-top:2px}
+.badge-live{display:inline-block;background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:6px;animation:pu 2s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.6}}
+
+.section{padding:16px 14px 8px}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:10px;padding-left:4px}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:600px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+.tile{background:#fff;border-radius:14px;padding:20px 14px;text-align:center;text-decoration:none;color:#1f2937;border:1px solid #e5e7eb;transition:all .15s;cursor:pointer;position:relative;overflow:hidden}
+.tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.tile:active{transform:scale(.97)}
+.tile-icon{font-size:36px;margin-bottom:8px;display:block}
+.tile-name{font-size:13px;font-weight:700;line-height:1.3}
+.tile-desc{font-size:10px;color:#6b7280;margin-top:3px;line-height:1.3}
+.tile-badge{position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;display:none}
+.tile-badge.show{display:block}
+
+.tile-primary{background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-color:#fbbf24}
+.tile-green{background:linear-gradient(135deg,#d1fae5 0%,#a7f3d0 100%);border-color:#34d399}
+.tile-blue{background:linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%);border-color:#60a5fa}
+.tile-purple{background:linear-gradient(135deg,#ede9fe 0%,#ddd6fe 100%);border-color:#a78bfa}
+.tile-pink{background:linear-gradient(135deg,#fce7f3 0%,#fbcfe8 100%);border-color:#f472b6}
+.tile-gray{background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);border-color:#d1d5db}
+
+.quick-stats{background:#fff;border-radius:14px;border:1px solid #e5e7eb;padding:14px;margin:0 14px 14px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.qs{padding:6px 0}
+.qs-n{font-size:22px;font-weight:800;line-height:1}
+.qs-l{font-size:9px;font-weight:600;text-transform:uppercase;color:#6b7280;margin-top:2px}
+.qs-neu .qs-n{color:#92400e}
+.qs-bear .qs-n{color:#1e40af}
+.qs-bereit .qs-n{color:#065f46}
+.qs-heute .qs-n{color:#9d174d}
+
+.footer{text-align:center;padding:20px;font-size:11px;color:#9ca3af}
+.footer a{color:#1e3a2f;font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-logo">🏪</div>
+  <h1>Dorfladen Mitarbeiter</h1>
+  <p>Bestellsystem & Verwaltung</p>
+  <span class="badge-live" id="live-badge">● LIVE</span>
+</div>
+
+<!-- Quick Stats -->
+<div style="padding:14px 14px 0">
+  <div class="quick-stats" id="stats">
+    <div class="qs qs-neu"><div class="qs-n" id="s-neu">–</div><div class="qs-l">Neu</div></div>
+    <div class="qs qs-bear"><div class="qs-n" id="s-bear">–</div><div class="qs-l">Packen</div></div>
+    <div class="qs qs-bereit"><div class="qs-n" id="s-bereit">–</div><div class="qs-l">Bereit</div></div>
+    <div class="qs qs-heute"><div class="qs-n" id="s-heute">–</div><div class="qs-l">Heute</div></div>
+  </div>
+</div>
+
+<!-- Bestellungen -->
+<div class="section">
+  <div class="section-title">📦 Bestellungen</div>
+  <div class="grid">
+    <a class="tile tile-primary" href="/bestellungen">
+      <span class="tile-badge" id="badge-neu"></span>
+      <span class="tile-icon">📋</span>
+      <div class="tile-name">Bestellübersicht</div>
+      <div class="tile-desc">Offene Bestellungen, Status ändern</div>
+    </a>
+    <a class="tile tile-green" href="/bestellungen" onclick="sessionStorage.setItem('bst-filter','pack')">
+      <span class="tile-icon">📦</span>
+      <div class="tile-name">Packen</div>
+      <div class="tile-desc">Bestellungen packen & scannen</div>
+    </a>
+    <a class="tile tile-blue" href="/bestellungen" onclick="sessionStorage.setItem('bst-filter','bereit')">
+      <span class="tile-icon">✅</span>
+      <div class="tile-name">Abholbereit</div>
+      <div class="tile-desc">Kunden abholen lassen</div>
+    </a>
+  </div>
+</div>
+
+<!-- Shop & Artikel -->
+<div class="section">
+  <div class="section-title">🛒 Shop & Artikel</div>
+  <div class="grid">
+    <a class="tile tile-purple" href="/shop">
+      <span class="tile-icon">🛍️</span>
+      <div class="tile-name">Shop-Vorschau</div>
+      <div class="tile-desc">So sehen Kunden den Shop</div>
+    </a>
+    <a class="tile tile-gray" href="/cms.html#articles">
+      <span class="tile-icon">📝</span>
+      <div class="tile-name">Artikel verwalten</div>
+      <div class="tile-desc">Preise, Bestellbar-Status</div>
+    </a>
+    <a class="tile tile-gray" href="/cms.html#angebote">
+      <span class="tile-icon">🏷️</span>
+      <div class="tile-name">Angebote</div>
+      <div class="tile-desc">Sonderangebote pflegen</div>
+    </a>
+  </div>
+</div>
+
+<!-- Verwaltung -->
+<div class="section">
+  <div class="section-title">⚙️ Verwaltung</div>
+  <div class="grid">
+    <a class="tile tile-pink" href="/cms.html#kunden">
+      <span class="tile-icon">👥</span>
+      <div class="tile-name">Kunden</div>
+      <div class="tile-desc">Registrierte Kunden</div>
+    </a>
+    <a class="tile tile-gray" href="/cms.html">
+      <span class="tile-icon">🖥️</span>
+      <div class="tile-name">CMS</div>
+      <div class="tile-desc">Website-Inhalte bearbeiten</div>
+    </a>
+    <a class="tile tile-gray" href="/cms.html#werbebilder">
+      <span class="tile-icon">🖼️</span>
+      <div class="tile-name">Werbebilder</div>
+      <div class="tile-desc">Bilder & Medien</div>
+    </a>
+  </div>
+</div>
+
+<div class="footer">
+  Dorfladen Bestellsystem · <a href="/cms.html">CMS öffnen</a>
+</div>
+
+<script>
+(function(){
+  var API=location.hostname==='localhost'?'http://localhost:7071/api':'/api';
+  function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+  function loadStats(){
+    fetch(API+'/shop-order?mode=cms').then(function(r){return r.json();}).then(function(res){
+      if(!res.success) return;
+      var orders=res.orders||[],n=0,b=0,br=0,h=0,td=today();
+      orders.forEach(function(o){
+        if(o.status===0) n++;
+        if(o.status===1) b++;
+        if(o.status===2) br++;
+        if(o.abholdatum===td && o.status<3) h++;
+      });
+      document.getElementById('s-neu').textContent=n;
+      document.getElementById('s-bear').textContent=b;
+      document.getElementById('s-bereit').textContent=br;
+      document.getElementById('s-heute').textContent=h;
+      // Badge
+      var badge=document.getElementById('badge-neu');
+      if(n>0){badge.textContent=n;badge.classList.add('show');}
+      else{badge.classList.remove('show');}
+    }).catch(function(){});
+  }
+
+  loadStats();
+  setInterval(loadStats,60000);
+})();
+</script>
+</body>
+</html>

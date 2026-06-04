@@ -16,7 +16,8 @@
     { "route": "/aktuelles", "rewrite": "/aktuelles.html" },
     { "route": "/shop", "rewrite": "/shop.html" },
     { "route": "/pack", "rewrite": "/pack.html" },
-    { "route": "/bestellungen", "rewrite": "/bestellungen.html" }
+    { "route": "/bestellungen", "rewrite": "/bestellungen.html" },
+    { "route": "/portal", "rewrite": "/portal.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
