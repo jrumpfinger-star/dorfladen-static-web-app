@@ -524,11 +524,10 @@
     input.addEventListener('input',function(){
       clearTimeout(searchTimer);
       if((this.value||'').indexOf('@')!==-1){this.value='';return;}
-      var q=this.value.trim();
       searchTimer=setTimeout(function(){
-        if(!q&&viewMode==='categories'){showCategoryOverview();}
+        if(!this.value.trim()&&viewMode==='categories'){showCategoryOverview();}
         else{showArticles();}
-      },300);
+      }.bind(this),300);
     });
   }
 
@@ -878,7 +877,7 @@
     if(!keys.length) return;
     for(var i=0;i<keys.length;i+=30){
       var batch=keys.slice(i,i+30);
-      fetch(API+'/werbebilder?artnrs='+encodeURIComponent(batch.join(',')))
+      fetch(API+'/werbebilder?sharepoint=1&artnrs='+encodeURIComponent(batch.join(',')))
         .then(function(r){return r.json();})
         .then(function(data){
           (data||[]).forEach(function(r){

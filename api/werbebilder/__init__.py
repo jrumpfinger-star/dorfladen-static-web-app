@@ -224,10 +224,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "dl_bild_base64": item.get("dl_bild_base64", ""),
                     "dl_download_url": item.get("dl_download_url", "")
                 })
-            found_keys = {x.get("dl_artikelnummer", "") for x in result}
-            missing = [x for x in nr_list if x not in found_keys]
-            if missing:
-                result.extend(_load_sharepoint_images(missing))
+            include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
+            if include_sp:
+                found_keys = {x.get("dl_artikelnummer", "") for x in result}
+                missing = [x for x in nr_list if x not in found_keys]
+                if missing:
+                    result.extend(_load_sharepoint_images(missing))
             return func.HttpResponse(
                 body=json.dumps(result),
                 status_code=200,
