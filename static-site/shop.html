@@ -723,10 +723,11 @@
     // Search filter
     var q=(document.getElementById('shop-search').value||'').trim().toLowerCase();
     if(q){
-      items=(activeCat!=='all'&&activeCat!=='bestseller'?items:allArticles).filter(function(a){
-        return a.bezeichnung.toLowerCase().indexOf(q)!==-1||
-               a.warengruppe.toLowerCase().indexOf(q)!==-1||
-               (a.strichcode||'').indexOf(q)!==-1;
+      items=allArticles.filter(function(a){
+        return (a.bezeichnung||'').toLowerCase().indexOf(q)!==-1||
+               (a.warengruppe||'').toLowerCase().indexOf(q)!==-1||
+               (a.artikelnummer||'').toString().toLowerCase().indexOf(q)!==-1||
+               (a.strichcode||'').toString().toLowerCase().indexOf(q)!==-1;
       });
       title='Suchergebnis';emoji='🔍';
     }
