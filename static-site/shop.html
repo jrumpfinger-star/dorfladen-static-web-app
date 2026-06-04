@@ -30,7 +30,7 @@
     .shop-search-input:focus{border-color:var(--shop-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
 
     /* ── Category Pills ── */
-    .shop-cats{padding:8px 16px;overflow-x:auto;white-space:nowrap;display:flex;gap:8px;background:#fff;border-bottom:1px solid var(--shop-border);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .shop-cats{padding:8px 16px;display:flex;gap:8px;background:#fff;border-bottom:1px solid var(--shop-border);flex-wrap:wrap;align-items:center;max-height:118px;overflow:auto;scrollbar-width:thin}
     .shop-cats::-webkit-scrollbar{display:none}
     .shop-cat-pill{display:inline-flex;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--shop-border);background:#fff;color:var(--shop-text);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
     .shop-cat-pill:hover,.shop-cat-pill.active{background:var(--shop-green);color:#fff;border-color:var(--shop-green)}
@@ -375,6 +375,31 @@
     return d.toLocaleDateString('de-DE',opts);
   }
 
+
+  function getShopGroup(name){
+    var n=(name||'').toString().toLowerCase();
+    if(!n) return 'Sonstiges';
+    if(n.indexOf('back')!==-1||n.indexOf('brot')!==-1||n.indexOf('baeck')!==-1||n.indexOf('baeck')!==-1) return 'Backwaren';
+    if(n.indexOf('mopro')!==-1||n.indexOf('molkerei')!==-1||n.indexOf('milch')!==-1||n.indexOf('kaese')!==-1||n.indexOf('kaese')!==-1||n.indexOf('butter')!==-1||n.indexOf('margarine')!==-1||n.indexOf('eier')!==-1) return 'Molkerei & Eier';
+    if(n.indexOf('obst')!==-1||n.indexOf('gemuese')!==-1||n.indexOf('gemuese')!==-1||n.indexOf('gemuse')!==-1) return 'Obst & Gemuese';
+    if(n.indexOf('fleisch')!==-1||n.indexOf('wurst')!==-1||n.indexOf('aufschnitt')!==-1||n.indexOf('metzger')!==-1||n.indexOf('schinken')!==-1||n.indexOf('salami')!==-1) return 'Fleisch & Wurst';
+    if(n.indexOf('bier')!==-1||n.indexOf('wein')!==-1||n.indexOf('spirit')!==-1||n.indexOf('getraenk')!==-1||n.indexOf('getraenk')!==-1||n.indexOf('saft')!==-1||n.indexOf('wasser')!==-1) return 'Getraenke';
+    if(n.indexOf('drogerie')!==-1||n.indexOf('haushalt')!==-1||n.indexOf('elektro')!==-1||n.indexOf('heimwerk')!==-1) return 'Haushalt & Drogerie';
+    if(n.indexOf('suess')!==-1||n.indexOf('suess')!==-1||n.indexOf('suss')!==-1||n.indexOf('snack')!==-1||n.indexOf('schoko')!==-1||n.indexOf('eis')!==-1) return 'Suesswaren & Snacks';
+    if(n.indexOf('tief')!==-1||n.indexOf('tk')!==-1) return 'Tiefkuehl';
+    if(n.indexOf('nudel')!==-1||n.indexOf('reis')!==-1||n.indexOf('konserve')!==-1||n.indexOf('fertig')!==-1||n.indexOf('sauce')!==-1||n.indexOf('sosse')!==-1||n.indexOf('sosse')!==-1) return 'Vorrat & Kueche';
+    if(n.indexOf('kaffee')!==-1||n.indexOf('tee')!==-1||n.indexOf('cafe')!==-1||n.indexOf('cafeteria')!==-1) return 'Kaffee & Tee';
+    if(n.indexOf('diaet')!==-1||n.indexOf('kind')!==-1||n.indexOf('baby')!==-1||n.indexOf('effektive')!==-1||n.indexOf('mikro')!==-1) return 'Spezial & Gesundheit';
+    return 'Sonstiges';
+  }
+
+  function buildShopGroups(){
+    var seen={};
+    allArticles.forEach(function(a){seen[getShopGroup(a.warengruppe)]=true;});
+    var order=['Backwaren','Molkerei & Eier','Obst & Gemuese','Fleisch & Wurst','Getraenke','Vorrat & Kueche','Suesswaren & Snacks','Tiefkuehl','Kaffee & Tee','Haushalt & Drogerie','Spezial & Gesundheit','Sonstiges'];
+    return order.filter(function(g){return seen[g];});
+  }
+
   function updateBanner(){
     var abhol=calcAbholdatum();
     var now=new Date();
@@ -671,7 +696,7 @@
     return html;
   }
 
-  var CAT_ICONS={'Backwaren':'🥨','Fleisch':'🥩','Mopro':'🧀','Obst & Gemüse':'🥬','Getränke':'🥤','Süßwaren':'🍫','Konserven':'🥫','Tiefkühl':'🧊','Haushalt':'🧹','Drogerie':'🧴','Wein & Spirituosen':'🍷','Bier':'🍺','Molkereiprodukte':'🧀','Brot & Backwaren':'🥖','Wurst & Aufschnitt':'🥓','Käse':'🧀','Eier':'🥚','Nudeln & Reis':'🍝','Gewürze':'🌿','Öle & Essig':'🫒','Snacks':'🍿','Kaffee & Tee':'☕','Müsli & Cerealien':'🥣','Babynahrung':'🍼','Tiernahrung':'🐾','Tabak':'🚬'};
+  var CAT_ICONS={'Backwaren':'B','Molkerei & Eier':'M','Obst & Gemuese':'O','Fleisch & Wurst':'F','Getraenke':'G','Vorrat & Kueche':'V','Suesswaren & Snacks':'S','Tiefkuehl':'T','Kaffee & Tee':'K','Haushalt & Drogerie':'H','Spezial & Gesundheit':'+','Sonstiges':'*'};
   var DEFAULT_CAT_ICON='📦';
   var viewMode='categories'; // 'categories' or 'articles'
 
@@ -683,7 +708,7 @@
     return DEFAULT_CAT_ICON;
   }
 
-  function countByCat(cat){return allArticles.filter(function(a){return a.warengruppe===cat;}).length;}
+  function countByCat(cat){return allArticles.filter(function(a){return getShopGroup(a.warengruppe)===cat;}).length;}
 
   function showCategoryOverview(){
     viewMode='categories';
@@ -762,7 +787,7 @@
     } else if(activeCat==='bestseller'){
       items=bestsellers;title='Beliebteste Artikel';emoji='Beliebt';
     } else if(activeCat!=='all'){
-      items=allArticles.filter(function(a){return a.warengruppe===activeCat;});
+      items=allArticles.filter(function(a){return getShopGroup(a.warengruppe)===activeCat;});
       title=activeCat;emoji=getCatIcon(activeCat);
     }
 
@@ -890,7 +915,7 @@
       if(!data.success){document.getElementById('shop-loading').innerHTML='<p>Fehler beim Laden</p>';return;}
       allArticles=data.articles||[];
       bestsellers=data.bestsellers||[];
-      categories=data.categories||[];
+      categories=buildShopGroups();
 
       // Build category pills
       var catsEl=document.getElementById('shop-cats');
