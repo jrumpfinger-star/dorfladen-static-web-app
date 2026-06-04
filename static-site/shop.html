@@ -295,16 +295,28 @@
         <div class="shop-auth-field"><label>Ort *</label><input type="text" id="reg-ort"></div>
       </div>
       <div class="shop-auth-sepa">
-        <strong>🏦 SEPA-Lastschriftmandat</strong>
-        Ich ermächtige den Dorfladen Oberornau, Zahlungen von meinem Konto mittels Lastschrift einzuziehen.
-        Zugleich weise ich mein Kreditinstitut an, die vom Dorfladen Oberornau gezogenen Lastschriften einzulösen.
-        Die Abbuchung erfolgt monatlich. Sie werden mindestens 14 Tage vor dem Einzug informiert.
+        <strong>🏦 SEPA-Lastschriftmandat (Wiederkehrende Zahlung)</strong>
+        <div style="margin:6px 0 4px;font-size:11px;color:#374151;line-height:1.6">
+          <strong>Zahlungsempfänger (Gläubiger):</strong><br>
+          Dorfladen Oberornau UG (haftungsbeschränkt)<br>
+          Dorfstraße 1, 84166 Adlkofen<br>
+          <strong>Gläubiger-Identifikationsnummer:</strong> DE98ZZZ09999999999<br>
+        </div>
+        <div style="font-size:11px;line-height:1.6;color:#374151">
+          Ich ermächtige die Dorfladen Oberornau UG (haftungsbeschränkt), Zahlungen von meinem Konto mittels SEPA-Basis-Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von der Dorfladen Oberornau UG gezogenen Lastschriften einzulösen.<br><br>
+          <strong>Hinweis:</strong> Ich kann innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem Kreditinstitut vereinbarten Bedingungen.<br><br>
+          <strong>Mandatstyp:</strong> Wiederkehrende Lastschrift<br>
+          <strong>Vorabankündigung:</strong> Sie werden mindestens 5 Tage vor dem Einzug per E-Mail über den Betrag und das Einzugsdatum informiert (Pre-Notification).<br>
+          <strong>Gültigkeit:</strong> Dieses Mandat gilt bis auf Widerruf. Es verfällt automatisch, wenn 36 Monate seit der letzten Lastschrift vergangen sind.<br>
+          <strong>Widerruf:</strong> Sie können dieses Mandat jederzeit schriftlich oder per E-Mail an info@dorfladen-oberornau.de widerrufen.
+        </div>
+        <div style="margin-top:6px;font-size:10px;color:#6b7280">Die Mandatsreferenz wird Ihnen nach der Registrierung mitgeteilt.</div>
       </div>
       <div class="shop-auth-field"><label>IBAN *</label><input type="text" id="reg-iban" placeholder="DE89 3704 0044 0532 0130 00"><div class="hint">Ihre IBAN wird verschlüsselt gespeichert</div></div>
       <div class="shop-auth-field"><label>Kontoinhaber *</label><input type="text" id="reg-kontoinhaber"></div>
-      <div class="shop-auth-check"><input type="checkbox" id="reg-sepa"> Ich stimme dem SEPA-Lastschriftmandat zu *</div>
-      <div class="shop-auth-check"><input type="checkbox" id="reg-dsgvo"> Ich habe die <a href="/datenschutz.html" target="_blank">Datenschutzerklärung</a> gelesen und stimme zu *</div>
-      <div class="shop-auth-check"><input type="checkbox" id="reg-agb"> Ich akzeptiere die <a href="/agb.html" target="_blank">AGB</a> *</div>
+      <div class="shop-auth-check"><input type="checkbox" id="reg-sepa"> Ich erteile das oben stehende SEPA-Lastschriftmandat *</div>
+      <div class="shop-auth-check"><input type="checkbox" id="reg-dsgvo"> Ich habe die <a href="/datenschutzerklaerung" target="_blank">Datenschutzerklärung</a> gelesen und stimme zu *</div>
+      <div class="shop-auth-check"><input type="checkbox" id="reg-agb"> Ich akzeptiere die <a href="/agb.html" target="_blank">AGB</a> und das <a href="/widerrufsrecht.html" target="_blank">Widerrufsrecht</a> *</div>
       <button class="shop-auth-submit" id="register-submit">Konto erstellen</button>
     </div>
   </div>
@@ -520,7 +532,14 @@
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
-          showToast('Registrierung erfolgreich! Bitte anmelden.');
+          var mref=res.mandatsreferenz||'';
+          var msg='Registrierung erfolgreich!';
+          if(mref) msg+=' Ihre Mandatsreferenz: '+mref;
+          showToast(msg);
+          // Show mandate confirmation
+          if(mref){
+            alert('✅ Registrierung erfolgreich!\n\nIhre SEPA-Mandatsreferenz:\n'+mref+'\n\nGläubiger-ID: DE98ZZZ09999999999\nGläubiger: Dorfladen Oberornau UG\n\nBitte bewahren Sie diese Angaben auf.\nSie erhalten eine Bestätigung per E-Mail.');
+          }
           showAuth('login');
           document.getElementById('login-email').value=body.email;
         } else {

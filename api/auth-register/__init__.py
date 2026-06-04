@@ -17,6 +17,12 @@ DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 ENTITY_SET = "dl_shopkundes"
 
+# SEPA-Gläubigerdaten
+GLAEUBIGER_ID = "DE98ZZZ09999999999"  # Gläubiger-Identifikationsnummer (bei Bundesbank beantragt)
+GLAEUBIGER_NAME = "Dorfladen Oberornau UG (haftungsbeschränkt)"
+GLAEUBIGER_ADRESSE = "Dorfstraße 1, 84166 Adlkofen"
+MANDAT_VERFALL_MONATE = 36  # SEPA-Mandat verfällt nach 36 Monaten Inaktivität
+
 
 def get_token():
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
@@ -192,6 +198,34 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     iban_encrypted = _encrypt_iban(iban)
 
     # Create customer record
+    now = datetime.utcnow()
+    mandatsdatum = now.strftime("%Y-%m-%d")
+    mandatsdatum_display = now.strftime("%d.%m.%Y")
+
+    # Collect signing metadata for legal compliance
+    client_ip = req.headers.get("X-Forwarded-For", req.headers.get("X-Real-IP", "unknown"))
+    user_agent = req.headers.get("User-Agent", "unknown")
+
+    # SEPA Mandate JSON with all legally required data
+    sepa_mandat_json = json.dumps({
+        "glaeubiger_id": GLAEUBIGER_ID,
+        "glaeubiger_name": GLAEUBIGER_NAME,
+        "glaeubiger_adresse": GLAEUBIGER_ADRESSE,
+        "mandatsreferenz": mandatsreferenz,
+        "mandatsdatum": mandatsdatum,
+        "mandatstyp": "RCUR",  # Wiederkehrende Lastschrift
+        "mandatsstatus": "aktiv",
+        "kontoinhaber": kontoinhaber,
+        "iban_masked": iban.replace(' ', '').upper()[:4] + '****' + iban.replace(' ', '').upper()[-4:],
+        "unterschrift_digital": True,
+        "unterschrift_ip": client_ip,
+        "unterschrift_useragent": user_agent,
+        "unterschrift_zeitpunkt": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "vorabankuendigung_tage": 5,
+        "letzte_lastschrift": None,
+        "verfall_monate": MANDAT_VERFALL_MONATE,
+    }, ensure_ascii=False)
+
     payload = {
         "dl_email": email,
         "dl_vorname": vorname,
@@ -204,7 +238,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "dl_iban_encrypted": iban_encrypted,
         "dl_kontoinhaber": kontoinhaber,
         "dl_mandatsreferenz": mandatsreferenz,
-        "dl_mandatsdatum": datetime.utcnow().strftime("%Y-%m-%d"),
+        "dl_mandatsdatum": mandatsdatum,
+        "dl_mandatstyp": "RCUR",
+        "dl_mandatsstatus": "aktiv",
+        "dl_sepa_mandat_json": sepa_mandat_json,
         "dl_email_verifiziert": False,
         "dl_aktiv": True,
         "dl_verify_token": verify_token,
@@ -223,6 +260,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "message": "Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.",
                     "id": record_id,
                     "mandatsreferenz": mandatsreferenz,
+                    "mandatsdatum": mandatsdatum_display,
+                    "glaeubiger_id": GLAEUBIGER_ID,
+                    "glaeubiger_name": GLAEUBIGER_NAME,
                     "verify_token": verify_token  # In production: only send via email
                 }, ensure_ascii=False),
                 status_code=201, headers=get_cors_headers()
