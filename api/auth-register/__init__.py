@@ -4,6 +4,7 @@ POST: {email, passwort, vorname, nachname, telefon, strasse, plz, ort, iban, kon
 """
 import azure.functions as func
 import json
+import logging
 import os
 import re
 import uuid
@@ -247,16 +248,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "dl_verify_token": verify_token,
     }
 
-    # Optional SEPA fields that may not exist yet in Dataverse
-    OPTIONAL_SEPA_FIELDS = ["dl_mandatstyp", "dl_mandatsstatus", "dl_sepa_mandat_json"]
+    # Fields that may not yet exist in Dataverse – strip on 400 and retry
+    OPTIONAL_FIELDS = [
+        "dl_mandatstyp", "dl_mandatsstatus", "dl_sepa_mandat_json",
+        "dl_mandatsreferenz", "dl_mandatsdatum",
+        "dl_verify_token", "dl_email_verifiziert", "dl_aktiv",
+        "dl_iban_encrypted", "dl_kontoinhaber",
+    ]
 
     try:
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
 
-        # If 400 with "Invalid property", retry without new optional fields
+        # If 400 with "Invalid property", progressively strip optional fields and retry
         if r.status_code == 400 and "Invalid property" in r.text:
-            for f in OPTIONAL_SEPA_FIELDS:
+            logging.warning(f"Dataverse 400 on first try, stripping optional fields. Detail: {r.text[:300]}")
+            for f in OPTIONAL_FIELDS:
                 payload.pop(f, None)
             r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
 
