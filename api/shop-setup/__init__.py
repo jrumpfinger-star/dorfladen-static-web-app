@@ -213,7 +213,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "dl_email", "E-Mail")
     results.append(r1)
 
-    if r1["status"] == "created":
+    # Always add attributes (idempotent – Dataverse returns 409 if already exists)
+    if r1["status"] in ("created", "already_exists"):
         e = "dl_shopkunde"
         _add_string_attr(base_url, headers, e, "dl_vorname", "Vorname", 100, True)
         _add_string_attr(base_url, headers, e, "dl_nachname", "Nachname", 100, True)
@@ -242,7 +243,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "dl_bestellnummer", "Bestellnummer")
     results.append(r2)
 
-    if r2["status"] == "created":
+    if r2["status"] in ("created", "already_exists"):
         e = "dl_shopbestellung"
         _add_string_attr(base_url, headers, e, "dl_kunde_email", "Kunde E-Mail", 200)
         _add_string_attr(base_url, headers, e, "dl_kunde_name", "Kundenname", 200)
