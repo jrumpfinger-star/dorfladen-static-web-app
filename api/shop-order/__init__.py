@@ -31,6 +31,7 @@ STATUS_STORNIERT = 4
 
 STATUS_LABELS = {0: "Neu", 1: "In Bearbeitung", 2: "Abholbereit", 3: "Abgeholt", 4: "Storniert"}
 BESTELLSCHLUSS_HOUR = 16  # 16:00 Uhr
+MINDESTBESTELLWERT = 10.0  # Mindestbestellwert in Euro
 
 
 def get_token():
@@ -172,6 +173,13 @@ def _handle_post(req, dv_token, base_url, headers):
     if not clean_positionen:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Keine gültigen Positionen im Warenkorb."}, ensure_ascii=False),
+            status_code=400, headers=get_cors_headers()
+        )
+
+    # Mindestbestellwert prüfen
+    if gesamtsumme < MINDESTBESTELLWERT:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Der Mindestbestellwert beträgt {MINDESTBESTELLWERT:.2f} €. Aktueller Warenkorbwert: {gesamtsumme:.2f} €.", "mindestbestellwert": MINDESTBESTELLWERT, "aktuell": round(gesamtsumme, 2)}, ensure_ascii=False),
             status_code=400, headers=get_cors_headers()
         )
 

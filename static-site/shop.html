@@ -108,6 +108,8 @@
     .shop-checkout-btn{width:100%;padding:14px;border:none;border-radius:10px;background:var(--shop-green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s}
     .shop-checkout-btn:hover{background:#256b42}
     .shop-checkout-btn:disabled{background:#ccc;cursor:not-allowed}
+    .shop-cart-minorder{font-size:12px;color:#dc2626;font-weight:600;margin-bottom:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;display:none}
+    .shop-cart-minorder.show{display:block}
     .shop-cart-note{width:100%;margin-top:8px;padding:8px 12px;border:1px solid var(--shop-border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:40px}
 
     /* ── Auth Modal ── */
@@ -246,6 +248,7 @@
       <span id="shop-cart-total-val">0,00 €</span>
     </div>
     <div class="shop-cart-hint">* Gewogene Ware wird nach tatsächlichem Gewicht berechnet</div>
+    <div class="shop-cart-minorder" id="shop-cart-minorder">⚠️ Mindestbestellwert: 10,00 €</div>
     <div class="shop-cart-abhol" id="shop-cart-abhol">📅 Abholung: morgen vormittags</div>
     <textarea class="shop-cart-note" id="shop-cart-note" placeholder="Anmerkungen zur Bestellung (optional)…" rows="2"></textarea>
     <button class="shop-checkout-btn" id="shop-checkout-btn">🛍 Jetzt bestellen</button>
@@ -412,7 +415,24 @@
     });
     body.innerHTML=html;
     footer.style.display='';
-    document.getElementById('shop-cart-total-val').textContent=fmtP(cartTotal())+' €';
+    var total=cartTotal();
+    document.getElementById('shop-cart-total-val').textContent=fmtP(total)+' €';
+
+    // Mindestbestellwert
+    var MINDESTBESTELLWERT=10;
+    var minEl=document.getElementById('shop-cart-minorder');
+    var ckBtn=document.getElementById('shop-checkout-btn');
+    if(total<MINDESTBESTELLWERT){
+      var diff=MINDESTBESTELLWERT-total;
+      minEl.textContent='⚠️ Mindestbestellwert: 10,00 € — noch '+fmtP(diff)+' € benötigt';
+      minEl.classList.add('show');
+      ckBtn.disabled=true;
+      ckBtn.textContent='🛍 Noch '+fmtP(diff)+' € bis zur Bestellung';
+    } else {
+      minEl.classList.remove('show');
+      ckBtn.disabled=false;
+      ckBtn.textContent='🛍 Jetzt bestellen ('+fmtP(total)+' €)';
+    }
 
     // Wire remove buttons
     body.querySelectorAll('[data-remove]').forEach(function(btn){
@@ -514,6 +534,7 @@
   function doCheckout(){
     if(!isLoggedIn()){showAuth('login');return;}
     if(!cart.length){showToast('Warenkorb ist leer');return;}
+    if(cartTotal()<10){showToast('⚠️ Mindestbestellwert: 10,00 €');return;}
     var note=document.getElementById('shop-cart-note').value.trim();
     var positionen=cart.map(function(c){
       return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.vk,strichcode:c.strichcode||''};

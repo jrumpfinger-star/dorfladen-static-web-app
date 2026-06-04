@@ -270,8 +270,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     bestseller_candidates.sort(key=lambda x: x["popularity"], reverse=True)
     bestsellers = bestseller_candidates[:20]
 
-    # Sort categories alphabetically
-    cat_list = sorted(categories.keys())
+    # Sort categories: prioritize key categories, then alphabetical
+    PRIORITY_CATEGORIES = [
+        "Backwaren",
+        "Fleisch & Wurst",
+        "Molkereiprodukte",
+        "Obst und Gemüse",
+    ]
+    prio_cats = [c for c in PRIORITY_CATEGORIES if c in categories]
+    other_cats = sorted([c for c in categories.keys() if c not in PRIORITY_CATEGORIES])
+    cat_list = prio_cats + other_cats
 
     return func.HttpResponse(
         json.dumps({
