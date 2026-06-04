@@ -457,9 +457,14 @@
     var tickerEl=document.getElementById('mob-ticker-content');
     if(!tickerEl) return;
     var sep='<span style="color:#f59e0b;margin:0 1.5em;font-size:14px">\u2605</span>';
+    var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
     var html=laufband.map(function(n){
       var t=n.dl_titel||n.title||'';
-      return '<span>'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
+      var safe=t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      var dRaw=n.dl_datum||n.datum||n.createdon;
+      var isNew=dRaw&&new Date(dRaw)>=sevenDaysAgo;
+      var badge=isNew?'<span class="news-ticker-new">NEU</span> ':'';
+      return '<span'+(isNew?' class="news-ticker-blink"':'')+'>'+badge+safe+'</span>';
     }).join(sep);
     tickerEl.innerHTML=html;
   }).catch(function(){});

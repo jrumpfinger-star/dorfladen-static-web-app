@@ -105,6 +105,9 @@ img{max-width:100%;display:block}
 .news-ticker-item a:hover{opacity:.75;text-decoration:underline}
 .news-ticker-sep{display:inline;margin:0 2em;opacity:.7;color:#f59e0b;font-size:12px}
 .news-ticker-spacer{display:inline-block}
+.news-ticker-new{background:#f59e0b;color:#1a1a1a;font-size:.65rem;font-weight:800;padding:2px 6px;border-radius:4px;letter-spacing:.5px;margin-right:5px;vertical-align:middle;text-decoration:none}
+.news-ticker-blink a{animation:tickerBlink 1.5s ease-in-out infinite}
+@keyframes tickerBlink{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 /* News overlay */
 .news-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity .3s ease}
