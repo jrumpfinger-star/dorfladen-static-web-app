@@ -55,25 +55,35 @@ def get_graph_token():
         return None
 
 
-def _sp_image_for_key(token, folder_id, key):
-    if not token or not key:
-        return None
+def _list_folder_files(token, folder_id):
+    """List all files in a SharePoint folder (cached per request)."""
     gh = {"Authorization": f"Bearer {token}"}
-    for ext in ("jpg", "png", "gif", "jpeg"):
-        meta_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{key}.{ext}"
-        meta = requests.get(meta_url, headers=gh, timeout=12)
-        if meta.status_code != 200:
-            continue
-        item = meta.json()
-        item_id = item.get("id")
-        if not item_id:
-            continue
-        content = requests.get(f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{item_id}/content", headers=gh, timeout=20)
-        if content.status_code != 200:
-            continue
-        mime = "image/png" if ext == "png" else "image/gif" if ext == "gif" else "image/jpeg"
-        return "data:" + mime + ";base64," + base64.b64encode(content.content).decode("ascii")
-    return None
+    files = {}
+    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}/children?$select=id,name&$top=999"
+    while url:
+        r = requests.get(url, headers=gh, timeout=30)
+        if r.status_code != 200:
+            break
+        data = r.json()
+        for item in data.get("value", []):
+            name = item.get("name", "")
+            stem = name.rsplit(".", 1)[0] if "." in name else name
+            ext = name.rsplit(".", 1)[1].lower() if "." in name else ""
+            if ext in ("jpg", "jpeg", "png", "gif", "webp"):
+                files[stem] = item.get("id")
+        url = data.get("@odata.nextLink")
+    return files
+
+
+def _download_sp_image(token, item_id, name):
+    """Download a single SharePoint image and return base64 data URI."""
+    gh = {"Authorization": f"Bearer {token}"}
+    r = requests.get(f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{item_id}/content", headers=gh, timeout=20)
+    if r.status_code != 200:
+        return None
+    ext = name.rsplit(".", 1)[1].lower() if "." in name else "jpg"
+    mime = "image/png" if ext == "png" else "image/gif" if ext == "gif" else "image/jpeg"
+    return "data:" + mime + ";base64," + base64.b64encode(r.content).decode("ascii")
 
 
 def _load_sharepoint_images(keys):
@@ -81,17 +91,24 @@ def _load_sharepoint_images(keys):
     if not token:
         return []
     result = []
-    for key in keys[:30]:
-        img = _sp_image_for_key(token, SP_BARCODE_FOLDER, key) or _sp_image_for_key(token, SP_FOLDER, key)
-        if img:
-            result.append({
-                "id": "sharepoint:" + key,
-                "dl_werbebildid": "",
-                "dl_artikelnummer": key,
-                "dl_bild_base64": img,
-                "dl_download_url": "",
-                "source": "sharepoint"
-            })
+    remaining = set(keys[:50])
+    for folder_id in (SP_BARCODE_FOLDER, SP_FOLDER):
+        if not remaining:
+            break
+        folder_files = _list_folder_files(token, folder_id)
+        for key in list(remaining):
+            if key in folder_files:
+                img = _download_sp_image(token, folder_files[key], key)
+                if img:
+                    result.append({
+                        "id": "sharepoint:" + key,
+                        "dl_werbebildid": "",
+                        "dl_artikelnummer": key,
+                        "dl_bild_base64": img,
+                        "dl_download_url": "",
+                        "source": "sharepoint"
+                    })
+                    remaining.discard(key)
     return result
 
 
