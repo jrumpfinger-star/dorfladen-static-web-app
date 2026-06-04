@@ -290,7 +290,9 @@
       var tomorrow=todayIdx>=6?(todayIdx===6?0:1):todayIdx+1;
       label=(next===tomorrow)?'Morgen':dayLabels[next];
     }
-    var showDishes=(menu[showIdx]||[]).filter(function(d){return d.name&&d.name.trim();});
+    var showAll=menu[showIdx]||[];
+    var showDishes=showAll.filter(function(d){return d.name&&d.name.trim();});
+    var showNotice=showAll.length>0&&showAll[0].notice?showAll[0].notice:'';
     if(sub&&showDishes.length>0){
       if(showDishes.length===1){
         sub.textContent=label+': '+showDishes[0].name;
@@ -304,8 +306,10 @@
                    '</div>';
           }).join('') + '</div>';
       }
-    }else if(sub&&hour>=14){
-      sub.textContent='Morgen: Kein Gericht eingetragen';
+    }else if(sub&&showNotice){
+      sub.innerHTML=label+': <em style="font-style:italic;opacity:0.85">'+esc(showNotice)+'</em>';
+    }else if(sub){
+      sub.textContent='';
     }
   }
 
