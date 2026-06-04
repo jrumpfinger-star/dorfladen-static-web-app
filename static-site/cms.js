@@ -8639,8 +8639,10 @@
         if(!flags)flags={};
         var fp=document.getElementById('feat-push');
         var fs=document.getElementById('feat-scanner');
+        var fo=document.getElementById('feat-orders');
         if(fp)fp.checked=flags.push!==false;
         if(fs)fs.checked=flags.scanner!==false;
+        if(fo)fo.checked=flags.orders===true;
       }
     }).catch(function(e){
       statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
@@ -8650,7 +8652,8 @@
   function saveFeatureFlags(){
     var fp=document.getElementById('feat-push');
     var fs=document.getElementById('feat-scanner');
-    var flags={push:fp?fp.checked:true,scanner:fs?fs.checked:true};
+    var fo=document.getElementById('feat-orders');
+    var flags={push:fp?fp.checked:true,scanner:fs?fs.checked:true,orders:fo?fo.checked:false};
     var btn=document.getElementById('settings-save');
     var hint=document.getElementById('settings-saved-hint');
     var statusEl=document.getElementById('settings-status');
