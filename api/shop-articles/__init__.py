@@ -177,7 +177,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         headers = _headers(token)
 
         # Fetch all articles (with bestellbar flag if available)
-        select_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung"
+        select_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung,cr5d4_tableid"
         # Try to include bestellbar field
         url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields},cr5d4_bestellbar,cr5d4_bestelleinheit&$orderby=cr5d4_artikelbezeichnung asc"
         items = _fetch_all_pages(url, headers)
@@ -196,7 +196,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         bestseller_candidates = []
 
         for item in items:
-            artnr = item.get("cr5d4_artikelnummeredeka", "")
+            artnr = item.get("cr5d4_artikelnummeredeka") or item.get("cr5d4_tableid", "")
             bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
             preis = _num(item.get("cr5d4_vk_dorf"))
             warengruppe = normalize_warengruppe(item.get("cr5d4_warengruppebez", ""))
