@@ -247,9 +247,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "dl_verify_token": verify_token,
     }
 
+    # Optional SEPA fields that may not exist yet in Dataverse
+    OPTIONAL_SEPA_FIELDS = ["dl_mandatstyp", "dl_mandatsstatus", "dl_sepa_mandat_json"]
+
     try:
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
+
+        # If 400 with "Invalid property", retry without new optional fields
+        if r.status_code == 400 and "Invalid property" in r.text:
+            for f in OPTIONAL_SEPA_FIELDS:
+                payload.pop(f, None)
+            r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
+
         if r.status_code in (200, 201):
             record = r.json()
             record_id = record.get("dl_shopkundeid", "")
