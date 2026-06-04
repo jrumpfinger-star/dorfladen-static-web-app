@@ -90,6 +90,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     inhalt = body.get("inhalt", "")
     status = body.get("status", 101001)
     laufband = body.get("dl_laufband", False)
+    laufband_bis = body.get("dl_laufband_bis", "")
     record_id = body.get("id")
 
     if not titel:
@@ -113,6 +114,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "dl_inhalt": inhalt,
             "dl_status": status,
             "dl_laufband": laufband,
+            "dl_laufband_bis": laufband_bis if laufband_bis else None,
         }
 
         if record_id:

@@ -3236,10 +3236,10 @@
     if(!item){toast('Beitrag nicht gefunden','error');return;}
     _editingNewsId = id;
     _editingNewsStatus = item.status||101001;
-    showNewsModal('Beitrag bearbeiten',item.titel,item.dl_inhalt||'',item.dl_laufband);
+    showNewsModal('Beitrag bearbeiten',item.titel,item.dl_inhalt||'',item.dl_laufband,item.dl_laufband_bis);
   }
 
-  function showNewsModal(title,titel,inhalt,laufband){
+  function showNewsModal(title,titel,inhalt,laufband,laufbandBis){
     // Extract existing beitragsbild from inhalt
     var existingImg = '';
     var cleanInhalt = inhalt.replace(/<div class="news-beitragsbild">.*?<\/div>/gi, function(m){
@@ -3277,6 +3277,7 @@
       +'<input type="hidden" id="news-edit-img-data">'
       +'</div>'
       +'<label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:#2e7d4f"> <span style="font-size:13px;font-weight:600;color:#374151">Im Laufband anzeigen</span></label>'
+      +'<div id="news-laufband-bis-row" style="margin-top:8px;display:none"><label class="cms-news-lbl">Laufband anzeigen bis</label><input type="date" class="cms-input" id="news-edit-laufband-bis" style="max-width:200px"></div>'
       +'<div class="cms-modal-footer" style="padding:14px 0 0;margin-top:16px">'
       +'<button class="cms-btn cms-btn-primary" data-action="saveNews">\ud83d\udcbe Speichern</button>'
       +'<button class="cms-btn cms-btn-gray" data-action="closeNewsModal">Abbrechen</button>'
@@ -3315,9 +3316,19 @@
     imgClr.addEventListener('click',function(){imgPv.src='';imgPv.style.display='none';imgClr.style.display='none';imgData.value='';});
     // Show existing beitragsbild if present
     if(existingImg){imgPv.src=existingImg;imgPv.style.display='';imgClr.style.display='';imgData.value=existingImg;}
-    // Set Laufband checkbox
+    // Set Laufband checkbox + toggle bis-row
     var lbCb=document.getElementById('news-edit-laufband');
-    if(lbCb) lbCb.checked=!!laufband;
+    var bisRow=document.getElementById('news-laufband-bis-row');
+    var bisInput=document.getElementById('news-edit-laufband-bis');
+    if(lbCb){
+      lbCb.checked=!!laufband;
+      if(bisRow) bisRow.style.display=lbCb.checked?'':'none';
+      lbCb.addEventListener('change',function(){if(bisRow) bisRow.style.display=lbCb.checked?'':'none';});
+    }
+    if(bisInput&&laufbandBis){
+      var d=new Date(laufbandBis);
+      if(!isNaN(d.getTime())) bisInput.value=d.toISOString().slice(0,10);
+    }
   }
 
   function saveNews(){
@@ -3330,7 +3341,8 @@
       inhalt += '<div class="news-beitragsbild"><img src="'+imgD.value+'" alt="Beitragsbild" style="max-width:100%;border-radius:8px;margin-top:12px"></div>';
     }
     var lbCb = document.getElementById('news-edit-laufband');
-    var payload = {titel:titel,inhalt:inhalt,status:_editingNewsStatus||101001,dl_laufband:lbCb?lbCb.checked:false};
+    var lbBis = document.getElementById('news-edit-laufband-bis');
+    var payload = {titel:titel,inhalt:inhalt,status:_editingNewsStatus||101001,dl_laufband:lbCb?lbCb.checked:false,dl_laufband_bis:(lbCb&&lbCb.checked&&lbBis&&lbBis.value)?lbBis.value:''};
     if(_editingNewsId) payload.id = _editingNewsId;
     fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json();})

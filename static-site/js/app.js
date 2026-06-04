@@ -539,7 +539,12 @@ window.closeDtModal = function(id) {
       /* News ticker above hero – only items marked as Laufband */
       var ticker=document.getElementById('news-ticker');
       var tickerContent=document.getElementById('news-ticker-content');
-      var recentItems=items.filter(function(n){return !!n.dl_laufband;});
+      var now=new Date();
+      var recentItems=items.filter(function(n){
+        if(!n.dl_laufband) return false;
+        if(n.dl_laufband_bis){var bis=new Date(n.dl_laufband_bis);bis.setHours(23,59,59,999);if(bis<now) return false;}
+        return true;
+      });
       if(ticker&&tickerContent&&recentItems.length){
         window._tickerNews=recentItems;
         var singleHtml='';

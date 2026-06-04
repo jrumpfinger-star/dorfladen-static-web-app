@@ -125,7 +125,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "dl_datum": item.get("dl_datum"),
                     "createdon": item.get("createdon"),
                     "status": item.get("dl_status"),
-                    "dl_laufband": item.get("dl_laufband", False)
+                    "dl_laufband": item.get("dl_laufband", False),
+                    "dl_laufband_bis": item.get("dl_laufband_bis", "")
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "data": news_list}, ensure_ascii=False),

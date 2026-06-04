@@ -452,7 +452,12 @@
     var items=data;
     if(data&&data.data) items=data.data;
     if(!Array.isArray(items)||!items.length) return;
-    var laufband=items.filter(function(n){return !!n.dl_laufband;});
+    var now=new Date();
+    var laufband=items.filter(function(n){
+      if(!n.dl_laufband) return false;
+      if(n.dl_laufband_bis){var bis=new Date(n.dl_laufband_bis);bis.setHours(23,59,59,999);if(bis<now) return false;}
+      return true;
+    });
     if(!laufband.length) return;
     var tickerEl=document.getElementById('mob-ticker-content');
     if(!tickerEl) return;
