@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Dorfladen – Bestellungen</title>
+<meta name="theme-color" content="#1e3a2f">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f2937;min-height:100vh}
+.hd{position:sticky;top:0;z-index:100;background:#1e3a2f;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.hd h1{font-size:15px;font-weight:700;flex:1;line-height:1.2}
+.hd small{display:block;font-size:10px;opacity:.7}
+.hd-btn{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hd-btn:hover{background:rgba(255,255,255,.25)}
+.cnt-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid #e5e7eb}
+.cnt{text-align:center;padding:8px 2px;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.cnt.on{border-color:#1f2937;transform:scale(1.04)}
+.cnt-n{font-size:24px;font-weight:800;line-height:1}
+.cnt-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.c0{background:#fef3c7;color:#92400e}.c1{background:#dbeafe;color:#1e40af}.c2{background:#d1fae5;color:#065f46}.c3{background:#fce7f3;color:#9d174d}
+.live{display:flex;align-items:center;gap:6px;padding:5px 12px;font-size:11px;color:#6b7280;background:#fff;border-bottom:1px solid #e5e7eb}
+.live-dot{width:7px;height:7px;background:#10b981;border-radius:50%;animation:pu 2s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+.live-r{margin-left:auto;font-family:monospace;font-size:10px}
+.cards{padding:8px 12px 20px}
+.cd{background:#fff;border-radius:12px;border-left:4px solid #ccc;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.cd.s0{border-left-color:#eab308}.cd.s1{border-left-color:#2563eb}.cd.s2{border-left-color:#10b981}.cd.s3{border-left-color:#6b7280}.cd.s4{border-left-color:#dc2626}
+.cd-top{display:flex;align-items:center;gap:10px;padding:12px;cursor:pointer}
+.cd-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.d0{background:#eab308}.d1{background:#2563eb}.d2{background:#10b981}.d3{background:#6b7280}.d4{background:#dc2626}
+.cd-body{flex:1;min-width:0}
+.cd-nr{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.bg{font-size:9px;padding:2px 6px;border-radius:6px;font-weight:700;text-transform:uppercase}
+.b0{background:#fef3c7;color:#92400e}.b1{background:#dbeafe;color:#1e40af}.b2{background:#d1fae5;color:#065f46}.b3{background:#f3f4f6;color:#6b7280}.b4{background:#fef2f2;color:#dc2626}
+.cd-kd{font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-rt{text-align:right;flex-shrink:0}
+.cd-sum{font-size:14px;font-weight:700;color:#1e3a2f}
+.cd-ab{font-size:10px;color:#ea580c;font-weight:600}
+.cd-t{font-size:10px;color:#6b7280}
+.cd-det{display:none;border-top:1px solid #f3f4f6;padding:10px 12px;background:#fafafa}
+.cd.open .cd-det{display:block}
+.di{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px dotted #e5e7eb}
+.di:last-child{border:none}
+.di-n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.di-q{font-weight:700;margin-left:8px;white-space:nowrap}
+.cd-note{background:#fef9c3;padding:6px 8px;border-radius:6px;font-size:11px;color:#92400e;margin:6px 0;font-style:italic}
+.cd-pack{background:#ecfdf5;padding:6px 8px;border-radius:6px;font-size:11px;color:#065f46;margin:6px 0}
+.cd-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cb{padding:9px 14px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px}
+.cb:active{transform:scale(.96)}
+.cb-pk{background:#fef3c7;color:#92400e}
+.cb-nb{background:#dbeafe;color:#1e40af}
+.cb-gb{background:#d1fae5;color:#065f46}
+.cb-dn{background:#f3f4f6;color:#374151}
+.cb-x{background:#fef2f2;color:#dc2626}
+.empty{text-align:center;padding:60px 20px;color:#6b7280}
+.empty i{font-size:48px;display:block;margin-bottom:12px;font-style:normal}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.new-pop{position:fixed;top:56px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:200;display:none;box-shadow:0 4px 12px rgba(220,38,38,.3);cursor:pointer;animation:bo .5s ease infinite alternate}
+@keyframes bo{from{transform:translateX(-50%) translateY(0)}to{transform:translateX(-50%) translateY(-4px)}}
+@media print{.hd,.cnt-row,.live,.cd-btns,.new-pop,.toast{display:none!important}body{background:#fff}.cards{padding:0}.cd{break-inside:avoid;border-radius:0;border:1px solid #ccc;margin-bottom:4px}.cd-det{display:block!important}}
+</style>
+</head>
+<body>
+<div class="hd">
+  <span style="font-size:20px">📋</span>
+  <div><h1>Bestellungen</h1><small id="hd-sub">Wird geladen…</small></div>
+  <button class="hd-btn" id="btn-p" title="Drucken">🖨</button>
+  <button class="hd-btn" id="btn-r" title="Aktualisieren">🔄</button>
+</div>
+<div class="cnt-row">
+  <div class="cnt c0 on" data-f="0" id="cn0"><div class="cnt-n" id="cn0n">0</div><div class="cnt-l">Neu</div></div>
+  <div class="cnt c1" data-f="1" id="cn1"><div class="cnt-n" id="cn1n">0</div><div class="cnt-l">Packen</div></div>
+  <div class="cnt c2" data-f="2" id="cn2"><div class="cnt-n" id="cn2n">0</div><div class="cnt-l">Bereit</div></div>
+  <div class="cnt c3" data-f="h" id="cnh"><div class="cnt-n" id="cnhn">0</div><div class="cnt-l">Heute</div></div>
+</div>
+<div class="live"><span class="live-dot"></span><span>Auto-Refresh 30s</span><span class="live-r" id="ltime">--:--</span></div>
+<div class="new-pop" id="npop">🔔 Neue Bestellung!</div>
+<div class="cards" id="cards"><div class="empty"><i>⏳</i><p>Bestellungen werden geladen…</p></div></div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+var API=location.hostname==='localhost'?'http://localhost:7071/api':'/api';
+var orders=[],filter='open',prevIds=[],timer=null;
+var ST={0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt',4:'Storniert'};
+function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function fmt(v){return(+v).toFixed(2).replace('.',',');}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+function load(silent){
+  if(!silent) document.getElementById('cards').innerHTML='<div class="empty"><i>⏳</i><p>Lädt…</p></div>';
+  fetch(API+'/shop-order?mode=cms').then(function(r){return r.json();}).then(function(res){
+    if(!res.success){toast('Fehler: '+(res.error||''));return;}
+    var nw=res.orders||[];
+    if(prevIds.length){
+      var nids=nw.map(function(o){return o.id;});
+      var fresh=nids.filter(function(id){return prevIds.indexOf(id)===-1;});
+      if(fresh.length){document.getElementById('npop').style.display='block';if(navigator.vibrate)navigator.vibrate([200,100,200]);}
+    }
+    prevIds=nw.map(function(o){return o.id;});
+    orders=nw;
+    updCnt();render();updTime();
+    document.getElementById('hd-sub').textContent=orders.length+' Bestellung'+(orders.length!==1?'en':'');
+  }).catch(function(e){if(!silent)document.getElementById('cards').innerHTML='<div class="empty"><i>⚠️</i><p>'+esc(e.message)+'</p></div>';});
+}
+
+function updTime(){document.getElementById('ltime').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+
+function updCnt(){
+  var n=0,b=0,br=0,h=0,td=today();
+  orders.forEach(function(o){if(o.status===0)n++;if(o.status===1)b++;if(o.status===2)br++;if(o.abholdatum===td&&o.status<3)h++;});
+  document.getElementById('cn0n').textContent=n;
+  document.getElementById('cn1n').textContent=b;
+  document.getElementById('cn2n').textContent=br;
+  document.getElementById('cnhn').textContent=h;
+}
+
+function filtered(){
+  var td=today();
+  if(filter==='open') return orders.filter(function(o){return o.status<3;});
+  if(filter==='0') return orders.filter(function(o){return o.status===0;});
+  if(filter==='1') return orders.filter(function(o){return o.status===1;});
+  if(filter==='2') return orders.filter(function(o){return o.status===2;});
+  if(filter==='h') return orders.filter(function(o){return o.abholdatum===td&&o.status<3;});
+  if(filter==='done') return orders.filter(function(o){return o.status>=3;});
+  return orders;
+}
+
+function render(){
+  var list=filtered();
+  list.sort(function(a,b){if(a.status!==b.status)return a.status-b.status;return(a.bestelldatum||'').localeCompare(b.bestelldatum||'');});
+  if(!list.length){document.getElementById('cards').innerHTML='<div class="empty"><i>✅</i><p>Keine Bestellungen</p></div>';return;}
+  var h='';
+  list.forEach(function(o){
+    var pos=o.positionen||[],pk='';
+    if(o.pack_data&&o.pack_data.alle_gepackt) pk='✅ Gepackt '+o.pack_data.gepackt_um;
+    else if(o.pack_data&&o.pack_data.items){var dn=o.pack_data.items.filter(function(i){return i.gepackt;}).length;pk='📦 '+dn+'/'+o.pack_data.items.length+' gepackt';}
+    h+='<div class="cd s'+o.status+'" data-id="'+esc(o.id)+'">';
+    h+='<div class="cd-top" data-tog="'+esc(o.id)+'">';
+    h+='<div class="cd-dot d'+o.status+'"></div>';
+    h+='<div class="cd-body"><div class="cd-nr">'+esc(o.bestellnummer)+' <span class="bg b'+o.status+'">'+esc(ST[o.status]||'?')+'</span></div>';
+    h+='<div class="cd-kd">'+esc(o.kunde_name||o.kunde_email)+'</div></div>';
+    h+='<div class="cd-rt"><div class="cd-sum">'+fmt(o.gesamtsumme)+' €</div>';
+    h+='<div class="cd-ab">📅 '+esc(o.abholdatum)+'</div>';
+    h+='<div class="cd-t">'+esc(o.bestelldatum)+'</div></div></div>';
+    h+='<div class="cd-det">';
+    if(o.anmerkungen) h+='<div class="cd-note">📝 '+esc(o.anmerkungen)+'</div>';
+    if(pk) h+='<div class="cd-pack">'+pk+'</div>';
+    h+='<div style="font-size:11px;font-weight:700;margin-bottom:4px;color:#6b7280">'+pos.length+' Artikel:</div>';
+    pos.forEach(function(p){h+='<div class="di"><span class="di-n">'+esc(p.bezeichnung)+'</span><span class="di-q">'+p.menge+' '+esc(p.einheit)+'</span></div>';});
+    h+='<div class="cd-btns">';
+    if(o.status<=1) h+='<button class="cb cb-pk" data-a="pack" data-o="'+esc(o.id)+'">📦 Packen</button>';
+    if(o.status===0) h+='<button class="cb cb-nb" data-a="st" data-o="'+esc(o.id)+'" data-s="1">→ Bearbeiten</button>';
+    if(o.status===1) h+='<button class="cb cb-gb" data-a="st" data-o="'+esc(o.id)+'" data-s="2" data-nr="'+esc(o.bestellnummer)+'" data-em="'+esc(o.kunde_email)+'" data-nm="'+esc(o.kunde_name)+'" data-ah="'+esc(o.abholdatum)+'">✓ Abholbereit</button>';
+    if(o.status===2) h+='<button class="cb cb-dn" data-a="st" data-o="'+esc(o.id)+'" data-s="3">✅ Abgeholt</button>';
+    if(o.status<3) h+='<button class="cb cb-x" data-a="st" data-o="'+esc(o.id)+'" data-s="4">✕</button>';
+    h+='</div></div></div>';
+  });
+  document.getElementById('cards').innerHTML=h;
+  wire();
+}
+
+function wire(){
+  document.querySelectorAll('[data-tog]').forEach(function(el){el.addEventListener('click',function(){el.closest('.cd').classList.toggle('open');});});
+  document.querySelectorAll('[data-a]').forEach(function(btn){btn.addEventListener('click',function(e){
+    e.stopPropagation();
+    var a=btn.getAttribute('data-a'),oid=btn.getAttribute('data-o');
+    if(a==='pack'){
+      var o=orders.find(function(x){return x.id===oid;});
+      if(o&&o.status===0){fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:oid,status:1})}).then(function(){load(true);});}
+      window.open('/pack.html?id='+encodeURIComponent(oid),'_blank');return;
+    }
+    if(a==='st'){
+      var s=parseInt(btn.getAttribute('data-s')),lb=ST[s]||'';
+      if(!confirm('Status → '+lb+'?'))return;
+      btn.disabled=true;btn.textContent='…';
+      fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:oid,status:s})})
+        .then(function(r){return r.json();}).then(function(res){
+          if(res.success){
+            toast('✅ → '+lb);
+            if(s===2){
+              var nr=btn.getAttribute('data-nr'),em=btn.getAttribute('data-em'),nm=btn.getAttribute('data-nm'),ah=btn.getAttribute('data-ah');
+              fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:nr,kunde_email:em,kunde_name:nm,abholdatum:ah})}).catch(function(){});
+            }
+            load(true);
+          } else {toast('Fehler: '+(res.error||''));btn.disabled=false;}
+        }).catch(function(e){toast('Fehler: '+e.message);btn.disabled=false;});
+    }
+  });});
+}
+
+// Counter clicks
+document.querySelectorAll('.cnt').forEach(function(el){el.addEventListener('click',function(){
+  document.querySelectorAll('.cnt').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+  var f=el.getAttribute('data-f');
+  if(f==='0'||f==='1'||f==='2') filter=f;
+  else if(f==='h') filter='h';
+  else filter='open';
+  render();
+});});
+
+document.getElementById('npop').addEventListener('click',function(){this.style.display='none';filter='open';document.querySelectorAll('.cnt').forEach(function(c){c.classList.remove('on');});document.getElementById('cn0').classList.add('on');load(true);});
+document.getElementById('btn-r').addEventListener('click',function(){load(false);});
+document.getElementById('btn-p').addEventListener('click',function(){window.print();});
+
+// Auto-refresh
+function startTimer(){if(timer)clearInterval(timer);timer=setInterval(function(){load(true);},30000);}
+
+load(false);
+startTimer();
+})();
+</script>
+</body>
+</html>

@@ -15,7 +15,8 @@
     { "route": "/datenschutzerklaerung", "rewrite": "/datenschutzerklaerung.html" },
     { "route": "/aktuelles", "rewrite": "/aktuelles.html" },
     { "route": "/shop", "rewrite": "/shop.html" },
-    { "route": "/pack", "rewrite": "/pack.html" }
+    { "route": "/pack", "rewrite": "/pack.html" },
+    { "route": "/bestellungen", "rewrite": "/bestellungen.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
