@@ -70,7 +70,7 @@ jobs:
             --name dorfladen-website \
             --environment-name ${{ github.event.pull_request.number }} \
             --setting-names \
-              "DV_DEFAULT_URL=https://org392a4789.crm16.dynamics.com" \
+              "DV_DEFAULT_URL=https://orgab4e2f00.crm16.dynamics.com" \
               "SHOP_JWT_SECRET=${{ secrets.SHOP_JWT_SECRET }}"
           echo "Preview environment configured with DEV Dataverse + Shop secrets"
 
