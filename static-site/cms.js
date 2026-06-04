@@ -3282,7 +3282,6 @@
       +'<button class="cms-btn cms-btn-gray" data-action="closeNewsModal">Abbrechen</button>'
       +'</div></div>';
     document.body.appendChild(overlay);
-    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
     // Wire save/cancel buttons directly (delegation can fail on mobile with contenteditable)
     var saveBtn=overlay.querySelector('[data-action="saveNews"]');
     var cancelBtn=overlay.querySelector('[data-action="closeNewsModal"]');
