@@ -95,7 +95,7 @@
     .shop-qty-btn{width:32px;height:32px;border:none;background:#f3f4f6;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
     .shop-qty-btn:hover{background:#e5e7eb}
     .shop-qty-val{width:40px;text-align:center;font-size:13px;font-weight:600;border:none;outline:none;background:#fff}
-    .shop-weight-input{width:60px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:13px;text-align:center}
+    .shop-weight-input{width:74px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:13px;text-align:center}.shop-qty-input{width:58px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:13px;text-align:center}
 
     /* ── Cart Sidebar / Bottom Sheet ── */
     .shop-cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;opacity:0;transition:opacity .2s}
@@ -394,7 +394,7 @@
   function saveCart(){localStorage.setItem('dl_shop_cart',JSON.stringify(cart));}
   function updateCartBadge(){
     var badge=document.getElementById('shop-cart-count');
-    var total=cart.reduce(function(s,c){return s+c.menge;},0);
+    var total=cart.length;
     if(total>0){badge.textContent=total>99?'99+':total;badge.style.display='flex';}
     else{badge.style.display='none';}
   }
@@ -416,8 +416,9 @@
   function updateCartQty(artnr,menge){
     var item=cart.find(function(c){return c.artikelnummer===artnr;});
     if(!item) return;
+    menge=Number(menge)||0;
     if(menge<=0){removeFromCart(artnr);return;}
-    item.menge=menge;
+    item.menge=Math.round(menge*1000)/1000;
     saveCart();updateCartBadge();renderCart();
   }
 
@@ -434,11 +435,13 @@
     var html='';
     cart.forEach(function(item){
       var price=fmtP(item.vk*item.menge);
-      var detail=item.gewichtsware?item.menge+' kg × '+fmtP(item.vk)+' €/kg':item.menge+' × '+fmtP(item.vk)+' €';
+      var step=item.gewichtsware?'0.1':'1';
+      var unit=item.gewichtsware?'kg':'Stueck';
+      var detail=item.gewichtsware?item.menge+' kg x '+fmtP(item.vk)+' EUR/kg':item.menge+' Stueck x '+fmtP(item.vk)+' EUR';
       html+='<div class="shop-cart-item">';
-      html+='<div class="shop-cart-item-info"><div class="shop-cart-item-name">'+esc(item.bezeichnung)+'</div><div class="shop-cart-item-detail">'+detail+'</div></div>';
-      html+='<div class="shop-cart-item-price">'+price+' €</div>';
-      html+='<button class="shop-cart-item-remove" data-remove="'+esc(item.artikelnummer)+'" title="Entfernen">✕</button>';
+      html+='<div class="shop-cart-item-info"><div class="shop-cart-item-name">'+esc(item.bezeichnung)+'</div><div class="shop-cart-item-detail">'+detail+'</div><div style="margin-top:6px"><input type="number" class="shop-qty-input" data-cart-qty="'+esc(item.artikelnummer)+'" value="'+item.menge+'" min="'+step+'" step="'+step+'"> <span style="font-size:11px;color:#6b7280">'+unit+'</span></div></div>';
+      html+='<div class="shop-cart-item-price">'+price+' EUR</div>';
+      html+='<button class="shop-cart-item-remove" data-remove="'+esc(item.artikelnummer)+'" title="Entfernen">x</button>';
       html+='</div>';
     });
     body.innerHTML=html;
@@ -465,6 +468,9 @@
     // Wire remove buttons
     body.querySelectorAll('[data-remove]').forEach(function(btn){
       btn.addEventListener('click',function(){removeFromCart(btn.getAttribute('data-remove'));});
+    });
+    body.querySelectorAll('[data-cart-qty]').forEach(function(inp){
+      inp.addEventListener('change',function(){updateCartQty(inp.getAttribute('data-cart-qty'),parseFloat(inp.value));});
     });
   }
 
@@ -755,6 +761,9 @@
         if(article.gewichtsware){
           var inp=document.querySelector('[data-artnr-wt="'+artnr+'"]');
           menge=inp?parseFloat(inp.value)||0.5:0.5;
+        } else {
+          var qty=document.querySelector('[data-artnr-qty="'+artnr+'"]');
+          menge=qty?parseInt(qty.value,10)||1:1;
         }
         addToCart(article,menge);
       });
@@ -872,30 +881,47 @@
   document.getElementById('shop-history-btn').addEventListener('click',function(){
     if(!isLoggedIn()){showAuth('login');return;}
     var content=document.getElementById('shop-content');
-    content.innerHTML='<div class="shop-loading"><div class="spinner"></div><p>Bestellungen laden…</p></div>';
+    content.innerHTML='<div class="shop-loading"><div class="spinner"></div><p>Bestellungen laden...</p></div>';
     fetch(API+'/shop-order?mode=customer',{headers:{'Authorization':'Bearer '+authToken}})
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.orders||!res.orders.length){
-          content.innerHTML='<div class="shop-loading"><p>Noch keine Bestellungen</p><button onclick="location.reload()" style="margin-top:12px;padding:10px 24px;border:none;border-radius:8px;background:#2e7d4f;color:#fff;font-size:14px;cursor:pointer">↩ Zum Shop</button></div>';
+          content.innerHTML='<div class="shop-loading"><p>Noch keine Bestellungen</p><button onclick="location.reload()" style="margin-top:12px;padding:10px 24px;border:none;border-radius:8px;background:#2e7d4f;color:#fff;font-size:14px;cursor:pointer">Zum Shop</button></div>';
           return;
         }
-        var html='<div class="shop-orders"><h2 style="font-size:18px;margin-bottom:16px">📋 Meine Bestellungen</h2>';
+        var todayStr=new Date().toISOString().slice(0,10);
+        var html='<div class="shop-orders"><h2 style="font-size:18px;margin-bottom:16px">Meine Bestellungen</h2>';
         res.orders.forEach(function(o){
+          var canCancel=o.status<2&&(!o.abholdatum||todayStr<o.abholdatum);
           html+='<div class="shop-order-card">';
           html+='<div class="shop-order-header"><span class="shop-order-nr">'+esc(o.bestellnummer)+'</span><span class="shop-order-status s'+o.status+'">'+esc(o.status_text)+'</span></div>';
           html+='<div class="shop-order-body">';
-          html+='<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>📅 Bestellt: '+esc(o.bestelldatum)+'</span><span>🏪 Abholung: '+esc(o.abholdatum)+'</span></div>';
-          html+='<div style="font-weight:700;margin-bottom:4px">'+fmtP(o.gesamtsumme)+' € (ca.)</div>';
+          html+='<div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><span>Bestellt: '+esc(o.bestelldatum)+'</span><span>Abholung: '+esc(o.abholdatum)+'</span></div>';
+          html+='<div style="font-weight:700;margin-bottom:4px">'+fmtP(o.gesamtsumme)+' EUR (ca.)</div>';
           if(o.positionen&&o.positionen.length){
             html+='<div style="font-size:12px;color:#6b7280">';
-            o.positionen.forEach(function(p){html+=esc(p.bezeichnung)+' ('+p.menge+' '+esc(p.einheit)+') · ';});
+            o.positionen.forEach(function(p){html+=esc(p.bezeichnung)+' ('+p.menge+' '+esc(p.einheit)+') - ';});
             html+='</div>';
+          }
+          if(canCancel){
+            html+='<div style="margin-top:10px"><button data-cancel-order="'+esc(o.id)+'" style="padding:8px 14px;border:none;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;cursor:pointer">Bestellung stornieren</button></div>';
+          } else if(o.status<4){
+            html+='<div style="margin-top:8px;font-size:12px;color:#6b7280">Aenderung/Storno nicht mehr moeglich, sobald Packung oder Abholung begonnen hat.</div>';
           }
           html+='</div></div>';
         });
-        html+='<button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;border:none;border-radius:8px;background:#2e7d4f;color:#fff;font-size:14px;cursor:pointer;width:100%">↩ Zurück zum Shop</button></div>';
+        html+='<button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;border:none;border-radius:8px;background:#2e7d4f;color:#fff;font-size:14px;cursor:pointer;width:100%">Zurueck zum Shop</button></div>';
         content.innerHTML=html;
+        document.querySelectorAll('[data-cancel-order]').forEach(function(btn){
+          btn.addEventListener('click',function(){
+            if(!confirm('Diese Bestellung wirklich stornieren?')) return;
+            btn.disabled=true;btn.textContent='Wird storniert...';
+            fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:btn.getAttribute('data-cancel-order'),customer_action:'cancel'})})
+              .then(function(r){return r.json();})
+              .then(function(x){if(x.success){showToast('Bestellung storniert');document.getElementById('shop-history-btn').click();}else{showToast('Fehler: '+(x.error||'Storno nicht moeglich'));btn.disabled=false;btn.textContent='Bestellung stornieren';}})
+              .catch(function(e){showToast('Fehler: '+e.message);btn.disabled=false;btn.textContent='Bestellung stornieren';});
+          });
+        });
       })
       .catch(function(e){content.innerHTML='<div class="shop-loading"><p>Fehler: '+esc(e.message)+'</p></div>';});
   });

@@ -337,28 +337,55 @@ def _handle_get(req, dv_token, base_url, headers):
 
 
 def _handle_patch(req, dv_token, base_url, headers):
-    """Update order status (CMS)."""
+    """Update order status (CMS) or customer cancellation."""
     try:
         body = req.get_json()
     except:
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "Ungültiger JSON-Body"}),
+            json.dumps({"success": False, "error": "Ung?ltiger JSON-Body"}),
             status_code=400, headers=get_cors_headers()
         )
 
     order_id = (body.get("id") or "").strip()
     new_status = body.get("status")
+    customer_action = (body.get("customer_action") or "").strip().lower()
+    pack_json = body.get("pack_json")
 
-    pack_json_input = body.get("pack_json")
-
-    if not order_id or (new_status is None and pack_json_input is None):
+    if not order_id or (new_status is None and pack_json is None and not customer_action):
         return func.HttpResponse(
             json.dumps({"success": False, "error": "id und status erforderlich"}),
             status_code=400, headers=get_cors_headers()
         )
 
-    # Pack data update
-    pack_json = body.get("pack_json")
+    if customer_action == "cancel":
+        user = _verify_jwt(req)
+        if not user:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Bitte melden Sie sich an."}, ensure_ascii=False),
+                status_code=401, headers=get_cors_headers()
+            )
+        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_status,dl_abholdatum"
+        cr = requests.get(check_url, headers=headers, timeout=30)
+        if cr.status_code != 200:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Bestellung nicht gefunden"}, ensure_ascii=False),
+                status_code=404, headers=get_cors_headers()
+            )
+        order = cr.json()
+        if (order.get("dl_kunde_email") or "").lower() != (user.get("email") or "").lower():
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Diese Bestellung geh?rt nicht zu Ihrem Konto."}, ensure_ascii=False),
+                status_code=403, headers=get_cors_headers()
+            )
+        status = order.get("dl_status", 0)
+        abholdatum = order.get("dl_abholdatum", "")
+        today = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%d")
+        if status >= STATUS_ABHOLBEREIT or (abholdatum and today >= abholdatum):
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Diese Bestellung kann nicht mehr storniert werden, da sie bereits in der Pack-/Abholphase ist."}, ensure_ascii=False),
+                status_code=400, headers=get_cors_headers()
+            )
+        new_status = STATUS_STORNIERT
 
     patch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})"
     patch_payload = {}
