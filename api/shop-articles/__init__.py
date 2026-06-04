@@ -196,7 +196,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         bestseller_candidates = []
 
         for item in items:
-            artnr = item.get("cr5d4_artikelnummeredeka") or item.get("cr5d4_tableid", "")
+            artnr = item.get("cr5d4_artikelnummeredeka") or item.get("cr5d4_strichcode") or item.get("cr5d4_tableid", "")
             bezeichnung = item.get("cr5d4_artikelbezeichnung", "")
             preis = _num(item.get("cr5d4_vk_dorf"))
             warengruppe = normalize_warengruppe(item.get("cr5d4_warengruppebez", ""))
