@@ -808,32 +808,67 @@
     });
   }
 
-  function loadImages(items){
+  function setArticleImage(artnr,src){
+    imageCache[artnr]=src;
+    var el=document.getElementById('simg-'+artnr);
+    if(el){
+      var img=document.createElement('img');
+      img.className='shop-card-img';
+      img.src=src;
+      img.alt='';
+      el.replaceWith(img);
+    }
+  }
+
+  function loadWerbebilderFallback(items){
     var artnrs=items.map(function(a){return a.artikelnummer;}).filter(function(nr){return nr&&!imageCache[nr];});
     if(!artnrs.length) return;
-    // Batch in groups of 30
     for(var i=0;i<artnrs.length;i+=30){
       var batch=artnrs.slice(i,i+30);
       fetch(API+'/werbebilder?artnrs='+encodeURIComponent(batch.join(',')))
         .then(function(r){return r.json();})
         .then(function(data){
-          (data||[]).forEach(function(r){if(r.dl_bild_base64) imageCache[r.dl_artikelnummer]=r.dl_bild_base64;});
-          // Update visible cards
-          Object.keys(imageCache).forEach(function(nr){
-            var el=document.getElementById('simg-'+nr);
-            if(el&&imageCache[nr]){
-              var img=document.createElement('img');
-              img.className='shop-card-img';
-              img.src=imageCache[nr].startsWith('data:')?imageCache[nr]:'data:image/jpeg;base64,'+imageCache[nr];
-              img.alt='';
-              el.replaceWith(img);
+          (data||[]).forEach(function(r){
+            if(r.dl_artikelnummer&&r.dl_bild_base64){
+              var src=r.dl_bild_base64.startsWith('data:')?r.dl_bild_base64:'data:image/jpeg;base64,'+r.dl_bild_base64;
+              setArticleImage(r.dl_artikelnummer,src);
             }
           });
         }).catch(function(){});
     }
   }
 
-  // ── Cart Toggle ──
+  function tryStaticBarcodeImage(article,done){
+    var barcode=(article.strichcode||'').toString().trim();
+    if(!barcode){done(false);return;}
+    var exts=['jpg','jpeg','png','webp'];
+    var idx=0;
+    function next(){
+      if(idx>=exts.length){done(false);return;}
+      var src='/images/sortiment/'+encodeURIComponent(barcode)+'.'+exts[idx++];
+      var img=new Image();
+      img.onload=function(){setArticleImage(article.artikelnummer,src);done(true);};
+      img.onerror=next;
+      img.src=src;
+    }
+    next();
+  }
+
+  function loadImages(items){
+    var pending=[];
+    items.forEach(function(a){
+      if(!a||!a.artikelnummer) return;
+      if(imageCache[a.artikelnummer]){setArticleImage(a.artikelnummer,imageCache[a.artikelnummer]);return;}
+      pending.push(new Promise(function(resolve){
+        tryStaticBarcodeImage(a,function(found){resolve({article:a,found:found});});
+      }));
+    });
+    if(!pending.length) return;
+    Promise.all(pending).then(function(results){
+      loadWerbebilderFallback(results.filter(function(r){return !r.found;}).map(function(r){return r.article;}));
+    });
+  }
+
   function toggleCart(open){
     var overlay=document.getElementById('shop-cart-overlay');
     var panel=document.getElementById('shop-cart-panel');
