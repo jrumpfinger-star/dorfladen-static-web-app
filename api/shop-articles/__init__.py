@@ -91,6 +91,7 @@ def _num(value, default=0):
 
 def normalize_warengruppe(name):
     """Clean up category names."""
+    name = str(name or "")
     name = re.sub(r'\s*\(?\d+%\)?', '', name)
     name = re.sub(r'\s+Bis\s+\d{4}.*$', '', name, flags=re.IGNORECASE)
     name = name.strip()
