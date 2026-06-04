@@ -41,7 +41,7 @@
 
       var rows='';
       items.forEach(function(item){
-        if(item.discount<5||item.discount>70) return;
+        if(item.discount<5||item.discount>60) return;
         var saving=item.uvp&&item.uvp>0&&item.vk>0?(item.uvp-item.vk):0;
         var mengeHtml=item.menge?'<span class="rp-menge">'+esc(item.menge)+'</span>':'';
         rows+='<tr data-art="'+esc(item.bezeichnung.toLowerCase())+'">';

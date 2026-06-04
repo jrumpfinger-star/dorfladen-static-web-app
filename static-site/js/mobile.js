@@ -496,7 +496,7 @@
           if(item.uvp && item.uvp > 0 && item.vk > 0 && !disc){
             disc = Math.round((item.uvp - item.vk) / item.uvp * 100);
           }
-          var is_rp = item.rp && disc >= 5 && disc <= 70;
+          var is_rp = item.rp && disc >= 5 && disc <= 60;
           var cls=is_rp?'mob-pl-rp':'';
           if(item.angebot) cls+=' mob-pl-ang';
           var priceHtml=fmtP(item.vk)+' €';
