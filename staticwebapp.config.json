@@ -13,7 +13,9 @@
     { "route": "/stille-gesellschafter", "rewrite": "/stille-gesellschafter.html" },
     { "route": "/impressum", "rewrite": "/impressum.html" },
     { "route": "/datenschutzerklaerung", "rewrite": "/datenschutzerklaerung.html" },
-    { "route": "/aktuelles", "rewrite": "/aktuelles.html" }
+    { "route": "/aktuelles", "rewrite": "/aktuelles.html" },
+    { "route": "/shop", "rewrite": "/shop.html" },
+    { "route": "/pack", "rewrite": "/pack.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",

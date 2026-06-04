@@ -64,13 +64,15 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Set DV_DEFAULT_URL to Dev environment
+      - name: Set Preview environment settings
         run: |
           az staticwebapp appsettings set \
             --name dorfladen-website \
             --environment-name ${{ github.event.pull_request.number }} \
-            --setting-names "DV_DEFAULT_URL=https://org392a4789.crm16.dynamics.com"
-          echo "Preview environment configured to use DEV Dataverse"
+            --setting-names \
+              "DV_DEFAULT_URL=https://org392a4789.crm16.dynamics.com" \
+              "SHOP_JWT_SECRET=${{ secrets.SHOP_JWT_SECRET }}"
+          echo "Preview environment configured with DEV Dataverse + Shop secrets"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
