@@ -348,6 +348,7 @@
   // ── State ──
   var allArticles=[];
   var bestsellers=[];
+  var previousArticles=[];
   var categories=[];
   var cart=JSON.parse(localStorage.getItem('dl_shop_cart')||'[]');
   var authToken=localStorage.getItem('dl_shop_token')||'';
@@ -487,6 +488,40 @@
   // ── Auth ──
   function isLoggedIn(){return !!authToken&&!!authUser;}
 
+  function loadPreviousArticles(){
+    if(!isLoggedIn()||!allArticles.length){previousArticles=[];return Promise.resolve([]);}
+    return fetch(API+'/shop-order?mode=customer',{headers:{'Authorization':'Bearer '+authToken}})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        var seen={};
+        (res.orders||[]).forEach(function(o){(o.positionen||[]).forEach(function(pos){
+          var keys=[pos.artikelnummer,pos.strichcode,(pos.bezeichnung||'').toLowerCase()].filter(Boolean);
+          allArticles.forEach(function(a){
+            if(seen[a.artikelnummer]) return;
+            if(keys.indexOf(a.artikelnummer)!==-1||keys.indexOf(a.strichcode)!==-1||keys.indexOf((a.bezeichnung||'').toLowerCase())!==-1) seen[a.artikelnummer]=true;
+          });
+        });});
+        previousArticles=allArticles.filter(function(a){return seen[a.artikelnummer];});
+        return previousArticles;
+      })
+      .catch(function(){previousArticles=[];return [];});
+  }
+
+  function ensurePreviousPill(){
+    var catsEl=document.getElementById('shop-cats');
+    if(!catsEl) return;
+    var existing=catsEl.querySelector('[data-cat="previous"]');
+    if(isLoggedIn()&&!existing){
+      var prevPill=document.createElement('span');
+      prevPill.className='shop-cat-pill';
+      prevPill.setAttribute('data-cat','previous');
+      prevPill.textContent='Schon bestellt';
+      var firstCat=catsEl.querySelector('[data-cat]:not([data-cat="all"]):not([data-cat="bestseller"])');
+      catsEl.insertBefore(prevPill,firstCat||null);
+    }
+    if(!isLoggedIn()&&existing) existing.remove();
+  }
+
   function updateUserUI(){
     var btn=document.getElementById('shop-user-btn');
     if(isLoggedIn()){
@@ -521,7 +556,7 @@
           authToken=res.token;authUser=res.kunde;
           localStorage.setItem('dl_shop_token',authToken);
           localStorage.setItem('dl_shop_user',JSON.stringify(authUser));
-          updateUserUI();hideAuth();showToast('Willkommen, '+authUser.vorname+'!');
+          updateUserUI();hideAuth();showToast('Willkommen, '+authUser.vorname+'!');ensurePreviousPill();loadPreviousArticles().then(function(){if(viewMode==='categories')showCategoryOverview();});
         } else {
           errEl.textContent=res.error||res.errors?.join(' ')||'Fehler';errEl.style.display='';
         }
@@ -719,8 +754,11 @@
     var title='Alle Artikel';
     var emoji='🛒';
 
-    if(activeCat==='bestseller'){
-      items=bestsellers;title='Beliebteste Artikel';emoji='🔥';
+    if(activeCat==='previous'){
+      if(!isLoggedIn()){showAuth('login');return;}
+      items=previousArticles;title='Schon bestellt';emoji='Historie';
+    } else if(activeCat==='bestseller'){
+      items=bestsellers;title='Beliebteste Artikel';emoji='Beliebt';
     } else if(activeCat!=='all'){
       items=allArticles.filter(function(a){return a.warengruppe===activeCat;});
       title=activeCat;emoji=getCatIcon(activeCat);
@@ -729,7 +767,7 @@
     // Search filter
     var q=(document.getElementById('shop-search').value||'').trim().toLowerCase();
     if(q){
-      items=allArticles.filter(function(a){
+      items=items.filter(function(a){
         return (a.bezeichnung||'').toLowerCase().indexOf(q)!==-1||
                (a.warengruppe||'').toLowerCase().indexOf(q)!==-1||
                (a.artikelnummer||'').toString().toLowerCase().indexOf(q)!==-1||
@@ -827,7 +865,8 @@
         catsEl.appendChild(pill);
       });
 
-      showCategoryOverview();
+      ensurePreviousPill();
+      loadPreviousArticles().then(showCategoryOverview);
     })
     .catch(function(e){
       document.getElementById('shop-loading').innerHTML='<p>Fehler: '+esc(e.message)+'</p>';
@@ -841,7 +880,7 @@
 
   document.getElementById('shop-user-btn').addEventListener('click',function(){
     if(isLoggedIn()){
-      if(confirm('Abmelden?')){authToken='';authUser=null;localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();showToast('Abgemeldet');}
+      if(confirm('Abmelden?')){authToken='';authUser=null;previousArticles=[];localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();ensurePreviousPill();showToast('Abgemeldet');}
     } else {showAuth('login');}
   });
 
