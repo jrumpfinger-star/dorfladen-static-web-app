@@ -497,7 +497,9 @@
       canvas.height = height;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
-      var compressed = canvas.toDataURL('image/jpeg', 0.75); // 75% quality JPEG for ultra light size
+      // Preserve original format: PNG stays PNG (keeps transparency), others become JPEG
+      var isPng=base64Str.indexOf('data:image/png')===0;
+      var compressed=isPng?canvas.toDataURL('image/png'):canvas.toDataURL('image/jpeg',0.75);
       callback(compressed);
     };
     img.onerror = function() {
