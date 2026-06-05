@@ -497,7 +497,9 @@
       canvas.height = height;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
-      var compressed = canvas.toDataURL('image/jpeg', 0.75); // 75% quality JPEG for ultra light size
+      // Preserve original format: PNG stays PNG (keeps transparency), others become JPEG
+      var isPng=base64Str.indexOf('data:image/png')===0;
+      var compressed=isPng?canvas.toDataURL('image/png'):canvas.toDataURL('image/jpeg',0.75);
       callback(compressed);
     };
     img.onerror = function() {
@@ -515,8 +517,8 @@
     var artnr=((nrInp&&nrInp.value)||'').trim();
     var strichcode='';
     if(artnr){
-      var c=_artikelCache.find(function(a){return a.nr===artnr;});
-      if(c && c.sc) strichcode=c.sc;
+      var c=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
+      if(c){strichcode=c.sc||'';if(!artnr||artnr===strichcode) artnr=c.nr||'';}
     }
     if(!artnr && prodInp){
       var prod=prodInp.value.trim().toLowerCase();
@@ -799,9 +801,9 @@
     // Accept artnr and/or strichcode – at least one must be provided
     if((!artnr && !strichcode) || !msalApp) return Promise.resolve(null);
     console.log('[CMS] Fetching image for article:',artnr,'strichcode:',strichcode);
-    // If strichcode not passed, look it up from artikel cache
+    // If strichcode not passed, look it up from artikel cache (by nr OR sc)
     if(!strichcode && artnr){
-      var cached=_artikelCache.find(function(a){return a.nr===artnr;});
+      var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
       if(cached && cached.sc) strichcode=cached.sc;
     }
     return getGraphToken().then(function(token){
