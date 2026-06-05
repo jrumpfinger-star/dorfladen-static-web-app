@@ -44,6 +44,54 @@ def get_headers():
     }
 
 
+SP_DRIVE = "b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A"
+SP_FOLDER = "01USAQ6ERA5Q2V5M2I2BCKYOFVH2WWICOC"
+SP_BARCODE_FOLDER = "01USAQ6ESD7NCQ4ZM6GRHK5IRCMJMSRSVH"
+_graph_msal_app = None
+
+def _get_graph_token():
+    global _graph_msal_app
+    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
+    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    client_secret = os.environ.get("DV_CLIENT_SECRET", "")
+    if not client_secret:
+        return None
+    if not _graph_msal_app:
+        _graph_msal_app = msal.ConfidentialClientApplication(
+            client_id,
+            authority=f"https://login.microsoftonline.com/{tenant_id}",
+            client_credential=client_secret,
+        )
+    r = _graph_msal_app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
+    return r.get("access_token")
+
+def _find_sp_image(token, folder_id, key):
+    if not token or not key:
+        return None
+    hdrs = {"Authorization": f"Bearer {token}"}
+    for ext in ("jpg", "png", "jpeg", "gif"):
+        url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{key}.{ext}"
+        r = requests.get(url, headers=hdrs, timeout=20)
+        if r.status_code == 200:
+            body = r.json()
+            return {"name": body.get("name", f"{key}.{ext}"), "dl_download_url": body.get("@microsoft.graph.downloadUrl", "")}
+    return None
+
+def _lookup_sp_images(article_infos):
+    token = _get_graph_token()
+    result = []
+    for info in article_infos[:20]:
+        artnr = (info.get("edeka_nr") or info.get("artikelnummer") or "").strip()
+        sc = (info.get("strichcode") or "").strip()
+        result_key = sc or artnr
+        hit = _find_sp_image(token, SP_BARCODE_FOLDER, sc) if sc else None
+        if not hit and artnr:
+            hit = _find_sp_image(token, SP_FOLDER, artnr)
+        if hit and hit.get("dl_download_url"):
+            result.append({"dl_artikelnummer": result_key, "dl_download_url": hit["dl_download_url"], "source": "sharepoint", "name": hit.get("name", "")})
+    return result
+
+
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
@@ -70,6 +118,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 body=json.dumps({"success": False, "error": "Invalid JSON"}),
                 status_code=400, headers=get_cors_headers()
             )
+        # --- SharePoint image lookup: POST {articles: [{artikelnummer, strichcode, edeka_nr}, ...]} ---
+        if "articles" in body:
+            article_infos = body["articles"][:20]
+            include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
+            if include_sp and article_infos:
+                return func.HttpResponse(body=json.dumps(_lookup_sp_images(article_infos)), status_code=200, headers=get_cors_headers())
+            return func.HttpResponse(body=json.dumps([]), status_code=200, headers=get_cors_headers())
+
         artnr = (body.get("dl_artikelnummer") or "").strip()
         bild = (body.get("dl_bild_base64") or "").strip()
         if not artnr:
