@@ -5910,7 +5910,7 @@
     // Fetch missing images first
     var fetchPromises=items.map(function(it){
       if(it.bild_data)return Promise.resolve();
-      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer;});if(cc)sc=cc.sc||'';}
+      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer||a.sc===it.artikelnummer;});if(cc)sc=cc.sc||'';}
       if(!sc&&it.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===it.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
       if(!it.artikelnummer&&!sc)return Promise.resolve();
       return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){if(b64)it.bild_data=b64;}).catch(function(){});
@@ -7101,7 +7101,7 @@
     // Fetch missing images via Server Logic before drawing
     var fetchPromises=items.map(function(it){
       if(it.bild_data) return Promise.resolve();
-      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer;});if(cc)sc=cc.sc||'';}
+      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer||a.sc===it.artikelnummer;});if(cc)sc=cc.sc||'';}
       if(!sc&&it.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===it.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
       if(!it.artikelnummer&&!sc) return Promise.resolve();
       return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){
@@ -7638,7 +7638,7 @@
       if(target==='flyer'){
         var p=Promise.resolve();
         if(!sample.bild_data){
-          var sc='';if(sample.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===sample.artikelnummer;});if(cc)sc=cc.sc||'';}
+          var sc='';if(sample.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===sample.artikelnummer||a.sc===sample.artikelnummer;});if(cc)sc=cc.sc||'';}
           if(!sc&&sample.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===sample.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
           if(sample.artikelnummer||sc) p=loadImageFromSharePoint(sample.artikelnummer,sc).then(function(b64){if(b64)sample.bild_data=b64;});
         }
@@ -7789,7 +7789,7 @@
           var artnr=(nrInp&&nrInp.value||'').trim();
           var scNr='';
           if(artnr){
-            var cached=_artikelCache.find(function(a){return a.nr===artnr;});
+            var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
             if(cached && cached.sc) scNr=cached.sc;
           }
           if(!scNr && prodInp){
