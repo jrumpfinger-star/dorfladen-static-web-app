@@ -31,10 +31,12 @@ Azure erstellt automatisch eine Preview-URL und setzt die Dev-Dataverse-DB.
 
 ## 3. Übersicht der Umgebungen
 
-| Umgebung | URL | Dataverse |
-|----------|-----|-----------|
-| **Produktion** (main) | kind-pebble-072605b03.7.azurestaticapps.net | orgab4e2f00 (Prod) |
-| **Preview** (PR) | kind-pebble-072605b03-{nr}.7.azurestaticapps.net | org392a4789 (Dev) |
+| Umgebung | Branch | URL | Dataverse |
+|----------|--------|-----|-----------|
+| **Produktion** | main | kind-pebble-072605b03.7.azurestaticapps.net | orgab4e2f00 (Prod) |
+| **Test** | dev | proud-dune-05a8bb803.7.azurestaticapps.net | orgab4e2f00 (Prod) |
+| **Bestellsystem** | feature/bestellsystem | witty-island-064f9d903.7.azurestaticapps.net | orgab4e2f00 (Prod) |
+| **Preview** | PR → main | kind-pebble-072605b03-{nr}.7.azurestaticapps.net | org392a4789 (Dev) |
 
 ## 4. Workflow für Änderungen
 
