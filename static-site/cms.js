@@ -519,6 +519,7 @@
     if(artnr){
       var c=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
       if(c){strichcode=c.sc||'';if(!artnr||artnr===strichcode) artnr=c.nr||'';}
+      if(!strichcode && !c){strichcode=artnr;}
     }
     if(!artnr && prodInp){
       var prod=prodInp.value.trim().toLowerCase();

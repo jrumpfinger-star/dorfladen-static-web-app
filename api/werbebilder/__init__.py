@@ -74,7 +74,20 @@ def _find_sp_image(token, folder_id, key):
         r = requests.get(url, headers=hdrs, timeout=20)
         if r.status_code == 200:
             body = r.json()
-            return {"name": body.get("name", f"{key}.{ext}"), "dl_download_url": body.get("@microsoft.graph.downloadUrl", "")}
+            dl_url = body.get("@microsoft.graph.downloadUrl", "")
+            name = body.get("name", f"{key}.{ext}")
+            # Download and convert to base64 so browser can use it (avoids CORS)
+            b64 = ""
+            if dl_url:
+                try:
+                    img_r = requests.get(dl_url, timeout=30)
+                    if img_r.status_code == 200:
+                        import base64
+                        ct = img_r.headers.get("Content-Type", "image/jpeg")
+                        b64 = f"data:{ct};base64," + base64.b64encode(img_r.content).decode("ascii")
+                except Exception:
+                    pass
+            return {"name": name, "dl_download_url": dl_url, "dl_bild_base64": b64}
     return None
 
 def _lookup_sp_images(article_infos):
@@ -87,8 +100,8 @@ def _lookup_sp_images(article_infos):
         hit = _find_sp_image(token, SP_BARCODE_FOLDER, sc) if sc else None
         if not hit and artnr:
             hit = _find_sp_image(token, SP_FOLDER, artnr)
-        if hit and hit.get("dl_download_url"):
-            result.append({"dl_artikelnummer": result_key, "dl_download_url": hit["dl_download_url"], "source": "sharepoint", "name": hit.get("name", "")})
+        if hit and (hit.get("dl_bild_base64") or hit.get("dl_download_url")):
+            result.append({"dl_artikelnummer": result_key, "dl_bild_base64": hit.get("dl_bild_base64", ""), "dl_download_url": hit.get("dl_download_url", ""), "source": "sharepoint", "name": hit.get("name", "")})
     return result
 
 
