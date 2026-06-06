@@ -80,7 +80,7 @@
   // --- Load Artikel Data from Azure Function API ---  
   async function loadArtikelData() {
     try {
-      const response = await fetch(API + '/preisliste');
+      const response = await fetch(API + '/preisliste?all=1');
       if (!response.ok) {
         console.error('Preisliste API failed:', response.status, response.statusText);
         return;

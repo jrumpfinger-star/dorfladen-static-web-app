@@ -198,7 +198,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Load active Sonderangebote from Default environment
         angebote_map = _load_active_angebote(default_url, hdrs)
 
-        # Cutoff: 6 months ago
+        # Cutoff: 6 months ago (skip for CMS full catalog via ?all=1)
+        skip_filter = req.params.get("all", "").lower() in ("1", "true", "yes")
         cutoff_date = datetime.utcnow() - timedelta(days=183)
         FLEISCH_WURST_KEYWORDS = ["fleisch", "wurst", "metzger", "aufschnitt", "schinken", "salami"]
 
@@ -230,7 +231,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 warengruppe_bez = normalize_warengruppe(warengruppe_bez) or warengruppe_bez
 
             # Filter: skip articles not sold in last 6 months, except Fleisch & Wurst
-            if not is_fleisch_wurst(warengruppe_bez):
+            if not skip_filter and not is_fleisch_wurst(warengruppe_bez):
                 if not letzter_verkauf:
                     skipped += 1
                     continue
