@@ -15,12 +15,61 @@ import requests
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
-# Actual M365 mailbox used for sending via Graph API
-SENDER_MAILBOX = os.environ.get("SHOP_SENDER_MAILBOX", "info@dorfladenoberornau.onmicrosoft.com")
-# Friendly display name shown as "From" in the customer's inbox
-SENDER_DISPLAY_NAME = "Dorfladen Oberornau"
-# Reply-To address – customer replies go here
-REPLY_TO_EMAIL = os.environ.get("SHOP_REPLY_TO", "bestellung@dorfladen-oberornau.de")
+# Fallback contact info (overridden by Dataverse config key "shop_kontakt")
+CONTACT_DEFAULTS = {
+    "name": "Dorfladen Oberornau",
+    "adresse": "Dorfplatz 1 · 84419 Obertaufkirchen",
+    "telefon": "08082 / 622 99 91",
+    "telefon_link": "+4980826229991",
+    "email": "bestellung@dorfladen-oberornau.de",
+    "website": "www.dorfladen-oberornau.de",
+    "website_url": "https://www.dorfladen-oberornau.de",
+    "shop_url": "https://www.dorfladen-oberornau.de/shop.html",
+    "logo_url": "https://www.dorfladen-oberornau.de/images/dorfladen-logo.png",
+    "mailbox": "info@dorfladenoberornau.onmicrosoft.com",
+    "reply_to": "bestellung@dorfladen-oberornau.de",
+    "slogan": "Ihr Nahversorger"
+}
+
+# Cache for Dataverse config (loaded once per function cold start)
+_contact_cache = None
+
+
+def get_contact_info():
+    """Load shop contact info from Dataverse (key: shop_kontakt), fallback to defaults."""
+    global _contact_cache
+    if _contact_cache is not None:
+        return _contact_cache
+
+    import logging
+    try:
+        token = get_token()
+        if not token:
+            raise Exception("No Dataverse token")
+
+        base_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "OData-MaxVersion": "4.0",
+            "OData-Version": "4.0",
+            "Accept": "application/json",
+        }
+
+        url = f"{base_url}/api/data/v9.2/dl_seiteninhalts?$filter=dl_schluessel eq 'shop_kontakt'&$select=dl_wert"
+        r = requests.get(url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            items = (r.json() or {}).get("value", [])
+            if items and items[0].get("dl_wert"):
+                dv_config = json.loads(items[0]["dl_wert"])
+                merged = {**CONTACT_DEFAULTS, **dv_config}
+                _contact_cache = merged
+                logging.info("[shop-notify] Contact info loaded from Dataverse")
+                return merged
+    except Exception as e:
+        logging.warning(f"[shop-notify] Could not load contact from Dataverse: {e}")
+
+    _contact_cache = CONTACT_DEFAULTS.copy()
+    return _contact_cache
 
 
 def get_token():
@@ -61,13 +110,11 @@ def get_graph_token():
         return None
 
 
-LOGO_URL = "https://www.dorfladen-oberornau.de/images/dorfladen-logo.png"
-WEBSITE_URL = "https://www.dorfladen-oberornau.de"
-SHOP_URL = "https://www.dorfladen-oberornau.de/shop.html"
-
-
 def build_email_html(body_text, subject=""):
-    """Build a branded HTML email with logo, header, styled body, and footer."""
+    """Build a branded HTML email with logo, header, styled body, and footer.
+    All contact details are loaded from Dataverse (key: shop_kontakt)."""
+    ci = get_contact_info()
+
     # Convert plain text lines to HTML paragraphs
     lines = body_text.split("\n")
     body_parts = []
@@ -76,14 +123,12 @@ def build_email_html(body_text, subject=""):
         if not stripped:
             body_parts.append('<div style="height:12px"></div>')
         elif stripped.startswith("•") or stripped.startswith("  •"):
-            # Bullet point
             item_text = stripped.lstrip("• ").strip()
             body_parts.append(
                 f'<div style="padding:6px 0 6px 16px;border-left:3px solid #2e7d4f">'
                 f'<span style="color:#2e7d4f;font-weight:600">•</span> {item_text}</div>'
             )
         elif stripped.startswith("Grund:"):
-            # Highlight reason
             body_parts.append(
                 f'<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;'
                 f'padding:10px 14px;margin:8px 0;font-weight:600;color:#92400e">'
@@ -93,13 +138,9 @@ def build_email_html(body_text, subject=""):
             body_parts.append(
                 f'<div style="margin-top:20px;color:#374151">{stripped}</div>'
             )
-        elif stripped.startswith("Ihr Dorfladen"):
+        elif stripped.startswith("Ihr Dorfladen") or stripped.startswith("Ihr " + ci["name"]):
             body_parts.append(
                 f'<div style="font-weight:700;color:#2e7d4f;font-size:15px">{stripped}</div>'
-            )
-        elif stripped.startswith("Dorfstraße") or stripped.startswith("dorfladen@") or stripped.startswith("bestellung@"):
-            body_parts.append(
-                f'<div style="font-size:12px;color:#6b7280">{stripped}</div>'
             )
         else:
             body_parts.append(f'<div style="margin:4px 0;color:#1f2937">{stripped}</div>')
@@ -126,11 +167,11 @@ def build_email_html(body_text, subject=""):
 
   <!-- Header with logo -->
   <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 28px 16px;text-align:center;border-bottom:4px solid {accent_color}">
-    <a href="{WEBSITE_URL}" style="text-decoration:none">
-      <img src="{LOGO_URL}" alt="Dorfladen Oberornau" style="height:60px;max-width:200px;margin-bottom:8px" />
+    <a href="{ci['website_url']}" style="text-decoration:none">
+      <img src="{ci['logo_url']}" alt="{ci['name']}" style="height:60px;max-width:200px;margin-bottom:8px" />
     </a>
     <div style="font-size:11px;color:#6b7280;letter-spacing:1px;text-transform:uppercase;font-weight:600">
-      Dorfladen Oberornau · Ihr Nahversorger
+      {ci['name']} &middot; {ci['slogan']}
     </div>
   </div>
 
@@ -146,7 +187,7 @@ def build_email_html(body_text, subject=""):
 
   <!-- CTA Button -->
   <div style="background:#fff;padding:0 28px 24px;text-align:center">
-    <a href="{SHOP_URL}" style="display:inline-block;padding:12px 28px;background:{accent_color};color:#fff;
+    <a href="{ci['shop_url']}" style="display:inline-block;padding:12px 28px;background:{accent_color};color:#fff;
        text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;margin-top:8px">
       🛒 Zum Dorfladen-Shop
     </a>
@@ -156,14 +197,14 @@ def build_email_html(body_text, subject=""):
   <div style="background:#1f2937;border-radius:0 0 16px 16px;padding:20px 28px;color:#d1d5db;font-size:12px;line-height:1.6">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <span style="font-size:18px">🏪</span>
-      <span style="font-weight:700;color:#fff;font-size:13px">Dorfladen Oberornau</span>
+      <span style="font-weight:700;color:#fff;font-size:13px">{ci['name']}</span>
     </div>
-    <div>Dorfplatz 1 · 84419 Obertaufkirchen</div>
-    <div>Tel: <a href="tel:+4980826229991" style="color:#93c5fd;text-decoration:none">08082 / 622 99 91</a></div>
+    <div>{ci['adresse']}</div>
+    <div>Tel: <a href="tel:{ci['telefon_link']}" style="color:#93c5fd;text-decoration:none">{ci['telefon']}</a></div>
     <div>
-      <a href="mailto:bestellung@dorfladen-oberornau.de" style="color:#93c5fd;text-decoration:none">bestellung@dorfladen-oberornau.de</a>
+      <a href="mailto:{ci['email']}" style="color:#93c5fd;text-decoration:none">{ci['email']}</a>
       &middot;
-      <a href="{WEBSITE_URL}" style="color:#93c5fd;text-decoration:none">www.dorfladen-oberornau.de</a>
+      <a href="{ci['website_url']}" style="color:#93c5fd;text-decoration:none">{ci['website']}</a>
     </div>
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid #374151;font-size:11px;color:#9ca3af">
       Diese E-Mail wurde automatisch erstellt. Bei Fragen antworten Sie einfach auf diese Mail.
@@ -175,12 +216,17 @@ def build_email_html(body_text, subject=""):
 
 
 def send_email(to_email, to_name, subject, body_text):
-    """Send email via Microsoft Graph API."""
+    """Send email via Microsoft Graph API. Contact info from Dataverse."""
     import logging
     token = get_graph_token()
     if not token:
         logging.warning("[shop-notify] No Graph token – cannot send email")
         return False, "No Graph token available"
+
+    ci = get_contact_info()
+    sender_mailbox = ci["mailbox"]
+    sender_name = ci["name"]
+    reply_to = ci["reply_to"]
 
     # Build branded HTML email
     email_html = build_email_html(body_text, subject)
@@ -194,8 +240,8 @@ def send_email(to_email, to_name, subject, body_text):
             },
             "from": {
                 "emailAddress": {
-                    "address": SENDER_MAILBOX,
-                    "name": SENDER_DISPLAY_NAME
+                    "address": sender_mailbox,
+                    "name": sender_name
                 }
             },
             "toRecipients": [{
@@ -203,15 +249,15 @@ def send_email(to_email, to_name, subject, body_text):
             }],
             "replyTo": [{
                 "emailAddress": {
-                    "address": REPLY_TO_EMAIL,
-                    "name": SENDER_DISPLAY_NAME
+                    "address": reply_to,
+                    "name": sender_name
                 }
             }]
         },
         "saveToSentItems": "true"
     }
 
-    url = f"https://graph.microsoft.com/v1.0/users/{SENDER_MAILBOX}/sendMail"
+    url = f"https://graph.microsoft.com/v1.0/users/{sender_mailbox}/sendMail"
     r = requests.post(
         url,
         json=mail_payload,
@@ -265,12 +311,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     storno_grund = body.get("storno_grund", "")
     anrede = f"Liebe/r {kunde_name}" if kunde_name else "Liebe Kundin, lieber Kunde"
 
+    # Load contact info from Dataverse for dynamic email content
+    ci = get_contact_info()
+    laden_name = ci["name"]
+
     # ── Build email subject + body based on notification type ──
     email_subject = ""
     email_body = ""
 
     if notify_type == "cancelled":
-        email_subject = f"Dorfladen Oberornau – Ihre Bestellung {bestellnummer} wurde storniert"
+        email_subject = f"{laden_name} – Ihre Bestellung {bestellnummer} wurde storniert"
         email_body = (
             f"{anrede},\n\n"
             f"leider müssen wir Ihnen mitteilen, dass Ihre Bestellung {bestellnummer} "
@@ -278,14 +328,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"Grund: {storno_grund}\n\n"
             f"Selbstverständlich wurde Ihnen nichts berechnet.\n\n"
             f"Wir bitten um Ihr Verständnis und freuen uns, Sie bald wieder "
-            f"im Dorfladen Oberornau begrüßen zu dürfen!\n\n"
+            f"im {laden_name} begrüßen zu dürfen!\n\n"
             f"Herzliche Grüße\n"
-            f"Ihr Dorfladen-Team Oberornau"
+            f"Ihr {laden_name}-Team"
         )
 
     elif notify_type == "missing_items" and missing_items:
         items_list = "\n".join(f"  • {item}" for item in missing_items)
-        email_subject = f"Dorfladen Oberornau – Hinweis zu Ihrer Bestellung {bestellnummer}"
+        email_subject = f"{laden_name} – Hinweis zu Ihrer Bestellung {bestellnummer}"
         email_body = (
             f"{anrede},\n\n"
             f"vielen Dank für Ihre Bestellung {bestellnummer}!\n\n"
@@ -293,35 +343,35 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"{items_list}\n\n"
             f"Diese Artikel werden Ihnen selbstverständlich nicht berechnet. "
             f"Alle anderen Artikel Ihrer Bestellung liegen für Sie zur Abholung bereit.\n\n"
-            f"Abholung: {abholdatum} vormittags im Dorfladen Oberornau.\n\n"
+            f"Abholung: {abholdatum} vormittags im {laden_name}.\n\n"
             f"Wir bitten um Ihr Verständnis und freuen uns auf Ihren Besuch!\n\n"
             f"Herzliche Grüße\n"
-            f"Ihr Dorfladen-Team Oberornau"
+            f"Ihr {laden_name}-Team"
         )
 
     elif notify_type == "ready":
-        email_subject = f"Dorfladen Oberornau – Ihre Bestellung {bestellnummer} ist abholbereit! 🏪"
+        email_subject = f"{laden_name} – Ihre Bestellung {bestellnummer} ist abholbereit! 🏪"
         email_body = (
             f"{anrede},\n\n"
             f"gute Nachrichten! Ihre Bestellung {bestellnummer} wurde sorgfältig "
             f"zusammengestellt und liegt für Sie zur Abholung bereit.\n\n"
             f"📅 Abholung: {abholdatum} vormittags\n"
-            f"📍 Ort: Dorfladen Oberornau, Dorfplatz 1, 84419 Obertaufkirchen\n\n"
+            f"📍 Ort: {laden_name}, {ci['adresse']}\n\n"
             f"Bitte holen Sie Ihre Bestellung bis 12:00 Uhr mittags ab.\n\n"
             f"Wir freuen uns auf Ihren Besuch!\n\n"
             f"Herzliche Grüße\n"
-            f"Ihr Dorfladen-Team Oberornau"
+            f"Ihr {laden_name}-Team"
         )
 
     else:
-        email_subject = f"Dorfladen Oberornau – Bestellung {bestellnummer}"
+        email_subject = f"{laden_name} – Bestellung {bestellnummer}"
         email_body = (
             f"{anrede},\n\n"
             f"es gibt Neuigkeiten zu Ihrer Bestellung {bestellnummer}.\n"
             f"Bitte schauen Sie in Ihrem Kundenkonto nach oder kontaktieren "
             f"Sie uns bei Fragen.\n\n"
             f"Herzliche Grüße\n"
-            f"Ihr Dorfladen-Team Oberornau"
+            f"Ihr {laden_name}-Team"
         )
 
     logging.info(
