@@ -100,8 +100,7 @@
     <input class="search" id="search" placeholder="Suchen…" autocomplete="off">
     <button class="search-clear" id="search-clear" title="Suche leeren">&times;</button>
   </div>
-  <button class="filter-btn active" data-filter="all">Alle</button>
-  <button class="filter-btn" data-filter="enabled">Freigegeben</button>
+  <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
   <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
   <div class="stats" id="stats">Lade…</div>
 </div>
@@ -147,7 +146,7 @@
   var allArticles=[];     // from Artikelstamm
   var freigabeMap={};     // strichcode → {id, aktiv, gueltig_bis, ...}
   var pendingChanges={};  // strichcode → {action:'enable'|'disable'|'update', gueltig_bis}
-  var activeFilter='all';
+  var activeFilter='enabled';
   var searchTerm='';
   var imgStrichcode='';
   var imgFileData=null;
