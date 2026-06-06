@@ -853,35 +853,23 @@
   }
 
   function loadImageFromSharePoint(artnr, strichcode){
-    // Accept artnr and/or strichcode – at least one must be provided
-    if(!artnr && !strichcode) return Promise.resolve(null);
-    console.log('[CMS] Fetching image for article:',artnr,'strichcode:',strichcode);
-    // If strichcode not passed, look it up from artikel cache (by nr OR sc)
-    if(!strichcode && artnr){
-      var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
-      if(cached && cached.sc) strichcode=cached.sc;
-    }
+    var sc=strichcode||artnr;
+    if(!sc) return Promise.resolve(null);
+    console.log('[CMS] Fetching image for strichcode:',sc);
     // Check in-memory cache first
-    var hit=_imgCacheGet(artnr,strichcode);
-    if(hit){console.log('[CMS] Image cache hit for',artnr,strichcode);return Promise.resolve(hit);}
-    if(!msalApp) return loadImageFromBackend(artnr,strichcode);
+    var hit=_imgCacheGet(sc,sc);
+    if(hit){console.log('[CMS] Image cache hit for',sc);return Promise.resolve(hit);}
+    if(!msalApp) return loadImageFromBackend(sc,sc);
     return getGraphToken().then(function(token){
-      // 1. Search in StrichcodeBilder folder first (by strichcode or artikelnummer)
-      var barcodeKey=strichcode||artnr;
-      var barcodeSearch=barcodeKey?_searchFolderForImage(token, SP_BARCODE_FOLDER, barcodeKey):Promise.resolve(null);
-      return barcodeSearch.then(function(b64){
-        if(b64){_imgCacheSet(artnr,strichcode,b64);return b64;}
-        // 2. Fallback: search in Werbebilder folder by artikelnummer
-        if(!artnr) return loadImageFromBackend(artnr,strichcode);
-        console.log('[CMS] Not found in StrichcodeBilder, trying Werbebilder with',artnr,'...');
-        return _searchFolderForImage(token, SP_FOLDER, artnr).then(function(fb){
-          if(fb){_imgCacheSet(artnr,strichcode,fb);return fb;}
-          return loadImageFromBackend(artnr,strichcode);
-        });
+      // Only search in StrichcodeBilder folder by strichcode
+      return _searchFolderForImage(token, SP_BARCODE_FOLDER, sc).then(function(b64){
+        if(b64){_imgCacheSet(sc,sc,b64);return b64;}
+        // Fallback: backend API (Dataverse)
+        return loadImageFromBackend(sc,sc);
       });
     }).catch(function(e){
-      console.error('[CMS] SharePoint image load error for '+(artnr||strichcode),e);
-      return loadImageFromBackend(artnr,strichcode);
+      console.error('[CMS] SharePoint image load error for',sc,e);
+      return loadImageFromBackend(sc,sc);
     });
   }
 
