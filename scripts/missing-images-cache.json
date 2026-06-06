@@ -1,0 +1,6200 @@
+[
+  {
+    "strichcode": "4250296608824",
+    "bezeichnung": "DRX Bio Dinkelmehl 630 5 kg",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": "80895"
+  },
+  {
+    "strichcode": "4250296682329",
+    "bezeichnung": "DRX Bio Hafer Cluster Crunchy",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": "88232"
+  },
+  {
+    "strichcode": "4250296672139",
+    "bezeichnung": "DRX Din. VM Mand.splitter K.waf.",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": "88412"
+  },
+  {
+    "strichcode": "4250296671965",
+    "bezeichnung": "DRX Dinkel VM Knusperwaffeln",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": "88411"
+  },
+  {
+    "strichcode": "4250296680998",
+    "bezeichnung": "DRX Erdb-Knus.waf. Jogh.schoko.",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": "88099"
+  },
+  {
+    "strichcode": "4250296680349",
+    "bezeichnung": "DRX Schoko Knusper Müsli 1kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": "88034"
+  },
+  {
+    "strichcode": "4250296681964",
+    "bezeichnung": "DRX Schoko-Apfelsch. misch.",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": "88196"
+  },
+  {
+    "strichcode": "4250296680578",
+    "bezeichnung": "DRX Schoko-Dinkelmüsli",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": "88057"
+  },
+  {
+    "strichcode": "4250296682084",
+    "bezeichnung": "DRX Zartbitter Cranberries",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": "88208"
+  },
+  {
+    "strichcode": "4003572506587",
+    "bezeichnung": "FID Sonnenblumenkerne 1 kg",
+    "warengruppe": "Tiernahrung",
+    "edeka_nr": "3510457003"
+  },
+  {
+    "strichcode": "4311501031391",
+    "bezeichnung": "G&G Kaugummi White 50st",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": "5902534000"
+  },
+  {
+    "strichcode": "4311501027677",
+    "bezeichnung": "G&G Kugummi Cherry 50st",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": "5883415000"
+  },
+  {
+    "strichcode": "4311501087923",
+    "bezeichnung": "G&G Mineralwasser 9x0,5l Classic",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": "6315684009"
+  },
+  {
+    "strichcode": "4311501088005",
+    "bezeichnung": "G&G Mineralwasser Still 9x0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": "6315721007"
+  },
+  {
+    "strichcode": "4311501047569",
+    "bezeichnung": "G&G Mini Chock Classic 600ml",
+    "warengruppe": "Eis",
+    "edeka_nr": "6013950000"
+  },
+  {
+    "strichcode": "4311536937804",
+    "bezeichnung": "G&G Servietten gelb 3lg.30ST",
+    "warengruppe": "Drogerie",
+    "edeka_nr": "834907007"
+  },
+  {
+    "strichcode": "4311501163689",
+    "bezeichnung": "G&G WC Reiniger Zitrone 1l",
+    "warengruppe": "Drogerie",
+    "edeka_nr": "6909338008"
+  },
+  {
+    "strichcode": "42451785",
+    "bezeichnung": "L&M Zigaretten 20st",
+    "warengruppe": "Tabakwaren",
+    "edeka_nr": "6375323009"
+  },
+  {
+    "strichcode": "42387626",
+    "bezeichnung": "Pall Mall Auth.Bl.XL 21ST 7,00",
+    "warengruppe": "Tabakwaren",
+    "edeka_nr": "4795729007"
+  },
+  {
+    "strichcode": "9",
+    "bezeichnung": "Helles/ Pils 0,5",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "14",
+    "bezeichnung": "Leberkässemmel",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "302",
+    "bezeichnung": "1 Kg Schachtel 18 St.",
+    "warengruppe": "Eier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "301",
+    "bezeichnung": "10 Stück Eier",
+    "warengruppe": "Eier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9005511060476",
+    "bezeichnung": "13 Weißburgunder 0,75l",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "11",
+    "bezeichnung": "2 Paar Wiener mit Brot",
+    "warengruppe": "Cafeteria 19% Bis 2025",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "13",
+    "bezeichnung": "2 Weißwürste mit Brezn",
+    "warengruppe": "Cafeteria 19% Bis 2025",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "131",
+    "bezeichnung": "3 Weißwürste mit Breze",
+    "warengruppe": "Cafeteria 19% Bis 2025",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4013044100342",
+    "bezeichnung": "4044889002522",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012852207335",
+    "bezeichnung": "4-Pack Lammsb. Zzzisch Pils 0,33l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "925",
+    "bezeichnung": "6-Korn-Quarkbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019555705342",
+    "bezeichnung": "A AlmaWin Schwamm",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346168906",
+    "bezeichnung": "A01 LEB THAI KUECHE 50G",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120083",
+    "bezeichnung": "ADELH. NATURELL PET 12X0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120021",
+    "bezeichnung": "ADELH. SANFT PET 6X1,0l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971033809",
+    "bezeichnung": "Almigh Caramel Popcorn 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971033700",
+    "bezeichnung": "Almigh. Churrios 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971043105",
+    "bezeichnung": "Almigh. Crun.Banane 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971043006",
+    "bezeichnung": "Almigh. Crunchy Van. 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971842708",
+    "bezeichnung": "Almigh. Fantasie Vanilla/Himbeere 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971014006",
+    "bezeichnung": "Almigh. Strac.Erdber. 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971840100",
+    "bezeichnung": "Almigh.Erdbeer 500g MW",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971840407",
+    "bezeichnung": "Almigh.Himbeer 500g MW",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971843101",
+    "bezeichnung": "Almigh.Obstsalat 500g MW",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971842203",
+    "bezeichnung": "Almighurt Vanille 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2012",
+    "bezeichnung": "Almzeit Käse",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016249039110",
+    "bezeichnung": "ALO Frucht pur Waldfrucht 250 gr.",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016249270957",
+    "bezeichnung": "ALO Gelbe Linsen Grillgemüse 140g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016249017071",
+    "bezeichnung": "ALO PaprikaTrio 135 g",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016249173906",
+    "bezeichnung": "ALO Rote Linse Chili 140g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016249132361",
+    "bezeichnung": "ALO scharfe Tomate 135g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016249128715",
+    "bezeichnung": "Alo Streichgenuss Aubergine 175g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8006540689158",
+    "bezeichnung": "Always Daily Fresch Norm. Duft 56 St",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000417102010",
+    "bezeichnung": "Amicelli Alles Liebe 137g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019555706042",
+    "bezeichnung": "AMW Color Waschmittel flüssig 1,5l",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019555700200",
+    "bezeichnung": "AMW Glas und Fenster Reiniger 500ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019555705649",
+    "bezeichnung": "AMW WC Reiniger Zitronig 750ml",
+    "warengruppe": "Tiernahrung",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060025969",
+    "bezeichnung": "AND Bio Lassi Himbeere 250ml",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060032912",
+    "bezeichnung": "AND Bio Passionfr. Guave 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060025563",
+    "bezeichnung": "AND Frischkäse Kräuter 175g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060028250",
+    "bezeichnung": "AND Jogh. Heidelbeer-Cassis 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060025808",
+    "bezeichnung": "AND Jogh. Vanille 100g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060031854",
+    "bezeichnung": "AND Joghurt Bratapfel 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060026393",
+    "bezeichnung": "AND Joghurt Vanille 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060031915",
+    "bezeichnung": "AND Milkinis Apf/Ban 100g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060031908",
+    "bezeichnung": "AND Milkis Erdb. Ban. 100g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060012150",
+    "bezeichnung": "AND Rahmjogh. Mango Vanille 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4104060025990",
+    "bezeichnung": "AND Schmand 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "33",
+    "bezeichnung": "Antipasti",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "59",
+    "bezeichnung": "Aperol",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7349",
+    "bezeichnung": "Äpfel Elstar Bio",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7007",
+    "bezeichnung": "Äpfel Gala",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7008",
+    "bezeichnung": "Äpfel Gala BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7012",
+    "bezeichnung": "Äpfel Jonagold BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7377",
+    "bezeichnung": "Äpfel Magic Star",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7015",
+    "bezeichnung": "Äpfel Pink Lady",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7016",
+    "bezeichnung": "Äpfel Pinova",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7017",
+    "bezeichnung": "Äpfel Pinova  BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7370",
+    "bezeichnung": "Äpfel SweeTango",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7206",
+    "bezeichnung": "Äpfel Topaz BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6004",
+    "bezeichnung": "Apfelstrudel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6008",
+    "bezeichnung": "Apfeltasche",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7225",
+    "bezeichnung": "Aprikose BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4262386710140",
+    "bezeichnung": "Aronia Glühwein 1l",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4262386710027",
+    "bezeichnung": "Aronia Saft 200ml",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4262386710058",
+    "bezeichnung": "Aronia-Apfelsaft 0,75l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4262386710010",
+    "bezeichnung": "Aroniasaft 0,75l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019736014522",
+    "bezeichnung": "Arrabitom 135g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7022",
+    "bezeichnung": "Auberginen BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7369",
+    "bezeichnung": "Auberginen Bio Stück",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7322",
+    "bezeichnung": "Auberginen Stück",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220760",
+    "bezeichnung": "Aufschnitt",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "50",
+    "bezeichnung": "Aufstrich",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120007",
+    "bezeichnung": "AUGUSTINER HELL 20X0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6505",
+    "bezeichnung": "Auszogne",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019555700187",
+    "bezeichnung": "B03 AMW BADR. MIN. 500ML",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346169002",
+    "bezeichnung": "B06 LEB AGLIO.OLIO GEW. 40G",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260123740160",
+    "bezeichnung": "B07 MID KL. OLIVENSEIFE 80G",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145003415",
+    "bezeichnung": "B07 STN SCHABZIGERKLEE 40G",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021779000165",
+    "bezeichnung": "B08 FRANZL TEUFEL EXTRA 500ML",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260123740337",
+    "bezeichnung": "B08 MID SEIFE WILDR. 100G",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145003149",
+    "bezeichnung": "B08 STN PETERSILIE 15G",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145008809",
+    "bezeichnung": "B11 STN PFEFFER SCHW. GANZ 55G",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012824401396",
+    "bezeichnung": "B12 YOG HALSW. TEE",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547301504",
+    "bezeichnung": "Bad Reiniger 0,5 l",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004",
+    "bezeichnung": "Baguett gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9009",
+    "bezeichnung": "Baguette 280g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "941",
+    "bezeichnung": "Baguette 400g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9010",
+    "bezeichnung": "Baguette gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "942",
+    "bezeichnung": "Baguette gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6039",
+    "bezeichnung": "Baguette Semmel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7025",
+    "bezeichnung": "Bananen G&G",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7026",
+    "bezeichnung": "Bananen WWF",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7027",
+    "bezeichnung": "Bananen WWF BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "713",
+    "bezeichnung": "Bären Fang Honig-Likör 0,5l",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "714",
+    "bezeichnung": "Bären Fang Honig-Likör 350ml",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8076809519977",
+    "bezeichnung": "Barilla Orecchiette 500g",
+    "warengruppe": "Nudeln",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7356",
+    "bezeichnung": "Bärlauch 80g",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7029",
+    "bezeichnung": "Batavia-Salat BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4337256831741",
+    "bezeichnung": "Batterien AA 8st",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "943",
+    "bezeichnung": "Bauern Baguette 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "944",
+    "bezeichnung": "Bauern Baguette gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220505",
+    "bezeichnung": "Bauerngeräuchertes im Stück",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4005366132309",
+    "bezeichnung": "BAUM.  BOSNA SAUCE 500 ML",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4005366132118",
+    "bezeichnung": "Baum.Hausm.Senf Meerrett.335ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2015",
+    "bezeichnung": "Bavaria blu Original",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2154807005",
+    "bezeichnung": "Bayerntaler",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5000159528320",
+    "bezeichnung": "Be-Kind Honey Nuts&Seasalt 40g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "21",
+    "bezeichnung": "Belegte Minibag./Rustiko",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250531710237",
+    "bezeichnung": "Bergkas mittelalt 280g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6033",
+    "bezeichnung": "Berliner",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6003",
+    "bezeichnung": "Berliner Brezel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4106060045510",
+    "bezeichnung": "BEU Blutorange 0,7l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4106060010327",
+    "bezeichnung": "BEU Zitronensafft 200ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4101530007456",
+    "bezeichnung": "BGL Bio Frucht&Knusper Banane150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4101530008866",
+    "bezeichnung": "BGL Bio Joghurt Vanille 150 g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4101530000464",
+    "bezeichnung": "BGL BIO Quark 0,2% 350g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4101530009269",
+    "bezeichnung": "BGL Latte Cappuccino 250g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021234101109",
+    "bezeichnung": "BHO Krunchy Christmas 375g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021234102274",
+    "bezeichnung": "BHO Krunchy Dinkel 600gr.",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021234101260",
+    "bezeichnung": "BHO Krunchy Low Sugar 375g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "3086123655751",
+    "bezeichnung": "BIC Stabfeuerzeug klein",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4101530007517",
+    "bezeichnung": "BIO BGL Kefir Him/Lim. 400g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "984",
+    "bezeichnung": "Bio Brot des Monats",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "985",
+    "bezeichnung": "Bio Brot des Monats gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4306205846426",
+    "bezeichnung": "Bio Condimento Bianco mild-süß 0,5l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "90001",
+    "bezeichnung": "Bio Dinkel Baguette 300g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "970",
+    "bezeichnung": "Bio Dinkel-Ernte 400g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501013168",
+    "bezeichnung": "Bio E. 8 Kräuter 50g",
+    "warengruppe": "Tiefkühlkost",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296611046",
+    "bezeichnung": "Bio Erdbeer Cluster Crunchy 375g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296657051",
+    "bezeichnung": "Bio Focaccia Backmischung 500g",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296609357",
+    "bezeichnung": "Bio Früchtetee 80g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012852001735",
+    "bezeichnung": "Bio Lamms.Na.Radl.AF 0,33l MW",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250531733335",
+    "bezeichnung": "BIO Laurenzius 200g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "968",
+    "bezeichnung": "Bio Mehrkornbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "969",
+    "bezeichnung": "Bio Mehrkornbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "989",
+    "bezeichnung": "Bio Naturlaib 3kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "990",
+    "bezeichnung": "Bio Naturlaib gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8052575090520",
+    "bezeichnung": "BIO Nocciolata 250g",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "994",
+    "bezeichnung": "BIO Roggen Vollk. gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9001",
+    "bezeichnung": "Bio Roggensaftbrot",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "966",
+    "bezeichnung": "Bio Sauerteigweckerl 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "967",
+    "bezeichnung": "Bio Sauerteigweckerl gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006",
+    "bezeichnung": "Bio Tagwerkbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "991",
+    "bezeichnung": "Bio Vollkornsonne 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "976",
+    "bezeichnung": "Bio Weltmeisterbrot 750g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "977",
+    "bezeichnung": "Bio Weltmeisterbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4013044110082",
+    "bezeichnung": "Bio Zitronat 100g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7030",
+    "bezeichnung": "Birnen Abate",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7214",
+    "bezeichnung": "Birnen Abate BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7031",
+    "bezeichnung": "Birnen BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7376",
+    "bezeichnung": "Birnen Rocha",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7039",
+    "bezeichnung": "Birnen Xenia",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4035731805965",
+    "bezeichnung": "BIV Kuchen-Natron 20g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4035731805255",
+    "bezeichnung": "BIV Zitronen Saue 10g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7040",
+    "bezeichnung": "Blaukraut",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7041",
+    "bezeichnung": "Blaukraut BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7313",
+    "bezeichnung": "Blumenkohl",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7215",
+    "bezeichnung": "Blumenkohl BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220449",
+    "bezeichnung": "Blutwürste",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7043",
+    "bezeichnung": "Bohnen BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4005561008911",
+    "bezeichnung": "BOL Mini Snäckebrot Sesam&Dinkel 95g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4030173000237",
+    "bezeichnung": "BRAEUMOOS ALK.FREI HELL",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4030173000121",
+    "bezeichnung": "BRAEUMOOS HELL",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130022",
+    "bezeichnung": "BRAEUMOOS HELL 20X0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260338440015",
+    "bezeichnung": "BRAEUZLOH HELL 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120006",
+    "bezeichnung": "BRAEUZLOH HELL 20X0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260338440442",
+    "bezeichnung": "BRAEUZLOH ZWICKEL ALK.FREI 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220109",
+    "bezeichnung": "Braten v. Strohrind",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220919",
+    "bezeichnung": "Bratensoße",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42",
+    "bezeichnung": "Bratensülze",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "43",
+    "bezeichnung": "Bratensülze klein",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260338440091",
+    "bezeichnung": "Bräu Mare Hell 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130100",
+    "bezeichnung": "Bräu Mare Hell 20x0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260338442071",
+    "bezeichnung": "Bräu z´Loh Wasser Classic 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "140016",
+    "bezeichnung": "BRAUNHALLE STROM 50 Cent/kWH",
+    "warengruppe": "Sonstiges 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "507",
+    "bezeichnung": "Brezenteigling",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4026913125902",
+    "bezeichnung": "Brie Demeter 125g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021234101406",
+    "bezeichnung": "BRN Krunchy Cocoa 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021234101420",
+    "bezeichnung": "BRN Krunchy Dinkel 600g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7224",
+    "bezeichnung": "Brokkoli BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7044",
+    "bezeichnung": "Brokkoli Stück",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "303",
+    "bezeichnung": "Brotzeitei",
+    "warengruppe": "Eier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "45",
+    "bezeichnung": "Budapestersalat 100g",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "333",
+    "bezeichnung": "Butterbreze",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2008",
+    "bezeichnung": "Butterkäse",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "972",
+    "bezeichnung": "Buttermilchbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "973",
+    "bezeichnung": "Buttermilchbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4005394202036",
+    "bezeichnung": "BVE Kakao 125g",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4018462157305",
+    "bezeichnung": "BYO Ketchup o. Zucker 500ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4018462157206",
+    "bezeichnung": "BYO Ketchup Scharf 0,5L",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4018462251607",
+    "bezeichnung": "BYO Kircherbsenwaffeln Vollm. 65g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4018462250600",
+    "bezeichnung": "BYO Mais Scheiben Meersalz 120g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4018462250709",
+    "bezeichnung": "BYO Reiswaffeln mit Amaranth 100g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4018462161524",
+    "bezeichnung": "BYO scharfer Senf 100ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4018462142103",
+    "bezeichnung": "BYO Spaghetti 500g",
+    "warengruppe": "Nudeln",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296601047",
+    "bezeichnung": "C  DRX ROGGEN T997 1kg",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4027468000195",
+    "bezeichnung": "C01 ERH Ajvar",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250085779551",
+    "bezeichnung": "C01 GRN BAUERNSPAETZLE 500G",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547300507",
+    "bezeichnung": "C03 SNT WC REIN.MIN. 750ML",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4030173000176",
+    "bezeichnung": "C04 BRAEUMOOS RADLER",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002403054006",
+    "bezeichnung": "C05 HAUG BUERSTE 24cm",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006133315178",
+    "bezeichnung": "C05 TED. PAPPTELLER 250ST",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311596459902",
+    "bezeichnung": "C06 G&G MIWA. STILL. 0,5L",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42043362",
+    "bezeichnung": "C07 UNERTL WEISSBIER",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296680783",
+    "bezeichnung": "C08 DRX CORNFL. SCHOKO 250G",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501428214",
+    "bezeichnung": "C09 G&G TR.TUECHER 25ST",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501465790",
+    "bezeichnung": "C10 ELK. WET LOOK GEL 150ML",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5029053563473",
+    "bezeichnung": "Camelia Maxi normal 24ST",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5000281022482",
+    "bezeichnung": "Capitan Morgan Black 40% 0,7l",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000177032732",
+    "bezeichnung": "Capri Sun Orange 200ml",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000177171912",
+    "bezeichnung": "CapriSun Monster Alarm 200ml",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7046",
+    "bezeichnung": "Champignions braun",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7047",
+    "bezeichnung": "Champignions braun BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7048",
+    "bezeichnung": "Champignions weiß",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7051",
+    "bezeichnung": "Chinakohl",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "982",
+    "bezeichnung": "Ciabata",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "90002",
+    "bezeichnung": "Ciabata 270g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "983",
+    "bezeichnung": "Ciabata gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6043",
+    "bezeichnung": "Ciambella Creme",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7053",
+    "bezeichnung": "Clementinen",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7368",
+    "bezeichnung": "Clementinen Kiste 10kg",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260338442033",
+    "bezeichnung": "Cola Mix",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8711327320109",
+    "bezeichnung": "Cornetto Erdbeer 120ml",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011800564445",
+    "bezeichnung": "Corny Milch 40g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8711327677302",
+    "bezeichnung": "Cremiss. Heidelbeere 825ml",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8711327622814",
+    "bezeichnung": "Cremossimo Stracciatella 825ml",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016512062142",
+    "bezeichnung": "D01  ERN URSALZ 1KG",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002861404122",
+    "bezeichnung": "D01 DRX BANDNUDELN 8MM",
+    "warengruppe": "Nudeln",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4026941004026",
+    "bezeichnung": "D02 BIO ROTE BEETE 210G",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4018462143001",
+    "bezeichnung": "D05 BYO TAGLIATELLA SEM. 250G",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260166240061",
+    "bezeichnung": "D05 ROTER HIRSCH 0,75L",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002448003533",
+    "bezeichnung": "D06 CALG. EXPR. BALL 15ST",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250085778875",
+    "bezeichnung": "D06 GRN KIDNEY BOHNEN 400G",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260166240221",
+    "bezeichnung": "D06 WEISSER HIRSCH 0,75l",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000915104615",
+    "bezeichnung": "D08 ISA KAPERN",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4024297151760",
+    "bezeichnung": "D10 NAT ACETO BALSAMICO 0,5l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008167040002",
+    "bezeichnung": "Dallmayr Cafe crema Forte 1kg",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008167037002",
+    "bezeichnung": "Dallmayr Gold 200g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4009700068934",
+    "bezeichnung": "Danone Activia Cerealien 4x115g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7058",
+    "bezeichnung": "Datteln BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019339303122",
+    "bezeichnung": "DAV Bulgur 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019339311257",
+    "bezeichnung": "DAV Butter Vanillekipferl 250g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019339493106",
+    "bezeichnung": "DAV Gelbe Linsen 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019339852217",
+    "bezeichnung": "DAV Rohrzucker 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019339405079",
+    "bezeichnung": "DAV Sonnenblumenkerne 250g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019339306109",
+    "bezeichnung": "DAV Vollkorn Couscous 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016435001648",
+    "bezeichnung": "DEM Brechbohnen 340g",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260284213398",
+    "bezeichnung": "DEM Heumilch Jogurt 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4106060018088",
+    "bezeichnung": "Dem. Apfelessig 0,75l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016435001594",
+    "bezeichnung": "Demeter Rotkohl",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "711",
+    "bezeichnung": "Dinkel Frischei Nudel 500g",
+    "warengruppe": "Nudeln",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296680639",
+    "bezeichnung": "Dinkel Frucht Müsli mit Dinkel 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "939",
+    "bezeichnung": "Dinkelvollkorn Pur 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "501",
+    "bezeichnung": "Doppelte Semmel/Müsli",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "16",
+    "bezeichnung": "Dorfladen Frühstück",
+    "warengruppe": "Cafeteria 19% Bis 2025",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296602211",
+    "bezeichnung": "Drax Dinkelmehl Type 1050 5kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296656405",
+    "bezeichnung": "DRAX Hildegard Energie-Kekse 350g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296680608",
+    "bezeichnung": "DRAX Schoko Dinkel gepufft",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250966110534",
+    "bezeichnung": "DRX Amara. Früchte Müsli 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296656900",
+    "bezeichnung": "DRX Bio Dinkel Pizza Backmischung 700g",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296600651",
+    "bezeichnung": "DRX Bio Emmermehl Vollkorn 1kg",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296600682",
+    "bezeichnung": "DRX Bio Gerstenmalzmehl 250g",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296656849",
+    "bezeichnung": "DRX Bio Poridgeflocken fein 1kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296606417",
+    "bezeichnung": "DRX Bio Roggenmehl 1370 1Kg",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296684521",
+    "bezeichnung": "DRX Bio Sonntagsmehl 1kg",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296620505",
+    "bezeichnung": "DRX Brotgewürz 500g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4033425307016",
+    "bezeichnung": "DRX Dinkel Backrbsen 100g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296671842",
+    "bezeichnung": "DRX Dinkel Knusper Vollm. 150g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296674317",
+    "bezeichnung": "DRX Dinkel Zartbitter Mandel 150g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296604468",
+    "bezeichnung": "DRX Einkornmehl Vollkorn 1kg",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296611008",
+    "bezeichnung": "DRX Haferflocken Großblatt 1kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002543225069",
+    "bezeichnung": "DRX Hirse Gepufft 200g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296681254",
+    "bezeichnung": "DRX Kürbiskerne 1kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296670814",
+    "bezeichnung": "DRX Reis Waffeln Jog.-Schoko 150g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296671590",
+    "bezeichnung": "DRX Reis Waffeln Zart 150g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296680394",
+    "bezeichnung": "DRX Reistal. Vollm. Mini 100g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296601863",
+    "bezeichnung": "DRX Roggenmehl 610  5kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296601917",
+    "bezeichnung": "DRX Roggenmehl 997 5kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501681633",
+    "bezeichnung": "E. Bio Erdber.Apfel 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501681640",
+    "bezeichnung": "E. Bio Mango- Banane 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501681657",
+    "bezeichnung": "E. Bio Rote Früchte 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501146255",
+    "bezeichnung": "E. Buttertoast 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501088586",
+    "bezeichnung": "E. Duo Creme 400g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501563472",
+    "bezeichnung": "E. Frischhaltenfolie 3in1 20m",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501048122",
+    "bezeichnung": "E. Grillgemüse 350g",
+    "warengruppe": "Tiefkühlkost",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501050811",
+    "bezeichnung": "E. Hummus Getrocknete Tomate 175g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501125953",
+    "bezeichnung": "E. Kokoskugeln 150g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501146194",
+    "bezeichnung": "E. Vollkorntoast 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "43115174",
+    "bezeichnung": "E.Ice Tea Zitrone-Lim.1,5l DPG",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4026941004064",
+    "bezeichnung": "E01 BIO PEPPERONI MILD 480G",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4026941000028",
+    "bezeichnung": "E02 Isar Moos Gurkensticks 670ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4004191025824",
+    "bezeichnung": "E12 ROTBAE. IMMUNST. 750ML",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "922",
+    "bezeichnung": "Ebrachtaler 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "921",
+    "bezeichnung": "Ebrachtaler 500gr",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "920",
+    "bezeichnung": "Ebrachtaler gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501458686",
+    "bezeichnung": "EDK. Schokospekulat. Zart. 200g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311596612376",
+    "bezeichnung": "EFSC Sauerkraut 9700g",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971842104",
+    "bezeichnung": "Ehr. Almig. Schoko/Van 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002971845006",
+    "bezeichnung": "Ehr. Jogh. Fantasie Blutorange 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "300",
+    "bezeichnung": "Ei",
+    "warengruppe": "Eier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "543",
+    "bezeichnung": "Ei Breze",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "710",
+    "bezeichnung": "Eierlikör 0,25 Genz.",
+    "warengruppe": "Spirituosen",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "950",
+    "bezeichnung": "Eierlikör 0,5l Genz.",
+    "warengruppe": "Spirituosen",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4046153084845",
+    "bezeichnung": "Einmalhandschuhe L 100St",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7059",
+    "bezeichnung": "Eisbergsalat",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7060",
+    "bezeichnung": "Eisbergsalat BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "22",
+    "bezeichnung": "Eiskaffee",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501752418",
+    "bezeichnung": "Elkos Duschgel Lime&Zitroneng. 300ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501796337",
+    "bezeichnung": "Elkos Wundpflaster Sensitiv 10st",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7610108059317",
+    "bezeichnung": "Elmex Zahnspülung 400ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "3600524138868",
+    "bezeichnung": "Elvital Total Repair 5 Shampoo 300ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260516011709",
+    "bezeichnung": "EM Badesalz mit Mandelöl 200g",
+    "warengruppe": "Effektive Mikroorganismen (19%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4050669000596",
+    "bezeichnung": "EM Zahncreme Fenchel",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130120",
+    "bezeichnung": "EMICO SAN 1,0l (Bio), DE-ÖKO-003",
+    "warengruppe": "Effektive Mikroorganismen (19%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4050669000572",
+    "bezeichnung": "EMIKO Care ZahnCreme Neutral, 75ml",
+    "warengruppe": "Effektive Mikroorganismen (19%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130108",
+    "bezeichnung": "EMIKO EM Silo 10,0 l",
+    "warengruppe": "Effektive Mikroorganismen (7%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130102",
+    "bezeichnung": "EMIKO EM1 1,0l",
+    "warengruppe": "Effektive Mikroorganismen (19%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130104",
+    "bezeichnung": "EMIKO EM1 10,0 l",
+    "warengruppe": "Effektive Mikroorganismen (19%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130203",
+    "bezeichnung": "EMIKO Zuckerrohr-Melasse 10l, konventionell",
+    "warengruppe": "Effektive Mikroorganismen (7%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260516010740",
+    "bezeichnung": "EMIKO Zuckerrohr-Melasse 5l, konventionell",
+    "warengruppe": "Effektive Mikroorganismen (7%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260516011600",
+    "bezeichnung": "EM-Zahncreme mit Propolis 75 ml",
+    "warengruppe": "Effektive Mikroorganismen (19%)",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4005967006580",
+    "bezeichnung": "Erdbeer-Cheesecake Snack 40g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7063",
+    "bezeichnung": "Erdbeeren",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6030",
+    "bezeichnung": "Erdbeer-Quark Tasche",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8713576003420",
+    "bezeichnung": "Erdnuss Crunchy 500 g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4027468000034",
+    "bezeichnung": "ERH Ajvar 125ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "730",
+    "bezeichnung": "Essen 7,30 €",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "830",
+    "bezeichnung": "Essen 8,30 €",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "930",
+    "bezeichnung": "Essen 9,30 €",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "39",
+    "bezeichnung": "Essigknödl",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019300171521",
+    "bezeichnung": "Ex. Quark m.Hafer Waldbeere 375g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019300173075",
+    "bezeichnung": "Exq.Knoblauch 175g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019300004652",
+    "bezeichnung": "Exqi. Quark Heidelb. 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019300173624",
+    "bezeichnung": "Exqui. Quark Himbeere 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012852001056",
+    "bezeichnung": "F LAMMSB ZISCH PILS 0,33l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4015100800715",
+    "bezeichnung": "FA Kids dg.&Schap. Meeresduft 250ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220537",
+    "bezeichnung": "Farmerschinken",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7333",
+    "bezeichnung": "Feldsalat BIO 100g",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7613034290595",
+    "bezeichnung": "Felix Crispies Lamm&Gemüse 45g",
+    "warengruppe": "Tiernahrung",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7067",
+    "bezeichnung": "Fenchel",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7068",
+    "bezeichnung": "Fenchel BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4022364487125",
+    "bezeichnung": "Feuerzeug Feuerstein",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4003572507966",
+    "bezeichnung": "Fidelio Nuss Stangen 200g",
+    "warengruppe": "Tiernahrung",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4251758412898",
+    "bezeichnung": "Finish A.in 1 Reg.54Tabs 696g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006835521174",
+    "bezeichnung": "Fischer Pusztasalat 670g",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "50357390",
+    "bezeichnung": "Fishermans Friend Eucalyptus 25g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "38",
+    "bezeichnung": "Fleischpflanzel",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220658",
+    "bezeichnung": "Fleischwurst",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016843004507",
+    "bezeichnung": "FLOETZ. COLA-MIX 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130015",
+    "bezeichnung": "FLOETZ. COLA-MIX 20X0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083214488",
+    "bezeichnung": "FRA Bartnelken Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083240098",
+    "bezeichnung": "FRA Bataviasalat Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083220052",
+    "bezeichnung": "FRA Buschbohnen Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083230044",
+    "bezeichnung": "FRA Feldsalat Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083225507",
+    "bezeichnung": "FRA Gartenkresse Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083240159",
+    "bezeichnung": "FRA Gurken Saladin Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083230259",
+    "bezeichnung": "FRA Gurken Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083240241",
+    "bezeichnung": "FRA Hokkaido-Kurbis Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083210671",
+    "bezeichnung": "FRA Kopfsalat Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083214426",
+    "bezeichnung": "FRA Lupinen Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083240548",
+    "bezeichnung": "FRA Petersilie Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083240494",
+    "bezeichnung": "FRA Pflücksalat Babyleaf-Mischung Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083239054",
+    "bezeichnung": "FRA Radies Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083202072",
+    "bezeichnung": "FRA Radieschen Mix Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083211005",
+    "bezeichnung": "FRA Radieschen Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083213672",
+    "bezeichnung": "FRA Ringelblumen Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083211630",
+    "bezeichnung": "FRA Salatrauke Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083213764",
+    "bezeichnung": "FRA Sonnenblumen Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083211128",
+    "bezeichnung": "FRA Spinat Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083214679",
+    "bezeichnung": "FRA Stiefmütterchen Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083230518",
+    "bezeichnung": "FRA Wilde Rauke Samen",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011083211388",
+    "bezeichnung": "FRA Wurzelpetersilie",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "974",
+    "bezeichnung": "Frankenlaib 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "975",
+    "bezeichnung": "Frankenlaib gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021479001684",
+    "bezeichnung": "Franzl's Teuf.Sauce pikant0,5l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008366009763",
+    "bezeichnung": "Frosta Schlemmerf. Brok. Mand. 360g",
+    "warengruppe": "Tiefkühlkost",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4101530003205",
+    "bezeichnung": "Fruchtquark Erdbeere 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7323",
+    "bezeichnung": "Frühkartoffel vfk lose",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7220",
+    "bezeichnung": "Frühkartoffeln vfk BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501568774",
+    "bezeichnung": "G&G Briefums.DIN lang o.F.50ST",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501064160",
+    "bezeichnung": "G&G Cookie&Cream 154g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501513583",
+    "bezeichnung": "G&G Eiswürfel-Beutel 10ST",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501746738",
+    "bezeichnung": "G&G Erdnusse Bunt 250g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501056189",
+    "bezeichnung": "G&G Fliegenklatsche",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311532433355",
+    "bezeichnung": "G&G Flüssigdünger 1l",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501462133",
+    "bezeichnung": "G&G Gewürz-Spekulatius 600g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501571798",
+    "bezeichnung": "G&G Grill Brikets 3kg",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501581056",
+    "bezeichnung": "G&G Heft Lineatru 22 A4 16 Bl",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501581087",
+    "bezeichnung": "G&G Heft Lineatur 27 A4 16 Bl",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501581094",
+    "bezeichnung": "G&G Heft Lineatur 28 A4 16 Bl",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7201",
+    "bezeichnung": "G&G Kartoffel vfk 2,5kg",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501121894",
+    "bezeichnung": "G&G Knuspertafeln 128g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501145661",
+    "bezeichnung": "G&G Likörkirschen 165g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501543269",
+    "bezeichnung": "G&G Müllbeut.m.Zugb.25l 25ST",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501596180",
+    "bezeichnung": "G&G Pagemarker 12Bl 5St",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501692943",
+    "bezeichnung": "G&G Pesto Rosso 190g",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501166185",
+    "bezeichnung": "g&G Pommes Frites 1000g",
+    "warengruppe": "Tiefkühlkost",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501568798",
+    "bezeichnung": "G&G Versandta.DIN C5 ws 20ST",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501082607",
+    "bezeichnung": "G&G WC Duftstick 4x40g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "714118661205",
+    "bezeichnung": "GAR Basilikum Kräuteröl 250 ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "714118663117",
+    "bezeichnung": "GAR Grillöl 0,25l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4049128220330",
+    "bezeichnung": "GAR Knob.-Ingw. Kräuteröl 0,25l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4313042436765",
+    "bezeichnung": "GAR Leinöl 0,25l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4049128220538",
+    "bezeichnung": "GAR Leinöl 0,5l",
+    "warengruppe": "Sonstiges 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4049128220569",
+    "bezeichnung": "GAR Mediterranes Kräuteröl 0,5l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "609613577352",
+    "bezeichnung": "GAR Rapsöl 0,5l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260183241201",
+    "bezeichnung": "GAR Rapsöl 0,75 ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4049128220385",
+    "bezeichnung": "GAR Raps-Senföl 0,25l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4313042436758",
+    "bezeichnung": "GAR Sonnenblumenöl 0,5l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4030500014364",
+    "bezeichnung": "Gaul.Blondes Blau 24ST 10,00",
+    "warengruppe": "Tabakwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4030500014753",
+    "bezeichnung": "Gaul.Liberte Rot 20ST 8,60",
+    "warengruppe": "Tabakwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7072",
+    "bezeichnung": "Gemüsezwiebeln",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7073",
+    "bezeichnung": "Gemusezwiebeln BIO 500g",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2014",
+    "bezeichnung": "Goldsteig Emmentaler",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2006",
+    "bezeichnung": "Gouda",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4004164025585",
+    "bezeichnung": "Gouda geraspelt 1kg",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5404015801242",
+    "bezeichnung": "Gouda Gerieben 1kg",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "3222270493871",
+    "bezeichnung": "Gourmet Gold Ente&Thrutan 85g",
+    "warengruppe": "Tiernahrung",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8717847089861",
+    "bezeichnung": "Grablicht Motiv Beten",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8717847132116",
+    "bezeichnung": "Grablicht Motiv Herbst",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8717847089885",
+    "bezeichnung": "Grablicht Steine",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7074",
+    "bezeichnung": "Grapefruit",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7075",
+    "bezeichnung": "Grapefruit BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250085778820",
+    "bezeichnung": "GRE Rote Bete 330g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250085779315",
+    "bezeichnung": "GREEN Penne hell 500g",
+    "warengruppe": "Nudeln",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220431",
+    "bezeichnung": "Griebenschmalz",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4004216000003",
+    "bezeichnung": "Grillholzkohle",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250085771357",
+    "bezeichnung": "GRN Basmanti Reis weiß 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250085771180",
+    "bezeichnung": "GRN Pfirsiche im Glas 680g",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250085795407",
+    "bezeichnung": "GRN Pizza Tomatensauce 340ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250085773122",
+    "bezeichnung": "GRN Schoko Reiswaffeln Vollm.100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5202423201025",
+    "bezeichnung": "Grüne&Kalamata Oliven 175 g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7076",
+    "bezeichnung": "Gurke",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7077",
+    "bezeichnung": "Gurke BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6335087",
+    "bezeichnung": "Haehnchenkeulen ca.1kg",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2",
+    "bezeichnung": "Haferl Kaffee",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5",
+    "bezeichnung": "Haferl Tee",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220367",
+    "bezeichnung": "Hähnchenbrüste",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220015",
+    "bezeichnung": "Halsgrat o. Kn. v. Strohschwein",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4031678000784",
+    "bezeichnung": "Händedesinfektionmittel 500ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4001686014585",
+    "bezeichnung": "Haribo Balla Stixx Sauer 175g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4044019150437",
+    "bezeichnung": "Haselnusskerne gehackt 100g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "1025",
+    "bezeichnung": "Hausgemachte Plätzchen 150g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "1026",
+    "bezeichnung": "Hausgemachte Plätzchen 250g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "1027",
+    "bezeichnung": "Hausgemachte Plätzchen 300g",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016435002256",
+    "bezeichnung": "Heidelbeeren im Glas 350 g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5900783007966",
+    "bezeichnung": "Heinz Burger Sauce 220ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "87157857",
+    "bezeichnung": "Heinz Mayonnaise 220ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8410066140374",
+    "bezeichnung": "Heinz Tomato Original 330ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4",
+    "bezeichnung": "Heiße Schokolade",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "963",
+    "bezeichnung": "Helles Mischbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "964",
+    "bezeichnung": "Helles Mischbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "965",
+    "bezeichnung": "Helles Mischbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4311501101056",
+    "bezeichnung": "Herzs. Fruchtauf. Pfir. 230g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4306205588821",
+    "bezeichnung": "HG Zündhölzer 45 St.",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6045",
+    "bezeichnung": "Himbeer-Mascarpone Fächer",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220500",
+    "bezeichnung": "Hinterschinken",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4015537003666",
+    "bezeichnung": "HMO Bar Banana 45g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "909",
+    "bezeichnung": "HO Karottenbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "910",
+    "bezeichnung": "HO Karottenbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "911",
+    "bezeichnung": "HO Karottenbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "919",
+    "bezeichnung": "HO Roggenbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "995",
+    "bezeichnung": "HO Roggenbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "996",
+    "bezeichnung": "HO Roggenbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "915",
+    "bezeichnung": "HO Roggengewürzbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "917",
+    "bezeichnung": "HO Roggengewürzbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "918",
+    "bezeichnung": "HO Roggengewürzbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "903",
+    "bezeichnung": "HO Vollkornbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "904",
+    "bezeichnung": "HO Vollkornbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "905",
+    "bezeichnung": "HO Vollkornbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "902",
+    "bezeichnung": "HO Weizenmichbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "900",
+    "bezeichnung": "HO Weizenmischbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "901",
+    "bezeichnung": "HO Weizenmischbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "906",
+    "bezeichnung": "HO Zwiebelbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "907",
+    "bezeichnung": "HO Zwiebelbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "908",
+    "bezeichnung": "HO Zwiebelbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7640161877085",
+    "bezeichnung": "HOL Pfirsich Pouchy 100g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "700",
+    "bezeichnung": "Honig 7,00",
+    "warengruppe": "Honig",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "750",
+    "bezeichnung": "Honig 7,50",
+    "warengruppe": "Honig",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "712",
+    "bezeichnung": "Honigwein 750ml 14%",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42468844",
+    "bezeichnung": "HVM Coconut-Strac. 275g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250241206778",
+    "bezeichnung": "Iglo Tagiat. Funghi 450g",
+    "warengruppe": "Tiefkühlkost",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7083",
+    "bezeichnung": "Ingwer BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "284",
+    "bezeichnung": "Ingwer-Zitrone Shot 200ml",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000915106718",
+    "bezeichnung": "ISA Bärlauchpesto vegan 125ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006496014046",
+    "bezeichnung": "Jäger Bavarella 300g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006496012042",
+    "bezeichnung": "Jäger Butter 250G",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006496024564",
+    "bezeichnung": "Jäger Delaco Kashkaval 350g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006496024915",
+    "bezeichnung": "Jäger Scamorza geräuchert 330g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8711000669969",
+    "bezeichnung": "Jakobs Klassisch 500g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4026941004002",
+    "bezeichnung": "Jalapenos geschnitten 180g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6023",
+    "bezeichnung": "Johannisbeer Taler",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4306188027027",
+    "bezeichnung": "JT Prinzessbohnen 400g",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4306188001805",
+    "bezeichnung": "JT Windeln Junior 36 St.",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4306188001744",
+    "bezeichnung": "JT Windeln Maxi 42 St.",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "500",
+    "bezeichnung": "Kaiser/Knopfsemmel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5202423200097",
+    "bezeichnung": "Kalamata Oliven al Natural 250 g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5202423123303",
+    "bezeichnung": "Kalamata Oliven in Scheiben 120g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7085",
+    "bezeichnung": "Karotten BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6001",
+    "bezeichnung": "Karottensemmel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7363",
+    "bezeichnung": "Kartoffel Agria Bio vfk 2kg",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "927",
+    "bezeichnung": "Kartoffelbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "928",
+    "bezeichnung": "Kartoffelbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7350",
+    "bezeichnung": "Kartoffeln vfk Bio",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7089",
+    "bezeichnung": "Kartoffeln vfk. Agria",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "44",
+    "bezeichnung": "Kartoffelsalat",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "800",
+    "bezeichnung": "Käse Speck Breze",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "509",
+    "bezeichnung": "Käse/Pfeffer/Körnerbreze",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220628",
+    "bezeichnung": "Käseknacker",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "510",
+    "bezeichnung": "Käsestange/Zopf",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "37",
+    "bezeichnung": "Kaspressknödl",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2007",
+    "bezeichnung": "Kasweckerl",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8711823194792",
+    "bezeichnung": "Kichererbsen im Glass 230g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8000500273470",
+    "bezeichnung": "Kinder Bueno White 117g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42216483",
+    "bezeichnung": "kinder Ü-Ei 20g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "10101",
+    "bezeichnung": "Kinderbuch",
+    "warengruppe": "Schreib und Bürowaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7091",
+    "bezeichnung": "Kiwi",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7092",
+    "bezeichnung": "Kiwi BIO Stück",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547308107",
+    "bezeichnung": "Klarspüler 500ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "15",
+    "bezeichnung": "kleines Frühstück",
+    "warengruppe": "Cafeteria 19% Bis 2025",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2004",
+    "bezeichnung": "Klosterkäse",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7093",
+    "bezeichnung": "Knoblauch BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "956",
+    "bezeichnung": "Knödlbrot 400g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6013",
+    "bezeichnung": "Knussperstange",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7098",
+    "bezeichnung": "Kohlrabi BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7095",
+    "bezeichnung": "Kohlrabi Stück",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "933",
+    "bezeichnung": "König-Ludwigbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "934",
+    "bezeichnung": "König-Ludwigbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7099",
+    "bezeichnung": "Kopf Salat grün",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7100",
+    "bezeichnung": "Kopf Salat grun BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7101",
+    "bezeichnung": "Kopf Salat rot",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "541",
+    "bezeichnung": "Körnersandwich/Körn. Leberkäsesem.",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "505",
+    "bezeichnung": "Körnersemmel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9012",
+    "bezeichnung": "Körnersemmel Teigling",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "542",
+    "bezeichnung": "KörnerWurstsemmel",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6041",
+    "bezeichnung": "Korn-Gipfel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6014",
+    "bezeichnung": "Kornquark/Nußstange",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "717",
+    "bezeichnung": "Krapfen  Magischer",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "723",
+    "bezeichnung": "Krapfen Backstube",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "718",
+    "bezeichnung": "Krapfen Eier-Likör",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "720",
+    "bezeichnung": "Krapfen Himbeermarmelade",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "719",
+    "bezeichnung": "Krapfen Marillen/Hagebuttemarmelade",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "721",
+    "bezeichnung": "Krapfen Mini Nougat/Vanille",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "716",
+    "bezeichnung": "Krapfen Nougat/Vanille",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7203",
+    "bezeichnung": "Kresse Demeter",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4013405007419",
+    "bezeichnung": "Kriegl Apfelessig klar 1l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4013405003459",
+    "bezeichnung": "Kriegl Apfelessig klar 5 L",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4013405007426",
+    "bezeichnung": "Kriegl Apfelessig Natürtrübe 1l",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021234101017",
+    "bezeichnung": "Krunchy Waldbeere 375g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "986",
+    "bezeichnung": "Krustenbrot",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "987",
+    "bezeichnung": "Krustenbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "947",
+    "bezeichnung": "Krustenlaib 2kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "948",
+    "bezeichnung": "Krustenlaib gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6501",
+    "bezeichnung": "Kuchen 2,00€",
+    "warengruppe": "Torten/Kuchen",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6502",
+    "bezeichnung": "Kuchen 2,40€",
+    "warengruppe": "Torten/Kuchen",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6503",
+    "bezeichnung": "Kuchen 2,70€",
+    "warengruppe": "Torten/Kuchen",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6500",
+    "bezeichnung": "Kuchen 3,00€",
+    "warengruppe": "Torten/Kuchen",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012200331002",
+    "bezeichnung": "Kühne Joghurt Dressing 500ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7324",
+    "bezeichnung": "Kürbis Hokkaido BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "725",
+    "bezeichnung": "Kurbis Ring",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7334",
+    "bezeichnung": "Kurkuma BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012852201715",
+    "bezeichnung": "Lammsbräu Radler alkoholfrei",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130085",
+    "bezeichnung": "Lamsbräu alkoholfrei",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "960",
+    "bezeichnung": "Landbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "961",
+    "bezeichnung": "Landbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "962",
+    "bezeichnung": "Landbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8018759000020",
+    "bezeichnung": "LaSelva Pomodoro 690g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7105",
+    "bezeichnung": "Lauch",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7378",
+    "bezeichnung": "Lauch Stück",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7107",
+    "bezeichnung": "Lauchzwiebel",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "513",
+    "bezeichnung": "Laugenstange",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021457648429",
+    "bezeichnung": "LAV Cremedusche 250 ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021457632886",
+    "bezeichnung": "LAV Fruchtige Pflegeseife 250ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021457665501",
+    "bezeichnung": "LAV Lippenbalsam 4,5g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021457655120",
+    "bezeichnung": "Lav Pflegeshampo Sensitiv 250ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4062139005864",
+    "bezeichnung": "Lays Gesalzen 150g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346154503",
+    "bezeichnung": "LEB Basilikum 15G",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346113005",
+    "bezeichnung": "LEB Curry Gold 50g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346525105",
+    "bezeichnung": "LEB Grünetee Zitrone 50g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346156002",
+    "bezeichnung": "LEB Kreuzkümmel 40g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346155708",
+    "bezeichnung": "LEB Kümmel gem. 40g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346156101",
+    "bezeichnung": "LEB Lorbeerblätter 5g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346172804",
+    "bezeichnung": "LEB Thai Curry 23g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012346155104",
+    "bezeichnung": "LEB Thymian 20g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220640",
+    "bezeichnung": "Leberkäse kalt",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220450",
+    "bezeichnung": "Leberwürste",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "22121103",
+    "bezeichnung": "Lebkuchen Herzen Weiß 150g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "283",
+    "bezeichnung": "Lebkuchen-Likör 200ml",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8721800401676",
+    "bezeichnung": "Leerdammer Feine Scheiben 100g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000186037933",
+    "bezeichnung": "Leimer Dinkelbackerb. 100g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220002",
+    "bezeichnung": "Lende v. Strohschwein",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260284219659",
+    "bezeichnung": "Lenz Lippenbalsam 4,7g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4025243132710",
+    "bezeichnung": "LIDW. MINERALWASSER",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120010",
+    "bezeichnung": "LIDW. MINERALWASSER 12X0,7l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4316268695695",
+    "bezeichnung": "Lieblings Aceto Balsamico Passionfrucht 250ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7109",
+    "bezeichnung": "Limetten",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8",
+    "bezeichnung": "Limo Spezi Schorle ...0,5",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000539145940",
+    "bezeichnung": "Lindor Milch 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000539145889",
+    "bezeichnung": "Lindor Mischung 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000539154362",
+    "bezeichnung": "Lindt Alles Liebe 125g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000539104343",
+    "bezeichnung": "Lindt Pistazie 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000539103063",
+    "bezeichnung": "Lindt Pralines Classic 125g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4009176314245",
+    "bezeichnung": "LNA American Schoko Cookies 150g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4009176311817",
+    "bezeichnung": "LNA Mini Honigwaffeln 150g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260284219901",
+    "bezeichnung": "LNZ Reinigungsmilch Kamilie 150g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8000380153480",
+    "bezeichnung": "Loacker Classik Vanille 90g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4009445022475",
+    "bezeichnung": "Luftpolstertasche",
+    "warengruppe": "Sonstiges 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8000920500200",
+    "bezeichnung": "MAGNUM classic",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8711327480537",
+    "bezeichnung": "Magnum Double Gold Caramel 85ml",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8000920500217",
+    "bezeichnung": "MAGNUM weiss 120ml",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4014400937466",
+    "bezeichnung": "Mamba 4st",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4014400937480",
+    "bezeichnung": "Mamba 4st",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4014400937473",
+    "bezeichnung": "Mamba Cola 3+1",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5202423201018",
+    "bezeichnung": "MAN Grüne Olive&Kalamata 280g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5202423123327",
+    "bezeichnung": "MAN Oliven Rormarin 175g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7111",
+    "bezeichnung": "Mandarinen",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "459",
+    "bezeichnung": "Mandelbogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9000331693286",
+    "bezeichnung": "Manner Kruspio Limette 110g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6037",
+    "bezeichnung": "Marillen-Topfen Strudel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4023500745376",
+    "bezeichnung": "Marlboro Mix 21st",
+    "warengruppe": "Tabakwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42435365",
+    "bezeichnung": "Marlboro Red OP 20ST 8,00",
+    "warengruppe": "Tabakwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "280",
+    "bezeichnung": "Marmelade selbstgemacht",
+    "warengruppe": "Honig",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "281",
+    "bezeichnung": "Marmelade Selbstgemacht klein",
+    "warengruppe": "Honig",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "22148391",
+    "bezeichnung": "Marzipanstolen 200g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4034900033017",
+    "bezeichnung": "Meggle Focaccia 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4039468030478",
+    "bezeichnung": "Memo Toilettenpapier",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002221045743",
+    "bezeichnung": "Meßmer Glühweingewürz 18x1,5g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260007645413",
+    "bezeichnung": "MID Blutenseife Laven. 100 g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260007645352",
+    "bezeichnung": "MID Blütenseife Peony 100g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260007645383",
+    "bezeichnung": "MID Blutenseife Vanilla 100g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260007645321",
+    "bezeichnung": "MID Blütenseife Verbena 100 g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "3",
+    "bezeichnung": "Milchkaffe/Cappu/Latte",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622210583376",
+    "bezeichnung": "Milka Hase Alpenmilch 45g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622202242267",
+    "bezeichnung": "Milka Kugeln Karamel 90g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622202258077",
+    "bezeichnung": "Milka Max Ganze Haselnüsse 250g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622200009084",
+    "bezeichnung": "Milka Max Schoko&Keks 300g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622210704740",
+    "bezeichnung": "Milka Oreo Riegel 37g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622210820310",
+    "bezeichnung": "Milka Peanut Crisp 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622201823733",
+    "bezeichnung": "Milka Thins 151g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622210588272",
+    "bezeichnung": "Milka Weihnachtsmann Alp.45g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622210588463",
+    "bezeichnung": "Milka Weihnachtsmann Knusper 90g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622201639266",
+    "bezeichnung": "Milka Weihnachtsmann Weiß 90g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4036300221445",
+    "bezeichnung": "Milram Buterm. Mandarine 750g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4036300059406",
+    "bezeichnung": "Milram Butterm. Erdbe. 750g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220407",
+    "bezeichnung": "Milzwurst",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6049",
+    "bezeichnung": "Mini Apfeltasche",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6040",
+    "bezeichnung": "Mini Baguette",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6044",
+    "bezeichnung": "Mini Donut",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "24997041",
+    "bezeichnung": "Mini Lebkuchen Vollm. 400g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8000920461150",
+    "bezeichnung": "mini milk",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8000920470008",
+    "bezeichnung": "Mini Milk Schoko",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7343",
+    "bezeichnung": "Mini Romanasalat 2 Stück",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "929",
+    "bezeichnung": "Mischbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "931",
+    "bezeichnung": "Mischbrot 500g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "932",
+    "bezeichnung": "Mischbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "691",
+    "bezeichnung": "Mitgebrachtes Behältnis",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "790",
+    "bezeichnung": "Mittagessen  8,80€",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "690",
+    "bezeichnung": "Mittagessen 7,80 €",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "890",
+    "bezeichnung": "Mittagessen 9,80 €",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130",
+    "bezeichnung": "Mittagessen sonstiger Preis",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6042",
+    "bezeichnung": "Mohnschnecke",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008400115535",
+    "bezeichnung": "Mon Cheri 189g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4014500519814",
+    "bezeichnung": "Monte Eis 4st",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008211002086",
+    "bezeichnung": "Mövenpick Erdbeere 850 ml",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42356196",
+    "bezeichnung": "Müller Jogh. Butterkeks 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4025500281649",
+    "bezeichnung": "Müller Jogh. Knusperherzen 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4024297061625",
+    "bezeichnung": "NAT Dinkel Spaghetti 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4024297061601",
+    "bezeichnung": "NAT Dinkel Spirelli 500g",
+    "warengruppe": "Nudeln",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9020200029268",
+    "bezeichnung": "NAT Mandel cuisine 200ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4024297340447",
+    "bezeichnung": "NAT Puderzucker 125g",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4024297021674",
+    "bezeichnung": "NAT Sweet Chili Sauce 210ml",
+    "warengruppe": "Nudeln",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7116",
+    "bezeichnung": "Nektarinen",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012852001636",
+    "bezeichnung": "NEU Lammsbräu Dunkle Weiße 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4335619082045",
+    "bezeichnung": "Nikolaus 110g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006000063638",
+    "bezeichnung": "Nivea Men 3in1 Power 250ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012852204945",
+    "bezeichnung": "NOW Passion Crush 0,33l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260360271502",
+    "bezeichnung": "NPU Kichererbsen im Glass 350g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "34",
+    "bezeichnung": "Nudelsalat",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6507",
+    "bezeichnung": "Nussecke",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6009",
+    "bezeichnung": "Nussschnecke",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6051",
+    "bezeichnung": "Nuss-Schoko Croissant",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "80751151",
+    "bezeichnung": "Nutella 15g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "35",
+    "bezeichnung": "Obadzda",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "21527500",
+    "bezeichnung": "Oblaten-Lebkuchen 200g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000521202118",
+    "bezeichnung": "Oetk.Orig.Mandel Pudd.3ST 111g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7118",
+    "bezeichnung": "Orangen",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7119",
+    "bezeichnung": "Orangen BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7346",
+    "bezeichnung": "Orangen Kiste 10Kg",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008100168688",
+    "bezeichnung": "Oro Tomaten Mark Basilikum 200g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006237642965",
+    "bezeichnung": "Oryza Jasminreis 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002674053906",
+    "bezeichnung": "OSTM. Nelken ganz 35g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002674126136",
+    "bezeichnung": "OSTM. Wild-Gewürz 12,5g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002674127829",
+    "bezeichnung": "Ostmann Suelzenpulver 20g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "715",
+    "bezeichnung": "Oxymel 250ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "180",
+    "bezeichnung": "paar Maurer",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42443414",
+    "bezeichnung": "Pall Mall Auth.Blue 20ST 8,00",
+    "warengruppe": "Tabakwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8714789732893",
+    "bezeichnung": "Palmoli DG Naturals Mandel 250ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7371",
+    "bezeichnung": "Paprika BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7120",
+    "bezeichnung": "Paprika gelb",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7121",
+    "bezeichnung": "Paprika gelb BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7348",
+    "bezeichnung": "Paprika Orange",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7124",
+    "bezeichnung": "Paprika rot",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7125",
+    "bezeichnung": "Paprika rot BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7375",
+    "bezeichnung": "Paprika Snack Bio",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002911210574",
+    "bezeichnung": "Papstar Papteller groß",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2002",
+    "bezeichnung": "Parmesan",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7221",
+    "bezeichnung": "Pastinaken BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4015200033822",
+    "bezeichnung": "Perwoll Caps Color 256,5g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "30",
+    "bezeichnung": "Pfand Glas19%",
+    "warengruppe": "Pfand",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4003148484356",
+    "bezeichnung": "Pfeffer-Sticks 0,2g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7126",
+    "bezeichnung": "Pfirsiche",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7354",
+    "bezeichnung": "Pflaumen",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4021457655281",
+    "bezeichnung": "Pflegespülung basis sensitiv 200 ml",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622210951663",
+    "bezeichnung": "Philad. Jalapeno 175g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622300318123",
+    "bezeichnung": "Philadelphia Kräuter Balance 175g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7622300318918",
+    "bezeichnung": "Philadelphia Raucherlachs 175g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "40225760",
+    "bezeichnung": "Picked Glasur Vollmilch 500g",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9021",
+    "bezeichnung": "Pita 80g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "540",
+    "bezeichnung": "Pizza Breze",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7315",
+    "bezeichnung": "Plattpfirsiche",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220360",
+    "bezeichnung": "Putenschnitzel",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6035",
+    "bezeichnung": "Quarkbällchen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6018",
+    "bezeichnung": "Quarktasche",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000417600103",
+    "bezeichnung": "R.Sport Alles Liebe 119g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000417620217",
+    "bezeichnung": "R: Sport Kaffe Knusper 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7131",
+    "bezeichnung": "Radieschen",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8719200262485",
+    "bezeichnung": "Rama XL 725g",
+    "warengruppe": "Butter und Magarine",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8001665720342",
+    "bezeichnung": "Rana Burrata und Arrab. 250g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8001665727525",
+    "bezeichnung": "Rana Prosciutto 250g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000735088300",
+    "bezeichnung": "RDEToilettenpap. weiß 3lagig",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296680417",
+    "bezeichnung": "RDX Familien Müsli 1kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7353",
+    "bezeichnung": "Rettich BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7218",
+    "bezeichnung": "Rhabarber",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4024967012933",
+    "bezeichnung": "RIE Alkoholfrei Wein 0,75l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8022836001206",
+    "bezeichnung": "RIE Spumante rose 0,75ml",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220130",
+    "bezeichnung": "Rindergulasch geschn. v. Strohrind",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250296601856",
+    "bezeichnung": "Roggenmehl T 610 2,5kg",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "503",
+    "bezeichnung": "Roggensemmel/Ciabatta",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7373",
+    "bezeichnung": "Romana BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4005967006566",
+    "bezeichnung": "ROS Milchcreme-Kugeln 70g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4005967003763",
+    "bezeichnung": "ROS Zimtsterne 140g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "502",
+    "bezeichnung": "Rosen-/Mohn-/Sesamsemmel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7134",
+    "bezeichnung": "Rote Bete",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7135",
+    "bezeichnung": "Rote Bete BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220121",
+    "bezeichnung": "Rouladen v. Strohrind",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7337",
+    "bezeichnung": "Rucola BIO 100g",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "40352886",
+    "bezeichnung": "Ruf Gelatine3x9g",
+    "warengruppe": "Mehl und Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002809024016",
+    "bezeichnung": "RUF Mandelkrokant 150g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7328",
+    "bezeichnung": "Rukola BIO 100g",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6017",
+    "bezeichnung": "Rustico Semmel hell",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9011",
+    "bezeichnung": "Rustiko teigling",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4030917005009",
+    "bezeichnung": "SAC Curry Rotes Thai 190g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4030917046200",
+    "bezeichnung": "SAC Currypaste Yellow Thai 190g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7380",
+    "bezeichnung": "Salat Bio Lollo Bianko",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7372",
+    "bezeichnung": "Salat Mix BIO 100g",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4003148484301",
+    "bezeichnung": "Salz-Sticks 1g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5421",
+    "bezeichnung": "Sandwich",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7364",
+    "bezeichnung": "Satsumas Bio",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4017194009333",
+    "bezeichnung": "SBG Kakao Milch3,8% 500ml",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "25",
+    "bezeichnung": "Schachtel für Eier",
+    "warengruppe": "Sonstiges 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8053323643807",
+    "bezeichnung": "Schiacciatine al rosmarino 150g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220761",
+    "bezeichnung": "Schinkenwurst",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "41",
+    "bezeichnung": "Schnitzel",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220003",
+    "bezeichnung": "Schnitzel v. Strohschwein",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6011",
+    "bezeichnung": "Schockocroissant",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000607001284",
+    "bezeichnung": "Schog. Bratapfel 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000607000607",
+    "bezeichnung": "Schog. FreezeMe Pfirsich-Marakuja 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000607831706",
+    "bezeichnung": "Schog. Popcorn 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000607001192",
+    "bezeichnung": "Schogg. Pistazie Vollm. 100g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6050",
+    "bezeichnung": "Schoko Cookie",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6024",
+    "bezeichnung": "Schoko Tasche",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6032",
+    "bezeichnung": "Schoko-Berliner mit Vanille",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "28497981",
+    "bezeichnung": "Schoko-Lebkuchen Vollm. 500g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4017194960412",
+    "bezeichnung": "Schroz. Joghurt Erdbeere 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6506",
+    "bezeichnung": "Schuxn",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "41057513",
+    "bezeichnung": "SCHW. Altb. Dunkel 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260516011327",
+    "bezeichnung": "Schwarz Erde Bokashi 10l",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130055",
+    "bezeichnung": "Schweiger Export hell 20x0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "41057506",
+    "bezeichnung": "SCHWEIGER HELL 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4105750000174",
+    "bezeichnung": "SCHWEIGER HELL ALK.FREI 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4105750000372",
+    "bezeichnung": "Schweiger Natur Radler 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120097",
+    "bezeichnung": "Schweiger Natur Radler 20x0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008258041116",
+    "bezeichnung": "Seeberg Pist. Gero. Gesalz. 150",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8018759001836",
+    "bezeichnung": "SEL Pesto Rosso 130g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8018759001584",
+    "bezeichnung": "SEL Polpa di Pomodoro mit Basilico 425g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8018759001768",
+    "bezeichnung": "SEL Prosecko Veneto 0,75l",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8018759000907",
+    "bezeichnung": "SEL Salsa Piccante 340g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8018759000815",
+    "bezeichnung": "SEL Tomatenpolpa Fein 690g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8018759000037",
+    "bezeichnung": "SEL Tomatensauce mit Gemüse 340g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7138",
+    "bezeichnung": "Sellerie",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7139",
+    "bezeichnung": "Sellerie BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6020",
+    "bezeichnung": "Semmel",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "46",
+    "bezeichnung": "Semmel Knödl",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "957",
+    "bezeichnung": "Semmelbrösel 400g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4009864067200",
+    "bezeichnung": "Sicherheitsbrennpaste 220g",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "150000",
+    "bezeichnung": "SIL Zitronen Limo 20x0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42040231",
+    "bezeichnung": "SIL. ACE Vit.getränk 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "140064",
+    "bezeichnung": "SIL. ACE Vit.getränk 20x0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4105750000013",
+    "bezeichnung": "SIL. Apfel-Kirsch 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "140063",
+    "bezeichnung": "SIL. Apfel-Kirsch 20x0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4105750000433",
+    "bezeichnung": "SIL. Apfelsch. naturtrüb 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "140061",
+    "bezeichnung": "SIL. Apfelsch. naturtrüb 20x0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42035411",
+    "bezeichnung": "SIL. Apfelschorle 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42030980",
+    "bezeichnung": "SIL. OrangenLimo 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "140065",
+    "bezeichnung": "SIL. OrangenLimo 20x0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260007645499",
+    "bezeichnung": "SMI Gästeseifen Mischung 4x20g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "5000159509671",
+    "bezeichnung": "Snickers Eis 60,5ml",
+    "warengruppe": "Eis",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547103917",
+    "bezeichnung": "SNT Fleckenentferner 450g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547405509",
+    "bezeichnung": "SNT Oran. Kraftreiniger 500ml",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547400009",
+    "bezeichnung": "SNT Scheuermilch 0,5l",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145009745",
+    "bezeichnung": "SNT Tee Frühlingskuss",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547101012",
+    "bezeichnung": "SNT Waschmittel Konz. 1,2kg",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008471490753",
+    "bezeichnung": "SÖB Joghurt Griech. Feige 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4026584133640",
+    "bezeichnung": "SOF Falafel tradi. 200g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4056114006144",
+    "bezeichnung": "SOM Cookies Cranb. Mandel&Sesam 125g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4056114005390",
+    "bezeichnung": "SOM DinkelAmaretti mit Mandel 125g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4015200030982",
+    "bezeichnung": "Somat Gold 49Tabs 911,4g",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145003118",
+    "bezeichnung": "SON 12 Kräutersalz 120g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145006676",
+    "bezeichnung": "SON Alles im Garten 15g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547306806",
+    "bezeichnung": "SON Geschirrspülm. Sensitiv 1l",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145006669",
+    "bezeichnung": "SON Thymian 20g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "923",
+    "bezeichnung": "Sonnenblumenkernbrot 750g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "924",
+    "bezeichnung": "Sonnenblumenkernbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7379",
+    "bezeichnung": "Spargel bund",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7142",
+    "bezeichnung": "Spargel weiß",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4013044100359",
+    "bezeichnung": "Spekulatiusgewürz Bio 16g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7336",
+    "bezeichnung": "Spinat BIO 100g",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6038",
+    "bezeichnung": "Spinatstrudel mit Feta",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7144",
+    "bezeichnung": "Spitzkraut",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7145",
+    "bezeichnung": "Spitzkraut BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7374",
+    "bezeichnung": "Spitzkraut BIO Stuck",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7146",
+    "bezeichnung": "Spitzpaprika",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7147",
+    "bezeichnung": "Spitzpaprika BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4170000095972",
+    "bezeichnung": "St. Wolf. Weide Milch 3,8% 1l",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130033",
+    "bezeichnung": "ST.LEON. MEDIUM 6X1,0l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120012",
+    "bezeichnung": "ST.LEON. STILL 6X1,0l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2016",
+    "bezeichnung": "Stangel Weidemilch Käse",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7148",
+    "bezeichnung": "Steiner  Tomaten Rispen",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260490690082",
+    "bezeichnung": "Steiner Aromatica 250g",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7213",
+    "bezeichnung": "Steiner Erdbeeren 250 g",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7150",
+    "bezeichnung": "Steiner Gurke BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7153",
+    "bezeichnung": "Steiner Paprika",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7151",
+    "bezeichnung": "Steiner Paprika gelb",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7205",
+    "bezeichnung": "Steiner Paprika Orange",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260490690402",
+    "bezeichnung": "Steiner Salat Mix",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7207",
+    "bezeichnung": "Steiner Scarlesa Mini Romatomaten",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7154",
+    "bezeichnung": "Steiner Spitzpaprika",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7155",
+    "bezeichnung": "Steiner Tomaten Aromatica",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7156",
+    "bezeichnung": "Steiner Tomaten Brioso",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7158",
+    "bezeichnung": "Steiner Tomaten Ochsenherz",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7209",
+    "bezeichnung": "Steiner Tomaten Rivolo",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7160",
+    "bezeichnung": "Steiner Tomaten San Marzano",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7204",
+    "bezeichnung": "Steiner Vitaminkiste 3,5 kg",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "978",
+    "bezeichnung": "Steinmetzbrot 1kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "979",
+    "bezeichnung": "Steinmetzbrot gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9007",
+    "bezeichnung": "Steinofenbaguette 550g",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9008",
+    "bezeichnung": "Steinofenbaguette gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4011261010215",
+    "bezeichnung": "Stiefmütter mix",
+    "warengruppe": "Garten und Freizeit",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130077",
+    "bezeichnung": "Stierb. Cola Mix 0,5x20",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138582199",
+    "bezeichnung": "STIERB. COLA-MIX 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138581079",
+    "bezeichnung": "STIERB. EIS PILS 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120027",
+    "bezeichnung": "STIERB. EIS PILS 20X0,33l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138582182",
+    "bezeichnung": "STIERB. FRUCHT. ZITRONE",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120057",
+    "bezeichnung": "STIERB. FRUCHT. ZITRONE 20X0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138581093",
+    "bezeichnung": "STIERB. HALB STARKE",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138581055",
+    "bezeichnung": "STIERB. HELL 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120003",
+    "bezeichnung": "STIERB. HELL 20X0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138582168",
+    "bezeichnung": "STIERB. ORANGE 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120058",
+    "bezeichnung": "STIERB. ORANGE 20X0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130105",
+    "bezeichnung": "Stierb. Quell Wasser Med. 20x0,5",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138582137",
+    "bezeichnung": "Stierb. Quell Wasser Medium 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138582151",
+    "bezeichnung": "STIERB. QUELLWASSER 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120025",
+    "bezeichnung": "STIERB. QUELLWASSER 20X0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138581031",
+    "bezeichnung": "STIERB. WEISSBIER 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138582175",
+    "bezeichnung": "STIERB. ZITRONE 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120056",
+    "bezeichnung": "STIERB. ZITRONE 20X0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138581178",
+    "bezeichnung": "Stierberg Alkoholfrei 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138581161",
+    "bezeichnung": "Stierberg ZamBraut Hell 0,33l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4260138581086",
+    "bezeichnung": "Stierberger Kirta Bier 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145005150",
+    "bezeichnung": "STN Basen KräuterTee 50g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145022638",
+    "bezeichnung": "STN Frühlingskuss",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145005051",
+    "bezeichnung": "STN Gute Laune-Kräutertee 50g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145002067",
+    "bezeichnung": "STN Kamilleblüten 50g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145006744",
+    "bezeichnung": "STN Kräuter a la Provence 20g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145007321",
+    "bezeichnung": "STN Kreuzkümmel 40g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145025561",
+    "bezeichnung": "STN Lindenblütentee",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145003095",
+    "bezeichnung": "STN Muskat gem. 30G",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145007772",
+    "bezeichnung": "STN Oregano 18g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145008786",
+    "bezeichnung": "STN Pfeffer Ganz Bunt 50g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145006706",
+    "bezeichnung": "STN Pfeffer schw. gem. 50g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145007000",
+    "bezeichnung": "STN Pizza&Pastagewürz 20g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145003101",
+    "bezeichnung": "STN Salatgew. gemal. 35g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145002104",
+    "bezeichnung": "STN Salbei 50g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145006829",
+    "bezeichnung": "STN Smokey Paprika",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145003361",
+    "bezeichnung": "STN Wachloderb. 35g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547501508",
+    "bezeichnung": "STN Waschmittel Sensitiv 2l",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547102200",
+    "bezeichnung": "STN Waschpulver Color Sen. 1,2kg",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9004145007345",
+    "bezeichnung": "STN Zimt gem. 40g",
+    "warengruppe": "Gewürze",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "11111",
+    "bezeichnung": "Stolen 1kg",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "11112",
+    "bezeichnung": "Stolen 500g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006544449608",
+    "bezeichnung": "Südz.Zuckersticks 250g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4006544496206",
+    "bezeichnung": "Südzuc. Rohrzucker Weiß 500g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "949",
+    "bezeichnung": "Superlaib 2kg",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "951",
+    "bezeichnung": "Superlaib gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9000",
+    "bezeichnung": "Superlaib mit Körner gewogen",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7163",
+    "bezeichnung": "Süßkartoffeln",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7164",
+    "bezeichnung": "Sußkartoffeln BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008871215659",
+    "bezeichnung": "Swirl Trag. Muellbtl. Reiss. 35l 15St",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016435001631",
+    "bezeichnung": "SWZ Erbsen und Möhren 370ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016435001570",
+    "bezeichnung": "SWZ Sauerkraut im Glas Demeter 720ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4002450551008",
+    "bezeichnung": "TAB Pueblo Zigarettenpapier",
+    "warengruppe": "Tabakwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012359114303",
+    "bezeichnung": "TAI Tofu Rosso 200g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012359111104",
+    "bezeichnung": "Taifun Räuchertofu 200g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "1",
+    "bezeichnung": "Tasse Kaffe",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4038054000178",
+    "bezeichnung": "Taufkirchen Colamix 0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42129592",
+    "bezeichnung": "Taufkirchner Cola-Mix 0,5 l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4038054006514",
+    "bezeichnung": "Taufkirchner Cola-Mix 0,5 l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130094",
+    "bezeichnung": "Taufkirchner Cola-Mix 20x0,5l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4038054000048",
+    "bezeichnung": "Taufkirchner leichtes Helles 0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "130093",
+    "bezeichnung": "Taufkirchner leichtes Helles 20x0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4009300002789",
+    "bezeichnung": "Teekane 8 Kräuter Tee 50x2g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4009300002642",
+    "bezeichnung": "Teekanne Frücht. Tee 50x2g",
+    "warengruppe": "Tee, Kaffee, Kakao",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2003",
+    "bezeichnung": "Tegernsee Bergfeuer",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250531735537",
+    "bezeichnung": "Tegernseer Bio Bärlauchkas 200g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120030",
+    "bezeichnung": "TEGERNSEER HELL 20X0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120029",
+    "bezeichnung": "TEGERNSEER HELL 24X0,33l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4009831438019",
+    "bezeichnung": "Tello klare Delikates Suppe 650g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8713576003413",
+    "bezeichnung": "TER Erdnuss Crunchy 250ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8713576003673",
+    "bezeichnung": "Ter Kokosmilch leicht 400ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "84185019",
+    "bezeichnung": "Tisch-Kühlvitrine TKVH700",
+    "warengruppe": "Elektro und Heimwerker",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4014400932959",
+    "bezeichnung": "Toffifee White 125g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4039468015079",
+    "bezeichnung": "Toilettenpapier Memo 8x250",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6509",
+    "bezeichnung": "Torte/Special Gebäck",
+    "warengruppe": "Torten/Kuchen",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000281306514",
+    "bezeichnung": "Treets Crispy 215g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4004980514003",
+    "bezeichnung": "Ültje Erdnüsse pika.o.F.180g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "120008",
+    "bezeichnung": "UNERTL WEISSBIER 20X0,5l",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "42043379",
+    "bezeichnung": "UNERTL WEISSBIER LEICHT",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4000345020387",
+    "bezeichnung": "Ur Salz fein 12kg",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016512062203",
+    "bezeichnung": "Ur-Salz grob 300g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6006",
+    "bezeichnung": "Vanille Croissant",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6026",
+    "bezeichnung": "Vanille Donut",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "6002",
+    "bezeichnung": "Vanille Stange",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008496105946",
+    "bezeichnung": "Varta AA 1,5V 4St",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "999999",
+    "bezeichnung": "Versandkosten/Porto",
+    "warengruppe": "Sonstiges 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "40",
+    "bezeichnung": "Verschnitt Wurst und Fleisch",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9017",
+    "bezeichnung": "Vinschgauer",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "80658054",
+    "bezeichnung": "VIP Jogh. Man.-Vanil. 150g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008239231109",
+    "bezeichnung": "Vitakr. Stick Pute für Hunde 12g",
+    "warengruppe": "Tiernahrung",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4044889004793",
+    "bezeichnung": "VNI Creme Brulee 40g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4044889005158",
+    "bezeichnung": "VNI Espresso Pistaccio Dark 75% 80g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4015533062360",
+    "bezeichnung": "VOE Apfelessig Shot 95ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4015533065880",
+    "bezeichnung": "VOE Immun Shot 95ml",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4015533048821",
+    "bezeichnung": "Voelkel Hafer Cuisine",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250531720335",
+    "bezeichnung": "Wallberger Kräuter 200g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4250531720137",
+    "bezeichnung": "Wallberger Natur 200g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7345",
+    "bezeichnung": "Walnüsse lose",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220070",
+    "bezeichnung": "Wammerl hellger. am Stück",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220012",
+    "bezeichnung": "Wammerl o. Kn. v. Strohschwein",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008496681129",
+    "bezeichnung": "Warta AA 8st",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4008496744688",
+    "bezeichnung": "Warta AAA 8st",
+    "warengruppe": "Haushaltswaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7300400482219",
+    "bezeichnung": "Wasa Tasty Rounds French Herbs 205g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4007547100916",
+    "bezeichnung": "Waschmittel Pulver Konzent. 2,4 kg",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7",
+    "bezeichnung": "Wasser 0,5",
+    "warengruppe": "Cafeteria 19%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "20",
+    "bezeichnung": "Wasser 0,75 l",
+    "warengruppe": "Säfte, Getränke alkoholfrei",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2005",
+    "bezeichnung": "Wasserburger",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7312",
+    "bezeichnung": "Wassermelone mini",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4270004090826",
+    "bezeichnung": "WeideMilch Jogh. 3,8% Heidel.",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4270004090840",
+    "bezeichnung": "WeideMilch Jogh. Erdbeer 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4270004090802",
+    "bezeichnung": "WeideMilch Jogh. Natur 500 g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4270004090833",
+    "bezeichnung": "WeideMilch Jogh. Pfirs. Mara. 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4270004090819",
+    "bezeichnung": "WeideMilch Jogh. Vanille 500g",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7168",
+    "bezeichnung": "Weintrauben rot",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7170",
+    "bezeichnung": "Weintrauben weiß",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "10",
+    "bezeichnung": "Weißbier",
+    "warengruppe": "Bier",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7172",
+    "bezeichnung": "Weißkraut",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7173",
+    "bezeichnung": "Weißkraut BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2220620",
+    "bezeichnung": "Wiener",
+    "warengruppe": "Fleisch und Wurstwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4014051008102",
+    "bezeichnung": "WIK Dinkel Dopelkeks Zitron. 90g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4027800400201",
+    "bezeichnung": "Wilkins Xtreme 3 Sens. Rasierer 6st",
+    "warengruppe": "Drogerie",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4012172709137",
+    "bezeichnung": "Winzerglühwein weiß 1l",
+    "warengruppe": "Wein und Sekt",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7174",
+    "bezeichnung": "Wirsing",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "32",
+    "bezeichnung": "Wurstsalat",
+    "warengruppe": "Salate selbstgemacht",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "100",
+    "bezeichnung": "Wurstsemmel",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "101",
+    "bezeichnung": "Wurstsemmel mit Gurke",
+    "warengruppe": "Snacks",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2009",
+    "bezeichnung": "Ziegenkäse im Glass",
+    "warengruppe": "Mopro",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7177",
+    "bezeichnung": "Zitronen BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "511",
+    "bezeichnung": "Zopf/Ring",
+    "warengruppe": "Backwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006403069997",
+    "bezeichnung": "ZOT \"Kulfi\" Pistazien, Mandel\" 70g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006403028826",
+    "bezeichnung": "ZOT Eierlikör 70g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006403052784",
+    "bezeichnung": "ZOT Mango Tango 70g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006403019916",
+    "bezeichnung": "ZOT Pistazien 70g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006403052937",
+    "bezeichnung": "ZOT Tiramisu 70g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006403047872",
+    "bezeichnung": "ZOT Trinkschoko 22g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006403018094",
+    "bezeichnung": "Zott Haselnuss Und Honig 70g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "9006403010661",
+    "bezeichnung": "Zott Himbeer und Kokos 70g",
+    "warengruppe": "Süßwaren",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7178",
+    "bezeichnung": "Zucchini",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7179",
+    "bezeichnung": "Zucchini BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7338",
+    "bezeichnung": "Zuckermais BIO",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4016435001617",
+    "bezeichnung": "Zuckermais im Glas Demeter 370ml",
+    "warengruppe": "Konservern und Fertiggerichte",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "200",
+    "bezeichnung": "zusätzliche Beilage",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "2000",
+    "bezeichnung": "zusätzliche Beilage",
+    "warengruppe": "Mittagessen 7%",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019736014348",
+    "bezeichnung": "ZWE Apfelmark 360g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019736014805",
+    "bezeichnung": "ZWE Basitom 135g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019736003748",
+    "bezeichnung": "ZWE Kinder Tomat. Sauce 340g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019736014270",
+    "bezeichnung": "ZWE Sauerkirschen im Glas 360g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019736004028",
+    "bezeichnung": "ZWE Tomatens. Basilikum 350g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "8018759000150",
+    "bezeichnung": "ZWE Tomatensauce klas. 280g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "4019736014669",
+    "bezeichnung": "ZWE Tomesan 135g",
+    "warengruppe": "Lebensmittel",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7211",
+    "bezeichnung": "Zwiebel gelb BIO lose",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7226",
+    "bezeichnung": "Zwiebel Netz 1,5 kg",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7184",
+    "bezeichnung": "Zwiebeln rot",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7185",
+    "bezeichnung": "Zwiebeln rot BIO",
+    "warengruppe": "Obst und Gemüse",
+    "edeka_nr": ""
+  },
+  {
+    "strichcode": "7188",
+    "bezeichnung": "Zwiebeln weiß Netz 2kg",
+    "warengruppe": "Obst und Gemüse Stück",
+    "edeka_nr": ""
+  }
+]
