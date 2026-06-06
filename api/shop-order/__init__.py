@@ -94,7 +94,7 @@ def _verify_jwt(req):
 def _debug_jwt(req):
     """Debug JWT verification - returns detailed error info."""
     auth = req.headers.get("Authorization", "")
-    info = {"has_auth": bool(auth), "starts_bearer": auth.startswith("Bearer "), "secret_len": len(JWT_SECRET), "secret_first5": JWT_SECRET[:5], "jwt_version": getattr(jwt, '__version__', 'unknown')}
+    info = {"has_auth": bool(auth), "auth_len": len(auth), "starts_bearer": auth.startswith("Bearer "), "secret_len": len(JWT_SECRET), "secret_first5": JWT_SECRET[:5], "jwt_version": getattr(jwt, '__version__', 'unknown'), "auth_first50": auth[:50], "auth_last50": auth[-50:] if len(auth) > 50 else auth}
     if not auth.startswith("Bearer "):
         info["error"] = "no bearer prefix"
         return info
