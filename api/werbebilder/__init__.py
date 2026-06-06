@@ -422,7 +422,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 })
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
-                found_keys = {x.get("dl_artikelnummer", "") for x in result if x.get("dl_bild_base64") or x.get("dl_download_url")}
+                found_keys = {x.get("dl_artikelnummer", "") for x in result if x.get("dl_bild_base64")}
                 missing = [{"artikelnummer": x, "strichcode": x} for x in nr_list if x not in found_keys]
                 if missing:
                     result.extend(_lookup_sp_images(missing))
