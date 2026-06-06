@@ -349,6 +349,7 @@
   </div>
 </div>
 
+<script src="shop-images.js"></script>
 <script>
 (function(){
   'use strict';
@@ -1023,45 +1024,19 @@
     overlay.classList.add('show');
   }
 
-  async function loadWerbebilderFallback(items,runId){
+  function loadWerbebilderFallback(items,runId){
     var infos=[];
     items.forEach(function(a){
       if(!a||!a.artikelnummer||imageCache[a.artikelnummer]) return;
       infos.push({artikelnummer:a.artikelnummer,edeka_nr:(a.edeka_nr||'').toString().trim(),strichcode:(a.strichcode||'').toString().trim()});
     });
     if(!infos.length) return;
-    var batchSize=24;
-    for(var i=0;i<infos.length;i+=batchSize){
-      if(runId!==imageLoadRun) return;
-      var batch=infos.slice(i,i+batchSize).filter(function(info){return !imageCache[info.artikelnummer];});
-      if(!batch.length) continue;
-      try{
-        // Build reverse map: strichcode/edeka_nr → original artikelnummer for matching
-        var keyMap={};
-        batch.forEach(function(info){
-          keyMap[info.artikelnummer]=info.artikelnummer;
-          if(info.strichcode) keyMap[info.strichcode]=info.artikelnummer;
-          if(info.edeka_nr) keyMap[info.edeka_nr]=info.artikelnummer;
-        });
-        var r=await fetch(API+'/werbebilder?sharepoint=1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({articles:batch})});
-        var data=await r.json();
-        (data||[]).forEach(function(row){
-          var respNr=(row.dl_artikelnummer||'').toString().trim();
-          if(!respNr) return;
-          var origNr=keyMap[respNr]||respNr;
-          var src='';
-          if(row.dl_bild_base64){
-            src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
-          } else if(row.dl_download_url){
-            src=row.dl_download_url;
-          }
-          if(src&&runId===imageLoadRun) setArticleImage(origNr,src);
-        });
-      }catch(err){
-        console.warn('[Shop] Werbebilder batch fetch error',err);
-      }
-      await new Promise(function(resolve){setTimeout(resolve,20);});
-    }
+    ShopImages.loadBatch(infos,{
+      apiBase:API,
+      cacheKey:function(info){return info.artikelnummer;},
+      runCheck:function(){return runId===imageLoadRun;},
+      onImage:function(key,src){if(runId===imageLoadRun) setArticleImage(key,src);}
+    });
   }
 
   function tryStaticBarcodeImage(article,done,runId){

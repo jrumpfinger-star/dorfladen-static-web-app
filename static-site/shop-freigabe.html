@@ -140,6 +140,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="shop-images.js"></script>
 <script>
 (function(){
   var API='/api';
@@ -592,50 +593,24 @@
       toLoad.push({artikelnummer:(a.edeka_nr||a.strichcode||'').trim(),edeka_nr:(a.edeka_nr||'').trim(),strichcode:a.strichcode});
     });
     if(!toLoad.length) return;
-    var batchSize=24;
-    (async function(){
-      for(var i=0;i<toLoad.length;i+=batchSize){
-        if(runId!==imgLoadId) return;
-        var batch=toLoad.slice(i,i+batchSize);
-        // Build reverse map: API dl_artikelnummer → strichcode for DOM matching
-        var keyMap={};
-        batch.forEach(function(info){
-          keyMap[info.strichcode]=info.strichcode;
-          if(info.edeka_nr) keyMap[info.edeka_nr]=info.strichcode;
-          if(info.artikelnummer) keyMap[info.artikelnummer]=info.strichcode;
-        });
-        try{
-          var r=await fetch(API+'/werbebilder?sharepoint=1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({articles:batch})});
-          var data=await r.json();
-          (data||[]).forEach(function(row){
-            var respNr=(row.dl_artikelnummer||'').toString().trim();
-            if(!respNr) return;
-            var sc=keyMap[respNr]||respNr;
-            var src='';
-            if(row.dl_bild_base64){
-              src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
-            }
-            if(!src) src=row.dl_download_url||'';
-            if(!src) return;
-            imgCache[sc]=src;
-            // Replace placeholder in DOM
-            var el=document.getElementById('fimg-'+sc);
-            if(el){
-              var img=document.createElement('img');
-              img.className='art-img';
-              img.src=src;
-              img.setAttribute('data-img-sc',sc);
-              img.title='Bild bearbeiten';
-              img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
-              el.replaceWith(img);
-            }
-          });
-        }catch(err){
-          console.warn('[Freigabe] Image batch error',err);
+    ShopImages.loadBatch(toLoad,{
+      apiBase:API,
+      cacheKey:function(info){return info.strichcode;},
+      runCheck:function(){return runId===imgLoadId;},
+      onImage:function(sc,src){
+        imgCache[sc]=src;
+        var el=document.getElementById('fimg-'+sc);
+        if(el){
+          var img=document.createElement('img');
+          img.className='art-img';
+          img.src=src;
+          img.setAttribute('data-img-sc',sc);
+          img.title='Bild bearbeiten';
+          img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
+          el.replaceWith(img);
         }
-        await new Promise(function(resolve){setTimeout(resolve,30);});
       }
-    })();
+    });
   }
 
   // ── Event listeners ──
