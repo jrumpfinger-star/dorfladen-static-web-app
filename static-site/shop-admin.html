@@ -118,7 +118,7 @@
     html+='.note{background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:8px 10px;font-size:11px;color:#92400e;margin-bottom:12px}';
     html+='@media print{body{padding:12px 16px}@page{margin:12mm 10mm}}';
     html+='</style></head><body>';
-    html+='<div class="header"><div class="logo">Dorfladen Oberornau<small>Online-Bestellung · Beipackzettel</small></div>';
+    html+='<div class="header"><div class="logo">Dorfladen Oberornau<small>Online-Bestellung &middot; Beipackzettel</small></div>';
     html+='<div class="ordernr">'+esc(o.bestellnummer)+'<small>Gedruckt: '+now.toLocaleDateString('de-DE')+' '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+'</small></div></div>';
     html+='<div class="info">';
     html+='<div><b>Kunde:</b> '+esc(o.kunde_name)+'</div>';
@@ -183,11 +183,14 @@
     html+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:8px 10px;font-size:10px;color:#92400e;margin:10px 0"><b>Hinweis:</b> Bei Gewichtsware (z.B. Fleisch, Käse, Obst) kann die tatsächlich gelieferte Menge geringfügig von der bestellten Menge abweichen. Es wird stets die tatsächlich gelieferte Menge berechnet. Nicht verfügbare Artikel werden nicht berechnet.</div>';
     html+='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;font-size:10px;color:#991b1b;margin:0 0 10px"><b>Verbindliche Bestellung:</b> Bitte holen Sie Ihre Bestellung bis <b>12:00 Uhr mittags</b> ab. Verderbliche Ware, die nicht rechtzeitig abgeholt wird und nicht mehr verkaufbar ist, wird in Rechnung gestellt. Eine kostenlose Stornierung ist bis 06:30 Uhr am Abholtag möglich.</div>';
     html+='<div class="footer">';
-    html+='<b>Abbuchung / Zahlung:</b><br>';
-    html+='Der Betrag von <b>'+fmtP(total)+' €</b> wird bei Abholung im Dorfladen Oberornau verrechnet.<br>';
-    html+='Zahlungsarten: Bar, EC-Karte, Kreditkarte<br><br>';
-    html+='<b>Dorfladen Oberornau</b> · Dorfstraße · 84416 Taufkirchen (Vils)<br>';
-    html+='Bei Fragen: dorfladen@oberornau.de';
+    html+='<b>Abbuchung / Zahlung per SEPA-Lastschrift:</b><br>';
+    html+='Der Betrag von <b>'+fmtP(total)+' &euro;</b> wird per SEPA-Lastschrift eingezogen.<br>';
+    if(o.iban_masked) html+='IBAN: <b>'+esc(o.iban_masked)+'</b>';
+    if(o.kontoinhaber) html+=' &middot; Kontoinhaber: <b>'+esc(o.kontoinhaber)+'</b>';
+    if(o.iban_masked||o.kontoinhaber) html+='<br>';
+    html+='Die Abrechnung der Lieferungen erfolgt immer zu Beginn des n&auml;chsten Monats.<br><br>';
+    html+='<b>Dorfladen Oberornau</b> &middot; Dorfplatz 1 &middot; 84419 Obertaufkirchen<br>';
+    html+='Bei Fragen: bestellung@dorfladen-oberornau.de &middot; Tel: 08082 / 622 99 91';
     html+='</div>';
     html+='<div class="noprint" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#2e7d4f;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">🖨 Beipackzettel drucken</button></div>';
     html+='<style>@media print{.noprint{display:none!important}}</style>';

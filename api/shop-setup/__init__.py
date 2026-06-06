@@ -274,6 +274,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # JSON array: [{artikelnummer, bezeichnung, menge, einheit, einzelpreis, positionspreis}]
         _add_string_attr(base_url, headers, e, "dl_kunde_id", "Kunde ID", 50)
         _add_memo_attr(base_url, headers, e, "dl_pack_json", "Pack-Daten (JSON)")
+        _add_string_attr(base_url, headers, e, "dl_iban_masked", "IBAN (maskiert)", 50)
+        _add_string_attr(base_url, headers, e, "dl_kontoinhaber", "Kontoinhaber", 200)
         # JSON: {gepackt_von, gepackt_um, items: [{artikelnummer, gepackt, gepackt_menge, scan_zeit}]}
 
     # ── 3. Artikelstamm: bestellbar-Flag auf cr5d4_tables ──
