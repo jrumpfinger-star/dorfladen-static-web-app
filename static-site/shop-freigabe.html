@@ -595,10 +595,11 @@
           (data||[]).forEach(function(row){
             var sc=(row.dl_artikelnummer||'').trim();
             if(!sc) return;
-            var src=row.dl_download_url||'';
-            if(!src&&row.dl_bild_base64){
+            var src='';
+            if(row.dl_bild_base64){
               src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
             }
+            if(!src) src=row.dl_download_url||'';
             if(!src) return;
             imgCache[sc]=src;
             // Replace placeholder in DOM
