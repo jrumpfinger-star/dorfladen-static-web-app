@@ -165,10 +165,11 @@
     html+='<b>Dorfladen Oberornau</b> · Dorfstraße · 84416 Taufkirchen (Vils)<br>';
     html+='Bei Fragen: dorfladen@oberornau.de';
     html+='</div>';
+    html+='<div class="noprint" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#2e7d4f;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">🖨 Beipackzettel drucken</button></div>';
+    html+='<style>@media print{.noprint{display:none!important}}</style>';
     html+='</body></html>';
     var w=window.open('','_blank','width=700,height=900');
     w.document.write(html);w.document.close();
-    setTimeout(function(){w.print();},500);
   }
   function renderDetail(){
     var o=selected;if(!o)return;
@@ -186,7 +187,7 @@
       detailHtml+='<div class="actions"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button></div>';
       detailHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Anmerkung:</div><textarea class="note" id="note">'+esc(o.anmerkungen||'')+'</textarea>';
     } else {
-      detailHtml+='<div class="actions"><button class="btn small" id="print-slip">🖨 Beipackzettel drucken</button></div>';
+      detailHtml+='<div class="actions"><button class="btn small" id="print-slip-detail">� Beipackzettel anzeigen</button></div>';
     }
     document.getElementById('detail').innerHTML=detailHtml;
     var packedCount=items.reduce(function(sum,p){return sum+(packFor(p).gepackt?1:0);},0);
@@ -237,9 +238,11 @@
       if(document.getElementById('note')) data.anmerkungen=document.getElementById('note').value;
       updateOrder(data);
     });}
-    // Wire print button
+    // Wire print buttons (packlist + detail)
     var printBtn=document.getElementById('print-slip');
     if(printBtn){printBtn.addEventListener('click',function(){printBeipackzettel(o,items);});}
+    var printBtn2=document.getElementById('print-slip-detail');
+    if(printBtn2){printBtn2.addEventListener('click',function(){printBeipackzettel(o,items);});}
   }
   function updateOrder(data){var selId=selected.id;data.id=selId;fetch(API,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json();}).then(function(res){if(!res.success)throw new Error(res.error||'Fehler');toast('Gespeichert');return fetch(API+'?action=dashboard').then(function(r2){return r2.json();}).then(function(res2){if(!res2.success)throw new Error(res2.error||'Fehler');orders=res2.orders||[];statusLabels=res2.status_labels||statusLabels;setStats(res2.summary);renderOrders();selectOrder(selId);});}).catch(function(e){toast('Fehler: '+e.message);});}
   document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.addEventListener('click',function(){activeStatFilter=el.getAttribute('data-stat-filter');document.getElementById('status-filter').value='all';renderOrders();});});document.getElementById('refresh-btn').addEventListener('click',loadDashboard);document.getElementById('load-orders').addEventListener('click',loadOrders);document.getElementById('search').addEventListener('keydown',function(e){if(e.key==='Enter')loadOrders();});document.getElementById('status-filter').addEventListener('change',loadOrders);
