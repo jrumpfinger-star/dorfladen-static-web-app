@@ -188,7 +188,8 @@ def _lookup_sp_images(article_infos):
         if not hit and artnr:
             hit = _find_sp_image(token, SP_FOLDER, artnr)
         if hit and hit.get("dl_download_url"):
-            result.append({"dl_artikelnummer": result_key, "dl_download_url": hit["dl_download_url"], "source": "sharepoint", "name": hit.get("name", "")})
+            b64 = _download_as_base64(hit["dl_download_url"])
+            result.append({"dl_artikelnummer": result_key, "dl_bild_base64": b64, "dl_download_url": hit["dl_download_url"], "source": "sharepoint", "name": hit.get("name", "")})
     return result
 
 
@@ -399,7 +400,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
                 found_keys = {x.get("dl_artikelnummer", "") for x in result if x.get("dl_bild_base64") or x.get("dl_download_url")}
-                missing = [{"artikelnummer": x, "strichcode": ""} for x in nr_list if x not in found_keys]
+                missing = [{"artikelnummer": x, "strichcode": x} for x in nr_list if x not in found_keys]
                 if missing:
                     result.extend(_lookup_sp_images(missing))
             return func.HttpResponse(
