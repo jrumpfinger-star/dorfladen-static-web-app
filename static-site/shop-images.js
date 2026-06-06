@@ -60,7 +60,7 @@ var ShopImages=(function(){
         }catch(err){
           console.warn('[ShopImages] batch error',err);
         }
-        await new Promise(function(resolve){setTimeout(resolve,20);});
+        await new Promise(function(resolve){setTimeout(resolve,200);});
       }
     })();
   }
