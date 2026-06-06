@@ -526,7 +526,24 @@
   }
 
   // ── Auth ──
-  function isLoggedIn(){return !!authToken&&!!authUser;}
+  function isTokenExpired(){
+    if(!authToken) return true;
+    try{
+      var parts=authToken.split('.');if(parts.length!==3) return true;
+      var payload=JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+      if(!payload.exp) return false;
+      return (payload.exp*1000)<Date.now();
+    }catch(e){return true;}
+  }
+  function isLoggedIn(){
+    if(!authToken||!authUser) return false;
+    if(isTokenExpired()){
+      authToken='';authUser=null;
+      localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');
+      return false;
+    }
+    return true;
+  }
 
 
   function clearSearchAutofill(){
@@ -590,8 +607,8 @@
     clearSearchAutofill();
     var btn=document.getElementById('shop-user-btn');
     if(isLoggedIn()){
-      btn.innerHTML='👤';
-      btn.title='Konto: '+authUser.vorname;
+      btn.innerHTML='👤 <span style="font-size:10px;vertical-align:middle;color:#2e7d4f">●</span>';
+      btn.title='Konto: '+authUser.vorname+' '+authUser.nachname;
     } else {
       btn.innerHTML='👤';
       btn.title='Anmelden';
@@ -683,7 +700,16 @@
     var btn=document.getElementById('shop-checkout-btn');
     btn.disabled=true;btn.textContent='Wird bestellt…';
     fetch(API+'/shop-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({positionen:positionen,anmerkungen:note})})
-      .then(function(r){return r.json();})
+      .then(function(r){
+        if(r.status===401){
+          authToken='';authUser=null;localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();
+          btn.disabled=false;btn.textContent='🛍 Jetzt bestellen';
+          showToast('Sitzung abgelaufen - bitte erneut anmelden');
+          showAuth('login');
+          throw new Error('__auth__');
+        }
+        return r.json();
+      })
       .then(function(res){
         btn.disabled=false;btn.textContent='🛍 Jetzt bestellen';
         if(res.success){
@@ -697,7 +723,7 @@
           showToast('Fehler: '+(res.error||'Unbekannt'));
         }
       })
-      .catch(function(e){btn.disabled=false;btn.textContent='🛍 Jetzt bestellen';showToast('Fehler: '+e.message);});
+      .catch(function(e){if(e.message==='__auth__')return;btn.disabled=false;btn.textContent='🛍 Jetzt bestellen';showToast('Fehler: '+e.message);});
   }
 
   // ── Render Articles ──
