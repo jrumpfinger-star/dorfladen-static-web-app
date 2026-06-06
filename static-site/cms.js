@@ -4061,8 +4061,8 @@
     var CARD_W=isMag?380:380,CARD_H=isMag?480:320;
     var cardPadI=14,mgRad=isMag?14:theme.cardRadius||10;
 
-    var html='<div class="cms-modal-bg">';
-    html+='<div class="cms-modal" style="max-width:440px;text-align:center;position:relative">';
+    var html='<div class="cms-modal-bg" style="align-items:flex-start;overflow-y:auto;padding:12px 6px">';
+    html+='<div class="cms-modal" style="max-width:440px;max-height:none;text-align:center;position:relative;margin:10px auto">';
     html+='<button class="cms-modal-close" id="pce-close" title="Schlie\u00dfen ohne Speichern">\u2715</button>';
     html+='<h3 style="margin:0 0 4px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+' <span onclick="document.getElementById(\'pce-close\')?.click(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700">?</span></h3>';
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
