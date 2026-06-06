@@ -268,7 +268,7 @@
       <span>Gesamt (ca.)</span>
       <span id="shop-cart-total-val">0,00 €</span>
     </div>
-    <div class="shop-cart-hint">* Gewogene Ware wird nach tatsächlichem Gewicht berechnet</div>
+    <div class="shop-cart-hint">* Bei Gewichtsware (z.B. Fleisch, Käse, Obst) kann die gelieferte Menge geringfügig abweichen. Es wird stets die tatsächlich gelieferte Menge berechnet. Nicht verfügbare Artikel werden nicht berechnet.</div>
     <div class="shop-cart-minorder" id="shop-cart-minorder">⚠️ Mindestbestellwert: 10,00 €</div>
     <div class="shop-cart-abhol" id="shop-cart-abhol">📅 Abholung: morgen vormittags</div>
     <textarea class="shop-cart-note" id="shop-cart-note" placeholder="Anmerkungen zur Bestellung (optional)…" rows="2"></textarea>
@@ -692,7 +692,7 @@
     if(cartTotal()<10){showToast('⚠️ Mindestbestellwert: 10,00 €');return;}
     var note=document.getElementById('shop-cart-note').value.trim();
     var positionen=cart.map(function(c){
-      return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.vk,strichcode:c.strichcode||''};
+      return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.vk,strichcode:c.strichcode||'',gewichtsware:!!c.gewichtsware};
     });
     var btn=document.getElementById('shop-checkout-btn');
     btn.disabled=true;btn.textContent='Wird bestellt…';

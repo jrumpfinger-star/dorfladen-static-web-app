@@ -84,10 +84,14 @@
   function buildPackJson(items){
     var cnt=0;
     var packItems=items.map(function(p,i){
-      var checked=!!document.querySelector('[data-pack-index="'+i+'"]');
-      if(checked) checked=document.querySelector('[data-pack-index="'+i+'"]').checked;
+      var cb=document.querySelector('[data-pack-index="'+i+'"]');
+      var checked=cb?cb.checked:false;
       if(checked) cnt++;
-      return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,gepackt_menge:checked?p.menge:0,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,scan_zeit:checked?new Date().toISOString():''};
+      var qtyInp=document.querySelector('[data-qty-index="'+i+'"]');
+      var isKg=qtyInp?qtyInp.getAttribute('data-is-kg')==='1':false;
+      var rawVal=qtyInp?parseFloat(qtyInp.value)||0:(p.menge||0);
+      var actualMenge=isKg?rawVal/1000:rawVal;
+      return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,gepackt_menge:checked?actualMenge:0,bestellt_menge:p.menge,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,gewichtsware:isKg,scan_zeit:checked?new Date().toISOString():''};
     });
     return {pack:{gepackt_von:'shop-admin',gepackt_um:new Date().toISOString(),items:packItems,alle_gepackt:cnt===items.length},packedCount:cnt};
   }
@@ -122,35 +126,45 @@
     html+='<div><b>Abholung:</b> '+esc(o.abholdatum||'-')+'</div>';
     html+='</div>';
     if(o.anmerkungen){html+='<div class="note"><b>Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';}
-    html+='<table><thead><tr><th class="check"></th><th>Pos</th><th>Artikel</th><th>Art.-Nr.</th><th>Barcode</th><th class="r">Menge</th><th class="r">Einzelpreis</th><th class="r">Gesamt</th></tr></thead><tbody>';
+    html+='<table><thead><tr><th class="check"></th><th>Pos</th><th>Artikel</th><th>Art.-Nr.</th><th>Barcode</th><th class="r">Bestellt</th><th class="r">Geliefert</th><th class="r">Einzelpreis</th><th class="r">Gesamt</th></tr></thead><tbody>';
     var total=0;
     var packItems=(o.pack_data&&o.pack_data.items)||[];
     items.forEach(function(p,i){
       var pk=packItems.find(function(x){return String(x.artikelnummer||x.strichcode||x.bezeichnung||'')===String(p.artikelnummer||p.strichcode||p.bezeichnung||'');})||{};
       var checked=pk.gepackt;
-      // Also check current checkboxes if available
       var cb=document.querySelector('[data-pack-index="'+i+'"]');
       if(cb) checked=cb.checked;
       var ep=p.einzelpreis||0;
-      var m=p.menge||0;
-      var gp=ep*m;
+      var isKg=p.einheit==='kg'||p.gewichtsware;
+      var bestellMenge=p.menge||0;
+      // Get actual packed qty from input or pack data
+      var qtyInp=document.querySelector('[data-qty-index="'+i+'"]');
+      var actualMenge;
+      if(qtyInp){var raw=parseFloat(qtyInp.value)||0;actualMenge=isKg?raw/1000:raw;}
+      else{actualMenge=pk.gepackt_menge||bestellMenge;}
+      var gp=ep*actualMenge;
+      var abweichung=checked&&Math.abs(actualMenge-bestellMenge)>0.001;
+      var bestellStr=isKg?Math.round(bestellMenge*1000)+' g':bestellMenge+' '+esc(p.einheit||'Stk');
+      var geliefertStr=isKg?Math.round(actualMenge*1000)+' g':actualMenge+' '+esc(p.einheit||'Stk');
       html+='<tr class="'+(checked?'packed':'notpacked')+'">';
       html+='<td class="check">'+(checked?'✅':'⬜')+'</td>';
       html+='<td>'+(i+1)+'</td>';
       var bc=p.strichcode||p.artikelnummer||'';
       if(checked){
         total+=gp;
-        html+='<td><b>'+esc(p.bezeichnung)+'</b></td>';
+        html+='<td><b>'+esc(p.bezeichnung)+'</b>'+(abweichung?'<br><span style="color:#b45309;font-size:10px;font-weight:700">⚠ Menge abweichend</span>':'')+'</td>';
         html+='<td>'+esc(bc)+'</td>';
         html+='<td>'+barcodeSvg(bc,28,1)+'</td>';
-        html+='<td class="r">'+m+' '+esc(p.einheit||'Stück')+'</td>';
-        html+='<td class="r">'+fmtP(ep)+' €</td>';
+        html+='<td class="r">'+bestellStr+'</td>';
+        html+='<td class="r"'+(abweichung?' style="color:#b45309;font-weight:700"':'')+'>'+ geliefertStr+'</td>';
+        html+='<td class="r">'+fmtP(ep)+' €'+(isKg?'/kg':'')+'</td>';
         html+='<td class="r"><b>'+fmtP(gp)+' €</b></td>';
       } else {
         html+='<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">⚠ Nicht verfügbar</span></td>';
         html+='<td style="color:#9ca3af">'+esc(bc)+'</td>';
         html+='<td></td>';
-        html+='<td class="r" style="color:#9ca3af">'+m+' '+esc(p.einheit||'Stück')+'</td>';
+        html+='<td class="r" style="color:#9ca3af">'+bestellStr+'</td>';
+        html+='<td class="r" style="color:#9ca3af">–</td>';
         html+='<td class="r" style="text-decoration:line-through;color:#9ca3af">'+fmtP(ep)+' €</td>';
         html+='<td class="r" style="text-decoration:line-through;color:#9ca3af">'+fmtP(gp)+' €</td>';
       }
@@ -158,6 +172,7 @@
     });
     html+='</tbody></table>';
     html+='<div class="total">Gesamtbetrag: '+fmtP(total)+' €</div>';
+    html+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:8px 10px;font-size:10px;color:#92400e;margin:10px 0"><b>Hinweis:</b> Bei Gewichtsware (z.B. Fleisch, Käse, Obst) kann die tatsächlich gelieferte Menge geringfügig von der bestellten Menge abweichen. Es wird stets die tatsächlich gelieferte Menge berechnet. Nicht verfügbare Artikel werden nicht berechnet.</div>';
     html+='<div class="footer">';
     html+='<b>Abbuchung / Zahlung:</b><br>';
     html+='Der Betrag von <b>'+fmtP(total)+' €</b> wird bei Abholung im Dorfladen Oberornau verrechnet.<br>';
@@ -198,17 +213,49 @@
     var summe=0;
     items.forEach(function(p,i){
       var pk=packFor(p);var checked=pk.gepackt?' checked':'';var cls=pk.gepackt?' packed':'';
-      var ep=p.einzelpreis||0;var gp=ep*(p.menge||0);summe+=gp;
+      var ep=p.einzelpreis||0;
+      var isKg=p.einheit==='kg'||p.gewichtsware;
+      var bestMenge=p.menge||0;
+      var packMenge=pk.gepackt_menge||bestMenge;
+      if(isKg){bestMenge=Math.round(bestMenge*1000);packMenge=Math.round((pk.gepackt_menge||p.menge||0)*1000);}
+      var actualMenge=isKg?packMenge/1000:packMenge;
+      var gp=ep*actualMenge;summe+=gp;
       var disabled=isEditable?'':' disabled';
       var bc=p.strichcode||p.artikelnummer||'';
-      packHtml+='<label class="item'+cls+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+disabled+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(bc)+'</div></div><div style="text-align:center">'+barcodeSvg(bc,22,1)+'</div><div style="text-align:right;white-space:nowrap">'+esc(p.menge)+' '+esc(p.einheit||'Stk')+'<br><span style="font-size:11px;color:#6b7f72">× '+money(ep)+'</span></div><div style="text-align:right;font-weight:800;white-space:nowrap">'+money(gp)+'</div></label>';
+      var step=isKg?'10':'1';var unit=isKg?'g':'Stk';var min=isKg?'0':'0';
+      packHtml+='<label class="item'+cls+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+disabled+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(bc)+'</div></div><div style="text-align:center">'+barcodeSvg(bc,22,1)+'</div><div style="text-align:right;white-space:nowrap"><input type="number" data-qty-index="'+i+'" data-is-kg="'+(isKg?1:0)+'" data-ep="'+ep+'" value="'+packMenge+'" min="'+min+'" step="'+step+'" style="width:52px;text-align:right;border:1px solid #dfe7e2;border-radius:4px;padding:2px 4px;font-size:12px"'+disabled+'> '+esc(unit)+'<br><span style="font-size:11px;color:#6b7f72">× '+money(ep)+(isKg?'/kg':'')+' = <b data-price-index="'+i+'">'+money(gp)+'</b></span></div></label>';
     });
     packHtml+='</div>';
-    packHtml+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:8px">Summe: '+money(summe)+'</div>';
+    packHtml+='<div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">ℹ Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>';
+    packHtml+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:4px" id="pack-summe">Summe: '+money(summe)+'</div>';
     packHtml+='<div style="display:flex;gap:8px;margin-top:12px">';
     if(isEditable) packHtml+='<button class="btn primary" id="finish-pack" style="flex:1;padding:11px">✅ Fertig – Abholbereit</button>';
     packHtml+='<button class="btn" id="print-slip" style="padding:11px'+(isEditable?'':';flex:1')+'">🖨 Drucken</button></div>';
     document.getElementById('pack').innerHTML=packHtml;
+    // Wire qty inputs for live price update
+    document.querySelectorAll('[data-qty-index]').forEach(function(inp){
+      inp.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();});
+      inp.addEventListener('change',function(){
+        var idx=inp.getAttribute('data-qty-index');
+        var isKg=inp.getAttribute('data-is-kg')==='1';
+        var ep=parseFloat(inp.getAttribute('data-ep'))||0;
+        var raw=parseFloat(inp.value)||0;
+        var actual=isKg?raw/1000:raw;
+        var gp=ep*actual;
+        var priceEl=document.querySelector('[data-price-index="'+idx+'"]');
+        if(priceEl) priceEl.textContent=money(gp);
+        // Recalc total
+        var total=0;
+        document.querySelectorAll('[data-qty-index]').forEach(function(q){
+          var qep=parseFloat(q.getAttribute('data-ep'))||0;
+          var qraw=parseFloat(q.value)||0;
+          var qkg=q.getAttribute('data-is-kg')==='1';
+          total+=qep*(qkg?qraw/1000:qraw);
+        });
+        var sumEl=document.getElementById('pack-summe');
+        if(sumEl) sumEl.innerHTML='Summe: '+money(total);
+      });
+    });
     // Wire status buttons
     document.querySelectorAll('[data-status]').forEach(function(b){b.addEventListener('click',function(){
       var newStatus=Number(b.getAttribute('data-status'));
