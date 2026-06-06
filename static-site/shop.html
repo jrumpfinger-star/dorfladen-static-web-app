@@ -1030,8 +1030,8 @@
       if(!a||!a.artikelnummer||imageCache[a.artikelnummer]) return;
       infos.push({artikelnummer:a.artikelnummer,edeka_nr:(a.edeka_nr||'').toString().trim(),strichcode:(a.strichcode||'').toString().trim()});
     });
-    if(!infos.length) return;
-    ShopImages.loadBatch(infos,{
+    if(!infos.length) return Promise.resolve();
+    return ShopImages.loadBatch(infos,{
       apiBase:API,
       batchSize:20,
       cacheKey:function(info){return info.artikelnummer;},

@@ -45,7 +45,7 @@ var ShopImages=(function(){
     var batchSize=opts.batchSize||24;
     var runCheck=opts.runCheck||function(){return true;};
 
-    (async function(){
+    return (async function(){
       for(var i=0;i<articleInfos.length;i+=batchSize){
         if(!runCheck()) return;
         var batch=articleInfos.slice(i,i+batchSize);
