@@ -5982,7 +5982,7 @@
             var pctW=(el.w/canvasW*100).toFixed(2),pctH=(el.h/canvasH*100).toFixed(2);
             var isCopy=el.id.indexOf('copy-')===0;
             var isSecondary=(el.id==='ghost'||el.id==='dup'||el.id==='customImg'||isCopy);
-            var noResize=(el.id==='ghost'||el.id==='dup'||isCopy);
+            var noResize=false;
             var extraCls=isSecondary?' el-secondary':'';
             if(el.id==='customImg') extraCls=' el-custom';
             zh+='<div class="el-zone'+extraCls+'" data-el="'+el.id+'" data-idx="'+idx+'" data-ov="'+el.ovKey+'"'
@@ -6565,8 +6565,14 @@
               var rIdx=parseInt(z.getAttribute('data-idx'),10);
               var rOvKey=z.getAttribute('data-ov');
               var rOv=artOvs[rIdx];
-              var scaleKey=rOvKey==='img'?'imgScale':rOvKey==='customImg'?'customImgScale':'priceScale';
-              var startScale=rOv[scaleKey]||100;
+              var rElId=z.getAttribute('data-el');
+              var scaleKey=rOvKey==='img'?'imgScale':rOvKey==='ghost'?'ghostScale':rOvKey==='dup'?'dupScale':rOvKey==='customImg'?'customImgScale':'priceScale';
+              var _rzCopy=null;
+              if(rOvKey==='copy'&&rElId&&rElId.indexOf('copy-')===0){
+                var _rzCi=parseInt(rElId.split('-')[1],10);
+                _rzCopy=rOv.copies&&rOv.copies[_rzCi];
+              }
+              var startScale=_rzCopy?(_rzCopy.scale||100):(rOv[scaleKey]||100);
               var startY=ev.clientY;
               var wrap=doc.getElementById('fw-'+rIdx);
               var wrapRect=wrap?wrap.getBoundingClientRect():{height:1};
@@ -6574,9 +6580,10 @@
               function rzMove(e){
                 var dy=e.clientY-startY;
                 var deltaPct=Math.round(dy/pxPerPct*2); // positive = bigger
-                rOv[scaleKey]=Math.max(20,Math.min(300,startScale+deltaPct));
+                var newScale=Math.max(20,Math.min(300,startScale+deltaPct));
+                if(_rzCopy){_rzCopy.scale=newScale;}else{rOv[scaleKey]=newScale;}
                 // Live feedback: scale the zone visually
-                var scFactor=rOv[scaleKey]/startScale;
+                var scFactor=newScale/startScale;
                 z.style.transform='scale('+scFactor.toFixed(2)+')';
                 z.style.transformOrigin='top left';
               }
@@ -6824,8 +6831,14 @@
               var rIdx=parseInt(z.getAttribute('data-idx'),10);
               var rOvKey=z.getAttribute('data-ov');
               var rOv=artOvs[rIdx];
-              var scaleKey=rOvKey==='img'?'imgScale':rOvKey==='customImg'?'customImgScale':'priceScale';
-              var startScale=rOv[scaleKey]||100;
+              var rElId=z.getAttribute('data-el');
+              var scaleKey=rOvKey==='img'?'imgScale':rOvKey==='ghost'?'ghostScale':rOvKey==='dup'?'dupScale':rOvKey==='customImg'?'customImgScale':'priceScale';
+              var _rzCopy=null;
+              if(rOvKey==='copy'&&rElId&&rElId.indexOf('copy-')===0){
+                var _rzCi=parseInt(rElId.split('-')[1],10);
+                _rzCopy=rOv.copies&&rOv.copies[_rzCi];
+              }
+              var startScale=_rzCopy?(_rzCopy.scale||100):(rOv[scaleKey]||100);
               var startRY=_tsY;
               var rwrap=doc.getElementById('fw-'+rIdx);
               var rwrapRect=rwrap?rwrap.getBoundingClientRect():{height:1};
@@ -6834,8 +6847,9 @@
                 var t2=e2.touches[0];
                 var dy=t2.clientY-startRY;
                 var deltaPct=Math.round(dy/pxPerPct*2);
-                rOv[scaleKey]=Math.max(20,Math.min(300,startScale+deltaPct));
-                var scFactor=rOv[scaleKey]/startScale;
+                var newScale=Math.max(20,Math.min(300,startScale+deltaPct));
+                if(_rzCopy){_rzCopy.scale=newScale;}else{rOv[scaleKey]=newScale;}
+                var scFactor=newScale/startScale;
                 z.style.transform='scale('+scFactor.toFixed(2)+')';
                 z.style.transformOrigin='top left';
               }
