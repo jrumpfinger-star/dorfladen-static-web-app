@@ -239,7 +239,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_bild_base64") or x.get("dl_download_url")}
                 missing = [a for a in article_infos if (a.get("artikelnummer") or a.get("strichcode")) and (a.get("artikelnummer","") not in found_keys)]
                 if missing:
-                    result.extend(_lookup_sp_images(missing))
+                    result.extend(_load_sharepoint_urls(missing))
             return func.HttpResponse(body=json.dumps(result), status_code=200, headers=get_cors_headers())
 
 
