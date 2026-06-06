@@ -91,6 +91,28 @@ def _verify_jwt(req):
         return None
 
 
+def _debug_jwt(req):
+    """Debug JWT verification - returns detailed error info."""
+    auth = req.headers.get("Authorization", "")
+    info = {"has_auth": bool(auth), "starts_bearer": auth.startswith("Bearer "), "secret_len": len(JWT_SECRET), "secret_first5": JWT_SECRET[:5]}
+    if not auth.startswith("Bearer "):
+        info["error"] = "no bearer prefix"
+        return info
+    token_str = auth[7:]
+    info["token_len"] = len(token_str)
+    info["token_first20"] = token_str[:20]
+    try:
+        payload = jwt.decode(token_str, JWT_SECRET, algorithms=["HS256"])
+        info["success"] = True
+        info["payload_sub"] = payload.get("sub", "")
+        info["payload_email"] = payload.get("email", "")
+    except Exception as e:
+        info["success"] = False
+        info["error_type"] = type(e).__name__
+        info["error_msg"] = str(e)
+    return info
+
+
 def _calc_abholdatum():
     """Calculate pickup date based on order time.
     Before 16:00 → next business day morning
@@ -247,6 +269,11 @@ def _handle_post(req, dv_token, base_url, headers):
 def _handle_get(req, dv_token, base_url, headers):
     """Fetch orders. ?mode=cms → all orders. Otherwise: customer's own orders."""
     mode = req.params.get("mode", "")
+
+    if mode == "debug_jwt":
+        info = _debug_jwt(req)
+        return func.HttpResponse(json.dumps(info, ensure_ascii=False), status_code=200, headers=get_cors_headers())
+
     user = _verify_jwt(req)
 
     if mode == "pack":
