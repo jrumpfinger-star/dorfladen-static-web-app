@@ -66,59 +66,110 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     notifications_sent = []
     import logging
 
-    # ── Handle missing_items notification ──
-    if notify_type == "missing_items" and missing_items:
-        logging.info(
-            f"[shop-notify] Missing items for {bestellnummer} "
-            f"(customer: {kunde_email}): {', '.join(missing_items)}"
-        )
-        # TODO: Send actual email via Azure Communication Services or SendGrid
-        # Email content would be:
-        #   Subject: Dorfladen Oberornau – Hinweis zu Ihrer Bestellung {bestellnummer}
-        #   Body: Leider sind folgende Artikel momentan nicht verfügbar:
-        #         - {item1}
-        #         - {item2}
-        #         Alle anderen Artikel liegen für Sie zur Abholung bereit.
-        if kunde_email:
-            notifications_sent.append(f"missing_items_email_queued:{kunde_email}")
-            notifications_sent.append(f"missing:{','.join(missing_items)}")
+    storno_grund = body.get("storno_grund", "")
+    anrede = f"Liebe/r {kunde_name}" if kunde_name else "Liebe Kundin, lieber Kunde"
 
-        return func.HttpResponse(
-            json.dumps({
-                "success": True,
-                "notifications": notifications_sent,
-                "message": f"Kunde {kunde_email} wird über {len(missing_items)} nicht verfügbare Artikel informiert"
-            }, ensure_ascii=False),
-            status_code=200, headers=get_cors_headers()
+    # ── Build email subject + body based on notification type ──
+    email_subject = ""
+    email_body = ""
+
+    if notify_type == "cancelled":
+        email_subject = f"Dorfladen Oberornau – Ihre Bestellung {bestellnummer} wurde storniert"
+        email_body = (
+            f"{anrede},\n\n"
+            f"leider müssen wir Ihnen mitteilen, dass Ihre Bestellung {bestellnummer} "
+            f"storniert werden musste.\n\n"
+            f"Grund: {storno_grund}\n\n"
+            f"Selbstverständlich wurde Ihnen nichts berechnet.\n\n"
+            f"Wir bitten um Ihr Verständnis und freuen uns, Sie bald wieder "
+            f"im Dorfladen Oberornau begrüßen zu dürfen!\n\n"
+            f"Herzliche Grüße\n"
+            f"Ihr Dorfladen-Team Oberornau\n"
+            f"Dorfstraße · 84416 Taufkirchen (Vils)\n"
+            f"dorfladen@oberornau.de"
         )
 
-    # ── Standard: order ready notification ──
-    # ── 1. Try to send push notification via existing push-send infrastructure ──
-    try:
-        push_payload = {
-            "title": "🏪 Bestellung abholbereit!",
-            "body": f"Ihre Bestellung {bestellnummer} liegt für Sie bereit. Abholung: {abholdatum} vormittags.",
-            "url": "/shop.html"
-        }
-        base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-        protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
-        internal_url = f"{protocol}://{base_host}/api/push-send"
-        r = requests.post(internal_url, json=push_payload, timeout=15)
-        if r.status_code in (200, 201):
-            notifications_sent.append("push")
-    except Exception as e:
-        pass  # Push is best-effort
+    elif notify_type == "missing_items" and missing_items:
+        items_list = "\n".join(f"  • {item}" for item in missing_items)
+        email_subject = f"Dorfladen Oberornau – Hinweis zu Ihrer Bestellung {bestellnummer}"
+        email_body = (
+            f"{anrede},\n\n"
+            f"vielen Dank für Ihre Bestellung {bestellnummer}!\n\n"
+            f"Leider sind folgende Artikel momentan nicht verfügbar:\n\n"
+            f"{items_list}\n\n"
+            f"Diese Artikel werden Ihnen selbstverständlich nicht berechnet. "
+            f"Alle anderen Artikel Ihrer Bestellung liegen für Sie zur Abholung bereit.\n\n"
+            f"Abholung: {abholdatum} vormittags im Dorfladen Oberornau.\n\n"
+            f"Wir bitten um Ihr Verständnis und freuen uns auf Ihren Besuch!\n\n"
+            f"Herzliche Grüße\n"
+            f"Ihr Dorfladen-Team Oberornau\n"
+            f"Dorfstraße · 84416 Taufkirchen (Vils)\n"
+            f"dorfladen@oberornau.de"
+        )
 
-    # ── 2. Email notification (placeholder – needs SMTP/SendGrid config) ──
-    # TODO: Integrate with Azure Communication Services or SendGrid
+    elif notify_type == "ready":
+        email_subject = f"Dorfladen Oberornau – Ihre Bestellung {bestellnummer} ist abholbereit! 🏪"
+        email_body = (
+            f"{anrede},\n\n"
+            f"gute Nachrichten! Ihre Bestellung {bestellnummer} wurde sorgfältig "
+            f"zusammengestellt und liegt für Sie zur Abholung bereit.\n\n"
+            f"📅 Abholung: {abholdatum} vormittags\n"
+            f"📍 Ort: Dorfladen Oberornau, Dorfstraße, 84416 Taufkirchen (Vils)\n\n"
+            f"Bitte holen Sie Ihre Bestellung bis 12:00 Uhr mittags ab.\n\n"
+            f"Wir freuen uns auf Ihren Besuch!\n\n"
+            f"Herzliche Grüße\n"
+            f"Ihr Dorfladen-Team Oberornau\n"
+            f"dorfladen@oberornau.de"
+        )
+
+    else:
+        email_subject = f"Dorfladen Oberornau – Bestellung {bestellnummer}"
+        email_body = (
+            f"{anrede},\n\n"
+            f"es gibt Neuigkeiten zu Ihrer Bestellung {bestellnummer}.\n"
+            f"Bitte schauen Sie in Ihrem Kundenkonto nach oder kontaktieren "
+            f"Sie uns bei Fragen.\n\n"
+            f"Herzliche Grüße\n"
+            f"Ihr Dorfladen-Team Oberornau\n"
+            f"dorfladen@oberornau.de"
+        )
+
+    logging.info(
+        f"[shop-notify] type={notify_type} order={bestellnummer} "
+        f"customer={kunde_email} subject={email_subject}"
+    )
+
+    # ── Send push notification for 'ready' type ──
+    if notify_type == "ready":
+        try:
+            push_payload = {
+                "title": "🏪 Bestellung abholbereit!",
+                "body": f"Ihre Bestellung {bestellnummer} liegt für Sie bereit. Abholung: {abholdatum} vormittags.",
+                "url": "/shop.html"
+            }
+            base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+            protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
+            internal_url = f"{protocol}://{base_host}/api/push-send"
+            r = requests.post(internal_url, json=push_payload, timeout=15)
+            if r.status_code in (200, 201):
+                notifications_sent.append("push")
+        except Exception:
+            pass  # Push is best-effort
+
+    # ── Send email (placeholder – needs SMTP/SendGrid/Azure Communication Services) ──
+    # TODO: Replace with actual email sending once mail service is configured
     if kunde_email:
         notifications_sent.append(f"email_queued:{kunde_email}")
+        logging.info(f"[shop-notify] Email queued for {kunde_email}:\n"
+                     f"Subject: {email_subject}\n{email_body}")
 
     return func.HttpResponse(
         json.dumps({
             "success": True,
             "notifications": notifications_sent,
-            "message": f"Benachrichtigung für {bestellnummer} gesendet"
+            "email_subject": email_subject,
+            "email_body": email_body,
+            "message": f"Benachrichtigung ({notify_type}) für {bestellnummer} gesendet"
         }, ensure_ascii=False),
         status_code=200, headers=get_cors_headers()
     )
