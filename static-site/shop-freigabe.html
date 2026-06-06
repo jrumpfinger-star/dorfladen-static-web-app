@@ -293,9 +293,9 @@
     });
     wrap.innerHTML=html;
     bindEvents();
-    // Load images only for articles actually rendered in the DOM
+    // Load images only for articles in open groups
     var rendered=[];
-    document.querySelectorAll('tr[data-sc]').forEach(function(tr){
+    document.querySelectorAll('.wg.open tr[data-sc]').forEach(function(tr){
       var sc=tr.getAttribute('data-sc');
       var a=articles.find(function(x){return x.strichcode===sc;});
       if(a) rendered.push(a);
@@ -305,10 +305,21 @@
 
   // ── Bind events ──
   function bindEvents(){
-    // Accordion toggle
+    // Accordion toggle – load images when group is opened
     document.querySelectorAll('.wg-head').forEach(function(head){
       head.addEventListener('click',function(){
-        head.parentElement.classList.toggle('open');
+        var wgEl=head.parentElement;
+        var wasOpen=wgEl.classList.contains('open');
+        wgEl.classList.toggle('open');
+        if(!wasOpen){
+          var toLoad=[];
+          wgEl.querySelectorAll('tr[data-sc]').forEach(function(tr){
+            var sc=tr.getAttribute('data-sc');
+            var a=allArticles.find(function(x){return x.strichcode===sc;});
+            if(a) toLoad.push(a);
+          });
+          if(toLoad.length) loadImagesAppend(toLoad);
+        }
       });
     });
 
@@ -622,61 +633,58 @@
     });
   }
 
-  // ── Load images from SharePoint via werbebilder API ──
-  var imgLoadRun=0;
-  function loadImagesAppend(articles){
-    var toLoad=[];
-    articles.forEach(function(a){
-      if(imgCache[a.strichcode]) return;
-      toLoad.push({artikelnummer:a.strichcode,edeka_nr:'',strichcode:a.strichcode});
-    });
-    if(!toLoad.length) return;
-    ShopImages.loadBatch(toLoad,{
+  // ── Image loading queue (serialized, one batch at a time) ──
+  var imgQueue=[];
+  var imgQueueRunning=false;
+  var imgQueueGen=0;
+
+  function onImageLoaded(sc,src){
+    imgCache[sc]=src;
+    var el=document.getElementById('fimg-'+sc);
+    if(el){
+      var img=document.createElement('img');
+      img.className='art-img';
+      img.src=src;
+      img.setAttribute('data-img-sc',sc);
+      img.title='Bild bearbeiten';
+      img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
+      el.replaceWith(img);
+    }
+  }
+
+  function processImageQueue(gen){
+    if(gen!==imgQueueGen){imgQueueRunning=false;return;}
+    if(!imgQueue.length){imgQueueRunning=false;return;}
+    imgQueueRunning=true;
+    var batch=imgQueue.splice(0,20);
+    ShopImages.loadBatch(batch,{
       apiBase:API,
       batchSize:20,
       cacheKey:function(info){return info.strichcode;},
-      onImage:function(sc,src){
-        imgCache[sc]=src;
-        var el=document.getElementById('fimg-'+sc);
-        if(el){
-          var img=document.createElement('img');
-          img.className='art-img';
-          img.src=src;
-          img.setAttribute('data-img-sc',sc);
-          img.title='Bild bearbeiten';
-          img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
-          el.replaceWith(img);
-        }
-      }
+      runCheck:function(){return gen===imgQueueGen;},
+      onImage:onImageLoaded
+    }).then(function(){
+      processImageQueue(gen);
     });
   }
-  function loadImages(articles){
-    var runId=++imgLoadRun;
-    var toLoad=[];
+
+  function enqueueImages(articles){
     articles.forEach(function(a){
       if(imgCache[a.strichcode]) return;
-      toLoad.push({artikelnummer:a.strichcode,edeka_nr:'',strichcode:a.strichcode});
+      if(imgQueue.some(function(q){return q.strichcode===a.strichcode;})) return;
+      imgQueue.push({artikelnummer:a.strichcode,edeka_nr:'',strichcode:a.strichcode});
     });
-    if(!toLoad.length) return;
-    ShopImages.loadBatch(toLoad,{
-      apiBase:API,
-      batchSize:20,
-      cacheKey:function(info){return info.strichcode;},
-      runCheck:function(){return runId===imgLoadRun;},
-      onImage:function(sc,src){
-        imgCache[sc]=src;
-        var el=document.getElementById('fimg-'+sc);
-        if(el){
-          var img=document.createElement('img');
-          img.className='art-img';
-          img.src=src;
-          img.setAttribute('data-img-sc',sc);
-          img.title='Bild bearbeiten';
-          img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
-          el.replaceWith(img);
-        }
-      }
-    });
+    if(!imgQueueRunning&&imgQueue.length) processImageQueue(imgQueueGen);
+  }
+
+  function loadImages(articles){
+    imgQueue=[];
+    imgQueueGen++;
+    enqueueImages(articles);
+  }
+
+  function loadImagesAppend(articles){
+    enqueueImages(articles);
   }
 
   // ── Event listeners ──
