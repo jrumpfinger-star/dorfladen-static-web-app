@@ -518,11 +518,13 @@
     var prodName=((prodInp&&prodInp.value)||'').trim().toLowerCase();
     var strichcode='';
     if(artnr){
-      // Prefer match by artikelnummer + produktname to avoid ambiguity (e.g. 6007)
+      // Match by produktname + nr/sc to avoid ambiguity (e.g. 5007 = Kirschkörbchen sc vs Duplo nr)
       var c=null;
-      if(prodName){c=_artikelCache.find(function(a){return a.nr===artnr&&(a.b||'').toLowerCase()===prodName;});}
-      if(!c){c=_artikelCache.find(function(a){return a.nr===artnr;});}
+      if(prodName){
+        c=_artikelCache.find(function(a){return (a.nr===artnr||a.sc===artnr)&&(a.b||'').toLowerCase()===prodName;});
+      }
       if(!c){c=_artikelCache.find(function(a){return a.sc===artnr;});}
+      if(!c){c=_artikelCache.find(function(a){return a.nr===artnr;});}
       if(c){strichcode=c.sc||'';if(!artnr||artnr===strichcode) artnr=c.nr||'';}
       if(!strichcode && !c){strichcode=artnr;}
     }
