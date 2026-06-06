@@ -10,10 +10,10 @@ DELETE /api/shop-freigabe?strichcode=X   → remove Freigabe
 import azure.functions as func
 import json
 import os
+from datetime import datetime, timedelta
 import logging
 import msal
 import requests
-from datetime import datetime
 
 
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
@@ -88,9 +88,11 @@ def _load_freigaben(base_url, headers):
 
 
 def _load_articles(base_url, headers):
-    """Load all articles from Artikelstamm for the selection UI."""
+    """Load articles from Artikelstamm sold in the last 6 weeks for the selection UI."""
+    cutoff = (datetime.utcnow() - timedelta(weeks=6)).strftime("%Y-%m-%dT00:00:00Z")
     select = "cr5d4_strichcode,cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_warengruppebez,cr5d4_vk_dorf,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_tableid"
-    url = f"{base_url}/api/data/v9.2/{ARTICLE_ENTITY}?$select={select}&$orderby=cr5d4_warengruppebez asc,cr5d4_artikelbezeichnung asc"
+    filt = f"cr5d4_artikelletzterverkauf ge {cutoff}"
+    url = f"{base_url}/api/data/v9.2/{ARTICLE_ENTITY}?$select={select}&$filter={filt}&$orderby=cr5d4_warengruppebez asc,cr5d4_artikelbezeichnung asc"
     items = _fetch_all_pages(url, headers)
     result = []
     for item in items:
