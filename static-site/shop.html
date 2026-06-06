@@ -617,6 +617,7 @@
     document.getElementById('shop-auth-register').style.display=tab==='register'?'':'none';
   }
 
+  var _pendingCheckout=false;
   function hideAuth(){document.getElementById('shop-auth-overlay').classList.remove('open');}
 
   function doLogin(){
@@ -632,7 +633,9 @@
           authToken=res.token;authUser=res.kunde;
           localStorage.setItem('dl_shop_token',authToken);
           localStorage.setItem('dl_shop_user',JSON.stringify(authUser));
-          updateUserUI();hideAuth();showToast('Willkommen, '+authUser.vorname+'!');ensurePreviousPill();loadPreviousArticles().then(function(){if(viewMode==='categories')showCategoryOverview();});
+          updateUserUI();hideAuth();showToast('Willkommen, '+authUser.vorname+'!');
+          if(_pendingCheckout){_pendingCheckout=false;doCheckout();}
+          else{ensurePreviousPill();loadPreviousArticles().then(function(){if(viewMode==='categories')showCategoryOverview();});}
         } else {
           errEl.textContent=res.error||res.errors?.join(' ')||'Fehler';errEl.style.display='';
         }

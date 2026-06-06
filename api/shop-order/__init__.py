@@ -94,13 +94,21 @@ def _verify_jwt(req):
 def _debug_jwt(req):
     """Debug JWT verification - returns detailed error info."""
     auth = req.headers.get("Authorization", "")
-    info = {"has_auth": bool(auth), "starts_bearer": auth.startswith("Bearer "), "secret_len": len(JWT_SECRET), "secret_first5": JWT_SECRET[:5]}
+    info = {"has_auth": bool(auth), "starts_bearer": auth.startswith("Bearer "), "secret_len": len(JWT_SECRET), "secret_first5": JWT_SECRET[:5], "jwt_version": getattr(jwt, '__version__', 'unknown')}
     if not auth.startswith("Bearer "):
         info["error"] = "no bearer prefix"
         return info
     token_str = auth[7:]
     info["token_len"] = len(token_str)
     info["token_first20"] = token_str[:20]
+    # Self-test: create and verify a token locally
+    try:
+        test_token = jwt.encode({"test": True, "iat": datetime.utcnow(), "exp": datetime.utcnow() + timedelta(hours=1)}, JWT_SECRET, algorithm="HS256")
+        test_decoded = jwt.decode(test_token, JWT_SECRET, algorithms=["HS256"])
+        info["self_test"] = "OK"
+    except Exception as e:
+        info["self_test"] = f"FAIL: {e}"
+    # Try decoding the incoming token
     try:
         payload = jwt.decode(token_str, JWT_SECRET, algorithms=["HS256"])
         info["success"] = True
@@ -110,6 +118,12 @@ def _debug_jwt(req):
         info["success"] = False
         info["error_type"] = type(e).__name__
         info["error_msg"] = str(e)
+    # Try without verification to see the payload
+    try:
+        unverified = jwt.decode(token_str, options={"verify_signature": False})
+        info["unverified_payload"] = unverified
+    except Exception as e:
+        info["unverified_error"] = str(e)
     return info
 
 
