@@ -584,15 +584,15 @@
   }
 
   // ── Load images from SharePoint via werbebilder API ──
-  var imgLoading={};
+  var imgRequested={};
   function loadImages(articles){
     var toLoad=[];
     articles.forEach(function(a){
-      if(imgCache[a.strichcode]||imgLoading[a.strichcode]) return;
-      imgLoading[a.strichcode]=true;
+      if(imgCache[a.strichcode]||imgRequested[a.strichcode]) return;
       toLoad.push({artikelnummer:(a.edeka_nr||a.strichcode||'').trim(),edeka_nr:(a.edeka_nr||'').trim(),strichcode:a.strichcode});
     });
     if(!toLoad.length) return;
+    toLoad.forEach(function(info){imgRequested[info.strichcode]=true;});
     ShopImages.loadBatch(toLoad,{
       apiBase:API,
       cacheKey:function(info){return info.strichcode;},
@@ -608,6 +608,12 @@
           img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
           el.replaceWith(img);
         }
+      },
+      onBatchDone:function(batch,found){
+        batch.forEach(function(info){
+          var sc=info.strichcode;
+          if(!found[sc]) delete imgRequested[sc];
+        });
       }
     });
   }

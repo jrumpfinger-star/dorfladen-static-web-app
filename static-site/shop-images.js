@@ -22,6 +22,7 @@ var ShopImages=(function(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({articles:batch})
     }).then(function(r){return r.json();}).then(function(data){
+      var found={};
       (data||[]).forEach(function(row){
         var respNr=(row.dl_artikelnummer||'').toString().trim();
         if(!respNr) return;
@@ -31,8 +32,10 @@ var ShopImages=(function(){
           src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
         }
         if(!src) return;
+        found[key]=true;
         if(opts.onImage) opts.onImage(key, src);
       });
+      if(opts.onBatchDone) opts.onBatchDone(batch, found);
     });
   }
 
