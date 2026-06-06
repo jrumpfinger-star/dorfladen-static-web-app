@@ -515,15 +515,19 @@
     var bildInp=row.querySelector('[data-f="bild_data"]');
     var prodInp=row.querySelector('[data-f="produkt"]');
     var artnr=((nrInp&&nrInp.value)||'').trim();
+    var prodName=((prodInp&&prodInp.value)||'').trim().toLowerCase();
     var strichcode='';
     if(artnr){
-      var c=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
+      // Prefer match by artikelnummer + produktname to avoid ambiguity (e.g. 6007)
+      var c=null;
+      if(prodName){c=_artikelCache.find(function(a){return a.nr===artnr&&(a.b||'').toLowerCase()===prodName;});}
+      if(!c){c=_artikelCache.find(function(a){return a.nr===artnr;});}
+      if(!c){c=_artikelCache.find(function(a){return a.sc===artnr;});}
       if(c){strichcode=c.sc||'';if(!artnr||artnr===strichcode) artnr=c.nr||'';}
       if(!strichcode && !c){strichcode=artnr;}
     }
-    if(!artnr && prodInp){
-      var prod=prodInp.value.trim().toLowerCase();
-      var match=_artikelCache.find(function(a){return (a.b||a.produktVal||'').toLowerCase()===prod;});
+    if(!artnr && prodName){
+      var match=_artikelCache.find(function(a){return (a.b||a.produktVal||'').toLowerCase()===prodName;});
       if(match){artnr=match.nr||'';strichcode=match.sc||'';}
     }
     if(!artnr && !strichcode){toast('Bitte Artikelnummer oder Produkt ausfüllen','warn');return;}
