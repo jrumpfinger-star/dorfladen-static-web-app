@@ -166,9 +166,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "email": email,
                     "email_verifiziert": email_verified
                 },
-                "debug_secret_len": len(JWT_SECRET),
-                "debug_secret_first5": JWT_SECRET[:5],
-                "debug_jwt_version": getattr(jwt, '__version__', 'unknown')
             }, ensure_ascii=False),
             status_code=200, headers=get_cors_headers()
         )

@@ -565,7 +565,7 @@
 
   function loadPreviousArticles(){
     if(!isLoggedIn()||!allArticles.length){previousArticles=[];return Promise.resolve([]);}
-    return fetch(API+'/shop-order?mode=customer',{headers:{'Authorization':'Bearer '+authToken}})
+    return fetch(API+'/shop-order?mode=customer',{headers:{'X-Shop-Token':authToken}})
       .then(function(r){return r.json();})
       .then(function(res){
         var seen={};
@@ -687,7 +687,7 @@
 
   // ── Checkout ──
   function doCheckout(){
-    if(!isLoggedIn()){showAuth('login');return;}
+    if(!isLoggedIn()){_pendingCheckout=true;showAuth('login');return;}
     if(!cart.length){showToast('Warenkorb ist leer');return;}
     if(cartTotal()<10){showToast('⚠️ Mindestbestellwert: 10,00 €');return;}
     var note=document.getElementById('shop-cart-note').value.trim();
@@ -696,7 +696,7 @@
     });
     var btn=document.getElementById('shop-checkout-btn');
     btn.disabled=true;btn.textContent='Wird bestellt…';
-    fetch(API+'/shop-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({positionen:positionen,anmerkungen:note})})
+    fetch(API+'/shop-order',{method:'POST',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({positionen:positionen,anmerkungen:note})})
       .then(function(r){
         if(r.status===401){
           authToken='';authUser=null;localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();
@@ -1187,7 +1187,7 @@
     if(!isLoggedIn()){showAuth('login');return;}
     var content=document.getElementById('shop-content');
     content.innerHTML='<div class="shop-loading"><div class="spinner"></div><p>Bestellungen laden...</p></div>';
-    fetch(API+'/shop-order?mode=customer',{headers:{'Authorization':'Bearer '+authToken}})
+    fetch(API+'/shop-order?mode=customer',{headers:{'X-Shop-Token':authToken}})
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.orders||!res.orders.length){
@@ -1241,7 +1241,7 @@
           btn.addEventListener('click',function(){
             if(!confirm('Diese Bestellung wirklich stornieren?')) return;
             btn.disabled=true;btn.textContent='Wird storniert...';
-            fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({id:btn.getAttribute('data-cancel-order'),customer_action:'cancel'})})
+            fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:btn.getAttribute('data-cancel-order'),customer_action:'cancel'})})
               .then(function(r){return r.json();})
               .then(function(x){if(x.success){showToast('Bestellung storniert');document.getElementById('shop-history-btn').click();}else{showToast('Fehler: '+(x.error||'Storno nicht moeglich'));btn.disabled=false;btn.textContent='Bestellung stornieren';}})
               .catch(function(e){showToast('Fehler: '+e.message);btn.disabled=false;btn.textContent='Bestellung stornieren';});

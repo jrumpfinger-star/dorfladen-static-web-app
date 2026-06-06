@@ -78,53 +78,24 @@ def _headers(token):
 
 
 def _verify_jwt(req):
-    """Extract and verify JWT from Authorization header."""
-    auth = req.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        logging.warning("JWT: No Bearer prefix in Authorization header")
+    """Extract and verify JWT from X-Shop-Token header.
+    Note: Azure SWA replaces the Authorization header with its own internal token,
+    so we use a custom header instead.
+    """
+    token_str = req.headers.get("X-Shop-Token", "")
+    if not token_str:
+        # Fallback: try Authorization header (for local dev)
+        auth = req.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            token_str = auth[7:]
+    if not token_str:
         return None
-    token_str = auth[7:]
     try:
         return jwt.decode(token_str, JWT_SECRET, algorithms=["HS256"])
     except Exception as e:
-        logging.error(f"JWT verify failed: {type(e).__name__}: {e}, secret_len={len(JWT_SECRET)}, token_len={len(token_str)}")
+        logging.error(f"JWT verify failed: {type(e).__name__}: {e}")
         return None
 
-
-def _debug_jwt(req):
-    """Debug JWT verification - returns detailed error info."""
-    auth = req.headers.get("Authorization", "")
-    info = {"has_auth": bool(auth), "auth_len": len(auth), "starts_bearer": auth.startswith("Bearer "), "secret_len": len(JWT_SECRET), "secret_first5": JWT_SECRET[:5], "jwt_version": getattr(jwt, '__version__', 'unknown'), "auth_first50": auth[:50], "auth_last50": auth[-50:] if len(auth) > 50 else auth}
-    if not auth.startswith("Bearer "):
-        info["error"] = "no bearer prefix"
-        return info
-    token_str = auth[7:]
-    info["token_len"] = len(token_str)
-    info["token_first20"] = token_str[:20]
-    # Self-test: create and verify a token locally
-    try:
-        test_token = jwt.encode({"test": True, "iat": datetime.utcnow(), "exp": datetime.utcnow() + timedelta(hours=1)}, JWT_SECRET, algorithm="HS256")
-        test_decoded = jwt.decode(test_token, JWT_SECRET, algorithms=["HS256"])
-        info["self_test"] = "OK"
-    except Exception as e:
-        info["self_test"] = f"FAIL: {e}"
-    # Try decoding the incoming token
-    try:
-        payload = jwt.decode(token_str, JWT_SECRET, algorithms=["HS256"])
-        info["success"] = True
-        info["payload_sub"] = payload.get("sub", "")
-        info["payload_email"] = payload.get("email", "")
-    except Exception as e:
-        info["success"] = False
-        info["error_type"] = type(e).__name__
-        info["error_msg"] = str(e)
-    # Try without verification to see the payload
-    try:
-        unverified = jwt.decode(token_str, options={"verify_signature": False})
-        info["unverified_payload"] = unverified
-    except Exception as e:
-        info["unverified_error"] = str(e)
-    return info
 
 
 def _calc_abholdatum():
@@ -160,9 +131,8 @@ def _handle_post(req, dv_token, base_url, headers):
     """Place a new order."""
     user = _verify_jwt(req)
     if not user:
-        auth_hdr = req.headers.get("Authorization", "")
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "Bitte melden Sie sich an.", "debug_has_auth": bool(auth_hdr), "debug_secret_len": len(JWT_SECRET)}, ensure_ascii=False),
+            json.dumps({"success": False, "error": "Bitte melden Sie sich an."}, ensure_ascii=False),
             status_code=401, headers=get_cors_headers()
         )
 
@@ -284,10 +254,6 @@ def _handle_get(req, dv_token, base_url, headers):
     """Fetch orders. ?mode=cms → all orders. Otherwise: customer's own orders."""
     mode = req.params.get("mode", "")
 
-    if mode == "debug_jwt":
-        info = _debug_jwt(req)
-        return func.HttpResponse(json.dumps(info, ensure_ascii=False), status_code=200, headers=get_cors_headers())
-
     user = _verify_jwt(req)
 
     if mode == "pack":
@@ -338,9 +304,8 @@ def _handle_get(req, dv_token, base_url, headers):
         email = user["email"]
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=50"
     else:
-        auth_hdr = req.headers.get("Authorization", "")
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "Bitte melden Sie sich an.", "debug_has_auth": bool(auth_hdr), "debug_secret_len": len(JWT_SECRET)}),
+            json.dumps({"success": False, "error": "Bitte melden Sie sich an."}),
             status_code=401, headers=get_cors_headers()
         )
 
