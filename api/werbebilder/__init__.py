@@ -252,7 +252,53 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
 
         try:
-            # Check if record already exists for this artikelnummer
+            # 1) Upload image to SharePoint StrichcodeBilder folder
+            dl_url = ""
+            sp_b64 = ""
+            if bild:
+                graph_token = get_graph_token()
+                if not graph_token:
+                    return func.HttpResponse(
+                        body=json.dumps({"success": False, "error": "Graph token unavailable"}),
+                        status_code=500, headers=get_cors_headers()
+                    )
+                # Decode base64 data URI → binary
+                if "," in bild:
+                    header_part, b64_data = bild.split(",", 1)
+                else:
+                    header_part, b64_data = "", bild
+                img_bytes = base64.b64decode(b64_data)
+                # Detect extension from MIME
+                ext = "jpg"
+                if "png" in header_part:
+                    ext = "png"
+                    content_type = "image/png"
+                elif "gif" in header_part:
+                    ext = "gif"
+                    content_type = "image/gif"
+                else:
+                    content_type = "image/jpeg"
+                filename = f"{artnr}.{ext}"
+                # Upload via Graph API PUT (create or overwrite)
+                upload_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{SP_BARCODE_FOLDER}:/{filename}:/content"
+                sp_r = requests.put(
+                    upload_url,
+                    headers={"Authorization": f"Bearer {graph_token}", "Content-Type": content_type},
+                    data=img_bytes,
+                    timeout=60
+                )
+                if sp_r.status_code in (200, 201):
+                    dl_url = sp_r.json().get("@microsoft.graph.downloadUrl", "")
+                    sp_b64 = bild  # keep for Dataverse thumbnail
+                    logging.info(f"[werbebilder] uploaded {filename} to SharePoint")
+                else:
+                    logging.warning(f"[werbebilder] SP upload failed: {sp_r.status_code} {sp_r.text[:200]}")
+                    return func.HttpResponse(
+                        body=json.dumps({"success": False, "error": f"SharePoint upload failed: {sp_r.status_code}"}),
+                        status_code=sp_r.status_code, headers=get_cors_headers()
+                    )
+
+            # 2) Upsert Dataverse record with download URL (no large base64)
             check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_werbebildid,dl_artikelnummer&$filter=dl_artikelnummer eq '{artnr}'"
             check = requests.get(check_url, headers=headers, timeout=30)
             if check.status_code != 200:
@@ -263,16 +309,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             existing = check.json().get("value", [])
 
             payload = {"dl_artikelnummer": artnr}
-            if bild:
-                payload["dl_bild_base64"] = bild
+            if dl_url:
+                payload["dl_download_url"] = dl_url
 
             if existing:
-                # PATCH existing record
                 record_id = existing[0]["dl_werbebildid"]
                 patch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})"
                 r = requests.patch(patch_url, headers=headers, json=payload, timeout=30)
             else:
-                # POST new record, request id back
                 post_headers = {**headers, "Prefer": "return=representation"}
                 post_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
                 r = requests.post(post_url, headers=post_headers, json=payload, timeout=30)
@@ -287,7 +331,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             if r.status_code in (200, 201, 204):
                 return func.HttpResponse(
-                    body=json.dumps({"success": True, "id": record_id}),
+                    body=json.dumps({"success": True, "id": record_id, "dl_download_url": dl_url}),
                     status_code=200, headers=get_cors_headers()
                 )
             else:
@@ -296,6 +340,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=r.status_code, headers=get_cors_headers()
                 )
         except Exception as e:
+            logging.error(f"[werbebilder] upload error: {e}")
             return func.HttpResponse(
                 body=json.dumps({"success": False, "error": str(e)}),
                 status_code=500, headers=get_cors_headers()
