@@ -15,6 +15,8 @@ import requests
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
+SENDER_EMAIL = os.environ.get("SHOP_SENDER_EMAIL", "dorfladen@oberornau.de")
+
 
 def get_token():
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
@@ -33,6 +35,73 @@ def get_token():
         return r.get("access_token")
     except:
         return None
+
+
+def get_graph_token():
+    """Get Microsoft Graph token for sending emails."""
+    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
+    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    client_secret = os.environ.get("DV_CLIENT_SECRET", "")
+    if not client_secret:
+        return None
+    try:
+        a = msal.ConfidentialClientApplication(
+            client_id,
+            authority=f"https://login.microsoftonline.com/{tenant_id}",
+            client_credential=client_secret,
+        )
+        r = a.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
+        return r.get("access_token")
+    except:
+        return None
+
+
+def send_email(to_email, to_name, subject, body_text):
+    """Send email via Microsoft Graph API."""
+    import logging
+    token = get_graph_token()
+    if not token:
+        logging.warning("[shop-notify] No Graph token – cannot send email")
+        return False, "No Graph token available"
+
+    # Convert plain text to HTML for nicer formatting
+    body_html = body_text.replace("\n", "<br>").replace("  •", "&nbsp;&nbsp;•")
+
+    mail_payload = {
+        "message": {
+            "subject": subject,
+            "body": {
+                "contentType": "HTML",
+                "content": (
+                    f'<div style="font-family:Segoe UI,system-ui,sans-serif;font-size:14px;'
+                    f'color:#1f2937;line-height:1.6;max-width:600px">{body_html}</div>'
+                )
+            },
+            "toRecipients": [{
+                "emailAddress": {"address": to_email, "name": to_name or to_email}
+            }]
+        },
+        "saveToSentItems": "true"
+    }
+
+    url = f"https://graph.microsoft.com/v1.0/users/{SENDER_EMAIL}/sendMail"
+    r = requests.post(
+        url,
+        json=mail_payload,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        },
+        timeout=30
+    )
+
+    if r.status_code in (200, 202):
+        logging.info(f"[shop-notify] Email sent to {to_email}: {subject}")
+        return True, "sent"
+    else:
+        err = r.text[:200] if r.text else str(r.status_code)
+        logging.error(f"[shop-notify] Email failed ({r.status_code}): {err}")
+        return False, f"Graph API error {r.status_code}: {err}"
 
 
 def get_cors_headers():
@@ -156,12 +225,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except Exception:
             pass  # Push is best-effort
 
-    # ── Send email (placeholder – needs SMTP/SendGrid/Azure Communication Services) ──
-    # TODO: Replace with actual email sending once mail service is configured
-    if kunde_email:
-        notifications_sent.append(f"email_queued:{kunde_email}")
-        logging.info(f"[shop-notify] Email queued for {kunde_email}:\n"
-                     f"Subject: {email_subject}\n{email_body}")
+    # ── Send email via Microsoft Graph ──
+    email_sent = False
+    email_error = ""
+    if kunde_email and email_subject:
+        try:
+            email_sent, email_error = send_email(
+                kunde_email, kunde_name, email_subject, email_body
+            )
+            if email_sent:
+                notifications_sent.append(f"email_sent:{kunde_email}")
+            else:
+                notifications_sent.append(f"email_failed:{email_error}")
+                logging.warning(f"[shop-notify] Email to {kunde_email} failed: {email_error}")
+        except Exception as e:
+            email_error = str(e)
+            notifications_sent.append(f"email_error:{email_error}")
+            logging.error(f"[shop-notify] Email exception: {e}")
 
     return func.HttpResponse(
         json.dumps({
