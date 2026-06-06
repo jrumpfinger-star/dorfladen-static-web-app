@@ -423,7 +423,7 @@
     });
     if(!toLoad.length) return;
     var unique=toLoad.filter(function(v,i,a){return a.indexOf(v)===i;});
-    fetch(API_BASE+'/werbebilder?artnrs='+encodeURIComponent(unique.join(',')))
+    fetch(API_BASE+'/werbebilder?artnrs='+encodeURIComponent(unique.join(','))+'&sharepoint=1')
       .then(function(r){return r.json();})
       .then(function(data){
         (data||[]).forEach(function(r){if(r.dl_bild_base64) _mobBildCache[r.dl_artikelnummer]=r.dl_bild_base64;});
