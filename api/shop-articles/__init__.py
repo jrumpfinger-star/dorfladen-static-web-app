@@ -157,10 +157,17 @@ def _load_freigaben(base_url, headers):
     Returns a dict: strichcode → {gueltig_bis, ...}. Expired entries are excluded.
     Returns None only if the entity does not exist yet (table not created)."""
     try:
+        # Try with dl_kurzfristig first; fall back without it if field doesn't exist yet
         url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_kurzfristig&$filter=dl_aktiv eq true"
         r = requests.get(url, headers=headers, timeout=30)
+        has_kurzfristig = True
+        if r.status_code not in (200, 404):
+            # Field may not exist yet – retry without dl_kurzfristig
+            url2 = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis&$filter=dl_aktiv eq true"
+            r = requests.get(url2, headers=headers, timeout=30)
+            has_kurzfristig = False
+            logging.info("[shop-articles] retried without dl_kurzfristig")
         if r.status_code == 404:
-            # Entity doesn't exist yet – return None to signal "no filtering"
             logging.info("[shop-articles] dl_shopfreigabes entity not found, skipping filter")
             return None
         if r.status_code != 200:
@@ -178,11 +185,11 @@ def _load_freigaben(base_url, headers):
                 gb_str = str(gb)[:10]
                 if gb_str < today:
                     continue  # expired
-            result[sc] = {"gueltig_bis": gb, "kurzfristig": bool(f.get("dl_kurzfristig"))}
+            result[sc] = {"gueltig_bis": gb, "kurzfristig": bool(f.get("dl_kurzfristig")) if has_kurzfristig else False}
         return result
     except Exception as e:
         logging.warning(f"[shop-articles] failed to load freigaben: {e}")
-        return None
+        return {}  # fail safe: show no articles rather than all
 
 
 def _load_angebote(base_url, headers):
