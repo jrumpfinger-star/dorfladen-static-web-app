@@ -61,6 +61,119 @@ def get_graph_token():
         return None
 
 
+LOGO_URL = "https://www.dorfladen-oberornau.de/images/dorfladen-logo.png"
+WEBSITE_URL = "https://www.dorfladen-oberornau.de"
+SHOP_URL = "https://www.dorfladen-oberornau.de/shop.html"
+
+
+def build_email_html(body_text, subject=""):
+    """Build a branded HTML email with logo, header, styled body, and footer."""
+    # Convert plain text lines to HTML paragraphs
+    lines = body_text.split("\n")
+    body_parts = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            body_parts.append('<div style="height:12px"></div>')
+        elif stripped.startswith("•") or stripped.startswith("  •"):
+            # Bullet point
+            item_text = stripped.lstrip("• ").strip()
+            body_parts.append(
+                f'<div style="padding:6px 0 6px 16px;border-left:3px solid #2e7d4f">'
+                f'<span style="color:#2e7d4f;font-weight:600">•</span> {item_text}</div>'
+            )
+        elif stripped.startswith("Grund:"):
+            # Highlight reason
+            body_parts.append(
+                f'<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;'
+                f'padding:10px 14px;margin:8px 0;font-weight:600;color:#92400e">'
+                f'📋 {stripped}</div>'
+            )
+        elif stripped.startswith("Herzliche Grüße"):
+            body_parts.append(
+                f'<div style="margin-top:20px;color:#374151">{stripped}</div>'
+            )
+        elif stripped.startswith("Ihr Dorfladen"):
+            body_parts.append(
+                f'<div style="font-weight:700;color:#2e7d4f;font-size:15px">{stripped}</div>'
+            )
+        elif stripped.startswith("Dorfstraße") or stripped.startswith("dorfladen@") or stripped.startswith("bestellung@"):
+            body_parts.append(
+                f'<div style="font-size:12px;color:#6b7280">{stripped}</div>'
+            )
+        else:
+            body_parts.append(f'<div style="margin:4px 0;color:#1f2937">{stripped}</div>')
+
+    body_html = "\n".join(body_parts)
+
+    # Determine accent color based on subject
+    accent_color = "#2e7d4f"
+    icon = "📦"
+    if "storniert" in subject.lower() or "storno" in subject.lower():
+        accent_color = "#dc2626"
+        icon = "❌"
+    elif "abholbereit" in subject.lower() or "bereit" in subject.lower():
+        accent_color = "#059669"
+        icon = "✅"
+    elif "nicht verfügbar" in subject.lower() or "fehlende" in subject.lower():
+        accent_color = "#d97706"
+        icon = "⚠️"
+
+    return f'''<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',system-ui,-apple-system,sans-serif">
+<div style="max-width:600px;margin:0 auto;padding:20px 16px">
+
+  <!-- Header with logo -->
+  <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 28px 16px;text-align:center;border-bottom:4px solid {accent_color}">
+    <a href="{WEBSITE_URL}" style="text-decoration:none">
+      <img src="{LOGO_URL}" alt="Dorfladen Oberornau" style="height:60px;max-width:200px;margin-bottom:8px" />
+    </a>
+    <div style="font-size:11px;color:#6b7280;letter-spacing:1px;text-transform:uppercase;font-weight:600">
+      Dorfladen Oberornau · Ihr Nahversorger
+    </div>
+  </div>
+
+  <!-- Subject banner -->
+  <div style="background:{accent_color};padding:14px 28px;color:#fff;font-size:16px;font-weight:700">
+    {icon} {subject}
+  </div>
+
+  <!-- Body content -->
+  <div style="background:#fff;padding:24px 28px;font-size:14px;line-height:1.7;color:#1f2937">
+    {body_html}
+  </div>
+
+  <!-- CTA Button -->
+  <div style="background:#fff;padding:0 28px 24px;text-align:center">
+    <a href="{SHOP_URL}" style="display:inline-block;padding:12px 28px;background:{accent_color};color:#fff;
+       text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;margin-top:8px">
+      🛒 Zum Dorfladen-Shop
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <div style="background:#1f2937;border-radius:0 0 16px 16px;padding:20px 28px;color:#d1d5db;font-size:12px;line-height:1.6">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:18px">🏪</span>
+      <span style="font-weight:700;color:#fff;font-size:13px">Dorfladen Oberornau</span>
+    </div>
+    <div>Dorfstraße · 84416 Taufkirchen (Vils)</div>
+    <div>Tel: <a href="tel:+4980826229991" style="color:#93c5fd;text-decoration:none">08082 / 622 99 91</a></div>
+    <div>
+      <a href="mailto:bestellung@dorfladen-oberornau.de" style="color:#93c5fd;text-decoration:none">bestellung@dorfladen-oberornau.de</a>
+      &middot;
+      <a href="{WEBSITE_URL}" style="color:#93c5fd;text-decoration:none">www.dorfladen-oberornau.de</a>
+    </div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #374151;font-size:11px;color:#9ca3af">
+      Diese E-Mail wurde automatisch erstellt. Bei Fragen antworten Sie einfach auf diese Mail.
+    </div>
+  </div>
+
+</div>
+</body></html>'''
+
+
 def send_email(to_email, to_name, subject, body_text):
     """Send email via Microsoft Graph API."""
     import logging
@@ -69,18 +182,15 @@ def send_email(to_email, to_name, subject, body_text):
         logging.warning("[shop-notify] No Graph token – cannot send email")
         return False, "No Graph token available"
 
-    # Convert plain text to HTML for nicer formatting
-    body_html = body_text.replace("\n", "<br>").replace("  •", "&nbsp;&nbsp;•")
+    # Build branded HTML email
+    email_html = build_email_html(body_text, subject)
 
     mail_payload = {
         "message": {
             "subject": subject,
             "body": {
                 "contentType": "HTML",
-                "content": (
-                    f'<div style="font-family:Segoe UI,system-ui,sans-serif;font-size:14px;'
-                    f'color:#1f2937;line-height:1.6;max-width:600px">{body_html}</div>'
-                )
+                "content": email_html
             },
             "from": {
                 "emailAddress": {
@@ -170,9 +280,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"Wir bitten um Ihr Verständnis und freuen uns, Sie bald wieder "
             f"im Dorfladen Oberornau begrüßen zu dürfen!\n\n"
             f"Herzliche Grüße\n"
-            f"Ihr Dorfladen-Team Oberornau\n"
-            f"Dorfstraße · 84416 Taufkirchen (Vils)\n"
-            f"dorfladen@oberornau.de"
+            f"Ihr Dorfladen-Team Oberornau"
         )
 
     elif notify_type == "missing_items" and missing_items:
@@ -188,9 +296,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"Abholung: {abholdatum} vormittags im Dorfladen Oberornau.\n\n"
             f"Wir bitten um Ihr Verständnis und freuen uns auf Ihren Besuch!\n\n"
             f"Herzliche Grüße\n"
-            f"Ihr Dorfladen-Team Oberornau\n"
-            f"Dorfstraße · 84416 Taufkirchen (Vils)\n"
-            f"dorfladen@oberornau.de"
+            f"Ihr Dorfladen-Team Oberornau"
         )
 
     elif notify_type == "ready":
@@ -204,8 +310,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"Bitte holen Sie Ihre Bestellung bis 12:00 Uhr mittags ab.\n\n"
             f"Wir freuen uns auf Ihren Besuch!\n\n"
             f"Herzliche Grüße\n"
-            f"Ihr Dorfladen-Team Oberornau\n"
-            f"dorfladen@oberornau.de"
+            f"Ihr Dorfladen-Team Oberornau"
         )
 
     else:
@@ -216,8 +321,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"Bitte schauen Sie in Ihrem Kundenkonto nach oder kontaktieren "
             f"Sie uns bei Fragen.\n\n"
             f"Herzliche Grüße\n"
-            f"Ihr Dorfladen-Team Oberornau\n"
-            f"dorfladen@oberornau.de"
+            f"Ihr Dorfladen-Team Oberornau"
         )
 
     logging.info(
