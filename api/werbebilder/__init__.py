@@ -1,6 +1,7 @@
 import azure.functions as func
 import json
 import os
+import io
 import logging
 import msal
 import requests
@@ -268,17 +269,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 else:
                     header_part, b64_data = "", bild
                 img_bytes = base64.b64decode(b64_data)
-                # Detect extension from MIME
-                ext = "jpg"
-                if "png" in header_part:
-                    ext = "png"
-                    content_type = "image/png"
-                elif "gif" in header_part:
-                    ext = "gif"
-                    content_type = "image/gif"
-                else:
-                    content_type = "image/jpeg"
+                # Always upload as PNG to SharePoint (consistent with fetch-product-images)
+                from PIL import Image as PILImage
+                pil_img = PILImage.open(io.BytesIO(img_bytes))
+                pil_img = pil_img.convert("RGBA")
+                buf = io.BytesIO()
+                pil_img.save(buf, format="PNG", optimize=True)
+                img_bytes = buf.getvalue()
+                ext = "png"
+                content_type = "image/png"
                 filename = f"{artnr}.{ext}"
+                # Delete stale .jpg if it exists
+                for old_ext in ("jpg", "jpeg"):
+                    old_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{SP_BARCODE_FOLDER}:/{artnr}.{old_ext}"
+                    old_r = requests.get(old_url, headers={"Authorization": f"Bearer {graph_token}"}, timeout=10)
+                    if old_r.status_code == 200:
+                        old_id = old_r.json().get("id", "")
+                        if old_id:
+                            requests.delete(f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{old_id}",
+                                            headers={"Authorization": f"Bearer {graph_token}"}, timeout=10)
+                            logging.info(f"[werbebilder] deleted stale {artnr}.{old_ext}")
                 # Upload via Graph API PUT (create or overwrite)
                 upload_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{SP_BARCODE_FOLDER}:/{filename}:/content"
                 sp_r = requests.put(
