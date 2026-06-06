@@ -7887,6 +7887,13 @@
                 t.disabled=true;t.textContent='\u23F3';
                 uploadImageToSharePoint(scNr, compressedB64).then(function(){
                   toast('Bild als '+scNr+' in StrichcodeBilder hochgeladen!');
+                  // Re-query DOM and update preview again in case row was re-rendered
+                  var freshRow=document.getElementById('cms-ar-'+rn);
+                  if(freshRow){
+                    var fpv=freshRow.querySelector('.cms-bild-preview');if(fpv){fpv.src=compressedB64;fpv.style.display='';}
+                    var fcl=freshRow.querySelector('.cms-bild-clear');if(fcl)fcl.style.display='';
+                    var fbi=freshRow.querySelector('[data-f="bild_data"]');if(fbi)fbi.value=compressedB64;
+                  }
                 }).catch(function(e){
                   var msg=e&&e.message||String(e);
                   if(msg.indexOf('interaction_in_progress')!==-1) msg='Anmeldung läuft noch – bitte kurz warten und erneut versuchen';
