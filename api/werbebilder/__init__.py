@@ -232,12 +232,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     for item in r.json().get("value", []):
                         result.append({
                             "dl_artikelnummer": item.get("dl_artikelnummer", ""),
-                            "dl_bild_base64": item.get("dl_bild_base64", ""),
+                            "dl_bild_base64": "",
                             "dl_download_url": item.get("dl_download_url", "")
                         })
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
-                found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_bild_base64") or x.get("dl_download_url")}
+                found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_download_url")}
                 missing = [a for a in article_infos if (a.get("artikelnummer") or a.get("strichcode")) and (a.get("artikelnummer","") not in found_keys)]
                 if missing:
                     result.extend(_load_sharepoint_urls(missing))
