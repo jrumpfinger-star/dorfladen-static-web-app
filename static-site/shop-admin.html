@@ -204,9 +204,9 @@
     });
     packHtml+='</div>';
     packHtml+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:8px">Summe: '+money(summe)+'</div>';
-    if(isEditable){
-      packHtml+='<div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" id="finish-pack" style="flex:1;padding:11px">✅ Fertig – Abholbereit</button><button class="btn" id="print-slip" style="padding:11px">🖨 Drucken</button></div>';
-    }
+    packHtml+='<div style="display:flex;gap:8px;margin-top:12px">';
+    if(isEditable) packHtml+='<button class="btn primary" id="finish-pack" style="flex:1;padding:11px">✅ Fertig – Abholbereit</button>';
+    packHtml+='<button class="btn" id="print-slip" style="padding:11px'+(isEditable?'':';flex:1')+'">🖨 Drucken</button></div>';
     document.getElementById('pack').innerHTML=packHtml;
     // Wire status buttons
     document.querySelectorAll('[data-status]').forEach(function(b){b.addEventListener('click',function(){
