@@ -237,19 +237,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         })
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
-                # Always load from SharePoint – ignore Dataverse results
                 sp_rows = _load_sharepoint_urls(article_infos)
                 if sp_rows:
-                    # Build map keyed by dl_artikelnummer for SP results
                     sp_map = {r["dl_artikelnummer"]: r for r in sp_rows}
-                    # Replace Dataverse rows with SP data, keep SP-only rows
+                    # SP base64 wins over Dataverse, but keep Dataverse base64 if SP has none
                     for row in result:
                         key = row.get("dl_artikelnummer", "")
                         if key in sp_map:
-                            row["dl_bild_base64"] = sp_map[key].get("dl_bild_base64", "")
-                            row["dl_download_url"] = sp_map[key].get("dl_download_url", "")
+                            sp = sp_map[key]
+                            if sp.get("dl_bild_base64"):
+                                row["dl_bild_base64"] = sp["dl_bild_base64"]
+                            row["dl_download_url"] = sp.get("dl_download_url", "")
                             del sp_map[key]
-                    # Add SP rows that had no Dataverse match
                     result.extend(sp_map.values())
             return func.HttpResponse(body=json.dumps(result), status_code=200, headers=get_cors_headers())
 
