@@ -268,7 +268,7 @@
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
       +'<input class="cms-input cms-price" data-f="preis" placeholder="VK" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
       +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="ArtNr/SC" value="'+esc((item&&item.artikelnummer)||'')+'">'
+      +'<input class="cms-input" data-f="artikelnummer" placeholder="SC" value="'+esc((item&&item.artikelnummer)||'')+'" title="Strichcode">'
       +'</div>';
     c.appendChild(row);
     var prodInp=row.querySelector('.cms-art-input');
@@ -444,7 +444,7 @@
         if(row){
           inp.value=m.b||m.produktVal||'';
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
-          if(nrInp) nrInp.value=m.nr||m.sc||'';
+          if(nrInp) nrInp.value=m.sc||'';
           var detInp=row.querySelector('[data-f="details"]');
           if(detInp) detInp.value=m.menge||m.details||'';
           var preisInp=row.querySelector('[data-f="preis"]');
@@ -514,23 +514,15 @@
     var nrInp=row.querySelector('[data-f="artikelnummer"]');
     var bildInp=row.querySelector('[data-f="bild_data"]');
     var prodInp=row.querySelector('[data-f="produkt"]');
-    var artnr=((nrInp&&nrInp.value)||'').trim();
+    // Field always contains strichcode now
+    var strichcode=((nrInp&&nrInp.value)||'').trim();
     var prodName=((prodInp&&prodInp.value)||'').trim().toLowerCase();
-    var strichcode='';
-    if(artnr){
-      // Prefer match by artikelnummer + produktname to avoid ambiguity (e.g. 6007)
-      var c=null;
-      if(prodName){c=_artikelCache.find(function(a){return a.nr===artnr&&(a.b||'').toLowerCase()===prodName;});}
-      if(!c){c=_artikelCache.find(function(a){return a.nr===artnr;});}
-      if(!c){c=_artikelCache.find(function(a){return a.sc===artnr;});}
-      if(c){strichcode=c.sc||'';if(!artnr||artnr===strichcode) artnr=c.nr||'';}
-      if(!strichcode && !c){strichcode=artnr;}
+    if(!strichcode && prodName){
+      var match=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===prodName;});
+      if(match) strichcode=match.sc||'';
     }
-    if(!artnr && prodName){
-      var match=_artikelCache.find(function(a){return (a.b||a.produktVal||'').toLowerCase()===prodName;});
-      if(match){artnr=match.nr||'';strichcode=match.sc||'';}
-    }
-    if(!artnr && !strichcode){toast('Bitte Artikelnummer oder Produkt ausfüllen','warn');return;}
+    if(!strichcode){toast('Bitte Strichcode oder Produkt eingeben','warn');return;}
+    var artnr=strichcode;
     var btn=row.querySelector('[data-action="loadBildSharePoint"]');
     if(btn){btn.disabled=true;btn.textContent='⏳';}
     console.log('[CMS] Loading image for article:',artnr,'strichcode:',strichcode);
@@ -614,9 +606,8 @@
           // Generate a temporary artikelnummer from product name if none provided
           var artNr=it.artikelnummer||('IMG-'+it.produkt.replace(/[^a-zA-Z0-9]/g,'').substring(0,20)+'-'+Date.now().toString(36));
           if(!it.artikelnummer) it.artikelnummer=artNr;
-          // Resolve strichcode for SharePoint filename (avoid collisions on short artnr like 6007)
-          var scForUpload=it.strichcode||'';
-          if(!scForUpload&&artNr){var cc=_artikelCache.find(function(a){return a.nr===artNr;});if(cc)scForUpload=cc.sc||'';}
+          // artikelnummer field now always contains strichcode
+          var scForUpload=artNr;
           var uploadNr=scForUpload||artNr;
           bildPromises.push(
             fetch(API+'/werbebilder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dl_artikelnummer:uploadNr,dl_bild_base64:it.bild_data})})
