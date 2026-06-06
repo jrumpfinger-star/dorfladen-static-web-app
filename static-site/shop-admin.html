@@ -89,9 +89,8 @@
       if(checked) cnt++;
       var qtyInp=document.querySelector('[data-qty-index="'+i+'"]');
       var isKg=qtyInp?qtyInp.getAttribute('data-is-kg')==='1':false;
-      var rawVal=qtyInp?parseFloat(qtyInp.value)||0:(p.menge||0);
-      var actualMenge=isKg?rawVal/1000:rawVal;
-      return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,gepackt_menge:checked?actualMenge:0,bestellt_menge:p.menge,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,gewichtsware:isKg,scan_zeit:checked?new Date().toISOString():''};
+      var rawVal=qtyInp?parseFloat(qtyInp.value)||0:(isKg?Math.round((p.menge||0)*1000):(p.menge||0));
+      return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,gepackt_menge:checked?rawVal:0,bestellt_menge:p.menge,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,gewichtsware:isKg,gepackt_menge_einheit:isKg?'g':'Stk',scan_zeit:checked?new Date().toISOString():''};
     });
     return {pack:{gepackt_von:'shop-admin',gepackt_um:new Date().toISOString(),items:packItems,alle_gepackt:cnt===items.length},packedCount:cnt};
   }
@@ -139,13 +138,20 @@
       var bestellMenge=p.menge||0;
       // Get actual packed qty from input or pack data
       var qtyInp=document.querySelector('[data-qty-index="'+i+'"]');
-      var actualMenge;
-      if(qtyInp){var raw=parseFloat(qtyInp.value)||0;actualMenge=isKg?raw/1000:raw;}
-      else{actualMenge=pk.gepackt_menge||bestellMenge;}
-      var gp=ep*actualMenge;
-      var abweichung=checked&&Math.abs(actualMenge-bestellMenge)>0.001;
-      var bestellStr=isKg?Math.round(bestellMenge*1000)+' g':bestellMenge+' '+esc(p.einheit||'Stk');
-      var geliefertStr=isKg?Math.round(actualMenge*1000)+' g':actualMenge+' '+esc(p.einheit||'Stk');
+      var packGramm,packStueck;
+      if(isKg){
+        if(qtyInp){packGramm=parseFloat(qtyInp.value)||0;}
+        else{packGramm=pk.gepackt_menge||Math.round(bestellMenge*1000);}
+      } else {
+        if(qtyInp){packStueck=parseFloat(qtyInp.value)||0;}
+        else{packStueck=pk.gepackt_menge||bestellMenge;}
+      }
+      var gp=isKg?ep*(packGramm/100):ep*packStueck;
+      var bestGramm=isKg?Math.round(bestellMenge*1000):bestellMenge;
+      var geliefertVal=isKg?packGramm:packStueck;
+      var abweichung=checked&&Math.abs(geliefertVal-bestGramm)>0.5;
+      var bestellStr=isKg?bestGramm+' g':bestellMenge+' '+esc(p.einheit||'Stk');
+      var geliefertStr=isKg?packGramm+' g':packStueck+' '+esc(p.einheit||'Stk');
       html+='<tr class="'+(checked?'packed':'notpacked')+'">';
       html+='<td class="check">'+(checked?'✅':'⬜')+'</td>';
       html+='<td>'+(i+1)+'</td>';
@@ -157,7 +163,7 @@
         html+='<td>'+barcodeSvg(bc,28,1)+'</td>';
         html+='<td class="r">'+bestellStr+'</td>';
         html+='<td class="r"'+(abweichung?' style="color:#b45309;font-weight:700"':'')+'>'+ geliefertStr+'</td>';
-        html+='<td class="r">'+fmtP(ep)+' €'+(isKg?'/kg':'')+'</td>';
+        html+='<td class="r">'+fmtP(ep)+' €'+(isKg?'/100g':'')+'</td>';
         html+='<td class="r"><b>'+fmtP(gp)+' €</b></td>';
       } else {
         html+='<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">⚠ Nicht verfügbar</span></td>';
@@ -218,12 +224,11 @@
       var bestMenge=p.menge||0;
       var packMenge=pk.gepackt_menge||bestMenge;
       if(isKg){bestMenge=Math.round(bestMenge*1000);packMenge=Math.round((pk.gepackt_menge||p.menge||0)*1000);}
-      var actualMenge=isKg?packMenge/1000:packMenge;
-      var gp=ep*actualMenge;summe+=gp;
+      var gp=isKg?ep*(packMenge/100):ep*packMenge;summe+=gp;
       var disabled=isEditable?'':' disabled';
       var bc=p.strichcode||p.artikelnummer||'';
       var step=isKg?'10':'1';var unit=isKg?'g':'Stk';var min=isKg?'0':'0';
-      packHtml+='<label class="item'+cls+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+disabled+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(bc)+'</div></div><div style="text-align:center">'+barcodeSvg(bc,22,1)+'</div><div style="text-align:right;white-space:nowrap"><input type="number" data-qty-index="'+i+'" data-is-kg="'+(isKg?1:0)+'" data-ep="'+ep+'" value="'+packMenge+'" min="'+min+'" step="'+step+'" style="width:52px;text-align:right;border:1px solid #dfe7e2;border-radius:4px;padding:2px 4px;font-size:12px"'+disabled+'> '+esc(unit)+'<br><span style="font-size:11px;color:#6b7f72">× '+money(ep)+(isKg?'/kg':'')+' = <b data-price-index="'+i+'">'+money(gp)+'</b></span></div></label>';
+      packHtml+='<label class="item'+cls+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+disabled+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(bc)+'</div></div><div style="text-align:center">'+barcodeSvg(bc,22,1)+'</div><div style="text-align:right;white-space:nowrap"><input type="number" data-qty-index="'+i+'" data-is-kg="'+(isKg?1:0)+'" data-ep="'+ep+'" value="'+packMenge+'" min="'+min+'" step="'+step+'" style="width:52px;text-align:right;border:1px solid #dfe7e2;border-radius:4px;padding:2px 4px;font-size:12px"'+disabled+'> '+esc(unit)+'<br><span style="font-size:11px;color:#6b7f72">× '+money(ep)+(isKg?'/100g':'')+' = <b data-price-index="'+i+'">'+money(gp)+'</b></span></div></label>';
     });
     packHtml+='</div>';
     packHtml+='<div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">ℹ Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>';
@@ -240,8 +245,7 @@
         var isKg=inp.getAttribute('data-is-kg')==='1';
         var ep=parseFloat(inp.getAttribute('data-ep'))||0;
         var raw=parseFloat(inp.value)||0;
-        var actual=isKg?raw/1000:raw;
-        var gp=ep*actual;
+        var gp=isKg?ep*(raw/100):ep*raw;
         var priceEl=document.querySelector('[data-price-index="'+idx+'"]');
         if(priceEl) priceEl.textContent=money(gp);
         // Recalc total
@@ -250,7 +254,7 @@
           var qep=parseFloat(q.getAttribute('data-ep'))||0;
           var qraw=parseFloat(q.value)||0;
           var qkg=q.getAttribute('data-is-kg')==='1';
-          total+=qep*(qkg?qraw/1000:qraw);
+          total+=qkg?qep*(qraw/100):qep*qraw;
         });
         var sumEl=document.getElementById('pack-summe');
         if(sumEl) sumEl.innerHTML='Summe: '+money(total);
