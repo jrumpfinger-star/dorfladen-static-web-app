@@ -60,10 +60,25 @@ def get_graph_token():
         return None
 
 
+def _download_as_base64(dl_url):
+    """Download image from SharePoint and return as data-URI base64 string."""
+    if not dl_url:
+        return ""
+    try:
+        img_r = requests.get(dl_url, timeout=30)
+        if img_r.status_code == 200:
+            ct = img_r.headers.get("Content-Type", "image/jpeg")
+            return f"data:{ct};base64," + base64.b64encode(img_r.content).decode("ascii")
+    except Exception:
+        pass
+    return ""
+
+
 def _load_sharepoint_urls(article_infos):
-    """Get SharePoint download URLs via Graph $batch API.
+    """Get SharePoint images via Graph $batch API, returned as base64 data-URIs.
     Werbebilder folder uses edeka_nr, StrichcodeBilder uses strichcode.
-    Graph allows max 20 subrequests per $batch, so larger visible sets are chunked."""
+    Graph allows max 20 subrequests per $batch, so larger sets are chunked.
+    Tries jpg, png, jpeg extensions per article."""
     token = get_graph_token()
     if not token:
         return []
@@ -74,16 +89,17 @@ def _load_sharepoint_urls(article_infos):
         enr = (info.get("edeka_nr") or "").strip()
         sc = (info.get("strichcode") or "").strip()
         artnr = info.get("artikelnummer", enr or sc)
-        if enr:
-            idx += 1
-            rid = str(idx)
-            batch_requests.append({"id": rid, "method": "GET", "url": f"/drives/{SP_DRIVE}/items/{SP_FOLDER}:/{enr}.jpg"})
-            id_to_artnr[rid] = artnr
-        if sc:
-            idx += 1
-            rid = str(idx)
-            batch_requests.append({"id": rid, "method": "GET", "url": f"/drives/{SP_DRIVE}/items/{SP_BARCODE_FOLDER}:/{sc}.jpg"})
-            id_to_artnr[rid] = artnr
+        for ext in ("jpg", "png", "jpeg"):
+            if sc:
+                idx += 1
+                rid = str(idx)
+                batch_requests.append({"id": rid, "method": "GET", "url": f"/drives/{SP_DRIVE}/items/{SP_BARCODE_FOLDER}:/{sc}.{ext}"})
+                id_to_artnr[rid] = artnr
+            if enr:
+                idx += 1
+                rid = str(idx)
+                batch_requests.append({"id": rid, "method": "GET", "url": f"/drives/{SP_DRIVE}/items/{SP_FOLDER}:/{enr}.{ext}"})
+                id_to_artnr[rid] = artnr
     if not batch_requests:
         return []
     result = []
@@ -106,7 +122,13 @@ def _load_sharepoint_urls(article_infos):
                 dl = resp.get("body", {}).get("@microsoft.graph.downloadUrl", "")
                 if artnr and dl and artnr not in found:
                     found.add(artnr)
-                    result.append({"dl_artikelnummer": artnr, "dl_download_url": dl, "source": "sharepoint"})
+                    b64 = _download_as_base64(dl)
+                    result.append({
+                        "dl_artikelnummer": artnr,
+                        "dl_bild_base64": b64,
+                        "dl_download_url": dl,
+                        "source": "sharepoint"
+                    })
     logging.info(f"[werbebilder] SP batch: {len(result)}/{len(article_infos)} found")
     return result
 
