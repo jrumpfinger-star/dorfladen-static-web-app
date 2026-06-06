@@ -128,7 +128,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "dl_sortierung": item.get("dl_sortierung", 0),
                         "status": item.get("dl_status"),
                         "dl_status": item.get("dl_status"),
-                        "bild_data": wb.get("dl_bild_base64", "") or wb.get("dl_download_url", ""),
+                        "bild_data": wb.get("dl_download_url", "") or wb.get("dl_bild_base64", ""),
                         "dl_bild_base64": wb.get("dl_bild_base64", ""),
                         "dl_download_url": wb.get("dl_download_url", ""),
                         "dl_werbebildid": wb.get("dl_werbebildid", "") or item.get("_dl_werbebildid_value", ""),
