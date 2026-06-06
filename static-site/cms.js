@@ -497,7 +497,9 @@
       canvas.height = height;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
-      var compressed = canvas.toDataURL('image/jpeg', 0.75); // 75% quality JPEG for ultra light size
+      // Preserve original format: PNG stays PNG (keeps transparency), others become JPEG
+      var isPng=base64Str.indexOf('data:image/png')===0;
+      var compressed=isPng?canvas.toDataURL('image/png'):canvas.toDataURL('image/jpeg',0.75);
       callback(compressed);
     };
     img.onerror = function() {
@@ -515,8 +517,9 @@
     var artnr=((nrInp&&nrInp.value)||'').trim();
     var strichcode='';
     if(artnr){
-      var c=_artikelCache.find(function(a){return a.nr===artnr;});
-      if(c && c.sc) strichcode=c.sc;
+      var c=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
+      if(c){strichcode=c.sc||'';if(!artnr||artnr===strichcode) artnr=c.nr||'';}
+      if(!strichcode && !c){strichcode=artnr;}
     }
     if(!artnr && prodInp){
       var prod=prodInp.value.trim().toLowerCase();
@@ -773,6 +776,7 @@
       var url='https://graph.microsoft.com/v1.0/drives/'+SP_DRIVE+'/items/'+folderId+':/'+artnr+'.'+exts[i];
       return fetch(url,{headers:{'Authorization':'Bearer '+token.accessToken}}).then(function(r){
         if(r.ok) return r.json();
+        if(r.status===401||r.status===403) throw new Error('Graph access denied: '+r.status);
         return tryNext(i+1);
       });
     };
@@ -795,15 +799,50 @@
     });
   }
 
+  function _blobToDataUrl(blob){
+    return new Promise(function(resolve,reject){
+      var fr=new FileReader();
+      fr.onload=function(){resolve(fr.result||'');};
+      fr.onerror=function(){reject(new Error('Blob conversion failed'));};
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  function loadImageFromBackend(artnr, strichcode){
+    var key=((strichcode||artnr||'')+'').trim();
+    if(!key) return Promise.resolve(null);
+    var payload={articles:[{artikelnummer:key,edeka_nr:(artnr||''),strichcode:(strichcode||'')}]};
+    return fetch(API+'/werbebilder?sharepoint=1',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    }).then(function(r){
+      if(!r.ok) return [];
+      return r.json();
+    }).then(function(list){
+      var arr=Array.isArray(list)?list:[];
+      var hit=arr.find(function(x){return (x.dl_artikelnummer||'')===key && (x.dl_bild_base64||x.dl_download_url);})
+        || arr.find(function(x){return x&& (x.dl_bild_base64||x.dl_download_url);});
+      if(!hit) return null;
+      if(hit.dl_bild_base64) return hit.dl_bild_base64;
+      if(!hit.dl_download_url) return null;
+      return fetch(hit.dl_download_url).then(function(r){
+        if(!r.ok) return null;
+        return r.blob().then(function(b){return _blobToDataUrl(b);});
+      });
+    }).catch(function(){return null;});
+  }
+
   function loadImageFromSharePoint(artnr, strichcode){
     // Accept artnr and/or strichcode – at least one must be provided
-    if((!artnr && !strichcode) || !msalApp) return Promise.resolve(null);
+    if(!artnr && !strichcode) return Promise.resolve(null);
     console.log('[CMS] Fetching image for article:',artnr,'strichcode:',strichcode);
-    // If strichcode not passed, look it up from artikel cache
+    // If strichcode not passed, look it up from artikel cache (by nr OR sc)
     if(!strichcode && artnr){
-      var cached=_artikelCache.find(function(a){return a.nr===artnr;});
+      var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
       if(cached && cached.sc) strichcode=cached.sc;
     }
+    if(!msalApp) return loadImageFromBackend(artnr,strichcode);
     return getGraphToken().then(function(token){
       // 1. Search in StrichcodeBilder folder first (by strichcode or artikelnummer)
       var barcodeKey=strichcode||artnr;
@@ -811,13 +850,16 @@
       return barcodeSearch.then(function(b64){
         if(b64) return b64;
         // 2. Fallback: search in Werbebilder folder by artikelnummer
-        if(!artnr) return null;
+        if(!artnr) return loadImageFromBackend(artnr,strichcode);
         console.log('[CMS] Not found in StrichcodeBilder, trying Werbebilder with',artnr,'...');
-        return _searchFolderForImage(token, SP_FOLDER, artnr);
+        return _searchFolderForImage(token, SP_FOLDER, artnr).then(function(fb){
+          if(fb) return fb;
+          return loadImageFromBackend(artnr,strichcode);
+        });
       });
     }).catch(function(e){
       console.error('[CMS] SharePoint image load error for '+(artnr||strichcode),e);
-      return null;
+      return loadImageFromBackend(artnr,strichcode);
     });
   }
 
@@ -5908,7 +5950,7 @@
     // Fetch missing images first
     var fetchPromises=items.map(function(it){
       if(it.bild_data)return Promise.resolve();
-      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer;});if(cc)sc=cc.sc||'';}
+      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer||a.sc===it.artikelnummer;});if(cc)sc=cc.sc||'';}
       if(!sc&&it.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===it.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
       if(!it.artikelnummer&&!sc)return Promise.resolve();
       return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){if(b64)it.bild_data=b64;}).catch(function(){});
@@ -7099,7 +7141,7 @@
     // Fetch missing images via Server Logic before drawing
     var fetchPromises=items.map(function(it){
       if(it.bild_data) return Promise.resolve();
-      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer;});if(cc)sc=cc.sc||'';}
+      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer||a.sc===it.artikelnummer;});if(cc)sc=cc.sc||'';}
       if(!sc&&it.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===it.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
       if(!it.artikelnummer&&!sc) return Promise.resolve();
       return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){
@@ -7636,7 +7678,7 @@
       if(target==='flyer'){
         var p=Promise.resolve();
         if(!sample.bild_data){
-          var sc='';if(sample.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===sample.artikelnummer;});if(cc)sc=cc.sc||'';}
+          var sc='';if(sample.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===sample.artikelnummer||a.sc===sample.artikelnummer;});if(cc)sc=cc.sc||'';}
           if(!sc&&sample.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===sample.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
           if(sample.artikelnummer||sc) p=loadImageFromSharePoint(sample.artikelnummer,sc).then(function(b64){if(b64)sample.bild_data=b64;});
         }
@@ -7787,7 +7829,7 @@
           var artnr=(nrInp&&nrInp.value||'').trim();
           var scNr='';
           if(artnr){
-            var cached=_artikelCache.find(function(a){return a.nr===artnr;});
+            var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
             if(cached && cached.sc) scNr=cached.sc;
           }
           if(!scNr && prodInp){

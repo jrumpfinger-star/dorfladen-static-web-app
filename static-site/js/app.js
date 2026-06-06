@@ -199,12 +199,12 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
     if(raw) applyHeroCfg(JSON.parse(raw));
   }catch(e){}
   var angTplDefaults={
-    'classic-red':{cardBg:'#ffffff',cardBorder:'#eeeeee',imgBg:'#faf9f6',textColor:'#1a1a1a',detailsColor:'#444444',tagColor:'#a51d2d'},
-    'minimal-clean':{cardBg:'#ffffff',cardBorder:'#e5e7eb',imgBg:'#f9fafb',textColor:'#1a1a1a',detailsColor:'#444444',tagColor:'#047857'},
-    'dark-modern':{cardBg:'#f5f5f5',cardBorder:'#94a3b8',imgBg:'#e2e8f0',textColor:'#111827',detailsColor:'#334155',tagColor:'#0ea5e9'},
-    'organic-market':{cardBg:'#fffdf8',cardBorder:'#e9dfcf',imgBg:'#faf5eb',textColor:'#2f3d2f',detailsColor:'#6b5b48',tagColor:'#8b1e3f'},
-    'bold-poster':{cardBg:'#fffaf2',cardBorder:'#fdba74',imgBg:'#fff5e6',textColor:'#7c2d12',detailsColor:'#9a3412',tagColor:'#ea580c'},
-    'modern-magazine':{cardBg:'#f6fbf5',cardBorder:'#d2e0cf',imgBg:'#eef5eb',textColor:'#2c3a2a',detailsColor:'#5b6d54',tagColor:'#6f835f'}
+    'classic-red':{cardBg:'#ffffff',cardBorder:'#eeeeee',imgBg:'#ffffff',textColor:'#1a1a1a',detailsColor:'#444444',tagColor:'#a51d2d'},
+    'minimal-clean':{cardBg:'#ffffff',cardBorder:'#e5e7eb',imgBg:'#ffffff',textColor:'#1a1a1a',detailsColor:'#444444',tagColor:'#047857'},
+    'dark-modern':{cardBg:'#f5f5f5',cardBorder:'#94a3b8',imgBg:'#ffffff',textColor:'#111827',detailsColor:'#334155',tagColor:'#0ea5e9'},
+    'organic-market':{cardBg:'#fffdf8',cardBorder:'#e9dfcf',imgBg:'#ffffff',textColor:'#2f3d2f',detailsColor:'#6b5b48',tagColor:'#8b1e3f'},
+    'bold-poster':{cardBg:'#fffaf2',cardBorder:'#fdba74',imgBg:'#ffffff',textColor:'#7c2d12',detailsColor:'#9a3412',tagColor:'#ea580c'},
+    'modern-magazine':{cardBg:'#f6fbf5',cardBorder:'#d2e0cf',imgBg:'#ffffff',textColor:'#2c3a2a',detailsColor:'#5b6d54',tagColor:'#6f835f'}
   };
   function applyOfferTileColors(dc){
     if(!dc)return;
