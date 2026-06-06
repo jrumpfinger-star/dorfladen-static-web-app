@@ -6213,7 +6213,9 @@
         }
 
         // Handlers registrieren
+        var _attached=false;
         var attach=function(){
+          if(_attached)return;_attached=true;
           function sanitize(s){return (s||'flyer').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_').substring(0,80);}
           function printOne(idx){
             var imgs=doc.querySelectorAll('.flyer-page img');
@@ -6923,6 +6925,18 @@
             })(btns[bi]);}
           };
           bindTouchMenuBtns();
+
+          // Direct onclick binding for toolbar close button (fallback for delegation issues)
+          var closeBtn=doc.querySelector('[data-act="close"]');
+          if(closeBtn){
+            closeBtn.addEventListener('click',function(ev){
+              ev.preventDefault();ev.stopPropagation();
+              var hasUnsaved=false;
+              for(var ui=0;ui<artOvs.length;ui++){if(JSON.stringify(artOvs[ui])!==JSON.stringify(_initArtOvs[ui])){hasUnsaved=true;break;}}
+              if(hasUnsaved&&!confirm('Es gibt ungespeicherte \u00c4nderungen.\nTrotzdem schlie\u00dfen? (\u00c4nderungen gehen verloren)'))return;
+              win.close();
+            });
+          }
 
           // ── Print style: show print images, hide interactive wraps ──
           if(!isMobile){
