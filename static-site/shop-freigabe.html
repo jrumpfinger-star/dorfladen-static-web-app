@@ -21,8 +21,12 @@
 
 /* ── Toolbar ── */
 .toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.search{flex:1;min-width:200px;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13px;outline:none}
+.search-wrap{position:relative;flex:0 1 320px;min-width:180px}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+.search{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 30px 8px 32px;font-size:13px;outline:none;box-sizing:border-box}
 .search:focus{border-color:var(--green)}
+.search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:2px 4px;display:none}
+.search-clear:hover{color:#111}
 .stats{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
 .filter-btn{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;transition:.15s}
 .filter-btn:hover,.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
@@ -91,7 +95,11 @@
 </div>
 
 <div class="toolbar">
-  <input class="search" id="search" placeholder="Artikel suchen (Name, Strichcode, EDEKA-Nr.)…" autocomplete="off">
+  <div class="search-wrap">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search" id="search" placeholder="Suchen…" autocomplete="off">
+    <button class="search-clear" id="search-clear" title="Suche leeren">&times;</button>
+  </div>
   <button class="filter-btn active" data-filter="all">Alle</button>
   <button class="filter-btn" data-filter="enabled">Freigegeben</button>
   <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
@@ -624,9 +632,15 @@
 
   // ── Event listeners ──
   document.getElementById('btn-save').addEventListener('click',saveChanges);
-  document.getElementById('search').addEventListener('input',function(){
+  var searchInput=document.getElementById('search');
+  var searchClear=document.getElementById('search-clear');
+  searchInput.addEventListener('input',function(){
     searchTerm=this.value.trim();
+    searchClear.style.display=searchTerm?'block':'none';
     render();
+  });
+  searchClear.addEventListener('click',function(){
+    searchInput.value='';searchTerm='';searchClear.style.display='none';render();searchInput.focus();
   });
   document.querySelectorAll('.filter-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
