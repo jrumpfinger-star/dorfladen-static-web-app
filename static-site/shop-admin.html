@@ -199,7 +199,7 @@
     detailHtml+='<div class="kv"><b>Kunde</b><span>'+esc(o.kunde_name)+' · '+esc(o.kunde_email)+'</span><b>Bestellt</b><span>'+esc(o.bestelldatum||'-')+'</span><b>Abholung</b><span>'+esc(o.abholdatum||'-')+'</span></div>';
     if(o.anmerkungen) detailHtml+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:5px 8px;font-size:11px;color:#92400e;margin-bottom:6px">📝 '+esc(o.anmerkungen)+'</div>';
     if(isEditable){
-      detailHtml+='<div class="actions"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button></div>';
+      detailHtml+='<div class="actions"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="print-slip-detail">📄 Beipackzettel</button></div>';
       detailHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Anmerkung:</div><textarea class="note" id="note">'+esc(o.anmerkungen||'')+'</textarea>';
     } else {
       detailHtml+='<div class="actions"><button class="btn small" id="print-slip-detail">� Beipackzettel anzeigen</button></div>';
