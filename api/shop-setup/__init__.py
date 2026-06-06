@@ -175,6 +175,23 @@ def _add_integer_attr(base_url, headers, entity_logical, schema_name, display_na
     return r.status_code in (200, 201, 204)
 
 
+def _add_datetime_attr(base_url, headers, entity_logical, schema_name, display_name, date_only=True):
+    """Add a datetime attribute to an existing entity."""
+    url = f"{base_url}/api/data/v9.2/EntityDefinitions(LogicalName='{entity_logical}')/Attributes"
+    payload = {
+        "@odata.type": "Microsoft.Dynamics.CRM.DateTimeAttributeMetadata",
+        "SchemaName": schema_name,
+        "DisplayName": {"@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [{"@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": display_name, "LanguageCode": 1031}]},
+        "RequiredLevel": {"Value": "None"},
+        "AttributeType": "DateTime",
+        "AttributeTypeName": {"Value": "DateTimeType"},
+        "Format": "DateOnly" if date_only else "DateAndTime",
+        "DateTimeBehavior": {"Value": "DateOnly" if date_only else "UserLocal"}
+    }
+    r = requests.post(url, headers=headers, json=payload, timeout=30)
+    return r.status_code in (200, 201, 204)
+
+
 def _add_memo_attr(base_url, headers, entity_logical, schema_name, display_name, max_length=10000):
     """Add a memo (multiline text) attribute."""
     url = f"{base_url}/api/data/v9.2/EntityDefinitions(LogicalName='{entity_logical}')/Attributes"
@@ -264,6 +281,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     r3_ok = _add_boolean_attr(base_url, headers, "cr5d4_table", "cr5d4_bestellbar", "Online bestellbar")
     r3b_ok = _add_string_attr(base_url, headers, "cr5d4_table", "cr5d4_bestelleinheit", "Bestelleinheit", 20)
     results.append({"entity": "cr5d4_table (Artikelstamm)", "bestellbar": "added" if r3_ok else "exists/error", "bestelleinheit": "added" if r3b_ok else "exists/error"})
+
+    # ── 4. dl_shopfreigabe – Separate Tabelle für Shop-Artikelfreigaben ──
+    # Strichcode ist der Key. Separate Tabelle, weil cr5d4_tables extern überschrieben wird.
+    r4 = _create_entity(base_url, headers,
+        "dl_shopfreigabe", "Shop-Freigabe", "Shop-Freigaben",
+        "Kennzeichnung welche Artikel im Bestellshop angezeigt werden",
+        "dl_strichcode", "Strichcode")
+    results.append(r4)
+
+    if r4["status"] in ("created", "already_exists"):
+        e = "dl_shopfreigabe"
+        _add_boolean_attr(base_url, headers, e, "dl_aktiv", "Aktiv", True)
+        _add_datetime_attr(base_url, headers, e, "dl_gueltig_bis", "Gültig bis", date_only=True)
+        _add_string_attr(base_url, headers, e, "dl_warengruppe", "Warengruppe", 200)
+        _add_string_attr(base_url, headers, e, "dl_bezeichnung", "Bezeichnung", 200)
+        _add_string_attr(base_url, headers, e, "dl_edeka_nr", "EDEKA-Nr.", 50)
+        _add_string_attr(base_url, headers, e, "dl_freigegeben_von", "Freigegeben von", 100)
 
     return func.HttpResponse(
         json.dumps({"success": True, "results": results}, ensure_ascii=False, indent=2),
