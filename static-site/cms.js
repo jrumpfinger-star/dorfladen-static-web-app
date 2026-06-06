@@ -820,15 +820,10 @@
       return r.json();
     }).then(function(list){
       var arr=Array.isArray(list)?list:[];
-      var hit=arr.find(function(x){return (x.dl_artikelnummer||'')===key && (x.dl_bild_base64||x.dl_download_url);})
-        || arr.find(function(x){return x&& (x.dl_bild_base64||x.dl_download_url);});
-      if(!hit) return null;
-      if(hit.dl_bild_base64) return hit.dl_bild_base64;
-      if(!hit.dl_download_url) return null;
-      return fetch(hit.dl_download_url).then(function(r){
-        if(!r.ok) return null;
-        return r.blob().then(function(b){return _blobToDataUrl(b);});
-      });
+      var hit=arr.find(function(x){return (x.dl_artikelnummer||'')===key && x.dl_bild_base64;})
+        || arr.find(function(x){return x && x.dl_bild_base64;});
+      if(!hit || !hit.dl_bild_base64) return null;
+      return hit.dl_bild_base64;
     }).catch(function(){return null;});
   }
 

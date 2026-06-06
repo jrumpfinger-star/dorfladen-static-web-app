@@ -146,7 +146,6 @@ def _load_sharepoint_urls(article_infos):
                     result.append({
                         "dl_artikelnummer": artnr,
                         "dl_bild_base64": b64,
-                        "dl_download_url": dl,
                         "source": "sharepoint"
                     })
     logging.info(f"[werbebilder] SP batch: {len(result)}/{len(article_infos)} found")
@@ -208,7 +207,7 @@ def _lookup_sp_images(article_infos):
             hit = _find_sp_image(token, SP_FOLDER, artnr)
         if hit and hit.get("dl_download_url"):
             b64 = _download_as_base64(hit["dl_download_url"])
-            result.append({"dl_artikelnummer": result_key, "dl_bild_base64": b64, "dl_download_url": hit["dl_download_url"], "source": "sharepoint", "name": hit.get("name", "")})
+            result.append({"dl_artikelnummer": result_key, "dl_bild_base64": b64, "source": "sharepoint", "name": hit.get("name", "")})
     return result
 
 
@@ -246,30 +245,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if nr_list:
                 filter_parts = [f"dl_artikelnummer eq '{nr}'" for nr in nr_list]
                 odata_filter = " or ".join(filter_parts)
-                url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_werbebildid,dl_artikelnummer,dl_bild_base64,dl_download_url&$filter={odata_filter}"
+                url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_werbebildid,dl_artikelnummer,dl_bild_base64&$filter={odata_filter}"
                 r = requests.get(url, headers=headers, timeout=30)
                 if r.status_code == 200:
                     for item in r.json().get("value", []):
                         result.append({
                             "dl_artikelnummer": item.get("dl_artikelnummer", ""),
-                            "dl_bild_base64": item.get("dl_bild_base64", ""),
-                            "dl_download_url": item.get("dl_download_url", "")
+                            "dl_bild_base64": item.get("dl_bild_base64", "")
                         })
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
-                sp_rows = _load_sharepoint_urls(article_infos)
-                if sp_rows:
-                    sp_map = {r["dl_artikelnummer"]: r for r in sp_rows}
-                    # SP base64 wins over Dataverse, but keep Dataverse base64 if SP has none
-                    for row in result:
-                        key = row.get("dl_artikelnummer", "")
-                        if key in sp_map:
-                            sp = sp_map[key]
-                            if sp.get("dl_bild_base64"):
-                                row["dl_bild_base64"] = sp["dl_bild_base64"]
-                            row["dl_download_url"] = sp.get("dl_download_url", "")
-                            del sp_map[key]
-                    result.extend(sp_map.values())
+                found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_bild_base64")}
+                missing = [a for a in article_infos if (a.get("artikelnummer") or a.get("strichcode")) and (a.get("artikelnummer","") not in found_keys)]
+                if missing:
+                    result.extend(_load_sharepoint_urls(missing))
             return func.HttpResponse(body=json.dumps(result), status_code=200, headers=get_cors_headers())
 
 
@@ -349,7 +338,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             payload = {"dl_artikelnummer": artnr}
             if dl_url:
-                payload["dl_download_url"] = dl_url
                 payload["dl_bild_base64"] = ""  # clear cached base64 – SP is source of truth
 
             if existing:
@@ -371,7 +359,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             if r.status_code in (200, 201, 204):
                 return func.HttpResponse(
-                    body=json.dumps({"success": True, "id": record_id, "dl_download_url": dl_url}),
+                    body=json.dumps({"success": True, "id": record_id}),
                     status_code=200, headers=get_cors_headers()
                 )
             else:
@@ -407,7 +395,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Build OData filter for multiple article numbers
         filter_parts = [f"dl_artikelnummer eq '{nr}'" for nr in nr_list[:50]]
         odata_filter = " or ".join(filter_parts)
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_werbebildid,dl_artikelnummer,dl_bild_base64,dl_download_url&$filter={odata_filter}"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_werbebildid,dl_artikelnummer,dl_bild_base64&$filter={odata_filter}"
         r = requests.get(url, headers=headers, timeout=30)
         if r.status_code == 200:
             items = r.json().get("value", [])
@@ -417,8 +405,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "id": item.get("dl_werbebildid", ""),
                     "dl_werbebildid": item.get("dl_werbebildid", ""),
                     "dl_artikelnummer": item.get("dl_artikelnummer", ""),
-                    "dl_bild_base64": item.get("dl_bild_base64", ""),
-                    "dl_download_url": item.get("dl_download_url", "")
+                    "dl_bild_base64": item.get("dl_bild_base64", "")
                 })
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
