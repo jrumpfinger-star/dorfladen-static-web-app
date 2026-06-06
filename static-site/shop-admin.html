@@ -75,7 +75,14 @@
     var packedCount=items.reduce(function(sum,p){return sum+(packFor(p).gepackt?1:0);},0);
     var pct=items.length?Math.round(packedCount/items.length*100):0;
     document.getElementById('pack').innerHTML='<div class="pack-title">Packliste</div><div class="pack-summary">'+packedCount+' von '+items.length+' Positionen gepackt</div><div class="pack-progress"><div style="width:'+pct+'%"></div></div><div class="items">'+items.map(function(p,i){var pk=packFor(p);var checked=pk.gepackt?' checked':'';var cls=pk.gepackt?' packed':'';return '<label class="item'+cls+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(p.artikelnummer||p.strichcode||'')+'</div></div><div>'+esc(p.menge)+' '+esc(p.einheit||'')+'</div><div style="text-align:right">'+money(p.positionspreis||((p.einzelpreis||0)*(p.menge||0)))+'</div></label>';}).join('')+'</div>';
-    document.querySelectorAll('[data-status]').forEach(function(b){b.addEventListener('click',function(){updateOrder({status:Number(b.getAttribute('data-status')),anmerkungen:document.getElementById('note').value});});});
+    document.querySelectorAll('[data-status]').forEach(function(b){b.addEventListener('click',function(){
+      var newStatus=Number(b.getAttribute('data-status'));
+      if(newStatus===2&&packedCount<items.length){
+        if(!confirm('Achtung: Erst '+packedCount+' von '+items.length+' Positionen gepackt.\nTrotzdem als Abholbereit markieren?')) return;
+      }
+      if(newStatus===4&&!confirm('Bestellung wirklich stornieren?')) return;
+      updateOrder({status:newStatus,anmerkungen:document.getElementById('note').value});
+    });});
     document.getElementById('save-pack').addEventListener('click',function(){
       var packedCount=0;
       var pack={gepackt_von:'shop-admin',gepackt_um:new Date().toISOString(),items:items.map(function(p,i){
