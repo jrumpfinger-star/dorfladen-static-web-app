@@ -158,7 +158,7 @@ def build_email_html(body_text, subject=""):
       <span style="font-size:18px">🏪</span>
       <span style="font-weight:700;color:#fff;font-size:13px">Dorfladen Oberornau</span>
     </div>
-    <div>Dorfstraße · 84416 Taufkirchen (Vils)</div>
+    <div>Dorfplatz 1 · 84419 Obertaufkirchen</div>
     <div>Tel: <a href="tel:+4980826229991" style="color:#93c5fd;text-decoration:none">08082 / 622 99 91</a></div>
     <div>
       <a href="mailto:bestellung@dorfladen-oberornau.de" style="color:#93c5fd;text-decoration:none">bestellung@dorfladen-oberornau.de</a>
@@ -306,7 +306,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"gute Nachrichten! Ihre Bestellung {bestellnummer} wurde sorgfältig "
             f"zusammengestellt und liegt für Sie zur Abholung bereit.\n\n"
             f"📅 Abholung: {abholdatum} vormittags\n"
-            f"📍 Ort: Dorfladen Oberornau, Dorfstraße, 84416 Taufkirchen (Vils)\n\n"
+            f"📍 Ort: Dorfladen Oberornau, Dorfplatz 1, 84419 Obertaufkirchen\n\n"
             f"Bitte holen Sie Ihre Bestellung bis 12:00 Uhr mittags ab.\n\n"
             f"Wir freuen uns auf Ihren Besuch!\n\n"
             f"Herzliche Grüße\n"
