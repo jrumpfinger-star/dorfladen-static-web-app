@@ -204,7 +204,7 @@
     var printBtn=document.getElementById('print-slip');
     if(printBtn){printBtn.addEventListener('click',function(){printBeipackzettel(o,items);});}
   }
-  function updateOrder(data){data.id=selected.id;fetch(API,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json();}).then(function(res){if(!res.success)throw new Error(res.error||'Fehler');toast('Gespeichert');loadOrders();selectOrder(selected.id);}).catch(function(e){toast('Fehler: '+e.message);});}
+  function updateOrder(data){var selId=selected.id;data.id=selId;fetch(API,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json();}).then(function(res){if(!res.success)throw new Error(res.error||'Fehler');toast('Gespeichert');return fetch(API+'?action=dashboard').then(function(r2){return r2.json();}).then(function(res2){if(!res2.success)throw new Error(res2.error||'Fehler');orders=res2.orders||[];statusLabels=res2.status_labels||statusLabels;setStats(res2.summary);renderOrders();selectOrder(selId);});}).catch(function(e){toast('Fehler: '+e.message);});}
   document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.addEventListener('click',function(){activeStatFilter=el.getAttribute('data-stat-filter');document.getElementById('status-filter').value='all';renderOrders();});});document.getElementById('refresh-btn').addEventListener('click',loadDashboard);document.getElementById('load-orders').addEventListener('click',loadOrders);document.getElementById('search').addEventListener('keydown',function(e){if(e.key==='Enter')loadOrders();});document.getElementById('status-filter').addEventListener('change',loadOrders);
   loadDashboard();
 })();
