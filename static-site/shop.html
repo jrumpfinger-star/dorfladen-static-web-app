@@ -236,7 +236,6 @@
 <!-- ── Category Pills ── -->
 <div class="shop-cats" id="shop-cats">
   <span class="shop-cat-pill active" data-cat="bestseller">🔥 Beliebt</span>
-  <span class="shop-cat-pill" data-cat="all">Alle</span>
 </div>
 
 <!-- ── Cutoff Banner ── -->
@@ -581,8 +580,8 @@
       prevPill.className='shop-cat-pill';
       prevPill.setAttribute('data-cat','previous');
       prevPill.textContent='Schon bestellt';
-      var allPill=catsEl.querySelector('[data-cat="all"]');
-      catsEl.insertBefore(prevPill,allPill||null);
+      var firstCatPill=catsEl.querySelector('[data-cat]:not([data-cat="bestseller"]):not([data-cat="previous"])');
+      catsEl.insertBefore(prevPill,firstCatPill||null);
     }
     if(!isLoggedIn()&&existing) existing.remove();
   }
@@ -798,7 +797,35 @@
     viewMode='categories';
     activeCat='all';
     var content=document.getElementById('shop-content');
-    var html='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title"><span class="emoji">🔥</span> Beliebt <span class="shop-section-count">('+bestsellers.length+')</span></div></div>';
+    var html='';
+
+    // "Nur kurz verfügbar" section – always first
+    var kurzArtikel=allArticles.filter(function(a){return a.kurzfristig;});
+    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title"><span class="emoji">⏳</span> Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
+    if(kurzArtikel.length){
+      html+='<div class="shop-grid">';
+      kurzArtikel.forEach(function(a){
+        var badges='<span class="shop-badge" style="background:#fef3c7;color:#92400e">⏳ Nur kurz</span>';
+        if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
+        var priceHtml=fmtP(a.vk)+' €';
+        if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
+        if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
+        html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
+        html+='<div class="shop-card-badges">'+badges+'</div>';
+        html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
+        html+='<div class="shop-card-body"><div class="shop-card-name">'+esc(a.bezeichnung)+'</div><div class="shop-card-meta">'+esc(a.warengruppe)+'</div><div class="shop-card-price">'+priceHtml+'</div></div>';
+        html+='<div class="shop-card-footer">';
+        if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
+        else html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
+        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
+      });
+      html+='</div>';
+    } else {
+      html+='<div style="padding:8px 16px 12px;color:#9ca3af;font-size:13px">Aktuell keine kurzfristig verfügbaren Artikel.</div>';
+    }
+
+    // Beliebt section
+    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title"><span class="emoji">🔥</span> Beliebt <span class="shop-section-count">('+bestsellers.length+')</span></div></div>';
     html+='<div class="shop-grid">';
     bestsellers.slice(0,6).forEach(function(a){
       var badges='';
@@ -817,29 +844,6 @@
       html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
     });
     html+='</div>';
-
-    // "Nur kurz verfügbar" section
-    var kurzArtikel=allArticles.filter(function(a){return a.kurzfristig;});
-    if(kurzArtikel.length){
-      html+='<div class="shop-section" style="padding:16px 16px 4px"><div class="shop-section-title"><span class="emoji">⏳</span> Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
-      html+='<div class="shop-grid">';
-      kurzArtikel.forEach(function(a){
-        var badges='<span class="shop-badge" style="background:#fef3c7;color:#92400e">⏳ Nur kurz</span>';
-        if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
-        var priceHtml=fmtP(a.vk)+' €';
-        if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
-        if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
-        html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
-        html+='<div class="shop-card-badges">'+badges+'</div>';
-        html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
-        html+='<div class="shop-card-body"><div class="shop-card-name">'+esc(a.bezeichnung)+'</div><div class="shop-card-meta">'+esc(a.warengruppe)+'</div><div class="shop-card-price">'+priceHtml+'</div></div>';
-        html+='<div class="shop-card-footer">';
-        if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
-        else html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
-        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
-      });
-      html+='</div>';
-    }
 
     content.innerHTML=html;
     wireAddButtons();
