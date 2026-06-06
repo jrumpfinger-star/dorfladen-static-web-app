@@ -237,7 +237,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         })
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
-                found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_bild_base64") or x.get("dl_download_url")}
+                found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_bild_base64")}
                 missing = [a for a in article_infos if (a.get("artikelnummer") or a.get("strichcode")) and (a.get("artikelnummer","") not in found_keys)]
                 if missing:
                     sp_rows = _load_sharepoint_urls(missing)
