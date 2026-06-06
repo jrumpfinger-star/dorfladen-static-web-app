@@ -240,12 +240,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_bild_base64") or x.get("dl_download_url")}
                 missing = [a for a in article_infos if (a.get("artikelnummer") or a.get("strichcode")) and (a.get("artikelnummer","") not in found_keys)]
                 if missing:
-                    result.extend(_load_sharepoint_urls(missing))
-                # If SharePoint returned a dl_download_url, clear stale base64 to prefer it
-                sp_keys = {x.get("dl_artikelnummer","") for x in result if x.get("dl_download_url")}
-                for row in result:
-                    if row.get("dl_artikelnummer","") in sp_keys and row.get("dl_download_url"):
-                        row["dl_bild_base64"] = ""
+                    sp_rows = _load_sharepoint_urls(missing)
+                    result.extend(sp_rows)
+                    # Replace stale Dataverse base64 with fresh SharePoint base64 for same key
+                    sp_map = {r["dl_artikelnummer"]: r for r in sp_rows if r.get("dl_bild_base64")}
+                    for row in result:
+                        key = row.get("dl_artikelnummer", "")
+                        if key in sp_map and row is not sp_map[key]:
+                            row["dl_bild_base64"] = sp_map[key]["dl_bild_base64"]
             return func.HttpResponse(body=json.dumps(result), status_code=200, headers=get_cors_headers())
 
 

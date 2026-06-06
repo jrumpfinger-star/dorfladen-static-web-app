@@ -1049,9 +1049,11 @@
           var respNr=(row.dl_artikelnummer||'').toString().trim();
           if(!respNr) return;
           var origNr=keyMap[respNr]||respNr;
-          var src=row.dl_download_url||'';
-          if(!src&&row.dl_bild_base64){
+          var src='';
+          if(row.dl_bild_base64){
             src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
+          } else if(row.dl_download_url){
+            src=row.dl_download_url;
           }
           if(src&&runId===imageLoadRun) setArticleImage(origNr,src);
         });
