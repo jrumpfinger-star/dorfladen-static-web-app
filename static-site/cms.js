@@ -614,10 +614,14 @@
           // Generate a temporary artikelnummer from product name if none provided
           var artNr=it.artikelnummer||('IMG-'+it.produkt.replace(/[^a-zA-Z0-9]/g,'').substring(0,20)+'-'+Date.now().toString(36));
           if(!it.artikelnummer) it.artikelnummer=artNr;
+          // Resolve strichcode for SharePoint filename (avoid collisions on short artnr like 6007)
+          var scForUpload=it.strichcode||'';
+          if(!scForUpload&&artNr){var cc=_artikelCache.find(function(a){return a.nr===artNr;});if(cc)scForUpload=cc.sc||'';}
+          var uploadNr=scForUpload||artNr;
           bildPromises.push(
-            fetch(API+'/werbebilder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dl_artikelnummer:artNr,dl_bild_base64:it.bild_data})})
+            fetch(API+'/werbebilder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dl_artikelnummer:uploadNr,dl_bild_base64:it.bild_data})})
             .then(function(r){return r.json();})
-            .then(function(j){it._werbebildid=j.id||'';_imgCacheInvalidate(artNr,null);})
+            .then(function(j){it._werbebildid=j.id||'';_imgCacheInvalidate(artNr,scForUpload);})
             .catch(function(){it._werbebildid='';})
           );
         } else if(it.dl_werbebildid){
