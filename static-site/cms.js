@@ -617,7 +617,7 @@
           bildPromises.push(
             fetch(API+'/werbebilder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dl_artikelnummer:artNr,dl_bild_base64:it.bild_data})})
             .then(function(r){return r.json();})
-            .then(function(j){it._werbebildid=j.id||'';})
+            .then(function(j){it._werbebildid=j.id||'';_imgCacheInvalidate(artNr,null);})
             .catch(function(){it._werbebildid='';})
           );
         } else if(it.dl_werbebildid){
@@ -837,6 +837,26 @@
     }).catch(function(){return null;});
   }
 
+  // ── In-memory image cache ──
+  var _imgCache={};
+  function _imgCacheKey(artnr,sc){return (artnr||'')+'|'+(sc||'');}
+  function _imgCacheGet(artnr,sc){
+    var k=_imgCacheKey(artnr,sc);var e=_imgCache[k];
+    if(!e) return null;
+    if(Date.now()-e.ts>15*60*1000){delete _imgCache[k];return null;} // 15 min TTL
+    return e.data;
+  }
+  function _imgCacheSet(artnr,sc,data){
+    _imgCache[_imgCacheKey(artnr,sc)]={data:data,ts:Date.now()};
+  }
+  function _imgCacheInvalidate(artnr,sc){
+    // Remove all entries matching artnr or sc
+    Object.keys(_imgCache).forEach(function(k){
+      if(artnr && k.indexOf(artnr)>=0) delete _imgCache[k];
+      if(sc && k.indexOf(sc)>=0) delete _imgCache[k];
+    });
+  }
+
   function loadImageFromSharePoint(artnr, strichcode){
     // Accept artnr and/or strichcode – at least one must be provided
     if(!artnr && !strichcode) return Promise.resolve(null);
@@ -846,18 +866,21 @@
       var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
       if(cached && cached.sc) strichcode=cached.sc;
     }
+    // Check in-memory cache first
+    var hit=_imgCacheGet(artnr,strichcode);
+    if(hit){console.log('[CMS] Image cache hit for',artnr,strichcode);return Promise.resolve(hit);}
     if(!msalApp) return loadImageFromBackend(artnr,strichcode);
     return getGraphToken().then(function(token){
       // 1. Search in StrichcodeBilder folder first (by strichcode or artikelnummer)
       var barcodeKey=strichcode||artnr;
       var barcodeSearch=barcodeKey?_searchFolderForImage(token, SP_BARCODE_FOLDER, barcodeKey):Promise.resolve(null);
       return barcodeSearch.then(function(b64){
-        if(b64) return b64;
+        if(b64){_imgCacheSet(artnr,strichcode,b64);return b64;}
         // 2. Fallback: search in Werbebilder folder by artikelnummer
         if(!artnr) return loadImageFromBackend(artnr,strichcode);
         console.log('[CMS] Not found in StrichcodeBilder, trying Werbebilder with',artnr,'...');
         return _searchFolderForImage(token, SP_FOLDER, artnr).then(function(fb){
-          if(fb) return fb;
+          if(fb){_imgCacheSet(artnr,strichcode,fb);return fb;}
           return loadImageFromBackend(artnr,strichcode);
         });
       });
@@ -889,6 +912,7 @@
         return r.json();
       }).then(function(item){
         console.log('[CMS] Uploaded to StrichcodeBilder:',item.name);
+        _imgCacheInvalidate(artnr,null);
         return item;
       });
     });
