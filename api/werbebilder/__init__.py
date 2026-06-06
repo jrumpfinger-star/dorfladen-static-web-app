@@ -311,6 +311,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             payload = {"dl_artikelnummer": artnr}
             if dl_url:
                 payload["dl_download_url"] = dl_url
+                payload["dl_bild_base64"] = ""  # clear cached base64 – SP is source of truth
 
             if existing:
                 record_id = existing[0]["dl_werbebildid"]
