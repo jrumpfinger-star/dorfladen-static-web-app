@@ -737,8 +737,28 @@
     return html;
   }
 
-  var CAT_ICONS={'Backwaren':'B','Molkerei & Eier':'M','Obst & Gemuese':'O','Fleisch & Wurst':'F','Getraenke':'G','Vorrat & Kueche':'V','Suesswaren & Snacks':'S','Tiefkuehl':'T','Kaffee & Tee':'K','Haushalt & Drogerie':'H','Spezial & Gesundheit':'+','Sonstiges':'*'};
-  var DEFAULT_CAT_ICON='📦';
+  var CAT_ICONS={
+    'Backwaren':'🥨','Brot':'🍞','Molkereiprodukte':'🧀','Molkerei':'🧀','Mopro':'🧀',
+    'Obst und Gemuese':'🥬','Obst':'🍎','Gemuese':'🥕',
+    'Fleisch':'🥩','Wurst':'🥩','Metzgerei':'🥩',
+    'Eier':'🥚',
+    'Bier':'🍺','Getraenke':'🥤','Wein':'🍷','Spirituosen':'🥃','Saft':'🧃',
+    'Tiefkuehl':'❄️','Tiefkühl':'❄️',
+    'Suesswaren':'🍫','Snacks':'🍿','Suessigkeiten':'🍬',
+    'Kaffee':'☕','Tee':'🍵',
+    'Gewuerze':'🌶️','Gewürze':'🌶️',
+    'Konserven':'🥫','Vorrat':'🥫',
+    'Nudeln':'🍝','Reis':'🍚',
+    'Drogerie':'🧴','Haushalt':'🧹','Hygiene':'🧼',
+    'Diät':'🍼','Kindernahrung':'🍼','Baby':'🍼',
+    'Cafeteria':'☕',
+    'Eis':'🍦',
+    'Elektro':'🔌','Heimwerker':'🔧',
+    'Effektive Mikroorganismen':'🌿',
+    'Butter':'🧈','Magarine':'🧈',
+    'Sonstiges':'📦'
+  };
+  var DEFAULT_CAT_ICON='�';
   var viewMode='categories'; // 'categories' or 'articles'
 
   function getCatIcon(cat){
@@ -1059,7 +1079,7 @@
         var pill=document.createElement('span');
         pill.className='shop-cat-pill';
         pill.setAttribute('data-cat',cat);
-        pill.innerHTML=esc(cat)+' <span class="cat-count">'+cnt+'</span>';
+        pill.innerHTML=getCatIcon(cat)+' '+esc(cat)+' <span class="cat-count">'+cnt+'</span>';
         catsEl.appendChild(pill);
       });
 
