@@ -11,6 +11,7 @@ import azure.functions as func
 import json
 import os
 import uuid
+import logging
 import msal
 import requests
 import jwt
@@ -80,10 +81,13 @@ def _verify_jwt(req):
     """Extract and verify JWT from Authorization header."""
     auth = req.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
+        logging.warning("JWT: No Bearer prefix in Authorization header")
         return None
+    token_str = auth[7:]
     try:
-        return jwt.decode(auth[7:], JWT_SECRET, algorithms=["HS256"])
-    except:
+        return jwt.decode(token_str, JWT_SECRET, algorithms=["HS256"])
+    except Exception as e:
+        logging.error(f"JWT verify failed: {type(e).__name__}: {e}, secret_len={len(JWT_SECRET)}, token_len={len(token_str)}")
         return None
 
 
@@ -120,8 +124,9 @@ def _handle_post(req, dv_token, base_url, headers):
     """Place a new order."""
     user = _verify_jwt(req)
     if not user:
+        auth_hdr = req.headers.get("Authorization", "")
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "Bitte melden Sie sich an."}, ensure_ascii=False),
+            json.dumps({"success": False, "error": "Bitte melden Sie sich an.", "debug_has_auth": bool(auth_hdr), "debug_secret_len": len(JWT_SECRET)}, ensure_ascii=False),
             status_code=401, headers=get_cors_headers()
         )
 
@@ -292,8 +297,9 @@ def _handle_get(req, dv_token, base_url, headers):
         email = user["email"]
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=50"
     else:
+        auth_hdr = req.headers.get("Authorization", "")
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "Bitte melden Sie sich an."}),
+            json.dumps({"success": False, "error": "Bitte melden Sie sich an.", "debug_has_auth": bool(auth_hdr), "debug_secret_len": len(JWT_SECRET)}),
             status_code=401, headers=get_cors_headers()
         )
 
