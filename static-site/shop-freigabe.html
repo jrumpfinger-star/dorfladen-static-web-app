@@ -192,6 +192,13 @@
     return f&&f.aktiv;
   }
 
+  function isKurzfristig(sc){
+    var p=pendingChanges[sc];
+    if(p&&p.kurzfristig!==undefined) return p.kurzfristig;
+    var f=freigabeMap[sc];
+    return f&&f.kurzfristig;
+  }
+
   function getGueltigBis(sc){
     var p=pendingChanges[sc];
     if(p&&p.gueltig_bis!==undefined) return p.gueltig_bis||'';
@@ -248,7 +255,7 @@
       html+='<input type="checkbox" class="wg-cb" data-wg-cb="'+esc(g.name)+'" title="Alle in '+esc(g.name)+'" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;margin-left:6px"'+(allChecked?' checked':'')+'>';
       html+='</div></div>';
       html+='<div class="wg-body"><table class="art-table"><thead><tr>';
-      html+='<th style="width:30px"></th><th style="width:42px">Bild</th><th>Artikel</th><th>Preis</th><th style="width:120px">Gültig bis</th><th style="width:30px"></th>';
+      html+='<th style="width:30px"></th><th style="width:42px">Bild</th><th>Artikel</th><th>Preis</th><th style="width:50px" title="Nur kurz verfügbar">Kurz</th><th style="width:120px">Gültig bis</th><th style="width:30px"></th>';
       html+='</tr></thead><tbody>';
 
       var visible=hasMore?g.items.slice(0,maxVisible):g.items;
@@ -264,12 +271,14 @@
       html+='<td>'+imgHtml+'</td>';
         html+='<td><div class="art-name">'+esc(a.bezeichnung)+'</div><div class="art-code">'+esc(a.strichcode)+(a.edeka_nr?' · '+esc(a.edeka_nr):'')+'</div></td>';
         html+='<td class="art-price">'+Number(a.preis).toFixed(2)+' €</td>';
+        var kf=isKurzfristig(a.strichcode);
+        html+='<td style="text-align:center"><input type="checkbox" class="art-kf" data-kf-sc="'+esc(a.strichcode)+'" title="Nur kurz verfügbar"'+(kf?' checked':'')+(en?'':' disabled')+'></td>';
         html+='<td class="art-date"><input type="date" value="'+esc(gb)+'" data-date-sc="'+esc(a.strichcode)+'" title="Ablaufdatum"'+(en?'':' disabled')+'></td>';
         html+='<td></td>';
         html+='</tr>';
       });
       if(hasMore){
-        html+='<tr><td colspan="6" style="text-align:center;padding:8px"><button class="btn small show-all-btn" data-wg="'+esc(g.name)+'">Alle '+(g.items.length)+' anzeigen</button></td></tr>';
+        html+='<tr><td colspan="7" style="text-align:center;padding:8px"><button class="btn small show-all-btn" data-wg="'+esc(g.name)+'">Alle '+(g.items.length)+' anzeigen</button></td></tr>';
       }
       html+='</tbody></table></div></div>';
     });
@@ -327,13 +336,25 @@
       cb.addEventListener('change',function(){
         var sc=cb.getAttribute('data-sc');
         toggleArticle(sc,cb.checked);
-        // Enable/disable date input
+        // Enable/disable date + kurzfristig inputs
         var dateInput=document.querySelector('[data-date-sc="'+sc+'"]');
         if(dateInput) dateInput.disabled=!cb.checked;
+        var kfInput=document.querySelector('[data-kf-sc="'+sc+'"]');
+        if(kfInput) kfInput.disabled=!cb.checked;
         // Update row style
         var row=cb.closest('.art-row');
         if(row) row.classList.toggle('enabled',cb.checked);
         updateStats();
+      });
+    });
+
+    // Kurzfristig toggle
+    document.querySelectorAll('.art-kf').forEach(function(cb){
+      cb.addEventListener('change',function(){
+        var sc=cb.getAttribute('data-kf-sc');
+        if(!pendingChanges[sc]) pendingChanges[sc]={action:'update'};
+        pendingChanges[sc].kurzfristig=cb.checked;
+        updateSaveBtn();
       });
     });
 
@@ -387,6 +408,7 @@
         +'<td>'+eImgHtml+'</td>'
         +'<td><div class="art-name">'+esc(a.bezeichnung)+'</div><div class="art-code">'+esc(a.strichcode)+(a.edeka_nr?' · '+esc(a.edeka_nr):'')+'</div></td>'
         +'<td class="art-price">'+Number(a.preis).toFixed(2)+' €</td>'
+        +'<td style="text-align:center"><input type="checkbox" class="art-kf" data-kf-sc="'+esc(a.strichcode)+'" title="Nur kurz verfügbar"'+(isKurzfristig(a.strichcode)?' checked':'')+(en?'':' disabled')+'></td>'
         +'<td class="art-date"><input type="date" value="'+esc(gb)+'" data-date-sc="'+esc(a.strichcode)+'" title="Ablaufdatum"'+(en?'':' disabled')+'></td>'
         +'<td></td>';
       tbody.appendChild(tr);
@@ -447,14 +469,16 @@
       if(p.action==='disable'){
         disableItems.push(sc);
       } else {
-        enableItems.push({
+        var item={
           strichcode:sc,
           aktiv:true,
           gueltig_bis:p.gueltig_bis||null,
           warengruppe:p.warengruppe||'',
           bezeichnung:p.bezeichnung||'',
           edeka_nr:p.edeka_nr||''
-        });
+        };
+        if(p.kurzfristig!==undefined) item.kurzfristig=p.kurzfristig;
+        enableItems.push(item);
       }
     });
     var btn=document.getElementById('btn-save');

@@ -157,7 +157,7 @@ def _load_freigaben(base_url, headers):
     Returns a dict: strichcode → {gueltig_bis, ...}. Expired entries are excluded.
     Returns None only if the entity does not exist yet (table not created)."""
     try:
-        url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis&$filter=dl_aktiv eq true"
+        url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_kurzfristig&$filter=dl_aktiv eq true"
         r = requests.get(url, headers=headers, timeout=30)
         if r.status_code == 404:
             # Entity doesn't exist yet – return None to signal "no filtering"
@@ -178,7 +178,7 @@ def _load_freigaben(base_url, headers):
                 gb_str = str(gb)[:10]
                 if gb_str < today:
                     continue  # expired
-            result[sc] = {"gueltig_bis": gb}
+            result[sc] = {"gueltig_bis": gb, "kurzfristig": bool(f.get("dl_kurzfristig"))}
         return result
     except Exception as e:
         logging.warning(f"[shop-articles] failed to load freigaben: {e}")
@@ -322,7 +322,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "angebot": ang is not None,
                 "angebot_preis": ang["preis"] if ang else None,
                 "rp": is_rp,
-                "discount": discount
+                "discount": discount,
+                "kurzfristig": freigaben_map.get(strichcode, {}).get("kurzfristig", False) if freigaben_map else False
             }
             articles.append(article)
 

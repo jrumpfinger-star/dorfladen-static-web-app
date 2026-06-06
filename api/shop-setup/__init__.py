@@ -298,6 +298,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         _add_string_attr(base_url, headers, e, "dl_bezeichnung", "Bezeichnung", 200)
         _add_string_attr(base_url, headers, e, "dl_edeka_nr", "EDEKA-Nr.", 50)
         _add_string_attr(base_url, headers, e, "dl_freigegeben_von", "Freigegeben von", 100)
+        _add_boolean_attr(base_url, headers, e, "dl_kurzfristig", "Kurzfristig verfügbar", False)
 
     return func.HttpResponse(
         json.dumps({"success": True, "results": results}, ensure_ascii=False, indent=2),
