@@ -1014,6 +1014,7 @@
     if(name==='sort' && !_sortLoaded) loadSortiment();
     if(name==='gallery' && !_galLoaded) loadGalleryAdmin();
     if(name==='settings' && !_settingsLoaded) loadFeatureFlags();
+    if(name==='settings' && !_kontaktLoaded) loadKontaktdaten();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
@@ -7908,6 +7909,7 @@
         })();
         break;
       case 'settingsSave':saveFeatureFlags();break;
+      case 'kontaktSave':saveKontaktdaten();break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
       case 'cfgRevertUnsaved':cfgRevertUnsaved();break;
@@ -8760,6 +8762,46 @@
       statusEl.textContent='\u274c Netzwerkfehler';
       toast('Fehler: '+e.message,'error');
     }).then(function(){if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Speichern';}});
+  }
+
+  // --- Kontaktdaten (shop_kontakt in Dataverse) ---
+  var _kontaktLoaded=false;
+  var KONTAKT_FIELDS=['name','slogan','adresse','telefon','telefon_link','email','reply_to','website','website_url','shop_url','logo_url','mailbox'];
+
+  function loadKontaktdaten(){
+    if(_kontaktLoaded) return;
+    _kontaktLoaded=true;
+    fetch('/api/cms-config').then(function(r){return r.json();}).then(function(res){
+      if(!res.success) return;
+      var raw=res.data.shop_kontakt;
+      if(!raw) return;
+      var ci=typeof raw==='string'?JSON.parse(raw):raw;
+      KONTAKT_FIELDS.forEach(function(f){
+        var el=document.getElementById('kontakt-'+f.replace(/_/g,'-'));
+        if(el && ci[f]) el.value=ci[f];
+      });
+    }).catch(function(){});
+  }
+
+  function saveKontaktdaten(){
+    var ci={};
+    KONTAKT_FIELDS.forEach(function(f){
+      var el=document.getElementById('kontakt-'+f.replace(/_/g,'-'));
+      if(el) ci[f]=el.value.trim();
+    });
+    var hint=document.getElementById('kontakt-saved-hint');
+    fetch('/api/cms-config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:'shop_kontakt',wert:ci})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res.success){
+        toast('Kontaktdaten gespeichert!');
+        if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
+      }else{
+        toast('Fehler: '+res.error,'error');
+      }
+    }).catch(function(e){toast('Fehler: '+e.message,'error');});
   }
 
   // === ANALYTICS DASHBOARD ===

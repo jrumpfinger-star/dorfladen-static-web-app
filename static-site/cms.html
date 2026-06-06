@@ -921,6 +921,84 @@ document.head.appendChild(msalScript);
       <button class="cms-btn cms-btn-primary" id="settings-save" data-action="settingsSave">&#128190; Speichern</button>
       <span id="settings-saved-hint" style="display:none;font-size:.82rem;color:#16a34a;font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
     </div>
+
+    <!-- Kontaktdaten / Laden-Stammdaten -->
+    <div class="cms-card" style="margin-top:18px">
+      <div class="cms-card-header" style="background:#059669!important">&#127978; Kontaktdaten &amp; Laden-Info</div>
+      <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
+        <p style="font-size:12px;color:#6b7280;margin:0">Diese Daten werden in E-Mails, im Footer und auf der Website verwendet.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Laden-Name</label>
+            <input type="text" id="kontakt-name" class="cms-input" placeholder="Dorfladen Oberornau">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Slogan</label>
+            <input type="text" id="kontakt-slogan" class="cms-input" placeholder="Ihr Nahversorger">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Adresse</label>
+          <input type="text" id="kontakt-adresse" class="cms-input" placeholder="Dorfplatz 1 &middot; 84419 Obertaufkirchen">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Telefon (Anzeige)</label>
+            <input type="text" id="kontakt-telefon" class="cms-input" placeholder="08082 / 622 99 91">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Telefon (Link)</label>
+            <input type="text" id="kontakt-telefon-link" class="cms-input" placeholder="+4980826229991">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">E-Mail (Kontakt)</label>
+            <input type="text" id="kontakt-email" class="cms-input" placeholder="bestellung@dorfladen-oberornau.de">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">E-Mail (Reply-To)</label>
+            <input type="text" id="kontakt-reply-to" class="cms-input" placeholder="bestellung@dorfladen-oberornau.de">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Website</label>
+            <input type="text" id="kontakt-website" class="cms-input" placeholder="www.dorfladen-oberornau.de">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Website URL</label>
+            <input type="text" id="kontakt-website-url" class="cms-input" placeholder="https://www.dorfladen-oberornau.de">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Shop URL</label>
+            <input type="text" id="kontakt-shop-url" class="cms-input" placeholder="https://www.dorfladen-oberornau.de/shop.html">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Logo URL</label>
+            <input type="text" id="kontakt-logo-url" class="cms-input" placeholder="https://www.dorfladen-oberornau.de/images/dorfladen-logo.png">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">M365 Postfach (Absender)</label>
+          <input type="text" id="kontakt-mailbox" class="cms-input" placeholder="info@dorfladenoberornau.onmicrosoft.com">
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="cms-btn cms-btn-primary" data-action="kontaktSave">&#128190; Kontaktdaten speichern</button>
+          <span id="kontakt-saved-hint" style="display:none;font-size:.82rem;color:#16a34a;font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Statistik / Analytics -->
