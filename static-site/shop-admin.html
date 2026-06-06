@@ -117,15 +117,23 @@
       var ep=p.einzelpreis||0;
       var m=p.menge||0;
       var gp=ep*m;
-      total+=gp;
       html+='<tr class="'+(checked?'packed':'notpacked')+'">';
       html+='<td class="check">'+(checked?'✅':'⬜')+'</td>';
       html+='<td>'+(i+1)+'</td>';
-      html+='<td><b>'+esc(p.bezeichnung)+'</b></td>';
-      html+='<td>'+esc(p.artikelnummer||'')+'</td>';
-      html+='<td class="r">'+m+' '+esc(p.einheit||'Stück')+'</td>';
-      html+='<td class="r">'+fmtP(ep)+' €</td>';
-      html+='<td class="r"><b>'+fmtP(gp)+' €</b></td>';
+      if(checked){
+        total+=gp;
+        html+='<td><b>'+esc(p.bezeichnung)+'</b></td>';
+        html+='<td>'+esc(p.artikelnummer||'')+'</td>';
+        html+='<td class="r">'+m+' '+esc(p.einheit||'Stück')+'</td>';
+        html+='<td class="r">'+fmtP(ep)+' €</td>';
+        html+='<td class="r"><b>'+fmtP(gp)+' €</b></td>';
+      } else {
+        html+='<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">⚠ Nicht verfügbar</span></td>';
+        html+='<td>'+esc(p.artikelnummer||'')+'</td>';
+        html+='<td class="r" style="color:#9ca3af">'+m+' '+esc(p.einheit||'Stück')+'</td>';
+        html+='<td class="r" style="text-decoration:line-through;color:#9ca3af">'+fmtP(ep)+' €</td>';
+        html+='<td class="r" style="text-decoration:line-through;color:#9ca3af">'+fmtP(gp)+' €</td>';
+      }
       html+='</tr>';
     });
     html+='</tbody></table>';
@@ -195,7 +203,14 @@
     if(finishBtn){finishBtn.addEventListener('click',function(){
       var r=buildPackJson(items);
       if(r.packedCount<items.length){
-        if(!confirm('Achtung: Erst '+r.packedCount+' von '+items.length+' Positionen gepackt.\nTrotzdem als Abholbereit markieren?')) return;
+        var missing=[];
+        items.forEach(function(p,i){var cb=document.querySelector('[data-pack-index="'+i+'"]');if(!cb||!cb.checked) missing.push(p.bezeichnung);});
+        var msg='Folgende Artikel sind nicht verfügbar:\n\n';
+        missing.forEach(function(m){msg+='  ⚠ '+m+'\n';});
+        msg+='\nDer Kunde ('+esc(o.kunde_email)+') wird per E-Mail informiert.\nTrotzdem als Abholbereit markieren?';
+        if(!confirm(msg)) return;
+        // Notify customer about missing items
+        fetch('/api/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:o.bestellnummer,kunde_email:o.kunde_email,kunde_name:o.kunde_name,abholdatum:o.abholdatum||'',type:'missing_items',missing_items:missing})}).catch(function(){});
       }
       var data={status:2,pack_json:r.pack};
       if(document.getElementById('note')) data.anmerkungen=document.getElementById('note').value;

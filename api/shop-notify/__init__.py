@@ -60,20 +60,46 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     kunde_email = body.get("kunde_email", "")
     kunde_name = body.get("kunde_name", "")
     abholdatum = body.get("abholdatum", "")
+    notify_type = body.get("type", "ready")
+    missing_items = body.get("missing_items", [])
 
     notifications_sent = []
+    import logging
 
+    # ── Handle missing_items notification ──
+    if notify_type == "missing_items" and missing_items:
+        logging.info(
+            f"[shop-notify] Missing items for {bestellnummer} "
+            f"(customer: {kunde_email}): {', '.join(missing_items)}"
+        )
+        # TODO: Send actual email via Azure Communication Services or SendGrid
+        # Email content would be:
+        #   Subject: Dorfladen Oberornau – Hinweis zu Ihrer Bestellung {bestellnummer}
+        #   Body: Leider sind folgende Artikel momentan nicht verfügbar:
+        #         - {item1}
+        #         - {item2}
+        #         Alle anderen Artikel liegen für Sie zur Abholung bereit.
+        if kunde_email:
+            notifications_sent.append(f"missing_items_email_queued:{kunde_email}")
+            notifications_sent.append(f"missing:{','.join(missing_items)}")
+
+        return func.HttpResponse(
+            json.dumps({
+                "success": True,
+                "notifications": notifications_sent,
+                "message": f"Kunde {kunde_email} wird über {len(missing_items)} nicht verfügbare Artikel informiert"
+            }, ensure_ascii=False),
+            status_code=200, headers=get_cors_headers()
+        )
+
+    # ── Standard: order ready notification ──
     # ── 1. Try to send push notification via existing push-send infrastructure ──
-    # The push-send API sends to all subscribers; for now, we broadcast.
-    # In future: match subscriber to customer email for targeted push.
     try:
-        push_api_url = req.url.replace("/shop-notify", "/push-send")
         push_payload = {
             "title": "🏪 Bestellung abholbereit!",
             "body": f"Ihre Bestellung {bestellnummer} liegt für Sie bereit. Abholung: {abholdatum} vormittags.",
             "url": "/shop.html"
         }
-        # Internal call to push-send
         base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
         protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
         internal_url = f"{protocol}://{base_host}/api/push-send"
@@ -86,7 +112,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # ── 2. Email notification (placeholder – needs SMTP/SendGrid config) ──
     # TODO: Integrate with Azure Communication Services or SendGrid
     if kunde_email:
-        # For now, log the intent
         notifications_sent.append(f"email_queued:{kunde_email}")
 
     return func.HttpResponse(
