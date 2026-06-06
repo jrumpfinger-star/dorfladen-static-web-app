@@ -171,8 +171,13 @@
 
     /* ── Order History ── */
     .shop-orders{padding:16px;max-width:800px;margin:0 auto}
-    .shop-order-card{background:#fff;border-radius:var(--shop-radius);border:1px solid var(--shop-border);margin-bottom:12px;overflow:hidden}
-    .shop-order-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f3f4f6}
+    .shop-order-card{background:#fff;border-radius:var(--shop-radius);border:1px solid #d1d5db;margin-bottom:20px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);border-left:5px solid #9ca3af}
+    .shop-order-card.s0{border-left-color:#f59e0b}
+    .shop-order-card.s1{border-left-color:#3b82f6}
+    .shop-order-card.s2{border-left-color:#10b981}
+    .shop-order-card.s3{border-left-color:#9ca3af}
+    .shop-order-card.s4{border-left-color:#ef4444}
+    .shop-order-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #e5e7eb;background:#f9fafb}
     .shop-order-nr{font-weight:700;font-size:14px}
     .shop-order-status{font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:.3px}
     .shop-order-status.s0{background:#fef3c7;color:#92400e}
@@ -1200,7 +1205,7 @@
         res.orders.forEach(function(o,idx){
           var canCancel=o.status<2&&(!o.abholdatum||todayStr<o.abholdatum);
           var open=idx===0;
-          html+='<div class="shop-order-card">';
+          html+='<div class="shop-order-card s'+o.status+'">';
           html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:0;cursor:pointer;text-align:left">';
           html+='<div class="shop-order-header"><span class="shop-order-nr">'+esc(o.bestellnummer)+'</span><span style="display:flex;align-items:center;gap:8px"><span style="font-weight:800;color:#2e7d4f">'+fmtP(o.gesamtsumme)+' EUR</span><span class="shop-order-status s'+o.status+'">'+esc(o.status_text)+'</span><span data-order-arrow="'+idx+'" style="font-size:16px;font-weight:900;color:#6b7280">'+(open?'v':'>')+'</span></span></div>';
           html+='<div style="padding:0 16px 12px;color:#6b7280;font-size:12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>Bestellt: '+esc(o.bestelldatum)+'</span><span>Abholung: '+esc(o.abholdatum)+'</span></div>';
