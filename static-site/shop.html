@@ -737,28 +737,50 @@
     return html;
   }
 
+  function _ci(d){return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px">'+d+'</svg>';}
+  var _bread=_ci('<path d="M5 12c0-4 3-8 7-8s7 4 7 8"/><rect x="4" y="12" width="16" height="6" rx="2"/><path d="M6 20h12"/>');
+  var _milk=_ci('<path d="M8 2h8l2 4H6l2-4z"/><rect x="6" y="6" width="12" height="14" rx="2"/><path d="M10 10v4"/><path d="M14 10v4"/>');
+  var _apple=_ci('<circle cx="12" cy="13" r="7"/><path d="M12 6V3"/><path d="M15 5c-1-1-2-1-3 0"/>');
+  var _leaf=_ci('<path d="M2 22l5-5"/><path d="M7 17c5 5 11-1 11-1s-6-6-11-1z"/>');
+  var _meat=_ci('<path d="M15 11c1.3-1.8 2-4 2-6 0 0-3.5 0-5.5 2S9 11 9 11"/><path d="M9 11a5 5 0 1 0 6 0"/>');
+  var _egg=_ci('<ellipse cx="12" cy="14" rx="6" ry="8"/>');
+  var _beer=_ci('<path d="M17 8h1a3 3 0 0 1 0 6h-1"/><path d="M5 8h12v9a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8z"/><path d="M7 2v4"/><path d="M11 2v2"/><path d="M15 2v4"/>');
+  var _wine=_ci('<path d="M8 22h8"/><path d="M12 11v11"/><path d="M7 2h10l-1 5c-.3 1.5-2 3-4 3s-3.7-1.5-4-3L7 2z"/>');
+  var _bottle=_ci('<rect x="7" y="4" width="10" height="16" rx="2"/><path d="M7 8h10"/><path d="M10 12h4"/>');
+  var _snow=_ci('<path d="M12 2v20"/><path d="M2 12h20"/><path d="m6 6 6 6-6 6"/><path d="m18 6-6 6 6 6"/>');
+  var _candy=_ci('<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4"/><path d="M8 8V6"/><path d="M16 8V6"/><path d="M3 14h18"/>');
+  var _cup=_ci('<path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 2v4"/><path d="M10 2v2"/><path d="M14 2v4"/>');
+  var _can=_ci('<rect x="6" y="4" width="12" height="16" rx="2"/><path d="M6 8h12"/><path d="M6 16h12"/>');
+  var _spray=_ci('<rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 9h4"/><path d="M12 7v4"/>');
+  var _baby=_ci('<circle cx="12" cy="8" r="5"/><path d="M12 13v9"/><path d="M9 18h6"/>');
+  var _bolt=_ci('<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>');
+  var _tool=_ci('<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>');
+  var _cone=_ci('<path d="M12 2L8 22h8L12 2z"/><circle cx="12" cy="7" r="3"/>');
+  var _box=_ci('<rect x="2" y="8" width="20" height="10" rx="2"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/>');
+  var _grid=_ci('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>');
+  var _cart=_ci('<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>');
   var CAT_ICONS={
-    'Backwaren':'🥨','Brot':'🍞','Molkereiprodukte':'🧀','Molkerei':'🧀','Mopro':'🧀',
-    'Obst und Gemuese':'🥬','Obst':'🍎','Gemuese':'🥕',
-    'Fleisch':'🥩','Wurst':'🥩','Metzgerei':'🥩',
-    'Eier':'🥚',
-    'Bier':'🍺','Getraenke':'🥤','Wein':'🍷','Spirituosen':'🥃','Saft':'🧃',
-    'Tiefkuehl':'❄️','Tiefkühl':'❄️',
-    'Suesswaren':'🍫','Snacks':'🍿','Suessigkeiten':'🍬',
-    'Kaffee':'☕','Tee':'🍵',
-    'Gewuerze':'🌶️','Gewürze':'🌶️',
-    'Konserven':'🥫','Vorrat':'🥫',
-    'Nudeln':'🍝','Reis':'🍚',
-    'Drogerie':'🧴','Haushalt':'🧹','Hygiene':'🧼',
-    'Diät':'🍼','Kindernahrung':'🍼','Baby':'🍼',
-    'Cafeteria':'☕',
-    'Eis':'🍦',
-    'Elektro':'🔌','Heimwerker':'🔧',
-    'Effektive Mikroorganismen':'🌿',
-    'Butter':'🧈','Magarine':'🧈',
-    'Sonstiges':'📦'
+    'Backwaren':_bread,'Brot':_bread,'Molkereiprodukte':_milk,'Molkerei':_milk,'Mopro':_milk,
+    'Obst und Gemuese':_apple,'Obst':_apple,'Gemuese':_leaf,
+    'Fleisch':_meat,'Wurst':_meat,'Metzgerei':_meat,
+    'Eier':_egg,
+    'Bier':_beer,'Getraenke':_bottle,'Wein':_wine,'Spirituosen':_wine,'Saft':_bottle,
+    'Tiefkuehl':_snow,'Tiefk\u00fchl':_snow,
+    'Suesswaren':_candy,'Snacks':_candy,'Suessigkeiten':_candy,
+    'Kaffee':_cup,'Tee':_cup,
+    'Gewuerze':_leaf,'Gew\u00fcrze':_leaf,
+    'Konserven':_can,'Vorrat':_can,
+    'Nudeln':_can,'Reis':_can,
+    'Drogerie':_spray,'Haushalt':_spray,'Hygiene':_spray,
+    'Di\u00e4t':_baby,'Kindernahrung':_baby,'Baby':_baby,
+    'Cafeteria':_cup,
+    'Eis':_cone,
+    'Elektro':_bolt,'Heimwerker':_tool,
+    'Effektive Mikroorganismen':_leaf,
+    'Butter':_box,'Magarine':_box,
+    'Sonstiges':_grid
   };
-  var DEFAULT_CAT_ICON='�';
+  var DEFAULT_CAT_ICON=_cart;
   var viewMode='categories'; // 'categories' or 'articles'
 
   function getCatIcon(cat){
