@@ -589,7 +589,7 @@
     var toLoad=[];
     articles.forEach(function(a){
       if(imgCache[a.strichcode]) return;
-      toLoad.push({artikelnummer:a.strichcode,edeka_nr:(a.edeka_nr||'').trim(),strichcode:a.strichcode});
+      toLoad.push({artikelnummer:(a.edeka_nr||a.strichcode||'').trim(),edeka_nr:(a.edeka_nr||'').trim(),strichcode:a.strichcode});
     });
     if(!toLoad.length) return;
     var batchSize=24;
@@ -597,12 +597,20 @@
       for(var i=0;i<toLoad.length;i+=batchSize){
         if(runId!==imgLoadId) return;
         var batch=toLoad.slice(i,i+batchSize);
+        // Build reverse map: API dl_artikelnummer → strichcode for DOM matching
+        var keyMap={};
+        batch.forEach(function(info){
+          keyMap[info.strichcode]=info.strichcode;
+          if(info.edeka_nr) keyMap[info.edeka_nr]=info.strichcode;
+          if(info.artikelnummer) keyMap[info.artikelnummer]=info.strichcode;
+        });
         try{
           var r=await fetch(API+'/werbebilder?sharepoint=1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({articles:batch})});
           var data=await r.json();
           (data||[]).forEach(function(row){
-            var sc=(row.dl_artikelnummer||'').trim();
-            if(!sc) return;
+            var respNr=(row.dl_artikelnummer||'').toString().trim();
+            if(!respNr) return;
+            var sc=keyMap[respNr]||respNr;
             var src='';
             if(row.dl_bild_base64){
               src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
