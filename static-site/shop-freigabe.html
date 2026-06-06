@@ -142,6 +142,7 @@
   var searchTerm='';
   var imgStrichcode='';
   var imgFileData=null;
+  var imgCache={};  // strichcode → base64/url
 
   function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
   function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';},2500);}
@@ -255,7 +256,10 @@
         var changed=!!pendingChanges[a.strichcode];
         html+='<tr class="art-row'+(en?' enabled':'')+'" data-sc="'+esc(a.strichcode)+'">';
         html+='<td><input type="checkbox" class="art-cb" data-sc="'+esc(a.strichcode)+'"'+(en?' checked':'')+'></td>';
-        html+='<td><div class="art-img-empty" data-img-sc="'+esc(a.strichcode)+'" title="Bild bearbeiten">📷</div></td>';
+        var imgHtml=imgCache[a.strichcode]
+        ?'<img class="art-img" data-img-sc="'+esc(a.strichcode)+'" src="'+imgCache[a.strichcode]+'" title="Bild bearbeiten">'
+        :'<div class="art-img-empty" data-img-sc="'+esc(a.strichcode)+'" id="fimg-'+esc(a.strichcode)+'" title="Bild bearbeiten">📷</div>';
+      html+='<td>'+imgHtml+'</td>';
         html+='<td><div class="art-name">'+esc(a.bezeichnung)+'</div><div class="art-code">'+esc(a.strichcode)+(a.edeka_nr?' · '+esc(a.edeka_nr):'')+'</div></td>';
         html+='<td class="art-price">'+Number(a.preis).toFixed(2)+' €</td>';
         html+='<td class="art-date"><input type="date" value="'+esc(gb)+'" data-date-sc="'+esc(a.strichcode)+'" title="Ablaufdatum"'+(en?'':' disabled')+'></td>';
@@ -269,6 +273,8 @@
     });
     wrap.innerHTML=html;
     bindEvents();
+    // Load images for visible articles
+    loadImages(articles);
   }
 
   // ── Bind events ──
@@ -338,8 +344,11 @@
       var tr=document.createElement('tr');
       tr.className='art-row'+(en?' enabled':'');
       tr.setAttribute('data-sc',a.strichcode);
+      var eImgHtml=imgCache[a.strichcode]
+        ?'<img class="art-img" data-img-sc="'+esc(a.strichcode)+'" src="'+imgCache[a.strichcode]+'" title="Bild bearbeiten">'
+        :'<div class="art-img-empty" data-img-sc="'+esc(a.strichcode)+'" id="fimg-'+esc(a.strichcode)+'" title="Bild bearbeiten">📷</div>';
       tr.innerHTML='<td><input type="checkbox" class="art-cb" data-sc="'+esc(a.strichcode)+'"'+(en?' checked':'')+'></td>'
-        +'<td><div class="art-img-empty" data-img-sc="'+esc(a.strichcode)+'" title="Bild bearbeiten">📷</div></td>'
+        +'<td>'+eImgHtml+'</td>'
         +'<td><div class="art-name">'+esc(a.bezeichnung)+'</div><div class="art-code">'+esc(a.strichcode)+(a.edeka_nr?' · '+esc(a.edeka_nr):'')+'</div></td>'
         +'<td class="art-price">'+Number(a.preis).toFixed(2)+' €</td>'
         +'<td class="art-date"><input type="date" value="'+esc(gb)+'" data-date-sc="'+esc(a.strichcode)+'" title="Ablaufdatum"'+(en?'':' disabled')+'></td>'
@@ -442,16 +451,15 @@
     document.getElementById('img-upload').style.display='none';
     document.getElementById('img-delete').style.display='none';
     document.getElementById('img-file').value='';
-    // Try to load existing image
+    // Show existing image from cache
     var prev=document.getElementById('img-preview');
-    prev.src='/images/barcodes/'+sc+'.jpg';
-    prev.style.display='block';
-    prev.onerror=function(){
-      prev.style.display='none';
-    };
-    prev.onload=function(){
+    if(imgCache[sc]){
+      prev.src=imgCache[sc];
+      prev.style.display='block';
       document.getElementById('img-delete').style.display='inline-flex';
-    };
+    } else {
+      prev.style.display='none';
+    }
     document.getElementById('img-overlay').classList.add('show');
   }
 
@@ -504,6 +512,53 @@
       toast('Fehler: '+e.message);
       document.getElementById('img-upload').textContent='Hochladen';
     });
+  }
+
+  // ── Load images from SharePoint via werbebilder API ──
+  var imgLoadId=0;
+  function loadImages(articles){
+    var runId=++imgLoadId;
+    var toLoad=[];
+    articles.forEach(function(a){
+      if(imgCache[a.strichcode]) return;
+      toLoad.push({artikelnummer:a.strichcode,edeka_nr:(a.edeka_nr||'').trim(),strichcode:a.strichcode});
+    });
+    if(!toLoad.length) return;
+    var batchSize=24;
+    (async function(){
+      for(var i=0;i<toLoad.length;i+=batchSize){
+        if(runId!==imgLoadId) return;
+        var batch=toLoad.slice(i,i+batchSize);
+        try{
+          var r=await fetch(API+'/werbebilder?sharepoint=1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({articles:batch})});
+          var data=await r.json();
+          (data||[]).forEach(function(row){
+            var sc=(row.dl_artikelnummer||'').trim();
+            if(!sc) return;
+            var src=row.dl_download_url||'';
+            if(!src&&row.dl_bild_base64){
+              src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
+            }
+            if(!src) return;
+            imgCache[sc]=src;
+            // Replace placeholder in DOM
+            var el=document.getElementById('fimg-'+sc);
+            if(el){
+              var img=document.createElement('img');
+              img.className='art-img';
+              img.src=src;
+              img.setAttribute('data-img-sc',sc);
+              img.title='Bild bearbeiten';
+              img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
+              el.replaceWith(img);
+            }
+          });
+        }catch(err){
+          console.warn('[Freigabe] Image batch error',err);
+        }
+        await new Promise(function(resolve){setTimeout(resolve,30);});
+      }
+    })();
   }
 
   // ── Event listeners ──
