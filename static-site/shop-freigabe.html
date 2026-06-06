@@ -244,6 +244,8 @@
       html+='<div class="wg-count">';
       if(g.enabledCount>0) html+='<span class="wg-badge badge-on">'+g.enabledCount+' aktiv</span>';
       html+='<span class="wg-badge badge-total">'+g.items.length+'</span>';
+      var allChecked=g.enabledCount===g.items.length;
+      html+='<input type="checkbox" class="wg-cb" data-wg-cb="'+esc(g.name)+'" title="Alle in '+esc(g.name)+'" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;margin-left:6px"'+(allChecked?' checked':'')+'>';
       html+='</div></div>';
       html+='<div class="wg-body"><table class="art-table"><thead><tr>';
       html+='<th style="width:30px"></th><th style="width:42px">Bild</th><th>Artikel</th><th>Preis</th><th style="width:120px">Gültig bis</th><th style="width:30px"></th>';
@@ -283,6 +285,40 @@
     document.querySelectorAll('.wg-head').forEach(function(head){
       head.addEventListener('click',function(){
         head.parentElement.classList.toggle('open');
+      });
+    });
+
+    // Warengruppe select/deselect all
+    document.querySelectorAll('.wg-cb').forEach(function(cb){
+      cb.addEventListener('click',function(e){e.stopPropagation();});
+      cb.addEventListener('change',function(e){
+        var wgName=cb.getAttribute('data-wg-cb');
+        var checked=cb.checked;
+        var wgEl=cb.closest('.wg');
+        if(!wgEl) return;
+        // Toggle all article checkboxes in this group
+        wgEl.querySelectorAll('.art-cb').forEach(function(artCb){
+          if(artCb.checked!==checked){
+            artCb.checked=checked;
+            var sc=artCb.getAttribute('data-sc');
+            toggleArticle(sc,checked);
+            var dateInput=document.querySelector('[data-date-sc="'+sc+'"]');
+            if(dateInput) dateInput.disabled=!checked;
+            var row=artCb.closest('.art-row');
+            if(row) row.classList.toggle('enabled',checked);
+          }
+        });
+        // Also toggle articles not yet in DOM (groups with >50 items)
+        allArticles.forEach(function(a){
+          if((a.warengruppe||'Sonstige')===wgName){
+            var currentlyEnabled=isArticleEnabled(a.strichcode);
+            if(currentlyEnabled!==checked){
+              toggleArticle(a.strichcode,checked);
+            }
+          }
+        });
+        updateStats();
+        updateSaveBtn();
       });
     });
 

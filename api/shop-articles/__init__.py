@@ -154,10 +154,19 @@ def _popularity_score(letzter_verkauf_str):
 
 def _load_freigaben(base_url, headers):
     """Load active Freigaben (enabled article strichcodes) from dl_shopfreigabes.
-    Returns a dict: strichcode → {gueltig_bis, ...}. Expired entries are excluded."""
+    Returns a dict: strichcode → {gueltig_bis, ...}. Expired entries are excluded.
+    Returns None only if the entity does not exist yet (table not created)."""
     try:
         url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis&$filter=dl_aktiv eq true"
-        items = _fetch_all_pages(url, headers)
+        r = requests.get(url, headers=headers, timeout=30)
+        if r.status_code == 404:
+            # Entity doesn't exist yet – return None to signal "no filtering"
+            logging.info("[shop-articles] dl_shopfreigabes entity not found, skipping filter")
+            return None
+        if r.status_code != 200:
+            logging.warning(f"[shop-articles] freigaben query returned {r.status_code}")
+            return None
+        items = r.json().get("value", [])
         today = datetime.utcnow().strftime("%Y-%m-%d")
         result = {}
         for f in items:
@@ -166,7 +175,6 @@ def _load_freigaben(base_url, headers):
                 continue
             gb = f.get("dl_gueltig_bis")
             if gb:
-                # DateOnly: "2025-12-31" or "2025-12-31T00:00:00Z"
                 gb_str = str(gb)[:10]
                 if gb_str < today:
                     continue  # expired
@@ -174,7 +182,7 @@ def _load_freigaben(base_url, headers):
         return result
     except Exception as e:
         logging.warning(f"[shop-articles] failed to load freigaben: {e}")
-        return {}
+        return None
 
 
 def _load_angebote(base_url, headers):
@@ -263,7 +271,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 continue
 
             # Only include articles that are explicitly enabled in dl_shopfreigabes
-            if freigaben_map and strichcode not in freigaben_map:
+            # None = table doesn't exist yet (show all as fallback)
+            # {} or {..} = table exists, filter by it
+            if freigaben_map is not None and strichcode not in freigaben_map:
                 continue
 
             # Server-side OData filter already limits to last 6 months
