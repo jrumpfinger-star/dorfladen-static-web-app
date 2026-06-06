@@ -13,7 +13,7 @@
     .wrap{max-width:1700px;margin:0 auto;padding:18px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.04);cursor:pointer;transition:transform .12s,border-color .12s}.stat:hover{transform:translateY(-1px);border-color:var(--green)}.stat.active{border-color:var(--green);box-shadow:0 0 0 2px #d7efe0,0 4px 18px rgba(0,0,0,.04)}.stat .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase}.stat .value{font-size:30px;font-weight:900;margin-top:5px}.stat.open .value{color:var(--warn)}.stat.ready .value{color:var(--blue)}.stat.sum .value{color:var(--green)}
     .panel{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:0 4px 18px rgba(0,0,0,.04);overflow:hidden}.toolbar{padding:14px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border);flex-wrap:wrap}.search{flex:1;min-width:220px;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:14px}.select{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff;font-weight:700}.content{display:grid;grid-template-columns:30% 35% 35%;min-height:680px}.list{border-right:1px solid var(--border);overflow:auto;max-height:calc(100vh - 245px)}.packcol{padding:18px;overflow:auto;max-height:calc(100vh - 245px);border-left:1px solid var(--border);background:#fbfdfc}.pack-title{font-size:18px;font-weight:900;margin-bottom:10px}.pack-summary{font-size:13px;color:var(--muted);margin-bottom:10px}.pack-progress{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:8px 0 12px}.pack-progress div{height:100%;background:var(--green)}
     .order{padding:12px 12px;border-bottom:1px solid var(--border);cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.order:hover{background:#f8fbf9}.order.active{background:#eaf6ef;border-left:4px solid var(--green);padding-left:12px}.order-title{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.order-meta{font-size:12px;color:var(--muted);margin-top:3px}.amount{font-weight:900;color:var(--green)}.status{display:inline-flex;align-items:center;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800}.s0{background:#fef3c7;color:#92400e}.s1{background:#dbeafe;color:#1d4ed8}.s2{background:#dcfce7;color:#166534}.s3{background:#e5e7eb;color:#374151}.s4{background:#fee2e2;color:#991b1b}
-    .detail{padding:18px;overflow:auto;max-height:calc(100vh - 245px)}.empty{height:100%;display:grid;place-items:center;color:var(--muted);text-align:center}.detail h2{margin:0 0 6px}.kv{display:grid;grid-template-columns:120px 1fr;gap:6px;font-size:13px;margin:12px 0}.kv b{color:var(--muted)}.items{margin-top:10px;display:flex;flex-direction:column;gap:10px}.item{display:grid;grid-template-columns:36px 1fr 72px 78px;gap:8px;padding:12px;border:1px solid var(--border);border-radius:12px;align-items:center;background:#fff;cursor:pointer}.item input{width:22px;height:22px;accent-color:var(--green)}.item.packed{background:#eefaf3;border-color:#9bd7b4}.item-name{font-weight:900}.item-code{font-size:11px;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.note{width:100%;min-height:80px;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:inherit}.toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:12px;padding:12px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none}.loading{padding:40px;text-align:center;color:var(--muted)}
+    .detail{padding:18px;overflow:auto;max-height:calc(100vh - 245px)}.empty{height:100%;display:grid;place-items:center;color:var(--muted);text-align:center}.detail h2{margin:0 0 6px}.kv{display:grid;grid-template-columns:120px 1fr;gap:6px;font-size:13px;margin:12px 0}.kv b{color:var(--muted)}.items{margin-top:10px;display:flex;flex-direction:column;gap:10px}.item{display:grid;grid-template-columns:36px 1fr auto auto;gap:8px;padding:12px;border:1px solid var(--border);border-radius:12px;align-items:center;background:#fff;cursor:pointer}.item input{width:22px;height:22px;accent-color:var(--green)}.item.packed{background:#eefaf3;border-color:#9bd7b4}.item-name{font-weight:900}.item-code{font-size:11px;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.note{width:100%;min-height:80px;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:inherit}.toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:12px;padding:12px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none}.loading{padding:40px;text-align:center;color:var(--muted)}
     @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}.content{grid-template-columns:1fr}.list{border-right:0;max-height:none}.detail,.packcol{max-height:none;border-left:0;border-top:1px solid var(--border)}}
   </style>
 </head>
@@ -63,6 +63,84 @@
   function updateStatActive(){document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.classList.toggle('active',el.getAttribute('data-stat-filter')===activeStatFilter);});}
   function renderOrders(){var el=document.getElementById('orders');var list=filteredOrders();updateStatActive();if(!list.length){el.innerHTML='<div class="loading">Keine Bestellungen gefunden.</div>';return;}el.innerHTML=list.map(function(o){return '<div class="order '+(selected&&selected.id===o.id?'active':'')+'" data-id="'+esc(o.id)+'"><div><div class="order-title">'+esc(o.bestellnummer)+' ? '+esc(o.kunde_name||o.kunde_email)+'</div><div class="order-meta">Abholung '+esc(o.abholdatum||'-')+' ? '+(o.positionen_count||0)+' Positionen</div></div><div style="text-align:right"><div class="amount">'+money(o.gesamtsumme)+'</div>'+statusBadge(o.status)+'</div></div>';}).join('');el.querySelectorAll('.order').forEach(function(row){row.addEventListener('click',function(){selectOrder(row.getAttribute('data-id'));});});}
   function selectOrder(id){var o=orders.find(function(x){return x.id===id;});if(!o)return;fetch(API+'?action=order&id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(res){selected=res.order||o;renderOrders();renderDetail();});}
+  function buildPackJson(items){
+    var cnt=0;
+    var packItems=items.map(function(p,i){
+      var checked=!!document.querySelector('[data-pack-index="'+i+'"]');
+      if(checked) checked=document.querySelector('[data-pack-index="'+i+'"]').checked;
+      if(checked) cnt++;
+      return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,gepackt_menge:checked?p.menge:0,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,scan_zeit:checked?new Date().toISOString():''};
+    });
+    return {pack:{gepackt_von:'shop-admin',gepackt_um:new Date().toISOString(),items:packItems,alle_gepackt:cnt===items.length},packedCount:cnt};
+  }
+  function printBeipackzettel(o,items){
+    var fmtP=function(v){return(+v).toFixed(2).replace('.',',');};
+    var now=new Date();
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Beipackzettel '+esc(o.bestellnummer)+'</title>';
+    html+='<style>';
+    html+='body{font-family:"Segoe UI",system-ui,sans-serif;font-size:13px;margin:0;padding:20px 28px;color:#1f2937}';
+    html+='.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1e3a2f;padding-bottom:12px;margin-bottom:14px}';
+    html+='.logo{font-size:20px;font-weight:900;color:#1e3a2f}.logo small{display:block;font-size:11px;font-weight:500;color:#6b7280}';
+    html+='.ordernr{font-size:16px;font-weight:800;text-align:right}.ordernr small{display:block;font-size:11px;color:#6b7280;font-weight:500}';
+    html+='.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12px;margin-bottom:16px}.info b{color:#6b7280}';
+    html+='table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}';
+    html+='th{background:#f3f4f6;text-align:left;padding:7px 8px;font-weight:700;border-bottom:2px solid #d1d5db;font-size:11px;text-transform:uppercase;letter-spacing:.3px}';
+    html+='th.r,td.r{text-align:right}';
+    html+='td{padding:7px 8px;border-bottom:1px solid #e5e7eb}';
+    html+='tr.packed td{background:#f0fdf4}tr.notpacked td{background:#fef2f2}';
+    html+='.check{font-size:15px;width:24px;text-align:center}';
+    html+='.total{text-align:right;font-size:14px;font-weight:800;padding:8px 0;border-top:2px solid #1e3a2f}';
+    html+='.footer{margin-top:20px;padding-top:12px;border-top:1px solid #d1d5db;font-size:11px;color:#6b7280}';
+    html+='.footer b{color:#1f2937}';
+    html+='.note{background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:8px 10px;font-size:11px;color:#92400e;margin-bottom:12px}';
+    html+='@media print{body{padding:12px 16px}@page{margin:12mm 10mm}}';
+    html+='</style></head><body>';
+    html+='<div class="header"><div class="logo">Dorfladen Oberornau<small>Online-Bestellung · Beipackzettel</small></div>';
+    html+='<div class="ordernr">'+esc(o.bestellnummer)+'<small>Gedruckt: '+now.toLocaleDateString('de-DE')+' '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+'</small></div></div>';
+    html+='<div class="info">';
+    html+='<div><b>Kunde:</b> '+esc(o.kunde_name)+'</div>';
+    html+='<div><b>E-Mail:</b> '+esc(o.kunde_email)+'</div>';
+    html+='<div><b>Bestellt am:</b> '+esc(o.bestelldatum||'-')+'</div>';
+    html+='<div><b>Abholung:</b> '+esc(o.abholdatum||'-')+'</div>';
+    html+='</div>';
+    if(o.anmerkungen){html+='<div class="note"><b>Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';}
+    html+='<table><thead><tr><th class="check"></th><th>Pos</th><th>Artikel</th><th>Art.-Nr.</th><th class="r">Menge</th><th class="r">Einzelpreis</th><th class="r">Gesamt</th></tr></thead><tbody>';
+    var total=0;
+    var packItems=(o.pack_data&&o.pack_data.items)||[];
+    items.forEach(function(p,i){
+      var pk=packItems.find(function(x){return String(x.artikelnummer||x.strichcode||x.bezeichnung||'')===String(p.artikelnummer||p.strichcode||p.bezeichnung||'');})||{};
+      var checked=pk.gepackt;
+      // Also check current checkboxes if available
+      var cb=document.querySelector('[data-pack-index="'+i+'"]');
+      if(cb) checked=cb.checked;
+      var ep=p.einzelpreis||0;
+      var m=p.menge||0;
+      var gp=ep*m;
+      total+=gp;
+      html+='<tr class="'+(checked?'packed':'notpacked')+'">';
+      html+='<td class="check">'+(checked?'✅':'⬜')+'</td>';
+      html+='<td>'+(i+1)+'</td>';
+      html+='<td><b>'+esc(p.bezeichnung)+'</b></td>';
+      html+='<td>'+esc(p.artikelnummer||'')+'</td>';
+      html+='<td class="r">'+m+' '+esc(p.einheit||'Stück')+'</td>';
+      html+='<td class="r">'+fmtP(ep)+' €</td>';
+      html+='<td class="r"><b>'+fmtP(gp)+' €</b></td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    html+='<div class="total">Gesamtbetrag: '+fmtP(total)+' €</div>';
+    html+='<div class="footer">';
+    html+='<b>Abbuchung / Zahlung:</b><br>';
+    html+='Der Betrag von <b>'+fmtP(total)+' €</b> wird bei Abholung im Dorfladen Oberornau verrechnet.<br>';
+    html+='Zahlungsarten: Bar, EC-Karte, Kreditkarte<br><br>';
+    html+='<b>Dorfladen Oberornau</b> · Dorfstraße · 84416 Taufkirchen (Vils)<br>';
+    html+='Bei Fragen: dorfladen@oberornau.de';
+    html+='</div>';
+    html+='</body></html>';
+    var w=window.open('','_blank','width=700,height=900');
+    w.document.write(html);w.document.close();
+    setTimeout(function(){w.print();},500);
+  }
   function renderDetail(){
     var o=selected;if(!o)return;
     var items=o.positionen||[];
@@ -71,31 +149,51 @@
       var key=String(p.artikelnummer||p.strichcode||p.bezeichnung||'');
       return packItems.find(function(x){return String(x.artikelnummer||x.strichcode||x.bezeichnung||'')===key;})||{};
     }
-    document.getElementById('detail').innerHTML='<h2>'+esc(o.bestellnummer)+'</h2><div>'+statusBadge(o.status)+' <b style="margin-left:8px">'+money(o.gesamtsumme)+'</b></div><div class="kv"><b>Kunde</b><span>'+esc(o.kunde_name)+'<br>'+esc(o.kunde_email)+'</span><b>Bestellt</b><span>'+esc(o.bestelldatum||'-')+'</span><b>Abholung</b><span>'+esc(o.abholdatum||'-')+'</span><b>Anmerkung</b><span>'+esc(o.anmerkungen||'-')+'</span></div><div class="actions"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small primary" data-status="2">Abholbereit</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="save-pack">Packdaten speichern</button><a class="btn small" href="pack.html?id='+encodeURIComponent(o.id)+'" target="_blank">Packansicht oeffnen</a></div><textarea class="note" id="note">'+esc(o.anmerkungen||'')+'</textarea>';
+    var isEditable=o.status<3; // editable until "Abgeholt"
+    document.getElementById('detail').innerHTML='<h2>'+esc(o.bestellnummer)+'</h2><div>'+statusBadge(o.status)+' <b style="margin-left:8px">'+money(o.gesamtsumme)+'</b></div><div class="kv"><b>Kunde</b><span>'+esc(o.kunde_name)+'<br>'+esc(o.kunde_email)+'</span><b>Bestellt</b><span>'+esc(o.bestelldatum||'-')+'</span><b>Abholung</b><span>'+esc(o.abholdatum||'-')+'</span><b>Anmerkung</b><span>'+esc(o.anmerkungen||'-')+'</span></div>'+(isEditable?'<div class="actions"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button></div><textarea class="note" id="note">'+esc(o.anmerkungen||'')+'</textarea>':'<div class="actions" style="margin-top:12px"><button class="btn small" id="print-slip">🖨 Beipackzettel drucken</button></div>');
     var packedCount=items.reduce(function(sum,p){return sum+(packFor(p).gepackt?1:0);},0);
     var pct=items.length?Math.round(packedCount/items.length*100):0;
-    document.getElementById('pack').innerHTML='<div class="pack-title">Packliste</div><div class="pack-summary">'+packedCount+' von '+items.length+' Positionen gepackt</div><div class="pack-progress"><div style="width:'+pct+'%"></div></div><div class="items">'+items.map(function(p,i){var pk=packFor(p);var checked=pk.gepackt?' checked':'';var cls=pk.gepackt?' packed':'';return '<label class="item'+cls+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(p.artikelnummer||p.strichcode||'')+'</div></div><div>'+esc(p.menge)+' '+esc(p.einheit||'')+'</div><div style="text-align:right">'+money(p.positionspreis||((p.einzelpreis||0)*(p.menge||0)))+'</div></label>';}).join('')+'</div>';
+    // Pack list with prices
+    var packHtml='<div class="pack-title">Packliste</div><div class="pack-summary">'+packedCount+' von '+items.length+' Positionen gepackt</div><div class="pack-progress"><div style="width:'+pct+'%"></div></div>';
+    packHtml+='<div class="items">';
+    var summe=0;
+    items.forEach(function(p,i){
+      var pk=packFor(p);var checked=pk.gepackt?' checked':'';var cls=pk.gepackt?' packed':'';
+      var ep=p.einzelpreis||0;var gp=ep*(p.menge||0);summe+=gp;
+      var disabled=isEditable?'':' disabled';
+      packHtml+='<label class="item'+cls+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+disabled+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(p.artikelnummer||p.strichcode||'')+'</div></div><div style="text-align:right;white-space:nowrap">'+esc(p.menge)+' '+esc(p.einheit||'Stk')+'<br><span style="font-size:11px;color:#6b7f72">× '+money(ep)+'</span></div><div style="text-align:right;font-weight:800;white-space:nowrap">'+money(gp)+'</div></label>';
+    });
+    packHtml+='</div>';
+    packHtml+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:8px">Summe: '+money(summe)+'</div>';
+    if(isEditable){
+      packHtml+='<div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" id="finish-pack" style="flex:1;padding:11px">✅ Fertig – Abholbereit</button><button class="btn" id="print-slip" style="padding:11px">🖨 Drucken</button></div>';
+    }
+    document.getElementById('pack').innerHTML=packHtml;
+    // Wire status buttons
     document.querySelectorAll('[data-status]').forEach(function(b){b.addEventListener('click',function(){
       var newStatus=Number(b.getAttribute('data-status'));
-      if(newStatus===2&&packedCount<items.length){
-        if(!confirm('Achtung: Erst '+packedCount+' von '+items.length+' Positionen gepackt.\nTrotzdem als Abholbereit markieren?')) return;
-      }
       if(newStatus===4&&!confirm('Bestellung wirklich stornieren?')) return;
-      updateOrder({status:newStatus,anmerkungen:document.getElementById('note').value});
+      if(newStatus===3&&packedCount<items.length){
+        if(!confirm('Achtung: Erst '+packedCount+' von '+items.length+' Positionen gepackt.\nTrotzdem als Abgeholt markieren?')) return;
+      }
+      var data={status:newStatus};
+      if(document.getElementById('note')) data.anmerkungen=document.getElementById('note').value;
+      updateOrder(data);
     });});
-    document.getElementById('save-pack').addEventListener('click',function(){
-      var packedCount=0;
-      var pack={gepackt_von:'shop-admin',gepackt_um:new Date().toISOString(),items:items.map(function(p,i){
-        var checked=!!document.querySelector('[data-pack-index="'+i+'"]').checked;
-        if(checked)packedCount++;
-        return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,gepackt_menge:checked?p.menge:0,menge:p.menge,einheit:p.einheit||'',scan_zeit:checked?new Date().toISOString():''};
-      })};
-      var nextStatus=o.status;
-      if(packedCount===0&&o.status===2) nextStatus=1;
-      else if(packedCount>0&&packedCount<items.length&&o.status===0) nextStatus=1;
-      else if(items.length&&packedCount===items.length) nextStatus=2;
-      updateOrder({status:nextStatus,pack_json:pack,anmerkungen:document.getElementById('note').value});
-    });
+    // Wire Fertig button
+    var finishBtn=document.getElementById('finish-pack');
+    if(finishBtn){finishBtn.addEventListener('click',function(){
+      var r=buildPackJson(items);
+      if(r.packedCount<items.length){
+        if(!confirm('Achtung: Erst '+r.packedCount+' von '+items.length+' Positionen gepackt.\nTrotzdem als Abholbereit markieren?')) return;
+      }
+      var data={status:2,pack_json:r.pack};
+      if(document.getElementById('note')) data.anmerkungen=document.getElementById('note').value;
+      updateOrder(data);
+    });}
+    // Wire print button
+    var printBtn=document.getElementById('print-slip');
+    if(printBtn){printBtn.addEventListener('click',function(){printBeipackzettel(o,items);});}
   }
   function updateOrder(data){data.id=selected.id;fetch(API,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json();}).then(function(res){if(!res.success)throw new Error(res.error||'Fehler');toast('Gespeichert');loadOrders();selectOrder(selected.id);}).catch(function(e){toast('Fehler: '+e.message);});}
   document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.addEventListener('click',function(){activeStatFilter=el.getAttribute('data-stat-filter');document.getElementById('status-filter').value='all';renderOrders();});});document.getElementById('refresh-btn').addEventListener('click',loadDashboard);document.getElementById('load-orders').addEventListener('click',loadOrders);document.getElementById('search').addEventListener('keydown',function(e){if(e.key==='Enter')loadOrders();});document.getElementById('status-filter').addEventListener('change',loadOrders);
