@@ -213,7 +213,7 @@
             preis:(a.dl_preis!=null?a.dl_preis:a.price),
             statt_preis:(a.dl_statt_preis!=null?a.dl_statt_preis:a.old_price),
             artikelnummer:a.dl_artikelnummer||a.artikelnummer||'',
-            bild_data:a.dl_bild_base64||a.bild_data||'',
+            bild_data:'',  // images loaded fresh from SharePoint on edit
             dl_werbebildid:a.dl_werbebildid||'',
             aktion_titel:a.dl_aktion_titel||a.aktion_titel||'',
             aktion_id:a.dl_aktion_id||a.aktion_id||'',
@@ -397,7 +397,7 @@
         rows.forEach(function(row){
           var bildInp=row.querySelector('[data-f="bild_data"]');
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
-          if(bildInp && !bildInp.value && nrInp && nrInp.value.trim()){
+          if(bildInp && nrInp && nrInp.value.trim()){
             var rowId=row.id.replace('cms-ar-','');
             cmsLoadBildSharePoint(parseInt(rowId));
           }
@@ -7663,7 +7663,7 @@
             preis:a.preis!=null?a.preis:(a.price!=null?a.price:(a.dl_preis||0)),
             statt_preis:a.statt_preis!=null?a.statt_preis:(a.old_price!=null?a.old_price:(a.dl_statt_preis||0)),
             artikelnummer:a.artikelnummer||a.dl_artikelnummer||'',
-            bild_data:a.bild_data||a.dl_bild_base64||a.dl_download_url||'',
+            bild_data:'',  // images loaded fresh from SharePoint
             dl_werbebildid:a.dl_werbebildid||'',
             aktion_titel:a.aktion_titel||a.dl_aktion_titel||'',
             aktion_id:a.aktion_id||a.dl_aktion_id||'',
