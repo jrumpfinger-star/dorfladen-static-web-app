@@ -952,13 +952,24 @@
     }
     document.getElementById('img-popup-img').src=src;
     document.getElementById('img-popup-name').textContent=a?a.bezeichnung:artnr;
-    document.getElementById('img-popup-price').textContent=a?(Number(a.vk).toFixed(2)+' \u20AC'+(a.menge?' / '+a.menge:'')):'';
+    var priceHtml='';
+    if(a){
+      if(a.angebot&&a.angebot_preis){
+        var ersparnis=(Number(a.vk)-Number(a.angebot_preis)).toFixed(2);
+        priceHtml=fmtP(a.angebot_preis)+' €';
+        if(a.menge) priceHtml+=' / '+esc(a.menge);
+        priceHtml+='<div style="margin-top:4px"><span style="text-decoration:line-through;color:#6b7280;font-size:14px;font-weight:400">UVP '+fmtP(a.vk)+' €</span> <span style="color:#dc2626;font-size:13px;font-weight:700">– '+ersparnis+' € gespart</span></div>';
+      } else {
+        priceHtml=fmtP(a.vk)+' €';
+        if(a.menge) priceHtml+=' / '+esc(a.menge);
+      }
+    }
+    document.getElementById('img-popup-price').innerHTML=priceHtml;
     var meta='';
     if(a){
       if(a.warengruppe) meta+='Warengruppe: '+a.warengruppe+'<br>';
-      if(a.strichcode) meta+='Strichcode: '+a.strichcode+'<br>';
-      if(a.edeka_nr) meta+='EDEKA-Nr.: '+a.edeka_nr+'<br>';
-      if(a.einheit) meta+='Einheit: '+a.einheit;
+      if(a.strichcode) meta+='Artikel: '+a.strichcode;
+      if(a.edeka_nr) meta+=' · '+a.edeka_nr;
     }
     document.getElementById('img-popup-meta').innerHTML=meta;
     overlay.classList.add('show');
