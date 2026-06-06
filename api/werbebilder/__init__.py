@@ -237,17 +237,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         })
             include_sp = (req.params.get("sharepoint") or "").lower() in ("1", "true", "yes")
             if include_sp:
-                found_keys = {x["dl_artikelnummer"] for x in result if x.get("dl_bild_base64")}
-                missing = [a for a in article_infos if (a.get("artikelnummer") or a.get("strichcode")) and (a.get("artikelnummer","") not in found_keys)]
-                if missing:
-                    sp_rows = _load_sharepoint_urls(missing)
-                    result.extend(sp_rows)
-                    # Replace stale Dataverse base64 with fresh SharePoint base64 for same key
-                    sp_map = {r["dl_artikelnummer"]: r for r in sp_rows if r.get("dl_bild_base64")}
+                # Always load from SharePoint – ignore Dataverse results
+                sp_rows = _load_sharepoint_urls(article_infos)
+                if sp_rows:
+                    # Build map keyed by dl_artikelnummer for SP results
+                    sp_map = {r["dl_artikelnummer"]: r for r in sp_rows}
+                    # Replace Dataverse rows with SP data, keep SP-only rows
                     for row in result:
                         key = row.get("dl_artikelnummer", "")
-                        if key in sp_map and row is not sp_map[key]:
-                            row["dl_bild_base64"] = sp_map[key]["dl_bild_base64"]
+                        if key in sp_map:
+                            row["dl_bild_base64"] = sp_map[key].get("dl_bild_base64", "")
+                            row["dl_download_url"] = sp_map[key].get("dl_download_url", "")
+                            del sp_map[key]
+                    # Add SP rows that had no Dataverse match
+                    result.extend(sp_map.values())
             return func.HttpResponse(body=json.dumps(result), status_code=200, headers=get_cors_headers())
 
 
