@@ -293,8 +293,14 @@
     });
     wrap.innerHTML=html;
     bindEvents();
-    // Load images for visible articles
-    loadImages(articles);
+    // Load images only for articles actually rendered in the DOM
+    var rendered=[];
+    document.querySelectorAll('tr[data-sc]').forEach(function(tr){
+      var sc=tr.getAttribute('data-sc');
+      var a=articles.find(function(x){return x.strichcode===sc;});
+      if(a) rendered.push(a);
+    });
+    loadImages(rendered);
   }
 
   // ── Bind events ──
