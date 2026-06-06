@@ -537,49 +537,81 @@
     imgStrichcode='';imgFileData=null;
   }
 
+  function compressImage(base64Str,maxWidth,maxHeight,callback){
+    if(!base64Str){callback('');return;}
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height;
+      var scale=Math.min(maxWidth/w,maxHeight/h,1);
+      var canvas=document.createElement('canvas');
+      canvas.width=Math.round(w*scale);
+      canvas.height=Math.round(h*scale);
+      var ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      var isPng=base64Str.indexOf('data:image/png')===0;
+      var compressed=isPng?canvas.toDataURL('image/png'):canvas.toDataURL('image/jpeg',0.75);
+      callback(compressed);
+    };
+    img.onerror=function(){callback(base64Str);};
+    img.src=base64Str;
+  }
+
   function handleImageFile(file){
     if(!file||!file.type.startsWith('image/')) return;
     var reader=new FileReader();
     reader.onload=function(e){
-      imgFileData=e.target.result;
-      var prev=document.getElementById('img-preview');
-      prev.src=imgFileData;
-      prev.style.display='block';
-      document.getElementById('img-upload').style.display='inline-flex';
+      compressImage(e.target.result,500,500,function(compressedB64){
+        imgFileData=compressedB64;
+        var prev=document.getElementById('img-preview');
+        prev.src=imgFileData;
+        prev.style.display='block';
+        document.getElementById('img-upload').style.display='inline-flex';
+      });
     };
     reader.readAsDataURL(file);
   }
 
   function uploadImage(){
     if(!imgFileData||!imgStrichcode) return;
-    document.getElementById('img-upload').textContent='Lädt…';
+    var sc=imgStrichcode;
+    var data=imgFileData;
+    var btn=document.getElementById('img-upload');
+    btn.disabled=true;
+    btn.textContent='Lädt…';
     // Upload to werbebilder API (stores in SharePoint StrichcodeBilder folder)
     fetch(API+'/werbebilder',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({dl_artikelnummer:imgStrichcode,dl_bild_base64:imgFileData})
-    }).then(function(r){return r.json();}).then(function(res){
+      body:JSON.stringify({dl_artikelnummer:sc,dl_bild_base64:data})
+    }).then(function(r){
+      return r.json().then(function(res){return {ok:r.ok,status:r.status,res:res};});
+    }).then(function(out){
+      var res=out.res||{};
       if(res.success){
+        imgCache[sc]=data;
+        imgRequested[sc]=true;
         toast('Bild gespeichert');
         closeImageDialog();
         // Update the thumbnail in the list
-        var imgEl=document.querySelector('[data-img-sc="'+imgStrichcode+'"]');
+        var imgEl=document.querySelector('[data-img-sc="'+sc+'"]')||document.getElementById('fimg-'+sc);
         if(imgEl){
           var img=document.createElement('img');
           img.className='art-img';
-          img.src=imgFileData;
-          img.setAttribute('data-img-sc',imgStrichcode);
+          img.src=data;
+          img.setAttribute('data-img-sc',sc);
           img.title='Bild bearbeiten';
-          img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(imgStrichcode);});
+          img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
           imgEl.replaceWith(img);
         }
       } else {
-        toast('Fehler: '+(res.error||'Unbekannt'));
+        toast('Fehler: '+(res.error||('HTTP '+out.status)));
       }
-      document.getElementById('img-upload').textContent='Hochladen';
+      btn.disabled=false;
+      btn.textContent='Hochladen';
     }).catch(function(e){
       toast('Fehler: '+e.message);
-      document.getElementById('img-upload').textContent='Hochladen';
+      btn.disabled=false;
+      btn.textContent='Hochladen';
     });
   }
 
@@ -595,6 +627,7 @@
     toLoad.forEach(function(info){imgRequested[info.strichcode]=true;});
     ShopImages.loadBatch(toLoad,{
       apiBase:API,
+      batchSize:20,
       cacheKey:function(info){return info.strichcode;},
       onImage:function(sc,src){
         imgCache[sc]=src;

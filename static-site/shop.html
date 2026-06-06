@@ -1033,6 +1033,7 @@
     if(!infos.length) return;
     ShopImages.loadBatch(infos,{
       apiBase:API,
+      batchSize:20,
       cacheKey:function(info){return info.artikelnummer;},
       runCheck:function(){return runId===imageLoadRun;},
       onImage:function(key,src){if(runId===imageLoadRun) setArticleImage(key,src);}
