@@ -622,7 +622,7 @@
     var toLoad=[];
     articles.forEach(function(a){
       if(imgCache[a.strichcode]) return;
-      toLoad.push({artikelnummer:(a.edeka_nr||a.strichcode||'').trim(),edeka_nr:(a.edeka_nr||'').trim(),strichcode:a.strichcode});
+      toLoad.push({artikelnummer:a.strichcode,edeka_nr:'',strichcode:a.strichcode});
     });
     if(!toLoad.length) return;
     ShopImages.loadBatch(toLoad,{
