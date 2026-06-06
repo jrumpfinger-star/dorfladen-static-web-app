@@ -2737,10 +2737,14 @@
     document.getElementById('cms-modal-wrap').innerHTML='';
   };
   // Backdrop click closes modal (unless Kachel-Editor is open — it has save/discard semantics)
-  // Also skip if an autocomplete dropdown is currently open (user may be clicking an item)
+  // Also skip if an autocomplete dropdown is currently open or was just closed (user may be clicking an item)
+  var _ddWasOpen=false;
+  document.getElementById('cms-modal-wrap').addEventListener('mousedown',function(e){
+    _ddWasOpen=!!document.querySelector('.cms-art-dd.open');
+  },true);
   document.getElementById('cms-modal-wrap').addEventListener('click',function(e){
     if(e.target.classList.contains('cms-modal-bg')&&!document.getElementById('pce-close')){
-      if(document.querySelector('.cms-art-dd.open')) return;
+      if(_ddWasOpen||document.querySelector('.cms-art-dd.open')) return;
       cmsCloseModal();
     }
   });
