@@ -250,7 +250,7 @@
 
     var html='';
     groups.forEach(function(g){
-      var isOpen=g.enabledCount>0||searchTerm.length>0;
+      var isOpen=searchTerm.length>0;
       // Limit visible items to keep DOM small; show expand button for large groups
       var maxVisible=50;
       var hasMore=g.items.length>maxVisible;
