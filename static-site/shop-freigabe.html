@@ -429,7 +429,7 @@
       tbody.appendChild(tr);
     });
     bindEvents();
-    loadImages(articles.slice(existing));
+    loadImagesAppend(articles.slice(existing));
   }
 
   // ── Toggle / update ──
@@ -624,6 +624,32 @@
 
   // ── Load images from SharePoint via werbebilder API ──
   var imgLoadRun=0;
+  function loadImagesAppend(articles){
+    var toLoad=[];
+    articles.forEach(function(a){
+      if(imgCache[a.strichcode]) return;
+      toLoad.push({artikelnummer:a.strichcode,edeka_nr:'',strichcode:a.strichcode});
+    });
+    if(!toLoad.length) return;
+    ShopImages.loadBatch(toLoad,{
+      apiBase:API,
+      batchSize:20,
+      cacheKey:function(info){return info.strichcode;},
+      onImage:function(sc,src){
+        imgCache[sc]=src;
+        var el=document.getElementById('fimg-'+sc);
+        if(el){
+          var img=document.createElement('img');
+          img.className='art-img';
+          img.src=src;
+          img.setAttribute('data-img-sc',sc);
+          img.title='Bild bearbeiten';
+          img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
+          el.replaceWith(img);
+        }
+      }
+    });
+  }
   function loadImages(articles){
     var runId=++imgLoadRun;
     var toLoad=[];
