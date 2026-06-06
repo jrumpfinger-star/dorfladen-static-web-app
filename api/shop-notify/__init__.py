@@ -15,7 +15,12 @@ import requests
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
-SENDER_EMAIL = os.environ.get("SHOP_SENDER_EMAIL", "dorfladen@oberornau.de")
+# Actual M365 mailbox used for sending via Graph API
+SENDER_MAILBOX = os.environ.get("SHOP_SENDER_MAILBOX", "info@dorfladenoberornau.onmicrosoft.com")
+# Friendly display name shown as "From" in the customer's inbox
+SENDER_DISPLAY_NAME = "Dorfladen Oberornau"
+# Reply-To address – customer replies go here
+REPLY_TO_EMAIL = os.environ.get("SHOP_REPLY_TO", "bestellung@dorfladen-oberornau.de")
 
 
 def get_token():
@@ -77,14 +82,26 @@ def send_email(to_email, to_name, subject, body_text):
                     f'color:#1f2937;line-height:1.6;max-width:600px">{body_html}</div>'
                 )
             },
+            "from": {
+                "emailAddress": {
+                    "address": SENDER_MAILBOX,
+                    "name": SENDER_DISPLAY_NAME
+                }
+            },
             "toRecipients": [{
                 "emailAddress": {"address": to_email, "name": to_name or to_email}
+            }],
+            "replyTo": [{
+                "emailAddress": {
+                    "address": REPLY_TO_EMAIL,
+                    "name": SENDER_DISPLAY_NAME
+                }
             }]
         },
         "saveToSentItems": "true"
     }
 
-    url = f"https://graph.microsoft.com/v1.0/users/{SENDER_EMAIL}/sendMail"
+    url = f"https://graph.microsoft.com/v1.0/users/{SENDER_MAILBOX}/sendMail"
     r = requests.post(
         url,
         json=mail_payload,
