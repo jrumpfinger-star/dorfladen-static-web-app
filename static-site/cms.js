@@ -3260,25 +3260,27 @@
     var empty = document.getElementById('cms-news-empty');
     if(_newsItems.length===0){container.innerHTML='';empty.style.display='';return;}
     empty.style.display='none';
-    var html='<table class="cms-news-tbl"><thead><tr><th style="width:76px">Datum</th><th>Titel</th><th style="width:56px">Status</th><th style="width:80px">Aktiv bis</th><th style="width:60px">Laufband</th><th style="width:140px;text-align:right">Aktionen</th></tr></thead><tbody>';
+    var isMob = window.innerWidth<768;
+    var html='<div style="overflow-x:auto"><table class="cms-news-tbl"><thead><tr><th style="width:76px">Datum</th><th>Titel</th><th style="width:56px">Status</th><th style="width:80px">Aktiv bis</th><th style="width:60px">Laufband</th><th class="cms-news-act-col" style="width:140px;text-align:right">Aktionen</th></tr></thead><tbody>';
     _newsItems.forEach(function(n){
       var isActive = n.status===101001;
       var isLaufband = !!n.dl_laufband;
       var dateStr = n.datum?new Date(n.datum).toLocaleDateString('de-DE',{day:'numeric',month:'numeric',year:'2-digit'}):'–';
       var desc = n.beschreibung||n.dl_kurztext||'';
-      html+='<tr style="opacity:1">'
+      html+='<tr style="opacity:1'+(isMob?';cursor:pointer':'')+'"'+(isMob?' data-action="editNews" data-id="'+n.id+'"':'')+'>'
         +'<td class="cms-news-date">'+dateStr+'</td>'
         +'<td><div class="cms-news-title">'+esc(n.titel)+'</div>'+(desc?'<div class="cms-news-desc">'+esc(desc.length>80?desc.substring(0,80)+'…':desc)+'</div>':'')+'</td>'
         +'<td><span class="cms-news-badge'+(isActive?' active':'')+'">'+(isActive?'Aktiv':'Inaktiv')+'</span></td>'
         +'<td style="font-size:11px;color:#6b7280">'+(n.dl_aktiv_bis?new Date(n.dl_aktiv_bis).toLocaleDateString('de-DE',{day:'numeric',month:'numeric',year:'2-digit'}):'∞')+'</td>'
         +'<td style="text-align:center">'+(isLaufband?'<span class="cms-news-badge active" style="background:#dbeafe;color:#1e40af">📢</span>':'–')+'</td>'
-        +'<td class="cms-news-actions">'
+        +'<td class="cms-news-actions cms-news-act-col">'
         +'<button class="cms-news-abtn" data-action="toggleNewsStatus" data-id="'+n.id+'" title="'+(isActive?'Deaktivieren':'Aktivieren')+'">'+(isActive?'⏸':'▶')+'</button>'
         +'<button class="cms-news-abtn" data-action="editNews" data-id="'+n.id+'" title="Bearbeiten">✏️</button>'
         +'<button class="cms-news-abtn cms-news-del" data-action="deleteNews" data-id="'+n.id+'" title="Löschen">🗑</button>'
         +'</td></tr>';
     });
-    html+='</tbody></table>';
+    html+='</tbody></table></div>';
+    if(isMob) html+='<p style="font-size:11px;color:#9ca3af;margin:6px 0 0;text-align:center">Tippen Sie auf einen Beitrag zum Bearbeiten</p>';
     container.innerHTML = html;
   }
 
