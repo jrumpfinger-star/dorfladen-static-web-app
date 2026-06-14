@@ -439,7 +439,7 @@
     var img=document.createElement('img');
     img.src=src;
     img.alt='';
-    img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:10px';
+    img.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:6px';
     div.innerHTML='';
     div.appendChild(img);
   }
