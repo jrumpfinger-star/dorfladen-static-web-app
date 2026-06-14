@@ -1006,6 +1006,9 @@
   var angebote = [];
   var _cmsCurrentTab='wp';
   window.cmsTab = function(name, skipHistory){
+    if(name==='help' && window.innerWidth<768 && typeof openHilfePopup==='function'){
+      openHilfePopup();return;
+    }
     _cmsCurrentTab=name;
     ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','help'].forEach(function(t){
       var panel=document.getElementById('cms-panel-'+t);
