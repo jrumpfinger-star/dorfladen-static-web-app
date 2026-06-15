@@ -10604,7 +10604,7 @@
     }
 
     // Build order link
-    var orderText='Hallo, ich m\u00f6chte gerne bestellen:\n___ Stk. '+meal.name+(meal.preis?' ('+meal.preis+'\u20AC)':'')+'\nAbholung ca. ___ Uhr.\nDanke!';
+    var orderText='Hallo!\nIch m\u00f6chte bestellen:\n\n1x '+meal.name+(meal.preis?' ('+meal.preis+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
     var orderLink='https://wa.me/491714910935?text='+encodeURIComponent(orderText);
 
     var canvas=document.getElementById('soc-post-canvas');
@@ -10785,7 +10785,7 @@
     if(onlyMittagessen){
       var msg='';
       cats['Mittagessen'].forEach(function(p){
-        var bestellText='Hallo! Ich m\u00F6chte bestellen: '+p.name;
+        var bestellText='Hallo!\nIch m\u00F6chte bestellen:\n\n1x '+p.name+(p.preis?' ('+parseFloat(p.preis).toFixed(2)+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
         msg+='\uD83D\uDC49 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
       });
       return msg.trim();
@@ -10809,7 +10809,7 @@
     if(hasMittagessen){
       msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n';
       cats['Mittagessen'].forEach(function(p){
-        var bestellText='Hallo! Ich m\u00F6chte bestellen: '+p.name;
+        var bestellText='Hallo!\nIch m\u00F6chte bestellen:\n\n1x '+p.name+(p.preis?' ('+parseFloat(p.preis).toFixed(2)+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
         msg+='\u2022 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
       });
       msg+='\n';
