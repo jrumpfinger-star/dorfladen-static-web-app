@@ -638,18 +638,26 @@
             dl_status:101001
           };
           if(it._werbebildid) body.dl_werbebildid=it._werbebildid;
-          if(it.id) promises.push(fetch(API+'/angebote/'+it.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
-          else promises.push(fetch(API+'/angebote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
+          var method=it.id?'PATCH':'POST';
+          var url=it.id?(API+'/angebote/'+it.id):(API+'/angebote');
+          console.log('[CMS] '+method+' '+url,JSON.stringify(body));
+          promises.push(fetch(url,{method:method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){
+            if(!r.ok) r.clone().text().then(function(t){console.error('[CMS] '+method+' failed:',r.status,t);});
+            return r;
+          }));
         });
         return Promise.all(promises);
       });
     }).then(function(results){
-      var ok=results.every(function(r){return r&&r.ok;});
-      if(!ok) throw new Error('Einige Anfragen fehlgeschlagen');
+      var failed=results.filter(function(r){return !r||!r.ok;});
+      if(failed.length){
+        failed.forEach(function(r){if(r)console.error('[CMS] Failed request:',r.status,r.url);});
+        throw new Error(failed.length+' von '+results.length+' Anfragen fehlgeschlagen (Status: '+failed.map(function(r){return r?r.status:'?';}).join(',')+')');
+      }
       toast(editId?'Aktion aktualisiert':'Aktion erstellt');
       cmsCloseModal();
       loadAngebote();
-    }).catch(function(e){toast('Fehler: '+e.message,'error');})
+    }).catch(function(e){toast('Fehler: '+e.message,'error');console.error('[CMS] Save error:',e);})
       .then(function(){btnDone(saveBtn);});
   };
 
