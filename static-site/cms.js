@@ -9532,7 +9532,7 @@
         html+='</td>';
         html+='<td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
         html+='<td style="padding:8px;text-align:right;white-space:nowrap">';
-        if(p.preis) html+='<span style="font-weight:700;color:#2e7d32">'+esc(p.preis)+' &#8364;</span>';
+        if(p.preis){var lp=parseFloat(p.preis);html+='<span style="font-weight:700;color:#2e7d32">'+(lp&&isFinite(lp)?lp.toFixed(2):esc(p.preis))+' &#8364;</span>';}
         html+='</td>';
         html+='<td style="padding:8px;width:80px;text-align:right;white-space:nowrap">';
         html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;font-size:11px;margin-right:4px">&#9998;</button>';
@@ -9551,7 +9551,7 @@
         });
         html+='</select></div>';
         html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
-        html+='<input id="soc-ed-preis-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(p.preis||'')+'"></div>';
+        var edP=parseFloat(p.preis);html+='<input id="soc-ed-preis-'+pid+'" type="number" step="0.01" min="0" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(edP&&isFinite(edP)?edP.toFixed(2):(p.preis||''))+'"></div>';
         html+='<div class="soc-kat-edit-btns" style="display:flex;gap:4px">';
         html+='<button class="cms-btn cms-btn-sm" onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700">&#10003; Speichern</button>';
         html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatCancelEdit(\''+pid+'\')" style="padding:5px 10px;font-size:12px">Abbrechen</button>';
@@ -9627,7 +9627,7 @@
     var fd=new FormData();
     fd.append('name',name);
     fd.append('kategorie',kat);
-    if(preis) fd.append('preis',preis);
+    if(preis){var pn=parseFloat(preis.replace(',','.'));fd.append('preis',pn&&isFinite(pn)?pn.toFixed(2):preis);}
     var bildFile = _socPastedFile || (bildInput && bildInput.files && bildInput.files[0]);
     if(bildFile){
       fd.append('bild',bildFile);
@@ -9740,7 +9740,7 @@
     html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>';
     html+='<input id="soc-free-name" class="cms-input" placeholder="z.B. Kartoffelsalat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
     html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
-    html+='<input id="soc-free-preis" class="cms-input" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
+    html+='<input id="soc-free-preis" type="number" step="0.01" min="0" class="cms-input" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
     html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
     html+='<select id="soc-free-kat" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
     html+='<option value="Mittagessen">&#127869; Mittagessen</option><option value="Kuchen">&#127856; Kuchen</option><option value="Obst & Gemuese">&#129382; Obst & Gem\u00fcse</option><option value="Aufstriche">&#129367; Aufstriche</option><option value="Sonstiges">Sonstiges</option>';
@@ -9779,7 +9779,7 @@
           html+='<img src="'+esc(p.bild_url)+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';
         }
         html+='<span style="font-weight:600;font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>';
-        if(p.preis) html+='<span style="font-size:11px;color:#2e7d32;font-weight:700;flex-shrink:0">'+esc(p.preis)+'\u20AC</span>';
+        if(p.preis){var cp=parseFloat(p.preis);html+='<span style="font-size:11px;color:#2e7d32;font-weight:700;flex-shrink:0">'+(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
         html+='</label>';
       });
       html+='</div>';
@@ -9852,7 +9852,8 @@
     var kat=document.getElementById('soc-free-kat').value;
     if(!name){socialStatus('soc-post-status','Bitte Name eingeben',false);return;}
     var bildInp=document.getElementById('soc-free-bild');
-    var fi={id:'free-'+(++_socFreeCounter),name:name,preis:preis,kategorie:kat,bild_data:''};
+    var preisNum=parseFloat(preis.replace(',','.'));
+    var fi={id:'free-'+(++_socFreeCounter),name:name,preis:preisNum&&isFinite(preisNum)?preisNum.toFixed(2):'',kategorie:kat,bild_data:''};
     function finish(){
       _socFreeItems.push(fi);
       var list=document.getElementById('soc-free-list');
@@ -10061,7 +10062,7 @@
     var html='';
     sel.forEach(function(p){
       html+='<span style="display:inline-block;background:#dcfce7;color:#15803d;font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;margin:2px 3px 2px 0">'+esc(p.name);
-      if(p.preis) html+=' <span style="opacity:.7">'+esc(p.preis)+'\u20AC</span>';
+      if(p.preis){var tp=parseFloat(p.preis);html+=' <span style="opacity:.7">'+(tp&&isFinite(tp)?tp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
       html+='</span>';
     });
     tags.innerHTML=html;
@@ -10318,7 +10319,7 @@
           ctx.fillStyle='#2e7d32';
           ctx.font='bold 14px "Segoe UI",system-ui,sans-serif';
           ctx.textAlign='right';
-          ctx.fillText(p.preis+' \u20AC',W-28,textY+14);
+          var dp=parseFloat(p.preis);ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):p.preis)+' \u20AC',W-28,textY+14);
           ctx.textAlign='left';
         }
         y+=ITEM_H;
@@ -10567,7 +10568,7 @@
       msg+='*'+cat+'*\n';
       cats[cat].forEach(function(p){
         msg+='\u2022 '+p.name;
-        if(p.preis) msg+=' - '+p.preis+'\u20AC';
+        var mp=parseFloat(p.preis);if(p.preis) msg+=' - '+(mp&&isFinite(mp)?mp.toFixed(2):p.preis)+'\u20AC';
         msg+='\n';
       });
       msg+='\n';
