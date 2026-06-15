@@ -11059,15 +11059,14 @@
       try{canShareFiles=navigator.canShare&&navigator.canShare(imgData);}catch(e){}
       if(canShareFiles){
         var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
-        socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
+        // Copy order text to clipboard so user can paste it as image caption
+        if(msg&&navigator.clipboard&&navigator.clipboard.writeText){
+          navigator.clipboard.writeText(msg).then(function(){
+            socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert! Im Bild-Feld mit Einf\u00fcgen (Strg+V) einsetzen.',true);
+          }).catch(function(){});
+        }
         navigator.share(imgData).then(function(){
-          socialStatus('soc-post-status','\u2705 Bild geteilt! Bestelltext wird gesendet...',true);
-          // After image is shared, open WhatsApp with order text as separate message
-          if(msg){
-            setTimeout(function(){
-              window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-            },600);
-          }
+          socialStatus('soc-post-status','\u2705 Bild geteilt! Bestelltext ist in der Zwischenablage \u2013 einfach einf\u00fcgen.',true);
         }).catch(function(err){
           if(err.name==='AbortError'){
             socialStatus('soc-post-status','Teilen abgebrochen.',true);
