@@ -11055,7 +11055,9 @@
     if(hasShare&&files.length){
       var shareData={files:files,text:msg||''};
       var canShareFiles=false;
-      try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){}
+      try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){
+        console.warn('[Social] canShare check error:',e);
+      }
       if(canShareFiles){
         var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
         socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
@@ -11065,18 +11067,41 @@
           if(err.name==='AbortError'){
             socialStatus('soc-post-status','Teilen abgebrochen.',true);
           } else {
+            console.error('[Social] share error:',err);
             socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
-            socialFallbackWaShare(null,msg);
+            socialDownloadFiles(files);
+            setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
           }
         });
       } else {
-        socialStatus('soc-post-status','canShare=false \u2013 Fallback',true);
-        socialFallbackWaShare(null,msg);
+        console.warn('[Social] canShare=false, trying share anyway...');
+        // Some browsers report canShare=false but share still works, try it
+        navigator.share(shareData).then(function(){
+          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+        }).catch(function(err){
+          console.error('[Social] share fallback error:',err);
+          socialStatus('soc-post-status','Poster werden heruntergeladen...',true);
+          socialDownloadFiles(files);
+          setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
+        });
       }
     } else {
       socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
-      socialFallbackWaShare(null,msg);
+      socialDownloadFiles(files);
+      setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
     }
+  }
+
+  // Download poster files as fallback
+  function socialDownloadFiles(files){
+    files.forEach(function(f){
+      var url=URL.createObjectURL(f);
+      var a=document.createElement('a');
+      a.href=url;a.download=f.name;
+      document.body.appendChild(a);a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
   }
 
   // --- Fallback: copy image to clipboard + download + open WhatsApp ---
