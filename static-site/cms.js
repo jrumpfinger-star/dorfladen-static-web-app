@@ -10841,6 +10841,44 @@
     });
   };
 
+  // --- WA-Katalog Tab: Upload today's meals directly ---
+  window.waKatalogUpload = function(){
+    waKatalogStatus('\u23F3 Lade heutige Mittagessen...',true);
+    // Ensure wochenplan meals are available
+    var todayMeals=socialGetTodayMeals();
+    if(!todayMeals.length){
+      waKatalogStatus('\u274C Keine Mittagessen f\u00FCr heute im Wochenplan gefunden. Bitte zuerst den Wochenplan pflegen.',false);
+      return;
+    }
+    // Load mt-bilder to check for images
+    socialLoadMtBilder(function(){
+      var meals=todayMeals.map(function(m){
+        var hasImg=!!(_socMtBilder[m.gericht]&&_socMtBilder[m.gericht].bild_url);
+        return {gericht:m.gericht,preis:m.preis,has_image:hasImg};
+      });
+      waKatalogStatus('\u23F3 Sende '+meals.length+' Gerichte an WhatsApp Katalog...',true);
+      fetch(API+'/meta-catalog',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({meals:meals})
+      })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.error){
+          waKatalogStatus('\u274C Fehler: '+res.error,false);
+          return;
+        }
+        var msg='\u2705 '+res.succeeded+'/'+res.total+' Gerichte im WA-Katalog aktualisiert';
+        if(res.failed>0) msg+=' ('+res.failed+' fehlgeschlagen)';
+        waKatalogStatus(msg,res.failed===0);
+        waKatalogLoad();
+      })
+      .catch(function(e){
+        waKatalogStatus('\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
+      });
+    });
+  };
+
   // --- WA-Katalog Tab: Load, Display, Delete ---
   function waKatalogStatus(msg,ok){
     socialStatus('wa-katalog-status',msg,ok);
