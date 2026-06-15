@@ -1039,8 +1039,13 @@
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
     if(name==='social'){
-      if(!window._socialKatLoaded) socialLoadKatalog();
-      socialLoadMtBilder(function(){ socialBuildPostItems(); });
+      var katReady=window._socialKatLoaded;
+      var mtReady=false;
+      function tryBuild(){ if(katReady&&mtReady) socialBuildPostItems(); }
+      if(!window._socialKatLoaded){
+        socialLoadKatalog(function(){ katReady=true; tryBuild(); });
+      }
+      socialLoadMtBilder(function(){ mtReady=true; tryBuild(); });
     }
     if(!skipHistory) history.pushState({cmsTab:name},'','');
   };
@@ -9362,7 +9367,15 @@
         b.style.boxShadow = t===name?'0 1px 3px rgba(0,0,0,.08)':'none';
       }
     });
-    if(name==='post'){ socialLoadMtBilder(function(){ socialBuildPostItems(); }); }
+    if(name==='post'){
+      var katReady2=window._socialKatLoaded;
+      var mtReady2=false;
+      function tryBuild2(){ if(katReady2&&mtReady2) socialBuildPostItems(); }
+      if(!window._socialKatLoaded){
+        socialLoadKatalog(function(){ katReady2=true; tryBuild2(); });
+      }
+      socialLoadMtBilder(function(){ mtReady2=true; tryBuild2(); });
+    }
     if(name==='verlauf' && !window._socialVerlaufLoaded) socialLoadVerlauf();
   };
 
@@ -9466,7 +9479,7 @@
   })();
 
   // --- Katalog laden ---
-  window.socialLoadKatalog = function(){
+  window.socialLoadKatalog = function(cb){
     var list=document.getElementById('soc-kat-list');
     var empty=document.getElementById('soc-kat-empty');
     var loading=document.getElementById('soc-kat-loading');
@@ -9492,6 +9505,7 @@
       })
       .then(function(){
         if(loading) loading.style.display='none';
+        if(typeof cb==='function') cb();
       });
   };
 
@@ -10892,17 +10906,33 @@
 
   // --- Fallback: download poster(s) + open WhatsApp web ---
   function socialFallbackWaShare(canvas,msg){
-    // Download all visible poster images
-    try{
-      socialDownloadPoster();
-      socialStatus('soc-post-status','\u2705 Poster heruntergeladen! Bitte die Bilder in WhatsApp als Foto anh\u00e4ngen.',true);
-    }catch(e){
-      socialStatus('soc-post-status','\u26A0 Poster konnte nicht heruntergeladen werden.',false);
-    }
-    // Open WhatsApp with text (user attaches downloaded images manually)
-    setTimeout(function(){
-      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-    },800);
+    // First ensure poster preview is generated
+    var genPromise=(socialGenPreview&&socialGenPreview())||Promise.resolve();
+    genPromise.then(function(){
+      // Download all visible poster images
+      var downloaded=false;
+      try{
+        socialDownloadPoster();
+        downloaded=true;
+      }catch(e){
+        console.error('[Social] Download error:',e);
+      }
+      if(downloaded){
+        socialStatus('soc-post-status','\u2705 Poster heruntergeladen! Bitte in WhatsApp als Foto anh\u00e4ngen. \u00D6ffne WhatsApp in 3 Sek...',true);
+      } else {
+        socialStatus('soc-post-status','\u26A0 Poster konnte nicht heruntergeladen werden. \u00D6ffne WhatsApp...',false);
+      }
+      // Give browser time to process downloads before opening new window
+      setTimeout(function(){
+        window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+      },3000);
+    }).catch(function(e){
+      console.error('[Social] Fallback preview error:',e);
+      socialStatus('soc-post-status','\u26A0 Poster-Fehler. \u00D6ffne WhatsApp nur mit Text...',false);
+      setTimeout(function(){
+        window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+      },1000);
+    });
   }
 
   // --- Instagram Share ---
