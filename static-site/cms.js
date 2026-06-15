@@ -10873,11 +10873,9 @@
 
   // Helper: share files + text via Web Share API or fallback
   function socialShareFilesWithText(files,msg){
-    // On mobile: use Web Share API (WhatsApp is a share target)
-    // On desktop: skip Web Share API (opens Outlook/Mail instead of WhatsApp) → download files + wa.me link
-    var isMobile=/Android|iPhone|iPad|iPod|webOS|BlackBerry/i.test(navigator.userAgent);
-    var hasShare=isMobile&&!!navigator.share;
-    if(hasShare&&files.length){
+    // Try Web Share API first (works on mobile AND desktop with WhatsApp installed)
+    var hasShare=!!navigator.share;
+    if(hasShare&&files&&files.length){
       var shareData={text:msg,files:files};
       var canShareFiles=false;
       try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){}
@@ -10895,56 +10893,72 @@
           }
         });
       } else {
-        socialStatus('soc-post-status','canShare=false \u2013 Fallback',true);
         socialFallbackWaShare(files,msg);
       }
     } else {
-      // Desktop: download the already-generated files + open WhatsApp with text
       socialFallbackWaShare(files,msg);
     }
   }
 
-  // --- Fallback: download poster(s) from blobs or canvas + open WhatsApp web ---
+  // --- Fallback: show overlay with poster downloads + WhatsApp link ---
   function socialFallbackWaShare(files,msg){
-    var downloaded=0;
-    var now=new Date();
-    var dateStr=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
-
-    // If we have File/Blob objects, download them directly (most reliable)
+    // Build blob URLs for poster images
+    var blobUrls=[];
     if(files&&files.length){
-      files.forEach(function(f,i){
+      files.forEach(function(f){
         try{
-          var url=URL.createObjectURL(f);
-          var a=document.createElement('a');
-          a.href=url;
-          a.download=f.name||('dorfladen-poster-'+dateStr+'-'+(i+1)+'.png');
-          document.body.appendChild(a);
-          setTimeout(function(){a.click();document.body.removeChild(a);URL.revokeObjectURL(url);},i*300);
-          downloaded++;
-        }catch(e){console.error('[Social] Blob download error:',e);}
+          blobUrls.push({url:URL.createObjectURL(f),name:f.name||'dorfladen-poster.png'});
+        }catch(e){console.error('[Social] Blob URL error:',e);}
+      });
+    }
+    // Fallback: grab from canvases if no blob files
+    if(!blobUrls.length){
+      ['soc-post-canvas-meal','soc-post-canvas'].forEach(function(id){
+        var c=document.getElementById(id);
+        if(c&&c.width>1){
+          try{
+            var dataUrl=c.toDataURL('image/png');
+            blobUrls.push({url:dataUrl,name:id.replace('soc-post-canvas','dorfladen-poster')+'.png'});
+          }catch(e){}
+        }
       });
     }
 
-    // Fallback: try canvas download if no blob files worked
-    if(!downloaded){
-      try{
-        socialDownloadPoster();
-        downloaded=1;
-      }catch(e){
-        console.error('[Social] Canvas download error:',e);
-      }
+    // Build overlay HTML
+    var waUrl='https://wa.me/?text='+encodeURIComponent(msg);
+    var html='<div id="soc-wa-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px">';
+    html+='<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)">';
+    html+='<h3 style="margin:0 0 8px;font-size:20px">WhatsApp Desktop</h3>';
+    html+='<p style="margin:0 0 16px;color:#555;font-size:14px">Bitte speichern Sie die Poster-Bilder und f\u00fcgen Sie sie in WhatsApp als Foto ein.</p>';
+
+    // Poster previews with individual download buttons
+    if(blobUrls.length){
+      blobUrls.forEach(function(b,i){
+        html+='<div style="margin-bottom:12px">';
+        html+='<img src="'+b.url+'" style="max-width:100%;max-height:240px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px" alt="Poster '+(i+1)+'">';
+        html+='<br><a href="'+b.url+'" download="'+b.name+'" style="display:inline-block;background:#25D366;color:#fff;padding:8px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;cursor:pointer">\u2B07 '+b.name+' speichern</a>';
+        html+='</div>';
+      });
+    } else {
+      html+='<p style="color:#c00">Keine Poster verf\u00fcgbar.</p>';
     }
 
-    if(downloaded){
-      socialStatus('soc-post-status','\u2705 '+downloaded+' Poster heruntergeladen! Bitte in WhatsApp als Foto anh\u00e4ngen. \u00D6ffne WhatsApp in 3 Sek...',true);
-    } else {
-      socialStatus('soc-post-status','\u26A0 Poster konnte nicht heruntergeladen werden. \u00D6ffne WhatsApp nur mit Text...',false);
-    }
-    // Give browser time to process downloads before opening new window
-    var delay=downloaded?Math.max(2000,downloaded*500+1500):1000;
-    setTimeout(function(){
-      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-    },delay);
+    // WhatsApp link button
+    html+='<div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">';
+    html+='<a href="'+waUrl+'" target="_blank" rel="noopener" style="display:inline-block;background:#25D366;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;cursor:pointer">\uD83D\uDCF1 WhatsApp \u00f6ffnen</a>';
+    html+='<p style="margin:8px 0 0;color:#888;font-size:12px">Erst Bilder speichern, dann WhatsApp \u00f6ffnen und als Foto anh\u00e4ngen</p>';
+    html+='</div>';
+
+    // Close button
+    html+='<button onclick="this.closest(\'#soc-wa-overlay\').remove()" style="margin-top:16px;background:none;border:1px solid #ccc;padding:8px 20px;border-radius:6px;cursor:pointer;color:#666;font-size:13px">Schlie\u00dfen</button>';
+    html+='</div></div>';
+
+    // Remove old overlay if exists, then show new one
+    var old=document.getElementById('soc-wa-overlay');
+    if(old)old.remove();
+    document.body.insertAdjacentHTML('beforeend',html);
+
+    socialStatus('soc-post-status','\u2705 Poster bereit \u2013 bitte speichern und in WhatsApp einf\u00fcgen',true);
   }
 
   // --- Instagram Share ---
