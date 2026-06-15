@@ -10812,22 +10812,22 @@
           });
           if(!files.length){
             socialStatus('soc-post-status','Poster-Erstellung fehlgeschlagen, sende nur Text...',true);
-            socialFallbackWaShare(null,msg);
+            window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
             return;
           }
           socialShareFilesWithText(files,msg);
         }).catch(function(e){
           console.error('[Social] genBothPosters error:',e);
           socialStatus('soc-post-status','Fehler: '+e.message+' \u2013 sende nur Text',false);
-          socialFallbackWaShare(null,msg);
+          window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
         });
-        }catch(e){console.error('[Social] sync error in hasMt:',e);socialFallbackWaShare(null,msg);}
+        }catch(e){console.error('[Social] sync error in hasMt:',e);window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
       } else {
         // Normal: single poster
         var canvas=document.getElementById('soc-post-canvas');
-        if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');socialFallbackWaShare(null,msg);return;}
+        if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');return;}
         canvas.toBlob(function(blob){
-          if(!blob){socialFallbackWaShare(null,msg);return;}
+          if(!blob){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');return;}
           var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
           socialShareFilesWithText([file],msg);
         },'image/png');
@@ -10835,7 +10835,7 @@
     }).catch(function(e){
       console.error('[Social] genPreview error:',e);
       socialStatus('soc-post-status','Poster-Fehler: '+e.message,false);
-      socialFallbackWaShare(null,msg);
+      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
     });
     socialSavePost(titel,freitext,selected);
     }catch(e){
@@ -10844,94 +10844,25 @@
     }
   };
 
-  // Helper: share files + text via Web Share API or fallback
+  // Helper: share files + text via Web Share API
   function socialShareFilesWithText(files,msg){
-    // Try Web Share API first (works on mobile AND desktop with WhatsApp installed)
-    var hasShare=!!navigator.share;
-    if(hasShare&&files&&files.length){
-      var shareData={text:msg,files:files};
-      var canShareFiles=false;
-      try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){}
-      if(canShareFiles){
-        var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
-        socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
-        navigator.share(shareData).then(function(){
-          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-        }).catch(function(err){
-          if(err.name==='AbortError'){
-            socialStatus('soc-post-status','Teilen abgebrochen.',true);
-          } else {
-            socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
-            socialFallbackWaShare(files,msg);
-          }
-        });
+    if(!navigator.share){
+      socialStatus('soc-post-status','Teilen nicht unterst\u00fctzt in diesem Browser.',false);
+      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+      return;
+    }
+    var shareData={text:msg,files:files};
+    socialStatus('soc-post-status','Teile Poster...',true);
+    navigator.share(shareData).then(function(){
+      socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+    }).catch(function(err){
+      if(err.name==='AbortError'){
+        socialStatus('soc-post-status','Teilen abgebrochen.',true);
       } else {
-        socialFallbackWaShare(files,msg);
+        console.warn('[Social] share error:',err.name,err.message);
+        socialStatus('soc-post-status','Teilen fehlgeschlagen: '+err.message,false);
       }
-    } else {
-      socialFallbackWaShare(files,msg);
-    }
-  }
-
-  // --- Fallback: show overlay with poster downloads + WhatsApp link ---
-  function socialFallbackWaShare(files,msg){
-    // Build blob URLs for poster images
-    var blobUrls=[];
-    if(files&&files.length){
-      files.forEach(function(f){
-        try{
-          blobUrls.push({url:URL.createObjectURL(f),name:f.name||'dorfladen-poster.png'});
-        }catch(e){console.error('[Social] Blob URL error:',e);}
-      });
-    }
-    // Fallback: grab from canvases if no blob files
-    if(!blobUrls.length){
-      ['soc-post-canvas-meal','soc-post-canvas'].forEach(function(id){
-        var c=document.getElementById(id);
-        if(c&&c.width>1){
-          try{
-            var dataUrl=c.toDataURL('image/png');
-            blobUrls.push({url:dataUrl,name:id.replace('soc-post-canvas','dorfladen-poster')+'.png'});
-          }catch(e){}
-        }
-      });
-    }
-
-    // Build overlay HTML
-    var waUrl='https://wa.me/?text='+encodeURIComponent(msg);
-    var html='<div id="soc-wa-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px">';
-    html+='<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)">';
-    html+='<h3 style="margin:0 0 8px;font-size:20px">WhatsApp Desktop</h3>';
-    html+='<p style="margin:0 0 16px;color:#555;font-size:14px">Bitte speichern Sie die Poster-Bilder und f\u00fcgen Sie sie in WhatsApp als Foto ein.</p>';
-
-    // Poster previews with individual download buttons
-    if(blobUrls.length){
-      blobUrls.forEach(function(b,i){
-        html+='<div style="margin-bottom:12px">';
-        html+='<img src="'+b.url+'" style="max-width:100%;max-height:240px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px" alt="Poster '+(i+1)+'">';
-        html+='<br><a href="'+b.url+'" download="'+b.name+'" style="display:inline-block;background:#25D366;color:#fff;padding:8px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;cursor:pointer">\u2B07 '+b.name+' speichern</a>';
-        html+='</div>';
-      });
-    } else {
-      html+='<p style="color:#c00">Keine Poster verf\u00fcgbar.</p>';
-    }
-
-    // WhatsApp link button
-    html+='<div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">';
-    html+='<a href="'+waUrl+'" target="_blank" rel="noopener" style="display:inline-block;background:#25D366;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;cursor:pointer">\uD83D\uDCF1 WhatsApp \u00f6ffnen</a>';
-    html+='<p style="margin:8px 0 0;color:#888;font-size:12px">Erst Bilder speichern, dann WhatsApp \u00f6ffnen und als Foto anh\u00e4ngen</p>';
-    html+='</div>';
-
-    // Close button
-    html+='<button onclick="this.closest(\'#soc-wa-overlay\').remove()" style="margin-top:16px;background:none;border:1px solid #ccc;padding:8px 20px;border-radius:6px;cursor:pointer;color:#666;font-size:13px">Schlie\u00dfen</button>';
-    html+='</div></div>';
-
-    // Remove old overlay if exists, then show new one
-    var old=document.getElementById('soc-wa-overlay');
-    if(old)old.remove();
-    document.body.insertAdjacentHTML('beforeend',html);
-
-    socialStatus('soc-post-status','\u2705 Poster bereit \u2013 bitte speichern und in WhatsApp einf\u00fcgen',true);
+    });
   }
 
   // --- Instagram Share ---
