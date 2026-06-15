@@ -10769,9 +10769,11 @@
 
   // --- WhatsApp Share ---
   window.socialShareWhatsApp = function(){
+    try{
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
     var selected=socialGatherSelected();
+    if(!selected.length){socialStatus('soc-post-status','Bitte Produkte ausw\u00e4hlen',false);return;}
     var msg=socialBuildWhatsAppMsg(selected,titel,freitext);
     var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
 
@@ -10782,29 +10784,51 @@
 
       // If Mittagessen: generate both posters and share together
       if(hasMt){
+        try{
         socialGenBothPosters(selected,titel,freitext,loadedImgs).then(function(posters){
           var files=posters.filter(function(p){return p.blob;}).map(function(p){
             return new File([p.blob],p.name,{type:'image/png'});
           });
+          if(!files.length){
+            socialStatus('soc-post-status','Poster-Erstellung fehlgeschlagen, sende nur Text...',true);
+            socialFallbackWaShare(null,msg);
+            return;
+          }
           socialShareFilesWithText(files,msg);
+        }).catch(function(e){
+          console.error('[Social] genBothPosters error:',e);
+          socialStatus('soc-post-status','Fehler: '+e.message+' \u2013 sende nur Text',false);
+          socialFallbackWaShare(null,msg);
         });
+        }catch(e){console.error('[Social] sync error in hasMt:',e);socialFallbackWaShare(null,msg);}
       } else {
         // Normal: single poster
         var canvas=document.getElementById('soc-post-canvas');
-        if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');return;}
+        if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');socialFallbackWaShare(null,msg);return;}
         canvas.toBlob(function(blob){
           if(!blob){socialFallbackWaShare(null,msg);return;}
           var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
           socialShareFilesWithText([file],msg);
         },'image/png');
       }
+    }).catch(function(e){
+      console.error('[Social] genPreview error:',e);
+      socialStatus('soc-post-status','Poster-Fehler: '+e.message,false);
+      socialFallbackWaShare(null,msg);
     });
     socialSavePost(titel,freitext,selected);
+    }catch(e){
+      console.error('[Social] WhatsApp share error:',e);
+      socialStatus('soc-post-status','Fehler: '+e.message,false);
+    }
   };
 
   // Helper: share files + text via Web Share API or fallback
   function socialShareFilesWithText(files,msg){
-    var hasShare=!!navigator.share;
+    // On mobile: use Web Share API (WhatsApp is a share target)
+    // On desktop: skip Web Share API (opens Outlook/Mail instead of WhatsApp) → use direct wa.me link
+    var isMobile=/Android|iPhone|iPad|iPod|webOS|BlackBerry/i.test(navigator.userAgent);
+    var hasShare=isMobile&&!!navigator.share;
     if(hasShare&&files.length){
       var shareData={text:msg,files:files};
       var canShareFiles=false;
@@ -10832,27 +10856,20 @@
     }
   }
 
-  // --- Fallback: copy image to clipboard + download + open WhatsApp ---
+  // --- Fallback: download poster + open WhatsApp web ---
   function socialFallbackWaShare(canvas,msg){
-    if(canvas){
-      canvas.toBlob(function(blob){
-        if(blob&&navigator.clipboard&&navigator.clipboard.write){
-          var item=new ClipboardItem({'image/png':blob});
-          navigator.clipboard.write([item]).then(function(){
-            socialStatus('soc-post-status','\u2705 Poster in Zwischenablage kopiert! In WhatsApp mit Strg+V einf\u00fcgen.',true);
-          }).catch(function(){
-            socialDownloadPoster();
-            socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
-          });
-        } else {
-          socialDownloadPoster();
-          socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
-        }
-      },'image/png');
+    // Download poster image(s)
+    var mainCanvas=canvas||document.getElementById('soc-post-canvas');
+    if(mainCanvas){
+      try{
+        socialDownloadPoster();
+        socialStatus('soc-post-status','\u2705 Poster heruntergeladen! \u00D6ffne WhatsApp...',true);
+      }catch(e){}
     }
+    // Open WhatsApp with text
     setTimeout(function(){
       window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-    },800);
+    },600);
   }
 
   // --- Instagram Share ---
