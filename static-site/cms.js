@@ -9696,9 +9696,16 @@
   var _socFreeCounter=0;
 
   function socialLoadMtBilder(cb){
-    fetch(API+'/social-katalog?action=mt-bilder')
+    fetch(API+'/social-katalog?action=mt-bilder&base64=1')
       .then(function(r){return r.json();})
-      .then(function(res){_socMtBilder=res.bilder||{};if(cb)cb();})
+      .then(function(res){
+        var bilder=res.bilder||{};
+        Object.keys(bilder).forEach(function(k){
+          if(bilder[k].bild_base64) bilder[k].bild_url=bilder[k].bild_base64;
+        });
+        _socMtBilder=bilder;
+        if(cb)cb();
+      })
       .catch(function(){if(cb)cb();});
   }
 

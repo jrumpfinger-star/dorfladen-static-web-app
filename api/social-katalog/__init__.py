@@ -354,8 +354,26 @@ def save_mt_bilder(token, folder_id, data):
 
 
 def handle_mt_bilder_get(req, token, folder_id):
-    """GET ?action=mt-bilder: Return all Mittagstisch images."""
+    """GET ?action=mt-bilder: Return all Mittagstisch images.
+    If ?base64=1, download each image from SharePoint and return as data:URI
+    so the browser can use them on canvas without CORS issues."""
     bilder = load_mt_bilder(token, folder_id)
+    want_base64 = req.params.get("base64", "") == "1"
+    if want_base64 and bilder:
+        h = graph_headers(token)
+        for gericht, info in bilder.items():
+            sp_id = info.get("bild_sp_id")
+            if not sp_id:
+                continue
+            try:
+                dl_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{sp_id}/content"
+                r = requests.get(dl_url, headers=h, timeout=20)
+                if r.status_code == 200:
+                    ct = r.headers.get("Content-Type", "image/png")
+                    b64 = base64.b64encode(r.content).decode("ascii")
+                    info["bild_base64"] = f"data:{ct};base64,{b64}"
+            except:
+                pass
     return ok({"success": True, "bilder": bilder})
 
 
