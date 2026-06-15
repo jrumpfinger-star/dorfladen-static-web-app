@@ -20,4 +20,6 @@ jobs:
         run: |
           swa deploy ./static-site \
             --api-location ./api \
+            --api-language python \
+            --api-version 3.11 \
             --deployment-token ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_TEST }}
