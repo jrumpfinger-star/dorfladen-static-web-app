@@ -11044,47 +11044,59 @@
     }
   };
 
-  // Helper: share files + text together (WhatsApp shows text as image caption)
+  // Helper: copy text to clipboard, then share files only (user pastes as caption)
   function socialShareFilesWithText(files,msg){
-    var hasShare=!!navigator.share;
-    if(hasShare&&files.length){
-      var shareData=msg?{files:files,text:msg}:{files:files};
-      var canShareFiles=false;
-      try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){
-        console.warn('[Social] canShare check error:',e);
-      }
-      if(canShareFiles){
-        var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
-        socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
-        navigator.share(shareData).then(function(){
-          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-        }).catch(function(err){
-          if(err.name==='AbortError'){
-            socialStatus('soc-post-status','Teilen abgebrochen.',true);
-          } else {
-            console.error('[Social] share error:',err);
-            socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
-            socialDownloadFiles(files);
-            setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
-          }
-        });
-      } else {
-        console.warn('[Social] canShare=false, trying share anyway...');
-        // Some browsers report canShare=false but share still works, try it
-        navigator.share(shareData).then(function(){
-          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-        }).catch(function(err){
-          console.error('[Social] share fallback error:',err);
-          socialStatus('soc-post-status','Poster werden heruntergeladen...',true);
-          socialDownloadFiles(files);
-          setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
-        });
-      }
+    // Step 1: Copy order text to clipboard if present
+    var clipboardOk=false;
+    var clipboardPromise;
+    if(msg&&navigator.clipboard&&navigator.clipboard.writeText){
+      clipboardPromise=navigator.clipboard.writeText(msg).then(function(){
+        clipboardOk=true;
+      }).catch(function(e){
+        console.warn('[Social] Clipboard copy failed:',e);
+      });
     } else {
-      socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
-      socialDownloadFiles(files);
-      setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
+      clipboardPromise=Promise.resolve();
     }
+    clipboardPromise.then(function(){
+      // Step 2: Share files WITHOUT text (image only)
+      var hasShare=!!navigator.share;
+      if(hasShare&&files.length){
+        var shareData={files:files};
+        var canShareFiles=false;
+        try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){
+          console.warn('[Social] canShare check error:',e);
+        }
+        var statusHint=clipboardOk?' \u2013 Text in Zwischenablage, als Caption einf\u00fcgen!':'';
+        if(canShareFiles){
+          var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
+          socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...'+statusHint,true);
+          navigator.share(shareData).then(function(){
+            socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+          }).catch(function(err){
+            if(err.name==='AbortError'){
+              socialStatus('soc-post-status','Teilen abgebrochen.',true);
+            } else {
+              console.error('[Social] share error:',err);
+              socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
+              socialDownloadFiles(files);
+            }
+          });
+        } else {
+          console.warn('[Social] canShare=false, trying share anyway...');
+          navigator.share(shareData).then(function(){
+            socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+          }).catch(function(err){
+            console.error('[Social] share fallback error:',err);
+            socialStatus('soc-post-status','Poster werden heruntergeladen...'+statusHint,true);
+            socialDownloadFiles(files);
+          });
+        }
+      } else {
+        socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
+        socialDownloadFiles(files);
+      }
+    });
   }
 
   // Download poster files as fallback
