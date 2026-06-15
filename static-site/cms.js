@@ -10100,7 +10100,7 @@
       contentH+=10; // gap
     });
     contentH+=50; // footer
-    var H=Math.max(540,contentH);
+    var H=Math.max(300,contentH);
     canvas.width=W; canvas.height=H;
 
     // Background
@@ -10290,25 +10290,37 @@
     var genPromise=socialGenPreview()||Promise.resolve();
     genPromise.then(function(){
       var canvas=document.getElementById('soc-post-canvas');
+      if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');return;}
+      var hasShare=!!navigator.share;
+      var blobSize=0;
       // Try Web Share API with image
-      if(canvas && navigator.share){
+      if(hasShare){
         canvas.toBlob(function(blob){
-          if(!blob){socialFallbackWaShare(null,msg);return;}
+          if(!blob){socialStatus('soc-post-status','Canvas-Blob leer \u2013 Fallback','error');socialFallbackWaShare(null,msg);return;}
+          blobSize=blob.size;
           var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
           var shareData={text:msg,files:[file]};
-          try{
-            if(navigator.canShare&&navigator.canShare(shareData)){
-              navigator.share(shareData).then(function(){
-                socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-              }).catch(function(err){
-                if(err.name!=='AbortError') socialFallbackWaShare(canvas,msg);
-              });
-              return;
-            }
-          }catch(e){}
-          socialFallbackWaShare(canvas,msg);
+          var canShareFiles=false;
+          try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){}
+          if(canShareFiles){
+            socialStatus('soc-post-status','Teile mit Web Share API ('+Math.round(blobSize/1024)+'KB)...',true);
+            navigator.share(shareData).then(function(){
+              socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+            }).catch(function(err){
+              if(err.name==='AbortError'){
+                socialStatus('soc-post-status','Teilen abgebrochen.',true);
+              } else {
+                socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
+                socialFallbackWaShare(canvas,msg);
+              }
+            });
+          } else {
+            socialStatus('soc-post-status','canShare=false ('+Math.round(blobSize/1024)+'KB) \u2013 Fallback',true);
+            socialFallbackWaShare(canvas,msg);
+          }
         },'image/png');
       } else {
+        socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
         socialFallbackWaShare(canvas,msg);
       }
     });
