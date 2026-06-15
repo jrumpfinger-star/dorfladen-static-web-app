@@ -9748,6 +9748,7 @@
     html+='</div>';
     html+='<div style="display:flex;gap:6px;align-items:center;margin-top:6px">';
     html+='<label style="cursor:pointer;padding:4px 10px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;color:#374151">&#128247; Bild <input type="file" id="soc-free-bild" accept="image/*" onchange="socialFreeImgPreview()" style="display:none"></label>';
+    html+='<button onclick="socialFreePaste(this)" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="padding:4px 8px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;cursor:pointer;color:#374151">&#128203; Einf\u00fcgen</button>';
     html+='<span id="soc-free-img-name" style="font-size:10px;color:#9ca3af;flex:1"></span>';
     html+='<button onclick="socialFreeAdd()" class="cms-btn cms-btn-sm" style="background:#2563eb;color:#fff;padding:5px 14px;font-size:12px;font-weight:700">&#10003; Hinzuf\u00fcgen</button>';
     html+='</div></div></div>';
@@ -9815,7 +9816,36 @@
     var inp=document.getElementById('soc-free-bild');
     var lbl=document.getElementById('soc-free-img-name');
     if(inp&&inp.files&&inp.files[0]&&lbl) lbl.textContent=inp.files[0].name;
+    window._socFreePastedData=''; // clear paste if user picks file
   };
+  // Paste-button for free product image
+  var _socFreePasteActive=false;
+  window._socFreePastedData='';
+  window.socialFreePaste = function(btn){
+    _socFreePasteActive=true;
+    btn.style.background='#fef08a';btn.textContent='\u23F3 Strg+V';
+    setTimeout(function(){btn.style.background='#fff';btn.textContent='\uD83D\uDCCB Einf\u00fcgen';_socFreePasteActive=false;},4000);
+  };
+  document.addEventListener('paste',function(e){
+    if(!_socFreePasteActive)return;
+    var items=e.clipboardData&&e.clipboardData.items;
+    if(!items)return;
+    for(var i=0;i<items.length;i++){
+      if(items[i].type.indexOf('image')!==-1){
+        var blob=items[i].getAsFile();
+        var reader=new FileReader();
+        reader.onload=function(ev){
+          window._socFreePastedData=ev.target.result;
+          var lbl=document.getElementById('soc-free-img-name');
+          if(lbl) lbl.textContent='\u2705 Bild eingef\u00fcgt';
+          _socFreePasteActive=false;
+        };
+        reader.readAsDataURL(blob);
+        e.preventDefault();
+        break;
+      }
+    }
+  });
   window.socialFreeAdd = function(){
     var name=(document.getElementById('soc-free-name').value||'').trim();
     var preis=(document.getElementById('soc-free-preis').value||'').trim();
@@ -9831,9 +9861,14 @@
       document.getElementById('soc-free-preis').value='';
       if(bildInp) bildInp.value='';
       var lbl=document.getElementById('soc-free-img-name');if(lbl) lbl.textContent='';
+      window._socFreePastedData='';
       socialPickUpdate();
     }
-    if(bildInp&&bildInp.files&&bildInp.files[0]){
+    // Pasted image has priority over file input
+    if(window._socFreePastedData){
+      fi.bild_data=window._socFreePastedData;
+      finish();
+    } else if(bildInp&&bildInp.files&&bildInp.files[0]){
       var reader=new FileReader();
       reader.onload=function(e){fi.bild_data=e.target.result;finish();};
       reader.readAsDataURL(bildInp.files[0]);
