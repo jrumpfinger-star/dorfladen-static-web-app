@@ -2562,12 +2562,26 @@
       .then(function(){if(wpLd)wpLd.style.display='none';});
   }
 
+  // --- Wochenplan Image Toggle ---
+  var _wpShowImages=localStorage.getItem('cms-wp-show-imgs')==='1';
+  window.cmsToggleWpImages=function(on){
+    _wpShowImages=!!on;
+    localStorage.setItem('cms-wp-show-imgs',on?'1':'0');
+    renderWP();
+  };
+
   function renderWP(){
     var grid=document.getElementById('cms-wp-grid');
     var empty=document.getElementById('cms-wp-empty');
     grid.innerHTML='';
     if(meals.length===0){grid.style.display='none';empty.style.display='';return;}
     grid.style.display='';empty.style.display='none';
+
+    // Sync checkbox state
+    var cb=document.getElementById('cms-wp-show-imgs');
+    if(cb) cb.checked=_wpShowImages;
+
+    var showImgs=_wpShowImages&&typeof _socMtBilder!=='undefined'&&_socMtBilder;
 
     var byDay={};
     [101000,101001,101002,101003,101004].forEach(function(d){byDay[d]=[];});
@@ -2586,17 +2600,23 @@
           b+='<div style="color:#9ca3af;font-size:13px;font-style:italic;text-align:center;padding:12px 4px">'+esc(notice)+'</div>';
           b+='<div class="cms-meal-actions">';
           b+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editMeal" data-id="'+items[0].id+'">Bearbeiten</button>';
-          b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag löschen" aria-label="Löschen" data-action="deleteMeal" data-id="'+items[0].id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
+          b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag l\u00f6schen" aria-label="L\u00f6schen" data-action="deleteMeal" data-id="'+items[0].id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
           b+='</div>';
         } else {
           items.forEach(function(m){
-            b+='<div class="cms-meal-item"><span>'+esc(m.gericht)+'</span>';
+            var imgHtml='';
+            if(showImgs&&m.gericht&&_socMtBilder[m.gericht]&&_socMtBilder[m.gericht].bild_url){
+              imgHtml='<img src="'+esc(_socMtBilder[m.gericht].bild_url)+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;flex-shrink:0" onerror="this.style.display=\'none\'">';
+            }
+            b+='<div class="cms-meal-item" style="'+(imgHtml?'display:flex;align-items:center;gap:8px':'')+'">';
+            b+=imgHtml;
+            b+='<span style="flex:1">'+esc(m.gericht)+'</span>';
             if(m.preis) b+='<span class="price">'+fmtP(m.preis)+'</span>';
             b+='</div>';
             if(m.beschreibung) b+='<div style="color:#9ca3af;font-size:11px;font-style:italic;padding:0 8px 4px">'+esc(m.beschreibung)+'</div>';
             b+='<div class="cms-meal-actions">';
             b+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editMeal" data-id="'+m.id+'">Bearbeiten</button>';
-            b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag löschen" aria-label="Löschen" data-action="deleteMeal" data-id="'+m.id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
+            b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag l\u00f6schen" aria-label="L\u00f6schen" data-action="deleteMeal" data-id="'+m.id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
             b+='</div>';
           });
         }
@@ -2604,7 +2624,14 @@
       b+='</div>';
       card.innerHTML=h+b; grid.appendChild(card);
     });
+
+    // Load images if enabled but not yet loaded
+    if(_wpShowImages&&!_wpImgsRequested){
+      _wpImgsRequested=true;
+      socialLoadMtBilder(function(){renderWP();});
+    }
   }
+  var _wpImgsRequested=false;
 
   // --- Add/Edit Meal Modal ---
   window.cmsOpenAddMeal = function(){
