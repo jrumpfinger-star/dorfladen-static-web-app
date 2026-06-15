@@ -50,36 +50,57 @@ def meta_headers():
     return {"Authorization": f"Bearer {META_ACCESS_TOKEN}"}
 
 def meta_create_product(product):
-    """Create or update a product in the Meta catalog."""
-    url = f"{META_GRAPH_URL}/{META_CATALOG_ID}/products"
-    data = {
+    """Create or update a product in the Meta catalog via batch API."""
+    url = f"{META_GRAPH_URL}/{META_CATALOG_ID}/batch"
+    
+    # Meta expects price as "980 EUR" format (cents + currency) 
+    price_str = f"{product['price']} {product.get('currency', 'EUR')}"
+    
+    item_data = {
         "retailer_id": product["retailer_id"],
         "name": product["name"],
         "description": product.get("description", ""),
         "availability": product.get("availability", "in stock"),
-        "price": product["price"],  # price in cents
-        "currency": product.get("currency", "EUR"),
+        "price": price_str,
         "url": product.get("url", "https://www.dorfladen-oberornau.de"),
     }
     if product.get("image_url"):
-        data["image_url"] = product["image_url"]
+        item_data["image_url"] = product["image_url"]
     
-    r = requests.post(url, headers=meta_headers(), data=data, timeout=30)
-    logging.info(f"[MetaCatalog] Create product '{product['name']}': {r.status_code} {r.text[:200]}")
-    return r.status_code, r.json() if r.text else {}
+    batch_data = {
+        "access_token": META_ACCESS_TOKEN,
+        "requests": json.dumps([{
+            "method": "CREATE",
+            "retailer_id": product["retailer_id"],
+            "data": item_data
+        }])
+    }
+    
+    r = requests.post(url, data=batch_data, timeout=30)
+    logging.info(f"[MetaCatalog] Create product '{product['name']}': {r.status_code} {r.text[:500]}")
+    try:
+        resp = r.json()
+    except:
+        resp = {"raw": r.text[:500]}
+    return r.status_code, resp
 
 def meta_delete_product(retailer_id):
     """Delete a product from the Meta catalog by retailer_id."""
-    url = f"{META_GRAPH_URL}/{META_CATALOG_ID}/products"
+    url = f"{META_GRAPH_URL}/{META_CATALOG_ID}/batch"
     data = {
+        "access_token": META_ACCESS_TOKEN,
         "requests": json.dumps([{
             "method": "DELETE",
             "retailer_id": retailer_id
         }])
     }
-    r = requests.post(url, headers=meta_headers(), data=data, timeout=30)
-    logging.info(f"[MetaCatalog] Delete product '{retailer_id}': {r.status_code} {r.text[:200]}")
-    return r.status_code, r.json() if r.text else {}
+    r = requests.post(url, data=data, timeout=30)
+    logging.info(f"[MetaCatalog] Delete product '{retailer_id}': {r.status_code} {r.text[:500]}")
+    try:
+        resp = r.json()
+    except:
+        resp = {"raw": r.text[:500]}
+    return r.status_code, resp
 
 def meta_list_products():
     """List all products in the catalog."""
