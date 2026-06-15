@@ -10152,15 +10152,34 @@
     }
 
     // Preload all images, then draw
+    // Use fetch+blob→objectURL to avoid CORS issues with canvas taint
     var imgUrls=Object.keys(imgMap).map(function(id){return {id:id,url:imgMap[id]};});
     var loadedImgs={};
     var promises=imgUrls.map(function(entry){
       return new Promise(function(resolve){
-        var img=new Image();
-        img.crossOrigin='anonymous';
-        img.onload=function(){loadedImgs[entry.id]=img;resolve();};
-        img.onerror=function(){resolve();}; // skip broken images
-        img.src=entry.url;
+        // If already base64 data URL, load directly
+        if(entry.url.indexOf('data:')===0){
+          var img=new Image();
+          img.onload=function(){loadedImgs[entry.id]=img;resolve();};
+          img.onerror=function(){console.warn('[Social] base64 img load failed for',entry.id);resolve();};
+          img.src=entry.url;
+          return;
+        }
+        // Fetch as blob to avoid cross-origin canvas taint
+        fetch(entry.url).then(function(r){return r.blob();}).then(function(blob){
+          var objUrl=URL.createObjectURL(blob);
+          var img=new Image();
+          img.onload=function(){loadedImgs[entry.id]=img;resolve();};
+          img.onerror=function(){URL.revokeObjectURL(objUrl);console.warn('[Social] img load failed for',entry.id);resolve();};
+          img.src=objUrl;
+        }).catch(function(e){
+          console.warn('[Social] fetch img failed for',entry.id,e);
+          // Fallback: try direct load without crossOrigin
+          var img=new Image();
+          img.onload=function(){loadedImgs[entry.id]=img;resolve();};
+          img.onerror=function(){console.warn('[Social] fallback img also failed for',entry.id);resolve();};
+          img.src=entry.url;
+        });
       });
     });
 
