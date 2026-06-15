@@ -9361,6 +9361,12 @@
   };
 
   // --- Katalog rendern ---
+  var _socKatOpts=[
+    {v:'Mittagessen',l:'&#127869; Mittagessen'},
+    {v:'Kuchen',l:'&#127856; Kuchen'},
+    {v:'Obst & Gemuese',l:'&#129382; Obst & Gem\u00fcse'},
+    {v:'Aufstriche',l:'&#129367; Aufstriche'}
+  ];
   function socialRenderKatalog(){
     var list=document.getElementById('soc-kat-list');
     var empty=document.getElementById('soc-kat-empty');
@@ -9371,7 +9377,6 @@
       return;
     }
     if(empty) empty.style.display='none';
-    // Group by category
     var cats={};
     _socialKatalog.forEach(function(p){
       var c=p.kategorie||'Sonstiges';
@@ -9386,7 +9391,9 @@
       html+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
       cats[cat].forEach(function(p,i){
         var bg=i%2===0?'#fff':'#fafbfc';
-        html+='<tr style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
+        var pid=esc(p.id);
+        // Display row
+        html+='<tr id="soc-row-'+pid+'" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
         html+='<td style="padding:8px;width:50px">';
         if(p.bild_url){
           html+='<img src="'+esc(p.bild_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" onerror="this.style.display=\'none\'">';
@@ -9398,14 +9405,74 @@
         html+='<td style="padding:8px;text-align:right;white-space:nowrap">';
         if(p.preis) html+='<span style="font-weight:700;color:#2e7d32">'+esc(p.preis)+' &#8364;</span>';
         html+='</td>';
-        html+='<td style="padding:8px;width:60px;text-align:right">';
-        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+esc(p.id)+'\')" title="Entfernen" style="color:#dc2626;padding:4px 8px;font-size:11px">&#10005;</button>';
+        html+='<td style="padding:8px;width:80px;text-align:right;white-space:nowrap">';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;font-size:11px;margin-right:4px">&#9998;</button>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="Entfernen" style="color:#dc2626;padding:4px 8px;font-size:11px">&#10005;</button>';
         html+='</td></tr>';
+        // Edit row (hidden)
+        html+='<tr id="soc-edit-'+pid+'" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b">';
+        html+='<td colspan="4" style="padding:10px">';
+        html+='<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">';
+        html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name</label>';
+        html+='<input id="soc-ed-name-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+esc(p.name)+'"></div>';
+        html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
+        html+='<select id="soc-ed-kat-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px">';
+        _socKatOpts.forEach(function(o){
+          html+='<option value="'+esc(o.v)+'"'+(o.v===p.kategorie?' selected':'')+'>'+o.l+'</option>';
+        });
+        html+='</select></div>';
+        html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
+        html+='<input id="soc-ed-preis-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(p.preis||'')+'"></div>';
+        html+='<div style="display:flex;gap:4px">';
+        html+='<button class="cms-btn cms-btn-sm" onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700">&#10003; Speichern</button>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatCancelEdit(\''+pid+'\')" style="padding:5px 10px;font-size:12px">Abbrechen</button>';
+        html+='</div></div></td></tr>';
       });
       html+='</table></div></div>';
     });
     list.innerHTML=html;
   }
+
+  // --- Inline Edit ---
+  window.socialKatEdit = function(id){
+    // Close any other open edit rows
+    document.querySelectorAll('[id^="soc-edit-"]').forEach(function(el){el.style.display='none';});
+    document.querySelectorAll('[id^="soc-row-"]').forEach(function(el){el.style.display='';});
+    var row=document.getElementById('soc-row-'+id);
+    var edit=document.getElementById('soc-edit-'+id);
+    if(row) row.style.display='none';
+    if(edit) edit.style.display='';
+    var nameInp=document.getElementById('soc-ed-name-'+id);
+    if(nameInp) nameInp.focus();
+  };
+  window.socialKatCancelEdit = function(id){
+    var row=document.getElementById('soc-row-'+id);
+    var edit=document.getElementById('soc-edit-'+id);
+    if(row) row.style.display='';
+    if(edit) edit.style.display='none';
+  };
+  window.socialKatSave = function(id){
+    var name=(document.getElementById('soc-ed-name-'+id).value||'').trim();
+    var kat=document.getElementById('soc-ed-kat-'+id).value;
+    var preis=(document.getElementById('soc-ed-preis-'+id).value||'').trim();
+    if(!name){socialStatus('soc-kat-status','Name darf nicht leer sein',false);return;}
+    socialStatus('soc-kat-status','Wird gespeichert...',true);
+    fetch(API+'/social-katalog',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id,name:name,kategorie:kat,preis:preis})
+    })
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    })
+    .then(function(res){
+      if(res.error){socialStatus('soc-kat-status',res.error,false);return;}
+      socialStatus('soc-kat-status','Gespeichert!',true);
+      socialLoadKatalog();
+    })
+    .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+  };
 
   // --- Produkt hinzufuegen ---
   window.socialKatAdd = function(){
