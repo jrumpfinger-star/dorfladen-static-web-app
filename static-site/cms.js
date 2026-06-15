@@ -10311,15 +10311,11 @@
       msg+='\n';
     });
     if(hasMittagessen){
-      var orderItems=cats['Mittagessen'].map(function(p){return p.name+(p.preis?' ('+p.preis+'\u20AC)':'');});
-      var orderText='Hallo, ich m\u00f6chte gerne bestellen:\n'+orderItems.map(function(n){return '___ Stk. '+n;}).join('\n')+'\nAbholung ca. _____ Uhr.\nDanke!';
-      var orderLink='https://wa.me/491714910935?text='+encodeURIComponent(orderText);
-      msg+='\uD83D\uDCF2 *Jetzt vorbestellen per WhatsApp:*\n';
-      msg+=orderLink+'\n\n';
-      msg+='\u260E\uFE0F Oder anrufen: 08082 / 622 99 91\n';
-      msg+='0,50\u20AC \u00D6ko-Rabatt mit eigenem Beh\u00E4lter!\n\n';
+      msg+='\uD83D\uDCDE *Gerne vorbestellen!*\n';
+      msg+='\u260E\uFE0F 08082 / 622 99 91\n';
+      msg+='\uD83C\uDF3F 0,50\u20AC \u00D6ko-Rabatt mit eigenem Beh\u00E4lter\n\n';
     }
-    msg+='\uD83D\uDED2 Dorfladen Oberornau\nDorfplatz 1, 84419 Obertaufkirchen\nTel: 08082 / 622 99 91';
+    msg+='\uD83D\uDED2 *Dorfladen Oberornau*\nDorfplatz 1, 84419 Obertaufkirchen';
     return msg;
   }
 
