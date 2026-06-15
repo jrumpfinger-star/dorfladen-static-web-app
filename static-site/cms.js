@@ -9859,10 +9859,35 @@
         if(res.error){socialStatus('soc-post-status',res.error,false);return;}
         socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" gespeichert!',true);
         _socMtBilder[gericht]={bild_url:res.bild_url};
-        socialBuildPostItems();
+        socialUpdateMtThumb(gericht,res.bild_url);
       })
       .catch(function(e){socialStatus('soc-post-status','Upload-Fehler: '+e.message,false);});
   };
+
+  // --- Update Mittagstisch thumbnail in-place (preserves checkbox state) ---
+  function socialUpdateMtThumb(gericht,url){
+    var rows=document.querySelectorAll('.soc-mt-row');
+    for(var i=0;i<rows.length;i++){
+      var cb=rows[i].querySelector('.soc-post-wp');
+      if(!cb)continue;
+      var dn=cb.getAttribute('data-name');
+      if(dn!==gericht)continue;
+      var lbl=cb.closest('label');
+      if(!lbl)continue;
+      var existing=lbl.querySelector('img');
+      if(existing){
+        existing.src=url;
+      }else{
+        var img=document.createElement('img');
+        img.src=url;
+        img.style.cssText='width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0';
+        img.onerror=function(){this.style.display='none';};
+        cb.parentNode.insertBefore(img,cb.nextSibling);
+      }
+      break;
+    }
+    socialGenPreview();
+  }
 
   // --- Mittagstisch Paste-Button: focus + listen for Ctrl+V ---
   var _socMtPasteTarget=null;
@@ -9907,7 +9932,8 @@
               if(res.error){socialStatus('soc-post-status',res.error,false);return;}
               socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" eingef\u00fcgt!',true);
               _socMtBilder[gericht]={bild_url:res.bild_url};
-              socialBuildPostItems();
+              // Update thumbnail in-place without full rebuild (preserves checkboxes)
+              socialUpdateMtThumb(gericht,res.bild_url);
             })
             .catch(function(err){socialStatus('soc-post-status','Paste-Fehler: '+err.message,false);});
           return;
