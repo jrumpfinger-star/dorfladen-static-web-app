@@ -9722,13 +9722,8 @@
     return lines;
   }
 
-  // --- WhatsApp Share ---
-  window.socialShareWhatsApp = function(){
-    socialGenPreview();
-    // Build text message
-    var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
-    var freitext=(document.getElementById('soc-post-text').value||'').trim();
-    var selected=socialGatherSelected();
+  // --- WhatsApp message builder ---
+  function socialBuildWhatsAppMsg(selected,titel,freitext){
     var msg='*'+titel+'*\n';
     var now=new Date();
     var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
@@ -9751,7 +9746,6 @@
       msg+='\n';
     });
     if(hasMittagessen){
-      // Build pre-filled order message for wa.me link
       var orderItems=cats['Mittagessen'].map(function(p){return p.name;});
       var orderText='Hallo, ich m\u00f6chte gerne bestellen:\n'+orderItems.map(function(n){return '- '+n;}).join('\n')+'\nAbholung ca. _____ Uhr.\nDanke!';
       var orderLink='https://wa.me/4980826229991?text='+encodeURIComponent(orderText);
@@ -9761,8 +9755,46 @@
       msg+='0,50\u20AC \u00D6ko-Rabatt mit eigenem Beh\u00E4lter!\n\n';
     }
     msg+='\uD83D\uDED2 Dorfladen Oberornau\nDorfplatz 1, 84419 Obertaufkirchen\nTel: 08082 / 622 99 91';
-    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-    // Save post
+    return msg;
+  }
+
+  // --- WhatsApp Share ---
+  window.socialShareWhatsApp = function(){
+    socialGenPreview();
+    var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
+    var freitext=(document.getElementById('soc-post-text').value||'').trim();
+    var selected=socialGatherSelected();
+    var msg=socialBuildWhatsAppMsg(selected,titel,freitext);
+    var canvas=document.getElementById('soc-post-canvas');
+
+    // Try Web Share API (mobile: shares image + text together)
+    if(canvas && navigator.share && navigator.canShare){
+      canvas.toBlob(function(blob){
+        if(!blob){
+          // Fallback: text only
+          window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+          return;
+        }
+        var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
+        var shareData={text:msg,files:[file]};
+        if(navigator.canShare(shareData)){
+          navigator.share(shareData).catch(function(){
+            // User cancelled or error – fallback
+            window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+          });
+        } else {
+          // canShare false – download image + open wa.me
+          socialDownloadPoster();
+          socialStatus('soc-post-status','Bild heruntergeladen! In WhatsApp als Anhang hinzuf\u00fcgen.',true);
+          window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+        }
+      },'image/png');
+    } else {
+      // Desktop: download image + open WhatsApp link
+      if(canvas) socialDownloadPoster();
+      socialStatus('soc-post-status','Bild heruntergeladen! In WhatsApp als Anhang hinzuf\u00fcgen.',true);
+      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+    }
     socialSavePost(titel,freitext,selected);
   };
 
