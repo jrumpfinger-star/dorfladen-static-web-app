@@ -10272,13 +10272,27 @@
     socialSavePost(titel,freitext,selected);
   };
 
-  // --- Fallback: download image + open WhatsApp with text ---
+  // --- Fallback: copy image to clipboard + download + open WhatsApp ---
   function socialFallbackWaShare(canvas,msg){
-    if(canvas) socialDownloadPoster();
-    socialStatus('soc-post-status','\u2705 Bild wurde heruntergeladen \u2013 bitte in WhatsApp als Foto anhaengen!',true);
+    if(canvas){
+      canvas.toBlob(function(blob){
+        if(blob&&navigator.clipboard&&navigator.clipboard.write){
+          var item=new ClipboardItem({'image/png':blob});
+          navigator.clipboard.write([item]).then(function(){
+            socialStatus('soc-post-status','\u2705 Poster in Zwischenablage kopiert! In WhatsApp mit Strg+V einf\u00fcgen.',true);
+          }).catch(function(){
+            socialDownloadPoster();
+            socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
+          });
+        } else {
+          socialDownloadPoster();
+          socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
+        }
+      },'image/png');
+    }
     setTimeout(function(){
       window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-    },600);
+    },800);
   }
 
   // --- Instagram Share (download image) ---
