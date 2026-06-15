@@ -10574,9 +10574,8 @@
       msg+='\n';
     });
     if(hasMittagessen){
-      var orderItems=cats['Mittagessen'].map(function(p){return '___ Stk. '+p.name;});
-      var orderText='Hallo, ich m\u00f6chte gerne bestellen:\n'+orderItems.join('\n')+'\nAbholung ca. ___ Uhr.\nDanke!';
-      msg+='\uD83D\uDCDE *Jetzt vorbestellen:*\nhttps://wa.me/491714910935?text='+encodeURIComponent(orderText)+'\n';
+      msg+='\uD83D\uDCDE *Jetzt vorbestellen:*\n';
+      msg+='Einfach auf diese Nachricht antworten!\n';
       msg+='\u260E\uFE0F 08082 / 622 99 91\n';
       msg+='\uD83C\uDF3F 0,50\u20AC \u00D6ko-Rabatt mit eigenem Beh\u00E4lter\n\n';
     }
