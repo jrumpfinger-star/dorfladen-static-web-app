@@ -2708,8 +2708,11 @@
     var st=row.querySelector('.cms-meal-img-status');
     var reader=new FileReader();
     reader.onload=function(){
-      if(pv){pv.src=reader.result;pv.style.display='';}
-      if(st) st.textContent=file.name;
+      if(pv){pv.src=reader.result;pv.style.display='inline-block';}
+      if(st) st.innerHTML='\u2705 '+esc(file.name||'Bild');
+      // Reset paste button if active
+      var btn=row.querySelector('[data-action="mealRowPaste"]');
+      if(btn){btn.style.background='#dcfce7';btn.textContent='\u2705 Bild';}
     };
     reader.readAsDataURL(file);
   }
@@ -2800,8 +2803,16 @@
     document.getElementById('cms-modal-wrap').innerHTML=html;
     document.getElementById('cms-modal-wrap').style.display='';
     mealRowCtr=0;
+    _mealRowImages={};
     if(isEdit){
       addMealRow(meal.gericht, meal.preis, meal.id);
+      // Show existing image if available
+      if(meal.gericht&&typeof _socMtBilder!=='undefined'&&_socMtBilder&&_socMtBilder[meal.gericht]&&_socMtBilder[meal.gericht].bild_url){
+        var pvImg=document.querySelector('#cms-mr-1 .cms-meal-img-pv');
+        if(pvImg){pvImg.src=_socMtBilder[meal.gericht].bild_url;pvImg.style.display='inline-block';}
+        var pvSt=document.querySelector('#cms-mr-1 .cms-meal-img-status');
+        if(pvSt) pvSt.innerHTML='\u2705 Bild vorhanden';
+      }
     } else {
       addMealRow();
     }
