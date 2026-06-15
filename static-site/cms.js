@@ -9386,8 +9386,13 @@
     var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
     var html='';
     Object.keys(cats).forEach(function(cat){
-      html+='<div class="cms-card" style="margin-bottom:10px"><div class="cms-card-header" style="background:#1f2937">'+(catIcons[cat]||'&#128230;')+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></div>';
-      html+='<div class="cms-card-body" style="padding:0">';
+      var catId='soc-kat-cat-'+esc(cat).replace(/[^a-zA-Z0-9]/g,'_');
+      html+='<div class="cms-card" style="margin-bottom:10px">';
+      html+='<div class="cms-card-header soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:#1f2937;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">';
+      html+='<span>'+(catIcons[cat]||'&#128230;')+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
+      html+='<span class="soc-kat-arrow" id="'+catId+'-arrow" style="transition:transform .2s;font-size:14px">&#9660;</span>';
+      html+='</div>';
+      html+='<div class="cms-card-body" id="'+catId+'" style="padding:0">';
       html+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
       cats[cat].forEach(function(p,i){
         var bg=i%2===0?'#fff':'#fafbfc';
@@ -9445,6 +9450,20 @@
     var nameInp=document.getElementById('soc-ed-name-'+id);
     if(nameInp) nameInp.focus();
   };
+  // --- Toggle category collapse ---
+  window.socialKatToggleCat = function(catId){
+    var body=document.getElementById(catId);
+    var arrow=document.getElementById(catId+'-arrow');
+    if(!body)return;
+    if(body.style.display==='none'){
+      body.style.display='';
+      if(arrow) arrow.style.transform='rotate(0deg)';
+    } else {
+      body.style.display='none';
+      if(arrow) arrow.style.transform='rotate(-90deg)';
+    }
+  };
+
   window.socialKatCancelEdit = function(id){
     var row=document.getElementById('soc-row-'+id);
     var edit=document.getElementById('soc-edit-'+id);
