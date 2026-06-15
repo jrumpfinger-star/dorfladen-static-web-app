@@ -10772,11 +10772,6 @@
 
   // --- WhatsApp message builder ---
   function socialBuildWhatsAppMsg(selected,titel,freitext){
-    var msg='*'+titel+'*\n';
-    var now=new Date();
-    var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-    msg+=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear()+'\n\n';
-    if(freitext) msg+=freitext+'\n\n';
     var cats={};
     selected.forEach(function(p){
       var c=p.kategorie||'Sonstiges';
@@ -10784,6 +10779,26 @@
       cats[c].push(p);
     });
     var hasMittagessen=!!cats['Mittagessen'];
+    var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
+
+    // Short caption for Mittagessen-only (details are on the poster image)
+    if(onlyMittagessen){
+      var msg='\uD83C\uDF5D *Mittagessen heute*\n';
+      cats['Mittagessen'].forEach(function(p){
+        var bestellText='Hallo! Ich m\u00F6chte bestellen: '+p.name;
+        msg+='\uD83D\uDC49 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
+      });
+      if(freitext) msg+='\n'+freitext+'\n';
+      msg+='\n\uD83D\uDED2 Dorfladen Oberornau \u2022 08082 / 622 99 91';
+      return msg;
+    }
+
+    // Full message for mixed categories
+    var msg='*'+titel+'*\n';
+    var now=new Date();
+    var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    msg+=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear()+'\n\n';
+    if(freitext) msg+=freitext+'\n\n';
     Object.keys(cats).forEach(function(cat){
       msg+='*'+cat+'*\n';
       cats[cat].forEach(function(p){
@@ -10794,11 +10809,6 @@
       msg+='\n';
     });
     if(hasMittagessen){
-      msg+='\uD83D\uDCDE *Jetzt vorbestellen:*\n';
-      msg+='Einfach auf diese Nachricht antworten!\n';
-      msg+='\u260E\uFE0F 08082 / 622 99 91\n';
-      msg+='\uD83C\uDF3F 0,50\u20AC \u00D6ko-Rabatt mit eigenem Beh\u00E4lter\n\n';
-      // Schnellbestell-Links pro Gericht
       msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n';
       cats['Mittagessen'].forEach(function(p){
         var bestellText='Hallo! Ich m\u00F6chte bestellen: '+p.name;
