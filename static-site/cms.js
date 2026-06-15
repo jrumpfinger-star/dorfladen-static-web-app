@@ -9035,7 +9035,7 @@
     var list=document.getElementById('cms-orders-list');
     if(!list) return;
     list.innerHTML='<p style="text-align:center;padding:20px;color:#6b7280">⏳ Bestellungen werden geladen…</p>';
-    fetch(API_BASE+'/shop-order?mode=cms')
+    fetch(API+'/shop-order?mode=cms')
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.orders){list.innerHTML='<p style="color:#ef4444">Fehler beim Laden</p>';return;}
@@ -9099,7 +9099,7 @@
   window.cmsOrderStatus=function(id,status,bestellnr,email,name,abholdatum){
     var label=STATUS_LABELS[status]||'';
     if(!confirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?')) return;
-    fetch(API_BASE+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:status})})
+    fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:status})})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
@@ -9109,7 +9109,7 @@
           cmsRenderOrders();
           // Send notification when order is ready for pickup
           if(status===2&&email){
-            fetch(API_BASE+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:bestellnr,kunde_email:email,kunde_name:name||'',abholdatum:abholdatum||''})}).catch(function(){});
+            fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:bestellnr,kunde_email:email,kunde_name:name||'',abholdatum:abholdatum||''})}).catch(function(){});
             cmsToast('✅ '+bestellnr+': Status → Abholbereit. Kunde wird benachrichtigt!');
           } else {
             cmsToast('✅ '+bestellnr+': Status → '+label);
@@ -9124,7 +9124,7 @@
     // Set status to "In Bearbeitung" if still "Neu"
     var o=_ordersData.find(function(x){return x.id===orderId;});
     if(o&&o.status===0){
-      fetch(API_BASE+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,status:1})})
+      fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,status:1})})
         .then(function(){if(o){o.status=1;o.status_text='In Bearbeitung';}cmsRenderOrders();})
         .catch(function(){});
     }
@@ -9178,7 +9178,7 @@
     var list=document.getElementById('cms-kunden-list');
     list.innerHTML='<p style="text-align:center;color:#6b7280">⏳ Kunden werden geladen…</p>';
     // Use Dataverse query via a proxy endpoint or direct
-    fetch(API_BASE+'/shop-order?mode=cms')
+    fetch(API+'/shop-order?mode=cms')
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
@@ -9717,7 +9717,7 @@
       freitext:freitext,
       items:items.map(function(p){return{id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};})
     };
-    fetch(API_BASE+'/social-post',{
+    fetch(API+'/social-post',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(body)
@@ -9733,7 +9733,7 @@
     if(loading) loading.style.display='block';
     if(list) list.innerHTML='';
     if(empty) empty.style.display='none';
-    fetch(API_BASE+'/social-post')
+    fetch(API+'/social-post')
       .then(function(r){return r.json();})
       .then(function(res){
         if(loading) loading.style.display='none';
