@@ -10552,6 +10552,11 @@
     ctx.textAlign='center';
     ctx.fillText('\uD83D\uDCDE Jetzt vorbestellen!',W/2,btnY+btnH/2+4);
 
+    // Phone number below button
+    ctx.fillStyle='#6b7280';
+    ctx.font='11px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('Tel: 08082 / 622 99 91  \u2022  Einfach anrufen oder WhatsApp schreiben!',W/2,btnY+btnH+18);
+
   }
 
   function socialWrapText(ctx,text,maxW){
