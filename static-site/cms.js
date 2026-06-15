@@ -10261,13 +10261,15 @@
       }));
     }
 
-    // 2. Normal poster (with ALL items including Mittagessen for full overview)
-    var c2=document.createElement('canvas');
-    var x2=c2.getContext('2d');
-    socialDrawPoster(c2,x2,W,selected,titel,freitext,loadedImgs);
-    results.push(new Promise(function(resolve){
-      c2.toBlob(function(b){resolve({blob:b,name:'dorfladen-post.png'});}, 'image/png');
-    }));
+    // 2. Normal poster only if there are non-Mittagessen items (otherwise meal poster is enough)
+    if(otherItems.length>0){
+      var c2=document.createElement('canvas');
+      var x2=c2.getContext('2d');
+      socialDrawPoster(c2,x2,W,selected,titel,freitext,loadedImgs);
+      results.push(new Promise(function(resolve){
+        c2.toBlob(function(b){resolve({blob:b,name:'dorfladen-post.png'});}, 'image/png');
+      }));
+    }
 
     return Promise.all(results);
   }
