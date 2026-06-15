@@ -117,6 +117,7 @@
   var aktionen = [];
   var _angWeekFilter = 'this';
   var angRowCounter = 0;
+  var _angPasteTarget = null; // row number for clipboard paste
 
   function toIsoDateOnly(v){
     if(!v) return '';
@@ -262,7 +263,8 @@
       +'<div class="cms-ang-row-img">'
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
       +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
-      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild auswählen & in StrichcodeBilder hochladen" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">📁</button>'
+      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild ausw\u00e4hlen & in StrichcodeBilder hochladen" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">\uD83D\uDCC1</button>'
++'<button class="cms-bild-paste-sp" data-action="pasteBildSP" data-row="'+angRowCounter+'" type="button" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="font-size:12px;background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:1px 4px;color:#6b7280">\uD83D\uDCCB</button>'
       +'</div>'
       +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
@@ -7910,6 +7912,14 @@
           inp.click();
         })();
         break;
+      case 'pasteBildSP':
+        (function(){
+          var rn=t.getAttribute('data-row');if(!rn)return;
+          _angPasteTarget=rn;
+          t.style.background='#fef08a';t.textContent='\u23F3 Strg+V';
+          setTimeout(function(){t.style.background='';t.textContent='\uD83D\uDCCB';_angPasteTarget=null;},4000);
+        })();
+        break;
       case 'settingsSave':saveFeatureFlags();break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
@@ -9598,10 +9608,11 @@
         html+='<span style="font-weight:700;font-size:13px;flex:1">'+esc(m.gericht)+'</span>';
         if(m.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
         html+='</label>';
-        // Image upload button for this meal
-        html+='<label title="Bild hochladen" style="cursor:pointer;padding:6px 10px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:18px;flex-shrink:0;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">';
+        // Image upload / paste button for this meal
+        html+='<label title="Bild hochladen oder einf\u00fcgen (Strg+V)" style="cursor:pointer;padding:6px 10px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:18px;flex-shrink:0;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">';
         html+='&#128247;<input type="file" accept="image/*" onchange="socialMtBildUpload(this,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="display:none">';
         html+='</label>';
+        html+='<button class="soc-mt-paste" data-gericht="'+esc(m.gericht).replace(/'/g,"&#39;")+'" onclick="socialMtPasteFocus(this)" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="padding:4px 8px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:12px;cursor:pointer;flex-shrink:0">&#128203;</button>';
         html+='</div>';
       });
       html+='</div>';
@@ -9738,6 +9749,86 @@
       })
       .catch(function(e){socialStatus('soc-post-status','Upload-Fehler: '+e.message,false);});
   };
+
+  // --- Mittagstisch Paste-Button: focus + listen for Ctrl+V ---
+  var _socMtPasteTarget=null;
+  window.socialMtPasteFocus = function(btn){
+    _socMtPasteTarget=btn.getAttribute('data-gericht');
+    btn.style.background='#fef08a';btn.textContent='\u23F3 Strg+V';
+    setTimeout(function(){btn.style.background='#fff8e1';btn.textContent='\uD83D\uDCCB';},3000);
+  };
+  document.addEventListener('paste',function(e){
+    // Mittagstisch paste
+    if(_socMtPasteTarget){
+      var items=e.clipboardData&&e.clipboardData.items;
+      if(!items)return;
+      for(var i=0;i<items.length;i++){
+        if(items[i].type.indexOf('image/')===0){
+          e.preventDefault();
+          var file=items[i].getAsFile();
+          var gericht=_socMtPasteTarget;
+          _socMtPasteTarget=null;
+          var fd=new FormData();
+          fd.append('gericht',gericht);
+          fd.append('bild',file);
+          socialStatus('soc-post-status','Bild wird hochgeladen...',true);
+          fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd})
+            .then(function(r){return r.json();})
+            .then(function(res){
+              if(res.error){socialStatus('soc-post-status',res.error,false);return;}
+              socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" eingef\u00fcgt!',true);
+              _socMtBilder[gericht]={bild_url:res.bild_url};
+              socialBuildPostItems();
+            })
+            .catch(function(err){socialStatus('soc-post-status','Paste-Fehler: '+err.message,false);});
+          return;
+        }
+      }
+    }
+    // Sonderangebote paste
+    if(_angPasteTarget){
+      var items2=e.clipboardData&&e.clipboardData.items;
+      if(!items2)return;
+      for(var j=0;j<items2.length;j++){
+        if(items2[j].type.indexOf('image/')===0){
+          e.preventDefault();
+          var file2=items2[j].getAsFile();
+          var rn=_angPasteTarget;
+          _angPasteTarget=null;
+          var row=document.getElementById('cms-ar-'+rn);
+          if(!row){toast('Zeile nicht gefunden','error');return;}
+          var bildInp=row.querySelector('[data-f="bild_data"]');
+          var nrInp=row.querySelector('[data-f="artikelnummer"]');
+          var prodInp=row.querySelector('[data-f="produkt"]');
+          var artnr=(nrInp&&nrInp.value||'').trim();
+          var scNr='';
+          if(artnr){var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});if(cached&&cached.sc)scNr=cached.sc;}
+          if(!scNr&&prodInp){var prod=prodInp.value.trim().toLowerCase();var match=_artikelCache.find(function(a){return(a.b||a.produktVal||'').toLowerCase()===prod;});if(match&&match.sc)scNr=match.sc;if(!scNr&&match&&match.nr)scNr=match.nr;}
+          if(!scNr)scNr=artnr;
+          if(!scNr){toast('Bitte zuerst einen Artikel ausw\u00e4hlen','warn');return;}
+          var reader2=new FileReader();
+          reader2.onload=function(){
+            cmsCompressImage(reader2.result,500,500,function(compressedB64){
+              if(bildInp)bildInp.value=compressedB64;
+              var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=compressedB64;pv.style.display='';}
+              var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
+              var pasteBtn=row.querySelector('.cms-bild-paste-sp');
+              if(pasteBtn){pasteBtn.textContent='\u23F3';}
+              uploadImageToSharePoint(scNr,compressedB64).then(function(){
+                toast('Bild als '+scNr+' eingef\u00fcgt & hochgeladen!');
+              }).catch(function(err){
+                var msg=err&&err.message||String(err);
+                if(msg.indexOf('interaction_in_progress')!==-1) msg='Anmeldung l\u00e4uft noch \u2013 bitte kurz warten und erneut versuchen';
+                toast('Upload-Fehler: '+msg,'error');
+              }).then(function(){if(pasteBtn)pasteBtn.textContent='\uD83D\uDCCB';});
+            });
+          };
+          reader2.readAsDataURL(file2);
+          return;
+        }
+      }
+    }
+  });
 
   // --- Search filter ---
   window.socialPickFilter = function(){
