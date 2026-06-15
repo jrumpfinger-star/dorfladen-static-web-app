@@ -9465,9 +9465,9 @@
       html+='<div class="cms-card" style="margin-bottom:10px">';
       html+='<div class="cms-card-header soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:#1f2937;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">';
       html+='<span>'+(catIcons[cat]||'&#128230;')+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
-      html+='<span class="soc-kat-arrow" id="'+catId+'-arrow" style="transition:transform .2s;font-size:14px">&#9660;</span>';
+      html+='<span class="soc-kat-arrow" id="'+catId+'-arrow" style="transition:transform .2s;font-size:14px">&#9654;</span>';
       html+='</div>';
-      html+='<div class="cms-card-body" id="'+catId+'" style="padding:0">';
+      html+='<div class="cms-card-body" id="'+catId+'" style="padding:0;display:none">';
       html+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
       cats[cat].forEach(function(p,i){
         var bg=i%2===0?'#fff':'#fafbfc';
@@ -9532,10 +9532,10 @@
     if(!body)return;
     if(body.style.display==='none'){
       body.style.display='';
-      if(arrow) arrow.style.transform='rotate(0deg)';
+      if(arrow) arrow.innerHTML='&#9660;';
     } else {
       body.style.display='none';
-      if(arrow) arrow.style.transform='rotate(-90deg)';
+      if(arrow) arrow.innerHTML='&#9654;';
     }
   };
 
