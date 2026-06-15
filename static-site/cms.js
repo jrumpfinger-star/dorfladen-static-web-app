@@ -10080,14 +10080,19 @@
     if(_featureFlags.post_images!==false){
       selected.forEach(function(p){
         var url='';
+        var pName=p.name||p.gericht||'';
+        // Mittagstisch image (uploaded via social module) – check first, most specific
+        if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url) url=_socMtBilder[pName].bild_url;
         // Katalog item
-        var katItem=_socialKatalog.find(function(k){return k.id===p.id;});
-        if(katItem&&katItem.bild_url) url=katItem.bild_url;
+        if(!url){
+          var katItem=_socialKatalog.find(function(k){return k.id===p.id;});
+          if(katItem&&katItem.bild_url) url=katItem.bild_url;
+        }
         // Free item (base64)
-        var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});
-        if(freeItem&&freeItem.bild_data) url=freeItem.bild_data;
-        // Mittagstisch image
-        if(!url&&_socMtBilder[p.name]&&_socMtBilder[p.name].bild_url) url=_socMtBilder[p.name].bild_url;
+        if(!url){
+          var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});
+          if(freeItem&&freeItem.bild_data) url=freeItem.bild_data;
+        }
         if(url) imgMap[p.id]=url;
       });
     }
