@@ -9442,37 +9442,94 @@
       .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
   };
 
-  // --- Post-Builder: Checkboxen aus Katalog ---
+  // --- Post-Builder: Checkboxen aus Katalog + Wochenplan-Mittagessen ---
+  function socialGetTodayMeals(){
+    // Get today's wochentag code: Mo=101000 ... Fr=101004, Sa=101005, So=101006
+    var d=new Date().getDay(); // 0=So,1=Mo,...,6=Sa
+    var todayCode = d===0 ? 101006 : 101000+(d-1);
+    // meals array is populated by loadWP() in the Wochenplan module
+    if(typeof meals==='undefined' || !meals || !meals.length) return [];
+    return meals.filter(function(m){
+      return m.wochentag===todayCode && m.gericht && m.gericht.trim() && m.preis;
+    });
+  }
+
   function socialBuildPostItems(){
     var wrap=document.getElementById('soc-post-items');
     if(!wrap)return;
-    if(!_socialKatalog.length){
-      wrap.innerHTML='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog. Bitte zuerst Produkte im Katalog-Tab anlegen.</p>';
-      return;
-    }
-    var cats={};
-    _socialKatalog.forEach(function(p){
-      var c=p.kategorie||'Sonstiges';
-      if(!cats[c]) cats[c]=[];
-      cats[c].push(p);
-    });
-    var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+
     var html='';
-    Object.keys(cats).forEach(function(cat){
-      html+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:4px">'+(catIcons[cat]||'')+' '+esc(cat)+'</div>';
-      cats[cat].forEach(function(p){
-        html+='<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=\'#fff\'">';
-        html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" style="width:18px;height:18px;accent-color:#e1306c">';
-        if(p.bild_url){
-          html+='<img src="'+esc(p.bild_url)+'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display=\'none\'">';
-        }
-        html+='<span style="font-weight:600;font-size:13px;flex:1">'+esc(p.name)+'</span>';
-        if(p.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+esc(p.preis)+' &#8364;</span>';
+    var todayMeals=socialGetTodayMeals();
+
+    // --- Heutiges Mittagessen aus Wochenplan ---
+    if(todayMeals.length){
+      var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+      var today=days[new Date().getDay()];
+      html+='<div style="margin-bottom:12px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px 12px">';
+      html+='<div style="font-size:12px;font-weight:700;color:#f57f17;margin-bottom:6px">&#127869; Heutiges Mittagessen ('+esc(today)+')</div>';
+      todayMeals.forEach(function(m){
+        var wpId='wp-'+m.id;
+        html+='<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:2px solid #ffe082;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'#fffde7\'" onmouseout="this.style.background=\'#fff\'">';
+        html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" style="width:20px;height:20px;accent-color:#f57f17">';
+        html+='<span style="font-weight:700;font-size:14px;flex:1">'+esc(m.gericht)+'</span>';
+        if(m.preis) html+='<span style="font-size:13px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
         html+='</label>';
       });
       html+='</div>';
-    });
+    }
+
+    // --- Katalog-Produkte ---
+    if(!_socialKatalog.length && !todayMeals.length){
+      wrap.innerHTML='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog und kein Mittagessen im Wochenplan f&#252;r heute.</p>';
+      return;
+    }
+
+    if(_socialKatalog.length){
+      var cats={};
+      _socialKatalog.forEach(function(p){
+        var c=p.kategorie||'Sonstiges';
+        if(!cats[c]) cats[c]=[];
+        cats[c].push(p);
+      });
+      var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+      Object.keys(cats).forEach(function(cat){
+        html+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:4px">'+(catIcons[cat]||'')+' '+esc(cat)+'</div>';
+        cats[cat].forEach(function(p){
+          html+='<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=\'#fff\'">';
+          html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" style="width:18px;height:18px;accent-color:#e1306c">';
+          if(p.bild_url){
+            html+='<img src="'+esc(p.bild_url)+'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+          }
+          html+='<span style="font-weight:600;font-size:13px;flex:1">'+esc(p.name)+'</span>';
+          if(p.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+esc(p.preis)+' &#8364;</span>';
+          html+='</label>';
+        });
+        html+='</div>';
+      });
+    }
     wrap.innerHTML=html;
+  }
+
+  // --- Gather all selected items (Katalog + Wochenplan) ---
+  function socialGatherSelected(){
+    var selected=[];
+    // Wochenplan-Mittagessen checkboxes
+    var wpChecked=document.querySelectorAll('.soc-post-wp:checked');
+    wpChecked.forEach(function(cb){
+      selected.push({
+        id:cb.value,
+        name:cb.getAttribute('data-name')||'',
+        preis:cb.getAttribute('data-preis')||'',
+        kategorie:cb.getAttribute('data-kat')||'Mittagessen'
+      });
+    });
+    // Katalog checkboxes
+    var katChecked=document.querySelectorAll('.soc-post-cb:checked');
+    katChecked.forEach(function(cb){
+      var item=_socialKatalog.find(function(p){return p.id===cb.value;});
+      if(item) selected.push(item);
+    });
+    return selected;
   }
 
   // --- Canvas Poster Generator ---
@@ -9484,12 +9541,7 @@
     canvas.width=W; canvas.height=H;
 
     // Gather selected items
-    var checked=document.querySelectorAll('.soc-post-cb:checked');
-    var selected=[];
-    checked.forEach(function(cb){
-      var item=_socialKatalog.find(function(p){return p.id===cb.value;});
-      if(item) selected.push(item);
-    });
+    var selected=socialGatherSelected();
     var titel=(document.getElementById('soc-post-titel').value||'').trim();
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
 
@@ -9601,12 +9653,7 @@
     // Build text message
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
-    var checked=document.querySelectorAll('.soc-post-cb:checked');
-    var selected=[];
-    checked.forEach(function(cb){
-      var item=_socialKatalog.find(function(p){return p.id===cb.value;});
-      if(item) selected.push(item);
-    });
+    var selected=socialGatherSelected();
     var msg='*'+titel+'*\n';
     var now=new Date();
     var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
@@ -9640,12 +9687,7 @@
     socialStatus('soc-post-status','Bild heruntergeladen! Jetzt in Instagram hochladen.',true);
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
-    var checked=document.querySelectorAll('.soc-post-cb:checked');
-    var selected=[];
-    checked.forEach(function(cb){
-      var item=_socialKatalog.find(function(p){return p.id===cb.value;});
-      if(item) selected.push(item);
-    });
+    var selected=socialGatherSelected();
     socialSavePost(titel,freitext,selected);
   };
 
