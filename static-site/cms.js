@@ -11049,18 +11049,25 @@
     }
   };
 
-  // Helper: share files + text via Web Share API or fallback
+  // Helper: share files then text (image first, text as follow-up so it appears BELOW the image)
   function socialShareFilesWithText(files,msg){
     var hasShare=!!navigator.share;
     if(hasShare&&files.length){
-      var shareData={text:msg,files:files};
+      // Share image only (no text) so WhatsApp shows it as clean image
+      var imgData={files:files};
       var canShareFiles=false;
-      try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){}
+      try{canShareFiles=navigator.canShare&&navigator.canShare(imgData);}catch(e){}
       if(canShareFiles){
         var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
         socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
-        navigator.share(shareData).then(function(){
-          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+        navigator.share(imgData).then(function(){
+          socialStatus('soc-post-status','\u2705 Bild geteilt! Bestelltext wird gesendet...',true);
+          // After image is shared, open WhatsApp with order text as separate message
+          if(msg){
+            setTimeout(function(){
+              window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+            },600);
+          }
         }).catch(function(err){
           if(err.name==='AbortError'){
             socialStatus('soc-post-status','Teilen abgebrochen.',true);
