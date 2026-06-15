@@ -9570,7 +9570,7 @@
       todayMeals.forEach(function(m){
         var wpId='wp-'+m.id;
         var mtImg=_socMtBilder[m.gericht];
-        html+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#fff;border:2px solid #ffe082;border-radius:8px;margin-bottom:3px">';
+        html+='<div class="soc-mt-row" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:2px solid #ffe082;border-radius:10px;margin-bottom:4px;min-height:44px">';
         html+='<label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer">';
         html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#f57f17">';
         if(mtImg&&mtImg.bild_url){
@@ -9580,7 +9580,7 @@
         if(m.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
         html+='</label>';
         // Image upload button for this meal
-        html+='<label title="Bild hochladen" style="cursor:pointer;padding:3px 6px;border-radius:4px;background:#fff8e1;border:1px solid #ffe082;font-size:14px;flex-shrink:0">';
+        html+='<label title="Bild hochladen" style="cursor:pointer;padding:6px 10px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:18px;flex-shrink:0;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">';
         html+='&#128247;<input type="file" accept="image/*" onchange="socialMtBildUpload(this,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="display:none">';
         html+='</label>';
         html+='</div>';
@@ -9590,7 +9590,7 @@
 
     // === Freierfassung: Schnell-Eintrag ===
     html+='<div style="margin-bottom:10px">';
-    html+='<button onclick="socialFreeToggle()" style="width:100%;padding:8px 12px;background:#eff6ff;border:1px dashed #93c5fd;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;color:#2563eb;text-align:left">&#10010; Produkt frei erfassen <span style="opacity:.5;font-weight:400">(ohne Katalog)</span></button>';
+    html+='<button onclick="socialFreeToggle()" style="width:100%;padding:12px 14px;background:#eff6ff;border:1px dashed #93c5fd;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#2563eb;text-align:left;min-height:44px;box-sizing:border-box">&#10010; Produkt frei erfassen <span style="opacity:.5;font-weight:400">(ohne Katalog)</span></button>';
     html+='<div id="soc-free-form" style="display:none;margin-top:6px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px">';
     html+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end">';
     html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>';
