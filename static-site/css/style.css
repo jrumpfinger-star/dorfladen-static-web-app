@@ -473,6 +473,10 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .ft ul{list-style:none}
 .ft li{margin-bottom:6px}
 .ft-addr p{line-height:1.8}
+.ft-social{display:flex;gap:12px;margin-top:12px}
+.ft-social a{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);color:#94a3b8;transition:all .2s}
+.ft-social a:hover{background:#25D366;color:#fff;transform:scale(1.1)}
+.ft-social a:last-child:hover{background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}
 .ft-bottom{max-width:var(--max);margin:24px auto 0;padding:16px 0;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:.75rem;color:#64748b}
 .ft-bottom a{color:#94a3b8}
 @media(max-width:768px){.ft-in{grid-template-columns:1fr 1fr;gap:20px}.ft-bottom{flex-direction:column;text-align:center}}
