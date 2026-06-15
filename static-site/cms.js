@@ -10070,6 +10070,24 @@
       var cb=row.querySelector('input[type=checkbox]');
       row.style.background=cb&&cb.checked?'#f0fdf4':'#fff';
     });
+    // Show individual meal poster buttons for Mittagessen items
+    var mealPosterWrap=document.getElementById('soc-meal-posters');
+    var mealPosterList=document.getElementById('soc-meal-poster-list');
+    if(mealPosterWrap&&mealPosterList){
+      var mtItems=sel.filter(function(p){return p.kategorie==='Mittagessen';});
+      if(mtItems.length){
+        mealPosterWrap.style.display='block';
+        var mh='';
+        mtItems.forEach(function(p,i){
+          mh+='<button onclick="socialGenMealPoster('+i+')" class="cms-btn" style="background:#f59e0b;color:#fff;padding:6px 12px;font-size:12px;font-weight:600;border-radius:8px">';
+          mh+='\uD83C\uDF7D Men\u00fc '+(i+1)+': '+esc(p.name).substring(0,25)+(p.name.length>25?'\u2026':'');
+          mh+='</button>';
+        });
+        mealPosterList.innerHTML=mh;
+      } else {
+        mealPosterWrap.style.display='none';
+      }
+    }
   };
 
   // --- Gather all selected items (Katalog + Wochenplan + Frei) ---
@@ -10336,6 +10354,200 @@
     if(cur) lines.push(cur);
     return lines;
   }
+
+  // --- Individual Meal Poster ---
+  window.socialGenMealPoster = function(idx){
+    var sel=socialGatherSelected();
+    var mtItems=sel.filter(function(p){return p.kategorie==='Mittagessen';});
+    var meal=mtItems[idx];
+    if(!meal){toast('Kein Mittagessen-Item gefunden','error');return;}
+
+    // Find image
+    var pName=meal.name||meal.gericht||'';
+    var imgUrl='';
+    if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url) imgUrl=_socMtBilder[pName].bild_url;
+    if(!imgUrl){
+      var katItem=_socialKatalog.find(function(k){return k.id===meal.id;});
+      if(katItem&&katItem.bild_url) imgUrl=katItem.bild_url;
+    }
+    if(!imgUrl){
+      var freeItem=_socFreeItems.find(function(f){return f.id===meal.id;});
+      if(freeItem&&freeItem.bild_data) imgUrl=freeItem.bild_data;
+    }
+
+    // Build order link
+    var orderText='Hallo, ich m\u00f6chte gerne bestellen:\n___ Stk. '+meal.name+(meal.preis?' ('+meal.preis+'\u20AC)':'')+'\nAbholung ca. ___ Uhr.\nDanke!';
+    var orderLink='https://wa.me/491714910935?text='+encodeURIComponent(orderText);
+
+    var canvas=document.getElementById('soc-post-canvas');
+    if(!canvas){toast('Canvas nicht gefunden','error');return;}
+    var ctx=canvas.getContext('2d');
+    var W=540,H=540;
+    canvas.width=W;canvas.height=H;
+
+    function drawMealPoster(foodImg){
+      // Background: warm off-white
+      ctx.fillStyle='#faf5ef';
+      ctx.fillRect(0,0,W,H);
+
+      // Image area (top portion)
+      var imgAreaH=270;
+      if(foodImg){
+        // Draw food image covering top area
+        var iw=foodImg.width,ih=foodImg.height;
+        var scale=Math.max(W/iw,imgAreaH/ih);
+        var dw=iw*scale,dh=ih*scale;
+        var dx=(W-dw)/2,dy=(imgAreaH-dh)/2;
+        ctx.save();
+        ctx.beginPath();ctx.rect(0,0,W,imgAreaH);ctx.clip();
+        ctx.drawImage(foodImg,dx,dy,dw,dh);
+        // Gradient overlay bottom
+        var grad=ctx.createLinearGradient(0,imgAreaH-80,0,imgAreaH);
+        grad.addColorStop(0,'rgba(250,245,239,0)');
+        grad.addColorStop(1,'rgba(250,245,239,1)');
+        ctx.fillStyle=grad;
+        ctx.fillRect(0,imgAreaH-80,W,80);
+        ctx.restore();
+      } else {
+        // No image: decorative placeholder
+        ctx.fillStyle='#e8dfd3';
+        ctx.fillRect(0,0,W,imgAreaH);
+        ctx.fillStyle='#c9b99a';
+        ctx.font='48px "Segoe UI",system-ui,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('\uD83C\uDF7D',W/2,imgAreaH/2+16);
+      }
+
+      // Logo bar top-right
+      ctx.fillStyle='rgba(255,255,255,0.92)';
+      var logoW=180,logoH=46,logoX=W-logoW-10,logoY=10;
+      ctx.beginPath();
+      ctx.moveTo(logoX+8,logoY);ctx.lineTo(logoX+logoW-8,logoY);
+      ctx.quadraticCurveTo(logoX+logoW,logoY,logoX+logoW,logoY+8);
+      ctx.lineTo(logoX+logoW,logoY+logoH-8);
+      ctx.quadraticCurveTo(logoX+logoW,logoY+logoH,logoX+logoW-8,logoY+logoH);
+      ctx.lineTo(logoX+8,logoY+logoH);
+      ctx.quadraticCurveTo(logoX,logoY+logoH,logoX,logoY+logoH-8);
+      ctx.lineTo(logoX,logoY+8);
+      ctx.quadraticCurveTo(logoX,logoY,logoX+8,logoY);
+      ctx.closePath();ctx.fill();
+      ctx.fillStyle='#2e7d32';
+      ctx.font='bold 13px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('DORFLADEN',logoX+logoW/2,logoY+20);
+      ctx.fillText('OBERORNAU',logoX+logoW/2,logoY+36);
+
+      // Decorative leaf icons
+      ctx.fillStyle='#6b8c42';
+      ctx.font='11px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,imgAreaH+16);
+
+      // "Mittagessen" title
+      var ty=imgAreaH+50;
+      ctx.fillStyle='#5b7a3a';
+      ctx.font='italic bold 32px Georgia,"Times New Roman",serif';
+      ctx.textAlign='center';
+      ctx.fillText('Mittagessen',W/2,ty);
+
+      // Day of week
+      var now=new Date();
+      var days=['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];
+      ty+=38;
+      ctx.fillStyle='#374151';
+      ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText(days[now.getDay()],W/2,ty);
+
+      // Menu number with brush stroke effect
+      ty+=40;
+      // Brush stroke bg
+      ctx.fillStyle='rgba(107,140,66,0.18)';
+      var brushW=180,brushH=36;
+      ctx.beginPath();
+      ctx.ellipse(W/2,ty-10,brushW/2,brushH/2,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle='#2e7d32';
+      ctx.font='bold 20px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText('Men\u00fc '+(idx+1),W/2,ty);
+
+      // Dish name (wrapped)
+      ty+=36;
+      ctx.fillStyle='#1f2937';
+      ctx.font='15px "Segoe UI",system-ui,sans-serif';
+      var nameLines=socialWrapText(ctx,meal.name,W-60);
+      nameLines.forEach(function(line){
+        ctx.fillText(line,W/2,ty);
+        ty+=20;
+      });
+
+      // Price
+      if(meal.preis){
+        ty+=6;
+        ctx.fillStyle='#6b7280';
+        ctx.font='13px "Segoe UI",system-ui,sans-serif';
+        ctx.fillText('\u20AC'+meal.preis,W/2,ty);
+        ty+=24;
+      } else {
+        ty+=16;
+      }
+
+      // Order link
+      ctx.fillStyle='#25D366';
+      var btnW=260,btnH=36,btnX=(W-btnW)/2,btnY=ty-10;
+      ctx.beginPath();
+      ctx.moveTo(btnX+10,btnY);ctx.lineTo(btnX+btnW-10,btnY);
+      ctx.quadraticCurveTo(btnX+btnW,btnY,btnX+btnW,btnY+10);
+      ctx.lineTo(btnX+btnW,btnY+btnH-10);
+      ctx.quadraticCurveTo(btnX+btnW,btnY+btnH,btnX+btnW-10,btnY+btnH);
+      ctx.lineTo(btnX+10,btnY+btnH);
+      ctx.quadraticCurveTo(btnX,btnY+btnH,btnX,btnY+btnH-10);
+      ctx.lineTo(btnX,btnY+10);
+      ctx.quadraticCurveTo(btnX,btnY,btnX+10,btnY);
+      ctx.closePath();ctx.fill();
+      ctx.fillStyle='#fff';
+      ctx.font='bold 13px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText('\uD83D\uDCDE Jetzt vorbestellen per WhatsApp',W/2,btnY+btnH/2+5);
+
+      // Footer
+      ctx.fillStyle='#2e7d32';
+      ctx.fillRect(0,H-36,W,36);
+      ctx.fillStyle='#fff';
+      ctx.font='bold 11px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('Dorfladen Oberornau \u2022 Dorfplatz 1 \u2022 84419 Obertaufkirchen',W/2,H-14);
+
+      // Scroll canvas into view
+      canvas.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+      // Auto-download
+      canvas.toBlob(function(blob){
+        if(!blob)return;
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a');
+        a.href=url;a.download='mittagessen-menue-'+(idx+1)+'.png';
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
+        setTimeout(function(){URL.revokeObjectURL(url);},2000);
+        toast('Men\u00fc-Poster heruntergeladen!','ok');
+      },'image/png');
+    }
+
+    // Load image if available, then draw
+    if(imgUrl){
+      socialStatus('soc-post-status','Lade Bild f\u00fcr Men\u00fc '+(idx+1)+'...',true);
+      var img=new Image();
+      img.crossOrigin='anonymous';
+      img.onload=function(){
+        drawMealPoster(img);
+        socialStatus('soc-post-status','');
+      };
+      img.onerror=function(){
+        drawMealPoster(null);
+        socialStatus('soc-post-status','Bild konnte nicht geladen werden \u2013 Poster ohne Bild','error');
+      };
+      img.src=imgUrl;
+    } else {
+      drawMealPoster(null);
+    }
+  };
 
   // --- WhatsApp message builder ---
   function socialBuildWhatsAppMsg(selected,titel,freitext){
