@@ -9620,7 +9620,7 @@
       html+='</div>';
 
       html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">';
-      html+='<button class="soc-cat-chip" data-cat="" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#1f2937;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Alle</button>';
+      html+='<button class="soc-cat-chip soc-cat-active" data-cat="" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#1f2937;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Alle</button>';
       allCats.forEach(function(cat){
         html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer">'+(_socCatIcons[cat]||'')+' '+esc(cat)+'</button>';
       });
@@ -9723,7 +9723,7 @@
   // --- Search filter ---
   window.socialPickFilter = function(){
     var q=(document.getElementById('soc-pick-search').value||'').toLowerCase().trim();
-    var activeCat=document.querySelector('.soc-cat-chip[style*="background:#1f2937"][data-cat]');
+    var activeCat=document.querySelector('.soc-cat-chip.soc-cat-active');
     var catFilter=activeCat?activeCat.getAttribute('data-cat'):'';
     var rows=document.querySelectorAll('#soc-pick-grid .soc-pick-row');
     var shown=0;
@@ -9742,8 +9742,10 @@
   // --- Category chip click ---
   window.socialPickCat = function(btn){
     document.querySelectorAll('.soc-cat-chip').forEach(function(c){
+      c.classList.remove('soc-cat-active');
       c.style.background='#fff';c.style.color='#374151';
     });
+    btn.classList.add('soc-cat-active');
     btn.style.background='#1f2937';btn.style.color='#fff';
     socialPickFilter();
   };
