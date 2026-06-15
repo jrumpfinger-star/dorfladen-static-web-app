@@ -9529,61 +9529,131 @@
     });
   }
 
+  var _socCatIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+
   function socialBuildPostItems(){
     var wrap=document.getElementById('soc-post-items');
     if(!wrap)return;
 
-    var html='';
     var todayMeals=socialGetTodayMeals();
+    if(!_socialKatalog.length && !todayMeals.length){
+      wrap.innerHTML='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog und kein Mittagessen im Wochenplan.</p>';
+      return;
+    }
 
-    // --- Heutiges Mittagessen aus Wochenplan ---
+    // Collect unique categories from katalog
+    var allCats=[];
+    _socialKatalog.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(allCats.indexOf(c)===-1) allCats.push(c);
+    });
+
+    var html='';
+
+    // === Selected items summary (updates dynamically) ===
+    html+='<div id="soc-pick-selected" style="display:none;margin-bottom:10px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:8px 12px">';
+    html+='<div style="font-size:11px;font-weight:700;color:#16a34a;margin-bottom:4px">&#10003; Ausgew\u00e4hlt:</div>';
+    html+='<div id="soc-pick-tags"></div></div>';
+
+    // === Heutiges Mittagessen ===
     if(todayMeals.length){
       var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
       var today=days[new Date().getDay()];
-      html+='<div style="margin-bottom:12px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px 12px">';
-      html+='<div style="font-size:12px;font-weight:700;color:#f57f17;margin-bottom:6px">&#127869; Heutiges Mittagessen ('+esc(today)+')</div>';
+      html+='<div style="margin-bottom:10px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:8px 12px">';
+      html+='<div style="font-size:12px;font-weight:700;color:#f57f17;margin-bottom:5px">&#127869; Heutiges Mittagessen ('+esc(today)+')</div>';
       todayMeals.forEach(function(m){
         var wpId='wp-'+m.id;
-        html+='<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:2px solid #ffe082;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'#fffde7\'" onmouseout="this.style.background=\'#fff\'">';
-        html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" style="width:20px;height:20px;accent-color:#f57f17">';
-        html+='<span style="font-weight:700;font-size:14px;flex:1">'+esc(m.gericht)+'</span>';
-        if(m.preis) html+='<span style="font-size:13px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
+        html+='<label class="soc-pick-row" style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#fff;border:2px solid #ffe082;border-radius:8px;margin-bottom:3px;cursor:pointer">';
+        html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#f57f17">';
+        html+='<span style="font-weight:700;font-size:13px;flex:1">'+esc(m.gericht)+'</span>';
+        if(m.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
         html+='</label>';
       });
       html+='</div>';
     }
 
-    // --- Katalog-Produkte ---
-    if(!_socialKatalog.length && !todayMeals.length){
-      wrap.innerHTML='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog und kein Mittagessen im Wochenplan f&#252;r heute.</p>';
-      return;
+    // === Search + Category filter ===
+    if(_socialKatalog.length){
+      html+='<div style="margin-bottom:8px">';
+      html+='<input id="soc-pick-search" type="text" placeholder="&#128269; Produkt suchen..." oninput="socialPickFilter()" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">';
+      html+='</div>';
+
+      // Category chips
+      html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">';
+      html+='<button class="soc-cat-chip" data-cat="" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#1f2937;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Alle</button>';
+      allCats.forEach(function(cat){
+        html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer">'+(_socCatIcons[cat]||'')+' '+esc(cat)+'</button>';
+      });
+      html+='</div>';
+
+      // Product grid (compact)
+      html+='<div id="soc-pick-grid" style="max-height:260px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
+      _socialKatalog.forEach(function(p){
+        html+='<label class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:2px;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=this.querySelector(\'input\').checked?\'#f0fdf4\':\'#fff\'">';
+        html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" onchange="socialPickUpdate()" style="width:16px;height:16px;accent-color:#e1306c;flex-shrink:0">';
+        if(p.bild_url){
+          html+='<img src="'+esc(p.bild_url)+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+        }
+        html+='<span style="font-weight:600;font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>';
+        if(p.preis) html+='<span style="font-size:11px;color:#2e7d32;font-weight:700;flex-shrink:0">'+esc(p.preis)+'\u20AC</span>';
+        html+='</label>';
+      });
+      html+='</div>';
+      html+='<div id="soc-pick-count" style="font-size:10px;color:#9ca3af;text-align:right;margin-top:2px">'+_socialKatalog.length+' Produkte</div>';
     }
 
-    if(_socialKatalog.length){
-      var cats={};
-      _socialKatalog.forEach(function(p){
-        var c=p.kategorie||'Sonstiges';
-        if(!cats[c]) cats[c]=[];
-        cats[c].push(p);
-      });
-      var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
-      Object.keys(cats).forEach(function(cat){
-        html+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:4px">'+(catIcons[cat]||'')+' '+esc(cat)+'</div>';
-        cats[cat].forEach(function(p){
-          html+='<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=\'#fff\'">';
-          html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" style="width:18px;height:18px;accent-color:#e1306c">';
-          if(p.bild_url){
-            html+='<img src="'+esc(p.bild_url)+'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display=\'none\'">';
-          }
-          html+='<span style="font-weight:600;font-size:13px;flex:1">'+esc(p.name)+'</span>';
-          if(p.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+esc(p.preis)+' &#8364;</span>';
-          html+='</label>';
-        });
-        html+='</div>';
-      });
-    }
     wrap.innerHTML=html;
   }
+
+  // --- Search filter ---
+  window.socialPickFilter = function(){
+    var q=(document.getElementById('soc-pick-search').value||'').toLowerCase().trim();
+    var activeCat=document.querySelector('.soc-cat-chip[style*="background:#1f2937"][data-cat]');
+    var catFilter=activeCat?activeCat.getAttribute('data-cat'):'';
+    var rows=document.querySelectorAll('#soc-pick-grid .soc-pick-row');
+    var shown=0;
+    rows.forEach(function(row){
+      var name=row.getAttribute('data-search')||'';
+      var cat=row.getAttribute('data-cat')||'';
+      var matchQ=!q||name.indexOf(q)!==-1;
+      var matchCat=!catFilter||cat===catFilter;
+      row.style.display=(matchQ && matchCat)?'flex':'none';
+      if(matchQ && matchCat) shown++;
+    });
+    var cnt=document.getElementById('soc-pick-count');
+    if(cnt) cnt.textContent=shown+' / '+_socialKatalog.length+' Produkte';
+  };
+
+  // --- Category chip click ---
+  window.socialPickCat = function(btn){
+    document.querySelectorAll('.soc-cat-chip').forEach(function(c){
+      c.style.background='#fff';c.style.color='#374151';
+    });
+    btn.style.background='#1f2937';btn.style.color='#fff';
+    socialPickFilter();
+  };
+
+  // --- Update selected tags summary ---
+  window.socialPickUpdate = function(){
+    var sel=socialGatherSelected();
+    var box=document.getElementById('soc-pick-selected');
+    var tags=document.getElementById('soc-pick-tags');
+    if(!box||!tags)return;
+    if(!sel.length){box.style.display='none';return;}
+    box.style.display='block';
+    var html='';
+    sel.forEach(function(p){
+      html+='<span style="display:inline-block;background:#dcfce7;color:#15803d;font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;margin:2px 3px 2px 0">'+esc(p.name);
+      if(p.preis) html+=' <span style="opacity:.7">'+esc(p.preis)+'\u20AC</span>';
+      html+='</span>';
+    });
+    tags.innerHTML=html;
+    // Highlight checked rows
+    document.querySelectorAll('#soc-pick-grid .soc-pick-row').forEach(function(row){
+      var cb=row.querySelector('input[type=checkbox]');
+      row.style.background=cb&&cb.checked?'#f0fdf4':'#fff';
+    });
+  };
 
   // --- Gather all selected items (Katalog + Wochenplan) ---
   function socialGatherSelected(){
