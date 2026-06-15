@@ -1049,15 +1049,15 @@ main{padding:0!important;margin:0!important}
   transform: scale(0.98);
 }
 
-/* === MOBILE WHATSAPP CTA === */
-.mob-wa{text-align:center;padding:0 16px 20px}
-.mob-wa a{
+/* === MOBILE SOCIAL CTA === */
+.mob-wa,.mob-wa a{
   display:inline-flex;
   align-items:center;
+  justify-content:center;
   gap:8px;
   background:#25D366;
   color:#fff;
-  padding:12px 24px;
+  padding:12px 16px;
   border-radius:12px;
   font-weight:800;
   font-size:.88rem;
@@ -1065,7 +1065,7 @@ main{padding:0!important;margin:0!important}
   box-shadow:0 6px 16px rgba(37,211,102,.15);
   transition: all 0.15s ease;
 }
-.mob-wa a:active {
+.mob-wa:active,.mob-wa a:active {
   transform: scale(0.97);
 }
 
