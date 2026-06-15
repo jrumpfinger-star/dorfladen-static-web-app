@@ -10028,7 +10028,7 @@
       });
     });
 
-    Promise.all(promises).then(function(){
+    return Promise.all(promises).then(function(){
       socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
     });
   };
@@ -10243,32 +10243,37 @@
 
   // --- WhatsApp Share ---
   window.socialShareWhatsApp = function(){
-    socialGenPreview();
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
     var selected=socialGatherSelected();
     var msg=socialBuildWhatsAppMsg(selected,titel,freitext);
-    var canvas=document.getElementById('soc-post-canvas');
 
-    // Try Web Share API with image (works on mobile)
-    if(canvas && navigator.share){
-      canvas.toBlob(function(blob){
-        if(!blob){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');return;}
-        var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
-        var shareData={text:msg,files:[file]};
-        try{
-          if(navigator.canShare&&navigator.canShare(shareData)){
-            navigator.share(shareData).catch(function(){
-              socialFallbackWaShare(canvas,msg);
-            });
-            return;
-          }
-        }catch(e){}
+    socialStatus('soc-post-status','Poster wird erstellt...',true);
+    var genPromise=socialGenPreview()||Promise.resolve();
+    genPromise.then(function(){
+      var canvas=document.getElementById('soc-post-canvas');
+      // Try Web Share API with image
+      if(canvas && navigator.share){
+        canvas.toBlob(function(blob){
+          if(!blob){socialFallbackWaShare(null,msg);return;}
+          var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
+          var shareData={text:msg,files:[file]};
+          try{
+            if(navigator.canShare&&navigator.canShare(shareData)){
+              navigator.share(shareData).then(function(){
+                socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+              }).catch(function(err){
+                if(err.name!=='AbortError') socialFallbackWaShare(canvas,msg);
+              });
+              return;
+            }
+          }catch(e){}
+          socialFallbackWaShare(canvas,msg);
+        },'image/png');
+      } else {
         socialFallbackWaShare(canvas,msg);
-      },'image/png');
-    } else {
-      socialFallbackWaShare(canvas,msg);
-    }
+      }
+    });
     socialSavePost(titel,freitext,selected);
   };
 
@@ -10297,9 +10302,12 @@
 
   // --- Instagram Share (download image) ---
   window.socialShareInstagram = function(){
-    socialGenPreview();
-    socialDownloadPoster();
-    socialStatus('soc-post-status','Bild heruntergeladen! Jetzt in Instagram hochladen.',true);
+    socialStatus('soc-post-status','Poster wird erstellt...',true);
+    var genPromise=socialGenPreview()||Promise.resolve();
+    genPromise.then(function(){
+      socialDownloadPoster();
+      socialStatus('soc-post-status','Bild heruntergeladen! Jetzt in Instagram hochladen.',true);
+    });
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
     var selected=socialGatherSelected();
