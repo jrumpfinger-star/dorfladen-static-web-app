@@ -1010,7 +1010,7 @@
       openHilfePopup();return;
     }
     _cmsCurrentTab=name;
-    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','help'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','social','help'].forEach(function(t){
       var panel=document.getElementById('cms-panel-'+t);
       if(panel) panel.style.display = t===name?'':'none';
       var tab=document.getElementById('cms-tab-'+t);
@@ -1026,6 +1026,7 @@
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
+    if(name==='social' && !window._socialKatLoaded) socialLoadKatalog();
     if(!skipHistory) history.pushState({cmsTab:name},'','');
   };
 
@@ -9206,6 +9207,446 @@
         list.innerHTML=html;
       })
       .catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+esc(e.message)+'</p>';});
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  //  SOCIAL MEDIA MODULE
+  // ═══════════════════════════════════════════════════════════
+  var _socialKatalog = [];
+  window._socialKatLoaded = false;
+
+  // --- Sub-tab switching ---
+  window.socialSubTab = function(name){
+    ['katalog','post','verlauf'].forEach(function(t){
+      var p=document.getElementById('social-panel-'+t);
+      var b=document.getElementById('social-subtab-'+t);
+      if(p) p.style.display = t===name?'':'none';
+      if(b){
+        b.style.background = t===name?'#fff':'transparent';
+        b.style.color = t===name?'#e1306c':'#6b7280';
+        b.style.boxShadow = t===name?'0 1px 3px rgba(0,0,0,.08)':'none';
+      }
+    });
+    if(name==='post') socialBuildPostItems();
+    if(name==='verlauf' && !window._socialVerlaufLoaded) socialLoadVerlauf();
+  };
+
+  // --- Status helper ---
+  function socialStatus(id,msg,ok){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.style.display='block';
+    el.style.background=ok?'#f0fdf4':'#fef2f2';
+    el.style.color=ok?'#166534':'#991b1b';
+    el.style.border='1px solid '+(ok?'#bbf7d0':'#fecaca');
+    el.textContent=msg;
+    setTimeout(function(){el.style.display='none';},4000);
+  }
+
+  // --- Bild-Vorschau für Katalog-Upload ---
+  (function(){
+    var inp=document.getElementById('soc-kat-bild');
+    if(inp) inp.addEventListener('change',function(){
+      var f=this.files&&this.files[0];
+      var wrap=document.getElementById('soc-kat-bild-preview');
+      var thumb=document.getElementById('soc-kat-bild-thumb');
+      if(f && wrap && thumb){
+        var r=new FileReader();
+        r.onload=function(e){thumb.src=e.target.result;wrap.style.display='block';};
+        r.readAsDataURL(f);
+      } else if(wrap){ wrap.style.display='none'; }
+    });
+  })();
+
+  // --- Katalog laden ---
+  window.socialLoadKatalog = function(){
+    var list=document.getElementById('soc-kat-list');
+    var empty=document.getElementById('soc-kat-empty');
+    var loading=document.getElementById('soc-kat-loading');
+    if(loading) loading.style.display='block';
+    if(list) list.innerHTML='';
+    if(empty) empty.style.display='none';
+    fetch(API_BASE+'/social-katalog')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(loading) loading.style.display='none';
+        window._socialKatLoaded=true;
+        _socialKatalog = res.produkte||[];
+        socialRenderKatalog();
+      })
+      .catch(function(e){
+        if(loading) loading.style.display='none';
+        socialStatus('soc-kat-status','Fehler beim Laden: '+e.message,false);
+      });
+  };
+
+  // --- Katalog rendern ---
+  function socialRenderKatalog(){
+    var list=document.getElementById('soc-kat-list');
+    var empty=document.getElementById('soc-kat-empty');
+    if(!list)return;
+    if(!_socialKatalog.length){
+      list.innerHTML='';
+      if(empty) empty.style.display='block';
+      return;
+    }
+    if(empty) empty.style.display='none';
+    // Group by category
+    var cats={};
+    _socialKatalog.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(p);
+    });
+    var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+    var html='';
+    Object.keys(cats).forEach(function(cat){
+      html+='<div class="cms-card" style="margin-bottom:10px"><div class="cms-card-header" style="background:#1f2937">'+(catIcons[cat]||'&#128230;')+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></div>';
+      html+='<div class="cms-card-body" style="padding:0">';
+      html+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+      cats[cat].forEach(function(p,i){
+        var bg=i%2===0?'#fff':'#fafbfc';
+        html+='<tr style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
+        html+='<td style="padding:8px;width:50px">';
+        if(p.bild_url){
+          html+='<img src="'+esc(p.bild_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" onerror="this.style.display=\'none\'">';
+        } else {
+          html+='<div style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">&#128247;</div>';
+        }
+        html+='</td>';
+        html+='<td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
+        html+='<td style="padding:8px;text-align:right;white-space:nowrap">';
+        if(p.preis) html+='<span style="font-weight:700;color:#2e7d32">'+esc(p.preis)+' &#8364;</span>';
+        html+='</td>';
+        html+='<td style="padding:8px;width:60px;text-align:right">';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+esc(p.id)+'\')" title="Entfernen" style="color:#dc2626;padding:4px 8px;font-size:11px">&#10005;</button>';
+        html+='</td></tr>';
+      });
+      html+='</table></div></div>';
+    });
+    list.innerHTML=html;
+  }
+
+  // --- Produkt hinzufuegen ---
+  window.socialKatAdd = function(){
+    var name=document.getElementById('soc-kat-name').value.trim();
+    var kat=document.getElementById('soc-kat-kategorie').value;
+    var preis=document.getElementById('soc-kat-preis').value.trim();
+    var bildInput=document.getElementById('soc-kat-bild');
+    if(!name){socialStatus('soc-kat-status','Bitte Namen eingeben',false);return;}
+    var fd=new FormData();
+    fd.append('name',name);
+    fd.append('kategorie',kat);
+    if(preis) fd.append('preis',preis);
+    if(bildInput && bildInput.files && bildInput.files[0]){
+      fd.append('bild',bildInput.files[0]);
+    }
+    socialStatus('soc-kat-status','Wird gespeichert...',true);
+    fetch(API_BASE+'/social-katalog',{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.error){socialStatus('soc-kat-status',res.error,false);return;}
+        socialStatus('soc-kat-status','Produkt hinzugefuegt!',true);
+        // Reset form
+        document.getElementById('soc-kat-name').value='';
+        document.getElementById('soc-kat-preis').value='';
+        if(bildInput) bildInput.value='';
+        var preview=document.getElementById('soc-kat-bild-preview');
+        if(preview) preview.style.display='none';
+        socialLoadKatalog();
+      })
+      .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+  };
+
+  // --- Produkt loeschen ---
+  window.socialKatDelete = function(id){
+    if(!confirm('Produkt wirklich entfernen?'))return;
+    fetch(API_BASE+'/social-katalog?id='+encodeURIComponent(id),{method:'DELETE'})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.error){socialStatus('soc-kat-status',res.error,false);return;}
+        socialStatus('soc-kat-status','Entfernt',true);
+        socialLoadKatalog();
+      })
+      .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+  };
+
+  // --- Post-Builder: Checkboxen aus Katalog ---
+  function socialBuildPostItems(){
+    var wrap=document.getElementById('soc-post-items');
+    if(!wrap)return;
+    if(!_socialKatalog.length){
+      wrap.innerHTML='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog. Bitte zuerst Produkte im Katalog-Tab anlegen.</p>';
+      return;
+    }
+    var cats={};
+    _socialKatalog.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(p);
+    });
+    var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+    var html='';
+    Object.keys(cats).forEach(function(cat){
+      html+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:4px">'+(catIcons[cat]||'')+' '+esc(cat)+'</div>';
+      cats[cat].forEach(function(p){
+        html+='<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=\'#fff\'">';
+        html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" style="width:18px;height:18px;accent-color:#e1306c">';
+        if(p.bild_url){
+          html+='<img src="'+esc(p.bild_url)+'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+        }
+        html+='<span style="font-weight:600;font-size:13px;flex:1">'+esc(p.name)+'</span>';
+        if(p.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+esc(p.preis)+' &#8364;</span>';
+        html+='</label>';
+      });
+      html+='</div>';
+    });
+    wrap.innerHTML=html;
+  }
+
+  // --- Canvas Poster Generator ---
+  window.socialGenPreview = function(){
+    var canvas=document.getElementById('soc-post-canvas');
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    var W=540, H=540;
+    canvas.width=W; canvas.height=H;
+
+    // Gather selected items
+    var checked=document.querySelectorAll('.soc-post-cb:checked');
+    var selected=[];
+    checked.forEach(function(cb){
+      var item=_socialKatalog.find(function(p){return p.id===cb.value;});
+      if(item) selected.push(item);
+    });
+    var titel=(document.getElementById('soc-post-titel').value||'').trim();
+    var freitext=(document.getElementById('soc-post-text').value||'').trim();
+
+    // Background
+    ctx.fillStyle='#faf9f6';
+    ctx.fillRect(0,0,W,H);
+
+    // Header bar
+    ctx.fillStyle='#2e7d32';
+    ctx.fillRect(0,0,W,60);
+    ctx.fillStyle='#fff';
+    ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(titel||'Heute im Dorfladen',W/2,40);
+
+    // Date
+    var now=new Date();
+    var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    var dateStr=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear();
+    ctx.fillStyle='#6b7280';
+    ctx.font='13px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(dateStr,W/2,80);
+
+    var y=100;
+
+    // Freitext
+    if(freitext){
+      ctx.fillStyle='#374151';
+      ctx.font='14px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      var lines=socialWrapText(ctx,freitext,W-60);
+      lines.forEach(function(line){
+        ctx.fillText(line,W/2,y);
+        y+=18;
+      });
+      y+=8;
+    }
+
+    // Group selected by category
+    var cats={};
+    selected.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(p);
+    });
+    var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
+
+    ctx.textAlign='left';
+    Object.keys(cats).forEach(function(cat){
+      // Category header
+      ctx.fillStyle='#e1306c';
+      ctx.font='bold 16px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText((catIcons[cat]||'')+' '+cat,24,y);
+      y+=6;
+      ctx.strokeStyle='#e1306c';
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(24,y);ctx.lineTo(W-24,y);ctx.stroke();
+      y+=16;
+
+      // Items
+      cats[cat].forEach(function(p){
+        ctx.fillStyle='#1f2937';
+        ctx.font='14px "Segoe UI",system-ui,sans-serif';
+        ctx.fillText('  \u2022 '+p.name,28,y);
+        if(p.preis){
+          ctx.fillStyle='#2e7d32';
+          ctx.font='bold 14px "Segoe UI",system-ui,sans-serif';
+          ctx.textAlign='right';
+          ctx.fillText(p.preis+' \u20AC',W-28,y);
+          ctx.textAlign='left';
+        }
+        y+=22;
+      });
+      y+=10;
+    });
+
+    if(!selected.length){
+      ctx.fillStyle='#9ca3af';
+      ctx.font='italic 14px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('Bitte Produkte oben auswaehlen...',W/2,H/2);
+    }
+
+    // Footer
+    ctx.fillStyle='#2e7d32';
+    ctx.fillRect(0,H-40,W,40);
+    ctx.fillStyle='#fff';
+    ctx.font='bold 12px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('Dorfladen Oberornau \u2022 Dorfplatz 1 \u2022 84419 Obertaufkirchen',W/2,H-16);
+  };
+
+  function socialWrapText(ctx,text,maxW){
+    var words=text.split(' '),lines=[],cur='';
+    words.forEach(function(w){
+      var test=cur?cur+' '+w:w;
+      if(ctx.measureText(test).width>maxW){
+        if(cur)lines.push(cur);
+        cur=w;
+      } else { cur=test; }
+    });
+    if(cur) lines.push(cur);
+    return lines;
+  }
+
+  // --- WhatsApp Share ---
+  window.socialShareWhatsApp = function(){
+    socialGenPreview();
+    // Build text message
+    var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
+    var freitext=(document.getElementById('soc-post-text').value||'').trim();
+    var checked=document.querySelectorAll('.soc-post-cb:checked');
+    var selected=[];
+    checked.forEach(function(cb){
+      var item=_socialKatalog.find(function(p){return p.id===cb.value;});
+      if(item) selected.push(item);
+    });
+    var msg='*'+titel+'*\n';
+    var now=new Date();
+    var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    msg+=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear()+'\n\n';
+    if(freitext) msg+=freitext+'\n\n';
+    var cats={};
+    selected.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(p);
+    });
+    Object.keys(cats).forEach(function(cat){
+      msg+='*'+cat+'*\n';
+      cats[cat].forEach(function(p){
+        msg+='\u2022 '+p.name;
+        if(p.preis) msg+=' - '+p.preis+'\u20AC';
+        msg+='\n';
+      });
+      msg+='\n';
+    });
+    msg+='\uD83D\uDED2 Dorfladen Oberornau\nDorfplatz 1, 84419 Obertaufkirchen\nTel: 08082 / 622 99 91';
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+    // Save post
+    socialSavePost(titel,freitext,selected);
+  };
+
+  // --- Instagram Share (download image) ---
+  window.socialShareInstagram = function(){
+    socialGenPreview();
+    socialDownloadPoster();
+    socialStatus('soc-post-status','Bild heruntergeladen! Jetzt in Instagram hochladen.',true);
+    var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
+    var freitext=(document.getElementById('soc-post-text').value||'').trim();
+    var checked=document.querySelectorAll('.soc-post-cb:checked');
+    var selected=[];
+    checked.forEach(function(cb){
+      var item=_socialKatalog.find(function(p){return p.id===cb.value;});
+      if(item) selected.push(item);
+    });
+    socialSavePost(titel,freitext,selected);
+  };
+
+  // --- Download poster image ---
+  window.socialDownloadPoster = function(){
+    var canvas=document.getElementById('soc-post-canvas');
+    if(!canvas)return;
+    var link=document.createElement('a');
+    var now=new Date();
+    link.download='dorfladen-post-'+now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate()+'.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  // --- Save post to API ---
+  function socialSavePost(titel,freitext,items){
+    var body={
+      titel:titel,
+      freitext:freitext,
+      items:items.map(function(p){return{id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};})
+    };
+    fetch(API_BASE+'/social-post',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    }).catch(function(){});
+  }
+
+  // --- Verlauf laden ---
+  window._socialVerlaufLoaded=false;
+  window.socialLoadVerlauf = function(){
+    var list=document.getElementById('soc-verlauf-list');
+    var empty=document.getElementById('soc-verlauf-empty');
+    var loading=document.getElementById('soc-verlauf-loading');
+    if(loading) loading.style.display='block';
+    if(list) list.innerHTML='';
+    if(empty) empty.style.display='none';
+    fetch(API_BASE+'/social-post')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(loading) loading.style.display='none';
+        window._socialVerlaufLoaded=true;
+        var posts=res.posts||[];
+        if(!posts.length){
+          if(empty) empty.style.display='block';
+          return;
+        }
+        posts.sort(function(a,b){return (b.datum||'').localeCompare(a.datum||'');});
+        var html='';
+        posts.forEach(function(p){
+          html+='<div class="cms-card" style="margin-bottom:8px">';
+          html+='<div class="cms-card-body" style="padding:10px 14px">';
+          html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+          html+='<span style="font-weight:700;font-size:14px">'+esc(p.titel||'Tagespost')+'</span>';
+          html+='<span style="font-size:11px;color:#6b7280">'+esc(p.datum||'')+'</span>';
+          html+='</div>';
+          if(p.freitext) html+='<div style="font-size:12px;color:#6b7280;margin-top:4px">'+esc(p.freitext)+'</div>';
+          if(p.items&&p.items.length){
+            html+='<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">';
+            p.items.forEach(function(it){
+              html+='<span style="background:#f3f4f6;padding:2px 8px;border-radius:10px;font-size:11px">'+esc(it.name)+'</span>';
+            });
+            html+='</div>';
+          }
+          html+='</div></div>';
+        });
+        if(list) list.innerHTML=html;
+      })
+      .catch(function(e){
+        if(loading) loading.style.display='none';
+        if(list) list.innerHTML='<p style="color:#ef4444;text-align:center">Fehler: '+esc(e.message)+'</p>';
+      });
   };
 
   // --- Init (only if already authenticated via session) ---
