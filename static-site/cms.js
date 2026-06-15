@@ -10800,6 +10800,39 @@
     return msg;
   }
 
+  // --- WhatsApp Business Katalog Sync ---
+  window.socialSyncMetaCatalog = function(){
+    var selected=socialGatherSelected();
+    var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+    if(!mtItems.length){
+      socialStatus('soc-post-status','Keine Mittagessen-Gerichte ausgew\u00e4hlt',false);
+      return;
+    }
+    socialStatus('soc-post-status','\u23F3 Sende '+mtItems.length+' Gerichte an WhatsApp Katalog...',true);
+    var meals=mtItems.map(function(m){
+      var hasImg=!!(_socMtBilder[m.name]&&_socMtBilder[m.name].bild_url);
+      return {gericht:m.name,preis:m.preis,has_image:hasImg};
+    });
+    fetch(API+'/meta-catalog',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({meals:meals})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){
+        socialStatus('soc-post-status','\u274C Fehler: '+res.error,false);
+        return;
+      }
+      var msg='\u2705 '+res.succeeded+'/'+res.total+' Gerichte im WA-Katalog aktualisiert';
+      if(res.failed>0) msg+=' ('+res.failed+' fehlgeschlagen)';
+      socialStatus('soc-post-status',msg,res.failed===0);
+    })
+    .catch(function(e){
+      socialStatus('soc-post-status','\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
+    });
+  };
+
   // --- WhatsApp Share ---
   window.socialShareWhatsApp = function(){
     try{
