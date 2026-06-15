@@ -11043,7 +11043,7 @@
   function socialShareFilesWithText(files,msg){
     var hasShare=!!navigator.share;
     if(hasShare&&files.length){
-      var shareData={files:files};
+      var shareData={text:msg,files:files};
       var canShareFiles=false;
       try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){}
       if(canShareFiles){
