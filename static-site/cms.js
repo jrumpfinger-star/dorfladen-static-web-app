@@ -10193,13 +10193,29 @@
     });
 
     return Promise.all(promises).then(function(){
-      // Auto-detect: if Mittagessen items are selected, show meal poster as preview
       var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
-      if(mtItems.length>0){
-        socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs);
-      } else {
-        socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
+      var hasMt=mtItems.length>0;
+
+      // Meal poster canvas (shown only when Mittagessen selected)
+      var mealCanvas=document.getElementById('soc-post-canvas-meal');
+      var mealLabel=document.getElementById('soc-preview-label-meal');
+      var dailyLabel=document.getElementById('soc-preview-label-daily');
+
+      if(hasMt&&mealCanvas){
+        mealCanvas.style.display='block';
+        if(mealLabel) mealLabel.style.display='block';
+        if(dailyLabel) dailyLabel.style.display='block';
+        var mCtx=mealCanvas.getContext('2d');
+        socialDrawMealPosterAuto(mealCanvas,mCtx,W,mtItems,loadedImgs);
+      } else if(mealCanvas){
+        mealCanvas.style.display='none';
+        if(mealLabel) mealLabel.style.display='none';
+        if(dailyLabel) dailyLabel.style.display='none';
       }
+
+      // Always draw the daily overview poster
+      socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
+
       // Store loaded images for share function to reuse
       window._socLoadedImgs=loadedImgs;
     });
@@ -10866,20 +10882,19 @@
     }
   }
 
-  // --- Fallback: download poster + open WhatsApp web ---
+  // --- Fallback: download poster(s) + open WhatsApp web ---
   function socialFallbackWaShare(canvas,msg){
-    // Download poster image(s)
-    var mainCanvas=canvas||document.getElementById('soc-post-canvas');
-    if(mainCanvas){
-      try{
-        socialDownloadPoster();
-        socialStatus('soc-post-status','\u2705 Poster heruntergeladen! \u00D6ffne WhatsApp...',true);
-      }catch(e){}
+    // Download all visible poster images
+    try{
+      socialDownloadPoster();
+      socialStatus('soc-post-status','\u2705 Poster heruntergeladen! Bitte die Bilder in WhatsApp als Foto anh\u00e4ngen.',true);
+    }catch(e){
+      socialStatus('soc-post-status','\u26A0 Poster konnte nicht heruntergeladen werden.',false);
     }
-    // Open WhatsApp with text
+    // Open WhatsApp with text (user attaches downloaded images manually)
     setTimeout(function(){
       window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-    },600);
+    },800);
   }
 
   // --- Instagram Share ---
@@ -10939,15 +10954,25 @@
     },'image/png');
   }
 
-  // --- Download poster image ---
+  // --- Download poster image(s) ---
   window.socialDownloadPoster = function(){
+    var now=new Date();
+    var dateStr=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+    // Download meal poster if visible
+    var mealCanvas=document.getElementById('soc-post-canvas-meal');
+    if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0){
+      var ml=document.createElement('a');
+      ml.download='dorfladen-mittagessen-'+dateStr+'.png';
+      ml.href=mealCanvas.toDataURL('image/png');
+      ml.click();
+    }
+    // Download daily overview poster
     var canvas=document.getElementById('soc-post-canvas');
     if(!canvas)return;
     var link=document.createElement('a');
-    var now=new Date();
-    link.download='dorfladen-post-'+now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate()+'.png';
+    link.download='dorfladen-post-'+dateStr+'.png';
     link.href=canvas.toDataURL('image/png');
-    link.click();
+    setTimeout(function(){link.click();},200);
   };
 
   // --- Save post to API ---
