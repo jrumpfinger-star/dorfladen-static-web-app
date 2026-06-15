@@ -9715,7 +9715,7 @@
         var mtImg=_socMtBilder[m.gericht];
         html+='<div class="soc-mt-row" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:2px solid #ffe082;border-radius:10px;margin-bottom:4px;min-height:44px">';
         html+='<label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer">';
-        html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#f57f17">';
+        html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" data-img="'+esc(mtImg&&mtImg.bild_url?mtImg.bild_url:'')+'" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#f57f17">';
         if(mtImg&&mtImg.bild_url){
           html+='<img src="'+esc(mtImg.bild_url)+'" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';
         }
@@ -10086,7 +10086,8 @@
         id:cb.value,
         name:cb.getAttribute('data-name')||'',
         preis:cb.getAttribute('data-preis')||'',
-        kategorie:cb.getAttribute('data-kat')||'Mittagessen'
+        kategorie:cb.getAttribute('data-kat')||'Mittagessen',
+        bild_url:cb.getAttribute('data-img')||''
       });
     });
     // Katalog checkboxes
@@ -10137,6 +10138,11 @@
             console.log('[Social]   -> Katalog bild found:',url.substring(0,60));
           }
           if(katItem&&!katItem.bild_url) console.log('[Social]   -> Katalog item found but NO bild_url');
+        }
+        // Item's own bild_url (e.g. from Wochenplan checkbox data-img)
+        if(!url&&p.bild_url){
+          url=p.bild_url;
+          console.log('[Social]   -> item.bild_url found:',url.substring(0,60));
         }
         // Free item (base64)
         if(!url){
@@ -10551,6 +10557,7 @@
     var pName=meal.name||meal.gericht||'';
     var imgUrl='';
     if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url) imgUrl=_socMtBilder[pName].bild_url;
+    if(!imgUrl&&meal.bild_url) imgUrl=meal.bild_url;
     if(!imgUrl){
       var katItem=_socialKatalog.find(function(k){return k.id===meal.id;});
       if(katItem&&katItem.bild_url) imgUrl=katItem.bild_url;
