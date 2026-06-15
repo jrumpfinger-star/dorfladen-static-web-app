@@ -10781,14 +10781,9 @@
     var hasMittagessen=!!cats['Mittagessen'];
     var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
 
-    // Mittagessen-only: just order links (everything else is on the poster image)
+    // Mittagessen-only: no text needed, everything is on the poster image
     if(onlyMittagessen){
-      var msg='';
-      cats['Mittagessen'].forEach(function(p){
-        var bestellText='Hallo!\nIch m\u00F6chte bestellen:\n\n1x '+p.name+(p.preis?' ('+parseFloat(p.preis).toFixed(2)+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
-        msg+='\uD83D\uDC49 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
-      });
-      return msg.trim();
+      return '';
     }
 
     // Full message for mixed categories
@@ -11053,7 +11048,7 @@
   function socialShareFilesWithText(files,msg){
     var hasShare=!!navigator.share;
     if(hasShare&&files.length){
-      var shareData={files:files,text:msg||''};
+      var shareData=msg?{files:files,text:msg}:{files:files};
       var canShareFiles=false;
       try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){
         console.warn('[Social] canShare check error:',e);
