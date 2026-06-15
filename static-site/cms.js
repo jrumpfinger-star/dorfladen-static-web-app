@@ -11051,16 +11051,34 @@
     }
   };
 
-  // Helper: copy text to clipboard, then share files only (user pastes as caption)
+  // Helper: copy text to clipboard (with fallback), then share files only
+  function socialCopyToClipboard(text){
+    // Try modern API first
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text).then(function(){return true;}).catch(function(){
+        return socialCopyFallback(text);
+      });
+    }
+    return Promise.resolve(socialCopyFallback(text));
+  }
+  function socialCopyFallback(text){
+    try{
+      var ta=document.createElement('textarea');
+      ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';
+      document.body.appendChild(ta);ta.select();
+      var ok=document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }catch(e){return false;}
+  }
   function socialShareFilesWithText(files,msg){
     // Step 1: Copy order text to clipboard if present
     var clipboardOk=false;
     var clipboardPromise;
-    if(msg&&navigator.clipboard&&navigator.clipboard.writeText){
-      clipboardPromise=navigator.clipboard.writeText(msg).then(function(){
-        clipboardOk=true;
-      }).catch(function(e){
-        console.warn('[Social] Clipboard copy failed:',e);
+    if(msg){
+      clipboardPromise=socialCopyToClipboard(msg).then(function(ok){
+        clipboardOk=!!ok;
+        if(clipboardOk) console.log('[Social] Text in Zwischenablage kopiert');
       });
     } else {
       clipboardPromise=Promise.resolve();
@@ -11074,7 +11092,7 @@
         try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){
           console.warn('[Social] canShare check error:',e);
         }
-        var statusHint=clipboardOk?' \u2013 Text in Zwischenablage, als Caption einf\u00fcgen!':'';
+        var statusHint=clipboardOk?' \u2013 Bestelltext kopiert! In WhatsApp Strg+V dr\u00fccken':'';
         if(canShareFiles){
           var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
           socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...'+statusHint,true);
