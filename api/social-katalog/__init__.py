@@ -19,6 +19,7 @@ SP_SOCIAL_FOLDER_NAME = "SocialMedia"
 
 KATEGORIEN = ["Mittagessen", "Kuchen", "Obst & Gemuese", "Aufstriche"]
 KATALOG_FILE = "katalog.json"
+MITTAGSTISCH_BILDER_FILE = "mittagstisch-bilder.json"
 
 
 def get_cors():
@@ -328,6 +329,102 @@ def handle_delete(req, token, folder_id):
     return ok({"success": True, "deleted": item_id})
 
 
+# ---------- Mittagstisch-Bilder handlers ----------
+
+def load_mt_bilder(token, folder_id):
+    """Load mittagstisch-bilder.json from the SocialMedia folder."""
+    h = graph_headers(token)
+    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{MITTAGSTISCH_BILDER_FILE}:/content"
+    r = requests.get(url, headers=h, timeout=15)
+    if r.status_code == 200:
+        try:
+            return json.loads(r.text)
+        except:
+            return {}
+    return {}
+
+
+def save_mt_bilder(token, folder_id, data):
+    """Save mittagstisch-bilder.json."""
+    h = {**graph_headers(token), "Content-Type": "application/json"}
+    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{MITTAGSTISCH_BILDER_FILE}:/content"
+    content = json.dumps(data, ensure_ascii=False, indent=2)
+    r = requests.put(url, headers=h, data=content.encode("utf-8"), timeout=15)
+    return r.status_code in (200, 201)
+
+
+def handle_mt_bilder_get(req, token, folder_id):
+    """GET ?action=mt-bilder: Return all Mittagstisch images."""
+    bilder = load_mt_bilder(token, folder_id)
+    return ok({"success": True, "bilder": bilder})
+
+
+def handle_mt_bilder_post(req, token, folder_id):
+    """POST ?action=mt-bild: Upload a Mittagstisch image for a specific gericht."""
+    content_type = req.headers.get("Content-Type", "")
+    if "multipart" in content_type:
+        gericht = req.form.get("gericht", "").strip()
+        if not gericht:
+            return err("gericht ist erforderlich")
+        if "bild" not in req.files:
+            return err("bild ist erforderlich")
+        f = req.files["bild"]
+        ext = os.path.splitext(f.filename)[1] or ".jpg"
+        safe_name = gericht.lower().replace(" ", "_").replace("/", "_")[:40]
+        bild_datei = f"mt_{safe_name}_{uuid.uuid4().hex[:6]}{ext}"
+        img_bytes = f.read()
+        bild_url, bild_sp_id = upload_image(token, folder_id, bild_datei, img_bytes, f.content_type or "image/jpeg")
+        if not bild_url:
+            return err("Bild-Upload fehlgeschlagen", 500)
+    else:
+        try:
+            body = req.get_json()
+        except:
+            return err("Ungültiger Request-Body")
+        gericht = body.get("gericht", "").strip()
+        if not gericht:
+            return err("gericht ist erforderlich")
+        bild_base64 = body.get("bild_base64", "")
+        if not bild_base64:
+            return err("bild_base64 ist erforderlich")
+        if "," in bild_base64:
+            bild_base64 = bild_base64.split(",", 1)[1]
+        img_bytes = base64.b64decode(bild_base64)
+        safe_name = gericht.lower().replace(" ", "_").replace("/", "_")[:40]
+        bild_datei = f"mt_{safe_name}_{uuid.uuid4().hex[:6]}.jpg"
+        bild_url, bild_sp_id = upload_image(token, folder_id, bild_datei, img_bytes)
+        if not bild_url:
+            return err("Bild-Upload fehlgeschlagen", 500)
+
+    # Save to mapping
+    bilder = load_mt_bilder(token, folder_id)
+    # Delete old image if exists
+    old = bilder.get(gericht)
+    if old and old.get("bild_sp_id"):
+        delete_sp_item(token, old["bild_sp_id"])
+    bilder[gericht] = {
+        "bild_url": bild_url,
+        "bild_datei": bild_datei,
+        "bild_sp_id": bild_sp_id,
+        "aktualisiert": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    save_mt_bilder(token, folder_id, bilder)
+    return ok({"success": True, "gericht": gericht, "bild_url": bild_url})
+
+
+def handle_mt_bilder_delete(req, token, folder_id):
+    """DELETE ?action=mt-bild&gericht=X: Remove Mittagstisch image."""
+    gericht = req.params.get("gericht", "")
+    if not gericht:
+        return err("gericht ist erforderlich")
+    bilder = load_mt_bilder(token, folder_id)
+    old = bilder.pop(gericht, None)
+    if old and old.get("bild_sp_id"):
+        delete_sp_item(token, old["bild_sp_id"])
+    save_mt_bilder(token, folder_id, bilder)
+    return ok({"success": True})
+
+
 # ---------- main ----------
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -342,6 +439,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if not folder_id:
         return err("SocialMedia-Ordner konnte nicht erstellt werden", 500)
 
+    # Mittagstisch-Bilder routes (via ?action= parameter)
+    action = req.params.get("action", "")
+    if action == "mt-bilder" and req.method == "GET":
+        return handle_mt_bilder_get(req, token, folder_id)
+    if action == "mt-bild" and req.method == "POST":
+        return handle_mt_bilder_post(req, token, folder_id)
+    if action == "mt-bild" and req.method == "DELETE":
+        return handle_mt_bilder_delete(req, token, folder_id)
+
+    # Standard Katalog routes
     if req.method == "GET":
         return handle_get(req, token, folder_id)
     elif req.method == "POST":

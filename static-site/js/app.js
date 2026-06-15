@@ -429,6 +429,23 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       html+='<span style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell">Gerne auch vorbestellen!</span>';
       html+='</div>';
       document.getElementById('wp-body').innerHTML=html;
+      // Load Mittagstisch images and inject into meal rows
+      fetch(API_BASE+'/social-katalog?action=mt-bilder')
+        .then(function(r){return r.json();})
+        .then(function(res){
+          var bilder=res.bilder||{};
+          document.querySelectorAll('.wp-dish-a').forEach(function(td){
+            var name=(td.textContent||'').trim();
+            if(bilder[name]&&bilder[name].bild_url){
+              var img=document.createElement('img');
+              img.src=bilder[name].bild_url;
+              img.style.cssText='width:36px;height:36px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:6px';
+              img.onerror=function(){this.style.display='none';};
+              td.insertBefore(img,td.firstChild);
+            }
+          });
+        })
+        .catch(function(){/* ignore */});
     })
     .catch(function(e){
       console.log('WP-API:',e);

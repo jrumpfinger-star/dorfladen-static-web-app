@@ -9227,7 +9227,7 @@
         b.style.boxShadow = t===name?'0 1px 3px rgba(0,0,0,.08)':'none';
       }
     });
-    if(name==='post') socialBuildPostItems();
+    if(name==='post'){ socialLoadMtBilder(function(){ socialBuildPostItems(); }); }
     if(name==='verlauf' && !window._socialVerlaufLoaded) socialLoadVerlauf();
   };
 
@@ -9530,16 +9530,22 @@
   }
 
   var _socCatIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+  var _socMtBilder={}; // gericht -> {bild_url,...}
+  var _socFreeItems=[]; // ad-hoc items [{id,name,preis,kategorie,bild_data}]
+  var _socFreeCounter=0;
+
+  function socialLoadMtBilder(cb){
+    fetch(API+'/social-katalog?action=mt-bilder')
+      .then(function(r){return r.json();})
+      .then(function(res){_socMtBilder=res.bilder||{};if(cb)cb();})
+      .catch(function(){if(cb)cb();});
+  }
 
   function socialBuildPostItems(){
     var wrap=document.getElementById('soc-post-items');
     if(!wrap)return;
 
     var todayMeals=socialGetTodayMeals();
-    if(!_socialKatalog.length && !todayMeals.length){
-      wrap.innerHTML='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog und kein Mittagessen im Wochenplan.</p>';
-      return;
-    }
 
     // Collect unique categories from katalog
     var allCats=[];
@@ -9550,7 +9556,7 @@
 
     var html='';
 
-    // === Selected items summary (updates dynamically) ===
+    // === Selected items summary ===
     html+='<div id="soc-pick-selected" style="display:none;margin-bottom:10px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:8px 12px">';
     html+='<div style="font-size:11px;font-weight:700;color:#16a34a;margin-bottom:4px">&#10003; Ausgew\u00e4hlt:</div>';
     html+='<div id="soc-pick-tags"></div></div>';
@@ -9563,22 +9569,56 @@
       html+='<div style="font-size:12px;font-weight:700;color:#f57f17;margin-bottom:5px">&#127869; Heutiges Mittagessen ('+esc(today)+')</div>';
       todayMeals.forEach(function(m){
         var wpId='wp-'+m.id;
-        html+='<label class="soc-pick-row" style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#fff;border:2px solid #ffe082;border-radius:8px;margin-bottom:3px;cursor:pointer">';
+        var mtImg=_socMtBilder[m.gericht];
+        html+='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#fff;border:2px solid #ffe082;border-radius:8px;margin-bottom:3px">';
+        html+='<label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer">';
         html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#f57f17">';
+        if(mtImg&&mtImg.bild_url){
+          html+='<img src="'+esc(mtImg.bild_url)+'" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+        }
         html+='<span style="font-weight:700;font-size:13px;flex:1">'+esc(m.gericht)+'</span>';
         if(m.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
         html+='</label>';
+        // Image upload button for this meal
+        html+='<label title="Bild hochladen" style="cursor:pointer;padding:3px 6px;border-radius:4px;background:#fff8e1;border:1px solid #ffe082;font-size:14px;flex-shrink:0">';
+        html+='&#128247;<input type="file" accept="image/*" onchange="socialMtBildUpload(this,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="display:none">';
+        html+='</label>';
+        html+='</div>';
       });
       html+='</div>';
     }
 
-    // === Search + Category filter ===
+    // === Freierfassung: Schnell-Eintrag ===
+    html+='<div style="margin-bottom:10px">';
+    html+='<button onclick="socialFreeToggle()" style="width:100%;padding:8px 12px;background:#eff6ff;border:1px dashed #93c5fd;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;color:#2563eb;text-align:left">&#10010; Produkt frei erfassen <span style="opacity:.5;font-weight:400">(ohne Katalog)</span></button>';
+    html+='<div id="soc-free-form" style="display:none;margin-top:6px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px">';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end">';
+    html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>';
+    html+='<input id="soc-free-name" class="cms-input" placeholder="z.B. Kartoffelsalat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
+    html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
+    html+='<input id="soc-free-preis" class="cms-input" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
+    html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
+    html+='<select id="soc-free-kat" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
+    html+='<option value="Mittagessen">&#127869; Mittagessen</option><option value="Kuchen">&#127856; Kuchen</option><option value="Obst & Gemuese">&#129382; Obst & Gem\u00fcse</option><option value="Aufstriche">&#129367; Aufstriche</option><option value="Sonstiges">Sonstiges</option>';
+    html+='</select></div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;align-items:center;margin-top:6px">';
+    html+='<label style="cursor:pointer;padding:4px 10px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;color:#374151">&#128247; Bild <input type="file" id="soc-free-bild" accept="image/*" onchange="socialFreeImgPreview()" style="display:none"></label>';
+    html+='<span id="soc-free-img-name" style="font-size:10px;color:#9ca3af;flex:1"></span>';
+    html+='<button onclick="socialFreeAdd()" class="cms-btn cms-btn-sm" style="background:#2563eb;color:#fff;padding:5px 14px;font-size:12px;font-weight:700">&#10003; Hinzuf\u00fcgen</button>';
+    html+='</div></div></div>';
+
+    // === Free items already added ===
+    html+='<div id="soc-free-list">';
+    html+=socialRenderFreeItems();
+    html+='</div>';
+
+    // === Search + Category filter (Katalog) ===
     if(_socialKatalog.length){
       html+='<div style="margin-bottom:8px">';
       html+='<input id="soc-pick-search" type="text" placeholder="&#128269; Produkt suchen..." oninput="socialPickFilter()" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">';
       html+='</div>';
 
-      // Category chips
       html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">';
       html+='<button class="soc-cat-chip" data-cat="" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#1f2937;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Alle</button>';
       allCats.forEach(function(cat){
@@ -9586,7 +9626,6 @@
       });
       html+='</div>';
 
-      // Product grid (compact)
       html+='<div id="soc-pick-grid" style="max-height:260px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
       _socialKatalog.forEach(function(p){
         html+='<label class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:2px;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=this.querySelector(\'input\').checked?\'#f0fdf4\':\'#fff\'">';
@@ -9600,10 +9639,86 @@
       });
       html+='</div>';
       html+='<div id="soc-pick-count" style="font-size:10px;color:#9ca3af;text-align:right;margin-top:2px">'+_socialKatalog.length+' Produkte</div>';
+    } else if(!todayMeals.length){
+      html+='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog.</p>';
     }
 
     wrap.innerHTML=html;
   }
+
+  // --- Free entry helpers ---
+  function socialRenderFreeItems(){
+    if(!_socFreeItems.length) return '';
+    var h='';
+    _socFreeItems.forEach(function(fi){
+      h+='<div class="soc-free-item" data-id="'+esc(fi.id)+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;margin-bottom:3px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px">';
+      if(fi.bild_data){
+        h+='<img src="'+fi.bild_data+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0">';
+      }
+      h+='<span style="font-weight:600;font-size:12px;flex:1">'+esc(fi.name)+'</span>';
+      if(fi.preis) h+='<span style="font-size:11px;color:#2e7d32;font-weight:700">'+esc(fi.preis)+'\u20AC</span>';
+      h+='<span style="font-size:10px;color:#6b7280;background:#e0e7ff;padding:1px 6px;border-radius:8px">'+esc(fi.kategorie)+'</span>';
+      h+='<button onclick="socialFreeRemove(\''+esc(fi.id)+'\')" style="border:none;background:none;color:#dc2626;cursor:pointer;font-size:14px;padding:0 4px" title="Entfernen">&#10005;</button>';
+      h+='</div>';
+    });
+    return h;
+  }
+  window.socialFreeToggle = function(){
+    var f=document.getElementById('soc-free-form');
+    if(f) f.style.display=f.style.display==='none'?'block':'none';
+  };
+  window.socialFreeImgPreview = function(){
+    var inp=document.getElementById('soc-free-bild');
+    var lbl=document.getElementById('soc-free-img-name');
+    if(inp&&inp.files&&inp.files[0]&&lbl) lbl.textContent=inp.files[0].name;
+  };
+  window.socialFreeAdd = function(){
+    var name=(document.getElementById('soc-free-name').value||'').trim();
+    var preis=(document.getElementById('soc-free-preis').value||'').trim();
+    var kat=document.getElementById('soc-free-kat').value;
+    if(!name){socialStatus('soc-post-status','Bitte Name eingeben',false);return;}
+    var bildInp=document.getElementById('soc-free-bild');
+    var fi={id:'free-'+(++_socFreeCounter),name:name,preis:preis,kategorie:kat,bild_data:''};
+    function finish(){
+      _socFreeItems.push(fi);
+      var list=document.getElementById('soc-free-list');
+      if(list) list.innerHTML=socialRenderFreeItems();
+      document.getElementById('soc-free-name').value='';
+      document.getElementById('soc-free-preis').value='';
+      if(bildInp) bildInp.value='';
+      var lbl=document.getElementById('soc-free-img-name');if(lbl) lbl.textContent='';
+      socialPickUpdate();
+    }
+    if(bildInp&&bildInp.files&&bildInp.files[0]){
+      var reader=new FileReader();
+      reader.onload=function(e){fi.bild_data=e.target.result;finish();};
+      reader.readAsDataURL(bildInp.files[0]);
+    } else { finish(); }
+  };
+  window.socialFreeRemove = function(id){
+    _socFreeItems=_socFreeItems.filter(function(f){return f.id!==id;});
+    var list=document.getElementById('soc-free-list');
+    if(list) list.innerHTML=socialRenderFreeItems();
+    socialPickUpdate();
+  };
+
+  // --- Mittagstisch-Bild Upload ---
+  window.socialMtBildUpload = function(input,gericht){
+    if(!input.files||!input.files[0])return;
+    var fd=new FormData();
+    fd.append('gericht',gericht);
+    fd.append('bild',input.files[0]);
+    socialStatus('soc-post-status','Bild wird hochgeladen...',true);
+    fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.error){socialStatus('soc-post-status',res.error,false);return;}
+        socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" gespeichert!',true);
+        _socMtBilder[gericht]={bild_url:res.bild_url};
+        socialBuildPostItems();
+      })
+      .catch(function(e){socialStatus('soc-post-status','Upload-Fehler: '+e.message,false);});
+  };
 
   // --- Search filter ---
   window.socialPickFilter = function(){
@@ -9655,7 +9770,7 @@
     });
   };
 
-  // --- Gather all selected items (Katalog + Wochenplan) ---
+  // --- Gather all selected items (Katalog + Wochenplan + Frei) ---
   function socialGatherSelected(){
     var selected=[];
     // Wochenplan-Mittagessen checkboxes
@@ -9673,6 +9788,10 @@
     katChecked.forEach(function(cb){
       var item=_socialKatalog.find(function(p){return p.id===cb.value;});
       if(item) selected.push(item);
+    });
+    // Free items (always included)
+    _socFreeItems.forEach(function(fi){
+      selected.push({id:fi.id,name:fi.name,preis:fi.preis,kategorie:fi.kategorie});
     });
     return selected;
   }
