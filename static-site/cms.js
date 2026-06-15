@@ -3660,10 +3660,7 @@
     }
 
     function drawFooter(color){
-      ctx.save();ctx.globalAlpha=footAlpha;
-      ctx.fillStyle=color||'#6b7280';ctx.font='11px '+SF;ctx.textAlign='center';
-      ctx.fillText('Dorfladen Oberornau \u00b7 Dorfplatz 1 \u00b7 84419 Obertaufkirchen \u00b7 Tel: 08082 622 99 91',W/2,H-footerH+10);
-      ctx.textAlign='left';ctx.restore();
+      // Footer removed per user request
     }
 
     // ── Shared row-drawing: Day label left, dishes right ──
@@ -7729,11 +7726,7 @@
       ctx.fillStyle=cfg.leafColor;ctx.fillText('\uD83D\uDECD',cx+cellW-cardPad+4,cy+cellH-cardPad+2);ctx.restore();}
       ctx.textAlign='left';
     });
-    // ── Footer ──
-    ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.globalAlpha=0.85;ctx.fillRect(0,H-32,W,32);ctx.globalAlpha=1.0;
-    ctx.fillStyle='#ffffff';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='left';
-    ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',20,H-24);ctx.textAlign='right';
-    ctx.fillText('Dorfladen Oberornau \u00B7 Dorfplatz 1 \u00B7 84419 Obertaufkirchen',W-20,H-24);
+    // Footer removed per user request
     ctx.textAlign='left';
     logoLoaded.then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
   }
@@ -10423,13 +10416,6 @@
       ctx.fillText('Bitte Produkte oben auswaehlen...',W/2,H/2);
     }
 
-    // Footer
-    ctx.fillStyle='#2e7d32';
-    ctx.fillRect(0,H-40,W,40);
-    ctx.fillStyle='#fff';
-    ctx.font='bold 12px "Segoe UI",system-ui,sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('Dorfladen Oberornau \u2022 Dorfplatz 1 \u2022 84419 Obertaufkirchen',W/2,H-16);
   };
 
   // --- Auto Meal Poster (replaces normal poster when Mittagessen is selected) ---
@@ -10566,12 +10552,6 @@
     ctx.textAlign='center';
     ctx.fillText('\uD83D\uDCDE Jetzt vorbestellen!',W/2,btnY+btnH/2+4);
 
-    // Footer
-    ctx.fillStyle='#2e7d32';
-    ctx.fillRect(0,H-36,W,36);
-    ctx.fillStyle='#fff';
-    ctx.font='bold 11px "Segoe UI",system-ui,sans-serif';
-    ctx.fillText('Dorfladen Oberornau \u2022 Dorfplatz 1 \u2022 84419 Obertaufkirchen',W/2,H-14);
   }
 
   function socialWrapText(ctx,text,maxW){
@@ -10740,13 +10720,6 @@
       ctx.font='bold 13px "Segoe UI",system-ui,sans-serif';
       ctx.fillText('\uD83D\uDCDE Jetzt vorbestellen per WhatsApp',W/2,btnY+btnH/2+5);
 
-      // Footer
-      ctx.fillStyle='#2e7d32';
-      ctx.fillRect(0,H-36,W,36);
-      ctx.fillStyle='#fff';
-      ctx.font='bold 11px "Segoe UI",system-ui,sans-serif';
-      ctx.textAlign='center';
-      ctx.fillText('Dorfladen Oberornau \u2022 Dorfplatz 1 \u2022 84419 Obertaufkirchen',W/2,H-14);
 
       // Scroll canvas into view
       canvas.scrollIntoView({behavior:'smooth',block:'nearest'});
