@@ -9673,6 +9673,7 @@
       if(!cats[c]) cats[c]=[];
       cats[c].push(p);
     });
+    var hasMittagessen=!!cats['Mittagessen'];
     Object.keys(cats).forEach(function(cat){
       msg+='*'+cat+'*\n';
       cats[cat].forEach(function(p){
@@ -9682,6 +9683,13 @@
       });
       msg+='\n';
     });
+    if(hasMittagessen){
+      msg+='\uD83D\uDCF2 *Jetzt vorbestellen!*\n';
+      msg+='Einfach \u00fcber unseren WhatsApp-Katalog bestellen:\n';
+      msg+='https://wa.me/c/4980826229991\n\n';
+      msg+='\u260E\uFE0F Oder anrufen: 08082 / 622 99 91\n';
+      msg+='Gerne auch vorbestellen \u2013 0,50\u20AC \u00D6ko-Rabatt mit eigenem Beh\u00E4lter!\n\n';
+    }
     msg+='\uD83D\uDED2 Dorfladen Oberornau\nDorfplatz 1, 84419 Obertaufkirchen\nTel: 08082 / 622 99 91';
     window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
     // Save post
