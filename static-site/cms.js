@@ -2596,7 +2596,7 @@
           items.forEach(function(m){
             var imgHtml='';
             if(showImgs&&m.gericht&&_socMtBilder[m.gericht]&&_socMtBilder[m.gericht].bild_url){
-              imgHtml='<img src="'+esc(_socMtBilder[m.gericht].bild_url)+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;flex-shrink:0" onerror="this.style.display=\'none\'">';
+              imgHtml='<img src="'+esc(_socMtBilder[m.gericht].bild_url)+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;flex-shrink:0;cursor:pointer" title="Klick zum Bearbeiten" onclick="document.querySelector(\'[data-action=editMeal][data-id=\\x22'+m.id+'\\x22]\').click()" onerror="this.style.display=\'none\'">';
             }
             b+='<div class="cms-meal-item" style="'+(imgHtml?'display:flex;align-items:center;gap:8px':'')+'">';
             b+=imgHtml;
