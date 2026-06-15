@@ -10800,7 +10800,7 @@
       msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n';
       cats['Mittagessen'].forEach(function(p){
         var bestellText='Hallo! Ich m\u00F6chte bestellen: '+p.name;
-        msg+='\u2022 '+p.name+'\nhttps://wa.me/4980826229991?text='+encodeURIComponent(bestellText)+'\n';
+        msg+='\u2022 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
       });
       msg+='\n';
     }
@@ -11235,3 +11235,4 @@
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
   }
 })();
+
