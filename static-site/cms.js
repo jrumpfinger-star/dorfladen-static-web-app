@@ -11049,24 +11049,18 @@
     }
   };
 
-  // Helper: share files then text (image first, text as follow-up so it appears BELOW the image)
+  // Helper: share files + text together (WhatsApp shows text as image caption)
   function socialShareFilesWithText(files,msg){
     var hasShare=!!navigator.share;
     if(hasShare&&files.length){
-      // Share image only (no text) so WhatsApp shows it as clean image
-      var imgData={files:files};
+      var shareData={files:files,text:msg||''};
       var canShareFiles=false;
-      try{canShareFiles=navigator.canShare&&navigator.canShare(imgData);}catch(e){}
+      try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){}
       if(canShareFiles){
         var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
-        // Copy order text to clipboard so user can paste it as image caption
-        if(msg&&navigator.clipboard&&navigator.clipboard.writeText){
-          navigator.clipboard.writeText(msg).then(function(){
-            socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert! Im Bild-Feld mit Einf\u00fcgen (Strg+V) einsetzen.',true);
-          }).catch(function(){});
-        }
-        navigator.share(imgData).then(function(){
-          socialStatus('soc-post-status','\u2705 Bild geteilt! Bestelltext ist in der Zwischenablage \u2013 einfach einf\u00fcgen.',true);
+        socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
+        navigator.share(shareData).then(function(){
+          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
         }).catch(function(err){
           if(err.name==='AbortError'){
             socialStatus('soc-post-status','Teilen abgebrochen.',true);
