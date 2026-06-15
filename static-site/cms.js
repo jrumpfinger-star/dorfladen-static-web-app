@@ -10781,9 +10781,9 @@
     var hasMittagessen=!!cats['Mittagessen'];
     var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
 
-    // Mittagessen-only: no text needed, everything is on the poster image
+    // Mittagessen-only: short order info (poster has all details)
     if(onlyMittagessen){
-      return '';
+      return '\uD83D\uDCDE Bestellen: 08082 / 622 99 91\n\uD83D\uDC49 https://wa.me/491714910935';
     }
 
     // Full message for mixed categories
