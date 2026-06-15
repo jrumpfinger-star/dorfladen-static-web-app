@@ -2635,6 +2635,7 @@ document.head.appendChild(msalScript);
     <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:8px;padding:3px;margin-bottom:16px">
       <button class="cms-btn" id="social-subtab-post" onclick="socialSubTab('post')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:#fff;color:#e1306c;box-shadow:0 1px 3px rgba(0,0,0,.08)">&#10133; Neuer Post</button>
       <button class="cms-btn" id="social-subtab-katalog" onclick="socialSubTab('katalog')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:transparent;color:#6b7280">&#128218; Katalog</button>
+      <button class="cms-btn" id="social-subtab-wakatalog" onclick="socialSubTab('wakatalog')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:transparent;color:#6b7280">&#128722; WA-Katalog</button>
       <button class="cms-btn" id="social-subtab-verlauf" onclick="socialSubTab('verlauf')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:transparent;color:#6b7280">&#128203; Verlauf</button>
     </div>
 
@@ -2743,6 +2744,27 @@ document.head.appendChild(msalScript);
         <div id="soc-meal-poster-list" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       </div>
       <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
+    </div>
+
+    <!-- ========== SUB: WA-KATALOG ========== -->
+    <div id="social-panel-wakatalog" style="display:none">
+      <div class="cms-card" style="margin-bottom:14px">
+        <div class="cms-card-header" style="background:#25D366">&#128722; WhatsApp Business Katalog</div>
+        <div class="cms-card-body">
+          <p style="font-size:12px;color:#6b7280;margin:0 0 10px">Produkte die aktuell im WhatsApp Business Katalog gelistet sind. Kunden sehen diese Produkte direkt im WhatsApp-Chat des Dorfladens.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <button class="cms-btn cms-btn-primary" onclick="waKatalogLoad()" style="background:#25D366;padding:8px 16px;font-size:13px">&#128260; Katalog laden</button>
+            <button class="cms-btn cms-btn-primary" onclick="socialSyncMetaCatalog()" style="background:#0084FF;padding:8px 16px;font-size:13px">&#11014;&#65039; Heutige Gerichte hochladen</button>
+            <button class="cms-btn cms-btn-gray" onclick="waKatalogDeleteAll()" style="padding:8px 16px;font-size:13px">&#128465; Alle l&#246;schen</button>
+          </div>
+          <div id="wa-katalog-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:10px"></div>
+          <div id="wa-katalog-loading" style="display:none;text-align:center;padding:20px 0">
+            <div style="display:inline-block;width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#25D366;border-radius:50%;animation:cms-spin 0.8s linear infinite"></div>
+          </div>
+          <div id="wa-katalog-list"></div>
+          <div class="cms-empty" id="wa-katalog-empty" style="display:none">Keine Produkte im WhatsApp Katalog.</div>
+        </div>
+      </div>
     </div>
 
     <!-- ========== SUB: VERLAUF ========== -->

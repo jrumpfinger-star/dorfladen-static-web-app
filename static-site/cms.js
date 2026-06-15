@@ -9350,7 +9350,7 @@
 
   // --- Sub-tab switching ---
   window.socialSubTab = function(name){
-    ['katalog','post','verlauf'].forEach(function(t){
+    ['katalog','post','verlauf','wakatalog'].forEach(function(t){
       var p=document.getElementById('social-panel-'+t);
       var b=document.getElementById('social-subtab-'+t);
       if(p) p.style.display = t===name?'':'none';
@@ -9370,6 +9370,7 @@
       socialLoadMtBilder(function(){ mtReady2=true; tryBuild2(); });
     }
     if(name==='verlauf' && !window._socialVerlaufLoaded) socialLoadVerlauf();
+    if(name==='wakatalog') waKatalogLoad();
   };
 
   // --- Status helper ---
@@ -10838,6 +10839,110 @@
     .catch(function(e){
       socialStatus('soc-post-status','\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
     });
+  };
+
+  // --- WA-Katalog Tab: Load, Display, Delete ---
+  function waKatalogStatus(msg,ok){
+    socialStatus('wa-katalog-status',msg,ok);
+  }
+
+  window.waKatalogLoad = function(){
+    var list=document.getElementById('wa-katalog-list');
+    var empty=document.getElementById('wa-katalog-empty');
+    var loading=document.getElementById('wa-katalog-loading');
+    if(list) list.innerHTML='';
+    if(empty) empty.style.display='none';
+    if(loading) loading.style.display='block';
+    waKatalogStatus('Lade WhatsApp Katalog...',true);
+
+    fetch(API+'/meta-catalog')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(loading) loading.style.display='none';
+        if(res.error){
+          waKatalogStatus('\u274C Fehler: '+res.error,false);
+          return;
+        }
+        var products=res.products||[];
+        if(!products.length){
+          if(empty) empty.style.display='block';
+          waKatalogStatus('Katalog ist leer.',true);
+          return;
+        }
+        waKatalogStatus('\u2705 '+products.length+' Produkte geladen',true);
+        var html='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+        html+='<thead><tr style="background:#f9fafb;text-align:left">';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Bild</th>';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Name</th>';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Preis</th>';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Status</th>';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Aktion</th>';
+        html+='</tr></thead><tbody>';
+        products.forEach(function(p){
+          var imgHtml=p.image_url?'<img src="'+p.image_url+'" style="width:50px;height:50px;object-fit:cover;border-radius:6px" onerror="this.src=\'\'">':'<span style="color:#9ca3af">&#128247;</span>';
+          var priceStr=p.price?((parseInt(p.price)/100).toFixed(2)+' \u20AC'):'–';
+          var statusBadge=p.availability==='in stock'?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">Verf\u00FCgbar</span>':'<span style="background:#fef2f2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px">'+p.availability+'</span>';
+          var rid=p.retailer_id||'';
+          html+='<tr style="border-bottom:1px solid #f3f4f6">';
+          html+='<td style="padding:8px">'+imgHtml+'</td>';
+          html+='<td style="padding:8px;font-weight:600">'+((p.name||'').replace(/</g,'&lt;'))+'</td>';
+          html+='<td style="padding:8px">'+priceStr+'</td>';
+          html+='<td style="padding:8px">'+statusBadge+'</td>';
+          html+='<td style="padding:8px"><button class="cms-btn cms-btn-gray" onclick="waKatalogDelete(\''+rid.replace(/'/g,"\\'")+'\')" style="padding:4px 10px;font-size:11px">\u274C</button></td>';
+          html+='</tr>';
+        });
+        html+='</tbody></table>';
+        if(list) list.innerHTML=html;
+      })
+      .catch(function(e){
+        if(loading) loading.style.display='none';
+        waKatalogStatus('\u274C Fehler beim Laden: '+e.message,false);
+      });
+  };
+
+  window.waKatalogDelete = function(retailerId){
+    if(!confirm('Produkt "'+retailerId+'" aus dem WhatsApp Katalog l\u00F6schen?')) return;
+    waKatalogStatus('\u23F3 L\u00F6sche Produkt...',true);
+    fetch(API+'/meta-catalog?retailer_id='+encodeURIComponent(retailerId),{method:'DELETE'})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          waKatalogStatus('\u2705 Produkt gel\u00F6scht',true);
+          waKatalogLoad();
+        } else {
+          waKatalogStatus('\u274C Fehler: '+JSON.stringify(res.response||res),false);
+        }
+      })
+      .catch(function(e){
+        waKatalogStatus('\u274C L\u00F6schen fehlgeschlagen: '+e.message,false);
+      });
+  };
+
+  window.waKatalogDeleteAll = function(){
+    if(!confirm('ALLE Produkte aus dem WhatsApp Katalog l\u00F6schen?')) return;
+    waKatalogStatus('\u23F3 Lade Katalog zum L\u00F6schen...',true);
+    fetch(API+'/meta-catalog')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        var products=res.products||[];
+        if(!products.length){
+          waKatalogStatus('Katalog ist bereits leer.',true);
+          return;
+        }
+        waKatalogStatus('\u23F3 L\u00F6sche '+products.length+' Produkte...',true);
+        var delPromises=products.map(function(p){
+          return fetch(API+'/meta-catalog?retailer_id='+encodeURIComponent(p.retailer_id||''),{method:'DELETE'})
+            .then(function(r){return r.json();});
+        });
+        Promise.all(delPromises).then(function(results){
+          var ok=results.filter(function(r){return r.success;}).length;
+          waKatalogStatus('\u2705 '+ok+'/'+products.length+' Produkte gel\u00F6scht',ok===products.length);
+          waKatalogLoad();
+        });
+      })
+      .catch(function(e){
+        waKatalogStatus('\u274C Fehler: '+e.message,false);
+      });
   };
 
   // --- WhatsApp Share ---
