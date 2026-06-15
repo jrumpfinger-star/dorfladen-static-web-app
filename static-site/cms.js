@@ -10078,23 +10078,38 @@
     // Collect image URLs for all selected items (only if post_images feature enabled)
     var imgMap={};
     if(_featureFlags.post_images!==false){
+      console.log('[Social] post_images enabled, searching images for',selected.length,'items');
+      console.log('[Social] _socMtBilder keys:',Object.keys(_socMtBilder));
+      console.log('[Social] _socialKatalog count:',_socialKatalog.length);
       selected.forEach(function(p){
         var url='';
         var pName=p.name||p.gericht||'';
+        console.log('[Social] Item:',p.id,'name="'+pName+'"','kat='+p.kategorie);
         // Mittagstisch image (uploaded via social module) – check first, most specific
-        if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url) url=_socMtBilder[pName].bild_url;
+        if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url){
+          url=_socMtBilder[pName].bild_url;
+          console.log('[Social]   -> MtBild found:',url.substring(0,60));
+        }
         // Katalog item
         if(!url){
           var katItem=_socialKatalog.find(function(k){return k.id===p.id;});
-          if(katItem&&katItem.bild_url) url=katItem.bild_url;
+          if(katItem&&katItem.bild_url){
+            url=katItem.bild_url;
+            console.log('[Social]   -> Katalog bild found:',url.substring(0,60));
+          }
+          if(katItem&&!katItem.bild_url) console.log('[Social]   -> Katalog item found but NO bild_url');
         }
         // Free item (base64)
         if(!url){
           var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});
           if(freeItem&&freeItem.bild_data) url=freeItem.bild_data;
         }
+        if(!url) console.log('[Social]   -> NO image found for "'+pName+'"');
         if(url) imgMap[p.id]=url;
       });
+      console.log('[Social] imgMap has',Object.keys(imgMap).length,'images');
+    } else {
+      console.log('[Social] post_images disabled, _featureFlags:',JSON.stringify(_featureFlags));
     }
 
     // Preload all images, then draw
@@ -10311,7 +10326,9 @@
       msg+='\n';
     });
     if(hasMittagessen){
-      msg+='\uD83D\uDCDE *Gerne vorbestellen!*\n';
+      var orderItems=cats['Mittagessen'].map(function(p){return '___ Stk. '+p.name;});
+      var orderText='Hallo, ich m\u00f6chte gerne bestellen:\n'+orderItems.join('\n')+'\nAbholung ca. ___ Uhr.\nDanke!';
+      msg+='\uD83D\uDCDE *Jetzt vorbestellen:*\nhttps://wa.me/491714910935?text='+encodeURIComponent(orderText)+'\n';
       msg+='\u260E\uFE0F 08082 / 622 99 91\n';
       msg+='\uD83C\uDF3F 0,50\u20AC \u00D6ko-Rabatt mit eigenem Beh\u00E4lter\n\n';
     }
