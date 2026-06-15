@@ -9803,13 +9803,77 @@
     var canvas=document.getElementById('soc-post-canvas');
     if(!canvas)return;
     var ctx=canvas.getContext('2d');
-    var W=540, H=540;
-    canvas.width=W; canvas.height=H;
+    var W=540;
 
     // Gather selected items
     var selected=socialGatherSelected();
     var titel=(document.getElementById('soc-post-titel').value||'').trim();
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
+
+    // Collect image URLs for all selected items
+    var imgMap={};
+    selected.forEach(function(p){
+      var url='';
+      // Katalog item
+      var katItem=_socialKatalog.find(function(k){return k.id===p.id;});
+      if(katItem&&katItem.bild_url) url=katItem.bild_url;
+      // Free item (base64)
+      var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});
+      if(freeItem&&freeItem.bild_data) url=freeItem.bild_data;
+      // Mittagstisch image
+      if(!url&&_socMtBilder[p.name]&&_socMtBilder[p.name].bild_url) url=_socMtBilder[p.name].bild_url;
+      if(url) imgMap[p.id]=url;
+    });
+
+    // Preload all images, then draw
+    var imgUrls=Object.keys(imgMap).map(function(id){return {id:id,url:imgMap[id]};});
+    var loadedImgs={};
+    var promises=imgUrls.map(function(entry){
+      return new Promise(function(resolve){
+        var img=new Image();
+        img.crossOrigin='anonymous';
+        img.onload=function(){loadedImgs[entry.id]=img;resolve();};
+        img.onerror=function(){resolve();}; // skip broken images
+        img.src=entry.url;
+      });
+    });
+
+    Promise.all(promises).then(function(){
+      socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
+    });
+  };
+
+  function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs){
+    var hasAnyImg=Object.keys(loadedImgs).length>0;
+    var IMG_SIZE=hasAnyImg?48:0;
+    var ITEM_H=hasAnyImg?Math.max(54,22):22;
+
+    // Group by category
+    var cats={};
+    selected.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(p);
+    });
+    var catKeys=Object.keys(cats);
+    var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
+
+    // Calculate dynamic height
+    var freitextLines=[];
+    if(freitext){
+      ctx.font='14px "Segoe UI",system-ui,sans-serif';
+      freitextLines=socialWrapText(ctx,freitext,W-60);
+    }
+    var contentH=100; // header+date
+    contentH+=freitextLines.length*18+(freitext?8:0);
+    catKeys.forEach(function(cat){
+      contentH+=28; // cat header
+      contentH+=cats[cat].length*ITEM_H;
+      contentH+=10; // gap
+    });
+    contentH+=50; // footer
+    var H=Math.max(540,contentH);
+    canvas.width=W; canvas.height=H;
 
     // Background
     ctx.fillStyle='#faf9f6';
@@ -9834,29 +9898,19 @@
     var y=100;
 
     // Freitext
-    if(freitext){
+    if(freitextLines.length){
       ctx.fillStyle='#374151';
       ctx.font='14px "Segoe UI",system-ui,sans-serif';
       ctx.textAlign='center';
-      var lines=socialWrapText(ctx,freitext,W-60);
-      lines.forEach(function(line){
+      freitextLines.forEach(function(line){
         ctx.fillText(line,W/2,y);
         y+=18;
       });
       y+=8;
     }
 
-    // Group selected by category
-    var cats={};
-    selected.forEach(function(p){
-      var c=p.kategorie||'Sonstiges';
-      if(!cats[c]) cats[c]=[];
-      cats[c].push(p);
-    });
-    var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
-
     ctx.textAlign='left';
-    Object.keys(cats).forEach(function(cat){
+    catKeys.forEach(function(cat){
       // Category header
       ctx.fillStyle='#e1306c';
       ctx.font='bold 16px "Segoe UI",system-ui,sans-serif';
@@ -9869,17 +9923,65 @@
 
       // Items
       cats[cat].forEach(function(p){
+        var itemImg=loadedImgs[p.id];
+        var textX=28;
+        var textY=y;
+
+        if(hasAnyImg){
+          // Draw image or placeholder
+          if(itemImg){
+            var ix=28, iy=y-4;
+            // Rounded rect clip
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(ix+4,iy);ctx.lineTo(ix+IMG_SIZE-4,iy);
+            ctx.quadraticCurveTo(ix+IMG_SIZE,iy,ix+IMG_SIZE,iy+4);
+            ctx.lineTo(ix+IMG_SIZE,iy+IMG_SIZE-4);
+            ctx.quadraticCurveTo(ix+IMG_SIZE,iy+IMG_SIZE,ix+IMG_SIZE-4,iy+IMG_SIZE);
+            ctx.lineTo(ix+4,iy+IMG_SIZE);
+            ctx.quadraticCurveTo(ix,iy+IMG_SIZE,ix,iy+IMG_SIZE-4);
+            ctx.lineTo(ix,iy+4);
+            ctx.quadraticCurveTo(ix,iy,ix+4,iy);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(itemImg,ix,iy,IMG_SIZE,IMG_SIZE);
+            ctx.restore();
+            // Light border
+            ctx.strokeStyle='#e5e7eb';
+            ctx.lineWidth=1;
+            ctx.beginPath();
+            ctx.moveTo(ix+4,iy);ctx.lineTo(ix+IMG_SIZE-4,iy);
+            ctx.quadraticCurveTo(ix+IMG_SIZE,iy,ix+IMG_SIZE,iy+4);
+            ctx.lineTo(ix+IMG_SIZE,iy+IMG_SIZE-4);
+            ctx.quadraticCurveTo(ix+IMG_SIZE,iy+IMG_SIZE,ix+IMG_SIZE-4,iy+IMG_SIZE);
+            ctx.lineTo(ix+4,iy+IMG_SIZE);
+            ctx.quadraticCurveTo(ix,iy+IMG_SIZE,ix,iy+IMG_SIZE-4);
+            ctx.lineTo(ix,iy+4);
+            ctx.quadraticCurveTo(ix,iy,ix+4,iy);
+            ctx.closePath();
+            ctx.stroke();
+          }
+          textX=28+IMG_SIZE+10;
+          textY=y+IMG_SIZE/2-6;
+        }
+
         ctx.fillStyle='#1f2937';
         ctx.font='14px "Segoe UI",system-ui,sans-serif';
-        ctx.fillText('  \u2022 '+p.name,28,y);
+        var maxNameW=W-textX-80;
+        var dispName=p.name;
+        while(ctx.measureText(dispName).width>maxNameW&&dispName.length>10){
+          dispName=dispName.substring(0,dispName.length-1);
+        }
+        if(dispName!==p.name) dispName+='\u2026';
+        ctx.fillText(dispName,textX,textY+14);
         if(p.preis){
           ctx.fillStyle='#2e7d32';
           ctx.font='bold 14px "Segoe UI",system-ui,sans-serif';
           ctx.textAlign='right';
-          ctx.fillText(p.preis+' \u20AC',W-28,y);
+          ctx.fillText(p.preis+' \u20AC',W-28,textY+14);
           ctx.textAlign='left';
         }
-        y+=22;
+        y+=ITEM_H;
       });
       y+=10;
     });
