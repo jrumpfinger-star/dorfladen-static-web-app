@@ -10071,24 +10071,9 @@
       var cb=row.querySelector('input[type=checkbox]');
       row.style.background=cb&&cb.checked?'#f0fdf4':'#fff';
     });
-    // Show individual meal poster buttons for Mittagessen items
+    // Hide individual meal poster section (no longer needed)
     var mealPosterWrap=document.getElementById('soc-meal-posters');
-    var mealPosterList=document.getElementById('soc-meal-poster-list');
-    if(mealPosterWrap&&mealPosterList){
-      var mtItems=sel.filter(function(p){return p.kategorie==='Mittagessen';});
-      if(mtItems.length){
-        mealPosterWrap.style.display='block';
-        var mh='';
-        mtItems.forEach(function(p,i){
-          mh+='<button onclick="socialGenMealPoster('+i+')" class="cms-btn" style="background:#f59e0b;color:#fff;padding:6px 12px;font-size:12px;font-weight:600;border-radius:8px">';
-          mh+='\uD83C\uDF7D Men\u00fc '+(i+1)+': '+esc(p.name).substring(0,25)+(p.name.length>25?'\u2026':'');
-          mh+='</button>';
-        });
-        mealPosterList.innerHTML=mh;
-      } else {
-        mealPosterWrap.style.display='none';
-      }
-    }
+    if(mealPosterWrap) mealPosterWrap.style.display='none';
   };
 
   // --- Gather all selected items (Katalog + Wochenplan + Frei) ---
@@ -10180,9 +10165,45 @@
     });
 
     return Promise.all(promises).then(function(){
-      socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
+      // Auto-detect: if Mittagessen items are selected, show meal poster as preview
+      var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+      if(mtItems.length>0){
+        socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs);
+      } else {
+        socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
+      }
+      // Store loaded images for share function to reuse
+      window._socLoadedImgs=loadedImgs;
     });
   };
+
+  // Generate both posters as blobs (meal poster + normal poster) when Mittagessen is present
+  function socialGenBothPosters(selected,titel,freitext,loadedImgs){
+    var W=540;
+    var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+    var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+    var results=[];
+
+    // 1. Meal poster
+    if(mtItems.length>0){
+      var c1=document.createElement('canvas');
+      var x1=c1.getContext('2d');
+      socialDrawMealPosterAuto(c1,x1,W,mtItems,loadedImgs);
+      results.push(new Promise(function(resolve){
+        c1.toBlob(function(b){resolve({blob:b,name:'mittagessen-poster.png'});}, 'image/png');
+      }));
+    }
+
+    // 2. Normal poster (with ALL items including Mittagessen for full overview)
+    var c2=document.createElement('canvas');
+    var x2=c2.getContext('2d');
+    socialDrawPoster(c2,x2,W,selected,titel,freitext,loadedImgs);
+    results.push(new Promise(function(resolve){
+      c2.toBlob(function(b){resolve({blob:b,name:'dorfladen-post.png'});}, 'image/png');
+    }));
+
+    return Promise.all(results);
+  }
 
   function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs){
     var hasAnyImg=Object.keys(loadedImgs).length>0;
@@ -10342,6 +10363,148 @@
     ctx.textAlign='center';
     ctx.fillText('Dorfladen Oberornau \u2022 Dorfplatz 1 \u2022 84419 Obertaufkirchen',W/2,H-16);
   };
+
+  // --- Auto Meal Poster (replaces normal poster when Mittagessen is selected) ---
+  function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs){
+    var H=540;
+    canvas.width=W;canvas.height=H;
+
+    // Find first available image
+    var foodImg=null;
+    for(var mi=0;mi<mtItems.length;mi++){
+      if(loadedImgs[mtItems[mi].id]){foodImg=loadedImgs[mtItems[mi].id];break;}
+    }
+
+    // Background
+    ctx.fillStyle='#faf5ef';
+    ctx.fillRect(0,0,W,H);
+
+    // Image area (top portion)
+    var imgAreaH=240;
+    if(foodImg){
+      var iw=foodImg.width,ih=foodImg.height;
+      var scale=Math.max(W/iw,imgAreaH/ih);
+      var dw=iw*scale,dh=ih*scale;
+      var dx=(W-dw)/2,dy=(imgAreaH-dh)/2;
+      ctx.save();
+      ctx.beginPath();ctx.rect(0,0,W,imgAreaH);ctx.clip();
+      ctx.drawImage(foodImg,dx,dy,dw,dh);
+      var grad=ctx.createLinearGradient(0,imgAreaH-80,0,imgAreaH);
+      grad.addColorStop(0,'rgba(250,245,239,0)');
+      grad.addColorStop(1,'rgba(250,245,239,1)');
+      ctx.fillStyle=grad;
+      ctx.fillRect(0,imgAreaH-80,W,80);
+      ctx.restore();
+    } else {
+      ctx.fillStyle='#e8dfd3';
+      ctx.fillRect(0,0,W,imgAreaH);
+      ctx.fillStyle='#c9b99a';
+      ctx.font='48px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('\uD83C\uDF7D',W/2,imgAreaH/2+16);
+    }
+
+    // Logo badge top-right
+    ctx.fillStyle='rgba(255,255,255,0.92)';
+    var logoW=170,logoH=44,logoX=W-logoW-10,logoY=10;
+    ctx.beginPath();
+    ctx.moveTo(logoX+8,logoY);ctx.lineTo(logoX+logoW-8,logoY);
+    ctx.quadraticCurveTo(logoX+logoW,logoY,logoX+logoW,logoY+8);
+    ctx.lineTo(logoX+logoW,logoY+logoH-8);
+    ctx.quadraticCurveTo(logoX+logoW,logoY+logoH,logoX+logoW-8,logoY+logoH);
+    ctx.lineTo(logoX+8,logoY+logoH);
+    ctx.quadraticCurveTo(logoX,logoY+logoH,logoX,logoY+logoH-8);
+    ctx.lineTo(logoX,logoY+8);
+    ctx.quadraticCurveTo(logoX,logoY,logoX+8,logoY);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle='#2e7d32';
+    ctx.font='bold 12px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('DORFLADEN',logoX+logoW/2,logoY+18);
+    ctx.fillText('OBERORNAU',logoX+logoW/2,logoY+34);
+
+    // Claim
+    ctx.fillStyle='#6b8c42';
+    ctx.font='10px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,imgAreaH+14);
+
+    // "Mittagessen" title
+    var ty=imgAreaH+42;
+    ctx.fillStyle='#5b7a3a';
+    ctx.font='italic bold 30px Georgia,"Times New Roman",serif';
+    ctx.fillText('Mittagessen',W/2,ty);
+
+    // Day
+    var now=new Date();
+    var days=['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];
+    ty+=32;
+    ctx.fillStyle='#374151';
+    ctx.font='bold 20px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(days[now.getDay()],W/2,ty);
+
+    // List all meals
+    ty+=30;
+    mtItems.forEach(function(meal,idx){
+      // Menu number badge
+      ctx.fillStyle='rgba(107,140,66,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(W/2,ty-6,70,16,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle='#2e7d32';
+      ctx.font='bold 15px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('Men\u00fc '+(idx+1),W/2,ty);
+      ty+=22;
+
+      // Dish name
+      ctx.fillStyle='#1f2937';
+      ctx.font='14px "Segoe UI",system-ui,sans-serif';
+      var nameLines=socialWrapText(ctx,meal.name,W-60);
+      nameLines.forEach(function(line){
+        ctx.fillText(line,W/2,ty);
+        ty+=18;
+      });
+
+      // Price
+      if(meal.preis){
+        var mp=parseFloat(meal.preis);
+        ctx.fillStyle='#6b7280';
+        ctx.font='12px "Segoe UI",system-ui,sans-serif';
+        ctx.fillText((mp&&isFinite(mp)?mp.toFixed(2):meal.preis)+' \u20AC',W/2,ty);
+        ty+=20;
+      } else {
+        ty+=8;
+      }
+      ty+=6;
+    });
+
+    // Order hint
+    ty=Math.min(ty,H-70);
+    ctx.fillStyle='#25D366';
+    var btnW=240,btnH=32,btnX=(W-btnW)/2,btnY=ty;
+    ctx.beginPath();
+    ctx.moveTo(btnX+10,btnY);ctx.lineTo(btnX+btnW-10,btnY);
+    ctx.quadraticCurveTo(btnX+btnW,btnY,btnX+btnW,btnY+10);
+    ctx.lineTo(btnX+btnW,btnY+btnH-10);
+    ctx.quadraticCurveTo(btnX+btnW,btnY+btnH,btnX+btnW-10,btnY+btnH);
+    ctx.lineTo(btnX+10,btnY+btnH);
+    ctx.quadraticCurveTo(btnX,btnY+btnH,btnX,btnY+btnH-10);
+    ctx.lineTo(btnX,btnY+10);
+    ctx.quadraticCurveTo(btnX,btnY,btnX+10,btnY);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.font='bold 12px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('\uD83D\uDCDE Jetzt vorbestellen!',W/2,btnY+btnH/2+4);
+
+    // Footer
+    ctx.fillStyle='#2e7d32';
+    ctx.fillRect(0,H-36,W,36);
+    ctx.fillStyle='#fff';
+    ctx.font='bold 11px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('Dorfladen Oberornau \u2022 Dorfplatz 1 \u2022 84419 Obertaufkirchen',W/2,H-14);
+  }
 
   function socialWrapText(ctx,text,maxW){
     var words=text.split(' '),lines=[],cur='';
@@ -10589,47 +10752,64 @@
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
     var selected=socialGatherSelected();
     var msg=socialBuildWhatsAppMsg(selected,titel,freitext);
+    var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
 
     socialStatus('soc-post-status','Poster wird erstellt...',true);
     var genPromise=socialGenPreview()||Promise.resolve();
     genPromise.then(function(){
-      var canvas=document.getElementById('soc-post-canvas');
-      if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');return;}
-      var hasShare=!!navigator.share;
-      var blobSize=0;
-      // Try Web Share API with image
-      if(hasShare){
-        canvas.toBlob(function(blob){
-          if(!blob){socialStatus('soc-post-status','Canvas-Blob leer \u2013 Fallback','error');socialFallbackWaShare(null,msg);return;}
-          blobSize=blob.size;
-          var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
-          var shareData={text:msg,files:[file]};
-          var canShareFiles=false;
-          try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){}
-          if(canShareFiles){
-            socialStatus('soc-post-status','Teile mit Web Share API ('+Math.round(blobSize/1024)+'KB)...',true);
-            navigator.share(shareData).then(function(){
-              socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-            }).catch(function(err){
-              if(err.name==='AbortError'){
-                socialStatus('soc-post-status','Teilen abgebrochen.',true);
-              } else {
-                socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
-                socialFallbackWaShare(canvas,msg);
-              }
-            });
-          } else {
-            socialStatus('soc-post-status','canShare=false ('+Math.round(blobSize/1024)+'KB) \u2013 Fallback',true);
-            socialFallbackWaShare(canvas,msg);
-          }
-        },'image/png');
+      var loadedImgs=window._socLoadedImgs||{};
+
+      // If Mittagessen: generate both posters and share together
+      if(hasMt){
+        socialGenBothPosters(selected,titel,freitext,loadedImgs).then(function(posters){
+          var files=posters.filter(function(p){return p.blob;}).map(function(p){
+            return new File([p.blob],p.name,{type:'image/png'});
+          });
+          socialShareFilesWithText(files,msg);
+        });
       } else {
-        socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
-        socialFallbackWaShare(canvas,msg);
+        // Normal: single poster
+        var canvas=document.getElementById('soc-post-canvas');
+        if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');return;}
+        canvas.toBlob(function(blob){
+          if(!blob){socialFallbackWaShare(null,msg);return;}
+          var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
+          socialShareFilesWithText([file],msg);
+        },'image/png');
       }
     });
     socialSavePost(titel,freitext,selected);
   };
+
+  // Helper: share files + text via Web Share API or fallback
+  function socialShareFilesWithText(files,msg){
+    var hasShare=!!navigator.share;
+    if(hasShare&&files.length){
+      var shareData={text:msg,files:files};
+      var canShareFiles=false;
+      try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){}
+      if(canShareFiles){
+        var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
+        socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
+        navigator.share(shareData).then(function(){
+          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+        }).catch(function(err){
+          if(err.name==='AbortError'){
+            socialStatus('soc-post-status','Teilen abgebrochen.',true);
+          } else {
+            socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
+            socialFallbackWaShare(null,msg);
+          }
+        });
+      } else {
+        socialStatus('soc-post-status','canShare=false \u2013 Fallback',true);
+        socialFallbackWaShare(null,msg);
+      }
+    } else {
+      socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
+      socialFallbackWaShare(null,msg);
+    }
+  }
 
   // --- Fallback: copy image to clipboard + download + open WhatsApp ---
   function socialFallbackWaShare(canvas,msg){
