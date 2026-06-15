@@ -10781,16 +10781,14 @@
     var hasMittagessen=!!cats['Mittagessen'];
     var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
 
-    // Short caption for Mittagessen-only (details are on the poster image)
+    // Mittagessen-only: just order links (everything else is on the poster image)
     if(onlyMittagessen){
-      var msg='\uD83C\uDF5D *Mittagessen heute*\n';
+      var msg='';
       cats['Mittagessen'].forEach(function(p){
         var bestellText='Hallo! Ich m\u00F6chte bestellen: '+p.name;
         msg+='\uD83D\uDC49 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
       });
-      if(freitext) msg+='\n'+freitext+'\n';
-      msg+='\n\uD83D\uDED2 Dorfladen Oberornau \u2022 08082 / 622 99 91';
-      return msg;
+      return msg.trim();
     }
 
     // Full message for mixed categories
