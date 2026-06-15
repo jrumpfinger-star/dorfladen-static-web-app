@@ -2632,6 +2632,7 @@
   loadGerichteHistory();
 
   var mealRowCtr=0;
+  var _mealPasteTarget=null;
   function addMealRow(name,price,id){
     mealRowCtr++;
     var c=document.getElementById('cms-meal-rows');
@@ -2639,6 +2640,7 @@
     row.className='cms-ang-row';row.id='cms-mr-'+mealRowCtr;
     row.dataset.mealId=id||'';
     var canRemove=c.children.length>0;
+    var rn=mealRowCtr;
     var h='';
     if(canRemove) h+='<button type="button" class="cms-ang-row-close" data-action="removeMealRow">&times;</button>';
     h+='<div class="cms-meal-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:8px">';
@@ -2646,9 +2648,43 @@
     h+='<div class="cms-art-dd"></div></div>';
     h+='<input class="cms-input cms-price" data-f="price" type="text" inputmode="decimal" placeholder="Preis" value="'+(price!=null?fmtDePrice(price):'')+'">';
     h+='</div>';
+    // Optional image row
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-top:6px">';
+    h+='<img class="cms-meal-img-pv" data-row="'+rn+'" src="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;display:none">';
+    h+='<label style="cursor:pointer;padding:3px 8px;border-radius:6px;background:#f3f4f6;border:1px solid #d1d5db;font-size:11px;color:#374151;display:inline-flex;align-items:center;gap:3px">';
+    h+='\uD83D\uDCF7 Bild<input type="file" accept="image/*" data-action="mealRowImg" data-row="'+rn+'" style="display:none">';
+    h+='</label>';
+    h+='<button type="button" data-action="mealRowPaste" data-row="'+rn+'" title="Bild aus Zwischenablage (Klick + Strg+V)" style="padding:2px 6px;border-radius:6px;background:#f3f4f6;border:1px solid #d1d5db;font-size:11px;cursor:pointer;color:#374151">\uD83D\uDCCB Einf\u00fcgen</button>';
+    h+='<input type="hidden" data-f="bild_file" value="">';
+    h+='<span class="cms-meal-img-status" style="font-size:10px;color:#9ca3af"></span>';
+    h+='</div>';
     row.innerHTML=h;
     c.appendChild(row);
     wireMealAC(row);
+    // Wire file input
+    var fileInp=row.querySelector('[data-action="mealRowImg"]');
+    if(fileInp){
+      fileInp.addEventListener('change',function(){
+        if(!fileInp.files||!fileInp.files[0])return;
+        mealRowSetImage(rn,fileInp.files[0]);
+      });
+    }
+  }
+
+  // Store pending image files per meal row
+  var _mealRowImages={};
+
+  function mealRowSetImage(rn,file){
+    _mealRowImages[rn]=file;
+    var row=document.getElementById('cms-mr-'+rn);if(!row)return;
+    var pv=row.querySelector('.cms-meal-img-pv');
+    var st=row.querySelector('.cms-meal-img-status');
+    var reader=new FileReader();
+    reader.onload=function(){
+      if(pv){pv.src=reader.result;pv.style.display='';}
+      if(st) st.textContent=file.name;
+    };
+    reader.readAsDataURL(file);
   }
 
   function wireMealAC(row){
@@ -2795,7 +2831,8 @@
       var name=(row.querySelector('[data-f="name"]').value||'').trim();
       var price=parseDePrice(row.querySelector('[data-f="price"]').value);
       var mid=row.dataset.mealId||'';
-      if(name) mealData.push({gericht:name,preis:price,id:mid,priceInput:row.querySelector('[data-f="price"]')});
+      var rn=row.id.replace('cms-mr-','');
+      if(name) mealData.push({gericht:name,preis:price,id:mid,priceInput:row.querySelector('[data-f="price"]'),rowNum:rn});
     });
 
     for(var mi=0;mi<mealData.length;mi++){if(mealData[mi].preis==null||isNaN(mealData[mi].preis)){mealData[mi].priceInput.style.border='2px solid #ef4444';mealData[mi].priceInput.focus();toast('Bitte Preis f\u00fcr "'+mealData[mi].gericht+'" eingeben','warn');return;} else {mealData[mi].priceInput.style.border='';}}
@@ -2825,6 +2862,26 @@
 
       return Promise.all(promises);
     })
+      .then(function(){
+        // Upload pending images for each meal row
+        var imgPromises=[];
+        mealData.forEach(function(item){
+          var imgFile=_mealRowImages[item.rowNum];
+          if(imgFile&&item.gericht){
+            var fd=new FormData();
+            fd.append('gericht',item.gericht);
+            fd.append('bild',imgFile);
+            imgPromises.push(
+              fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd})
+                .then(function(r){return r.json();})
+                .then(function(res){if(!res.error) toast('Bild f\u00fcr "'+item.gericht+'" gespeichert');})
+                .catch(function(){})
+            );
+          }
+        });
+        _mealRowImages={};
+        return Promise.all(imgPromises);
+      })
       .then(function(){
         var cnt=mealData.length;
         toast(editId?'Gericht aktualisiert':cnt+' Gericht'+(cnt>1?'e':'')+' hinzugefuegt');
@@ -7786,6 +7843,14 @@
       case 'removeAngRow':t.parentElement.remove();renumberAngRows();break;
       case 'addMealRow':addMealRow();break;
       case 'removeMealRow':t.parentElement.remove();break;
+      case 'mealRowPaste':
+        (function(){
+          var rn=t.getAttribute('data-row');if(!rn)return;
+          _mealPasteTarget=rn;
+          t.style.background='#fef08a';t.textContent='\u23F3 Strg+V';
+          setTimeout(function(){t.style.background='#f3f4f6';t.textContent='\uD83D\uDCCB Einf\u00fcgen';_mealPasteTarget=null;},4000);
+        })();
+        break;
       case 'shareWP':cmsShareWP();break;
       case 'previewWP':cmsPreviewWP();break;
       case 'printWP':cmsPrintWP();break;
@@ -9758,6 +9823,21 @@
     setTimeout(function(){btn.style.background='#fff8e1';btn.textContent='\uD83D\uDCCB';},3000);
   };
   document.addEventListener('paste',function(e){
+    // Meal modal paste
+    if(_mealPasteTarget){
+      var mitems=e.clipboardData&&e.clipboardData.items;
+      if(!mitems)return;
+      for(var m=0;m<mitems.length;m++){
+        if(mitems[m].type.indexOf('image/')===0){
+          e.preventDefault();
+          var mfile=mitems[m].getAsFile();
+          var mrn=_mealPasteTarget;
+          _mealPasteTarget=null;
+          mealRowSetImage(parseInt(mrn),mfile);
+          return;
+        }
+      }
+    }
     // Mittagstisch paste
     if(_socMtPasteTarget){
       var items=e.clipboardData&&e.clipboardData.items;
