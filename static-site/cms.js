@@ -10874,7 +10874,7 @@
   // Helper: share files + text via Web Share API or fallback
   function socialShareFilesWithText(files,msg){
     // On mobile: use Web Share API (WhatsApp is a share target)
-    // On desktop: skip Web Share API (opens Outlook/Mail instead of WhatsApp) → use direct wa.me link
+    // On desktop: skip Web Share API (opens Outlook/Mail instead of WhatsApp) → download files + wa.me link
     var isMobile=/Android|iPhone|iPad|iPod|webOS|BlackBerry/i.test(navigator.userAgent);
     var hasShare=isMobile&&!!navigator.share;
     if(hasShare&&files.length){
@@ -10891,48 +10891,60 @@
             socialStatus('soc-post-status','Teilen abgebrochen.',true);
           } else {
             socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
-            socialFallbackWaShare(null,msg);
+            socialFallbackWaShare(files,msg);
           }
         });
       } else {
         socialStatus('soc-post-status','canShare=false \u2013 Fallback',true);
-        socialFallbackWaShare(null,msg);
+        socialFallbackWaShare(files,msg);
       }
     } else {
-      socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
-      socialFallbackWaShare(null,msg);
+      // Desktop: download the already-generated files + open WhatsApp with text
+      socialFallbackWaShare(files,msg);
     }
   }
 
-  // --- Fallback: download poster(s) + open WhatsApp web ---
-  function socialFallbackWaShare(canvas,msg){
-    // First ensure poster preview is generated
-    var genPromise=(socialGenPreview&&socialGenPreview())||Promise.resolve();
-    genPromise.then(function(){
-      // Download all visible poster images
-      var downloaded=false;
+  // --- Fallback: download poster(s) from blobs or canvas + open WhatsApp web ---
+  function socialFallbackWaShare(files,msg){
+    var downloaded=0;
+    var now=new Date();
+    var dateStr=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+
+    // If we have File/Blob objects, download them directly (most reliable)
+    if(files&&files.length){
+      files.forEach(function(f,i){
+        try{
+          var url=URL.createObjectURL(f);
+          var a=document.createElement('a');
+          a.href=url;
+          a.download=f.name||('dorfladen-poster-'+dateStr+'-'+(i+1)+'.png');
+          document.body.appendChild(a);
+          setTimeout(function(){a.click();document.body.removeChild(a);URL.revokeObjectURL(url);},i*300);
+          downloaded++;
+        }catch(e){console.error('[Social] Blob download error:',e);}
+      });
+    }
+
+    // Fallback: try canvas download if no blob files worked
+    if(!downloaded){
       try{
         socialDownloadPoster();
-        downloaded=true;
+        downloaded=1;
       }catch(e){
-        console.error('[Social] Download error:',e);
+        console.error('[Social] Canvas download error:',e);
       }
-      if(downloaded){
-        socialStatus('soc-post-status','\u2705 Poster heruntergeladen! Bitte in WhatsApp als Foto anh\u00e4ngen. \u00D6ffne WhatsApp in 3 Sek...',true);
-      } else {
-        socialStatus('soc-post-status','\u26A0 Poster konnte nicht heruntergeladen werden. \u00D6ffne WhatsApp...',false);
-      }
-      // Give browser time to process downloads before opening new window
-      setTimeout(function(){
-        window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-      },3000);
-    }).catch(function(e){
-      console.error('[Social] Fallback preview error:',e);
-      socialStatus('soc-post-status','\u26A0 Poster-Fehler. \u00D6ffne WhatsApp nur mit Text...',false);
-      setTimeout(function(){
-        window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-      },1000);
-    });
+    }
+
+    if(downloaded){
+      socialStatus('soc-post-status','\u2705 '+downloaded+' Poster heruntergeladen! Bitte in WhatsApp als Foto anh\u00e4ngen. \u00D6ffne WhatsApp in 3 Sek...',true);
+    } else {
+      socialStatus('soc-post-status','\u26A0 Poster konnte nicht heruntergeladen werden. \u00D6ffne WhatsApp nur mit Text...',false);
+    }
+    // Give browser time to process downloads before opening new window
+    var delay=downloaded?Math.max(2000,downloaded*500+1500):1000;
+    setTimeout(function(){
+      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+    },delay);
   }
 
   // --- Instagram Share ---
