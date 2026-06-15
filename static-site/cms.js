@@ -9338,17 +9338,25 @@
     if(loading) loading.style.display='block';
     if(list) list.innerHTML='';
     if(empty) empty.style.display='none';
-    fetch(API_BASE+'/social-katalog')
-      .then(function(r){return r.json();})
+    fetch(API+'/social-katalog')
+      .then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return r.json();
+      })
       .then(function(res){
-        if(loading) loading.style.display='none';
+        if(res.error){
+          socialStatus('soc-kat-status','API-Fehler: '+res.error,false);
+          return;
+        }
         window._socialKatLoaded=true;
-        _socialKatalog = res.produkte||[];
+        _socialKatalog = res.items||[];
         socialRenderKatalog();
       })
       .catch(function(e){
-        if(loading) loading.style.display='none';
         socialStatus('soc-kat-status','Fehler beim Laden: '+e.message,false);
+      })
+      .then(function(){
+        if(loading) loading.style.display='none';
       });
   };
 
@@ -9415,7 +9423,7 @@
       fd.append('bild',bildFile);
     }
     socialStatus('soc-kat-status','Wird gespeichert...',true);
-    fetch(API_BASE+'/social-katalog',{method:'POST',body:fd})
+    fetch(API+'/social-katalog',{method:'POST',body:fd})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.error){socialStatus('soc-kat-status',res.error,false);return;}
@@ -9432,7 +9440,7 @@
   // --- Produkt loeschen ---
   window.socialKatDelete = function(id){
     if(!confirm('Produkt wirklich entfernen?'))return;
-    fetch(API_BASE+'/social-katalog?id='+encodeURIComponent(id),{method:'DELETE'})
+    fetch(API+'/social-katalog?id='+encodeURIComponent(id),{method:'DELETE'})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.error){socialStatus('soc-kat-status',res.error,false);return;}
