@@ -9243,19 +9243,91 @@
     setTimeout(function(){el.style.display='none';},4000);
   }
 
-  // --- Bild-Vorschau für Katalog-Upload ---
+  // --- Bild-Vorschau + Paste + Drag&Drop ---
+  var _socPastedFile = null; // holds pasted/dropped file (not from file input)
+
+  function socialShowBildPreview(file){
+    var wrap=document.getElementById('soc-kat-bild-preview');
+    var thumb=document.getElementById('soc-kat-bild-thumb');
+    var hint=document.getElementById('soc-kat-paste-hint');
+    var zone=document.getElementById('soc-kat-paste-zone');
+    if(!wrap||!thumb)return;
+    var r=new FileReader();
+    r.onload=function(e){
+      thumb.src=e.target.result;
+      wrap.style.display='block';
+      if(hint) hint.style.display='none';
+      if(zone){ zone.style.borderColor='#e1306c'; zone.style.background='#fef2f2'; }
+    };
+    r.readAsDataURL(file);
+  }
+
+  window.socialClearBild = function(){
+    _socPastedFile=null;
+    var inp=document.getElementById('soc-kat-bild');
+    if(inp) inp.value='';
+    var wrap=document.getElementById('soc-kat-bild-preview');
+    var hint=document.getElementById('soc-kat-paste-hint');
+    var zone=document.getElementById('soc-kat-paste-zone');
+    if(wrap) wrap.style.display='none';
+    if(hint) hint.style.display='block';
+    if(zone){ zone.style.borderColor='#d1d5db'; zone.style.background='#fafbfc'; }
+  };
+
   (function(){
+    // File input change
     var inp=document.getElementById('soc-kat-bild');
     if(inp) inp.addEventListener('change',function(){
+      _socPastedFile=null;
       var f=this.files&&this.files[0];
-      var wrap=document.getElementById('soc-kat-bild-preview');
-      var thumb=document.getElementById('soc-kat-bild-thumb');
-      if(f && wrap && thumb){
-        var r=new FileReader();
-        r.onload=function(e){thumb.src=e.target.result;wrap.style.display='block';};
-        r.readAsDataURL(f);
-      } else if(wrap){ wrap.style.display='none'; }
+      if(f) socialShowBildPreview(f);
     });
+
+    // Paste (Strg+V) on the paste zone or anywhere in the social panel
+    var zone=document.getElementById('soc-kat-paste-zone');
+    var panel=document.getElementById('cms-panel-social');
+    function handlePaste(e){
+      var items=e.clipboardData&&e.clipboardData.items;
+      if(!items)return;
+      for(var i=0;i<items.length;i++){
+        if(items[i].type.indexOf('image')!==-1){
+          e.preventDefault();
+          var f=items[i].getAsFile();
+          if(f){
+            _socPastedFile=f;
+            if(inp) inp.value='';
+            socialShowBildPreview(f);
+          }
+          return;
+        }
+      }
+    }
+    if(zone) zone.addEventListener('paste',handlePaste);
+    if(panel) panel.addEventListener('paste',handlePaste);
+
+    // Drag & Drop on zone
+    if(zone){
+      zone.addEventListener('dragover',function(e){
+        e.preventDefault();
+        zone.style.borderColor='#e1306c';
+        zone.style.background='#fef2f2';
+      });
+      zone.addEventListener('dragleave',function(){
+        if(!_socPastedFile && !(inp&&inp.files&&inp.files.length)){
+          zone.style.borderColor='#d1d5db';
+          zone.style.background='#fafbfc';
+        }
+      });
+      zone.addEventListener('drop',function(e){
+        e.preventDefault();
+        var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+        if(f && f.type.indexOf('image')!==-1){
+          _socPastedFile=f;
+          if(inp) inp.value='';
+          socialShowBildPreview(f);
+        }
+      });
+    }
   })();
 
   // --- Katalog laden ---
@@ -9338,8 +9410,9 @@
     fd.append('name',name);
     fd.append('kategorie',kat);
     if(preis) fd.append('preis',preis);
-    if(bildInput && bildInput.files && bildInput.files[0]){
-      fd.append('bild',bildInput.files[0]);
+    var bildFile = _socPastedFile || (bildInput && bildInput.files && bildInput.files[0]);
+    if(bildFile){
+      fd.append('bild',bildFile);
     }
     socialStatus('soc-kat-status','Wird gespeichert...',true);
     fetch(API_BASE+'/social-katalog',{method:'POST',body:fd})
@@ -9350,9 +9423,7 @@
         // Reset form
         document.getElementById('soc-kat-name').value='';
         document.getElementById('soc-kat-preis').value='';
-        if(bildInput) bildInput.value='';
-        var preview=document.getElementById('soc-kat-bild-preview');
-        if(preview) preview.style.display='none';
+        socialClearBild();
         socialLoadKatalog();
       })
       .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});

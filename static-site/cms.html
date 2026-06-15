@@ -2578,8 +2578,18 @@ document.head.appendChild(msalScript);
             </div>
             <button class="cms-btn cms-btn-primary" onclick="socialKatAdd()" style="white-space:nowrap">&#10133; Hinzuf&#252;gen</button>
           </div>
-          <div id="soc-kat-bild-preview" style="margin-top:8px;display:none">
-            <img id="soc-kat-bild-thumb" style="max-width:80px;max-height:80px;border-radius:8px;border:1px solid #e5e7eb">
+          <!-- Paste-Zone -->
+          <div id="soc-kat-paste-zone" tabindex="0"
+            style="margin-top:8px;border:2px dashed #d1d5db;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
+            onclick="document.getElementById('soc-kat-bild').click()"
+            title="Klicken zum Datei w&#228;hlen oder Strg+V zum Einf&#252;gen">
+            <div id="soc-kat-paste-hint" style="color:#9ca3af;font-size:12px">
+              &#128203; <strong>Strg+V</strong> zum Einf&#252;gen oder <strong>klicken</strong> zum Datei w&#228;hlen
+            </div>
+            <div id="soc-kat-bild-preview" style="display:none;margin-top:6px">
+              <img id="soc-kat-bild-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
+              <button onclick="event.stopPropagation();socialClearBild()" style="display:block;margin:6px auto 0;background:none;border:none;color:#dc2626;font-size:11px;cursor:pointer;text-decoration:underline">&#10005; Bild entfernen</button>
+            </div>
           </div>
         </div>
       </div>
