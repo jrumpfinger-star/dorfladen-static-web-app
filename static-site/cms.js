@@ -1030,7 +1030,10 @@
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
-    if(name==='social' && !window._socialKatLoaded) socialLoadKatalog();
+    if(name==='social'){
+      if(!window._socialKatLoaded) socialLoadKatalog();
+      socialLoadMtBilder(function(){ socialBuildPostItems(); });
+    }
     if(!skipHistory) history.pushState({cmsTab:name},'','');
   };
 
