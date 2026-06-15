@@ -10300,19 +10300,62 @@
     },800);
   }
 
-  // --- Instagram Share (download image) ---
+  // --- Instagram Share ---
   window.socialShareInstagram = function(){
-    socialStatus('soc-post-status','Poster wird erstellt...',true);
-    var genPromise=socialGenPreview()||Promise.resolve();
-    genPromise.then(function(){
-      socialDownloadPoster();
-      socialStatus('soc-post-status','Bild heruntergeladen! Jetzt in Instagram hochladen.',true);
-    });
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
     var selected=socialGatherSelected();
+
+    socialStatus('soc-post-status','Poster wird erstellt...',true);
+    var genPromise=socialGenPreview()||Promise.resolve();
+    genPromise.then(function(){
+      var canvas=document.getElementById('soc-post-canvas');
+      if(!canvas){socialStatus('soc-post-status','Kein Poster vorhanden','error');return;}
+
+      // Mobile: try Web Share API (user can pick Instagram)
+      if(navigator.share){
+        canvas.toBlob(function(blob){
+          if(!blob){socialIgFallback();return;}
+          var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
+          var shareData={files:[file]};
+          try{
+            if(navigator.canShare&&navigator.canShare(shareData)){
+              navigator.share(shareData).then(function(){
+                socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+              }).catch(function(err){
+                if(err.name!=='AbortError') socialIgFallback();
+              });
+              return;
+            }
+          }catch(e){}
+          socialIgFallback();
+        },'image/png');
+      } else {
+        socialIgFallback();
+      }
+    });
     socialSavePost(titel,freitext,selected);
   };
+
+  function socialIgFallback(){
+    var canvas=document.getElementById('soc-post-canvas');
+    if(!canvas){return;}
+    // Copy to clipboard + download
+    canvas.toBlob(function(blob){
+      if(blob&&navigator.clipboard&&navigator.clipboard.write){
+        var item=new ClipboardItem({'image/png':blob});
+        navigator.clipboard.write([item]).then(function(){
+          socialStatus('soc-post-status','\u2705 Poster in Zwischenablage kopiert! \u00D6ffne Instagram und f\u00fcge es mit Strg+V ein.',true);
+        }).catch(function(){
+          socialDownloadPoster();
+          socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 jetzt in Instagram hochladen.',true);
+        });
+      } else {
+        socialDownloadPoster();
+        socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 jetzt in Instagram hochladen.',true);
+      }
+    },'image/png');
+  }
 
   // --- Download poster image ---
   window.socialDownloadPoster = function(){
