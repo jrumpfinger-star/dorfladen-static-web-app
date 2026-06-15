@@ -10781,9 +10781,16 @@
     var hasMittagessen=!!cats['Mittagessen'];
     var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
 
-    // Mittagessen-only: short order info (poster has all details)
+    // Mittagessen-only: order links with quantity and pickup time
     if(onlyMittagessen){
-      return '\uD83D\uDCDE Bestellen: 08082 / 622 99 91\n\uD83D\uDC49 https://wa.me/491714910935';
+      var msg='\uD83C\uDF7D *Mittagstisch*\n\n';
+      msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n';
+      cats['Mittagessen'].forEach(function(p){
+        var bestellText='Hallo!\nIch m\u00F6chte bestellen:\n\n1x '+p.name+(p.preis?' ('+parseFloat(p.preis).toFixed(2)+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
+        msg+='\u2022 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
+      });
+      msg+='\n\uD83D\uDCDE 08082 / 622 99 91';
+      return msg;
     }
 
     // Full message for mixed categories
