@@ -72,7 +72,7 @@ def _build_offer_payload(body):
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS, DELETE",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS, DELETE",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
         "Content-Type": "application/json; charset=utf-8"
