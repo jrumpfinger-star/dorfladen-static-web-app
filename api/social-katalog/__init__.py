@@ -152,12 +152,15 @@ def get_download_url(token, folder_id, filename):
 def handle_get(req, token, folder_id):
     """GET: Return full katalog with image URLs refreshed."""
     katalog = load_katalog(token, folder_id)
-    # Optionally refresh download URLs (they expire)
-    refresh = req.params.get("refresh", "0") == "1"
-    if refresh:
-        for item in katalog:
-            if item.get("bild_datei"):
-                item["bild_url"] = get_download_url(token, folder_id, item["bild_datei"])
+    # Always refresh download URLs (they expire after ~1h)
+    changed = False
+    for item in katalog:
+        if item.get("bild_datei"):
+            fresh_url = get_download_url(token, folder_id, item["bild_datei"])
+            if fresh_url and fresh_url != item.get("bild_url", ""):
+                item["bild_url"] = fresh_url
+                changed = True
+    if changed:
         save_katalog(token, folder_id, katalog)
     return ok({"success": True, "kategorien": KATEGORIEN, "items": katalog})
 
