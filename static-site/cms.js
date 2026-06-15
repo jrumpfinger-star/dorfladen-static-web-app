@@ -9393,7 +9393,7 @@
         var bg=i%2===0?'#fff':'#fafbfc';
         var pid=esc(p.id);
         // Display row
-        html+='<tr id="soc-row-'+pid+'" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
+        html+='<tr id="soc-row-'+pid+'" class="soc-kat-item" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
         html+='<td style="padding:8px;width:50px">';
         if(p.bild_url){
           html+='<img src="'+esc(p.bild_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" onerror="this.style.display=\'none\'">';
@@ -9410,9 +9410,9 @@
         html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="Entfernen" style="color:#dc2626;padding:4px 8px;font-size:11px">&#10005;</button>';
         html+='</td></tr>';
         // Edit row (hidden)
-        html+='<tr id="soc-edit-'+pid+'" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b">';
+        html+='<tr id="soc-edit-'+pid+'" class="soc-kat-edit-tr" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b">';
         html+='<td colspan="4" style="padding:10px">';
-        html+='<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">';
+        html+='<div class="soc-kat-edit-row" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">';
         html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name</label>';
         html+='<input id="soc-ed-name-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+esc(p.name)+'"></div>';
         html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
@@ -9423,7 +9423,7 @@
         html+='</select></div>';
         html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
         html+='<input id="soc-ed-preis-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(p.preis||'')+'"></div>';
-        html+='<div style="display:flex;gap:4px">';
+        html+='<div class="soc-kat-edit-btns" style="display:flex;gap:4px">';
         html+='<button class="cms-btn cms-btn-sm" onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700">&#10003; Speichern</button>';
         html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatCancelEdit(\''+pid+'\')" style="padding:5px 10px;font-size:12px">Abbrechen</button>';
         html+='</div></div></td></tr>';
