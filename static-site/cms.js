@@ -10812,22 +10812,22 @@
           });
           if(!files.length){
             socialStatus('soc-post-status','Poster-Erstellung fehlgeschlagen, sende nur Text...',true);
-            window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+            socialFallbackWaShare(null,msg);
             return;
           }
           socialShareFilesWithText(files,msg);
         }).catch(function(e){
           console.error('[Social] genBothPosters error:',e);
           socialStatus('soc-post-status','Fehler: '+e.message+' \u2013 sende nur Text',false);
-          window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+          socialFallbackWaShare(null,msg);
         });
-        }catch(e){console.error('[Social] sync error in hasMt:',e);window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+        }catch(e){console.error('[Social] sync error in hasMt:',e);socialFallbackWaShare(null,msg);}
       } else {
         // Normal: single poster
         var canvas=document.getElementById('soc-post-canvas');
-        if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');return;}
+        if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');socialFallbackWaShare(null,msg);return;}
         canvas.toBlob(function(blob){
-          if(!blob){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');return;}
+          if(!blob){socialFallbackWaShare(null,msg);return;}
           var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
           socialShareFilesWithText([file],msg);
         },'image/png');
@@ -10835,7 +10835,7 @@
     }).catch(function(e){
       console.error('[Social] genPreview error:',e);
       socialStatus('soc-post-status','Poster-Fehler: '+e.message,false);
-      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+      socialFallbackWaShare(null,msg);
     });
     socialSavePost(titel,freitext,selected);
     }catch(e){
@@ -10844,25 +10844,57 @@
     }
   };
 
-  // Helper: share files + text via Web Share API
+  // Helper: share files + text via Web Share API or fallback
   function socialShareFilesWithText(files,msg){
-    if(!navigator.share){
-      socialStatus('soc-post-status','Teilen nicht unterst\u00fctzt in diesem Browser.',false);
-      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-      return;
-    }
-    var shareData={text:msg,files:files};
-    socialStatus('soc-post-status','Teile Poster...',true);
-    navigator.share(shareData).then(function(){
-      socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-    }).catch(function(err){
-      if(err.name==='AbortError'){
-        socialStatus('soc-post-status','Teilen abgebrochen.',true);
+    var hasShare=!!navigator.share;
+    if(hasShare&&files.length){
+      var shareData={text:msg,files:files};
+      var canShareFiles=false;
+      try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){}
+      if(canShareFiles){
+        var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
+        socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
+        navigator.share(shareData).then(function(){
+          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+        }).catch(function(err){
+          if(err.name==='AbortError'){
+            socialStatus('soc-post-status','Teilen abgebrochen.',true);
+          } else {
+            socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
+            socialFallbackWaShare(null,msg);
+          }
+        });
       } else {
-        console.warn('[Social] share error:',err.name,err.message);
-        socialStatus('soc-post-status','Teilen fehlgeschlagen: '+err.message,false);
+        socialStatus('soc-post-status','canShare=false \u2013 Fallback',true);
+        socialFallbackWaShare(null,msg);
       }
-    });
+    } else {
+      socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
+      socialFallbackWaShare(null,msg);
+    }
+  }
+
+  // --- Fallback: copy image to clipboard + download + open WhatsApp ---
+  function socialFallbackWaShare(canvas,msg){
+    if(canvas){
+      canvas.toBlob(function(blob){
+        if(blob&&navigator.clipboard&&navigator.clipboard.write){
+          var item=new ClipboardItem({'image/png':blob});
+          navigator.clipboard.write([item]).then(function(){
+            socialStatus('soc-post-status','\u2705 Poster in Zwischenablage kopiert! In WhatsApp mit Strg+V einf\u00fcgen.',true);
+          }).catch(function(){
+            socialDownloadPoster();
+            socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
+          });
+        } else {
+          socialDownloadPoster();
+          socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
+        }
+      },'image/png');
+    }
+    setTimeout(function(){
+      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+    },800);
   }
 
   // --- Instagram Share ---
