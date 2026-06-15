@@ -10795,6 +10795,13 @@
       msg+='Einfach auf diese Nachricht antworten!\n';
       msg+='\u260E\uFE0F 08082 / 622 99 91\n';
       msg+='\uD83C\uDF3F 0,50\u20AC \u00D6ko-Rabatt mit eigenem Beh\u00E4lter\n\n';
+      // Schnellbestell-Links pro Gericht
+      msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n';
+      cats['Mittagessen'].forEach(function(p){
+        var bestellText='Hallo! Ich m\u00F6chte bestellen: '+p.name;
+        msg+='\u2022 '+p.name+'\nhttps://wa.me/4980826229991?text='+encodeURIComponent(bestellText)+'\n';
+      });
+      msg+='\n';
     }
     msg+='\uD83D\uDED2 *Dorfladen Oberornau*\nDorfplatz 1, 84419 Obertaufkirchen';
     return msg;
