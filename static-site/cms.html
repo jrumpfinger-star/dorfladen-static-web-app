@@ -2697,9 +2697,53 @@ document.head.appendChild(msalScript);
         <div class="cms-card-header" style="background:#25D366">&#128221; Tagespost zusammenstellen</div>
         <div class="cms-card-body">
           <div style="margin-bottom:12px">
-            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Titel (optional)</label>
-            <input id="soc-post-titel" class="cms-input" placeholder="z.B. Heute im Dorfladen &#8211; Montag" style="width:100%">
+            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Titel</label>
+            <select id="soc-post-titel-sel" class="cms-input" onchange="socialTitelChange()" style="width:100%">
+            </select>
+            <input id="soc-post-titel" class="cms-input" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:4px;display:none">
           </div>
+          <script>
+          (function(){
+            var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+            var tag=tage[new Date().getDay()];
+            var sel=document.getElementById('soc-post-titel-sel');
+            if(!sel)return;
+            var opts=[
+              'Heute im Dorfladen \u2013 '+tag,
+              'Aktuelles',
+              'Wochenangebot',
+              'Frisch eingetroffen',
+              'Mittagstisch \u2013 '+tag,
+              'Sonderangebot',
+              '_custom'
+            ];
+            var labels={
+              '_custom':'\u270F\uFE0F Eigenen Titel eingeben...'
+            };
+            opts.forEach(function(o){
+              var op=document.createElement('option');
+              op.value=o;
+              op.textContent=labels[o]||o;
+              sel.appendChild(op);
+            });
+            // Sync hidden input with default
+            var inp=document.getElementById('soc-post-titel');
+            if(inp) inp.value=opts[0];
+          })();
+          window.socialTitelChange=function(){
+            var sel=document.getElementById('soc-post-titel-sel');
+            var inp=document.getElementById('soc-post-titel');
+            if(!sel||!inp)return;
+            if(sel.value==='_custom'){
+              inp.style.display='';
+              inp.value='';
+              inp.focus();
+            } else {
+              inp.style.display='none';
+              inp.value=sel.value;
+            }
+          };
+          </script>
           <div style="margin-bottom:12px">
             <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Freitext (optional)</label>
             <textarea id="soc-post-text" class="cms-input" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" style="width:100%;resize:vertical"></textarea>
