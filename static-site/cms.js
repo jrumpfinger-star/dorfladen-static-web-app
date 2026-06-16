@@ -10224,11 +10224,8 @@
           img.src=objUrl;
         }).catch(function(e){
           console.warn('[Social] fetch img failed for',entry.id,e);
-          // Fallback: try direct load without crossOrigin
-          var img=new Image();
-          img.onload=function(){loadedImgs[entry.id]=img;resolve();};
-          img.onerror=function(){console.warn('[Social] fallback img also failed for',entry.id);resolve();};
-          img.src=entry.url;
+          // Skip image to avoid canvas taint (direct load would taint canvas)
+          resolve();
         });
       });
     });
@@ -11032,7 +11029,7 @@
           return new File([r.blob],r.name,{type:'image/png'});
         });
         if(!files.length){socialFallbackWaShare(null,msg);return;}
-        socialShareFiles(files,msg);
+        socialShareFiles(files,msg,hasMt);
       });
     }).catch(function(e){
       console.error('[Social] genPreview error:',e);
@@ -11069,9 +11066,8 @@
   function socialIsMobile(){
     return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
-  function socialShareFiles(files,msg){
-    var hasMt=msg&&msg.indexOf('bestellen')>=0;
-    console.log('[Social] share: '+files.length+' files, hasMt='+hasMt);
+  function socialShareFiles(files,msg,hasMt){
+    console.log('[Social] share: '+files.length+' files, hasMt='+hasMt+', msg='+(msg?msg.substring(0,50):'null'));
     // Use navigator.share() with files only
     if(navigator.share&&navigator.canShare){
       var shareFiles=files;
@@ -11089,7 +11085,7 @@
         }).catch(function(err){
           console.warn('[Social] share error:',err.name,err.message);
           if(err.name!=='AbortError'){
-            socialFallbackDownloadFiles(files,msg);
+            socialFallbackDownloadFiles(files,msg,hasMt);
           }
         });
         socialStatus('soc-post-status','Poster wird geteilt...',true);
@@ -11099,14 +11095,14 @@
     }
     // Fallback if navigator.share not available
     console.log('[Social] using fallback download');
-    socialFallbackDownloadFiles(files,msg);
+    socialFallbackDownloadFiles(files,msg,hasMt);
   }
   function socialSendOrderText(msg){
     var waUrl=socialIsMobile()?'https://wa.me/?text='+encodeURIComponent(msg):'https://web.whatsapp.com/send?text='+encodeURIComponent(msg);
     socialStatus('soc-post-status','\uD83D\uDCE9 Bestelltext wird ge\u00f6ffnet...',true);
     setTimeout(function(){window.open(waUrl,'_blank');},1000);
   }
-  function socialFallbackDownloadFiles(files,msg){
+  function socialFallbackDownloadFiles(files,msg,hasMt){
     files.forEach(function(f){
       var url=URL.createObjectURL(f);
       var a=document.createElement('a');a.href=url;a.download=f.name;
@@ -11114,9 +11110,8 @@
       setTimeout(function(){URL.revokeObjectURL(url);},2000);
     });
     socialStatus('soc-post-status','\u2705 '+files.length+' Poster heruntergeladen',true);
-    if(msg){
-      var waUrl=socialIsMobile()?'https://wa.me/?text='+encodeURIComponent(msg):'https://web.whatsapp.com/send?text='+encodeURIComponent(msg);
-      setTimeout(function(){window.open(waUrl,'_blank');},800);
+    if(hasMt&&msg){
+      socialSendOrderText(msg);
     }
   }
 
