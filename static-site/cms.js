@@ -9550,22 +9550,20 @@
         // Display row
         html+='<tr id="soc-row-'+pid+'" class="soc-kat-item" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
         html+='<td style="padding:8px;width:50px">';
-        html+='<label style="cursor:pointer;display:block" title="Klicken um Bild zu \u00e4ndern">';
         if(p.bild_url){
           html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" onerror="this.style.display=\'none\'">';
         } else {
-          html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">&#128247;</div>';
+          html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#9ca3af">&#128247;</div>';
         }
-        html+='<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none">';
-        html+='</label>';
         html+='</td>';
         html+='<td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
         html+='<td style="padding:8px;text-align:right;white-space:nowrap">';
         if(p.preis){var lp=parseFloat(p.preis);html+='<span style="font-weight:700;color:#2e7d32">'+(lp&&isFinite(lp)?lp.toFixed(2):esc(p.preis))+' &#8364;</span>';}
         html+='</td>';
-        html+='<td style="padding:8px;width:80px;text-align:right;white-space:nowrap">';
-        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;font-size:11px;margin-right:4px">&#9998;</button>';
-        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="Entfernen" style="color:#dc2626;padding:4px 8px;font-size:11px">&#10005;</button>';
+        html+='<td style="padding:8px;width:110px;text-align:right;white-space:nowrap">';
+        html+='<label class="cms-btn cms-btn-gray cms-btn-sm" title="Bild \u00e4ndern" style="padding:4px 8px;font-size:14px;margin-right:3px;cursor:pointer;display:inline-flex;align-items:center">&#128247;<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;font-size:14px;margin-right:3px">&#9998;</button>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="L\u00f6schen" style="color:#dc2626;padding:4px 8px;font-size:14px">&#10005;</button>';
         html+='</td></tr>';
         // Edit row (hidden)
         html+='<tr id="soc-edit-'+pid+'" class="soc-kat-edit-tr" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b">';
@@ -9965,7 +9963,7 @@
       reader.readAsDataURL(bildInp.files[0]);
     } else { finish(); }
   };
-  // --- Replace image for a catalog product (shared helper) ---
+  // --- Replace image for a catalog product TEMPORARILY (only for this post, not saved to API) ---
   function socialPickImgUpload(prodId, b64){
     // Update thumbnail immediately
     var thumb=document.getElementById('soc-pick-img-'+prodId);
@@ -9980,24 +9978,11 @@
         thumb.parentNode.replaceChild(img,thumb);
       }
     }
-    // Update local catalog data
+    // Update local catalog data (temporary - only for poster generation)
     var item=_socialKatalog.find(function(p){return p.id===prodId;});
     if(item) item.bild_url=b64;
-    // Upload to API
-    fetch(API+'/social-katalog',{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({id:prodId,bild_base64:b64})
-    }).then(function(r){return r.json();}).then(function(res){
-      if(res.error){
-        socialStatus('soc-post-status','Bild-Upload fehlgeschlagen: '+res.error,false);
-      } else {
-        socialStatus('soc-post-status','Bild aktualisiert!',true);
-        if(res.item&&res.item.bild_url&&item) item.bild_url=res.item.bild_url;
-      }
-    }).catch(function(err){
-      socialStatus('soc-post-status','Bild-Upload Fehler: '+err.message,false);
-    });
+    socialStatus('soc-post-status','Bild tempor\u00e4r ge\u00e4ndert (nur f\u00fcr diesen Post)',true);
+    socialGenPreview();
   }
   // File input change handler
   window.socialPickImgChange = function(prodId, inp){
