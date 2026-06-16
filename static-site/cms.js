@@ -10761,30 +10761,30 @@
     var hasMittagessen=!!cats['Mittagessen'];
     var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
 
-    // Mittagessen-only: order links with quantity and pickup time
+    // Mittagessen-only: compact list (no wa.me links)
     if(onlyMittagessen){
-      var msg='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
+      var msg='\uD83C\uDF5D *Mittagessen*\n\n';
       var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var bestellText='Bestelle 1x '+p.name;
-        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
+        msg+=nr+' '+p.name+prStr+'\n';
       });
+      msg+='\n\uD83D\uDCDE Bestellen: 0171 4910935';
       return msg.trim();
     }
 
-    // For clipboard: only Mittagessen order info (no overhead)
+    // For clipboard: only Mittagessen info (compact, no links)
     var msg='';
     if(hasMittagessen){
       var menuNr2=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
-      msg+='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
+      msg+='\uD83C\uDF5D *Mittagessen*\n\n';
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr2[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var bestellText='Bestelle 1x '+p.name;
-        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
+        msg+=nr+' '+p.name+prStr+'\n';
       });
+      msg+='\n\uD83D\uDCDE Bestellen: 0171 4910935';
     }
     return msg.trim();
   }
