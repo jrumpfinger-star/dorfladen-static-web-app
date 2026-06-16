@@ -10231,7 +10231,11 @@
     });
 
     return Promise.all(promises).then(function(){
-      // Hide separate meal poster - everything goes on ONE poster
+      var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+      var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+      var hasMt=mtItems.length>0;
+      var hasOther=otherItems.length>0;
+
       var mealCanvas=document.getElementById('soc-post-canvas-meal');
       var mealLabel=document.getElementById('soc-preview-label-meal');
       var dailyLabel=document.getElementById('soc-preview-label-daily');
@@ -10239,8 +10243,27 @@
       if(mealLabel) mealLabel.style.display='none';
       if(dailyLabel) dailyLabel.style.display='none';
 
-      // Draw ALL items on one poster
-      if(selected.length>0){
+      if(hasMt&&hasOther){
+        // COMBINED POSTER: daily overview on top + meal poster below
+        var tmpDaily=document.createElement('canvas');
+        var tmpDailyCtx=tmpDaily.getContext('2d');
+        socialDrawPoster(tmpDaily,tmpDailyCtx,W,otherItems,titel,freitext,loadedImgs);
+        var tmpMeal=document.createElement('canvas');
+        var tmpMealCtx=tmpMeal.getContext('2d');
+        socialDrawMealPosterAuto(tmpMeal,tmpMealCtx,W,mtItems,loadedImgs);
+        // Combine vertically onto main canvas
+        var totalH=tmpDaily.height+tmpMeal.height;
+        canvas.width=W;
+        canvas.height=totalH;
+        ctx.drawImage(tmpDaily,0,0);
+        ctx.drawImage(tmpMeal,0,tmpDaily.height);
+        canvas.style.display='block';
+      } else if(hasMt){
+        // Only Mittagessen - use meal poster directly
+        canvas.style.display='block';
+        socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs);
+      } else if(selected.length>0){
+        // No Mittagessen - normal poster
         canvas.style.display='block';
         socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
       } else {
@@ -11055,24 +11078,34 @@
         shareFiles=[files[0]];
       }
       if(navigator.canShare({files:shareFiles})){
+        var orderTextSent=false;
         navigator.share({files:shareFiles}).then(function(){
           socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
-          // After poster is shared, send order text as second message
-          if(hasMt&&msg){
+          if(hasMt&&msg&&!orderTextSent){
+            orderTextSent=true;
             socialSendOrderText(msg);
           }
         }).catch(function(err){
           console.warn('[Social] share error:',err.name,err.message);
-          if(err.name==='AbortError'){
-            // User closed dialog - poster was likely sent, still send order text
-            if(hasMt&&msg){
-              socialSendOrderText(msg);
-            }
-          } else {
+          if(hasMt&&msg&&!orderTextSent){
+            orderTextSent=true;
+            socialSendOrderText(msg);
+          }
+          if(err.name!=='AbortError'){
             socialFallbackDownloadFiles(files,msg,hasMt);
           }
         });
         socialStatus('soc-post-status','Poster wird geteilt...',true);
+        // Fallback: if promise never resolves, send order text after 15 seconds
+        if(hasMt&&msg){
+          setTimeout(function(){
+            if(!orderTextSent){
+              orderTextSent=true;
+              console.log('[Social] share promise timeout, sending order text');
+              socialSendOrderText(msg);
+            }
+          },15000);
+        }
         return;
       }
       console.log('[Social] canShare rejected even single file');
