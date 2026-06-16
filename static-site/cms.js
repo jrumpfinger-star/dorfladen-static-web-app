@@ -10231,41 +10231,20 @@
     });
 
     return Promise.all(promises).then(function(){
-      var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
-      var hasMt=mtItems.length>0;
-
-      // Meal poster canvas (shown only when Mittagessen selected)
+      // Hide separate meal poster - everything goes on ONE poster
       var mealCanvas=document.getElementById('soc-post-canvas-meal');
       var mealLabel=document.getElementById('soc-preview-label-meal');
       var dailyLabel=document.getElementById('soc-preview-label-daily');
+      if(mealCanvas) mealCanvas.style.display='none';
+      if(mealLabel) mealLabel.style.display='none';
+      if(dailyLabel) dailyLabel.style.display='none';
 
-      if(hasMt&&mealCanvas){
-        mealCanvas.style.display='block';
-        if(mealLabel) mealLabel.style.display='block';
-        var mCtx=mealCanvas.getContext('2d');
-        socialDrawMealPosterAuto(mealCanvas,mCtx,W,mtItems,loadedImgs);
-      } else if(mealCanvas){
-        mealCanvas.style.display='none';
-        if(mealLabel) mealLabel.style.display='none';
-        if(dailyLabel) dailyLabel.style.display='none';
-      }
-
-      // Daily overview poster: only if there are non-Mittagessen items
-      var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
-      if(otherItems.length>0){
+      // Draw ALL items on one poster
+      if(selected.length>0){
         canvas.style.display='block';
-        if(dailyLabel) dailyLabel.style.display=hasMt?'block':'none';
-        // When Mittagessen has its own poster, show only other items in daily overview
-        socialDrawPoster(canvas,ctx,W,hasMt?otherItems:selected,titel,freitext,loadedImgs);
-      } else if(!hasMt&&selected.length>0){
-        // No Mittagessen, no other items categorized differently - show all
-        canvas.style.display='block';
-        if(dailyLabel) dailyLabel.style.display='none';
         socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
       } else {
-        // Only Mittagessen or nothing: hide daily overview
         canvas.style.display='none';
-        if(dailyLabel) dailyLabel.style.display='none';
       }
 
       // Store loaded images for share function to reuse
@@ -11084,7 +11063,12 @@
           }
         }).catch(function(err){
           console.warn('[Social] share error:',err.name,err.message);
-          if(err.name!=='AbortError'){
+          if(err.name==='AbortError'){
+            // User closed dialog - poster was likely sent, still send order text
+            if(hasMt&&msg){
+              socialSendOrderText(msg);
+            }
+          } else {
             socialFallbackDownloadFiles(files,msg,hasMt);
           }
         });
