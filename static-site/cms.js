@@ -9550,11 +9550,14 @@
         // Display row
         html+='<tr id="soc-row-'+pid+'" class="soc-kat-item" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
         html+='<td style="padding:8px;width:50px">';
+        html+='<label style="cursor:pointer;display:block" title="Klicken um Bild zu \u00e4ndern">';
         if(p.bild_url){
-          html+='<img src="'+esc(p.bild_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" onerror="this.style.display=\'none\'">';
+          html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" onerror="this.style.display=\'none\'">';
         } else {
-          html+='<div style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">&#128247;</div>';
+          html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">&#128247;</div>';
         }
+        html+='<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none">';
+        html+='</label>';
         html+='</td>';
         html+='<td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
         html+='<td style="padding:8px;text-align:right;white-space:nowrap">';
@@ -9684,6 +9687,44 @@
         socialLoadKatalog();
       })
       .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+  };
+
+  // --- Katalog Bild ändern per Klick auf Thumbnail ---
+  window.socialKatImgChange = function(id, inp){
+    if(!inp||!inp.files||!inp.files[0]) return;
+    var file=inp.files[0];
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var b64=e.target.result;
+      // Update thumbnail immediately
+      var thumb=document.getElementById('soc-kat-thumb-'+id);
+      if(thumb){
+        if(thumb.tagName==='IMG'){
+          thumb.src=b64;
+        } else {
+          var img=document.createElement('img');
+          img.id='soc-kat-thumb-'+id;
+          img.src=b64;
+          img.style.cssText='width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb';
+          thumb.parentNode.replaceChild(img,thumb);
+        }
+      }
+      // Upload to API
+      socialStatus('soc-kat-status','Bild wird hochgeladen...',true);
+      fetch(API+'/social-katalog',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:id,bild_base64:b64})
+      }).then(function(r){return r.json();}).then(function(res){
+        if(res.error){socialStatus('soc-kat-status','Bild-Upload fehlgeschlagen: '+res.error,false);return;}
+        socialStatus('soc-kat-status','Bild aktualisiert!',true);
+        var item=_socialKatalog.find(function(p){return p.id===id;});
+        if(item) item.bild_url=res.item&&res.item.bild_url?res.item.bild_url:b64;
+      }).catch(function(err){
+        socialStatus('soc-kat-status','Bild-Upload Fehler: '+err.message,false);
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   // --- Post-Builder: Checkboxen aus Katalog + Wochenplan-Mittagessen ---
