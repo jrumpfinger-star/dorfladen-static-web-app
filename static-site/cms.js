@@ -10326,7 +10326,7 @@
   }
 
   function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs){
-    var hasAnyImg=Object.keys(loadedImgs).length>0;
+    var hasAnyImg=Object.keys(loadedImgs).filter(function(k){return k!=='_tainted';}).length>0;
     var IMG_SIZE=hasAnyImg?48:0;
     var ITEM_H=hasAnyImg?Math.max(54,22):22;
 
@@ -10355,8 +10355,8 @@
         contentH+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;
       });
     });
-    contentH+=50; // footer
-    var H=Math.max(300,contentH);
+    contentH+=20; // footer
+    var H=Math.max(160,contentH);
     canvas.width=W; canvas.height=H;
 
     // Background
@@ -10774,21 +10774,8 @@
       return msg.trim();
     }
 
-    // Full message for mixed categories
-    var msg='*'+titel+'*\n';
-    var now=new Date();
-    var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-    msg+=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear()+'\n\n';
-    if(freitext) msg+=freitext+'\n\n';
-    Object.keys(cats).forEach(function(cat){
-      msg+='*'+cat+'*\n';
-      cats[cat].forEach(function(p){
-        msg+='\u2022 '+p.name;
-        var mp=parseFloat(p.preis);if(p.preis) msg+=' - '+(mp&&isFinite(mp)?mp.toFixed(2):p.preis)+'\u20AC';
-        msg+='\n';
-      });
-      msg+='\n';
-    });
+    // For clipboard: only Mittagessen order info (no overhead)
+    var msg='';
     if(hasMittagessen){
       var menuNr2=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
       msg+='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
@@ -10799,8 +10786,7 @@
         msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
       });
     }
-    msg+='\uD83D\uDED2 *Dorfladen Oberornau*\nDorfplatz 1, 84419 Obertaufkirchen';
-    return msg;
+    return msg.trim();
   }
 
   // --- WhatsApp Business Katalog Sync ---
