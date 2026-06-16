@@ -10461,71 +10461,35 @@
 
   // --- Auto Meal Poster (replaces normal poster when Mittagessen is selected) ---
   function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs){
-    var H=460;
-    canvas.width=W;canvas.height=H;
-
-    // Find first available image
-    var foodImg=null;
-    for(var mi=0;mi<mtItems.length;mi++){
-      if(loadedImgs[mtItems[mi].id]){foodImg=loadedImgs[mtItems[mi].id];break;}
-    }
+    // Pre-calculate height
+    var tmpC=document.createElement('canvas');tmpC.width=W;tmpC.height=10;
+    var tmpX=tmpC.getContext('2d');
+    var calcH=24+28+32+30; // claim + title + day + gap
+    tmpX.font='14px "Segoe UI",system-ui,sans-serif';
+    mtItems.forEach(function(meal){
+      calcH+=22; // menu badge
+      var nl=socialWrapText(tmpX,meal.name,W-60);
+      calcH+=nl.length*18;
+      calcH+=meal.preis?20:8;
+      calcH+=6;
+    });
+    calcH+=10; // bottom padding
+    canvas.width=W;canvas.height=calcH;
+    ctx=canvas.getContext('2d');
 
     // Background
     ctx.fillStyle='#faf5ef';
-    ctx.fillRect(0,0,W,H);
-
-    // Image area (top portion)
-    var imgAreaH=240;
-    if(foodImg){
-      var iw=foodImg.width,ih=foodImg.height;
-      var scale=Math.max(W/iw,imgAreaH/ih);
-      var dw=iw*scale,dh=ih*scale;
-      var dx=(W-dw)/2,dy=(imgAreaH-dh)/2;
-      ctx.save();
-      ctx.beginPath();ctx.rect(0,0,W,imgAreaH);ctx.clip();
-      ctx.drawImage(foodImg,dx,dy,dw,dh);
-      var grad=ctx.createLinearGradient(0,imgAreaH-80,0,imgAreaH);
-      grad.addColorStop(0,'rgba(250,245,239,0)');
-      grad.addColorStop(1,'rgba(250,245,239,1)');
-      ctx.fillStyle=grad;
-      ctx.fillRect(0,imgAreaH-80,W,80);
-      ctx.restore();
-    } else {
-      ctx.fillStyle='#e8dfd3';
-      ctx.fillRect(0,0,W,imgAreaH);
-      ctx.fillStyle='#c9b99a';
-      ctx.font='48px "Segoe UI",system-ui,sans-serif';
-      ctx.textAlign='center';
-      ctx.fillText('\uD83C\uDF7D',W/2,imgAreaH/2+16);
-    }
-
-    // Logo badge top-right
-    ctx.fillStyle='rgba(255,255,255,0.92)';
-    var logoW=170,logoH=44,logoX=W-logoW-10,logoY=10;
-    ctx.beginPath();
-    ctx.moveTo(logoX+8,logoY);ctx.lineTo(logoX+logoW-8,logoY);
-    ctx.quadraticCurveTo(logoX+logoW,logoY,logoX+logoW,logoY+8);
-    ctx.lineTo(logoX+logoW,logoY+logoH-8);
-    ctx.quadraticCurveTo(logoX+logoW,logoY+logoH,logoX+logoW-8,logoY+logoH);
-    ctx.lineTo(logoX+8,logoY+logoH);
-    ctx.quadraticCurveTo(logoX,logoY+logoH,logoX,logoY+logoH-8);
-    ctx.lineTo(logoX,logoY+8);
-    ctx.quadraticCurveTo(logoX,logoY,logoX+8,logoY);
-    ctx.closePath();ctx.fill();
-    ctx.fillStyle='#2e7d32';
-    ctx.font='bold 12px "Segoe UI",system-ui,sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('DORFLADEN',logoX+logoW/2,logoY+18);
-    ctx.fillText('OBERORNAU',logoX+logoW/2,logoY+34);
+    ctx.fillRect(0,0,W,calcH);
 
     // Claim
+    var ty=24;
+    ctx.textAlign='center';
     ctx.fillStyle='#6b8c42';
     ctx.font='10px "Segoe UI",system-ui,sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,imgAreaH+14);
+    ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,ty);
 
     // "Mittagessen" title
-    var ty=imgAreaH+42;
+    ty+=28;
     ctx.fillStyle='#5b7a3a';
     ctx.font='italic bold 30px Georgia,"Times New Roman",serif';
     ctx.fillText('Mittagessen',W/2,ty);
