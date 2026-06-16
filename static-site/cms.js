@@ -4044,7 +4044,9 @@
     var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(url);},2000);
     toast('Bild heruntergeladen \u2013 WhatsApp \u00f6ffnet sich...','ok');
-    setTimeout(function(){window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');},800);
+    var isMob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var waUrl=isMob?'https://wa.me/?text='+encodeURIComponent(msg):'https://web.whatsapp.com/send?text='+encodeURIComponent(msg);
+    setTimeout(function(){window.open(waUrl,'_blank');},800);
   }
 
   function showSharePreview(blob,filename,opts){
@@ -11072,7 +11074,8 @@
     setTimeout(function(){URL.revokeObjectURL(url);},2000);
     socialStatus('soc-post-status','\u2705 Poster heruntergeladen',true);
     if(msg){
-      setTimeout(function(){window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');},800);
+      var waUrl=socialIsMobile()?'https://wa.me/?text='+encodeURIComponent(msg):'https://web.whatsapp.com/send?text='+encodeURIComponent(msg);
+      setTimeout(function(){window.open(waUrl,'_blank');},800);
     }
   }
 
