@@ -10974,31 +10974,34 @@
     var msg=socialBuildWhatsAppMsg(selected,titel,freitext);
     var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
 
-    socialStatus('soc-post-status','Poster wird erstellt...',true);
-    var genPromise=socialGenPreview()||Promise.resolve();
-    genPromise.then(function(){
-      // Collect all visible poster canvases: daily overview first, then meal poster
-      var dailyCanvas=document.getElementById('soc-post-canvas');
-      var mealCanvas=document.getElementById('soc-post-canvas-meal');
-      var canvases=[];
-      if(dailyCanvas&&dailyCanvas.style.display!=='none'&&dailyCanvas.width>0){
-        canvases.push({canvas:dailyCanvas,name:'dorfladen-post.png'});
-      }
-      if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0){
-        canvases.push({canvas:mealCanvas,name:'mittagessen-poster.png'});
-      }
-      if(!canvases.length){
-        socialStatus('soc-post-status','Kein sichtbares Poster','error');
-        socialFallbackWaShare(null,msg);
-        return;
-      }
-      // Convert canvases to blobs; if tainted, redraw clean poster without cross-origin images
-      var isTainted=window._socLoadedImgs&&window._socLoadedImgs['_tainted'];
-      // Helper: build a clean (untainted) export canvas
-      function socialBuildCleanExport(){
+    socialStatus('soc-post-status','Poster wird geteilt...',true);
+    // Use already rendered canvas – convert synchronously to keep user gesture for navigator.share
+    var dailyCanvas=document.getElementById('soc-post-canvas');
+    var mealCanvas=document.getElementById('soc-post-canvas-meal');
+    var canvases=[];
+    if(dailyCanvas&&dailyCanvas.style.display!=='none'&&dailyCanvas.width>0){
+      canvases.push({canvas:dailyCanvas,name:'dorfladen-post.png'});
+    }
+    if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0){
+      canvases.push({canvas:mealCanvas,name:'mittagessen-poster.png'});
+    }
+    if(!canvases.length){
+      socialStatus('soc-post-status','Bitte zuerst Vorschau aktualisieren',false);
+      return;
+    }
+    // Convert canvas to blob synchronously via toDataURL→fetch
+    var isTainted=window._socLoadedImgs&&window._socLoadedImgs['_tainted'];
+    var files=[];
+    canvases.forEach(function(c){
+      var dataUrl;
+      try{
+        dataUrl=c.canvas.toDataURL('image/png');
+      }catch(e){
+        console.warn('[Social] toDataURL tainted, redrawing clean');
+        // Redraw clean poster without cross-origin images
         var cleanImgs={};
-        var cleanCanvas=document.createElement('canvas');
-        var cleanCtx=cleanCanvas.getContext('2d');
+        var cc=document.createElement('canvas');
+        var cx=cc.getContext('2d');
         var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});
         var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
         if(mtI.length>0&&otherI.length>0){
@@ -11006,58 +11009,31 @@
           socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,cleanImgs);
           var tM=document.createElement('canvas');
           socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,cleanImgs);
-          cleanCanvas.width=540;cleanCanvas.height=tD.height+tM.height;
-          cleanCtx.drawImage(tD,0,0);cleanCtx.drawImage(tM,0,tD.height);
+          cc.width=540;cc.height=tD.height+tM.height;
+          cx.drawImage(tD,0,0);cx.drawImage(tM,0,tD.height);
         } else if(mtI.length>0){
-          socialDrawMealPosterAuto(cleanCanvas,cleanCtx,540,mtI,cleanImgs);
+          socialDrawMealPosterAuto(cc,cx,540,mtI,cleanImgs);
         } else {
-          socialDrawPoster(cleanCanvas,cleanCtx,540,otherI,titel,freitext,cleanImgs);
+          socialDrawPoster(cc,cx,540,otherI,titel,freitext,cleanImgs);
         }
-        return cleanCanvas;
+        dataUrl=cc.toDataURL('image/png');
       }
-      // If tainted, use clean canvas directly
-      if(isTainted){
-        console.log('[Social] canvas tainted, using clean export without images');
-        var cleanC=socialBuildCleanExport();
-        cleanC.toBlob(function(blob){
-          if(!blob){socialFallbackWaShare(null,msg);return;}
-          var files=[new File([blob],'dorfladen-post.png',{type:'image/png'})];
-          socialShareFiles(files,msg,hasMt);
-        },'image/png');
-        return;
+      if(dataUrl){
+        // Convert data URL to blob synchronously
+        var parts=dataUrl.split(',');
+        var mime=parts[0].match(/:(.*?);/)[1];
+        var bstr=atob(parts[1]);
+        var u8=new Uint8Array(bstr.length);
+        for(var i=0;i<bstr.length;i++) u8[i]=bstr.charCodeAt(i);
+        var blob=new Blob([u8],{type:mime});
+        files.push(new File([blob],c.name,{type:'image/png'}));
       }
-      var blobPromises=canvases.map(function(c){
-        return new Promise(function(resolve){
-          try{
-            c.canvas.toBlob(function(blob){
-              if(!blob){
-                // toBlob returned null (tainted on some mobile browsers)
-                console.warn('[Social] toBlob returned null, using clean canvas');
-                var cc=socialBuildCleanExport();
-                cc.toBlob(function(b){resolve({blob:b,name:c.name});},'image/png');
-              } else {
-                resolve({blob:blob,name:c.name});
-              }
-            },'image/png');
-          }catch(e){
-            console.warn('[Social] canvas tainted (exception), using clean canvas');
-            var cc=socialBuildCleanExport();
-            cc.toBlob(function(b){resolve({blob:b,name:c.name});},'image/png');
-          }
-        });
-      });
-      Promise.all(blobPromises).then(function(results){
-        var files=results.filter(function(r){return r.blob;}).map(function(r){
-          return new File([r.blob],r.name,{type:'image/png'});
-        });
-        if(!files.length){socialFallbackWaShare(null,msg);return;}
-        socialShareFiles(files,msg,hasMt);
-      });
-    }).catch(function(e){
-      console.error('[Social] genPreview error:',e);
-      socialStatus('soc-post-status','Poster-Fehler: '+e.message,false);
-      socialFallbackWaShare(null,msg);
     });
+    if(!files.length){
+      socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);
+      return;
+    }
+    socialShareFiles(files,msg,hasMt);
     socialSavePost(titel,freitext,selected);
     }catch(e){
       console.error('[Social] WhatsApp share error:',e);
