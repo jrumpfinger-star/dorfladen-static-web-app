@@ -11048,44 +11048,32 @@
   }
   function socialShareBlob(blob,filename,msg){
     var file=new File([blob],filename,{type:blob.type||'image/png'});
-    // Mobile: use navigator.share() (works fine on mobile)
-    if(socialIsMobile()&&navigator.share){
+    // Use navigator.share() with single file + text (works on mobile + desktop)
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
       var shareData={files:[file]};
       if(msg) shareData.text=msg;
       navigator.share(shareData).then(function(){
         socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
       }).catch(function(err){
+        console.warn('[Social] share error:',err.name,err.message);
         if(err.name!=='AbortError'){
-          console.warn('[Social] mobile share failed:',err);
-          socialDesktopShare(blob,filename,msg);
+          socialFallbackDownload(blob,filename,msg);
         }
       });
       return;
     }
-    // Desktop: clipboard + download + WhatsApp Web
-    socialDesktopShare(blob,filename,msg);
+    // Fallback if navigator.share not available
+    socialFallbackDownload(blob,filename,msg);
   }
-  function socialDesktopShare(blob,filename,msg){
-    // Step 1: Copy TEXT to clipboard (for Ctrl+V in WhatsApp)
-    if(msg){
-      try{
-        if(navigator.clipboard&&navigator.clipboard.writeText){
-          navigator.clipboard.writeText(msg).catch(function(){
-            socialCopyFallback(msg);
-          });
-        } else {
-          socialCopyFallback(msg);
-        }
-      }catch(e){socialCopyFallback(msg);}
-    }
-    // Step 2: Download image
+  function socialFallbackDownload(blob,filename,msg){
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');a.href=url;a.download=filename;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(url);},2000);
-    // Step 3: Status + open WhatsApp Web
-    socialStatus('soc-post-status','\u2705 Poster heruntergeladen & Bestelltext kopiert! In WhatsApp: Bild anh\u00e4ngen + Strg+V f\u00fcr Text',true);
-    setTimeout(function(){window.open('https://web.whatsapp.com','_blank');},800);
+    socialStatus('soc-post-status','\u2705 Poster heruntergeladen',true);
+    if(msg){
+      setTimeout(function(){window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');},800);
+    }
   }
 
   // Download poster files as fallback
@@ -11118,9 +11106,6 @@
         }
       },'image/png');
     }
-    setTimeout(function(){
-      window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');
-    },800);
   }
 
   // --- Instagram Share ---
