@@ -11091,6 +11091,8 @@
       try{canShareFiles=navigator.canShare({files:files});}catch(e){}
     }
     console.log('[Social] canShareFiles='+canShareFiles);
+    // Always copy order text to clipboard (for desktop Ctrl+V as 2nd message)
+    if(hasMt&&msg) socialCopyMsg(msg);
     // Best case: share with files
     if(canShareFiles){
       var shareData={files:files.length>1?[files[0]]:files};
