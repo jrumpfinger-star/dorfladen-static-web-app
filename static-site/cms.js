@@ -9780,9 +9780,12 @@
     html+='<select id="soc-free-kat" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
     html+='<option value="Mittagessen">&#127869; Mittagessen</option><option value="Kuchen">&#127856; Kuchen</option><option value="Obst & Gemuese">&#129382; Obst & Gem\u00fcse</option><option value="Aufstriche">&#129367; Aufstriche</option><option value="Sonstiges">Sonstiges</option>';
     html+='</select></div>';
+    html+='<div style="width:56px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">ab</label>';
+    html+='<select id="soc-free-ab" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
+    html+='<option value="">ab</option><option value="10:00">10:00</option><option value="12:00">12:00</option></select></div>';
     html+='</div>';
     html+='<div style="display:flex;gap:6px;align-items:center;margin-top:6px">';
-    html+='<label style="cursor:pointer;padding:4px 10px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;color:#374151">&#128247; Bild <input type="file" id="soc-free-bild" accept="image/*" onchange="socialFreeImgPreview()" style="display:none"></label>';
+    html+='<label style="cursor:pointer;padding:4px 10px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;color:#374151">&#128247; Bild <input type="file" id="soc-free-bild" accept="image/*" capture="environment" onchange="socialFreeImgPreview()" style="display:none"></label>';
     html+='<button onclick="socialFreePaste(this)" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="padding:4px 8px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;cursor:pointer;color:#374151">&#128203; Einf\u00fcgen</button>';
     html+='<span id="soc-free-img-name" style="font-size:10px;color:#9ca3af;flex:1"></span>';
     html+='<button onclick="socialFreeAdd()" class="cms-btn cms-btn-sm" style="background:#2563eb;color:#fff;padding:5px 14px;font-size:12px;font-weight:700">&#10003; Hinzuf\u00fcgen</button>';
@@ -9840,7 +9843,7 @@
       if(fi.bild_data){
         h+='<img src="'+fi.bild_data+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0">';
       }
-      h+='<span style="font-weight:600;font-size:12px;flex:1">'+esc(fi.name)+'</span>';
+      h+='<span style="font-weight:600;font-size:12px;flex:1">'+esc(fi.name)+(fi.ab_uhr?' <span style="font-size:10px;color:#9ca3af;font-style:italic">ab '+esc(fi.ab_uhr)+'</span>':'')+'</span>';
       if(fi.preis) h+='<span style="font-size:11px;color:#2e7d32;font-weight:700">'+esc(fi.preis)+'\u20AC</span>';
       h+='<span style="font-size:10px;color:#6b7280;background:#e0e7ff;padding:1px 6px;border-radius:8px">'+esc(fi.kategorie)+'</span>';
       h+='<button onclick="socialFreeRemove(\''+esc(fi.id)+'\')" style="border:none;background:none;color:#dc2626;cursor:pointer;font-size:14px;padding:0 4px" title="Entfernen">&#10005;</button>';
@@ -9893,13 +9896,15 @@
     if(!name){socialStatus('soc-post-status','Bitte Name eingeben',false);return;}
     var bildInp=document.getElementById('soc-free-bild');
     var preisNum=parseFloat(preis.replace(',','.'));
-    var fi={id:'free-'+(++_socFreeCounter),name:name,preis:preisNum&&isFinite(preisNum)?preisNum.toFixed(2):'',kategorie:kat,bild_data:''};
+    var abUhr=(document.getElementById('soc-free-ab')||{}).value||'';
+    var fi={id:'free-'+(++_socFreeCounter),name:name,preis:preisNum&&isFinite(preisNum)?preisNum.toFixed(2):'',kategorie:kat,bild_data:'',ab_uhr:abUhr};
     function finish(){
       _socFreeItems.push(fi);
       var list=document.getElementById('soc-free-list');
       if(list) list.innerHTML=socialRenderFreeItems();
       document.getElementById('soc-free-name').value='';
       document.getElementById('soc-free-preis').value='';
+      var abSel2=document.getElementById('soc-free-ab');if(abSel2) abSel2.value='';
       if(bildInp) bildInp.value='';
       var lbl=document.getElementById('soc-free-img-name');if(lbl) lbl.textContent='';
       window._socFreePastedData='';
@@ -10145,7 +10150,9 @@
     });
     // Free items (always included)
     _socFreeItems.forEach(function(fi){
-      selected.push({id:fi.id,name:fi.name,preis:fi.preis,kategorie:fi.kategorie});
+      var o={id:fi.id,name:fi.name,preis:fi.preis,kategorie:fi.kategorie};
+      if(fi.ab_uhr) o.ab_uhr=fi.ab_uhr;
+      selected.push(o);
     });
     return selected;
   }
