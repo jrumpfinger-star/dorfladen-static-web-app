@@ -11094,8 +11094,13 @@
       return ok;
     }catch(e){return false;}
   }
+  function socialIsMobile(){
+    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
   function socialShareFilesWithText(files,msg){
-    // Step 1: Copy order text to clipboard if present
+    // On desktop: navigator.share() causes WhatsApp Desktop to hang – use clipboard+download instead
+    var isMobile=socialIsMobile();
+    // Step 1: Copy text to clipboard
     var clipboardOk=false;
     var clipboardPromise;
     if(msg){
@@ -11107,18 +11112,17 @@
       clipboardPromise=Promise.resolve();
     }
     clipboardPromise.then(function(){
-      // Step 2: Share files WITHOUT text (image only)
-      var hasShare=!!navigator.share;
-      if(hasShare&&files.length){
+      if(isMobile&&navigator.share&&files.length){
+        // Mobile: use Web Share API (works reliably on phones)
         var shareData={files:files};
+        if(msg) shareData.text=msg;
         var canShareFiles=false;
-        try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){
+        try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){
           console.warn('[Social] canShare check error:',e);
         }
-        var statusHint=clipboardOk?' \u2013 Bestelltext kopiert! In WhatsApp Strg+V dr\u00fccken':'';
         if(canShareFiles){
           var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
-          socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...'+statusHint,true);
+          socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
           navigator.share(shareData).then(function(){
             socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
           }).catch(function(err){
@@ -11126,23 +11130,43 @@
               socialStatus('soc-post-status','Teilen abgebrochen.',true);
             } else {
               console.error('[Social] share error:',err);
-              socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
-              socialDownloadFiles(files);
+              socialDesktopWaShare(files,msg,clipboardOk);
             }
           });
         } else {
-          console.warn('[Social] canShare=false, trying share anyway...');
-          navigator.share(shareData).then(function(){
-            socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-          }).catch(function(err){
-            console.error('[Social] share fallback error:',err);
-            socialStatus('soc-post-status','Poster werden heruntergeladen...'+statusHint,true);
-            socialDownloadFiles(files);
-          });
+          socialDesktopWaShare(files,msg,clipboardOk);
         }
       } else {
-        socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
-        socialDownloadFiles(files);
+        // Desktop: copy image to clipboard + download + open wa.me
+        socialDesktopWaShare(files,msg,clipboardOk);
+      }
+    });
+  }
+  function socialDesktopWaShare(files,msg,textCopied){
+    // Try to copy first image to clipboard
+    var imgCopyPromise=Promise.resolve(false);
+    if(files.length&&navigator.clipboard&&navigator.clipboard.write){
+      try{
+        var item=new ClipboardItem({'image/png':files[0]});
+        imgCopyPromise=navigator.clipboard.write([item]).then(function(){return true;}).catch(function(){return false;});
+      }catch(e){imgCopyPromise=Promise.resolve(false);}
+    }
+    imgCopyPromise.then(function(imgCopied){
+      // Download all poster files
+      socialDownloadFiles(files);
+      var hints=[];
+      if(imgCopied) hints.push('Poster in Zwischenablage');
+      if(textCopied) hints.push('Text in Zwischenablage');
+      if(hints.length){
+        socialStatus('soc-post-status','\u2705 '+hints.join(' + ')+' \u2013 In WhatsApp mit Strg+V einf\u00fcgen!',true);
+      } else {
+        socialStatus('soc-post-status','\u2705 Poster heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
+      }
+      // Open WhatsApp with text
+      if(msg){
+        setTimeout(function(){
+          window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+        },600);
       }
     });
   }
