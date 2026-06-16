@@ -10136,6 +10136,15 @@
     var ctx=canvas.getContext('2d');
     var W=540;
 
+    // Hide both canvases immediately to prevent stale content
+    canvas.style.display='none';
+    var _mealC=document.getElementById('soc-post-canvas-meal');
+    var _mealL=document.getElementById('soc-preview-label-meal');
+    var _dailyL=document.getElementById('soc-preview-label-daily');
+    if(_mealC) _mealC.style.display='none';
+    if(_mealL) _mealL.style.display='none';
+    if(_dailyL) _dailyL.style.display='none';
+
     // Gather selected items
     var selected=socialGatherSelected();
     var titel=(document.getElementById('soc-post-titel').value||'').trim();
@@ -10237,12 +10246,18 @@
 
       // Daily overview poster: only if there are non-Mittagessen items
       var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
-      if(otherItems.length>0||!hasMt){
+      if(otherItems.length>0){
         canvas.style.display='block';
         if(dailyLabel) dailyLabel.style.display=hasMt?'block':'none';
+        // When Mittagessen has its own poster, show only other items in daily overview
+        socialDrawPoster(canvas,ctx,W,hasMt?otherItems:selected,titel,freitext,loadedImgs);
+      } else if(!hasMt&&selected.length>0){
+        // No Mittagessen, no other items categorized differently - show all
+        canvas.style.display='block';
+        if(dailyLabel) dailyLabel.style.display='none';
         socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
       } else {
-        // Only Mittagessen: hide daily overview
+        // Only Mittagessen or nothing: hide daily overview
         canvas.style.display='none';
         if(dailyLabel) dailyLabel.style.display='none';
       }
@@ -10273,7 +10288,7 @@
     if(otherItems.length>0){
       var c2=document.createElement('canvas');
       var x2=c2.getContext('2d');
-      socialDrawPoster(c2,x2,W,selected,titel,freitext,loadedImgs);
+      socialDrawPoster(c2,x2,W,mtItems.length>0?otherItems:selected,titel,freitext,loadedImgs);
       results.push(new Promise(function(resolve){
         c2.toBlob(function(b){resolve({blob:b,name:'dorfladen-post.png'});}, 'image/png');
       }));
@@ -11236,13 +11251,14 @@
       ml.href=mealCanvas.toDataURL('image/png');
       ml.click();
     }
-    // Download daily overview poster
+    // Download daily overview poster (only if visible)
     var canvas=document.getElementById('soc-post-canvas');
-    if(!canvas)return;
-    var link=document.createElement('a');
-    link.download='dorfladen-post-'+dateStr+'.png';
-    link.href=canvas.toDataURL('image/png');
-    setTimeout(function(){link.click();},200);
+    if(canvas&&canvas.style.display!=='none'&&canvas.width>0){
+      var link=document.createElement('a');
+      link.download='dorfladen-post-'+dateStr+'.png';
+      link.href=canvas.toDataURL('image/png');
+      setTimeout(function(){link.click();},200);
+    }
   };
 
   // --- Save post to API ---
