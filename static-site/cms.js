@@ -11095,56 +11095,30 @@
     }catch(e){return false;}
   }
   function socialShareFilesWithText(files,msg){
-    // Step 1: Copy text to clipboard
-    var clipboardOk=false;
-    var clipboardPromise;
-    if(msg){
-      clipboardPromise=socialCopyToClipboard(msg).then(function(ok){
-        clipboardOk=!!ok;
-        if(clipboardOk) console.log('[Social] Text in Zwischenablage kopiert');
-      });
-    } else {
-      clipboardPromise=Promise.resolve();
-    }
-    clipboardPromise.then(function(){
-      // Step 2: Share files via Web Share API
-      var hasShare=!!navigator.share;
-      if(hasShare&&files.length){
-        var shareData={files:files};
-        var canShareFiles=false;
-        try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){
-          console.warn('[Social] canShare check error:',e);
-        }
-        var statusHint=clipboardOk?' \u2013 Bestelltext kopiert! In WhatsApp Strg+V dr\u00fccken':'';
-        if(canShareFiles){
-          var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
-          socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...'+statusHint,true);
-          navigator.share(shareData).then(function(){
-            socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!'+statusHint,true);
-          }).catch(function(err){
-            if(err.name==='AbortError'){
-              socialStatus('soc-post-status','Teilen abgebrochen.',true);
-            } else {
-              console.error('[Social] share error:',err);
-              socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
-              socialDownloadFiles(files);
-            }
-          });
+    // Share files + text together via Web Share API (text becomes image caption in WhatsApp)
+    if(navigator.share&&files.length){
+      var shareData={files:files};
+      if(msg) shareData.text=msg;
+      navigator.share(shareData).then(function(){
+        socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+      }).catch(function(err){
+        if(err.name==='AbortError'){
+          socialStatus('soc-post-status','Teilen abgebrochen.',true);
         } else {
-          console.warn('[Social] canShare=false, trying share anyway...');
-          navigator.share(shareData).then(function(){
-            socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!'+statusHint,true);
-          }).catch(function(err){
-            console.error('[Social] share fallback error:',err);
-            socialStatus('soc-post-status','Poster werden heruntergeladen...'+statusHint,true);
-            socialDownloadFiles(files);
-          });
+          console.warn('[Social] share failed:',err.name,err.message);
+          socialFallbackShareFiles(files,msg);
         }
-      } else {
-        socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
-        socialDownloadFiles(files);
-      }
-    });
+      });
+      return;
+    }
+    socialFallbackShareFiles(files,msg);
+  }
+  function socialFallbackShareFiles(files,msg){
+    socialDownloadFiles(files);
+    socialStatus('soc-post-status','\u2705 Poster heruntergeladen',true);
+    if(msg){
+      setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
+    }
   }
 
   // Download poster files as fallback
