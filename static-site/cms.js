@@ -11058,7 +11058,7 @@
     return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
   function socialShareFiles(files,msg){
-    // Copy text to clipboard first (for Ctrl+V in "Add a message")
+    // Copy text to clipboard (for optional manual caption via Ctrl+V)
     if(msg){
       try{
         if(navigator.clipboard&&navigator.clipboard.writeText){
@@ -11068,7 +11068,7 @@
         }
       }catch(e){socialCopyFallback(msg);}
     }
-    // Use navigator.share() with files (text via clipboard)
+    // Use navigator.share() with files only (no text to avoid separate message)
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:files})){
       navigator.share({files:files}).then(function(){
         socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
@@ -11078,7 +11078,9 @@
           socialFallbackDownloadFiles(files,msg);
         }
       });
-      socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 in WhatsApp mit Strg+V einf\u00fcgen',true);
+      if(msg){
+        socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage \u2013 optional als Bildunterschrift mit Strg+V',true);
+      }
       return;
     }
     // Fallback if navigator.share not available
