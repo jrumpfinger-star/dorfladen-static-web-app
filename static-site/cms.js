@@ -11085,34 +11085,69 @@
   }
   function socialShareFiles(files,msg,hasMt){
     console.log('[Social] share: '+files.length+' files, hasMt='+hasMt+', hasShare='+!!navigator.share);
-    // Use navigator.share() FIRST – it needs the user gesture!
-    if(navigator.share){
-      var shareFiles=files.length>1?[files[0]]:files;
-      console.log('[Social] calling navigator.share NOW (sync, user gesture intact)');
-      navigator.share({files:shareFiles}).then(function(){
+    // Check if navigator.share supports files
+    var canShareFiles=false;
+    if(navigator.share&&navigator.canShare){
+      try{canShareFiles=navigator.canShare({files:files});}catch(e){}
+    }
+    console.log('[Social] canShareFiles='+canShareFiles);
+    // Best case: share with files
+    if(canShareFiles){
+      navigator.share({files:files.length>1?[files[0]]:files}).then(function(){
         socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
-        // Copy order text AFTER share succeeded
         if(hasMt&&msg) socialCopyMsg(msg);
       }).catch(function(err){
-        console.warn('[Social] share error:',err.name,err.message);
-        if(err.name==='AbortError'){
-          // User cancelled – still copy text
-          if(hasMt&&msg) socialCopyMsg(msg);
-          return;
-        }
-        if(!socialIsMobile()){
-          socialFallbackDownloadFiles(files);
-        } else {
-          socialStatus('soc-post-status','Teilen fehlgeschlagen: '+err.message,false);
-        }
+        if(err.name==='AbortError'){if(hasMt&&msg) socialCopyMsg(msg);return;}
+        console.warn('[Social] share error:',err.message);
+        // Fallback to clipboard+WhatsApp
+        socialShareViaClipboard(files,msg,hasMt);
       });
       socialStatus('soc-post-status','Poster wird geteilt...',true);
       return;
     }
+    // Mobile fallback: copy poster to clipboard + open WhatsApp
+    if(socialIsMobile()){
+      socialShareViaClipboard(files,msg,hasMt);
+      return;
+    }
     // Desktop fallback: copy text + download files
-    console.log('[Social] navigator.share not available, using download fallback');
     if(hasMt&&msg) socialCopyMsg(msg);
     socialFallbackDownloadFiles(files);
+  }
+  function socialShareViaClipboard(files,msg,hasMt){
+    // Copy poster image to clipboard, then open WhatsApp
+    var blob=files[0];
+    var copied=false;
+    if(navigator.clipboard&&navigator.clipboard.write&&typeof ClipboardItem!=='undefined'){
+      try{
+        var item=new ClipboardItem({'image/png':blob});
+        navigator.clipboard.write([item]).then(function(){
+          copied=true;
+          socialStatus('soc-post-status','\u2705 Poster in Zwischenablage! In WhatsApp einf\u00fcgen mit langem Dr\u00fccken \u2192 Einf\u00fcgen',true);
+          if(hasMt&&msg){
+            // Also copy text after a short delay so user can paste image first
+            setTimeout(function(){socialCopyMsg(msg);},500);
+          }
+        }).catch(function(){
+          socialShareViaDownload(files,msg,hasMt);
+        });
+      }catch(e){
+        socialShareViaDownload(files,msg,hasMt);
+      }
+    } else {
+      socialShareViaDownload(files,msg,hasMt);
+    }
+    // Open WhatsApp
+    setTimeout(function(){
+      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+    },300);
+  }
+  function socialShareViaDownload(files,msg,hasMt){
+    socialFallbackDownloadFiles(files);
+    if(hasMt&&msg) socialCopyMsg(msg);
+    setTimeout(function(){
+      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+    },500);
   }
   function socialCopyMsg(msg){
     try{
