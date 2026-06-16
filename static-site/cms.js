@@ -10569,11 +10569,11 @@
     var tmpC=document.createElement('canvas');tmpC.width=W;tmpC.height=10;
     var tmpX=tmpC.getContext('2d');
     var calcH=24+28+32+30; // claim + title + day + gap
-    tmpX.font='14px "Segoe UI",system-ui,sans-serif';
+    tmpX.font='bold 18px "Segoe UI",system-ui,sans-serif';
     mtItems.forEach(function(meal){
       calcH+=22; // menu badge
-      var nl=socialWrapText(tmpX,meal.name,W-60);
-      calcH+=nl.length*18;
+      var nl=socialWrapText(tmpX,meal.name,W-50);
+      calcH+=nl.length*22;
       calcH+=meal.preis?20:8;
       calcH+=6;
     });
@@ -10621,13 +10621,13 @@
       ctx.fillText('Men\u00fc '+(idx+1),W/2,ty);
       ty+=22;
 
-      // Dish name
-      ctx.fillStyle='#1f2937';
-      ctx.font='14px "Segoe UI",system-ui,sans-serif';
-      var nameLines=socialWrapText(ctx,meal.name,W-60);
+      // Dish name (prominent)
+      ctx.fillStyle='#1a1a1a';
+      ctx.font='bold 18px "Segoe UI",system-ui,sans-serif';
+      var nameLines=socialWrapText(ctx,meal.name,W-50);
       nameLines.forEach(function(line){
         ctx.fillText(line,W/2,ty);
-        ty+=18;
+        ty+=22;
       });
 
       // Price
