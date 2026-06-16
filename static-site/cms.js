@@ -11174,6 +11174,7 @@
       if(msg) shareData.text=msg;
       navigator.share(shareData).then(function(){
         socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
+        if(hasMt&&msg) socialCopyMsg(msg);
       }).catch(function(err){
         if(err.name==='AbortError') return;
         console.warn('[Social] share error:',err.message);
@@ -11188,8 +11189,9 @@
       socialShareViaClipboard(files,msg,hasMt);
       return;
     }
-    // Desktop fallback: download files
+    // Desktop fallback: download files + copy text for Ctrl+V in WhatsApp Desktop
     socialFallbackDownloadFiles(files);
+    if(hasMt&&msg) socialCopyMsg(msg);
   }
   function socialShareViaClipboard(files,msg,hasMt){
     // Copy poster image to clipboard, then open WhatsApp
