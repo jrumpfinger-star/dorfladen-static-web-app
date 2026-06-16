@@ -10223,9 +10223,19 @@
           img.onerror=function(){URL.revokeObjectURL(objUrl);console.warn('[Social] img load failed for',entry.id);resolve();};
           img.src=objUrl;
         }).catch(function(e){
-          console.warn('[Social] fetch img failed for',entry.id,e);
-          // Skip image to avoid canvas taint (direct load would taint canvas)
-          resolve();
+          console.warn('[Social] fetch img failed for',entry.id,', loading directly (preview only)');
+          // Load directly - taints canvas but works for preview display
+          var img=new Image();
+          img.crossOrigin='anonymous';
+          img.onload=function(){loadedImgs[entry.id]=img;loadedImgs['_tainted']=true;resolve();};
+          img.onerror=function(){
+            // Try without crossOrigin
+            var img2=new Image();
+            img2.onload=function(){loadedImgs[entry.id]=img2;loadedImgs['_tainted']=true;resolve();};
+            img2.onerror=function(){console.warn('[Social] direct img load also failed for',entry.id);resolve();};
+            img2.src=entry.url;
+          };
+          img.src=entry.url;
         });
       });
     });
@@ -10979,14 +10989,33 @@
         socialFallbackWaShare(null,msg);
         return;
       }
-      // Convert all canvases to blobs (skip tainted canvases)
+      // Convert all canvases to blobs; if tainted, redraw without images
+      var isTainted=window._socLoadedImgs&&window._socLoadedImgs['_tainted'];
       var blobPromises=canvases.map(function(c){
         return new Promise(function(resolve){
           try{
             c.canvas.toBlob(function(blob){resolve({blob:blob,name:c.name});},'image/png');
           }catch(e){
-            console.warn('[Social] canvas tainted, skipping:',c.name,e.message);
-            resolve({blob:null,name:c.name});
+            console.warn('[Social] canvas tainted, redrawing without images for export');
+            var cleanImgs={};
+            var cleanCanvas=document.createElement('canvas');
+            var cleanCtx=cleanCanvas.getContext('2d');
+            // Redraw combined poster without cross-origin images
+            var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+            var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+            if(mtI.length>0&&otherI.length>0){
+              var tD=document.createElement('canvas');
+              socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,cleanImgs);
+              var tM=document.createElement('canvas');
+              socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,cleanImgs);
+              cleanCanvas.width=540;cleanCanvas.height=tD.height+tM.height;
+              cleanCtx.drawImage(tD,0,0);cleanCtx.drawImage(tM,0,tD.height);
+            } else if(mtI.length>0){
+              socialDrawMealPosterAuto(cleanCanvas,cleanCtx,540,mtI,cleanImgs);
+            } else {
+              socialDrawPoster(cleanCanvas,cleanCtx,540,otherI,titel,freitext,cleanImgs);
+            }
+            cleanCanvas.toBlob(function(blob){resolve({blob:blob,name:c.name});},'image/png');
           }
         });
       });
