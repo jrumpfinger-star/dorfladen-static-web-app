@@ -11006,33 +11006,57 @@
         socialFallbackWaShare(null,msg);
         return;
       }
-      // Convert all canvases to blobs; if tainted, redraw without images
+      // Convert canvases to blobs; if tainted, redraw clean poster without cross-origin images
       var isTainted=window._socLoadedImgs&&window._socLoadedImgs['_tainted'];
+      // Helper: build a clean (untainted) export canvas
+      function socialBuildCleanExport(){
+        var cleanImgs={};
+        var cleanCanvas=document.createElement('canvas');
+        var cleanCtx=cleanCanvas.getContext('2d');
+        var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+        var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+        if(mtI.length>0&&otherI.length>0){
+          var tD=document.createElement('canvas');
+          socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,cleanImgs);
+          var tM=document.createElement('canvas');
+          socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,cleanImgs);
+          cleanCanvas.width=540;cleanCanvas.height=tD.height+tM.height;
+          cleanCtx.drawImage(tD,0,0);cleanCtx.drawImage(tM,0,tD.height);
+        } else if(mtI.length>0){
+          socialDrawMealPosterAuto(cleanCanvas,cleanCtx,540,mtI,cleanImgs);
+        } else {
+          socialDrawPoster(cleanCanvas,cleanCtx,540,otherI,titel,freitext,cleanImgs);
+        }
+        return cleanCanvas;
+      }
+      // If tainted, use clean canvas directly
+      if(isTainted){
+        console.log('[Social] canvas tainted, using clean export without images');
+        var cleanC=socialBuildCleanExport();
+        cleanC.toBlob(function(blob){
+          if(!blob){socialFallbackWaShare(null,msg);return;}
+          var files=[new File([blob],'dorfladen-post.png',{type:'image/png'})];
+          socialShareFiles(files,msg,hasMt);
+        },'image/png');
+        return;
+      }
       var blobPromises=canvases.map(function(c){
         return new Promise(function(resolve){
           try{
-            c.canvas.toBlob(function(blob){resolve({blob:blob,name:c.name});},'image/png');
+            c.canvas.toBlob(function(blob){
+              if(!blob){
+                // toBlob returned null (tainted on some mobile browsers)
+                console.warn('[Social] toBlob returned null, using clean canvas');
+                var cc=socialBuildCleanExport();
+                cc.toBlob(function(b){resolve({blob:b,name:c.name});},'image/png');
+              } else {
+                resolve({blob:blob,name:c.name});
+              }
+            },'image/png');
           }catch(e){
-            console.warn('[Social] canvas tainted, redrawing without images for export');
-            var cleanImgs={};
-            var cleanCanvas=document.createElement('canvas');
-            var cleanCtx=cleanCanvas.getContext('2d');
-            // Redraw combined poster without cross-origin images
-            var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});
-            var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
-            if(mtI.length>0&&otherI.length>0){
-              var tD=document.createElement('canvas');
-              socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,cleanImgs);
-              var tM=document.createElement('canvas');
-              socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,cleanImgs);
-              cleanCanvas.width=540;cleanCanvas.height=tD.height+tM.height;
-              cleanCtx.drawImage(tD,0,0);cleanCtx.drawImage(tM,0,tD.height);
-            } else if(mtI.length>0){
-              socialDrawMealPosterAuto(cleanCanvas,cleanCtx,540,mtI,cleanImgs);
-            } else {
-              socialDrawPoster(cleanCanvas,cleanCtx,540,otherI,titel,freitext,cleanImgs);
-            }
-            cleanCanvas.toBlob(function(blob){resolve({blob:blob,name:c.name});},'image/png');
+            console.warn('[Social] canvas tainted (exception), using clean canvas');
+            var cc=socialBuildCleanExport();
+            cc.toBlob(function(b){resolve({blob:b,name:c.name});},'image/png');
           }
         });
       });
