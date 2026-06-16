@@ -11094,12 +11094,7 @@
       return ok;
     }catch(e){return false;}
   }
-  function socialIsMobile(){
-    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  }
   function socialShareFilesWithText(files,msg){
-    // On desktop: navigator.share() causes WhatsApp Desktop to hang – use clipboard+download instead
-    var isMobile=socialIsMobile();
     // Step 1: Copy text to clipboard
     var clipboardOk=false;
     var clipboardPromise;
@@ -11112,127 +11107,44 @@
       clipboardPromise=Promise.resolve();
     }
     clipboardPromise.then(function(){
-      if(isMobile&&navigator.share&&files.length){
-        // Mobile: use Web Share API (works reliably on phones)
+      // Step 2: Share files via Web Share API
+      var hasShare=!!navigator.share;
+      if(hasShare&&files.length){
         var shareData={files:files};
-        if(msg) shareData.text=msg;
         var canShareFiles=false;
-        try{canShareFiles=navigator.canShare&&navigator.canShare(shareData);}catch(e){
+        try{canShareFiles=navigator.canShare&&navigator.canShare({files:files});}catch(e){
           console.warn('[Social] canShare check error:',e);
         }
+        var statusHint=clipboardOk?' \u2013 Bestelltext kopiert! In WhatsApp Strg+V dr\u00fccken':'';
         if(canShareFiles){
           var totalKB=Math.round(files.reduce(function(s,f){return s+f.size;},0)/1024);
-          socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...',true);
+          socialStatus('soc-post-status','Teile '+files.length+' Poster ('+totalKB+'KB)...'+statusHint,true);
           navigator.share(shareData).then(function(){
-            socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+            socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!'+statusHint,true);
           }).catch(function(err){
             if(err.name==='AbortError'){
               socialStatus('soc-post-status','Teilen abgebrochen.',true);
             } else {
               console.error('[Social] share error:',err);
-              socialDesktopWaShare(files,msg,clipboardOk);
+              socialStatus('soc-post-status','Share fehlgeschlagen: '+err.message+' \u2013 Fallback','error');
+              socialDownloadFiles(files);
             }
           });
         } else {
-          socialDesktopWaShare(files,msg,clipboardOk);
-        }
-      } else {
-        // Desktop: copy image to clipboard + download + open wa.me
-        socialDesktopWaShare(files,msg,clipboardOk);
-      }
-    });
-  }
-  function socialDesktopWaShare(files,msg,textCopied){
-    // Show share dialog with step-by-step instructions
-    socialShowDesktopShareDialog(files,msg);
-  }
-  function socialShowDesktopShareDialog(files,msg){
-    // Remove existing dialog
-    var old=document.getElementById('soc-desktop-share-dialog');
-    if(old) old.remove();
-    // Create overlay
-    var overlay=document.createElement('div');
-    overlay.id='soc-desktop-share-dialog';
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
-    overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
-    // Dialog box
-    var box=document.createElement('div');
-    box.style.cssText='background:#fff;border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.3)';
-    var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
-    h+='<h3 style="margin:0;font-size:18px;color:#25D366">\uD83D\uDCE4 In WhatsApp teilen</h3>';
-    h+='<button onclick="document.getElementById(\'soc-desktop-share-dialog\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;padding:0 4px">\u2715</button></div>';
-    // Step 1: Image preview + copy
-    h+='<div style="margin-bottom:16px;text-align:center">';
-    h+='<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px">Schritt 1: Poster kopieren</div>';
-    h+='<div id="soc-share-img-preview" style="margin-bottom:8px;max-height:200px;overflow:hidden;border-radius:8px;border:1px solid #e5e7eb"></div>';
-    h+='<button id="soc-share-copy-img-btn" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;width:100%">\uD83D\uDCCB Poster in Zwischenablage kopieren</button>';
-    h+='<div id="soc-share-img-status" style="font-size:11px;color:#6b7280;margin-top:4px"></div>';
-    h+='</div>';
-    // Step 2: Text copy
-    if(msg){
-      h+='<div style="margin-bottom:16px">';
-      h+='<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px">Schritt 2: Bestelltext kopieren</div>';
-      h+='<div style="background:#f3f4f6;border-radius:8px;padding:10px;font-size:12px;max-height:120px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;margin-bottom:8px;border:1px solid #e5e7eb">'+esc(msg)+'</div>';
-      h+='<button id="soc-share-copy-text-btn" style="background:#374151;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;width:100%">\uD83D\uDCCB Text kopieren</button>';
-      h+='</div>';
-    }
-    // Step 3: Open WhatsApp
-    h+='<div style="margin-bottom:8px">';
-    h+='<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px">'+(msg?'Schritt 3':'Schritt 2')+': WhatsApp \u00f6ffnen & einf\u00fcgen</div>';
-    h+='<a href="https://web.whatsapp.com/" target="_blank" style="display:block;background:#25D366;color:#fff;border:none;border-radius:8px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none">\uD83D\uDCF1 WhatsApp \u00f6ffnen</a>';
-    h+='<div style="font-size:11px;color:#6b7280;margin-top:6px;text-align:center">Chat \u00f6ffnen \u2192 Strg+V f\u00fcr Poster \u2192 Senden \u2192 nochmal Strg+V f\u00fcr Text</div>';
-    h+='</div>';
-    // Download fallback
-    h+='<div style="text-align:center;margin-top:12px;border-top:1px solid #e5e7eb;padding-top:12px">';
-    h+='<button id="soc-share-download-btn" style="background:none;border:1px solid #d1d5db;border-radius:8px;padding:8px 16px;font-size:12px;color:#6b7280;cursor:pointer">\u2B07 Poster herunterladen</button>';
-    h+='</div>';
-    box.innerHTML=h;
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    // Show image preview
-    if(files.length){
-      var imgUrl=URL.createObjectURL(files[0]);
-      var prevDiv=document.getElementById('soc-share-img-preview');
-      if(prevDiv){
-        var img=document.createElement('img');
-        img.src=imgUrl;img.style.cssText='max-width:100%;max-height:200px;border-radius:8px';
-        prevDiv.appendChild(img);
-      }
-    }
-    // Wire up buttons
-    var copyImgBtn=document.getElementById('soc-share-copy-img-btn');
-    var imgStatus=document.getElementById('soc-share-img-status');
-    if(copyImgBtn&&files.length){
-      copyImgBtn.onclick=function(){
-        var blob=files[0];
-        if(navigator.clipboard&&navigator.clipboard.write){
-          var item=new ClipboardItem({'image/png':blob});
-          navigator.clipboard.write([item]).then(function(){
-            copyImgBtn.textContent='\u2705 Kopiert!';
-            copyImgBtn.style.background='#16a34a';
-            if(imgStatus) imgStatus.textContent='Poster in Zwischenablage \u2013 jetzt in WhatsApp Strg+V dr\u00fccken';
-          }).catch(function(){
-            if(imgStatus) imgStatus.textContent='Kopieren fehlgeschlagen \u2013 bitte Poster herunterladen';
+          console.warn('[Social] canShare=false, trying share anyway...');
+          navigator.share(shareData).then(function(){
+            socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!'+statusHint,true);
+          }).catch(function(err){
+            console.error('[Social] share fallback error:',err);
+            socialStatus('soc-post-status','Poster werden heruntergeladen...'+statusHint,true);
             socialDownloadFiles(files);
           });
-        } else {
-          if(imgStatus) imgStatus.textContent='Clipboard nicht verf\u00fcgbar \u2013 Poster wird heruntergeladen';
-          socialDownloadFiles(files);
         }
-      };
-    }
-    var copyTextBtn=document.getElementById('soc-share-copy-text-btn');
-    if(copyTextBtn&&msg){
-      copyTextBtn.onclick=function(){
-        socialCopyToClipboard(msg).then(function(ok){
-          if(ok){copyTextBtn.textContent='\u2705 Text kopiert!';copyTextBtn.style.background='#16a34a';}
-        });
-      };
-    }
-    var dlBtn=document.getElementById('soc-share-download-btn');
-    if(dlBtn&&files.length){
-      dlBtn.onclick=function(){socialDownloadFiles(files);dlBtn.textContent='\u2705 Heruntergeladen!';};
-    }
+      } else {
+        socialStatus('soc-post-status','Kein navigator.share \u2013 Fallback',true);
+        socialDownloadFiles(files);
+      }
+    });
   }
 
   // Download poster files as fallback
