@@ -11073,15 +11073,15 @@
       var fx=fc.getContext('2d');
       if(mtI.length>0&&otherI.length>0){
         var tD=document.createElement('canvas');
-        socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,{});
+        socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,{},2);
         var tM=document.createElement('canvas');
-        socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,{});
-        fc.width=540;fc.height=tD.height+tM.height;
+        socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,{},2);
+        fc.width=1080;fc.height=tD.height+tM.height;
         fx.drawImage(tD,0,0);fx.drawImage(tM,0,tD.height);
       } else if(mtI.length>0){
-        socialDrawMealPosterAuto(fc,fx,540,mtI,{});
+        socialDrawMealPosterAuto(fc,fx,540,mtI,{},2);
       } else {
-        socialDrawPoster(fc,fx,540,otherI,titel,freitext,{});
+        socialDrawPoster(fc,fx,540,otherI,titel,freitext,{},2);
       }
       canvases.push({canvas:fc,name:'dorfladen-post.png'});
     }
@@ -11102,15 +11102,15 @@
         var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
         if(mtI.length>0&&otherI.length>0){
           var tD=document.createElement('canvas');
-          socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,cleanImgs);
+          socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,cleanImgs,2);
           var tM=document.createElement('canvas');
-          socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,cleanImgs);
-          cc.width=540;cc.height=tD.height+tM.height;
+          socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,cleanImgs,2);
+          cc.width=1080;cc.height=tD.height+tM.height;
           cx.drawImage(tD,0,0);cx.drawImage(tM,0,tD.height);
         } else if(mtI.length>0){
-          socialDrawMealPosterAuto(cc,cx,540,mtI,cleanImgs);
+          socialDrawMealPosterAuto(cc,cx,540,mtI,cleanImgs,2);
         } else {
-          socialDrawPoster(cc,cx,540,otherI,titel,freitext,cleanImgs);
+          socialDrawPoster(cc,cx,540,otherI,titel,freitext,cleanImgs,2);
         }
         dataUrl=cc.toDataURL('image/png');
       }
@@ -11171,11 +11171,8 @@
     // Best case: share with files
     if(canShareFiles){
       var shareData={files:files.length>1?[files[0]]:files};
-      if(msg) shareData.text=msg;
       navigator.share(shareData).then(function(){
         socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
-        // Copy order text AFTER share dialog closes (for desktop 2nd message)
-        if(hasMt&&msg) socialCopyMsg(msg);
       }).catch(function(err){
         if(err.name==='AbortError') return;
         console.warn('[Social] share error:',err.message);
@@ -11190,8 +11187,7 @@
       socialShareViaClipboard(files,msg,hasMt);
       return;
     }
-    // Desktop fallback: copy text + download files
-    if(hasMt&&msg) socialCopyMsg(msg);
+    // Desktop fallback: download files
     socialFallbackDownloadFiles(files);
   }
   function socialShareViaClipboard(files,msg,hasMt){
@@ -11204,10 +11200,6 @@
         navigator.clipboard.write([item]).then(function(){
           copied=true;
           socialStatus('soc-post-status','\u2705 Poster in Zwischenablage! In WhatsApp einf\u00fcgen mit langem Dr\u00fccken \u2192 Einf\u00fcgen',true);
-          if(hasMt&&msg){
-            // Also copy text after a short delay so user can paste image first
-            setTimeout(function(){socialCopyMsg(msg);},500);
-          }
         }).catch(function(){
           socialShareViaDownload(files,msg,hasMt);
         });
@@ -11217,16 +11209,15 @@
     } else {
       socialShareViaDownload(files,msg,hasMt);
     }
-    // Open WhatsApp
+    // Open WhatsApp (no pre-filled text)
     setTimeout(function(){
-      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+      window.open('https://wa.me/','_blank');
     },300);
   }
   function socialShareViaDownload(files,msg,hasMt){
     socialFallbackDownloadFiles(files);
-    if(hasMt&&msg) socialCopyMsg(msg);
     setTimeout(function(){
-      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+      window.open('https://wa.me/','_blank');
     },500);
   }
   function socialCopyMsg(msg){
