@@ -10225,8 +10225,8 @@
     var canvas=document.getElementById('soc-post-canvas');
     if(!canvas)return;
     var ctx=canvas.getContext('2d');
-    var W=540;
-    var SCALE=2; // render at 1080px for crisp WhatsApp images
+    var W=600;
+    var SCALE=2; // render at 1200px for large WhatsApp display
 
     // Hide both canvases immediately to prevent stale content
     canvas.style.display='none';
@@ -11073,15 +11073,15 @@
       var fx=fc.getContext('2d');
       if(mtI.length>0&&otherI.length>0){
         var tD=document.createElement('canvas');
-        socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,{},2);
+        socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2);
         var tM=document.createElement('canvas');
-        socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,{},2);
-        fc.width=1080;fc.height=tD.height+tM.height;
+        socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2);
+        fc.width=1200;fc.height=tD.height+tM.height;
         fx.drawImage(tD,0,0);fx.drawImage(tM,0,tD.height);
       } else if(mtI.length>0){
-        socialDrawMealPosterAuto(fc,fx,540,mtI,{},2);
+        socialDrawMealPosterAuto(fc,fx,600,mtI,{},2);
       } else {
-        socialDrawPoster(fc,fx,540,otherI,titel,freitext,{},2);
+        socialDrawPoster(fc,fx,600,otherI,titel,freitext,{},2);
       }
       canvases.push({canvas:fc,name:'dorfladen-post.png'});
     }
@@ -11102,15 +11102,15 @@
         var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
         if(mtI.length>0&&otherI.length>0){
           var tD=document.createElement('canvas');
-          socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,cleanImgs,2);
+          socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,cleanImgs,2);
           var tM=document.createElement('canvas');
-          socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,cleanImgs,2);
-          cc.width=1080;cc.height=tD.height+tM.height;
+          socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,cleanImgs,2);
+          cc.width=1200;cc.height=tD.height+tM.height;
           cx.drawImage(tD,0,0);cx.drawImage(tM,0,tD.height);
         } else if(mtI.length>0){
-          socialDrawMealPosterAuto(cc,cx,540,mtI,cleanImgs,2);
+          socialDrawMealPosterAuto(cc,cx,600,mtI,cleanImgs,2);
         } else {
-          socialDrawPoster(cc,cx,540,otherI,titel,freitext,cleanImgs,2);
+          socialDrawPoster(cc,cx,600,otherI,titel,freitext,cleanImgs,2);
         }
         dataUrl=cc.toDataURL('image/png');
       }
