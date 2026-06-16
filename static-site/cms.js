@@ -11161,16 +11161,16 @@
       try{canShareFiles=navigator.canShare({files:files});}catch(e){}
     }
     console.log('[Social] canShareFiles='+canShareFiles);
-    // Always copy order text to clipboard (for desktop Ctrl+V as 2nd message)
-    if(hasMt&&msg) socialCopyMsg(msg);
     // Best case: share with files
     if(canShareFiles){
       var shareData={files:files.length>1?[files[0]]:files};
       if(msg) shareData.text=msg;
       navigator.share(shareData).then(function(){
         socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
+        // Copy order text AFTER share dialog closes (for desktop 2nd message)
+        if(hasMt&&msg) socialCopyMsg(msg);
       }).catch(function(err){
-        if(err.name==='AbortError'){if(hasMt&&msg) socialCopyMsg(msg);return;}
+        if(err.name==='AbortError') return;
         console.warn('[Social] share error:',err.message);
         // Fallback to clipboard+WhatsApp
         socialShareViaClipboard(files,msg,hasMt);
