@@ -10807,12 +10807,15 @@
     // Mittagessen-only: order links with quantity and pickup time
     if(onlyMittagessen){
       var msg='\uD83C\uDF7D *Mittagstisch*\n\n';
-      msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n';
-      cats['Mittagessen'].forEach(function(p){
+      msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n\n';
+      var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
+      cats['Mittagessen'].forEach(function(p,i){
+        var nr=menuNr[i]||('\u2022');
+        var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
         var bestellText='Hallo!\nIch m\u00F6chte bestellen:\n\n1x '+p.name+(p.preis?' ('+parseFloat(p.preis).toFixed(2)+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
-        msg+='\u2022 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
+        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
       });
-      msg+='\n\uD83D\uDCDE 08082 / 622 99 91';
+      msg+='\uD83D\uDCDE 08082 / 622 99 91';
       return msg;
     }
 
@@ -10832,12 +10835,14 @@
       msg+='\n';
     });
     if(hasMittagessen){
-      msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n';
-      cats['Mittagessen'].forEach(function(p){
+      var menuNr2=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
+      msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n\n';
+      cats['Mittagessen'].forEach(function(p,i){
+        var nr=menuNr2[i]||('\u2022');
+        var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
         var bestellText='Hallo!\nIch m\u00F6chte bestellen:\n\n1x '+p.name+(p.preis?' ('+parseFloat(p.preis).toFixed(2)+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
-        msg+='\u2022 '+p.name+'\nhttps://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n';
+        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
       });
-      msg+='\n';
     }
     msg+='\uD83D\uDED2 *Dorfladen Oberornau*\nDorfplatz 1, 84419 Obertaufkirchen';
     return msg;
@@ -11031,37 +11036,25 @@
     socialStatus('soc-post-status','Poster wird erstellt...',true);
     var genPromise=socialGenPreview()||Promise.resolve();
     genPromise.then(function(){
-      var loadedImgs=window._socLoadedImgs||{};
-
-      // If Mittagessen: generate both posters and share together
-      if(hasMt){
-        try{
-        socialGenBothPosters(selected,titel,freitext,loadedImgs).then(function(posters){
-          var files=posters.filter(function(p){return p.blob;}).map(function(p){
-            return new File([p.blob],p.name,{type:'image/png'});
-          });
-          if(!files.length){
-            socialStatus('soc-post-status','Poster-Erstellung fehlgeschlagen, sende nur Text...',true);
-            socialFallbackWaShare(null,msg);
-            return;
-          }
-          socialShareFilesWithText(files,msg);
-        }).catch(function(e){
-          console.error('[Social] genBothPosters error:',e);
-          socialStatus('soc-post-status','Fehler: '+e.message+' \u2013 sende nur Text',false);
-          socialFallbackWaShare(null,msg);
-        });
-        }catch(e){console.error('[Social] sync error in hasMt:',e);socialFallbackWaShare(null,msg);}
-      } else {
-        // Normal: single poster
-        var canvas=document.getElementById('soc-post-canvas');
-        if(!canvas){socialStatus('soc-post-status','Kein Canvas gefunden','error');socialFallbackWaShare(null,msg);return;}
-        canvas.toBlob(function(blob){
-          if(!blob){socialFallbackWaShare(null,msg);return;}
-          var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
-          socialShareFilesWithText([file],msg);
-        },'image/png');
+      // Pick the visible poster canvas (meal poster preferred, then daily overview)
+      var mealCanvas=document.getElementById('soc-post-canvas-meal');
+      var dailyCanvas=document.getElementById('soc-post-canvas');
+      var shareCanvas=null;
+      var shareName='dorfladen-post.png';
+      if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0){
+        shareCanvas=mealCanvas;shareName='mittagessen-poster.png';
+      } else if(dailyCanvas&&dailyCanvas.style.display!=='none'&&dailyCanvas.width>0){
+        shareCanvas=dailyCanvas;
       }
+      if(!shareCanvas){
+        socialStatus('soc-post-status','Kein sichtbares Poster','error');
+        socialFallbackWaShare(null,msg);
+        return;
+      }
+      shareCanvas.toBlob(function(blob){
+        if(!blob){socialFallbackWaShare(null,msg);return;}
+        socialShareBlob(blob,shareName,msg);
+      },'image/png');
     }).catch(function(e){
       console.error('[Social] genPreview error:',e);
       socialStatus('soc-post-status','Poster-Fehler: '+e.message,false);
@@ -11094,27 +11087,24 @@
       return ok;
     }catch(e){return false;}
   }
-  function socialShareFilesWithText(files,msg){
-    // Share files + text together via Web Share API (text becomes image caption in WhatsApp)
-    if(navigator.share&&files.length){
-      var shareData={files:files};
-      if(msg) shareData.text=msg;
-      navigator.share(shareData).then(function(){
+  function socialShareBlob(blob,filename,msg){
+    var file=new File([blob],filename,{type:blob.type||'image/png'});
+    if(navigator.share){
+      navigator.share({text:msg,files:[file]}).then(function(){
         socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
       }).catch(function(err){
-        if(err.name==='AbortError'){
-          socialStatus('soc-post-status','Teilen abgebrochen.',true);
-        } else {
-          console.warn('[Social] share failed:',err.name,err.message);
-          socialFallbackShareFiles(files,msg);
-        }
+        console.warn('[Social] share failed:',err.name,err.message);
+        if(err.name!=='AbortError') socialFallbackShare(blob,filename,msg);
       });
       return;
     }
-    socialFallbackShareFiles(files,msg);
+    socialFallbackShare(blob,filename,msg);
   }
-  function socialFallbackShareFiles(files,msg){
-    socialDownloadFiles(files);
+  function socialFallbackShare(blob,filename,msg){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
     socialStatus('soc-post-status','\u2705 Poster heruntergeladen',true);
     if(msg){
       setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
