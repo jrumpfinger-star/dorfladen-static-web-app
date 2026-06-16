@@ -11085,22 +11085,40 @@
       return ok;
     }catch(e){return false;}
   }
+  function socialIsMobile(){
+    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
   function socialShareBlob(blob,filename,msg){
+    var file=new File([blob],filename,{type:blob.type||'image/png'});
+    // Mobile: use navigator.share() (works fine on mobile)
+    if(socialIsMobile()&&navigator.share){
+      var shareData={files:[file]};
+      if(msg) shareData.text=msg;
+      navigator.share(shareData).then(function(){
+        socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+      }).catch(function(err){
+        if(err.name!=='AbortError'){
+          console.warn('[Social] mobile share failed:',err);
+          socialDesktopShare(blob,filename,msg);
+        }
+      });
+      return;
+    }
+    // Desktop: clipboard + download + WhatsApp Web
+    socialDesktopShare(blob,filename,msg);
+  }
+  function socialDesktopShare(blob,filename,msg){
     // Step 1: Copy TEXT to clipboard (for Ctrl+V in WhatsApp)
-    var textCopied=false;
     if(msg){
       try{
         if(navigator.clipboard&&navigator.clipboard.writeText){
-          navigator.clipboard.writeText(msg).then(function(){
-            textCopied=true;
-            console.log('[Social] Text in Zwischenablage kopiert');
-          }).catch(function(){
-            textCopied=socialCopyFallback(msg);
+          navigator.clipboard.writeText(msg).catch(function(){
+            socialCopyFallback(msg);
           });
         } else {
-          textCopied=socialCopyFallback(msg);
+          socialCopyFallback(msg);
         }
-      }catch(e){textCopied=socialCopyFallback(msg);}
+      }catch(e){socialCopyFallback(msg);}
     }
     // Step 2: Download image
     var url=URL.createObjectURL(blob);
