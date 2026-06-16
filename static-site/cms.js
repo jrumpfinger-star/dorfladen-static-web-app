@@ -11223,15 +11223,26 @@
     },500);
   }
   function socialCopyMsg(msg){
-    try{
-      if(navigator.clipboard&&navigator.clipboard.writeText){
-        navigator.clipboard.writeText(msg).then(function(){
-          socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage kopiert',true);
-        }).catch(function(){socialCopyFallback(msg);});
-      } else {
-        socialCopyFallback(msg);
-      }
-    }catch(e){socialCopyFallback(msg);}
+    function doCopy(){
+      try{
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+          navigator.clipboard.writeText(msg).then(function(){
+            socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 jetzt in WhatsApp mit Strg+V einf\u00fcgen!',true);
+          }).catch(function(){
+            // Retry once after short delay (focus may not be back yet)
+            setTimeout(function(){
+              navigator.clipboard.writeText(msg).then(function(){
+                socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 jetzt in WhatsApp mit Strg+V einf\u00fcgen!',true);
+              }).catch(function(){socialCopyFallback(msg);});
+            },500);
+          });
+        } else {
+          socialCopyFallback(msg);
+        }
+      }catch(e){socialCopyFallback(msg);}
+    }
+    // Delay slightly to ensure page has focus back after share dialog
+    setTimeout(doCopy,300);
   }
   function socialFallbackDownloadFiles(files){
     files.forEach(function(f){
