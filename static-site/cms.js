@@ -4044,7 +4044,7 @@
     var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(url);},2000);
     toast('Bild heruntergeladen \u2013 WhatsApp \u00f6ffnet sich...','ok');
-    setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
+    setTimeout(function(){window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');},800);
   }
 
   function showSharePreview(blob,filename,opts){
@@ -11120,7 +11120,7 @@
         socialStatus('soc-post-status','\u2705 Poster heruntergeladen! In WhatsApp als Anhang senden',true);
       }
       if(msg){
-        setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
+        setTimeout(function(){window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');},800);
       }
     });
   }
@@ -11156,7 +11156,7 @@
       },'image/png');
     }
     setTimeout(function(){
-      window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+      window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');
     },800);
   }
 
