@@ -11088,27 +11088,41 @@
     }catch(e){return false;}
   }
   function socialShareBlob(blob,filename,msg){
-    var file=new File([blob],filename,{type:blob.type||'image/png'});
-    if(navigator.share){
-      navigator.share({text:msg,files:[file]}).then(function(){
-        socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-      }).catch(function(err){
-        console.warn('[Social] share failed:',err.name,err.message);
-        if(err.name!=='AbortError') socialFallbackShare(blob,filename,msg);
-      });
-      return;
+    // Step 1: Copy image to clipboard
+    var imgCopied=false;
+    var copyPromise;
+    if(navigator.clipboard&&navigator.clipboard.write&&typeof ClipboardItem!=='undefined'){
+      var pngBlob=(blob.type==='image/png')?blob:new Blob([blob],{type:'image/png'});
+      try{
+        copyPromise=navigator.clipboard.write([new ClipboardItem({'image/png':pngBlob})]).then(function(){
+          imgCopied=true;
+          console.log('[Social] Poster in Zwischenablage kopiert');
+        }).catch(function(e){
+          console.warn('[Social] Clipboard write failed:',e);
+        });
+      }catch(e){
+        console.warn('[Social] ClipboardItem error:',e);
+        copyPromise=Promise.resolve();
+      }
+    } else {
+      copyPromise=Promise.resolve();
     }
-    socialFallbackShare(blob,filename,msg);
-  }
-  function socialFallbackShare(blob,filename,msg){
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=url;a.download=filename;
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(function(){URL.revokeObjectURL(url);},2000);
-    socialStatus('soc-post-status','\u2705 Poster heruntergeladen',true);
-    if(msg){
-      setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
-    }
+    copyPromise.then(function(){
+      // Step 2: Download image as backup
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');a.href=url;a.download=filename;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},2000);
+      // Step 3: Open WhatsApp with text
+      if(imgCopied){
+        socialStatus('soc-post-status','\u2705 Poster in Zwischenablage + heruntergeladen! In WhatsApp Chat \u00f6ffnen & Strg+V',true);
+      } else {
+        socialStatus('soc-post-status','\u2705 Poster heruntergeladen! In WhatsApp als Anhang senden',true);
+      }
+      if(msg){
+        setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
+      }
+    });
   }
 
   // Download poster files as fallback
