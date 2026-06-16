@@ -11093,9 +11093,10 @@
     console.log('[Social] canShareFiles='+canShareFiles);
     // Best case: share with files
     if(canShareFiles){
-      navigator.share({files:files.length>1?[files[0]]:files}).then(function(){
+      var shareData={files:files.length>1?[files[0]]:files};
+      if(msg) shareData.text=msg;
+      navigator.share(shareData).then(function(){
         socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
-        if(hasMt&&msg) socialCopyMsg(msg);
       }).catch(function(err){
         if(err.name==='AbortError'){if(hasMt&&msg) socialCopyMsg(msg);return;}
         console.warn('[Social] share error:',err.message);
