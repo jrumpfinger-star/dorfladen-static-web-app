@@ -11171,10 +11171,9 @@
     // Best case: share with files
     if(canShareFiles){
       var shareData={files:files.length>1?[files[0]]:files};
-      if(msg) shareData.text=msg;
       navigator.share(shareData).then(function(){
-        socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
-        if(hasMt&&msg) socialCopyMsg(msg);
+        socialStatus('soc-post-status','\u2705 Poster geteilt! Bestelltext mit Strg+V einf\u00fcgen.',true);
+        if(msg) socialCopyMsg(msg);
       }).catch(function(err){
         if(err.name==='AbortError') return;
         console.warn('[Social] share error:',err.message);
@@ -11191,7 +11190,7 @@
     }
     // Desktop fallback: download files + copy text for Ctrl+V in WhatsApp Desktop
     socialFallbackDownloadFiles(files);
-    if(hasMt&&msg) socialCopyMsg(msg);
+    if(msg) socialCopyMsg(msg);
   }
   function socialShareViaClipboard(files,msg,hasMt){
     // Copy poster image to clipboard, then open WhatsApp
