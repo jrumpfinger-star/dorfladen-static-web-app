@@ -9364,12 +9364,17 @@
     });
     if(name==='post'){
       var katReady2=window._socialKatLoaded;
-      var mtReady2=false;
+      var mtReady2=window._socialMtBilderLoaded||false;
       function tryBuild2(){ if(katReady2&&mtReady2) socialBuildPostItems(); }
-      if(!window._socialKatLoaded){
-        socialLoadKatalog(function(){ katReady2=true; tryBuild2(); });
+      if(katReady2&&mtReady2){ socialBuildPostItems(); }
+      else {
+        if(!window._socialKatLoaded){
+          socialLoadKatalog(function(){ katReady2=true; tryBuild2(); });
+        }
+        if(!window._socialMtBilderLoaded){
+          socialLoadMtBilder(function(){ mtReady2=true; tryBuild2(); });
+        } else { mtReady2=true; tryBuild2(); }
       }
-      socialLoadMtBilder(function(){ mtReady2=true; tryBuild2(); });
     }
     if(name==='verlauf' && !window._socialVerlaufLoaded) socialLoadVerlauf();
     if(name==='wakatalog') waKatalogLoad();
@@ -9698,6 +9703,7 @@
   var _socFreeItems=[]; // ad-hoc items [{id,name,preis,kategorie,bild_data}]
   var _socFreeCounter=0;
 
+  window._socialMtBilderLoaded=false;
   function socialLoadMtBilder(cb){
     fetch(API+'/social-katalog?action=mt-bilder&base64=1')
       .then(function(r){return r.json();})
@@ -9707,6 +9713,7 @@
           if(bilder[k].bild_base64) bilder[k].bild_url=bilder[k].bild_base64;
         });
         _socMtBilder=bilder;
+        window._socialMtBilderLoaded=true;
         if(cb)cb();
       })
       .catch(function(){if(cb)cb();});
