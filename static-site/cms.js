@@ -11084,50 +11084,46 @@
     return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
   function socialShareFiles(files,msg,hasMt){
-    console.log('[Social] share: '+files.length+' files, hasMt='+hasMt);
-    // Copy order text to clipboard BEFORE sharing (if Mittagessen selected)
-    if(hasMt&&msg){
-      try{
-        if(navigator.clipboard&&navigator.clipboard.writeText){
-          navigator.clipboard.writeText(msg).catch(function(){socialCopyFallback(msg);});
-        } else {
-          socialCopyFallback(msg);
-        }
-      }catch(e){socialCopyFallback(msg);}
-    }
-    // Use navigator.share() with files
+    console.log('[Social] share: '+files.length+' files, hasMt='+hasMt+', hasShare='+!!navigator.share);
+    // Use navigator.share() FIRST – it needs the user gesture!
     if(navigator.share){
       var shareFiles=files.length>1?[files[0]]:files;
-      // Check canShare if available, but don't block on it
-      var canShareOk=true;
-      if(navigator.canShare){
-        try{canShareOk=navigator.canShare({files:shareFiles});}catch(e){canShareOk=false;}
-        console.log('[Social] canShare result:',canShareOk);
-      }
-      // Try share even if canShare says no (some browsers lie)
-      console.log('[Social] attempting navigator.share with',shareFiles.length,'files');
+      console.log('[Social] calling navigator.share NOW (sync, user gesture intact)');
       navigator.share({files:shareFiles}).then(function(){
         socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
+        // Copy order text AFTER share succeeded
+        if(hasMt&&msg) socialCopyMsg(msg);
       }).catch(function(err){
         console.warn('[Social] share error:',err.name,err.message);
-        if(err.name==='AbortError') return;
-        // Only download on desktop, not mobile
+        if(err.name==='AbortError'){
+          // User cancelled – still copy text
+          if(hasMt&&msg) socialCopyMsg(msg);
+          return;
+        }
         if(!socialIsMobile()){
           socialFallbackDownloadFiles(files);
         } else {
           socialStatus('soc-post-status','Teilen fehlgeschlagen: '+err.message,false);
         }
       });
-      if(hasMt&&msg){
-        socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage \u2013 nach dem Poster als 2. Nachricht mit Strg+V einf\u00fcgen',true);
-      } else {
-        socialStatus('soc-post-status','Poster wird geteilt...',true);
-      }
+      socialStatus('soc-post-status','Poster wird geteilt...',true);
       return;
     }
-    // Fallback if navigator.share not available (desktop only)
+    // Desktop fallback: copy text + download files
     console.log('[Social] navigator.share not available, using download fallback');
+    if(hasMt&&msg) socialCopyMsg(msg);
     socialFallbackDownloadFiles(files);
+  }
+  function socialCopyMsg(msg){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(msg).then(function(){
+          socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage kopiert',true);
+        }).catch(function(){socialCopyFallback(msg);});
+      } else {
+        socialCopyFallback(msg);
+      }
+    }catch(e){socialCopyFallback(msg);}
   }
   function socialFallbackDownloadFiles(files){
     files.forEach(function(f){
