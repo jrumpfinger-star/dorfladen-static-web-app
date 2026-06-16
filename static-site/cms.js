@@ -9811,15 +9811,19 @@
 
       html+='<div id="soc-pick-grid" style="max-height:260px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
       _socialKatalog.forEach(function(p){
-        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:2px;transition:background .1s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=this.querySelector(\'input\').checked?\'#f0fdf4\':\'#fff\'">';
-        html+='<label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer;min-width:0">';
+        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:2px;transition:background .1s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=this.querySelector(\'input[type=checkbox]\').checked?\'#f0fdf4\':\'#fff\'">';
         html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" onchange="socialPickUpdate()" style="width:16px;height:16px;accent-color:#e1306c;flex-shrink:0">';
+        // Clickable image thumbnail to replace photo
+        html+='<label style="cursor:pointer;flex-shrink:0;position:relative" title="Bild \u00e4ndern">';
         if(p.bild_url){
-          html+='<img src="'+esc(p.bild_url)+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+          html+='<img id="soc-pick-img-'+esc(p.id)+'" src="'+esc(p.bild_url)+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px" onerror="this.style.display=\'none\'">';
+        } else {
+          html+='<div id="soc-pick-img-'+esc(p.id)+'" style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px">&#128247;</div>';
         }
+        html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+esc(p.id)+'\',this)" style="display:none">';
+        html+='</label>';
         html+='<span style="font-weight:600;font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>';
         if(p.preis){var cp=parseFloat(p.preis);html+='<span style="font-size:11px;color:#2e7d32;font-weight:700;flex-shrink:0">'+(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
-        html+='</label>';
         html+='<select class="soc-pick-ab" data-id="'+esc(p.id)+'" style="font-size:10px;padding:2px 4px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;flex-shrink:0;width:56px">';
         html+='<option value="">ab</option><option value="10:00">10:00</option><option value="12:00">12:00</option>';
         html+='</select>';
@@ -9920,6 +9924,50 @@
       reader.readAsDataURL(bildInp.files[0]);
     } else { finish(); }
   };
+  // --- Replace image for a catalog product from the pick grid ---
+  window.socialPickImgChange = function(prodId, inp){
+    if(!inp||!inp.files||!inp.files[0]) return;
+    var file=inp.files[0];
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var b64=e.target.result;
+      // Update thumbnail immediately
+      var thumb=document.getElementById('soc-pick-img-'+prodId);
+      if(thumb){
+        if(thumb.tagName==='IMG'){
+          thumb.src=b64;
+        } else {
+          // Replace div placeholder with img
+          var img=document.createElement('img');
+          img.id='soc-pick-img-'+prodId;
+          img.src=b64;
+          img.style.cssText='width:28px;height:28px;object-fit:cover;border-radius:4px';
+          thumb.parentNode.replaceChild(img,thumb);
+        }
+      }
+      // Update local catalog data
+      var item=_socialKatalog.find(function(p){return p.id===prodId;});
+      if(item) item.bild_url=b64;
+      // Upload to API
+      fetch(API+'/social-katalog',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:prodId,bild_base64:b64})
+      }).then(function(r){return r.json();}).then(function(res){
+        if(res.error){
+          socialStatus('soc-post-status','Bild-Upload fehlgeschlagen: '+res.error,false);
+        } else {
+          socialStatus('soc-post-status','Bild aktualisiert!',true);
+          // Update bild_url from server response
+          if(res.item&&res.item.bild_url&&item) item.bild_url=res.item.bild_url;
+        }
+      }).catch(function(err){
+        socialStatus('soc-post-status','Bild-Upload Fehler: '+err.message,false);
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
   window.socialFreeRemove = function(id){
     _socFreeItems=_socFreeItems.filter(function(f){return f.id!==id;});
     var list=document.getElementById('soc-free-list');
