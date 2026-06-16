@@ -10772,7 +10772,7 @@
 
     // Mittagessen-only: order links with quantity and pickup time
     if(onlyMittagessen){
-      var msg='\uD83D\uDC49 *Direkt bestellen per Klick:*\n\n';
+      var msg='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
       var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr[i]||('\u2022');
@@ -10800,7 +10800,7 @@
     });
     if(hasMittagessen){
       var menuNr2=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
-      msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n\n';
+      msg+='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr2[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
