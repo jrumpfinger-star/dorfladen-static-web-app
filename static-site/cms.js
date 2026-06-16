@@ -10226,6 +10226,7 @@
     if(!canvas)return;
     var ctx=canvas.getContext('2d');
     var W=540;
+    var SCALE=2; // render at 1080px for crisp WhatsApp images
 
     // Hide both canvases immediately to prevent stale content
     canvas.style.display='none';
@@ -10339,13 +10340,13 @@
         // COMBINED POSTER: daily overview on top + meal poster below
         var tmpDaily=document.createElement('canvas');
         var tmpDailyCtx=tmpDaily.getContext('2d');
-        socialDrawPoster(tmpDaily,tmpDailyCtx,W,otherItems,titel,freitext,loadedImgs);
+        socialDrawPoster(tmpDaily,tmpDailyCtx,W,otherItems,titel,freitext,loadedImgs,SCALE);
         var tmpMeal=document.createElement('canvas');
         var tmpMealCtx=tmpMeal.getContext('2d');
-        socialDrawMealPosterAuto(tmpMeal,tmpMealCtx,W,mtItems,loadedImgs);
+        socialDrawMealPosterAuto(tmpMeal,tmpMealCtx,W,mtItems,loadedImgs,SCALE);
         // Combine vertically onto main canvas
         var totalH=tmpDaily.height+tmpMeal.height;
-        canvas.width=W;
+        canvas.width=W*SCALE;
         canvas.height=totalH;
         ctx.drawImage(tmpDaily,0,0);
         ctx.drawImage(tmpMeal,0,tmpDaily.height);
@@ -10353,11 +10354,11 @@
       } else if(hasMt){
         // Only Mittagessen - use meal poster directly
         canvas.style.display='block';
-        socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs);
+        socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs,SCALE);
       } else if(selected.length>0){
         // No Mittagessen - normal poster
         canvas.style.display='block';
-        socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs);
+        socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE);
       } else {
         canvas.style.display='none';
       }
@@ -10370,6 +10371,7 @@
   // Generate both posters as blobs (meal poster + normal poster) when Mittagessen is present
   function socialGenBothPosters(selected,titel,freitext,loadedImgs){
     var W=540;
+    var SCALE=2;
     var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
     var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
     var results=[];
@@ -10378,7 +10380,7 @@
     if(mtItems.length>0){
       var c1=document.createElement('canvas');
       var x1=c1.getContext('2d');
-      socialDrawMealPosterAuto(c1,x1,W,mtItems,loadedImgs);
+      socialDrawMealPosterAuto(c1,x1,W,mtItems,loadedImgs,SCALE);
       results.push(new Promise(function(resolve){
         c1.toBlob(function(b){resolve({blob:b,name:'mittagessen-poster.png'});}, 'image/png');
       }));
@@ -10388,7 +10390,7 @@
     if(otherItems.length>0){
       var c2=document.createElement('canvas');
       var x2=c2.getContext('2d');
-      socialDrawPoster(c2,x2,W,mtItems.length>0?otherItems:selected,titel,freitext,loadedImgs);
+      socialDrawPoster(c2,x2,W,mtItems.length>0?otherItems:selected,titel,freitext,loadedImgs,SCALE);
       results.push(new Promise(function(resolve){
         c2.toBlob(function(b){resolve({blob:b,name:'dorfladen-post.png'});}, 'image/png');
       }));
@@ -10397,7 +10399,8 @@
     return Promise.all(results);
   }
 
-  function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs){
+  function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE){
+    SCALE=SCALE||1;
     var hasAnyImg=Object.keys(loadedImgs).filter(function(k){return k!=='_tainted';}).length>0;
     var IMG_SIZE=hasAnyImg?48:0;
     var ITEM_H=hasAnyImg?Math.max(54,22):22;
@@ -10429,7 +10432,8 @@
     });
     contentH+=20; // footer
     var H=Math.max(160,contentH);
-    canvas.width=W; canvas.height=H;
+    canvas.width=W*SCALE; canvas.height=H*SCALE;
+    ctx.setTransform(SCALE,0,0,SCALE,0,0);
 
     // Background
     ctx.fillStyle='#faf9f6';
@@ -10559,7 +10563,8 @@
   };
 
   // --- Auto Meal Poster (replaces normal poster when Mittagessen is selected) ---
-  function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs){
+  function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE){
+    SCALE=SCALE||1;
     // Pre-calculate height
     var tmpC=document.createElement('canvas');tmpC.width=W;tmpC.height=10;
     var tmpX=tmpC.getContext('2d');
@@ -10573,8 +10578,9 @@
       calcH+=6;
     });
     calcH+=10; // bottom padding
-    canvas.width=W;canvas.height=calcH;
+    canvas.width=W*SCALE;canvas.height=calcH*SCALE;
     ctx=canvas.getContext('2d');
+    ctx.setTransform(SCALE,0,0,SCALE,0,0);
 
     // Background
     ctx.fillStyle='#faf5ef';
@@ -10680,8 +10686,9 @@
     var canvas=document.getElementById('soc-post-canvas');
     if(!canvas){toast('Canvas nicht gefunden','error');return;}
     var ctx=canvas.getContext('2d');
-    var W=540,H=540;
-    canvas.width=W;canvas.height=H;
+    var W=540,H=540,SCALE=2;
+    canvas.width=W*SCALE;canvas.height=H*SCALE;
+    ctx.setTransform(SCALE,0,0,SCALE,0,0);
 
     function drawMealPoster(foodImg){
       // Background: warm off-white
