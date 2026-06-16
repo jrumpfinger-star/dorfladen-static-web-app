@@ -150,7 +150,8 @@ def get_download_url(token, folder_id, filename):
 # ---------- handlers ----------
 
 def handle_get(req, token, folder_id):
-    """GET: Return full katalog with image URLs refreshed."""
+    """GET: Return full katalog with image URLs refreshed.
+    If ?base64=1, download each image and return as data:URI (avoids CORS)."""
     katalog = load_katalog(token, folder_id)
     # Always refresh download URLs (they expire after ~1h)
     changed = False
@@ -162,6 +163,20 @@ def handle_get(req, token, folder_id):
                 changed = True
     if changed:
         save_katalog(token, folder_id, katalog)
+    # Convert images to base64 data URIs if requested
+    want_base64 = req.params.get("base64", "") == "1"
+    if want_base64:
+        for item in katalog:
+            dl_url = item.get("bild_url", "")
+            if dl_url and not dl_url.startswith("data:"):
+                try:
+                    r = requests.get(dl_url, timeout=15)
+                    if r.status_code == 200:
+                        ct = r.headers.get("Content-Type", "image/jpeg")
+                        b64 = base64.b64encode(r.content).decode("ascii")
+                        item["bild_url"] = f"data:{ct};base64,{b64}"
+                except:
+                    pass
     return ok({"success": True, "kategorien": KATEGORIEN, "items": katalog})
 
 

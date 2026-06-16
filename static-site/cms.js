@@ -9487,7 +9487,7 @@
     if(loading) loading.style.display='block';
     if(list) list.innerHTML='';
     if(empty) empty.style.display='none';
-    fetch(API+'/social-katalog')
+    fetch(API+'/social-katalog?base64=1')
       .then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
         return r.json();
