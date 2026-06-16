@@ -9808,7 +9808,8 @@
 
       html+='<div id="soc-pick-grid" style="max-height:260px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
       _socialKatalog.forEach(function(p){
-        html+='<label class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:2px;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=this.querySelector(\'input\').checked?\'#f0fdf4\':\'#fff\'">';
+        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:2px;transition:background .1s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=this.querySelector(\'input\').checked?\'#f0fdf4\':\'#fff\'">';
+        html+='<label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer;min-width:0">';
         html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" onchange="socialPickUpdate()" style="width:16px;height:16px;accent-color:#e1306c;flex-shrink:0">';
         if(p.bild_url){
           html+='<img src="'+esc(p.bild_url)+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';
@@ -9816,6 +9817,10 @@
         html+='<span style="font-weight:600;font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>';
         if(p.preis){var cp=parseFloat(p.preis);html+='<span style="font-size:11px;color:#2e7d32;font-weight:700;flex-shrink:0">'+(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
         html+='</label>';
+        html+='<select class="soc-pick-ab" data-id="'+esc(p.id)+'" style="font-size:10px;padding:2px 4px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;flex-shrink:0;width:56px">';
+        html+='<option value="">ab</option><option value="10:00">10:00</option><option value="12:00">12:00</option>';
+        html+='</select>';
+        html+='</div>';
       });
       html+='</div>';
       html+='<div id="soc-pick-count" style="font-size:10px;color:#9ca3af;text-align:right;margin-top:2px">'+_socialKatalog.length+' Produkte</div>';
@@ -10129,7 +10134,12 @@
     var katChecked=document.querySelectorAll('.soc-post-cb:checked');
     katChecked.forEach(function(cb){
       var item=_socialKatalog.find(function(p){return p.id===cb.value;});
-      if(item) selected.push(item);
+      if(item){
+        var copy={id:item.id,name:item.name,preis:item.preis,kategorie:item.kategorie,bild_url:item.bild_url};
+        var abSel=document.querySelector('.soc-pick-ab[data-id="'+item.id+'"]');
+        if(abSel&&abSel.value) copy.ab_uhr=abSel.value;
+        selected.push(copy);
+      }
     });
     // Free items (always included)
     _socFreeItems.forEach(function(fi){
@@ -10341,7 +10351,9 @@
     catKeys.forEach(function(cat,ci){
       contentH+=ci===0?4:20; // space above category (more gap between categories)
       contentH+=28; // cat header
-      contentH+=cats[cat].length*ITEM_H;
+      cats[cat].forEach(function(p){
+        contentH+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;
+      });
     });
     contentH+=50; // footer
     var H=Math.max(300,contentH);
@@ -10448,6 +10460,11 @@
         }
         if(dispName!==p.name) dispName+='\u2026';
         ctx.fillText(dispName,textX,textY+14);
+        if(p.ab_uhr){
+          ctx.fillStyle='#9ca3af';
+          ctx.font='italic 11px "Segoe UI",system-ui,sans-serif';
+          ctx.fillText('ab '+p.ab_uhr,textX,textY+28);
+        }
         if(p.preis){
           ctx.fillStyle='#2e7d32';
           ctx.font='bold 14px "Segoe UI",system-ui,sans-serif';
@@ -10455,7 +10472,7 @@
           var dp=parseFloat(p.preis);ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):p.preis)+' \u20AC',W-28,textY+14);
           ctx.textAlign='left';
         }
-        y+=ITEM_H;
+        y+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;
       });
       y+=10;
     });
