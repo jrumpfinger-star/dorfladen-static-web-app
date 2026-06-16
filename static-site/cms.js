@@ -10812,7 +10812,7 @@
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var bestellText='Hallo!\nIch m\u00F6chte bestellen:\n\n1x '+p.name+(p.preis?' ('+parseFloat(p.preis).toFixed(2)+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
+        var bestellText='Bestelle 1x '+p.name;
         msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
       });
       msg+='\uD83D\uDCDE 08082 / 622 99 91';
@@ -10840,7 +10840,7 @@
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr2[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var bestellText='Hallo!\nIch m\u00F6chte bestellen:\n\n1x '+p.name+(p.preis?' ('+parseFloat(p.preis).toFixed(2)+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
+        var bestellText='Bestelle 1x '+p.name;
         msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
       });
     }
