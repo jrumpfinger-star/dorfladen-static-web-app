@@ -9813,15 +9813,15 @@
       _socialKatalog.forEach(function(p){
         html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:2px;transition:background .1s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=this.querySelector(\'input[type=checkbox]\').checked?\'#f0fdf4\':\'#fff\'">';
         html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" onchange="socialPickUpdate()" style="width:16px;height:16px;accent-color:#e1306c;flex-shrink:0">';
-        // Clickable image thumbnail to replace photo (click=file, Ctrl+V=paste)
-        html+='<label tabindex="0" style="cursor:pointer;flex-shrink:0;position:relative;outline:none;border-radius:4px" title="Klick: Bild w\u00e4hlen / Strg+V: Einf\u00fcgen" onpaste="socialPickImgPaste(\''+esc(p.id)+'\',event)" onkeydown="if(event.key===\'v\'&&(event.ctrlKey||event.metaKey))this.focus()">';
+        // Image thumbnail: click=file dialog, Ctrl+V=paste image
+        html+='<div tabindex="0" class="soc-pick-thumb" data-pid="'+esc(p.id)+'" ondblclick="this.querySelector(\'input[type=file]\').click()" onpaste="socialPickImgPaste(\''+esc(p.id)+'\',event)" style="cursor:pointer;flex-shrink:0;outline:none;border-radius:4px;position:relative;outline-offset:1px" title="Doppelklick: Bild w\u00e4hlen / Strg+V: Einf\u00fcgen">';
         if(p.bild_url){
           html+='<img id="soc-pick-img-'+esc(p.id)+'" src="'+esc(p.bild_url)+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px" onerror="this.style.display=\'none\'">';
         } else {
           html+='<div id="soc-pick-img-'+esc(p.id)+'" style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px">&#128247;</div>';
         }
         html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+esc(p.id)+'\',this)" style="display:none">';
-        html+='</label>';
+        html+='</div>';
         html+='<span style="font-weight:600;font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>';
         if(p.preis){var cp=parseFloat(p.preis);html+='<span style="font-size:11px;color:#2e7d32;font-weight:700;flex-shrink:0">'+(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
         html+='<select class="soc-pick-ab" data-id="'+esc(p.id)+'" style="font-size:10px;padding:2px 4px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;flex-shrink:0;width:56px">';
