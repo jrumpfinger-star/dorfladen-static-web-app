@@ -11100,33 +11100,38 @@
         }
       }catch(e){socialCopyFallback(msg);}
     }
-    // Use navigator.share() with files only
-    if(navigator.share&&navigator.canShare){
-      var shareFiles=files;
-      if(!navigator.canShare({files:files})&&files.length>1){
-        console.log('[Social] canShare rejected '+files.length+' files, trying single file');
-        shareFiles=[files[0]];
+    // Use navigator.share() with files
+    if(navigator.share){
+      var shareFiles=files.length>1?[files[0]]:files;
+      // Check canShare if available, but don't block on it
+      var canShareOk=true;
+      if(navigator.canShare){
+        try{canShareOk=navigator.canShare({files:shareFiles});}catch(e){canShareOk=false;}
+        console.log('[Social] canShare result:',canShareOk);
       }
-      if(navigator.canShare({files:shareFiles})){
-        navigator.share({files:shareFiles}).then(function(){
-          socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
-        }).catch(function(err){
-          console.warn('[Social] share error:',err.name,err.message);
-          if(err.name!=='AbortError'){
-            socialFallbackDownloadFiles(files);
-          }
-        });
-        if(hasMt&&msg){
-          socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage \u2013 nach dem Poster als 2. Nachricht mit Strg+V einf\u00fcgen',true);
+      // Try share even if canShare says no (some browsers lie)
+      console.log('[Social] attempting navigator.share with',shareFiles.length,'files');
+      navigator.share({files:shareFiles}).then(function(){
+        socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
+      }).catch(function(err){
+        console.warn('[Social] share error:',err.name,err.message);
+        if(err.name==='AbortError') return;
+        // Only download on desktop, not mobile
+        if(!socialIsMobile()){
+          socialFallbackDownloadFiles(files);
         } else {
-          socialStatus('soc-post-status','Poster wird geteilt...',true);
+          socialStatus('soc-post-status','Teilen fehlgeschlagen: '+err.message,false);
         }
-        return;
+      });
+      if(hasMt&&msg){
+        socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage \u2013 nach dem Poster als 2. Nachricht mit Strg+V einf\u00fcgen',true);
+      } else {
+        socialStatus('soc-post-status','Poster wird geteilt...',true);
       }
-      console.log('[Social] canShare rejected even single file');
+      return;
     }
-    // Fallback if navigator.share not available
-    console.log('[Social] using fallback download');
+    // Fallback if navigator.share not available (desktop only)
+    console.log('[Social] navigator.share not available, using download fallback');
     socialFallbackDownloadFiles(files);
   }
   function socialFallbackDownloadFiles(files){
