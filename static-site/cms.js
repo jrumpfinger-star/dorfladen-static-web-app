@@ -11171,6 +11171,7 @@
     // Best case: share with files
     if(canShareFiles){
       var shareData={files:files.length>1?[files[0]]:files};
+      if(msg) shareData.text=msg;
       navigator.share(shareData).then(function(){
         socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
       }).catch(function(err){
@@ -11209,15 +11210,15 @@
     } else {
       socialShareViaDownload(files,msg,hasMt);
     }
-    // Open WhatsApp (no pre-filled text)
+    // Open WhatsApp with order text
     setTimeout(function(){
-      window.open('https://wa.me/','_blank');
+      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
     },300);
   }
   function socialShareViaDownload(files,msg,hasMt){
     socialFallbackDownloadFiles(files);
     setTimeout(function(){
-      window.open('https://wa.me/','_blank');
+      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
     },500);
   }
   function socialCopyMsg(msg){
