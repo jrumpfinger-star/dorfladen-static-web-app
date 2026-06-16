@@ -10114,6 +10114,8 @@
     // Hide individual meal poster section (no longer needed)
     var mealPosterWrap=document.getElementById('soc-meal-posters');
     if(mealPosterWrap) mealPosterWrap.style.display='none';
+    // Auto-generate preview so poster is ready when share button is clicked
+    if(sel.length) socialGenPreview();
   };
 
   // --- Gather all selected items (Katalog + Wochenplan + Frei) ---
@@ -10986,8 +10988,25 @@
       canvases.push({canvas:mealCanvas,name:'mittagessen-poster.png'});
     }
     if(!canvases.length){
-      socialStatus('soc-post-status','Bitte zuerst Vorschau aktualisieren',false);
-      return;
+      // Fallback: draw poster synchronously without images
+      console.log('[Social] no canvas ready, drawing sync fallback');
+      var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+      var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+      var fc=document.createElement('canvas');
+      var fx=fc.getContext('2d');
+      if(mtI.length>0&&otherI.length>0){
+        var tD=document.createElement('canvas');
+        socialDrawPoster(tD,tD.getContext('2d'),540,otherI,titel,freitext,{});
+        var tM=document.createElement('canvas');
+        socialDrawMealPosterAuto(tM,tM.getContext('2d'),540,mtI,{});
+        fc.width=540;fc.height=tD.height+tM.height;
+        fx.drawImage(tD,0,0);fx.drawImage(tM,0,tD.height);
+      } else if(mtI.length>0){
+        socialDrawMealPosterAuto(fc,fx,540,mtI,{});
+      } else {
+        socialDrawPoster(fc,fx,540,otherI,titel,freitext,{});
+      }
+      canvases.push({canvas:fc,name:'dorfladen-post.png'});
     }
     // Convert canvas to blob synchronously via toDataURL→fetch
     var isTainted=window._socLoadedImgs&&window._socLoadedImgs['_tainted'];
