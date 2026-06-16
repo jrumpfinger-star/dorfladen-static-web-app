@@ -11069,7 +11069,17 @@
     return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
   function socialShareFiles(files,msg,hasMt){
-    console.log('[Social] share: '+files.length+' files, hasMt='+hasMt+', msg='+(msg?msg.substring(0,50):'null'));
+    console.log('[Social] share: '+files.length+' files, hasMt='+hasMt);
+    // Copy order text to clipboard BEFORE sharing (if Mittagessen selected)
+    if(hasMt&&msg){
+      try{
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+          navigator.clipboard.writeText(msg).catch(function(){socialCopyFallback(msg);});
+        } else {
+          socialCopyFallback(msg);
+        }
+      }catch(e){socialCopyFallback(msg);}
+    }
     // Use navigator.share() with files only
     if(navigator.share&&navigator.canShare){
       var shareFiles=files;
@@ -11078,33 +11088,18 @@
         shareFiles=[files[0]];
       }
       if(navigator.canShare({files:shareFiles})){
-        var orderTextSent=false;
         navigator.share({files:shareFiles}).then(function(){
           socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
-          if(hasMt&&msg&&!orderTextSent){
-            orderTextSent=true;
-            socialSendOrderText(msg);
-          }
         }).catch(function(err){
           console.warn('[Social] share error:',err.name,err.message);
-          if(hasMt&&msg&&!orderTextSent){
-            orderTextSent=true;
-            socialSendOrderText(msg);
-          }
           if(err.name!=='AbortError'){
-            socialFallbackDownloadFiles(files,msg,hasMt);
+            socialFallbackDownloadFiles(files);
           }
         });
-        socialStatus('soc-post-status','Poster wird geteilt...',true);
-        // Fallback: if promise never resolves, send order text after 15 seconds
         if(hasMt&&msg){
-          setTimeout(function(){
-            if(!orderTextSent){
-              orderTextSent=true;
-              console.log('[Social] share promise timeout, sending order text');
-              socialSendOrderText(msg);
-            }
-          },15000);
+          socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage \u2013 nach dem Poster als 2. Nachricht mit Strg+V einf\u00fcgen',true);
+        } else {
+          socialStatus('soc-post-status','Poster wird geteilt...',true);
         }
         return;
       }
@@ -11112,14 +11107,9 @@
     }
     // Fallback if navigator.share not available
     console.log('[Social] using fallback download');
-    socialFallbackDownloadFiles(files,msg,hasMt);
+    socialFallbackDownloadFiles(files);
   }
-  function socialSendOrderText(msg){
-    var waUrl=socialIsMobile()?'https://wa.me/?text='+encodeURIComponent(msg):'https://web.whatsapp.com/send?text='+encodeURIComponent(msg);
-    socialStatus('soc-post-status','\uD83D\uDCE9 Bestelltext wird ge\u00f6ffnet...',true);
-    setTimeout(function(){window.open(waUrl,'_blank');},1000);
-  }
-  function socialFallbackDownloadFiles(files,msg,hasMt){
+  function socialFallbackDownloadFiles(files){
     files.forEach(function(f){
       var url=URL.createObjectURL(f);
       var a=document.createElement('a');a.href=url;a.download=f.name;
@@ -11127,9 +11117,6 @@
       setTimeout(function(){URL.revokeObjectURL(url);},2000);
     });
     socialStatus('soc-post-status','\u2705 '+files.length+' Poster heruntergeladen',true);
-    if(hasMt&&msg){
-      socialSendOrderText(msg);
-    }
   }
 
   // Download poster files as fallback
