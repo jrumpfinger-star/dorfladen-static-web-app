@@ -11009,10 +11009,15 @@
         socialFallbackWaShare(null,msg);
         return;
       }
-      // Convert all canvases to blobs
+      // Convert all canvases to blobs (skip tainted canvases)
       var blobPromises=canvases.map(function(c){
         return new Promise(function(resolve){
-          c.canvas.toBlob(function(blob){resolve({blob:blob,name:c.name});},'image/png');
+          try{
+            c.canvas.toBlob(function(blob){resolve({blob:blob,name:c.name});},'image/png');
+          }catch(e){
+            console.warn('[Social] canvas tainted, skipping:',c.name,e.message);
+            resolve({blob:null,name:c.name});
+          }
         });
       });
       Promise.all(blobPromises).then(function(results){
@@ -11058,20 +11063,10 @@
     return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
   function socialShareFiles(files,msg){
-    // Copy text to clipboard (for optional manual caption via Ctrl+V)
-    if(msg){
-      try{
-        if(navigator.clipboard&&navigator.clipboard.writeText){
-          navigator.clipboard.writeText(msg).catch(function(){socialCopyFallback(msg);});
-        } else {
-          socialCopyFallback(msg);
-        }
-      }catch(e){socialCopyFallback(msg);}
-    }
-    // Use navigator.share() with files only (no text to avoid separate message)
-    console.log('[Social] share: '+files.length+' files, navigator.share='+!!navigator.share+', canShare='+!!(navigator.canShare));
+    var hasMt=msg&&msg.indexOf('bestellen')>=0;
+    console.log('[Social] share: '+files.length+' files, hasMt='+hasMt);
+    // Use navigator.share() with files only
     if(navigator.share&&navigator.canShare){
-      // Try all files first, if canShare fails try single file
       var shareFiles=files;
       if(!navigator.canShare({files:files})&&files.length>1){
         console.log('[Social] canShare rejected '+files.length+' files, trying single file');
@@ -11079,16 +11074,18 @@
       }
       if(navigator.canShare({files:shareFiles})){
         navigator.share({files:shareFiles}).then(function(){
-          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+          socialStatus('soc-post-status','\u2705 Poster geteilt!',true);
+          // After poster is shared, send order text as second message
+          if(hasMt&&msg){
+            socialSendOrderText(msg);
+          }
         }).catch(function(err){
           console.warn('[Social] share error:',err.name,err.message);
           if(err.name!=='AbortError'){
             socialFallbackDownloadFiles(files,msg);
           }
         });
-        if(msg){
-          socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage \u2013 optional als Bildunterschrift mit Strg+V',true);
-        }
+        socialStatus('soc-post-status','Poster wird geteilt...',true);
         return;
       }
       console.log('[Social] canShare rejected even single file');
@@ -11096,6 +11093,11 @@
     // Fallback if navigator.share not available
     console.log('[Social] using fallback download');
     socialFallbackDownloadFiles(files,msg);
+  }
+  function socialSendOrderText(msg){
+    var waUrl=socialIsMobile()?'https://wa.me/?text='+encodeURIComponent(msg):'https://web.whatsapp.com/send?text='+encodeURIComponent(msg);
+    socialStatus('soc-post-status','\uD83D\uDCE9 Bestelltext wird ge\u00f6ffnet...',true);
+    setTimeout(function(){window.open(waUrl,'_blank');},1000);
   }
   function socialFallbackDownloadFiles(files,msg){
     files.forEach(function(f){
