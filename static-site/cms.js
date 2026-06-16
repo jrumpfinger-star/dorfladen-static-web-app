@@ -11050,11 +11050,19 @@
   }
   function socialShareBlob(blob,filename,msg){
     var file=new File([blob],filename,{type:blob.type||'image/png'});
-    // Use navigator.share() with single file + text (works on mobile + desktop)
+    // Copy text to clipboard first (for Ctrl+V in "Add a message")
+    if(msg){
+      try{
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+          navigator.clipboard.writeText(msg).catch(function(){socialCopyFallback(msg);});
+        } else {
+          socialCopyFallback(msg);
+        }
+      }catch(e){socialCopyFallback(msg);}
+    }
+    // Use navigator.share() with file only (text via clipboard)
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      var shareData={files:[file]};
-      if(msg) shareData.text=msg;
-      navigator.share(shareData).then(function(){
+      navigator.share({files:[file]}).then(function(){
         socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
       }).catch(function(err){
         console.warn('[Social] share error:',err.name,err.message);
@@ -11062,6 +11070,7 @@
           socialFallbackDownload(blob,filename,msg);
         }
       });
+      socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 in WhatsApp mit Strg+V einf\u00fcgen',true);
       return;
     }
     // Fallback if navigator.share not available
