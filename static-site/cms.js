@@ -11069,21 +11069,32 @@
       }catch(e){socialCopyFallback(msg);}
     }
     // Use navigator.share() with files only (no text to avoid separate message)
-    if(navigator.share&&navigator.canShare&&navigator.canShare({files:files})){
-      navigator.share({files:files}).then(function(){
-        socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
-      }).catch(function(err){
-        console.warn('[Social] share error:',err.name,err.message);
-        if(err.name!=='AbortError'){
-          socialFallbackDownloadFiles(files,msg);
-        }
-      });
-      if(msg){
-        socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage \u2013 optional als Bildunterschrift mit Strg+V',true);
+    console.log('[Social] share: '+files.length+' files, navigator.share='+!!navigator.share+', canShare='+!!(navigator.canShare));
+    if(navigator.share&&navigator.canShare){
+      // Try all files first, if canShare fails try single file
+      var shareFiles=files;
+      if(!navigator.canShare({files:files})&&files.length>1){
+        console.log('[Social] canShare rejected '+files.length+' files, trying single file');
+        shareFiles=[files[0]];
       }
-      return;
+      if(navigator.canShare({files:shareFiles})){
+        navigator.share({files:shareFiles}).then(function(){
+          socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+        }).catch(function(err){
+          console.warn('[Social] share error:',err.name,err.message);
+          if(err.name!=='AbortError'){
+            socialFallbackDownloadFiles(files,msg);
+          }
+        });
+        if(msg){
+          socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext in Zwischenablage \u2013 optional als Bildunterschrift mit Strg+V',true);
+        }
+        return;
+      }
+      console.log('[Social] canShare rejected even single file');
     }
     // Fallback if navigator.share not available
+    console.log('[Social] using fallback download');
     socialFallbackDownloadFiles(files,msg);
   }
   function socialFallbackDownloadFiles(files,msg){
