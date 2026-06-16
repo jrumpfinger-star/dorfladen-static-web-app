@@ -10453,7 +10453,7 @@
 
   // --- Auto Meal Poster (replaces normal poster when Mittagessen is selected) ---
   function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs){
-    var H=540;
+    var H=460;
     canvas.width=W;canvas.height=H;
 
     // Find first available image
@@ -10565,30 +10565,6 @@
       }
       ty+=6;
     });
-
-    // Order hint
-    ty=Math.min(ty,H-70);
-    ctx.fillStyle='#25D366';
-    var btnW=240,btnH=32,btnX=(W-btnW)/2,btnY=ty;
-    ctx.beginPath();
-    ctx.moveTo(btnX+10,btnY);ctx.lineTo(btnX+btnW-10,btnY);
-    ctx.quadraticCurveTo(btnX+btnW,btnY,btnX+btnW,btnY+10);
-    ctx.lineTo(btnX+btnW,btnY+btnH-10);
-    ctx.quadraticCurveTo(btnX+btnW,btnY+btnH,btnX+btnW-10,btnY+btnH);
-    ctx.lineTo(btnX+10,btnY+btnH);
-    ctx.quadraticCurveTo(btnX,btnY+btnH,btnX,btnY+btnH-10);
-    ctx.lineTo(btnX,btnY+10);
-    ctx.quadraticCurveTo(btnX,btnY,btnX+10,btnY);
-    ctx.closePath();ctx.fill();
-    ctx.fillStyle='#fff';
-    ctx.font='bold 12px "Segoe UI",system-ui,sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('\uD83D\uDCDE Jetzt vorbestellen!',W/2,btnY+btnH/2+4);
-
-    // Phone number below button
-    ctx.fillStyle='#6b7280';
-    ctx.font='11px "Segoe UI",system-ui,sans-serif';
-    ctx.fillText('Tel: 08082 / 622 99 91  \u2022  Einfach anrufen oder WhatsApp schreiben!',W/2,btnY+btnH+18);
 
   }
 
@@ -10740,24 +10716,6 @@
       } else {
         ty+=16;
       }
-
-      // Order link
-      ctx.fillStyle='#25D366';
-      var btnW=260,btnH=36,btnX=(W-btnW)/2,btnY=ty-10;
-      ctx.beginPath();
-      ctx.moveTo(btnX+10,btnY);ctx.lineTo(btnX+btnW-10,btnY);
-      ctx.quadraticCurveTo(btnX+btnW,btnY,btnX+btnW,btnY+10);
-      ctx.lineTo(btnX+btnW,btnY+btnH-10);
-      ctx.quadraticCurveTo(btnX+btnW,btnY+btnH,btnX+btnW-10,btnY+btnH);
-      ctx.lineTo(btnX+10,btnY+btnH);
-      ctx.quadraticCurveTo(btnX,btnY+btnH,btnX,btnY+btnH-10);
-      ctx.lineTo(btnX,btnY+10);
-      ctx.quadraticCurveTo(btnX,btnY,btnX+10,btnY);
-      ctx.closePath();ctx.fill();
-      ctx.fillStyle='#fff';
-      ctx.font='bold 13px "Segoe UI",system-ui,sans-serif';
-      ctx.fillText('\uD83D\uDCDE Jetzt vorbestellen per WhatsApp',W/2,btnY+btnH/2+5);
-
 
       // Scroll canvas into view
       canvas.scrollIntoView({behavior:'smooth',block:'nearest'});
