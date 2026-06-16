@@ -10806,8 +10806,7 @@
 
     // Mittagessen-only: order links with quantity and pickup time
     if(onlyMittagessen){
-      var msg='\uD83C\uDF7D *Mittagstisch*\n\n';
-      msg+='\uD83D\uDC49 *Direkt bestellen per Klick:*\n\n';
+      var msg='\uD83D\uDC49 *Direkt bestellen per Klick:*\n\n';
       var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr[i]||('\u2022');
@@ -10815,8 +10814,7 @@
         var bestellText='Bestelle 1x '+p.name;
         msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
       });
-      msg+='\uD83D\uDCDE 08082 / 622 99 91';
-      return msg;
+      return msg.trim();
     }
 
     // Full message for mixed categories
@@ -11088,41 +11086,30 @@
     }catch(e){return false;}
   }
   function socialShareBlob(blob,filename,msg){
-    // Step 1: Copy image to clipboard
-    var imgCopied=false;
-    var copyPromise;
-    if(navigator.clipboard&&navigator.clipboard.write&&typeof ClipboardItem!=='undefined'){
-      var pngBlob=(blob.type==='image/png')?blob:new Blob([blob],{type:'image/png'});
+    // Step 1: Copy TEXT to clipboard (for Ctrl+V in WhatsApp)
+    var textCopied=false;
+    if(msg){
       try{
-        copyPromise=navigator.clipboard.write([new ClipboardItem({'image/png':pngBlob})]).then(function(){
-          imgCopied=true;
-          console.log('[Social] Poster in Zwischenablage kopiert');
-        }).catch(function(e){
-          console.warn('[Social] Clipboard write failed:',e);
-        });
-      }catch(e){
-        console.warn('[Social] ClipboardItem error:',e);
-        copyPromise=Promise.resolve();
-      }
-    } else {
-      copyPromise=Promise.resolve();
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+          navigator.clipboard.writeText(msg).then(function(){
+            textCopied=true;
+            console.log('[Social] Text in Zwischenablage kopiert');
+          }).catch(function(){
+            textCopied=socialCopyFallback(msg);
+          });
+        } else {
+          textCopied=socialCopyFallback(msg);
+        }
+      }catch(e){textCopied=socialCopyFallback(msg);}
     }
-    copyPromise.then(function(){
-      // Step 2: Download image as backup
-      var url=URL.createObjectURL(blob);
-      var a=document.createElement('a');a.href=url;a.download=filename;
-      document.body.appendChild(a);a.click();document.body.removeChild(a);
-      setTimeout(function(){URL.revokeObjectURL(url);},2000);
-      // Step 3: Open WhatsApp with text
-      if(imgCopied){
-        socialStatus('soc-post-status','\u2705 Poster in Zwischenablage + heruntergeladen! In WhatsApp Chat \u00f6ffnen & Strg+V',true);
-      } else {
-        socialStatus('soc-post-status','\u2705 Poster heruntergeladen! In WhatsApp als Anhang senden',true);
-      }
-      if(msg){
-        setTimeout(function(){window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');},800);
-      }
-    });
+    // Step 2: Download image
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    // Step 3: Status + open WhatsApp Web
+    socialStatus('soc-post-status','\u2705 Poster heruntergeladen & Bestelltext kopiert! In WhatsApp: Bild anh\u00e4ngen + Strg+V f\u00fcr Text',true);
+    setTimeout(function(){window.open('https://web.whatsapp.com','_blank');},800);
   }
 
   // Download poster files as fallback
