@@ -315,11 +315,6 @@ def _handle_post(req, dv_token, base_url, headers):
     try:
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
-        # Fallback: if dl_abhol_zeitslot column doesn't exist yet, retry without it
-        if r.status_code == 400 and 'dl_abhol_zeitslot' in payload:
-            logging.warning("[shop-order] dl_abhol_zeitslot column not found, retrying POST without it")
-            del payload['dl_abhol_zeitslot']
-            r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
         if r.status_code in (200, 201):
             record = r.json()
             return func.HttpResponse(
@@ -377,9 +372,6 @@ def _handle_get(req, dv_token, base_url, headers):
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
         try:
             r = requests.get(url, headers=headers, timeout=30)
-            if r.status_code == 400 and 'dl_abhol_zeitslot' in url:
-                url = url.replace(',dl_abhol_zeitslot', '')
-                r = requests.get(url, headers=headers, timeout=30)
             if r.status_code == 200:
                 item = r.json()
                 positionen = json.loads(item.get("dl_positionen_json", "[]"))
@@ -425,11 +417,6 @@ def _handle_get(req, dv_token, base_url, headers):
 
     try:
         r = requests.get(url, headers=headers, timeout=30)
-        # Fallback: if dl_abhol_zeitslot column doesn't exist yet, retry without it
-        if r.status_code == 400 and 'dl_abhol_zeitslot' in url:
-            logging.warning("[shop-order] dl_abhol_zeitslot not found, retrying without it")
-            url = url.replace(',dl_abhol_zeitslot', '')
-            r = requests.get(url, headers=headers, timeout=30)
         if r.status_code == 200:
             items = r.json().get("value", [])
             orders = []
@@ -496,13 +483,8 @@ def _handle_patch(req, dv_token, base_url, headers):
                 json.dumps({"success": False, "error": "Bitte melden Sie sich an."}, ensure_ascii=False),
                 status_code=401, headers=get_cors_headers()
             )
-        select_fields = "dl_kunde_email,dl_status,dl_abholdatum,dl_abhol_zeitslot"
-        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select={select_fields}"
+        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_status,dl_abholdatum,dl_abhol_zeitslot"
         cr = requests.get(check_url, headers=headers, timeout=30)
-        # Fallback if dl_abhol_zeitslot column doesn't exist
-        if cr.status_code == 400 and 'dl_abhol_zeitslot' in select_fields:
-            check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_status,dl_abholdatum"
-            cr = requests.get(check_url, headers=headers, timeout=30)
         if cr.status_code != 200:
             return func.HttpResponse(
                 json.dumps({"success": False, "error": "Bestellung nicht gefunden"}, ensure_ascii=False),
