@@ -482,11 +482,15 @@ document.head.appendChild(msalScript);
     /* Mittagessen meals: bigger touch targets */
     .soc-post-wp{width:22px!important;height:22px!important}
     .soc-post-wp+span,.soc-post-wp~span{font-size:13px!important}
-    /* Pick grid */
-    #soc-pick-grid{max-height:250px!important;-webkit-overflow-scrolling:touch}
-    #soc-pick-grid .soc-pick-row{padding:10px 8px!important;gap:8px!important;min-height:44px!important;align-items:center!important}
-    #soc-pick-grid .soc-pick-row input{width:22px!important;height:22px!important}
-    #soc-pick-grid .soc-pick-row span{font-size:13px!important}
+    /* Pick grid – mobile card layout */
+    #soc-pick-grid{max-height:50vh!important;-webkit-overflow-scrolling:touch;padding:6px!important}
+    #soc-pick-grid .soc-pick-row{padding:10px!important;gap:10px!important;min-height:auto!important;align-items:flex-start!important;border-radius:10px!important;margin-bottom:4px!important}
+    #soc-pick-grid .soc-pick-row input[type=checkbox]{width:24px!important;height:24px!important;margin-top:6px!important}
+    #soc-pick-grid .soc-pick-thumb-wrap{width:48px!important;height:48px!important}
+    #soc-pick-grid .soc-pick-thumb img,#soc-pick-grid .soc-pick-thumb>div{width:48px!important;height:48px!important;border-radius:8px!important}
+    #soc-pick-grid .soc-pick-cam{width:26px!important;height:26px!important;font-size:14px!important;bottom:-4px!important;right:-4px!important}
+    #soc-pick-grid .soc-pick-name{font-size:14px!important;line-height:1.35!important}
+    #soc-pick-grid .soc-pick-ab{min-height:32px!important;font-size:12px!important;padding:4px 8px!important}
     /* Cat chips larger touch targets */
     .soc-cat-chip{padding:8px 14px!important;font-size:12px!important;min-height:36px!important}
     /* Selected tags */

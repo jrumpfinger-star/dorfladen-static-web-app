@@ -9848,24 +9848,37 @@
       });
       html+='</div>';
 
-      html+='<div id="soc-pick-grid" style="max-height:260px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
+      html+='<div id="soc-pick-grid" style="max-height:340px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
       _socialKatalog.forEach(function(p){
-        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:2px;transition:background .1s" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=this.querySelector(\'input[type=checkbox]\').checked?\'#f0fdf4\':\'#fff\'">';
-        html+='<input type="checkbox" class="soc-post-cb" value="'+esc(p.id)+'" onchange="socialPickUpdate()" style="width:16px;height:16px;accent-color:#e1306c;flex-shrink:0">';
-        // Image thumbnail: click=file dialog, Ctrl+V=paste image
-        html+='<div tabindex="0" class="soc-pick-thumb" data-pid="'+esc(p.id)+'" ondblclick="this.querySelector(\'input[type=file]\').click()" onpaste="socialPickImgPaste(\''+esc(p.id)+'\',event)" style="cursor:pointer;flex-shrink:0;outline:none;border-radius:4px;position:relative;outline-offset:1px" title="Doppelklick: Bild w\u00e4hlen / Strg+V: Einf\u00fcgen">';
+        var pid=esc(p.id);
+        var priceStr='';
+        if(p.preis){var cp=parseFloat(p.preis);priceStr=(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC';}
+        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px 8px;border-radius:8px;margin-bottom:3px;transition:background .15s,border-color .15s;border:1px solid transparent" onmouseover="if(!this.querySelector(\'input[type=checkbox]\').checked)this.style.background=\'#fef2f2\'" onmouseout="var c=this.querySelector(\'input[type=checkbox]\').checked;this.style.background=c?\'#f0fdf4\':\'#fff\';this.style.borderColor=c?\'#86efac\':\'transparent\'">';
+        // Checkbox
+        html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate()" style="width:20px;height:20px;accent-color:#e1306c;flex-shrink:0;margin-top:2px">';
+        // Thumbnail
+        html+='<div class="soc-pick-thumb-wrap" style="flex-shrink:0;position:relative">';
+        html+='<div tabindex="0" class="soc-pick-thumb" data-pid="'+pid+'" onpaste="socialPickImgPaste(\''+pid+'\',event)" style="cursor:pointer;outline:none;border-radius:6px;position:relative">';
         if(p.bild_url){
-          html+='<img id="soc-pick-img-'+esc(p.id)+'" src="'+esc(p.bild_url)+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px" onerror="this.style.display=\'none\'">';
+          html+='<img id="soc-pick-img-'+pid+'" src="'+esc(p.bild_url)+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block" onerror="this.style.display=\'none\'">';
         } else {
-          html+='<div id="soc-pick-img-'+esc(p.id)+'" style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px">&#128247;</div>';
+          html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#9ca3af;border:1px solid #e5e7eb">&#128247;</div>';
         }
-        html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+esc(p.id)+'\',this)" style="display:none">';
+        html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+pid+'\',this)" style="display:none">';
         html+='</div>';
-        html+='<span style="font-weight:600;font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>';
-        if(p.preis){var cp=parseFloat(p.preis);html+='<span style="font-size:11px;color:#2e7d32;font-weight:700;flex-shrink:0">'+(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
-        html+='<select class="soc-pick-ab" data-id="'+esc(p.id)+'" style="font-size:10px;padding:2px 4px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;flex-shrink:0;width:56px">';
+        // Camera button overlay
+        html+='<button type="button" onclick="this.parentNode.querySelector(\'input[type=file]\').click()" class="soc-pick-cam" style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d5db;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)" title="Bild \u00e4ndern (Kamera/Datei)">&#128247;</button>';
+        html+='</div>';
+        // Name + price + ab (stacked on mobile)
+        html+='<div style="flex:1;min-width:0">';
+        html+='<div class="soc-pick-name" style="font-weight:600;font-size:13px;line-height:1.3;word-break:break-word;color:#1f2937">'+esc(p.name)+'</div>';
+        html+='<div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">';
+        if(priceStr) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+priceStr+'</span>';
+        html+='<select class="soc-pick-ab" data-id="'+pid+'" style="font-size:11px;padding:2px 6px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;min-height:26px">';
         html+='<option value="">ab</option><option value="10:00">10:00</option><option value="12:00">12:00</option>';
         html+='</select>';
+        html+='</div>';
+        html+='</div>';
         html+='</div>';
       });
       html+='</div>';
@@ -9974,7 +9987,7 @@
         var img=document.createElement('img');
         img.id='soc-pick-img-'+prodId;
         img.src=b64;
-        img.style.cssText='width:28px;height:28px;object-fit:cover;border-radius:4px';
+        img.style.cssText='width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block';
         thumb.parentNode.replaceChild(img,thumb);
       }
     }
@@ -10203,7 +10216,9 @@
     // Highlight checked rows
     document.querySelectorAll('#soc-pick-grid .soc-pick-row').forEach(function(row){
       var cb=row.querySelector('input[type=checkbox]');
-      row.style.background=cb&&cb.checked?'#f0fdf4':'#fff';
+      var isChecked=cb&&cb.checked;
+      row.style.background=isChecked?'#f0fdf4':'#fff';
+      row.style.borderColor=isChecked?'#86efac':'transparent';
     });
     // Hide individual meal poster section (no longer needed)
     var mealPosterWrap=document.getElementById('soc-meal-posters');
