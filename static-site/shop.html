@@ -1034,9 +1034,11 @@
         reorderBanner+='</div>';
         // Detail panel (hidden by default)
         reorderBanner+='<div data-reorder-detail="'+oi+'" style="display:none;border-top:1px solid #bae6fd;background:#f0f9ff;padding:8px 14px">';
-        po.positionen.forEach(function(p){
+        po.positionen.forEach(function(p,pi){
+          var pArtnr=p.artikelnummer||p.strichcode||'';
           var pPreis=p.positionspreis!=null?fmtP(p.positionspreis):p.einzelpreis!=null?fmtP((Number(p.einzelpreis)||0)*(Number(p.menge)||0)):'';
-          reorderBanner+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #e0f2fe;font-size:12px">';
+          reorderBanner+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #e0f2fe;font-size:12px">';
+          reorderBanner+='<button data-reorder-single="'+esc(pArtnr)+'" data-reorder-single-qty="'+(Number(p.menge)||1)+'" style="flex-shrink:0;width:26px;height:26px;border:none;border-radius:6px;background:#2e7d4f;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Diesen Artikel übernehmen">+</button>';
           reorderBanner+='<div style="flex:1;min-width:0;font-weight:600;color:#1e3a5f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.bezeichnung||'')+'</div>';
           reorderBanner+='<div style="color:#0369a1;white-space:nowrap">'+esc(p.menge)+' '+esc(p.einheit||'')+'</div>';
           if(pPreis) reorderBanner+='<div style="font-weight:700;color:#0c4a6e;white-space:nowrap">'+pPreis+' €</div>';
@@ -1072,6 +1074,18 @@
         var idx=parseInt(btn.getAttribute('data-reorder-btn'),10);
         var o=previousOrders[idx];
         if(o&&o.positionen) reorderFromHistory(o.positionen,o.bestellnummer);
+      });
+    });
+    document.querySelectorAll('[data-reorder-single]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var artnr=btn.getAttribute('data-reorder-single');
+        var menge=parseFloat(btn.getAttribute('data-reorder-single-qty'))||1;
+        var article=allArticles.find(function(a){return a.artikelnummer===artnr||a.strichcode===artnr;});
+        if(!article){showToast('Artikel nicht mehr verfügbar');return;}
+        addToCart(article,menge);
+        btn.style.background='#166534';btn.textContent='✓';
+        setTimeout(function(){btn.style.background='#2e7d4f';btn.textContent='+';},1200);
       });
     });
     // View toggle click
