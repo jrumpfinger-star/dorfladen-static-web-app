@@ -442,16 +442,23 @@
         e.preventDefault(); // Prevent blur from firing before selection completes
         var row=inp.closest('.cms-ang-row');
         if(row){
-          inp.value=m.b||m.produktVal||'';
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
-          if(nrInp) nrInp.value=m.sc||'';
           var detInp=row.querySelector('[data-f="details"]');
-          if(detInp) detInp.value=m.menge||m.details||'';
           var preisInp=row.querySelector('[data-f="preis"]');
-          if(preisInp && m.preis) preisInp.value=Number(m.preis).toFixed(2).replace('.',',');
           var stattInp=row.querySelector('[data-f="statt_preis"]');
-          if(stattInp && m.statt_preis) stattInp.value=Number(m.statt_preis).toFixed(2).replace('.',',');
-          console.log('[CMS] Selected article:',m.b,'Nr:',m.nr,'Menge:',m.menge,'Preis:',m.preis,'Statt:',m.statt_preis);
+          // Check if a DIFFERENT article is being selected (compare by strichcode/artikelnummer)
+          var oldNr=nrInp?nrInp.value.trim():'';
+          var newNr=(m.sc||'').trim();
+          var isDifferentArticle=!oldNr||oldNr!==newNr;
+          inp.value=m.b||m.produktVal||'';
+          if(nrInp) nrInp.value=m.sc||'';
+          // Only overwrite details/prices if selecting a DIFFERENT article
+          if(isDifferentArticle){
+            if(detInp) detInp.value=m.menge||m.details||'';
+            if(preisInp && m.preis) preisInp.value=Number(m.preis).toFixed(2).replace('.',',');
+            if(stattInp && m.statt_preis) stattInp.value=Number(m.statt_preis).toFixed(2).replace('.',',');
+          }
+          console.log('[CMS] Selected article:',m.b,'Nr:',m.nr,'Menge:',m.menge,'isDifferent:',isDifferentArticle);
           // Auto-load image from SharePoint (by artikelnummer or strichcode)
           if((m.nr || m.sc) && typeof cmsLoadBildSharePoint==='function'){
             var rowId=row.id.replace('cms-ar-','');
