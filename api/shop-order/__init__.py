@@ -228,9 +228,9 @@ def _handle_post(req, dv_token, base_url, headers):
         "dl_gesamtsumme": round(gesamtsumme, 2),
         "dl_anmerkungen": anmerkungen,
         "dl_positionen_json": json.dumps(clean_positionen, ensure_ascii=False),
-        "dl_iban_masked": iban_masked,
-        "dl_kontoinhaber": kontoinhaber
     }
+    # IBAN/Kontoinhaber: nur setzen wenn Felder in Dataverse existieren
+    # Werden vorerst im Kundenstamm (dl_shopkundes) abgerufen statt in der Bestellung gespeichert
 
     logging.info(f"[shop-order] POST payload keys: {list(payload.keys())}")
     logging.info(f"[shop-order] POST payload: {json.dumps(payload, ensure_ascii=False, default=str)[:2000]}")
@@ -290,7 +290,7 @@ def _handle_get(req, dv_token, base_url, headers):
                 json.dumps({"success": False, "error": "Bestell-ID erforderlich"}),
                 status_code=400, headers=get_cors_headers()
             )
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json,dl_iban_masked,dl_kontoinhaber"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
         try:
             r = requests.get(url, headers=headers, timeout=30)
             if r.status_code == 200:
@@ -308,9 +308,7 @@ def _handle_get(req, dv_token, base_url, headers):
                         "gesamtsumme": item.get("dl_gesamtsumme", 0),
                         "anmerkungen": item.get("dl_anmerkungen", ""),
                         "positionen": positionen,
-                        "pack_data": pack_data,
-                        "iban_masked": item.get("dl_iban_masked", ""),
-                        "kontoinhaber": item.get("dl_kontoinhaber", "")
+                        "pack_data": pack_data
                     }}, ensure_ascii=False),
                     status_code=200, headers=get_cors_headers()
                 )
@@ -326,7 +324,7 @@ def _handle_get(req, dv_token, base_url, headers):
 
     if mode == "cms":
         # CMS mode: return all orders (no JWT required for now, add admin check later)
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json,dl_iban_masked,dl_kontoinhaber&$orderby=createdon desc&$top=200"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json&$orderby=createdon desc&$top=200"
     elif user:
         # Customer mode: own orders
         email = user["email"]
@@ -359,9 +357,7 @@ def _handle_get(req, dv_token, base_url, headers):
                     "status_text": STATUS_LABELS.get(item.get("dl_status", 0), "Unbekannt"),
                     "gesamtsumme": item.get("dl_gesamtsumme", 0),
                     "anmerkungen": item.get("dl_anmerkungen", ""),
-                    "positionen": positionen,
-                    "iban_masked": item.get("dl_iban_masked", ""),
-                    "kontoinhaber": item.get("dl_kontoinhaber", "")
+                    "positionen": positionen
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "orders": orders}, ensure_ascii=False),
