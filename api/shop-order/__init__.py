@@ -496,8 +496,13 @@ def _handle_patch(req, dv_token, base_url, headers):
                 json.dumps({"success": False, "error": "Bitte melden Sie sich an."}, ensure_ascii=False),
                 status_code=401, headers=get_cors_headers()
             )
-        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_status,dl_abholdatum"
+        select_fields = "dl_kunde_email,dl_status,dl_abholdatum,dl_abhol_zeitslot"
+        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select={select_fields}"
         cr = requests.get(check_url, headers=headers, timeout=30)
+        # Fallback if dl_abhol_zeitslot column doesn't exist
+        if cr.status_code == 400 and 'dl_abhol_zeitslot' in select_fields:
+            check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_status,dl_abholdatum"
+            cr = requests.get(check_url, headers=headers, timeout=30)
         if cr.status_code != 200:
             return func.HttpResponse(
                 json.dumps({"success": False, "error": "Bestellung nicht gefunden"}, ensure_ascii=False),
@@ -506,15 +511,59 @@ def _handle_patch(req, dv_token, base_url, headers):
         order = cr.json()
         if (order.get("dl_kunde_email") or "").lower() != (user.get("email") or "").lower():
             return func.HttpResponse(
-                json.dumps({"success": False, "error": "Diese Bestellung geh?rt nicht zu Ihrem Konto."}, ensure_ascii=False),
+                json.dumps({"success": False, "error": "Diese Bestellung gehört nicht zu Ihrem Konto."}, ensure_ascii=False),
                 status_code=403, headers=get_cors_headers()
             )
         status = order.get("dl_status", 0)
         abholdatum = order.get("dl_abholdatum", "")
-        today = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%d")
-        if status >= STATUS_ABHOLBEREIT or (abholdatum and today >= abholdatum):
+        now_local = datetime.utcnow() + timedelta(hours=2)
+        today = now_local.strftime("%Y-%m-%d")
+
+        # Storno-Frist: 1h vor Öffnungszeit des gewählten Zeitslots am Abholtag
+        # Shop hours: Mo-Fr VM 06:30, Sa 07:00; NM 16:30
+        STORNO_VOR_H = 1
+        cancel_allowed = True
+        cancel_reason = ""
+        if status >= STATUS_ABHOLBEREIT:
+            cancel_allowed = False
+            cancel_reason = "Die Bestellung ist bereits in der Pack-/Abholphase."
+        elif abholdatum and today > abholdatum:
+            cancel_allowed = False
+            cancel_reason = "Der Abholtag ist bereits vorbei."
+        elif abholdatum and today == abholdatum:
+            # Check time-based deadline: 1h before opening time of the slot's period
+            zeitslot = _parse_zeitslot(order.get("dl_abhol_zeitslot", ""))
+            open_time_str = zeitslot.get("von", "")
+            if open_time_str:
+                # open_time_str is like "07:30" (Abholzeit start), but we need opening time
+                # Opening time = Abholzeit - ABHOL_OFFSET_H (1h), stored as openFrom in frontend
+                # Actually, slot.von = abholVon, opening = von - 1h offset
+                # Better: use openFrom if available, otherwise derive from period defaults
+                pass
+            # Derive opening time from period and weekday
+            period = zeitslot.get("period", "vm")
+            try:
+                abhol_date = datetime.strptime(abholdatum, "%Y-%m-%d")
+                dow = abhol_date.weekday()  # 0=Mo ... 6=So
+                # Shop hours indexed by ISO weekday
+                SHOP_HRS = {0: (6.5, 16.5), 1: (6.5, None), 2: (6.5, 16.5), 3: (6.5, 16.5), 4: (6.5, 16.5), 5: (7, None)}
+                hrs = SHOP_HRS.get(dow, (6.5, 16.5))
+                if period == "nm" and hrs[1]:
+                    open_h = hrs[1]
+                else:
+                    open_h = hrs[0]
+                storno_deadline_h = open_h - STORNO_VOR_H
+                now_h = now_local.hour + now_local.minute / 60.0
+                if now_h >= storno_deadline_h:
+                    storno_uhr = f"{int(storno_deadline_h)}:{int((storno_deadline_h % 1) * 60):02d}"
+                    cancel_allowed = False
+                    cancel_reason = f"Die Stornierungsfrist ({storno_uhr} Uhr) ist abgelaufen."
+            except Exception as e:
+                logging.warning(f"[shop-order] Error parsing cancel deadline: {e}")
+
+        if not cancel_allowed:
             return func.HttpResponse(
-                json.dumps({"success": False, "error": "Diese Bestellung kann nicht mehr storniert werden, da sie bereits in der Pack-/Abholphase ist."}, ensure_ascii=False),
+                json.dumps({"success": False, "error": cancel_reason or "Diese Bestellung kann nicht mehr storniert werden."}, ensure_ascii=False),
                 status_code=400, headers=get_cors_headers()
             )
         new_status = STATUS_STORNIERT

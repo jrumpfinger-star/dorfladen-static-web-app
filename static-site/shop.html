@@ -359,7 +359,7 @@
       <div style="padding:12px 16px 16px">
         <div class="shop-cart-hint">* Bei Gewichtsware (z.B. Fleisch, Käse, Obst) kann die gelieferte Menge geringfügig abweichen. Es wird stets die tatsächlich gelieferte Menge berechnet. Nicht verfügbare Artikel werden nicht berechnet.</div>
         <div id="shop-slot-picker" style="margin-bottom:10px"></div>
-        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;font-size:11px;color:#991b1b;margin-bottom:8px;line-height:1.5"><b>⚠ Verbindliche Bestellung:</b> Bitte holen Sie Ihre Bestellung zum gewählten Abholtermin ab. Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, wird in Rechnung gestellt. Eine kostenlose Stornierung ist bis <b>06:30 Uhr</b> am Abholtag möglich.</div>
+        <div id="shop-storno-hint" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;font-size:11px;color:#991b1b;margin-bottom:8px;line-height:1.5"></div>
         <textarea class="shop-cart-note" id="shop-cart-note" placeholder="Anmerkungen zur Bestellung (optional)…" rows="2"></textarea>
       </div>
     </div>
@@ -460,6 +460,7 @@
   ];
   var VORLAUF_H=2; // Bestellung muss X Stunden VOR Öffnungszeit eingehen
   var ABHOL_OFFSET_H=1; // Abholung frühestens X Stunden NACH Öffnungszeit
+  var STORNO_VOR_H=1; // Stornierung bis X Stunden VOR Öffnungszeit möglich
   var selectedSlot=null;
 
   // ── Feiertage Bayern (Gauss-Osterformel für bewegliche Feiertage) ──
@@ -588,7 +589,7 @@
         var bestellBis=vmOpen-VORLAUF_H; // Bestellung muss so viele Stunden vorher eingehen
         var canOrder=true;
         if(sameDay&&nowH>=bestellBis) canOrder=false;
-        if(canOrder) slots.push({date:new Date(d),period:'vm',label:'Vormittag',abholVon:fmtHour(abholAb),abholBis:fmtHour(vmClose),openFrom:fmtHour(vmOpen),openTo:fmtHour(vmClose),dateStr:dateKey(d)});
+        if(canOrder) slots.push({date:new Date(d),period:'vm',label:'Vormittag',abholVon:fmtHour(abholAb),abholBis:fmtHour(vmClose),openFrom:fmtHour(vmOpen),openTo:fmtHour(vmClose),stornoFrist:fmtHour(vmOpen-STORNO_VOR_H),dateStr:dateKey(d)});
       }
       // Nachmittag
       if(hrs[2]!=null){
@@ -597,7 +598,7 @@
         var bestellBisNm=nmOpen-VORLAUF_H;
         var canOrderNm=true;
         if(sameDay&&nowH>=bestellBisNm) canOrderNm=false;
-        if(canOrderNm) slots.push({date:new Date(d),period:'nm',label:'Nachmittag',abholVon:fmtHour(abholAbNm),abholBis:fmtHour(nmClose),openFrom:fmtHour(nmOpen),openTo:fmtHour(nmClose),dateStr:dateKey(d)});
+        if(canOrderNm) slots.push({date:new Date(d),period:'nm',label:'Nachmittag',abholVon:fmtHour(abholAbNm),abholBis:fmtHour(nmClose),openFrom:fmtHour(nmOpen),openTo:fmtHour(nmClose),stornoFrist:fmtHour(nmOpen-STORNO_VOR_H),dateStr:dateKey(d)});
       }
     }
     return slots;
@@ -694,6 +695,19 @@
         if(found){selectedSlot=found;renderSlotPicker();}
       });
     });
+    // Update storno hint based on selected slot
+    updateStornoHint();
+  }
+
+  function updateStornoHint(){
+    var el=document.getElementById('shop-storno-hint');
+    if(!el) return;
+    if(!selectedSlot){el.innerHTML='';return;}
+    var dayLabel;
+    if(isToday(selectedSlot.date)) dayLabel='heute';
+    else if(isTomorrow(selectedSlot.date)) dayLabel='morgen';
+    else dayLabel='am '+formatDateShort(selectedSlot.date);
+    el.innerHTML='<b>\u26A0 Verbindliche Bestellung:</b> Bitte holen Sie Ihre Bestellung zum gew\u00e4hlten Abholtermin ab. Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, wird in Rechnung gestellt. Eine kostenlose Stornierung ist bis <b>'+esc(selectedSlot.stornoFrist)+' Uhr</b> '+esc(dayLabel)+' m\u00f6glich.';
   }
 
   // ── Cart ──
@@ -1681,7 +1695,25 @@
         var todayStr=new Date().toISOString().slice(0,10);
         var html='<div class="shop-orders"><h2 style="font-size:18px;margin-bottom:16px">Meine Bestellungen</h2>';
         res.orders.forEach(function(o,idx){
-          var canCancel=o.status<2&&(!o.abholdatum||todayStr<o.abholdatum);
+          var canCancel=false;
+          if(o.status<2){
+            if(!o.abholdatum||todayStr<o.abholdatum){
+              canCancel=true;
+            } else if(todayStr===o.abholdatum){
+              // Check storno deadline: 1h before opening time of the slot
+              var slotPeriod=(o.abhol_zeitslot&&o.abhol_zeitslot.period)||'vm';
+              var abholDate=new Date(o.abholdatum+'T00:00:00');
+              var abholDow=abholDate.getDay(); // 0=So
+              var slotHrs=SHOP_HOURS[abholDow];
+              if(slotHrs){
+                var openH=(slotPeriod==='nm'&&slotHrs[2]!=null)?slotHrs[2]:slotHrs[0];
+                var stornoH=openH-STORNO_VOR_H;
+                var nowHCancel=new Date();
+                var nowHVal=nowHCancel.getHours()+nowHCancel.getMinutes()/60;
+                if(nowHVal<stornoH) canCancel=true;
+              }
+            }
+          }
           var open=idx===0;
           html+='<div class="shop-order-card s'+o.status+'">';
           html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:0;cursor:pointer;text-align:left">';
