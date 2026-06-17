@@ -315,6 +315,11 @@ def _handle_post(req, dv_token, base_url, headers):
     try:
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
+        # Fallback: if dl_abhol_zeitslot column doesn't exist yet, retry without it
+        if r.status_code == 400 and 'dl_abhol_zeitslot' in payload:
+            logging.warning("[shop-order] dl_abhol_zeitslot column not found, retrying POST without it")
+            del payload['dl_abhol_zeitslot']
+            r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
         if r.status_code in (200, 201):
             record = r.json()
             return func.HttpResponse(
