@@ -196,7 +196,7 @@ def _handle_post(req, dv_token, base_url, headers):
 
     bestellnummer = _generate_bestellnummer()
     abholdatum = _calc_abholdatum()
-    now_str = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
+    now_str = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Load customer IBAN + Kontoinhaber for Beipackzettel
     iban_masked = ""
@@ -232,6 +232,9 @@ def _handle_post(req, dv_token, base_url, headers):
         "dl_kontoinhaber": kontoinhaber
     }
 
+    logging.info(f"[shop-order] POST payload keys: {list(payload.keys())}")
+    logging.info(f"[shop-order] POST payload: {json.dumps(payload, ensure_ascii=False, default=str)[:2000]}")
+
     try:
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
@@ -260,8 +263,10 @@ def _handle_post(req, dv_token, base_url, headers):
                 status_code=201, headers=get_cors_headers()
             )
         else:
+            detail = r.text[:1000]
+            logging.error(f"[shop-order] Dataverse POST {r.status_code}: {detail}")
             return func.HttpResponse(
-                json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "detail": r.text[:300]}),
+                json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "detail": detail}),
                 status_code=500, headers=get_cors_headers()
             )
     except Exception as e:
