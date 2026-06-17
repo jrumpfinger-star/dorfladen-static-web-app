@@ -130,6 +130,12 @@
     .shop-badge-angebot{background:#ffebee;color:#c62828}
     .shop-badge-rp{background:#e3f2fd;color:#1565c0}
 
+    /* ── Favorite Button ── */
+    .shop-fav-btn{background:none;border:none;font-size:18px;cursor:pointer;padding:4px;border-radius:6px;line-height:1;color:#d1d5db;transition:color .2s,transform .15s;flex-shrink:0}
+    .shop-fav-btn:hover{color:#ef4444;transform:scale(1.15)}
+    .shop-fav-btn.active{color:#ef4444}
+    .shop-card .shop-fav-btn{position:absolute;top:6px;right:6px;z-index:2;font-size:20px;background:rgba(255,255,255,.85);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
     /* ── Add to Cart Button ── */
     .shop-card-footer{padding:0 8px 8px;display:flex;align-items:center;gap:4px}
     .shop-add-btn{padding:6px 12px;border:none;border-radius:8px;background:var(--shop-green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
@@ -400,6 +406,53 @@
   var imageCache={};
   var imageLoadRun=0;
   var activeCat='bestseller';
+  var favorites=JSON.parse(localStorage.getItem('dl_shop_favs')||'[]');
+  var _favSyncing=false;
+
+  function isFav(artnr){return favorites.indexOf(artnr)!==-1;}
+  function toggleFav(artnr){
+    var idx=favorites.indexOf(artnr);
+    if(idx===-1){favorites.push(artnr);} else {favorites.splice(idx,1);}
+    localStorage.setItem('dl_shop_favs',JSON.stringify(favorites));
+    updateFavPill();
+    _syncFavsToServer();
+    document.querySelectorAll('[data-fav="'+artnr+'"]').forEach(function(b){b.classList.toggle('active',isFav(artnr));b.textContent=isFav(artnr)?'\u2764':'\u2661';});
+  }
+  function updateFavPill(){
+    var pill=document.querySelector('[data-cat="favorites"]');
+    if(pill){
+      var cnt=favorites.length;
+      pill.querySelector('.cat-count').textContent=cnt;
+      pill.style.display=cnt?'':'none';
+    }
+  }
+  function _syncFavsToServer(){
+    if(!isLoggedIn()||_favSyncing) return;
+    _favSyncing=true;
+    fetch(API+'/shop-favorites',{method:'PUT',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({favorites:favorites})})
+      .then(function(r){return r.json();})
+      .then(function(){_favSyncing=false;})
+      .catch(function(){_favSyncing=false;});
+  }
+  function loadFavsFromServer(){
+    if(!isLoggedIn()) return Promise.resolve([]);
+    return fetch(API+'/shop-favorites',{headers:{'X-Shop-Token':authToken}})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success&&Array.isArray(res.favorites)){
+          var localFavs=favorites.slice();
+          var merged={};
+          res.favorites.forEach(function(f){merged[f]=true;});
+          localFavs.forEach(function(f){merged[f]=true;});
+          favorites=Object.keys(merged);
+          localStorage.setItem('dl_shop_favs',JSON.stringify(favorites));
+          updateFavPill();
+          if(favorites.length!==res.favorites.length) _syncFavsToServer();
+        }
+        return favorites;
+      })
+      .catch(function(){return favorites;});
+  }
 
   // ── Helpers ──
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -696,6 +749,7 @@
           localStorage.setItem('dl_shop_token',authToken);
           localStorage.setItem('dl_shop_user',JSON.stringify(authUser));
           updateUserUI();hideAuth();showToast('Willkommen, '+authUser.vorname+'!');
+          loadFavsFromServer();
           if(_pendingCheckout){_pendingCheckout=false;doCheckout();}
           else{ensurePreviousPill();loadPreviousArticles().then(function(){if(viewMode==='categories')showCategoryOverview();});}
         } else {
@@ -802,6 +856,7 @@
       if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
 
       html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
+      html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
       html+='<div class="shop-card-badges">'+badges+'</div>';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-card-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
       else html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
@@ -836,7 +891,7 @@
       html+='<div class="shop-list-item" data-artnr="'+esc(a.artikelnummer)+'">';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-list-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
       else html+='<div class="shop-list-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
-      html+='<div class="shop-list-info"><div class="shop-list-name">'+esc(a.bezeichnung)+'</div><div class="shop-list-meta">'+esc(a.warengruppe)+'</div>';
+      html+='<div class="shop-list-info"><div style="display:flex;align-items:flex-start;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+'</div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div><div class="shop-list-meta">'+esc(a.warengruppe)+'</div>';
       html+='<div class="shop-list-row2"><span class="shop-list-price">'+priceHtml+'</span>';
       html+='<div class="shop-list-qty">';
       if(a.gewichtsware){
@@ -928,6 +983,7 @@
         if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
         if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
         html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
+        html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
         html+='<div class="shop-card-badges">'+badges+'</div>';
         if(imageCache[a.artikelnummer]) html+='<img class="shop-card-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
       else html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
@@ -953,6 +1009,7 @@
       if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
       if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
       html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
+      html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
       html+='<div class="shop-card-badges">'+badges+'</div>';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-card-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
       else html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
@@ -996,7 +1053,10 @@
     var title='Alle Artikel';
     var emoji='🛒';
 
-    if(activeCat==='previous'){
+    if(activeCat==='favorites'){
+      items=allArticles.filter(function(a){return isFav(a.artikelnummer);});
+      title='Favoriten';emoji='❤️';
+    } else if(activeCat==='previous'){
       if(!isLoggedIn()){showAuth('login');return;}
       items=previousArticles;title='Schon bestellt';emoji='Historie';
     } else if(activeCat==='bestseller'){
@@ -1054,8 +1114,12 @@
       reorderBanner+='</div>';
     }
 
+    var favsEmpty='';
+    if(activeCat==='favorites'&&!items.length){
+      favsEmpty='<div style="text-align:center;padding:40px 20px;color:#6b7280"><div style="font-size:48px;margin-bottom:12px">❤️</div><p style="font-size:16px;font-weight:600;margin-bottom:8px">Noch keine Favoriten</p><p style="font-size:13px">Tippen Sie das Herz-Symbol ♡ bei einem Artikel, um ihn als Favorit zu speichern.</p></div>';
+    }
     var renderFn=articleViewMode==='list'?renderArticlesList:renderArticles;
-    content.innerHTML=bc+reorderBanner+renderFn(items,title,emoji);
+    content.innerHTML=bc+reorderBanner+(favsEmpty||renderFn(items,title,emoji));
     wireAddButtons();
     loadImages(items);
 
@@ -1134,6 +1198,12 @@
           menge=qty?parseInt(qty.value,10)||1:1;
         }
         addToCart(article,menge);
+      });
+    });
+    document.querySelectorAll('[data-fav]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        toggleFav(btn.getAttribute('data-fav'));
       });
     });
   }
@@ -1292,6 +1362,14 @@
 
       // Build category pills
       var catsEl=document.getElementById('shop-cats');
+      // Favorites pill (after Beliebt)
+      var favPill=document.createElement('span');
+      favPill.className='shop-cat-pill';
+      favPill.setAttribute('data-cat','favorites');
+      favPill.innerHTML='❤️ Favoriten <span class="cat-count">'+favorites.length+'</span>';
+      if(!favorites.length) favPill.style.display='none';
+      catsEl.appendChild(favPill);
+
       categories.forEach(function(cat){
         var cnt=countByCat(cat);
         if(!cnt) return;
@@ -1302,7 +1380,10 @@
         catsEl.appendChild(pill);
       });
 
-      // 3) Show default view: "Schon bestellt" if logged in, else category overview
+      // 3) Load favorites from server if logged in
+      loadFavsFromServer();
+
+      // 4) Show default view: "Schon bestellt" if logged in, else category overview
       loadPreviousArticles().then(function(prev){
         ensurePreviousPill();
         if(prev&&prev.length){
