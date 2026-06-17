@@ -1643,6 +1643,11 @@
       allArticles.forEach(function(a){a._search=((a.bezeichnung||'')+' '+(a.warengruppe||'')+' '+(a.artikelnummer||'')+' '+(a.strichcode||'')).toLowerCase();});
       bestsellers=data.bestsellers||[];
 
+      // Purge stale favorites (articles no longer in sortiment)
+      var artSet={};allArticles.forEach(function(a){artSet[a.artikelnummer]=true;});
+      var cleanFavs=favorites.filter(function(f){return artSet[f];});
+      if(cleanFavs.length!==favorites.length){favorites=cleanFavs;localStorage.setItem('dl_shop_favs',JSON.stringify(favorites));}
+
       // Build category nav: quick pills + custom dropdown
       var catsEl=document.getElementById('shop-cats');
       var ddEl=document.getElementById('shop-cat-dd');
