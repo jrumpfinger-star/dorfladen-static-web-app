@@ -479,6 +479,28 @@
     showToast('✓ '+article.bezeichnung+' hinzugefügt');
   }
 
+  function reorderFromHistory(positionen,bestellnummer){
+    var added=0,skipped=[];
+    positionen.forEach(function(p){
+      var artnr=p.artikelnummer||p.strichcode||'';
+      if(!artnr) return;
+      var article=allArticles.find(function(a){return a.artikelnummer===artnr||a.strichcode===artnr;});
+      if(!article){skipped.push(p.bezeichnung||artnr);return;}
+      var menge=Number(p.menge)||1;
+      var existing=cart.find(function(c){return c.artikelnummer===article.artikelnummer;});
+      if(existing){existing.menge=menge;}
+      else{cart.push({artikelnummer:article.artikelnummer,bezeichnung:article.bezeichnung,vk:article.vk,einheit:article.einheit,menge:menge,gewichtsware:article.gewichtsware,strichcode:article.strichcode||''});}
+      added++;
+    });
+    saveCart();updateCartBadge();renderCart();markCartItems();
+    var msg='✓ '+added+' Artikel aus '+bestellnummer+' in den Warenkorb gelegt';
+    if(skipped.length) msg+='\n⚠ Nicht mehr verfügbar: '+skipped.join(', ');
+    showToast(msg);
+    viewMode='categories';activeCat='bestseller';showCategoryOverview();
+    window.scrollTo(0,0);
+    toggleCart(true);
+  }
+
   function removeFromCart(artnr){
     cart=cart.filter(function(c){return c.artikelnummer!==artnr;});
     saveCart();updateCartBadge();renderCart();markCartItems();
@@ -1279,11 +1301,16 @@
             });
             html+='</div>';
           }
-          if(canCancel){
-            html+='<div style="margin-top:10px"><button data-cancel-order="'+esc(o.id)+'" style="padding:8px 14px;border:none;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;cursor:pointer">Bestellung stornieren</button></div>';
-          } else if(o.status<4){
-            html+='<div style="margin-top:8px;font-size:12px;color:#6b7280">Aenderung/Storno nicht mehr moeglich, sobald Packung oder Abholung begonnen hat.</div>';
+          html+='<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">';
+          if(o.positionen&&o.positionen.length){
+            html+='<button data-reorder="'+idx+'" data-reorder-nr="'+esc(o.bestellnummer)+'" data-reorder-pos=\''+JSON.stringify(o.positionen).replace(/'/g,"&#39;")+'\' style="padding:8px 14px;border:none;border-radius:8px;background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:700;cursor:pointer">🔄 Nochmal bestellen</button>';
           }
+          if(canCancel){
+            html+='<button data-cancel-order="'+esc(o.id)+'" style="padding:8px 14px;border:none;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;cursor:pointer">Bestellung stornieren</button>';
+          } else if(o.status<4){
+            html+='<span style="font-size:12px;color:#6b7280;align-self:center">Storno nicht mehr moeglich</span>';
+          }
+          html+='</div>';
           html+='</div></div>';
         });
         html+='<button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;border:none;border-radius:8px;background:#2e7d4f;color:#fff;font-size:14px;cursor:pointer;width:100%">Zurueck zum Shop</button></div>';
@@ -1307,6 +1334,15 @@
               .then(function(r){return r.json();})
               .then(function(x){if(x.success){showToast('Bestellung storniert');document.getElementById('shop-history-btn').click();}else{showToast('Fehler: '+(x.error||'Storno nicht moeglich'));btn.disabled=false;btn.textContent='Bestellung stornieren';}})
               .catch(function(e){showToast('Fehler: '+e.message);btn.disabled=false;btn.textContent='Bestellung stornieren';});
+          });
+        });
+        document.querySelectorAll('[data-reorder]').forEach(function(btn){
+          btn.addEventListener('click',function(){
+            try{
+              var pos=JSON.parse(btn.getAttribute('data-reorder-pos'));
+              var nr=btn.getAttribute('data-reorder-nr')||'Bestellung';
+              reorderFromHistory(pos,nr);
+            }catch(e){showToast('Fehler beim Laden der Bestellung');}
           });
         });
       })
