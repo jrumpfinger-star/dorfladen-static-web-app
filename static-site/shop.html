@@ -9,9 +9,11 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2d5016">
   <link rel="apple-touch-icon" href="/images/icon-192.png">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     :root{--shop-green:#2e7d4f;--shop-green-light:#e8f5e9;--shop-orange:#e65100;--shop-gray:#f8f9fa;--shop-border:#e5e7eb;--shop-text:#1f2937;--shop-muted:#6b7280;--shop-radius:12px;--shop-shadow:0 2px 8px rgba(0,0,0,.08)}
     *{box-sizing:border-box;margin:0;padding:0}
+    [data-lucide]{display:inline-block;vertical-align:-2px}
     body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:var(--shop-text);-webkit-font-smoothing:antialiased}
 
     /* ── Top Bar ── */
@@ -36,10 +38,20 @@
     .shop-cat-pill:hover{background:#e8f5e9;border-color:var(--shop-green);color:var(--shop-green)}
     .shop-cat-pill.active{background:var(--shop-green);color:#fff;border-color:var(--shop-green)}
     .shop-cat-pill .cat-count{font-weight:400;opacity:.65;font-size:11px;margin-left:2px}
-    .shop-cat-select{flex:1;min-width:0;padding:7px 12px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--shop-border);background:#f9fafb;color:var(--shop-text);cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7f72'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
-    .shop-cat-select:focus{border-color:var(--shop-green);outline:none;box-shadow:0 0 0 3px rgba(46,125,79,.12)}
-    .shop-cat-select.active{background-color:var(--shop-green);color:#fff;border-color:var(--shop-green);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E")}
-    @media(max-width:600px){.shop-cats{padding:8px 12px;gap:6px}.shop-cat-pill{padding:6px 10px;font-size:12px}.shop-cat-select{font-size:12px;padding:6px 10px}}
+    .shop-cat-dd{position:relative;flex:1;min-width:0}
+    .shop-cat-dd-btn{width:100%;padding:7px 28px 7px 12px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--shop-border);background:#f9fafb;color:var(--shop-text);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .shop-cat-dd-btn::after{content:'';position:absolute;right:10px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--shop-muted)}
+    .shop-cat-dd-btn.active{background:var(--shop-green);color:#fff;border-color:var(--shop-green)}
+    .shop-cat-dd-btn.active::after{border-top-color:#fff}
+    .shop-cat-dd-btn svg{width:14px;height:14px;flex-shrink:0}
+    .shop-cat-dd-list{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--shop-border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;max-height:320px;overflow-y:auto;padding:4px}
+    .shop-cat-dd.open .shop-cat-dd-list{display:block}
+    .shop-cat-dd-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--shop-text);cursor:pointer;transition:background .1s}
+    .shop-cat-dd-item:hover{background:#f0fdf4}
+    .shop-cat-dd-item.active{background:var(--shop-green-light);color:var(--shop-green);font-weight:700}
+    .shop-cat-dd-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
+    .shop-cat-dd-item .cat-dd-count{margin-left:auto;font-size:11px;color:var(--shop-muted);font-weight:400}
+    @media(max-width:600px){.shop-cats{padding:8px 12px;gap:6px}.shop-cat-pill{padding:6px 10px;font-size:12px}.shop-cat-dd-btn{font-size:12px;padding:6px 10px}}
 
     /* ── Info Banner (compact, inline in topbar) ── */
     .shop-banner{display:none}
@@ -297,11 +309,11 @@
     <small>Abholen im Dorfladen</small>
   </div>
   <div class="shop-cutoff-hint" id="shop-cutoff-hint"><strong><span id="shop-cutoff-time"></span></strong><span id="shop-abhol-date"></span></div>
-  <a href="/shop-admin.html" class="shop-topbar-btn" id="shop-admin-btn" title="Shop Verwaltung" style="text-decoration:none">&#9881;</a>
-  <button class="shop-topbar-btn" id="shop-history-btn" title="Meine Bestellungen">📋</button>
-  <button class="shop-topbar-btn" id="shop-user-btn" title="Anmelden / Konto">👤</button>
+  <a href="/shop-admin.html" class="shop-topbar-btn" id="shop-admin-btn" title="Shop Verwaltung" style="text-decoration:none"><i data-lucide="settings" style="width:20px;height:20px"></i></a>
+  <button class="shop-topbar-btn" id="shop-history-btn" title="Meine Bestellungen"><i data-lucide="clipboard-list" style="width:20px;height:20px"></i></button>
+  <button class="shop-topbar-btn" id="shop-user-btn" title="Anmelden / Konto"><i data-lucide="user" style="width:20px;height:20px"></i></button>
   <button class="shop-topbar-btn" id="shop-cart-btn" title="Warenkorb">
-    🛒<span class="shop-cart-badge" id="shop-cart-count" style="display:none">0</span>
+    <i data-lucide="shopping-cart" style="width:20px;height:20px"></i><span class="shop-cart-badge" id="shop-cart-count" style="display:none">0</span>
   </button>
 </div>
 
@@ -310,10 +322,11 @@
 
 <!-- ── Category Nav ── -->
 <div class="shop-cats" id="shop-cats">
-  <span class="shop-cat-pill active" data-cat="bestseller">🔥 Beliebt</span>
-  <select class="shop-cat-select" id="shop-cat-select">
-    <option value="">🏪 Warengruppe…</option>
-  </select>
+  <span class="shop-cat-pill active" data-cat="bestseller"><i data-lucide="flame" style="width:14px;height:14px"></i> Beliebt</span>
+  <div class="shop-cat-dd" id="shop-cat-dd">
+    <button class="shop-cat-dd-btn" id="shop-cat-dd-btn" type="button"><i data-lucide="layout-grid" style="width:14px;height:14px"></i> Warengruppe…</button>
+    <div class="shop-cat-dd-list" id="shop-cat-dd-list"></div>
+  </div>
 </div>
 </div><!-- /shop-header -->
 
@@ -331,8 +344,8 @@
 <div class="shop-cart-overlay" id="shop-cart-overlay"></div>
 <div class="shop-cart-panel" id="shop-cart-panel">
   <div class="shop-cart-header">
-    <h3>🛒 Warenkorb</h3>
-    <button class="shop-cart-close" id="shop-cart-close">✕</button>
+    <h3><i data-lucide="shopping-cart" style="width:20px;height:20px"></i> Warenkorb</h3>
+    <button class="shop-cart-close" id="shop-cart-close"><i data-lucide="x" style="width:20px;height:20px"></i></button>
   </div>
   <div class="shop-cart-scroll">
     <div class="shop-cart-body" id="shop-cart-body">
@@ -882,9 +895,10 @@
       var prevPill=document.createElement('span');
       prevPill.className='shop-cat-pill';
       prevPill.setAttribute('data-cat','previous');
-      prevPill.textContent='🔄 Bestellt';
-      var selectEl=catsEl.querySelector('.shop-cat-select');
-      catsEl.insertBefore(prevPill,selectEl||null);
+      prevPill.innerHTML=lucideHtml('refresh-cw',14)+' Bestellt';
+      var ddEl=catsEl.querySelector('.shop-cat-dd');
+      catsEl.insertBefore(prevPill,ddEl||null);
+      if(window.lucide) lucide.createIcons();
     }
     if(!isLoggedIn()&&existing) existing.remove();
   }
@@ -893,12 +907,13 @@
     clearSearchAutofill();
     var btn=document.getElementById('shop-user-btn');
     if(isLoggedIn()){
-      btn.innerHTML='👤 <span style="font-size:10px;vertical-align:middle;color:#2e7d4f">●</span>';
+      btn.innerHTML=lucideHtml('user-check',20);
       btn.title='Konto: '+authUser.vorname+' '+authUser.nachname;
     } else {
-      btn.innerHTML='👤';
+      btn.innerHTML=lucideHtml('user',20);
       btn.title='Anmelden';
     }
+    if(window.lucide) lucide.createIcons();
   }
 
   function showAuth(tab){
@@ -1087,67 +1102,39 @@
     return html;
   }
 
-  function _ci(d){return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px">'+d+'</svg>';}
-  var _bread=_ci('<path d="M5 12c0-4 3-8 7-8s7 4 7 8"/><rect x="4" y="12" width="16" height="6" rx="2"/><path d="M6 20h12"/>');
-  var _milk=_ci('<path d="M8 2h8l2 4H6l2-4z"/><rect x="6" y="6" width="12" height="14" rx="2"/><path d="M10 10v4"/><path d="M14 10v4"/>');
-  var _apple=_ci('<circle cx="12" cy="13" r="7"/><path d="M12 6V3"/><path d="M15 5c-1-1-2-1-3 0"/>');
-  var _leaf=_ci('<path d="M2 22l5-5"/><path d="M7 17c5 5 11-1 11-1s-6-6-11-1z"/>');
-  var _meat=_ci('<path d="M15 11c1.3-1.8 2-4 2-6 0 0-3.5 0-5.5 2S9 11 9 11"/><path d="M9 11a5 5 0 1 0 6 0"/>');
-  var _egg=_ci('<ellipse cx="12" cy="14" rx="6" ry="8"/>');
-  var _beer=_ci('<path d="M17 8h1a3 3 0 0 1 0 6h-1"/><path d="M5 8h12v9a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8z"/><path d="M7 2v4"/><path d="M11 2v2"/><path d="M15 2v4"/>');
-  var _wine=_ci('<path d="M8 22h8"/><path d="M12 11v11"/><path d="M7 2h10l-1 5c-.3 1.5-2 3-4 3s-3.7-1.5-4-3L7 2z"/>');
-  var _bottle=_ci('<rect x="7" y="4" width="10" height="16" rx="2"/><path d="M7 8h10"/><path d="M10 12h4"/>');
-  var _snow=_ci('<path d="M12 2v20"/><path d="M2 12h20"/><path d="m6 6 6 6-6 6"/><path d="m18 6-6 6 6 6"/>');
-  var _candy=_ci('<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4"/><path d="M8 8V6"/><path d="M16 8V6"/><path d="M3 14h18"/>');
-  var _cup=_ci('<path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 2v4"/><path d="M10 2v2"/><path d="M14 2v4"/>');
-  var _can=_ci('<rect x="6" y="4" width="12" height="16" rx="2"/><path d="M6 8h12"/><path d="M6 16h12"/>');
-  var _spray=_ci('<rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 9h4"/><path d="M12 7v4"/>');
-  var _baby=_ci('<circle cx="12" cy="8" r="5"/><path d="M12 13v9"/><path d="M9 18h6"/>');
-  var _bolt=_ci('<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>');
-  var _tool=_ci('<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>');
-  var _cone=_ci('<path d="M12 2L8 22h8L12 2z"/><circle cx="12" cy="7" r="3"/>');
-  var _box=_ci('<rect x="2" y="8" width="20" height="10" rx="2"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/>');
-  var _grid=_ci('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>');
-  var _cart=_ci('<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>');
-  var CAT_ICONS={
-    'Backwaren':_bread,'Brot':_bread,'Molkereiprodukte':_milk,'Molkerei':_milk,'Mopro':_milk,
-    'Obst und Gemuese':_apple,'Obst':_apple,'Gemuese':_leaf,
-    'Fleisch':_meat,'Wurst':_meat,'Metzgerei':_meat,
-    'Eier':_egg,
-    'Bier':_beer,'Getraenke':_bottle,'Wein':_wine,'Spirituosen':_wine,'Saft':_bottle,
-    'Tiefkuehl':_snow,'Tiefk\u00fchl':_snow,
-    'Suesswaren':_candy,'Snacks':_candy,'Suessigkeiten':_candy,
-    'Kaffee':_cup,'Tee':_cup,
-    'Gewuerze':_leaf,'Gew\u00fcrze':_leaf,
-    'Konserven':_can,'Vorrat':_can,
-    'Nudeln':_can,'Reis':_can,
-    'Drogerie':_spray,'Haushalt':_spray,'Hygiene':_spray,
-    'Di\u00e4t':_baby,'Kindernahrung':_baby,'Baby':_baby,
-    'Cafeteria':_cup,
-    'Eis':_cone,
-    'Elektro':_bolt,'Heimwerker':_tool,
-    'Effektive Mikroorganismen':_leaf,
-    'Butter':_box,'Magarine':_box,
-    'Sonstiges':_grid
+  // Lucide icon name mapping for categories
+  var CAT_LUCIDE={
+    'Backwaren':'croissant','Brot':'croissant','Molkereiprodukte':'milk','Molkerei':'milk','Mopro':'milk',
+    'Obst und Gemuese':'apple','Obst':'apple','Gemuese':'leaf',
+    'Fleisch':'beef','Wurst':'beef','Metzgerei':'beef',
+    'Eier':'egg',
+    'Bier':'beer','Getraenke':'cup-soda','Wein':'wine','Spirituosen':'wine','Saft':'glass-water',
+    'Tiefkuehl':'snowflake','Tiefk\u00fchl':'snowflake',
+    'Suesswaren':'candy','Snacks':'candy','Suessigkeiten':'candy',
+    'Kaffee':'coffee','Tee':'coffee',
+    'Gewuerze':'leaf','Gew\u00fcrze':'leaf',
+    'Konserven':'package','Vorrat':'package',
+    'Nudeln':'package','Reis':'package',
+    'Drogerie':'sparkles','Haushalt':'sparkles','Hygiene':'sparkles',
+    'Di\u00e4t':'baby','Kindernahrung':'baby','Baby':'baby',
+    'Cafeteria':'coffee',
+    'Eis':'ice-cream-cone',
+    'Elektro':'zap','Heimwerker':'wrench',
+    'Effektive Mikroorganismen':'leaf',
+    'Butter':'package','Magarine':'package',
+    'Sonstiges':'grid-2x2','Lebensmittel':'utensils'
   };
-  var DEFAULT_CAT_ICON=_cart;
+  function getCatLucideName(cat){
+    if(CAT_LUCIDE[cat]) return CAT_LUCIDE[cat];
+    var keys=Object.keys(CAT_LUCIDE);
+    for(var i=0;i<keys.length;i++){if(cat.toLowerCase().indexOf(keys[i].toLowerCase())!==-1||keys[i].toLowerCase().indexOf(cat.toLowerCase())!==-1) return CAT_LUCIDE[keys[i]];}
+    return 'package';
+  }
+  function lucideHtml(name,size){return '<i data-lucide="'+name+'" style="width:'+(size||14)+'px;height:'+(size||14)+'px"></i>';}
+  function getCatIcon(cat){return lucideHtml(getCatLucideName(cat),16);}
+  var DEFAULT_CAT_ICON=lucideHtml('package',16);
   var viewMode='categories'; // 'categories' or 'articles'
   var articleViewMode=localStorage.getItem('dl_shop_viewmode')||'grid'; // 'grid' or 'list'
-
-  function getCatIcon(cat){
-    if(CAT_ICONS[cat]) return CAT_ICONS[cat];
-    // Partial match
-    var keys=Object.keys(CAT_ICONS);
-    for(var i=0;i<keys.length;i++){if(cat.toLowerCase().indexOf(keys[i].toLowerCase())!==-1||keys[i].toLowerCase().indexOf(cat.toLowerCase())!==-1) return CAT_ICONS[keys[i]];}
-    return DEFAULT_CAT_ICON;
-  }
-  var CAT_EMOJI={'Backwaren':'🍞','Brot':'🍞','Molkereiprodukte':'🥛','Molkerei':'🥛','Mopro':'🥛','Obst und Gemuese':'🍎','Obst':'🍎','Gemuese':'🥬','Fleisch':'🥩','Wurst':'🥩','Metzgerei':'🥩','Getränke':'🥤','Getraenke':'🥤','Süßwaren':'🍫','Suesses':'🍫','Tiefkühl':'❄️','TK':'❄️','Konserven':'🥫','Haushalt':'🧹','Hygiene':'🧴','Drogerie':'🧴'};
-  function getCatEmoji(cat){
-    if(CAT_EMOJI[cat]) return CAT_EMOJI[cat];
-    var keys=Object.keys(CAT_EMOJI);
-    for(var i=0;i<keys.length;i++){if(cat.toLowerCase().indexOf(keys[i].toLowerCase())!==-1||keys[i].toLowerCase().indexOf(cat.toLowerCase())!==-1) return CAT_EMOJI[keys[i]];}
-    return '📦';
-  }
 
   function countByCat(cat){return allArticles.filter(function(a){return getShopGroup(a.warengruppe)===cat;}).length;}
 
@@ -1219,7 +1206,8 @@
     loadImages(bestsellers.slice(0,6).concat(kurzImgs));
     // Update nav state
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')==='bestseller');});
-    var sel=document.getElementById('shop-cat-select');if(sel){sel.value='';sel.classList.remove('active');}
+    var ddBtn=document.getElementById('shop-cat-dd-btn');if(ddBtn){ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Warengruppe\u2026';}
+    if(window.lucide) lucide.createIcons();
   }
 
   function wireCatTiles(){
@@ -1365,11 +1353,13 @@
     // Update nav state: pills + dropdown
     var isPillCat=['bestseller','favorites','previous'].indexOf(activeCat)!==-1;
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')===activeCat);});
-    var sel=document.getElementById('shop-cat-select');
-    if(sel){
-      if(!isPillCat&&activeCat!=='all'){sel.value=activeCat;sel.classList.add('active');}
-      else{sel.value='';sel.classList.remove('active');}
+    var ddBtn=document.getElementById('shop-cat-dd-btn');
+    if(ddBtn){
+      if(!isPillCat&&activeCat!=='all'){ddBtn.classList.add('active');ddBtn.innerHTML=lucideHtml(getCatLucideName(activeCat),14)+' '+esc(activeCat);}
+      else if(activeCat==='all'){ddBtn.classList.add('active');ddBtn.innerHTML=lucideHtml('shopping-cart',14)+' Alle Artikel';}
+      else{ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Warengruppe\u2026';}
     }
+    if(window.lucide) lucide.createIcons();
   }
 
   function wireAddButtons(){
@@ -1551,6 +1541,8 @@
   updateCartBadge();
   updateUserUI();
   setTimeout(createSearchInput,300);
+  // Initialize Lucide icons on page load
+  if(window.lucide) lucide.createIcons();
 
   // Load articles
   fetch(API+'/shop-articles')
@@ -1565,43 +1557,58 @@
       allArticles.forEach(function(a){a._search=((a.bezeichnung||'')+' '+(a.warengruppe||'')+' '+(a.artikelnummer||'')+' '+(a.strichcode||'')).toLowerCase();});
       bestsellers=data.bestsellers||[];
 
-      // Build category nav: quick pills + dropdown
+      // Build category nav: quick pills + custom dropdown
       var catsEl=document.getElementById('shop-cats');
-      var selectEl=document.getElementById('shop-cat-select');
+      var ddEl=document.getElementById('shop-cat-dd');
       // Favorites pill (after Beliebt)
       var favPill=document.createElement('span');
       favPill.className='shop-cat-pill';
       favPill.setAttribute('data-cat','favorites');
-      favPill.innerHTML='❤️ <span class="cat-count">'+favorites.length+'</span>';
+      favPill.innerHTML=lucideHtml('heart',14)+' <span class="cat-count">'+favorites.length+'</span>';
       if(!favorites.length) favPill.style.display='none';
-      catsEl.insertBefore(favPill,selectEl);
+      catsEl.insertBefore(favPill,ddEl);
 
-      // Populate dropdown with categories
+      // Populate custom dropdown with categories
+      var ddList=document.getElementById('shop-cat-dd-list');
       categories.forEach(function(cat){
         var cnt=countByCat(cat);
         if(!cnt) return;
-        var opt=document.createElement('option');
-        opt.value=cat;
-        opt.textContent=getCatEmoji(cat)+' '+cat+' ('+cnt+')';
-        selectEl.appendChild(opt);
+        var item=document.createElement('div');
+        item.className='shop-cat-dd-item';
+        item.setAttribute('data-cat-dd',cat);
+        item.innerHTML=lucideHtml(getCatLucideName(cat),16)+' '+esc(cat)+'<span class="cat-dd-count">'+cnt+'</span>';
+        ddList.appendChild(item);
       });
-      // "Alle Artikel" option at the end
-      var allOpt=document.createElement('option');
-      allOpt.value='all';
-      allOpt.textContent='🛒 Alle Artikel ('+allArticles.length+')';
-      selectEl.appendChild(allOpt);
+      // "Alle Artikel" option
+      var allItem=document.createElement('div');
+      allItem.className='shop-cat-dd-item';
+      allItem.setAttribute('data-cat-dd','all');
+      allItem.innerHTML=lucideHtml('shopping-cart',16)+' Alle Artikel<span class="cat-dd-count">'+allArticles.length+'</span>';
+      ddList.appendChild(allItem);
 
-      // Dropdown change handler
-      selectEl.addEventListener('change',function(){
-        var val=selectEl.value;
-        if(!val) return;
-        // Deactivate pills
+      // Custom dropdown toggle
+      var ddBtn=document.getElementById('shop-cat-dd-btn');
+      ddBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        ddEl.classList.toggle('open');
+      });
+      // Close on outside click
+      document.addEventListener('click',function(){ddEl.classList.remove('open');});
+      // Item click handler
+      ddList.addEventListener('click',function(e){
+        var item=e.target.closest('[data-cat-dd]');
+        if(!item) return;
+        var val=item.getAttribute('data-cat-dd');
+        ddEl.classList.remove('open');
         document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.remove('active');});
-        selectEl.classList.add('active');
+        ddBtn.classList.add('active');
+        ddBtn.innerHTML=lucideHtml(getCatLucideName(val),14)+' '+esc(val==='all'?'Alle Artikel':val);
         activeCat=val;
         showArticles();
         window.scrollTo(0,0);
       });
+      // Initialize Lucide icons in nav
+      if(window.lucide) lucide.createIcons();
 
       // 3) Load favorites from server if logged in
       loadFavsFromServer();
@@ -1648,7 +1655,7 @@
     if(!pill) return;
     activeCat=pill.getAttribute('data-cat');
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')===activeCat);});
-    var sel=document.getElementById('shop-cat-select');if(sel){sel.value='';sel.classList.remove('active');}
+    var ddBtn=document.getElementById('shop-cat-dd-btn');if(ddBtn){ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Warengruppe\u2026';if(window.lucide) lucide.createIcons();}
     if(activeCat==='bestseller'){showCategoryOverview();} else {showArticles();}
     window.scrollTo(0,0);
   });
