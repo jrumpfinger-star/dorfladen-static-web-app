@@ -130,8 +130,8 @@
 
     /* ── Add to Cart Button ── */
     .shop-card-footer{padding:0 8px 8px;display:flex;align-items:center;gap:4px}
-    .shop-add-btn{padding:5px 10px;border:1px solid var(--shop-green);border-radius:8px;background:#fff;color:var(--shop-green);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
-    .shop-add-btn:hover{background:var(--shop-green);color:#fff}
+    .shop-add-btn{padding:6px 12px;border:none;border-radius:8px;background:var(--shop-green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+    .shop-add-btn:hover{background:#256b42}
     .shop-add-btn:active{transform:scale(.97)}
     .shop-qty-ctrl{display:flex;align-items:center;gap:0;border:1px solid var(--shop-border);border-radius:8px;overflow:hidden}
     .shop-qty-btn{width:32px;height:32px;border:none;background:#f3f4f6;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -790,7 +790,7 @@
       } else {
         html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
       }
-      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+🛒</button>';
+      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button>';
       html+='</div></div>';
     });
     html+='</div>';
@@ -822,7 +822,7 @@
       } else {
         html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
       }
-      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+🛒</button>';
+      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button>';
       html+='</div></div>';
     });
     html+='</div>';
@@ -911,7 +911,7 @@
         html+='<div class="shop-card-footer">';
         if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
         else html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
-        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+🛒</button></div></div>';
+        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
       });
       html+='</div>';
     } else {
@@ -936,7 +936,7 @@
       html+='<div class="shop-card-footer">';
       if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
       else html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
-      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+🛒</button></div></div>';
+      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
     });
     html+='</div>';
 
