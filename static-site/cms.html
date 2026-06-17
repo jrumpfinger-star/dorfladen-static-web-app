@@ -2592,7 +2592,10 @@ document.head.appendChild(msalScript);
             </select>
             <button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadOrders()">🔄 Aktualisieren</button>
           </div>
-          <button class="cms-btn cms-btn-sm" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0" onclick="cmsPrintOrders()">🖨 Kommissionierliste drucken</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <a href="/shop.html" target="_blank" class="cms-btn cms-btn-sm" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;text-decoration:none">🛒 Shop öffnen</a>
+            <button class="cms-btn cms-btn-sm" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0" onclick="cmsPrintOrders()">🖨 Kommissionierliste drucken</button>
+          </div>
         </div>
         <div id="cms-orders-list" style="font-size:13px">
           <p style="color:#6b7280;text-align:center;padding:20px">Klicken Sie "Aktualisieren" um Bestellungen zu laden</p>
