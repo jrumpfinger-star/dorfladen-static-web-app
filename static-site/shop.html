@@ -860,7 +860,7 @@
         previousArticles=allArticles.filter(function(a){return seen[a.artikelnummer];});
         return previousArticles;
       })
-      .catch(function(){previousArticles=[];return [];});
+      .catch(function(e){console.error('loadPreviousArticles error:',e);previousArticles=[];previousOrders=[];return [];});
   }
 
   function ensurePreviousPill(){
@@ -1298,12 +1298,16 @@
       reorderBanner+='</div>';
     }
 
-    var favsEmpty='';
+    var emptyHint='';
     if(activeCat==='favorites'&&!items.length){
-      favsEmpty='<div style="text-align:center;padding:40px 20px;color:#6b7280"><div style="font-size:48px;margin-bottom:12px">❤️</div><p style="font-size:16px;font-weight:600;margin-bottom:8px">Noch keine Favoriten</p><p style="font-size:13px">Tippen Sie das Herz-Symbol ♡ bei einem Artikel, um ihn als Favorit zu speichern.</p></div>';
+      emptyHint='<div style="text-align:center;padding:40px 20px;color:#6b7280"><div style="font-size:48px;margin-bottom:12px">❤️</div><p style="font-size:16px;font-weight:600;margin-bottom:8px">Noch keine Favoriten</p><p style="font-size:13px">Tippen Sie das Herz-Symbol ♡ bei einem Artikel, um ihn als Favorit zu speichern.</p></div>';
+    }
+    if(activeCat==='previous'&&!items.length&&!previousOrders.length){
+      emptyHint='<div style="text-align:center;padding:40px 20px;color:#6b7280"><div style="font-size:48px;margin-bottom:12px">📦</div><p style="font-size:16px;font-weight:600;margin-bottom:8px">Noch keine Bestellungen</p><p style="font-size:13px">Ihre bestellten Artikel werden hier angezeigt, sobald Sie eine Bestellung aufgeben.</p></div>';
     }
     var renderFn=articleViewMode==='list'?renderArticlesList:renderArticles;
-    content.innerHTML=bc+reorderBanner+(favsEmpty||renderFn(items,title,emoji));
+    var articleHtml=items.length?renderFn(items,title,emoji):'';
+    content.innerHTML=bc+reorderBanner+(emptyHint||articleHtml);
     wireAddButtons();
     loadImages(items);
 

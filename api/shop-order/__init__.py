@@ -372,6 +372,9 @@ def _handle_get(req, dv_token, base_url, headers):
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
         try:
             r = requests.get(url, headers=headers, timeout=30)
+            if r.status_code == 400 and 'dl_abhol_zeitslot' in url:
+                url = url.replace(',dl_abhol_zeitslot', '')
+                r = requests.get(url, headers=headers, timeout=30)
             if r.status_code == 200:
                 item = r.json()
                 positionen = json.loads(item.get("dl_positionen_json", "[]"))
@@ -417,6 +420,11 @@ def _handle_get(req, dv_token, base_url, headers):
 
     try:
         r = requests.get(url, headers=headers, timeout=30)
+        # Fallback: if dl_abhol_zeitslot column doesn't exist yet, retry without it
+        if r.status_code == 400 and 'dl_abhol_zeitslot' in url:
+            logging.warning("[shop-order] dl_abhol_zeitslot not found, retrying without it")
+            url = url.replace(',dl_abhol_zeitslot', '')
+            r = requests.get(url, headers=headers, timeout=30)
         if r.status_code == 200:
             items = r.json().get("value", [])
             orders = []
