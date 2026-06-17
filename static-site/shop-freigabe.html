@@ -9,7 +9,7 @@
 *{box-sizing:border-box;margin:0}body{background:var(--bg);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text)}
 
 /* ── Top bar ── */
-.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.04);max-width:960px;margin:0 auto}
 .brand{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--green);font-size:15px}
 .brand-icon{width:34px;height:34px;border-radius:10px;background:#e9f5ee;display:grid;place-items:center;font-size:20px}
 .spacer{flex:1}
@@ -20,7 +20,7 @@
 .btn.red{color:var(--red);border-color:var(--red)}.btn.red:hover{background:#fef2f2}
 
 /* ── Toolbar ── */
-.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:960px;margin:0 auto}
 .search-wrap{position:relative;flex:0 1 320px;min-width:180px}
 .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
 .search{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 30px 8px 32px;font-size:13px;outline:none;box-sizing:border-box}
