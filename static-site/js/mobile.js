@@ -669,15 +669,22 @@
       scannerDiv.style.display='block';
       Quagga.init({
         inputStream:{name:'Live',type:'LiveStream',target:readerDiv,
-          constraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}},
-        locator:{patchSize:'medium',halfSample:true},
+          constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},
+            focusMode:'continuous',focusDistance:0}},
+        locator:{patchSize:'medium',halfSample:false},
         decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader']},
         locate:true,
-        frequency:15
+        frequency:10
       },function(err){
         if(err){stopScanner();alert('Kamera konnte nicht ge\u00f6ffnet werden.\n'+err);return;}
         Quagga.start();
         _scanActive=true;
+        try{
+          var track=Quagga.CameraAccess.getActiveTrack();
+          if(track&&track.applyConstraints){
+            track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){});
+          }
+        }catch(e){}
       });
       Quagga.offDetected();
       Quagga.onDetected(function(result){
