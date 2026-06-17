@@ -71,6 +71,15 @@
     .shop-cat-dd-item.active{background:var(--shop-green-light);color:var(--shop-green);font-weight:700}
     .shop-cat-dd-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
     .shop-cat-dd-item .cat-dd-count{margin-left:auto;font-size:11px;color:var(--shop-muted);font-weight:400}
+    /* Desktop: inline pills replace dropdown */
+    .shop-cats-desktop{display:none}
+    @media(min-width:768px){
+      .shop-cat-dd{display:none}
+      .shop-cats{flex-wrap:wrap}
+      .shop-cats-desktop{display:contents}
+      .shop-cats-desktop .shop-cat-pill{padding:6px 12px;font-size:12px}
+    }
+    @media(max-width:767px){.shop-cats-desktop{display:none}}
     @media(max-width:600px){.shop-cats{padding:8px 12px;gap:6px}.shop-cat-pill{padding:6px 10px;font-size:12px}.shop-cat-dd-btn{font-size:12px;padding:6px 10px}}
 
     /* ── Info Banner (compact, inline in topbar) ── */
@@ -346,6 +355,7 @@
 <!-- ── Category Nav ── -->
 <div class="shop-cats" id="shop-cats">
   <span class="shop-cat-pill active" data-cat="bestseller"><i data-lucide="flame" style="width:14px;height:14px"></i> Beliebt</span>
+  <div class="shop-cats-desktop" id="shop-cats-desktop"></div>
   <div class="shop-cat-dd" id="shop-cat-dd">
     <button class="shop-cat-dd-btn" id="shop-cat-dd-btn" type="button"><i data-lucide="layout-grid" style="width:14px;height:14px"></i> Warengruppe…</button>
     <div class="shop-cat-dd-list" id="shop-cat-dd-list"></div>
@@ -1687,6 +1697,25 @@
       allItem.setAttribute('data-cat-dd','all');
       allItem.innerHTML=lucideHtml('shopping-cart',16)+' Alle Artikel<span class="cat-dd-count">'+allArticles.length+'</span>';
       ddList.appendChild(allItem);
+
+      // Desktop: populate inline category pills (visible on >=768px)
+      var dtCats=document.getElementById('shop-cats-desktop');
+      if(dtCats){
+        categories.forEach(function(cat){
+          var cnt=countByCat(cat);
+          if(!cnt) return;
+          var pill=document.createElement('span');
+          pill.className='shop-cat-pill';
+          pill.setAttribute('data-cat',cat);
+          pill.innerHTML=lucideHtml(getCatLucideName(cat),14)+' '+esc(cat);
+          dtCats.appendChild(pill);
+        });
+        var allPill=document.createElement('span');
+        allPill.className='shop-cat-pill';
+        allPill.setAttribute('data-cat','all');
+        allPill.innerHTML=lucideHtml('shopping-cart',14)+' Alle';
+        dtCats.appendChild(allPill);
+      }
 
       // Custom dropdown toggle
       var ddBtn=document.getElementById('shop-cat-dd-btn');
