@@ -81,6 +81,7 @@ def _order_from_dv(item, include_pack=True):
         "kunde_name": item.get("dl_kunde_name", ""),
         "bestelldatum": item.get("dl_bestelldatum", ""),
         "abholdatum": item.get("dl_abholdatum", ""),
+        "abhol_zeitslot": _safe_json(item.get("dl_abhol_zeitslot", ""), {"period": "vm", "label": "Vormittag", "von": "", "bis": ""}),
         "status": status,
         "status_text": STATUS_LABELS.get(status, "Unbekannt"),
         "gesamtsumme": item.get("dl_gesamtsumme", 0),
@@ -92,7 +93,7 @@ def _order_from_dv(item, include_pack=True):
 
 
 def _select_fields():
-    return "dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json,createdon"
+    return "dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json,createdon"
 
 
 def _list_orders(req, base_url, headers):

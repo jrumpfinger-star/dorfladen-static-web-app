@@ -96,7 +96,18 @@
   function filteredOrders(){var today=todayStr();return orders.filter(function(o){if(!historyMode&&(o.status===3||o.status===4)){var od=String(o.bestelldatum||'').substring(0,10);var ad=String(o.abholdatum||'').substring(0,10);if(od<today&&ad<today) return false;}if(activeStatFilter==='all')return true;if(activeStatFilter==='open')return o.status===0||o.status===1;return String(o.status)===String(activeStatFilter);});}
   function updateStatActive(){document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.classList.toggle('active',el.getAttribute('data-stat-filter')===activeStatFilter);});}
   function fmtDt(s){if(!s)return '-';try{var d=new Date(s);return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}catch(e){return s;}}
-  function renderOrders(){var el=document.getElementById('orders');var list=filteredOrders();list.sort(function(a,b){return (b.bestelldatum||'').localeCompare(a.bestelldatum||'');});updateStatActive();if(!list.length){el.innerHTML='<div class="loading">Keine Bestellungen gefunden.</div>';return;}el.innerHTML=list.map(function(o){return '<div class="order '+(selected&&selected.id===o.id?'active':'')+'" data-id="'+esc(o.id)+'"><div><div class="order-title">'+esc(o.kunde_name||o.kunde_email)+'</div><div class="order-nr">'+esc(o.bestellnummer)+' · '+(o.positionen_count||0)+' Pos.</div><div class="order-meta">'+fmtDt(o.bestelldatum)+'</div></div><div style="text-align:right"><div class="amount">'+money(o.gesamtsumme)+'</div>'+statusBadge(o.status)+'</div></div>';}).join('');el.querySelectorAll('.order').forEach(function(row){row.addEventListener('click',function(){selectOrder(row.getAttribute('data-id'));});});}
+  function abholSlotBadge(o){
+    var zs=o.abhol_zeitslot||{};var period=zs.period||'vm';var von=zs.von||'';var bis=zs.bis||'';
+    var ad=String(o.abholdatum||'').substring(0,10);
+    var today=todayStr();var tom=new Date();tom.setDate(tom.getDate()+1);var tomStr=tom.getFullYear()+'-'+String(tom.getMonth()+1).padStart(2,'0')+'-'+String(tom.getDate()).padStart(2,'0');
+    var dayLabel=ad===today?'Heute':ad===tomStr?'Morgen':ad;
+    var periodLabel=period==='nm'?'NM':'VM';
+    var timeStr=von&&bis?von+'–'+bis:'';
+    var bg=period==='nm'?'#fef3c7':'#dbeafe';var color=period==='nm'?'#92400e':'#1d4ed8';
+    if(ad===today){bg='#dcfce7';color='#166534';}
+    return '<span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:'+bg+';color:'+color+'">'+esc(dayLabel)+' '+esc(periodLabel)+(timeStr?' '+esc(timeStr):'')+'</span>';
+  }
+  function renderOrders(){var el=document.getElementById('orders');var list=filteredOrders();list.sort(function(a,b){var ad=String(a.abholdatum||'').substring(0,10);var bd=String(b.abholdatum||'').substring(0,10);if(ad!==bd)return ad.localeCompare(bd);var ap=(a.abhol_zeitslot||{}).period==='nm'?1:0;var bp=(b.abhol_zeitslot||{}).period==='nm'?1:0;if(ap!==bp)return ap-bp;return (b.bestelldatum||'').localeCompare(a.bestelldatum||'');});updateStatActive();if(!list.length){el.innerHTML='<div class="loading">Keine Bestellungen gefunden.</div>';return;}el.innerHTML=list.map(function(o){return '<div class="order '+(selected&&selected.id===o.id?'active':'')+'" data-id="'+esc(o.id)+'"><div><div class="order-title">'+esc(o.kunde_name||o.kunde_email)+'</div><div class="order-nr">'+esc(o.bestellnummer)+' · '+(o.positionen_count||0)+' Pos.</div><div class="order-meta">'+abholSlotBadge(o)+'</div></div><div style="text-align:right"><div class="amount">'+money(o.gesamtsumme)+'</div>'+statusBadge(o.status)+'</div></div>';}).join('');el.querySelectorAll('.order').forEach(function(row){row.addEventListener('click',function(){selectOrder(row.getAttribute('data-id'));});});}
   function selectOrder(id){var o=orders.find(function(x){return x.id===id;});if(!o)return;fetch(API+'?action=order&id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(res){selected=res.order||o;renderOrders();renderDetail();});}
   function buildPackJson(items){
     var cnt=0;
@@ -225,7 +236,8 @@
     }
     var isEditable=o.status<3; // editable until "Abgeholt"
     var detailHtml='<h2>'+esc(o.bestellnummer)+' '+statusBadge(o.status)+'</h2>';
-    detailHtml+='<div class="kv"><b>Kunde</b><span>'+esc(o.kunde_name)+' · '+esc(o.kunde_email)+'</span><b>Bestellt</b><span>'+esc(o.bestelldatum||'-')+'</span><b>Abholung</b><span>'+esc(o.abholdatum||'-')+'</span></div>';
+    var zsD=o.abhol_zeitslot||{};var abholTxt=esc(o.abholdatum||'-')+' '+(zsD.label||'Vormittag');if(zsD.von&&zsD.bis) abholTxt+=' ('+esc(zsD.von)+'–'+esc(zsD.bis)+' Uhr)';
+    detailHtml+='<div class="kv"><b>Kunde</b><span>'+esc(o.kunde_name)+' · '+esc(o.kunde_email)+'</span><b>Bestellt</b><span>'+esc(o.bestelldatum||'-')+'</span><b>Abholung</b><span style="font-weight:700;color:#2e7d4f">'+abholTxt+'</span></div>';
     if(o.anmerkungen) detailHtml+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:5px 8px;font-size:11px;color:#92400e;margin-bottom:6px">📝 '+esc(o.anmerkungen)+'</div>';
     if(isEditable){
       detailHtml+='<div class="actions"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="print-slip-detail">📄 Beipackzettel</button></div>';

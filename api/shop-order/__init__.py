@@ -98,27 +98,87 @@ def _verify_jwt(req):
 
 
 
+def _ostern(year):
+    """Gauss-Osterformel: Ostersonntag berechnen."""
+    a = year % 19
+    b, c = divmod(year, 100)
+    d, e = divmod(b, 4)
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = ((h + l - 7 * m + 114) % 31) + 1
+    return datetime(year, month, day)
+
+
+def _bayern_feiertage(year):
+    """Alle gesetzlichen Feiertage in Bayern für ein Jahr."""
+    o = _ostern(year)
+    feiertage = [
+        datetime(year, 1, 1),    # Neujahr
+        datetime(year, 1, 6),    # Hl. Drei Könige
+        o + timedelta(days=-2),  # Karfreitag
+        o + timedelta(days=1),   # Ostermontag
+        datetime(year, 5, 1),    # Tag der Arbeit
+        o + timedelta(days=39),  # Christi Himmelfahrt
+        o + timedelta(days=50),  # Pfingstmontag
+        o + timedelta(days=60),  # Fronleichnam
+        datetime(year, 8, 15),   # Mariä Himmelfahrt
+        datetime(year, 10, 3),   # Tag der dt. Einheit
+        datetime(year, 11, 1),   # Allerheiligen
+        datetime(year, 12, 25),  # 1. Weihnachtstag
+        datetime(year, 12, 26),  # 2. Weihnachtstag
+    ]
+    return {d.strftime("%Y-%m-%d") for d in feiertage}
+
+
+_feiertag_cache = {}
+
+def _is_feiertag(d):
+    """Prüft ob ein Datum ein bayerischer Feiertag ist."""
+    y = d.year
+    if y not in _feiertag_cache:
+        _feiertag_cache[y] = _bayern_feiertage(y)
+    return d.strftime("%Y-%m-%d") in _feiertag_cache[y]
+
+
+def _is_closed(d):
+    """Prüft ob der Laden an diesem Tag geschlossen ist (Sonntag oder Feiertag)."""
+    return d.weekday() == 6 or _is_feiertag(d)
+
+
 def _calc_abholdatum():
     """Calculate pickup date based on order time.
     Before 16:00 → next business day morning
     After 16:00 → day after next business day morning
-    Skip Sundays (Dorfladen closed)
+    Skip Sundays and Bavarian public holidays
     """
     now = datetime.utcnow() + timedelta(hours=2)  # CET/CEST approximation
     hour = now.hour
 
     if hour < BESTELLSCHLUSS_HOUR:
-        # Before cutoff: pickup tomorrow
         abhol = now + timedelta(days=1)
     else:
-        # After cutoff: pickup day after tomorrow
         abhol = now + timedelta(days=2)
 
-    # Skip Sunday (6 = Sunday)
-    if abhol.weekday() == 6:
+    # Skip Sundays and Feiertage
+    while _is_closed(abhol):
         abhol += timedelta(days=1)
 
     return abhol.strftime("%Y-%m-%d")
+
+
+def _parse_zeitslot(raw):
+    """Parse dl_abhol_zeitslot JSON string into dict, with fallback."""
+    if not raw:
+        return {"period": "vm", "label": "Vormittag", "von": "", "bis": ""}
+    try:
+        return json.loads(raw)
+    except Exception:
+        return {"period": "vm", "label": "Vormittag", "von": "", "bis": ""}
 
 
 def _generate_bestellnummer():
@@ -146,6 +206,7 @@ def _handle_post(req, dv_token, base_url, headers):
 
     positionen = body.get("positionen", [])
     anmerkungen = (body.get("anmerkungen") or "").strip()
+    abholslot = body.get("abholslot")  # {datum, period, label, abhol_von, abhol_bis}
 
     if not positionen:
         return func.HttpResponse(
@@ -195,8 +256,23 @@ def _handle_post(req, dv_token, base_url, headers):
         )
 
     bestellnummer = _generate_bestellnummer()
-    abholdatum = _calc_abholdatum()
     now_str = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Abholslot: vom Kunden gewählt, Fallback auf altes System
+    if abholslot and isinstance(abholslot, dict) and abholslot.get("datum"):
+        abholdatum = abholslot["datum"]
+        abhol_period = abholslot.get("period", "vm")
+        abhol_label = abholslot.get("label", "Vormittag")
+        abhol_von = abholslot.get("abhol_von", "")
+        abhol_bis = abholslot.get("abhol_bis", "")
+        abhol_display = f"Abholung: {abholdatum} {abhol_label} ({abhol_von}–{abhol_bis} Uhr)"
+    else:
+        abholdatum = _calc_abholdatum()
+        abhol_period = "vm"
+        abhol_label = "Vormittag"
+        abhol_von = "07:30"
+        abhol_bis = "14:00"
+        abhol_display = f"Abholung: {abholdatum} vormittags"
 
     # Load customer IBAN + Kontoinhaber for Beipackzettel
     iban_masked = ""
@@ -224,6 +300,7 @@ def _handle_post(req, dv_token, base_url, headers):
         "dl_kunde_id": user["sub"],
         "dl_bestelldatum": now_str,
         "dl_abholdatum": abholdatum,
+        "dl_abhol_zeitslot": json.dumps({"period": abhol_period, "label": abhol_label, "von": abhol_von, "bis": abhol_bis}, ensure_ascii=False),
         "dl_status": STATUS_NEU,
         "dl_gesamtsumme": round(gesamtsumme, 2),
         "dl_anmerkungen": anmerkungen,
@@ -247,7 +324,8 @@ def _handle_post(req, dv_token, base_url, headers):
                     "abholdatum": abholdatum,
                     "gesamtsumme": round(gesamtsumme, 2),
                     "positionen": len(clean_positionen),
-                    "message": f"Bestellung {bestellnummer} aufgegeben! Abholung am {abholdatum} vormittags."
+                    "abhol_display": abhol_display,
+                    "message": f"Bestellung {bestellnummer} aufgegeben! {abhol_display}"
                 }, ensure_ascii=False),
                 status_code=201, headers=get_cors_headers()
             )
@@ -258,7 +336,8 @@ def _handle_post(req, dv_token, base_url, headers):
                     "bestellnummer": bestellnummer,
                     "abholdatum": abholdatum,
                     "gesamtsumme": round(gesamtsumme, 2),
-                    "message": f"Bestellung {bestellnummer} aufgegeben!"
+                    "abhol_display": abhol_display,
+                    "message": f"Bestellung {bestellnummer} aufgegeben! {abhol_display}"
                 }, ensure_ascii=False),
                 status_code=201, headers=get_cors_headers()
             )
@@ -290,7 +369,7 @@ def _handle_get(req, dv_token, base_url, headers):
                 json.dumps({"success": False, "error": "Bestell-ID erforderlich"}),
                 status_code=400, headers=get_cors_headers()
             )
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
         try:
             r = requests.get(url, headers=headers, timeout=30)
             if r.status_code == 200:
@@ -304,6 +383,7 @@ def _handle_get(req, dv_token, base_url, headers):
                         "kunde_name": item.get("dl_kunde_name", ""),
                         "kunde_email": item.get("dl_kunde_email", ""),
                         "abholdatum": item.get("dl_abholdatum", ""),
+                        "abhol_zeitslot": _parse_zeitslot(item.get("dl_abhol_zeitslot", "")),
                         "status": item.get("dl_status", 0),
                         "gesamtsumme": item.get("dl_gesamtsumme", 0),
                         "anmerkungen": item.get("dl_anmerkungen", ""),
@@ -324,11 +404,11 @@ def _handle_get(req, dv_token, base_url, headers):
 
     if mode == "cms":
         # CMS mode: return all orders (no JWT required for now, add admin check later)
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json&$orderby=createdon desc&$top=200"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json&$orderby=createdon desc&$top=200"
     elif user:
         # Customer mode: own orders
         email = user["email"]
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=50"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=50"
     else:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Bitte melden Sie sich an."}),
@@ -353,6 +433,7 @@ def _handle_get(req, dv_token, base_url, headers):
                     "kunde_name": item.get("dl_kunde_name", ""),
                     "bestelldatum": item.get("dl_bestelldatum", ""),
                     "abholdatum": item.get("dl_abholdatum", ""),
+                    "abhol_zeitslot": _parse_zeitslot(item.get("dl_abhol_zeitslot", "")),
                     "status": item.get("dl_status", 0),
                     "status_text": STATUS_LABELS.get(item.get("dl_status", 0), "Unbekannt"),
                     "gesamtsumme": item.get("dl_gesamtsumme", 0),

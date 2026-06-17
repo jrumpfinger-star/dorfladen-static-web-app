@@ -29,14 +29,16 @@
     .shop-search-input{width:100%;padding:10px 14px 10px 38px;border:1px solid var(--shop-border);border-radius:10px;font-size:14px;outline:none;background:#f9fafb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 12px center no-repeat;transition:border-color .2s}
     .shop-search-input:focus{border-color:var(--shop-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
 
-    /* ── Category Tiles ── */
-    .shop-cats{padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;background:#fff;border-bottom:1px solid var(--shop-border);align-items:stretch}
-    @media(max-width:600px){.shop-cats{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:8px 12px;gap:6px;mask-image:linear-gradient(to right,#000 85%,transparent);-webkit-mask-image:linear-gradient(to right,#000 85%,transparent)}.shop-cats::-webkit-scrollbar{display:none}.shop-cat-pill{padding:7px 12px;font-size:12px}}
-    .shop-cat-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--shop-border);background:#f9fafb;color:var(--shop-text);cursor:pointer;white-space:nowrap;transition:all .2s}
+    /* ── Category Nav ── */
+    .shop-cats{padding:8px 16px;display:flex;gap:8px;background:#fff;border-bottom:1px solid var(--shop-border);align-items:center;flex-wrap:nowrap}
+    .shop-cat-pill{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--shop-border);background:#f9fafb;color:var(--shop-text);cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
     .shop-cat-pill:hover{background:#e8f5e9;border-color:var(--shop-green);color:var(--shop-green)}
     .shop-cat-pill.active{background:var(--shop-green);color:#fff;border-color:var(--shop-green)}
-    .shop-cat-pill svg{flex-shrink:0}
     .shop-cat-pill .cat-count{font-weight:400;opacity:.65;font-size:11px;margin-left:2px}
+    .shop-cat-select{flex:1;min-width:0;padding:7px 12px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--shop-border);background:#f9fafb;color:var(--shop-text);cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7f72'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+    .shop-cat-select:focus{border-color:var(--shop-green);outline:none;box-shadow:0 0 0 3px rgba(46,125,79,.12)}
+    .shop-cat-select.active{background-color:var(--shop-green);color:#fff;border-color:var(--shop-green);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E")}
+    @media(max-width:600px){.shop-cats{padding:8px 12px;gap:6px}.shop-cat-pill{padding:6px 10px;font-size:12px}.shop-cat-select{font-size:12px;padding:6px 10px}}
 
     /* ── Info Banner (compact, inline in topbar) ── */
     .shop-banner{display:none}
@@ -64,25 +66,24 @@
     .shop-list{display:grid;grid-template-columns:1fr;gap:4px;padding:0 16px 16px}
     @media(min-width:900px){.shop-list{grid-template-columns:1fr 1fr;gap:6px;padding:0 24px 24px}}
     @media(min-width:1200px){.shop-list{max-width:1400px}}
-    .shop-list-item{display:grid;grid-template-columns:48px 1fr;align-items:start;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--shop-border);border-radius:10px;transition:background .1s}
+    .shop-list-item{display:grid;grid-template-columns:50px 1fr auto;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--shop-border);border-radius:10px;transition:background .1s}
     .shop-list-item:hover{background:#f9fafb}
     .shop-list-item.in-cart{border-color:#2e7d4f;background:#f0faf3}
     .shop-list-item.in-cart .shop-add-btn{display:none}
-    .shop-list-img{width:48px;height:48px;max-width:48px;object-fit:contain;border-radius:8px;background:#fff;mix-blend-mode:multiply;overflow:hidden;border:1px solid #f3f4f6}
-    .shop-list-noimg{width:48px;height:48px;max-width:48px;background:#f3f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#d1d5db;overflow:hidden}
-    .shop-list-info{min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:2px}
-    .shop-list-name{font-size:14px;font-weight:700;line-height:1.3;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    .shop-list-meta{font-size:11px;color:var(--shop-muted);font-weight:500}
-    .shop-list-row2{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
-    .shop-list-price{font-size:15px;font-weight:800;color:var(--shop-green);white-space:nowrap}
+    .shop-list-img{width:50px;height:50px;object-fit:contain;border-radius:8px;background:#fff;mix-blend-mode:multiply;border:1px solid #f3f4f6}
+    .shop-list-noimg{width:50px;height:50px;background:#f3f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#d1d5db}
+    .shop-list-info{min-width:0;overflow:hidden}
+    .shop-list-name{font-size:14px;font-weight:700;line-height:1.3;word-break:break-word;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .shop-list-meta{font-size:11px;color:var(--shop-muted);font-weight:500;margin-top:1px}
+    .shop-list-price{font-size:14px;font-weight:800;color:var(--shop-green);white-space:nowrap;margin-top:3px}
     .shop-list-price .unit{font-size:10px;font-weight:400;color:var(--shop-muted)}
     .shop-list-price .old{text-decoration:line-through;color:#999;font-size:11px;font-weight:400;margin-left:4px}
-    .shop-list-qty{display:flex;align-items:center;gap:4px}
-    .shop-list-qty .shop-qty-ctrl{border-radius:6px}
-    .shop-list-qty .shop-qty-btn{width:30px;height:30px;font-size:16px}
-    .shop-list-qty .shop-qty-val{width:34px;font-size:13px}
-    .shop-list-qty .shop-weight-input{width:60px;padding:4px 6px;font-size:13px}
-    .shop-list-row2 .shop-add-btn{padding:6px 14px;font-size:13px;border-radius:8px;min-height:30px}
+    .shop-list-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .shop-list-actions .shop-qty-ctrl{border-radius:6px}
+    .shop-list-actions .shop-qty-btn{width:28px;height:28px;font-size:15px}
+    .shop-list-actions .shop-qty-val{width:30px;font-size:13px}
+    .shop-list-actions .shop-weight-input{width:56px;padding:4px 6px;font-size:12px}
+    .shop-list-actions .shop-add-btn{padding:6px 12px;font-size:12px;border-radius:8px;min-height:28px;white-space:nowrap}
 
     /* ── Product Card ── */
     .shop-card{background:#fff;border-radius:var(--shop-radius);border:1px solid var(--shop-border);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;position:relative}
@@ -264,7 +265,7 @@
     Online bestellen
     <small>Abholen im Dorfladen</small>
   </div>
-  <div class="shop-cutoff-hint" id="shop-cutoff-hint"><strong>bis <span id="shop-cutoff-time">16:00</span> Uhr</strong><br><span id="shop-abhol-date">morgen vormittags</span></div>
+  <div class="shop-cutoff-hint" id="shop-cutoff-hint"><strong><span id="shop-cutoff-time"></span></strong><span id="shop-abhol-date"></span></div>
   <a href="/shop-admin.html" class="shop-topbar-btn" id="shop-admin-btn" title="Shop Verwaltung" style="text-decoration:none">&#9881;</a>
   <button class="shop-topbar-btn" id="shop-history-btn" title="Meine Bestellungen">📋</button>
   <button class="shop-topbar-btn" id="shop-user-btn" title="Anmelden / Konto">👤</button>
@@ -276,9 +277,12 @@
 <!-- ── Search ── -->
 <div class="shop-search" id="shop-search-wrap"></div>
 
-<!-- ── Category Pills ── -->
+<!-- ── Category Nav ── -->
 <div class="shop-cats" id="shop-cats">
   <span class="shop-cat-pill active" data-cat="bestseller">🔥 Beliebt</span>
+  <select class="shop-cat-select" id="shop-cat-select">
+    <option value="">🏪 Warengruppe…</option>
+  </select>
 </div>
 
 <!-- Banner hidden, info moved to topbar -->
@@ -312,8 +316,8 @@
     </div>
     <div class="shop-cart-hint">* Bei Gewichtsware (z.B. Fleisch, Käse, Obst) kann die gelieferte Menge geringfügig abweichen. Es wird stets die tatsächlich gelieferte Menge berechnet. Nicht verfügbare Artikel werden nicht berechnet.</div>
     <div class="shop-cart-minorder" id="shop-cart-minorder">⚠️ Mindestbestellwert: 10,00 €</div>
-    <div class="shop-cart-abhol" id="shop-cart-abhol">📅 Abholung: morgen vormittags</div>
-    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;font-size:11px;color:#991b1b;margin-bottom:8px;line-height:1.5"><b>⚠ Verbindliche Bestellung:</b> Bitte holen Sie Ihre Bestellung bis <b>12:00 Uhr mittags</b> ab. Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, wird in Rechnung gestellt. Eine kostenlose Stornierung ist bis <b>06:30 Uhr</b> am Abholtag möglich.</div>
+    <div id="shop-slot-picker" style="margin-bottom:10px"></div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;font-size:11px;color:#991b1b;margin-bottom:8px;line-height:1.5"><b>⚠ Verbindliche Bestellung:</b> Bitte holen Sie Ihre Bestellung zum gewählten Abholtermin ab. Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, wird in Rechnung gestellt. Eine kostenlose Stornierung ist bis <b>06:30 Uhr</b> am Abholtag möglich.</div>
     <textarea class="shop-cart-note" id="shop-cart-note" placeholder="Anmerkungen zur Bestellung (optional)…" rows="2"></textarea>
     <button class="shop-checkout-btn" id="shop-checkout-btn">🛍 Jetzt bestellen</button>
   </div>
@@ -392,7 +396,58 @@
   'use strict';
 
   var API=window.location.hostname==='localhost'?'http://localhost:7071/api':'/api';
-  var BESTELLSCHLUSS=22; // 22:00 Uhr – TODO: load from CMS config
+  // ── Öffnungszeiten: [vm_open, vm_close, nm_open, nm_close] oder null wenn geschlossen ──
+  // Wochentag 0=So, 1=Mo, …, 6=Sa
+  var SHOP_HOURS=[
+    null,                            // 0 = Sonntag: geschlossen
+    [6.5,14, 16.5,19],               // 1 = Montag
+    [6.5,14, null,null],             // 2 = Dienstag (kein Nachmittag)
+    [6.5,14, 16.5,19],               // 3 = Mittwoch
+    [6.5,14, 16.5,19],               // 4 = Donnerstag
+    [6.5,14, 16.5,19],               // 5 = Freitag
+    [7,13, null,null]                // 6 = Samstag (kein Nachmittag)
+  ];
+  var VORLAUF_H=2; // Bestellung muss X Stunden VOR Öffnungszeit eingehen
+  var ABHOL_OFFSET_H=1; // Abholung frühestens X Stunden NACH Öffnungszeit
+  var selectedSlot=null;
+
+  // ── Feiertage Bayern (Gauss-Osterformel für bewegliche Feiertage) ──
+  function osterSonntag(year){
+    var a=year%19,b=Math.floor(year/100),c=year%100;
+    var d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25);
+    var g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30;
+    var i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7;
+    var m=Math.floor((a+11*h+22*l)/451);
+    var month=Math.floor((h+l-7*m+114)/31),day=((h+l-7*m+114)%31)+1;
+    return new Date(year,month-1,day);
+  }
+  function bayernFeiertage(year){
+    var o=osterSonntag(year);
+    function addDays(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r;}
+    var ft=[];
+    // Feste Feiertage
+    ft.push(new Date(year,0,1));   // Neujahr
+    ft.push(new Date(year,0,6));   // Hl. Drei Könige
+    ft.push(new Date(year,4,1));   // Tag der Arbeit
+    ft.push(new Date(year,7,15));  // Mariä Himmelfahrt
+    ft.push(new Date(year,9,3));   // Tag der dt. Einheit
+    ft.push(new Date(year,10,1));  // Allerheiligen
+    ft.push(new Date(year,11,25)); // 1. Weihnachtstag
+    ft.push(new Date(year,11,26)); // 2. Weihnachtstag
+    // Bewegliche Feiertage (Ostern-basiert)
+    ft.push(addDays(o,-2));  // Karfreitag
+    ft.push(addDays(o,1));   // Ostermontag
+    ft.push(addDays(o,39));  // Christi Himmelfahrt
+    ft.push(addDays(o,50));  // Pfingstmontag
+    ft.push(addDays(o,60));  // Fronleichnam
+    return ft.map(function(d){return dateKey(d);});
+  }
+  var _feiertagCache={};
+  function isFeiertag(d){
+    var y=d.getFullYear();
+    if(!_feiertagCache[y]) _feiertagCache[y]=bayernFeiertage(y);
+    return _feiertagCache[y].indexOf(dateKey(d))!==-1;
+  }
 
   // ── State ──
   var allArticles=[];
@@ -458,21 +513,52 @@
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   function fmtP(v){return(+v).toFixed(2).replace('.',',');}
 
-  function calcAbholdatum(){
+  function fmtHour(h){var hh=Math.floor(h);var mm=Math.round((h-hh)*60);return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+  function formatDate(d){return d.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});}
+  function formatDateShort(d){return d.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'});}
+  function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function isToday(d){var t=new Date();return dateKey(d)===dateKey(t);}
+  function isTomorrow(d){var t=new Date();t.setDate(t.getDate()+1);return dateKey(d)===dateKey(t);}
+
+  function calcAvailableSlots(){
     var now=new Date();
-    var h=now.getHours();
-    var days=h<BESTELLSCHLUSS?1:2;
-    var d=new Date(now);
-    d.setDate(d.getDate()+days);
-    if(d.getDay()===0) d.setDate(d.getDate()+1); // skip Sunday
-    return d;
+    var nowH=now.getHours()+now.getMinutes()/60;
+    var slots=[];
+    for(var di=0;di<8&&slots.length<6;di++){
+      var d=new Date(now);d.setDate(d.getDate()+di);d.setHours(0,0,0,0);
+      var dow=d.getDay();
+      var hrs=SHOP_HOURS[dow];
+      if(!hrs||isFeiertag(d)) continue; // geschlossen (Sonntag/Feiertag)
+      var sameDay=(di===0);
+      // Vormittag
+      if(hrs[0]!=null){
+        var vmOpen=hrs[0], vmClose=hrs[1];
+        var abholAb=vmOpen+ABHOL_OFFSET_H;
+        var bestellBis=vmOpen-VORLAUF_H; // Bestellung muss so viele Stunden vorher eingehen
+        var canOrder=true;
+        if(sameDay&&nowH>=bestellBis) canOrder=false;
+        if(canOrder) slots.push({date:new Date(d),period:'vm',label:'Vormittag',abholVon:fmtHour(abholAb),abholBis:fmtHour(vmClose),openFrom:fmtHour(vmOpen),openTo:fmtHour(vmClose),dateStr:dateKey(d)});
+      }
+      // Nachmittag
+      if(hrs[2]!=null){
+        var nmOpen=hrs[2], nmClose=hrs[3];
+        var abholAbNm=nmOpen+ABHOL_OFFSET_H;
+        var bestellBisNm=nmOpen-VORLAUF_H;
+        var canOrderNm=true;
+        if(sameDay&&nowH>=bestellBisNm) canOrderNm=false;
+        if(canOrderNm) slots.push({date:new Date(d),period:'nm',label:'Nachmittag',abholVon:fmtHour(abholAbNm),abholBis:fmtHour(nmClose),openFrom:fmtHour(nmOpen),openTo:fmtHour(nmClose),dateStr:dateKey(d)});
+      }
+    }
+    return slots;
   }
 
-  function formatDate(d){
-    var opts={weekday:'long',day:'numeric',month:'long'};
-    return d.toLocaleDateString('de-DE',opts);
+  function slotDisplayName(slot){
+    var dayName;
+    if(isToday(slot.date)) dayName='Heute';
+    else if(isTomorrow(slot.date)) dayName='Morgen';
+    else dayName=formatDateShort(slot.date);
+    return dayName+', '+slot.label+' ('+slot.abholVon+'–'+slot.abholBis+')';
   }
-
 
   function getShopGroup(name){
     var n=(name||'').toString();
@@ -494,19 +580,69 @@
 
 
   function updateBanner(){
-    var abhol=calcAbholdatum();
-    var now=new Date();
+    var slots=calcAvailableSlots();
     var cutoffEl=document.getElementById('shop-cutoff-time');
     var abholEl=document.getElementById('shop-abhol-date');
-    var cartAbhol=document.getElementById('shop-cart-abhol');
-    if(cutoffEl) cutoffEl.textContent=BESTELLSCHLUSS+':00';
-    var txt=formatDate(abhol)+' vormittags';
-    if(abholEl) abholEl.textContent=txt;
-    if(cartAbhol) cartAbhol.textContent='📅 Abholung: '+txt;
-    if(now.getHours()>=BESTELLSCHLUSS){
-      var hint=document.getElementById('shop-cutoff-hint');
-      if(hint){hint.style.color='#c62828';hint.querySelector('strong').textContent='Bestellschluss erreicht';}
+    if(slots.length){
+      var first=slots[0];
+      if(cutoffEl) cutoffEl.textContent='';
+      if(abholEl) abholEl.textContent=slotDisplayName(first);
+    } else {
+      if(cutoffEl) cutoffEl.textContent='';
+      if(abholEl) abholEl.textContent='Aktuell keine Abholzeit verfügbar';
     }
+    renderSlotPicker();
+  }
+
+  function renderSlotPicker(){
+    var container=document.getElementById('shop-slot-picker');
+    if(!container) return;
+    var slots=calcAvailableSlots();
+    if(!slots.length){
+      container.innerHTML='<div style="color:#991b1b;font-size:13px;padding:8px 0">⚠️ Aktuell keine Abholzeiten verfügbar.</div>';
+      selectedSlot=null;
+      return;
+    }
+    // Group by date
+    var groups={};var groupOrder=[];
+    slots.forEach(function(s){
+      if(!groups[s.dateStr]){groups[s.dateStr]={date:s.date,dateStr:s.dateStr,slots:[]};groupOrder.push(s.dateStr);}
+      groups[s.dateStr].slots.push(s);
+    });
+    var html='<div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#24352b">📅 Abholtermin wählen:</div>';
+    groupOrder.forEach(function(dk){
+      var g=groups[dk];
+      var dayLabel;
+      if(isToday(g.date)) dayLabel='Heute';
+      else if(isTomorrow(g.date)) dayLabel='Morgen';
+      else dayLabel=formatDate(g.date);
+      html+='<div style="font-size:12px;font-weight:600;color:#6b7280;margin:8px 0 4px">'+esc(dayLabel)+'</div>';
+      html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+      g.slots.forEach(function(s){
+        var key=s.dateStr+'_'+s.period;
+        var isSelected=selectedSlot&&selectedSlot.dateStr===s.dateStr&&selectedSlot.period===s.period;
+        var bg=isSelected?'#2e7d4f':'#fff';
+        var color=isSelected?'#fff':'#24352b';
+        var border=isSelected?'#2e7d4f':'#dfe7e2';
+        html+='<button data-slot-key="'+esc(key)+'" style="flex:1;min-width:120px;padding:10px 12px;border:2px solid '+border+';border-radius:10px;background:'+bg+';color:'+color+';cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;text-align:left">';
+        html+='<div>'+esc(s.label)+'</div>';
+        html+='<div style="font-size:11px;font-weight:400;margin-top:2px;opacity:.8">Abholung '+esc(s.abholVon)+' – '+esc(s.abholBis)+' Uhr</div>';
+        html+='</button>';
+      });
+      html+='</div>';
+    });
+    container.innerHTML=html;
+    // Auto-select first if none selected
+    if(!selectedSlot) {selectedSlot=slots[0];renderSlotPicker();}
+    // Wire click handlers
+    container.querySelectorAll('[data-slot-key]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var key=btn.getAttribute('data-slot-key');
+        var parts=key.split('_');
+        var found=slots.find(function(s){return s.dateStr===parts[0]&&s.period===parts[1];});
+        if(found){selectedSlot=found;renderSlotPicker();}
+      });
+    });
   }
 
   // ── Cart ──
@@ -705,9 +841,9 @@
       var prevPill=document.createElement('span');
       prevPill.className='shop-cat-pill';
       prevPill.setAttribute('data-cat','previous');
-      prevPill.textContent='Schon bestellt';
-      var firstCatPill=catsEl.querySelector('[data-cat]:not([data-cat="bestseller"]):not([data-cat="previous"])');
-      catsEl.insertBefore(prevPill,firstCatPill||null);
+      prevPill.textContent='🔄 Bestellt';
+      var selectEl=catsEl.querySelector('.shop-cat-select');
+      catsEl.insertBefore(prevPill,selectEl||null);
     }
     if(!isLoggedIn()&&existing) existing.remove();
   }
@@ -806,13 +942,15 @@
     if(!isLoggedIn()){_pendingCheckout=true;showAuth('login');return;}
     if(!cart.length){showToast('Warenkorb ist leer');return;}
     if(cartTotal()<10){showToast('⚠️ Mindestbestellwert: 10,00 €');return;}
+    if(!selectedSlot){showToast('⚠️ Bitte Abholtermin wählen');return;}
     var note=document.getElementById('shop-cart-note').value.trim();
     var positionen=cart.map(function(c){
       return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.vk,strichcode:c.strichcode||'',gewichtsware:!!c.gewichtsware};
     });
+    var slotInfo={datum:selectedSlot.dateStr,period:selectedSlot.period,label:selectedSlot.label,abhol_von:selectedSlot.abholVon,abhol_bis:selectedSlot.abholBis};
     var btn=document.getElementById('shop-checkout-btn');
     btn.disabled=true;btn.textContent='Wird bestellt…';
-    fetch(API+'/shop-order',{method:'POST',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({positionen:positionen,anmerkungen:note})})
+    fetch(API+'/shop-order',{method:'POST',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({positionen:positionen,anmerkungen:note,abholslot:slotInfo})})
       .then(function(r){
         if(r.status===401){
           authToken='';authUser=null;localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();
@@ -831,7 +969,8 @@
           showToast('✅ Bestellung '+res.bestellnummer+' aufgegeben!');
           // Show confirmation
           var content=document.getElementById('shop-content');
-          content.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="font-size:64px;margin-bottom:16px">✅</div><h2 style="font-size:22px;margin-bottom:8px">Bestellung aufgegeben!</h2><p style="font-size:15px;color:#6b7280;margin-bottom:12px">'+esc(res.bestellnummer)+'</p><p style="font-size:16px;font-weight:600;color:#2e7d4f;margin-bottom:20px">📅 Abholung: '+esc(res.abholdatum)+' vormittags</p><p style="font-size:14px;color:#6b7280;margin-bottom:24px">Gesamtbetrag (ca.): '+fmtP(res.gesamtsumme)+' €</p><button onclick="location.reload()" style="padding:12px 32px;border:none;border-radius:10px;background:#2e7d4f;color:#fff;font-size:15px;font-weight:700;cursor:pointer">↩ Zurück zum Shop</button></div>';
+          var abholTxt=res.abhol_display||res.abholdatum||'';
+          content.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="font-size:64px;margin-bottom:16px">✅</div><h2 style="font-size:22px;margin-bottom:8px">Bestellung aufgegeben!</h2><p style="font-size:15px;color:#6b7280;margin-bottom:12px">'+esc(res.bestellnummer)+'</p><p style="font-size:16px;font-weight:600;color:#2e7d4f;margin-bottom:20px">📅 '+esc(abholTxt)+'</p><p style="font-size:14px;color:#6b7280;margin-bottom:24px">Gesamtbetrag (ca.): '+fmtP(res.gesamtsumme)+' €</p><button onclick="location.reload()" style="padding:12px 32px;border:none;border-radius:10px;background:#2e7d4f;color:#fff;font-size:15px;font-weight:700;cursor:pointer">↩ Zurück zum Shop</button></div>';
         } else {
           showToast('Fehler: '+(res.error||'Unbekannt'));
         }
@@ -891,17 +1030,16 @@
       html+='<div class="shop-list-item" data-artnr="'+esc(a.artikelnummer)+'">';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-list-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
       else html+='<div class="shop-list-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
-      html+='<div class="shop-list-info"><div style="display:flex;align-items:flex-start;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+'</div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div><div class="shop-list-meta">'+esc(a.warengruppe)+'</div>';
-      html+='<div class="shop-list-row2"><span class="shop-list-price">'+priceHtml+'</span>';
-      html+='<div class="shop-list-qty">';
+      html+='<div class="shop-list-info"><div style="display:flex;align-items:center;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+'</div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div><div class="shop-list-meta">'+esc(a.warengruppe)+'</div>';
+      html+='<div class="shop-list-price">'+priceHtml+'</div></div>';
+      html+='<div class="shop-list-actions">';
       if(a.gewichtsware){
         html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"><span style="font-size:10px;color:#6b7280">g</span>';
       } else {
         html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
       }
+      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzu</button>';
       html+='</div>';
-      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+🛒</button>';
-      html+='</div></div>';
       html+='</div>';
     });
     html+='</div>';
@@ -1025,8 +1163,9 @@
     wireAddButtons();
     var kurzImgs=allArticles.filter(function(a){return a.kurzfristig;});
     loadImages(bestsellers.slice(0,6).concat(kurzImgs));
-    // Update pills
+    // Update nav state
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')==='bestseller');});
+    var sel=document.getElementById('shop-cat-select');if(sel){sel.value='';sel.classList.remove('active');}
   }
 
   function wireCatTiles(){
@@ -1162,9 +1301,15 @@
     if(vtList) vtList.addEventListener('click',function(){articleViewMode='list';localStorage.setItem('dl_shop_viewmode','list');showArticles();});
     // Breadcrumb click
     var bcHome=document.getElementById('bc-home');
-    if(bcHome) bcHome.addEventListener('click',function(){activeCat='bestseller';showArticles();window.scrollTo(0,0);});
-    // Update pills
+    if(bcHome) bcHome.addEventListener('click',function(){activeCat='bestseller';showCategoryOverview();window.scrollTo(0,0);});
+    // Update nav state: pills + dropdown
+    var isPillCat=['bestseller','favorites','previous'].indexOf(activeCat)!==-1;
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')===activeCat);});
+    var sel=document.getElementById('shop-cat-select');
+    if(sel){
+      if(!isPillCat&&activeCat!=='all'){sel.value=activeCat;sel.classList.add('active');}
+      else{sel.value='';sel.classList.remove('active');}
+    }
   }
 
   function wireAddButtons(){
@@ -1360,24 +1505,42 @@
       allArticles.forEach(function(a){a._search=((a.bezeichnung||'')+' '+(a.warengruppe||'')+' '+(a.artikelnummer||'')+' '+(a.strichcode||'')).toLowerCase();});
       bestsellers=data.bestsellers||[];
 
-      // Build category pills
+      // Build category nav: quick pills + dropdown
       var catsEl=document.getElementById('shop-cats');
+      var selectEl=document.getElementById('shop-cat-select');
       // Favorites pill (after Beliebt)
       var favPill=document.createElement('span');
       favPill.className='shop-cat-pill';
       favPill.setAttribute('data-cat','favorites');
-      favPill.innerHTML='❤️ Favoriten <span class="cat-count">'+favorites.length+'</span>';
+      favPill.innerHTML='❤️ <span class="cat-count">'+favorites.length+'</span>';
       if(!favorites.length) favPill.style.display='none';
-      catsEl.appendChild(favPill);
+      catsEl.insertBefore(favPill,selectEl);
 
+      // Populate dropdown with categories
       categories.forEach(function(cat){
         var cnt=countByCat(cat);
         if(!cnt) return;
-        var pill=document.createElement('span');
-        pill.className='shop-cat-pill';
-        pill.setAttribute('data-cat',cat);
-        pill.innerHTML=getCatIcon(cat)+' '+esc(cat)+' <span class="cat-count">'+cnt+'</span>';
-        catsEl.appendChild(pill);
+        var opt=document.createElement('option');
+        opt.value=cat;
+        opt.textContent=getCatIcon(cat)+' '+cat+' ('+cnt+')';
+        selectEl.appendChild(opt);
+      });
+      // "Alle Artikel" option at the end
+      var allOpt=document.createElement('option');
+      allOpt.value='all';
+      allOpt.textContent='🛒 Alle Artikel ('+allArticles.length+')';
+      selectEl.appendChild(allOpt);
+
+      // Dropdown change handler
+      selectEl.addEventListener('change',function(){
+        var val=selectEl.value;
+        if(!val) return;
+        // Deactivate pills
+        document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.remove('active');});
+        selectEl.classList.add('active');
+        activeCat=val;
+        showArticles();
+        window.scrollTo(0,0);
       });
 
       // 3) Load favorites from server if logged in
@@ -1425,6 +1588,7 @@
     if(!pill) return;
     activeCat=pill.getAttribute('data-cat');
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')===activeCat);});
+    var sel=document.getElementById('shop-cat-select');if(sel){sel.value='';sel.classList.remove('active');}
     if(activeCat==='bestseller'){showCategoryOverview();} else {showArticles();}
     window.scrollTo(0,0);
   });
