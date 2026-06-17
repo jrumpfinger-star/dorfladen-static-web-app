@@ -16,7 +16,11 @@
     .list{border-right:1px solid var(--border);overflow:auto;max-height:calc(100vh - 245px)}
     .right-pane{overflow:auto;max-height:calc(100vh - 245px)}
     /* Tabs */
-    .tab-bar{display:flex;border-bottom:1px solid var(--border);background:#f9fafb;position:sticky;top:0;z-index:2}
+    .tab-bar{border-bottom:1px solid var(--border);background:#f9fafb;position:sticky;top:0;z-index:2}
+    .tab-bar-ctx{display:none;padding:6px 12px;font-size:11px;color:var(--text);background:#eaf6ef;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tab-bar-ctx .ctx-nr{font-weight:600;color:var(--green)}
+    .tab-bar-ctx .ctx-name{color:var(--muted);margin-left:6px}
+    .tab-bar-btns{display:flex}
     .tab-btn{flex:1;padding:12px 16px;border:none;background:none;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s}
     .tab-btn.active{color:var(--green);border-bottom-color:var(--green);background:#fff}
     .tab-btn:hover:not(.active){background:#f0f4f1}
@@ -81,7 +85,7 @@
       <div class="content">
         <div class="list" id="orders"><div class="loading">Lade Bestellungen…</div></div>
         <div class="right-pane" id="right-pane">
-          <div class="tab-bar"><button class="tab-btn active" data-tab="detail">📋 Bestellung</button><button class="tab-btn" data-tab="pack">📦 Packen</button></div>
+          <div class="tab-bar" id="tab-bar"><div class="tab-bar-ctx" id="tab-bar-ctx"></div><div class="tab-bar-btns"><button class="tab-btn active" data-tab="detail">📋 Bestellung</button><button class="tab-btn" data-tab="pack">📦 Packen</button></div></div>
           <div class="tab-content active" data-tab-content="detail" id="detail"><div class="empty"><div><h2>Bestellung ausw&auml;hlen</h2><p>Links eine Bestellung anklicken</p></div></div></div>
           <div class="tab-content" data-tab-content="pack" id="pack"><div class="empty"><div><h2>Packliste</h2><p>Nach Auswahl hier abhaken</p></div></div></div>
         </div>
@@ -220,7 +224,18 @@
       row.addEventListener('click',function(){selectOrder(row.getAttribute('data-id'));});
     });
   }
-  function selectOrder(id){var o=orders.find(function(x){return x.id===id;});if(!o)return;fetch(API+'?action=order&id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(res){selected=res.order||o;renderOrders();renderDetail();switchTab('detail');});}
+  function selectOrder(id){var o=orders.find(function(x){return x.id===id;});if(!o)return;fetch(API+'?action=order&id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(res){selected=res.order||o;renderOrders();renderDetail();switchTab('detail');updateTabCtx();
+    // On mobile, scroll to detail pane
+    if(window.innerWidth<=1100){var rp=document.getElementById('right-pane');if(rp)rp.scrollIntoView({behavior:'smooth',block:'start'});}
+  });}
+  function updateTabCtx(){
+    var ctx=document.getElementById('tab-bar-ctx');
+    if(!ctx) return;
+    if(!selected){ctx.style.display='none';return;}
+    var shortNr=selected.bestellnummer?'#'+selected.bestellnummer.split('-').pop():'';
+    ctx.innerHTML='<span class="ctx-nr">'+esc(shortNr)+'</span><span class="ctx-name">'+esc(selected.kunde_name||selected.kunde_email||'')+'</span>';
+    ctx.style.display='block';
+  }
   function buildPackJson(items){
     var cnt=0;
     var packItems=items.map(function(p,i){
