@@ -15,7 +15,8 @@
     body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:var(--shop-text);-webkit-font-smoothing:antialiased}
 
     /* ── Top Bar ── */
-    .shop-topbar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--shop-border);padding:10px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shop-shadow)}
+    .shop-header{position:sticky;top:0;z-index:100;background:#fff;box-shadow:var(--shop-shadow)}
+    .shop-topbar{background:#fff;border-bottom:1px solid var(--shop-border);padding:10px 16px;display:flex;align-items:center;gap:12px}
     .shop-logo{height:36px;width:auto;border-radius:6px}
     .shop-title{font-size:15px;font-weight:700;color:var(--shop-green);flex:1}
     .shop-title small{display:block;font-size:11px;font-weight:400;color:var(--shop-muted)}
@@ -258,7 +259,8 @@
 </head>
 <body>
 
-<!-- ── Top Bar ── -->
+<!-- ── Sticky Header ── -->
+<div class="shop-header">
 <div class="shop-topbar">
   <a href="/"><img src="/images/icon-192.png" alt="Dorfladen" class="shop-logo"></a>
   <div class="shop-title">
@@ -284,6 +286,7 @@
     <option value="">🏪 Warengruppe…</option>
   </select>
 </div>
+</div><!-- /shop-header -->
 
 <!-- Banner hidden, info moved to topbar -->
 
