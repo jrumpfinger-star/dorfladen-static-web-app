@@ -98,7 +98,7 @@
     /* ── Product Grid ── */
     .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;padding:8px 16px 16px}
     @media(min-width:768px){.shop-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;padding:8px 24px 24px}}
-    @media(min-width:1200px){.shop-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));max-width:1500px;margin:0 auto}}
+    @media(min-width:1200px){.shop-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));max-width:1100px;margin:0 auto}}
 
     /* ── View Toggle ── */
     .shop-view-toggle{display:flex;gap:2px;background:#f3f4f6;border-radius:8px;padding:2px;margin-left:auto}
@@ -108,7 +108,7 @@
     /* ── List View ── */
     .shop-list{display:grid;grid-template-columns:1fr;gap:4px;padding:0 16px 16px}
     @media(min-width:900px){.shop-list{grid-template-columns:1fr 1fr;gap:6px;padding:0 24px 24px}}
-    @media(min-width:1200px){.shop-list{max-width:1400px}}
+    @media(min-width:1200px){.shop-list{max-width:1100px;margin:0 auto}}
     .shop-list-item{display:grid;grid-template-columns:50px 1fr auto;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--shop-border);border-radius:10px;transition:background .1s}
     .shop-list-item:hover{background:#f9fafb}
     .shop-list-item.in-cart{border-color:#2e7d4f;background:#f0faf3}
@@ -150,7 +150,7 @@
     /* ── Category Tiles ── */
     .shop-cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px 16px}
     @media(min-width:600px){.shop-cat-grid{grid-template-columns:repeat(3,1fr);gap:14px;padding:12px 24px}}
-    @media(min-width:900px){.shop-cat-grid{grid-template-columns:repeat(4,1fr);max-width:1000px;margin:0 auto}}
+    @media(min-width:900px){.shop-cat-grid{grid-template-columns:repeat(4,1fr);max-width:900px;margin:0 auto}}
     .shop-cat-tile{background:#fff;border-radius:14px;border:1px solid var(--shop-border);padding:18px 12px;text-align:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
     .shop-cat-tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
     .shop-cat-tile:active{transform:scale(.97)}
@@ -162,7 +162,7 @@
     /* ── Reorder Cards ── */
     .reorder-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:8px 16px 16px}
     @media(min-width:768px){.reorder-grid{grid-template-columns:1fr 1fr;padding:8px 24px 16px}}
-    @media(min-width:1200px){.reorder-grid{grid-template-columns:1fr 1fr 1fr;padding:8px 40px 16px;max-width:1400px;margin:0 auto}}
+    @media(min-width:1200px){.reorder-grid{grid-template-columns:1fr 1fr 1fr;padding:8px 40px 16px;max-width:1100px;margin:0 auto}}
     .reorder-card{background:#fff;border:1px solid var(--shop-border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
     .reorder-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s}
     .reorder-header:hover{background:#f0fdf4}
