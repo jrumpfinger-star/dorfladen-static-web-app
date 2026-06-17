@@ -67,9 +67,9 @@
     .shop-list-item:hover{background:#f9fafb}
     .shop-list-item.in-cart{border-color:#2e7d4f;background:#f0faf3}
     .shop-list-item.in-cart .shop-add-btn{display:none}
-    .shop-list-img{width:36px;height:36px;object-fit:contain;border-radius:6px;background:#fff;mix-blend-mode:multiply}
-    .shop-list-noimg{width:36px;height:36px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#d1d5db}
-    .shop-list-info{min-width:0;display:flex;flex-direction:column;gap:1px}
+    .shop-list-img{width:36px;height:36px;max-width:36px;object-fit:contain;border-radius:6px;background:#fff;mix-blend-mode:multiply;overflow:hidden}
+    .shop-list-noimg{width:36px;height:36px;max-width:36px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#d1d5db;overflow:hidden}
+    .shop-list-info{min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:1px}
     .shop-list-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .shop-list-meta{font-size:10px;color:var(--shop-muted)}
     .shop-list-price{font-size:14px;font-weight:800;color:var(--shop-green);white-space:nowrap;text-align:right}
