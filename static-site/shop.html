@@ -390,6 +390,7 @@
   var allArticles=[];
   var bestsellers=[];
   var previousArticles=[];
+  var previousOrders=[];
   var categories=[];
   var cart=JSON.parse(localStorage.getItem('dl_shop_cart')||'[]');
   var authToken=localStorage.getItem('dl_shop_token')||'';
@@ -626,6 +627,7 @@
     return fetch(API+'/shop-order?mode=customer',{headers:{'X-Shop-Token':authToken}})
       .then(function(r){return r.json();})
       .then(function(res){
+        previousOrders=(res.orders||[]).slice();
         var seen={};
         (res.orders||[]).forEach(function(o){(o.positionen||[]).forEach(function(pos){
           var keys=[pos.artikelnummer,pos.strichcode,(pos.bezeichnung||'').toLowerCase()].filter(Boolean);
@@ -1013,10 +1015,40 @@
     bc+='<div class="shop-view-toggle"><button id="vt-grid" class="'+(articleViewMode==='grid'?'active':'')+'">▦</button><button id="vt-list" class="'+(articleViewMode==='list'?'active':'')+'">☰</button></div>';
     bc+='</div>';
 
+    // Reorder banner for "Schon bestellt"
+    var reorderBanner='';
+    if(activeCat==='previous'&&previousOrders.length){
+      reorderBanner+='<div style="padding:0 16px 12px">';
+      var maxShow=Math.min(previousOrders.length,3);
+      for(var oi=0;oi<maxShow;oi++){
+        var po=previousOrders[oi];
+        if(!po.positionen||!po.positionen.length) continue;
+        var poCount=po.positionen.length;
+        var poDate=po.bestelldatum||'';
+        reorderBanner+='<div data-reorder-card="'+oi+'" style="display:flex;align-items:center;gap:12px;padding:10px 14px;margin-bottom:6px;background:#e0f2fe;border:1px solid #bae6fd;border-radius:10px;cursor:pointer;transition:background .15s">';
+        reorderBanner+='<span style="font-size:24px">📦</span>';
+        reorderBanner+='<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px;color:#0c4a6e">'+esc(po.bestellnummer)+' nochmal bestellen</div><div style="font-size:11px;color:#0369a1">'+poCount+' Artikel · '+esc(poDate)+' · '+fmtP(po.gesamtsumme)+' €</div></div>';
+        reorderBanner+='<span style="font-size:13px;font-weight:700;color:#0369a1;white-space:nowrap">🔄 Alle übernehmen</span>';
+        reorderBanner+='</div>';
+      }
+      reorderBanner+='</div>';
+    }
+
     var renderFn=articleViewMode==='list'?renderArticlesList:renderArticles;
-    content.innerHTML=bc+renderFn(items,title,emoji);
+    content.innerHTML=bc+reorderBanner+renderFn(items,title,emoji);
     wireAddButtons();
     loadImages(items);
+
+    // Wire reorder cards
+    document.querySelectorAll('[data-reorder-card]').forEach(function(card){
+      card.addEventListener('click',function(){
+        var idx=parseInt(card.getAttribute('data-reorder-card'),10);
+        var o=previousOrders[idx];
+        if(o&&o.positionen) reorderFromHistory(o.positionen,o.bestellnummer);
+      });
+      card.addEventListener('mouseenter',function(){card.style.background='#bae6fd';});
+      card.addEventListener('mouseleave',function(){card.style.background='#e0f2fe';});
+    });
     // View toggle click
     var vtGrid=document.getElementById('vt-grid');
     var vtList=document.getElementById('vt-list');
@@ -1241,7 +1273,7 @@
 
   document.getElementById('shop-user-btn').addEventListener('click',function(){
     if(isLoggedIn()){
-      if(confirm('Abmelden?')){authToken='';authUser=null;previousArticles=[];localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();ensurePreviousPill();showToast('Abgemeldet');}
+      if(confirm('Abmelden?')){authToken='';authUser=null;previousArticles=[];previousOrders=[];localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();ensurePreviousPill();showToast('Abgemeldet');}
     } else {showAuth('login');}
   });
 
