@@ -1130,6 +1130,13 @@
     for(var i=0;i<keys.length;i++){if(cat.toLowerCase().indexOf(keys[i].toLowerCase())!==-1||keys[i].toLowerCase().indexOf(cat.toLowerCase())!==-1) return CAT_ICONS[keys[i]];}
     return DEFAULT_CAT_ICON;
   }
+  var CAT_EMOJI={'Backwaren':'🍞','Brot':'🍞','Molkereiprodukte':'🥛','Molkerei':'🥛','Mopro':'🥛','Obst und Gemuese':'🍎','Obst':'🍎','Gemuese':'🥬','Fleisch':'🥩','Wurst':'🥩','Metzgerei':'🥩','Getränke':'🥤','Getraenke':'🥤','Süßwaren':'🍫','Suesses':'🍫','Tiefkühl':'❄️','TK':'❄️','Konserven':'🥫','Haushalt':'🧹','Hygiene':'🧴','Drogerie':'🧴'};
+  function getCatEmoji(cat){
+    if(CAT_EMOJI[cat]) return CAT_EMOJI[cat];
+    var keys=Object.keys(CAT_EMOJI);
+    for(var i=0;i<keys.length;i++){if(cat.toLowerCase().indexOf(keys[i].toLowerCase())!==-1||keys[i].toLowerCase().indexOf(cat.toLowerCase())!==-1) return CAT_EMOJI[keys[i]];}
+    return '📦';
+  }
 
   function countByCat(cat){return allArticles.filter(function(a){return getShopGroup(a.warengruppe)===cat;}).length;}
 
@@ -1560,7 +1567,7 @@
         if(!cnt) return;
         var opt=document.createElement('option');
         opt.value=cat;
-        opt.textContent=getCatIcon(cat)+' '+cat+' ('+cnt+')';
+        opt.textContent=getCatEmoji(cat)+' '+cat+' ('+cnt+')';
         selectEl.appendChild(opt);
       });
       // "Alle Artikel" option at the end
