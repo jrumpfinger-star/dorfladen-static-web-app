@@ -1765,17 +1765,55 @@
           return;
         }
         var todayStr=new Date().toISOString().slice(0,10);
-        var html='<div class="shop-orders"><h2 style="font-size:18px;margin-bottom:16px">Meine Bestellungen</h2>';
+        // Helper: format date nicely
+        function fmtOrderDate(raw){
+          if(!raw) return '–';
+          try{
+            var d=new Date(raw.length===10?raw+'T12:00:00':raw);
+            if(isNaN(d.getTime())) return raw;
+            var tage=['So','Mo','Di','Mi','Do','Fr','Sa'];
+            var tag=tage[d.getDay()];
+            return tag+', '+d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();
+          }catch(e){return raw;}
+        }
+        function fmtOrderDateTime(raw){
+          if(!raw) return '–';
+          try{
+            var d=new Date(raw);
+            if(isNaN(d.getTime())) return raw;
+            return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear()+' um '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+' Uhr';
+          }catch(e){return raw;}
+        }
+        // Short order number: "DL-20260617-4A35" → "#4A35"
+        function shortNr(nr){
+          if(!nr) return '';
+          var parts=nr.split('-');
+          return '#'+(parts.length>=3?parts[parts.length-1]:nr);
+        }
+        // Status icon
+        function statusIcon(s){
+          if(s===0) return '<i data-lucide="clock" style="width:14px;height:14px"></i>';
+          if(s===1) return '<i data-lucide="loader" style="width:14px;height:14px"></i>';
+          if(s===2) return '<i data-lucide="package-check" style="width:14px;height:14px"></i>';
+          if(s===3) return '<i data-lucide="check-circle" style="width:14px;height:14px"></i>';
+          if(s===4) return '<i data-lucide="x-circle" style="width:14px;height:14px"></i>';
+          return '';
+        }
+
+        var html='<div class="shop-orders" style="max-width:600px;margin:0 auto;padding:16px">';
+        html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+        html+='<h2 style="font-size:18px;font-weight:800;color:#1f2937">Meine Bestellungen</h2>';
+        html+='<button onclick="location.reload()" style="padding:6px 16px;border:none;border-radius:8px;background:var(--shop-green);color:#fff;font-size:13px;font-weight:600;cursor:pointer">'+lucideHtml('arrow-left',14)+' Zum Shop</button>';
+        html+='</div>';
         res.orders.forEach(function(o,idx){
           var canCancel=false;
           if(o.status<2){
             if(!o.abholdatum||todayStr<o.abholdatum){
               canCancel=true;
             } else if(todayStr===o.abholdatum){
-              // Check storno deadline: 1h before opening time of the slot
               var slotPeriod=(o.abhol_zeitslot&&o.abhol_zeitslot.period)||'vm';
               var abholDate=new Date(o.abholdatum+'T00:00:00');
-              var abholDow=abholDate.getDay(); // 0=So
+              var abholDow=abholDate.getDay();
               var slotHrs=SHOP_HOURS[abholDow];
               if(slotHrs){
                 var openH=(slotPeriod==='nm'&&slotHrs[2]!=null)?slotHrs[2]:slotHrs[0];
@@ -1787,38 +1825,58 @@
             }
           }
           var open=idx===0;
-          html+='<div class="shop-order-card s'+o.status+'">';
-          html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:0;cursor:pointer;text-align:left">';
-          html+='<div class="shop-order-header"><span class="shop-order-nr">'+esc(o.bestellnummer)+'</span><span style="display:flex;align-items:center;gap:8px"><span style="font-weight:800;color:#2e7d4f">'+fmtP(o.gesamtsumme)+' EUR</span><span class="shop-order-status s'+o.status+'">'+esc(o.status_text)+'</span><span data-order-arrow="'+idx+'" style="font-size:16px;font-weight:900;color:#6b7280">'+(open?'v':'>')+'</span></span></div>';
-          html+='<div style="padding:0 16px 12px;color:#6b7280;font-size:12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>Bestellt: '+esc(o.bestelldatum)+'</span><span>Abholung: '+esc(o.abholdatum)+'</span></div>';
+          var anzahl=o.positionen?o.positionen.length:0;
+          html+='<div class="shop-order-card s'+o.status+'" style="margin-bottom:12px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">';
+          // Header
+          html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:14px 16px 10px;cursor:pointer;text-align:left">';
+          html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">';
+          html+='<div style="display:flex;align-items:center;gap:10px">';
+          html+='<span style="font-size:16px;font-weight:800;color:#1f2937">'+esc(shortNr(o.bestellnummer))+'</span>';
+          html+='<span class="shop-order-status s'+o.status+'" style="display:inline-flex;align-items:center;gap:4px">'+statusIcon(o.status)+esc(o.status_text)+'</span>';
+          html+='</div>';
+          html+='<div style="display:flex;align-items:center;gap:8px">';
+          html+='<span style="font-size:17px;font-weight:800;color:var(--shop-green)">'+fmtP(o.gesamtsumme)+' \u20AC</span>';
+          html+='<span data-order-arrow="'+idx+'" style="font-size:14px;color:#9ca3af;transition:transform .2s">'+(open?'\u25BC':'\u25B6')+'</span>';
+          html+='</div>';
+          html+='</div>';
+          // Meta row
+          html+='<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:#6b7280">';
+          html+='<span>'+lucideHtml('calendar',12)+' Bestellt: '+fmtOrderDateTime(o.bestelldatum)+'</span>';
+          html+='<span>'+lucideHtml('map-pin',12)+' Abholung: '+fmtOrderDate(o.abholdatum)+'</span>';
+          if(anzahl) html+='<span>'+anzahl+' Artikel</span>';
+          html+='</div>';
           html+='</button>';
-          html+='<div class="shop-order-body" data-order-body="'+idx+'" style="display:'+(open?'':'none')+'">';
+          // Body
+          html+='<div class="shop-order-body" data-order-body="'+idx+'" style="display:'+(open?'':'none')+';padding:0 16px 14px">';
           if(o.positionen&&o.positionen.length){
-            html+='<div style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fff">';
-            o.positionen.forEach(function(p){
-              var preis=p.positionspreis!=null?fmtP(p.positionspreis)+' EUR':(p.einzelpreis!=null?fmtP((Number(p.einzelpreis)||0)*(Number(p.menge)||0))+' EUR':'');
-              html+='<div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #f3f4f6">';
-              html+='<div><div style="font-weight:700;color:#1f2937">'+esc(p.bezeichnung)+'</div><div style="font-size:11px;color:#6b7280">'+esc(p.artikelnummer||p.strichcode||'')+'</div></div>';
-              html+='<div style="font-size:12px;color:#374151;white-space:nowrap">'+esc(p.menge)+' '+esc(p.einheit||'')+'</div>';
-              html+='<div style="font-size:12px;font-weight:700;color:#2e7d4f;white-space:nowrap;text-align:right">'+preis+'</div>';
+            html+='<div style="border:1px solid #f0f0f0;border-radius:10px;overflow:hidden;background:#fafafa">';
+            o.positionen.forEach(function(p,pi){
+              var preis=p.positionspreis!=null?fmtP(p.positionspreis)+' \u20AC':(p.einzelpreis!=null?fmtP((Number(p.einzelpreis)||0)*(Number(p.menge)||0))+' \u20AC':'');
+              html+='<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 12px;'+(pi<o.positionen.length-1?'border-bottom:1px solid #f0f0f0':'')+'">';
+              html+='<div style="font-weight:600;color:#1f2937;font-size:13px">'+esc(p.bezeichnung)+'</div>';
+              html+='<div style="font-size:12px;color:#6b7280;white-space:nowrap">'+esc(p.menge)+'× '+esc(p.einheit||'St.')+'</div>';
+              html+='<div style="font-size:13px;font-weight:700;color:var(--shop-green);white-space:nowrap;text-align:right">'+preis+'</div>';
               html+='</div>';
             });
             html+='</div>';
           }
-          html+='<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">';
+          // Action buttons
+          html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
           if(o.positionen&&o.positionen.length){
-            html+='<button data-reorder="'+idx+'" data-reorder-nr="'+esc(o.bestellnummer)+'" data-reorder-pos=\''+JSON.stringify(o.positionen).replace(/'/g,"&#39;")+'\' style="padding:8px 14px;border:none;border-radius:8px;background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:700;cursor:pointer">🔄 Nochmal bestellen</button>';
+            html+='<button data-reorder="'+idx+'" data-reorder-nr="'+esc(o.bestellnummer)+'" data-reorder-pos=\''+JSON.stringify(o.positionen).replace(/'/g,"&#39;")+'\' style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:700;cursor:pointer">'+lucideHtml('repeat',14)+' Nochmal bestellen</button>';
           }
           if(canCancel){
-            html+='<button data-cancel-order="'+esc(o.id)+'" style="padding:8px 14px;border:none;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;cursor:pointer">Bestellung stornieren</button>';
+            html+='<button data-cancel-order="'+esc(o.id)+'" data-cancel-nr="'+esc(shortNr(o.bestellnummer))+'" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;cursor:pointer">'+lucideHtml('x',14)+' Stornieren</button>';
           } else if(o.status<4){
-            html+='<span style="font-size:12px;color:#6b7280;align-self:center">Storno nicht mehr moeglich</span>';
+            html+='<span style="font-size:11px;color:#9ca3af;align-self:center">Stornierung nicht mehr m\u00f6glich</span>';
           }
           html+='</div>';
           html+='</div></div>';
         });
-        html+='<button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;border:none;border-radius:8px;background:#2e7d4f;color:#fff;font-size:14px;cursor:pointer;width:100%">Zurueck zum Shop</button></div>';
+        html+='</div>';
         content.innerHTML=html;
+        if(window.lucide) lucide.createIcons();
+        // Toggle handlers
         document.querySelectorAll('[data-order-toggle]').forEach(function(btn){
           btn.addEventListener('click',function(){
             var idx=btn.getAttribute('data-order-toggle');
@@ -1827,19 +1885,38 @@
             if(!body) return;
             var open=body.style.display==='none';
             body.style.display=open?'':'none';
-            if(arrow) arrow.textContent=open?'v':'>';
+            if(arrow) arrow.textContent=open?'\u25BC':'\u25B6';
           });
         });
+        // Cancel with inline confirmation
         document.querySelectorAll('[data-cancel-order]').forEach(function(btn){
           btn.addEventListener('click',function(){
-            if(!confirm('Diese Bestellung wirklich stornieren?')) return;
-            btn.disabled=true;btn.textContent='Wird storniert...';
-            fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:btn.getAttribute('data-cancel-order'),customer_action:'cancel'})})
-              .then(function(r){return r.json();})
-              .then(function(x){if(x.success){showToast('Bestellung storniert');document.getElementById('shop-history-btn').click();}else{showToast('Fehler: '+(x.error||'Storno nicht moeglich'));btn.disabled=false;btn.textContent='Bestellung stornieren';}})
-              .catch(function(e){showToast('Fehler: '+e.message);btn.disabled=false;btn.textContent='Bestellung stornieren';});
+            var orderId=btn.getAttribute('data-cancel-order');
+            var nr=btn.getAttribute('data-cancel-nr')||'';
+            // Replace button with inline confirm
+            var wrapper=btn.parentNode;
+            var confirmHtml='<div data-cancel-confirm style="display:flex;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px">';
+            confirmHtml+='<span style="font-size:12px;color:#991b1b;font-weight:600">'+esc(nr)+' wirklich stornieren?</span>';
+            confirmHtml+='<button data-cancel-yes="'+esc(orderId)+'" style="padding:6px 12px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:12px;font-weight:700;cursor:pointer">Ja, stornieren</button>';
+            confirmHtml+='<button data-cancel-no style="padding:6px 12px;border:none;border-radius:6px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:600;cursor:pointer">Abbrechen</button>';
+            confirmHtml+='</div>';
+            btn.style.display='none';
+            wrapper.insertAdjacentHTML('beforeend',confirmHtml);
+            wrapper.querySelector('[data-cancel-no]').addEventListener('click',function(){
+              wrapper.querySelector('[data-cancel-confirm]').remove();
+              btn.style.display='';
+            });
+            wrapper.querySelector('[data-cancel-yes]').addEventListener('click',function(){
+              var yesBtn=wrapper.querySelector('[data-cancel-yes]');
+              yesBtn.disabled=true;yesBtn.textContent='Wird storniert\u2026';
+              fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,customer_action:'cancel'})})
+                .then(function(r){return r.json();})
+                .then(function(x){if(x.success){showToast('Bestellung storniert');document.getElementById('shop-history-btn').click();}else{showToast('Fehler: '+(x.error||'Storno nicht m\u00f6glich'));wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';}})
+                .catch(function(e){showToast('Fehler: '+e.message);wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';});
+            });
           });
         });
+        // Reorder handlers
         document.querySelectorAll('[data-reorder]').forEach(function(btn){
           btn.addEventListener('click',function(){
             try{
