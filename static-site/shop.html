@@ -1103,7 +1103,13 @@
 
   function countByCat(cat){return allArticles.filter(function(a){return getShopGroup(a.warengruppe)===cat;}).length;}
 
+  function showShopNav(){
+    document.getElementById('shop-search-wrap').style.display='';
+    document.getElementById('shop-cats').style.display='';
+  }
+
   function showCategoryOverview(){
+    showShopNav();
     viewMode='categories';
     activeCat='all';
     var content=document.getElementById('shop-content');
@@ -1186,6 +1192,7 @@
   }
 
   function showArticles(){
+    showShopNav();
     viewMode='articles';
     var content=document.getElementById('shop-content');
     var items=allArticles;
@@ -1599,6 +1606,9 @@
   // Order history
   document.getElementById('shop-history-btn').addEventListener('click',function(){
     if(!isLoggedIn()){showAuth('login');return;}
+    // Hide search and category nav in order history view
+    document.getElementById('shop-search-wrap').style.display='none';
+    document.getElementById('shop-cats').style.display='none';
     var content=document.getElementById('shop-content');
     content.innerHTML='<div class="shop-loading"><div class="spinner"></div><p>Bestellungen laden...</p></div>';
     fetch(API+'/shop-order?mode=customer',{headers:{'X-Shop-Token':authToken}})
