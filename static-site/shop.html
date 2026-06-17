@@ -25,6 +25,18 @@
     .shop-topbar-btn{background:none;border:none;font-size:22px;cursor:pointer;padding:6px;border-radius:8px;position:relative}
     .shop-topbar-btn:hover{background:var(--shop-gray)}
     .shop-topbar-btn svg,.shop-topbar-btn i{pointer-events:none}
+    /* Topbar Slot Picker */
+    .shop-slot-dd{position:relative;flex-shrink:0}
+    .shop-slot-dd-btn{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--shop-border);border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:var(--shop-green);white-space:nowrap;transition:all .15s}
+    .shop-slot-dd-btn:hover{background:var(--shop-green-light);border-color:var(--shop-green)}
+    .shop-slot-dd-btn svg,.shop-slot-dd-btn i{pointer-events:none}
+    .shop-slot-dd-list{display:none;position:absolute;top:100%;right:0;margin-top:4px;background:#fff;border:1px solid var(--shop-border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:240px;max-height:320px;overflow-y:auto;padding:4px 0}
+    .shop-slot-dd.open .shop-slot-dd-list{display:block}
+    .shop-slot-dd-group{padding:6px 12px 2px;font-size:11px;font-weight:700;color:var(--shop-muted);text-transform:uppercase;letter-spacing:.5px}
+    .shop-slot-dd-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:13px;color:var(--shop-text);transition:background .1s}
+    .shop-slot-dd-item:hover{background:var(--shop-green-light)}
+    .shop-slot-dd-item.active{background:var(--shop-green-light);font-weight:700;color:var(--shop-green)}
+    .shop-slot-dd-item .slot-time{font-size:11px;color:var(--shop-muted);margin-left:auto}
     .shop-cart-badge{position:absolute;top:0;right:0;background:var(--shop-orange);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
     .shop-user-badge{font-size:11px;color:var(--shop-green);font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -309,7 +321,10 @@
     Online bestellen
     <small>Abholen im Dorfladen</small>
   </div>
-  <div class="shop-cutoff-hint" id="shop-cutoff-hint"><strong><span id="shop-cutoff-time"></span></strong><span id="shop-abhol-date"></span></div>
+  <div class="shop-slot-dd" id="shop-slot-dd">
+    <button class="shop-slot-dd-btn" id="shop-slot-dd-btn" title="Abholtermin wählen"><i data-lucide="calendar" style="width:14px;height:14px"></i> <span id="shop-slot-dd-label">Laden…</span> <i data-lucide="chevron-down" style="width:12px;height:12px"></i></button>
+    <div class="shop-slot-dd-list" id="shop-slot-dd-list"></div>
+  </div>
   <a href="/shop-admin.html" class="shop-topbar-btn" id="shop-admin-btn" title="Shop Verwaltung" style="text-decoration:none"><i data-lucide="settings" style="width:20px;height:20px"></i></a>
   <button class="shop-topbar-btn" id="shop-history-btn" title="Meine Bestellungen"><i data-lucide="clipboard-list" style="width:20px;height:20px"></i></button>
   <button class="shop-topbar-btn" id="shop-user-btn" title="Anmelden / Konto"><i data-lucide="user" style="width:20px;height:20px"></i></button>
@@ -634,17 +649,72 @@
 
   function updateBanner(){
     var slots=calcAvailableSlots();
-    var cutoffEl=document.getElementById('shop-cutoff-time');
-    var abholEl=document.getElementById('shop-abhol-date');
-    if(slots.length){
-      var first=slots[0];
-      if(cutoffEl) cutoffEl.textContent='';
-      if(abholEl) abholEl.textContent=slotDisplayName(first);
-    } else {
-      if(cutoffEl) cutoffEl.textContent='';
-      if(abholEl) abholEl.textContent='Aktuell keine Abholzeit verfügbar';
+    var label=document.getElementById('shop-slot-dd-label');
+    var list=document.getElementById('shop-slot-dd-list');
+    if(!label||!list) return;
+    list.innerHTML='';
+    if(!slots.length){
+      label.textContent='Keine Abholzeit';
+      selectedSlot=null;
+      renderSlotPicker();
+      return;
     }
+    // Auto-select first slot if none selected or current selection no longer available
+    if(!selectedSlot||!slots.find(function(s){return s.dateStr===selectedSlot.dateStr&&s.period===selectedSlot.period;})){
+      selectedSlot=slots[0];
+    }
+    // Update label
+    label.textContent=slotDisplayName(selectedSlot);
+    // Build dropdown grouped by date
+    var groups={};var groupOrder=[];
+    slots.forEach(function(s){
+      if(!groups[s.dateStr]){groups[s.dateStr]={date:s.date,dateStr:s.dateStr,slots:[]};groupOrder.push(s.dateStr);}
+      groups[s.dateStr].slots.push(s);
+    });
+    groupOrder.forEach(function(dk){
+      var g=groups[dk];
+      var dayLabel;
+      if(isToday(g.date)) dayLabel='Heute';
+      else if(isTomorrow(g.date)) dayLabel='Morgen';
+      else dayLabel=formatDate(g.date);
+      var hdr=document.createElement('div');
+      hdr.className='shop-slot-dd-group';
+      hdr.textContent=dayLabel;
+      list.appendChild(hdr);
+      g.slots.forEach(function(s){
+        var item=document.createElement('div');
+        item.className='shop-slot-dd-item';
+        if(selectedSlot&&selectedSlot.dateStr===s.dateStr&&selectedSlot.period===s.period) item.classList.add('active');
+        item.setAttribute('data-slot-sel',s.dateStr+'_'+s.period);
+        item.innerHTML=esc(s.label)+'<span class="slot-time">'+esc(s.abholVon)+' – '+esc(s.abholBis)+'</span>';
+        list.appendChild(item);
+      });
+    });
     renderSlotPicker();
+  }
+
+  function initTopbarSlotPicker(){
+    var ddEl=document.getElementById('shop-slot-dd');
+    var ddBtn=document.getElementById('shop-slot-dd-btn');
+    var ddList=document.getElementById('shop-slot-dd-list');
+    if(!ddEl||!ddBtn||!ddList) return;
+    ddBtn.addEventListener('click',function(e){e.stopPropagation();ddEl.classList.toggle('open');});
+    document.addEventListener('click',function(e){if(!ddEl.contains(e.target)) ddEl.classList.remove('open');});
+    ddList.addEventListener('click',function(e){
+      var item=e.target.closest('[data-slot-sel]');
+      if(!item) return;
+      var parts=item.getAttribute('data-slot-sel').split('_');
+      var slots=calcAvailableSlots();
+      var found=slots.find(function(s){return s.dateStr===parts[0]&&s.period===parts[1];});
+      if(found){
+        selectedSlot=found;
+        ddEl.classList.remove('open');
+        updateBanner();
+        // Re-render current view with new slot filter
+        if(viewMode==='categories') showCategoryOverview();
+        else showArticles();
+      }
+    });
   }
 
   function renderSlotPicker(){
@@ -693,7 +763,7 @@
         var key=btn.getAttribute('data-slot-key');
         var parts=key.split('_');
         var found=slots.find(function(s){return s.dateStr===parts[0]&&s.period===parts[1];});
-        if(found){selectedSlot=found;renderSlotPicker();}
+        if(found){selectedSlot=found;updateBanner();}
       });
     });
     // Update storno hint based on selected slot
@@ -1552,6 +1622,7 @@
   }
 
   // ── Init ──
+  initTopbarSlotPicker();
   updateBanner();
   updateCartBadge();
   updateUserUI();
