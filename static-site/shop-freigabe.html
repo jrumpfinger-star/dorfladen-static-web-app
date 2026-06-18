@@ -30,6 +30,7 @@
 .stats{font-size:12px;color:var(--muted);font-weight:400;white-space:nowrap}
 .filter-btn{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;background:#fff;transition:.15s}
 .filter-btn:hover,.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+.fb-kurz{border-color:#f59e0b;color:#92400e}.fb-kurz:hover,.fb-kurz.active{background:#f59e0b;color:#fff;border-color:#f59e0b}
 
 /* ── Warengruppe Accordion ── */
 .wrap{max-width:960px;margin:0 auto;padding:12px 18px 80px}
@@ -126,7 +127,7 @@
     <button class="search-clear" id="search-clear" title="Suche leeren">&times;</button>
   </div>
   <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
-  <button class="filter-btn" data-filter="kurz" style="border-color:#f59e0b;color:#92400e">⏳ Nur kurz</button>
+  <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
   <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
   <div class="stats" id="stats">Lade…</div>
 </div>
