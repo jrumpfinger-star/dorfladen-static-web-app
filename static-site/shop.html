@@ -644,6 +644,7 @@
   }
 
   // ── Helpers ──
+  document.addEventListener('focus',function(e){if(e.target&&e.target.type==='number') e.target.select();},true);
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   function fmtP(v){return(+v).toFixed(2).replace('.',',');}
 

@@ -41,10 +41,14 @@
     /* Inline expand (accordion on mobile) */
     .order-expand{display:none;border-bottom:2px solid var(--green);background:#f8fbf9}
     .order-expand.open{display:block}
+    .order-expand .expand-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--green);color:#fff;font-size:12px;font-weight:700}
+    .order-expand .expand-hdr .xh-nr{opacity:.7;font-weight:400;margin-left:6px}
     .order-expand .expand-tabs{display:flex;border-bottom:1px solid var(--border);background:#f0f4f1}
     .order-expand .expand-tab{flex:1;padding:8px 10px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
     .order-expand .expand-tab.active{color:var(--green);border-bottom-color:var(--green);background:#fff}
-    .order-expand .expand-body{padding:12px}
+    .order-expand .expand-body{padding:10px 12px}
+    .pack-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+    .pack-actions .btn{padding:7px 12px;font-size:11px;border-radius:8px}
     @media(max-width:1100px){.content{grid-template-columns:1fr}.list{border-right:0;max-height:none}.right-pane{display:none}}
     @media(max-width:600px){
       .top{padding:10px 12px;gap:6px;flex-wrap:nowrap}.brand{font-size:13px}.brand-badge{width:28px;height:28px;font-size:15px;border-radius:8px}.sub{display:none}.spacer{display:none}
@@ -310,7 +314,9 @@
     // Copy detail + pack content into expand area
     var detailEl=document.getElementById('detail');
     var packEl=document.getElementById('pack');
-    var html='<div class="expand-tabs">';
+    var shortNr=selected.bestellnummer?'#'+selected.bestellnummer.split('-').pop():'';
+    var html='<div class="expand-hdr"><span>'+esc(selected.kunde_name||selected.kunde_email||'')+' <span class="xh-nr">'+esc(shortNr)+'</span></span><span>'+money(selected.gesamtsumme)+'</span></div>';
+    html+='<div class="expand-tabs">';
     html+='<button class="expand-tab active" data-xtab="detail">📋 Bestellung</button>';
     html+='<button class="expand-tab" data-xtab="pack">📦 Packen</button>';
     html+='</div>';
@@ -684,9 +690,9 @@
     packHtml+='</div>';
     packHtml+='<div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">ℹ Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>';
     packHtml+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:4px" id="pack-summe">Summe: '+money(summe)+'</div>';
-    packHtml+='<div style="display:flex;gap:8px;margin-top:12px">';
-    if(isEditable) packHtml+='<button class="btn primary" id="finish-pack" style="flex:1;padding:11px">✅ Fertig – Abholbereit</button>';
-    packHtml+='<button class="btn" id="print-slip" style="padding:11px'+(isEditable?'':';flex:1')+'">🖨 Drucken</button></div>';
+    packHtml+='<div class="pack-actions">';
+    if(isEditable) packHtml+='<button class="btn primary" id="finish-pack">✅ Fertig – Abholbereit</button>';
+    packHtml+='<button class="btn" id="print-slip">🖨 Drucken</button></div>';
     document.getElementById('pack').innerHTML=packHtml;
     wirePackUI(document,items,o,isEditable,packedCount);
     wireDetailUI(document,items,o,isEditable,packedCount);
