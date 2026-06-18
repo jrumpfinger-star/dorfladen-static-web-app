@@ -20,8 +20,8 @@
 .btn.red{color:var(--red);border-color:var(--red)}.btn.red:hover{background:#fef2f2}
 
 /* ── Toolbar ── */
-.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;flex-direction:column;gap:8px;max-width:960px;margin:0 auto}
-.search-wrap{position:relative;width:100%}
+.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:960px;margin:0 auto}
+.search-wrap{position:relative;flex:0 1 240px;min-width:160px}
 .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
 .search{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 30px 8px 32px;font-size:13px;outline:none;box-sizing:border-box}
 .search:focus{border-color:var(--green)}
@@ -122,16 +122,14 @@
 </div>
 
 <div class="toolbar">
+  <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
+  <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
+  <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
+  <div class="stats" id="stats">Lade…</div>
   <div class="search-wrap">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input class="search" id="search" placeholder="Suchen…" autocomplete="off">
     <button class="search-clear" id="search-clear" title="Suche leeren">&times;</button>
-  </div>
-  <div class="filter-row">
-    <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
-    <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
-    <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
-    <div class="stats" id="stats">Lade…</div>
   </div>
 </div>
 
