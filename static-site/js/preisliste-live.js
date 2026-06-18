@@ -207,6 +207,20 @@
       }catch(e){}
     }
 
+    function pickCentral(barcodes,vw,vh){
+      if(barcodes.length===1)return barcodes[0];
+      var cx=vw/2,cy=vh/2,best=null,bestDist=Infinity;
+      barcodes.forEach(function(b){
+        var r=b.boundingBox||b.cornerPoints&&{x:b.cornerPoints[0].x,y:b.cornerPoints[0].y,
+          width:b.cornerPoints[2].x-b.cornerPoints[0].x,height:b.cornerPoints[2].y-b.cornerPoints[0].y};
+        if(!r){best=best||b;return;}
+        var mx=r.x+r.width/2,my=r.y+r.height/2;
+        var d=Math.abs(mx-cx)+Math.abs(my-cy);
+        if(d<bestDist){bestDist=d;best=b;}
+      });
+      return best||barcodes[0];
+    }
+
     function startNativeScanner(){
       var video=document.createElement('video');
       video.setAttribute('playsinline','');video.setAttribute('autoplay','');
@@ -223,7 +237,7 @@
             if(video.readyState>=2){
               detector.detect(video).then(function(barcodes){
                 if(!_scanning||!barcodes.length)return;
-                var code=barcodes[0].rawValue;
+                var code=pickCentral(barcodes,video.videoWidth,video.videoHeight).rawValue;
                 var now=Date.now();
                 if(code===_lastCode&&(now-_lastTime)<2000){_confirmCount++;}else{_confirmCount=1;_lastCode=code;}_lastTime=now;
                 if(_confirmCount>=2){_scanning=false;stopScanner();onBarcodeScanned(code);}
