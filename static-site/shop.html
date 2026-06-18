@@ -209,7 +209,7 @@
     .shop-card .shop-fav-btn{position:absolute;top:6px;right:6px;z-index:2;font-size:20px;background:rgba(255,255,255,.85);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 
     /* ── Add to Cart Button ── */
-    .shop-card-footer{padding:0 8px 8px;display:flex;align-items:center;gap:4px}
+    .shop-card-footer{padding:0 8px 8px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
     .shop-add-btn{padding:6px 12px;border:none;border-radius:8px;background:var(--shop-green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
     .shop-add-btn:hover{background:#256b42}
     .shop-add-btn:active{transform:scale(.97)}
@@ -217,7 +217,8 @@
     .shop-qty-btn{width:32px;height:32px;border:none;background:#f3f4f6;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
     .shop-qty-btn:hover{background:#e5e7eb}
     .shop-qty-val{width:40px;text-align:center;font-size:13px;font-weight:600;border:none;outline:none;background:#fff}
-    .shop-weight-input{width:74px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:13px;text-align:center}.shop-qty-input{width:58px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:13px;text-align:center}
+    .shop-weight-input{width:60px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:12px;text-align:center}.shop-qty-input{width:50px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:12px;text-align:center}
+    @media(max-width:480px){.shop-card-footer{flex-direction:column;align-items:stretch;gap:4px}.shop-card-footer .shop-add-btn{width:100%;justify-content:center}.shop-card-footer .shop-qty-ctrl{width:100%;justify-content:center}.shop-card-footer .shop-weight-input{flex:1;min-width:0}}
 
     /* ── Cart Sidebar / Bottom Sheet ── */
     .shop-cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;opacity:0;transition:opacity .2s}
@@ -1285,10 +1286,16 @@
       html+='<div style="padding:8px 16px 12px;color:#9ca3af;font-size:13px">Aktuell keine kurzfristig verfügbaren Artikel.</div>';
     }
 
-    // Beliebt section
-    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title"><span class="emoji">🔥</span> Beliebt <span class="shop-section-count">('+bestsellers.length+')</span></div></div>';
+    // Beliebt section — respect view mode toggle
+    var bsItems=bestsellers.slice(0,6);
+    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="emoji">🔥</span> Beliebt <span class="shop-section-count">('+bestsellers.length+')</span>';
+    html+='<div class="shop-view-toggle" style="margin-left:auto" id="bs-view-toggle"><button class="bs-vt'+(articleViewMode==='grid'?' active':'')+'" data-bs-view="grid">▦</button><button class="bs-vt'+(articleViewMode==='list'?' active':'')+'" data-bs-view="list">☰</button></div>';
+    html+='</div></div>';
+    if(articleViewMode==='list'){
+      html+=renderArticlesList(bsItems,'Beliebt','🔥').replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
+    } else {
     html+='<div class="shop-grid">';
-    bestsellers.slice(0,6).forEach(function(a){
+    bsItems.forEach(function(a){
       var badges='';
       if(a.popularity>=70) badges+='<span class="shop-badge shop-badge-bestseller">🔥 Beliebt</span>';
       if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
@@ -1296,7 +1303,7 @@
       if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
       if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
       html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
-      html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
+      html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+' " data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
       html+='<div class="shop-card-badges">'+badges+'</div>';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-card-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
       else html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">🛒</div>';
@@ -1307,11 +1314,20 @@
       html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
     });
     html+='</div>';
+    }
 
     content.innerHTML=html;
     wireAddButtons();
     var kurzImgs=allArticles.filter(function(a){return a.kurzfristig;});
     loadImages(bestsellers.slice(0,6).concat(kurzImgs));
+    // Beliebt view toggle
+    document.querySelectorAll('[data-bs-view]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        articleViewMode=btn.getAttribute('data-bs-view');
+        localStorage.setItem('dl_shop_viewmode',articleViewMode);
+        showCategoryOverview();
+      });
+    });
     // Update nav state
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')==='bestseller');});
     var ddBtn=document.getElementById('shop-cat-dd-btn');if(ddBtn){ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Warengruppe\u2026';}
