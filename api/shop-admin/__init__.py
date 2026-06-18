@@ -310,7 +310,7 @@ def _scan_pickup(req, base_url, headers):
     )
 
 
-KUNDEN_SELECT = "dl_shopkundeid,dl_email,dl_vorname,dl_nachname,dl_telefon,dl_strasse,dl_plz,dl_ort,dl_aktiv,dl_email_verifiziert,createdon"
+KUNDEN_SELECT = "dl_shopkundeid,dl_email,dl_vorname,dl_nachname,dl_telefon,dl_strasse,dl_plz,dl_ort,dl_aktiv,dl_email_verifiziert,createdon,dl_iban_encrypted,dl_kontoinhaber,dl_mandatsreferenz,dl_mandatsdatum,dl_mandatsstatus"
 
 
 def _list_kunden(req, base_url, headers):
@@ -326,8 +326,18 @@ def _list_kunden(req, base_url, headers):
             json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}, ensure_ascii=False),
             status_code=r.status_code, headers=get_cors_headers(),
         )
+    import base64
     kunden = []
     for k in r.json().get("value", []):
+        # Mask IBAN for display
+        iban_masked = ""
+        enc_iban = k.get("dl_iban_encrypted", "") or ""
+        if enc_iban and enc_iban.startswith("ENC:"):
+            try:
+                raw = base64.b64decode(enc_iban[4:]).decode()
+                iban_masked = raw[:4] + " **** **** " + raw[-4:] if len(raw) >= 8 else raw
+            except Exception:
+                iban_masked = "(Fehler)"
         kunden.append({
             "id": k.get("dl_shopkundeid", ""),
             "email": k.get("dl_email", ""),
@@ -340,6 +350,11 @@ def _list_kunden(req, base_url, headers):
             "aktiv": k.get("dl_aktiv", True),
             "email_verifiziert": k.get("dl_email_verifiziert", False),
             "erstellt": k.get("createdon", ""),
+            "iban_masked": iban_masked,
+            "kontoinhaber": k.get("dl_kontoinhaber", ""),
+            "mandatsreferenz": k.get("dl_mandatsreferenz", ""),
+            "mandatsdatum": k.get("dl_mandatsdatum", ""),
+            "mandatsstatus": k.get("dl_mandatsstatus", ""),
         })
     return func.HttpResponse(
         json.dumps({"success": True, "kunden": kunden}, ensure_ascii=False),

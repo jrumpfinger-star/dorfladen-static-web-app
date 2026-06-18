@@ -9298,6 +9298,22 @@
     html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Ort<input id="kd-ort" class="cms-input" value="'+esc(k.ort||'')+'" style="width:100%;margin-top:2px"></label>';
     html+='<label style="font-size:11px;font-weight:700;color:#6b7280;grid-column:1/3;display:flex;align-items:center;gap:8px"><input type="checkbox" id="kd-aktiv" '+(k.aktiv?'checked':'')+' style="width:18px;height:18px;accent-color:#2e7d4f"> Konto aktiv</label>';
     html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
+    html+='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px"><i data-lucide="landmark" style="width:12px;height:12px;vertical-align:-2px"></i> SEPA-Lastschriftmandat</div>';
+    var hasMd=k.mandatsreferenz||k.iban_masked;
+    if(hasMd){
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:10px">';
+      html+='<div><span style="color:#6b7280">IBAN:</span> <b style="font-family:monospace;letter-spacing:1px">'+esc(k.iban_masked||'–')+'</b></div>';
+      html+='<div><span style="color:#6b7280">Kontoinhaber:</span> <b>'+esc(k.kontoinhaber||'–')+'</b></div>';
+      html+='<div><span style="color:#6b7280">Mandatsreferenz:</span> <b>'+esc(k.mandatsreferenz||'–')+'</b></div>';
+      html+='<div><span style="color:#6b7280">Mandatsdatum:</span> <b>'+fmtDe(k.mandatsdatum)+'</b></div>';
+      var msBadge=k.mandatsstatus==='aktiv'?'background:#dcfce7;color:#166534':'background:#fee2e2;color:#991b1b';
+      html+='<div style="grid-column:1/3"><span style="color:#6b7280">Status:</span> <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;'+msBadge+'">'+esc(k.mandatsstatus||'–')+'</span></div>';
+      html+='</div>';
+    } else {
+      html+='<div style="font-size:12px;color:#9ca3af;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px">Kein SEPA-Mandat hinterlegt</div>';
+    }
+    html+='</div>';
+    html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
     html+='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">Passwort zurücksetzen</div>';
     html+='<div style="display:flex;gap:8px;align-items:center">';
     html+='<input type="password" id="kd-new-pw" class="cms-input" placeholder="Neues Passwort (min. 8 Zeichen)" style="flex:1">';
