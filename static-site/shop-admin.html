@@ -458,6 +458,14 @@
       });
     });
     items.forEach(function(p,i){updatePackTag(String(i));});
+    var saveBtn=q('#save-pack')||q('[id="save-pack"]');
+    if(saveBtn){saveBtn.addEventListener('click',function(){
+      var r=scopedBuildPackJson();
+      var data={status:1,pack_json:r.pack};
+      var noteEl=q('#note')||q('[id="note"]');
+      if(noteEl) data.anmerkungen=noteEl.value;
+      updateOrder(data);
+    });}
     var finishBtn=q('#finish-pack')||q('[id="finish-pack"]');
     if(finishBtn){finishBtn.addEventListener('click',function(){
       var r=scopedBuildPackJson();
@@ -766,6 +774,7 @@
     packHtml+='<div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">ℹ Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>';
     packHtml+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:4px" id="pack-summe">Summe: '+money(summe)+'</div>';
     packHtml+='<div class="pack-actions">';
+    if(isEditable) packHtml+='<button class="btn" id="save-pack" style="background:#e0f2fe;color:#0369a1;border-color:#7dd3fc">💾 Zwischenspeichern</button>';
     if(isEditable) packHtml+='<button class="btn primary" id="finish-pack">✅ Fertig – Abholbereit</button>';
     packHtml+='<button class="btn" id="print-slip">🖨 Drucken</button></div>';
     document.getElementById('pack').innerHTML=packHtml;
