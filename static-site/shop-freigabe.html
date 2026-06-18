@@ -20,14 +20,15 @@
 .btn.red{color:var(--red);border-color:var(--red)}.btn.red:hover{background:#fef2f2}
 
 /* ── Toolbar ── */
-.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:960px;margin:0 auto}
-.search-wrap{position:relative;flex:0 1 320px;min-width:180px}
+.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;flex-direction:column;gap:8px;max-width:960px;margin:0 auto}
+.search-wrap{position:relative;width:100%}
 .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
 .search{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 30px 8px 32px;font-size:13px;outline:none;box-sizing:border-box}
 .search:focus{border-color:var(--green)}
 .search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:2px 4px;display:none}
 .search-clear:hover{color:#111}
-.stats{font-size:12px;color:var(--muted);font-weight:400;white-space:nowrap}
+.filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stats{font-size:12px;color:var(--muted);font-weight:400;white-space:nowrap;margin-left:auto}
 .filter-btn{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;background:#fff;transition:.15s}
 .filter-btn:hover,.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
 .fb-kurz{border-color:#f59e0b;color:#92400e}.fb-kurz:hover,.fb-kurz.active{background:#f59e0b;color:#fff;border-color:#f59e0b}
@@ -126,10 +127,12 @@
     <input class="search" id="search" placeholder="Suchen…" autocomplete="off">
     <button class="search-clear" id="search-clear" title="Suche leeren">&times;</button>
   </div>
-  <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
-  <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
-  <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
-  <div class="stats" id="stats">Lade…</div>
+  <div class="filter-row">
+    <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
+    <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
+    <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
+    <div class="stats" id="stats">Lade…</div>
+  </div>
 </div>
 
 <div class="wrap" id="wrap">
