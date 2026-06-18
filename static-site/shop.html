@@ -874,7 +874,7 @@
   function addToCart(article,menge){
     var existing=cart.find(function(c){return c.artikelnummer===article.artikelnummer;});
     if(existing){existing.menge+=menge;}
-    else{cart.push({artikelnummer:article.artikelnummer,bezeichnung:article.bezeichnung,vk:article.vk,einheit:article.einheit,menge:menge,gewichtsware:article.gewichtsware,strichcode:article.strichcode||''});}
+    else{cart.push({artikelnummer:article.artikelnummer,bezeichnung:article.bezeichnung,vk:article.vk,vk_base:article.vk_base||article.vk,einheit:article.einheit,menge:menge,gewichtsware:article.gewichtsware,strichcode:article.strichcode||''});}
     saveCart();updateCartBadge();renderCart();markCartItems();
     // Toast
     showToast('✓ '+article.bezeichnung+' hinzugefügt');
@@ -890,7 +890,7 @@
       var menge=Number(p.menge)||1;
       var existing=cart.find(function(c){return c.artikelnummer===article.artikelnummer;});
       if(existing){existing.menge=menge;}
-      else{cart.push({artikelnummer:article.artikelnummer,bezeichnung:article.bezeichnung,vk:article.vk,einheit:article.einheit,menge:menge,gewichtsware:article.gewichtsware,strichcode:article.strichcode||''});}
+      else{cart.push({artikelnummer:article.artikelnummer,bezeichnung:article.bezeichnung,vk:article.vk,vk_base:article.vk_base||article.vk,einheit:article.einheit,menge:menge,gewichtsware:article.gewichtsware,strichcode:article.strichcode||''});}
       added++;
     });
     saveCart();updateCartBadge();renderCart();markCartItems();
@@ -916,7 +916,7 @@
     saveCart();updateCartBadge();renderCart();markCartItems();
   }
 
-  function cartTotal(){return cart.reduce(function(s,c){return s+c.vk*c.menge;},0);}
+  function cartTotal(){return cart.reduce(function(s,c){var p=c.gewichtsware?(c.vk_base||c.vk):c.vk;return s+p*c.menge;},0);}
 
   function renderCart(){
     var body=document.getElementById('shop-cart-body');
@@ -930,10 +930,11 @@
     }
     var html='';
     cart.forEach(function(item){
-      var price=fmtP(item.vk*item.menge);
+      var calcPrice=item.gewichtsware?(item.vk_base||item.vk):item.vk;
+      var price=fmtP(calcPrice*item.menge);
       var step=item.gewichtsware?'50':'1';
       var unit=item.gewichtsware?'g':'Stueck';
-      var detail=item.gewichtsware?Math.round(item.menge*1000)+' g x '+fmtP(item.vk)+' EUR/kg':item.menge+' Stueck x '+fmtP(item.vk)+' EUR';
+      var detail=item.gewichtsware?Math.round(item.menge*1000)+' g x '+fmtP(item.vk_base||item.vk)+' EUR/kg':item.menge+' Stueck x '+fmtP(item.vk)+' EUR';
       html+='<div class="shop-cart-item">';
       html+='<div class="shop-cart-item-info"><div class="shop-cart-item-name">'+esc(item.bezeichnung)+'</div><div class="shop-cart-item-detail">'+detail+'</div><div style="margin-top:6px"><input type="number" class="shop-qty-input" data-cart-qty="'+esc(item.artikelnummer)+'" value="'+(item.gewichtsware?Math.round(item.menge*1000):item.menge)+'" min="'+step+'" step="'+step+'"> <span style="font-size:11px;color:#6b7280">'+unit+'</span></div></div>';
       html+='<div class="shop-cart-item-price">'+price+' EUR</div>';
@@ -1194,7 +1195,7 @@
     if(!selectedSlot){showToast('⚠️ Bitte Abholtermin wählen');return;}
     var note=document.getElementById('shop-cart-note').value.trim();
     var positionen=cart.map(function(c){
-      return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.vk,strichcode:c.strichcode||'',gewichtsware:!!c.gewichtsware};
+      return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.gewichtsware?(c.vk_base||c.vk):c.vk,strichcode:c.strichcode||'',gewichtsware:!!c.gewichtsware};
     });
     var slotInfo={datum:selectedSlot.dateStr,period:selectedSlot.period,label:selectedSlot.label,abhol_von:selectedSlot.abholVon,abhol_bis:selectedSlot.abholBis};
     var btn=document.getElementById('shop-checkout-btn');
@@ -1769,6 +1770,16 @@
       allArticles=data.articles||[];
       allArticles.forEach(function(a){a._search=((a.bezeichnung||'')+' '+(a.warengruppe||'')+' '+(a.artikelnummer||'')+' '+(a.strichcode||'')).toLowerCase();});
       bestsellers=data.bestsellers||[];
+
+      // Migrate cart items: add vk_base from article data for correct weight pricing
+      var dirty=false;
+      cart.forEach(function(c){
+        if(c.gewichtsware&&!c.vk_base){
+          var a=allArticles.find(function(x){return x.artikelnummer===c.artikelnummer;});
+          if(a&&a.vk_base){c.vk_base=a.vk_base;dirty=true;}
+        }
+      });
+      if(dirty) saveCart();
 
       // Purge stale favorites (articles no longer in sortiment)
       var artSet={};allArticles.forEach(function(a){artSet[a.artikelnummer]=true;});
