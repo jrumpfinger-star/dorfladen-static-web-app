@@ -270,7 +270,11 @@
 
     var wrap=document.getElementById('wrap');
     if(!groups.length){
-      wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Keine Artikel gefunden.</div>';
+      var hint='Keine Artikel gefunden.';
+      if(activeFilter==='kurz') hint='Keine kurzfristigen Artikel vorhanden. Markiere Artikel als "Nur kurz" um sie hier zu sehen.';
+      else if(activeFilter==='enabled'&&!searchTerm) hint='Noch keine Artikel freigegeben. Wechsle zu "Nicht freigegeben" um Artikel hinzuzufügen.';
+      else if(activeFilter==='disabled'&&!searchTerm) hint='Alle Artikel sind bereits freigegeben.';
+      wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">'+hint+'</div>';
       return;
     }
 
