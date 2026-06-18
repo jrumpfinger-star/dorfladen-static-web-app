@@ -661,6 +661,18 @@
         }).catch(function(){showResult(code,[]);});
     }
 
+    function applyFocus(stream){
+      try{
+        var track=stream.getVideoTracks()[0];
+        if(!track||!track.applyConstraints)return;
+        setTimeout(function(){
+          track.applyConstraints({advanced:[{focusMode:'continuous'}]})
+            .catch(function(){return track.applyConstraints({advanced:[{focusDistance:0}]});})
+            .catch(function(){});
+        },500);
+      }catch(e){}
+    }
+
     function startNativeScanner(){
       var video=document.createElement('video');
       video.setAttribute('playsinline','');video.setAttribute('autoplay','');
@@ -669,7 +681,7 @@
       navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
         .then(function(stream){
           _stream=stream;video.srcObject=stream;video.play();
-          try{var track=stream.getVideoTracks()[0];if(track&&track.applyConstraints)track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){});}catch(e){}
+          applyFocus(stream);
           var detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
           var _lastCode='',_lastTime=0,_confirmCount=0,_scanning=true;
           function tick(){
@@ -703,7 +715,7 @@
       },function(err){
         if(err){stopScanner();alert('Kamera konnte nicht geöffnet werden.\n'+err);return;}
         Quagga.start();
-        try{var track=Quagga.CameraAccess.getActiveTrack();if(track&&track.applyConstraints)track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){});}catch(e){}
+        try{var s=Quagga.CameraAccess.getActiveStreamRef&&Quagga.CameraAccess.getActiveStreamRef();if(s)applyFocus(s);}catch(e){}
       });
       Quagga.offDetected();
       var _lastCode='',_lastTime=0,_confirmCount=0;
