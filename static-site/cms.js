@@ -9293,11 +9293,30 @@
     html+='<label style="font-size:11px;font-weight:700;color:#6b7280">PLZ<input id="kd-plz" class="cms-input" value="'+esc(k.plz||'')+'" style="width:100%;margin-top:2px"></label>';
     html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Ort<input id="kd-ort" class="cms-input" value="'+esc(k.ort||'')+'" style="width:100%;margin-top:2px"></label>';
     html+='<label style="font-size:11px;font-weight:700;color:#6b7280;grid-column:1/3;display:flex;align-items:center;gap:8px"><input type="checkbox" id="kd-aktiv" '+(k.aktiv?'checked':'')+' style="width:18px;height:18px;accent-color:#2e7d4f"> Konto aktiv</label>';
+    html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
+    html+='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">Passwort zurücksetzen</div>';
+    html+='<div style="display:flex;gap:8px;align-items:center">';
+    html+='<input type="password" id="kd-new-pw" class="cms-input" placeholder="Neues Passwort (min. 8 Zeichen)" style="flex:1">';
+    html+='<button class="cms-btn cms-btn-sm" id="kd-reset-pw" style="background:#fef3c7;color:#92400e;white-space:nowrap"><i data-lucide="key-round" style="width:12px;height:12px;vertical-align:-2px"></i> Setzen</button>';
+    html+='</div></div>';
     html+='</div></div></div>';
     wrap.innerHTML=html;
     wrap.style.display='';
     if(window.lucide)lucide.createIcons();
     document.getElementById('kd-close').onclick=function(){wrap.style.display='none';wrap.innerHTML='';};
+    document.getElementById('kd-reset-pw').onclick=function(){
+      var newPw=document.getElementById('kd-new-pw').value.trim();
+      if(!newPw||newPw.length<8){cmsToast('Passwort muss mindestens 8 Zeichen haben','error');return;}
+      if(!confirm('Passwort für '+k.vorname+' '+k.nachname+' wirklich zurücksetzen?'))return;
+      fetch(API+'/auth-reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'admin-reset',kunde_id:id,passwort:newPw})})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          cmsToast('Passwort wurde zurückgesetzt');
+          document.getElementById('kd-new-pw').value='';
+        })
+        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+    };
     document.getElementById('kd-save').onclick=function(){
       var payload={_entity:'kunde',id:id,vorname:document.getElementById('kd-vorname').value.trim(),nachname:document.getElementById('kd-nachname').value.trim(),telefon:document.getElementById('kd-telefon').value.trim(),strasse:document.getElementById('kd-strasse').value.trim(),plz:document.getElementById('kd-plz').value.trim(),ort:document.getElementById('kd-ort').value.trim(),aktiv:document.getElementById('kd-aktiv').checked};
       fetch(API+'/shop-admin',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})

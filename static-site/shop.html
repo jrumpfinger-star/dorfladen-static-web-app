@@ -475,6 +475,26 @@
       <div class="shop-auth-field"><label>E-Mail</label><input type="email" id="login-email" placeholder="ihre@email.de"></div>
       <div class="shop-auth-field"><label>Passwort</label><input type="password" id="login-passwort" placeholder="••••••••"></div>
       <button class="shop-auth-submit" id="login-submit">Anmelden</button>
+      <div style="text-align:center;margin-top:10px"><a href="#" id="forgot-pw-link" style="font-size:12px;color:var(--shop-green)">Passwort vergessen?</a></div>
+    </div>
+
+    <!-- Password Reset Request Form -->
+    <div class="shop-auth-body" id="shop-auth-reset-request" style="display:none">
+      <div id="reset-req-errors" class="shop-auth-errors" style="display:none"></div>
+      <p style="font-size:13px;color:var(--shop-muted);margin-bottom:12px">Geben Sie Ihre E-Mail-Adresse ein. Sie erhalten einen Link zum Zurücksetzen Ihres Passworts.</p>
+      <div class="shop-auth-field"><label>E-Mail</label><input type="email" id="reset-email" placeholder="ihre@email.de"></div>
+      <button class="shop-auth-submit" id="reset-request-submit">Link anfordern</button>
+      <div style="text-align:center;margin-top:10px"><a href="#" id="back-to-login-link" style="font-size:12px;color:var(--shop-green)">← Zurück zur Anmeldung</a></div>
+    </div>
+
+    <!-- Password Reset Confirm Form (shown via URL parameter) -->
+    <div class="shop-auth-body" id="shop-auth-reset-confirm" style="display:none">
+      <div id="reset-confirm-errors" class="shop-auth-errors" style="display:none"></div>
+      <div id="reset-confirm-success" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:#166534"></div>
+      <p style="font-size:13px;color:var(--shop-muted);margin-bottom:12px">Geben Sie Ihr neues Passwort ein.</p>
+      <div class="shop-auth-field"><label>Neues Passwort (min. 8 Zeichen)</label><input type="password" id="reset-new-pw" placeholder="••••••••"></div>
+      <div class="shop-auth-field"><label>Passwort bestätigen</label><input type="password" id="reset-new-pw2" placeholder="••••••••"></div>
+      <button class="shop-auth-submit" id="reset-confirm-submit">Passwort speichern</button>
     </div>
 
     <!-- Register Form -->
@@ -1114,9 +1134,14 @@
   function showAuth(tab){
     document.getElementById('shop-auth-overlay').classList.add('open');
     var tabs=document.querySelectorAll('.shop-auth-tab');
+    var isReset=tab==='reset-request'||tab==='reset-confirm';
     tabs.forEach(function(t){t.classList.toggle('active',t.getAttribute('data-tab')===tab);});
+    if(!isReset) tabs.forEach(function(t){t.style.display='';});
+    else tabs.forEach(function(t){t.style.display='none';});
     document.getElementById('shop-auth-login').style.display=tab==='login'?'':'none';
     document.getElementById('shop-auth-register').style.display=tab==='register'?'':'none';
+    document.getElementById('shop-auth-reset-request').style.display=tab==='reset-request'?'':'none';
+    document.getElementById('shop-auth-reset-confirm').style.display=tab==='reset-confirm'?'':'none';
   }
 
   var _pendingCheckout=false;
@@ -1904,6 +1929,69 @@
   document.getElementById('login-submit').addEventListener('click',doLogin);
   document.getElementById('register-submit').addEventListener('click',doRegister);
   document.getElementById('login-passwort').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
+  // ── Password Reset ──
+  document.getElementById('forgot-pw-link').addEventListener('click',function(e){
+    e.preventDefault();
+    var loginEmail=document.getElementById('login-email').value.trim();
+    if(loginEmail) document.getElementById('reset-email').value=loginEmail;
+    showAuth('reset-request');
+  });
+  document.getElementById('back-to-login-link').addEventListener('click',function(e){e.preventDefault();showAuth('login');});
+  document.getElementById('reset-request-submit').addEventListener('click',function(){
+    var email=document.getElementById('reset-email').value.trim();
+    var errEl=document.getElementById('reset-req-errors');
+    if(!email){errEl.textContent='Bitte E-Mail eingeben.';errEl.style.display='';return;}
+    errEl.style.display='none';
+    this.disabled=true;this.textContent='Wird gesendet…';
+    var btn=this;
+    fetch(API+'/auth-reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'request',email:email})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        btn.disabled=false;btn.textContent='Link anfordern';
+        if(res.success){
+          errEl.style.display='none';
+          var reqEl=document.getElementById('shop-auth-reset-request');
+          reqEl.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;text-align:center;font-size:13px;color:#166534"><strong>✓ E-Mail gesendet!</strong><br><br>'+res.message+'</div><div style="text-align:center;margin-top:12px"><a href="#" id="back-to-login-link2" style="font-size:12px;color:var(--shop-green)">← Zurück zur Anmeldung</a></div>';
+          var bl=document.getElementById('back-to-login-link2');
+          if(bl) bl.addEventListener('click',function(e){e.preventDefault();showAuth('login');});
+        } else {errEl.textContent=res.error||'Fehler';errEl.style.display='';}
+      })
+      .catch(function(){btn.disabled=false;btn.textContent='Link anfordern';errEl.textContent='Netzwerkfehler';errEl.style.display='';});
+  });
+  document.getElementById('reset-confirm-submit').addEventListener('click',function(){
+    var pw=document.getElementById('reset-new-pw').value;
+    var pw2=document.getElementById('reset-new-pw2').value;
+    var errEl=document.getElementById('reset-confirm-errors');
+    var sucEl=document.getElementById('reset-confirm-success');
+    if(!pw||pw.length<8){errEl.textContent='Passwort muss mindestens 8 Zeichen haben.';errEl.style.display='';return;}
+    if(pw!==pw2){errEl.textContent='Passwörter stimmen nicht überein.';errEl.style.display='';return;}
+    errEl.style.display='none';
+    var params=new URLSearchParams(location.search);
+    var token=params.get('reset_token');
+    var email=params.get('email');
+    if(!token||!email){errEl.textContent='Ungültiger Reset-Link.';errEl.style.display='';return;}
+    this.disabled=true;this.textContent='Wird gespeichert…';
+    var btn=this;
+    fetch(API+'/auth-reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'confirm',token:token,email:email,passwort:pw})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        btn.disabled=false;btn.textContent='Passwort speichern';
+        if(res.success){
+          errEl.style.display='none';
+          sucEl.innerHTML='<strong>✓ '+res.message+'</strong>';sucEl.style.display='';
+          btn.style.display='none';
+          document.getElementById('reset-new-pw').disabled=true;
+          document.getElementById('reset-new-pw2').disabled=true;
+          // Clean URL
+          history.replaceState(null,'',location.pathname);
+          setTimeout(function(){showAuth('login');},3000);
+        } else {errEl.textContent=res.error||'Fehler';errEl.style.display='';}
+      })
+      .catch(function(){btn.disabled=false;btn.textContent='Passwort speichern';errEl.textContent='Netzwerkfehler';errEl.style.display='';});
+  });
+  // Auto-open reset confirm form if URL has reset_token
+  (function(){var p=new URLSearchParams(location.search);if(p.get('reset_token')&&p.get('email')){showAuth('reset-confirm');}})();
 
   // Category selector
   document.getElementById('shop-cats').addEventListener('click',function(e){
