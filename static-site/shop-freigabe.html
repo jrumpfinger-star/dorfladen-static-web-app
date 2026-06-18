@@ -10,10 +10,10 @@
 
 /* ── Top bar ── */
 .top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.04);max-width:960px;margin:0 auto}
-.brand{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--green);font-size:15px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--green);font-size:15px}
 .brand-icon{width:34px;height:34px;border-radius:10px;background:#e9f5ee;display:grid;place-items:center;font-size:20px}
 .spacer{flex:1}
-.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;transition:.15s}
 .btn:hover{border-color:var(--green);color:var(--green)}
 .btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.btn.primary:hover{background:var(--green2)}
 .btn.small{padding:5px 8px;font-size:12px}
@@ -27,19 +27,19 @@
 .search:focus{border-color:var(--green)}
 .search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:2px 4px;display:none}
 .search-clear:hover{color:#111}
-.stats{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
-.filter-btn{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;transition:.15s}
+.stats{font-size:12px;color:var(--muted);font-weight:400;white-space:nowrap}
+.filter-btn{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;background:#fff;transition:.15s}
 .filter-btn:hover,.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
 
 /* ── Warengruppe Accordion ── */
 .wrap{max-width:960px;margin:0 auto;padding:12px 18px 80px}
 .wg{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden}
-.wg-head{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;font-weight:800;font-size:14px;transition:background .12s}
+.wg-head{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;font-weight:600;font-size:14px;transition:background .12s}
 .wg-head:hover{background:#f8fbf9}
 .wg-arrow{font-size:11px;color:var(--muted);transition:transform .2s;width:16px}
 .wg.open .wg-arrow{transform:rotate(90deg)}
 .wg-count{margin-left:auto;display:flex;gap:6px;align-items:center}
-.wg-badge{font-size:11px;padding:2px 7px;border-radius:99px;font-weight:800}
+.wg-badge{font-size:11px;padding:2px 7px;border-radius:99px;font-weight:500}
 .badge-total{background:#e5e7eb;color:#374151}
 .badge-on{background:#dcfce7;color:#166534}
 .wg-body{display:none;border-top:1px solid var(--border)}
@@ -47,7 +47,7 @@
 
 /* ── Article rows ── */
 .art-table{width:100%;border-collapse:collapse;font-size:13px}
-.art-table th{text-align:left;padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:800;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card)}
+.art-table th{text-align:left;padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:500;letter-spacing:.3px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card)}
 .art-row{border-bottom:1px solid #f3f4f6;transition:background .1s}
 .art-row:hover{background:#f8fbf9}
 .art-row.enabled{background:#f0faf3}
@@ -55,9 +55,9 @@
 .art-cb{width:18px;height:18px;accent-color:var(--green);cursor:pointer}
 .art-img{width:36px;height:36px;border-radius:6px;object-fit:contain;background:#f9fafb;border:1px solid #e5e7eb;cursor:pointer}
 .art-img-empty{width:36px;height:36px;border-radius:6px;background:#f3f4f6;border:1px dashed #d1d5db;display:grid;place-items:center;font-size:14px;color:#9ca3af;cursor:pointer}
-.art-name{font-weight:700;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.art-name{font-weight:500;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .art-code{font-size:11px;color:var(--muted)}
-.art-price{font-weight:700;white-space:nowrap}
+.art-price{font-weight:500;white-space:nowrap}
 .art-date{width:110px}
 .art-date input{width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit}
 .art-actions{display:flex;gap:4px}
@@ -73,7 +73,7 @@
 .img-actions{display:flex;gap:8px;justify-content:flex-end}
 
 /* ── Toast ── */
-.toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none;z-index:200}
+.toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:10px;padding:10px 14px;font-weight:500;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none;z-index:200}
 
 /* ── Batch bar ── */
 .batch-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:10px 18px;display:none;align-items:center;gap:12px;z-index:30;box-shadow:0 -4px 16px rgba(0,0,0,.06)}
@@ -135,7 +135,7 @@
 
 <!-- Batch action bar -->
 <div class="batch-bar" id="batch-bar">
-  <span id="batch-count" style="font-weight:800"></span>
+  <span id="batch-count" style="font-weight:500"></span>
   <input type="date" id="batch-date" style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px" title="Ablaufdatum für alle markierten setzen">
   <button class="btn small primary" id="batch-enable">Alle freigeben</button>
   <button class="btn small red" id="batch-disable">Alle sperren</button>
