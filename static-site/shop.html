@@ -1359,7 +1359,13 @@
   var viewMode='categories'; // 'categories' or 'articles'
   var articleViewMode=localStorage.getItem('dl_shop_viewmode')||'grid'; // 'grid' or 'list'
 
-  function countByCat(cat){return allArticles.filter(function(a){return getShopGroup(a.warengruppe)===cat;}).length;}
+  function isAvailableForSlot(a){
+    if(!a.gueltig_bis) return true;
+    if(!selectedSlot) return true;
+    return a.gueltig_bis>=selectedSlot.dateStr;
+  }
+  function visibleArticles(){return allArticles.filter(isAvailableForSlot);}
+  function countByCat(cat){return visibleArticles().filter(function(a){return getShopGroup(a.warengruppe)===cat;}).length;}
 
   function showShopNav(){
     document.getElementById('shop-search-wrap').style.display='';
@@ -1374,7 +1380,7 @@
     var html='';
 
     // "Nur kurz verfügbar" section – always first
-    var kurzArtikel=allArticles.filter(function(a){return a.kurzfristig;});
+    var kurzArtikel=visibleArticles().filter(function(a){return a.kurzfristig;});
     html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title"><span class="emoji">⏳</span> Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
     if(kurzArtikel.length){
       html+='<div class="shop-grid">';
@@ -1433,7 +1439,7 @@
 
     content.innerHTML=html;
     wireAddButtons();
-    var kurzImgs=allArticles.filter(function(a){return a.kurzfristig;});
+    var kurzImgs=visibleArticles().filter(function(a){return a.kurzfristig;});
     loadImages(bestsellers.slice(0,6).concat(kurzImgs));
     // Beliebt view toggle
     document.querySelectorAll('[data-bs-view]').forEach(function(btn){
@@ -1470,12 +1476,12 @@
     showShopNav();
     viewMode='articles';
     var content=document.getElementById('shop-content');
-    var items=allArticles;
+    var items=visibleArticles();
     var title='Alle Artikel';
     var emoji='🛒';
 
     if(activeCat==='favorites'){
-      items=allArticles.filter(function(a){return isFav(a.artikelnummer);});
+      items=visibleArticles().filter(function(a){return isFav(a.artikelnummer);});
       title='Favoriten';emoji='❤️';
     } else if(activeCat==='previous'){
       if(!isLoggedIn()){showAuth('login');return;}
@@ -1483,14 +1489,14 @@
     } else if(activeCat==='bestseller'){
       items=bestsellers;title='Beliebt';emoji='';
     } else if(activeCat!=='all'){
-      items=allArticles.filter(function(a){return getShopGroup(a.warengruppe)===activeCat;});
+      items=visibleArticles().filter(function(a){return getShopGroup(a.warengruppe)===activeCat;});
       title=activeCat;emoji=getCatIcon(activeCat);
     }
 
     // Search filter
     var q=(document.getElementById('shop-search').value||'').trim().toLowerCase();
     if(q){
-      items=allArticles.filter(function(a){return (a._search||'').indexOf(q)!==-1;});
+      items=visibleArticles().filter(function(a){return (a._search||'').indexOf(q)!==-1;});
       title='Suchergebnis';emoji='🔍';
     }
 
