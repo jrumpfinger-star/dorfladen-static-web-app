@@ -338,9 +338,7 @@
     // Copy detail + pack content into expand area
     var detailEl=document.getElementById('detail');
     var packEl=document.getElementById('pack');
-    var shortNr=selected.bestellnummer?'#'+selected.bestellnummer.split('-').pop():'';
-    var html='<div class="expand-hdr"><span>'+esc(selected.kunde_name||selected.kunde_email||'')+' <span class="xh-nr">'+esc(shortNr)+'</span></span><span>'+money(selected.gesamtsumme)+'</span></div>';
-    html+='<div class="expand-tabs">';
+    var html='<div class="expand-tabs">';
     html+='<button class="expand-tab active" data-xtab="detail">📋 Bestellung</button>';
     html+='<button class="expand-tab" data-xtab="pack">📦 Packen</button>';
     html+='</div>';
@@ -662,15 +660,25 @@
     var periodLabel=(zsD.period==='nm'?'Nachmittag':'Vormittag');
     var timeRange=zsD.von&&zsD.bis?' ('+zsD.von+'–'+zsD.bis+' Uhr)':'';
     var urg=isUrgent(o);
-    var detailHtml='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">';
-    detailHtml+='<div><h2 style="margin:0;font-size:18px">'+esc(shortNr)+'</h2><div style="font-size:10px;color:var(--muted)">'+esc(o.bestellnummer)+'</div></div>';
-    detailHtml+=statusBadge(o.status);
-    detailHtml+='</div>';
-    // Info cards
-    detailHtml+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
-    detailHtml+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Abholung</div><div style="font-size:14px;font-weight:800;color:var(--green)">'+esc(abholDay)+'</div><div style="font-size:12px;color:var(--text)">'+esc(periodLabel)+timeRange+'</div>'+(urg?'<div style="font-size:10px;font-weight:800;color:var(--urgent);margin-top:4px">⚡ JETZT PACKEN</div>':'')+'</div>';
-    detailHtml+='<div style="background:#f8fafc;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Kunde</div><div style="font-size:13px;font-weight:700">'+esc(o.kunde_name)+'</div><div style="font-size:11px;color:var(--muted);word-break:break-all">'+esc(o.kunde_email)+'</div></div>';
-    detailHtml+='</div>';
+    var isMob=isMobile();
+    var detailHtml='';
+    if(!isMob){
+      detailHtml+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">';
+      detailHtml+='<div><h2 style="margin:0;font-size:18px">'+esc(shortNr)+'</h2><div style="font-size:10px;color:var(--muted)">'+esc(o.bestellnummer)+'</div></div>';
+      detailHtml+=statusBadge(o.status);
+      detailHtml+='</div>';
+      detailHtml+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
+      detailHtml+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Abholung</div><div style="font-size:14px;font-weight:800;color:var(--green)">'+esc(abholDay)+'</div><div style="font-size:12px;color:var(--text)">'+esc(periodLabel)+timeRange+'</div>'+(urg?'<div style="font-size:10px;font-weight:800;color:var(--urgent);margin-top:4px">⚡ JETZT PACKEN</div>':'')+'</div>';
+      detailHtml+='<div style="background:#f8fafc;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Kunde</div><div style="font-size:13px;font-weight:700">'+esc(o.kunde_name)+'</div><div style="font-size:11px;color:var(--muted);word-break:break-all">'+esc(o.kunde_email)+'</div></div>';
+      detailHtml+='</div>';
+    } else {
+      detailHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
+      detailHtml+='<span style="font-weight:700;color:var(--green)">'+esc(abholDay)+' '+esc(periodLabel)+'</span>';
+      if(timeRange) detailHtml+='<span>'+timeRange+'</span>';
+      if(urg) detailHtml+='<span style="font-weight:800;color:var(--urgent)">⚡ JETZT</span>';
+      detailHtml+='<span>·</span><span>'+esc(o.kunde_email)+'</span>';
+      detailHtml+='</div>';
+    }
     detailHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Bestellt: '+fmtDateTimeFull(o.bestelldatum)+' · '+items.length+' Positionen · <b style="color:var(--green)">'+money(o.gesamtsumme)+'</b></div>';
     if(o.anmerkungen) detailHtml+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;margin-bottom:10px"><b>📝 Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';
     // Quick article list in detail tab (compact, no checkboxes)
