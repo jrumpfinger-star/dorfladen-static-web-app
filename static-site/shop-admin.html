@@ -539,7 +539,9 @@
       if(newStatus===2){
         fetch('/api/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
           bestellnummer:o.bestellnummer,kunde_email:o.kunde_email,kunde_name:o.kunde_name,
-          abholdatum:o.abholdatum||'',type:'ready'
+          abholdatum:o.abholdatum||'',type:'ready',
+          positionen:items.map(function(p){return{bezeichnung:p.bezeichnung,menge:p.menge,einheit:p.einheit,einzelpreis:p.einzelpreis,positionspreis:p.positionspreis};}),
+          gesamtsumme:o.gesamtsumme,anmerkungen:o.anmerkungen||''
         })}).catch(function(){});
       }
       if(newStatus===3&&packedCount<items.length){

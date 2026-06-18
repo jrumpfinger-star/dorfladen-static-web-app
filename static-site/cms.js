@@ -9169,7 +9169,9 @@
           cmsRenderOrders();
           // Send notification when order is ready for pickup
           if(status===2&&email){
-            fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:bestellnr,kunde_email:email,kunde_name:name||'',abholdatum:abholdatum||''})}).catch(function(){});
+            var notifyPayload={bestellnummer:bestellnr,kunde_email:email,kunde_name:name||'',abholdatum:abholdatum||'',type:'ready'};
+            if(o&&o.positionen){notifyPayload.positionen=o.positionen;notifyPayload.gesamtsumme=o.gesamtsumme;notifyPayload.anmerkungen=o.anmerkungen||'';}
+            fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(notifyPayload)}).catch(function(){});
             cmsToast('✅ '+bestellnr+': Status → Abholbereit. Kunde wird benachrichtigt!');
           } else {
             cmsToast('✅ '+bestellnr+': Status → '+label);

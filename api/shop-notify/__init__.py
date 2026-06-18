@@ -110,9 +110,10 @@ def get_graph_token():
         return None
 
 
-def build_email_html(body_text, subject=""):
+def build_email_html(body_text, subject="", extra_html=""):
     """Build a branded HTML email with logo, header, styled body, and footer.
-    All contact details are loaded from Dataverse (key: shop_kontakt)."""
+    All contact details are loaded from Dataverse (key: shop_kontakt).
+    extra_html is inserted after the body text (for tables etc.)."""
     ci = get_contact_info()
 
     # Convert plain text lines to HTML paragraphs
@@ -183,6 +184,7 @@ def build_email_html(body_text, subject=""):
   <!-- Body content -->
   <div style="background:#fff;padding:24px 28px;font-size:14px;line-height:1.7;color:#1f2937">
     {body_html}
+    {extra_html}
   </div>
 
   <!-- CTA Button -->
@@ -215,7 +217,7 @@ def build_email_html(body_text, subject=""):
 </body></html>'''
 
 
-def send_email(to_email, to_name, subject, body_text):
+def send_email(to_email, to_name, subject, body_text, extra_html=""):
     """Send email via Microsoft Graph API. Contact info from Dataverse."""
     import logging
     token = get_graph_token()
@@ -229,7 +231,7 @@ def send_email(to_email, to_name, subject, body_text):
     reply_to = ci["reply_to"]
 
     # Build branded HTML email
-    email_html = build_email_html(body_text, subject)
+    email_html = build_email_html(body_text, subject, extra_html)
 
     mail_payload = {
         "message": {
@@ -324,6 +326,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     ci = get_contact_info()
     laden_name = ci["name"]
 
+    positionen = body.get("positionen", [])
+    gesamtsumme = body.get("gesamtsumme", "")
+
     # ── Build email subject + body based on notification type ──
     email_subject = ""
     email_body = ""
@@ -360,14 +365,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     elif notify_type == "ready":
         email_subject = f"{laden_name} – Ihre Bestellung {bestellnummer} ist abholbereit! 🏪"
+        anmerkungen = body.get("anmerkungen", "")
         email_body = (
             f"{anrede},\n\n"
             f"gute Nachrichten! Ihre Bestellung {bestellnummer} wurde sorgfältig "
             f"zusammengestellt und liegt für Sie zur Abholung bereit.\n\n"
             f"📅 Abholung: {abholdatum} vormittags\n"
             f"📍 Ort: {laden_name}, {ci['adresse']}\n\n"
-            f"Bitte holen Sie Ihre Bestellung bis 12:00 Uhr mittags ab.\n\n"
-            f"Wir freuen uns auf Ihren Besuch!\n\n"
+            f"Bitte holen Sie Ihre Bestellung bis 12:00 Uhr mittags ab."
+        )
+        if anmerkungen:
+            email_body += f"\n\n📝 Ihre Anmerkung: {anmerkungen}"
+        email_body += (
+            f"\n\nWir freuen uns auf Ihren Besuch!\n\n"
             f"Herzliche Grüße\n"
             f"Ihr {laden_name}-Team"
         )
@@ -405,13 +415,54 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except Exception:
             pass  # Push is best-effort
 
+    # ── Build positions table HTML for ready emails ──
+    positions_html = ""
+    if notify_type == "ready" and positionen:
+        def _fmt_price(v):
+            try:
+                return f"{float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
+            except (ValueError, TypeError):
+                return ""
+        rows = ""
+        for p in positionen:
+            bez = p.get("bezeichnung", "")
+            menge = p.get("menge", "")
+            einheit = p.get("einheit", "")
+            ep = p.get("einzelpreis", "")
+            pp = p.get("positionspreis", "")
+            rows += (
+                f'<tr>'
+                f'<td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;color:#1f2937">{bez}</td>'
+                f'<td style="padding:8px 6px;border-bottom:1px solid #f3f4f6;text-align:center;color:#6b7280">{menge} {einheit}</td>'
+                f'<td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#1f2937;white-space:nowrap">{_fmt_price(pp)}</td>'
+                f'</tr>'
+            )
+        total_str = _fmt_price(gesamtsumme) if gesamtsumme else ""
+        positions_html = (
+            f'<div style="margin-top:16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">'
+            f'<div style="background:#f0fdf4;padding:10px 14px;font-size:12px;font-weight:700;color:#166534;border-bottom:1px solid #e5e7eb">'
+            f'📋 Ihre Bestellung im Überblick</div>'
+            f'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+            f'<thead><tr style="background:#f9fafb">'
+            f'<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6b7280">Artikel</th>'
+            f'<th style="padding:8px 6px;text-align:center;font-size:11px;font-weight:600;color:#6b7280">Menge</th>'
+            f'<th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6b7280">Preis</th>'
+            f'</tr></thead>'
+            f'<tbody>{rows}</tbody>'
+            f'<tfoot><tr style="background:#f0fdf4">'
+            f'<td colspan="2" style="padding:10px;font-weight:700;color:#166534;font-size:14px">Gesamt (ca.)</td>'
+            f'<td style="padding:10px;text-align:right;font-weight:700;color:#166534;font-size:14px">{total_str}</td>'
+            f'</tr></tfoot>'
+            f'</table></div>'
+        )
+
     # ── Send email via Microsoft Graph ──
     email_sent = False
     email_error = ""
     if kunde_email and email_subject:
         try:
             email_sent, email_error = send_email(
-                kunde_email, kunde_name, email_subject, email_body
+                kunde_email, kunde_name, email_subject, email_body, positions_html
             )
             if email_sent:
                 notifications_sent.append(f"email_sent:{kunde_email}")
