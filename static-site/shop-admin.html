@@ -214,6 +214,22 @@
   function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
   function money(v){return (Number(v)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});}
   function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';},2500);}
+  function showConfirm(title,bodyHtml,confirmText,onConfirm,btnColor){
+    btnColor=btnColor||'var(--green)';
+    var ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;display:grid;place-items:center;padding:16px';
+    var m=document.createElement('div');
+    m.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
+    m.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:10px">'+title+'</div>'
+      +'<div style="font-size:13px;line-height:1.5;margin-bottom:16px">'+bodyHtml+'</div>'
+      +'<div style="display:flex;gap:8px"><button class="cd-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer;font-size:13px">Abbrechen</button>'
+      +'<button class="cd-ok" style="flex:1;padding:10px;border:none;border-radius:10px;background:'+btnColor+';color:#fff;font-weight:700;cursor:pointer;font-size:13px">'+confirmText+'</button></div>';
+    ov.appendChild(m);document.body.appendChild(ov);
+    function close(){document.body.removeChild(ov);}
+    m.querySelector('.cd-cancel').addEventListener('click',close);
+    ov.addEventListener('click',function(e){if(e.target===ov)close();});
+    m.querySelector('.cd-ok').addEventListener('click',function(){close();onConfirm();});
+  }
   function statusBadge(s){return '<span class="status s'+s+'">'+esc(statusLabels[s]||'Unbekannt')+'</span>';}
   function setStats(summary){summary=summary||{};document.getElementById('stat-count').textContent=summary.count||0;document.getElementById('stat-open').textContent=summary.open||0;document.getElementById('stat-ready').textContent=summary.ready||0;}
   function fmtDateNice(raw){
@@ -442,11 +458,18 @@
       if(r.packedCount<items.length){
         var missing=[];
         items.forEach(function(p,i){var cb=q('[data-pack-index="'+i+'"]');if(!cb||!cb.checked) missing.push(p.bezeichnung);});
-        var msg='Folgende Artikel sind nicht verfügbar:\n\n';
-        missing.forEach(function(m){msg+='  ⚠ '+m+'\n';});
-        msg+='\nDer Kunde ('+esc(o.kunde_email)+') wird per E-Mail informiert.\nTrotzdem als Abholbereit markieren?';
-        if(!confirm(msg)) return;
-        fetch('/api/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:o.bestellnummer,kunde_email:o.kunde_email,kunde_name:o.kunde_name,abholdatum:o.abholdatum||'',type:'missing_items',missing_items:missing})}).catch(function(){});
+        var listHtml=missing.map(function(m){return '<div style="padding:3px 0">⚠️ '+esc(m)+'</div>';}).join('');
+        var bodyHtml='<div style="font-weight:600;margin-bottom:8px">Folgende Artikel sind nicht verfügbar:</div>'
+          +'<div style="background:#fef2f2;border-radius:8px;padding:8px 12px;margin-bottom:10px">'+listHtml+'</div>'
+          +'<div>Der Kunde <b>'+esc(o.kunde_email)+'</b> wird per E-Mail informiert.</div>';
+        showConfirm('Nicht alle Artikel gepackt',bodyHtml,'Trotzdem Abholbereit',function(){
+          fetch('/api/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:o.bestellnummer,kunde_email:o.kunde_email,kunde_name:o.kunde_name,abholdatum:o.abholdatum||'',type:'missing_items',missing_items:missing})}).catch(function(){});
+          var data2={status:2,pack_json:r.pack};
+          var noteEl2=q('#note')||q('[id="note"]');
+          if(noteEl2) data2.anmerkungen=noteEl2.value;
+          updateOrder(data2);
+        },'#f59e0b');
+        return;
       }
       var data={status:2,pack_json:r.pack};
       var noteEl=q('#note')||q('[id="note"]');
@@ -514,7 +537,15 @@
         })}).catch(function(){});
       }
       if(newStatus===3&&packedCount<items.length){
-        if(!confirm('Achtung: Erst '+packedCount+' von '+items.length+' Positionen gepackt.\nTrotzdem als Abgeholt markieren?')) return;
+        showConfirm('Noch nicht alles gepackt',
+          '<div>Erst <b>'+packedCount+' von '+items.length+'</b> Positionen gepackt.</div><div style="margin-top:6px">Trotzdem als Abgeholt markieren?</div>',
+          'Ja, Abgeholt',function(){
+            var data3={status:3};
+            var noteEl3=q('#note')||q('[id="note"]');
+            if(noteEl3) data3.anmerkungen=noteEl3.value;
+            updateOrder(data3);
+          },'#f59e0b');
+        return;
       }
       var data={status:newStatus};
       var noteEl=q('#note')||q('[id="note"]');
