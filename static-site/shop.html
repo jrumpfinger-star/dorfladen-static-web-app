@@ -54,7 +54,7 @@
     .slot-badge-vm{background:#dbeafe;color:#1d4ed8}
     .slot-badge-nm{background:#fef3c7;color:#92400e}
     .slot-time{font-size:11px;color:var(--shop-muted);margin-left:auto;white-space:nowrap}
-    @media(max-width:480px){.shop-slot-dd-btn{font-size:11px;padding:4px 8px;gap:4px}.shop-slot-dd-list{position:fixed;top:auto;bottom:0;left:0;right:0;min-width:0;width:100%;max-height:60vh;border-radius:16px 16px 0 0;margin-top:0;box-shadow:0 -8px 30px rgba(0,0,0,.2);z-index:301}}
+    @media(max-width:600px){.shop-slot-dd-btn{font-size:11px;padding:4px 8px;gap:4px}.shop-slot-dd-list{position:fixed;top:auto;bottom:0;left:0;right:0;min-width:0;width:100%;max-height:60vh;border-radius:16px 16px 0 0;margin-top:0;box-shadow:0 -8px 30px rgba(0,0,0,.2);z-index:301}}
     .shop-cart-badge{position:absolute;top:0;right:0;background:var(--shop-orange);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
     .shop-user-badge{font-size:11px;color:var(--shop-green);font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -444,6 +444,7 @@
     </div>
   </div>
   <div class="shop-cart-footer" id="shop-cart-footer" style="display:none">
+    <div class="shop-cart-abhol" id="shop-cart-abhol" style="display:none">📅 <span id="shop-cart-abhol-text"></span></div>
     <div class="shop-cart-total">
       <span>Gesamt (ca.)</span>
       <span id="shop-cart-total-val">0,00 €</span>
@@ -765,7 +766,7 @@
     var ddBtn=document.getElementById('shop-slot-dd-btn');
     var ddList=document.getElementById('shop-slot-dd-list');
     if(!ddEl||!ddBtn||!ddList) return;
-    ddBtn.addEventListener('click',function(e){e.stopPropagation();var wasOpen=ddEl.classList.contains('open');ddEl.classList.toggle('open');if(!wasOpen){history.pushState({overlay:'slotdd'},'');if(window.innerWidth<=480) ddOpen();}else{ddClose();}});
+    ddBtn.addEventListener('click',function(e){e.stopPropagation();var wasOpen=ddEl.classList.contains('open');ddEl.classList.toggle('open');if(!wasOpen){history.pushState({overlay:'slotdd'},'');if(window.innerWidth<=600) ddOpen();}else{ddClose();}});
     document.addEventListener('click',function(e){if(!ddEl.contains(e.target)){if(ddEl.classList.contains('open')) ddClose();ddEl.classList.remove('open');}});
     ddList.addEventListener('click',function(e){
       var item=e.target.closest('[data-slot-sel]');
@@ -831,7 +832,7 @@
         var key=btn.getAttribute('data-slot-key');
         var parts=key.split('_');
         var found=slots.find(function(s){return s.dateStr===parts[0]&&s.period===parts[1];});
-        if(found){selectedSlot=found;updateBanner();}
+        if(found){selectedSlot=found;updateBanner();renderSlotPicker();renderCart();}
       });
     });
     // Update storno hint based on selected slot
@@ -940,6 +941,18 @@
     checkout.style.display='';
     var total=cartTotal();
     document.getElementById('shop-cart-total-val').textContent=fmtP(total)+' €';
+
+    // Abholtermin im Footer
+    var abholEl=document.getElementById('shop-cart-abhol');
+    var abholText=document.getElementById('shop-cart-abhol-text');
+    if(selectedSlot){
+      var dayLbl;
+      if(isToday(selectedSlot.date)) dayLbl='Heute';
+      else if(isTomorrow(selectedSlot.date)) dayLbl='Morgen';
+      else dayLbl=formatDate(selectedSlot.date);
+      abholText.textContent='Abholung: '+dayLbl+', '+selectedSlot.label+' ('+selectedSlot.abholVon+'–'+selectedSlot.abholBis+' Uhr)';
+      abholEl.style.display='';
+    } else {abholEl.style.display='none';}
 
     // Mindestbestellwert
     var MINDESTBESTELLWERT=10;
