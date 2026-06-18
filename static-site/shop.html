@@ -45,7 +45,7 @@
     .slot-badge-vm{background:#dbeafe;color:#1d4ed8}
     .slot-badge-nm{background:#fef3c7;color:#92400e}
     .slot-time{font-size:11px;color:var(--shop-muted);margin-left:auto;white-space:nowrap}
-    @media(max-width:480px){.shop-slot-dd-btn{font-size:11px;padding:4px 8px;gap:4px}.shop-slot-dd-list{position:fixed;top:auto;bottom:0;left:0;right:0;min-width:0;width:100%;max-height:60vh;border-radius:16px 16px 0 0;margin-top:0;box-shadow:0 -8px 30px rgba(0,0,0,.2)}}
+    @media(max-width:480px){.shop-slot-dd-btn{font-size:11px;padding:4px 8px;gap:4px}.shop-slot-dd-list{position:fixed;top:auto;bottom:0;left:0;right:0;min-width:0;width:100%;max-height:60vh;border-radius:16px 16px 0 0;margin-top:0;box-shadow:0 -8px 30px rgba(0,0,0,.2);z-index:301}}
     .shop-cart-badge{position:absolute;top:0;right:0;background:var(--shop-orange);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
     .shop-user-badge{font-size:11px;color:var(--shop-green);font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -82,7 +82,10 @@
       .shop-cats-desktop .shop-cat-pill{padding:6px 12px;font-size:12px}
     }
     @media(max-width:767px){.shop-cats-desktop{display:none}}
-    @media(max-width:600px){.shop-cats{padding:6px 10px;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch}.shop-cat-pill{padding:5px 9px;font-size:11px}.shop-cat-dd-btn{font-size:11px;padding:5px 9px}.shop-cat-dd-list{position:fixed;top:auto;bottom:0;left:0;right:0;border-radius:14px 14px 0 0;max-height:55vh;box-shadow:0 -6px 24px rgba(0,0,0,.18)}}
+    @media(max-width:600px){.shop-cats{padding:6px 10px;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch}.shop-cat-pill{padding:5px 9px;font-size:11px}.shop-cat-dd-btn{font-size:11px;padding:5px 9px}.shop-cat-dd-list{position:fixed;top:auto;bottom:0;left:0;right:0;border-radius:14px 14px 0 0;max-height:55vh;box-shadow:0 -6px 24px rgba(0,0,0,.18);z-index:301}}
+    .dd-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300}
+    .dd-backdrop.show{display:block}
+    body.dd-open{overflow:hidden;position:fixed;width:100%;touch-action:none}
 
     /* ── Info Banner (compact, inline in topbar) ── */
     .shop-banner{display:none}
@@ -334,6 +337,7 @@
   </style>
 </head>
 <body>
+<div class="dd-backdrop" id="dd-backdrop"></div>
 
 <!-- ── Sticky Header ── -->
 <div class="shop-header">
@@ -725,8 +729,8 @@
     var ddBtn=document.getElementById('shop-slot-dd-btn');
     var ddList=document.getElementById('shop-slot-dd-list');
     if(!ddEl||!ddBtn||!ddList) return;
-    ddBtn.addEventListener('click',function(e){e.stopPropagation();var wasOpen=ddEl.classList.contains('open');ddEl.classList.toggle('open');if(!wasOpen) history.pushState({overlay:'slotdd'},'');});
-    document.addEventListener('click',function(e){if(!ddEl.contains(e.target)) ddEl.classList.remove('open');});
+    ddBtn.addEventListener('click',function(e){e.stopPropagation();var wasOpen=ddEl.classList.contains('open');ddEl.classList.toggle('open');if(!wasOpen){history.pushState({overlay:'slotdd'},'');if(window.innerWidth<=480) ddOpen();}else{ddClose();}});
+    document.addEventListener('click',function(e){if(!ddEl.contains(e.target)){if(ddEl.classList.contains('open')) ddClose();ddEl.classList.remove('open');}});
     ddList.addEventListener('click',function(e){
       var item=e.target.closest('[data-slot-sel]');
       if(!item) return;
@@ -736,6 +740,7 @@
       if(found){
         selectedSlot=found;
         ddEl.classList.remove('open');
+        ddClose();
         updateBanner();
         // Re-render current view with new slot filter
         if(viewMode==='categories') showCategoryOverview();
@@ -1745,16 +1750,17 @@
         e.stopPropagation();
         var wasOpen=ddEl.classList.contains('open');
         ddEl.classList.toggle('open');
-        if(!wasOpen) history.pushState({overlay:'catdd'},'');
+        if(!wasOpen){history.pushState({overlay:'catdd'},'');if(window.innerWidth<=600) ddOpen();}else{ddClose();}
       });
       // Close on outside click
-      document.addEventListener('click',function(){ddEl.classList.remove('open');});
+      document.addEventListener('click',function(){if(ddEl.classList.contains('open')) ddClose();ddEl.classList.remove('open');});
       // Item click handler
       ddList.addEventListener('click',function(e){
         var item=e.target.closest('[data-cat-dd]');
         if(!item) return;
         var val=item.getAttribute('data-cat-dd');
         ddEl.classList.remove('open');
+        ddClose();
         document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.remove('active');});
         ddBtn.classList.add('active');
         ddBtn.innerHTML=lucideHtml(getCatLucideName(val),14)+' '+esc(val==='all'?'Alle Artikel':val);
@@ -1999,6 +2005,27 @@
       .catch(function(e){content.innerHTML='<div class="shop-loading"><p>Fehler: '+esc(e.message)+'</p></div>';});
   });
 
+  // ── Dropdown backdrop + scroll lock ──
+  var _ddScrollY=0;
+  var _ddBackdrop=document.getElementById('dd-backdrop');
+  function ddOpen(){
+    _ddScrollY=window.scrollY;
+    _ddBackdrop.classList.add('show');
+    document.body.classList.add('dd-open');
+    document.body.style.top=(-_ddScrollY)+'px';
+  }
+  function ddClose(){
+    _ddBackdrop.classList.remove('show');
+    document.body.classList.remove('dd-open');
+    document.body.style.top='';
+    window.scrollTo(0,_ddScrollY);
+  }
+  _ddBackdrop.addEventListener('click',function(){
+    var sd=document.querySelector('.shop-slot-dd.open');if(sd) sd.classList.remove('open');
+    var cd=document.querySelector('.shop-cat-dd.open');if(cd) cd.classList.remove('open');
+    ddClose();
+  });
+
   // ── Android Back-Button: close overlays instead of leaving page ──
   function getOpenOverlay(){
     if(document.querySelector('.shop-cart-overlay.open')) return 'cart';
@@ -2014,8 +2041,8 @@
     if(o==='cart') toggleCart(false);
     else if(o==='auth') hideAuth();
     else if(o==='imgpopup'){var ip=document.querySelector('.img-popup-overlay.show');if(ip) ip.classList.remove('show');}
-    else if(o==='slotdd'){var sd=document.querySelector('.shop-slot-dd.open');if(sd) sd.classList.remove('open');}
-    else if(o==='catdd'){var cd=document.querySelector('.shop-cat-dd.open');if(cd) cd.classList.remove('open');}
+    else if(o==='slotdd'){var sd=document.querySelector('.shop-slot-dd.open');if(sd) sd.classList.remove('open');ddClose();}
+    else if(o==='catdd'){var cd=document.querySelector('.shop-cat-dd.open');if(cd) cd.classList.remove('open');ddClose();}
     return true;
   }
   // Push dummy state when overlay opens, pop it to close
