@@ -496,6 +496,7 @@
         },'#f59e0b');
         return;
       }
+      fetch('/api/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:o.bestellnummer,kunde_email:o.kunde_email,kunde_name:o.kunde_name,abholdatum:o.abholdatum||'',type:'ready',positionen:items.map(function(p){return{bezeichnung:p.bezeichnung,menge:p.menge,einheit:p.einheit,einzelpreis:p.einzelpreis,positionspreis:p.positionspreis};}),gesamtsumme:o.gesamtsumme,anmerkungen:o.anmerkungen||''})}).catch(function(){});
       var data={status:2,pack_json:r.pack};
       var noteEl=q('#note')||q('[id="note"]');
       if(noteEl) data.anmerkungen=noteEl.value;
