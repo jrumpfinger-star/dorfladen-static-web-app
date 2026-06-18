@@ -1262,7 +1262,7 @@
     html+='<div class="shop-grid">';
     items.forEach(function(a){
       var badges='';
-      if(a.kurzfristig) badges+='<span class="shop-badge" style="background:#fef3c7;color:#92400e">⏳ Nur kurz</span>';
+      if(a.kurzfristig){var kfTxt='⏳ Nur kurz';if(a.gueltig_bis){var gp=a.gueltig_bis.split('-');if(gp.length===3)kfTxt+=' (bis '+gp[2]+'.'+gp[1]+'.)';} badges+='<span class="shop-badge" style="background:#fef3c7;color:#92400e">'+kfTxt+'</span>';}
       if(a.popularity>=70) badges+='<span class="shop-badge shop-badge-bestseller">🔥 Beliebt</span>';
       if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
       else if(a.rp) badges+='<span class="shop-badge shop-badge-rp">-'+a.discount+'%</span>';
@@ -1379,7 +1379,8 @@
     if(kurzArtikel.length){
       html+='<div class="shop-grid">';
       kurzArtikel.forEach(function(a){
-        var badges='<span class="shop-badge" style="background:#fef3c7;color:#92400e">⏳ Nur kurz</span>';
+        var kfTxt2='⏳ Nur kurz';if(a.gueltig_bis){var gp2=a.gueltig_bis.split('-');if(gp2.length===3)kfTxt2+=' (bis '+gp2[2]+'.'+gp2[1]+'.)';}
+        var badges='<span class="shop-badge" style="background:#fef3c7;color:#92400e">'+kfTxt2+'</span>';
         if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
         var priceHtml=fmtP(a.vk)+' €';
         if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';

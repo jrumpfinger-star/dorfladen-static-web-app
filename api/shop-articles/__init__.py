@@ -330,7 +330,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "angebot_preis": ang["preis"] if ang else None,
                 "rp": is_rp,
                 "discount": discount,
-                "kurzfristig": freigaben_map.get(strichcode, {}).get("kurzfristig", False) if freigaben_map else False
+                "kurzfristig": freigaben_map.get(strichcode, {}).get("kurzfristig", False) if freigaben_map else False,
+                "gueltig_bis": str(freigaben_map.get(strichcode, {}).get("gueltig_bis", "") or "")[:10] if freigaben_map else ""
             }
             articles.append(article)
 

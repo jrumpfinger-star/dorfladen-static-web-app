@@ -397,13 +397,22 @@
       });
     });
 
-    // Kurzfristig toggle
+    // Kurzfristig toggle – auto-focus date field when checked
     document.querySelectorAll('.art-kf').forEach(function(cb){
       cb.addEventListener('change',function(){
         var sc=cb.getAttribute('data-kf-sc');
         if(!pendingChanges[sc]) pendingChanges[sc]={action:'update'};
         pendingChanges[sc].kurzfristig=cb.checked;
         updateSaveBtn();
+        var dateInput=document.querySelector('[data-date-sc="'+sc+'"]');
+        if(dateInput){
+          if(cb.checked){
+            dateInput.style.background='#fef3c7';dateInput.style.borderColor='#f59e0b';
+            if(!dateInput.value) dateInput.focus();
+          } else {
+            dateInput.style.background='';dateInput.style.borderColor='';
+          }
+        }
       });
     });
 
@@ -512,6 +521,19 @@
   function saveChanges(){
     var keys=Object.keys(pendingChanges);
     if(!keys.length){toast('Keine Änderungen');return;}
+    // Warn if kurzfristig articles have no gueltig_bis date
+    var missingDate=[];
+    keys.forEach(function(sc){
+      var kf=isKurzfristig(sc);
+      var gb=getGueltigBis(sc);
+      if(kf&&!gb){
+        var art=allArticles.find(function(a){return a.strichcode===sc;});
+        missingDate.push(art?art.bezeichnung:sc);
+      }
+    });
+    if(missingDate.length){
+      if(!confirm('Folgende "Kurz verfügbar"-Artikel haben kein Ablaufdatum:\n\n• '+missingDate.join('\n• ')+'\n\nOhne Datum bleiben diese Artikel unbegrenzt sichtbar. Trotzdem speichern?')) return;
+    }
     var enableItems=[];
     var disableItems=[];
     keys.forEach(function(sc){
@@ -522,7 +544,7 @@
         var item={
           strichcode:sc,
           aktiv:true,
-          gueltig_bis:p.gueltig_bis||null,
+          gueltig_bis:p.gueltig_bis||getGueltigBis(sc)||null,
           warengruppe:p.warengruppe||'',
           bezeichnung:p.bezeichnung||'',
           edeka_nr:p.edeka_nr||''
