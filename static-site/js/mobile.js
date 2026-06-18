@@ -596,7 +596,7 @@
       code=code.trim();
       var found=[];
       plAllItems.forEach(function(entry){
-        if(entry.strichcode&&entry.strichcode.indexOf(code)!==-1)found.push(entry);
+        if(entry.strichcode&&entry.strichcode===code)found.push(entry);
       });
       return found;
     }
@@ -626,7 +626,8 @@
         if(disc>DISC_MIN&&disc<=DISC_MAX) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.7rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
         var badgesHtml=badges?'<div style="margin-top:3px">'+badges+'</div>':'';
         h+='<div style="background:#fff;border-radius:6px;padding:10px;margin-top:6px;display:flex;justify-content:space-between;align-items:start">';
-        h+='<div><b>'+esc(m.bezeichnung)+'</b><br><small style="color:#888">'+esc(m.wg)+'</small>'+badgesHtml+savingsHtml+'</div>';
+        var bcLabel=m.strichcode?'<small style="color:#aaa;font-size:.72rem"> · EAN '+esc(m.strichcode)+'</small>':'';
+        h+='<div><b>'+esc(m.bezeichnung)+'</b><br><small style="color:#888">'+esc(m.wg)+'</small>'+bcLabel+badgesHtml+savingsHtml+'</div>';
         var preisHtml='<div style="font-weight:700;white-space:nowrap;padding-top:2px;text-align:right">'+fmtP(preis)+' &euro;';
         if(m.angebot&&m.angebot_preis&&m.vk&&m.angebot_preis<m.vk) preisHtml+='<br><span style="text-decoration:line-through;color:#999;font-size:.75rem;font-weight:400">'+fmtP(m.vk)+' &euro;</span>';
         preisHtml+='</div>';

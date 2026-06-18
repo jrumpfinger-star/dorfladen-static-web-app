@@ -130,7 +130,7 @@
       var found=[];
       allItems.forEach(function(entry){
         var bc=entry.item.strichcode||'';
-        if(bc&&bc.indexOf(code)!==-1)found.push(entry);
+        if(bc&&bc===code)found.push(entry);
       });
       return found;
     }
@@ -160,7 +160,8 @@
         if(it.angebot) badges+='<span style="background:#ff6f00;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700;margin-right:4px">\u2B50 Angebot</span>';
         if(disc>DISC_MIN&&disc<=DISC_MAX) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.72rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
         var badgesHtml=badges?'<div style="margin-top:3px">'+badges+'</div>':'';
-        h+='<tr><td class="so-td-name">'+esc(it.bezeichnung)+'<br><small style="color:#888">'+esc(m.wg)+'</small>'+badgesHtml+savingsHtml+'</td>';
+        var bcLabel=it.strichcode?'<small style="color:#aaa;font-size:.72rem"> · EAN '+esc(it.strichcode)+'</small>':'';
+        h+='<tr><td class="so-td-name">'+esc(it.bezeichnung)+'<br><small style="color:#888">'+esc(m.wg)+'</small>'+bcLabel+badgesHtml+savingsHtml+'</td>';
         var preisCell=fmtPrice(preis)+'&nbsp;&euro;';
         if(it.angebot&&it.angebot_preis&&it.vk&&it.angebot_preis<it.vk) preisCell+='<br><span style="text-decoration:line-through;color:#999;font-size:.75rem;font-weight:400">'+fmtPrice(it.vk)+'&nbsp;&euro;</span>';
         h+='<td class="so-td-price">'+preisCell+'</td></tr>';
