@@ -301,7 +301,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     bestellnummer = body.get("bestellnummer", "")
     kunde_email = body.get("kunde_email", "")
     kunde_name = body.get("kunde_name", "")
-    abholdatum = body.get("abholdatum", "")
+    abholdatum_raw = body.get("abholdatum", "")
+    # Format date to German dd.mm.yyyy
+    abholdatum = abholdatum_raw
+    if abholdatum_raw and len(abholdatum_raw) >= 10:
+        try:
+            parts = abholdatum_raw[:10].split("-")
+            if len(parts) == 3:
+                abholdatum = f"{parts[2]}.{parts[1]}.{parts[0]}"
+        except Exception:
+            pass
     notify_type = body.get("type", "ready")
     missing_items = body.get("missing_items", [])
 

@@ -974,6 +974,7 @@
   function fmtDePrice(v){if(v==null||v==='')return '';var n=parseFloat(String(v).replace(',','.'));return isNaN(n)?'':n.toFixed(2).replace('.',',');}
   function parseDePrice(s){if(!s)return null;var n=parseFloat(String(s).replace(',','.'));return isNaN(n)?null:n;}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function fmtDe(s){if(!s)return '–';try{var p=String(s).substring(0,10).split('-');if(p.length===3)return p[2]+'.'+p[1]+'.'+p[0];return s;}catch(e){return s;}}
 
   function toast(msg,type){
     var el=document.createElement('div');
@@ -9127,8 +9128,8 @@
       html+='<tr style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
       html+='<td style="padding:8px;font-weight:700">'+esc(o.bestellnummer)+'</td>';
       html+='<td style="padding:8px">'+esc(o.kunde_name)+'<br><span style="font-size:10px;color:#9ca3af">'+esc(o.kunde_email)+'</span></td>';
-      html+='<td style="padding:8px">'+esc(o.bestelldatum)+'</td>';
-      html+='<td style="padding:8px;font-weight:600">'+esc(o.abholdatum)+'</td>';
+      html+='<td style="padding:8px">'+fmtDe(o.bestelldatum)+'</td>';
+      html+='<td style="padding:8px;font-weight:600">'+fmtDe(o.abholdatum)+'</td>';
       html+='<td style="padding:8px;text-align:right;font-weight:700">'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td>';
       html+='<td style="padding:8px;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+col+'">'+esc(o.status_text)+'</span></td>';
       html+='<td style="padding:8px;text-align:center">';
@@ -9211,7 +9212,7 @@
     html+='<div class="meta">Erstellt: '+new Date().toLocaleString('de-DE')+' · '+open.length+' Bestellung(en)</div>';
 
     open.forEach(function(o){
-      html+='<div class="order-header">'+esc(o.bestellnummer)+' · '+esc(o.kunde_name)+' · Abholung: '+esc(o.abholdatum)+'</div>';
+      html+='<div class="order-header">'+esc(o.bestellnummer)+' · '+esc(o.kunde_name)+' · Abholung: '+fmtDe(o.abholdatum)+'</div>';
       if(o.anmerkungen) html+='<div style="padding:4px 8px;color:#92400e;font-style:italic">📝 '+esc(o.anmerkungen)+'</div>';
       html+='<table><thead><tr><th style="width:30px">✓</th><th>ARTIKEL</th><th>MENGE</th><th>EINHEIT</th><th>PREIS</th></tr></thead><tbody>';
       (o.positionen||[]).forEach(function(p){

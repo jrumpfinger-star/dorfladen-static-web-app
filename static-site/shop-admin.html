@@ -239,14 +239,18 @@
   }
   function fmtDateTimeFull(raw){
     if(!raw) return '–';
-    try{var d=new Date(raw);if(isNaN(d.getTime()))return raw;return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear()+' um '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+' Uhr';}catch(e){return raw;}
+    try{var d=new Date(raw);if(isNaN(d.getTime()))return raw;return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear()+' um '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+' Uhr';}catch(e){return raw;}
+  }
+  function fmtDateFull(raw){
+    if(!raw) return '–';
+    try{var p=String(raw).substring(0,10).split('-');if(p.length===3)return p[2]+'.'+p[1]+'.'+p[0];return raw;}catch(e){return raw;}
   }
   function dayLabel(dateStr){
     if(!dateStr) return '–';
     var today=todayStr();var tom=tomorrowStr();
     if(dateStr===today) return 'Heute';
     if(dateStr===tom) return 'Morgen';
-    try{var d=new Date(dateStr+'T12:00:00');var tage=['So','Mo','Di','Mi','Do','Fr','Sa'];return tage[d.getDay()]+', '+d.getDate()+'.'+(d.getMonth()+1)+'.';}catch(e){return dateStr;}
+    try{var d=new Date(dateStr+'T12:00:00');var tage=['So','Mo','Di','Mi','Do','Fr','Sa'];return tage[d.getDay()]+', '+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';}catch(e){return dateStr;}
   }
   function isUrgent(o){
     // An order is urgent if: status<2 AND pickup is today within current opening period
@@ -602,8 +606,8 @@
     html+='<div class="info">';
     html+='<div><b>Kunde:</b> '+esc(o.kunde_name)+'</div>';
     html+='<div><b>E-Mail:</b> '+esc(o.kunde_email)+'</div>';
-    html+='<div><b>Bestellt am:</b> '+esc(o.bestelldatum||'-')+'</div>';
-    html+='<div><b>Abholung:</b> '+esc(o.abholdatum||'-')+'</div>';
+    html+='<div><b>Bestellt am:</b> '+fmtDateTimeFull(o.bestelldatum)+'</div>';
+    html+='<div><b>Abholung:</b> '+fmtDateFull(o.abholdatum)+'</div>';
     html+='</div>';
     if(o.anmerkungen){html+='<div class="note"><b>Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';}
     html+='<table><thead><tr><th class="check"></th><th>Pos</th><th>Artikel</th><th>Art.-Nr.</th><th>Barcode</th><th class="r">Bestellt</th><th class="r">Geliefert</th><th class="r">Einzelpreis</th><th class="r">Gesamt</th></tr></thead><tbody>';
