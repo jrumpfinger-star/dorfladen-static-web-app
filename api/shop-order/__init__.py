@@ -315,8 +315,29 @@ def _handle_post(req, dv_token, base_url, headers):
     try:
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
-        if r.status_code in (200, 201):
-            record = r.json()
+        if r.status_code in (200, 201, 204):
+            # Send confirmation email (best-effort, don't block response)
+            try:
+                notify_payload = {
+                    "type": "confirmation",
+                    "bestellnummer": bestellnummer,
+                    "kunde_email": user["email"],
+                    "kunde_name": user.get("name", ""),
+                    "abholdatum": abholdatum,
+                    "abhol_zeitslot": {"period": abhol_period, "label": abhol_label, "von": abhol_von, "bis": abhol_bis},
+                    "positionen": clean_positionen,
+                    "gesamtsumme": round(gesamtsumme, 2),
+                    "anmerkungen": anmerkungen,
+                    "iban_masked": iban_masked,
+                    "zahlungsart": "Lastschrift" if iban_masked else "Bar bei Abholung",
+                }
+                base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
+                notify_url = f"{protocol}://{base_host}/api/shop-notify"
+                requests.post(notify_url, json=notify_payload, timeout=10)
+            except Exception as ne:
+                logging.warning(f"[shop-order] Confirmation email failed (non-blocking): {ne}")
+
             return func.HttpResponse(
                 json.dumps({
                     "success": True,
@@ -324,18 +345,6 @@ def _handle_post(req, dv_token, base_url, headers):
                     "abholdatum": abholdatum,
                     "gesamtsumme": round(gesamtsumme, 2),
                     "positionen": len(clean_positionen),
-                    "abhol_display": abhol_display,
-                    "message": f"Bestellung {bestellnummer} aufgegeben! {abhol_display}"
-                }, ensure_ascii=False),
-                status_code=201, headers=get_cors_headers()
-            )
-        elif r.status_code == 204:
-            return func.HttpResponse(
-                json.dumps({
-                    "success": True,
-                    "bestellnummer": bestellnummer,
-                    "abholdatum": abholdatum,
-                    "gesamtsumme": round(gesamtsumme, 2),
                     "abhol_display": abhol_display,
                     "message": f"Bestellung {bestellnummer} aufgegeben! {abhol_display}"
                 }, ensure_ascii=False),

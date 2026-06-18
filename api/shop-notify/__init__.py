@@ -157,6 +157,9 @@ def build_email_html(body_text, subject="", extra_html=""):
     elif "abholbereit" in subject.lower() or "bereit" in subject.lower():
         accent_color = "#059669"
         icon = "✅"
+    elif "bestellbestätigung" in subject.lower():
+        accent_color = "#2e7d4f"
+        icon = "🛒"
     elif "nicht verfügbar" in subject.lower() or "fehlende" in subject.lower():
         accent_color = "#d97706"
         icon = "⚠️"
@@ -333,7 +336,46 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     email_subject = ""
     email_body = ""
 
-    if notify_type == "cancelled":
+    abhol_zeitslot = body.get("abhol_zeitslot", {})
+    zahlungsart = body.get("zahlungsart", "")
+    iban_masked = body.get("iban_masked", "")
+
+    if notify_type == "confirmation":
+        # ── Bestellbestätigung nach Aufgabe ──
+        slot_label = abhol_zeitslot.get("label", "Vormittag") if abhol_zeitslot else "Vormittag"
+        slot_von = abhol_zeitslot.get("von", "") if abhol_zeitslot else ""
+        slot_bis = abhol_zeitslot.get("bis", "") if abhol_zeitslot else ""
+        slot_display = f"{slot_label} ({slot_von}–{slot_bis} Uhr)" if slot_von else slot_label
+
+        email_subject = f"{laden_name} – Bestellbestätigung {bestellnummer}"
+        email_body = (
+            f"{anrede},\n\n"
+            f"vielen Dank für Ihre Bestellung! Wir haben folgende Bestellung erhalten "
+            f"und beginnen in Kürze mit der Zusammenstellung.\n\n"
+            f"📋 Bestellnummer: {bestellnummer}\n"
+            f"📅 Abholung: {abholdatum}, {slot_display}\n"
+            f"📍 Ort: {laden_name}, {ci['adresse']}\n"
+        )
+        if zahlungsart:
+            email_body += f"💳 Zahlung: {zahlungsart}"
+            if iban_masked:
+                email_body += f" ({iban_masked})"
+            email_body += "\n"
+        if body.get("anmerkungen"):
+            email_body += f"\n📝 Ihre Anmerkung: {body['anmerkungen']}\n"
+        email_body += (
+            f"\nSie erhalten eine weitere E-Mail, sobald Ihre Bestellung zur "
+            f"Abholung bereitsteht.\n\n"
+            f"⚠ Bitte holen Sie Ihre Bestellung zum gewählten Abholtermin ab. "
+            f"Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, "
+            f"wird in Rechnung gestellt.\n\n"
+            f"Bei Fragen erreichen Sie uns unter {ci['telefon']} oder "
+            f"per E-Mail an {ci['email']}.\n\n"
+            f"Herzliche Grüße\n"
+            f"Ihr {laden_name}-Team"
+        )
+
+    elif notify_type == "cancelled":
         email_subject = f"{laden_name} – Ihre Bestellung {bestellnummer} wurde storniert"
         email_body = (
             f"{anrede},\n\n"
@@ -415,9 +457,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except Exception:
             pass  # Push is best-effort
 
-    # ── Build positions table HTML for ready emails ──
+    # ── Build positions table HTML for confirmation and ready emails ──
     positions_html = ""
-    if notify_type == "ready" and positionen:
+    if notify_type in ("confirmation", "ready") and positionen:
         def _fmt_price(v):
             try:
                 return f"{float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
