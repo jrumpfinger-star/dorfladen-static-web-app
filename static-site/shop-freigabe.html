@@ -290,8 +290,7 @@
       html+='<div class="wg'+(isOpen?' open':'')+'" data-wg="'+esc(g.name)+'">';
       html+='<div class="wg-head"><span class="wg-arrow">▶</span>'+esc(g.name);
       html+='<div class="wg-count">';
-      if(g.enabledCount>0) html+='<span class="wg-badge badge-on">'+g.enabledCount+' aktiv</span>';
-      html+='<span class="wg-badge badge-total">'+g.items.length+'</span>';
+      html+='<span class="wg-badge badge-on">'+g.enabledCount+'/'+g.items.length+'</span>';
       var allChecked=g.enabledCount===g.items.length;
       html+='<input type="checkbox" class="wg-cb" data-wg-cb="'+esc(g.name)+'" title="Alle in '+esc(g.name)+'" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;margin-left:6px"'+(allChecked?' checked':'')+'>';
       html+='</div></div>';
