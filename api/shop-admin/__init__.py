@@ -387,6 +387,26 @@ def _patch_kunde(req, base_url, headers):
     )
 
 
+def _delete_kunde(req, base_url, headers):
+    kunde_id = (req.params.get("id") or "").strip()
+    if not kunde_id:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "id erforderlich"}, ensure_ascii=False),
+            status_code=400, headers=get_cors_headers(),
+        )
+    del_headers = {**headers, "If-Match": "*"}
+    r = requests.delete(f"{base_url}/api/data/v9.2/{KUNDEN_ENTITY_SET}({kunde_id})", headers=del_headers, timeout=30)
+    if r.status_code not in (200, 204):
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "detail": r.text[:800]}, ensure_ascii=False),
+            status_code=r.status_code, headers=get_cors_headers(),
+        )
+    return func.HttpResponse(
+        json.dumps({"success": True}, ensure_ascii=False),
+        status_code=200, headers=get_cors_headers(),
+    )
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -401,6 +421,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     base_url = _base_url()
     headers = _headers(token)
+
+    if req.method == "DELETE":
+        return _delete_kunde(req, base_url, headers)
 
     if req.method == "PATCH":
         try:

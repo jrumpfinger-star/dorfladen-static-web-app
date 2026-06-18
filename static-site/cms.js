@@ -9285,7 +9285,8 @@
     var wrap=document.getElementById('cms-modal-wrap');
     var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:500px">';
     html+='<div class="cms-modal-header"><h3><i data-lucide="user-pen" style="width:18px;height:18px;vertical-align:-3px"></i> Kunde bearbeiten</h3>';
-    html+='<div style="display:flex;gap:8px"><button class="cms-btn cms-btn-primary" id="kd-save"><i data-lucide="save" style="width:14px;height:14px;vertical-align:-2px"></i> Speichern</button>';
+    html+='<div style="display:flex;gap:8px"><button class="cms-btn cms-btn-danger" id="kd-delete" style="margin-right:auto"><i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:-2px"></i> Löschen</button>';
+    html+='<button class="cms-btn cms-btn-primary" id="kd-save"><i data-lucide="save" style="width:14px;height:14px;vertical-align:-2px"></i> Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" id="kd-close">Abbrechen</button></div></div>';
     html+='<div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">';
     html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Vorname<input id="kd-vorname" class="cms-input" value="'+esc(k.vorname)+'" style="width:100%;margin-top:2px"></label>';
@@ -9307,6 +9308,19 @@
     wrap.style.display='';
     if(window.lucide)lucide.createIcons();
     document.getElementById('kd-close').onclick=function(){wrap.style.display='none';wrap.innerHTML='';};
+    document.getElementById('kd-delete').onclick=function(){
+      if(!confirm('Kunde "'+k.vorname+' '+k.nachname+'" ('+k.email+') wirklich endgültig löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!'))return;
+      fetch(API+'/shop-admin?id='+encodeURIComponent(id),{method:'DELETE'})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          cmsToast('Kunde gelöscht');
+          wrap.style.display='none';wrap.innerHTML='';
+          _kundenData=_kundenData.filter(function(x){return x.id!==id;});
+          cmsRenderKunden();
+        })
+        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+    };
     document.getElementById('kd-reset-pw').onclick=function(){
       var newPw=document.getElementById('kd-new-pw').value.trim();
       if(!newPw||newPw.length<8){cmsToast('Passwort muss mindestens 8 Zeichen haben','error');return;}
