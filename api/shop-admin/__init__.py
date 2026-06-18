@@ -246,6 +246,69 @@ def _patch_order(req, base_url, headers):
     )
 
 
+def _scan_pickup(req, base_url, headers):
+    """Lookup order by bestellnummer and set status to 3 (Abgeholt)."""
+    nr = (req.params.get("nr") or "").strip()
+    if not nr:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "Bestellnummer (nr) erforderlich"}, ensure_ascii=False),
+            status_code=400,
+            headers=get_cors_headers(),
+        )
+    # Find order by bestellnummer
+    escaped_nr = nr.replace("'", "''")
+    url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_name,dl_status,dl_gesamtsumme&$filter=dl_bestellnummer eq '{escaped_nr}'&$top=1"
+    r = requests.get(url, headers=headers, timeout=30)
+    if r.status_code != 200:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}, ensure_ascii=False),
+            status_code=r.status_code,
+            headers=get_cors_headers(),
+        )
+    items = r.json().get("value", [])
+    if not items:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Bestellung {nr} nicht gefunden"}, ensure_ascii=False),
+            status_code=404,
+            headers=get_cors_headers(),
+        )
+    order = items[0]
+    order_id = order.get("dl_shopbestellungid", "")
+    current_status = order.get("dl_status", 0)
+    if current_status == 3:
+        return func.HttpResponse(
+            json.dumps({"success": True, "already": True, "message": f"Bestellung {nr} war bereits als Abgeholt markiert",
+                        "bestellnummer": nr, "kunde_name": order.get("dl_kunde_name", ""), "status": 3,
+                        "status_text": STATUS_LABELS.get(3, ""), "gesamtsumme": order.get("dl_gesamtsumme", 0)}, ensure_ascii=False),
+            status_code=200,
+            headers=get_cors_headers(),
+        )
+    if current_status not in (1, 2):  # only allow from In Bearbeitung or Abholbereit
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Bestellung {nr} hat Status '{STATUS_LABELS.get(current_status, 'Unbekannt')}' – kann nicht als Abgeholt markiert werden",
+                        "bestellnummer": nr, "status": current_status, "status_text": STATUS_LABELS.get(current_status, "")}, ensure_ascii=False),
+            status_code=400,
+            headers=get_cors_headers(),
+        )
+    # Update status to Abgeholt
+    patch_headers = {**headers, "If-Match": "*"}
+    rp = requests.patch(f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})", headers=patch_headers,
+                        json={"dl_status": 3}, timeout=30)
+    if rp.status_code not in (200, 204):
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Dataverse Update fehlgeschlagen ({rp.status_code})"}, ensure_ascii=False),
+            status_code=rp.status_code,
+            headers=get_cors_headers(),
+        )
+    return func.HttpResponse(
+        json.dumps({"success": True, "message": f"Bestellung {nr} als Abgeholt markiert",
+                    "bestellnummer": nr, "kunde_name": order.get("dl_kunde_name", ""), "status": 3,
+                    "status_text": STATUS_LABELS.get(3, ""), "gesamtsumme": order.get("dl_gesamtsumme", 0)}, ensure_ascii=False),
+        status_code=200,
+        headers=get_cors_headers(),
+    )
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -271,6 +334,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return _list_orders(req, base_url, headers)
     if action == "order":
         return _get_order(req, base_url, headers)
+    if action == "scan":
+        return _scan_pickup(req, base_url, headers)
     if action == "status-labels":
         return func.HttpResponse(
             json.dumps({"success": True, "status_labels": STATUS_LABELS}, ensure_ascii=False),

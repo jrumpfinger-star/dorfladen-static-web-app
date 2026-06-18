@@ -205,11 +205,13 @@
       Quagga.init({
         inputStream:{name:'Live',type:'LiveStream',target:readerDiv,
           constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},
-            focusMode:'continuous',focusDistance:0}},
-        locator:{patchSize:'medium',halfSample:false},
-        decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader']},
+            focusMode:'continuous',focusDistance:0},
+          area:{top:'20%',right:'5%',left:'5%',bottom:'20%'}},
+        locator:{patchSize:'large',halfSample:false},
+        decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'],
+          multiple:false},
         locate:true,
-        frequency:10
+        frequency:15
       },function(err){
         if(err){stopScanner();alert('Kamera konnte nicht ge\u00f6ffnet werden.\n'+err);return;}
         Quagga.start();
@@ -223,6 +225,7 @@
         }catch(e){}
       });
       Quagga.offDetected();
+      var _lastCode='',_lastTime=0,_confirmCount=0;
       Quagga.onDetected(function(result){
         if(!result||!result.codeResult||!result.codeResult.code)return;
         // Confidence check: reject low-quality reads
@@ -230,10 +233,12 @@
         if(errs&&errs.length){
           var sumErr=0,cnt=0;
           errs.forEach(function(d){if(typeof d.error==='number'){sumErr+=d.error;cnt++;}});
-          if(cnt>0&&(sumErr/cnt)>0.15)return; // avg error > 15% → skip
+          if(cnt>0&&(sumErr/cnt)>0.12)return;
         }
-        stopScanner();
-        onBarcodeScanned(result.codeResult.code);
+        var code=result.codeResult.code;
+        var now=Date.now();
+        if(code===_lastCode&&(now-_lastTime)<2000){_confirmCount++;}else{_confirmCount=1;_lastCode=code;}_lastTime=now;
+        if(_confirmCount>=2){stopScanner();onBarcodeScanned(code);}
       });
     });
 

@@ -38,6 +38,23 @@
     .actions{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.note{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px}
     .pack-title{font-size:15px;font-weight:700;margin-bottom:6px}.pack-summary{font-size:12px;color:var(--muted);margin-bottom:6px}.pack-progress{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:6px 0 10px}.pack-progress div{height:100%;background:var(--green)}
     .toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:12px;padding:12px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none}.loading{padding:40px;text-align:center;color:var(--muted)}
+    .scan-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center}
+    .scan-overlay.open{display:flex}
+    .scan-header{color:#fff;font-size:16px;font-weight:800;margin-bottom:12px;text-align:center}
+    .scan-header small{display:block;font-size:11px;font-weight:400;opacity:.7;margin-top:2px}
+    .scan-video-wrap{position:relative;width:90vw;max-width:480px;aspect-ratio:4/3;border-radius:16px;overflow:hidden;border:3px solid var(--green);background:#000}
+    .scan-video-wrap video,.scan-video-wrap canvas{width:100%!important;height:100%!important;object-fit:cover}
+    .scan-crosshair{position:absolute;inset:20%;border:2px solid rgba(46,125,79,.6);border-radius:8px;pointer-events:none;animation:scan-pulse 1.5s infinite}
+    @keyframes scan-pulse{0%,100%{opacity:.4}50%{opacity:1}}
+    .scan-close{margin-top:16px;background:none;border:2px solid #fff;color:#fff;border-radius:12px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer}
+    .scan-close:hover{background:rgba(255,255,255,.1)}
+    .scan-result{position:fixed;bottom:0;left:0;right:0;z-index:101;padding:16px 20px;border-radius:16px 16px 0 0;text-align:center;font-weight:700;font-size:14px;transform:translateY(100%);transition:transform .3s ease}
+    .scan-result.show{transform:translateY(0)}
+    .scan-result.success{background:#16a34a;color:#fff}
+    .scan-result.error{background:#dc2626;color:#fff}
+    .scan-result.already{background:#2563eb;color:#fff}
+    .scan-result .sr-msg{font-size:14px}.scan-result .sr-detail{font-size:11px;opacity:.8;margin-top:2px}
+    .btn.scan-btn{background:#7c3aed;border-color:#7c3aed;color:#fff}.btn.scan-btn:hover{background:#6d28d9}
     /* Inline expand (accordion on mobile) */
     .order-expand{display:none;border-bottom:2px solid var(--green);background:#f8fbf9}
     .order-expand.open{display:block}
@@ -81,8 +98,15 @@
     <a class="btn" href="/shop-freigabe" title="Artikelfreigabe verwalten"><span class="btn-icon">✅</span><span class="btn-label">Freigabe</span></a>
     <a class="btn" href="/cms" title="CMS – Inhalte bearbeiten"><span class="btn-icon">⚙</span><span class="btn-label">CMS</span></a>
     <a class="btn" href="/shop" title="Zum Online-Shop"><span class="btn-icon">🛒</span><span class="btn-label">Shop</span></a>
+    <button class="btn scan-btn" id="scan-btn" title="Abholscan – Barcode scannen"><span class="btn-icon">📷</span><span class="btn-label">Abholscan</span></button>
     <button class="btn primary" id="refresh-btn" title="Bestellungen neu laden"><span class="btn-icon">🔄</span><span class="btn-label">Aktualisieren</span></button>
   </div>
+  <div class="scan-overlay" id="scan-overlay">
+    <div class="scan-header">📷 Abholscan<small>Beipackzettel-Barcode scannen → Abgeholt</small></div>
+    <div class="scan-video-wrap"><div id="scan-reader"></div><div class="scan-crosshair"></div></div>
+    <button class="scan-close" id="scan-close">✕ Scanner schließen</button>
+  </div>
+  <div class="scan-result" id="scan-result"><div class="sr-msg"></div><div class="sr-detail"></div></div>
   <div class="wrap">
     <div class="grid">
       <div class="stat active" data-stat-filter="all"><div class="label">Bestellungen</div><div class="value" id="stat-count">-</div></div>
@@ -538,6 +562,9 @@
     html+='.footer b{color:#1f2937}';
     html+='.note{background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:8px 10px;font-size:11px;color:#92400e;margin-bottom:12px}';
     html+='@media print{body{padding:12px 16px}@page{margin:12mm 10mm}}';
+    html+='.barcode-box{text-align:center;margin:16px 0;padding:12px;border:2px dashed #d1d5db;border-radius:8px;background:#f9fafb}';
+    html+='.barcode-box svg{display:block;margin:0 auto 4px}';
+    html+='.barcode-box .bc-label{font-size:14px;font-weight:800;letter-spacing:2px;font-family:monospace}';
     html+='</style></head><body>';
     html+='<div class="header"><div class="logo">Dorfladen Oberornau<small>Online-Bestellung &middot; Beipackzettel</small></div>';
     html+='<div class="ordernr">'+esc(o.bestellnummer)+'<small>Gedruckt: '+now.toLocaleDateString('de-DE')+' '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+'</small></div></div>';
@@ -613,6 +640,7 @@
     html+='<b>Dorfladen Oberornau</b> &middot; Dorfplatz 1 &middot; 84419 Obertaufkirchen<br>';
     html+='Bei Fragen: bestellung@dorfladen-oberornau.de &middot; Tel: 08082 / 622 99 91';
     html+='</div>';
+    html+='<div class="barcode-box"><div style="font-size:10px;color:#6b7280;margin-bottom:4px">Abholscan – Bestellnummer</div>'+code128Svg(o.bestellnummer,40,1.5)+'</div>';
     html+='<div class="noprint" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#2e7d4f;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">🖨 Beipackzettel drucken</button></div>';
     html+='<style>@media print{.noprint{display:none!important}}</style>';
     html+='</body></html>';
@@ -707,7 +735,82 @@
   document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.addEventListener('click',function(){activeStatFilter=el.getAttribute('data-stat-filter');document.getElementById('status-filter').value='all';renderOrders();});});document.getElementById('refresh-btn').addEventListener('click',loadDashboard);document.getElementById('load-orders').addEventListener('click',loadOrders);document.getElementById('search').addEventListener('keydown',function(e){if(e.key==='Enter')loadOrders();});document.getElementById('status-filter').addEventListener('change',loadOrders);
   document.getElementById('show-history').addEventListener('click',function(){historyMode=!historyMode;this.classList.toggle('primary',historyMode);this.textContent=historyMode?'📜 Historie ausblenden':'📜 Historie';renderOrders();});
   loadDashboard();
+  // ── Abholscan ──
+  (function(){
+    var scanBtn=document.getElementById('scan-btn');
+    var overlay=document.getElementById('scan-overlay');
+    var reader=document.getElementById('scan-reader');
+    var closeBtn=document.getElementById('scan-close');
+    var resultEl=document.getElementById('scan-result');
+    var _active=false,_processing=false;
+    function stopScan(){
+      if(_active){try{Quagga.stop();}catch(e){}}_active=false;
+      reader.innerHTML='';overlay.classList.remove('open');
+    }
+    function showResult(cls,msg,detail){
+      resultEl.className='scan-result '+cls+' show';
+      resultEl.querySelector('.sr-msg').textContent=msg;
+      resultEl.querySelector('.sr-detail').textContent=detail||'';
+      setTimeout(function(){resultEl.classList.remove('show');},4000);
+    }
+    function handleScanned(code){
+      if(_processing) return;
+      _processing=true;
+      stopScan();
+      fetch(API+'?action=scan&nr='+encodeURIComponent(code))
+        .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d};});})
+        .then(function(res){
+          _processing=false;
+          var d=res.data;
+          if(d.success){
+            var cls=d.already?'already':'success';
+            showResult(cls,'✅ '+d.message, d.kunde_name+' · '+money(d.gesamtsumme));
+            loadDashboard();
+          } else {
+            showResult('error','⚠ '+d.error, d.bestellnummer||code);
+          }
+        })
+        .catch(function(e){
+          _processing=false;
+          showResult('error','Fehler: '+e.message, code);
+        });
+    }
+    scanBtn.addEventListener('click',function(){
+      if(typeof Quagga==='undefined'){alert('Scanner-Library wird geladen…');return;}
+      resultEl.className='scan-result';
+      overlay.classList.add('open');
+      Quagga.init({
+        inputStream:{name:'Live',type:'LiveStream',target:reader,
+          constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},
+            focusMode:'continuous',focusDistance:0}},
+        locator:{patchSize:'medium',halfSample:false},
+        decoder:{readers:['code_128_reader']},
+        locate:true,
+        frequency:15
+      },function(err){
+        if(err){stopScan();alert('Kamera konnte nicht geöffnet werden.\n'+err);return;}
+        Quagga.start();_active=true;
+        try{var track=Quagga.CameraAccess.getActiveTrack();
+          if(track&&track.applyConstraints) track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){});
+        }catch(e){}
+      });
+      Quagga.offDetected();
+      var _lastCode='',_lastTime=0,_confirmCount=0;
+      Quagga.onDetected(function(result){
+        if(!result||!result.codeResult||!result.codeResult.code||_processing) return;
+        var errs=result.codeResult.decodedCodes;
+        if(errs&&errs.length){var s=0,c=0;errs.forEach(function(d){if(typeof d.error==='number'){s+=d.error;c++;}});if(c>0&&(s/c)>0.10) return;}
+        var code=result.codeResult.code;
+        if(!/^DL-\d{8}-[A-Z0-9]{4}$/.test(code)) return;
+        var now=Date.now();
+        if(code===_lastCode&&(now-_lastTime)<2000){_confirmCount++;}else{_confirmCount=1;_lastCode=code;}_lastTime=now;
+        if(_confirmCount>=2) handleScanned(code);
+      });
+    });
+    closeBtn.addEventListener('click',function(){stopScan();});
+  })();
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
 </body>
 </html>
