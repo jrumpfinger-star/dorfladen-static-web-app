@@ -129,9 +129,9 @@
       <div class="content">
         <div class="list" id="orders"><div class="loading">Lade Bestellungen…</div></div>
         <div class="right-pane" id="right-pane">
-          <div class="tab-bar" id="tab-bar"><div class="tab-bar-ctx" id="tab-bar-ctx"></div><div class="tab-bar-btns"><button class="tab-btn active" data-tab="detail"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> Bestellung</button><button class="tab-btn" data-tab="pack"><i data-lucide="package" style="width:14px;height:14px;vertical-align:-2px"></i> Packen</button></div></div>
-          <div class="tab-content active" data-tab-content="detail" id="detail"><div class="empty"><div><h2>Bestellung ausw&auml;hlen</h2><p>Links eine Bestellung anklicken</p></div></div></div>
-          <div class="tab-content" data-tab-content="pack" id="pack"><div class="empty"><div><h2>Packliste</h2><p>Nach Auswahl hier abhaken</p></div></div></div>
+          <div class="tab-bar" id="tab-bar"><div class="tab-bar-ctx" id="tab-bar-ctx"></div></div>
+          <div class="tab-content active" id="detail"><div class="empty"><div><h2>Bestellung ausw&auml;hlen</h2><p>Links eine Bestellung anklicken</p></div></div></div>
+          <div id="pack" style="display:none"></div>
         </div>
       </div>
     </div>
@@ -346,7 +346,7 @@
     });
   }
   function isMobile(){return window.innerWidth<=1100;}
-  function selectOrder(id){var o=orders.find(function(x){return x.id===id;});if(!o)return;fetch(API+'?action=order&id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(res){selected=res.order||o;renderOrders();renderDetail();switchTab('detail');updateTabCtx();renderInlineExpand();
+  function selectOrder(id){var o=orders.find(function(x){return x.id===id;});if(!o)return;fetch(API+'?action=order&id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(res){selected=res.order||o;renderOrders();renderDetail();updateTabCtx();renderInlineExpand();
   });}
   function updateTabCtx(){
     var ctx=document.getElementById('tab-bar-ctx');
@@ -360,22 +360,9 @@
     if(!isMobile()||!selected) return;
     var exp=document.querySelector('[data-expand="'+selected.id+'"]');
     if(!exp) return;
-    // Copy detail + pack content into expand area
+    // Copy combined detail content into expand area (no tabs needed)
     var detailEl=document.getElementById('detail');
-    var packEl=document.getElementById('pack');
-    var html='<div class="expand-tabs">';
-    html+='<button class="expand-tab active" data-xtab="detail"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> Bestellung</button>';
-    html+='<button class="expand-tab" data-xtab="pack"><i data-lucide="package" style="width:14px;height:14px;vertical-align:-2px"></i> Packen</button>';
-    html+='</div>';
-    html+='<div class="expand-body" data-xbody="detail">'+detailEl.innerHTML+'</div>';
-    html+='<div class="expand-body" data-xbody="pack" style="display:none">'+packEl.innerHTML+'</div>';
-    exp.innerHTML=html;
-    // Tab switching within expand
-    exp.querySelectorAll('.expand-tab').forEach(function(t){t.addEventListener('click',function(){
-      var tab=t.getAttribute('data-xtab');
-      exp.querySelectorAll('.expand-tab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-xtab')===tab);});
-      exp.querySelectorAll('.expand-body').forEach(function(b){b.style.display=b.getAttribute('data-xbody')===tab?'block':'none';});
-    });});
+    exp.innerHTML='<div class="expand-body">'+detailEl.innerHTML+'</div>';
     // Wire events on the inline expand copy
     var o=selected;
     var items=(o.positionen||[]);
@@ -732,54 +719,34 @@
     var timeRange=zsD.von&&zsD.bis?' ('+zsD.von+'–'+zsD.bis+' Uhr)':'';
     var urg=isUrgent(o);
     var isMob=isMobile();
-    var detailHtml='';
-    if(!isMob){
-      detailHtml+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">';
-      detailHtml+='<div><h2 style="margin:0;font-size:18px">'+esc(shortNr)+'</h2><div style="font-size:10px;color:var(--muted)">'+esc(o.bestellnummer)+'</div></div>';
-      detailHtml+=statusBadge(o.status);
-      detailHtml+='</div>';
-      detailHtml+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
-      detailHtml+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Abholung</div><div style="font-size:14px;font-weight:800;color:var(--green)">'+esc(abholDay)+'</div><div style="font-size:12px;color:var(--text)">'+esc(periodLabel)+timeRange+'</div>'+(urg?'<div style="font-size:10px;font-weight:800;color:var(--urgent);margin-top:4px">⚡ JETZT PACKEN</div>':'')+'</div>';
-      detailHtml+='<div style="background:#f8fafc;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Kunde</div><div style="font-size:13px;font-weight:700">'+esc(o.kunde_name)+'</div><div style="font-size:11px;color:var(--muted);word-break:break-all">'+esc(o.kunde_email)+'</div></div>';
-      detailHtml+='</div>';
-    } else {
-      detailHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
-      detailHtml+='<span style="font-weight:700;color:var(--green)">'+esc(abholDay)+' '+esc(periodLabel)+'</span>';
-      if(timeRange) detailHtml+='<span>'+timeRange+'</span>';
-      if(urg) detailHtml+='<span style="font-weight:800;color:var(--urgent)">⚡ JETZT</span>';
-      detailHtml+='<span>·</span><span>'+esc(o.kunde_email)+'</span>';
-      detailHtml+='</div>';
-    }
-    detailHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Bestellt: '+fmtDateTimeFull(o.bestelldatum)+' · '+items.length+' Positionen · <b style="color:var(--green)">'+money(o.gesamtsumme)+'</b></div>';
-    if(o.anmerkungen) detailHtml+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;margin-bottom:10px"><b>📝 Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';
-    // Quick article list in detail tab (compact, no checkboxes)
-    if(items.length){
-      detailHtml+='<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px">';
-      items.forEach(function(p,i){
-        var pk=packFor(p);
-        var ep=p.einzelpreis||0;var isKg=p.einheit==='kg'||p.gewichtsware;
-        var gp=isKg?ep*(p.menge||0):ep*(p.menge||0);
-        var packIcon=pk.gepackt?'✅':'⬜';
-        detailHtml+='<div style="display:grid;grid-template-columns:24px 1fr auto;gap:6px;padding:8px 10px;font-size:12px;border-bottom:1px solid #f3f4f6;align-items:center">';
-        detailHtml+='<span>'+packIcon+'</span>';
-        detailHtml+='<span style="font-weight:600">'+esc(p.bezeichnung)+'</span>';
-        detailHtml+='<span style="white-space:nowrap;color:var(--muted)">'+esc(p.menge)+' '+esc(p.einheit||'Stk')+'</span>';
-        detailHtml+='</div>';
-      });
-      detailHtml+='</div>';
-    }
-    if(isEditable){
-      detailHtml+='<div class="actions"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="print-slip-detail">📄 Beipackzettel</button></div>';
-      detailHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Anmerkung:</div><textarea class="note" id="note">'+esc(o.anmerkungen||'')+'</textarea>';
-    } else {
-      detailHtml+='<div class="actions"><button class="btn small" id="print-slip-detail">📄 Beipackzettel anzeigen</button></div>';
-    }
-    document.getElementById('detail').innerHTML=detailHtml;
     var packedCount=items.reduce(function(sum,p){return sum+(packFor(p).gepackt?1:0);},0);
     var pct=items.length?Math.round(packedCount/items.length*100):0;
-    // Pack list with prices
-    var packHtml='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><div class="pack-title" style="margin:0">Packliste</div><div class="pack-summary" style="margin:0">'+packedCount+'/'+items.length+' gepackt</div></div><div class="pack-progress" style="margin:4px 0 8px"><div style="width:'+pct+'%"></div></div>';
-    packHtml+='<div class="items">';
+    var html='';
+    // ── Header: Order info ──
+    if(!isMob){
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">';
+      html+='<div><h2 style="margin:0;font-size:18px">'+esc(shortNr)+'</h2><div style="font-size:10px;color:var(--muted)">'+esc(o.bestellnummer)+'</div></div>';
+      html+=statusBadge(o.status);
+      html+='</div>';
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
+      html+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Abholung</div><div style="font-size:14px;font-weight:800;color:var(--green)">'+esc(abholDay)+'</div><div style="font-size:12px;color:var(--text)">'+esc(periodLabel)+timeRange+'</div>'+(urg?'<div style="font-size:10px;font-weight:800;color:var(--urgent);margin-top:4px">⚡ JETZT PACKEN</div>':'')+'</div>';
+      html+='<div style="background:#f8fafc;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Kunde</div><div style="font-size:13px;font-weight:700">'+esc(o.kunde_name)+'</div><div style="font-size:11px;color:var(--muted);word-break:break-all">'+esc(o.kunde_email)+'</div></div>';
+      html+='</div>';
+    } else {
+      html+='<div style="font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
+      html+='<span style="font-weight:700;color:var(--green)">'+esc(abholDay)+' '+esc(periodLabel)+'</span>';
+      if(timeRange) html+='<span>'+timeRange+'</span>';
+      if(urg) html+='<span style="font-weight:800;color:var(--urgent)">⚡ JETZT</span>';
+      html+='<span>·</span><span>'+esc(o.kunde_email)+'</span>';
+      html+='</div>';
+    }
+    html+='<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Bestellt: '+fmtDateTimeFull(o.bestelldatum)+' · '+items.length+' Positionen · <b style="color:var(--green)">'+money(o.gesamtsumme)+'</b></div>';
+    if(o.anmerkungen) html+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;margin-bottom:10px"><b>📝 Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';
+    // ── Pack progress bar ──
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div style="font-size:13px;font-weight:700">Packliste</div><div style="font-size:12px;color:var(--muted)">'+packedCount+'/'+items.length+' gepackt</div></div>';
+    html+='<div class="pack-progress" style="margin:4px 0 8px"><div style="width:'+pct+'%"></div></div>';
+    // ── Pack items (with checkboxes, quantities, prices) ──
+    html+='<div class="items">';
     var summe=0;
     items.forEach(function(p,i){
       var pk=packFor(p);var checked=pk.gepackt?' checked':'';var cls=pk.gepackt?' packed':'';
@@ -792,16 +759,22 @@
       var disabled=isEditable?'':' disabled';
       var bc=p.strichcode||p.artikelnummer||'';
       var step=isKg?'10':'1';var unit=isKg?'g':'Stk';var min=isKg?'0':'0';
-      packHtml+='<label class="item'+cls+'" data-item-row="'+i+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+disabled+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(bc)+'</div><div data-tag-index="'+i+'"></div></div><div style="text-align:right;white-space:nowrap"><input type="number" class="pack-qty" data-qty-index="'+i+'" data-is-kg="'+(isKg?1:0)+'" data-ep="'+ep+'" data-best="'+bestMenge+'" value="'+packMenge+'" min="'+min+'" step="'+step+'"'+disabled+' onfocus="this.select()"> '+esc(unit)+'</div><div style="text-align:right;white-space:nowrap"><span style="font-size:11px;color:#6b7f72">× '+money(ep)+(isKg?'/kg':'')+' =</span><br><b data-price-index="'+i+'" style="font-size:14px">'+money(gp)+'</b></div></label>';
+      html+='<label class="item'+cls+'" data-item-row="'+i+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+disabled+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(bc)+'</div><div data-tag-index="'+i+'"></div></div><div style="text-align:right;white-space:nowrap"><input type="number" class="pack-qty" data-qty-index="'+i+'" data-is-kg="'+(isKg?1:0)+'" data-ep="'+ep+'" data-best="'+bestMenge+'" value="'+packMenge+'" min="'+min+'" step="'+step+'"'+disabled+' onfocus="this.select()"> '+esc(unit)+'</div><div style="text-align:right;white-space:nowrap"><span style="font-size:11px;color:#6b7f72">× '+money(ep)+(isKg?'/kg':'')+' =</span><br><b data-price-index="'+i+'" style="font-size:14px">'+money(gp)+'</b></div></label>';
     });
-    packHtml+='</div>';
-    packHtml+='<div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">ℹ Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>';
-    packHtml+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:4px" id="pack-summe">Summe: '+money(summe)+'</div>';
-    packHtml+='<div class="pack-actions">';
-    if(isEditable) packHtml+='<span id="pack-autosave" style="font-size:11px;color:#6b7280;margin-right:auto"></span>';
-    if(isEditable) packHtml+='<button class="btn primary" id="finish-pack">✅ Fertig – Abholbereit</button>';
-    packHtml+='<button class="btn" id="print-slip">🖨 Drucken</button></div>';
-    document.getElementById('pack').innerHTML=packHtml;
+    html+='</div>';
+    html+='<div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">ℹ Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>';
+    html+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:4px" id="pack-summe">Summe: '+money(summe)+'</div>';
+    // ── Actions ──
+    html+='<div class="pack-actions" style="margin-top:8px">';
+    if(isEditable) html+='<span id="pack-autosave" style="font-size:11px;color:#6b7280;margin-right:auto"></span>';
+    if(isEditable) html+='<button class="btn primary" id="finish-pack">✅ Fertig – Abholbereit</button>';
+    html+='<button class="btn" id="print-slip">🖨 Drucken</button></div>';
+    if(isEditable){
+      html+='<div class="actions" style="margin-top:8px"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="print-slip-detail">📄 Beipackzettel</button></div>';
+      html+='<div style="font-size:11px;color:var(--muted);margin-bottom:4px;margin-top:8px">Anmerkung:</div><textarea class="note" id="note">'+esc(o.anmerkungen||'')+'</textarea>';
+    }
+    document.getElementById('detail').innerHTML=html;
+    document.getElementById('pack').innerHTML='';
     wirePackUI(document,items,o,isEditable,packedCount);
     wireDetailUI(document,items,o,isEditable,packedCount);
   }
