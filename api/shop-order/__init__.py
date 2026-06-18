@@ -10,6 +10,7 @@ Nach 16 Uhr → Abholung übernächster Tag vormittags
 import azure.functions as func
 import json
 import os
+import sys
 import uuid
 import logging
 import msal
@@ -316,25 +317,87 @@ def _handle_post(req, dv_token, base_url, headers):
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
         if r.status_code in (200, 201, 204):
-            # Send confirmation email (best-effort, don't block response)
+            # Send confirmation email (best-effort, direct import)
             try:
-                notify_payload = {
-                    "type": "confirmation",
-                    "bestellnummer": bestellnummer,
-                    "kunde_email": user["email"],
-                    "kunde_name": user.get("name", ""),
-                    "abholdatum": abholdatum,
-                    "abhol_zeitslot": {"period": abhol_period, "label": abhol_label, "von": abhol_von, "bis": abhol_bis},
-                    "positionen": clean_positionen,
-                    "gesamtsumme": round(gesamtsumme, 2),
-                    "anmerkungen": anmerkungen,
-                    "iban_masked": iban_masked,
-                    "zahlungsart": "Lastschrift" if iban_masked else "Bar bei Abholung",
-                }
-                base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-                protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
-                notify_url = f"{protocol}://{base_host}/api/shop-notify"
-                requests.post(notify_url, json=notify_payload, timeout=10)
+                api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if api_dir not in sys.path:
+                    sys.path.insert(0, api_dir)
+                from importlib import import_module
+                notify_mod = import_module("shop-notify")
+                ci = notify_mod.get_contact_info()
+                laden_name = ci["name"]
+                kunde_name = user.get("name", "")
+                anrede = f"Liebe/r {kunde_name}" if kunde_name else "Liebe Kundin, lieber Kunde"
+                slot_display = f"{abhol_label} ({abhol_von}–{abhol_bis} Uhr)" if abhol_von else abhol_label
+                # Format date to German dd.mm.yyyy
+                abholdatum_de = abholdatum
+                try:
+                    dp = abholdatum[:10].split("-")
+                    if len(dp) == 3:
+                        abholdatum_de = f"{dp[2]}.{dp[1]}.{dp[0]}"
+                except Exception:
+                    pass
+                zahlungsart = "Lastschrift" if iban_masked else "Bar bei Abholung"
+                email_subject = f"{laden_name} – Bestellbestätigung {bestellnummer}"
+                email_body = (
+                    f"{anrede},\n\n"
+                    f"vielen Dank für Ihre Bestellung! Wir haben folgende Bestellung erhalten "
+                    f"und beginnen in Kürze mit der Zusammenstellung.\n\n"
+                    f"📋 Bestellnummer: {bestellnummer}\n"
+                    f"📅 Abholung: {abholdatum_de}, {slot_display}\n"
+                    f"📍 Ort: {laden_name}, {ci['adresse']}\n"
+                    f"💳 Zahlung: {zahlungsart}"
+                )
+                if iban_masked:
+                    email_body += f" ({iban_masked})"
+                email_body += "\n"
+                if anmerkungen:
+                    email_body += f"\n📝 Ihre Anmerkung: {anmerkungen}\n"
+                email_body += (
+                    f"\nSie erhalten eine weitere E-Mail, sobald Ihre Bestellung zur "
+                    f"Abholung bereitsteht.\n\n"
+                    f"⚠ Bitte holen Sie Ihre Bestellung zum gewählten Abholtermin ab. "
+                    f"Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, "
+                    f"wird in Rechnung gestellt.\n\n"
+                    f"Bei Fragen erreichen Sie uns unter {ci['telefon']} oder "
+                    f"per E-Mail an {ci['email']}.\n\n"
+                    f"Herzliche Grüße\n"
+                    f"Ihr {laden_name}-Team"
+                )
+                # Build positions table
+                def _fmt_price(v):
+                    try:
+                        return f"{float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
+                    except (ValueError, TypeError):
+                        return ""
+                rows = ""
+                for p in clean_positionen:
+                    rows += (
+                        f'<tr>'
+                        f'<td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;color:#1f2937">{p.get("bezeichnung","")}</td>'
+                        f'<td style="padding:8px 6px;border-bottom:1px solid #f3f4f6;text-align:center;color:#6b7280">{p.get("menge","")} {p.get("einheit","")}</td>'
+                        f'<td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#1f2937;white-space:nowrap">{_fmt_price(p.get("positionspreis",0))}</td>'
+                        f'</tr>'
+                    )
+                positions_html = (
+                    f'<div style="margin-top:16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">'
+                    f'<div style="background:#f0fdf4;padding:10px 14px;font-size:12px;font-weight:700;color:#166534;border-bottom:1px solid #e5e7eb">'
+                    f'📋 Ihre Bestellung im Überblick</div>'
+                    f'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+                    f'<thead><tr style="background:#f9fafb">'
+                    f'<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6b7280">Artikel</th>'
+                    f'<th style="padding:8px 6px;text-align:center;font-size:11px;font-weight:600;color:#6b7280">Menge</th>'
+                    f'<th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6b7280">Preis</th>'
+                    f'</tr></thead>'
+                    f'<tbody>{rows}</tbody>'
+                    f'<tfoot><tr style="background:#f0fdf4">'
+                    f'<td colspan="2" style="padding:10px;font-weight:700;color:#166534;font-size:14px">Gesamt (ca.)</td>'
+                    f'<td style="padding:10px;text-align:right;font-weight:700;color:#166534;font-size:14px">{_fmt_price(gesamtsumme)}</td>'
+                    f'</tr></tfoot>'
+                    f'</table></div>'
+                )
+                notify_mod.send_email(user["email"], kunde_name, email_subject, email_body, positions_html)
+                logging.info(f"[shop-order] Confirmation email sent to {user['email']}")
             except Exception as ne:
                 logging.warning(f"[shop-order] Confirmation email failed (non-blocking): {ne}")
 
