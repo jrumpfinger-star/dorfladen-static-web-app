@@ -777,6 +777,8 @@
   document.getElementById('show-history').addEventListener('click',function(){historyMode=!historyMode;this.classList.toggle('primary',historyMode);this.textContent=historyMode?'📜 Historie ausblenden':'📜 Historie';renderOrders();});
   loadDashboard();
   if(window.lucide)lucide.createIcons();
+  // Auto-select order from URL ?order=ID
+  (function(){var p=new URLSearchParams(location.search);var oid=p.get('order');if(oid){var wait=setInterval(function(){if(!orders.length)return;clearInterval(wait);selectOrder(oid);var tab=p.get('tab');if(tab)switchTab(tab);},200);setTimeout(function(){clearInterval(wait);},10000);}})();
   // ── Abholscan ──
   (function(){
     var scanBtn=document.getElementById('scan-btn');

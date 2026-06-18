@@ -9132,11 +9132,11 @@
       html+='<td style="padding:8px;text-align:right;font-weight:700">'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td>';
       html+='<td style="padding:8px;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+col+'">'+esc(o.status_text)+'</span></td>';
       html+='<td style="padding:8px;text-align:center">';
-      if(o.status<=1) html+='<button class="cms-btn cms-btn-sm" style="background:#fef3c7;color:#92400e" onclick="cmsOpenPack(\''+o.id+'\')">📦 Packen</button> ';
-      if(o.status===0) html+='<button class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af" onclick="cmsOrderStatus(\''+o.id+'\',1,\''+esc(o.bestellnummer)+'\')">→ Bearbeiten</button>';
+      if(o.status<=1) html+='<a class="cms-btn cms-btn-sm" style="background:#fef3c7;color:#92400e;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'&tab=pack" target="_blank"><i data-lucide="package" style="width:12px;height:12px;vertical-align:-2px"></i> Packen</a> ';
+      if(o.status===0) html+='<a class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'" target="_blank"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</a>';
       if(o.status===1) html+='<button class="cms-btn cms-btn-sm" style="background:#d1fae5;color:#065f46" onclick="cmsOrderStatus(\''+o.id+'\',2,\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\',\''+esc(o.kunde_name)+'\',\''+esc(o.abholdatum)+'\')">✓ Abholbereit</button>';
-      if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')">📦 Abgeholt</button>';
-      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsOrderStatus(\''+o.id+'\',4,\''+esc(o.bestellnummer)+'\')">✕</button>';
+      if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')"><i data-lucide="package-check" style="width:12px;height:12px;vertical-align:-2px"></i> Abgeholt</button>';
+      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsOrderStatus(\''+o.id+'\',4,\''+esc(o.bestellnummer)+'\')" title="Stornieren"><i data-lucide="x" style="width:12px;height:12px;vertical-align:-2px"></i></button>';
       html+='</td></tr>';
       // Expandable positions row
       if(posCount){
@@ -9149,6 +9149,7 @@
     });
     html+='</tbody></table>';
     list.innerHTML=html;
+    if(window.lucide)lucide.createIcons();
   }
 
   // Filter change
@@ -9232,39 +9233,86 @@
   };
 
   // ── Kunden laden ──
+  var _kundenData=[];
   window.cmsLoadKunden=function(){
     var list=document.getElementById('cms-kunden-list');
     list.innerHTML='<p style="text-align:center;color:#6b7280">⏳ Kunden werden geladen…</p>';
-    // Use Dataverse query via a proxy endpoint or direct
-    fetch(API+'/shop-order?mode=cms')
+    fetch(API+'/shop-admin?action=kunden')
       .then(function(r){return r.json();})
       .then(function(res){
-        if(!res.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
-        // Extract unique customers from orders
-        var kundenMap={};
-        (res.orders||[]).forEach(function(o){
-          if(!kundenMap[o.kunde_email]) kundenMap[o.kunde_email]={email:o.kunde_email,name:o.kunde_name,orders:0,total:0};
-          kundenMap[o.kunde_email].orders++;
-          kundenMap[o.kunde_email].total+=(+o.gesamtsumme)||0;
-        });
-        var kunden=Object.values(kundenMap);
-        kunden.sort(function(a,b){return b.orders-a.orders;});
-        if(!kunden.length){list.innerHTML='<p style="text-align:center;color:#6b7280">Noch keine Kunden mit Bestellungen</p>';return;}
-        var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-        html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
-        html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">KUNDE</th>';
-        html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">E-MAIL</th>';
-        html+='<th style="text-align:right;padding:8px;font-weight:700;color:#6b7280">BESTELLUNGEN</th>';
-        html+='<th style="text-align:right;padding:8px;font-weight:700;color:#6b7280">UMSATZ (CA.)</th>';
-        html+='</tr></thead><tbody>';
-        kunden.forEach(function(k,i){
-          var bg=i%2===0?'#fff':'#fafbfc';
-          html+='<tr style="background:'+bg+'"><td style="padding:8px;font-weight:600">'+esc(k.name)+'</td><td style="padding:8px">'+esc(k.email)+'</td><td style="padding:8px;text-align:right;font-weight:700">'+k.orders+'</td><td style="padding:8px;text-align:right;font-weight:700">'+(k.total.toFixed(2).replace('.',','))+' €</td></tr>';
-        });
-        html+='</tbody></table>';
-        list.innerHTML=html;
+        if(!res.success){list.innerHTML='<p style="color:#ef4444">Fehler: '+(res.error||'')+'</p>';return;}
+        _kundenData=res.kunden||[];
+        cmsRenderKunden();
       })
       .catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+esc(e.message)+'</p>';});
+  };
+  function cmsRenderKunden(){
+    var list=document.getElementById('cms-kunden-list');
+    var kunden=_kundenData;
+    if(!kunden.length){list.innerHTML='<p style="text-align:center;color:#6b7280">Keine Kunden gefunden</p>';return;}
+    var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">NAME</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">E-MAIL</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">TELEFON</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">ADRESSE</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">STATUS</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">AKTION</th>';
+    html+='</tr></thead><tbody>';
+    kunden.forEach(function(k,i){
+      var bg=i%2===0?'#fff':'#fafbfc';
+      var statusBadge=k.aktiv?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">Aktiv</span>':'<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">Inaktiv</span>';
+      var adresse=[k.strasse,k.plz,k.ort].filter(Boolean).join(', ');
+      html+='<tr style="background:'+bg+'">';
+      html+='<td style="padding:8px;font-weight:600">'+esc(k.vorname)+' '+esc(k.nachname)+'</td>';
+      html+='<td style="padding:8px">'+esc(k.email)+'</td>';
+      html+='<td style="padding:8px">'+esc(k.telefon||'–')+'</td>';
+      html+='<td style="padding:8px;font-size:11px">'+esc(adresse||'–')+'</td>';
+      html+='<td style="padding:8px;text-align:center">'+statusBadge+'</td>';
+      html+='<td style="padding:8px;text-align:center"><button class="cms-btn cms-btn-sm" onclick="cmsEditKunde(\''+k.id+'\')"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</button></td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    list.innerHTML=html;
+    if(window.lucide)lucide.createIcons();
+  }
+  window.cmsEditKunde=function(id){
+    var k=_kundenData.find(function(x){return x.id===id;});
+    if(!k){cmsToast('Kunde nicht gefunden','error');return;}
+    var wrap=document.getElementById('cms-modal-wrap');
+    var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:500px">';
+    html+='<div class="cms-modal-header"><h3><i data-lucide="user-pen" style="width:18px;height:18px;vertical-align:-3px"></i> Kunde bearbeiten</h3>';
+    html+='<div style="display:flex;gap:8px"><button class="cms-btn cms-btn-primary" id="kd-save"><i data-lucide="save" style="width:14px;height:14px;vertical-align:-2px"></i> Speichern</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="kd-close">Abbrechen</button></div></div>';
+    html+='<div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Vorname<input id="kd-vorname" class="cms-input" value="'+esc(k.vorname)+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Nachname<input id="kd-nachname" class="cms-input" value="'+esc(k.nachname)+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280;grid-column:1/3">E-Mail<input class="cms-input" value="'+esc(k.email)+'" disabled style="width:100%;margin-top:2px;background:#f3f4f6"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Telefon<input id="kd-telefon" class="cms-input" value="'+esc(k.telefon||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Straße<input id="kd-strasse" class="cms-input" value="'+esc(k.strasse||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">PLZ<input id="kd-plz" class="cms-input" value="'+esc(k.plz||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Ort<input id="kd-ort" class="cms-input" value="'+esc(k.ort||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280;grid-column:1/3;display:flex;align-items:center;gap:8px"><input type="checkbox" id="kd-aktiv" '+(k.aktiv?'checked':'')+' style="width:18px;height:18px;accent-color:#2e7d4f"> Konto aktiv</label>';
+    html+='</div></div></div>';
+    wrap.innerHTML=html;
+    wrap.style.display='';
+    if(window.lucide)lucide.createIcons();
+    document.getElementById('kd-close').onclick=function(){wrap.style.display='none';wrap.innerHTML='';};
+    document.getElementById('kd-save').onclick=function(){
+      var payload={_entity:'kunde',id:id,vorname:document.getElementById('kd-vorname').value.trim(),nachname:document.getElementById('kd-nachname').value.trim(),telefon:document.getElementById('kd-telefon').value.trim(),strasse:document.getElementById('kd-strasse').value.trim(),plz:document.getElementById('kd-plz').value.trim(),ort:document.getElementById('kd-ort').value.trim(),aktiv:document.getElementById('kd-aktiv').checked};
+      fetch(API+'/shop-admin',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          cmsToast('Kunde gespeichert');
+          wrap.style.display='none';wrap.innerHTML='';
+          // Update local data
+          var local=_kundenData.find(function(x){return x.id===id;});
+          if(local){local.vorname=payload.vorname;local.nachname=payload.nachname;local.telefon=payload.telefon;local.strasse=payload.strasse;local.plz=payload.plz;local.ort=payload.ort;local.aktiv=payload.aktiv;}
+          cmsRenderKunden();
+        })
+        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+    };
   };
 
   // --- Init (only if already authenticated via session) ---

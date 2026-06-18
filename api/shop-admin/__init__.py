@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 ENTITY_SET = "dl_shopbestellungs"
+KUNDEN_ENTITY_SET = "dl_shopkundes"
 
 STATUS_LABELS = {
     0: "Neu",
@@ -309,6 +310,83 @@ def _scan_pickup(req, base_url, headers):
     )
 
 
+KUNDEN_SELECT = "dl_shopkundeid,dl_email,dl_vorname,dl_nachname,dl_telefon,dl_strasse,dl_plz,dl_ort,dl_aktiv,dl_email_verifiziert,createdon"
+
+
+def _list_kunden(req, base_url, headers):
+    q = (req.params.get("q") or "").strip().replace("'", "''")
+    filters = []
+    if q:
+        filters.append(f"(contains(dl_vorname,'{q}') or contains(dl_nachname,'{q}') or contains(dl_email,'{q}'))")
+    filter_part = ("&$filter=" + " and ".join(filters)) if filters else ""
+    url = f"{base_url}/api/data/v9.2/{KUNDEN_ENTITY_SET}?$select={KUNDEN_SELECT}{filter_part}&$orderby=createdon desc&$top=500"
+    r = requests.get(url, headers=headers, timeout=60)
+    if r.status_code != 200:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}, ensure_ascii=False),
+            status_code=r.status_code, headers=get_cors_headers(),
+        )
+    kunden = []
+    for k in r.json().get("value", []):
+        kunden.append({
+            "id": k.get("dl_shopkundeid", ""),
+            "email": k.get("dl_email", ""),
+            "vorname": k.get("dl_vorname", ""),
+            "nachname": k.get("dl_nachname", ""),
+            "telefon": k.get("dl_telefon", ""),
+            "strasse": k.get("dl_strasse", ""),
+            "plz": k.get("dl_plz", ""),
+            "ort": k.get("dl_ort", ""),
+            "aktiv": k.get("dl_aktiv", True),
+            "email_verifiziert": k.get("dl_email_verifiziert", False),
+            "erstellt": k.get("createdon", ""),
+        })
+    return func.HttpResponse(
+        json.dumps({"success": True, "kunden": kunden}, ensure_ascii=False),
+        status_code=200, headers=get_cors_headers(),
+    )
+
+
+def _patch_kunde(req, base_url, headers):
+    try:
+        body = req.get_json()
+    except Exception:
+        body = {}
+    kunde_id = (body.get("id") or "").strip()
+    if not kunde_id:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "id erforderlich"}, ensure_ascii=False),
+            status_code=400, headers=get_cors_headers(),
+        )
+    allowed = {"vorname": "dl_vorname", "nachname": "dl_nachname", "telefon": "dl_telefon",
+               "strasse": "dl_strasse", "plz": "dl_plz", "ort": "dl_ort", "aktiv": "dl_aktiv"}
+    patch_payload = {}
+    for key, dv_key in allowed.items():
+        if key in body:
+            val = body[key]
+            if key == "aktiv":
+                val = bool(val)
+            else:
+                val = str(val or "")
+            patch_payload[dv_key] = val
+    if not patch_payload:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "Keine Änderung übergeben"}, ensure_ascii=False),
+            status_code=400, headers=get_cors_headers(),
+        )
+    patch_headers = {**headers, "If-Match": "*"}
+    r = requests.patch(f"{base_url}/api/data/v9.2/{KUNDEN_ENTITY_SET}({kunde_id})", headers=patch_headers, json=patch_payload, timeout=30)
+    if r.status_code not in (200, 204):
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "detail": r.text[:800]}, ensure_ascii=False),
+            status_code=r.status_code, headers=get_cors_headers(),
+        )
+    return func.HttpResponse(
+        json.dumps({"success": True, "updated": patch_payload}, ensure_ascii=False),
+        status_code=200, headers=get_cors_headers(),
+    )
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -325,6 +403,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     headers = _headers(token)
 
     if req.method == "PATCH":
+        try:
+            body = req.get_json()
+        except Exception:
+            body = {}
+        if body.get("_entity") == "kunde":
+            return _patch_kunde(req, base_url, headers)
         return _patch_order(req, base_url, headers)
 
     action = (req.params.get("action") or "dashboard").strip().lower()
@@ -336,6 +420,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return _get_order(req, base_url, headers)
     if action == "scan":
         return _scan_pickup(req, base_url, headers)
+    if action == "kunden":
+        return _list_kunden(req, base_url, headers)
     if action == "status-labels":
         return func.HttpResponse(
             json.dumps({"success": True, "status_labels": STATUS_LABELS}, ensure_ascii=False),
