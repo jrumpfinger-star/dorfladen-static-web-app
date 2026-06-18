@@ -750,9 +750,11 @@
     var reader=document.getElementById('scan-reader');
     var closeBtn=document.getElementById('scan-close');
     var resultEl=document.getElementById('scan-result');
-    var _active=false,_processing=false;
+    var _processing=false,_stream=null,_nativeLoop=0;
     function stopScan(){
-      if(_active){try{Quagga.stop();}catch(e){}}_active=false;
+      if(_nativeLoop){cancelAnimationFrame(_nativeLoop);_nativeLoop=0;}
+      if(_stream){_stream.getTracks().forEach(function(t){t.stop();});_stream=null;}
+      try{if(typeof Quagga!=='undefined')Quagga.stop();}catch(e){}
       reader.innerHTML='';overlay.classList.remove('open');
     }
     function showResult(cls,msg,detail){
@@ -783,24 +785,48 @@
           showResult('error','Fehler: '+e.message, code);
         });
     }
-    scanBtn.addEventListener('click',function(){
+    function startNativeScan(){
+      var video=document.createElement('video');
+      video.setAttribute('playsinline','');video.setAttribute('autoplay','');
+      video.style.cssText='width:100%;height:100%;object-fit:cover';
+      reader.innerHTML='';reader.appendChild(video);
+      navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
+        .then(function(stream){
+          _stream=stream;video.srcObject=stream;video.play();
+          try{var track=stream.getVideoTracks()[0];if(track&&track.applyConstraints)track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){});}catch(e){}
+          var detector=new BarcodeDetector({formats:['code_128']});
+          var _lastCode='',_lastTime=0,_confirmCount=0,_scanning=true;
+          function tick(){
+            if(!_scanning||_processing)return;
+            if(video.readyState>=2){
+              detector.detect(video).then(function(barcodes){
+                if(!_scanning||!barcodes.length)return;
+                var code=barcodes[0].rawValue;
+                if(!/^DL-\d{8}-[A-Z0-9]{4}$/.test(code))return;
+                var now=Date.now();
+                if(code===_lastCode&&(now-_lastTime)<2000){_confirmCount++;}else{_confirmCount=1;_lastCode=code;}_lastTime=now;
+                if(_confirmCount>=2){_scanning=false;handleScanned(code);}
+              }).catch(function(){});
+            }
+            _nativeLoop=requestAnimationFrame(tick);
+          }
+          _nativeLoop=requestAnimationFrame(tick);
+        })
+        .catch(function(err){stopScan();alert('Kamera konnte nicht geöffnet werden.\n'+err);});
+    }
+    function startQuaggaScan(){
       if(typeof Quagga==='undefined'){alert('Scanner-Library wird geladen…');return;}
-      resultEl.className='scan-result';
-      overlay.classList.add('open');
       Quagga.init({
         inputStream:{name:'Live',type:'LiveStream',target:reader,
           constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},
             focusMode:'continuous',focusDistance:0}},
         locator:{patchSize:'medium',halfSample:false},
         decoder:{readers:['code_128_reader']},
-        locate:true,
-        frequency:15
+        locate:true,frequency:15
       },function(err){
         if(err){stopScan();alert('Kamera konnte nicht geöffnet werden.\n'+err);return;}
-        Quagga.start();_active=true;
-        try{var track=Quagga.CameraAccess.getActiveTrack();
-          if(track&&track.applyConstraints) track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){});
-        }catch(e){}
+        Quagga.start();
+        try{var track=Quagga.CameraAccess.getActiveTrack();if(track&&track.applyConstraints)track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(function(){});}catch(e){}
       });
       Quagga.offDetected();
       var _lastCode='',_lastTime=0,_confirmCount=0;
@@ -814,6 +840,12 @@
         if(code===_lastCode&&(now-_lastTime)<2000){_confirmCount++;}else{_confirmCount=1;_lastCode=code;}_lastTime=now;
         if(_confirmCount>=2) handleScanned(code);
       });
+    }
+    scanBtn.addEventListener('click',function(){
+      resultEl.className='scan-result';
+      overlay.classList.add('open');
+      if('BarcodeDetector' in window){startNativeScan();}
+      else{startQuaggaScan();}
     });
     closeBtn.addEventListener('click',function(){stopScan();});
   })();
