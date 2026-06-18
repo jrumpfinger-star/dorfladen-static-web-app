@@ -722,7 +722,7 @@
     var ddBtn=document.getElementById('shop-slot-dd-btn');
     var ddList=document.getElementById('shop-slot-dd-list');
     if(!ddEl||!ddBtn||!ddList) return;
-    ddBtn.addEventListener('click',function(e){e.stopPropagation();ddEl.classList.toggle('open');});
+    ddBtn.addEventListener('click',function(e){e.stopPropagation();var wasOpen=ddEl.classList.contains('open');ddEl.classList.toggle('open');if(!wasOpen) history.pushState({overlay:'slotdd'},'');});
     document.addEventListener('click',function(e){if(!ddEl.contains(e.target)) ddEl.classList.remove('open');});
     ddList.addEventListener('click',function(e){
       var item=e.target.closest('[data-slot-sel]');
@@ -1577,6 +1577,7 @@
     }
     document.getElementById('img-popup-meta').innerHTML=meta;
     overlay.classList.add('show');
+    history.pushState({overlay:'imgpopup'},'');
   }
 
   function loadWerbebilderFallback(items,runId){
@@ -1739,7 +1740,9 @@
       var ddBtn=document.getElementById('shop-cat-dd-btn');
       ddBtn.addEventListener('click',function(e){
         e.stopPropagation();
+        var wasOpen=ddEl.classList.contains('open');
         ddEl.classList.toggle('open');
+        if(!wasOpen) history.pushState({overlay:'catdd'},'');
       });
       // Close on outside click
       document.addEventListener('click',function(){ddEl.classList.remove('open');});
@@ -1991,6 +1994,43 @@
         });
       })
       .catch(function(e){content.innerHTML='<div class="shop-loading"><p>Fehler: '+esc(e.message)+'</p></div>';});
+  });
+
+  // ── Android Back-Button: close overlays instead of leaving page ──
+  function getOpenOverlay(){
+    if(document.querySelector('.shop-cart-overlay.open')) return 'cart';
+    if(document.querySelector('.shop-auth-overlay.open')) return 'auth';
+    if(document.querySelector('.img-popup-overlay.show')) return 'imgpopup';
+    if(document.querySelector('.shop-slot-dd.open')) return 'slotdd';
+    if(document.querySelector('.shop-cat-dd.open')) return 'catdd';
+    return null;
+  }
+  function closeTopOverlay(){
+    var o=getOpenOverlay();
+    if(!o) return false;
+    if(o==='cart') toggleCart(false);
+    else if(o==='auth') hideAuth();
+    else if(o==='imgpopup'){var ip=document.querySelector('.img-popup-overlay.show');if(ip) ip.classList.remove('show');}
+    else if(o==='slotdd'){var sd=document.querySelector('.shop-slot-dd.open');if(sd) sd.classList.remove('open');}
+    else if(o==='catdd'){var cd=document.querySelector('.shop-cat-dd.open');if(cd) cd.classList.remove('open');}
+    return true;
+  }
+  // Push dummy state when overlay opens, pop it to close
+  var _origToggleCart=toggleCart;
+  toggleCart=function(open){
+    if(open) history.pushState({overlay:'cart'},'');
+    _origToggleCart(open);
+  };
+  var _origShowAuth=showAuth;
+  showAuth=function(tab){
+    history.pushState({overlay:'auth'},'');
+    _origShowAuth(tab);
+  };
+  // Listen for back-button
+  window.addEventListener('popstate',function(e){
+    if(getOpenOverlay()){
+      closeTopOverlay();
+    }
   });
 
 })();
