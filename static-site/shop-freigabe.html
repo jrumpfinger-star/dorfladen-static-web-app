@@ -126,6 +126,7 @@
     <button class="search-clear" id="search-clear" title="Suche leeren">&times;</button>
   </div>
   <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
+  <button class="filter-btn" data-filter="kurz" style="border-color:#f59e0b;color:#92400e">⏳ Nur kurz</button>
   <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
   <div class="stats" id="stats">Lade…</div>
 </div>
@@ -207,10 +208,11 @@
         var hay=(a.bezeichnung+' '+a.strichcode+' '+a.edeka_nr+' '+a.warengruppe).toLowerCase();
         if(hay.indexOf(term)<0) return false;
       }
-      // enabled/disabled filter
+      // enabled/disabled/kurz filter
       var isEnabled=isArticleEnabled(a.strichcode);
       if(activeFilter==='enabled'&&!isEnabled) return false;
       if(activeFilter==='disabled'&&isEnabled) return false;
+      if(activeFilter==='kurz'&&!isKurzfristig(a.strichcode)) return false;
       return true;
     });
   }
