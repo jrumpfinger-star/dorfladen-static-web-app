@@ -125,7 +125,7 @@
     /* ── List View ── */
     .shop-list{display:grid;grid-template-columns:1fr;gap:4px;padding:0 16px 16px}
     @media(min-width:900px){.shop-list{grid-template-columns:1fr 1fr;gap:6px;padding:0 24px 24px}}
-    @media(min-width:1400px){.shop-list{grid-template-columns:1fr 1fr 1fr;padding:0 40px 24px}}
+    @media(min-width:1400px){.shop-list{grid-template-columns:1fr 1fr 1fr;padding:0 40px 24px}.shop-list-item{grid-template-columns:50px 1fr;gap:8px}.shop-list-actions{grid-column:1/-1;justify-content:flex-start;gap:6px;padding-top:4px;border-top:1px solid #f3f4f6;margin-top:2px}}
     @media(min-width:1900px){.shop-list{grid-template-columns:1fr 1fr 1fr 1fr}}
     .shop-list-item{display:grid;grid-template-columns:50px 1fr auto;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--shop-border);border-radius:10px;transition:background .1s}
     @media(max-width:480px){.shop-list-item{grid-template-columns:44px 1fr;gap:8px;padding:10px}.shop-list-actions{grid-column:1/-1;justify-content:flex-start;gap:6px;padding-top:4px;border-top:1px solid #f3f4f6;margin-top:2px}}
