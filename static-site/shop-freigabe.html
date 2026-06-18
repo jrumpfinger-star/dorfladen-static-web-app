@@ -27,8 +27,7 @@
 .search:focus{border-color:var(--green)}
 .search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:2px 4px;display:none}
 .search-clear:hover{color:#111}
-.filter-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
-.stats{font-size:12px;color:var(--muted);font-weight:400;white-space:nowrap;margin-left:auto}
+.stats{font-size:12px;color:var(--muted);font-weight:400;white-space:nowrap}
 .filter-btn{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;background:#fff;transition:.15s}
 .filter-btn:hover,.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
 .fb-kurz{border-color:#f59e0b;color:#92400e}.fb-kurz:hover,.fb-kurz.active{background:#f59e0b;color:#fff;border-color:#f59e0b}
@@ -92,8 +91,7 @@
   .brand{font-size:13px;gap:6px}
   .brand-icon{width:28px;height:28px;font-size:16px;border-radius:8px}
   .toolbar{padding:8px 10px;gap:6px;top:47px;flex-wrap:wrap}
-  .search-wrap{width:100%;order:1}
-  .filter-row{order:2;width:100%}
+  .search-wrap{width:100%;order:-1}
   .filter-btn{padding:5px 8px;font-size:11px}
   .stats{font-size:11px}
   .wrap{padding:8px 8px 80px}
@@ -117,23 +115,21 @@
 <div class="top">
   <div class="brand"><div class="brand-icon">🛒</div><div>Artikelfreigabe</div></div>
   <div class="spacer"></div>
-  <a class="btn" href="/shop-admin">Bestellungen</a>
-  <a class="btn" href="/cms">CMS</a>
-  <button class="btn primary" id="btn-save">Änderungen speichern</button>
+  <a class="btn small" href="/shop-admin">Bestellungen</a>
+  <a class="btn small" href="/cms">CMS</a>
 </div>
 
 <div class="toolbar">
-  <div class="filter-row">
-    <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
-    <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
-    <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
-    <div class="stats" id="stats">Lade…</div>
-  </div>
+  <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
+  <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
+  <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
+  <div class="stats" id="stats">Lade…</div>
   <div class="search-wrap">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input class="search" id="search" placeholder="Suchen…" autocomplete="off">
     <button class="search-clear" id="search-clear" title="Suche leeren">&times;</button>
   </div>
+  <button class="btn primary small" id="btn-save">Speichern</button>
 </div>
 
 <div class="wrap" id="wrap">
