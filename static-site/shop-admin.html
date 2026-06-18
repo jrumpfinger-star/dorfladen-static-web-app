@@ -754,8 +754,8 @@
       var ep=p.einzelpreis||0;
       var isKg=p.einheit==='kg'||p.gewichtsware;
       var bestMenge=p.menge||0;
-      var packMenge=pk.gepackt_menge||bestMenge;
-      if(isKg){bestMenge=Math.round(bestMenge*1000);packMenge=Math.round((pk.gepackt_menge||p.menge||0)*1000);}
+      if(isKg){bestMenge=Math.round(bestMenge*1000);}
+      var packMenge=pk.gepackt_menge!=null?pk.gepackt_menge:(isKg?bestMenge:(p.menge||0));
       var gp=isKg?ep*(packMenge/1000):ep*packMenge;summe+=gp;
       var disabled=isEditable?'':' disabled';
       var bc=p.strichcode||p.artikelnummer||'';
