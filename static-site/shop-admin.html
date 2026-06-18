@@ -769,9 +769,9 @@
     html+='<div class="pack-actions" style="margin-top:8px">';
     if(isEditable) html+='<span id="pack-autosave" style="font-size:11px;color:#6b7280;margin-right:auto"></span>';
     if(isEditable) html+='<button class="btn primary" id="finish-pack">✅ Fertig – Abholbereit</button>';
-    html+='<button class="btn" id="print-slip">🖨 Drucken</button></div>';
+    html+='</div>';
     if(isEditable){
-      html+='<div class="actions" style="margin-top:8px"><button class="btn small" data-status="1">In Bearbeitung</button><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="print-slip-detail">📄 Beipackzettel</button></div>';
+      html+='<div class="actions" style="margin-top:8px"><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="print-slip-detail">📄 Beipackzettel</button></div>';
       html+='<div style="font-size:11px;color:var(--muted);margin-bottom:4px;margin-top:8px">Anmerkung:</div><textarea class="note" id="note">'+esc(o.anmerkungen||'')+'</textarea>';
     }
     document.getElementById('detail').innerHTML=html;
