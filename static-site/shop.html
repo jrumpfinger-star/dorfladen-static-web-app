@@ -14,11 +14,12 @@
     :root{--shop-green:#2e7d4f;--shop-green-light:#e8f5e9;--shop-orange:#e65100;--shop-gray:#f8f9fa;--shop-border:#e5e7eb;--shop-text:#1f2937;--shop-muted:#6b7280;--shop-radius:12px;--shop-shadow:0 2px 8px rgba(0,0,0,.08)}
     *{box-sizing:border-box;margin:0;padding:0}
     [data-lucide]{display:inline-block;vertical-align:-2px}
-    html{overflow-x:clip}body{overflow-x:hidden}
+    html,body{overflow-x:hidden}
     body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:var(--shop-text);-webkit-font-smoothing:antialiased}
 
     /* ── Top Bar ── */
-    .shop-header{position:sticky;top:0;z-index:100;background:#fff;box-shadow:var(--shop-shadow)}
+    .shop-header{position:fixed;top:0;left:0;right:0;z-index:100;background:#fff;box-shadow:var(--shop-shadow)}
+    .shop-header-spacer{height:1px}
     .shop-topbar{background:#fff;border-bottom:1px solid var(--shop-border);padding:10px 16px;display:flex;align-items:center;gap:12px;max-width:1100px;margin:0 auto}
     .shop-logo{height:38px;max-width:120px;width:auto;object-fit:contain}
     .shop-title{font-size:15px;font-weight:700;color:var(--shop-green);flex:1;min-width:0}
@@ -411,8 +412,7 @@
   </div>
 </div>
 </div><!-- /shop-header -->
-
-<!-- Banner hidden, info moved to topbar -->
+<div class="shop-header-spacer" id="shop-header-spacer"></div>
 
 <!-- ── Content ── -->
 <div id="shop-content">
@@ -1791,6 +1791,15 @@
   setTimeout(createSearchInput,300);
   // Initialize Lucide icons on page load
   if(window.lucide) lucide.createIcons();
+  // Fixed header spacer: push content below fixed header
+  (function(){
+    var hdr=document.querySelector('.shop-header');
+    var spacer=document.getElementById('shop-header-spacer');
+    if(!hdr||!spacer) return;
+    function sync(){spacer.style.height=hdr.offsetHeight+'px';}
+    sync();window.addEventListener('resize',sync);
+    new MutationObserver(sync).observe(hdr,{childList:true,subtree:true,attributes:true});
+  })();
 
   // Load articles
   fetch(API+'/shop-articles')
