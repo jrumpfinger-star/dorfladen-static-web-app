@@ -90,19 +90,20 @@
       .toast{left:12px;right:12px;bottom:12px;font-size:13px;text-align:center}
     }
   </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <div class="top">
-    <div class="brand"><div class="brand-badge">📦</div><div><div>Shop Admin</div><div class="sub">Bestellungen, Packen & Status</div></div></div>
+    <div class="brand"><div class="brand-badge"><i data-lucide="store" style="width:18px;height:18px"></i></div><div><div>Shop Admin</div><div class="sub">Bestellungen, Packen & Status</div></div></div>
     <div class="spacer"></div>
-    <a class="btn" href="/shop-freigabe" title="Artikelfreigabe verwalten"><span class="btn-icon">✅</span><span class="btn-label">Freigabe</span></a>
-    <a class="btn" href="/cms" title="CMS – Inhalte bearbeiten"><span class="btn-icon">⚙</span><span class="btn-label">CMS</span></a>
-    <a class="btn" href="/shop" title="Zum Online-Shop"><span class="btn-icon">🛒</span><span class="btn-label">Shop</span></a>
-    <button class="btn scan-btn" id="scan-btn" title="Abholscan – Barcode scannen"><span class="btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="8" x2="13" y2="8"/><line x1="7" y1="16" x2="15" y2="16"/></svg></span><span class="btn-label">Abholscan</span></button>
-    <button class="btn primary" id="refresh-btn" title="Bestellungen neu laden"><span class="btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg></span><span class="btn-label">Aktualisieren</span></button>
+    <a class="btn" href="/shop-freigabe" title="Artikelfreigabe verwalten"><span class="btn-icon"><i data-lucide="check-circle" style="width:16px;height:16px"></i></span><span class="btn-label">Freigabe</span></a>
+    <a class="btn" href="/cms" title="CMS – Inhalte bearbeiten"><span class="btn-icon"><i data-lucide="settings" style="width:16px;height:16px"></i></span><span class="btn-label">CMS</span></a>
+    <a class="btn" href="/shop" title="Zum Online-Shop"><span class="btn-icon"><i data-lucide="shopping-cart" style="width:16px;height:16px"></i></span><span class="btn-label">Shop</span></a>
+    <button class="btn scan-btn" id="scan-btn" title="Abholscan – Barcode scannen"><span class="btn-icon"><i data-lucide="scan-barcode" style="width:16px;height:16px"></i></span><span class="btn-label">Abholscan</span></button>
+    <button class="btn primary" id="refresh-btn" title="Bestellungen neu laden"><span class="btn-icon"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i></span><span class="btn-label">Aktualisieren</span></button>
   </div>
   <div class="scan-overlay" id="scan-overlay">
-    <div class="scan-header">📷 Abholscan<small>Beipackzettel-Barcode scannen → Abgeholt</small></div>
+    <div class="scan-header"><i data-lucide="scan-barcode" style="width:20px;height:20px;vertical-align:-4px"></i> Abholscan<small>Beipackzettel-Barcode scannen → Abgeholt</small></div>
     <div class="scan-video-wrap"><div id="scan-reader"></div><div class="scan-crosshair"></div></div>
     <button class="scan-close" id="scan-close">✕ Scanner schließen</button>
   </div>
@@ -128,7 +129,7 @@
       <div class="content">
         <div class="list" id="orders"><div class="loading">Lade Bestellungen…</div></div>
         <div class="right-pane" id="right-pane">
-          <div class="tab-bar" id="tab-bar"><div class="tab-bar-ctx" id="tab-bar-ctx"></div><div class="tab-bar-btns"><button class="tab-btn active" data-tab="detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Bestellung</button><button class="tab-btn" data-tab="pack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Packen</button></div></div>
+          <div class="tab-bar" id="tab-bar"><div class="tab-bar-ctx" id="tab-bar-ctx"></div><div class="tab-bar-btns"><button class="tab-btn active" data-tab="detail"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> Bestellung</button><button class="tab-btn" data-tab="pack"><i data-lucide="package" style="width:14px;height:14px;vertical-align:-2px"></i> Packen</button></div></div>
           <div class="tab-content active" data-tab-content="detail" id="detail"><div class="empty"><div><h2>Bestellung ausw&auml;hlen</h2><p>Links eine Bestellung anklicken</p></div></div></div>
           <div class="tab-content" data-tab-content="pack" id="pack"><div class="empty"><div><h2>Packliste</h2><p>Nach Auswahl hier abhaken</p></div></div></div>
         </div>
@@ -355,8 +356,8 @@
     var detailEl=document.getElementById('detail');
     var packEl=document.getElementById('pack');
     var html='<div class="expand-tabs">';
-    html+='<button class="expand-tab active" data-xtab="detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Bestellung</button>';
-    html+='<button class="expand-tab" data-xtab="pack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Packen</button>';
+    html+='<button class="expand-tab active" data-xtab="detail"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> Bestellung</button>';
+    html+='<button class="expand-tab" data-xtab="pack"><i data-lucide="package" style="width:14px;height:14px;vertical-align:-2px"></i> Packen</button>';
     html+='</div>';
     html+='<div class="expand-body" data-xbody="detail">'+detailEl.innerHTML+'</div>';
     html+='<div class="expand-body" data-xbody="pack" style="display:none">'+packEl.innerHTML+'</div>';
@@ -379,6 +380,7 @@
     },0);
     wirePackUI(exp,items,o,isEditable,packedCount);
     wireDetailUI(exp,items,o,isEditable,packedCount);
+    if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});
     // Scroll into view
     exp.scrollIntoView({behavior:'smooth',block:'start'});
   }
@@ -774,6 +776,7 @@
   document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.addEventListener('click',function(){activeStatFilter=el.getAttribute('data-stat-filter');document.getElementById('status-filter').value='all';renderOrders();});});document.getElementById('refresh-btn').addEventListener('click',loadDashboard);document.getElementById('load-orders').addEventListener('click',loadOrders);document.getElementById('search').addEventListener('keydown',function(e){if(e.key==='Enter')loadOrders();});document.getElementById('status-filter').addEventListener('change',loadOrders);
   document.getElementById('show-history').addEventListener('click',function(){historyMode=!historyMode;this.classList.toggle('primary',historyMode);this.textContent=historyMode?'📜 Historie ausblenden':'📜 Historie';renderOrders();});
   loadDashboard();
+  if(window.lucide)lucide.createIcons();
   // ── Abholscan ──
   (function(){
     var scanBtn=document.getElementById('scan-btn');
