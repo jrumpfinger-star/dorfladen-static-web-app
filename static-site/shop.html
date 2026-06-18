@@ -259,6 +259,22 @@
     .shop-cart-minorder.show{display:block}
     .shop-cart-note{width:100%;margin-top:8px;padding:8px 12px;border:1px solid var(--shop-border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:40px}
 
+    /* ── Confirm Dialog ── */
+    .shop-confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+    .shop-confirm-overlay.open{display:flex}
+    .shop-confirm-box{background:#fff;border-radius:16px;width:100%;max-width:340px;padding:28px 24px 20px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center}
+    .shop-confirm-icon{font-size:40px;margin-bottom:12px}
+    .shop-confirm-title{font-size:17px;font-weight:700;color:var(--shop-text);margin-bottom:6px}
+    .shop-confirm-msg{font-size:13px;color:var(--shop-muted);line-height:1.5;margin-bottom:20px}
+    .shop-confirm-btns{display:flex;gap:10px}
+    .shop-confirm-btns button{flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+    .shop-confirm-cancel{background:#f3f4f6;color:var(--shop-text)}
+    .shop-confirm-cancel:hover{background:#e5e7eb}
+    .shop-confirm-ok{background:var(--shop-green);color:#fff}
+    .shop-confirm-ok:hover{background:#256b42}
+    .shop-confirm-ok.red{background:#dc2626}
+    .shop-confirm-ok.red:hover{background:#b91c1c}
+
     /* ── Auth Modal ── */
     .shop-auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
     .shop-auth-overlay.open{display:flex}
@@ -338,6 +354,17 @@
 </head>
 <body>
 <div class="dd-backdrop" id="dd-backdrop"></div>
+<div class="shop-confirm-overlay" id="shop-confirm-overlay">
+  <div class="shop-confirm-box">
+    <div class="shop-confirm-icon" id="shop-confirm-icon"></div>
+    <div class="shop-confirm-title" id="shop-confirm-title"></div>
+    <div class="shop-confirm-msg" id="shop-confirm-msg"></div>
+    <div class="shop-confirm-btns">
+      <button class="shop-confirm-cancel" id="shop-confirm-cancel">Abbrechen</button>
+      <button class="shop-confirm-ok" id="shop-confirm-ok">OK</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Sticky Header ── -->
 <div class="shop-header">
@@ -929,6 +956,29 @@
       inp.addEventListener('change',function(){var artnr=inp.getAttribute('data-cart-qty');var ci=cart.find(function(c){return c.artikelnummer===artnr;});var val=parseFloat(inp.value)||0;if(ci&&ci.gewichtsware) val=val/1000;updateCartQty(artnr,val);});
     });
   }
+
+  // ── Confirm Dialog ──
+  var _confirmCb=null;
+  function shopConfirm(opts,cb){
+    var ov=document.getElementById('shop-confirm-overlay');
+    document.getElementById('shop-confirm-icon').textContent=opts.icon||'❓';
+    document.getElementById('shop-confirm-title').textContent=opts.title||'Bestätigen';
+    document.getElementById('shop-confirm-msg').textContent=opts.msg||'';
+    var okBtn=document.getElementById('shop-confirm-ok');
+    okBtn.textContent=opts.ok||'OK';
+    okBtn.className='shop-confirm-ok'+(opts.color==='red'?' red':'');
+    _confirmCb=cb;
+    ov.classList.add('open');
+    history.pushState({overlay:'confirm'},'');
+  }
+  function hideConfirm(){document.getElementById('shop-confirm-overlay').classList.remove('open');_confirmCb=null;}
+  document.getElementById('shop-confirm-cancel').addEventListener('click',hideConfirm);
+  document.getElementById('shop-confirm-ok').addEventListener('click',function(){
+    var cb=_confirmCb;hideConfirm();if(cb) cb();
+  });
+  document.getElementById('shop-confirm-overlay').addEventListener('click',function(e){
+    if(e.target===this) hideConfirm();
+  });
 
   // ── Toast ──
   function showToast(msg){
@@ -1798,7 +1848,9 @@
 
   document.getElementById('shop-user-btn').addEventListener('click',function(){
     if(isLoggedIn()){
-      if(confirm('Abmelden?')){authToken='';authUser=null;previousArticles=[];previousOrders=[];localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();ensurePreviousPill();showToast('Abgemeldet');}
+      shopConfirm({icon:'👋',title:'Abmelden?',msg:'Du wirst ausgeloggt und deine Sitzung beendet.',ok:'Abmelden',color:'red'},function(){
+        authToken='';authUser=null;previousArticles=[];previousOrders=[];localStorage.removeItem('dl_shop_token');localStorage.removeItem('dl_shop_user');updateUserUI();ensurePreviousPill();showToast('Abgemeldet');
+      });
     } else {showAuth('login');}
   });
 
@@ -2028,6 +2080,7 @@
 
   // ── Android Back-Button: close overlays instead of leaving page ──
   function getOpenOverlay(){
+    if(document.querySelector('.shop-confirm-overlay.open')) return 'confirm';
     if(document.querySelector('.shop-cart-overlay.open')) return 'cart';
     if(document.querySelector('.shop-auth-overlay.open')) return 'auth';
     if(document.querySelector('.img-popup-overlay.show')) return 'imgpopup';
@@ -2038,7 +2091,8 @@
   function closeTopOverlay(){
     var o=getOpenOverlay();
     if(!o) return false;
-    if(o==='cart') toggleCart(false);
+    if(o==='confirm') hideConfirm();
+    else if(o==='cart') toggleCart(false);
     else if(o==='auth') hideAuth();
     else if(o==='imgpopup'){var ip=document.querySelector('.img-popup-overlay.show');if(ip) ip.classList.remove('show');}
     else if(o==='slotdd'){var sd=document.querySelector('.shop-slot-dd.open');if(sd) sd.classList.remove('open');ddClose();}
