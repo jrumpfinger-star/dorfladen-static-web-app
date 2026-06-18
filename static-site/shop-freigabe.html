@@ -6,7 +6,7 @@
 <title>Dorfladen – Artikelfreigabe</title>
 <style>
 :root{--green:#2e7d4f;--green2:#1f5c39;--bg:#f4f7f5;--card:#fff;--border:#dfe7e2;--text:#24352b;--muted:#6b7f72;--warn:#f59e0b;--red:#dc2626;--blue:#2563eb}
-*{box-sizing:border-box;margin:0}body{background:var(--bg);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text)}
+*{box-sizing:border-box;margin:0}html,body{overflow-x:hidden}body{background:var(--bg);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text)}
 
 /* ── Top bar ── */
 .top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.04);max-width:960px;margin:0 auto}
@@ -81,7 +81,31 @@
 
 @media(max-width:768px){
   .art-table th:nth-child(4),.art-row td:nth-child(4){display:none}
+  .art-table th:nth-child(6),.art-row td:nth-child(6){display:none}
   .art-name{max-width:160px}
+}
+@media(max-width:480px){
+  .top{padding:8px 10px;gap:8px}
+  .brand{font-size:13px;gap:6px}
+  .brand-icon{width:28px;height:28px;font-size:16px;border-radius:8px}
+  .toolbar{padding:8px 10px;gap:6px;top:47px}
+  .search-wrap{flex:1 1 100%;min-width:0}
+  .filter-btn{padding:5px 8px;font-size:11px}
+  .stats{font-size:11px}
+  .wrap{padding:8px 8px 80px}
+  .wg{border-radius:8px;margin-bottom:6px}
+  .wg-head{padding:8px 10px;font-size:13px;gap:6px}
+  .art-table{font-size:12px}
+  .art-table th{padding:4px 4px;font-size:9px}
+  .art-row td{padding:4px 4px}
+  .art-img,.art-img-empty{width:30px;height:30px}
+  .art-cb{width:16px;height:16px}
+  .art-name{max-width:120px;font-size:12px}
+  .art-code{font-size:9px}
+  .art-table th:nth-child(5),.art-row td:nth-child(5){display:none}
+  .art-table th:nth-child(7),.art-row td:nth-child(7){display:none}
+  .batch-bar{padding:8px 10px;gap:8px}
+  .batch-bar .btn{padding:6px 10px;font-size:12px}
 }
 </style>
 </head>
