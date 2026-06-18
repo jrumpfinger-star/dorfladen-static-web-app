@@ -23,7 +23,16 @@
     .shop-logo{height:36px;width:auto;border-radius:6px}
     .shop-title{font-size:15px;font-weight:700;color:var(--shop-green);flex:1;min-width:0}
     .shop-title small{display:block;font-size:11px;font-weight:400;color:var(--shop-muted)}
-    @media(max-width:520px){.shop-title{font-size:12px;line-height:1.2}.shop-title small{display:none}.shop-topbar{padding:8px 10px;gap:8px}.shop-logo{height:28px}.shop-topbar-btn{font-size:20px;padding:4px}.shop-search{padding:8px 10px}.shop-search-input{padding:8px 12px 8px 34px;font-size:13px}}
+    @media(max-width:520px){
+      .shop-title{display:none}
+      .shop-topbar{padding:8px 10px;gap:6px;flex-wrap:wrap}
+      .shop-logo{height:28px}
+      .shop-topbar-btn{font-size:20px;padding:4px}
+      .shop-slot-dd{order:10;flex:1 1 100%;margin-top:2px}
+      .shop-slot-dd-btn{width:100%;justify-content:center;font-size:12px;padding:6px 10px}
+      .shop-search{padding:8px 10px}
+      .shop-search-input{padding:8px 12px 8px 34px;font-size:13px}
+    }
     .shop-topbar-btn{background:none;border:none;font-size:22px;cursor:pointer;padding:6px;border-radius:8px;position:relative}
     .shop-topbar-btn:hover{background:var(--shop-gray)}
     .shop-topbar-btn svg,.shop-topbar-btn i{pointer-events:none}
