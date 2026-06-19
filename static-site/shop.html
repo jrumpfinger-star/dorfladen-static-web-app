@@ -2076,7 +2076,9 @@
           // Meta row
           html+='<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:#6b7280">';
           html+='<span>'+lucideHtml('calendar',12)+' Bestellt: '+fmtOrderDateTime(o.bestelldatum)+'</span>';
-          html+='<span>'+lucideHtml('map-pin',12)+' Abholung: '+fmtOrderDate(o.abholdatum)+'</span>';
+          var abholDisp=fmtOrderDate(o.abholdatum);
+          if(o.abhol_zeitslot){var sl=o.abhol_zeitslot;abholDisp+=', '+(sl.period==='nm'?'NM':'VM')+' '+esc(sl.abhol_von||'')+'\u2013'+esc(sl.abhol_bis||'')+' Uhr';}
+          html+='<span>'+lucideHtml('map-pin',12)+' Abholung: '+abholDisp+'</span>';
           if(anzahl) html+='<span>'+anzahl+' Artikel</span>';
           html+='</div>';
           html+='</button>';
