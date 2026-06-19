@@ -257,7 +257,7 @@ def _handle_post(req, dv_token, base_url, headers):
         )
 
     bestellnummer = _generate_bestellnummer()
-    now_str = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Abholslot: vom Kunden gewählt, Fallback auf altes System
     if abholslot and isinstance(abholslot, dict) and abholslot.get("datum"):

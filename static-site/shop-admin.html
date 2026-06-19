@@ -475,7 +475,7 @@
             if(_autoSaveIndicator) _autoSaveIndicator.textContent=res.success?'✓ Gespeichert':'Fehler beim Speichern';
             if(res.success){
               var lo=orders.find(function(x){return x.id===selId;});
-              if(lo&&lo.status===0){lo.status=1;lo.status_text='In Bearbeitung';renderOrders();}
+              if(lo&&lo.status===0){lo.status=1;lo.status_text='In Bearbeitung';var row=document.querySelector('.order[data-id="'+selId+'"]');if(row){var badge=row.querySelector('.badge');if(badge){badge.textContent='In Bearbeitung';badge.className='badge badge-1';}}}
             }
           })
           .catch(function(){if(_autoSaveIndicator) _autoSaveIndicator.textContent='Fehler beim Speichern';});
