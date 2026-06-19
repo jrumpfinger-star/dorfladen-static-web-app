@@ -1397,15 +1397,16 @@
     }
 
     // Beliebt section
-    var bsItems=bestsellers.slice(0,6);
-    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title">'+lucideHtml('trending-up',18)+' Beliebt <span class="shop-section-count">('+bestsellers.length+')</span></div></div>';
+    var bsFiltered=bestsellers.filter(isAvailableForSlot);
+    var bsItems=bsFiltered.slice(0,6);
+    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title">'+lucideHtml('trending-up',18)+' Beliebt <span class="shop-section-count">('+bsFiltered.length+')</span></div></div>';
     var bsContent=articleViewMode==='list'?renderArticlesList(bsItems,'',''):renderArticles(bsItems,'','');
     html+=bsContent.replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
 
     content.innerHTML=html;
     wireAddButtons();
     var kurzImgs=visibleArticles().filter(function(a){return a.kurzfristig;});
-    loadImages(bestsellers.slice(0,6).concat(kurzImgs));
+    loadImages(bsItems.concat(kurzImgs));
     // Overview view toggle (grid/list)
     document.querySelectorAll('[data-ov-view]').forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -1452,7 +1453,7 @@
       if(!isLoggedIn()){showAuth('login');return;}
       items=previousArticles;title='Schon bestellt';emoji=lucideHtml('history',16);
     } else if(activeCat==='bestseller'){
-      items=bestsellers;title='Beliebt';emoji=lucideHtml('trending-up',16);
+      items=bestsellers.filter(isAvailableForSlot);title='Beliebt';emoji=lucideHtml('trending-up',16);
     } else if(activeCat!=='all'){
       items=visibleArticles().filter(function(a){return getShopGroup(a.warengruppe)===activeCat;});
       title=activeCat;emoji=getCatIcon(activeCat);
