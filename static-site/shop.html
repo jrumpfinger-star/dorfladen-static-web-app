@@ -98,7 +98,8 @@
     @media(max-width:600px){.shop-cats{padding:6px 10px;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch}.shop-cat-pill{padding:5px 9px;font-size:11px}.shop-cat-dd-btn{font-size:11px;padding:5px 9px}.shop-cat-dd-list{position:fixed;top:auto;bottom:0;left:0;right:0;border-radius:14px 14px 0 0;max-height:55vh;box-shadow:0 -6px 24px rgba(0,0,0,.18);z-index:301}}
     .dd-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300}
     .dd-backdrop.show{display:block}
-    body.dd-open{overflow:hidden;position:fixed;width:100%;touch-action:none}
+    body.dd-open{overflow:hidden;position:fixed;width:100%}
+    body.dd-open .shop-cat-dd-list,body.dd-open .shop-slot-dd-list,body.dd-open .dd-backdrop{touch-action:auto}
 
     /* ── Info Banner (compact, inline in topbar) ── */
     .shop-banner{display:none}
@@ -1886,8 +1887,8 @@
         ddEl.classList.toggle('open');
         if(!wasOpen){history.pushState({overlay:'catdd'},'');if(window.innerWidth<=600) ddOpen();}else{ddClose();}
       });
-      // Close on outside click
-      document.addEventListener('click',function(){if(ddEl.classList.contains('open')) ddClose();ddEl.classList.remove('open');});
+      // Close on outside click (only if click is outside the dropdown)
+      document.addEventListener('click',function(e){if(!ddEl.contains(e.target)){if(ddEl.classList.contains('open')) ddClose();ddEl.classList.remove('open');}});
       // Item click handler
       ddList.addEventListener('click',function(e){
         var item=e.target.closest('[data-cat-dd]');
