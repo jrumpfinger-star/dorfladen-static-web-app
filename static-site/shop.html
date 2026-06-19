@@ -45,7 +45,7 @@
     .shop-slot-dd-list{display:none;position:absolute;top:100%;right:0;margin-top:6px;background:#fff;border:1px solid var(--shop-border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.15);z-index:200;min-width:280px;max-width:calc(100vw - 20px);max-height:70vh;overflow-y:auto;padding:6px}
     .shop-slot-dd.open .shop-slot-dd-list{display:block}
     .shop-slot-dd.open{z-index:302}
-    .shop-header.slot-dd-elevated{z-index:301}
+    .shop-header.slot-dd-elevated,.shop-header.cat-dd-elevated{z-index:301}
     .shop-slot-dd-group{padding:10px 12px 6px;font-size:11px;font-weight:600;color:var(--shop-muted);text-transform:uppercase;letter-spacing:.5px;border-top:1px solid var(--shop-border);margin-top:4px}
     .shop-slot-dd-group:first-child{border-top:none;margin-top:0}
     .shop-slot-dd-group.today-grp{color:var(--shop-green)}
@@ -1848,17 +1848,19 @@
       ddBtn.addEventListener('click',function(e){
         e.stopPropagation();
         var wasOpen=ddEl.classList.contains('open');
+        var hdr=ddEl.closest('.shop-header')||document.querySelector('.shop-header');
         ddEl.classList.toggle('open');
-        if(!wasOpen){history.pushState({overlay:'catdd'},'');if(window.innerWidth<=600) ddOpen();}else{ddClose();}
+        if(!wasOpen){if(hdr) hdr.classList.add('cat-dd-elevated');history.pushState({overlay:'catdd'},'');if(window.innerWidth<=600) ddOpen();}else{if(hdr) hdr.classList.remove('cat-dd-elevated');ddClose();}
       });
       // Close on outside click (only if click is outside the dropdown)
-      document.addEventListener('click',function(e){if(!ddEl.contains(e.target)){if(ddEl.classList.contains('open')) ddClose();ddEl.classList.remove('open');}});
+      document.addEventListener('click',function(e){if(!ddEl.contains(e.target)){if(ddEl.classList.contains('open')) ddClose();ddEl.classList.remove('open');var hdr2=document.querySelector('.shop-header');if(hdr2) hdr2.classList.remove('cat-dd-elevated');}});
       // Item click handler
       ddList.addEventListener('click',function(e){
         var item=e.target.closest('[data-cat-dd]');
         if(!item) return;
         var val=item.getAttribute('data-cat-dd');
         ddEl.classList.remove('open');
+        var hdr3=document.querySelector('.shop-header');if(hdr3) hdr3.classList.remove('cat-dd-elevated');
         ddClose();
         document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.remove('active');});
         ddBtn.classList.add('active');
