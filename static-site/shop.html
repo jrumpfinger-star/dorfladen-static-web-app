@@ -151,7 +151,7 @@
     .shop-list-actions .shop-add-btn{padding:6px 12px;font-size:12px;border-radius:8px;min-height:28px;white-space:nowrap}
 
     /* ── Product Card ── */
-    .shop-card{background:#fff;border-radius:var(--shop-radius);border:1px solid var(--shop-border);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;position:relative}
+    .shop-card{background:#fff;border-radius:var(--shop-radius);border:1px solid #d1d5db;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.06)}
     .shop-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
     .shop-card.in-cart{border-color:#2e7d4f;box-shadow:0 0 0 2px rgba(46,125,79,.18);background:#f0faf3}
     .shop-card.in-cart .shop-add-btn{display:none}
@@ -213,11 +213,11 @@
     .shop-breadcrumb a:hover{text-decoration:underline}
     .shop-card-body{padding:6px 8px;flex:1;display:flex;flex-direction:column;gap:2px}
     .shop-card-name{font-size:12px;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    .shop-card-meta{font-size:10px;color:#fff;background:var(--shop-green);display:inline-block;padding:1px 6px;border-radius:4px;font-weight:600;letter-spacing:.2px;margin-bottom:2px}
+    .shop-card-meta{font-size:10px;color:var(--shop-muted);font-weight:500;margin-bottom:2px}
     .shop-card-price{font-size:14px;font-weight:800;color:var(--shop-green)}
     .shop-card-price .unit{font-size:11px;font-weight:400;color:var(--shop-muted)}
     .shop-card-price .old{text-decoration:line-through;color:#999;font-size:12px;font-weight:400;margin-left:6px}
-    .shop-card-badges{position:absolute;top:6px;left:6px;display:flex;flex-direction:column;gap:3px}
+    .shop-card-badges{position:absolute;top:6px;left:6px;display:flex;flex-direction:column;gap:3px;z-index:2}
     .shop-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.3px}
     .shop-badge-bestseller{background:#fff3e0;color:#e65100}
     .shop-badge-angebot{background:#ffebee;color:#c62828}
@@ -239,7 +239,7 @@
     .shop-qty-btn:hover{background:#e5e7eb}
     .shop-qty-val{width:40px;text-align:center;font-size:13px;font-weight:600;border:none;outline:none;background:#fff}
     .shop-weight-input{width:60px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:12px;text-align:center}.shop-qty-input{width:50px;padding:4px 6px;border:1px solid var(--shop-border);border-radius:6px;font-size:12px;text-align:center}
-    @media(max-width:480px){.shop-card-footer{flex-direction:column;align-items:stretch;gap:4px}.shop-card-footer .shop-add-btn{width:100%;justify-content:center}.shop-card-footer .shop-qty-ctrl{width:100%;justify-content:center}.shop-card-footer .shop-weight-input{flex:1;min-width:0}}
+    @media(max-width:480px){.shop-card-footer{flex-wrap:wrap;gap:4px}.shop-card-footer .shop-add-btn{width:100%;justify-content:center;order:9}.shop-card-footer .shop-qty-ctrl{justify-content:center}.shop-card-footer .shop-weight-input{width:60px}}
 
     /* ── Cart Sidebar / Bottom Sheet ── */
     .shop-cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;opacity:0;transition:opacity .2s}
@@ -1264,8 +1264,8 @@
     html+='<div class="shop-grid">';
     items.forEach(function(a){
       var badges='';
-      if(a.kurzfristig){var kfTxt='⏳ Nur kurz';if(a.gueltig_bis){var gp=a.gueltig_bis.split('-');if(gp.length===3)kfTxt+=' (bis '+gp[2]+'.'+gp[1]+'.)';} badges+='<span class="shop-badge" style="background:#fef3c7;color:#92400e">'+kfTxt+'</span>';}
-      if(a.popularity>=70) badges+='<span class="shop-badge shop-badge-bestseller">🔥 Beliebt</span>';
+      if(a.kurzfristig){var kfTxt=lucideHtml('clock',10)+' Nur kurz';if(a.gueltig_bis){var gp=a.gueltig_bis.split('-');if(gp.length===3)kfTxt+=' (bis '+gp[2]+'.'+gp[1]+'.)';} badges+='<span class="shop-badge" style="background:#fef3c7;color:#92400e">'+kfTxt+'</span>';}
+      if(a.popularity>=70) badges+='<span class="shop-badge shop-badge-bestseller">'+lucideHtml('trending-up',10)+' Beliebt</span>';
       if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
       else if(a.rp) badges+='<span class="shop-badge shop-badge-rp">-'+a.discount+'%</span>';
 
@@ -1381,63 +1381,20 @@
     var content=document.getElementById('shop-content');
     var html='';
 
-    // "Nur kurz verfügbar" section – always first
+    // "Nur kurz verfügbar" section – always as list
     var kurzArtikel=visibleArticles().filter(function(a){return a.kurzfristig;});
-    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title"><span class="emoji">⏳</span> Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
+    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title">'+lucideHtml('clock',18)+' Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
     if(kurzArtikel.length){
-      html+='<div class="shop-grid">';
-      kurzArtikel.forEach(function(a){
-        var kfTxt2='⏳ Nur kurz';if(a.gueltig_bis){var gp2=a.gueltig_bis.split('-');if(gp2.length===3)kfTxt2+=' (bis '+gp2[2]+'.'+gp2[1]+'.)';}
-        var badges='<span class="shop-badge" style="background:#fef3c7;color:#92400e">'+kfTxt2+'</span>';
-        if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
-        var priceHtml=fmtP(a.vk)+' €';
-        if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
-        if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
-        html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
-        html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
-        html+='<div class="shop-card-badges">'+badges+'</div>';
-        if(imageCache[a.artikelnummer]) html+='<img class="shop-card-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
-      else html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">'+getCatEmoji(a.warengruppe)+'</div>';
-        html+='<div class="shop-card-body"><div class="shop-card-name">'+esc(a.bezeichnung)+'</div><div class="shop-card-meta">'+esc(a.warengruppe)+'</div><div class="shop-card-price">'+priceHtml+'</div></div>';
-        html+='<div class="shop-card-footer">';
-        if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
-        else html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
-        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
-      });
-      html+='</div>';
+      html+=renderArticlesList(kurzArtikel,'Nur kurz verfügbar','').replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
     } else {
       html+='<div style="padding:8px 16px 12px;color:#9ca3af;font-size:13px">Aktuell keine kurzfristig verfügbaren Artikel.</div>';
     }
 
-    // Beliebt section — respect view mode toggle
+    // Beliebt section — always as list on overview
     var bsItems=bestsellers.slice(0,6);
-    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="emoji">🔥</span> Beliebt <span class="shop-section-count">('+bestsellers.length+')</span>';
-    html+='<div class="shop-view-toggle" style="margin-left:auto" id="bs-view-toggle"><button class="bs-vt'+(articleViewMode==='grid'?' active':'')+'" data-bs-view="grid">▦</button><button class="bs-vt'+(articleViewMode==='list'?' active':'')+'" data-bs-view="list">☰</button></div>';
+    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+lucideHtml('trending-up',18)+' Beliebt <span class="shop-section-count">('+bestsellers.length+')</span>';
     html+='</div></div>';
-    if(articleViewMode==='list'){
-      html+=renderArticlesList(bsItems,'Beliebt','🔥').replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
-    } else {
-    html+='<div class="shop-grid">';
-    bsItems.forEach(function(a){
-      var badges='';
-      if(a.popularity>=70) badges+='<span class="shop-badge shop-badge-bestseller">🔥 Beliebt</span>';
-      if(a.angebot) badges+='<span class="shop-badge shop-badge-angebot">Angebot</span>';
-      var priceHtml=fmtP(a.vk)+' €';
-      if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
-      if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
-      html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
-      html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+' " data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
-      html+='<div class="shop-card-badges">'+badges+'</div>';
-      if(imageCache[a.artikelnummer]) html+='<img class="shop-card-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
-      else html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">'+getCatEmoji(a.warengruppe)+'</div>';
-      html+='<div class="shop-card-body"><div class="shop-card-name">'+esc(a.bezeichnung)+'</div><div class="shop-card-meta">'+esc(a.warengruppe)+'</div><div class="shop-card-price">'+priceHtml+'</div></div>';
-      html+='<div class="shop-card-footer">';
-      if(a.gewichtsware) html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
-      else html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
-      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button></div></div>';
-    });
-    html+='</div>';
-    }
+    html+=renderArticlesList(bsItems,'Beliebt','').replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
 
     content.innerHTML=html;
     wireAddButtons();
@@ -1480,16 +1437,16 @@
     var content=document.getElementById('shop-content');
     var items=visibleArticles();
     var title='Alle Artikel';
-    var emoji='🛒';
+    var emoji=lucideHtml('shopping-cart',16);
 
     if(activeCat==='favorites'){
       items=visibleArticles().filter(function(a){return isFav(a.artikelnummer);});
-      title='Favoriten';emoji='❤️';
+      title='Favoriten';emoji=lucideHtml('heart',16);
     } else if(activeCat==='previous'){
       if(!isLoggedIn()){showAuth('login');return;}
-      items=previousArticles;title='Schon bestellt';emoji='Historie';
+      items=previousArticles;title='Schon bestellt';emoji=lucideHtml('history',16);
     } else if(activeCat==='bestseller'){
-      items=bestsellers;title='Beliebt';emoji='';
+      items=bestsellers;title='Beliebt';emoji=lucideHtml('trending-up',16);
     } else if(activeCat!=='all'){
       items=visibleArticles().filter(function(a){return getShopGroup(a.warengruppe)===activeCat;});
       title=activeCat;emoji=getCatIcon(activeCat);
@@ -1499,12 +1456,12 @@
     var q=(document.getElementById('shop-search').value||'').trim().toLowerCase();
     if(q){
       items=visibleArticles().filter(function(a){return (a._search||'').indexOf(q)!==-1;});
-      title='Suchergebnis';emoji='🔍';
+      title='Suchergebnis';emoji=lucideHtml('search',16);
     }
 
     // Breadcrumb + View Toggle
-    var bc='<div class="shop-breadcrumb" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div><a id="bc-home">🏪 Sortiment</a> <span>›</span> <span>'+esc(title)+'</span></div>';
-    bc+='<div class="shop-view-toggle"><button id="vt-grid" class="'+(articleViewMode==='grid'?'active':'')+'">▦</button><button id="vt-list" class="'+(articleViewMode==='list'?'active':'')+'">☰</button></div>';
+    var bc='<div class="shop-breadcrumb" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div><a id="bc-home">'+lucideHtml('store',14)+' Sortiment</a> <span>›</span> <span>'+esc(title)+'</span></div>';
+    bc+='<div class="shop-view-toggle"><button id="vt-grid" class="'+(articleViewMode==='grid'?'active':'')+'">'+lucideHtml('grid-2x2',16)+'</button><button id="vt-list" class="'+(articleViewMode==='list'?'active':'')+'">'+lucideHtml('list',16)+'</button></div>';
     bc+='</div>';
 
     // Reorder cards for "Schon bestellt"
