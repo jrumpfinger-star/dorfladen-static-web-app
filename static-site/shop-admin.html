@@ -337,8 +337,10 @@
       });
     });
     el.innerHTML=html;
+    el.querySelectorAll('.order-expand').forEach(function(exp){exp.addEventListener('click',function(ev){ev.stopPropagation();});});
     el.querySelectorAll('.order').forEach(function(row){
-      row.addEventListener('click',function(){
+      row.addEventListener('click',function(ev){
+        if(ev.target.closest('.order-expand')) return;
         var rid=row.getAttribute('data-id');
         if(selected&&selected.id===rid){if(history.state&&history.state.order){history.back();}else{selected=null;renderOrders();if(isMobile()){document.querySelectorAll('.order-expand.open').forEach(function(x){x.classList.remove('open');x.innerHTML='';});}else{document.getElementById('detail').innerHTML='<div class="empty">Bestellung auswählen</div>';document.getElementById('pack').innerHTML='';}updateTabCtx();}return;}
         selectOrder(rid);
