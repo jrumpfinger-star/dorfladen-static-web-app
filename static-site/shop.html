@@ -141,7 +141,7 @@
     .shop-list-info{min-width:0;overflow:hidden}
     .shop-list-name{font-size:14px;font-weight:700;line-height:1.3;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     @media(max-width:600px){.shop-list-name{font-size:12px;line-height:1.2;-webkit-line-clamp:1;line-clamp:1}}
-    .shop-list-meta{font-size:10px;color:var(--shop-muted);font-weight:500;margin-top:0}
+    .shop-list-meta{font-size:10px;color:var(--shop-muted);font-weight:400}
     .shop-list-row{display:flex;align-items:center;gap:8px;margin-top:2px}
     @media(max-width:600px){.shop-list-row{gap:6px;margin-top:1px}}
     .shop-list-price{font-size:13px;font-weight:800;color:var(--shop-green);white-space:nowrap}
@@ -1314,7 +1314,7 @@
       html+='<div class="shop-list-item" data-artnr="'+esc(a.artikelnummer)+'">';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-list-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
       else html+='<div class="shop-list-noimg" id="simg-'+esc(a.artikelnummer)+'">'+getCatEmoji(a.warengruppe)+'</div>';
-      html+='<div class="shop-list-info"><div style="display:flex;align-items:center;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+'</div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div><div class="shop-list-meta">'+esc(a.warengruppe)+'</div>';
+      html+='<div class="shop-list-info"><div style="display:flex;align-items:center;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+' <span class="shop-list-meta">'+esc(a.warengruppe)+'</span></div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div>';
       html+='<div class="shop-list-row"><div class="shop-list-price">'+priceHtml+'</div>';
       html+='<div class="shop-list-actions">';
       if(a.gewichtsware){
