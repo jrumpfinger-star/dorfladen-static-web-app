@@ -382,8 +382,10 @@
     wirePackUI(exp,items,o,isEditable,packedCount);
     wireDetailUI(exp,items,o,isEditable,packedCount);
     if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});
-    // Scroll into view
-    exp.scrollIntoView({behavior:'smooth',block:'start'});
+    // Scroll the order row (header) into view so header info is visible
+    var orderRow=exp.previousElementSibling;
+    if(orderRow&&orderRow.classList.contains('order')) orderRow.scrollIntoView({behavior:'smooth',block:'start'});
+    else exp.scrollIntoView({behavior:'smooth',block:'start'});
   }
   function wirePackUI(scope,items,o,isEditable,packedCount){
     var q=scope.querySelector?scope.querySelector.bind(scope):document.querySelector.bind(document);
