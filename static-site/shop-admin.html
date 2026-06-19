@@ -340,14 +340,18 @@
     el.querySelectorAll('.order').forEach(function(row){
       row.addEventListener('click',function(){
         var rid=row.getAttribute('data-id');
-        if(selected&&selected.id===rid){selected=null;renderOrders();if(isMobile()){document.querySelectorAll('.order-expand.open').forEach(function(x){x.classList.remove('open');x.innerHTML='';});}else{document.getElementById('detail').innerHTML='<div class="empty">Bestellung auswählen</div>';document.getElementById('pack').innerHTML='';}updateTabCtx();return;}
+        if(selected&&selected.id===rid){if(history.state&&history.state.order){history.back();}else{selected=null;renderOrders();if(isMobile()){document.querySelectorAll('.order-expand.open').forEach(function(x){x.classList.remove('open');x.innerHTML='';});}else{document.getElementById('detail').innerHTML='<div class="empty">Bestellung auswählen</div>';document.getElementById('pack').innerHTML='';}updateTabCtx();}return;}
         selectOrder(rid);
       });
     });
   }
   function isMobile(){return window.innerWidth<=1100;}
-  function selectOrder(id){var o=orders.find(function(x){return x.id===id;});if(!o)return;fetch(API+'?action=order&id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(res){selected=res.order||o;renderOrders();renderDetail();updateTabCtx();renderInlineExpand();
+  function selectOrder(id,skipPush){var o=orders.find(function(x){return x.id===id;});if(!o)return;fetch(API+'?action=order&id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(res){selected=res.order||o;renderOrders();renderDetail();updateTabCtx();renderInlineExpand();
+    if(!skipPush) history.pushState({order:id},'','?order='+encodeURIComponent(id));
   });}
+  window.addEventListener('popstate',function(e){
+    if(selected){selected=null;renderOrders();if(isMobile()){document.querySelectorAll('.order-expand.open').forEach(function(x){x.classList.remove('open');x.innerHTML='';});}else{document.getElementById('detail').innerHTML='<div class="empty">Bestellung auswählen</div>';document.getElementById('pack').innerHTML='';}updateTabCtx();}
+  });
   function updateTabCtx(){
     var ctx=document.getElementById('tab-bar-ctx');
     if(!ctx) return;
@@ -471,7 +475,7 @@
             if(_autoSaveIndicator) _autoSaveIndicator.textContent=res.success?'✓ Gespeichert':'Fehler beim Speichern';
             if(res.success){
               var lo=orders.find(function(x){return x.id===selId;});
-              if(lo&&lo.status===0){lo.status=1;lo.status_text='In Bearbeitung';renderOrders();selectOrder(selId);}
+              if(lo&&lo.status===0){lo.status=1;lo.status_text='In Bearbeitung';renderOrders();}
             }
           })
           .catch(function(){if(_autoSaveIndicator) _autoSaveIndicator.textContent='Fehler beim Speichern';});
@@ -792,7 +796,7 @@
   loadDashboard();
   if(window.lucide)lucide.createIcons();
   // Auto-select order from URL ?order=ID
-  (function(){var p=new URLSearchParams(location.search);var oid=p.get('order');if(oid){var wait=setInterval(function(){if(!orders.length)return;clearInterval(wait);selectOrder(oid);var tab=p.get('tab');if(tab)switchTab(tab);},200);setTimeout(function(){clearInterval(wait);},10000);}})();
+  (function(){var p=new URLSearchParams(location.search);var oid=p.get('order');if(oid){var wait=setInterval(function(){if(!orders.length)return;clearInterval(wait);selectOrder(oid,true);var tab=p.get('tab');if(tab)switchTab(tab);},200);setTimeout(function(){clearInterval(wait);},10000);}})();
   // ── Abholscan ──
   (function(){
     var scanBtn=document.getElementById('scan-btn');
