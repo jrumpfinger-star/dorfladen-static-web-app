@@ -339,24 +339,24 @@ def _handle_post(req, dv_token, base_url, headers):
                     pass
                 zahlungsart = "Lastschrift" if iban_masked else "Bar bei Abholung"
                 email_subject = f"{laden_name} – Bestellbestätigung {bestellnummer}"
+                zahlung_text = zahlungsart
+                if iban_masked:
+                    zahlung_text += f" ({iban_masked})"
                 email_body = (
                     f"{anrede},\n\n"
                     f"vielen Dank für Ihre Bestellung! Wir haben folgende Bestellung erhalten "
                     f"und beginnen in Kürze mit der Zusammenstellung.\n\n"
-                    f"📋 Bestellnummer: {bestellnummer}\n"
-                    f"📅 Abholung: {abholdatum_de}, {slot_display}\n"
-                    f"📍 Ort: {laden_name}, {ci['adresse']}\n"
-                    f"💳 Zahlung: {zahlungsart}"
+                    f"[info:clipboard-list] Bestellnummer: {bestellnummer}\n"
+                    f"[info:calendar] Abholung: {abholdatum_de}, {slot_display}\n"
+                    f"[info:map-pin] Ort: {laden_name}, {ci['adresse']}\n"
+                    f"[info:credit-card] Zahlung: {zahlung_text}\n"
                 )
-                if iban_masked:
-                    email_body += f" ({iban_masked})"
-                email_body += "\n"
                 if anmerkungen:
-                    email_body += f"\n📝 Ihre Anmerkung: {anmerkungen}\n"
+                    email_body += f"\n[info:message-square] Ihre Anmerkung: {anmerkungen}\n"
                 email_body += (
                     f"\nSie erhalten eine weitere E-Mail, sobald Ihre Bestellung zur "
                     f"Abholung bereitsteht.\n\n"
-                    f"⚠ Bitte holen Sie Ihre Bestellung zum gewählten Abholtermin ab. "
+                    f"[warn] Bitte holen Sie Ihre Bestellung zum gewählten Abholtermin ab. "
                     f"Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, "
                     f"wird in Rechnung gestellt.\n\n"
                     f"Bei Fragen erreichen Sie uns unter {ci['telefon']} oder "
@@ -382,7 +382,7 @@ def _handle_post(req, dv_token, base_url, headers):
                 positions_html = (
                     f'<div style="margin-top:16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">'
                     f'<div style="background:#f0fdf4;padding:10px 14px;font-size:12px;font-weight:700;color:#166534;border-bottom:1px solid #e5e7eb">'
-                    f'📋 Ihre Bestellung im Überblick</div>'
+                    f'{notify_mod._icon("clipboard-list", "#166534", 14)} Ihre Bestellung im Überblick</div>'
                     f'<table style="width:100%;border-collapse:collapse;font-size:13px">'
                     f'<thead><tr style="background:#f9fafb">'
                     f'<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6b7280">Artikel</th>'
