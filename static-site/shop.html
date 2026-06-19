@@ -1381,29 +1381,35 @@
     var content=document.getElementById('shop-content');
     var html='';
 
-    // "Nur kurz verfügbar" section – always as list
+    // Global view toggle for overview sections
+    html+='<div style="display:flex;align-items:center;justify-content:flex-end;padding:8px 16px 0">';
+    html+='<div class="shop-view-toggle"><button data-ov-view="grid" class="'+(articleViewMode==='grid'?'active':'')+'">'+lucideHtml('grid-2x2',14)+'</button><button data-ov-view="list" class="'+(articleViewMode==='list'?'active':'')+'">'+lucideHtml('list',14)+'</button></div>';
+    html+='</div>';
+
+    // "Nur kurz verfügbar" section
     var kurzArtikel=visibleArticles().filter(function(a){return a.kurzfristig;});
     html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title">'+lucideHtml('clock',18)+' Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
     if(kurzArtikel.length){
-      html+=renderArticlesList(kurzArtikel,'Nur kurz verfügbar','').replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
+      var kurzContent=articleViewMode==='list'?renderArticlesList(kurzArtikel,'',''):renderArticles(kurzArtikel,'','');
+      html+=kurzContent.replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
     } else {
       html+='<div style="padding:8px 16px 12px;color:#9ca3af;font-size:13px">Aktuell keine kurzfristig verfügbaren Artikel.</div>';
     }
 
-    // Beliebt section — always as list on overview
+    // Beliebt section
     var bsItems=bestsellers.slice(0,6);
-    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+lucideHtml('trending-up',18)+' Beliebt <span class="shop-section-count">('+bestsellers.length+')</span>';
-    html+='</div></div>';
-    html+=renderArticlesList(bsItems,'Beliebt','').replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
+    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title">'+lucideHtml('trending-up',18)+' Beliebt <span class="shop-section-count">('+bestsellers.length+')</span></div></div>';
+    var bsContent=articleViewMode==='list'?renderArticlesList(bsItems,'',''):renderArticles(bsItems,'','');
+    html+=bsContent.replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
 
     content.innerHTML=html;
     wireAddButtons();
     var kurzImgs=visibleArticles().filter(function(a){return a.kurzfristig;});
     loadImages(bestsellers.slice(0,6).concat(kurzImgs));
-    // Beliebt view toggle
-    document.querySelectorAll('[data-bs-view]').forEach(function(btn){
+    // Overview view toggle (grid/list)
+    document.querySelectorAll('[data-ov-view]').forEach(function(btn){
       btn.addEventListener('click',function(){
-        articleViewMode=btn.getAttribute('data-bs-view');
+        articleViewMode=btn.getAttribute('data-ov-view');
         localStorage.setItem('dl_shop_viewmode',articleViewMode);
         showCategoryOverview();
       });
