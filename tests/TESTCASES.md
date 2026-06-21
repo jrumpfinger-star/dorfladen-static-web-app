@@ -148,10 +148,10 @@
 - **Prüfung:** `console.errors` zählen
 - **Erwartung:** 0 JS-Errors
 
-### T4.2 – Alle 4 Tabs vorhanden
+### T4.2 – 3 Tabs vorhanden
 - **Aktion:** `.k-tab` Elemente zählen und Texte lesen
 - **Prüfung:** `document.querySelectorAll('.k-tab')` → `textContent`
-- **Erwartung:** 4 Tabs: "🍽 Mittagstisch", "🛒 Abholungen (N)", "👥 Stammkunden", "📋 Speiseplan"
+- **Erwartung:** 3 Tabs: "🍽 Mittagstisch", "🛒 Online-Shop", "👥 Stammkunden" (kein Speiseplan-Tab)
 
 ### T4.3 – Abholungen-Tab: Badge mit Zähler
 - **Aktion:** Text des Abholungen-Tabs prüfen
@@ -168,10 +168,39 @@
 - **Prüfung:** "Neuer Kunde" und "Alle laden" Buttons prüfen
 - **Erwartung:** Beide Buttons sichtbar und klickbar
 
-### T4.6 – Speiseplan-Tab: Wochenplan angezeigt
-- **Aktion:** Speiseplan-Tab öffnen
-- **Prüfung:** Inhalt enthält Wochentage und Gerichte
-- **Erwartung:** Mo–Fr mit Gerichtnamen und Preisen sichtbar
+### T4.6 – Refresh-Button im Header
+- **Aktion:** Header-Bereich prüfen
+- **Prüfung:** `.k-header button[title="Aktualisieren"]` vorhanden
+- **Erwartung:** 🔄 Button sichtbar rechts neben der Uhr, lädt Bestellungen neu
+
+### T4.7 – Küchenliste drucken
+- **Aktion:** Bottom-Bar prüfen, "🖨 Küchenliste drucken" Button klicken
+- **Prüfung:** Neues Fenster öffnet sich mit gruppierter Ansicht
+- **Erwartung:** Bestellungen nach Gericht gruppiert, Portionen-Anzahl, Mitnehmen/Vor-Ort Aufschlüsselung, Kundennamen, Gesamtstatistik
+
+### T4.8 – Bottom-Bar: Nur 2 Buttons
+- **Aktion:** `.k-bottom` Buttons zählen
+- **Prüfung:** `document.querySelectorAll('.k-bottom .k-btn')` → `length`
+- **Erwartung:** 2 Buttons: "☎ Neue Telefonbestellung" und "🖨 Küchenliste drucken" (kein separater Refresh-Button)
+
+---
+
+## T9 – Datum-Normalisierung (lunch-order API)
+
+### T9.1 – POST normalisiert Datum
+- **Aktion:** POST `/api/lunch-order` mit `datum: "2026-06-22T00:00:00Z"`
+- **Prüfung:** GET `/api/lunch-order?datum=2026-06-22`, Bestellung prüfen
+- **Erwartung:** Bestellung gefunden, `datum` in Response = `"2026-06-22"` (ohne Zeitstempel)
+
+### T9.2 – GET findet Bestellungen unabhängig vom Format
+- **Aktion:** GET `/api/lunch-order?datum=2026-06-22`
+- **Prüfung:** Findet sowohl Records mit `dl_datum="2026-06-22"` als auch `dl_datum="2026-06-22T00:00:00Z"`
+- **Erwartung:** Alle Bestellungen für dieses Datum werden zurückgegeben
+
+### T9.3 – API-Rückgabe normalisiert Datum
+- **Aktion:** GET `/api/lunch-order` (ohne Datum-Filter)
+- **Prüfung:** Alle `datum`-Felder in der Response prüfen
+- **Erwartung:** Kein Datum enthält `T00:00:00Z`, alle im Format `YYYY-MM-DD`
 
 ---
 
@@ -268,7 +297,7 @@
 
 ---
 
-## Letzter Testlauf: 2026-06-21 (Sonntag)
+## Letzter Testlauf: 2026-06-21 (Samstag)
 Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 
 | Test | Status | Anmerkung |
@@ -281,13 +310,20 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | T3 Tab-Wechsel | ✅ | Bestellungen laden für korrekten Tag (z.B. 2026-06-24) |
 | T3 Neue Bestellung Form | ✅ | Formular öffnet, Gericht-Dropdown mit Montags-Gericht |
 | T3 Shop getrennt | ✅ | "Online-Shop-Bestellungen" Überschrift |
-| T4 Kiosk Tabs | ✅ | 4 Tabs, Abholungen Badge=16 |
+| T4 Kiosk 3 Tabs | ✅ | 3 Tabs (Speiseplan entfernt), Online-Shop Badge |
+| T4 Refresh im Header | ✅ | 🔄 Button im Header sichtbar |
+| T4 Küchenliste | ✅ | Druckansicht nach Gericht gruppiert |
+| T4 Bottom-Bar 2 Buttons | ✅ | Telefonbestellung + Küchenliste |
 | T5 Lunch-Admin Kiosk-Link | ✅ | 🏪 Kiosk sichtbar |
 | T6 CMS Toggle An | ✅ | Grün (#22c55e) |
 | T6 CMS Toggle Aus | ✅ | Grau (#e5e7eb) |
+| T9 Datum POST normalisiert | ✅ | T00:00:00Z wird zu YYYY-MM-DD |
+| T9 Datum GET startswith | ✅ | Findet beide Formate |
 
 ## Fehler-Log
 | Datum | Test | Fehler | Fix |
 |---|---|---|---|
 | 2026-06-21 | T2 Wochenplan | Am Wochenende alle Tage ausgegraut (opacity .45) + keine Bestell-Buttons, obwohl nächste Woche angezeigt wird | `isWeekend`-Check: am Sa/So `isPast=false` und `isToday=false` für alle Tage → alles bestellbar |
 | 2026-06-21 | T3 Tages-Tabs | Am Wochenende war Sonntag als Datum selektiert, statt nächster Werktag. Tabs korrekt (Mo-Fr) aber Bestellungen für Sonntag geladen | `validDates.indexOf()` Check: falls `_mtSelectedDate` nicht in Tabs → auf ersten Tab (Montag) setzen |
+| 2026-06-21 | T4 Kiosk | Online-Bestellungen nicht im Kiosk sichtbar | Datum-Format Mismatch: Wochenplan liefert `T00:00:00Z`, Kiosk filtert mit `eq` auf `YYYY-MM-DD`. Fix: POST normalisiert Datum, GET verwendet `startswith` |
+| 2026-06-21 | T4 Kiosk UI | Speiseplan-Tab redundant, Refresh-Button unpraktisch in Bottom-Bar, Küchenliste = `window.print()` | Speiseplan-Tab entfernt, Refresh in Header, Küchenliste gruppiert nach Gericht |

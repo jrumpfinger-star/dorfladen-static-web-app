@@ -7,7 +7,20 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 
 ### Tab-Leiste
 - [x] Tab "Abholungen" umbenennen zu "Online-Shop"
-- [x] 4 Tabs: Mittagstisch, Online-Shop, Stammkunden, Speiseplan
+- [x] ~~4 Tabs: Mittagstisch, Online-Shop, Stammkunden, Speiseplan~~
+- [x] 3 Tabs: Mittagstisch, Online-Shop, Stammkunden (Speiseplan entfernt – redundant, Gerichte werden im Bestellmodal angezeigt)
+
+### Header
+- [x] Refresh-Button (🔄) im Header rechts neben Uhr, nicht in Bottom-Bar
+
+### Bottom-Bar
+- [x] Nur 2 Buttons: "☎ Neue Telefonbestellung" + "🖨 Küchenliste drucken"
+- [x] Küchenliste öffnet Druck-Fenster mit Bestellungen gruppiert nach Gericht (Portionen, Mitnehmen/Vor-Ort, Kundennamen)
+
+### Datum-Normalisierung
+- [x] Online-Bestellungen speichern Datum als `YYYY-MM-DD` (nicht `YYYY-MM-DDT00:00:00Z`)
+- [x] GET-Filter verwendet `startswith` statt `eq` für Abwärtskompatibilität
+- [x] API-Rückgabe normalisiert Datum immer auf `YYYY-MM-DD`
 
 ### Online-Shop Filter
 - [x] Filter-Buttons vereinfachen: nur "Offene" und "Heute" (kein "Alle", kein "Abgeholt")
@@ -40,6 +53,8 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 
 ## Akzeptanzkriterien
 - [x] AK-UI-01: Tab zeigt "Online-Shop" statt "Abholungen"
+- [x] AK-UI-01b: 3 Tabs: Mittagstisch, Online-Shop, Stammkunden (kein Speiseplan)
+- [x] AK-UI-01c: Refresh-Button im Header sichtbar
 - [x] AK-UI-02: Nur 2 Filter-Buttons: "📦 Offene" und "📅 Heute"
 - [x] AK-UI-03: Klick auf Slot-Header klappt Gruppe auf/zu
 - [x] AK-UI-04: Pfeil wechselt zwischen ▶ (collapsed) und ▼ (expanded)
@@ -48,12 +63,14 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-07: Duplikat-Kunde (409) zeigt Info-Toast, nicht Fehlermeldung
 - [ ] AK-UI-08: Bei API-Fehler (404/500) wird Toast mit Statuscode angezeigt, kein alert()
 - [x] AK-UI-09: Badge auf Online-Shop-Tab zeigt Anzahl offener Bestellungen
+- [x] AK-UI-10: Küchenliste druckt Bestellungen nach Gericht gruppiert
+- [x] AK-UI-11: Datum wird beim POST normalisiert (YYYY-MM-DD)
+- [x] AK-UI-12: GET-Filter findet Bestellungen unabhängig vom Datum-Format
 
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)
-- Keine Änderung am Speiseplan-Tab
 
 ## Status
 - [x] Spec reviewed
 - [x] Implementierung
-- [ ] Validierung (teilweise – Stammkunden-API auf feature-branch, nicht auf main deployed)
+- [x] Validierung – 19/19 Kiosk-Tests grün (2026-06-21)

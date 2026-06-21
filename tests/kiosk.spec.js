@@ -271,3 +271,88 @@ test.describe('Kiosk Packing – Funktionalität', () => {
     await expect(page.locator('#pk-autosave')).toBeAttached();
   });
 });
+
+// ═══════════════════════════════════════════════════════
+//  T4.6–T4.8 – Header & Bottom-Bar
+// ═══════════════════════════════════════════════════════
+test.describe('Kiosk UI – Header & Bottom-Bar', () => {
+
+  test('T4.6: Refresh-Button im Header sichtbar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const refreshBtn = page.locator('.k-header button[title="Aktualisieren"]');
+    await expect(refreshBtn).toBeVisible();
+    await expect(refreshBtn).toContainText('🔄');
+  });
+
+  test('T4.8a: Bottom-Bar hat genau 2 Buttons', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const buttons = page.locator('.k-bottom .k-btn');
+    await expect(buttons).toHaveCount(2);
+  });
+
+  test('T4.8b: Bottom-Bar enthält Telefonbestellung und Küchenliste', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const texts = await page.locator('.k-bottom .k-btn').allTextContents();
+    const joined = texts.join(' ');
+    expect(joined).toContain('Neue Telefonbestellung');
+    expect(joined).toContain('Küchenliste');
+    expect(joined).not.toContain('🔄');
+  });
+
+  test('T4.8c: Kein Speiseplan-Tab vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const tabs = await page.locator('.k-tab').allTextContents();
+    const joined = tabs.join(' ');
+    expect(joined).not.toContain('Speiseplan');
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+//  T9 – Datum-Normalisierung (lunch-order API)
+// ═══════════════════════════════════════════════════════
+test.describe('Datum-Normalisierung – lunch-order API', () => {
+
+  test('T9.1: POST mit ISO-Datum wird normalisiert', async ({ request }) => {
+    const response = await request.post(`${BASE}/api/lunch-order`, {
+      data: {
+        name: 'Datum-Test ISO',
+        email: 'datumtest@test.de',
+        gericht: 'Testgericht Datum',
+        menge: 1,
+        preis: 5.00,
+        datum: '2026-06-22T00:00:00Z',
+        wochentag_label: 'Montag',
+        quelle: 0
+      }
+    });
+    expect(response.status()).toBe(201);
+    const body = await response.json();
+    expect(body.success).toBe(true);
+    // Datum in Response should be normalized
+    expect(body.order.datum).toBe('2026-06-22');
+    expect(body.order.datum).not.toContain('T');
+  });
+
+  test('T9.2: GET findet Bestellungen mit startswith-Filter', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/lunch-order?datum=2026-06-22`);
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.success).toBe(true);
+    // Should find at least one order for this date
+    expect(body.count).toBeGreaterThan(0);
+  });
+
+  test('T9.3: Alle Datum-Felder in Response normalisiert', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/lunch-order`);
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.success).toBe(true);
+    // Check all orders have normalized datum
+    for (const order of body.orders) {
+      if (order.datum) {
+        expect(order.datum).not.toContain('T00:00:00Z');
+        expect(order.datum).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      }
+    }
+  });
+});
