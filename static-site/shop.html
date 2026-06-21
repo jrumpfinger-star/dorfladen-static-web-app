@@ -1925,23 +1925,25 @@
     });
 
   // ── Push Notifications for order updates ──
+  // Automatically requests push permission on login.
+  // If permission was already granted, silently re-subscribes with current email.
+  // If permission was not yet asked, browser shows native permission dialog.
   function registerShopPush(){
     if(!isLoggedIn()||!authUser||!authUser.email) return;
     if(!('serviceWorker' in navigator)||!('PushManager' in window)) return;
-    // Don't ask again if already subscribed for this email
-    var pushEmail=localStorage.getItem('dl_shop_push_email');
-    if(pushEmail===authUser.email) return;
+    var curEmail=authUser.email;
     navigator.serviceWorker.ready.then(function(reg){
-      // Check if already has a subscription
+      // If permission already granted or existing subscription, update silently
       reg.pushManager.getSubscription().then(function(existing){
         if(existing){
-          // Update existing subscription with email
-          fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:existing.toJSON(),email:authUser.email,categories:['bestellung']})})
+          // Re-register with current email (handles account switches)
+          fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:existing.toJSON(),email:curEmail,categories:['bestellung']})})
             .then(function(r){return r.json();})
-            .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',authUser.email);});
+            .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',curEmail);});
           return;
         }
-        // Request permission and subscribe
+        // No existing subscription – request permission (browser dialog only shows once)
+        if(Notification.permission==='denied') return; // User permanently blocked – can't ask again
         Notification.requestPermission().then(function(perm){
           if(perm!=='granted') return;
           fetch(API+'/push-vapid-key').then(function(r){return r.json();}).then(function(data){
@@ -1950,9 +1952,9 @@
             var arr=new Uint8Array(raw.length);
             for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
             reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
-              fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),email:authUser.email,categories:['bestellung'],validate:true})})
+              fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),email:curEmail,categories:['bestellung'],validate:true})})
                 .then(function(r){return r.json();})
-                .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',authUser.email);});
+                .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',curEmail);});
             });
           });
         });
