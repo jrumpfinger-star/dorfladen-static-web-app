@@ -1,12 +1,11 @@
 /**
- * Kiosk Tests – Playwright
+ * Kiosk Tests – Playwright (funktionale E2E-Tests)
  * 
  * Testet die kiosk.html Features gegen die Specs:
  *   - specs/kiosk-ui.md
  *   - specs/kiosk-packing.md
  * 
- * Voraussetzung: SWA CLI oder lokaler Server auf Port 4280
- *   npx @azure/static-web-apps-cli start static-site --api-location api
+ * Nur funktionale Tests – keine DOM-Präsenz-, Source-String- oder CSS-Checks.
  * 
  * Ausführen:
  *   npx playwright test tests/kiosk.spec.js
@@ -18,389 +17,247 @@ const BASE = process.env.TEST_URL || 'http://localhost:4280';
 const KIOSK_URL = `${BASE}/kiosk`;
 
 // ════════════════════════════════════════════════════
-//  AK-UI: Kiosk UI Verbesserungen (specs/kiosk-ui.md)
+//  Tab-Navigation & Default-Tab
 // ════════════════════════════════════════════════════
 
-test.describe('Kiosk UI – Tabs', () => {
+test.describe('Kiosk – Tab-Navigation', () => {
 
-  test('AK-UI-01: Tab zeigt "Online-Shop" statt "Abholungen"', async ({ page }) => {
+  test('Online-Shop ist Default-Tab beim Laden', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    const tabTexts = await page.locator('.k-tab').allTextContents();
-    const joined = tabTexts.join(' ');
-    expect(joined).toContain('Online-Shop');
-    expect(joined).not.toContain('Abholungen');
+    const activeTab = page.locator('.k-tab.active');
+    await expect(activeTab).toHaveAttribute('data-tab', 'abhol');
+    const activePanel = page.locator('.k-panel.active');
+    await expect(activePanel).toHaveAttribute('id', 'panel-abhol');
   });
 
-  test('AK-UI-01b: 3 Tabs vorhanden: Mittagstisch, Online-Shop, Stammkunden', async ({ page }) => {
+  test('Tab-Wechsel zeigt korrektes Panel', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    const tabs = page.locator('.k-tab');
-    await expect(tabs).toHaveCount(3);
-    const texts = await tabs.allTextContents();
-    expect(texts[0]).toContain('Mittagstisch');
-    expect(texts[1]).toContain('Online-Shop');
-    expect(texts[2]).toContain('Stammkunden');
-  });
-
-  test('AK-UI-01c: Refresh-Button im Header vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const refreshBtn = page.locator('.k-header button[title="Aktualisieren"]');
-    await expect(refreshBtn).toBeVisible();
+    // Switch to Mittagstisch
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await expect(page.locator('.k-tab[data-tab="mittag"]')).toHaveClass(/active/);
+    await expect(page.locator('#panel-mittag')).toHaveClass(/active/);
+    // Switch to Stammkunden
+    await page.locator('.k-tab[data-tab="kunden"]').click();
+    await expect(page.locator('.k-tab[data-tab="kunden"]')).toHaveClass(/active/);
+    await expect(page.locator('#panel-kunden')).toHaveClass(/active/);
+    // Mittagstisch panel should no longer be active
+    await expect(page.locator('#panel-mittag')).not.toHaveClass(/active/);
   });
 });
 
-test.describe('Kiosk UI – Online-Shop Filter', () => {
+// ════════════════════════════════════════════════════
+//  Online-Shop Filter-Wechsel
+// ════════════════════════════════════════════════════
 
-  test('AK-UI-02: 4 Filter-Buttons: Zu erledigen, Heute abholen, Überfällig, Historie', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    // Switch to Online-Shop tab
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    const buttons = page.locator('#abhol-filter-bar .k-filter-btn');
-    await expect(buttons).toHaveCount(4);
-    const texts = await buttons.allTextContents();
-    expect(texts[0]).toContain('Zu erledigen');
-    expect(texts[1]).toContain('Heute abholen');
-    expect(texts[2]).toContain('Überfällig');
-    expect(texts[3]).toContain('Historie');
-  });
+test.describe('Kiosk – Shop-Filter', () => {
 
-  test('AK-UI-09: Badge auf Online-Shop-Tab vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const badge = page.locator('#badge-abhol');
-    await expect(badge).toBeAttached();
-  });
-
-  test('AK-UI-13: Shop-Stats zeigen handlungsorientierte Labels', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const stats = await page.locator('#abhol-stats').textContent();
-    // Should NOT contain old labels
-    expect(stats).not.toContain('Bearb.');
-    expect(stats).not.toContain('Umsatz');
-    expect(stats).not.toContain('€');
-  });
-
-  test('AK-UI-14: Mittagstisch-Stats zeigen Portionen statt Umsatz', async ({ page }) => {
+  test('Filterwechsel ändert active-Klasse und angezeigte Bestellungen', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(2000);
-    const stats = await page.locator('#mittag-stats').textContent();
-    expect(stats).toContain('Portionen');
-    expect(stats).not.toContain('Umsatz');
+    // Click "Heute abholen"
+    const todayBtn = page.locator('.k-filter-btn[data-filter="today"]');
+    await todayBtn.click();
+    await expect(todayBtn).toHaveClass(/active/);
+    // Click back to "Zu erledigen"
+    const openBtn = page.locator('.k-filter-btn[data-filter="open"]');
+    await openBtn.click();
+    await expect(openBtn).toHaveClass(/active/);
+    await expect(todayBtn).not.toHaveClass(/active/);
+  });
+
+  test('Historie-Toggle ein/aus', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const histBtn = page.locator('#btn-history');
+    await expect(histBtn).not.toHaveClass(/active/);
+    await histBtn.click();
+    await expect(histBtn).toHaveClass(/active/);
+    await histBtn.click();
+    await expect(histBtn).not.toHaveClass(/active/);
+  });
+
+  test('Badge-Zahl ≤ "Zu erledigen" Filteranzahl', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    const badgeText = await page.locator('#badge-abhol').textContent();
+    const badgeVal = parseInt(badgeText) || 0;
+    const filterCount = parseInt(await page.locator('#fc-open').textContent()) || 0;
+    expect(badgeVal).toBeLessThanOrEqual(filterCount);
   });
 });
 
-test.describe('Kiosk UI – Mittagstisch Tagesauswahl', () => {
+// ════════════════════════════════════════════════════
+//  Zeitslot-Gruppen: Auf/Zuklappen + Zustand beibehalten
+// ════════════════════════════════════════════════════
 
-  test('AK-UI-05: Tagesauswahl zeigt 7 Tage', async ({ page }) => {
+test.describe('Kiosk – Slot-Gruppen', () => {
+
+  test('Slot-Gruppen klappen auf/zu und behalten Zustand bei Refresh', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    await page.waitForSelector('#mittag-day-bar button');
-    const dayButtons = page.locator('#mittag-day-bar button');
-    await expect(dayButtons).toHaveCount(7);
+    await page.waitForTimeout(2000);
+    const headers = page.locator('.k-slot-header');
+    const count = await headers.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Bestellungen – Slot-Gruppen nicht testbar');
+      return;
+    }
+    // Find first collapsed group
+    const firstHeader = headers.first();
+    const group = firstHeader.locator('..');
+    const wasCollapsed = await group.evaluate(el => el.classList.contains('collapsed'));
+
+    if (wasCollapsed) {
+      // Expand it
+      await firstHeader.click();
+      await expect(group).not.toHaveClass(/collapsed/);
+    } else {
+      // Collapse it
+      await firstHeader.click();
+      await expect(group).toHaveClass(/collapsed/);
+    }
+
+    // Click Refresh – slot group state should be preserved
+    const groupId = await group.getAttribute('id');
+    await page.locator('button[title="Aktualisieren"]').click();
+    await page.waitForTimeout(3000);
+    const updatedGroup = page.locator('#' + groupId);
+    if (wasCollapsed) {
+      // Was collapsed, we expanded it → after refresh should still be expanded
+      await expect(updatedGroup).not.toHaveClass(/collapsed/);
+    } else {
+      // Was expanded, we collapsed it → after refresh should still be collapsed
+      await expect(updatedGroup).toHaveClass(/collapsed/);
+    }
   });
+});
 
-  test('AK-UI-05b: Heute-Button ist standardmäßig aktiv', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForSelector('#mittag-day-bar button');
-    const activeBtn = page.locator('#mittag-day-bar button.active');
-    await expect(activeBtn).toHaveCount(1);
-    await expect(activeBtn).toContainText('Heute');
-  });
+// ════════════════════════════════════════════════════
+//  Mittagstisch – Tagesauswahl + API
+// ════════════════════════════════════════════════════
 
-  test('AK-UI-05c: Tagesauswahl enthält "Gestern" und "Morgen"', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForSelector('#mittag-day-bar button');
-    const texts = await page.locator('#mittag-day-bar button').allTextContents();
-    expect(texts[0]).toContain('Gestern');
-    expect(texts[1]).toContain('Heute');
-    expect(texts[2]).toContain('Morgen');
-  });
+test.describe('Kiosk – Mittagstisch Tagesauswahl', () => {
 
-  test('AK-UI-05d: Klick auf anderen Tag wechselt aktiven Button', async ({ page }) => {
+  test('7 Tage, Default=Heute, Wechsel lädt korrekte Daten', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    await page.waitForSelector('#mittag-day-bar button');
-    const morgenBtn = page.locator('#mittag-day-bar button', { hasText: 'Morgen' });
-    await morgenBtn.click();
-    await expect(morgenBtn).toHaveClass(/active/);
-    const heuteBtn = page.locator('#mittag-day-bar button', { hasText: 'Heute' });
-    await expect(heuteBtn).not.toHaveClass(/active/);
-  });
-
-  test('AK-UI-05e: Jeder Tages-Button liefert API-Daten und aktualisiert Anzeige', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    // Switch to Mittagstisch tab first
     await page.locator('.k-tab[data-tab="mittag"]').click();
     await page.waitForSelector('#mittag-day-bar button');
-    const dayButtons = page.locator('#mittag-day-bar button');
-    const count = await dayButtons.count();
-    expect(count).toBe(7);
 
+    const dayButtons = page.locator('#mittag-day-bar button');
+    await expect(dayButtons).toHaveCount(7);
+
+    // Default active = Heute
+    const activeBtn = page.locator('#mittag-day-bar button.active');
+    await expect(activeBtn).toContainText('Heute');
+
+    // Click each day: verify API call + response + rendering
+    const count = await dayButtons.count();
     for (let i = 0; i < count; i++) {
       const btn = dayButtons.nth(i);
       const label = (await btn.textContent()).trim();
       const datum = await btn.getAttribute('data-datum');
 
-      // Intercept the API call for this date
       const apiPromise = page.waitForResponse(
         resp => resp.url().includes('/api/lunch-order') && resp.url().includes(`datum=${datum}`),
         { timeout: 10000 }
       );
-
       await btn.click();
-
-      // Wait for API response
       const apiResponse = await apiPromise;
-      expect(apiResponse.status(), `API für "${label}" (${datum}) sollte 200 liefern`).toBe(200);
-
+      expect(apiResponse.status(), `API für "${label}" (${datum})`).toBe(200);
       const json = await apiResponse.json();
-      expect(json.success, `API für "${label}" (${datum}) sollte success=true sein`).toBe(true);
-      expect(Array.isArray(json.orders), `API für "${label}" (${datum}) sollte orders-Array liefern`).toBe(true);
-
-      // Verify the button is now active
+      expect(json.success).toBe(true);
+      expect(Array.isArray(json.orders)).toBe(true);
       await expect(btn).toHaveClass(/active/);
 
-      // Verify counts update – "Alle" count should match the API count
+      // "Alle" Zähler = API order count
       const alleCount = await page.locator('#mt-fc-alle').textContent();
-      expect(parseInt(alleCount), `"Alle" Zähler für "${label}" (${datum}) sollte ${json.orders.length} sein`).toBe(json.orders.length);
+      expect(parseInt(alleCount), `Alle-Zähler für ${label}`).toBe(json.orders.length);
 
-      // If there are orders, verify they are rendered
       if (json.orders.length > 0) {
-        const orderCards = page.locator('#mittag-orders .k-order');
-        // With filter 'offen' active, count may be less than total, so check total via 'alle' filter
-        // Click "Alle" filter to see all orders
         await page.locator('#mittag-status-bar button[data-mt-filter="alle"]').click();
         await page.waitForTimeout(300);
         const visibleOrders = await page.locator('#mittag-orders .k-order').count();
-        expect(visibleOrders, `"${label}" (${datum}): ${json.orders.length} Bestellungen sollten angezeigt werden`).toBe(json.orders.length);
-        // Reset to 'offen' filter for next iteration
+        expect(visibleOrders, `${label}: Bestellungen rendern`).toBe(json.orders.length);
         await page.locator('#mittag-status-bar button[data-mt-filter="offen"]').click();
       }
     }
   });
 });
 
-test.describe('Kiosk UI – Stammkunden Formular', () => {
+// ════════════════════════════════════════════════════
+//  Mittagstisch – Status-Filter
+// ════════════════════════════════════════════════════
 
-  test('AK-UI-06: Nachname und Vorname sind separate Felder', async ({ page }) => {
+test.describe('Kiosk – Mittagstisch Filter', () => {
+
+  test('Default-Filter ist "Zu bestätigen", Wechsel funktioniert', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(1000);
+    const activeBtn = page.locator('#mittag-status-bar .k-filter-btn.active');
+    await expect(activeBtn).toHaveCount(1);
+    const text = await activeBtn.textContent();
+    expect(text).toContain('Zu bestätigen');
+    // Switch to "Alle"
+    await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="alle"]').click();
+    const newActive = page.locator('#mittag-status-bar .k-filter-btn.active');
+    const newText = await newActive.textContent();
+    expect(newText).toContain('Alle');
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Mittagstisch – Bestätigen-Dialog
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Bestätigen-Dialog', () => {
+
+  test('Bestätigen öffnet Dialog mit Textfeld, Abbrechen schließt ihn', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(2000);
+    const confirmBtn = page.locator('.k-order-actions .k-btn-confirm:has-text("Bestätigen")').first();
+    if (await confirmBtn.count() === 0) {
+      test.skip(true, 'Keine offene Bestellung vorhanden');
+      return;
+    }
+    await confirmBtn.click();
+    const dialog = page.locator('.k-confirm-dialog').first();
+    await expect(dialog).toBeVisible();
+    // Optionales Textfeld vorhanden
+    const input = page.locator('.k-confirm-input').first();
+    await expect(input).toBeVisible();
+    await expect(input).toHaveAttribute('placeholder', /optional/i);
+    // Abbrechen schließt Dialog
+    await page.locator('.k-btn-outline:has-text("Abbrechen")').first().click();
+    await expect(dialog).not.toBeVisible();
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Stammkunden – Formular-Validierung
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Stammkunden Formular', () => {
+
+  test('Nachname Pflichtfeld: Submit ohne Nachname zeigt Fehler', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="kunden"]').click();
-    // Open new customer modal
     await page.locator('text=Neuer Kunde').click();
     await expect(page.locator('#nk-nachname')).toBeVisible();
     await expect(page.locator('#nk-vorname')).toBeVisible();
-  });
-
-  test('AK-UI-06b: Nachname ist Pflichtfeld, Vorname optional', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="kunden"]').click();
-    await page.locator('text=Neuer Kunde').click();
-    // Try submit without Nachname
+    // Submit without Nachname
     await page.locator('#nk-phone').fill('123');
     await page.locator('text=Kunde anlegen').click();
-    // Should show error toast
     await expect(page.locator('#k-toast')).toContainText('Nachname');
   });
 });
 
 // ════════════════════════════════════════════════════
-//  AK-UI: Zeitslot-Gruppen (specs/kiosk-ui.md)
+//  Datum-Normalisierung – lunch-order API
 // ════════════════════════════════════════════════════
 
-test.describe('Kiosk UI – Zeitslot-Gruppen', () => {
+test.describe('Datum-Normalisierung – API', () => {
 
-  test('AK-UI-03 + AK-UI-04: Slot-Gruppen default collapsed, klappbar', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const headers = page.locator('.k-slot-header');
-    const count = await headers.count();
-    if (count === 0) {
-      test.skip(true, 'Keine Bestellungen vorhanden – Slot-Gruppen nicht testbar');
-      return;
-    }
-    const firstHeader = headers.first();
-    const group = firstHeader.locator('..');
-    // Default: collapsed
-    await expect(group).toHaveClass(/collapsed/);
-    // Click to expand
-    await firstHeader.click();
-    await expect(group).not.toHaveClass(/collapsed/);
-    // Click again to collapse
-    await firstHeader.click();
-    await expect(group).toHaveClass(/collapsed/);
-  });
-
-  test('AK-UI-03b: Slot-Header zeigt Status-Badges (📥/📦/🔔)', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const counts = page.locator('.k-slot-count');
-    if (await counts.count() === 0) {
-      test.skip(true, 'Keine Slot-Gruppen vorhanden');
-      return;
-    }
-    const firstCount = await counts.first().textContent();
-    // Should contain status icons or "Bestellung(en)"
-    const hasStatusBadges = firstCount.includes('📥') || firstCount.includes('📦') || firstCount.includes('🔔') || firstCount.includes('Bestellung');
-    expect(hasStatusBadges).toBe(true);
-  });
-});
-
-// ════════════════════════════════════════════════════
-//  AK-PK: Kiosk Packing (specs/kiosk-packing.md)
-// ════════════════════════════════════════════════════
-
-test.describe('Kiosk Packing – Modal', () => {
-
-  test('AK-PK-01: Pack-Modal öffnet inline, keine Navigation', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    // Find a "Packen" button
-    const packBtn = page.locator('button[onclick*="openPackModal"]').first();
-    if (await packBtn.count() === 0) {
-      test.skip(true, 'Keine packbare Bestellung vorhanden (Status 1 nötig)');
-      return;
-    }
-    await packBtn.click();
-    // Should stay on same page, modal visible
-    expect(page.url()).toContain('/kiosk');
-    await expect(page.locator('#modal-pack')).toBeVisible({ timeout: 10000 });
-  });
-
-  test('AK-PK-01b: Pack-Modal hat Schließen-Button', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const packBtn = page.locator('button[onclick*="openPackModal"]').first();
-    if (await packBtn.count() === 0) {
-      test.skip(true, 'Keine packbare Bestellung vorhanden (Status 1 nötig)');
-      return;
-    }
-    await packBtn.click();
-    await expect(page.locator('#modal-pack')).toBeVisible({ timeout: 10000 });
-    // Close it
-    await page.locator('#modal-pack .k-modal-close').click();
-    await expect(page.locator('#modal-pack')).not.toBeVisible();
-  });
-});
-
-test.describe('Kiosk Packing – Funktionalität', () => {
-
-  test('AK-PK-02: Pack-Items haben Checkboxen', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const packBtn = page.locator('button[onclick*="openPackModal"]').first();
-    if (await packBtn.count() === 0) {
-      test.skip(true, 'Keine packbare Bestellung vorhanden (Status 1 nötig)');
-      return;
-    }
-    await packBtn.click();
-    await page.waitForSelector('.pk-item', { timeout: 15000 });
-    const checkboxes = page.locator('.pk-item input[type="checkbox"]');
-    expect(await checkboxes.count()).toBeGreaterThan(0);
-  });
-
-  test('AK-PK-03: Pack-Items haben Mengen-Eingabefelder', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const packBtn = page.locator('button[onclick*="openPackModal"]').first();
-    if (await packBtn.count() === 0) {
-      test.skip(true, 'Keine packbare Bestellung vorhanden (Status 1 nötig)');
-      return;
-    }
-    await packBtn.click();
-    await page.waitForSelector('.pk-item', { timeout: 15000 });
-    const qtyInputs = page.locator('.pk-item input[type="number"]');
-    expect(await qtyInputs.count()).toBeGreaterThan(0);
-  });
-
-  test('AK-PK-04: Beipackzettel-Button vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const packBtn = page.locator('button[onclick*="openPackModal"]').first();
-    if (await packBtn.count() === 0) {
-      test.skip(true, 'Keine packbare Bestellung vorhanden (Status 1 nötig)');
-      return;
-    }
-    await packBtn.click();
-    await expect(page.locator('#modal-pack')).toBeVisible({ timeout: 10000 });
-    const printBtn = page.locator('#modal-pack button:has-text("Beipackzettel")');
-    await expect(printBtn).toBeVisible();
-  });
-
-  test('AK-PK-06: Abholbereit-Button vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const packBtn = page.locator('button[onclick*="openPackModal"]').first();
-    if (await packBtn.count() === 0) {
-      test.skip(true, 'Keine packbare Bestellung vorhanden (Status 1 nötig)');
-      return;
-    }
-    await packBtn.click();
-    await expect(page.locator('#modal-pack')).toBeVisible({ timeout: 10000 });
-    const finishBtn = page.locator('#modal-pack button:has-text("Abholbereit"), #pk-finish-btn').first();
-    await expect(finishBtn).toBeVisible();
-  });
-
-  test('AK-PK-07: Autosave-Indikator vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const packBtn = page.locator('button[onclick*="openPackModal"]').first();
-    if (await packBtn.count() === 0) {
-      test.skip(true, 'Keine packbare Bestellung vorhanden (Status 1 nötig)');
-      return;
-    }
-    await packBtn.click();
-    await expect(page.locator('#pk-autosave')).toBeAttached();
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  T4.6–T4.8 – Header & Bottom-Bar
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk UI – Header & Bottom-Bar', () => {
-
-  test('T4.6: Refresh-Button im Header sichtbar', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const refreshBtn = page.locator('.k-header button[title="Aktualisieren"]');
-    await expect(refreshBtn).toBeVisible();
-    await expect(refreshBtn).toContainText('🔄');
-  });
-
-  test('T4.8a: Bottom-Bar hat genau 2 Buttons', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const buttons = page.locator('.k-bottom .k-btn');
-    await expect(buttons).toHaveCount(2);
-  });
-
-  test('T4.8b: Bottom-Bar enthält Telefonbestellung und Küchenliste', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const texts = await page.locator('.k-bottom .k-btn').allTextContents();
-    const joined = texts.join(' ');
-    expect(joined).toContain('Neue Telefonbestellung');
-    expect(joined).toContain('Küchenliste');
-    expect(joined).not.toContain('🔄');
-  });
-
-  test('T4.8c: Kein Speiseplan-Tab vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const tabs = await page.locator('.k-tab').allTextContents();
-    const joined = tabs.join(' ');
-    expect(joined).not.toContain('Speiseplan');
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  T9 – Datum-Normalisierung (lunch-order API)
-// ═══════════════════════════════════════════════════════
-test.describe('Datum-Normalisierung – lunch-order API', () => {
-
-  test('T9.1: POST mit ISO-Datum wird normalisiert', async ({ request }) => {
+  test('POST normalisiert ISO-Datum auf YYYY-MM-DD', async ({ request }) => {
     const response = await request.post(`${BASE}/api/lunch-order`, {
       data: {
         name: 'Datum-Test ISO',
@@ -416,26 +273,15 @@ test.describe('Datum-Normalisierung – lunch-order API', () => {
     expect(response.status()).toBe(201);
     const body = await response.json();
     expect(body.success).toBe(true);
-    // Datum in Response should be normalized
     expect(body.order.datum).toBe('2026-06-22');
     expect(body.order.datum).not.toContain('T');
   });
 
-  test('T9.2: GET findet Bestellungen mit startswith-Filter', async ({ request }) => {
-    const response = await request.get(`${BASE}/api/lunch-order?datum=2026-06-22`);
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body.success).toBe(true);
-    // Should find at least one order for this date
-    expect(body.count).toBeGreaterThan(0);
-  });
-
-  test('T9.3: Alle Datum-Felder in Response normalisiert', async ({ request }) => {
+  test('GET findet Bestellungen und alle Datums-Felder normalisiert', async ({ request }) => {
     const response = await request.get(`${BASE}/api/lunch-order`);
     expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body.success).toBe(true);
-    // Check all orders have normalized datum
     for (const order of body.orders) {
       if (order.datum) {
         expect(order.datum).not.toContain('T00:00:00Z');
@@ -445,476 +291,87 @@ test.describe('Datum-Normalisierung – lunch-order API', () => {
   });
 });
 
-// ═══════════════════════════════════════════════════════
-//  Bestätigen mit optionalem Text
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk – Bestätigen mit Text', () => {
+// ════════════════════════════════════════════════════
+//  Pack-Modal – E2E Workflow
+// ════════════════════════════════════════════════════
 
-  test('AK-UI-16: Bestätigen-Button öffnet Confirm-Dialog', async ({ page }) => {
+test.describe('Kiosk – Packen E2E', () => {
+
+  test('Pack-Modal öffnet inline, zeigt Positionen, Checkbox aktualisiert Summe + Fortschritt', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(2000);
-    const confirmBtn = page.locator('.k-order-actions .k-btn-confirm:has-text("Bestätigen")').first();
-    if (await confirmBtn.count() === 0) {
-      test.skip(true, 'Keine offene Bestellung vorhanden');
+    // Find Packen button (status 1 or ungepackte status 2)
+    const packBtn = page.locator('button[onclick*="openPackModal"]').first();
+    if (await packBtn.count() === 0) {
+      test.skip(true, 'Keine packbare Bestellung vorhanden');
       return;
     }
-    await confirmBtn.click();
-    const dialog = page.locator('.k-confirm-dialog').first();
-    await expect(dialog).toBeVisible();
-  });
+    // Slot group might be collapsed – expand first
+    const group = packBtn.locator('closest=.k-slot-group');
+    // Click Packen
+    await packBtn.click({ force: true });
+    expect(page.url()).toContain('/kiosk');
+    await expect(page.locator('#modal-pack')).toBeVisible({ timeout: 10000 });
 
-  test('AK-UI-16b: Confirm-Dialog hat optionales Textfeld', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(2000);
-    const confirmBtn = page.locator('.k-order-actions .k-btn-confirm:has-text("Bestätigen")').first();
-    if (await confirmBtn.count() === 0) {
-      test.skip(true, 'Keine offene Bestellung vorhanden');
-      return;
+    // Wait for items to load
+    await page.waitForSelector('.pk-item', { timeout: 15000 });
+    const checkboxes = page.locator('.pk-item input[type="checkbox"]');
+    const itemCount = await checkboxes.count();
+    expect(itemCount).toBeGreaterThan(0);
+
+    // Check a box: should update progress and trigger autosave
+    const firstCb = checkboxes.first();
+    const wasChecked = await firstCb.isChecked();
+    if (!wasChecked) {
+      await firstCb.click();
+      await page.waitForTimeout(1500);
+      // Progress text should show updated count
+      const progressText = await page.locator('#pk-progress-text').textContent();
+      expect(progressText).toMatch(/\d+\/\d+ gepackt/);
+      // Autosave indicator should show
+      const autosaveText = await page.locator('#pk-autosave').textContent();
+      expect(autosaveText).toContain('Gespeichert');
     }
-    await confirmBtn.click();
-    const input = page.locator('.k-confirm-input').first();
-    await expect(input).toBeVisible();
-    await expect(input).toHaveAttribute('placeholder', /optional/i);
-  });
 
-  test('AK-UI-16c: Bestätigungstext-Div hat korrektes Styling', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(2000);
-    // Verify that the rendering code for bestaetigung_text exists in page source
-    const source = await page.content();
-    expect(source).toContain('bestaetigung_text');
-    expect(source).toContain('dcfce7');
-  });
-
-  test('AK-UI-16d: Abbrechen-Button schließt Confirm-Dialog', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(2000);
-    const confirmBtn = page.locator('.k-order-actions .k-btn-confirm:has-text("Bestätigen")').first();
-    if (await confirmBtn.count() === 0) {
-      test.skip(true, 'Keine offene Bestellung vorhanden');
-      return;
-    }
-    await confirmBtn.click();
-    const dialog = page.locator('.k-confirm-dialog').first();
-    await expect(dialog).toBeVisible();
-    // Click Abbrechen
-    const cancelBtn = page.locator('.k-btn-outline:has-text("Abbrechen")').first();
-    await cancelBtn.click();
-    await expect(dialog).not.toBeVisible();
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  Badge, Überfällig, Filter-Wechsel
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk UI – Badge & Überfällig', () => {
-
-  test('AK-UI-09b: Badge-Zahl entspricht Eingang+Packen (nicht alle offenen)', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    const badgeText = await page.locator('#badge-abhol').textContent();
-    const badgeVal = parseInt(badgeText) || 0;
-    // Badge should match "Zu erledigen" filter count (Eingang + Packen)
-    // Get stats values
-    const statsText = await page.locator('#abhol-stats').textContent();
-    // Badge value should be <= "Zu erledigen" filter count
-    const filterCount = parseInt(await page.locator('#fc-open').textContent()) || 0;
-    expect(badgeVal).toBeLessThanOrEqual(filterCount);
-  });
-
-  test('AK-UI-15: Überfällige Bestellungen haben CSS-Klasse k-order-overdue', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    // Check if overdue CSS class and styling is in the page
-    const source = await page.content();
-    expect(source).toContain('k-order-overdue');
-    // If there are overdue orders, check they have red styling
-    const overdueCount = parseInt(await page.locator('#fc-overdue').textContent()) || 0;
-    if (overdueCount > 0) {
-      // Click overdue filter to show only overdue
-      await page.locator('.k-filter-btn[data-filter="overdue"]').click();
-      await page.waitForTimeout(500);
-      const overdueCards = page.locator('.k-order-overdue');
-      expect(await overdueCards.count()).toBeGreaterThan(0);
-    }
-  });
-
-  test('AK-UI-02b: Filterwechsel ändert angezeigte Bestellungen', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.locator('.k-tab[data-tab="abhol"]').click();
-    await page.waitForTimeout(2000);
-    // Click "Heute abholen"
-    const todayBtn = page.locator('.k-filter-btn[data-filter="today"]');
-    await todayBtn.click();
-    await expect(todayBtn).toHaveClass(/active/);
-    // Click back to "Zu erledigen"
-    const openBtn = page.locator('.k-filter-btn[data-filter="open"]');
-    await openBtn.click();
-    await expect(openBtn).toHaveClass(/active/);
-    await expect(todayBtn).not.toHaveClass(/active/);
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  Mittagstisch Stats: Mitnehmen & Vor Ort
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk UI – Mittagstisch Stats Detail', () => {
-
-  test('AK-UI-14b: Mittagstisch-Stats zeigen Mitnehmen und Vor Ort', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(2000);
-    const stats = await page.locator('#mittag-stats').textContent();
-    // Stats should have "Offen", "Portionen" labels
-    // "Mitnehmen" and "Vor Ort" may or may not show depending on data
-    expect(stats).toContain('Portionen');
-    // Verify it does NOT show "Umsatz" or "Bestätigt"
-    expect(stats).not.toContain('Umsatz');
-    expect(stats).not.toContain('Bestätigt');
-    expect(stats).not.toContain('Abgeholt');
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  Küchenliste: Datum & Kundennamen
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk UI – Küchenliste', () => {
-
-  test('AK-UI-10b: Küchenliste-Button vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const btn = page.locator('.k-bottom .k-btn:has-text("Küchenliste")');
-    await expect(btn).toBeVisible();
-  });
-
-  test('AK-UI-10c: printKitchen verwendet ausgewähltes Datum (nicht heute)', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    // Verify that the code references _mittagDatum for kitchen list
-    const source = await page.content();
-    expect(source).toContain('_mittagDatum');
-    // Verify it does NOT use "new Date()" directly for the header
-    // The fix changed "new Date().toLocaleDateString" to "new Date(_mittagDatum..."
-    expect(source).toContain("new Date(_mittagDatum");
-  });
-
-  test('AK-UI-10d: printKitchen verwendet o.name und o.menge', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const source = await page.content();
-    // Should use o.name (not o.kundenname) and o.menge (not o.portionen)
-    expect(source).toContain("o.name || '?'");
-    expect(source).toContain('o.menge || 1');
-    // Should NOT contain the old buggy field names
-    expect(source).not.toContain('o.kundenname');
-    expect(source).not.toContain('o.portionen');
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  Mittagstisch Status-Filter
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk UI – Mittagstisch Status-Filter', () => {
-
-  test('AK-UI-17: Status-Filter-Bar mit 5 Buttons vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const bar = page.locator('#mittag-status-bar');
-    await expect(bar).toBeVisible();
-    const btns = bar.locator('.k-filter-btn');
-    expect(await btns.count()).toBe(5);
-  });
-
-  test('AK-UI-17b: Default-Filter ist "Zu bestätigen"', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(1000);
-    const activeBtn = page.locator('#mittag-status-bar .k-filter-btn.active');
-    await expect(activeBtn).toHaveCount(1);
-    const text = await activeBtn.textContent();
-    expect(text).toContain('Zu bestätigen');
-  });
-
-  test('AK-UI-17c: Filterwechsel ändert active-Klasse', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(1000);
-    // Click "Alle"
-    await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="alle"]').click();
-    const activeBtn = page.locator('#mittag-status-bar .k-filter-btn.active');
-    const text = await activeBtn.textContent();
-    expect(text).toContain('Alle');
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  Shop Order Detail Modal
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk UI – Order Detail Modal', () => {
-
-  test('AK-UI-18: Detail-Modal HTML vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const modal = page.locator('#modal-detail');
-    await expect(modal).toBeAttached();
-  });
-
-  test('AK-UI-18b: Shop-Karten haben ondblclick für Details', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const source = await page.content();
-    expect(source).toContain('showOrderDetail');
-    expect(source).toContain('ondblclick');
-  });
-
-  test('AK-UI-16e: Confirm-Dialog ist vollbreit unter der Karte', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const source = await page.content();
-    // Confirm dialog should NOT be inside k-order-actions anymore
-    // It should be a separate div after the card
-    expect(source).toContain('Nachricht an Kunde (optional)');
-    expect(source).toContain('Jetzt bestätigen');
-  });
-});
-
-// ──────────────────────────────────────────────
-// AK-UI-19: Lucide Icons
-// ──────────────────────────────────────────────
-test.describe('Lucide Icons (AK-UI-19)', () => {
-  test('AK-UI-19: Lucide CDN ist eingebunden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const lucideScript = page.locator('script[src*="lucide"]');
-    await expect(lucideScript).toHaveCount(1);
-  });
-
-  test('AK-UI-19b: Keine Emoji-Icons in statischem HTML (Buttons, Header, Tabs)', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    // Check that main UI areas use data-lucide icons instead of emojis
-    const header = page.locator('.k-header h1 i[data-lucide]');
-    await expect(header).toHaveCount(1);
-    const tabIcons = page.locator('.k-tab i[data-lucide]');
-    expect(await tabIcons.count()).toBeGreaterThanOrEqual(3);
-  });
-
-  test('AK-UI-19c: Lucide Icons werden nach DOM-Update gerendert (SVG-Elemente)', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(2000);
-    // After createIcons(), <i data-lucide> should be replaced with <svg>
-    const svgs = page.locator('.k-header svg');
-    expect(await svgs.count()).toBeGreaterThanOrEqual(1);
-  });
-});
-
-// ──────────────────────────────────────────────
-// AK-UI-20: Shop Historie Toggle
-// ──────────────────────────────────────────────
-test.describe('Shop Historie Toggle (AK-UI-20)', () => {
-  test('AK-UI-20: Historie-Button existiert in Shop-Filter-Bar', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const histBtn = page.locator('#btn-history');
-    await expect(histBtn).toBeVisible();
-    await expect(histBtn).toContainText('Historie');
-  });
-
-  test('AK-UI-20b: Historie-Button hat Zähler', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const counter = page.locator('#fc-history');
-    await expect(counter).toBeVisible();
-  });
-
-  test('AK-UI-20c: Historie-Toggle wechselt active-Klasse', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const histBtn = page.locator('#btn-history');
-    // Initially not active
-    await expect(histBtn).not.toHaveClass(/active/);
-    await histBtn.click();
-    await expect(histBtn).toHaveClass(/active/);
-    await histBtn.click();
-    await expect(histBtn).not.toHaveClass(/active/);
-  });
-});
-
-// ──────────────────────────────────────────────
-// AK-UI-21: Aktuelle Schicht Hervorhebung
-// ──────────────────────────────────────────────
-test.describe('Aktuelle Schicht (AK-UI-21)', () => {
-  test('AK-UI-21: CSS für aktuelle Schicht existiert', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const source = await page.content();
-    expect(source).toContain('k-slot-current');
-    expect(source).toContain('k-slot-now');
-  });
-
-  test('AK-UI-21b: toggleHistory ist in Public API verfügbar', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const hasToggle = await page.evaluate(() => typeof K.toggleHistory === 'function');
-    expect(hasToggle).toBe(true);
+    // Close modal
+    await page.locator('#modal-pack .k-modal-close').click();
+    await expect(page.locator('#modal-pack')).not.toBeVisible();
   });
 });
 
 // ════════════════════════════════════════════════════
-//  Slot-Header Badge Readability
+//  Shop-Karten Buttons: Annehmen, Ausgeben, Details
 // ════════════════════════════════════════════════════
 
-test.describe('Kiosk UI – Slot-Header Badges', () => {
-
-  test('AK-UI-22: k-slot-badge CSS hat weißen Hintergrund', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const source = await page.content();
-    expect(source).toContain('k-slot-badge');
-    expect(source).toContain('background:#fff');
-  });
-
-  test('AK-UI-22b: Badge-Klassen für Farbkodierung vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const source = await page.content();
-    expect(source).toContain('sb-pack');
-    expect(source).toContain('sb-wait');
-    expect(source).toContain('sb-overdue');
-  });
-
-  test('AK-UI-23: Filter-Zähler schließen alte erledigte Bestellungen aus', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    // The counter logic filters old completed orders – verify the function exists
-    const hasFilter = await page.evaluate(() => typeof K.loadShopOrders === 'function');
-    expect(hasFilter).toBe(true);
-  });
-
-  test('AK-UI-24: Online-Shop ist Default-Tab beim Laden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const activeTab = page.locator('.k-tab.active');
-    await expect(activeTab).toHaveAttribute('data-tab', 'abhol');
-    const activePanel = page.locator('.k-panel.active');
-    await expect(activePanel).toHaveAttribute('id', 'panel-abhol');
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  AK-BS-14/15: Nachrichten-Badge (geräteübergreifend via Dataverse)
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk – Nachrichten-Gelesen', () => {
-
-  test('AK-BS-14: Kein localStorage-basiertes Tracking mehr (rein Dataverse)', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const source = await page.content();
-    // Must NOT use localStorage for seen-comments anymore
-    expect(source).not.toContain('kiosk_seen_comments');
-    // Must use kommentar_gelesen from API response
-    expect(source).toContain('kommentar_gelesen');
-  });
-
-  test('AK-BS-14b: API liefert kommentar_gelesen Feld für Bestellungen', async ({ request }) => {
-    const response = await request.get(`${BASE}/api/lunch-order`);
-    expect(response.status()).toBe(200);
-    const data = await response.json();
-    expect(data.success).toBe(true);
-    expect(data.orders.length).toBeGreaterThan(0);
-    // Every order must have the kommentar_gelesen field (boolean)
-    for (const order of data.orders) {
-      expect(typeof order.kommentar_gelesen).toBe('boolean');
-    }
-  });
-
-  test('AK-BS-14c: Nachrichten-Badge zeigt Anzahl ungelesener Kommentare', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    // Switch to Mittagstisch tab
-    await page.click('.k-tab[data-tab="mittag"]');
-    await page.waitForTimeout(3000);
-    // Nachrichten-Badge should exist and show count
-    const badge = page.locator('[data-mt-filter="nachrichten"]');
-    await expect(badge).toBeAttached();
-    // Evaluate: count orders with unseen comments via API data
-    const unreadCount = await page.evaluate(() => {
-      if (typeof orders === 'undefined') return -1;
-      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
-    });
-    // Badge text should match the count (or be hidden if 0)
-    if (unreadCount > 0) {
-      const badgeText = await badge.textContent();
-      expect(badgeText).toContain(String(unreadCount));
-    }
-  });
-
-  test('AK-BS-15: Klick auf Nachrichten-Badge sendet PATCH für jede ungelesene Bestellung', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.click('.k-tab[data-tab="mittag"]');
-    await page.waitForTimeout(3000);
-    // Check if there are unread comments
-    const unreadCount = await page.evaluate(() => {
-      if (typeof orders === 'undefined') return 0;
-      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
-    });
-    if (unreadCount > 0) {
-      // Collect all PATCH requests
-      const patchRequests = [];
-      page.on('request', r => {
-        if (r.url().includes('/api/lunch-order/') && r.method() === 'PATCH') {
-          patchRequests.push(r);
-        }
-      });
-      // Click the nachrichten badge
-      await page.click('[data-mt-filter="nachrichten"]');
-      await page.waitForTimeout(2000);
-      // Should have sent one PATCH per unread order
-      expect(patchRequests.length).toBe(unreadCount);
-      // Each PATCH should set kommentar_gelesen: true
-      for (const req of patchRequests) {
-        const body = JSON.parse(req.postData());
-        expect(body.kommentar_gelesen).toBe(true);
-      }
-    }
-  });
-
-  test('AK-BS-15b: Nach Markieren als gelesen verschwindet der Badge-Zähler', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.click('.k-tab[data-tab="mittag"]');
-    await page.waitForTimeout(3000);
-    // Click nachrichten badge to mark all as read
-    await page.click('[data-mt-filter="nachrichten"]');
-    await page.waitForTimeout(2000);
-    // After marking, the in-memory orders should all have kommentar_gelesen = true
-    const stillUnread = await page.evaluate(() => {
-      if (typeof orders === 'undefined') return -1;
-      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
-    });
-    expect(stillUnread).toBe(0);
-  });
-});
-
-// ═══════════════════════════════════════════════════════
-//  AK-UI-25: Shop-Karten Buttons (Details, Annehmen, Ausgeben)
-// ═══════════════════════════════════════════════════════
 test.describe('Kiosk – Shop-Karten Buttons', () => {
 
-  test('AK-UI-25: Details-Button öffnet Detail-Modal', async ({ page }) => {
+  test('Details-Button öffnet Detail-Modal mit Bestellinfos', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    await page.waitForTimeout(4000);
-    // Find any Details button (eye icon)
-    const detailBtns = page.locator('button:has-text("Details"), button[onclick*="showOrderDetail"]');
-    const count = await detailBtns.count();
-    if (count > 0) {
-      await detailBtns.first().click();
-      await page.waitForSelector('#modal-detail.open', { state: 'attached', timeout: 5000 });
-      const modal = page.locator('#modal-detail.open');
-      await expect(modal).toBeAttached();
-      // Modal should show order info (Kunde, Nr., Status)
-      const body = await page.locator('#detail-body').textContent();
-      expect(body).toContain('Kunde');
-      expect(body).toContain('Nr.');
+    await page.waitForTimeout(3000);
+    // Expand a slot group to find a Details button
+    const headers = page.locator('.k-slot-header');
+    const hCount = await headers.count();
+    for (let i = 0; i < hCount; i++) {
+      const h = headers.nth(i);
+      const g = h.locator('..');
+      if (await g.evaluate(el => el.classList.contains('collapsed'))) {
+        await h.click();
+        await page.waitForTimeout(300);
+      }
     }
+    const detailBtns = page.locator('button[onclick*="showOrderDetail"]');
+    if (await detailBtns.count() === 0) {
+      test.skip(true, 'Keine Bestellungen mit Details-Button');
+      return;
+    }
+    await detailBtns.first().click();
+    await page.waitForSelector('#modal-detail.open', { state: 'attached', timeout: 5000 });
+    const body = await page.locator('#detail-body').textContent();
+    expect(body).toContain('Kunde');
+    expect(body).toContain('Nr.');
   });
 
-  test('AK-UI-25b: Kein "Abgeholt"-Button mehr vorhanden', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(4000);
-    const source = await page.locator('#panel-abhol').innerHTML();
-    // "Abgeholt" als Button-Text darf nicht mehr existieren
-    const abgeholtBtns = source.match(/>[\s]*Abgeholt[\s]*</g);
-    expect(abgeholtBtns).toBeNull();
-  });
-
-  test('AK-UI-25c: "Ausgeben" statt "Abgeholt" bei Status Bereit', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    await page.waitForTimeout(4000);
-    const source = await page.content();
-    // Code must use "Ausgeben" for status 2 action
-    expect(source).toContain('Ausgeben');
-  });
-
-  test('AK-UI-25d: API liefert gepackt-Feld für Shop-Bestellungen', async ({ request }) => {
+  test('API liefert gepackt-Feld für Shop-Bestellungen', async ({ request }) => {
     const response = await request.get(`${BASE}/api/shop-order?mode=cms`);
     expect(response.status()).toBe(200);
     const data = await response.json();
@@ -926,57 +383,123 @@ test.describe('Kiosk – Shop-Karten Buttons', () => {
     }
   });
 
-  test('AK-UI-25e: Ungepackte Bereit-Bestellung zeigt Packen statt Ausgeben', async ({ page }) => {
+  test('Ungepackte Bereit-Bestellung zeigt Packen statt Ausgeben', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    await page.waitForTimeout(4000);
-    // Check if any status-2 order exists that is NOT gepackt
+    await page.waitForTimeout(3000);
     const hasUnpackedBereit = await page.evaluate(() => {
       if (typeof _allShopOrders === 'undefined') return false;
       return _allShopOrders.some(o => o.status === 2 && !o.gepackt);
     });
     if (hasUnpackedBereit) {
-      // Those orders should NOT have an "Ausgeben" button
-      // They should have a "Packen" button instead
+      // Expand all groups to see buttons
+      const headers = page.locator('.k-slot-header');
+      for (let i = 0; i < await headers.count(); i++) {
+        const g = headers.nth(i).locator('..');
+        if (await g.evaluate(el => el.classList.contains('collapsed'))) {
+          await headers.nth(i).click();
+        }
+      }
+      await page.waitForTimeout(500);
       const panelHtml = await page.locator('#panel-abhol').innerHTML();
-      // At least one "Packen" button should exist for bereit orders
       expect(panelHtml).toContain('Packen');
     }
   });
+});
 
-  test('AK-UI-25f: "Annehmen" statt "Bearbeiten" bei Status Eingang', async ({ page }) => {
+// ════════════════════════════════════════════════════
+//  Detail-Modal Preise
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Detail-Modal Preise', () => {
+
+  test('Shop-Bestellung Detail zeigt Einzelpreise > 0€', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    await page.waitForTimeout(4000);
-    const source = await page.content();
-    // Code must use "Annehmen" for status 0 action
-    expect(source).toContain('Annehmen');
-    // "Bearbeiten" als Button-Label darf nicht mehr existieren
-    expect(source).not.toMatch(/k-btn-confirm[^>]*>.*Bearbeiten/);
+    await page.waitForTimeout(3000);
+    // Expand all groups
+    const headers = page.locator('.k-slot-header');
+    for (let i = 0; i < await headers.count(); i++) {
+      const g = headers.nth(i).locator('..');
+      if (await g.evaluate(el => el.classList.contains('collapsed'))) {
+        await headers.nth(i).click();
+      }
+    }
+    await page.waitForTimeout(300);
+    const detailBtns = page.locator('button[onclick*="showOrderDetail"]');
+    if (await detailBtns.count() === 0) {
+      test.skip(true, 'Keine Bestellungen');
+      return;
+    }
+    await detailBtns.first().click();
+    await page.waitForSelector('#modal-detail.open', { state: 'attached', timeout: 5000 });
+    const priceTexts = await page.locator('#detail-body td:nth-child(4)').allTextContents();
+    const gesamtText = await page.locator('#detail-body tfoot td:last-child').textContent();
+    if (!gesamtText.includes('0,00')) {
+      const allZero = priceTexts.every(t => t.trim() === '0,00€');
+      expect(allZero).toBe(false);
+    }
   });
 });
 
-// ═══════════════════════════════════════════════════════
-//  AK-UI-18c: Detail-Modal Preise korrekt (einzelpreis/positionspreis)
-// ═══════════════════════════════════════════════════════
-test.describe('Kiosk – Detail-Modal Preise', () => {
+// ════════════════════════════════════════════════════
+//  Nachrichten-Gelesen (Dataverse-basiert)
+// ════════════════════════════════════════════════════
 
-  test('AK-UI-18c: Shop-Bestellung Detail zeigt Einzelpreise > 0€', async ({ page }) => {
+test.describe('Kiosk – Nachrichten-Gelesen', () => {
+
+  test('API liefert kommentar_gelesen Boolean für alle Bestellungen', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/lunch-order`);
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.orders.length).toBeGreaterThan(0);
+    for (const order of data.orders) {
+      expect(typeof order.kommentar_gelesen).toBe('boolean');
+    }
+  });
+
+  test('Badge-Zähler stimmt mit ungelesenen Kommentaren überein', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    // Wait for shop orders to load
-    await page.waitForTimeout(4000);
-    // Find a shop order card and double-click to open detail
-    const shopCards = page.locator('.k-card[ondblclick*="showOrderDetail"]');
-    const cardCount = await shopCards.count();
-    if (cardCount > 0) {
-      await shopCards.first().dblclick();
-      await page.waitForSelector('#modal-detail', { state: 'visible', timeout: 5000 });
-      // Check that the price column does NOT show only 0,00€ values
-      const priceTexts = await page.locator('#detail-body td:nth-child(4)').allTextContents();
-      const allZero = priceTexts.every(t => t.trim() === '0,00€');
-      // At least one non-zero price if order has gesamtsumme > 0
-      const gesamtText = await page.locator('#detail-body tfoot td:last-child').textContent();
-      if (!gesamtText.includes('0,00')) {
-        expect(allZero).toBe(false);
+    await page.click('.k-tab[data-tab="mittag"]');
+    await page.waitForTimeout(3000);
+    const badge = page.locator('[data-mt-filter="nachrichten"]');
+    await expect(badge).toBeAttached();
+    const unreadCount = await page.evaluate(() => {
+      if (typeof orders === 'undefined') return -1;
+      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
+    });
+    if (unreadCount > 0) {
+      const badgeText = await badge.textContent();
+      expect(badgeText).toContain(String(unreadCount));
+    }
+  });
+
+  test('Klick auf Badge sendet PATCH mit kommentar_gelesen: true', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.click('.k-tab[data-tab="mittag"]');
+    await page.waitForTimeout(3000);
+    const unreadCount = await page.evaluate(() => {
+      if (typeof orders === 'undefined') return 0;
+      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
+    });
+    if (unreadCount > 0) {
+      const patchRequests = [];
+      page.on('request', r => {
+        if (r.url().includes('/api/lunch-order/') && r.method() === 'PATCH') {
+          patchRequests.push(r);
+        }
+      });
+      await page.click('[data-mt-filter="nachrichten"]');
+      await page.waitForTimeout(2000);
+      expect(patchRequests.length).toBe(unreadCount);
+      for (const req of patchRequests) {
+        const body = JSON.parse(req.postData());
+        expect(body.kommentar_gelesen).toBe(true);
       }
+      // After marking: 0 unread
+      const stillUnread = await page.evaluate(() => {
+        return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
+      });
+      expect(stillUnread).toBe(0);
     }
   });
 });

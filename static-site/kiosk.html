@@ -1215,6 +1215,12 @@ var K = (function(){
       groupMap[groupKey].orders.push(o);
     });
 
+    // Remember which slot groups were manually opened/collapsed
+    var prevOpen = {};
+    document.querySelectorAll('.k-slot-group').forEach(function(el){
+      if(el.id) prevOpen[el.id] = !el.classList.contains('collapsed');
+    });
+
     var html = '';
     groups.forEach(function(g,gi){
       var gid = 'slotg-'+gi;
@@ -1226,8 +1232,9 @@ var K = (function(){
       if(sc[1]) badges.push('<span class="k-slot-badge sb-pack">'+luc('package',12)+' '+sc[1]+' Warten</span>');
       if(sc[2]) badges.push('<span class="k-slot-badge sb-wait">'+luc('bell',12)+' '+sc[2]+' Bereit</span>');
       var countLabel = badges.length ? badges.join(' ') : '<span class="k-slot-badge" style="color:#666">'+g.orders.length+' Bestellung'+(g.orders.length!==1?'en':'')+'</span>';
-      // Current shift: expanded + highlighted; others: collapsed
-      var cls = g.isCurrent ? 'k-slot-group k-slot-current' : 'k-slot-group collapsed';
+      // Restore previous state if available, else default: current=open, others=collapsed
+      var isOpen = gid in prevOpen ? prevOpen[gid] : g.isCurrent;
+      var cls = 'k-slot-group'+(g.isCurrent?' k-slot-current':'')+(isOpen?'':' collapsed');
       html += '<div class="'+cls+'" id="'+gid+'">';
       html += '<div class="k-slot-header" onclick="K.toggleSlotGroup(\''+gid+'\')">';
       html += '<span class="k-slot-arrow">▼</span> '+esc(g.label);
@@ -1269,7 +1276,7 @@ var K = (function(){
     var posPreview = posArr.slice(0,3).map(function(p){return p.bezeichnung||p.name||'?';});
     if(posCount>3) posPreview.push('+'+(posCount-3)+' weitere');
 
-    var html = '<div class="k-order '+stClass+(overdue?' k-order-overdue':'')+'" ondblclick="K.showOrderDetail(\''+o.id+'\')" style="cursor:pointer" title="Doppelklick für Details">';
+    var html = '<div class="k-order '+stClass+(overdue?' k-order-overdue':'')+'">';
     html += '<div class="k-order-info">';
     html += '<div class="k-order-top">';
     html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';
