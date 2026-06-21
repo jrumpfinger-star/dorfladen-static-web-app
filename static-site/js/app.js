@@ -388,6 +388,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         byDay[dc].push(g);
       });
       var todayIdx = new Date().getDay(); // 0=So, 1=Mo, ..., 6=Sa
+      var isWeekend = todayIdx === 0 || todayIdx === 6;
       var todayDc = 101000 + (todayIdx === 0 ? 6 : todayIdx - 1); // map to 101000-101006
       var currentHour = new Date().getHours();
       // Always show Mon-Fri (101000-101004)
@@ -398,8 +399,9 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         var dayMeals=byDay[dc]||[];
         var day=DAYS[dc]||'?';
         var grp=dIdx%2===0?'wp-grp-even':'wp-grp-odd';
-        var isToday=dc===todayDc;
-        var isPast=dc<todayDc;
+        // Am Wochenende zeigt API nächste Woche → kein Tag ist vergangen
+        var isToday=!isWeekend&&dc===todayDc;
+        var isPast=!isWeekend&&dc<todayDc;
         // Bestellschluss: heute bis 10:00, zukünftige Tage erlaubt, vergangene nicht
         var canOrder=isToday?(currentHour<10):(!isPast);
         var notice='';

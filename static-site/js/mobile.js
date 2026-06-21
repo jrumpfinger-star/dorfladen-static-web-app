@@ -238,6 +238,7 @@
 
   function renderWP(menu){
     var todayIdx=new Date().getDay();
+    var isWeekend=todayIdx===0||todayIdx===6;
     var currentHour=new Date().getHours();
     var kwEl=document.getElementById('mob-wp-kw');
     if(kwEl) kwEl.textContent='Kalenderwoche '+getKW();
@@ -245,8 +246,9 @@
     if(!container) return;
     var html='';
     for(var i=1;i<=5;i++){
-      var isToday=i===todayIdx;
-      var isPast=i<todayIdx;
+      // Am Wochenende zeigt API nächste Woche → kein Tag ist vergangen
+      var isToday=!isWeekend&&i===todayIdx;
+      var isPast=!isWeekend&&i<todayIdx;
       // Bestellschluss: heute bis 10:00, zukünftige Tage erlaubt, vergangene nicht
       var canOrder=isToday?(currentHour<10):(!isPast);
       var dayData=menu[i]||[];
