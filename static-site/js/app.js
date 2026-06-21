@@ -427,7 +427,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
             var orderLink='/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(g.id||'')+'&gericht='+encodeURIComponent(g.gericht)+'&preis='+(g.preis||0)+'&datum='+encodeURIComponent(g.datum||'')+'&tag='+encodeURIComponent(DAYS[dc]||'');
             html+='<td class="wp-dish wp-dish-a">'+esc(g.gericht)+'</td>';
             var orderBtn='';
-            if(canOrder) orderBtn=' <a href="'+orderLink+'" class="feature-mittagstisch" style="display:inline-block;margin-left:6px;padding:3px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;vertical-align:middle" title="Jetzt bestellen">\uD83C\uDF7D</a>';
+            if(canOrder) orderBtn=' <a href="'+orderLink+'" class="feature-mittagstisch wp-order-btn" title="Jetzt bestellen"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Bestellen</a>';
             html+='<td class="wp-price wp-price-a">'+price+orderBtn+'</td></tr>';
           });
         }

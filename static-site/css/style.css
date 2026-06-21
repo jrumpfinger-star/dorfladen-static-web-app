@@ -318,6 +318,9 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .wp-dish-a{color:#1a1a1a}
 .wp-price{text-align:right;white-space:nowrap;font-weight:600;color:#2d7a5e;font-size:.92rem}
 .wp-price-a{color:#2d7a5e}
+.wp-order-btn{display:inline-flex;align-items:center;gap:3px;margin-left:8px;padding:5px 14px;background:#c0392b;color:#fff;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .2s;box-shadow:0 2px 6px rgba(192,57,43,.25)}
+.wp-order-btn:hover{background:#a93226;transform:translateY(-1px);box-shadow:0 4px 10px rgba(192,57,43,.35)}
+.wp-order-btn:active{transform:scale(.96)}
 .wp-notice{font-style:italic;color:#888}
 .wp-grp-even td{background:#fafafa}
 .wp-grp-odd td{background:#fff}
@@ -358,6 +361,7 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
   .wp-day{padding:0;font-size:.62rem;margin-bottom:-1px}
   .wp-dish{padding:0;font-size:.72rem;line-height:1.25}
   .wp-price{padding:0;text-align:left;font-size:.65rem;margin-bottom:2px}
+  .wp-order-btn{margin-left:0;margin-top:4px;padding:6px 16px;font-size:.72rem;display:inline-flex}
   .wp-day-first td{border-top:none}
   .wp-grp-even td,.wp-grp-odd td{padding:1px 0}
   .wp-footer{padding:4px 10px;font-size:.58rem}
