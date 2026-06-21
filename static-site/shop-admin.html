@@ -38,6 +38,13 @@
     .actions{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.note{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px}
     .pack-title{font-size:15px;font-weight:700;margin-bottom:6px}.pack-summary{font-size:12px;color:var(--muted);margin-bottom:6px}.pack-progress{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:6px 0 10px}.pack-progress div{height:100%;background:var(--green)}
     .toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:12px;padding:12px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none}.loading{padding:40px;text-align:center;color:var(--muted)}
+    .admin-tabs{display:flex;gap:0;background:#fff;border:1px solid var(--border);border-radius:14px 14px 0 0;overflow:hidden;margin-bottom:0}
+    .admin-tab{flex:1;padding:14px 16px;text-align:center;font-size:15px;font-weight:800;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;user-select:none;position:relative}
+    .admin-tab:hover{background:#f9fafb}
+    .admin-tab.active{border-bottom-color:var(--green);color:var(--green);background:#f0fdf4}
+    .admin-tab .admin-tab-badge{background:#f59e0b;color:#fff;font-size:11px;font-weight:800;padding:1px 8px;border-radius:10px;min-width:18px;display:none}
+    .admin-tab .admin-tab-badge.show{display:inline-block}
+    .admin-panel{display:none}.admin-panel.active{display:block}
     .scan-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center}
     .scan-overlay.open{display:flex}
     .scan-header{color:#fff;font-size:16px;font-weight:800;margin-bottom:12px;text-align:center}
@@ -110,24 +117,29 @@
   </div>
   <div class="scan-result" id="scan-result"><div class="sr-msg"></div><div class="sr-detail"></div></div>
   <div class="wrap">
-    <!-- ═══ Mittagstisch Sektion ═══ -->
-    <div id="mt-section" style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.03);margin-bottom:12px;overflow:hidden">
-      <div onclick="toggleMittag()" style="padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);background:#fefce8">
-        <span style="font-size:20px">🍽</span>
-        <span style="font-weight:800;font-size:15px;flex:1">Mittagstisch-Bestellungen</span>
-        <span id="mt-badge" style="background:#f59e0b;color:#fff;font-size:12px;font-weight:800;padding:2px 10px;border-radius:12px;display:none">0</span>
-        <span id="mt-toggle-icon" style="font-size:14px;color:var(--muted)">▼</span>
+    <!-- ═══ Haupt-Tab-Leiste ═══ -->
+    <div class="admin-tabs">
+      <div class="admin-tab active" data-admin-tab="shop" onclick="switchAdminTab('shop')">
+        🛒 Online-Shop
+        <span class="admin-tab-badge" id="badge-shop"></span>
       </div>
-      <div id="mt-body" style="display:none;padding:12px 16px">
-        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
-          <div style="display:flex;gap:6px" id="mt-stats"></div>
-          <div style="flex:1"></div>
-          <button class="btn small" onclick="mtShowNewOrder()" style="background:#fef3c7;border-color:#f59e0b;color:#92400e;font-weight:800">➕ Neue Bestellung</button>
-          <button class="btn small" onclick="loadMittagOrders()">🔄 Aktualisieren</button>
-          <a class="btn small" href="/kiosk" style="background:#f0fdf4;border-color:#2e7d4f;color:#2e7d4f">🏪 Kiosk öffnen</a>
-        </div>
-        <!-- Day tabs -->
-        <div id="mt-day-tabs" style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap"></div>
+      <div class="admin-tab" data-admin-tab="mittag" onclick="switchAdminTab('mittag')">
+        🍽 Mittagstisch
+        <span class="admin-tab-badge" id="badge-mittag"></span>
+      </div>
+    </div>
+
+    <!-- ═══ Mittagstisch Panel ═══ -->
+    <div class="admin-panel" id="panel-mittag" style="background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;box-shadow:0 2px 10px rgba(0,0,0,.03);margin-bottom:12px;padding:12px 16px">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;gap:6px" id="mt-stats"></div>
+        <div style="flex:1"></div>
+        <button class="btn small" onclick="mtShowNewOrder()" style="background:#fef3c7;border-color:#f59e0b;color:#92400e;font-weight:800">➕ Neue Bestellung</button>
+        <button class="btn small" onclick="loadMittagOrders()">🔄 Aktualisieren</button>
+        <a class="btn small" href="/kiosk" style="background:#f0fdf4;border-color:#2e7d4f;color:#2e7d4f">🏪 Kiosk öffnen</a>
+      </div>
+      <!-- Day tabs -->
+      <div id="mt-day-tabs" style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap"></div>
         <!-- Manual order form (hidden by default) -->
         <div id="mt-new-form" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:10px">
           <div style="font-weight:800;font-size:13px;margin-bottom:8px">📝 Manuelle Bestellung erfassen</div>
@@ -184,13 +196,10 @@
           </div>
         </div>
         <div id="mt-orders" style="font-size:13px"><div style="color:var(--muted);text-align:center;padding:20px">Laden…</div></div>
-      </div>
     </div>
 
-    <!-- ═══ Shop-Bestellungen Header ═══ -->
-    <div style="font-weight:800;font-size:14px;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:8px">
-      <span style="font-size:18px">🛒</span> Online-Shop-Bestellungen
-    </div>
+    <!-- ═══ Online-Shop Panel ═══ -->
+    <div class="admin-panel active" id="panel-shop">
     <div class="grid">
       <div class="stat active" data-stat-filter="all"><div class="label">Bestellungen</div><div class="value" id="stat-count">-</div></div>
       <div class="stat open" data-stat-filter="open"><div class="label">Offen</div><div class="value" id="stat-open">-</div></div>
@@ -217,6 +226,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /panel-shop -->
   </div>
   <div class="toast" id="toast"></div>
 <script>
@@ -314,7 +324,7 @@
     m.querySelector('.cd-ok').addEventListener('click',function(){close();onConfirm();});
   }
   function statusBadge(s){return '<span class="status s'+s+'">'+esc(statusLabels[s]||'Unbekannt')+'</span>';}
-  function setStats(summary){summary=summary||{};document.getElementById('stat-count').textContent=summary.count||0;document.getElementById('stat-open').textContent=summary.open||0;document.getElementById('stat-ready').textContent=summary.ready||0;}
+  function setStats(summary){summary=summary||{};document.getElementById('stat-count').textContent=summary.count||0;document.getElementById('stat-open').textContent=summary.open||0;document.getElementById('stat-ready').textContent=summary.ready||0;var ob=document.getElementById('badge-shop');var oc=(summary.open||0);if(oc>0){ob.textContent=oc;ob.classList.add('show');}else{ob.classList.remove('show');}}
   function fmtDateNice(raw){
     if(!raw) return '–';
     try{var d=new Date(raw.length===10?raw+'T12:00:00':raw);if(isNaN(d.getTime()))return raw;var tage=['So','Mo','Di','Mi','Do','Fr','Sa'];return tage[d.getDay()]+', '+d.getDate()+'.'+(d.getMonth()+1)+'.';}catch(e){return raw;}
@@ -1018,7 +1028,7 @@
 // ═══════════════════════════════════════════
 //  MITTAGSTISCH in Shop Admin
 // ═══════════════════════════════════════════
-var _mtOpen = false;
+var _mtInitialized = false;
 var _mtSelectedDate = '';
 var _mtDays = [];
 var _mtWpDishes = []; // Wochenplan-Gerichte für Dropdown
@@ -1028,11 +1038,12 @@ function _fmtDate(d){ return d.getFullYear()+'-'+_pad(d.getMonth()+1)+'-'+_pad(d
 var _dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 var _dayNamesFull = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
 
-function toggleMittag(){
-  _mtOpen = !_mtOpen;
-  document.getElementById('mt-body').style.display = _mtOpen ? 'block' : 'none';
-  document.getElementById('mt-toggle-icon').textContent = _mtOpen ? '▲' : '▼';
-  if(_mtOpen){
+function switchAdminTab(tab){
+  document.querySelectorAll('.admin-tab').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-admin-tab')===tab); });
+  document.querySelectorAll('.admin-panel').forEach(function(p){ p.classList.toggle('active', p.id==='panel-'+tab); });
+  if(tab==='mittag' && !_mtInitialized){
+    _mtInitialized = true;
+    _mtSelectedDate = _fmtDate(new Date());
     mtBuildDayTabs();
     mtLoadWochenplan();
   }
@@ -1130,8 +1141,8 @@ function loadMittagOrders(){
       var todayStr = _fmtDate(new Date());
       if(date === todayStr){
         var openCount = orders.filter(function(o){ return o.status === 0 || o.status === 1; }).length;
-        var badge = document.getElementById('mt-badge');
-        if(openCount > 0){ badge.textContent = openCount; badge.style.display = ''; } else { badge.style.display = 'none'; }
+        var badge = document.getElementById('badge-mittag');
+        if(openCount > 0){ badge.textContent = openCount; badge.classList.add('show'); } else { badge.classList.remove('show'); }
       }
     })
     .catch(function(e){ document.getElementById('mt-orders').innerHTML='<div style="color:var(--red);padding:10px">'+e.message+'</div>'; });
@@ -1366,9 +1377,22 @@ function mtSubmitNewOrder(){
   .catch(function(e){ alert('Fehler: '+e.message); });
 }
 
-// Auto-load badge on page load (today only)
-_mtSelectedDate = _fmtDate(new Date());
-loadMittagOrders();
+// Pre-load Mittagstisch badge count (without full init)
+(function(){
+  var today = _fmtDate(new Date());
+  fetch('/api/lunch-order?datum='+today)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var orders = res.orders || [];
+      var open = orders.filter(function(o){ return o.dl_status !== 4; });
+      if(open.length > 0){
+        var b = document.getElementById('badge-mittag');
+        b.textContent = open.length;
+        b.classList.add('show');
+      }
+    })
+    .catch(function(){});
+})();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
 </body>
