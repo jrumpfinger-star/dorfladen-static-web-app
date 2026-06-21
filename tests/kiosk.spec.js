@@ -124,6 +124,58 @@ test.describe('Kiosk UI – Mittagstisch Tagesauswahl', () => {
     const heuteBtn = page.locator('#mittag-day-bar button', { hasText: 'Heute' });
     await expect(heuteBtn).not.toHaveClass(/active/);
   });
+
+  test('AK-UI-05e: Jeder Tages-Button liefert API-Daten und aktualisiert Anzeige', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    // Switch to Mittagstisch tab first
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForSelector('#mittag-day-bar button');
+    const dayButtons = page.locator('#mittag-day-bar button');
+    const count = await dayButtons.count();
+    expect(count).toBe(7);
+
+    for (let i = 0; i < count; i++) {
+      const btn = dayButtons.nth(i);
+      const label = (await btn.textContent()).trim();
+      const datum = await btn.getAttribute('data-datum');
+
+      // Intercept the API call for this date
+      const apiPromise = page.waitForResponse(
+        resp => resp.url().includes('/api/lunch-order') && resp.url().includes(`datum=${datum}`),
+        { timeout: 10000 }
+      );
+
+      await btn.click();
+
+      // Wait for API response
+      const apiResponse = await apiPromise;
+      expect(apiResponse.status(), `API für "${label}" (${datum}) sollte 200 liefern`).toBe(200);
+
+      const json = await apiResponse.json();
+      expect(json.success, `API für "${label}" (${datum}) sollte success=true sein`).toBe(true);
+      expect(Array.isArray(json.orders), `API für "${label}" (${datum}) sollte orders-Array liefern`).toBe(true);
+
+      // Verify the button is now active
+      await expect(btn).toHaveClass(/active/);
+
+      // Verify counts update – "Alle" count should match the API count
+      const alleCount = await page.locator('#mt-fc-alle').textContent();
+      expect(parseInt(alleCount), `"Alle" Zähler für "${label}" (${datum}) sollte ${json.orders.length} sein`).toBe(json.orders.length);
+
+      // If there are orders, verify they are rendered
+      if (json.orders.length > 0) {
+        const orderCards = page.locator('#mittag-orders .k-order');
+        // With filter 'offen' active, count may be less than total, so check total via 'alle' filter
+        // Click "Alle" filter to see all orders
+        await page.locator('#mittag-status-bar button[data-mt-filter="alle"]').click();
+        await page.waitForTimeout(300);
+        const visibleOrders = await page.locator('#mittag-orders .k-order').count();
+        expect(visibleOrders, `"${label}" (${datum}): ${json.orders.length} Bestellungen sollten angezeigt werden`).toBe(json.orders.length);
+        // Reset to 'offen' filter for next iteration
+        await page.locator('#mittag-status-bar button[data-mt-filter="offen"]').click();
+      }
+    }
+  });
 });
 
 test.describe('Kiosk UI – Stammkunden Formular', () => {

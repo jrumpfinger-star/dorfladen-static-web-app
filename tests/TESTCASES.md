@@ -438,6 +438,15 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 
 ---
 
+## T9.5 – Mittagstisch: Tages-Buttons API-Daten
+
+### T9.5.1 – Jeder Tages-Button liefert API-Daten
+- **Aktion:** Kiosk laden, Mittagstisch Tab öffnen, jeden der 7 Tages-Buttons klicken (Gestern bis Fr)
+- **Prüfung:** Für jeden Button: API-Response prüfen (Status 200, success=true, orders Array)
+- **Erwartung:** Kein 400/500-Fehler, "Alle"-Zähler = API-Anzahl, Bestellkarten werden gerendert
+
+---
+
 ## T10 – Kiosk: Slot-Header-Badges & Filterung
 
 ### T10.1 – Slot-Header-Badges lesbar (nicht gelb auf gelb)
