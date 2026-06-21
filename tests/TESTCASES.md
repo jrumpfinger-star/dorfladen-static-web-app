@@ -481,8 +481,8 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 |---|---|---|
 | T10.1 Badges lesbar | ✅ | Weiße Pillen, farbige Schrift, Labels "Warten"/"Bereit" |
 | T10.2 Default-Tab | ✅ | Online-Shop aktiv (data-tab=abhol, panel-abhol) |
-| T10.3 Filter-Zähler | ✅ | 16 Zu erledigen, 13 Überfällig, 10 Historie (alte raus) |
-| T10.4 Historie | ✅ | 10 alte Bestellungen in Historie |
+| T10.3 Filter-Zähler | ✅ | 3 Zu erledigen, 0 Überfällig, 23 Historie – alte komplett raus |
+| T10.4 Historie | ✅ | 23 alte Bestellungen in Historie, nur Morgen-Slots sichtbar |
 | T11.1 Shop-Admin Bestellungen | ✅ | 16 Bestellungen (vorher nur 3) |
 | T11.2 Shop-Admin Zähler | ✅ | 16 Bestellungen, 5 Offen, 11 Abholbereit |
 
