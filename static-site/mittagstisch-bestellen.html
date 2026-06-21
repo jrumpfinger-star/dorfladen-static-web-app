@@ -206,6 +206,7 @@
     <div class="success-nr" id="success-nr"></div>
     <p id="success-msg">Wir bestätigen Ihre Bestellung in Kürze per Push-Nachricht.</p>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <a class="success-btn" href="/bestellstatus" style="background:#2563eb">📋 Bestellstatus ansehen</a>
       <button class="success-btn" onclick="newOrder()">🍽 Weitere Bestellung</button>
       <a class="success-btn" href="/" style="background:#6b7280">← Zur Startseite</a>
     </div>
@@ -446,6 +447,8 @@
         document.getElementById('success-msg').textContent = 
           'Wir bestätigen Ihre Bestellung in Kürze.' + 
           (mitnehmen ? ' (Zum Mitnehmen)' : ' (Verzehr im Laden)');
+        // Save for bestellstatus page auto-login
+        try{ localStorage.setItem('bs_nr', res.bestellnummer||''); localStorage.setItem('bs_email', email); }catch(e){}
         document.getElementById('success-overlay').classList.add('show');
       } else {
         errEl.innerHTML = (res.errors || [res.error || 'Fehler']).join('<br>');

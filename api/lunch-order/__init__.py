@@ -91,6 +91,8 @@ def _serialize(item):
         "anmerkung": item.get("dl_anmerkung", ""),
         "status": item.get("dl_status", STATUS_NEU),
         "bestaetigung_text": item.get("dl_bestaetigung_text", ""),
+        "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
+        "personal_antwort": item.get("dl_personal_antwort", ""),
         "bestellt_am": item.get("createdon", ""),
         "wochentag_label": item.get("dl_wochentag_label", ""),
         "quelle": item.get("dl_quelle", QUELLE_ONLINE),
@@ -100,7 +102,7 @@ def _serialize(item):
     }
 
 
-def _send_push(email, title, body_text, tag="lunch"):
+def _send_push(email, title, body_text, tag="lunch", bestellnr=""):
     """Best-effort push notification to customer."""
     try:
         # Use SWA_HOSTNAME for the public URL, fallback to WEBSITE_HOSTNAME
@@ -109,10 +111,13 @@ def _send_push(email, title, body_text, tag="lunch"):
             swa_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
         protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
         internal_url = f"{protocol}://{swa_host}/api/push-send"
+        push_url = "/bestellstatus"
+        if bestellnr:
+            push_url += f"?nr={bestellnr}"
         payload = {
             "title": title,
             "message": body_text,
-            "url": "/mittagstisch-bestellen.html",
+            "url": push_url,
             "target_email": email,
             "tag": tag,
         }
@@ -249,6 +254,31 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=404, headers=get_cors_headers(),
                 )
 
+            # Lookup by bestellnummer (for customer status page)
+            nr_filter = req.params.get("nr", "").strip()
+            email_filter = req.params.get("email", "").strip().lower()
+            if nr_filter and email_filter:
+                lookup_url = (
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+                    f"?$filter=dl_bestellnummer eq '{nr_filter}' and dl_email eq '{email_filter}'"
+                    f"&$top=1"
+                )
+                lr = requests.get(lookup_url, headers=headers, timeout=30)
+                if lr.status_code == 200:
+                    items = lr.json().get("value", [])
+                    if items:
+                        o = _serialize(items[0])
+                        o["bestellnummer"] = items[0].get("dl_bestellnummer", "")
+                        o["mitnehmen"] = items[0].get("dl_mitnehmen", False)
+                        return func.HttpResponse(
+                            json.dumps({"success": True, "order": o}, ensure_ascii=False),
+                            status_code=200, headers=get_cors_headers(),
+                        )
+                return func.HttpResponse(
+                    json.dumps({"success": False, "error": "Bestellung nicht gefunden"}),
+                    status_code=404, headers=get_cors_headers(),
+                )
+
             # List: filter by date (default: today)
             filter_date = req.params.get("datum", "")
             status_filter = req.params.get("status", "")
@@ -264,7 +294,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
             params = {
-                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,createdon",
+                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,createdon",
                 "$orderby": "createdon desc",
                 "$top": "200",
             }
@@ -314,6 +344,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if new_anmerkung is not None:
                 patch_data["dl_anmerkung"] = new_anmerkung.strip()
 
+            # Customer comment
+            kunde_kommentar = body.get("kunde_kommentar")
+            if kunde_kommentar is not None:
+                patch_data["dl_kunde_kommentar"] = kunde_kommentar.strip()
+            # Staff reply
+            personal_antwort = body.get("personal_antwort")
+            if personal_antwort is not None:
+                patch_data["dl_personal_antwort"] = personal_antwort.strip()
+
             if not patch_data:
                 return func.HttpResponse(
                     json.dumps({"success": False, "error": "Keine Änderung angegeben"}, ensure_ascii=False),
@@ -337,14 +376,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         push_body = f"Ihre Bestellung ({gericht_name}) wurde bestätigt!"
                         if bestaetigung_text:
                             push_body += f" {bestaetigung_text}"
-                        _send_push(customer_email, "✅ Mittagessen bestätigt", push_body, f"lunch-{bestellnr}")
+                        _send_push(customer_email, "✅ Mittagessen bestätigt", push_body, f"lunch-{bestellnr}", bestellnr)
                     elif int(new_status) == STATUS_STORNIERT:
                         push_body = f"Ihre Bestellung ({gericht_name}) wurde leider storniert."
                         if bestaetigung_text:
                             push_body += f" {bestaetigung_text}"
-                        _send_push(customer_email, "❌ Bestellung storniert", push_body, f"lunch-{bestellnr}")
+                        _send_push(customer_email, "❌ Bestellung storniert", push_body, f"lunch-{bestellnr}", bestellnr)
                     elif int(new_status) == STATUS_ABGEHOLT:
-                        _send_push(customer_email, "🍽 Guten Appetit!", f"Ihr Mittagessen ({gericht_name}) wurde abgeholt. Guten Appetit!", f"lunch-{bestellnr}")
+                        _send_push(customer_email, "🍽 Guten Appetit!", f"Ihr Mittagessen ({gericht_name}) wurde abgeholt. Guten Appetit!", f"lunch-{bestellnr}", bestellnr)
+
+                # Push to customer when staff sends a reply
+                if customer_email and personal_antwort:
+                    _send_push(customer_email, "💬 Nachricht vom Dorfladen", personal_antwort, f"lunch-reply-{bestellnr}", bestellnr)
 
                 return func.HttpResponse(
                     json.dumps({"success": True, "message": "Status aktualisiert"}, ensure_ascii=False),

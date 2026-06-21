@@ -164,6 +164,7 @@
     .k-slot-current .k-slot-header{background:linear-gradient(90deg,#16a34a,#22c55e)}
     .k-slot-now{background:rgba(255,255,255,.35);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:3px;animation:nowPulse 2s ease-in-out infinite}
     @keyframes nowPulse{0%,100%{opacity:1}50%{opacity:.65}}
+    @keyframes kPulse{0%,100%{background-color:#eff6ff}50%{background-color:#dbeafe}}
 
     /* ═══ Pack modal (inline) ═══ */
     .k-modal.k-modal-lg{max-width:720px}
@@ -610,6 +611,8 @@ var K = (function(){
       html += '</div>';
       if(o.anmerkung) html += '<div class="k-order-note">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
       if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
+      if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+      if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
       html += '</div>';
 
       // Qty
@@ -622,6 +625,7 @@ var K = (function(){
         html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
       } else if(o.status===1){
         html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">'+luc('package-check',16)+' Abgeholt</button>';
+        if(o.kunde_kommentar) html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc('reply',16)+' Antworten</button>';
       } else if(o.status===3){
         html += luc('check-circle',20);
       }
@@ -635,6 +639,18 @@ var K = (function(){
         html += '<div style="display:flex;gap:8px;margin-top:8px">';
         html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;padding:10px" onclick="K.confirmOrder(\''+o.id+'\')">' +luc('check-circle',16)+' Jetzt bestätigen</button>';
         html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideConfirmDialog(\''+o.id+'\')">Abbrechen</button>';
+        html += '</div></div>';
+      }
+      // Reply dialog – for orders with customer comments (any non-cancelled status)
+      if(o.kunde_kommentar && o.status!==2){
+        html += '<div class="k-confirm-dialog" id="rpl-'+o.id+'" style="display:none;padding:12px 16px;background:#eff6ff;border:2px solid #93c5fd;border-radius:0 0 12px 12px;margin-top:-6px">';
+        html += '<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+luc('message-circle',14)+' Kunde schreibt:</div>';
+        html += '<div style="font-size:13px;color:#374151;margin-bottom:8px;padding:8px;background:#fff;border-radius:8px">'+esc(o.kunde_kommentar)+'</div>';
+        html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('reply',14)+' Antwort an Kunde (Push-Nachricht)</div>';
+        html += '<input type="text" id="rpt-'+o.id+'" placeholder="Ihre Antwort…" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
+        html += '<div style="display:flex;gap:8px;margin-top:8px">';
+        html += '<button class="k-btn k-btn-sm" style="flex:1;padding:10px;background:#2563eb;color:#fff" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',16)+' Senden</button>';
+        html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideReplyDialog(\''+o.id+'\')">Abbrechen</button>';
         html += '</div></div>';
       }
     });
@@ -675,6 +691,36 @@ var K = (function(){
   function confirmOrder(id){
     var text = (document.getElementById('cft-'+id)||{}).value || '';
     setStatus(id, 1, text.trim());
+  }
+
+  function showReplyDialog(id){
+    var el = document.getElementById('rpl-'+id);
+    if(el){ el.style.display='block'; var inp=document.getElementById('rpt-'+id); if(inp) inp.focus(); }
+  }
+
+  function hideReplyDialog(id){
+    var el = document.getElementById('rpl-'+id);
+    if(el) el.style.display='none';
+  }
+
+  function sendReply(id){
+    var text = (document.getElementById('rpt-'+id)||{}).value || '';
+    if(!text.trim()){ toast('⚠️ Bitte Antwort eingeben'); return; }
+    fetch(API+'/lunch-order/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({personal_antwort: text.trim()})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('✅ Antwort gesendet (Push an Kunde)');
+        loadOrders();
+      } else {
+        toast('Fehler: '+(res.error||''));
+      }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
   }
 
   // ══════════════════════════════════════════════════
@@ -1778,6 +1824,9 @@ var K = (function(){
     showConfirmDialog: showConfirmDialog,
     hideConfirmDialog: hideConfirmDialog,
     confirmOrder: confirmOrder,
+    showReplyDialog: showReplyDialog,
+    hideReplyDialog: hideReplyDialog,
+    sendReply: sendReply,
     openNewOrder: openNewOrder,
     pickDish: pickDish,
     noQty: noQtyChange,

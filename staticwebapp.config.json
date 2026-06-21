@@ -83,12 +83,24 @@
       "rewrite": "/mittagstisch-bestellen.html"
     },
     {
+      "route": "/bestellstatus",
+      "rewrite": "/bestellstatus.html"
+    },
+    {
       "route": "/lunch-admin",
       "rewrite": "/lunch-admin.html"
     },
     {
       "route": "/kiosk",
       "rewrite": "/kiosk.html"
+    },
+    {
+      "route": "/agb",
+      "rewrite": "/agb.html"
+    },
+    {
+      "route": "/widerrufsrecht",
+      "rewrite": "/widerrufsrecht.html"
     }
   ],
   "navigationFallback": {
