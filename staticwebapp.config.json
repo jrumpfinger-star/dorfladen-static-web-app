@@ -77,6 +77,14 @@
     {
       "route": "/portal",
       "rewrite": "/portal.html"
+    },
+    {
+      "route": "/mittagstisch-bestellen",
+      "rewrite": "/mittagstisch-bestellen.html"
+    },
+    {
+      "route": "/lunch-admin",
+      "rewrite": "/lunch-admin.html"
     }
   ],
   "navigationFallback": {

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mittagessen bestellen – Dorfladen Oberornau</title>
+  <meta name="description" content="Mittagessen bestellen beim Dorfladen Oberornau. Zum Mitnehmen oder Verzehr im Laden.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2d5016">
+  <link rel="apple-touch-icon" href="/images/icon-192.png">
+  <meta property="og:title" content="Mittagessen bestellen – Dorfladen Oberornau">
+  <meta property="og:description" content="Jetzt Mittagessen vorbestellen!">
+  <meta property="og:type" content="website">
+  <style>
+    :root{--c-pri:#2d5016;--c-acc:#bd8b5c;--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--c-green:#2e7d4f;--c-red:#dc2626;--radius:14px}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);min-height:100vh}
+
+    .header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:16px 20px;text-align:center;position:sticky;top:0;z-index:100}
+    .header h1{font-size:18px;font-weight:800;margin-bottom:2px}
+    .header small{font-size:12px;opacity:.85}
+
+    .container{max-width:520px;margin:0 auto;padding:16px}
+
+    /* Gericht-Karte */
+    .dish-card{background:var(--c-card);border-radius:var(--radius);box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;margin-bottom:16px}
+    .dish-header{background:linear-gradient(135deg,#fef3c7,#fef9c3);padding:20px;border-bottom:1px solid #f59e0b33}
+    .dish-day{font-size:12px;font-weight:700;text-transform:uppercase;color:#92400e;letter-spacing:.5px;margin-bottom:4px}
+    .dish-name{font-size:20px;font-weight:800;color:var(--c-text);line-height:1.3}
+    .dish-price{font-size:18px;font-weight:700;color:var(--c-green);margin-top:8px}
+    .dish-eco{font-size:12px;color:var(--c-muted);margin-top:4px}
+
+    /* Menge */
+    .qty-row{display:flex;align-items:center;justify-content:center;gap:16px;padding:20px}
+    .qty-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--c-green);background:#fff;color:var(--c-green);font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .qty-btn:hover{background:var(--c-green);color:#fff}
+    .qty-btn:disabled{opacity:.3;cursor:not-allowed}
+    .qty-val{font-size:28px;font-weight:800;min-width:48px;text-align:center}
+    .qty-label{font-size:13px;color:var(--c-muted);text-align:center;margin-top:-8px;padding-bottom:12px}
+    .total-row{text-align:center;font-size:15px;font-weight:600;color:var(--c-text);padding:0 20px 16px}
+    .total-price{font-size:22px;font-weight:800;color:var(--c-green)}
+
+    /* Option Mitnehmen */
+    .option-row{display:flex;align-items:center;gap:10px;padding:0 20px 16px;font-size:14px}
+    .option-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--c-green)}
+    .option-row label{cursor:pointer}
+
+    /* Anmerkung */
+    .note-wrap{padding:0 20px 16px}
+    .note-wrap textarea{width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;outline:none}
+    .note-wrap textarea:focus{border-color:var(--c-green)}
+    .note-wrap label{font-size:12px;color:var(--c-muted);margin-bottom:4px;display:block}
+
+    /* Kundendaten */
+    .form-card{background:var(--c-card);border-radius:var(--radius);box-shadow:0 2px 12px rgba(0,0,0,.08);padding:20px;margin-bottom:16px}
+    .form-card h3{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+    .field{margin-bottom:12px}
+    .field label{font-size:12px;font-weight:600;color:var(--c-muted);margin-bottom:4px;display:block}
+    .field input{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;outline:none}
+    .field input:focus{border-color:var(--c-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
+    .field-hint{font-size:11px;color:var(--c-muted);margin-top:2px}
+    .saved-badge{display:inline-block;font-size:11px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:6px;font-weight:600}
+
+    /* Submit */
+    .submit-btn{width:100%;padding:16px;background:var(--c-green);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:12px}
+    .submit-btn:hover{background:#256b41;transform:translateY(-1px);box-shadow:0 4px 12px rgba(46,125,79,.3)}
+    .submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+    .share-row{display:flex;gap:8px;margin-top:12px}
+    .share-btn{flex:1;padding:10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--c-text);text-decoration:none}
+    .share-btn:hover{background:#f3f4f6}
+    .share-btn.wa{background:#25d366;color:#fff;border-color:#25d366}
+    .share-btn.wa:hover{background:#1da851}
+
+    /* Errors */
+    .error-box{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;display:none}
+
+    /* Success */
+    .success-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+    .success-overlay.show{display:flex}
+    .success-card{background:#fff;border-radius:20px;max-width:420px;width:100%;padding:32px 24px;text-align:center;animation:popIn .3s ease}
+    @keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .success-icon{font-size:56px;margin-bottom:12px}
+    .success-card h2{font-size:20px;margin-bottom:8px;color:var(--c-green)}
+    .success-card p{font-size:14px;color:var(--c-muted);line-height:1.5;margin-bottom:16px}
+    .success-nr{font-size:18px;font-weight:800;color:var(--c-text);background:#f0fdf4;padding:8px 16px;border-radius:10px;display:inline-block;margin-bottom:16px}
+    .success-btn{display:inline-block;padding:12px 28px;background:var(--c-green);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none}
+
+    /* Wochenplan-Übersicht */
+    .menu-overview{background:var(--c-card);border-radius:var(--radius);box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:16px;overflow:hidden}
+    .menu-overview h3{font-size:15px;font-weight:700;padding:16px 20px 8px;color:var(--c-text)}
+    .menu-item{display:flex;align-items:center;padding:12px 20px;border-top:1px solid #f3f4f6;cursor:pointer;transition:background .15s;gap:12px}
+    .menu-item:hover{background:#f0fdf4}
+    .menu-item.selected{background:#dcfce7;border-left:3px solid var(--c-green)}
+    .menu-item-day{font-size:11px;font-weight:700;color:var(--c-acc);text-transform:uppercase;min-width:24px}
+    .menu-item-dish{flex:1;font-size:14px;font-weight:500}
+    .menu-item-price{font-size:14px;font-weight:700;color:var(--c-green);white-space:nowrap}
+    .menu-day-header{padding:8px 20px 4px;font-size:12px;font-weight:800;color:var(--c-acc);text-transform:uppercase;border-top:1px solid #f3f4f6;background:#fefce8}
+    .menu-day-header:first-child{border-top:none}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:999;display:none;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+
+    .footer{text-align:center;padding:20px;font-size:12px;color:var(--c-muted)}
+    .footer a{color:var(--c-green);text-decoration:none}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🍽 Mittagessen bestellen</h1>
+  <small>Dorfladen Oberornau · Dorfplatz 1</small>
+</div>
+
+<div class="container">
+
+  <!-- Wenn kein Gericht per URL: Wochenplan anzeigen -->
+  <div id="menu-section" style="display:none">
+    <div class="menu-overview">
+      <h3>📋 Mittagstisch diese Woche</h3>
+      <div id="menu-list"></div>
+    </div>
+  </div>
+
+  <!-- Gericht-Karte -->
+  <div id="dish-section" style="display:none">
+    <div class="dish-card">
+      <div class="dish-header">
+        <div class="dish-day" id="dish-day"></div>
+        <div class="dish-name" id="dish-name"></div>
+        <div class="dish-price" id="dish-price"></div>
+        <div class="dish-eco">🏷 0,50 € Öko-Rabatt mit eigenem Behälter</div>
+      </div>
+      <div class="qty-row">
+        <button class="qty-btn" id="qty-minus" type="button" onclick="changeQty(-1)">−</button>
+        <div class="qty-val" id="qty-val">1</div>
+        <button class="qty-btn" id="qty-plus" type="button" onclick="changeQty(1)">+</button>
+      </div>
+      <div class="qty-label">Anzahl Portionen</div>
+      <div class="total-row">Gesamt: <span class="total-price" id="total-price">0,00 €</span></div>
+      <div class="option-row">
+        <input type="checkbox" id="opt-mitnehmen">
+        <label for="opt-mitnehmen">📦 Zum Mitnehmen</label>
+      </div>
+      <div class="note-wrap">
+        <label for="note-input">Anmerkung (optional)</label>
+        <textarea id="note-input" placeholder="z.B. ohne Zwiebeln, extra Soße…"></textarea>
+      </div>
+
+      <div class="share-row" style="padding:0 20px 16px">
+        <a class="share-btn wa" id="share-wa" href="#" target="_blank" onclick="return shareWhatsApp()">📱 WhatsApp teilen</a>
+        <button class="share-btn" onclick="copyLink()">📋 Link kopieren</button>
+      </div>
+    </div>
+
+    <!-- Kundendaten -->
+    <div class="form-card">
+      <h3>👤 Ihre Daten <span class="saved-badge" id="saved-badge" style="display:none">✓ gespeichert</span></h3>
+      <div class="field">
+        <label for="cust-name">Name *</label>
+        <input type="text" id="cust-name" placeholder="Vor- und Nachname" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="cust-email">E-Mail *</label>
+        <input type="email" id="cust-email" placeholder="ihre@email.de" autocomplete="email">
+        <div class="field-hint">Für Bestätigung und Benachrichtigungen</div>
+      </div>
+      <div class="field">
+        <label for="cust-phone">Telefon (optional)</label>
+        <input type="tel" id="cust-phone" placeholder="08082 …" autocomplete="tel">
+      </div>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitOrder()">🍽 Jetzt bestellen</button>
+
+    <div class="footer">
+      <a href="/">← Zurück zum Dorfladen</a> · <a href="tel:+4980826229991">☎ 08082 622 99 91</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Success Overlay -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-card">
+    <div class="success-icon">🎉</div>
+    <h2>Bestellung aufgenommen!</h2>
+    <div class="success-nr" id="success-nr"></div>
+    <p id="success-msg">Wir bestätigen Ihre Bestellung in Kürze per Push-Nachricht.</p>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="success-btn" onclick="newOrder()">🍽 Weitere Bestellung</button>
+      <a class="success-btn" href="/" style="background:#6b7280">← Zur Startseite</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var API = '/api';
+  var qty = 1;
+  var selectedDish = null; // {id, gericht, preis, datum, wochentag_label}
+  var DAY_LABELS = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa'};
+  var DAY_FULL = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag',101005:'Samstag'};
+
+  // ── Persist customer data ──
+  function loadCustomer(){
+    try{
+      var d = JSON.parse(localStorage.getItem('dl_lunch_customer')||'{}');
+      if(d.name) document.getElementById('cust-name').value = d.name;
+      if(d.email) document.getElementById('cust-email').value = d.email;
+      if(d.phone) document.getElementById('cust-phone').value = d.phone;
+      if(d.name || d.email) document.getElementById('saved-badge').style.display='';
+    }catch(e){}
+  }
+  function saveCustomer(){
+    var d = {
+      name: document.getElementById('cust-name').value.trim(),
+      email: document.getElementById('cust-email').value.trim(),
+      phone: document.getElementById('cust-phone').value.trim()
+    };
+    localStorage.setItem('dl_lunch_customer', JSON.stringify(d));
+  }
+
+  // ── Parse URL params ──
+  var params = new URLSearchParams(window.location.search);
+  var paramId = params.get('gericht_id') || params.get('id') || '';
+  var paramGericht = params.get('gericht') || '';
+  var paramPreis = parseFloat(params.get('preis') || '0');
+  var paramDatum = params.get('datum') || '';
+  var paramTag = params.get('tag') || '';
+
+  // ── Load Wochenplan ──
+  function loadMenu(){
+    fetch(API+'/wochenplan')
+      .then(function(r){return r.json();})
+      .then(function(data){
+        var items = (data.data || []).filter(function(m){return m.dl_gericht && m.dl_preis;});
+        if(items.length===0){
+          document.getElementById('menu-section').style.display='';
+          document.getElementById('menu-list').innerHTML='<div style="padding:20px;text-align:center;color:#888">Kein aktueller Mittagstisch verfügbar.</div>';
+          return;
+        }
+
+        // If gericht_id in URL, find & select it
+        if(paramId){
+          var found = items.find(function(m){return m.dl_wochenplanid===paramId;});
+          if(found){
+            selectDish({
+              id: found.dl_wochenplanid,
+              gericht: found.dl_gericht,
+              preis: found.dl_preis,
+              datum: found.dl_datum || '',
+              wochentag: found.dl_wochentag,
+              wochentag_label: DAY_FULL[found.dl_wochentag]||''
+            });
+            return;
+          }
+        }
+
+        // If gericht name in URL (fallback for permanent links)
+        if(paramGericht){
+          var found2 = items.find(function(m){return m.dl_gericht.toLowerCase()===paramGericht.toLowerCase();});
+          if(found2){
+            selectDish({
+              id: found2.dl_wochenplanid,
+              gericht: found2.dl_gericht,
+              preis: found2.dl_preis || paramPreis,
+              datum: found2.dl_datum || paramDatum,
+              wochentag: found2.dl_wochentag,
+              wochentag_label: DAY_FULL[found2.dl_wochentag]||paramTag
+            });
+            return;
+          }
+        }
+
+        // Show full menu to pick from
+        renderMenuList(items);
+      })
+      .catch(function(){
+        // If params provided, use them directly
+        if(paramGericht && paramPreis){
+          selectDish({id: paramId, gericht: paramGericht, preis: paramPreis, datum: paramDatum, wochentag_label: paramTag});
+        } else {
+          document.getElementById('menu-section').style.display='';
+          document.getElementById('menu-list').innerHTML='<div style="padding:20px;text-align:center;color:#888">Fehler beim Laden des Mittagstischs.</div>';
+        }
+      });
+  }
+
+  function renderMenuList(items){
+    document.getElementById('menu-section').style.display='';
+    var byDay = {};
+    items.forEach(function(m){
+      var dc = m.dl_wochentag;
+      if(!byDay[dc]) byDay[dc]=[];
+      byDay[dc].push(m);
+    });
+    var weekDays = [101000,101001,101002,101003,101004,101005];
+    var html = '';
+    weekDays.forEach(function(dc){
+      var dayMeals = byDay[dc] || [];
+      if(dayMeals.length===0) return;
+      html += '<div class="menu-day-header">' + (DAY_FULL[dc]||'?') + '</div>';
+      dayMeals.forEach(function(m){
+        var p = m.dl_preis ? (m.dl_preis.toFixed(2).replace('.',',')+' €') : '';
+        html += '<div class="menu-item" onclick="window._selectFromMenu(\'' + m.dl_wochenplanid + '\')">';
+        html += '<div class="menu-item-dish">' + esc(m.dl_gericht) + '</div>';
+        html += '<div class="menu-item-price">' + p + '</div>';
+        html += '</div>';
+      });
+    });
+    document.getElementById('menu-list').innerHTML = html;
+
+    // Store for selection
+    window._menuItems = items;
+    window._selectFromMenu = function(id){
+      var m = items.find(function(x){return x.dl_wochenplanid===id;});
+      if(m) selectDish({
+        id: m.dl_wochenplanid,
+        gericht: m.dl_gericht,
+        preis: m.dl_preis,
+        datum: m.dl_datum || '',
+        wochentag: m.dl_wochentag,
+        wochentag_label: DAY_FULL[m.dl_wochentag]||''
+      });
+    };
+  }
+
+  function selectDish(dish){
+    selectedDish = dish;
+    qty = 1;
+    document.getElementById('menu-section').style.display='none';
+    document.getElementById('dish-section').style.display='';
+    document.getElementById('dish-day').textContent = dish.wochentag_label || '';
+    document.getElementById('dish-name').textContent = dish.gericht;
+    document.getElementById('dish-price').textContent = dish.preis ? (dish.preis.toFixed(2).replace('.',',')+' € pro Portion') : '';
+    updateQtyUI();
+
+    // Update page title + OG
+    document.title = dish.gericht + ' bestellen – Dorfladen Oberornau';
+
+    // Register push if possible
+    registerPush();
+  }
+
+  window.changeQty = function(d){
+    qty = Math.max(1, Math.min(20, qty + d));
+    updateQtyUI();
+  };
+
+  function updateQtyUI(){
+    document.getElementById('qty-val').textContent = qty;
+    document.getElementById('qty-minus').disabled = qty <= 1;
+    var total = selectedDish ? (selectedDish.preis * qty) : 0;
+    document.getElementById('total-price').textContent = total.toFixed(2).replace('.',',') + ' €';
+  }
+
+  // ── Submit ──
+  window.submitOrder = function(){
+    var errEl = document.getElementById('error-box');
+    var name = document.getElementById('cust-name').value.trim();
+    var email = document.getElementById('cust-email').value.trim();
+    var phone = document.getElementById('cust-phone').value.trim();
+    var note = document.getElementById('note-input').value.trim();
+    var mitnehmen = document.getElementById('opt-mitnehmen').checked;
+
+    var errors = [];
+    if(!name) errors.push('Bitte Name eingeben.');
+    if(!email) errors.push('Bitte E-Mail eingeben.');
+    if(!selectedDish) errors.push('Kein Gericht ausgewählt.');
+    if(errors.length){
+      errEl.innerHTML = errors.join('<br>');
+      errEl.style.display='';
+      return;
+    }
+    errEl.style.display='none';
+
+    saveCustomer();
+
+    var btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Wird gesendet…';
+
+    fetch(API+'/lunch-order',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name: name,
+        email: email,
+        telefon: phone,
+        gericht: selectedDish.gericht,
+        gericht_id: selectedDish.id || '',
+        menge: qty,
+        preis: selectedDish.preis || 0,
+        datum: selectedDish.datum || '',
+        anmerkung: note,
+        wochentag_label: selectedDish.wochentag_label || '',
+        mitnehmen: mitnehmen
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      btn.disabled = false;
+      btn.textContent = '🍽 Jetzt bestellen';
+      if(res.success){
+        document.getElementById('success-nr').textContent = res.bestellnummer || '';
+        document.getElementById('success-msg').textContent = 
+          'Wir bestätigen Ihre Bestellung in Kürze.' + 
+          (mitnehmen ? ' (Zum Mitnehmen)' : ' (Verzehr im Laden)');
+        document.getElementById('success-overlay').classList.add('show');
+      } else {
+        errEl.innerHTML = (res.errors || [res.error || 'Fehler']).join('<br>');
+        errEl.style.display='';
+      }
+    })
+    .catch(function(e){
+      btn.disabled = false;
+      btn.textContent = '🍽 Jetzt bestellen';
+      errEl.textContent = 'Verbindungsfehler: ' + e.message;
+      errEl.style.display='';
+    });
+  };
+
+  window.newOrder = function(){
+    document.getElementById('success-overlay').classList.remove('show');
+    qty = 1;
+    updateQtyUI();
+    document.getElementById('note-input').value = '';
+    document.getElementById('opt-mitnehmen').checked = false;
+    // Show menu again to pick another dish
+    document.getElementById('dish-section').style.display='none';
+    loadMenu();
+  };
+
+  // ── Sharing ──
+  window.shareWhatsApp = function(){
+    if(!selectedDish) return false;
+    var url = buildShareLink();
+    var text = '🍽 ' + selectedDish.gericht + ' beim Dorfladen bestellen:\n' + url;
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+    return false;
+  };
+
+  window.copyLink = function(){
+    var url = buildShareLink();
+    navigator.clipboard.writeText(url).then(function(){
+      showToast('Link kopiert!');
+    }).catch(function(){
+      prompt('Link kopieren:', url);
+    });
+  };
+
+  function buildShareLink(){
+    if(!selectedDish) return window.location.href;
+    var base = window.location.origin + '/mittagstisch-bestellen.html';
+    var p = new URLSearchParams();
+    if(selectedDish.id) p.set('gericht_id', selectedDish.id);
+    p.set('gericht', selectedDish.gericht);
+    if(selectedDish.preis) p.set('preis', selectedDish.preis.toString());
+    if(selectedDish.datum) p.set('datum', selectedDish.datum);
+    if(selectedDish.wochentag_label) p.set('tag', selectedDish.wochentag_label);
+    return base + '?' + p.toString();
+  }
+
+  // ── Push registration (lightweight, no account needed) ──
+  function registerPush(){
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    var email = document.getElementById('cust-email').value.trim();
+    if(!email) return;
+    if(Notification.permission === 'denied') return;
+    
+    navigator.serviceWorker.ready.then(function(reg){
+      reg.pushManager.getSubscription().then(function(existing){
+        if(existing){
+          // Update with email
+          fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['mittagstisch']})});
+          return;
+        }
+        Notification.requestPermission().then(function(perm){
+          if(perm!=='granted') return;
+          fetch(API+'/push-vapid-key').then(function(r){return r.json();}).then(function(data){
+            if(!data.publicKey) return;
+            var raw=atob(data.publicKey.replace(/-/g,'+').replace(/_/g,'/'));
+            var arr=new Uint8Array(raw.length);
+            for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+            reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
+              fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['mittagstisch']})});
+            });
+          });
+        });
+      });
+    });
+  }
+
+  // ── Utils ──
+  function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function showToast(msg){
+    var t=document.getElementById('toast');
+    t.textContent=msg;t.style.display='block';
+    setTimeout(function(){t.style.display='none';},2500);
+  }
+  window.showToast = showToast;
+
+  // ── Init ──
+  loadCustomer();
+  loadMenu();
+
+  // Re-register push when email changes
+  document.getElementById('cust-email').addEventListener('blur', function(){
+    saveCustomer();
+    registerPush();
+  });
+
+  // Service Worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>

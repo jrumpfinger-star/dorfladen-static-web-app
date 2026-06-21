@@ -417,8 +417,9 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
             var price=g.preis?(g.preis.toFixed(2).replace('.',',')+' \u20AC'):'';
             html+='<tr class="'+cls+'">';
             html+='<td class="'+(isFirst?'wp-day':'wp-day-empty')+'">'+(isFirst?day:'')+'</td>';
+            var orderLink='/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(g.id||'')+'&gericht='+encodeURIComponent(g.gericht)+'&preis='+(g.preis||0)+'&datum='+encodeURIComponent(g.datum||'')+'&tag='+encodeURIComponent(DAYS[dc]||'');
             html+='<td class="wp-dish wp-dish-a">'+esc(g.gericht)+'</td>';
-            html+='<td class="wp-price wp-price-a">'+price+'</td></tr>';
+            html+='<td class="wp-price wp-price-a">'+price+' <a href="'+orderLink+'" style="display:inline-block;margin-left:6px;padding:3px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;vertical-align:middle" title="Jetzt bestellen">\uD83C\uDF7D</a></td></tr>';
           });
         }
       });
@@ -426,7 +427,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       html+='<div class="wp-footer"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>';
       html+='<span id="wp-oeko"><strong>0,50 \u20AC \u00D6ko-Rabatt</strong> mit eigenem Beh\u00E4lter</span>';
       html+='<span class="wp-hint" id="wp-phone">\u260E\uFE0F <a href="tel:+4980826229991">08082 622 99 91</a></span>';
-      html+='<span style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell">Gerne auch vorbestellen!</span>';
+      html+='<span style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell"><a href="/mittagstisch-bestellen.html" style="color:#c0392b;text-decoration:none">\uD83C\uDF7D Jetzt online vorbestellen!</a></span>';
       html+='</div>';
       document.getElementById('wp-body').innerHTML=html;
     })

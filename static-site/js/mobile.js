@@ -264,9 +264,11 @@
           if(isNotice&&!p){
             html+='<div class="mob-wp-day-menu" style="color:#888;font-style:italic">'+esc(d.name)+'</div>';
           }else{
-            html+='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">';
+            var oLink=d.id?('/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(d.id)+'&gericht='+encodeURIComponent(d.name)+'&preis='+parseFloat(String(d.price||'0').replace(',','.'))+'&datum='+encodeURIComponent(d.datum||'')+'&tag='+encodeURIComponent(wpDays[i]||'')):'';
+            html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">';
             html+='<div class="mob-wp-day-menu" style="flex:1'+(d.notice?';font-style:italic;color:#888':'')+'">'+esc(d.name)+'</div>';
             html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
+            if(oLink) html+='<a href="'+oLink+'" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
             html+='</div>';
           }
         });
@@ -326,7 +328,7 @@
         var wt=item.dl_wochentag;
         var label=item._dl_wochentag_label;
         var dIdx=wpDayMap[wt]||wpDayMap[(label||'').toLowerCase()]||wpDayMap[(String(wt)||'').toLowerCase()];
-        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||''),notice:item.dl_beschreibung||''});
+        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||''),notice:item.dl_beschreibung||'',id:item.dl_wochenplanid||item.id||'',datum:item.dl_datum||'',wochentag:wt});
       });
       renderWP(menu);
     }else{
