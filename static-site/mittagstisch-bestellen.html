@@ -433,7 +433,8 @@
         datum: selectedDish.datum || '',
         anmerkung: note,
         wochentag_label: selectedDish.wochentag_label || '',
-        mitnehmen: mitnehmen
+        mitnehmen: mitnehmen,
+        quelle: 0
       })
     })
     .then(function(r){return r.json();})

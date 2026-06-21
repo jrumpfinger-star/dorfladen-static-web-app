@@ -1171,7 +1171,7 @@ function loadMittagOrders(){
       // Badge: count open for today only
       var todayStr = _fmtDate(new Date());
       if(date === todayStr){
-        var openCount = orders.filter(function(o){ return o.status === 0 || o.status === 1; }).length;
+        var openCount = orders.filter(function(o){ return o.status === 0; }).length;
         var badge = document.getElementById('badge-mittag');
         if(openCount > 0){ badge.textContent = openCount; badge.classList.add('show'); } else { badge.classList.remove('show'); }
       }
@@ -1202,14 +1202,18 @@ function renderMittagStats(orders){
   var offen = neu + best;
   // Stats badges
   document.getElementById('mt-stats').innerHTML =
+    (neu>0?'<div style="background:#fee2e2;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;animation:pulse 1.5s infinite" onclick="mtSetFilter(\'neu\')">🔔 Neu: '+neu+'</div>':'')+
     '<div style="background:#fef3c7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer" onclick="mtSetFilter(\'open\')">🟡 Offen: '+offen+'</div>'+
+    '<div style="background:#dcfce7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer" onclick="mtSetFilter(\'confirmed\')">✅ Bestätigt: '+best+'</div>'+
     '<div style="background:#f3f4f6;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer" onclick="mtSetFilter(\'done\')">📦 Abgeholt: '+abg+'</div>'+
     '<div style="background:#e8f5e9;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">🍽 '+portionen+' Port.</div>'+
     (umsatz>0?'<div style="background:#f0fdf4;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">💰 '+umsatz.toFixed(2)+'€</div>':'');
   // Filter buttons
   document.getElementById('mt-filter-bar').innerHTML =
     '<button class="mt-filter-btn'+(_mtFilter==='all'?' active':'')+'" data-filter="all" onclick="mtSetFilter(\'all\')">📋 Alle<span class="mt-filter-count">'+orders.length+'</span></button>'+
+    (neu>0?'<button class="mt-filter-btn'+(_mtFilter==='neu'?' active':'')+'" data-filter="neu" onclick="mtSetFilter(\'neu\')" style="border-color:#ef4444">🔔 Neu<span class="mt-filter-count" style="background:#fee2e2;color:#dc2626">'+neu+'</span></button>':'')+
     '<button class="mt-filter-btn'+(_mtFilter==='open'?' active':'')+'" data-filter="open" onclick="mtSetFilter(\'open\')">🟡 Offen<span class="mt-filter-count">'+offen+'</span></button>'+
+    '<button class="mt-filter-btn'+(_mtFilter==='confirmed'?' active':'')+'" data-filter="confirmed" onclick="mtSetFilter(\'confirmed\')">✅ Bestätigt<span class="mt-filter-count">'+best+'</span></button>'+
     '<button class="mt-filter-btn'+(_mtFilter==='done'?' active':'')+'" data-filter="done" onclick="mtSetFilter(\'done\')">📦 Abgeholt<span class="mt-filter-count">'+abg+'</span></button>'+
     '<button class="mt-filter-btn'+(_mtFilter==='cancelled'?' active':'')+'" data-filter="cancelled" onclick="mtSetFilter(\'cancelled\')">❌ Storniert<span class="mt-filter-count">'+stor+'</span></button>';
   // Dish summary (only open)
@@ -1233,6 +1237,8 @@ function renderMittagStats(orders){
 
 function mtRenderFiltered(){
   var filtered = _mtAllOrders.filter(function(o){
+    if(_mtFilter==='neu') return o.status===0;
+    if(_mtFilter==='confirmed') return o.status===1;
     if(_mtFilter==='open') return o.status===0 || o.status===1;
     if(_mtFilter==='done') return o.status===3;
     if(_mtFilter==='cancelled') return o.status===2;
@@ -1275,7 +1281,9 @@ function renderMittagCards(orders){
     html += '<div class="mt-card-badges">';
     html += '<span class="mt-card-badge" style="background:'+(stBg[o.status]||'#f3f4f6')+';color:'+(stColors[o.status]||'#666')+'">'+(STATUS[o.status]||'?')+'</span>';
     if(o.mitnehmen) html += '<span class="mt-card-badge mt-badge-mitnehmen">📦 Mitn.</span>';
-    html += '<span class="mt-card-badge mt-badge-quelle">'+(SRC[o.quelle]||'🌐')+'</span>';
+    var srcBg = {0:'#dbeafe',1:'#fef3c7',2:'#f3e8ff'};
+    var srcFg = {0:'#1d4ed8',1:'#92400e',2:'#7c3aed'};
+    html += '<span class="mt-card-badge" style="background:'+(srcBg[o.quelle]||'#dbeafe')+';color:'+(srcFg[o.quelle]||'#1d4ed8')+'">'+(SRC[o.quelle]||'🌐')+' '+(SRC_LABEL[o.quelle]||'Online')+'</span>';
     html += '</div>';
     // Actions
     html += '<div class="mt-card-actions">';
@@ -1470,7 +1478,7 @@ function mtSubmitNewOrder(){
     .then(function(r){ return r.json(); })
     .then(function(res){
       var orders = res.orders || [];
-      var open = orders.filter(function(o){ return o.dl_status !== 4; });
+      var open = orders.filter(function(o){ return o.status === 0; });
       if(open.length > 0){
         var b = document.getElementById('badge-mittag');
         b.textContent = open.length;
