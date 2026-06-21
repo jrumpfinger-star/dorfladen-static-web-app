@@ -1170,6 +1170,7 @@
           localStorage.setItem('dl_shop_user',JSON.stringify(authUser));
           updateUserUI();hideAuth();showToast('Willkommen, '+authUser.vorname+'!');
           loadFavsFromServer();
+          registerShopPush();
           if(_pendingCheckout){_pendingCheckout=false;doCheckout();}
           else{ensurePreviousPill();loadPreviousArticles().then(function(){if(viewMode==='categories')showCategoryOverview();});}
         } else {
@@ -1897,6 +1898,44 @@
     .catch(function(e){
       document.getElementById('shop-loading').innerHTML='<p>Fehler: '+esc(e.message)+'</p>';
     });
+
+  // ── Push Notifications for order updates ──
+  function registerShopPush(){
+    if(!isLoggedIn()||!authUser||!authUser.email) return;
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)) return;
+    // Don't ask again if already subscribed for this email
+    var pushEmail=localStorage.getItem('dl_shop_push_email');
+    if(pushEmail===authUser.email) return;
+    navigator.serviceWorker.ready.then(function(reg){
+      // Check if already has a subscription
+      reg.pushManager.getSubscription().then(function(existing){
+        if(existing){
+          // Update existing subscription with email
+          fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:existing.toJSON(),email:authUser.email,categories:['bestellung']})})
+            .then(function(r){return r.json();})
+            .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',authUser.email);});
+          return;
+        }
+        // Request permission and subscribe
+        Notification.requestPermission().then(function(perm){
+          if(perm!=='granted') return;
+          fetch(API+'/push-vapid-key').then(function(r){return r.json();}).then(function(data){
+            if(!data.publicKey) return;
+            var raw=atob(data.publicKey.replace(/-/g,'+').replace(/_/g,'/'));
+            var arr=new Uint8Array(raw.length);
+            for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+            reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
+              fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),email:authUser.email,categories:['bestellung'],validate:true})})
+                .then(function(r){return r.json();})
+                .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',authUser.email);});
+            });
+          });
+        });
+      });
+    });
+  }
+  // Re-register push on page load if already logged in
+  if(isLoggedIn()) setTimeout(registerShopPush,3000);
 
   // ── Event Listeners ──
   document.getElementById('shop-cart-btn').addEventListener('click',function(){toggleCart(true);});

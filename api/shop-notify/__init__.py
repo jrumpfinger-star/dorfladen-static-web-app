@@ -496,20 +496,43 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         f"customer={kunde_email} subject={email_subject}"
     )
 
-    # ── Send push notification for 'ready' type ──
-    if notify_type == "ready":
+    # ── Send push notification to specific customer ──
+    push_messages = {
+        "confirmation": {
+            "title": "✅ Bestellung bestätigt",
+            "body": f"Ihre Bestellung {bestellnummer} wurde aufgenommen. Abholung: {abholdatum}.",
+        },
+        "ready": {
+            "title": "🏪 Bestellung abholbereit!",
+            "body": f"Ihre Bestellung {bestellnummer} liegt für Sie bereit. Abholung: {abholdatum} vormittags.",
+        },
+        "cancelled": {
+            "title": "❌ Bestellung storniert",
+            "body": f"Ihre Bestellung {bestellnummer} wurde storniert.",
+        },
+        "missing_items": {
+            "title": "ℹ️ Bestellung aktualisiert",
+            "body": f"Einige Artikel Ihrer Bestellung {bestellnummer} sind leider nicht verfügbar.",
+        },
+    }
+    push_msg = push_messages.get(notify_type)
+    if push_msg and kunde_email:
         try:
             push_payload = {
-                "title": "🏪 Bestellung abholbereit!",
-                "body": f"Ihre Bestellung {bestellnummer} liegt für Sie bereit. Abholung: {abholdatum} vormittags.",
-                "url": "/shop.html"
+                "title": push_msg["title"],
+                "message": push_msg["body"],
+                "url": "/shop.html",
+                "target_email": kunde_email,
+                "tag": f"order-{bestellnummer}",
             }
             base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
             protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
             internal_url = f"{protocol}://{base_host}/api/push-send"
             r = requests.post(internal_url, json=push_payload, timeout=15)
             if r.status_code in (200, 201):
-                notifications_sent.append("push")
+                resp_data = r.json() if r.text else {}
+                if resp_data.get("sent", 0) > 0:
+                    notifications_sent.append("push")
         except Exception:
             pass  # Push is best-effort
 

@@ -401,6 +401,22 @@ def _handle_post(req, dv_token, base_url, headers):
             except Exception as ne:
                 logging.warning(f"[shop-order] Confirmation email failed (non-blocking): {ne}")
 
+            # Send push notification to customer (best-effort)
+            try:
+                push_payload = {
+                    "title": "✅ Bestellung bestätigt",
+                    "message": f"Ihre Bestellung {bestellnummer} wurde aufgenommen. Abholung: {abhol_display}.",
+                    "url": "/shop.html",
+                    "target_email": user["email"],
+                    "tag": f"order-{bestellnummer}",
+                }
+                base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
+                internal_url = f"{protocol}://{base_host}/api/push-send"
+                requests.post(internal_url, json=push_payload, timeout=10)
+            except Exception:
+                pass
+
             return func.HttpResponse(
                 json.dumps({
                     "success": True,

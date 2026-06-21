@@ -167,6 +167,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     subscription = body.get("subscription", body)
     endpoint = subscription.get("endpoint", "")
     categories = body.get("categories", ALL_CATEGORIES[:])
+    email = body.get("email", "")
     if not endpoint:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "endpoint required"}),
@@ -194,11 +195,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
-    # POST – save subscription with categories
+    # POST – save subscription with categories and optional email
     sub_data = {
         "subscription": subscription,
         "categories": categories
     }
+    if email:
+        sub_data["email"] = email.lower().strip()
     sub_json = json.dumps(sub_data, ensure_ascii=False)
 
     filter_url = (
