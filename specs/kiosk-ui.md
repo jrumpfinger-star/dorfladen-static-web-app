@@ -110,7 +110,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-21b: Aktuelle Schicht ist standardmäßig aufgeklappt, andere collapsed
 - [x] AK-UI-21c: "Jetzt"-Badge mit Uhr-Icon pulsiert in der aktuellen Slot-Gruppe
 - [x] AK-UI-22: Slot-Header-Badges haben weißen Hintergrund mit farbiger Schrift (lesbar auf orange/grün)
-- [x] AK-UI-22b: Badges zeigen Textlabels: "Packen", "Warten", "Bereit"
+- [x] AK-UI-22b: Badges zeigen Textlabels: "Packen", "Warten", "Bereit" (Status 0=Packen, 1=Warten, 2=Bereit)
 - [x] AK-UI-23: Filter-Zähler (Zu erledigen/Überfällig) schließen alte erledigte Bestellungen aus
 - [x] AK-UI-24: Online-Shop ist Default-Tab beim Laden des Kiosk
 
@@ -120,4 +120,4 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 ## Status
 - [x] Spec reviewed
 - [x] Implementierung
-- [x] Validierung – 19/19 Kiosk-Tests grün (2026-06-21)
+- [x] Validierung (2026-06-21)

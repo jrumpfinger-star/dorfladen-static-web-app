@@ -48,8 +48,8 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 - Push-URL: `/bestellstatus?nr=XXX`
 
 ## Dataverse-Felder (dl_mittagsbestellungs)
-- `dl_kunde_kommentar` – Einzeilig Text, max 500 Zeichen
-- `dl_personal_antwort` – Einzeilig Text, max 500 Zeichen
+- `dl_kunde_kommentar` – Einzeilig Text, max 2000 Zeichen (angelegt 2026-06-21)
+- `dl_personal_antwort` – Einzeilig Text, max 2000 Zeichen (angelegt 2026-06-21)
 
 ## Akzeptanzkriterien
 - [x] AK-BS-01: Push-Notification öffnet Bestellstatus-Seite (nicht Bestellformular)
@@ -71,4 +71,4 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 ## Status
 - [x] Spec reviewed
 - [x] Implementierung
-- [ ] Validierung – Dataverse-Felder müssen noch in Prod angelegt werden
+- [x] Validierung – Dataverse-Felder angelegt (2026-06-21), API verifiziert
