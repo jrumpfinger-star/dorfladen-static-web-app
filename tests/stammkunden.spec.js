@@ -167,7 +167,7 @@ test.describe('Stammkunden UI – Kiosk', () => {
   test('SK-UI-02: "Alle Kunden laden" Button vorhanden', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="kunden"]').click();
-    const loadAllBtn = page.locator('text=Alle Kunden laden');
+    const loadAllBtn = page.getByRole('button', { name: /Alle Kunden laden/ });
     await expect(loadAllBtn).toBeVisible();
   });
 
@@ -182,7 +182,7 @@ test.describe('Stammkunden UI – Kiosk', () => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="kunden"]').click();
     // Click "Alle Kunden laden"
-    await page.locator('text=Alle Kunden laden').click();
+    await page.getByRole('button', { name: /Alle Kunden laden/ }).click();
     // Wait for API response
     await page.waitForResponse(r => r.url().includes('/api/stammkunden'));
     await page.waitForTimeout(500);
@@ -242,7 +242,7 @@ test.describe('Stammkunden UI – Kiosk', () => {
   test('SK-UI-09: Kundenkarte zeigt Bestellen-Button', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="kunden"]').click();
-    await page.locator('text=Alle Kunden laden').click();
+    await page.getByRole('button', { name: /Alle Kunden laden/ }).click();
     await page.waitForResponse(r => r.url().includes('/api/stammkunden'));
     await page.waitForTimeout(500);
     const orderBtn = page.locator('text=Bestellen').first();
