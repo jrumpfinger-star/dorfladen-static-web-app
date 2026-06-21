@@ -543,9 +543,12 @@ var K = (function(){
     var mitnehmen = active.filter(function(o){return o.mitnehmen;}).reduce(function(s,o){return s+(o.menge||1);},0);
     var vorOrt = portionen - mitnehmen;
 
+    var nachrichten = active.filter(function(o){return o.kunde_kommentar && !o.personal_antwort;}).length;
+
     var html = '';
     html += '<div class="k-stat" style="border-left:3px solid #1b5e20"><div class="k-stat-val" style="color:#1b5e20">'+portionen+'</div><div class="k-stat-label">'+luc('utensils',14)+' Portionen</div></div>';
     if(neu>0) html += '<div class="k-stat orange"><div class="k-stat-val">'+neu+'</div><div class="k-stat-label">'+luc('inbox',14)+' Offen</div></div>';
+    if(nachrichten>0) html += '<div class="k-stat" style="border-left:3px solid #3b82f6;animation:kPulse 2s ease-in-out infinite"><div class="k-stat-val" style="color:#3b82f6">'+nachrichten+'</div><div class="k-stat-label">'+luc('message-circle',14)+' Nachrichten</div></div>';
     if(mitnehmen>0) html += '<div class="k-stat"><div class="k-stat-val">'+mitnehmen+'</div><div class="k-stat-label">'+luc('package',14)+' Mitnehmen</div></div>';
     if(vorOrt>0) html += '<div class="k-stat"><div class="k-stat-val">'+vorOrt+'</div><div class="k-stat-label">'+luc('armchair',14)+' Vor Ort</div></div>';
     document.getElementById('mittag-stats').innerHTML = html;
@@ -605,6 +608,7 @@ var K = (function(){
       html += '<div class="k-order-info">';
       html += '<div class="k-order-top">';
       html += '<span class="k-order-name">'+esc(o.name)+'</span>';
+      if(o.kunde_kommentar && !o.personal_antwort) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;animation:kPulse 2s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
       html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
       if(o.mitnehmen) html += ' <span class="k-order-mitnehmen">'+luc('package',14)+' Mitnehmen</span>';
       html += '</div>';
