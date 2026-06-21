@@ -43,6 +43,6 @@ Aktuell zeigt die Shop-Admin-Seite den Mittagstisch als aufklappbare Sektion üb
 - Kein neues Styling der Bestelllisten
 
 ## Status
-- [ ] Spec reviewed
-- [ ] Implementierung
+- [x] Spec reviewed
+- [x] Implementierung
 - [ ] Validierung

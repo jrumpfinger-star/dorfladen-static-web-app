@@ -45,6 +45,33 @@
     .admin-tab .admin-tab-badge{background:#f59e0b;color:#fff;font-size:11px;font-weight:800;padding:1px 8px;border-radius:10px;min-width:18px;display:none}
     .admin-tab .admin-tab-badge.show{display:inline-block}
     .admin-panel{display:none}.admin-panel.active{display:block}
+    /* Mittagstisch cards & filter */
+    .mt-filter-bar{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+    .mt-filter-btn{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;min-height:44px;transition:all .15s}
+    .mt-filter-btn:hover{background:#f9fafb}
+    .mt-filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+    .mt-filter-btn .mt-filter-count{background:rgba(0,0,0,.15);padding:1px 7px;border-radius:8px;font-size:11px;min-width:18px;text-align:center}
+    .mt-filter-btn.active .mt-filter-count{background:rgba(255,255,255,.3)}
+    .mt-dish-bar{background:#f0fdf4;border:1px solid #dcfce7;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13px}
+    .mt-dish-bar strong{margin-right:12px}
+    .mt-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:all .15s}
+    .mt-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+    .mt-card-qty{font-size:28px;font-weight:900;color:var(--green);min-width:44px;text-align:center;line-height:1}
+    .mt-card-body{flex:1;min-width:0}
+    .mt-card-dish{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mt-card-customer{font-size:12px;color:var(--muted);margin-top:2px}
+    .mt-card-note{font-size:11px;color:#92400e;background:#fef3c7;padding:3px 8px;border-radius:6px;margin-top:4px;display:inline-block}
+    .mt-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+    .mt-card-badges{display:flex;gap:4px;align-items:center}
+    .mt-card-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
+    .mt-badge-mitnehmen{background:#dbeafe;color:#1d4ed8}
+    .mt-badge-quelle{background:#f3f4f6;color:var(--muted)}
+    .mt-card-actions{display:flex;gap:4px}
+    .mt-card-actions .btn{min-height:36px;min-width:36px;padding:6px 10px;font-size:12px}
+    .mt-card.status-0{border-left:4px solid #f59e0b}
+    .mt-card.status-1{border-left:4px solid #22c55e}
+    .mt-card.status-2{border-left:4px solid #dc2626;opacity:.6}
+    .mt-card.status-3{border-left:4px solid #9ca3af;opacity:.6}
     .scan-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center}
     .scan-overlay.open{display:flex}
     .scan-header{color:#fff;font-size:16px;font-weight:800;margin-bottom:12px;text-align:center}
@@ -140,7 +167,11 @@
       </div>
       <!-- Day tabs -->
       <div id="mt-day-tabs" style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap"></div>
-        <!-- Manual order form (hidden by default) -->
+      <!-- Filter buttons -->
+      <div class="mt-filter-bar" id="mt-filter-bar"></div>
+      <!-- Dish summary -->
+      <div class="mt-dish-bar" id="mt-dish-summary" style="display:none"></div>
+      <!-- Manual order form (hidden by default) -->
         <div id="mt-new-form" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:10px">
           <div style="font-weight:800;font-size:13px;margin-bottom:8px">📝 Manuelle Bestellung erfassen</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -1148,62 +1179,117 @@ function loadMittagOrders(){
     .catch(function(e){ document.getElementById('mt-orders').innerHTML='<div style="color:var(--red);padding:10px">'+e.message+'</div>'; });
 }
 
+var _mtAllOrders = [];
+var _mtFilter = 'open'; // default: show open orders
+
+function mtSetFilter(f){
+  _mtFilter = f;
+  document.querySelectorAll('#mt-filter-bar .mt-filter-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-filter')===f); });
+  mtRenderFiltered();
+}
+
 function renderMittagStats(orders){
-  var neu=0,best=0,stor=0,abg=0;
+  _mtAllOrders = orders;
+  var neu=0,best=0,stor=0,abg=0,portionen=0,umsatz=0;
   orders.forEach(function(o){
     if(o.status===0) neu++;
     else if(o.status===1) best++;
     else if(o.status===2) stor++;
     else if(o.status===3) abg++;
+    if(o.status!==2) portionen += (o.menge||1);
+    if(o.status!==2 && o.preis) umsatz += (o.preis * (o.menge||1));
   });
+  var offen = neu + best;
+  // Stats badges
   document.getElementById('mt-stats').innerHTML =
-    '<div style="background:#fef3c7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">🟡 Neu: '+neu+'</div>'+
-    '<div style="background:#dcfce7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">✅ Bestätigt: '+best+'</div>'+
-    '<div style="background:#f3f4f6;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">📦 Abgeholt: '+abg+'</div>'+
-    '<div style="background:#fef2f2;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">❌ Storniert: '+stor+'</div>';
+    '<div style="background:#fef3c7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer" onclick="mtSetFilter(\'open\')">🟡 Offen: '+offen+'</div>'+
+    '<div style="background:#f3f4f6;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer" onclick="mtSetFilter(\'done\')">📦 Abgeholt: '+abg+'</div>'+
+    '<div style="background:#e8f5e9;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">🍽 '+portionen+' Port.</div>'+
+    (umsatz>0?'<div style="background:#f0fdf4;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">💰 '+umsatz.toFixed(2)+'€</div>':'');
+  // Filter buttons
+  document.getElementById('mt-filter-bar').innerHTML =
+    '<button class="mt-filter-btn'+(_mtFilter==='all'?' active':'')+'" data-filter="all" onclick="mtSetFilter(\'all\')">📋 Alle<span class="mt-filter-count">'+orders.length+'</span></button>'+
+    '<button class="mt-filter-btn'+(_mtFilter==='open'?' active':'')+'" data-filter="open" onclick="mtSetFilter(\'open\')">🟡 Offen<span class="mt-filter-count">'+offen+'</span></button>'+
+    '<button class="mt-filter-btn'+(_mtFilter==='done'?' active':'')+'" data-filter="done" onclick="mtSetFilter(\'done\')">📦 Abgeholt<span class="mt-filter-count">'+abg+'</span></button>'+
+    '<button class="mt-filter-btn'+(_mtFilter==='cancelled'?' active':'')+'" data-filter="cancelled" onclick="mtSetFilter(\'cancelled\')">❌ Storniert<span class="mt-filter-count">'+stor+'</span></button>';
+  // Dish summary (only open)
+  var dishMap = {};
+  orders.forEach(function(o){
+    if(o.status===0 || o.status===1){
+      var g = o.gericht || 'Unbekannt';
+      dishMap[g] = (dishMap[g]||0) + (o.menge||1);
+    }
+  });
+  var dishParts = [];
+  for(var g in dishMap) dishParts.push(dishMap[g]+'× '+g);
+  var ds = document.getElementById('mt-dish-summary');
+  if(dishParts.length > 0){
+    ds.innerHTML = '<strong>🍽 Gerichte offen:</strong> '+dishParts.join(' &nbsp;·&nbsp; ');
+    ds.style.display = '';
+  } else {
+    ds.style.display = 'none';
+  }
+}
+
+function mtRenderFiltered(){
+  var filtered = _mtAllOrders.filter(function(o){
+    if(_mtFilter==='open') return o.status===0 || o.status===1;
+    if(_mtFilter==='done') return o.status===3;
+    if(_mtFilter==='cancelled') return o.status===2;
+    return true;
+  });
+  renderMittagCards(filtered);
 }
 
 function renderMittagOrders(orders, dateStr){
-  var dateLabel = dateStr || '';
+  renderMittagStats(orders);
+  mtRenderFiltered();
+}
+
+function renderMittagCards(orders){
   if(orders.length === 0){
-    document.getElementById('mt-orders').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Keine Mittagstisch-Bestellungen für '+dateLabel+'</div>';
+    document.getElementById('mt-orders').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:14px">Keine Bestellungen in dieser Ansicht</div>';
     return;
   }
   var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
-  var SRC = {0:'Online',1:'Telefon',2:'Personal'};
-  var DAY = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa'};
-  var html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
-  html += '<tr style="background:#f9fafb;font-weight:700;font-size:11px;text-transform:uppercase;color:var(--muted)">';
-  html += '<td style="padding:6px 8px">Kunde</td><td style="padding:6px 8px">Gericht</td><td style="padding:6px 8px;text-align:center">Menge</td><td style="padding:6px 8px">Status</td><td style="padding:6px 8px">Quelle</td><td style="padding:6px 8px">Aktionen</td></tr>';
+  var SRC = {0:'🌐',1:'📞',2:'👤'};
+  var SRC_LABEL = {0:'Online',1:'Telefon',2:'Personal'};
+  var stColors = {0:'#f59e0b',1:'#22c55e',2:'#dc2626',3:'#9ca3af'};
+  var stBg = {0:'#fef3c7',1:'#dcfce7',2:'#fef2f2',3:'#f3f4f6'};
+  var html = '';
   orders.forEach(function(o){
-    var stColors = {0:'#f59e0b',1:'#22c55e',2:'#dc2626',3:'#9ca3af'};
-    var stBg = {0:'#fef3c7',1:'#dcfce7',2:'#fef2f2',3:'#f3f4f6'};
-    html += '<tr style="border-bottom:1px solid #f3f4f6">';
-    html += '<td style="padding:8px"><strong>'+(o.name||'')+'</strong>';
-    if(o.telefon) html += '<br><span style="font-size:11px;color:var(--muted)">📞 '+o.telefon+'</span>';
-    html += '</td>';
-    html += '<td style="padding:8px">'+(o.gericht||'–');
-    if(o.tag!==undefined) html += ' <span style="font-size:10px;color:var(--muted)">('+((DAY[o.tag])||'')+')</span>';
-    html += '</td>';
-    html += '<td style="padding:8px;text-align:center;font-weight:800;font-size:16px">'+(o.menge||1)+'</td>';
-    html += '<td style="padding:8px"><span style="background:'+(stBg[o.status]||'#f3f4f6')+';color:'+(stColors[o.status]||'#666')+';padding:2px 8px;border-radius:6px;font-weight:700;font-size:11px">'+(STATUS[o.status]||'?')+'</span></td>';
-    html += '<td style="padding:8px;font-size:11px">'+(SRC[o.quelle]||'Online')+'</td>';
-    html += '<td style="padding:8px;white-space:nowrap">';
+    html += '<div class="mt-card status-'+o.status+'">';
+    // Qty
+    html += '<div class="mt-card-qty">'+(o.menge||1)+'</div>';
+    // Body
+    html += '<div class="mt-card-body">';
+    html += '<div class="mt-card-dish">'+(o.gericht||'–')+'</div>';
+    html += '<div class="mt-card-customer">'+(o.name||'');
+    if(o.telefon) html += ' · 📞 '+o.telefon;
+    html += '</div>';
+    if(o.anmerkung) html += '<div class="mt-card-note">💬 '+o.anmerkung+'</div>';
+    html += '</div>';
+    // Right side
+    html += '<div class="mt-card-right">';
+    // Badges
+    html += '<div class="mt-card-badges">';
+    html += '<span class="mt-card-badge" style="background:'+(stBg[o.status]||'#f3f4f6')+';color:'+(stColors[o.status]||'#666')+'">'+(STATUS[o.status]||'?')+'</span>';
+    if(o.mitnehmen) html += '<span class="mt-card-badge mt-badge-mitnehmen">📦 Mitn.</span>';
+    html += '<span class="mt-card-badge mt-badge-quelle">'+(SRC[o.quelle]||'🌐')+'</span>';
+    html += '</div>';
+    // Actions
+    html += '<div class="mt-card-actions">';
     if(o.status === 0){
-      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',1)" style="background:#dcfce7;border-color:#22c55e;color:#166534;margin-right:4px">✅ Bestätigen</button>';
-      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',2)" style="color:var(--red);font-size:11px">❌</button>';
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',1)" style="background:#dcfce7;border-color:#22c55e;color:#166534">✅ Bestätigen</button>';
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',2)" style="color:#dc2626">❌</button>';
     } else if(o.status === 1){
-      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',3)" style="background:#dbeafe;border-color:#2563eb;color:#1d4ed8;margin-right:4px">📦 Abgeholt</button>';
-      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',2)" style="color:var(--red);font-size:11px">❌</button>';
-    } else {
-      html += '<span style="font-size:14px">'+(o.status===3?'✅':'–')+'</span>';
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',3)" style="background:#dbeafe;border-color:#2563eb;color:#1d4ed8">📦 Abgeholt</button>';
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',2)" style="color:#dc2626">❌</button>';
     }
-    html += '</td></tr>';
-    if(o.anmerkung){
-      html += '<tr style="border-bottom:1px solid #f3f4f6"><td colspan="6" style="padding:2px 8px 8px;font-size:12px;color:#92400e;font-style:italic">💬 '+o.anmerkung+'</td></tr>';
-    }
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
   });
-  html += '</table>';
   document.getElementById('mt-orders').innerHTML = html;
 }
 
