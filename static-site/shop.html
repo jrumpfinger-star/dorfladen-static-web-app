@@ -484,7 +484,7 @@
       <span>Gesamt (ca.)</span>
       <span id="shop-cart-total-val">0,00 €</span>
     </div>
-    <div class="shop-cart-minorder" id="shop-cart-minorder">⚠️ Mindestbestellwert: 10,00 €</div>
+    <div class="shop-cart-minorder" id="shop-cart-minorder">⚠️ Mindestbestellwert wird geladen…</div>
     <button class="shop-checkout-btn" id="shop-checkout-btn">🛍 Jetzt bestellen</button>
   </div>
 </div>
@@ -570,7 +570,7 @@
       <div class="shop-auth-field"><label>Kontoinhaber *</label><input type="text" id="reg-kontoinhaber"></div>
       <div class="shop-auth-check"><input type="checkbox" id="reg-sepa"> Ich erteile das oben stehende SEPA-Lastschriftmandat *</div>
       <div class="shop-auth-check"><input type="checkbox" id="reg-dsgvo"> Ich habe die <a href="/datenschutzerklaerung" target="_blank">Datenschutzerklärung</a> gelesen und stimme zu *</div>
-      <div class="shop-auth-check"><input type="checkbox" id="reg-agb"> Ich akzeptiere die <a href="/agb.html" target="_blank">AGB</a> und das <a href="/widerrufsrecht.html" target="_blank">Widerrufsrecht</a> *</div>
+      <div class="shop-auth-check"><input type="checkbox" id="reg-agb"> Ich akzeptiere die <a href="/agb" target="_blank">AGB</a> und das <a href="/widerrufsrecht" target="_blank">Widerrufsrecht</a> *</div>
       <button class="shop-auth-submit" id="register-submit">Konto erstellen</button>
     </div>
   </div>
@@ -601,7 +601,7 @@
 
   var API=window.location.hostname==='localhost'?'http://localhost:7071/api':'/api';
   // ── Öffnungszeiten: [vm_open, vm_close, nm_open, nm_close] oder null wenn geschlossen ──
-  // Wochentag 0=So, 1=Mo, …, 6=Sa
+  // Wochentag 0=So, 1=Mo, …, 6=Sa  (Defaults – werden aus /api/hours überschrieben)
   var SHOP_HOURS=[
     null,                            // 0 = Sonntag: geschlossen
     [6.5,14, 16.5,19],               // 1 = Montag
@@ -614,7 +614,52 @@
   var VORLAUF_H=2; // Bestellung muss X Stunden VOR Öffnungszeit eingehen
   var ABHOL_OFFSET_H=1; // Abholung frühestens X Stunden NACH Öffnungszeit
   var STORNO_VOR_H=1; // Stornierung bis X Stunden VOR Öffnungszeit möglich
+  var MINDESTBESTELLWERT=10; // Defaults – wird aus CMS-Config überschrieben
+  var _shopConfigLoaded=false;
   var selectedSlot=null;
+
+  // ── Shop-Konfiguration aus APIs laden (Öffnungszeiten + CMS-Config) ──
+  function loadShopConfig(){
+    var p1=fetch(API+'/hours').then(function(r){return r.json();}).then(function(res){
+      if(!res.success||!res.data) return;
+      // Dataverse Wochentag-Codes: 101000=Mo, 101001=Di, …, 101006=So
+      // JS getDay(): 0=So, 1=Mo, …, 6=Sa
+      var dvToJs={101000:1, 101001:2, 101002:3, 101003:4, 101004:5, 101005:6, 101006:0};
+      var newHours=[null,null,null,null,null,null,null];
+      res.data.forEach(function(h){
+        var jsDay=dvToJs[h.wochentag||h.dl_wochentag];
+        if(jsDay===undefined) return;
+        if(h.geschlossen||h.dl_geschlossen){newHours[jsDay]=null;return;}
+        var vmVon=parseTimeToDecimal(h.vormittag_von||h.dl_vormittag_von);
+        var vmBis=parseTimeToDecimal(h.vormittag_bis||h.dl_vormittag_bis);
+        var nmVon=parseTimeToDecimal(h.nachmittag_von||h.dl_nachmittag_von);
+        var nmBis=parseTimeToDecimal(h.nachmittag_bis||h.dl_nachmittag_bis);
+        if(vmVon!=null&&vmBis!=null){
+          newHours[jsDay]=[vmVon,vmBis,nmVon,nmBis];
+        } else {
+          newHours[jsDay]=null;
+        }
+      });
+      SHOP_HOURS=newHours;
+    }).catch(function(){/* keep defaults */});
+
+    var p2=fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(res){
+      var cfg=(res.data&&typeof res.data==='object')?res.data:{};
+      if(cfg.shop_vorlauf_h!=null) VORLAUF_H=parseFloat(cfg.shop_vorlauf_h)||VORLAUF_H;
+      if(cfg.shop_abhol_offset_h!=null) ABHOL_OFFSET_H=parseFloat(cfg.shop_abhol_offset_h)||ABHOL_OFFSET_H;
+      if(cfg.shop_storno_vor_h!=null) STORNO_VOR_H=parseFloat(cfg.shop_storno_vor_h)||STORNO_VOR_H;
+      if(cfg.shop_mindestbestellwert!=null) MINDESTBESTELLWERT=parseFloat(cfg.shop_mindestbestellwert)||MINDESTBESTELLWERT;
+    }).catch(function(){/* keep defaults */});
+
+    return Promise.all([p1,p2]).then(function(){_shopConfigLoaded=true;});
+  }
+
+  function parseTimeToDecimal(t){
+    if(!t) return null;
+    var parts=String(t).split(':');
+    if(parts.length<2) return null;
+    return parseInt(parts[0],10)+parseInt(parts[1],10)/60;
+  }
 
   // ── Feiertage Bayern (Gauss-Osterformel für bewegliche Feiertage) ──
   function osterSonntag(year){
@@ -1031,13 +1076,12 @@
       abholEl.style.display='';
     } else {abholEl.style.display='none';}
 
-    // Mindestbestellwert
-    var MINDESTBESTELLWERT=10;
+    // Mindestbestellwert (aus CMS-Config oder Default)
     var minEl=document.getElementById('shop-cart-minorder');
     var ckBtn=document.getElementById('shop-checkout-btn');
     if(total<MINDESTBESTELLWERT){
       var diff=MINDESTBESTELLWERT-total;
-      minEl.textContent='⚠️ Mindestbestellwert: 10,00 € — noch '+fmtP(diff)+' € benötigt';
+      minEl.textContent='⚠️ Mindestbestellwert: '+fmtP(MINDESTBESTELLWERT)+' € — noch '+fmtP(diff)+' € benötigt';
       minEl.classList.add('show');
       ckBtn.disabled=true;
       ckBtn.textContent='🛍 Noch '+fmtP(diff)+' € bis zur Bestellung';
@@ -1286,7 +1330,7 @@
   function doCheckout(){
     if(!isLoggedIn()){_pendingCheckout=true;showAuth('login');return;}
     if(!cart.length){showToast('Warenkorb ist leer');return;}
-    if(cartTotal()<10){showToast('⚠️ Mindestbestellwert: 10,00 €');return;}
+    if(cartTotal()<MINDESTBESTELLWERT){showToast('⚠️ Mindestbestellwert: '+fmtP(MINDESTBESTELLWERT)+' €');return;}
     if(!selectedSlot){showToast('⚠️ Bitte Abholtermin wählen');return;}
     var note=document.getElementById('shop-cart-note').value.trim();
     var positionen=cart.map(function(c){
@@ -1833,11 +1877,17 @@
     new MutationObserver(sync).observe(hdr,{childList:true,subtree:true,attributes:true});
   })();
 
-  // Load articles
+  // Load shop config (Öffnungszeiten + CMS-Config) parallel with articles
+  var configReady=loadShopConfig();
   fetch(API+'/shop-articles')
     .then(function(r){return r.json();})
     .then(function(data){
       if(!data.success){document.getElementById('shop-loading').innerHTML='<p>Fehler beim Laden</p>';return;}
+      // Wait for config before building slots (opening hours needed)
+      return configReady.then(function(){return data;});
+    })
+    .then(function(data){
+      if(!data) return;
       // 1) Populate category pills
       categories=data.categories||[];
 

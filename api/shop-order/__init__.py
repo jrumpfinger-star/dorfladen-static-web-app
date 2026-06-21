@@ -4,8 +4,11 @@ POST: Place a new order (requires JWT)
 GET: Fetch orders (customer: own orders; CMS: all orders)
 PATCH: Update order status (CMS only)
 
-Bestellschluss: 16:00 Uhr → Abholung nächster Tag vormittags
-Nach 16 Uhr → Abholung übernächster Tag vormittags
+Abholtermin: Wird vom Frontend als Slot (Datum + Zeitfenster) mitgesendet.
+Die Slots basieren auf den Öffnungszeiten aus /api/hours.
+Fallback: _calc_abholdatum() mit BESTELLSCHLUSS_HOUR (nur für ältere Clients).
+Mindestbestellwert: Aus CMS-Config (dl_seiteninhalt, Schlüssel 'shop_mindestbestellwert'),
+Fallback MINDESTBESTELLWERT_DEFAULT.
 """
 import azure.functions as func
 import json
@@ -32,8 +35,23 @@ STATUS_ABGEHOLT = 3
 STATUS_STORNIERT = 4
 
 STATUS_LABELS = {0: "Neu", 1: "In Bearbeitung", 2: "Abholbereit", 3: "Abgeholt", 4: "Storniert"}
-BESTELLSCHLUSS_HOUR = 16  # 16:00 Uhr
-MINDESTBESTELLWERT = 10.0  # Mindestbestellwert in Euro
+BESTELLSCHLUSS_HOUR = 16  # Fallback, nur verwendet wenn Frontend keinen Slot sendet
+MINDESTBESTELLWERT_DEFAULT = 10.0  # Fallback – wird aus CMS-Config überschrieben
+
+
+def _load_mindestbestellwert(base_url, headers):
+    """Load shop_mindestbestellwert from CMS-Config (dl_seiteninhalt). Returns float."""
+    try:
+        url = f"{base_url}/api/data/v9.2/dl_seiteninhalts?$filter=dl_schluessel eq 'shop_mindestbestellwert'&$select=dl_wert&$top=1"
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            items = r.json().get("value", [])
+            if items:
+                val = items[0].get("dl_wert", "")
+                return float(val)
+    except Exception as e:
+        logging.debug(f"[shop-order] CMS-Config load failed: {e}")
+    return MINDESTBESTELLWERT_DEFAULT
 
 
 def get_token():
@@ -249,10 +267,11 @@ def _handle_post(req, dv_token, base_url, headers):
             status_code=400, headers=get_cors_headers()
         )
 
-    # Mindestbestellwert prüfen
-    if gesamtsumme < MINDESTBESTELLWERT:
+    # Mindestbestellwert prüfen (aus CMS-Config oder Default)
+    mindestbestellwert = _load_mindestbestellwert(base_url, headers)
+    if gesamtsumme < mindestbestellwert:
         return func.HttpResponse(
-            json.dumps({"success": False, "error": f"Der Mindestbestellwert beträgt {MINDESTBESTELLWERT:.2f} €. Aktueller Warenkorbwert: {gesamtsumme:.2f} €.", "mindestbestellwert": MINDESTBESTELLWERT, "aktuell": round(gesamtsumme, 2)}, ensure_ascii=False),
+            json.dumps({"success": False, "error": f"Der Mindestbestellwert beträgt {mindestbestellwert:.2f} €. Aktueller Warenkorbwert: {gesamtsumme:.2f} €.", "mindestbestellwert": mindestbestellwert, "aktuell": round(gesamtsumme, 2)}, ensure_ascii=False),
             status_code=400, headers=get_cors_headers()
         )
 

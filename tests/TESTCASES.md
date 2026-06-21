@@ -229,6 +229,45 @@
 
 ---
 
+## T8 – Shop-Config (CMS-konfigurierbare Werte)
+
+### T8.1 – Öffnungszeiten werden von /api/hours geladen
+- **Aktion:** `/shop.html` laden, Network-Tab beobachten
+- **Prüfung:** Request an `/api/hours` wird beim Start gemacht
+- **Erwartung:** Request vorhanden, Response `{success: true, data: [...]}`
+
+### T8.2 – CMS-Config wird beim Start geladen
+- **Aktion:** `/shop.html` laden, Network-Tab beobachten
+- **Prüfung:** Request an `/api/cms-config` wird beim Start gemacht
+- **Erwartung:** Request vorhanden, Response `{success: true, data: {...}}`
+
+### T8.3 – Mindestbestellwert dynamisch
+- **Aktion:** `/shop.html` laden, Warenkorb öffnen (mit Artikeln unter Mindestbestellwert)
+- **Prüfung:** `#shop-cart-minorder` Text prüfen
+- **Erwartung:** Text zeigt dynamischen Wert (aus CMS oder Default 10,00 €), NICHT den Platzhalter "wird geladen…"
+
+### T8.4 – SHOP_HOURS aus Öffnungszeiten-API
+- **Aktion:** `/shop.html` laden, Abholslots prüfen
+- **Prüfung:** Slot-Zeiten stimmen mit `/api/hours`-Daten überein
+- **Erwartung:** Slots basieren auf live Öffnungszeiten, nicht auf hardcoded Werten
+
+### T8.5 – API: cms-config liefert korrektes Format
+- **Aktion:** GET `/api/cms-config`
+- **Prüfung:** Response-Body parsen
+- **Erwartung:** `{success: true, data: {...}}` als Key-Value-Objekt
+
+### T8.6 – API: hours liefert korrektes Format
+- **Aktion:** GET `/api/hours`
+- **Prüfung:** Response-Body parsen
+- **Erwartung:** `{success: true, data: [...]}` als Array mit Wochentag-Einträgen
+
+### T8.7 – API: shop-order ohne Auth → 401
+- **Aktion:** POST `/api/shop-order` ohne `X-Shop-Token` Header
+- **Prüfung:** HTTP-Status
+- **Erwartung:** 400 oder 401 (kein 500er)
+
+---
+
 ## Letzter Testlauf: 2026-06-21 (Sonntag)
 Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 
