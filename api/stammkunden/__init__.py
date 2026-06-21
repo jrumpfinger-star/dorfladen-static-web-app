@@ -218,9 +218,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if not show_inactive:
                 odata_filters.append("dl_aktiv eq true")
             if search:
-                # Search in name, telefon
+                # Search in name, vorname, nachname, telefon, email
                 odata_filters.append(
-                    f"(contains(dl_name,'{search}') or contains(dl_telefon,'{search}'))"
+                    f"(contains(dl_name,'{search}') or contains(dl_vorname,'{search}') or contains(dl_nachname,'{search}') or contains(dl_telefon,'{search}') or contains(dl_email,'{search}'))"
                 )
 
             url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"

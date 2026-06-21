@@ -237,6 +237,30 @@
 
 ---
 
+## T11 – Stammkunden-Suche (erweitert)
+
+### T11.1 – Suche nach Nachname
+- **Aktion:** GET `/api/stammkunden?q=Rumpf`
+- **Prüfung:** Kunden mit Nachname "Rumpfinger" werden gefunden
+- **Erwartung:** Mindestens 1 Treffer, `nachname` enthält "Rumpf"
+
+### T11.2 – Suche nach Vorname
+- **Aktion:** GET `/api/stammkunden?q=Josef`
+- **Prüfung:** Kunden mit Vorname "Josef" werden gefunden
+- **Erwartung:** Mindestens 1 Treffer, `vorname` enthält "Josef"
+
+### T11.3 – Suche nach E-Mail
+- **Aktion:** GET `/api/stammkunden?q=@example`
+- **Prüfung:** Kunden mit E-Mail-Domain werden gefunden
+- **Erwartung:** Treffer wenn E-Mail `@example` enthält
+
+### T11.4 – Suche nach Telefon (bestehend)
+- **Aktion:** GET `/api/stammkunden?q=08082`
+- **Prüfung:** Kunden mit Telefonnummer werden gefunden
+- **Erwartung:** Treffer wenn Telefon `08082` enthält
+
+---
+
 ## T5 – Lunch-Admin (/lunch-admin)
 
 ### T5.1 – Seite lädt fehlerfrei

@@ -93,6 +93,32 @@ test.describe('Stammkunden API', () => {
     expect(body.customers.length).toBeGreaterThanOrEqual(1);
   });
 
+  test('SK-API-05b: GET Suche nach Vorname findet Kunden', async ({ request }) => {
+    const res = await request.get(`${API}/stammkunden?q=${TEST_VORNAME}`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body.success).toBeTruthy();
+    const found = body.customers.find(c => (c.vorname || '').includes(TEST_VORNAME));
+    expect(found).toBeTruthy();
+  });
+
+  test('SK-API-05c: GET Suche nach Nachname findet Kunden', async ({ request }) => {
+    const res = await request.get(`${API}/stammkunden?q=${TEST_NACHNAME}`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body.success).toBeTruthy();
+    const found = body.customers.find(c => (c.nachname || '').includes(TEST_NACHNAME));
+    expect(found).toBeTruthy();
+  });
+
+  test('SK-API-05d: GET Suche nach E-Mail findet Kunden', async ({ request }) => {
+    const res = await request.get(`${API}/stammkunden?q=test-${TS}@example`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body.success).toBeTruthy();
+    expect(body.customers.length).toBeGreaterThanOrEqual(1);
+  });
+
   test('SK-API-06: PATCH Kunden aktualisieren', async ({ request }) => {
     // Find the customer first
     const search = await request.get(`${API}/stammkunden?q=${TEST_NACHNAME}`);
