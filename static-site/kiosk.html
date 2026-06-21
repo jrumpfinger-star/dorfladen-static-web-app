@@ -476,20 +476,16 @@ var K = (function(){
   var _mittagDatum = today();
   var _mittagFilter = 'offen'; // Default: Zu bestätigen
 
-  function _getSeenComments(){
-    try{ return JSON.parse(localStorage.getItem('kiosk_seen_comments')||'{}'); }catch(e){ return {}; }
+  function _hasUnseenComment(o){
+    return !!(o.kunde_kommentar && o.status!==2 && !o.kommentar_gelesen);
   }
   function _markCommentsAsSeen(){
-    var seen = _getSeenComments();
     orders.forEach(function(o){
-      if(o.kunde_kommentar && o.status!==2) seen[o.id] = o.kunde_kommentar;
+      if(_hasUnseenComment(o)){
+        o.kommentar_gelesen = true;
+        fetch('/api/lunch-order/'+o.id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kommentar_gelesen:true})}).catch(function(){});
+      }
     });
-    try{ localStorage.setItem('kiosk_seen_comments', JSON.stringify(seen)); }catch(e){}
-  }
-  function _hasUnseenComment(o){
-    if(!o.kunde_kommentar || o.status===2) return false;
-    var seen = _getSeenComments();
-    return seen[o.id] !== o.kunde_kommentar;
   }
 
   function setMittagFilter(f){

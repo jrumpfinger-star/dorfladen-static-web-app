@@ -93,6 +93,7 @@ def _serialize(item):
         "bestaetigung_text": item.get("dl_bestaetigung_text", ""),
         "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
         "personal_antwort": item.get("dl_personal_antwort", ""),
+        "kommentar_gelesen": bool(item.get("dl_kommentar_gelesen", False)),
         "bestellt_am": item.get("createdon", ""),
         "wochentag_label": item.get("dl_wochentag_label", ""),
         "quelle": item.get("dl_quelle", QUELLE_ONLINE),
@@ -294,7 +295,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
             params = {
-                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,createdon",
+                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,createdon",
                 "$orderby": "createdon desc",
                 "$top": "200",
             }
@@ -348,10 +349,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             kunde_kommentar = body.get("kunde_kommentar")
             if kunde_kommentar is not None:
                 patch_data["dl_kunde_kommentar"] = kunde_kommentar.strip()
+                patch_data["dl_kommentar_gelesen"] = False  # new comment → unread
             # Staff reply
             personal_antwort = body.get("personal_antwort")
             if personal_antwort is not None:
                 patch_data["dl_personal_antwort"] = personal_antwort.strip()
+            # Mark comment as read
+            kommentar_gelesen = body.get("kommentar_gelesen")
+            if kommentar_gelesen is not None:
+                patch_data["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
 
             if not patch_data:
                 return func.HttpResponse(

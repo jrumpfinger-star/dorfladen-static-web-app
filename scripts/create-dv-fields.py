@@ -20,6 +20,20 @@ ENTITY_LOGICAL_NAME = "dl_mittagsbestellung"
 
 FIELDS = [
     {
+        "SchemaName": "dl_kommentar_gelesen",
+        "DisplayName": {"@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [{"@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Kommentar gelesen", "LanguageCode": 1031}]},
+        "Description": {"@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [{"@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Ob der Kundenkommentar vom Personal gelesen wurde", "LanguageCode": 1031}]},
+        "@odata.type": "Microsoft.Dynamics.CRM.BooleanAttributeMetadata",
+        "AttributeType": "Boolean",
+        "OptionSet": {
+            "@odata.type": "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata",
+            "TrueOption": {"Value": 1, "Label": {"@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [{"@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Ja", "LanguageCode": 1031}]}},
+            "FalseOption": {"Value": 0, "Label": {"@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [{"@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Nein", "LanguageCode": 1031}]}},
+        },
+        "DefaultValue": False,
+        "RequiredLevel": {"Value": "None"},
+    },
+    {
         "SchemaName": "dl_kunde_kommentar",
         "DisplayName": {"@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [{"@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Kunde Kommentar", "LanguageCode": 1031}]},
         "Description": {"@odata.type": "Microsoft.Dynamics.CRM.Label", "LocalizedLabels": [{"@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel", "Label": "Kommentar des Kunden zur Bestellung", "LanguageCode": 1031}]},
