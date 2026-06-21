@@ -1517,14 +1517,15 @@ var K = (function(){
     todayOrders.forEach(function(o){
       var key = o.gericht || 'Unbekannt';
       if(!byDish[key]) byDish[key] = { count: 0, mitnehmen: 0, vorOrt: 0, kunden: [] };
-      var qty = o.portionen || 1;
+      var qty = o.menge || 1;
       byDish[key].count += qty;
       if(o.mitnehmen) byDish[key].mitnehmen += qty; else byDish[key].vorOrt += qty;
-      var name = o.kundenname || o.kunde_name || '?';
+      var name = o.name || '?';
       byDish[key].kunden.push(name + (qty > 1 ? ' ('+qty+'x)' : '') + (o.mitnehmen ? ' 📦' : ''));
     });
 
-    var datum = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+    var selDate = new Date(_mittagDatum+'T12:00:00');
+    var datum = selDate.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
     var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Küchenliste</title>';
     html += '<style>body{font-family:Arial,sans-serif;padding:20px;max-width:700px;margin:0 auto}';
     html += 'h1{font-size:20px;border-bottom:2px solid #1b5e20;padding-bottom:8px}';

@@ -174,9 +174,13 @@
 - **Erwartung:** 🔄 Button sichtbar rechts neben der Uhr, lädt Bestellungen neu
 
 ### T4.7 – Küchenliste drucken
-- **Aktion:** Bottom-Bar prüfen, "🖨 Küchenliste drucken" Button klicken
+- **Aktion:** Tag in Tagesauswahl wechseln (z.B. Di 23.06), dann "🖨 Küchenliste drucken" klicken
 - **Prüfung:** Neues Fenster öffnet sich mit gruppierter Ansicht
-- **Erwartung:** Bestellungen nach Gericht gruppiert, Portionen-Anzahl, Mitnehmen/Vor-Ort Aufschlüsselung, Kundennamen, Gesamtstatistik
+- **Erwartung:**
+  - Datum = **ausgewählter Tag** (nicht immer heute) – *Bugfix: war `new Date()` statt `_mittagDatum`*
+  - Kundennamen vollständig angezeigt – *Bugfix: `o.name` statt `o.kundenname`*
+  - Portionen korrekt gezählt – *Bugfix: `o.menge` statt `o.portionen`*
+  - Bestellungen nach Gericht gruppiert, Mitnehmen/Vor-Ort Aufschlüsselung, Gesamtstatistik
 
 ### T4.8 – Bottom-Bar: Nur 2 Buttons
 - **Aktion:** `.k-bottom` Buttons zählen
