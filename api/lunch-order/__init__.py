@@ -87,7 +87,7 @@ def _serialize(item):
         "gericht_id": item.get("dl_gericht_id", ""),
         "menge": item.get("dl_menge", 1),
         "preis": item.get("dl_preis", 0),
-        "datum": item.get("dl_datum", ""),
+        "datum": (item.get("dl_datum") or "").split("T")[0],
         "anmerkung": item.get("dl_anmerkung", ""),
         "status": item.get("dl_status", STATUS_NEU),
         "bestaetigung_text": item.get("dl_bestaetigung_text", ""),
@@ -153,6 +153,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             menge = int(body.get("menge", 1))
             preis = float(body.get("preis", 0))
             datum = (body.get("datum") or "").strip()
+            # Normalize: "2026-06-22T00:00:00Z" → "2026-06-22"
+            if "T" in datum:
+                datum = datum.split("T")[0]
             anmerkung = (body.get("anmerkung") or "").strip()
             wochentag_label = (body.get("wochentag_label") or "").strip()
             mitnehmen = body.get("mitnehmen", False)
@@ -252,7 +255,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             odata_filter_parts = []
             if filter_date:
-                odata_filter_parts.append(f"dl_datum eq '{filter_date}'")
+                # Match both "2026-06-22" and "2026-06-22T00:00:00Z"
+                odata_filter_parts.append(f"startswith(dl_datum,'{filter_date}')")
             if status_filter:
                 odata_filter_parts.append(f"dl_status eq {status_filter}")
 
