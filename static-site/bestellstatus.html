@@ -253,6 +253,7 @@ function sendComment(){
     btn.disabled = false;
     btn.textContent = 'Nachricht senden';
     if(data.success){
+      document.getElementById('bs-comment').value = '';
       document.getElementById('bs-comment-sent').style.display = 'block';
       setTimeout(function(){ document.getElementById('bs-comment-sent').style.display = 'none'; }, 4000);
       // Refresh order to show updated messages
