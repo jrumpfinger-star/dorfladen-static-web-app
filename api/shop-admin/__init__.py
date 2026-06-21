@@ -163,7 +163,8 @@ def _get_order(req, base_url, headers):
 def _dashboard(req, base_url, headers):
     today = datetime.utcnow().date().isoformat()
     future = (datetime.utcnow().date() + timedelta(days=14)).isoformat()
-    url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select={_select_fields()}&$filter=dl_abholdatum ge '{today}' and dl_abholdatum le '{future}'&$orderby=dl_abholdatum asc,createdon desc&$top=300"
+    # Include: all open/in-progress orders (any date) + future orders (any status)
+    url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select={_select_fields()}&$filter=(dl_status lt 3) or (dl_abholdatum ge '{today}' and dl_abholdatum le '{future}')&$orderby=dl_abholdatum asc,createdon desc&$top=300"
     r = requests.get(url, headers=headers, timeout=60)
     if r.status_code != 200:
         return func.HttpResponse(

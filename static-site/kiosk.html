@@ -225,11 +225,11 @@
 
 <!-- ═══ Tab bar ═══ -->
 <div class="k-tabs">
-  <div class="k-tab active" data-tab="mittag" onclick="K.switchTab('mittag')">
+  <div class="k-tab" data-tab="mittag" onclick="K.switchTab('mittag')">
     <span class="k-tab-icon"><i data-lucide="utensils" style="width:22px;height:22px"></i></span> Mittagstisch
     <span class="k-tab-badge" id="badge-mittag"></span>
   </div>
-  <div class="k-tab" data-tab="abhol" onclick="K.switchTab('abhol')">
+  <div class="k-tab active" data-tab="abhol" onclick="K.switchTab('abhol')">
     <span class="k-tab-icon"><i data-lucide="shopping-cart" style="width:22px;height:22px"></i></span> Online-Shop
     <span class="k-tab-badge" id="badge-abhol"></span>
   </div>
@@ -242,7 +242,7 @@
 <div class="k-main">
 
   <!-- ── Mittagstisch ── -->
-  <div class="k-panel active" id="panel-mittag">
+  <div class="k-panel" id="panel-mittag">
     <div class="k-shop-toolbar">
       <div class="k-filter-bar" id="mittag-day-bar" style="margin-bottom:0"></div>
       <div style="flex:1"></div>
@@ -260,7 +260,7 @@
   </div>
 
   <!-- ── Shop-Abholungen ── -->
-  <div class="k-panel" id="panel-abhol">
+  <div class="k-panel active" id="panel-abhol">
     <div class="k-shop-toolbar">
       <div class="k-filter-bar" id="abhol-filter-bar" style="margin-bottom:0">
         <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')"><i data-lucide="package" style="width:14px;height:14px"></i> Zu erledigen <span class="k-filter-count" id="fc-open">-</span></button>
