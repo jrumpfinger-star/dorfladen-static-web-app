@@ -142,6 +142,32 @@
     .k-empty{text-align:center;padding:60px 20px;color:var(--c-muted);font-size:16px}
     .k-empty .k-empty-icon{font-size:48px;margin-bottom:12px}
 
+    /* ═══ Filter button bar ═══ */
+    .k-filter-bar{display:flex;gap:6px;margin-bottom:10px}
+    .k-filter-btn{flex:1;padding:10px 8px;border:2px solid var(--c-border);border-radius:10px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+    .k-filter-btn:active{transform:scale(.97)}
+    .k-filter-btn.active{border-color:var(--c-green);background:#f0fdf4;color:var(--c-green)}
+    .k-filter-btn .k-filter-count{font-size:16px;font-weight:800;display:block}
+
+    /* ═══ Slot group headers ═══ */
+    .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px}
+
+    /* ═══ Pack modal (inline) ═══ */
+    .k-modal.k-modal-lg{max-width:700px}
+    .pk-item{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #f3f4f6;cursor:pointer;border-radius:8px;transition:background .1s}
+    .pk-item:active{background:#f9fafb}
+    .pk-item.packed{background:#f0fdf4}
+    .pk-check{width:36px;height:36px;border-radius:50%;border:3px solid var(--c-border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:all .15s}
+    .pk-item.packed .pk-check{border-color:var(--c-green);background:var(--c-green);color:#fff}
+    .pk-body{flex:1;min-width:0}
+    .pk-name{font-weight:700;font-size:15px}
+    .pk-artnr{font-size:11px;color:var(--c-muted)}
+    .pk-qty{font-size:20px;font-weight:800;text-align:right;min-width:50px}
+    .pk-progress{background:#e5e7eb;border-radius:6px;height:8px;margin:12px 0;overflow:hidden}
+    .pk-progress-bar{height:100%;background:var(--c-green);border-radius:6px;transition:width .3s}
+    .pk-weight-input{display:flex;align-items:center;gap:6px;padding:0 0 8px 48px;font-size:13px}
+    .pk-weight-input input{width:80px;padding:6px 8px;border:2px solid var(--c-border);border-radius:8px;font-size:14px;text-align:center}
+
     /* ═══ Print ═══ */
     @media print{
       .k-header,.k-tabs,.k-bottom,.k-order-actions,.k-btn,.k-modal-bg,.k-toast{display:none!important}
@@ -199,12 +225,10 @@
   <!-- ── Shop-Abholungen ── -->
   <div class="k-panel" id="panel-abhol">
     <div class="k-stats" id="abhol-stats"></div>
-    <div class="k-field" style="margin-bottom:8px">
-      <select id="abhol-filter" onchange="K.loadShopOrders()" style="padding:10px 14px;border:2px solid var(--c-border);border-radius:10px;font-size:14px;font-weight:600;width:100%">
-        <option value="open">📦 Offene Bestellungen</option>
-        <option value="today">📅 Heute abholen</option>
-        <option value="all">📋 Alle (letzte 200)</option>
-      </select>
+    <div class="k-filter-bar" id="abhol-filter-bar">
+      <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')">📦 Offene<span class="k-filter-count" id="fc-open">-</span></button>
+      <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')">📅 Heute abholen<span class="k-filter-count" id="fc-today">-</span></button>
+      <button class="k-filter-btn" data-filter="all" onclick="K.setShopFilter('all')">📋 Alle<span class="k-filter-count" id="fc-all">-</span></button>
     </div>
     <div id="abhol-orders"><div class="k-empty"><div class="k-empty-icon">⏳</div>Laden…</div></div>
   </div>
@@ -257,7 +281,8 @@
       </div>
       <div id="no-kunde-new" style="display:none;margin-bottom:16px">
         <div style="display:flex;gap:8px">
-          <div class="k-field" style="flex:1"><label>Name *</label><input type="text" id="no-new-name" placeholder="Vor- und Nachname"></div>
+          <div class="k-field" style="flex:1"><label>Nachname *</label><input type="text" id="no-new-nachname" placeholder="Nachname"></div>
+          <div class="k-field" style="flex:1"><label>Vorname</label><input type="text" id="no-new-vorname" placeholder="Vorname"></div>
           <div class="k-field" style="flex:1"><label>Telefon</label><input type="tel" id="no-new-phone" placeholder="08082…"></div>
         </div>
       </div>
@@ -306,7 +331,10 @@
       <button class="k-modal-close" onclick="K.closeModal('modal-kunde')">✕</button>
     </div>
     <div class="k-modal-body">
-      <div class="k-field"><label>Name *</label><input type="text" id="nk-name" placeholder="Vor- und Nachname"></div>
+      <div style="display:flex;gap:8px">
+        <div class="k-field" style="flex:1"><label>Nachname *</label><input type="text" id="nk-nachname" placeholder="Nachname"></div>
+        <div class="k-field" style="flex:1"><label>Vorname</label><input type="text" id="nk-vorname" placeholder="Vorname"></div>
+      </div>
       <div class="k-field"><label>Telefon *</label><input type="tel" id="nk-phone" placeholder="08082…"></div>
       <div class="k-field"><label>E-Mail</label><input type="email" id="nk-email" placeholder="optional"></div>
       <div class="k-field"><label>Notiz</label><textarea id="nk-note" placeholder="z.B. Stammgast, immer Freitags…"></textarea></div>
@@ -314,6 +342,27 @@
     <div class="k-modal-footer">
       <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-kunde')">Abbrechen</button>
       <button class="k-btn k-btn-lg k-btn-confirm" style="flex:2" onclick="K.submitNewKunde()">✅ Kunde anlegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Pack modal (inline) ═══ -->
+<div class="k-modal-bg" id="modal-pack">
+  <div class="k-modal k-modal-lg">
+    <div class="k-modal-head">
+      <h2 id="pk-title">📦 Bestellung packen</h2>
+      <button class="k-modal-close" onclick="K.closeModal('modal-pack')">✕</button>
+    </div>
+    <div class="k-modal-body" style="padding:12px 24px">
+      <div id="pk-info" style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--c-muted);margin-bottom:8px"></div>
+      <div class="pk-progress"><div class="pk-progress-bar" id="pk-progress-bar" style="width:0%"></div></div>
+      <div id="pk-progress-text" style="font-size:12px;color:var(--c-muted);text-align:center;margin-bottom:8px"></div>
+      <div id="pk-items"></div>
+    </div>
+    <div class="k-modal-footer">
+      <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-pack')">Schließen</button>
+      <button class="k-btn k-btn-lg" style="flex:1;background:#2563eb;color:#fff" id="pk-save-btn" onclick="K.savePackState()">💾 Speichern</button>
+      <button class="k-btn k-btn-lg k-btn-confirm" style="flex:1" id="pk-finish-btn" onclick="K.finishPack()">✅ Abholbereit</button>
     </div>
   </div>
 </div>
@@ -685,7 +734,8 @@ var K = (function(){
     document.getElementById('no-kunde-results').classList.remove('show');
     document.getElementById('no-kunde-search').style.display = 'none';
     document.getElementById('no-kunde-new').style.display = '';
-    document.getElementById('no-new-name').value = document.getElementById('no-kunde-search').value.trim();
+    document.getElementById('no-new-nachname').value = document.getElementById('no-kunde-search').value.trim();
+    document.getElementById('no-new-vorname').value = '';
     document.getElementById('no-new-phone').value = '';
     selectedKunde = null;
   }
@@ -709,25 +759,27 @@ var K = (function(){
       kundenPhone = selectedKunde.telefon;
       stammkundeId = selectedKunde.id;
     } else if(document.getElementById('no-kunde-new').style.display!=='none'){
-      kundenName = document.getElementById('no-new-name').value.trim();
+      var nn = document.getElementById('no-new-nachname').value.trim();
+      var vn = document.getElementById('no-new-vorname').value.trim();
       kundenPhone = document.getElementById('no-new-phone').value.trim();
-      if(!kundenName){toast('❌ Name eingeben!');return;}
+      if(!nn){toast('❌ Nachname eingeben!');return;}
+      kundenName = (vn?vn+' ':'')+nn;
       // Create Stammkunde first
       fetch(API+'/stammkunden',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name:kundenName,telefon:kundenPhone})
+        body:JSON.stringify({nachname:nn,vorname:vn,name:kundenName,telefon:kundenPhone})
       })
       .then(function(r){return r.json();})
       .then(function(res){
-        if(res.success){
+        if(res.success && res.customer){
           stammkundeId = res.customer.id;
           doSubmitOrder(kundenName, kundenPhone, stammkundeId);
         } else if(res.existing){
           stammkundeId = res.existing.id;
           doSubmitOrder(kundenName, kundenPhone, stammkundeId);
         } else {
-          toast('❌ Kunde konnte nicht angelegt werden');
+          toast('❌ '+(res.error||res.errors&&res.errors.join(', ')||'Kunde konnte nicht angelegt werden'));
         }
       });
       return;
@@ -780,7 +832,8 @@ var K = (function(){
   // ══════════════════════════════════════════════════
 
   function openNewKunde(){
-    document.getElementById('nk-name').value = '';
+    document.getElementById('nk-nachname').value = '';
+    document.getElementById('nk-vorname').value = '';
     document.getElementById('nk-phone').value = '';
     document.getElementById('nk-email').value = '';
     document.getElementById('nk-note').value = '';
@@ -788,17 +841,18 @@ var K = (function(){
   }
 
   function submitNewKunde(){
-    var name = document.getElementById('nk-name').value.trim();
+    var nachname = document.getElementById('nk-nachname').value.trim();
+    var vorname = document.getElementById('nk-vorname').value.trim();
     var phone = document.getElementById('nk-phone').value.trim();
     var email = document.getElementById('nk-email').value.trim();
     var note = document.getElementById('nk-note').value.trim();
-    if(!name){toast('❌ Name eingeben!');return;}
+    if(!nachname){toast('❌ Nachname eingeben!');return;}
     if(!phone){toast('❌ Telefon eingeben!');return;}
 
     fetch(API+'/stammkunden',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name:name,telefon:phone,email:email,notiz:note})
+      body:JSON.stringify({nachname:nachname,vorname:vorname,name:(vorname?vorname+' ':'')+nachname,telefon:phone,email:email,notiz:note})
     })
     .then(function(r){return r.json();})
     .then(function(res){
@@ -817,25 +871,45 @@ var K = (function(){
   //  SHOP-ABHOLUNGEN
   // ══════════════════════════════════════════════════
 
+  var _shopFilter = 'open';
+  var _allShopOrders = [];
+
+  function setShopFilter(f){
+    _shopFilter = f;
+    document.querySelectorAll('#abhol-filter-bar .k-filter-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.filter===f);
+    });
+    applyShopFilter();
+  }
+
+  function applyShopFilter(){
+    var td = today();
+    if(_shopFilter==='open'){
+      shopOrders = _allShopOrders.filter(function(o){return o.status<3;});
+    } else if(_shopFilter==='today'){
+      shopOrders = _allShopOrders.filter(function(o){return (o.abholdatum||'').substring(0,10)===td;});
+    } else {
+      shopOrders = _allShopOrders.slice();
+    }
+    renderShopOrders();
+  }
+
   function loadShopOrders(){
     fetch(API+'/shop-order?mode=cms')
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success) return;
-        var all = res.orders || [];
-        var filter = document.getElementById('abhol-filter').value;
+        _allShopOrders = res.orders || [];
+        applyShopFilter();
+        renderShopStats(_allShopOrders);
+        // Update filter counts
         var td = today();
-        if(filter==='open'){
-          shopOrders = all.filter(function(o){return o.status<3;});
-        } else if(filter==='today'){
-          shopOrders = all.filter(function(o){return (o.abholdatum||'').substring(0,10)===td;});
-        } else {
-          shopOrders = all;
-        }
-        renderShopOrders();
-        renderShopStats(all);
-        var openCount = all.filter(function(o){return o.status<3;}).length;
-        updateBadge('abhol', openCount);
+        var openC = _allShopOrders.filter(function(o){return o.status<3;}).length;
+        var todayC = _allShopOrders.filter(function(o){return (o.abholdatum||'').substring(0,10)===td;}).length;
+        document.getElementById('fc-open').textContent = openC;
+        document.getElementById('fc-today').textContent = todayC;
+        document.getElementById('fc-all').textContent = _allShopOrders.length;
+        updateBadge('abhol', openC);
       })
       .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">⚠️</div>Fehler beim Laden: '+esc(e.message)+'</div>'; });
   }
@@ -865,62 +939,96 @@ var K = (function(){
       document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">📭</div>Keine Bestellungen gefunden</div>';
       return;
     }
+    // Sort by status priority, then by abholdatum
     var sorted = shopOrders.slice().sort(function(a,b){
       var prio = {0:0,1:1,2:2,3:3,4:4};
-      return (prio[a.status]||9) - (prio[b.status]||9);
+      var d = (prio[a.status]||9) - (prio[b.status]||9);
+      if(d!==0) return d;
+      return (a.abholdatum||'').localeCompare(b.abholdatum||'');
     });
-    var html = '';
+
+    // Group by abholdatum + zeitslot
+    var groups = [];
+    var groupMap = {};
     sorted.forEach(function(o){
-      var stClass = 'shop-st-'+o.status;
-      var badgeClass = 'shop-badge-'+o.status;
-      var statusLabel = SHOP_STATUS[o.status]||'?';
       var zeitslot = o.abhol_zeitslot||{};
       var slotLabel = zeitslot.label||'';
       if(zeitslot.von && zeitslot.bis) slotLabel += ' ('+zeitslot.von+'–'+zeitslot.bis+')';
-      var posArr = o.positionen||[];
-      var posCount = posArr.length;
-      var posPreview = posArr.slice(0,3).map(function(p){return p.bezeichnung||p.name||'?';});
-      if(posCount>3) posPreview.push('+'+(posCount-3)+' weitere');
-
-      html += '<div class="k-order '+stClass+'">';
-      html += '<div class="k-order-info">';
-      html += '<div class="k-order-top">';
-      html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';
-      html += '<span class="k-order-status '+badgeClass+'">'+SHOP_ICONS[o.status]+' '+statusLabel+'</span>';
-      html += '</div>';
-      html += '<div class="k-order-dish">'+esc(o.bestellnummer)+' · '+fmtDate(o.abholdatum)+' '+esc(slotLabel)+'</div>';
-      html += '<div class="k-order-meta">';
-      html += '<span>💰 '+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
-      html += '<span>📦 '+posCount+' Artikel</span>';
-      if(o.anmerkungen) html += '<span>💬 '+esc(o.anmerkungen)+'</span>';
-      html += '</div>';
-      if(posPreview.length>0){
-        html += '<div class="k-order-positions">';
-        posPreview.forEach(function(p){ html += '<span>'+esc(p)+'</span>'; });
-        html += '</div>';
+      var dateLabel = fmtDateRelative(o.abholdatum);
+      var groupKey = (o.abholdatum||'')+'|'+(zeitslot.label||'_none');
+      if(!groupMap[groupKey]){
+        groupMap[groupKey] = {label:dateLabel+' · '+slotLabel, orders:[]};
+        groups.push(groupMap[groupKey]);
       }
-      html += '</div>';
+      groupMap[groupKey].orders.push(o);
+    });
 
-      // Gesamtsumme
-      html += '<div class="k-order-qty"><div class="qty-display" style="font-size:16px">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+'€</div></div>';
-
-      // Actions
-      html += '<div class="k-order-actions">';
-      if(o.status===0){
-        html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)">📋 Bearbeiten</button>';
-        html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',4)">❌</button>';
-      } else if(o.status===1){
-        html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff" onclick="K.setShopStatus(\''+o.id+'\',2)">✅ Bereit</button>';
-        html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">📦 Packen</button>';
-      } else if(o.status===2){
-        html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">📦 Abgeholt</button>';
-      } else if(o.status===3){
-        html += '<span style="font-size:20px">✅</span>';
-      }
-      html += '</div>';
-      html += '</div>';
+    var html = '';
+    groups.forEach(function(g){
+      html += '<div class="k-slot-header">'+esc(g.label)+'</div>';
+      g.orders.forEach(function(o){
+        html += renderShopOrderCard(o);
+      });
     });
     document.getElementById('abhol-orders').innerHTML = html;
+  }
+
+  function fmtDateRelative(d){
+    if(!d) return '';
+    var td = today();
+    var dateStr = (d||'').substring(0,10);
+    if(dateStr===td) return 'Heute';
+    var tom = new Date(); tom.setDate(tom.getDate()+1);
+    if(dateStr===tom.toISOString().split('T')[0]) return 'Morgen';
+    return fmtDate(d);
+  }
+
+  function renderShopOrderCard(o){
+    var stClass = 'shop-st-'+o.status;
+    var badgeClass = 'shop-badge-'+o.status;
+    var statusLabel = SHOP_STATUS[o.status]||'?';
+    var posArr = o.positionen||[];
+    var posCount = posArr.length;
+    var posPreview = posArr.slice(0,3).map(function(p){return p.bezeichnung||p.name||'?';});
+    if(posCount>3) posPreview.push('+'+(posCount-3)+' weitere');
+
+    var html = '<div class="k-order '+stClass+'">';
+    html += '<div class="k-order-info">';
+    html += '<div class="k-order-top">';
+    html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';
+    html += '<span class="k-order-status '+badgeClass+'">'+SHOP_ICONS[o.status]+' '+statusLabel+'</span>';
+    html += '</div>';
+    html += '<div class="k-order-dish">'+esc(o.bestellnummer)+' · '+posCount+' Pos.</div>';
+    html += '<div class="k-order-meta">';
+    html += '<span>💰 '+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
+    if(o.anmerkungen) html += '<span>💬 '+esc(o.anmerkungen)+'</span>';
+    html += '</div>';
+    if(posPreview.length>0){
+      html += '<div class="k-order-positions">';
+      posPreview.forEach(function(p){ html += '<span>'+esc(p)+'</span>'; });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Gesamtsumme
+    html += '<div class="k-order-qty"><div class="qty-display" style="font-size:16px">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+'€</div></div>';
+
+    // Actions
+    html += '<div class="k-order-actions">';
+    if(o.status===0){
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)">📋 Bearbeiten</button>';
+      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',4)">❌</button>';
+    } else if(o.status===1){
+      html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff" onclick="K.setShopStatus(\''+o.id+'\',2)">✅ Bereit</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">📦 Packen</button>';
+    } else if(o.status===2){
+      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">📦 Abgeholt</button>';
+    } else if(o.status===3){
+      html += '<span style="font-size:20px">✅</span>';
+    }
+    html += '</div>';
+    html += '</div>';
+    return html;
   }
 
   function setShopStatus(id, status){
@@ -942,9 +1050,167 @@ var K = (function(){
     .catch(function(e){toast('Fehler: '+e.message);});
   }
 
+  // ══════════════════════════════════════════════════
+  //  INLINE PACK MODAL
+  // ══════════════════════════════════════════════════
+
+  var _packOrder = null;
+  var _packState = {};
+
   function openPackModal(orderId){
-    // Open shop-admin pack page in new tab
-    window.open('/shop-admin.html?pack='+orderId, '_blank');
+    _packOrder = null;
+    _packState = {};
+    document.getElementById('pk-items').innerHTML = '<div style="text-align:center;padding:20px;color:var(--c-muted)">⏳ Laden…</div>';
+    document.getElementById('pk-info').innerHTML = '';
+    document.getElementById('pk-progress-bar').style.width = '0%';
+    document.getElementById('pk-progress-text').textContent = '';
+    openModal('modal-pack');
+
+    fetch(API+'/shop-order?mode=pack&id='+encodeURIComponent(orderId))
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success||!res.order){
+          document.getElementById('pk-items').innerHTML = '<div style="text-align:center;padding:20px;color:var(--c-red)">⚠️ Bestellung nicht gefunden</div>';
+          return;
+        }
+        _packOrder = res.order;
+        if(_packOrder.pack_data && _packOrder.pack_data.items){
+          _packOrder.pack_data.items.forEach(function(p){
+            _packState[p.artikelnummer] = {gepackt:p.gepackt, gepackt_menge:p.gepackt_menge||0};
+          });
+        }
+        renderPackModal();
+      })
+      .catch(function(e){
+        document.getElementById('pk-items').innerHTML = '<div style="text-align:center;padding:20px;color:var(--c-red)">⚠️ '+esc(e.message)+'</div>';
+      });
+  }
+
+  function renderPackModal(){
+    if(!_packOrder) return;
+    var o = _packOrder;
+    document.getElementById('pk-title').textContent = '📦 '+o.bestellnummer+' · '+esc(o.kunde_name);
+    document.getElementById('pk-info').innerHTML =
+      '<span>👤 '+esc(o.kunde_name)+'</span>'+
+      '<span>📅 '+fmtDate(o.abholdatum)+'</span>'+
+      '<span>💰 '+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>'+
+      (o.anmerkungen?'<span style="color:#92400e">📝 '+esc(o.anmerkungen)+'</span>':'');
+
+    var items = o.positionen||[];
+    var html = '';
+    items.forEach(function(p,idx){
+      var st = _packState[p.artikelnummer];
+      var packed = st && st.gepackt;
+      html += '<div class="pk-item'+(packed?' packed':'')+'" onclick="K.togglePackItem('+idx+')">';
+      html += '<div class="pk-check">'+(packed?'✓':'')+'</div>';
+      html += '<div class="pk-body">';
+      html += '<div class="pk-name">'+esc(p.bezeichnung)+'</div>';
+      html += '<div class="pk-artnr">Art.-Nr: '+esc(p.artikelnummer)+(p.strichcode?' · EAN: '+esc(p.strichcode):'')+'</div>';
+      html += '</div>';
+      html += '<div class="pk-qty">'+p.menge+' '+(p.einheit||'Stk')+'</div>';
+      html += '</div>';
+      if(p.einheit==='kg'){
+        var wt = st?st.gepackt_menge:p.menge;
+        html += '<div class="pk-weight-input" onclick="event.stopPropagation()">';
+        html += '<span>Gewicht:</span> <input type="number" data-pk-weight="'+idx+'" value="'+wt+'" min="0" max="99" step="0.01" onchange="K.setPackWeight('+idx+',this.value)"> <span>kg</span>';
+        html += '</div>';
+      }
+    });
+    document.getElementById('pk-items').innerHTML = html;
+    updatePackProgress();
+  }
+
+  function togglePackItem(idx){
+    var p = _packOrder.positionen[idx];
+    if(!p) return;
+    var artnr = p.artikelnummer;
+    if(!_packState[artnr]) _packState[artnr] = {gepackt:false, gepackt_menge:p.menge};
+    _packState[artnr].gepackt = !_packState[artnr].gepackt;
+    if(_packState[artnr].gepackt && !_packState[artnr].gepackt_menge) _packState[artnr].gepackt_menge = p.menge;
+    renderPackModal();
+  }
+
+  function setPackWeight(idx, val){
+    var p = _packOrder.positionen[idx];
+    if(!p) return;
+    if(!_packState[p.artikelnummer]) _packState[p.artikelnummer] = {gepackt:false, gepackt_menge:0};
+    _packState[p.artikelnummer].gepackt_menge = parseFloat(val)||0;
+  }
+
+  function updatePackProgress(){
+    var items = _packOrder.positionen||[];
+    var total = items.length;
+    var packed = 0;
+    items.forEach(function(p){
+      var st = _packState[p.artikelnummer];
+      if(st && st.gepackt) packed++;
+    });
+    var pct = total>0?Math.round(packed/total*100):0;
+    document.getElementById('pk-progress-bar').style.width = pct+'%';
+    document.getElementById('pk-progress-text').textContent = packed+' / '+total+' Artikel gepackt ('+pct+'%)';
+  }
+
+  function buildPackJson(){
+    var items = _packOrder.positionen||[];
+    var packItems = [];
+    items.forEach(function(p){
+      var st = _packState[p.artikelnummer];
+      packItems.push({
+        artikelnummer:p.artikelnummer,
+        bezeichnung:p.bezeichnung,
+        strichcode:p.strichcode||'',
+        gepackt:st?st.gepackt:false,
+        gepackt_menge:st?st.gepackt_menge:0,
+        scan_zeit:''
+      });
+    });
+    return {
+      gepackt_von:'Kiosk',
+      gepackt_um:new Date().toLocaleString('de-DE'),
+      items:packItems,
+      alle_gepackt:packItems.every(function(i){return i.gepackt;})
+    };
+  }
+
+  function savePackState(){
+    if(!_packOrder) return;
+    var packJson = buildPackJson();
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:_packOrder.id, status:1, pack_json:packJson})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success) toast('💾 Pack-Status gespeichert');
+      else toast('Fehler beim Speichern');
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  function finishPack(){
+    if(!_packOrder) return;
+    var packJson = buildPackJson();
+    var allPacked = packJson.alle_gepackt;
+    if(!allPacked){
+      if(!confirm('Nicht alle Artikel gepackt! Trotzdem als Abholbereit markieren?')) return;
+    }
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:_packOrder.id, status:2, pack_json:packJson})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('✅ Bestellung ist abholbereit');
+        closeModal('modal-pack');
+        loadShopOrders();
+      } else {
+        toast('Fehler: '+(res.error||''));
+      }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
   }
 
   // ══════════════════════════════════════════════════
@@ -1012,8 +1278,13 @@ var K = (function(){
     searchKunden: searchKunden,
     printKitchen: printKitchen,
     loadShopOrders: loadShopOrders,
+    setShopFilter: setShopFilter,
     setShopStatus: setShopStatus,
     openPackModal: openPackModal,
+    togglePackItem: togglePackItem,
+    setPackWeight: setPackWeight,
+    savePackState: savePackState,
+    finishPack: finishPack,
     openModal: openModal,
     closeModal: closeModal,
     refresh: refresh
