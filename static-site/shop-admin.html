@@ -1171,7 +1171,7 @@ function renderMittagOrders(orders, dateStr){
     html += '<td style="padding:8px"><strong>'+(o.name||'')+'</strong>';
     if(o.telefon) html += '<br><span style="font-size:11px;color:var(--muted)">📞 '+o.telefon+'</span>';
     html += '</td>';
-    html += '<td style="padding:8px">'+(o.gericht_name||'–');
+    html += '<td style="padding:8px">'+(o.gericht||'–');
     if(o.tag!==undefined) html += ' <span style="font-size:10px;color:var(--muted)">('+((DAY[o.tag])||'')+')</span>';
     html += '</td>';
     html += '<td style="padding:8px;text-align:center;font-weight:800;font-size:16px">'+(o.menge||1)+'</td>';
@@ -1182,7 +1182,8 @@ function renderMittagOrders(orders, dateStr){
       html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',1)" style="background:#dcfce7;border-color:#22c55e;color:#166534;margin-right:4px">✅ Bestätigen</button>';
       html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',2)" style="color:var(--red);font-size:11px">❌</button>';
     } else if(o.status === 1){
-      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',3)" style="background:#dbeafe;border-color:#2563eb;color:#1d4ed8">📦 Abgeholt</button>';
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',3)" style="background:#dbeafe;border-color:#2563eb;color:#1d4ed8;margin-right:4px">📦 Abgeholt</button>';
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',2)" style="color:var(--red);font-size:11px">❌</button>';
     } else {
       html += '<span style="font-size:14px">'+(o.status===3?'✅':'–')+'</span>';
     }
