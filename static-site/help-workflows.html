@@ -15,8 +15,8 @@
   .nav button { padding:8px 16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
   .nav button:hover { background:#f0fdf4; border-color:#86efac; }
   .nav button.active { background:#166534; color:#fff; border-color:#166534; }
-  .section { display:none; padding:24px 32px; max-width:1200px; margin:0 auto; }
-  .section.active { display:block; }
+  .section { padding:24px 32px; max-width:1200px; margin:0 auto; height:0; overflow:hidden; opacity:0; position:absolute; left:-9999px; }
+  .section.active { height:auto; overflow:visible; opacity:1; position:relative; left:auto; }
   .section h2 { font-size:20px; font-weight:800; margin-bottom:6px; color:#166534; }
   .section .desc { font-size:13px; color:#64748b; margin-bottom:20px; line-height:1.5; }
   .mermaid { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; margin-bottom:24px; overflow-x:auto; }
@@ -42,14 +42,14 @@
 </div>
 
 <div class="nav" id="nav">
-  <button class="active" onclick="show('status')">Status-Lebenszyklus</button>
-  <button onclick="show('bestellung')">Bestellvorgang</button>
-  <button onclick="show('bearbeitung')">Bearbeitung & Packen</button>
-  <button onclick="show('abholscan')">Abholscan</button>
-  <button onclick="show('email')">E-Mail-Benachrichtigungen</button>
-  <button onclick="show('filter')">Kiosk-Filterlogik</button>
-  <button onclick="show('architektur')">Gesamtarchitektur</button>
-  <button onclick="show('api')">API-Endpunkte</button>
+  <button class="active" onclick="show('status',this)">Status-Lebenszyklus</button>
+  <button onclick="show('bestellung',this)">Bestellvorgang</button>
+  <button onclick="show('bearbeitung',this)">Bearbeitung & Packen</button>
+  <button onclick="show('abholscan',this)">Abholscan</button>
+  <button onclick="show('email',this)">E-Mail-Benachrichtigungen</button>
+  <button onclick="show('filter',this)">Kiosk-Filterlogik</button>
+  <button onclick="show('architektur',this)">Gesamtarchitektur</button>
+  <button onclick="show('api',this)">API-Endpunkte</button>
 </div>
 
 <!-- 1. Status-Lebenszyklus -->
@@ -384,11 +384,11 @@ flowchart TB
     sequence: { mirrorActors: false, messageAlign: 'left' }
   });
 
-  function show(id) {
+  function show(id, btn) {
     document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
     document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
     document.getElementById('sec-'+id).classList.add('active');
-    event.target.classList.add('active');
+    if(btn) btn.classList.add('active');
   }
 </script>
 </body>
