@@ -436,6 +436,56 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | T9 Datum POST normalisiert | ✅ | T00:00:00Z wird zu YYYY-MM-DD |
 | T9 Datum GET startswith | ✅ | Findet beide Formate |
 
+---
+
+## T10 – Kiosk: Slot-Header-Badges & Filterung
+
+### T10.1 – Slot-Header-Badges lesbar (nicht gelb auf gelb)
+- **Aktion:** Kiosk `/kiosk` laden, Online-Shop Tab öffnen
+- **Prüfung:** `.k-slot-badge` CSS prüfen: `background:#fff`, farbige Schrift
+- **Erwartung:** Weiße Pillen mit farbiger Schrift + Textlabels ("Packen", "Warten", "Bereit")
+
+### T10.2 – Online-Shop ist Default-Tab
+- **Aktion:** Kiosk `/kiosk` laden
+- **Prüfung:** `.k-tab.active` hat `data-tab="abhol"`, Panel `#panel-abhol` hat Klasse `active`
+- **Erwartung:** Online-Shop Tab ist beim Start aktiv, nicht Mittagstisch
+
+### T10.3 – Filter-Zähler ohne alte erledigte Bestellungen
+- **Aktion:** Kiosk laden, "Zu erledigen" Zähler und Stats prüfen
+- **Prüfung:** Alte abgeschlossene Bestellungen (status >= 3, Abholdatum < heute) nicht mitzählen
+- **Erwartung:** Zähler zeigt nur aktive Bestellungen, alte nur in Historie
+
+### T10.4 – Historie-Button zeigt alte Bestellungen
+- **Aktion:** "Historie" Button klicken
+- **Prüfung:** Alte abgeschlossene Bestellungen werden sichtbar
+- **Erwartung:** Historie-Zähler korrekt, Toggle blendet alte ein/aus
+
+---
+
+## T11 – Shop-Admin: Dashboard zeigt alle Bestellungen
+
+### T11.1 – Shop-Admin zeigt offene/überfällige Bestellungen
+- **Aktion:** Shop-Admin `/shop-admin` laden
+- **Prüfung:** Bestellungsliste enthält auch ältere offene Bestellungen (Abholdatum in Vergangenheit)
+- **Erwartung:** Alle Bestellungen mit Status < 3 sichtbar, unabhängig vom Abholdatum
+
+### T11.2 – Shop-Admin Zähler korrekt
+- **Aktion:** Shop-Admin laden, Stats-Leiste prüfen
+- **Prüfung:** Bestellungen-Zahl, Offen-Zahl, Abholbereit-Zahl
+- **Erwartung:** Zähler stimmen mit Kiosk-Ansicht überein
+
+---
+
+## Testlauf 2026-06-21 (Abend)
+| Test | Status | Ergebnis |
+|---|---|---|
+| T10.1 Badges lesbar | ⏳ | Deploy läuft |
+| T10.2 Default-Tab | ⏳ | Deploy läuft |
+| T10.3 Filter-Zähler | ⏳ | Deploy läuft |
+| T10.4 Historie | ⏳ | Deploy läuft |
+| T11.1 Shop-Admin Bestellungen | ⏳ | Deploy läuft |
+| T11.2 Shop-Admin Zähler | ⏳ | Deploy läuft |
+
 ## Fehler-Log
 | Datum | Test | Fehler | Fix |
 |---|---|---|---|

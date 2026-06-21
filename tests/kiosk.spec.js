@@ -720,4 +720,12 @@ test.describe('Kiosk UI – Slot-Header Badges', () => {
     const hasFilter = await page.evaluate(() => typeof K.loadShopOrders === 'function');
     expect(hasFilter).toBe(true);
   });
+
+  test('AK-UI-24: Online-Shop ist Default-Tab beim Laden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const activeTab = page.locator('.k-tab.active');
+    await expect(activeTab).toHaveAttribute('data-tab', 'abhol');
+    const activePanel = page.locator('.k-panel.active');
+    await expect(activePanel).toHaveAttribute('id', 'panel-abhol');
+  });
 });
