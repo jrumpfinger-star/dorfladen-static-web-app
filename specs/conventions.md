@@ -26,10 +26,23 @@
 - **Fallbacks sind keine erfolgreichen Tests** – ein Test der nur prüft ob kein Fehler fliegt, aber nicht ob die echten Daten ankommen, ist wertlos
 - Tests müssen die **tatsächliche Funktionalität** verifizieren: echte API-Antworten, echte Daten, korrekte Anzeige
 
-### Testlauf nach Fix:
-- **Nur fehlgeschlagene Tests erneut ausführen**, nicht die gesamte Suite
-- Playwright: `npx playwright test --last-failed` oder gezielt die betroffene Datei
-- Gesamte Suite nur bei Release-Kandidaten oder großen Refactorings
+### Mit validen Daten testen:
+- **Nie Fake-/Dummy-Daten in Produktions-Dataverse schreiben** (z.B. "Testgericht Datum", "Datum-Test ISO")
+- Falls Testdaten angelegt wurden, **sofort nach dem Test wieder löschen** (Script: `scripts/delete-test-orders.py`)
+- Tests verwenden echte, existierende Daten oder testen nur Struktur/API-Verhalten
+
+### Testcase-Pflege – regelmäßig gegen Anforderungen prüfen:
+- **Vor jedem Testlauf prüfen:** Sind die Testcases noch aktuell? Passen sie zu den aktuellen Anforderungen?
+- **Obsolete Tests entfernen** – Tests die veraltete Funktionalität prüfen verfälschen die Ergebnisse
+- **Nur betroffene Tests ausführen** – bei einer Änderung nur die Tests der geänderten Anforderung laufen lassen
+- **Gesamte Suite nur auf explizite Anforderung** des Users, nicht automatisch
+- Playwright gezielt: `npx playwright test tests/kiosk.spec.js -g "Testname"`
+
+### PowerShell-Befehle korrekt formulieren:
+- `powershell -ExecutionPolicy Bypass -Command` verschluckt `$env:VAR = 'value'` → **die Variable wird nicht gesetzt**
+- **Lösung:** Immer `.ps1`-Dateien verwenden, nie Inline-Befehle mit `$env:` in `-Command`
+- Pattern für env + Befehl: `powershell -ExecutionPolicy Bypass -File scripts/run-with-secret.ps1 scripts/myscript.py`
+- Pattern für Tests: `powershell -ExecutionPolicy Bypass -File test-live.ps1 tests/kiosk.spec.js -g "Testname"`
 
 ---
 
