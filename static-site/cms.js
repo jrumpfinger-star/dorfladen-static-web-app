@@ -830,8 +830,7 @@
       return r.json();
     }).then(function(list){
       var arr=Array.isArray(list)?list:[];
-      var hit=arr.find(function(x){return (x.dl_artikelnummer||'')===key && x.dl_bild_base64;})
-        || arr.find(function(x){return x && x.dl_bild_base64;});
+      var hit=arr.find(function(x){return (x.dl_artikelnummer||'')===key && x.dl_bild_base64;});
       if(!hit || !hit.dl_bild_base64) return null;
       return hit.dl_bild_base64;
     }).catch(function(){return null;});
