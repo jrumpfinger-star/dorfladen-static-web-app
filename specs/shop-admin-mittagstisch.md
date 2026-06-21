@@ -11,12 +11,17 @@ Die Shop-Admin-Seite (`static-site/shop-admin.html`) zeigt Mittagstisch-Bestellu
 - [x] Fehlermeldungen als Toast statt alert()
 
 ## Betroffene Dateien
-- `static-site/shop-admin.html`
+- `static-site/shop-admin.html` – `mtBuildDayTabs()`, `mtSetStatus()`
+
+## API-Endpunkte
+- `PATCH /api/lunch-order/{id}` – Status einer Bestellung ändern
+- `GET /api/lunch-order?datum=YYYY-MM-DD` – Bestellungen nach Datum laden
 
 ## Akzeptanzkriterien
-- [x] Samstag erscheint als Tab wenn heute Sa ist oder Sa in den nächsten 4 Geschäftstagen liegt
-- [x] Klick auf ❌ bei einer Bestellung ändert den Status ohne "Method not allowed"-Fehler
-- [x] Fehlermeldungen erscheinen als Toast-Notification, nicht als Browser-alert()
+- [x] AK-MT-01: Samstag erscheint als Tab wenn Sa in den nächsten 5 Geschäftstagen liegt
+- [x] AK-MT-02: `mtSetStatus()` sendet PATCH an `/api/lunch-order/{id}` (ID in URL, nicht nur im Body)
+- [x] AK-MT-03: Fehlermeldungen als Toast, nicht als Browser-alert()
+- [x] AK-MT-04: Nach erfolgreicher Statusänderung wird `loadMittagOrders()` aufgerufen
 
 ## Nicht-Ziele
 - Keine Sonntags-Unterstützung (Laden ist So geschlossen)
