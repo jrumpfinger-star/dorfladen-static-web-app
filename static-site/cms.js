@@ -10902,9 +10902,8 @@
       if(freeItem&&freeItem.bild_data) imgUrl=freeItem.bild_data;
     }
 
-    // Build order link
-    var orderText='Hallo!\nIch m\u00f6chte bestellen:\n\n1x '+meal.name+(meal.preis?' ('+meal.preis+'\u20AC)':'')+'\n\nAbholung ca. ___ Uhr\nDanke! \uD83D\uDE0A';
-    var orderLink='https://wa.me/491714910935?text='+encodeURIComponent(orderText);
+    // Build order link (permanent link to ordering page)
+    var orderLink=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(meal.name)+(meal.preis?'&preis='+encodeURIComponent(meal.preis):'');
 
     var canvas=document.getElementById('soc-post-canvas');
     if(!canvas){toast('Canvas nicht gefunden','error');return;}
@@ -11070,8 +11069,8 @@
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var bestellText='Bestelle 1x '+p.name;
-        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
+        var lnk=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(parseFloat(p.preis).toFixed(2)):'');
+        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';
       });
       return msg.trim();
     }
@@ -11084,8 +11083,8 @@
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr2[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var bestellText='Bestelle 1x '+p.name;
-        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 https://wa.me/491714910935?text='+encodeURIComponent(bestellText)+'\n\n';
+        var lnk=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(parseFloat(p.preis).toFixed(2)):'');
+        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';
       });
     }
     return msg.trim();
@@ -11360,26 +11359,6 @@
     }
   };
 
-  // Helper: copy text to clipboard (with fallback), then share files only
-  function socialCopyToClipboard(text){
-    // Try modern API first
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      return navigator.clipboard.writeText(text).then(function(){return true;}).catch(function(){
-        return socialCopyFallback(text);
-      });
-    }
-    return Promise.resolve(socialCopyFallback(text));
-  }
-  function socialCopyFallback(text){
-    try{
-      var ta=document.createElement('textarea');
-      ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';
-      document.body.appendChild(ta);ta.select();
-      var ok=document.execCommand('copy');
-      document.body.removeChild(ta);
-      return ok;
-    }catch(e){return false;}
-  }
   function socialIsMobile(){
     return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
@@ -11451,28 +11430,6 @@
       window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
     },500);
   }
-  function socialCopyMsg(msg){
-    function doCopy(){
-      try{
-        if(navigator.clipboard&&navigator.clipboard.writeText){
-          navigator.clipboard.writeText(msg).then(function(){
-            socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 jetzt in WhatsApp mit Strg+V einf\u00fcgen!',true);
-          }).catch(function(){
-            // Retry once after short delay (focus may not be back yet)
-            setTimeout(function(){
-              navigator.clipboard.writeText(msg).then(function(){
-                socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 jetzt in WhatsApp mit Strg+V einf\u00fcgen!',true);
-              }).catch(function(){socialCopyFallback(msg);});
-            },500);
-          });
-        } else {
-          socialCopyFallback(msg);
-        }
-      }catch(e){socialCopyFallback(msg);}
-    }
-    // Delay slightly to ensure page has focus back after share dialog
-    setTimeout(doCopy,300);
-  }
   function socialFallbackDownloadFiles(files){
     files.forEach(function(f){
       var url=URL.createObjectURL(f);
@@ -11481,38 +11438,6 @@
       setTimeout(function(){URL.revokeObjectURL(url);},2000);
     });
     socialStatus('soc-post-status','\u2705 '+files.length+' Poster heruntergeladen',true);
-  }
-
-  // Download poster files as fallback
-  function socialDownloadFiles(files){
-    files.forEach(function(f){
-      var url=URL.createObjectURL(f);
-      var a=document.createElement('a');
-      a.href=url;a.download=f.name;
-      document.body.appendChild(a);a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-  }
-
-  // --- Fallback: copy image to clipboard + download + open WhatsApp ---
-  function socialFallbackWaShare(canvas,msg){
-    if(canvas){
-      canvas.toBlob(function(blob){
-        if(blob&&navigator.clipboard&&navigator.clipboard.write){
-          var item=new ClipboardItem({'image/png':blob});
-          navigator.clipboard.write([item]).then(function(){
-            socialStatus('soc-post-status','\u2705 Poster in Zwischenablage kopiert! In WhatsApp mit Strg+V einf\u00fcgen.',true);
-          }).catch(function(){
-            socialDownloadPoster();
-            socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
-          });
-        } else {
-          socialDownloadPoster();
-          socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 bitte in WhatsApp als Foto anh\u00e4ngen!',true);
-        }
-      },'image/png');
-    }
   }
 
   // --- Instagram Share ---

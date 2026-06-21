@@ -171,6 +171,7 @@
     @keyframes nowPulse{0%,100%{opacity:1}50%{opacity:.65}}
     @keyframes kPulse{0%,100%{background-color:#eff6ff}50%{background-color:#dbeafe}}
     @keyframes kBlink{0%,100%{opacity:1}50%{opacity:.4}}
+    @keyframes kSpin{to{transform:rotate(360deg)}}
 
     /* ═══ Pack modal (inline) ═══ */
     .k-modal.k-modal-lg{max-width:720px}
@@ -238,6 +239,9 @@
   <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
     <span class="k-tab-icon"><i data-lucide="users" style="width:22px;height:22px"></i></span> Stammkunden
   </div>
+  <div class="k-tab" data-tab="social" onclick="K.switchTab('social')">
+    <span class="k-tab-icon"><i data-lucide="share-2" style="width:22px;height:22px"></i></span> Social
+  </div>
 </div>
 
 <!-- ═══ Panels ═══ -->
@@ -289,6 +293,141 @@
       <button class="k-btn k-btn-outline" style="min-height:40px;padding:8px 16px;font-size:13px;border-radius:10px" onclick="document.getElementById('kunden-search').value='';K.searchKunden()"><i data-lucide="users" style="width:16px;height:16px"></i> Alle Kunden laden</button>
     </div>
     <div id="kunden-list"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="users" style="width:24px;height:24px"></i></div>Suchbegriff eingeben oder „Alle Kunden laden" klicken</div></div>
+  </div>
+
+  <!-- ── Social Media ── -->
+  <div class="k-panel" id="panel-social">
+    <div id="kiosk-panel-social">
+    <div style="margin-bottom:10px">
+      <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0">&#128247; Social Media &#8211; Tagespost</h3>
+      <p style="font-size:12px;color:#6b7280;margin:4px 0 12px">T&#228;gliche Angebote zusammenstellen und auf WhatsApp &amp; Instagram teilen.</p>
+    </div>
+
+    <!-- Sub-Tabs: Neuer Post | Katalog -->
+    <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:8px;padding:3px;margin-bottom:16px">
+      <button id="social-subtab-post" onclick="socialSubTab('post')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:#fff;color:#e1306c;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer">&#10133; Neuer Post</button>
+      <button id="social-subtab-katalog" onclick="socialSubTab('katalog')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:transparent;color:#6b7280;cursor:pointer">&#128218; Katalog</button>
+    </div>
+
+    <!-- ========== SUB: KATALOG ========== -->
+    <div id="social-panel-katalog" style="display:none">
+      <div style="margin-bottom:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+        <div style="background:#e1306c;color:#fff;padding:10px 14px;font-weight:700;font-size:13px">&#10133; Neues Produkt zum Katalog hinzuf&#252;gen</div>
+        <div style="padding:14px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:2;min-width:160px">
+              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Name *</label>
+              <input id="soc-kat-name" placeholder="z.B. Geschnetzeltes mit Champignonrahm" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+            <div style="flex:1;min-width:120px">
+              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Kategorie *</label>
+              <select id="soc-kat-kategorie" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                <option value="Mittagessen">&#127869; Mittagessen</option>
+                <option value="Kuchen">&#127856; Kuchen</option>
+                <option value="Obst &amp; Gemuese">&#129382; Obst &amp; Gem&#252;se</option>
+                <option value="Aufstriche">&#129367; Aufstriche</option>
+              </select>
+            </div>
+            <div style="width:80px">
+              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Preis &#8364;</label>
+              <input id="soc-kat-preis" type="number" step="0.01" min="0" placeholder="9.80" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+            <div style="min-width:140px">
+              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Bild</label>
+              <input id="soc-kat-bild" type="file" accept="image/*" capture="environment" style="width:100%;font-size:11px">
+            </div>
+            <button onclick="socialKatAdd()" style="white-space:nowrap;background:#e1306c;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer">&#10133; Hinzuf&#252;gen</button>
+          </div>
+          <div id="soc-kat-paste-zone" tabindex="0"
+            style="margin-top:8px;border:2px dashed #d1d5db;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
+            onclick="document.getElementById('soc-kat-bild').click()"
+            title="Klicken zum Datei w&#228;hlen oder Strg+V zum Einf&#252;gen">
+            <div id="soc-kat-paste-hint" style="color:#9ca3af;font-size:12px">
+              &#128203; <strong>Strg+V</strong> zum Einf&#252;gen oder <strong>klicken</strong> zum Datei w&#228;hlen
+            </div>
+            <div id="soc-kat-bild-preview" style="display:none;margin-top:6px">
+              <img id="soc-kat-bild-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
+              <button onclick="event.stopPropagation();socialClearBild()" style="display:block;margin:6px auto 0;background:none;border:none;color:#dc2626;font-size:11px;cursor:pointer;text-decoration:underline">&#10005; Bild entfernen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="soc-kat-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+      <div id="soc-kat-loading" style="display:none;text-align:center;padding:30px 0">
+        <div style="display:inline-block;width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#e1306c;border-radius:50%;animation:kSpin 0.8s linear infinite"></div>
+        <div style="margin-top:8px;color:#6b7280;font-size:13px">Katalog wird geladen&#8230;</div>
+      </div>
+      <div id="soc-kat-list"></div>
+      <div id="soc-kat-empty" style="display:none;text-align:center;padding:30px 0;color:#9ca3af;font-size:13px">Noch keine Produkte im Katalog. F&#252;gen Sie oben Ihr erstes Produkt hinzu.</div>
+    </div>
+
+    <!-- ========== SUB: NEUER POST ========== -->
+    <div id="social-panel-post">
+      <div style="margin-bottom:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+        <div style="background:#25D366;color:#fff;padding:10px 14px;font-weight:700;font-size:13px">&#128221; Tagespost zusammenstellen</div>
+        <div style="padding:14px">
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Titel</label>
+            <select id="soc-post-titel-sel" onchange="socialTitelChange()" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box"></select>
+            <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:4px;display:none;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+          </div>
+          <script>
+          (function(){
+            var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+            var tag=tage[new Date().getDay()];
+            var sel=document.getElementById('soc-post-titel-sel');
+            if(!sel)return;
+            var opts=['Heute im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
+            var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
+            opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
+            var inp=document.getElementById('soc-post-titel');if(inp) inp.value=opts[0];
+          })();
+          window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}};
+          </script>
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Freitext (optional)</label>
+            <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" style="width:100%;resize:vertical;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box"></textarea>
+          </div>
+          <p style="font-size:12px;font-weight:700;color:#374151;margin:0 0 8px">Produkte ausw&#228;hlen:</p>
+          <div id="soc-post-items" style="display:flex;flex-direction:column;gap:6px">
+            <p style="color:#9ca3af;font-size:12px;font-style:italic">Laden Sie zuerst den Katalog...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vorschau -->
+      <div style="margin-bottom:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+        <div style="background:#1f2937;color:#fff;padding:10px 14px;font-weight:700;font-size:13px">&#128065; Vorschau</div>
+        <div style="text-align:center;padding:16px">
+          <div id="soc-preview-label-meal" style="display:none;font-size:11px;font-weight:700;color:#f57f17;margin-bottom:4px">&#127869; MITTAGESSEN-POSTER</div>
+          <canvas id="soc-post-canvas-meal" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6;margin-bottom:12px"></canvas>
+          <div id="soc-preview-label-daily" style="display:none;font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px">&#128230; TAGES&#220;BERSICHT</div>
+          <canvas id="soc-post-canvas" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6"></canvas>
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button onclick="socialGenPreview()" style="background:#e1306c;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer">&#128260; Vorschau aktualisieren</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teilen -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <button onclick="socialShareWhatsApp()" style="background:#25D366;color:#fff;border:none;border-radius:8px;flex:1;min-width:140px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Auf WhatsApp teilen
+        </button>
+        <button onclick="socialShareInstagram()" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;flex:1;min-width:140px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+          Auf Instagram teilen
+        </button>
+        <button onclick="socialDownloadPoster()" style="min-width:100px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px">&#128190; Bild speichern</button>
+      </div>
+      <div id="soc-meal-posters" style="display:none;margin-top:12px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">&#127860; Einzel-Poster pro Gericht</div>
+        <div id="soc-meal-poster-list" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+      <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
+    </div>
+    </div>
   </div>
 
 </div>
@@ -467,6 +606,7 @@ var K = (function(){
     document.querySelectorAll('.k-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+id);});
     if(id==='abhol') loadShopOrders();
     if(id==='kunden' && kunden.length===0) searchKunden();
+    if(id==='social' && typeof socialSubTab==='function') socialSubTab('post');
   }
 
   // ══════════════════════════════════════════════════
@@ -1113,7 +1253,7 @@ var K = (function(){
         return _isOverdue(o, now);
       });
     } else {
-      shopOrders = base.filter(function(o){return o.status<3;});
+      shopOrders = _showHistory ? base : base.filter(function(o){return o.status<3;});
     }
     renderShopOrders();
     // Update history count – all orders with abholdatum before today
@@ -1227,12 +1367,14 @@ var K = (function(){
     groups.forEach(function(g,gi){
       var gid = 'slotg-'+gi;
       // Status counts for header
-      var sc = {0:0,1:0,2:0};
-      g.orders.forEach(function(o){ if(o.status<=2) sc[o.status]=(sc[o.status]||0)+1; });
+      var sc = {0:0,1:0,2:0,3:0,4:0};
+      g.orders.forEach(function(o){ if(o.status>=0&&o.status<=4) sc[o.status]=(sc[o.status]||0)+1; });
       var badges = [];
       if(sc[0]) badges.push('<span class="k-slot-badge sb-pack">'+luc('inbox',12)+' '+sc[0]+' Packen</span>');
       if(sc[1]) badges.push('<span class="k-slot-badge sb-pack">'+luc('package',12)+' '+sc[1]+' Warten</span>');
       if(sc[2]) badges.push('<span class="k-slot-badge sb-wait">'+luc('bell',12)+' '+sc[2]+' Bereit</span>');
+      if(sc[3]) badges.push('<span class="k-slot-badge" style="color:#16a34a">'+luc('check-circle',12)+' '+sc[3]+' Abgeholt</span>');
+      if(sc[4]) badges.push('<span class="k-slot-badge sb-overdue">'+luc('x-circle',12)+' '+sc[4]+' Storniert</span>');
       var countLabel = badges.length ? badges.join(' ') : '<span class="k-slot-badge" style="color:#666">'+g.orders.length+' Bestellung'+(g.orders.length!==1?'en':'')+'</span>';
       // Restore previous state if available, else default: current=open, others=collapsed
       var isOpen = gid in prevOpen ? prevOpen[gid] : g.isCurrent;
@@ -1914,5 +2056,7 @@ var K = (function(){
   };
 })();
 </script>
+<script src="/js/social.js"></script>
+<script src="/js/social-poster.js"></script>
 </body>
 </html>
