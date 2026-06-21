@@ -113,6 +113,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-22b: Badges zeigen Textlabels: "Packen", "Warten", "Bereit" (Status 0=Packen, 1=Warten, 2=Bereit)
 - [x] AK-UI-23: Filter-Zähler (Zu erledigen/Überfällig) schließen alte erledigte Bestellungen aus
 - [x] AK-UI-24: Online-Shop ist Default-Tab beim Laden des Kiosk
+- [x] AK-UI-25: Shop-Karten haben expliziten "Details"-Button (Auge-Icon) statt nur Doppelklick
+- [x] AK-UI-25b: Button-Labels sind aktionsorientiert: "Annehmen" (statt "Bearbeiten"), "Ausgeben" (statt "Abgeholt")
+- [x] AK-UI-25c: "Ausgeben" bei Status "Bereit" – keine Verwechslung mit Status-Anzeige
 
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)

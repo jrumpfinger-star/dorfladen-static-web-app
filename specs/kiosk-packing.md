@@ -34,6 +34,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) zeigt Online-Shop-Bestellungen an. Bi
 - [x] AK-PK-08: Nicht-gepackte Artikel zeigen "✕ Nicht lieferbar" Tag
 - [x] AK-PK-09: Teilmenge-Artikel (weniger als bestellt) zeigen "⚠ Teilmenge" Tag
 - [x] AK-PK-10: Finish-Dialog zeigt fehlende Artikel namentlich auf
+- [x] AK-PK-11: Fortschrittsbalken und Zähler aktualisieren sich live bei Checkbox-Änderung (nicht nur initial)
 
 ## Nicht-Ziele
 - Kein Barcode-Scanning im Kiosk-Pack-Modal

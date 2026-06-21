@@ -1293,13 +1293,16 @@ var K = (function(){
     // Actions
     html += '<div class="k-order-actions">';
     if(o.status===0){
-      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',16)+' Bearbeiten</button>';
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',16)+' Annehmen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+' Details</button>';
       html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',4)">'+luc('x',16)+'</button>';
     } else if(o.status===1){
       html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff" onclick="K.setShopStatus(\''+o.id+'\',2)">'+luc('check-circle',16)+' Bereit</button>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">' +luc('package',16)+' Packen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+'</button>';
     } else if(o.status===2){
-      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('package-check',16)+' Abgeholt</button>';
+      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',16)+' Ausgeben</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+'</button>';
     } else if(o.status===3){
       html += luc('check-circle',20);
     }
@@ -1531,9 +1534,12 @@ var K = (function(){
 
   function pkRecalcSum(){
     var total = 0;
-    document.querySelectorAll('[data-pk-qty]').forEach(function(inp){
+    var packed = 0;
+    var all = document.querySelectorAll('[data-pk-qty]');
+    all.forEach(function(inp){
       var idx = inp.dataset.pkQty;
       var cb = document.querySelector('[data-pk-idx="'+idx+'"]');
+      if(cb&&cb.checked) packed++;
       if(cb&&!cb.checked) return;
       var ep = parseFloat(inp.dataset.ep)||0;
       var raw = parseFloat(inp.value)||0;
@@ -1541,6 +1547,10 @@ var K = (function(){
       total += isKg?ep*(raw/1000):ep*raw;
     });
     document.getElementById('pk-summe').textContent = 'Summe: '+money(total);
+    var cnt = all.length;
+    var pct = cnt?Math.round(packed/cnt*100):0;
+    document.getElementById('pk-progress-bar').style.width = pct+'%';
+    document.getElementById('pk-progress-text').textContent = packed+'/'+cnt+' gepackt';
   }
 
   function pkBuildJson(){

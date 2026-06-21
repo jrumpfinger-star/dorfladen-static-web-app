@@ -787,38 +787,167 @@ test.describe('Kiosk UI – Slot-Header Badges', () => {
 // ═══════════════════════════════════════════════════════
 test.describe('Kiosk – Nachrichten-Gelesen', () => {
 
-  test('AK-BS-14: _hasUnseenComment prüft kommentar_gelesen Feld', async ({ page }) => {
+  test('AK-BS-14: Kein localStorage-basiertes Tracking mehr (rein Dataverse)', async ({ page }) => {
     await page.goto(KIOSK_URL);
     const source = await page.content();
-    // Must use kommentar_gelesen from API, NOT localStorage
-    expect(source).toContain('kommentar_gelesen');
+    // Must NOT use localStorage for seen-comments anymore
     expect(source).not.toContain('kiosk_seen_comments');
+    // Must use kommentar_gelesen from API response
+    expect(source).toContain('kommentar_gelesen');
   });
 
-  test('AK-BS-15: _markCommentsAsSeen sendet PATCH an API', async ({ page }) => {
-    await page.goto(KIOSK_URL);
-    const source = await page.content();
-    expect(source).toContain('kommentar_gelesen:true');
-    expect(source).toContain("method:'PATCH'");
+  test('AK-BS-14b: API liefert kommentar_gelesen Feld für Bestellungen', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/lunch-order`);
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.orders.length).toBeGreaterThan(0);
+    // Every order must have the kommentar_gelesen field (boolean)
+    for (const order of data.orders) {
+      expect(typeof order.kommentar_gelesen).toBe('boolean');
+    }
   });
 
-  test('AK-BS-14b: Nachrichten-Filter-Button vorhanden', async ({ page }) => {
+  test('AK-BS-14c: Nachrichten-Badge zeigt Anzahl ungelesener Kommentare', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    const btn = page.locator('[data-mt-filter="nachrichten"]');
-    await expect(btn).toBeAttached();
+    // Switch to Mittagstisch tab
+    await page.click('.k-tab[data-tab="mittag"]');
+    await page.waitForTimeout(3000);
+    // Nachrichten-Badge should exist and show count
+    const badge = page.locator('[data-mt-filter="nachrichten"]');
+    await expect(badge).toBeAttached();
+    // Evaluate: count orders with unseen comments via API data
+    const unreadCount = await page.evaluate(() => {
+      if (typeof orders === 'undefined') return -1;
+      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
+    });
+    // Badge text should match the count (or be hidden if 0)
+    if (unreadCount > 0) {
+      const badgeText = await badge.textContent();
+      expect(badgeText).toContain(String(unreadCount));
+    }
+  });
+
+  test('AK-BS-15: Klick auf Nachrichten-Badge sendet PATCH für jede ungelesene Bestellung', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.click('.k-tab[data-tab="mittag"]');
+    await page.waitForTimeout(3000);
+    // Check if there are unread comments
+    const unreadCount = await page.evaluate(() => {
+      if (typeof orders === 'undefined') return 0;
+      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
+    });
+    if (unreadCount > 0) {
+      // Collect all PATCH requests
+      const patchRequests = [];
+      page.on('request', r => {
+        if (r.url().includes('/api/lunch-order/') && r.method() === 'PATCH') {
+          patchRequests.push(r);
+        }
+      });
+      // Click the nachrichten badge
+      await page.click('[data-mt-filter="nachrichten"]');
+      await page.waitForTimeout(2000);
+      // Should have sent one PATCH per unread order
+      expect(patchRequests.length).toBe(unreadCount);
+      // Each PATCH should set kommentar_gelesen: true
+      for (const req of patchRequests) {
+        const body = JSON.parse(req.postData());
+        expect(body.kommentar_gelesen).toBe(true);
+      }
+    }
+  });
+
+  test('AK-BS-15b: Nach Markieren als gelesen verschwindet der Badge-Zähler', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.click('.k-tab[data-tab="mittag"]');
+    await page.waitForTimeout(3000);
+    // Click nachrichten badge to mark all as read
+    await page.click('[data-mt-filter="nachrichten"]');
+    await page.waitForTimeout(2000);
+    // After marking, the in-memory orders should all have kommentar_gelesen = true
+    const stillUnread = await page.evaluate(() => {
+      if (typeof orders === 'undefined') return -1;
+      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
+    });
+    expect(stillUnread).toBe(0);
   });
 });
 
 // ═══════════════════════════════════════════════════════
-//  AK-UI-18c: Detail-Modal verwendet einzelpreis/positionspreis
+//  AK-UI-25: Shop-Karten Buttons (Details, Annehmen, Ausgeben)
+// ═══════════════════════════════════════════════════════
+test.describe('Kiosk – Shop-Karten Buttons', () => {
+
+  test('AK-UI-25: Details-Button öffnet Detail-Modal', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(4000);
+    // Find any Details button (eye icon)
+    const detailBtns = page.locator('button:has-text("Details"), button[onclick*="showOrderDetail"]');
+    const count = await detailBtns.count();
+    if (count > 0) {
+      await detailBtns.first().click();
+      await page.waitForSelector('#modal-detail.open', { state: 'attached', timeout: 5000 });
+      const modal = page.locator('#modal-detail.open');
+      await expect(modal).toBeAttached();
+      // Modal should show order info (Kunde, Nr., Status)
+      const body = await page.locator('#detail-body').textContent();
+      expect(body).toContain('Kunde');
+      expect(body).toContain('Nr.');
+    }
+  });
+
+  test('AK-UI-25b: Kein "Abgeholt"-Button mehr vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(4000);
+    const source = await page.locator('#panel-abhol').innerHTML();
+    // "Abgeholt" als Button-Text darf nicht mehr existieren
+    const abgeholtBtns = source.match(/>[\s]*Abgeholt[\s]*</g);
+    expect(abgeholtBtns).toBeNull();
+  });
+
+  test('AK-UI-25c: "Ausgeben" statt "Abgeholt" bei Status Bereit', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(4000);
+    const source = await page.content();
+    // Code must use "Ausgeben" for status 2 action
+    expect(source).toContain('Ausgeben');
+  });
+
+  test('AK-UI-25d: "Annehmen" statt "Bearbeiten" bei Status Eingang', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(4000);
+    const source = await page.content();
+    // Code must use "Annehmen" for status 0 action
+    expect(source).toContain('Annehmen');
+    // "Bearbeiten" als Button-Label darf nicht mehr existieren
+    expect(source).not.toMatch(/k-btn-confirm[^>]*>.*Bearbeiten/);
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+//  AK-UI-18c: Detail-Modal Preise korrekt (einzelpreis/positionspreis)
 // ═══════════════════════════════════════════════════════
 test.describe('Kiosk – Detail-Modal Preise', () => {
 
-  test('AK-UI-18c: showOrderDetail verwendet einzelpreis statt vk_preis', async ({ page }) => {
+  test('AK-UI-18c: Shop-Bestellung Detail zeigt Einzelpreise > 0€', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    const source = await page.content();
-    // The price variable must use einzelpreis as primary source
-    expect(source).toContain('p.einzelpreis');
-    expect(source).toContain('p.positionspreis');
+    // Wait for shop orders to load
+    await page.waitForTimeout(4000);
+    // Find a shop order card and double-click to open detail
+    const shopCards = page.locator('.k-card[ondblclick*="showOrderDetail"]');
+    const cardCount = await shopCards.count();
+    if (cardCount > 0) {
+      await shopCards.first().dblclick();
+      await page.waitForSelector('#modal-detail', { state: 'visible', timeout: 5000 });
+      // Check that the price column does NOT show only 0,00€ values
+      const priceTexts = await page.locator('#detail-body td:nth-child(4)').allTextContents();
+      const allZero = priceTexts.every(t => t.trim() === '0,00€');
+      // At least one non-zero price if order has gesamtsumme > 0
+      const gesamtText = await page.locator('#detail-body tfoot td:last-child').textContent();
+      if (!gesamtText.includes('0,00')) {
+        expect(allZero).toBe(false);
+      }
+    }
   });
 });

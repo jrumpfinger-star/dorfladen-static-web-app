@@ -378,49 +378,105 @@ test.describe('API Smoke-Tests', () => {
 //  T-BS: Bestellstatus (/bestellstatus)
 // ════════════════════════════════════════════════════
 
-test.describe('Bestellstatus – Grundlagen', () => {
+// Known test order – must exist in Dataverse (datum >= today)
+const TEST_NR = 'MT-260621-6E6BE';
+const TEST_EMAIL = 'jrumpfinger@t-online.de';
+const TEST_GERICHT = 'Schaschlikpfanne';
 
-  test('T-BS-01: Seite lädt ohne JS-Fehler', async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', (err) => errors.push(err.message));
+test.describe('Bestellstatus – Lookup & Anzeige', () => {
+
+  test('T-BS-01: Lookup mit gültiger Bestellnummer + Email zeigt Bestelldetails', async ({ page }) => {
     await page.goto(`${BASE}/bestellstatus.html`);
-    await page.waitForTimeout(2000);
-    const criticalErrors = errors.filter(e =>
-      !e.includes('fetch') && !e.includes('NetworkError') && !e.includes('Failed to fetch')
+    await page.fill('#bs-nr', TEST_NR);
+    await page.fill('#bs-email', TEST_EMAIL);
+    await page.click('#bs-lookup-btn');
+    // Wait for order data to render
+    await page.waitForSelector('#bs-details', { state: 'visible', timeout: 10000 });
+    const details = await page.locator('#bs-details').textContent();
+    expect(details).toContain(TEST_GERICHT);
+  });
+
+  test('T-BS-02: Lookup mit falscher Email zeigt Fehlermeldung', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus.html`);
+    await page.fill('#bs-nr', TEST_NR);
+    await page.fill('#bs-email', 'falsch@test.de');
+    await page.click('#bs-lookup-btn');
+    await page.waitForTimeout(3000);
+    // Details should NOT be visible
+    const detailsVisible = await page.locator('#bs-details').isVisible();
+    expect(detailsVisible).toBe(false);
+    // Error message should appear
+    const errorEl = page.locator('#bs-error');
+    await expect(errorEl).toBeVisible();
+  });
+
+  test('T-BS-03: Auto-Login per URL-Parameter + localStorage Email', async ({ page }) => {
+    // Set email in localStorage first
+    await page.goto(`${BASE}/bestellstatus.html`);
+    await page.evaluate((email) => localStorage.setItem('bs_email', email), TEST_EMAIL);
+    // Navigate with nr parameter
+    await page.goto(`${BASE}/bestellstatus.html?nr=${TEST_NR}`);
+    await page.waitForSelector('#bs-details', { state: 'visible', timeout: 10000 });
+    const details = await page.locator('#bs-details').textContent();
+    expect(details).toContain(TEST_GERICHT);
+    // Clean up
+    await page.evaluate(() => localStorage.removeItem('bs_email'));
+  });
+
+  test('T-BS-04: Auto-Login per localStorage (bs_nr + bs_email)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus.html`);
+    await page.evaluate(({ nr, email }) => {
+      localStorage.setItem('bs_nr', nr);
+      localStorage.setItem('bs_email', email);
+    }, { nr: TEST_NR, email: TEST_EMAIL });
+    // Reload – should auto-lookup
+    await page.goto(`${BASE}/bestellstatus.html`);
+    await page.waitForSelector('#bs-details', { state: 'visible', timeout: 10000 });
+    const details = await page.locator('#bs-details').textContent();
+    expect(details).toContain(TEST_GERICHT);
+    // Clean up
+    await page.evaluate(() => { localStorage.removeItem('bs_nr'); localStorage.removeItem('bs_email'); });
+  });
+
+  test('T-BS-05: Kommentar senden → PATCH API-Call wird ausgeführt', async ({ page }) => {
+    // First lookup the order
+    await page.goto(`${BASE}/bestellstatus.html`);
+    await page.fill('#bs-nr', TEST_NR);
+    await page.fill('#bs-email', TEST_EMAIL);
+    await page.click('#bs-lookup-btn');
+    await page.waitForSelector('#bs-details', { state: 'visible', timeout: 10000 });
+    // Intercept PATCH call
+    const patchPromise = page.waitForRequest(r =>
+      r.url().includes('/api/lunch-order/') && r.method() === 'PATCH'
     );
-    expect(criticalErrors).toHaveLength(0);
+    await page.fill('#bs-comment', 'Playwright-Test-Kommentar');
+    await page.click('#bs-comment-btn');
+    const patchReq = await patchPromise;
+    const body = JSON.parse(patchReq.postData());
+    expect(body.kunde_kommentar).toBe('Playwright-Test-Kommentar');
+    // Wait for success indication
+    await page.waitForSelector('#bs-comment-sent', { state: 'visible', timeout: 5000 });
   });
 
-  test('T-BS-02: Lookup-Formular vorhanden (Bestellnummer + Email)', async ({ page }) => {
-    await page.goto(`${BASE}/bestellstatus.html`);
-    const nrField = page.locator('#bs-nr');
-    const emailField = page.locator('#bs-email');
-    await expect(nrField).toBeAttached();
-    await expect(emailField).toBeAttached();
-  });
-
-  test('T-BS-03: Kommentar-Bereich vorhanden', async ({ page }) => {
-    await page.goto(`${BASE}/bestellstatus.html`);
-    const commentArea = page.locator('#bs-comment');
-    const commentBtn = page.locator('#bs-comment-btn');
-    await expect(commentArea).toBeAttached();
-    await expect(commentBtn).toBeAttached();
-  });
-
-  test('T-BS-04: Zurück-Link führt zur Startseite', async ({ page }) => {
+  test('T-BS-06: Zurück-Link führt zur Startseite (/)', async ({ page }) => {
     await page.goto(`${BASE}/bestellstatus.html`);
     const backLink = page.locator('a.bs-link');
-    await expect(backLink).toBeAttached();
+    await expect(backLink).toBeVisible();
     const href = await backLink.getAttribute('href');
     expect(href).toBe('/');
     const text = await backLink.textContent();
     expect(text).toContain('Startseite');
   });
 
-  test('T-BS-05: Code referenziert lunch-order API', async ({ page }) => {
+  test('T-BS-07: Status-Badge wird farblich korrekt angezeigt', async ({ page }) => {
     await page.goto(`${BASE}/bestellstatus.html`);
-    const content = await page.content();
-    expect(content).toContain('/api/lunch-order');
+    await page.fill('#bs-nr', TEST_NR);
+    await page.fill('#bs-email', TEST_EMAIL);
+    await page.click('#bs-lookup-btn');
+    await page.waitForSelector('#bs-details', { state: 'visible', timeout: 10000 });
+    // Status badge should exist and have color styling
+    const badge = page.locator('#bs-status-badge, .bs-status');
+    await expect(badge.first()).toBeVisible();
   });
 });
 
@@ -430,45 +486,82 @@ test.describe('Bestellstatus – Grundlagen', () => {
 
 test.describe('Homepage – Meine Bestellung Link', () => {
 
-  test('T-HP-01: Desktop-Link existiert im DOM (initial hidden)', async ({ page }) => {
+  test('T-HP-01: Ohne localStorage → Links bleiben versteckt', async ({ page }) => {
     await page.goto(`${BASE}/`);
-    await page.waitForTimeout(2000);
-    const deskLink = page.locator('#desk-my-order');
-    await expect(deskLink).toBeAttached();
-    // Should be hidden by default (no active order in localStorage)
-    await expect(deskLink).toBeHidden();
+    // Clear localStorage to ensure clean state
+    await page.evaluate(() => { localStorage.removeItem('bs_nr'); localStorage.removeItem('bs_email'); });
+    await page.goto(`${BASE}/`);
+    await page.waitForTimeout(3000);
+    await expect(page.locator('#desk-my-order')).toBeHidden();
+    await expect(page.locator('#mob-my-order')).toBeHidden();
   });
 
-  test('T-HP-02: Mobile-Link existiert im DOM (initial hidden)', async ({ page }) => {
+  test('T-HP-02: Mit localStorage (aktive Bestellung) → Links werden sichtbar', async ({ page }) => {
     await page.goto(`${BASE}/`);
-    await page.waitForTimeout(2000);
-    const mobLink = page.locator('#mob-my-order');
-    await expect(mobLink).toBeAttached();
-    await expect(mobLink).toBeHidden();
+    await page.evaluate(({ nr, email }) => {
+      localStorage.setItem('bs_nr', nr);
+      localStorage.setItem('bs_email', email);
+    }, { nr: TEST_NR, email: TEST_EMAIL });
+    await page.goto(`${BASE}/`);
+    // Wait for API check to complete and links to become visible
+    await page.waitForSelector('#desk-my-order', { state: 'visible', timeout: 10000 });
+    await expect(page.locator('#desk-my-order')).toBeVisible();
+    // Check that Bestellnummer is shown
+    const deskText = await page.locator('#desk-my-order').textContent();
+    expect(deskText).toContain(TEST_NR);
+    // Clean up
+    await page.evaluate(() => { localStorage.removeItem('bs_nr'); localStorage.removeItem('bs_email'); });
   });
 
-  test('T-HP-03: Desktop-Link href zeigt auf /bestellstatus', async ({ page }) => {
+  test('T-HP-03: Mit localStorage aber falscher Email → Links bleiben versteckt', async ({ page }) => {
     await page.goto(`${BASE}/`);
-    const deskLink = page.locator('#desk-my-order');
-    const href = await deskLink.getAttribute('href');
-    expect(href).toBe('/bestellstatus');
+    await page.evaluate(({ nr }) => {
+      localStorage.setItem('bs_nr', nr);
+      localStorage.setItem('bs_email', 'falsch@test.de');
+    }, { nr: TEST_NR });
+    await page.goto(`${BASE}/`);
+    await page.waitForTimeout(4000);
+    await expect(page.locator('#desk-my-order')).toBeHidden();
+    // Clean up
+    await page.evaluate(() => { localStorage.removeItem('bs_nr'); localStorage.removeItem('bs_email'); });
   });
 
-  test('T-HP-04: Mobile-Link href zeigt auf /bestellstatus', async ({ page }) => {
+  test('T-HP-04: Link führt zu /bestellstatus und lädt Bestellung', async ({ page }) => {
     await page.goto(`${BASE}/`);
-    const mobLink = page.locator('#mob-my-order');
-    const href = await mobLink.getAttribute('href');
-    expect(href).toBe('/bestellstatus');
+    await page.evaluate(({ nr, email }) => {
+      localStorage.setItem('bs_nr', nr);
+      localStorage.setItem('bs_email', email);
+    }, { nr: TEST_NR, email: TEST_EMAIL });
+    await page.goto(`${BASE}/`);
+    await page.waitForSelector('#desk-my-order', { state: 'visible', timeout: 10000 });
+    // Click the link
+    await page.click('#desk-my-order');
+    // Should navigate to bestellstatus
+    await page.waitForURL('**/bestellstatus**');
+    // Should auto-load the order
+    await page.waitForSelector('#bs-details', { state: 'visible', timeout: 10000 });
+    const details = await page.locator('#bs-details').textContent();
+    expect(details).toContain(TEST_GERICHT);
+    // Clean up
+    await page.evaluate(() => { localStorage.removeItem('bs_nr'); localStorage.removeItem('bs_email'); });
   });
 
-  test('T-HP-05: Script prüft localStorage und ruft lunch-order API', async ({ page }) => {
+  test('T-HP-05: API-Call erfolgt mit korrekten Parametern', async ({ page }) => {
     await page.goto(`${BASE}/`);
-    const content = await page.content();
-    expect(content).toContain('bs_nr');
-    expect(content).toContain('bs_email');
-    expect(content).toContain('/api/lunch-order');
-    expect(content).toContain('desk-my-order');
-    expect(content).toContain('mob-my-order');
+    await page.evaluate(({ nr, email }) => {
+      localStorage.setItem('bs_nr', nr);
+      localStorage.setItem('bs_email', email);
+    }, { nr: TEST_NR, email: TEST_EMAIL });
+    // Intercept the API call
+    const apiPromise = page.waitForRequest(r =>
+      r.url().includes('/api/lunch-order') && r.url().includes('nr=') && r.url().includes('email=')
+    );
+    await page.goto(`${BASE}/`);
+    const apiReq = await apiPromise;
+    expect(apiReq.url()).toContain(`nr=${encodeURIComponent(TEST_NR)}`);
+    expect(apiReq.url()).toContain(`email=${encodeURIComponent(TEST_EMAIL)}`);
+    // Clean up
+    await page.evaluate(() => { localStorage.removeItem('bs_nr'); localStorage.removeItem('bs_email'); });
   });
 });
 
