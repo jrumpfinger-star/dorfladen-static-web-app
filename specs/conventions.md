@@ -19,6 +19,13 @@
    - Akzeptanzkriterien ergänzen / abhaken
    - Anforderungen bei Änderungen nachziehen
 
+### Keine Fallbacks – Funktionalität muss funktionieren:
+- **Fehlende Abhängigkeiten (Datenbankfelder, APIs, Configs) müssen angelegt werden** – nicht per Fallback/Default umgangen
+- Ein `try/catch` mit stiller Rückgabe eines Defaults ist **kein Fix**, sondern versteckt den Fehler
+- Wenn ein Feature Dataverse-Felder, API-Endpunkte oder Konfiguration braucht, müssen diese existieren und funktionieren
+- **Fallbacks sind keine erfolgreichen Tests** – ein Test der nur prüft ob kein Fehler fliegt, aber nicht ob die echten Daten ankommen, ist wertlos
+- Tests müssen die **tatsächliche Funktionalität** verifizieren: echte API-Antworten, echte Daten, korrekte Anzeige
+
 ### Testlauf nach Fix:
 - **Nur fehlgeschlagene Tests erneut ausführen**, nicht die gesamte Suite
 - Playwright: `npx playwright test --last-failed` oder gezielt die betroffene Datei
