@@ -85,6 +85,10 @@
     {
       "route": "/lunch-admin",
       "rewrite": "/lunch-admin.html"
+    },
+    {
+      "route": "/kiosk",
+      "rewrite": "/kiosk.html"
     }
   ],
   "navigationFallback": {
