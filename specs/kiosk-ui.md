@@ -102,6 +102,13 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-18: Doppelklick auf Shop-Bestellkarte öffnet Detail-Modal
 - [x] AK-UI-18b: Detail-Modal zeigt Positionen-Tabelle mit Menge, Einheit, Preis
 - [x] AK-UI-16e: Confirm-Dialog als vollbreites Element unter der Karte (nicht inline in Actions)
+- [x] AK-UI-19: Alle UI-Icons verwenden Lucide Icons (keine Emojis in produktiven UI-Elementen)
+- [x] AK-UI-19b: Lucide CDN eingebunden, createIcons() wird nach jedem DOM-Update aufgerufen
+- [x] AK-UI-20: Shop-Historie-Toggle blendet alte abgeschlossene Bestellungen ein/aus (Default: ausgeblendet)
+- [x] AK-UI-20b: Historie-Button zeigt Anzahl alter abgeschlossener Bestellungen
+- [x] AK-UI-21: Aktuelle Schicht (Slot-Gruppe) ist farblich hervorgehoben (grün statt orange)
+- [x] AK-UI-21b: Aktuelle Schicht ist standardmäßig aufgeklappt, andere collapsed
+- [x] AK-UI-21c: "Jetzt"-Badge mit Uhr-Icon pulsiert in der aktuellen Slot-Gruppe
 
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)

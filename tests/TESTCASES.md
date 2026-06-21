@@ -153,15 +153,15 @@
 - **Prüfung:** `document.querySelectorAll('.k-tab')` → `textContent`
 - **Erwartung:** 3 Tabs: "🍽 Mittagstisch", "🛒 Online-Shop", "👥 Stammkunden" (kein Speiseplan-Tab)
 
-### T4.3 – Abholungen-Tab: Badge mit Zähler
-- **Aktion:** Text des Abholungen-Tabs prüfen
-- **Prüfung:** Zahl im Tab-Text extrahieren
-- **Erwartung:** Zahl > 0 wenn offene Shop-Bestellungen vorhanden, z.B. "🛒 Abholungen 16"
+### T4.3 – Online-Shop Badge: Nur aktiv zu erledigende Bestellungen
+- **Aktion:** Badge `#badge-abhol` prüfen
+- **Prüfung:** Badge-Zahl ≤ Zahl offener Bestellungen (`#fc-open`)
+- **Erwartung:** Badge = Eingang (Status 0) + Packen (Status 1), **nicht** Warten (Status 2)
 
-### T4.4 – Abholungen-Tab: Filter funktioniert
-- **Aktion:** Abholungen-Tab öffnen, Filter-Buttons (Offen/Heute/Alle) anklicken
-- **Prüfung:** Angezeigte Bestellungen zählen nach Filterwechsel
-- **Erwartung:** "Offen" zeigt nur Status Neu/Bearbeitung/Bereit, "Heute" nur heutiges Datum, "Alle" alle Bestellungen
+### T4.4 – Online-Shop: 3 Filter (Zu erledigen / Heute abholen / Überfällig)
+- **Aktion:** Online-Shop-Tab öffnen, Filter-Buttons anklicken
+- **Prüfung:** Active-Klasse wechselt, angezeigte Bestellungen ändern sich
+- **Erwartung:** "Zu erledigen" = Status < 3, "Heute abholen" = Abholdatum heute, "Überfällig" = Abholzeit vorbei + Status < 3
 
 ### T4.5 – Stammkunden-Tab: Buttons vorhanden
 - **Aktion:** Stammkunden-Tab öffnen
@@ -186,6 +186,26 @@
 - **Aktion:** `.k-bottom` Buttons zählen
 - **Prüfung:** `document.querySelectorAll('.k-bottom .k-btn')` → `length`
 - **Erwartung:** 2 Buttons: "☎ Neue Telefonbestellung" und "🖨 Küchenliste drucken" (kein separater Refresh-Button)
+
+### T4.9 – Überfällige Bestellungen rot hervorgehoben
+- **Aktion:** Online-Shop-Tab öffnen, Überfällig-Filter klicken
+- **Prüfung:** CSS-Klasse `k-order-overdue` an überfälligen Karten
+- **Erwartung:** Rote Hervorhebung (`border-left-color:#dc2626`, `background:#fef2f2`)
+
+### T4.10 – Bestätigen: Abbrechen schließt Dialog
+- **Aktion:** Bei offener Bestellung "Bestätigen" klicken, dann "Abbrechen"
+- **Prüfung:** Dialog verschwindet, Status unverändert
+- **Erwartung:** `.k-confirm-dialog` nicht mehr sichtbar
+
+### T4.11 – Mittagstisch-Stats: Keine veralteten Labels
+- **Aktion:** Mittagstisch-Tab prüfen
+- **Prüfung:** Stats-Text enthält "Portionen", nicht "Umsatz"/"Bestätigt"/"Abgeholt"
+- **Erwartung:** Nur handlungsorientierte Labels
+
+### T4.12 – Küchenliste Code: Korrekte Feldnamen
+- **Aktion:** Quellcode prüfen
+- **Prüfung:** `printKitchen` verwendet `o.name`, `o.menge`, `_mittagDatum`
+- **Erwartung:** Kein `o.kundenname`, kein `o.portionen`, kein `new Date()` für Datum
 
 ---
 
@@ -351,6 +371,45 @@
 - **Aktion:** POST `/api/shop-order` ohne `X-Shop-Token` Header
 - **Prüfung:** HTTP-Status
 - **Erwartung:** 400 oder 401 (kein 500er)
+
+---
+
+## T9 – Lucide Icons, Historie, Schicht-Hervorhebung
+
+### T9.1 – Lucide CDN eingebunden
+- **Aktion:** Kiosk `/kiosk` aufrufen
+- **Prüfung:** `<script src="...lucide...">` im Head vorhanden
+- **Erwartung:** Genau 1 Lucide-Script-Tag
+
+### T9.2 – Keine Emojis in statischem HTML
+- **Aktion:** Kiosk laden
+- **Prüfung:** Header, Tab-Bar, Filter-Buttons enthalten `<i data-lucide="...">` statt Emoji-Zeichen
+- **Erwartung:** Mindestens 3 Tab-Icons als Lucide-Icons gerendert
+
+### T9.3 – Lucide Icons werden zu SVG gerendert
+- **Aktion:** Kiosk laden, 2s warten
+- **Prüfung:** `.k-header svg` Elemente zählen
+- **Erwartung:** ≥ 1 SVG-Element im Header
+
+### T9.4 – Historie-Button vorhanden
+- **Aktion:** Kiosk laden, Shop-Tab öffnen
+- **Prüfung:** `#btn-history` sichtbar
+- **Erwartung:** Button mit Text "Historie" und Zähler vorhanden
+
+### T9.5 – Historie-Toggle wechselt active
+- **Aktion:** Historie-Button klicken
+- **Prüfung:** Button-Klasse nach Klick
+- **Erwartung:** Klasse `active` wird gesetzt; erneuter Klick entfernt sie
+
+### T9.6 – CSS für aktuelle Schicht vorhanden
+- **Aktion:** Kiosk laden
+- **Prüfung:** Stylesheet enthält `.k-slot-current` und `.k-slot-now`
+- **Erwartung:** CSS-Klassen für Hervorhebung vorhanden
+
+### T9.7 – toggleHistory in Public API
+- **Aktion:** `typeof K.toggleHistory` in Console
+- **Prüfung:** Typ prüfen
+- **Erwartung:** `'function'`
 
 ---
 

@@ -616,3 +616,78 @@ test.describe('Kiosk UI – Order Detail Modal', () => {
     expect(source).toContain('Jetzt bestätigen');
   });
 });
+
+// ──────────────────────────────────────────────
+// AK-UI-19: Lucide Icons
+// ──────────────────────────────────────────────
+test.describe('Lucide Icons (AK-UI-19)', () => {
+  test('AK-UI-19: Lucide CDN ist eingebunden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const lucideScript = page.locator('script[src*="lucide"]');
+    await expect(lucideScript).toHaveCount(1);
+  });
+
+  test('AK-UI-19b: Keine Emoji-Icons in statischem HTML (Buttons, Header, Tabs)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    // Check that main UI areas use data-lucide icons instead of emojis
+    const header = page.locator('.k-header h1 i[data-lucide]');
+    await expect(header).toHaveCount(1);
+    const tabIcons = page.locator('.k-tab i[data-lucide]');
+    expect(await tabIcons.count()).toBeGreaterThanOrEqual(3);
+  });
+
+  test('AK-UI-19c: Lucide Icons werden nach DOM-Update gerendert (SVG-Elemente)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    // After createIcons(), <i data-lucide> should be replaced with <svg>
+    const svgs = page.locator('.k-header svg');
+    expect(await svgs.count()).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ──────────────────────────────────────────────
+// AK-UI-20: Shop Historie Toggle
+// ──────────────────────────────────────────────
+test.describe('Shop Historie Toggle (AK-UI-20)', () => {
+  test('AK-UI-20: Historie-Button existiert in Shop-Filter-Bar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const histBtn = page.locator('#btn-history');
+    await expect(histBtn).toBeVisible();
+    await expect(histBtn).toContainText('Historie');
+  });
+
+  test('AK-UI-20b: Historie-Button hat Zähler', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const counter = page.locator('#fc-history');
+    await expect(counter).toBeVisible();
+  });
+
+  test('AK-UI-20c: Historie-Toggle wechselt active-Klasse', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const histBtn = page.locator('#btn-history');
+    // Initially not active
+    await expect(histBtn).not.toHaveClass(/active/);
+    await histBtn.click();
+    await expect(histBtn).toHaveClass(/active/);
+    await histBtn.click();
+    await expect(histBtn).not.toHaveClass(/active/);
+  });
+});
+
+// ──────────────────────────────────────────────
+// AK-UI-21: Aktuelle Schicht Hervorhebung
+// ──────────────────────────────────────────────
+test.describe('Aktuelle Schicht (AK-UI-21)', () => {
+  test('AK-UI-21: CSS für aktuelle Schicht existiert', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const source = await page.content();
+    expect(source).toContain('k-slot-current');
+    expect(source).toContain('k-slot-now');
+  });
+
+  test('AK-UI-21b: toggleHistory ist in Public API verfügbar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const hasToggle = await page.evaluate(() => typeof K.toggleHistory === 'function');
+    expect(hasToggle).toBe(true);
+  });
+});
