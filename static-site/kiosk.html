@@ -66,6 +66,8 @@
     .shop-badge-3{background:#f3f4f6;color:#6b7280}
     .shop-badge-4{background:#fef2f2;color:#991b1b}
     .k-order-overdue{border-left-color:#dc2626!important;background:#fef2f2}
+    .k-confirm-dialog{margin-top:8px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px}
+    .k-confirm-input{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box}
     .k-order-positions{font-size:12px;color:var(--c-muted);margin-top:2px}
     .k-order-positions span{display:inline-block;background:#f3f4f6;padding:1px 6px;border-radius:4px;margin:1px 2px}
     .k-order-info{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
@@ -538,6 +540,7 @@ var K = (function(){
       if(o.preis) html += '<span>'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' €</span>';
       html += '</div>';
       if(o.anmerkung) html += '<div class="k-order-note">💬 '+esc(o.anmerkung)+'</div>';
+      if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a">✅ '+esc(o.bestaetigung_text)+'</div>';
       html += '</div>';
 
       // Qty
@@ -546,8 +549,14 @@ var K = (function(){
       // Actions
       html += '<div class="k-order-actions">';
       if(o.status===0){
-        html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setStatus(\''+o.id+'\',1)">✅ Bestätigen</button>';
+        html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">✅ Bestätigen</button>';
         html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">❌</button>';
+        html += '<div class="k-confirm-dialog" id="cfd-'+o.id+'" style="display:none">';
+        html += '<input type="text" class="k-confirm-input" id="cft-'+o.id+'" placeholder="Nachricht an Kunde (optional)" maxlength="200">';
+        html += '<div style="display:flex;gap:6px;margin-top:6px">';
+        html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1" onclick="K.confirmOrder(\''+o.id+'\')">✅ Bestätigen</button>';
+        html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.hideConfirmDialog(\''+o.id+'\')">← Abbrechen</button>';
+        html += '</div></div>';
       } else if(o.status===1){
         html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">📦 Abgeholt</button>';
       } else if(o.status===3){
@@ -559,11 +568,13 @@ var K = (function(){
     document.getElementById('mittag-orders').innerHTML = html;
   }
 
-  function setStatus(id, status){
+  function setStatus(id, status, text){
+    var payload = {status:status};
+    if(text) payload.bestaetigung_text = text;
     fetch(API+'/lunch-order/'+id,{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({status:status})
+      body:JSON.stringify(payload)
     })
     .then(function(r){return r.json();})
     .then(function(res){
@@ -575,6 +586,21 @@ var K = (function(){
       }
     })
     .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  function showConfirmDialog(id){
+    var el = document.getElementById('cfd-'+id);
+    if(el){ el.style.display='block'; var inp=document.getElementById('cft-'+id); if(inp) inp.focus(); }
+  }
+
+  function hideConfirmDialog(id){
+    var el = document.getElementById('cfd-'+id);
+    if(el) el.style.display='none';
+  }
+
+  function confirmOrder(id){
+    var text = (document.getElementById('cft-'+id)||{}).value || '';
+    setStatus(id, 1, text.trim());
   }
 
   // ══════════════════════════════════════════════════
@@ -1579,6 +1605,9 @@ var K = (function(){
     switchTab: switchTab,
     setMittagDatum: setMittagDatum,
     setStatus: setStatus,
+    showConfirmDialog: showConfirmDialog,
+    hideConfirmDialog: hideConfirmDialog,
+    confirmOrder: confirmOrder,
     openNewOrder: openNewOrder,
     pickDish: pickDish,
     noQty: noQtyChange,

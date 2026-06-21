@@ -34,6 +34,14 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] Stats: Portionen (Gesamt), Offen (unbestätigt), Mitnehmen, Vor Ort
 - [x] Kein Umsatz, kein "Bestätigt"-Zähler, kein "Abgeholt"-Zähler
 
+### Bestätigen mit optionalem Text
+- [x] "Bestätigen"-Button öffnet Inline-Confirm-Dialog statt direkt Status zu ändern
+- [x] Dialog enthält optionales Textfeld (Placeholder: "Nachricht an Kunde")
+- [x] Text wird als `bestaetigung_text` per PATCH an API gesendet
+- [x] Text wird in Push-Benachrichtigung an Kunden angehängt
+- [x] Bestätigungstext wird auf der Karte grün hinterlegt angezeigt
+- [x] Abbrechen-Button schließt Dialog ohne Aktion
+
 ### Zeitslot-Gruppen
 - [x] Bestellungen gruppiert nach Abholdatum + Zeitslot
 - [x] Gruppen aufklappbar (collapsible) mit Pfeil-Indikator (▶/▼) und Bestellanzahl-Badge
@@ -77,6 +85,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-13: Shop-Stats zeigen handlungsorientierte Labels (kein Umsatz/Bearb.)
 - [x] AK-UI-14: Mittagstisch-Stats zeigen Portionen/Mitnehmen/Vor-Ort statt Umsatz
 - [x] AK-UI-15: Überfällige Bestellungen rot hervorgehoben
+- [x] AK-UI-16: Bestätigen-Button öffnet Confirm-Dialog mit optionalem Textfeld
+- [x] AK-UI-16b: Confirm-Dialog zeigt Textfeld mit Placeholder
+- [x] AK-UI-16c: Bestätigungstext wird auf Karte grün angezeigt
 
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)

@@ -204,6 +204,35 @@
 
 ---
 
+## T10 – Bestätigen mit optionalem Text
+
+### T10.1 – Bestätigen öffnet Confirm-Dialog
+- **Aktion:** Kiosk laden, bei offener Bestellung auf "✅ Bestätigen" klicken
+- **Prüfung:** Inline-Dialog mit Textfeld erscheint
+- **Erwartung:** Dialog sichtbar, Textfeld hat Placeholder "Nachricht an Kunde (optional)"
+
+### T10.2 – Bestätigen ohne Text
+- **Aktion:** Confirm-Dialog öffnen, direkt "✅ Bestätigen" klicken (ohne Text)
+- **Prüfung:** PATCH wird ohne `bestaetigung_text` gesendet
+- **Erwartung:** Bestellung bestätigt, Toast zeigt "✅ Bestätigt"
+
+### T10.3 – Bestätigen mit Text
+- **Aktion:** Confirm-Dialog öffnen, "Abholzeit 12:30" eingeben, "✅ Bestätigen" klicken
+- **Prüfung:** PATCH mit `bestaetigung_text: "Abholzeit 12:30"` gesendet
+- **Erwartung:** Bestellung bestätigt, Text auf Karte grün angezeigt
+
+### T10.4 – Abbrechen schließt Dialog
+- **Aktion:** Confirm-Dialog öffnen, "← Abbrechen" klicken
+- **Prüfung:** Dialog verschwindet, Status unverändert
+- **Erwartung:** Dialog nicht sichtbar, Bestellung immer noch "Neu"
+
+### T10.5 – Bestätigungstext auf Karte sichtbar
+- **Aktion:** Bestellung mit Bestätigungstext laden
+- **Prüfung:** Karte zeigt grün hinterlegten Text mit ✅-Prefix
+- **Erwartung:** Div mit `background:#dcfce7` und `border-left:3px solid #16a34a` vorhanden
+
+---
+
 ## T5 – Lunch-Admin (/lunch-admin)
 
 ### T5.1 – Seite lädt fehlerfrei
