@@ -255,6 +255,7 @@
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')">Alle <span class="k-filter-count" id="mt-fc-alle">0</span></button>
       <button class="k-filter-btn" data-mt-filter="abgeholt" onclick="K.setMittagFilter('abgeholt')"><i data-lucide="package-check" style="width:14px;height:14px"></i> Abgeholt <span class="k-filter-count" id="mt-fc-abgeholt">0</span></button>
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')"><i data-lucide="x-circle" style="width:14px;height:14px"></i> Storniert <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
+      <span id="mt-msg-badge" style="display:none;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;animation:kPulse 2s ease-in-out infinite;cursor:default;white-space:nowrap"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> Nachrichten</span>
     </div>
     <div class="k-dish-summary" id="mittag-dish-summary"></div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
@@ -495,6 +496,11 @@ var K = (function(){
     document.getElementById('mt-fc-alle').textContent = orders.length;
     document.getElementById('mt-fc-abgeholt').textContent = c3;
     document.getElementById('mt-fc-storniert').textContent = c2;
+    var msgCount = orders.filter(function(o){return o.kunde_kommentar && !o.personal_antwort && o.status!==2;}).length;
+    var msgBadge = document.getElementById('mt-msg-badge');
+    var msgCountEl = document.getElementById('mt-msg-count');
+    if(msgBadge){ msgBadge.style.display = msgCount>0?'inline-flex':'none'; }
+    if(msgCountEl){ msgCountEl.textContent = msgCount; }
   }
 
   function buildDayBar(){
