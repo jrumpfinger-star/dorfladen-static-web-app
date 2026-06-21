@@ -1197,7 +1197,7 @@ function renderMittagOrders(orders, dateStr){
 }
 
 function mtSetStatus(id, status){
-  fetch('/api/lunch-order', {
+  fetch('/api/lunch-order/'+encodeURIComponent(id), {
     method: 'PATCH',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({id: id, status: status})
@@ -1207,10 +1207,10 @@ function mtSetStatus(id, status){
     if(res.success){
       loadMittagOrders();
     } else {
-      alert('Fehler: ' + (res.error||''));
+      toast('❌ Fehler: ' + (res.error||''));
     }
   })
-  .catch(function(e){ alert('Fehler: '+e.message); });
+  .catch(function(e){ toast('❌ Fehler: '+e.message); });
 }
 
 // ── Manual order ──
