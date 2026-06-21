@@ -1041,10 +1041,10 @@ function toggleMittag(){
 function mtBuildDayTabs(){
   var today = new Date();
   _mtDays = [];
-  // Heute + nächste 4 Werktage
+  // Heute + nächste 4 Geschäftstage (Mo–Sa, kein Sonntag)
   var d = new Date(today);
   while(_mtDays.length < 5){
-    if(d.getDay() >= 1 && d.getDay() <= 5){
+    if(d.getDay() >= 1 && d.getDay() <= 6){
       _mtDays.push(new Date(d));
     }
     d.setDate(d.getDate()+1);
