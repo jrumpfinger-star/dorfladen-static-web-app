@@ -237,6 +237,13 @@
       <div style="flex:1"></div>
       <div class="k-stats" id="mittag-stats"></div>
     </div>
+    <div class="k-filter-bar" id="mittag-status-bar" style="margin-top:6px">
+      <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')">📥 Zu bestätigen <span class="k-filter-count" id="mt-fc-offen">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="bestaetigt" onclick="K.setMittagFilter('bestaetigt')">✅ Bestätigt <span class="k-filter-count" id="mt-fc-bestaetigt">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')">Alle <span class="k-filter-count" id="mt-fc-alle">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="abgeholt" onclick="K.setMittagFilter('abgeholt')">📦 Abgeholt <span class="k-filter-count" id="mt-fc-abgeholt">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')">❌ Storniert <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
+    </div>
     <div class="k-dish-summary" id="mittag-dish-summary"></div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon">⏳</div>Laden…</div></div>
   </div>
@@ -387,6 +394,20 @@
   </div>
 </div>
 
+<!-- ═══ Order Detail Modal ═══ -->
+<div class="k-modal-bg" id="modal-detail">
+  <div class="k-modal k-modal-lg">
+    <div class="k-modal-head">
+      <h2 id="detail-title">📋 Bestelldetails</h2>
+      <button class="k-modal-close" onclick="K.closeModal('modal-detail')">✕</button>
+    </div>
+    <div class="k-modal-body" id="detail-body" style="padding:16px 24px"></div>
+    <div class="k-modal-footer">
+      <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-detail')">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ Toast ═══ -->
 <div class="k-toast" id="k-toast"></div>
 
@@ -436,6 +457,30 @@ var K = (function(){
   // ══════════════════════════════════════════════════
 
   var _mittagDatum = today();
+  var _mittagFilter = 'offen'; // Default: Zu bestätigen
+
+  function setMittagFilter(f){
+    _mittagFilter = f;
+    document.querySelectorAll('#mittag-status-bar .k-filter-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.mtFilter===f);
+    });
+    renderOrders();
+  }
+
+  function updateMittagFilterCounts(){
+    var c0=0,c1=0,c2=0,c3=0;
+    orders.forEach(function(o){
+      if(o.status===0) c0++;
+      else if(o.status===1) c1++;
+      else if(o.status===2) c2++;
+      else if(o.status===3) c3++;
+    });
+    document.getElementById('mt-fc-offen').textContent = c0;
+    document.getElementById('mt-fc-bestaetigt').textContent = c1;
+    document.getElementById('mt-fc-alle').textContent = orders.length;
+    document.getElementById('mt-fc-abgeholt').textContent = c3;
+    document.getElementById('mt-fc-storniert').textContent = c2;
+  }
 
   function buildDayBar(){
     var DAY_SHORT = ['So','Mo','Di','Mi','Do','Fr','Sa'];
@@ -468,6 +513,7 @@ var K = (function(){
       .then(function(res){
         if(!res.success) return;
         orders = res.orders || [];
+        updateMittagFilterCounts();
         renderOrders();
         renderStats();
         updateBadge('mittag', orders.filter(function(o){return o.status===0;}).length);
@@ -517,8 +563,19 @@ var K = (function(){
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">📭</div>Keine Bestellungen für heute</div>';
       return;
     }
+    // Filter by _mittagFilter
+    var filtered = orders;
+    if(_mittagFilter==='offen') filtered = orders.filter(function(o){return o.status===0;});
+    else if(_mittagFilter==='bestaetigt') filtered = orders.filter(function(o){return o.status===1;});
+    else if(_mittagFilter==='abgeholt') filtered = orders.filter(function(o){return o.status===3;});
+    else if(_mittagFilter==='storniert') filtered = orders.filter(function(o){return o.status===2;});
+    if(filtered.length===0){
+      var filterLabels = {offen:'zu bestätigen',bestaetigt:'bestätigt',abgeholt:'abgeholt',storniert:'storniert',alle:'vorhanden'};
+      document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">📭</div>Keine Bestellungen '+(filterLabels[_mittagFilter]||'')+'</div>';
+      return;
+    }
     // Sort: neu first, then bestätigt, then rest
-    var sorted = orders.slice().sort(function(a,b){
+    var sorted = filtered.slice().sort(function(a,b){
       var prio = {0:0,1:1,3:2,2:3};
       return (prio[a.status]||9) - (prio[b.status]||9);
     });
@@ -551,12 +608,6 @@ var K = (function(){
       if(o.status===0){
         html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">✅ Bestätigen</button>';
         html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">❌</button>';
-        html += '<div class="k-confirm-dialog" id="cfd-'+o.id+'" style="display:none">';
-        html += '<input type="text" class="k-confirm-input" id="cft-'+o.id+'" placeholder="Nachricht an Kunde (optional)" maxlength="200">';
-        html += '<div style="display:flex;gap:6px;margin-top:6px">';
-        html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1" onclick="K.confirmOrder(\''+o.id+'\')">✅ Bestätigen</button>';
-        html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.hideConfirmDialog(\''+o.id+'\')">← Abbrechen</button>';
-        html += '</div></div>';
       } else if(o.status===1){
         html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">📦 Abgeholt</button>';
       } else if(o.status===3){
@@ -564,6 +615,16 @@ var K = (function(){
       }
       html += '</div>';
       html += '</div>';
+      // Confirm dialog – full width below card (only for status 0)
+      if(o.status===0){
+        html += '<div class="k-confirm-dialog" id="cfd-'+o.id+'" style="display:none;padding:12px 16px;background:#f0fdf4;border:2px solid #86efac;border-radius:0 0 12px 12px;margin-top:-6px">';
+        html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">💬 Nachricht an Kunde (optional)</div>';
+        html += '<input type="text" class="k-confirm-input" id="cft-'+o.id+'" placeholder="z.B. Gericht wird um 12:30 fertig…" maxlength="200" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
+        html += '<div style="display:flex;gap:8px;margin-top:8px">';
+        html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;padding:10px" onclick="K.confirmOrder(\''+o.id+'\')">✅ Jetzt bestätigen</button>';
+        html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideConfirmDialog(\''+o.id+'\')">Abbrechen</button>';
+        html += '</div></div>';
+      }
     });
     document.getElementById('mittag-orders').innerHTML = html;
   }
@@ -1085,7 +1146,7 @@ var K = (function(){
     var posPreview = posArr.slice(0,3).map(function(p){return p.bezeichnung||p.name||'?';});
     if(posCount>3) posPreview.push('+'+(posCount-3)+' weitere');
 
-    var html = '<div class="k-order '+stClass+(overdue?' k-order-overdue':'')+'">';
+    var html = '<div class="k-order '+stClass+(overdue?' k-order-overdue':'')+'" ondblclick="K.showOrderDetail(\''+o.id+'\')" style="cursor:pointer" title="Doppelklick für Details">';
     html += '<div class="k-order-info">';
     html += '<div class="k-order-top">';
     html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';
@@ -1141,6 +1202,55 @@ var K = (function(){
       }
     })
     .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  // ══════════════════════════════════════════════════
+  //  ORDER DETAIL MODAL (double-click on shop card)
+  // ══════════════════════════════════════════════════
+
+  function showOrderDetail(orderId){
+    var o = _allShopOrders.find(function(x){return x.id===orderId;});
+    if(!o){toast('Bestellung nicht gefunden');return;}
+    var posArr = o.positionen||[];
+    var html = '';
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">';
+    html += '<div><strong>Kunde:</strong> '+esc(o.kunde_name||o.kunde_email||'–')+'</div>';
+    html += '<div><strong>Nr.:</strong> '+esc(o.bestellnummer||'–')+'</div>';
+    html += '<div><strong>Status:</strong> '+(SHOP_STATUS[o.status]||'?')+'</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;font-size:13px;color:#6b7280">';
+    if(o.abholdatum) html += '<div>📅 Abholdatum: '+fmtDate(o.abholdatum)+'</div>';
+    var zs = o.abhol_zeitslot||{};
+    if(zs.label) html += '<div>🕐 '+esc(zs.label)+(zs.von?' ('+zs.von+'–'+zs.bis+')':'')+'</div>';
+    if(o.kunde_telefon) html += '<div>☎ '+esc(o.kunde_telefon)+'</div>';
+    if(o.kunde_email) html += '<div>✉ '+esc(o.kunde_email)+'</div>';
+    html += '</div>';
+    if(o.anmerkungen) html += '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:12px">💬 '+esc(o.anmerkungen)+'</div>';
+    // Positions table
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    html += '<thead><tr style="border-bottom:2px solid #e5e7eb;text-align:left"><th style="padding:6px 8px">Artikel</th><th style="padding:6px 8px;text-align:right">Menge</th><th style="padding:6px 8px;text-align:right">Einheit</th><th style="padding:6px 8px;text-align:right">Preis</th></tr></thead>';
+    html += '<tbody>';
+    var total = 0;
+    posArr.forEach(function(p){
+      var name = p.bezeichnung||p.name||'?';
+      var menge = p.menge||1;
+      var einheit = p.einheit||'Stk';
+      var preis = p.vk_preis||p.preis||0;
+      var zeile = menge * preis;
+      total += zeile;
+      html += '<tr style="border-bottom:1px solid #f3f4f6">';
+      html += '<td style="padding:6px 8px">'+esc(name)+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right">'+menge+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right">'+esc(einheit)+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right">'+zeile.toFixed(2).replace('.',',')+'€</td>';
+      html += '</tr>';
+    });
+    html += '</tbody>';
+    html += '<tfoot><tr style="border-top:2px solid #1e3a2f;font-weight:900"><td colspan="3" style="padding:8px">Gesamt</td><td style="padding:8px;text-align:right">'+(o.gesamtsumme||total).toFixed(2).replace('.',',')+'€</td></tr></tfoot>';
+    html += '</table>';
+    document.getElementById('detail-title').textContent = '📋 '+esc(o.bestellnummer||'Bestelldetails');
+    document.getElementById('detail-body').innerHTML = html;
+    openModal('modal-detail');
   }
 
   // ══════════════════════════════════════════════════
@@ -1605,6 +1715,7 @@ var K = (function(){
   // ══════════════════════════════════════════════════
 
   buildDayBar();
+  setMittagFilter('offen'); // Default: "Zu bestätigen"
   loadOrders();
   loadDishes();
   loadShopOrders();
@@ -1644,6 +1755,8 @@ var K = (function(){
     printPackSlip: printPackSlip,
     openModal: openModal,
     closeModal: closeModal,
+    setMittagFilter: setMittagFilter,
+    showOrderDetail: showOrderDetail,
     refresh: refresh
   };
 })();
