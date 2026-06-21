@@ -1070,14 +1070,9 @@ var K = (function(){
   function applyShopFilter(){
     var td = today();
     var now = new Date();
-    // Base filter: exclude old completed orders unless history is shown
-    var base = _showHistory ? _allShopOrders : _allShopOrders.filter(function(o){
-      if(o.status>=3){
-        var d = (o.abholdatum||'').substring(0,10);
-        if(d && d < td) return false; // hide old completed/cancelled
-      }
-      return true;
-    });
+    // Base filter: exclude old orders (abholdatum < today) unless history is shown
+    function _isOld(o){ var d=(o.abholdatum||'').substring(0,10); return d && d < td; }
+    var base = _showHistory ? _allShopOrders : _allShopOrders.filter(function(o){ return !_isOld(o); });
     if(_shopFilter==='today'){
       shopOrders = base.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;});
     } else if(_shopFilter==='overdue'){
@@ -1089,8 +1084,8 @@ var K = (function(){
       shopOrders = base.filter(function(o){return o.status<3;});
     }
     renderShopOrders();
-    // Update history count
-    var histCount = _allShopOrders.filter(function(o){ var d=(o.abholdatum||'').substring(0,10); return o.status>=3 && d && d<td; }).length;
+    // Update history count – all orders with abholdatum before today
+    var histCount = _allShopOrders.filter(function(o){ return _isOld(o); }).length;
     var hcEl = document.getElementById('fc-history');
     if(hcEl) hcEl.textContent = histCount;
   }
@@ -1114,12 +1109,11 @@ var K = (function(){
         if(!res.success) return;
         _allShopOrders = res.orders || [];
         applyShopFilter();
-        // Update filter counts – exclude old completed orders (those belong in Historie)
+        // Update filter counts – exclude ALL old orders (abholdatum < today = Historie)
         var td = today();
         var now = new Date();
         var active = _allShopOrders.filter(function(o){
-          if(o.status>=3){ var d=(o.abholdatum||'').substring(0,10); if(d && d<td) return false; }
-          return true;
+          var d=(o.abholdatum||'').substring(0,10); return !(d && d<td);
         });
         renderShopStats(active);
         var openC = active.filter(function(o){return o.status<3;}).length;
