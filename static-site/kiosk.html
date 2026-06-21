@@ -158,7 +158,7 @@
     .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
     .k-slot-header:active{opacity:.85}
     .k-slot-arrow{transition:transform .2s;font-size:11px}
-    .k-slot-header.collapsed .k-slot-arrow{transform:rotate(-90deg)}
+    .k-slot-group.collapsed .k-slot-arrow{transform:rotate(-90deg)}
     .k-slot-group.collapsed .k-order{display:none}
     .k-slot-count{margin-left:auto;background:rgba(255,255,255,.3);padding:2px 8px;border-radius:6px;font-size:12px}
 
@@ -1037,10 +1037,19 @@ var K = (function(){
     var html = '';
     groups.forEach(function(g,gi){
       var gid = 'slotg-'+gi;
-      html += '<div class="k-slot-group" id="'+gid+'">';
+      // Status counts for header
+      var sc = {0:0,1:0,2:0};
+      g.orders.forEach(function(o){ if(o.status<=2) sc[o.status]=(sc[o.status]||0)+1; });
+      var badges = [];
+      if(sc[0]) badges.push('📥 '+sc[0]);
+      if(sc[1]) badges.push('📦 '+sc[1]);
+      if(sc[2]) badges.push('🔔 '+sc[2]);
+      var countLabel = badges.length ? badges.join(' · ') : g.orders.length+' Bestellung'+(g.orders.length!==1?'en':'');
+      // Default collapsed
+      html += '<div class="k-slot-group collapsed" id="'+gid+'">';
       html += '<div class="k-slot-header" onclick="K.toggleSlotGroup(\''+gid+'\')">';
       html += '<span class="k-slot-arrow">▼</span> '+esc(g.label);
-      html += '<span class="k-slot-count">'+g.orders.length+' Bestellung'+(g.orders.length!==1?'en':'')+'</span>';
+      html += '<span class="k-slot-count">'+countLabel+'</span>';
       html += '</div>';
       g.orders.forEach(function(o){
         html += renderShopOrderCard(o);
