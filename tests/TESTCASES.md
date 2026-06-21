@@ -494,6 +494,7 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | T10.4 Historie | ✅ | 23 alte Bestellungen in Historie, nur Morgen-Slots sichtbar |
 | T11.1 Shop-Admin Bestellungen | ✅ | 16 Bestellungen (vorher nur 3) |
 | T11.2 Shop-Admin Zähler | ✅ | 16 Bestellungen, 5 Offen, 11 Abholbereit |
+| T9.5.1 Tages-Buttons API | ✅ | Alle 7 Tages-Buttons: API 200, Zähler korrekt, Karten gerendert |
 
 ## Fehler-Log
 | Datum | Test | Fehler | Fix |
@@ -502,3 +503,4 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-21 | T3 Tages-Tabs | Am Wochenende war Sonntag als Datum selektiert, statt nächster Werktag. Tabs korrekt (Mo-Fr) aber Bestellungen für Sonntag geladen | `validDates.indexOf()` Check: falls `_mtSelectedDate` nicht in Tabs → auf ersten Tab (Montag) setzen |
 | 2026-06-21 | T4 Kiosk | Online-Bestellungen nicht im Kiosk sichtbar | Datum-Format Mismatch: Wochenplan liefert `T00:00:00Z`, Kiosk filtert mit `eq` auf `YYYY-MM-DD`. Fix: POST normalisiert Datum, GET verwendet `startswith` |
 | 2026-06-21 | T4 Kiosk UI | Speiseplan-Tab redundant, Refresh-Button unpraktisch in Bottom-Bar, Küchenliste = `window.print()` | Speiseplan-Tab entfernt, Refresh in Header, Küchenliste gruppiert nach Gericht |
+| 2026-06-21 | T9.5 Mittagstisch API | lunch-order API 400-Fehler: `$select` enthielt `dl_kunde_kommentar` und `dl_personal_antwort`, die in Dataverse nicht existierten | Felder per Script `scripts/create-dv-fields.py` in Dataverse angelegt + PublishAllXml |
