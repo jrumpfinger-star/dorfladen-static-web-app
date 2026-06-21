@@ -63,7 +63,22 @@
 
 ---
 
+## Letzter Testlauf: 2026-06-21 (Sonntag)
+Umgebung: witty-island-064f9d903.7.azurestaticapps.net
+
+| Test | Status | Anmerkung |
+|---|---|---|
+| T1 Startseite lädt | ✅ | 0 JS-Fehler |
+| T2 Wochenplan Desktop | ✅ | Alle 5 Tage mit Button, keine Opacity (Wochenende = nächste Woche) |
+| T3 Shop-Admin Kiosk-Link | ✅ | 🏪 Kiosk sichtbar |
+| T3 Mittagstisch-Sektion | ✅ | Vorhanden, Badge=0 (hidden) |
+| T3 Shop getrennt | ✅ | "Online-Shop-Bestellungen" Überschrift |
+| T4 Kiosk Tabs | ✅ | 4 Tabs, Abholungen Badge=16 |
+| T5 Lunch-Admin Kiosk-Link | ✅ | 🏪 Kiosk sichtbar |
+| T6 CMS Toggle An | ✅ | Grün (#22c55e) |
+| T6 CMS Toggle Aus | ✅ | Grau (#e5e7eb) |
+
 ## Fehler-Log
 | Datum | Test | Fehler | Fix |
 |---|---|---|---|
-| (noch keine Einträge) | | | |
+| 2026-06-21 | T2 Wochenplan | Am Wochenende alle Tage ausgegraut (opacity .45) + keine Bestell-Buttons, obwohl nächste Woche angezeigt wird | `isWeekend`-Check: am Sa/So `isPast=false` und `isToday=false` für alle Tage → alles bestellbar |
