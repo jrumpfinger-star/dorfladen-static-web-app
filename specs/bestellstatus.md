@@ -35,11 +35,26 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 - [x] Nach erfolgreicher Bestellung: Email + Bestellnummer in localStorage speichern
 - [x] Success-Overlay enthält Link "📋 Bestellstatus ansehen"
 
+### Startseite – "Meine Bestellung ansehen"
+- [x] Link unter Mittagstisch-Kachel (Mobile) und unter Wochenplan (Desktop)
+- [x] Sichtbar nur wenn: `bs_nr` + `bs_email` im localStorage UND API bestätigt aktive Bestellung
+- [x] Aktive Bestellung = Datum ≥ heute UND Status ≠ 2 (storniert)
+- [x] Klick führt zu `/bestellstatus` (auto-login per localStorage)
+- [x] Versteckt wenn keine aktive Bestellung vorliegt
+
+### Nachrichten-Gelesen (Kiosk)
+- [x] Neues Dataverse-Feld `dl_kommentar_gelesen` (Boolean)
+- [x] Nachrichten-Badge blinkt nur bei ungelesenen Nachrichten (`kommentar_gelesen === false`)
+- [x] Klick auf Badge markiert alle als gelesen (PATCH `kommentar_gelesen: true`)
+- [x] Geräteübergreifend: Status in Dataverse gespeichert, nicht localStorage
+- [x] Neuer Kundenkommentar setzt `kommentar_gelesen` automatisch auf `false` zurück
+
 ## Betroffene Dateien
-- `static-site/bestellstatus.html` – Neu: Kundenansicht
-- `static-site/kiosk.html` – Kommentar-Anzeige + Antwort-Dialog
+- `static-site/bestellstatus.html` – Kundenansicht, Zurück-Link → `/`
+- `static-site/kiosk.html` – Kommentar-Anzeige + Antwort-Dialog + Gelesen-Badge
 - `static-site/mittagstisch-bestellen.html` – localStorage-Speicherung + Link
-- `api/lunch-order/__init__.py` – Neue Felder, Bestellnummer-Lookup, Push-URL
+- `static-site/index.html` – "Meine Bestellung ansehen" Link (Mobile + Desktop)
+- `api/lunch-order/__init__.py` – Neue Felder, Bestellnummer-Lookup, Push-URL, kommentar_gelesen
 - `staticwebapp.config.json` – Route `/bestellstatus`
 
 ## API-Änderungen
@@ -50,6 +65,7 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 ## Dataverse-Felder (dl_mittagsbestellungs)
 - `dl_kunde_kommentar` – Einzeilig Text, max 2000 Zeichen (angelegt 2026-06-21)
 - `dl_personal_antwort` – Einzeilig Text, max 2000 Zeichen (angelegt 2026-06-21)
+- `dl_kommentar_gelesen` – Boolean, Default false (angelegt 2026-06-21)
 
 ## Akzeptanzkriterien
 - [x] AK-BS-01: Push-Notification öffnet Bestellstatus-Seite (nicht Bestellformular)
@@ -62,6 +78,11 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 - [x] AK-BS-08: Personalantwort erscheint auf Bestellstatus-Seite
 - [x] AK-BS-09: Auto-Login per localStorage (Bestellnummer + Email)
 - [x] AK-BS-10: Success-Overlay auf Bestellseite enthält Link zum Bestellstatus
+- [x] AK-BS-11: "Meine Bestellung ansehen" Link auf Startseite (Mobile unter Kachel, Desktop unter Wochenplan)
+- [x] AK-BS-12: Link nur sichtbar bei aktiver Bestellung (Datum ≥ heute, Status ≠ storniert)
+- [x] AK-BS-13: Bestellstatus-Seite "Zurück"-Link führt zur Startseite (`/`)
+- [x] AK-BS-14: Nachrichten-Badge im Kiosk nutzt `kommentar_gelesen` aus Dataverse (geräteübergreifend)
+- [x] AK-BS-15: Klick auf Nachrichten-Badge → PATCH `kommentar_gelesen: true` → Badge verschwindet
 
 ## Nicht-Ziele
 - Kein Echtzeit-Chat (kein WebSocket) – Polling reicht

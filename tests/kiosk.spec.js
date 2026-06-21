@@ -781,3 +781,44 @@ test.describe('Kiosk UI – Slot-Header Badges', () => {
     await expect(activePanel).toHaveAttribute('id', 'panel-abhol');
   });
 });
+
+// ═══════════════════════════════════════════════════════
+//  AK-BS-14/15: Nachrichten-Badge (geräteübergreifend via Dataverse)
+// ═══════════════════════════════════════════════════════
+test.describe('Kiosk – Nachrichten-Gelesen', () => {
+
+  test('AK-BS-14: _hasUnseenComment prüft kommentar_gelesen Feld', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const source = await page.content();
+    // Must use kommentar_gelesen from API, NOT localStorage
+    expect(source).toContain('kommentar_gelesen');
+    expect(source).not.toContain('kiosk_seen_comments');
+  });
+
+  test('AK-BS-15: _markCommentsAsSeen sendet PATCH an API', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const source = await page.content();
+    expect(source).toContain('kommentar_gelesen:true');
+    expect(source).toContain("method:'PATCH'");
+  });
+
+  test('AK-BS-14b: Nachrichten-Filter-Button vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const btn = page.locator('[data-mt-filter="nachrichten"]');
+    await expect(btn).toBeAttached();
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+//  AK-UI-18c: Detail-Modal verwendet einzelpreis/positionspreis
+// ═══════════════════════════════════════════════════════
+test.describe('Kiosk – Detail-Modal Preise', () => {
+
+  test('AK-UI-18c: showOrderDetail verwendet einzelpreis statt vk_preis', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const source = await page.content();
+    // The price variable must use einzelpreis as primary source
+    expect(source).toContain('p.einzelpreis');
+    expect(source).toContain('p.positionspreis');
+  });
+});
