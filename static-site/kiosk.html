@@ -975,10 +975,11 @@ var K = (function(){
         var openC = _allShopOrders.filter(function(o){return o.status<3;}).length;
         var todayC = _allShopOrders.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;}).length;
         var overdueC = _allShopOrders.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
+        var todoC = _allShopOrders.filter(function(o){return o.status<=1;}).length; // Eingang + Packen = aktiv zu tun
         document.getElementById('fc-open').textContent = openC;
         document.getElementById('fc-today').textContent = todayC;
         document.getElementById('fc-overdue').textContent = overdueC;
-        updateBadge('abhol', openC);
+        updateBadge('abhol', todoC);
       })
       .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">⚠️</div>Fehler beim Laden: '+esc(e.message)+'</div>'; });
   }

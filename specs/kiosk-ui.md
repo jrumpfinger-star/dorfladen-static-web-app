@@ -78,7 +78,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-06: Nachname/Vorname werden separat erfasst und an API als `nachname`/`vorname` gesendet
 - [x] AK-UI-07: Duplikat-Kunde (409) zeigt Info-Toast, nicht Fehlermeldung
 - [ ] AK-UI-08: Bei API-Fehler (404/500) wird Toast mit Statuscode angezeigt, kein alert()
-- [x] AK-UI-09: Badge auf Online-Shop-Tab zeigt Anzahl offener Bestellungen
+- [x] AK-UI-09: Badge auf Online-Shop-Tab zeigt Anzahl aktiv zu erledigender Bestellungen (Eingang + Packen, nicht Warten)
 - [x] AK-UI-10: Küchenliste druckt Bestellungen nach Gericht gruppiert
 - [x] AK-UI-11: Datum wird beim POST normalisiert (YYYY-MM-DD)
 - [x] AK-UI-12: GET-Filter findet Bestellungen unabhängig vom Datum-Format
