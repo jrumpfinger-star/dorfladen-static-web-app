@@ -1358,8 +1358,8 @@ var K = (function(){
       var name = p.bezeichnung||p.name||'?';
       var menge = p.menge||1;
       var einheit = p.einheit||'Stk';
-      var preis = p.vk_preis||p.preis||0;
-      var zeile = menge * preis;
+      var preis = p.einzelpreis||p.vk_preis||p.preis||0;
+      var zeile = p.positionspreis||(menge * preis);
       total += zeile;
       html += '<tr style="border-bottom:1px solid #f3f4f6">';
       html += '<td style="padding:6px 8px">'+esc(name)+'</td>';
