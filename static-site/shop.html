@@ -298,6 +298,7 @@
     /* ── Auth Modal ── */
     .shop-auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
     .shop-auth-overlay.open{display:flex}
+    body.auth-open{overflow:hidden;position:fixed;width:100%;touch-action:none}
     .shop-auth-modal{background:#fff;border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
     .shop-auth-header{padding:20px 24px 0;text-align:center}
     .shop-auth-header h2{font-size:20px;font-weight:700;margin-bottom:4px}
@@ -1139,8 +1140,12 @@
     if(window.lucide) lucide.createIcons();
   }
 
+  var _authSavedScrollY=0;
   function showAuth(tab){
+    _authSavedScrollY=window.scrollY;
     document.getElementById('shop-auth-overlay').classList.add('open');
+    document.body.classList.add('auth-open');
+    document.body.style.top=(-_authSavedScrollY)+'px';
     var tabs=document.querySelectorAll('.shop-auth-tab');
     var isReset=tab==='reset-request'||tab==='reset-confirm';
     tabs.forEach(function(t){t.classList.toggle('active',t.getAttribute('data-tab')===tab);});
@@ -1153,7 +1158,7 @@
   }
 
   var _pendingCheckout=false;
-  function hideAuth(){document.getElementById('shop-auth-overlay').classList.remove('open');}
+  function hideAuth(){document.getElementById('shop-auth-overlay').classList.remove('open');document.body.classList.remove('auth-open');document.body.style.top='';window.scrollTo(0,_authSavedScrollY);}
 
   function doLogin(){
     var email=document.getElementById('login-email').value.trim();
