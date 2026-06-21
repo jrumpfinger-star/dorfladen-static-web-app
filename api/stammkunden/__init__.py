@@ -26,7 +26,7 @@ import msal
 import requests
 
 
-ENTITY_SET = "dl_stammkundens"
+ENTITY_SET = "dl_stammkundes"
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
