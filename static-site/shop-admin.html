@@ -1040,7 +1040,11 @@ function mtBuildDayTabs(){
     }
     d.setDate(d.getDate()+1);
   }
-  if(!_mtSelectedDate) _mtSelectedDate = _fmtDate(_mtDays[0]);
+  // Default to first weekday if no date selected or selected date is not in tabs
+  var validDates = _mtDays.map(function(d){ return _fmtDate(d); });
+  if(!_mtSelectedDate || validDates.indexOf(_mtSelectedDate) === -1){
+    _mtSelectedDate = _fmtDate(_mtDays[0]);
+  }
 
   var container = document.getElementById('mt-day-tabs');
   var html = '';
