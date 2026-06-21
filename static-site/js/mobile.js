@@ -238,6 +238,7 @@
 
   function renderWP(menu){
     var todayIdx=new Date().getDay();
+    var currentHour=new Date().getHours();
     var kwEl=document.getElementById('mob-wp-kw');
     if(kwEl) kwEl.textContent='Kalenderwoche '+getKW();
     var container=document.getElementById('mob-wp-days');
@@ -245,11 +246,14 @@
     var html='';
     for(var i=1;i<=5;i++){
       var isToday=i===todayIdx;
+      var isPast=i<todayIdx;
+      // Bestellschluss: heute bis 10:00, zukünftige Tage erlaubt, vergangene nicht
+      var canOrder=isToday?(currentHour<10):(!isPast);
       var dayData=menu[i]||[];
       var dishes=dayData.filter?dayData.filter(function(d){return d.name&&d.name.trim();}):dayData;
       var notice='';
       (menu[i]||[]).forEach(function(d){if(d.notice&&!notice) notice=d.notice;});
-      html+='<div class="mob-wp-day'+(isToday?' today':'')+'">';
+      html+='<div class="mob-wp-day'+(isToday?' today':'')+'"'+(isPast?' style="opacity:.45"':'')+'>';
       html+='<div class="mob-wp-day-name">'+wpDays[i]+(isToday?' · Heute':'')+'</div>';
       if(dishes.length===0){
         if(notice){
@@ -268,7 +272,7 @@
             html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">';
             html+='<div class="mob-wp-day-menu" style="flex:1'+(d.notice?';font-style:italic;color:#888':'')+'">'+esc(d.name)+'</div>';
             html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
-            if(oLink) html+='<a href="'+oLink+'" class="feature-mittagstisch" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
+            if(oLink&&canOrder) html+='<a href="'+oLink+'" class="feature-mittagstisch" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
             html+='</div>';
           }
         });

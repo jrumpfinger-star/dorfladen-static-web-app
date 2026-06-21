@@ -99,6 +99,7 @@
     <a class="btn" href="/shop-freigabe" title="Artikelfreigabe verwalten"><span class="btn-icon"><i data-lucide="check-circle" style="width:16px;height:16px"></i></span><span class="btn-label">Freigabe</span></a>
     <a class="btn" href="/cms" title="CMS – Inhalte bearbeiten"><span class="btn-icon"><i data-lucide="settings" style="width:16px;height:16px"></i></span><span class="btn-label">CMS</span></a>
     <a class="btn" href="/shop" title="Zum Online-Shop"><span class="btn-icon"><i data-lucide="shopping-cart" style="width:16px;height:16px"></i></span><span class="btn-label">Shop</span></a>
+    <a class="btn" href="/kiosk" title="Kiosk – Mittagstisch, Abholungen, Stammkunden" style="background:#f0fdf4;border-color:#2e7d4f;color:#2e7d4f"><span class="btn-icon">🏪</span><span class="btn-label">Kiosk</span></a>
     <button class="btn scan-btn" id="scan-btn" title="Abholscan – Barcode scannen"><span class="btn-icon"><i data-lucide="scan-barcode" style="width:16px;height:16px"></i></span><span class="btn-label">Abholscan</span></button>
     <button class="btn primary" id="refresh-btn" title="Bestellungen neu laden"><span class="btn-icon"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i></span><span class="btn-label">Aktualisieren</span></button>
   </div>
@@ -109,6 +110,29 @@
   </div>
   <div class="scan-result" id="scan-result"><div class="sr-msg"></div><div class="sr-detail"></div></div>
   <div class="wrap">
+    <!-- ═══ Mittagstisch Sektion ═══ -->
+    <div id="mt-section" style="background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.03);margin-bottom:12px;overflow:hidden">
+      <div onclick="toggleMittag()" style="padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);background:#fefce8">
+        <span style="font-size:20px">🍽</span>
+        <span style="font-weight:800;font-size:15px;flex:1">Mittagstisch-Bestellungen</span>
+        <span id="mt-badge" style="background:#f59e0b;color:#fff;font-size:12px;font-weight:800;padding:2px 10px;border-radius:12px;display:none">0</span>
+        <span id="mt-toggle-icon" style="font-size:14px;color:var(--muted)">▼</span>
+      </div>
+      <div id="mt-body" style="display:none;padding:12px 16px">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;gap:6px" id="mt-stats"></div>
+          <div style="flex:1"></div>
+          <button class="btn small" onclick="loadMittagOrders()">🔄 Aktualisieren</button>
+          <a class="btn small" href="/kiosk" style="background:#f0fdf4;border-color:#2e7d4f;color:#2e7d4f">🏪 Kiosk öffnen</a>
+        </div>
+        <div id="mt-orders" style="font-size:13px"><div style="color:var(--muted);text-align:center;padding:20px">Laden…</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ Shop-Bestellungen Header ═══ -->
+    <div style="font-weight:800;font-size:14px;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:18px">🛒</span> Online-Shop-Bestellungen
+    </div>
     <div class="grid">
       <div class="stat active" data-stat-filter="all"><div class="label">Bestellungen</div><div class="value" id="stat-count">-</div></div>
       <div class="stat open" data-stat-filter="open"><div class="label">Offen</div><div class="value" id="stat-open">-</div></div>
@@ -932,6 +956,111 @@
     closeBtn.addEventListener('click',function(){stopScan();});
   })();
 })();
+
+// ═══════════════════════════════════════════
+//  MITTAGSTISCH in Shop Admin
+// ═══════════════════════════════════════════
+var _mtOpen = false;
+function toggleMittag(){
+  _mtOpen = !_mtOpen;
+  document.getElementById('mt-body').style.display = _mtOpen ? 'block' : 'none';
+  document.getElementById('mt-toggle-icon').textContent = _mtOpen ? '▲' : '▼';
+  if(_mtOpen) loadMittagOrders();
+}
+
+function loadMittagOrders(){
+  var today = new Date().toISOString().split('T')[0];
+  fetch('/api/lunch-order?datum=' + today)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res.success){ document.getElementById('mt-orders').innerHTML='<div style="color:var(--red);padding:10px">Fehler beim Laden</div>'; return; }
+      var orders = res.orders || [];
+      renderMittagStats(orders);
+      renderMittagOrders(orders);
+      var openCount = orders.filter(function(o){ return o.status === 0 || o.status === 1; }).length;
+      var badge = document.getElementById('mt-badge');
+      if(openCount > 0){ badge.textContent = openCount; badge.style.display = ''; } else { badge.style.display = 'none'; }
+    })
+    .catch(function(e){ document.getElementById('mt-orders').innerHTML='<div style="color:var(--red);padding:10px">'+e.message+'</div>'; });
+}
+
+function renderMittagStats(orders){
+  var neu=0,best=0,stor=0,abg=0;
+  orders.forEach(function(o){
+    if(o.status===0) neu++;
+    else if(o.status===1) best++;
+    else if(o.status===2) stor++;
+    else if(o.status===3) abg++;
+  });
+  document.getElementById('mt-stats').innerHTML =
+    '<div style="background:#fef3c7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">🟡 Neu: '+neu+'</div>'+
+    '<div style="background:#dcfce7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">✅ Bestätigt: '+best+'</div>'+
+    '<div style="background:#f3f4f6;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">📦 Abgeholt: '+abg+'</div>'+
+    '<div style="background:#fef2f2;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">❌ Storniert: '+stor+'</div>';
+}
+
+function renderMittagOrders(orders){
+  if(orders.length === 0){
+    document.getElementById('mt-orders').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Keine Mittagstisch-Bestellungen für heute</div>';
+    return;
+  }
+  var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
+  var SRC = {0:'Online',1:'Telefon',2:'Personal'};
+  var DAY = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa'};
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html += '<tr style="background:#f9fafb;font-weight:700;font-size:11px;text-transform:uppercase;color:var(--muted)">';
+  html += '<td style="padding:6px 8px">Kunde</td><td style="padding:6px 8px">Gericht</td><td style="padding:6px 8px;text-align:center">Menge</td><td style="padding:6px 8px">Status</td><td style="padding:6px 8px">Quelle</td><td style="padding:6px 8px">Aktionen</td></tr>';
+  orders.forEach(function(o){
+    var stColors = {0:'#f59e0b',1:'#22c55e',2:'#dc2626',3:'#9ca3af'};
+    var stBg = {0:'#fef3c7',1:'#dcfce7',2:'#fef2f2',3:'#f3f4f6'};
+    html += '<tr style="border-bottom:1px solid #f3f4f6">';
+    html += '<td style="padding:8px"><strong>'+(o.name||'')+'</strong>';
+    if(o.telefon) html += '<br><span style="font-size:11px;color:var(--muted)">📞 '+o.telefon+'</span>';
+    html += '</td>';
+    html += '<td style="padding:8px">'+(o.gericht_name||'–');
+    if(o.tag!==undefined) html += ' <span style="font-size:10px;color:var(--muted)">('+((DAY[o.tag])||'')+')</span>';
+    html += '</td>';
+    html += '<td style="padding:8px;text-align:center;font-weight:800;font-size:16px">'+(o.menge||1)+'</td>';
+    html += '<td style="padding:8px"><span style="background:'+(stBg[o.status]||'#f3f4f6')+';color:'+(stColors[o.status]||'#666')+';padding:2px 8px;border-radius:6px;font-weight:700;font-size:11px">'+(STATUS[o.status]||'?')+'</span></td>';
+    html += '<td style="padding:8px;font-size:11px">'+(SRC[o.quelle]||'Online')+'</td>';
+    html += '<td style="padding:8px;white-space:nowrap">';
+    if(o.status === 0){
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',1)" style="background:#dcfce7;border-color:#22c55e;color:#166534;margin-right:4px">✅ Bestätigen</button>';
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',2)" style="color:var(--red);font-size:11px">❌</button>';
+    } else if(o.status === 1){
+      html += '<button class="btn small" onclick="mtSetStatus(\''+o.id+'\',3)" style="background:#dbeafe;border-color:#2563eb;color:#1d4ed8">📦 Abgeholt</button>';
+    } else {
+      html += '<span style="font-size:14px">'+(o.status===3?'✅':'–')+'</span>';
+    }
+    html += '</td></tr>';
+    if(o.anmerkung){
+      html += '<tr style="border-bottom:1px solid #f3f4f6"><td colspan="6" style="padding:2px 8px 8px;font-size:12px;color:#92400e;font-style:italic">💬 '+o.anmerkung+'</td></tr>';
+    }
+  });
+  html += '</table>';
+  document.getElementById('mt-orders').innerHTML = html;
+}
+
+function mtSetStatus(id, status){
+  fetch('/api/lunch-order', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({id: id, status: status})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if(res.success){
+      loadMittagOrders();
+    } else {
+      alert('Fehler: ' + (res.error||''));
+    }
+  })
+  .catch(function(e){ alert('Fehler: '+e.message); });
+}
+
+// Auto-load badge on page load
+loadMittagOrders();
+// Also check for open Mittagstisch orders to show badge even when collapsed
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
 </body>

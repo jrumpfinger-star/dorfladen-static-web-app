@@ -52,6 +52,19 @@
     .k-order.st-1{border-left-color:var(--c-green)}
     .k-order.st-2{border-left-color:var(--c-red)}
     .k-order.st-3{border-left-color:#9ca3af}
+    .k-order.st-4{border-left-color:#9ca3af;opacity:.6}
+    .k-order.shop-st-1{border-left-color:var(--c-yellow)}
+    .k-order.shop-st-2{border-left-color:#2563eb}
+    .k-order.shop-st-3{border-left-color:#9ca3af}
+    .k-order.shop-st-4{border-left-color:var(--c-red);opacity:.6}
+    .k-order-status{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
+    .shop-badge-0{background:#fef3c7;color:#92400e}
+    .shop-badge-1{background:#fef3c7;color:#92400e}
+    .shop-badge-2{background:#dbeafe;color:#1d4ed8}
+    .shop-badge-3{background:#f3f4f6;color:#6b7280}
+    .shop-badge-4{background:#fef2f2;color:#991b1b}
+    .k-order-positions{font-size:12px;color:var(--c-muted);margin-top:2px}
+    .k-order-positions span{display:inline-block;background:#f3f4f6;padding:1px 6px;border-radius:4px;margin:1px 2px}
     .k-order-info{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
     .k-order-top{display:flex;align-items:center;gap:10px}
     .k-order-name{font-size:16px;font-weight:700;flex:1}
@@ -185,15 +198,29 @@
 
   <!-- ── Shop-Abholungen ── -->
   <div class="k-panel" id="panel-abhol">
-    <div class="k-empty"><div class="k-empty-icon">🛒</div>Shop-Abholungen (Phase 2)</div>
+    <div class="k-stats" id="abhol-stats"></div>
+    <div class="k-field" style="margin-bottom:8px">
+      <select id="abhol-filter" onchange="K.loadShopOrders()" style="padding:10px 14px;border:2px solid var(--c-border);border-radius:10px;font-size:14px;font-weight:600;width:100%">
+        <option value="open">📦 Offene Bestellungen</option>
+        <option value="today">📅 Heute abholen</option>
+        <option value="all">📋 Alle (letzte 200)</option>
+      </select>
+    </div>
+    <div id="abhol-orders"><div class="k-empty"><div class="k-empty-icon">⏳</div>Laden…</div></div>
   </div>
 
   <!-- ── Stammkunden ── -->
   <div class="k-panel" id="panel-kunden">
-    <div class="k-field" style="margin-bottom:8px">
-      <input type="text" id="kunden-search" placeholder="🔍 Kunde suchen (Name oder Telefon)…" oninput="K.searchKunden()">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div class="k-field" style="flex:1;margin-bottom:0">
+        <input type="text" id="kunden-search" placeholder="🔍 Kunde suchen (Name oder Telefon)…" oninput="K.searchKunden()">
+      </div>
+      <button class="k-btn k-btn-confirm" style="min-width:180px;border-radius:12px;font-size:14px" onclick="K.openNewKunde()">➕ Neuer Kunde</button>
     </div>
-    <div id="kunden-list"><div class="k-empty"><div class="k-empty-icon">👥</div>Suchbegriff eingeben oder alle laden…</div></div>
+    <div style="margin-bottom:10px">
+      <button class="k-btn k-btn-outline" style="min-height:40px;padding:8px 16px;font-size:13px;border-radius:10px" onclick="document.getElementById('kunden-search').value='';K.searchKunden()">👥 Alle Kunden laden</button>
+    </div>
+    <div id="kunden-list"><div class="k-empty"><div class="k-empty-icon">👥</div>Suchbegriff eingeben oder „Alle Kunden laden" klicken</div></div>
   </div>
 
   <!-- ── Speiseplan ── -->
@@ -310,6 +337,11 @@ var K = (function(){
   var SRC_CLASS = {0:'src-online',1:'src-telefon',2:'src-personal'};
   var DAY_FULL = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag',101005:'Samstag'};
 
+  // Shop-Order statuses
+  var SHOP_STATUS = {0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt',4:'Storniert'};
+  var SHOP_ICONS = {0:'🆕',1:'📋',2:'✅',3:'📦',4:'❌'};
+  var shopOrders = [];
+
   function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
   function today(){return new Date().toISOString().split('T')[0];}
 
@@ -326,6 +358,7 @@ var K = (function(){
   function switchTab(id){
     document.querySelectorAll('.k-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===id);});
     document.querySelectorAll('.k-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+id);});
+    if(id==='abhol') loadShopOrders();
     if(id==='kunden' && kunden.length===0) searchKunden();
     if(id==='plan' && dishes.length===0) loadDishes();
   }
@@ -781,6 +814,140 @@ var K = (function(){
   }
 
   // ══════════════════════════════════════════════════
+  //  SHOP-ABHOLUNGEN
+  // ══════════════════════════════════════════════════
+
+  function loadShopOrders(){
+    fetch(API+'/shop-order?mode=cms')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success) return;
+        var all = res.orders || [];
+        var filter = document.getElementById('abhol-filter').value;
+        var td = today();
+        if(filter==='open'){
+          shopOrders = all.filter(function(o){return o.status<3;});
+        } else if(filter==='today'){
+          shopOrders = all.filter(function(o){return (o.abholdatum||'').substring(0,10)===td;});
+        } else {
+          shopOrders = all;
+        }
+        renderShopOrders();
+        renderShopStats(all);
+        var openCount = all.filter(function(o){return o.status<3;}).length;
+        updateBadge('abhol', openCount);
+      })
+      .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">⚠️</div>Fehler beim Laden: '+esc(e.message)+'</div>'; });
+  }
+
+  function renderShopStats(all){
+    if(!all) all = shopOrders;
+    var neu = all.filter(function(o){return o.status===0;}).length;
+    var bearb = all.filter(function(o){return o.status===1;}).length;
+    var bereit = all.filter(function(o){return o.status===2;}).length;
+    var abgeholt = all.filter(function(o){return o.status===3;}).length;
+    var summe = all.filter(function(o){return o.status<4;}).reduce(function(s,o){return s+(o.gesamtsumme||0);},0);
+    document.getElementById('abhol-stats').innerHTML =
+      '<div class="k-stat orange"><div class="k-stat-val">'+neu+'</div><div class="k-stat-label">Neu</div></div>'+
+      '<div class="k-stat"><div class="k-stat-val" style="color:#d97706">'+bearb+'</div><div class="k-stat-label">In Bearbeitung</div></div>'+
+      '<div class="k-stat"><div class="k-stat-val" style="color:#2563eb">'+bereit+'</div><div class="k-stat-label">Abholbereit</div></div>'+
+      '<div class="k-stat"><div class="k-stat-val">'+abgeholt+'</div><div class="k-stat-label">Abgeholt</div></div>'+
+      '<div class="k-stat green"><div class="k-stat-val">'+summe.toFixed(0)+'€</div><div class="k-stat-label">Umsatz</div></div>';
+  }
+
+  function fmtDate(d){
+    if(!d) return '';
+    try{ var p=d.substring(0,10).split('-'); return p[2]+'.'+p[1]+'.'+p[0]; }catch(e){return d;}
+  }
+
+  function renderShopOrders(){
+    if(shopOrders.length===0){
+      document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">📭</div>Keine Bestellungen gefunden</div>';
+      return;
+    }
+    var sorted = shopOrders.slice().sort(function(a,b){
+      var prio = {0:0,1:1,2:2,3:3,4:4};
+      return (prio[a.status]||9) - (prio[b.status]||9);
+    });
+    var html = '';
+    sorted.forEach(function(o){
+      var stClass = 'shop-st-'+o.status;
+      var badgeClass = 'shop-badge-'+o.status;
+      var statusLabel = SHOP_STATUS[o.status]||'?';
+      var zeitslot = o.abhol_zeitslot||{};
+      var slotLabel = zeitslot.label||'';
+      if(zeitslot.von && zeitslot.bis) slotLabel += ' ('+zeitslot.von+'–'+zeitslot.bis+')';
+      var posArr = o.positionen||[];
+      var posCount = posArr.length;
+      var posPreview = posArr.slice(0,3).map(function(p){return p.bezeichnung||p.name||'?';});
+      if(posCount>3) posPreview.push('+'+(posCount-3)+' weitere');
+
+      html += '<div class="k-order '+stClass+'">';
+      html += '<div class="k-order-info">';
+      html += '<div class="k-order-top">';
+      html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';
+      html += '<span class="k-order-status '+badgeClass+'">'+SHOP_ICONS[o.status]+' '+statusLabel+'</span>';
+      html += '</div>';
+      html += '<div class="k-order-dish">'+esc(o.bestellnummer)+' · '+fmtDate(o.abholdatum)+' '+esc(slotLabel)+'</div>';
+      html += '<div class="k-order-meta">';
+      html += '<span>💰 '+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
+      html += '<span>📦 '+posCount+' Artikel</span>';
+      if(o.anmerkungen) html += '<span>💬 '+esc(o.anmerkungen)+'</span>';
+      html += '</div>';
+      if(posPreview.length>0){
+        html += '<div class="k-order-positions">';
+        posPreview.forEach(function(p){ html += '<span>'+esc(p)+'</span>'; });
+        html += '</div>';
+      }
+      html += '</div>';
+
+      // Gesamtsumme
+      html += '<div class="k-order-qty"><div class="qty-display" style="font-size:16px">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+'€</div></div>';
+
+      // Actions
+      html += '<div class="k-order-actions">';
+      if(o.status===0){
+        html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)">📋 Bearbeiten</button>';
+        html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',4)">❌</button>';
+      } else if(o.status===1){
+        html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff" onclick="K.setShopStatus(\''+o.id+'\',2)">✅ Bereit</button>';
+        html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">📦 Packen</button>';
+      } else if(o.status===2){
+        html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">📦 Abgeholt</button>';
+      } else if(o.status===3){
+        html += '<span style="font-size:20px">✅</span>';
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+    document.getElementById('abhol-orders').innerHTML = html;
+  }
+
+  function setShopStatus(id, status){
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id, status:status})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        var labels = {1:'📋 In Bearbeitung',2:'✅ Abholbereit',3:'📦 Abgeholt',4:'❌ Storniert'};
+        toast(labels[status]||'Status aktualisiert');
+        loadShopOrders();
+      } else {
+        toast('Fehler: '+(res.error||''));
+      }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  function openPackModal(orderId){
+    // Open shop-admin pack page in new tab
+    window.open('/shop-admin.html?pack='+orderId, '_blank');
+  }
+
+  // ══════════════════════════════════════════════════
   //  KITCHEN PRINT
   // ══════════════════════════════════════════════════
 
@@ -813,6 +980,7 @@ var K = (function(){
 
   function refresh(){
     loadOrders();
+    loadShopOrders();
     toast('🔄 Aktualisiert');
   }
 
@@ -822,8 +990,9 @@ var K = (function(){
 
   loadOrders();
   loadDishes();
+  loadShopOrders();
   // Auto-refresh every 30s
-  refreshTimer = setInterval(loadOrders, 30000);
+  refreshTimer = setInterval(function(){ loadOrders(); loadShopOrders(); }, 30000);
 
   // Public API
   return {
@@ -842,6 +1011,9 @@ var K = (function(){
     submitNewKunde: submitNewKunde,
     searchKunden: searchKunden,
     printKitchen: printKitchen,
+    loadShopOrders: loadShopOrders,
+    setShopStatus: setShopStatus,
+    openPackModal: openPackModal,
     openModal: openModal,
     closeModal: closeModal,
     refresh: refresh

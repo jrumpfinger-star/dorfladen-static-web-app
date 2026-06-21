@@ -389,6 +389,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       });
       var todayIdx = new Date().getDay(); // 0=So, 1=Mo, ..., 6=Sa
       var todayDc = 101000 + (todayIdx === 0 ? 6 : todayIdx - 1); // map to 101000-101006
+      var currentHour = new Date().getHours();
       // Always show Mon-Fri (101000-101004)
       var weekDays=[101000,101001,101002,101003,101004];
 
@@ -398,16 +399,20 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         var day=DAYS[dc]||'?';
         var grp=dIdx%2===0?'wp-grp-even':'wp-grp-odd';
         var isToday=dc===todayDc;
+        var isPast=dc<todayDc;
+        // Bestellschluss: heute bis 10:00, zukünftige Tage erlaubt, vergangene nicht
+        var canOrder=isToday?(currentHour<10):(!isPast);
         var notice='';
         dayMeals.forEach(function(g){if(g.beschreibung&&!notice) notice=g.beschreibung;});
         var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim()&&g.preis;});
         if(!notice){dayMeals.forEach(function(g){if(g.gericht&&g.gericht.trim()&&!g.preis&&!notice) notice=g.gericht;});}
+        var pastStyle=isPast?' style="opacity:.45"':'';
         if(realMeals.length===0){
           var cls=grp+(isToday?' wp-today wp-day-first wp-day-last':' wp-day-first wp-day-last');
           if(notice){
-            html+='<tr class="'+cls+'"><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2" style="color:#888;font-style:italic">'+esc(notice)+'</td></tr>';
+            html+='<tr class="'+cls+'"'+pastStyle+'><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2" style="color:#888;font-style:italic">'+esc(notice)+'</td></tr>';
           }else{
-            html+='<tr class="'+cls+'"><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2" style="color:#aaa;font-style:italic">\u2013</td></tr>';
+            html+='<tr class="'+cls+'"'+pastStyle+'><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2" style="color:#aaa;font-style:italic">\u2013</td></tr>';
           }
         } else {
           realMeals.forEach(function(g,i){
@@ -415,11 +420,13 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
             var isLast=i===realMeals.length-1;
             var cls=grp+(isFirst?' wp-day-first':'')+(isLast?' wp-day-last':'')+(isToday?' wp-today':'');
             var price=g.preis?(g.preis.toFixed(2).replace('.',',')+' \u20AC'):'';
-            html+='<tr class="'+cls+'">';
+            html+='<tr class="'+cls+'"'+pastStyle+'>';
             html+='<td class="'+(isFirst?'wp-day':'wp-day-empty')+'">'+(isFirst?day:'')+'</td>';
             var orderLink='/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(g.id||'')+'&gericht='+encodeURIComponent(g.gericht)+'&preis='+(g.preis||0)+'&datum='+encodeURIComponent(g.datum||'')+'&tag='+encodeURIComponent(DAYS[dc]||'');
             html+='<td class="wp-dish wp-dish-a">'+esc(g.gericht)+'</td>';
-            html+='<td class="wp-price wp-price-a">'+price+' <a href="'+orderLink+'" class="feature-mittagstisch" style="display:inline-block;margin-left:6px;padding:3px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;vertical-align:middle" title="Jetzt bestellen">\uD83C\uDF7D</a></td></tr>';
+            var orderBtn='';
+            if(canOrder) orderBtn=' <a href="'+orderLink+'" class="feature-mittagstisch" style="display:inline-block;margin-left:6px;padding:3px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;vertical-align:middle" title="Jetzt bestellen">\uD83C\uDF7D</a>';
+            html+='<td class="wp-price wp-price-a">'+price+orderBtn+'</td></tr>';
           });
         }
       });
