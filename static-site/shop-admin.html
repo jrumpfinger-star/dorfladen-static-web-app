@@ -122,8 +122,57 @@
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
           <div style="display:flex;gap:6px" id="mt-stats"></div>
           <div style="flex:1"></div>
+          <button class="btn small" onclick="mtShowNewOrder()" style="background:#fef3c7;border-color:#f59e0b;color:#92400e;font-weight:800">➕ Neue Bestellung</button>
           <button class="btn small" onclick="loadMittagOrders()">🔄 Aktualisieren</button>
           <a class="btn small" href="/kiosk" style="background:#f0fdf4;border-color:#2e7d4f;color:#2e7d4f">🏪 Kiosk öffnen</a>
+        </div>
+        <!-- Day tabs -->
+        <div id="mt-day-tabs" style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap"></div>
+        <!-- Manual order form (hidden by default) -->
+        <div id="mt-new-form" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:10px">
+          <div style="font-weight:800;font-size:13px;margin-bottom:8px">📝 Manuelle Bestellung erfassen</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--muted)">Name *</label>
+              <input id="mt-new-name" class="search" placeholder="Kundenname" style="width:100%;max-width:none">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--muted)">Telefon</label>
+              <input id="mt-new-tel" class="search" placeholder="Telefonnummer" style="width:100%;max-width:none">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--muted)">Gericht *</label>
+              <select id="mt-new-gericht" class="select" style="width:100%">
+                <option value="">Gericht wählen…</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--muted)">Menge</label>
+              <input id="mt-new-menge" type="number" value="1" min="1" max="20" class="search" style="width:80px">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--muted)">Quelle</label>
+              <select id="mt-new-quelle" class="select" style="width:100%">
+                <option value="1">📞 Telefon</option>
+                <option value="2">👤 Personal/Theke</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--muted)">Mitnehmen?</label>
+              <select id="mt-new-mitnehmen" class="select" style="width:100%">
+                <option value="false">🍽 Vor Ort</option>
+                <option value="true">📦 Mitnehmen</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:6px">
+            <label style="font-size:11px;font-weight:700;color:var(--muted)">Anmerkung</label>
+            <input id="mt-new-anmerkung" class="search" placeholder="Optional…" style="width:100%;max-width:none">
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn small" onclick="document.getElementById('mt-new-form').style.display='none'">Abbrechen</button>
+            <button class="btn small" onclick="mtSubmitNewOrder()" style="background:#22c55e;color:#fff;border-color:#22c55e;font-weight:800">✅ Bestellung speichern</button>
+          </div>
         </div>
         <div id="mt-orders" style="font-size:13px"><div style="color:var(--muted);text-align:center;padding:20px">Laden…</div></div>
       </div>
@@ -961,25 +1010,116 @@
 //  MITTAGSTISCH in Shop Admin
 // ═══════════════════════════════════════════
 var _mtOpen = false;
+var _mtSelectedDate = '';
+var _mtDays = [];
+var _mtWpDishes = []; // Wochenplan-Gerichte für Dropdown
+
+function _pad(n){ return n<10?'0'+n:''+n; }
+function _fmtDate(d){ return d.getFullYear()+'-'+_pad(d.getMonth()+1)+'-'+_pad(d.getDate()); }
+var _dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+var _dayNamesFull = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+
 function toggleMittag(){
   _mtOpen = !_mtOpen;
   document.getElementById('mt-body').style.display = _mtOpen ? 'block' : 'none';
   document.getElementById('mt-toggle-icon').textContent = _mtOpen ? '▲' : '▼';
-  if(_mtOpen) loadMittagOrders();
+  if(_mtOpen){
+    mtBuildDayTabs();
+    mtLoadWochenplan();
+  }
+}
+
+function mtBuildDayTabs(){
+  var today = new Date();
+  _mtDays = [];
+  // Heute + nächste 4 Werktage
+  var d = new Date(today);
+  while(_mtDays.length < 5){
+    if(d.getDay() >= 1 && d.getDay() <= 5){
+      _mtDays.push(new Date(d));
+    }
+    d.setDate(d.getDate()+1);
+  }
+  if(!_mtSelectedDate) _mtSelectedDate = _fmtDate(_mtDays[0]);
+
+  var container = document.getElementById('mt-day-tabs');
+  var html = '';
+  _mtDays.forEach(function(day){
+    var ds = _fmtDate(day);
+    var isToday = ds === _fmtDate(today);
+    var isActive = ds === _mtSelectedDate;
+    var label = isToday ? '📅 Heute' : _dayNames[day.getDay()]+' '+_pad(day.getDate())+'.'+_pad(day.getMonth()+1);
+    html += '<button onclick="mtSelectDay(\''+ds+'\')" class="btn small" style="';
+    if(isActive) html += 'background:var(--green);color:#fff;border-color:var(--green);';
+    else html += 'background:#f9fafb;';
+    html += 'font-size:12px">'+label+'</button>';
+  });
+  container.innerHTML = html;
+  loadMittagOrders();
+}
+
+function mtSelectDay(ds){
+  _mtSelectedDate = ds;
+  mtBuildDayTabs();
+}
+
+function mtLoadWochenplan(){
+  fetch('/api/wochenplan')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var items = (res.data||res.value||res||[]);
+      if(!Array.isArray(items)) items = [];
+      _mtWpDishes = items.map(function(item){
+        return {
+          id: item.dl_wochenplanid||item.id||'',
+          gericht: item.dl_gericht||item.gericht||'',
+          preis: item.dl_preis!=null?item.dl_preis:(item.preis||0),
+          wochentag: item.dl_wochentag!=null?item.dl_wochentag:item.wochentag,
+          datum: item.dl_datum||item.datum||''
+        };
+      }).filter(function(d){ return d.gericht && d.gericht.trim() && d.preis; });
+      mtUpdateGerichtDropdown();
+    })
+    .catch(function(e){ console.log('WP load error:', e); });
+}
+
+function mtUpdateGerichtDropdown(){
+  var sel = document.getElementById('mt-new-gericht');
+  var html = '<option value="">Gericht wählen…</option>';
+  // Filter dishes for selected day
+  var selDate = new Date(_mtSelectedDate+'T00:00:00');
+  var selDow = selDate.getDay(); // 0=So,1=Mo,...
+  var dayCode = 101000 + (selDow === 0 ? 6 : selDow - 1);
+  _mtWpDishes.forEach(function(d){
+    if(d.wochentag === dayCode){
+      html += '<option value="'+d.id+'" data-gericht="'+d.gericht.replace(/"/g,'&quot;')+'" data-preis="'+d.preis+'">'+d.gericht+' ('+d.preis.toFixed(2).replace('.',',')+'€)</option>';
+    }
+  });
+  if(html.indexOf('data-gericht') === -1){
+    // Show all dishes if none match
+    _mtWpDishes.forEach(function(d){
+      html += '<option value="'+d.id+'" data-gericht="'+d.gericht.replace(/"/g,'&quot;')+'" data-preis="'+d.preis+'">'+d.gericht+' ('+d.preis.toFixed(2).replace('.',',')+'€)</option>';
+    });
+  }
+  sel.innerHTML = html;
 }
 
 function loadMittagOrders(){
-  var today = new Date().toISOString().split('T')[0];
-  fetch('/api/lunch-order?datum=' + today)
+  var date = _mtSelectedDate || _fmtDate(new Date());
+  fetch('/api/lunch-order?datum=' + date)
     .then(function(r){ return r.json(); })
     .then(function(res){
       if(!res.success){ document.getElementById('mt-orders').innerHTML='<div style="color:var(--red);padding:10px">Fehler beim Laden</div>'; return; }
       var orders = res.orders || [];
       renderMittagStats(orders);
-      renderMittagOrders(orders);
-      var openCount = orders.filter(function(o){ return o.status === 0 || o.status === 1; }).length;
-      var badge = document.getElementById('mt-badge');
-      if(openCount > 0){ badge.textContent = openCount; badge.style.display = ''; } else { badge.style.display = 'none'; }
+      renderMittagOrders(orders, date);
+      // Badge: count open for today only
+      var todayStr = _fmtDate(new Date());
+      if(date === todayStr){
+        var openCount = orders.filter(function(o){ return o.status === 0 || o.status === 1; }).length;
+        var badge = document.getElementById('mt-badge');
+        if(openCount > 0){ badge.textContent = openCount; badge.style.display = ''; } else { badge.style.display = 'none'; }
+      }
     })
     .catch(function(e){ document.getElementById('mt-orders').innerHTML='<div style="color:var(--red);padding:10px">'+e.message+'</div>'; });
 }
@@ -999,9 +1139,10 @@ function renderMittagStats(orders){
     '<div style="background:#fef2f2;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">❌ Storniert: '+stor+'</div>';
 }
 
-function renderMittagOrders(orders){
+function renderMittagOrders(orders, dateStr){
+  var dateLabel = dateStr || '';
   if(orders.length === 0){
-    document.getElementById('mt-orders').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Keine Mittagstisch-Bestellungen für heute</div>';
+    document.getElementById('mt-orders').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Keine Mittagstisch-Bestellungen für '+dateLabel+'</div>';
     return;
   }
   var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
@@ -1058,9 +1199,71 @@ function mtSetStatus(id, status){
   .catch(function(e){ alert('Fehler: '+e.message); });
 }
 
-// Auto-load badge on page load
+// ── Manual order ──
+function mtShowNewOrder(){
+  document.getElementById('mt-new-form').style.display = 'block';
+  document.getElementById('mt-new-name').value = '';
+  document.getElementById('mt-new-tel').value = '';
+  document.getElementById('mt-new-menge').value = '1';
+  document.getElementById('mt-new-anmerkung').value = '';
+  mtUpdateGerichtDropdown();
+}
+
+function mtSubmitNewOrder(){
+  var name = document.getElementById('mt-new-name').value.trim();
+  var tel = document.getElementById('mt-new-tel').value.trim();
+  var gerichtSel = document.getElementById('mt-new-gericht');
+  var opt = gerichtSel.options[gerichtSel.selectedIndex];
+  var gerichtId = gerichtSel.value;
+  var gerichtName = opt ? (opt.getAttribute('data-gericht')||'') : '';
+  var preis = opt ? parseFloat(opt.getAttribute('data-preis')||'0') : 0;
+  var menge = parseInt(document.getElementById('mt-new-menge').value)||1;
+  var quelle = parseInt(document.getElementById('mt-new-quelle').value)||1;
+  var mitnehmen = document.getElementById('mt-new-mitnehmen').value === 'true';
+  var anmerkung = document.getElementById('mt-new-anmerkung').value.trim();
+
+  if(!name){ alert('Bitte Name eingeben.'); return; }
+  if(!gerichtId){ alert('Bitte Gericht auswählen.'); return; }
+
+  // Determine the day label for selected date
+  var selDate = new Date(_mtSelectedDate+'T00:00:00');
+  var wochentagLabel = _dayNamesFull[selDate.getDay()] || '';
+
+  var payload = {
+    name: name,
+    telefon: tel,
+    gericht: gerichtName,
+    gericht_id: gerichtId,
+    preis: preis,
+    menge: menge,
+    datum: _mtSelectedDate,
+    quelle: quelle,
+    mitnehmen: mitnehmen,
+    anmerkung: anmerkung,
+    wochentag_label: wochentagLabel,
+    erfasst_von: 'Shop-Admin'
+  };
+
+  fetch('/api/lunch-order', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if(res.success){
+      document.getElementById('mt-new-form').style.display = 'none';
+      loadMittagOrders();
+    } else {
+      alert('Fehler: ' + (res.error || JSON.stringify(res.errors||'')));
+    }
+  })
+  .catch(function(e){ alert('Fehler: '+e.message); });
+}
+
+// Auto-load badge on page load (today only)
+_mtSelectedDate = _fmtDate(new Date());
 loadMittagOrders();
-// Also check for open Mittagstisch orders to show badge even when collapsed
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
 </body>
