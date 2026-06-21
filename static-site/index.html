@@ -163,6 +163,12 @@
 
   </div>
 
+  <a href="/bestellstatus" id="mob-my-order" onclick="event.stopPropagation()" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 16px;margin-top:6px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:700;align-items:center;gap:8px">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span>Meine Bestellung ansehen</span>
+    <span id="mob-my-order-nr" style="margin-left:auto;font-size:11px;color:#6b7280"></span>
+  </a>
+
 </div>
 
 <div class="mob-only mob-actions-row">
@@ -1434,6 +1440,30 @@
       window._featureMittagstisch=showMT;
       document.querySelectorAll('.feature-mittagstisch').forEach(function(el){el.style.display=showMT?'':'none';});
     }).catch(function(){});
+  })();
+</script>
+
+<script>
+  // Show "Meine Bestellung" link if customer has an active order
+  (function(){
+    try{
+      var nr = localStorage.getItem('bs_nr');
+      var email = localStorage.getItem('bs_email');
+      if(!nr || !email) return;
+      fetch('/api/lunch-order?nr='+encodeURIComponent(nr)+'&email='+encodeURIComponent(email))
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res.success || !res.order) return;
+          var datum = (res.order.datum||'').substring(0,10);
+          var heute = new Date().toISOString().substring(0,10);
+          if(datum < heute) return;
+          if(res.order.status === 2) return; // storniert
+          var el = document.getElementById('mob-my-order');
+          var nrEl = document.getElementById('mob-my-order-nr');
+          if(el){ el.style.display = 'flex'; }
+          if(nrEl){ nrEl.textContent = nr; }
+        }).catch(function(){});
+    }catch(e){}
   })();
 </script>
 
