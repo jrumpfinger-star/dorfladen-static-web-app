@@ -268,7 +268,7 @@
             html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">';
             html+='<div class="mob-wp-day-menu" style="flex:1'+(d.notice?';font-style:italic;color:#888':'')+'">'+esc(d.name)+'</div>';
             html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
-            if(oLink) html+='<a href="'+oLink+'" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
+            if(oLink) html+='<a href="'+oLink+'" class="feature-mittagstisch" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
             html+='</div>';
           }
         });
@@ -276,6 +276,10 @@
       html+='</div>';
     }
     container.innerHTML=html;
+    // Apply mittagstisch feature flag to dynamically rendered content
+    if(!window._featureMittagstisch){
+      container.querySelectorAll('.feature-mittagstisch').forEach(function(el){el.style.display='none';});
+    }
     // Update quick-action subtitle
     // After 14:00 or on Sunday, show next business day's dishes
     var sub=document.getElementById('mob-lunch-sub');
