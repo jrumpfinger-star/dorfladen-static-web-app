@@ -12,6 +12,23 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     :root{--shop-green:#2e7d4f;--shop-green-light:#e8f5e9;--shop-orange:#e65100;--shop-gray:#f8f9fa;--shop-border:#e5e7eb;--shop-text:#1f2937;--shop-muted:#6b7280;--shop-radius:12px;--shop-shadow:0 2px 8px rgba(0,0,0,.08)}
+
+    /* ── Push notification pre-prompt ── */
+    .push-prompt-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:flex-end;justify-content:center;padding:16px}
+    .push-prompt-bg.open{display:flex}
+    .push-prompt{background:#fff;border-radius:20px;max-width:400px;width:100%;padding:28px 24px 20px;box-shadow:0 16px 48px rgba(0,0,0,.2);animation:pushSlideUp .3s ease}
+    @keyframes pushSlideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .push-prompt-icon{text-align:center;font-size:48px;margin-bottom:12px}
+    .push-prompt h3{text-align:center;font-size:18px;font-weight:800;color:var(--shop-text);margin-bottom:8px}
+    .push-prompt p{text-align:center;font-size:14px;color:var(--shop-muted);line-height:1.5;margin-bottom:20px}
+    .push-prompt-features{list-style:none;margin:0 0 20px;padding:0}
+    .push-prompt-features li{font-size:13px;padding:6px 0;color:var(--shop-text);display:flex;align-items:center;gap:8px}
+    .push-prompt-features li::before{content:'';display:none}
+    .push-prompt-btns{display:flex;gap:10px}
+    .push-prompt-btns button{flex:1;padding:14px 16px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
+    .push-prompt-btns button:active{transform:scale(.97)}
+    .push-prompt-yes{background:var(--shop-green);color:#fff}
+    .push-prompt-no{background:#f3f4f6;color:var(--shop-muted)}
     *{box-sizing:border-box;margin:0;padding:0}
     [data-lucide]{display:inline-block;vertical-align:-2px}
     html,body{overflow-x:hidden}
@@ -555,6 +572,24 @@
       <div class="shop-auth-check"><input type="checkbox" id="reg-dsgvo"> Ich habe die <a href="/datenschutzerklaerung" target="_blank">Datenschutzerklärung</a> gelesen und stimme zu *</div>
       <div class="shop-auth-check"><input type="checkbox" id="reg-agb"> Ich akzeptiere die <a href="/agb.html" target="_blank">AGB</a> und das <a href="/widerrufsrecht.html" target="_blank">Widerrufsrecht</a> *</div>
       <button class="shop-auth-submit" id="register-submit">Konto erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Push notification pre-prompt -->
+<div class="push-prompt-bg" id="push-prompt">
+  <div class="push-prompt">
+    <div class="push-prompt-icon">🔔</div>
+    <h3>Benachrichtigungen aktivieren?</h3>
+    <p>Bleiben Sie immer auf dem Laufenden über Ihre Bestellungen im Dorfladen:</p>
+    <ul class="push-prompt-features">
+      <li>✅ Bestellbestätigung sofort erhalten</li>
+      <li>📦 Info wenn Ihre Bestellung abholbereit ist</li>
+      <li>🍽 Neuer Mittagstisch verfügbar</li>
+    </ul>
+    <div class="push-prompt-btns">
+      <button class="push-prompt-no" onclick="closePushPrompt(false)">Nein danke</button>
+      <button class="push-prompt-yes" onclick="closePushPrompt(true)">Ja, gerne!</button>
     </div>
   </div>
 </div>
@@ -1925,39 +1960,59 @@
     });
 
   // ── Push Notifications for order updates ──
-  // Automatically requests push permission on login.
+  // Shows a friendly custom dialog before triggering the native browser permission prompt.
   // If permission was already granted, silently re-subscribes with current email.
-  // If permission was not yet asked, browser shows native permission dialog.
   function registerShopPush(){
     if(!isLoggedIn()||!authUser||!authUser.email) return;
     if(!('serviceWorker' in navigator)||!('PushManager' in window)) return;
     var curEmail=authUser.email;
     navigator.serviceWorker.ready.then(function(reg){
-      // If permission already granted or existing subscription, update silently
       reg.pushManager.getSubscription().then(function(existing){
         if(existing){
-          // Re-register with current email (handles account switches)
+          // Already subscribed – silently update email
           fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:existing.toJSON(),email:curEmail,categories:['bestellung']})})
             .then(function(r){return r.json();})
             .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',curEmail);});
           return;
         }
-        // No existing subscription – request permission (browser dialog only shows once)
-        if(Notification.permission==='denied') return; // User permanently blocked – can't ask again
-        Notification.requestPermission().then(function(perm){
-          if(perm!=='granted') return;
-          fetch(API+'/push-vapid-key').then(function(r){return r.json();}).then(function(data){
-            if(!data.publicKey) return;
-            var raw=atob(data.publicKey.replace(/-/g,'+').replace(/_/g,'/'));
-            var arr=new Uint8Array(raw.length);
-            for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
-            reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
-              fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),email:curEmail,categories:['bestellung'],validate:true})})
-                .then(function(r){return r.json();})
-                .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',curEmail);});
-            });
-          });
-        });
+        if(Notification.permission==='granted'){
+          // Permission already granted but no subscription – subscribe directly
+          doPushSubscribe(reg,curEmail);
+          return;
+        }
+        if(Notification.permission==='denied') return;
+        // Check if user already dismissed our custom prompt this session
+        if(sessionStorage.getItem('dl_push_dismissed')) return;
+        // Show custom pre-prompt instead of browser dialog
+        document.getElementById('push-prompt').classList.add('open');
+      });
+    });
+  }
+  window.closePushPrompt=function(accepted){
+    document.getElementById('push-prompt').classList.remove('open');
+    if(!accepted){
+      sessionStorage.setItem('dl_push_dismissed','1');
+      return;
+    }
+    // User said yes → now trigger the real browser permission dialog
+    Notification.requestPermission().then(function(perm){
+      if(perm!=='granted') return;
+      if(!authUser||!authUser.email) return;
+      navigator.serviceWorker.ready.then(function(reg){
+        doPushSubscribe(reg,authUser.email);
+      });
+    });
+  };
+  function doPushSubscribe(reg,email){
+    fetch(API+'/push-vapid-key').then(function(r){return r.json();}).then(function(data){
+      if(!data.publicKey) return;
+      var raw=atob(data.publicKey.replace(/-/g,'+').replace(/_/g,'/'));
+      var arr=new Uint8Array(raw.length);
+      for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+      reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
+        fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['bestellung'],validate:true})})
+          .then(function(r){return r.json();})
+          .then(function(res){if(res.success) localStorage.setItem('dl_shop_push_email',email);});
       });
     });
   }

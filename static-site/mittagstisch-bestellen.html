@@ -13,6 +13,22 @@
   <meta property="og:type" content="website">
   <style>
     :root{--c-pri:#2d5016;--c-acc:#bd8b5c;--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--c-green:#2e7d4f;--c-red:#dc2626;--radius:14px}
+    /* ── Push notification pre-prompt ── */
+    .push-prompt-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:flex-end;justify-content:center;padding:16px}
+    .push-prompt-bg.open{display:flex}
+    .push-prompt{background:#fff;border-radius:20px;max-width:400px;width:100%;padding:28px 24px 20px;box-shadow:0 16px 48px rgba(0,0,0,.2);animation:pushSlideUp .3s ease}
+    @keyframes pushSlideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .push-prompt-icon{text-align:center;font-size:48px;margin-bottom:12px}
+    .push-prompt h3{text-align:center;font-size:18px;font-weight:800;color:var(--c-text);margin-bottom:8px}
+    .push-prompt p{text-align:center;font-size:14px;color:var(--c-muted);line-height:1.5;margin-bottom:20px}
+    .push-prompt-features{list-style:none;margin:0 0 20px;padding:0}
+    .push-prompt-features li{font-size:13px;padding:6px 0;color:var(--c-text);display:flex;align-items:center;gap:8px}
+    .push-prompt-features li::before{content:'';display:none}
+    .push-prompt-btns{display:flex;gap:10px}
+    .push-prompt-btns button{flex:1;padding:14px 16px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
+    .push-prompt-btns button:active{transform:scale(.97)}
+    .push-prompt-yes{background:var(--c-green);color:#fff}
+    .push-prompt-no{background:#f3f4f6;color:var(--c-muted)}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);min-height:100vh}
 
@@ -197,6 +213,24 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Push notification pre-prompt -->
+<div class="push-prompt-bg" id="push-prompt">
+  <div class="push-prompt">
+    <div class="push-prompt-icon">🔔</div>
+    <h3>Benachrichtigungen aktivieren?</h3>
+    <p>Wir informieren Sie, wenn Ihr Mittagessen bestätigt oder bereit zur Abholung ist:</p>
+    <ul class="push-prompt-features">
+      <li>✅ Bestellbestätigung erhalten</li>
+      <li>📦 Info wenn Ihr Essen abholbereit ist</li>
+      <li>🍽 Neue Gerichte auf dem Speiseplan</li>
+    </ul>
+    <div class="push-prompt-btns">
+      <button class="push-prompt-no" onclick="closePushPrompt(false)">Nein danke</button>
+      <button class="push-prompt-yes" onclick="closePushPrompt(true)">Ja, gerne!</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -466,7 +500,7 @@
     return base + '?' + p.toString();
   }
 
-  // ── Push registration (lightweight, no account needed) ──
+  // ── Push registration (with friendly pre-prompt) ──
   function registerPush(){
     if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     var email = document.getElementById('cust-email').value.trim();
@@ -476,24 +510,44 @@
     navigator.serviceWorker.ready.then(function(reg){
       reg.pushManager.getSubscription().then(function(existing){
         if(existing){
-          // Update with email
           fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
             body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['mittagstisch']})});
           return;
         }
-        Notification.requestPermission().then(function(perm){
-          if(perm!=='granted') return;
-          fetch(API+'/push-vapid-key').then(function(r){return r.json();}).then(function(data){
-            if(!data.publicKey) return;
-            var raw=atob(data.publicKey.replace(/-/g,'+').replace(/_/g,'/'));
-            var arr=new Uint8Array(raw.length);
-            for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
-            reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
-              fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['mittagstisch']})});
-            });
-          });
-        });
+        if(Notification.permission==='granted'){
+          doPushSubscribe(reg,email);
+          return;
+        }
+        if(sessionStorage.getItem('dl_push_dismissed')) return;
+        // Show custom pre-prompt instead of browser dialog
+        document.getElementById('push-prompt').classList.add('open');
+      });
+    });
+  }
+  window.closePushPrompt=function(accepted){
+    document.getElementById('push-prompt').classList.remove('open');
+    if(!accepted){
+      sessionStorage.setItem('dl_push_dismissed','1');
+      return;
+    }
+    Notification.requestPermission().then(function(perm){
+      if(perm!=='granted') return;
+      var email = document.getElementById('cust-email').value.trim();
+      if(!email) return;
+      navigator.serviceWorker.ready.then(function(reg){
+        doPushSubscribe(reg,email);
+      });
+    });
+  };
+  function doPushSubscribe(reg,email){
+    fetch(API+'/push-vapid-key').then(function(r){return r.json();}).then(function(data){
+      if(!data.publicKey) return;
+      var raw=atob(data.publicKey.replace(/-/g,'+').replace(/_/g,'/'));
+      var arr=new Uint8Array(raw.length);
+      for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+      reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
+        fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['mittagstisch']})});
       });
     });
   }
