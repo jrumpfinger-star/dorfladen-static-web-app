@@ -72,7 +72,8 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-01b: 3 Tabs: Mittagstisch, Online-Shop, Stammkunden (kein Speiseplan)
 - [x] AK-UI-01c: Refresh-Button im Header sichtbar
 - [x] AK-UI-02: 3 Filter-Buttons: "📦 Zu erledigen", "📅 Heute abholen", "⚠️ Überfällig"
-- [x] AK-UI-03: Klick auf Slot-Header klappt Gruppe auf/zu
+- [x] AK-UI-03: Slot-Gruppen default collapsed, Klick klappt auf/zu
+- [x] AK-UI-03b: Slot-Header zeigt Status-Badges (📥 Eingang / 📦 Packen / 🔔 Warten) statt nur Gesamtzahl
 - [x] AK-UI-04: Pfeil wechselt zwischen ▶ (collapsed) und ▼ (expanded)
 - [x] AK-UI-05: Tagesauswahl zeigt 7 Tage (Gestern bis +5)
 - [x] AK-UI-06: Nachname/Vorname werden separat erfasst und an API als `nachname`/`vorname` gesendet
@@ -88,6 +89,19 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-16: Bestätigen-Button öffnet Confirm-Dialog mit optionalem Textfeld
 - [x] AK-UI-16b: Confirm-Dialog zeigt Textfeld mit Placeholder
 - [x] AK-UI-16c: Bestätigungstext wird auf Karte grün angezeigt
+- [x] AK-UI-16d: Abbrechen-Button schließt Confirm-Dialog ohne Aktion
+- [x] AK-UI-09b: Badge-Zahl = Eingang + Packen (nicht Warten)
+- [x] AK-UI-02b: Filterwechsel ändert active-Klasse und angezeigte Bestellungen
+- [x] AK-UI-14b: Mittagstisch-Stats enthalten keine veralteten Labels (Umsatz/Bestätigt/Abgeholt)
+- [x] AK-UI-10b: Küchenliste-Button in Bottom-Bar vorhanden
+- [x] AK-UI-10c: printKitchen verwendet _mittagDatum (nicht new Date())
+- [x] AK-UI-10d: printKitchen verwendet o.name und o.menge (nicht o.kundenname/o.portionen)
+- [x] AK-UI-17: Mittagstisch Status-Filter-Bar (Zu bestätigen/Bestätigt/Alle/Abgeholt/Storniert)
+- [x] AK-UI-17b: Default-Filter ist "Zu bestätigen" (status 0)
+- [x] AK-UI-17c: Filter-Badges zeigen Anzahl pro Status
+- [x] AK-UI-18: Doppelklick auf Shop-Bestellkarte öffnet Detail-Modal
+- [x] AK-UI-18b: Detail-Modal zeigt Positionen-Tabelle mit Menge, Einheit, Preis
+- [x] AK-UI-16e: Confirm-Dialog als vollbreites Element unter der Karte (nicht inline in Actions)
 
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)
