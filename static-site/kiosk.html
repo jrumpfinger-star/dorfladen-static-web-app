@@ -170,6 +170,7 @@
     .k-slot-now{background:rgba(255,255,255,.35);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:3px;animation:nowPulse 2s ease-in-out infinite}
     @keyframes nowPulse{0%,100%{opacity:1}50%{opacity:.65}}
     @keyframes kPulse{0%,100%{background-color:#eff6ff}50%{background-color:#dbeafe}}
+    @keyframes kBlink{0%,100%{opacity:1}50%{opacity:.4}}
 
     /* ═══ Pack modal (inline) ═══ */
     .k-modal.k-modal-lg{max-width:720px}
@@ -255,7 +256,7 @@
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')">Alle <span class="k-filter-count" id="mt-fc-alle">0</span></button>
       <button class="k-filter-btn" data-mt-filter="abgeholt" onclick="K.setMittagFilter('abgeholt')"><i data-lucide="package-check" style="width:14px;height:14px"></i> Abgeholt <span class="k-filter-count" id="mt-fc-abgeholt">0</span></button>
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')"><i data-lucide="x-circle" style="width:14px;height:14px"></i> Storniert <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
-      <span id="mt-msg-badge" style="display:none;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;animation:kPulse 2s ease-in-out infinite;cursor:default;white-space:nowrap"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> Nachrichten</span>
+      <button class="k-filter-btn" id="mt-msg-badge" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="display:none;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border:2px solid #3b82f6;border-radius:12px;animation:kBlink 1s ease-in-out infinite;white-space:nowrap"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> Nachrichten</button>
     </div>
     <div class="k-dish-summary" id="mittag-dish-summary"></div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
@@ -480,6 +481,11 @@ var K = (function(){
     document.querySelectorAll('#mittag-status-bar .k-filter-btn').forEach(function(b){
       b.classList.toggle('active', b.dataset.mtFilter===f);
     });
+    var msgBadge = document.getElementById('mt-msg-badge');
+    if(msgBadge){
+      if(f==='nachrichten'){ msgBadge.style.animation='none'; }
+      else { msgBadge.style.animation='kBlink 1s ease-in-out infinite'; }
+    }
     renderOrders();
   }
 
@@ -595,8 +601,9 @@ var K = (function(){
     else if(_mittagFilter==='bestaetigt') filtered = orders.filter(function(o){return o.status===1;});
     else if(_mittagFilter==='abgeholt') filtered = orders.filter(function(o){return o.status===3;});
     else if(_mittagFilter==='storniert') filtered = orders.filter(function(o){return o.status===2;});
+    else if(_mittagFilter==='nachrichten') filtered = orders.filter(function(o){return o.kunde_kommentar && !o.personal_antwort && o.status!==2;});
     if(filtered.length===0){
-      var filterLabels = {offen:'zu bestätigen',bestaetigt:'bestätigt',abgeholt:'abgeholt',storniert:'storniert',alle:'vorhanden'};
+      var filterLabels = {offen:'zu bestätigen',bestaetigt:'bestätigt',abgeholt:'abgeholt',storniert:'storniert',nachrichten:'mit neuen Nachrichten',alle:'vorhanden'};
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen '+(filterLabels[_mittagFilter]||'')+'</div>';
       reinitIcons();
       return;
