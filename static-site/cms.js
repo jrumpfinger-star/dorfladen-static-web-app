@@ -822,24 +822,8 @@
     });
   }
 
-  function loadImageFromBackend(artnr, strichcode){
-    var key=((strichcode||artnr||'')+'').trim();
-    if(!key) return Promise.resolve(null);
-    var payload={articles:[{artikelnummer:key,edeka_nr:(artnr||''),strichcode:(strichcode||'')}]};
-    return fetch(API+'/werbebilder?sharepoint=1',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    }).then(function(r){
-      if(!r.ok) return [];
-      return r.json();
-    }).then(function(list){
-      var arr=Array.isArray(list)?list:[];
-      var hit=arr.find(function(x){return (x.dl_artikelnummer||'')===key && x.dl_bild_base64;});
-      if(!hit || !hit.dl_bild_base64) return null;
-      return hit.dl_bild_base64;
-    }).catch(function(){return null;});
-  }
+  // loadImageFromBackend entfernt – kein Dataverse-Fallback mehr,
+  // da er falsche Bilder liefern kann (z.B. Duplo statt Kirschkoerbchen)
 
   // ── In-memory image cache ──
   var _imgCache={};
@@ -865,20 +849,18 @@
     var sc=strichcode||artnr;
     if(!sc) return Promise.resolve(null);
     console.log('[CMS] Fetching image for strichcode:',sc);
-    // Check in-memory cache first
     var hit=_imgCacheGet(sc,sc);
     if(hit){console.log('[CMS] Image cache hit for',sc);return Promise.resolve(hit);}
-    if(!msalApp) return loadImageFromBackend(sc,sc);
+    if(!msalApp){console.warn('[CMS] MSAL nicht verfuegbar – kein Bild geladen fuer',sc);return Promise.resolve(null);}
     return getGraphToken().then(function(token){
-      // Only search in StrichcodeBilder folder by strichcode
       return _searchFolderForImage(token, SP_BARCODE_FOLDER, sc).then(function(b64){
         if(b64){_imgCacheSet(sc,sc,b64);return b64;}
-        // Fallback: backend API (Dataverse)
-        return loadImageFromBackend(sc,sc);
+        console.warn('[CMS] Kein Bild in SharePoint StrichcodeBilder fuer',sc);
+        return null;
       });
     }).catch(function(e){
       console.error('[CMS] SharePoint image load error for',sc,e);
-      return loadImageFromBackend(sc,sc);
+      return null;
     });
   }
 
