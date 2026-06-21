@@ -70,6 +70,13 @@ STATUS_STORNIERT = 2
 STATUS_ABGEHOLT = 3
 
 
+# Bestellquellen
+QUELLE_ONLINE = 0
+QUELLE_TELEFON = 1
+QUELLE_PERSONAL = 2
+QUELLE_LABELS = {0: "Online", 1: "Telefon", 2: "Personal"}
+
+
 def _serialize(item):
     return {
         "id": item.get("dl_mittagsbestellungid", ""),
@@ -86,15 +93,22 @@ def _serialize(item):
         "bestaetigung_text": item.get("dl_bestaetigung_text", ""),
         "bestellt_am": item.get("createdon", ""),
         "wochentag_label": item.get("dl_wochentag_label", ""),
+        "quelle": item.get("dl_quelle", QUELLE_ONLINE),
+        "quelle_label": QUELLE_LABELS.get(item.get("dl_quelle", QUELLE_ONLINE), "Online"),
+        "stammkunde_id": item.get("dl_stammkunde_id", ""),
+        "erfasst_von": item.get("dl_erfasst_von", ""),
     }
 
 
 def _send_push(email, title, body_text, tag="lunch"):
     """Best-effort push notification to customer."""
     try:
-        base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-        protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
-        internal_url = f"{protocol}://{base_host}/api/push-send"
+        # Use SWA_HOSTNAME for the public URL, fallback to WEBSITE_HOSTNAME
+        swa_host = os.environ.get("SWA_HOSTNAME", "")
+        if not swa_host:
+            swa_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+        protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+        internal_url = f"{protocol}://{swa_host}/api/push-send"
         payload = {
             "title": title,
             "message": body_text,
@@ -142,16 +156,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             anmerkung = (body.get("anmerkung") or "").strip()
             wochentag_label = (body.get("wochentag_label") or "").strip()
             mitnehmen = body.get("mitnehmen", False)
+            quelle = int(body.get("quelle", QUELLE_ONLINE))
+            stammkunde_id = (body.get("stammkunde_id") or "").strip()
+            erfasst_von = (body.get("erfasst_von") or "").strip()
 
             errors = []
             if not name:
                 errors.append("Name ist erforderlich.")
-            if not email:
+            # E-Mail nur bei Online-Bestellungen pflicht
+            if quelle == QUELLE_ONLINE and not email:
                 errors.append("E-Mail ist erforderlich.")
             if not gericht:
                 errors.append("Kein Gericht ausgewählt.")
-            if menge < 1 or menge > 20:
-                errors.append("Menge muss zwischen 1 und 20 liegen.")
+            if menge < 1 or menge > 99:
+                errors.append("Menge muss zwischen 1 und 99 liegen.")
             if not datum:
                 errors.append("Datum fehlt.")
             if errors:
@@ -161,6 +179,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 )
 
             bestellnr = f"MT-{datetime.utcnow().strftime('%y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
+
+            # Telefonbestellungen werden sofort als bestätigt gespeichert
+            initial_status = STATUS_BESTAETIGT if quelle in (QUELLE_TELEFON, QUELLE_PERSONAL) else STATUS_NEU
 
             payload = {
                 "dl_name": name,
@@ -172,10 +193,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "dl_preis": preis,
                 "dl_datum": datum,
                 "dl_anmerkung": anmerkung,
-                "dl_status": STATUS_NEU,
+                "dl_status": initial_status,
                 "dl_bestellnummer": bestellnr,
                 "dl_wochentag_label": wochentag_label,
                 "dl_mitnehmen": mitnehmen,
+                "dl_quelle": quelle,
+                "dl_stammkunde_id": stammkunde_id,
+                "dl_erfasst_von": erfasst_von,
             }
 
             post_headers = {**headers, "Prefer": "return=representation"}
@@ -236,7 +260,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
             params = {
-                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,createdon",
+                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,createdon",
                 "$orderby": "createdon desc",
                 "$top": "200",
             }
@@ -266,6 +290,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             body = req.get_json()
             new_status = body.get("status")
             bestaetigung_text = (body.get("bestaetigung_text") or "").strip()
+            new_menge = body.get("menge")
+            new_anmerkung = body.get("anmerkung")
 
             # Fetch existing order for push notification
             fetch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})"
@@ -277,6 +303,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 patch_data["dl_status"] = int(new_status)
             if bestaetigung_text:
                 patch_data["dl_bestaetigung_text"] = bestaetigung_text
+            if new_menge is not None:
+                m = int(new_menge)
+                if 1 <= m <= 99:
+                    patch_data["dl_menge"] = m
+            if new_anmerkung is not None:
+                patch_data["dl_anmerkung"] = new_anmerkung.strip()
 
             if not patch_data:
                 return func.HttpResponse(

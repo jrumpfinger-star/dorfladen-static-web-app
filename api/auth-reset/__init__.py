@@ -207,7 +207,7 @@ def _request_reset(body, base_url, headers):
         return success_response
 
     # Build reset link
-    host = os.environ.get("WEBSITE_HOSTNAME", "www.dorfladen-oberornau.de")
+    host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "www.dorfladen-oberornau.de")
     protocol = "https" if "azurestaticapps" in host or "azure" in host or "dorfladen" in host else "http"
     reset_link = f"{protocol}://{host}/shop.html?reset_token={token}&email={email}"
 

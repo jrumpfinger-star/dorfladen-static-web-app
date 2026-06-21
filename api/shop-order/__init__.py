@@ -410,9 +410,9 @@ def _handle_post(req, dv_token, base_url, headers):
                     "target_email": user["email"],
                     "tag": f"order-{bestellnummer}",
                 }
-                base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-                protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
-                internal_url = f"{protocol}://{base_host}/api/push-send"
+                swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+                internal_url = f"{protocol}://{swa_host}/api/push-send"
                 requests.post(internal_url, json=push_payload, timeout=10)
             except Exception:
                 pass

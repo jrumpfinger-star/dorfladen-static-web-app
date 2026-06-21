@@ -169,9 +169,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     requests.patch(patch_url, headers=patch_headers,
                                    json={"dl_verify_token": new_verify_token}, timeout=15)
 
-                    base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-                    protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
-                    verify_url = f"{protocol}://{base_host}/api/auth-verify?token={new_verify_token}&email={email}"
+                    swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                    protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+                    verify_url = f"{protocol}://{swa_host}/api/auth-verify?token={new_verify_token}&email={email}"
                     vorname = kunde.get("dl_vorname", "")
                     email_body = (
                         f"Hallo {vorname},\n\n"

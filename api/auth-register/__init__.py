@@ -264,9 +264,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 from importlib import import_module
                 notify_mod = import_module("shop-notify")
 
-                base_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-                protocol = "https" if "azurestaticapps" in base_host or "azure" in base_host else "http"
-                verify_url = f"{protocol}://{base_host}/api/auth-verify?token={verify_token}&email={email}"
+                # Use SWA_HOSTNAME (the public Static Web App URL), NOT WEBSITE_HOSTNAME
+                # (which is the internal Functions host that doesn't support direct browser access)
+                swa_host = os.environ.get("SWA_HOSTNAME", "")
+                if not swa_host:
+                    # Fallback: derive from WEBSITE_HOSTNAME or use known SWA URL
+                    internal_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                    if "localhost" in internal_host:
+                        swa_host = internal_host
+                    else:
+                        swa_host = os.environ.get("WEBSITE_HOSTNAME_STATIC", "witty-island-064f9d903.7.azurestaticapps.net")
+                protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+                verify_url = f"{protocol}://{swa_host}/api/auth-verify?token={verify_token}&email={email}"
 
                 email_body = (
                     f"Hallo {vorname},\n\n"
