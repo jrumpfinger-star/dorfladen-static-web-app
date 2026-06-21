@@ -630,6 +630,7 @@ var K = (function(){
       } else if(o.status===1){
         html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">'+luc('package-check',16)+' Abgeholt</button>';
         if(o.kunde_kommentar) html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc('reply',16)+' Antworten</button>';
+        html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
       } else if(o.status===3){
         html += luc('check-circle',20);
       }
