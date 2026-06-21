@@ -132,9 +132,11 @@
         <div id="mt-new-form" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:10px">
           <div style="font-weight:800;font-size:13px;margin-bottom:8px">📝 Manuelle Bestellung erfassen</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div>
-              <label style="font-size:11px;font-weight:700;color:var(--muted)">Name *</label>
-              <input id="mt-new-name" class="search" placeholder="Kundenname" style="width:100%;max-width:none">
+            <div style="position:relative">
+              <label style="font-size:11px;font-weight:700;color:var(--muted)">Name * <span id="mt-sk-label" style="font-size:10px;color:#22c55e;display:none">✅ Stammkunde</span></label>
+              <input id="mt-new-name" class="search" placeholder="Kundenname tippen…" autocomplete="off" style="width:100%;max-width:none" oninput="mtSearchCustomer(this.value)">
+              <input type="hidden" id="mt-new-sk-id" value="">
+              <div id="mt-sk-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);max-height:180px;overflow-y:auto;z-index:50;font-size:12px"></div>
             </div>
             <div>
               <label style="font-size:11px;font-weight:700;color:var(--muted)">Telefon</label>
@@ -168,6 +170,13 @@
           <div style="margin-top:6px">
             <label style="font-size:11px;font-weight:700;color:var(--muted)">Anmerkung</label>
             <input id="mt-new-anmerkung" class="search" placeholder="Optional…" style="width:100%;max-width:none">
+          </div>
+          <div id="mt-neukunde-row" style="margin-top:8px;display:none">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+              <input type="checkbox" id="mt-new-save-customer" checked>
+              <span style="font-weight:700">👤 Als Neukunde/Stammkunde speichern</span>
+              <span style="color:var(--muted);font-size:11px">(Name + Telefon werden gespeichert)</span>
+            </label>
           </div>
           <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
             <button class="btn small" onclick="document.getElementById('mt-new-form').style.display='none'">Abbrechen</button>
@@ -1204,14 +1213,87 @@ function mtSetStatus(id, status){
 }
 
 // ── Manual order ──
+var _mtSkTimer = null;
+var _mtSelectedCustomerId = '';
+
 function mtShowNewOrder(){
   document.getElementById('mt-new-form').style.display = 'block';
   document.getElementById('mt-new-name').value = '';
   document.getElementById('mt-new-tel').value = '';
   document.getElementById('mt-new-menge').value = '1';
   document.getElementById('mt-new-anmerkung').value = '';
+  document.getElementById('mt-new-sk-id').value = '';
+  document.getElementById('mt-sk-label').style.display = 'none';
+  document.getElementById('mt-sk-dropdown').style.display = 'none';
+  document.getElementById('mt-neukunde-row').style.display = 'none';
+  _mtSelectedCustomerId = '';
   mtUpdateGerichtDropdown();
 }
+
+function mtSearchCustomer(q){
+  // Reset selected customer when typing
+  _mtSelectedCustomerId = '';
+  document.getElementById('mt-new-sk-id').value = '';
+  document.getElementById('mt-sk-label').style.display = 'none';
+
+  q = (q||'').trim();
+  if(q.length < 2){
+    document.getElementById('mt-sk-dropdown').style.display = 'none';
+    document.getElementById('mt-neukunde-row').style.display = 'none';
+    return;
+  }
+  clearTimeout(_mtSkTimer);
+  _mtSkTimer = setTimeout(function(){
+    fetch('/api/stammkunden?q='+encodeURIComponent(q))
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        var dd = document.getElementById('mt-sk-dropdown');
+        var customers = (res.customers||[]);
+        if(customers.length === 0){
+          // No match → show "Als Neukunde speichern" option
+          dd.innerHTML = '<div style="padding:10px;color:var(--muted);text-align:center;font-size:11px">Kein Stammkunde gefunden</div>';
+          dd.style.display = 'block';
+          document.getElementById('mt-neukunde-row').style.display = 'block';
+          return;
+        }
+        document.getElementById('mt-neukunde-row').style.display = 'none';
+        var html = '';
+        customers.forEach(function(c){
+          html += '<div onclick="mtSelectCustomer(\''+c.id+'\',\''+_escAttr(c.name)+'\',\''+_escAttr(c.telefon||'')+'\')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#fff\'">';
+          html += '<div><strong>'+_escH(c.name)+'</strong>';
+          if(c.telefon) html += ' <span style="color:var(--muted);font-size:11px">📞 '+_escH(c.telefon)+'</span>';
+          html += '</div>';
+          if(c.stammkunde_nr) html += '<span style="font-size:10px;color:var(--muted)">'+_escH(c.stammkunde_nr)+'</span>';
+          html += '</div>';
+        });
+        dd.innerHTML = html;
+        dd.style.display = 'block';
+      })
+      .catch(function(e){ console.log('SK search error:', e); });
+  }, 300);
+}
+
+function _escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _escAttr(s){ return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+function mtSelectCustomer(id, name, tel){
+  _mtSelectedCustomerId = id;
+  document.getElementById('mt-new-name').value = name;
+  document.getElementById('mt-new-tel').value = tel;
+  document.getElementById('mt-new-sk-id').value = id;
+  document.getElementById('mt-sk-label').style.display = 'inline';
+  document.getElementById('mt-sk-dropdown').style.display = 'none';
+  document.getElementById('mt-neukunde-row').style.display = 'none';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e){
+  var dd = document.getElementById('mt-sk-dropdown');
+  var nameField = document.getElementById('mt-new-name');
+  if(dd && !dd.contains(e.target) && e.target !== nameField){
+    dd.style.display = 'none';
+  }
+});
 
 function mtSubmitNewOrder(){
   var name = document.getElementById('mt-new-name').value.trim();
@@ -1225,6 +1307,8 @@ function mtSubmitNewOrder(){
   var quelle = parseInt(document.getElementById('mt-new-quelle').value)||1;
   var mitnehmen = document.getElementById('mt-new-mitnehmen').value === 'true';
   var anmerkung = document.getElementById('mt-new-anmerkung').value.trim();
+  var stammkundeId = document.getElementById('mt-new-sk-id').value;
+  var saveAsCustomer = !stammkundeId && document.getElementById('mt-new-save-customer').checked;
 
   if(!name){ alert('Bitte Name eingeben.'); return; }
   if(!gerichtId){ alert('Bitte Gericht auswählen.'); return; }
@@ -1245,7 +1329,8 @@ function mtSubmitNewOrder(){
     mitnehmen: mitnehmen,
     anmerkung: anmerkung,
     wochentag_label: wochentagLabel,
-    erfasst_von: 'Shop-Admin'
+    erfasst_von: 'Shop-Admin',
+    stammkunde_id: stammkundeId
   };
 
   fetch('/api/lunch-order', {
@@ -1258,6 +1343,21 @@ function mtSubmitNewOrder(){
     if(res.success){
       document.getElementById('mt-new-form').style.display = 'none';
       loadMittagOrders();
+      // Save as new customer if checkbox checked
+      if(saveAsCustomer && name){
+        fetch('/api/stammkunden', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ name: name, telefon: tel, notiz: 'Automatisch aus Bestellung erstellt' })
+        })
+        .then(function(r2){ return r2.json(); })
+        .then(function(res2){
+          if(res2.success) console.log('Neukunde gespeichert: ' + name);
+          else if(res2.error === 'Kunde existiert bereits') console.log('Kunde existiert bereits');
+          else console.log('Neukunde Fehler:', res2);
+        })
+        .catch(function(e2){ console.log('Neukunde Fehler:', e2); });
+      }
     } else {
       alert('Fehler: ' + (res.error || JSON.stringify(res.errors||'')));
     }
