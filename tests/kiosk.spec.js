@@ -55,16 +55,36 @@ test.describe('Kiosk UI – Online-Shop Filter', () => {
     // Switch to Online-Shop tab
     await page.locator('.k-tab[data-tab="abhol"]').click();
     const buttons = page.locator('#abhol-filter-bar .k-filter-btn');
-    await expect(buttons).toHaveCount(2);
+    await expect(buttons).toHaveCount(3);
     const texts = await buttons.allTextContents();
-    expect(texts[0]).toContain('Offene');
-    expect(texts[1]).toContain('Heute');
+    expect(texts[0]).toContain('Zu erledigen');
+    expect(texts[1]).toContain('Heute abholen');
+    expect(texts[2]).toContain('Überfällig');
   });
 
   test('AK-UI-09: Badge auf Online-Shop-Tab vorhanden', async ({ page }) => {
     await page.goto(KIOSK_URL);
     const badge = page.locator('#badge-abhol');
     await expect(badge).toBeAttached();
+  });
+
+  test('AK-UI-13: Shop-Stats zeigen handlungsorientierte Labels', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    const stats = await page.locator('#abhol-stats').textContent();
+    // Should NOT contain old labels
+    expect(stats).not.toContain('Bearb.');
+    expect(stats).not.toContain('Umsatz');
+    expect(stats).not.toContain('€');
+  });
+
+  test('AK-UI-14: Mittagstisch-Stats zeigen Portionen statt Umsatz', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    const stats = await page.locator('#mittag-stats').textContent();
+    expect(stats).toContain('Portionen');
+    expect(stats).not.toContain('Umsatz');
   });
 });
 

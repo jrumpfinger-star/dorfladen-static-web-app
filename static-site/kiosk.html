@@ -65,6 +65,7 @@
     .shop-badge-2{background:#dbeafe;color:#1d4ed8}
     .shop-badge-3{background:#f3f4f6;color:#6b7280}
     .shop-badge-4{background:#fef2f2;color:#991b1b}
+    .k-order-overdue{border-left-color:#dc2626!important;background:#fef2f2}
     .k-order-positions{font-size:12px;color:var(--c-muted);margin-top:2px}
     .k-order-positions span{display:inline-block;background:#f3f4f6;padding:1px 6px;border-radius:4px;margin:1px 2px}
     .k-order-info{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
@@ -242,8 +243,9 @@
   <div class="k-panel" id="panel-abhol">
     <div class="k-shop-toolbar">
       <div class="k-filter-bar" id="abhol-filter-bar" style="margin-bottom:0">
-        <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')">📦 Offene <span class="k-filter-count" id="fc-open">-</span></button>
-        <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')">📅 Heute <span class="k-filter-count" id="fc-today">-</span></button>
+        <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')">📦 Zu erledigen <span class="k-filter-count" id="fc-open">-</span></button>
+        <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')">📅 Heute abholen <span class="k-filter-count" id="fc-today">-</span></button>
+        <button class="k-filter-btn" data-filter="overdue" onclick="K.setShopFilter('overdue')">⚠️ Überfällig <span class="k-filter-count" id="fc-overdue">-</span></button>
       </div>
       <div style="flex:1"></div>
       <div class="k-stats" id="abhol-stats"></div>
@@ -472,18 +474,18 @@ var K = (function(){
   }
 
   function renderStats(){
+    var active = orders.filter(function(o){return o.status!==2;});
     var neu = orders.filter(function(o){return o.status===0;}).length;
-    var ok = orders.filter(function(o){return o.status===1;}).length;
-    var abgeholt = orders.filter(function(o){return o.status===3;}).length;
-    var portionen = orders.filter(function(o){return o.status!==2;}).reduce(function(s,o){return s+(o.menge||1);},0);
-    var umsatz = orders.filter(function(o){return o.status!==2;}).reduce(function(s,o){return s+(o.preis||0)*(o.menge||1);},0);
+    var portionen = active.reduce(function(s,o){return s+(o.menge||1);},0);
+    var mitnehmen = active.filter(function(o){return o.mitnehmen;}).reduce(function(s,o){return s+(o.menge||1);},0);
+    var vorOrt = portionen - mitnehmen;
 
-    document.getElementById('mittag-stats').innerHTML =
-      '<div class="k-stat orange"><div class="k-stat-val">'+neu+'</div><div class="k-stat-label">Offen</div></div>'+
-      '<div class="k-stat green"><div class="k-stat-val">'+ok+'</div><div class="k-stat-label">Bestätigt</div></div>'+
-      '<div class="k-stat"><div class="k-stat-val">'+abgeholt+'</div><div class="k-stat-label">Abgeholt</div></div>'+
-      '<div class="k-stat"><div class="k-stat-val">'+portionen+'</div><div class="k-stat-label">Portionen</div></div>'+
-      '<div class="k-stat green"><div class="k-stat-val">'+umsatz.toFixed(0)+'€</div><div class="k-stat-label">Umsatz</div></div>';
+    var html = '';
+    html += '<div class="k-stat" style="border-left:3px solid #1b5e20"><div class="k-stat-val" style="color:#1b5e20">'+portionen+'</div><div class="k-stat-label">🍽 Portionen</div></div>';
+    if(neu>0) html += '<div class="k-stat orange"><div class="k-stat-val">'+neu+'</div><div class="k-stat-label">📥 Offen</div></div>';
+    if(mitnehmen>0) html += '<div class="k-stat"><div class="k-stat-val">'+mitnehmen+'</div><div class="k-stat-label">📦 Mitnehmen</div></div>';
+    if(vorOrt>0) html += '<div class="k-stat"><div class="k-stat-val">'+vorOrt+'</div><div class="k-stat-label">🪑 Vor Ort</div></div>';
+    document.getElementById('mittag-stats').innerHTML = html;
   }
 
   function renderDishSummary(){
@@ -907,12 +909,30 @@ var K = (function(){
 
   function applyShopFilter(){
     var td = today();
+    var now = new Date();
     if(_shopFilter==='today'){
       shopOrders = _allShopOrders.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;});
+    } else if(_shopFilter==='overdue'){
+      shopOrders = _allShopOrders.filter(function(o){
+        if(o.status>=3) return false;
+        return _isOverdue(o, now);
+      });
     } else {
       shopOrders = _allShopOrders.filter(function(o){return o.status<3;});
     }
     renderShopOrders();
+  }
+
+  function _isOverdue(o, now){
+    if(!now) now = new Date();
+    var zs = o.abhol_zeitslot||{};
+    if(!o.abholdatum) return false;
+    var d = o.abholdatum.substring(0,10);
+    var endTime = zs.bis || '18:00';
+    try{
+      var deadline = new Date(d+'T'+endTime+':00');
+      return now > deadline;
+    }catch(e){return false;}
   }
 
   function loadShopOrders(){
@@ -925,10 +945,13 @@ var K = (function(){
         renderShopStats(_allShopOrders);
         // Update filter counts
         var td = today();
+        var now = new Date();
         var openC = _allShopOrders.filter(function(o){return o.status<3;}).length;
-        var todayC = _allShopOrders.filter(function(o){return (o.abholdatum||'').substring(0,10)===td;}).length;
+        var todayC = _allShopOrders.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;}).length;
+        var overdueC = _allShopOrders.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
         document.getElementById('fc-open').textContent = openC;
         document.getElementById('fc-today').textContent = todayC;
+        document.getElementById('fc-overdue').textContent = overdueC;
         updateBadge('abhol', openC);
       })
       .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">⚠️</div>Fehler beim Laden: '+esc(e.message)+'</div>'; });
@@ -936,15 +959,18 @@ var K = (function(){
 
   function renderShopStats(all){
     if(!all) all = shopOrders;
-    var neu = all.filter(function(o){return o.status===0;}).length;
-    var bearb = all.filter(function(o){return o.status===1;}).length;
-    var bereit = all.filter(function(o){return o.status===2;}).length;
-    var summe = all.filter(function(o){return o.status<4;}).reduce(function(s,o){return s+(o.gesamtsumme||0);},0);
-    document.getElementById('abhol-stats').innerHTML =
-      '<div class="k-stat orange"><div class="k-stat-val">'+neu+'</div><div class="k-stat-label">Neu</div></div>'+
-      '<div class="k-stat"><div class="k-stat-val" style="color:#d97706">'+bearb+'</div><div class="k-stat-label">Bearb.</div></div>'+
-      '<div class="k-stat"><div class="k-stat-val" style="color:#2563eb">'+bereit+'</div><div class="k-stat-label">Abholbereit</div></div>'+
-      '<div class="k-stat green"><div class="k-stat-val">'+summe.toFixed(0)+'€</div></div>';
+    var now = new Date();
+    var eingang = all.filter(function(o){return o.status===0;}).length;
+    var packen = all.filter(function(o){return o.status===1;}).length;
+    var warten = all.filter(function(o){return o.status===2;}).length;
+    var ueberfaellig = all.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
+    var html = '';
+    if(eingang>0) html += '<div class="k-stat orange"><div class="k-stat-val">'+eingang+'</div><div class="k-stat-label">📥 Eingang</div></div>';
+    if(packen>0) html += '<div class="k-stat" style="border-left:3px solid #d97706"><div class="k-stat-val" style="color:#d97706">'+packen+'</div><div class="k-stat-label">📦 Packen</div></div>';
+    if(warten>0) html += '<div class="k-stat" style="border-left:3px solid #2563eb"><div class="k-stat-val" style="color:#2563eb">'+warten+'</div><div class="k-stat-label">🔔 Warten</div></div>';
+    if(ueberfaellig>0) html += '<div class="k-stat" style="background:#fef2f2;border-left:3px solid #dc2626"><div class="k-stat-val" style="color:#dc2626">'+ueberfaellig+'</div><div class="k-stat-label">⚠️ Überfällig</div></div>';
+    if(!html) html = '<div class="k-stat green"><div class="k-stat-val">✅</div><div class="k-stat-label">Alles erledigt</div></div>';
+    document.getElementById('abhol-stats').innerHTML = html;
   }
 
   function fmtDate(d){
@@ -1016,12 +1042,14 @@ var K = (function(){
     var stClass = 'shop-st-'+o.status;
     var badgeClass = 'shop-badge-'+o.status;
     var statusLabel = SHOP_STATUS[o.status]||'?';
+    var overdue = o.status<3 && _isOverdue(o);
+    if(overdue) statusLabel = '⚠️ Überfällig';
     var posArr = o.positionen||[];
     var posCount = posArr.length;
     var posPreview = posArr.slice(0,3).map(function(p){return p.bezeichnung||p.name||'?';});
     if(posCount>3) posPreview.push('+'+(posCount-3)+' weitere');
 
-    var html = '<div class="k-order '+stClass+'">';
+    var html = '<div class="k-order '+stClass+(overdue?' k-order-overdue':'')+'">';
     html += '<div class="k-order-info">';
     html += '<div class="k-order-top">';
     html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';

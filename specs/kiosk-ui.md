@@ -22,9 +22,17 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] GET-Filter verwendet `startswith` statt `eq` für Abwärtskompatibilität
 - [x] API-Rückgabe normalisiert Datum immer auf `YYYY-MM-DD`
 
-### Online-Shop Filter
-- [x] Filter-Buttons vereinfachen: nur "Offene" und "Heute" (kein "Alle", kein "Abgeholt")
-- [x] Stats-Balken: nur Bestellungen, Offen, Abholbereit (kein "Abgeholt"-Zähler)
+### Online-Shop Filter & Stats
+- [x] ~~Filter-Buttons: "Offene" und "Heute"~~
+- [x] 3 Filter: "📦 Zu erledigen", "📅 Heute abholen", "⚠️ Überfällig"
+- [x] Stats handlungsorientiert: "📥 Eingang" / "📦 Packen" / "🔔 Warten" / "⚠️ Überfällig" (kein Umsatz)
+- [x] Überfällige Bestellungen = Abholzeit vorbei + Status < abgeholt
+- [x] Überfällige Karten rot hervorgehoben
+- [x] Wenn nichts offen: "✅ Alles erledigt"
+
+### Mittagstisch-Stats
+- [x] Stats: Portionen (Gesamt), Offen (unbestätigt), Mitnehmen, Vor Ort
+- [x] Kein Umsatz, kein "Bestätigt"-Zähler, kein "Abgeholt"-Zähler
 
 ### Zeitslot-Gruppen
 - [x] Bestellungen gruppiert nach Abholdatum + Zeitslot
@@ -55,7 +63,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-01: Tab zeigt "Online-Shop" statt "Abholungen"
 - [x] AK-UI-01b: 3 Tabs: Mittagstisch, Online-Shop, Stammkunden (kein Speiseplan)
 - [x] AK-UI-01c: Refresh-Button im Header sichtbar
-- [x] AK-UI-02: Nur 2 Filter-Buttons: "📦 Offene" und "📅 Heute"
+- [x] AK-UI-02: 3 Filter-Buttons: "📦 Zu erledigen", "📅 Heute abholen", "⚠️ Überfällig"
 - [x] AK-UI-03: Klick auf Slot-Header klappt Gruppe auf/zu
 - [x] AK-UI-04: Pfeil wechselt zwischen ▶ (collapsed) und ▼ (expanded)
 - [x] AK-UI-05: Tagesauswahl zeigt 7 Tage (Gestern bis +5)
@@ -66,6 +74,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-10: Küchenliste druckt Bestellungen nach Gericht gruppiert
 - [x] AK-UI-11: Datum wird beim POST normalisiert (YYYY-MM-DD)
 - [x] AK-UI-12: GET-Filter findet Bestellungen unabhängig vom Datum-Format
+- [x] AK-UI-13: Shop-Stats zeigen handlungsorientierte Labels (kein Umsatz/Bearb.)
+- [x] AK-UI-14: Mittagstisch-Stats zeigen Portionen/Mitnehmen/Vor-Ort statt Umsatz
+- [x] AK-UI-15: Überfällige Bestellungen rot hervorgehoben
 
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)
