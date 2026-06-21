@@ -604,7 +604,7 @@ var K = (function(){
   var shopOrders = [];
 
   function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-  function today(){return new Date().toISOString().split('T')[0];}
+  function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
   function luc(name,size){size=size||16;return '<i data-lucide="'+name+'" style="width:'+size+'px;height:'+size+'px"></i>';}
   function reinitIcons(){if(typeof lucide!=='undefined') lucide.createIcons();}
 
@@ -686,7 +686,7 @@ var K = (function(){
     for(var i=-1;i<=5;i++){
       var d = new Date();
       d.setDate(d.getDate()+i);
-      var iso = d.toISOString().split('T')[0];
+      var iso = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
       var dayName = DAY_SHORT[d.getDay()];
       var dayNum = ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);
       var label = i===0?'Heute':i===1?'Morgen':i===-1?'Gestern':dayName+' '+dayNum;
@@ -1428,7 +1428,8 @@ var K = (function(){
     var dateStr = (d||'').substring(0,10);
     if(dateStr===td) return 'Heute';
     var tom = new Date(); tom.setDate(tom.getDate()+1);
-    if(dateStr===tom.toISOString().split('T')[0]) return 'Morgen';
+    var tomIso=tom.getFullYear()+'-'+('0'+(tom.getMonth()+1)).slice(-2)+'-'+('0'+tom.getDate()).slice(-2);
+    if(dateStr===tomIso) return 'Morgen';
     return fmtDate(d);
   }
 
