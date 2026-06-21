@@ -33,12 +33,13 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 })();
 
 /* === CMS Config from API === */
+window._dlFlagsReady=new Promise(function(resolveFlags){
 (function(){
   fetch(API_BASE+'/cms-config')
     .then(function(r){return r.json();})
     .then(function(payload){
       var config=(payload&&payload.data)?payload.data:payload;
-      if(!config || Object.keys(config).length===0) return;
+      if(!config || Object.keys(config).length===0){resolveFlags();return;}
       console.log('CMS Config loaded:', config);
       
       // Apply Hero texts from Dataverse CMS
@@ -64,9 +65,15 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       if(homeCfg.layout){
         document.documentElement.setAttribute('data-layout', homeCfg.layout);
       }
+      // Store feature flags globally
+      var ff=config['feature_flags']||config.feature_flags;
+      if(typeof ff==='string'){try{ff=JSON.parse(ff);}catch(e){ff={};}}
+      if(ff) window._dlFeatureFlags=ff;
+      resolveFlags();
     })
-    .catch(function(e){console.log('CMS Config fetch failed:', e);});
+    .catch(function(e){console.log('CMS Config fetch failed:', e);resolveFlags();});
 })();
+});
 
 /* === CMS Config (dl_homepage_cfg + dl_hp_design_config from localStorage) === */
 (function(){
@@ -334,9 +341,11 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 
 /* === Wochenplan loader === */
 (function(){
-  fetch(API_BASE+'/wochenplan')
-    .then(function(r){return r.json();})
-    .then(function(response){
+  // Fetch wochenplan and feature flags in parallel, render only when both ready
+  var flagsReady=window._dlFlagsReady||Promise.resolve();
+  var wpData=fetch(API_BASE+'/wochenplan').then(function(r){return r.json();});
+  Promise.all([wpData,flagsReady])
+    .then(function(results){var response=results[0];
       var items=unwrapApiData(response).map(function(item){
         return {
           id:item.id||item.dl_wochenplanid||item.dl_wochenplansid||'',
@@ -394,7 +403,8 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       // Always show Mon-Fri (101000-101004)
       var weekDays=[101000,101001,101002,101003,101004];
 
-      var html='<table class="wp-table"><thead><tr><th class="wp-th-day"></th><th></th><th class="wp-th-price">Verzehr im Laden<br><small>oder zum Mitnehmen</small></th></tr></thead><tbody>';
+      var _wpImgs=window._dlFeatureFlags&&window._dlFeatureFlags.wp_images;
+      var html='<table class="wp-table'+(_wpImgs?' wp-has-imgs':'')+'"><thead><tr><th class="wp-th-day"></th>'+(_wpImgs?'<th class="wp-th-img"></th>':'')+'<th></th><th class="wp-th-price">Verzehr im Laden<br><small>oder zum Mitnehmen</small></th></tr></thead><tbody>';
       weekDays.forEach(function(dc,dIdx){
         var dayMeals=byDay[dc]||[];
         var day=DAYS[dc]||'?';
@@ -411,10 +421,11 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         var pastStyle=isPast?' style="opacity:.45"':'';
         if(realMeals.length===0){
           var cls=grp+(isToday?' wp-today wp-day-first wp-day-last':' wp-day-first wp-day-last');
+          var noticeColspan=_wpImgs?'3':'2';
           if(notice){
-            html+='<tr class="'+cls+'"'+pastStyle+'><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2" style="color:#888;font-style:italic">'+esc(notice)+'</td></tr>';
+            html+='<tr class="'+cls+'"'+pastStyle+'><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="'+noticeColspan+'" style="color:#888;font-style:italic">'+esc(notice)+'</td></tr>';
           }else{
-            html+='<tr class="'+cls+'"'+pastStyle+'><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2" style="color:#aaa;font-style:italic">\u2013</td></tr>';
+            html+='<tr class="'+cls+'"'+pastStyle+'><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="'+noticeColspan+'" style="color:#aaa;font-style:italic">\u2013</td></tr>';
           }
         } else {
           realMeals.forEach(function(g,i){
@@ -425,6 +436,7 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
             html+='<tr class="'+cls+'"'+pastStyle+'>';
             html+='<td class="'+(isFirst?'wp-day':'wp-day-empty')+'">'+(isFirst?day:'')+'</td>';
             var orderLink='/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(g.id||'')+'&gericht='+encodeURIComponent(g.gericht)+'&preis='+(g.preis||0)+'&datum='+encodeURIComponent(g.datum||'')+'&tag='+encodeURIComponent(DAYS[dc]||'');
+            if(_wpImgs) html+='<td class="wp-img-cell" data-gericht="'+esc(g.gericht)+'"></td>';
             html+='<td class="wp-dish wp-dish-a">'+esc(g.gericht)+'</td>';
             var orderBtn='';
             if(canOrder) orderBtn=' <a href="'+orderLink+'" class="feature-mittagstisch wp-order-btn" title="Jetzt bestellen"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Bestellen</a>';
@@ -442,6 +454,27 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       // Apply mittagstisch feature flag to dynamically rendered content
       if(!window._featureMittagstisch){
         document.querySelectorAll('#wp-body .feature-mittagstisch').forEach(function(el){el.style.display='none';});
+      }
+      // Load Mittagstisch images into dedicated column (if feature enabled)
+      if(_wpImgs){
+        fetch(API_BASE+'/social-katalog?action=mt-bilder')
+          .then(function(r){return r.json();})
+          .then(function(res){
+            var bilder=res.bilder||{};
+            document.querySelectorAll('.wp-img-cell').forEach(function(td){
+              var name=td.getAttribute('data-gericht');
+              if(bilder[name]&&bilder[name].bild_url){
+                var img=document.createElement('img');
+                img.src=bilder[name].bild_url;
+                img.className='wp-meal-thumb';
+                img.alt=name;
+                img.onerror=function(){this.style.display='none';};
+                img.addEventListener('dblclick',function(){wpOpenLightbox(this.src,name);});
+                td.appendChild(img);
+              }
+            });
+          })
+          .catch(function(){/* ignore */});
       }
     })
     .catch(function(e){
@@ -880,3 +913,24 @@ document.addEventListener('keydown',function(e){
       grid.innerHTML='<div class="gallery-empty">Galerie konnte nicht geladen werden</div>';
     });
 })();
+
+/* === Wochenplan Image Lightbox === */
+function wpOpenLightbox(src,alt){
+  var existing=document.getElementById('wp-lightbox');
+  if(existing) existing.remove();
+  var overlay=document.createElement('div');
+  overlay.id='wp-lightbox';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;animation:wpLbFadeIn .2s';
+  overlay.addEventListener('click',function(){overlay.remove();});
+  var img=document.createElement('img');
+  img.src=src;
+  img.alt=alt||'';
+  img.style.cssText='max-width:90vw;max-height:85vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)';
+  var cap=document.createElement('div');
+  cap.textContent=alt||'';
+  cap.style.cssText='position:absolute;bottom:24px;left:50%;transform:translateX(-50%);color:#fff;font-size:1rem;font-weight:600;background:rgba(0,0,0,.5);padding:6px 18px;border-radius:8px';
+  overlay.appendChild(img);
+  if(alt) overlay.appendChild(cap);
+  document.body.appendChild(overlay);
+  document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){overlay.remove();document.removeEventListener('keydown',onKey);}});
+}
