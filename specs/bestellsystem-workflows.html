@@ -67,11 +67,11 @@
   <div class="mermaid">
 stateDiagram-v2
     [*] --> Neu: Kunde bestellt
-    Neu --> InBearbeitung: Annehmen\n(Kiosk/Admin)
+    Neu --> InBearbeitung: Annehmen (Kiosk oder Admin)
     Neu --> Storniert: Stornieren
-    InBearbeitung --> Abholbereit: Packen fertig\n(finishPack)
+    InBearbeitung --> Abholbereit: Packen fertig (finishPack)
     InBearbeitung --> Storniert: Stornieren
-    Abholbereit --> Abgeholt: Ausgeben / Scan\n(setShopStatus 3)
+    Abholbereit --> Abgeholt: Ausgeben oder Scan (setShopStatus 3)
     Abholbereit --> Storniert: Stornieren
     Abgeholt --> [*]
     Storniert --> [*]
@@ -79,27 +79,27 @@ stateDiagram-v2
     state Neu {
         direction LR
         [*] --> status0
-        status0: Status 0\n📥 Neue Bestellung
+        status0: Status 0 - Neue Bestellung
     }
     state InBearbeitung {
         direction LR
         [*] --> status1
-        status1: Status 1\n📋 Wird gepackt
+        status1: Status 1 - Wird gepackt
     }
     state Abholbereit {
         direction LR
         [*] --> status2
-        status2: Status 2\n🔔 Kunde benachrichtigt
+        status2: Status 2 - Kunde benachrichtigt
     }
     state Abgeholt {
         direction LR
         [*] --> status3
-        status3: Status 3\n✅ Erledigt
+        status3: Status 3 - Erledigt
     }
     state Storniert {
         direction LR
         [*] --> status4
-        status4: Status 4\n❌ Abgebrochen
+        status4: Status 4 - Abgebrochen
     }
   </div>
 </div>
@@ -110,28 +110,28 @@ stateDiagram-v2
   <p class="desc">Der Kunde füllt den Warenkorb, wählt einen Abholtermin und sendet die Bestellung ab. Das System validiert, speichert und benachrichtigt.</p>
   <div class="mermaid">
 sequenceDiagram
-    participant K as 👤 Kunde<br/>(shop.html)
-    participant API as ⚡ API<br/>(shop-order)
-    participant DV as 🗄️ Dataverse
-    participant Mail as 📧 shop-notify
+    participant K as Kunde
+    participant API as API shop-order
+    participant DV as Dataverse
+    participant Mail as shop-notify
 
-    K->>K: Warenkorb füllen
-    K->>K: Abholtermin wählen<br/>(Datum + Zeitslot)
-    K->>API: POST /shop-order<br/>+ JWT + Positionen + Slot
+    K->>K: Warenkorb fuellen
+    K->>K: Abholtermin waehlen (Datum + Zeitslot)
+    K->>API: POST /shop-order + JWT + Positionen + Slot
     
     API->>API: JWT verifizieren
-    API->>DV: Mindestbestellwert laden<br/>(dl_seiteninhalt)
+    API->>DV: Mindestbestellwert laden (dl_seiteninhalt)
     DV-->>API: shop_mindestbestellwert
-    API->>API: Betrag prüfen ≥ Minimum
-    API->>API: Bestellnummer generieren<br/>DL-YYYYMMDD-XXXX
-    API->>DV: POST dl_shopbestellungs<br/>Status = 0 (Neu)
+    API->>API: Betrag pruefen >= Minimum
+    API->>API: Bestellnummer generieren DL-YYYYMMDD-XXXX
+    API->>DV: POST dl_shopbestellungs Status=0 (Neu)
     DV-->>API: 201 Created
     
-    API->>Mail: E-Mail: Bestellbestätigung
-    Mail-->>K: 📧 Bestätigung + Positionen
+    API->>Mail: E-Mail Bestellbestaetigung
+    Mail-->>K: Bestaetigung + Positionen
     API->>API: Push-Notification senden
-    API-->>K: ✅ {bestellnummer, abholdatum}
-    K->>K: Bestätigung anzeigen
+    API-->>K: bestellnummer + abholdatum
+    K->>K: Bestaetigung anzeigen
   </div>
 </div>
 
@@ -141,33 +141,33 @@ sequenceDiagram
   <p class="desc">Im Kiosk oder Shop-Admin werden Bestellungen angenommen, gepackt und zur Abholung bereitgestellt.</p>
   <div class="mermaid">
 flowchart TD
-    A[📥 Neue Bestellung<br/>Status 0] --> B{Aktion?}
-    B -->|Annehmen| C[📋 In Bearbeitung<br/>Status 1]
-    B -->|Stornieren| X[❌ Storniert<br/>Status 4]
+    A["Neue Bestellung<br/>Status 0"] --> B{"Aktion?"}
+    B -->|Annehmen| C["In Bearbeitung<br/>Status 1"]
+    B -->|Stornieren| X["Storniert<br/>Status 4"]
     
-    C --> D{Aktion?}
-    D -->|Packen öffnen| E[📦 Pack-Modal]
+    C --> D{"Aktion?"}
+    D -->|Packen oeffnen| E["Pack-Modal"]
     D -->|Direkt Bereit| G
     
-    E --> F{Für jede Position}
-    F --> F1[☑️ Checkbox: gepackt?]
-    F --> F2[🔢 Menge anpassen<br/>Gewichtsware in Gramm]
-    F --> F3[💾 Auto-Save<br/>alle 1,2 Sek via PATCH]
+    E --> F{"Fuer jede Position"}
+    F --> F1["Checkbox: gepackt?"]
+    F --> F2["Menge anpassen<br/>Gewichtsware in Gramm"]
+    F --> F3["Auto-Save<br/>alle 1,2 Sek via PATCH"]
     
-    F1 & F2 & F3 --> H{Fertig packen?}
+    F1 & F2 & F3 --> H{"Fertig packen?"}
     
-    H -->|Alle Artikel da| G[🔔 Abholbereit<br/>Status 2]
-    H -->|Artikel fehlen| I[⚠️ Bestätigung:<br/>Trotzdem bereit?]
+    H -->|Alle Artikel da| G["Abholbereit<br/>Status 2"]
+    H -->|Artikel fehlen| I["Bestaetigung:<br/>Trotzdem bereit?"]
     I -->|Ja| G
     I -->|Nein| E
     
-    G --> J[📧 E-Mail an Kunde]
-    J --> K{Alle Artikel?}
-    K -->|Ja| K1[✉️ Bestellung bereit]
-    K -->|Nein| K2[✉️ Fehlende Artikel Info]
+    G --> J["E-Mail an Kunde"]
+    J --> K{"Alle Artikel?"}
+    K -->|Ja| K1["Bestellung bereit"]
+    K -->|Nein| K2["Fehlende Artikel Info"]
     
-    G --> L{Ausgabe}
-    L -->|Ausgeben-Button| M[✅ Abgeholt<br/>Status 3]
+    G --> L{"Ausgabe"}
+    L -->|Ausgeben-Button| M["Abgeholt<br/>Status 3"]
     L -->|Barcode scannen| M
 
     style A fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
@@ -185,18 +185,18 @@ flowchart TD
   <p class="desc">Bestellungen können per Barcode-Scan oder manuelle Eingabe der Bestellnummer als abgeholt markiert werden.</p>
   <div class="mermaid">
 flowchart TD
-    A[📷 Barcode scannen<br/>oder Bestellnr eingeben] --> B[GET /shop-admin<br/>?action=scan_pickup<br/>&nr=DL-...]
+    A["Barcode scannen<br/>oder Bestellnr eingeben"] --> B["GET /shop-admin<br/>action=scan_pickup"]
     
-    B --> C{Bestellung<br/>gefunden?}
-    C -->|Nein| D[❌ Nicht gefunden]
-    C -->|Ja| E{Aktueller Status?}
+    B --> C{"Bestellung gefunden?"}
+    C -->|Nein| D["Nicht gefunden"]
+    C -->|Ja| E{"Aktueller Status?"}
     
-    E -->|Status 1 oder 2| F[✅ Auf Abgeholt setzen<br/>PATCH Status → 3]
-    E -->|Status 3| G[ℹ️ Bereits abgeholt]
-    E -->|Status 0| H[❌ Noch nicht<br/>angenommen]
-    E -->|Status 4| I[❌ Storniert –<br/>Ausgabe nicht möglich]
+    E -->|Status 1 oder 2| F["Auf Abgeholt setzen<br/>PATCH Status = 3"]
+    E -->|Status 3| G["Bereits abgeholt"]
+    E -->|Status 0| H["Noch nicht angenommen"]
+    E -->|Status 4| I["Storniert"]
     
-    F --> J[✅ Erfolg anzeigen<br/>Kunde + Summe]
+    F --> J["Erfolg anzeigen<br/>Kunde + Summe"]
 
     style A fill:#f0f9ff,stroke:#0ea5e9,color:#0c4a6e
     style F fill:#dcfce7,stroke:#22c55e,color:#14532d
@@ -213,22 +213,22 @@ flowchart TD
   <p class="desc">Das System sendet automatisch E-Mails an Kunden bei bestimmten Statusänderungen.</p>
   <div class="mermaid">
 flowchart LR
-    subgraph Auslöser
-        A1[🛒 Bestellung<br/>aufgegeben]
-        A2[📦 Packen fertig<br/>alle Artikel da]
-        A3[⚠️ Packen fertig<br/>Artikel fehlen]
+    subgraph Ausloeser["Ausloeser"]
+        A1["Bestellung aufgegeben"]
+        A2["Packen fertig<br/>alle Artikel da"]
+        A3["Packen fertig<br/>Artikel fehlen"]
     end
 
     subgraph API
-        B1[POST /shop-order]
-        B2[finishPack → Status 2]
-        B3[finishPack → Status 2]
+        B1["POST /shop-order"]
+        B2["finishPack, Status 2"]
+        B3["finishPack, Status 2"]
     end
 
-    subgraph E-Mail an Kunde
-        C1[✉️ Bestellbestätigung<br/>• Bestellnummer<br/>• Abholtermin + Slot<br/>• Positionen-Tabelle<br/>• Zahlungsart]
-        C2[✉️ Abholbereit<br/>• Bestellung ist bereit<br/>• Abholtermin]
-        C3[✉️ Fehlende Artikel<br/>• Liste nicht verfügbar<br/>• Aktualisierte Info]
+    subgraph EMail["E-Mail an Kunde"]
+        C1["Bestellbestaetigung<br/>Bestellnummer, Abholtermin,<br/>Positionen, Zahlungsart"]
+        C2["Abholbereit<br/>Bestellung ist bereit"]
+        C3["Fehlende Artikel<br/>Liste nicht verfuegbar"]
     end
 
     A1 --> B1 --> C1
@@ -247,30 +247,30 @@ flowchart LR
   <p class="desc">Die Filterlogik im Kiosk bestimmt, welche Bestellungen in welchem Modus angezeigt werden.</p>
   <div class="mermaid">
 flowchart TD
-    A[_allShopOrders<br/>alle Bestellungen vom API] --> B{_showHistory?}
+    A["allShopOrders<br/>alle Bestellungen vom API"] --> B{showHistory?}
     
-    B -->|false ⭐ Standard| C[base = abholdatum ≥ heute]
-    B -->|true 📜 Historie| D[base = ALLE Bestellungen]
+    B -->|Standard| C["base = abholdatum ab heute"]
+    B -->|Historie| D["base = ALLE Bestellungen"]
     
-    C --> E{Aktiver Filter?}
-    D --> F{Aktiver Filter?}
+    C --> E{"Aktiver Filter?"}
+    D --> F{"Aktiver Filter?"}
     
-    E -->|Zu erledigen| E1[status &lt; 3<br/>→ Neu, Bearbeitung, Bereit]
-    E -->|Heute abholen| E2[abholdatum = heute<br/>& status &lt; 4]
-    E -->|Überfällig| E3[status &lt; 3<br/>& Zeitslot abgelaufen]
+    E -->|Zu erledigen| E1["status unter 3<br/>Neu, Bearbeitung, Bereit"]
+    E -->|Heute abholen| E2["abholdatum = heute<br/>und status unter 4"]
+    E -->|Ueberfaellig| E3["status unter 3<br/>und Zeitslot abgelaufen"]
     
-    F -->|Zu erledigen + Historie| F1[Alle Status anzeigen<br/>inkl. Abgeholt + Storniert]
-    F -->|Heute + Historie| F2[abholdatum = heute<br/>& status &lt; 4]
-    F -->|Überfällig + Historie| F3[status &lt; 3<br/>& Zeitslot abgelaufen]
+    F -->|Zu erledigen + Historie| F1["Alle Status anzeigen<br/>inkl. Abgeholt + Storniert"]
+    F -->|Heute + Historie| F2["abholdatum = heute<br/>und status unter 4"]
+    F -->|Ueberfaellig + Historie| F3["status unter 3<br/>und Zeitslot abgelaufen"]
     
-    E1 & E2 & E3 & F1 & F2 & F3 --> G[renderShopOrders<br/>Gruppiert nach Zeitslot]
+    E1 & E2 & E3 & F1 & F2 & F3 --> G["renderShopOrders<br/>Gruppiert nach Zeitslot"]
     
-    G --> H[Slot-Header Badges]
-    H --> H1[📥 Packen]
-    H --> H2[📦 Warten]
-    H --> H3[🔔 Bereit]
-    H --> H4[✅ Abgeholt]
-    H --> H5[❌ Storniert]
+    G --> H["Slot-Header Badges"]
+    H --> H1["Packen"]
+    H --> H2["Warten"]
+    H --> H3["Bereit"]
+    H --> H4["Abgeholt"]
+    H --> H5["Storniert"]
 
     style A fill:#f0f9ff,stroke:#0ea5e9
     style C fill:#dcfce7,stroke:#22c55e
@@ -286,15 +286,15 @@ flowchart TD
   <div class="mermaid">
 flowchart TB
     subgraph Kunde
-        S1[🛒 shop.html<br/>Warenkorb & Bestellung]
-        S2[📱 Push-Notifications]
-        S3[📧 E-Mail]
+        S1["shop.html<br/>Warenkorb und Bestellung"]
+        S2["Push-Notifications"]
+        S3["E-Mail"]
     end
 
     subgraph Frontend["Frontend (Static Web App)"]
-        K1[🖥️ kiosk.html<br/>Mittagstisch · Online-Shop<br/>Stammkunden · Social]
-        K2[⚙️ shop-admin.html<br/>Bestellverwaltung<br/>Packen · Abholscan]
-        K3[📝 cms.js<br/>Content Management<br/>Social Media Posting]
+        K1["kiosk.html<br/>Mittagstisch, Online-Shop,<br/>Stammkunden, Social"]
+        K2["shop-admin.html<br/>Bestellverwaltung,<br/>Packen, Abholscan"]
+        K3["cms.js<br/>Content Management,<br/>Social Media Posting"]
     end
 
     subgraph API["Azure Functions API"]
@@ -312,20 +312,20 @@ flowchart TB
         D3[(dl_seiteninhalt<br/>CMS-Config)]
     end
 
-    S1 -->|JWT + POST| A1
+    S1 -->|"JWT + POST"| A1
     A1 -->|CRUD| D1
     A1 -->|E-Mail| A3
     A3 --> S3
     A1 -->|Push| A4
     A4 --> S2
 
-    K1 -->|GET/PATCH| A1
+    K1 -->|"GET/PATCH"| A1
     K1 -->|GET| A2
-    K2 -->|GET/PATCH| A1
+    K2 -->|"GET/PATCH"| A1
     K2 -->|Scan| A2
     K2 -->|Notify| A3
 
-    A2 -->|Read/Write| D1
+    A2 -->|"Read/Write"| D1
     A2 -->|Kunden| D2
     A1 -->|Config| D3
 
