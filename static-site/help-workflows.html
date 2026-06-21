@@ -298,18 +298,18 @@ flowchart TB
     end
 
     subgraph API["Azure Functions API"]
-        A1[/shop-order/]
-        A2[/shop-admin/]
-        A3[/shop-notify/]
-        A4[/push-send/]
-        A5[/meta-catalog/]
-        A6[/social-post/]
+        A1["shop-order"]
+        A2["shop-admin"]
+        A3["shop-notify"]
+        A4["push-send"]
+        A5["meta-catalog"]
+        A6["social-post"]
     end
 
     subgraph Backend["Dataverse (CRM)"]
-        D1[(dl_shopbestellungs<br/>Bestellungen)]
-        D2[(dl_shopkundes<br/>Kundenstamm)]
-        D3[(dl_seiteninhalt<br/>CMS-Config)]
+        D1[("dl_shopbestellungs")]
+        D2[("dl_shopkundes")]
+        D3[("dl_seiteninhalt")]
     end
 
     S1 -->|"JWT + POST"| A1
