@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bestellsystem – Workflow-Diagramme</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#f8fafc; color:#1e293b; }
+  .header { background:linear-gradient(135deg,#166534,#15803d); color:#fff; padding:28px 32px; }
+  .header h1 { font-size:24px; font-weight:800; }
+  .header p { font-size:13px; opacity:.8; margin-top:4px; }
+  .nav { display:flex; flex-wrap:wrap; gap:6px; padding:16px 32px; background:#fff; border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:10; }
+  .nav button { padding:8px 16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .nav button:hover { background:#f0fdf4; border-color:#86efac; }
+  .nav button.active { background:#166534; color:#fff; border-color:#166534; }
+  .section { display:none; padding:24px 32px; max-width:1200px; margin:0 auto; }
+  .section.active { display:block; }
+  .section h2 { font-size:20px; font-weight:800; margin-bottom:6px; color:#166534; }
+  .section .desc { font-size:13px; color:#64748b; margin-bottom:20px; line-height:1.5; }
+  .mermaid { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; margin-bottom:24px; overflow-x:auto; }
+  .legend { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-size:12px; }
+  .legend h4 { font-size:13px; font-weight:700; margin-bottom:6px; color:#166534; }
+  .legend span { display:inline-block; padding:2px 10px; border-radius:6px; margin:2px 4px 2px 0; font-weight:600; }
+  .api-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff; border-radius:10px; overflow:hidden; border:1px solid #e2e8f0; }
+  .api-table th { background:#f0fdf4; padding:10px 14px; text-align:left; font-weight:700; color:#166534; border-bottom:2px solid #bbf7d0; }
+  .api-table td { padding:10px 14px; border-bottom:1px solid #f1f5f9; }
+  .api-table tr:hover td { background:#f8fafc; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; }
+  .b-get { background:#dbeafe; color:#1d4ed8; }
+  .b-post { background:#dcfce7; color:#166534; }
+  .b-patch { background:#fef3c7; color:#92400e; }
+  @media(max-width:768px) { .nav { padding:10px 16px; } .section { padding:16px; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛒 Dorfladen Bestellsystem – Workflows</h1>
+  <p>Interaktive Ablaufdiagramme aller Geschäftsprozesse</p>
+</div>
+
+<div class="nav" id="nav">
+  <button class="active" onclick="show('status')">Status-Lebenszyklus</button>
+  <button onclick="show('bestellung')">Bestellvorgang</button>
+  <button onclick="show('bearbeitung')">Bearbeitung & Packen</button>
+  <button onclick="show('abholscan')">Abholscan</button>
+  <button onclick="show('email')">E-Mail-Benachrichtigungen</button>
+  <button onclick="show('filter')">Kiosk-Filterlogik</button>
+  <button onclick="show('architektur')">Gesamtarchitektur</button>
+  <button onclick="show('api')">API-Endpunkte</button>
+</div>
+
+<!-- 1. Status-Lebenszyklus -->
+<div class="section active" id="sec-status">
+  <h2>1. Bestellstatus-Lebenszyklus</h2>
+  <p class="desc">Jede Bestellung durchläuft diese Status. Der Normalfall ist der grüne Pfad von links nach rechts.</p>
+  <div class="legend">
+    <h4>Legende</h4>
+    <span style="background:#dbeafe;color:#1d4ed8">0 Neu</span>
+    <span style="background:#fef3c7;color:#92400e">1 In Bearbeitung</span>
+    <span style="background:#e0e7ff;color:#3730a3">2 Abholbereit</span>
+    <span style="background:#dcfce7;color:#166534">3 Abgeholt</span>
+    <span style="background:#fee2e2;color:#991b1b">4 Storniert</span>
+  </div>
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> Neu: Kunde bestellt
+    Neu --> InBearbeitung: Annehmen\n(Kiosk/Admin)
+    Neu --> Storniert: Stornieren
+    InBearbeitung --> Abholbereit: Packen fertig\n(finishPack)
+    InBearbeitung --> Storniert: Stornieren
+    Abholbereit --> Abgeholt: Ausgeben / Scan\n(setShopStatus 3)
+    Abholbereit --> Storniert: Stornieren
+    Abgeholt --> [*]
+    Storniert --> [*]
+
+    state Neu {
+        direction LR
+        [*] --> status0
+        status0: Status 0\n📥 Neue Bestellung
+    }
+    state InBearbeitung {
+        direction LR
+        [*] --> status1
+        status1: Status 1\n📋 Wird gepackt
+    }
+    state Abholbereit {
+        direction LR
+        [*] --> status2
+        status2: Status 2\n🔔 Kunde benachrichtigt
+    }
+    state Abgeholt {
+        direction LR
+        [*] --> status3
+        status3: Status 3\n✅ Erledigt
+    }
+    state Storniert {
+        direction LR
+        [*] --> status4
+        status4: Status 4\n❌ Abgebrochen
+    }
+  </div>
+</div>
+
+<!-- 2. Bestellvorgang -->
+<div class="section" id="sec-bestellung">
+  <h2>2. Bestellvorgang (Kunde → System)</h2>
+  <p class="desc">Der Kunde füllt den Warenkorb, wählt einen Abholtermin und sendet die Bestellung ab. Das System validiert, speichert und benachrichtigt.</p>
+  <div class="mermaid">
+sequenceDiagram
+    participant K as 👤 Kunde<br/>(shop.html)
+    participant API as ⚡ API<br/>(shop-order)
+    participant DV as 🗄️ Dataverse
+    participant Mail as 📧 shop-notify
+
+    K->>K: Warenkorb füllen
+    K->>K: Abholtermin wählen<br/>(Datum + Zeitslot)
+    K->>API: POST /shop-order<br/>+ JWT + Positionen + Slot
+    
+    API->>API: JWT verifizieren
+    API->>DV: Mindestbestellwert laden<br/>(dl_seiteninhalt)
+    DV-->>API: shop_mindestbestellwert
+    API->>API: Betrag prüfen ≥ Minimum
+    API->>API: Bestellnummer generieren<br/>DL-YYYYMMDD-XXXX
+    API->>DV: POST dl_shopbestellungs<br/>Status = 0 (Neu)
+    DV-->>API: 201 Created
+    
+    API->>Mail: E-Mail: Bestellbestätigung
+    Mail-->>K: 📧 Bestätigung + Positionen
+    API->>API: Push-Notification senden
+    API-->>K: ✅ {bestellnummer, abholdatum}
+    K->>K: Bestätigung anzeigen
+  </div>
+</div>
+
+<!-- 3. Bearbeitung & Packen -->
+<div class="section" id="sec-bearbeitung">
+  <h2>3. Bearbeitung & Pack-Workflow</h2>
+  <p class="desc">Im Kiosk oder Shop-Admin werden Bestellungen angenommen, gepackt und zur Abholung bereitgestellt.</p>
+  <div class="mermaid">
+flowchart TD
+    A[📥 Neue Bestellung<br/>Status 0] --> B{Aktion?}
+    B -->|Annehmen| C[📋 In Bearbeitung<br/>Status 1]
+    B -->|Stornieren| X[❌ Storniert<br/>Status 4]
+    
+    C --> D{Aktion?}
+    D -->|Packen öffnen| E[📦 Pack-Modal]
+    D -->|Direkt Bereit| G
+    
+    E --> F{Für jede Position}
+    F --> F1[☑️ Checkbox: gepackt?]
+    F --> F2[🔢 Menge anpassen<br/>Gewichtsware in Gramm]
+    F --> F3[💾 Auto-Save<br/>alle 1,2 Sek via PATCH]
+    
+    F1 & F2 & F3 --> H{Fertig packen?}
+    
+    H -->|Alle Artikel da| G[🔔 Abholbereit<br/>Status 2]
+    H -->|Artikel fehlen| I[⚠️ Bestätigung:<br/>Trotzdem bereit?]
+    I -->|Ja| G
+    I -->|Nein| E
+    
+    G --> J[📧 E-Mail an Kunde]
+    J --> K{Alle Artikel?}
+    K -->|Ja| K1[✉️ Bestellung bereit]
+    K -->|Nein| K2[✉️ Fehlende Artikel Info]
+    
+    G --> L{Ausgabe}
+    L -->|Ausgeben-Button| M[✅ Abgeholt<br/>Status 3]
+    L -->|Barcode scannen| M
+
+    style A fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
+    style C fill:#fef3c7,stroke:#f59e0b,color:#78350f
+    style G fill:#e0e7ff,stroke:#6366f1,color:#312e81
+    style M fill:#dcfce7,stroke:#22c55e,color:#14532d
+    style X fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+    style E fill:#f5f3ff,stroke:#8b5cf6,color:#4c1d95
+  </div>
+</div>
+
+<!-- 4. Abholscan -->
+<div class="section" id="sec-abholscan">
+  <h2>4. Abholscan-Workflow</h2>
+  <p class="desc">Bestellungen können per Barcode-Scan oder manuelle Eingabe der Bestellnummer als abgeholt markiert werden.</p>
+  <div class="mermaid">
+flowchart TD
+    A[📷 Barcode scannen<br/>oder Bestellnr eingeben] --> B[GET /shop-admin<br/>?action=scan_pickup<br/>&nr=DL-...]
+    
+    B --> C{Bestellung<br/>gefunden?}
+    C -->|Nein| D[❌ Nicht gefunden]
+    C -->|Ja| E{Aktueller Status?}
+    
+    E -->|Status 1 oder 2| F[✅ Auf Abgeholt setzen<br/>PATCH Status → 3]
+    E -->|Status 3| G[ℹ️ Bereits abgeholt]
+    E -->|Status 0| H[❌ Noch nicht<br/>angenommen]
+    E -->|Status 4| I[❌ Storniert –<br/>Ausgabe nicht möglich]
+    
+    F --> J[✅ Erfolg anzeigen<br/>Kunde + Summe]
+
+    style A fill:#f0f9ff,stroke:#0ea5e9,color:#0c4a6e
+    style F fill:#dcfce7,stroke:#22c55e,color:#14532d
+    style G fill:#fef3c7,stroke:#f59e0b,color:#78350f
+    style D fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+    style H fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+    style I fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+  </div>
+</div>
+
+<!-- 5. E-Mail-Benachrichtigungen -->
+<div class="section" id="sec-email">
+  <h2>5. E-Mail-Benachrichtigungen</h2>
+  <p class="desc">Das System sendet automatisch E-Mails an Kunden bei bestimmten Statusänderungen.</p>
+  <div class="mermaid">
+flowchart LR
+    subgraph Auslöser
+        A1[🛒 Bestellung<br/>aufgegeben]
+        A2[📦 Packen fertig<br/>alle Artikel da]
+        A3[⚠️ Packen fertig<br/>Artikel fehlen]
+    end
+
+    subgraph API
+        B1[POST /shop-order]
+        B2[finishPack → Status 2]
+        B3[finishPack → Status 2]
+    end
+
+    subgraph E-Mail an Kunde
+        C1[✉️ Bestellbestätigung<br/>• Bestellnummer<br/>• Abholtermin + Slot<br/>• Positionen-Tabelle<br/>• Zahlungsart]
+        C2[✉️ Abholbereit<br/>• Bestellung ist bereit<br/>• Abholtermin]
+        C3[✉️ Fehlende Artikel<br/>• Liste nicht verfügbar<br/>• Aktualisierte Info]
+    end
+
+    A1 --> B1 --> C1
+    A2 --> B2 --> C2
+    A3 --> B3 --> C3
+
+    style C1 fill:#dcfce7,stroke:#22c55e
+    style C2 fill:#dbeafe,stroke:#3b82f6
+    style C3 fill:#fef3c7,stroke:#f59e0b
+  </div>
+</div>
+
+<!-- 6. Kiosk-Filterlogik -->
+<div class="section" id="sec-filter">
+  <h2>6. Kiosk-Filterlogik (Online-Shop Tab)</h2>
+  <p class="desc">Die Filterlogik im Kiosk bestimmt, welche Bestellungen in welchem Modus angezeigt werden.</p>
+  <div class="mermaid">
+flowchart TD
+    A[_allShopOrders<br/>alle Bestellungen vom API] --> B{_showHistory?}
+    
+    B -->|false ⭐ Standard| C[base = abholdatum ≥ heute]
+    B -->|true 📜 Historie| D[base = ALLE Bestellungen]
+    
+    C --> E{Aktiver Filter?}
+    D --> F{Aktiver Filter?}
+    
+    E -->|Zu erledigen| E1[status &lt; 3<br/>→ Neu, Bearbeitung, Bereit]
+    E -->|Heute abholen| E2[abholdatum = heute<br/>& status &lt; 4]
+    E -->|Überfällig| E3[status &lt; 3<br/>& Zeitslot abgelaufen]
+    
+    F -->|Zu erledigen + Historie| F1[Alle Status anzeigen<br/>inkl. Abgeholt + Storniert]
+    F -->|Heute + Historie| F2[abholdatum = heute<br/>& status &lt; 4]
+    F -->|Überfällig + Historie| F3[status &lt; 3<br/>& Zeitslot abgelaufen]
+    
+    E1 & E2 & E3 & F1 & F2 & F3 --> G[renderShopOrders<br/>Gruppiert nach Zeitslot]
+    
+    G --> H[Slot-Header Badges]
+    H --> H1[📥 Packen]
+    H --> H2[📦 Warten]
+    H --> H3[🔔 Bereit]
+    H --> H4[✅ Abgeholt]
+    H --> H5[❌ Storniert]
+
+    style A fill:#f0f9ff,stroke:#0ea5e9
+    style C fill:#dcfce7,stroke:#22c55e
+    style D fill:#fef3c7,stroke:#f59e0b
+    style F1 fill:#e0e7ff,stroke:#6366f1
+  </div>
+</div>
+
+<!-- 7. Gesamtarchitektur -->
+<div class="section" id="sec-architektur">
+  <h2>7. Gesamtarchitektur</h2>
+  <p class="desc">Überblick über alle Komponenten und deren Zusammenspiel.</p>
+  <div class="mermaid">
+flowchart TB
+    subgraph Kunde
+        S1[🛒 shop.html<br/>Warenkorb & Bestellung]
+        S2[📱 Push-Notifications]
+        S3[📧 E-Mail]
+    end
+
+    subgraph Frontend["Frontend (Static Web App)"]
+        K1[🖥️ kiosk.html<br/>Mittagstisch · Online-Shop<br/>Stammkunden · Social]
+        K2[⚙️ shop-admin.html<br/>Bestellverwaltung<br/>Packen · Abholscan]
+        K3[📝 cms.js<br/>Content Management<br/>Social Media Posting]
+    end
+
+    subgraph API["Azure Functions API"]
+        A1[/shop-order/]
+        A2[/shop-admin/]
+        A3[/shop-notify/]
+        A4[/push-send/]
+        A5[/meta-catalog/]
+        A6[/social-post/]
+    end
+
+    subgraph Backend["Dataverse (CRM)"]
+        D1[(dl_shopbestellungs<br/>Bestellungen)]
+        D2[(dl_shopkundes<br/>Kundenstamm)]
+        D3[(dl_seiteninhalt<br/>CMS-Config)]
+    end
+
+    S1 -->|JWT + POST| A1
+    A1 -->|CRUD| D1
+    A1 -->|E-Mail| A3
+    A3 --> S3
+    A1 -->|Push| A4
+    A4 --> S2
+
+    K1 -->|GET/PATCH| A1
+    K1 -->|GET| A2
+    K2 -->|GET/PATCH| A1
+    K2 -->|Scan| A2
+    K2 -->|Notify| A3
+
+    A2 -->|Read/Write| D1
+    A2 -->|Kunden| D2
+    A1 -->|Config| D3
+
+    K3 -->|Social| A6
+    K3 -->|Katalog| A5
+    K1 -->|Social| A6
+    K1 -->|Katalog| A5
+
+    style S1 fill:#dbeafe,stroke:#3b82f6
+    style K1 fill:#dcfce7,stroke:#22c55e
+    style K2 fill:#fef3c7,stroke:#f59e0b
+    style K3 fill:#e0e7ff,stroke:#6366f1
+    style D1 fill:#f3e8ff,stroke:#a855f7
+    style D2 fill:#f3e8ff,stroke:#a855f7
+    style D3 fill:#f3e8ff,stroke:#a855f7
+  </div>
+</div>
+
+<!-- 8. API-Endpunkte -->
+<div class="section" id="sec-api">
+  <h2>8. API-Endpunkte</h2>
+  <p class="desc">Alle verfügbaren API-Endpunkte mit Methode, Zweck und Authentifizierung.</p>
+  <table class="api-table">
+    <thead>
+      <tr><th>Endpunkt</th><th>Methode</th><th>Zweck</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-post">POST</span></td><td>Neue Bestellung aufgeben</td><td>JWT (Kunde)</td></tr>
+      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-get">GET</span></td><td>Bestellungen laden (Kunde: eigene, CMS: alle)</td><td>JWT oder CMS</td></tr>
+      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-patch">PATCH</span></td><td>Status ändern, Pack-Daten speichern</td><td>CMS</td></tr>
+      <tr><td><code>/api/shop-admin</code></td><td><span class="badge b-get">GET</span></td><td>Dashboard, Kunden, Abholscan</td><td>CMS</td></tr>
+      <tr><td><code>/api/shop-admin</code></td><td><span class="badge b-patch">PATCH</span></td><td>Kundendaten aktualisieren, SEPA-Mandat</td><td>CMS</td></tr>
+      <tr><td><code>/api/shop-notify</code></td><td><span class="badge b-post">POST</span></td><td>E-Mail senden (Bereit / Fehlend)</td><td>Intern</td></tr>
+      <tr><td><code>/api/push-send</code></td><td><span class="badge b-post">POST</span></td><td>Push-Notification an Kunde</td><td>Intern</td></tr>
+      <tr><td><code>/api/meta-catalog</code></td><td><span class="badge b-get">GET</span> <span class="badge b-post">POST</span></td><td>WhatsApp Business Katalog verwalten</td><td>CMS</td></tr>
+      <tr><td><code>/api/social-post</code></td><td><span class="badge b-get">GET</span> <span class="badge b-post">POST</span></td><td>Social-Media Posts speichern/laden</td><td>CMS</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  mermaid.initialize({ 
+    startOnLoad: true, 
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#dcfce7',
+      primaryTextColor: '#166534',
+      primaryBorderColor: '#86efac',
+      lineColor: '#94a3b8',
+      secondaryColor: '#f0f9ff',
+      tertiaryColor: '#faf5ff',
+      fontFamily: '"Segoe UI",system-ui,sans-serif',
+      fontSize: '13px'
+    },
+    flowchart: { curve: 'basis', padding: 16 },
+    sequence: { mirrorActors: false, messageAlign: 'left' }
+  });
+
+  function show(id) {
+    document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+    document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('sec-'+id).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>
