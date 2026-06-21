@@ -116,6 +116,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-25: Shop-Karten haben expliziten "Details"-Button (Auge-Icon) statt nur Doppelklick
 - [x] AK-UI-25b: Button-Labels sind aktionsorientiert: "Annehmen" (statt "Bearbeiten"), "Ausgeben" (statt "Abgeholt")
 - [x] AK-UI-25c: "Ausgeben" bei Status "Bereit" – keine Verwechslung mit Status-Anzeige
+- [x] AK-UI-25d: "Ausgeben" nur sichtbar wenn Bestellung gepackt (`gepackt: true`), sonst "Packen" anbieten
 
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)

@@ -533,6 +533,13 @@ def _handle_get(req, dv_token, base_url, headers):
                     positionen = json.loads(item.get("dl_positionen_json", "[]"))
                 except:
                     pass
+                pack_data = None
+                try:
+                    raw = item.get("dl_pack_json")
+                    if raw:
+                        pack_data = json.loads(raw)
+                except:
+                    pass
                 orders.append({
                     "id": item.get("dl_shopbestellungid", ""),
                     "bestellnummer": item.get("dl_bestellnummer", ""),
@@ -545,7 +552,8 @@ def _handle_get(req, dv_token, base_url, headers):
                     "status_text": STATUS_LABELS.get(item.get("dl_status", 0), "Unbekannt"),
                     "gesamtsumme": item.get("dl_gesamtsumme", 0),
                     "anmerkungen": item.get("dl_anmerkungen", ""),
-                    "positionen": positionen
+                    "positionen": positionen,
+                    "gepackt": bool(pack_data)
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "orders": orders}, ensure_ascii=False),

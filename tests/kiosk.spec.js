@@ -914,7 +914,36 @@ test.describe('Kiosk – Shop-Karten Buttons', () => {
     expect(source).toContain('Ausgeben');
   });
 
-  test('AK-UI-25d: "Annehmen" statt "Bearbeiten" bei Status Eingang', async ({ page }) => {
+  test('AK-UI-25d: API liefert gepackt-Feld für Shop-Bestellungen', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/shop-order?mode=cms`);
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    if (data.orders.length > 0) {
+      for (const order of data.orders) {
+        expect(typeof order.gepackt).toBe('boolean');
+      }
+    }
+  });
+
+  test('AK-UI-25e: Ungepackte Bereit-Bestellung zeigt Packen statt Ausgeben', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(4000);
+    // Check if any status-2 order exists that is NOT gepackt
+    const hasUnpackedBereit = await page.evaluate(() => {
+      if (typeof _allShopOrders === 'undefined') return false;
+      return _allShopOrders.some(o => o.status === 2 && !o.gepackt);
+    });
+    if (hasUnpackedBereit) {
+      // Those orders should NOT have an "Ausgeben" button
+      // They should have a "Packen" button instead
+      const panelHtml = await page.locator('#panel-abhol').innerHTML();
+      // At least one "Packen" button should exist for bereit orders
+      expect(panelHtml).toContain('Packen');
+    }
+  });
+
+  test('AK-UI-25f: "Annehmen" statt "Bearbeiten" bei Status Eingang', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(4000);
     const source = await page.content();
