@@ -160,7 +160,11 @@
     .k-slot-arrow{transition:transform .2s;font-size:11px}
     .k-slot-group.collapsed .k-slot-arrow{transform:rotate(-90deg)}
     .k-slot-group.collapsed .k-order{display:none}
-    .k-slot-count{margin-left:auto;background:rgba(255,255,255,.3);padding:2px 8px;border-radius:6px;font-size:12px}
+    .k-slot-count{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px}
+    .k-slot-badge{display:inline-flex;align-items:center;gap:3px;background:#fff;padding:2px 10px;border-radius:6px;font-weight:800;font-size:12px}
+    .k-slot-badge.sb-pack{color:#d97706}
+    .k-slot-badge.sb-wait{color:#2563eb}
+    .k-slot-badge.sb-overdue{color:#dc2626}
     .k-slot-current .k-slot-header{background:linear-gradient(90deg,#16a34a,#22c55e)}
     .k-slot-now{background:rgba(255,255,255,.35);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:3px;animation:nowPulse 2s ease-in-out infinite}
     @keyframes nowPulse{0%,100%{opacity:1}50%{opacity:.65}}
@@ -1110,14 +1114,18 @@ var K = (function(){
         if(!res.success) return;
         _allShopOrders = res.orders || [];
         applyShopFilter();
-        renderShopStats(_allShopOrders);
-        // Update filter counts
+        // Update filter counts – exclude old completed orders (those belong in Historie)
         var td = today();
         var now = new Date();
-        var openC = _allShopOrders.filter(function(o){return o.status<3;}).length;
-        var todayC = _allShopOrders.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;}).length;
-        var overdueC = _allShopOrders.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
-        var todoC = _allShopOrders.filter(function(o){return o.status<=1;}).length; // Eingang + Packen = aktiv zu tun
+        var active = _allShopOrders.filter(function(o){
+          if(o.status>=3){ var d=(o.abholdatum||'').substring(0,10); if(d && d<td) return false; }
+          return true;
+        });
+        renderShopStats(active);
+        var openC = active.filter(function(o){return o.status<3;}).length;
+        var todayC = active.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;}).length;
+        var overdueC = active.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
+        var todoC = active.filter(function(o){return o.status<=1;}).length;
         document.getElementById('fc-open').textContent = openC;
         document.getElementById('fc-today').textContent = todayC;
         document.getElementById('fc-overdue').textContent = overdueC;
@@ -1190,10 +1198,10 @@ var K = (function(){
       var sc = {0:0,1:0,2:0};
       g.orders.forEach(function(o){ if(o.status<=2) sc[o.status]=(sc[o.status]||0)+1; });
       var badges = [];
-      if(sc[0]) badges.push(luc('inbox',13)+' '+sc[0]);
-      if(sc[1]) badges.push(luc('package',13)+' '+sc[1]);
-      if(sc[2]) badges.push(luc('bell',13)+' '+sc[2]);
-      var countLabel = badges.length ? badges.join(' · ') : g.orders.length+' Bestellung'+(g.orders.length!==1?'en':'');
+      if(sc[0]) badges.push('<span class="k-slot-badge sb-pack">'+luc('inbox',12)+' '+sc[0]+' Packen</span>');
+      if(sc[1]) badges.push('<span class="k-slot-badge sb-pack">'+luc('package',12)+' '+sc[1]+' Warten</span>');
+      if(sc[2]) badges.push('<span class="k-slot-badge sb-wait">'+luc('bell',12)+' '+sc[2]+' Bereit</span>');
+      var countLabel = badges.length ? badges.join(' ') : '<span class="k-slot-badge" style="color:#666">'+g.orders.length+' Bestellung'+(g.orders.length!==1?'en':'')+'</span>';
       // Current shift: expanded + highlighted; others: collapsed
       var cls = g.isCurrent ? 'k-slot-group k-slot-current' : 'k-slot-group collapsed';
       html += '<div class="'+cls+'" id="'+gid+'">';

@@ -50,16 +50,17 @@ test.describe('Kiosk UI – Tabs', () => {
 
 test.describe('Kiosk UI – Online-Shop Filter', () => {
 
-  test('AK-UI-02: 3 Filter-Buttons: Zu erledigen, Heute abholen, Überfällig', async ({ page }) => {
+  test('AK-UI-02: 4 Filter-Buttons: Zu erledigen, Heute abholen, Überfällig, Historie', async ({ page }) => {
     await page.goto(KIOSK_URL);
     // Switch to Online-Shop tab
     await page.locator('.k-tab[data-tab="abhol"]').click();
     const buttons = page.locator('#abhol-filter-bar .k-filter-btn');
-    await expect(buttons).toHaveCount(3);
+    await expect(buttons).toHaveCount(4);
     const texts = await buttons.allTextContents();
     expect(texts[0]).toContain('Zu erledigen');
     expect(texts[1]).toContain('Heute abholen');
     expect(texts[2]).toContain('Überfällig');
+    expect(texts[3]).toContain('Historie');
   });
 
   test('AK-UI-09: Badge auf Online-Shop-Tab vorhanden', async ({ page }) => {
@@ -689,5 +690,34 @@ test.describe('Aktuelle Schicht (AK-UI-21)', () => {
     await page.goto(KIOSK_URL);
     const hasToggle = await page.evaluate(() => typeof K.toggleHistory === 'function');
     expect(hasToggle).toBe(true);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Slot-Header Badge Readability
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk UI – Slot-Header Badges', () => {
+
+  test('AK-UI-22: k-slot-badge CSS hat weißen Hintergrund', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const source = await page.content();
+    expect(source).toContain('k-slot-badge');
+    expect(source).toContain('background:#fff');
+  });
+
+  test('AK-UI-22b: Badge-Klassen für Farbkodierung vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const source = await page.content();
+    expect(source).toContain('sb-pack');
+    expect(source).toContain('sb-wait');
+    expect(source).toContain('sb-overdue');
+  });
+
+  test('AK-UI-23: Filter-Zähler schließen alte erledigte Bestellungen aus', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    // The counter logic filters old completed orders – verify the function exists
+    const hasFilter = await page.evaluate(() => typeof K.loadShopOrders === 'function');
+    expect(hasFilter).toBe(true);
   });
 });

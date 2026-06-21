@@ -71,7 +71,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-01: Tab zeigt "Online-Shop" statt "Abholungen"
 - [x] AK-UI-01b: 3 Tabs: Mittagstisch, Online-Shop, Stammkunden (kein Speiseplan)
 - [x] AK-UI-01c: Refresh-Button im Header sichtbar
-- [x] AK-UI-02: 3 Filter-Buttons: "📦 Zu erledigen", "📅 Heute abholen", "⚠️ Überfällig"
+- [x] AK-UI-02: 4 Filter-Buttons: "📦 Zu erledigen", "📅 Heute abholen", "⚠️ Überfällig", "🕓 Historie"
 - [x] AK-UI-03: Slot-Gruppen default collapsed, Klick klappt auf/zu
 - [x] AK-UI-03b: Slot-Header zeigt Status-Badges (📥 Eingang / 📦 Packen / 🔔 Warten) statt nur Gesamtzahl
 - [x] AK-UI-04: Pfeil wechselt zwischen ▶ (collapsed) und ▼ (expanded)
@@ -109,6 +109,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-21: Aktuelle Schicht (Slot-Gruppe) ist farblich hervorgehoben (grün statt orange)
 - [x] AK-UI-21b: Aktuelle Schicht ist standardmäßig aufgeklappt, andere collapsed
 - [x] AK-UI-21c: "Jetzt"-Badge mit Uhr-Icon pulsiert in der aktuellen Slot-Gruppe
+- [x] AK-UI-22: Slot-Header-Badges haben weißen Hintergrund mit farbiger Schrift (lesbar auf orange/grün)
+- [x] AK-UI-22b: Badges zeigen Textlabels: "Packen", "Warten", "Bereit"
+- [x] AK-UI-23: Filter-Zähler (Zu erledigen/Überfällig) schließen alte erledigte Bestellungen aus
 
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)
