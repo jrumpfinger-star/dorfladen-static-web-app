@@ -30,21 +30,23 @@
     .k-panel{position:absolute;inset:0;overflow-y:auto;padding:12px 16px;display:none}
     .k-panel.active{display:block}
 
-    /* ═══ Stats bar ═══ */
-    .k-stats{display:flex;gap:10px;margin-bottom:12px}
-    .k-stat{background:var(--c-card);border-radius:12px;padding:12px 16px;flex:1;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-    .k-stat-val{font-size:28px;font-weight:800}
-    .k-stat-label{font-size:11px;font-weight:700;color:var(--c-muted);text-transform:uppercase;letter-spacing:.3px}
+    /* ═══ Stats bar (compact) ═══ */
+    .k-stats{display:flex;gap:6px;margin-bottom:0;align-items:center;flex-wrap:wrap}
+    .k-stat{background:var(--c-card);border-radius:8px;padding:4px 10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;gap:5px;font-size:13px}
+    .k-stat-val{font-size:16px;font-weight:800}
+    .k-stat-label{font-size:10px;font-weight:700;color:var(--c-muted);text-transform:uppercase;letter-spacing:.2px}
     .k-stat.green .k-stat-val{color:var(--c-green)}
     .k-stat.orange .k-stat-val{color:var(--c-orange)}
     .k-stat.red .k-stat-val{color:var(--c-red)}
+    /* ═══ Shop toolbar (stats + filter in one row) ═══ */
+    .k-shop-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;padding:6px 0}
 
     /* ═══ Dish summary bar ═══ */
-    .k-dish-summary{background:#fff;border-radius:12px;padding:14px 18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-    .k-dish-summary h3{font-size:14px;font-weight:700;margin-bottom:8px;color:var(--c-muted)}
-    .k-dish-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:15px}
+    .k-dish-summary{background:#fff;border-radius:10px;padding:8px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .k-dish-summary h3{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--c-muted)}
+    .k-dish-row{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:14px}
     .k-dish-row .k-dish-name{flex:1;font-weight:600}
-    .k-dish-row .k-dish-count{font-weight:800;font-size:20px;color:var(--c-green);min-width:50px;text-align:right}
+    .k-dish-row .k-dish-count{font-weight:800;font-size:16px;color:var(--c-green);min-width:40px;text-align:right}
 
     /* ═══ Order cards ═══ */
     .k-order{background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:10px;overflow:hidden;border-left:5px solid transparent;display:flex;align-items:stretch}
@@ -144,10 +146,10 @@
 
     /* ═══ Filter button bar ═══ */
     .k-filter-bar{display:flex;gap:6px;margin-bottom:10px}
-    .k-filter-btn{flex:1;padding:10px 8px;border:2px solid var(--c-border);border-radius:10px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+    .k-filter-btn{padding:6px 12px;border:2px solid var(--c-border);border-radius:8px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap}
     .k-filter-btn:active{transform:scale(.97)}
     .k-filter-btn.active{border-color:var(--c-green);background:#f0fdf4;color:var(--c-green)}
-    .k-filter-btn .k-filter-count{font-size:16px;font-weight:800;display:block}
+    .k-filter-btn .k-filter-count{font-size:14px;font-weight:800;margin-left:4px}
 
     /* ═══ Slot group headers ═══ */
     .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
@@ -198,9 +200,12 @@
 <!-- ═══ Header ═══ -->
 <div class="k-header">
   <h1>🏪 Dorfladen Kiosk</h1>
-  <div>
-    <div class="k-date" id="k-date"></div>
-    <div class="k-clock" id="k-clock"></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div>
+      <div class="k-date" id="k-date"></div>
+      <div class="k-clock" id="k-clock"></div>
+    </div>
+    <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.refresh()" title="Aktualisieren">🔄</button>
   </div>
 </div>
 
@@ -217,9 +222,6 @@
   <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
     <span class="k-tab-icon">👥</span> Stammkunden
   </div>
-  <div class="k-tab" data-tab="plan" onclick="K.switchTab('plan')">
-    <span class="k-tab-icon">📋</span> Speiseplan
-  </div>
 </div>
 
 <!-- ═══ Panels ═══ -->
@@ -227,18 +229,24 @@
 
   <!-- ── Mittagstisch ── -->
   <div class="k-panel active" id="panel-mittag">
-    <div class="k-filter-bar" id="mittag-day-bar"></div>
-    <div class="k-stats" id="mittag-stats"></div>
+    <div class="k-shop-toolbar">
+      <div class="k-filter-bar" id="mittag-day-bar" style="margin-bottom:0"></div>
+      <div style="flex:1"></div>
+      <div class="k-stats" id="mittag-stats"></div>
+    </div>
     <div class="k-dish-summary" id="mittag-dish-summary"></div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon">⏳</div>Laden…</div></div>
   </div>
 
   <!-- ── Shop-Abholungen ── -->
   <div class="k-panel" id="panel-abhol">
-    <div class="k-stats" id="abhol-stats"></div>
-    <div class="k-filter-bar" id="abhol-filter-bar">
-      <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')">📦 Offene<span class="k-filter-count" id="fc-open">-</span></button>
-      <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')">📅 Heute<span class="k-filter-count" id="fc-today">-</span></button>
+    <div class="k-shop-toolbar">
+      <div class="k-filter-bar" id="abhol-filter-bar" style="margin-bottom:0">
+        <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')">📦 Offene <span class="k-filter-count" id="fc-open">-</span></button>
+        <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')">📅 Heute <span class="k-filter-count" id="fc-today">-</span></button>
+      </div>
+      <div style="flex:1"></div>
+      <div class="k-stats" id="abhol-stats"></div>
     </div>
     <div id="abhol-orders"><div class="k-empty"><div class="k-empty-icon">⏳</div>Laden…</div></div>
   </div>
@@ -257,18 +265,12 @@
     <div id="kunden-list"><div class="k-empty"><div class="k-empty-icon">👥</div>Suchbegriff eingeben oder „Alle Kunden laden" klicken</div></div>
   </div>
 
-  <!-- ── Speiseplan ── -->
-  <div class="k-panel" id="panel-plan">
-    <div id="plan-content"><div class="k-empty"><div class="k-empty-icon">📋</div>Laden…</div></div>
-  </div>
-
 </div>
 
 <!-- ═══ Bottom bar ═══ -->
 <div class="k-bottom">
   <button class="k-btn k-btn-lg k-btn-confirm" onclick="K.openNewOrder()">☎ Neue Telefonbestellung</button>
-  <button class="k-btn k-btn-lg k-btn-outline" onclick="K.printKitchen()">🖨 Küchenliste</button>
-  <button class="k-btn k-btn-lg k-btn-outline" onclick="K.refresh()">🔄</button>
+  <button class="k-btn k-btn-lg k-btn-outline" onclick="K.printKitchen()">🖨 Küchenliste drucken</button>
 </div>
 
 <!-- ═══ New order modal ═══ -->
@@ -423,7 +425,6 @@ var K = (function(){
     document.querySelectorAll('.k-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+id);});
     if(id==='abhol') loadShopOrders();
     if(id==='kunden' && kunden.length===0) searchKunden();
-    if(id==='plan' && dishes.length===0) loadDishes();
   }
 
   // ══════════════════════════════════════════════════
@@ -583,34 +584,8 @@ var K = (function(){
       .then(function(r){return r.json();})
       .then(function(data){
         dishes = (data.data||[]).filter(function(d){return d.dl_gericht && d.dl_preis;});
-        renderPlan();
       })
       .catch(function(){});
-  }
-
-  function renderPlan(){
-    if(dishes.length===0){
-      document.getElementById('plan-content').innerHTML = '<div class="k-empty"><div class="k-empty-icon">📋</div>Kein Speiseplan verfügbar</div>';
-      return;
-    }
-    var byDay = {};
-    dishes.forEach(function(d){
-      var dc = d.dl_wochentag;
-      if(!byDay[dc]) byDay[dc]=[];
-      byDay[dc].push(d);
-    });
-    var html = '';
-    [101000,101001,101002,101003,101004,101005].forEach(function(dc){
-      var dayMeals = byDay[dc]||[];
-      if(!dayMeals.length) return;
-      html += '<div class="k-dish-summary"><h3>'+(DAY_FULL[dc]||'?')+'</h3>';
-      dayMeals.forEach(function(m){
-        var p = m.dl_preis?(m.dl_preis.toFixed(2).replace('.',',')+' €'):'';
-        html += '<div class="k-dish-row"><span class="k-dish-name">'+esc(m.dl_gericht)+'</span><span class="k-dish-count">'+p+'</span></div>';
-      });
-      html += '</div>';
-    });
-    document.getElementById('plan-content').innerHTML = html;
   }
 
   // ══════════════════════════════════════════════════
@@ -967,9 +942,9 @@ var K = (function(){
     var summe = all.filter(function(o){return o.status<4;}).reduce(function(s,o){return s+(o.gesamtsumme||0);},0);
     document.getElementById('abhol-stats').innerHTML =
       '<div class="k-stat orange"><div class="k-stat-val">'+neu+'</div><div class="k-stat-label">Neu</div></div>'+
-      '<div class="k-stat"><div class="k-stat-val" style="color:#d97706">'+bearb+'</div><div class="k-stat-label">In Bearbeitung</div></div>'+
+      '<div class="k-stat"><div class="k-stat-val" style="color:#d97706">'+bearb+'</div><div class="k-stat-label">Bearb.</div></div>'+
       '<div class="k-stat"><div class="k-stat-val" style="color:#2563eb">'+bereit+'</div><div class="k-stat-label">Abholbereit</div></div>'+
-      '<div class="k-stat green"><div class="k-stat-val">'+summe.toFixed(0)+'€</div><div class="k-stat-label">Umsatz</div></div>';
+      '<div class="k-stat green"><div class="k-stat-val">'+summe.toFixed(0)+'€</div></div>';
   }
 
   function fmtDate(d){
@@ -1480,7 +1455,55 @@ var K = (function(){
   // ══════════════════════════════════════════════════
 
   function printKitchen(){
-    window.print();
+    // Group today's orders by dish for kitchen preparation
+    var todayOrders = orders.filter(function(o){ return o.status !== 2; }); // exclude cancelled
+    if(todayOrders.length === 0){ toast('Keine Bestellungen für heute'); return; }
+
+    var byDish = {};
+    todayOrders.forEach(function(o){
+      var key = o.gericht || 'Unbekannt';
+      if(!byDish[key]) byDish[key] = { count: 0, mitnehmen: 0, vorOrt: 0, kunden: [] };
+      var qty = o.portionen || 1;
+      byDish[key].count += qty;
+      if(o.mitnehmen) byDish[key].mitnehmen += qty; else byDish[key].vorOrt += qty;
+      var name = o.kundenname || o.kunde_name || '?';
+      byDish[key].kunden.push(name + (qty > 1 ? ' ('+qty+'x)' : '') + (o.mitnehmen ? ' 📦' : ''));
+    });
+
+    var datum = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Küchenliste</title>';
+    html += '<style>body{font-family:Arial,sans-serif;padding:20px;max-width:700px;margin:0 auto}';
+    html += 'h1{font-size:20px;border-bottom:2px solid #1b5e20;padding-bottom:8px}';
+    html += '.dish{margin:16px 0;page-break-inside:avoid}';
+    html += '.dish-head{background:#e8f5e9;padding:10px 14px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;font-weight:700}';
+    html += '.dish-count{font-size:24px;color:#1b5e20}';
+    html += '.dish-details{padding:6px 14px;font-size:13px;color:#555}';
+    html += '.kunde{padding:2px 0;border-bottom:1px dotted #ddd}';
+    html += '.summary{margin-top:24px;padding:12px;background:#f5f5f5;border-radius:8px;font-weight:700}';
+    html += '@media print{body{padding:10px}}</style></head><body>';
+    html += '<h1>🍽 Küchenliste – ' + datum + '</h1>';
+
+    var totalPortions = 0;
+    var sortedDishes = Object.keys(byDish).sort();
+    sortedDishes.forEach(function(dish){
+      var d = byDish[dish];
+      totalPortions += d.count;
+      html += '<div class="dish">';
+      html += '<div class="dish-head"><span>' + esc(dish) + '</span><span class="dish-count">' + d.count + 'x</span></div>';
+      html += '<div class="dish-details">';
+      if(d.mitnehmen > 0) html += '📦 Mitnehmen: ' + d.mitnehmen + ' · ';
+      if(d.vorOrt > 0) html += '🍽 Vor Ort: ' + d.vorOrt;
+      html += '<div style="margin-top:4px">';
+      d.kunden.forEach(function(k){ html += '<div class="kunde">' + esc(k) + '</div>'; });
+      html += '</div></div></div>';
+    });
+
+    html += '<div class="summary">Gesamt: ' + totalPortions + ' Portionen · ' + sortedDishes.length + ' Gerichte · ' + todayOrders.length + ' Bestellungen</div>';
+    html += '<script>window.onload=function(){window.print();}<\/script>';
+    html += '</body></html>';
+
+    var w = window.open('', '_blank', 'width=700,height=900');
+    w.document.write(html); w.document.close();
   }
 
   // ══════════════════════════════════════════════════

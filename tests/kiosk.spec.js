@@ -31,15 +31,20 @@ test.describe('Kiosk UI – Tabs', () => {
     expect(joined).not.toContain('Abholungen');
   });
 
-  test('AK-UI-01b: 4 Tabs vorhanden: Mittagstisch, Online-Shop, Stammkunden, Speiseplan', async ({ page }) => {
+  test('AK-UI-01b: 3 Tabs vorhanden: Mittagstisch, Online-Shop, Stammkunden', async ({ page }) => {
     await page.goto(KIOSK_URL);
     const tabs = page.locator('.k-tab');
-    await expect(tabs).toHaveCount(4);
+    await expect(tabs).toHaveCount(3);
     const texts = await tabs.allTextContents();
     expect(texts[0]).toContain('Mittagstisch');
     expect(texts[1]).toContain('Online-Shop');
     expect(texts[2]).toContain('Stammkunden');
-    expect(texts[3]).toContain('Speiseplan');
+  });
+
+  test('AK-UI-01c: Refresh-Button im Header vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const refreshBtn = page.locator('.k-header button[title="Aktualisieren"]');
+    await expect(refreshBtn).toBeVisible();
   });
 });
 
@@ -143,14 +148,12 @@ test.describe('Kiosk UI – Zeitslot-Gruppen', () => {
     // Click first header to collapse
     const firstHeader = headers.first();
     await firstHeader.click();
-    // Group should have collapsed class
-    const groupId = await firstHeader.getAttribute('onclick');
-    // Verify arrow changed (implementation-specific)
-    const arrow = firstHeader.locator('.k-slot-arrow');
-    await expect(arrow).toContainText('▶');
+    // Group should have collapsed class (CSS rotate, not text change)
+    const group = firstHeader.locator('..');
+    await expect(group).toHaveClass(/collapsed/);
     // Click again to expand
     await firstHeader.click();
-    await expect(arrow).toContainText('▼');
+    await expect(group).not.toHaveClass(/collapsed/);
   });
 });
 
@@ -251,7 +254,7 @@ test.describe('Kiosk Packing – Funktionalität', () => {
     }
     await packBtn.click();
     await expect(page.locator('#modal-pack')).toBeVisible();
-    const finishBtn = page.locator('text=Abholbereit');
+    const finishBtn = page.locator('#modal-pack button:has-text("Abholbereit"), #modal-pack [onclick*="Abholbereit"]').first();
     await expect(finishBtn).toBeVisible();
   });
 
