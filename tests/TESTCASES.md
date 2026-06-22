@@ -588,6 +588,7 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-22 | T14 Angebot-Bilder | Flyer zeigt falsches Bild (Duplo statt Kirschkörbchen). `_artikelCache.find()` liefert falschen Strichcode für Eigenprodukte. | `_artikelCache`-Lookup entfernt – `artikelnummer` direkt als SharePoint-Key verwendet |
 | 2026-06-22 | T14 Angebot-Bilder | Bild im Strichcodefolder wird beim Bearbeiten+Speichern überschrieben. Auto-Preload setzt `bild_data` → unnötiger Re-Upload an API. | `data-bild-dirty` Flag: nur explizite User-Uploads werden an werbebilder API geschickt |
 | 2026-06-22 | T14 Angebot-Bilder | Artikelnummer-Feld zu klein (85px) für EAN-13 Strichcodes | CSS-Spaltenbreite auf 120px erhöht |
+| 2026-06-22 | T13.6 Kachel-Bild→Flyer | customImg im Kachel-Editor gespeichert, aber auf Flyer nicht sichtbar. Magazine-Layout: async Image-Load ohne await vor toBlob. Klassisches Layout: customImg-Rendering fehlte komplett. | 1. customImg-Loads als Promises 2. `Promise.all` vor `toBlob` 3. customImg-Rendering im klassischen Layout nachgerüstet |
 
 ---
 
@@ -618,3 +619,18 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 - **Aktion:** Bild per 📁-Button für "Kirschkörbchen" hochladen
 - **Prüfung:** Konsole: Upload nach SharePoint unter "Kirschkörbchen.png"
 - **Erwartung:** Dateiname = Wert aus Artikelnummer-Feld (nicht aus _artikelCache)
+
+---
+
+## T13.6 – customImg auf Angebots-Plakat sichtbar (AK-FKE-06)
+> Spec: specs/flyer-kachel-editor.md → AK-FKE-06
+
+### T13.6.1 – customImg im Magazine-Layout
+- **Aktion:** Kachel bearbeiten → + BILD → Bild hochladen → Speichern → Flyer-Vorschau öffnen (Magazine-Template)
+- **Prüfung:** Das eigene Bild ist auf der Flyer-Kachel sichtbar
+- **Erwartung:** Eigenes Bild wird als Overlay über die Kachel gerendert
+
+### T13.6.2 – customImg im klassischen Layout
+- **Aktion:** Kachel bearbeiten → + BILD → Bild hochladen → Speichern → Flyer-Vorschau öffnen (klassisches Template)
+- **Prüfung:** Das eigene Bild ist auf der Flyer-Kachel sichtbar
+- **Erwartung:** Eigenes Bild wird als Overlay über die Kachel gerendert

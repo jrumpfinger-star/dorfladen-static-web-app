@@ -31,6 +31,7 @@ Der Kachel-Editor (PCE = Patch Canvas Editor) ermöglicht die visuelle Bearbeitu
 | Datum | Problem | Ursache | Fix |
 |---|---|---|---|
 | 2026-06-22 | Eigenes Bild wird nach Speichern nicht auf dem Flyer angezeigt | Bild wurde als volle unkomprimierte Base64-Data-URL gespeichert → Dataverse `dl_wert` Feldgröße überschritten → stiller Fehler durch `.catch(function(){})` | 1. Bild beim Upload komprimieren (400×400, JPEG 0.75) 2. Fehler-Handling in `plakatArtOverrideSave` + `_dvSave` eingebaut |
+| 2026-06-22 | customImg in Kachel gespeichert, aber nicht auf Flyer sichtbar | `drawAngebotPlakat`: customImg-Load ist async (`new Image().onload`) aber `toBlob(callback)` wartet nicht darauf. Klassisches Layout hatte customImg-Rendering gar nicht. | 1. customImg-Loads als Promises sammeln 2. `Promise.all` vor `toBlob` 3. customImg-Rendering im klassischen Layout hinzugefügt |
 
 ## Akzeptanzkriterien
 - [x] AK-FKE-01: Eigenes Bild wird beim Upload auf max 400×400 komprimiert
@@ -38,6 +39,7 @@ Der Kachel-Editor (PCE = Patch Canvas Editor) ermöglicht die visuelle Bearbeitu
 - [x] AK-FKE-03: Bild bleibt nach Speichern + Neuladen erhalten (Persistenz in Dataverse)
 - [x] AK-FKE-04: Bei zu großem Payload erscheint Fehlermeldung (Toast)
 - [x] AK-FKE-05: Bei HTTP-Fehler beim Speichern erscheint Fehlermeldung (kein stilles Verschlucken)
+- [x] AK-FKE-06: customImg aus Kachel-Editor erscheint auf dem Angebots-Plakat (beide Layouts)
 
 ## Status
 - [x] Spec erstellt (2026-06-22)
