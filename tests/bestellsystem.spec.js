@@ -595,7 +595,7 @@ test.describe('Homepage – Meine Bestellungen Widget', () => {
     await page.evaluate(() => { localStorage.removeItem('bs_email'); });
   });
 
-  test('T-MY-03 (AK-BS-18): API mode=my liefert Bestellungen für bekannte Email', async ({ page }) => {
+  test('T-MY-03 (AK-BS-18, AK-BS-23): API mode=my liefert nur Neu+Bestätigt, aufsteigend sortiert', async ({ page }) => {
     await page.goto(`${BASE}/`);
     const resp = await page.evaluate(async (email) => {
       const r = await fetch('/api/lunch-order?email=' + encodeURIComponent(email) + '&mode=my');
@@ -603,40 +603,75 @@ test.describe('Homepage – Meine Bestellungen Widget', () => {
     }, TEST_EMAIL);
     expect(resp.success).toBe(true);
     expect(Array.isArray(resp.orders)).toBe(true);
-    // Orders should have required fields
-    if (resp.orders.length > 0) {
-      const o = resp.orders[0];
+    for (const o of resp.orders) {
       expect(o).toHaveProperty('gericht');
       expect(o).toHaveProperty('status');
       expect(o).toHaveProperty('bestellnummer');
+      // AK-BS-23: Only status 0 (Neu) or 1 (Bestätigt) – no Abgeholt/Storniert
+      expect([0, 1]).toContain(o.status);
+    }
+    // Verify ascending date order
+    if (resp.orders.length > 1) {
+      for (let i = 1; i < resp.orders.length; i++) {
+        expect(resp.orders[i].datum >= resp.orders[i - 1].datum).toBe(true);
+      }
     }
   });
 
-  test('T-MY-04 (AK-BS-19): Mit aktiven Bestellungen → Widget wird sichtbar', async ({ page }) => {
+  test('T-MY-04 (AK-BS-19, AK-BS-21): Einzeilige Darstellung – Direktlink oder Popup', async ({ page }) => {
     await page.goto(`${BASE}/`);
     await page.evaluate((email) => { localStorage.setItem('bs_email', email); }, TEST_EMAIL);
     await page.goto(`${BASE}/`);
-    // Wait for widget to appear (up to 10s for API call)
     try {
       await page.waitForSelector('#desk-my-orders:not([style*="display: none"])', { timeout: 10000 });
       const deskVisible = await page.locator('#desk-my-orders').isVisible();
       const mobVisible = await page.locator('#mob-my-orders').isVisible();
-      // At least one should be visible (depending on viewport)
       expect(deskVisible || mobVisible).toBe(true);
-      // Should contain order links
-      const links = page.locator('#desk-my-orders a, #mob-my-orders a');
-      if (await links.count() > 0) {
-        const href = await links.first().getAttribute('href');
-        expect(href).toContain('/bestellstatus');
+      // AK-BS-21: Widget shows exactly one row (one <a> or one <div> click trigger)
+      const container = deskVisible ? '#desk-my-orders' : '#mob-my-orders';
+      const directChildren = await page.locator(`${container} > *`).count();
+      expect(directChildren).toBe(1); // single line
+      // If multiple orders: click trigger should open a popup
+      const clickDiv = page.locator(`${container} > div[onclick]`);
+      if (await clickDiv.count() > 0) {
+        await clickDiv.click();
+        // Popup should appear
+        const popup = page.locator(`#popup-${container.replace('#','')}`);
+        await expect(popup).toBeVisible({ timeout: 2000 });
+        // Popup contains order links
+        const popupLinks = popup.locator('a[href*="/bestellstatus"]');
+        expect(await popupLinks.count()).toBeGreaterThan(1);
+        // Close popup
+        await popup.locator('span:has-text("✕")').click();
+        await expect(popup).toBeHidden({ timeout: 2000 });
+      } else {
+        // Single order: direct link
+        const link = page.locator(`${container} a[href*="/bestellstatus"]`);
+        expect(await link.count()).toBe(1);
       }
     } catch {
-      // If no active orders exist for test email, skip
       test.skip();
     }
     await page.evaluate(() => { localStorage.removeItem('bs_email'); });
   });
 
-  test('T-MY-05 (AK-BS-20): Falsche Email → Widget bleibt versteckt', async ({ page }) => {
+  test('T-MY-05 (AK-BS-22): Datumsformat dd.mm.yyyy in Widget-Anzeige', async ({ page }) => {
+    await page.goto(`${BASE}/`);
+    await page.evaluate((email) => { localStorage.setItem('bs_email', email); }, TEST_EMAIL);
+    await page.goto(`${BASE}/`);
+    try {
+      await page.waitForSelector('#desk-my-orders:not([style*="display: none"])', { timeout: 10000 });
+      const text = await page.locator('#desk-my-orders').innerText();
+      // Date should be in dd.mm.yyyy format (e.g. 22.06.2026), NOT yyyy-mm-dd
+      expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}/); // no ISO dates
+      expect(text).toMatch(/\d{2}\.\d{2}\.\d{4}/);    // dd.mm.yyyy present
+    } catch {
+      test.skip();
+    }
+    await page.evaluate(() => { localStorage.removeItem('bs_email'); });
+  });
+
+  test('T-MY-06 (AK-BS-20): Falsche Email → Widget bleibt versteckt', async ({ page }) => {
     await page.goto(`${BASE}/`);
     await page.evaluate(() => { localStorage.setItem('bs_email', 'nobody@example.com'); });
     await page.goto(`${BASE}/`);

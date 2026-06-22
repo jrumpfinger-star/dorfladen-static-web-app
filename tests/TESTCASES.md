@@ -414,7 +414,7 @@
 ---
 
 ## T12 – Homepage: Meine Bestellungen Widget (mode=my)
-> Spec: `specs/bestellstatus.md` → Abschnitt "Meine Bestellungen Widget", AK-BS-16 bis AK-BS-20
+> Spec: `specs/bestellstatus.md` → Abschnitt "Meine Bestellungen Widget", AK-BS-16 bis AK-BS-23
 
 ### T12.1 – Ohne bs_email → Widget versteckt (AK-BS-16)
 - **Aktion:** Startseite `/` laden, localStorage `bs_email` nicht gesetzt
@@ -426,17 +426,22 @@
 - **Prüfung:** Network-Request an `/api/lunch-order?email=...&mode=my` abfangen
 - **Erwartung:** Request enthält korrekte Email und `mode=my` Parameter
 
-### T12.3 – API mode=my liefert Bestellungen (AK-BS-18)
+### T12.3 – API liefert nur Neu+Bestätigt, aufsteigend sortiert (AK-BS-18, AK-BS-23)
 - **Aktion:** `GET /api/lunch-order?email=jrumpfinger@t-online.de&mode=my` aufrufen
-- **Prüfung:** Response-Body prüfen
-- **Erwartung:** `{success: true, orders: [...]}`, jede Bestellung hat `gericht`, `status`, `bestellnummer`
+- **Prüfung:** Response-Body: Jede Bestellung hat Status 0 oder 1, Datum aufsteigend
+- **Erwartung:** Kein Status 2 (Storniert) oder 3 (Abgeholt) in Ergebnissen
 
-### T12.4 – Widget wird sichtbar bei aktiven Bestellungen (AK-BS-19)
-- **Aktion:** `bs_email` setzen (mit aktiven Bestellungen), Startseite laden
-- **Prüfung:** `#desk-my-orders` oder `#mob-my-orders` sichtbar, Links prüfen
-- **Erwartung:** Widget sichtbar, enthält Links zu `/bestellstatus?nr=XXX`
+### T12.4 – Einzeilige Darstellung: Direktlink oder Popup (AK-BS-19, AK-BS-21)
+- **Aktion:** `bs_email` setzen, Startseite laden
+- **Prüfung:** Widget enthält genau 1 Kind-Element (einzeilig). Bei >1 Bestellungen: Klick öffnet Popup mit Auswahl
+- **Erwartung:** Einzelbestellung → Direktlink. Mehrere → Popup mit allen Bestellungen, Schließen via ✕
 
-### T12.5 – Falsche Email → Widget bleibt versteckt (AK-BS-20)
+### T12.5 – Datumsformat dd.mm.yyyy (AK-BS-22)
+- **Aktion:** `bs_email` setzen, Startseite laden, Widget-Text lesen
+- **Prüfung:** Datum im Format dd.mm.yyyy (z.B. "22.06.2026"), kein ISO-Format
+- **Erwartung:** Regex `/\d{2}\.\d{2}\.\d{4}/` matcht, kein `yyyy-mm-dd`
+
+### T12.6 – Falsche Email → Widget bleibt versteckt (AK-BS-20)
 - **Aktion:** `bs_email = 'nobody@example.com'` setzen, Startseite laden
 - **Prüfung:** `#mob-my-orders` und `#desk-my-orders` prüfen
 - **Erwartung:** Beide Container versteckt (API gibt leere Liste zurück)

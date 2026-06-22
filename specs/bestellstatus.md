@@ -46,10 +46,14 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 - [x] Container `#mob-my-orders` (Mobile) und `#desk-my-orders` (Desktop) auf Startseite
 - [x] Widget lädt automatisch wenn `bs_email` im localStorage gesetzt ist
 - [x] API-Call: `GET /api/lunch-order?email=X&mode=my`
-- [x] API liefert alle nicht-stornierten Bestellungen mit Datum ≥ heute
-- [x] OData-Filter: `dl_email eq '{email}' and dl_status ne 2 and dl_datum ge '{today}'`
-- [x] Jede Bestellung als Link zu `/bestellstatus?nr=XXX`
-- [x] Anzeige: Gericht, Status-Badge (farblich), Bestellnummer
+- [x] API liefert nur Status 0 (Neu) und 1 (Bestätigt) – NICHT Abgeholt/Storniert
+- [x] OData-Filter: `dl_email eq '{email}' and (dl_status eq 0 or dl_status eq 1) and dl_datum ge '{today}'`
+- [x] Sortierung: nach Datum aufsteigend (`$orderby=dl_datum asc`)
+- [x] Datumsformat in Anzeige: **dd.mm.yyyy** (nicht ISO-Format)
+- [x] Keine historischen Bestellungen (nur Datum ≥ heute)
+- [ ] **Einzeilige Darstellung:** Widget zeigt nur eine Zeile (Link/Button)
+  - Bei 1 Bestellung: direkt zu `/bestellstatus?nr=XXX` verlinken
+  - Bei >1 Bestellungen: Klick öffnet Popup/Overlay mit Auswahliste, Klick auf Eintrag verzweigt zu `/bestellstatus?nr=XXX`
 - [x] Widget versteckt wenn keine Bestellungen oder keine Email im localStorage
 - [x] Falsche Email → Widget bleibt versteckt (leere API-Antwort)
 
@@ -96,9 +100,12 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 - [x] AK-BS-15: Klick auf Nachrichten-Badge → PATCH `kommentar_gelesen: true` → Badge verschwindet
 - [x] AK-BS-16: Ohne `bs_email` im localStorage → Widget `#mob-my-orders` / `#desk-my-orders` bleibt versteckt
 - [x] AK-BS-17: API `mode=my` wird mit korrekter Email aus localStorage aufgerufen
-- [x] AK-BS-18: API `mode=my` liefert nicht-stornierte Bestellungen mit Datum ≥ heute (OData-Filter mit Quotes)
+- [x] AK-BS-18: API `mode=my` liefert nur Status 0+1 (Neu/Bestätigt), Datum ≥ heute, aufsteigend sortiert
 - [x] AK-BS-19: Bei aktiven Bestellungen wird Widget sichtbar mit Links zu `/bestellstatus?nr=XXX`
 - [x] AK-BS-20: Falsche/unbekannte Email → Widget bleibt versteckt (API gibt leere Liste zurück)
+- [ ] AK-BS-21: Widget zeigt nur eine Zeile – bei 1 Bestellung Direktlink, bei >1 öffnet Popup mit Auswahl (live testen)
+- [ ] AK-BS-22: Datumsformat in Anzeige ist dd.mm.yyyy (z.B. "22.06.2026") (live testen)
+- [ ] AK-BS-23: Keine Abgeholten/Stornierten Bestellungen im Widget (live testen)
 
 ## Nicht-Ziele
 - Kein Echtzeit-Chat (kein WebSocket) – Polling reicht

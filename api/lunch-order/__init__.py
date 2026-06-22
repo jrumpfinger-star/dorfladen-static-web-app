@@ -265,7 +265,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
                     f"?$filter=dl_email eq '{email_filter}'"
-                    f" and dl_status ne {STATUS_STORNIERT}"
+                    f" and (dl_status eq {STATUS_NEU} or dl_status eq {STATUS_BESTAETIGT})"
                     f" and dl_datum ge '{today_str}'"
                     f"&$orderby=dl_datum asc"
                     f"&$top=20"
