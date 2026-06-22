@@ -5400,7 +5400,9 @@
   // ── Per-Article Flyer Layout Overrides ──
   var _flyerArtOverrides=null;
   function _flyerArtKey(item){
-    return (item.artikelnummer||'').trim()||(item.produkt||'').trim().toLowerCase().replace(/\s+/g,'_');
+    // Always use produkt-based key for stability (artikelnummer is unreliable –
+    // can be EAN, strichcode, or product name fragment depending on data source)
+    return (item.produkt||'').trim().toLowerCase().replace(/\s+/g,'_');
   }
   function flyerArtOverridesGetAll(){
     if(!_flyerArtOverrides)_flyerArtOverrides={};
@@ -5408,7 +5410,12 @@
   }
   function flyerArtOverrideGet(item){
     var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);
-    return (k&&all[k])?_clone(all[k]):null;
+    var found=k&&all[k];
+    if(!found&&item.artikelnummer){
+      var oldK=(item.artikelnummer||'').trim();
+      if(oldK&&all[oldK]){found=all[oldK];all[k]=found;delete all[oldK];}
+    }
+    return found?_clone(found):null;
   }
   function flyerArtOverrideSave(item,ov){
     var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
@@ -5548,8 +5555,17 @@
   function plakatArtOverrideGet(item){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);
     var found=k&&all[k];
-    console.log('[plakatArtOverrideGet] key="'+k+'" artnr="'+(item.artikelnummer||'')+'" produkt="'+(item.produkt||'')+'" found:',!!found,found&&found.customImg?'customImg:YES':'');
-    return found?_clone(all[k]):null;
+    // Fallback: try old artikelnummer-based key (migration from pre-v1.4.77)
+    if(!found&&item.artikelnummer){
+      var oldK=(item.artikelnummer||'').trim();
+      if(oldK&&all[oldK]){
+        found=all[oldK];
+        // Migrate to new produkt-based key
+        all[k]=found;delete all[oldK];
+        console.log('[CMS] Migrated plakat override from old key "'+oldK+'" to "'+k+'"');
+      }
+    }
+    return found?_clone(found):null;
   }
   function plakatArtOverrideSave(item,ov){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
