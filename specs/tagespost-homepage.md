@@ -9,14 +9,9 @@ Ein **Floating Action Button (FAB)** unten links auf der Homepage. Klick öffnet
 ## Anforderungen
 
 ### Daten-Backend
-- [ ] Neue Dataverse-Entity `dl_tagesposts` mit Feldern:
-  - `dl_datum` (Date) – Gültigkeitstag
-  - `dl_titel` (String) – z.B. "Heute im Dorfladen – Dienstag"
-  - `dl_freitext` (Multiline) – optionaler Text
-  - `dl_produkte` (Multiline/JSON) – Array von Produkten mit Name, Preis, Bild-URL, Kategorie
-  - `dl_aktiv` (Boolean) – ob angezeigt werden soll
-- [ ] Neuer API-Endpunkt `GET /api/tagespost` – gibt den aktiven Tagespost für heute zurück
-- [ ] Social-Tab "Senden"-Aktion speichert den Post zusätzlich in `dl_tagesposts`
+- [x] Bestehende SharePoint-Datei `posts.json` im SocialMedia-Ordner wird genutzt (kein neues Dataverse-Entity nötig)
+- [x] Posts werden bereits über `/api/social-post` gespeichert mit Titel, Text, Items, Datum
+- [ ] Neuer API-Endpunkt `GET /api/tagespost` – gibt den neuesten Post von heute zurück (öffentlich, read-only)
 
 ### FAB (Floating Action Button)
 - [ ] Position: `fixed`, oben links (`top:90px; left:20px`) – unterhalb des sticky Headers
@@ -48,8 +43,7 @@ Ein **Floating Action Button (FAB)** unten links auf der Homepage. Klick öffnet
 ## Betroffene Dateien
 - `static-site/index.html` – FAB + Modal HTML/CSS/JS
 - `api/tagespost/__init__.py` – neuer API-Endpunkt (GET)
-- `static-site/kiosk.html` oder `static-site/social.js` – Senden-Aktion erweitern
-- Dataverse: neue Entity `dl_tagesposts`
+- SharePoint: bestehende `posts.json` im SocialMedia-Ordner
 
 ## Akzeptanzkriterien
 - [ ] AK-TP-01: FAB erscheint nur wenn ein Tagespost für heute existiert
@@ -60,7 +54,7 @@ Ein **Floating Action Button (FAB)** unten links auf der Homepage. Klick öffnet
 - [ ] AK-TP-06: CTA-Button "Jetzt bestellen" verlinkt auf Shop/Mittagstisch
 - [ ] AK-TP-07: Modal schließbar über ✕, Overlay-Klick und Escape
 - [ ] AK-TP-08: Responsiv: Mobile fast Vollbild, Desktop 500px zentriert
-- [ ] AK-TP-09: Social-Tab "Senden" speichert Post auch in dl_tagesposts
+- [ ] AK-TP-09: Bestehende Social-Post-Daten werden wiederverwendet (kein separater Speicher)
 - [ ] AK-TP-10: API /api/tagespost gibt korrekten Post für heute zurück (öffentlich, kein Auth)
 
 ## Nicht-Ziele
@@ -68,14 +62,13 @@ Ein **Floating Action Button (FAB)** unten links auf der Homepage. Klick öffnet
 - Keine Push-Benachrichtigung für den Tagespost
 - Kein Tagespost-Archiv (nur aktueller Tag)
 
-## Offene Fragen
-- Soll der FAB auch auf Unterseiten (z.B. /shop) sichtbar sein oder nur auf der Homepage?
-- Soll der Tagespost auch Produkte ohne Bild anzeigen (nur Name + Preis)?
+## Entscheidungen
+- FAB nur auf der Hauptseite (index.html), nicht auf Unterseiten
+- Produkte ohne Bild werden trotzdem angezeigt (nur Name + Preis)
 
 ## Status
-- [ ] Spec reviewed
-- [ ] Dataverse-Entity angelegt
-- [ ] API implementiert
+- [x] Spec reviewed
+- [x] Daten-Backend: bestehende posts.json wird genutzt
+- [ ] API /api/tagespost implementiert
 - [ ] Frontend (FAB + Modal) implementiert
-- [ ] Social-Tab Integration
 - [ ] Validierung

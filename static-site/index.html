@@ -1563,6 +1563,152 @@
   })();
 </script>
 
+<!-- ====== TAGESPOST FAB + MODAL ====== -->
+<style>
+.tp-fab{position:fixed;top:90px;left:20px;z-index:500;width:56px;height:56px;border-radius:50%;background:#1e3a2f;color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.25);cursor:pointer;border:none;font-size:20px;transition:transform .15s}
+.tp-fab:hover{transform:scale(1.1)}
+.tp-fab .tp-badge{position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+@keyframes tp-pulse{0%,100%{box-shadow:0 4px 12px rgba(0,0,0,.25)}50%{box-shadow:0 0 0 10px rgba(46,125,79,.3),0 4px 12px rgba(0,0,0,.25)}}
+.tp-fab.pulse{animation:tp-pulse 1.5s ease 3}
+.tp-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:flex-start;padding:60px 16px 16px}
+.tp-overlay.open{display:flex}
+.tp-modal{background:#fff;border-radius:16px;max-width:500px;width:100%;max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+.tp-modal-head{position:sticky;top:0;background:#1e3a2f;color:#fff;padding:16px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;gap:12px;z-index:2}
+.tp-modal-head h2{margin:0;font-size:18px;font-weight:600;flex:1}
+.tp-modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1}
+.tp-modal-close:hover{background:rgba(255,255,255,.15)}
+.tp-modal-body{padding:20px}
+.tp-freitext{font-size:14px;color:#374151;margin-bottom:16px;line-height:1.5;padding:12px;background:#f0fdf4;border-radius:10px;border-left:3px solid #2e7d4f}
+.tp-section{margin-bottom:16px}
+.tp-section-title{font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.tp-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:6px;transition:background .12s}
+.tp-item:hover{background:#f9fafb}
+.tp-item-img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#f3f4f6;flex-shrink:0}
+.tp-item-img.no-img{display:flex;align-items:center;justify-content:center;font-size:24px;color:#9ca3af}
+.tp-item-info{flex:1;min-width:0}
+.tp-item-name{font-size:14px;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-item-cat{font-size:12px;color:#6b7280}
+.tp-item-price{font-size:15px;font-weight:700;color:#2e7d4f;white-space:nowrap}
+.tp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.tp-grid-card{text-align:center;padding:10px 6px;border:1px solid #e5e7eb;border-radius:10px;transition:background .12s}
+.tp-grid-card:hover{background:#f9fafb}
+.tp-grid-card img{width:64px;height:64px;border-radius:8px;object-fit:cover;margin-bottom:4px}
+.tp-grid-card .card-name{font-size:12px;font-weight:600;color:#1f2937;line-height:1.2;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tp-grid-card .card-price{font-size:13px;font-weight:700;color:#2e7d4f}
+.tp-cta{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.tp-cta a{flex:1;text-align:center;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;transition:.15s;min-width:140px}
+.tp-cta-shop{background:#2e7d4f;color:#fff}.tp-cta-shop:hover{background:#1f5c39}
+.tp-cta-wa{background:#25d366;color:#fff}.tp-cta-wa:hover{background:#1da851}
+.tp-datum{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px}
+@media(max-width:600px){.tp-overlay{padding:20px 8px 8px}.tp-modal{max-height:calc(100vh - 30px);border-radius:12px}.tp-modal-head{border-radius:12px 12px 0 0}.tp-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}}
+</style>
+
+<button class="tp-fab" id="tp-fab" title="Heute im Dorfladen">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  <span class="tp-badge" id="tp-badge">0</span>
+</button>
+
+<div class="tp-overlay" id="tp-overlay">
+  <div class="tp-modal" id="tp-modal">
+    <div class="tp-modal-head">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <div><h2 id="tp-title">Heute im Dorfladen</h2><div class="tp-datum" id="tp-datum"></div></div>
+      <button class="tp-modal-close" id="tp-close">✕</button>
+    </div>
+    <div class="tp-modal-body" id="tp-body"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var fab=document.getElementById('tp-fab'),overlay=document.getElementById('tp-overlay'),modal=document.getElementById('tp-modal'),closeBtn=document.getElementById('tp-close');
+  function openModal(){overlay.classList.add('open');}
+  function closeModal(){overlay.classList.remove('open');}
+  fab.addEventListener('click',openModal);
+  closeBtn.addEventListener('click',closeModal);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)closeModal();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+
+  var WOCHENTAGE=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var MONATE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  function fmtDate(d){return WOCHENTAGE[d.getDay()]+', '+d.getDate()+'. '+MONATE[d.getMonth()];}
+
+  function renderPost(post){
+    document.getElementById('tp-title').textContent=post.titel||'Heute im Dorfladen';
+    var d=new Date(post.datum);
+    document.getElementById('tp-datum').textContent=fmtDate(d);
+
+    var items=post.items||[];
+    document.getElementById('tp-badge').textContent=items.length;
+
+    var mittagessen=items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
+    var theke=items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
+
+    var html='';
+
+    if(post.text){html+='<div class="tp-freitext">'+esc(post.text)+'</div>';}
+
+    if(mittagessen.length){
+      html+='<div class="tp-section"><div class="tp-section-title">🍽️ Mittagessen</div>';
+      mittagessen.forEach(function(it){html+=itemCard(it);});
+      html+='</div>';
+    }
+
+    if(theke.length){
+      html+='<div class="tp-section"><div class="tp-section-title">🍰 Theke & Kuchen</div>';
+      if(theke.length<=3){theke.forEach(function(it){html+=itemCard(it);});}
+      else{html+='<div class="tp-grid">';theke.forEach(function(it){html+=gridCard(it);});html+='</div>';}
+      html+='</div>';
+    }
+
+    if(!mittagessen.length&&!theke.length&&items.length){
+      html+='<div class="tp-section"><div class="tp-section-title">🛒 Produkte</div>';
+      items.forEach(function(it){html+=itemCard(it);});
+      html+='</div>';
+    }
+
+    html+='<div class="tp-cta">';
+    if(mittagessen.length){html+='<a href="/mittagstisch-bestellen" class="tp-cta-shop">🍽️ Mittagessen bestellen</a>';}
+    else{html+='<a href="/shop" class="tp-cta-shop">🛒 Jetzt bestellen</a>';}
+    var shareText=encodeURIComponent((post.titel||'Heute im Dorfladen')+'\n'+window.location.origin);
+    html+='<a href="https://wa.me/?text='+shareText+'" target="_blank" class="tp-cta-wa">📱 Teilen</a>';
+    html+='</div>';
+
+    document.getElementById('tp-body').innerHTML=html;
+  }
+
+  function itemCard(it){
+    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="">':'<div class="tp-item-img no-img">📦</div>';
+    var preis=it.preis?fmtPreis(it.preis):'';
+    return '<div class="tp-item">'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+'</div>';
+  }
+
+  function gridCard(it){
+    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:24px;color:#9ca3af;margin:0 auto 4px">📦</div>';
+    var preis=it.preis?fmtPreis(it.preis):'';
+    return '<div class="tp-grid-card">'+img+'<div class="card-name">'+esc(it.name||'')+'</div>'+(preis?'<div class="card-price">'+preis+'</div>':'')+'</div>';
+  }
+
+  function fmtPreis(p){var n=parseFloat(p);if(isNaN(n))return p;return n.toFixed(2).replace('.',',')+' €';}
+  function esc(s){if(!s)return '';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+  fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
+    if(!res.success||!res.post)return;
+    var post=res.post;
+    fab.style.display='flex';
+    fab.classList.add('pulse');
+    renderPost(post);
+
+    var seenKey='tagespost_seen_'+new Date().toISOString().substring(0,10);
+    if(!localStorage.getItem(seenKey)){
+      localStorage.setItem(seenKey,1);
+      setTimeout(openModal,1200);
+    }
+  }).catch(function(){});
+})();
+</script>
+
 </body>
 
 </html>
