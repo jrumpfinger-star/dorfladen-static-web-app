@@ -543,6 +543,38 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | T12.5 Datumsformat dd.mm.yyyy | ⏭ | Übersprungen (catch, Daten-abhängig) |
 | T12.6 Falsche Email → Widget versteckt | ✅ | Beide Container hidden |
 
+---
+
+## T13 – Flyer Kachel-Editor: Eigenes Bild
+> Spec: specs/flyer-kachel-editor.md → AK-FKE-01..05
+
+### T13.1 – Eigenes Bild wird beim Upload komprimiert (AK-FKE-01)
+- **Aktion:** Im Kachel-Editor auf `🖼+ Bild` klicken, großes Bild (>1 MB) hochladen
+- **Prüfung:** `ov.customImg` enthält komprimierte Base64-Daten (<<1 MB)
+- **Erwartung:** Bild wird auf max 400×400 px verkleinert, JPEG 0.75 oder PNG
+
+### T13.2 – Eigenes Bild auf Kachel sichtbar (AK-FKE-02)
+- **Aktion:** Bild hochladen, Kachel-Vorschau prüfen
+- **Prüfung:** Canvas zeigt das hochgeladene Bild als Overlay
+- **Erwartung:** Bild korrekt auf der Kachel dargestellt
+
+### T13.3 – Bild bleibt nach Speichern+Neuladen erhalten (AK-FKE-03)
+- **Aktion:** Bild hochladen → Speichern → CMS neu laden → Kachel-Editor erneut öffnen
+- **Prüfung:** `customImg` in Dataverse (`plakat_article_overrides`) vorhanden
+- **Erwartung:** Bild erscheint wieder auf der Kachel
+
+### T13.4 – Fehlermeldung bei zu großem Payload (AK-FKE-04)
+- **Aktion:** (Manuell) Override-Daten >900 KB simulieren
+- **Prüfung:** Toast-Meldung
+- **Erwartung:** Toast: "Kachel-Daten zu groß zum Speichern..."
+
+### T13.5 – Fehlermeldung bei HTTP-Fehler (AK-FKE-05)
+- **Aktion:** Speichern bei Netzwerk-/Server-Fehler
+- **Prüfung:** Toast-Meldung
+- **Erwartung:** Toast: "Kachel-Speichern fehlgeschlagen: ..." (kein stilles Verschlucken)
+
+---
+
 ## Fehler-Log
 | Datum | Test | Fehler | Fix |
 |---|---|---|---|
@@ -552,3 +584,4 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-21 | T4 Kiosk UI | Speiseplan-Tab redundant, Refresh-Button unpraktisch in Bottom-Bar, Küchenliste = `window.print()` | Speiseplan-Tab entfernt, Refresh in Header, Küchenliste gruppiert nach Gericht |
 | 2026-06-21 | T9.5 Mittagstisch API | lunch-order API 400-Fehler: `$select` enthielt `dl_kunde_kommentar` und `dl_personal_antwort`, die in Dataverse nicht existierten | Felder per Script `scripts/create-dv-fields.py` in Dataverse angelegt + PublishAllXml |
 | 2026-06-22 | T12 mode=my | OData-Filter `dl_datum ge 2026-06-22` ohne Quotes → String-Vergleich fehlgeschlagen → leere Ergebnisse | Fix: `dl_datum ge '2026-06-22'` (einfache Anführungszeichen um String-Wert im OData-Filter) |
+| 2026-06-22 | T13 Kachel-Bild | Eigenes Bild wird nach Speichern nicht auf dem Flyer angezeigt. Unkomprimierte Base64-Data-URL in `ov.customImg` überschreitet Dataverse `dl_wert` Feldgröße. `.catch(function(){})` verschluckt den Fehler. | 1. `cmsCompressImage(400,400)` beim Upload 2. Payload-Größen-Check vor Senden 3. Fehler-Handling in `plakatArtOverrideSave` + `_dvSave` |
