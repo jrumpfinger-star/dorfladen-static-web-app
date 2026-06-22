@@ -1669,7 +1669,7 @@
     }
 
     html+='<div class="tp-cta">';
-    if(mittagessen.length){html+='<a href="/mittagstisch-bestellen" class="tp-cta-shop">🍽️ Mittagessen bestellen</a>';}
+    if(mittagessen.length){html+='<a href="/mittagstisch-bestellen?heute=1" class="tp-cta-shop">🍽️ Mittagessen bestellen</a>';}
     else{html+='<a href="/shop" class="tp-cta-shop">🛒 Jetzt bestellen</a>';}
     var shareText=encodeURIComponent((post.titel||'Heute im Dorfladen')+'\n'+window.location.origin);
     html+='<a href="https://wa.me/?text='+shareText+'" target="_blank" class="tp-cta-wa">📱 Teilen</a>';

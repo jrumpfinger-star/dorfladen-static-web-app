@@ -274,6 +274,7 @@
   var paramPreis = parseFloat(params.get('preis') || '0');
   var paramDatum = params.get('datum') || '';
   var paramTag = params.get('tag') || '';
+  var paramHeute = params.get('heute') === '1';
 
   // ── Load Wochenplan ──
   function loadMenu(){
@@ -281,6 +282,16 @@
       .then(function(r){return r.json();})
       .then(function(data){
         var items = (data.data || []).filter(function(m){return m.dl_gericht && m.dl_preis;});
+
+        // Filter to today only if ?heute=1
+        if(paramHeute){
+          var todayDay = new Date().getDay(); // 0=Sun,1=Mon...6=Sat
+          var dvDay = todayDay===0?null:(100999+todayDay);
+          if(dvDay){
+            var todayItems = items.filter(function(m){return m.dl_wochentag===dvDay;});
+            if(todayItems.length) items = todayItems;
+          }
+        }
         if(items.length===0){
           document.getElementById('menu-section').style.display='';
           document.getElementById('menu-list').innerHTML='<div style="padding:20px;text-align:center;color:#888">Kein aktueller Mittagstisch verfügbar.</div>';
