@@ -120,7 +120,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-26: Stats haben keinen box-shadow und keinen border-radius (flacher Text)
 - [x] AK-UI-26b: Stats verwenden Dot-Separatoren zwischen den Werten
 - [x] AK-UI-27: Filter-Bar hat border-bottom-Underline statt Button-Borders
-- [x] AK-UI-27b: Aktiver Filter hat grüne Unterstreichung, kein Hintergrund
+- [x] AK-UI-27b: Aktiver Filter hat grünen Hintergrund + weiße Schrift + grüne Unterstreichung (siehe specs/filter-visibility.md)
 - [x] AK-UI-28: Tagesauswahl verwendet k-day-pill (keine Borders, runde Pills)
 - [x] AK-UI-28b: Aktiver Tag hat grünen Hintergrund mit weißer Schrift
 - [x] AK-UI-29: Gerichtzusammenfassung als Inline-Text mit Pipe-Trennern

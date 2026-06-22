@@ -32,13 +32,18 @@ Die Social-Media-Funktionen "Neuer Post" und "Katalog" aus dem CMS sollen 1:1 im
 - [x] `static-site/js/social-poster.js` – Canvas-Poster-Rendering, Sharing, WA-Katalog
 
 ## Akzeptanzkriterien
-- [ ] Social-Tab wird im Kiosk angezeigt und ist klickbar
-- [ ] Katalog laden, Produkt hinzufügen, bearbeiten, löschen funktioniert
-- [ ] Post-Builder zeigt Katalog-Produkte und ermöglicht Auswahl
-- [ ] Poster-Vorschau wird korrekt gerendert
-- [ ] WhatsApp/Instagram-Sharing funktioniert
-- [ ] CMS Social-Funktionalität bleibt unverändert (nach Migration auf social.js)
+- [x] AK-SO-01: Social-Tab wird im Kiosk angezeigt und ist klickbar
+- [x] AK-SO-02: Katalog laden, Produkt hinzufügen, bearbeiten, löschen funktioniert
+- [x] AK-SO-03: Post-Builder zeigt Katalog-Produkte und ermöglicht Auswahl
+- [x] AK-SO-04: Poster-Vorschau wird korrekt gerendert
+- [x] AK-SO-05: WhatsApp/Instagram-Sharing funktioniert
+- [ ] AK-SO-06: CMS Social-Funktionalität bleibt unverändert (nach Migration auf social.js – nicht migriert, CMS hat eigenen Code)
 
 ## Nicht enthalten
 - "Verlauf" Sub-Tab (nur im CMS)
-- CMS-Migration auf social.js (separater Schritt)
+- CMS-Migration auf social.js (separater Schritt, noch offen)
+
+## Status
+- [x] Spec erstellt
+- [x] Implementierung (Social-Tab, Katalog, Post-Builder, Sharing)
+- [ ] AK-SO-06 offen (CMS-Migration auf shared social.js)
