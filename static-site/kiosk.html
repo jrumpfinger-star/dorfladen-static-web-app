@@ -1673,7 +1673,7 @@ var K = (function(){
       var isKg = p.einheit==='kg'||p.gewichtsware;
       var bestMenge = p.menge||0;
       if(isKg) bestMenge = Math.round(bestMenge*1000);
-      var packMenge = pk.gepackt_menge!=null?pk.gepackt_menge:(isKg?bestMenge:(p.menge||0));
+      var packMenge = (pk.gepackt_menge!=null&&(pk.gepackt||pk.gepackt_menge>0))?pk.gepackt_menge:(isKg?bestMenge:(p.menge||0));
       var gp = isKg?ep*(packMenge/1000):ep*packMenge;
       if(checked) summe += gp;
       var disabled = isEditable?'':' disabled';
