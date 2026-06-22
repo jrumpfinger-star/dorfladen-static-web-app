@@ -5560,9 +5560,26 @@
       var oldK=(item.artikelnummer||'').trim();
       if(oldK&&all[oldK]){
         found=all[oldK];
-        // Migrate to new produkt-based key
         all[k]=found;delete all[oldK];
         console.log('[CMS] Migrated plakat override from old key "'+oldK+'" to "'+k+'"');
+      }
+    }
+    // Fallback 2: search all numeric keys (old EAN-based) that have customImg data
+    // and haven't been claimed yet – match via _artikelCache strichcode→produkt
+    if(!found&&_artikelCache&&_artikelCache.length){
+      var keys=Object.keys(all);
+      for(var ki=0;ki<keys.length;ki++){
+        var ck=keys[ki];
+        if(all[ck]&&all[ck].customImg&&/^\d{4,}$/.test(ck)){
+          // Find if this EAN belongs to current item's product
+          var match=_artikelCache.find(function(a){return a.sc===ck&&a.b&&a.b.trim().toLowerCase().replace(/\s+/g,'_')===k;});
+          if(match){
+            found=all[ck];
+            all[k]=found;delete all[ck];
+            console.log('[CMS] Migrated plakat override from EAN key "'+ck+'" to "'+k+'"');
+            break;
+          }
+        }
       }
     }
     return found?_clone(found):null;
