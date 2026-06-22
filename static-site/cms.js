@@ -1302,6 +1302,9 @@
         var dvPlakatOv=res.data['plakat_article_overrides'];
         if(dvPlakatOv&&typeof dvPlakatOv==='object'){
           _plakatArtOverrides=dvPlakatOv;
+          var _pKeys=Object.keys(dvPlakatOv);
+          console.log('[CMS] plakat_article_overrides loaded:',_pKeys.length,'keys:',_pKeys);
+          _pKeys.forEach(function(pk){var v=dvPlakatOv[pk];console.log('[CMS]   key="'+pk+'" customImg:',v.customImg?'YES ('+v.customImg.length+')':'NO');});
         }
         var dvCfg=res.data['design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
@@ -5544,7 +5547,9 @@
   }
   function plakatArtOverrideGet(item){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);
-    return (k&&all[k])?_clone(all[k]):null;
+    var found=k&&all[k];
+    console.log('[plakatArtOverrideGet] key="'+k+'" artnr="'+(item.artikelnummer||'')+'" produkt="'+(item.produkt||'')+'" found:',!!found,found&&found.customImg?'customImg:YES':'');
+    return found?_clone(all[k]):null;
   }
   function plakatArtOverrideSave(item,ov){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
