@@ -261,7 +261,7 @@
       +'<button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
       +'<div class="cms-ang-fields">'
       +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
-      +'<input type="hidden" data-f="bild_data" value="'+esc((item&&item.bild_data)||'')+'">'
+      +'<input type="hidden" data-f="bild_data" data-bild-dirty="" value="'+esc((item&&item.bild_data)||'')+'">'
       +'<input type="hidden" data-f="dl_werbebildid" value="'+esc((item&&item.dl_werbebildid)||'')+'">'
       +'<div class="cms-ang-row-img">'
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
@@ -519,12 +519,11 @@
     var nrInp=row.querySelector('[data-f="artikelnummer"]');
     var bildInp=row.querySelector('[data-f="bild_data"]');
     var prodInp=row.querySelector('[data-f="produkt"]');
-    // Field always contains strichcode now
+    // Field contains strichcode or product name (used as SharePoint filename key)
     var strichcode=((nrInp&&nrInp.value)||'').trim();
-    var prodName=((prodInp&&prodInp.value)||'').trim().toLowerCase();
-    if(!strichcode && prodName){
-      var match=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===prodName;});
-      if(match) strichcode=match.sc||'';
+    if(!strichcode){
+      // Use product name directly as SP key (no _artikelCache – can return wrong strichcodes)
+      strichcode=((prodInp&&prodInp.value)||'').trim();
     }
     if(!strichcode){toast('Bitte Strichcode oder Produkt eingeben','warn');return;}
     var artnr=strichcode;
@@ -576,6 +575,7 @@
         if(statt==null){sInp.style.border='2px solid #e53935';sInp.addEventListener('input',function(){this.style.border='';},{once:true});}
         hasError=true;
       }
+      var bildInp=row.querySelector('[data-f="bild_data"]');
       items.push({
         id:(row.querySelector('[data-f="id"]').value||''),
         produkt:produkt,
@@ -583,7 +583,8 @@
         preis:preis,
         statt_preis:statt,
         artikelnummer:(row.querySelector('[data-f="artikelnummer"]').value||'').trim(),
-        bild_data:(row.querySelector('[data-f="bild_data"]').value||'').trim(),
+        bild_data:(bildInp.value||'').trim(),
+        _bild_dirty:bildInp.getAttribute('data-bild-dirty')==='1',
         dl_werbebildid:(row.querySelector('[data-f="dl_werbebildid"]').value||'').trim()
       });
     });
@@ -607,17 +608,15 @@
       // Step 1: Upsert werbebilder first to get IDs, then save angebote with relation
       var bildPromises=[];
       items.forEach(function(it){
-        if(it.bild_data){
-          // Generate a temporary artikelnummer from product name if none provided
+        if(it.bild_data && it._bild_dirty){
+          // Only upload if user explicitly changed the image (not auto-preloaded from SP)
           var artNr=it.artikelnummer||('IMG-'+it.produkt.replace(/[^a-zA-Z0-9]/g,'').substring(0,20)+'-'+Date.now().toString(36));
           if(!it.artikelnummer) it.artikelnummer=artNr;
-          // artikelnummer field now always contains strichcode
-          var scForUpload=artNr;
-          var uploadNr=scForUpload||artNr;
+          var uploadNr=artNr;
           bildPromises.push(
             fetch(API+'/werbebilder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dl_artikelnummer:uploadNr,dl_bild_base64:it.bild_data})})
             .then(function(r){return r.json();})
-            .then(function(j){it._werbebildid=j.id||'';_imgCacheInvalidate(artNr,scForUpload);})
+            .then(function(j){it._werbebildid=j.id||'';_imgCacheInvalidate(artNr,artNr);})
             .catch(function(){it._werbebildid='';})
           );
         } else if(it.dl_werbebildid){
@@ -6063,10 +6062,9 @@
     // Fetch missing images first
     var fetchPromises=items.map(function(it){
       if(it.bild_data)return Promise.resolve();
-      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer||a.sc===it.artikelnummer;});if(cc)sc=cc.sc||'';}
-      if(!sc&&it.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===it.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
-      if(!it.artikelnummer&&!sc)return Promise.resolve();
-      return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){if(b64)it.bild_data=b64;}).catch(function(){});
+      var key=(it.artikelnummer||'').trim();
+      if(!key) return Promise.resolve();
+      return loadImageFromSharePoint(key,key).then(function(b64){if(b64)it.bild_data=b64;}).catch(function(){});
     });
     Promise.all(fetchPromises).then(function(){
       // Ensure Dataverse overrides are loaded before building flyers (fixes cross-PC sync)
@@ -7284,10 +7282,11 @@
     // Fetch missing images via Server Logic before drawing
     var fetchPromises=items.map(function(it){
       if(it.bild_data) return Promise.resolve();
-      var sc='';if(it.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===it.artikelnummer||a.sc===it.artikelnummer;});if(cc)sc=cc.sc||'';}
-      if(!sc&&it.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===it.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
-      if(!it.artikelnummer&&!sc) return Promise.resolve();
-      return loadImageFromSharePoint(it.artikelnummer,sc).then(function(b64){
+      // artikelnummer field value = SharePoint filename key (no _artikelCache lookup –
+      // cache can return wrong strichcodes for custom products, causing wrong images)
+      var key=(it.artikelnummer||'').trim();
+      if(!key) return Promise.resolve();
+      return loadImageFromSharePoint(key,key).then(function(b64){
         if(b64) it.bild_data=b64;
       }).catch(function(){});
     });
@@ -7817,9 +7816,8 @@
       if(target==='flyer'){
         var p=Promise.resolve();
         if(!sample.bild_data){
-          var sc='';if(sample.artikelnummer){var cc=_artikelCache.find(function(a){return a.nr===sample.artikelnummer||a.sc===sample.artikelnummer;});if(cc)sc=cc.sc||'';}
-          if(!sc&&sample.produkt){var cc2=_artikelCache.find(function(a){return (a.b||'').toLowerCase()===sample.produkt.toLowerCase();});if(cc2)sc=cc2.sc||'';}
-          if(sample.artikelnummer||sc) p=loadImageFromSharePoint(sample.artikelnummer,sc).then(function(b64){if(b64)sample.bild_data=b64;});
+          var key=(sample.artikelnummer||'').trim();
+          if(key) p=loadImageFromSharePoint(key,key).then(function(b64){if(b64)sample.bild_data=b64;});
         }
         p.then(function(){
           return generateEinzelflyer(sample,data,cfg).then(function(canvas){
@@ -7972,20 +7970,9 @@
           var bildInp=row.querySelector('[data-f="bild_data"]');
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
           var prodInp=row.querySelector('[data-f="produkt"]');
-          // Resolve strichcode first
-          var artnr=(nrInp&&nrInp.value||'').trim();
-          var scNr='';
-          if(artnr){
-            var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});
-            if(cached && cached.sc) scNr=cached.sc;
-          }
-          if(!scNr && prodInp){
-            var prod=prodInp.value.trim().toLowerCase();
-            var match=_artikelCache.find(function(a){return (a.b||a.produktVal||'').toLowerCase()===prod;});
-            if(match && match.sc) scNr=match.sc;
-            if(!scNr && match && match.nr) scNr=match.nr;
-          }
-          if(!scNr) scNr=artnr;
+          // Use artikelnummer directly as SP key (no _artikelCache lookup)
+          var scNr=(nrInp&&nrInp.value||'').trim();
+          if(!scNr) scNr=((prodInp&&prodInp.value)||'').trim();
           if(!scNr){toast('Bitte zuerst einen Artikel ausw\u00e4hlen','warn');return;}
           // Always open file picker – select image, compress, set preview, upload to SharePoint
           var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
@@ -7994,7 +7981,7 @@
             var reader=new FileReader();
             reader.onload=function(){
               cmsCompressImage(reader.result, 500, 500, function(compressedB64){
-                if(bildInp) bildInp.value=compressedB64;
+                if(bildInp){bildInp.value=compressedB64;bildInp.setAttribute('data-bild-dirty','1');}
                 var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=compressedB64;pv.style.display='';}
                 var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
                 t.disabled=true;t.textContent='\u23F3';
@@ -10313,16 +10300,14 @@
           var bildInp=row.querySelector('[data-f="bild_data"]');
           var nrInp=row.querySelector('[data-f="artikelnummer"]');
           var prodInp=row.querySelector('[data-f="produkt"]');
-          var artnr=(nrInp&&nrInp.value||'').trim();
-          var scNr='';
-          if(artnr){var cached=_artikelCache.find(function(a){return a.nr===artnr||a.sc===artnr;});if(cached&&cached.sc)scNr=cached.sc;}
-          if(!scNr&&prodInp){var prod=prodInp.value.trim().toLowerCase();var match=_artikelCache.find(function(a){return(a.b||a.produktVal||'').toLowerCase()===prod;});if(match&&match.sc)scNr=match.sc;if(!scNr&&match&&match.nr)scNr=match.nr;}
-          if(!scNr)scNr=artnr;
+          // Use artikelnummer directly as SP key (no _artikelCache lookup)
+          var scNr=(nrInp&&nrInp.value||'').trim();
+          if(!scNr) scNr=((prodInp&&prodInp.value)||'').trim();
           if(!scNr){toast('Bitte zuerst einen Artikel ausw\u00e4hlen','warn');return;}
           var reader2=new FileReader();
           reader2.onload=function(){
             cmsCompressImage(reader2.result,500,500,function(compressedB64){
-              if(bildInp)bildInp.value=compressedB64;
+              if(bildInp){bildInp.value=compressedB64;bildInp.setAttribute('data-bild-dirty','1');}
               var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=compressedB64;pv.style.display='';}
               var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
               var pasteBtn=row.querySelector('.cms-bild-paste-sp');
