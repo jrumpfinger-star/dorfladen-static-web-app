@@ -61,8 +61,11 @@ img{max-width:100%;display:block}
 .tb-legal{display:flex;gap:18px}
 @media(max-width:640px){.tb{display:none}}
 
+/* === STICKY HEADER WRAPPER === */
+.site-header-wrap{position:sticky;top:0;z-index:900}
+
 /* === NAV === */
-.nv{background:rgba(255,255,255,.92);border-bottom:1px solid rgba(0,0,0,.06);position:sticky;top:0;z-index:900;box-shadow:0 1px 0 rgba(0,0,0,.04);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:box-shadow .4s var(--ease)}
+.nv{background:rgba(255,255,255,.92);border-bottom:1px solid rgba(0,0,0,.06);box-shadow:0 1px 0 rgba(0,0,0,.04);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:box-shadow .4s var(--ease)}
 .nv-in{max-width:var(--max);margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:var(--nh)}
 .nv-logo{font-size:1.2rem;font-weight:700;color:var(--c-pri);display:flex;align-items:center;gap:10px;white-space:nowrap;transition:transform .3s var(--ease-spring)}
 .nv-logo>span{visibility:hidden}
