@@ -332,6 +332,9 @@
     .shop-auth-field{margin-bottom:12px}
     .shop-auth-field label{display:block;font-size:12px;font-weight:600;color:var(--shop-text);margin-bottom:4px}
     .shop-auth-field input,.shop-auth-field select{width:100%;padding:10px 12px;border:1px solid var(--shop-border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+    .shop-pw-wrap{position:relative}
+    .shop-pw-wrap input{padding-right:42px}
+    .shop-pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:18px;padding:4px;line-height:1}
     .shop-auth-field input:focus{border-color:var(--shop-green)}
     .shop-auth-field .hint{font-size:11px;color:var(--shop-muted);margin-top:2px}
     .shop-auth-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -507,7 +510,7 @@
     <div class="shop-auth-body" id="shop-auth-login">
       <div id="login-errors" class="shop-auth-errors" style="display:none"></div>
       <div class="shop-auth-field"><label>E-Mail</label><input type="email" id="login-email" placeholder="ihre@email.de"></div>
-      <div class="shop-auth-field"><label>Passwort</label><input type="password" id="login-passwort" placeholder="••••••••"></div>
+      <div class="shop-auth-field"><label>Passwort</label><div class="shop-pw-wrap"><input type="password" id="login-passwort" placeholder="••••••••"><button type="button" class="shop-pw-toggle" title="Passwort anzeigen">&#128065;</button></div></div>
       <button class="shop-auth-submit" id="login-submit">Anmelden</button>
       <div style="text-align:center;margin-top:10px"><a href="#" id="forgot-pw-link" style="font-size:12px;color:var(--shop-green)">Passwort vergessen?</a></div>
     </div>
@@ -526,8 +529,8 @@
       <div id="reset-confirm-errors" class="shop-auth-errors" style="display:none"></div>
       <div id="reset-confirm-success" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:#166534"></div>
       <p style="font-size:13px;color:var(--shop-muted);margin-bottom:12px">Geben Sie Ihr neues Passwort ein.</p>
-      <div class="shop-auth-field"><label>Neues Passwort (min. 8 Zeichen)</label><input type="password" id="reset-new-pw" placeholder="••••••••"></div>
-      <div class="shop-auth-field"><label>Passwort bestätigen</label><input type="password" id="reset-new-pw2" placeholder="••••••••"></div>
+      <div class="shop-auth-field"><label>Neues Passwort (min. 8 Zeichen)</label><div class="shop-pw-wrap"><input type="password" id="reset-new-pw" placeholder="••••••••"><button type="button" class="shop-pw-toggle" title="Passwort anzeigen">&#128065;</button></div></div>
+      <div class="shop-auth-field"><label>Passwort bestätigen</label><div class="shop-pw-wrap"><input type="password" id="reset-new-pw2" placeholder="••••••••"><button type="button" class="shop-pw-toggle" title="Passwort anzeigen">&#128065;</button></div></div>
       <button class="shop-auth-submit" id="reset-confirm-submit">Passwort speichern</button>
     </div>
 
@@ -540,8 +543,8 @@
       </div>
       <div class="shop-auth-field"><label>E-Mail *</label><input type="email" id="reg-email" placeholder="ihre@email.de"></div>
       <div class="shop-auth-field"><label>Telefon *</label><input type="tel" id="reg-telefon" placeholder="+49 …"></div>
-      <div class="shop-auth-field"><label>Passwort * (min. 8 Zeichen)</label><input type="password" id="reg-passwort"></div>
-      <div class="shop-auth-field"><label>Passwort bestätigen *</label><input type="password" id="reg-passwort2"></div>
+      <div class="shop-auth-field"><label>Passwort * (min. 8 Zeichen)</label><div class="shop-pw-wrap"><input type="password" id="reg-passwort"><button type="button" class="shop-pw-toggle" title="Passwort anzeigen">&#128065;</button></div></div>
+      <div class="shop-auth-field"><label>Passwort bestätigen *</label><div class="shop-pw-wrap"><input type="password" id="reg-passwort2"><button type="button" class="shop-pw-toggle" title="Passwort anzeigen">&#128065;</button></div></div>
       <div class="shop-auth-row">
         <div class="shop-auth-field" style="grid-column:1/-1"><label>Straße + Nr. *</label><input type="text" id="reg-strasse"></div>
       </div>
@@ -2091,6 +2094,13 @@
   document.getElementById('login-submit').addEventListener('click',doLogin);
   document.getElementById('register-submit').addEventListener('click',doRegister);
   document.getElementById('login-passwort').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  // Password toggle
+  document.querySelectorAll('.shop-pw-toggle').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var inp=btn.parentElement.querySelector('input');
+      if(inp) inp.type=inp.type==='password'?'text':'password';
+    });
+  });
 
   // ── Password Reset ──
   document.getElementById('forgot-pw-link').addEventListener('click',function(e){

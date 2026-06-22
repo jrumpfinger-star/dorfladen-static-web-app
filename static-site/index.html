@@ -163,11 +163,7 @@
 
   </div>
 
-  <a href="/bestellstatus" id="mob-my-order" onclick="event.stopPropagation()" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 16px;margin-top:6px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:700;align-items:center;gap:8px">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    <span>Meine Bestellung ansehen</span>
-    <span id="mob-my-order-nr" style="margin-left:auto;font-size:11px;color:#6b7280"></span>
-  </a>
+  <div id="mob-my-orders" style="display:none;margin-top:6px"></div>
 
 </div>
 
@@ -639,11 +635,7 @@
 
     </div>
 
-    <a href="/bestellstatus" id="desk-my-order" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px 20px;margin-top:10px;text-decoration:none;color:#1d4ed8;font-size:14px;font-weight:700;align-items:center;gap:10px">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span>📋 Meine Bestellung ansehen</span>
-      <span id="desk-my-order-nr" style="margin-left:auto;font-size:12px;color:#6b7280"></span>
-    </a>
+    <div id="desk-my-orders" style="display:none;margin-top:10px"></div>
 
     <!-- ====== WHATSAPP SPEISEPLAN INFO ====== -->
 
@@ -1448,28 +1440,73 @@
 </script>
 
 <script>
-  // Show "Meine Bestellung" link if customer has an active order
+  // Show all active Mittagstisch orders for the logged-in customer
   (function(){
     try{
-      var nr = localStorage.getItem('bs_nr');
-      var email = localStorage.getItem('bs_email');
-      if(!nr || !email) return;
-      fetch('/api/lunch-order?nr='+encodeURIComponent(nr)+'&email='+encodeURIComponent(email))
+      var email = (localStorage.getItem('bs_email')||'').trim();
+      if(!email) return;
+
+      var STATUS_LABELS = {0:'Neu',1:'Best\u00e4tigt',2:'Storniert',3:'Abgeholt'};
+      var STATUS_COLORS = {0:'#f59e0b',1:'#10b981',2:'#ef4444',3:'#6b7280'};
+      var STATUS_BG = {0:'#fef3c7',1:'#d1fae5',2:'#fee2e2',3:'#f3f4f6'};
+
+      fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
         .then(function(r){ return r.json(); })
         .then(function(res){
-          if(!res.success || !res.order) return;
-          var datum = (res.order.datum||'').substring(0,10);
-          var heute = new Date().toISOString().substring(0,10);
-          if(datum < heute) return;
-          if(res.order.status === 2) return; // storniert
-          var el = document.getElementById('mob-my-order');
-          var nrEl = document.getElementById('mob-my-order-nr');
-          if(el){ el.style.display = 'flex'; }
-          if(nrEl){ nrEl.textContent = nr; }
-          var dEl = document.getElementById('desk-my-order');
-          var dNrEl = document.getElementById('desk-my-order-nr');
-          if(dEl){ dEl.style.display = 'flex'; }
-          if(dNrEl){ dNrEl.textContent = nr; }
+          if(!res.success) return;
+          var orders = res.orders||[];
+          if(!orders.length) return;
+
+          function renderOrders(containerId){
+            var el = document.getElementById(containerId);
+            if(!el) return;
+            var html = '';
+            orders.forEach(function(o){
+              var st = STATUS_LABELS[o.status]||'?';
+              var col = STATUS_COLORS[o.status]||'#6b7280';
+              var bg = STATUS_BG[o.status]||'#f3f4f6';
+              var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+              html += '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 14px;margin-bottom:4px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600">';
+              html += '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+              html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.gericht||'Mittagessen')+'</span>';
+              html += '<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>';
+              html += '<span style="font-size:10px;color:#6b7280;white-space:nowrap">'+(o.bestellnummer||'')+'</span>';
+              html += '</a>';
+            });
+            el.innerHTML = html;
+            el.style.display = 'block';
+          }
+
+          renderOrders('mob-my-orders');
+          renderOrders('desk-my-orders');
+        }).catch(function(){});
+    }catch(e){}
+  })();
+
+  // Shop-Bestellungen: Floating badge showing count of open orders
+  (function(){
+    try{
+      var token = localStorage.getItem('dl_shop_token')||'';
+      if(!token) return;
+      fetch('/api/shop-order',{headers:{'X-Shop-Token':token}})
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res.success) return;
+          var open = (res.orders||[]).filter(function(o){ return o.status < 3; });
+          if(!open.length) return;
+          // Create floating badge
+          var badge = document.createElement('a');
+          badge.href = '/shop#meine-bestellungen';
+          badge.title = open.length + ' offene Bestellung'+(open.length>1?'en':'');
+          badge.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:500;width:56px;height:56px;border-radius:50%;background:#1e3a2f;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.25);text-decoration:none;font-size:20px;transition:transform .15s';
+          badge.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+          var count = document.createElement('span');
+          count.style.cssText = 'position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:12px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px';
+          count.textContent = open.length;
+          badge.appendChild(count);
+          badge.addEventListener('mouseenter',function(){badge.style.transform='scale(1.1)';});
+          badge.addEventListener('mouseleave',function(){badge.style.transform='scale(1)';});
+          document.body.appendChild(badge);
         }).catch(function(){});
     }catch(e){}
   })();

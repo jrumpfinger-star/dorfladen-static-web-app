@@ -258,6 +258,36 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Lookup by bestellnummer (for customer status page)
             nr_filter = req.params.get("nr", "").strip()
             email_filter = req.params.get("email", "").strip().lower()
+
+            # All active orders for a customer (homepage widget)
+            if email_filter and not nr_filter and req.params.get("mode") == "my":
+                today_str = datetime.utcnow().strftime("%Y-%m-%d")
+                lookup_url = (
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+                    f"?$filter=dl_email eq '{email_filter}'"
+                    f" and dl_status ne {STATUS_STORNIERT}"
+                    f" and dl_datum ge {today_str}"
+                    f"&$orderby=dl_datum asc"
+                    f"&$top=20"
+                )
+                lr = requests.get(lookup_url, headers=headers, timeout=30)
+                if lr.status_code == 200:
+                    items = lr.json().get("value", [])
+                    orders_list = []
+                    for item in items:
+                        o = _serialize(item)
+                        o["bestellnummer"] = item.get("dl_bestellnummer", "")
+                        o["mitnehmen"] = item.get("dl_mitnehmen", False)
+                        orders_list.append(o)
+                    return func.HttpResponse(
+                        json.dumps({"success": True, "orders": orders_list, "count": len(orders_list)}, ensure_ascii=False),
+                        status_code=200, headers=get_cors_headers(),
+                    )
+                return func.HttpResponse(
+                    json.dumps({"success": True, "orders": [], "count": 0}, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+
             if nr_filter and email_filter:
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
