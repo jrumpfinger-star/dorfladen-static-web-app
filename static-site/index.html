@@ -1589,6 +1589,8 @@
 .tp-item-name{font-size:14px;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tp-item-cat{font-size:12px;color:#6b7280}
 .tp-item-price{font-size:15px;font-weight:700;color:#2e7d4f;white-space:nowrap}
+.tp-item-order{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#2e7d4f;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;text-decoration:none;transition:background .12s}
+.tp-item-order:hover{background:#1f5c39}
 .tp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
 .tp-grid-card{text-align:center;padding:10px 6px;border:1px solid #e5e7eb;border-radius:10px;transition:background .12s}
 .tp-grid-card:hover{background:#f9fafb}
@@ -1651,7 +1653,7 @@
 
     if(mittagessen.length){
       html+='<div class="tp-section"><div class="tp-section-title">🍽️ Mittagessen</div>';
-      mittagessen.forEach(function(it){html+=itemCard(it);});
+      mittagessen.forEach(function(it){html+=itemCard(it,true);});
       html+='</div>';
     }
 
@@ -1669,19 +1671,22 @@
     }
 
     html+='<div class="tp-cta">';
-    if(mittagessen.length){html+='<a href="/mittagstisch-bestellen?heute=1" class="tp-cta-shop">🍽️ Mittagessen bestellen</a>';}
-    else{html+='<a href="/shop" class="tp-cta-shop">🛒 Jetzt bestellen</a>';}
-    var shareText=encodeURIComponent((post.titel||'Heute im Dorfladen')+'\n'+window.location.origin);
-    html+='<a href="https://wa.me/?text='+shareText+'" target="_blank" class="tp-cta-wa">📱 Teilen</a>';
+    if(mittagessen.length){html+='<a href="/mittagstisch-bestellen?heute=1" class="tp-cta-shop" style="flex:1 1 100%">🍽️ Mittagessen bestellen</a>';}
+    else{html+='<a href="/shop" class="tp-cta-shop" style="flex:1 1 100%">🛒 Jetzt bestellen</a>';}
     html+='</div>';
 
     document.getElementById('tp-body').innerHTML=html;
   }
 
-  function itemCard(it){
+  function itemCard(it,showOrder){
     var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="">':'<div class="tp-item-img no-img">📦</div>';
     var preis=it.preis?fmtPreis(it.preis):'';
-    return '<div class="tp-item">'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+'</div>';
+    var orderBtn='';
+    if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
+      var href='/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'');
+      orderBtn='<a class="tp-item-order" href="'+esc(href)+'" title="Bestellen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
+    }
+    return '<div class="tp-item">'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+orderBtn+'</div>';
   }
 
   function gridCard(it){
