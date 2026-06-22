@@ -31,23 +31,24 @@
     .k-panel{position:absolute;inset:0;overflow-y:auto;padding:12px 16px;display:none}
     .k-panel.active{display:block}
 
-    /* ═══ Stats bar (compact) ═══ */
-    .k-stats{display:flex;gap:6px;margin-bottom:0;align-items:center;flex-wrap:wrap}
-    .k-stat{background:var(--c-card);border-radius:8px;padding:4px 10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;gap:5px;font-size:13px}
-    .k-stat-val{font-size:16px;font-weight:800}
-    .k-stat-label{font-size:10px;font-weight:700;color:var(--c-muted);text-transform:uppercase;letter-spacing:.2px}
+    /* ═══ Stats bar (flat inline text – NOT buttons) ═══ */
+    .k-stats{display:flex;align-items:center;gap:0;flex-wrap:wrap;font-size:12px;color:var(--c-muted);padding:4px 0}
+    .k-stat{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;background:none;box-shadow:none;border:none;padding:0}
+    .k-stat-val{font-weight:800;font-size:14px;color:var(--c-text)}
+    .k-stat-label{font-size:11px;font-weight:600;color:var(--c-muted)}
     .k-stat.green .k-stat-val{color:var(--c-green)}
     .k-stat.orange .k-stat-val{color:var(--c-orange)}
     .k-stat.red .k-stat-val{color:var(--c-red)}
+    .k-stat-dot{width:3px;height:3px;border-radius:50%;background:#d1d5db;margin:0 8px;flex-shrink:0}
     /* ═══ Shop toolbar (stats + filter in one row) ═══ */
     .k-shop-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;padding:6px 0}
 
-    /* ═══ Dish summary bar ═══ */
-    .k-dish-summary{background:#fff;border-radius:10px;padding:8px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-    .k-dish-summary h3{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--c-muted)}
-    .k-dish-row{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:14px}
-    .k-dish-row .k-dish-name{flex:1;font-weight:600}
-    .k-dish-row .k-dish-count{font-weight:800;font-size:16px;color:var(--c-green);min-width:40px;text-align:right}
+    /* ═══ Dish summary (flat inline text – NOT a card) ═══ */
+    .k-dish-summary{font-size:12px;color:var(--c-muted);padding:2px 0;margin-bottom:4px;background:none;box-shadow:none;border-radius:0}
+    .k-dish-summary h3{display:none}
+    .k-dish-inline{display:inline}
+    .k-dish-inline .dish-count{font-weight:800;color:var(--c-text);font-size:13px}
+    .k-dish-sep{margin:0 6px;color:#d1d5db}
 
     /* ═══ Order cards ═══ */
     .k-order{background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:10px;overflow:hidden;border-left:5px solid transparent;display:flex;align-items:stretch}
@@ -74,14 +75,14 @@
     .k-order-info{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
     .k-order-top{display:flex;align-items:center;gap:10px}
     .k-order-name{font-size:16px;font-weight:700;flex:1}
-    .k-order-src{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
-    .src-online{background:#dbeafe;color:#1d4ed8}
-    .src-telefon{background:#fef3c7;color:#92400e}
-    .src-personal{background:#f3e8ff;color:#7c3aed}
+    .k-order-src{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:0;border-radius:0;background:none}
+    .src-online{color:#2563eb}
+    .src-telefon{color:#92400e}
+    .src-personal{color:#7c3aed}
     .k-order-dish{font-size:14px;color:var(--c-text)}
     .k-order-meta{font-size:12px;color:var(--c-muted);display:flex;gap:12px;flex-wrap:wrap}
     .k-order-note{font-size:12px;color:#92400e;font-style:italic}
-    .k-order-mitnehmen{font-size:11px;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:4px;font-weight:700}
+    .k-order-mitnehmen{font-size:9px;background:none;color:#1d4ed8;padding:0;border-radius:0;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
     .k-order-qty{display:flex;align-items:center;gap:4px;padding:6px 8px;border-left:1px solid var(--c-border)}
     .k-order-qty .qty-display{font-size:20px;font-weight:800;min-width:28px;text-align:center}
     .k-order-actions{display:flex;flex-direction:column;gap:3px;padding:6px;border-left:1px solid var(--c-border);justify-content:center}
@@ -151,12 +152,19 @@
     .k-empty{text-align:center;padding:60px 20px;color:var(--c-muted);font-size:16px}
     .k-empty .k-empty-icon{font-size:48px;margin-bottom:12px}
 
-    /* ═══ Filter button bar ═══ */
-    .k-filter-bar{display:flex;gap:6px;margin-bottom:10px}
-    .k-filter-btn{padding:6px 12px;border:2px solid var(--c-border);border-radius:8px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap}
-    .k-filter-btn:active{transform:scale(.97)}
-    .k-filter-btn.active{border-color:var(--c-green);background:#f0fdf4;color:var(--c-green)}
-    .k-filter-btn .k-filter-count{font-size:14px;font-weight:800;margin-left:4px}
+    /* ═══ Filter tabs (underline style – NOT buttons) ═══ */
+    .k-filter-bar{display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--c-border);overflow-x:auto;scrollbar-width:none}
+    .k-filter-bar::-webkit-scrollbar{display:none}
+    .k-filter-btn{padding:6px 12px;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:4px}
+    .k-filter-btn:hover{color:var(--c-text)}
+    .k-filter-btn:active{transform:none}
+    .k-filter-btn.active{border-bottom-color:var(--c-green);color:var(--c-green);background:none}
+    .k-filter-btn .k-filter-count{font-size:10px;font-weight:800;background:#f3f4f6;color:var(--c-muted);padding:1px 5px;border-radius:8px;min-width:16px;text-align:center}
+    .k-filter-btn.active .k-filter-count{background:var(--c-green-light);color:var(--c-green)}
+    /* ═══ Day pills (borderless, simple) ═══ */
+    .k-day-pill{padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-muted);border:none;white-space:nowrap}
+    .k-day-pill.active{background:var(--c-green);color:#fff}
+    .k-day-pill:not(.active):hover{background:#f3f4f6}
 
     /* ═══ Slot group headers ═══ */
     .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
@@ -253,18 +261,18 @@
 
   <!-- ── Mittagstisch ── -->
   <div class="k-panel" id="panel-mittag">
-    <div class="k-shop-toolbar">
-      <div class="k-filter-bar" id="mittag-day-bar" style="margin-bottom:0"></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0">
+      <div id="mittag-day-bar" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"></div>
       <div style="flex:1"></div>
       <div class="k-stats" id="mittag-stats"></div>
     </div>
-    <div class="k-filter-bar" id="mittag-status-bar" style="margin-top:6px">
+    <div class="k-filter-bar" id="mittag-status-bar">
       <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> Zu bestätigen <span class="k-filter-count" id="mt-fc-offen">0</span></button>
       <button class="k-filter-btn" data-mt-filter="bestaetigt" onclick="K.setMittagFilter('bestaetigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Bestätigt <span class="k-filter-count" id="mt-fc-bestaetigt">0</span></button>
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')">Alle <span class="k-filter-count" id="mt-fc-alle">0</span></button>
       <button class="k-filter-btn" data-mt-filter="abgeholt" onclick="K.setMittagFilter('abgeholt')"><i data-lucide="package-check" style="width:14px;height:14px"></i> Abgeholt <span class="k-filter-count" id="mt-fc-abgeholt">0</span></button>
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')"><i data-lucide="x-circle" style="width:14px;height:14px"></i> Storniert <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
-      <button class="k-filter-btn" id="mt-msg-badge" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="display:none;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border:2px solid #3b82f6;border-radius:12px;animation:kBlink 1s ease-in-out infinite;white-space:nowrap"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> Nachrichten</button>
+      <button class="k-filter-btn" id="mt-msg-badge" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="display:none;color:#3b82f6"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> Nachrichten</button>
     </div>
     <div class="k-dish-summary" id="mittag-dish-summary"></div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
@@ -272,16 +280,13 @@
 
   <!-- ── Shop-Abholungen ── -->
   <div class="k-panel active" id="panel-abhol">
-    <div class="k-shop-toolbar">
-      <div class="k-filter-bar" id="abhol-filter-bar" style="margin-bottom:0">
-        <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')"><i data-lucide="package" style="width:14px;height:14px"></i> Zu erledigen <span class="k-filter-count" id="fc-open">-</span></button>
-        <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')"><i data-lucide="calendar" style="width:14px;height:14px"></i> Heute abholen <span class="k-filter-count" id="fc-today">-</span></button>
-        <button class="k-filter-btn" data-filter="overdue" onclick="K.setShopFilter('overdue')"><i data-lucide="alert-triangle" style="width:14px;height:14px"></i> Überfällig <span class="k-filter-count" id="fc-overdue">-</span></button>
-        <button class="k-filter-btn" id="btn-history" onclick="K.toggleHistory()" title="Alte abgeschlossene Bestellungen anzeigen"><i data-lucide="history" style="width:14px;height:14px"></i> Historie <span class="k-filter-count" id="fc-history">0</span></button>
-      </div>
-      <div style="flex:1"></div>
-      <div class="k-stats" id="abhol-stats"></div>
+    <div class="k-filter-bar" id="abhol-filter-bar">
+      <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')"><i data-lucide="package" style="width:14px;height:14px"></i> Zu erledigen <span class="k-filter-count" id="fc-open">-</span></button>
+      <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')"><i data-lucide="calendar" style="width:14px;height:14px"></i> Heute abholen <span class="k-filter-count" id="fc-today">-</span></button>
+      <button class="k-filter-btn" data-filter="overdue" onclick="K.setShopFilter('overdue')"><i data-lucide="alert-triangle" style="width:14px;height:14px"></i> Überfällig <span class="k-filter-count" id="fc-overdue">-</span></button>
+      <button class="k-filter-btn" id="btn-history" onclick="K.toggleHistory()" title="Alte abgeschlossene Bestellungen anzeigen"><i data-lucide="history" style="width:14px;height:14px"></i> Historie <span class="k-filter-count" id="fc-history">0</span></button>
     </div>
+    <div class="k-stats" id="abhol-stats" style="margin-bottom:8px"></div>
     <div id="abhol-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
   </div>
 
@@ -693,14 +698,14 @@ var K = (function(){
       var dayNum = ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);
       var label = i===0?'Heute':i===1?'Morgen':i===-1?'Gestern':dayName+' '+dayNum;
       var active = iso===_mittagDatum?' active':'';
-      html += '<button class="k-filter-btn'+active+'" data-datum="'+iso+'" onclick="K.setMittagDatum(\''+iso+'\')">'+label+'</button>';
+      html += '<button class="k-day-pill'+active+'" data-datum="'+iso+'" onclick="K.setMittagDatum(\''+iso+'\')">'+label+'</button>';
     }
     bar.innerHTML = html;
   }
 
   function setMittagDatum(datum){
     _mittagDatum = datum;
-    document.querySelectorAll('#mittag-day-bar .k-filter-btn').forEach(function(b){
+    document.querySelectorAll('#mittag-day-bar .k-day-pill').forEach(function(b){
       b.classList.toggle('active', b.dataset.datum===datum);
     });
     loadOrders();
@@ -769,13 +774,13 @@ var K = (function(){
 
     var nachrichten = active.filter(function(o){return _hasUnseenComment(o);}).length;
 
-    var html = '';
-    html += '<div class="k-stat" style="border-left:3px solid #1b5e20"><div class="k-stat-val" style="color:#1b5e20">'+portionen+'</div><div class="k-stat-label">'+luc('utensils',14)+' Portionen</div></div>';
-    if(neu>0) html += '<div class="k-stat orange"><div class="k-stat-val">'+neu+'</div><div class="k-stat-label">'+luc('inbox',14)+' Offen</div></div>';
-    if(nachrichten>0) html += '<div class="k-stat" style="border-left:3px solid #3b82f6;animation:kPulse 2s ease-in-out infinite"><div class="k-stat-val" style="color:#3b82f6">'+nachrichten+'</div><div class="k-stat-label">'+luc('message-circle',14)+' Nachrichten</div></div>';
-    if(mitnehmen>0) html += '<div class="k-stat"><div class="k-stat-val">'+mitnehmen+'</div><div class="k-stat-label">'+luc('package',14)+' Mitnehmen</div></div>';
-    if(vorOrt>0) html += '<div class="k-stat"><div class="k-stat-val">'+vorOrt+'</div><div class="k-stat-label">'+luc('armchair',14)+' Vor Ort</div></div>';
-    document.getElementById('mittag-stats').innerHTML = html;
+    var parts = [];
+    parts.push('<span class="k-stat green"><span class="k-stat-val">'+portionen+'</span> <span class="k-stat-label">Portionen</span></span>');
+    if(neu>0) parts.push('<span class="k-stat orange"><span class="k-stat-val">'+neu+'</span> <span class="k-stat-label">Offen</span></span>');
+    if(nachrichten>0) parts.push('<span class="k-stat" style="color:#3b82f6"><span class="k-stat-val" style="color:#3b82f6">'+nachrichten+'</span> <span class="k-stat-label" style="color:#3b82f6">Nachrichten</span></span>');
+    if(mitnehmen>0) parts.push('<span class="k-stat"><span class="k-stat-val">'+mitnehmen+'</span> <span class="k-stat-label">Mitnehmen</span></span>');
+    if(vorOrt>0) parts.push('<span class="k-stat"><span class="k-stat-val">'+vorOrt+'</span> <span class="k-stat-label">Vor Ort</span></span>');
+    document.getElementById('mittag-stats').innerHTML = parts.join('<span class="k-stat-dot"></span>');
   }
 
   function renderDishSummary(){
@@ -792,12 +797,11 @@ var K = (function(){
       return;
     }
     document.getElementById('mittag-dish-summary').style.display='';
-    var html = '<h3>'+luc('bar-chart-3',16)+' Zusammenfassung pro Gericht</h3>';
+    var parts = [];
     keys.forEach(function(name){
-      html += '<div class="k-dish-row"><span class="k-dish-name">'+esc(name)+'</span><span class="k-dish-count">'+byDish[name].count+'×</span></div>';
+      parts.push('<span class="k-dish-inline"><span class="dish-count">'+byDish[name].count+'×</span> '+esc(name)+'</span>');
     });
-    document.getElementById('mittag-dish-summary').innerHTML = html;
-    reinitIcons();
+    document.getElementById('mittag-dish-summary').innerHTML = parts.join('<span class="k-dish-sep">|</span>');
   }
 
   function renderOrders(){
@@ -1372,14 +1376,13 @@ var K = (function(){
     var packen = all.filter(function(o){return o.status===1;}).length;
     var warten = all.filter(function(o){return o.status===2;}).length;
     var ueberfaellig = all.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
-    var html = '';
-    if(eingang>0) html += '<div class="k-stat orange"><div class="k-stat-val">'+eingang+'</div><div class="k-stat-label">'+luc('inbox',14)+' Eingang</div></div>';
-    if(packen>0) html += '<div class="k-stat" style="border-left:3px solid #d97706"><div class="k-stat-val" style="color:#d97706">'+packen+'</div><div class="k-stat-label">'+luc('package',14)+' Packen</div></div>';
-    if(warten>0) html += '<div class="k-stat" style="border-left:3px solid #2563eb"><div class="k-stat-val" style="color:#2563eb">'+warten+'</div><div class="k-stat-label">'+luc('bell',14)+' Warten</div></div>';
-    if(ueberfaellig>0) html += '<div class="k-stat" style="background:#fef2f2;border-left:3px solid #dc2626"><div class="k-stat-val" style="color:#dc2626">'+ueberfaellig+'</div><div class="k-stat-label">'+luc('alert-triangle',14)+' Überfällig</div></div>';
-    if(!html) html = '<div class="k-stat green"><div class="k-stat-val">'+luc('check-circle',20)+'</div><div class="k-stat-label">Alles erledigt</div></div>';
-    document.getElementById('abhol-stats').innerHTML = html;
-    reinitIcons();
+    var parts = [];
+    if(eingang>0) parts.push('<span class="k-stat orange"><span class="k-stat-val">'+eingang+'</span> <span class="k-stat-label">Eingang</span></span>');
+    if(packen>0) parts.push('<span class="k-stat" style="color:#d97706"><span class="k-stat-val" style="color:#d97706">'+packen+'</span> <span class="k-stat-label">Packen</span></span>');
+    if(warten>0) parts.push('<span class="k-stat"><span class="k-stat-val" style="color:#2563eb">'+warten+'</span> <span class="k-stat-label">Warten</span></span>');
+    if(ueberfaellig>0) parts.push('<span class="k-stat red"><span class="k-stat-val">'+ueberfaellig+'</span> <span class="k-stat-label">Überfällig</span></span>');
+    if(parts.length===0) parts.push('<span class="k-stat green"><span class="k-stat-val">✓</span> <span class="k-stat-label">Alles erledigt</span></span>');
+    document.getElementById('abhol-stats').innerHTML = parts.join('<span class="k-stat-dot"></span>');
   }
 
   function fmtDate(d){
