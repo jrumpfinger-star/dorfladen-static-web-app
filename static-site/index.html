@@ -1543,7 +1543,8 @@
         .then(function(r){ return r.json(); })
         .then(function(res){
           if(!res.success) return;
-          var open = (res.orders||[]).filter(function(o){ return o.status < 3; });
+          var todayStr = new Date().toISOString().substring(0,10);
+          var open = (res.orders||[]).filter(function(o){ return o.status < 3 && (o.abholdatum||'').substring(0,10) >= todayStr; });
           if(!open.length) return;
           // Create floating badge
           var badge = document.createElement('a');
