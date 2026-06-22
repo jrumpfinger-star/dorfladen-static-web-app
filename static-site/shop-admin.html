@@ -555,7 +555,7 @@
         var rawVal=qtyInp?parseFloat(qtyInp.value)||0:(isKg?Math.round((p.menge||0)*1000):(p.menge||0));
         var bestVal=isKg?Math.round((p.menge||0)*1000):(p.menge||0);
         var teilmenge=checked&&rawVal<bestVal-0.5;
-        return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,nicht_lieferbar:!checked,teilmenge:teilmenge,gepackt_menge:checked?rawVal:0,bestellt_menge:p.menge,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,gewichtsware:isKg,gepackt_menge_einheit:isKg?'g':'Stk',scan_zeit:checked?new Date().toISOString():''};
+        return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,nicht_lieferbar:!checked,teilmenge:teilmenge,gepackt_menge:rawVal,bestellt_menge:p.menge,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,gewichtsware:isKg,gepackt_menge_einheit:isKg?'g':'Stk',scan_zeit:checked?new Date().toISOString():''};
       });
       return {pack:{gepackt_von:'shop-admin',gepackt_um:new Date().toISOString(),items:packItems,alle_gepackt:cnt===items.length},packedCount:cnt};
     }
@@ -726,7 +726,7 @@
       var rawVal=qtyInp?parseFloat(qtyInp.value)||0:(isKg?Math.round((p.menge||0)*1000):(p.menge||0));
       var bestVal=isKg?Math.round((p.menge||0)*1000):(p.menge||0);
       var teilmenge=checked&&rawVal<bestVal-0.5;
-      return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,nicht_lieferbar:!checked,teilmenge:teilmenge,gepackt_menge:checked?rawVal:0,bestellt_menge:p.menge,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,gewichtsware:isKg,gepackt_menge_einheit:isKg?'g':'Stk',scan_zeit:checked?new Date().toISOString():''};
+      return {artikelnummer:p.artikelnummer||p.strichcode||'',strichcode:p.strichcode||'',bezeichnung:p.bezeichnung,gepackt:checked,nicht_lieferbar:!checked,teilmenge:teilmenge,gepackt_menge:rawVal,bestellt_menge:p.menge,menge:p.menge,einheit:p.einheit||'',einzelpreis:p.einzelpreis||0,gewichtsware:isKg,gepackt_menge_einheit:isKg?'g':'Stk',scan_zeit:checked?new Date().toISOString():''};
     });
     return {pack:{gepackt_von:'shop-admin',gepackt_um:new Date().toISOString(),items:packItems,alle_gepackt:cnt===items.length},packedCount:cnt};
   }
