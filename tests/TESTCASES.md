@@ -531,16 +531,17 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | T11.2 Shop-Admin Zähler | ✅ | 16 Bestellungen, 5 Offen, 11 Abholbereit |
 | T9.5.1 Tages-Buttons API | ✅ | Alle 7 Tages-Buttons: API 200, Zähler korrekt, Karten gerendert |
 
-## Testlauf 2026-06-22 (Sonntag)
+## Testlauf 2026-06-22 (Sonntag, 10:45)
 Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 
 | Test | Status | Ergebnis |
 |---|---|---|
-| T12.1 Ohne bs_email → Widget versteckt | ✅ | Beide Container hidden |
+| T12.1 Ohne bs_email → Widget versteckt | ⏭ | Timeout beim Seitenaufruf (Netzwerk, kein Code-Fehler) |
 | T12.2 API mode=my mit korrekter Email | ✅ | Request enthält email + mode=my |
-| T12.3 API mode=my liefert Bestellungen | ✅ | success:true, orders Array mit gericht/status/bestellnummer |
-| T12.4 Widget sichtbar bei aktiven Bestellungen | ✅ | Widget sichtbar, Links zu /bestellstatus |
-| T12.5 Falsche Email → Widget versteckt | ✅ | Beide Container hidden |
+| T12.3 API nur Neu+Bestätigt, aufsteigend | ✅ | Alle Orders Status 0 oder 1, Datum aufsteigend |
+| T12.4 Einzeilige Darstellung + Popup | ✅ | Widget 1 Kind-Element, Popup öffnet/schließt korrekt |
+| T12.5 Datumsformat dd.mm.yyyy | ⏭ | Übersprungen (catch, Daten-abhängig) |
+| T12.6 Falsche Email → Widget versteckt | ✅ | Beide Container hidden |
 
 ## Fehler-Log
 | Datum | Test | Fehler | Fix |

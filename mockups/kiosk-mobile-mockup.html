@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Kiosk Mobile – Mockup v2: Info vs. Actions</title>
+<style>
+  :root{--pri:#2d5016;--green:#2e7d4f;--green-light:#dcfce7;--red:#dc2626;--orange:#e65100;--yellow:#f59e0b;--bg:#f0f2f5;--card:#fff;--text:#1f2937;--muted:#6b7280;--border:#e5e7eb;--r:12px;--touch:48px}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;touch-action:manipulation}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;user-select:none;max-width:430px;margin:0 auto;box-shadow:0 0 40px rgba(0,0,0,.15)}
+
+  /* ═══ HEADER – compact single row ═══ */
+  .h{background:linear-gradient(135deg,#2d5016,#3a6b1e);color:#fff;padding:8px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .h-logo{font-size:15px;font-weight:800;white-space:nowrap}
+  .h-spacer{flex:1}
+  .h-date{font-size:10px;opacity:.8;text-align:right;line-height:1.2}
+  .h-clock{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+  .h-btn{width:34px;height:34px;border:none;border-radius:8px;background:rgba(255,255,255,.15);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+  /* ═══ TAB BAR – icon-only on mobile ═══ */
+  .tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);flex-shrink:0}
+  .tab{flex:1;padding:8px 4px;text-align:center;font-size:10px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--muted)}
+  .tab.active{border-bottom-color:var(--green);color:var(--green);background:#f0fdf4}
+  .tab-icon{font-size:20px}
+  .tab-badge{background:var(--orange);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:8px;min-width:16px;position:absolute;top:-4px;right:-8px}
+  .tab-wrap{position:relative;display:inline-block}
+
+  /* ═══ MAIN ═══ */
+  .main{flex:1;overflow:hidden;position:relative}
+  .panel{position:absolute;inset:0;overflow-y:auto;padding:8px 10px;display:none;-webkit-overflow-scrolling:touch}
+  .panel.active{display:block}
+
+  /* ═══ TOOLBAR – collapsed stats + filters ═══ */
+  .toolbar{display:flex;gap:4px;align-items:center;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-bottom:6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .toolbar::-webkit-scrollbar{display:none}
+
+  /* ═══ FILTER CHIPS ═══ */
+  .chip{padding:5px 10px;border:1.5px solid var(--border);border-radius:20px;background:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;flex-shrink:0;transition:all .15s}
+  .chip.active{border-color:var(--green);background:#f0fdf4;color:var(--green)}
+  .chip-count{font-weight:800;font-size:12px}
+
+  /* ═══ DAY PILLS ═══ */
+  .days{display:flex;gap:4px;margin-bottom:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .days::-webkit-scrollbar{display:none}
+  .day-pill{padding:4px 10px;border:1.5px solid var(--border);border-radius:16px;background:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+  .day-pill.active{border-color:var(--green);background:var(--green);color:#fff}
+
+  /* ═══ COMPACT STATS ROW ═══ */
+  .stats-row{display:flex;gap:4px;margin-bottom:6px;overflow-x:auto;scrollbar-width:none}
+  .stats-row::-webkit-scrollbar{display:none}
+  .stat-pill{background:#fff;border-radius:16px;padding:3px 10px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .stat-pill .sv{font-size:14px;font-weight:800}
+  .stat-pill.green .sv{color:var(--green)}
+  .stat-pill.orange .sv{color:var(--orange)}
+
+  /* ═══ DISH SUMMARY – collapsible ═══ */
+  .dish-sum{background:#fff;border-radius:var(--r);padding:8px 12px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,.05);cursor:pointer}
+  .dish-sum-head{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .dish-sum-head .arrow{transition:transform .2s;font-size:10px}
+  .dish-sum.collapsed .dish-sum-body{display:none}
+  .dish-sum.collapsed .arrow{transform:rotate(-90deg)}
+  .dish-sum-body{margin-top:6px}
+  .dish-row{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:13px}
+  .dish-row .dn{flex:1;font-weight:600}
+  .dish-row .dc{font-weight:800;font-size:15px;color:var(--green);min-width:32px;text-align:right}
+
+  /* ═══ ORDER CARDS – compact ═══ */
+  .order{background:#fff;border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:6px;overflow:hidden;border-left:4px solid transparent}
+  .order.st-0{border-left-color:var(--yellow)}
+  .order.st-1{border-left-color:var(--green)}
+  .order.st-2{border-left-color:var(--red)}
+  .order.st-3{border-left-color:#9ca3af}
+  .order-inner{padding:10px 12px}
+  .order-top{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+  .order-name{font-size:14px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .order-src{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+  .src-online{background:#dbeafe;color:#1d4ed8}
+  .src-tel{background:#fef3c7;color:#92400e}
+  .order-dish{font-size:13px;color:var(--text);margin-bottom:2px}
+  .order-meta{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+  .order-note{font-size:11px;color:#92400e;font-style:italic;margin-top:2px}
+  .order-mitnehmen{font-size:10px;background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:4px;font-weight:700}
+  .badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap}
+  .badge-warn{background:#fef3c7;color:#92400e}
+  .badge-ok{background:var(--green-light);color:#166534}
+
+  /* ═══ SWIPE ACTIONS (visual hint) ═══ */
+  .order-actions{display:flex;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid #f3f4f6}
+  .act-btn{flex:1;padding:8px 0;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;min-height:var(--touch)}
+  .act-ok{background:var(--green);color:#fff}
+  .act-done{background:#2563eb;color:#fff}
+  .act-cancel{background:#fff;color:var(--red);border:1.5px solid #fca5a5}
+  .act-qty{background:#fff;border:1.5px solid var(--border);font-size:18px;font-weight:800;min-width:60px;max-width:60px}
+
+  /* ═══ BOTTOM BAR – compact ═══ */
+  .bottom{background:#fff;border-top:1px solid var(--border);padding:6px 10px;display:flex;gap:6px;flex-shrink:0}
+  .bottom-btn{flex:1;padding:10px 8px;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:var(--touch)}
+  .bb-primary{background:var(--green);color:#fff}
+  .bb-secondary{background:#fff;border:1.5px solid var(--border);color:var(--text)}
+
+  /* ═══ SEARCH ═══ */
+  .search-wrap{display:flex;gap:6px;margin-bottom:8px}
+  .search-input{flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r);font-size:14px;outline:none}
+  .search-input:focus{border-color:var(--green)}
+
+  /* ═══ CUSTOMER CARD ═══ */
+  .kunde{background:#fff;border-radius:var(--r);padding:12px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;align-items:center;gap:10px}
+  .kunde-avatar{width:40px;height:40px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+  .kunde-info{flex:1;min-width:0}
+  .kunde-name{font-weight:700;font-size:14px}
+  .kunde-phone{font-size:12px;color:var(--muted)}
+  .kunde-btn{width:var(--touch);height:var(--touch);border:none;border-radius:10px;background:var(--green);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+  /* ═══ SOCIAL (compact) ═══ */
+  .social-subtabs{display:flex;gap:3px;background:#f3f4f6;border-radius:8px;padding:3px;margin-bottom:10px}
+  .social-subtab{flex:1;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:700;background:transparent;color:var(--muted);cursor:pointer;text-align:center}
+  .social-subtab.active{background:#fff;color:#e1306c;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .soc-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+  .soc-card-head{padding:8px 12px;font-weight:700;font-size:12px;color:#fff}
+  .soc-card-body{padding:10px 12px}
+  .soc-field{margin-bottom:8px}
+  .soc-field label{font-size:10px;font-weight:700;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px}
+  .soc-field input,.soc-field select,.soc-field textarea{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit}
+  .soc-field textarea{resize:vertical;min-height:50px}
+  .soc-btn-full{width:100%;padding:10px;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}
+
+  /* ═══ SHOP ORDER ═══ */
+  .shop-order{background:#fff;border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:6px;overflow:hidden;border-left:4px solid var(--yellow)}
+  .shop-order.st-2{border-left-color:#2563eb}
+  .shop-order.st-3{border-left-color:#9ca3af}
+  .shop-inner{padding:10px 12px}
+  .shop-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+  .shop-name{font-size:14px;font-weight:700;flex:1}
+  .shop-slot{font-size:11px;color:var(--muted);background:#f3f4f6;padding:2px 8px;border-radius:4px;font-weight:600}
+  .shop-items{font-size:11px;color:var(--muted);margin-bottom:4px}
+  .shop-items span{display:inline-block;background:#f3f4f6;padding:1px 5px;border-radius:3px;margin:1px 2px}
+
+  /* ═══ SLOT HEADER ═══ */
+  .slot-hdr{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;margin:8px 0 4px;display:flex;align-items:center;gap:6px;cursor:pointer}
+  .slot-hdr.current{background:linear-gradient(90deg,#16a34a,#22c55e)}
+
+  /* ═══ MOCKUP LABEL ═══ */
+  .mockup-label{position:fixed;top:0;left:0;right:0;background:#ef4444;color:#fff;text-align:center;font-size:10px;font-weight:800;padding:2px;z-index:999;letter-spacing:1px;text-transform:uppercase}
+
+  /* Hide scrollbars globally */
+  ::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+
+<div class="mockup-label">📐 MOCKUP – Kiosk Mobile Redesign</div>
+<div style="height:20px;flex-shrink:0"></div>
+
+<!-- ═══ HEADER ═══ -->
+<div class="h">
+  <div class="h-logo">🏪 Dorfladen Kiosk</div>
+  <div class="h-spacer"></div>
+  <div>
+    <div class="h-date">Mo, 22.06.2025</div>
+    <div class="h-clock" id="clock">09:48</div>
+  </div>
+  <button class="h-btn" title="Aktualisieren">🔄</button>
+</div>
+
+<!-- ═══ TAB BAR ═══ -->
+<div class="tabs" id="tab-bar">
+  <div class="tab active" data-t="mittag" onclick="switchTab('mittag')">
+    <span class="tab-wrap">
+      <span class="tab-icon">🍽️</span>
+      <span class="tab-badge">3</span>
+    </span>
+    <span>Mittag</span>
+  </div>
+  <div class="tab" data-t="shop" onclick="switchTab('shop')">
+    <span class="tab-wrap">
+      <span class="tab-icon">🛒</span>
+      <span class="tab-badge">1</span>
+    </span>
+    <span>Shop</span>
+  </div>
+  <div class="tab" data-t="kunden" onclick="switchTab('kunden')">
+    <span class="tab-icon">👥</span>
+    <span>Kunden</span>
+  </div>
+  <div class="tab" data-t="social" onclick="switchTab('social')">
+    <span class="tab-icon">📷</span>
+    <span>Social</span>
+  </div>
+</div>
+
+<!-- ═══ PANELS ═══ -->
+<div class="main">
+
+  <!-- ── MITTAGSTISCH ── -->
+  <div class="panel active" id="p-mittag">
+
+    <!-- Day pills -->
+    <div class="days">
+      <div class="day-pill">Gestern</div>
+      <div class="day-pill active">Heute</div>
+      <div class="day-pill">Morgen</div>
+      <div class="day-pill">Mi 25.06</div>
+      <div class="day-pill">Do 26.06</div>
+    </div>
+
+    <!-- Compact stats -->
+    <div class="stats-row">
+      <span class="stat-pill green"><span class="sv">5</span> 🍽️</span>
+      <span class="stat-pill orange"><span class="sv">1</span> Offen</span>
+      <span class="stat-pill"><span class="sv">2</span> 📦 Mitnehmen</span>
+      <span class="stat-pill"><span class="sv">3</span> Vor Ort</span>
+    </div>
+
+    <!-- Filter chips (scrollable) -->
+    <div class="toolbar">
+      <div class="chip active">Zu bestätigen <span class="chip-count">1</span></div>
+      <div class="chip">Bestätigt <span class="chip-count">1</span></div>
+      <div class="chip">Alle <span class="chip-count">3</span></div>
+      <div class="chip">Abgeholt <span class="chip-count">0</span></div>
+      <div class="chip">Storniert <span class="chip-count">0</span></div>
+    </div>
+
+    <!-- Dish summary (collapsible) -->
+    <div class="dish-sum" onclick="this.classList.toggle('collapsed')">
+      <div class="dish-sum-head">
+        <span class="arrow">▼</span>
+        Zusammenfassung pro Gericht
+      </div>
+      <div class="dish-sum-body">
+        <div class="dish-row"><span class="dn">Cordon bleu mit Pommes</span><span class="dc">5×</span></div>
+        <div class="dish-row"><span class="dn">Gemüsepfanne</span><span class="dc">2×</span></div>
+      </div>
+    </div>
+
+    <!-- Order cards -->
+    <div class="order st-0">
+      <div class="order-inner">
+        <div class="order-top">
+          <span class="order-name">Josef Rumpfinger</span>
+          <span class="order-src src-online">Online</span>
+          <span class="badge badge-warn">Neu</span>
+        </div>
+        <div class="order-dish">Cordon bleu mit Pommes oder Kartoffelsalat</div>
+        <div class="order-meta">
+          <span>📞 0171 491 0935</span>
+          <span>🕐 11:45</span>
+        </div>
+        <div class="order-actions">
+          <button class="act-btn act-ok">✅ Bestätigen</button>
+          <button class="act-btn act-qty">1×</button>
+          <button class="act-btn act-cancel">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="order st-1">
+      <div class="order-inner">
+        <div class="order-top">
+          <span class="order-name">Maria Huber</span>
+          <span class="order-src src-tel">Telefon</span>
+          <span class="badge badge-ok">Bestätigt</span>
+        </div>
+        <div class="order-dish">Cordon bleu mit Pommes</div>
+        <div class="order-meta">
+          <span>📞 0176 234 5678</span>
+          <span>🕐 12:00</span>
+          <span class="order-mitnehmen">📦 Mitnehmen</span>
+        </div>
+        <div class="order-note">💬 Bitte ohne Salat</div>
+        <div class="order-actions">
+          <button class="act-btn act-done">📦 Abgeholt</button>
+          <button class="act-btn act-qty">2×</button>
+          <button class="act-btn act-cancel">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="order st-1">
+      <div class="order-inner">
+        <div class="order-top">
+          <span class="order-name">Franz Meier</span>
+          <span class="order-src src-online">Online</span>
+          <span class="badge badge-ok">Bestätigt</span>
+        </div>
+        <div class="order-dish">Gemüsepfanne</div>
+        <div class="order-meta">
+          <span>📞 0151 999 1234</span>
+          <span>🕐 12:15</span>
+        </div>
+        <div class="order-actions">
+          <button class="act-btn act-done">📦 Abgeholt</button>
+          <button class="act-btn act-qty">1×</button>
+          <button class="act-btn act-cancel">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ONLINE-SHOP ── -->
+  <div class="panel" id="p-shop">
+
+    <div class="toolbar">
+      <div class="chip active">Zu erledigen <span class="chip-count">1</span></div>
+      <div class="chip">Heute abholen <span class="chip-count">1</span></div>
+      <div class="chip">Überfällig <span class="chip-count">0</span></div>
+      <div class="chip">Historie <span class="chip-count">5</span></div>
+    </div>
+
+    <div class="slot-hdr current">
+      ⏰ 10:00 – 12:00 Uhr
+      <span style="margin-left:auto;font-size:11px;background:rgba(255,255,255,.3);padding:2px 8px;border-radius:4px">🔴 JETZT</span>
+    </div>
+
+    <div class="shop-order">
+      <div class="shop-inner">
+        <div class="shop-top">
+          <span class="shop-name">Anna Berger</span>
+          <span class="badge badge-warn">Offen</span>
+        </div>
+        <div class="shop-items">
+          <span>3× Eier</span>
+          <span>1× Milch</span>
+          <span>2× Brot</span>
+        </div>
+        <div class="order-meta">
+          <span class="shop-slot">📅 Heute, 10:00–12:00</span>
+          <span>€ 12,80</span>
+        </div>
+        <div class="order-actions">
+          <button class="act-btn act-ok">📦 Packen</button>
+          <button class="act-btn act-done">✅ Bereit</button>
+          <button class="act-btn act-cancel">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot-hdr">
+      ⏰ 14:00 – 16:00 Uhr
+      <span style="margin-left:auto;font-size:11px">1 Bestellung</span>
+    </div>
+
+    <div class="shop-order st-2">
+      <div class="shop-inner">
+        <div class="shop-top">
+          <span class="shop-name">Klaus Weber</span>
+          <span class="badge" style="background:#dbeafe;color:#1d4ed8">Gepackt</span>
+        </div>
+        <div class="shop-items">
+          <span>2× Wurst</span>
+          <span>1× Käse</span>
+        </div>
+        <div class="order-meta">
+          <span class="shop-slot">📅 Heute, 14:00–16:00</span>
+          <span>€ 8,40</span>
+        </div>
+        <div class="order-actions">
+          <button class="act-btn act-done">✅ Abgeholt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STAMMKUNDEN ── -->
+  <div class="panel" id="p-kunden">
+    <div class="search-wrap">
+      <input class="search-input" placeholder="🔍 Kunde suchen…">
+      <button class="bottom-btn bb-primary" style="flex:none;padding:10px 14px;border-radius:var(--r)">+ Neu</button>
+    </div>
+
+    <div class="kunde">
+      <div class="kunde-avatar">JR</div>
+      <div class="kunde-info">
+        <div class="kunde-name">Josef Rumpfinger</div>
+        <div class="kunde-phone">📞 0171 491 0935</div>
+      </div>
+      <button class="kunde-btn" title="Bestellung aufnehmen">🍽️</button>
+    </div>
+
+    <div class="kunde">
+      <div class="kunde-avatar">MH</div>
+      <div class="kunde-info">
+        <div class="kunde-name">Maria Huber</div>
+        <div class="kunde-phone">📞 0176 234 5678</div>
+      </div>
+      <button class="kunde-btn" title="Bestellung aufnehmen">🍽️</button>
+    </div>
+
+    <div class="kunde">
+      <div class="kunde-avatar">FM</div>
+      <div class="kunde-info">
+        <div class="kunde-name">Franz Meier</div>
+        <div class="kunde-phone">📞 0151 999 1234</div>
+      </div>
+      <button class="kunde-btn" title="Bestellung aufnehmen">🍽️</button>
+    </div>
+
+    <div class="kunde">
+      <div class="kunde-avatar">AB</div>
+      <div class="kunde-info">
+        <div class="kunde-name">Anna Berger</div>
+        <div class="kunde-phone">📞 0174 555 7890</div>
+      </div>
+      <button class="kunde-btn" title="Bestellung aufnehmen">🍽️</button>
+    </div>
+  </div>
+
+  <!-- ── SOCIAL ── -->
+  <div class="panel" id="p-social">
+    <div class="social-subtabs">
+      <button class="social-subtab active" onclick="socTab(this,'soc-post')">✏️ Neuer Post</button>
+      <button class="social-subtab" onclick="socTab(this,'soc-katalog')">📚 Katalog</button>
+    </div>
+
+    <!-- Post -->
+    <div id="soc-post">
+      <div class="soc-card">
+        <div class="soc-card-head" style="background:#25D366">📝 Tagespost</div>
+        <div class="soc-card-body">
+          <div class="soc-field">
+            <label>Titel</label>
+            <select><option>Heute im Dorfladen – Montag</option><option>Aktuelles</option><option>Mittagstisch</option></select>
+          </div>
+          <div class="soc-field">
+            <label>Freitext</label>
+            <textarea placeholder="z.B. Frisch aus der Küche!"></textarea>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">Produkte auswählen:</div>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">
+            <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f9fafb;border-radius:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" checked style="width:18px;height:18px;accent-color:var(--green)">
+              <span style="flex:1">Cordon bleu m. Pommes</span>
+              <span style="font-weight:700;color:var(--green)">€9,80</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f9fafb;border-radius:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" style="width:18px;height:18px;accent-color:var(--green)">
+              <span style="flex:1">Gemüsepfanne</span>
+              <span style="font-weight:700;color:var(--green)">€8,50</span>
+            </label>
+          </div>
+          <button class="soc-btn-full" style="background:#e1306c;color:#fff">🔄 Vorschau aktualisieren</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:12px;background:#fff;border-radius:var(--r);margin-bottom:8px;border:1px solid var(--border)">
+        <div style="width:100%;aspect-ratio:1;background:#faf9f6;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px">
+          📸 Vorschau-Canvas
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="soc-btn-full" style="background:#25D366;color:#fff;flex:1">WhatsApp</button>
+        <button class="soc-btn-full" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743);color:#fff;flex:1">Instagram</button>
+        <button class="soc-btn-full" style="background:#f3f4f6;border:1px solid #d1d5db;flex:0.6">💾</button>
+      </div>
+    </div>
+
+    <!-- Katalog -->
+    <div id="soc-katalog" style="display:none">
+      <div class="soc-card">
+        <div class="soc-card-head" style="background:#e1306c">➕ Neues Produkt</div>
+        <div class="soc-card-body">
+          <div class="soc-field"><label>Name *</label><input placeholder="z.B. Geschnetzeltes"></div>
+          <div style="display:flex;gap:6px">
+            <div class="soc-field" style="flex:2"><label>Kategorie</label><select><option>🍽️ Mittagessen</option><option>🧁 Kuchen</option></select></div>
+            <div class="soc-field" style="flex:1"><label>Preis €</label><input type="number" placeholder="9.80"></div>
+          </div>
+          <div class="soc-field"><label>Bild</label><input type="file" accept="image/*" style="font-size:12px"></div>
+          <button class="soc-btn-full" style="background:#e1306c;color:#fff">➕ Hinzufügen</button>
+        </div>
+      </div>
+
+      <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">
+        Katalog-Produkte werden hier geladen…
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ BOTTOM BAR ═══ -->
+<div class="bottom" id="bottom-bar">
+  <button class="bottom-btn bb-primary">📞 Neue Bestellung</button>
+  <button class="bottom-btn bb-secondary">🖨️ Küchenliste</button>
+</div>
+
+<script>
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-t')===id)});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('active',p.id==='p-'+id)});
+  // Update bottom bar context
+  var bb = document.getElementById('bottom-bar');
+  if(id==='mittag') bb.innerHTML='<button class="bottom-btn bb-primary">📞 Neue Bestellung</button><button class="bottom-btn bb-secondary">🖨️ Küchenliste</button>';
+  else if(id==='shop') bb.innerHTML='<button class="bottom-btn bb-secondary" style="flex:1">🔄 Aktualisieren</button>';
+  else if(id==='kunden') bb.innerHTML='<button class="bottom-btn bb-primary">👤 Neuer Kunde</button>';
+  else bb.innerHTML='';
+}
+function socTab(btn,panelId){
+  document.querySelectorAll('.social-subtab').forEach(function(s){s.classList.remove('active')});
+  btn.classList.add('active');
+  document.getElementById('soc-post').style.display=panelId==='soc-post'?'':'none';
+  document.getElementById('soc-katalog').style.display=panelId==='soc-katalog'?'':'none';
+}
+// Filter chip toggle
+document.querySelectorAll('.chip').forEach(function(c){
+  c.addEventListener('click',function(){
+    c.parentElement.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active')});
+    c.classList.add('active');
+  });
+});
+document.querySelectorAll('.day-pill').forEach(function(d){
+  d.addEventListener('click',function(){
+    d.parentElement.querySelectorAll('.day-pill').forEach(function(x){x.classList.remove('active')});
+    d.classList.add('active');
+  });
+});
+// Clock
+setInterval(function(){
+  var n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+</script>
+</body>
+</html>

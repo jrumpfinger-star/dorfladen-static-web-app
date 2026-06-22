@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mockup: Info vs. Actions – Kiosk Mobile</title>
+<style>
+  :root{--green:#2e7d4f;--green-light:#dcfce7;--red:#dc2626;--orange:#e65100;--bg:#f0f2f5;--card:#fff;--text:#1f2937;--muted:#6b7280;--border:#e5e7eb;--r:12px;--blue:#3b82f6}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;padding:0 0 30px}
+
+  .mockup-bar{position:sticky;top:0;background:#ef4444;color:#fff;text-align:center;font-size:10px;font-weight:800;padding:4px;z-index:99;letter-spacing:1px}
+  .section{margin:16px 12px 0;background:var(--card);border-radius:var(--r);padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .section h2{font-size:13px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+  .section h2 .old{color:var(--red);font-size:10px;font-weight:700;background:#fef2f2;padding:2px 8px;border-radius:4px}
+  .section h2 .new{color:var(--green);font-size:10px;font-weight:700;background:var(--green-light);padding:2px 8px;border-radius:4px}
+
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .compare-col{border:1.5px dashed var(--border);border-radius:10px;padding:10px}
+  .compare-col h3{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:center}
+  .compare-col.old h3{color:var(--red)}
+  .compare-col.new h3{color:var(--green)}
+
+  /* ═══ OLD STYLE: Everything looks like a button ═══ */
+  .old-stat{background:var(--card);border-radius:8px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;border:1px solid var(--border);margin:2px}
+  .old-filter{padding:5px 10px;border:2px solid var(--border);border-radius:8px;background:#fff;font-size:11px;font-weight:700;display:inline-block;margin:2px;white-space:nowrap}
+  .old-filter.active{border-color:var(--green);background:#f0fdf4;color:var(--green)}
+
+  /* ═══ NEW STYLE: Info is flat text, Actions are buttons ═══ */
+
+  /* Stats = flat inline text with subtle separator dots */
+  .info-bar{display:flex;align-items:center;gap:0;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:4px 0}
+  .info-item{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+  .info-item .num{font-weight:800;font-size:14px;color:var(--text)}
+  .info-item .num.green{color:var(--green)}
+  .info-item .num.orange{color:var(--orange)}
+  .info-item .num.blue{color:var(--blue)}
+  .info-dot{width:3px;height:3px;border-radius:50%;background:#d1d5db;margin:0 8px;flex-shrink:0}
+
+  /* Filter = underline tabs, not buttons */
+  .filter-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:0;overflow-x:auto;scrollbar-width:none}
+  .filter-tabs::-webkit-scrollbar{display:none}
+  .ftab{padding:6px 12px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:4px;background:none;border-top:none;border-left:none;border-right:none}
+  .ftab:hover{color:var(--text)}
+  .ftab.active{color:var(--green);border-bottom-color:var(--green)}
+  .ftab .fc{font-size:10px;font-weight:800;background:#f3f4f6;color:var(--muted);padding:1px 5px;border-radius:8px;min-width:16px;text-align:center}
+  .ftab.active .fc{background:var(--green-light);color:var(--green)}
+
+  /* Day selector = pills (these ARE interactive, so button-like is OK, but smaller/simpler) */
+  .day-bar{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+  .day-bar::-webkit-scrollbar{display:none}
+  .day-pill{padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);border:none;white-space:nowrap}
+  .day-pill.active{background:var(--green);color:#fff}
+  .day-pill:not(.active):hover{background:#f3f4f6}
+
+  /* Dish summary = inline text, no card wrapper */
+  .dish-summary{font-size:12px;color:var(--muted);padding:4px 0}
+  .dish-summary .dish{display:inline-flex;align-items:center;gap:3px}
+  .dish .dcount{font-weight:800;color:var(--text);font-size:13px}
+  .dish-sep{margin:0 6px;color:#d1d5db}
+
+  /* Order card */
+  .order{background:var(--card);border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.06);margin-top:8px;overflow:hidden;display:flex;border-left:4px solid #f59e0b}
+  .order.confirmed{border-left-color:var(--green)}
+  .order-body{flex:1;padding:10px 12px}
+  .order-top{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+  .order-name{font-size:14px;font-weight:700;flex:1}
+
+  /* Source = subtle colored text, NOT a button */
+  .src{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+  .src-online{color:#2563eb}
+  .src-tel{color:#92400e}
+
+  /* Status badge = flat label */
+  .status{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+  .status-new{background:#fef3c7;color:#92400e}
+  .status-ok{background:var(--green-light);color:#166534}
+
+  .order-dish{font-size:13px;margin-bottom:2px}
+  .order-meta{font-size:11px;color:var(--muted)}
+  .order-note{font-size:11px;color:#92400e;font-style:italic;margin-top:2px}
+  .mitnehmen{font-size:9px;background:#eff6ff;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700}
+
+  /* Action buttons column */
+  .order-actions{display:flex;flex-direction:column;gap:3px;padding:6px;border-left:1px solid #f3f4f6;justify-content:center}
+  .abtn{min-height:30px;padding:4px 8px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
+  .abtn:active{transform:scale(.96)}
+  .abtn-ok{background:var(--green);color:#fff}
+  .abtn-done{background:#2563eb;color:#fff}
+  .abtn-x{background:#fff;color:var(--red);border:1.5px solid #fca5a5;font-size:14px}
+  .abtn-qty{background:#f9fafb;border:1.5px solid var(--border);font-size:16px;font-weight:800;min-width:36px}
+
+  /* Explanation cards */
+  .explain{margin-top:8px;padding:10px 12px;border-radius:8px;font-size:11px;line-height:1.5}
+  .explain.good{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+  .explain.bad{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+  .explain b{font-weight:800}
+
+  .rule{margin:10px 0;padding:10px;background:#eff6ff;border-radius:8px;font-size:11px;color:#1e40af;border:1px solid #bfdbfe;line-height:1.6}
+  .rule b{font-weight:800}
+
+  /* Shop section */
+  .shop-stat-line{font-size:12px;color:var(--muted);padding:2px 0}
+  .shop-stat-line .sv{font-weight:800;color:var(--text)}
+
+  /* Bottom bar */
+  .bottom{position:fixed;bottom:0;left:0;right:0;max-width:430px;margin:0 auto;background:#fff;border-top:1px solid var(--border);padding:6px 10px;display:flex;gap:6px;z-index:10}
+  .bbtn{flex:1;padding:10px;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+  .bbtn-pri{background:var(--green);color:#fff}
+  .bbtn-sec{background:#fff;border:1.5px solid var(--border);color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="mockup-bar">📐 MOCKUP v2 – Info vs. Action Buttons</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- DESIGN PRINCIPLE                                  -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>🎯 Design-Prinzip</h2>
+  <div class="rule">
+    <b>Regel:</b> Nur Elemente die eine <b>Aktion auslösen</b> dürfen wie Buttons aussehen (raised, Borders, Schatten).<br>
+    <b>Informationen</b> werden als <b>flacher Inline-Text</b> dargestellt – ohne Rahmen, ohne Schatten, ohne Button-Styling.<br>
+    <b>Filter</b> nutzen <b>Unterstrich-Tabs</b> statt Button-Chips (wie bei Material Design / Google).
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- 1. STATS BAR: vorher vs. nachher                  -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>① Stats-Leiste</h2>
+  <div class="compare">
+    <div class="compare-col old">
+      <h3>❌ Vorher</h3>
+      <div>
+        <span class="old-stat"><b style="color:#1b5e20">5</b> 🍽️ Portionen</span>
+        <span class="old-stat"><b style="color:#e65100">1</b> 📬 Offen</span>
+        <span class="old-stat"><b>2</b> 📦 Mitnehmen</span>
+        <span class="old-stat"><b>3</b> 🪑 Vor Ort</span>
+      </div>
+      <div class="explain bad">Sieht aus wie <b>4 klickbare Buttons</b>. Verwirrend!</div>
+    </div>
+    <div class="compare-col new">
+      <h3>✅ Nachher</h3>
+      <div class="info-bar">
+        <span class="info-item"><span class="num green">5</span> Portionen</span>
+        <span class="info-dot"></span>
+        <span class="info-item"><span class="num orange">1</span> offen</span>
+        <span class="info-dot"></span>
+        <span class="info-item"><span class="num">2</span> 📦</span>
+        <span class="info-dot"></span>
+        <span class="info-item"><span class="num">3</span> vor Ort</span>
+      </div>
+      <div class="explain good">Flacher Text mit Trennpunkten. <b>Eindeutig nur Info</b>, kein Button.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- 2. FILTER: vorher vs. nachher                     -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>② Status-Filter</h2>
+  <div class="compare">
+    <div class="compare-col old">
+      <h3>❌ Vorher</h3>
+      <div>
+        <span class="old-filter active">Zu bestätigen 1</span>
+        <span class="old-filter">Bestätigt 1</span>
+        <span class="old-filter">Alle 3</span>
+      </div>
+      <div class="explain bad">Buttons mit Rand → <b>verwechselbar mit Actions</b>.</div>
+    </div>
+    <div class="compare-col new">
+      <h3>✅ Nachher</h3>
+      <div class="filter-tabs">
+        <button class="ftab active">Offen <span class="fc">1</span></button>
+        <button class="ftab">Bestätigt <span class="fc">1</span></button>
+        <button class="ftab">Alle <span class="fc">3</span></button>
+        <button class="ftab">Abgeholt <span class="fc">0</span></button>
+      </div>
+      <div class="explain good"><b>Unterstrich-Tabs</b> – klar als Navigation erkennbar, nicht als Action.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- 3. DAY SELECTOR: vorher vs. nachher               -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>③ Tag-Auswahl</h2>
+  <div class="compare">
+    <div class="compare-col old">
+      <h3>❌ Vorher</h3>
+      <div>
+        <span class="old-filter">Gestern</span>
+        <span class="old-filter active">Heute</span>
+        <span class="old-filter">Morgen</span>
+      </div>
+      <div class="explain bad">Gleicher Stil wie Status-Filter → <b>zwei Button-Zeilen sehen identisch aus</b>.</div>
+    </div>
+    <div class="compare-col new">
+      <h3>✅ Nachher</h3>
+      <div class="day-bar">
+        <span class="day-pill">Gestern</span>
+        <span class="day-pill active">Heute</span>
+        <span class="day-pill">Morgen</span>
+        <span class="day-pill">Mi 25.06</span>
+      </div>
+      <div class="explain good"><b>Schlichte Pills</b> ohne Rand – visuell verschieden von Status-Filtern.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- 4. GERICHT-ZUSAMMENFASSUNG                        -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>④ Gerichtzusammenfassung</h2>
+  <div class="compare">
+    <div class="compare-col old">
+      <h3>❌ Vorher</h3>
+      <div style="background:#fff;border-radius:8px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div style="font-weight:700;font-size:11px;margin-bottom:4px">Zusammenfassung pro Gericht</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span>Cordon bleu mit Pommes</span><b style="color:#2e7d4f">5×</b></div>
+      </div>
+      <div class="explain bad">Eigene Card mit Schatten → <b>wirkt wie klickbares Element</b>.</div>
+    </div>
+    <div class="compare-col new">
+      <h3>✅ Nachher</h3>
+      <div class="dish-summary">
+        <span class="dish"><span class="dcount">5×</span> Cordon bleu</span>
+        <span class="dish-sep">|</span>
+        <span class="dish"><span class="dcount">2×</span> Gemüsepfanne</span>
+      </div>
+      <div class="explain good"><b>Inline-Text</b> – wie eine Zusammenfassungszeile, nicht interaktiv.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- 5. ORDER SOURCE LABEL                             -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>⑤ Bestellquelle</h2>
+  <div class="compare">
+    <div class="compare-col old">
+      <h3>❌ Vorher</h3>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-weight:700;font-size:14px">Josef Rumpfinger</span>
+        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:#dbeafe;color:#1d4ed8">Online</span>
+      </div>
+      <div class="explain bad">Farbiger Badge mit Hintergrund → <b>sieht klickbar aus</b>.</div>
+    </div>
+    <div class="compare-col new">
+      <h3>✅ Nachher</h3>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-weight:700;font-size:14px">Josef Rumpfinger</span>
+        <span class="src src-online">ONLINE</span>
+      </div>
+      <div class="explain good"><b>Nur farbiger Text</b> ohne Hintergrund – eindeutig ein Label.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- VOLLSTÄNDIGE ANSICHT: Mittagstisch                -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section" style="background:var(--bg);padding:8px 10px">
+  <h2>📱 Komplettansicht: Mittagstisch <span class="new">NEU</span></h2>
+
+  <!-- Day pills -->
+  <div class="day-bar" style="margin-bottom:6px">
+    <span class="day-pill">Gestern</span>
+    <span class="day-pill active">Heute</span>
+    <span class="day-pill">Morgen</span>
+    <span class="day-pill">Mi 25.06</span>
+    <span class="day-pill">Do 26.06</span>
+  </div>
+
+  <!-- Stats as flat text -->
+  <div class="info-bar" style="margin-bottom:4px">
+    <span class="info-item"><span class="num green">5</span> Portionen</span>
+    <span class="info-dot"></span>
+    <span class="info-item"><span class="num orange">1</span> offen</span>
+    <span class="info-dot"></span>
+    <span class="info-item"><span class="num">2</span> 📦</span>
+    <span class="info-dot"></span>
+    <span class="info-item"><span class="num">3</span> vor Ort</span>
+    <span class="info-dot"></span>
+    <span class="info-item"><span class="num blue">1</span> 💬</span>
+  </div>
+
+  <!-- Filter as underline tabs -->
+  <div class="filter-tabs" style="margin-bottom:6px">
+    <button class="ftab active">Offen <span class="fc">1</span></button>
+    <button class="ftab">Bestätigt <span class="fc">1</span></button>
+    <button class="ftab">Alle <span class="fc">3</span></button>
+    <button class="ftab">Abgeholt <span class="fc">0</span></button>
+    <button class="ftab">💬 <span class="fc">1</span></button>
+  </div>
+
+  <!-- Dish summary as inline text -->
+  <div class="dish-summary" style="margin-bottom:6px">
+    🍽️ <span class="dish"><span class="dcount">5×</span> Cordon bleu m. Pommes</span>
+    <span class="dish-sep">|</span>
+    <span class="dish"><span class="dcount">2×</span> Gemüsepfanne</span>
+  </div>
+
+  <!-- Order card with clear action buttons -->
+  <div class="order">
+    <div class="order-body">
+      <div class="order-top">
+        <span class="order-name">Josef Rumpfinger</span>
+        <span class="src src-online">ONLINE</span>
+        <span class="status status-new">Neu</span>
+      </div>
+      <div class="order-dish">Cordon bleu mit Pommes oder Kartoffelsalat</div>
+      <div class="order-meta">📞 0171 491 0935 · 🕐 11:45</div>
+    </div>
+    <div class="order-actions">
+      <button class="abtn abtn-ok">✅ Bestätigen</button>
+      <button class="abtn abtn-qty">1×</button>
+      <button class="abtn abtn-x">✕</button>
+    </div>
+  </div>
+
+  <div class="order confirmed">
+    <div class="order-body">
+      <div class="order-top">
+        <span class="order-name">Maria Huber</span>
+        <span class="src src-tel">TELEFON</span>
+        <span class="status status-ok">Bestätigt</span>
+      </div>
+      <div class="order-dish">Cordon bleu mit Pommes</div>
+      <div class="order-meta">📞 0176 234 5678 · 🕐 12:00 <span class="mitnehmen">📦 Mitnehmen</span></div>
+      <div class="order-note">💬 Bitte ohne Salat</div>
+    </div>
+    <div class="order-actions">
+      <button class="abtn abtn-done">📦 Abgeholt</button>
+      <button class="abtn abtn-qty">2×</button>
+      <button class="abtn abtn-x">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- SHOP ANSICHT                                      -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section" style="background:var(--bg);padding:8px 10px">
+  <h2>📱 Komplettansicht: Online-Shop <span class="new">NEU</span></h2>
+
+  <!-- Filter tabs -->
+  <div class="filter-tabs" style="margin-bottom:6px">
+    <button class="ftab active">Zu erledigen <span class="fc">1</span></button>
+    <button class="ftab">Heute <span class="fc">1</span></button>
+    <button class="ftab">Überfällig <span class="fc">0</span></button>
+    <button class="ftab">Historie</button>
+  </div>
+
+  <!-- Stats as flat text -->
+  <div class="info-bar" style="margin-bottom:6px">
+    <span class="info-item"><span class="num green">2</span> Bestellungen</span>
+    <span class="info-dot"></span>
+    <span class="info-item"><span class="num orange">1</span> offen</span>
+    <span class="info-dot"></span>
+    <span class="info-item"><span class="num">€ 21,20</span> Gesamt</span>
+  </div>
+
+  <!-- Slot header (this stays as it is – clearly a group header) -->
+  <div style="background:linear-gradient(90deg,#16a34a,#22c55e);color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;margin:4px 0;display:flex;align-items:center;gap:6px">
+    ⏰ 10:00–12:00 <span style="margin-left:auto;font-size:10px;background:rgba(255,255,255,.3);padding:1px 6px;border-radius:4px">JETZT</span>
+  </div>
+
+  <div class="order">
+    <div class="order-body">
+      <div class="order-top">
+        <span class="order-name">Anna Berger</span>
+        <span class="status status-new">Offen</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:2px">3× Eier · 1× Milch · 2× Brot</div>
+      <div class="order-meta">📅 Heute, 10–12 Uhr · € 12,80</div>
+    </div>
+    <div class="order-actions">
+      <button class="abtn abtn-ok">📦 Packen</button>
+      <button class="abtn abtn-done">✅ Bereit</button>
+      <button class="abtn abtn-x">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════ -->
+<!-- ZUSAMMENFASSUNG                                   -->
+<!-- ═════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>📋 Checkliste aller Änderungen</h2>
+  <div style="font-size:12px;line-height:2">
+    <div>✅ <b>Stats-Leiste</b> → flacher Inline-Text mit Trennpunkten</div>
+    <div>✅ <b>Status-Filter</b> → Unterstrich-Tabs statt Button-Chips</div>
+    <div>✅ <b>Tag-Auswahl</b> → schlichte Pills ohne Rand</div>
+    <div>✅ <b>Gerichtzusammenfassung</b> → Inline-Text statt Card</div>
+    <div>✅ <b>Bestellquelle</b> (Online/Telefon) → nur farbiger Text, kein Badge</div>
+    <div>✅ <b>Status-Badge</b> (Neu/Bestätigt) → flaches Label, klein</div>
+    <div>✅ <b>Shop-Filter</b> → Unterstrich-Tabs</div>
+    <div>✅ <b>Shop-Stats</b> → flacher Inline-Text</div>
+    <div>✅ <b>Mitnehmen-Label</b> → sehr kleiner subtiler Tag</div>
+    <div style="margin-top:8px;padding:8px;background:#eff6ff;border-radius:6px;color:#1e40af">
+      <b>Nur echte Action-Buttons</b> (Bestätigen, Abgeholt, Stornieren, Packen) haben Button-Styling mit Farbe und Schatten.
+    </div>
+  </div>
+</div>
+
+<div style="height:80px"></div>
+
+</body>
+</html>
