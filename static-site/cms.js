@@ -7292,6 +7292,7 @@
         ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
       }
 
+      var _ciPromises=[];
       for(var ci=0;ci<Math.min(mgCols*mgRows,renderItems.length);ci++){
         var col=ci%mgCols, row=Math.floor(ci/mgCols);
         var cx=mgPadX+col*(mgCellW+mgGap);
@@ -7348,29 +7349,33 @@
           else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
           ctx.restore();
           
-          // Custom image overlay
+          // Custom image overlay (collected as promise for async rendering)
           if(pOv.customImg){
-            var ci=new Image();ci.onload=function(){
-              var ciOfc=document.createElement('canvas');ciOfc.width=ci.width;ciOfc.height=ci.height;
-              var cio=ciOfc.getContext('2d');cio.drawImage(ci,0,0);
-              if(cfg.imgFreistellen){
-                try{var id=cio.getImageData(0,0,ciOfc.width,ciOfc.height),d=id.data;
-                var thr=cfg.imgThreshold,fade=30;
-                for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
-                cio.putImageData(id,0,0);}catch(e){}
-              }
-              var ciSc=(pOv.customImgScale||100)/100;
-              var maxCIW=mgCellW-cardPadI*2, maxCIH=imgAreaH-10;
-              var ciScI=Math.min(maxCIW/ciOfc.width,maxCIH/ciOfc.height,cfg.imgMaxScale||3)*ciSc;
-              var ciW=ciOfc.width*ciScI,ciH=ciOfc.height*ciScI;
-              var ciX=cx+mgCellW/2-ciW/2+(pOv.customImgDx||0),ciY=cy+cardPadI+(imgAreaH-ciH)/2+(pOv.customImgDy||0);
-              var ciRotRad=(pOv.customImgRot||0)*Math.PI/180;
-              ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-              ctx.globalAlpha=(pOv.customImgAlpha!=null?pOv.customImgAlpha:100)/100;
-              if(ciRotRad){ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);}
-              else{ctx.drawImage(ciOfc,ciX,ciY,ciW,ciH);}
-              ctx.globalAlpha=1.0;ctx.restore();
-            };ci.src=pOv.customImg;
+            _ciPromises.push((function(_pOv,_cx,_cy,_mgCellW,_imgAreaH,_cardPadI,_mgRad){
+              return new Promise(function(resCI){
+                var ci=new Image();ci.onload=function(){
+                  var ciOfc=document.createElement('canvas');ciOfc.width=ci.width;ciOfc.height=ci.height;
+                  var cio=ciOfc.getContext('2d');cio.drawImage(ci,0,0);
+                  if(cfg.imgFreistellen){
+                    try{var id=cio.getImageData(0,0,ciOfc.width,ciOfc.height),d=id.data;
+                    var thr=cfg.imgThreshold,fade=30;
+                    for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
+                    cio.putImageData(id,0,0);}catch(e){}
+                  }
+                  var ciSc=(_pOv.customImgScale||100)/100;
+                  var maxCIW=_mgCellW-_cardPadI*2, maxCIH=_imgAreaH-10;
+                  var ciScI=Math.min(maxCIW/ciOfc.width,maxCIH/ciOfc.height,cfg.imgMaxScale||3)*ciSc;
+                  var ciW=ciOfc.width*ciScI,ciH=ciOfc.height*ciScI;
+                  var ciX=_cx+_mgCellW/2-ciW/2+(_pOv.customImgDx||0),ciY=_cy+_cardPadI+(_imgAreaH-ciH)/2+(_pOv.customImgDy||0);
+                  var ciRotRad=(_pOv.customImgRot||0)*Math.PI/180;
+                  ctx.save();mgRRect(_cx+2,_cy+2,_mgCellW-4,_imgAreaH,_mgRad);ctx.clip();
+                  ctx.globalAlpha=(_pOv.customImgAlpha!=null?_pOv.customImgAlpha:100)/100;
+                  if(ciRotRad){ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);}
+                  else{ctx.drawImage(ciOfc,ciX,ciY,ciW,ciH);}
+                  ctx.globalAlpha=1.0;ctx.restore();resCI();
+                };ci.onerror=function(){resCI();};ci.src=_pOv.customImg;
+              });
+            })(pOv,cx,cy,mgCellW,imgAreaH,cardPadI,mgRad));
           }
         }
 
@@ -7439,7 +7444,7 @@
       ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
       ctx.textAlign='left';
 
-      logoP.then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
+      Promise.all([logoP].concat(_ciPromises)).then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
       return;
     }
     // ── Papier-Hintergrund (warm beige) ──
@@ -7495,6 +7500,7 @@
       ctx.restore();
     }
     // ── Produktkarten ──
+    var _clCiPromises=[];
     items.forEach(function(item,i){
       if(i>=perPage) return;
       var col=i%cols,row=Math.floor(i/cols);
@@ -7564,6 +7570,28 @@
         ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
         ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
         ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
+      }
+      // Custom image overlay (classic layout)
+      if(pOv.customImg){
+        _clCiPromises.push((function(_pOv,_cx,_cy,_cellW,_cellH,_imgAreaTop,_imgAreaH,_cardPad){
+          return new Promise(function(resCI){
+            var ci=new Image();ci.onload=function(){
+              var ciOfc=_freistellCanvas(ci,cfg);
+              var ciSc=(_pOv.customImgScale||100)/100;
+              var maxCIW=_cellW-_cardPad*2, maxCIH=_imgAreaH*0.88;
+              var ciScI=Math.min(maxCIW/ciOfc.width,maxCIH/ciOfc.height,cfg.imgMaxScale||3)*ciSc;
+              var ciW=ciOfc.width*ciScI,ciH=ciOfc.height*ciScI;
+              var ciX=_cx+_cardPad+maxCIW*0.45-ciW/2+(_pOv.customImgDx||0);
+              var ciY=_imgAreaTop+_imgAreaH*0.5-ciH/2+(_pOv.customImgDy||0);
+              var ciRotRad=(_pOv.customImgRot||0)*Math.PI/180;
+              ctx.save();roundRect(_cx,_cy,_cellW,_cellH,theme.cardRadius);ctx.clip();
+              ctx.globalAlpha=(_pOv.customImgAlpha!=null?_pOv.customImgAlpha:100)/100;
+              if(ciRotRad){ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(-ciRotRad);ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);}
+              else{ctx.drawImage(ciOfc,ciX,ciY,ciW,ciH);}
+              ctx.globalAlpha=1.0;ctx.restore();resCI();
+            };ci.onerror=function(){resCI();};ci.src=_pOv.customImg;
+          });
+        })(pOv,cx,cy,cellW,cellH,imgAreaTop,imgAreaH,cardPad));
       }
       // ── Schräges rotes Preisschild rechts (with override offsets) ──
       var clPDx=pOv.priceDx||0,clPDy=pOv.priceDy||0;
@@ -7638,7 +7666,7 @@
     ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',20,H-24);ctx.textAlign='right';
     ctx.fillText('Dorfladen Oberornau \u00B7 Dorfplatz 1 \u00B7 84419 Obertaufkirchen',W-20,H-24);
     ctx.textAlign='left';
-    logoLoaded.then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
+    Promise.all([logoLoaded].concat(_clCiPromises)).then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
   }
 
   window.cmsShareAktion=function(aktId){
