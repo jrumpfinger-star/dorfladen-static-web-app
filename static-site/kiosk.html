@@ -632,6 +632,8 @@ var K = (function(){
 
   var _mittagDatum = today();
   var _mittagFilter = 'offen'; // Default: Zu bestätigen
+  var _globalUnreadMessages = 0;
+  var _globalTodayNew = 0;
 
   function _hasUnseenComment(o){
     return !!(o.kunde_kommentar && o.status!==2 && !o.kommentar_gelesen);
@@ -713,9 +715,49 @@ var K = (function(){
         updateMittagFilterCounts();
         renderOrders();
         renderStats();
-        updateBadge('mittag', orders.filter(function(o){return o.status===0;}).length);
       })
       .catch(function(){});
+    loadMittagBadge();
+  }
+
+  function loadMittagBadge(){
+    // 1) Today's new orders (status=0) – always for today, regardless of selected day
+    fetch(API+'/lunch-order?datum='+today()+'&status=0')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        _globalTodayNew = (res.success && res.orders) ? res.orders.length : 0;
+        _updateMittagTabBadge();
+      }).catch(function(){});
+    // 2) Unread messages across all dates
+    fetch(API+'/lunch-order?mode=unread_messages')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        _globalUnreadMessages = (res.success) ? (res.unread_count||0) : 0;
+        _updateMittagTabBadge();
+      }).catch(function(){});
+  }
+
+  function _updateMittagTabBadge(){
+    var total = _globalTodayNew + _globalUnreadMessages;
+    var el = document.getElementById('badge-mittag');
+    if(!el) return;
+    if(total>0){
+      var parts = [];
+      if(_globalTodayNew>0) parts.push(_globalTodayNew+' neu');
+      if(_globalUnreadMessages>0) parts.push(_globalUnreadMessages+' 💬');
+      el.textContent = total;
+      el.title = parts.join(', ');
+      el.classList.add('show');
+      // Color: blue if messages, orange if only orders
+      if(_globalUnreadMessages>0){
+        el.style.background = '#3b82f6';
+      } else {
+        el.style.background = '';
+      }
+    } else {
+      el.classList.remove('show');
+      el.style.background = '';
+    }
   }
 
   function renderStats(){

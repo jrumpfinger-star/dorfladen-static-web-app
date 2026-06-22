@@ -288,6 +288,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=200, headers=get_cors_headers(),
                 )
 
+            # Count unread customer messages across all dates (for tab badge)
+            if req.params.get("mode") == "unread_messages":
+                msg_url = (
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+                    f"?$filter=dl_kunde_kommentar ne null"
+                    f" and dl_kunde_kommentar ne ''"
+                    f" and dl_kommentar_gelesen ne true"
+                    f" and dl_status ne {STATUS_STORNIERT}"
+                    f"&$select=dl_mittagsbestellungid"
+                    f"&$top=50"
+                )
+                mr = requests.get(msg_url, headers=headers, timeout=30)
+                msg_count = 0
+                if mr.status_code == 200:
+                    msg_count = len(mr.json().get("value", []))
+                return func.HttpResponse(
+                    json.dumps({"success": True, "unread_count": msg_count}, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+
             if nr_filter and email_filter:
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
