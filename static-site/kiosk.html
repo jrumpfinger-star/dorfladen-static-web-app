@@ -1438,9 +1438,9 @@ var K = (function(){
       var sc = {0:0,1:0,2:0,3:0,4:0};
       g.orders.forEach(function(o){ if(o.status>=0&&o.status<=4) sc[o.status]=(sc[o.status]||0)+1; });
       var badges = [];
-      if(sc[0]) badges.push('<span class="k-slot-badge sb-pack">'+luc('inbox',12)+' '+sc[0]+' Packen</span>');
-      if(sc[1]) badges.push('<span class="k-slot-badge sb-pack">'+luc('package',12)+' '+sc[1]+' Warten</span>');
-      if(sc[2]) badges.push('<span class="k-slot-badge sb-wait">'+luc('bell',12)+' '+sc[2]+' Bereit</span>');
+      if(sc[0]) badges.push('<span class="k-slot-badge sb-pack">'+luc('inbox',12)+' '+sc[0]+' Neu</span>');
+      if(sc[1]) badges.push('<span class="k-slot-badge sb-pack">'+luc('package',12)+' '+sc[1]+' Packen</span>');
+      if(sc[2]) badges.push('<span class="k-slot-badge sb-wait">'+luc('bell',12)+' '+sc[2]+' Warten</span>');
       if(sc[3]) badges.push('<span class="k-slot-badge" style="color:#16a34a">'+luc('check-circle',12)+' '+sc[3]+' Abgeholt</span>');
       if(sc[4]) badges.push('<span class="k-slot-badge sb-overdue">'+luc('x-circle',12)+' '+sc[4]+' Storniert</span>');
       var countLabel = badges.length ? badges.join(' ') : '<span class="k-slot-badge" style="color:#666">'+g.orders.length+' Bestellung'+(g.orders.length!==1?'en':'')+'</span>';
