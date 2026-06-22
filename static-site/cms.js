@@ -5555,31 +5555,41 @@
   function plakatArtOverrideGet(item){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);
     var found=k&&all[k];
-    // Fallback: try old artikelnummer-based key (migration from pre-v1.4.77)
-    if(!found&&item.artikelnummer){
+    // Migration: collect all old keys that belong to this item and merge the richest one
+    var oldKeys=[];
+    // Old artikelnummer-based key
+    if(item.artikelnummer){
       var oldK=(item.artikelnummer||'').trim();
-      if(oldK&&all[oldK]){
-        found=all[oldK];
-        all[k]=found;delete all[oldK];
-        console.log('[CMS] Migrated plakat override from old key "'+oldK+'" to "'+k+'"');
+      if(oldK&&oldK!==k&&all[oldK]) oldKeys.push(oldK);
+    }
+    // Old EAN-based keys (match via _artikelCache strichcode→produkt)
+    if(_artikelCache&&_artikelCache.length){
+      var allKeys=Object.keys(all);
+      for(var ki=0;ki<allKeys.length;ki++){
+        var ck=allKeys[ki];
+        if(ck===k||oldKeys.indexOf(ck)>=0)continue;
+        if(all[ck]&&/^\d{4,}$/.test(ck)){
+          var match=_artikelCache.find(function(a){return a.sc===ck&&a.b&&a.b.trim().toLowerCase().replace(/\s+/g,'_')===k;});
+          if(match) oldKeys.push(ck);
+        }
       }
     }
-    // Fallback 2: search all numeric keys (old EAN-based) that have customImg data
-    // and haven't been claimed yet – match via _artikelCache strichcode→produkt
-    if(!found&&_artikelCache&&_artikelCache.length){
-      var keys=Object.keys(all);
-      for(var ki=0;ki<keys.length;ki++){
-        var ck=keys[ki];
-        if(all[ck]&&all[ck].customImg&&/^\d{4,}$/.test(ck)){
-          // Find if this EAN belongs to current item's product
-          var match=_artikelCache.find(function(a){return a.sc===ck&&a.b&&a.b.trim().toLowerCase().replace(/\s+/g,'_')===k;});
-          if(match){
-            found=all[ck];
-            all[k]=found;delete all[ck];
-            console.log('[CMS] Migrated plakat override from EAN key "'+ck+'" to "'+k+'"');
-            break;
-          }
+    // Merge: pick the override with the most data (prefer one with customImg)
+    if(oldKeys.length){
+      var best=found||null;
+      for(var oi=0;oi<oldKeys.length;oi++){
+        var candidate=all[oldKeys[oi]];
+        if(!best||(candidate.customImg&&!best.customImg)){best=candidate;}
+      }
+      // Merge best into target key, clean up old keys
+      if(best){
+        if(!found||(!found.customImg&&best.customImg)){
+          all[k]=best;found=best;
         }
+      }
+      for(var di=0;di<oldKeys.length;di++){
+        console.log('[CMS] Migrated plakat override from old key "'+oldKeys[di]+'" to "'+k+'"');
+        delete all[oldKeys[di]];
       }
     }
     return found?_clone(found):null;
