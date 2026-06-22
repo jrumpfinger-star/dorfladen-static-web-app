@@ -1636,16 +1636,21 @@
 
   function fmtDate(d){return WOCHENTAGE[d.getDay()]+', '+d.getDate()+'. '+MONATE[d.getMonth()];}
 
-  function renderPost(post){
-    document.getElementById('tp-title').textContent=post.titel||'Heute im Dorfladen';
+  var _isTomorrow=false;
+
+  function renderPost(post,isTomorrow){
+    _isTomorrow=!!isTomorrow;
+    var titlePrefix=_isTomorrow?'Morgen':'Heute';
+    document.getElementById('tp-title').textContent=post.titel||(titlePrefix+' im Dorfladen');
+    if(_isTomorrow&&post.titel){document.getElementById('tp-title').textContent='Morgen: '+post.titel.replace(/^Heute/i,'').replace(/^\s*[:–-]\s*/,'');}
     var d=new Date(post.datum);
-    document.getElementById('tp-datum').textContent=fmtDate(d);
+    document.getElementById('tp-datum').textContent=(_isTomorrow?'Vorschau – ':'')+fmtDate(d);
 
     var items=post.items||[];
     document.getElementById('tp-badge').textContent=items.length;
 
     var nowH=new Date().getHours();
-    var lunchOver=nowH>=13;
+    var lunchOver=_isTomorrow?false:nowH>=13;
 
     var mittagessen=lunchOver?[]:items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
     var theke=items.filter(function(i){return lunchOver?true:(i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
@@ -1659,7 +1664,7 @@
 
     if(mittagessen.length){
       html+='<div class="tp-section"><div class="tp-section-title">🍽️ Mittagessen</div>';
-      mittagessen.forEach(function(it){html+=itemCard(it,true);});
+      mittagessen.forEach(function(it){html+=itemCard(it,!_isTomorrow);});
       html+='</div>';
     }
 
@@ -1676,10 +1681,12 @@
       html+='</div>';
     }
 
-    html+='<div class="tp-cta">';
-    if(mittagessen.length){html+='<a href="/mittagstisch-bestellen?heute=1" class="tp-cta-shop" style="flex:1 1 100%">🍽️ Mittagessen bestellen</a>';}
-    else{html+='<a href="/shop" class="tp-cta-shop" style="flex:1 1 100%">🛒 Jetzt bestellen</a>';}
-    html+='</div>';
+    if(!_isTomorrow){
+      html+='<div class="tp-cta">';
+      if(mittagessen.length){html+='<a href="/mittagstisch-bestellen?heute=1" class="tp-cta-shop" style="flex:1 1 100%">🍽️ Mittagessen bestellen</a>';}
+      else{html+='<a href="/shop" class="tp-cta-shop" style="flex:1 1 100%">🛒 Jetzt bestellen</a>';}
+      html+='</div>';
+    }
 
     document.getElementById('tp-body').innerHTML=html;
     return visibleItems;
@@ -1708,7 +1715,7 @@
   fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
     if(!res.success||!res.post)return;
     var post=res.post;
-    var count=renderPost(post);
+    var count=renderPost(post,res.is_tomorrow);
     if(!count)return;
     fab.style.display='flex';
     fab.classList.add('pulse');

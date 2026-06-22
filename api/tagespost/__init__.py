@@ -3,7 +3,7 @@ import json
 import os
 import msal
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # ---------- config ----------
 TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
@@ -97,15 +97,40 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if not posts:
         return ok({"success": True, "post": None})
 
-    # Find the newest post from today
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # CET/CEST timezone (UTC+1 / UTC+2)
+    try:
+        from zoneinfo import ZoneInfo
+        cet = ZoneInfo("Europe/Berlin")
+    except:
+        cet = timezone(timedelta(hours=2))  # fallback CEST
+
+    now_local = datetime.now(cet)
+    today = now_local.strftime("%Y-%m-%d")
+    tomorrow = (now_local + timedelta(days=1)).strftime("%Y-%m-%d")
+    current_hour = now_local.hour
+
+    # Find posts for today
     today_posts = [p for p in posts if p.get("datum", "")[:10] == today]
 
+    # After 18:00 (store closed), prefer tomorrow's post if available
+    if current_hour >= 18:
+        tomorrow_posts = [p for p in posts if p.get("datum", "")[:10] == tomorrow]
+        if tomorrow_posts:
+            tomorrow_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
+            post = tomorrow_posts[0]
+            return ok({"success": True, "post": post, "is_tomorrow": True})
+
     if not today_posts:
+        # No post for today – check if tomorrow's post exists
+        tomorrow_posts = [p for p in posts if p.get("datum", "")[:10] == tomorrow]
+        if tomorrow_posts:
+            tomorrow_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
+            post = tomorrow_posts[0]
+            return ok({"success": True, "post": post, "is_tomorrow": True})
         return ok({"success": True, "post": None})
 
     # Return the newest post from today
     today_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
     post = today_posts[0]
 
-    return ok({"success": True, "post": post})
+    return ok({"success": True, "post": post, "is_tomorrow": False})
