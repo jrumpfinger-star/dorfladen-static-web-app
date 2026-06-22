@@ -249,8 +249,8 @@
       // Am Wochenende zeigt API nächste Woche → kein Tag ist vergangen
       var isToday=!isWeekend&&i===todayIdx;
       var isPast=!isWeekend&&i<todayIdx;
-      // Bestellschluss: heute bis 10:00, zukünftige Tage erlaubt, vergangene nicht
-      var canOrder=isToday?(currentHour<10):(!isPast);
+      // Bestellschluss: heute bis 10:30, zukünftige Tage erlaubt, vergangene nicht
+      var canOrder=isToday?(currentHour<10||(currentHour===10&&new Date().getMinutes()<30)):(!isPast);
       var dayData=menu[i]||[];
       var dishes=dayData.filter?dayData.filter(function(d){return d.name&&d.name.trim();}):dayData;
       var notice='';

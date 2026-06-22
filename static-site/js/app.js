@@ -412,8 +412,8 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
         // Am Wochenende zeigt API nächste Woche → kein Tag ist vergangen
         var isToday=!isWeekend&&dc===todayDc;
         var isPast=!isWeekend&&dc<todayDc;
-        // Bestellschluss: heute bis 10:00, zukünftige Tage erlaubt, vergangene nicht
-        var canOrder=isToday?(currentHour<10):(!isPast);
+        // Bestellschluss: heute bis 10:30, zukünftige Tage erlaubt, vergangene nicht
+        var canOrder=isToday?(currentHour<10||(currentHour===10&&new Date().getMinutes()<30)):(!isPast);
         var notice='';
         dayMeals.forEach(function(g){if(g.beschreibung&&!notice) notice=g.beschreibung;});
         var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim()&&g.preis;});
