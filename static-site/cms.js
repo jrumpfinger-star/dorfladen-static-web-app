@@ -7,7 +7,10 @@
   function _clone(o){return JSON.parse(JSON.stringify(o));}
   function _dvSave(name,wert){
     return fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,wert:wert})})
-      .then(function(r){return r.json();});
+      .then(function(r){
+        if(!r.ok) return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t.substring(0,200));});
+        return r.json();
+      });
   }
 
   // --- CMS Password Gate ---
@@ -4986,14 +4989,12 @@
       if(!customImgInput.files||!customImgInput.files[0])return;
       var reader=new FileReader();
       reader.onload=function(e){
-        var img=new Image();
-        img.onload=function(){
-          ov.customImg=e.target.result;
+        cmsCompressImage(e.target.result, 400, 400, function(compressed){
+          ov.customImg=compressed;
           if(!ov.customImgDx)ov.customImgDx=0;if(!ov.customImgDy)ov.customImgDy=0;
           if(!ov.customImgScale)ov.customImgScale=100;
           renderCard();autoSave();
-        };
-        img.src=e.target.result;
+        });
       };
       reader.readAsDataURL(customImgInput.files[0]);
       customImgInput.value='';
@@ -5455,14 +5456,25 @@
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
     all[k]=_clone(ov);
     _plakatArtOverrides=all;
+    var jsonStr=JSON.stringify(all);
+    if(jsonStr.length>900000){
+      toast('Kachel-Daten zu gro\u00df zum Speichern ('+Math.round(jsonStr.length/1024)+' KB). Bitte Bild entfernen oder kleineres Bild verwenden.','error');
+      return Promise.reject(new Error('payload too large'));
+    }
     return _dvSave('plakat_article_overrides',all)
-      .then(function(r){return r.json();}).catch(function(){});
+      .then(function(res){
+        if(res&&!res.success){toast('Kachel-Speichern fehlgeschlagen: '+(res.error||'Unbekannt'),'error');}
+        return res;
+      }).catch(function(e){
+        toast('Kachel-Speichern fehlgeschlagen: '+(e.message||'Netzwerk-Fehler'),'error');
+      });
   }
   function plakatArtOverrideDelete(item){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return;
     delete all[k];_plakatArtOverrides=all;
-    _dvSave('plakat_article_overrides',all)
-      .then(function(r){return r.json();}).catch(function(){});
+    _dvSave('plakat_article_overrides',all).catch(function(e){
+      toast('Kachel-L\u00f6schen fehlgeschlagen: '+(e.message||'Netzwerk-Fehler'),'error');
+    });
   }
 
   function generateEinzelflyer(item,data,cfgOverride){
