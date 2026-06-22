@@ -473,6 +473,44 @@ test.describe('Kiosk – Nachrichten-Gelesen', () => {
     }
   });
 
+  test('API mode=unread_messages liefert unread_count', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/lunch-order?mode=unread_messages`);
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(typeof data.unread_count).toBe('number');
+    expect(data.unread_count).toBeGreaterThanOrEqual(0);
+  });
+
+  test('Tab-Badge zeigt Summe aus neuen Bestellungen (heute) + ungelesene Nachrichten', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.click('.k-tab[data-tab="mittag"]');
+    // Wait for loadMittagBadge to complete
+    await page.waitForTimeout(3000);
+
+    // Get today's new orders via API
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayRes = await page.request.get(`${BASE}/api/lunch-order?datum=${todayStr}&status=0`);
+    const todayData = await todayRes.json();
+    const todayNew = todayData.success ? (todayData.orders || []).length : 0;
+
+    // Get unread messages via API
+    const msgRes = await page.request.get(`${BASE}/api/lunch-order?mode=unread_messages`);
+    const msgData = await msgRes.json();
+    const unreadMsgs = msgData.success ? (msgData.unread_count || 0) : 0;
+
+    const expectedTotal = todayNew + unreadMsgs;
+    const badge = page.locator('#badge-mittag');
+
+    if (expectedTotal > 0) {
+      await expect(badge).toHaveClass(/show/);
+      const badgeText = await badge.textContent();
+      expect(parseInt(badgeText)).toBe(expectedTotal);
+    } else {
+      await expect(badge).not.toHaveClass(/show/);
+    }
+  });
+
   test('Klick auf Badge sendet PATCH mit kommentar_gelesen: true', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.click('.k-tab[data-tab="mittag"]');
@@ -501,5 +539,27 @@ test.describe('Kiosk – Nachrichten-Gelesen', () => {
       });
       expect(stillUnread).toBe(0);
     }
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Kompakte Buttons (Mobile)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Kompakte Buttons', () => {
+
+  test('k-btn-sm Buttons sind ≤32px hoch', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(2000);
+    const smBtns = page.locator('.k-btn-sm');
+    const count = await smBtns.count();
+    if (count === 0) {
+      test.skip(true, 'Keine k-btn-sm sichtbar');
+      return;
+    }
+    const firstBtn = smBtns.first();
+    const minHeight = await firstBtn.evaluate(el => parseFloat(getComputedStyle(el).minHeight));
+    expect(minHeight).toBeLessThanOrEqual(32);
   });
 });

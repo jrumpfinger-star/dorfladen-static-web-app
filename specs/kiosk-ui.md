@@ -118,10 +118,32 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-25c: "Ausgeben" bei Status "Bereit" – keine Verwechslung mit Status-Anzeige
 - [x] AK-UI-25d: "Ausgeben" nur sichtbar wenn Bestellung gepackt (`gepackt: true`), sonst "Packen" anbieten
 
+### Tab-Badge: Neue Bestellungen + Nachrichten
+- [x] Mittagstisch-Tab-Badge zeigt Summe aus neuen Bestellungen (heute, Status 0) + ungelesene Nachrichten (tagesübergreifend)
+- [x] Neue Bestellungen werden IMMER für heute gezählt (unabhängig vom gewählten Tag)
+- [x] Ungelesene Nachrichten werden über alle Tage gezählt (neuer API-Modus `mode=unread_messages`)
+- [x] Badge wird blau eingefärbt wenn Nachrichten vorhanden, sonst orange
+- [x] Badge-Tooltip zeigt Aufschlüsselung (z.B. "1 neu, 2 💬")
+
+### Kompakte Buttons (Mobile)
+- [x] Action-Buttons (`k-btn-sm`) sind kleiner: min-height 32px, padding 4px 8px, font-size 11px
+- [x] Mengenanzeige (`qty-display`) kompakter: 20px statt 24px
+- [x] Action-Spalte weniger Padding/Gap
+
+### Info vs. Actions Design-Prinzip (Mockup erstellt, noch nicht implementiert)
+- [ ] Stats-Leiste als flacher Inline-Text mit Trennpunkten (nicht als Card/Button)
+- [ ] Status-Filter als Unterstrich-Tabs (nicht als Button-Chips)
+- [ ] Tag-Auswahl als schlichte Pills ohne Rand
+- [ ] Gerichtzusammenfassung als Inline-Text (nicht als Card)
+- [ ] Bestellquelle (Online/Telefon) als farbiger Text ohne Hintergrund
+
+## API-Endpunkte
+- `GET /api/lunch-order?mode=unread_messages` – Anzahl ungelesener Kundennachrichten (tagesübergreifend)
+
 ## Nicht-Ziele
 - Keine Änderung am Stammkunden-Tab-Layout (nur Formular)
 
 ## Status
 - [x] Spec reviewed
 - [x] Implementierung
-- [x] Validierung (2026-06-21)
+- [ ] Validierung (Tab-Badge + kompakte Buttons: 2026-06-22)
