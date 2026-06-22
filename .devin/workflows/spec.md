@@ -76,6 +76,11 @@ Nach der Implementierung:
 - Markiere erledigte Kriterien in der Spec als `[x]`
 - Aktualisiere den Status-Bereich
 - Falls ein Kriterium nicht erfüllt → fixe es bevor du weitermachst
+- **Erkannte Fehler/Learnings IMMER in die Spec zurückschreiben:**
+  - Bug gefunden → Ursache + Fix in der Spec dokumentieren (z.B. "OData-Filter braucht Quotes für Strings")
+  - Neues Verhalten entdeckt → Anforderung in der Spec ergänzen
+  - Test-Erkenntnis → Akzeptanzkriterium präzisieren oder hinzufügen
+  - Die Spec ist das lebende Dokument – sie muss immer den aktuellen Stand widerspiegeln
 
 ### 7. Commit
 Commit-Message-Format: `feat(<bereich>): <beschreibung> [spec: <spec-datei>]`
@@ -87,5 +92,6 @@ Commit-Message-Format: `feat(<bereich>): <beschreibung> [spec: <spec-datei>]`
 - [ ] Akzeptanzkriterien definiert?
 - [ ] Playwright-Tests mit AK-Referenz geschrieben?
 - [ ] TESTCASES.md aktualisiert (Testcases + Testlauf + ggf. Fehler-Log)?
-- [ ] Tests ausgeführt und bestanden?
+- [ ] Tests ausgeführt (via `test-live.ps1`, nie localhost!) und bestanden?
 - [ ] Spec-Checkboxen aktualisiert?
+- [ ] Erkannte Fehler/Learnings in Spec dokumentiert?
