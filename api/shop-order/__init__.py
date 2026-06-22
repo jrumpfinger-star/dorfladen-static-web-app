@@ -4,13 +4,18 @@ POST: Place a new order (requires JWT)
 GET: Fetch orders (customer: own orders; CMS: all orders)
 PATCH: Update order status (CMS only)
 
-Bestellschluss: 16:00 Uhr → Abholung nächster Tag vormittags
-Nach 16 Uhr → Abholung übernächster Tag vormittags
+Abholtermin: Wird vom Frontend als Slot (Datum + Zeitfenster) mitgesendet.
+Die Slots basieren auf den Öffnungszeiten aus /api/hours.
+Fallback: _calc_abholdatum() mit BESTELLSCHLUSS_HOUR (nur für ältere Clients).
+Mindestbestellwert: Aus CMS-Config (dl_seiteninhalt, Schlüssel 'shop_mindestbestellwert'),
+Fallback MINDESTBESTELLWERT_DEFAULT.
 """
 import azure.functions as func
 import json
 import os
+import sys
 import uuid
+import logging
 import msal
 import requests
 import jwt
@@ -30,8 +35,23 @@ STATUS_ABGEHOLT = 3
 STATUS_STORNIERT = 4
 
 STATUS_LABELS = {0: "Neu", 1: "In Bearbeitung", 2: "Abholbereit", 3: "Abgeholt", 4: "Storniert"}
-BESTELLSCHLUSS_HOUR = 16  # 16:00 Uhr
-MINDESTBESTELLWERT = 10.0  # Mindestbestellwert in Euro
+BESTELLSCHLUSS_HOUR = 16  # Fallback, nur verwendet wenn Frontend keinen Slot sendet
+MINDESTBESTELLWERT_DEFAULT = 10.0  # Fallback – wird aus CMS-Config überschrieben
+
+
+def _load_mindestbestellwert(base_url, headers):
+    """Load shop_mindestbestellwert from CMS-Config (dl_seiteninhalt). Returns float."""
+    try:
+        url = f"{base_url}/api/data/v9.2/dl_seiteninhalts?$filter=dl_schluessel eq 'shop_mindestbestellwert'&$select=dl_wert&$top=1"
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            items = r.json().get("value", [])
+            if items:
+                val = items[0].get("dl_wert", "")
+                return float(val)
+    except Exception as e:
+        logging.debug(f"[shop-order] CMS-Config load failed: {e}")
+    return MINDESTBESTELLWERT_DEFAULT
 
 
 def get_token():
@@ -77,37 +97,107 @@ def _headers(token):
 
 
 def _verify_jwt(req):
-    """Extract and verify JWT from Authorization header."""
-    auth = req.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
+    """Extract and verify JWT from X-Shop-Token header.
+    Note: Azure SWA replaces the Authorization header with its own internal token,
+    so we use a custom header instead.
+    """
+    token_str = req.headers.get("X-Shop-Token", "")
+    if not token_str:
+        # Fallback: try Authorization header (for local dev)
+        auth = req.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            token_str = auth[7:]
+    if not token_str:
         return None
     try:
-        return jwt.decode(auth[7:], JWT_SECRET, algorithms=["HS256"])
-    except:
+        return jwt.decode(token_str, JWT_SECRET, algorithms=["HS256"])
+    except Exception as e:
+        logging.error(f"JWT verify failed: {type(e).__name__}: {e}")
         return None
+
+
+
+def _ostern(year):
+    """Gauss-Osterformel: Ostersonntag berechnen."""
+    a = year % 19
+    b, c = divmod(year, 100)
+    d, e = divmod(b, 4)
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = ((h + l - 7 * m + 114) % 31) + 1
+    return datetime(year, month, day)
+
+
+def _bayern_feiertage(year):
+    """Alle gesetzlichen Feiertage in Bayern für ein Jahr."""
+    o = _ostern(year)
+    feiertage = [
+        datetime(year, 1, 1),    # Neujahr
+        datetime(year, 1, 6),    # Hl. Drei Könige
+        o + timedelta(days=-2),  # Karfreitag
+        o + timedelta(days=1),   # Ostermontag
+        datetime(year, 5, 1),    # Tag der Arbeit
+        o + timedelta(days=39),  # Christi Himmelfahrt
+        o + timedelta(days=50),  # Pfingstmontag
+        o + timedelta(days=60),  # Fronleichnam
+        datetime(year, 8, 15),   # Mariä Himmelfahrt
+        datetime(year, 10, 3),   # Tag der dt. Einheit
+        datetime(year, 11, 1),   # Allerheiligen
+        datetime(year, 12, 25),  # 1. Weihnachtstag
+        datetime(year, 12, 26),  # 2. Weihnachtstag
+    ]
+    return {d.strftime("%Y-%m-%d") for d in feiertage}
+
+
+_feiertag_cache = {}
+
+def _is_feiertag(d):
+    """Prüft ob ein Datum ein bayerischer Feiertag ist."""
+    y = d.year
+    if y not in _feiertag_cache:
+        _feiertag_cache[y] = _bayern_feiertage(y)
+    return d.strftime("%Y-%m-%d") in _feiertag_cache[y]
+
+
+def _is_closed(d):
+    """Prüft ob der Laden an diesem Tag geschlossen ist (Sonntag oder Feiertag)."""
+    return d.weekday() == 6 or _is_feiertag(d)
 
 
 def _calc_abholdatum():
     """Calculate pickup date based on order time.
     Before 16:00 → next business day morning
     After 16:00 → day after next business day morning
-    Skip Sundays (Dorfladen closed)
+    Skip Sundays and Bavarian public holidays
     """
     now = datetime.utcnow() + timedelta(hours=2)  # CET/CEST approximation
     hour = now.hour
 
     if hour < BESTELLSCHLUSS_HOUR:
-        # Before cutoff: pickup tomorrow
         abhol = now + timedelta(days=1)
     else:
-        # After cutoff: pickup day after tomorrow
         abhol = now + timedelta(days=2)
 
-    # Skip Sunday (6 = Sunday)
-    if abhol.weekday() == 6:
+    # Skip Sundays and Feiertage
+    while _is_closed(abhol):
         abhol += timedelta(days=1)
 
     return abhol.strftime("%Y-%m-%d")
+
+
+def _parse_zeitslot(raw):
+    """Parse dl_abhol_zeitslot JSON string into dict, with fallback."""
+    if not raw:
+        return {"period": "vm", "label": "Vormittag", "von": "", "bis": ""}
+    try:
+        return json.loads(raw)
+    except Exception:
+        return {"period": "vm", "label": "Vormittag", "von": "", "bis": ""}
 
 
 def _generate_bestellnummer():
@@ -135,6 +225,7 @@ def _handle_post(req, dv_token, base_url, headers):
 
     positionen = body.get("positionen", [])
     anmerkungen = (body.get("anmerkungen") or "").strip()
+    abholslot = body.get("abholslot")  # {datum, period, label, abhol_von, abhol_bis}
 
     if not positionen:
         return func.HttpResponse(
@@ -176,16 +267,51 @@ def _handle_post(req, dv_token, base_url, headers):
             status_code=400, headers=get_cors_headers()
         )
 
-    # Mindestbestellwert prüfen
-    if gesamtsumme < MINDESTBESTELLWERT:
+    # Mindestbestellwert prüfen (aus CMS-Config oder Default)
+    mindestbestellwert = _load_mindestbestellwert(base_url, headers)
+    if gesamtsumme < mindestbestellwert:
         return func.HttpResponse(
-            json.dumps({"success": False, "error": f"Der Mindestbestellwert beträgt {MINDESTBESTELLWERT:.2f} €. Aktueller Warenkorbwert: {gesamtsumme:.2f} €.", "mindestbestellwert": MINDESTBESTELLWERT, "aktuell": round(gesamtsumme, 2)}, ensure_ascii=False),
+            json.dumps({"success": False, "error": f"Der Mindestbestellwert beträgt {mindestbestellwert:.2f} €. Aktueller Warenkorbwert: {gesamtsumme:.2f} €.", "mindestbestellwert": mindestbestellwert, "aktuell": round(gesamtsumme, 2)}, ensure_ascii=False),
             status_code=400, headers=get_cors_headers()
         )
 
     bestellnummer = _generate_bestellnummer()
-    abholdatum = _calc_abholdatum()
-    now_str = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
+    now_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Abholslot: vom Kunden gewählt, Fallback auf altes System
+    if abholslot and isinstance(abholslot, dict) and abholslot.get("datum"):
+        abholdatum = abholslot["datum"]
+        abhol_period = abholslot.get("period", "vm")
+        abhol_label = abholslot.get("label", "Vormittag")
+        abhol_von = abholslot.get("abhol_von", "")
+        abhol_bis = abholslot.get("abhol_bis", "")
+        abhol_display = f"Abholung: {abholdatum} {abhol_label} ({abhol_von}–{abhol_bis} Uhr)"
+    else:
+        abholdatum = _calc_abholdatum()
+        abhol_period = "vm"
+        abhol_label = "Vormittag"
+        abhol_von = "07:30"
+        abhol_bis = "14:00"
+        abhol_display = f"Abholung: {abholdatum} vormittags"
+
+    # Load customer IBAN + Kontoinhaber for Beipackzettel
+    iban_masked = ""
+    kontoinhaber = ""
+    try:
+        import base64
+        cust_email = user["email"]
+        cust_url = f"{base_url}/api/data/v9.2/dl_shopkundes?$filter=dl_email eq '{cust_email}'&$select=dl_iban_encrypted,dl_kontoinhaber&$top=1"
+        cr = requests.get(cust_url, headers=headers, timeout=15)
+        if cr.status_code == 200:
+            cust_items = cr.json().get("value", [])
+            if cust_items:
+                kontoinhaber = cust_items[0].get("dl_kontoinhaber", "")
+                enc_iban = cust_items[0].get("dl_iban_encrypted", "")
+                if enc_iban and enc_iban.startswith("ENC:"):
+                    raw_iban = base64.b64decode(enc_iban[4:]).decode()
+                    iban_masked = raw_iban[:4] + " **** **** **** " + raw_iban[-4:] if len(raw_iban) >= 8 else raw_iban
+    except Exception as e:
+        logging.warning(f"[shop-order] Could not load customer IBAN: {e}")
 
     payload = {
         "dl_bestellnummer": bestellnummer,
@@ -194,17 +320,122 @@ def _handle_post(req, dv_token, base_url, headers):
         "dl_kunde_id": user["sub"],
         "dl_bestelldatum": now_str,
         "dl_abholdatum": abholdatum,
+        "dl_abhol_zeitslot": json.dumps({"period": abhol_period, "label": abhol_label, "von": abhol_von, "bis": abhol_bis}, ensure_ascii=False),
         "dl_status": STATUS_NEU,
         "dl_gesamtsumme": round(gesamtsumme, 2),
         "dl_anmerkungen": anmerkungen,
-        "dl_positionen_json": json.dumps(clean_positionen, ensure_ascii=False)
+        "dl_positionen_json": json.dumps(clean_positionen, ensure_ascii=False),
     }
+    # IBAN/Kontoinhaber: nur setzen wenn Felder in Dataverse existieren
+    # Werden vorerst im Kundenstamm (dl_shopkundes) abgerufen statt in der Bestellung gespeichert
+
+    logging.info(f"[shop-order] POST payload keys: {list(payload.keys())}")
+    logging.info(f"[shop-order] POST payload: {json.dumps(payload, ensure_ascii=False, default=str)[:2000]}")
 
     try:
         post_headers = {**headers, "Prefer": "return=representation"}
         r = requests.post(f"{base_url}/api/data/v9.2/{ENTITY_SET}", headers=post_headers, json=payload, timeout=30)
-        if r.status_code in (200, 201):
-            record = r.json()
+        if r.status_code in (200, 201, 204):
+            # Send confirmation email (best-effort, direct import)
+            try:
+                api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if api_dir not in sys.path:
+                    sys.path.insert(0, api_dir)
+                from importlib import import_module
+                notify_mod = import_module("shop-notify")
+                ci = notify_mod.get_contact_info()
+                laden_name = ci["name"]
+                kunde_name = user.get("name", "")
+                anrede = f"Liebe/r {kunde_name}" if kunde_name else "Liebe Kundin, lieber Kunde"
+                slot_display = f"{abhol_label} ({abhol_von}–{abhol_bis} Uhr)" if abhol_von else abhol_label
+                # Format date to German dd.mm.yyyy
+                abholdatum_de = abholdatum
+                try:
+                    dp = abholdatum[:10].split("-")
+                    if len(dp) == 3:
+                        abholdatum_de = f"{dp[2]}.{dp[1]}.{dp[0]}"
+                except Exception:
+                    pass
+                zahlungsart = "Lastschrift" if iban_masked else "Bar bei Abholung"
+                email_subject = f"{laden_name} – Bestellbestätigung {bestellnummer}"
+                zahlung_text = zahlungsart
+                if iban_masked:
+                    zahlung_text += f" ({iban_masked})"
+                email_body = (
+                    f"{anrede},\n\n"
+                    f"vielen Dank für Ihre Bestellung! Wir haben folgende Bestellung erhalten "
+                    f"und beginnen in Kürze mit der Zusammenstellung.\n\n"
+                    f"[info:clipboard-list] Bestellnummer: {bestellnummer}\n"
+                    f"[info:calendar] Abholung: {abholdatum_de}, {slot_display}\n"
+                    f"[info:map-pin] Ort: {laden_name}, {ci['adresse']}\n"
+                    f"[info:credit-card] Zahlung: {zahlung_text}\n"
+                )
+                if anmerkungen:
+                    email_body += f"\n[info:message-square] Ihre Anmerkung: {anmerkungen}\n"
+                email_body += (
+                    f"\nSie erhalten eine weitere E-Mail, sobald Ihre Bestellung zur "
+                    f"Abholung bereitsteht.\n\n"
+                    f"[warn] Bitte holen Sie Ihre Bestellung zum gewählten Abholtermin ab. "
+                    f"Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, "
+                    f"wird in Rechnung gestellt.\n\n"
+                    f"Bei Fragen erreichen Sie uns unter {ci['telefon']} oder "
+                    f"per E-Mail an {ci['email']}.\n\n"
+                    f"Herzliche Grüße\n"
+                    f"Ihr {laden_name}-Team"
+                )
+                # Build positions table
+                def _fmt_price(v):
+                    try:
+                        return f"{float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
+                    except (ValueError, TypeError):
+                        return ""
+                rows = ""
+                for p in clean_positionen:
+                    rows += (
+                        f'<tr>'
+                        f'<td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;color:#1f2937">{p.get("bezeichnung","")}</td>'
+                        f'<td style="padding:8px 6px;border-bottom:1px solid #f3f4f6;text-align:center;color:#6b7280">{p.get("menge","")} {p.get("einheit","")}</td>'
+                        f'<td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#1f2937;white-space:nowrap">{_fmt_price(p.get("positionspreis",0))}</td>'
+                        f'</tr>'
+                    )
+                positions_html = (
+                    f'<div style="margin-top:16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">'
+                    f'<div style="background:#f0fdf4;padding:10px 14px;font-size:12px;font-weight:700;color:#166534;border-bottom:1px solid #e5e7eb">'
+                    f'{notify_mod._icon("clipboard-list", "#166534", 14)} Ihre Bestellung im Überblick</div>'
+                    f'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+                    f'<thead><tr style="background:#f9fafb">'
+                    f'<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6b7280">Artikel</th>'
+                    f'<th style="padding:8px 6px;text-align:center;font-size:11px;font-weight:600;color:#6b7280">Menge</th>'
+                    f'<th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6b7280">Preis</th>'
+                    f'</tr></thead>'
+                    f'<tbody>{rows}</tbody>'
+                    f'<tfoot><tr style="background:#f0fdf4">'
+                    f'<td colspan="2" style="padding:10px;font-weight:700;color:#166534;font-size:14px">Gesamt (ca.)</td>'
+                    f'<td style="padding:10px;text-align:right;font-weight:700;color:#166534;font-size:14px">{_fmt_price(gesamtsumme)}</td>'
+                    f'</tr></tfoot>'
+                    f'</table></div>'
+                )
+                notify_mod.send_email(user["email"], kunde_name, email_subject, email_body, positions_html)
+                logging.info(f"[shop-order] Confirmation email sent to {user['email']}")
+            except Exception as ne:
+                logging.warning(f"[shop-order] Confirmation email failed (non-blocking): {ne}")
+
+            # Send push notification to customer (best-effort)
+            try:
+                push_payload = {
+                    "title": "✅ Bestellung bestätigt",
+                    "message": f"Ihre Bestellung {bestellnummer} wurde aufgenommen. Abholung: {abhol_display}.",
+                    "url": "/shop.html",
+                    "target_email": user["email"],
+                    "tag": f"order-{bestellnummer}",
+                }
+                swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+                internal_url = f"{protocol}://{swa_host}/api/push-send"
+                requests.post(internal_url, json=push_payload, timeout=10)
+            except Exception:
+                pass
+
             return func.HttpResponse(
                 json.dumps({
                     "success": True,
@@ -212,24 +443,16 @@ def _handle_post(req, dv_token, base_url, headers):
                     "abholdatum": abholdatum,
                     "gesamtsumme": round(gesamtsumme, 2),
                     "positionen": len(clean_positionen),
-                    "message": f"Bestellung {bestellnummer} aufgegeben! Abholung am {abholdatum} vormittags."
-                }, ensure_ascii=False),
-                status_code=201, headers=get_cors_headers()
-            )
-        elif r.status_code == 204:
-            return func.HttpResponse(
-                json.dumps({
-                    "success": True,
-                    "bestellnummer": bestellnummer,
-                    "abholdatum": abholdatum,
-                    "gesamtsumme": round(gesamtsumme, 2),
-                    "message": f"Bestellung {bestellnummer} aufgegeben!"
+                    "abhol_display": abhol_display,
+                    "message": f"Bestellung {bestellnummer} aufgegeben! {abhol_display}"
                 }, ensure_ascii=False),
                 status_code=201, headers=get_cors_headers()
             )
         else:
+            detail = r.text[:1000]
+            logging.error(f"[shop-order] Dataverse POST {r.status_code}: {detail}")
             return func.HttpResponse(
-                json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "detail": r.text[:300]}),
+                json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "detail": detail}),
                 status_code=500, headers=get_cors_headers()
             )
     except Exception as e:
@@ -242,6 +465,7 @@ def _handle_post(req, dv_token, base_url, headers):
 def _handle_get(req, dv_token, base_url, headers):
     """Fetch orders. ?mode=cms → all orders. Otherwise: customer's own orders."""
     mode = req.params.get("mode", "")
+
     user = _verify_jwt(req)
 
     if mode == "pack":
@@ -252,7 +476,7 @@ def _handle_get(req, dv_token, base_url, headers):
                 json.dumps({"success": False, "error": "Bestell-ID erforderlich"}),
                 status_code=400, headers=get_cors_headers()
             )
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
         try:
             r = requests.get(url, headers=headers, timeout=30)
             if r.status_code == 200:
@@ -266,6 +490,7 @@ def _handle_get(req, dv_token, base_url, headers):
                         "kunde_name": item.get("dl_kunde_name", ""),
                         "kunde_email": item.get("dl_kunde_email", ""),
                         "abholdatum": item.get("dl_abholdatum", ""),
+                        "abhol_zeitslot": _parse_zeitslot(item.get("dl_abhol_zeitslot", "")),
                         "status": item.get("dl_status", 0),
                         "gesamtsumme": item.get("dl_gesamtsumme", 0),
                         "anmerkungen": item.get("dl_anmerkungen", ""),
@@ -286,11 +511,11 @@ def _handle_get(req, dv_token, base_url, headers):
 
     if mode == "cms":
         # CMS mode: return all orders (no JWT required for now, add admin check later)
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json&$orderby=createdon desc&$top=200"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json&$orderby=createdon desc&$top=200"
     elif user:
         # Customer mode: own orders
         email = user["email"]
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=50"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=50"
     else:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Bitte melden Sie sich an."}),
@@ -308,6 +533,13 @@ def _handle_get(req, dv_token, base_url, headers):
                     positionen = json.loads(item.get("dl_positionen_json", "[]"))
                 except:
                     pass
+                pack_data = None
+                try:
+                    raw = item.get("dl_pack_json")
+                    if raw:
+                        pack_data = json.loads(raw)
+                except:
+                    pass
                 orders.append({
                     "id": item.get("dl_shopbestellungid", ""),
                     "bestellnummer": item.get("dl_bestellnummer", ""),
@@ -315,11 +547,13 @@ def _handle_get(req, dv_token, base_url, headers):
                     "kunde_name": item.get("dl_kunde_name", ""),
                     "bestelldatum": item.get("dl_bestelldatum", ""),
                     "abholdatum": item.get("dl_abholdatum", ""),
+                    "abhol_zeitslot": _parse_zeitslot(item.get("dl_abhol_zeitslot", "")),
                     "status": item.get("dl_status", 0),
                     "status_text": STATUS_LABELS.get(item.get("dl_status", 0), "Unbekannt"),
                     "gesamtsumme": item.get("dl_gesamtsumme", 0),
                     "anmerkungen": item.get("dl_anmerkungen", ""),
-                    "positionen": positionen
+                    "positionen": positionen,
+                    "gepackt": bool(pack_data)
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "orders": orders}, ensure_ascii=False),
@@ -364,7 +598,7 @@ def _handle_patch(req, dv_token, base_url, headers):
                 json.dumps({"success": False, "error": "Bitte melden Sie sich an."}, ensure_ascii=False),
                 status_code=401, headers=get_cors_headers()
             )
-        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_status,dl_abholdatum"
+        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_status,dl_abholdatum,dl_abhol_zeitslot"
         cr = requests.get(check_url, headers=headers, timeout=30)
         if cr.status_code != 200:
             return func.HttpResponse(
@@ -374,15 +608,59 @@ def _handle_patch(req, dv_token, base_url, headers):
         order = cr.json()
         if (order.get("dl_kunde_email") or "").lower() != (user.get("email") or "").lower():
             return func.HttpResponse(
-                json.dumps({"success": False, "error": "Diese Bestellung geh?rt nicht zu Ihrem Konto."}, ensure_ascii=False),
+                json.dumps({"success": False, "error": "Diese Bestellung gehört nicht zu Ihrem Konto."}, ensure_ascii=False),
                 status_code=403, headers=get_cors_headers()
             )
         status = order.get("dl_status", 0)
         abholdatum = order.get("dl_abholdatum", "")
-        today = (datetime.utcnow() + timedelta(hours=2)).strftime("%Y-%m-%d")
-        if status >= STATUS_ABHOLBEREIT or (abholdatum and today >= abholdatum):
+        now_local = datetime.utcnow() + timedelta(hours=2)
+        today = now_local.strftime("%Y-%m-%d")
+
+        # Storno-Frist: 1h vor Öffnungszeit des gewählten Zeitslots am Abholtag
+        # Shop hours: Mo-Fr VM 06:30, Sa 07:00; NM 16:30
+        STORNO_VOR_H = 1
+        cancel_allowed = True
+        cancel_reason = ""
+        if status >= STATUS_ABHOLBEREIT:
+            cancel_allowed = False
+            cancel_reason = "Die Bestellung ist bereits in der Pack-/Abholphase."
+        elif abholdatum and today > abholdatum:
+            cancel_allowed = False
+            cancel_reason = "Der Abholtag ist bereits vorbei."
+        elif abholdatum and today == abholdatum:
+            # Check time-based deadline: 1h before opening time of the slot's period
+            zeitslot = _parse_zeitslot(order.get("dl_abhol_zeitslot", ""))
+            open_time_str = zeitslot.get("von", "")
+            if open_time_str:
+                # open_time_str is like "07:30" (Abholzeit start), but we need opening time
+                # Opening time = Abholzeit - ABHOL_OFFSET_H (1h), stored as openFrom in frontend
+                # Actually, slot.von = abholVon, opening = von - 1h offset
+                # Better: use openFrom if available, otherwise derive from period defaults
+                pass
+            # Derive opening time from period and weekday
+            period = zeitslot.get("period", "vm")
+            try:
+                abhol_date = datetime.strptime(abholdatum, "%Y-%m-%d")
+                dow = abhol_date.weekday()  # 0=Mo ... 6=So
+                # Shop hours indexed by ISO weekday
+                SHOP_HRS = {0: (6.5, 16.5), 1: (6.5, None), 2: (6.5, 16.5), 3: (6.5, 16.5), 4: (6.5, 16.5), 5: (7, None)}
+                hrs = SHOP_HRS.get(dow, (6.5, 16.5))
+                if period == "nm" and hrs[1]:
+                    open_h = hrs[1]
+                else:
+                    open_h = hrs[0]
+                storno_deadline_h = open_h - STORNO_VOR_H
+                now_h = now_local.hour + now_local.minute / 60.0
+                if now_h >= storno_deadline_h:
+                    storno_uhr = f"{int(storno_deadline_h)}:{int((storno_deadline_h % 1) * 60):02d}"
+                    cancel_allowed = False
+                    cancel_reason = f"Die Stornierungsfrist ({storno_uhr} Uhr) ist abgelaufen."
+            except Exception as e:
+                logging.warning(f"[shop-order] Error parsing cancel deadline: {e}")
+
+        if not cancel_allowed:
             return func.HttpResponse(
-                json.dumps({"success": False, "error": "Diese Bestellung kann nicht mehr storniert werden, da sie bereits in der Pack-/Abholphase ist."}, ensure_ascii=False),
+                json.dumps({"success": False, "error": cancel_reason or "Diese Bestellung kann nicht mehr storniert werden."}, ensure_ascii=False),
                 status_code=400, headers=get_cors_headers()
             )
         new_status = STATUS_STORNIERT

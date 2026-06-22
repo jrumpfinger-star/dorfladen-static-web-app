@@ -274,6 +274,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # JSON array: [{artikelnummer, bezeichnung, menge, einheit, einzelpreis, positionspreis}]
         _add_string_attr(base_url, headers, e, "dl_kunde_id", "Kunde ID", 50)
         _add_memo_attr(base_url, headers, e, "dl_pack_json", "Pack-Daten (JSON)")
+        _add_string_attr(base_url, headers, e, "dl_iban_masked", "IBAN (maskiert)", 50)
+        _add_string_attr(base_url, headers, e, "dl_kontoinhaber", "Kontoinhaber", 200)
         # JSON: {gepackt_von, gepackt_um, items: [{artikelnummer, gepackt, gepackt_menge, scan_zeit}]}
 
     # ── 3. Artikelstamm: bestellbar-Flag auf cr5d4_tables ──
@@ -282,7 +284,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     r3b_ok = _add_string_attr(base_url, headers, "cr5d4_table", "cr5d4_bestelleinheit", "Bestelleinheit", 20)
     results.append({"entity": "cr5d4_table (Artikelstamm)", "bestellbar": "added" if r3_ok else "exists/error", "bestelleinheit": "added" if r3b_ok else "exists/error"})
 
-    # ── 4. dl_shopfreigabe – Separate Tabelle für Shop-Artikelfreigaben ──
+    # ── 4. dl_stammkunde – Stammkunden (Telefon-/Ladenkunden) ──
+    r4sk = _create_entity(base_url, headers,
+        "dl_stammkunde", "Stammkunde", "Stammkunden",
+        "Telefon- und Ladenkunden für Mittagstisch-Bestellungen",
+        "dl_name", "Name")
+    results.append(r4sk)
+
+    if r4sk["status"] in ("created", "already_exists"):
+        e = "dl_stammkunde"
+        _add_string_attr(base_url, headers, e, "dl_vorname", "Vorname", 100)
+        _add_string_attr(base_url, headers, e, "dl_nachname", "Nachname", 100)
+        _add_string_attr(base_url, headers, e, "dl_telefon", "Telefon", 50)
+        _add_string_attr(base_url, headers, e, "dl_email", "E-Mail", 200)
+        _add_string_attr(base_url, headers, e, "dl_adresse", "Adresse", 500)
+        _add_memo_attr(base_url, headers, e, "dl_notiz", "Notiz")
+        _add_boolean_attr(base_url, headers, e, "dl_aktiv", "Aktiv", True)
+        _add_boolean_attr(base_url, headers, e, "dl_bevorzugt_mitnehmen", "Bevorzugt Mitnehmen", False)
+        _add_string_attr(base_url, headers, e, "dl_stammkunde_nr", "Stammkunde-Nr", 20)
+
+    # ── 5. dl_shopfreigabe – Separate Tabelle für Shop-Artikelfreigaben ──
     # Strichcode ist der Key. Separate Tabelle, weil cr5d4_tables extern überschrieben wird.
     r4 = _create_entity(base_url, headers,
         "dl_shopfreigabe", "Shop-Freigabe", "Shop-Freigaben",

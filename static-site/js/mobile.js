@@ -238,18 +238,24 @@
 
   function renderWP(menu){
     var todayIdx=new Date().getDay();
+    var isWeekend=todayIdx===0||todayIdx===6;
+    var currentHour=new Date().getHours();
     var kwEl=document.getElementById('mob-wp-kw');
     if(kwEl) kwEl.textContent='Kalenderwoche '+getKW();
     var container=document.getElementById('mob-wp-days');
     if(!container) return;
     var html='';
     for(var i=1;i<=5;i++){
-      var isToday=i===todayIdx;
+      // Am Wochenende zeigt API nächste Woche → kein Tag ist vergangen
+      var isToday=!isWeekend&&i===todayIdx;
+      var isPast=!isWeekend&&i<todayIdx;
+      // Bestellschluss: heute bis 10:30, zukünftige Tage erlaubt, vergangene nicht
+      var canOrder=isToday?(currentHour<10||(currentHour===10&&new Date().getMinutes()<30)):(!isPast);
       var dayData=menu[i]||[];
       var dishes=dayData.filter?dayData.filter(function(d){return d.name&&d.name.trim();}):dayData;
       var notice='';
       (menu[i]||[]).forEach(function(d){if(d.notice&&!notice) notice=d.notice;});
-      html+='<div class="mob-wp-day'+(isToday?' today':'')+'">';
+      html+='<div class="mob-wp-day'+(isToday?' today':'')+'"'+(isPast?' style="opacity:.45"':'')+'>';
       html+='<div class="mob-wp-day-name">'+wpDays[i]+(isToday?' · Heute':'')+'</div>';
       if(dishes.length===0){
         if(notice){
@@ -264,9 +270,11 @@
           if(isNotice&&!p){
             html+='<div class="mob-wp-day-menu" style="color:#888;font-style:italic">'+esc(d.name)+'</div>';
           }else{
-            html+='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">';
+            var oLink=d.id?('/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(d.id)+'&gericht='+encodeURIComponent(d.name)+'&preis='+parseFloat(String(d.price||'0').replace(',','.'))+'&datum='+encodeURIComponent(d.datum||'')+'&tag='+encodeURIComponent(wpDays[i]||'')):'';
+            html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">';
             html+='<div class="mob-wp-day-menu" style="flex:1'+(d.notice?';font-style:italic;color:#888':'')+'">'+esc(d.name)+'</div>';
             html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
+            if(oLink&&canOrder) html+='<a href="'+oLink+'" class="feature-mittagstisch" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
             html+='</div>';
           }
         });
@@ -274,6 +282,10 @@
       html+='</div>';
     }
     container.innerHTML=html;
+    // Apply mittagstisch feature flag to dynamically rendered content
+    if(!window._featureMittagstisch){
+      container.querySelectorAll('.feature-mittagstisch').forEach(function(el){el.style.display='none';});
+    }
     // Update quick-action subtitle
     // After 14:00 or on Sunday, show next business day's dishes
     var sub=document.getElementById('mob-lunch-sub');
@@ -326,7 +338,7 @@
         var wt=item.dl_wochentag;
         var label=item._dl_wochentag_label;
         var dIdx=wpDayMap[wt]||wpDayMap[(label||'').toLowerCase()]||wpDayMap[(String(wt)||'').toLowerCase()];
-        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||''),notice:item.dl_beschreibung||''});
+        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||''),notice:item.dl_beschreibung||'',id:item.dl_wochenplanid||item.id||'',datum:item.dl_datum||'',wochentag:wt});
       });
       renderWP(menu);
     }else{
@@ -596,7 +608,7 @@
       code=code.trim();
       var found=[];
       plAllItems.forEach(function(entry){
-        if(entry.strichcode&&entry.strichcode.indexOf(code)!==-1)found.push(entry);
+        if(entry.strichcode&&entry.strichcode===code)found.push(entry);
       });
       return found;
     }
@@ -626,7 +638,8 @@
         if(disc>DISC_MIN&&disc<=DISC_MAX) badges+='<span style="background:#2e7d32;color:#fff;padding:1px 6px;border-radius:6px;font-size:.7rem;font-weight:700">\uD83D\uDCB0 Ersparnis</span>';
         var badgesHtml=badges?'<div style="margin-top:3px">'+badges+'</div>':'';
         h+='<div style="background:#fff;border-radius:6px;padding:10px;margin-top:6px;display:flex;justify-content:space-between;align-items:start">';
-        h+='<div><b>'+esc(m.bezeichnung)+'</b><br><small style="color:#888">'+esc(m.wg)+'</small>'+badgesHtml+savingsHtml+'</div>';
+        var bcLabel=m.strichcode?'<small style="color:#aaa;font-size:.72rem"> · EAN '+esc(m.strichcode)+'</small>':'';
+        h+='<div><b>'+esc(m.bezeichnung)+'</b><br><small style="color:#888">'+esc(m.wg)+'</small>'+bcLabel+badgesHtml+savingsHtml+'</div>';
         var preisHtml='<div style="font-weight:700;white-space:nowrap;padding-top:2px;text-align:right">'+fmtP(preis)+' &euro;';
         if(m.angebot&&m.angebot_preis&&m.vk&&m.angebot_preis<m.vk) preisHtml+='<br><span style="text-decoration:line-through;color:#999;font-size:.75rem;font-weight:400">'+fmtP(m.vk)+' &euro;</span>';
         preisHtml+='</div>';
@@ -636,12 +649,11 @@
       resultDiv.innerHTML=h;resultDiv.style.display='block';
     }
 
-    var _scanActive=false;
+    var _stream=null,_nativeLoop=0;
     function stopScanner(){
-      if(_scanActive){
-        Quagga.stop();
-        _scanActive=false;
-      }
+      if(_nativeLoop){cancelAnimationFrame(_nativeLoop);_nativeLoop=0;}
+      if(_stream){_stream.getTracks().forEach(function(t){t.stop();});_stream=null;}
+      try{if(typeof Quagga!=='undefined')Quagga.stop();}catch(e){}
       readerDiv.innerHTML='';
       scannerDiv.style.display='none';
     }
@@ -649,7 +661,6 @@
     function onBarcodeScanned(code){
       var matches=findByBarcode(code);
       if(matches.length){showResult(code,matches);return;}
-      // Fallback: API lookup (bypasses 6-month filter)
       resultDiv.innerHTML='<div style="text-align:center;padding:14px;color:#666">Suche EAN '+esc(code)+' in Datenbank...</div>';
       resultDiv.style.display='block';
       fetch((window.API_BASE||'/api')+'/preisliste?barcode='+encodeURIComponent(code))
@@ -663,35 +674,94 @@
         }).catch(function(){showResult(code,[]);});
     }
 
-    scanBtn.addEventListener('click',function(){
+    function applyFocus(stream){
+      try{
+        var track=stream.getVideoTracks()[0];
+        if(!track||!track.applyConstraints)return;
+        setTimeout(function(){
+          track.applyConstraints({advanced:[{focusMode:'continuous'}]})
+            .catch(function(){return track.applyConstraints({advanced:[{focusDistance:0}]});})
+            .catch(function(){});
+        },500);
+      }catch(e){}
+    }
+
+    function pickCentral(barcodes,vw,vh){
+      if(barcodes.length===1)return barcodes[0];
+      var cx=vw/2,cy=vh/2,best=null,bestDist=Infinity;
+      barcodes.forEach(function(b){
+        var r=b.boundingBox||b.cornerPoints&&{x:b.cornerPoints[0].x,y:b.cornerPoints[0].y,
+          width:b.cornerPoints[2].x-b.cornerPoints[0].x,height:b.cornerPoints[2].y-b.cornerPoints[0].y};
+        if(!r){best=best||b;return;}
+        var mx=r.x+r.width/2,my=r.y+r.height/2;
+        var d=Math.abs(mx-cx)+Math.abs(my-cy);
+        if(d<bestDist){bestDist=d;best=b;}
+      });
+      return best||barcodes[0];
+    }
+
+    function startNativeScanner(){
+      var video=document.createElement('video');
+      video.setAttribute('playsinline','');video.setAttribute('autoplay','');
+      video.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:8px';
+      readerDiv.innerHTML='';readerDiv.appendChild(video);
+      navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
+        .then(function(stream){
+          _stream=stream;video.srcObject=stream;video.play();
+          applyFocus(stream);
+          var detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
+          var _lastCode='',_lastTime=0,_confirmCount=0,_scanning=true;
+          function tick(){
+            if(!_scanning)return;
+            if(video.readyState>=2){
+              detector.detect(video).then(function(barcodes){
+                if(!_scanning||!barcodes.length)return;
+                var code=pickCentral(barcodes,video.videoWidth,video.videoHeight).rawValue;
+                var now=Date.now();
+                if(code===_lastCode&&(now-_lastTime)<2000){_confirmCount++;}else{_confirmCount=1;_lastCode=code;}_lastTime=now;
+                if(_confirmCount>=2){_scanning=false;stopScanner();onBarcodeScanned(code);}
+              }).catch(function(){});
+            }
+            _nativeLoop=requestAnimationFrame(tick);
+          }
+          _nativeLoop=requestAnimationFrame(tick);
+        })
+        .catch(function(err){stopScanner();alert('Kamera konnte nicht geöffnet werden.\n'+err);});
+    }
+
+    function startQuaggaScanner(){
       if(typeof Quagga==='undefined'){alert('Barcode-Scanner Library nicht geladen.');return;}
-      resultDiv.style.display='none';resultDiv.innerHTML='';
-      scannerDiv.style.display='block';
       Quagga.init({
         inputStream:{name:'Live',type:'LiveStream',target:readerDiv,
-          constraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}},
-        locator:{patchSize:'medium',halfSample:true},
-        decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader']},
-        locate:true,
-        frequency:15
+          constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},
+            focusMode:'continuous',focusDistance:0},
+          area:{top:'20%',right:'5%',left:'5%',bottom:'20%'}},
+        locator:{patchSize:'large',halfSample:false},
+        decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'],multiple:false},
+        locate:true,frequency:15
       },function(err){
-        if(err){stopScanner();alert('Kamera konnte nicht ge\u00f6ffnet werden.\n'+err);return;}
+        if(err){stopScanner();alert('Kamera konnte nicht geöffnet werden.\n'+err);return;}
         Quagga.start();
-        _scanActive=true;
+        try{var s=Quagga.CameraAccess.getActiveStreamRef&&Quagga.CameraAccess.getActiveStreamRef();if(s)applyFocus(s);}catch(e){}
       });
       Quagga.offDetected();
+      var _lastCode='',_lastTime=0,_confirmCount=0;
       Quagga.onDetected(function(result){
         if(!result||!result.codeResult||!result.codeResult.code)return;
-        // Confidence check: reject low-quality reads
         var errs=result.codeResult.decodedCodes;
-        if(errs&&errs.length){
-          var sumErr=0,cnt=0;
-          errs.forEach(function(d){if(typeof d.error==='number'){sumErr+=d.error;cnt++;}});
-          if(cnt>0&&(sumErr/cnt)>0.15)return; // avg error > 15% → skip
-        }
-        stopScanner();
-        onBarcodeScanned(result.codeResult.code);
+        if(errs&&errs.length){var s=0,c=0;errs.forEach(function(d){if(typeof d.error==='number'){s+=d.error;c++;}});if(c>0&&(s/c)>0.12)return;}
+        var code=result.codeResult.code;
+        var now=Date.now();
+        if(code===_lastCode&&(now-_lastTime)<2000){_confirmCount++;}else{_confirmCount=1;_lastCode=code;}_lastTime=now;
+        if(_confirmCount>=2){stopScanner();onBarcodeScanned(code);}
       });
+    }
+
+    scanBtn.addEventListener('click',function(){
+      resultDiv.style.display='none';resultDiv.innerHTML='';
+      scannerDiv.style.display='block';
+      if('BarcodeDetector' in window){startNativeScanner();}
+      else{startQuaggaScanner();}
     });
 
     closeBtn.addEventListener('click',function(){stopScanner();});

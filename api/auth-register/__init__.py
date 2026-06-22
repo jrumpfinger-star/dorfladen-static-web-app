@@ -254,17 +254,65 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if r.status_code in (200, 201):
             record = r.json()
             record_id = record.get("dl_shopkundeid", "")
-            # TODO: Send verification email with verify_token
+
+            # Send verification email
+            try:
+                import sys
+                api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if api_dir not in sys.path:
+                    sys.path.insert(0, api_dir)
+                from importlib import import_module
+                notify_mod = import_module("shop-notify")
+
+                # Use SWA_HOSTNAME (the public Static Web App URL), NOT WEBSITE_HOSTNAME
+                # (which is the internal Functions host that doesn't support direct browser access)
+                swa_host = os.environ.get("SWA_HOSTNAME", "")
+                if not swa_host:
+                    # Fallback: derive from WEBSITE_HOSTNAME or use known SWA URL
+                    internal_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                    if "localhost" in internal_host:
+                        swa_host = internal_host
+                    else:
+                        swa_host = os.environ.get("WEBSITE_HOSTNAME_STATIC", "witty-island-064f9d903.7.azurestaticapps.net")
+                protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+                verify_url = f"{protocol}://{swa_host}/api/auth-verify?token={verify_token}&email={email}"
+
+                email_body = (
+                    f"Hallo {vorname},\n\n"
+                    f"vielen Dank für Ihre Registrierung im Dorfladen-Bestellsystem!\n\n"
+                    f"Bitte bestätigen Sie Ihre E-Mail-Adresse, indem Sie auf den folgenden Link klicken:\n\n"
+                    f"{verify_url}\n\n"
+                    f"Erst nach der Bestätigung können Sie Bestellungen aufgeben.\n\n"
+                    f"Herzliche Grüße\n"
+                    f"Ihr Dorfladen-Team"
+                )
+                verify_btn_html = (
+                    f'<div style="text-align:center;margin:24px 0">'
+                    f'<a href="{verify_url}" style="display:inline-block;padding:14px 36px;'
+                    f'background:#2e7d4f;color:#fff;text-decoration:none;border-radius:10px;'
+                    f'font-weight:700;font-size:15px">E-Mail bestätigen ✓</a></div>'
+                    f'<p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:8px">'
+                    f'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:<br>'
+                    f'<a href="{verify_url}" style="color:#2e7d4f;word-break:break-all">{verify_url}</a></p>'
+                )
+                notify_mod.send_email(
+                    email, vorname,
+                    "Bitte bestätigen Sie Ihre E-Mail-Adresse – Dorfladen Oberornau",
+                    email_body, verify_btn_html
+                )
+                logging.info(f"[auth-register] Verification email sent to {email}")
+            except Exception as ve:
+                logging.warning(f"[auth-register] Verification email failed (non-blocking): {ve}")
+
             return func.HttpResponse(
                 json.dumps({
                     "success": True,
-                    "message": "Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.",
+                    "message": "Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link in der E-Mail.",
                     "id": record_id,
                     "mandatsreferenz": mandatsreferenz,
                     "mandatsdatum": mandatsdatum_display,
                     "glaeubiger_id": GLAEUBIGER_ID,
                     "glaeubiger_name": GLAEUBIGER_NAME,
-                    "verify_token": verify_token  # In production: only send via email
                 }, ensure_ascii=False),
                 status_code=201, headers=get_cors_headers()
             )

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bestellstatus – Dorfladen Oberornau</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2d5016">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/images/icon-192.png">
+  <meta property="og:title" content="📋 Bestellstatus – Dorfladen Oberornau">
+  <meta property="og:description" content="Den aktuellen Status deiner Bestellung beim Dorfladen einsehen.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://kind-pebble-072605b03.7.azurestaticapps.net/images/icon-512.png">
+  <meta property="og:site_name" content="Dorfladen Oberornau">
+  <meta property="og:locale" content="de_DE">
+  <style>
+    :root{--c-pri:#2d5016;--c-green:#2e7d4f;--c-green-light:#dcfce7;--c-red:#dc2626;--c-orange:#e65100;--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--radius:16px}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);min-height:100vh}
+
+    .bs-header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:20px 20px 28px;text-align:center}
+    .bs-header h1{font-size:20px;font-weight:800;margin-bottom:4px}
+    .bs-header p{font-size:13px;opacity:.8}
+    .bs-logo{width:48px;height:48px;margin:0 auto 10px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:24px}
+
+    .bs-container{max-width:480px;margin:-16px auto 0;padding:0 16px 40px;position:relative}
+
+    .bs-card{background:var(--c-card);border-radius:var(--radius);box-shadow:0 2px 12px rgba(0,0,0,.08);padding:24px;margin-bottom:16px}
+    .bs-card h2{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+    /* Status badge */
+    .bs-status{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:12px;font-size:14px;font-weight:700}
+    .bs-status.st-0{background:#fef3c7;color:#92400e}
+    .bs-status.st-1{background:var(--c-green-light);color:var(--c-green)}
+    .bs-status.st-2{background:#fecaca;color:#991b1b}
+    .bs-status.st-3{background:#e0e7ff;color:#3730a3}
+
+    .bs-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6}
+    .bs-row:last-child{border-bottom:none}
+    .bs-row .bs-label{font-size:13px;color:var(--c-muted);font-weight:600}
+    .bs-row .bs-value{font-size:15px;font-weight:700;text-align:right;max-width:60%}
+
+    .bs-msg{background:#f0fdf4;border-radius:12px;padding:14px 16px;margin-top:12px;border-left:4px solid var(--c-green)}
+    .bs-msg.warn{background:#fef2f2;border-left-color:var(--c-red)}
+    .bs-msg .bs-msg-label{font-size:11px;font-weight:700;color:var(--c-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .bs-msg .bs-msg-text{font-size:14px;line-height:1.5}
+
+    .bs-comment-box{margin-top:16px}
+    .bs-comment-box label{font-size:13px;font-weight:700;color:var(--c-muted);display:block;margin-bottom:6px}
+    .bs-comment-box textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:15px;font-family:inherit;resize:vertical;min-height:80px;outline:none;transition:border-color .15s}
+    .bs-comment-box textarea:focus{border-color:var(--c-green)}
+    .bs-comment-box button{margin-top:10px;width:100%;padding:14px;border:none;border-radius:12px;background:var(--c-green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
+    .bs-comment-box button:active{transform:scale(.98);opacity:.9}
+    .bs-comment-box button:disabled{opacity:.5;cursor:default}
+    .bs-comment-sent{color:var(--c-green);font-size:13px;font-weight:700;margin-top:8px;display:none}
+
+    .bs-login{text-align:center}
+    .bs-login label{font-size:13px;font-weight:700;color:var(--c-muted);display:block;margin-bottom:6px;text-align:left}
+    .bs-login input{width:100%;padding:14px 16px;border:2px solid #e5e7eb;border-radius:12px;font-size:16px;font-family:inherit;outline:none;margin-bottom:12px;transition:border-color .15s}
+    .bs-login input:focus{border-color:var(--c-green)}
+    .bs-login button{width:100%;padding:14px;border:none;border-radius:12px;background:var(--c-green);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+    .bs-login button:active{transform:scale(.98)}
+    .bs-error{color:var(--c-red);font-size:13px;font-weight:600;margin-top:8px;display:none}
+
+    .bs-empty{text-align:center;padding:40px 20px;color:var(--c-muted)}
+    .bs-empty-icon{font-size:48px;margin-bottom:12px}
+
+    .bs-link{display:block;text-align:center;margin-top:16px;color:var(--c-green);font-size:14px;font-weight:600;text-decoration:none}
+    .bs-link:hover{text-decoration:underline}
+
+    .bs-timeline{position:relative;padding-left:24px;margin-top:12px}
+    .bs-timeline::before{content:'';position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:#e5e7eb}
+    .bs-tl-item{position:relative;padding-bottom:14px}
+    .bs-tl-item:last-child{padding-bottom:0}
+    .bs-tl-dot{position:absolute;left:-24px;top:2px;width:16px;height:16px;border-radius:50%;border:2px solid #e5e7eb;background:#fff}
+    .bs-tl-item.active .bs-tl-dot{background:var(--c-green);border-color:var(--c-green)}
+    .bs-tl-item.cancelled .bs-tl-dot{background:var(--c-red);border-color:var(--c-red)}
+    .bs-tl-label{font-size:13px;font-weight:700;color:var(--c-text)}
+    .bs-tl-item.active .bs-tl-label{color:var(--c-green)}
+    .bs-tl-item.cancelled .bs-tl-label{color:var(--c-red)}
+    .bs-tl-time{font-size:11px;color:var(--c-muted)}
+
+    @media(max-width:480px){
+      .bs-container{padding:0 12px 30px}
+      .bs-card{padding:18px}
+    }
+  </style>
+</head>
+<body>
+  <div class="bs-header">
+    <div class="bs-logo">🍽</div>
+    <h1>Dorfladen Oberornau</h1>
+    <p>Bestellstatus</p>
+  </div>
+
+  <div class="bs-container">
+    <!-- Login/Lookup form (shown when no order loaded) -->
+    <div class="bs-card" id="bs-login-card">
+      <h2>📋 Bestellung aufrufen</h2>
+      <div class="bs-login">
+        <label for="bs-nr">Bestellnummer</label>
+        <input type="text" id="bs-nr" placeholder="z.B. MT-260621-BF0D4" autocomplete="off">
+        <label for="bs-email">E-Mail-Adresse</label>
+        <input type="email" id="bs-email" placeholder="ihre@email.de" autocomplete="email">
+        <button onclick="lookupOrder()">Bestellung anzeigen</button>
+        <div class="bs-error" id="bs-login-error"></div>
+      </div>
+    </div>
+
+    <!-- Order detail (hidden until loaded) -->
+    <div id="bs-detail" style="display:none">
+      <div class="bs-card">
+        <h2>🍽 <span id="bs-gericht">–</span></h2>
+        <div id="bs-status-row" style="text-align:center;margin-bottom:16px"></div>
+        <div id="bs-info-rows"></div>
+      </div>
+
+      <!-- Messages from staff -->
+      <div class="bs-card" id="bs-messages-card" style="display:none">
+        <h2>💬 Nachrichten</h2>
+        <div id="bs-messages"></div>
+      </div>
+
+      <!-- Customer comment -->
+      <div class="bs-card" id="bs-comment-card">
+        <h2>✍️ Nachricht an den Dorfladen</h2>
+        <div class="bs-comment-box">
+          <textarea id="bs-comment" placeholder="Haben Sie eine Frage oder Anmerkung?"></textarea>
+          <button id="bs-comment-btn" onclick="sendComment()">Nachricht senden</button>
+          <div class="bs-comment-sent" id="bs-comment-sent">✅ Nachricht gesendet!</div>
+        </div>
+      </div>
+
+      <a href="/" class="bs-link">← Zurück zur Startseite</a>
+    </div>
+  </div>
+
+<script>
+var API = '/api/lunch-order';
+var _order = null;
+
+function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+function getParam(name){
+  var url = new URL(window.location.href);
+  return url.searchParams.get(name) || '';
+}
+
+function lookupOrder(){
+  var nr = document.getElementById('bs-nr').value.trim();
+  var email = document.getElementById('bs-email').value.trim().toLowerCase();
+  var errEl = document.getElementById('bs-login-error');
+  errEl.style.display = 'none';
+
+  if(!nr || !email){
+    errEl.textContent = 'Bitte Bestellnummer und E-Mail eingeben.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Save to localStorage for auto-login
+  try{ localStorage.setItem('bs_email', email); localStorage.setItem('bs_nr', nr); }catch(e){}
+
+  fetch(API + '?nr=' + encodeURIComponent(nr) + '&email=' + encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(!data.success || !data.order){
+        errEl.textContent = 'Bestellung nicht gefunden. Bitte prüfen Sie Bestellnummer und E-Mail.';
+        errEl.style.display = 'block';
+        return;
+      }
+      _order = data.order;
+      renderOrder(_order);
+    })
+    .catch(function(e){
+      errEl.textContent = 'Fehler: ' + e.message;
+      errEl.style.display = 'block';
+    });
+}
+
+var STATUS_LABELS = {0:'Eingegangen',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
+var STATUS_ICONS = {0:'⏳',1:'✅',2:'❌',3:'📦'};
+
+function renderOrder(o){
+  document.getElementById('bs-login-card').style.display = 'none';
+  document.getElementById('bs-detail').style.display = 'block';
+
+  document.getElementById('bs-gericht').textContent = o.gericht || '–';
+
+  // Status badge
+  var stHtml = '<div class="bs-status st-'+o.status+'">'+(STATUS_ICONS[o.status]||'')+' '+(STATUS_LABELS[o.status]||'Unbekannt')+'</div>';
+  document.getElementById('bs-status-row').innerHTML = stHtml;
+
+  // Info rows
+  var rows = '';
+  rows += '<div class="bs-row"><span class="bs-label">Bestellnummer</span><span class="bs-value">'+esc(o.bestellnummer)+'</span></div>';
+  rows += '<div class="bs-row"><span class="bs-label">Menge</span><span class="bs-value">'+o.menge+' Portion'+(o.menge>1?'en':'')+'</span></div>';
+  rows += '<div class="bs-row"><span class="bs-label">Preis</span><span class="bs-value">'+(o.preis||0).toFixed(2).replace('.',',')+' €</span></div>';
+  if(o.datum){
+    var dp = o.datum.split('-');
+    rows += '<div class="bs-row"><span class="bs-label">Datum</span><span class="bs-value">'+dp[2]+'.'+dp[1]+'.'+dp[0]+'</span></div>';
+  }
+  if(o.mitnehmen) rows += '<div class="bs-row"><span class="bs-label">Art</span><span class="bs-value">📦 Zum Mitnehmen</span></div>';
+  if(o.anmerkung) rows += '<div class="bs-row"><span class="bs-label">Ihre Anmerkung</span><span class="bs-value">'+esc(o.anmerkung)+'</span></div>';
+  document.getElementById('bs-info-rows').innerHTML = rows;
+
+  // Messages
+  var msgHtml = '';
+  var hasMessages = false;
+  if(o.bestaetigung_text){
+    hasMessages = true;
+    var cls = o.status===2 ? 'bs-msg warn' : 'bs-msg';
+    msgHtml += '<div class="'+cls+'"><div class="bs-msg-label">Dorfladen</div><div class="bs-msg-text">'+esc(o.bestaetigung_text)+'</div></div>';
+  }
+  if(o.personal_antwort){
+    hasMessages = true;
+    msgHtml += '<div class="bs-msg" style="margin-top:8px"><div class="bs-msg-label">💬 Antwort vom Dorfladen</div><div class="bs-msg-text">'+esc(o.personal_antwort)+'</div></div>';
+  }
+  if(o.kunde_kommentar){
+    hasMessages = true;
+    msgHtml += '<div class="bs-msg" style="margin-top:8px;background:#eff6ff;border-left-color:#3b82f6"><div class="bs-msg-label">Ihre Nachricht</div><div class="bs-msg-text">'+esc(o.kunde_kommentar)+'</div></div>';
+  }
+  if(hasMessages){
+    document.getElementById('bs-messages-card').style.display = '';
+    document.getElementById('bs-messages').innerHTML = msgHtml;
+  }
+
+  // Pre-fill comment if already exists
+  if(o.kunde_kommentar){
+    document.getElementById('bs-comment').value = o.kunde_kommentar;
+  }
+
+  // Hide comment box if order is completed
+  if(o.status === 3){
+    document.getElementById('bs-comment-card').style.display = 'none';
+  }
+}
+
+function sendComment(){
+  if(!_order) return;
+  var text = document.getElementById('bs-comment').value.trim();
+  if(!text){
+    alert('Bitte geben Sie eine Nachricht ein.');
+    return;
+  }
+
+  var btn = document.getElementById('bs-comment-btn');
+  btn.disabled = true;
+  btn.textContent = 'Wird gesendet…';
+
+  fetch(API + '/' + _order.id, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({kunde_kommentar: text})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    btn.disabled = false;
+    btn.textContent = 'Nachricht senden';
+    if(data.success){
+      document.getElementById('bs-comment').value = '';
+      document.getElementById('bs-comment-sent').style.display = 'block';
+      setTimeout(function(){ document.getElementById('bs-comment-sent').style.display = 'none'; }, 4000);
+      // Refresh order to show updated messages
+      lookupOrder();
+    } else {
+      alert('Fehler: ' + (data.error || 'Konnte nicht gesendet werden'));
+    }
+  })
+  .catch(function(e){
+    btn.disabled = false;
+    btn.textContent = 'Nachricht senden';
+    alert('Fehler: ' + e.message);
+  });
+}
+
+// Auto-load if params present
+(function(){
+  var nr = getParam('nr');
+  var email = getParam('email');
+
+  // Try from localStorage if no URL params
+  if(!nr || !email){
+    try{
+      nr = nr || localStorage.getItem('bs_nr') || '';
+      email = email || localStorage.getItem('bs_email') || '';
+    }catch(e){}
+  }
+
+  if(nr){
+    document.getElementById('bs-nr').value = nr;
+  }
+  if(email){
+    document.getElementById('bs-email').value = email;
+  }
+  if(nr && email){
+    lookupOrder();
+  }
+})();
+</script>
+</body>
+</html>

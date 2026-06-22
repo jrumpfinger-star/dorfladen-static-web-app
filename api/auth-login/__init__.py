@@ -17,7 +17,7 @@ DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 ENTITY_SET = "dl_shopkundes"
 JWT_SECRET = os.environ.get("SHOP_JWT_SECRET", "dorfladen-shop-secret-change-in-production-2026")
-JWT_EXPIRY_HOURS = 24
+JWT_EXPIRY_HOURS = 24 * 90  # 90 days – keep user logged in persistently
 
 
 def get_token():
@@ -149,6 +149,63 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Check email verification
         email_verified = kunde.get("dl_email_verifiziert", False)
 
+        if not email_verified:
+            # Resend verification email
+            resend = body.get("resend_verify", False)
+            if resend:
+                try:
+                    import sys
+                    api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    if api_dir not in sys.path:
+                        sys.path.insert(0, api_dir)
+                    from importlib import import_module
+                    notify_mod = import_module("shop-notify")
+
+                    # Generate new token
+                    import uuid
+                    new_verify_token = uuid.uuid4().hex
+                    patch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({kunde['dl_shopkundeid']})"
+                    patch_headers = {**headers, "If-Match": "*"}
+                    requests.patch(patch_url, headers=patch_headers,
+                                   json={"dl_verify_token": new_verify_token}, timeout=15)
+
+                    swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                    protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+                    verify_url = f"{protocol}://{swa_host}/api/auth-verify?token={new_verify_token}&email={email}"
+                    vorname = kunde.get("dl_vorname", "")
+                    email_body = (
+                        f"Hallo {vorname},\n\n"
+                        f"hier ist Ihr neuer Bestätigungslink:\n\n{verify_url}\n\n"
+                        f"Herzliche Grüße\nIhr Dorfladen-Team"
+                    )
+                    verify_btn_html = (
+                        f'<div style="text-align:center;margin:24px 0">'
+                        f'<a href="{verify_url}" style="display:inline-block;padding:14px 36px;'
+                        f'background:#2e7d4f;color:#fff;text-decoration:none;border-radius:10px;'
+                        f'font-weight:700;font-size:15px">E-Mail bestätigen ✓</a></div>'
+                    )
+                    notify_mod.send_email(email, vorname,
+                                          "Bestätigungslink – Dorfladen Oberornau",
+                                          email_body, verify_btn_html)
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "email_not_verified": True,
+                                    "error": "Ein neuer Bestätigungslink wurde an Ihre E-Mail gesendet."},
+                                   ensure_ascii=False),
+                        status_code=403, headers=get_cors_headers()
+                    )
+                except Exception as ve:
+                    logging.warning(f"[auth-login] Resend verification email failed: {ve}")
+
+            return func.HttpResponse(
+                json.dumps({
+                    "success": False,
+                    "email_not_verified": True,
+                    "error": "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse. "
+                             "Prüfen Sie Ihren Posteingang (auch Spam)."
+                }, ensure_ascii=False),
+                status_code=403, headers=get_cors_headers()
+            )
+
         # Create JWT
         kunde_id = kunde["dl_shopkundeid"]
         vorname = kunde.get("dl_vorname", "")
@@ -165,7 +222,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "nachname": nachname,
                     "email": email,
                     "email_verifiziert": email_verified
-                }
+                },
             }, ensure_ascii=False),
             status_code=200, headers=get_cors_headers()
         )

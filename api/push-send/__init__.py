@@ -82,15 +82,18 @@ def _fetch_all_subscriptions(base_url, hdrs, entity_set):
                 if "subscription" in raw:
                     sub = raw["subscription"]
                     cats = raw.get("categories", ["mittagstisch", "angebote", "news"])
+                    email = raw.get("email", "")
                 elif raw.get("endpoint"):
                     sub = raw
                     cats = ["mittagstisch", "angebote", "news"]
+                    email = ""
                 else:
                     continue
                 subs.append({
                     "record_id": item.get("dl_seiteninhaltid"),
                     "subscription": sub,
-                    "categories": cats
+                    "categories": cats,
+                    "email": email
                 })
             except (json.JSONDecodeError, TypeError):
                 pass
@@ -236,6 +239,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     tag = body.get("tag", "dorfladen")
     image = body.get("image", "")
     category = body.get("category", "")
+    target_email = (body.get("target_email", "") or "").lower().strip()
 
     if not message:
         return func.HttpResponse(
@@ -258,6 +262,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # Filter by category if specified
     if category:
         all_subs = [s for s in all_subs if category in s.get("categories", [])]
+
+    # Filter by target email if specified (for customer-specific notifications)
+    if target_email:
+        all_subs = [s for s in all_subs if s.get("email", "").lower() == target_email]
 
     if not all_subs:
         return func.HttpResponse(

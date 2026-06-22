@@ -6,40 +6,41 @@
 <title>Dorfladen – Artikelfreigabe</title>
 <style>
 :root{--green:#2e7d4f;--green2:#1f5c39;--bg:#f4f7f5;--card:#fff;--border:#dfe7e2;--text:#24352b;--muted:#6b7f72;--warn:#f59e0b;--red:#dc2626;--blue:#2563eb}
-*{box-sizing:border-box;margin:0}body{background:var(--bg);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text)}
+*{box-sizing:border-box;margin:0}html,body{overflow-x:hidden}body{background:var(--bg);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text)}
 
 /* ── Top bar ── */
-.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
-.brand{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--green);font-size:15px}
+.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.04);max-width:960px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--green);font-size:15px}
 .brand-icon{width:34px;height:34px;border-radius:10px;background:#e9f5ee;display:grid;place-items:center;font-size:20px}
 .spacer{flex:1}
-.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;transition:.15s}
 .btn:hover{border-color:var(--green);color:var(--green)}
 .btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.btn.primary:hover{background:var(--green2)}
 .btn.small{padding:5px 8px;font-size:12px}
 .btn.red{color:var(--red);border-color:var(--red)}.btn.red:hover{background:#fef2f2}
 
 /* ── Toolbar ── */
-.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.search-wrap{position:relative;flex:0 1 320px;min-width:180px}
+.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:8px 18px;display:flex;align-items:center;gap:8px;max-width:960px;margin:0 auto}
+.search-wrap{position:relative;width:220px;flex-shrink:0}
 .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
 .search{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 30px 8px 32px;font-size:13px;outline:none;box-sizing:border-box}
 .search:focus{border-color:var(--green)}
 .search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:2px 4px;display:none}
 .search-clear:hover{color:#111}
-.stats{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
-.filter-btn{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;transition:.15s}
+.stats{font-size:12px;color:var(--muted);font-weight:400;white-space:nowrap}
+.filter-btn{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;background:#fff;transition:.15s}
 .filter-btn:hover,.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+.fb-kurz{border-color:#f59e0b;color:#92400e}.fb-kurz:hover,.fb-kurz.active{background:#f59e0b;color:#fff;border-color:#f59e0b}
 
 /* ── Warengruppe Accordion ── */
-.wrap{max-width:1400px;margin:0 auto;padding:12px 18px 80px}
+.wrap{max-width:960px;margin:0 auto;padding:12px 18px 80px}
 .wg{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden}
-.wg-head{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;font-weight:800;font-size:14px;transition:background .12s}
+.wg-head{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;font-weight:600;font-size:14px;transition:background .12s}
 .wg-head:hover{background:#f8fbf9}
 .wg-arrow{font-size:11px;color:var(--muted);transition:transform .2s;width:16px}
 .wg.open .wg-arrow{transform:rotate(90deg)}
 .wg-count{margin-left:auto;display:flex;gap:6px;align-items:center}
-.wg-badge{font-size:11px;padding:2px 7px;border-radius:99px;font-weight:800}
+.wg-badge{font-size:11px;padding:2px 7px;border-radius:99px;font-weight:500}
 .badge-total{background:#e5e7eb;color:#374151}
 .badge-on{background:#dcfce7;color:#166534}
 .wg-body{display:none;border-top:1px solid var(--border)}
@@ -47,7 +48,7 @@
 
 /* ── Article rows ── */
 .art-table{width:100%;border-collapse:collapse;font-size:13px}
-.art-table th{text-align:left;padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:800;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card)}
+.art-table th{text-align:left;padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:500;letter-spacing:.3px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card)}
 .art-row{border-bottom:1px solid #f3f4f6;transition:background .1s}
 .art-row:hover{background:#f8fbf9}
 .art-row.enabled{background:#f0faf3}
@@ -55,9 +56,9 @@
 .art-cb{width:18px;height:18px;accent-color:var(--green);cursor:pointer}
 .art-img{width:36px;height:36px;border-radius:6px;object-fit:contain;background:#f9fafb;border:1px solid #e5e7eb;cursor:pointer}
 .art-img-empty{width:36px;height:36px;border-radius:6px;background:#f3f4f6;border:1px dashed #d1d5db;display:grid;place-items:center;font-size:14px;color:#9ca3af;cursor:pointer}
-.art-name{font-weight:700;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.art-name{font-weight:500;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .art-code{font-size:11px;color:var(--muted)}
-.art-price{font-weight:700;white-space:nowrap}
+.art-price{font-weight:500;white-space:nowrap}
 .art-date{width:110px}
 .art-date input{width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit}
 .art-actions{display:flex;gap:4px}
@@ -73,7 +74,7 @@
 .img-actions{display:flex;gap:8px;justify-content:flex-end}
 
 /* ── Toast ── */
-.toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none;z-index:200}
+.toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:10px;padding:10px 14px;font-weight:500;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none;z-index:200}
 
 /* ── Batch bar ── */
 .batch-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:10px 18px;display:none;align-items:center;gap:12px;z-index:30;box-shadow:0 -4px 16px rgba(0,0,0,.06)}
@@ -81,7 +82,33 @@
 
 @media(max-width:768px){
   .art-table th:nth-child(4),.art-row td:nth-child(4){display:none}
+  .art-table th:nth-child(7),.art-row td:nth-child(7){display:none}
   .art-name{max-width:160px}
+  .art-date input{font-size:11px;padding:3px 4px}
+}
+@media(max-width:480px){
+  .top{padding:8px 10px;gap:8px}
+  .brand{font-size:13px;gap:6px}
+  .brand-icon{width:28px;height:28px;font-size:16px;border-radius:8px}
+  .toolbar{padding:8px 10px;gap:6px;top:47px;flex-wrap:wrap}
+  .search-wrap{width:100%;order:-1}
+  #btn-save{width:100%;order:99;text-align:center}
+  .filter-btn{padding:5px 8px;font-size:11px}
+  .stats{font-size:11px}
+  .wrap{padding:8px 8px 80px}
+  .wg{border-radius:8px;margin-bottom:6px}
+  .wg-head{padding:8px 10px;font-size:13px;gap:6px}
+  .art-table{font-size:12px}
+  .art-table th{padding:4px 4px;font-size:9px}
+  .art-row td{padding:4px 4px}
+  .art-img,.art-img-empty{width:30px;height:30px}
+  .art-cb{width:16px;height:16px}
+  .art-name{max-width:120px;font-size:12px}
+  .art-code{font-size:9px}
+  .art-table th:nth-child(5),.art-row td:nth-child(5){display:none}
+  .art-table th:nth-child(7),.art-row td:nth-child(7){display:none}
+  .batch-bar{padding:8px 10px;gap:8px}
+  .batch-bar .btn{padding:6px 10px;font-size:12px}
 }
 </style>
 </head>
@@ -89,21 +116,21 @@
 <div class="top">
   <div class="brand"><div class="brand-icon">🛒</div><div>Artikelfreigabe</div></div>
   <div class="spacer"></div>
-  <a class="btn" href="/shop-admin">Bestellungen</a>
-  <a class="btn" href="/cms">CMS</a>
-  <button class="btn primary" id="btn-save">Änderungen speichern</button>
+  <a class="btn small" href="/shop-admin">Bestellungen</a>
+  <a class="btn small" href="/cms">CMS</a>
 </div>
 
 <div class="toolbar">
+  <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
+  <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
+  <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
+  <div class="stats" id="stats">Lade…</div>
   <div class="search-wrap">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input class="search" id="search" placeholder="Suchen…" autocomplete="off">
     <button class="search-clear" id="search-clear" title="Suche leeren">&times;</button>
   </div>
-  <button class="filter-btn active" data-filter="all">Alle</button>
-  <button class="filter-btn" data-filter="enabled">Freigegeben</button>
-  <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
-  <div class="stats" id="stats">Lade…</div>
+  <button class="btn primary small" id="btn-save">Speichern</button>
 </div>
 
 <div class="wrap" id="wrap">
@@ -112,7 +139,7 @@
 
 <!-- Batch action bar -->
 <div class="batch-bar" id="batch-bar">
-  <span id="batch-count" style="font-weight:800"></span>
+  <span id="batch-count" style="font-weight:500"></span>
   <input type="date" id="batch-date" style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px" title="Ablaufdatum für alle markierten setzen">
   <button class="btn small primary" id="batch-enable">Alle freigeben</button>
   <button class="btn small red" id="batch-disable">Alle sperren</button>
@@ -140,13 +167,14 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="shop-images.js"></script>
 <script>
 (function(){
   var API='/api';
   var allArticles=[];     // from Artikelstamm
   var freigabeMap={};     // strichcode → {id, aktiv, gueltig_bis, ...}
   var pendingChanges={};  // strichcode → {action:'enable'|'disable'|'update', gueltig_bis}
-  var activeFilter='all';
+  var activeFilter='enabled';
   var searchTerm='';
   var imgStrichcode='';
   var imgFileData=null;
@@ -182,10 +210,11 @@
         var hay=(a.bezeichnung+' '+a.strichcode+' '+a.edeka_nr+' '+a.warengruppe).toLowerCase();
         if(hay.indexOf(term)<0) return false;
       }
-      // enabled/disabled filter
+      // enabled/disabled/kurz filter
       var isEnabled=isArticleEnabled(a.strichcode);
       if(activeFilter==='enabled'&&!isEnabled) return false;
       if(activeFilter==='disabled'&&isEnabled) return false;
+      if(activeFilter==='kurz'&&!isKurzfristig(a.strichcode)) return false;
       return true;
     });
   }
@@ -243,13 +272,17 @@
 
     var wrap=document.getElementById('wrap');
     if(!groups.length){
-      wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Keine Artikel gefunden.</div>';
+      var hint='Keine Artikel gefunden.';
+      if(activeFilter==='kurz') hint='Keine kurzfristigen Artikel vorhanden. Markiere Artikel als "Nur kurz" um sie hier zu sehen.';
+      else if(activeFilter==='enabled'&&!searchTerm) hint='Noch keine Artikel freigegeben. Wechsle zu "Nicht freigegeben" um Artikel hinzuzufügen.';
+      else if(activeFilter==='disabled'&&!searchTerm) hint='Alle Artikel sind bereits freigegeben.';
+      wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">'+hint+'</div>';
       return;
     }
 
     var html='';
     groups.forEach(function(g){
-      var isOpen=g.enabledCount>0||searchTerm.length>0;
+      var isOpen=searchTerm.length>0;
       // Limit visible items to keep DOM small; show expand button for large groups
       var maxVisible=50;
       var hasMore=g.items.length>maxVisible;
@@ -257,8 +290,7 @@
       html+='<div class="wg'+(isOpen?' open':'')+'" data-wg="'+esc(g.name)+'">';
       html+='<div class="wg-head"><span class="wg-arrow">▶</span>'+esc(g.name);
       html+='<div class="wg-count">';
-      if(g.enabledCount>0) html+='<span class="wg-badge badge-on">'+g.enabledCount+' aktiv</span>';
-      html+='<span class="wg-badge badge-total">'+g.items.length+'</span>';
+      html+='<span class="wg-badge badge-on">'+g.enabledCount+'/'+g.items.length+'</span>';
       var allChecked=g.enabledCount===g.items.length;
       html+='<input type="checkbox" class="wg-cb" data-wg-cb="'+esc(g.name)+'" title="Alle in '+esc(g.name)+'" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;margin-left:6px"'+(allChecked?' checked':'')+'>';
       html+='</div></div>';
@@ -292,16 +324,33 @@
     });
     wrap.innerHTML=html;
     bindEvents();
-    // Load images for visible articles
-    loadImages(articles);
+    // Load images only for articles in open groups
+    var rendered=[];
+    document.querySelectorAll('.wg.open tr[data-sc]').forEach(function(tr){
+      var sc=tr.getAttribute('data-sc');
+      var a=articles.find(function(x){return x.strichcode===sc;});
+      if(a) rendered.push(a);
+    });
+    loadImages(rendered);
   }
 
   // ── Bind events ──
   function bindEvents(){
-    // Accordion toggle
+    // Accordion toggle – load images when group is opened
     document.querySelectorAll('.wg-head').forEach(function(head){
       head.addEventListener('click',function(){
-        head.parentElement.classList.toggle('open');
+        var wgEl=head.parentElement;
+        var wasOpen=wgEl.classList.contains('open');
+        wgEl.classList.toggle('open');
+        if(!wasOpen){
+          var toLoad=[];
+          wgEl.querySelectorAll('tr[data-sc]').forEach(function(tr){
+            var sc=tr.getAttribute('data-sc');
+            var a=allArticles.find(function(x){return x.strichcode===sc;});
+            if(a) toLoad.push(a);
+          });
+          if(toLoad.length) loadImagesAppend(toLoad);
+        }
       });
     });
 
@@ -356,13 +405,22 @@
       });
     });
 
-    // Kurzfristig toggle
+    // Kurzfristig toggle – auto-focus date field when checked
     document.querySelectorAll('.art-kf').forEach(function(cb){
       cb.addEventListener('change',function(){
         var sc=cb.getAttribute('data-kf-sc');
         if(!pendingChanges[sc]) pendingChanges[sc]={action:'update'};
         pendingChanges[sc].kurzfristig=cb.checked;
         updateSaveBtn();
+        var dateInput=document.querySelector('[data-date-sc="'+sc+'"]');
+        if(dateInput){
+          if(cb.checked){
+            dateInput.style.background='#fef3c7';dateInput.style.borderColor='#f59e0b';
+            if(!dateInput.value) dateInput.focus();
+          } else {
+            dateInput.style.background='';dateInput.style.borderColor='';
+          }
+        }
       });
     });
 
@@ -422,6 +480,7 @@
       tbody.appendChild(tr);
     });
     bindEvents();
+    loadImagesAppend(articles.slice(existing));
   }
 
   // ── Toggle / update ──
@@ -470,6 +529,19 @@
   function saveChanges(){
     var keys=Object.keys(pendingChanges);
     if(!keys.length){toast('Keine Änderungen');return;}
+    // Warn if kurzfristig articles have no gueltig_bis date
+    var missingDate=[];
+    keys.forEach(function(sc){
+      var kf=isKurzfristig(sc);
+      var gb=getGueltigBis(sc);
+      if(kf&&!gb){
+        var art=allArticles.find(function(a){return a.strichcode===sc;});
+        missingDate.push(art?art.bezeichnung:sc);
+      }
+    });
+    if(missingDate.length){
+      if(!confirm('Folgende "Kurz verfügbar"-Artikel haben kein Ablaufdatum:\n\n• '+missingDate.join('\n• ')+'\n\nOhne Datum bleiben diese Artikel unbegrenzt sichtbar. Trotzdem speichern?')) return;
+    }
     var enableItems=[];
     var disableItems=[];
     keys.forEach(function(sc){
@@ -480,7 +552,7 @@
         var item={
           strichcode:sc,
           aktiv:true,
-          gueltig_bis:p.gueltig_bis||null,
+          gueltig_bis:p.gueltig_bis||getGueltigBis(sc)||null,
           warengruppe:p.warengruppe||'',
           bezeichnung:p.bezeichnung||'',
           edeka_nr:p.edeka_nr||''
@@ -536,97 +608,135 @@
     imgStrichcode='';imgFileData=null;
   }
 
+  function compressImage(base64Str,maxWidth,maxHeight,callback){
+    if(!base64Str){callback('');return;}
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height;
+      var scale=Math.min(maxWidth/w,maxHeight/h,1);
+      var canvas=document.createElement('canvas');
+      canvas.width=Math.round(w*scale);
+      canvas.height=Math.round(h*scale);
+      var ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      var isPng=base64Str.indexOf('data:image/png')===0;
+      var compressed=isPng?canvas.toDataURL('image/png'):canvas.toDataURL('image/jpeg',0.75);
+      callback(compressed);
+    };
+    img.onerror=function(){callback(base64Str);};
+    img.src=base64Str;
+  }
+
   function handleImageFile(file){
     if(!file||!file.type.startsWith('image/')) return;
     var reader=new FileReader();
     reader.onload=function(e){
-      imgFileData=e.target.result;
-      var prev=document.getElementById('img-preview');
-      prev.src=imgFileData;
-      prev.style.display='block';
-      document.getElementById('img-upload').style.display='inline-flex';
+      compressImage(e.target.result,500,500,function(compressedB64){
+        imgFileData=compressedB64;
+        var prev=document.getElementById('img-preview');
+        prev.src=imgFileData;
+        prev.style.display='block';
+        document.getElementById('img-upload').style.display='inline-flex';
+      });
     };
     reader.readAsDataURL(file);
   }
 
   function uploadImage(){
     if(!imgFileData||!imgStrichcode) return;
-    document.getElementById('img-upload').textContent='Lädt…';
+    var sc=imgStrichcode;
+    var data=imgFileData;
+    var btn=document.getElementById('img-upload');
+    btn.disabled=true;
+    btn.textContent='Lädt…';
     // Upload to werbebilder API (stores in SharePoint StrichcodeBilder folder)
     fetch(API+'/werbebilder',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({dl_artikelnummer:imgStrichcode,dl_bild_base64:imgFileData})
-    }).then(function(r){return r.json();}).then(function(res){
+      body:JSON.stringify({dl_artikelnummer:sc,dl_bild_base64:data})
+    }).then(function(r){
+      return r.json().then(function(res){return {ok:r.ok,status:r.status,res:res};});
+    }).then(function(out){
+      var res=out.res||{};
       if(res.success){
+        imgCache[sc]=data;
         toast('Bild gespeichert');
         closeImageDialog();
         // Update the thumbnail in the list
-        var imgEl=document.querySelector('[data-img-sc="'+imgStrichcode+'"]');
+        var imgEl=document.querySelector('[data-img-sc="'+sc+'"]')||document.getElementById('fimg-'+sc);
         if(imgEl){
           var img=document.createElement('img');
           img.className='art-img';
-          img.src=imgFileData;
-          img.setAttribute('data-img-sc',imgStrichcode);
+          img.src=data;
+          img.setAttribute('data-img-sc',sc);
           img.title='Bild bearbeiten';
-          img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(imgStrichcode);});
+          img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
           imgEl.replaceWith(img);
         }
       } else {
-        toast('Fehler: '+(res.error||'Unbekannt'));
+        toast('Fehler: '+(res.error||('HTTP '+out.status)));
       }
-      document.getElementById('img-upload').textContent='Hochladen';
+      btn.disabled=false;
+      btn.textContent='Hochladen';
     }).catch(function(e){
       toast('Fehler: '+e.message);
-      document.getElementById('img-upload').textContent='Hochladen';
+      btn.disabled=false;
+      btn.textContent='Hochladen';
     });
   }
 
-  // ── Load images from SharePoint via werbebilder API ──
-  var imgLoadId=0;
-  function loadImages(articles){
-    var runId=++imgLoadId;
-    var toLoad=[];
+  // ── Image loading queue (serialized, one batch at a time) ──
+  var imgQueue=[];
+  var imgQueueRunning=false;
+  var imgQueueGen=0;
+
+  function onImageLoaded(sc,src){
+    imgCache[sc]=src;
+    var el=document.getElementById('fimg-'+sc);
+    if(el){
+      var img=document.createElement('img');
+      img.className='art-img';
+      img.src=src;
+      img.setAttribute('data-img-sc',sc);
+      img.title='Bild bearbeiten';
+      img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
+      el.replaceWith(img);
+    }
+  }
+
+  function processImageQueue(gen){
+    if(gen!==imgQueueGen){imgQueueRunning=false;return;}
+    if(!imgQueue.length){imgQueueRunning=false;return;}
+    imgQueueRunning=true;
+    var batch=imgQueue.splice(0,20);
+    ShopImages.loadBatch(batch,{
+      apiBase:API,
+      batchSize:20,
+      cacheKey:function(info){return info.strichcode;},
+      runCheck:function(){return gen===imgQueueGen;},
+      onImage:onImageLoaded
+    }).then(function(){
+      processImageQueue(gen);
+    });
+  }
+
+  function enqueueImages(articles){
     articles.forEach(function(a){
       if(imgCache[a.strichcode]) return;
-      toLoad.push({artikelnummer:a.strichcode,edeka_nr:(a.edeka_nr||'').trim(),strichcode:a.strichcode});
+      if(imgQueue.some(function(q){return q.strichcode===a.strichcode;})) return;
+      imgQueue.push({artikelnummer:a.strichcode,edeka_nr:'',strichcode:a.strichcode});
     });
-    if(!toLoad.length) return;
-    var batchSize=24;
-    (async function(){
-      for(var i=0;i<toLoad.length;i+=batchSize){
-        if(runId!==imgLoadId) return;
-        var batch=toLoad.slice(i,i+batchSize);
-        try{
-          var r=await fetch(API+'/werbebilder?sharepoint=1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({articles:batch})});
-          var data=await r.json();
-          (data||[]).forEach(function(row){
-            var sc=(row.dl_artikelnummer||'').trim();
-            if(!sc) return;
-            var src='';
-            if(row.dl_bild_base64){
-              src=row.dl_bild_base64.startsWith('data:')?row.dl_bild_base64:'data:image/jpeg;base64,'+row.dl_bild_base64;
-            }
-            if(!src) return;
-            imgCache[sc]=src;
-            // Replace placeholder in DOM
-            var el=document.getElementById('fimg-'+sc);
-            if(el){
-              var img=document.createElement('img');
-              img.className='art-img';
-              img.src=src;
-              img.setAttribute('data-img-sc',sc);
-              img.title='Bild bearbeiten';
-              img.addEventListener('click',function(e){e.stopPropagation();openImageDialog(sc);});
-              el.replaceWith(img);
-            }
-          });
-        }catch(err){
-          console.warn('[Freigabe] Image batch error',err);
-        }
-        await new Promise(function(resolve){setTimeout(resolve,30);});
-      }
-    })();
+    if(!imgQueueRunning&&imgQueue.length) processImageQueue(imgQueueGen);
+  }
+
+  function loadImages(articles){
+    imgQueue=[];
+    imgQueueGen++;
+    enqueueImages(articles);
+  }
+
+  function loadImagesAppend(articles){
+    enqueueImages(articles);
   }
 
   // ── Event listeners ──

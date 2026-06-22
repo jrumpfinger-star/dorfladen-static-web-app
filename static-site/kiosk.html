@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kiosk – Dorfladen Oberornau</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root{--c-pri:#2d5016;--c-green:#2e7d4f;--c-green-light:#dcfce7;--c-red:#dc2626;--c-orange:#e65100;--c-yellow:#f59e0b;--c-bg:#f0f2f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--c-border:#e5e7eb;--radius:14px;--touch-min:56px}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;overflow:hidden;touch-action:manipulation}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);display:flex;flex-direction:column;user-select:none}
+
+    /* ═══ Header ═══ */
+    .k-header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+    .k-header h1{font-size:20px;font-weight:800;flex:1}
+    .k-header .k-clock{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+    .k-header .k-date{font-size:13px;opacity:.85}
+
+    /* ═══ Tab bar ═══ */
+    .k-tabs{display:flex;background:#fff;border-bottom:2px solid var(--c-border);flex-shrink:0}
+    .k-tab{flex:1;padding:14px 8px;text-align:center;font-size:14px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:var(--touch-min)}
+    .k-tab:hover{background:#f9fafb}
+    .k-tab.active{border-bottom-color:var(--c-green);color:var(--c-green);background:#f0fdf4}
+    .k-tab .k-tab-icon{font-size:22px}
+    .k-tab .k-tab-badge{background:var(--c-orange);color:#fff;font-size:11px;font-weight:800;padding:1px 7px;border-radius:10px;min-width:20px;display:none}
+    .k-tab .k-tab-badge.show{display:inline-block}
+
+    /* ═══ Main content ═══ */
+    .k-main{flex:1;overflow:hidden;position:relative}
+    .k-panel{position:absolute;inset:0;overflow-y:auto;padding:12px 16px;display:none}
+    .k-panel.active{display:block}
+
+    /* ═══ Stats bar (flat inline text – NOT buttons) ═══ */
+    .k-stats{display:flex;align-items:center;gap:0;flex-wrap:wrap;font-size:12px;color:var(--c-muted);padding:4px 0}
+    .k-stat{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;background:none;box-shadow:none;border:none;padding:0}
+    .k-stat-val{font-weight:800;font-size:14px;color:var(--c-text)}
+    .k-stat-label{font-size:11px;font-weight:600;color:var(--c-muted)}
+    .k-stat.green .k-stat-val{color:var(--c-green)}
+    .k-stat.orange .k-stat-val{color:var(--c-orange)}
+    .k-stat.red .k-stat-val{color:var(--c-red)}
+    .k-stat-dot{width:3px;height:3px;border-radius:50%;background:#d1d5db;margin:0 8px;flex-shrink:0}
+    /* ═══ Shop toolbar (stats + filter in one row) ═══ */
+    .k-shop-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;padding:6px 0}
+
+    /* ═══ Dish summary (flat inline text – NOT a card) ═══ */
+    .k-dish-summary{font-size:12px;color:var(--c-muted);padding:2px 0;margin-bottom:4px;background:none;box-shadow:none;border-radius:0}
+    .k-dish-summary h3{display:none}
+    .k-dish-inline{display:inline}
+    .k-dish-inline .dish-count{font-weight:800;color:var(--c-text);font-size:13px}
+    .k-dish-sep{margin:0 6px;color:#d1d5db}
+
+    /* ═══ Order cards ═══ */
+    .k-order{background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:10px;overflow:hidden;border-left:5px solid transparent;display:flex;align-items:stretch}
+    .k-order.st-0{border-left-color:var(--c-yellow)}
+    .k-order.st-1{border-left-color:var(--c-green)}
+    .k-order.st-2{border-left-color:var(--c-red)}
+    .k-order.st-3{border-left-color:#9ca3af}
+    .k-order.st-4{border-left-color:#9ca3af;opacity:.6}
+    .k-order.shop-st-1{border-left-color:var(--c-yellow)}
+    .k-order.shop-st-2{border-left-color:#2563eb}
+    .k-order.shop-st-3{border-left-color:#9ca3af}
+    .k-order.shop-st-4{border-left-color:var(--c-red);opacity:.6}
+    .k-order-status{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
+    .shop-badge-0{background:#fef3c7;color:#92400e}
+    .shop-badge-1{background:#fef3c7;color:#92400e}
+    .shop-badge-2{background:#dbeafe;color:#1d4ed8}
+    .shop-badge-3{background:#f3f4f6;color:#6b7280}
+    .shop-badge-4{background:#fef2f2;color:#991b1b}
+    .k-order-overdue{border-left-color:#dc2626!important;background:#fef2f2}
+    .k-confirm-dialog{margin-top:8px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px}
+    .k-confirm-input{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box}
+    .k-order-positions{font-size:12px;color:var(--c-muted);margin-top:2px}
+    .k-order-positions span{display:inline-block;background:#f3f4f6;padding:1px 6px;border-radius:4px;margin:1px 2px}
+    .k-order-info{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+    .k-order-top{display:flex;align-items:center;gap:10px}
+    .k-order-name{font-size:16px;font-weight:700;flex:1}
+    .k-order-src{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:0;border-radius:0;background:none}
+    .src-online{color:#2563eb}
+    .src-telefon{color:#92400e}
+    .src-personal{color:#7c3aed}
+    .k-order-dish{font-size:14px;color:var(--c-text)}
+    .k-order-meta{font-size:12px;color:var(--c-muted);display:flex;gap:12px;flex-wrap:wrap}
+    .k-order-note{font-size:12px;color:#92400e;font-style:italic}
+    .k-order-mitnehmen{font-size:9px;background:none;color:#1d4ed8;padding:0;border-radius:0;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+    .k-order-qty{display:flex;align-items:center;gap:4px;padding:6px 8px;border-left:1px solid var(--c-border)}
+    .k-order-qty .qty-display{font-size:20px;font-weight:800;min-width:28px;text-align:center}
+    .k-order-actions{display:flex;flex-direction:column;gap:3px;padding:6px;border-left:1px solid var(--c-border);justify-content:center}
+    .k-btn{min-height:var(--touch-min);min-width:var(--touch-min);padding:8px 18px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;white-space:nowrap}
+    .k-btn:active{transform:scale(.96)}
+    .k-btn-confirm{background:var(--c-green);color:#fff}
+    .k-btn-pickup{background:#2563eb;color:#fff}
+    .k-btn-cancel{background:var(--c-red);color:#fff;font-size:12px}
+    .k-btn-sm{min-height:32px;padding:4px 8px;font-size:11px}
+    .k-btn-outline{background:#fff;color:var(--c-text);border:2px solid var(--c-border)}
+    .k-btn-lg{min-height:64px;padding:12px 28px;font-size:16px;border-radius:14px}
+
+    /* ═══ Bottom action bar ═══ */
+    .k-bottom{background:#fff;border-top:1px solid var(--c-border);padding:10px 16px;display:flex;gap:10px;flex-shrink:0}
+    .k-bottom .k-btn{flex:1}
+
+    /* ═══ Modal ═══ */
+    .k-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+    .k-modal-bg.open{display:flex}
+    .k-modal{background:#fff;border-radius:20px;width:95%;max-width:560px;max-height:90vh;overflow-y:auto;padding:0;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+    .k-modal.k-modal-full{max-width:95vw;width:95vw;max-height:95vh;height:95vh;display:flex;flex-direction:column}
+    .k-modal.k-modal-full .k-modal-body{flex:1;padding:0;overflow:hidden}
+    .k-modal.k-modal-full .k-modal-body iframe{width:100%;height:100%;border:none;border-radius:0 0 20px 20px}
+    .k-modal-head{padding:20px 24px 0;display:flex;align-items:center;gap:12px}
+    .k-modal-head h2{font-size:20px;font-weight:800;flex:1}
+    .k-modal-close{width:44px;height:44px;border:none;background:#f3f4f6;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .k-modal-body{padding:20px 24px}
+    .k-modal-footer{padding:0 24px 24px;display:flex;gap:10px}
+
+    /* ═══ Form fields ═══ */
+    .k-field{margin-bottom:16px}
+    .k-field label{font-size:13px;font-weight:700;color:var(--c-muted);margin-bottom:6px;display:block}
+    .k-field input,.k-field textarea,.k-field select{width:100%;padding:14px 16px;border:2px solid var(--c-border);border-radius:12px;font-size:16px;font-family:inherit;outline:none}
+    .k-field input:focus,.k-field textarea:focus,.k-field select:focus{border-color:var(--c-green)}
+    .k-field textarea{resize:vertical;min-height:60px}
+    .k-field select{background:#fff;appearance:auto}
+
+    /* ═══ Search results ═══ */
+    .k-search-results{border:1px solid var(--c-border);border-radius:10px;max-height:180px;overflow-y:auto;margin-top:4px;display:none}
+    .k-search-results.show{display:block}
+    .k-search-item{padding:12px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:10px;min-height:var(--touch-min)}
+    .k-search-item:hover,.k-search-item:active{background:#f0fdf4}
+    .k-search-item:last-child{border-bottom:none}
+    .k-search-item .si-name{font-weight:700;flex:1}
+    .k-search-item .si-phone{font-size:13px;color:var(--c-muted)}
+
+    /* ═══ Qty selector ═══ */
+    .k-qty-sel{display:flex;align-items:center;justify-content:center;gap:20px;margin:8px 0}
+    .k-qty-btn{width:56px;height:56px;border-radius:50%;border:2px solid var(--c-green);background:#fff;color:var(--c-green);font-size:26px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .k-qty-btn:active{background:var(--c-green);color:#fff}
+    .k-qty-val{font-size:36px;font-weight:800;min-width:50px;text-align:center}
+
+    /* ═══ Gericht-Auswahl (Radio-Karten) ═══ */
+    .k-dish-pick{display:flex;flex-direction:column;gap:6px}
+    .k-dish-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--c-border);border-radius:12px;cursor:pointer;min-height:var(--touch-min);transition:border-color .1s}
+    .k-dish-opt.selected{border-color:var(--c-green);background:#f0fdf4}
+    .k-dish-opt .do-name{flex:1;font-weight:600;font-size:15px}
+    .k-dish-opt .do-day{font-size:12px;color:var(--c-muted)}
+    .k-dish-opt .do-price{font-weight:700;color:var(--c-green);font-size:15px}
+
+    /* ═══ Toast ═══ */
+    .k-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:14px 28px;border-radius:14px;font-size:16px;font-weight:700;z-index:999;display:none;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90%}
+    .k-toast.show{display:block;animation:toastIn .3s ease}
+    @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+    /* ═══ Empty state ═══ */
+    .k-empty{text-align:center;padding:60px 20px;color:var(--c-muted);font-size:16px}
+    .k-empty .k-empty-icon{font-size:48px;margin-bottom:12px}
+
+    /* ═══ Filter tabs (underline style – NOT buttons) ═══ */
+    .k-filter-bar{display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--c-border);overflow-x:auto;scrollbar-width:none}
+    .k-filter-bar::-webkit-scrollbar{display:none}
+    .k-filter-btn{padding:6px 12px;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:4px}
+    .k-filter-btn:hover{color:var(--c-text)}
+    .k-filter-btn:active{transform:none}
+    .k-filter-btn.active{border-bottom-color:var(--c-green);color:var(--c-green);background:none}
+    .k-filter-btn .k-filter-count{font-size:10px;font-weight:800;background:#f3f4f6;color:var(--c-muted);padding:1px 5px;border-radius:8px;min-width:16px;text-align:center}
+    .k-filter-btn.active .k-filter-count{background:var(--c-green-light);color:var(--c-green)}
+    /* ═══ Day pills (borderless, simple) ═══ */
+    .k-day-pill{padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-muted);border:none;white-space:nowrap}
+    .k-day-pill.active{background:var(--c-green);color:#fff}
+    .k-day-pill:not(.active):hover{background:#f3f4f6}
+
+    /* ═══ Slot group headers ═══ */
+    .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
+    .k-slot-header:active{opacity:.85}
+    .k-slot-arrow{transition:transform .2s;font-size:11px}
+    .k-slot-group.collapsed .k-slot-arrow{transform:rotate(-90deg)}
+    .k-slot-group.collapsed .k-order{display:none}
+    .k-slot-count{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px}
+    .k-slot-badge{display:inline-flex;align-items:center;gap:3px;background:#fff;padding:2px 10px;border-radius:6px;font-weight:800;font-size:12px}
+    .k-slot-badge.sb-pack{color:#d97706}
+    .k-slot-badge.sb-wait{color:#2563eb}
+    .k-slot-badge.sb-overdue{color:#dc2626}
+    .k-slot-current .k-slot-header{background:linear-gradient(90deg,#16a34a,#22c55e)}
+    .k-slot-now{background:rgba(255,255,255,.35);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:3px;animation:nowPulse 2s ease-in-out infinite}
+    @keyframes nowPulse{0%,100%{opacity:1}50%{opacity:.65}}
+    @keyframes kPulse{0%,100%{background-color:#eff6ff}50%{background-color:#dbeafe}}
+    @keyframes kBlink{0%,100%{opacity:1}50%{opacity:.4}}
+    @keyframes kSpin{to{transform:rotate(360deg)}}
+
+    /* ═══ Pack modal (inline) ═══ */
+    .k-modal.k-modal-lg{max-width:720px}
+    .pk-progress{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:8px}
+    .pk-progress-bar{height:100%;background:var(--c-green);border-radius:4px;transition:width .3s}
+    .pk-item{display:flex;align-items:center;gap:8px;padding:10px 8px;border-bottom:1px solid #f3f4f6;border-radius:8px;transition:background .1s}
+    .pk-item.packed{background:#f0fdf4}
+    .pk-item.unavail{background:#fef2f2;opacity:.7}
+    .pk-item input[type=checkbox]{width:22px;height:22px;accent-color:var(--c-green);flex-shrink:0;cursor:pointer}
+    .pk-body{flex:1;min-width:0}
+    .pk-name{font-weight:700;font-size:14px}
+    .pk-code{font-size:10px;color:var(--c-muted)}
+    .pk-tag-red{display:inline-block;background:#fecaca;color:#991b1b;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:2px}
+    .pk-tag-orange{display:inline-block;background:#fed7aa;color:#9a3412;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:2px}
+    .pk-best{font-size:11px;color:var(--c-muted);white-space:nowrap;min-width:50px;text-align:right}
+    .pk-best .pk-unit{font-size:10px;color:#9ca3af}
+    .pk-qty-wrap{text-align:right;white-space:nowrap}
+    .pk-qty-input{width:64px;padding:5px 4px;border:1px solid var(--c-border);border-radius:6px;text-align:center;font-size:14px;font-weight:700}
+    .pk-qty-input:focus{border-color:var(--c-green);outline:none;box-shadow:0 0 0 2px rgba(46,125,79,.15)}
+    .pk-unit{font-size:11px;color:#6b7280}
+    .pk-price{text-align:right;white-space:nowrap;font-size:13px;font-weight:700;min-width:60px}
+
+    /* ═══ Print ═══ */
+    @media print{
+      .k-header,.k-tabs,.k-bottom,.k-order-actions,.k-btn,.k-modal-bg,.k-toast{display:none!important}
+      html,body{height:auto;overflow:auto}
+      .k-main,.k-panel,.k-panel.active{position:static;overflow:visible;display:block!important}
+      .k-order{break-inside:avoid;border:1px solid #999;margin-bottom:6px}
+      body{background:#fff;font-size:12px}
+      .k-stats{display:none}
+      .k-dish-summary{border:1px solid #999;box-shadow:none;margin-bottom:8px}
+      .k-dish-summary h3{font-size:16px;font-weight:800;margin-bottom:4px}
+      .k-dish-row{font-size:14px}
+      @page{margin:1cm}
+    }
+    /* Lucide inline icons */
+    [data-lucide]{display:inline-block;vertical-align:middle}
+  </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<!-- ═══ Header ═══ -->
+<div class="k-header">
+  <h1><i data-lucide="store" style="width:24px;height:24px"></i> Dorfladen Kiosk</h1>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div>
+      <div class="k-date" id="k-date"></div>
+      <div class="k-clock" id="k-clock"></div>
+    </div>
+    <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.openModal('modal-help')" title="Hilfe & Workflows"><i data-lucide="help-circle" style="width:20px;height:20px"></i></button>
+    <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.refresh()" title="Aktualisieren"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
+  </div>
+</div>
+
+<!-- ═══ Tab bar ═══ -->
+<div class="k-tabs">
+  <div class="k-tab" data-tab="mittag" onclick="K.switchTab('mittag')">
+    <span class="k-tab-icon"><i data-lucide="utensils" style="width:22px;height:22px"></i></span> Mittagstisch
+    <span class="k-tab-badge" id="badge-mittag"></span>
+  </div>
+  <div class="k-tab active" data-tab="abhol" onclick="K.switchTab('abhol')">
+    <span class="k-tab-icon"><i data-lucide="shopping-cart" style="width:22px;height:22px"></i></span> Online-Shop
+    <span class="k-tab-badge" id="badge-abhol"></span>
+  </div>
+  <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
+    <span class="k-tab-icon"><i data-lucide="users" style="width:22px;height:22px"></i></span> Stammkunden
+  </div>
+  <div class="k-tab" data-tab="social" onclick="K.switchTab('social')">
+    <span class="k-tab-icon"><i data-lucide="share-2" style="width:22px;height:22px"></i></span> Social
+  </div>
+</div>
+
+<!-- ═══ Panels ═══ -->
+<div class="k-main">
+
+  <!-- ── Mittagstisch ── -->
+  <div class="k-panel" id="panel-mittag">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0">
+      <div id="mittag-day-bar" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"></div>
+      <div style="flex:1"></div>
+      <div class="k-stats" id="mittag-stats"></div>
+    </div>
+    <div class="k-filter-bar" id="mittag-status-bar">
+      <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> Zu bestätigen <span class="k-filter-count" id="mt-fc-offen">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="bestaetigt" onclick="K.setMittagFilter('bestaetigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Bestätigt <span class="k-filter-count" id="mt-fc-bestaetigt">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')">Alle <span class="k-filter-count" id="mt-fc-alle">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="abgeholt" onclick="K.setMittagFilter('abgeholt')"><i data-lucide="package-check" style="width:14px;height:14px"></i> Abgeholt <span class="k-filter-count" id="mt-fc-abgeholt">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')"><i data-lucide="x-circle" style="width:14px;height:14px"></i> Storniert <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
+      <button class="k-filter-btn" id="mt-msg-badge" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="display:none;color:#3b82f6"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> Nachrichten</button>
+    </div>
+    <div class="k-dish-summary" id="mittag-dish-summary"></div>
+    <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
+  </div>
+
+  <!-- ── Shop-Abholungen ── -->
+  <div class="k-panel active" id="panel-abhol">
+    <div class="k-filter-bar" id="abhol-filter-bar">
+      <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')"><i data-lucide="package" style="width:14px;height:14px"></i> Zu erledigen <span class="k-filter-count" id="fc-open">-</span></button>
+      <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')"><i data-lucide="calendar" style="width:14px;height:14px"></i> Heute abholen <span class="k-filter-count" id="fc-today">-</span></button>
+      <button class="k-filter-btn" data-filter="overdue" onclick="K.setShopFilter('overdue')"><i data-lucide="alert-triangle" style="width:14px;height:14px"></i> Überfällig <span class="k-filter-count" id="fc-overdue">-</span></button>
+      <button class="k-filter-btn" id="btn-history" onclick="K.toggleHistory()" title="Alte abgeschlossene Bestellungen anzeigen"><i data-lucide="history" style="width:14px;height:14px"></i> Historie <span class="k-filter-count" id="fc-history">0</span></button>
+    </div>
+    <div class="k-stats" id="abhol-stats" style="margin-bottom:8px"></div>
+    <div id="abhol-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
+  </div>
+
+  <!-- ── Stammkunden ── -->
+  <div class="k-panel" id="panel-kunden">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div class="k-field" style="flex:1;margin-bottom:0">
+        <input type="text" id="kunden-search" placeholder="Kunde suchen (Name oder Telefon)…" oninput="K.searchKunden()">
+      </div>
+      <button class="k-btn k-btn-confirm" style="min-width:180px;border-radius:12px;font-size:14px" onclick="K.openNewKunde()"><i data-lucide="user-plus" style="width:16px;height:16px"></i> Neuer Kunde</button>
+    </div>
+    <div style="margin-bottom:10px">
+      <button class="k-btn k-btn-outline" style="min-height:40px;padding:8px 16px;font-size:13px;border-radius:10px" onclick="document.getElementById('kunden-search').value='';K.searchKunden()"><i data-lucide="users" style="width:16px;height:16px"></i> Alle Kunden laden</button>
+    </div>
+    <div id="kunden-list"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="users" style="width:24px;height:24px"></i></div>Suchbegriff eingeben oder „Alle Kunden laden" klicken</div></div>
+  </div>
+
+  <!-- ── Social Media ── -->
+  <div class="k-panel" id="panel-social">
+    <div id="kiosk-panel-social">
+    <div style="margin-bottom:10px">
+      <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0">&#128247; Social Media &#8211; Tagespost</h3>
+      <p style="font-size:12px;color:#6b7280;margin:4px 0 12px">T&#228;gliche Angebote zusammenstellen und auf WhatsApp &amp; Instagram teilen.</p>
+    </div>
+
+    <!-- Sub-Tabs: Neuer Post | Katalog -->
+    <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:8px;padding:3px;margin-bottom:16px">
+      <button id="social-subtab-post" onclick="socialSubTab('post')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:#fff;color:#e1306c;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer">&#10133; Neuer Post</button>
+      <button id="social-subtab-katalog" onclick="socialSubTab('katalog')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:transparent;color:#6b7280;cursor:pointer">&#128218; Katalog</button>
+    </div>
+
+    <!-- ========== SUB: KATALOG ========== -->
+    <div id="social-panel-katalog" style="display:none">
+      <div style="margin-bottom:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+        <div style="background:#e1306c;color:#fff;padding:10px 14px;font-weight:700;font-size:13px">&#10133; Neues Produkt zum Katalog hinzuf&#252;gen</div>
+        <div style="padding:14px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:2;min-width:160px">
+              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Name *</label>
+              <input id="soc-kat-name" placeholder="z.B. Geschnetzeltes mit Champignonrahm" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+            <div style="flex:1;min-width:120px">
+              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Kategorie *</label>
+              <select id="soc-kat-kategorie" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                <option value="Mittagessen">&#127869; Mittagessen</option>
+                <option value="Kuchen">&#127856; Kuchen</option>
+                <option value="Obst &amp; Gemuese">&#129382; Obst &amp; Gem&#252;se</option>
+                <option value="Aufstriche">&#129367; Aufstriche</option>
+              </select>
+            </div>
+            <div style="width:80px">
+              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Preis &#8364;</label>
+              <input id="soc-kat-preis" type="number" step="0.01" min="0" placeholder="9.80" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+            <div style="min-width:140px">
+              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Bild</label>
+              <input id="soc-kat-bild" type="file" accept="image/*" capture="environment" style="width:100%;font-size:11px">
+            </div>
+            <button onclick="socialKatAdd()" style="white-space:nowrap;background:#e1306c;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer">&#10133; Hinzuf&#252;gen</button>
+          </div>
+          <div id="soc-kat-paste-zone" tabindex="0"
+            style="margin-top:8px;border:2px dashed #d1d5db;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
+            onclick="document.getElementById('soc-kat-bild').click()"
+            title="Klicken zum Datei w&#228;hlen oder Strg+V zum Einf&#252;gen">
+            <div id="soc-kat-paste-hint" style="color:#9ca3af;font-size:12px">
+              &#128203; <strong>Strg+V</strong> zum Einf&#252;gen oder <strong>klicken</strong> zum Datei w&#228;hlen
+            </div>
+            <div id="soc-kat-bild-preview" style="display:none;margin-top:6px">
+              <img id="soc-kat-bild-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
+              <button onclick="event.stopPropagation();socialClearBild()" style="display:block;margin:6px auto 0;background:none;border:none;color:#dc2626;font-size:11px;cursor:pointer;text-decoration:underline">&#10005; Bild entfernen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="soc-kat-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+      <div id="soc-kat-loading" style="display:none;text-align:center;padding:30px 0">
+        <div style="display:inline-block;width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#e1306c;border-radius:50%;animation:kSpin 0.8s linear infinite"></div>
+        <div style="margin-top:8px;color:#6b7280;font-size:13px">Katalog wird geladen&#8230;</div>
+      </div>
+      <div id="soc-kat-list"></div>
+      <div id="soc-kat-empty" style="display:none;text-align:center;padding:30px 0;color:#9ca3af;font-size:13px">Noch keine Produkte im Katalog. F&#252;gen Sie oben Ihr erstes Produkt hinzu.</div>
+    </div>
+
+    <!-- ========== SUB: NEUER POST ========== -->
+    <div id="social-panel-post">
+      <div style="margin-bottom:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+        <div style="background:#25D366;color:#fff;padding:10px 14px;font-weight:700;font-size:13px">&#128221; Tagespost zusammenstellen</div>
+        <div style="padding:14px">
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Titel</label>
+            <select id="soc-post-titel-sel" onchange="socialTitelChange()" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box"></select>
+            <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:4px;display:none;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+          </div>
+          <script>
+          (function(){
+            var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+            var tag=tage[new Date().getDay()];
+            var sel=document.getElementById('soc-post-titel-sel');
+            if(!sel)return;
+            var opts=['Heute im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
+            var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
+            opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
+            var inp=document.getElementById('soc-post-titel');if(inp) inp.value=opts[0];
+          })();
+          window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}};
+          </script>
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Freitext (optional)</label>
+            <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" style="width:100%;resize:vertical;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box"></textarea>
+          </div>
+          <p style="font-size:12px;font-weight:700;color:#374151;margin:0 0 8px">Produkte ausw&#228;hlen:</p>
+          <div id="soc-post-items" style="display:flex;flex-direction:column;gap:6px">
+            <p style="color:#9ca3af;font-size:12px;font-style:italic">Laden Sie zuerst den Katalog...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vorschau -->
+      <div style="margin-bottom:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+        <div style="background:#1f2937;color:#fff;padding:10px 14px;font-weight:700;font-size:13px">&#128065; Vorschau</div>
+        <div style="text-align:center;padding:16px">
+          <div id="soc-preview-label-meal" style="display:none;font-size:11px;font-weight:700;color:#f57f17;margin-bottom:4px">&#127869; MITTAGESSEN-POSTER</div>
+          <canvas id="soc-post-canvas-meal" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6;margin-bottom:12px"></canvas>
+          <div id="soc-preview-label-daily" style="display:none;font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px">&#128230; TAGES&#220;BERSICHT</div>
+          <canvas id="soc-post-canvas" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6"></canvas>
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button onclick="socialGenPreview()" style="background:#e1306c;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer">&#128260; Vorschau aktualisieren</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teilen -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <button onclick="socialShareWhatsApp()" style="background:#25D366;color:#fff;border:none;border-radius:8px;flex:1;min-width:140px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Auf WhatsApp teilen
+        </button>
+        <button onclick="socialShareInstagram()" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:8px;flex:1;min-width:140px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+          Auf Instagram teilen
+        </button>
+        <button onclick="socialDownloadPoster()" style="min-width:100px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px">&#128190; Bild speichern</button>
+      </div>
+      <div id="soc-meal-posters" style="display:none;margin-top:12px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">&#127860; Einzel-Poster pro Gericht</div>
+        <div id="soc-meal-poster-list" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+      <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
+    </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ Bottom bar ═══ -->
+<div class="k-bottom">
+  <button class="k-btn k-btn-lg k-btn-confirm" onclick="K.openNewOrder()"><i data-lucide="phone" style="width:18px;height:18px"></i> Neue Telefonbestellung</button>
+  <button class="k-btn k-btn-lg k-btn-outline" onclick="K.printKitchen()"><i data-lucide="printer" style="width:18px;height:18px"></i> Küchenliste drucken</button>
+</div>
+
+<!-- ═══ New order modal ═══ -->
+<div class="k-modal-bg" id="modal-order">
+  <div class="k-modal">
+    <div class="k-modal-head">
+      <h2><i data-lucide="phone" style="width:20px;height:20px"></i> Neue Bestellung</h2>
+      <button class="k-modal-close" onclick="K.closeModal('modal-order')">✕</button>
+    </div>
+    <div class="k-modal-body">
+      <!-- Step 1: Kunde -->
+      <div class="k-field">
+        <label>Kunde *</label>
+        <input type="text" id="no-kunde-search" placeholder="Name oder Telefon eingeben…" oninput="K.searchOrderKunde()">
+        <div class="k-search-results" id="no-kunde-results"></div>
+      </div>
+      <div id="no-kunde-selected" style="display:none;background:#f0fdf4;padding:12px;border-radius:10px;margin-bottom:16px">
+        <strong id="no-kunde-name"></strong> <span id="no-kunde-phone" style="color:#6b7280"></span>
+        <button class="k-btn k-btn-sm k-btn-outline" onclick="K.clearOrderKunde()" style="float:right">✕ Ändern</button>
+      </div>
+      <div id="no-kunde-new" style="display:none;margin-bottom:16px">
+        <div style="display:flex;gap:8px">
+          <div class="k-field" style="flex:1"><label>Nachname *</label><input type="text" id="no-new-nachname" placeholder="Nachname"></div>
+          <div class="k-field" style="flex:1"><label>Vorname</label><input type="text" id="no-new-vorname" placeholder="Vorname"></div>
+          <div class="k-field" style="flex:1"><label>Telefon</label><input type="tel" id="no-new-phone" placeholder="08082…"></div>
+        </div>
+      </div>
+
+      <!-- Step 2: Gericht -->
+      <div class="k-field">
+        <label>Gericht *</label>
+        <div class="k-dish-pick" id="no-dishes"></div>
+      </div>
+
+      <!-- Step 3: Menge -->
+      <div class="k-field">
+        <label>Menge</label>
+        <div class="k-qty-sel">
+          <button class="k-qty-btn" onclick="K.noQty(-1)">−</button>
+          <div class="k-qty-val" id="no-qty">1</div>
+          <button class="k-qty-btn" onclick="K.noQty(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Anmerkung -->
+      <div class="k-field">
+        <label>Anmerkung (optional)</label>
+        <textarea id="no-note" placeholder="z.B. ohne Zwiebeln…"></textarea>
+      </div>
+
+      <div class="k-field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="no-mitnehmen" style="width:22px;height:22px;accent-color:var(--c-green)">
+          <i data-lucide="package" style="width:18px;height:18px"></i> Zum Mitnehmen
+        </label>
+      </div>
+    </div>
+    <div class="k-modal-footer">
+      <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-order')">Abbrechen</button>
+      <button class="k-btn k-btn-lg k-btn-confirm" style="flex:2" onclick="K.submitNewOrder()"><i data-lucide="check-circle" style="width:18px;height:18px"></i> Bestellung aufnehmen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ New customer modal ═══ -->
+<div class="k-modal-bg" id="modal-kunde">
+  <div class="k-modal">
+    <div class="k-modal-head">
+      <h2><i data-lucide="user-plus" style="width:20px;height:20px"></i> Neuer Stammkunde</h2>
+      <button class="k-modal-close" onclick="K.closeModal('modal-kunde')">✕</button>
+    </div>
+    <div class="k-modal-body">
+      <div style="display:flex;gap:8px">
+        <div class="k-field" style="flex:1"><label>Nachname *</label><input type="text" id="nk-nachname" placeholder="Nachname"></div>
+        <div class="k-field" style="flex:1"><label>Vorname</label><input type="text" id="nk-vorname" placeholder="Vorname"></div>
+      </div>
+      <div class="k-field"><label>Telefon *</label><input type="tel" id="nk-phone" placeholder="08082…"></div>
+      <div class="k-field"><label>E-Mail</label><input type="email" id="nk-email" placeholder="optional"></div>
+      <div class="k-field"><label>Notiz</label><textarea id="nk-note" placeholder="z.B. Stammgast, immer Freitags…"></textarea></div>
+    </div>
+    <div class="k-modal-footer">
+      <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-kunde')">Abbrechen</button>
+      <button class="k-btn k-btn-lg k-btn-confirm" style="flex:2" onclick="K.submitNewKunde()"><i data-lucide="check-circle" style="width:18px;height:18px"></i> Kunde anlegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Pack modal (inline) ═══ -->
+<div class="k-modal-bg" id="modal-pack">
+  <div class="k-modal k-modal-lg">
+    <div class="k-modal-head">
+      <h2 id="pk-title"><i data-lucide="package" style="width:20px;height:20px"></i> Bestellung packen</h2>
+      <button class="k-modal-close" onclick="K.closeModal('modal-pack')">✕</button>
+    </div>
+    <div class="k-modal-body" style="padding:12px 20px">
+      <div id="pk-info" style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--c-muted);margin-bottom:8px"></div>
+      <div id="pk-note" style="display:none;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;margin-bottom:8px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div style="font-size:13px;font-weight:700">Packliste</div><div id="pk-progress-text" style="font-size:12px;color:var(--c-muted)"></div></div>
+      <div class="pk-progress"><div class="pk-progress-bar" id="pk-progress-bar" style="width:0%"></div></div>
+      <div id="pk-items"></div>
+      <div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">ℹ Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>
+      <div id="pk-summe" style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:4px"></div>
+    </div>
+    <div class="k-modal-footer" style="flex-wrap:wrap;gap:6px">
+      <span id="pk-autosave" style="font-size:11px;color:#6b7280;width:100%;text-align:center;min-height:16px"></span>
+      <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-pack')">Schließen</button>
+      <button class="k-btn k-btn-lg" style="flex:1;background:#6366f1;color:#fff" onclick="K.printPackSlip()">� Beipackzettel</button>
+      <button class="k-btn k-btn-lg k-btn-confirm" style="flex:2" id="pk-finish-btn" onclick="K.finishPack()"><i data-lucide="check-circle" style="width:18px;height:18px"></i> Abholbereit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Order Detail Modal ═══ -->
+<div class="k-modal-bg" id="modal-detail">
+  <div class="k-modal k-modal-lg">
+    <div class="k-modal-head">
+      <h2 id="detail-title"><i data-lucide="clipboard-list" style="width:20px;height:20px"></i> Bestelldetails</h2>
+      <button class="k-modal-close" onclick="K.closeModal('modal-detail')">✕</button>
+    </div>
+    <div class="k-modal-body" id="detail-body" style="padding:16px 24px"></div>
+    <div class="k-modal-footer">
+      <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-detail')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Help Modal ═══ -->
+<div class="k-modal-bg" id="modal-help">
+  <div class="k-modal k-modal-full">
+    <div class="k-modal-head">
+      <h2><i data-lucide="help-circle" style="width:20px;height:20px"></i> Hilfe &ndash; Bestellsystem Workflows</h2>
+      <button class="k-modal-close" onclick="K.closeModal('modal-help')">&#10005;</button>
+    </div>
+    <div class="k-modal-body">
+      <iframe id="help-iframe" src="about:blank"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Toast ═══ -->
+<div class="k-toast" id="k-toast"></div>
+
+<script>
+var K = (function(){
+  var API = '/api';
+  var orders = [];
+  var dishes = [];
+  var kunden = [];
+  var selectedKunde = null;
+  var selectedDish = null;
+  var noQty = 1;
+  var refreshTimer = null;
+
+  var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
+  var SRC_LABELS = {0:'Online',1:'Telefon',2:'Personal'};
+  var SRC_CLASS = {0:'src-online',1:'src-telefon',2:'src-personal'};
+  var DAY_FULL = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag',101005:'Samstag'};
+
+  // Shop-Order statuses
+  var SHOP_STATUS = {0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt',4:'Storniert'};
+  var SHOP_ICON_NAMES = {0:'circle-dot',1:'clipboard-list',2:'check-circle',3:'package-check',4:'x-circle'};
+  var shopOrders = [];
+
+  function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+  function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+  function luc(name,size){size=size||16;return '<i data-lucide="'+name+'" style="width:'+size+'px;height:'+size+'px"></i>';}
+  function reinitIcons(){if(typeof lucide!=='undefined') lucide.createIcons();}
+
+  // ── Clock ──
+  function updateClock(){
+    var now = new Date();
+    document.getElementById('k-clock').textContent = now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.getElementById('k-date').textContent = now.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ── Tabs ──
+  function switchTab(id){
+    document.querySelectorAll('.k-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===id);});
+    document.querySelectorAll('.k-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+id);});
+    if(id==='abhol') loadShopOrders();
+    if(id==='kunden' && kunden.length===0) searchKunden();
+    if(id==='social' && typeof socialSubTab==='function') socialSubTab('post');
+  }
+
+  // ══════════════════════════════════════════════════
+  //  MITTAGSTISCH
+  // ══════════════════════════════════════════════════
+
+  var _mittagDatum = today();
+  var _mittagFilter = 'offen'; // Default: Zu bestätigen
+  var _globalUnreadMessages = 0;
+  var _globalTodayNew = 0;
+
+  function _hasUnseenComment(o){
+    return !!(o.kunde_kommentar && o.status!==2 && !o.kommentar_gelesen);
+  }
+  function _markCommentsAsSeen(){
+    orders.forEach(function(o){
+      if(_hasUnseenComment(o)){
+        o.kommentar_gelesen = true;
+        fetch('/api/lunch-order/'+o.id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kommentar_gelesen:true})}).catch(function(){});
+      }
+    });
+  }
+
+  function setMittagFilter(f){
+    if(f==='nachrichten'){
+      _markCommentsAsSeen();
+      _mittagFilter = 'nachrichten';
+    } else {
+      _mittagFilter = f;
+    }
+    document.querySelectorAll('#mittag-status-bar .k-filter-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.mtFilter===_mittagFilter);
+    });
+    renderOrders();
+    updateMittagFilterCounts();
+  }
+
+  function updateMittagFilterCounts(){
+    var c0=0,c1=0,c2=0,c3=0;
+    orders.forEach(function(o){
+      if(o.status===0) c0++;
+      else if(o.status===1) c1++;
+      else if(o.status===2) c2++;
+      else if(o.status===3) c3++;
+    });
+    document.getElementById('mt-fc-offen').textContent = c0;
+    document.getElementById('mt-fc-bestaetigt').textContent = c1;
+    document.getElementById('mt-fc-alle').textContent = orders.length;
+    document.getElementById('mt-fc-abgeholt').textContent = c3;
+    document.getElementById('mt-fc-storniert').textContent = c2;
+    var msgCount = orders.filter(function(o){return _hasUnseenComment(o);}).length;
+    var msgBadge = document.getElementById('mt-msg-badge');
+    var msgCountEl = document.getElementById('mt-msg-count');
+    if(msgBadge){ msgBadge.style.display = msgCount>0?'inline-flex':'none'; }
+    if(msgCountEl){ msgCountEl.textContent = msgCount; }
+  }
+
+  function buildDayBar(){
+    var DAY_SHORT = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+    var bar = document.getElementById('mittag-day-bar');
+    var html = '';
+    for(var i=-1;i<=5;i++){
+      var d = new Date();
+      d.setDate(d.getDate()+i);
+      var iso = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+      var dayName = DAY_SHORT[d.getDay()];
+      var dayNum = ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);
+      var label = i===0?'Heute':i===1?'Morgen':i===-1?'Gestern':dayName+' '+dayNum;
+      var active = iso===_mittagDatum?' active':'';
+      html += '<button class="k-day-pill'+active+'" data-datum="'+iso+'" onclick="K.setMittagDatum(\''+iso+'\')">'+label+'</button>';
+    }
+    bar.innerHTML = html;
+  }
+
+  function setMittagDatum(datum){
+    _mittagDatum = datum;
+    document.querySelectorAll('#mittag-day-bar .k-day-pill').forEach(function(b){
+      b.classList.toggle('active', b.dataset.datum===datum);
+    });
+    loadOrders();
+  }
+
+  function loadOrders(){
+    fetch(API+'/lunch-order?datum='+_mittagDatum)
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success) return;
+        orders = res.orders || [];
+        updateMittagFilterCounts();
+        renderOrders();
+        renderStats();
+      })
+      .catch(function(){});
+    loadMittagBadge();
+  }
+
+  function loadMittagBadge(){
+    // 1) Today's new orders (status=0) – always for today, regardless of selected day
+    fetch(API+'/lunch-order?datum='+today()+'&status=0')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        _globalTodayNew = (res.success && res.orders) ? res.orders.length : 0;
+        _updateMittagTabBadge();
+      }).catch(function(){});
+    // 2) Unread messages across all dates
+    fetch(API+'/lunch-order?mode=unread_messages')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        _globalUnreadMessages = (res.success) ? (res.unread_count||0) : 0;
+        _updateMittagTabBadge();
+      }).catch(function(){});
+  }
+
+  function _updateMittagTabBadge(){
+    var total = _globalTodayNew + _globalUnreadMessages;
+    var el = document.getElementById('badge-mittag');
+    if(!el) return;
+    if(total>0){
+      var parts = [];
+      if(_globalTodayNew>0) parts.push(_globalTodayNew+' neu');
+      if(_globalUnreadMessages>0) parts.push(_globalUnreadMessages+' 💬');
+      el.textContent = total;
+      el.title = parts.join(', ');
+      el.classList.add('show');
+      // Color: blue if messages, orange if only orders
+      if(_globalUnreadMessages>0){
+        el.style.background = '#3b82f6';
+      } else {
+        el.style.background = '';
+      }
+    } else {
+      el.classList.remove('show');
+      el.style.background = '';
+    }
+  }
+
+  function renderStats(){
+    var active = orders.filter(function(o){return o.status!==2;});
+    var neu = orders.filter(function(o){return o.status===0;}).length;
+    var portionen = active.reduce(function(s,o){return s+(o.menge||1);},0);
+    var mitnehmen = active.filter(function(o){return o.mitnehmen;}).reduce(function(s,o){return s+(o.menge||1);},0);
+    var vorOrt = portionen - mitnehmen;
+
+    var nachrichten = active.filter(function(o){return _hasUnseenComment(o);}).length;
+
+    var parts = [];
+    parts.push('<span class="k-stat green"><span class="k-stat-val">'+portionen+'</span> <span class="k-stat-label">Portionen</span></span>');
+    if(neu>0) parts.push('<span class="k-stat orange"><span class="k-stat-val">'+neu+'</span> <span class="k-stat-label">Offen</span></span>');
+    if(nachrichten>0) parts.push('<span class="k-stat" style="color:#3b82f6"><span class="k-stat-val" style="color:#3b82f6">'+nachrichten+'</span> <span class="k-stat-label" style="color:#3b82f6">Nachrichten</span></span>');
+    if(mitnehmen>0) parts.push('<span class="k-stat"><span class="k-stat-val">'+mitnehmen+'</span> <span class="k-stat-label">Mitnehmen</span></span>');
+    if(vorOrt>0) parts.push('<span class="k-stat"><span class="k-stat-val">'+vorOrt+'</span> <span class="k-stat-label">Vor Ort</span></span>');
+    document.getElementById('mittag-stats').innerHTML = parts.join('<span class="k-stat-dot"></span>');
+  }
+
+  function renderDishSummary(){
+    var active = orders.filter(function(o){return o.status!==2;});
+    var byDish = {};
+    active.forEach(function(o){
+      var name = o.gericht || '?';
+      if(!byDish[name]) byDish[name] = {count:0,preis:o.preis||0};
+      byDish[name].count += (o.menge||1);
+    });
+    var keys = Object.keys(byDish).sort();
+    if(keys.length===0){
+      document.getElementById('mittag-dish-summary').style.display='none';
+      return;
+    }
+    document.getElementById('mittag-dish-summary').style.display='';
+    var parts = [];
+    keys.forEach(function(name){
+      parts.push('<span class="k-dish-inline"><span class="dish-count">'+byDish[name].count+'×</span> '+esc(name)+'</span>');
+    });
+    document.getElementById('mittag-dish-summary').innerHTML = parts.join('<span class="k-dish-sep">|</span>');
+  }
+
+  function renderOrders(){
+    renderDishSummary();
+    if(orders.length===0){
+      document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen für heute</div>';
+      reinitIcons();
+      return;
+    }
+    // Filter by _mittagFilter
+    var filtered = orders;
+    if(_mittagFilter==='offen') filtered = orders.filter(function(o){return o.status===0;});
+    else if(_mittagFilter==='bestaetigt') filtered = orders.filter(function(o){return o.status===1;});
+    else if(_mittagFilter==='abgeholt') filtered = orders.filter(function(o){return o.status===3;});
+    else if(_mittagFilter==='storniert') filtered = orders.filter(function(o){return o.status===2;});
+    else if(_mittagFilter==='nachrichten') filtered = orders.filter(function(o){return !!(o.kunde_kommentar);});
+    if(filtered.length===0){
+      var filterLabels = {offen:'zu bestätigen',bestaetigt:'bestätigt',abgeholt:'abgeholt',storniert:'storniert',nachrichten:'mit Nachrichten',alle:'vorhanden'};
+      document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen '+(filterLabels[_mittagFilter]||'')+'</div>';
+      reinitIcons();
+      return;
+    }
+    // Sort: neu first, then bestätigt, then rest
+    var sorted = filtered.slice().sort(function(a,b){
+      var prio = {0:0,1:1,3:2,2:3};
+      return (prio[a.status]||9) - (prio[b.status]||9);
+    });
+    var html = '';
+    sorted.forEach(function(o){
+      var srcLabel = SRC_LABELS[o.quelle]||'Online';
+      var srcCls = SRC_CLASS[o.quelle]||'src-online';
+      html += '<div class="k-order st-'+o.status+'">';
+      html += '<div class="k-order-info">';
+      html += '<div class="k-order-top">';
+      html += '<span class="k-order-name">'+esc(o.name)+'</span>';
+      if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
+      html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
+      if(o.mitnehmen) html += ' <span class="k-order-mitnehmen">'+luc('package',14)+' Mitnehmen</span>';
+      html += '</div>';
+      html += '<div class="k-order-dish">'+esc(o.gericht)+'</div>';
+      html += '<div class="k-order-meta">';
+      html += '<span>'+esc(o.bestellnummer||'')+'</span>';
+      if(o.telefon) html += '<span>'+luc('phone',12)+' '+esc(o.telefon)+'</span>';
+      if(o.preis) html += '<span>'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' €</span>';
+      html += '</div>';
+      if(o.anmerkung) html += '<div class="k-order-note">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
+      if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
+      if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+      if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+      html += '</div>';
+
+      // Qty
+      html += '<div class="k-order-qty"><div class="qty-display">'+((o.menge||1))+'×</div></div>';
+
+      // Actions
+      html += '<div class="k-order-actions">';
+      if(o.status===0){
+        html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">' +luc('check-circle',16)+' Bestätigen</button>';
+        html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
+      } else if(o.status===1){
+        html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">'+luc('package-check',16)+' Abgeholt</button>';
+        if(o.kunde_kommentar) html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc('reply',16)+' Antworten</button>';
+        html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
+      } else if(o.status===3){
+        html += luc('check-circle',20);
+      }
+      html += '</div>';
+      html += '</div>';
+      // Confirm dialog – full width below card (only for status 0)
+      if(o.status===0){
+        html += '<div class="k-confirm-dialog" id="cfd-'+o.id+'" style="display:none;padding:12px 16px;background:#f0fdf4;border:2px solid #86efac;border-radius:0 0 12px 12px;margin-top:-6px">';
+        html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('message-square',14)+' Nachricht an Kunde (optional)</div>';
+        html += '<input type="text" class="k-confirm-input" id="cft-'+o.id+'" placeholder="z.B. Gericht wird um 12:30 fertig…" maxlength="200" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
+        html += '<div style="display:flex;gap:8px;margin-top:8px">';
+        html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;padding:10px" onclick="K.confirmOrder(\''+o.id+'\')">' +luc('check-circle',16)+' Jetzt bestätigen</button>';
+        html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideConfirmDialog(\''+o.id+'\')">Abbrechen</button>';
+        html += '</div></div>';
+      }
+      // Reply dialog – for orders with customer comments (any non-cancelled status)
+      if(o.kunde_kommentar && o.status!==2){
+        html += '<div class="k-confirm-dialog" id="rpl-'+o.id+'" style="display:none;padding:12px 16px;background:#eff6ff;border:2px solid #93c5fd;border-radius:0 0 12px 12px;margin-top:-6px">';
+        html += '<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+luc('message-circle',14)+' Kunde schreibt:</div>';
+        html += '<div style="font-size:13px;color:#374151;margin-bottom:8px;padding:8px;background:#fff;border-radius:8px">'+esc(o.kunde_kommentar)+'</div>';
+        html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('reply',14)+' Antwort an Kunde (Push-Nachricht)</div>';
+        html += '<input type="text" id="rpt-'+o.id+'" placeholder="Ihre Antwort…" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
+        html += '<div style="display:flex;gap:8px;margin-top:8px">';
+        html += '<button class="k-btn k-btn-sm" style="flex:1;padding:10px;background:#2563eb;color:#fff" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',16)+' Senden</button>';
+        html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideReplyDialog(\''+o.id+'\')">Abbrechen</button>';
+        html += '</div></div>';
+      }
+    });
+    document.getElementById('mittag-orders').innerHTML = html;
+    reinitIcons();
+  }
+
+  function setStatus(id, status, text){
+    var payload = {status:status};
+    if(text) payload.bestaetigung_text = text;
+    fetch(API+'/lunch-order/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast(status===1?'✅ Bestätigt':status===3?'📦 Abgeholt':'❌ Storniert');
+        loadOrders();
+      } else {
+        toast('Fehler: '+(res.error||''));
+      }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  function showConfirmDialog(id){
+    var el = document.getElementById('cfd-'+id);
+    if(el){ el.style.display='block'; var inp=document.getElementById('cft-'+id); if(inp) inp.focus(); }
+  }
+
+  function hideConfirmDialog(id){
+    var el = document.getElementById('cfd-'+id);
+    if(el) el.style.display='none';
+  }
+
+  function confirmOrder(id){
+    var text = (document.getElementById('cft-'+id)||{}).value || '';
+    setStatus(id, 1, text.trim());
+  }
+
+  function showReplyDialog(id){
+    var el = document.getElementById('rpl-'+id);
+    if(el){ el.style.display='block'; var inp=document.getElementById('rpt-'+id); if(inp) inp.focus(); }
+  }
+
+  function hideReplyDialog(id){
+    var el = document.getElementById('rpl-'+id);
+    if(el) el.style.display='none';
+  }
+
+  function sendReply(id){
+    var text = (document.getElementById('rpt-'+id)||{}).value || '';
+    if(!text.trim()){ toast('⚠️ Bitte Antwort eingeben'); return; }
+    fetch(API+'/lunch-order/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({personal_antwort: text.trim()})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('✅ Antwort gesendet (Push an Kunde)');
+        loadOrders();
+      } else {
+        toast('Fehler: '+(res.error||''));
+      }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  // ══════════════════════════════════════════════════
+  //  WOCHENPLAN / DISHES
+  // ══════════════════════════════════════════════════
+
+  function loadDishes(){
+    fetch(API+'/wochenplan')
+      .then(function(r){return r.json();})
+      .then(function(data){
+        dishes = (data.data||[]).filter(function(d){return d.dl_gericht && d.dl_preis;});
+        // Expose meals for social.js (converts dl_* fields to meals format)
+        window.SOCIAL_MEALS = function(){
+          return dishes.map(function(d){
+            return {id:d.dl_wochenplanid||'',gericht:d.dl_gericht,preis:d.dl_preis,wochentag:d.dl_wochentag,datum:d.dl_datum||''};
+          });
+        };
+      })
+      .catch(function(){});
+  }
+
+  // ══════════════════════════════════════════════════
+  //  STAMMKUNDEN
+  // ══════════════════════════════════════════════════
+
+  var kundenSearchTimer = null;
+  function searchKunden(){
+    clearTimeout(kundenSearchTimer);
+    kundenSearchTimer = setTimeout(function(){
+      var q = document.getElementById('kunden-search').value.trim();
+      var url = API+'/stammkunden'+(q?'?q='+encodeURIComponent(q):'');
+      fetch(url)
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(!res.success) return;
+          kunden = res.customers||[];
+          renderKunden();
+        })
+        .catch(function(){});
+    }, 300);
+  }
+
+  function renderKunden(){
+    if(kunden.length===0){
+      document.getElementById('kunden-list').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('user',24)+'</div>Keine Kunden gefunden</div>'+
+        '<div style="text-align:center;margin-top:12px"><button class="k-btn k-btn-confirm k-btn-lg" onclick="K.openNewKunde()">'+luc('user-plus',16)+' Neuen Stammkunden anlegen</button></div>';
+      reinitIcons();
+      return;
+    }
+    var html = '';
+    kunden.forEach(function(c){
+      html += '<div class="k-order" style="border-left-color:var(--c-green)">';
+      html += '<div class="k-order-info" style="padding:14px 16px">';
+      html += '<div class="k-order-top"><span class="k-order-name">'+esc(c.name)+'</span><span style="font-size:12px;color:var(--c-muted)">'+esc(c.stammkunde_nr)+'</span></div>';
+      html += '<div class="k-order-meta">';
+      if(c.telefon) html += '<span>'+luc('phone',12)+' '+esc(c.telefon)+'</span>';
+      if(c.email) html += '<span>'+luc('mail',12)+' '+esc(c.email)+'</span>';
+      if(c.notiz) html += '<span>'+luc('sticky-note',12)+' '+esc(c.notiz)+'</span>';
+      html += '</div></div>';
+      html += '<div class="k-order-actions">';
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.orderForKunde(\''+c.id+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\',\''+esc(c.telefon).replace(/'/g,"\\'")+'\')">' +luc('utensils',14)+' Bestellen</button>';
+      html += '</div></div>';
+    });
+    html += '<div style="text-align:center;margin-top:12px"><button class="k-btn k-btn-confirm k-btn-lg" onclick="K.openNewKunde()">'+luc('user-plus',16)+' Neuen Stammkunden anlegen</button></div>';
+    document.getElementById('kunden-list').innerHTML = html;
+    reinitIcons();
+  }
+
+  // ══════════════════════════════════════════════════
+  //  NEW ORDER MODAL
+  // ══════════════════════════════════════════════════
+
+  function openNewOrder(){
+    selectedKunde = null;
+    selectedDish = null;
+    noQty = 1;
+    document.getElementById('no-kunde-search').value = '';
+    document.getElementById('no-kunde-results').classList.remove('show');
+    document.getElementById('no-kunde-selected').style.display = 'none';
+    document.getElementById('no-kunde-new').style.display = 'none';
+    document.getElementById('no-kunde-search').style.display = '';
+    document.getElementById('no-qty').textContent = '1';
+    document.getElementById('no-note').value = '';
+    document.getElementById('no-mitnehmen').checked = false;
+
+    // Load dishes for picker
+    if(dishes.length===0){
+      fetch(API+'/wochenplan')
+        .then(function(r){return r.json();})
+        .then(function(data){
+          dishes = (data.data||[]).filter(function(d){return d.dl_gericht && d.dl_preis;});
+          renderDishPicker();
+        });
+    } else {
+      renderDishPicker();
+    }
+    openModal('modal-order');
+  }
+
+  function renderDishPicker(){
+    // Filter to today's weekday
+    var todayDay = new Date().getDay(); // 0=Sun,1=Mon...6=Sat
+    var dvDay = todayDay===0?null:(100999+todayDay); // 101000=Mo,...101005=Sa
+    var todayDishes = dvDay ? dishes.filter(function(d){return d.dl_wochentag===dvDay;}) : [];
+    if(todayDishes.length===0) todayDishes = dishes; // Fallback: show all
+
+    var html = '';
+    todayDishes.forEach(function(d,i){
+      var p = d.dl_preis?(d.dl_preis.toFixed(2).replace('.',',')+' €'):'';
+      var day = DAY_FULL[d.dl_wochentag]||'';
+      html += '<div class="k-dish-opt" data-idx="'+i+'" onclick="K.pickDish('+i+')">';
+      html += '<span class="do-name">'+esc(d.dl_gericht)+'</span>';
+      if(day && todayDishes.length>2) html += '<span class="do-day">'+day+'</span>';
+      html += '<span class="do-price">'+p+'</span>';
+      html += '</div>';
+    });
+    document.getElementById('no-dishes').innerHTML = html;
+    // Store reference
+    window._noDishes = todayDishes;
+  }
+
+  function pickDish(idx){
+    selectedDish = window._noDishes[idx];
+    document.querySelectorAll('.k-dish-opt').forEach(function(el,i){
+      el.classList.toggle('selected',i===idx);
+    });
+  }
+
+  function noQtyChange(d){
+    noQty = Math.max(1, Math.min(99, noQty+d));
+    document.getElementById('no-qty').textContent = noQty;
+  }
+
+  // Search kunden in order modal
+  var noKundeTimer = null;
+  function searchOrderKunde(){
+    clearTimeout(noKundeTimer);
+    noKundeTimer = setTimeout(function(){
+      var q = document.getElementById('no-kunde-search').value.trim();
+      if(q.length<2){
+        document.getElementById('no-kunde-results').classList.remove('show');
+        return;
+      }
+      fetch(API+'/stammkunden?q='+encodeURIComponent(q))
+        .then(function(r){return r.json();})
+        .then(function(res){
+          var list = res.customers||[];
+          var el = document.getElementById('no-kunde-results');
+          if(list.length===0){
+            el.innerHTML = '<div class="k-search-item" onclick="K.newOrderKunde()"><span class="si-name">'+luc('user-plus',14)+' Neuen Kunden anlegen: "'+esc(q)+'"</span></div>';
+          } else {
+            var html = '';
+            list.forEach(function(c){
+              html += '<div class="k-search-item" onclick="K.selectOrderKunde(\''+c.id+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\',\''+esc(c.telefon).replace(/'/g,"\\'")+'\')"><span class="si-name">'+esc(c.name)+'</span><span class="si-phone">'+esc(c.telefon)+'</span></div>';
+            });
+            html += '<div class="k-search-item" onclick="K.newOrderKunde()"><span class="si-name">'+luc('user-plus',14)+' Neuen Kunden anlegen</span></div>';
+            el.innerHTML = html;
+          }
+          el.classList.add('show');
+        });
+    }, 300);
+  }
+
+  function selectOrderKunde(id, name, phone){
+    selectedKunde = {id:id, name:name, telefon:phone};
+    document.getElementById('no-kunde-search').style.display = 'none';
+    document.getElementById('no-kunde-results').classList.remove('show');
+    document.getElementById('no-kunde-selected').style.display = '';
+    document.getElementById('no-kunde-name').textContent = name;
+    document.getElementById('no-kunde-phone').textContent = phone?phone:'';
+    document.getElementById('no-kunde-new').style.display = 'none';
+  }
+
+  function clearOrderKunde(){
+    selectedKunde = null;
+    document.getElementById('no-kunde-search').style.display = '';
+    document.getElementById('no-kunde-search').value = '';
+    document.getElementById('no-kunde-selected').style.display = 'none';
+    document.getElementById('no-kunde-new').style.display = 'none';
+  }
+
+  function newOrderKunde(){
+    document.getElementById('no-kunde-results').classList.remove('show');
+    document.getElementById('no-kunde-search').style.display = 'none';
+    document.getElementById('no-kunde-new').style.display = '';
+    document.getElementById('no-new-nachname').value = document.getElementById('no-kunde-search').value.trim();
+    document.getElementById('no-new-vorname').value = '';
+    document.getElementById('no-new-phone').value = '';
+    selectedKunde = null;
+  }
+
+  function orderForKunde(id, name, phone){
+    switchTab('mittag');
+    openNewOrder();
+    setTimeout(function(){
+      selectOrderKunde(id, name, phone);
+    }, 100);
+  }
+
+  function submitNewOrder(){
+    // Validate
+    var kundenName = '';
+    var kundenPhone = '';
+    var stammkundeId = '';
+
+    if(selectedKunde){
+      kundenName = selectedKunde.name;
+      kundenPhone = selectedKunde.telefon;
+      stammkundeId = selectedKunde.id;
+    } else if(document.getElementById('no-kunde-new').style.display!=='none'){
+      var nn = document.getElementById('no-new-nachname').value.trim();
+      var vn = document.getElementById('no-new-vorname').value.trim();
+      kundenPhone = document.getElementById('no-new-phone').value.trim();
+      if(!nn){toast('❌ Nachname eingeben!');return;}
+      kundenName = (vn?vn+' ':'')+nn;
+      // Create Stammkunde first
+      fetch(API+'/stammkunden',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({nachname:nn,vorname:vn,name:kundenName,telefon:kundenPhone})
+      })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success && res.customer){
+          stammkundeId = res.customer.id;
+          doSubmitOrder(kundenName, kundenPhone, stammkundeId);
+        } else if(res.existing){
+          stammkundeId = res.existing.id;
+          doSubmitOrder(kundenName, kundenPhone, stammkundeId);
+        } else {
+          toast('❌ '+(res.error||res.errors&&res.errors.join(', ')||'Kunde konnte nicht angelegt werden'));
+        }
+      });
+      return;
+    } else {
+      toast('❌ Bitte Kunden auswählen!');
+      return;
+    }
+    if(!selectedDish){toast('❌ Bitte Gericht auswählen!');return;}
+    doSubmitOrder(kundenName, kundenPhone, stammkundeId);
+  }
+
+  function doSubmitOrder(name, phone, skId){
+    if(!selectedDish){toast('❌ Bitte Gericht auswählen!');return;}
+    var payload = {
+      name: name,
+      email: '',
+      telefon: phone,
+      gericht: selectedDish.dl_gericht,
+      gericht_id: selectedDish.dl_wochenplanid||'',
+      menge: noQty,
+      preis: selectedDish.dl_preis||0,
+      datum: selectedDish.dl_datum||today(),
+      anmerkung: document.getElementById('no-note').value.trim(),
+      wochentag_label: DAY_FULL[selectedDish.dl_wochentag]||'',
+      mitnehmen: document.getElementById('no-mitnehmen').checked,
+      quelle: 1, // Telefon
+      stammkunde_id: skId||''
+    };
+
+    fetch(API+'/lunch-order',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('✅ Bestellung aufgenommen: '+res.bestellnummer);
+        closeModal('modal-order');
+        loadOrders();
+      } else {
+        toast('❌ '+(res.errors?res.errors.join(', '):res.error||'Fehler'));
+      }
+    })
+    .catch(function(e){toast('❌ '+e.message);});
+  }
+
+  // ══════════════════════════════════════════════════
+  //  NEW CUSTOMER MODAL
+  // ══════════════════════════════════════════════════
+
+  function openNewKunde(){
+    document.getElementById('nk-nachname').value = '';
+    document.getElementById('nk-vorname').value = '';
+    document.getElementById('nk-phone').value = '';
+    document.getElementById('nk-email').value = '';
+    document.getElementById('nk-note').value = '';
+    openModal('modal-kunde');
+  }
+
+  function submitNewKunde(){
+    var nachname = document.getElementById('nk-nachname').value.trim();
+    var vorname = document.getElementById('nk-vorname').value.trim();
+    var phone = document.getElementById('nk-phone').value.trim();
+    var email = document.getElementById('nk-email').value.trim();
+    var note = document.getElementById('nk-note').value.trim();
+    if(!nachname){toast('❌ Nachname eingeben!');return;}
+    if(!phone){toast('❌ Telefon eingeben!');return;}
+
+    fetch(API+'/stammkunden',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({nachname:nachname,vorname:vorname,name:(vorname?vorname+' ':'')+nachname,telefon:phone,email:email,notiz:note})
+    })
+    .then(function(r){
+      if(!r.ok && r.status!==409) throw new Error('Speicherfehler ('+r.status+')');
+      return r.json();
+    })
+    .then(function(res){
+      if(res.success){
+        toast('✅ Kunde angelegt: '+(res.customer&&res.customer.stammkunde_nr||''));
+        closeModal('modal-kunde');
+        searchKunden();
+      } else if(res.existing){
+        toast('ℹ️ Kunde existiert bereits: '+res.existing.name);
+        closeModal('modal-kunde');
+        searchKunden();
+      } else {
+        toast('❌ '+(res.errors?res.errors.join(', '):res.error||'Fehler'));
+      }
+    })
+    .catch(function(e){toast('❌ '+e.message);});
+  }
+
+  // ══════════════════════════════════════════════════
+  //  SHOP-ABHOLUNGEN
+  // ══════════════════════════════════════════════════
+
+  var _shopFilter = 'open';
+  var _allShopOrders = [];
+  var _showHistory = false;
+
+  function toggleHistory(){
+    _showHistory = !_showHistory;
+    var btn = document.getElementById('btn-history');
+    if(btn) btn.classList.toggle('active', _showHistory);
+    applyShopFilter();
+  }
+
+  function setShopFilter(f){
+    _shopFilter = f;
+    document.querySelectorAll('#abhol-filter-bar .k-filter-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.filter===f);
+    });
+    applyShopFilter();
+  }
+
+  function applyShopFilter(){
+    var td = today();
+    var now = new Date();
+    // Base filter: exclude old orders (abholdatum < today) unless history is shown
+    function _isOld(o){ var d=(o.abholdatum||'').substring(0,10); return d && d < td; }
+    var base = _showHistory ? _allShopOrders : _allShopOrders.filter(function(o){ return !_isOld(o); });
+    if(_shopFilter==='today'){
+      shopOrders = base.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;});
+    } else if(_shopFilter==='overdue'){
+      shopOrders = base.filter(function(o){
+        if(o.status>=3) return false;
+        return _isOverdue(o, now);
+      });
+    } else {
+      shopOrders = _showHistory ? base : base.filter(function(o){return o.status<3;});
+    }
+    renderShopOrders();
+    // Update history count – all orders with abholdatum before today
+    var histCount = _allShopOrders.filter(function(o){ return _isOld(o); }).length;
+    var hcEl = document.getElementById('fc-history');
+    if(hcEl) hcEl.textContent = histCount;
+  }
+
+  function _isOverdue(o, now){
+    if(!now) now = new Date();
+    var zs = o.abhol_zeitslot||{};
+    if(!o.abholdatum) return false;
+    var d = o.abholdatum.substring(0,10);
+    var endTime = zs.bis || '18:00';
+    try{
+      var deadline = new Date(d+'T'+endTime+':00');
+      return now > deadline;
+    }catch(e){return false;}
+  }
+
+  function loadShopOrders(){
+    fetch(API+'/shop-order?mode=cms')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success) return;
+        _allShopOrders = res.orders || [];
+        applyShopFilter();
+        // Update filter counts – exclude ALL old orders (abholdatum < today = Historie)
+        var td = today();
+        var now = new Date();
+        var active = _allShopOrders.filter(function(o){
+          var d=(o.abholdatum||'').substring(0,10); return !(d && d<td);
+        });
+        renderShopStats(active);
+        var openC = active.filter(function(o){return o.status<3;}).length;
+        var todayC = active.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;}).length;
+        var overdueC = active.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
+        var todoC = active.filter(function(o){return o.status<=1;}).length;
+        document.getElementById('fc-open').textContent = openC;
+        document.getElementById('fc-today').textContent = todayC;
+        document.getElementById('fc-overdue').textContent = overdueC;
+        updateBadge('abhol', todoC);
+      })
+      .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('alert-triangle',24)+'</div>Fehler beim Laden: '+esc(e.message)+'</div>'; reinitIcons(); });
+  }
+
+  function renderShopStats(all){
+    if(!all) all = shopOrders;
+    var now = new Date();
+    var eingang = all.filter(function(o){return o.status===0;}).length;
+    var packen = all.filter(function(o){return o.status===1;}).length;
+    var warten = all.filter(function(o){return o.status===2;}).length;
+    var ueberfaellig = all.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
+    var parts = [];
+    if(eingang>0) parts.push('<span class="k-stat orange"><span class="k-stat-val">'+eingang+'</span> <span class="k-stat-label">Eingang</span></span>');
+    if(packen>0) parts.push('<span class="k-stat" style="color:#d97706"><span class="k-stat-val" style="color:#d97706">'+packen+'</span> <span class="k-stat-label">Packen</span></span>');
+    if(warten>0) parts.push('<span class="k-stat"><span class="k-stat-val" style="color:#2563eb">'+warten+'</span> <span class="k-stat-label">Warten</span></span>');
+    if(ueberfaellig>0) parts.push('<span class="k-stat red"><span class="k-stat-val">'+ueberfaellig+'</span> <span class="k-stat-label">Überfällig</span></span>');
+    if(parts.length===0) parts.push('<span class="k-stat green"><span class="k-stat-val">✓</span> <span class="k-stat-label">Alles erledigt</span></span>');
+    document.getElementById('abhol-stats').innerHTML = parts.join('<span class="k-stat-dot"></span>');
+  }
+
+  function fmtDate(d){
+    if(!d) return '';
+    try{ var p=d.substring(0,10).split('-'); return p[2]+'.'+p[1]+'.'+p[0]; }catch(e){return d;}
+  }
+
+  function renderShopOrders(){
+    if(shopOrders.length===0){
+      document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen gefunden</div>';reinitIcons();
+      return;
+    }
+    // Sort by status priority, then by abholdatum
+    var sorted = shopOrders.slice().sort(function(a,b){
+      var prio = {0:0,1:1,2:2,3:3,4:4};
+      var d = (prio[a.status]||9) - (prio[b.status]||9);
+      if(d!==0) return d;
+      return (a.abholdatum||'').localeCompare(b.abholdatum||'');
+    });
+
+    // Group by abholdatum + zeitslot
+    var groups = [];
+    var groupMap = {};
+    var td = today();
+    var nowH = new Date().getHours();
+    var nowM = new Date().getMinutes();
+    var nowTime = (nowH<10?'0':'')+nowH+':'+(nowM<10?'0':'')+nowM;
+    sorted.forEach(function(o){
+      var zeitslot = o.abhol_zeitslot||{};
+      var slotLabel = zeitslot.label||'';
+      if(zeitslot.von && zeitslot.bis) slotLabel += ' ('+zeitslot.von+'–'+zeitslot.bis+')';
+      var dateLabel = fmtDateRelative(o.abholdatum);
+      var groupKey = (o.abholdatum||'')+'|'+(zeitslot.label||'_none');
+      if(!groupMap[groupKey]){
+        var gDate = (o.abholdatum||'').substring(0,10);
+        var isCurrent = gDate===td && zeitslot.von && zeitslot.bis && nowTime>=zeitslot.von && nowTime<=zeitslot.bis;
+        groupMap[groupKey] = {label:dateLabel+' · '+slotLabel, orders:[], isCurrent:isCurrent};
+        groups.push(groupMap[groupKey]);
+      }
+      groupMap[groupKey].orders.push(o);
+    });
+
+    // Remember which slot groups were manually opened/collapsed
+    var prevOpen = {};
+    document.querySelectorAll('.k-slot-group').forEach(function(el){
+      if(el.id) prevOpen[el.id] = !el.classList.contains('collapsed');
+    });
+
+    var html = '';
+    groups.forEach(function(g,gi){
+      var gid = 'slotg-'+gi;
+      // Status counts for header
+      var sc = {0:0,1:0,2:0,3:0,4:0};
+      g.orders.forEach(function(o){ if(o.status>=0&&o.status<=4) sc[o.status]=(sc[o.status]||0)+1; });
+      var badges = [];
+      if(sc[0]) badges.push('<span class="k-slot-badge sb-pack">'+luc('inbox',12)+' '+sc[0]+' Packen</span>');
+      if(sc[1]) badges.push('<span class="k-slot-badge sb-pack">'+luc('package',12)+' '+sc[1]+' Warten</span>');
+      if(sc[2]) badges.push('<span class="k-slot-badge sb-wait">'+luc('bell',12)+' '+sc[2]+' Bereit</span>');
+      if(sc[3]) badges.push('<span class="k-slot-badge" style="color:#16a34a">'+luc('check-circle',12)+' '+sc[3]+' Abgeholt</span>');
+      if(sc[4]) badges.push('<span class="k-slot-badge sb-overdue">'+luc('x-circle',12)+' '+sc[4]+' Storniert</span>');
+      var countLabel = badges.length ? badges.join(' ') : '<span class="k-slot-badge" style="color:#666">'+g.orders.length+' Bestellung'+(g.orders.length!==1?'en':'')+'</span>';
+      // Restore previous state if available, else default: current=open, others=collapsed
+      var isOpen = gid in prevOpen ? prevOpen[gid] : g.isCurrent;
+      var cls = 'k-slot-group'+(g.isCurrent?' k-slot-current':'')+(isOpen?'':' collapsed');
+      html += '<div class="'+cls+'" id="'+gid+'">';
+      html += '<div class="k-slot-header" onclick="K.toggleSlotGroup(\''+gid+'\')">';
+      html += '<span class="k-slot-arrow">▼</span> '+esc(g.label);
+      if(g.isCurrent) html += ' <span class="k-slot-now">'+luc('clock',12)+' Jetzt</span>';
+      html += '<span class="k-slot-count">'+countLabel+'</span>';
+      html += '</div>';
+      g.orders.forEach(function(o){
+        html += renderShopOrderCard(o);
+      });
+      html += '</div>';
+    });
+    document.getElementById('abhol-orders').innerHTML = html;
+    reinitIcons();
+  }
+
+  function toggleSlotGroup(gid){
+    var el = document.getElementById(gid);
+    if(el) el.classList.toggle('collapsed');
+  }
+
+  function fmtDateRelative(d){
+    if(!d) return '';
+    var td = today();
+    var dateStr = (d||'').substring(0,10);
+    if(dateStr===td) return 'Heute';
+    var tom = new Date(); tom.setDate(tom.getDate()+1);
+    var tomIso=tom.getFullYear()+'-'+('0'+(tom.getMonth()+1)).slice(-2)+'-'+('0'+tom.getDate()).slice(-2);
+    if(dateStr===tomIso) return 'Morgen';
+    return fmtDate(d);
+  }
+
+  function renderShopOrderCard(o){
+    var stClass = 'shop-st-'+o.status;
+    var badgeClass = 'shop-badge-'+o.status;
+    var statusLabel = SHOP_STATUS[o.status]||'?';
+    var overdue = o.status<3 && _isOverdue(o);
+    if(overdue) statusLabel = 'Überfällig';
+    var posArr = o.positionen||[];
+    var posCount = posArr.length;
+    var posPreview = posArr.slice(0,3).map(function(p){return p.bezeichnung||p.name||'?';});
+    if(posCount>3) posPreview.push('+'+(posCount-3)+' weitere');
+
+    var html = '<div class="k-order '+stClass+(overdue?' k-order-overdue':'')+'">';
+    html += '<div class="k-order-info">';
+    html += '<div class="k-order-top">';
+    html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';
+    html += '<span class="k-order-status '+badgeClass+'">'+luc(SHOP_ICON_NAMES[o.status]||'circle',14)+' '+statusLabel+'</span>';
+    html += '</div>';
+    html += '<div class="k-order-dish">'+esc(o.bestellnummer)+' · '+posCount+' Pos.</div>';
+    html += '<div class="k-order-meta">';
+    html += '<span>'+luc('coins',12)+' '+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
+    if(o.anmerkungen) html += '<span>'+luc('message-square',12)+' '+esc(o.anmerkungen)+'</span>';
+    html += '</div>';
+    if(posPreview.length>0){
+      html += '<div class="k-order-positions">';
+      posPreview.forEach(function(p){ html += '<span>'+esc(p)+'</span>'; });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Gesamtsumme
+    html += '<div class="k-order-qty"><div class="qty-display" style="font-size:16px">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+'€</div></div>';
+
+    // Actions
+    html += '<div class="k-order-actions">';
+    if(o.status===0){
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',16)+' Annehmen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+' Details</button>';
+      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',4)">'+luc('x',16)+'</button>';
+    } else if(o.status===1){
+      html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff" onclick="K.setShopStatus(\''+o.id+'\',2)">'+luc('check-circle',16)+' Bereit</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">' +luc('package',16)+' Packen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+'</button>';
+    } else if(o.status===2){
+      if(o.gepackt){
+        html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',16)+' Ausgeben</button>';
+      } else {
+        html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">' +luc('package',16)+' Packen</button>';
+      }
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+'</button>';
+    } else if(o.status===3){
+      html += luc('check-circle',20);
+    }
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function setShopStatus(id, status){
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id, status:status})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        var labels = {1:'📋 In Bearbeitung',2:'✅ Abholbereit',3:'📦 Abgeholt',4:'❌ Storniert'};
+        toast(labels[status]||'Status aktualisiert');
+        loadShopOrders();
+      } else {
+        toast('Fehler: '+(res.error||''));
+      }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  // ══════════════════════════════════════════════════
+  //  ORDER DETAIL MODAL (double-click on shop card)
+  // ══════════════════════════════════════════════════
+
+  function showOrderDetail(orderId){
+    var o = _allShopOrders.find(function(x){return x.id===orderId;});
+    if(!o){toast('Bestellung nicht gefunden');return;}
+    var posArr = o.positionen||[];
+    var html = '';
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">';
+    html += '<div><strong>Kunde:</strong> '+esc(o.kunde_name||o.kunde_email||'–')+'</div>';
+    html += '<div><strong>Nr.:</strong> '+esc(o.bestellnummer||'–')+'</div>';
+    html += '<div><strong>Status:</strong> '+(SHOP_STATUS[o.status]||'?')+'</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;font-size:13px;color:#6b7280">';
+    if(o.abholdatum) html += '<div>'+luc('calendar',13)+' Abholdatum: '+fmtDate(o.abholdatum)+'</div>';
+    var zs = o.abhol_zeitslot||{};
+    if(zs.label) html += '<div>'+luc('clock',13)+' '+esc(zs.label)+(zs.von?' ('+zs.von+'–'+zs.bis+')':'')+'</div>';
+    if(o.kunde_telefon) html += '<div>'+luc('phone',13)+' '+esc(o.kunde_telefon)+'</div>';
+    if(o.kunde_email) html += '<div>'+luc('mail',13)+' '+esc(o.kunde_email)+'</div>';
+    html += '</div>';
+    if(o.anmerkungen) html += '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:12px">'+luc('message-square',13)+' '+esc(o.anmerkungen)+'</div>';
+    // Positions table
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    html += '<thead><tr style="border-bottom:2px solid #e5e7eb;text-align:left"><th style="padding:6px 8px">Artikel</th><th style="padding:6px 8px;text-align:right">Menge</th><th style="padding:6px 8px;text-align:right">Einheit</th><th style="padding:6px 8px;text-align:right">Preis</th></tr></thead>';
+    html += '<tbody>';
+    var total = 0;
+    posArr.forEach(function(p){
+      var name = p.bezeichnung||p.name||'?';
+      var menge = p.menge||1;
+      var einheit = p.einheit||'Stk';
+      var preis = p.einzelpreis||p.vk_preis||p.preis||0;
+      var zeile = p.positionspreis||(menge * preis);
+      total += zeile;
+      html += '<tr style="border-bottom:1px solid #f3f4f6">';
+      html += '<td style="padding:6px 8px">'+esc(name)+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right">'+menge+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right">'+esc(einheit)+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right">'+zeile.toFixed(2).replace('.',',')+'€</td>';
+      html += '</tr>';
+    });
+    html += '</tbody>';
+    html += '<tfoot><tr style="border-top:2px solid #1e3a2f;font-weight:900"><td colspan="3" style="padding:8px">Gesamt</td><td style="padding:8px;text-align:right">'+(o.gesamtsumme||total).toFixed(2).replace('.',',')+'€</td></tr></tfoot>';
+    html += '</table>';
+    document.getElementById('detail-title').innerHTML = luc('clipboard-list',20)+' '+esc(o.bestellnummer||'Bestelldetails');
+    document.getElementById('detail-body').innerHTML = html;
+    openModal('modal-detail');
+    reinitIcons();
+  }
+
+  // ══════════════════════════════════════════════════
+  //  INLINE PACK MODAL (full shop-admin functionality)
+  // ══════════════════════════════════════════════════
+
+  var _packOrder = null;
+  var _packAutoTimer = null;
+
+  function money(v){return (+v||0).toFixed(2).replace('.',',')+' €';}
+
+  function openPackModal(orderId){
+    _packOrder = null;
+    document.getElementById('pk-items').innerHTML = '<div style="text-align:center;padding:20px;color:var(--c-muted)">'+luc('loader',20)+' Laden…</div>';
+    document.getElementById('pk-info').innerHTML = '';
+    document.getElementById('pk-note').style.display = 'none';
+    document.getElementById('pk-progress-bar').style.width = '0%';
+    document.getElementById('pk-progress-text').textContent = '';
+    document.getElementById('pk-summe').textContent = '';
+    document.getElementById('pk-autosave').textContent = '';
+    openModal('modal-pack');
+
+    fetch(API+'/shop-order?mode=pack&id='+encodeURIComponent(orderId))
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success||!res.order){
+          document.getElementById('pk-items').innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">'+luc('alert-triangle',20)+' Bestellung nicht gefunden</div>';
+          return;
+        }
+        _packOrder = res.order;
+        renderPackModal();
+      })
+      .catch(function(e){
+        document.getElementById('pk-items').innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">'+luc('alert-triangle',20)+' '+esc(e.message)+'</div>';
+      });
+  }
+
+  function renderPackModal(){
+    if(!_packOrder) return;
+    var o = _packOrder;
+    var items = o.positionen||[];
+    var packItems = (o.pack_data&&o.pack_data.items)||[];
+    var isEditable = o.status<3;
+
+    document.getElementById('pk-title').innerHTML = luc('package',20)+' '+esc(o.bestellnummer||'')+' · '+esc(o.kunde_name);
+    document.getElementById('pk-info').innerHTML =
+      '<span>'+luc('user',13)+' '+esc(o.kunde_name)+'</span>'+
+      '<span>'+luc('calendar',13)+' '+fmtDate(o.abholdatum)+'</span>'+
+      '<span>'+luc('coins',13)+' '+money(o.gesamtsumme)+'</span>';
+    if(o.anmerkungen){
+      var noteEl = document.getElementById('pk-note');
+      noteEl.innerHTML = '<b>'+luc('sticky-note',13)+' Anmerkung:</b> '+esc(o.anmerkungen);
+      noteEl.style.display = '';
+    }
+
+    function packFor(p){
+      var key = String(p.artikelnummer||p.strichcode||p.bezeichnung||'');
+      return packItems.find(function(x){return String(x.artikelnummer||x.strichcode||x.bezeichnung||'')===key;})||{};
+    }
+
+    var packedCount = 0;
+    var summe = 0;
+    var html = '';
+    items.forEach(function(p,i){
+      var pk = packFor(p);
+      var checked = pk.gepackt;
+      if(checked) packedCount++;
+      var ep = p.einzelpreis||0;
+      var isKg = p.einheit==='kg'||p.gewichtsware;
+      var bestMenge = p.menge||0;
+      if(isKg) bestMenge = Math.round(bestMenge*1000);
+      var packMenge = pk.gepackt_menge!=null?pk.gepackt_menge:(isKg?bestMenge:(p.menge||0));
+      var gp = isKg?ep*(packMenge/1000):ep*packMenge;
+      if(checked) summe += gp;
+      var disabled = isEditable?'':' disabled';
+      var bc = p.strichcode||p.artikelnummer||'';
+      var step = isKg?'10':'1';
+      var unit = isKg?'g':'Stk';
+      var bestLabel = isKg?((p.menge||0)+' <span class="pk-unit">kg</span>'):(bestMenge+' <span class="pk-unit">'+esc(p.einheit||'Stk')+'</span>');
+
+      html += '<div class="pk-item'+(checked?' packed':'')+'" data-pk-row="'+i+'">';
+      html += '<input type="checkbox" data-pk-idx="'+i+'"'+(checked?' checked':'')+disabled+' onclick="K.pkToggle('+i+')">';
+      html += '<div class="pk-body">';
+      html += '<div class="pk-name">'+esc(p.bezeichnung)+'</div>';
+      html += '<div class="pk-code">'+esc(bc)+'</div>';
+      html += '<div data-pk-tag="'+i+'"></div>';
+      html += '</div>';
+      html += '<div class="pk-best">'+bestLabel+'</div>';
+      html += '<div class="pk-qty-wrap">';
+      html += '<input type="number" class="pk-qty-input" data-pk-qty="'+i+'" data-is-kg="'+(isKg?1:0)+'" data-ep="'+ep+'" data-best="'+bestMenge+'" value="'+packMenge+'" min="0" step="'+step+'"'+disabled+' onfocus="this.select()" onclick="event.stopPropagation()" onchange="K.pkQtyChange('+i+')">';
+      html += ' <span class="pk-unit">'+esc(unit)+'</span>';
+      html += '</div>';
+      html += '<div class="pk-price" data-pk-price="'+i+'">'+money(gp)+'</div>';
+      html += '</div>';
+    });
+    document.getElementById('pk-items').innerHTML = html;
+
+    // Progress
+    var pct = items.length?Math.round(packedCount/items.length*100):0;
+    document.getElementById('pk-progress-bar').style.width = pct+'%';
+    document.getElementById('pk-progress-text').textContent = packedCount+'/'+items.length+' gepackt';
+    document.getElementById('pk-summe').textContent = 'Summe: '+money(summe);
+
+    // Initial tags
+    items.forEach(function(p,i){ pkUpdateTag(i); });
+
+    // Hide finish if not editable
+    document.getElementById('pk-finish-btn').style.display = isEditable?'':'none';
+    reinitIcons();
+  }
+
+  function pkToggle(idx){
+    var cb = document.querySelector('[data-pk-idx="'+idx+'"]');
+    var row = document.querySelector('[data-pk-row="'+idx+'"]');
+    if(!cb) return;
+    row.classList.toggle('packed', cb.checked);
+    row.classList.toggle('unavail', !cb.checked);
+    pkUpdateTag(idx);
+    pkRecalcSum();
+    pkAutoSave();
+  }
+
+  function pkQtyChange(idx){
+    var inp = document.querySelector('[data-pk-qty="'+idx+'"]');
+    if(!inp) return;
+    var isKg = inp.dataset.isKg==='1';
+    var ep = parseFloat(inp.dataset.ep)||0;
+    var raw = parseFloat(inp.value)||0;
+    var gp = isKg?ep*(raw/1000):ep*raw;
+    var priceEl = document.querySelector('[data-pk-price="'+idx+'"]');
+    if(priceEl) priceEl.textContent = money(gp);
+    pkUpdateTag(idx);
+    pkRecalcSum();
+    pkAutoSave();
+  }
+
+  function pkUpdateTag(idx){
+    var cb = document.querySelector('[data-pk-idx="'+idx+'"]');
+    var inp = document.querySelector('[data-pk-qty="'+idx+'"]');
+    var tag = document.querySelector('[data-pk-tag="'+idx+'"]');
+    var row = document.querySelector('[data-pk-row="'+idx+'"]');
+    if(!tag) return;
+    tag.innerHTML = '';
+    if(row) row.classList.remove('unavail');
+    if(cb&&!cb.checked){
+      tag.innerHTML = '<span class="pk-tag-red">✕ Nicht lieferbar</span>';
+      if(row) row.classList.add('unavail');
+    } else if(inp){
+      var best = parseFloat(inp.dataset.best)||0;
+      var cur = parseFloat(inp.value)||0;
+      if(cur<best-0.5) tag.innerHTML = '<span class="pk-tag-orange">⚠ Teilmenge</span>';
+    }
+  }
+
+  function pkRecalcSum(){
+    var total = 0;
+    var packed = 0;
+    var all = document.querySelectorAll('[data-pk-qty]');
+    all.forEach(function(inp){
+      var idx = inp.dataset.pkQty;
+      var cb = document.querySelector('[data-pk-idx="'+idx+'"]');
+      if(cb&&cb.checked) packed++;
+      if(cb&&!cb.checked) return;
+      var ep = parseFloat(inp.dataset.ep)||0;
+      var raw = parseFloat(inp.value)||0;
+      var isKg = inp.dataset.isKg==='1';
+      total += isKg?ep*(raw/1000):ep*raw;
+    });
+    document.getElementById('pk-summe').textContent = 'Summe: '+money(total);
+    var cnt = all.length;
+    var pct = cnt?Math.round(packed/cnt*100):0;
+    document.getElementById('pk-progress-bar').style.width = pct+'%';
+    document.getElementById('pk-progress-text').textContent = packed+'/'+cnt+' gepackt';
+  }
+
+  function pkBuildJson(){
+    if(!_packOrder) return {};
+    var items = _packOrder.positionen||[];
+    var cnt = 0;
+    var packItems = items.map(function(p,i){
+      var cb = document.querySelector('[data-pk-idx="'+i+'"]');
+      var checked = cb?cb.checked:false;
+      if(checked) cnt++;
+      var inp = document.querySelector('[data-pk-qty="'+i+'"]');
+      var isKg = inp?inp.dataset.isKg==='1':false;
+      var rawVal = inp?parseFloat(inp.value)||0:(isKg?Math.round((p.menge||0)*1000):(p.menge||0));
+      var bestVal = isKg?Math.round((p.menge||0)*1000):(p.menge||0);
+      var teilmenge = checked&&rawVal<bestVal-0.5;
+      return {
+        artikelnummer:p.artikelnummer||p.strichcode||'',
+        strichcode:p.strichcode||'',
+        bezeichnung:p.bezeichnung,
+        gepackt:checked,
+        nicht_lieferbar:!checked,
+        teilmenge:teilmenge,
+        gepackt_menge:checked?rawVal:0,
+        bestellt_menge:p.menge,
+        menge:p.menge,
+        einheit:p.einheit||'',
+        einzelpreis:p.einzelpreis||0,
+        gewichtsware:isKg,
+        gepackt_menge_einheit:isKg?'g':'Stk',
+        scan_zeit:checked?new Date().toISOString():''
+      };
+    });
+    return {
+      pack:{gepackt_von:'Kiosk',gepackt_um:new Date().toISOString(),items:packItems,alle_gepackt:cnt===items.length},
+      packedCount:cnt
+    };
+  }
+
+  function pkAutoSave(){
+    if(_packAutoTimer) clearTimeout(_packAutoTimer);
+    var indicator = document.getElementById('pk-autosave');
+    if(indicator) indicator.textContent = 'Änderungen werden gespeichert…';
+    _packAutoTimer = setTimeout(function(){
+      var r = pkBuildJson();
+      if(!r.pack) return;
+      fetch(API+'/shop-order',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:_packOrder.id, status:1, pack_json:r.pack})
+      })
+      .then(function(res){return res.json();})
+      .then(function(d){
+        if(indicator) indicator.textContent = d.success?'✓ Gespeichert':'Fehler beim Speichern';
+      })
+      .catch(function(){if(indicator) indicator.textContent = 'Fehler beim Speichern';});
+    }, 1200);
+  }
+
+  function savePackState(){
+    if(!_packOrder) return;
+    var r = pkBuildJson();
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:_packOrder.id, status:1, pack_json:r.pack})
+    })
+    .then(function(res){return res.json();})
+    .then(function(d){
+      if(d.success) toast('💾 Pack-Status gespeichert');
+      else toast('Fehler beim Speichern');
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  function finishPack(){
+    if(!_packOrder) return;
+    var r = pkBuildJson();
+    var items = _packOrder.positionen||[];
+    if(r.packedCount<items.length){
+      var missing = [];
+      items.forEach(function(p,i){
+        var cb = document.querySelector('[data-pk-idx="'+i+'"]');
+        if(!cb||!cb.checked) missing.push(p.bezeichnung);
+      });
+      if(!confirm('Folgende Artikel sind nicht verfügbar:\n\n• '+missing.join('\n• ')+'\n\nTrotzdem als Abholbereit markieren?')) return;
+      // Notify customer about missing items
+      fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        bestellnummer:_packOrder.bestellnummer,kunde_email:_packOrder.kunde_email,kunde_name:_packOrder.kunde_name,
+        abholdatum:_packOrder.abholdatum||'',type:'missing_items',missing_items:missing
+      })}).catch(function(){});
+    } else {
+      // Notify customer order is ready
+      fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        bestellnummer:_packOrder.bestellnummer,kunde_email:_packOrder.kunde_email,kunde_name:_packOrder.kunde_name,
+        abholdatum:_packOrder.abholdatum||'',type:'ready',positionen:items.map(function(p){return{bezeichnung:p.bezeichnung,menge:p.menge,einheit:p.einheit,einzelpreis:p.einzelpreis,positionspreis:p.positionspreis};}),
+        gesamtsumme:_packOrder.gesamtsumme,anmerkungen:_packOrder.anmerkungen||''
+      })}).catch(function(){});
+    }
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:_packOrder.id, status:2, pack_json:r.pack})
+    })
+    .then(function(res){return res.json();})
+    .then(function(d){
+      if(d.success){
+        toast('✅ Bestellung ist abholbereit');
+        closeModal('modal-pack');
+        loadShopOrders();
+      } else {
+        toast('Fehler: '+(d.error||''));
+      }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  function printPackSlip(){
+    if(!_packOrder) return;
+    var o = _packOrder;
+    var items = o.positionen||[];
+    var fmtP = function(v){return(+v).toFixed(2).replace('.',',');};
+    var now = new Date();
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Beipackzettel '+esc(o.bestellnummer)+'</title>';
+    html += '<style>';
+    html += 'body{font-family:"Segoe UI",system-ui,sans-serif;font-size:13px;margin:0;padding:20px 28px;color:#1f2937}';
+    html += '.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1e3a2f;padding-bottom:12px;margin-bottom:14px}';
+    html += '.logo{font-size:20px;font-weight:900;color:#1e3a2f}.logo small{display:block;font-size:11px;font-weight:500;color:#6b7280}';
+    html += '.ordernr{font-size:16px;font-weight:800;text-align:right}.ordernr small{display:block;font-size:11px;color:#6b7280;font-weight:500}';
+    html += '.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12px;margin-bottom:16px}.info b{color:#6b7280}';
+    html += 'table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}';
+    html += 'th{background:#f3f4f6;text-align:left;padding:7px 8px;font-weight:700;border-bottom:2px solid #d1d5db;font-size:11px;text-transform:uppercase;letter-spacing:.3px}';
+    html += 'th.r,td.r{text-align:right}';
+    html += 'td{padding:7px 8px;border-bottom:1px solid #e5e7eb}';
+    html += 'tr.packed td{background:#f0fdf4}tr.notpacked td{background:#fef2f2}';
+    html += '.check{font-size:15px;width:24px;text-align:center}';
+    html += '.total{text-align:right;font-size:14px;font-weight:800;padding:8px 0;border-top:2px solid #1e3a2f}';
+    html += '.footer{margin-top:20px;padding-top:12px;border-top:1px solid #d1d5db;font-size:11px;color:#6b7280}';
+    html += '.footer b{color:#1f2937}';
+    html += '.note{background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:8px 10px;font-size:11px;color:#92400e;margin-bottom:12px}';
+    html += '@media print{body{padding:12px 16px}@page{margin:12mm 10mm}.noprint{display:none!important}}';
+    html += '</style></head><body>';
+    html += '<div class="header"><div class="logo">Dorfladen Oberornau<small>Online-Bestellung · Beipackzettel</small></div>';
+    html += '<div class="ordernr">'+esc(o.bestellnummer)+'<small>Gedruckt: '+now.toLocaleDateString('de-DE')+' '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+'</small></div></div>';
+    html += '<div class="info">';
+    html += '<div><b>Kunde:</b> '+esc(o.kunde_name)+'</div>';
+    html += '<div><b>E-Mail:</b> '+esc(o.kunde_email)+'</div>';
+    html += '<div><b>Bestellt am:</b> '+fmtDate(o.bestelldatum)+'</div>';
+    html += '<div><b>Abholung:</b> '+fmtDate(o.abholdatum)+'</div>';
+    html += '</div>';
+    if(o.anmerkungen) html += '<div class="note"><b>Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';
+    html += '<table><thead><tr><th class="check"></th><th>Pos</th><th>Artikel</th><th>Art.-Nr.</th><th class="r">Bestellt</th><th class="r">Geliefert</th><th class="r">Einzelpreis</th><th class="r">Gesamt</th></tr></thead><tbody>';
+    var total = 0;
+    var packItems = (o.pack_data&&o.pack_data.items)||[];
+    items.forEach(function(p,i){
+      var pk = packItems.find(function(x){return String(x.artikelnummer||x.strichcode||x.bezeichnung||'')===String(p.artikelnummer||p.strichcode||p.bezeichnung||'');})||{};
+      var cb = document.querySelector('[data-pk-idx="'+i+'"]');
+      var checked = cb?cb.checked:pk.gepackt;
+      var ep = p.einzelpreis||0;
+      var isKg = p.einheit==='kg'||p.gewichtsware;
+      var bestellMenge = p.menge||0;
+      var qtyInp = document.querySelector('[data-pk-qty="'+i+'"]');
+      var packGramm, packStueck;
+      if(isKg){
+        packGramm = qtyInp?parseFloat(qtyInp.value)||0:(pk.gepackt_menge||Math.round(bestellMenge*1000));
+      } else {
+        packStueck = qtyInp?parseFloat(qtyInp.value)||0:(pk.gepackt_menge||bestellMenge);
+      }
+      var gp = isKg?ep*(packGramm/1000):ep*packStueck;
+      var bestGramm = isKg?Math.round(bestellMenge*1000):bestellMenge;
+      var geliefertVal = isKg?packGramm:packStueck;
+      var abweichung = checked&&Math.abs(geliefertVal-bestGramm)>0.5;
+      var bestellStr = isKg?bestGramm+' g':bestellMenge+' '+(p.einheit||'Stk');
+      var geliefertStr = isKg?packGramm+' g':packStueck+' '+(p.einheit||'Stk');
+      var bc = p.strichcode||p.artikelnummer||'';
+      html += '<tr class="'+(checked?'packed':'notpacked')+'">';
+      html += '<td class="check">'+(checked?'✅':'⬜')+'</td>';
+      html += '<td>'+(i+1)+'</td>';
+      if(checked){
+        total += gp;
+        html += '<td><b>'+esc(p.bezeichnung)+'</b>'+(abweichung?'<br><span style="color:#b45309;font-size:10px;font-weight:700">⚠ Menge abweichend</span>':'')+'</td>';
+        html += '<td>'+esc(bc)+'</td>';
+        html += '<td class="r">'+bestellStr+'</td>';
+        html += '<td class="r"'+(abweichung?' style="color:#b45309;font-weight:700"':'')+'>'+geliefertStr+'</td>';
+        html += '<td class="r">'+fmtP(ep)+' €'+(isKg?'/kg':'')+'</td>';
+        html += '<td class="r"><b>'+fmtP(gp)+' €</b></td>';
+      } else {
+        html += '<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">⚠ Nicht verfügbar</span></td>';
+        html += '<td style="color:#9ca3af">'+esc(bc)+'</td>';
+        html += '<td class="r" style="color:#9ca3af">'+bestellStr+'</td>';
+        html += '<td class="r" style="color:#9ca3af">–</td>';
+        html += '<td class="r" style="text-decoration:line-through;color:#9ca3af">'+fmtP(ep)+' €</td>';
+        html += '<td class="r" style="text-decoration:line-through;color:#9ca3af">'+fmtP(gp)+' €</td>';
+      }
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    html += '<div class="total">Gesamtbetrag: '+fmtP(total)+' €</div>';
+    html += '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:8px 10px;font-size:10px;color:#92400e;margin:10px 0"><b>Hinweis:</b> Bei Gewichtsware kann die tatsächlich gelieferte Menge geringfügig abweichen. Nicht verfügbare Artikel werden nicht berechnet.</div>';
+    html += '<div class="footer">';
+    html += '<b>Dorfladen Oberornau</b> · Dorfplatz 1 · 84419 Obertaufkirchen<br>';
+    html += 'Bei Fragen: bestellung@dorfladen-oberornau.de · Tel: 08082 / 622 99 91';
+    html += '</div>';
+    html += '<div class="noprint" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#2e7d4f;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">🖨 Beipackzettel drucken</button></div>';
+    html += '</body></html>';
+    var w = window.open('','_blank','width=700,height=900');
+    w.document.write(html);w.document.close();
+  }
+
+  // ══════════════════════════════════════════════════
+  //  KITCHEN PRINT
+  // ══════════════════════════════════════════════════
+
+  function printKitchen(){
+    // Group today's orders by dish for kitchen preparation
+    var todayOrders = orders.filter(function(o){ return o.status !== 2; }); // exclude cancelled
+    if(todayOrders.length === 0){ toast('Keine Bestellungen für heute'); return; }
+
+    var byDish = {};
+    todayOrders.forEach(function(o){
+      var key = o.gericht || 'Unbekannt';
+      if(!byDish[key]) byDish[key] = { count: 0, mitnehmen: 0, vorOrt: 0, kunden: [] };
+      var qty = o.menge || 1;
+      byDish[key].count += qty;
+      if(o.mitnehmen) byDish[key].mitnehmen += qty; else byDish[key].vorOrt += qty;
+      var name = o.name || '?';
+      byDish[key].kunden.push(name + (qty > 1 ? ' ('+qty+'x)' : '') + (o.mitnehmen ? ' 📦' : ''));
+    });
+
+    var selDate = new Date(_mittagDatum+'T12:00:00');
+    var datum = selDate.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Küchenliste</title>';
+    html += '<style>body{font-family:Arial,sans-serif;padding:20px;max-width:700px;margin:0 auto}';
+    html += 'h1{font-size:20px;border-bottom:2px solid #1b5e20;padding-bottom:8px}';
+    html += '.dish{margin:16px 0;page-break-inside:avoid}';
+    html += '.dish-head{background:#e8f5e9;padding:10px 14px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;font-weight:700}';
+    html += '.dish-count{font-size:24px;color:#1b5e20}';
+    html += '.dish-details{padding:6px 14px;font-size:13px;color:#555}';
+    html += '.kunde{padding:2px 0;border-bottom:1px dotted #ddd}';
+    html += '.summary{margin-top:24px;padding:12px;background:#f5f5f5;border-radius:8px;font-weight:700}';
+    html += '@media print{body{padding:10px}}</style></head><body>';
+    html += '<h1>🍽 Küchenliste – ' + datum + '</h1>';
+
+    var totalPortions = 0;
+    var sortedDishes = Object.keys(byDish).sort();
+    sortedDishes.forEach(function(dish){
+      var d = byDish[dish];
+      totalPortions += d.count;
+      html += '<div class="dish">';
+      html += '<div class="dish-head"><span>' + esc(dish) + '</span><span class="dish-count">' + d.count + 'x</span></div>';
+      html += '<div class="dish-details">';
+      if(d.mitnehmen > 0) html += '📦 Mitnehmen: ' + d.mitnehmen + ' · ';
+      if(d.vorOrt > 0) html += '🍽 Vor Ort: ' + d.vorOrt;
+      html += '<div style="margin-top:4px">';
+      d.kunden.forEach(function(k){ html += '<div class="kunde">' + esc(k) + '</div>'; });
+      html += '</div></div></div>';
+    });
+
+    html += '<div class="summary">Gesamt: ' + totalPortions + ' Portionen · ' + sortedDishes.length + ' Gerichte · ' + todayOrders.length + ' Bestellungen</div>';
+    html += '<script>window.onload=function(){window.print();}<\/script>';
+    html += '</body></html>';
+
+    var w = window.open('', '_blank', 'width=700,height=900');
+    w.document.write(html); w.document.close();
+  }
+
+  // ══════════════════════════════════════════════════
+  //  UTILS
+  // ══════════════════════════════════════════════════
+
+  function openModal(id){
+    document.getElementById(id).classList.add('open');
+    if(id==='modal-help'){var f=document.getElementById('help-iframe');if(f&&f.src.indexOf('help-workflows')===-1)f.src='/help-workflows.html';}
+  }
+  function closeModal(id){
+    document.getElementById(id).classList.remove('open');
+    if(id==='modal-help'){var f=document.getElementById('help-iframe');if(f)f.src='about:blank';}
+  }
+
+  function updateBadge(tab, count){
+    var el = document.getElementById('badge-'+tab);
+    if(!el) return;
+    if(count>0){el.textContent=count;el.classList.add('show');}
+    else{el.classList.remove('show');}
+  }
+
+  var toastTimer = null;
+  function toast(msg){
+    var el = document.getElementById('k-toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){el.classList.remove('show');}, 3000);
+  }
+
+  function refresh(){
+    loadOrders();
+    loadShopOrders();
+    toast('🔄 Aktualisiert');
+  }
+
+  // ══════════════════════════════════════════════════
+  //  INIT
+  // ══════════════════════════════════════════════════
+
+  buildDayBar();
+  reinitIcons(); // Initialize static Lucide icons
+  setMittagFilter('offen'); // Default: "Zu bestätigen"
+  loadOrders();
+  loadDishes();
+  loadShopOrders();
+  // Auto-refresh every 30s
+  refreshTimer = setInterval(function(){ loadOrders(); loadShopOrders(); }, 30000);
+
+  // Public API
+  return {
+    switchTab: switchTab,
+    setMittagDatum: setMittagDatum,
+    setStatus: setStatus,
+    showConfirmDialog: showConfirmDialog,
+    hideConfirmDialog: hideConfirmDialog,
+    confirmOrder: confirmOrder,
+    showReplyDialog: showReplyDialog,
+    hideReplyDialog: hideReplyDialog,
+    sendReply: sendReply,
+    openNewOrder: openNewOrder,
+    pickDish: pickDish,
+    noQty: noQtyChange,
+    searchOrderKunde: searchOrderKunde,
+    selectOrderKunde: selectOrderKunde,
+    clearOrderKunde: clearOrderKunde,
+    newOrderKunde: newOrderKunde,
+    submitNewOrder: submitNewOrder,
+    orderForKunde: orderForKunde,
+    openNewKunde: openNewKunde,
+    submitNewKunde: submitNewKunde,
+    searchKunden: searchKunden,
+    printKitchen: printKitchen,
+    loadShopOrders: loadShopOrders,
+    setShopFilter: setShopFilter,
+    toggleHistory: toggleHistory,
+    setShopStatus: setShopStatus,
+    toggleSlotGroup: toggleSlotGroup,
+    openPackModal: openPackModal,
+    pkToggle: pkToggle,
+    pkQtyChange: pkQtyChange,
+    savePackState: savePackState,
+    finishPack: finishPack,
+    printPackSlip: printPackSlip,
+    openModal: openModal,
+    closeModal: closeModal,
+    setMittagFilter: setMittagFilter,
+    showOrderDetail: showOrderDetail,
+    refresh: refresh
+  };
+})();
+</script>
+<script src="/js/social.js"></script>
+<script src="/js/social-poster.js"></script>
+</body>
+</html>

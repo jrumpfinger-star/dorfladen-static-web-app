@@ -6,7 +6,7 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "patch", "options"],
+      "methods": ["get", "patch", "delete", "options"],
       "route": "shop-admin"
     },
     {

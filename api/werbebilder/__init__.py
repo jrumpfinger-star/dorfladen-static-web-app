@@ -6,6 +6,7 @@ import logging
 import msal
 import requests
 import base64
+import time
 
 
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
@@ -59,6 +60,24 @@ def get_graph_token():
         return r.get("access_token")
     except:
         return None
+
+
+def _put_with_retry(url, headers, data, timeout=60, attempts=4):
+    response = None
+    for attempt in range(attempts):
+        response = requests.put(url, headers=headers, data=data, timeout=timeout)
+        if response.status_code not in (429, 500, 502, 503, 504):
+            return response
+        if attempt >= attempts - 1:
+            return response
+        retry_after = (response.headers.get("Retry-After") or "").strip()
+        try:
+            delay = max(1, min(10, int(retry_after)))
+        except Exception:
+            delay = min(8, 2 ** attempt)
+        logging.warning(f"[werbebilder] retrying SharePoint upload after {response.status_code}, attempt {attempt + 1}/{attempts}, wait={delay}s")
+        time.sleep(delay)
+    return response
 
 
 def _download_as_base64(dl_url):
@@ -290,7 +309,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                             logging.info(f"[werbebilder] deleted stale {artnr}.{old_ext}")
                 # Upload via Graph API PUT (create or overwrite)
                 upload_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{SP_BARCODE_FOLDER}:/{filename}:/content"
-                sp_r = requests.put(
+                sp_r = _put_with_retry(
                     upload_url,
                     headers={"Authorization": f"Bearer {graph_token}", "Content-Type": content_type},
                     data=img_bytes,

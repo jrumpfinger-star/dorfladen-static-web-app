@@ -112,8 +112,12 @@ def normalize_warengruppe(name):
     return name
 
 
-def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung):
-    """Calculate corrected price and unit display string."""
+_KG_PREIS_WARENGRUPPEN = {"obst und gemüse", "obst", "gemüse"}
+
+def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung, warengruppe=""):
+    """Calculate corrected price and unit display string.
+    warengruppe: if in _KG_PREIS_WARENGRUPPEN, show kg price instead of 100g.
+    """
     mt = (mengentyp or "").strip().lower()
     me_val = str(mengenerfassung or "").strip()
     preis = _num(preis)
@@ -121,8 +125,13 @@ def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung):
     vk_korr = preis
     menge_str = ""
     if mt == "kg" and me_val == "3":
-        vk_korr = round(preis / 10, 2)
-        menge_str = "100 g"
+        wg = (warengruppe or "").strip().lower()
+        if wg in _KG_PREIS_WARENGRUPPEN:
+            vk_korr = preis
+            menge_str = "1 kg"
+        else:
+            vk_korr = round(preis / 10, 2)
+            menge_str = "100 g"
     elif mt == "kg" and gpfaktor and gpfaktor != 1:
         vk_korr = round(preis * gpfaktor, 2)
         if mengeneinheit:
@@ -290,7 +299,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             mengeneinheit = item.get("cr5d4_mengeneinheit")
             gpfaktor = _num(item.get("cr5d4_gpfaktor"), 1)
             mengenerfassung = item.get("cr5d4_mengenerfassung")
-            vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung)
+            vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung, warengruppe)
 
             # Determine order unit type
             mt = (mengentyp or "").strip().lower()
@@ -330,7 +339,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "angebot_preis": ang["preis"] if ang else None,
                 "rp": is_rp,
                 "discount": discount,
-                "kurzfristig": freigaben_map.get(strichcode, {}).get("kurzfristig", False) if freigaben_map else False
+                "kurzfristig": freigaben_map.get(strichcode, {}).get("kurzfristig", False) if freigaben_map else False,
+                "gueltig_bis": str(freigaben_map.get(strichcode, {}).get("gueltig_bis", "") or "")[:10] if freigaben_map else ""
             }
             articles.append(article)
 

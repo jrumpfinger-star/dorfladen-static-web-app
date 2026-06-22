@@ -33,12 +33,13 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 })();
 
 /* === CMS Config from API === */
+window._dlFlagsReady=new Promise(function(resolveFlags){
 (function(){
   fetch(API_BASE+'/cms-config')
     .then(function(r){return r.json();})
     .then(function(payload){
       var config=(payload&&payload.data)?payload.data:payload;
-      if(!config || Object.keys(config).length===0) return;
+      if(!config || Object.keys(config).length===0){resolveFlags();return;}
       console.log('CMS Config loaded:', config);
       
       // Apply Hero texts from Dataverse CMS
@@ -64,9 +65,15 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       if(homeCfg.layout){
         document.documentElement.setAttribute('data-layout', homeCfg.layout);
       }
+      // Store feature flags globally
+      var ff=config['feature_flags']||config.feature_flags;
+      if(typeof ff==='string'){try{ff=JSON.parse(ff);}catch(e){ff={};}}
+      if(ff) window._dlFeatureFlags=ff;
+      resolveFlags();
     })
-    .catch(function(e){console.log('CMS Config fetch failed:', e);});
+    .catch(function(e){console.log('CMS Config fetch failed:', e);resolveFlags();});
 })();
+});
 
 /* === CMS Config (dl_homepage_cfg + dl_hp_design_config from localStorage) === */
 (function(){
@@ -334,9 +341,11 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
 
 /* === Wochenplan loader === */
 (function(){
-  fetch(API_BASE+'/wochenplan')
-    .then(function(r){return r.json();})
-    .then(function(response){
+  // Fetch wochenplan and feature flags in parallel, render only when both ready
+  var flagsReady=window._dlFlagsReady||Promise.resolve();
+  var wpData=fetch(API_BASE+'/wochenplan').then(function(r){return r.json();});
+  Promise.all([wpData,flagsReady])
+    .then(function(results){var response=results[0];
       var items=unwrapApiData(response).map(function(item){
         return {
           id:item.id||item.dl_wochenplanid||item.dl_wochenplansid||'',
@@ -388,26 +397,35 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
         byDay[dc].push(g);
       });
       var todayIdx = new Date().getDay(); // 0=So, 1=Mo, ..., 6=Sa
+      var isWeekend = todayIdx === 0 || todayIdx === 6;
       var todayDc = 101000 + (todayIdx === 0 ? 6 : todayIdx - 1); // map to 101000-101006
+      var currentHour = new Date().getHours();
       // Always show Mon-Fri (101000-101004)
       var weekDays=[101000,101001,101002,101003,101004];
 
-      var html='<table class="wp-table"><thead><tr><th class="wp-th-day"></th><th></th><th class="wp-th-price">Verzehr im Laden<br><small>oder zum Mitnehmen</small></th></tr></thead><tbody>';
+      var _wpImgs=window._dlFeatureFlags&&window._dlFeatureFlags.wp_images;
+      var html='<table class="wp-table'+(_wpImgs?' wp-has-imgs':'')+'"><thead><tr><th class="wp-th-day"></th>'+(_wpImgs?'<th class="wp-th-img"></th>':'')+'<th></th><th class="wp-th-price">Verzehr im Laden<br><small>oder zum Mitnehmen</small></th></tr></thead><tbody>';
       weekDays.forEach(function(dc,dIdx){
         var dayMeals=byDay[dc]||[];
         var day=DAYS[dc]||'?';
         var grp=dIdx%2===0?'wp-grp-even':'wp-grp-odd';
-        var isToday=dc===todayDc;
+        // Am Wochenende zeigt API nächste Woche → kein Tag ist vergangen
+        var isToday=!isWeekend&&dc===todayDc;
+        var isPast=!isWeekend&&dc<todayDc;
+        // Bestellschluss: heute bis 10:30, zukünftige Tage erlaubt, vergangene nicht
+        var canOrder=isToday?(currentHour<10||(currentHour===10&&new Date().getMinutes()<30)):(!isPast);
         var notice='';
         dayMeals.forEach(function(g){if(g.beschreibung&&!notice) notice=g.beschreibung;});
         var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim()&&g.preis;});
         if(!notice){dayMeals.forEach(function(g){if(g.gericht&&g.gericht.trim()&&!g.preis&&!notice) notice=g.gericht;});}
+        var pastStyle=isPast?' style="opacity:.45"':'';
         if(realMeals.length===0){
           var cls=grp+(isToday?' wp-today wp-day-first wp-day-last':' wp-day-first wp-day-last');
+          var noticeColspan=_wpImgs?'3':'2';
           if(notice){
-            html+='<tr class="'+cls+'"><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2" style="color:#888;font-style:italic">'+esc(notice)+'</td></tr>';
+            html+='<tr class="'+cls+'"'+pastStyle+'><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="'+noticeColspan+'" style="color:#888;font-style:italic">'+esc(notice)+'</td></tr>';
           }else{
-            html+='<tr class="'+cls+'"><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="2" style="color:#aaa;font-style:italic">\u2013</td></tr>';
+            html+='<tr class="'+cls+'"'+pastStyle+'><td class="wp-day">'+day+'</td><td class="wp-notice" colspan="'+noticeColspan+'" style="color:#aaa;font-style:italic">\u2013</td></tr>';
           }
         } else {
           realMeals.forEach(function(g,i){
@@ -415,10 +433,14 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
             var isLast=i===realMeals.length-1;
             var cls=grp+(isFirst?' wp-day-first':'')+(isLast?' wp-day-last':'')+(isToday?' wp-today':'');
             var price=g.preis?(g.preis.toFixed(2).replace('.',',')+' \u20AC'):'';
-            html+='<tr class="'+cls+'">';
+            html+='<tr class="'+cls+'"'+pastStyle+'>';
             html+='<td class="'+(isFirst?'wp-day':'wp-day-empty')+'">'+(isFirst?day:'')+'</td>';
+            var orderLink='/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(g.id||'')+'&gericht='+encodeURIComponent(g.gericht)+'&preis='+(g.preis||0)+'&datum='+encodeURIComponent(g.datum||'')+'&tag='+encodeURIComponent(DAYS[dc]||'');
+            if(_wpImgs) html+='<td class="wp-img-cell" data-gericht="'+esc(g.gericht)+'"></td>';
             html+='<td class="wp-dish wp-dish-a">'+esc(g.gericht)+'</td>';
-            html+='<td class="wp-price wp-price-a">'+price+'</td></tr>';
+            var orderBtn='';
+            if(canOrder) orderBtn=' <a href="'+orderLink+'" class="feature-mittagstisch wp-order-btn" title="Jetzt bestellen"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Bestellen</a>';
+            html+='<td class="wp-price wp-price-a">'+price+orderBtn+'</td></tr>';
           });
         }
       });
@@ -426,9 +448,34 @@ function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+',
       html+='<div class="wp-footer"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>';
       html+='<span id="wp-oeko"><strong>0,50 \u20AC \u00D6ko-Rabatt</strong> mit eigenem Beh\u00E4lter</span>';
       html+='<span class="wp-hint" id="wp-phone">\u260E\uFE0F <a href="tel:+4980826229991">08082 622 99 91</a></span>';
-      html+='<span style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell">Gerne auch vorbestellen!</span>';
+      html+='<span class="feature-mittagstisch" style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell"><a href="/mittagstisch-bestellen.html" style="color:#c0392b;text-decoration:none">\uD83C\uDF7D Jetzt online vorbestellen!</a></span>';
       html+='</div>';
       document.getElementById('wp-body').innerHTML=html;
+      // Apply mittagstisch feature flag to dynamically rendered content
+      if(!window._featureMittagstisch){
+        document.querySelectorAll('#wp-body .feature-mittagstisch').forEach(function(el){el.style.display='none';});
+      }
+      // Load Mittagstisch images into dedicated column (if feature enabled)
+      if(_wpImgs){
+        fetch(API_BASE+'/social-katalog?action=mt-bilder')
+          .then(function(r){return r.json();})
+          .then(function(res){
+            var bilder=res.bilder||{};
+            document.querySelectorAll('.wp-img-cell').forEach(function(td){
+              var name=td.getAttribute('data-gericht');
+              if(bilder[name]&&bilder[name].bild_url){
+                var img=document.createElement('img');
+                img.src=bilder[name].bild_url;
+                img.className='wp-meal-thumb';
+                img.alt=name;
+                img.onerror=function(){this.style.display='none';};
+                img.addEventListener('dblclick',function(){wpOpenLightbox(this.src,name);});
+                td.appendChild(img);
+              }
+            });
+          })
+          .catch(function(){/* ignore */});
+      }
     })
     .catch(function(e){
       console.log('WP-API:',e);
@@ -866,3 +913,24 @@ document.addEventListener('keydown',function(e){
       grid.innerHTML='<div class="gallery-empty">Galerie konnte nicht geladen werden</div>';
     });
 })();
+
+/* === Wochenplan Image Lightbox === */
+function wpOpenLightbox(src,alt){
+  var existing=document.getElementById('wp-lightbox');
+  if(existing) existing.remove();
+  var overlay=document.createElement('div');
+  overlay.id='wp-lightbox';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;animation:wpLbFadeIn .2s';
+  overlay.addEventListener('click',function(){overlay.remove();});
+  var img=document.createElement('img');
+  img.src=src;
+  img.alt=alt||'';
+  img.style.cssText='max-width:90vw;max-height:85vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)';
+  var cap=document.createElement('div');
+  cap.textContent=alt||'';
+  cap.style.cssText='position:absolute;bottom:24px;left:50%;transform:translateX(-50%);color:#fff;font-size:1rem;font-weight:600;background:rgba(0,0,0,.5);padding:6px 18px;border-radius:8px';
+  overlay.appendChild(img);
+  if(alt) overlay.appendChild(cap);
+  document.body.appendChild(overlay);
+  document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){overlay.remove();document.removeEventListener('keydown',onKey);}});
+}

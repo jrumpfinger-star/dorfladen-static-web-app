@@ -120,6 +120,7 @@
   var aktionen = [];
   var _angWeekFilter = 'this';
   var angRowCounter = 0;
+  var _angPasteTarget = null; // row number for clipboard paste
 
   function toIsoDateOnly(v){
     if(!v) return '';
@@ -265,7 +266,8 @@
       +'<div class="cms-ang-row-img">'
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
       +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
-      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild auswählen & in StrichcodeBilder hochladen" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">📁</button>'
+      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild ausw\u00e4hlen & in StrichcodeBilder hochladen" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">\uD83D\uDCC1</button>'
++'<button class="cms-bild-paste-sp" data-action="pasteBildSP" data-row="'+angRowCounter+'" type="button" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="font-size:12px;background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:1px 4px;color:#6b7280">\uD83D\uDCCB</button>'
       +'</div>'
       +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
@@ -935,6 +937,8 @@
       jahr = d.getFullYear();
       kw = isoWeek(d);
       loadWP();
+      // Pre-load feature flags silently so renderWP/social can use them
+      loadFeatureFlagsSilent();
       // Pre-load design overrides from Dataverse so they're ready when Design tab opens
       if(typeof cfgLoadFromDataverse==='function') cfgLoadFromDataverse();
       document.getElementById('cms-status').textContent = 'Verbunden';
@@ -964,6 +968,7 @@
   function fmtDePrice(v){if(v==null||v==='')return '';var n=parseFloat(String(v).replace(',','.'));return isNaN(n)?'':n.toFixed(2).replace('.',',');}
   function parseDePrice(s){if(!s)return null;var n=parseFloat(String(s).replace(',','.'));return isNaN(n)?null:n;}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function fmtDe(s){if(!s)return '–';try{var p=String(s).substring(0,10).split('-');if(p.length===3)return p[2]+'.'+p[1]+'.'+p[0];return s;}catch(e){return s;}}
 
   function toast(msg,type){
     var el=document.createElement('div');
@@ -1008,7 +1013,7 @@
       openHilfePopup();return;
     }
     _cmsCurrentTab=name;
-    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','help'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','social','help'].forEach(function(t){
       var panel=document.getElementById('cms-panel-'+t);
       if(panel) panel.style.display = t===name?'':'none';
       var tab=document.getElementById('cms-tab-'+t);
@@ -1021,9 +1026,19 @@
     if(name==='sort' && !_sortLoaded) loadSortiment();
     if(name==='gallery' && !_galLoaded) loadGalleryAdmin();
     if(name==='settings' && !_settingsLoaded) loadFeatureFlags();
+    if(name==='settings' && !_kontaktLoaded) loadKontaktdaten();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
+    if(name==='social'){
+      var katReady=window._socialKatLoaded;
+      var mtReady=false;
+      function tryBuild(){ if(katReady&&mtReady) socialBuildPostItems(); }
+      if(!window._socialKatLoaded){
+        socialLoadKatalog(function(){ katReady=true; tryBuild(); });
+      }
+      socialLoadMtBilder(function(){ mtReady=true; tryBuild(); });
+    }
     if(!skipHistory) history.pushState({cmsTab:name},'','');
   };
 
@@ -1294,6 +1309,9 @@
         var dvPlakatOv=res.data['plakat_article_overrides'];
         if(dvPlakatOv&&typeof dvPlakatOv==='object'){
           _plakatArtOverrides=dvPlakatOv;
+          var _pKeys=Object.keys(dvPlakatOv);
+          console.log('[CMS] plakat_article_overrides loaded:',_pKeys.length,'keys:',_pKeys);
+          _pKeys.forEach(function(pk){var v=dvPlakatOv[pk];console.log('[CMS]   key="'+pk+'" customImg:',v.customImg?'YES ('+v.customImg.length+')':'NO');});
         }
         var dvCfg=res.data['design_config'];
         if(dvCfg&&typeof dvCfg==='object'){
@@ -2564,6 +2582,8 @@
     if(meals.length===0){grid.style.display='none';empty.style.display='';return;}
     grid.style.display='';empty.style.display='none';
 
+    var showImgs=_featureFlags.wp_images&&typeof _socMtBilder!=='undefined'&&_socMtBilder;
+
     var byDay={};
     [101000,101001,101002,101003,101004].forEach(function(d){byDay[d]=[];});
     meals.forEach(function(m){if(byDay[m.wochentag])byDay[m.wochentag].push(m);});
@@ -2581,17 +2601,23 @@
           b+='<div style="color:#9ca3af;font-size:13px;font-style:italic;text-align:center;padding:12px 4px">'+esc(notice)+'</div>';
           b+='<div class="cms-meal-actions">';
           b+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editMeal" data-id="'+items[0].id+'">Bearbeiten</button>';
-          b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag löschen" aria-label="Löschen" data-action="deleteMeal" data-id="'+items[0].id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
+          b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag l\u00f6schen" aria-label="L\u00f6schen" data-action="deleteMeal" data-id="'+items[0].id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
           b+='</div>';
         } else {
           items.forEach(function(m){
-            b+='<div class="cms-meal-item"><span>'+esc(m.gericht)+'</span>';
+            var imgHtml='';
+            if(showImgs&&m.gericht&&_socMtBilder[m.gericht]&&_socMtBilder[m.gericht].bild_url){
+              imgHtml='<img src="'+esc(_socMtBilder[m.gericht].bild_url)+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;flex-shrink:0;cursor:pointer" title="Klick zum Bearbeiten" onclick="document.querySelector(\'[data-action=editMeal][data-id=\\x22'+m.id+'\\x22]\').click()" onerror="this.style.display=\'none\'">';
+            }
+            b+='<div class="cms-meal-item" style="'+(imgHtml?'display:flex;align-items:center;gap:8px':'')+'">';
+            b+=imgHtml;
+            b+='<span style="flex:1">'+esc(m.gericht)+'</span>';
             if(m.preis) b+='<span class="price">'+fmtP(m.preis)+'</span>';
             b+='</div>';
             if(m.beschreibung) b+='<div style="color:#9ca3af;font-size:11px;font-style:italic;padding:0 8px 4px">'+esc(m.beschreibung)+'</div>';
             b+='<div class="cms-meal-actions">';
             b+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editMeal" data-id="'+m.id+'">Bearbeiten</button>';
-            b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag löschen" aria-label="Löschen" data-action="deleteMeal" data-id="'+m.id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
+            b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag l\u00f6schen" aria-label="L\u00f6schen" data-action="deleteMeal" data-id="'+m.id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
             b+='</div>';
           });
         }
@@ -2599,7 +2625,14 @@
       b+='</div>';
       card.innerHTML=h+b; grid.appendChild(card);
     });
+
+    // Load images if enabled but not yet loaded
+    if(_featureFlags.wp_images&&!_wpImgsRequested){
+      _wpImgsRequested=true;
+      socialLoadMtBilder(function(){renderWP();});
+    }
   }
+  var _wpImgsRequested=false;
 
   // --- Add/Edit Meal Modal ---
   window.cmsOpenAddMeal = function(){
@@ -2627,6 +2660,7 @@
   loadGerichteHistory();
 
   var mealRowCtr=0;
+  var _mealPasteTarget=null;
   function addMealRow(name,price,id){
     mealRowCtr++;
     var c=document.getElementById('cms-meal-rows');
@@ -2634,6 +2668,7 @@
     row.className='cms-ang-row';row.id='cms-mr-'+mealRowCtr;
     row.dataset.mealId=id||'';
     var canRemove=c.children.length>0;
+    var rn=mealRowCtr;
     var h='';
     if(canRemove) h+='<button type="button" class="cms-ang-row-close" data-action="removeMealRow">&times;</button>';
     h+='<div class="cms-meal-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:8px">';
@@ -2641,9 +2676,46 @@
     h+='<div class="cms-art-dd"></div></div>';
     h+='<input class="cms-input cms-price" data-f="price" type="text" inputmode="decimal" placeholder="Preis" value="'+(price!=null?fmtDePrice(price):'')+'">';
     h+='</div>';
+    // Optional image row
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-top:6px">';
+    h+='<img class="cms-meal-img-pv" data-row="'+rn+'" src="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;display:none">';
+    h+='<label style="cursor:pointer;padding:3px 8px;border-radius:6px;background:#f3f4f6;border:1px solid #d1d5db;font-size:11px;color:#374151;display:inline-flex;align-items:center;gap:3px">';
+    h+='\uD83D\uDCF7 Bild<input type="file" accept="image/*" data-action="mealRowImg" data-row="'+rn+'" style="display:none">';
+    h+='</label>';
+    h+='<button type="button" data-action="mealRowPaste" data-row="'+rn+'" title="Bild aus Zwischenablage (Klick + Strg+V)" style="padding:2px 6px;border-radius:6px;background:#f3f4f6;border:1px solid #d1d5db;font-size:11px;cursor:pointer;color:#374151">\uD83D\uDCCB Einf\u00fcgen</button>';
+    h+='<input type="hidden" data-f="bild_file" value="">';
+    h+='<span class="cms-meal-img-status" style="font-size:10px;color:#9ca3af"></span>';
+    h+='</div>';
     row.innerHTML=h;
     c.appendChild(row);
     wireMealAC(row);
+    // Wire file input
+    var fileInp=row.querySelector('[data-action="mealRowImg"]');
+    if(fileInp){
+      fileInp.addEventListener('change',function(){
+        if(!fileInp.files||!fileInp.files[0])return;
+        mealRowSetImage(rn,fileInp.files[0]);
+      });
+    }
+  }
+
+  // Store pending image files per meal row
+  var _mealRowImages={};
+
+  function mealRowSetImage(rn,file){
+    _mealRowImages[rn]=file;
+    var row=document.getElementById('cms-mr-'+rn);if(!row)return;
+    var pv=row.querySelector('.cms-meal-img-pv');
+    var st=row.querySelector('.cms-meal-img-status');
+    var reader=new FileReader();
+    reader.onload=function(){
+      if(pv){pv.src=reader.result;pv.style.display='inline-block';}
+      if(st) st.innerHTML='\u2705 '+esc(file.name||'Bild');
+      // Reset paste button if active
+      var btn=row.querySelector('[data-action="mealRowPaste"]');
+      if(btn){btn.style.background='#dcfce7';btn.textContent='\u2705 Bild';}
+    };
+    reader.readAsDataURL(file);
   }
 
   function wireMealAC(row){
@@ -2732,8 +2804,16 @@
     document.getElementById('cms-modal-wrap').innerHTML=html;
     document.getElementById('cms-modal-wrap').style.display='';
     mealRowCtr=0;
+    _mealRowImages={};
     if(isEdit){
       addMealRow(meal.gericht, meal.preis, meal.id);
+      // Show existing image if available
+      if(meal.gericht&&typeof _socMtBilder!=='undefined'&&_socMtBilder&&_socMtBilder[meal.gericht]&&_socMtBilder[meal.gericht].bild_url){
+        var pvImg=document.querySelector('#cms-mr-1 .cms-meal-img-pv');
+        if(pvImg){pvImg.src=_socMtBilder[meal.gericht].bild_url;pvImg.style.display='inline-block';}
+        var pvSt=document.querySelector('#cms-mr-1 .cms-meal-img-status');
+        if(pvSt) pvSt.innerHTML='\u2705 Bild vorhanden';
+      }
     } else {
       addMealRow();
     }
@@ -2790,7 +2870,8 @@
       var name=(row.querySelector('[data-f="name"]').value||'').trim();
       var price=parseDePrice(row.querySelector('[data-f="price"]').value);
       var mid=row.dataset.mealId||'';
-      if(name) mealData.push({gericht:name,preis:price,id:mid,priceInput:row.querySelector('[data-f="price"]')});
+      var rn=row.id.replace('cms-mr-','');
+      if(name) mealData.push({gericht:name,preis:price,id:mid,priceInput:row.querySelector('[data-f="price"]'),rowNum:rn});
     });
 
     for(var mi=0;mi<mealData.length;mi++){if(mealData[mi].preis==null||isNaN(mealData[mi].preis)){mealData[mi].priceInput.style.border='2px solid #ef4444';mealData[mi].priceInput.focus();toast('Bitte Preis f\u00fcr "'+mealData[mi].gericht+'" eingeben','warn');return;} else {mealData[mi].priceInput.style.border='';}}
@@ -2820,6 +2901,26 @@
 
       return Promise.all(promises);
     })
+      .then(function(){
+        // Upload pending images for each meal row
+        var imgPromises=[];
+        mealData.forEach(function(item){
+          var imgFile=_mealRowImages[item.rowNum];
+          if(imgFile&&item.gericht){
+            var fd=new FormData();
+            fd.append('gericht',item.gericht);
+            fd.append('bild',imgFile);
+            imgPromises.push(
+              fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd})
+                .then(function(r){return r.json();})
+                .then(function(res){if(!res.error) toast('Bild f\u00fcr "'+item.gericht+'" gespeichert');})
+                .catch(function(){})
+            );
+          }
+        });
+        _mealRowImages={};
+        return Promise.all(imgPromises);
+      })
       .then(function(){
         var cnt=mealData.length;
         toast(editId?'Gericht aktualisiert':cnt+' Gericht'+(cnt>1?'e':'')+' hinzugefuegt');
@@ -3554,10 +3655,7 @@
     }
 
     function drawFooter(color){
-      ctx.save();ctx.globalAlpha=footAlpha;
-      ctx.fillStyle=color||'#6b7280';ctx.font='11px '+SF;ctx.textAlign='center';
-      ctx.fillText('Dorfladen Oberornau \u00b7 Dorfplatz 1 \u00b7 84419 Obertaufkirchen \u00b7 Tel: 08082 622 99 91',W/2,H-footerH+10);
-      ctx.textAlign='left';ctx.restore();
+      // Footer removed per user request
     }
 
     // ── Shared row-drawing: Day label left, dishes right ──
@@ -3941,7 +4039,9 @@
     var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(url);},2000);
     toast('Bild heruntergeladen \u2013 WhatsApp \u00f6ffnet sich...','ok');
-    setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');},800);
+    var isMob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var waUrl=isMob?'https://wa.me/?text='+encodeURIComponent(msg):'https://web.whatsapp.com/send?text='+encodeURIComponent(msg);
+    setTimeout(function(){window.open(waUrl,'_blank');},800);
   }
 
   function showSharePreview(blob,filename,opts){
@@ -4862,7 +4962,12 @@
     }
     document.getElementById('pce-save').onclick=function(){closeEditor(false);};
     document.getElementById('pce-close').onclick=function(){closeEditor(true);};
-    document.getElementById('pce-close-discard').onclick=function(){closeEditor(true);};
+    document.getElementById('pce-close-discard').onclick=function(){
+      // Reset to initial state but keep editor open
+      ov=_clone(_initOv);
+      _activeEl='img';syncScaleSlider();syncRotSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();
+      plakatArtOverrideSave(item,ov).then(function(){toast('Änderungen verworfen','info');});
+    };
     document.getElementById('pce-reset').onclick=function(){
       ov=plakatArtOverrideDefault();
       _activeEl='img';syncScaleSlider();syncRotSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();autoSave();
@@ -5302,7 +5407,9 @@
   // ── Per-Article Flyer Layout Overrides ──
   var _flyerArtOverrides=null;
   function _flyerArtKey(item){
-    return (item.artikelnummer||'').trim()||(item.produkt||'').trim().toLowerCase().replace(/\s+/g,'_');
+    // Always use produkt-based key for stability (artikelnummer is unreliable –
+    // can be EAN, strichcode, or product name fragment depending on data source)
+    return (item.produkt||'').trim().toLowerCase().replace(/\s+/g,'_');
   }
   function flyerArtOverridesGetAll(){
     if(!_flyerArtOverrides)_flyerArtOverrides={};
@@ -5310,7 +5417,12 @@
   }
   function flyerArtOverrideGet(item){
     var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);
-    return (k&&all[k])?_clone(all[k]):null;
+    var found=k&&all[k];
+    if(!found&&item.artikelnummer){
+      var oldK=(item.artikelnummer||'').trim();
+      if(oldK&&all[oldK]){found=all[oldK];all[k]=found;delete all[oldK];}
+    }
+    return found?_clone(found):null;
   }
   function flyerArtOverrideSave(item,ov){
     var all=flyerArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
@@ -5449,10 +5561,49 @@
   }
   function plakatArtOverrideGet(item){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);
-    return (k&&all[k])?_clone(all[k]):null;
+    var found=k&&all[k];
+    // Migration: collect all old keys that belong to this item and merge the richest one
+    var oldKeys=[];
+    // Old artikelnummer-based key
+    if(item.artikelnummer){
+      var oldK=(item.artikelnummer||'').trim();
+      if(oldK&&oldK!==k&&all[oldK]) oldKeys.push(oldK);
+    }
+    // Old EAN-based keys (match via _artikelCache strichcode→produkt)
+    if(_artikelCache&&_artikelCache.length){
+      var allKeys=Object.keys(all);
+      for(var ki=0;ki<allKeys.length;ki++){
+        var ck=allKeys[ki];
+        if(ck===k||oldKeys.indexOf(ck)>=0)continue;
+        if(all[ck]&&/^\d{4,}$/.test(ck)){
+          var match=_artikelCache.find(function(a){return a.sc===ck&&a.b&&a.b.trim().toLowerCase().replace(/\s+/g,'_')===k;});
+          if(match) oldKeys.push(ck);
+        }
+      }
+    }
+    // Merge: pick the override with the most data (prefer one with customImg)
+    if(oldKeys.length){
+      var best=found||null;
+      for(var oi=0;oi<oldKeys.length;oi++){
+        var candidate=all[oldKeys[oi]];
+        if(!best||(candidate.customImg&&!best.customImg)){best=candidate;}
+      }
+      // Merge best into target key, clean up old keys
+      if(best){
+        if(!found||(!found.customImg&&best.customImg)){
+          all[k]=best;found=best;
+        }
+      }
+      for(var di=0;di<oldKeys.length;di++){
+        console.log('[CMS] Migrated plakat override from old key "'+oldKeys[di]+'" to "'+k+'"');
+        delete all[oldKeys[di]];
+      }
+    }
+    return found?_clone(found):null;
   }
   function plakatArtOverrideSave(item,ov){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
+    console.log('[plakatArtOverrideSave] key=',k,'customImg:',ov.customImg?'YES ('+ov.customImg.length+' chars)':'NO','keys:',Object.keys(ov).join(','));
     all[k]=_clone(ov);
     _plakatArtOverrides=all;
     var jsonStr=JSON.stringify(all);
@@ -6450,12 +6601,7 @@
             }
             ev.preventDefault();
             if(act==='print-all'){if(isMobile){printOne(0);}else{try{win.focus();win.print();}catch(e){}}}
-            else if(act==='close'){
-              var hasUnsaved=false;
-              for(var ui=0;ui<artOvs.length;ui++){if(JSON.stringify(artOvs[ui])!==JSON.stringify(_initArtOvs[ui])){hasUnsaved=true;break;}}
-              if(hasUnsaved&&!confirm('Es gibt ungespeicherte \u00c4nderungen.\nTrotzdem schlie\u00dfen? (Nicht gespeicherte \u00c4nderungen gehen verloren)'))return;
-              win.close();
-            }
+            else if(act==='close'){closeEditor();}
             else if(act==='print'){printOne(parseInt(t.getAttribute('data-idx'),10)||0);}
             else if(act==='art-save'){
               var idx=parseInt(t.getAttribute('data-idx'),10);
@@ -6957,15 +7103,22 @@
           };
           bindTouchMenuBtns();
 
+          // Shared close logic – uses opener's confirm() in popups (Chrome blocks confirm in popups)
+          function closeEditor(){
+            var hasUnsaved=false;
+            for(var ui=0;ui<artOvs.length;ui++){if(JSON.stringify(artOvs[ui])!==JSON.stringify(_initArtOvs[ui])){hasUnsaved=true;break;}}
+            if(hasUnsaved){
+              var cfn=window.opener&&window.opener.confirm?window.opener.confirm.bind(window.opener):confirm;
+              try{if(!cfn('Es gibt ungespeicherte \u00c4nderungen.\nTrotzdem schlie\u00dfen? (\u00c4nderungen gehen verloren)'))return;}catch(e){if(!confirm('Es gibt ungespeicherte \u00c4nderungen.\nTrotzdem schlie\u00dfen?'))return;}
+            }
+            win.close();
+          }
           // Direct onclick binding for toolbar close button (fallback for delegation issues)
           var closeBtn=doc.querySelector('[data-act="close"]');
           if(closeBtn){
             closeBtn.addEventListener('click',function(ev){
               ev.preventDefault();ev.stopPropagation();
-              var hasUnsaved=false;
-              for(var ui=0;ui<artOvs.length;ui++){if(JSON.stringify(artOvs[ui])!==JSON.stringify(_initArtOvs[ui])){hasUnsaved=true;break;}}
-              if(hasUnsaved&&!confirm('Es gibt ungespeicherte \u00c4nderungen.\nTrotzdem schlie\u00dfen? (\u00c4nderungen gehen verloren)'))return;
-              win.close();
+              closeEditor();
             });
           }
 
@@ -7312,6 +7465,7 @@
         ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,cy,mgCellW,imgAreaH);ctx.fillRect(cx,cy,mgCellW,imgAreaH);ctx.restore();
         // Per-card overrides
         var pOv=plakatArtOverrideGet(it)||plakatArtOverrideDefault();
+        console.log('[drawAngebotPlakat] card',ci,it.produkt,'pOv.customImg:',pOv.customImg?'YES ('+pOv.customImg.length+' chars)':'NO','keys:',Object.keys(pOv).join(','));
         if(img){
           var ofc=_freistellCanvas(img,cfg);
           var fImgSc2=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
@@ -7660,11 +7814,7 @@
       ctx.fillStyle=cfg.leafColor;ctx.fillText('\uD83D\uDECD',cx+cellW-cardPad+4,cy+cellH-cardPad+2);ctx.restore();}
       ctx.textAlign='left';
     });
-    // ── Footer ──
-    ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.globalAlpha=0.85;ctx.fillRect(0,H-32,W,32);ctx.globalAlpha=1.0;
-    ctx.fillStyle='#ffffff';ctx.font='600 11px Arial, sans-serif';ctx.textAlign='left';
-    ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',20,H-24);ctx.textAlign='right';
-    ctx.fillText('Dorfladen Oberornau \u00B7 Dorfplatz 1 \u00B7 84419 Obertaufkirchen',W-20,H-24);
+    // Footer removed per user request
     ctx.textAlign='left';
     Promise.all([logoLoaded].concat(_clCiPromises)).then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
   }
@@ -7817,6 +7967,14 @@
       case 'removeAngRow':t.parentElement.remove();renumberAngRows();break;
       case 'addMealRow':addMealRow();break;
       case 'removeMealRow':t.parentElement.remove();break;
+      case 'mealRowPaste':
+        (function(){
+          var rn=t.getAttribute('data-row');if(!rn)return;
+          _mealPasteTarget=rn;
+          t.style.background='#fef08a';t.textContent='\u23F3 Strg+V';
+          setTimeout(function(){t.style.background='#f3f4f6';t.textContent='\uD83D\uDCCB Einf\u00fcgen';_mealPasteTarget=null;},4000);
+        })();
+        break;
       case 'shareWP':cmsShareWP();break;
       case 'previewWP':cmsPreviewWP();break;
       case 'printWP':cmsPrintWP();break;
@@ -7919,6 +8077,13 @@
                 t.disabled=true;t.textContent='\u23F3';
                 uploadImageToSharePoint(scNr, compressedB64).then(function(){
                   toast('Bild als '+scNr+' in StrichcodeBilder hochgeladen!');
+                  // Re-query DOM and update preview again in case row was re-rendered
+                  var freshRow=document.getElementById('cms-ar-'+rn);
+                  if(freshRow){
+                    var fpv=freshRow.querySelector('.cms-bild-preview');if(fpv){fpv.src=compressedB64;fpv.style.display='';}
+                    var fcl=freshRow.querySelector('.cms-bild-clear');if(fcl)fcl.style.display='';
+                    var fbi=freshRow.querySelector('[data-f="bild_data"]');if(fbi)fbi.value=compressedB64;
+                  }
                 }).catch(function(e){
                   var msg=e&&e.message||String(e);
                   if(msg.indexOf('interaction_in_progress')!==-1) msg='Anmeldung läuft noch – bitte kurz warten und erneut versuchen';
@@ -7932,7 +8097,16 @@
           inp.click();
         })();
         break;
+      case 'pasteBildSP':
+        (function(){
+          var rn=t.getAttribute('data-row');if(!rn)return;
+          _angPasteTarget=rn;
+          t.style.background='#fef08a';t.textContent='\u23F3 Strg+V';
+          setTimeout(function(){t.style.background='';t.textContent='\uD83D\uDCCB';_angPasteTarget=null;},4000);
+        })();
+        break;
       case 'settingsSave':saveFeatureFlags();break;
+      case 'kontaktSave':saveKontaktdaten();break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
       case 'cfgRevertUnsaved':cfgRevertUnsaved();break;
@@ -8733,7 +8907,19 @@
   };
 
   // --- Feature Flags (Settings tab) ---
+  var _featureFlags={};
   var _settingsLoaded=false;
+  function loadFeatureFlagsSilent(){
+    fetch('/api/cms-config').then(function(r){return r.json();}).then(function(res){
+      if(res.success&&res.data){
+        var flags=res.data.feature_flags;
+        if(typeof flags==='string'){try{flags=JSON.parse(flags);}catch(e){flags={};}}
+        if(!flags)flags={};
+        _featureFlags=flags;
+        renderWP();
+      }
+    }).catch(function(){});
+  }
   function loadFeatureFlags(){
     _settingsLoaded=true;
     var statusEl=document.getElementById('settings-status');
@@ -8748,9 +8934,16 @@
         var fp=document.getElementById('feat-push');
         var fs=document.getElementById('feat-scanner');
         var fo=document.getElementById('feat-orders');
+        var fm=document.getElementById('feat-mittagstisch');
+        var fwi=document.getElementById('feat-wp-images');
+        var fpi=document.getElementById('feat-post-images');
         if(fp)fp.checked=flags.push!==false;
         if(fs)fs.checked=flags.scanner!==false;
         if(fo)fo.checked=flags.orders===true;
+        if(fm)fm.checked=flags.mittagstisch===true;
+        if(fwi)fwi.checked=flags.wp_images===true;
+        if(fpi)fpi.checked=flags.post_images!==false;
+        _featureFlags=flags;
       }
     }).catch(function(e){
       statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
@@ -8761,7 +8954,10 @@
     var fp=document.getElementById('feat-push');
     var fs=document.getElementById('feat-scanner');
     var fo=document.getElementById('feat-orders');
-    var flags={push:fp?fp.checked:true,scanner:fs?fs.checked:true,orders:fo?fo.checked:false};
+    var fm=document.getElementById('feat-mittagstisch');
+    var fwi=document.getElementById('feat-wp-images');
+    var fpi=document.getElementById('feat-post-images');
+    var flags={push:fp?fp.checked:true,scanner:fs?fs.checked:true,orders:fo?fo.checked:false,mittagstisch:fm?fm.checked:false,wp_images:fwi?fwi.checked:false,post_images:fpi?fpi.checked:true};
     var btn=document.getElementById('settings-save');
     var hint=document.getElementById('settings-saved-hint');
     var statusEl=document.getElementById('settings-status');
@@ -8773,8 +8969,10 @@
     }).then(function(r){return r.json();}).then(function(res){
       if(res.success){
         statusEl.style.display='none';
+        _featureFlags=flags;
         toast('Feature-Einstellungen gespeichert!');
         if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
+        renderWP();
       }else{
         statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
         statusEl.textContent='\u274c '+res.error;
@@ -8785,6 +8983,46 @@
       statusEl.textContent='\u274c Netzwerkfehler';
       toast('Fehler: '+e.message,'error');
     }).then(function(){if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Speichern';}});
+  }
+
+  // --- Kontaktdaten (shop_kontakt in Dataverse) ---
+  var _kontaktLoaded=false;
+  var KONTAKT_FIELDS=['name','slogan','adresse','telefon','telefon_link','email','reply_to','website','website_url','shop_url','logo_url','mailbox'];
+
+  function loadKontaktdaten(){
+    if(_kontaktLoaded) return;
+    _kontaktLoaded=true;
+    fetch('/api/cms-config').then(function(r){return r.json();}).then(function(res){
+      if(!res.success) return;
+      var raw=res.data.shop_kontakt;
+      if(!raw) return;
+      var ci=typeof raw==='string'?JSON.parse(raw):raw;
+      KONTAKT_FIELDS.forEach(function(f){
+        var el=document.getElementById('kontakt-'+f.replace(/_/g,'-'));
+        if(el && ci[f]) el.value=ci[f];
+      });
+    }).catch(function(){});
+  }
+
+  function saveKontaktdaten(){
+    var ci={};
+    KONTAKT_FIELDS.forEach(function(f){
+      var el=document.getElementById('kontakt-'+f.replace(/_/g,'-'));
+      if(el) ci[f]=el.value.trim();
+    });
+    var hint=document.getElementById('kontakt-saved-hint');
+    fetch('/api/cms-config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:'shop_kontakt',wert:ci})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res.success){
+        toast('Kontaktdaten gespeichert!');
+        if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
+      }else{
+        toast('Fehler: '+res.error,'error');
+      }
+    }).catch(function(e){toast('Fehler: '+e.message,'error');});
   }
 
   // === ANALYTICS DASHBOARD ===
@@ -9057,7 +9295,7 @@
     var list=document.getElementById('cms-orders-list');
     if(!list) return;
     list.innerHTML='<p style="text-align:center;padding:20px;color:#6b7280">⏳ Bestellungen werden geladen…</p>';
-    fetch(API_BASE+'/shop-order?mode=cms')
+    fetch(API+'/shop-order?mode=cms')
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.orders){list.innerHTML='<p style="color:#ef4444">Fehler beim Laden</p>';return;}
@@ -9091,16 +9329,16 @@
       html+='<tr style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
       html+='<td style="padding:8px;font-weight:700">'+esc(o.bestellnummer)+'</td>';
       html+='<td style="padding:8px">'+esc(o.kunde_name)+'<br><span style="font-size:10px;color:#9ca3af">'+esc(o.kunde_email)+'</span></td>';
-      html+='<td style="padding:8px">'+esc(o.bestelldatum)+'</td>';
-      html+='<td style="padding:8px;font-weight:600">'+esc(o.abholdatum)+'</td>';
+      html+='<td style="padding:8px">'+fmtDe(o.bestelldatum)+'</td>';
+      html+='<td style="padding:8px;font-weight:600">'+fmtDe(o.abholdatum)+'</td>';
       html+='<td style="padding:8px;text-align:right;font-weight:700">'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td>';
       html+='<td style="padding:8px;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+col+'">'+esc(o.status_text)+'</span></td>';
       html+='<td style="padding:8px;text-align:center">';
-      if(o.status<=1) html+='<button class="cms-btn cms-btn-sm" style="background:#fef3c7;color:#92400e" onclick="cmsOpenPack(\''+o.id+'\')">📦 Packen</button> ';
-      if(o.status===0) html+='<button class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af" onclick="cmsOrderStatus(\''+o.id+'\',1,\''+esc(o.bestellnummer)+'\')">→ Bearbeiten</button>';
+      if(o.status<=1) html+='<a class="cms-btn cms-btn-sm" style="background:#fef3c7;color:#92400e;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'&tab=pack" target="_blank"><i data-lucide="package" style="width:12px;height:12px;vertical-align:-2px"></i> Packen</a> ';
+      if(o.status===0) html+='<a class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'" target="_blank"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</a>';
       if(o.status===1) html+='<button class="cms-btn cms-btn-sm" style="background:#d1fae5;color:#065f46" onclick="cmsOrderStatus(\''+o.id+'\',2,\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\',\''+esc(o.kunde_name)+'\',\''+esc(o.abholdatum)+'\')">✓ Abholbereit</button>';
-      if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')">📦 Abgeholt</button>';
-      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsOrderStatus(\''+o.id+'\',4,\''+esc(o.bestellnummer)+'\')">✕</button>';
+      if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')"><i data-lucide="package-check" style="width:12px;height:12px;vertical-align:-2px"></i> Abgeholt</button>';
+      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsOrderStatus(\''+o.id+'\',4,\''+esc(o.bestellnummer)+'\')" title="Stornieren"><i data-lucide="x" style="width:12px;height:12px;vertical-align:-2px"></i></button>';
       html+='</td></tr>';
       // Expandable positions row
       if(posCount){
@@ -9113,6 +9351,7 @@
     });
     html+='</tbody></table>';
     list.innerHTML=html;
+    if(window.lucide)lucide.createIcons();
   }
 
   // Filter change
@@ -9121,7 +9360,7 @@
   window.cmsOrderStatus=function(id,status,bestellnr,email,name,abholdatum){
     var label=STATUS_LABELS[status]||'';
     if(!confirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?')) return;
-    fetch(API_BASE+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:status})})
+    fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:status})})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
@@ -9131,7 +9370,9 @@
           cmsRenderOrders();
           // Send notification when order is ready for pickup
           if(status===2&&email){
-            fetch(API_BASE+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:bestellnr,kunde_email:email,kunde_name:name||'',abholdatum:abholdatum||''})}).catch(function(){});
+            var notifyPayload={bestellnummer:bestellnr,kunde_email:email,kunde_name:name||'',abholdatum:abholdatum||'',type:'ready'};
+            if(o&&o.positionen){notifyPayload.positionen=o.positionen;notifyPayload.gesamtsumme=o.gesamtsumme;notifyPayload.anmerkungen=o.anmerkungen||'';}
+            fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(notifyPayload)}).catch(function(){});
             cmsToast('✅ '+bestellnr+': Status → Abholbereit. Kunde wird benachrichtigt!');
           } else {
             cmsToast('✅ '+bestellnr+': Status → '+label);
@@ -9146,7 +9387,7 @@
     // Set status to "In Bearbeitung" if still "Neu"
     var o=_ordersData.find(function(x){return x.id===orderId;});
     if(o&&o.status===0){
-      fetch(API_BASE+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,status:1})})
+      fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,status:1})})
         .then(function(){if(o){o.status=1;o.status_text='In Bearbeitung';}cmsRenderOrders();})
         .catch(function(){});
     }
@@ -9174,7 +9415,7 @@
     html+='<div class="meta">Erstellt: '+new Date().toLocaleString('de-DE')+' · '+open.length+' Bestellung(en)</div>';
 
     open.forEach(function(o){
-      html+='<div class="order-header">'+esc(o.bestellnummer)+' · '+esc(o.kunde_name)+' · Abholung: '+esc(o.abholdatum)+'</div>';
+      html+='<div class="order-header">'+esc(o.bestellnummer)+' · '+esc(o.kunde_name)+' · Abholung: '+fmtDe(o.abholdatum)+'</div>';
       if(o.anmerkungen) html+='<div style="padding:4px 8px;color:#92400e;font-style:italic">📝 '+esc(o.anmerkungen)+'</div>';
       html+='<table><thead><tr><th style="width:30px">✓</th><th>ARTIKEL</th><th>MENGE</th><th>EINHEIT</th><th>PREIS</th></tr></thead><tbody>';
       (o.positionen||[]).forEach(function(p){
@@ -9196,40 +9437,2215 @@
   };
 
   // ── Kunden laden ──
+  var _kundenData=[];
   window.cmsLoadKunden=function(){
     var list=document.getElementById('cms-kunden-list');
     list.innerHTML='<p style="text-align:center;color:#6b7280">⏳ Kunden werden geladen…</p>';
-    // Use Dataverse query via a proxy endpoint or direct
-    fetch(API_BASE+'/shop-order?mode=cms')
+    fetch(API+'/shop-admin?action=kunden')
       .then(function(r){return r.json();})
       .then(function(res){
-        if(!res.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
-        // Extract unique customers from orders
-        var kundenMap={};
-        (res.orders||[]).forEach(function(o){
-          if(!kundenMap[o.kunde_email]) kundenMap[o.kunde_email]={email:o.kunde_email,name:o.kunde_name,orders:0,total:0};
-          kundenMap[o.kunde_email].orders++;
-          kundenMap[o.kunde_email].total+=(+o.gesamtsumme)||0;
-        });
-        var kunden=Object.values(kundenMap);
-        kunden.sort(function(a,b){return b.orders-a.orders;});
-        if(!kunden.length){list.innerHTML='<p style="text-align:center;color:#6b7280">Noch keine Kunden mit Bestellungen</p>';return;}
-        var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-        html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
-        html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">KUNDE</th>';
-        html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">E-MAIL</th>';
-        html+='<th style="text-align:right;padding:8px;font-weight:700;color:#6b7280">BESTELLUNGEN</th>';
-        html+='<th style="text-align:right;padding:8px;font-weight:700;color:#6b7280">UMSATZ (CA.)</th>';
-        html+='</tr></thead><tbody>';
-        kunden.forEach(function(k,i){
-          var bg=i%2===0?'#fff':'#fafbfc';
-          html+='<tr style="background:'+bg+'"><td style="padding:8px;font-weight:600">'+esc(k.name)+'</td><td style="padding:8px">'+esc(k.email)+'</td><td style="padding:8px;text-align:right;font-weight:700">'+k.orders+'</td><td style="padding:8px;text-align:right;font-weight:700">'+(k.total.toFixed(2).replace('.',','))+' €</td></tr>';
-        });
-        html+='</tbody></table>';
-        list.innerHTML=html;
+        if(!res.success){list.innerHTML='<p style="color:#ef4444">Fehler: '+(res.error||'')+'</p>';return;}
+        _kundenData=res.kunden||[];
+        cmsRenderKunden();
       })
       .catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+esc(e.message)+'</p>';});
   };
+  function cmsRenderKunden(){
+    var list=document.getElementById('cms-kunden-list');
+    var kunden=_kundenData;
+    if(!kunden.length){list.innerHTML='<p style="text-align:center;color:#6b7280">Keine Kunden gefunden</p>';return;}
+    var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">NAME</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">E-MAIL</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">TELEFON</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">ADRESSE</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">STATUS</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">AKTION</th>';
+    html+='</tr></thead><tbody>';
+    kunden.forEach(function(k,i){
+      var bg=i%2===0?'#fff':'#fafbfc';
+      var statusBadge=k.aktiv?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">Aktiv</span>':'<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">Inaktiv</span>';
+      var adresse=[k.strasse,k.plz,k.ort].filter(Boolean).join(', ');
+      html+='<tr style="background:'+bg+'">';
+      html+='<td style="padding:8px;font-weight:600">'+esc(k.vorname)+' '+esc(k.nachname)+'</td>';
+      html+='<td style="padding:8px">'+esc(k.email)+'</td>';
+      html+='<td style="padding:8px">'+esc(k.telefon||'–')+'</td>';
+      html+='<td style="padding:8px;font-size:11px">'+esc(adresse||'–')+'</td>';
+      html+='<td style="padding:8px;text-align:center">'+statusBadge+'</td>';
+      html+='<td style="padding:8px;text-align:center"><button class="cms-btn cms-btn-sm" onclick="cmsEditKunde(\''+k.id+'\')"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</button></td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    list.innerHTML=html;
+    if(window.lucide)lucide.createIcons();
+  }
+  window.cmsEditKunde=function(id){
+    var k=_kundenData.find(function(x){return x.id===id;});
+    if(!k){cmsToast('Kunde nicht gefunden','error');return;}
+    var wrap=document.getElementById('cms-modal-wrap');
+    var html='<div class="cms-modal-bg"><div class="cms-modal" style="max-width:500px">';
+    html+='<div class="cms-modal-header"><h3><i data-lucide="user-pen" style="width:18px;height:18px;vertical-align:-3px"></i> Kunde bearbeiten</h3>';
+    html+='<div style="display:flex;gap:8px"><button class="cms-btn cms-btn-danger" id="kd-delete" style="margin-right:auto"><i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:-2px"></i> Löschen</button>';
+    html+='<button class="cms-btn cms-btn-primary" id="kd-save"><i data-lucide="save" style="width:14px;height:14px;vertical-align:-2px"></i> Speichern</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="kd-close">Abbrechen</button></div></div>';
+    html+='<div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Vorname<input id="kd-vorname" class="cms-input" value="'+esc(k.vorname)+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Nachname<input id="kd-nachname" class="cms-input" value="'+esc(k.nachname)+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280;grid-column:1/3">E-Mail<input class="cms-input" value="'+esc(k.email)+'" disabled style="width:100%;margin-top:2px;background:#f3f4f6"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Telefon<input id="kd-telefon" class="cms-input" value="'+esc(k.telefon||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Straße<input id="kd-strasse" class="cms-input" value="'+esc(k.strasse||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">PLZ<input id="kd-plz" class="cms-input" value="'+esc(k.plz||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Ort<input id="kd-ort" class="cms-input" value="'+esc(k.ort||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:700;color:#6b7280;grid-column:1/3;display:flex;align-items:center;gap:8px"><input type="checkbox" id="kd-aktiv" '+(k.aktiv?'checked':'')+' style="width:18px;height:18px;accent-color:#2e7d4f"> Konto aktiv</label>';
+    html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
+    html+='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px"><i data-lucide="landmark" style="width:12px;height:12px;vertical-align:-2px"></i> SEPA-Lastschriftmandat</div>';
+    var hasMd=k.mandatsreferenz||k.iban_masked;
+    if(hasMd){
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:10px">';
+      html+='<div><span style="color:#6b7280">IBAN:</span> <b style="font-family:monospace;letter-spacing:1px">'+esc(k.iban_masked||'–')+'</b></div>';
+      html+='<div><span style="color:#6b7280">Kontoinhaber:</span> <b>'+esc(k.kontoinhaber||'–')+'</b></div>';
+      html+='<div><span style="color:#6b7280">Mandatsreferenz:</span> <b>'+esc(k.mandatsreferenz||'–')+'</b></div>';
+      html+='<div><span style="color:#6b7280">Mandatsdatum:</span> <b>'+fmtDe(k.mandatsdatum)+'</b></div>';
+      var msBadge=k.mandatsstatus==='aktiv'?'background:#dcfce7;color:#166534':'background:#fee2e2;color:#991b1b';
+      html+='<div style="grid-column:1/3"><span style="color:#6b7280">Status:</span> <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;'+msBadge+'">'+esc(k.mandatsstatus||'–')+'</span></div>';
+      html+='</div>';
+    } else {
+      html+='<div style="font-size:12px;color:#9ca3af;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px">Kein SEPA-Mandat hinterlegt</div>';
+    }
+    html+='</div>';
+    html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
+    html+='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">Passwort zurücksetzen</div>';
+    html+='<div style="display:flex;gap:8px;align-items:center">';
+    html+='<input type="password" id="kd-new-pw" class="cms-input" placeholder="Neues Passwort (min. 8 Zeichen)" style="flex:1">';
+    html+='<button class="cms-btn cms-btn-sm" id="kd-reset-pw" style="background:#fef3c7;color:#92400e;white-space:nowrap"><i data-lucide="key-round" style="width:12px;height:12px;vertical-align:-2px"></i> Setzen</button>';
+    html+='</div></div>';
+    html+='</div></div></div>';
+    wrap.innerHTML=html;
+    wrap.style.display='';
+    if(window.lucide)lucide.createIcons();
+    document.getElementById('kd-close').onclick=function(){wrap.style.display='none';wrap.innerHTML='';};
+    document.getElementById('kd-delete').onclick=function(){
+      if(!confirm('Kunde "'+k.vorname+' '+k.nachname+'" ('+k.email+') wirklich endgültig löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!'))return;
+      fetch(API+'/shop-admin?id='+encodeURIComponent(id),{method:'DELETE'})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          cmsToast('Kunde gelöscht');
+          wrap.style.display='none';wrap.innerHTML='';
+          _kundenData=_kundenData.filter(function(x){return x.id!==id;});
+          cmsRenderKunden();
+        })
+        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+    };
+    document.getElementById('kd-reset-pw').onclick=function(){
+      var newPw=document.getElementById('kd-new-pw').value.trim();
+      if(!newPw||newPw.length<8){cmsToast('Passwort muss mindestens 8 Zeichen haben','error');return;}
+      if(!confirm('Passwort für '+k.vorname+' '+k.nachname+' wirklich zurücksetzen?'))return;
+      fetch(API+'/auth-reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'admin-reset',kunde_id:id,passwort:newPw})})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          cmsToast('Passwort wurde zurückgesetzt');
+          document.getElementById('kd-new-pw').value='';
+        })
+        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+    };
+    document.getElementById('kd-save').onclick=function(){
+      var payload={_entity:'kunde',id:id,vorname:document.getElementById('kd-vorname').value.trim(),nachname:document.getElementById('kd-nachname').value.trim(),telefon:document.getElementById('kd-telefon').value.trim(),strasse:document.getElementById('kd-strasse').value.trim(),plz:document.getElementById('kd-plz').value.trim(),ort:document.getElementById('kd-ort').value.trim(),aktiv:document.getElementById('kd-aktiv').checked};
+      fetch(API+'/shop-admin',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          cmsToast('Kunde gespeichert');
+          wrap.style.display='none';wrap.innerHTML='';
+          // Update local data
+          var local=_kundenData.find(function(x){return x.id===id;});
+          if(local){local.vorname=payload.vorname;local.nachname=payload.nachname;local.telefon=payload.telefon;local.strasse=payload.strasse;local.plz=payload.plz;local.ort=payload.ort;local.aktiv=payload.aktiv;}
+          cmsRenderKunden();
+        })
+        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+    };
+  };
+
+  // --- Free entry helpers ---
+  function socialRenderFreeItems(){
+    if(!_socFreeItems.length) return '';
+    var h='';
+    _socFreeItems.forEach(function(fi){
+      h+='<div class="soc-free-item" data-id="'+esc(fi.id)+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;margin-bottom:3px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px">';
+      if(fi.bild_data){
+        h+='<img src="'+fi.bild_data+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0">';
+      }
+      h+='<span style="font-weight:600;font-size:12px;flex:1">'+esc(fi.name)+(fi.ab_uhr?' <span style="font-size:10px;color:#9ca3af;font-style:italic">ab '+esc(fi.ab_uhr)+'</span>':'')+'</span>';
+      if(fi.preis) h+='<span style="font-size:11px;color:#2e7d32;font-weight:700">'+esc(fi.preis)+'\u20AC</span>';
+      h+='<span style="font-size:10px;color:#6b7280;background:#e0e7ff;padding:1px 6px;border-radius:8px">'+esc(fi.kategorie)+'</span>';
+      h+='<button onclick="socialFreeRemove(\''+esc(fi.id)+'\')" style="border:none;background:none;color:#dc2626;cursor:pointer;font-size:14px;padding:0 4px" title="Entfernen">&#10005;</button>';
+      h+='</div>';
+    });
+    return h;
+  }
+  window.socialFreeToggle = function(){
+    var f=document.getElementById('soc-free-form');
+    if(f) f.style.display=f.style.display==='none'?'block':'none';
+  };
+  window.socialFreeImgPreview = function(){
+    var inp=document.getElementById('soc-free-bild');
+    var lbl=document.getElementById('soc-free-img-name');
+    if(inp&&inp.files&&inp.files[0]&&lbl) lbl.textContent=inp.files[0].name;
+    window._socFreePastedData=''; // clear paste if user picks file
+  };
+  // Paste-button for free product image
+  var _socFreePasteActive=false;
+  window._socFreePastedData='';
+  window.socialFreePaste = function(btn){
+    _socFreePasteActive=true;
+    btn.style.background='#fef08a';btn.textContent='\u23F3 Strg+V';
+    setTimeout(function(){btn.style.background='#fff';btn.textContent='\uD83D\uDCCB Einf\u00fcgen';_socFreePasteActive=false;},4000);
+  };
+  document.addEventListener('paste',function(e){
+    if(!_socFreePasteActive)return;
+    var items=e.clipboardData&&e.clipboardData.items;
+    if(!items)return;
+    for(var i=0;i<items.length;i++){
+      if(items[i].type.indexOf('image')!==-1){
+        var blob=items[i].getAsFile();
+        var reader=new FileReader();
+        reader.onload=function(ev){
+          window._socFreePastedData=ev.target.result;
+          var lbl=document.getElementById('soc-free-img-name');
+          if(lbl) lbl.textContent='\u2705 Bild eingef\u00fcgt';
+          _socFreePasteActive=false;
+        };
+        reader.readAsDataURL(blob);
+        e.preventDefault();
+        break;
+      }
+    }
+  });
+  window.socialFreeAdd = function(){
+    var name=(document.getElementById('soc-free-name').value||'').trim();
+    var preis=(document.getElementById('soc-free-preis').value||'').trim();
+    var kat=document.getElementById('soc-free-kat').value;
+    if(!name){socialStatus('soc-post-status','Bitte Name eingeben',false);return;}
+    var bildInp=document.getElementById('soc-free-bild');
+    var preisNum=parseFloat(preis.replace(',','.'));
+    var abUhr=(document.getElementById('soc-free-ab')||{}).value||'';
+    var fi={id:'free-'+(++_socFreeCounter),name:name,preis:preisNum&&isFinite(preisNum)?preisNum.toFixed(2):'',kategorie:kat,bild_data:'',ab_uhr:abUhr};
+    function finish(){
+      _socFreeItems.push(fi);
+      var list=document.getElementById('soc-free-list');
+      if(list) list.innerHTML=socialRenderFreeItems();
+      document.getElementById('soc-free-name').value='';
+      document.getElementById('soc-free-preis').value='';
+      var abSel2=document.getElementById('soc-free-ab');if(abSel2) abSel2.value='';
+      if(bildInp) bildInp.value='';
+      var lbl=document.getElementById('soc-free-img-name');if(lbl) lbl.textContent='';
+      window._socFreePastedData='';
+      socialPickUpdate();
+    }
+    // Pasted image has priority over file input
+    if(window._socFreePastedData){
+      fi.bild_data=window._socFreePastedData;
+      finish();
+    } else if(bildInp&&bildInp.files&&bildInp.files[0]){
+      var reader=new FileReader();
+      reader.onload=function(e){fi.bild_data=e.target.result;finish();};
+      reader.readAsDataURL(bildInp.files[0]);
+    } else { finish(); }
+  };
+  // --- Replace image for a catalog product TEMPORARILY (only for this post, not saved to API) ---
+  function socialPickImgUpload(prodId, b64){
+    // Update thumbnail immediately
+    var thumb=document.getElementById('soc-pick-img-'+prodId);
+    if(thumb){
+      if(thumb.tagName==='IMG'){
+        thumb.src=b64;
+      } else {
+        var img=document.createElement('img');
+        img.id='soc-pick-img-'+prodId;
+        img.src=b64;
+        img.style.cssText='width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in';
+        img.onclick=function(){socialPickImgPreview(prodId);};
+        thumb.parentNode.replaceChild(img,thumb);
+      }
+    }
+    // Update local catalog data (temporary - only for poster generation)
+    var item=_socialKatalog.find(function(p){return p.id===prodId;});
+    if(item) item.bild_url=b64;
+    socialStatus('soc-post-status','Bild tempor\u00e4r ge\u00e4ndert (nur f\u00fcr diesen Post)',true);
+    socialGenPreview();
+  }
+  // File input change handler
+  window.socialPickImgChange = function(prodId, inp){
+    if(!inp||!inp.files||!inp.files[0]) return;
+    var reader=new FileReader();
+    reader.onload=function(e){ socialPickImgUpload(prodId, e.target.result); };
+    reader.readAsDataURL(inp.files[0]);
+  };
+  // Paste handler (Ctrl+V on thumbnail)
+  window.socialPickImgPaste = function(prodId, e){
+    var items=e.clipboardData&&e.clipboardData.items;
+    if(!items) return;
+    for(var i=0;i<items.length;i++){
+      if(items[i].type.indexOf('image')!==-1){
+        e.preventDefault();
+        var f=items[i].getAsFile();
+        if(f){
+          var reader=new FileReader();
+          reader.onload=function(ev){ socialPickImgUpload(prodId, ev.target.result); };
+          reader.readAsDataURL(f);
+        }
+        return;
+      }
+    }
+  };
+
+  // Image preview popup – tap thumbnail to see full size
+  window.socialPickImgPreview = function(prodId){
+    var img=document.getElementById('soc-pick-img-'+prodId);
+    if(!img) return;
+    var src=img.tagName==='IMG'?img.src:'';
+    if(!src) return;
+    var item=_socialKatalog.find(function(p){return p.id===prodId;});
+    var name=item?item.name:'';
+    var old=document.getElementById('soc-img-popup');
+    if(old) old.remove();
+    var ov=document.createElement('div');
+    ov.id='soc-img-popup';
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer';
+    ov.onclick=function(){ov.remove();};
+    var im=document.createElement('img');
+    im.src=src;
+    im.style.cssText='max-width:90vw;max-height:75vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)';
+    ov.appendChild(im);
+    if(name){var lbl=document.createElement('div');lbl.textContent=name;lbl.style.cssText='color:#fff;font-size:15px;font-weight:600;margin-top:12px;text-align:center;max-width:90vw;word-break:break-word';ov.appendChild(lbl);}
+    var cls=document.createElement('button');
+    cls.textContent='\u2715';
+    cls.style.cssText='position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';
+    cls.onclick=function(e){e.stopPropagation();ov.remove();};
+    ov.appendChild(cls);
+    document.body.appendChild(ov);
+  };
+
+  window.socialFreeRemove = function(id){
+    _socFreeItems=_socFreeItems.filter(function(f){return f.id!==id;});
+    var list=document.getElementById('soc-free-list');
+    if(list) list.innerHTML=socialRenderFreeItems();
+    socialPickUpdate();
+  };
+
+  // --- Mittagstisch-Bild Upload ---
+  window.socialMtBildUpload = function(input,gericht){
+    if(!input.files||!input.files[0])return;
+    var fd=new FormData();
+    fd.append('gericht',gericht);
+    fd.append('bild',input.files[0]);
+    socialStatus('soc-post-status','Bild wird hochgeladen...',true);
+    fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.error){socialStatus('soc-post-status',res.error,false);return;}
+        socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" gespeichert!',true);
+        _socMtBilder[gericht]={bild_url:res.bild_url};
+        socialUpdateMtThumb(gericht,res.bild_url);
+      })
+      .catch(function(e){socialStatus('soc-post-status','Upload-Fehler: '+e.message,false);});
+  };
+
+  // --- Update Mittagstisch thumbnail in-place (preserves checkbox state) ---
+  function socialUpdateMtThumb(gericht,url){
+    var rows=document.querySelectorAll('.soc-mt-row');
+    for(var i=0;i<rows.length;i++){
+      var cb=rows[i].querySelector('.soc-post-wp');
+      if(!cb)continue;
+      var dn=cb.getAttribute('data-name');
+      if(dn!==gericht)continue;
+      var lbl=cb.closest('label');
+      if(!lbl)continue;
+      var existing=lbl.querySelector('img');
+      if(existing){
+        existing.src=url;
+      }else{
+        var img=document.createElement('img');
+        img.src=url;
+        img.style.cssText='width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0';
+        img.onerror=function(){this.style.display='none';};
+        cb.parentNode.insertBefore(img,cb.nextSibling);
+      }
+      break;
+    }
+    socialGenPreview();
+  }
+
+  // --- Mittagstisch Paste-Button: focus + listen for Ctrl+V ---
+  var _socMtPasteTarget=null;
+  window.socialMtPasteFocus = function(btn){
+    _socMtPasteTarget=btn.getAttribute('data-gericht');
+    btn.style.background='#fef08a';btn.textContent='\u23F3 Strg+V';
+    setTimeout(function(){btn.style.background='#fff8e1';btn.textContent='\uD83D\uDCCB';},3000);
+  };
+  document.addEventListener('paste',function(e){
+    // Meal modal paste
+    if(_mealPasteTarget){
+      var mitems=e.clipboardData&&e.clipboardData.items;
+      if(!mitems)return;
+      for(var m=0;m<mitems.length;m++){
+        if(mitems[m].type.indexOf('image/')===0){
+          e.preventDefault();
+          var mfile=mitems[m].getAsFile();
+          var mrn=_mealPasteTarget;
+          _mealPasteTarget=null;
+          mealRowSetImage(parseInt(mrn),mfile);
+          return;
+        }
+      }
+    }
+    // Mittagstisch paste
+    if(_socMtPasteTarget){
+      var items=e.clipboardData&&e.clipboardData.items;
+      if(!items)return;
+      for(var i=0;i<items.length;i++){
+        if(items[i].type.indexOf('image/')===0){
+          e.preventDefault();
+          var file=items[i].getAsFile();
+          var gericht=_socMtPasteTarget;
+          _socMtPasteTarget=null;
+          var fd=new FormData();
+          fd.append('gericht',gericht);
+          fd.append('bild',file);
+          socialStatus('soc-post-status','Bild wird hochgeladen...',true);
+          fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd})
+            .then(function(r){return r.json();})
+            .then(function(res){
+              if(res.error){socialStatus('soc-post-status',res.error,false);return;}
+              socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" eingef\u00fcgt!',true);
+              _socMtBilder[gericht]={bild_url:res.bild_url};
+              // Update thumbnail in-place without full rebuild (preserves checkboxes)
+              socialUpdateMtThumb(gericht,res.bild_url);
+            })
+            .catch(function(err){socialStatus('soc-post-status','Paste-Fehler: '+err.message,false);});
+          return;
+        }
+      }
+    }
+    // Sonderangebote paste
+    if(_angPasteTarget){
+      var items2=e.clipboardData&&e.clipboardData.items;
+      if(!items2)return;
+      for(var j=0;j<items2.length;j++){
+        if(items2[j].type.indexOf('image/')===0){
+          e.preventDefault();
+          var file2=items2[j].getAsFile();
+          var rn=_angPasteTarget;
+          _angPasteTarget=null;
+          var row=document.getElementById('cms-ar-'+rn);
+          if(!row){toast('Zeile nicht gefunden','error');return;}
+          var bildInp=row.querySelector('[data-f="bild_data"]');
+          var nrInp=row.querySelector('[data-f="artikelnummer"]');
+          var prodInp=row.querySelector('[data-f="produkt"]');
+          // Use artikelnummer directly as SP key (no _artikelCache lookup)
+          var scNr=(nrInp&&nrInp.value||'').trim();
+          if(!scNr) scNr=((prodInp&&prodInp.value)||'').trim();
+          if(!scNr){toast('Bitte zuerst einen Artikel ausw\u00e4hlen','warn');return;}
+          var reader2=new FileReader();
+          reader2.onload=function(){
+            cmsCompressImage(reader2.result,500,500,function(compressedB64){
+              if(bildInp){bildInp.value=compressedB64;bildInp.setAttribute('data-bild-dirty','1');}
+              var pv=row.querySelector('.cms-bild-preview');if(pv){pv.src=compressedB64;pv.style.display='';}
+              var cl=row.querySelector('.cms-bild-clear');if(cl)cl.style.display='';
+              var pasteBtn=row.querySelector('.cms-bild-paste-sp');
+              if(pasteBtn){pasteBtn.textContent='\u23F3';}
+              uploadImageToSharePoint(scNr,compressedB64).then(function(){
+                toast('Bild als '+scNr+' eingef\u00fcgt & hochgeladen!');
+              }).catch(function(err){
+                var msg=err&&err.message||String(err);
+                if(msg.indexOf('interaction_in_progress')!==-1) msg='Anmeldung l\u00e4uft noch \u2013 bitte kurz warten und erneut versuchen';
+                toast('Upload-Fehler: '+msg,'error');
+              }).then(function(){if(pasteBtn)pasteBtn.textContent='\uD83D\uDCCB';});
+            });
+          };
+          reader2.readAsDataURL(file2);
+          return;
+        }
+      }
+    }
+  });
+
+  // --- Search filter ---
+  window.socialPickFilter = function(){
+    var q=(document.getElementById('soc-pick-search').value||'').toLowerCase().trim();
+    var activeCat=document.querySelector('.soc-cat-chip.soc-cat-active');
+    var catFilter=activeCat?activeCat.getAttribute('data-cat'):'';
+    var rows=document.querySelectorAll('#soc-pick-grid .soc-pick-row');
+    var shown=0;
+    rows.forEach(function(row){
+      var name=row.getAttribute('data-search')||'';
+      var cat=row.getAttribute('data-cat')||'';
+      var matchQ=!q||name.indexOf(q)!==-1;
+      var matchCat=!catFilter||cat===catFilter;
+      row.style.display=(matchQ && matchCat)?'flex':'none';
+      if(matchQ && matchCat) shown++;
+    });
+    var cnt=document.getElementById('soc-pick-count');
+    if(cnt) cnt.textContent=shown+' / '+_socialKatalog.length+' Produkte';
+  };
+
+  // --- Category chip click ---
+  window.socialPickCat = function(btn){
+    document.querySelectorAll('.soc-cat-chip').forEach(function(c){
+      c.classList.remove('soc-cat-active');
+      c.style.background='#fff';c.style.color='#374151';
+    });
+    btn.classList.add('soc-cat-active');
+    btn.style.background='#1f2937';btn.style.color='#fff';
+    socialPickFilter();
+  };
+
+  // --- Update selected tags summary ---
+  window.socialPickUpdate = function(){
+    var sel=socialGatherSelected();
+    var box=document.getElementById('soc-pick-selected');
+    var tags=document.getElementById('soc-pick-tags');
+    if(!box||!tags)return;
+    if(!sel.length){box.style.display='none';return;}
+    box.style.display='block';
+    var html='';
+    sel.forEach(function(p){
+      html+='<span style="display:inline-block;background:#dcfce7;color:#15803d;font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;margin:2px 3px 2px 0">'+esc(p.name);
+      if(p.preis){var tp=parseFloat(p.preis);html+=' <span style="opacity:.7">'+(tp&&isFinite(tp)?tp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
+      html+='</span>';
+    });
+    tags.innerHTML=html;
+    // Highlight checked rows
+    document.querySelectorAll('#soc-pick-grid .soc-pick-row').forEach(function(row){
+      var cb=row.querySelector('input[type=checkbox]');
+      var isChecked=cb&&cb.checked;
+      row.style.background=isChecked?'#f0fdf4':'#fff';
+      row.style.borderColor=isChecked?'#86efac':'transparent';
+    });
+    // Hide individual meal poster section (no longer needed)
+    var mealPosterWrap=document.getElementById('soc-meal-posters');
+    if(mealPosterWrap) mealPosterWrap.style.display='none';
+    // Auto-generate preview so poster is ready when share button is clicked
+    if(sel.length) socialGenPreview();
+  };
+
+  // --- Gather all selected items (Katalog + Wochenplan + Frei) ---
+  function socialGatherSelected(){
+    var selected=[];
+    // Wochenplan-Mittagessen checkboxes
+    var wpChecked=document.querySelectorAll('.soc-post-wp:checked');
+    wpChecked.forEach(function(cb){
+      selected.push({
+        id:cb.value,
+        name:cb.getAttribute('data-name')||'',
+        preis:cb.getAttribute('data-preis')||'',
+        kategorie:cb.getAttribute('data-kat')||'Mittagessen',
+        bild_url:cb.getAttribute('data-img')||''
+      });
+    });
+    // Katalog checkboxes
+    var katChecked=document.querySelectorAll('.soc-post-cb:checked');
+    katChecked.forEach(function(cb){
+      var item=_socialKatalog.find(function(p){return p.id===cb.value;});
+      if(item){
+        var copy={id:item.id,name:item.name,preis:item.preis,kategorie:item.kategorie,bild_url:item.bild_url};
+        var abSel=document.querySelector('.soc-pick-ab[data-id="'+item.id+'"]');
+        if(abSel&&abSel.value) copy.ab_uhr=abSel.value;
+        selected.push(copy);
+      }
+    });
+    // Free items (always included)
+    _socFreeItems.forEach(function(fi){
+      var o={id:fi.id,name:fi.name,preis:fi.preis,kategorie:fi.kategorie};
+      if(fi.ab_uhr) o.ab_uhr=fi.ab_uhr;
+      selected.push(o);
+    });
+    return selected;
+  }
+
+  // --- Canvas Poster Generator ---
+  window.socialGenPreview = function(){
+    var canvas=document.getElementById('soc-post-canvas');
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    var W=600;
+    var SCALE=2; // render at 1200px for large WhatsApp display
+
+    // Hide both canvases immediately to prevent stale content
+    canvas.style.display='none';
+    var _mealC=document.getElementById('soc-post-canvas-meal');
+    var _mealL=document.getElementById('soc-preview-label-meal');
+    var _dailyL=document.getElementById('soc-preview-label-daily');
+    if(_mealC) _mealC.style.display='none';
+    if(_mealL) _mealL.style.display='none';
+    if(_dailyL) _dailyL.style.display='none';
+
+    // Gather selected items
+    var selected=socialGatherSelected();
+    var titel=(document.getElementById('soc-post-titel').value||'').trim();
+    var freitext=(document.getElementById('soc-post-text').value||'').trim();
+
+    // Collect image URLs for all selected items (only if post_images feature enabled)
+    var imgMap={};
+    if(_featureFlags.post_images!==false){
+      console.log('[Social] post_images enabled, searching images for',selected.length,'items');
+      console.log('[Social] _socMtBilder keys:',Object.keys(_socMtBilder));
+      console.log('[Social] _socialKatalog count:',_socialKatalog.length);
+      selected.forEach(function(p){
+        var url='';
+        var pName=p.name||p.gericht||'';
+        console.log('[Social] Item:',p.id,'name="'+pName+'"','kat='+p.kategorie);
+        // Mittagstisch image (uploaded via social module) – check first, most specific
+        if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url){
+          url=_socMtBilder[pName].bild_url;
+          console.log('[Social]   -> MtBild found:',url.substring(0,60));
+        }
+        // Katalog item
+        if(!url){
+          var katItem=_socialKatalog.find(function(k){return k.id===p.id;});
+          if(katItem&&katItem.bild_url){
+            url=katItem.bild_url;
+            console.log('[Social]   -> Katalog bild found:',url.substring(0,60));
+          }
+          if(katItem&&!katItem.bild_url) console.log('[Social]   -> Katalog item found but NO bild_url');
+        }
+        // Item's own bild_url (e.g. from Wochenplan checkbox data-img)
+        if(!url&&p.bild_url){
+          url=p.bild_url;
+          console.log('[Social]   -> item.bild_url found:',url.substring(0,60));
+        }
+        // Free item (base64)
+        if(!url){
+          var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});
+          if(freeItem&&freeItem.bild_data) url=freeItem.bild_data;
+        }
+        if(!url) console.log('[Social]   -> NO image found for "'+pName+'"');
+        if(url) imgMap[p.id]=url;
+      });
+      console.log('[Social] imgMap has',Object.keys(imgMap).length,'images');
+    } else {
+      console.log('[Social] post_images disabled, _featureFlags:',JSON.stringify(_featureFlags));
+    }
+
+    // Preload all images, then draw
+    // Use fetch+blob→objectURL to avoid CORS issues with canvas taint
+    var imgUrls=Object.keys(imgMap).map(function(id){return {id:id,url:imgMap[id]};});
+    var loadedImgs={};
+    var promises=imgUrls.map(function(entry){
+      return new Promise(function(resolve){
+        // If already base64 data URL, load directly
+        if(entry.url.indexOf('data:')===0){
+          var img=new Image();
+          img.onload=function(){loadedImgs[entry.id]=img;resolve();};
+          img.onerror=function(){console.warn('[Social] base64 img load failed for',entry.id);resolve();};
+          img.src=entry.url;
+          return;
+        }
+        // Fetch as blob to avoid cross-origin canvas taint
+        fetch(entry.url).then(function(r){return r.blob();}).then(function(blob){
+          var objUrl=URL.createObjectURL(blob);
+          var img=new Image();
+          img.onload=function(){loadedImgs[entry.id]=img;resolve();};
+          img.onerror=function(){URL.revokeObjectURL(objUrl);console.warn('[Social] img load failed for',entry.id);resolve();};
+          img.src=objUrl;
+        }).catch(function(e){
+          console.warn('[Social] fetch img failed for',entry.id,', loading directly (preview only)');
+          // Load directly - taints canvas but works for preview display
+          var img=new Image();
+          img.crossOrigin='anonymous';
+          img.onload=function(){loadedImgs[entry.id]=img;loadedImgs['_tainted']=true;resolve();};
+          img.onerror=function(){
+            // Try without crossOrigin
+            var img2=new Image();
+            img2.onload=function(){loadedImgs[entry.id]=img2;loadedImgs['_tainted']=true;resolve();};
+            img2.onerror=function(){console.warn('[Social] direct img load also failed for',entry.id);resolve();};
+            img2.src=entry.url;
+          };
+          img.src=entry.url;
+        });
+      });
+    });
+
+    return Promise.all(promises).then(function(){
+      var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+      var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+      var hasMt=mtItems.length>0;
+      var hasOther=otherItems.length>0;
+
+      var mealCanvas=document.getElementById('soc-post-canvas-meal');
+      var mealLabel=document.getElementById('soc-preview-label-meal');
+      var dailyLabel=document.getElementById('soc-preview-label-daily');
+      if(mealCanvas) mealCanvas.style.display='none';
+      if(mealLabel) mealLabel.style.display='none';
+      if(dailyLabel) dailyLabel.style.display='none';
+
+      if(hasMt&&hasOther){
+        // COMBINED POSTER: daily overview on top + meal poster below
+        var tmpDaily=document.createElement('canvas');
+        var tmpDailyCtx=tmpDaily.getContext('2d');
+        socialDrawPoster(tmpDaily,tmpDailyCtx,W,otherItems,titel,freitext,loadedImgs,SCALE);
+        var tmpMeal=document.createElement('canvas');
+        var tmpMealCtx=tmpMeal.getContext('2d');
+        socialDrawMealPosterAuto(tmpMeal,tmpMealCtx,W,mtItems,loadedImgs,SCALE);
+        // Combine vertically onto main canvas
+        var totalH=tmpDaily.height+tmpMeal.height;
+        canvas.width=W*SCALE;
+        canvas.height=totalH;
+        ctx.drawImage(tmpDaily,0,0);
+        ctx.drawImage(tmpMeal,0,tmpDaily.height);
+        canvas.style.display='block';
+      } else if(hasMt){
+        // Only Mittagessen - use meal poster directly
+        canvas.style.display='block';
+        socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs,SCALE);
+      } else if(selected.length>0){
+        // No Mittagessen - normal poster
+        canvas.style.display='block';
+        socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE);
+      } else {
+        canvas.style.display='none';
+      }
+
+      // Store loaded images for share function to reuse
+      window._socLoadedImgs=loadedImgs;
+    });
+  };
+
+  // Generate both posters as blobs (meal poster + normal poster) when Mittagessen is present
+  function socialGenBothPosters(selected,titel,freitext,loadedImgs){
+    var W=540;
+    var SCALE=2;
+    var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+    var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+    var results=[];
+
+    // 1. Meal poster
+    if(mtItems.length>0){
+      var c1=document.createElement('canvas');
+      var x1=c1.getContext('2d');
+      socialDrawMealPosterAuto(c1,x1,W,mtItems,loadedImgs,SCALE);
+      results.push(new Promise(function(resolve){
+        c1.toBlob(function(b){resolve({blob:b,name:'mittagessen-poster.png'});}, 'image/png');
+      }));
+    }
+
+    // 2. Normal poster only if there are non-Mittagessen items (otherwise meal poster is enough)
+    if(otherItems.length>0){
+      var c2=document.createElement('canvas');
+      var x2=c2.getContext('2d');
+      socialDrawPoster(c2,x2,W,mtItems.length>0?otherItems:selected,titel,freitext,loadedImgs,SCALE);
+      results.push(new Promise(function(resolve){
+        c2.toBlob(function(b){resolve({blob:b,name:'dorfladen-post.png'});}, 'image/png');
+      }));
+    }
+
+    return Promise.all(results);
+  }
+
+  function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE){
+    SCALE=SCALE||1;
+    var hasAnyImg=Object.keys(loadedImgs).filter(function(k){return k!=='_tainted';}).length>0;
+    var IMG_SIZE=hasAnyImg?48:0;
+    var ITEM_H=hasAnyImg?Math.max(54,22):22;
+
+    // Group by category
+    var cats={};
+    selected.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(p);
+    });
+    var catKeys=Object.keys(cats);
+    var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
+
+    // Calculate dynamic height
+    var freitextLines=[];
+    if(freitext){
+      ctx.font='14px "Segoe UI",system-ui,sans-serif';
+      freitextLines=socialWrapText(ctx,freitext,W-60);
+    }
+    var contentH=100; // header+date
+    contentH+=freitextLines.length*18+(freitext?8:0);
+    catKeys.forEach(function(cat,ci){
+      contentH+=ci===0?4:20; // space above category (more gap between categories)
+      contentH+=28; // cat header
+      cats[cat].forEach(function(p){
+        contentH+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;
+      });
+    });
+    contentH+=20; // footer
+    var H=Math.max(160,contentH);
+    canvas.width=W*SCALE; canvas.height=H*SCALE;
+    ctx.setTransform(SCALE,0,0,SCALE,0,0);
+
+    // Background
+    ctx.fillStyle='#faf9f6';
+    ctx.fillRect(0,0,W,H);
+
+    // Header bar
+    ctx.fillStyle='#2e7d32';
+    ctx.fillRect(0,0,W,60);
+    ctx.fillStyle='#fff';
+    ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(titel||'Heute im Dorfladen',W/2,40);
+
+    // Date
+    var now=new Date();
+    var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    var dateStr=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear();
+    ctx.fillStyle='#6b7280';
+    ctx.font='13px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(dateStr,W/2,80);
+
+    var y=100;
+
+    // Freitext
+    if(freitextLines.length){
+      ctx.fillStyle='#374151';
+      ctx.font='14px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      freitextLines.forEach(function(line){
+        ctx.fillText(line,W/2,y);
+        y+=18;
+      });
+      y+=8;
+    }
+
+    ctx.textAlign='left';
+    catKeys.forEach(function(cat,ci){
+      // Space above category (bigger gap between categories)
+      y+=ci===0?4:20;
+      // Category header
+      ctx.fillStyle='#e1306c';
+      ctx.font='bold 16px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText((catIcons[cat]||'')+' '+cat,24,y);
+      y+=6;
+      ctx.strokeStyle='#e1306c';
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(24,y);ctx.lineTo(W-24,y);ctx.stroke();
+      y+=12;
+
+      // Items
+      cats[cat].forEach(function(p){
+        var itemImg=loadedImgs[p.id];
+        var textX=28;
+        var textY=y;
+
+        if(hasAnyImg){
+          // Draw image or placeholder
+          if(itemImg){
+            var ix=28, iy=y-4;
+            // Rounded rect clip
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(ix+4,iy);ctx.lineTo(ix+IMG_SIZE-4,iy);
+            ctx.quadraticCurveTo(ix+IMG_SIZE,iy,ix+IMG_SIZE,iy+4);
+            ctx.lineTo(ix+IMG_SIZE,iy+IMG_SIZE-4);
+            ctx.quadraticCurveTo(ix+IMG_SIZE,iy+IMG_SIZE,ix+IMG_SIZE-4,iy+IMG_SIZE);
+            ctx.lineTo(ix+4,iy+IMG_SIZE);
+            ctx.quadraticCurveTo(ix,iy+IMG_SIZE,ix,iy+IMG_SIZE-4);
+            ctx.lineTo(ix,iy+4);
+            ctx.quadraticCurveTo(ix,iy,ix+4,iy);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(itemImg,ix,iy,IMG_SIZE,IMG_SIZE);
+            ctx.restore();
+            // Light border
+            ctx.strokeStyle='#e5e7eb';
+            ctx.lineWidth=1;
+            ctx.beginPath();
+            ctx.moveTo(ix+4,iy);ctx.lineTo(ix+IMG_SIZE-4,iy);
+            ctx.quadraticCurveTo(ix+IMG_SIZE,iy,ix+IMG_SIZE,iy+4);
+            ctx.lineTo(ix+IMG_SIZE,iy+IMG_SIZE-4);
+            ctx.quadraticCurveTo(ix+IMG_SIZE,iy+IMG_SIZE,ix+IMG_SIZE-4,iy+IMG_SIZE);
+            ctx.lineTo(ix+4,iy+IMG_SIZE);
+            ctx.quadraticCurveTo(ix,iy+IMG_SIZE,ix,iy+IMG_SIZE-4);
+            ctx.lineTo(ix,iy+4);
+            ctx.quadraticCurveTo(ix,iy,ix+4,iy);
+            ctx.closePath();
+            ctx.stroke();
+          }
+          textX=28+IMG_SIZE+10;
+          textY=y+IMG_SIZE/2-6;
+        }
+
+        ctx.fillStyle='#1f2937';
+        ctx.font='14px "Segoe UI",system-ui,sans-serif';
+        var maxNameW=W-textX-80;
+        var dispName=p.name;
+        while(ctx.measureText(dispName).width>maxNameW&&dispName.length>10){
+          dispName=dispName.substring(0,dispName.length-1);
+        }
+        if(dispName!==p.name) dispName+='\u2026';
+        ctx.fillText(dispName,textX,textY+14);
+        if(p.ab_uhr){
+          ctx.fillStyle='#9ca3af';
+          ctx.font='italic 11px "Segoe UI",system-ui,sans-serif';
+          ctx.fillText('ab '+p.ab_uhr,textX,textY+28);
+        }
+        if(p.preis){
+          ctx.fillStyle='#2e7d32';
+          ctx.font='bold 14px "Segoe UI",system-ui,sans-serif';
+          ctx.textAlign='right';
+          var dp=parseFloat(p.preis);ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):p.preis)+' \u20AC',W-28,textY+14);
+          ctx.textAlign='left';
+        }
+        y+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;
+      });
+      y+=10;
+    });
+
+    if(!selected.length){
+      ctx.fillStyle='#9ca3af';
+      ctx.font='italic 14px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('Bitte Produkte oben auswaehlen...',W/2,H/2);
+    }
+
+  };
+
+  // --- Auto Meal Poster (replaces normal poster when Mittagessen is selected) ---
+  function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE){
+    SCALE=SCALE||1;
+    // Pre-calculate height
+    var tmpC=document.createElement('canvas');tmpC.width=W;tmpC.height=10;
+    var tmpX=tmpC.getContext('2d');
+    var calcH=24+28+32+30; // claim + title + day + gap
+    tmpX.font='bold 18px "Segoe UI",system-ui,sans-serif';
+    mtItems.forEach(function(meal){
+      calcH+=22; // menu badge
+      var nl=socialWrapText(tmpX,meal.name,W-50);
+      calcH+=nl.length*22;
+      calcH+=meal.preis?20:8;
+      calcH+=6;
+    });
+    calcH+=10; // bottom padding
+    canvas.width=W*SCALE;canvas.height=calcH*SCALE;
+    ctx=canvas.getContext('2d');
+    ctx.setTransform(SCALE,0,0,SCALE,0,0);
+
+    // Background
+    ctx.fillStyle='#faf5ef';
+    ctx.fillRect(0,0,W,calcH);
+
+    // Claim
+    var ty=24;
+    ctx.textAlign='center';
+    ctx.fillStyle='#6b8c42';
+    ctx.font='10px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,ty);
+
+    // "Mittagessen" title
+    ty+=28;
+    ctx.fillStyle='#5b7a3a';
+    ctx.font='italic bold 30px Georgia,"Times New Roman",serif';
+    ctx.fillText('Mittagessen',W/2,ty);
+
+    // Day
+    var now=new Date();
+    var days=['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];
+    ty+=32;
+    ctx.fillStyle='#374151';
+    ctx.font='bold 20px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(days[now.getDay()],W/2,ty);
+
+    // List all meals
+    ty+=30;
+    mtItems.forEach(function(meal,idx){
+      // Menu number badge
+      ctx.fillStyle='rgba(107,140,66,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(W/2,ty-6,70,16,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle='#2e7d32';
+      ctx.font='bold 15px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('Men\u00fc '+(idx+1),W/2,ty);
+      ty+=22;
+
+      // Dish name (prominent)
+      ctx.fillStyle='#1a1a1a';
+      ctx.font='bold 18px "Segoe UI",system-ui,sans-serif';
+      var nameLines=socialWrapText(ctx,meal.name,W-50);
+      nameLines.forEach(function(line){
+        ctx.fillText(line,W/2,ty);
+        ty+=22;
+      });
+
+      // Price
+      if(meal.preis){
+        var mp=parseFloat(meal.preis);
+        ctx.fillStyle='#6b7280';
+        ctx.font='12px "Segoe UI",system-ui,sans-serif';
+        ctx.fillText((mp&&isFinite(mp)?mp.toFixed(2):meal.preis)+' \u20AC',W/2,ty);
+        ty+=20;
+      } else {
+        ty+=8;
+      }
+      ty+=6;
+    });
+
+  }
+
+  function socialWrapText(ctx,text,maxW){
+    var words=text.split(' '),lines=[],cur='';
+    words.forEach(function(w){
+      var test=cur?cur+' '+w:w;
+      if(ctx.measureText(test).width>maxW){
+        if(cur)lines.push(cur);
+        cur=w;
+      } else { cur=test; }
+    });
+    if(cur) lines.push(cur);
+    return lines;
+  }
+
+  // --- Individual Meal Poster ---
+  window.socialGenMealPoster = function(idx){
+    var sel=socialGatherSelected();
+    var mtItems=sel.filter(function(p){return p.kategorie==='Mittagessen';});
+    var meal=mtItems[idx];
+    if(!meal){toast('Kein Mittagessen-Item gefunden','error');return;}
+
+    // Find image
+    var pName=meal.name||meal.gericht||'';
+    var imgUrl='';
+    if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url) imgUrl=_socMtBilder[pName].bild_url;
+    if(!imgUrl&&meal.bild_url) imgUrl=meal.bild_url;
+    if(!imgUrl){
+      var katItem=_socialKatalog.find(function(k){return k.id===meal.id;});
+      if(katItem&&katItem.bild_url) imgUrl=katItem.bild_url;
+    }
+    if(!imgUrl){
+      var freeItem=_socFreeItems.find(function(f){return f.id===meal.id;});
+      if(freeItem&&freeItem.bild_data) imgUrl=freeItem.bild_data;
+    }
+
+    // Build order link (permanent link to ordering page)
+    var orderLink=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(meal.name)+(meal.preis?'&preis='+encodeURIComponent(meal.preis):'');
+
+    var canvas=document.getElementById('soc-post-canvas');
+    if(!canvas){toast('Canvas nicht gefunden','error');return;}
+    var ctx=canvas.getContext('2d');
+    var W=540,H=540,SCALE=2;
+    canvas.width=W*SCALE;canvas.height=H*SCALE;
+    ctx.setTransform(SCALE,0,0,SCALE,0,0);
+
+    function drawMealPoster(foodImg){
+      // Background: warm off-white
+      ctx.fillStyle='#faf5ef';
+      ctx.fillRect(0,0,W,H);
+
+      // Image area (top portion)
+      var imgAreaH=270;
+      if(foodImg){
+        // Draw food image covering top area
+        var iw=foodImg.width,ih=foodImg.height;
+        var scale=Math.max(W/iw,imgAreaH/ih);
+        var dw=iw*scale,dh=ih*scale;
+        var dx=(W-dw)/2,dy=(imgAreaH-dh)/2;
+        ctx.save();
+        ctx.beginPath();ctx.rect(0,0,W,imgAreaH);ctx.clip();
+        ctx.drawImage(foodImg,dx,dy,dw,dh);
+        // Gradient overlay bottom
+        var grad=ctx.createLinearGradient(0,imgAreaH-80,0,imgAreaH);
+        grad.addColorStop(0,'rgba(250,245,239,0)');
+        grad.addColorStop(1,'rgba(250,245,239,1)');
+        ctx.fillStyle=grad;
+        ctx.fillRect(0,imgAreaH-80,W,80);
+        ctx.restore();
+      } else {
+        // No image: decorative placeholder
+        ctx.fillStyle='#e8dfd3';
+        ctx.fillRect(0,0,W,imgAreaH);
+        ctx.fillStyle='#c9b99a';
+        ctx.font='48px "Segoe UI",system-ui,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('\uD83C\uDF7D',W/2,imgAreaH/2+16);
+      }
+
+      // Logo bar top-right
+      ctx.fillStyle='rgba(255,255,255,0.92)';
+      var logoW=180,logoH=46,logoX=W-logoW-10,logoY=10;
+      ctx.beginPath();
+      ctx.moveTo(logoX+8,logoY);ctx.lineTo(logoX+logoW-8,logoY);
+      ctx.quadraticCurveTo(logoX+logoW,logoY,logoX+logoW,logoY+8);
+      ctx.lineTo(logoX+logoW,logoY+logoH-8);
+      ctx.quadraticCurveTo(logoX+logoW,logoY+logoH,logoX+logoW-8,logoY+logoH);
+      ctx.lineTo(logoX+8,logoY+logoH);
+      ctx.quadraticCurveTo(logoX,logoY+logoH,logoX,logoY+logoH-8);
+      ctx.lineTo(logoX,logoY+8);
+      ctx.quadraticCurveTo(logoX,logoY,logoX+8,logoY);
+      ctx.closePath();ctx.fill();
+      ctx.fillStyle='#2e7d32';
+      ctx.font='bold 13px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('DORFLADEN',logoX+logoW/2,logoY+20);
+      ctx.fillText('OBERORNAU',logoX+logoW/2,logoY+36);
+
+      // Decorative leaf icons
+      ctx.fillStyle='#6b8c42';
+      ctx.font='11px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,imgAreaH+16);
+
+      // "Mittagessen" title
+      var ty=imgAreaH+50;
+      ctx.fillStyle='#5b7a3a';
+      ctx.font='italic bold 32px Georgia,"Times New Roman",serif';
+      ctx.textAlign='center';
+      ctx.fillText('Mittagessen',W/2,ty);
+
+      // Day of week
+      var now=new Date();
+      var days=['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];
+      ty+=38;
+      ctx.fillStyle='#374151';
+      ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText(days[now.getDay()],W/2,ty);
+
+      // Menu number with brush stroke effect
+      ty+=40;
+      // Brush stroke bg
+      ctx.fillStyle='rgba(107,140,66,0.18)';
+      var brushW=180,brushH=36;
+      ctx.beginPath();
+      ctx.ellipse(W/2,ty-10,brushW/2,brushH/2,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle='#2e7d32';
+      ctx.font='bold 20px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText('Men\u00fc '+(idx+1),W/2,ty);
+
+      // Dish name (wrapped)
+      ty+=36;
+      ctx.fillStyle='#1f2937';
+      ctx.font='15px "Segoe UI",system-ui,sans-serif';
+      var nameLines=socialWrapText(ctx,meal.name,W-60);
+      nameLines.forEach(function(line){
+        ctx.fillText(line,W/2,ty);
+        ty+=20;
+      });
+
+      // Price
+      if(meal.preis){
+        ty+=6;
+        ctx.fillStyle='#6b7280';
+        ctx.font='13px "Segoe UI",system-ui,sans-serif';
+        ctx.fillText('\u20AC'+meal.preis,W/2,ty);
+        ty+=24;
+      } else {
+        ty+=16;
+      }
+
+      // Scroll canvas into view
+      canvas.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+      // Auto-download
+      canvas.toBlob(function(blob){
+        if(!blob)return;
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a');
+        a.href=url;a.download='mittagessen-menue-'+(idx+1)+'.png';
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
+        setTimeout(function(){URL.revokeObjectURL(url);},2000);
+        toast('Men\u00fc-Poster heruntergeladen!','ok');
+      },'image/png');
+    }
+
+    // Load image if available, then draw
+    if(imgUrl){
+      socialStatus('soc-post-status','Lade Bild f\u00fcr Men\u00fc '+(idx+1)+'...',true);
+      var img=new Image();
+      img.crossOrigin='anonymous';
+      img.onload=function(){
+        drawMealPoster(img);
+        socialStatus('soc-post-status','');
+      };
+      img.onerror=function(){
+        drawMealPoster(null);
+        socialStatus('soc-post-status','Bild konnte nicht geladen werden \u2013 Poster ohne Bild','error');
+      };
+      img.src=imgUrl;
+    } else {
+      drawMealPoster(null);
+    }
+  };
+
+  // --- WhatsApp message builder ---
+  function socialBuildWhatsAppMsg(selected,titel,freitext){
+    var cats={};
+    selected.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(p);
+    });
+    var hasMittagessen=!!cats['Mittagessen'];
+    var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
+
+    // Mittagessen-only: order links
+    if(onlyMittagessen){
+      var msg='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
+      var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
+      cats['Mittagessen'].forEach(function(p,i){
+        var nr=menuNr[i]||('\u2022');
+        var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
+        var lnk=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(parseFloat(p.preis).toFixed(2)):'');
+        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';
+      });
+      return msg.trim();
+    }
+
+    // For clipboard: only Mittagessen order info with wa.me links
+    var msg='';
+    if(hasMittagessen){
+      var menuNr2=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
+      msg+='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
+      cats['Mittagessen'].forEach(function(p,i){
+        var nr=menuNr2[i]||('\u2022');
+        var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
+        var lnk=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(parseFloat(p.preis).toFixed(2)):'');
+        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';
+      });
+    }
+    return msg.trim();
+  }
+
+  // --- WhatsApp Business Katalog Sync ---
+  window.socialSyncMetaCatalog = function(){
+    var selected=socialGatherSelected();
+    var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+    if(!mtItems.length){
+      socialStatus('soc-post-status','Keine Mittagessen-Gerichte ausgew\u00e4hlt',false);
+      return;
+    }
+    socialStatus('soc-post-status','\u23F3 Sende '+mtItems.length+' Gerichte an WhatsApp Katalog...',true);
+    var meals=mtItems.map(function(m){
+      var hasImg=!!(_socMtBilder[m.name]&&_socMtBilder[m.name].bild_url);
+      return {gericht:m.name,preis:m.preis,has_image:hasImg};
+    });
+    fetch(API+'/meta-catalog',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({meals:meals})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){
+        socialStatus('soc-post-status','\u274C Fehler: '+res.error,false);
+        return;
+      }
+      var msg='\u2705 '+res.succeeded+'/'+res.total+' Gerichte im WA-Katalog aktualisiert';
+      if(res.failed>0) msg+=' ('+res.failed+' fehlgeschlagen)';
+      socialStatus('soc-post-status',msg,res.failed===0);
+    })
+    .catch(function(e){
+      socialStatus('soc-post-status','\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
+    });
+  };
+
+  // --- WA-Katalog Tab: Upload today's meals directly ---
+  window.waKatalogUpload = function(){
+    waKatalogStatus('\u23F3 Lade heutige Mittagessen...',true);
+    // Ensure wochenplan meals are available
+    var todayMeals=socialGetTodayMeals();
+    if(!todayMeals.length){
+      waKatalogStatus('\u274C Keine Mittagessen f\u00FCr heute im Wochenplan gefunden. Bitte zuerst den Wochenplan pflegen.',false);
+      return;
+    }
+    // Load mt-bilder to check for images
+    socialLoadMtBilder(function(){
+      var meals=todayMeals.map(function(m){
+        var hasImg=!!(_socMtBilder[m.gericht]&&_socMtBilder[m.gericht].bild_url);
+        return {gericht:m.gericht,preis:m.preis,has_image:hasImg};
+      });
+      waKatalogStatus('\u23F3 Sende '+meals.length+' Gerichte an WhatsApp Katalog...',true);
+      fetch(API+'/meta-catalog',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({meals:meals})
+      })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.error){
+          waKatalogStatus('\u274C Fehler: '+res.error,false);
+          return;
+        }
+        var msg='\u2705 '+res.succeeded+'/'+res.total+' Gerichte im WA-Katalog aktualisiert';
+        if(res.failed>0) msg+=' ('+res.failed+' fehlgeschlagen)';
+        waKatalogStatus(msg,res.failed===0);
+        waKatalogLoad();
+      })
+      .catch(function(e){
+        waKatalogStatus('\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
+      });
+    });
+  };
+
+  // --- WA-Katalog Tab: Load, Display, Delete ---
+  function waKatalogStatus(msg,ok){
+    socialStatus('wa-katalog-status',msg,ok);
+  }
+
+  window.waKatalogLoad = function(){
+    var list=document.getElementById('wa-katalog-list');
+    var empty=document.getElementById('wa-katalog-empty');
+    var loading=document.getElementById('wa-katalog-loading');
+    if(list) list.innerHTML='';
+    if(empty) empty.style.display='none';
+    if(loading) loading.style.display='block';
+    waKatalogStatus('Lade WhatsApp Katalog...',true);
+
+    fetch(API+'/meta-catalog')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(loading) loading.style.display='none';
+        if(res.error){
+          waKatalogStatus('\u274C Fehler: '+res.error,false);
+          return;
+        }
+        var products=res.products||[];
+        if(!products.length){
+          if(empty) empty.style.display='block';
+          waKatalogStatus('Katalog ist leer.',true);
+          return;
+        }
+        waKatalogStatus('\u2705 '+products.length+' Produkte geladen',true);
+        var html='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+        html+='<thead><tr style="background:#f9fafb;text-align:left">';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Bild</th>';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Name</th>';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Preis</th>';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Status</th>';
+        html+='<th style="padding:8px;border-bottom:2px solid #e5e7eb">Aktion</th>';
+        html+='</tr></thead><tbody>';
+        products.forEach(function(p){
+          var imgHtml=p.image_url?'<img src="'+p.image_url+'" style="width:50px;height:50px;object-fit:cover;border-radius:6px" onerror="this.src=\'\'">':'<span style="color:#9ca3af">&#128247;</span>';
+          var priceStr=p.price?((parseInt(p.price)/100).toFixed(2)+' \u20AC'):'–';
+          var statusBadge=p.availability==='in stock'?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">Verf\u00FCgbar</span>':'<span style="background:#fef2f2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px">'+p.availability+'</span>';
+          var rid=p.retailer_id||'';
+          html+='<tr style="border-bottom:1px solid #f3f4f6">';
+          html+='<td style="padding:8px">'+imgHtml+'</td>';
+          html+='<td style="padding:8px;font-weight:600">'+((p.name||'').replace(/</g,'&lt;'))+'</td>';
+          html+='<td style="padding:8px">'+priceStr+'</td>';
+          html+='<td style="padding:8px">'+statusBadge+'</td>';
+          html+='<td style="padding:8px"><button class="cms-btn cms-btn-gray" onclick="waKatalogDelete(\''+rid.replace(/'/g,"\\'")+'\')" style="padding:4px 10px;font-size:11px">\u274C</button></td>';
+          html+='</tr>';
+        });
+        html+='</tbody></table>';
+        if(list) list.innerHTML=html;
+      })
+      .catch(function(e){
+        if(loading) loading.style.display='none';
+        waKatalogStatus('\u274C Fehler beim Laden: '+e.message,false);
+      });
+  };
+
+  window.waKatalogDelete = function(retailerId){
+    if(!confirm('Produkt "'+retailerId+'" aus dem WhatsApp Katalog l\u00F6schen?')) return;
+    waKatalogStatus('\u23F3 L\u00F6sche Produkt...',true);
+    fetch(API+'/meta-catalog?retailer_id='+encodeURIComponent(retailerId),{method:'DELETE'})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          waKatalogStatus('\u2705 Produkt gel\u00F6scht',true);
+          waKatalogLoad();
+        } else {
+          waKatalogStatus('\u274C Fehler: '+JSON.stringify(res.response||res),false);
+        }
+      })
+      .catch(function(e){
+        waKatalogStatus('\u274C L\u00F6schen fehlgeschlagen: '+e.message,false);
+      });
+  };
+
+  window.waKatalogDeleteAll = function(){
+    if(!confirm('ALLE Produkte aus dem WhatsApp Katalog l\u00F6schen?')) return;
+    waKatalogStatus('\u23F3 Lade Katalog zum L\u00F6schen...',true);
+    fetch(API+'/meta-catalog')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        var products=res.products||[];
+        if(!products.length){
+          waKatalogStatus('Katalog ist bereits leer.',true);
+          return;
+        }
+        waKatalogStatus('\u23F3 L\u00F6sche '+products.length+' Produkte...',true);
+        var delPromises=products.map(function(p){
+          return fetch(API+'/meta-catalog?retailer_id='+encodeURIComponent(p.retailer_id||''),{method:'DELETE'})
+            .then(function(r){return r.json();});
+        });
+        Promise.all(delPromises).then(function(results){
+          var ok=results.filter(function(r){return r.success;}).length;
+          waKatalogStatus('\u2705 '+ok+'/'+products.length+' Produkte gel\u00F6scht',ok===products.length);
+          waKatalogLoad();
+        });
+      })
+      .catch(function(e){
+        waKatalogStatus('\u274C Fehler: '+e.message,false);
+      });
+  };
+
+  // --- WhatsApp Share ---
+  window.socialShareWhatsApp = function(){
+    try{
+    var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
+    var freitext=(document.getElementById('soc-post-text').value||'').trim();
+    var selected=socialGatherSelected();
+    if(!selected.length){socialStatus('soc-post-status','Bitte Produkte ausw\u00e4hlen',false);return;}
+    var msg=socialBuildWhatsAppMsg(selected,titel,freitext);
+    var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
+
+    socialStatus('soc-post-status','Poster wird geteilt...',true);
+    // Use already rendered canvas – convert synchronously to keep user gesture for navigator.share
+    var dailyCanvas=document.getElementById('soc-post-canvas');
+    var mealCanvas=document.getElementById('soc-post-canvas-meal');
+    var canvases=[];
+    if(dailyCanvas&&dailyCanvas.style.display!=='none'&&dailyCanvas.width>0){
+      canvases.push({canvas:dailyCanvas,name:'dorfladen-post.png'});
+    }
+    if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0){
+      canvases.push({canvas:mealCanvas,name:'mittagessen-poster.png'});
+    }
+    if(!canvases.length){
+      // Fallback: draw poster synchronously without images
+      console.log('[Social] no canvas ready, drawing sync fallback');
+      var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+      var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+      var fc=document.createElement('canvas');
+      var fx=fc.getContext('2d');
+      if(mtI.length>0&&otherI.length>0){
+        var tD=document.createElement('canvas');
+        socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2);
+        var tM=document.createElement('canvas');
+        socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2);
+        fc.width=1200;fc.height=tD.height+tM.height;
+        fx.drawImage(tD,0,0);fx.drawImage(tM,0,tD.height);
+      } else if(mtI.length>0){
+        socialDrawMealPosterAuto(fc,fx,600,mtI,{},2);
+      } else {
+        socialDrawPoster(fc,fx,600,otherI,titel,freitext,{},2);
+      }
+      canvases.push({canvas:fc,name:'dorfladen-post.png'});
+    }
+    // Convert canvas to blob synchronously via toDataURL→fetch
+    var isTainted=window._socLoadedImgs&&window._socLoadedImgs['_tainted'];
+    var files=[];
+    canvases.forEach(function(c){
+      var dataUrl;
+      try{
+        dataUrl=c.canvas.toDataURL('image/png');
+      }catch(e){
+        console.warn('[Social] toDataURL tainted, redrawing clean');
+        // Redraw clean poster without cross-origin images
+        var cleanImgs={};
+        var cc=document.createElement('canvas');
+        var cx=cc.getContext('2d');
+        var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+        var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+        if(mtI.length>0&&otherI.length>0){
+          var tD=document.createElement('canvas');
+          socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,cleanImgs,2);
+          var tM=document.createElement('canvas');
+          socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,cleanImgs,2);
+          cc.width=1200;cc.height=tD.height+tM.height;
+          cx.drawImage(tD,0,0);cx.drawImage(tM,0,tD.height);
+        } else if(mtI.length>0){
+          socialDrawMealPosterAuto(cc,cx,600,mtI,cleanImgs,2);
+        } else {
+          socialDrawPoster(cc,cx,600,otherI,titel,freitext,cleanImgs,2);
+        }
+        dataUrl=cc.toDataURL('image/png');
+      }
+      if(dataUrl){
+        // Convert data URL to blob synchronously
+        var parts=dataUrl.split(',');
+        var mime=parts[0].match(/:(.*?);/)[1];
+        var bstr=atob(parts[1]);
+        var u8=new Uint8Array(bstr.length);
+        for(var i=0;i<bstr.length;i++) u8[i]=bstr.charCodeAt(i);
+        var blob=new Blob([u8],{type:mime});
+        files.push(new File([blob],c.name,{type:'image/png'}));
+      }
+    });
+    if(!files.length){
+      socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);
+      return;
+    }
+    socialShareFiles(files,msg,hasMt);
+    socialSavePost(titel,freitext,selected);
+    }catch(e){
+      console.error('[Social] WhatsApp share error:',e);
+      socialStatus('soc-post-status','Fehler: '+e.message,false);
+    }
+  };
+
+  function socialIsMobile(){
+    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+  function socialShareFiles(files,msg,hasMt){
+    console.log('[Social] share: '+files.length+' files, hasMt='+hasMt+', hasShare='+!!navigator.share);
+    // Check if navigator.share supports files
+    var canShareFiles=false;
+    if(navigator.share&&navigator.canShare){
+      try{canShareFiles=navigator.canShare({files:files});}catch(e){}
+    }
+    console.log('[Social] canShareFiles='+canShareFiles);
+    // Best case: share with files
+    if(canShareFiles){
+      // Copy order text BEFORE share dialog (page has focus now, clipboard works)
+      if(msg){
+        try{navigator.clipboard.writeText(msg);}catch(e){}
+      }
+      var shareData={files:files.length>1?[files[0]]:files};
+      navigator.share(shareData).then(function(){
+        socialStatus('soc-post-status','\u2705 Poster geteilt! Bestelltext mit Strg+V einf\u00fcgen.',true);
+      }).catch(function(err){
+        if(err.name==='AbortError') return;
+        console.warn('[Social] share error:',err.message);
+        // Fallback to clipboard+WhatsApp
+        socialShareViaClipboard(files,msg,hasMt);
+      });
+      socialStatus('soc-post-status','Poster wird geteilt...',true);
+      return;
+    }
+    // Mobile fallback: copy poster to clipboard + open WhatsApp
+    if(socialIsMobile()){
+      socialShareViaClipboard(files,msg,hasMt);
+      return;
+    }
+    // Desktop fallback: copy text first (page has focus), then download files
+    if(msg){
+      try{navigator.clipboard.writeText(msg);}catch(e){}
+      socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 Strg+V in WhatsApp!',true);
+    }
+    socialFallbackDownloadFiles(files);
+  }
+  function socialShareViaClipboard(files,msg,hasMt){
+    // Copy poster image to clipboard, then open WhatsApp
+    var blob=files[0];
+    var copied=false;
+    if(navigator.clipboard&&navigator.clipboard.write&&typeof ClipboardItem!=='undefined'){
+      try{
+        var item=new ClipboardItem({'image/png':blob});
+        navigator.clipboard.write([item]).then(function(){
+          copied=true;
+          socialStatus('soc-post-status','\u2705 Poster in Zwischenablage! In WhatsApp einf\u00fcgen mit langem Dr\u00fccken \u2192 Einf\u00fcgen',true);
+        }).catch(function(){
+          socialShareViaDownload(files,msg,hasMt);
+        });
+      }catch(e){
+        socialShareViaDownload(files,msg,hasMt);
+      }
+    } else {
+      socialShareViaDownload(files,msg,hasMt);
+    }
+    // Open WhatsApp with order text
+    setTimeout(function(){
+      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+    },300);
+  }
+  function socialShareViaDownload(files,msg,hasMt){
+    socialFallbackDownloadFiles(files);
+    setTimeout(function(){
+      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+    },500);
+  }
+  function socialFallbackDownloadFiles(files){
+    files.forEach(function(f){
+      var url=URL.createObjectURL(f);
+      var a=document.createElement('a');a.href=url;a.download=f.name;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    });
+    socialStatus('soc-post-status','\u2705 '+files.length+' Poster heruntergeladen',true);
+  }
+
+  // --- Instagram Share ---
+  window.socialShareInstagram = function(){
+    var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';
+    var freitext=(document.getElementById('soc-post-text').value||'').trim();
+    var selected=socialGatherSelected();
+
+    socialStatus('soc-post-status','Poster wird erstellt...',true);
+    var genPromise=socialGenPreview()||Promise.resolve();
+    genPromise.then(function(){
+      var canvas=document.getElementById('soc-post-canvas');
+      if(!canvas){socialStatus('soc-post-status','Kein Poster vorhanden','error');return;}
+
+      // Mobile: try Web Share API (user can pick Instagram)
+      if(navigator.share){
+        canvas.toBlob(function(blob){
+          if(!blob){socialIgFallback();return;}
+          var file=new File([blob],'dorfladen-post.png',{type:'image/png'});
+          var shareData={files:[file]};
+          try{
+            if(navigator.canShare&&navigator.canShare(shareData)){
+              navigator.share(shareData).then(function(){
+                socialStatus('soc-post-status','\u2705 Erfolgreich geteilt!',true);
+              }).catch(function(err){
+                if(err.name!=='AbortError') socialIgFallback();
+              });
+              return;
+            }
+          }catch(e){}
+          socialIgFallback();
+        },'image/png');
+      } else {
+        socialIgFallback();
+      }
+    });
+    socialSavePost(titel,freitext,selected);
+  };
+
+  function socialIgFallback(){
+    var canvas=document.getElementById('soc-post-canvas');
+    if(!canvas){return;}
+    // Copy to clipboard + download
+    canvas.toBlob(function(blob){
+      if(blob&&navigator.clipboard&&navigator.clipboard.write){
+        var item=new ClipboardItem({'image/png':blob});
+        navigator.clipboard.write([item]).then(function(){
+          socialStatus('soc-post-status','\u2705 Poster in Zwischenablage kopiert! \u00D6ffne Instagram und f\u00fcge es mit Strg+V ein.',true);
+        }).catch(function(){
+          socialDownloadPoster();
+          socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 jetzt in Instagram hochladen.',true);
+        });
+      } else {
+        socialDownloadPoster();
+        socialStatus('soc-post-status','\u2705 Bild heruntergeladen \u2013 jetzt in Instagram hochladen.',true);
+      }
+    },'image/png');
+  }
+
+  // --- Download poster image(s) ---
+  window.socialDownloadPoster = function(){
+    var now=new Date();
+    var dateStr=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+    // Download meal poster if visible
+    var mealCanvas=document.getElementById('soc-post-canvas-meal');
+    if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0){
+      var ml=document.createElement('a');
+      ml.download='dorfladen-mittagessen-'+dateStr+'.png';
+      ml.href=mealCanvas.toDataURL('image/png');
+      ml.click();
+    }
+    // Download daily overview poster (only if visible)
+    var canvas=document.getElementById('soc-post-canvas');
+    if(canvas&&canvas.style.display!=='none'&&canvas.width>0){
+      var link=document.createElement('a');
+      link.download='dorfladen-post-'+dateStr+'.png';
+      link.href=canvas.toDataURL('image/png');
+      setTimeout(function(){link.click();},200);
+    }
+  };
+
+  // --- Save post to API ---
+  function socialSavePost(titel,freitext,items){
+    var body={
+      titel:titel,
+      freitext:freitext,
+      items:items.map(function(p){return{id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};})
+    };
+    fetch(API+'/social-post',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    }).catch(function(){});
+  }
+
+  // --- Verlauf laden ---
+  window._socialVerlaufLoaded=false;
+  window.socialLoadVerlauf = function(){
+    var list=document.getElementById('soc-verlauf-list');
+    var empty=document.getElementById('soc-verlauf-empty');
+    var loading=document.getElementById('soc-verlauf-loading');
+    if(loading) loading.style.display='block';
+    if(list) list.innerHTML='';
+    if(empty) empty.style.display='none';
+    fetch(API+'/social-post')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(loading) loading.style.display='none';
+        window._socialVerlaufLoaded=true;
+        var posts=res.posts||[];
+        if(!posts.length){
+          if(empty) empty.style.display='block';
+          return;
+        }
+        posts.sort(function(a,b){return (b.datum||'').localeCompare(a.datum||'');});
+        var html='';
+        posts.forEach(function(p){
+          html+='<div class="cms-card" style="margin-bottom:8px">';
+          html+='<div class="cms-card-body" style="padding:10px 14px">';
+          html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+          html+='<span style="font-weight:700;font-size:14px">'+esc(p.titel||'Tagespost')+'</span>';
+          html+='<span style="font-size:11px;color:#6b7280">'+esc(p.datum||'')+'</span>';
+          html+='</div>';
+          if(p.freitext) html+='<div style="font-size:12px;color:#6b7280;margin-top:4px">'+esc(p.freitext)+'</div>';
+          if(p.items&&p.items.length){
+            html+='<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">';
+            p.items.forEach(function(it){
+              html+='<span style="background:#f3f4f6;padding:2px 8px;border-radius:10px;font-size:11px">'+esc(it.name)+'</span>';
+            });
+            html+='</div>';
+          }
+          html+='</div></div>';
+        });
+        if(list) list.innerHTML=html;
+      })
+      .catch(function(e){
+        if(loading) loading.style.display='none';
+        if(list) list.innerHTML='<p style="color:#ef4444;text-align:center">Fehler: '+esc(e.message)+'</p>';
+      });
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  //  SOCIAL MEDIA MODULE
+  // ═══════════════════════════════════════════════════════════
+  var _socialKatalog = [];
+  window._socialKatLoaded = false;
+
+  // --- Sub-tab switching ---
+  window.socialSubTab = function(name){
+    ['katalog','post','verlauf','wakatalog'].forEach(function(t){
+      var p=document.getElementById('social-panel-'+t);
+      var b=document.getElementById('social-subtab-'+t);
+      if(p) p.style.display = t===name?'':'none';
+      if(b){
+        b.style.background = t===name?'#fff':'transparent';
+        b.style.color = t===name?'#e1306c':'#6b7280';
+        b.style.boxShadow = t===name?'0 1px 3px rgba(0,0,0,.08)':'none';
+      }
+    });
+    if(name==='post'){
+      var katReady2=window._socialKatLoaded;
+      var mtReady2=window._socialMtBilderLoaded||false;
+      function tryBuild2(){ if(katReady2&&mtReady2) socialBuildPostItems(); }
+      if(katReady2&&mtReady2){ socialBuildPostItems(); }
+      else {
+        if(!window._socialKatLoaded){
+          socialLoadKatalog(function(){ katReady2=true; tryBuild2(); });
+        }
+        if(!window._socialMtBilderLoaded){
+          socialLoadMtBilder(function(){ mtReady2=true; tryBuild2(); });
+        } else { mtReady2=true; tryBuild2(); }
+      }
+    }
+    if(name==='verlauf' && !window._socialVerlaufLoaded) socialLoadVerlauf();
+    if(name==='wakatalog') waKatalogLoad();
+  };
+
+  // --- Status helper ---
+  function socialStatus(id,msg,ok){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.style.display='block';
+    el.style.background=ok?'#f0fdf4':'#fef2f2';
+    el.style.color=ok?'#166534':'#991b1b';
+    el.style.border='1px solid '+(ok?'#bbf7d0':'#fecaca');
+    el.textContent=msg;
+    setTimeout(function(){el.style.display='none';},4000);
+  }
+
+  // --- Bild-Vorschau + Paste + Drag&Drop ---
+  var _socPastedFile = null; // holds pasted/dropped file (not from file input)
+
+  function socialShowBildPreview(file){
+    var wrap=document.getElementById('soc-kat-bild-preview');
+    var thumb=document.getElementById('soc-kat-bild-thumb');
+    var hint=document.getElementById('soc-kat-paste-hint');
+    var zone=document.getElementById('soc-kat-paste-zone');
+    if(!wrap||!thumb)return;
+    var r=new FileReader();
+    r.onload=function(e){
+      thumb.src=e.target.result;
+      wrap.style.display='block';
+      if(hint) hint.style.display='none';
+      if(zone){ zone.style.borderColor='#e1306c'; zone.style.background='#fef2f2'; }
+    };
+    r.readAsDataURL(file);
+  }
+
+  window.socialClearBild = function(){
+    _socPastedFile=null;
+    var inp=document.getElementById('soc-kat-bild');
+    if(inp) inp.value='';
+    var wrap=document.getElementById('soc-kat-bild-preview');
+    var hint=document.getElementById('soc-kat-paste-hint');
+    var zone=document.getElementById('soc-kat-paste-zone');
+    if(wrap) wrap.style.display='none';
+    if(hint) hint.style.display='block';
+    if(zone){ zone.style.borderColor='#d1d5db'; zone.style.background='#fafbfc'; }
+  };
+
+  (function(){
+    // File input change
+    var inp=document.getElementById('soc-kat-bild');
+    if(inp) inp.addEventListener('change',function(){
+      _socPastedFile=null;
+      var f=this.files&&this.files[0];
+      if(f) socialShowBildPreview(f);
+    });
+
+    // Paste (Strg+V) on the paste zone or anywhere in the social panel
+    var zone=document.getElementById('soc-kat-paste-zone');
+    var panel=document.getElementById('cms-panel-social');
+    function handlePaste(e){
+      var items=e.clipboardData&&e.clipboardData.items;
+      if(!items)return;
+      for(var i=0;i<items.length;i++){
+        if(items[i].type.indexOf('image')!==-1){
+          e.preventDefault();
+          var f=items[i].getAsFile();
+          if(f){
+            _socPastedFile=f;
+            if(inp) inp.value='';
+            socialShowBildPreview(f);
+          }
+          return;
+        }
+      }
+    }
+    if(zone) zone.addEventListener('paste',handlePaste);
+    if(panel) panel.addEventListener('paste',handlePaste);
+
+    // Drag & Drop on zone
+    if(zone){
+      zone.addEventListener('dragover',function(e){
+        e.preventDefault();
+        zone.style.borderColor='#e1306c';
+        zone.style.background='#fef2f2';
+      });
+      zone.addEventListener('dragleave',function(){
+        if(!_socPastedFile && !(inp&&inp.files&&inp.files.length)){
+          zone.style.borderColor='#d1d5db';
+          zone.style.background='#fafbfc';
+        }
+      });
+      zone.addEventListener('drop',function(e){
+        e.preventDefault();
+        var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+        if(f && f.type.indexOf('image')!==-1){
+          _socPastedFile=f;
+          if(inp) inp.value='';
+          socialShowBildPreview(f);
+        }
+      });
+    }
+  })();
+
+  // --- Katalog laden ---
+  window.socialLoadKatalog = function(cb){
+    var list=document.getElementById('soc-kat-list');
+    var empty=document.getElementById('soc-kat-empty');
+    var loading=document.getElementById('soc-kat-loading');
+    if(loading) loading.style.display='block';
+    if(list) list.innerHTML='';
+    if(empty) empty.style.display='none';
+    fetch(API+'/social-katalog?base64=1')
+      .then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return r.json();
+      })
+      .then(function(res){
+        if(res.error){
+          socialStatus('soc-kat-status','API-Fehler: '+res.error,false);
+          return;
+        }
+        window._socialKatLoaded=true;
+        _socialKatalog = res.items||[];
+        socialRenderKatalog();
+      })
+      .catch(function(e){
+        socialStatus('soc-kat-status','Fehler beim Laden: '+e.message,false);
+      })
+      .then(function(){
+        if(loading) loading.style.display='none';
+        if(typeof cb==='function') cb();
+      });
+  };
+
+  // --- Katalog rendern ---
+  var _socKatOpts=[
+    {v:'Mittagessen',l:'&#127869; Mittagessen'},
+    {v:'Kuchen',l:'&#127856; Kuchen'},
+    {v:'Obst & Gemuese',l:'&#129382; Obst & Gem\u00fcse'},
+    {v:'Aufstriche',l:'&#129367; Aufstriche'}
+  ];
+  function socialRenderKatalog(){
+    var list=document.getElementById('soc-kat-list');
+    var empty=document.getElementById('soc-kat-empty');
+    if(!list)return;
+    if(!_socialKatalog.length){
+      list.innerHTML='';
+      if(empty) empty.style.display='block';
+      return;
+    }
+    if(empty) empty.style.display='none';
+    var cats={};
+    _socialKatalog.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(p);
+    });
+    var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+    var html='';
+    Object.keys(cats).forEach(function(cat){
+      var catId='soc-kat-cat-'+esc(cat).replace(/[^a-zA-Z0-9]/g,'_');
+      html+='<div class="cms-card" style="margin-bottom:10px">';
+      html+='<div class="cms-card-header soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:#1f2937;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">';
+      html+='<span>'+(catIcons[cat]||'&#128230;')+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
+      html+='<span class="soc-kat-arrow" id="'+catId+'-arrow" style="transition:transform .2s;font-size:14px">&#9654;</span>';
+      html+='</div>';
+      html+='<div class="cms-card-body" id="'+catId+'" style="padding:0;display:none">';
+      html+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+      cats[cat].forEach(function(p,i){
+        var bg=i%2===0?'#fff':'#fafbfc';
+        var pid=esc(p.id);
+        // Display row
+        html+='<tr id="soc-row-'+pid+'" class="soc-kat-item" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
+        html+='<td style="padding:8px;width:50px">';
+        if(p.bild_url){
+          html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" onerror="this.style.display=\'none\'">';
+        } else {
+          html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#9ca3af">&#128247;</div>';
+        }
+        html+='</td>';
+        html+='<td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
+        html+='<td style="padding:8px;text-align:right;white-space:nowrap">';
+        if(p.preis){var lp=parseFloat(p.preis);html+='<span style="font-weight:700;color:#2e7d32">'+(lp&&isFinite(lp)?lp.toFixed(2):esc(p.preis))+' &#8364;</span>';}
+        html+='</td>';
+        html+='<td style="padding:8px;width:110px;text-align:right;white-space:nowrap">';
+        html+='<label class="cms-btn cms-btn-gray cms-btn-sm" title="Bild \u00e4ndern" style="padding:4px 8px;font-size:14px;margin-right:3px;cursor:pointer;display:inline-flex;align-items:center">&#128247;<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;font-size:14px;margin-right:3px">&#9998;</button>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="L\u00f6schen" style="color:#dc2626;padding:4px 8px;font-size:14px">&#10005;</button>';
+        html+='</td></tr>';
+        // Edit row (hidden)
+        html+='<tr id="soc-edit-'+pid+'" class="soc-kat-edit-tr" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b">';
+        html+='<td colspan="4" style="padding:10px">';
+        html+='<div class="soc-kat-edit-row" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">';
+        html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name</label>';
+        html+='<input id="soc-ed-name-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+esc(p.name)+'"></div>';
+        html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
+        html+='<select id="soc-ed-kat-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px">';
+        _socKatOpts.forEach(function(o){
+          html+='<option value="'+esc(o.v)+'"'+(o.v===p.kategorie?' selected':'')+'>'+o.l+'</option>';
+        });
+        html+='</select></div>';
+        html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
+        var edP=parseFloat(p.preis);html+='<input id="soc-ed-preis-'+pid+'" type="number" step="0.01" min="0" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(edP&&isFinite(edP)?edP.toFixed(2):(p.preis||''))+'"></div>';
+        html+='<div class="soc-kat-edit-btns" style="display:flex;gap:4px">';
+        html+='<button class="cms-btn cms-btn-sm" onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700">&#10003; Speichern</button>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatCancelEdit(\''+pid+'\')" style="padding:5px 10px;font-size:12px">Abbrechen</button>';
+        html+='</div></div></td></tr>';
+      });
+      html+='</table></div></div>';
+    });
+    list.innerHTML=html;
+  }
+
+  // --- Inline Edit ---
+  window.socialKatEdit = function(id){
+    // Close any other open edit rows
+    document.querySelectorAll('[id^="soc-edit-"]').forEach(function(el){el.style.display='none';});
+    document.querySelectorAll('[id^="soc-row-"]').forEach(function(el){el.style.display='';});
+    var row=document.getElementById('soc-row-'+id);
+    var edit=document.getElementById('soc-edit-'+id);
+    if(row) row.style.display='none';
+    if(edit) edit.style.display='';
+    var nameInp=document.getElementById('soc-ed-name-'+id);
+    if(nameInp) nameInp.focus();
+  };
+  // --- Toggle category collapse ---
+  window.socialKatToggleCat = function(catId){
+    var body=document.getElementById(catId);
+    var arrow=document.getElementById(catId+'-arrow');
+    if(!body)return;
+    if(body.style.display==='none'){
+      body.style.display='';
+      if(arrow) arrow.innerHTML='&#9660;';
+    } else {
+      body.style.display='none';
+      if(arrow) arrow.innerHTML='&#9654;';
+    }
+  };
+
+  window.socialKatCancelEdit = function(id){
+    var row=document.getElementById('soc-row-'+id);
+    var edit=document.getElementById('soc-edit-'+id);
+    if(row) row.style.display='';
+    if(edit) edit.style.display='none';
+  };
+  window.socialKatSave = function(id){
+    var name=(document.getElementById('soc-ed-name-'+id).value||'').trim();
+    var kat=document.getElementById('soc-ed-kat-'+id).value;
+    var preis=(document.getElementById('soc-ed-preis-'+id).value||'').trim();
+    if(!name){socialStatus('soc-kat-status','Name darf nicht leer sein',false);return;}
+    socialStatus('soc-kat-status','Wird gespeichert...',true);
+    fetch(API+'/social-katalog',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id,name:name,kategorie:kat,preis:preis})
+    })
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    })
+    .then(function(res){
+      if(res.error){socialStatus('soc-kat-status',res.error,false);return;}
+      socialStatus('soc-kat-status','Gespeichert!',true);
+      socialLoadKatalog();
+    })
+    .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+  };
+
+  // --- Produkt hinzufuegen ---
+  window.socialKatAdd = function(){
+    var name=document.getElementById('soc-kat-name').value.trim();
+    var kat=document.getElementById('soc-kat-kategorie').value;
+    var preis=document.getElementById('soc-kat-preis').value.trim();
+    var bildInput=document.getElementById('soc-kat-bild');
+    if(!name){socialStatus('soc-kat-status','Bitte Namen eingeben',false);return;}
+    var fd=new FormData();
+    fd.append('name',name);
+    fd.append('kategorie',kat);
+    if(preis){var pn=parseFloat(preis.replace(',','.'));fd.append('preis',pn&&isFinite(pn)?pn.toFixed(2):preis);}
+    var bildFile = _socPastedFile || (bildInput && bildInput.files && bildInput.files[0]);
+    if(bildFile){
+      fd.append('bild',bildFile);
+    }
+    socialStatus('soc-kat-status','Wird gespeichert...',true);
+    fetch(API+'/social-katalog',{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.error){socialStatus('soc-kat-status',res.error,false);return;}
+        socialStatus('soc-kat-status','Produkt hinzugefuegt!',true);
+        // Reset form
+        document.getElementById('soc-kat-name').value='';
+        document.getElementById('soc-kat-preis').value='';
+        socialClearBild();
+        socialLoadKatalog();
+      })
+      .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+  };
+
+  // --- Produkt loeschen ---
+  window.socialKatDelete = function(id){
+    if(!confirm('Produkt wirklich entfernen?'))return;
+    fetch(API+'/social-katalog?id='+encodeURIComponent(id),{method:'DELETE'})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.error){socialStatus('soc-kat-status',res.error,false);return;}
+        socialStatus('soc-kat-status','Entfernt',true);
+        socialLoadKatalog();
+      })
+      .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+  };
+
+  // --- Katalog Bild ändern per Klick auf Thumbnail ---
+  window.socialKatImgChange = function(id, inp){
+    if(!inp||!inp.files||!inp.files[0]) return;
+    var file=inp.files[0];
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var b64=e.target.result;
+      // Update thumbnail immediately
+      var thumb=document.getElementById('soc-kat-thumb-'+id);
+      if(thumb){
+        if(thumb.tagName==='IMG'){
+          thumb.src=b64;
+        } else {
+          var img=document.createElement('img');
+          img.id='soc-kat-thumb-'+id;
+          img.src=b64;
+          img.style.cssText='width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb';
+          thumb.parentNode.replaceChild(img,thumb);
+        }
+      }
+      // Upload to API
+      socialStatus('soc-kat-status','Bild wird hochgeladen...',true);
+      fetch(API+'/social-katalog',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:id,bild_base64:b64})
+      }).then(function(r){return r.json();}).then(function(res){
+        if(res.error){socialStatus('soc-kat-status','Bild-Upload fehlgeschlagen: '+res.error,false);return;}
+        socialStatus('soc-kat-status','Bild aktualisiert!',true);
+        var item=_socialKatalog.find(function(p){return p.id===id;});
+        if(item) item.bild_url=res.item&&res.item.bild_url?res.item.bild_url:b64;
+      }).catch(function(err){
+        socialStatus('soc-kat-status','Bild-Upload Fehler: '+err.message,false);
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // --- Post-Builder: Checkboxen aus Katalog + Wochenplan-Mittagessen ---
+  function socialGetTodayMeals(){
+    // Get today's wochentag code: Mo=101000 ... Fr=101004, Sa=101005, So=101006
+    var d=new Date().getDay(); // 0=So,1=Mo,...,6=Sa
+    var todayCode = d===0 ? 101006 : 101000+(d-1);
+    // meals array is populated by loadWP() in the Wochenplan module
+    if(typeof meals==='undefined' || !meals || !meals.length) return [];
+    return meals.filter(function(m){
+      return m.wochentag===todayCode && m.gericht && m.gericht.trim() && m.preis;
+    });
+  }
+
+  var _socCatIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+  var _socMtBilder={}; // gericht -> {bild_url,...}
+  var _socFreeItems=[]; // ad-hoc items [{id,name,preis,kategorie,bild_data}]
+  var _socFreeCounter=0;
+
+  window._socialMtBilderLoaded=false;
+  function socialLoadMtBilder(cb){
+    fetch(API+'/social-katalog?action=mt-bilder&base64=1')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        var bilder=res.bilder||{};
+        Object.keys(bilder).forEach(function(k){
+          if(bilder[k].bild_base64) bilder[k].bild_url=bilder[k].bild_base64;
+        });
+        _socMtBilder=bilder;
+        window._socialMtBilderLoaded=true;
+        if(cb)cb();
+      })
+      .catch(function(){if(cb)cb();});
+  }
+
+  function socialBuildPostItems(){
+    var wrap=document.getElementById('soc-post-items');
+    if(!wrap)return;
+
+    var todayMeals=socialGetTodayMeals();
+
+    // Collect unique categories from katalog
+    var allCats=[];
+    _socialKatalog.forEach(function(p){
+      var c=p.kategorie||'Sonstiges';
+      if(allCats.indexOf(c)===-1) allCats.push(c);
+    });
+
+    var html='';
+
+    // === Selected items summary ===
+    html+='<div id="soc-pick-selected" style="display:none;margin-bottom:10px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:8px 12px">';
+    html+='<div style="font-size:11px;font-weight:700;color:#16a34a;margin-bottom:4px">&#10003; Ausgew\u00e4hlt:</div>';
+    html+='<div id="soc-pick-tags"></div></div>';
+
+    // === Heutiges Mittagessen ===
+    if(todayMeals.length){
+      var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+      var today=days[new Date().getDay()];
+      html+='<div style="margin-bottom:10px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:8px 12px">';
+      html+='<div style="font-size:12px;font-weight:700;color:#f57f17;margin-bottom:5px">&#127869; Heutiges Mittagessen ('+esc(today)+')</div>';
+      todayMeals.forEach(function(m){
+        var wpId='wp-'+m.id;
+        var mtImg=_socMtBilder[m.gericht];
+        html+='<div class="soc-mt-row" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:2px solid #ffe082;border-radius:10px;margin-bottom:4px;min-height:44px">';
+        html+='<label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer">';
+        html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" data-img="'+esc(mtImg&&mtImg.bild_url?mtImg.bild_url:'')+'" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#f57f17">';
+        if(mtImg&&mtImg.bild_url){
+          html+='<img src="'+esc(mtImg.bild_url)+'" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+        }
+        html+='<span style="font-weight:700;font-size:13px;flex:1">'+esc(m.gericht)+'</span>';
+        if(m.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
+        html+='</label>';
+        // Image upload / paste button for this meal
+        html+='<label title="Bild hochladen oder einf\u00fcgen (Strg+V)" style="cursor:pointer;padding:6px 10px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:18px;flex-shrink:0;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">';
+        html+='&#128247;<input type="file" accept="image/*" onchange="socialMtBildUpload(this,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="display:none">';
+        html+='</label>';
+        html+='<button class="soc-mt-paste" data-gericht="'+esc(m.gericht).replace(/'/g,"&#39;")+'" onclick="socialMtPasteFocus(this)" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="padding:4px 8px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:12px;cursor:pointer;flex-shrink:0">&#128203;</button>';
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+
+    // === Freierfassung: Schnell-Eintrag ===
+    html+='<div style="margin-bottom:10px">';
+    html+='<button onclick="socialFreeToggle()" style="width:100%;padding:12px 14px;background:#eff6ff;border:1px dashed #93c5fd;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#2563eb;text-align:left;min-height:44px;box-sizing:border-box">&#10010; Produkt frei erfassen <span style="opacity:.5;font-weight:400">(ohne Katalog)</span></button>';
+    html+='<div id="soc-free-form" style="display:none;margin-top:6px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px">';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end">';
+    html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>';
+    html+='<input id="soc-free-name" class="cms-input" placeholder="z.B. Kartoffelsalat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
+    html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
+    html+='<input id="soc-free-preis" type="number" step="0.01" min="0" class="cms-input" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
+    html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
+    html+='<select id="soc-free-kat" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
+    html+='<option value="Mittagessen">&#127869; Mittagessen</option><option value="Kuchen">&#127856; Kuchen</option><option value="Obst & Gemuese">&#129382; Obst & Gem\u00fcse</option><option value="Aufstriche">&#129367; Aufstriche</option><option value="Sonstiges">Sonstiges</option>';
+    html+='</select></div>';
+    html+='<div style="width:56px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">ab</label>';
+    html+='<select id="soc-free-ab" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
+    html+='<option value="">ab</option><option value="10:00">10:00</option><option value="12:00">12:00</option></select></div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;align-items:center;margin-top:6px">';
+    html+='<label style="cursor:pointer;padding:4px 10px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;color:#374151">&#128247; Bild <input type="file" id="soc-free-bild" accept="image/*" capture="environment" onchange="socialFreeImgPreview()" style="display:none"></label>';
+    html+='<button onclick="socialFreePaste(this)" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="padding:4px 8px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;cursor:pointer;color:#374151">&#128203; Einf\u00fcgen</button>';
+    html+='<span id="soc-free-img-name" style="font-size:10px;color:#9ca3af;flex:1"></span>';
+    html+='<button onclick="socialFreeAdd()" class="cms-btn cms-btn-sm" style="background:#2563eb;color:#fff;padding:5px 14px;font-size:12px;font-weight:700">&#10003; Hinzuf\u00fcgen</button>';
+    html+='</div></div></div>';
+
+    // === Free items already added ===
+    html+='<div id="soc-free-list">';
+    html+=socialRenderFreeItems();
+    html+='</div>';
+
+    // === Search + Category filter (Katalog) ===
+    if(_socialKatalog.length){
+      html+='<div style="margin-bottom:8px">';
+      html+='<input id="soc-pick-search" type="text" placeholder="&#128269; Produkt suchen..." oninput="socialPickFilter()" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">';
+      html+='</div>';
+
+      html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">';
+      html+='<button class="soc-cat-chip soc-cat-active" data-cat="" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#1f2937;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Alle</button>';
+      allCats.forEach(function(cat){
+        html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer">'+(_socCatIcons[cat]||'')+' '+esc(cat)+'</button>';
+      });
+      html+='</div>';
+
+      html+='<div id="soc-pick-grid" style="max-height:340px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
+      _socialKatalog.forEach(function(p){
+        var pid=esc(p.id);
+        var priceStr='';
+        if(p.preis){var cp=parseFloat(p.preis);priceStr=(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC';}
+        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px 8px;border-radius:8px;margin-bottom:3px;transition:background .15s,border-color .15s;border:1px solid transparent" onmouseover="if(!this.querySelector(\'input[type=checkbox]\').checked)this.style.background=\'#fef2f2\'" onmouseout="var c=this.querySelector(\'input[type=checkbox]\').checked;this.style.background=c?\'#f0fdf4\':\'#fff\';this.style.borderColor=c?\'#86efac\':\'transparent\'">';
+        // Checkbox
+        html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate()" style="width:20px;height:20px;accent-color:#e1306c;flex-shrink:0;margin-top:2px">';
+        // Thumbnail
+        html+='<div class="soc-pick-thumb-wrap" style="flex-shrink:0;position:relative">';
+        html+='<div tabindex="0" class="soc-pick-thumb" data-pid="'+pid+'" onpaste="socialPickImgPaste(\''+pid+'\',event)" style="cursor:pointer;outline:none;border-radius:6px;position:relative">';
+        if(p.bild_url){
+          html+='<img id="soc-pick-img-'+pid+'" src="'+esc(p.bild_url)+'" onclick="socialPickImgPreview(\''+pid+'\')" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in" onerror="this.style.display=\'none\'">';
+        } else {
+          html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#9ca3af;border:1px solid #e5e7eb">&#128247;</div>';
+        }
+        html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+pid+'\',this)" style="display:none">';
+        html+='</div>';
+        // Camera button overlay
+        html+='<button type="button" onclick="this.parentNode.querySelector(\'input[type=file]\').click()" class="soc-pick-cam" style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d5db;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)" title="Bild \u00e4ndern (Kamera/Datei)">&#128247;</button>';
+        html+='</div>';
+        // Name + price + ab (stacked on mobile)
+        html+='<div style="flex:1;min-width:0">';
+        html+='<div class="soc-pick-name" style="font-weight:600;font-size:13px;line-height:1.3;word-break:break-word;color:#1f2937">'+esc(p.name)+'</div>';
+        html+='<div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">';
+        if(priceStr) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+priceStr+'</span>';
+        html+='<select class="soc-pick-ab" data-id="'+pid+'" style="font-size:11px;padding:2px 6px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;min-height:26px">';
+        html+='<option value="">ab</option><option value="10:00">10:00</option><option value="12:00">12:00</option>';
+        html+='</select>';
+        html+='</div>';
+        html+='</div>';
+        html+='</div>';
+      });
+      html+='</div>';
+      html+='<div id="soc-pick-count" style="font-size:10px;color:#9ca3af;text-align:right;margin-top:2px">'+_socialKatalog.length+' Produkte</div>';
+    } else if(!todayMeals.length){
+      html+='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog.</p>';
+    }
+
+    wrap.innerHTML=html;
+  }
 
   // --- Free entry helpers ---
   function socialRenderFreeItems(){
@@ -10769,3 +13185,4 @@
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
   }
 })();
+

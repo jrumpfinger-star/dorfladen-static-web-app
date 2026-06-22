@@ -28,9 +28,12 @@ def normalize_warengruppe(name):
 
     return name
 
-def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung):
+_KG_PREIS_WARENGRUPPEN = {"obst und gemüse", "obst", "gemüse"}
+
+def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung, warengruppe=""):
     """Berechne korrigierten VK-Preis und Mengenanzeige-String.
     Sonderfall: mengenerfassung=3 + mengentyp=kg → VK/10, Menge='100 g'
+    Obst/Gemüse: mengenerfassung=3 + mengentyp=kg → VK bleibt, Menge='1 kg'
     Sonst: mengentyp g/kg + gpfaktor != 1 → VK * gpfaktor, Menge aus Mengeneinheit.
     """
     mt = (mengentyp or "").strip().lower()
@@ -38,9 +41,13 @@ def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung):
     vk_korr = preis
     menge_str = ""
     if mt == "kg" and me_val == "3":
-        # Spezialfall: Preis gilt für 100g (Basis 1kg / 10)
-        vk_korr = round(preis / 10, 2)
-        menge_str = "100 g"
+        wg = (warengruppe or "").strip().lower()
+        if wg in _KG_PREIS_WARENGRUPPEN:
+            vk_korr = preis
+            menge_str = "1 kg"
+        else:
+            vk_korr = round(preis / 10, 2)
+            menge_str = "100 g"
     elif mt == "kg" and gpfaktor and gpfaktor != 1:
         vk_korr = round(preis * gpfaktor, 2)
         if mengeneinheit:
@@ -166,7 +173,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     mengeneinheit = item.get("cr5d4_mengeneinheit")
                     gpfaktor = item.get("cr5d4_gpfaktor") or 1
                     mengenerfassung = item.get("cr5d4_mengenerfassung")
-                    vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung)
+                    wg_barcode = normalize_warengruppe(item.get("cr5d4_warengruppebez", "")) or ""
+                    vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung, wg_barcode)
                     results.append({
                         "artikelnummer": artnr,
                         "bezeichnung": item.get("cr5d4_artikelbezeichnung", ""),
@@ -223,12 +231,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             mengeneinheit = item.get("cr5d4_mengeneinheit")
             gpfaktor = item.get("cr5d4_gpfaktor") or 1
             mengenerfassung = item.get("cr5d4_mengenerfassung")
-            vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung)
-
             if not warengruppe_bez:
                 warengruppe_bez = "Sonstiges"
             else:
                 warengruppe_bez = normalize_warengruppe(warengruppe_bez) or warengruppe_bez
+            vk_korr, menge_str = calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung, warengruppe_bez)
 
             # Filter: skip articles not sold in last 6 months, except Fleisch & Wurst
             if not skip_filter and not is_fleisch_wurst(warengruppe_bez):
