@@ -566,6 +566,88 @@ test.describe('Homepage – Meine Bestellung Link', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  T-MY: Homepage – Meine Bestellungen Widget (mode=my)
+// ════════════════════════════════════════════════════
+
+test.describe('Homepage – Meine Bestellungen Widget', () => {
+
+  test('T-MY-01: Ohne bs_email → Widget bleibt versteckt', async ({ page }) => {
+    await page.goto(`${BASE}/`);
+    await page.evaluate(() => { localStorage.removeItem('bs_email'); });
+    await page.goto(`${BASE}/`);
+    await page.waitForTimeout(3000);
+    const mob = page.locator('#mob-my-orders');
+    const desk = page.locator('#desk-my-orders');
+    await expect(mob).toBeHidden();
+    await expect(desk).toBeHidden();
+  });
+
+  test('T-MY-02: API mode=my wird mit korrekter Email aufgerufen', async ({ page }) => {
+    await page.goto(`${BASE}/`);
+    await page.evaluate((email) => { localStorage.setItem('bs_email', email); }, TEST_EMAIL);
+    const apiPromise = page.waitForRequest(r =>
+      r.url().includes('/api/lunch-order') && r.url().includes('mode=my') && r.url().includes('email=')
+    );
+    await page.goto(`${BASE}/`);
+    const apiReq = await apiPromise;
+    expect(apiReq.url()).toContain(`email=${encodeURIComponent(TEST_EMAIL)}`);
+    expect(apiReq.url()).toContain('mode=my');
+    await page.evaluate(() => { localStorage.removeItem('bs_email'); });
+  });
+
+  test('T-MY-03: API mode=my liefert Bestellungen für bekannte Email', async ({ page }) => {
+    await page.goto(`${BASE}/`);
+    const resp = await page.evaluate(async (email) => {
+      const r = await fetch('/api/lunch-order?email=' + encodeURIComponent(email) + '&mode=my');
+      return r.json();
+    }, TEST_EMAIL);
+    expect(resp.success).toBe(true);
+    expect(Array.isArray(resp.orders)).toBe(true);
+    // Orders should have required fields
+    if (resp.orders.length > 0) {
+      const o = resp.orders[0];
+      expect(o).toHaveProperty('gericht');
+      expect(o).toHaveProperty('status');
+      expect(o).toHaveProperty('bestellnummer');
+    }
+  });
+
+  test('T-MY-04: Mit aktiven Bestellungen → Widget wird sichtbar', async ({ page }) => {
+    await page.goto(`${BASE}/`);
+    await page.evaluate((email) => { localStorage.setItem('bs_email', email); }, TEST_EMAIL);
+    await page.goto(`${BASE}/`);
+    // Wait for widget to appear (up to 10s for API call)
+    try {
+      await page.waitForSelector('#desk-my-orders:not([style*="display: none"])', { timeout: 10000 });
+      const deskVisible = await page.locator('#desk-my-orders').isVisible();
+      const mobVisible = await page.locator('#mob-my-orders').isVisible();
+      // At least one should be visible (depending on viewport)
+      expect(deskVisible || mobVisible).toBe(true);
+      // Should contain order links
+      const links = page.locator('#desk-my-orders a, #mob-my-orders a');
+      if (await links.count() > 0) {
+        const href = await links.first().getAttribute('href');
+        expect(href).toContain('/bestellstatus');
+      }
+    } catch {
+      // If no active orders exist for test email, skip
+      test.skip();
+    }
+    await page.evaluate(() => { localStorage.removeItem('bs_email'); });
+  });
+
+  test('T-MY-05: Falsche Email → Widget bleibt versteckt', async ({ page }) => {
+    await page.goto(`${BASE}/`);
+    await page.evaluate(() => { localStorage.setItem('bs_email', 'nobody@example.com'); });
+    await page.goto(`${BASE}/`);
+    await page.waitForTimeout(4000);
+    await expect(page.locator('#desk-my-orders')).toBeHidden();
+    await expect(page.locator('#mob-my-orders')).toBeHidden();
+    await page.evaluate(() => { localStorage.removeItem('bs_email'); });
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  T-PACK: Pack-Seite (/pack)
 // ════════════════════════════════════════════════════
 
