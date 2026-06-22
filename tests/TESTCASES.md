@@ -585,3 +585,36 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-21 | T9.5 Mittagstisch API | lunch-order API 400-Fehler: `$select` enthielt `dl_kunde_kommentar` und `dl_personal_antwort`, die in Dataverse nicht existierten | Felder per Script `scripts/create-dv-fields.py` in Dataverse angelegt + PublishAllXml |
 | 2026-06-22 | T12 mode=my | OData-Filter `dl_datum ge 2026-06-22` ohne Quotes → String-Vergleich fehlgeschlagen → leere Ergebnisse | Fix: `dl_datum ge '2026-06-22'` (einfache Anführungszeichen um String-Wert im OData-Filter) |
 | 2026-06-22 | T13 Kachel-Bild | Eigenes Bild wird nach Speichern nicht auf dem Flyer angezeigt. Unkomprimierte Base64-Data-URL in `ov.customImg` überschreitet Dataverse `dl_wert` Feldgröße. `.catch(function(){})` verschluckt den Fehler. | 1. `cmsCompressImage(400,400)` beim Upload 2. Payload-Größen-Check vor Senden 3. Fehler-Handling in `plakatArtOverrideSave` + `_dvSave` |
+| 2026-06-22 | T14 Angebot-Bilder | Flyer zeigt falsches Bild (Duplo statt Kirschkörbchen). `_artikelCache.find()` liefert falschen Strichcode für Eigenprodukte. | `_artikelCache`-Lookup entfernt – `artikelnummer` direkt als SharePoint-Key verwendet |
+| 2026-06-22 | T14 Angebot-Bilder | Bild im Strichcodefolder wird beim Bearbeiten+Speichern überschrieben. Auto-Preload setzt `bild_data` → unnötiger Re-Upload an API. | `data-bild-dirty` Flag: nur explizite User-Uploads werden an werbebilder API geschickt |
+| 2026-06-22 | T14 Angebot-Bilder | Artikelnummer-Feld zu klein (85px) für EAN-13 Strichcodes | CSS-Spaltenbreite auf 120px erhöht |
+
+---
+
+## T14 – Angebot-Bilder: Laden, Speichern, Anzeigen
+> Spec: specs/angebot-bilder.md → AK-AB-01..05
+
+### T14.1 – Artikelnummer-Feld zeigt vollständige EAN-13 an (AK-AB-01)
+- **Aktion:** Aktion mit Artikel öffnen, der EAN-13 Strichcode hat (z.B. 4001686327487)
+- **Prüfung:** Artikelnummer-Feld zeigt die vollständige Nummer ohne Abschneiden
+- **Erwartung:** Gesamte Nummer sichtbar (≥120px Spaltenbreite)
+
+### T14.2 – Flyer zeigt korrektes Bild für Eigenprodukte (AK-AB-02)
+- **Aktion:** Aktion mit Eigenprodukt "Kirschkörbchen" erstellen, Bild hochladen, Flyer-Vorschau öffnen
+- **Prüfung:** Flyer-Kachel zeigt das hochgeladene Kirschkörbchen-Bild
+- **Erwartung:** Korrektes Bild (nicht Duplo oder anderes Produkt)
+
+### T14.3 – Auto-Preload überschreibt kein User-Upload (AK-AB-03)
+- **Aktion:** Bild zu Artikel hochladen → Speichern → erneut Bearbeiten
+- **Prüfung:** Nach erneutem Öffnen ist das hochgeladene Bild sichtbar
+- **Erwartung:** Kein Überschreiben durch altes Bild aus SharePoint
+
+### T14.4 – Nur User-Uploads triggern Re-Upload (AK-AB-04)
+- **Aktion:** Aktion bearbeiten (ohne neues Bild hochzuladen) → Speichern
+- **Prüfung:** Konsole: kein `POST /werbebilder` Request
+- **Erwartung:** Auto-preloaded Bilder werden nicht erneut an API geschickt
+
+### T14.5 – Upload/Paste verwendet Artikelnummer als SP-Key (AK-AB-05)
+- **Aktion:** Bild per 📁-Button für "Kirschkörbchen" hochladen
+- **Prüfung:** Konsole: Upload nach SharePoint unter "Kirschkörbchen.png"
+- **Erwartung:** Dateiname = Wert aus Artikelnummer-Feld (nicht aus _artikelCache)
