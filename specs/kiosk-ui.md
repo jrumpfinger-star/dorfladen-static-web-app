@@ -117,6 +117,15 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-25b: Button-Labels sind aktionsorientiert: "Annehmen" (statt "Bearbeiten"), "Ausgeben" (statt "Abgeholt")
 - [x] AK-UI-25c: "Ausgeben" bei Status "Bereit" – keine Verwechslung mit Status-Anzeige
 - [x] AK-UI-25d: "Ausgeben" nur sichtbar wenn Bestellung gepackt (`gepackt: true`), sonst "Packen" anbieten
+- [x] AK-UI-26: Stats haben keinen box-shadow und keinen border-radius (flacher Text)
+- [x] AK-UI-26b: Stats verwenden Dot-Separatoren zwischen den Werten
+- [x] AK-UI-27: Filter-Bar hat border-bottom-Underline statt Button-Borders
+- [x] AK-UI-27b: Aktiver Filter hat grüne Unterstreichung, kein Hintergrund
+- [x] AK-UI-28: Tagesauswahl verwendet k-day-pill (keine Borders, runde Pills)
+- [x] AK-UI-28b: Aktiver Tag hat grünen Hintergrund mit weißer Schrift
+- [x] AK-UI-29: Gerichtzusammenfassung als Inline-Text mit Pipe-Trennern
+- [x] AK-UI-30: Bestellquellen-Labels (Online/Telefon/Personal) nur farbiger Text, kein Hintergrund
+- [x] AK-UI-30b: Mitnehmen-Label ohne Hintergrund, nur farbiger Text
 
 ### Tab-Badge: Neue Bestellungen + Nachrichten
 - [x] Mittagstisch-Tab-Badge zeigt Summe aus neuen Bestellungen (heute, Status 0) + ungelesene Nachrichten (tagesübergreifend)
@@ -130,12 +139,13 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] Mengenanzeige (`qty-display`) kompakter: 20px statt 24px
 - [x] Action-Spalte weniger Padding/Gap
 
-### Info vs. Actions Design-Prinzip (Mockup erstellt, noch nicht implementiert)
-- [ ] Stats-Leiste als flacher Inline-Text mit Trennpunkten (nicht als Card/Button)
-- [ ] Status-Filter als Unterstrich-Tabs (nicht als Button-Chips)
-- [ ] Tag-Auswahl als schlichte Pills ohne Rand
-- [ ] Gerichtzusammenfassung als Inline-Text (nicht als Card)
-- [ ] Bestellquelle (Online/Telefon) als farbiger Text ohne Hintergrund
+### Info vs. Actions Design-Prinzip
+- [x] Stats-Leiste als flacher Inline-Text mit Trennpunkten (nicht als Card/Button)
+- [x] Status-Filter als Unterstrich-Tabs (nicht als Button-Chips)
+- [x] Tag-Auswahl als schlichte Pills ohne Rand (`k-day-pill`)
+- [x] Gerichtzusammenfassung als Inline-Text mit Pipe-Trenner (nicht als Card)
+- [x] Bestellquelle (Online/Telefon) als farbiger Text ohne Hintergrund (uppercase, 9px)
+- [x] Mitnehmen-Label als kleiner Text statt Badge mit Hintergrund
 
 ## API-Endpunkte
 - `GET /api/lunch-order?mode=unread_messages` – Anzahl ungelesener Kundennachrichten (tagesübergreifend)

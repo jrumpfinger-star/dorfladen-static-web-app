@@ -543,6 +543,75 @@ test.describe('Kiosk – Nachrichten-Gelesen', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  Info vs. Actions Design
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Info vs Actions Design', () => {
+
+  test('Stats sind flacher Text ohne box-shadow', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(2000);
+    const stat = page.locator('#mittag-stats .k-stat').first();
+    if (await stat.count() > 0) {
+      const shadow = await stat.evaluate(el => getComputedStyle(el).boxShadow);
+      expect(shadow === 'none' || shadow === '').toBeTruthy();
+      const bg = await stat.evaluate(el => getComputedStyle(el).background);
+      expect(bg).not.toContain('rgb(255, 255, 255)');
+    }
+  });
+
+  test('Stats verwenden Dot-Separatoren', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(2000);
+    const dots = page.locator('#mittag-stats .k-stat-dot');
+    const stats = page.locator('#mittag-stats .k-stat');
+    const statCount = await stats.count();
+    if (statCount > 1) {
+      const dotCount = await dots.count();
+      expect(dotCount).toBe(statCount - 1);
+    }
+  });
+
+  test('Filter-Tabs haben border-bottom statt border/border-radius', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const filterBar = page.locator('#abhol-filter-bar');
+    const borderBottom = await filterBar.evaluate(el => getComputedStyle(el).borderBottomStyle);
+    expect(borderBottom).toBe('solid');
+    const activeBtn = page.locator('#abhol-filter-bar .k-filter-btn.active');
+    const btnBorder = await activeBtn.evaluate(el => getComputedStyle(el).borderBottomColor);
+    // Should be green (not transparent)
+    expect(btnBorder).not.toBe('rgba(0, 0, 0, 0)');
+    const btnBg = await activeBtn.evaluate(el => getComputedStyle(el).backgroundColor);
+    expect(btnBg).toBe('rgba(0, 0, 0, 0)');
+  });
+
+  test('Tagesauswahl verwendet k-day-pill Klasse', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForSelector('#mittag-day-bar button');
+    const pills = page.locator('#mittag-day-bar .k-day-pill');
+    await expect(pills).toHaveCount(7);
+    const activePill = page.locator('#mittag-day-bar .k-day-pill.active');
+    const bg = await activePill.evaluate(el => getComputedStyle(el).backgroundColor);
+    // Active pill should have green background
+    expect(bg).not.toBe('rgba(0, 0, 0, 0)');
+  });
+
+  test('Bestellquellen-Labels haben keinen Hintergrund', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(2000);
+    const srcLabels = page.locator('.k-order-src');
+    if (await srcLabels.count() > 0) {
+      const bg = await srcLabels.first().evaluate(el => getComputedStyle(el).backgroundColor);
+      expect(bg).toBe('rgba(0, 0, 0, 0)');
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  Kompakte Buttons (Mobile)
 // ════════════════════════════════════════════════════
 
