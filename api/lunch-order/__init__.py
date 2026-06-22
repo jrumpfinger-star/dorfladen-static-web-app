@@ -261,16 +261,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             # All active orders for a customer (homepage widget)
             if email_filter and not nr_filter and req.params.get("mode") == "my":
-                today_str = datetime.utcnow().strftime("%Y-%m-%dT00:00:00Z")
+                today_str = datetime.utcnow().strftime("%Y-%m-%d")
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
                     f"?$filter=dl_email eq '{email_filter}'"
                     f" and dl_status ne {STATUS_STORNIERT}"
-                    f" and dl_datum ge {today_str}"
+                    f" and dl_datum ge '{today_str}'"
                     f"&$orderby=dl_datum asc"
                     f"&$top=20"
                 )
-                logging.info(f"[lunch-order] mode=my email={email_filter} today={today_str}")
+                logging.info(f"[lunch-order] mode=my email={email_filter} today={today_str} url={lookup_url}")
                 lr = requests.get(lookup_url, headers=headers, timeout=30)
                 logging.info(f"[lunch-order] mode=my response={lr.status_code} body={lr.text[:300]}")
                 if lr.status_code == 200:
