@@ -69,6 +69,6 @@ Ein **Floating Action Button (FAB)** unten links auf der Homepage. Klick öffnet
 ## Status
 - [x] Spec reviewed
 - [x] Daten-Backend: bestehende posts.json wird genutzt
-- [ ] API /api/tagespost implementiert
-- [ ] Frontend (FAB + Modal) implementiert
-- [ ] Validierung
+- [x] API /api/tagespost implementiert
+- [x] Frontend (FAB + Modal) implementiert
+- [x] Validierung (live getestet auf witty-island)
