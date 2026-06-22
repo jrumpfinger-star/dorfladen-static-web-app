@@ -156,4 +156,4 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 ## Status
 - [x] Spec reviewed
 - [x] Implementierung
-- [ ] Validierung (Tab-Badge + kompakte Buttons: 2026-06-22)
+- [x] Validierung (Tab-Badge + kompakte Buttons + Info vs Actions: 2026-06-22)
