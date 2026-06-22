@@ -420,9 +420,9 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .ang-header svg{width:22px;height:22px;fill:#fff;flex-shrink:0}
 .ang-sub{font-size:.78rem;font-weight:400;opacity:.85;margin-left:auto}
 .ang-week-nav{display:flex;align-items:center;gap:8px;padding:10px 20px;background:#fafafa;border-bottom:1px solid var(--c-brd)}
-.ang-week-btn{background:var(--c-surf);border:2px solid var(--c-brd);border-radius:var(--r-sm);padding:8px 18px;font-size:.9rem;font-weight:700;color:var(--c-text);cursor:pointer;transition:all .25s var(--ease)}
+.ang-week-btn{background:var(--c-surf);border:1px solid var(--c-brd);border-radius:var(--r-sm);padding:6px 14px;font-size:.8rem;font-weight:600;color:var(--c-text);cursor:pointer;transition:all .25s var(--ease)}
 .ang-week-btn:hover{border-color:var(--c-acc);color:var(--c-acc)}
-.ang-week-btn.active{background:var(--c-acc);color:#fff;border-color:var(--c-acc);box-shadow:0 2px 8px rgba(185,28,28,.25)}
+.ang-week-btn.active{background:var(--c-acc);color:#fff;border-color:var(--c-acc)}
 .ang-week-label{font-size:.82rem;font-weight:600;color:var(--c-text)}
 .ang-empty{padding:30px 20px;text-align:center;color:var(--c-sec);font-size:.9rem}
 .ang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:18px;background:#f4f1ea;border-radius:0 0 var(--r) var(--r)}
