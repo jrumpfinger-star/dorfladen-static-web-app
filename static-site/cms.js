@@ -4952,7 +4952,12 @@
     }
     document.getElementById('pce-save').onclick=function(){closeEditor(false);};
     document.getElementById('pce-close').onclick=function(){closeEditor(true);};
-    document.getElementById('pce-close-discard').onclick=function(){closeEditor(true);};
+    document.getElementById('pce-close-discard').onclick=function(){
+      // Reset to initial state but keep editor open
+      ov=_clone(_initOv);
+      _activeEl='img';syncScaleSlider();syncRotSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();
+      plakatArtOverrideSave(item,ov).then(function(){toast('Änderungen verworfen','info');});
+    };
     document.getElementById('pce-reset').onclick=function(){
       ov=plakatArtOverrideDefault();
       _activeEl='img';syncScaleSlider();syncRotSlider();updateGhostBtn();updateDupBtn();updateActiveLabel();renderCard();autoSave();
