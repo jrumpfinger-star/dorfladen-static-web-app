@@ -5543,6 +5543,7 @@
   }
   function plakatArtOverrideSave(item,ov){
     var all=plakatArtOverridesGetAll();var k=_flyerArtKey(item);if(!k)return Promise.resolve();
+    console.log('[plakatArtOverrideSave] key=',k,'customImg:',ov.customImg?'YES ('+ov.customImg.length+' chars)':'NO','keys:',Object.keys(ov).join(','));
     all[k]=_clone(ov);
     _plakatArtOverrides=all;
     var jsonStr=JSON.stringify(all);
@@ -7404,6 +7405,7 @@
         ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,cy,mgCellW,imgAreaH);ctx.fillRect(cx,cy,mgCellW,imgAreaH);ctx.restore();
         // Per-card overrides
         var pOv=plakatArtOverrideGet(it)||plakatArtOverrideDefault();
+        console.log('[drawAngebotPlakat] card',ci,it.produkt,'pOv.customImg:',pOv.customImg?'YES ('+pOv.customImg.length+' chars)':'NO','keys:',Object.keys(pOv).join(','));
         if(img){
           var ofc=_freistellCanvas(img,cfg);
           var fImgSc2=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
