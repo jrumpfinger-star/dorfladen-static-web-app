@@ -1644,8 +1644,14 @@
     var items=post.items||[];
     document.getElementById('tp-badge').textContent=items.length;
 
-    var mittagessen=items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
-    var theke=items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
+    var nowH=new Date().getHours();
+    var lunchOver=nowH>=13;
+
+    var mittagessen=lunchOver?[]:items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
+    var theke=items.filter(function(i){return lunchOver?true:(i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
+
+    var visibleItems=mittagessen.length+theke.length;
+    document.getElementById('tp-badge').textContent=visibleItems;
 
     var html='';
 
@@ -1676,6 +1682,7 @@
     html+='</div>';
 
     document.getElementById('tp-body').innerHTML=html;
+    return visibleItems;
   }
 
   function itemCard(it,showOrder){
@@ -1701,9 +1708,10 @@
   fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
     if(!res.success||!res.post)return;
     var post=res.post;
+    var count=renderPost(post);
+    if(!count)return;
     fab.style.display='flex';
     fab.classList.add('pulse');
-    renderPost(post);
 
     var seenKey='tagespost_seen_'+new Date().toISOString().substring(0,10);
     if(!localStorage.getItem(seenKey)){
