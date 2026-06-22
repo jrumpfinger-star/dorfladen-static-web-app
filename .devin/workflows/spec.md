@@ -59,6 +59,11 @@ Dies ist NICHT optional – es gehört zur Implementierung dazu:
 
 ### 5. Tests ausführen
 // turbo
+**WICHTIG: Tests IMMER gegen die Live-Umgebung ausführen, NIEMALS gegen localhost:4280!**
+- Es gibt keinen lokalen SWA-Server. `npx playwright test` ohne `test-live.ps1` schlägt mit `ERR_CONNECTION_REFUSED` fehl.
+- IMMER `test-live.ps1` verwenden – das setzt `BASE_URL` auf die Feature-Branch-SWA.
+- Nach `git push` erst ~2 Min auf den Deploy warten, dann testen.
+
 Betroffene Tests gegen die Live-Umgebung ausführen (NUR betroffene, nicht die ganze Suite):
 ```
 powershell -ExecutionPolicy Bypass -File test-live.ps1 tests/<datei>.spec.js -g "<Testgruppe>"
