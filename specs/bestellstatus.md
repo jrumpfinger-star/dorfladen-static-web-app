@@ -35,12 +35,23 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 - [x] Nach erfolgreicher Bestellung: Email + Bestellnummer in localStorage speichern
 - [x] Success-Overlay enthält Link "📋 Bestellstatus ansehen"
 
-### Startseite – "Meine Bestellung ansehen"
+### Startseite – "Meine Bestellung ansehen" (Einzellink)
 - [x] Link unter Mittagstisch-Kachel (Mobile) und unter Wochenplan (Desktop)
 - [x] Sichtbar nur wenn: `bs_nr` + `bs_email` im localStorage UND API bestätigt aktive Bestellung
 - [x] Aktive Bestellung = Datum ≥ heute UND Status ≠ 2 (storniert)
 - [x] Klick führt zu `/bestellstatus` (auto-login per localStorage)
 - [x] Versteckt wenn keine aktive Bestellung vorliegt
+
+### Startseite – "Meine Bestellungen" Widget (alle aktiven Bestellungen)
+- [x] Container `#mob-my-orders` (Mobile) und `#desk-my-orders` (Desktop) auf Startseite
+- [x] Widget lädt automatisch wenn `bs_email` im localStorage gesetzt ist
+- [x] API-Call: `GET /api/lunch-order?email=X&mode=my`
+- [x] API liefert alle nicht-stornierten Bestellungen mit Datum ≥ heute
+- [x] OData-Filter: `dl_email eq '{email}' and dl_status ne 2 and dl_datum ge '{today}'`
+- [x] Jede Bestellung als Link zu `/bestellstatus?nr=XXX`
+- [x] Anzeige: Gericht, Status-Badge (farblich), Bestellnummer
+- [x] Widget versteckt wenn keine Bestellungen oder keine Email im localStorage
+- [x] Falsche Email → Widget bleibt versteckt (leere API-Antwort)
 
 ### Nachrichten-Gelesen (Kiosk)
 - [x] Neues Dataverse-Feld `dl_kommentar_gelesen` (Boolean)
@@ -83,6 +94,11 @@ Zusätzlich soll ein Kommentar-System ermöglichen, dass Kunde und Personal bidi
 - [x] AK-BS-13: Bestellstatus-Seite "Zurück"-Link führt zur Startseite (`/`)
 - [x] AK-BS-14: Nachrichten-Badge im Kiosk nutzt `kommentar_gelesen` aus Dataverse (geräteübergreifend)
 - [x] AK-BS-15: Klick auf Nachrichten-Badge → PATCH `kommentar_gelesen: true` → Badge verschwindet
+- [x] AK-BS-16: Ohne `bs_email` im localStorage → Widget `#mob-my-orders` / `#desk-my-orders` bleibt versteckt
+- [x] AK-BS-17: API `mode=my` wird mit korrekter Email aus localStorage aufgerufen
+- [x] AK-BS-18: API `mode=my` liefert nicht-stornierte Bestellungen mit Datum ≥ heute (OData-Filter mit Quotes)
+- [x] AK-BS-19: Bei aktiven Bestellungen wird Widget sichtbar mit Links zu `/bestellstatus?nr=XXX`
+- [x] AK-BS-20: Falsche/unbekannte Email → Widget bleibt versteckt (API gibt leere Liste zurück)
 
 ## Nicht-Ziele
 - Kein Echtzeit-Chat (kein WebSocket) – Polling reicht

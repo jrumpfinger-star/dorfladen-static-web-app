@@ -571,7 +571,7 @@ test.describe('Homepage – Meine Bestellung Link', () => {
 
 test.describe('Homepage – Meine Bestellungen Widget', () => {
 
-  test('T-MY-01: Ohne bs_email → Widget bleibt versteckt', async ({ page }) => {
+  test('T-MY-01 (AK-BS-16): Ohne bs_email → Widget bleibt versteckt', async ({ page }) => {
     await page.goto(`${BASE}/`);
     await page.evaluate(() => { localStorage.removeItem('bs_email'); });
     await page.goto(`${BASE}/`);
@@ -582,7 +582,7 @@ test.describe('Homepage – Meine Bestellungen Widget', () => {
     await expect(desk).toBeHidden();
   });
 
-  test('T-MY-02: API mode=my wird mit korrekter Email aufgerufen', async ({ page }) => {
+  test('T-MY-02 (AK-BS-17): API mode=my wird mit korrekter Email aufgerufen', async ({ page }) => {
     await page.goto(`${BASE}/`);
     await page.evaluate((email) => { localStorage.setItem('bs_email', email); }, TEST_EMAIL);
     const apiPromise = page.waitForRequest(r =>
@@ -595,7 +595,7 @@ test.describe('Homepage – Meine Bestellungen Widget', () => {
     await page.evaluate(() => { localStorage.removeItem('bs_email'); });
   });
 
-  test('T-MY-03: API mode=my liefert Bestellungen für bekannte Email', async ({ page }) => {
+  test('T-MY-03 (AK-BS-18): API mode=my liefert Bestellungen für bekannte Email', async ({ page }) => {
     await page.goto(`${BASE}/`);
     const resp = await page.evaluate(async (email) => {
       const r = await fetch('/api/lunch-order?email=' + encodeURIComponent(email) + '&mode=my');
@@ -612,7 +612,7 @@ test.describe('Homepage – Meine Bestellungen Widget', () => {
     }
   });
 
-  test('T-MY-04: Mit aktiven Bestellungen → Widget wird sichtbar', async ({ page }) => {
+  test('T-MY-04 (AK-BS-19): Mit aktiven Bestellungen → Widget wird sichtbar', async ({ page }) => {
     await page.goto(`${BASE}/`);
     await page.evaluate((email) => { localStorage.setItem('bs_email', email); }, TEST_EMAIL);
     await page.goto(`${BASE}/`);
@@ -636,7 +636,7 @@ test.describe('Homepage – Meine Bestellungen Widget', () => {
     await page.evaluate(() => { localStorage.removeItem('bs_email'); });
   });
 
-  test('T-MY-05: Falsche Email → Widget bleibt versteckt', async ({ page }) => {
+  test('T-MY-05 (AK-BS-20): Falsche Email → Widget bleibt versteckt', async ({ page }) => {
     await page.goto(`${BASE}/`);
     await page.evaluate(() => { localStorage.setItem('bs_email', 'nobody@example.com'); });
     await page.goto(`${BASE}/`);

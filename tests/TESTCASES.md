@@ -413,6 +413,36 @@
 
 ---
 
+## T12 – Homepage: Meine Bestellungen Widget (mode=my)
+> Spec: `specs/bestellstatus.md` → Abschnitt "Meine Bestellungen Widget", AK-BS-16 bis AK-BS-20
+
+### T12.1 – Ohne bs_email → Widget versteckt (AK-BS-16)
+- **Aktion:** Startseite `/` laden, localStorage `bs_email` nicht gesetzt
+- **Prüfung:** `#mob-my-orders` und `#desk-my-orders` prüfen
+- **Erwartung:** Beide Container `display:none` / nicht sichtbar
+
+### T12.2 – API mode=my mit korrekter Email (AK-BS-17)
+- **Aktion:** `bs_email` in localStorage setzen, Startseite laden
+- **Prüfung:** Network-Request an `/api/lunch-order?email=...&mode=my` abfangen
+- **Erwartung:** Request enthält korrekte Email und `mode=my` Parameter
+
+### T12.3 – API mode=my liefert Bestellungen (AK-BS-18)
+- **Aktion:** `GET /api/lunch-order?email=jrumpfinger@t-online.de&mode=my` aufrufen
+- **Prüfung:** Response-Body prüfen
+- **Erwartung:** `{success: true, orders: [...]}`, jede Bestellung hat `gericht`, `status`, `bestellnummer`
+
+### T12.4 – Widget wird sichtbar bei aktiven Bestellungen (AK-BS-19)
+- **Aktion:** `bs_email` setzen (mit aktiven Bestellungen), Startseite laden
+- **Prüfung:** `#desk-my-orders` oder `#mob-my-orders` sichtbar, Links prüfen
+- **Erwartung:** Widget sichtbar, enthält Links zu `/bestellstatus?nr=XXX`
+
+### T12.5 – Falsche Email → Widget bleibt versteckt (AK-BS-20)
+- **Aktion:** `bs_email = 'nobody@example.com'` setzen, Startseite laden
+- **Prüfung:** `#mob-my-orders` und `#desk-my-orders` prüfen
+- **Erwartung:** Beide Container versteckt (API gibt leere Liste zurück)
+
+---
+
 ## Letzter Testlauf: 2026-06-21 (Samstag)
 Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 
@@ -496,6 +526,17 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | T11.2 Shop-Admin Zähler | ✅ | 16 Bestellungen, 5 Offen, 11 Abholbereit |
 | T9.5.1 Tages-Buttons API | ✅ | Alle 7 Tages-Buttons: API 200, Zähler korrekt, Karten gerendert |
 
+## Testlauf 2026-06-22 (Sonntag)
+Umgebung: witty-island-064f9d903.7.azurestaticapps.net
+
+| Test | Status | Ergebnis |
+|---|---|---|
+| T12.1 Ohne bs_email → Widget versteckt | ✅ | Beide Container hidden |
+| T12.2 API mode=my mit korrekter Email | ✅ | Request enthält email + mode=my |
+| T12.3 API mode=my liefert Bestellungen | ✅ | success:true, orders Array mit gericht/status/bestellnummer |
+| T12.4 Widget sichtbar bei aktiven Bestellungen | ✅ | Widget sichtbar, Links zu /bestellstatus |
+| T12.5 Falsche Email → Widget versteckt | ✅ | Beide Container hidden |
+
 ## Fehler-Log
 | Datum | Test | Fehler | Fix |
 |---|---|---|---|
@@ -504,3 +545,4 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-21 | T4 Kiosk | Online-Bestellungen nicht im Kiosk sichtbar | Datum-Format Mismatch: Wochenplan liefert `T00:00:00Z`, Kiosk filtert mit `eq` auf `YYYY-MM-DD`. Fix: POST normalisiert Datum, GET verwendet `startswith` |
 | 2026-06-21 | T4 Kiosk UI | Speiseplan-Tab redundant, Refresh-Button unpraktisch in Bottom-Bar, Küchenliste = `window.print()` | Speiseplan-Tab entfernt, Refresh in Header, Küchenliste gruppiert nach Gericht |
 | 2026-06-21 | T9.5 Mittagstisch API | lunch-order API 400-Fehler: `$select` enthielt `dl_kunde_kommentar` und `dl_personal_antwort`, die in Dataverse nicht existierten | Felder per Script `scripts/create-dv-fields.py` in Dataverse angelegt + PublishAllXml |
+| 2026-06-22 | T12 mode=my | OData-Filter `dl_datum ge 2026-06-22` ohne Quotes → String-Vergleich fehlgeschlagen → leere Ergebnisse | Fix: `dl_datum ge '2026-06-22'` (einfache Anführungszeichen um String-Wert im OData-Filter) |
