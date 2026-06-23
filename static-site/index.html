@@ -1845,6 +1845,11 @@
 
   fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
     if(!res.success||!res.post)return;
+    // Nach Ladenschluss (18:30) heutige TagesInfo nicht mehr anzeigen
+    if(!res.is_tomorrow){
+      var now=new Date();
+      if(now.getHours()>18||(now.getHours()===18&&now.getMinutes()>=30)) return;
+    }
     var post=res.post;
     var count=renderPost(post,res.is_tomorrow);
     if(!count)return;
