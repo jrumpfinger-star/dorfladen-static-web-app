@@ -112,6 +112,45 @@ def get_download_url(token, folder_id, filename):
     return ""
 
 
+def merge_day_posts(day_posts):
+    """Merge multiple posts from the same day into one combined post.
+    Uses the newest post's titel/freitext, but combines all items (deduplicated)."""
+    if not day_posts:
+        return None
+    if len(day_posts) == 1:
+        return day_posts[0]
+
+    # Sort newest first
+    day_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
+    merged = dict(day_posts[0])  # base: newest post
+
+    # Collect all items from all posts, deduplicate by name
+    seen_names = set()
+    all_items = []
+    for post in day_posts:
+        for it in post.get("items") or []:
+            name = (it.get("name") or "").strip().lower()
+            if name and name not in seen_names:
+                seen_names.add(name)
+                all_items.append(it)
+            elif not name:
+                all_items.append(it)
+    merged["items"] = all_items
+
+    # Combine freitext if different
+    freitexte = []
+    seen_texts = set()
+    for post in day_posts:
+        ft = (post.get("freitext") or "").strip()
+        if ft and ft not in seen_texts:
+            seen_texts.add(ft)
+            freitexte.append(ft)
+    if len(freitexte) > 1:
+        merged["freitext"] = "\n\n".join(freitexte)
+
+    return merged
+
+
 def enrich_post_images(post, token, folder_id):
     """Fill missing bild_url on post items from katalog and mt-bilder."""
     items = post.get("items")
@@ -197,8 +236,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if current_hour >= 18:
         tomorrow_posts = [p for p in posts if p.get("datum", "")[:10] == tomorrow]
         if tomorrow_posts:
-            tomorrow_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
-            post = tomorrow_posts[0]
+            post = merge_day_posts(tomorrow_posts)
             enrich_post_images(post, token, folder_id)
             return ok({"success": True, "post": post, "is_tomorrow": True})
 
@@ -206,15 +244,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # No post for today – check if tomorrow's post exists
         tomorrow_posts = [p for p in posts if p.get("datum", "")[:10] == tomorrow]
         if tomorrow_posts:
-            tomorrow_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
-            post = tomorrow_posts[0]
+            post = merge_day_posts(tomorrow_posts)
             enrich_post_images(post, token, folder_id)
             return ok({"success": True, "post": post, "is_tomorrow": True})
         return ok({"success": True, "post": None})
 
-    # Return the newest post from today
-    today_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
-    post = today_posts[0]
+    # Merge all posts from today into one combined post
+    post = merge_day_posts(today_posts)
     enrich_post_images(post, token, folder_id)
 
     return ok({"success": True, "post": post, "is_tomorrow": False})
