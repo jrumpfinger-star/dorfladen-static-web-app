@@ -3,6 +3,7 @@ import json
 import os
 import msal
 import requests
+import base64
 from datetime import datetime, timezone, timedelta
 
 # ---------- config ----------
@@ -13,6 +14,8 @@ CLIENT_SECRET = os.environ.get("DV_CLIENT_SECRET", "")
 SP_DRIVE = "b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A"
 SP_SOCIAL_FOLDER_NAME = "SocialMedia"
 POSTS_FILE = "posts.json"
+KATALOG_FILE = "katalog.json"
+MITTAGSTISCH_BILDER_FILE = "mittagstisch-bilder.json"
 
 
 def get_cors():
@@ -69,16 +72,94 @@ def find_social_folder(token):
     return None
 
 
-def load_posts(token, folder_id):
+def load_json_file(token, folder_id, filename):
     h = graph_headers(token)
-    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{POSTS_FILE}:/content"
+    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{filename}:/content"
     r = requests.get(url, headers=h, timeout=15)
     if r.status_code == 200:
         try:
             return json.loads(r.text)
         except:
-            return []
-    return []
+            pass
+    return None
+
+
+def load_posts(token, folder_id):
+    return load_json_file(token, folder_id, POSTS_FILE) or []
+
+
+def download_as_data_uri(url):
+    """Download an image URL and return as base64 data URI."""
+    if not url or url.startswith("data:"):
+        return url or ""
+    try:
+        r = requests.get(url, timeout=10)
+        if r.status_code == 200:
+            ct = r.headers.get("Content-Type", "image/jpeg")
+            b64 = base64.b64encode(r.content).decode("ascii")
+            return f"data:{ct};base64,{b64}"
+    except:
+        pass
+    return ""
+
+
+def get_download_url(token, folder_id, filename):
+    h = graph_headers(token)
+    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{filename}"
+    r = requests.get(url, headers=h, timeout=15)
+    if r.status_code == 200:
+        return r.json().get("@microsoft.graph.downloadUrl", "")
+    return ""
+
+
+def enrich_post_images(post, token, folder_id):
+    """Fill missing bild_url on post items from katalog and mt-bilder."""
+    items = post.get("items")
+    if not items:
+        return
+    needs_images = [it for it in items if not it.get("bild_url")]
+    if not needs_images:
+        return
+
+    # Build lookup maps from katalog and mt-bilder
+    katalog_by_name = {}
+    mt_bilder = {}
+    try:
+        katalog = load_json_file(token, folder_id, KATALOG_FILE) or []
+        for k in katalog:
+            if k.get("name"):
+                katalog_by_name[k["name"].lower()] = k
+    except:
+        pass
+    try:
+        mt_bilder = load_json_file(token, folder_id, MITTAGSTISCH_BILDER_FILE) or {}
+    except:
+        pass
+
+    for it in needs_images:
+        name = (it.get("name") or "").strip()
+        name_lower = name.lower()
+        kat = (it.get("kategorie") or "").lower()
+        bild_url = ""
+
+        # 1) Try katalog match by name
+        if name_lower in katalog_by_name:
+            ki = katalog_by_name[name_lower]
+            if ki.get("bild_datei"):
+                dl = get_download_url(token, folder_id, ki["bild_datei"])
+                if dl:
+                    bild_url = download_as_data_uri(dl)
+
+        # 2) Try mt-bilder match for Mittagessen
+        if not bild_url and "mittag" in kat and name in mt_bilder:
+            mi = mt_bilder[name]
+            if mi.get("bild_datei"):
+                dl = get_download_url(token, folder_id, mi["bild_datei"])
+                if dl:
+                    bild_url = download_as_data_uri(dl)
+
+        if bild_url:
+            it["bild_url"] = bild_url
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -118,6 +199,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if tomorrow_posts:
             tomorrow_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
             post = tomorrow_posts[0]
+            enrich_post_images(post, token, folder_id)
             return ok({"success": True, "post": post, "is_tomorrow": True})
 
     if not today_posts:
@@ -126,11 +208,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if tomorrow_posts:
             tomorrow_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
             post = tomorrow_posts[0]
+            enrich_post_images(post, token, folder_id)
             return ok({"success": True, "post": post, "is_tomorrow": True})
         return ok({"success": True, "post": None})
 
     # Return the newest post from today
     today_posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
     post = today_posts[0]
+    enrich_post_images(post, token, folder_id)
 
     return ok({"success": True, "post": post, "is_tomorrow": False})
