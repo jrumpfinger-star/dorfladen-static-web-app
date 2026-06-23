@@ -31,15 +31,15 @@
     .k-panel{position:absolute;inset:0;overflow-y:auto;padding:12px 16px;display:none}
     .k-panel.active{display:block}
 
-    /* ═══ Stats bar (flat inline text – NOT buttons) ═══ */
-    .k-stats{display:flex;align-items:center;gap:0;flex-wrap:wrap;font-size:14px;color:var(--c-muted);padding:4px 0}
-    .k-stat{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;background:none;box-shadow:none;border:none;padding:0}
+    /* ═══ Stats bar (chip style for clarity) ═══ */
+    .k-stats{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--c-muted);padding:4px 0}
+    .k-stat{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;background:#f3f4f6;border-radius:8px;padding:4px 10px;border:none;box-shadow:none}
     .k-stat-val{font-weight:800;font-size:16px;color:var(--c-text)}
-    .k-stat-label{font-size:13px;font-weight:600;color:var(--c-muted)}
-    .k-stat.green .k-stat-val{color:var(--c-green)}
-    .k-stat.orange .k-stat-val{color:var(--c-orange)}
-    .k-stat.red .k-stat-val{color:var(--c-red)}
-    .k-stat-dot{width:3px;height:3px;border-radius:50%;background:#d1d5db;margin:0 8px;flex-shrink:0}
+    .k-stat-label{font-size:12px;font-weight:600;color:var(--c-muted)}
+    .k-stat.green{background:#f0fdf4}.k-stat.green .k-stat-val{color:var(--c-green)}
+    .k-stat.orange{background:#fff7ed}.k-stat.orange .k-stat-val{color:var(--c-orange)}
+    .k-stat.red{background:#fef2f2}.k-stat.red .k-stat-val{color:var(--c-red)}
+    .k-stat-dot{display:none}
     /* ═══ Shop toolbar (stats + filter in one row) ═══ */
     .k-shop-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;padding:6px 0}
 
@@ -167,9 +167,13 @@
       .k-filter-label{display:none}
       .k-filter-btn.active .k-filter-label{display:inline}
     }
-    /* ═══ Day pills (borderless, simple) ═══ */
-    .k-day-pill{padding:6px 16px;border-radius:16px;font-size:14px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-muted);border:none;white-space:nowrap}
+    /* ═══ Day bar ═══ */
+    .k-day-bar{display:flex;gap:2px;align-items:stretch;padding:4px 0 8px;border-bottom:1px solid var(--c-border);margin-bottom:4px;overflow-x:auto}
+    /* ═══ Day pills (two-line: label + date) ═══ */
+    .k-day-pill{padding:6px 12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-muted);border:none;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
+    .k-day-pill .day-date{font-size:11px;font-weight:500;opacity:.7}
     .k-day-pill.active{background:var(--c-green);color:#fff}
+    .k-day-pill.active .day-date{opacity:1}
     .k-day-pill:not(.active):hover{background:#f3f4f6}
 
     /* ═══ Slot group headers ═══ */
@@ -267,11 +271,11 @@
 
   <!-- ── Mittagstisch ── -->
   <div class="k-panel" id="panel-mittag">
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0">
-      <div id="mittag-day-bar" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"></div>
-      <div style="flex:1"></div>
-      <div class="k-stats" id="mittag-stats"></div>
-    </div>
+    <!-- Tage-Auswahl -->
+    <div id="mittag-day-bar" class="k-day-bar"></div>
+    <!-- Zusammenfassung -->
+    <div class="k-stats" id="mittag-stats" style="padding:6px 0;border-bottom:1px solid var(--c-border)"></div>
+    <!-- Status-Filter -->
     <div class="k-filter-bar" id="mittag-status-bar">
       <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Zu bestätigen</span> <span class="k-filter-count" id="mt-fc-offen">0</span></button>
       <button class="k-filter-btn" data-mt-filter="bestaetigt" onclick="K.setMittagFilter('bestaetigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Bestätigt</span> <span class="k-filter-count" id="mt-fc-bestaetigt">0</span></button>
@@ -702,9 +706,9 @@ var K = (function(){
       var iso = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
       var dayName = DAY_SHORT[d.getDay()];
       var dayNum = ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);
-      var label = i===0?'Heute':i===1?'Morgen':i===-1?'Gestern':dayName+' '+dayNum;
+      var label = i===0?'Heute':i===1?'Morgen':i===-1?'Gestern':dayName;
       var active = iso===_mittagDatum?' active':'';
-      html += '<button class="k-day-pill'+active+'" data-datum="'+iso+'" onclick="K.setMittagDatum(\''+iso+'\')">'+label+'</button>';
+      html += '<button class="k-day-pill'+active+'" data-datum="'+iso+'" onclick="K.setMittagDatum(\''+iso+'\')"><span>'+label+'</span><span class="day-date">'+dayNum+'</span></button>';
     }
     bar.innerHTML = html;
   }
