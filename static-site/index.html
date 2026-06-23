@@ -1476,10 +1476,12 @@
       if(typeof flags==='string'){try{flags=JSON.parse(flags);}catch(e){flags={};}}
       if(!flags)flags={};
       var isStaging=location.hostname.indexOf('witty-island')>=0;
-      var show=!!(flags.orders===true)||isStaging;
+      // Staging: alle Features pauschal aktivieren
+      if(isStaging){['push','barcode','orders','mittagstisch','wp_images','social_poster'].forEach(function(k){flags[k]=true;});}
+      var show=!!(flags.orders===true);
       document.querySelectorAll('.feature-orders-link').forEach(function(el){el.style.display=show?'':'none';});
       // Mittagstisch bestellen: show/hide order buttons and mobile quick-action
-      var showMT=!!(flags.mittagstisch===true)||isStaging;
+      var showMT=!!(flags.mittagstisch===true);
       window._featureMittagstisch=showMT;
       document.querySelectorAll('.feature-mittagstisch').forEach(function(el){el.style.display=showMT?'':'none';});
     }).catch(function(){});
