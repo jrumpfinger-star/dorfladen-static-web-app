@@ -1731,8 +1731,9 @@
   function renderPost(post,isTomorrow){
     _isTomorrow=!!isTomorrow;
     var titlePrefix=_isTomorrow?'Morgen':'Heute';
-    document.getElementById('tp-title').textContent=post.titel||'TagesInfo';
-    if(_isTomorrow&&post.titel){document.getElementById('tp-title').textContent='Morgen: '+post.titel.replace(/^Heute/i,'').replace(/^\s*[:–-]\s*/,'');}
+    var pTitel=(post.titel||'TagesInfo').replace(/Aktuelles/gi,'TagesInfo');
+    document.getElementById('tp-title').textContent=pTitel;
+    if(_isTomorrow&&pTitel){document.getElementById('tp-title').textContent='Morgen: '+pTitel.replace(/^Heute/i,'').replace(/^\s*[:–-]\s*/,'');}
     var d=new Date(post.datum);
     document.getElementById('tp-datum').textContent=(_isTomorrow?'Vorschau – ':'')+fmtDate(d);
 
