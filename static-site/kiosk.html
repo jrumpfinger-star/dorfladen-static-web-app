@@ -153,14 +153,20 @@
     .k-empty .k-empty-icon{font-size:48px;margin-bottom:12px}
 
     /* ═══ Filter tabs (underline style – NOT buttons) ═══ */
-    .k-filter-bar{display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--c-border);overflow-x:auto;scrollbar-width:none}
-    .k-filter-bar::-webkit-scrollbar{display:none}
+    .k-filter-bar{display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--c-border);overflow:hidden}
     .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px}
     .k-filter-btn:hover{color:var(--c-text)}
     .k-filter-btn:active{transform:none}
     .k-filter-btn.active{border-bottom-color:var(--c-green);color:#fff;background:var(--c-green);border-radius:8px 8px 0 0}
     .k-filter-btn .k-filter-count{font-size:12px;font-weight:800;background:#f3f4f6;color:var(--c-muted);padding:2px 7px;border-radius:8px;min-width:20px;text-align:center}
     .k-filter-btn.active .k-filter-count{background:rgba(255,255,255,.3);color:#fff}
+    .k-filter-label{display:inline}
+    @media(max-width:600px){
+      .k-filter-bar{flex-wrap:nowrap;justify-content:space-between}
+      .k-filter-btn{padding:8px 8px;font-size:12px;gap:4px;flex:0 0 auto;min-width:0}
+      .k-filter-label{display:none}
+      .k-filter-btn.active .k-filter-label{display:inline}
+    }
     /* ═══ Day pills (borderless, simple) ═══ */
     .k-day-pill{padding:6px 16px;border-radius:16px;font-size:14px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-muted);border:none;white-space:nowrap}
     .k-day-pill.active{background:var(--c-green);color:#fff}
@@ -267,12 +273,12 @@
       <div class="k-stats" id="mittag-stats"></div>
     </div>
     <div class="k-filter-bar" id="mittag-status-bar">
-      <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> Zu bestätigen <span class="k-filter-count" id="mt-fc-offen">0</span></button>
-      <button class="k-filter-btn" data-mt-filter="bestaetigt" onclick="K.setMittagFilter('bestaetigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Bestätigt <span class="k-filter-count" id="mt-fc-bestaetigt">0</span></button>
-      <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')">Alle <span class="k-filter-count" id="mt-fc-alle">0</span></button>
-      <button class="k-filter-btn" data-mt-filter="abgeholt" onclick="K.setMittagFilter('abgeholt')"><i data-lucide="package-check" style="width:14px;height:14px"></i> Abgeholt <span class="k-filter-count" id="mt-fc-abgeholt">0</span></button>
-      <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')"><i data-lucide="x-circle" style="width:14px;height:14px"></i> Storniert <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
-      <button class="k-filter-btn" id="mt-msg-badge" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="display:none;color:#3b82f6"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> Nachrichten</button>
+      <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Zu bestätigen</span> <span class="k-filter-count" id="mt-fc-offen">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="bestaetigt" onclick="K.setMittagFilter('bestaetigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Bestätigt</span> <span class="k-filter-count" id="mt-fc-bestaetigt">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')"><span class="k-filter-label">Alle</span> <span class="k-filter-count" id="mt-fc-alle">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="abgeholt" onclick="K.setMittagFilter('abgeholt')"><i data-lucide="package-check" style="width:14px;height:14px"></i> <span class="k-filter-label">Abgeholt</span> <span class="k-filter-count" id="mt-fc-abgeholt">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
+      <button class="k-filter-btn" id="mt-msg-badge" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="display:none;color:#3b82f6"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> <span class="k-filter-label">Nachrichten</span></button>
     </div>
     <div class="k-dish-summary" id="mittag-dish-summary"></div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
@@ -281,10 +287,10 @@
   <!-- ── Shop-Abholungen ── -->
   <div class="k-panel active" id="panel-abhol">
     <div class="k-filter-bar" id="abhol-filter-bar">
-      <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')"><i data-lucide="package" style="width:14px;height:14px"></i> Zu erledigen <span class="k-filter-count" id="fc-open">-</span></button>
-      <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')"><i data-lucide="calendar" style="width:14px;height:14px"></i> Heute abholen <span class="k-filter-count" id="fc-today">-</span></button>
-      <button class="k-filter-btn" data-filter="overdue" onclick="K.setShopFilter('overdue')"><i data-lucide="alert-triangle" style="width:14px;height:14px"></i> Überfällig <span class="k-filter-count" id="fc-overdue">-</span></button>
-      <button class="k-filter-btn" id="btn-history" onclick="K.toggleHistory()" title="Alte abgeschlossene Bestellungen anzeigen"><i data-lucide="history" style="width:14px;height:14px"></i> Historie <span class="k-filter-count" id="fc-history">0</span></button>
+      <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')"><i data-lucide="package" style="width:14px;height:14px"></i> <span class="k-filter-label">Zu erledigen</span> <span class="k-filter-count" id="fc-open">-</span></button>
+      <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')"><i data-lucide="calendar" style="width:14px;height:14px"></i> <span class="k-filter-label">Heute abholen</span> <span class="k-filter-count" id="fc-today">-</span></button>
+      <button class="k-filter-btn" data-filter="overdue" onclick="K.setShopFilter('overdue')"><i data-lucide="alert-triangle" style="width:14px;height:14px"></i> <span class="k-filter-label">Überfällig</span> <span class="k-filter-count" id="fc-overdue">-</span></button>
+      <button class="k-filter-btn" id="btn-history" onclick="K.toggleHistory()" title="Alte abgeschlossene Bestellungen anzeigen"><i data-lucide="history" style="width:14px;height:14px"></i> <span class="k-filter-label">Historie</span> <span class="k-filter-count" id="fc-history">0</span></button>
     </div>
     <div class="k-stats" id="abhol-stats" style="margin-bottom:8px"></div>
     <div id="abhol-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
