@@ -109,6 +109,7 @@
     .k-btn-outline{background:#fff;color:var(--c-text);border:1.5px solid var(--c-border)}
     .k-btn-outline:hover{border-color:var(--c-green);color:var(--c-green)}
     .k-tool{width:30px;height:30px;padding:0;border:none;border-radius:6px;background:transparent;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+    .k-tool svg{width:50%;height:50%}
     .k-tool:hover{background:#fff;color:var(--c-green);box-shadow:0 1px 3px rgba(0,0,0,.1)}
     .k-tool.danger{color:#dc2626}
     .k-tool.danger:hover{background:#fff;color:#dc2626;box-shadow:0 1px 3px rgba(220,38,38,.2)}
@@ -250,6 +251,7 @@
     .st-line{position:absolute;top:14px;left:0;right:0;height:3px;background:#e5e7eb;z-index:0}
     .st-line-fill{height:100%;background:#16a34a;border-radius:2px;transition:width .3s}
     .st-compact{margin:8px 0 10px;padding:0 8px}
+    .st-dot svg{width:55%;height:55%}
     .st-compact .st-dot{width:22px;height:22px;border-width:2px}
     .st-compact .st-label{font-size:9px}
     .st-compact .st-line{top:11px;height:2px}
@@ -293,6 +295,56 @@
     }
     /* Lucide inline icons */
     [data-lucide]{display:inline-block;vertical-align:middle}
+
+    /* ═══ Large kiosk screens ═══ */
+    @media(min-width:1200px){
+      .k-header{padding:16px 32px}
+      .k-header h1{font-size:26px}
+      .k-header .k-clock{font-size:24px}
+      .k-header .k-date{font-size:16px}
+      .k-tab{padding:18px 12px;font-size:17px}
+      .k-tab .k-tab-icon{font-size:28px}
+      .k-panel{padding:16px 32px}
+      .k-order-info{padding:18px 22px;gap:6px}
+      .k-order-name{font-size:20px}
+      .k-order-dish{font-size:17px}
+      .k-order-meta{font-size:14px}
+      .k-order-positions{font-size:14px}
+      .k-order-positions span{padding:2px 8px;border-radius:5px}
+      .k-order-price{font-size:18px}
+      .st-timeline{margin:12px 0 14px;padding:0 12px}
+      .st-compact .st-dot{width:30px;height:30px;border-width:3px}
+      .st-compact .st-label{font-size:12px}
+      .st-compact .st-line{top:15px;height:3px}
+      .k-btn-sm{min-height:36px;padding:6px 16px;font-size:14px}
+      .k-tool{width:36px;height:36px}
+      .k-act-tools{border-radius:10px;padding:3px;gap:2px}
+      .k-order-actions{gap:10px;padding:10px 0 0}
+      .k-grp-header{font-size:15px;padding:10px 32px}
+    }
+    @media(min-width:1600px){
+      .k-header{padding:20px 48px}
+      .k-header h1{font-size:32px}
+      .k-header .k-clock{font-size:28px}
+      .k-tab{padding:22px 16px;font-size:20px}
+      .k-tab .k-tab-icon{font-size:32px}
+      .k-panel{padding:20px 48px}
+      .k-order-info{padding:22px 28px;gap:8px}
+      .k-order-name{font-size:24px}
+      .k-order-dish{font-size:20px}
+      .k-order-meta{font-size:16px;gap:16px}
+      .k-order-positions{font-size:16px}
+      .k-order-price{font-size:22px}
+      .st-timeline{margin:14px 0 18px;padding:0 16px}
+      .st-compact .st-dot{width:36px;height:36px;border-width:3px}
+      .st-compact .st-label{font-size:14px;margin-top:8px}
+      .st-compact .st-line{top:18px;height:4px}
+      .k-btn-sm{min-height:42px;padding:8px 20px;font-size:16px;border-radius:10px}
+      .k-tool{width:42px;height:42px;border-radius:8px}
+      .k-act-tools{border-radius:12px;padding:4px;gap:3px}
+      .k-order-actions{gap:12px;padding:12px 0 0}
+      .k-grp-header{font-size:17px;padding:12px 48px}
+    }
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
