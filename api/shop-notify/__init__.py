@@ -222,12 +222,23 @@ def build_email_html(body_text, subject="", extra_html=""):
         header_icon = _icon("alert-triangle", "#fff", 22)
 
     return f'''<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  @media only screen and (max-width:620px) {{
+    .email-wrap {{ padding:8px 4px !important; }}
+    .email-header {{ padding:18px 16px 12px !important; border-radius:12px 12px 0 0 !important; }}
+    .email-banner {{ padding:12px 16px !important; font-size:15px !important; }}
+    .email-body {{ padding:16px !important; }}
+    .email-cta {{ padding:0 16px 18px !important; }}
+    .email-footer {{ padding:16px !important; border-radius:0 0 12px 12px !important; }}
+  }}
+</style>
+</head>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',system-ui,-apple-system,sans-serif">
-<div style="max-width:600px;margin:0 auto;padding:20px 16px">
+<div class="email-wrap" style="max-width:600px;margin:0 auto;padding:20px 12px">
 
   <!-- Header with logo -->
-  <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 28px 16px;text-align:center;border-bottom:4px solid {accent_color}">
+  <div class="email-header" style="background:#fff;border-radius:16px 16px 0 0;padding:24px 28px 16px;text-align:center;border-bottom:4px solid {accent_color}">
     <a href="{ci['website_url']}" style="text-decoration:none">
       <img src="{ci['logo_url']}" alt="{ci['name']}" style="height:60px;max-width:200px;margin-bottom:8px" />
     </a>
@@ -237,18 +248,18 @@ def build_email_html(body_text, subject="", extra_html=""):
   </div>
 
   <!-- Subject banner -->
-  <div style="background:{accent_color};padding:14px 28px;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px">
+  <div class="email-banner" style="background:{accent_color};padding:14px 28px;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px">
     {header_icon} {subject}
   </div>
 
   <!-- Body content -->
-  <div style="background:#fff;padding:24px 28px;font-size:14px;line-height:1.7;color:#1f2937">
+  <div class="email-body" style="background:#fff;padding:20px 24px;font-size:14px;line-height:1.7;color:#1f2937">
     {body_html}
     {extra_html}
   </div>
 
   <!-- CTA Button -->
-  <div style="background:#fff;padding:0 28px 24px;text-align:center">
+  <div class="email-cta" style="background:#fff;padding:0 24px 24px;text-align:center">
     <a href="{ci['shop_url']}" style="display:inline-block;padding:12px 28px;background:{accent_color};color:#fff;
        text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;margin-top:8px">
       {_icon('shopping-bag', '#fff', 16)} Zum Dorfladen-Shop
@@ -256,7 +267,7 @@ def build_email_html(body_text, subject="", extra_html=""):
   </div>
 
   <!-- Footer -->
-  <div style="background:#1f2937;border-radius:0 0 16px 16px;padding:20px 28px;color:#d1d5db;font-size:12px;line-height:1.6">
+  <div class="email-footer" style="background:#1f2937;border-radius:0 0 16px 16px;padding:20px 24px;color:#d1d5db;font-size:12px;line-height:1.6">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       {_icon('store', '#93c5fd', 20)}
       <span style="font-weight:700;color:#fff;font-size:13px">{ci['name']}</span>
