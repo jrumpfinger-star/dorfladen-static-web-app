@@ -167,11 +167,11 @@
 
       <span class="mob-action-sub" id="mob-lunch-sub">Wochenplan</span>
 
+      <div id="mob-my-orders" style="display:none;margin-top:6px" onclick="event.stopPropagation()"></div>
+
     </div>
 
   </div>
-
-  <div id="mob-my-orders" style="display:none;padding:0 16px 8px" onclick="event.stopPropagation()"></div>
 
 </div>
 
@@ -1517,30 +1517,32 @@
           function renderWidget(containerId){
             var el = document.getElementById(containerId);
             if(!el) return;
+            var isDark = containerId === 'mob-my-orders';
+            var wrapBg = isDark ? 'rgba(255,255,255,.15)' : '#eff6ff';
+            var wrapBorder = isDark ? 'rgba(255,255,255,.2)' : '#bfdbfe';
+            var wrapColor = isDark ? '#fff' : '#1d4ed8';
+            var chevronColor = isDark ? 'rgba(255,255,255,.5)' : 'currentColor';
 
             if(orders.length === 1){
-              // Single order → direct link
               var o = orders[0];
               var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
               var st = STATUS_LABELS[o.status]||'?';
               var col = STATUS_COLORS[o.status]||'#6b7280';
               var bg = STATUS_BG[o.status]||'#f3f4f6';
-              el.innerHTML = '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 14px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600">'
+              el.innerHTML = '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;text-decoration:none;color:'+wrapColor+';font-size:13px;font-weight:600">'
                 +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
                 +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtDate(o.datum)+' \u2013 '+(o.gericht||'Mittagessen')+'</span>'
                 +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
-                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+chevronColor+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>'
                 +'</a>';
             } else {
-              // Multiple orders → single line with popup trigger
               var popupId = 'popup-'+containerId;
-              el.innerHTML = '<div onclick="document.getElementById(\''+popupId+'\').style.display=\'flex\'" style="display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 14px;cursor:pointer;color:#1d4ed8;font-size:13px;font-weight:600">'
+              el.innerHTML = '<div onclick="document.getElementById(\''+popupId+'\').style.display=\'flex\'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;cursor:pointer;color:'+wrapColor+';font-size:13px;font-weight:600">'
                 +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
                 +'<span style="flex:1">Meine Bestellungen</span>'
-                +'<span style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
-                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+                +'<span style="font-size:11px;background:'+(isDark?'rgba(255,255,255,.2)':'#dbeafe')+';color:'+wrapColor+';padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
+                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+chevronColor+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>'
                 +'</div>';
-              // Build popup overlay
               var pop = document.createElement('div');
               pop.id = popupId;
               pop.style.cssText = 'display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:20px';
