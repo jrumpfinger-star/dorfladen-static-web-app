@@ -226,10 +226,7 @@ function renderOrder(o){
     document.getElementById('bs-messages').innerHTML = msgHtml;
   }
 
-  // Pre-fill comment if already exists
-  if(o.kunde_kommentar){
-    document.getElementById('bs-comment').value = o.kunde_kommentar;
-  }
+  // Don't pre-fill textarea – sent comments are shown in the messages section above
 
   // Hide comment box if order is completed
   if(o.status === 3){
