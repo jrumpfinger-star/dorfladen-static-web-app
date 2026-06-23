@@ -176,6 +176,29 @@
     .k-day-pill.active .day-date{opacity:1}
     .k-day-pill:not(.active):hover{background:#f3f4f6}
 
+    /* ═══ Dish group (Mittagstisch – grouped by dish, collapsible) ═══ */
+    .k-dish-group{margin-bottom:6px}
+    .k-dish-group-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f8fafc;border:1px solid var(--c-border);border-radius:10px;cursor:pointer;user-select:none;margin-bottom:4px;transition:background .15s}
+    .k-dish-group-hdr:hover{background:#f1f5f9}
+    .k-dish-group-hdr:active{opacity:.85}
+    .k-dg-arrow{transition:transform .2s;font-size:11px;color:var(--c-muted);flex-shrink:0}
+    .k-dish-group.collapsed .k-dg-arrow{transform:rotate(-90deg)}
+    .k-dish-group.collapsed .k-dg-body{display:none}
+    .k-dg-title{font-weight:700;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .k-dg-count{font-weight:800;font-size:15px;color:var(--c-green);white-space:nowrap}
+    .k-dg-badges{display:flex;gap:6px;align-items:center;flex-shrink:0}
+    .k-dg-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+    .k-dg-badge-open{background:#fef3c7;color:#92400e}
+    .k-dg-badge-confirmed{background:#dcfce7;color:#166534}
+    .k-dg-badge-pack{background:#dbeafe;color:#1d4ed8}
+    .k-dg-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
+    .k-dg-actions .k-btn{min-height:32px;min-width:32px;padding:4px 10px;font-size:12px;border-radius:8px;gap:4px}
+    @media(max-width:600px){
+      .k-dg-badges .k-dg-badge{font-size:9px;padding:2px 5px}
+      .k-dg-actions .k-btn{padding:4px 6px;font-size:11px}
+      .k-dg-actions .k-btn .dg-btn-label{display:none}
+    }
+
     /* ═══ Slot group headers ═══ */
     .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
     .k-slot-header:active{opacity:.85}
@@ -814,6 +837,91 @@ var K = (function(){
     document.getElementById('mittag-dish-summary').innerHTML = parts.join('<span class="k-dish-sep">|</span>');
   }
 
+  // Track which dish groups are manually expanded
+  var _dishGroupOpen = {};
+
+  function toggleDishGroup(gid){
+    var el = document.getElementById(gid);
+    if(!el) return;
+    el.classList.toggle('collapsed');
+    _dishGroupOpen[gid] = !el.classList.contains('collapsed');
+  }
+
+  function bulkConfirmDish(dishName){
+    var toConfirm = orders.filter(function(o){return o.gericht===dishName && o.status===0;});
+    if(toConfirm.length===0) return;
+    toConfirm.forEach(function(o){ setStatus(o.id, 1); });
+  }
+
+  function bulkPickupDish(dishName){
+    var toPickup = orders.filter(function(o){return o.gericht===dishName && o.status===1;});
+    if(toPickup.length===0) return;
+    toPickup.forEach(function(o){ setStatus(o.id, 3); });
+  }
+
+  function _renderOrderCard(o){
+    var srcLabel = SRC_LABELS[o.quelle]||'Online';
+    var srcCls = SRC_CLASS[o.quelle]||'src-online';
+    var html = '';
+    html += '<div class="k-order st-'+o.status+'">';
+    html += '<div class="k-order-info">';
+    html += '<div class="k-order-top">';
+    html += '<span class="k-order-name">'+esc(o.name)+'</span>';
+    if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
+    html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
+    if(o.mitnehmen) html += ' <span class="k-order-mitnehmen">'+luc('package',14)+' Mitnehmen</span>';
+    html += '</div>';
+    html += '<div class="k-order-meta">';
+    html += '<span>'+esc(o.bestellnummer||'')+'</span>';
+    if(o.telefon) html += '<span>'+luc('phone',12)+' '+esc(o.telefon)+'</span>';
+    if(o.preis) html += '<span>'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' €</span>';
+    html += '</div>';
+    if(o.anmerkung) html += '<div class="k-order-note">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
+    if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
+    if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+    html += '</div>';
+    // Qty
+    html += '<div class="k-order-qty"><div class="qty-display">'+((o.menge||1))+'×</div></div>';
+    // Actions
+    html += '<div class="k-order-actions">';
+    if(o.status===0){
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">' +luc('check-circle',16)+' Bestätigen</button>';
+      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
+    } else if(o.status===1){
+      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">'+luc('package-check',16)+' Abgeholt</button>';
+      if(o.kunde_kommentar) html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc('reply',16)+' Antworten</button>';
+      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
+    } else if(o.status===3){
+      html += luc('check-circle',20);
+    }
+    html += '</div>';
+    html += '</div>';
+    // Confirm dialog
+    if(o.status===0){
+      html += '<div class="k-confirm-dialog" id="cfd-'+o.id+'" style="display:none;padding:12px 16px;background:#f0fdf4;border:2px solid #86efac;border-radius:0 0 12px 12px;margin-top:-6px">';
+      html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('message-square',14)+' Nachricht an Kunde (optional)</div>';
+      html += '<input type="text" class="k-confirm-input" id="cft-'+o.id+'" placeholder="z.B. Gericht wird um 12:30 fertig…" maxlength="200" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
+      html += '<div style="display:flex;gap:8px;margin-top:8px">';
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;padding:10px" onclick="K.confirmOrder(\''+o.id+'\')">' +luc('check-circle',16)+' Jetzt bestätigen</button>';
+      html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideConfirmDialog(\''+o.id+'\')">Abbrechen</button>';
+      html += '</div></div>';
+    }
+    // Reply dialog
+    if(o.kunde_kommentar && o.status!==2){
+      html += '<div class="k-confirm-dialog" id="rpl-'+o.id+'" style="display:none;padding:12px 16px;background:#eff6ff;border:2px solid #93c5fd;border-radius:0 0 12px 12px;margin-top:-6px">';
+      html += '<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+luc('message-circle',14)+' Kunde schreibt:</div>';
+      html += '<div style="font-size:13px;color:#374151;margin-bottom:8px;padding:8px;background:#fff;border-radius:8px">'+esc(o.kunde_kommentar)+'</div>';
+      html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('reply',14)+' Antwort an Kunde (Push-Nachricht)</div>';
+      html += '<input type="text" id="rpt-'+o.id+'" placeholder="Ihre Antwort…" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
+      html += '<div style="display:flex;gap:8px;margin-top:8px">';
+      html += '<button class="k-btn k-btn-sm" style="flex:1;padding:10px;background:#2563eb;color:#fff" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',16)+' Senden</button>';
+      html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideReplyDialog(\''+o.id+'\')">Abbrechen</button>';
+      html += '</div></div>';
+    }
+    return html;
+  }
+
   function renderOrders(){
     renderDishSummary();
     if(orders.length===0){
@@ -834,74 +942,56 @@ var K = (function(){
       reinitIcons();
       return;
     }
-    // Sort: neu first, then bestätigt, then rest
-    var sorted = filtered.slice().sort(function(a,b){
-      var prio = {0:0,1:1,3:2,2:3};
-      return (prio[a.status]||9) - (prio[b.status]||9);
+    // Group by dish
+    var dishMap = {};
+    var dishOrder = [];
+    filtered.forEach(function(o){
+      var dish = o.gericht || 'Sonstiges';
+      if(!dishMap[dish]){ dishMap[dish] = []; dishOrder.push(dish); }
+      dishMap[dish].push(o);
     });
+    // Sort orders within each group: neu first, then bestätigt, then rest
+    var statusPrio = {0:0,1:1,3:2,2:3};
+    dishOrder.forEach(function(dish){
+      dishMap[dish].sort(function(a,b){ return (statusPrio[a.status]||9) - (statusPrio[b.status]||9); });
+    });
+
     var html = '';
-    sorted.forEach(function(o){
-      var srcLabel = SRC_LABELS[o.quelle]||'Online';
-      var srcCls = SRC_CLASS[o.quelle]||'src-online';
-      html += '<div class="k-order st-'+o.status+'">';
-      html += '<div class="k-order-info">';
-      html += '<div class="k-order-top">';
-      html += '<span class="k-order-name">'+esc(o.name)+'</span>';
-      if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
-      html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
-      if(o.mitnehmen) html += ' <span class="k-order-mitnehmen">'+luc('package',14)+' Mitnehmen</span>';
-      html += '</div>';
-      html += '<div class="k-order-dish">'+esc(o.gericht)+'</div>';
-      html += '<div class="k-order-meta">';
-      html += '<span>'+esc(o.bestellnummer||'')+'</span>';
-      if(o.telefon) html += '<span>'+luc('phone',12)+' '+esc(o.telefon)+'</span>';
-      if(o.preis) html += '<span>'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' €</span>';
-      html += '</div>';
-      if(o.anmerkung) html += '<div class="k-order-note">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
-      if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
-      if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
-      if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-      html += '</div>';
+    dishOrder.forEach(function(dish){
+      var groupOrders = dishMap[dish];
+      var totalQty = groupOrders.reduce(function(s,o){return s+(o.menge||1);},0);
+      var openCount = groupOrders.filter(function(o){return o.status===0;}).reduce(function(s,o){return s+(o.menge||1);},0);
+      var confirmedCount = groupOrders.filter(function(o){return o.status===1;}).reduce(function(s,o){return s+(o.menge||1);},0);
+      var packCount = groupOrders.filter(function(o){return o.mitnehmen && o.status!==2;}).reduce(function(s,o){return s+(o.menge||1);},0);
+      var gid = 'dg-'+dish.replace(/[^a-zA-Z0-9]/g,'_');
 
-      // Qty
-      html += '<div class="k-order-qty"><div class="qty-display">'+((o.menge||1))+'×</div></div>';
+      // Default collapsed, unless user manually opened or there are open orders
+      var isOpen = gid in _dishGroupOpen ? _dishGroupOpen[gid] : (openCount > 0);
+      var cls = 'k-dish-group'+(isOpen?'':' collapsed');
 
-      // Actions
-      html += '<div class="k-order-actions">';
-      if(o.status===0){
-        html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">' +luc('check-circle',16)+' Bestätigen</button>';
-        html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
-      } else if(o.status===1){
-        html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">'+luc('package-check',16)+' Abgeholt</button>';
-        if(o.kunde_kommentar) html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc('reply',16)+' Antworten</button>';
-        html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
-      } else if(o.status===3){
-        html += luc('check-circle',20);
-      }
+      html += '<div class="'+cls+'" id="'+gid+'">';
+      // Header row (clickable to toggle)
+      html += '<div class="k-dish-group-hdr" onclick="K.toggleDishGroup(\''+gid+'\')">';
+      html += '<span class="k-dg-arrow">▼</span>';
+      html += '<span class="k-dg-count">'+totalQty+'×</span>';
+      html += '<span class="k-dg-title">'+esc(dish)+'</span>';
+      // Badges
+      html += '<span class="k-dg-badges">';
+      if(openCount>0) html += '<span class="k-dg-badge k-dg-badge-open">'+openCount+' offen</span>';
+      if(confirmedCount>0) html += '<span class="k-dg-badge k-dg-badge-confirmed">'+confirmedCount+' ✓</span>';
+      if(packCount>0) html += '<span class="k-dg-badge k-dg-badge-pack">'+packCount+' 📦</span>';
+      html += '</span>';
+      // Quick actions (stop propagation so clicking buttons doesn't toggle group)
+      html += '<span class="k-dg-actions" onclick="event.stopPropagation()">';
+      if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle bestätigen">'+luc('check-circle',14)+' <span class="dg-btn-label">Alle ✓</span></button>';
+      if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle abgeholt">'+luc('package-check',14)+' <span class="dg-btn-label">Abgeholt</span></button>';
+      html += '</span>';
+      html += '</div>';
+      // Body (individual order cards)
+      html += '<div class="k-dg-body">';
+      groupOrders.forEach(function(o){ html += _renderOrderCard(o); });
       html += '</div>';
       html += '</div>';
-      // Confirm dialog – full width below card (only for status 0)
-      if(o.status===0){
-        html += '<div class="k-confirm-dialog" id="cfd-'+o.id+'" style="display:none;padding:12px 16px;background:#f0fdf4;border:2px solid #86efac;border-radius:0 0 12px 12px;margin-top:-6px">';
-        html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('message-square',14)+' Nachricht an Kunde (optional)</div>';
-        html += '<input type="text" class="k-confirm-input" id="cft-'+o.id+'" placeholder="z.B. Gericht wird um 12:30 fertig…" maxlength="200" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
-        html += '<div style="display:flex;gap:8px;margin-top:8px">';
-        html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;padding:10px" onclick="K.confirmOrder(\''+o.id+'\')">' +luc('check-circle',16)+' Jetzt bestätigen</button>';
-        html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideConfirmDialog(\''+o.id+'\')">Abbrechen</button>';
-        html += '</div></div>';
-      }
-      // Reply dialog – for orders with customer comments (any non-cancelled status)
-      if(o.kunde_kommentar && o.status!==2){
-        html += '<div class="k-confirm-dialog" id="rpl-'+o.id+'" style="display:none;padding:12px 16px;background:#eff6ff;border:2px solid #93c5fd;border-radius:0 0 12px 12px;margin-top:-6px">';
-        html += '<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+luc('message-circle',14)+' Kunde schreibt:</div>';
-        html += '<div style="font-size:13px;color:#374151;margin-bottom:8px;padding:8px;background:#fff;border-radius:8px">'+esc(o.kunde_kommentar)+'</div>';
-        html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('reply',14)+' Antwort an Kunde (Push-Nachricht)</div>';
-        html += '<input type="text" id="rpt-'+o.id+'" placeholder="Ihre Antwort…" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
-        html += '<div style="display:flex;gap:8px;margin-top:8px">';
-        html += '<button class="k-btn k-btn-sm" style="flex:1;padding:10px;background:#2563eb;color:#fff" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',16)+' Senden</button>';
-        html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideReplyDialog(\''+o.id+'\')">Abbrechen</button>';
-        html += '</div></div>';
-      }
     });
     document.getElementById('mittag-orders').innerHTML = html;
     reinitIcons();
@@ -2127,6 +2217,9 @@ var K = (function(){
     toggleHistory: toggleHistory,
     setShopStatus: setShopStatus,
     toggleSlotGroup: toggleSlotGroup,
+    toggleDishGroup: toggleDishGroup,
+    bulkConfirmDish: bulkConfirmDish,
+    bulkPickupDish: bulkPickupDish,
     openPackModal: openPackModal,
     pkToggle: pkToggle,
     pkQtyChange: pkQtyChange,
