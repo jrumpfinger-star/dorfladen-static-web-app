@@ -50,8 +50,20 @@
     .k-dish-inline .dish-count{font-weight:800;color:var(--c-text);font-size:13px}
     .k-dish-sep{margin:0 6px;color:#d1d5db}
 
-    /* ═══ Order cards ═══ */
-    .k-order{background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:10px;overflow:hidden;border-left:5px solid transparent;display:flex;align-items:stretch}
+    /* ═══ Order cards (collapsible) ═══ */
+    .k-order{background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:10px;overflow:hidden;border-left:5px solid transparent}
+    .k-order-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;min-height:44px}
+    .k-order-hdr:active{background:#f9fafb}
+    .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0}
+    .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
+    .k-order.oc-collapsed .k-order-body{display:none}
+    .k-order-hdr .k-oc-name{font-weight:700;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .k-order-hdr .k-oc-qty{font-weight:800;font-size:15px;color:var(--c-green)}
+    .k-order-hdr .k-oc-badges{display:flex;gap:4px;align-items:center;flex-shrink:0}
+    .k-order-hdr .k-oc-actions{display:flex;gap:3px;align-items:center;flex-shrink:0}
+    .k-order-hdr .k-oc-actions .k-btn{min-height:32px;min-width:32px;padding:4px 8px;font-size:11px;border-radius:8px;gap:3px}
+    @media(max-width:600px){.k-order-hdr .k-oc-actions .k-btn .oc-btn-label{display:none}}
+    .k-order-body{display:flex;align-items:stretch;border-top:1px solid var(--c-border)}
     .k-order.st-0{border-left-color:var(--c-yellow)}
     .k-order.st-1{border-left-color:var(--c-green)}
     .k-order.st-2{border-left-color:var(--c-red)}
@@ -859,18 +871,52 @@ var K = (function(){
     toPickup.forEach(function(o){ setStatus(o.id, 3); });
   }
 
+  var _orderCardOpen = {};
+
+  function toggleOrderCard(oid){
+    var el = document.getElementById('oc-'+oid);
+    if(!el) return;
+    el.classList.toggle('oc-collapsed');
+    _orderCardOpen[oid] = !el.classList.contains('oc-collapsed');
+  }
+
   function _renderOrderCard(o){
     var srcLabel = SRC_LABELS[o.quelle]||'Online';
     var srcCls = SRC_CLASS[o.quelle]||'src-online';
+    var hasNote = o.anmerkung || o.kunde_kommentar;
+    // Default collapsed unless user opened or has unseen comment
+    var isOpen = o.id in _orderCardOpen ? _orderCardOpen[o.id] : false;
     var html = '';
-    html += '<div class="k-order st-'+o.status+'">';
-    html += '<div class="k-order-info">';
-    html += '<div class="k-order-top">';
-    html += '<span class="k-order-name">'+esc(o.name)+'</span>';
-    if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
+    html += '<div class="k-order st-'+o.status+(isOpen?'':' oc-collapsed')+'" id="oc-'+o.id+'">';
+
+    // ── Compact header (always visible) ──
+    html += '<div class="k-order-hdr" onclick="K.toggleOrderCard(\''+o.id+'\')">';
+    html += '<span class="k-oc-arrow">▼</span>';
+    html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
+    html += '<span class="k-oc-qty">'+(o.menge||1)+'×</span>';
+    html += '<span class="k-oc-badges">';
     html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
-    if(o.mitnehmen) html += ' <span class="k-order-mitnehmen">'+luc('package',14)+' Mitnehmen</span>';
+    if(o.mitnehmen) html += '<span class="k-order-mitnehmen">'+luc('package',12)+' MIT</span>';
+    if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:6px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',9)+' NEU</span>';
+    if(hasNote) html += '<span style="color:#92400e;font-size:10px" title="Hat Anmerkung">'+luc('message-square',12)+'</span>';
+    html += '</span>';
+    // Inline actions (stop propagation)
+    html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
+    if(o.status===0){
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">'+luc('check-circle',14)+' <span class="oc-btn-label">Bestätigen</span></button>';
+      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',14)+'</button>';
+    } else if(o.status===1){
+      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">'+luc('package-check',14)+' <span class="oc-btn-label">Abgeholt</span></button>';
+      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',14)+'</button>';
+    } else if(o.status===3){
+      html += '<span style="color:#16a34a">'+luc('check-circle',18)+'</span>';
+    }
+    html += '</span>';
     html += '</div>';
+
+    // ── Expandable body (details) ──
+    html += '<div class="k-order-body">';
+    html += '<div class="k-order-info">';
     html += '<div class="k-order-meta">';
     html += '<span>'+esc(o.bestellnummer||'')+'</span>';
     if(o.telefon) html += '<span>'+luc('phone',12)+' '+esc(o.telefon)+'</span>';
@@ -880,23 +926,10 @@ var K = (function(){
     if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
     if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
     if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    html += '</div>';
-    // Qty
-    html += '<div class="k-order-qty"><div class="qty-display">'+((o.menge||1))+'×</div></div>';
-    // Actions
-    html += '<div class="k-order-actions">';
-    if(o.status===0){
-      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">' +luc('check-circle',16)+' Bestätigen</button>';
-      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
-    } else if(o.status===1){
-      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">'+luc('package-check',16)+' Abgeholt</button>';
-      if(o.kunde_kommentar) html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc('reply',16)+' Antworten</button>';
-      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setStatus(\''+o.id+'\',2)">'+luc('x',16)+'</button>';
-    } else if(o.status===3){
-      html += luc('check-circle',20);
-    }
+    if(o.kunde_kommentar && o.status===1) html += '<div style="padding-top:4px"><button class="k-btn k-btn-sm k-btn-outline" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc('reply',14)+' Antworten</button></div>';
     html += '</div>';
     html += '</div>';
+
     // Confirm dialog
     if(o.status===0){
       html += '<div class="k-confirm-dialog" id="cfd-'+o.id+'" style="display:none;padding:12px 16px;background:#f0fdf4;border:2px solid #86efac;border-radius:0 0 12px 12px;margin-top:-6px">';
@@ -919,6 +952,7 @@ var K = (function(){
       html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideReplyDialog(\''+o.id+'\')">Abbrechen</button>';
       html += '</div></div>';
     }
+    html += '</div>';
     return html;
   }
 
@@ -2218,6 +2252,7 @@ var K = (function(){
     setShopStatus: setShopStatus,
     toggleSlotGroup: toggleSlotGroup,
     toggleDishGroup: toggleDishGroup,
+    toggleOrderCard: toggleOrderCard,
     bulkConfirmDish: bulkConfirmDish,
     bulkPickupDish: bulkPickupDish,
     openPackModal: openPackModal,
