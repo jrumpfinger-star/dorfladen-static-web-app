@@ -1891,7 +1891,10 @@
       // Aktuelle Uhrzeit als HH:MM
       var hh=now.getHours(), mm=now.getMinutes();
       var nowTime=(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
-      if(nowTime>=closeTime) return; // nach Ladenschluss
+      // 30 Min vor Schluss ausblenden
+      var cp=closeTime.split(':'), cMin=parseInt(cp[0],10)*60+parseInt(cp[1],10)-30;
+      var hideTime=(Math.floor(cMin/60)<10?'0':'')+Math.floor(cMin/60)+':'+(cMin%60<10?'0':'')+(cMin%60);
+      if(nowTime>=hideTime) return;
       _showPost();
     }).catch(function(){ _showPost(); });
   }).catch(function(){});
