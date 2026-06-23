@@ -733,6 +733,12 @@ var K = (function(){
     document.getElementById('mt-fc-alle').textContent = orders.length;
     document.getElementById('mt-fc-abgeholt').textContent = c3;
     document.getElementById('mt-fc-storniert').textContent = c2;
+    // Highlight "Zu bestätigen" in red when pending orders exist
+    var offenBtn = document.querySelector('[data-mt-filter="offen"]');
+    if(offenBtn){
+      offenBtn.style.color = c0>0 ? '#dc2626' : '';
+      offenBtn.style.fontWeight = c0>0 ? '800' : '';
+    }
     var msgCount = orders.filter(function(o){return _hasUnseenComment(o);}).length;
     var msgBadge = document.getElementById('mt-msg-badge');
     var msgCountEl = document.getElementById('mt-msg-count');
