@@ -312,60 +312,38 @@
     /* Lucide inline icons */
     [data-lucide]{display:inline-block;vertical-align:middle}
 
-    /* ═══ Large kiosk screens ═══ */
+    /* ═══ Large kiosk screens – 2-column grid ═══ */
     @media(min-width:1200px){
-      .k-header{padding:16px 32px}
-      .k-header h1{font-size:26px}
-      .k-header .k-clock{font-size:24px}
-      .k-header .k-date{font-size:16px}
-      .k-tab{padding:18px 12px;font-size:17px}
-      .k-tab .k-tab-icon{font-size:28px}
-      .k-panel{padding:16px 32px}
-      .k-order-info{padding:18px 22px;gap:6px}
-      .k-order-name{font-size:20px}
-      .k-order-dish{font-size:17px}
-      .k-order-meta{font-size:14px}
-      .k-order-positions{font-size:14px}
-      .k-order-positions span{padding:2px 8px;border-radius:5px}
-      .k-order-price{font-size:18px}
-      .st-timeline{margin:12px 0 14px;padding:0 12px}
-      .st-compact .st-dot{width:30px;height:30px;border-width:3px}
-      .st-compact .st-label{font-size:12px}
-      .st-compact .st-line{top:15px;height:3px}
-      .k-btn-sm{min-height:36px;padding:6px 16px;font-size:14px}
-      .k-tool{width:36px;height:36px}
-      .k-act-tools{border-radius:10px;padding:3px;gap:2px}
-      .k-order-actions{gap:10px;padding:10px 0 0}
-      .k-grp-header{font-size:15px;padding:10px 32px}
-      .pack-ring,.countdown-ring{width:52px;height:52px}
-      .pack-ring .ring-text{font-size:13px}
-      .countdown-ring .ring-text{font-size:11px}
+      .k-header{padding:14px 28px}
+      .k-header h1{font-size:22px}
+      .k-header .k-clock{font-size:20px}
+      .k-panel{padding:14px 28px}
+      .k-slot-group{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .k-slot-group .k-slot-header{grid-column:1/-1}
+      .k-grp-header{font-size:14px;padding:8px 28px}
+      .k-order-name{font-size:16px}
+      .st-compact .st-dot{width:24px;height:24px;border-width:2px}
+      .st-compact .st-label{font-size:10px}
+      .st-compact .st-line{top:12px;height:2px}
+      .pack-ring,.countdown-ring{width:48px;height:48px}
+      .pack-ring .ring-text{font-size:12px}
+      .countdown-ring .ring-text{font-size:10px}
+      #k-sparkline{width:100px;height:36px}
     }
     @media(min-width:1600px){
-      .k-header{padding:20px 48px}
-      .k-header h1{font-size:32px}
-      .k-header .k-clock{font-size:28px}
-      .k-tab{padding:22px 16px;font-size:20px}
-      .k-tab .k-tab-icon{font-size:32px}
-      .k-panel{padding:20px 48px}
-      .k-order-info{padding:22px 28px;gap:8px}
-      .k-order-name{font-size:24px}
-      .k-order-dish{font-size:20px}
-      .k-order-meta{font-size:16px;gap:16px}
-      .k-order-positions{font-size:16px}
-      .k-order-price{font-size:22px}
-      .st-timeline{margin:14px 0 18px;padding:0 16px}
-      .st-compact .st-dot{width:36px;height:36px;border-width:3px}
-      .st-compact .st-label{font-size:14px;margin-top:8px}
-      .st-compact .st-line{top:18px;height:4px}
-      .k-btn-sm{min-height:42px;padding:8px 20px;font-size:16px;border-radius:10px}
-      .k-tool{width:42px;height:42px;border-radius:8px}
-      .k-act-tools{border-radius:12px;padding:4px;gap:3px}
-      .k-order-actions{gap:12px;padding:12px 0 0}
-      .k-grp-header{font-size:17px;padding:12px 48px}
-      .pack-ring,.countdown-ring{width:60px;height:60px}
-      .pack-ring .ring-text{font-size:15px}
-      .countdown-ring .ring-text{font-size:12px}
+      .k-header{padding:16px 40px}
+      .k-header h1{font-size:24px}
+      .k-header .k-clock{font-size:22px}
+      .k-panel{padding:16px 40px}
+      .k-slot-group{grid-template-columns:1fr 1fr 1fr;gap:12px}
+      .k-grp-header{font-size:15px;padding:10px 40px}
+      .k-order-info{padding:16px 18px}
+      .k-order-name{font-size:17px}
+      .k-order-dish{font-size:14px}
+      .st-compact .st-dot{width:26px;height:26px}
+      .st-compact .st-label{font-size:10px}
+      .st-compact .st-line{top:13px;height:2px}
+      #k-sparkline{width:120px;height:40px}
     }
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
