@@ -1732,6 +1732,7 @@ var K = (function(){
       html += luc('check-circle',20);
       html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.setShopStatus(\''+o.id+'\',2)" title="Zurück auf Bereit">'+luc('undo-2',16)+'</button>';
     }
+    html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;margin-left:auto" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Bestellung löschen">'+luc('trash-2',14)+'</button>';
     html += '</div>';
     html += '</div>';
     return html;
@@ -1762,14 +1763,15 @@ var K = (function(){
 
   var _detailOrderId = null;
 
-  function deleteShopOrder(){
-    if(!_detailOrderId) return;
-    var o = _allShopOrders.find(function(x){return x.id===_detailOrderId;});
-    var label = o ? (o.bestellnummer||_detailOrderId) : _detailOrderId;
+  function deleteShopOrder(orderId){
+    var delId = orderId || _detailOrderId;
+    if(!delId) return;
+    var o = _allShopOrders.find(function(x){return x.id===delId;});
+    var label = o ? (o.bestellnummer||delId) : delId;
     if(!confirm('Bestellung '+label+' wirklich endgültig löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.')) return;
     var btn = document.getElementById('detail-delete-btn');
     if(btn){btn.disabled=true;btn.textContent='Wird gelöscht…';}
-    fetch(API+'/shop-order',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:_detailOrderId})})
+    fetch(API+'/shop-order',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:delId})})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
