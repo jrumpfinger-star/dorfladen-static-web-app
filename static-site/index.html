@@ -1735,7 +1735,8 @@
     document.getElementById('tp-datum').textContent=(_isTomorrow?'Vorschau – ':'')+fmtDate(d);
 
     var items=post.items||[];
-    document.getElementById('tp-badge').textContent=items.length;
+    if(typeof items==='string'){try{items=JSON.parse(items);}catch(e){items=[];}}
+    if(!Array.isArray(items))items=[];
 
     var nowH=new Date().getHours();
     var lunchOver=_isTomorrow?false:nowH>=13;
@@ -1744,7 +1745,6 @@
     var theke=items.filter(function(i){return lunchOver?true:(i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
 
     var visibleItems=mittagessen.length+theke.length;
-    document.getElementById('tp-badge').textContent=visibleItems;
 
     var html='';
 
