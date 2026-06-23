@@ -1607,8 +1607,8 @@
     orders.forEach(function(o){
       var st=o.status||0;
       var positionen=[];
-      try{positionen=typeof o.positionen_json==='string'?JSON.parse(o.positionen_json):o.positionen_json||[];}catch(e){}
-      var artikelCount=positionen.length;
+      try{positionen=Array.isArray(o.positionen)?o.positionen:(typeof o.positionen_json==='string'?JSON.parse(o.positionen_json):[]);}catch(e){}
+      var artikelCount=positionen.reduce(function(s,p){return s+(p.menge||1);},0);
       var datum=o.abholdatum||'';
       try{var dp=datum.substring(0,10).split('-');if(dp.length===3)datum=dp[2]+'.'+dp[1]+'.'+dp[0];}catch(e){}
       var slot='';
