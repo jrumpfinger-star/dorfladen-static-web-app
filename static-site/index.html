@@ -555,6 +555,26 @@
 
   <div class="promo-bar-in">
 
+    <a href="javascript:void(0)" class="promo-item promo-tp" id="promo-tp-link" style="display:none" onclick="document.getElementById('tp-overlay').classList.add('open')">
+
+      <span class="promo-tp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+
+      Aktuelles
+
+      <span class="promo-count" id="promo-tp-count" style="display:none">0</span>
+
+    </a>
+
+    <a href="/shop#meine-bestellungen" class="promo-item promo-orders" id="promo-orders-link" style="display:none">
+
+      <span class="promo-orders-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>
+
+      Bestellungen
+
+      <span class="promo-count" id="promo-orders-count">0</span>
+
+    </a>
+
     <a href="#angebote" class="promo-item promo-ang" id="promo-ang-link" style="display:none">
 
       <span class="promo-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg> Sonderangebote</span>
@@ -1546,19 +1566,9 @@
           var todayStr = new Date().toISOString().substring(0,10);
           var open = (res.orders||[]).filter(function(o){ return o.status < 3 && (o.abholdatum||'').substring(0,10) >= todayStr; });
           if(!open.length) return;
-          // Create floating badge
-          var badge = document.createElement('a');
-          badge.href = '/shop#meine-bestellungen';
-          badge.title = open.length + ' offene Bestellung'+(open.length>1?'en':'');
-          badge.style.cssText = 'position:fixed;top:110px;right:20px;z-index:500;width:56px;height:56px;border-radius:50%;background:#1e3a2f;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.25);text-decoration:none;font-size:20px;transition:transform .15s';
-          badge.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
-          var count = document.createElement('span');
-          count.style.cssText = 'position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:12px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px';
-          count.textContent = open.length;
-          badge.appendChild(count);
-          badge.addEventListener('mouseenter',function(){badge.style.transform='scale(1.1)';});
-          badge.addEventListener('mouseleave',function(){badge.style.transform='scale(1)';});
-          document.body.appendChild(badge);
+          var promoLink = document.getElementById('promo-orders-link');
+          var promoCount = document.getElementById('promo-orders-count');
+          if(promoLink){ promoLink.style.display=''; promoCount.textContent=open.length; }
         }).catch(function(){});
     }catch(e){}
   })();
@@ -1566,11 +1576,9 @@
 
 <!-- ====== TAGESPOST FAB + MODAL ====== -->
 <style>
-.tp-fab{position:fixed;top:110px;left:20px;z-index:500;width:56px;height:56px;border-radius:50%;background:#1e3a2f;color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.25);cursor:pointer;border:none;font-size:20px;transition:transform .15s}
-.tp-fab:hover{transform:scale(1.1)}
-.tp-fab .tp-badge{position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px}
-@keyframes tp-pulse{0%,100%{box-shadow:0 4px 12px rgba(0,0,0,.25)}50%{box-shadow:0 0 0 10px rgba(46,125,79,.3),0 4px 12px rgba(0,0,0,.25)}}
-.tp-fab.pulse{animation:tp-pulse 1.5s ease 3}
+.tp-fab{display:none}
+.promo-tp{background:#1e3a2f;color:#fff;font-weight:700}.promo-tp:hover{background:#2a5040;color:#fff}
+.promo-orders{background:#1e3a2f;color:#fff;font-weight:700}.promo-orders:hover{background:#2a5040;color:#fff}
 .tp-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:flex-start;padding:60px 16px 16px}
 .tp-overlay.open{display:flex}
 .tp-modal{background:#fff;border-radius:16px;max-width:500px;width:100%;max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
@@ -1606,10 +1614,7 @@
 @media(max-width:600px){.tp-overlay{padding:20px 8px 8px}.tp-modal{max-height:calc(100vh - 30px);border-radius:12px}.tp-modal-head{border-radius:12px 12px 0 0}.tp-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}}
 </style>
 
-<button class="tp-fab" id="tp-fab" title="Heute im Dorfladen">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-  <span class="tp-badge" id="tp-badge">0</span>
-</button>
+<span class="tp-fab" id="tp-fab"></span>
 
 <div class="tp-overlay" id="tp-overlay">
   <div class="tp-modal" id="tp-modal">
@@ -1723,8 +1728,10 @@
     var post=res.post;
     var count=renderPost(post,res.is_tomorrow);
     if(!count)return;
-    fab.style.display='flex';
-    fab.classList.add('pulse');
+    var promoTp=document.getElementById('promo-tp-link');
+    var promoTpCount=document.getElementById('promo-tp-count');
+    if(promoTp){promoTp.style.display='';}
+    if(promoTpCount&&count>0){promoTpCount.style.display='';promoTpCount.textContent=count;}
 
     var seenKey='tagespost_seen_'+new Date().toISOString().substring(0,10);
     if(!localStorage.getItem(seenKey)){
