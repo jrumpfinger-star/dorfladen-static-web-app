@@ -610,8 +610,9 @@
       <button class="k-modal-close" onclick="K.closeModal('modal-detail')">✕</button>
     </div>
     <div class="k-modal-body" id="detail-body" style="padding:16px 24px"></div>
-    <div class="k-modal-footer">
+    <div class="k-modal-footer" style="flex-wrap:wrap;gap:6px">
       <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-detail')">Schließen</button>
+      <button class="k-btn k-btn-lg" style="flex:1;background:#dc2626;color:#fff" id="detail-delete-btn" onclick="K.deleteShopOrder()">🗑 Löschen</button>
     </div>
   </div>
 </div>
@@ -1707,7 +1708,35 @@ var K = (function(){
   //  ORDER DETAIL MODAL (double-click on shop card)
   // ══════════════════════════════════════════════════
 
+  var _detailOrderId = null;
+
+  function deleteShopOrder(){
+    if(!_detailOrderId) return;
+    var o = _allShopOrders.find(function(x){return x.id===_detailOrderId;});
+    var label = o ? (o.bestellnummer||_detailOrderId) : _detailOrderId;
+    if(!confirm('Bestellung '+label+' wirklich endgültig löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.')) return;
+    var btn = document.getElementById('detail-delete-btn');
+    if(btn){btn.disabled=true;btn.textContent='Wird gelöscht…';}
+    fetch(API+'/shop-order',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:_detailOrderId})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          toast('🗑 Bestellung gelöscht');
+          closeModal('modal-detail');
+          loadShopOrders();
+        } else {
+          toast('Fehler: '+(res.error||''));
+          if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
+        }
+      })
+      .catch(function(e){
+        toast('Fehler: '+e.message);
+        if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
+      });
+  }
+
   function showOrderDetail(orderId){
+    _detailOrderId = orderId;
     var o = _allShopOrders.find(function(x){return x.id===orderId;});
     if(!o){toast('Bestellung nicht gefunden');return;}
     var posArr = o.positionen||[];
@@ -2280,6 +2309,7 @@ var K = (function(){
     closeModal: closeModal,
     setMittagFilter: setMittagFilter,
     showOrderDetail: showOrderDetail,
+    deleteShopOrder: deleteShopOrder,
     refresh: refresh
   };
 })();

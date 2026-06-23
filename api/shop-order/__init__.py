@@ -696,6 +696,40 @@ def _handle_patch(req, dv_token, base_url, headers):
         )
 
 
+def _handle_delete(req, dv_token, base_url, headers):
+    """Permanently delete a shop order (CMS/admin action)."""
+    try:
+        body = req.get_json()
+    except:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "Ungültiger JSON-Body"}, ensure_ascii=False),
+            status_code=400, headers=get_cors_headers()
+        )
+    order_id = (body.get("id") or "").strip()
+    if not order_id:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "id erforderlich"}, ensure_ascii=False),
+            status_code=400, headers=get_cors_headers()
+        )
+    delete_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})"
+    try:
+        r = requests.delete(delete_url, headers=headers, timeout=30)
+        if r.status_code in (200, 204):
+            return func.HttpResponse(
+                json.dumps({"success": True}, ensure_ascii=False),
+                status_code=200, headers=get_cors_headers()
+            )
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}, ensure_ascii=False),
+            status_code=r.status_code, headers=get_cors_headers()
+        )
+    except Exception as e:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": str(e)}, ensure_ascii=False),
+            status_code=500, headers=get_cors_headers()
+        )
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -716,6 +750,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return _handle_get(req, dv_token, base_url, headers)
     elif req.method == "PATCH":
         return _handle_patch(req, dv_token, base_url, headers)
+    elif req.method == "DELETE":
+        return _handle_delete(req, dv_token, base_url, headers)
 
     return func.HttpResponse(
         json.dumps({"success": False, "error": "Methode nicht unterstützt"}),
