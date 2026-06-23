@@ -1739,7 +1739,7 @@
     if(!Array.isArray(items))items=[];
 
     var nowH=new Date().getHours();
-    var lunchOver=_isTomorrow?false:nowH>=13;
+    var lunchOver=_isTomorrow?false:nowH>=14;
 
     var mittagessen=lunchOver?[]:items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
     var theke=items.filter(function(i){return lunchOver?true:(i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
@@ -1769,9 +1769,6 @@
       html+='</div>';
     }
 
-    if(!_isTomorrow&&!mittagessen.length){
-      html+='<div class="tp-cta"><a href="/shop" class="tp-cta-shop" style="flex:1 1 100%">🛒 Jetzt bestellen</a></div>';
-    }
 
     html+='<div id="tp-my-order"></div>';
 
