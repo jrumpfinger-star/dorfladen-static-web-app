@@ -681,7 +681,7 @@ var K = (function(){
   // ══════════════════════════════════════════════════
 
   var _mittagDatum = today();
-  var _mittagFilter = 'offen'; // Default: Zu bestätigen
+  var _mittagFilter = 'alle'; // Default: Alle
   var _globalUnreadMessages = 0;
   var _globalTodayNew = 0;
 
@@ -2224,7 +2224,7 @@ var K = (function(){
 
   buildDayBar();
   reinitIcons(); // Initialize static Lucide icons
-  setMittagFilter('offen'); // Default: "Zu bestätigen"
+  setMittagFilter('alle'); // Default: Alle
   loadOrders();
   loadDishes();
   loadShopOrders();
