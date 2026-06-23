@@ -701,6 +701,15 @@ var K = (function(){
     if(f==='nachrichten'){
       _markCommentsAsSeen();
       _mittagFilter = 'nachrichten';
+      // Auto-expand all cards and groups with comments
+      orders.forEach(function(o){
+        if(o.kunde_kommentar){
+          _orderCardOpen[o.id] = true;
+          var dish = o.gericht || 'Sonstiges';
+          var gid = 'dg-'+dish.replace(/[^a-zA-Z0-9]/g,'_');
+          _dishGroupOpen[gid] = true;
+        }
+      });
     } else {
       _mittagFilter = f;
     }
