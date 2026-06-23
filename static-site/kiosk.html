@@ -242,6 +242,10 @@
     .st-step.cancelled .st-label{color:#dc2626}
     .st-line{position:absolute;top:14px;left:0;right:0;height:3px;background:#e5e7eb;z-index:0}
     .st-line-fill{height:100%;background:#16a34a;border-radius:2px;transition:width .3s}
+    .st-compact{margin:8px 0 10px;padding:0 8px}
+    .st-compact .st-dot{width:22px;height:22px;border-width:2px}
+    .st-compact .st-label{font-size:9px}
+    .st-compact .st-line{top:11px;height:2px}
 
     /* ═══ Pack modal (inline) ═══ */
     .k-modal.k-modal-lg{max-width:720px}
@@ -1642,6 +1646,37 @@ var K = (function(){
     return fmtDate(d);
   }
 
+  function _buildTimelineCompact(status){
+    var steps = [
+      {s:0, icon:'circle-dot',    label:'Neu'},
+      {s:1, icon:'clipboard-list', label:'Bearbeitung'},
+      {s:2, icon:'check-circle',   label:'Bereit'},
+      {s:3, icon:'package-check',  label:'Abgeholt'}
+    ];
+    var isCancelled = status===4;
+    var fillPct = isCancelled ? 0 : (status>=3 ? 100 : Math.round((status / 3)*100));
+    var html = '<div class="st-timeline st-compact">';
+    html += '<div class="st-line"><div class="st-line-fill" style="width:'+fillPct+'%"></div></div>';
+    steps.forEach(function(st){
+      var cls = '';
+      if(isCancelled) cls = '';
+      else if(st.s < status) cls = 'done';
+      else if(st.s === status) cls = 'active';
+      html += '<div class="st-step '+cls+'">';
+      html += '<div class="st-dot">'+luc(st.icon,10)+'</div>';
+      html += '<div class="st-label">'+st.label+'</div>';
+      html += '</div>';
+    });
+    if(isCancelled){
+      html += '<div class="st-step cancelled">';
+      html += '<div class="st-dot">'+luc('x',10)+'</div>';
+      html += '<div class="st-label">Storniert</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function renderShopOrderCard(o){
     var stClass = 'shop-st-'+o.status;
     var badgeClass = 'shop-badge-'+o.status;
@@ -1657,11 +1692,12 @@ var K = (function(){
     html += '<div class="k-order-info">';
     html += '<div class="k-order-top">';
     html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';
-    html += '<span class="k-order-status '+badgeClass+'">'+luc(SHOP_ICON_NAMES[o.status]||'circle',14)+' '+statusLabel+'</span>';
+    html += '<span style="font-size:13px;font-weight:700;color:var(--c-green)">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
     html += '</div>';
+    // Compact timeline
+    html += _buildTimelineCompact(o.status);
     html += '<div class="k-order-dish">'+esc(o.bestellnummer)+' · '+posCount+' Pos.</div>';
     html += '<div class="k-order-meta">';
-    html += '<span>'+luc('coins',12)+' '+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
     if(o.anmerkungen) html += '<span>'+luc('message-square',12)+' '+esc(o.anmerkungen)+'</span>';
     html += '</div>';
     if(posPreview.length>0){
@@ -1670,9 +1706,6 @@ var K = (function(){
       html += '</div>';
     }
     html += '</div>';
-
-    // Gesamtsumme
-    html += '<div class="k-order-qty"><div class="qty-display" style="font-size:16px">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+'€</div></div>';
 
     // Actions
     html += '<div class="k-order-actions">';
