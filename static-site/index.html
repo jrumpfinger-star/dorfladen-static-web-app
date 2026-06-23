@@ -1682,11 +1682,8 @@
       html+='</div>';
     }
 
-    if(!_isTomorrow){
-      html+='<div class="tp-cta">';
-      if(mittagessen.length){html+='<a href="/mittagstisch-bestellen?heute=1" class="tp-cta-shop" style="flex:1 1 100%">🍽️ Mittagessen bestellen</a>';}
-      else{html+='<a href="/shop" class="tp-cta-shop" style="flex:1 1 100%">🛒 Jetzt bestellen</a>';}
-      html+='</div>';
+    if(!_isTomorrow&&!mittagessen.length){
+      html+='<div class="tp-cta"><a href="/shop" class="tp-cta-shop" style="flex:1 1 100%">🛒 Jetzt bestellen</a></div>';
     }
 
     document.getElementById('tp-body').innerHTML=html;
