@@ -246,6 +246,9 @@
     .st-compact .st-dot{width:22px;height:22px;border-width:2px}
     .st-compact .st-label{font-size:9px}
     .st-compact .st-line{top:11px;height:2px}
+    .st-clickable{cursor:pointer}
+    .st-clickable:hover .st-dot{transform:scale(1.2);box-shadow:0 0 0 3px rgba(22,163,74,.25)}
+    .st-clickable:hover .st-label{text-decoration:underline}
 
     /* ═══ Pack modal (inline) ═══ */
     .k-modal.k-modal-lg{max-width:720px}
@@ -1649,7 +1652,7 @@ var K = (function(){
     return fmtDate(d);
   }
 
-  function _buildTimelineCompact(status){
+  function _buildTimelineCompact(status, orderId){
     var steps = [
       {s:0, icon:'circle-dot',    label:'Neu'},
       {s:1, icon:'clipboard-list', label:'Bearbeitung'},
@@ -1665,7 +1668,8 @@ var K = (function(){
       if(isCancelled) cls = '';
       else if(st.s < status) cls = 'done';
       else if(st.s === status) cls = 'active';
-      html += '<div class="st-step '+cls+'">';
+      var clickable = orderId && !isCancelled && st.s < status;
+      html += '<div class="st-step '+cls+(clickable?' st-clickable':'')+'"'+(clickable?' onclick="K.setShopStatus(\''+orderId+'\','+st.s+')" title="Zurück auf '+st.label+'"':'')+'>';
       html += '<div class="st-dot">'+luc(st.icon,10)+'</div>';
       html += '<div class="st-label">'+st.label+'</div>';
       html += '</div>';
@@ -1698,7 +1702,7 @@ var K = (function(){
     html += '<span style="font-size:13px;font-weight:700;color:var(--c-green)">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
     html += '</div>';
     // Compact timeline
-    html += _buildTimelineCompact(o.status);
+    html += _buildTimelineCompact(o.status, o.id);
     html += '<div class="k-order-dish">'+esc(o.bestellnummer)+' · '+posCount+' Pos.</div>';
     html += '<div class="k-order-meta">';
     if(o.anmerkungen) html += '<span>'+luc('message-square',12)+' '+esc(o.anmerkungen)+'</span>';
@@ -1717,18 +1721,16 @@ var K = (function(){
       html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+' Details</button>';
       html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',4)">'+luc('x',16)+'</button>';
     } else if(o.status===1){
-      html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff" onclick="K.setShopStatus(\''+o.id+'\',2)">'+luc('check-circle',16)+' Bereit</button>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">' +luc('package',16)+' Packen</button>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+'</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.setShopStatus(\''+o.id+'\',0)" title="Zurück auf Neu">'+luc('undo-2',16)+'</button>';
     } else if(o.status===2){
-      if(o.gepackt){
-        html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',16)+' Ausgeben</button>';
-      } else {
-        html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">' +luc('package',16)+' Packen</button>';
-      }
+      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',16)+' Ausgeben</button>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+'</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.setShopStatus(\''+o.id+'\',1)" title="Zurück auf Bearbeitung">'+luc('undo-2',16)+'</button>';
     } else if(o.status===3){
       html += luc('check-circle',20);
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.setShopStatus(\''+o.id+'\',2)" title="Zurück auf Bereit">'+luc('undo-2',16)+'</button>';
     }
     html += '</div>';
     html += '</div>';
@@ -1744,7 +1746,7 @@ var K = (function(){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        var labels = {1:'📋 In Bearbeitung',2:'✅ Abholbereit',3:'📦 Abgeholt',4:'❌ Storniert'};
+        var labels = {0:'↩ Zurück auf Neu',1:'📋 In Bearbeitung',2:'✅ Abholbereit',3:'📦 Abgeholt',4:'❌ Storniert'};
         toast(labels[status]||'Status aktualisiert');
         loadShopOrders();
       } else {
@@ -1785,7 +1787,7 @@ var K = (function(){
       });
   }
 
-  function _buildTimeline(status){
+  function _buildTimeline(status, orderId){
     // Steps: 0=Neu, 1=In Bearbeitung, 2=Abholbereit, 3=Abgeholt, 4=Storniert
     var steps = [
       {s:0, icon:'circle-dot',   label:'Neu'},
@@ -1803,7 +1805,8 @@ var K = (function(){
       if(isCancelled){ cls = ''; }
       else if(st.s < status) cls = 'done';
       else if(st.s === status) cls = 'active';
-      html += '<div class="st-step '+cls+'">';
+      var clickable = orderId && !isCancelled && st.s < status;
+      html += '<div class="st-step '+cls+(clickable?' st-clickable':'')+'"'+(clickable?' onclick="K.setShopStatus(\''+orderId+'\','+st.s+');K.closeModal(\'modal-detail\')" title="Zurück auf '+st.label+'"':'')+'>';
       html += '<div class="st-dot">'+luc(st.icon,14)+'</div>';
       html += '<div class="st-label">'+st.label+'</div>';
       html += '</div>';
@@ -1825,7 +1828,7 @@ var K = (function(){
     var posArr = o.positionen||[];
     var html = '';
     // Status Timeline
-    html += _buildTimeline(o.status);
+    html += _buildTimeline(o.status, o.id);
     // Info grid
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:16px;font-size:13px">';
     html += '<div><span style="color:#6b7280">Kunde</span><br><strong>'+esc(o.kunde_name||o.kunde_email||'–')+'</strong></div>';

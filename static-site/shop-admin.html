@@ -137,6 +137,9 @@
     .st-step.cancelled .st-label{color:#dc2626}
     .st-line{position:absolute;top:14px;left:0;right:0;height:3px;background:#e5e7eb;z-index:0}
     .st-line-fill{height:100%;background:#16a34a;border-radius:2px;transition:width .3s}
+    .st-clickable{cursor:pointer}
+    .st-clickable:hover .st-dot{transform:scale(1.2);box-shadow:0 0 0 3px rgba(22,163,74,.25)}
+    .st-clickable:hover .st-label{text-decoration:underline}
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -346,7 +349,7 @@
   }
   var orders=[];var selected=null;var activeStatFilter='all';var historyMode=false;var statusLabels={0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt',4:'Storniert'};
   function luc(name,size){return '<i data-lucide="'+name+'" style="width:'+(size||14)+'px;height:'+(size||14)+'px"></i>';}
-  function _buildTimeline(status){
+  function _buildTimeline(status, orderId){
     var steps=[{s:0,icon:'circle-dot',label:'Neu'},{s:1,icon:'clipboard-list',label:'In Bearbeitung'},{s:2,icon:'check-circle',label:'Abholbereit'},{s:3,icon:'package-check',label:'Abgeholt'}];
     var isCancelled=status===4;
     var fillPct=isCancelled?0:(status>=3?100:Math.round((status/3)*100));
@@ -354,11 +357,15 @@
     steps.forEach(function(st){
       var cls='';
       if(!isCancelled){if(st.s<status)cls='done';else if(st.s===status)cls='active';}
-      h+='<div class="st-step '+cls+'"><div class="st-dot">'+luc(st.icon,14)+'</div><div class="st-label">'+st.label+'</div></div>';
+      var clickable=orderId&&!isCancelled&&st.s<status;
+      h+='<div class="st-step '+cls+(clickable?' st-clickable':'')+'"'+(clickable?' onclick="timelineSetStatus(\''+orderId+'\','+st.s+')" title="Zurück auf '+st.label+'"':'')+'><div class="st-dot">'+luc(st.icon,14)+'</div><div class="st-label">'+st.label+'</div></div>';
     });
     if(isCancelled) h+='<div class="st-step cancelled"><div class="st-dot">'+luc('x',14)+'</div><div class="st-label">Storniert</div></div>';
     h+='</div>';
     return h;
+  }
+  function timelineSetStatus(orderId, status){
+    updateOrder({id:orderId, status:status});
   }
   // Shop opening hours [openVM, closeVM, openNM, closeNM] indexed by JS weekday (0=So)
   var SHOP_HOURS=[null,[6.5,14,16.5,19],[6.5,14,null,null],[6.5,14,16.5,19],[6.5,14,16.5,19],[6.5,14,16.5,19],[7,13,null,null]];
@@ -889,7 +896,7 @@
       html+='<div><h2 style="margin:0;font-size:18px">'+esc(shortNr)+'</h2><div style="font-size:10px;color:var(--muted)">'+esc(o.bestellnummer)+'</div></div>';
       html+=statusBadge(o.status);
       html+='</div>';
-      html+=_buildTimeline(o.status);
+      html+=_buildTimeline(o.status, o.id);
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
       html+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Abholung</div><div style="font-size:14px;font-weight:800;color:var(--green)">'+esc(abholDay)+'</div><div style="font-size:12px;color:var(--text)">'+esc(periodLabel)+timeRange+'</div>'+(urg?'<div style="font-size:10px;font-weight:800;color:var(--urgent);margin-top:4px">⚡ JETZT PACKEN</div>':'')+'</div>';
       html+='<div style="background:#f8fafc;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Kunde</div><div style="font-size:13px;font-weight:700">'+esc(o.kunde_name)+'</div><div style="font-size:11px;color:var(--muted);word-break:break-all">'+esc(o.kunde_email)+'</div></div>';
@@ -901,7 +908,7 @@
       if(urg) html+='<span style="font-weight:800;color:var(--urgent)">⚡ JETZT</span>';
       html+='<span>·</span><span>'+esc(o.kunde_email)+'</span>';
       html+='</div>';
-      html+=_buildTimeline(o.status);
+      html+=_buildTimeline(o.status, o.id);
     }
     html+='<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Bestellt: '+fmtDateTimeFull(o.bestelldatum)+' · '+items.length+' Positionen · <b style="color:var(--green)">'+money(o.gesamtsumme)+'</b></div>';
     if(o.anmerkungen) html+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;margin-bottom:10px"><b>📝 Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';
