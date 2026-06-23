@@ -1846,13 +1846,14 @@
   fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
     if(!res.success||!res.post)return;
     // Nach Ladenschluss heutige TagesInfo nicht mehr anzeigen
-    // Di 18:00, Sa 13:00, sonst 18:30
+    // Öffnungszeiten: Di bis 14:00, Sa bis 13:00, sonst bis 18:30
+    // TagesInfo 30 Min vor Schluss ausblenden
     if(!res.is_tomorrow){
       var now=new Date(), day=now.getDay(), h=now.getHours(), m=now.getMinutes();
-      var closeH=18, closeM=30;
-      if(day===2){closeH=18;closeM=0;}       // Dienstag
-      else if(day===6){closeH=13;closeM=0;}   // Samstag
-      if(h>closeH||(h===closeH&&m>=closeM)) return;
+      var hideH=18, hideM=0; // default: 18:30 - 30min = 18:00
+      if(day===2){hideH=13;hideM=30;}         // Dienstag: 14:00 - 30min = 13:30
+      else if(day===6){hideH=12;hideM=30;}    // Samstag: 13:00 - 30min = 12:30
+      if(h>hideH||(h===hideH&&m>=hideM)) return;
     }
     var post=res.post;
     var count=renderPost(post,res.is_tomorrow);
