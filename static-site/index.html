@@ -1845,10 +1845,14 @@
 
   fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
     if(!res.success||!res.post)return;
-    // Nach Ladenschluss (18:30) heutige TagesInfo nicht mehr anzeigen
+    // Nach Ladenschluss heutige TagesInfo nicht mehr anzeigen
+    // Di 18:00, Sa 13:00, sonst 18:30
     if(!res.is_tomorrow){
-      var now=new Date();
-      if(now.getHours()>18||(now.getHours()===18&&now.getMinutes()>=30)) return;
+      var now=new Date(), day=now.getDay(), h=now.getHours(), m=now.getMinutes();
+      var closeH=18, closeM=30;
+      if(day===2){closeH=18;closeM=0;}       // Dienstag
+      else if(day===6){closeH=13;closeM=0;}   // Samstag
+      if(h>closeH||(h===closeH&&m>=closeM)) return;
     }
     var post=res.post;
     var count=renderPost(post,res.is_tomorrow);
