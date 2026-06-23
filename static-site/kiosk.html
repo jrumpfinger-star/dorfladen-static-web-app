@@ -97,14 +97,19 @@
     .k-order-mitnehmen{font-size:9px;background:none;color:#1d4ed8;padding:0;border-radius:0;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
     .k-order-qty{display:flex;align-items:center;gap:4px;padding:6px 8px;border-left:1px solid var(--c-border)}
     .k-order-qty .qty-display{font-size:20px;font-weight:800;min-width:28px;text-align:center}
-    .k-order-actions{display:flex;flex-wrap:wrap;gap:4px;padding:8px 0 0;justify-content:flex-start;align-items:center}
+    .k-order-actions{display:flex;gap:6px;padding:8px 0 0;align-items:center}
     .k-btn{min-height:var(--touch-min);min-width:var(--touch-min);padding:8px 18px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;white-space:nowrap}
     .k-btn:active{transform:scale(.96)}
     .k-btn-confirm{background:var(--c-green);color:#fff}
     .k-btn-pickup{background:#2563eb;color:#fff}
     .k-btn-cancel{background:var(--c-red);color:#fff;font-size:12px}
-    .k-btn-sm{min-height:32px;padding:4px 8px;font-size:11px}
-    .k-btn-outline{background:#fff;color:var(--c-text);border:2px solid var(--c-border)}
+    .k-btn-sm{min-height:32px;padding:5px 12px;font-size:12px;border-radius:8px}
+    .k-btn-outline{background:#fff;color:var(--c-text);border:1.5px solid var(--c-border)}
+    .k-btn-outline:hover{border-color:var(--c-green);color:var(--c-green)}
+    .k-btn-icon{min-height:28px;min-width:28px;padding:0;border-radius:50%;border:1.5px solid var(--c-border);background:#fff;color:var(--c-muted);font-size:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .k-btn-icon:hover{border-color:var(--c-green);color:var(--c-green);background:#f0fdf4}
+    .k-btn-icon.danger{border-color:#fecaca;color:#dc2626}
+    .k-btn-icon.danger:hover{background:#fef2f2;border-color:#dc2626}
     .k-btn-lg{min-height:64px;padding:12px 28px;font-size:16px;border-radius:14px}
 
     /* ═══ Bottom action bar ═══ */
@@ -1717,22 +1722,22 @@ var K = (function(){
     // Actions
     html += '<div class="k-order-actions">';
     if(o.status===0){
-      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',16)+' Annehmen</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+' Details</button>';
-      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',4)">'+luc('x',16)+'</button>';
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',14)+' Annehmen</button>';
+      html += '<button class="k-btn-icon" onclick="K.showOrderDetail(\''+o.id+'\')" title="Details">'+luc('eye',14)+'</button>';
+      html += '<button class="k-btn-icon danger" onclick="K.setShopStatus(\''+o.id+'\',4)" title="Stornieren">'+luc('x',14)+'</button>';
     } else if(o.status===1){
-      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">' +luc('package',16)+' Packen</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+'</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.setShopStatus(\''+o.id+'\',0)" title="Zurück auf Neu">'+luc('undo-2',16)+'</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.openPackModal(\''+o.id+'\')">'+luc('package',14)+' Packen</button>';
+      html += '<button class="k-btn-icon" onclick="K.showOrderDetail(\''+o.id+'\')" title="Details">'+luc('eye',14)+'</button>';
+      html += '<button class="k-btn-icon" onclick="K.setShopStatus(\''+o.id+'\',0)" title="Zurück auf Neu">'+luc('undo-2',14)+'</button>';
     } else if(o.status===2){
-      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',16)+' Ausgeben</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('eye',16)+'</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.setShopStatus(\''+o.id+'\',1)" title="Zurück auf Bearbeitung">'+luc('undo-2',16)+'</button>';
+      html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',14)+' Ausgeben</button>';
+      html += '<button class="k-btn-icon" onclick="K.showOrderDetail(\''+o.id+'\')" title="Details">'+luc('eye',14)+'</button>';
+      html += '<button class="k-btn-icon" onclick="K.setShopStatus(\''+o.id+'\',1)" title="Zurück auf Bearbeitung">'+luc('undo-2',14)+'</button>';
     } else if(o.status===3){
-      html += luc('check-circle',20);
-      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.setShopStatus(\''+o.id+'\',2)" title="Zurück auf Bereit">'+luc('undo-2',16)+'</button>';
+      html += '<span style="color:var(--c-green)">'+luc('check-circle',18)+'</span>';
+      html += '<button class="k-btn-icon" onclick="K.setShopStatus(\''+o.id+'\',2)" title="Zurück auf Bereit">'+luc('undo-2',14)+'</button>';
     }
-    html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;margin-left:auto" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Bestellung löschen">'+luc('trash-2',14)+'</button>';
+    html += '<button class="k-btn-icon danger" style="margin-left:auto" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
     html += '</div>';
     html += '</div>';
     return html;
