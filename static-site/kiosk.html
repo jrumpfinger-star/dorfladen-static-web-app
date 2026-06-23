@@ -229,6 +229,20 @@
     @keyframes kBlink{0%,100%{opacity:1}50%{opacity:.4}}
     @keyframes kSpin{to{transform:rotate(360deg)}}
 
+    /* ═══ Status Timeline ═══ */
+    .st-timeline{display:flex;align-items:flex-start;justify-content:space-between;margin:16px 0 20px;padding:0 4px;position:relative}
+    .st-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:1}
+    .st-dot{width:28px;height:28px;border-radius:50%;border:3px solid #d1d5db;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;color:#9ca3af;transition:all .3s}
+    .st-step.done .st-dot{border-color:#16a34a;background:#16a34a;color:#fff}
+    .st-step.active .st-dot{border-color:#2563eb;background:#2563eb;color:#fff;box-shadow:0 0 0 4px rgba(37,99,235,.2);transform:scale(1.15)}
+    .st-step.cancelled .st-dot{border-color:#dc2626;background:#dc2626;color:#fff}
+    .st-label{font-size:10px;font-weight:700;margin-top:6px;color:#9ca3af;text-align:center;line-height:1.2}
+    .st-step.done .st-label{color:#16a34a}
+    .st-step.active .st-label{color:#2563eb}
+    .st-step.cancelled .st-label{color:#dc2626}
+    .st-line{position:absolute;top:14px;left:0;right:0;height:3px;background:#e5e7eb;z-index:0}
+    .st-line-fill{height:100%;background:#16a34a;border-radius:2px;transition:width .3s}
+
     /* ═══ Pack modal (inline) ═══ */
     .k-modal.k-modal-lg{max-width:720px}
     .pk-progress{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:8px}
@@ -1735,23 +1749,55 @@ var K = (function(){
       });
   }
 
+  function _buildTimeline(status){
+    // Steps: 0=Neu, 1=In Bearbeitung, 2=Abholbereit, 3=Abgeholt, 4=Storniert
+    var steps = [
+      {s:0, icon:'circle-dot',   label:'Neu'},
+      {s:1, icon:'clipboard-list',label:'In Bearbeitung'},
+      {s:2, icon:'check-circle',  label:'Abholbereit'},
+      {s:3, icon:'package-check', label:'Abgeholt'}
+    ];
+    var isCancelled = status===4;
+    var html = '<div class="st-timeline">';
+    // Background line
+    var fillPct = isCancelled ? 0 : (status>=3 ? 100 : Math.round((status / 3)*100));
+    html += '<div class="st-line"><div class="st-line-fill" style="width:'+fillPct+'%"></div></div>';
+    steps.forEach(function(st){
+      var cls = '';
+      if(isCancelled){ cls = ''; }
+      else if(st.s < status) cls = 'done';
+      else if(st.s === status) cls = 'active';
+      html += '<div class="st-step '+cls+'">';
+      html += '<div class="st-dot">'+luc(st.icon,14)+'</div>';
+      html += '<div class="st-label">'+st.label+'</div>';
+      html += '</div>';
+    });
+    if(isCancelled){
+      html += '<div class="st-step cancelled">';
+      html += '<div class="st-dot">'+luc('x',14)+'</div>';
+      html += '<div class="st-label">Storniert</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function showOrderDetail(orderId){
     _detailOrderId = orderId;
     var o = _allShopOrders.find(function(x){return x.id===orderId;});
     if(!o){toast('Bestellung nicht gefunden');return;}
     var posArr = o.positionen||[];
     var html = '';
-    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">';
-    html += '<div><strong>Kunde:</strong> '+esc(o.kunde_name||o.kunde_email||'–')+'</div>';
-    html += '<div><strong>Nr.:</strong> '+esc(o.bestellnummer||'–')+'</div>';
-    html += '<div><strong>Status:</strong> '+(SHOP_STATUS[o.status]||'?')+'</div>';
-    html += '</div>';
-    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;font-size:13px;color:#6b7280">';
-    if(o.abholdatum) html += '<div>'+luc('calendar',13)+' Abholdatum: '+fmtDate(o.abholdatum)+'</div>';
+    // Status Timeline
+    html += _buildTimeline(o.status);
+    // Info grid
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:16px;font-size:13px">';
+    html += '<div><span style="color:#6b7280">Kunde</span><br><strong>'+esc(o.kunde_name||o.kunde_email||'–')+'</strong></div>';
+    html += '<div><span style="color:#6b7280">Nr.</span><br><strong>'+esc(o.bestellnummer||'–')+'</strong></div>';
     var zs = o.abhol_zeitslot||{};
-    if(zs.label) html += '<div>'+luc('clock',13)+' '+esc(zs.label)+(zs.von?' ('+zs.von+'–'+zs.bis+')':'')+'</div>';
-    if(o.kunde_telefon) html += '<div>'+luc('phone',13)+' '+esc(o.kunde_telefon)+'</div>';
-    if(o.kunde_email) html += '<div>'+luc('mail',13)+' '+esc(o.kunde_email)+'</div>';
+    if(o.abholdatum) html += '<div><span style="color:#6b7280">Abholung</span><br><strong>'+fmtDate(o.abholdatum)+(zs.label?', '+esc(zs.label):'')+'</strong></div>';
+    if(o.kunde_telefon) html += '<div><span style="color:#6b7280">Telefon</span><br><strong>'+esc(o.kunde_telefon)+'</strong></div>';
+    if(o.kunde_email) html += '<div><span style="color:#6b7280">E-Mail</span><br><strong>'+esc(o.kunde_email)+'</strong></div>';
     html += '</div>';
     if(o.anmerkungen) html += '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:12px">'+luc('message-square',13)+' '+esc(o.anmerkungen)+'</div>';
     // Positions table
