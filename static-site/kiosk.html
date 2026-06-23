@@ -505,7 +505,7 @@
 </div>
 
 <!-- ═══ Bottom bar ═══ -->
-<div class="k-bottom">
+<div class="k-bottom" style="display:none">
   <button class="k-btn k-btn-lg k-btn-confirm" onclick="K.openNewOrder()"><i data-lucide="phone" style="width:18px;height:18px"></i> Neue Telefonbestellung</button>
   <button class="k-btn k-btn-lg k-btn-outline" onclick="K.printKitchen()"><i data-lucide="printer" style="width:18px;height:18px"></i> Küchenliste drucken</button>
 </div>
@@ -690,6 +690,9 @@ var K = (function(){
   function switchTab(id){
     document.querySelectorAll('.k-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===id);});
     document.querySelectorAll('.k-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+id);});
+    // Bottom bar only for Mittagstisch
+    var bottom = document.querySelector('.k-bottom');
+    if(bottom) bottom.style.display = id==='mittag' ? '' : 'none';
     if(id==='abhol') loadShopOrders();
     if(id==='kunden' && kunden.length===0) searchKunden();
     if(id==='social' && typeof socialSubTab==='function') socialSubTab('post');
