@@ -73,6 +73,7 @@ Ein **Chip in der Promo-Bar** (Desktop) bzw. ein **Action-Button im Mobile-Grid*
 - [x] AK-TP-16: Items ohne Bild zeigen kategorie-spezifisches Emoji statt generischem 📦
 - [x] AK-TP-17: WhatsApp-Share enthält Bestelllinks als Text (nicht nur Bild)
 - [x] AK-TP-18: Desktop Promo-Bar + Mobile Action-Buttons statt runder FABs
+- [x] AK-TP-19: Bestellungen-Chip zeigt Popup mit offenen Bestellungen (Nummer, Status, Abholtermin, Summe) statt zur Shop-Seite weiterzuleiten
 
 ## Nicht-Ziele
 - Kein Bearbeiten des Tagespost auf der Homepage (nur Anzeige)
