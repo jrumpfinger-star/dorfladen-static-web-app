@@ -1770,19 +1770,14 @@
     }
 
 
-    html+='<div id="tp-my-order"></div>';
-
     document.getElementById('tp-body').innerHTML=html;
 
-    if(!_isTomorrow){loadMyLunchOrder();}
+    if(!_isTomorrow){loadMyLunchOrderMarkers();}
 
     return visibleItems;
   }
 
-  var LUNCH_STATUS_LABELS={0:'Neu',1:'Best\u00e4tigt',2:'Storniert',3:'Abgeholt'};
-  var LUNCH_STATUS_COLORS={0:'#d97706',1:'#16a34a',2:'#dc2626',3:'#6b7280'};
-  var LUNCH_STATUS_BG={0:'#fef3c7',1:'#dcfce7',2:'#fee2e2',3:'#f3f4f6'};
-  function loadMyLunchOrder(){
+  function loadMyLunchOrderMarkers(){
     var email=localStorage.getItem('bs_email')||localStorage.getItem('lunch_email')||'';
     if(!email)return;
     fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
@@ -1793,24 +1788,26 @@
         var today=new Date().toISOString().substring(0,10);
         var todayOrders=orders.filter(function(o){return (o.datum||'').substring(0,10)===today&&o.status!==2;});
         if(!todayOrders.length)return;
-        var el=document.getElementById('tp-my-order');
-        if(!el)return;
-        var h='<div class="tp-section" style="margin-top:12px"><div class="tp-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg> Meine Bestellung</div>';
+        var byGericht={};
         todayOrders.forEach(function(o){
-          var st=LUNCH_STATUS_LABELS[o.status]||'?';
-          var col=LUNCH_STATUS_COLORS[o.status]||'#6b7280';
-          var bg=LUNCH_STATUS_BG[o.status]||'#f3f4f6';
-          var href='/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
-          h+='<a href="'+esc(href)+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:6px;text-decoration:none;color:#1f2937;transition:background .12s" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'transparent\'">';
-          h+='<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.gericht||'Mittagessen')+'</div>';
-          if(o.menge&&o.menge>1) h+='<div style="font-size:12px;color:#6b7280">'+o.menge+'x</div>';
-          h+='</div>';
-          h+='<span style="font-size:11px;padding:3px 8px;border-radius:8px;font-weight:700;background:'+bg+';color:'+col+';white-space:nowrap">'+st+'</span>';
-          h+='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>';
-          h+='</a>';
+          var g=(o.gericht||'').trim().toLowerCase();
+          if(!byGericht[g])byGericht[g]={count:0,nr:o.bestellnummer||'',status:o.status};
+          byGericht[g].count+=(o.menge||1);
         });
-        h+='</div>';
-        el.innerHTML=h;
+        document.querySelectorAll('.tp-item[data-gericht]').forEach(function(el){
+          var g=el.getAttribute('data-gericht').toLowerCase();
+          if(!byGericht[g])return;
+          var info=byGericht[g];
+          var lbl=info.count>1?info.count+'x bestellt':'bestellt';
+          var col=info.status===1?'#16a34a':'#d97706';
+          var bg=info.status===1?'#dcfce7':'#fef3c7';
+          var badge=document.createElement('a');
+          badge.href='/bestellstatus?nr='+encodeURIComponent(info.nr);
+          badge.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:'+bg+';color:'+col+';border-radius:6px;font-size:10px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0;white-space:nowrap';
+          badge.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+lbl;
+          badge.onclick=function(e){e.stopPropagation();};
+          el.appendChild(badge);
+        });
       }).catch(function(){});
   }
 
@@ -1830,7 +1827,8 @@
       var href='/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'');
       orderBtn='<a class="tp-item-order" href="'+esc(href)+'" title="Bestellen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
     }
-    return '<div class="tp-item">'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+orderBtn+'</div>';
+    var gerichtAttr=(showOrder&&it.name)?' data-gericht="'+esc(it.name)+'"':'';
+    return '<div class="tp-item"'+gerichtAttr+'>'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+orderBtn+'</div>';
   }
 
   function gridCard(it){
