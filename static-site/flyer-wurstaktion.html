@@ -12,14 +12,15 @@
   .flyer { width: 210mm; min-height: 297mm; position: relative; overflow: hidden; display: flex; flex-direction: column; border: 6px solid #b91c1c; }
 
   /* === TOP BANNER === */
-  .top-banner { background: #faf9f6; color: #1e463a; padding: 14mm 20mm 12mm; text-align: center; position: relative; border-bottom: 4px solid #1e463a; }
-  .top-banner::after { content: ''; position: absolute; bottom: -20px; left: 0; right: 0; height: 40px; background: #fff; border-radius: 50% 50% 0 0 / 100% 100% 0 0; display: none; }
-  .logo-row { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 14px; }
-  .logo-row img { height: 54px; width: auto; }
-  .banner-tag { display: inline-block; background: #b91c1c; color: #fff; font-size: 12px; font-weight: 800; padding: 5px 18px; border-radius: 20px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
-  .banner-title { font-size: 36px; font-weight: 900; line-height: 1.15; margin-bottom: 4px; }
-  .banner-title .pct { color: #b91c1c; font-size: 48px; }
-  .banner-sub { font-size: 16px; font-weight: 600; color: #374151; }
+  .top-banner { background: linear-gradient(135deg, #1e463a 0%, #2d6a4f 100%); color: #fff; padding: 18px 20mm 20px; position: relative; border-bottom: 4px solid #b91c1c; display: flex; align-items: center; gap: 24px; }
+  .top-banner::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 40%; background: radial-gradient(circle at 80% 50%, rgba(255,255,255,0.08) 0%, transparent 70%); pointer-events: none; }
+  .logo-row { flex-shrink: 0; }
+  .logo-row img { height: 56px; width: auto; filter: brightness(0) invert(1); }
+  .banner-right { flex: 1; text-align: center; }
+  .banner-tag { display: inline-block; background: #b91c1c; color: #fff; font-size: 11px; font-weight: 800; padding: 4px 16px; border-radius: 20px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .banner-title { font-size: 28px; font-weight: 900; line-height: 1.15; margin-bottom: 2px; color: #fff; }
+  .banner-title .pct { color: #fbbf24; font-size: 38px; }
+  .banner-sub { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
 
   /* === MIDDLE CONTENT === */
   .content { flex: 1; padding: 16px 18mm 12px; display: flex; flex-direction: column; gap: 14px; }
@@ -85,9 +86,11 @@
     <div class="logo-row">
       <img src="/images/dorfladen-logo.png" alt="Dorfladen Oberornau">
     </div>
-    <div class="banner-tag">Daueraktion</div>
-    <div class="banner-title">Fleisch &amp; Wurst:<br><span class="pct">15 % Rabatt</span></div>
-    <div class="banner-sub">bei Vorbestellung ab 1 kg</div>
+    <div class="banner-right">
+      <div class="banner-tag">Daueraktion</div>
+      <div class="banner-title">Fleisch &amp; Wurst: <span class="pct">15 % Rabatt</span></div>
+      <div class="banner-sub">bei Vorbestellung ab 1 kg</div>
+    </div>
   </div>
 
   <!-- CONTENT -->
