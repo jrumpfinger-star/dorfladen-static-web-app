@@ -1846,15 +1846,8 @@
   fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
     if(!res.success||!res.post)return;
     // Nach Ladenschluss heutige TagesInfo nicht mehr anzeigen
-    // Öffnungszeiten: Di bis 14:00, Sa bis 13:00, sonst bis 18:30
-    // TagesInfo 30 Min vor Schluss ausblenden
-    if(!res.is_tomorrow){
-      var now=new Date(), day=now.getDay(), h=now.getHours(), m=now.getMinutes();
-      var hideH=18, hideM=0; // default: 18:30 - 30min = 18:00
-      if(day===2){hideH=13;hideM=30;}         // Dienstag: 14:00 - 30min = 13:30
-      else if(day===6){hideH=12;hideM=30;}    // Samstag: 13:00 - 30min = 12:30
-      if(h>hideH||(h===hideH&&m>=hideM)) return;
-    }
+    // Öffnungszeiten aus DB laden und Schlusszeit dynamisch ermitteln
+    function _showPost(){
     var post=res.post;
     var count=renderPost(post,res.is_tomorrow);
     if(!count)return;
@@ -1871,6 +1864,36 @@
       localStorage.setItem(seenKey,1);
       setTimeout(openModal,1200);
     }
+    } // end _showPost
+
+    // Morgen-Posts immer anzeigen
+    if(res.is_tomorrow){ _showPost(); return; }
+
+    // Öffnungszeiten aus DB laden und prüfen
+    fetch('/api/hours').then(function(r){return r.json();}).then(function(hRes){
+      if(!hRes.success||!hRes.data){ _showPost(); return; }
+      var now=new Date();
+      // JS getDay: 0=So,1=Mo..6=Sa → Dataverse: 101000=Mo..101006=So
+      var jsDay=now.getDay();
+      var dvDay=jsDay===0?101006:(101000+jsDay-1);
+      // Finde Öffnungszeit für heute
+      var todayHours=hRes.data.filter(function(h){return h.wochentag===dvDay;});
+      if(!todayHours.length){ _showPost(); return; }
+      // Geschlossen → nicht anzeigen
+      if(todayHours[0].geschlossen) return;
+      // Letzte Schlusszeit ermitteln (nachmittag_bis oder vormittag_bis)
+      var closeTime='';
+      todayHours.forEach(function(h){
+        var t=h.nachmittag_bis||h.vormittag_bis||'';
+        if(t>closeTime) closeTime=t;
+      });
+      if(!closeTime){ _showPost(); return; }
+      // Aktuelle Uhrzeit als HH:MM
+      var hh=now.getHours(), mm=now.getMinutes();
+      var nowTime=(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+      if(nowTime>=closeTime) return; // nach Ladenschluss
+      _showPost();
+    }).catch(function(){ _showPost(); });
   }).catch(function(){});
 })();
 </script>
