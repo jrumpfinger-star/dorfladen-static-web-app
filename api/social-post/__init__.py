@@ -156,6 +156,33 @@ def handle_post(req, token, folder_id):
     wochentag = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
     tag = wochentag[datetime.utcnow().weekday()]
 
+    # Upload inline base64 images from items as files
+    for idx, it in enumerate(items):
+        bild = it.get("bild_url", "")
+        if bild and bild.startswith("data:"):
+            try:
+                # Parse data URI: data:image/png;base64,xxxxx
+                header, b64data = bild.split(",", 1)
+                ct = "image/png"
+                if "image/jpeg" in header:
+                    ct = "image/jpeg"
+                    ext = "jpg"
+                elif "image/webp" in header:
+                    ct = "image/webp"
+                    ext = "webp"
+                else:
+                    ext = "png"
+                img_bytes = base64.b64decode(b64data)
+                safe_name = (it.get("name") or f"item_{idx}").replace(" ", "_").replace("/", "_")[:30]
+                fname = f"item_{safe_name}_{post_id[:8]}.{ext}"
+                dl_url, _ = upload_image(token, folder_id, fname, img_bytes, ct)
+                if dl_url:
+                    it["bild_url"] = dl_url
+                else:
+                    it["bild_url"] = ""
+            except Exception:
+                it["bild_url"] = ""
+
     post = {
         "id": post_id,
         "titel": titel or f"Heute im Dorfladen – {tag}",

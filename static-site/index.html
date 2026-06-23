@@ -1753,20 +1753,20 @@
     if(post.text){html+='<div class="tp-freitext">'+esc(post.text)+'</div>';}
 
     if(mittagessen.length){
-      html+='<div class="tp-section"><div class="tp-section-title">🍽️ Mittagessen</div>';
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Mittagessen</div>';
       mittagessen.forEach(function(it){html+=itemCard(it,!_isTomorrow);});
       html+='</div>';
     }
 
     if(theke.length){
-      html+='<div class="tp-section"><div class="tp-section-title">🍰 Theke & Kuchen</div>';
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="12" cy="11" r="3"/><path d="M6.58 18.5A8 8 0 0 1 2 21"/><path d="M22 21a8 8 0 0 0-5-7.5"/><path d="M12 8V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="m19.07 10.93-1.41 1.41"/></svg> Theke & Kuchen</div>';
       if(theke.length<=3){theke.forEach(function(it){html+=itemCard(it);});}
       else{html+='<div class="tp-grid">';theke.forEach(function(it){html+=gridCard(it);});html+='</div>';}
       html+='</div>';
     }
 
     if(!mittagessen.length&&!theke.length&&items.length){
-      html+='<div class="tp-section"><div class="tp-section-title">🛒 Produkte</div>';
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Produkte</div>';
       items.forEach(function(it){html+=itemCard(it);});
       html+='</div>';
     }
@@ -1813,16 +1813,17 @@
       }).catch(function(){});
   }
 
-  function catEmoji(kat){
+  function catIcon(kat){
     var k=(kat||'').toLowerCase();
-    if(k.indexOf('mittag')>=0)return '🍽️';
-    if(k.indexOf('kuchen')>=0||k.indexOf('back')>=0||k.indexOf('torte')>=0)return '🍰';
-    if(k.indexOf('theke')>=0||k.indexOf('salat')>=0)return '🧀';
-    if(k.indexOf('getr')>=0)return '🥤';
-    return '📦';
+    var s='width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+    if(k.indexOf('mittag')>=0)return '<svg '+s+'><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>';
+    if(k.indexOf('kuchen')>=0||k.indexOf('back')>=0||k.indexOf('torte')>=0)return '<svg '+s+'><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="12" cy="11" r="3"/><path d="M12 8V2"/></svg>';
+    if(k.indexOf('theke')>=0||k.indexOf('salat')>=0)return '<svg '+s+'><path d="M15.2 22H8.8a2 2 0 0 1-2-1.79L5 3h14l-1.81 17.21A2 2 0 0 1 15.2 22Z"/><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"/></svg>';
+    if(k.indexOf('getr')>=0)return '<svg '+s+'><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/></svg>';
+    return '<svg '+s+'><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
   }
   function itemCard(it,showOrder){
-    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="">':'<div class="tp-item-img no-img">'+catEmoji(it.kategorie)+'</div>';
+    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="">':'<div class="tp-item-img no-img">'+catIcon(it.kategorie)+'</div>';
     var preis=it.preis?fmtPreis(it.preis):'';
     var orderBtn='';
     if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
@@ -1834,7 +1835,7 @@
   }
 
   function gridCard(it){
-    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:24px;color:#9ca3af;margin:0 auto 4px">'+catEmoji(it.kategorie)+'</div>';
+    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>';
     var preis=it.preis?fmtPreis(it.preis):'';
     return '<div class="tp-grid-card">'+img+'<div class="card-name">'+esc(it.name||'')+'</div>'+(preis?'<div class="card-price">'+preis+'</div>':'')+'</div>';
   }
