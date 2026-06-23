@@ -7,23 +7,23 @@
 <style>
   @page { size: A4; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 210mm; min-height: 297mm; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #1f2521; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { width: 794px; min-height: 1123px; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #1f2521; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-  .flyer { width: 210mm; min-height: 297mm; position: relative; overflow: hidden; display: flex; flex-direction: column; border: 6px solid #b91c1c; }
+  .flyer { width: 794px; min-height: 1123px; position: relative; overflow: hidden; display: flex; flex-direction: column; border: 6px solid #b91c1c; }
 
   /* === TOP BANNER === */
-  .top-banner { background: linear-gradient(135deg, #1e463a 0%, #2d6a4f 100%); color: #fff; padding: 18px 20mm 20px; position: relative; border-bottom: 4px solid #b91c1c; display: flex; align-items: center; gap: 24px; }
+  .top-banner { background: linear-gradient(135deg, #1e463a 0%, #2d6a4f 100%); color: #fff; padding: 20px 40px; position: relative; border-bottom: 4px solid #b91c1c; display: flex; align-items: center; gap: 28px; }
   .top-banner::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 40%; background: radial-gradient(circle at 80% 50%, rgba(255,255,255,0.08) 0%, transparent 70%); pointer-events: none; }
   .logo-row { flex-shrink: 0; }
-  .logo-row img { height: 56px; width: auto; background: #fff; border-radius: 8px; padding: 6px 10px; }
+  .logo-row img { height: 60px; width: auto; background: #fff; border-radius: 8px; padding: 8px 12px; }
   .banner-right { flex: 1; text-align: center; }
   .banner-tag { display: inline-block; background: #b91c1c; color: #fff; font-size: 11px; font-weight: 800; padding: 4px 16px; border-radius: 20px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
-  .banner-title { font-size: 26px; font-weight: 900; line-height: 1.2; margin-bottom: 2px; color: #fff; white-space: nowrap; }
-  .banner-title .pct { color: #fbbf24; font-size: 36px; }
+  .banner-title { font-size: 30px; font-weight: 900; line-height: 1.15; margin-bottom: 4px; color: #fff; }
+  .banner-title .pct { color: #fbbf24; font-size: 42px; display: block; }
   .banner-sub { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
 
   /* === MIDDLE CONTENT === */
-  .content { flex: 1; padding: 16px 18mm 12px; display: flex; flex-direction: column; gap: 14px; }
+  .content { flex: 1; padding: 20px 40px 16px; display: flex; flex-direction: column; gap: 16px; }
 
   .highlight-box { background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 100%); border: 2px solid #f59e0b; border-radius: 14px; padding: 16px 24px; text-align: center; }
   .highlight-box .big { font-size: 24px; font-weight: 900; color: #92400e; margin-bottom: 2px; }
@@ -54,7 +54,7 @@
   .eco-hint .text { font-size: 11.5px; color: #065f46; font-weight: 600; line-height: 1.35; }
 
   /* === BOTTOM BAR === */
-  .bottom-bar { background: #1e463a; color: #fff; padding: 14px 18mm; display: flex; align-items: center; justify-content: space-between; }
+  .bottom-bar { background: #1e463a; color: #fff; padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
   .bottom-left { flex-shrink: 0; }
   .bottom-left .name { font-size: 16px; font-weight: 800; }
   .bottom-left .addr { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 2px; }
@@ -68,7 +68,7 @@
   /* Print */
   @media print {
     html, body { width: 210mm; height: 297mm; }
-    .flyer { height: 297mm; }
+    .flyer { width: 210mm; height: 297mm; }
     .no-print { display: none !important; }
   }
 
@@ -88,7 +88,7 @@
     </div>
     <div class="banner-right">
       <div class="banner-tag">Daueraktion</div>
-      <div class="banner-title">Fleisch &amp; Wurst: <span class="pct">15 % Rabatt</span></div>
+      <div class="banner-title">Fleisch &amp; Wurst:<span class="pct">15 % Rabatt</span></div>
       <div class="banner-sub">bei Vorbestellung ab 1 kg</div>
     </div>
   </div>
