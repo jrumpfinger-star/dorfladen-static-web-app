@@ -1529,12 +1529,12 @@ var K = (function(){
       document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen gefunden</div>';reinitIcons();
       return;
     }
-    // Sort by status priority, then by abholdatum
+    // Sort by abholdatum descending, then by status priority within each date
     var sorted = shopOrders.slice().sort(function(a,b){
+      var dCmp = (b.abholdatum||'').localeCompare(a.abholdatum||'');
+      if(dCmp!==0) return dCmp;
       var prio = {0:0,1:1,2:2,3:3,4:4};
-      var d = (prio[a.status]||9) - (prio[b.status]||9);
-      if(d!==0) return d;
-      return (a.abholdatum||'').localeCompare(b.abholdatum||'');
+      return (prio[a.status]||9) - (prio[b.status]||9);
     });
 
     // Group by abholdatum + zeitslot
