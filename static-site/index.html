@@ -179,7 +179,7 @@
 
   <div class="mob-action highlight" id="mob-action-tp" style="display:none;border-color:rgba(30,58,47,.15);background:#f0fdf4" onclick="document.getElementById('tp-overlay').classList.add('open')">
 
-    <span class="mob-action-icon" style="color:#1e3a2f;background:rgba(30,58,47,.1)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+    <span class="mob-action-icon" style="color:#1e3a2f;background:rgba(30,58,47,.1)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span>
 
     <span class="mob-action-label" style="color:#1e3a2f">Aktuelles</span>
 
@@ -577,7 +577,7 @@
 
     <a href="javascript:void(0)" class="promo-item promo-tp" id="promo-tp-link" style="display:none" onclick="document.getElementById('tp-overlay').classList.add('open')">
 
-      <span class="promo-tp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+      <span class="promo-tp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span>
 
       Aktuelles
 
@@ -1701,8 +1701,8 @@
 <div class="tp-overlay" id="tp-overlay">
   <div class="tp-modal" id="tp-modal">
     <div class="tp-modal-head">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <div><h2 id="tp-title">Heute im Dorfladen</h2><div class="tp-datum" id="tp-datum"></div></div>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+      <div><h2 id="tp-title">Aktuelles</h2><div class="tp-datum" id="tp-datum"></div></div>
       <button class="tp-modal-close" id="tp-close">✕</button>
     </div>
     <div class="tp-modal-body" id="tp-body"></div>
@@ -1729,7 +1729,7 @@
   function renderPost(post,isTomorrow){
     _isTomorrow=!!isTomorrow;
     var titlePrefix=_isTomorrow?'Morgen':'Heute';
-    document.getElementById('tp-title').textContent=post.titel||(titlePrefix+' im Dorfladen');
+    document.getElementById('tp-title').textContent=post.titel||'Aktuelles';
     if(_isTomorrow&&post.titel){document.getElementById('tp-title').textContent='Morgen: '+post.titel.replace(/^Heute/i,'').replace(/^\s*[:–-]\s*/,'');}
     var d=new Date(post.datum);
     document.getElementById('tp-datum').textContent=(_isTomorrow?'Vorschau – ':'')+fmtDate(d);
@@ -1773,8 +1773,48 @@
       html+='<div class="tp-cta"><a href="/shop" class="tp-cta-shop" style="flex:1 1 100%">🛒 Jetzt bestellen</a></div>';
     }
 
+    html+='<div id="tp-my-order"></div>';
+
     document.getElementById('tp-body').innerHTML=html;
+
+    if(!_isTomorrow){loadMyLunchOrder();}
+
     return visibleItems;
+  }
+
+  var LUNCH_STATUS_LABELS={0:'Neu',1:'Best\u00e4tigt',2:'Storniert',3:'Abgeholt'};
+  var LUNCH_STATUS_COLORS={0:'#d97706',1:'#16a34a',2:'#dc2626',3:'#6b7280'};
+  var LUNCH_STATUS_BG={0:'#fef3c7',1:'#dcfce7',2:'#fee2e2',3:'#f3f4f6'};
+  function loadMyLunchOrder(){
+    var email=localStorage.getItem('bs_email')||localStorage.getItem('lunch_email')||'';
+    if(!email)return;
+    fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success)return;
+        var orders=res.orders||[];
+        var today=new Date().toISOString().substring(0,10);
+        var todayOrders=orders.filter(function(o){return (o.datum||'').substring(0,10)===today&&o.status!==2;});
+        if(!todayOrders.length)return;
+        var el=document.getElementById('tp-my-order');
+        if(!el)return;
+        var h='<div class="tp-section" style="margin-top:12px"><div class="tp-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg> Meine Bestellung</div>';
+        todayOrders.forEach(function(o){
+          var st=LUNCH_STATUS_LABELS[o.status]||'?';
+          var col=LUNCH_STATUS_COLORS[o.status]||'#6b7280';
+          var bg=LUNCH_STATUS_BG[o.status]||'#f3f4f6';
+          var href='/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+          h+='<a href="'+esc(href)+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:6px;text-decoration:none;color:#1f2937;transition:background .12s" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'transparent\'">';
+          h+='<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.gericht||'Mittagessen')+'</div>';
+          if(o.menge&&o.menge>1) h+='<div style="font-size:12px;color:#6b7280">'+o.menge+'x</div>';
+          h+='</div>';
+          h+='<span style="font-size:11px;padding:3px 8px;border-radius:8px;font-weight:700;background:'+bg+';color:'+col+';white-space:nowrap">'+st+'</span>';
+          h+='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>';
+          h+='</a>';
+        });
+        h+='</div>';
+        el.innerHTML=h;
+      }).catch(function(){});
   }
 
   function catEmoji(kat){
