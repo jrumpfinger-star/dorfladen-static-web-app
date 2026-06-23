@@ -1734,20 +1734,17 @@ var K = (function(){
       html += '<button class="k-btn k-btn-sm k-btn-outline k-act-primary" onclick="K.openPackModal(\''+o.id+'\')">'+luc('package',14)+' Packen</button>';
       html += '<div class="k-act-tools">';
       html += '<button class="k-tool" onclick="K.showOrderDetail(\''+o.id+'\')" title="Details">'+luc('eye',14)+'</button>';
-      html += '<button class="k-tool" onclick="K.setShopStatus(\''+o.id+'\',0)" title="Zurück auf Neu">'+luc('undo-2',14)+'</button>';
       html += '<button class="k-tool danger" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
       html += '</div>';
     } else if(o.status===2){
       html += '<button class="k-btn k-btn-pickup k-btn-sm k-act-primary" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',14)+' Ausgeben</button>';
       html += '<div class="k-act-tools">';
       html += '<button class="k-tool" onclick="K.showOrderDetail(\''+o.id+'\')" title="Details">'+luc('eye',14)+'</button>';
-      html += '<button class="k-tool" onclick="K.setShopStatus(\''+o.id+'\',1)" title="Zurück auf Bearbeitung">'+luc('undo-2',14)+'</button>';
       html += '<button class="k-tool danger" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
       html += '</div>';
     } else if(o.status===3){
       html += '<span style="color:var(--c-green)">'+luc('check-circle',18)+'</span>';
       html += '<div class="k-act-tools">';
-      html += '<button class="k-tool" onclick="K.setShopStatus(\''+o.id+'\',2)" title="Zurück auf Bereit">'+luc('undo-2',14)+'</button>';
       html += '<button class="k-tool danger" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
       html += '</div>';
     }
