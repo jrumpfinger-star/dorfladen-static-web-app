@@ -212,6 +212,13 @@
     .reorder-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:8px 16px 16px}
     @media(min-width:768px){.reorder-grid{grid-template-columns:1fr 1fr;padding:8px 24px 16px}}
     @media(min-width:1200px){.reorder-grid{grid-template-columns:1fr 1fr 1fr;padding:8px 40px 16px;max-width:1100px;margin:0 auto}}
+    .reorder-wrap{position:relative}
+    .reorder-wrap.expanded .reorder-grid{max-height:none!important}
+    .reorder-wrap.expanded .reorder-more{display:none}
+    .reorder-wrap:not(.expanded) .reorder-grid{overflow:hidden}
+    .reorder-wrap.expanded .reorder-grid{max-height:520px;overflow-y:auto;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+    .reorder-more{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px;font-size:12px;font-weight:600;color:var(--shop-green);cursor:pointer;border-top:1px solid var(--shop-border);margin:0 16px;transition:color .12s}
+    .reorder-more:hover{color:#1b5e20}
     .reorder-card{background:#fff;border:1px solid var(--shop-border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
     .reorder-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s}
     .reorder-header:hover{background:#f0fdf4}
@@ -1608,9 +1615,11 @@
     // Reorder cards for "Schon bestellt"
     var reorderBanner='';
     if(activeCat==='previous'&&previousOrders.length){
-      reorderBanner+='<div class="reorder-grid">';
-      var maxShow=Math.min(previousOrders.length,3);
-      for(var oi=0;oi<maxShow;oi++){
+      var initialShow=2;
+      var hasMore=previousOrders.length>initialShow;
+      reorderBanner+='<div class="reorder-wrap" id="reorder-wrap">';
+      reorderBanner+='<div class="reorder-grid" id="reorder-grid">';
+      for(var oi=0;oi<previousOrders.length;oi++){
         var po=previousOrders[oi];
         if(!po.positionen||!po.positionen.length) continue;
         var poCount=po.positionen.length;
@@ -1672,6 +1681,8 @@
         reorderBanner+='</div>';
       }
       reorderBanner+='</div>';
+      if(hasMore) reorderBanner+='<div class="reorder-more" id="reorder-more" onclick="var w=document.getElementById(\'reorder-wrap\');var g=document.getElementById(\'reorder-grid\');w.classList.add(\'expanded\');g.style.maxHeight=w.getAttribute(\'data-scroll-h\')+\'px\';this.style.display=\'none\'">'+lucideHtml('chevron-down',14)+' Alle '+previousOrders.length+' Bestellungen anzeigen</div>';
+      reorderBanner+='</div>';
     }
 
     var emptyHint='';
@@ -1686,6 +1697,31 @@
     content.innerHTML=bc+reorderBanner+(emptyHint||articleHtml);
     wireAddButtons();
     loadImages(items);
+
+    // Limit reorder grid to show only first 2 cards initially
+    (function(){
+      var grid=document.getElementById('reorder-grid');
+      var wrap=document.getElementById('reorder-wrap');
+      if(!grid||!wrap||wrap.classList.contains('expanded')) return;
+      var cards=grid.querySelectorAll('.reorder-card');
+      if(cards.length<=2) { var moreBtn=document.getElementById('reorder-more'); if(moreBtn) moreBtn.style.display='none'; return; }
+      // Measure height of first 2 cards + gaps
+      requestAnimationFrame(function(){
+        var h=0;
+        for(var ci=0;ci<2&&ci<cards.length;ci++){
+          h+=cards[ci].offsetHeight;
+        }
+        h+=10; // gap
+        grid.style.maxHeight=h+'px';
+        // Set expanded scroll height to ~3 cards
+        var h3=0;
+        for(var ci2=0;ci2<3&&ci2<cards.length;ci2++){
+          h3+=cards[ci2].offsetHeight;
+        }
+        h3+=20; // gaps
+        wrap.setAttribute('data-scroll-h',h3);
+      });
+    })();
 
     // Wire reorder toggle + buttons
     document.querySelectorAll('[data-reorder-toggle]').forEach(function(hdr){
