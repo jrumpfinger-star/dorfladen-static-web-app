@@ -1626,11 +1626,25 @@
         try{var podt=new Date(po.bestelldatum);poTime=('0'+podt.getHours()).slice(-2)+':'+('0'+podt.getMinutes()).slice(-2);}catch(e){}
         var poShortNr='';
         try{var poParts=(po.bestellnummer||'').split('-');poShortNr='#'+(poParts.length>=3?poParts[poParts.length-1]:po.bestellnummer);}catch(e){poShortNr=po.bestellnummer||'';}
-        // Progress dots
-        var poProg='<div style="display:flex;gap:2px;margin-top:6px">';
+        // Mini status timeline with dots + icons + labels
         var poSt=po.status||0;
-        if(poSt===4){for(var ppi=0;ppi<4;ppi++) poProg+='<div style="flex:1;height:3px;border-radius:2px;background:#ef4444"></div>';}
-        else{for(var ppi=0;ppi<4;ppi++){var ppCls=ppi<poSt?'var(--shop-green)':ppi===poSt?'#3b82f6':'#e5e7eb';poProg+='<div style="flex:1;height:3px;border-radius:2px;background:'+ppCls+'"></div>';}}
+        var poTlSteps=[{ic:'\u23f3',l:'Neu'},{ic:'\u2699\ufe0f',l:'Packen'},{ic:'\u2705',l:'Bereit'},{ic:'\ud83d\udce6',l:'Abgeholt'}];
+        var poProg='<div style="display:flex;align-items:flex-start;margin-top:8px;position:relative">';
+        if(poSt===4){
+          poProg+='<div style="flex:1;text-align:center"><div style="width:20px;height:20px;border-radius:50%;background:#fee2e2;border:2px solid #ef4444;display:inline-flex;align-items:center;justify-content:center;font-size:10px">\u274c</div><div style="font-size:8px;color:#ef4444;font-weight:700;margin-top:2px">Storniert</div></div>';
+        } else {
+          poTlSteps.forEach(function(ts,ti){
+            var done=ti<poSt,active=ti===poSt;
+            var bg=done?'#d1fae5':active?'#dbeafe':'#f3f4f6';
+            var bdr=done?'#22c55e':active?'#3b82f6':'#d1d5db';
+            var lc=done?'#22c55e':active?'#3b82f6':'#9ca3af';
+            poProg+='<div style="flex:1;text-align:center;position:relative;z-index:1">';
+            if(ti<poTlSteps.length-1) poProg+='<div style="position:absolute;top:9px;left:calc(50% + 12px);right:calc(-50% + 12px);height:2px;background:'+(done?'#22c55e':'#e5e7eb')+';z-index:0"></div>';
+            poProg+='<div style="width:20px;height:20px;border-radius:50%;background:'+bg+';border:2px solid '+bdr+';display:inline-flex;align-items:center;justify-content:center;font-size:9px;position:relative;z-index:1">'+ts.ic+'</div>';
+            poProg+='<div style="font-size:8px;color:'+lc+';font-weight:'+(active?'700':'600')+';margin-top:2px">'+ts.l+'</div>';
+            poProg+='</div>';
+          });
+        }
         poProg+='</div>';
         reorderBanner+='<div class="reorder-card">';
         // Header
