@@ -187,6 +187,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=400, headers=get_cors_headers(),
                 )
 
+            # ── Bestellzeitsperre: Online-Bestellungen für heute nur bis 10:30 ──
+            if quelle == QUELLE_ONLINE and datum:
+                now_local = datetime.utcnow() + timedelta(hours=2)  # CET/CEST approximation
+                today_str = now_local.strftime("%Y-%m-%d")
+                if datum == today_str:
+                    now_h = now_local.hour + now_local.minute / 60.0
+                    BESTELLSCHLUSS_H = 10.5  # 10:30 Uhr
+                    if now_h >= BESTELLSCHLUSS_H:
+                        return func.HttpResponse(
+                            json.dumps({
+                                "success": False,
+                                "errors": ["Der Bestellschluss für heute (10:30 Uhr) ist leider überschritten."]
+                            }, ensure_ascii=False),
+                            status_code=400, headers=get_cors_headers(),
+                        )
+
             bestellnr = f"MT-{datetime.utcnow().strftime('%y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
 
             # Telefonbestellungen werden sofort als bestätigt gespeichert

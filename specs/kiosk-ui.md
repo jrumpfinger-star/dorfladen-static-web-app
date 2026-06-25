@@ -173,6 +173,21 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 ### Mittagstisch Gerichtauswahl
 - [x] Wenn nur 1 Gericht für heute verfügbar: automatisch als Default vorausgewählt (spart einen Klick)
 
+### Stornierung mit Begründung (Pflicht)
+- [x] Storno-Button öffnet Dialog mit 5 vordefinierten Gründen (Pflichtauswahl)
+- [x] Optionaler Kommentar als Freitext
+- [x] Stornieren-Button erst aktiv wenn Grund gewählt
+- [x] Grund wird als `bestaetigung_text` gespeichert → Push an Kunden mit Begründung
+- [x] Implementiert in: Kiosk, lunch-admin.html, shop-admin.html (Mittagstisch-Bereich)
+
+### Bestellzeitsperre (Mittagstisch)
+- [x] Online-Bestellungen für heute nur bis 10:30 Uhr möglich
+- [x] Frontend: `mittagstisch-bestellen.html` zeigt Fehlermeldung + deaktiviert Submit-Button
+- [x] Frontend: `index.html` Tagespost-Modal blendet Bestell-Button nach 10:30 aus
+- [x] Frontend: Wochenplan (`app.js`, `mobile.js`) bereits implementiert
+- [x] Backend: `api/lunch-order` POST lehnt Online-Bestellungen für heute nach 10:30 ab (HTTP 400)
+- [x] Personal-/Telefonbestellungen sind nicht betroffen
+
 ## Status
 - [x] Spec reviewed
 - [x] Implementierung

@@ -64,6 +64,23 @@ Bestellungen werden **nach Gericht gruppiert** angezeigt:
     - Status 3 (Abgeholt): Grünes Häkchen (keine Aktion)
   - **Aufgeklappte Details**: Bestellnummer, Telefon, Preis, Anmerkung
 
+### Stornierung mit Begründung (Pflicht)
+Klick auf den Storno-Button (✕) öffnet einen **Storno-Dialog** (Overlay):
+1. **Überschrift**: "Bestellung stornieren" mit Bestellnummer und Kundenname
+2. **Stornierungsgrund (Pflichtfeld)** — einer der folgenden muss gewählt werden:
+   - "Gericht ist leider ausverkauft"
+   - "Bestellung wurde doppelt aufgegeben"
+   - "Bestellschluss bereits überschritten"
+   - "Kunde hat telefonisch storniert"
+   - "Sonstiger Grund"
+3. **Zusätzlicher Kommentar** (optional): Freitext-Feld
+4. **Buttons**: "Abbrechen" und "Stornieren" (rot, erst aktiv wenn Grund gewählt)
+5. Nach Bestätigung:
+   - Status → 2 (Storniert)
+   - Grund wird im Feld `bestaetigung_text` gespeichert (Grund + optionaler Kommentar)
+   - Push-Nachricht an den Kunden: "❌ Bestellung storniert" mit Begründung
+   - Gilt **für alle Oberflächen**: Kiosk, lunch-admin.html, shop-admin.html (Mittagstisch-Bereich)
+
 ### Bestätigen mit Nachricht
 - Klick auf "Bestätigen" öffnet einen **Inline-Dialog** unter der Karte
 - Optionales Textfeld: z.B. "Gericht wird um 12:30 fertig"
@@ -249,6 +266,15 @@ Der "Tagesinfo"-Button ist visuell als grüner Outline-Button unterhalb der Shar
 - **Wochenplan**: `GET /api/wochenplan`
 - **Social-Posts**: `GET/POST /api/social-post`
 - **Tagespost (public)**: `GET /api/tagespost`
+
+### Bestellzeitsperre (Mittagstisch)
+- **Bestellschluss**: 10:30 Uhr für Bestellungen des heutigen Tages
+- **Gilt für Online-Bestellungen** (quelle=0). Personal-/Telefonbestellungen sind nicht betroffen.
+- **Frontend-Prüfung** (3 Stellen):
+  - `mittagstisch-bestellen.html`: Formular zeigt Fehlermeldung "Der Bestellschluss für heute (10:30 Uhr) ist leider überschritten."
+  - `index.html` (Tagespost-Modal): Bestell-Button wird nach 10:30 deaktiviert/ausgeblendet
+  - Wochenplan (`app.js`, `mobile.js`): Bestell-Buttons werden für vergangene Tage und nach 10:30 ausgeblendet (✅ bereits implementiert)
+- **Backend-Prüfung** (`api/lunch-order` POST): Lehnt Online-Bestellungen für heute nach 10:30 Uhr mit HTTP 400 ab
 
 ### Auto-Refresh
 - Bestellungen werden periodisch automatisch neu geladen
