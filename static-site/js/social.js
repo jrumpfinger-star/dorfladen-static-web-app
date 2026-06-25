@@ -52,12 +52,13 @@
   function socialStatus(id,msg,ok){
     var el=document.getElementById(id);
     if(!el)return;
+    if(el._statusTimer){clearTimeout(el._statusTimer);el._statusTimer=null;}
     el.style.display='block';
     el.style.background=ok?'#f0fdf4':'#fef2f2';
     el.style.color=ok?'#166534':'#991b1b';
     el.style.border='1px solid '+(ok?'#bbf7d0':'#fecaca');
     el.textContent=msg;
-    setTimeout(function(){el.style.display='none';},4000);
+    el._statusTimer=setTimeout(function(){el.style.display='none';el._statusTimer=null;},4000);
   }
 
   var _socPastedFile = null;
