@@ -264,6 +264,53 @@ Der "Tagesinfo"-Button ist visuell als grüner Outline-Button unterhalb der Shar
 
 ---
 
+## 6a. Bild-Zoom (Doppelklick-Lightbox)
+
+**Überall, wo Produktbilder angezeigt werden, können diese per Doppelklick vergrößert dargestellt werden.**
+
+### Auslösung
+- **Desktop**: Doppelklick auf das Produktbild
+- **Mobile/Tablet**: Doppeltipp auf das Produktbild
+
+### Verhalten
+1. Beim Doppelklick auf ein Produktbild öffnet sich ein **Fullscreen-Overlay** (Lightbox):
+   - Halbtransparenter schwarzer Hintergrund (`rgba(0,0,0,.85)`)
+   - Bild zentriert, maximal 90% Viewport-Breite und 80% Viewport-Höhe
+   - Produktname als Beschriftung unterhalb des Bildes (weiß)
+   - Schließen-Button (✕) oben rechts
+2. **Schließen** der Lightbox durch:
+   - Klick auf den ✕-Button
+   - Klick auf den Hintergrund (außerhalb des Bildes)
+   - Escape-Taste (Desktop)
+3. Bilder ohne URL (Platzhalter-Icons) lösen **keinen** Zoom aus
+
+### Betroffene Stellen
+| Bereich | Datei | Bild-Element |
+|---------|-------|-------------|
+| Katalog-Thumbnails (44×44) | `social.js` | `soc-kat-thumb-{id}` |
+| Post-Builder Produktbilder (40×40) | `social.js` | `soc-pick-img-{id}` |
+| Post-Builder Mittagessen-Bilder (32×32) | `social.js` | Inline `<img>` im Mittagessen-Bereich |
+| CMS Katalog-Thumbnails | `cms.js` | `soc-kat-thumb-{id}` |
+| CMS Post-Builder Bilder | `cms.js` | `soc-pick-img-{id}` |
+| CMS Wochenplan Mahlzeit-Bilder | `cms.js` | `wp-meal-thumb` |
+| Homepage Tagespost (itemCard) | `index.html` | `.tp-item-img` |
+| Homepage Tagespost (gridCard) | `index.html` | Grid-Card `<img>` |
+| Wochenplan Mahlzeit-Bilder | `app.js` | `wp-meal-thumb` (bereits vorhanden) |
+
+### Implementierung
+- **Eine zentrale Funktion** `window.dlImagePopup(src, alt)` in `app.js`, die von allen Stellen genutzt wird
+- Bestehende `wpOpenLightbox()` in `app.js` und `socialPickImgPreview()` in `social.js` werden durch `dlImagePopup` ersetzt
+- Doppelklick (`ondblclick`) wird als HTML-Attribut oder per Event-Delegation angebunden
+- **Bestehende Klick-Handler** (z.B. Checkbox-Toggle, Bild-Upload) bleiben vollständig erhalten
+- `cursor: zoom-in` als visueller Hinweis auf allen zoombaren Bildern
+
+### Einschränkungen
+- Nur echte Bilder (mit `src`-URL oder Base64) sind zoombar, keine Platzhalter-Divs
+- Canvas-Poster-Vorschauen sind nicht betroffen (kein Zoom auf Canvas)
+- Bestehende Einzelklick-Funktionen (z.B. `socialPickImgPreview` per onclick) werden auf Doppelklick umgestellt
+
+---
+
 ## 7. Technische Details
 
 ### Datenquellen
