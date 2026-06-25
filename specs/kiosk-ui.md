@@ -16,6 +16,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 ### Bottom-Bar
 - [x] Nur 2 Buttons: "☎ Neue Telefonbestellung" + "🖨 Küchenliste drucken"
 - [x] Küchenliste öffnet Druck-Fenster mit Bestellungen gruppiert nach Gericht (Portionen, Mitnehmen/Vor-Ort, Kundennamen)
+- [x] Responsive auf Mobile (≤600px): kleinere Höhe (40px statt 64px), kompakteres Padding, Font 13px
 
 ### Datum-Normalisierung
 - [x] Online-Bestellungen speichern Datum als `YYYY-MM-DD` (nicht `YYYY-MM-DDT00:00:00Z`)
@@ -42,6 +43,12 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] Bestätigungstext wird auf der Karte grün hinterlegt angezeigt
 - [x] Abbrechen-Button schließt Dialog ohne Aktion
 
+### Nachricht an Kunde
+- [x] "Nachricht senden"-Button nur bei Online-Bestellungen (quelle===0), nicht bei Telefon/Personal
+- [x] Bei Kundenkommentar: Button-Label "Antworten" mit Reply-Icon
+- [x] Ohne Kundenkommentar: Button-Label "Nachricht senden" mit Send-Icon
+- [x] Reply-Dialog zeigt Kundenkommentar (wenn vorhanden) + Textfeld + Senden-Button
+
 ### Zeitslot-Gruppen
 - [x] Bestellungen gruppiert nach Abholdatum + Zeitslot
 - [x] Gruppen aufklappbar (collapsible) mit Pfeil-Indikator (▶/▼) und Bestellanzahl-Badge
@@ -57,6 +64,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] Neue-Kunde-Formular: Separate Felder für Nachname (Pflicht) und Vorname
 - [x] Inline-Kunden-Anlage im Bestellformular: ebenfalls Nachname/Vorname getrennt
 - [x] Fehlerbehandlung: HTTP-Status prüfen, Duplikate erkennen (409), verständliche Meldungen
+- [x] Stammkunden-Karte: Bearbeiten-Button → Edit-Modal mit allen Feldern (Name, Telefon, E-Mail, Notiz)
+- [x] Stammkunden-Karte: Löschen-Button → Bestätigungsdialog, Soft-Delete (Kunde wird deaktiviert)
+- [x] Edit-Modal nutzt PATCH `/api/stammkunden/{id}`, Löschen nutzt DELETE `/api/stammkunden/{id}`
 
 ## Betroffene Dateien
 - `static-site/kiosk.html` – Tabs, Filter, Gruppen, Tagesauswahl, Kundenformulare
@@ -65,6 +75,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - `GET /api/shop-order` – Shop-Bestellungen laden
 - `POST /api/stammkunden` – Neuen Stammkunden anlegen
 - `GET /api/stammkunden?q=...` – Stammkunden suchen
+- `GET /api/stammkunden/{id}` – Einzelner Kunde laden
+- `PATCH /api/stammkunden/{id}` – Kundendaten aktualisieren
+- `DELETE /api/stammkunden/{id}` – Kunde deaktivieren (Soft-Delete)
 - `GET /api/lunch-order?datum=YYYY-MM-DD` – Mittagstisch-Bestellungen nach Datum
 
 ## Akzeptanzkriterien
@@ -126,6 +139,13 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-29: Gerichtzusammenfassung als Inline-Text mit Pipe-Trennern
 - [x] AK-UI-30: Bestellquellen-Labels (Online/Telefon/Personal) nur farbiger Text, kein Hintergrund
 - [x] AK-UI-30b: Mitnehmen-Label ohne Hintergrund, nur farbiger Text
+- [x] AK-UI-31: Bottom-Bar responsive auf Mobile (≤600px)
+- [x] AK-UI-32: Gericht auto-select wenn nur 1 Gericht verfügbar
+- [x] AK-UI-33: Nachricht-senden nur bei Online-Bestellungen (nicht Telefon/Personal)
+- [x] AK-UI-33b: Button-Label kontextabhängig: "Antworten" vs "Nachricht senden"
+- [x] AK-UI-34: Stammkunden-Karte zeigt Bearbeiten-Button → Edit-Modal
+- [x] AK-UI-34b: Stammkunden-Karte zeigt Löschen-Button → Soft-Delete mit Bestätigung
+- [x] AK-UI-34c: Edit-Modal lädt Kundendaten, speichert via PATCH
 
 ### Tab-Badge: Neue Bestellungen + Nachrichten
 - [x] Mittagstisch-Tab-Badge zeigt Summe aus neuen Bestellungen (heute, Status 0) + ungelesene Nachrichten (tagesübergreifend)
@@ -150,10 +170,11 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 ## API-Endpunkte
 - `GET /api/lunch-order?mode=unread_messages` – Anzahl ungelesener Kundennachrichten (tagesübergreifend)
 
-## Nicht-Ziele
-- Keine Änderung am Stammkunden-Tab-Layout (nur Formular)
+### Mittagstisch Gerichtauswahl
+- [x] Wenn nur 1 Gericht für heute verfügbar: automatisch als Default vorausgewählt (spart einen Klick)
 
 ## Status
 - [x] Spec reviewed
 - [x] Implementierung
 - [x] Validierung (Tab-Badge + kompakte Buttons + Info vs Actions: 2026-06-22)
+- [x] Validierung (Bottom-Bar responsive + Gericht-Default + Nachricht-senden + Stammkunden CRUD: 2026-06-25)
