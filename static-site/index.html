@@ -1597,12 +1597,14 @@
     }catch(e){}
   })();
 
+  var _shopOrders=[];
   function renderOrdersPopup(orders){
+    _shopOrders=orders;
     var statusLabels=['Neu','In Bearbeitung','Bereit','Abgeholt'];
     var statusColors=['#f59e0b','#3b82f6','#22c55e','#6b7280'];
     var statusIcons=['\u23f3','\u2699\ufe0f','\u2705','\u2611\ufe0f'];
     var html='';
-    orders.forEach(function(o){
+    orders.forEach(function(o,i){
       var st=o.status||0;
       var positionen=[];
       try{positionen=Array.isArray(o.positionen)?o.positionen:(typeof o.positionen_json==='string'?JSON.parse(o.positionen_json):[]);}catch(e){}
@@ -1612,15 +1614,75 @@
       var slot='';
       try{var zs=typeof o.abhol_zeitslot==='string'?JSON.parse(o.abhol_zeitslot):o.abhol_zeitslot;if(zs)slot=zs.label||'';if(zs&&zs.von)slot+=' ('+zs.von+'\u2013'+zs.bis+')';}catch(e){}
       var summe=o.gesamtsumme?parseFloat(o.gesamtsumme).toFixed(2).replace('.',',')+'\u00a0\u20ac':'';
-      html+='<a href="/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'')+'" class="ord-card" style="border-left:4px solid '+statusColors[st]+'">';
+      html+='<div class="ord-card" style="border-left:4px solid '+statusColors[st]+';cursor:pointer" onclick="showOrderDetail('+i+')">';
       html+='<div class="ord-head"><span class="ord-nr">'+((o.bestellnummer||'').replace('DL-',''))+'</span><span class="ord-status" style="color:'+statusColors[st]+'">'+statusIcons[st]+' '+statusLabels[st]+'</span></div>';
       html+='<div class="ord-details">';
       html+='<span>'+artikelCount+' Artikel \u00b7 '+summe+'</span>';
       if(datum)html+='<span>Abholung: '+datum+(slot?' '+slot:'')+'</span>';
-      html+='</div></a>';
+      html+='</div></div>';
     });
     html+='<a href="/shop#meine-bestellungen" class="ord-all">Alle Bestellungen \u2192</a>';
     document.getElementById('orders-body').innerHTML=html;
+  }
+
+  function showOrderDetail(idx){
+    var o=_shopOrders[idx];if(!o) return;
+    var statusLabels=['Neu','In Bearbeitung','Abholbereit','Abgeholt','Storniert'];
+    var statusColors=['#f59e0b','#3b82f6','#22c55e','#6b7280','#ef4444'];
+    var st=o.status||0;
+    var positionen=[];
+    try{positionen=Array.isArray(o.positionen)?o.positionen:(typeof o.positionen_json==='string'?JSON.parse(o.positionen_json):[]);}catch(e){}
+    // Format dates
+    function fd(raw){if(!raw)return'\u2013';try{var p=raw.substring(0,10).split('-');return p[2]+'.'+p[1]+'.'+p[0];}catch(e){return raw;}}
+    var datum=fd(o.abholdatum);
+    var bestDatum=fd(o.bestelldatum);
+    var slot='';
+    try{var zs=typeof o.abhol_zeitslot==='string'?JSON.parse(o.abhol_zeitslot):o.abhol_zeitslot;if(zs&&zs.von)slot=(zs.period==='nm'?'NM':'VM')+' '+zs.von+'\u2013'+zs.bis;}catch(e){}
+    // Timeline
+    var tlSteps=[{icon:'\u23f3',l:'Neu'},{icon:'\u2699\ufe0f',l:'Packen'},{icon:'\u2705',l:'Bereit'},{icon:'\ud83d\udce6',l:'Abgeholt'}];
+    var tlHtml='<div style="display:flex;align-items:flex-start;margin:16px 0 12px;position:relative">';
+    if(st===4){
+      tlHtml+='<div style="flex:1;text-align:center"><div style="width:28px;height:28px;border-radius:50%;background:#fee2e2;border:2px solid #ef4444;display:inline-flex;align-items:center;justify-content:center;font-size:14px">\u274c</div><div style="font-size:10px;color:#ef4444;font-weight:700;margin-top:3px">Storniert</div></div>';
+    } else {
+      tlSteps.forEach(function(s,si){
+        var done=si<st,active=si===st;
+        var bg=done?statusColors[0<1?si:0]:active?'#dbeafe':'#f3f4f6';
+        if(done) bg='#d1fae5';
+        var border=done?'#22c55e':active?'#3b82f6':'#d1d5db';
+        var lblCol=done?'#22c55e':active?'#3b82f6':'#9ca3af';
+        tlHtml+='<div style="flex:1;text-align:center;position:relative;z-index:1">';
+        if(si<tlSteps.length-1) tlHtml+='<div style="position:absolute;top:13px;left:calc(50% + 16px);right:calc(-50% + 16px);height:2px;background:'+(done?'#22c55e':'#e5e7eb')+';z-index:0"></div>';
+        tlHtml+='<div style="width:28px;height:28px;border-radius:50%;background:'+bg+';border:2px solid '+border+';display:inline-flex;align-items:center;justify-content:center;font-size:13px;position:relative;z-index:1'+(active?';animation:odpulse 1.5s infinite':'')+'">'+s.icon+'</div>';
+        tlHtml+='<div style="font-size:10px;color:'+lblCol+';font-weight:'+(active?'700':'600')+';margin-top:3px">'+s.l+'</div>';
+        tlHtml+='</div>';
+      });
+    }
+    tlHtml+='</div>';
+    // Positions
+    var posHtml='';
+    if(positionen.length){
+      posHtml='<div style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin:12px 0">';
+      positionen.forEach(function(p,pi){
+        var pr=p.positionspreis!=null?Number(p.positionspreis).toFixed(2).replace('.',',')+' \u20ac':(p.einzelpreis!=null?(Number(p.einzelpreis)*Number(p.menge||1)).toFixed(2).replace('.',',')+' \u20ac':'');
+        posHtml+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:13px;'+(pi<positionen.length-1?'border-bottom:1px solid #f0f0f0;':'')+'background:#fafafa">';
+        posHtml+='<div style="flex:1;min-width:0"><div style="font-weight:600;color:#1f2937">'+(p.bezeichnung||'\u2013')+'</div><div style="font-size:11px;color:#6b7280;margin-top:1px">'+(p.menge||1)+'\u00d7 '+(p.einheit||'St.')+'</div></div>';
+        posHtml+='<div style="font-weight:700;color:#2e7d4f;white-space:nowrap">'+pr+'</div>';
+        posHtml+='</div>';
+      });
+      posHtml+='</div>';
+    }
+    var total=o.gesamtsumme?parseFloat(o.gesamtsumme).toFixed(2).replace('.',',')+' \u20ac':'';
+    // Build modal
+    var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:17px;font-weight:800;color:#1f2937">'+o.bestellnummer+'</span></div>';
+    h+=tlHtml;
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:8px">';
+    h+='<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="color:#6b7280;font-size:11px;font-weight:600">Bestellt am</div><div style="font-weight:700;color:#1f2937;margin-top:2px">'+bestDatum+'</div></div>';
+    h+='<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="color:#6b7280;font-size:11px;font-weight:600">Abholung</div><div style="font-weight:700;color:#1f2937;margin-top:2px">'+datum+(slot?' '+slot:'')+'</div></div>';
+    h+='</div>';
+    h+=posHtml;
+    if(total) h+='<div style="display:flex;justify-content:space-between;padding:10px 0;border-top:2px solid #e5e7eb;margin-top:4px"><span style="font-weight:700;color:#374151">Gesamt</span><span style="font-size:18px;font-weight:800;color:#2e7d4f">'+total+'</span></div>';
+    document.getElementById('od-body').innerHTML=h;
+    document.getElementById('od-overlay').classList.add('open');
   }
 </script>
 
@@ -1643,7 +1705,30 @@
 .ord-all{display:block;text-align:center;padding:12px;color:#2e7d4f;font-weight:600;font-size:.88rem;text-decoration:none;border-top:1px solid #e5e7eb;margin-top:4px}
 .ord-all:hover{background:#f0fdf4;border-radius:0 0 16px 16px}
 @media(max-width:600px){.orders-overlay{padding:20px 8px 8px}.orders-modal{max-height:calc(100vh - 30px);border-radius:12px}.orders-modal-head{border-radius:12px 12px 0 0}}
+/* ── Order Detail Overlay ── */
+.od-overlay{display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px}
+.od-overlay.open{display:flex}
+.od-modal{background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+.od-head{position:sticky;top:0;background:#1e3a2f;color:#fff;padding:14px 48px 14px 18px;border-radius:16px 16px 0 0;display:flex;align-items:center;gap:10px;z-index:2}
+.od-head h2{margin:0;font-size:16px;font-weight:700;flex:1}
+.od-close{position:absolute;top:10px;right:10px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:6px 10px;border-radius:8px;line-height:1}
+.od-close:hover{background:rgba(255,255,255,.15)}
+.od-body{padding:16px}
+@keyframes odpulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(max-width:600px){.od-modal{max-height:calc(100vh - 40px);border-radius:12px}.od-head{border-radius:12px 12px 0 0}}
 </style>
+
+<!-- ====== ORDER DETAIL OVERLAY ====== -->
+<div class="od-overlay" id="od-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="od-modal">
+    <div class="od-head">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <h2>Bestelldetails</h2>
+      <button class="od-close" onclick="document.getElementById('od-overlay').classList.remove('open')">&times;</button>
+    </div>
+    <div class="od-body" id="od-body"></div>
+  </div>
+</div>
 
 <div class="orders-overlay" id="orders-overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="orders-modal">
