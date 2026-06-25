@@ -39,40 +39,54 @@
     .actions{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.note{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px}
     .pack-title{font-size:15px;font-weight:700;margin-bottom:6px}.pack-summary{font-size:12px;color:var(--muted);margin-bottom:6px}.pack-progress{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:6px 0 10px}.pack-progress div{height:100%;background:var(--green)}
     .toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;border-radius:12px;padding:12px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none}.loading{padding:40px;text-align:center;color:var(--muted)}
-    .admin-tabs{display:flex;gap:0;background:#fff;border:1px solid var(--border);border-radius:14px 14px 0 0;overflow:hidden;margin-bottom:0}
-    .admin-tab{flex:1;padding:14px 16px;text-align:center;font-size:15px;font-weight:800;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;user-select:none;position:relative}
+    .admin-tabs{display:flex;gap:0;background:#fff;border:1px solid var(--border);border-radius:12px 12px 0 0;overflow:hidden;margin-bottom:0}
+    .admin-tab{flex:1;padding:11px 14px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:6px;user-select:none;position:relative;letter-spacing:.1px}
     .admin-tab:hover{background:#f9fafb}
     .admin-tab.active{border-bottom-color:var(--green);color:var(--green);background:#f0fdf4}
-    .admin-tab .admin-tab-badge{background:#f59e0b;color:#fff;font-size:11px;font-weight:800;padding:1px 8px;border-radius:10px;min-width:18px;display:none}
+    .admin-tab .admin-tab-badge{background:#f59e0b;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;min-width:16px;display:none}
     .admin-tab .admin-tab-badge.show{display:inline-block}
     .admin-panel{display:none}.admin-panel.active{display:block}
-    /* Mittagstisch cards & filter */
-    .mt-filter-bar{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-    .mt-filter-btn{padding:10px 18px;border-radius:10px;border:2px solid var(--border);background:#fff;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:48px;transition:all .15s}
-    .mt-filter-btn:hover{background:#f9fafb}
-    .mt-filter-btn.active{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 2px 8px rgba(30,70,58,.25)}
-    .mt-filter-btn .mt-filter-count{background:rgba(0,0,0,.15);padding:2px 8px;border-radius:8px;font-size:13px;min-width:22px;text-align:center}
-    .mt-filter-btn.active .mt-filter-count{background:rgba(255,255,255,.3)}
-    .mt-dish-bar{background:#f0fdf4;border:1px solid #dcfce7;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13px}
-    .mt-dish-bar strong{margin-right:12px}
-    .mt-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:all .15s}
-    .mt-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .mt-card-qty{font-size:28px;font-weight:900;color:var(--green);min-width:44px;text-align:center;line-height:1}
+    /* ── Mittagstisch Toolbar ── */
+    .mt-toolbar{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+    .mt-toolbar .mt-day-btn{padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:#f9fafb;font-size:11px;font-weight:600;cursor:pointer;transition:all .12s;color:var(--text)}
+    .mt-toolbar .mt-day-btn:hover{background:#e8f5e9;border-color:var(--green)}
+    .mt-toolbar .mt-day-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+    .mt-toolbar .mt-day-btn.today{font-weight:700}
+    .mt-toolbar-sep{width:1px;height:20px;background:var(--border);margin:0 2px}
+    .mt-action-btn{padding:4px 8px;border-radius:7px;border:1px solid var(--border);background:#fff;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;color:var(--muted);transition:all .12s}
+    .mt-action-btn:hover{background:#f0fdf4;border-color:var(--green);color:var(--green)}
+    .mt-action-btn.primary{background:#fef3c7;border-color:#f59e0b;color:#92400e}
+    /* ── Mittagstisch Stats & Filter ── */
+    .mt-stats-row{display:flex;align-items:center;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+    .mt-stat{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.2px}
+    .mt-filter-bar{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+    .mt-filter-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .12s;color:var(--text)}
+    .mt-filter-btn:hover{background:#f9fafb;border-color:#d1d5db}
+    .mt-filter-btn.active{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 1px 4px rgba(30,70,58,.2)}
+    .mt-filter-btn .mt-filter-count{background:rgba(0,0,0,.08);padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;min-width:16px;text-align:center}
+    .mt-filter-btn.active .mt-filter-count{background:rgba(255,255,255,.25)}
+    /* ── Dish Summary ── */
+    .mt-dish-bar{background:#f0fdf4;border:1px solid #dcfce7;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;display:flex;align-items:center;gap:6px}
+    .mt-dish-bar strong{font-weight:700;color:var(--green);margin-right:4px}
+    /* ── Mittagstisch Cards ── */
+    .mt-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:all .12s}
+    .mt-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .mt-card-qty{font-size:22px;font-weight:800;color:var(--green);min-width:32px;text-align:center;line-height:1}
     .mt-card-body{flex:1;min-width:0}
-    .mt-card-dish{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .mt-card-customer{font-size:12px;color:var(--muted);margin-top:2px}
-    .mt-card-note{font-size:11px;color:#92400e;background:#fef3c7;padding:3px 8px;border-radius:6px;margin-top:4px;display:inline-block}
-    .mt-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
-    .mt-card-badges{display:flex;gap:4px;align-items:center}
-    .mt-card-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
+    .mt-card-dish{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#1f2937}
+    .mt-card-customer{font-size:11px;color:var(--muted);margin-top:1px}
+    .mt-card-note{font-size:10px;color:#92400e;background:#fef3c7;padding:2px 7px;border-radius:5px;margin-top:3px;display:inline-block}
+    .mt-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+    .mt-card-badges{display:flex;gap:3px;align-items:center}
+    .mt-card-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;letter-spacing:.2px}
     .mt-badge-mitnehmen{background:#dbeafe;color:#1d4ed8}
     .mt-badge-quelle{background:#f3f4f6;color:var(--muted)}
-    .mt-card-actions{display:flex;gap:4px}
-    .mt-card-actions .btn{min-height:36px;min-width:36px;padding:6px 10px;font-size:12px}
-    .mt-card.status-0{border-left:4px solid #f59e0b}
-    .mt-card.status-1{border-left:4px solid #22c55e}
-    .mt-card.status-2{border-left:4px solid #dc2626;opacity:.6}
-    .mt-card.status-3{border-left:4px solid #9ca3af;opacity:.6}
+    .mt-card-actions{display:flex;gap:3px}
+    .mt-card-actions .btn{min-height:28px;min-width:28px;padding:4px 8px;font-size:11px;font-weight:600;border-radius:6px}
+    .mt-card.status-0{border-left:3px solid #f59e0b}
+    .mt-card.status-1{border-left:3px solid #22c55e}
+    .mt-card.status-2{border-left:3px solid #dc2626;opacity:.55}
+    .mt-card.status-3{border-left:3px solid #9ca3af;opacity:.55}
     .scan-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center}
     .scan-overlay.open{display:flex}
     .scan-header{color:#fff;font-size:16px;font-weight:800;margin-bottom:12px;text-align:center}
@@ -174,19 +188,20 @@
     </div>
 
     <!-- ═══ Mittagstisch Panel ═══ -->
-    <div class="admin-panel" id="panel-mittag" style="background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;box-shadow:0 2px 10px rgba(0,0,0,.03);margin-bottom:12px;padding:12px 16px">
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
-        <div style="display:flex;gap:6px" id="mt-stats"></div>
+    <div class="admin-panel" id="panel-mittag" style="background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;box-shadow:0 2px 10px rgba(0,0,0,.03);margin-bottom:12px;padding:12px 14px">
+      <!-- Zone 1: Toolbar (Day tabs + Actions) -->
+      <div class="mt-toolbar">
+        <div id="mt-day-tabs" style="display:contents"></div>
+        <div class="mt-toolbar-sep"></div>
+        <button class="mt-action-btn primary" onclick="mtShowNewOrder()"><i data-lucide="plus" style="width:12px;height:12px"></i> Neu</button>
+        <button class="mt-action-btn" onclick="loadMittagOrders()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i></button>
+        <a class="mt-action-btn" href="/kiosk"><i data-lucide="monitor" style="width:12px;height:12px"></i></a>
         <div style="flex:1"></div>
-        <button class="btn small" onclick="mtShowNewOrder()" style="background:#fef3c7;border-color:#f59e0b;color:#92400e;font-weight:800"><i data-lucide="plus" style="width:14px;height:14px"></i> Neue Bestellung</button>
-        <button class="btn small" onclick="loadMittagOrders()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Aktualisieren</button>
-        <a class="btn small" href="/kiosk" style="background:#f0fdf4;border-color:#2e7d4f;color:#2e7d4f"><i data-lucide="monitor" style="width:14px;height:14px"></i> Kiosk öffnen</a>
+        <div id="mt-stats" style="display:contents"></div>
       </div>
-      <!-- Day tabs -->
-      <div id="mt-day-tabs" style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap"></div>
-      <!-- Filter buttons -->
+      <!-- Zone 2: Filter -->
       <div class="mt-filter-bar" id="mt-filter-bar"></div>
-      <!-- Dish summary -->
+      <!-- Zone 3: Dish summary -->
       <div class="mt-dish-bar" id="mt-dish-summary" style="display:none"></div>
       <!-- Manual order form (hidden by default) -->
         <div id="mt-new-form" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:10px">
@@ -1143,10 +1158,7 @@ function mtBuildDayTabs(){
     var isToday = ds === _fmtDate(today);
     var isActive = ds === _mtSelectedDate;
     var label = isToday ? 'Heute' : _dayNames[day.getDay()]+' '+_pad(day.getDate())+'.'+_pad(day.getMonth()+1);
-    html += '<button onclick="mtSelectDay(\''+ds+'\')" class="btn small" style="';
-    if(isActive) html += 'background:var(--green);color:#fff;border-color:var(--green);';
-    else html += 'background:#f9fafb;';
-    html += 'font-size:12px">'+label+'</button>';
+    html += '<button onclick="mtSelectDay(\''+ds+'\')" class="mt-day-btn'+(isActive?' active':'')+(isToday?' today':'')+'">'+label+'</button>';
   });
   container.innerHTML = html;
   loadMittagOrders();
@@ -1239,22 +1251,21 @@ function renderMittagStats(orders){
     if(o.status!==2 && o.preis) umsatz += (o.preis * (o.menge||1));
   });
   var offen = neu + best;
-  // Stats badges
-  document.getElementById('mt-stats').innerHTML =
-    (neu>0?'<div style="background:#fee2e2;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;animation:pulse 1.5s infinite" onclick="mtSetFilter(\'neu\')">Neu: '+neu+'</div>':'')+
-    '<div style="background:#fef3c7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer" onclick="mtSetFilter(\'open\')">Offen: '+offen+'</div>'+
-    '<div style="background:#dcfce7;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer" onclick="mtSetFilter(\'confirmed\')">Bestätigt: '+best+'</div>'+
-    '<div style="background:#f3f4f6;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer" onclick="mtSetFilter(\'done\')">Abgeholt: '+abg+'</div>'+
-    '<div style="background:#e8f5e9;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">'+portionen+' Port.</div>'+
-    (umsatz>0?'<div style="background:#f0fdf4;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">'+umsatz.toFixed(2)+'€</div>':'');
-  // Filter buttons
-  document.getElementById('mt-filter-bar').innerHTML =
-    '<button class="mt-filter-btn'+(_mtFilter==='all'?' active':'')+'" data-filter="all" onclick="mtSetFilter(\'all\')">Alle<span class="mt-filter-count">'+orders.length+'</span></button>'+
-    (neu>0?'<button class="mt-filter-btn'+(_mtFilter==='neu'?' active':'')+'" data-filter="neu" onclick="mtSetFilter(\'neu\')" style="border-color:#ef4444">Neu<span class="mt-filter-count" style="background:#fee2e2;color:#dc2626">'+neu+'</span></button>':'')+
-    '<button class="mt-filter-btn'+(_mtFilter==='open'?' active':'')+'" data-filter="open" onclick="mtSetFilter(\'open\')">Offen<span class="mt-filter-count">'+offen+'</span></button>'+
-    '<button class="mt-filter-btn'+(_mtFilter==='confirmed'?' active':'')+'" data-filter="confirmed" onclick="mtSetFilter(\'confirmed\')">Bestätigt<span class="mt-filter-count">'+best+'</span></button>'+
-    '<button class="mt-filter-btn'+(_mtFilter==='done'?' active':'')+'" data-filter="done" onclick="mtSetFilter(\'done\')">Abgeholt<span class="mt-filter-count">'+abg+'</span></button>'+
-    '<button class="mt-filter-btn'+(_mtFilter==='cancelled'?' active':'')+'" data-filter="cancelled" onclick="mtSetFilter(\'cancelled\')">Storniert<span class="mt-filter-count">'+stor+'</span></button>';
+  // Compact stats in toolbar
+  var statsHtml = '';
+  statsHtml += '<span class="mt-stat" style="background:#e8f5e9;color:#166534">'+portionen+' Port.</span>';
+  if(umsatz>0) statsHtml += '<span class="mt-stat" style="background:#f0fdf4;color:#166534">'+umsatz.toFixed(2)+'€</span>';
+  if(neu>0) statsHtml += '<span class="mt-stat" style="background:#fee2e2;color:#dc2626;cursor:pointer;animation:pulse 1.5s infinite" onclick="mtSetFilter(\'neu\')">'+neu+' neu!</span>';
+  document.getElementById('mt-stats').innerHTML = statsHtml;
+  // Filter pills
+  var fb = '';
+  fb += '<button class="mt-filter-btn'+(_mtFilter==='all'?' active':'')+'" data-filter="all" onclick="mtSetFilter(\'all\')">Alle <span class="mt-filter-count">'+orders.length+'</span></button>';
+  if(neu>0) fb += '<button class="mt-filter-btn'+(_mtFilter==='neu'?' active':'')+'" data-filter="neu" onclick="mtSetFilter(\'neu\')" style="border-color:#fca5a5">Neu <span class="mt-filter-count" style="background:#fee2e2;color:#dc2626">'+neu+'</span></button>';
+  fb += '<button class="mt-filter-btn'+(_mtFilter==='open'?' active':'')+'" data-filter="open" onclick="mtSetFilter(\'open\')">Offen <span class="mt-filter-count">'+offen+'</span></button>';
+  fb += '<button class="mt-filter-btn'+(_mtFilter==='confirmed'?' active':'')+'" data-filter="confirmed" onclick="mtSetFilter(\'confirmed\')">Bestätigt <span class="mt-filter-count">'+best+'</span></button>';
+  fb += '<button class="mt-filter-btn'+(_mtFilter==='done'?' active':'')+'" data-filter="done" onclick="mtSetFilter(\'done\')">Abgeholt <span class="mt-filter-count">'+abg+'</span></button>';
+  if(stor>0) fb += '<button class="mt-filter-btn'+(_mtFilter==='cancelled'?' active':'')+'" data-filter="cancelled" onclick="mtSetFilter(\'cancelled\')">Storno <span class="mt-filter-count">'+stor+'</span></button>';
+  document.getElementById('mt-filter-bar').innerHTML = fb;
   // Dish summary (only open)
   var dishMap = {};
   orders.forEach(function(o){
@@ -1264,10 +1275,10 @@ function renderMittagStats(orders){
     }
   });
   var dishParts = [];
-  for(var g in dishMap) dishParts.push(dishMap[g]+'× '+g);
+  for(var g in dishMap) dishParts.push('<span style="white-space:nowrap">'+dishMap[g]+'× '+g+'</span>');
   var ds = document.getElementById('mt-dish-summary');
   if(dishParts.length > 0){
-    ds.innerHTML = '<strong>Gerichte offen:</strong> '+dishParts.join(' &nbsp;·&nbsp; ');
+    ds.innerHTML = '<strong>Offen:</strong> '+dishParts.join(' <span style="color:#d1d5db">·</span> ');
     ds.style.display = '';
   } else {
     ds.style.display = 'none';
