@@ -5,7 +5,31 @@
 
 ---
 
-## 1. Testpflicht bei Änderungen
+## 1. Funktionsbeschreibung vor Code-Änderung (Pflicht)
+
+**Vor jeder Code-Änderung muss eine detaillierte Funktionsbeschreibung erstellt oder aktualisiert werden.**
+
+### Pflicht-Schritte VOR einer Änderung:
+1. **Funktionsbeschreibung** in `specs/*-funktionen.md` erstellen oder aktualisieren:
+   - Was macht das Feature? Wie bedient man es? Welche Regeln gelten?
+   - Alle Bildschirme, Buttons, Dialoge, Fehlerfälle beschreiben
+   - Dient als Basis für spätere Kundendokumentation
+2. **Benutzer muss die Funktionsbeschreibung bestätigen** bevor Code geschrieben wird
+3. Erst nach Bestätigung: Code implementieren
+
+### Funktionsdoku-Dateien:
+| Datei | Bereich |
+|-------|---------|
+| `specs/kiosk-funktionen.md` | Kiosk (Mittagstisch, Online-Shop, Stammkunden, Social) |
+| _weitere nach Bedarf_ | Shop-Admin, Bestellstatus, CMS, etc. |
+
+### Nachholpflicht:
+- Fehlende Funktionsbeschreibungen müssen **nachträglich** erstellt werden
+- Bei jeder Änderung an einem Bereich ohne Funktionsdoku: zuerst Doku erstellen
+
+---
+
+## 2. Testpflicht bei Änderungen
 
 **Bei jeder Code-Änderung müssen die zugehörigen Testcases aktualisiert werden.**
 
@@ -46,7 +70,7 @@
 
 ---
 
-## 2. Icons: Lucide Icons verwenden
+## 3. Icons: Lucide Icons verwenden
 
 **Alle UI-Icons müssen [Lucide Icons](https://lucide.dev/) verwenden** – keine Emoji-Icons (🔄, 📦, etc.) in produktiven UI-Elementen.
 
@@ -66,7 +90,7 @@
 
 ---
 
-## 3. UI-Design: Verkäuferinnen-Perspektive
+## 4. UI-Design: Verkäuferinnen-Perspektive
 
 **Das Kiosk-UI wird aus der Perspektive der Verkäuferin designt:**
 - Labels sind handlungsorientiert ("Zum Packen", "Warten auf Abholung") statt technisch ("Status 1", "In Bearbeitung")
@@ -76,7 +100,7 @@
 
 ---
 
-## 4. Popups & Overlays: Hintergrund-Scroll sperren
+## 5. Popups & Overlays: Hintergrund-Scroll sperren
 
 **Bei jedem Popup/Overlay/Modal muss der Hintergrund-Scroll gesperrt werden.**
 
@@ -110,7 +134,7 @@ function dlUnlockScroll() {
 
 ---
 
-## 5. Commit-Konventionen
+## 6. Commit-Konventionen
 
 - `feat:` – Neue Funktionalität
 - `fix:` – Bugfix
@@ -120,7 +144,7 @@ function dlUnlockScroll() {
 
 ---
 
-## 6. Branch-Strategie
+## 7. Branch-Strategie
 
 | Branch | Zweck |
 |---|---|
