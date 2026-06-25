@@ -372,7 +372,7 @@
     <!-- Tage-Auswahl -->
     <div id="mittag-day-bar" class="k-day-bar"></div>
     <!-- Zusammenfassung -->
-    <div class="k-stats" id="mittag-stats" style="padding:6px 0;border-bottom:1px solid var(--c-border)"></div>
+    <div class="k-stats" id="mittag-stats" style="display:none"></div>
     <!-- Status-Filter -->
     <div class="k-filter-bar" id="mittag-status-bar">
       <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Zu bestätigen</span> <span class="k-filter-count" id="mt-fc-offen">0</span></button>
@@ -892,14 +892,7 @@ var K = (function(){
   }
 
   function renderStats(){
-    var active = orders.filter(function(o){return o.status!==2;});
-    var portionen = active.reduce(function(s,o){return s+(o.menge||1);},0);
-    var nachrichten = active.filter(function(o){return _hasUnseenComment(o);}).length;
-
-    var parts = [];
-    parts.push('<span class="k-stat green"><span class="k-stat-val">'+portionen+'</span> <span class="k-stat-label">Portionen</span></span>');
-    if(nachrichten>0) parts.push('<span class="k-stat" style="color:#3b82f6"><span class="k-stat-val" style="color:#3b82f6">'+nachrichten+'</span> <span class="k-stat-label" style="color:#3b82f6">Nachrichten</span></span>');
-    document.getElementById('mittag-stats').innerHTML = parts.join('<span class="k-stat-dot"></span>');
+    document.getElementById('mittag-stats').innerHTML = '';
   }
 
 
