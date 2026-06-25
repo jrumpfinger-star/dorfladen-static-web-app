@@ -51,19 +51,19 @@
     .k-dish-sep{margin:0 6px;color:#d1d5db}
 
     /* ═══ Order cards (collapsible) ═══ */
-    .k-order{background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:10px;overflow:hidden;border-left:5px solid transparent;position:relative;transition:transform .2s ease}
+    .k-order{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:3px;overflow:hidden;border-left:4px solid transparent;position:relative;transition:transform .2s ease}
     .k-order .k-swipe-hint{position:absolute;right:0;top:0;bottom:0;width:60px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;border-radius:0 var(--radius) var(--radius) 0;opacity:0;transition:opacity .15s;pointer-events:none;z-index:0}
     .k-order.swiping .k-swipe-hint{opacity:1}
-    .k-order-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;min-height:44px}
+    .k-order-hdr{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;user-select:none;min-height:32px}
     .k-order-hdr:active{background:#f9fafb}
-    .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0}
+    .k-order-hdr .k-oc-arrow{font-size:9px;color:var(--c-muted);transition:transform .2s;flex-shrink:0}
     .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
     .k-order.oc-collapsed .k-order-body{display:none}
-    .k-order-hdr .k-oc-name{font-weight:700;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .k-order-hdr .k-oc-qty{font-weight:800;font-size:15px;color:var(--c-green)}
-    .k-order-hdr .k-oc-badges{display:flex;gap:4px;align-items:center;flex-shrink:0}
-    .k-order-hdr .k-oc-actions{display:flex;gap:3px;align-items:center;flex-shrink:0}
-    .k-order-hdr .k-oc-actions .k-btn{min-height:32px;min-width:32px;padding:4px 8px;font-size:11px;border-radius:8px;gap:3px}
+    .k-order-hdr .k-oc-name{font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .k-order-hdr .k-oc-qty{font-weight:700;font-size:13px;color:var(--c-green)}
+    .k-order-hdr .k-oc-badges{display:flex;gap:3px;align-items:center;flex-shrink:0}
+    .k-order-hdr .k-oc-actions{display:flex;gap:2px;align-items:center;flex-shrink:0}
+    .k-order-hdr .k-oc-actions .k-btn{min-height:26px;min-width:26px;padding:3px 6px;font-size:10px;border-radius:6px;gap:2px}
     @media(max-width:600px){.k-order-hdr .k-oc-actions .k-btn .oc-btn-label{display:none}}
     .k-order-body{display:flex;align-items:stretch;border-top:1px solid var(--c-border)}
     .k-order.st-0{border-left-color:var(--c-yellow)}
@@ -198,12 +198,12 @@
     .k-day-pill.active .day-date{opacity:1}
     .k-day-pill:not(.active):hover{background:#f3f4f6}
 
-    /* ═══ Dish separator row (subtle label between dishes) ═══ */
-    .k-dish-sep-row{display:flex;align-items:center;gap:6px;padding:2px 14px;margin:6px 0 2px;user-select:none}
+    /* ═══ Dish group header (prominent section divider) ═══ */
+    .k-dish-sep-row{display:flex;align-items:center;gap:8px;padding:8px 14px;margin:10px 0 4px;background:linear-gradient(90deg,#f0fdf4,#e8f5ec);border:1px solid #c8e6c9;border-radius:8px;user-select:none}
     .k-dish-sep-row:first-child{margin-top:0}
-    .k-dish-sep-label{font-weight:600;font-size:11px;color:var(--c-muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+    .k-dish-sep-label{font-weight:700;font-size:14px;color:#1b5e20;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .k-dish-sep-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
-    .k-btn-xs{min-height:22px;padding:1px 6px;font-size:10px;border-radius:5px;gap:2px}
+    .k-btn-xs{min-height:24px;padding:2px 8px;font-size:10px;border-radius:6px;gap:3px}
 
     /* ═══ Slot group headers ═══ */
     .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
@@ -1086,8 +1086,8 @@ var K = (function(){
       html += '<div class="k-dish-sep-row">';
       html += '<span class="k-dish-sep-label">'+totalQty+'× '+esc(dish)+'</span>';
       html += '<span class="k-dish-sep-actions">';
-      if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-xs" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle bestätigen">'+luc('check-circle',12)+' Alle ✓</button>';
-      if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle abgeholt">'+luc('package-check',12)+' Abgeholt</button>';
+      if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-xs" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+openCount+' offene bestätigen">'+luc('check-circle',12)+' '+openCount+' bestätigen</button>';
+      if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+confirmedCount+' als abgeholt markieren">'+luc('package-check',12)+' '+confirmedCount+' abgeholt</button>';
       html += '</span>';
       html += '</div>';
       groupOrders.forEach(function(o){ html += _renderOrderCard(o); });
