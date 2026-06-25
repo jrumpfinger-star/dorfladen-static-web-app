@@ -1597,9 +1597,10 @@
     }catch(e){}
   })();
 
-  var _shopOrders=[];
+  window._shopOrders=[];
+  window.showOrderDetail=showOrderDetail;
   function renderOrdersPopup(orders){
-    _shopOrders=orders;
+    window._shopOrders=orders;
     var statusLabels=['Neu','In Bearbeitung','Bereit','Abgeholt'];
     var statusColors=['#f59e0b','#3b82f6','#22c55e','#6b7280'];
     var statusIcons=['\u23f3','\u2699\ufe0f','\u2705','\u2611\ufe0f'];
@@ -1626,7 +1627,7 @@
   }
 
   function showOrderDetail(idx){
-    var o=_shopOrders[idx];if(!o) return;
+    var o=window._shopOrders[idx];if(!o){console.warn('Order not found at index',idx);return;}
     var statusLabels=['Neu','In Bearbeitung','Abholbereit','Abgeholt','Storniert'];
     var statusColors=['#f59e0b','#3b82f6','#22c55e','#6b7280','#ef4444'];
     var st=o.status||0;
