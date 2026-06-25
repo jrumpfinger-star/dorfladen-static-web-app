@@ -1557,6 +1557,7 @@
 
     content.innerHTML=html;
     wireAddButtons();
+    markCartItems();
     var kurzImgs=visibleArticles().filter(function(a){return a.kurzfristig;});
     loadImages(bsItems.concat(kurzImgs));
     // Overview view toggle (grid/list)
@@ -1707,6 +1708,7 @@
     var articleHtml=items.length?renderFn(items,title,emoji):'';
     content.innerHTML=bc+reorderBanner+(emptyHint||articleHtml);
     wireAddButtons();
+    markCartItems();
     loadImages(items);
 
     // Limit reorder grid to show only first 2 cards initially
