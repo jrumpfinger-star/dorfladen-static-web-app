@@ -156,8 +156,12 @@
     var titel=(document.getElementById('soc-post-title')||{}).value||'';
     var freitext=(document.getElementById('soc-post-freitext')||{}).value||'';
     if(!selected.length&&!freitext.trim()){socialStatus('soc-post-status','Bitte mindestens ein Produkt auswählen oder Freitext eingeben',false);return;}
-    socialSavePost(titel,freitext,selected);
-    socialStatus('soc-post-status','✅ Tagesinfo veröffentlicht – erscheint auf der Homepage',true);
+    socialStatus('soc-post-status','⏳ Wird veröffentlicht…',true);
+    var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};
+    fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
+    .then(function(){socialStatus('soc-post-status','✅ Tagesinfo veröffentlicht – erscheint auf der Homepage',true);})
+    .catch(function(e){socialStatus('soc-post-status','❌ '+e.message,false);});
   };
 
   // --- Verlauf ---
