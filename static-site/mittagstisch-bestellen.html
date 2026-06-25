@@ -402,7 +402,8 @@
     if(dish.datum){
       var now = new Date();
       var todayISO = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
-      if(dish.datum === todayISO && (now.getHours() + now.getMinutes()/60) >= 10.5){
+      var dishDate = (dish.datum||'').split('T')[0];
+      if(dishDate === todayISO && (now.getHours() + now.getMinutes()/60) >= 10.5){
         errEl.innerHTML = '⚠️ Der Bestellschluss für heute (10:30 Uhr) ist leider überschritten. Bestellungen für heute sind nicht mehr möglich.';
         errEl.style.display = '';
         var btn = document.getElementById('submit-btn');
@@ -447,7 +448,8 @@
     if(selectedDish && selectedDish.datum){
       var now = new Date();
       var todayISO = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
-      if(selectedDish.datum === todayISO){
+      var dishDate2 = (selectedDish.datum||'').split('T')[0];
+      if(dishDate2 === todayISO){
         var h = now.getHours() + now.getMinutes()/60;
         if(h >= 10.5) errors.push('Der Bestellschluss für heute (10:30 Uhr) ist leider überschritten.');
       }
