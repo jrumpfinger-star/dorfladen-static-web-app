@@ -689,3 +689,63 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 - **Aktion:** Kiosk → Social → Neuer Post → Katalog-Produkte vorhanden
 - **Prüfung:** Kategorie-Filter-Chips enthalten `<svg>` statt Emoji-Zeichen
 - **Erwartung:** Chips zeigen Lucide-Icons inline neben dem Kategorienamen
+
+---
+
+## T15 – Bild-Zoom (Doppelklick-Lightbox)
+> Spec: specs/kiosk-funktionen.md, Abschnitt 6a
+
+### T15.1 – dlImagePopup ist verfuegbar (Kiosk)
+- **Aktion:** Kiosk `/kiosk.html` laden
+- **Pruefung:** `typeof window.dlImagePopup` in Console pruefen
+- **Erwartung:** `"function"`
+
+### T15.2 – dlImagePopup ist verfuegbar (CMS)
+- **Aktion:** CMS `/cms` laden
+- **Pruefung:** `typeof window.dlImagePopup` in Console pruefen
+- **Erwartung:** `"function"`
+
+### T15.3 – dlImagePopup ist verfuegbar (Homepage)
+- **Aktion:** Homepage `/` laden
+- **Pruefung:** `typeof window.dlImagePopup` in Console pruefen
+- **Erwartung:** `"function"`
+
+### T15.4 – Katalog-Thumbnail: Doppelklick oeffnet Lightbox
+- **Aktion:** Kiosk, Social, Katalog, Kategorie aufklappen, Doppelklick auf Produkt-Thumbnail (44x44)
+- **Pruefung:** `document.getElementById('dl-img-popup')` existiert nach Doppelklick
+- **Erwartung:** Fullscreen-Overlay mit vergroessertem Bild, Produktname als Caption, X-Button sichtbar
+
+### T15.5 – Lightbox schliessen per X-Button
+- **Aktion:** Lightbox geoeffnet, X-Button klicken
+- **Pruefung:** `document.getElementById('dl-img-popup')` nach Klick
+- **Erwartung:** `null` (Lightbox entfernt)
+
+### T15.6 – Lightbox schliessen per Escape
+- **Aktion:** Lightbox geoeffnet, Escape-Taste druecken
+- **Pruefung:** `document.getElementById('dl-img-popup')` nach Escape
+- **Erwartung:** `null` (Lightbox entfernt)
+
+### T15.7 – Lightbox schliessen per Klick auf Hintergrund
+- **Aktion:** Lightbox geoeffnet, auf den halbtransparenten Hintergrund klicken (nicht auf Bild)
+- **Pruefung:** Overlay wird entfernt
+- **Erwartung:** Lightbox geschlossen
+
+### T15.8 – Post-Builder Bilder: Doppelklick oeffnet Lightbox
+- **Aktion:** Kiosk, Social, Neuer Post, Doppelklick auf ein Produkt-Thumbnail (40x40) im Picker
+- **Pruefung:** Lightbox oeffnet mit vergroessertem Bild
+- **Erwartung:** Bild und Produktname korrekt angezeigt
+
+### T15.9 – Platzhalter-Icons loesen keinen Zoom aus
+- **Aktion:** Doppelklick auf ein Produkt ohne Bild (Kamera-Platzhalter-Div)
+- **Pruefung:** Kein Lightbox-Overlay erscheint
+- **Erwartung:** `document.getElementById('dl-img-popup')` ist `null`
+
+### T15.10 – cursor:zoom-in auf zoombaren Bildern
+- **Aktion:** Katalog-Thumbnails mit Bild inspizieren
+- **Pruefung:** `getComputedStyle(img).cursor`
+- **Erwartung:** `"zoom-in"`
+
+### T15.11 – Bestehende Checkbox-Funktionalitaet bleibt erhalten
+- **Aktion:** Im Post-Builder ein Produkt per Checkbox anwaehlen (Einfachklick)
+- **Pruefung:** Checkbox wird gecheckt, Vorschau aktualisiert
+- **Erwartung:** Checkbox reagiert normal, kein ungewollter Lightbox-Trigger bei Einfachklick

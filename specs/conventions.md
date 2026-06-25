@@ -154,3 +154,13 @@ function dlUnlockScroll() {
 
 - Nie direkt auf `main` committen
 - Feature-Branches von `feature/bestellsystem` abzweigen
+
+---
+
+## 8. Test-Zugangsdaten
+
+| Zugang | Wert |
+|---|---|
+| CMS Passwort | `DorfladenCMS!` |
+| Live-URL (Bestellsystem) | `https://witty-island-064f9d903.7.azurestaticapps.net` |
+| Live-URL (Produktion) | `https://kind-pebble-072605b03.7.azurestaticapps.net` |
