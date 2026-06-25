@@ -643,6 +643,30 @@
   </div>
 </div>
 
+<!-- ═══ Edit customer modal ═══ -->
+<div class="k-modal-bg" id="modal-edit-kunde">
+  <div class="k-modal">
+    <div class="k-modal-head">
+      <h2><i data-lucide="pencil" style="width:20px;height:20px"></i> Kunde bearbeiten</h2>
+      <button class="k-modal-close" onclick="K.closeModal('modal-edit-kunde')">✕</button>
+    </div>
+    <div class="k-modal-body">
+      <input type="hidden" id="ek-id">
+      <div style="display:flex;gap:8px">
+        <div class="k-field" style="flex:1"><label>Nachname *</label><input type="text" id="ek-nachname" placeholder="Nachname"></div>
+        <div class="k-field" style="flex:1"><label>Vorname</label><input type="text" id="ek-vorname" placeholder="Vorname"></div>
+      </div>
+      <div class="k-field"><label>Telefon *</label><input type="tel" id="ek-phone" placeholder="08082…"></div>
+      <div class="k-field"><label>E-Mail</label><input type="email" id="ek-email" placeholder="optional"></div>
+      <div class="k-field"><label>Notiz</label><textarea id="ek-note" placeholder="z.B. Stammgast, immer Freitags…"></textarea></div>
+    </div>
+    <div class="k-modal-footer">
+      <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-edit-kunde')">Abbrechen</button>
+      <button class="k-btn k-btn-lg k-btn-confirm" style="flex:2" onclick="K.submitEditKunde()"><i data-lucide="check-circle" style="width:18px;height:18px"></i> Speichern</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ Pack modal (inline) ═══ -->
 <div class="k-modal-bg" id="modal-pack">
   <div class="k-modal k-modal-lg">
@@ -1190,8 +1214,10 @@ var K = (function(){
       if(c.email) html += '<span>'+luc('mail',12)+' '+esc(c.email)+'</span>';
       if(c.notiz) html += '<span>'+luc('sticky-note',12)+' '+esc(c.notiz)+'</span>';
       html += '</div></div>';
-      html += '<div class="k-order-actions">';
+      html += '<div class="k-order-actions" style="display:flex;gap:4px;flex-wrap:wrap">';
       html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.orderForKunde(\''+c.id+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\',\''+esc(c.telefon).replace(/'/g,"\\'")+'\')">' +luc('utensils',14)+' Bestellen</button>';
+      html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.editKunde(\''+c.id+'\')">' +luc('pencil',14)+' Bearbeiten</button>';
+      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.deleteKunde(\''+c.id+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\')">' +luc('trash-2',14)+'</button>';
       html += '</div></div>';
     });
     html += '<div style="text-align:center;margin-top:12px"><button class="k-btn k-btn-confirm k-btn-lg" onclick="K.openNewKunde()">'+luc('user-plus',16)+' Neuen Stammkunden anlegen</button></div>';
@@ -1453,6 +1479,75 @@ var K = (function(){
         searchKunden();
       } else {
         toast('❌ '+(res.errors?res.errors.join(', '):res.error||'Fehler'));
+      }
+    })
+    .catch(function(e){toast('❌ '+e.message);});
+  }
+
+  // ══════════════════════════════════════════════════
+  //  EDIT / DELETE KUNDE
+  // ══════════════════════════════════════════════════
+
+  function editKunde(id){
+    var c = kunden.find(function(k){return k.id===id;});
+    if(!c){
+      fetch(API+'/stammkunden/'+id).then(function(r){return r.json();}).then(function(res){
+        if(res.success) _openEditKunde(res.customer);
+        else toast('❌ Kunde nicht gefunden');
+      });
+      return;
+    }
+    _openEditKunde(c);
+  }
+
+  function _openEditKunde(c){
+    document.getElementById('ek-id').value = c.id;
+    document.getElementById('ek-nachname').value = c.nachname||'';
+    document.getElementById('ek-vorname').value = c.vorname||'';
+    document.getElementById('ek-phone').value = c.telefon||'';
+    document.getElementById('ek-email').value = c.email||'';
+    document.getElementById('ek-note').value = c.notiz||'';
+    openModal('modal-edit-kunde');
+  }
+
+  function submitEditKunde(){
+    var id = document.getElementById('ek-id').value;
+    var nachname = document.getElementById('ek-nachname').value.trim();
+    var vorname = document.getElementById('ek-vorname').value.trim();
+    var phone = document.getElementById('ek-phone').value.trim();
+    var email = document.getElementById('ek-email').value.trim();
+    var note = document.getElementById('ek-note').value.trim();
+    if(!nachname){toast('❌ Nachname eingeben!');return;}
+    if(!phone){toast('❌ Telefon eingeben!');return;}
+
+    fetch(API+'/stammkunden/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({nachname:nachname,vorname:vorname,name:(vorname?vorname+' ':'')+nachname,telefon:phone,email:email,notiz:note})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('✅ Kunde aktualisiert');
+        closeModal('modal-edit-kunde');
+        searchKunden();
+      } else {
+        toast('❌ '+(res.error||'Fehler'));
+      }
+    })
+    .catch(function(e){toast('❌ '+e.message);});
+  }
+
+  function deleteKunde(id, name){
+    if(!confirm('Kunde "'+name+'" wirklich löschen?')) return;
+    fetch(API+'/stammkunden/'+id,{method:'DELETE'})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('✅ Kunde deaktiviert');
+        searchKunden();
+      } else {
+        toast('❌ '+(res.error||'Fehler'));
       }
     })
     .catch(function(e){toast('❌ '+e.message);});
@@ -2503,6 +2598,9 @@ var K = (function(){
     orderForKunde: orderForKunde,
     openNewKunde: openNewKunde,
     submitNewKunde: submitNewKunde,
+    editKunde: editKunde,
+    submitEditKunde: submitEditKunde,
+    deleteKunde: deleteKunde,
     searchKunden: searchKunden,
     printKitchen: printKitchen,
     loadShopOrders: loadShopOrders,
