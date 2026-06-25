@@ -198,12 +198,12 @@
     .k-day-pill.active .day-date{opacity:1}
     .k-day-pill:not(.active):hover{background:#f3f4f6}
 
-    /* ═══ Dish separator row (compact label between dishes) ═══ */
-    .k-dish-sep-row{display:flex;align-items:center;gap:8px;padding:6px 14px;margin:8px 0 4px;border-bottom:2px solid var(--c-border);user-select:none}
+    /* ═══ Dish separator row (subtle label between dishes) ═══ */
+    .k-dish-sep-row{display:flex;align-items:center;gap:6px;padding:2px 14px;margin:6px 0 2px;user-select:none}
     .k-dish-sep-row:first-child{margin-top:0}
-    .k-dish-sep-label{font-weight:700;font-size:13px;color:var(--c-text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .k-dish-sep-label{font-weight:600;font-size:11px;color:var(--c-muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
     .k-dish-sep-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
-    .k-btn-xs{min-height:24px;padding:2px 8px;font-size:11px;border-radius:6px;gap:3px}
+    .k-btn-xs{min-height:22px;padding:1px 6px;font-size:10px;border-radius:5px;gap:2px}
 
     /* ═══ Slot group headers ═══ */
     .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
@@ -1082,16 +1082,14 @@ var K = (function(){
       var openCount = groupOrders.filter(function(o){return o.status===0;}).reduce(function(s,o){return s+(o.menge||1);},0);
       var confirmedCount = groupOrders.filter(function(o){return o.status===1;}).reduce(function(s,o){return s+(o.menge||1);},0);
 
-      if(!singleDish){
-        // Compact dish separator with inline bulk actions
-        html += '<div class="k-dish-sep-row">';
-        html += '<span class="k-dish-sep-label">'+totalQty+'× '+esc(dish)+'</span>';
-        html += '<span class="k-dish-sep-actions">';
-        if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-xs" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle bestätigen">'+luc('check-circle',12)+' Alle ✓</button>';
-        if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle abgeholt">'+luc('package-check',12)+' Abgeholt</button>';
-        html += '</span>';
-        html += '</div>';
-      }
+      // Dish label (always visible, compact)
+      html += '<div class="k-dish-sep-row">';
+      html += '<span class="k-dish-sep-label">'+totalQty+'× '+esc(dish)+'</span>';
+      html += '<span class="k-dish-sep-actions">';
+      if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-xs" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle bestätigen">'+luc('check-circle',12)+' Alle ✓</button>';
+      if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle abgeholt">'+luc('package-check',12)+' Abgeholt</button>';
+      html += '</span>';
+      html += '</div>';
       groupOrders.forEach(function(o){ html += _renderOrderCard(o); });
     });
     document.getElementById('mittag-orders').innerHTML = html;
