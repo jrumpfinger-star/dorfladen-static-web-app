@@ -290,17 +290,48 @@
   }
 
   var _socIconFilter='';
+  // German keyword → English Lucide icon name mapping for search
+  var _socIconDeMap={'eis':'ice-cream','eiscreme':'ice-cream','getraenk':'cup-soda','trinken':'cup-soda','brot':'wheat','fleisch':'beef','rind':'beef','schwein':'ham','huhn':'drumstick','haehnchen':'drumstick','gemuese':'carrot','obst':'apple','frucht':'cherry','torte':'cake','kuchen':'cake','wein':'wine','bier':'beer','milch':'milk','kaese':'wedge','fisch':'fish','pizza':'pizza','suppe':'soup','kaffee':'coffee','tee':'coffee','salat':'salad','bonbon':'candy','blume':'flower','sonne':'sun','stern':'star','herz':'heart','feuer':'flame','wasser':'droplet','blatt':'leaf','nuss':'nut','traube':'grape','kirsche':'cherry','zitrone':'citrus','keks':'cookie','essen':'utensils','gabel':'utensils','messer':'utensils','tasse':'coffee','glas':'wine','flasche':'wine','korb':'shopping-basket','tuete':'shopping-bag','laden':'store','geschaeft':'store','paket':'package','lieferung':'truck','schneeflocke':'snowflake','kalt':'snowflake','heiss':'flame','frisch':'leaf','bio':'sprout','vegan':'sprout','popcorn':'popcorn'};
+  function _socGetAllLucideIcons(){
+    if(!window.lucide||!window.lucide.icons) return [];
+    var names=[];
+    for(var key in window.lucide.icons){
+      // Convert PascalCase to kebab-case
+      var kebab=key.replace(/([a-z])([A-Z])/g,'$1-$2').replace(/([A-Z])([A-Z][a-z])/g,'$1-$2').toLowerCase();
+      names.push(kebab);
+    }
+    return names;
+  }
   function socRenderIconPicker(){
     var grid=document.getElementById('soc-kat-icon-grid');
     if(!grid)return;
-    var q=_socIconFilter.toLowerCase();
-    var filtered=_socIconChoices.filter(function(ic){return !q||ic.indexOf(q)!==-1;});
+    var q=_socIconFilter.toLowerCase().trim();
+    var filtered;
+    if(!q){
+      // No search: show curated icons
+      filtered=_socIconChoices;
+    } else {
+      // Translate German search terms to English icon names
+      var searchTerms=[q];
+      if(_socIconDeMap[q]) searchTerms.push(_socIconDeMap[q]);
+      // Also check partial German matches
+      for(var de in _socIconDeMap){ if(de.indexOf(q)!==-1||q.indexOf(de)!==-1) searchTerms.push(_socIconDeMap[de]); }
+      // Search ALL Lucide icons
+      var allIcons=_socGetAllLucideIcons();
+      if(!allIcons.length) allIcons=_socIconChoices; // fallback if lucide not loaded
+      filtered=allIcons.filter(function(ic){
+        for(var i=0;i<searchTerms.length;i++){ if(ic.indexOf(searchTerms[i])!==-1) return true; }
+        return false;
+      });
+      // Limit results to prevent performance issues
+      if(filtered.length>60) filtered=filtered.slice(0,60);
+    }
     var html='';
     filtered.forEach(function(ic){
       var sel=document.getElementById('soc-kat-new-icon')&&document.getElementById('soc-kat-new-icon').value===ic;
       html+='<button type="button" onclick="socialKatMgrPickIcon(\''+ic+'\')" title="'+ic+'" style="width:36px;height:36px;border-radius:6px;border:2px solid '+(sel?'#e1306c':'#e5e7eb')+';background:'+(sel?'#fef2f2':'#fff')+';cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#374151">'+lucideIcon(ic,18)+'</button>';
     });
-    if(!filtered.length) html='<div style="color:#9ca3af;font-size:11px;padding:8px">Kein Icon gefunden</div>';
+    if(!filtered.length) html='<div style="color:#9ca3af;font-size:11px;padding:8px">Kein Icon gefunden – versuche englische Begriffe (z.B. ice-cream, bread, cup)</div>';
     grid.innerHTML=html;
     if(window.lucide) try{lucide.createIcons();}catch(e){}
   }
