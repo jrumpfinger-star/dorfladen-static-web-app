@@ -8,6 +8,30 @@
 (function(){
   'use strict';
   var API = window.SOCIAL_API || '/api';
+  // Universal image popup – fallback if app.js is not loaded (e.g. kiosk.html)
+  if(!window.dlImagePopup){
+    window.dlImagePopup=function(src,alt){
+      if(!src)return;
+      var existing=document.getElementById('dl-img-popup');
+      if(existing) existing.remove();
+      var ov=document.createElement('div');
+      ov.id='dl-img-popup';
+      ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer';
+      ov.addEventListener('click',function(){ov.remove();});
+      var img=document.createElement('img');
+      img.src=src; img.alt=alt||'';
+      img.style.cssText='max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)';
+      img.addEventListener('click',function(e){e.stopPropagation();});
+      ov.appendChild(img);
+      if(alt){var cap=document.createElement('div');cap.textContent=alt;cap.style.cssText='color:#fff;font-size:15px;font-weight:600;margin-top:12px;text-align:center;max-width:90vw;word-break:break-word';ov.appendChild(cap);}
+      var cls=document.createElement('button');cls.innerHTML='&#10005;';
+      cls.style.cssText='position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';
+      cls.addEventListener('click',function(e){e.stopPropagation();ov.remove();});
+      ov.appendChild(cls);
+      document.body.appendChild(ov);
+      document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){ov.remove();document.removeEventListener('keydown',onKey);}});
+    };
+  }
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   function getFeatureFlags(){return window.SOCIAL_FEATURE_FLAGS||window._featureFlags||{};}
   function getMeals(){
