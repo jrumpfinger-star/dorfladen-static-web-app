@@ -937,7 +937,7 @@ var K = (function(){
       byDish[name].count += (o.menge||1);
     });
     var keys = Object.keys(byDish).sort();
-    if(keys.length===0){
+    if(keys.length<=1){
       document.getElementById('mittag-dish-summary').style.display='none';
       return;
     }
