@@ -250,7 +250,8 @@ Der "Tagesinfo"-Button ist visuell als grüner Outline-Button unterhalb der Shar
 ### Tagespost auf der Homepage
 - Gespeicherte Posts erscheinen automatisch als **Tagespost-Modal** auf der Homepage (`index.html`)
 - Modal zeigt Titel, Freitext, Produkte mit Bildern und Preisen
-- Mittagessen mit direktem Bestell-Button pro Gericht
+- Mittagessen mit direktem Bestell-Button pro Gericht (nur vor 10:30 Uhr)
+- **Mittagessen-Kategorie verschwindet ab 12:30 Uhr** aus der Tagesinfo (Essen ist dann bereits gekocht/ausgegeben)
 - Öffnet sich automatisch beim ersten Besuch am Tag
 - Nach Ladenschluss (≥18:00) wird der Post für morgen angezeigt
 - Siehe `specs/tagespost-homepage.md` für Details
