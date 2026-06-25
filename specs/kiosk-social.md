@@ -26,6 +26,7 @@ Die Social-Media-Funktionen "Neuer Post" und "Katalog" aus dem CMS sollen 1:1 im
 - [x] WhatsApp-Teilen (mit Bestelllinks)
 - [x] Instagram-Teilen
 - [x] Poster herunterladen
+- [x] "Nur als Tagesinfo veröffentlichen" – speichert Post ohne WhatsApp/Instagram, erscheint auf Homepage
 
 ### Shared Code
 - [x] `static-site/js/social.js` – Katalog-Verwaltung, Post-Builder, Produkt-Picker
@@ -37,6 +38,7 @@ Die Social-Media-Funktionen "Neuer Post" und "Katalog" aus dem CMS sollen 1:1 im
 - [x] AK-SO-03: Post-Builder zeigt Katalog-Produkte und ermöglicht Auswahl
 - [x] AK-SO-04: Poster-Vorschau wird korrekt gerendert
 - [x] AK-SO-05: WhatsApp/Instagram-Sharing funktioniert
+- [x] AK-SO-07: "Nur als Tagesinfo veröffentlichen" speichert Post und zeigt Bestätigung
 - [ ] AK-SO-06: CMS Social-Funktionalität bleibt unverändert (nach Migration auf social.js – nicht migriert, CMS hat eigenen Code)
 
 ## Nicht enthalten

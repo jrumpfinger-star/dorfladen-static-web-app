@@ -150,6 +150,16 @@
   // --- Save post ---
   function socialSavePost(titel,freitext,items){fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({titel:titel,freitext:freitext,items:items.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})})}).catch(function(){});}
 
+  // --- Publish as Tagesinfo only (no WhatsApp/Instagram) ---
+  window.socialPublishTagesinfo=function(){
+    var selected=socialGatherSelected();
+    var titel=(document.getElementById('soc-post-title')||{}).value||'';
+    var freitext=(document.getElementById('soc-post-freitext')||{}).value||'';
+    if(!selected.length&&!freitext.trim()){socialStatus('soc-post-status','Bitte mindestens ein Produkt auswählen oder Freitext eingeben',false);return;}
+    socialSavePost(titel,freitext,selected);
+    socialStatus('soc-post-status','✅ Tagesinfo veröffentlicht – erscheint auf der Homepage',true);
+  };
+
   // --- Verlauf ---
   window._socialVerlaufLoaded=false;
   function socialLoadVerlauf(){

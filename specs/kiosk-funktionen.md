@@ -198,10 +198,45 @@ Edit-Modal mit denselben Feldern, vorausgefüllt mit aktuellen Daten. Speichern 
 
 ## 6. Social (Tab)
 
-- Neuer Post erstellen (Canvas-basierter Poster-Editor)
-- Produktkatalog verwalten
-- Teilen via WhatsApp und Instagram
-- Siehe `specs/kiosk-social.md` für Details
+### Sub-Tabs
+| Sub-Tab | Funktion |
+|---------|----------|
+| Neuer Post | Tagespost zusammenstellen und veröffentlichen |
+| Katalog | Produktkatalog verwalten (Bilder, Preise, Kategorien) |
+
+### Neuer Post erstellen
+1. **Titel wählen**: Vorgefertigte Titel (z.B. "Heute im Dorfladen – Donnerstag") oder eigenen Titel eingeben
+2. **Freitext** (optional): z.B. "Frisch aus der Küche! Heute als Dessert: Erdbeer-Sahne-Torte"
+3. **Produkte auswählen**:
+   - Heutiges Mittagessen (automatisch aus Wochenplan)
+   - Produkte aus dem Katalog (nach Kategorie filterbar)
+   - Freie Produkt-Eingabe (Name + Preis, ohne Katalog)
+4. **Poster-Vorschau**: Canvas-Rendering mit Dorfladen-Design
+
+### Veröffentlichungsoptionen
+
+| Button | Funktion |
+|--------|----------|
+| **Auf WhatsApp teilen** | Poster + Bestelllinks werden per WhatsApp geteilt. Post wird gespeichert. |
+| **Auf Instagram teilen** | Poster wird per Instagram geteilt (oder in Zwischenablage). Post wird gespeichert. |
+| **Bild speichern** | Poster als PNG herunterladen |
+| **Nur als Tagesinfo veröffentlichen** | Post wird gespeichert und erscheint auf der Homepage im Tagespost-Modal – **ohne WhatsApp/Instagram**. Für reine Tagesinformationen gedacht. |
+
+Der "Tagesinfo"-Button ist visuell als grüner Outline-Button unterhalb der Share-Buttons platziert, mit Hinweistext "Erscheint auf der Homepage – ohne WhatsApp/Instagram".
+
+### Katalog
+- Produkte anlegen: Name, Kategorie, Preis, Bild
+- Bild per Drag&Drop, Datei-Upload oder Strg+V einfügen
+- Produkte bearbeiten und löschen
+- Kategorien: Mittagessen, Kuchen, Obst & Gemüse, Aufstriche
+
+### Tagespost auf der Homepage
+- Gespeicherte Posts erscheinen automatisch als **Tagespost-Modal** auf der Homepage (`index.html`)
+- Modal zeigt Titel, Freitext, Produkte mit Bildern und Preisen
+- Mittagessen mit direktem Bestell-Button pro Gericht
+- Öffnet sich automatisch beim ersten Besuch am Tag
+- Nach Ladenschluss (≥18:00) wird der Post für morgen angezeigt
+- Siehe `specs/tagespost-homepage.md` für Details
 
 ---
 
@@ -212,6 +247,8 @@ Edit-Modal mit denselben Feldern, vorausgefüllt mit aktuellen Daten. Speichern 
 - **Online-Shop**: `GET /api/shop-order`
 - **Stammkunden**: `GET/POST/PATCH/DELETE /api/stammkunden/{id?}`
 - **Wochenplan**: `GET /api/wochenplan`
+- **Social-Posts**: `GET/POST /api/social-post`
+- **Tagespost (public)**: `GET /api/tagespost`
 
 ### Auto-Refresh
 - Bestellungen werden periodisch automatisch neu geladen
