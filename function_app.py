@@ -333,10 +333,37 @@ def cms_config_save(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(status_code=204, headers=get_cors_headers())
     try:
         body = req.get_json()
-        items = body.get("items", [])
         headers = get_headers("DV_DEV_URL")
         dev_url = os.environ.get("DV_DEV_URL", "https://org392a4789.crm16.dynamics.com")
         errors = []
+
+        # Support shorthand: {schluessel: "key", wert: "value"} → upsert by dl_schluessel
+        if "schluessel" in body and "wert" in body:
+            schluessel = body["schluessel"]
+            wert = body["wert"]
+            if isinstance(wert, (dict, list)):
+                wert = json.dumps(wert, ensure_ascii=False)
+            # Find existing record by dl_schluessel
+            find_url = f"{dev_url}/api/data/v9.2/dl_seiteninhalts?$filter=dl_schluessel eq '{schluessel}'&$select=dl_seiteninhaltid&$top=1"
+            fr = requests.get(find_url, headers=headers, timeout=10)
+            existing = fr.json().get("value", []) if fr.status_code == 200 else []
+            if existing:
+                record_id = existing[0]["dl_seiteninhaltid"]
+                url = f"{dev_url}/api/data/v9.2/dl_seiteninhalts({record_id})"
+                r = requests.patch(url, headers=headers, json={"dl_wert": str(wert)})
+                if r.status_code != 204:
+                    errors.append(f"{schluessel}: {r.status_code}")
+            else:
+                url = f"{dev_url}/api/data/v9.2/dl_seiteninhalts"
+                r = requests.post(url, headers=headers, json={"dl_schluessel": schluessel, "dl_wert": str(wert)})
+                if r.status_code not in (200, 201, 204):
+                    errors.append(f"{schluessel}: {r.status_code}")
+            if errors:
+                return create_response({"success": False, "error": "; ".join(errors)}, 500)
+            return create_response({"success": True}, 200)
+
+        # Standard format: {items: [{id, name, wert}, ...]}
+        items = body.get("items", [])
         for item in items:
             record_id = item.get("id")
             wert = item.get("wert", "")
