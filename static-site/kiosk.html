@@ -114,6 +114,10 @@
     /* ═══ Bottom action bar ═══ */
     .k-bottom{background:#fff;border-top:1px solid var(--c-border);padding:10px 16px;display:flex;gap:10px;flex-shrink:0}
     .k-bottom .k-btn{flex:1}
+    @media(max-width:600px){
+      .k-bottom{padding:6px 10px;gap:6px}
+      .k-bottom .k-btn.k-btn-lg{min-height:40px;padding:8px 10px;font-size:13px;border-radius:10px}
+    }
 
     /* ═══ Modal ═══ */
     .k-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
@@ -1244,6 +1248,8 @@ var K = (function(){
     document.getElementById('no-dishes').innerHTML = html;
     // Store reference
     window._noDishes = todayDishes;
+    // Auto-select if only one dish available
+    if(todayDishes.length===1){ pickDish(0); }
   }
 
   function pickDish(idx){
