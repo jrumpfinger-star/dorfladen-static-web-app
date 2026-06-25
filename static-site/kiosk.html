@@ -198,28 +198,12 @@
     .k-day-pill.active .day-date{opacity:1}
     .k-day-pill:not(.active):hover{background:#f3f4f6}
 
-    /* ═══ Dish group (Mittagstisch – grouped by dish, collapsible) ═══ */
-    .k-dish-group{margin-bottom:6px}
-    .k-dish-group-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f8fafc;border:1px solid var(--c-border);border-radius:10px;cursor:pointer;user-select:none;margin-bottom:4px;transition:background .15s}
-    .k-dish-group-hdr:hover{background:#f1f5f9}
-    .k-dish-group-hdr:active{opacity:.85}
-    .k-dg-arrow{transition:transform .2s;font-size:11px;color:var(--c-muted);flex-shrink:0}
-    .k-dish-group.collapsed .k-dg-arrow{transform:rotate(-90deg)}
-    .k-dish-group.collapsed .k-dg-body{display:none}
-    .k-dg-title{font-weight:700;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .k-dg-count{font-weight:800;font-size:15px;color:var(--c-green);white-space:nowrap}
-    .k-dg-badges{display:flex;gap:6px;align-items:center;flex-shrink:0}
-    .k-dg-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
-    .k-dg-badge-open{background:#fef3c7;color:#92400e}
-    .k-dg-badge-confirmed{background:#dcfce7;color:#166534}
-    .k-dg-badge-pack{background:#dbeafe;color:#1d4ed8}
-    .k-dg-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
-    .k-dg-actions .k-btn{min-height:32px;min-width:32px;padding:4px 10px;font-size:12px;border-radius:8px;gap:4px}
-    @media(max-width:600px){
-      .k-dg-badges .k-dg-badge{font-size:9px;padding:2px 5px}
-      .k-dg-actions .k-btn{padding:4px 6px;font-size:11px}
-      .k-dg-actions .k-btn .dg-btn-label{display:none}
-    }
+    /* ═══ Dish separator row (compact label between dishes) ═══ */
+    .k-dish-sep-row{display:flex;align-items:center;gap:8px;padding:6px 14px;margin:8px 0 4px;border-bottom:2px solid var(--c-border);user-select:none}
+    .k-dish-sep-row:first-child{margin-top:0}
+    .k-dish-sep-label{font-weight:700;font-size:13px;color:var(--c-text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .k-dish-sep-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
+    .k-btn-xs{min-height:24px;padding:2px 8px;font-size:11px;border-radius:6px;gap:3px}
 
     /* ═══ Slot group headers ═══ */
     .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
@@ -1091,41 +1075,24 @@ var K = (function(){
     });
 
     var html = '';
+    var singleDish = dishOrder.length === 1;
     dishOrder.forEach(function(dish){
       var groupOrders = dishMap[dish];
       var totalQty = groupOrders.reduce(function(s,o){return s+(o.menge||1);},0);
       var openCount = groupOrders.filter(function(o){return o.status===0;}).reduce(function(s,o){return s+(o.menge||1);},0);
       var confirmedCount = groupOrders.filter(function(o){return o.status===1;}).reduce(function(s,o){return s+(o.menge||1);},0);
-      var packCount = groupOrders.filter(function(o){return o.mitnehmen && o.status!==2;}).reduce(function(s,o){return s+(o.menge||1);},0);
-      var gid = 'dg-'+dish.replace(/[^a-zA-Z0-9]/g,'_');
 
-      // Default collapsed, unless user manually opened or there are open orders
-      var isOpen = gid in _dishGroupOpen ? _dishGroupOpen[gid] : (openCount > 0);
-      var cls = 'k-dish-group'+(isOpen?'':' collapsed');
-
-      html += '<div class="'+cls+'" id="'+gid+'">';
-      // Header row (clickable to toggle)
-      html += '<div class="k-dish-group-hdr" onclick="K.toggleDishGroup(\''+gid+'\')">';
-      html += '<span class="k-dg-arrow">▼</span>';
-      html += '<span class="k-dg-count">'+totalQty+'×</span>';
-      html += '<span class="k-dg-title">'+esc(dish)+'</span>';
-      // Badges
-      html += '<span class="k-dg-badges">';
-      if(openCount>0) html += '<span class="k-dg-badge k-dg-badge-open">'+openCount+' offen</span>';
-      if(confirmedCount>0) html += '<span class="k-dg-badge k-dg-badge-confirmed">'+confirmedCount+' ✓</span>';
-      if(packCount>0) html += '<span class="k-dg-badge k-dg-badge-pack">'+packCount+' 📦</span>';
-      html += '</span>';
-      // Quick actions (stop propagation so clicking buttons doesn't toggle group)
-      html += '<span class="k-dg-actions" onclick="event.stopPropagation()">';
-      if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle bestätigen">'+luc('check-circle',14)+' <span class="dg-btn-label">Alle ✓</span></button>';
-      if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle abgeholt">'+luc('package-check',14)+' <span class="dg-btn-label">Abgeholt</span></button>';
-      html += '</span>';
-      html += '</div>';
-      // Body (individual order cards)
-      html += '<div class="k-dg-body">';
+      if(!singleDish){
+        // Compact dish separator with inline bulk actions
+        html += '<div class="k-dish-sep-row">';
+        html += '<span class="k-dish-sep-label">'+totalQty+'× '+esc(dish)+'</span>';
+        html += '<span class="k-dish-sep-actions">';
+        if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-xs" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle bestätigen">'+luc('check-circle',12)+' Alle ✓</button>';
+        if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="Alle abgeholt">'+luc('package-check',12)+' Abgeholt</button>';
+        html += '</span>';
+        html += '</div>';
+      }
       groupOrders.forEach(function(o){ html += _renderOrderCard(o); });
-      html += '</div>';
-      html += '</div>';
     });
     document.getElementById('mittag-orders').innerHTML = html;
     reinitIcons();
