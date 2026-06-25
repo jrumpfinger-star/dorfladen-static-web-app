@@ -185,7 +185,7 @@
 
   </div>
 
-  <div class="mob-action" id="mob-action-orders" style="display:none" onclick="document.getElementById('orders-overlay').classList.add('open')">
+  <div class="mob-action" id="mob-action-orders" style="display:none" onclick="document.getElementById('orders-overlay').classList.add('open');dlLockScroll()">
 
     <span class="mob-action-icon" style="color:#1e3a2f;background:rgba(30,58,47,.1)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>
 
@@ -581,7 +581,7 @@
 
     </a>
 
-    <a href="javascript:void(0)" class="promo-item promo-orders" id="promo-orders-link" style="display:none" onclick="document.getElementById('orders-overlay').classList.add('open')">
+    <a href="javascript:void(0)" class="promo-item promo-orders" id="promo-orders-link" style="display:none" onclick="document.getElementById('orders-overlay').classList.add('open');dlLockScroll()">
 
       <span class="promo-orders-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>
 
@@ -1597,6 +1597,9 @@
     }catch(e){}
   })();
 
+  // Scroll lock helpers for overlays
+  window.dlLockScroll=function(){document.documentElement.style.setProperty('--scroll-y','-'+window.scrollY+'px');document.body.classList.add('overlay-open');};
+  window.dlUnlockScroll=function(){document.body.classList.remove('overlay-open');var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;document.documentElement.style.removeProperty('--scroll-y');window.scrollTo(0,y);};
   window._shopOrders=[];
   window.showOrderDetail=showOrderDetail;
   function renderOrdersPopup(orders){
@@ -1684,6 +1687,7 @@
     if(total) h+='<div style="display:flex;justify-content:space-between;padding:10px 0;border-top:2px solid #e5e7eb;margin-top:4px"><span style="font-weight:700;color:#374151">Gesamt</span><span style="font-size:18px;font-weight:800;color:#2e7d4f">'+total+'</span></div>';
     document.getElementById('od-body').innerHTML=h;
     document.getElementById('od-overlay').classList.add('open');
+    dlLockScroll();
   }
 </script>
 
@@ -1691,6 +1695,7 @@
 <style>
 .orders-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:flex-start;padding:60px 16px 16px}
 .orders-overlay.open{display:flex}
+body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0)}
 .orders-modal{background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
 .orders-modal-head{position:sticky;top:0;background:#1e3a2f;color:#fff;padding:16px 48px 16px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;gap:12px;z-index:2}
 .orders-modal-head h2{margin:0;font-size:17px;font-weight:600;flex:1}
@@ -1720,23 +1725,23 @@
 </style>
 
 <!-- ====== ORDER DETAIL OVERLAY ====== -->
-<div class="od-overlay" id="od-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="od-overlay" id="od-overlay" onclick="if(event.target===this){this.classList.remove('open');dlUnlockScroll()}">
   <div class="od-modal">
     <div class="od-head">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <h2>Bestelldetails</h2>
-      <button class="od-close" onclick="document.getElementById('od-overlay').classList.remove('open')">&times;</button>
+      <button class="od-close" onclick="document.getElementById('od-overlay').classList.remove('open');dlUnlockScroll()">&times;</button>
     </div>
     <div class="od-body" id="od-body"></div>
   </div>
 </div>
 
-<div class="orders-overlay" id="orders-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="orders-overlay" id="orders-overlay" onclick="if(event.target===this){this.classList.remove('open');dlUnlockScroll()}">
   <div class="orders-modal">
     <div class="orders-modal-head">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
       <h2>Online-Einkauf</h2>
-      <button class="orders-modal-close" onclick="document.getElementById('orders-overlay').classList.remove('open')">&#10005;</button>
+      <button class="orders-modal-close" onclick="document.getElementById('orders-overlay').classList.remove('open');dlUnlockScroll()">&#10005;</button>
     </div>
     <div class="orders-body" id="orders-body"></div>
   </div>

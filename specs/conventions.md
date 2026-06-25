@@ -76,7 +76,41 @@
 
 ---
 
-## 4. Commit-Konventionen
+## 4. Popups & Overlays: Hintergrund-Scroll sperren
+
+**Bei jedem Popup/Overlay/Modal muss der Hintergrund-Scroll gesperrt werden.**
+
+### Regeln:
+- Beim **Öffnen** eines Overlays: `body` bekommt `overflow:hidden` + `position:fixed` (verhindert iOS-Scroll-Bug)
+- Beim **Schließen**: Scroll-Position wiederherstellen
+- Gilt für **alle** Seiten: `index.html`, `shop.html`, `kiosk.html`, etc.
+- Standard-Pattern: `dlLockScroll()` beim Öffnen, `dlUnlockScroll()` beim Schließen
+
+### Implementierung:
+```css
+body.overlay-open { overflow: hidden; position: fixed; width: 100%; top: var(--scroll-y, 0); }
+```
+```js
+function dlLockScroll() {
+  document.documentElement.style.setProperty('--scroll-y', '-' + window.scrollY + 'px');
+  document.body.classList.add('overlay-open');
+}
+function dlUnlockScroll() {
+  document.body.classList.remove('overlay-open');
+  var y = parseInt(document.documentElement.style.getPropertyValue('--scroll-y') || '0') * -1;
+  document.documentElement.style.removeProperty('--scroll-y');
+  window.scrollTo(0, y);
+}
+```
+
+### Checkliste bei neuem Popup:
+- [ ] `dlLockScroll()` bei jedem Open-Trigger (Button, Link, JS)
+- [ ] `dlUnlockScroll()` bei Close-Button UND Overlay-Backdrop-Klick
+- [ ] Testen auf Mobile (iOS Safari hat eigenes Scroll-Verhalten)
+
+---
+
+## 5. Commit-Konventionen
 
 - `feat:` – Neue Funktionalität
 - `fix:` – Bugfix
@@ -86,7 +120,7 @@
 
 ---
 
-## 5. Branch-Strategie
+## 6. Branch-Strategie
 
 | Branch | Zweck |
 |---|---|
