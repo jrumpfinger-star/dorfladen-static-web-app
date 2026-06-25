@@ -21,7 +21,7 @@ DEFAULT_KATEGORIEN = [
     {"name": "Mittagessen", "icon": "utensils"},
     {"name": "Kuchen", "icon": "cake-slice"},
     {"name": "Obst & Gemuese", "icon": "apple"},
-    {"name": "Aufstriche", "icon": "jar"},
+    {"name": "Aufstriche", "icon": "sandwich"},
     {"name": "Salate", "icon": "salad"},
 ]
 KATALOG_FILE = "katalog.json"

@@ -21,17 +21,20 @@
   window._socialKatLoaded = false;
 
   // Lucide SVG icon helper – renders inline SVG for a Lucide icon name
+  // Converts kebab-case (e.g. "cake-slice") to PascalCase (e.g. "CakeSlice") for lucide.icons lookup
   function lucideIcon(name, size) {
     size = size || 16;
-    // Use lucide.icons if available, otherwise fallback to data-lucide
-    if (window.lucide && window.lucide.icons && window.lucide.icons[name]) {
-      var ic = window.lucide.icons[name];
-      var paths = (ic[2] || []).map(function(p) {
-        var tag = p[0], attrs = p[1] || {};
-        var a = ''; for (var k in attrs) a += ' ' + k + '="' + attrs[k] + '"';
-        return '<' + tag + a + '/>';
-      }).join('');
-      return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+    if (window.lucide && window.lucide.icons) {
+      var pascal = name.split('-').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join('');
+      var ic = window.lucide.icons[pascal];
+      if (ic && Array.isArray(ic)) {
+        var paths = ic.map(function(p) {
+          var tag = p[0], attrs = p[1] || {};
+          var a = ''; for (var k in attrs) a += ' ' + k + '="' + attrs[k] + '"';
+          return '<' + tag + a + '/>';
+        }).join('');
+        return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+      }
     }
     return '<i data-lucide="' + esc(name) + '" style="width:' + size + 'px;height:' + size + 'px"></i>';
   }
@@ -243,7 +246,7 @@
 
   // --- Category Manager ---
   // A curated list of useful Lucide icon names for food/shop categories
-  var _socIconChoices=['utensils','cake-slice','apple','jar','salad','coffee','beef','fish','egg-fried','milk','wheat','grape','carrot','cherry','citrus','cookie','croissant','drum','drumstick','ice-cream-cone','leaf','nut','pizza','popcorn','sandwich','soup','wine','beer','candy','shopping-basket','package','tag','store','heart','star','sun','flower','sprout','flame','snowflake','droplet','zap'];
+  var _socIconChoices=['utensils','cake-slice','apple','salad','coffee','beef','fish','egg-fried','milk','wheat','grape','carrot','cherry','citrus','cookie','croissant','drum','drumstick','ice-cream-cone','leaf','nut','pizza','popcorn','sandwich','soup','wine','beer','candy','shopping-basket','package','tag','store','heart','star','sun','flower','sprout','flame','snowflake','droplet','zap'];
 
   function socRenderKatManager(){
     var wrap=document.getElementById('soc-kat-manager-list');
