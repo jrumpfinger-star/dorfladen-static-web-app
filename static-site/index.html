@@ -1835,7 +1835,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var lunchOver=_isTomorrow?false:(nowH>12||(nowH===12&&nowM>=30));
 
     var mittagessen=lunchOver?[]:items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
-    var theke=items.filter(function(i){return lunchOver?true:(i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
+    var theke=items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
 
     var visibleItems=mittagessen.length+theke.length;
 
