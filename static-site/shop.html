@@ -366,11 +366,24 @@
     .shop-order-status.s3{background:#f3f4f6;color:#374151}
     .shop-order-status.s4{background:#fee2e2;color:#991b1b}
     .shop-order-body{padding:12px 16px;font-size:13px}
-    .soc-progress{display:flex;gap:3px;margin-top:8px}
-    .soc-progress-dot{flex:1;height:4px;border-radius:2px;background:#e5e7eb;transition:background .3s}
-    .soc-progress-dot.done{background:var(--shop-green)}
-    .soc-progress-dot.active{background:#3b82f6;animation:soc-pulse 1.5s infinite}
-    .soc-progress-dot.cancel{background:#ef4444}
+    /* ═══ Status Timeline (Kundenansicht) ═══ */
+    .soc-timeline{display:flex;align-items:flex-start;position:relative;margin:10px 0 4px;padding:0 4px}
+    .soc-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+    .soc-dot{width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;background:#fff;display:flex;align-items:center;justify-content:center;transition:all .3s}
+    .soc-dot svg{width:55%;height:55%;color:#9ca3af}
+    .soc-dot.done{border-color:var(--shop-green);background:var(--shop-green)}
+    .soc-dot.done svg{color:#fff}
+    .soc-dot.active{border-color:#3b82f6;background:#dbeafe;animation:soc-pulse 1.5s infinite}
+    .soc-dot.active svg{color:#3b82f6}
+    .soc-dot.cancel{border-color:#ef4444;background:#fee2e2}
+    .soc-dot.cancel svg{color:#ef4444}
+    .soc-label{font-size:9px;color:#9ca3af;margin-top:3px;font-weight:600;text-align:center;white-space:nowrap}
+    .soc-label.done{color:var(--shop-green)}
+    .soc-label.active{color:#3b82f6;font-weight:700}
+    .soc-label.cancel{color:#ef4444}
+    .soc-line{position:absolute;top:11px;left:calc(50% + 13px);right:calc(-50% + 13px);height:2px;background:#e5e7eb;z-index:0}
+    .soc-line.done{background:var(--shop-green)}
+    .soc-line.cancel{background:#ef4444}
     @keyframes soc-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
     /* ── Loading / Empty ── */
@@ -2293,15 +2306,27 @@
           // Abhol info
           var abholDisp=fmtOrderDate(o.abholdatum);
           if(o.abhol_zeitslot){var sl=o.abhol_zeitslot;abholDisp+=', '+(sl.period==='nm'?'NM':'VM')+' '+esc(sl.abhol_von||'')+'\u2013'+esc(sl.abhol_bis||'');}
-          // Progress dots (4 steps: Neu → Bearbeitung → Bereit → Abgeholt)
-          var progHtml='<div class="soc-progress">';
+          // Status Timeline (visual dots + icons + labels)
+          var tlSteps=[
+            {icon:'inbox',label:'Neu'},
+            {icon:'package',label:'Packen'},
+            {icon:'bell',label:'Bereit'},
+            {icon:'check-circle',label:'Abgeholt'}
+          ];
+          var progHtml='<div class="soc-timeline">';
           if(o.status===4){
-            for(var pi=0;pi<4;pi++) progHtml+='<div class="soc-progress-dot cancel"></div>';
+            progHtml+='<div class="soc-step"><div class="soc-dot cancel">'+lucideHtml('x',14)+'</div><div class="soc-label cancel">Storniert</div></div>';
           } else {
-            for(var pi=0;pi<4;pi++){
-              var cls=pi<o.status?'done':pi===o.status?'active':'';
-              progHtml+='<div class="soc-progress-dot '+cls+'"></div>';
-            }
+            tlSteps.forEach(function(st,si){
+              var dotCls=si<o.status?'done':si===o.status?'active':'';
+              var lblCls=dotCls;
+              var lineCls=si<o.status?'done':'';
+              progHtml+='<div class="soc-step">';
+              if(si<tlSteps.length-1) progHtml+='<div class="soc-line '+lineCls+'"></div>';
+              progHtml+='<div class="soc-dot '+dotCls+'">'+lucideHtml(st.icon,12)+'</div>';
+              progHtml+='<div class="soc-label '+lblCls+'">'+st.label+'</div>';
+              progHtml+='</div>';
+            });
           }
           progHtml+='</div>';
 
@@ -2311,11 +2336,10 @@
           // Row 1: Date + Status + Price
           html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">';
           html+='<div style="min-width:0">';
-          html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">';
+          html+='<div style="display:flex;align-items:center;gap:8px">';
           html+='<span style="font-size:16px;font-weight:800;color:#1f2937">'+relDate+'</span>';
           html+='<span style="font-size:12px;color:#9ca3af;font-weight:500">'+orderTime+'</span>';
           html+='</div>';
-          html+='<span class="shop-order-status s'+o.status+'" style="display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:11px">'+statusIcon(o.status)+esc(o.status_text)+'</span>';
           html+='</div>';
           html+='<div style="text-align:right;flex-shrink:0">';
           html+='<div style="font-size:18px;font-weight:800;color:var(--shop-green)">'+fmtP(o.gesamtsumme)+' \u20AC</div>';
