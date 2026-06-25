@@ -244,8 +244,14 @@ Der "Tagesinfo"-Button ist visuell als grüner Outline-Button unterhalb der Shar
 ### Katalog
 - Produkte anlegen: Name, Kategorie, Preis, Bild
 - Bild per Drag&Drop, Datei-Upload oder Strg+V einfügen
+- **Bild per Strg+V in Edit-Row austauschen**: Beim Bearbeiten eines bestehenden Artikels kann das Bild direkt per Strg+V aus der Zwischenablage ersetzt werden (Paste-Zone mit visueller Vorschau)
 - Produkte bearbeiten und löschen
-- Kategorien: Mittagessen, Kuchen, Obst & Gemüse, Aufstriche
+- **Kategorien dynamisch aus Dataverse**: Werden über die API geladen (`katalog_kategorien` in `dl_seiteninhalt`)
+- Default-Kategorien: Mittagessen, Kuchen, Obst & Gemüse, Aufstriche, Salate
+- **Kategorie-Manager** (aufklappbar): Kategorien hinzufügen/entfernen mit Lucide-Icon-Picker
+  - Icon-Picker mit Suchfilter und visueller Vorschau
+  - Änderungen werden in Dataverse gespeichert
+- **Alle Icons als Lucide-Icons** dargestellt (keine Emojis im UI; Emojis nur im Canvas-Poster-Export)
 
 ### Tagespost auf der Homepage
 - Gespeicherte Posts erscheinen automatisch als **Tagespost-Modal** auf der Homepage (`index.html`)

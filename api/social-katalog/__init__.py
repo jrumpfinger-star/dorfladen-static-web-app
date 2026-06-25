@@ -17,7 +17,13 @@ SP_DRIVE = "b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A"
 # We store everything under a "SocialMedia" folder in SP
 SP_SOCIAL_FOLDER_NAME = "SocialMedia"
 
-KATEGORIEN = ["Mittagessen", "Kuchen", "Obst & Gemuese", "Aufstriche"]
+DEFAULT_KATEGORIEN = [
+    {"name": "Mittagessen", "icon": "utensils"},
+    {"name": "Kuchen", "icon": "cake-slice"},
+    {"name": "Obst & Gemuese", "icon": "apple"},
+    {"name": "Aufstriche", "icon": "jar"},
+    {"name": "Salate", "icon": "salad"},
+]
 KATALOG_FILE = "katalog.json"
 MITTAGSTISCH_BILDER_FILE = "mittagstisch-bilder.json"
 
@@ -149,6 +155,65 @@ def get_download_url(token, folder_id, filename):
 
 # ---------- handlers ----------
 
+def _normalize_kategorien(raw):
+    """Ensure kategorien is a list of {name, icon} objects.
+    Handles legacy string arrays and new object arrays."""
+    if not isinstance(raw, list) or not raw:
+        return DEFAULT_KATEGORIEN
+    # Build icon lookup from defaults
+    icon_map = {k["name"]: k["icon"] for k in DEFAULT_KATEGORIEN}
+    result = []
+    for item in raw:
+        if isinstance(item, str):
+            result.append({"name": item, "icon": icon_map.get(item, "tag")})
+        elif isinstance(item, dict) and item.get("name"):
+            if not item.get("icon"):
+                item["icon"] = icon_map.get(item["name"], "tag")
+            result.append(item)
+    return result if result else DEFAULT_KATEGORIEN
+
+
+def load_kategorien():
+    """Load categories from cms-config (Dataverse). Fallback to DEFAULT_KATEGORIEN."""
+    try:
+        dv_url = os.environ.get("DV_DEFAULT_URL", "") or os.environ.get("DV_DEV_URL", "")
+        if not dv_url:
+            return DEFAULT_KATEGORIEN
+        tenant_id = os.environ.get("DV_TENANT_ID", "")
+        client_id = os.environ.get("DV_CLIENT_ID", "")
+        client_secret = os.environ.get("DV_CLIENT_SECRET", "")
+        if not client_secret:
+            return DEFAULT_KATEGORIEN
+        import msal as _msal
+        app = _msal.ConfidentialClientApplication(
+            client_id,
+            authority=f"https://login.microsoftonline.com/{tenant_id}",
+            client_credential=client_secret,
+        )
+        tok = app.acquire_token_for_client(scopes=[f"{dv_url}/.default"])
+        access_token = tok.get("access_token")
+        if not access_token:
+            return DEFAULT_KATEGORIEN
+        h = {
+            "Authorization": f"Bearer {access_token}",
+            "OData-MaxVersion": "4.0", "OData-Version": "4.0",
+            "Accept": "application/json",
+        }
+        url = f"{dv_url}/api/data/v9.2/dl_seiteninhalts?$filter=dl_schluessel eq 'katalog_kategorien'&$select=dl_wert&$top=1"
+        r = requests.get(url, headers=h, timeout=10)
+        if r.status_code == 200:
+            items = r.json().get("value", [])
+            if items:
+                import json as _json
+                val = items[0].get("dl_wert", "")
+                parsed = _json.loads(val) if val.strip().startswith("[") else None
+                if isinstance(parsed, list) and len(parsed) > 0:
+                    return _normalize_kategorien(parsed)
+    except Exception:
+        pass
+    return DEFAULT_KATEGORIEN
+
+
 def handle_get(req, token, folder_id):
     """GET: Return full katalog with image URLs refreshed.
     If ?base64=1, download each image and return as data:URI (avoids CORS)."""
@@ -177,7 +242,8 @@ def handle_get(req, token, folder_id):
                         item["bild_url"] = f"data:{ct};base64,{b64}"
                 except:
                     pass
-    return ok({"success": True, "kategorien": KATEGORIEN, "items": katalog})
+    kategorien = load_kategorien()
+    return ok({"success": True, "kategorien": kategorien, "items": katalog})
 
 
 def handle_post(req, token, folder_id):

@@ -634,3 +634,58 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 - **Aktion:** Kachel bearbeiten → + BILD → Bild hochladen → Speichern → Flyer-Vorschau öffnen (klassisches Template)
 - **Prüfung:** Das eigene Bild ist auf der Flyer-Kachel sichtbar
 - **Erwartung:** Eigenes Bild wird als Overlay über die Kachel gerendert
+
+---
+
+## T14 – Social: Dynamische Kategorien & Lucide-Icons
+> Spec: specs/kiosk-social.md → AK-SO-08, AK-SO-09, AK-SO-10, AK-SO-11
+
+### T14.1 – Kategorien werden dynamisch aus API geladen (AK-SO-08)
+- **Aktion:** Kiosk → Social → Katalog öffnen
+- **Prüfung:** Kategorie-Dropdown im "Neues Produkt"-Formular enthält Optionen
+- **Erwartung:** Dropdown enthält mind. 5 Einträge (Mittagessen, Kuchen, Obst & Gemuese, Aufstriche, Salate), keine hardcoded Emojis in den Options-Texten
+
+### T14.2 – Kategorie-Header zeigen Lucide-Icons (AK-SO-11)
+- **Aktion:** Kiosk → Social → Katalog, Produkte sind vorhanden
+- **Prüfung:** Kategorie-Header im Katalog enthalten `<svg>` oder `<i data-lucide="...">` statt Emoji-Zeichen
+- **Erwartung:** Jeder Kategorie-Header zeigt ein Lucide-Icon, keine Unicode-Emojis (&#127869; etc.)
+
+### T14.3 – Kategorie-Manager öffnen und Kategorien anzeigen (AK-SO-09)
+- **Aktion:** Kiosk → Social → Katalog → "Kategorien verwalten" Button klicken
+- **Prüfung:** Manager-Panel öffnet sich, aktuelle Kategorien mit Lucide-Icons sind aufgelistet
+- **Erwartung:** Panel zeigt mind. 5 Kategorien mit Icon-Name und Lucide-Icon-Vorschau
+
+### T14.4 – Neue Kategorie hinzufügen (AK-SO-09)
+- **Aktion:** Kategorie-Manager öffnen → Name "Getränke" eingeben → Icon "coffee" im Icon-Picker auswählen → "+ Hinzufügen" klicken
+- **Prüfung:** Neue Kategorie erscheint in der Liste, Dropdown wird aktualisiert
+- **Erwartung:** "Getränke" mit Coffee-Icon in der Manager-Liste und im Kategorie-Dropdown sichtbar
+
+### T14.5 – Kategorie entfernen (AK-SO-09)
+- **Aktion:** Kategorie-Manager → × Button bei einer Kategorie klicken → Bestätigung
+- **Prüfung:** Kategorie verschwindet aus Manager-Liste und Dropdowns
+- **Erwartung:** Kategorie ist entfernt, Änderung wird in Dataverse gespeichert
+
+### T14.6 – Icon-Picker Suchfilter
+- **Aktion:** Kategorie-Manager → "Icon suchen" Feld → "cake" eintippen
+- **Prüfung:** Icon-Grid filtert auf passende Icons
+- **Erwartung:** Nur Icons mit "cake" im Namen werden angezeigt (z.B. cake-slice)
+
+### T14.7 – Strg+V Bild-Paste in Edit-Row (AK-SO-10)
+- **Aktion:** Katalog → Produkt bearbeiten (Stift-Icon) → In Paste-Zone klicken → Strg+V mit Bild in Zwischenablage
+- **Prüfung:** Bild-Vorschau erscheint in Paste-Zone, Bild wird hochgeladen
+- **Erwartung:** Paste-Zone zeigt Bild-Vorschau, Thumbnail im Katalog wird aktualisiert, Status-Meldung "Bild aktualisiert!"
+
+### T14.8 – CMS: Dynamische Kategorien (AK-SO-08)
+- **Aktion:** CMS → Social → Katalog öffnen
+- **Prüfung:** Kategorie-Dropdown im "Neues Produkt"-Formular enthält dynamische Optionen
+- **Erwartung:** Gleiche Kategorien wie im Kiosk, keine hardcoded Emojis
+
+### T14.9 – CMS: Strg+V in Edit-Row (AK-SO-10)
+- **Aktion:** CMS → Social → Katalog → Produkt bearbeiten → In Paste-Zone klicken → Strg+V
+- **Prüfung:** Bild wird in Paste-Zone angezeigt und hochgeladen
+- **Erwartung:** Bild-Vorschau in Paste-Zone, Thumbnail aktualisiert
+
+### T14.10 – Post-Builder: Kategorie-Chips zeigen Lucide-Icons (AK-SO-11)
+- **Aktion:** Kiosk → Social → Neuer Post → Katalog-Produkte vorhanden
+- **Prüfung:** Kategorie-Filter-Chips enthalten `<svg>` statt Emoji-Zeichen
+- **Erwartung:** Chips zeigen Lucide-Icons inline neben dem Kategorienamen

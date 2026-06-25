@@ -9716,6 +9716,12 @@
         }
         window._socialKatLoaded=true;
         _socialKatalog = res.items||[];
+        if(res.kategorien&&res.kategorien.length){
+          window._cmsKategorien=res.kategorien;
+        }
+        // Populate category select
+        var katSel=document.getElementById('soc-kat-kategorie');
+        if(katSel){var cur=katSel.value;katSel.innerHTML=_cmsKatOptionsHtml('');if(cur)katSel.value=cur;}
         socialRenderKatalog();
       })
       .catch(function(e){
@@ -9728,12 +9734,31 @@
   };
 
   // --- Katalog rendern ---
-  var _socKatOpts=[
-    {v:'Mittagessen',l:'&#127869; Mittagessen'},
-    {v:'Kuchen',l:'&#127856; Kuchen'},
-    {v:'Obst & Gemuese',l:'&#129382; Obst & Gem\u00fcse'},
-    {v:'Aufstriche',l:'&#129367; Aufstriche'}
-  ];
+  // Kategorien kommen dynamisch aus der API (social.js shared oder _cmsKategorien)
+  function _cmsGetKategorien(){
+    if(window._socKategorien_ref) return window._socKategorien_ref();
+    return window._cmsKategorien||[];
+  }
+  function _cmsKatOptionsHtml(selectedVal){
+    return _cmsGetKategorien().map(function(k){
+      var sel=k.name===selectedVal?' selected':'';
+      return '<option value="'+esc(k.name)+'"'+sel+'>'+esc(k.name)+'</option>';
+    }).join('');
+  }
+  function _cmsLucideIcon(name,size){
+    size=size||16;
+    if(window.lucide&&window.lucide.icons&&window.lucide.icons[name]){
+      var ic=window.lucide.icons[name];
+      var paths=(ic[2]||[]).map(function(p){var tag=p[0],attrs=p[1]||{};var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]+'"';return '<'+tag+a+'/>';}).join('');
+      return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+paths+'</svg>';
+    }
+    return '<i data-lucide="'+esc(name)+'" style="width:'+size+'px;height:'+size+'px"></i>';
+  }
+  function _cmsCatIconName(catName){
+    var kats=_cmsGetKategorien();
+    for(var i=0;i<kats.length;i++){if(kats[i].name===catName) return kats[i].icon||'tag';}
+    return 'tag';
+  }
   function socialRenderKatalog(){
     var list=document.getElementById('soc-kat-list');
     var empty=document.getElementById('soc-kat-empty');
@@ -9750,7 +9775,7 @@
       if(!cats[c]) cats[c]=[];
       cats[c].push(p);
     });
-    var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+    var catIcons={}; _cmsGetKategorien().forEach(function(k){catIcons[k.name]=_cmsLucideIcon(k.icon||'tag',16);});
     var html='';
     Object.keys(cats).forEach(function(cat){
       var catId='soc-kat-cat-'+esc(cat).replace(/[^a-zA-Z0-9]/g,'_');
@@ -9790,21 +9815,25 @@
         html+='<input id="soc-ed-name-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+esc(p.name)+'"></div>';
         html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
         html+='<select id="soc-ed-kat-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px">';
-        _socKatOpts.forEach(function(o){
-          html+='<option value="'+esc(o.v)+'"'+(o.v===p.kategorie?' selected':'')+'>'+o.l+'</option>';
-        });
+        html+=_cmsKatOptionsHtml(p.kategorie);
         html+='</select></div>';
         html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
         var edP=parseFloat(p.preis);html+='<input id="soc-ed-preis-'+pid+'" type="number" step="0.01" min="0" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(edP&&isFinite(edP)?edP.toFixed(2):(p.preis||''))+'"></div>';
         html+='<div class="soc-kat-edit-btns" style="display:flex;gap:4px">';
         html+='<button class="cms-btn cms-btn-sm" onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700">&#10003; Speichern</button>';
         html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatCancelEdit(\''+pid+'\')" style="padding:5px 10px;font-size:12px">Abbrechen</button>';
-        html+='</div></div></td></tr>';
+        html+='</div></div>';
+        html+='<div id="soc-ed-paste-'+pid+'" tabindex="0" onpaste="socialKatEditPaste(\''+pid+'\',event)" style="margin-top:6px;border:2px dashed #d1d5db;border-radius:8px;padding:8px;text-align:center;cursor:pointer;background:#fafbfc;outline:none;font-size:11px;color:#9ca3af" onclick="document.getElementById(\'soc-ed-paste-'+pid+'\').focus()" title="Strg+V zum Bild einf\u00fcgen"><i data-lucide="clipboard-paste" style="width:14px;height:14px;vertical-align:middle"></i> <strong>Strg+V</strong> Bild einf\u00fcgen oder <label style="color:#2563eb;cursor:pointer;text-decoration:underline">Datei w\u00e4hlen<input type="file" accept="image/*" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label></div>';
+        html+='</td></tr>';
       });
       html+='</table></div></div>';
     });
     list.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
   }
+
+  // Strg+V paste handler for edit row (cms.js version)
+  window.socialKatEditPaste=function(id,e){ var items=e.clipboardData&&e.clipboardData.items; if(!items)return; for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image')!==-1){e.preventDefault();var f=items[i].getAsFile();if(f){var reader=new FileReader();reader.onload=function(ev){var b64=ev.target.result;var zone=document.getElementById('soc-ed-paste-'+id);if(zone){zone.style.borderColor='#22c55e';zone.innerHTML='<img src="'+b64+'" style="max-width:80px;max-height:80px;border-radius:6px;border:1px solid #e5e7eb">';} socialKatImgChange(id,{files:[f]});};reader.readAsDataURL(f);}return;}} };
 
   // --- Inline Edit ---
   window.socialKatEdit = function(id){
@@ -9954,7 +9983,7 @@
     });
   }
 
-  var _socCatIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+  // _socCatIcons now built dynamically from _cmsGetKategorien() via _cmsCatIconName()
   var _socMtBilder={}; // gericht -> {bild_url,...}
   var _socFreeItems=[]; // ad-hoc items [{id,name,preis,kategorie,bild_data}]
   var _socFreeCounter=0;
@@ -10034,7 +10063,7 @@
     html+='<input id="soc-free-preis" type="number" step="0.01" min="0" class="cms-input" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
     html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
     html+='<select id="soc-free-kat" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
-    html+='<option value="Mittagessen">&#127869; Mittagessen</option><option value="Kuchen">&#127856; Kuchen</option><option value="Obst & Gemuese">&#129382; Obst & Gem\u00fcse</option><option value="Aufstriche">&#129367; Aufstriche</option><option value="Sonstiges">Sonstiges</option>';
+    html+=_cmsKatOptionsHtml('')+'<option value="Sonstiges">Sonstiges</option>';
     html+='</select></div>';
     html+='<div style="width:56px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">ab</label>';
     html+='<select id="soc-free-ab" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
@@ -10061,7 +10090,7 @@
       html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">';
       html+='<button class="soc-cat-chip soc-cat-active" data-cat="" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#1f2937;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Alle</button>';
       allCats.forEach(function(cat){
-        html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer">'+(_socCatIcons[cat]||'')+' '+esc(cat)+'</button>';
+        html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+_cmsLucideIcon(_cmsCatIconName(cat),14)+' '+esc(cat)+'</button>';
       });
       html+='</div>';
 
@@ -10697,7 +10726,12 @@
       cats[c].push(p);
     });
     var catKeys=Object.keys(cats);
-    var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
+    // Canvas cannot render SVG/Lucide – use emoji fallbacks (allowed per conventions §3 for print/poster)
+    var _iconToEmoji={'utensils':'\uD83C\uDF5D','cake-slice':'\uD83C\uDF70','apple':'\uD83C\uDF4E','jar':'\uD83E\uDD57','salad':'\uD83E\uDD57','coffee':'\u2615','beef':'\uD83E\uDD69','fish':'\uD83D\uDC1F','pizza':'\uD83C\uDF55','sandwich':'\uD83E\uDD6A','cookie':'\uD83C\uDF6A','ice-cream-cone':'\uD83C\uDF66','wine':'\uD83C\uDF77','beer':'\uD83C\uDF7A','cherry':'\uD83C\uDF52','grape':'\uD83C\uDF47','carrot':'\uD83E\uDD55','wheat':'\uD83C\uDF3E','leaf':'\uD83C\uDF3F','tag':'\uD83C\uDFF7\uFE0F'};
+    var catIcons={};
+    _cmsGetKategorien().forEach(function(k){catIcons[k.name]=_iconToEmoji[k.icon]||'';});
+    if(!catIcons['Mittagessen'])catIcons['Mittagessen']='\uD83C\uDF5D';
+    if(!catIcons['Kuchen'])catIcons['Kuchen']='\uD83C\uDF70';
 
     // Calculate dynamic height
     var freitextLines=[];

@@ -17,7 +17,49 @@
   }
 
   var _socialKatalog = [];
+  var _socKategorien = []; // [{name, icon}] from API
   window._socialKatLoaded = false;
+
+  // Lucide SVG icon helper – renders inline SVG for a Lucide icon name
+  function lucideIcon(name, size) {
+    size = size || 16;
+    // Use lucide.icons if available, otherwise fallback to data-lucide
+    if (window.lucide && window.lucide.icons && window.lucide.icons[name]) {
+      var ic = window.lucide.icons[name];
+      var paths = (ic[2] || []).map(function(p) {
+        var tag = p[0], attrs = p[1] || {};
+        var a = ''; for (var k in attrs) a += ' ' + k + '="' + attrs[k] + '"';
+        return '<' + tag + a + '/>';
+      }).join('');
+      return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+    }
+    return '<i data-lucide="' + esc(name) + '" style="width:' + size + 'px;height:' + size + 'px"></i>';
+  }
+
+  // Build <option> HTML for category dropdowns from _socKategorien
+  function socKatOptionsHtml(selectedVal) {
+    return _socKategorien.map(function(k) {
+      var sel = k.name === selectedVal ? ' selected' : '';
+      return '<option value="' + esc(k.name) + '"' + sel + '>' + esc(k.name) + '</option>';
+    }).join('');
+  }
+
+  // Populate all static category <select> elements
+  function socPopulateKatSelects() {
+    var html = socKatOptionsHtml('');
+    ['soc-kat-kategorie'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { var cur = el.value; el.innerHTML = html; if (cur) el.value = cur; }
+    });
+  }
+
+  // Get Lucide icon name for a category
+  function socCatIcon(catName) {
+    for (var i = 0; i < _socKategorien.length; i++) {
+      if (_socKategorien[i].name === catName) return _socKategorien[i].icon || 'tag';
+    }
+    return 'tag';
+  }
 
   // --- Sub-tab switching ---
   window.socialSubTab = function(name){
@@ -130,12 +172,12 @@
     if(list) list.innerHTML='';
     if(empty) empty.style.display='none';
     fetch(API+'/social-katalog?base64=1').then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-      .then(function(res){ if(res.error){socialStatus('soc-kat-status','API-Fehler: '+res.error,false);return;} window._socialKatLoaded=true; _socialKatalog=res.items||[]; socialRenderKatalog(); })
+      .then(function(res){ if(res.error){socialStatus('soc-kat-status','API-Fehler: '+res.error,false);return;} window._socialKatLoaded=true; _socialKatalog=res.items||[]; if(res.kategorien&&res.kategorien.length){_socKategorien=res.kategorien;} socPopulateKatSelects(); socialRenderKatalog(); })
       .catch(function(e){socialStatus('soc-kat-status','Fehler beim Laden: '+e.message,false);})
       .then(function(){ if(loading) loading.style.display='none'; if(typeof cb==='function') cb(); });
   };
 
-  var _socKatOpts=[{v:'Mittagessen',l:'&#127869; Mittagessen'},{v:'Kuchen',l:'&#127856; Kuchen'},{v:'Obst & Gemuese',l:'&#129382; Obst & Gem\u00fcse'},{v:'Aufstriche',l:'&#129367; Aufstriche'}];
+  // _socKatOpts is now dynamically built from _socKategorien (no more hardcoded emojis)
 
   function socialRenderKatalog(){
     var list=document.getElementById('soc-kat-list');
@@ -144,7 +186,7 @@
     if(!_socialKatalog.length){ list.innerHTML=''; if(empty) empty.style.display='block'; return; }
     if(empty) empty.style.display='none';
     var cats={}; _socialKatalog.forEach(function(p){ var c=p.kategorie||'Sonstiges'; if(!cats[c]) cats[c]=[]; cats[c].push(p); });
-    var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+    var catIcons={}; _socKategorien.forEach(function(k){ catIcons[k.name]=lucideIcon(k.icon||'tag',16); });
     var html='';
     Object.keys(cats).forEach(function(cat){
       var catId='soc-kat-cat-'+esc(cat).replace(/[^a-zA-Z0-9]/g,'_');
@@ -173,17 +215,20 @@
         html+='<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">';
         html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name</label><input id="soc-ed-name-'+pid+'" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px" value="'+esc(p.name)+'"></div>';
         html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label><select id="soc-ed-kat-'+pid+'" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px">';
-        _socKatOpts.forEach(function(o){ html+='<option value="'+esc(o.v)+'"'+(o.v===p.kategorie?' selected':'')+'>'+o.l+'</option>'; });
+        html+=socKatOptionsHtml(p.kategorie);
         html+='</select></div>';
         var edP=parseFloat(p.preis);
         html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label><input id="soc-ed-preis-'+pid+'" type="number" step="0.01" min="0" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px" value="'+(edP&&isFinite(edP)?edP.toFixed(2):(p.preis||''))+'"></div>';
-        html+='<div style="display:flex;gap:4px"><button onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700;border:none;border-radius:6px;cursor:pointer">&#10003; Speichern</button>';
+        html+='<div style="display:flex;gap:4px;align-items:center"><button onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700;border:none;border-radius:6px;cursor:pointer">&#10003; Speichern</button>';
         html+='<button onclick="socialKatCancelEdit(\''+pid+'\')" style="padding:5px 10px;font-size:12px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">Abbrechen</button></div>';
-        html+='</div></td></tr>';
+        html+='</div>';
+        html+='<div id="soc-ed-paste-'+pid+'" tabindex="0" onpaste="socialKatEditPaste(\''+pid+'\',event)" style="margin-top:6px;border:2px dashed #d1d5db;border-radius:8px;padding:8px;text-align:center;cursor:pointer;background:#fafbfc;outline:none;font-size:11px;color:#9ca3af" onclick="document.getElementById(\'soc-ed-paste-'+pid+'\').focus()" title="Strg+V zum Bild einf\u00fcgen"><i data-lucide="clipboard-paste" style="width:14px;height:14px;vertical-align:middle"></i> <strong>Strg+V</strong> Bild einf\u00fcgen oder <label style="color:#2563eb;cursor:pointer;text-decoration:underline">Datei w\u00e4hlen<input type="file" accept="image/*" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label></div>';
+        html+='</td></tr>';
       });
       html+='</table></div></div>';
     });
     list.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
   }
 
   window.socialKatEdit=function(id){ document.querySelectorAll('[id^="soc-edit-"]').forEach(function(el){el.style.display='none';}); document.querySelectorAll('[id^="soc-row-"]').forEach(function(el){el.style.display='';}); var row=document.getElementById('soc-row-'+id); var edit=document.getElementById('soc-edit-'+id); if(row) row.style.display='none'; if(edit) edit.style.display=''; var ni=document.getElementById('soc-ed-name-'+id); if(ni) ni.focus(); };
@@ -193,10 +238,111 @@
   window.socialKatAdd=function(){ var name=document.getElementById('soc-kat-name').value.trim(); var kat=document.getElementById('soc-kat-kategorie').value; var preis=document.getElementById('soc-kat-preis').value.trim(); var bildInput=document.getElementById('soc-kat-bild'); if(!name){socialStatus('soc-kat-status','Bitte Namen eingeben',false);return;} var fd=new FormData(); fd.append('name',name); fd.append('kategorie',kat); if(preis){var pn=parseFloat(preis.replace(',','.'));fd.append('preis',pn&&isFinite(pn)?pn.toFixed(2):preis);} var bildFile=_socPastedFile||(bildInput&&bildInput.files&&bildInput.files[0]); if(bildFile) fd.append('bild',bildFile); socialStatus('soc-kat-status','Wird gespeichert...',true); fetch(API+'/social-katalog',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-kat-status',res.error,false);return;}socialStatus('soc-kat-status','Produkt hinzugefuegt!',true);document.getElementById('soc-kat-name').value='';document.getElementById('soc-kat-preis').value='';socialClearBild();socialLoadKatalog();}).catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);}); };
   window.socialKatDelete=function(id){ if(!confirm('Produkt wirklich entfernen?'))return; fetch(API+'/social-katalog?id='+encodeURIComponent(id),{method:'DELETE'}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-kat-status',res.error,false);return;}socialStatus('soc-kat-status','Entfernt',true);socialLoadKatalog();}).catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);}); };
   window.socialKatImgChange=function(id,inp){ if(!inp||!inp.files||!inp.files[0])return; var file=inp.files[0]; var reader=new FileReader(); reader.onload=function(e){ var b64=e.target.result; var thumb=document.getElementById('soc-kat-thumb-'+id); if(thumb){if(thumb.tagName==='IMG'){thumb.src=b64;}else{var img=document.createElement('img');img.id='soc-kat-thumb-'+id;img.src=b64;img.style.cssText='width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb';thumb.parentNode.replaceChild(img,thumb);}} socialStatus('soc-kat-status','Bild wird hochgeladen...',true); fetch(API+'/social-katalog',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,bild_base64:b64})}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-kat-status','Bild-Upload fehlgeschlagen: '+res.error,false);return;}socialStatus('soc-kat-status','Bild aktualisiert!',true);var item=_socialKatalog.find(function(p){return p.id===id;});if(item) item.bild_url=res.item&&res.item.bild_url?res.item.bild_url:b64;}).catch(function(err){socialStatus('soc-kat-status','Bild-Upload Fehler: '+err.message,false);}); }; reader.readAsDataURL(file); };
+  // Strg+V paste handler for edit row
+  window.socialKatEditPaste=function(id,e){ var items=e.clipboardData&&e.clipboardData.items; if(!items)return; for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image')!==-1){e.preventDefault();var f=items[i].getAsFile();if(f){var reader=new FileReader();reader.onload=function(ev){var b64=ev.target.result;var zone=document.getElementById('soc-ed-paste-'+id);if(zone){zone.style.borderColor='#22c55e';zone.innerHTML='<img src="'+b64+'" style="max-width:80px;max-height:80px;border-radius:6px;border:1px solid #e5e7eb">';} socialKatImgChange(id,{files:[f]});};reader.readAsDataURL(f);}return;}} };
+
+  // --- Category Manager ---
+  // A curated list of useful Lucide icon names for food/shop categories
+  var _socIconChoices=['utensils','cake-slice','apple','jar','salad','coffee','beef','fish','egg-fried','milk','wheat','grape','carrot','cherry','citrus','cookie','croissant','drum','drumstick','ice-cream-cone','leaf','nut','pizza','popcorn','sandwich','soup','wine','beer','candy','shopping-basket','package','tag','store','heart','star','sun','flower','sprout','flame','snowflake','droplet','zap'];
+
+  function socRenderKatManager(){
+    var wrap=document.getElementById('soc-kat-manager-list');
+    if(!wrap)return;
+    if(!_socKategorien.length){wrap.innerHTML='<div style="color:#9ca3af;font-size:12px;padding:10px">Keine Kategorien geladen.</div>';return;}
+    var html='';
+    _socKategorien.forEach(function(k,idx){
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:'+(idx%2===0?'#fff':'#f9fafb')+';border-radius:6px;margin-bottom:2px">';
+      html+='<span style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#6b7280">'+lucideIcon(k.icon||'tag',18)+'</span>';
+      html+='<span style="flex:1;font-weight:600;font-size:13px">'+esc(k.name)+'</span>';
+      html+='<span style="font-size:10px;color:#9ca3af;background:#f3f4f6;padding:2px 6px;border-radius:4px">'+esc(k.icon||'tag')+'</span>';
+      html+='<button onclick="socialKatMgrRemove('+idx+')" title="Entfernen" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:2px 4px">&times;</button>';
+      html+='</div>';
+    });
+    wrap.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
+  }
+
+  var _socIconFilter='';
+  function socRenderIconPicker(){
+    var grid=document.getElementById('soc-kat-icon-grid');
+    if(!grid)return;
+    var q=_socIconFilter.toLowerCase();
+    var filtered=_socIconChoices.filter(function(ic){return !q||ic.indexOf(q)!==-1;});
+    var html='';
+    filtered.forEach(function(ic){
+      var sel=document.getElementById('soc-kat-new-icon')&&document.getElementById('soc-kat-new-icon').value===ic;
+      html+='<button type="button" onclick="socialKatMgrPickIcon(\''+ic+'\')" title="'+ic+'" style="width:36px;height:36px;border-radius:6px;border:2px solid '+(sel?'#e1306c':'#e5e7eb')+';background:'+(sel?'#fef2f2':'#fff')+';cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#374151">'+lucideIcon(ic,18)+'</button>';
+    });
+    if(!filtered.length) html='<div style="color:#9ca3af;font-size:11px;padding:8px">Kein Icon gefunden</div>';
+    grid.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
+  }
+
+  window.socialKatMgrPickIcon=function(iconName){
+    var inp=document.getElementById('soc-kat-new-icon');
+    if(inp) inp.value=iconName;
+    var preview=document.getElementById('soc-kat-icon-preview');
+    if(preview) preview.innerHTML=lucideIcon(iconName,20);
+    socRenderIconPicker();
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
+  };
+
+  window.socialKatMgrFilterIcons=function(){
+    var inp=document.getElementById('soc-kat-icon-search');
+    _socIconFilter=inp?inp.value:'';
+    socRenderIconPicker();
+  };
+
+  window.socialKatMgrAdd=function(){
+    var nameInp=document.getElementById('soc-kat-new-name');
+    var iconInp=document.getElementById('soc-kat-new-icon');
+    var name=(nameInp?nameInp.value:'').trim();
+    var icon=(iconInp?iconInp.value:'').trim()||'tag';
+    if(!name){socialStatus('soc-kat-status','Kategoriename eingeben',false);return;}
+    // Check duplicate
+    for(var i=0;i<_socKategorien.length;i++){if(_socKategorien[i].name===name){socialStatus('soc-kat-status','Kategorie "'+name+'" existiert bereits',false);return;}}
+    _socKategorien.push({name:name,icon:icon});
+    socialKatMgrSave();
+    if(nameInp) nameInp.value='';
+    if(iconInp) iconInp.value='';
+    _socIconFilter='';
+    var search=document.getElementById('soc-kat-icon-search');
+    if(search) search.value='';
+  };
+
+  window.socialKatMgrRemove=function(idx){
+    if(!confirm('Kategorie "'+_socKategorien[idx].name+'" wirklich entfernen?'))return;
+    _socKategorien.splice(idx,1);
+    socialKatMgrSave();
+  };
+
+  function socialKatMgrSave(){
+    socialStatus('soc-kat-status','Kategorien werden gespeichert...',true);
+    fetch(API+'/cms-config-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({schluessel:'katalog_kategorien',wert:JSON.stringify(_socKategorien)})})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){socialStatus('soc-kat-status','Fehler: '+res.error,false);return;}
+      socialStatus('soc-kat-status','Kategorien gespeichert!',true);
+      socPopulateKatSelects();
+      socRenderKatManager();
+      socialRenderKatalog();
+    })
+    .catch(function(e){socialStatus('soc-kat-status','Speichern fehlgeschlagen: '+e.message,false);});
+  }
+
+  window.socialKatMgrToggle=function(){
+    var panel=document.getElementById('soc-kat-manager');
+    if(!panel)return;
+    if(panel.style.display==='none'){panel.style.display='';socRenderKatManager();socRenderIconPicker();}
+    else{panel.style.display='none';}
+  };
+
+  // Expose _socKategorien for external access
+  window._socKategorien_ref=function(){return _socKategorien;};
 
   // --- Post Builder ---
   function socialGetTodayMeals(){ var d=new Date().getDay(); var todayCode=d===0?101006:101000+(d-1); var m=getMeals(); if(!m||!m.length) return []; return m.filter(function(mi){return mi.wochentag===todayCode&&mi.gericht&&mi.gericht.trim()&&mi.preis;}); }
-  var _socCatIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+  // _socCatIcons now built dynamically from _socKategorien via socCatIcon()
   var _socMtBilder={};
   var _socFreeItems=[];
   var _socFreeCounter=0;
@@ -217,13 +363,13 @@
         html+='<button class="soc-mt-paste" data-gericht="'+esc(m.gericht).replace(/'/g,"&#39;")+'" onclick="socialMtPasteFocus(this)" title="Bild aus Zwischenablage" style="padding:4px 8px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:12px;cursor:pointer;flex-shrink:0">&#128203;</button></div>'; }); html+='</div>'; }
     // Free entry
     html+='<div style="margin-bottom:10px"><button onclick="socialFreeToggle()" style="width:100%;padding:12px 14px;background:#eff6ff;border:1px dashed #93c5fd;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#2563eb;text-align:left;min-height:44px;box-sizing:border-box">&#10010; Produkt frei erfassen <span style="opacity:.5;font-weight:400">(ohne Katalog)</span></button>';
-    html+='<div id="soc-free-form" style="display:none;margin-top:6px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end"><div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label><input id="soc-free-name" placeholder="z.B. Kartoffelsalat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px"></div><div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label><input id="soc-free-preis" type="number" step="0.01" min="0" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px"></div><div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label><select id="soc-free-kat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px"><option value="Mittagessen">&#127869; Mittagessen</option><option value="Kuchen">&#127856; Kuchen</option><option value="Obst & Gemuese">&#129382; Obst & Gem\u00fcse</option><option value="Aufstriche">&#129367; Aufstriche</option><option value="Sonstiges">Sonstiges</option></select></div><div style="width:56px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">ab</label><select id="soc-free-ab" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px"><option value="">ab</option><option value="10:00">10:00</option><option value="12:00">12:00</option></select></div></div>';
+    html+='<div id="soc-free-form" style="display:none;margin-top:6px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end"><div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label><input id="soc-free-name" placeholder="z.B. Kartoffelsalat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px"></div><div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label><input id="soc-free-preis" type="number" step="0.01" min="0" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px"></div><div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label><select id="soc-free-kat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px">'+socKatOptionsHtml('')+'<option value="Sonstiges">Sonstiges</option></select></div><div style="width:56px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">ab</label><select id="soc-free-ab" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px"><option value="">ab</option><option value="10:00">10:00</option><option value="12:00">12:00</option></select></div></div>';
     html+='<div style="display:flex;gap:6px;align-items:center;margin-top:6px"><label style="cursor:pointer;padding:4px 10px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;color:#374151">&#128247; Bild <input type="file" id="soc-free-bild" accept="image/*" capture="environment" onchange="socialFreeImgPreview()" style="display:none"></label><button onclick="socialFreePaste(this)" title="Bild einfuegen" style="padding:4px 8px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;cursor:pointer;color:#374151">&#128203; Einf\u00fcgen</button><span id="soc-free-img-name" style="font-size:10px;color:#9ca3af;flex:1"></span><button onclick="socialFreeAdd()" style="background:#2563eb;color:#fff;padding:5px 14px;font-size:12px;font-weight:700;border:none;border-radius:6px;cursor:pointer">&#10003; Hinzuf\u00fcgen</button></div></div></div>';
     html+='<div id="soc-free-list">'+socialRenderFreeItems()+'</div>';
     // Katalog product picker
     if(_socialKatalog.length){ html+='<div style="margin-bottom:8px"><input id="soc-pick-search" type="text" placeholder="&#128269; Produkt suchen..." oninput="socialPickFilter()" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box"></div>';
       html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px"><button class="soc-cat-chip soc-cat-active" data-cat="" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#1f2937;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Alle</button>';
-      allCats.forEach(function(cat){ html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer">'+(_socCatIcons[cat]||'')+' '+esc(cat)+'</button>'; }); html+='</div>';
+      allCats.forEach(function(cat){ html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+lucideIcon(socCatIcon(cat),14)+' '+esc(cat)+'</button>'; }); html+='</div>';
       html+='<div id="soc-pick-grid" style="max-height:340px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
       _socialKatalog.forEach(function(p){ var pid=esc(p.id); var priceStr=''; if(p.preis){var cp=parseFloat(p.preis);priceStr=(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC';}
         html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px;border-radius:8px;margin-bottom:3px;border:1px solid transparent">';

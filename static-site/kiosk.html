@@ -431,6 +431,39 @@
 
     <!-- ========== SUB: KATALOG ========== -->
     <div id="social-panel-katalog" style="display:none">
+      <!-- Kategorie-Manager (aufklappbar) -->
+      <div style="margin-bottom:10px">
+        <button onclick="socialKatMgrToggle()" style="width:100%;padding:10px 14px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#374151;text-align:left;display:flex;align-items:center;gap:8px">
+          <i data-lucide="settings" style="width:16px;height:16px"></i> Kategorien verwalten
+          <span style="margin-left:auto;font-size:11px;color:#9ca3af">CMS</span>
+        </button>
+        <div id="soc-kat-manager" style="display:none;margin-top:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px">
+          <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Aktuelle Kategorien</div>
+          <div id="soc-kat-manager-list" style="margin-bottom:10px"></div>
+          <div style="border-top:1px solid #e5e7eb;padding-top:10px">
+            <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Neue Kategorie hinzuf&#252;gen</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+              <div style="flex:1;min-width:140px">
+                <label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>
+                <input id="soc-kat-new-name" placeholder="z.B. Salate" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;box-sizing:border-box">
+              </div>
+              <div style="width:50px">
+                <label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Icon</label>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span id="soc-kat-icon-preview" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#6b7280"><i data-lucide="tag" style="width:18px;height:18px"></i></span>
+                  <input id="soc-kat-new-icon" type="hidden" value="">
+                </div>
+              </div>
+              <button onclick="socialKatMgrAdd()" style="background:#1f2937;color:#fff;padding:5px 14px;font-size:12px;font-weight:700;border:none;border-radius:6px;cursor:pointer;white-space:nowrap">+ Hinzuf&#252;gen</button>
+            </div>
+            <div style="margin-top:8px">
+              <label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Icon suchen</label>
+              <input id="soc-kat-icon-search" type="text" placeholder="z.B. salad, cake, apple..." oninput="socialKatMgrFilterIcons()" style="width:100%;font-size:11px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;box-sizing:border-box;margin-bottom:6px">
+              <div id="soc-kat-icon-grid" style="display:flex;flex-wrap:wrap;gap:4px;max-height:160px;overflow-y:auto"></div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div style="margin-bottom:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
         <div style="background:#e1306c;color:#fff;padding:10px 14px;font-weight:700;font-size:13px">&#10133; Neues Produkt zum Katalog hinzuf&#252;gen</div>
         <div style="padding:14px">
@@ -442,10 +475,7 @@
             <div style="flex:1;min-width:120px">
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Kategorie *</label>
               <select id="soc-kat-kategorie" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
-                <option value="Mittagessen">&#127869; Mittagessen</option>
-                <option value="Kuchen">&#127856; Kuchen</option>
-                <option value="Obst &amp; Gemuese">&#129382; Obst &amp; Gem&#252;se</option>
-                <option value="Aufstriche">&#129367; Aufstriche</option>
+                <!-- dynamisch bef&#252;llt via social.js -->
               </select>
             </div>
             <div style="width:80px">

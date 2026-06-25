@@ -19,7 +19,13 @@
     var ITEM_H=hasAnyImg?Math.max(54,22):22;
     var cats={};selected.forEach(function(p){var c=p.kategorie||'Sonstiges';if(!cats[c])cats[c]=[];cats[c].push(p);});
     var catKeys=Object.keys(cats);
-    var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
+    // Canvas cannot render SVG/Lucide – use emoji fallbacks (allowed per conventions §3 for print/poster)
+    var _iconToEmoji={'utensils':'\uD83C\uDF5D','cake-slice':'\uD83C\uDF70','apple':'\uD83C\uDF4E','jar':'\uD83E\uDD57','salad':'\uD83E\uDD57','coffee':'\u2615','beef':'\uD83E\uDD69','fish':'\uD83D\uDC1F','pizza':'\uD83C\uDF55','sandwich':'\uD83E\uDD6A','cookie':'\uD83C\uDF6A','ice-cream-cone':'\uD83C\uDF66','wine':'\uD83C\uDF77','beer':'\uD83C\uDF7A','cherry':'\uD83C\uDF52','grape':'\uD83C\uDF47','carrot':'\uD83E\uDD55','wheat':'\uD83C\uDF3E','leaf':'\uD83C\uDF3F','tag':'\uD83C\uDFF7\uFE0F'};
+    var catIcons={};
+    var kats=window._socKategorien_ref?window._socKategorien_ref():[];
+    kats.forEach(function(k){catIcons[k.name]=_iconToEmoji[k.icon]||'';});
+    if(!catIcons['Mittagessen'])catIcons['Mittagessen']='\uD83C\uDF5D';
+    if(!catIcons['Kuchen'])catIcons['Kuchen']='\uD83C\uDF70';
     var freitextLines=[];
     if(freitext){ctx.font='14px "Segoe UI",system-ui,sans-serif';freitextLines=socialWrapText(ctx,freitext,W-60);}
     var contentH=100;contentH+=freitextLines.length*18+(freitext?8:0);
