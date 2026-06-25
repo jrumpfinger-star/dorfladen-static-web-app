@@ -1056,7 +1056,6 @@ var K = (function(){
       html += '</span>';
       html += '<span class="k-dish-sep-actions" onclick="event.stopPropagation()">';
       if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-xs" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+openCount+' offene bestätigen">'+luc('check-circle',12)+' '+openCount+' bestätigen</button>';
-      if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+confirmedCount+' als abgeholt markieren">'+luc('package-check',12)+' '+confirmedCount+' abgeholt</button>';
       html += '</span>';
       html += '</div>';
       html += '<div class="k-dish-body">';
