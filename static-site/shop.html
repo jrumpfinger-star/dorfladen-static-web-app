@@ -152,11 +152,13 @@
     @media(min-width:900px){.shop-list{grid-template-columns:1fr 1fr;gap:6px;padding:0 24px 24px}}
     @media(min-width:1400px){.shop-list{grid-template-columns:1fr 1fr 1fr;padding:0 40px 24px}.shop-list-item{grid-template-columns:50px 1fr;gap:8px}.shop-list-actions{grid-column:1/-1;justify-content:flex-start;gap:6px;padding-top:4px;border-top:1px solid #f3f4f6;margin-top:2px}}
     @media(min-width:1900px){.shop-list{grid-template-columns:1fr 1fr 1fr 1fr}}
-    .shop-list-item{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid var(--shop-border);border-radius:10px;transition:background .1s}
+    .shop-list-item{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid var(--shop-border);border-radius:10px;transition:background .1s;position:relative}
     @media(max-width:600px){.shop-list-item{grid-template-columns:34px 1fr;gap:5px;padding:5px 7px;border-radius:8px}}
     .shop-list-item:hover{background:#f9fafb}
     .shop-list-item.in-cart{border-color:#2e7d4f;background:#f0faf3}
     .shop-list-item.in-cart .shop-add-btn{display:none}
+    .shop-cart-badge{display:none;position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:10px;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2);z-index:2;line-height:1}
+    .in-cart .shop-cart-badge{display:flex}
     .shop-list-img{width:40px;height:40px;object-fit:contain;border-radius:7px;background:#fff;mix-blend-mode:multiply;border:1px solid #f3f4f6}
     .shop-list-noimg{width:40px;height:40px;background:linear-gradient(135deg,#f0faf3,#e8f5ec);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:.8}
     @media(max-width:600px){.shop-list-img,.shop-list-noimg{width:34px;height:34px;border-radius:6px}.shop-list-noimg{font-size:16px}}
@@ -182,6 +184,7 @@
     .shop-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
     .shop-card.in-cart{border-color:#2e7d4f;box-shadow:0 0 0 2px rgba(46,125,79,.18);background:#f0faf3}
     .shop-card.in-cart .shop-add-btn{display:none}
+    .shop-card .shop-cart-badge{top:4px;right:4px}
     .shop-card-img{width:100%;height:80px;object-fit:contain;object-position:center;background:#fff;padding:6px;box-sizing:border-box;mix-blend-mode:multiply;cursor:pointer}
     .shop-card-noimg{width:100%;height:80px;background:linear-gradient(135deg,#f0faf3,#e8f5ec);display:flex;align-items:center;justify-content:center;font-size:32px;opacity:.8}
 
@@ -1013,9 +1016,15 @@
 
   function markCartItems(){
     var inCart={};
-    cart.forEach(function(c){inCart[c.artikelnummer]=true;});
-    document.querySelectorAll('.shop-card[data-artnr]').forEach(function(card){
-      card.classList.toggle('in-cart',!!inCart[card.getAttribute('data-artnr')]);
+    cart.forEach(function(c){inCart[c.artikelnummer]=(c.menge||1);});
+    document.querySelectorAll('[data-artnr]').forEach(function(el){
+      var nr=el.getAttribute('data-artnr');
+      var isIn=!!inCart[nr];
+      el.classList.toggle('in-cart',isIn);
+      var badge=el.querySelector('.shop-cart-badge');
+      if(badge){
+        if(isIn){badge.textContent='✓';badge.title='Im Warenkorb ('+inCart[nr]+'×)';}
+      }
     });
   }
 
@@ -1415,6 +1424,7 @@
       if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
 
       html+='<div class="shop-card" data-artnr="'+esc(a.artikelnummer)+'">';
+      html+='<span class="shop-cart-badge">\u2713</span>';
       html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
       html+='<div class="shop-card-badges">'+badges+'</div>';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-card-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
@@ -1448,6 +1458,7 @@
       if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
 
       html+='<div class="shop-list-item" data-artnr="'+esc(a.artikelnummer)+'">';
+      html+='<span class="shop-cart-badge">\u2713</span>';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-list-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
       else html+='<div class="shop-list-noimg" id="simg-'+esc(a.artikelnummer)+'">'+getCatEmoji(a.warengruppe)+'</div>';
       html+='<div class="shop-list-info"><div style="display:flex;align-items:center;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+' <span class="shop-list-meta">'+esc(a.warengruppe)+'</span></div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div>';
