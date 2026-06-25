@@ -350,21 +350,28 @@
 
     /* ── Order History ── */
     .shop-orders{padding:16px;max-width:800px;margin:0 auto}
-    .shop-order-card{background:#fff;border-radius:var(--shop-radius);border:1px solid #d1d5db;margin-bottom:20px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);border-left:5px solid #9ca3af}
-    .shop-order-card.s0{border-left-color:#f59e0b}
-    .shop-order-card.s1{border-left-color:#3b82f6}
-    .shop-order-card.s2{border-left-color:#10b981}
-    .shop-order-card.s3{border-left-color:#9ca3af}
-    .shop-order-card.s4{border-left-color:#ef4444}
+    .shop-order-card{background:#fff;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07);border:none;position:relative}
+    .shop-order-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .shop-order-card.s0::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+    .shop-order-card.s1::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+    .shop-order-card.s2::before{background:linear-gradient(90deg,#10b981,#34d399)}
+    .shop-order-card.s3::before{background:linear-gradient(90deg,#9ca3af,#d1d5db)}
+    .shop-order-card.s4::before{background:linear-gradient(90deg,#ef4444,#f87171)}
     .shop-order-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #e5e7eb;background:#f9fafb}
     .shop-order-nr{font-weight:700;font-size:14px}
     .shop-order-status{font-size:11px;font-weight:800;padding:4px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:.4px}
-    .shop-order-status.s0{background:#fef3c7;color:#78350f}
-    .shop-order-status.s1{background:#dbeafe;color:#1e3a8a}
-    .shop-order-status.s2{background:#bbf7d0;color:#14532d}
-    .shop-order-status.s3{background:#e5e7eb;color:#374151}
-    .shop-order-status.s4{background:#fecaca;color:#7f1d1d}
+    .shop-order-status.s0{background:#fef3c7;color:#92400e}
+    .shop-order-status.s1{background:#dbeafe;color:#1e40af}
+    .shop-order-status.s2{background:#d1fae5;color:#065f46}
+    .shop-order-status.s3{background:#f3f4f6;color:#374151}
+    .shop-order-status.s4{background:#fee2e2;color:#991b1b}
     .shop-order-body{padding:12px 16px;font-size:13px}
+    .soc-progress{display:flex;gap:3px;margin-top:8px}
+    .soc-progress-dot{flex:1;height:4px;border-radius:2px;background:#e5e7eb;transition:background .3s}
+    .soc-progress-dot.done{background:var(--shop-green)}
+    .soc-progress-dot.active{background:#3b82f6;animation:soc-pulse 1.5s infinite}
+    .soc-progress-dot.cancel{background:#ef4444}
+    @keyframes soc-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
     /* ── Loading / Empty ── */
     .shop-loading{text-align:center;padding:60px 20px;color:var(--shop-muted)}
@@ -2256,26 +2263,56 @@
           }
           var open=idx===0;
           var anzahl=o.positionen?o.positionen.length:0;
-          html+='<div class="shop-order-card s'+o.status+'" style="margin-bottom:12px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">';
-          // Header
-          html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:14px 16px 10px;cursor:pointer;text-align:left">';
-          html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">';
-          html+='<div style="display:flex;align-items:center;gap:10px;min-width:0">';
-          html+='<span style="font-size:15px;font-weight:800;color:#1f2937">'+fmtOrderDate(o.bestelldatum)+'</span>';
-          html+='<span class="shop-order-status s'+o.status+'" style="display:inline-flex;align-items:center;gap:4px;font-weight:700">'+statusIcon(o.status)+esc(o.status_text)+'</span>';
-          html+='</div>';
-          html+='<div style="display:flex;align-items:center;gap:8px">';
-          html+='<span style="font-size:17px;font-weight:800;color:var(--shop-green)">'+fmtP(o.gesamtsumme)+' \u20AC</span>';
-          html+='<span data-order-arrow="'+idx+'" style="font-size:14px;color:#9ca3af;transition:transform .2s">'+(open?'\u25BC':'\u25B6')+'</span>';
-          html+='</div>';
-          html+='</div>';
-          // Meta row
-          html+='<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:#6b7280">';
-          html+='<span style="color:#9ca3af">'+esc(shortNr(o.bestellnummer))+'</span>';
+          // Relative date label
+          var relDate='';
+          try{
+            var bd=(o.bestelldatum||'').substring(0,10);
+            if(bd===todayStr) relDate='Heute';
+            else{var yd=new Date(new Date(todayStr).getTime()-86400000).toISOString().substring(0,10);relDate=bd===yd?'Gestern':fmtOrderDate(o.bestelldatum);}
+          }catch(e){relDate=fmtOrderDate(o.bestelldatum);}
+          // Time
+          var orderTime='';
+          try{var dt=new Date(o.bestelldatum);orderTime=('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2)+' Uhr';}catch(e){}
+          // Abhol info
           var abholDisp=fmtOrderDate(o.abholdatum);
-          if(o.abhol_zeitslot){var sl=o.abhol_zeitslot;abholDisp+=', '+(sl.period==='nm'?'NM':'VM')+' '+esc(sl.abhol_von||'')+'\u2013'+esc(sl.abhol_bis||'')+' Uhr';}
-          html+='<span>'+lucideHtml('map-pin',12)+' Abholung: '+abholDisp+'</span>';
-          if(anzahl) html+='<span>'+anzahl+' Artikel</span>';
+          if(o.abhol_zeitslot){var sl=o.abhol_zeitslot;abholDisp+=', '+(sl.period==='nm'?'NM':'VM')+' '+esc(sl.abhol_von||'')+'\u2013'+esc(sl.abhol_bis||'');}
+          // Progress dots (4 steps: Neu → Bearbeitung → Bereit → Abgeholt)
+          var progHtml='<div class="soc-progress">';
+          if(o.status===4){
+            for(var pi=0;pi<4;pi++) progHtml+='<div class="soc-progress-dot cancel"></div>';
+          } else {
+            for(var pi=0;pi<4;pi++){
+              var cls=pi<o.status?'done':pi===o.status?'active':'';
+              progHtml+='<div class="soc-progress-dot '+cls+'"></div>';
+            }
+          }
+          progHtml+='</div>';
+
+          html+='<div class="shop-order-card s'+o.status+'">';
+          // Header
+          html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:14px 16px 12px;cursor:pointer;text-align:left">';
+          // Row 1: Date + Status + Price
+          html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">';
+          html+='<div style="min-width:0">';
+          html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">';
+          html+='<span style="font-size:16px;font-weight:800;color:#1f2937">'+relDate+'</span>';
+          html+='<span style="font-size:12px;color:#9ca3af;font-weight:500">'+orderTime+'</span>';
+          html+='</div>';
+          html+='<span class="shop-order-status s'+o.status+'" style="display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:11px">'+statusIcon(o.status)+esc(o.status_text)+'</span>';
+          html+='</div>';
+          html+='<div style="text-align:right;flex-shrink:0">';
+          html+='<div style="font-size:18px;font-weight:800;color:var(--shop-green)">'+fmtP(o.gesamtsumme)+' \u20AC</div>';
+          html+='<div style="font-size:11px;color:#9ca3af;font-weight:500">'+anzahl+' Artikel</div>';
+          html+='</div>';
+          html+='</div>';
+          // Progress bar
+          html+=progHtml;
+          // Row 2: Meta
+          html+='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:#6b7280;align-items:center">';
+          html+='<span style="display:inline-flex;align-items:center;gap:4px">'+lucideHtml('calendar',12)+' '+abholDisp+'</span>';
+          html+='<span style="color:#d1d5db">\u00b7</span>';
+          html+='<span style="color:#b0b7c3;font-size:11px">'+esc(shortNr(o.bestellnummer))+'</span>';
+          html+='<span data-order-arrow="'+idx+'" style="margin-left:auto;font-size:12px;color:#9ca3af;transition:transform .2s">'+(open?'\u25BC':'\u25B6')+'</span>';
           html+='</div>';
           html+='</button>';
           // Body
