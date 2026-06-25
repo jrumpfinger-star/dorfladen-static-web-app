@@ -376,7 +376,7 @@
 
   function socialKatMgrSave(){
     socialStatus('soc-kat-status','Kategorien werden gespeichert...',true);
-    fetch(API+'/cms-config-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({schluessel:'katalog_kategorien',wert:JSON.stringify(_socKategorien)})})
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'katalog_kategorien',wert:JSON.stringify(_socKategorien)})})
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.error){socialStatus('soc-kat-status','Fehler: '+res.error,false);return;}
