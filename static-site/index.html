@@ -1612,14 +1612,14 @@
       var slot='';
       try{var zs=typeof o.abhol_zeitslot==='string'?JSON.parse(o.abhol_zeitslot):o.abhol_zeitslot;if(zs)slot=zs.label||'';if(zs&&zs.von)slot+=' ('+zs.von+'\u2013'+zs.bis+')';}catch(e){}
       var summe=o.gesamtsumme?parseFloat(o.gesamtsumme).toFixed(2).replace('.',',')+'\u00a0\u20ac':'';
-      html+='<a href="/shop#meine-bestellungen" class="ord-card" style="border-left:4px solid '+statusColors[st]+'">';
+      html+='<a href="/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'')+'" class="ord-card" style="border-left:4px solid '+statusColors[st]+'">';
       html+='<div class="ord-head"><span class="ord-nr">'+((o.bestellnummer||'').replace('DL-',''))+'</span><span class="ord-status" style="color:'+statusColors[st]+'">'+statusIcons[st]+' '+statusLabels[st]+'</span></div>';
       html+='<div class="ord-details">';
       html+='<span>'+artikelCount+' Artikel \u00b7 '+summe+'</span>';
       if(datum)html+='<span>Abholung: '+datum+(slot?' '+slot:'')+'</span>';
       html+='</div></a>';
     });
-    html+='<a href="/shop#meine-bestellungen" class="ord-all">Alle Bestellungen anzeigen \u2192</a>';
+    html+='<a href="/shop#meine-bestellungen" class="ord-all">Alle Bestellungen \u2192</a>';
     document.getElementById('orders-body').innerHTML=html;
   }
 </script>
