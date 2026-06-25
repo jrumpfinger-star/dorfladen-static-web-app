@@ -921,7 +921,7 @@ var K = (function(){
       byDish[name].count += (o.menge||1);
     });
     var keys = Object.keys(byDish).sort();
-    if(keys.length<=1){
+    if(keys.length===0){
       document.getElementById('mittag-dish-summary').style.display='none';
       return;
     }
@@ -1047,27 +1047,21 @@ var K = (function(){
       reinitIcons();
       return;
     }
-    // Filter by _mittagFilter
-    var filtered = orders;
-    if(_mittagFilter==='offen') filtered = orders.filter(function(o){return o.status===0;});
-    else if(_mittagFilter==='bestaetigt') filtered = orders.filter(function(o){return o.status===1;});
-    else if(_mittagFilter==='abgeholt') filtered = orders.filter(function(o){return o.status===3;});
-    else if(_mittagFilter==='storniert') filtered = orders.filter(function(o){return o.status===2;});
-    else if(_mittagFilter==='nachrichten') filtered = orders.filter(function(o){return !!(o.kunde_kommentar);});
-    if(filtered.length===0){
-      var filterLabels = {offen:'zu bestätigen',bestaetigt:'bestätigt',abgeholt:'abgeholt',storniert:'storniert',nachrichten:'mit Nachrichten',alle:'vorhanden'};
-      document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen '+(filterLabels[_mittagFilter]||'')+'</div>';
-      reinitIcons();
-      return;
-    }
-    // Group by dish
+    // Build dish groups from ALL orders (so headers always appear)
     var dishMap = {};
     var dishOrder = [];
-    filtered.forEach(function(o){
+    orders.filter(function(o){return o.status!==2;}).forEach(function(o){
       var dish = o.gericht || 'Sonstiges';
       if(!dishMap[dish]){ dishMap[dish] = []; dishOrder.push(dish); }
       dishMap[dish].push(o);
     });
+    // Filter function for visible cards
+    var filterFn = function(o){return true;};
+    if(_mittagFilter==='offen') filterFn = function(o){return o.status===0;};
+    else if(_mittagFilter==='bestaetigt') filterFn = function(o){return o.status===1;};
+    else if(_mittagFilter==='abgeholt') filterFn = function(o){return o.status===3;};
+    else if(_mittagFilter==='storniert') filterFn = function(o){return o.status===2;};
+    else if(_mittagFilter==='nachrichten') filterFn = function(o){return !!(o.kunde_kommentar);};
     // Sort orders within each group: neu first, then bestätigt, then rest
     var statusPrio = {0:0,1:1,3:2,2:3};
     dishOrder.forEach(function(dish){
@@ -1075,14 +1069,14 @@ var K = (function(){
     });
 
     var html = '';
-    var singleDish = dishOrder.length === 1;
     dishOrder.forEach(function(dish){
-      var groupOrders = dishMap[dish];
-      var totalQty = groupOrders.reduce(function(s,o){return s+(o.menge||1);},0);
-      var openCount = groupOrders.filter(function(o){return o.status===0;}).reduce(function(s,o){return s+(o.menge||1);},0);
-      var confirmedCount = groupOrders.filter(function(o){return o.status===1;}).reduce(function(s,o){return s+(o.menge||1);},0);
+      var allInGroup = dishMap[dish];
+      var totalQty = allInGroup.reduce(function(s,o){return s+(o.menge||1);},0);
+      var openCount = allInGroup.filter(function(o){return o.status===0;}).reduce(function(s,o){return s+(o.menge||1);},0);
+      var confirmedCount = allInGroup.filter(function(o){return o.status===1;}).reduce(function(s,o){return s+(o.menge||1);},0);
+      var visibleOrders = allInGroup.filter(filterFn);
 
-      // Dish label (always visible, compact)
+      // Dish header (always visible)
       html += '<div class="k-dish-sep-row">';
       html += '<span class="k-dish-sep-label">'+totalQty+'× '+esc(dish)+'</span>';
       html += '<span class="k-dish-sep-actions">';
@@ -1090,7 +1084,9 @@ var K = (function(){
       if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+confirmedCount+' als abgeholt markieren">'+luc('package-check',12)+' '+confirmedCount+' abgeholt</button>';
       html += '</span>';
       html += '</div>';
-      groupOrders.forEach(function(o){ html += _renderOrderCard(o); });
+      if(visibleOrders.length>0){
+        visibleOrders.forEach(function(o){ html += _renderOrderCard(o); });
+      }
     });
     document.getElementById('mittag-orders').innerHTML = html;
     reinitIcons();
