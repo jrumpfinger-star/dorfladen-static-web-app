@@ -198,9 +198,13 @@
     .k-day-pill.active .day-date{opacity:1}
     .k-day-pill:not(.active):hover{background:#f3f4f6}
 
-    /* ═══ Dish group header (prominent section divider) ═══ */
-    .k-dish-sep-row{display:flex;align-items:center;gap:8px;padding:8px 14px;margin:10px 0 4px;background:linear-gradient(90deg,#f0fdf4,#e8f5ec);border:1px solid #c8e6c9;border-radius:8px;user-select:none}
-    .k-dish-sep-row:first-child{margin-top:0}
+    /* ═══ Dish group (collapsible section) ═══ */
+    .k-dish-group{margin-bottom:4px}
+    .k-dish-sep-row{display:flex;align-items:center;gap:8px;padding:8px 14px;background:linear-gradient(90deg,#f0fdf4,#e8f5ec);border:1px solid #c8e6c9;border-radius:8px;cursor:pointer;user-select:none;margin-bottom:3px}
+    .k-dish-sep-row:hover{background:linear-gradient(90deg,#e8f5ec,#dcfce7)}
+    .k-dish-sep-arrow{font-size:10px;color:#1b5e20;transition:transform .2s;flex-shrink:0}
+    .k-dish-group.collapsed .k-dish-sep-arrow{transform:rotate(-90deg)}
+    .k-dish-group.collapsed .k-dish-body{display:none}
     .k-dish-sep-label{font-weight:700;font-size:14px;color:#1b5e20;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .k-dish-sep-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
     .k-btn-xs{min-height:24px;padding:2px 8px;font-size:10px;border-radius:6px;gap:3px}
@@ -1076,17 +1080,23 @@ var K = (function(){
       var confirmedCount = allInGroup.filter(function(o){return o.status===1;}).reduce(function(s,o){return s+(o.menge||1);},0);
       var visibleOrders = allInGroup.filter(filterFn);
 
-      // Dish header (always visible)
-      html += '<div class="k-dish-sep-row">';
+      var gid = 'dg-'+dish.replace(/[^a-zA-Z0-9]/g,'_');
+      var isOpen = gid in _dishGroupOpen ? _dishGroupOpen[gid] : true;
+      html += '<div class="k-dish-group'+(isOpen?'':' collapsed')+'" id="'+gid+'">';
+      html += '<div class="k-dish-sep-row" onclick="K.toggleDishGroup(\''+gid+'\')">'; 
+      html += '<span class="k-dish-sep-arrow">▼</span>';
       html += '<span class="k-dish-sep-label">'+totalQty+'× '+esc(dish)+'</span>';
-      html += '<span class="k-dish-sep-actions">';
+      html += '<span class="k-dish-sep-actions" onclick="event.stopPropagation()">';
       if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-xs" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+openCount+' offene bestätigen">'+luc('check-circle',12)+' '+openCount+' bestätigen</button>';
       if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+confirmedCount+' als abgeholt markieren">'+luc('package-check',12)+' '+confirmedCount+' abgeholt</button>';
       html += '</span>';
       html += '</div>';
+      html += '<div class="k-dish-body">';
       if(visibleOrders.length>0){
         visibleOrders.forEach(function(o){ html += _renderOrderCard(o); });
       }
+      html += '</div>';
+      html += '</div>';
     });
     document.getElementById('mittag-orders').innerHTML = html;
     reinitIcons();
