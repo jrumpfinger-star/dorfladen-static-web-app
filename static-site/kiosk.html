@@ -43,12 +43,6 @@
     /* ═══ Shop toolbar (stats + filter in one row) ═══ */
     .k-shop-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;padding:6px 0}
 
-    /* ═══ Dish summary (flat inline text – NOT a card) ═══ */
-    .k-dish-summary{font-size:12px;color:var(--c-muted);padding:2px 0;margin-bottom:4px;background:none;box-shadow:none;border-radius:0}
-    .k-dish-summary h3{display:none}
-    .k-dish-inline{display:inline}
-    .k-dish-inline .dish-count{font-weight:800;color:var(--c-text);font-size:13px}
-    .k-dish-sep{margin:0 6px;color:#d1d5db}
 
     /* ═══ Order cards (collapsible) ═══ */
     .k-order{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:3px;overflow:hidden;border-left:4px solid transparent;position:relative;transition:transform .2s ease}
@@ -388,7 +382,6 @@
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
       <button class="k-filter-btn" id="mt-msg-badge" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="display:none;color:#3b82f6"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> <span class="k-filter-label">Nachrichten</span></button>
     </div>
-    <div class="k-dish-summary" id="mittag-dish-summary"></div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
   </div>
 
@@ -900,42 +893,15 @@ var K = (function(){
 
   function renderStats(){
     var active = orders.filter(function(o){return o.status!==2;});
-    var neu = orders.filter(function(o){return o.status===0;}).length;
     var portionen = active.reduce(function(s,o){return s+(o.menge||1);},0);
-    var mitnehmen = active.filter(function(o){return o.mitnehmen;}).reduce(function(s,o){return s+(o.menge||1);},0);
-    var vorOrt = portionen - mitnehmen;
-
     var nachrichten = active.filter(function(o){return _hasUnseenComment(o);}).length;
 
     var parts = [];
     parts.push('<span class="k-stat green"><span class="k-stat-val">'+portionen+'</span> <span class="k-stat-label">Portionen</span></span>');
-    if(neu>0) parts.push('<span class="k-stat orange"><span class="k-stat-val">'+neu+'</span> <span class="k-stat-label">Offen</span></span>');
     if(nachrichten>0) parts.push('<span class="k-stat" style="color:#3b82f6"><span class="k-stat-val" style="color:#3b82f6">'+nachrichten+'</span> <span class="k-stat-label" style="color:#3b82f6">Nachrichten</span></span>');
-    if(mitnehmen>0) parts.push('<span class="k-stat"><span class="k-stat-val">'+mitnehmen+'</span> <span class="k-stat-label">Mitnehmen</span></span>');
-    if(vorOrt>0) parts.push('<span class="k-stat"><span class="k-stat-val">'+vorOrt+'</span> <span class="k-stat-label">Vor Ort</span></span>');
     document.getElementById('mittag-stats').innerHTML = parts.join('<span class="k-stat-dot"></span>');
   }
 
-  function renderDishSummary(){
-    var active = orders.filter(function(o){return o.status!==2;});
-    var byDish = {};
-    active.forEach(function(o){
-      var name = o.gericht || '?';
-      if(!byDish[name]) byDish[name] = {count:0,preis:o.preis||0};
-      byDish[name].count += (o.menge||1);
-    });
-    var keys = Object.keys(byDish).sort();
-    if(keys.length===0){
-      document.getElementById('mittag-dish-summary').style.display='none';
-      return;
-    }
-    document.getElementById('mittag-dish-summary').style.display='';
-    var parts = [];
-    keys.forEach(function(name){
-      parts.push('<span class="k-dish-inline"><span class="dish-count">'+byDish[name].count+'×</span> '+esc(name)+'</span>');
-    });
-    document.getElementById('mittag-dish-summary').innerHTML = parts.join('<span class="k-dish-sep">|</span>');
-  }
 
   // Track which dish groups are manually expanded
   var _dishGroupOpen = {};
@@ -1045,7 +1011,6 @@ var K = (function(){
   }
 
   function renderOrders(){
-    renderDishSummary();
     if(orders.length===0){
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen für heute</div>';
       reinitIcons();
@@ -1078,6 +1043,7 @@ var K = (function(){
       var totalQty = allInGroup.reduce(function(s,o){return s+(o.menge||1);},0);
       var openCount = allInGroup.filter(function(o){return o.status===0;}).reduce(function(s,o){return s+(o.menge||1);},0);
       var confirmedCount = allInGroup.filter(function(o){return o.status===1;}).reduce(function(s,o){return s+(o.menge||1);},0);
+      var mitnehmenCount = allInGroup.filter(function(o){return o.mitnehmen && o.status!==2;}).reduce(function(s,o){return s+(o.menge||1);},0);
       var visibleOrders = allInGroup.filter(filterFn);
 
       var gid = 'dg-'+dish.replace(/[^a-zA-Z0-9]/g,'_');
@@ -1085,7 +1051,9 @@ var K = (function(){
       html += '<div class="k-dish-group'+(isOpen?'':' collapsed')+'" id="'+gid+'">';
       html += '<div class="k-dish-sep-row" onclick="K.toggleDishGroup(\''+gid+'\')">'; 
       html += '<span class="k-dish-sep-arrow">▼</span>';
-      html += '<span class="k-dish-sep-label">'+totalQty+'× '+esc(dish)+'</span>';
+      html += '<span class="k-dish-sep-label">'+totalQty+'× '+esc(dish);
+      if(mitnehmenCount>0) html += ' <span style="font-size:11px;font-weight:500;color:#6b7280">('+mitnehmenCount+' Mitn.)</span>';
+      html += '</span>';
       html += '<span class="k-dish-sep-actions" onclick="event.stopPropagation()">';
       if(openCount>0) html += '<button class="k-btn k-btn-confirm k-btn-xs" onclick="K.bulkConfirmDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+openCount+' offene bestätigen">'+luc('check-circle',12)+' '+openCount+' bestätigen</button>';
       if(confirmedCount>0) html += '<button class="k-btn k-btn-pickup k-btn-xs" onclick="K.bulkPickupDish(\''+esc(dish).replace(/'/g,"\\'")+'\')" title="'+confirmedCount+' als abgeholt markieren">'+luc('package-check',12)+' '+confirmedCount+' abgeholt</button>';
