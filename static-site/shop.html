@@ -1601,11 +1601,28 @@
         var po=previousOrders[oi];
         if(!po.positionen||!po.positionen.length) continue;
         var poCount=po.positionen.length;
-        var poDate=po.bestelldatum||'';
+        // Relative date
+        var poRelDate='';
+        try{
+          var pobd=(po.bestelldatum||'').substring(0,10);
+          var poTodayStr=new Date().toISOString().slice(0,10);
+          if(pobd===poTodayStr) poRelDate='Heute';
+          else{var poYd=new Date(new Date(poTodayStr).getTime()-86400000).toISOString().substring(0,10);if(pobd===poYd){poRelDate='Gestern';}else{try{var pdd=new Date(pobd+'T12:00:00');var wt=['So','Mo','Di','Mi','Do','Fr','Sa'];poRelDate=wt[pdd.getDay()]+', '+pdd.getDate()+'.'+(pdd.getMonth()+1)+'.';}catch(e){poRelDate=pobd;}}}
+        }catch(e){poRelDate=po.bestelldatum||'';}
+        var poTime='';
+        try{var podt=new Date(po.bestelldatum);poTime=('0'+podt.getHours()).slice(-2)+':'+('0'+podt.getMinutes()).slice(-2);}catch(e){}
+        var poShortNr='';
+        try{var poParts=(po.bestellnummer||'').split('-');poShortNr='#'+(poParts.length>=3?poParts[poParts.length-1]:po.bestellnummer);}catch(e){poShortNr=po.bestellnummer||'';}
+        // Progress dots
+        var poProg='<div style="display:flex;gap:2px;margin-top:6px">';
+        var poSt=po.status||0;
+        if(poSt===4){for(var ppi=0;ppi<4;ppi++) poProg+='<div style="flex:1;height:3px;border-radius:2px;background:#ef4444"></div>';}
+        else{for(var ppi=0;ppi<4;ppi++){var ppCls=ppi<poSt?'var(--shop-green)':ppi===poSt?'#3b82f6':'#e5e7eb';poProg+='<div style="flex:1;height:3px;border-radius:2px;background:'+ppCls+'"></div>';}}
+        poProg+='</div>';
         reorderBanner+='<div class="reorder-card">';
         // Header
         reorderBanner+='<div data-reorder-toggle="'+oi+'" class="reorder-header">';
-        reorderBanner+='<div class="reorder-header-info"><div class="reorder-nr">'+esc(po.bestellnummer)+'</div><div class="reorder-meta">'+poCount+' Artikel · '+esc(poDate)+' · <strong>'+fmtP(po.gesamtsumme)+' €</strong></div></div>';
+        reorderBanner+='<div class="reorder-header-info"><div class="reorder-nr" style="display:flex;align-items:center;gap:8px"><span>'+esc(poRelDate)+'</span><span style="font-size:12px;color:#9ca3af;font-weight:500">'+poTime+'</span></div><div class="reorder-meta">'+poCount+' Artikel · <strong>'+fmtP(po.gesamtsumme)+' €</strong> · <span style="color:#b0b7c3;font-size:11px">'+esc(poShortNr)+'</span></div>'+poProg+'</div>';
         reorderBanner+='<span data-reorder-arrow="'+oi+'" class="reorder-arrow">▼</span>';
         reorderBanner+='</div>';
         // Detail (hidden)
