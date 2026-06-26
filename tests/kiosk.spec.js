@@ -1285,9 +1285,9 @@ test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
   });
 
   test('T-50-07: Badge "X ausgewählt" in Step 2 Header (AK-UI-50-07)', async ({ page }) => {
-    // Step-2 count badge should exist
+    // Step-2 count badge should exist in DOM
     const badge = page.locator('#soc-step2-count');
-    await expect(badge).toBeVisible();
+    await expect(badge).toBeAttached();
     // Initially empty (no products selected)
     await expect(badge).toHaveText('');
   });

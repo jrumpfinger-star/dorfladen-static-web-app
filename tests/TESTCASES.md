@@ -1029,4 +1029,10 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 
 | Datum | Test | Ergebnis |
 |---|---|---|
-| – | T-50-01 bis T-50-07 | ⏳ Ausstehend |
+| 2026-06-27 | T-50-01 | ✅ Pass |
+| 2026-06-27 | T-50-02 | ✅ Pass |
+| 2026-06-27 | T-50-03 | ✅ Pass |
+| 2026-06-27 | T-50-04 | ✅ Pass |
+| 2026-06-27 | T-50-05 | ✅ Pass |
+| 2026-06-27 | T-50-06 | ✅ Pass |
+| 2026-06-27 | T-50-07 | ✅ Pass |
