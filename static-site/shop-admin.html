@@ -379,7 +379,7 @@
     h+='</div>';
     return h;
   }
-  function timelineSetStatus(orderId, status){
+  window.timelineSetStatus = function(orderId, status){
     var label=statusLabels[status]||'Unbekannt';
     showConfirm('Status zurücksetzen?','Status wird auf <strong>„'+label+'"</strong> zurückgesetzt.','Zurücksetzen',function(){updateOrder({id:orderId, status:status});},'#d97706');
   }
