@@ -823,7 +823,7 @@ test.describe('Kiosk – Kompakte Buttons', () => {
 
 test.describe('AK-UI-36 – Android Zurück-Button', () => {
   test('T-36-01: Hilfe-Modal öffnen → Back schließt Modal', async ({ page }) => {
-    await page.goto((process.env.BASE_URL || 'http://localhost:4280') + '/kiosk');
+    await page.goto(KIOSK_URL);
     await page.waitForLoadState('networkidle');
 
     // Open help modal
@@ -841,7 +841,7 @@ test.describe('AK-UI-36 – Android Zurück-Button', () => {
   });
 
   test('T-36-02: Bestelldetail-Modal öffnen → Back schließt Modal', async ({ page }) => {
-    await page.goto((process.env.BASE_URL || 'http://localhost:4280') + '/kiosk');
+    await page.goto(KIOSK_URL);
     await page.waitForLoadState('networkidle');
 
     // Open detail modal
@@ -857,7 +857,7 @@ test.describe('AK-UI-36 – Android Zurück-Button', () => {
   });
 
   test('T-36-03: Zwei Modals → Back schließt nur das oberste', async ({ page }) => {
-    await page.goto((process.env.BASE_URL || 'http://localhost:4280') + '/kiosk');
+    await page.goto(KIOSK_URL);
     await page.waitForLoadState('networkidle');
 
     // Open first modal

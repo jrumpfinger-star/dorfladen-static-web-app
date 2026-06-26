@@ -869,3 +869,11 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 - **shop-freigabe.html:** Image-Upload-Overlay → Back schließt
 - **lunch-admin.html:** Storno-Dialog → Back schließt
 - **mittagstisch-bestellen.html:** Success-Overlay → Back schließt
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-26 | T-36-01 Hilfe-Modal → Back | ✅ Pass |
+| 2026-06-26 | T-36-02 Detail-Modal → Back | ✅ Pass |
+| 2026-06-26 | T-36-03 Zwei Modals Stack | ✅ Pass |
