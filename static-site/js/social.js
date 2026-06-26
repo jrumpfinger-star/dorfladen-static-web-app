@@ -413,7 +413,7 @@
   window._socKategorien_ref=function(){return _socKategorien;};
 
   // --- Post Builder ---
-  function socialGetTodayMeals(){ var d=new Date().getDay(); var todayCode=d===0?101006:101000+(d-1); var m=getMeals(); if(!m||!m.length) return []; return m.filter(function(mi){return mi.wochentag===todayCode&&mi.gericht&&mi.gericht.trim()&&mi.preis;}); }
+  function socialGetTodayMeals(){ if(new Date().getHours()>=11) return []; var d=new Date().getDay(); var todayCode=d===0?101006:101000+(d-1); var m=getMeals(); if(!m||!m.length) return []; return m.filter(function(mi){return mi.wochentag===todayCode&&mi.gericht&&mi.gericht.trim()&&mi.preis;}); }
   // _socCatIcons now built dynamically from _socKategorien via socCatIcon()
   var _socMtBilder={};
   var _socFreeItems=[];

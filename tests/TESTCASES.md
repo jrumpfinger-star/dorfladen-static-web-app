@@ -1085,6 +1085,16 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung**: Kein Button `#social-subtab-verlauf`, kein Panel `#social-panel-verlauf`
 - **Erwartung**: Verlauf-Tab und Panel sind vollständig entfernt
 
+### T-RD-14: Kiosk – Mittagessen nach 11 Uhr ausgeblendet
+- **Aktion**: Kiosk → Social → Neuer Post (nach 11:00 Uhr)
+- **Prüfung**: Sektion "Heutiges Mittagessen" ist nicht sichtbar
+- **Erwartung**: Ab 11:00 Uhr wird kein Mittagessen im Tagespost-Builder angezeigt
+
+### T-RD-14b: CMS – Mittagessen nach 11 Uhr ausgeblendet
+- **Aktion**: CMS → Social → Neuer Post (nach 11:00 Uhr)
+- **Prüfung**: Sektion "Heutiges Mittagessen" ist nicht sichtbar
+- **Erwartung**: Ab 11:00 Uhr wird kein Mittagessen im Tagespost-Builder angezeigt
+
 ### Testlauf-Tabelle
 
 | Datum | Test | Ergebnis |
@@ -1101,3 +1111,5 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-26 | T-RD-12 | ✅ Pass |
 | 2026-06-26 | T-RD-12b | ✅ Pass |
 | 2026-06-26 | T-RD-13 | ✅ Pass |
+| 2026-06-26 | T-RD-14 | ✅ Pass |
+| 2026-06-26 | T-RD-14b | ✅ Pass |

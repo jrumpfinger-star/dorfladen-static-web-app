@@ -10012,6 +10012,8 @@
 
   // --- Post-Builder: Checkboxen aus Katalog + Wochenplan-Mittagessen ---
   function socialGetTodayMeals(){
+    // Nach 11:00 Uhr keine Mittagessen mehr anzeigen (zu spät für Tagespost)
+    if(new Date().getHours()>=11) return [];
     // Get today's wochentag code: Mo=101000 ... Fr=101004, Sa=101005, So=101006
     var d=new Date().getDay(); // 0=So,1=Mo,...,6=Sa
     var todayCode = d===0 ? 101006 : 101000+(d-1);
