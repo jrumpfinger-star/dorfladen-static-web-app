@@ -944,7 +944,7 @@ Gegenseitiger Nachrichtenaustausch bei Shop-Bestellungen, analog zum Mittagstisc
 
 | Datum | Test | Ergebnis |
 |---|---|---|
-| – | T-39-01 | – |
-| – | T-39-02 | – |
-| – | T-39-03 | – |
-| – | T-39-04 | – |
+| 2026-06-27 | T-39-01 | ⏭ Skipped (keine Shop-Bestellungen in Live-Daten) |
+| 2026-06-27 | T-39-02 | ⏭ Skipped (keine Shop-Bestellungen in Live-Daten) |
+| 2026-06-27 | T-39-03 | ✅ Pass |
+| 2026-06-27 | T-39-04 | ⏭ Skipped (keine Shop-Bestellungen in Live-Daten) |

@@ -973,7 +973,7 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(2000);
     // Switch to Shop tab
-    await page.click('[onclick*="switchTab"][onclick*="shop"]');
+    await page.click('[data-tab="abhol"]');
     await page.waitForTimeout(1500);
 
     // Find any shop card and expand it
@@ -996,7 +996,7 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
   test('T-39-02 Shop-Antwort-Dialog öffnet sich', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(2000);
-    await page.click('[onclick*="switchTab"][onclick*="shop"]');
+    await page.click('[data-tab="abhol"]');
     await page.waitForTimeout(1500);
 
     const shopCards = page.locator('.k-order[id^="soc-"]:not([data-ostatus="3"]):not([data-ostatus="4"])');
@@ -1026,7 +1026,7 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
   test('T-39-03 NEU-Badge bei ungelesener Nachricht sichtbar', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(2000);
-    await page.click('[onclick*="switchTab"][onclick*="shop"]');
+    await page.click('[data-tab="abhol"]');
     await page.waitForTimeout(1500);
 
     // Check if any card has a NEU badge (depends on live data)
@@ -1039,7 +1039,7 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
   test('T-39-04 Kunden-Nachricht und Antwort werden angezeigt', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(2000);
-    await page.click('[onclick*="switchTab"][onclick*="shop"]');
+    await page.click('[data-tab="abhol"]');
     await page.waitForTimeout(1500);
 
     const shopCards = page.locator('.k-order[id^="soc-"]');
