@@ -1208,6 +1208,7 @@ var K = (function(){
   }
 
   function renderOrders(){
+    if(_mittagFilter==='nachrichten') return;
     if(orders.length===0){
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen für heute</div>';
       reinitIcons();
