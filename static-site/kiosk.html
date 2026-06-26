@@ -1971,6 +1971,12 @@ var K = (function(){
     });
 
     var html = '';
+    // Collapse/expand all shop cards toggle
+    if(shopOrders.length>1){
+      var allShopCollapsed = Object.keys(_shopCardOpen).length===0 || Object.keys(_shopCardOpen).every(function(k){return !_shopCardOpen[k];});
+      html += '<div style="display:flex;justify-content:flex-end;padding:2px 0"><button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px;min-height:32px;padding:4px 10px;gap:4px" onclick="K.'+(allShopCollapsed?'expandAllShopCards':'collapseAllShopCards')+'()" title="'+(allShopCollapsed?'Alle aufklappen':'Alle zuklappen')+'">'+luc(allShopCollapsed?'chevrons-down':'chevrons-up',14)+' '+(allShopCollapsed?'Aufklappen':'Zuklappen')+'</button></div>';
+    }
+
     groups.forEach(function(g,gi){
       var gid = 'slotg-'+gi;
       // Status counts for header
@@ -2127,70 +2133,115 @@ var K = (function(){
       +'<div class="ring-text" style="color:'+color+'">'+label+'</div></div>';
   }
 
+  var _shopCardOpen = {};
+
+  function toggleShopCard(oid){
+    var el = document.getElementById('soc-'+oid);
+    if(!el) return;
+    el.classList.toggle('oc-collapsed');
+    _shopCardOpen[oid] = !el.classList.contains('oc-collapsed');
+  }
+
+  function collapseAllShopCards(){
+    _shopCardOpen = {};
+    renderShopOrders();
+  }
+
+  function expandAllShopCards(){
+    shopOrders.forEach(function(o){ _shopCardOpen[o.id] = true; });
+    renderShopOrders();
+  }
+
   function renderShopOrderCard(o){
     var stClass = 'shop-st-'+o.status;
-    var badgeClass = 'shop-badge-'+o.status;
     var statusLabel = SHOP_STATUS[o.status]||'?';
     var overdue = o.status<3 && _isOverdue(o);
     if(overdue) statusLabel = 'Überfällig';
     var posArr = o.positionen||[];
     var posCount = posArr.length;
-    var posPreview = posArr.slice(0,3).map(function(p){return p.bezeichnung||p.name||'?';});
-    if(posCount>3) posPreview.push('+'+(posCount-3)+' weitere');
 
-    var nextStatus = o.status<3 ? o.status+1 : -1;
-    var swipeBg = nextStatus===1?'var(--c-yellow)':nextStatus===2?'#2563eb':nextStatus===3?'var(--c-green)':'#9ca3af';
-    var swipeLabel = nextStatus===1?'→ Bearbeitung':nextStatus===2?'→ Bereit':nextStatus===3?'→ Abgeholt':'';
-    var html = '<div class="k-order '+stClass+(overdue?' k-order-overdue':'')+'" data-oid="'+o.id+'" data-ostatus="'+o.status+'">';
-    if(nextStatus>=0) html += '<div class="k-swipe-hint" style="background:'+swipeBg+'"><span style="font-size:11px;font-weight:700">'+swipeLabel+'</span></div>';
-    html += '<div class="k-order-info" style="position:relative;z-index:1;background:#fff">';
-    html += '<div class="k-order-top">';
-    html += '<span class="k-order-name">'+esc(o.kunde_name||o.kunde_email)+'</span>';
+    // Status badge colors
+    var SBADGE = {0:{bg:'#fef3c7',fg:'#92400e',icon:'circle-dot'},1:{bg:'#fef3c7',fg:'#d97706',icon:'clipboard-list'},2:{bg:'#dbeafe',fg:'#1d4ed8',icon:'bell'},3:{bg:'#f0fdf4',fg:'#16a34a',icon:'check-circle'},4:{bg:'#fef2f2',fg:'#991b1b',icon:'x-circle'}};
+    var sb = SBADGE[o.status]||SBADGE[0];
+    if(overdue){ sb = {bg:'#fef2f2',fg:'#dc2626',icon:'alert-triangle'}; }
+
+    var isOpen = o.id in _shopCardOpen ? _shopCardOpen[o.id] : false;
+    var html = '<div class="k-order '+stClass+(overdue?' k-order-overdue':'')+(isOpen?'':' oc-collapsed')+'" id="soc-'+o.id+'" data-oid="'+o.id+'" data-ostatus="'+o.status+'">';
+
+    // ── Compact Header (always visible) ──
+    html += '<div class="k-order-hdr" onclick="K.toggleShopCard(\''+o.id+'\')">';
+    html += '<span class="k-oc-arrow">▼</span>';
+    html += '<span class="k-oc-name">'+esc(o.kunde_name||o.kunde_email||'–')+'</span>';
+    html += '<span style="font-size:12px;color:#6b7280">'+posCount+' Pos.</span>';
     html += _buildCountdownRing(o);
     html += _buildPackRing(o);
-    html += '<span style="font-size:13px;font-weight:700;color:var(--c-green)">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
-    html += '</div>';
-    // Compact timeline
-    html += _buildTimelineCompact(o.status, o.id);
-    html += '<div class="k-order-dish">'+esc(o.bestellnummer)+' · '+posCount+' Pos.</div>';
-    html += '<div class="k-order-meta">';
-    if(o.anmerkungen) html += '<span>'+luc('message-square',12)+' '+esc(o.anmerkungen)+'</span>';
-    html += '</div>';
-    if(posPreview.length>0){
-      html += '<div class="k-order-positions">';
-      posPreview.forEach(function(p){ html += '<span>'+esc(p)+'</span>'; });
-      html += '</div>';
-    }
+    html += '<span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+sb.bg+';color:'+sb.fg+';display:inline-flex;align-items:center;gap:3px">'+luc(sb.icon,11)+' '+esc(statusLabel)+'</span>';
+    html += '<span style="font-size:14px;font-weight:800;color:var(--c-green);min-width:55px;text-align:right">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
+
+    // Primary action in header (quick access without expanding)
+    html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
+    if(o.status===0) html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',1)" title="Annehmen">'+luc('clipboard-list',14)+' <span class="oc-btn-label">Annehmen</span></button>';
+    else if(o.status===1) html += '<button class="k-btn k-btn-sm" style="background:#d97706;color:#fff" onclick="K.openPackModal(\''+o.id+'\')" title="Packen">'+luc('package',14)+' <span class="oc-btn-label">Packen</span></button>';
+    else if(o.status===2) html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setShopStatus(\''+o.id+'\',3)" title="Ausgeben">'+luc('hand',14)+' <span class="oc-btn-label">Ausgeben</span></button>';
+    else if(o.status===3) html += '<span style="color:var(--c-green)">'+luc('check-circle',18)+'</span>';
+    html += '</span>';
     html += '</div>';
 
-    // Actions
-    html += '<div class="k-order-actions">';
-    if(o.status===0){
-      html += '<button class="k-btn k-btn-confirm k-btn-sm k-act-primary" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',14)+' Annehmen</button>';
-      html += '<div class="k-act-tools">';
-      html += '<button class="k-tool" onclick="K.showOrderDetail(\''+o.id+'\')" title="Details">'+luc('eye',14)+'</button>';
-      html += '<button class="k-tool danger" onclick="K.setShopStatus(\''+o.id+'\',4)" title="Stornieren">'+luc('x',14)+'</button>';
-      html += '<button class="k-tool danger" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
-      html += '</div>';
-    } else if(o.status===1){
-      html += '<button class="k-btn k-btn-sm k-btn-outline k-act-primary" onclick="K.openPackModal(\''+o.id+'\')">'+luc('package',14)+' Packen</button>';
-      html += '<div class="k-act-tools">';
-      html += '<button class="k-tool" onclick="K.showOrderDetail(\''+o.id+'\')" title="Details">'+luc('eye',14)+'</button>';
-      html += '<button class="k-tool danger" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
-      html += '</div>';
-    } else if(o.status===2){
-      html += '<button class="k-btn k-btn-pickup k-btn-sm k-act-primary" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',14)+' Ausgeben</button>';
-      html += '<div class="k-act-tools">';
-      html += '<button class="k-tool" onclick="K.showOrderDetail(\''+o.id+'\')" title="Details">'+luc('eye',14)+'</button>';
-      html += '<button class="k-tool danger" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
-      html += '</div>';
-    } else if(o.status===3){
-      html += '<span style="color:var(--c-green)">'+luc('check-circle',18)+'</span>';
-      html += '<div class="k-act-tools">';
-      html += '<button class="k-tool danger" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
+    // ── Expandable Body ──
+    html += '<div class="k-order-body">';
+    html += '<div class="k-order-info" style="padding:10px 14px 12px">';
+
+    // Order info line
+    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+    html += '<span style="font-size:12px;color:#6b7280">'+luc('hash',11)+' '+esc(o.bestellnummer||'–')+'</span>';
+    if(o.abholdatum){
+      var zs = o.abhol_zeitslot||{};
+      html += '<span style="font-size:12px;color:#6b7280">'+luc('calendar',11)+' '+fmtDateRelative(o.abholdatum)+(zs.label?', '+esc(zs.label):'')+'</span>';
+    }
+    if(o.kunde_telefon) html += '<span style="font-size:12px;color:#6b7280">'+luc('phone',11)+' '+esc(o.kunde_telefon)+'</span>';
+    html += '</div>';
+
+    // Note
+    if(o.anmerkungen){
+      html += '<div class="k-order-note" style="background:#fef3c7;border-left:3px solid #f59e0b;color:#92400e;margin:0 0 8px;padding:8px 10px;font-style:normal">'+luc('message-square',13)+' '+esc(o.anmerkungen)+'</div>';
+    }
+
+    // Positions preview
+    if(posArr.length>0){
+      html += '<div style="margin-bottom:8px">';
+      posArr.slice(0,4).forEach(function(p){
+        var name = p.bezeichnung||p.name||'?';
+        var menge = p.menge||1;
+        var einheit = p.einheit||'Stk';
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px"><span style="font-weight:600;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span><span style="color:#6b7280;white-space:nowrap">'+menge+' '+esc(einheit)+'</span></div>';
+      });
+      if(posArr.length>4) html += '<div style="font-size:12px;color:#6b7280;padding:2px 0">+'+(posArr.length-4)+' weitere Artikel</div>';
       html += '</div>';
     }
+
+    // Action buttons – large, clear, touch-friendly
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:4px;border-top:1px solid #f3f4f6">';
+    // Primary action (duplicated for expanded view)
+    if(o.status===0){
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;min-width:120px" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',14)+' Annehmen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
+      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:90px" onclick="K.setShopStatus(\''+o.id+'\',4)">'+luc('x-circle',14)+' Storno</button>';
+    } else if(o.status===1){
+      html += '<button class="k-btn k-btn-sm" style="flex:1;min-width:120px;background:#d97706;color:#fff" onclick="K.openPackModal(\''+o.id+'\')">'+luc('package',14)+' Packen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
+      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
+    } else if(o.status===2){
+      html += '<button class="k-btn k-btn-pickup k-btn-sm" style="flex:1;min-width:120px" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',14)+' Ausgeben</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
+      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
+    } else if(o.status===3){
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="flex:1;min-width:120px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details ansehen</button>';
+      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
+    }
     html += '</div>';
+    html += '</div>';
+    html += '</div>';
+
     html += '</div>';
     return html;
   }
@@ -2882,8 +2933,11 @@ var K = (function(){
     toggleSlotGroup: toggleSlotGroup,
     toggleDishGroup: toggleDishGroup,
     toggleOrderCard: toggleOrderCard,
+    toggleShopCard: toggleShopCard,
     collapseAllCards: collapseAllCards,
     expandAllCards: expandAllCards,
+    collapseAllShopCards: collapseAllShopCards,
+    expandAllShopCards: expandAllShopCards,
     bulkConfirmDish: bulkConfirmDish,
     bulkPickupDish: bulkPickupDish,
     openPackModal: openPackModal,
