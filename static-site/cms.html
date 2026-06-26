@@ -2759,9 +2759,14 @@ document.head.appendChild(msalScript);
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Preis &#8364;</label>
               <input id="soc-kat-preis" class="cms-input" type="number" step="0.01" min="0" placeholder="9.80" style="width:100%">
             </div>
-            <div style="min-width:140px">
+            <div style="min-width:160px">
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Bild</label>
-              <input id="soc-kat-bild" type="file" accept="image/*" capture="environment" class="cms-input" style="width:100%;font-size:11px">
+              <input id="soc-kat-bild" type="file" accept="image/*" style="display:none">
+              <input id="soc-kat-bild-cam" type="file" accept="image/*" capture="environment" style="display:none">
+              <div style="display:flex;gap:6px;align-items:center">
+                <button type="button" class="cms-btn cms-btn-gray" onclick="document.getElementById('soc-kat-bild-cam').click()" style="padding:8px 12px;font-size:12px;display:inline-flex;align-items:center;gap:4px" title="Foto mit Kamera aufnehmen"><i data-lucide="camera" style="width:16px;height:16px"></i> Kamera</button>
+                <button type="button" class="cms-btn cms-btn-gray" onclick="document.getElementById('soc-kat-bild').click()" style="padding:8px 12px;font-size:12px;display:inline-flex;align-items:center;gap:4px" title="Bild aus Dateien w&#228;hlen"><i data-lucide="image" style="width:16px;height:16px"></i> Datei</button>
+              </div>
             </div>
           </div>
           <button class="cms-btn cms-btn-primary" onclick="socialKatAdd()" style="white-space:nowrap;margin-top:10px;width:100%"><i data-lucide="plus-circle" style="width:16px;height:16px;vertical-align:middle"></i> Hinzuf&#252;gen</button>

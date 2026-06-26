@@ -150,6 +150,8 @@
     _socPastedFile=null;
     var inp=document.getElementById('soc-kat-bild');
     if(inp) inp.value='';
+    var cam=document.getElementById('soc-kat-bild-cam');
+    if(cam) cam.value='';
     var wrap=document.getElementById('soc-kat-bild-preview');
     var hint=document.getElementById('soc-kat-paste-hint');
     var zone=document.getElementById('soc-kat-paste-zone');
@@ -163,6 +165,14 @@
     var inp=document.getElementById('soc-kat-bild');
     if(inp) inp.addEventListener('change',function(){
       _socPastedFile=null;
+      var cam=document.getElementById('soc-kat-bild-cam'); if(cam) cam.value='';
+      var f=this.files&&this.files[0];
+      if(f) socialShowBildPreview(f);
+    });
+    var camInp=document.getElementById('soc-kat-bild-cam');
+    if(camInp) camInp.addEventListener('change',function(){
+      _socPastedFile=null;
+      if(inp) inp.value='';
       var f=this.files&&this.files[0];
       if(f) socialShowBildPreview(f);
     });
@@ -260,7 +270,7 @@
   window.socialKatToggleCat=function(catId){ var body=document.getElementById(catId); var arrow=document.getElementById(catId+'-arrow'); if(!body)return; if(body.style.display==='none'){body.style.display='';if(arrow) arrow.innerHTML='&#9660;';}else{body.style.display='none';if(arrow) arrow.innerHTML='&#9654;';} };
   window.socialKatCancelEdit=function(id){ var row=document.getElementById('soc-row-'+id); var edit=document.getElementById('soc-edit-'+id); if(row) row.style.display=''; if(edit) edit.style.display='none'; };
   window.socialKatSave=function(id){ var name=(document.getElementById('soc-ed-name-'+id).value||'').trim(); var kat=document.getElementById('soc-ed-kat-'+id).value; var preis=(document.getElementById('soc-ed-preis-'+id).value||'').trim(); if(!name){socialStatus('soc-kat-status','Name darf nicht leer sein',false);return;} socialStatus('soc-kat-status','Wird gespeichert...',true); fetch(API+'/social-katalog',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,name:name,kategorie:kat,preis:preis})}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(res){if(res.error){socialStatus('soc-kat-status',res.error,false);return;}socialStatus('soc-kat-status','Gespeichert!',true);socialLoadKatalog();}).catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);}); };
-  window.socialKatAdd=function(){ var name=document.getElementById('soc-kat-name').value.trim(); var kat=document.getElementById('soc-kat-kategorie').value; var preis=document.getElementById('soc-kat-preis').value.trim(); var bildInput=document.getElementById('soc-kat-bild'); if(!name){socialStatus('soc-kat-status','Bitte Namen eingeben',false);return;} var fd=new FormData(); fd.append('name',name); fd.append('kategorie',kat); if(preis){var pn=parseFloat(preis.replace(',','.'));fd.append('preis',pn&&isFinite(pn)?pn.toFixed(2):preis);} var bildFile=_socPastedFile||(bildInput&&bildInput.files&&bildInput.files[0]); if(bildFile) fd.append('bild',bildFile); socialStatus('soc-kat-status','Wird gespeichert...',true); fetch(API+'/social-katalog',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-kat-status',res.error,false);return;}socialStatus('soc-kat-status','Produkt hinzugefuegt!',true);document.getElementById('soc-kat-name').value='';document.getElementById('soc-kat-preis').value='';socialClearBild();socialLoadKatalog();}).catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);}); };
+  window.socialKatAdd=function(){ var name=document.getElementById('soc-kat-name').value.trim(); var kat=document.getElementById('soc-kat-kategorie').value; var preis=document.getElementById('soc-kat-preis').value.trim(); var bildInput=document.getElementById('soc-kat-bild'); var camInput=document.getElementById('soc-kat-bild-cam'); if(!name){socialStatus('soc-kat-status','Bitte Namen eingeben',false);return;} var fd=new FormData(); fd.append('name',name); fd.append('kategorie',kat); if(preis){var pn=parseFloat(preis.replace(',','.'));fd.append('preis',pn&&isFinite(pn)?pn.toFixed(2):preis);} var bildFile=_socPastedFile||(bildInput&&bildInput.files&&bildInput.files[0])||(camInput&&camInput.files&&camInput.files[0]); if(bildFile) fd.append('bild',bildFile); socialStatus('soc-kat-status','Wird gespeichert...',true); fetch(API+'/social-katalog',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-kat-status',res.error,false);return;}socialStatus('soc-kat-status','Produkt hinzugefuegt!',true);document.getElementById('soc-kat-name').value='';document.getElementById('soc-kat-preis').value='';socialClearBild();socialLoadKatalog();}).catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);}); };
   window.socialKatDelete=function(id){ if(!confirm('Produkt wirklich entfernen?'))return; fetch(API+'/social-katalog?id='+encodeURIComponent(id),{method:'DELETE'}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-kat-status',res.error,false);return;}socialStatus('soc-kat-status','Entfernt',true);socialLoadKatalog();}).catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);}); };
   window.socialKatImgChange=function(id,inp){ if(!inp||!inp.files||!inp.files[0])return; var file=inp.files[0]; var reader=new FileReader(); reader.onload=function(e){ var b64=e.target.result; var thumb=document.getElementById('soc-kat-thumb-'+id); if(thumb){if(thumb.tagName==='IMG'){thumb.src=b64;}else{var img=document.createElement('img');img.id='soc-kat-thumb-'+id;img.src=b64;img.style.cssText='width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb';thumb.parentNode.replaceChild(img,thumb);}} socialStatus('soc-kat-status','Bild wird hochgeladen...',true); fetch(API+'/social-katalog',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,bild_base64:b64})}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-kat-status','Bild-Upload fehlgeschlagen: '+res.error,false);return;}socialStatus('soc-kat-status','Bild aktualisiert!',true);var item=_socialKatalog.find(function(p){return p.id===id;});if(item) item.bild_url=res.item&&res.item.bild_url?res.item.bild_url:b64;}).catch(function(err){socialStatus('soc-kat-status','Bild-Upload Fehler: '+err.message,false);}); }; reader.readAsDataURL(file); };
   // Strg+V paste handler for edit row

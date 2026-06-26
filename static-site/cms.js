@@ -9632,6 +9632,8 @@
     _socPastedFile=null;
     var inp=document.getElementById('soc-kat-bild');
     if(inp) inp.value='';
+    var cam=document.getElementById('soc-kat-bild-cam');
+    if(cam) cam.value='';
     var wrap=document.getElementById('soc-kat-bild-preview');
     var hint=document.getElementById('soc-kat-paste-hint');
     var zone=document.getElementById('soc-kat-paste-zone');
@@ -9645,6 +9647,14 @@
     var inp=document.getElementById('soc-kat-bild');
     if(inp) inp.addEventListener('change',function(){
       _socPastedFile=null;
+      var cam=document.getElementById('soc-kat-bild-cam'); if(cam) cam.value='';
+      var f=this.files&&this.files[0];
+      if(f) socialShowBildPreview(f);
+    });
+    var camInp=document.getElementById('soc-kat-bild-cam');
+    if(camInp) camInp.addEventListener('change',function(){
+      _socPastedFile=null;
+      if(inp) inp.value='';
       var f=this.files&&this.files[0];
       if(f) socialShowBildPreview(f);
     });
@@ -9924,12 +9934,13 @@
     var kat=document.getElementById('soc-kat-kategorie').value;
     var preis=document.getElementById('soc-kat-preis').value.trim();
     var bildInput=document.getElementById('soc-kat-bild');
+    var camInput=document.getElementById('soc-kat-bild-cam');
     if(!name){socialStatus('soc-kat-status','Bitte Namen eingeben',false);return;}
     var fd=new FormData();
     fd.append('name',name);
     fd.append('kategorie',kat);
     if(preis){var pn=parseFloat(preis.replace(',','.'));fd.append('preis',pn&&isFinite(pn)?pn.toFixed(2):preis);}
-    var bildFile = _socPastedFile || (bildInput && bildInput.files && bildInput.files[0]);
+    var bildFile = _socPastedFile || (bildInput && bildInput.files && bildInput.files[0]) || (camInput && camInput.files && camInput.files[0]);
     if(bildFile){
       fd.append('bild',bildFile);
     }
