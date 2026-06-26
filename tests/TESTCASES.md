@@ -979,7 +979,7 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 
 | Datum | Test | Ergebnis |
 |---|---|---|
-| – | T-40-01 | – |
-| – | T-40-02 | – |
-| – | T-40-03 | – |
-| – | T-40-04 | – |
+| 2026-06-27 | T-40-01 | ✅ Pass |
+| 2026-06-27 | T-40-02 | ✅ Pass |
+| 2026-06-27 | T-40-03 | ✅ Pass |
+| 2026-06-27 | T-40-04 | ✅ Pass |
