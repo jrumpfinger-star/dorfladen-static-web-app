@@ -913,3 +913,38 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-26 | T-37-02 Sub-Bar versteckt bei Filterwechsel | ✅ Pass |
 | 2026-06-26 | T-37-03 Zeitraum-Pills Toggle | ✅ Pass |
 | 2026-06-26 | T-37-04 Status-Pills Toggle | ✅ Pass |
+
+---
+
+## AK-UI-39 – Shop-Kommunikation (Kunde ↔ Verkäufer)
+
+Gegenseitiger Nachrichtenaustausch bei Shop-Bestellungen, analog zum Mittagstisch.
+
+### T-39-01 (AK-UI-39a) Shop-Karten zeigen Nachrichten-Buttons
+- **Aktion:** Kiosk laden → Shop-Tab → erste Karte aufklappen
+- **Prüfung:** "Antworten" oder "Nachricht senden" Button im erweiterten Bereich
+- **Erwartung:** Button vorhanden bei aktiven Bestellungen (Status < 3)
+
+### T-39-02 (AK-UI-39b) Shop-Antwort-Dialog öffnet sich
+- **Aktion:** Aktive Shop-Karte aufklappen → "Antworten"/"Nachricht senden" klicken
+- **Prüfung:** Antwort-Eingabefeld und Senden-Button erscheinen
+- **Erwartung:** Input-Feld sichtbar mit Placeholder "Antwort an Kunden…"
+
+### T-39-03 (AK-UI-39c) NEU-Badge bei ungelesener Nachricht
+- **Aktion:** Kiosk laden → Shop-Tab
+- **Prüfung:** Karten mit ungelesener Kundennachricht zeigen blaues "NEU" Badge
+- **Erwartung:** Badge animiert (blink), datenabhängig
+
+### T-39-04 (AK-UI-39d) Kunden-Nachricht und Antwort werden angezeigt
+- **Aktion:** Shop-Karte aufklappen
+- **Prüfung:** Vorhandene Nachrichten (Kunde:/Antwort:) werden angezeigt
+- **Erwartung:** Korrekte Darstellung, keine JS-Fehler
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| – | T-39-01 | – |
+| – | T-39-02 | – |
+| – | T-39-03 | – |
+| – | T-39-04 | – |
