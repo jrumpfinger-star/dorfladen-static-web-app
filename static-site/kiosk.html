@@ -1262,6 +1262,7 @@ var K = (function(){
       dishMap[dish].sort(function(a,b){ return (statusPrio[a.status]||9) - (statusPrio[b.status]||9); });
     });
 
+    var html = '';
     // Collapse/expand all toggle
     var totalCards = 0;
     dishOrder.forEach(function(d){totalCards += dishMap[d].filter(filterFn).length;});
