@@ -326,6 +326,31 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=200, headers=get_cors_headers(),
                 )
 
+            # Full message orders across all dates (for Nachrichten tab)
+            if req.params.get("mode") == "messages":
+                select_fields = "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,createdon"
+                msg_url = (
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+                    f"?$filter=dl_kunde_kommentar ne null"
+                    f" and dl_kunde_kommentar ne ''"
+                    f" and dl_status ne {STATUS_STORNIERT}"
+                    f"&$select={select_fields}"
+                    f"&$orderby=createdon desc"
+                    f"&$top=50"
+                )
+                mr = requests.get(msg_url, headers=headers, timeout=30)
+                msg_orders = []
+                if mr.status_code == 200:
+                    for item in mr.json().get("value", []):
+                        o = _serialize(item)
+                        o["bestellnummer"] = item.get("dl_bestellnummer", "")
+                        o["mitnehmen"] = item.get("dl_mitnehmen", False)
+                        msg_orders.append(o)
+                return func.HttpResponse(
+                    json.dumps({"success": True, "orders": msg_orders, "count": len(msg_orders)}, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+
             if nr_filter and email_filter:
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"

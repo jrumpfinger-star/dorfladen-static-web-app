@@ -379,12 +379,10 @@
     <div class="k-stats" id="mittag-stats" style="display:none"></div>
     <!-- Status-Filter -->
     <div class="k-filter-bar" id="mittag-status-bar">
-      <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Zu bestätigen</span> <span class="k-filter-count" id="mt-fc-offen">0</span></button>
-      <button class="k-filter-btn" data-mt-filter="bestaetigt" onclick="K.setMittagFilter('bestaetigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Bestätigt</span> <span class="k-filter-count" id="mt-fc-bestaetigt">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Offen</span> <span class="k-filter-count" id="mt-fc-offen">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="color:#3b82f6"><i data-lucide="message-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Nachrichten</span> <span class="k-filter-count" id="mt-fc-nachrichten">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="erledigt" onclick="K.setMittagFilter('erledigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Erledigt</span> <span class="k-filter-count" id="mt-fc-erledigt">0</span></button>
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')"><span class="k-filter-label">Alle</span> <span class="k-filter-count" id="mt-fc-alle">0</span></button>
-      <button class="k-filter-btn" data-mt-filter="abgeholt" onclick="K.setMittagFilter('abgeholt')"><i data-lucide="package-check" style="width:14px;height:14px"></i> <span class="k-filter-label">Abgeholt</span> <span class="k-filter-count" id="mt-fc-abgeholt">0</span></button>
-      <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
-      <button class="k-filter-btn" id="mt-msg-badge" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="display:none;color:#3b82f6"><i data-lucide="message-circle" style="width:12px;height:12px"></i> <span id="mt-msg-count">0</span> <span class="k-filter-label">Nachrichten</span></button>
     </div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
   </div>
@@ -812,69 +810,191 @@ var K = (function(){
   // ══════════════════════════════════════════════════
 
   var _mittagDatum = today();
-  var _mittagFilter = 'alle'; // Default: Alle
+  var _mittagFilter = 'offen'; // Default: Offen
   var _globalUnreadMessages = 0;
   var _globalTodayNew = 0;
+  var _msgOrders = []; // Nachrichten über alle Tage
 
   function _hasUnseenComment(o){
     return !!(o.kunde_kommentar && o.status!==2 && !o.kommentar_gelesen);
   }
-  function _markCommentsAsSeen(){
-    orders.forEach(function(o){
-      if(_hasUnseenComment(o)){
-        o.kommentar_gelesen = true;
-        fetch('/api/lunch-order/'+o.id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kommentar_gelesen:true})}).catch(function(){});
-      }
-    });
-  }
 
   function setMittagFilter(f){
+    _mittagFilter = f;
     if(f==='nachrichten'){
-      _markCommentsAsSeen();
-      _mittagFilter = 'nachrichten';
-      // Auto-expand all cards and groups with comments
-      orders.forEach(function(o){
-        if(o.kunde_kommentar){
-          _orderCardOpen[o.id] = true;
-          var dish = o.gericht || 'Sonstiges';
-          var gid = 'dg-'+dish.replace(/[^a-zA-Z0-9]/g,'_');
-          _dishGroupOpen[gid] = true;
-        }
-      });
+      _loadMessageOrders();
     } else {
-      _mittagFilter = f;
+      renderOrders();
     }
     document.querySelectorAll('#mittag-status-bar .k-filter-btn').forEach(function(b){
       b.classList.toggle('active', b.dataset.mtFilter===_mittagFilter);
     });
-    renderOrders();
     updateMittagFilterCounts();
   }
 
-  function updateMittagFilterCounts(){
-    var c0=0,c1=0,c2=0,c3=0;
-    orders.forEach(function(o){
-      if(o.status===0) c0++;
-      else if(o.status===1) c1++;
-      else if(o.status===2) c2++;
-      else if(o.status===3) c3++;
+  function _loadMessageOrders(){
+    document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px;animation:kSpin 1s linear infinite"></i></div>Nachrichten laden…</div>';
+    reinitIcons();
+    fetch(API+'/lunch-order?mode=messages')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success) return;
+        _msgOrders = res.orders || [];
+        _renderMessageList();
+      })
+      .catch(function(){ document.getElementById('mittag-orders').innerHTML = '<div class="k-empty">Fehler beim Laden</div>'; });
+  }
+
+  function _renderMessageList(){
+    if(_mittagFilter!=='nachrichten') return;
+    if(_msgOrders.length===0){
+      document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('message-circle',32)+'</div>Keine Nachrichten</div>';
+      reinitIcons();
+      return;
+    }
+    var html = '';
+    // Sort: unread first, then by date desc
+    var sorted = _msgOrders.slice().sort(function(a,b){
+      var aU = a.kommentar_gelesen?1:0, bU = b.kommentar_gelesen?1:0;
+      if(aU!==bU) return aU-bU;
+      return (b.datum||'').localeCompare(a.datum||'');
     });
-    document.getElementById('mt-fc-offen').textContent = c0;
-    document.getElementById('mt-fc-bestaetigt').textContent = c1;
-    document.getElementById('mt-fc-alle').textContent = orders.length;
-    document.getElementById('mt-fc-abgeholt').textContent = c3;
-    document.getElementById('mt-fc-storniert').textContent = c2;
-    // Highlight "Zu bestätigen" in red when pending orders exist
+    var unreadCount = sorted.filter(function(o){return !o.kommentar_gelesen;}).length;
+    if(unreadCount>0){
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;margin-bottom:4px">';
+      html += '<span style="font-size:13px;font-weight:700;color:#1e40af">'+unreadCount+' ungelesen</span>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px;margin-left:auto" onclick="K.markAllMsgRead()">'+luc('check-check',14)+' Alle als gelesen</button>';
+      html += '</div>';
+    }
+    sorted.forEach(function(o){
+      var isUnread = !o.kommentar_gelesen;
+      var datumLabel = o.datum||'';
+      var STATUS_LABELS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
+      var STATUS_COLORS = {0:'#f59e0b',1:'#16a34a',2:'#dc2626',3:'#6b7280'};
+      html += '<div class="k-order'+(isUnread?' st-1':' st-3')+'" style="'+(isUnread?'background:#eff6ff;border-left-color:#3b82f6':'')+'">'; 
+      html += '<div class="k-order-info" style="padding:12px 14px">';
+      // Top row: Name + Date + Status
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
+      html += '<span style="font-weight:700;font-size:15px;flex:1">'+esc(o.name)+'</span>';
+      if(isUnread) html += '<span style="background:#3b82f6;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">NEU</span>';
+      html += '<span style="font-size:12px;color:#6b7280">'+esc(datumLabel)+'</span>';
+      html += '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:'+(STATUS_COLORS[o.status]||'#6b7280')+'1a;color:'+(STATUS_COLORS[o.status]||'#6b7280')+'">'+esc(STATUS_LABELS[o.status]||'')+'</span>';
+      html += '</div>';
+      // Dish + Order info
+      html += '<div style="font-size:13px;color:#6b7280;margin-bottom:6px">'+(o.menge||1)+'× '+esc(o.gericht||'')+' · '+esc(o.bestellnummer||'')+'</div>';
+      // Customer message
+      html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;margin:0 0 6px">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+      // Staff reply if exists
+      if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 0 6px">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+      // Actions: Reply + Mark read
+      html += '<div style="display:flex;gap:8px;padding-top:4px;align-items:center">';
+      html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff;font-size:13px" onclick="K.showMsgReply(\''+o.id+'\')">'+luc('reply',14)+' Antworten</button>';
+      if(isUnread) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px" onclick="K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
+      html += '</div>';
+      // Inline reply box
+      html += '<div id="msg-rpl-'+o.id+'" style="display:none;margin-top:8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
+      html += '<input type="text" id="msg-rpt-'+o.id+'" placeholder="Antwort eingeben…" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
+      html += '<div style="display:flex;gap:8px">';
+      html += '<button class="k-btn k-btn-sm" style="flex:1;background:#2563eb;color:#fff;font-size:13px" onclick="K.sendMsgReply(\''+o.id+'\')">'+luc('send',14)+' Senden</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px" onclick="document.getElementById(\'msg-rpl-'+o.id+'\').style.display=\'none\'">Abbrechen</button>';
+      html += '</div></div>';
+      html += '</div></div>';
+    });
+    document.getElementById('mittag-orders').innerHTML = html;
+    reinitIcons();
+  }
+
+  function showMsgReply(id){
+    var el = document.getElementById('msg-rpl-'+id);
+    if(el){ el.style.display='block'; var inp=document.getElementById('msg-rpt-'+id); if(inp) inp.focus(); }
+  }
+
+  function sendMsgReply(id){
+    var text = (document.getElementById('msg-rpt-'+id)||{}).value || '';
+    if(!text.trim()){ toast('Bitte Antwort eingeben'); return; }
+    fetch(API+'/lunch-order/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({personal_antwort: text.trim(), kommentar_gelesen: true})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('✅ Antwort gesendet');
+        _loadMessageOrders();
+        loadMittagBadge();
+      } else { toast('Fehler: '+(res.error||'')); }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  function markMsgRead(id){
+    fetch(API+'/lunch-order/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kommentar_gelesen: true})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        _loadMessageOrders();
+        loadMittagBadge();
+      }
+    }).catch(function(){});
+  }
+
+  function markAllMsgRead(){
+    var unread = _msgOrders.filter(function(o){return !o.kommentar_gelesen;});
+    if(unread.length===0) return;
+    var done = 0;
+    unread.forEach(function(o){
+      fetch(API+'/lunch-order/'+o.id,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kommentar_gelesen: true})
+      })
+      .then(function(r){return r.json();})
+      .then(function(){
+        done++;
+        if(done>=unread.length){
+          toast('✅ Alle als gelesen markiert');
+          _loadMessageOrders();
+          loadMittagBadge();
+        }
+      }).catch(function(){ done++; });
+    });
+  }
+
+  function updateMittagFilterCounts(){
+    var cOffen=0,cErledigt=0;
+    orders.forEach(function(o){
+      if(o.status===0 || o.status===1) cOffen++;
+      else if(o.status===2 || o.status===3) cErledigt++;
+    });
+    var elOffen = document.getElementById('mt-fc-offen');
+    var elErledigt = document.getElementById('mt-fc-erledigt');
+    var elAlle = document.getElementById('mt-fc-alle');
+    var elNachr = document.getElementById('mt-fc-nachrichten');
+    if(elOffen) elOffen.textContent = cOffen;
+    if(elErledigt) elErledigt.textContent = cErledigt;
+    if(elAlle) elAlle.textContent = orders.length;
+    if(elNachr) elNachr.textContent = _globalUnreadMessages;
+    // Highlight "Offen" in red when new orders exist
+    var newCount = orders.filter(function(o){return o.status===0;}).length;
     var offenBtn = document.querySelector('[data-mt-filter="offen"]');
     if(offenBtn){
-      offenBtn.style.color = c0>0 ? '#dc2626' : '';
-      offenBtn.style.fontWeight = c0>0 ? '800' : '';
+      offenBtn.style.color = newCount>0 ? '#dc2626' : '';
+      offenBtn.style.fontWeight = newCount>0 ? '800' : '';
     }
-    var msgCount = orders.filter(function(o){return _hasUnseenComment(o);}).length;
-    var msgBadge = document.getElementById('mt-msg-badge');
-    var msgCountEl = document.getElementById('mt-msg-count');
-    if(msgBadge){ msgBadge.style.display = msgCount>0?'inline-flex':'none'; }
-    if(msgCountEl){ msgCountEl.textContent = msgCount; }
+    // Highlight Nachrichten tab when unread
+    var msgBtn = document.querySelector('[data-mt-filter="nachrichten"]');
+    if(msgBtn && _globalUnreadMessages>0){
+      msgBtn.style.color = '#3b82f6';
+      msgBtn.style.fontWeight = '800';
+    } else if(msgBtn){
+      msgBtn.style.color = '';
+      msgBtn.style.fontWeight = '';
+    }
   }
 
   function buildDayBar(){
@@ -1086,11 +1206,8 @@ var K = (function(){
     });
     // Filter function for visible cards
     var filterFn = function(o){return true;};
-    if(_mittagFilter==='offen') filterFn = function(o){return o.status===0;};
-    else if(_mittagFilter==='bestaetigt') filterFn = function(o){return o.status===1;};
-    else if(_mittagFilter==='abgeholt') filterFn = function(o){return o.status===3;};
-    else if(_mittagFilter==='storniert') filterFn = function(o){return o.status===2;};
-    else if(_mittagFilter==='nachrichten') filterFn = function(o){return !!(o.kunde_kommentar);};
+    if(_mittagFilter==='offen') filterFn = function(o){return o.status===0 || o.status===1;};
+    else if(_mittagFilter==='erledigt') filterFn = function(o){return o.status===2 || o.status===3;};
     // Sort orders within each group: neu first, then bestätigt, then rest
     var statusPrio = {0:0,1:1,3:2,2:3};
     dishOrder.forEach(function(dish){
@@ -2649,7 +2766,7 @@ var K = (function(){
 
   buildDayBar();
   reinitIcons(); // Initialize static Lucide icons
-  setMittagFilter('alle'); // Default: Alle
+  setMittagFilter('offen'); // Default: Offen
   loadOrders();
   loadDishes();
   loadShopOrders();
@@ -2702,6 +2819,10 @@ var K = (function(){
     openModal: openModal,
     closeModal: closeModal,
     setMittagFilter: setMittagFilter,
+    showMsgReply: showMsgReply,
+    sendMsgReply: sendMsgReply,
+    markMsgRead: markMsgRead,
+    markAllMsgRead: markAllMsgRead,
     showOrderDetail: showOrderDetail,
     deleteShopOrder: deleteShopOrder,
     refresh: refresh
