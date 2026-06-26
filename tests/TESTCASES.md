@@ -780,3 +780,13 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 - **Aktion:** GET /api/lunch-order?mode=messages
 - **Pruefung:** Response-Format pruefen
 - **Erwartung:** success:true, orders-Array mit kunde_kommentar, name, gericht, datum, kommentar_gelesen
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-26 | T16.1 T-17-01 Default-Filter Offen | ✅ Pass |
+| 2026-06-26 | T16.2 T-17-02 Genau 4 Filter-Tabs | ✅ Pass |
+| 2026-06-26 | T16.3 T-17-03 Nachrichten tagesuebergreifend | ✅ Pass |
+| 2026-06-26 | T16.4 T-17-04 Antwort+Gelesen Buttons | ✅ Pass |
+| 2026-06-26 | T16.5 T-17-05 API mode=messages | ✅ Pass |
