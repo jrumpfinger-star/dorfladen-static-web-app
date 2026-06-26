@@ -1462,6 +1462,7 @@ var K = (function(){
   // ══════════════════════════════════════════════════
 
   var kundenSearchTimer = null;
+  var _kundenCardOpen = {};
   function searchKunden(){
     clearTimeout(kundenSearchTimer);
     kundenSearchTimer = setTimeout(function(){
@@ -1478,6 +1479,13 @@ var K = (function(){
     }, 300);
   }
 
+  function toggleKundeCard(id){
+    var el = document.getElementById('kc-'+id);
+    if(!el) return;
+    el.classList.toggle('oc-collapsed');
+    _kundenCardOpen[id] = !el.classList.contains('oc-collapsed');
+  }
+
   function renderKunden(){
     if(kunden.length===0){
       document.getElementById('kunden-list').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('user',24)+'</div>Keine Kunden gefunden</div>'+
@@ -1487,19 +1495,41 @@ var K = (function(){
     }
     var html = '';
     kunden.forEach(function(c){
-      html += '<div class="k-order" style="border-left-color:var(--c-green)">';
-      html += '<div class="k-order-info" style="padding:14px 16px">';
-      html += '<div class="k-order-top"><span class="k-order-name">'+esc(c.name)+'</span><span style="font-size:12px;color:var(--c-muted)">'+esc(c.stammkunde_nr)+'</span></div>';
+      var isOpen = c.id in _kundenCardOpen ? _kundenCardOpen[c.id] : false;
+      var eName = esc(c.name).replace(/'/g,"\\'");
+      var ePhone = esc(c.telefon||'').replace(/'/g,"\\'");
+      html += '<div class="k-order'+(isOpen?'':' oc-collapsed')+'" style="border-left-color:var(--c-green)" id="kc-'+c.id+'">';
+
+      // ── Compact Header ──
+      html += '<div class="k-order-hdr" onclick="K.toggleKundeCard(\''+c.id+'\')">';
+      html += '<span class="k-oc-arrow">▼</span>';
+      html += '<span class="k-oc-name">'+esc(c.name)+'</span>';
+      if(c.telefon) html += '<span style="font-size:12px;color:var(--c-muted);white-space:nowrap">'+luc('phone',11)+' '+esc(c.telefon)+'</span>';
+      html += '<span style="font-size:11px;color:var(--c-muted);white-space:nowrap">'+esc(c.stammkunde_nr)+'</span>';
+      html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.orderForKunde(\''+c.id+'\',\''+eName+'\',\''+ePhone+'\')">'+luc('utensils',14)+' <span class="oc-btn-label">Bestellen</span></button>';
+      html += '</span>';
+      html += '</div>';
+
+      // ── Expandable Body ──
+      html += '<div class="k-order-body">';
+      html += '<div class="k-order-info" style="padding:10px 14px 12px">';
       html += '<div class="k-order-meta">';
       if(c.telefon) html += '<span>'+luc('phone',12)+' '+esc(c.telefon)+'</span>';
       if(c.email) html += '<span>'+luc('mail',12)+' '+esc(c.email)+'</span>';
-      if(c.notiz) html += '<span>'+luc('sticky-note',12)+' '+esc(c.notiz)+'</span>';
+      if(c.adresse) html += '<span>'+luc('map-pin',12)+' '+esc(c.adresse)+'</span>';
+      html += '<span>'+luc('hash',12)+' '+esc(c.stammkunde_nr)+'</span>';
+      html += '</div>';
+      if(c.notiz) html += '<div class="k-order-note">'+luc('sticky-note',12)+' '+esc(c.notiz)+'</div>';
+      if(c.bevorzugt_mitnehmen) html += '<span class="k-order-mitnehmen" style="display:inline-block;margin-top:6px">'+luc('package',12)+' Bevorzugt zum Mitnehmen</span>';
+      html += '<div class="k-order-actions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px">';
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.orderForKunde(\''+c.id+'\',\''+eName+'\',\''+ePhone+'\')">'+luc('utensils',14)+' Bestellen</button>';
+      html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.editKunde(\''+c.id+'\')">'+luc('pencil',14)+' Bearbeiten</button>';
+      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.deleteKunde(\''+c.id+'\',\''+eName+'\')">'+luc('trash-2',14)+'</button>';
+      html += '</div>';
       html += '</div></div>';
-      html += '<div class="k-order-actions" style="display:flex;gap:4px;flex-wrap:wrap">';
-      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.orderForKunde(\''+c.id+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\',\''+esc(c.telefon).replace(/'/g,"\\'")+'\')">' +luc('utensils',14)+' Bestellen</button>';
-      html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.editKunde(\''+c.id+'\')">' +luc('pencil',14)+' Bearbeiten</button>';
-      html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.deleteKunde(\''+c.id+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\')">' +luc('trash-2',14)+'</button>';
-      html += '</div></div>';
+
+      html += '</div>';
     });
     html += '<div style="text-align:center;margin-top:12px"><button class="k-btn k-btn-confirm k-btn-lg" onclick="K.openNewKunde()">'+luc('user-plus',16)+' Neuen Stammkunden anlegen</button></div>';
     document.getElementById('kunden-list').innerHTML = html;
@@ -3057,6 +3087,7 @@ var K = (function(){
     submitEditKunde: submitEditKunde,
     deleteKunde: deleteKunde,
     searchKunden: searchKunden,
+    toggleKundeCard: toggleKundeCard,
     printKitchen: printKitchen,
     loadShopOrders: loadShopOrders,
     setShopFilter: setShopFilter,
