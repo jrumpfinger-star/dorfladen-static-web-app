@@ -2235,6 +2235,7 @@ var K = (function(){
     html += _buildCountdownRing(o);
     html += _buildPackRing(o);
     html += '<span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+sb.bg+';color:'+sb.fg+';display:inline-flex;align-items:center;gap:3px">'+luc(sb.icon,11)+' '+esc(statusLabel)+'</span>';
+    if(o.kunde_kommentar && !o.kommentar_gelesen) html += '<span style="background:#3b82f6;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',11)+' NEU</span>';
     html += '<span style="font-size:14px;font-weight:800;color:var(--c-green);min-width:55px;text-align:right">'+(o.gesamtsumme||0).toFixed(2).replace('.',',')+' €</span>';
 
     // Primary action in header (quick access without expanding)
@@ -2278,6 +2279,22 @@ var K = (function(){
       if(posArr.length>4) html += '<div style="font-size:12px;color:#6b7280;padding:2px 0">+'+(posArr.length-4)+' weitere Artikel</div>';
       html += '</div>';
     }
+
+    // Customer message & staff reply
+    if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;margin:0 0 8px;padding:8px 10px;animation:'+(o.kommentar_gelesen?'none':'kPulse 2s ease-in-out 3')+'">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 0 8px;padding:8px 10px">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+    if(o.status<3){
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="event.stopPropagation();K.showShopReply(\''+o.id+'\')">'+luc(o.kunde_kommentar?'reply':'send',14)+' '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button>';
+      if(o.kunde_kommentar && !o.kommentar_gelesen) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markShopMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
+      html += '</div>';
+    }
+    // Reply input (hidden by default)
+    html += '<div id="shop-rpl-'+o.id+'" style="display:none;margin-bottom:8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
+    if(o.kunde_kommentar) html += '<div style="font-size:12px;color:#374151;margin-bottom:6px;padding:6px 8px;background:#fff;border-radius:6px;border-left:3px solid #3b82f6">'+esc(o.kunde_kommentar)+'</div>';
+    html += '<input type="text" id="shop-rpt-'+o.id+'" placeholder="Antwort an Kunden…" maxlength="500" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
+    html += '<div style="display:flex;gap:8px"><button class="k-btn k-btn-sm" style="flex:1;background:#2563eb;color:#fff;font-size:13px" onclick="K.sendShopReply(\''+o.id+'\')">'+luc('send',14)+' Senden</button>';
+    html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="document.getElementById(\'shop-rpl-'+o.id+'\').style.display=\'none\'">Abbrechen</button></div></div>';
 
     // Action buttons – large, clear, touch-friendly
     html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:4px;border-top:1px solid #f3f4f6">';
@@ -2323,6 +2340,42 @@ var K = (function(){
       }
     })
     .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  // ── Shop message functions ──
+  function showShopReply(id){
+    var el = document.getElementById('shop-rpl-'+id);
+    if(el){ el.style.display='block'; var inp=document.getElementById('shop-rpt-'+id); if(inp) inp.focus(); }
+  }
+
+  function sendShopReply(id){
+    var text = (document.getElementById('shop-rpt-'+id)||{}).value || '';
+    if(!text.trim()){ toast('Bitte Antwort eingeben'); return; }
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id, personal_antwort: text.trim(), kommentar_gelesen: true})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        toast('✅ Antwort gesendet (Push an Kunde)');
+        loadShopOrders();
+      } else { toast('Fehler: '+(res.error||'')); }
+    })
+    .catch(function(e){toast('Fehler: '+e.message);});
+  }
+
+  function markShopMsgRead(id){
+    fetch(API+'/shop-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id, kommentar_gelesen: true})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success) loadShopOrders();
+    }).catch(function(){});
   }
 
   // ══════════════════════════════════════════════════
@@ -3033,6 +3086,9 @@ var K = (function(){
     sendMsgReply: sendMsgReply,
     markMsgRead: markMsgRead,
     markAllMsgRead: markAllMsgRead,
+    showShopReply: showShopReply,
+    sendShopReply: sendShopReply,
+    markShopMsgRead: markShopMsgRead,
     showOrderDetail: showOrderDetail,
     deleteShopOrder: deleteShopOrder,
     refresh: refresh

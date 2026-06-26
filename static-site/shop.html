@@ -2445,6 +2445,22 @@
             });
             html+='</div>';
           }
+          // Messages (staff reply + customer comment)
+          var hasMsg=o.personal_antwort||o.kunde_kommentar;
+          if(hasMsg||o.status<3){
+            html+='<div style="margin-top:12px">';
+            if(o.personal_antwort) html+='<div style="background:#f0fdf4;border-left:4px solid var(--shop-green);border-radius:12px;padding:12px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">\ud83d\udcac Antwort vom Dorfladen</div><div style="font-size:14px;line-height:1.5;color:#1f2937">'+esc(o.personal_antwort)+'</div></div>';
+            if(o.kunde_kommentar) html+='<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:12px;padding:12px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Ihre Nachricht</div><div style="font-size:14px;line-height:1.5;color:#1f2937">'+esc(o.kunde_kommentar)+'</div></div>';
+            if(o.status<3){
+              html+='<div data-shop-comment-box="'+idx+'" style="margin-top:8px">';
+              html+='<label style="font-size:13px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">'+lucideHtml('message-circle',14)+' Nachricht an den Dorfladen</label>';
+              html+='<textarea data-shop-comment="'+idx+'" data-shop-order-id="'+esc(o.id)+'" placeholder="Ihre Nachricht\u2026" maxlength="500" rows="2" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;resize:vertical;box-sizing:border-box"></textarea>';
+              html+='<button data-shop-comment-send="'+idx+'" style="margin-top:6px;padding:8px 18px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px">'+lucideHtml('send',14)+' Nachricht senden</button>';
+              html+='<div data-shop-comment-sent="'+idx+'" style="display:none;margin-top:6px;padding:8px 12px;background:#d1fae5;border-radius:8px;font-size:13px;color:#065f46;font-weight:600">\u2705 Nachricht gesendet</div>';
+              html+='</div>';
+            }
+            html+='</div>';
+          }
           // Action buttons
           html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
           if(o.positionen&&o.positionen.length){
@@ -2509,6 +2525,30 @@
               var nr=btn.getAttribute('data-reorder-nr')||'Bestellung';
               reorderFromHistory(pos,nr);
             }catch(e){showToast('Fehler beim Laden der Bestellung');}
+          });
+        });
+        // Comment send handlers
+        document.querySelectorAll('[data-shop-comment-send]').forEach(function(btn){
+          btn.addEventListener('click',function(){
+            var idx=btn.getAttribute('data-shop-comment-send');
+            var ta=document.querySelector('[data-shop-comment="'+idx+'"]');
+            if(!ta) return;
+            var text=ta.value.trim();
+            if(!text){showToast('Bitte Nachricht eingeben');return;}
+            var orderId=ta.getAttribute('data-shop-order-id');
+            btn.disabled=true;btn.textContent='Wird gesendet\u2026';
+            fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,kunde_kommentar:text})})
+              .then(function(r){return r.json();})
+              .then(function(x){
+                btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Nachricht senden';
+                if(x.success){
+                  ta.value='';
+                  var sent=document.querySelector('[data-shop-comment-sent="'+idx+'"]');
+                  if(sent) sent.style.display='block';
+                  showToast('\u2705 Nachricht gesendet');
+                } else {showToast('Fehler: '+(x.error||''));}
+              })
+              .catch(function(e){btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Nachricht senden';showToast('Fehler: '+e.message);});
           });
         });
       })

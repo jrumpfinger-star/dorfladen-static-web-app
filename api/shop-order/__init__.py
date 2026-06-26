@@ -476,7 +476,7 @@ def _handle_get(req, dv_token, base_url, headers):
                 json.dumps({"success": False, "error": "Bestell-ID erforderlich"}),
                 status_code=400, headers=get_cors_headers()
             )
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen"
         try:
             r = requests.get(url, headers=headers, timeout=30)
             if r.status_code == 200:
@@ -511,11 +511,11 @@ def _handle_get(req, dv_token, base_url, headers):
 
     if mode == "cms":
         # CMS mode: return all orders (no JWT required for now, add admin check later)
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json&$orderby=createdon desc&$top=200"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen&$orderby=createdon desc&$top=200"
     elif user:
         # Customer mode: own orders
         email = user["email"]
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=50"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen&$orderby=createdon desc&$top=50"
     else:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Bitte melden Sie sich an."}),
@@ -553,7 +553,10 @@ def _handle_get(req, dv_token, base_url, headers):
                     "gesamtsumme": item.get("dl_gesamtsumme", 0),
                     "anmerkungen": item.get("dl_anmerkungen", ""),
                     "positionen": positionen,
-                    "gepackt": bool(pack_data)
+                    "gepackt": bool(pack_data),
+                    "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
+                    "personal_antwort": item.get("dl_personal_antwort", ""),
+                    "kommentar_gelesen": bool(item.get("dl_kommentar_gelesen", False))
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "orders": orders}, ensure_ascii=False),
@@ -584,12 +587,39 @@ def _handle_patch(req, dv_token, base_url, headers):
     new_status = body.get("status")
     customer_action = (body.get("customer_action") or "").strip().lower()
     pack_json = body.get("pack_json")
+    kunde_kommentar = body.get("kunde_kommentar")
+    personal_antwort = body.get("personal_antwort")
+    kommentar_gelesen = body.get("kommentar_gelesen")
 
-    if not order_id or (new_status is None and pack_json is None and not customer_action):
+    has_update = (new_status is not None or pack_json is not None or customer_action
+                  or kunde_kommentar is not None or personal_antwort is not None
+                  or kommentar_gelesen is not None)
+    if not order_id or not has_update:
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "id und status erforderlich"}),
+            json.dumps({"success": False, "error": "id und Änderung erforderlich"}),
             status_code=400, headers=get_cors_headers()
         )
+
+    # Customer comment requires JWT + ownership check
+    if kunde_kommentar is not None and not personal_antwort and not kommentar_gelesen and new_status is None and not pack_json:
+        user = _verify_jwt(req)
+        if not user:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Bitte melden Sie sich an."}, ensure_ascii=False),
+                status_code=401, headers=get_cors_headers()
+            )
+        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email"
+        cr = requests.get(check_url, headers=headers, timeout=15)
+        if cr.status_code != 200:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Bestellung nicht gefunden"}, ensure_ascii=False),
+                status_code=404, headers=get_cors_headers()
+            )
+        if (cr.json().get("dl_kunde_email") or "").lower() != (user.get("email") or "").lower():
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Diese Bestellung gehört nicht zu Ihrem Konto."}, ensure_ascii=False),
+                status_code=403, headers=get_cors_headers()
+            )
 
     if customer_action == "cancel":
         user = _verify_jwt(req)
@@ -671,6 +701,13 @@ def _handle_patch(req, dv_token, base_url, headers):
         patch_payload["dl_status"] = new_status
     if pack_json is not None:
         patch_payload["dl_pack_json"] = json.dumps(pack_json, ensure_ascii=False) if isinstance(pack_json, dict) else str(pack_json)
+    if kunde_kommentar is not None:
+        patch_payload["dl_kunde_kommentar"] = kunde_kommentar.strip()
+        patch_payload["dl_kommentar_gelesen"] = False  # new comment → unread
+    if personal_antwort is not None:
+        patch_payload["dl_personal_antwort"] = personal_antwort.strip()
+    if kommentar_gelesen is not None:
+        patch_payload["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
     if not patch_payload:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Nichts zu aktualisieren"}),
@@ -681,6 +718,28 @@ def _handle_patch(req, dv_token, base_url, headers):
     try:
         r = requests.patch(patch_url, headers=patch_headers, json=patch_payload, timeout=30)
         if r.status_code in (200, 204):
+            # Send push to customer when staff replies
+            if personal_antwort:
+                try:
+                    fetch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_bestellnummer"
+                    fr = requests.get(fetch_url, headers=headers, timeout=15)
+                    if fr.status_code == 200:
+                        odata = fr.json()
+                        cust_email = odata.get("dl_kunde_email", "")
+                        bestellnr = odata.get("dl_bestellnummer", "")
+                        if cust_email:
+                            swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                            protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+                            internal_url = f"{protocol}://{swa_host}/api/push-send"
+                            requests.post(internal_url, json={
+                                "title": "💬 Nachricht zu Ihrer Bestellung",
+                                "message": personal_antwort.strip(),
+                                "url": "/shop.html",
+                                "target_email": cust_email,
+                                "tag": f"shop-reply-{bestellnr}",
+                            }, timeout=10)
+                except Exception as pe:
+                    logging.warning(f"[shop-order] Push for reply failed: {pe}")
             return func.HttpResponse(
                 json.dumps({"success": True, "status": new_status, "status_text": STATUS_LABELS.get(new_status, "")}, ensure_ascii=False),
                 status_code=200, headers=get_cors_headers()
