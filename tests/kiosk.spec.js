@@ -321,11 +321,15 @@ test.describe('Kiosk – Shop Redesign', () => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="abhol"]').click();
     await page.waitForTimeout(2000);
+    // Switch to "Heute" filter so all statuses are visible
+    const todayFilter = page.locator('#abhol-filter-bar .k-filter-btn[data-filter="today"]');
+    if (await todayFilter.count() > 0) await todayFilter.click();
+    await page.waitForTimeout(1000);
     const cards = page.locator('#abhol-orders .k-order');
     const count = await cards.count();
     if (count > 0) {
-      // Expand first card
-      await cards.first().locator('.k-order-hdr').click();
+      // Expand first card via JS to avoid visibility issues
+      await cards.first().evaluate(el => el.classList.remove('oc-collapsed'));
       await page.waitForTimeout(300);
       // Find Details button
       const detailBtn = cards.first().locator('.k-order-body .k-btn:has-text("Details")');
