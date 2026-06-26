@@ -881,3 +881,88 @@ test.describe('AK-UI-36 – Android Zurück-Button', () => {
     expect(page.url()).toContain('/kiosk');
   });
 });
+
+// ═══════════════════════════════════════════════════
+//  AK-UI-37 – Historie-Filter mit Zeitraum & Status
+// ═══════════════════════════════════════════════════
+
+test.describe('AK-UI-37 – Historie-Filter', () => {
+  test('T-37-01: Historie-Tab zeigt Sub-Filter-Bar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    // Sub-filter bar should be hidden initially
+    await expect(page.locator('#hist-bar')).not.toHaveClass(/show/);
+
+    // Click Historie tab
+    await page.click('[data-filter="history"]');
+    await page.waitForTimeout(300);
+
+    // Sub-filter bar should now be visible
+    await expect(page.locator('#hist-bar')).toHaveClass(/show/);
+
+    // Should have time range pills
+    await expect(page.locator('[data-range="7"]')).toBeVisible();
+    await expect(page.locator('[data-range="30"]')).toBeVisible();
+    await expect(page.locator('[data-range="all"]')).toBeVisible();
+
+    // Should have status pills
+    await expect(page.locator('[data-hstatus="all"]')).toBeVisible();
+    await expect(page.locator('[data-hstatus="3"]')).toBeVisible();
+    await expect(page.locator('[data-hstatus="4"]')).toBeVisible();
+  });
+
+  test('T-37-02: Wechsel zu anderem Filter versteckt Sub-Bar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    // Activate history
+    await page.click('[data-filter="history"]');
+    await page.waitForTimeout(200);
+    await expect(page.locator('#hist-bar')).toHaveClass(/show/);
+
+    // Switch to "Zu erledigen"
+    await page.click('[data-filter="open"]');
+    await page.waitForTimeout(200);
+
+    // Sub-filter bar should be hidden again
+    await expect(page.locator('#hist-bar')).not.toHaveClass(/show/);
+  });
+
+  test('T-37-03: Zeitraum-Pills wechseln aktiven Zustand', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    await page.click('[data-filter="history"]');
+    await page.waitForTimeout(200);
+
+    // Default: "7 Tage" active
+    await expect(page.locator('[data-range="7"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-range="30"]')).not.toHaveClass(/active/);
+
+    // Click "30 Tage"
+    await page.click('[data-range="30"]');
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('[data-range="30"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-range="7"]')).not.toHaveClass(/active/);
+  });
+
+  test('T-37-04: Status-Pills wechseln aktiven Zustand', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    await page.click('[data-filter="history"]');
+    await page.waitForTimeout(200);
+
+    // Default: "Alle" status active
+    await expect(page.locator('[data-hstatus="all"]')).toHaveClass(/active/);
+
+    // Click "Abgeholt"
+    await page.click('[data-hstatus="3"]');
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('[data-hstatus="3"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-hstatus="all"]')).not.toHaveClass(/active/);
+  });
+});

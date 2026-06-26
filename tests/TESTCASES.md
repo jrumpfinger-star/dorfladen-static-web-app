@@ -877,3 +877,30 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-26 | T-36-01 Hilfe-Modal → Back | ✅ Pass |
 | 2026-06-26 | T-36-02 Detail-Modal → Back | ✅ Pass |
 | 2026-06-26 | T-36-03 Zwei Modals Stack | ✅ Pass |
+
+---
+
+## AK-UI-37 – Historie-Filter mit Zeitraum & Status
+
+> Spec: `specs/kiosk-historie-filter.md`  
+> Tests: `tests/kiosk.spec.js` → `AK-UI-37`
+
+### T-37-01 (AK-UI-37a) Historie-Tab zeigt Sub-Filter-Bar
+- **Aktion:** Kiosk Shop-Tab → Historie-Filter klicken
+- **Prüfung:** Sub-Filter-Bar mit Zeitraum-Pills (7 Tage, 30 Tage, Alle) und Status-Pills (Alle, Abgeholt, Storniert) erscheint
+- **Erwartung:** Bar sichtbar, alle Pills vorhanden
+
+### T-37-02 (AK-UI-37b) Wechsel zu anderem Filter versteckt Sub-Bar
+- **Aktion:** Historie aktivieren, dann "Zu erledigen" klicken
+- **Prüfung:** Sub-Filter-Bar verschwindet
+- **Erwartung:** Bar versteckt
+
+### T-37-03 (AK-UI-37c) Zeitraum-Pills wechseln aktiven Zustand
+- **Aktion:** Historie aktivieren, "30 Tage" klicken
+- **Prüfung:** "30 Tage" wird aktiv, "7 Tage" wird inaktiv
+- **Erwartung:** Nur ein Zeitraum-Pill aktiv
+
+### T-37-04 (AK-UI-37d) Status-Pills wechseln aktiven Zustand
+- **Aktion:** Historie aktivieren, "Abgeholt" klicken
+- **Prüfung:** "Abgeholt" wird aktiv, "Alle" wird inaktiv
+- **Erwartung:** Nur ein Status-Pill aktiv
