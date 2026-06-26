@@ -1025,6 +1025,35 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung**: #soc-step2-count existiert, initial leer
 - **Erwartung**: Badge-Element vorhanden, ohne Produkte leer
 
+---
+
+## T-TL – Status-Zurücksetzen: Confirm-Abfrage (AK-TL-07, AK-TL-08)
+
+### T-TL-01: Kiosk – Doppelklick auf Status-Badge zeigt confirm
+- **Aktion**: Kiosk öffnen → Online-Shop → Bestellung mit Status "In Bearbeitung" → Status-Badge doppelklicken
+- **Prüfung**: Browser-confirm Dialog erscheint mit Text „Status zurücksetzen auf ‚Neu'?"
+- **Erwartung**: Bei "OK" → Status wird auf "Neu" zurückgesetzt. Bei "Abbrechen" → keine Änderung
+
+### T-TL-02: Kiosk – Doppelklick auf Status-Badge bei Status "Neu" – kein Handler
+- **Aktion**: Kiosk → Bestellung mit Status "Neu" → Status-Badge doppelklicken
+- **Prüfung**: Kein confirm-Dialog, kein Status-Change
+- **Erwartung**: Nichts passiert (Badge hat kein ondblclick bei Status 0)
+
+### T-TL-03: Shop-Admin – Timeline-Klick zeigt showConfirm Dialog
+- **Aktion**: Shop-Admin öffnen → Bestellung mit Status "In Bearbeitung" → Timeline-Schritt "Neu" (grün, done) klicken
+- **Prüfung**: Schöner Confirm-Dialog (showConfirm) erscheint mit Titel „Status zurücksetzen?" und Zielstatus
+- **Erwartung**: Bei "Zurücksetzen" → Status wird auf "Neu" gesetzt. Bei "Abbrechen" → keine Änderung
+
+### T-TL-04: Shop-Admin – Timeline-Klick auf aktiven/zukünftigen Schritt – nicht klickbar
+- **Aktion**: Bestellung Status "In Bearbeitung" → Timeline-Schritt "Abholbereit" klicken
+- **Prüfung**: Kein Dialog, kein onclick-Handler (Element hat keine st-clickable Klasse)
+- **Erwartung**: Nichts passiert
+
+### T-TL-05: Kiosk – Vorwärts-Aktionen bleiben ohne Confirm
+- **Aktion**: Kiosk → Bestellung "Neu" → Button "Annehmen" klicken
+- **Prüfung**: Kein confirm-Dialog, Status wird direkt auf "In Bearbeitung" gesetzt
+- **Erwartung**: Sofortige Statusänderung ohne Rückfrage
+
 ### Testlauf-Tabelle
 
 | Datum | Test | Ergebnis |

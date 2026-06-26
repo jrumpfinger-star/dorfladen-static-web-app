@@ -380,7 +380,8 @@
     return h;
   }
   function timelineSetStatus(orderId, status){
-    updateOrder({id:orderId, status:status});
+    var label=statusLabels[status]||'Unbekannt';
+    showConfirm('Status zurücksetzen?','Status wird auf <strong>„'+label+'"</strong> zurückgesetzt.','Zurücksetzen',function(){updateOrder({id:orderId, status:status});},'#d97706');
   }
   // Shop opening hours [openVM, closeVM, openNM, closeNM] indexed by JS weekday (0=So)
   var SHOP_HOURS=[null,[6.5,14,16.5,19],[6.5,14,null,null],[6.5,14,16.5,19],[6.5,14,16.5,19],[6.5,14,16.5,19],[7,13,null,null]];

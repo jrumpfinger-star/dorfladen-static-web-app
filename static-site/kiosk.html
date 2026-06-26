@@ -2247,7 +2247,7 @@ var K = (function(){
       else if(st.s < status) cls = 'done';
       else if(st.s === status) cls = 'active';
       var clickable = orderId && !isCancelled && st.s < status;
-      html += '<div class="st-step '+cls+(clickable?' st-clickable':'')+'"'+(clickable?' onclick="K.setShopStatus(\''+orderId+'\','+st.s+')" title="Zurück auf '+st.label+'"':'')+'>';
+      html += '<div class="st-step '+cls+(clickable?' st-clickable':'')+'"'+(clickable?' onclick="K.confirmRevert(\''+orderId+'\','+st.s+')" title="Zurück auf '+st.label+'"':'')+'>';
       html += '<div class="st-dot">'+luc(st.icon,10)+'</div>';
       html += '<div class="st-label">'+st.label+'</div>';
       html += '</div>';
@@ -2444,6 +2444,13 @@ var K = (function(){
     setShopStatus(id, prev);
   }
 
+  function confirmRevert(id, targetStatus, closeModalAfter){
+    var labels = {0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt'};
+    if(!confirm('Status zurücksetzen auf „'+(labels[targetStatus]||'?')+'"?')) return;
+    setShopStatus(id, targetStatus);
+    if(closeModalAfter) closeModal('modal-detail');
+  }
+
   function setShopStatus(id, status){
     fetch(API+'/shop-order',{
       method:'PATCH',
@@ -2550,7 +2557,7 @@ var K = (function(){
       else if(st.s < status) cls = 'done';
       else if(st.s === status) cls = 'active';
       var clickable = orderId && !isCancelled && st.s < status;
-      html += '<div class="st-step '+cls+(clickable?' st-clickable':'')+'"'+(clickable?' onclick="K.setShopStatus(\''+orderId+'\','+st.s+');K.closeModal(\'modal-detail\')" title="Zurück auf '+st.label+'"':'')+'>';
+      html += '<div class="st-step '+cls+(clickable?' st-clickable':'')+'"'+(clickable?' onclick="K.confirmRevert(\''+orderId+'\','+st.s+',true)" title="Zurück auf '+st.label+'"':'')+'>';
       html += '<div class="st-dot">'+luc(st.icon,14)+'</div>';
       html += '<div class="st-label">'+st.label+'</div>';
       html += '</div>';
@@ -3186,6 +3193,7 @@ var K = (function(){
     setHistStatus: setHistStatus,
     setShopStatus: setShopStatus,
     revertShopStatus: revertShopStatus,
+    confirmRevert: confirmRevert,
     toggleSlotGroup: toggleSlotGroup,
     toggleDishGroup: toggleDishGroup,
     toggleOrderCard: toggleOrderCard,
