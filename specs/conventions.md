@@ -164,3 +164,36 @@ function dlUnlockScroll() {
 | CMS Passwort | `DorfladenCMS!` |
 | Live-URL (Bestellsystem) | `https://witty-island-064f9d903.7.azurestaticapps.net` |
 | Live-URL (Produktion) | `https://kind-pebble-072605b03.7.azurestaticapps.net` |
+
+---
+
+## 9. Responsive UI-Test-Pflicht
+
+**Jede UI-Änderung muss auf allen drei Gerätekategorien getestet werden, bevor sie committed wird.**
+
+### Geräte-Breakpoints:
+
+| Gerät | Breite | Typisch |
+|---|---|---|
+| **Mobile** | ≤ 480px | iPhone SE/14, Android |
+| **Tablet/iPad** | 481–1024px | iPad Mini/Air/Pro |
+| **Desktop** | > 1024px | Laptop, Monitor |
+
+### Checkliste bei jeder UI-Änderung:
+
+- [ ] **Mobile** — Eingabefelder min. 40px Höhe, Touch-Targets min. 44px, kein horizontaler Overflow
+- [ ] **iPad** — Formulare und Tabellen brechen sauber um, keine abgeschnittenen Elemente
+- [ ] **Desktop** — Layout nutzt verfügbaren Platz, keine unnötig großen Lücken
+
+### Testen mit Browser-DevTools:
+
+1. Chrome/Edge DevTools öffnen (F12)
+2. Device Toolbar aktivieren (Strg+Shift+M)
+3. Mindestens testen: **iPhone SE** (375px), **iPad Air** (820px), **Desktop** (1280px)
+
+### Touch-Mindestgrößen:
+
+- Eingabefelder: `min-height: 40px`, `padding: 10px 12px`, `font-size: 14px`
+- Buttons: `min-height: var(--touch-min, 44px)`
+- Checkboxen: `width: 20px; height: 20px`
+- Klickbare Icons/Labels: min. 32×32px Touch-Area
