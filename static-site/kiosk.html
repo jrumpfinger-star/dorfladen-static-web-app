@@ -2817,14 +2817,33 @@ var K = (function(){
   //  UTILS
   // ══════════════════════════════════════════════════
 
+  // ── Android Back-Button support for modals ──
+  var _modalStack = [];
+
   function openModal(id){
     document.getElementById(id).classList.add('open');
     if(id==='modal-help'){var f=document.getElementById('help-iframe');if(f&&f.src.indexOf('help-workflows')===-1)f.src='/help-workflows.html';}
+    _modalStack.push(id);
+    history.pushState({modal:id},'');
   }
-  function closeModal(id){
+  function closeModal(id, viaBack){
     document.getElementById(id).classList.remove('open');
     if(id==='modal-help'){var f=document.getElementById('help-iframe');if(f)f.src='about:blank';}
+    var idx = _modalStack.indexOf(id);
+    if(idx!==-1) _modalStack.splice(idx,1);
+    if(!viaBack) history.back();
   }
+
+  function _getOpenOverlay(){
+    if(_modalStack.length>0) return _modalStack[_modalStack.length-1];
+    var bgs=document.querySelectorAll('.k-modal-bg.open');
+    for(var i=0;i<bgs.length;i++) return bgs[i].id;
+    return null;
+  }
+  window.addEventListener('popstate',function(){
+    var id=_getOpenOverlay();
+    if(id) closeModal(id, true);
+  });
 
   function updateBadge(tab, count){
     var el = document.getElementById('badge-'+tab);

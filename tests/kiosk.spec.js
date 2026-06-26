@@ -816,3 +816,68 @@ test.describe('Kiosk – Kompakte Buttons', () => {
     expect(minHeight).toBeLessThanOrEqual(32);
   });
 });
+
+// ═══════════════════════════════════════════════════
+//  AK-UI-36 – Android Zurück-Button
+// ═══════════════════════════════════════════════════
+
+test.describe('AK-UI-36 – Android Zurück-Button', () => {
+  test('T-36-01: Hilfe-Modal öffnen → Back schließt Modal', async ({ page }) => {
+    await page.goto((process.env.BASE_URL || 'http://localhost:4280') + '/kiosk');
+    await page.waitForLoadState('networkidle');
+
+    // Open help modal
+    await page.evaluate(() => K.openModal('modal-help'));
+    await expect(page.locator('#modal-help')).toHaveClass(/open/);
+
+    // Simulate Android back button
+    await page.goBack();
+    await page.waitForTimeout(300);
+
+    // Modal should be closed
+    await expect(page.locator('#modal-help')).not.toHaveClass(/open/);
+    // Page should still be kiosk (not navigated away)
+    expect(page.url()).toContain('/kiosk');
+  });
+
+  test('T-36-02: Bestelldetail-Modal öffnen → Back schließt Modal', async ({ page }) => {
+    await page.goto((process.env.BASE_URL || 'http://localhost:4280') + '/kiosk');
+    await page.waitForLoadState('networkidle');
+
+    // Open detail modal
+    await page.evaluate(() => K.openModal('modal-detail'));
+    await expect(page.locator('#modal-detail')).toHaveClass(/open/);
+
+    // Simulate Android back
+    await page.goBack();
+    await page.waitForTimeout(300);
+
+    await expect(page.locator('#modal-detail')).not.toHaveClass(/open/);
+    expect(page.url()).toContain('/kiosk');
+  });
+
+  test('T-36-03: Zwei Modals → Back schließt nur das oberste', async ({ page }) => {
+    await page.goto((process.env.BASE_URL || 'http://localhost:4280') + '/kiosk');
+    await page.waitForLoadState('networkidle');
+
+    // Open first modal
+    await page.evaluate(() => K.openModal('modal-detail'));
+    await expect(page.locator('#modal-detail')).toHaveClass(/open/);
+
+    // Open second modal on top
+    await page.evaluate(() => K.openModal('modal-help'));
+    await expect(page.locator('#modal-help')).toHaveClass(/open/);
+
+    // Back closes only top modal (help)
+    await page.goBack();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#modal-help')).not.toHaveClass(/open/);
+    await expect(page.locator('#modal-detail')).toHaveClass(/open/);
+
+    // Second back closes detail
+    await page.goBack();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#modal-detail')).not.toHaveClass(/open/);
+    expect(page.url()).toContain('/kiosk');
+  });
+});

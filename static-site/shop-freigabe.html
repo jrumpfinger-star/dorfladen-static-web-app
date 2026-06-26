@@ -601,11 +601,13 @@
       prev.style.display='none';
     }
     document.getElementById('img-overlay').classList.add('show');
+    history.pushState({overlay:'img'},'');
   }
 
-  function closeImageDialog(){
+  function closeImageDialog(viaBack){
     document.getElementById('img-overlay').classList.remove('show');
     imgStrichcode='';imgFileData=null;
+    if(!viaBack) history.back();
   }
 
   function compressImage(base64Str,maxWidth,maxHeight,callback){
@@ -782,6 +784,11 @@
     document.querySelectorAll('.art-cb:checked').forEach(function(cb){
       if(cb.offsetParent!==null){cb.checked=false;cb.dispatchEvent(new Event('change'));}
     });
+  });
+
+  // ── Android Back-Button ──
+  window.addEventListener('popstate',function(){
+    if(document.getElementById('img-overlay').classList.contains('show')) closeImageDialog(true);
   });
 
   // ── Init ──

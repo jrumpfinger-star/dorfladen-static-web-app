@@ -497,6 +497,7 @@
         // Save for bestellstatus page auto-login
         try{ localStorage.setItem('bs_nr', res.bestellnummer||''); localStorage.setItem('bs_email', email); }catch(e){}
         document.getElementById('success-overlay').classList.add('show');
+        history.pushState({overlay:'success'},'');
       } else {
         errEl.innerHTML = (res.errors || [res.error || 'Fehler']).join('<br>');
         errEl.style.display='';
@@ -620,6 +621,11 @@
   document.getElementById('cust-email').addEventListener('blur', function(){
     saveCustomer();
     registerPush();
+  });
+
+  // ── Android Back-Button ──
+  window.addEventListener('popstate',function(){
+    if(document.getElementById('success-overlay').classList.contains('show')) newOrder();
   });
 
   // Service Worker

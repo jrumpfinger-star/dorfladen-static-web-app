@@ -841,3 +841,31 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-26 | T-35-03 Primär-Action im Header | ✅ Pass |
 | 2026-06-26 | T-35-04 Details-Button vollwertig | ✅ Pass |
 | 2026-06-26 | T-35-05 Aufklappen/Zuklappen Toggle | ✅ Pass |
+
+---
+
+## AK-UI-36 – Android Zurück-Button für alle Overlays
+
+> Spec: `specs/android-back-button.md`  
+> Tests: `tests/kiosk.spec.js` → `AK-UI-36`
+
+### T-36-01 (AK-UI-36a) Hilfe-Modal → Back schließt Modal
+- **Aktion:** Kiosk öffnen, Hilfe-Modal öffnen, Android-Zurück drücken
+- **Prüfung:** Modal geschlossen, Seite bleibt auf /kiosk
+- **Erwartung:** Modal zu, keine Navigation weg
+
+### T-36-02 (AK-UI-36b) Bestelldetail-Modal → Back schließt Modal
+- **Aktion:** Kiosk öffnen, Detail-Modal öffnen, Android-Zurück drücken
+- **Prüfung:** Modal geschlossen, Seite bleibt auf /kiosk
+- **Erwartung:** Modal zu, keine Navigation weg
+
+### T-36-03 (AK-UI-36c) Zwei Modals → Back schließt nur oberstes
+- **Aktion:** Detail-Modal öffnen, dann Hilfe-Modal öffnen, Back drücken
+- **Prüfung:** Nur Hilfe-Modal geschlossen, Detail noch offen
+- **Erwartung:** Stack-Verhalten, zweiter Back schließt Detail
+
+### Weitere Seiten (manuell getestet)
+- **pack.html:** Camera-Overlay + Kasse-Overlay → Back schließt
+- **shop-freigabe.html:** Image-Upload-Overlay → Back schließt
+- **lunch-admin.html:** Storno-Dialog → Back schließt
+- **mittagstisch-bestellen.html:** Success-Overlay → Back schließt
