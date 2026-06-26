@@ -9575,7 +9575,7 @@
       if(p) p.style.display = t===name?'':'none';
       if(b){
         b.style.background = t===name?'#fff':'transparent';
-        b.style.color = t===name?'#e1306c':'#6b7280';
+        b.style.color = t===name?'#2e7d4f':'#6b7280';
         b.style.boxShadow = t===name?'0 1px 3px rgba(0,0,0,.08)':'none';
       }
     });
@@ -9623,7 +9623,7 @@
       thumb.src=e.target.result;
       wrap.style.display='block';
       if(hint) hint.style.display='none';
-      if(zone){ zone.style.borderColor='#e1306c'; zone.style.background='#fef2f2'; }
+      if(zone){ zone.style.borderColor='#2e7d4f'; zone.style.background='#f0fdf4'; }
     };
     r.readAsDataURL(file);
   }
@@ -9675,8 +9675,8 @@
     if(zone){
       zone.addEventListener('dragover',function(e){
         e.preventDefault();
-        zone.style.borderColor='#e1306c';
-        zone.style.background='#fef2f2';
+        zone.style.borderColor='#2e7d4f';
+        zone.style.background='#f0fdf4';
       });
       zone.addEventListener('dragleave',function(){
         if(!_socPastedFile && !(inp&&inp.files&&inp.files.length)){
@@ -9808,8 +9808,8 @@
     Object.keys(cats).forEach(function(cat){
       var catId='soc-kat-cat-'+esc(cat).replace(/[^a-zA-Z0-9]/g,'_');
       html+='<div class="cms-card" style="margin-bottom:10px">';
-      html+='<div class="cms-card-header soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:#1f2937;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">';
-      html+='<span>'+(catIcons[cat]||'&#128230;')+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
+      html+='<div class="cms-card-header soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:linear-gradient(135deg,#2d5016 0%,#2e7d4f 100%);cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">';
+      html+='<span>'+(catIcons[cat]||_cmsLucideIcon('package',16))+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
       html+='<span class="soc-kat-arrow" id="'+catId+'-arrow" style="transition:transform .2s;font-size:14px">&#9654;</span>';
       html+='</div>';
       html+='<div class="cms-card-body" id="'+catId+'" style="padding:0;display:none">';
@@ -9823,7 +9823,7 @@
         if(p.bild_url){
           html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         } else {
-          html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#9ca3af">&#128247;</div>';
+          html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9ca3af">'+_cmsLucideIcon('camera',20)+'</div>';
         }
         html+='</td>';
         html+='<td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
@@ -9831,9 +9831,9 @@
         if(p.preis){var lp=parseFloat(p.preis);html+='<span style="font-weight:700;color:#2e7d32">'+(lp&&isFinite(lp)?lp.toFixed(2):esc(p.preis))+' &#8364;</span>';}
         html+='</td>';
         html+='<td style="padding:8px;width:110px;text-align:right;white-space:nowrap">';
-        html+='<label class="cms-btn cms-btn-gray cms-btn-sm" title="Bild \u00e4ndern" style="padding:4px 8px;font-size:14px;margin-right:3px;cursor:pointer;display:inline-flex;align-items:center">&#128247;<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label>';
-        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;font-size:14px;margin-right:3px">&#9998;</button>';
-        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="L\u00f6schen" style="color:#dc2626;padding:4px 8px;font-size:14px">&#10005;</button>';
+        html+='<label class="cms-btn cms-btn-gray cms-btn-sm" title="Bild \u00e4ndern" style="padding:4px 8px;margin-right:3px;cursor:pointer;display:inline-flex;align-items:center">'+_cmsLucideIcon('camera',16)+'<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;margin-right:3px;display:inline-flex;align-items:center">'+_cmsLucideIcon('pencil',16)+'</button>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="L\u00f6schen" style="color:#dc2626;padding:4px 8px;display:inline-flex;align-items:center">'+_cmsLucideIcon('trash-2',16)+'</button>';
         html+='</td></tr>';
         // Edit row (hidden)
         html+='<tr id="soc-edit-'+pid+'" class="soc-kat-edit-tr" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b">';
@@ -10127,21 +10127,21 @@
         var pid=esc(p.id);
         var priceStr='';
         if(p.preis){var cp=parseFloat(p.preis);priceStr=(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC';}
-        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px 8px;border-radius:8px;margin-bottom:3px;transition:background .15s,border-color .15s;border:1px solid transparent" onmouseover="if(!this.querySelector(\'input[type=checkbox]\').checked)this.style.background=\'#fef2f2\'" onmouseout="var c=this.querySelector(\'input[type=checkbox]\').checked;this.style.background=c?\'#f0fdf4\':\'#fff\';this.style.borderColor=c?\'#86efac\':\'transparent\'">';
+        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px 8px;border-radius:8px;margin-bottom:3px;transition:background .15s,border-color .15s;border:1px solid transparent" onmouseover="if(!this.querySelector(\'input[type=checkbox]\').checked)this.style.background=\'#f0fdf4\'" onmouseout="var c=this.querySelector(\'input[type=checkbox]\').checked;this.style.background=c?\'#f0fdf4\':\'#fff\';this.style.borderColor=c?\'#86efac\':\'transparent\'">';
         // Checkbox
-        html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate()" style="width:20px;height:20px;accent-color:#e1306c;flex-shrink:0;margin-top:2px">';
+        html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate()" style="width:20px;height:20px;accent-color:#2e7d4f;flex-shrink:0;margin-top:2px">';
         // Thumbnail
         html+='<div class="soc-pick-thumb-wrap" style="flex-shrink:0;position:relative">';
         html+='<div tabindex="0" class="soc-pick-thumb" data-pid="'+pid+'" onpaste="socialPickImgPaste(\''+pid+'\',event)" style="cursor:pointer;outline:none;border-radius:6px;position:relative">';
         if(p.bild_url){
           html+='<img id="soc-pick-img-'+pid+'" src="'+esc(p.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         } else {
-          html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#9ca3af;border:1px solid #e5e7eb">&#128247;</div>';
+          html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9ca3af;border:1px solid #e5e7eb">'+_cmsLucideIcon('camera',18)+'</div>';
         }
         html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+pid+'\',this)" style="display:none">';
         html+='</div>';
         // Camera button overlay
-        html+='<button type="button" onclick="this.parentNode.querySelector(\'input[type=file]\').click()" class="soc-pick-cam" style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d5db;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)" title="Bild \u00e4ndern (Kamera/Datei)">&#128247;</button>';
+        html+='<button type="button" onclick="this.parentNode.querySelector(\'input[type=file]\').click()" class="soc-pick-cam" style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d5db;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)" title="Bild \u00e4ndern (Kamera/Datei)">'+_cmsLucideIcon('camera',12)+'</button>';
         html+='</div>';
         // Name + price + ab (stacked on mobile)
         html+='<div style="flex:1;min-width:0">';
@@ -10820,11 +10820,11 @@
       // Space above category (bigger gap between categories)
       y+=ci===0?4:20;
       // Category header
-      ctx.fillStyle='#e1306c';
+      ctx.fillStyle='#2e7d4f';
       ctx.font='bold 16px "Segoe UI",system-ui,sans-serif';
       ctx.fillText((catIcons[cat]||'')+' '+cat,24,y);
       y+=6;
-      ctx.strokeStyle='#e1306c';
+      ctx.strokeStyle='#2e7d4f';
       ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(24,y);ctx.lineTo(W-24,y);ctx.stroke();
       y+=12;
