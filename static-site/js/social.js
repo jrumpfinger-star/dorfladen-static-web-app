@@ -95,9 +95,7 @@
       var b=document.getElementById('social-subtab-'+t);
       if(p) p.style.display = t===name?'':'none';
       if(b){
-        b.style.background = t===name?'#fff':'transparent';
-        b.style.color = t===name?'#e1306c':'#6b7280';
-        b.style.boxShadow = t===name?'0 1px 3px rgba(0,0,0,.08)':'none';
+        if(t===name){ b.classList.add('active'); } else { b.classList.remove('active'); }
       }
     });
     if(name==='post'){
@@ -143,7 +141,7 @@
       thumb.src=e.target.result;
       wrap.style.display='block';
       if(hint) hint.style.display='none';
-      if(zone){ zone.style.borderColor='#e1306c'; zone.style.background='#fef2f2'; }
+      if(zone){ zone.style.borderColor='var(--c-green,#2e7d4f)'; zone.style.background='#f0fdf4'; }
     };
     r.readAsDataURL(file);
   }
@@ -157,7 +155,7 @@
     var zone=document.getElementById('soc-kat-paste-zone');
     if(wrap) wrap.style.display='none';
     if(hint) hint.style.display='block';
-    if(zone){ zone.style.borderColor='#d1d5db'; zone.style.background='#fafbfc'; }
+    if(zone){ zone.style.borderColor='var(--c-border,#e5e7eb)'; zone.style.background='#fafbfc'; }
   };
 
   // Init bild handlers on DOMContentLoaded
@@ -185,8 +183,8 @@
     if(zone) zone.addEventListener('paste',handlePaste);
     if(panel) panel.addEventListener('paste',handlePaste);
     if(zone){
-      zone.addEventListener('dragover',function(e){ e.preventDefault(); zone.style.borderColor='#e1306c'; zone.style.background='#fef2f2'; });
-      zone.addEventListener('dragleave',function(){ if(!_socPastedFile&&!(inp&&inp.files&&inp.files.length)){ zone.style.borderColor='#d1d5db'; zone.style.background='#fafbfc'; } });
+      zone.addEventListener('dragover',function(e){ e.preventDefault(); zone.style.borderColor='var(--c-green,#2e7d4f)'; zone.style.background='#f0fdf4'; });
+      zone.addEventListener('dragleave',function(){ if(!_socPastedFile&&!(inp&&inp.files&&inp.files.length)){ zone.style.borderColor='var(--c-border,#e5e7eb)'; zone.style.background='#fafbfc'; } });
       zone.addEventListener('drop',function(e){ e.preventDefault(); var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f&&f.type.indexOf('image')!==-1){ _socPastedFile=f; if(inp) inp.value=''; socialShowBildPreview(f); } });
     }
   }
@@ -217,9 +215,9 @@
     var html='';
     Object.keys(cats).forEach(function(cat){
       var catId='soc-kat-cat-'+esc(cat).replace(/[^a-zA-Z0-9]/g,'_');
-      html+='<div class="cms-card soc-card" style="margin-bottom:10px">';
-      html+='<div class="cms-card-header soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:#1f2937;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;padding:10px 14px;color:#fff;font-weight:700;border-radius:10px 10px 0 0">';
-      html+='<span>'+(catIcons[cat]||'&#128230;')+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
+      html+='<div class="k-order soc-card" style="margin-bottom:10px">';
+      html+='<div class="soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:linear-gradient(135deg,var(--c-pri,#2d5016) 0%,var(--c-green,#2e7d4f) 100%);cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;padding:10px 14px;color:#fff;font-weight:700;border-radius:10px 10px 0 0">';
+      html+='<span style="display:inline-flex;align-items:center;gap:6px">'+(catIcons[cat]||lucideIcon('package',16))+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
       html+='<span class="soc-kat-arrow" id="'+catId+'-arrow" style="transition:transform .2s;font-size:14px">&#9654;</span>';
       html+='</div>';
       html+='<div id="'+catId+'" style="padding:0;display:none">';
@@ -229,14 +227,14 @@
         html+='<tr id="soc-row-'+pid+'" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
         html+='<td style="padding:8px;width:50px">';
         if(p.bild_url) html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;cursor:zoom-in" onerror="this.style.display=\'none\'">';
-        else html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#9ca3af">&#128247;</div>';
+        else html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9ca3af">'+lucideIcon('camera',20)+'</div>';
         html+='</td><td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
         html+='<td style="padding:8px;text-align:right;white-space:nowrap">';
         if(p.preis){var lp=parseFloat(p.preis);html+='<span style="font-weight:700;color:#2e7d32">'+(lp&&isFinite(lp)?lp.toFixed(2):esc(p.preis))+' &#8364;</span>';}
         html+='</td><td style="padding:8px;width:110px;text-align:right;white-space:nowrap">';
-        html+='<label title="Bild \u00e4ndern" style="padding:4px 8px;font-size:14px;margin-right:3px;cursor:pointer;display:inline-flex;align-items:center;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px">&#128247;<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label>';
-        html+='<button onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;font-size:14px;margin-right:3px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">&#9998;</button>';
-        html+='<button onclick="socialKatDelete(\''+pid+'\')" title="L\u00f6schen" style="color:#dc2626;padding:4px 8px;font-size:14px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;cursor:pointer">&#10005;</button>';
+        html+='<label title="Bild \u00e4ndern" style="padding:4px 8px;margin-right:3px;cursor:pointer;display:inline-flex;align-items:center;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;min-height:32px">'+lucideIcon('camera',16)+'<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label>';
+        html+='<button onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;margin-right:3px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;min-height:32px">'+lucideIcon('pencil',16)+'</button>';
+        html+='<button onclick="socialKatDelete(\''+pid+'\')" title="L\u00f6schen" style="color:#dc2626;padding:4px 8px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;min-height:32px">'+lucideIcon('trash-2',16)+'</button>';
         html+='</td></tr>';
         html+='<tr id="soc-edit-'+pid+'" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b"><td colspan="4" style="padding:10px">';
         html+='<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">';
@@ -329,7 +327,7 @@
     var html='';
     filtered.forEach(function(ic){
       var sel=document.getElementById('soc-kat-new-icon')&&document.getElementById('soc-kat-new-icon').value===ic;
-      html+='<button type="button" onclick="socialKatMgrPickIcon(\''+ic+'\')" title="'+ic+'" style="width:36px;height:36px;border-radius:6px;border:2px solid '+(sel?'#e1306c':'#e5e7eb')+';background:'+(sel?'#fef2f2':'#fff')+';cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#374151">'+lucideIcon(ic,18)+'</button>';
+      html+='<button type="button" onclick="socialKatMgrPickIcon(\''+ic+'\')" title="'+ic+'" style="width:36px;height:36px;border-radius:6px;border:2px solid '+(sel?'var(--c-green,#2e7d4f)':'#e5e7eb')+';background:'+(sel?'#f0fdf4':'#fff')+';cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#374151">'+lucideIcon(ic,18)+'</button>';
     });
     if(!filtered.length) html='<div style="color:#9ca3af;font-size:11px;padding:8px">Kein Icon gefunden – versuche englische Begriffe (z.B. ice-cream, bread, cup)</div>';
     grid.innerHTML=html;
@@ -431,10 +429,10 @@
       html+='<div id="soc-pick-grid" style="max-height:340px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;padding:4px">';
       _socialKatalog.forEach(function(p){ var pid=esc(p.id); var priceStr=''; if(p.preis){var cp=parseFloat(p.preis);priceStr=(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC';}
         html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px;border-radius:8px;margin-bottom:3px;border:1px solid transparent">';
-        html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate()" style="width:20px;height:20px;accent-color:#e1306c;flex-shrink:0;margin-top:2px">';
+        html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate()" style="width:20px;height:20px;accent-color:var(--c-green,#2e7d4f);flex-shrink:0;margin-top:2px">';
         html+='<div style="flex-shrink:0;position:relative"><div tabindex="0" data-pid="'+pid+'" onpaste="socialPickImgPaste(\''+pid+'\',event)" style="cursor:pointer;outline:none;border-radius:6px;position:relative">';
         if(p.bild_url) html+='<img id="soc-pick-img-'+pid+'" src="'+esc(p.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in" onerror="this.style.display=\'none\'">';
-        else html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#9ca3af;border:1px solid #e5e7eb">&#128247;</div>';
+        else html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9ca3af;border:1px solid #e5e7eb">'+lucideIcon('camera',18)+'</div>';
         html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+pid+'\',this)" style="display:none"></div>';
         html+='<button type="button" onclick="this.parentNode.querySelector(\'input[type=file]\').click()" style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d5db;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)" title="Bild \u00e4ndern">&#128247;</button></div>';
         html+='<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;line-height:1.3;word-break:break-word;color:#1f2937">'+esc(p.name)+'</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">';

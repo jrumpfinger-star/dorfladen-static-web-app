@@ -438,23 +438,23 @@
   <div class="k-panel" id="panel-social">
     <div id="kiosk-panel-social">
     <div style="margin-bottom:12px">
-      <h3 style="font-size:17px;font-weight:800;color:#1f2937;margin:0;display:flex;align-items:center;gap:8px"><i data-lucide="share-2" style="width:20px;height:20px;color:#e1306c"></i> Social Media</h3>
+      <h3 style="font-size:17px;font-weight:800;color:#1f2937;margin:0;display:flex;align-items:center;gap:8px"><i data-lucide="share-2" style="width:20px;height:20px;color:var(--c-green)"></i> Social Media</h3>
       <p style="font-size:12px;color:#6b7280;margin:4px 0 0">Tagespost erstellen und teilen – in 4 einfachen Schritten.</p>
     </div>
 
     <!-- Sub-Tabs: Neuer Post | Katalog -->
-    <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:16px">
-      <button id="social-subtab-post" onclick="socialSubTab('post')" style="flex:1;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;background:#fff;color:#e1306c;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;min-height:44px"><i data-lucide="plus-circle" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Neuer Post</button>
-      <button id="social-subtab-katalog" onclick="socialSubTab('katalog')" style="flex:1;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;background:transparent;color:#6b7280;cursor:pointer;min-height:44px"><i data-lucide="book-open" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Katalog</button>
+    <div class="k-filter-bar" style="margin-bottom:16px">
+      <button class="k-filter-btn active" id="social-subtab-post" onclick="socialSubTab('post')"><i data-lucide="plus-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Neuer Post</span></button>
+      <button class="k-filter-btn" id="social-subtab-katalog" onclick="socialSubTab('katalog')"><i data-lucide="book-open" style="width:14px;height:14px"></i> <span class="k-filter-label">Katalog</span></button>
     </div>
 
     <!-- ========== SUB: KATALOG ========== -->
     <div id="social-panel-katalog" style="display:none">
       <!-- Kategorie-Manager (aufklappbar) -->
       <div style="margin-bottom:10px">
-        <button onclick="socialKatMgrToggle()" style="width:100%;padding:10px 14px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#374151;text-align:left;display:flex;align-items:center;gap:8px">
+        <button class="k-btn k-btn-outline" onclick="socialKatMgrToggle()" style="width:100%;text-align:left;display:flex;align-items:center;gap:8px">
           <i data-lucide="settings" style="width:16px;height:16px"></i> Kategorien verwalten
-          <span style="margin-left:auto;font-size:11px;color:#9ca3af">CMS</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--c-muted)">CMS</span>
         </button>
         <div id="soc-kat-manager" style="display:none;margin-top:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px">
           <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Aktuelle Kategorien</div>
@@ -473,7 +473,7 @@
                   <input id="soc-kat-new-icon" type="hidden" value="">
                 </div>
               </div>
-              <button onclick="socialKatMgrAdd()" style="background:#1f2937;color:#fff;padding:5px 14px;font-size:12px;font-weight:700;border:none;border-radius:6px;cursor:pointer;white-space:nowrap">+ Hinzuf&#252;gen</button>
+              <button class="k-btn k-btn-confirm" onclick="socialKatMgrAdd()" style="padding:5px 14px;font-size:12px;white-space:nowrap"><i data-lucide="plus" style="width:14px;height:14px"></i> Hinzuf&#252;gen</button>
             </div>
             <div style="margin-top:8px">
               <label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Icon suchen</label>
@@ -483,36 +483,36 @@
           </div>
         </div>
       </div>
-      <div style="margin-bottom:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
-        <div style="background:#e1306c;color:#fff;padding:10px 14px;font-weight:700;font-size:13px">&#10133; Neues Produkt zum Katalog hinzuf&#252;gen</div>
+      <div class="k-order" style="margin-bottom:14px;border-left-color:var(--c-green)">
+        <div style="background:var(--c-green);color:#fff;padding:10px 14px;font-weight:700;font-size:13px;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:16px;height:16px"></i> Neues Produkt zum Katalog hinzuf&#252;gen</div>
         <div style="padding:14px">
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
             <div style="flex:2;min-width:160px">
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Name *</label>
-              <input id="soc-kat-name" placeholder="z.B. Geschnetzeltes mit Champignonrahm" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+              <input id="soc-kat-name" class="k-field" placeholder="z.B. Geschnetzeltes mit Champignonrahm" style="width:100%;font-size:13px">
             </div>
             <div style="flex:1;min-width:120px">
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Kategorie *</label>
-              <select id="soc-kat-kategorie" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+              <select id="soc-kat-kategorie" class="k-field" style="width:100%;font-size:13px">
                 <!-- dynamisch bef&#252;llt via social.js -->
               </select>
             </div>
             <div style="width:80px">
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Preis &#8364;</label>
-              <input id="soc-kat-preis" type="number" step="0.01" min="0" placeholder="9.80" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+              <input id="soc-kat-preis" type="number" step="0.01" min="0" placeholder="9.80" class="k-field" style="width:100%;font-size:13px">
             </div>
             <div style="min-width:140px">
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Bild</label>
               <input id="soc-kat-bild" type="file" accept="image/*" capture="environment" style="width:100%;font-size:11px">
             </div>
-            <button onclick="socialKatAdd()" style="white-space:nowrap;background:#e1306c;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer">&#10133; Hinzuf&#252;gen</button>
+            <button class="k-btn k-btn-confirm" onclick="socialKatAdd()" style="white-space:nowrap;font-size:13px"><i data-lucide="plus" style="width:14px;height:14px"></i> Hinzuf&#252;gen</button>
           </div>
           <div id="soc-kat-paste-zone" tabindex="0"
-            style="margin-top:8px;border:2px dashed #d1d5db;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
+            style="margin-top:8px;border:2px dashed var(--c-border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
             onclick="document.getElementById('soc-kat-bild').click()"
             title="Klicken zum Datei w&#228;hlen oder Strg+V zum Einf&#252;gen">
             <div id="soc-kat-paste-hint" style="color:#9ca3af;font-size:12px">
-              &#128203; <strong>Strg+V</strong> zum Einf&#252;gen oder <strong>klicken</strong> zum Datei w&#228;hlen
+              <i data-lucide="clipboard-paste" style="width:14px;height:14px;vertical-align:middle"></i> <strong>Strg+V</strong> zum Einf&#252;gen oder <strong>klicken</strong> zum Datei w&#228;hlen
             </div>
             <div id="soc-kat-bild-preview" style="display:none;margin-top:6px">
               <img id="soc-kat-bild-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
@@ -523,7 +523,7 @@
       </div>
       <div id="soc-kat-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
       <div id="soc-kat-loading" style="display:none;text-align:center;padding:30px 0">
-        <div style="display:inline-block;width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#e1306c;border-radius:50%;animation:kSpin 0.8s linear infinite"></div>
+        <div style="display:inline-block;width:28px;height:28px;border:3px solid var(--c-border);border-top-color:var(--c-green);border-radius:50%;animation:kSpin 0.8s linear infinite"></div>
         <div style="margin-top:8px;color:#6b7280;font-size:13px">Katalog wird geladen&#8230;</div>
       </div>
       <div id="soc-kat-list"></div>
