@@ -781,6 +781,16 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 - **Pruefung:** Response-Format pruefen
 - **Erwartung:** success:true, orders-Array mit kunde_kommentar, name, gericht, datum, kommentar_gelesen
 
+### T16.6 – T-17-06 (AK-UI-17g) Bestellschluss-Funktion existiert
+- **Aktion:** Kiosk → Mittagstisch
+- **Pruefung:** Button #btn-new-order vorhanden, _isMittagCutoff im Code
+- **Erwartung:** Button existiert, Cutoff-Funktion ist definiert
+
+### T16.7 – T-17-07 (AK-UI-17h) Button-Zustand nach Uhrzeit
+- **Aktion:** Kiosk → Mittagstisch, Uhrzeit pruefen
+- **Pruefung:** Vor 12:00 → Button enabled, ab 12:00 → Button disabled + opacity
+- **Erwartung:** Zustand entspricht aktueller Uhrzeit
+
 ### Testlauf-Tabelle
 
 | Datum | Test | Ergebnis |

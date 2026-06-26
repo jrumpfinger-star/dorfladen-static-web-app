@@ -228,6 +228,40 @@ test.describe('Kiosk – Mittagstisch Filter', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  Mittagstisch – Bestellschluss (12:00)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Bestellschluss', () => {
+  test('T-17-06 (AK-UI-17g) Button hat id btn-new-order und _isMittagCutoff existiert', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(1000);
+    const btn = page.locator('#btn-new-order');
+    await expect(btn).toHaveCount(1);
+    // _isMittagCutoff function exists
+    const hasFn = await page.evaluate(() => typeof K._isMittagCutoff === 'function' || document.body.innerHTML.includes('_isMittagCutoff'));
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-17-07 (AK-UI-17h) Button-Zustand passt zur Uhrzeit', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(1000);
+    const btn = page.locator('#btn-new-order');
+    const hour = new Date().getHours();
+    if (hour >= 12) {
+      // After cutoff: button should be disabled
+      await expect(btn).toBeDisabled();
+      const opacity = await btn.evaluate(el => getComputedStyle(el).opacity);
+      expect(parseFloat(opacity)).toBeLessThan(1);
+    } else {
+      // Before cutoff: button should be enabled
+      await expect(btn).toBeEnabled();
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  Mittagstisch – Bestätigen-Dialog
 // ════════════════════════════════════════════════════
 

@@ -589,7 +589,7 @@
 
 <!-- ═══ Bottom bar ═══ -->
 <div class="k-bottom" style="display:none">
-  <button class="k-btn k-btn-lg k-btn-confirm" onclick="K.openNewOrder()"><i data-lucide="phone" style="width:18px;height:18px"></i> Neue Telefonbestellung</button>
+  <button class="k-btn k-btn-lg k-btn-confirm" id="btn-new-order" onclick="K.openNewOrder()"><i data-lucide="phone" style="width:18px;height:18px"></i> Neue Telefonbestellung</button>
   <button class="k-btn k-btn-lg k-btn-outline" onclick="K.printKitchen()"><i data-lucide="printer" style="width:18px;height:18px"></i> Küchenliste drucken</button>
 </div>
 
@@ -785,10 +785,13 @@ var K = (function(){
   function reinitIcons(){if(typeof lucide!=='undefined') lucide.createIcons();}
 
   // ── Clock ──
+  var _lastCutoffCheck = -1;
   function updateClock(){
     var now = new Date();
     document.getElementById('k-clock').textContent = now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     document.getElementById('k-date').textContent = now.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    var min = now.getHours()*60+now.getMinutes();
+    if(min!==_lastCutoffCheck){ _lastCutoffCheck=min; if(typeof _updateNewOrderBtn==='function') _updateNewOrderBtn(); }
   }
   setInterval(updateClock, 1000);
   updateClock();
@@ -1031,6 +1034,7 @@ var K = (function(){
         updateMittagFilterCounts();
         renderOrders();
         renderStats();
+        _updateNewOrderBtn();
       })
       .catch(function(){});
     loadMittagBadge();
@@ -1427,7 +1431,25 @@ var K = (function(){
   //  NEW ORDER MODAL
   // ══════════════════════════════════════════════════
 
+  function _isMittagCutoff(){
+    var now = new Date();
+    return _mittagDatum === today() && now.getHours() >= 12;
+  }
+
+  function _updateNewOrderBtn(){
+    var btn = document.getElementById('btn-new-order');
+    if(!btn) return;
+    var cutoff = _isMittagCutoff();
+    btn.disabled = cutoff;
+    btn.style.opacity = cutoff ? '.5' : '';
+    btn.title = cutoff ? 'Bestellschluss für heute (12:00 Uhr) erreicht' : '';
+  }
+
   function openNewOrder(){
+    if(_isMittagCutoff()){
+      toast('🕐 Bestellschluss für heute ist 12:00 Uhr. Für morgen bitte zuerst den Tag wechseln.');
+      return;
+    }
     selectedKunde = null;
     selectedDish = null;
     noQty = 1;

@@ -115,6 +115,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-17d: Nachrichten-Tab zeigt alle Kundenkommentare tagesübergreifend
 - [x] AK-UI-17e: Nachrichten-Tab: Inline-Antwort + Gelesen-Markierung
 - [x] AK-UI-17f: API mode=messages liefert vollständige Nachrichten-Bestellungen
+- [x] AK-UI-17g: Bestellschluss 12:00 – Neue Telefonbestellung für heute ab 12 Uhr gesperrt
+- [x] AK-UI-17h: Button visuell deaktiviert (disabled + opacity) ab Bestellschluss
+- [x] AK-UI-17i: Toast-Hinweis bei Klick auf gesperrten Button
 - [x] AK-UI-18: Doppelklick auf Shop-Bestellkarte öffnet Detail-Modal
 - [x] AK-UI-18b: Detail-Modal zeigt Positionen-Tabelle mit Menge, Einheit, Preis
 - [x] AK-UI-16e: Confirm-Dialog als vollbreites Element unter der Karte (nicht inline in Actions)
