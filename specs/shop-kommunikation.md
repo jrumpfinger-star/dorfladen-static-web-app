@@ -51,3 +51,20 @@ Neue Felder im bestehenden Entity:
 
 ### Dataverse
 4. Felder `dl_kunde_kommentar`, `dl_personal_antwort`, `dl_kommentar_gelesen` in `dl_shopbestellungs` anlegen
+
+## Status
+
+| Komponente | Status |
+|---|---|
+| API GET (Serialisierung) | ✅ Implementiert |
+| API PATCH (Kommentar/Antwort/Gelesen) | ✅ Implementiert |
+| API JWT-Prüfung (Kunden-Kommentar) | ✅ Implementiert |
+| Push-Benachrichtigung (Antwort→Kunde) | ✅ Implementiert |
+| Kiosk: NEU-Badge Shop-Karte | ✅ Implementiert |
+| Kiosk: Nachrichten-Anzeige | ✅ Implementiert |
+| Kiosk: Antwort-Dialog | ✅ Implementiert |
+| Kiosk: Gelesen-Button | ✅ Implementiert |
+| shop.html: Nachrichten-Anzeige | ✅ Implementiert |
+| shop.html: Nachricht senden | ✅ Implementiert |
+| Dataverse-Felder | ⏳ Manuell in Dataverse anlegen |
+| Tests (Playwright) | ✅ Geschrieben |
