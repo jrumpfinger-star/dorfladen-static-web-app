@@ -562,11 +562,18 @@ def _handle_get(req, dv_token, base_url, headers):
                 json.dumps({"success": True, "orders": orders}, ensure_ascii=False),
                 status_code=200, headers=get_cors_headers()
             )
+        dv_detail = ""
+        try:
+            dv_detail = r.text[:500]
+        except:
+            pass
+        logging.error("shop-order GET cms Dataverse %s: %s", r.status_code, dv_detail)
         return func.HttpResponse(
-            json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}),
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "detail": dv_detail}),
             status_code=r.status_code, headers=get_cors_headers()
         )
     except Exception as e:
+        logging.exception("shop-order GET cms exception")
         return func.HttpResponse(
             json.dumps({"success": False, "error": str(e)}),
             status_code=500, headers=get_cors_headers()
