@@ -1219,9 +1219,9 @@ var K = (function(){
     dishOrder.forEach(function(dish){
       var allInGroup = dishMap[dish];
       var totalQty = allInGroup.reduce(function(s,o){return s+(o.menge||1);},0);
-      var openCount = allInGroup.filter(function(o){return o.status===0;}).reduce(function(s,o){return s+(o.menge||1);},0);
-      var confirmedCount = allInGroup.filter(function(o){return o.status===1;}).reduce(function(s,o){return s+(o.menge||1);},0);
-      var mitnehmenCount = allInGroup.filter(function(o){return o.mitnehmen && o.status!==2;}).reduce(function(s,o){return s+(o.menge||1);},0);
+      var openCount = allInGroup.filter(function(o){return o.status===0;}).length;
+      var confirmedCount = allInGroup.filter(function(o){return o.status===1;}).length;
+      var mitnehmenCount = allInGroup.filter(function(o){return o.mitnehmen && o.status!==2;}).length;
       var visibleOrders = allInGroup.filter(filterFn);
 
       var gid = 'dg-'+dish.replace(/[^a-zA-Z0-9]/g,'_');
