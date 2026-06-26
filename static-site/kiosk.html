@@ -45,19 +45,19 @@
 
 
     /* ═══ Order cards (collapsible) ═══ */
-    .k-order{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:3px;overflow:hidden;border-left:4px solid transparent;position:relative;transition:transform .2s ease}
+    .k-order{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:6px;overflow:hidden;border-left:4px solid transparent;position:relative;transition:transform .2s ease}
     .k-order .k-swipe-hint{position:absolute;right:0;top:0;bottom:0;width:60px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;border-radius:0 var(--radius) var(--radius) 0;opacity:0;transition:opacity .15s;pointer-events:none;z-index:0}
     .k-order.swiping .k-swipe-hint{opacity:1}
-    .k-order-hdr{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;user-select:none;min-height:32px}
+    .k-order-hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none;min-height:44px}
     .k-order-hdr:active{background:#f9fafb}
-    .k-order-hdr .k-oc-arrow{font-size:9px;color:var(--c-muted);transition:transform .2s;flex-shrink:0}
+    .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0}
     .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
     .k-order.oc-collapsed .k-order-body{display:none}
-    .k-order-hdr .k-oc-name{font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .k-order-hdr .k-oc-qty{font-weight:700;font-size:13px;color:var(--c-green)}
-    .k-order-hdr .k-oc-badges{display:flex;gap:3px;align-items:center;flex-shrink:0}
+    .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .k-order-hdr .k-oc-qty{font-weight:800;font-size:15px;color:var(--c-green)}
+    .k-order-hdr .k-oc-badges{display:flex;gap:5px;align-items:center;flex-shrink:0}
     .k-order-hdr .k-oc-actions{display:flex;gap:2px;align-items:center;flex-shrink:0}
-    .k-order-hdr .k-oc-actions .k-btn{min-height:26px;min-width:26px;padding:3px 6px;font-size:10px;border-radius:6px;gap:2px}
+    .k-order-hdr .k-oc-actions .k-btn{min-height:34px;min-width:34px;padding:5px 10px;font-size:12px;border-radius:8px;gap:4px}
     @media(max-width:600px){.k-order-hdr .k-oc-actions .k-btn .oc-btn-label{display:none}}
     .k-order-body{display:flex;align-items:stretch;border-top:1px solid var(--c-border)}
     .k-order.st-0{border-left-color:var(--c-yellow)}
@@ -69,7 +69,7 @@
     .k-order.shop-st-2{border-left-color:#2563eb}
     .k-order.shop-st-3{border-left-color:#9ca3af}
     .k-order.shop-st-4{border-left-color:var(--c-red);opacity:.6}
-    .k-order-status{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
+    .k-order-status{font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px;white-space:nowrap}
     .shop-badge-0{background:#fef3c7;color:#92400e}
     .shop-badge-1{background:#fef3c7;color:#92400e}
     .shop-badge-2{background:#dbeafe;color:#1d4ed8}
@@ -83,14 +83,14 @@
     .k-order-info{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
     .k-order-top{display:flex;align-items:center;gap:10px}
     .k-order-name{font-size:16px;font-weight:700;flex:1}
-    .k-order-src{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:0;border-radius:0;background:none}
+    .k-order-src{font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#f3f4f6}
     .src-online{color:#2563eb}
     .src-telefon{color:#92400e}
     .src-personal{color:#7c3aed}
     .k-order-dish{font-size:14px;color:var(--c-text)}
-    .k-order-meta{font-size:12px;color:var(--c-muted);display:flex;gap:12px;flex-wrap:wrap}
-    .k-order-note{font-size:12px;color:#92400e;font-style:italic}
-    .k-order-mitnehmen{font-size:9px;background:none;color:#1d4ed8;padding:0;border-radius:0;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+    .k-order-meta{font-size:13px;color:var(--c-muted);display:flex;gap:12px;flex-wrap:wrap}
+    .k-order-note{font-size:13px;color:#92400e;font-style:italic;padding:6px 10px;border-radius:6px;margin-top:4px}
+    .k-order-mitnehmen{font-size:11px;background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
     .k-order-qty{display:flex;align-items:center;gap:4px;padding:6px 8px;border-left:1px solid var(--c-border)}
     .k-order-qty .qty-display{font-size:20px;font-weight:800;min-width:28px;text-align:center}
     .k-order-actions{display:flex;align-items:center;gap:8px;padding:8px 0 0}
@@ -188,24 +188,24 @@
       .k-filter-btn.active .k-filter-label{display:inline}
     }
     /* ═══ Day bar ═══ */
-    .k-day-bar{display:flex;gap:2px;align-items:stretch;padding:4px 0 8px;border-bottom:1px solid var(--c-border);margin-bottom:4px;overflow-x:auto}
+    .k-day-bar{display:flex;gap:4px;align-items:stretch;padding:6px 0 10px;border-bottom:1px solid var(--c-border);margin-bottom:6px;overflow-x:auto}
     /* ═══ Day pills (two-line: label + date) ═══ */
-    .k-day-pill{padding:6px 12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-muted);border:none;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
-    .k-day-pill .day-date{font-size:11px;font-weight:500;opacity:.7}
+    .k-day-pill{padding:8px 14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-muted);border:none;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;min-height:44px;justify-content:center}
+    .k-day-pill .day-date{font-size:12px;font-weight:500;opacity:.7}
     .k-day-pill.active{background:var(--c-green);color:#fff}
     .k-day-pill.active .day-date{opacity:1}
     .k-day-pill:not(.active):hover{background:#f3f4f6}
 
     /* ═══ Dish group (collapsible section) ═══ */
-    .k-dish-group{margin-bottom:4px}
-    .k-dish-sep-row{display:flex;align-items:center;gap:8px;padding:8px 14px;background:linear-gradient(90deg,#f0fdf4,#e8f5ec);border:1px solid #c8e6c9;border-radius:8px;cursor:pointer;user-select:none;margin-bottom:3px}
+    .k-dish-group{margin-bottom:8px}
+    .k-dish-sep-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(90deg,#f0fdf4,#e8f5ec);border:1px solid #c8e6c9;border-radius:10px;cursor:pointer;user-select:none;margin-bottom:6px}
     .k-dish-sep-row:hover{background:linear-gradient(90deg,#e8f5ec,#dcfce7)}
     .k-dish-sep-arrow{font-size:10px;color:#1b5e20;transition:transform .2s;flex-shrink:0}
     .k-dish-group.collapsed .k-dish-sep-arrow{transform:rotate(-90deg)}
     .k-dish-group.collapsed .k-dish-body{display:none}
-    .k-dish-sep-label{font-weight:700;font-size:14px;color:#1b5e20;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .k-dish-sep-label{font-weight:700;font-size:15px;color:#1b5e20;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .k-dish-sep-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
-    .k-btn-xs{min-height:24px;padding:2px 8px;font-size:10px;border-radius:6px;gap:3px}
+    .k-btn-xs{min-height:30px;padding:4px 10px;font-size:12px;border-radius:6px;gap:4px}
 
     /* ═══ Slot group headers ═══ */
     .k-slot-header{background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
@@ -1009,8 +1009,8 @@ var K = (function(){
     html += '<span class="k-oc-badges">';
     html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
     if(o.mitnehmen) html += '<span class="k-order-mitnehmen">'+luc('package',12)+' MIT</span>';
-    if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:6px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',9)+' NEU</span>';
-    if(hasNote) html += '<span style="color:#92400e;font-size:10px" title="Hat Anmerkung">'+luc('message-square',12)+'</span>';
+    if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',11)+' NEU</span>';
+    if(hasNote) html += '<span style="color:#92400e;font-size:12px" title="Hat Anmerkung">'+luc('message-square',14)+'</span>';
     html += '</span>';
     // Inline actions (stop propagation)
     html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
@@ -1034,11 +1034,11 @@ var K = (function(){
     if(o.telefon) html += '<span>'+luc('phone',12)+' '+esc(o.telefon)+'</span>';
     if(o.preis) html += '<span>'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' €</span>';
     html += '</div>';
-    if(o.anmerkung) html += '<div class="k-order-note">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
-    if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
-    if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
-    if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    if(o.status===1 && o.quelle===0) html += '<div style="padding-top:4px"><button class="k-btn k-btn-sm k-btn-outline" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc(o.kunde_kommentar?'reply':'send',14)+' '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button></div>';
+    if(o.anmerkung) html += '<div class="k-order-note" style="background:#fef3c7">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
+    if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a;color:#166534">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
+    if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+    if(o.status===1 && o.quelle===0) html += '<div style="padding-top:6px"><button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc(o.kunde_kommentar?'reply':'send',14)+' '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button></div>';
     html += '</div>';
     html += '</div>';
 
