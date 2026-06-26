@@ -1062,3 +1062,114 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
     expect(antwortCount).toBeGreaterThanOrEqual(0);
   });
 });
+
+// ─── AK-UI-40: Stammkunden klappbare Karten ──────────────────────
+test.describe('AK-UI-40 Stammkunden klappbare Karten', () => {
+  test('T-40-01 Stammkunden-Karten haben klappbaren Header', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="kunden"]');
+    await page.waitForTimeout(500);
+
+    // Load all customers
+    await page.click('button:has-text("Alle Kunden laden")');
+    await page.waitForTimeout(2000);
+
+    // Check for collapsible cards with kc- prefix
+    const kundenCards = page.locator('.k-order[id^="kc-"]');
+    const count = await kundenCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Cards should have k-order-hdr
+    const header = kundenCards.first().locator('.k-order-hdr');
+    await expect(header).toBeVisible();
+
+    // Cards should start collapsed
+    await expect(kundenCards.first()).toHaveClass(/oc-collapsed/);
+  });
+
+  test('T-40-02 Stammkunden-Karte klappt auf/zu', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="kunden"]');
+    await page.waitForTimeout(500);
+
+    await page.click('button:has-text("Alle Kunden laden")');
+    await page.waitForTimeout(2000);
+
+    const kundenCards = page.locator('.k-order[id^="kc-"]');
+    const count = await kundenCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Click header to expand
+    await kundenCards.first().locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+
+    // Should no longer be collapsed
+    await expect(kundenCards.first()).not.toHaveClass(/oc-collapsed/);
+
+    // Body should be visible
+    const body = kundenCards.first().locator('.k-order-body');
+    await expect(body).toBeVisible();
+
+    // Click again to collapse
+    await kundenCards.first().locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+    await expect(kundenCards.first()).toHaveClass(/oc-collapsed/);
+  });
+
+  test('T-40-03 Header zeigt Bestellen-Button', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="kunden"]');
+    await page.waitForTimeout(500);
+
+    await page.click('button:has-text("Alle Kunden laden")');
+    await page.waitForTimeout(2000);
+
+    const kundenCards = page.locator('.k-order[id^="kc-"]');
+    const count = await kundenCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Header should contain Bestellen button
+    const bestellBtn = kundenCards.first().locator('.k-order-hdr .k-oc-actions button:has-text("Bestellen")');
+    await expect(bestellBtn).toBeVisible();
+  });
+
+  test('T-40-04 Body zeigt Bearbeiten und Löschen', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="kunden"]');
+    await page.waitForTimeout(500);
+
+    await page.click('button:has-text("Alle Kunden laden")');
+    await page.waitForTimeout(2000);
+
+    const kundenCards = page.locator('.k-order[id^="kc-"]');
+    const count = await kundenCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Expand first card
+    await kundenCards.first().locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+
+    // Body should have Bearbeiten and delete buttons
+    const editBtn = kundenCards.first().locator('.k-order-body button:has-text("Bearbeiten")');
+    await expect(editBtn).toBeVisible();
+
+    const deleteBtn = kundenCards.first().locator('.k-order-body .k-btn-cancel');
+    await expect(deleteBtn).toBeVisible();
+  });
+});

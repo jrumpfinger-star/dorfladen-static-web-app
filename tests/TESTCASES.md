@@ -948,3 +948,38 @@ Gegenseitiger Nachrichtenaustausch bei Shop-Bestellungen, analog zum Mittagstisc
 | 2026-06-27 | T-39-02 | ⏭ Skipped (keine Shop-Bestellungen in Live-Daten) |
 | 2026-06-27 | T-39-03 | ✅ Pass |
 | 2026-06-27 | T-39-04 | ⏭ Skipped (keine Shop-Bestellungen in Live-Daten) |
+
+---
+
+## AK-UI-40 – Stammkunden klappbare Karten
+
+Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mittagstisch und Shop.
+
+### T-40-01 (AK-UI-40a) Karten haben klappbaren Header
+- **Aktion:** Kiosk → Stammkunden-Tab → "Alle Kunden laden"
+- **Prüfung:** Karten haben `.k-order-hdr` und starten zugeklappt (`oc-collapsed`)
+- **Erwartung:** Header sichtbar, Body versteckt
+
+### T-40-02 (AK-UI-40b) Karte klappt auf/zu
+- **Aktion:** Header einer Karte klicken
+- **Prüfung:** Karte klappt auf (kein `oc-collapsed`), Body sichtbar; erneut klicken → zugeklappt
+- **Erwartung:** Toggle-Verhalten funktioniert
+
+### T-40-03 (AK-UI-40c) Header zeigt Bestellen-Button
+- **Aktion:** Karten laden
+- **Prüfung:** Im Header `.k-oc-actions` ist "Bestellen"-Button sichtbar
+- **Erwartung:** Quick-Action direkt im Header verfügbar
+
+### T-40-04 (AK-UI-40d) Body zeigt Bearbeiten und Löschen
+- **Aktion:** Karte aufklappen
+- **Prüfung:** Body enthält "Bearbeiten"-Button und Löschen-Button (`.k-btn-cancel`)
+- **Erwartung:** Sekundäre Aktionen nur im Body
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| – | T-40-01 | – |
+| – | T-40-02 | – |
+| – | T-40-03 | – |
+| – | T-40-04 | – |
