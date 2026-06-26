@@ -10574,6 +10574,52 @@
     return selected;
   }
 
+  // --- Publish as Tagesinfo only (no WhatsApp/Instagram) ---
+  window.socialPublishTagesinfo=function(){
+    var selected=socialGatherSelected();
+    var titel=(document.getElementById('soc-post-titel')||{}).value||'';
+    var freitext=(document.getElementById('soc-post-text')||{}).value||'';
+    if(!selected.length&&!freitext.trim()){socialStatus('soc-post-status','Bitte mindestens ein Produkt auswählen oder Freitext eingeben',false);return;}
+    var btns=document.querySelectorAll('button[onclick="socialPublishTagesinfo()"]');
+    btns.forEach(function(b){b.disabled=true;b._origHtml=b.innerHTML;b.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:socSpin 0.6s linear infinite;vertical-align:middle;margin-right:6px"></span> Wird ver\u00f6ffentlicht\u2026';b.style.opacity='0.7';b.style.cursor='wait';});
+    if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
+    socialStatus('soc-post-status','\u23F3 Wird ver\u00f6ffentlicht\u2026',true);
+    var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};
+    fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
+    .then(function(){
+      socialStatus('soc-post-status','\u2705 Tagesinfo ver\u00f6ffentlicht \u2013 erscheint auf der Homepage',true);
+      btns.forEach(function(b){b.innerHTML='<span style="vertical-align:middle;margin-right:6px">\u2705</span> Ver\u00f6ffentlicht!';b.style.opacity='1';b.style.background='#dcfce7';b.style.borderColor='#16a34a';b.style.color='#166534';});
+      setTimeout(function(){btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});},3000);
+      if(typeof socialLoadTodayPosts==='function') socialLoadTodayPosts();
+    })
+    .catch(function(e){
+      socialStatus('soc-post-status','\u274C '+e.message,false);
+      btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});
+    });
+  };
+
+  // --- Heutige Posts laden ---
+  window.socialLoadTodayPosts=function(){
+    var wrap=document.getElementById('soc-today-posts');
+    var list=document.getElementById('soc-today-posts-list');
+    if(!wrap||!list)return;
+    var today=new Date();var td=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){
+      var posts=(res.items||[]).filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
+      if(!posts.length){wrap.style.display='none';return;}
+      wrap.style.display='';
+      var html='';posts.forEach(function(p){
+        var cnt=p.items?p.items.length:0;
+        html+='<div style="padding:4px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center">';
+        html+='<span style="font-weight:600;color:#374151">'+esc(p.titel||'Post')+'</span>';
+        html+='<span style="color:#6b7280">'+cnt+' Produkt'+(cnt!==1?'e':'')+'</span>';
+        html+='</div>';
+      });
+      list.innerHTML=html;
+    }).catch(function(){});
+  };
+
   // --- Canvas Poster Generator ---
   window.socialGenPreview = function(){
     var canvas=document.getElementById('soc-post-canvas');
