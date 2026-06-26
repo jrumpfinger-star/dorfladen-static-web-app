@@ -563,7 +563,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 
 // === DEV ENVIRONMENT INDICATOR ===
 (function(){
-  if(location.hostname.indexOf('proud-dune')!==-1||location.hostname.indexOf('dorfladen-test')!==-1){
+  if(location.hostname.indexOf('proud-dune')!==-1||location.hostname.indexOf('witty-island')!==-1||location.hostname.indexOf('dorfladen-test')!==-1){
     var b=document.createElement('div');
     b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#e53e3e;color:#fff;text-align:center;padding:4px 0;font-size:13px;font-weight:700;letter-spacing:1px;';
     b.textContent='\u26A0 TEST-UMGEBUNG \u2013 Nicht die Live-Seite!';
