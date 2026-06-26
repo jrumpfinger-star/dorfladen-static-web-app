@@ -56,8 +56,8 @@
     .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .k-order-hdr .k-oc-qty{font-weight:800;font-size:15px;color:var(--c-green)}
     .k-order-hdr .k-oc-badges{display:flex;gap:5px;align-items:center;flex-shrink:0}
-    .k-order-hdr .k-oc-actions{display:flex;gap:2px;align-items:center;flex-shrink:0}
-    .k-order-hdr .k-oc-actions .k-btn{min-height:34px;min-width:34px;padding:5px 10px;font-size:12px;border-radius:8px;gap:4px}
+    .k-order-hdr .k-oc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+    .k-order-hdr .k-oc-actions .k-btn{min-height:40px;min-width:40px;padding:6px 14px;font-size:13px;border-radius:8px;gap:5px}
     @media(max-width:600px){.k-order-hdr .k-oc-actions .k-btn .oc-btn-label{display:none}}
     .k-order-body{display:flex;align-items:stretch;border-top:1px solid var(--c-border)}
     .k-order.st-0{border-left-color:var(--c-yellow)}
@@ -100,8 +100,8 @@
     .k-btn:active{transform:scale(.96)}
     .k-btn-confirm{background:var(--c-green);color:#fff}
     .k-btn-pickup{background:#2563eb;color:#fff}
-    .k-btn-cancel{background:var(--c-red);color:#fff;font-size:12px}
-    .k-btn-sm{min-height:30px;padding:4px 12px;font-size:12px;border-radius:8px}
+    .k-btn-cancel{background:var(--c-red);color:#fff;font-size:14px}
+    .k-btn-sm{min-height:38px;padding:6px 14px;font-size:13px;border-radius:8px}
     .k-btn-outline{background:#fff;color:var(--c-text);border:1.5px solid var(--c-border)}
     .k-btn-outline:hover{border-color:var(--c-green);color:var(--c-green)}
     .k-tool{width:30px;height:30px;padding:0;border:none;border-radius:6px;background:transparent;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
@@ -863,7 +863,7 @@ var K = (function(){
     if(unreadCount>0){
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;margin-bottom:4px">';
       html += '<span style="font-size:13px;font-weight:700;color:#1e40af">'+unreadCount+' ungelesen</span>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px;margin-left:auto" onclick="K.markAllMsgRead()">'+luc('check-check',14)+' Alle als gelesen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;margin-left:auto" onclick="K.markAllMsgRead()">'+luc('check-check',14)+' Alle als gelesen</button>';
       html += '</div>';
     }
     sorted.forEach(function(o){
@@ -889,14 +889,14 @@ var K = (function(){
       // Actions: Reply + Mark read
       html += '<div style="display:flex;gap:8px;padding-top:4px;align-items:center">';
       html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff;font-size:13px" onclick="K.showMsgReply(\''+o.id+'\')">'+luc('reply',14)+' Antworten</button>';
-      if(isUnread) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px" onclick="K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
+      if(isUnread) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
       html += '</div>';
       // Inline reply box
       html += '<div id="msg-rpl-'+o.id+'" style="display:none;margin-top:8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
       html += '<input type="text" id="msg-rpt-'+o.id+'" placeholder="Antwort eingeben…" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
       html += '<div style="display:flex;gap:8px">';
       html += '<button class="k-btn k-btn-sm" style="flex:1;background:#2563eb;color:#fff;font-size:13px" onclick="K.sendMsgReply(\''+o.id+'\')">'+luc('send',14)+' Senden</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px" onclick="document.getElementById(\'msg-rpl-'+o.id+'\').style.display=\'none\'">Abbrechen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="document.getElementById(\'msg-rpl-'+o.id+'\').style.display=\'none\'">Abbrechen</button>';
       html += '</div></div>';
       html += '</div></div>';
     });
