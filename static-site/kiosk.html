@@ -1199,7 +1199,8 @@ var K = (function(){
     // Build dish groups from ALL orders (so headers always appear)
     var dishMap = {};
     var dishOrder = [];
-    orders.filter(function(o){return o.status!==2;}).forEach(function(o){
+    var includeStorno = (_mittagFilter==='erledigt' || _mittagFilter==='alle');
+    orders.filter(function(o){return includeStorno || o.status!==2;}).forEach(function(o){
       var dish = o.gericht || 'Sonstiges';
       if(!dishMap[dish]){ dishMap[dish] = []; dishOrder.push(dish); }
       dishMap[dish].push(o);

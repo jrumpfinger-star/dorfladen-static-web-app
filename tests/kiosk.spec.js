@@ -150,6 +150,10 @@ test.describe('Kiosk – Mittagstisch Tagesauswahl', () => {
 
     // Click each day: verify API call + response + rendering
     const count = await dayButtons.count();
+    // Set filter to "Alle" first so we see all orders
+    await page.locator('#mittag-status-bar button[data-mt-filter="alle"]').click();
+    await page.waitForTimeout(300);
+
     for (let i = 0; i < count; i++) {
       const btn = dayButtons.nth(i);
       const label = (await btn.textContent()).trim();
@@ -172,11 +176,11 @@ test.describe('Kiosk – Mittagstisch Tagesauswahl', () => {
       expect(parseInt(alleCount), `Alle-Zähler für ${label}`).toBe(json.orders.length);
 
       if (json.orders.length > 0) {
+        // Ensure "Alle" filter is active to see all orders
         await page.locator('#mittag-status-bar button[data-mt-filter="alle"]').click();
         await page.waitForTimeout(300);
         const visibleOrders = await page.locator('#mittag-orders .k-order').count();
         expect(visibleOrders, `${label}: Bestellungen rendern`).toBe(json.orders.length);
-        await page.locator('#mittag-status-bar button[data-mt-filter="offen"]').click();
       }
     }
   });
