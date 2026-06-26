@@ -262,6 +262,96 @@ test.describe('Kiosk – Bestellschluss', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  Shop – Bestellkarten Redesign
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Shop Redesign', () => {
+  test('T-35-01 (AK-UI-35) Shop-Karten haben Collapse-Pattern', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    // Cards should have k-order-hdr (collapsible header) and k-order-body
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 0) {
+      const hdr = cards.first().locator('.k-order-hdr');
+      await expect(hdr).toHaveCount(1);
+      const body = cards.first().locator('.k-order-body');
+      await expect(body).toHaveCount(1);
+      // Default collapsed
+      await expect(cards.first()).toHaveClass(/oc-collapsed/);
+    }
+  });
+
+  test('T-35-02 (AK-UI-35b) Header zeigt Name, Status-Badge, Preis', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 0) {
+      const hdr = cards.first().locator('.k-order-hdr');
+      // Name
+      const name = hdr.locator('.k-oc-name');
+      await expect(name).toHaveCount(1);
+      const nameText = await name.textContent();
+      expect(nameText.length).toBeGreaterThan(0);
+      // Price (€)
+      const priceText = await hdr.textContent();
+      expect(priceText).toContain('€');
+    }
+  });
+
+  test('T-35-03 (AK-UI-35d) Primär-Action im Header erreichbar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 0) {
+      const hdrActions = cards.first().locator('.k-order-hdr .k-oc-actions');
+      await expect(hdrActions).toHaveCount(1);
+      const btns = hdrActions.locator('.k-btn');
+      const btnCount = await btns.count();
+      expect(btnCount).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  test('T-35-04 (AK-UI-35f) Details-Button im Body ist vollwertiger Button', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 0) {
+      // Expand first card
+      await cards.first().locator('.k-order-hdr').click();
+      await page.waitForTimeout(300);
+      // Find Details button
+      const detailBtn = cards.first().locator('.k-order-body .k-btn:has-text("Details")');
+      const detailCount = await detailBtn.count();
+      expect(detailCount).toBeGreaterThanOrEqual(1);
+      if (detailCount > 0) {
+        const minH = await detailBtn.first().evaluate(el => parseInt(getComputedStyle(el).minHeight));
+        expect(minH).toBeGreaterThanOrEqual(38);
+      }
+    }
+  });
+
+  test('T-35-05 (AK-UI-35h) Aufklappen/Zuklappen Toggle vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 1) {
+      const toggleBtn = page.locator('#abhol-orders button:has-text("Aufklappen"), #abhol-orders button:has-text("Zuklappen")');
+      await expect(toggleBtn).toHaveCount(1);
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  Mittagstisch – Bestätigen-Dialog
 // ════════════════════════════════════════════════════
 

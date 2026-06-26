@@ -154,6 +154,16 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-34b: Stammkunden-Karte zeigt Löschen-Button → Soft-Delete mit Bestätigung
 - [x] AK-UI-34c: Edit-Modal lädt Kundendaten, speichert via PATCH
 
+### Shop-Bestellkarten Redesign
+- [x] AK-UI-35: Shop-Karten verwenden Collapse-Pattern wie Mittagstisch (Header immer sichtbar, Details aufklappbar)
+- [x] AK-UI-35b: Header zeigt Name, Pos.-Anzahl, Status-Badge, Preis und Primär-Action
+- [x] AK-UI-35c: Status als farbiger Badge (Icon + Text) statt Timeline in Karte
+- [x] AK-UI-35d: Primär-Action im Header ohne Aufklappen erreichbar (Annehmen/Packen/Ausgeben)
+- [x] AK-UI-35e: Aufgeklappte Karte zeigt Bestellnr, Abholdatum, Telefon, Positionen-Liste, volle Action-Buttons
+- [x] AK-UI-35f: Details-Button als vollwertiger Button (file-text Icon + "Details") statt Mini-Eye-Icon
+- [x] AK-UI-35g: Alle Buttons ≥38px Höhe (Touch-Target-konform)
+- [x] AK-UI-35h: Alle zuklappen/aufklappen Toggle für Shop-Karten
+
 ### Tab-Badge: Neue Bestellungen + Nachrichten
 - [x] Mittagstisch-Tab-Badge zeigt Summe aus neuen Bestellungen (heute, Status 0) + ungelesene Nachrichten (tagesübergreifend)
 - [x] Neue Bestellungen werden IMMER für heute gezählt (unabhängig vom gewählten Tag)

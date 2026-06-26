@@ -802,3 +802,37 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-26 | T16.5 T-17-05 API mode=messages | ✅ Pass |
 | 2026-06-26 | T16.6 T-17-06 Bestellschluss-Funktion | ✅ Pass |
 | 2026-06-26 | T16.7 T-17-07 Button-Zustand (vor 12:00) | ✅ Pass |
+
+---
+
+## T17 – Shop Bestellkarten Redesign (AK-UI-35)
+
+### T-35-01 (AK-UI-35) Shop-Karten haben Collapse-Pattern
+- **Aktion:** Kiosk öffnen → Shop-Tab wählen → Karten laden
+- **Prüfung:** Karten haben `.k-order-hdr` und `.k-order-body`, Default = collapsed
+- **Erwartung:** Header sichtbar, Body ausgeblendet (oc-collapsed)
+
+### T-35-02 (AK-UI-35b) Header zeigt Name, Status-Badge, Preis
+- **Aktion:** Shop-Tab öffnen, erste Karte inspizieren
+- **Prüfung:** Header enthält `.k-oc-name` mit Text, €-Zeichen
+- **Erwartung:** Name, Status und Preis im Header sichtbar
+
+### T-35-03 (AK-UI-35d) Primär-Action im Header erreichbar
+- **Aktion:** Shop-Tab öffnen, Header-Actions prüfen
+- **Prüfung:** `.k-oc-actions` enthält mindestens 1 `.k-btn`
+- **Erwartung:** Annehmen/Packen/Ausgeben direkt im Header
+
+### T-35-04 (AK-UI-35f) Details-Button ist vollwertiger Button
+- **Aktion:** Karte aufklappen → Details-Button suchen
+- **Prüfung:** `.k-order-body .k-btn:has-text("Details")` existiert, min-height ≥38px
+- **Erwartung:** Großer, klar sichtbarer Details-Button
+
+### T-35-05 (AK-UI-35h) Aufklappen/Zuklappen Toggle vorhanden
+- **Aktion:** Shop-Tab öffnen mit >1 Bestellung
+- **Prüfung:** Aufklappen/Zuklappen-Button existiert
+- **Erwartung:** Toggle-Button sichtbar
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
