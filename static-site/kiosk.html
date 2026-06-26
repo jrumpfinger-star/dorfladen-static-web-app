@@ -1134,6 +1134,23 @@ var K = (function(){
 
   var _orderCardOpen = {};
 
+  function collapseAllCards(){
+    document.querySelectorAll('#mittag-orders .k-order').forEach(function(el){
+      el.classList.add('oc-collapsed');
+    });
+    _orderCardOpen = {};
+    renderOrders();
+  }
+
+  function expandAllCards(){
+    document.querySelectorAll('#mittag-orders .k-order').forEach(function(el){
+      el.classList.remove('oc-collapsed');
+      var oid = (el.id||'').replace('oc-','');
+      if(oid) _orderCardOpen[oid] = true;
+    });
+    renderOrders();
+  }
+
   function toggleOrderCard(oid){
     var el = document.getElementById('oc-'+oid);
     if(!el) return;
@@ -1245,7 +1262,14 @@ var K = (function(){
       dishMap[dish].sort(function(a,b){ return (statusPrio[a.status]||9) - (statusPrio[b.status]||9); });
     });
 
-    var html = '';
+    // Collapse/expand all toggle
+    var totalCards = 0;
+    dishOrder.forEach(function(d){totalCards += dishMap[d].filter(filterFn).length;});
+    if(totalCards>1){
+      var allCollapsed = Object.keys(_orderCardOpen).length===0 || Object.keys(_orderCardOpen).every(function(k){return !_orderCardOpen[k];});
+      html += '<div style="display:flex;justify-content:flex-end;padding:2px 0"><button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px;min-height:32px;padding:4px 10px;gap:4px" onclick="K.'+(allCollapsed?'expandAllCards':'collapseAllCards')+'()" title="'+(allCollapsed?'Alle aufklappen':'Alle zuklappen')+'">'+luc(allCollapsed?'chevrons-down':'chevrons-up',14)+' '+(allCollapsed?'Aufklappen':'Zuklappen')+'</button></div>';
+    }
+
     dishOrder.forEach(function(dish){
       var allInGroup = dishMap[dish];
       var totalQty = allInGroup.reduce(function(s,o){return s+(o.menge||1);},0);
@@ -2857,6 +2881,8 @@ var K = (function(){
     toggleSlotGroup: toggleSlotGroup,
     toggleDishGroup: toggleDishGroup,
     toggleOrderCard: toggleOrderCard,
+    collapseAllCards: collapseAllCards,
+    expandAllCards: expandAllCards,
     bulkConfirmDish: bulkConfirmDish,
     bulkPickupDish: bulkPickupDish,
     openPackModal: openPackModal,
