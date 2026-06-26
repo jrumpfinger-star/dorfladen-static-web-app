@@ -904,3 +904,12 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 - **Aktion:** Historie aktivieren, "Abgeholt" klicken
 - **Prüfung:** "Abgeholt" wird aktiv, "Alle" wird inaktiv
 - **Erwartung:** Nur ein Status-Pill aktiv
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-26 | T-37-01 Sub-Filter-Bar sichtbar | ✅ Pass |
+| 2026-06-26 | T-37-02 Sub-Bar versteckt bei Filterwechsel | ✅ Pass |
+| 2026-06-26 | T-37-03 Zeitraum-Pills Toggle | ✅ Pass |
+| 2026-06-26 | T-37-04 Status-Pills Toggle | ✅ Pass |
