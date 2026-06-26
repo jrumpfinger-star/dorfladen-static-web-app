@@ -1038,10 +1038,22 @@ var K = (function(){
     loadOrders();
   }
 
+  var _loadOrdersAC = null;
   function loadOrders(){
-    fetch(API+'/lunch-order?datum='+_mittagDatum)
+    // Abort any in-flight request
+    if(_loadOrdersAC) try{_loadOrdersAC.abort();}catch(e){}
+    _loadOrdersAC = new AbortController();
+    var sig = _loadOrdersAC.signal;
+    var datum = _mittagDatum;
+    // Show loading state immediately (unless Nachrichten tab is active)
+    if(_mittagFilter!=='nachrichten'){
+      document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px;animation:kSpin 1s linear infinite"></i></div>Laden…</div>';
+      reinitIcons();
+    }
+    fetch(API+'/lunch-order?datum='+datum,{signal:sig})
       .then(function(r){return r.json();})
       .then(function(res){
+        if(datum!==_mittagDatum) return; // stale response
         if(!res.success) return;
         orders = res.orders || [];
         updateMittagFilterCounts();
@@ -1049,7 +1061,7 @@ var K = (function(){
         renderStats();
         _updateNewOrderBtn();
       })
-      .catch(function(){});
+      .catch(function(e){if(e.name!=='AbortError') console.error(e);});
     loadMittagBadge();
   }
 
