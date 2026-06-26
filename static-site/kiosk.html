@@ -976,6 +976,7 @@ var K = (function(){
       if(res.success){
         _loadMessageOrders();
         loadMittagBadge();
+        loadOrders();
       }
     }).catch(function(){});
   }
@@ -997,6 +998,7 @@ var K = (function(){
           toast('✅ Alle als gelesen markiert');
           _loadMessageOrders();
           loadMittagBadge();
+          loadOrders();
         }
       }).catch(function(){ done++; });
     });
@@ -1225,7 +1227,12 @@ var K = (function(){
     if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a;color:#166534">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
     if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
     if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    if(o.status===1 && o.quelle===0) html += '<div style="padding-top:6px"><button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc(o.kunde_kommentar?'reply':'send',14)+' '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button></div>';
+    if(o.status===1 && o.quelle===0 || _hasUnseenComment(o)){
+      html += '<div style="padding-top:6px;display:flex;gap:6px;flex-wrap:wrap">';
+      if(o.status===1 && o.quelle===0) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc(o.kunde_kommentar?'reply':'send',14)+' '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button>';
+      if(_hasUnseenComment(o)) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
+      html += '</div>';
+    }
     html += '</div>';
     html += '</div>';
 
