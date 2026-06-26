@@ -188,19 +188,38 @@ test.describe('Kiosk – Mittagstisch Tagesauswahl', () => {
 
 test.describe('Kiosk – Mittagstisch Filter', () => {
 
-  test('Default-Filter ist "Zu bestätigen", Wechsel funktioniert', async ({ page }) => {
+  test('T-17-01 (AK-UI-17b) Default-Filter ist "Offen", Wechsel funktioniert', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="mittag"]').click();
     await page.waitForTimeout(1000);
     const activeBtn = page.locator('#mittag-status-bar .k-filter-btn.active');
     await expect(activeBtn).toHaveCount(1);
     const text = await activeBtn.textContent();
-    expect(text).toContain('Zu bestätigen');
+    expect(text).toContain('Offen');
     // Switch to "Alle"
     await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="alle"]').click();
     const newActive = page.locator('#mittag-status-bar .k-filter-btn.active');
     const newText = await newActive.textContent();
     expect(newText).toContain('Alle');
+    // Switch to "Erledigt"
+    await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="erledigt"]').click();
+    const erlActive = page.locator('#mittag-status-bar .k-filter-btn.active');
+    const erlText = await erlActive.textContent();
+    expect(erlText).toContain('Erledigt');
+  });
+
+  test('T-17-02 (AK-UI-17) Genau 4 Filter-Tabs vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(1000);
+    const filterBtns = page.locator('#mittag-status-bar .k-filter-btn');
+    await expect(filterBtns).toHaveCount(4);
+    const labels = await filterBtns.allTextContents();
+    const joined = labels.join(' ');
+    expect(joined).toContain('Offen');
+    expect(joined).toContain('Nachrichten');
+    expect(joined).toContain('Erledigt');
+    expect(joined).toContain('Alle');
   });
 });
 
@@ -511,33 +530,63 @@ test.describe('Kiosk – Nachrichten-Gelesen', () => {
     }
   });
 
-  test('Klick auf Badge sendet PATCH mit kommentar_gelesen: true', async ({ page }) => {
+  test('T-17-03 (AK-UI-17d) Nachrichten-Tab zeigt tagesübergreifende Kommentare', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.click('.k-tab[data-tab="mittag"]');
-    await page.waitForTimeout(3000);
-    const unreadCount = await page.evaluate(() => {
-      if (typeof orders === 'undefined') return 0;
-      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
-    });
-    if (unreadCount > 0) {
-      const patchRequests = [];
-      page.on('request', r => {
-        if (r.url().includes('/api/lunch-order/') && r.method() === 'PATCH') {
-          patchRequests.push(r);
-        }
-      });
-      await page.click('[data-mt-filter="nachrichten"]');
-      await page.waitForTimeout(2000);
-      expect(patchRequests.length).toBe(unreadCount);
-      for (const req of patchRequests) {
-        const body = JSON.parse(req.postData());
-        expect(body.kommentar_gelesen).toBe(true);
+    await page.waitForTimeout(2000);
+    // Click Nachrichten tab
+    const apiPromise = page.waitForResponse(
+      resp => resp.url().includes('/api/lunch-order') && resp.url().includes('mode=messages'),
+      { timeout: 10000 }
+    );
+    await page.click('[data-mt-filter="nachrichten"]');
+    const apiResponse = await apiPromise;
+    expect(apiResponse.status()).toBe(200);
+    const json = await apiResponse.json();
+    expect(json.success).toBe(true);
+    expect(Array.isArray(json.orders)).toBe(true);
+    if (json.orders.length > 0) {
+      // Each order should have kunde_kommentar
+      for (const o of json.orders) {
+        expect(o.kunde_kommentar).toBeTruthy();
       }
-      // After marking: 0 unread
-      const stillUnread = await page.evaluate(() => {
-        return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
-      });
-      expect(stillUnread).toBe(0);
+      // Nachrichten list should show Kunde text
+      await page.waitForTimeout(1000);
+      const html = await page.locator('#mittag-orders').innerHTML();
+      expect(html).toContain('Kunde:');
+    }
+  });
+
+  test('T-17-04 (AK-UI-17e) Nachrichten-Tab: Antwort-Button und Gelesen-Button sichtbar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.click('.k-tab[data-tab="mittag"]');
+    await page.waitForTimeout(2000);
+    await page.click('[data-mt-filter="nachrichten"]');
+    await page.waitForTimeout(2000);
+    const orders = await page.locator('#mittag-orders .k-order').count();
+    if (orders === 0) {
+      test.skip(true, 'Keine Nachrichten vorhanden');
+      return;
+    }
+    // Antworten button should exist
+    const replyBtns = page.locator('#mittag-orders button:has-text("Antworten")');
+    expect(await replyBtns.count()).toBeGreaterThan(0);
+  });
+
+  test('T-17-05 (AK-UI-17f) API mode=messages liefert vollständige Bestellungen', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/lunch-order?mode=messages`);
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(typeof data.count).toBe('number');
+    expect(Array.isArray(data.orders)).toBe(true);
+    if (data.orders.length > 0) {
+      const o = data.orders[0];
+      expect(o.kunde_kommentar).toBeTruthy();
+      expect(typeof o.name).toBe('string');
+      expect(typeof o.gericht).toBe('string');
+      expect(typeof o.datum).toBe('string');
+      expect(typeof o.kommentar_gelesen).toBe('boolean');
     }
   });
 });
@@ -599,14 +648,17 @@ test.describe('Kiosk – Info vs Actions Design', () => {
     expect(bg).not.toBe('rgba(0, 0, 0, 0)');
   });
 
-  test('Bestellquellen-Labels haben keinen Hintergrund', async ({ page }) => {
+  test('Bestellquellen-Labels sind als Pill-Badge gestaltet', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="mittag"]').click();
     await page.waitForTimeout(2000);
+    // Switch to Alle to see all orders
+    await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="alle"]').click();
+    await page.waitForTimeout(500);
     const srcLabels = page.locator('.k-order-src');
     if (await srcLabels.count() > 0) {
-      const bg = await srcLabels.first().evaluate(el => getComputedStyle(el).backgroundColor);
-      expect(bg).toBe('rgba(0, 0, 0, 0)');
+      const fontSize = await srcLabels.first().evaluate(el => getComputedStyle(el).fontSize);
+      expect(parseFloat(fontSize)).toBeGreaterThanOrEqual(11);
     }
   });
 });

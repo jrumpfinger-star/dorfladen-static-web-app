@@ -109,9 +109,12 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-10b: Küchenliste-Button in Bottom-Bar vorhanden
 - [x] AK-UI-10c: printKitchen verwendet _mittagDatum (nicht new Date())
 - [x] AK-UI-10d: printKitchen verwendet o.name und o.menge (nicht o.kundenname/o.portionen)
-- [x] AK-UI-17: Mittagstisch Status-Filter-Bar (Zu bestätigen/Bestätigt/Alle/Abgeholt/Storniert)
-- [x] AK-UI-17b: Default-Filter ist "Zu bestätigen" (status 0)
-- [x] AK-UI-17c: Filter-Badges zeigen Anzahl pro Status
+- [x] AK-UI-17: Mittagstisch Filter-Bar: 4 Tabs (Offen/Nachrichten/Erledigt/Alle)
+- [x] AK-UI-17b: Default-Filter ist "Offen" (Status 0+1)
+- [x] AK-UI-17c: Filter-Badges zeigen Anzahl pro Gruppe
+- [x] AK-UI-17d: Nachrichten-Tab zeigt alle Kundenkommentare tagesübergreifend
+- [x] AK-UI-17e: Nachrichten-Tab: Inline-Antwort + Gelesen-Markierung
+- [x] AK-UI-17f: API mode=messages liefert vollständige Nachrichten-Bestellungen
 - [x] AK-UI-18: Doppelklick auf Shop-Bestellkarte öffnet Detail-Modal
 - [x] AK-UI-18b: Detail-Modal zeigt Positionen-Tabelle mit Menge, Einheit, Preis
 - [x] AK-UI-16e: Confirm-Dialog als vollbreites Element unter der Karte (nicht inline in Actions)
@@ -169,6 +172,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 
 ## API-Endpunkte
 - `GET /api/lunch-order?mode=unread_messages` – Anzahl ungelesener Kundennachrichten (tagesübergreifend)
+- `GET /api/lunch-order?mode=messages` – Vollständige Bestellungen mit Kundenkommentaren (tagesübergreifend, für Nachrichten-Tab)
 
 ### Mittagstisch Gerichtauswahl
 - [x] Wenn nur 1 Gericht für heute verfügbar: automatisch als Default vorausgewählt (spart einen Klick)
@@ -179,6 +183,27 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] Stornieren-Button erst aktiv wenn Grund gewählt
 - [x] Grund wird als `bestaetigung_text` gespeichert → Push an Kunden mit Begründung
 - [x] Implementiert in: Kiosk, lunch-admin.html, shop-admin.html (Mittagstisch-Bereich)
+
+### Mittagstisch Filter-Redesign (iPad-optimiert)
+- [x] 4 Filter statt 5+1: "Offen" (Neu+Bestätigt), "Nachrichten", "Erledigt" (Abgeholt+Storniert), "Alle"
+- [x] Default-Filter ist "Offen" (zeigt alles was noch zu erledigen ist)
+- [x] Nachrichten-Tab zeigt alle Kundenkommentare über alle Tage hinweg (nicht nur aktueller Tag)
+- [x] Nachrichten-Tab sortiert: ungelesen oben, dann nach Datum absteigend
+- [x] Nachrichten-Tab: "Alle als gelesen" Button bei ungelesenen Nachrichten
+- [x] Nachrichten-Tab: Inline-Antwort-Funktion (Reply-Box direkt in der Karte)
+- [x] Nachrichten-Tab: "Gelesen" Button pro Nachricht
+- [x] Nachrichten-Tab: Ungelesene Karten blau hervorgehoben mit NEU-Badge
+- [x] Nachrichten-Count wird via `mode=unread_messages` geladen (tagesübergreifend)
+- [x] Nachrichten-Tab nutzt neuen API-Modus `mode=messages` für vollständige Bestelldaten
+- [x] "Offen"-Tab rot hervorgehoben wenn neue Bestellungen (Status 0) vorhanden
+- [x] "Nachrichten"-Tab blau hervorgehoben wenn ungelesene Nachrichten vorhanden
+
+### iPad Mini Optimierung (Schriftbild + Touch-Targets)
+- [x] Einheitliche Schriftgrößen: Name 15px, Qty 15px, Badges 11px, Notes 13px
+- [x] Touch-Targets mindestens 34px (Action-Buttons) / 44px (Day-Pills)
+- [x] Badges (ONLINE, MIT) mit Hintergrund-Pill statt nur Text
+- [x] Kommentar-Abschnitte mit Border-Left und Hintergrundfarbe zur Unterscheidung
+- [x] Card-Abstände 6px, rounded 10px
 
 ### Bestellzeitsperre (Mittagstisch)
 - [x] Online-Bestellungen für heute nur bis 10:30 Uhr möglich

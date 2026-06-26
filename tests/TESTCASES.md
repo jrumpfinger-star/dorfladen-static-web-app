@@ -749,3 +749,34 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 - **Aktion:** Im Post-Builder ein Produkt per Checkbox anwaehlen (Einfachklick)
 - **Pruefung:** Checkbox wird gecheckt, Vorschau aktualisiert
 - **Erwartung:** Checkbox reagiert normal, kein ungewollter Lightbox-Trigger bei Einfachklick
+
+---
+
+## T16 – Kiosk Mittagstisch: Filter-Redesign + Nachrichten-Tab
+
+> Spec: specs/kiosk-ui.md → AK-UI-17, AK-UI-17b–f
+
+### T16.1 – T-17-01 (AK-UI-17b) Default-Filter ist "Offen"
+- **Aktion:** Kiosk oeffnen, auf Mittagstisch-Tab wechseln
+- **Pruefung:** Aktiver Filter-Button pruefen
+- **Erwartung:** "Offen" ist aktiv (nicht "Alle" oder "Zu bestaetigen")
+
+### T16.2 – T-17-02 (AK-UI-17) Genau 4 Filter-Tabs
+- **Aktion:** Kiosk → Mittagstisch
+- **Pruefung:** Anzahl und Labels der Filter-Buttons
+- **Erwartung:** 4 Tabs: "Offen", "Nachrichten", "Erledigt", "Alle"
+
+### T16.3 – T-17-03 (AK-UI-17d) Nachrichten-Tab tagesuebergreifend
+- **Aktion:** Klick auf "Nachrichten" Filter-Tab
+- **Pruefung:** API-Call mode=messages + Anzeige
+- **Erwartung:** API liefert Bestellungen mit Kundenkommentaren ueber alle Tage, Anzeige zeigt "Kunde:" Text
+
+### T16.4 – T-17-04 (AK-UI-17e) Nachrichten-Tab: Antwort + Gelesen
+- **Aktion:** Nachrichten-Tab oeffnen, Nachrichtenkarten pruefen
+- **Pruefung:** "Antworten" und "Gelesen" Buttons vorhanden
+- **Erwartung:** Mindestens ein Antworten-Button sichtbar (wenn Nachrichten vorhanden)
+
+### T16.5 – T-17-05 (AK-UI-17f) API mode=messages
+- **Aktion:** GET /api/lunch-order?mode=messages
+- **Pruefung:** Response-Format pruefen
+- **Erwartung:** success:true, orders-Array mit kunde_kommentar, name, gericht, datum, kommentar_gelesen
