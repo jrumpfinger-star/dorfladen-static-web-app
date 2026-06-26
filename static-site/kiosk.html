@@ -486,39 +486,36 @@
       <div class="k-order" style="margin-bottom:14px;border-left-color:var(--c-green)">
         <div style="background:var(--c-green);color:#fff;padding:10px 14px;font-weight:700;font-size:13px;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:16px;height:16px"></i> Neues Produkt zum Katalog hinzuf&#252;gen</div>
         <div style="padding:14px">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-            <div style="flex:2;min-width:160px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="grid-column:1/-1">
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Name *</label>
               <input id="soc-kat-name" class="k-field" placeholder="z.B. Geschnetzeltes mit Champignonrahm" style="width:100%;font-size:13px">
             </div>
-            <div style="flex:1;min-width:120px">
+            <div>
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Kategorie *</label>
               <select id="soc-kat-kategorie" class="k-field" style="width:100%;font-size:13px">
                 <!-- dynamisch bef&#252;llt via social.js -->
               </select>
             </div>
-            <div style="width:80px">
+            <div>
               <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Preis &#8364;</label>
               <input id="soc-kat-preis" type="number" step="0.01" min="0" placeholder="9.80" class="k-field" style="width:100%;font-size:13px">
             </div>
-            <div style="min-width:140px">
-              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Bild</label>
-              <input id="soc-kat-bild" type="file" accept="image/*" capture="environment" style="width:100%;font-size:11px">
-            </div>
-            <button class="k-btn k-btn-confirm" onclick="socialKatAdd()" style="white-space:nowrap;font-size:13px"><i data-lucide="plus" style="width:14px;height:14px"></i> Hinzuf&#252;gen</button>
           </div>
+          <input id="soc-kat-bild" type="file" accept="image/*" capture="environment" style="display:none">
           <div id="soc-kat-paste-zone" tabindex="0"
-            style="margin-top:8px;border:2px dashed var(--c-border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
+            style="margin-top:10px;border:2px dashed var(--c-border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
             onclick="document.getElementById('soc-kat-bild').click()"
             title="Klicken zum Datei w&#228;hlen oder Strg+V zum Einf&#252;gen">
             <div id="soc-kat-paste-hint" style="color:#9ca3af;font-size:12px">
-              <i data-lucide="clipboard-paste" style="width:14px;height:14px;vertical-align:middle"></i> <strong>Strg+V</strong> zum Einf&#252;gen oder <strong>klicken</strong> zum Datei w&#228;hlen
+              <i data-lucide="camera" style="width:16px;height:16px;vertical-align:middle"></i> <strong>Foto aufnehmen</strong> oder <strong>Bild einf&#252;gen</strong> (Strg+V / klicken)
             </div>
             <div id="soc-kat-bild-preview" style="display:none;margin-top:6px">
               <img id="soc-kat-bild-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
               <button onclick="event.stopPropagation();socialClearBild()" style="display:block;margin:6px auto 0;background:none;border:none;color:#dc2626;font-size:11px;cursor:pointer;text-decoration:underline">&#10005; Bild entfernen</button>
             </div>
           </div>
+          <button class="k-btn k-btn-confirm" onclick="socialKatAdd()" style="width:100%;margin-top:10px;font-size:14px;min-height:var(--touch-min)"><i data-lucide="plus" style="width:16px;height:16px"></i> Hinzuf&#252;gen</button>
         </div>
       </div>
       <div id="soc-kat-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
