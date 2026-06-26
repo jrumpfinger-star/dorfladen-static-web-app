@@ -983,3 +983,50 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-27 | T-40-02 | ✅ Pass |
 | 2026-06-27 | T-40-03 | ✅ Pass |
 | 2026-06-27 | T-40-04 | ✅ Pass |
+
+---
+
+## AK-UI-50 – Social Media Step-Wizard
+
+> Spec: specs/social-wizard.md → AK-UI-50-01 bis AK-UI-50-07
+
+### T-50-01: 4 nummerierte Step-Karten sichtbar (AK-UI-50-01)
+- **Aktion**: Kiosk öffnen → Social-Tab klicken
+- **Prüfung**: 4 Step-Karten (#soc-step-1 bis #soc-step-4) sichtbar, jeweils mit Nummer 1–4
+- **Erwartung**: Alle 4 Steps sind sichtbar mit nummeriertem Kreis
+
+### T-50-02: Steps 1+2 offen, Steps 3+4 zugeklappt (AK-UI-50-02)
+- **Aktion**: Social-Tab öffnen
+- **Prüfung**: CSS-Klasse `oc-collapsed` nur auf Steps 3+4
+- **Erwartung**: Steps 1+2 sind aufgeklappt, Steps 3+4 zugeklappt
+
+### T-50-03: Klick auf Step-Header toggled auf/zu (AK-UI-50-03)
+- **Aktion**: Klick auf Step-1-Header → Klick erneut → Klick auf Step-3-Header
+- **Prüfung**: `oc-collapsed` Klasse wird getoggelt
+- **Erwartung**: Step 1 wird zugeklappt, dann wieder aufgeklappt; Step 3 wird aufgeklappt
+
+### T-50-04: Touch-Targets min 44px hoch (AK-UI-50-04)
+- **Aktion**: boundingBox() der Titel-Select und Sub-Tab-Buttons messen
+- **Prüfung**: Höhe ≥ 44px
+- **Erwartung**: Alle Touch-Targets sind iPad-freundlich (≥44px)
+
+### T-50-05: Sub-Tabs mit Lucide-Icons (AK-UI-50-05)
+- **Aktion**: Sub-Tab-Buttons im Social-Panel prüfen
+- **Prüfung**: Buttons haben [data-lucide]-Icon, Höhe ≥ 44px
+- **Erwartung**: Icons vorhanden, Touch-freundliche Größe
+
+### T-50-06: Teilen-Buttons vertikal mit min-height 56px (AK-UI-50-06)
+- **Aktion**: Step 4 aufklappen → Share-Buttons messen
+- **Prüfung**: WhatsApp und Instagram Buttons haben Höhe ≥ 56px, Tagesinfo sichtbar
+- **Erwartung**: Große, leicht treffbare Share-Buttons
+
+### T-50-07: Badge "X ausgewählt" in Step 2 Header (AK-UI-50-07)
+- **Aktion**: Social-Tab öffnen → Step-2-Count prüfen
+- **Prüfung**: #soc-step2-count existiert, initial leer
+- **Erwartung**: Badge-Element vorhanden, ohne Produkte leer
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| – | T-50-01 bis T-50-07 | ⏳ Ausstehend |

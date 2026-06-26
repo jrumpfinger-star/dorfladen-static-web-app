@@ -1173,3 +1173,125 @@ test.describe('AK-UI-40 Stammkunden klappbare Karten', () => {
     await expect(deleteBtn).toBeVisible();
   });
 });
+
+// ═══════════════════════════════════════════════════════════
+// AK-UI-50 – Social Media Step-Wizard
+// ═══════════════════════════════════════════════════════════
+test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(BASE_URL + '/kiosk.html');
+    await page.fill('#cms-pw-input', CMS_PW);
+    await page.click('#cms-pw-btn');
+    await page.waitForSelector('.k-main', { timeout: 10000 });
+    // Navigate to Social tab
+    const socialTab = page.locator('.k-tab[data-tab="social"]');
+    await socialTab.click();
+    await page.waitForSelector('#panel-social.active', { timeout: 5000 });
+  });
+
+  test('T-50-01: 4 nummerierte Step-Karten sichtbar (AK-UI-50-01)', async ({ page }) => {
+    for (let i = 1; i <= 4; i++) {
+      const step = page.locator('#soc-step-' + i);
+      await expect(step).toBeVisible();
+      // Verify numbered circle
+      const circle = step.locator('.k-order-hdr >> text="' + i + '"');
+      await expect(circle).toBeVisible();
+    }
+  });
+
+  test('T-50-02: Steps 1+2 offen, Steps 3+4 zugeklappt (AK-UI-50-02)', async ({ page }) => {
+    // Steps 1 and 2 should NOT have oc-collapsed class
+    const step1 = page.locator('#soc-step-1');
+    const step2 = page.locator('#soc-step-2');
+    await expect(step1).not.toHaveClass(/oc-collapsed/);
+    await expect(step2).not.toHaveClass(/oc-collapsed/);
+
+    // Steps 3 and 4 SHOULD have oc-collapsed class
+    const step3 = page.locator('#soc-step-3');
+    const step4 = page.locator('#soc-step-4');
+    await expect(step3).toHaveClass(/oc-collapsed/);
+    await expect(step4).toHaveClass(/oc-collapsed/);
+  });
+
+  test('T-50-03: Klick auf Step-Header toggled auf/zu (AK-UI-50-03)', async ({ page }) => {
+    const step1 = page.locator('#soc-step-1');
+    const step1Hdr = step1.locator('.k-order-hdr');
+
+    // Step 1 starts open – click to collapse
+    await step1Hdr.click();
+    await expect(step1).toHaveClass(/oc-collapsed/);
+
+    // Click again to expand
+    await step1Hdr.click();
+    await expect(step1).not.toHaveClass(/oc-collapsed/);
+
+    // Step 3 starts collapsed – click to expand
+    const step3 = page.locator('#soc-step-3');
+    const step3Hdr = step3.locator('.k-order-hdr');
+    await step3Hdr.click();
+    await expect(step3).not.toHaveClass(/oc-collapsed/);
+  });
+
+  test('T-50-04: Touch-Targets min 44px hoch (AK-UI-50-04)', async ({ page }) => {
+    // Check title select
+    const titleSel = page.locator('#soc-post-titel-sel');
+    const selBox = await titleSel.boundingBox();
+    expect(selBox.height).toBeGreaterThanOrEqual(44);
+
+    // Check sub-tab buttons
+    const postTab = page.locator('#social-subtab-post');
+    const postTabBox = await postTab.boundingBox();
+    expect(postTabBox.height).toBeGreaterThanOrEqual(44);
+  });
+
+  test('T-50-05: Sub-Tabs mit Lucide-Icons und min-height:44px (AK-UI-50-05)', async ({ page }) => {
+    const postBtn = page.locator('#social-subtab-post');
+    const katalogBtn = page.locator('#social-subtab-katalog');
+    await expect(postBtn).toBeVisible();
+    await expect(katalogBtn).toBeVisible();
+
+    // Check min-height
+    const postBox = await postBtn.boundingBox();
+    expect(postBox.height).toBeGreaterThanOrEqual(44);
+    const katalogBox = await katalogBtn.boundingBox();
+    expect(katalogBox.height).toBeGreaterThanOrEqual(44);
+
+    // Check Lucide icons are present (data-lucide attributes)
+    const postIcon = postBtn.locator('[data-lucide]');
+    await expect(postIcon).toHaveCount(1);
+    const katalogIcon = katalogBtn.locator('[data-lucide]');
+    await expect(katalogIcon).toHaveCount(1);
+  });
+
+  test('T-50-06: Teilen-Buttons vertikal mit min-height 56px (AK-UI-50-06)', async ({ page }) => {
+    // Expand step 4
+    const step4 = page.locator('#soc-step-4');
+    const step4Hdr = step4.locator('.k-order-hdr');
+    await step4Hdr.click();
+    await expect(step4).not.toHaveClass(/oc-collapsed/);
+
+    // WhatsApp button
+    const waBtn = step4.locator('button', { hasText: 'WhatsApp' });
+    await expect(waBtn).toBeVisible();
+    const waBox = await waBtn.boundingBox();
+    expect(waBox.height).toBeGreaterThanOrEqual(56);
+
+    // Instagram button
+    const igBtn = step4.locator('button', { hasText: 'Instagram' });
+    await expect(igBtn).toBeVisible();
+    const igBox = await igBtn.boundingBox();
+    expect(igBox.height).toBeGreaterThanOrEqual(56);
+
+    // Tagesinfo button
+    const tiBtn = step4.locator('button', { hasText: 'Tagesinfo' });
+    await expect(tiBtn).toBeVisible();
+  });
+
+  test('T-50-07: Badge "X ausgewählt" in Step 2 Header (AK-UI-50-07)', async ({ page }) => {
+    // Step-2 count badge should exist
+    const badge = page.locator('#soc-step2-count');
+    await expect(badge).toBeVisible();
+    // Initially empty (no products selected)
+    await expect(badge).toHaveText('');
+  });
+});
