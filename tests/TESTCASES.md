@@ -800,3 +800,5 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 | 2026-06-26 | T16.3 T-17-03 Nachrichten tagesuebergreifend | ✅ Pass |
 | 2026-06-26 | T16.4 T-17-04 Antwort+Gelesen Buttons | ✅ Pass |
 | 2026-06-26 | T16.5 T-17-05 API mode=messages | ✅ Pass |
+| 2026-06-26 | T16.6 T-17-06 Bestellschluss-Funktion | ✅ Pass |
+| 2026-06-26 | T16.7 T-17-07 Button-Zustand (vor 12:00) | ✅ Pass |
