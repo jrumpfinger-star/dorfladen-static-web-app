@@ -162,12 +162,25 @@
     var titel=(document.getElementById('soc-post-titel')||{}).value||'';
     var freitext=(document.getElementById('soc-post-text')||{}).value||'';
     if(!selected.length&&!freitext.trim()){socialStatus('soc-post-status','Bitte mindestens ein Produkt auswählen oder Freitext eingeben',false);return;}
+    // Button-Feedback: Spinner + deaktivieren
+    var btns=document.querySelectorAll('button[onclick="socialPublishTagesinfo()"]');
+    btns.forEach(function(b){b.disabled=true;b._origHtml=b.innerHTML;b.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:socSpin 0.6s linear infinite;vertical-align:middle;margin-right:6px"></span> Wird veröffentlicht…';b.style.opacity='0.7';b.style.cursor='wait';});
+    // CSS-Animation für Spinner (einmalig einfügen)
+    if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
     socialStatus('soc-post-status','⏳ Wird veröffentlicht…',true);
     var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};
     fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
-    .then(function(){socialStatus('soc-post-status','✅ Tagesinfo veröffentlicht – erscheint auf der Homepage',true);})
-    .catch(function(e){socialStatus('soc-post-status','❌ '+e.message,false);});
+    .then(function(){
+      socialStatus('soc-post-status','✅ Tagesinfo veröffentlicht – erscheint auf der Homepage',true);
+      btns.forEach(function(b){b.innerHTML='<span style="vertical-align:middle;margin-right:6px">✅</span> Veröffentlicht!';b.style.opacity='1';b.style.background='#dcfce7';b.style.borderColor='#16a34a';b.style.color='#166534';});
+      setTimeout(function(){btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});},3000);
+      if(typeof socialLoadTodayPosts==='function') socialLoadTodayPosts();
+    })
+    .catch(function(e){
+      socialStatus('soc-post-status','❌ '+e.message,false);
+      btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});
+    });
   };
 
   // --- Heutige Posts laden ---
