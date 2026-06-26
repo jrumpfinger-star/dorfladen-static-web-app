@@ -1054,6 +1054,37 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung**: Kein confirm-Dialog, Status wird direkt auf "In Bearbeitung" gesetzt
 - **Erwartung**: Sofortige Statusänderung ohne Rückfrage
 
+---
+
+## T-RD – Social Feature-Abgleich Kiosk ↔ CMS (AK-RD-10, AK-RD-11, AK-RD-12)
+
+> Spec: specs/kiosk-social-redesign.md → RD-11, RD-12, RD-13
+
+### T-RD-11: Kiosk – Tagesinfo-Button vorhanden (AK-RD-10)
+- **Aktion**: Kiosk → Social-Tab öffnen
+- **Prüfung**: Button "Nur als Tagesinfo veröffentlichen" ist sichtbar
+- **Erwartung**: Button existiert im Step-4-Bereich
+
+### T-RD-11b: CMS – Tagesinfo-Button vorhanden (AK-RD-10)
+- **Aktion**: CMS → Social → Neuer Post
+- **Prüfung**: Button "Nur als Tagesinfo veröffentlichen" ist sichtbar
+- **Erwartung**: Button existiert unterhalb der Teilen-Buttons (Feature-Parität mit Kiosk)
+
+### T-RD-12: Kiosk – Heutige-Posts-Container vorhanden (AK-RD-11)
+- **Aktion**: Kiosk → Social-Tab öffnen
+- **Prüfung**: DOM-Elemente `#soc-today-posts` und `#soc-today-posts-list` existieren
+- **Erwartung**: Container ist im DOM (hidden wenn keine Posts heute)
+
+### T-RD-12b: CMS – Heutige-Posts-Container vorhanden (AK-RD-11)
+- **Aktion**: CMS → Social → Neuer Post
+- **Prüfung**: DOM-Elemente `#soc-today-posts` und `#soc-today-posts-list` existieren
+- **Erwartung**: Container ist im DOM (hidden wenn keine Posts heute)
+
+### T-RD-13: CMS – Verlauf-Tab entfernt (AK-RD-12)
+- **Aktion**: CMS → Social-Tab öffnen
+- **Prüfung**: Kein Button `#social-subtab-verlauf`, kein Panel `#social-panel-verlauf`
+- **Erwartung**: Verlauf-Tab und Panel sind vollständig entfernt
+
 ### Testlauf-Tabelle
 
 | Datum | Test | Ergebnis |
@@ -1065,3 +1096,8 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-27 | T-50-05 | ✅ Pass |
 | 2026-06-27 | T-50-06 | ✅ Pass |
 | 2026-06-27 | T-50-07 | ✅ Pass |
+| 2026-06-26 | T-RD-11 | ✅ Pass |
+| 2026-06-26 | T-RD-11b | ✅ Pass |
+| 2026-06-26 | T-RD-12 | ✅ Pass |
+| 2026-06-26 | T-RD-12b | ✅ Pass |
+| 2026-06-26 | T-RD-13 | ✅ Pass |

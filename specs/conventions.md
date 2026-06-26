@@ -42,6 +42,9 @@
 3. **Spec** in `specs/*.md` aktualisieren:
    - Akzeptanzkriterien ergänzen / abhaken
    - Anforderungen bei Änderungen nachziehen
+4. **Tests ausführen** – betroffene Tests müssen nach der Änderung laufen:
+   - Gezielt: `npx playwright test tests/<file>.spec.js -g "Testname"`
+   - Ergebnis in TESTCASES.md dokumentieren (Datum, Ergebnis, ggf. Fehler)
 
 ### Keine Fallbacks – Funktionalität muss funktionieren:
 - **Fehlende Abhängigkeiten (Datenbankfelder, APIs, Configs) müssen angelegt werden** – nicht per Fallback/Default umgangen

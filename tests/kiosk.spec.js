@@ -1292,3 +1292,92 @@ test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
     await expect(badge).toHaveText('');
   });
 });
+
+// ═══════════════════════════════════════════════════════════
+// RD-11/12/13 – Social Feature-Abgleich Kiosk ↔ CMS
+// ═══════════════════════════════════════════════════════════
+test.describe('Social Feature-Abgleich (RD-11, RD-12, RD-13)', () => {
+
+  test('T-RD-11: Kiosk – Tagesinfo-Button vorhanden (AK-RD-10)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="social"]');
+    await page.waitForTimeout(500);
+    // Step 4 aufklappen damit Button sichtbar wird
+    const step4Hdr = page.locator('#soc-step-4 .k-order-hdr');
+    await step4Hdr.click();
+    await page.waitForTimeout(300);
+    const tiBtn = page.locator('button', { hasText: 'Tagesinfo' });
+    await expect(tiBtn).toBeVisible();
+  });
+
+  test('T-RD-11b: CMS – Tagesinfo-Button vorhanden (AK-RD-10)', async ({ page }) => {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    // Login
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+    // Navigate to Social tab
+    await page.click('#cms-tab-social');
+    await page.waitForTimeout(1000);
+    // Switch to Post sub-tab
+    await page.click('#social-subtab-post');
+    await page.waitForTimeout(500);
+    const tiBtn = page.locator('button', { hasText: 'Tagesinfo' });
+    await expect(tiBtn).toBeVisible();
+  });
+
+  test('T-RD-12: Kiosk – Heutige-Posts-Container vorhanden (AK-RD-11)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="social"]');
+    await page.waitForTimeout(1500);
+    // Container must exist in DOM (hidden if no posts today)
+    const wrap = page.locator('#soc-today-posts');
+    await expect(wrap).toBeAttached();
+    const list = page.locator('#soc-today-posts-list');
+    await expect(list).toBeAttached();
+  });
+
+  test('T-RD-12b: CMS – Heutige-Posts-Container vorhanden (AK-RD-11)', async ({ page }) => {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+    await page.click('#cms-tab-social');
+    await page.waitForTimeout(1000);
+    await page.click('#social-subtab-post');
+    await page.waitForTimeout(500);
+    const wrap = page.locator('#soc-today-posts');
+    await expect(wrap).toBeAttached();
+    const list = page.locator('#soc-today-posts-list');
+    await expect(list).toBeAttached();
+  });
+
+  test('T-RD-13: CMS – Verlauf-Tab entfernt (AK-RD-12)', async ({ page }) => {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+    await page.click('#cms-tab-social');
+    await page.waitForTimeout(500);
+    // Verlauf-Tab button must NOT exist
+    const verlaufBtn = page.locator('#social-subtab-verlauf');
+    await expect(verlaufBtn).toHaveCount(0);
+    // Verlauf panel must NOT exist
+    const verlaufPanel = page.locator('#social-panel-verlauf');
+    await expect(verlaufPanel).toHaveCount(0);
+  });
+});
