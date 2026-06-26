@@ -836,3 +836,8 @@ Umgebung: witty-island-064f9d903.7.azurestaticapps.net
 
 | Datum | Test | Ergebnis |
 |---|---|---|
+| 2026-06-26 | T-35-01 Collapse-Pattern | ✅ Pass |
+| 2026-06-26 | T-35-02 Header Name/Status/Preis | ✅ Pass |
+| 2026-06-26 | T-35-03 Primär-Action im Header | ✅ Pass |
+| 2026-06-26 | T-35-04 Details-Button vollwertig | ✅ Pass |
+| 2026-06-26 | T-35-05 Aufklappen/Zuklappen Toggle | ✅ Pass |
