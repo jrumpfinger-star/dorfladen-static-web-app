@@ -1179,14 +1179,11 @@ test.describe('AK-UI-40 Stammkunden klappbare Karten', () => {
 // ═══════════════════════════════════════════════════════════
 test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(BASE_URL + '/kiosk.html');
-    await page.fill('#cms-pw-input', CMS_PW);
-    await page.click('#cms-pw-btn');
-    await page.waitForSelector('.k-main', { timeout: 10000 });
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
     // Navigate to Social tab
-    const socialTab = page.locator('.k-tab[data-tab="social"]');
-    await socialTab.click();
-    await page.waitForSelector('#panel-social.active', { timeout: 5000 });
+    await page.click('[data-tab="social"]');
+    await page.waitForTimeout(500);
   });
 
   test('T-50-01: 4 nummerierte Step-Karten sichtbar (AK-UI-50-01)', async ({ page }) => {
