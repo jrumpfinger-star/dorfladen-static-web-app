@@ -170,15 +170,26 @@
     .catch(function(e){socialStatus('soc-post-status','❌ '+e.message,false);});
   };
 
-  // --- Verlauf ---
-  window._socialVerlaufLoaded=false;
-  function socialLoadVerlauf(){
-    var list=document.getElementById('social-verlauf-list');if(!list)return;list.innerHTML='<p style="color:#9ca3af;font-size:12px">Laden...</p>';
-    fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){window._socialVerlaufLoaded=true;var posts=res.items||[];if(!posts.length){list.innerHTML='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Posts erstellt.</p>';return;}
-      var html='';posts.forEach(function(p){html+='<div style="padding:8px 10px;border-bottom:1px solid #f3f4f6"><div style="font-weight:600;font-size:13px">'+M.esc(p.titel||'Post')+'</div><div style="font-size:11px;color:#6b7280">'+M.esc(p.datum||'')+(p.items?' \u2022 '+p.items.length+' Produkte':'')+'</div></div>';});
+  // --- Heutige Posts laden ---
+  window.socialLoadTodayPosts=function(){
+    var wrap=document.getElementById('soc-today-posts');
+    var list=document.getElementById('soc-today-posts-list');
+    if(!wrap||!list)return;
+    var today=new Date();var td=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){
+      var posts=(res.items||[]).filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
+      if(!posts.length){wrap.style.display='none';return;}
+      wrap.style.display='';
+      var html='';posts.forEach(function(p){
+        var cnt=p.items?p.items.length:0;
+        html+='<div style="padding:4px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center">';
+        html+='<span style="font-weight:600;color:#374151">'+M.esc(p.titel||'Post')+'</span>';
+        html+='<span style="color:#6b7280">'+cnt+' Produkt'+(cnt!==1?'e':'')+'</span>';
+        html+='</div>';
+      });
       list.innerHTML=html;
-    }).catch(function(e){list.innerHTML='<p style="color:#dc2626;font-size:12px">Fehler: '+M.esc(e.message)+'</p>';});
-  }
+    }).catch(function(){wrap.style.display='none';});
+  };
 
   // --- Individual Meal Poster ---
   window.socialGenMealPoster=function(idx){

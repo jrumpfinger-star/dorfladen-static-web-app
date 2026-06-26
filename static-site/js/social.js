@@ -90,7 +90,7 @@
 
   // --- Sub-tab switching ---
   window.socialSubTab = function(name){
-    ['katalog','post','verlauf','wakatalog'].forEach(function(t){
+    ['katalog','post','wakatalog'].forEach(function(t){
       var p=document.getElementById('social-panel-'+t);
       var b=document.getElementById('social-subtab-'+t);
       if(p) p.style.display = t===name?'':'none';
@@ -111,8 +111,8 @@
           socialLoadMtBilder(function(){ mtReady2=true; tryBuild2(); });
         } else { mtReady2=true; tryBuild2(); }
       }
+      socialLoadTodayPosts();
     }
-    if(name==='verlauf' && !window._socialVerlaufLoaded) socialLoadVerlauf();
     if(name==='wakatalog') waKatalogLoad();
   };
 
