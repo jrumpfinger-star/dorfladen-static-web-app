@@ -2272,7 +2272,8 @@ var K = (function(){
         var name = p.bezeichnung||p.name||'?';
         var menge = p.menge||1;
         var einheit = p.einheit||'Stk';
-        html += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px"><span style="font-weight:600;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span><span style="color:#6b7280;white-space:nowrap">'+menge+' '+esc(einheit)+'</span></div>';
+        var preis = p.einzelpreis||p.preis||0;
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px"><span style="font-weight:600;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span>'+(preis?'<span style="color:#374151;font-weight:600;white-space:nowrap">'+(preis*menge).toFixed(2).replace('.',',')+' €</span>':'')+'<span style="color:#6b7280;white-space:nowrap">'+menge+' '+esc(einheit)+'</span></div>';
       });
       if(posArr.length>4) html += '<div style="font-size:12px;color:#6b7280;padding:2px 0">+'+(posArr.length-4)+' weitere Artikel</div>';
       html += '</div>';
@@ -2282,19 +2283,19 @@ var K = (function(){
     html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:4px;border-top:1px solid #f3f4f6">';
     // Primary action (duplicated for expanded view)
     if(o.status===0){
-      html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;min-width:120px" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',14)+' Annehmen</button>';
+      html += '<button class="k-btn k-btn-confirm k-btn-sm" style="min-width:120px" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',14)+' Annehmen</button>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
       html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:90px" onclick="K.setShopStatus(\''+o.id+'\',4)">'+luc('x-circle',14)+' Storno</button>';
     } else if(o.status===1){
-      html += '<button class="k-btn k-btn-sm" style="flex:1;min-width:120px;background:#d97706;color:#fff" onclick="K.openPackModal(\''+o.id+'\')">'+luc('package',14)+' Packen</button>';
+      html += '<button class="k-btn k-btn-sm" style="min-width:120px;background:#d97706;color:#fff" onclick="K.openPackModal(\''+o.id+'\')">'+luc('package',14)+' Packen</button>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
       html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
     } else if(o.status===2){
-      html += '<button class="k-btn k-btn-pickup k-btn-sm" style="flex:1;min-width:120px" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',14)+' Ausgeben</button>';
+      html += '<button class="k-btn k-btn-pickup k-btn-sm" style="min-width:120px" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',14)+' Ausgeben</button>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
       html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
     } else if(o.status===3){
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="flex:1;min-width:120px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details ansehen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:120px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details ansehen</button>';
       html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
     }
     html += '</div>';
