@@ -535,6 +535,46 @@ def _handle_get(req, token, base_url, hdrs):
             status_code=200, headers=get_cors_headers()
         )
 
+    # Count unread customer messages (for tab badge)
+    if mode == "unread_messages":
+        msg_url = (
+            f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+            f"?$filter=dl_kunde_kommentar ne null"
+            f" and dl_kunde_kommentar ne ''"
+            f" and dl_kommentar_gelesen ne true"
+            f" and dl_status ne {STATUS_STORNIERT}"
+            f"&$select=dl_fleischbestellungid"
+            f"&$top=50"
+        )
+        mr = requests.get(msg_url, headers=hdrs, timeout=30)
+        msg_count = 0
+        if mr.status_code == 200:
+            msg_count = len(mr.json().get("value", []))
+        return func.HttpResponse(
+            json.dumps({"success": True, "unread_count": msg_count}, ensure_ascii=False),
+            status_code=200, headers=get_cors_headers()
+        )
+
+    # Full message orders (for Kiosk Nachrichten-Bereich in Metzger tab)
+    if mode == "messages":
+        msg_url = (
+            f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+            f"?$filter=dl_kunde_kommentar ne null"
+            f" and dl_kunde_kommentar ne ''"
+            f" and dl_status ne {STATUS_STORNIERT}"
+            f"&$orderby=createdon desc"
+            f"&$top=50"
+        )
+        mr = requests.get(msg_url, headers=hdrs, timeout=30)
+        msg_orders = []
+        if mr.status_code == 200:
+            for item in mr.json().get("value", []):
+                msg_orders.append(_serialize(item))
+        return func.HttpResponse(
+            json.dumps({"success": True, "orders": msg_orders, "count": len(msg_orders)}, ensure_ascii=False),
+            status_code=200, headers=get_cors_headers()
+        )
+
     # All orders (CMS mode with optional filters)
     status_filter = req.params.get("status", "")
     odata_parts = []
@@ -559,7 +599,7 @@ def _handle_get(req, token, base_url, hdrs):
     )
 
 
-# ── PATCH: Update status ──
+# ── PATCH: Update status / comments ──
 
 def _handle_patch(req, token, base_url, hdrs):
     try:
@@ -572,22 +612,32 @@ def _handle_patch(req, token, base_url, hdrs):
 
     record_id = body.get("id", "")
     new_status = body.get("status")
-    personal_antwort = body.get("personal_antwort", "")
+    kunde_kommentar = body.get("kunde_kommentar")
+    personal_antwort = body.get("personal_antwort")
+    kommentar_gelesen = body.get("kommentar_gelesen")
 
     if not record_id:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Bestell-ID erforderlich"}, ensure_ascii=False),
             status_code=400, headers=get_cors_headers()
         )
-    if new_status is None:
+
+    patch_data = {}
+    if new_status is not None:
+        patch_data["dl_status"] = int(new_status)
+    if kunde_kommentar is not None:
+        patch_data["dl_kunde_kommentar"] = kunde_kommentar.strip()
+        patch_data["dl_kommentar_gelesen"] = False  # new comment → unread
+    if personal_antwort is not None:
+        patch_data["dl_personal_antwort"] = personal_antwort.strip()
+    if kommentar_gelesen is not None:
+        patch_data["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
+
+    if not patch_data:
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "Status erforderlich"}, ensure_ascii=False),
+            json.dumps({"success": False, "error": "Keine Aenderung angegeben"}, ensure_ascii=False),
             status_code=400, headers=get_cors_headers()
         )
-
-    patch_data = {"dl_status": int(new_status)}
-    if personal_antwort:
-        patch_data["dl_personal_antwort"] = personal_antwort
 
     url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})"
     patch_hdrs = dict(hdrs)
@@ -597,20 +647,24 @@ def _handle_patch(req, token, base_url, hdrs):
     if r.status_code not in (200, 204):
         logging.error(f"[fleisch-order] PATCH failed: {r.status_code} {r.text[:500]}")
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "Status konnte nicht aktualisiert werden"}, ensure_ascii=False),
+            json.dumps({"success": False, "error": "Aktualisierung fehlgeschlagen"}, ensure_ascii=False),
             status_code=500, headers=get_cors_headers()
         )
 
     # Send push notification on relevant status changes
-    if int(new_status) in (STATUS_EINGETROFFEN, STATUS_STORNIERT):
+    if new_status is not None and int(new_status) in (STATUS_EINGETROFFEN, STATUS_STORNIERT):
         _try_send_notification(record_id, base_url, hdrs, int(new_status), req)
 
+    # Push to customer when staff sends a reply
+    if personal_antwort is not None and personal_antwort.strip():
+        _try_send_reply_push(record_id, base_url, hdrs, personal_antwort.strip(), req)
+
+    resp = {"success": True, "message": "Aktualisiert"}
+    if new_status is not None:
+        resp["status"] = int(new_status)
+        resp["status_label"] = STATUS_LABELS.get(int(new_status), "")
     return func.HttpResponse(
-        json.dumps({
-            "success": True,
-            "status": int(new_status),
-            "status_label": STATUS_LABELS.get(int(new_status), ""),
-        }, ensure_ascii=False),
+        json.dumps(resp, ensure_ascii=False),
         status_code=200, headers=get_cors_headers()
     )
 
@@ -662,6 +716,42 @@ def _try_send_notification(record_id, base_url, hdrs, status, req):
         logging.debug(f"[fleisch-order] Notification failed: {e}")
 
 
+def _try_send_reply_push(record_id, base_url, hdrs, reply_text, req):
+    """Send push notification when staff replies to a customer comment."""
+    try:
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})?$select=dl_bestellnummer,dl_name,dl_email"
+        r = requests.get(url, headers=hdrs, timeout=10)
+        if r.status_code != 200:
+            return
+        data = r.json()
+        name = data.get("dl_name", "")
+        nr = data.get("dl_bestellnummer", "")
+
+        title = "Nachricht vom Dorfladen \U0001F4AC"
+        message = f"Hallo {name}, neue Nachricht zu Ihrer Bestellung {nr}: {reply_text[:120]}"
+
+        req_url = req.url or ""
+        push_url = ""
+        if "/api/" in req_url:
+            push_url = req_url.split("/api/")[0] + "/api/push-send"
+
+        if push_url:
+            push_payload = {
+                "title": title,
+                "message": message,
+                "url": f"/fleisch-bestellen?nr={nr}",
+                "tag": f"fleisch-reply-{nr}",
+                "category": "fleisch"
+            }
+            try:
+                pr = requests.post(push_url, json=push_payload, timeout=15)
+                logging.info(f"[fleisch-order] Reply push sent for {nr}: {pr.status_code}")
+            except Exception as pe:
+                logging.debug(f"[fleisch-order] Reply push send failed: {pe}")
+    except Exception as e:
+        logging.debug(f"[fleisch-order] Reply push failed: {e}")
+
+
 # ── Serializer ──
 
 def _serialize(item):
@@ -690,6 +780,7 @@ def _serialize(item):
         "anmerkung": item.get("dl_anmerkung", ""),
         "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
         "personal_antwort": item.get("dl_personal_antwort", ""),
+        "kommentar_gelesen": item.get("dl_kommentar_gelesen", False),
     }
 
 

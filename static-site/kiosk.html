@@ -444,6 +444,7 @@
       <button class="k-filter-btn active" data-fm-filter="offen" onclick="K.setMetzgerFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Zu erledigen</span> <span class="k-filter-count" id="fm-fc-offen">0</span></button>
       <button class="k-filter-btn" data-fm-filter="heute" onclick="K.setMetzgerFilter('heute')"><i data-lucide="calendar-check" style="width:14px;height:14px"></i> <span class="k-filter-label">Heute abholen</span> <span class="k-filter-count" id="fm-fc-heute">0</span></button>
       <button class="k-filter-btn" data-fm-filter="sammel" onclick="K.setMetzgerFilter('sammel')"><i data-lucide="clipboard-list" style="width:14px;height:14px"></i> <span class="k-filter-label">Sammelbestellung</span></button>
+      <button class="k-filter-btn" data-fm-filter="nachrichten" onclick="K.setMetzgerFilter('nachrichten')"><i data-lucide="message-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Nachrichten</span> <span class="k-filter-count" id="fm-fc-msg">0</span></button>
       <button class="k-filter-btn" data-fm-filter="historie" onclick="K.setMetzgerFilter('historie')"><i data-lucide="history" style="width:14px;height:14px"></i> <span class="k-filter-label">Historie</span></button>
     </div>
     <div class="k-stats" id="metzger-stats" style="display:none"></div>
@@ -456,6 +457,8 @@
       </div>
       <div id="metzger-sammel-body"></div>
     </div>
+    <!-- Fleisch-Nachrichten Bereich -->
+    <div id="metzger-nachrichten" style="display:none"></div>
     <div id="metzger-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="beef" style="width:24px;height:24px"></i></div>Keine Fleisch-Vorbestellungen</div></div>
   </div>
 
@@ -3183,6 +3186,8 @@ var K = (function(){
   var _fmFilter = 'offen';
   var _fmCardOpen = {};
   var _fmSammelLiefertag = '';
+  var _fmMsgOrders = [];
+  var _fmUnreadCount = 0;
 
   function loadMetzgerOrders(){
     var url = API + '/fleisch-order?mode=kiosk';
@@ -3190,13 +3195,39 @@ var K = (function(){
       if(!data.success) return;
       _fmOrders = data.bestellungen || [];
       updateMetzgerBadge();
-      renderMetzgerOrders();
+      if(_fmFilter==='nachrichten'){
+        _loadFmMessages();
+      } else {
+        renderMetzgerOrders();
+      }
     }).catch(function(e){ console.error('[metzger] load failed', e); });
+    // Also load unread message count
+    fetch(API+'/fleisch-order?mode=unread_messages')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        _fmUnreadCount = (res.success) ? (res.unread_count||0) : 0;
+        var el = document.getElementById('fm-fc-msg'); if(el) el.textContent = _fmUnreadCount || '';
+        updateMetzgerBadge();
+      }).catch(function(){});
   }
 
   function updateMetzgerBadge(){
-    var count = _fmOrders.filter(function(o){ return o.status < 3; }).length;
-    updateBadge('metzger', count);
+    var orderCount = _fmOrders.filter(function(o){ return o.status < 3; }).length;
+    var total = orderCount + _fmUnreadCount;
+    var el = document.getElementById('badge-metzger');
+    if(!el) return;
+    if(total>0){
+      el.textContent = total;
+      el.classList.add('show');
+      el.style.background = _fmUnreadCount > 0 ? '#3b82f6' : '';
+      var parts = [];
+      if(orderCount>0) parts.push(orderCount+' offen');
+      if(_fmUnreadCount>0) parts.push(_fmUnreadCount+' \uD83D\uDCAC');
+      el.title = parts.join(', ');
+    } else {
+      el.classList.remove('show');
+      el.style.background = '';
+    }
   }
 
   function setMetzgerFilter(f){
@@ -3205,8 +3236,12 @@ var K = (function(){
       btn.classList.toggle('active', btn.getAttribute('data-fm-filter')===f);
     });
     document.getElementById('metzger-sammel').style.display = f==='sammel' ? 'block' : 'none';
+    document.getElementById('metzger-nachrichten').style.display = f==='nachrichten' ? 'block' : 'none';
+    document.getElementById('metzger-orders').style.display = (f==='nachrichten') ? 'none' : '';
     if(f==='sammel'){
       loadMetzgerSammel();
+    } else if(f==='nachrichten'){
+      _loadFmMessages();
     } else {
       renderMetzgerOrders();
     }
@@ -3276,6 +3311,18 @@ var K = (function(){
 
       if(o.anmerkung) html += '<div style="padding:4px 12px 8px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:6px;margin:0 8px 8px"><i data-lucide="message-circle" style="width:12px;height:12px"></i> '+esc(o.anmerkung)+'</div>';
 
+      // Customer comment
+      var fmIsUnread = o.kunde_kommentar && !o.kommentar_gelesen;
+      if(o.kunde_kommentar){
+        html += '<div class="k-order-note" style="background:'+(fmIsUnread?'#eff6ff;border-left:3px solid #3b82f6;color:#1e40af':'#f8fafc;border-left:3px solid #d1d5db;color:#6b7280')+';margin:0 8px 6px;padding:6px 10px;border-radius:4px;font-size:12px">';
+        html += '<i data-lucide="user" style="width:12px;height:12px"></i> <strong>Kunde:</strong> '+esc(o.kunde_kommentar);
+        if(fmIsUnread) html += ' <span style="background:#3b82f6;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px">NEU</span>';
+        html += '</div>';
+      }
+      if(o.personal_antwort){
+        html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 8px 6px;padding:6px 10px;border-radius:4px;font-size:12px"><i data-lucide="reply" style="width:12px;height:12px"></i> <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+      }
+
       // Action buttons
       html += '<div class="k-oc-actions" style="padding:8px 12px 12px;display:flex;gap:6px;flex-wrap:wrap">';
       if(o.status===0){
@@ -3286,10 +3333,18 @@ var K = (function(){
       } else if(o.status===2){
         html += '<button class="k-btn k-btn-confirm" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',3)"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Abgeholt</button>';
       }
-      if(o.telefon){
-        html += '<a href="tel:'+esc(o.telefon)+'" class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px;text-decoration:none"><i data-lucide="phone" style="width:14px;height:14px"></i> Anrufen</a>';
+      // Reply & Read buttons
+      if(o.status < 3){
+        html += '<button class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="event.stopPropagation();K.showFmReply(\''+o.id+'\')"><i data-lucide="'+(o.kunde_kommentar?'reply':'send')+'" style="width:14px;height:14px"></i> '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button>';
+        if(fmIsUnread) html += '<button class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
       }
-      html += '</div></div></div>';
+      html += '</div>';
+      // Inline reply form (hidden by default)
+      html += '<div id="fm-rpl-'+o.id+'" style="display:none;margin:0 8px 8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
+      html += '<input type="text" id="fm-rpt-'+o.id+'" placeholder="Antwort eingeben\u2026" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
+      html += '<button class="k-btn k-btn-confirm" style="font-size:13px;padding:6px 14px;border-radius:8px" onclick="K.sendFmReply(\''+o.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i> Senden</button>';
+      html += '</div>';
+      html += '</div></div>';
     });
 
     container.innerHTML = html;
@@ -3315,6 +3370,126 @@ var K = (function(){
         toast('Fehler: '+(data.error||''));
       }
     }).catch(function(){ toast('Netzwerkfehler'); });
+  }
+
+  // ── Fleisch-Nachrichten (like Mittagstisch messages) ──
+  function _loadFmMessages(){
+    fetch(API+'/fleisch-order?mode=messages')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        _fmMsgOrders = (res.success && res.orders) ? res.orders : [];
+        _renderFmMessages();
+      }).catch(function(e){ console.error('[metzger] msg load failed',e); });
+  }
+
+  function _renderFmMessages(){
+    var container = document.getElementById('metzger-nachrichten');
+    if(!container) return;
+    var unread = _fmMsgOrders.filter(function(o){return !o.kommentar_gelesen;});
+    var read = _fmMsgOrders.filter(function(o){return o.kommentar_gelesen;});
+    var html = '';
+
+    if(!_fmMsgOrders.length){
+      html = '<div class="k-empty"><div class="k-empty-icon"><i data-lucide="message-circle" style="width:24px;height:24px"></i></div>Keine Nachrichten</div>';
+      container.innerHTML = html; reinitIcons(); return;
+    }
+
+    // Unread section
+    if(unread.length){
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 6px">';
+      html += '<span style="font-size:13px;font-weight:700;color:#1e40af">'+unread.length+' ungelesen</span>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;margin-left:auto" onclick="K.markAllFmRead()"><i data-lucide="check-check" style="width:14px;height:14px"></i> Alle als gelesen</button>';
+      html += '</div>';
+      unread.forEach(function(o){ html += _renderFmMsgCard(o, true); });
+    }
+    if(read.length){
+      html += '<div style="font-size:12px;color:var(--c-muted);padding:10px 0 4px;border-top:1px solid #e5e7eb;margin-top:8px">Gelesen ('+read.length+')</div>';
+      read.forEach(function(o){ html += _renderFmMsgCard(o, false); });
+    }
+    container.innerHTML = html;
+    reinitIcons();
+  }
+
+  function _renderFmMsgCard(o, isUnread){
+    var h = '<div class="k-order" style="margin-bottom:8px;border-left:3px solid '+(isUnread?'#3b82f6':'#d1d5db')+'">';
+    h += '<div class="k-order-hdr" style="padding:8px 12px">';
+    h += '<span class="k-oc-name">'+esc(o.name)+' <span style="font-size:11px;color:var(--c-muted)">#'+esc(o.bestellnummer)+'</span></span>';
+    h += '</div>';
+    h += '<div class="k-order-body" style="display:block">';
+    h += '<div class="k-order-note" style="background:'+(isUnread?'#eff6ff;border-left:3px solid #3b82f6;color:#1e40af':'#f8fafc;border-left:3px solid #d1d5db;color:#6b7280')+';margin:0 8px 6px;padding:6px 10px;border-radius:4px;font-size:12px">';
+    h += '<i data-lucide="user" style="width:12px;height:12px"></i> <strong>Kunde:</strong> '+esc(o.kunde_kommentar);
+    if(isUnread) h += ' <span style="background:#3b82f6;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px">NEU</span>';
+    h += '</div>';
+    if(o.personal_antwort) h += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 8px 6px;padding:6px 10px;border-radius:4px;font-size:12px"><i data-lucide="reply" style="width:12px;height:12px"></i> <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+    h += '<div style="display:flex;gap:8px;padding:4px 8px 8px;align-items:center">';
+    h += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff;font-size:13px" onclick="K.showFmReply(\''+o.id+'\')"><i data-lucide="reply" style="width:14px;height:14px"></i> Antworten</button>';
+    if(isUnread) h += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
+    h += '</div>';
+    h += '<div id="fm-rpl-'+o.id+'" style="display:none;margin:0 8px 8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
+    h += '<input type="text" id="fm-rpt-'+o.id+'" placeholder="Antwort eingeben\u2026" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
+    h += '<button class="k-btn k-btn-confirm" style="font-size:13px;padding:6px 14px;border-radius:8px" onclick="K.sendFmReply(\''+o.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i> Senden</button>';
+    h += '</div>';
+    h += '</div></div>';
+    return h;
+  }
+
+  function showFmReply(id){
+    var el = document.getElementById('fm-rpl-'+id);
+    if(el){
+      el.style.display = el.style.display==='none' ? 'block' : 'none';
+      if(el.style.display==='block'){
+        var inp = document.getElementById('fm-rpt-'+id);
+        if(inp) inp.focus();
+      }
+    }
+  }
+
+  function sendFmReply(id){
+    var inp = document.getElementById('fm-rpt-'+id);
+    if(!inp) return;
+    var text = inp.value.trim();
+    if(!text){ toast('Bitte Antwort eingeben'); return; }
+    fetch(API+'/fleisch-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id, personal_antwort:text, kommentar_gelesen:true})
+    }).then(function(r){return r.json();}).then(function(data){
+      if(data.success){
+        toast('\u2705 Antwort gesendet');
+        loadMetzgerOrders();
+      } else {
+        toast('Fehler: '+(data.error||''));
+      }
+    }).catch(function(){ toast('Netzwerkfehler'); });
+  }
+
+  function markFmRead(id){
+    fetch(API+'/fleisch-order',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id, kommentar_gelesen:true})
+    }).then(function(r){return r.json();}).then(function(data){
+      if(data.success){
+        toast('\u2705 Als gelesen markiert');
+        loadMetzgerOrders();
+      }
+    }).catch(function(){ toast('Netzwerkfehler'); });
+  }
+
+  function markAllFmRead(){
+    var unread = _fmMsgOrders.filter(function(o){return !o.kommentar_gelesen;});
+    if(!unread.length){ toast('Keine ungelesenen Nachrichten'); return; }
+    var pending = unread.length;
+    unread.forEach(function(o){
+      fetch(API+'/fleisch-order',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:o.id, kommentar_gelesen:true})
+      }).then(function(r){return r.json();}).then(function(){
+        pending--;
+        if(pending<=0){ toast('\u2705 Alle als gelesen markiert'); loadMetzgerOrders(); }
+      }).catch(function(){ pending--; });
+    });
   }
 
   // Sammelbestellung
@@ -3475,6 +3650,10 @@ var K = (function(){
     loadMetzgerOrders: loadMetzgerOrders,
     printMetzgerSammel: printMetzgerSammel,
     metzgerAlleGesendet: metzgerAlleGesendet,
+    showFmReply: showFmReply,
+    sendFmReply: sendFmReply,
+    markFmRead: markFmRead,
+    markAllFmRead: markAllFmRead,
     refresh: refresh
   };
 })();
