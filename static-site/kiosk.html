@@ -3326,14 +3326,8 @@ var K = (function(){
         html += '<button class="k-btn k-btn-confirm" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',3)"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Abgeholt</button>';
       }
       if(fmIsUnread) html += '<button class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
+      if(o.status < 3) html += '<button class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px;color:#2563eb;border-color:#93c5fd" onclick="event.stopPropagation();K.openFmReplyModal(\''+o.id+'\',\''+esc(o.name)+'\')"><i data-lucide="message-circle" style="width:14px;height:14px"></i> Nachricht</button>';
       html += '</div>';
-      // Inline reply input (always visible for active orders)
-      if(o.status < 3){
-        html += '<div style="padding:4px 12px 12px;display:flex;gap:6px;align-items:center">';
-        html += '<input type="text" id="fm-rpt-'+o.id+'" placeholder="'+(o.kunde_kommentar?'Antwort eingeben\u2026':'Nachricht an Kunde\u2026')+'" maxlength="300" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'){event.preventDefault();K.sendFmReply(\''+o.id+'\')}">';
-        html += '<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff;white-space:nowrap;border-radius:8px" onclick="K.sendFmReply(\''+o.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
-        html += '</div>';
-      }
       html += '</div></div>';
     });
 
@@ -3416,9 +3410,8 @@ var K = (function(){
       h += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
       h += '</div>';
     }
-    h += '<div style="display:flex;gap:6px;padding:4px 8px 10px;align-items:center">';
-    h += '<input type="text" id="fm-rpt-'+o.id+'" placeholder="'+(o.kunde_kommentar?'Antwort eingeben\u2026':'Nachricht an Kunde\u2026')+'" maxlength="300" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'){event.preventDefault();K.sendFmReply(\''+o.id+'\')}">';
-    h += '<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff;white-space:nowrap;border-radius:8px" onclick="K.sendFmReply(\''+o.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
+    h += '<div style="display:flex;gap:8px;padding:4px 8px 10px;align-items:center">';
+    h += '<button class="k-btn k-btn-outline" style="font-size:13px;padding:8px 16px;border-radius:8px;color:#2563eb;border-color:#93c5fd" onclick="K.openFmReplyModal(\''+o.id+'\',\''+esc(o.name)+'\')"><i data-lucide="message-circle" style="width:14px;height:14px"></i> Antworten</button>';
     h += '</div>';
     h += '</div></div>';
     return h;
@@ -3435,23 +3428,58 @@ var K = (function(){
     }
   }
 
-  function sendFmReply(id){
-    var inp = document.getElementById('fm-rpt-'+id);
-    if(!inp) return;
-    var text = inp.value.trim();
-    if(!text){ toast('Bitte Antwort eingeben'); return; }
+  function openFmReplyModal(id, name){
+    var existing = document.getElementById('fm-reply-modal');
+    if(existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'fm-reply-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
+    overlay.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">'
+      +'<div style="padding:20px 24px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="font-size:18px;font-weight:700;color:#1e293b"><i data-lucide="message-circle" style="width:20px;height:20px;vertical-align:middle;margin-right:6px"></i> Nachricht an '+esc(name)+'</div>'
+      +'<button onclick="document.getElementById(\'fm-reply-modal\').remove()" style="background:none;border:none;cursor:pointer;padding:8px"><i data-lucide="x" style="width:24px;height:24px;color:#6b7280"></i></button>'
+      +'</div>'
+      +'<div style="padding:20px 24px">'
+      +'<textarea id="fm-modal-reply-text" rows="4" maxlength="500" placeholder="Nachricht eingeben\u2026" style="width:100%;padding:14px 16px;border:2px solid #d1d5db;border-radius:12px;font-size:16px;font-family:inherit;resize:vertical;box-sizing:border-box;min-height:120px"></textarea>'
+      +'</div>'
+      +'<div style="padding:0 24px 20px;display:flex;gap:12px">'
+      +'<button onclick="document.getElementById(\'fm-reply-modal\').remove()" style="flex:1;padding:14px;border:2px solid #d1d5db;border-radius:12px;background:#fff;font-size:16px;font-weight:600;color:#6b7280;cursor:pointer">Abbrechen</button>'
+      +'<button onclick="K.sendFmModalReply(\''+id+'\')" style="flex:1;padding:14px;border:none;border-radius:12px;background:#2563eb;font-size:16px;font-weight:600;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i data-lucide="send" style="width:18px;height:18px"></i> Senden</button>'
+      +'</div></div>';
+
+    document.body.appendChild(overlay);
+    reinitIcons();
+    setTimeout(function(){ document.getElementById('fm-modal-reply-text').focus(); }, 100);
+  }
+
+  function sendFmModalReply(id){
+    var ta = document.getElementById('fm-modal-reply-text');
+    if(!ta) return;
+    var text = ta.value.trim();
+    if(!text){ toast('Bitte Nachricht eingeben'); return; }
+    var btn = ta.closest('div').parentNode.querySelector('button[onclick*="sendFmModalReply"]');
+    if(btn){ btn.disabled=true; btn.textContent='Senden\u2026'; }
     fetch(API+'/fleisch-order',{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({id:id, personal_antwort:text, kommentar_gelesen:true})
     }).then(function(r){return r.json();}).then(function(data){
+      var modal = document.getElementById('fm-reply-modal');
+      if(modal) modal.remove();
       if(data.success){
-        toast('\u2705 Antwort gesendet');
+        toast('\u2705 Nachricht gesendet');
         loadMetzgerOrders();
       } else {
         toast('Fehler: '+(data.error||''));
       }
-    }).catch(function(){ toast('Netzwerkfehler'); });
+    }).catch(function(){
+      var modal = document.getElementById('fm-reply-modal');
+      if(modal) modal.remove();
+      toast('Netzwerkfehler');
+    });
   }
 
   function markFmRead(id){
@@ -3643,6 +3671,8 @@ var K = (function(){
     metzgerAlleGesendet: metzgerAlleGesendet,
     showFmReply: showFmReply,
     sendFmReply: sendFmReply,
+    openFmReplyModal: openFmReplyModal,
+    sendFmModalReply: sendFmModalReply,
     markFmRead: markFmRead,
     markAllFmRead: markAllFmRead,
     refresh: refresh
