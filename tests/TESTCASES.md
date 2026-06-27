@@ -1204,3 +1204,33 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Aktion:** `/fleisch-bestellen` aufrufen
 - **Prüfung:** HTTP Status
 - **Erwartung:** 200 OK (Route in staticwebapp.config.json konfiguriert)
+
+### T-11-01 API: GET mode=unread_messages liefert Zähler (AK-FLEISCH-11)
+- **Aktion:** GET `/api/fleisch-order?mode=unread_messages`
+- **Prüfung:** Response hat `success: true` und `unread_count` (Number)
+- **Erwartung:** `success: true`, `unread_count >= 0`
+
+### T-11-02 API: GET mode=messages liefert Bestellungen mit Kommentar (AK-FLEISCH-11)
+- **Aktion:** GET `/api/fleisch-order?mode=messages`
+- **Prüfung:** Response hat `success: true`, `orders` (Array), `count` (Number)
+- **Erwartung:** `success: true`, Array mit Bestellungen die `kunde_kommentar` haben
+
+### T-11-03 API: PATCH mit kommentar_gelesen akzeptiert (AK-FLEISCH-11)
+- **Aktion:** PATCH `/api/fleisch-order` mit `{id: "...", kommentar_gelesen: true}`
+- **Prüfung:** Response hat `success: true`
+- **Erwartung:** Kommentar wird als gelesen markiert
+
+### T-11-04 Kiosk: Metzger-Tab Nachrichten-Filter vorhanden (AK-FLEISCH-11)
+- **Aktion:** Kiosk `/kiosk` laden, Metzger-Tab öffnen
+- **Prüfung:** Filter-Button mit `data-fm-filter="nachrichten"` vorhanden
+- **Erwartung:** Button mit Text "Nachrichten" und Count-Badge sichtbar
+
+### T-11-05 Kiosk: Metzger-Tab Badge zeigt Nachrichten (AK-FLEISCH-11)
+- **Aktion:** Kiosk `/kiosk` laden
+- **Prüfung:** `#badge-metzger` Element prüfen
+- **Erwartung:** Badge zeigt kombinierte Zahl (offene Bestellungen + ungelesene Nachrichten)
+
+### T-11-06 Kiosk: Bestellkarte zeigt Antworten-Button (AK-FLEISCH-11)
+- **Aktion:** Kiosk laden, Metzger-Tab öffnen, Bestellkarte aufklappen
+- **Prüfung:** Button mit Text "Antworten" oder "Nachricht senden" in `.k-oc-actions`
+- **Erwartung:** Button vorhanden, klickbar, öffnet Inline-Antwortformular

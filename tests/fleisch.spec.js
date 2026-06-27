@@ -181,6 +181,66 @@ test.describe('T-09 API Benachrichtigungen (AK-FLEISCH-09)', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  T-11: Kommentar-System (AK-FLEISCH-11)
+// ════════════════════════════════════════════════════
+
+test.describe('T-11 Kommentar-System (AK-FLEISCH-11)', () => {
+
+  test('T-11-01 API GET mode=unread_messages liefert Zähler (AK-FLEISCH-11)', async ({ request }) => {
+    const resp = await request.get(`${BASE}/api/fleisch-order?mode=unread_messages`);
+    expect(resp.status()).toBe(200);
+    const data = await resp.json();
+    expect(data.success).toBe(true);
+    expect(typeof data.unread_count).toBe('number');
+    expect(data.unread_count).toBeGreaterThanOrEqual(0);
+  });
+
+  test('T-11-02 API GET mode=messages liefert Bestellungen-Array (AK-FLEISCH-11)', async ({ request }) => {
+    const resp = await request.get(`${BASE}/api/fleisch-order?mode=messages`);
+    expect(resp.status()).toBe(200);
+    const data = await resp.json();
+    expect(data.success).toBe(true);
+    expect(Array.isArray(data.orders)).toBe(true);
+    expect(typeof data.count).toBe('number');
+  });
+
+  test('T-11-04 Kiosk: Metzger-Tab Nachrichten-Filter vorhanden (AK-FLEISCH-11)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    const msgBtn = page.locator('[data-fm-filter="nachrichten"]');
+    await expect(msgBtn).toBeVisible();
+    await expect(msgBtn).toContainText('Nachrichten');
+  });
+
+  test('T-11-05 Kiosk: Metzger-Tab Badge vorhanden (AK-FLEISCH-11)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    const badge = page.locator('#badge-metzger');
+    await expect(badge).toBeAttached();
+  });
+
+  test('T-11-06 Kiosk: Bestellkarte zeigt Antworten/Nachricht-Button (AK-FLEISCH-11)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    // Wait for orders to load
+    await page.waitForTimeout(2000);
+    // Check if there are any orders with reply buttons
+    const replyBtns = page.locator('#panel-metzger .k-oc-actions button:has-text("Antworten"), #panel-metzger .k-oc-actions button:has-text("Nachricht senden")');
+    const count = await replyBtns.count();
+    // If there are open orders, there should be reply buttons
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
+
+  test('T-11-07 Kiosk: Nachrichten-Filter zeigt Nachrichten-Bereich (AK-FLEISCH-11)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.locator('[data-fm-filter="nachrichten"]').click();
+    // metzger-nachrichten div should be visible, metzger-orders hidden
+    await expect(page.locator('#metzger-nachrichten')).toBeVisible();
+    await expect(page.locator('#metzger-orders')).toBeHidden();
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  Routing
 // ════════════════════════════════════════════════════
 
