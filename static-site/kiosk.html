@@ -3533,6 +3533,8 @@ var K = (function(){
       }).catch(function(e){ console.error('[metzger] sammel failed', e); });
   }
 
+  var _fmSammelChecked = {}; // key → true/false for checked items
+
   function renderSammelbestellung(data){
     var body = document.getElementById('metzger-sammel-body');
     var agg = data.aggregiert || [];
@@ -3543,14 +3545,65 @@ var K = (function(){
 
     var html = '<div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--c-muted)">Liefertag: '+esc(data.liefertag)+' | '+data.gesamt_bestellungen+' Bestellungen</div>';
     html += '<table id="metzger-sammel-table" style="width:100%;font-size:14px;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">';
-    html += '<thead><tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px">Artikel</th><th style="text-align:right;padding:8px 12px">Gesamt kg</th><th style="text-align:right;padding:8px 12px">Bestellungen</th></tr></thead><tbody>';
-    agg.forEach(function(a){
-      html += '<tr style="border-top:1px solid #f3f4f6"><td style="padding:8px 12px">'+esc(a.bezeichnung)+'</td>';
-      html += '<td style="text-align:right;padding:8px 12px;font-weight:700">'+Number(a.gesamt_kg).toFixed(1)+' kg</td>';
-      html += '<td style="text-align:right;padding:8px 12px">'+a.anzahl_bestellungen+'</td></tr>';
+    html += '<thead><tr style="background:#f9fafb"><th style="width:40px;padding:8px 6px;text-align:center"><input type="checkbox" id="fm-sammel-all-cb" title="Alle markieren" style="width:18px;height:18px;cursor:pointer"></th><th style="text-align:left;padding:8px 12px">Artikel</th><th style="text-align:right;padding:8px 12px">Gesamt kg</th><th style="text-align:right;padding:8px 12px">Bestellungen</th></tr></thead><tbody>';
+    agg.forEach(function(a,i){
+      var key = a.artikelnummer || a.bezeichnung || ('row-'+i);
+      var checked = _fmSammelChecked[key] || false;
+      html += '<tr data-fm-sammel-row="'+esc(key)+'" style="border-top:1px solid #f3f4f6;'+(checked?'background:#f0fdf4;':'cursor:pointer;')+'">';
+      html += '<td style="padding:8px 6px;text-align:center"><input type="checkbox" data-fm-sammel-cb="'+esc(key)+'" '+(checked?'checked':'')+' style="width:18px;height:18px;cursor:pointer"></td>';
+      html += '<td style="padding:8px 12px;'+(checked?'text-decoration:line-through;color:#9ca3af':'')+'">'+esc(a.bezeichnung)+'</td>';
+      html += '<td style="text-align:right;padding:8px 12px;font-weight:700;'+(checked?'text-decoration:line-through;color:#9ca3af':'')+'">'+Number(a.gesamt_kg).toFixed(1)+' kg</td>';
+      html += '<td style="text-align:right;padding:8px 12px;'+(checked?'color:#9ca3af':'')+'">'+a.anzahl_bestellungen+'</td></tr>';
     });
     html += '</tbody></table>';
     body.innerHTML = html;
+
+    // Wire checkbox events
+    document.querySelectorAll('[data-fm-sammel-cb]').forEach(function(cb){
+      cb.addEventListener('change', function(){
+        var key = cb.getAttribute('data-fm-sammel-cb');
+        _fmSammelChecked[key] = cb.checked;
+        var row = document.querySelector('[data-fm-sammel-row="'+key+'"]');
+        if(row){
+          row.style.background = cb.checked ? '#f0fdf4' : '';
+          var cells = row.querySelectorAll('td');
+          if(cells[1]) cells[1].style.cssText = 'padding:8px 12px;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
+          if(cells[2]) cells[2].style.cssText = 'text-align:right;padding:8px 12px;font-weight:700;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
+          if(cells[3]) cells[3].style.cssText = 'text-align:right;padding:8px 12px;'+(cb.checked?'color:#9ca3af':'');
+        }
+        _fmUpdateSammelAllCb();
+      });
+    });
+
+    // Row click toggles checkbox
+    document.querySelectorAll('[data-fm-sammel-row]').forEach(function(row){
+      row.addEventListener('click', function(e){
+        if(e.target.tagName==='INPUT') return;
+        var cb = row.querySelector('[data-fm-sammel-cb]');
+        if(cb){ cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
+      });
+    });
+
+    // "Select all" checkbox
+    var allCb = document.getElementById('fm-sammel-all-cb');
+    if(allCb){
+      allCb.addEventListener('change', function(){
+        document.querySelectorAll('[data-fm-sammel-cb]').forEach(function(cb){
+          cb.checked = allCb.checked;
+          cb.dispatchEvent(new Event('change'));
+        });
+      });
+      _fmUpdateSammelAllCb();
+    }
+  }
+
+  function _fmUpdateSammelAllCb(){
+    var allCb = document.getElementById('fm-sammel-all-cb');
+    if(!allCb) return;
+    var cbs = document.querySelectorAll('[data-fm-sammel-cb]');
+    var allChecked = cbs.length > 0;
+    cbs.forEach(function(cb){ if(!cb.checked) allChecked = false; });
+    allCb.checked = allChecked;
   }
 
   function printMetzgerSammel(){

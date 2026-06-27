@@ -11922,6 +11922,8 @@
   };
 
   // ── Sammelbestellung: Aggregate articles per delivery day ──
+  var _fmCmsSammelChecked = {};
+
   function _fmRenderSammel(orders,list){
     var open=orders.filter(function(o){return o.status<3;});
     if(!open.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine offenen Bestellungen</p>';return;}
@@ -11941,9 +11943,8 @@
 
     var days=Object.keys(byDay).sort();
     var html='';
-    days.forEach(function(day){
+    days.forEach(function(day,di){
       var g=byDay[day];
-      // Format date
       var dayLabel=day;
       try{var dd=new Date(day+'T12:00:00');var wt=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];dayLabel=wt[dd.getDay()]+', '+dd.getDate()+'.'+(dd.getMonth()+1)+'.'+dd.getFullYear();}catch(e){}
 
@@ -11953,15 +11954,19 @@
       html+='<span style="font-size:12px;font-weight:400;opacity:.8">'+g.orders.length+' Bestellung'+(g.orders.length>1?'en':'')+'</span>';
       html+='</div>';
 
-      // Aggregated articles
       var arts=Object.values(g.articles).sort(function(a,b){return a.bezeichnung.localeCompare(b.bezeichnung,'de');});
-      html+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#fef2f2"><th style="text-align:left;padding:6px 10px">Artikel</th><th style="text-align:right;padding:6px 10px">Gesamt-Menge</th></tr></thead><tbody>';
-      arts.forEach(function(a){
-        html+='<tr style="border-top:1px solid #fecaca"><td style="padding:6px 10px">'+esc(a.bezeichnung)+'</td><td style="text-align:right;padding:6px 10px;font-weight:700">'+a.menge.toFixed(1)+' '+esc(a.einheit)+'</td></tr>';
+      html+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#fef2f2"><th style="width:32px;padding:6px;text-align:center"><input type="checkbox" class="fm-cms-sammel-all" data-day="'+di+'" title="Alle markieren" style="width:16px;height:16px;cursor:pointer"></th><th style="text-align:left;padding:6px 10px">Artikel</th><th style="text-align:right;padding:6px 10px">Gesamt-Menge</th></tr></thead><tbody>';
+      arts.forEach(function(a,ai){
+        var rk=di+'-'+ai;
+        var chk=_fmCmsSammelChecked[rk]||false;
+        html+='<tr data-fm-cms-srow="'+rk+'" style="border-top:1px solid #fecaca;cursor:pointer;'+(chk?'background:#f0fdf4':'')+'">';
+        html+='<td style="padding:6px;text-align:center"><input type="checkbox" data-fm-cms-scb="'+rk+'" '+(chk?'checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>';
+        html+='<td style="padding:6px 10px;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+esc(a.bezeichnung)+'</td>';
+        html+='<td style="text-align:right;padding:6px 10px;font-weight:700;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+a.menge.toFixed(1)+' '+esc(a.einheit)+'</td>';
+        html+='</tr>';
       });
       html+='</tbody></table>';
 
-      // Print button
       html+='<div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right">';
       html+='<button class="cms-btn" style="font-size:11px;padding:4px 12px" onclick="window.print()">Drucken</button>';
       html+='</div>';
@@ -11969,6 +11974,48 @@
     });
 
     list.innerHTML=html;
+    _fmWireSammelCbs();
+  }
+
+  function _fmWireSammelCbs(){
+    document.querySelectorAll('[data-fm-cms-scb]').forEach(function(cb){
+      cb.addEventListener('change',function(){
+        var rk=cb.getAttribute('data-fm-cms-scb');
+        _fmCmsSammelChecked[rk]=cb.checked;
+        var row=document.querySelector('[data-fm-cms-srow="'+rk+'"]');
+        if(row){
+          row.style.background=cb.checked?'#f0fdf4':'';
+          var cells=row.querySelectorAll('td');
+          if(cells[1]) cells[1].style.cssText='padding:6px 10px;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
+          if(cells[2]) cells[2].style.cssText='text-align:right;padding:6px 10px;font-weight:700;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
+        }
+        _fmUpdateCmsSammelAll(cb.getAttribute('data-fm-cms-scb').split('-')[0]);
+      });
+    });
+    document.querySelectorAll('[data-fm-cms-srow]').forEach(function(row){
+      row.addEventListener('click',function(e){
+        if(e.target.tagName==='INPUT') return;
+        var cb=row.querySelector('[data-fm-cms-scb]');
+        if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}
+      });
+    });
+    document.querySelectorAll('.fm-cms-sammel-all').forEach(function(allCb){
+      allCb.addEventListener('change',function(){
+        var di=allCb.getAttribute('data-day');
+        document.querySelectorAll('[data-fm-cms-scb^="'+di+'-"]').forEach(function(cb){
+          cb.checked=allCb.checked;cb.dispatchEvent(new Event('change'));
+        });
+      });
+    });
+  }
+
+  function _fmUpdateCmsSammelAll(di){
+    var allCb=document.querySelector('.fm-cms-sammel-all[data-day="'+di+'"]');
+    if(!allCb) return;
+    var cbs=document.querySelectorAll('[data-fm-cms-scb^="'+di+'-"]');
+    var allChk=cbs.length>0;
+    cbs.forEach(function(cb){if(!cb.checked) allChk=false;});
+    allCb.checked=allChk;
   }
 
   // ── Wire events for order cards ──
