@@ -11935,7 +11935,7 @@
       if(!byDay[lt]) byDay[lt]={orders:[],articles:{}};
       byDay[lt].orders.push(o);
       (o.positionen||[]).forEach(function(p){
-        var key=(p.bezeichnung||p.artikelnummer||'?').trim();
+        var key=(p.strichcode||p.bezeichnung||p.artikelnummer||'?').trim();
         if(!byDay[lt].articles[key]) byDay[lt].articles[key]={bezeichnung:p.bezeichnung||key,menge:0,einheit:'kg'};
         byDay[lt].articles[key].menge+=Number(p.menge_kg||0);
       });

@@ -513,14 +513,15 @@ def _handle_get(req, token, base_url, hdrs):
         items = r.json().get("value", [])
         bestellungen = [_serialize(it) for it in items]
 
-        # Aggregate positions across all orders – group by bezeichnung (name)
-        # to correctly sum identical articles even with different artikelnummer
+        # Aggregate positions across all orders – group by strichcode (barcode)
+        # as the unique product identifier; fallback to bezeichnung
         aggregiert = {}
         for best in bestellungen:
             for pos in best.get("positionen", []):
-                key = (pos.get("bezeichnung") or pos.get("artikelnummer") or "?").strip()
+                key = (pos.get("strichcode") or pos.get("bezeichnung") or pos.get("artikelnummer") or "?").strip()
                 if key not in aggregiert:
                     aggregiert[key] = {
+                        "strichcode": pos.get("strichcode", ""),
                         "artikelnummer": pos.get("artikelnummer", ""),
                         "bezeichnung": pos.get("bezeichnung", key),
                         "gesamt_kg": 0,
@@ -721,7 +722,8 @@ def _handle_patch(req, token, base_url, hdrs):
 # ── Notification helper ──
 
 def _try_send_notification(record_id, base_url, hdrs, status, req):
-    """Send push notification when order status changes to EINGETROFFEN or STORNIERT."""
+    """Send push notification when order status changes to EINGETROFFEN or STORNIERT.
+    Targets the specific customer by email if available."""
     try:
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})?$select=dl_bestellnummer,dl_name,dl_email,dl_telefon"
         r = requests.get(url, headers=hdrs, timeout=10)
@@ -730,6 +732,7 @@ def _try_send_notification(record_id, base_url, hdrs, status, req):
         data = r.json()
         name = data.get("dl_name", "")
         nr = data.get("dl_bestellnummer", "")
+        email = (data.get("dl_email") or "").strip().lower()
 
         if status == STATUS_EINGETROFFEN:
             title = "Fleischbestellung abholbereit! 🥩"
@@ -740,7 +743,6 @@ def _try_send_notification(record_id, base_url, hdrs, status, req):
         else:
             return
 
-        # Build push-send API URL from request URL
         req_url = req.url or ""
         push_url = ""
         if "/api/" in req_url:
@@ -750,13 +752,15 @@ def _try_send_notification(record_id, base_url, hdrs, status, req):
             push_payload = {
                 "title": title,
                 "message": message,
-                "url": "/fleisch-bestellen",
+                "url": f"/bestellstatus?nr={nr}",
                 "tag": f"fleisch-{nr}",
                 "category": "fleisch"
             }
+            if email:
+                push_payload["target_email"] = email
             try:
                 pr = requests.post(push_url, json=push_payload, timeout=15)
-                logging.info(f"[fleisch-order] Push sent for {nr}: {pr.status_code}")
+                logging.info(f"[fleisch-order] Push sent for {nr} (target={email or 'broadcast'}): {pr.status_code}")
             except Exception as pe:
                 logging.debug(f"[fleisch-order] Push send failed: {pe}")
 
@@ -766,7 +770,8 @@ def _try_send_notification(record_id, base_url, hdrs, status, req):
 
 
 def _try_send_reply_push(record_id, base_url, hdrs, reply_text, req):
-    """Send push notification when staff replies to a customer comment."""
+    """Send push notification when staff replies to a customer comment.
+    Targets the specific customer by email if available."""
     try:
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})?$select=dl_bestellnummer,dl_name,dl_email"
         r = requests.get(url, headers=hdrs, timeout=10)
@@ -775,8 +780,9 @@ def _try_send_reply_push(record_id, base_url, hdrs, reply_text, req):
         data = r.json()
         name = data.get("dl_name", "")
         nr = data.get("dl_bestellnummer", "")
+        email = (data.get("dl_email") or "").strip().lower()
 
-        title = "Nachricht vom Dorfladen \U0001F4AC"
+        title = "Nachricht vom Dorfladen 💬"
         message = f"Hallo {name}, neue Nachricht zu Ihrer Bestellung {nr}: {reply_text[:120]}"
 
         req_url = req.url or ""
@@ -788,13 +794,15 @@ def _try_send_reply_push(record_id, base_url, hdrs, reply_text, req):
             push_payload = {
                 "title": title,
                 "message": message,
-                "url": f"/fleisch-bestellen?nr={nr}",
+                "url": f"/bestellstatus?nr={nr}",
                 "tag": f"fleisch-reply-{nr}",
                 "category": "fleisch"
             }
+            if email:
+                push_payload["target_email"] = email
             try:
                 pr = requests.post(push_url, json=push_payload, timeout=15)
-                logging.info(f"[fleisch-order] Reply push sent for {nr}: {pr.status_code}")
+                logging.info(f"[fleisch-order] Reply push sent for {nr} (target={email or 'broadcast'}): {pr.status_code}")
             except Exception as pe:
                 logging.debug(f"[fleisch-order] Reply push send failed: {pe}")
     except Exception as e:
