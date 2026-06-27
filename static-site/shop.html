@@ -1721,18 +1721,28 @@
       reorderBanner+='</div>';
     }
 
-    // Fleisch-Vorbestellungs-Banner
+    // Fleisch-Vorbestellungs-Banner (immer sichtbar, kompakt wenn nicht Fleisch-Kategorie)
     var fleischBanner='';
-    if(activeCat&&isFleischWurst(activeCat)){
-      fleischBanner='<a href="/fleisch-bestellen" style="display:block;text-decoration:none;margin:12px 0 16px">'
-        +'<div style="background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 50%,#b91c1c 100%);border-radius:12px;padding:16px 20px;color:#fff;display:flex;align-items:center;gap:16px;box-shadow:0 4px 12px rgba(127,29,29,.25)">'
-        +'<div style="flex-shrink:0;width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center">'+lucideHtml('beef',28)+'</div>'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:16px;font-weight:800;letter-spacing:.3px">15 % Rabatt auf Fleisch & Wurst</div>'
-        +'<div style="font-size:13px;opacity:.9;margin-top:2px">Ab 1 kg vorbestellen &amp; im Laden abholen</div>'
-        +'</div>'
-        +'<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap">Jetzt bestellen '+lucideHtml('arrow-right',16)+'</div>'
-        +'</div></a>';
+    var hasFleischArticles=allArticles.some(function(a){return isFleischWurst(a.warengruppe);});
+    if(hasFleischArticles){
+      if(activeCat&&isFleischWurst(activeCat)){
+        fleischBanner='<a href="/fleisch-bestellen" style="display:block;text-decoration:none;margin:12px 0 16px">'
+          +'<div style="background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 50%,#b91c1c 100%);border-radius:12px;padding:16px 20px;color:#fff;display:flex;align-items:center;gap:16px;box-shadow:0 4px 12px rgba(127,29,29,.25)">'
+          +'<div style="flex-shrink:0;width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center">'+lucideHtml('beef',28)+'</div>'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:16px;font-weight:800;letter-spacing:.3px">15 % Rabatt auf Fleisch & Wurst</div>'
+          +'<div style="font-size:13px;opacity:.9;margin-top:2px">Ab 1 kg vorbestellen &amp; im Laden abholen</div>'
+          +'</div>'
+          +'<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap">Jetzt bestellen '+lucideHtml('arrow-right',16)+'</div>'
+          +'</div></a>';
+      } else {
+        fleischBanner='<a href="/fleisch-bestellen" style="display:block;text-decoration:none;margin:8px 0 12px">'
+          +'<div style="background:linear-gradient(135deg,#7f1d1d,#991b1b);border-radius:10px;padding:10px 16px;color:#fff;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(127,29,29,.2)">'
+          +'<div style="flex-shrink:0;display:flex;align-items:center">'+lucideHtml('beef',18)+'</div>'
+          +'<div style="flex:1;font-size:13px;font-weight:700">15 % Rabatt auf Fleisch & Wurst <span style="opacity:.8;font-weight:400">\u2013 ab 1 kg vorbestellen</span></div>'
+          +'<div style="flex-shrink:0;display:flex;align-items:center;gap:3px;font-size:12px;font-weight:700;white-space:nowrap">Bestellen '+lucideHtml('arrow-right',14)+'</div>'
+          +'</div></a>';
+      }
     }
 
     var emptyHint='';

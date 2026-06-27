@@ -1311,3 +1311,25 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-27 | T-13-01, T-13-02 | ✅ passed |
 | 2026-06-27 | T-14-01, T-14-02 | ✅ passed |
 | 2026-06-27 | T-15-01 | ✅ passed |
+
+---
+
+## T16 – Fleisch-Banner im Shop überall sichtbar (AK-FLEISCH-20)
+
+### T-16-01 Shop-Übersicht zeigt Fleisch-Banner (AK-FLEISCH-20)
+- **Aktion:** `/shop` laden, Kategorien-Übersicht anzeigen
+- **Prüfung:** `a[href="/fleisch-bestellen"]` im `#shop-content` sichtbar
+- **Erwartung:** Banner mit „15 % Rabatt" und Link zu `/fleisch-bestellen` vorhanden
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-20
+
+### T-16-02 Shop-Artikelansicht (nicht Fleisch) zeigt kompaktes Banner (AK-FLEISCH-20)
+- **Aktion:** `/shop` laden, Kategorie „Backwaren" oder „Molkereiprodukte" auswählen
+- **Prüfung:** `a[href="/fleisch-bestellen"]` im `#shop-content` sichtbar
+- **Erwartung:** Kompaktes Banner mit Link zu `/fleisch-bestellen` vorhanden
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-20
+
+### T-16-03 Shop-Fleisch-Kategorie zeigt großes Banner (AK-FLEISCH-20)
+- **Aktion:** `/shop` laden, Kategorie „Fleisch und Wurstwaren" auswählen
+- **Prüfung:** `a[href="/fleisch-bestellen"]` im `#shop-content` mit großem Padding sichtbar
+- **Erwartung:** Großes Banner mit Icon, Text und CTA-Button
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-20

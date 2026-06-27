@@ -797,3 +797,63 @@ test.describe('Pack-Seite – Grundlagen', () => {
     expect(criticalErrors).toHaveLength(0);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  T-16: Fleisch-Banner im Shop überall sichtbar (AK-FLEISCH-20)
+// ════════════════════════════════════════════════════
+
+test.describe('Fleisch-Banner im Shop', () => {
+
+  test('T-16-01 (AK-FLEISCH-20): Kategorien-Übersicht zeigt Fleisch-Banner', async ({ page }) => {
+    await page.goto(`${BASE}/shop`);
+    await page.waitForTimeout(3000);
+    const banner = page.locator('#shop-content a[href="/fleisch-bestellen"]');
+    await expect(banner.first()).toBeVisible();
+    await expect(banner.first()).toContainText('Rabatt');
+  });
+
+  test('T-16-02 (AK-FLEISCH-20): Nicht-Fleisch-Kategorie zeigt kompaktes Banner', async ({ page }) => {
+    await page.goto(`${BASE}/shop`);
+    await page.waitForTimeout(3000);
+    // Click a non-Fleisch category pill (e.g. first dropdown category)
+    const catPill = page.locator('.shop-cat-pill[data-cat="Backwaren"], .shop-cat-pill[data-cat="Molkereiprodukte"], .shop-cat-pill[data-cat="Eier"]').first();
+    if (await catPill.count() > 0) {
+      await catPill.click();
+      await page.waitForTimeout(1000);
+    } else {
+      // Try dropdown category
+      const ddBtn = page.locator('#shop-cat-dd-btn');
+      if (await ddBtn.count() > 0) {
+        await ddBtn.click();
+        await page.waitForTimeout(500);
+        const ddItem = page.locator('.shop-dd-item').first();
+        if (await ddItem.count() > 0) await ddItem.click();
+        await page.waitForTimeout(1000);
+      }
+    }
+    const banner = page.locator('#shop-content a[href="/fleisch-bestellen"]');
+    await expect(banner.first()).toBeVisible();
+  });
+
+  test('T-16-03 (AK-FLEISCH-20): Fleisch-Kategorie zeigt großes Banner', async ({ page }) => {
+    await page.goto(`${BASE}/shop`);
+    await page.waitForTimeout(3000);
+    // Find Fleisch category via dropdown or pill
+    const fleischPill = page.locator('.shop-cat-pill[data-cat="Fleisch und Wurstwaren"]');
+    if (await fleischPill.count() > 0) {
+      await fleischPill.click();
+    } else {
+      const ddBtn = page.locator('#shop-cat-dd-btn');
+      if (await ddBtn.count() > 0) {
+        await ddBtn.click();
+        await page.waitForTimeout(500);
+        const fleischItem = page.locator('.shop-dd-item:has-text("Fleisch")').first();
+        if (await fleischItem.count() > 0) await fleischItem.click();
+      }
+    }
+    await page.waitForTimeout(1000);
+    const banner = page.locator('#shop-content a[href="/fleisch-bestellen"]');
+    await expect(banner.first()).toBeVisible();
+    await expect(banner.first()).toContainText('Jetzt bestellen');
+  });
+});
