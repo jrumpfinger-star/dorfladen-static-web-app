@@ -1545,6 +1545,20 @@
     html+='<div class="shop-view-toggle"><button data-ov-view="grid" class="'+(articleViewMode==='grid'?'active':'')+'">'+lucideHtml('grid-2x2',14)+'</button><button data-ov-view="list" class="'+(articleViewMode==='list'?'active':'')+'">'+lucideHtml('list',14)+'</button></div>';
     html+='</div>';
 
+    // Fleisch-Vorbestellungs-Banner (immer sichtbar in Übersicht)
+    var hasFleisch=allArticles.some(function(a){return isFleischWurst(a.warengruppe);});
+    if(hasFleisch){
+      html+='<div style="padding:0 16px 4px"><a href="/fleisch-bestellen" style="display:block;text-decoration:none">'
+        +'<div style="background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 50%,#b91c1c 100%);border-radius:12px;padding:14px 18px;color:#fff;display:flex;align-items:center;gap:14px;box-shadow:0 4px 12px rgba(127,29,29,.25)">'
+        +'<div style="flex-shrink:0;width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center">'+lucideHtml('beef',24)+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:15px;font-weight:800;letter-spacing:.3px">15 % Rabatt auf Fleisch & Wurst</div>'
+        +'<div style="font-size:12px;opacity:.85;margin-top:2px">Ab 1 kg vorbestellen &amp; im Laden abholen</div>'
+        +'</div>'
+        +'<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap">Bestellen '+lucideHtml('arrow-right',14)+'</div>'
+        +'</div></a></div>';
+    }
+
     // "Nur kurz verfügbar" section
     var kurzArtikel=visibleArticles().filter(function(a){return a.kurzfristig;});
     html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title">'+lucideHtml('clock',18)+' Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
