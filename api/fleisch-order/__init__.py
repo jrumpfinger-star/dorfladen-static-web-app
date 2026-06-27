@@ -408,9 +408,14 @@ def _handle_post(req, token, base_url, hdrs):
     r = requests.post(url, headers=hdrs, json=payload, timeout=30)
 
     if r.status_code not in (200, 201, 204):
-        logging.error(f"[fleisch-order] Dataverse POST failed: {r.status_code} {r.text[:500]}")
+        dv_error = ""
+        try:
+            dv_error = r.text[:500]
+        except Exception:
+            pass
+        logging.error(f"[fleisch-order] Dataverse POST failed: {r.status_code} {dv_error}")
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "Bestellung konnte nicht gespeichert werden"}, ensure_ascii=False),
+            json.dumps({"success": False, "error": "Bestellung konnte nicht gespeichert werden", "detail": dv_error}, ensure_ascii=False),
             status_code=500, headers=get_cors_headers()
         )
 
