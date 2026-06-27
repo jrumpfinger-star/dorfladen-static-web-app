@@ -83,6 +83,10 @@
       "rewrite": "/mittagstisch-bestellen.html"
     },
     {
+      "route": "/fleisch-bestellen",
+      "rewrite": "/fleisch-bestellen.html"
+    },
+    {
       "route": "/bestellstatus",
       "rewrite": "/bestellstatus.html"
     },

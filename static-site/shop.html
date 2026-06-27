@@ -1434,12 +1434,15 @@
       html+='<div class="shop-card-price">'+priceHtml+'</div>';
       html+='</div>';
       html+='<div class="shop-card-footer">';
-      if(a.gewichtsware){
+      if(a.gewichtsware&&isFleischWurst(a.warengruppe)){
+        html+='<a href="/fleisch-bestellen" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:#7f1d1d;color:#fff;font-size:12px;font-weight:700;text-decoration:none;width:100%;justify-content:center">'+lucideHtml('beef',14)+' Vorbestellen mit 15% Rabatt</a>';
+      } else if(a.gewichtsware){
         html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
+        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button>';
       } else {
         html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
+        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button>';
       }
-      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button>';
       html+='</div></div>';
     });
     html+='</div>';
@@ -1463,12 +1466,15 @@
       html+='<div class="shop-list-info"><div style="display:flex;align-items:center;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+' <span class="shop-list-meta">'+esc(a.warengruppe)+'</span></div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div>';
       html+='<div class="shop-list-row"><div class="shop-list-price">'+priceHtml+'</div>';
       html+='<div class="shop-list-actions">';
-      if(a.gewichtsware){
+      if(a.gewichtsware&&isFleischWurst(a.warengruppe)){
+        html+='<a href="/fleisch-bestellen" style="display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:6px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap">'+lucideHtml('beef',12)+' Vorbestellen</a>';
+      } else if(a.gewichtsware){
         html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"><span style="font-size:10px;color:#6b7280">g</span>';
+        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzu</button>';
       } else {
         html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
+        html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzu</button>';
       }
-      html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzu</button>';
       html+='</div></div></div>';
       html+='</div>';
     });
@@ -1509,6 +1515,8 @@
   var DEFAULT_CAT_ICON=lucideHtml('package',16);
   var CAT_EMOJI={'Backwaren':'🥐','Brot':'🍞','Molkereiprodukte':'🥛','Obst und Gemüse':'🍎','Obst':'🍎','Gemüse':'🥬','Fleisch':'🥩','Wurst':'🥩','Metzgerei':'🥩','Fleisch und Wurstwaren':'🥩','Eier':'🥚','Bier':'🍺','Getränke':'🥤','Wein':'🍷','Spirituosen':'🍷','Saft':'🧃','Tiefkühl':'❄️','Süßwaren':'🍬','Snacks':'🍬','Kaffee':'☕','Tee':'🍵','Gewürze':'🌿','Konserven':'🥫','Nudeln':'🍝','Reis':'🍚','Drogerie':'🧴','Haushalt':'🧹','Eis':'🍦','Cafeteria':'☕','Sonstiges':'📦','Lebensmittel':'🍽️'};
   function getCatEmoji(cat){if(CAT_EMOJI[cat]) return CAT_EMOJI[cat];var keys=Object.keys(CAT_EMOJI);for(var i=0;i<keys.length;i++){if(cat.toLowerCase().indexOf(keys[i].toLowerCase())!==-1) return CAT_EMOJI[keys[i]];}return '📦';}
+  var FLEISCH_KW=['fleisch','wurst','metzger','aufschnitt','schinken','salami'];
+  function isFleischWurst(wg){var w=(wg||'').toLowerCase();return FLEISCH_KW.some(function(k){return w.indexOf(k)!==-1;});}
   var viewMode='categories'; // 'categories' or 'articles'
   var articleViewMode=localStorage.getItem('dl_shop_viewmode')||'grid'; // 'grid' or 'list'
 

@@ -375,6 +375,10 @@
   <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
     <span class="k-tab-icon"><i data-lucide="users" style="width:22px;height:22px"></i></span> Stammkunden
   </div>
+  <div class="k-tab" data-tab="metzger" onclick="K.switchTab('metzger')">
+    <span class="k-tab-icon"><i data-lucide="beef" style="width:22px;height:22px"></i></span> Metzger
+    <span class="k-tab-badge" id="badge-metzger"></span>
+  </div>
   <div class="k-tab" data-tab="social" onclick="K.switchTab('social')">
     <span class="k-tab-icon"><i data-lucide="share-2" style="width:22px;height:22px"></i></span> Social
   </div>
@@ -432,6 +436,27 @@
       <button class="k-btn k-btn-outline" style="min-height:40px;padding:8px 16px;font-size:13px;border-radius:10px" onclick="document.getElementById('kunden-search').value='';K.searchKunden()"><i data-lucide="users" style="width:16px;height:16px"></i> Alle Kunden laden</button>
     </div>
     <div id="kunden-list"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="users" style="width:24px;height:24px"></i></div>Suchbegriff eingeben oder „Alle Kunden laden" klicken</div></div>
+  </div>
+
+  <!-- ── Metzger (Fleisch-Vorbestellungen) ── -->
+  <div class="k-panel" id="panel-metzger">
+    <div class="k-filter-bar" id="metzger-filter-bar">
+      <button class="k-filter-btn active" data-fm-filter="offen" onclick="K.setMetzgerFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Zu erledigen</span> <span class="k-filter-count" id="fm-fc-offen">0</span></button>
+      <button class="k-filter-btn" data-fm-filter="heute" onclick="K.setMetzgerFilter('heute')"><i data-lucide="calendar-check" style="width:14px;height:14px"></i> <span class="k-filter-label">Heute abholen</span> <span class="k-filter-count" id="fm-fc-heute">0</span></button>
+      <button class="k-filter-btn" data-fm-filter="sammel" onclick="K.setMetzgerFilter('sammel')"><i data-lucide="clipboard-list" style="width:14px;height:14px"></i> <span class="k-filter-label">Sammelbestellung</span></button>
+      <button class="k-filter-btn" data-fm-filter="historie" onclick="K.setMetzgerFilter('historie')"><i data-lucide="history" style="width:14px;height:14px"></i> <span class="k-filter-label">Historie</span></button>
+    </div>
+    <div class="k-stats" id="metzger-stats" style="display:none"></div>
+    <!-- Sammelbestellung Druckbereich -->
+    <div id="metzger-sammel" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <h4 style="flex:1;font-size:15px;font-weight:700;margin:0"><i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Sammelbestellung</h4>
+        <button class="k-btn k-btn-outline" style="min-height:36px;padding:6px 14px;border-radius:8px;font-size:13px" onclick="K.printMetzgerSammel()"><i data-lucide="printer" style="width:14px;height:14px"></i> Drucken</button>
+        <button class="k-btn k-btn-confirm" style="min-height:36px;padding:6px 14px;border-radius:8px;font-size:13px" onclick="K.metzgerAlleGesendet()"><i data-lucide="check-check" style="width:14px;height:14px"></i> Alle bestellt</button>
+      </div>
+      <div id="metzger-sammel-body"></div>
+    </div>
+    <div id="metzger-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="beef" style="width:24px;height:24px"></i></div>Keine Fleisch-Vorbestellungen</div></div>
   </div>
 
   <!-- ── Social Media ── -->
@@ -3109,6 +3134,7 @@ var K = (function(){
   function refresh(){
     loadOrders();
     loadShopOrders();
+    loadMetzgerOrders();
     toast('🔄 Aktualisiert');
   }
 
@@ -3150,6 +3176,222 @@ var K = (function(){
   })();
 
   // ══════════════════════════════════════════════════
+  //  METZGER TAB (Fleisch-Vorbestellungen)
+  // ══════════════════════════════════════════════════
+
+  var _fmOrders = [];
+  var _fmFilter = 'offen';
+  var _fmCardOpen = {};
+  var _fmSammelLiefertag = '';
+
+  function loadMetzgerOrders(){
+    var url = API + '/fleisch-order?mode=kiosk';
+    fetch(url).then(function(r){return r.json();}).then(function(data){
+      if(!data.success) return;
+      _fmOrders = data.bestellungen || [];
+      updateMetzgerBadge();
+      renderMetzgerOrders();
+    }).catch(function(e){ console.error('[metzger] load failed', e); });
+  }
+
+  function updateMetzgerBadge(){
+    var count = _fmOrders.filter(function(o){ return o.status < 3; }).length;
+    updateBadge('metzger', count);
+  }
+
+  function setMetzgerFilter(f){
+    _fmFilter = f;
+    document.querySelectorAll('[data-fm-filter]').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-fm-filter')===f);
+    });
+    document.getElementById('metzger-sammel').style.display = f==='sammel' ? 'block' : 'none';
+    if(f==='sammel'){
+      loadMetzgerSammel();
+    } else {
+      renderMetzgerOrders();
+    }
+  }
+
+  function renderMetzgerOrders(){
+    var today = new Date().toISOString().slice(0,10);
+    var list = _fmOrders;
+
+    if(_fmFilter==='offen'){
+      list = list.filter(function(o){ return o.status < 3; });
+    } else if(_fmFilter==='heute'){
+      list = list.filter(function(o){ return o.liefertag === today && o.status === 2; });
+    } else if(_fmFilter==='historie'){
+      list = list.filter(function(o){ return o.status >= 3; });
+    }
+
+    // Update counts
+    var cOffen = _fmOrders.filter(function(o){ return o.status < 3; }).length;
+    var cHeute = _fmOrders.filter(function(o){ return o.liefertag === today && o.status === 2; }).length;
+    var el1 = document.getElementById('fm-fc-offen'); if(el1) el1.textContent = cOffen;
+    var el2 = document.getElementById('fm-fc-heute'); if(el2) el2.textContent = cHeute;
+
+    var container = document.getElementById('metzger-orders');
+    if(!list.length){
+      container.innerHTML = '<div class="k-empty"><div class="k-empty-icon"><i data-lucide="beef" style="width:24px;height:24px"></i></div>Keine Bestellungen</div>';
+      reinitIcons(); return;
+    }
+
+    var STATUS_CSS = {0:'st-new',1:'st-confirm',2:'st-ready',3:'st-done',4:'st-cancel'};
+    var STATUS_LABELS = {0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+    var html = '';
+
+    list.forEach(function(o){
+      var collapsed = _fmCardOpen[o.id] ? '' : ' oc-collapsed';
+      var positionen = o.positionen || [];
+
+      html += '<div class="k-order'+collapsed+'" data-fmid="'+o.id+'" data-fmstatus="'+o.status+'">';
+      html += '<div class="k-order-hdr" onclick="K.toggleMetzgerCard(\''+o.id+'\')">';
+      html += '<span class="k-oc-arrow"><i data-lucide="chevron-down" style="width:16px;height:16px"></i></span>';
+      html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
+      html += '<span class="k-oc-qty">'+positionen.length+' Pos.</span>';
+      html += '<span class="k-oc-badges">';
+      html += '<span class="k-badge '+STATUS_CSS[o.status]+'">'+STATUS_LABELS[o.status]+'</span>';
+      html += '</span></div>';
+
+      html += '<div class="k-order-body">';
+      html += '<div style="padding:8px 12px;font-size:12px;color:var(--c-muted);display:flex;gap:12px;flex-wrap:wrap">';
+      html += '<span><i data-lucide="hash" style="width:12px;height:12px"></i> '+esc(o.bestellnummer)+'</span>';
+      html += '<span><i data-lucide="phone" style="width:12px;height:12px"></i> '+esc(o.telefon)+'</span>';
+      html += '<span><i data-lucide="truck" style="width:12px;height:12px"></i> '+esc(o.liefertag)+'</span>';
+      html += '</div>';
+
+      html += '<table style="width:100%;font-size:13px;border-collapse:collapse;margin:4px 0">';
+      html += '<thead><tr style="background:#f9fafb"><th style="text-align:left;padding:4px 8px">Artikel</th><th style="text-align:right;padding:4px 8px">Menge</th><th style="text-align:right;padding:4px 8px">Preis</th></tr></thead><tbody>';
+      positionen.forEach(function(p){
+        html += '<tr style="border-top:1px solid #f3f4f6"><td style="padding:4px 8px">'+esc(p.bezeichnung)+'</td>';
+        html += '<td style="text-align:right;padding:4px 8px">'+Number(p.menge_kg).toFixed(1)+' kg</td>';
+        html += '<td style="text-align:right;padding:4px 8px">'+Number(p.rabattpreis||p.normalpreis||0).toFixed(2)+' \u20AC</td></tr>';
+      });
+      html += '</tbody></table>';
+
+      html += '<div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center">';
+      html += '<span style="font-size:14px;font-weight:700">Gesamt: '+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</span>';
+      if(o.rabatt_summe > 0) html += '<span style="font-size:12px;color:#2e7d4f">Ersparnis: '+Number(o.rabatt_summe).toFixed(2)+' \u20AC</span>';
+      html += '</div>';
+
+      if(o.anmerkung) html += '<div style="padding:4px 12px 8px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:6px;margin:0 8px 8px"><i data-lucide="message-circle" style="width:12px;height:12px"></i> '+esc(o.anmerkung)+'</div>';
+
+      // Action buttons
+      html += '<div class="k-oc-actions" style="padding:8px 12px 12px;display:flex;gap:6px;flex-wrap:wrap">';
+      if(o.status===0){
+        html += '<button class="k-btn k-btn-confirm" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',1)"><i data-lucide="send" style="width:14px;height:14px"></i> Beim Metzger bestellt</button>';
+        html += '<button class="k-btn k-btn-cancel" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',4)"><i data-lucide="x" style="width:14px;height:14px"></i> Stornieren</button>';
+      } else if(o.status===1){
+        html += '<button class="k-btn k-btn-confirm" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',2)"><i data-lucide="package-check" style="width:14px;height:14px"></i> Eingetroffen</button>';
+      } else if(o.status===2){
+        html += '<button class="k-btn k-btn-confirm" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',3)"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Abgeholt</button>';
+      }
+      if(o.telefon){
+        html += '<a href="tel:'+esc(o.telefon)+'" class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px;text-decoration:none"><i data-lucide="phone" style="width:14px;height:14px"></i> Anrufen</a>';
+      }
+      html += '</div></div></div>';
+    });
+
+    container.innerHTML = html;
+    reinitIcons();
+  }
+
+  function toggleMetzgerCard(id){
+    _fmCardOpen[id] = !_fmCardOpen[id];
+    var card = document.querySelector('[data-fmid="'+id+'"]');
+    if(card) card.classList.toggle('oc-collapsed', !_fmCardOpen[id]);
+  }
+
+  function setMetzgerStatus(id, status){
+    fetch(API + '/fleisch-order', {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({id:id, status:status})
+    }).then(function(r){return r.json();}).then(function(data){
+      if(data.success){
+        toast((status===4?'\u274C Storniert':'\u2705 Status aktualisiert'));
+        loadMetzgerOrders();
+      } else {
+        toast('Fehler: '+(data.error||''));
+      }
+    }).catch(function(){ toast('Netzwerkfehler'); });
+  }
+
+  // Sammelbestellung
+  function loadMetzgerSammel(){
+    // Find the next delivery day from open orders
+    var dates = [];
+    _fmOrders.forEach(function(o){
+      if(o.status < 3 && o.liefertag && dates.indexOf(o.liefertag)===-1) dates.push(o.liefertag);
+    });
+    dates.sort();
+    _fmSammelLiefertag = dates[0] || '';
+    if(!_fmSammelLiefertag){
+      document.getElementById('metzger-sammel-body').innerHTML = '<div style="text-align:center;color:var(--c-muted);padding:20px">Keine offenen Bestellungen</div>';
+      return;
+    }
+
+    fetch(API + '/fleisch-order?liefertag='+_fmSammelLiefertag)
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(!data.success) return;
+        renderSammelbestellung(data);
+      }).catch(function(e){ console.error('[metzger] sammel failed', e); });
+  }
+
+  function renderSammelbestellung(data){
+    var body = document.getElementById('metzger-sammel-body');
+    var agg = data.aggregiert || [];
+    if(!agg.length){
+      body.innerHTML = '<div style="text-align:center;color:var(--c-muted);padding:20px">Keine Positionen</div>';
+      return;
+    }
+
+    var html = '<div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--c-muted)">Liefertag: '+esc(data.liefertag)+' | '+data.gesamt_bestellungen+' Bestellungen</div>';
+    html += '<table id="metzger-sammel-table" style="width:100%;font-size:14px;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">';
+    html += '<thead><tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px">Artikel</th><th style="text-align:right;padding:8px 12px">Gesamt kg</th><th style="text-align:right;padding:8px 12px">Bestellungen</th></tr></thead><tbody>';
+    agg.forEach(function(a){
+      html += '<tr style="border-top:1px solid #f3f4f6"><td style="padding:8px 12px">'+esc(a.bezeichnung)+'</td>';
+      html += '<td style="text-align:right;padding:8px 12px;font-weight:700">'+Number(a.gesamt_kg).toFixed(1)+' kg</td>';
+      html += '<td style="text-align:right;padding:8px 12px">'+a.anzahl_bestellungen+'</td></tr>';
+    });
+    html += '</tbody></table>';
+    body.innerHTML = html;
+  }
+
+  function printMetzgerSammel(){
+    var table = document.getElementById('metzger-sammel-table');
+    if(!table){ toast('Nichts zum Drucken'); return; }
+    var w = window.open('','','width=600,height=400');
+    w.document.write('<html><head><title>Sammelbestellung '+_fmSammelLiefertag+'</title>');
+    w.document.write('<style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #ddd}th{background:#f3f3f3}h2{margin-bottom:10px}</style>');
+    w.document.write('</head><body>');
+    w.document.write('<h2>Sammelbestellung Metzger – '+_fmSammelLiefertag+'</h2>');
+    w.document.write(table.outerHTML);
+    w.document.write('<p style="margin-top:16px;font-size:12px;color:#999">Dorfladen Oberornau – generiert am '+new Date().toLocaleString('de-DE')+'</p>');
+    w.document.write('</body></html>');
+    w.document.close();
+    w.print();
+  }
+
+  function metzgerAlleGesendet(){
+    var ids = [];
+    _fmOrders.forEach(function(o){
+      if(o.status===0 && o.liefertag===_fmSammelLiefertag) ids.push(o.id);
+    });
+    if(!ids.length){ toast('Keine neuen Bestellungen'); return; }
+    var pending = ids.length;
+    ids.forEach(function(id){
+      fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:1})})
+        .then(function(r){return r.json();})
+        .then(function(){
+          pending--;
+          if(pending<=0){ toast('\u2705 '+ids.length+' Bestellungen als bestellt markiert'); loadMetzgerOrders(); }
+        }).catch(function(){ pending--; });
+    });
+  }
+
+  // ══════════════════════════════════════════════════
   //  INIT
   // ══════════════════════════════════════════════════
 
@@ -3159,8 +3401,9 @@ var K = (function(){
   loadOrders();
   loadDishes();
   loadShopOrders();
+  loadMetzgerOrders();
   // Auto-refresh every 30s
-  refreshTimer = setInterval(function(){ loadOrders(); loadShopOrders(); }, 30000);
+  refreshTimer = setInterval(function(){ loadOrders(); loadShopOrders(); loadMetzgerOrders(); }, 30000);
 
   // Public API
   return {
@@ -3226,6 +3469,12 @@ var K = (function(){
     markShopMsgRead: markShopMsgRead,
     showOrderDetail: showOrderDetail,
     deleteShopOrder: deleteShopOrder,
+    setMetzgerFilter: setMetzgerFilter,
+    toggleMetzgerCard: toggleMetzgerCard,
+    setMetzgerStatus: setMetzgerStatus,
+    loadMetzgerOrders: loadMetzgerOrders,
+    printMetzgerSammel: printMetzgerSammel,
+    metzgerAlleGesendet: metzgerAlleGesendet,
     refresh: refresh
   };
 })();

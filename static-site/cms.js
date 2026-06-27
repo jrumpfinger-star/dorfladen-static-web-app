@@ -1006,7 +1006,7 @@
       openHilfePopup();return;
     }
     _cmsCurrentTab=name;
-    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','social','help'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','metzger','social','help'].forEach(function(t){
       var panel=document.getElementById('cms-panel-'+t);
       if(panel) panel.style.display = t===name?'':'none';
       var tab=document.getElementById('cms-tab-'+t);
@@ -1023,6 +1023,7 @@
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
+    if(name==='metzger' && !window._fmCfgLoaded) cmsLoadFleischConfig();
     if(name==='social'){
       var katReady=window._socialKatLoaded;
       var mtReady=false;
@@ -11759,6 +11760,95 @@
         if(loading) loading.style.display='none';
         if(list) list.innerHTML='<p style="color:#ef4444;text-align:center">Fehler: '+esc(e.message)+'</p>';
       });
+  };
+
+  // ══════════════════════════════════════════════════
+  //  METZGER CMS (Fleisch-Vorbestellung Config & Orders)
+  // ══════════════════════════════════════════════════
+
+  var LT_MAP={0:'fm-cfg-lt-mo',1:'fm-cfg-lt-di',2:'fm-cfg-lt-mi',3:'fm-cfg-lt-do',4:'fm-cfg-lt-fr',5:'fm-cfg-lt-sa'};
+
+  window.cmsLoadFleischConfig = function(){
+    fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(data){
+      if(!data.success) return;
+      var d=data.data||{};
+      var el;
+      el=document.getElementById('fm-cfg-rabatt'); if(el) el.value=d.fleisch_rabatt_prozent||15;
+      el=document.getElementById('fm-cfg-mindestmenge'); if(el) el.value=d.fleisch_mindestmenge_kg||1;
+      el=document.getElementById('fm-cfg-bestellschluss'); if(el) el.value=d.fleisch_bestellschluss_h||10;
+      el=document.getElementById('fm-cfg-aktiv'); if(el) el.checked=(d.fleisch_aktiv!==false&&d.fleisch_aktiv!=='false'&&d.fleisch_aktiv!=='0');
+
+      // Liefertage
+      var lt=(d.fleisch_liefertage||'0,3').split(',').map(function(s){return parseInt(s.trim(),10);});
+      for(var i=0;i<6;i++){
+        var cb=document.getElementById(LT_MAP[i]);
+        if(cb) cb.checked=lt.indexOf(i)!==-1;
+      }
+      window._fmCfgLoaded=true;
+    }).catch(function(e){ console.error('[cms-metzger] config load failed',e); });
+  };
+
+  window.cmsSaveFleischConfig = function(){
+    var btn=document.getElementById('fm-cfg-save-btn');
+    var status=document.getElementById('fm-cfg-status');
+    btn.disabled=true; status.textContent='Speichern...';
+
+    var rabatt=parseFloat(document.getElementById('fm-cfg-rabatt').value)||15;
+    var mindest=parseFloat(document.getElementById('fm-cfg-mindestmenge').value)||1;
+    var schluss=parseInt(document.getElementById('fm-cfg-bestellschluss').value,10)||10;
+    var aktiv=document.getElementById('fm-cfg-aktiv').checked;
+    var lt=[];
+    for(var i=0;i<6;i++){
+      var cb=document.getElementById(LT_MAP[i]);
+      if(cb&&cb.checked) lt.push(i);
+    }
+    if(!lt.length) lt=[0,3];
+
+    var saves=[
+      _dvSave('fleisch_rabatt_prozent',String(rabatt)),
+      _dvSave('fleisch_mindestmenge_kg',String(mindest)),
+      _dvSave('fleisch_bestellschluss_h',String(schluss)),
+      _dvSave('fleisch_aktiv',aktiv?'true':'false'),
+      _dvSave('fleisch_liefertage',lt.join(','))
+    ];
+    Promise.all(saves).then(function(){
+      btn.disabled=false; status.textContent='Gespeichert!';
+      setTimeout(function(){ status.textContent=''; },3000);
+    }).catch(function(e){
+      btn.disabled=false; status.textContent='Fehler: '+e.message;
+      status.style.color='#ef4444';
+    });
+  };
+
+  window.cmsLoadFleischOrders = function(filter){
+    var list=document.getElementById('fm-orders-list');
+    list.innerHTML='<p style="color:#6b7280;text-align:center">Laden...</p>';
+    var url=API+'/fleisch-order?mode=kiosk';
+    fetch(url).then(function(r){return r.json();}).then(function(data){
+      if(!data.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
+      var orders=data.bestellungen||[];
+      var today=new Date().toISOString().slice(0,10);
+      if(filter==='offen') orders=orders.filter(function(o){return o.status<3;});
+      else if(filter==='heute') orders=orders.filter(function(o){return o.liefertag===today;});
+
+      if(!orders.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine Bestellungen</p>';return;}
+
+      var STATUS_L={0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+      var STATUS_C={0:'#d97706',1:'#2563eb',2:'#2e7d4f',3:'#6b7280',4:'#ef4444'};
+      var html='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f9fafb"><th style="text-align:left;padding:6px 8px">Nr.</th><th style="text-align:left;padding:6px 8px">Name</th><th style="text-align:left;padding:6px 8px">Telefon</th><th style="text-align:left;padding:6px 8px">Liefertag</th><th style="text-align:right;padding:6px 8px">Summe</th><th style="text-align:center;padding:6px 8px">Status</th></tr></thead><tbody>';
+      orders.forEach(function(o){
+        html+='<tr style="border-top:1px solid #f3f4f6">';
+        html+='<td style="padding:6px 8px;font-weight:600">'+esc(o.bestellnummer)+'</td>';
+        html+='<td style="padding:6px 8px">'+esc(o.name)+'</td>';
+        html+='<td style="padding:6px 8px">'+esc(o.telefon)+'</td>';
+        html+='<td style="padding:6px 8px">'+esc(o.liefertag)+'</td>';
+        html+='<td style="padding:6px 8px;text-align:right;font-weight:600">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</td>';
+        html+='<td style="padding:6px 8px;text-align:center"><span style="background:'+STATUS_C[o.status]+';color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">'+STATUS_L[o.status]+'</span></td>';
+        html+='</tr>';
+      });
+      html+='</tbody></table>';
+      list.innerHTML=html;
+    }).catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+e.message+'</p>';});
   };
 
   // --- Init (only if already authenticated via session) ---

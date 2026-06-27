@@ -7,6 +7,13 @@
 		"Dev ENV": {
 			"url": "https://org392a4789.crm16.dynamics.com",
 			"type": "http"
+		},
+		"markitdown": {
+			"type": "stdio",
+			"command": "uvx",
+			"args": [
+				"markitdown-mcp"
+			]
 		}
 	},
 	"inputs": []

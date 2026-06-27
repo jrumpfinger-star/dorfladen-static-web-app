@@ -1113,3 +1113,79 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-26 | T-RD-13 | ✅ Pass |
 | 2026-06-26 | T-RD-14 | ✅ Pass |
 | 2026-06-26 | T-RD-14b | ✅ Pass |
+
+---
+
+## T-FM – Fleisch-Vorbestellung
+
+> Spec: specs/fleisch-vorbestellung.md
+
+### T-06-01 Shop-Verweis: Fleisch-Gewichtswaren zeigen Vorbestellen-Link (AK-FLEISCH-06)
+- **Aktion:** Shop-Seite `/shop` laden, Fleisch/Wurst-Kategorie öffnen
+- **Prüfung:** Gewichtsware-Artikel der Warengruppe Fleisch/Wurst haben einen "Vorbestellen"-Link statt "Hinzufügen"
+- **Erwartung:** Link mit `href="/fleisch-bestellen"` und Text "Vorbestellen mit 15% Rabatt"
+
+### T-06-02 Shop-Verweis: Vorbestellen-Link führt zu fleisch-bestellen (AK-FLEISCH-06)
+- **Aktion:** Auf Vorbestellen-Link klicken
+- **Prüfung:** Navigation zur Fleisch-Bestellseite
+- **Erwartung:** URL enthält `/fleisch-bestellen`
+
+### T-07-01 Homepage Desktop: Fleisch-Promo CTA verlinkt auf fleisch-bestellen (AK-FLEISCH-07)
+- **Aktion:** Startseite `/` laden
+- **Prüfung:** Element `#meat-cta` hat `href="/fleisch-bestellen"`
+- **Erwartung:** Link vorhanden und korrekt
+
+### T-07-02 Homepage Mobile: Popup CTA verlinkt auf fleisch-bestellen (AK-FLEISCH-07)
+- **Aktion:** Startseite `/` laden
+- **Prüfung:** Element `#mob-meat-cta` hat `href="/fleisch-bestellen"`
+- **Erwartung:** Link vorhanden und korrekt
+
+### T-08-01 Kiosk: Metzger-Tab existiert und ist klickbar (AK-FLEISCH-08)
+- **Aktion:** Kiosk `/kiosk` laden, Metzger-Tab klicken
+- **Prüfung:** Tab wird aktiv, Panel `#panel-metzger` wird sichtbar
+- **Erwartung:** Tab mit `data-tab="metzger"` hat Klasse `active`, Panel hat Klasse `active`
+
+### T-08-02 Kiosk: Metzger Filter-Buttons vorhanden (AK-FLEISCH-08)
+- **Aktion:** Kiosk laden, Metzger-Tab öffnen
+- **Prüfung:** Filter-Buttons für Status sind sichtbar
+- **Erwartung:** Mindestens 2 Filter-Buttons im Panel
+
+### T-08-03 Kiosk: Metzger-Panel hat Sammelbestellungs-Bereich (AK-FLEISCH-08)
+- **Aktion:** Kiosk laden, Metzger-Tab öffnen
+- **Prüfung:** Sammelbestellungs-Bereich ist vorhanden
+- **Erwartung:** Bereich mit ID `fm-sammel` oder ähnlich existiert
+
+### T-10-01 CMS: Metzger-Tab existiert (AK-FLEISCH-10)
+- **Aktion:** CMS `/cms` laden
+- **Prüfung:** Element `#cms-tab-metzger` ist vorhanden
+- **Erwartung:** Tab-Button im DOM vorhanden
+
+### T-10-02 CMS: Metzger Config-Felder vorhanden (AK-FLEISCH-10)
+- **Aktion:** CMS `/cms` laden
+- **Prüfung:** Input-Felder `#fm-cfg-rabatt`, `#fm-cfg-mindestmenge`, `#fm-cfg-bestellschluss`, `#fm-cfg-aktiv`
+- **Erwartung:** Alle Config-Felder im DOM vorhanden
+
+### T-10-03 CMS: Metzger Bestellungs-Filter vorhanden (AK-FLEISCH-10)
+- **Aktion:** CMS `/cms` laden
+- **Prüfung:** Filter-Buttons und Bestellliste im Panel
+- **Erwartung:** `#fm-orders-list`, `#fm-orders-btn-offen`, `#fm-orders-btn-alle` vorhanden
+
+### T-04-01 Fleisch-Bestellseite lädt (AK-FLEISCH-04)
+- **Aktion:** `/fleisch-bestellen` aufrufen
+- **Prüfung:** HTTP Status 200, Seite enthält "Fleisch" oder "Vorbestell"
+- **Erwartung:** Seite lädt korrekt
+
+### T-09-01 API PATCH Endpoint existiert (AK-FLEISCH-09)
+- **Aktion:** PATCH `/api/fleisch-order` mit leerem Body
+- **Prüfung:** HTTP Status (400 oder 405 erwartet, nicht 404)
+- **Erwartung:** API-Endpoint existiert und validiert Input
+
+### T-09-02 API GET Info-Endpoint liefert Liefertag-Info (AK-FLEISCH-09)
+- **Aktion:** GET `/api/fleisch-order?info=1`
+- **Prüfung:** Antwort enthält `liefertag` und `bestellschluss`
+- **Erwartung:** `success: true` mit Liefertag-Daten
+
+### Routing: SWA Route /fleisch-bestellen
+- **Aktion:** `/fleisch-bestellen` aufrufen
+- **Prüfung:** HTTP Status
+- **Erwartung:** 200 OK (Route in staticwebapp.config.json konfiguriert)
