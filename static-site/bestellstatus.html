@@ -100,9 +100,15 @@
       <h2>📋 Bestellung aufrufen</h2>
       <div class="bs-login">
         <label for="bs-nr">Bestellnummer</label>
-        <input type="text" id="bs-nr" placeholder="z.B. MT-260621-BF0D4" autocomplete="off">
-        <label for="bs-email">E-Mail-Adresse</label>
-        <input type="email" id="bs-email" placeholder="ihre@email.de" autocomplete="email">
+        <input type="text" id="bs-nr" placeholder="z.B. MT-260621-BF0D4 oder FM-..." autocomplete="off" oninput="bsUpdateAuthField()">
+        <div id="bs-auth-email-wrap">
+          <label for="bs-email">E-Mail-Adresse</label>
+          <input type="email" id="bs-email" placeholder="ihre@email.de" autocomplete="email">
+        </div>
+        <div id="bs-auth-telefon-wrap" style="display:none">
+          <label for="bs-telefon">Telefonnummer</label>
+          <input type="tel" id="bs-telefon" placeholder="z.B. 0171 1234567" autocomplete="tel">
+        </div>
         <button onclick="lookupOrder()">Bestellung anzeigen</button>
         <div class="bs-error" id="bs-login-error"></div>
       </div>
@@ -137,8 +143,8 @@
   </div>
 
 <script>
-var API = '/api/lunch-order';
 var _order = null;
+var _orderType = 'mt'; // 'mt' or 'fm'
 
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
@@ -147,31 +153,60 @@ function getParam(name){
   return url.searchParams.get(name) || '';
 }
 
+function isFleisch(nr){ return (nr||'').toUpperCase().indexOf('FM-')===0; }
+
+// Toggle auth field based on order number prefix
+function bsUpdateAuthField(){
+  var nr = document.getElementById('bs-nr').value.trim();
+  var fm = isFleisch(nr);
+  document.getElementById('bs-auth-email-wrap').style.display = fm ? 'none' : '';
+  document.getElementById('bs-auth-telefon-wrap').style.display = fm ? '' : 'none';
+}
+
 function lookupOrder(){
   var nr = document.getElementById('bs-nr').value.trim();
-  var email = document.getElementById('bs-email').value.trim().toLowerCase();
   var errEl = document.getElementById('bs-login-error');
   errEl.style.display = 'none';
 
-  if(!nr || !email){
-    errEl.textContent = 'Bitte Bestellnummer und E-Mail eingeben.';
-    errEl.style.display = 'block';
-    return;
+  var fm = isFleisch(nr);
+  _orderType = fm ? 'fm' : 'mt';
+
+  if(fm){
+    var telefon = document.getElementById('bs-telefon').value.trim();
+    if(!nr || !telefon){
+      errEl.textContent = 'Bitte Bestellnummer und Telefonnummer eingeben.';
+      errEl.style.display = 'block';
+      return;
+    }
+    try{ localStorage.setItem('fm_nr', nr); localStorage.setItem('fm_telefon', telefon); }catch(e){}
+    var apiUrl = '/api/fleisch-order?nr='+encodeURIComponent(nr)+'&telefon='+encodeURIComponent(telefon);
+  } else {
+    var email = document.getElementById('bs-email').value.trim().toLowerCase();
+    if(!nr || !email){
+      errEl.textContent = 'Bitte Bestellnummer und E-Mail eingeben.';
+      errEl.style.display = 'block';
+      return;
+    }
+    try{ localStorage.setItem('bs_email', email); localStorage.setItem('bs_nr', nr); }catch(e){}
+    var apiUrl = '/api/lunch-order?nr='+encodeURIComponent(nr)+'&email='+encodeURIComponent(email);
   }
 
-  // Save to localStorage for auto-login
-  try{ localStorage.setItem('bs_email', email); localStorage.setItem('bs_nr', nr); }catch(e){}
-
-  fetch(API + '?nr=' + encodeURIComponent(nr) + '&email=' + encodeURIComponent(email))
+  fetch(apiUrl)
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if(!data.success || !data.order){
-        errEl.textContent = 'Bestellung nicht gefunden. Bitte prüfen Sie Bestellnummer und E-Mail.';
+      if(!data.success){
+        errEl.textContent = 'Bestellung nicht gefunden. Bitte Eingaben prüfen.';
         errEl.style.display = 'block';
         return;
       }
-      _order = data.order;
-      renderOrder(_order);
+      // FM returns .bestellung, MT returns .order
+      _order = data.bestellung || data.order;
+      if(!_order){
+        errEl.textContent = 'Bestellung nicht gefunden.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if(fm) renderFleischOrder(_order); else renderOrder(_order);
     })
     .catch(function(e){
       errEl.textContent = 'Fehler: ' + e.message;
@@ -179,6 +214,7 @@ function lookupOrder(){
     });
 }
 
+// ── Mittagstisch rendering (unchanged) ──
 var STATUS_LABELS = {0:'Eingegangen',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
 var STATUS_ICONS = {0:'⏳',1:'✅',2:'❌',3:'📦'};
 
@@ -188,11 +224,9 @@ function renderOrder(o){
 
   document.getElementById('bs-gericht').textContent = o.gericht || '–';
 
-  // Status badge
   var stHtml = '<div class="bs-status st-'+o.status+'">'+(STATUS_ICONS[o.status]||'')+' '+(STATUS_LABELS[o.status]||'Unbekannt')+'</div>';
   document.getElementById('bs-status-row').innerHTML = stHtml;
 
-  // Info rows
   var rows = '';
   rows += '<div class="bs-row"><span class="bs-label">Bestellnummer</span><span class="bs-value">'+esc(o.bestellnummer)+'</span></div>';
   rows += '<div class="bs-row"><span class="bs-label">Menge</span><span class="bs-value">'+o.menge+' Portion'+(o.menge>1?'en':'')+'</span></div>';
@@ -205,12 +239,68 @@ function renderOrder(o){
   if(o.anmerkung) rows += '<div class="bs-row"><span class="bs-label">Ihre Anmerkung</span><span class="bs-value">'+esc(o.anmerkung)+'</span></div>';
   document.getElementById('bs-info-rows').innerHTML = rows;
 
-  // Messages
+  renderMessages(o);
+  if(o.status === 3) document.getElementById('bs-comment-card').style.display = 'none';
+}
+
+// ── Fleisch rendering ──
+var FM_STATUS_LABELS = {0:'Neu',1:'Beim Metzger bestellt',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+var FM_STATUS_ICONS = {0:'⏳',1:'🥩',2:'✅',3:'📦',4:'❌'};
+var FM_STATUS_CLASS = {0:'st-0',1:'st-3',2:'st-1',3:'st-1',4:'st-2'};
+
+function fmtP(v){ return (v||0).toFixed(2).replace('.',','); }
+
+function renderFleischOrder(o){
+  document.getElementById('bs-login-card').style.display = 'none';
+  document.getElementById('bs-detail').style.display = 'block';
+
+  document.getElementById('bs-gericht').textContent = '🥩 Fleisch-Vorbestellung';
+
+  var st = o.status||0;
+  var stHtml = '<div class="bs-status '+(FM_STATUS_CLASS[st]||'st-0')+'">'+(FM_STATUS_ICONS[st]||'')+' '+(FM_STATUS_LABELS[st]||'Unbekannt')+'</div>';
+  document.getElementById('bs-status-row').innerHTML = stHtml;
+
+  var rows = '';
+  rows += '<div class="bs-row"><span class="bs-label">Bestellnummer</span><span class="bs-value">'+esc(o.bestellnummer)+'</span></div>';
+  if(o.liefertag){
+    var lp = o.liefertag.split('-');
+    rows += '<div class="bs-row"><span class="bs-label">Liefertag</span><span class="bs-value">'+lp[2]+'.'+lp[1]+'.'+lp[0]+'</span></div>';
+  }
+  rows += '<div class="bs-row"><span class="bs-label">Name</span><span class="bs-value">'+esc(o.name)+'</span></div>';
+
+  // Positionen
+  var pos = o.positionen||[];
+  if(pos.length){
+    rows += '<div style="margin-top:12px;padding-top:8px;border-top:2px solid #f3f4f6">';
+    rows += '<div style="font-size:13px;font-weight:700;color:var(--c-muted);margin-bottom:8px">Positionen</div>';
+    pos.forEach(function(p){
+      var preis = p.rabattpreis || (p.menge_kg * p.preis_kg);
+      rows += '<div class="bs-row"><span class="bs-label">'+esc(p.bezeichnung)+' ('+p.menge_kg.toFixed(1).replace('.',',')+' kg)</span><span class="bs-value">'+fmtP(preis)+' €</span></div>';
+    });
+    rows += '</div>';
+  }
+
+  if(o.rabatt_summe > 0){
+    rows += '<div class="bs-row" style="color:#2e7d4f;font-weight:600"><span class="bs-label">Ersparnis</span><span class="bs-value">-'+fmtP(o.rabatt_summe)+' €</span></div>';
+  }
+  rows += '<div class="bs-row" style="font-weight:700;font-size:15px"><span class="bs-label">Gesamt</span><span class="bs-value">'+fmtP(o.gesamtsumme)+' €</span></div>';
+
+  if(o.anmerkung) rows += '<div class="bs-row"><span class="bs-label">Anmerkung</span><span class="bs-value">'+esc(o.anmerkung)+'</span></div>';
+  rows += '<div style="margin-top:8px;font-size:12px;color:var(--c-muted)">Bezahlung: Bar bei Abholung im Laden</div>';
+  document.getElementById('bs-info-rows').innerHTML = rows;
+
+  renderMessages(o);
+  // Hide comment for terminal states
+  if(st === 3 || st === 4) document.getElementById('bs-comment-card').style.display = 'none';
+}
+
+// ── Messages (shared) ──
+function renderMessages(o){
   var msgHtml = '';
   var hasMessages = false;
   if(o.bestaetigung_text){
     hasMessages = true;
-    var cls = o.status===2 ? 'bs-msg warn' : 'bs-msg';
+    var cls = (o.status===2 || o.status===4) ? 'bs-msg warn' : 'bs-msg';
     msgHtml += '<div class="'+cls+'"><div class="bs-msg-label">Dorfladen</div><div class="bs-msg-text">'+esc(o.bestaetigung_text)+'</div></div>';
   }
   if(o.personal_antwort){
@@ -225,15 +315,9 @@ function renderOrder(o){
     document.getElementById('bs-messages-card').style.display = '';
     document.getElementById('bs-messages').innerHTML = msgHtml;
   }
-
-  // Don't pre-fill textarea – sent comments are shown in the messages section above
-
-  // Hide comment box if order is completed
-  if(o.status === 3){
-    document.getElementById('bs-comment-card').style.display = 'none';
-  }
 }
 
+// ── Send Comment ──
 function sendComment(){
   if(!_order) return;
   var text = document.getElementById('bs-comment').value.trim();
@@ -246,10 +330,16 @@ function sendComment(){
   btn.disabled = true;
   btn.textContent = 'Wird gesendet…';
 
-  fetch(API + '/' + _order.id, {
+  var apiBase = _orderType === 'fm' ? '/api/fleisch-order' : '/api/lunch-order';
+  var body = _orderType === 'fm'
+    ? {id: _order.id, kunde_kommentar: text}
+    : {kunde_kommentar: text};
+  var fetchUrl = _orderType === 'fm' ? apiBase : apiBase + '/' + _order.id;
+
+  fetch(fetchUrl, {
     method: 'PATCH',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({kunde_kommentar: text})
+    body: JSON.stringify(body)
   })
   .then(function(r){ return r.json(); })
   .then(function(data){
@@ -259,7 +349,6 @@ function sendComment(){
       document.getElementById('bs-comment').value = '';
       document.getElementById('bs-comment-sent').style.display = 'block';
       setTimeout(function(){ document.getElementById('bs-comment-sent').style.display = 'none'; }, 4000);
-      // Refresh order to show updated messages
       lookupOrder();
     } else {
       alert('Fehler: ' + (data.error || 'Konnte nicht gesendet werden'));
@@ -272,12 +361,23 @@ function sendComment(){
   });
 }
 
-// Auto-load if params present
+// ── Auto-load ──
 (function(){
   var nr = getParam('nr');
-  var email = getParam('email');
 
-  // Try from localStorage if no URL params
+  // FM: try telefon from params or localStorage
+  if(isFleisch(nr)){
+    var telefon = getParam('telefon');
+    if(!telefon){ try{ telefon = localStorage.getItem('fm_telefon')||''; }catch(e){} }
+    if(nr) document.getElementById('bs-nr').value = nr;
+    if(telefon) document.getElementById('bs-telefon').value = telefon;
+    bsUpdateAuthField();
+    if(nr && telefon) lookupOrder();
+    return;
+  }
+
+  // MT: try email from params or localStorage
+  var email = getParam('email');
   if(!nr || !email){
     try{
       nr = nr || localStorage.getItem('bs_nr') || '';
@@ -285,15 +385,10 @@ function sendComment(){
     }catch(e){}
   }
 
-  if(nr){
-    document.getElementById('bs-nr').value = nr;
-  }
-  if(email){
-    document.getElementById('bs-email').value = email;
-  }
-  if(nr && email){
-    lookupOrder();
-  }
+  if(nr) document.getElementById('bs-nr').value = nr;
+  if(email) document.getElementById('bs-email').value = email;
+  bsUpdateAuthField();
+  if(nr && email) lookupOrder();
 })();
 </script>
 <script src="/js/env-banner.js"></script>

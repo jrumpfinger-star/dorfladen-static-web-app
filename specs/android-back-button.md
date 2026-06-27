@@ -22,6 +22,7 @@ Der Android-Zurück-Button (Hardware/Gesture) soll auf allen Seiten offene Modal
 | **Shop-Freigabe** | Image-Upload-Overlay | pushState in `openImageDialog` |
 | **Lunch-Admin** | Storno-Dialog | pushState in `showStornoDialog` |
 | **Mittagstisch-Bestellen** | Success-Overlay | pushState nach Bestellerfolg |
+| **Fleisch-Bestellen** | Cart-Drawer, Bestätigungs-Ansicht | pushState in `fmOpenCart`/`showConfirmation` |
 
 ## Kiosk-Implementierung (Detail)
 - `_modalStack[]` trackt offene Modals als Stack

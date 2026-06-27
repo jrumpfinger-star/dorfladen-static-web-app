@@ -276,6 +276,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     <h2>Bestellung aufgenommen!</h2>
     <div class="fm-confirm-nr" id="fm-confirm-nr"></div>
     <div class="fm-confirm-summary" id="fm-confirm-summary"></div>
+    <a id="fm-confirm-status-link" href="#" style="display:none;align-items:center;justify-content:center;gap:6px;margin-top:12px;padding:12px 24px;border-radius:10px;background:var(--c-green);color:#fff;font-size:14px;font-weight:700;text-decoration:none;transition:all .15s"><i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Bestellstatus ansehen</a>
     <button class="fm-confirm-back" onclick="fmReset()"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Weitere Bestellung</button>
   </div>
 </div>
@@ -804,12 +805,14 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     document.getElementById('fm-cart-panel').classList.add('open');
     lockScroll();
     renderCart();
+    history.pushState({overlay:'cart'},'');
   };
 
-  window.fmCloseCart = function(){
+  window.fmCloseCart = function(viaBack){
     document.getElementById('fm-cart-overlay').classList.remove('open');
     document.getElementById('fm-cart-panel').classList.remove('open');
     unlockScroll();
+    if(!viaBack) history.back();
   };
 
   // ── Submit ──
@@ -860,7 +863,10 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       localStorage.setItem('fm_last_order', JSON.stringify(data));
       lastOrder = data;
 
-      fmCloseCart();
+      // Save for bestellstatus auto-login
+      try{ localStorage.setItem('fm_nr', data.bestellnummer||''); }catch(e){}
+
+      fmCloseCart(true);
       showConfirmation(data);
       cart=[];
       updateCartUI();
@@ -895,20 +901,39 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     html+='<div style="margin-top:12px;font-size:12px;color:var(--c-muted)">Bezahlung: Bar bei Abholung im Laden</div>';
     document.getElementById('fm-confirm-summary').innerHTML=html;
 
+    // Bestellstatus-Link
+    var statusUrl='/bestellstatus?nr='+encodeURIComponent(data.bestellnummer||'');
+    document.getElementById('fm-confirm-status-link').href=statusUrl;
+    document.getElementById('fm-confirm-status-link').style.display='inline-flex';
+
+    // Save telefon for bestellstatus auto-login
+    try{ localStorage.setItem('fm_telefon', document.getElementById('fm-telefon').value.trim()); }catch(e){}
+
     el.classList.add('show');
+    history.pushState({overlay:'confirm'},'');
     if(window.lucide) lucide.createIcons();
   }
 
   // ── Reset ──
-  window.fmReset = function(){
+  window.fmReset = function(viaBack){
     document.getElementById('fm-confirm').classList.remove('show');
+    document.getElementById('fm-confirm-status-link').style.display='none';
     document.getElementById('fm-articles').style.display='';
     document.getElementById('fm-rabatt').style.display='block';
     document.getElementById('fm-cats').style.display='flex';
     document.getElementById('fm-search-row').style.display='flex';
     showReorderBanner();
     renderArticles();
+    if(!viaBack) history.back();
   };
+
+  // ── Android Back Button ──
+  window.addEventListener('popstate', function(){
+    var cartOpen = document.getElementById('fm-cart-overlay').classList.contains('open');
+    if(cartOpen){ fmCloseCart(true); return; }
+    var confirmOpen = document.getElementById('fm-confirm').classList.contains('show');
+    if(confirmOpen){ fmReset(true); return; }
+  });
 
   // ── Start ──
   document.addEventListener('DOMContentLoaded', function(){

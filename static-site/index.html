@@ -201,7 +201,9 @@
 
     <span class="mob-action-label">Fleisch &amp; Wurst</span>
 
-    <span class="mob-action-sub">15% ab 1kg</span>
+    <span class="mob-action-sub" id="mob-meat-sub-default">15% ab 1kg</span>
+
+    <div id="mob-fm-orders" style="display:none;margin-top:6px" onclick="event.stopPropagation()"></div>
 
   </div>
 
@@ -1570,6 +1572,66 @@
 
           renderWidget('mob-my-orders');
           renderWidget('desk-my-orders');
+        }).catch(function(){});
+    }catch(e){}
+  })();
+
+  // Fleisch-Bestellungen: Widget in Fleisch-Kachel
+  (function(){
+    try{
+      var telefon = (localStorage.getItem('fm_telefon')||'').trim();
+      if(!telefon) return;
+
+      var FM_ST = {0:'Neu',1:'Beim Metzger',2:'Eingetroffen'};
+      var FM_COL = {0:'#f59e0b',1:'#6366f1',2:'#10b981'};
+      var FM_BG = {0:'#fef3c7',1:'#e0e7ff',2:'#d1fae5'};
+
+      function fmtDate(iso){
+        if(!iso) return '';
+        var p = iso.split('-');
+        return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : iso;
+      }
+
+      fetch('/api/fleisch-order?mode=my&telefon='+encodeURIComponent(telefon))
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res.success) return;
+          var orders = res.bestellungen||[];
+          if(!orders.length) return;
+
+          var el = document.getElementById('mob-fm-orders');
+          if(!el) return;
+
+          // Hide default subtitle
+          var sub = document.getElementById('mob-meat-sub-default');
+          if(sub) sub.style.display='none';
+
+          if(orders.length === 1){
+            var o = orders[0];
+            var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+            var st = FM_ST[o.status]||'?';
+            var col = FM_COL[o.status]||'#6b7280';
+            var bg = FM_BG[o.status]||'#f3f4f6';
+            el.innerHTML = '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;text-decoration:none;color:#7f1d1d;font-size:13px;font-weight:600">'
+              +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtDate(o.liefertag)+'</span>'
+              +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
+              +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+              +'</a>';
+          } else {
+            var html = '';
+            orders.forEach(function(o){
+              var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+              var st = FM_ST[o.status]||'?';
+              var col = FM_COL[o.status]||'#6b7280';
+              var bg = FM_BG[o.status]||'#f3f4f6';
+              html += '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:6px 12px;text-decoration:none;color:#7f1d1d;font-size:12px;font-weight:600;margin-bottom:4px">'
+                +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtDate(o.liefertag)+'</span>'
+                +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
+                +'</a>';
+            });
+            el.innerHTML = html;
+          }
+          el.style.display = 'block';
         }).catch(function(){});
     }catch(e){}
   })();

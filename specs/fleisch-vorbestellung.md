@@ -266,7 +266,48 @@ Neu → Storniert
 
 ---
 
-## 11. Benachrichtigungen
+## 11. Bestellstatus für Fleischbestellungen
+
+### Erweiterung `bestellstatus.html`
+Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (FM-xxx) anzuzeigen.
+
+#### Auto-Erkennung Bestelltyp
+- Bestellnummer mit `FM-` Prefix → API `/api/fleisch-order?nr=XXX&telefon=YYY`
+- Bestellnummer mit `MT-` Prefix → API `/api/lunch-order?nr=XXX&email=YYY` (wie bisher)
+- Authentifizierung Fleisch: **Bestellnummer + Telefon** (statt E-Mail, da E-Mail optional)
+
+#### Anzeige Fleischbestellung
+- Positionen-Tabelle (Artikel, Menge kg, Preis)
+- Gesamtsumme + Ersparnis
+- Liefertag
+- Status-Timeline: Neu → Beim Metzger bestellt → Eingetroffen → Abgeholt (+ Storniert)
+- Nachrichten (Personal-Antwort) anzeigen
+- Kommentar-Feld: Kunde kann Nachricht an den Laden senden
+
+#### localStorage
+- `fm_nr` – letzte Fleisch-Bestellnummer
+- `fm_telefon` – Telefonnummer (für Auto-Login)
+
+#### Link aus Bestätigung
+- Nach erfolgreicher Fleischbestellung: Link "📋 Bestellstatus ansehen" → `/bestellstatus?nr=FM-xxx`
+- Bestellnummer + Telefon in localStorage speichern
+
+### Startseiten-Widget „Meine Fleischbestellung"
+- Container `#mob-fm-orders` in der Fleisch-Kachel auf der Startseite (Mobile)
+- Widget lädt wenn `fm_telefon` im localStorage gesetzt
+- API-Call: `GET /api/fleisch-order?telefon=XXX&mode=my`
+- API liefert nur Status 0–2 (Neu, Beim Metzger, Eingetroffen) – NICHT Abgeholt/Storniert
+- Bei aktiver Bestellung: Link zu `/bestellstatus?nr=FM-xxx`
+- Widget versteckt wenn keine aktiven Bestellungen
+
+### Android Zurück-Button (`fleisch-bestellen.html`)
+- **Cart-Drawer**: `history.pushState({overlay:'cart'})` beim Öffnen, `history.back()` beim Schließen per UI
+- **Bestätigungs-Ansicht**: `history.pushState({overlay:'confirm'})` nach Bestellerfolg
+- **popstate-Listener**: Schließt Cart-Drawer bzw. navigiert von Bestätigung zurück zur Artikelliste
+
+---
+
+## 12. Benachrichtigungen
 
 | Ereignis | Kanal | Empfänger |
 |---|---|---|
@@ -278,7 +319,7 @@ Neu → Storniert
 
 ---
 
-## 12. Akzeptanzkriterien
+## 13. Akzeptanzkriterien
 
 ### AK-FLEISCH-01: Liefertag-Berechnung
 - [ ] Nächster Liefertag (Mo/Do) wird korrekt berechnet
@@ -343,6 +384,33 @@ Neu → Storniert
 - [x] Kiosk: „Alle als gelesen" Massenaktion im Nachrichten-Bereich
 - [ ] Bestellstatus-Seite: Kunde kann Kommentar senden
 
+### AK-FLEISCH-12: Bestellstatus-Seite für Fleisch
+- [ ] Bestellnummer mit FM-Prefix wird automatisch als Fleischbestellung erkannt
+- [ ] Lookup per Bestellnummer + Telefon (nicht E-Mail)
+- [ ] Positionen-Tabelle mit Artikel, Menge, Preis angezeigt
+- [ ] Gesamtsumme + Ersparnis angezeigt
+- [ ] Liefertag angezeigt
+- [ ] Status-Timeline: Neu → Beim Metzger → Eingetroffen → Abgeholt
+- [ ] Personal-Antwort wird angezeigt
+- [ ] Kunde kann Kommentar senden (PATCH an fleisch-order API)
+- [ ] Auto-Login per localStorage (fm_nr + fm_telefon)
+
+### AK-FLEISCH-13: Homepage-Widget „Meine Fleischbestellung“
+- [ ] Widget in Fleisch-Kachel auf Startseite (Mobile)
+- [ ] Lädt wenn fm_telefon im localStorage gesetzt
+- [ ] Zeigt nur aktive Bestellungen (Status 0–2)
+- [ ] Link führt zu /bestellstatus?nr=FM-xxx
+- [ ] Versteckt wenn keine aktiven Bestellungen
+
+### AK-FLEISCH-14: Android Zurück-Button (fleisch-bestellen.html)
+- [ ] Cart-Drawer: pushState beim Öffnen, popstate schließt Drawer
+- [ ] Bestätigungs-Ansicht: pushState nach Bestellerfolg, popstate zurück zur Artikelliste
+- [ ] Kein doppeltes history.back() bei UI-Close + Back-Button
+
+### AK-FLEISCH-15: Bestätigung → Bestellstatus-Link
+- [ ] Nach Bestellerfolg: Link „Bestellstatus ansehen“ in der Bestätigung
+- [ ] Bestellnummer + Telefon in localStorage gespeichert (fm_nr, fm_telefon)
+
 ### AK-FLEISCH-10: CMS-Integration
 - [x] Rabatt, Mindestmenge, Liefertage, Bestellschluss konfigurierbar
 - [x] Fleisch-Vorbestellung aktivierbar/deaktivierbar
@@ -352,7 +420,7 @@ Neu → Storniert
 
 ---
 
-## 13. Umsetzungsreihenfolge
+## 14. Umsetzungsreihenfolge
 
 | # | Task | Aufwand |
 |---|---|---|

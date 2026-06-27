@@ -516,6 +516,25 @@ def _handle_get(req, token, base_url, hdrs):
             status_code=200, headers=get_cors_headers()
         )
 
+    # Customer mode: my active orders (for homepage widget)
+    if mode == "my" and telefon:
+        odata_filter = f"dl_telefon eq '{telefon}' and dl_status lt {STATUS_ABGEHOLT}"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter={odata_filter}&$orderby=dl_liefertag asc&$top=10"
+        r = requests.get(url, headers=hdrs, timeout=30)
+        if r.status_code != 200:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Fehler beim Laden"}, ensure_ascii=False),
+                status_code=500, headers=get_cors_headers()
+            )
+        items = r.json().get("value", [])
+        return func.HttpResponse(
+            json.dumps({
+                "success": True,
+                "bestellungen": [_serialize(it) for it in items],
+            }, ensure_ascii=False),
+            status_code=200, headers=get_cors_headers()
+        )
+
     # Kiosk mode: all open orders
     if mode == "kiosk":
         odata_filter = f"dl_status lt {STATUS_ABGEHOLT}"
