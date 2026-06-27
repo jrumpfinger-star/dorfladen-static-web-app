@@ -161,6 +161,33 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .fm-inactive p{color:#b91c1c;font-size:13px}
 
 body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0)}
+
+/* View Toggle */
+.fm-view-toggle{display:flex;align-items:center;gap:8px;margin-bottom:12px;justify-content:flex-end}
+.fm-view-btn{background:none;border:1.5px solid var(--c-border);border-radius:8px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--c-muted);transition:all .15s}
+.fm-view-btn.active{background:var(--c-meat);color:#fff;border-color:var(--c-meat)}
+
+/* List View */
+.fm-list{display:flex;flex-direction:column;gap:0;margin-bottom:16px}
+.fm-list-item{background:var(--c-card);border-bottom:1px solid #f3f4f6;padding:12px 14px;display:flex;align-items:center;gap:12px;transition:background .1s}
+.fm-list-item:first-child{border-radius:var(--radius) var(--radius) 0 0}
+.fm-list-item:last-child{border-radius:0 0 var(--radius) var(--radius);border-bottom:none}
+.fm-list-item:only-child{border-radius:var(--radius)}
+.fm-list-item:active{background:#fef2f2}
+.fm-list-icon{flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#fef2f2,#fff5f5);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#dc2626}
+.fm-list-info{flex:1;min-width:0}
+.fm-list-name{font-size:14px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-list-prices{display:flex;align-items:baseline;gap:6px;margin-top:2px}
+.fm-list-orig{font-size:12px;color:var(--c-muted);text-decoration:line-through}
+.fm-list-new{font-size:15px;font-weight:800;color:var(--c-meat-accent)}
+.fm-list-unit{font-size:10px;color:var(--c-muted)}
+.fm-list-actions{flex-shrink:0;display:flex;align-items:center;gap:6px}
+.fm-list-kg{width:56px;padding:7px 4px;border:1.5px solid var(--c-border);border-radius:6px;font-size:13px;text-align:center;outline:none}
+.fm-list-kg:focus{border-color:var(--c-meat)}
+.fm-list-add{padding:7px 12px;border:none;border-radius:8px;background:var(--c-meat);color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;transition:background .15s}
+.fm-list-add:hover{background:#991b1b}
+.fm-list-fav{background:none;border:none;font-size:16px;cursor:pointer;padding:2px 4px}
+.fm-list-badge{background:var(--c-meat-accent);color:#fff;font-size:9px;font-weight:800;padding:2px 5px;border-radius:4px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -208,14 +235,20 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   <!-- Category Pills -->
   <div class="fm-cats" id="fm-cats" style="display:none"></div>
 
-  <!-- Search -->
-  <div class="fm-search" id="fm-search" style="display:none">
-    <i data-lucide="search" style="width:16px;height:16px"></i>
-    <input type="text" id="fm-search-input" placeholder="Artikel suchen...">
+  <!-- Search + View Toggle -->
+  <div id="fm-search-row" style="display:none">
+    <div class="fm-search" style="display:block">
+      <i data-lucide="search" style="width:16px;height:16px"></i>
+      <input type="text" id="fm-search-input" placeholder="Artikel suchen...">
+    </div>
+    <div class="fm-view-toggle">
+      <button class="fm-view-btn" id="fm-vt-list" title="Listenansicht"><i data-lucide="list" style="width:18px;height:18px"></i></button>
+      <button class="fm-view-btn" id="fm-vt-grid" title="Kachelansicht"><i data-lucide="grid-2x2" style="width:18px;height:18px"></i></button>
+    </div>
   </div>
 
-  <!-- Article Grid -->
-  <div class="fm-grid" id="fm-grid"></div>
+  <!-- Article Grid / List -->
+  <div id="fm-articles"></div>
 
   <!-- Confirmation -->
   <div class="fm-confirm" id="fm-confirm">
@@ -295,6 +328,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   var favorites = JSON.parse(localStorage.getItem('fm_favorites') || '[]');
   var lastOrder = JSON.parse(localStorage.getItem('fm_last_order') || 'null');
   var cdInterval = null;
+  var viewMode = localStorage.getItem('fm_viewmode') || 'list';
 
   // ── Helpers ──
   function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
@@ -323,8 +357,11 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     loadSavedData();
     document.getElementById('fm-search-input').addEventListener('input', function(){
       searchTerm = this.value.trim().toLowerCase();
-      renderGrid();
+      renderArticles();
     });
+    // View toggle
+    document.getElementById('fm-vt-list').addEventListener('click', function(){ setView('list'); });
+    document.getElementById('fm-vt-grid').addEventListener('click', function(){ setView('grid'); });
   }
 
   function loadSavedData(){
@@ -428,15 +465,16 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
         document.getElementById('fm-loading').style.display='none';
         if(!allArticles.length){
-          document.getElementById('fm-grid').innerHTML='<div style="text-align:center;padding:40px;color:var(--c-muted)">Keine Fleisch-/Wurstwaren verfuegbar</div>';
+          document.getElementById('fm-articles').innerHTML='<div style="text-align:center;padding:40px;color:var(--c-muted)">Keine Fleisch-/Wurstwaren verfuegbar</div>';
           return;
         }
 
         buildCategories();
         showReorderBanner();
         document.getElementById('fm-cats').style.display='flex';
-        document.getElementById('fm-search').style.display='block';
-        renderGrid();
+        document.getElementById('fm-search-row').style.display='block';
+        updateViewToggle();
+        renderArticles();
         if(window.lucide) lucide.createIcons();
       })
       .catch(function(){ showError(); });
@@ -462,7 +500,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       if(!pill) return;
       activeCat=pill.getAttribute('data-cat');
       document.querySelectorAll('.fm-cat').forEach(function(p){ p.classList.toggle('active',p.getAttribute('data-cat')===activeCat); });
-      renderGrid();
+      renderArticles();
     });
   }
 
@@ -486,8 +524,20 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     if(added) showToast(added+' Artikel in den Warenkorb gelegt');
   };
 
-  // ── Render grid ──
-  function renderGrid(){
+  // ── View toggle ──
+  function setView(mode){
+    viewMode=mode;
+    localStorage.setItem('fm_viewmode',mode);
+    updateViewToggle();
+    renderArticles();
+  }
+  function updateViewToggle(){
+    document.getElementById('fm-vt-list').classList.toggle('active',viewMode==='list');
+    document.getElementById('fm-vt-grid').classList.toggle('active',viewMode==='grid');
+  }
+
+  // ── Filter logic ──
+  function getFilteredItems(){
     var items=allArticles;
     if(activeCat==='favoriten'){
       items=items.filter(function(a){ return favorites.indexOf(a.artikelnummer)!==-1; });
@@ -500,15 +550,58 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
                (a.warengruppe||'').toLowerCase().indexOf(searchTerm)!==-1;
       });
     }
+    return items;
+  }
 
+  // ── Render dispatcher ──
+  function renderArticles(){
+    var items=getFilteredItems();
+    var container=document.getElementById('fm-articles');
     if(!items.length){
-      document.getElementById('fm-grid').innerHTML='<div style="text-align:center;padding:40px;color:var(--c-muted)">Keine Artikel gefunden</div>';
+      container.innerHTML='<div style="text-align:center;padding:40px;color:var(--c-muted)">Keine Artikel gefunden</div>';
       return;
     }
+    if(viewMode==='list') renderList(items, container);
+    else renderGrid(items, container);
+  }
 
+  // ── Render List (compact, fast ordering) ──
+  function renderList(items, container){
     var pct=config.rabatt_prozent||15;
     var minKg=config.mindestmenge_kg||1;
-    var html='';
+    var html='<div class="fm-list">';
+
+    items.forEach(function(a){
+      var isFav=favorites.indexOf(a.artikelnummer)!==-1;
+      var rabattPreis=a.vk_base*(1-pct/100);
+      html+='<div class="fm-list-item">';
+      html+='<div class="fm-list-icon"><i data-lucide="beef" style="width:20px;height:20px"></i></div>';
+      html+='<div class="fm-list-info">';
+      html+='<div class="fm-list-name">'+esc(a.bezeichnung)+'</div>';
+      html+='<div class="fm-list-prices">';
+      html+='<span class="fm-list-badge">-'+pct+'%</span> ';
+      html+='<span class="fm-list-orig">'+fmtP(a.vk_base)+' &euro;</span> ';
+      html+='<span class="fm-list-new">'+fmtP(rabattPreis)+' &euro;</span>';
+      html+='<span class="fm-list-unit">/kg</span>';
+      html+='</div></div>';
+      html+='<div class="fm-list-actions">';
+      html+='<input type="number" class="fm-list-kg" value="1.0" min="0.5" max="50" step="0.5" data-artnr="'+esc(a.artikelnummer)+'">';
+      html+='<button class="fm-list-add" data-add="'+esc(a.artikelnummer)+'"><i data-lucide="plus" style="width:12px;height:12px"></i> Bestellen</button>';
+      html+='<button class="fm-list-fav" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav?'\u2764':'\u2661')+'</button>';
+      html+='</div></div>';
+    });
+
+    html+='</div>';
+    container.innerHTML=html;
+    if(window.lucide) lucide.createIcons();
+    wireArticleEvents();
+  }
+
+  // ── Render Grid (card view) ──
+  function renderGrid(items, container){
+    var pct=config.rabatt_prozent||15;
+    var minKg=config.mindestmenge_kg||1;
+    var html='<div class="fm-grid">';
 
     items.forEach(function(a){
       var isFav = favorites.indexOf(a.artikelnummer)!==-1;
@@ -531,10 +624,15 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       html+='</div></div>';
     });
 
-    document.getElementById('fm-grid').innerHTML=html;
+    html+='</div>';
+    container.innerHTML=html;
     if(window.lucide) lucide.createIcons();
+    wireArticleEvents();
+  }
 
-    // Event: Add to cart
+  // ── Wire events for both views ──
+  function wireArticleEvents(){
+    // Add to cart
     document.querySelectorAll('[data-add]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var nr=btn.getAttribute('data-add');
@@ -545,8 +643,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
         addToCart(art, kg);
       });
     });
-
-    // Event: Favorites
+    // Favorites
     document.querySelectorAll('[data-fav]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var nr=btn.getAttribute('data-fav');
@@ -751,11 +848,11 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
   // ── Confirmation ──
   function showConfirmation(data){
-    document.getElementById('fm-grid').style.display='none';
+    document.getElementById('fm-articles').style.display='none';
     document.getElementById('fm-rabatt').style.display='none';
     document.getElementById('fm-reorder').style.display='none';
     document.getElementById('fm-cats').style.display='none';
-    document.getElementById('fm-search').style.display='none';
+    document.getElementById('fm-search-row').style.display='none';
 
     var el=document.getElementById('fm-confirm');
     document.getElementById('fm-confirm-nr').textContent='Bestellnummer: '+data.bestellnummer+' | Liefertag: '+data.liefertag_label;
@@ -778,12 +875,12 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   // ── Reset ──
   window.fmReset = function(){
     document.getElementById('fm-confirm').classList.remove('show');
-    document.getElementById('fm-grid').style.display='';
+    document.getElementById('fm-articles').style.display='';
     document.getElementById('fm-rabatt').style.display='block';
     document.getElementById('fm-cats').style.display='flex';
-    document.getElementById('fm-search').style.display='block';
+    document.getElementById('fm-search-row').style.display='block';
     showReorderBanner();
-    renderGrid();
+    renderArticles();
   };
 
   // ── Start ──
