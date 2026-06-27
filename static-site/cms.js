@@ -11820,36 +11820,246 @@
     });
   };
 
+  var FM_STATUS_L={0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+  var FM_STATUS_C={0:'#d97706',1:'#2563eb',2:'#2e7d4f',3:'#6b7280',4:'#ef4444'};
+  var _fmCurrentFilter='offen';
+
   window.cmsLoadFleischOrders = function(filter){
+    _fmCurrentFilter=filter||_fmCurrentFilter;
+    // Highlight active filter button
+    ['offen','alle','heute','sammel'].forEach(function(f){
+      var btn=document.getElementById('fm-orders-btn-'+f);
+      if(btn) btn.style.fontWeight=f===_fmCurrentFilter?'800':'400';
+    });
     var list=document.getElementById('fm-orders-list');
     list.innerHTML='<p style="color:#6b7280;text-align:center">Laden...</p>';
+
     var url=API+'/fleisch-order?mode=kiosk';
     fetch(url).then(function(r){return r.json();}).then(function(data){
       if(!data.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
       var orders=data.bestellungen||[];
       var today=new Date().toISOString().slice(0,10);
-      if(filter==='offen') orders=orders.filter(function(o){return o.status<3;});
-      else if(filter==='heute') orders=orders.filter(function(o){return o.liefertag===today;});
+
+      if(_fmCurrentFilter==='offen') orders=orders.filter(function(o){return o.status<3;});
+      else if(_fmCurrentFilter==='heute') orders=orders.filter(function(o){return o.liefertag===today;});
+      else if(_fmCurrentFilter==='sammel'){_fmRenderSammel(orders,list);return;}
 
       if(!orders.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine Bestellungen</p>';return;}
 
-      var STATUS_L={0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
-      var STATUS_C={0:'#d97706',1:'#2563eb',2:'#2e7d4f',3:'#6b7280',4:'#ef4444'};
-      var html='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f9fafb"><th style="text-align:left;padding:6px 8px">Nr.</th><th style="text-align:left;padding:6px 8px">Name</th><th style="text-align:left;padding:6px 8px">Telefon</th><th style="text-align:left;padding:6px 8px">Liefertag</th><th style="text-align:right;padding:6px 8px">Summe</th><th style="text-align:center;padding:6px 8px">Status</th></tr></thead><tbody>';
-      orders.forEach(function(o){
-        html+='<tr style="border-top:1px solid #f3f4f6">';
-        html+='<td style="padding:6px 8px;font-weight:600">'+esc(o.bestellnummer)+'</td>';
-        html+='<td style="padding:6px 8px">'+esc(o.name)+'</td>';
-        html+='<td style="padding:6px 8px">'+esc(o.telefon)+'</td>';
-        html+='<td style="padding:6px 8px">'+esc(o.liefertag)+'</td>';
-        html+='<td style="padding:6px 8px;text-align:right;font-weight:600">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</td>';
-        html+='<td style="padding:6px 8px;text-align:center"><span style="background:'+STATUS_C[o.status]+';color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">'+STATUS_L[o.status]+'</span></td>';
-        html+='</tr>';
+      var html='';
+      orders.forEach(function(o,idx){
+        var hasMsg=o.kunde_kommentar&&!o.kommentar_gelesen;
+        var sc=FM_STATUS_C[o.status]||'#6b7280';
+        var sl=FM_STATUS_L[o.status]||'?';
+        // Short date
+        var ld=o.liefertag||'';
+        try{var dd=new Date(ld+'T12:00:00');var wt=['So','Mo','Di','Mi','Do','Fr','Sa'];ld=wt[dd.getDay()]+' '+dd.getDate()+'.'+(dd.getMonth()+1)+'.';}catch(e){}
+
+        html+='<div class="fm-cms-order" style="border:1px solid '+(hasMsg?'#fbbf24':'#e5e7eb')+';border-radius:10px;margin-bottom:8px;overflow:hidden'+(hasMsg?';box-shadow:0 0 0 2px rgba(251,191,36,.3)':'')+'">';
+        // Header row (clickable)
+        html+='<div data-fm-toggle="'+idx+'" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:#faf5f3">';
+        html+='<span style="background:'+sc+';color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap">'+esc(sl)+'</span>';
+        html+='<span style="font-weight:700;font-size:13px;flex-shrink:0">'+esc(o.bestellnummer)+'</span>';
+        html+='<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.name)+'</span>';
+        html+='<span style="font-size:12px;color:#6b7280;flex-shrink:0">'+esc(ld)+'</span>';
+        html+='<span style="font-size:13px;font-weight:700;flex-shrink:0">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</span>';
+        if(hasMsg) html+='<span style="background:#fbbf24;color:#7c2d12;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800" title="Neue Nachricht">\u2709</span>';
+        html+='<span data-fm-arrow="'+idx+'" style="transition:transform .2s;font-size:14px;color:#9ca3af">\u25B6</span>';
+        html+='</div>';
+
+        // Detail (collapsed)
+        html+='<div data-fm-detail="'+idx+'" style="display:none;padding:12px;border-top:1px solid #e5e7eb;background:#fff">';
+
+        // Positionen table
+        var pos=o.positionen||[];
+        if(pos.length){
+          html+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px"><thead><tr style="background:#f9fafb"><th style="text-align:left;padding:4px 6px">Artikel</th><th style="text-align:right;padding:4px 6px">Menge</th><th style="text-align:right;padding:4px 6px">Preis/kg</th><th style="text-align:right;padding:4px 6px">Summe</th></tr></thead><tbody>';
+          pos.forEach(function(p){
+            var ps=Number(p.endpreis||p.preis_kg*p.menge_kg||0).toFixed(2);
+            html+='<tr style="border-top:1px solid #f3f4f6"><td style="padding:4px 6px">'+esc(p.bezeichnung||p.artikelnummer)+'</td><td style="text-align:right;padding:4px 6px">'+Number(p.menge_kg||0).toFixed(1)+' kg</td><td style="text-align:right;padding:4px 6px">'+Number(p.preis_kg||0).toFixed(2)+' \u20AC</td><td style="text-align:right;padding:4px 6px;font-weight:600">'+ps+' \u20AC</td></tr>';
+          });
+          html+='</tbody></table>';
+        }
+
+        // Anmerkung
+        if(o.anmerkung) html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#fef3c7;border-radius:6px;color:#92400e"><strong>Anmerkung:</strong> '+esc(o.anmerkung)+'</div>';
+
+        // Kundenkommentar
+        if(o.kunde_kommentar){
+          html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#dbeafe;border-radius:6px;color:#1e40af"><strong>Kunde:</strong> '+esc(o.kunde_kommentar);
+          if(!o.kommentar_gelesen) html+=' <button class="cms-btn" style="font-size:10px;padding:2px 6px;margin-left:6px" data-fm-gelesen="'+esc(o.id)+'">Als gelesen markieren</button>';
+          html+='</div>';
+        }
+        // Personal-Antwort
+        if(o.personal_antwort) html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#dcfce7;border-radius:6px;color:#166534"><strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+
+        // Kontakt
+        html+='<div style="font-size:12px;margin-bottom:12px;color:#6b7280">';
+        html+='<strong>Telefon:</strong> '+esc(o.telefon||'-');
+        if(o.email) html+=' &middot; <strong>E-Mail:</strong> '+esc(o.email);
+        html+='</div>';
+
+        // Action buttons
+        html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+        if(o.status<3){
+          [1,2,3].forEach(function(ns){
+            if(ns===o.status) return;
+            var bc=FM_STATUS_C[ns];
+            html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:'+bc+';color:#fff;border:none;border-radius:6px" data-fm-status="'+esc(o.id)+'" data-fm-newstatus="'+ns+'">'+FM_STATUS_L[ns]+'</button>';
+          });
+          html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#ef4444;color:#fff;border:none;border-radius:6px" data-fm-status="'+esc(o.id)+'" data-fm-newstatus="4">Stornieren</button>';
+        }
+        html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#1e40af;color:#fff;border:none;border-radius:6px" data-fm-reply="'+esc(o.id)+'">Nachricht senden</button>';
+        html+='</div>';
+
+        html+='</div>'; // detail
+        html+='</div>'; // order card
       });
-      html+='</tbody></table>';
+
       list.innerHTML=html;
+      _fmWireOrderEvents();
     }).catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+e.message+'</p>';});
   };
+
+  // ── Sammelbestellung: Aggregate articles per delivery day ──
+  function _fmRenderSammel(orders,list){
+    var open=orders.filter(function(o){return o.status<3;});
+    if(!open.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine offenen Bestellungen</p>';return;}
+
+    // Group by liefertag
+    var byDay={};
+    open.forEach(function(o){
+      var lt=o.liefertag||'unbekannt';
+      if(!byDay[lt]) byDay[lt]={orders:[],articles:{}};
+      byDay[lt].orders.push(o);
+      (o.positionen||[]).forEach(function(p){
+        var key=p.artikelnummer||p.bezeichnung||'?';
+        if(!byDay[lt].articles[key]) byDay[lt].articles[key]={bezeichnung:p.bezeichnung||key,menge:0,einheit:'kg'};
+        byDay[lt].articles[key].menge+=Number(p.menge_kg||0);
+      });
+    });
+
+    var days=Object.keys(byDay).sort();
+    var html='';
+    days.forEach(function(day){
+      var g=byDay[day];
+      // Format date
+      var dayLabel=day;
+      try{var dd=new Date(day+'T12:00:00');var wt=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];dayLabel=wt[dd.getDay()]+', '+dd.getDate()+'.'+(dd.getMonth()+1)+'.'+dd.getFullYear();}catch(e){}
+
+      html+='<div style="border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;overflow:hidden">';
+      html+='<div style="background:#7f1d1d;color:#fff;padding:10px 14px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center">';
+      html+='<span>'+esc(dayLabel)+'</span>';
+      html+='<span style="font-size:12px;font-weight:400;opacity:.8">'+g.orders.length+' Bestellung'+(g.orders.length>1?'en':'')+'</span>';
+      html+='</div>';
+
+      // Aggregated articles
+      var arts=Object.values(g.articles).sort(function(a,b){return a.bezeichnung.localeCompare(b.bezeichnung,'de');});
+      html+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#fef2f2"><th style="text-align:left;padding:6px 10px">Artikel</th><th style="text-align:right;padding:6px 10px">Gesamt-Menge</th></tr></thead><tbody>';
+      arts.forEach(function(a){
+        html+='<tr style="border-top:1px solid #fecaca"><td style="padding:6px 10px">'+esc(a.bezeichnung)+'</td><td style="text-align:right;padding:6px 10px;font-weight:700">'+a.menge.toFixed(1)+' '+esc(a.einheit)+'</td></tr>';
+      });
+      html+='</tbody></table>';
+
+      // Print button
+      html+='<div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right">';
+      html+='<button class="cms-btn" style="font-size:11px;padding:4px 12px" onclick="window.print()">Drucken</button>';
+      html+='</div>';
+      html+='</div>';
+    });
+
+    list.innerHTML=html;
+  }
+
+  // ── Wire events for order cards ──
+  function _fmWireOrderEvents(){
+    // Toggle expand/collapse
+    document.querySelectorAll('[data-fm-toggle]').forEach(function(el){
+      el.addEventListener('click',function(){
+        var idx=el.getAttribute('data-fm-toggle');
+        var detail=document.querySelector('[data-fm-detail="'+idx+'"]');
+        var arrow=document.querySelector('[data-fm-arrow="'+idx+'"]');
+        if(!detail) return;
+        var open=detail.style.display==='none';
+        detail.style.display=open?'':'none';
+        if(arrow) arrow.style.transform=open?'rotate(90deg)':'';
+      });
+    });
+
+    // Status change buttons
+    document.querySelectorAll('[data-fm-status]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var id=btn.getAttribute('data-fm-status');
+        var ns=parseInt(btn.getAttribute('data-fm-newstatus'),10);
+        if(ns===4&&!confirm('Bestellung wirklich stornieren?')) return;
+        btn.disabled=true;btn.textContent='...';
+        fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:ns})})
+        .then(function(r){return r.json();}).then(function(d){
+          if(d.success) cmsLoadFleischOrders();
+          else{btn.disabled=false;btn.textContent='Fehler';alert(d.error||'Fehler');}
+        }).catch(function(){btn.disabled=false;btn.textContent='Fehler';});
+      });
+    });
+
+    // Gelesen button
+    document.querySelectorAll('[data-fm-gelesen]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var id=btn.getAttribute('data-fm-gelesen');
+        btn.disabled=true;btn.textContent='...';
+        fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,kommentar_gelesen:true})})
+        .then(function(r){return r.json();}).then(function(d){
+          if(d.success) cmsLoadFleischOrders();
+        }).catch(function(){btn.disabled=false;});
+      });
+    });
+
+    // Reply button → modal
+    document.querySelectorAll('[data-fm-reply]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        _fmShowReplyModal(btn.getAttribute('data-fm-reply'));
+      });
+    });
+  }
+
+  // ── Reply modal ──
+  function _fmShowReplyModal(orderId){
+    var existing=document.getElementById('fm-cms-reply-overlay');
+    if(existing) existing.remove();
+
+    var ov=document.createElement('div');
+    ov.id='fm-cms-reply-overlay';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+
+    var box=document.createElement('div');
+    box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)';
+    box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#7f1d1d">Nachricht an Kunden</div>'
+      +'<textarea id="fm-cms-reply-text" rows="4" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:14px;resize:vertical;font-family:inherit" placeholder="Ihre Nachricht..."></textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
+      +'<button id="fm-cms-reply-cancel" class="cms-btn" style="font-size:13px;padding:8px 16px">Abbrechen</button>'
+      +'<button id="fm-cms-reply-send" class="cms-btn cms-btn-primary" style="font-size:13px;padding:8px 16px;background:#1e40af;color:#fff;border:none">Senden</button>'
+      +'</div>';
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+
+    ov.addEventListener('click',function(e){if(e.target===ov) ov.remove();});
+    document.getElementById('fm-cms-reply-cancel').addEventListener('click',function(){ov.remove();});
+    document.getElementById('fm-cms-reply-send').addEventListener('click',function(){
+      var text=(document.getElementById('fm-cms-reply-text').value||'').trim();
+      if(!text){alert('Bitte Nachricht eingeben');return;}
+      var sendBtn=document.getElementById('fm-cms-reply-send');
+      sendBtn.disabled=true;sendBtn.textContent='Senden...';
+      fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,personal_antwort:text,kommentar_gelesen:true})})
+      .then(function(r){return r.json();}).then(function(d){
+        ov.remove();
+        if(d.success) cmsLoadFleischOrders();
+        else alert(d.error||'Fehler');
+      }).catch(function(e){sendBtn.disabled=false;sendBtn.textContent='Senden';alert('Fehler: '+e.message);});
+    });
+    setTimeout(function(){document.getElementById('fm-cms-reply-text').focus();},100);
+  }
 
   // --- Init (only if already authenticated via session) ---
   if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){

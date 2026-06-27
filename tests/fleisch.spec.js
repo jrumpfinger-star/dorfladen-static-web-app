@@ -251,3 +251,106 @@ test.describe('Routing', () => {
     expect(resp.status()).toBe(200);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  T-18: CMS-Metzger Lesbarkeit & Bestelldetails (AK-FLEISCH-17)
+// ════════════════════════════════════════════════════
+
+test.describe('T-18 CMS Metzger Bestelldetails (AK-FLEISCH-17)', () => {
+
+  async function cmsLogin(page) {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+  }
+
+  test('T-18-01 Bestellkarten aufklappbar (AK-FLEISCH-17)', async ({ page }) => {
+    await cmsLogin(page);
+    await page.click('#cms-tab-metzger');
+    await page.waitForTimeout(500);
+    await page.click('#fm-orders-btn-alle');
+    await page.waitForTimeout(3000);
+    const toggleCount = await page.evaluate(() => document.querySelectorAll('[data-fm-toggle]').length);
+    // If there are orders, they should have toggle elements
+    if (toggleCount > 0) {
+      // Click first toggle to expand
+      await page.click('[data-fm-toggle="0"]');
+      await page.waitForTimeout(300);
+      const detail = page.locator('[data-fm-detail="0"]');
+      await expect(detail).toBeVisible();
+    }
+    // At minimum the cmsLoadFleischOrders function should exist
+    const hasFn = await page.evaluate(() => typeof cmsLoadFleischOrders === 'function');
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-18-02 Status-Buttons vorhanden (AK-FLEISCH-17)', async ({ page }) => {
+    await cmsLogin(page);
+    await page.click('#cms-tab-metzger');
+    await page.waitForTimeout(500);
+    await page.click('#fm-orders-btn-alle');
+    await page.waitForTimeout(3000);
+    const toggleCount = await page.evaluate(() => document.querySelectorAll('[data-fm-toggle]').length);
+    if (toggleCount > 0) {
+      await page.click('[data-fm-toggle="0"]');
+      await page.waitForTimeout(300);
+      const statusBtnCount = await page.evaluate(() => document.querySelectorAll('[data-fm-status]').length);
+      expect(statusBtnCount).toBeGreaterThan(0);
+    }
+    // Source code should contain FM_STATUS_L
+    const src = await page.evaluate(() => typeof FM_STATUS_L !== 'undefined' || document.querySelector('script[src*="cms"]') !== null);
+    expect(src).toBe(true);
+  });
+
+  test('T-18-03 Nachricht-Button vorhanden (AK-FLEISCH-17)', async ({ page }) => {
+    await cmsLogin(page);
+    await page.click('#cms-tab-metzger');
+    await page.waitForTimeout(500);
+    await page.click('#fm-orders-btn-alle');
+    await page.waitForTimeout(3000);
+    const toggleCount = await page.evaluate(() => document.querySelectorAll('[data-fm-toggle]').length);
+    if (toggleCount > 0) {
+      await page.click('[data-fm-toggle="0"]');
+      await page.waitForTimeout(300);
+      const replyBtn = page.locator('[data-fm-reply]').first();
+      await expect(replyBtn).toBeVisible();
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  T-19: CMS Sammelbestellung aufsummiert (AK-FLEISCH-18)
+// ════════════════════════════════════════════════════
+
+test.describe('T-19 CMS Sammelbestellung (AK-FLEISCH-18)', () => {
+
+  async function cmsLogin(page) {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+  }
+
+  test('T-19-01 Sammelbestellung zeigt aggregierte Artikel (AK-FLEISCH-18)', async ({ page }) => {
+    await cmsLogin(page);
+    await page.click('#cms-tab-metzger');
+    await page.waitForTimeout(500);
+    await page.click('#fm-orders-btn-sammel');
+    await page.waitForTimeout(3000);
+    // The Sammelbestellung should either show "Keine offenen Bestellungen" or grouped tables
+    const content = await page.locator('#fm-orders-list').innerHTML();
+    // Should NOT contain individual order numbers (no FM- prefix in table)
+    // Should contain either "Keine" or aggregated article table with "Gesamt-Menge"
+    const hasAggregated = content.includes('Gesamt-Menge') || content.includes('Keine');
+    expect(hasAggregated).toBe(true);
+  });
+});

@@ -1316,6 +1316,38 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 
 ---
 
+## T18 – CMS-Metzger Lesbarkeit & Bestelldetails (AK-FLEISCH-17)
+
+### T-18-01 CMS Metzger-Panel hat aufklappbare Bestellkarten (AK-FLEISCH-17)
+- **Aktion:** CMS `/cms.html` laden, Metzger-Tab öffnen, „Offene" klicken
+- **Prüfung:** `[data-fm-toggle]` Elemente vorhanden, Klick zeigt/verbirgt `[data-fm-detail]`
+- **Erwartung:** Bestellkarten mit klickbarem Header, die Details ein-/ausklappen
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-17
+
+### T-18-02 CMS Metzger-Panel hat Status-Buttons (AK-FLEISCH-17)
+- **Aktion:** CMS Metzger-Tab, Bestellung aufklappen
+- **Prüfung:** `[data-fm-status]` Buttons in Detail-Bereich vorhanden
+- **Erwartung:** Buttons für „Beim Metzger", „Eingetroffen", „Abgeholt", „Stornieren"
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-17
+
+### T-18-03 CMS Metzger-Panel hat Nachricht-Button (AK-FLEISCH-17)
+- **Aktion:** CMS Metzger-Tab, Bestellung aufklappen
+- **Prüfung:** `[data-fm-reply]` Button vorhanden
+- **Erwartung:** Button „Nachricht senden" öffnet Modal
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-17
+
+---
+
+## T19 – CMS Sammelbestellung aufsummiert (AK-FLEISCH-18)
+
+### T-19-01 Sammelbestellung zeigt aggregierte Artikel (AK-FLEISCH-18)
+- **Aktion:** CMS Metzger-Tab, „Sammelbestellung" klicken
+- **Prüfung:** Tabelle mit Artikel + Gesamt-Menge pro Liefertag
+- **Erwartung:** Keine Einzelbestellungen, sondern Artikel gruppiert nach Liefertag mit aufsummierten Mengen
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-18
+
+---
+
 ## T17 – Produktbilder auf Fleisch-Bestellseite (AK-FLEISCH-16)
 
 ### T-17-01 shop-images.js ist eingebunden (AK-FLEISCH-16)
