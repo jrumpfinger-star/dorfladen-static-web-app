@@ -24,20 +24,20 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .fm-back:hover{opacity:1}
 
 /* Countdown Banner */
-.fm-countdown{background:linear-gradient(135deg,#fef3c7,#fef9c3);border-bottom:1px solid #f59e0b33;padding:14px 16px;text-align:center}
-.fm-countdown-title{font-size:14px;font-weight:700;color:#92400e}
-.fm-countdown-sub{font-size:12px;color:#a16207;margin-top:2px}
-.fm-countdown-timer{font-size:20px;font-weight:800;color:#b45309;margin-top:4px;font-variant-numeric:tabular-nums}
+.fm-countdown{background:linear-gradient(135deg,#fef3c7,#fef9c3);border-bottom:1px solid #f59e0b33;padding:10px 16px;text-align:center;position:sticky;top:62px;z-index:99}
+.fm-countdown-title{font-size:13px;font-weight:700;color:#92400e}
+.fm-countdown-sub{font-size:11px;color:#a16207;margin-top:1px}
+.fm-countdown-timer{font-size:16px;font-weight:800;color:#b45309;margin-top:2px;font-variant-numeric:tabular-nums}
 .fm-countdown.closed{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#dc262633}
 .fm-countdown.closed .fm-countdown-title{color:#991b1b}
 .fm-countdown.closed .fm-countdown-sub{color:#b91c1c}
 
-.fm-container{max-width:600px;margin:0 auto;padding:16px}
+.fm-container{max-width:600px;margin:0 auto;padding:12px 16px}
 
-/* Rabatt Banner */
-.fm-rabatt{background:var(--c-meat-light);border:1.5px solid #fecaca;border-radius:var(--radius);padding:16px;margin-bottom:16px;text-align:center}
-.fm-rabatt-pct{font-size:24px;font-weight:900;color:var(--c-meat-accent)}
-.fm-rabatt-sub{font-size:13px;color:var(--c-text);margin-top:4px}
+/* Rabatt Banner – compact */
+.fm-rabatt{background:var(--c-meat-light);border:1.5px solid #fecaca;border-radius:10px;padding:10px 14px;margin-bottom:10px;text-align:center;display:flex;align-items:center;gap:10px;justify-content:center}
+.fm-rabatt-pct{font-size:16px;font-weight:900;color:var(--c-meat-accent);white-space:nowrap}
+.fm-rabatt-sub{font-size:12px;color:var(--c-text);text-align:left}
 
 /* Category Pills */
 .fm-cats{display:flex;gap:8px;overflow-x:auto;padding:0 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -52,11 +52,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .fm-search input:focus{border-color:var(--c-meat)}
 .fm-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--c-muted)}
 
-/* Reorder Banner */
-.fm-reorder{background:var(--c-green-light);border:1.5px solid #a7f3d0;border-radius:var(--radius);padding:14px;margin-bottom:16px;cursor:pointer;transition:all .15s}
+/* Reorder Banner – compact */
+.fm-reorder{background:var(--c-green-light);border:1.5px solid #a7f3d0;border-radius:10px;padding:10px 14px;margin-bottom:10px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px}
 .fm-reorder:hover{box-shadow:var(--shadow)}
-.fm-reorder-title{font-size:14px;font-weight:700;color:var(--c-green);display:flex;align-items:center;gap:6px}
-.fm-reorder-sub{font-size:12px;color:var(--c-muted);margin-top:4px}
+.fm-reorder-title{font-size:13px;font-weight:700;color:var(--c-green);display:flex;align-items:center;gap:6px;flex:1}
+.fm-reorder-sub{font-size:11px;color:var(--c-muted)}
 
 /* Article Grid */
 .fm-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
@@ -209,8 +209,8 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 </head>
 <body>
 
-<!-- Header -->
-<div class="fm-header" style="position:relative">
+<!-- Header (sticky via CSS, position:relative for back-btn) -->
+<div class="fm-header">
   <a href="/" class="fm-back"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></a>
   <h1><i data-lucide="beef" style="width:22px;height:22px"></i> Fleisch &amp; Wurst</h1>
   <small>Vorbestellen &amp; im Laden abholen</small>
@@ -245,8 +245,11 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
   <!-- Reorder Banner -->
   <div class="fm-reorder" id="fm-reorder" style="display:none" onclick="fmReorder()">
-    <div class="fm-reorder-title"><i data-lucide="repeat" style="width:16px;height:16px"></i> <span id="fm-reorder-label">Letzte Bestellung nochmal bestellen</span></div>
-    <div class="fm-reorder-sub" id="fm-reorder-sub"></div>
+    <i data-lucide="repeat" style="width:16px;height:16px;color:var(--c-green);flex-shrink:0"></i>
+    <div style="flex:1;min-width:0">
+      <div class="fm-reorder-title"><span id="fm-reorder-label">Letzte Bestellung nochmal</span></div>
+      <div class="fm-reorder-sub" id="fm-reorder-sub"></div>
+    </div>
   </div>
 
   <!-- Category Pills -->
@@ -605,7 +608,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       html+='</div>';
       html+='<div class="fm-list-row2">';
       html+='<span class="fm-list-badge">-'+pct+'%</span>';
-      html+='<div class="fm-list-kg-wrap"><input type="number" class="fm-list-kg" value="1.0" min="0.5" max="50" step="0.5" data-artnr="'+esc(a.artikelnummer)+'"> <span class="fm-list-kg-label">kg</span></div>';
+      html+='<div class="fm-list-kg-wrap"><input type="text" inputmode="decimal" class="fm-list-kg" value="1,0" data-artnr="'+esc(a.artikelnummer)+'" onfocus="this.select()"> <span class="fm-list-kg-label">kg</span></div>';
       html+='<button class="fm-list-add" data-add="'+esc(a.artikelnummer)+'"><i data-lucide="plus" style="width:12px;height:12px"></i> Bestellen</button>';
       html+='</div></div>';
     });
@@ -638,7 +641,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       html+='<span class="fm-card-price-unit">/kg ab '+minKg+' kg</span>';
       html+='</div></div>';
       html+='<div class="fm-card-footer">';
-      html+='<div class="fm-card-kg"><input type="number" value="1.0" min="0.5" max="50" step="0.5" data-artnr="'+esc(a.artikelnummer)+'"> <span>kg</span></div>';
+      html+='<div class="fm-card-kg"><input type="text" inputmode="decimal" value="1,0" data-artnr="'+esc(a.artikelnummer)+'" onfocus="this.select()"> <span>kg</span></div>';
       html+='<button class="fm-card-add" data-add="'+esc(a.artikelnummer)+'"><i data-lucide="plus" style="width:14px;height:14px"></i> Bestellen</button>';
       html+='</div></div>';
     });
@@ -658,7 +661,8 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
         var art=allArticles.find(function(a){ return a.artikelnummer===nr; });
         if(!art) return;
         var inp=document.querySelector('input[data-artnr="'+nr+'"]');
-        var kg=parseFloat(inp?inp.value:1)||1;
+        var kg=parseFloat((inp?inp.value:'1').replace(',','.'))||1;
+        if(kg<0.5) kg=0.5; if(kg>50) kg=50;
         addToCart(art, kg);
       });
     });
@@ -748,7 +752,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       html+='<span class="fm-ci-price">'+fmtP(rabatt)+' &euro;</span>';
       html+='</div>';
       if(!hatRabatt) html+='<span class="fm-ci-warn">unter '+minKg+' kg</span>';
-      html+='<div class="fm-ci-qty"><input type="number" value="'+item.menge_kg.toFixed(1)+'" min="0.5" max="50" step="0.5" data-cart-qty="'+esc(item.artikelnummer)+'"> <span>kg</span></div>';
+      html+='<div class="fm-ci-qty"><input type="text" inputmode="decimal" value="'+item.menge_kg.toFixed(1).replace('.',',')+'" data-cart-qty="'+esc(item.artikelnummer)+'" onfocus="this.select()"> <span>kg</span></div>';
       html+='</div></div>';
       html+='<button class="fm-ci-rm" data-rm="'+esc(item.artikelnummer)+'" title="Entfernen"><i data-lucide="x" style="width:16px;height:16px"></i></button>';
       html+='</div>';
@@ -787,7 +791,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
         var nr=inp.getAttribute('data-cart-qty');
         var ci=cart.find(function(c){ return c.artikelnummer===nr; });
         if(ci){
-          ci.menge_kg=Math.max(0.5, parseFloat(inp.value)||1);
+          ci.menge_kg=Math.max(0.5, Math.min(50, parseFloat(inp.value.replace(',','.'))||1));
           renderCart();
         }
       });

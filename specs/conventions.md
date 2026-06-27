@@ -137,7 +137,25 @@ function dlUnlockScroll() {
 
 ---
 
-## 6. Commit-Konventionen
+## 6. Sticky Headers (nicht scrollbar)
+
+**Seiten-Header (Navigation, Titel) müssen immer sichtbar bleiben und dürfen nicht mit dem Content scrollen.**
+
+### Regeln:
+- Header mit `position: sticky; top: 0; z-index: 100` fixieren
+- Sekundäre Banner (Countdown, Status) direkt darunter sticky: `position: sticky; top: <header-höhe>px; z-index: 99`
+- Der scrollbare Content beginnt erst unter den fixierten Elementen
+- Gilt für **alle** Seiten: Shop, Kiosk, Fleisch-Bestellen, CMS, etc.
+- Kein `position: relative` auf Header-Elemente setzen (verhindert sticky)
+
+### Begründung:
+- Mobile-Nutzer verlieren sonst die Orientierung
+- Zurück-Button und Seitentitel müssen immer erreichbar sein
+- Countdown/Deadline-Info muss während des Scrollens sichtbar bleiben
+
+---
+
+## 7. Commit-Konventionen
 
 - `feat:` – Neue Funktionalität
 - `fix:` – Bugfix
@@ -147,7 +165,7 @@ function dlUnlockScroll() {
 
 ---
 
-## 7. Branch-Strategie
+## 8. Branch-Strategie
 
 | Branch | Zweck |
 |---|---|
@@ -160,7 +178,7 @@ function dlUnlockScroll() {
 
 ---
 
-## 8. Test-Zugangsdaten
+## 9. Test-Zugangsdaten
 
 | Zugang | Wert |
 |---|---|
@@ -170,7 +188,7 @@ function dlUnlockScroll() {
 
 ---
 
-## 9. Responsive UI-Test-Pflicht
+## 10. Responsive UI-Test-Pflicht
 
 **Jede UI-Änderung muss auf allen drei Gerätekategorien getestet werden, bevor sie committed wird.**
 
