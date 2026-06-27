@@ -1707,6 +1707,20 @@
       reorderBanner+='</div>';
     }
 
+    // Fleisch-Vorbestellungs-Banner
+    var fleischBanner='';
+    if(activeCat&&isFleischWurst(activeCat)){
+      fleischBanner='<a href="/fleisch-bestellen" style="display:block;text-decoration:none;margin:12px 0 16px">'
+        +'<div style="background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 50%,#b91c1c 100%);border-radius:12px;padding:16px 20px;color:#fff;display:flex;align-items:center;gap:16px;box-shadow:0 4px 12px rgba(127,29,29,.25)">'
+        +'<div style="flex-shrink:0;width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center">'+lucideHtml('beef',28)+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:16px;font-weight:800;letter-spacing:.3px">15 % Rabatt auf Fleisch & Wurst</div>'
+        +'<div style="font-size:13px;opacity:.9;margin-top:2px">Ab 1 kg vorbestellen &amp; im Laden abholen</div>'
+        +'</div>'
+        +'<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap">Jetzt bestellen '+lucideHtml('arrow-right',16)+'</div>'
+        +'</div></a>';
+    }
+
     var emptyHint='';
     if(activeCat==='favorites'&&!items.length){
       emptyHint='<div style="text-align:center;padding:40px 20px;color:#6b7280"><div style="font-size:48px;margin-bottom:12px">❤️</div><p style="font-size:16px;font-weight:600;margin-bottom:8px">Noch keine Favoriten</p><p style="font-size:13px">Tippen Sie das Herz-Symbol ♡ bei einem Artikel, um ihn als Favorit zu speichern.</p></div>';
@@ -1716,7 +1730,7 @@
     }
     var renderFn=articleViewMode==='list'?renderArticlesList:renderArticles;
     var articleHtml=items.length?renderFn(items,title,emoji):'';
-    content.innerHTML=bc+reorderBanner+(emptyHint||articleHtml);
+    content.innerHTML=bc+fleischBanner+reorderBanner+(emptyHint||articleHtml);
     wireAddButtons();
     markCartItems();
     loadImages(items);
