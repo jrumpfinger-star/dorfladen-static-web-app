@@ -482,8 +482,9 @@ def _handle_get(req, token, base_url, hdrs):
             odata_filter = f"dl_bestellnummer eq '{nr}' and (dl_telefon eq '{tel_norm}' or dl_telefon eq '{tel_orig}')"
         else:
             odata_filter = f"dl_bestellnummer eq '{nr}' and dl_telefon eq '{tel_norm}'"
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter={odata_filter}&$top=1"
-        r = requests.get(url, headers=hdrs, timeout=30)
+        logging.info(f"[fleisch-order] Lookup filter: {odata_filter}")
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+        r = requests.get(url, headers=hdrs, timeout=30, params={"$filter": odata_filter, "$top": "1"})
         if r.status_code != 200:
             return func.HttpResponse(
                 json.dumps({"success": False, "error": "Fehler beim Laden"}, ensure_ascii=False),
@@ -550,8 +551,8 @@ def _handle_get(req, token, base_url, hdrs):
             odata_filter = f"(dl_telefon eq '{tel_norm}' or dl_telefon eq '{tel_orig}') and dl_status lt {STATUS_ABGEHOLT}"
         else:
             odata_filter = f"dl_telefon eq '{tel_norm}' and dl_status lt {STATUS_ABGEHOLT}"
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter={odata_filter}&$orderby=dl_liefertag asc&$top=10"
-        r = requests.get(url, headers=hdrs, timeout=30)
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+        r = requests.get(url, headers=hdrs, timeout=30, params={"$filter": odata_filter, "$orderby": "dl_liefertag asc", "$top": "10"})
         if r.status_code != 200:
             return func.HttpResponse(
                 json.dumps({"success": False, "error": "Fehler beim Laden"}, ensure_ascii=False),
