@@ -639,6 +639,8 @@
 
     </div>
 
+    <div id="desk-fm-orders" style="display:none;margin-top:8px"></div>
+
   </div>
 
 </div>
@@ -1592,6 +1594,21 @@
         return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : iso;
       }
 
+      function _fmRenderOrderLink(o){
+        var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+        var st = FM_ST[o.status]||'?';
+        var col = FM_COL[o.status]||'#6b7280';
+        var bg = FM_BG[o.status]||'#f3f4f6';
+        return '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;text-decoration:none;color:#7f1d1d;font-size:13px;font-weight:600;margin-bottom:4px">'
+          +'<span style="font-size:11px;opacity:.7;min-width:60px">'+esc(o.bestellnummer||'')+'</span>'
+          +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Liefertag: '+fmtDate(o.liefertag)+'</span>'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
+          +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+          +'</a>';
+      }
+
+      function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
       fetch('/api/fleisch-order?mode=my&telefon='+encodeURIComponent(telefon))
         .then(function(r){ return r.json(); })
         .then(function(res){
@@ -1599,39 +1616,27 @@
           var orders = res.bestellungen||[];
           if(!orders.length) return;
 
+          // ── Mobile widget ──
           var el = document.getElementById('mob-fm-orders');
-          if(!el) return;
-
-          // Hide default subtitle
-          var sub = document.getElementById('mob-meat-sub-default');
-          if(sub) sub.style.display='none';
-
-          if(orders.length === 1){
-            var o = orders[0];
-            var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
-            var st = FM_ST[o.status]||'?';
-            var col = FM_COL[o.status]||'#6b7280';
-            var bg = FM_BG[o.status]||'#f3f4f6';
-            el.innerHTML = '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;text-decoration:none;color:#7f1d1d;font-size:13px;font-weight:600">'
-              +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtDate(o.liefertag)+'</span>'
-              +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
-              +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
-              +'</a>';
-          } else {
+          if(el){
+            var sub = document.getElementById('mob-meat-sub-default');
+            if(sub) sub.style.display='none';
             var html = '';
-            orders.forEach(function(o){
-              var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
-              var st = FM_ST[o.status]||'?';
-              var col = FM_COL[o.status]||'#6b7280';
-              var bg = FM_BG[o.status]||'#f3f4f6';
-              html += '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:6px 12px;text-decoration:none;color:#7f1d1d;font-size:12px;font-weight:600;margin-bottom:4px">'
-                +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtDate(o.liefertag)+'</span>'
-                +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
-                +'</a>';
-            });
+            orders.forEach(function(o){ html += _fmRenderOrderLink(o); });
             el.innerHTML = html;
+            el.style.display = 'block';
           }
-          el.style.display = 'block';
+
+          // ── Desktop widget (inside meat-promo banner) ──
+          var deskEl = document.getElementById('desk-fm-orders');
+          if(deskEl){
+            var dh = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;font-weight:700;color:#7f1d1d">'
+              +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z"/><polyline points="12 6 12 12 16 14"/></svg>'
+              +' Ihre aktive'+(orders.length>1?'n':'')+' Vorbestellung'+(orders.length>1?'en':'')+':</div>';
+            orders.forEach(function(o){ dh += _fmRenderOrderLink(o); });
+            deskEl.innerHTML = dh;
+            deskEl.style.display = 'block';
+          }
         }).catch(function(){});
     }catch(e){}
   })();
