@@ -1305,10 +1305,16 @@ var K = (function(){
     if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a;color:#166534">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
     if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
     if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    if(o.status===1 && o.quelle===0 || _hasUnseenComment(o)){
+    if(_hasUnseenComment(o)){
       html += '<div style="padding-top:6px;display:flex;gap:6px;flex-wrap:wrap">';
-      if(o.status===1 && o.quelle===0) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.showReplyDialog(\''+o.id+'\')">'+luc(o.kunde_kommentar?'reply':'send',14)+' '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button>';
-      if(_hasUnseenComment(o)) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
+      html += '</div>';
+    }
+    // Inline reply input (always visible for online confirmed orders)
+    if(o.status===1 && o.quelle===0){
+      html += '<div style="padding-top:8px;display:flex;gap:6px;align-items:center">';
+      html += '<input type="text" id="rpt-'+o.id+'" placeholder="'+(o.kunde_kommentar?'Antwort eingeben\u2026':'Nachricht an Kunde\u2026')+'" maxlength="300" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'){event.preventDefault();K.sendReply(\''+o.id+'\')}">';
+      html += '<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff;white-space:nowrap" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',14)+'</button>';
       html += '</div>';
     }
     html += '</div>';
@@ -1322,20 +1328,6 @@ var K = (function(){
       html += '<div style="display:flex;gap:8px;margin-top:8px">';
       html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;padding:10px" onclick="K.confirmOrder(\''+o.id+'\')">' +luc('check-circle',16)+' Jetzt bestätigen</button>';
       html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideConfirmDialog(\''+o.id+'\')">Abbrechen</button>';
-      html += '</div></div>';
-    }
-    // Reply dialog (only for online orders – Telefon/Personal have no push)
-    if(o.status===1 && o.quelle===0){
-      html += '<div class="k-confirm-dialog" id="rpl-'+o.id+'" style="display:none;padding:12px 16px;background:#eff6ff;border:2px solid #93c5fd;border-radius:0 0 12px 12px;margin-top:-6px">';
-      if(o.kunde_kommentar){
-        html += '<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+luc('message-circle',14)+' Kunde schreibt:</div>';
-        html += '<div style="font-size:13px;color:#374151;margin-bottom:8px;padding:8px;background:#fff;border-radius:8px">'+esc(o.kunde_kommentar)+'</div>';
-      }
-      html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('send',14)+' Nachricht an Kunde (Push-Nachricht)</div>';
-      html += '<input type="text" id="rpt-'+o.id+'" placeholder="Ihre Antwort…" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
-      html += '<div style="display:flex;gap:8px;margin-top:8px">';
-      html += '<button class="k-btn k-btn-sm" style="flex:1;padding:10px;background:#2563eb;color:#fff" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',16)+' Senden</button>';
-      html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideReplyDialog(\''+o.id+'\')">Abbrechen</button>';
       html += '</div></div>';
     }
     html += '</div>';
@@ -3333,17 +3325,15 @@ var K = (function(){
       } else if(o.status===2){
         html += '<button class="k-btn k-btn-confirm" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',3)"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Abgeholt</button>';
       }
-      // Reply & Read buttons
+      if(fmIsUnread) html += '<button class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
+      html += '</div>';
+      // Inline reply input (always visible for active orders)
       if(o.status < 3){
-        html += '<button class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="event.stopPropagation();K.showFmReply(\''+o.id+'\')"><i data-lucide="'+(o.kunde_kommentar?'reply':'send')+'" style="width:14px;height:14px"></i> '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button>';
-        if(fmIsUnread) html += '<button class="k-btn k-btn-outline" style="font-size:12px;padding:6px 12px;border-radius:8px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
+        html += '<div style="padding:4px 12px 12px;display:flex;gap:6px;align-items:center">';
+        html += '<input type="text" id="fm-rpt-'+o.id+'" placeholder="'+(o.kunde_kommentar?'Antwort eingeben\u2026':'Nachricht an Kunde\u2026')+'" maxlength="300" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'){event.preventDefault();K.sendFmReply(\''+o.id+'\')}">';
+        html += '<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff;white-space:nowrap;border-radius:8px" onclick="K.sendFmReply(\''+o.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
+        html += '</div>';
       }
-      html += '</div>';
-      // Inline reply form (hidden by default)
-      html += '<div id="fm-rpl-'+o.id+'" style="display:none;margin:0 8px 8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
-      html += '<input type="text" id="fm-rpt-'+o.id+'" placeholder="Antwort eingeben\u2026" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
-      html += '<button class="k-btn k-btn-confirm" style="font-size:13px;padding:6px 14px;border-radius:8px" onclick="K.sendFmReply(\''+o.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i> Senden</button>';
-      html += '</div>';
       html += '</div></div>';
     });
 
@@ -3421,13 +3411,14 @@ var K = (function(){
     if(isUnread) h += ' <span style="background:#3b82f6;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px">NEU</span>';
     h += '</div>';
     if(o.personal_antwort) h += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 8px 6px;padding:6px 10px;border-radius:4px;font-size:12px"><i data-lucide="reply" style="width:12px;height:12px"></i> <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    h += '<div style="display:flex;gap:8px;padding:4px 8px 8px;align-items:center">';
-    h += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff;font-size:13px" onclick="K.showFmReply(\''+o.id+'\')"><i data-lucide="reply" style="width:14px;height:14px"></i> Antworten</button>';
-    if(isUnread) h += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
-    h += '</div>';
-    h += '<div id="fm-rpl-'+o.id+'" style="display:none;margin:0 8px 8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
-    h += '<input type="text" id="fm-rpt-'+o.id+'" placeholder="Antwort eingeben\u2026" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
-    h += '<button class="k-btn k-btn-confirm" style="font-size:13px;padding:6px 14px;border-radius:8px" onclick="K.sendFmReply(\''+o.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i> Senden</button>';
+    if(isUnread){
+      h += '<div style="display:flex;gap:8px;padding:4px 8px 4px;align-items:center">';
+      h += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
+      h += '</div>';
+    }
+    h += '<div style="display:flex;gap:6px;padding:4px 8px 10px;align-items:center">';
+    h += '<input type="text" id="fm-rpt-'+o.id+'" placeholder="'+(o.kunde_kommentar?'Antwort eingeben\u2026':'Nachricht an Kunde\u2026')+'" maxlength="300" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'){event.preventDefault();K.sendFmReply(\''+o.id+'\')}">';
+    h += '<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff;white-space:nowrap;border-radius:8px" onclick="K.sendFmReply(\''+o.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
     h += '</div>';
     h += '</div></div>';
     return h;
