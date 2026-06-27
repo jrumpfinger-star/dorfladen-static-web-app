@@ -45,6 +45,23 @@ DEFAULT_BESTELLSCHLUSS_H = 10
 FLEISCH_WURST_KEYWORDS = ["fleisch", "wurst", "metzger", "aufschnitt", "schinken", "salami"]
 
 
+def _normalize_phone(phone):
+    """Normalize phone number to consistent format for storage and lookup.
+    Strips whitespace, dashes, slashes. Converts 0049/+49 prefix to 0.
+    Example: '+49 173 707 1811' -> '01737071811'
+    """
+    import re
+    phone = (phone or "").strip()
+    # Remove all non-digit characters except leading +
+    cleaned = re.sub(r'[^\d+]', '', phone)
+    # Convert +49 or 0049 to 0
+    if cleaned.startswith('+49'):
+        cleaned = '0' + cleaned[3:]
+    elif cleaned.startswith('0049'):
+        cleaned = '0' + cleaned[4:]
+    return cleaned or phone
+
+
 def get_token():
     tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
     client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
@@ -305,7 +322,7 @@ def _handle_post(req, token, base_url, hdrs):
         )
 
     name = (body.get("name") or "").strip()
-    telefon = (body.get("telefon") or "").strip()
+    telefon = _normalize_phone(body.get("telefon") or "")
     email = (body.get("email") or "").strip()
     positionen = body.get("positionen") or []
     anmerkung = (body.get("anmerkung") or "").strip()
@@ -458,7 +475,13 @@ def _handle_get(req, token, base_url, hdrs):
 
     # Single order lookup by Bestellnummer + Telefon
     if nr and telefon:
-        odata_filter = f"dl_bestellnummer eq '{nr}' and dl_telefon eq '{telefon}'"
+        tel_norm = _normalize_phone(telefon)
+        tel_orig = (telefon or "").strip()
+        # Build filter that matches both normalized and original phone formats
+        if tel_norm != tel_orig:
+            odata_filter = f"dl_bestellnummer eq '{nr}' and (dl_telefon eq '{tel_norm}' or dl_telefon eq '{tel_orig}')"
+        else:
+            odata_filter = f"dl_bestellnummer eq '{nr}' and dl_telefon eq '{tel_norm}'"
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter={odata_filter}&$top=1"
         r = requests.get(url, headers=hdrs, timeout=30)
         if r.status_code != 200:
@@ -518,7 +541,12 @@ def _handle_get(req, token, base_url, hdrs):
 
     # Customer mode: my active orders (for homepage widget)
     if mode == "my" and telefon:
-        odata_filter = f"dl_telefon eq '{telefon}' and dl_status lt {STATUS_ABGEHOLT}"
+        tel_norm = _normalize_phone(telefon)
+        tel_orig = (telefon or "").strip()
+        if tel_norm != tel_orig:
+            odata_filter = f"(dl_telefon eq '{tel_norm}' or dl_telefon eq '{tel_orig}') and dl_status lt {STATUS_ABGEHOLT}"
+        else:
+            odata_filter = f"dl_telefon eq '{tel_norm}' and dl_status lt {STATUS_ABGEHOLT}"
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter={odata_filter}&$orderby=dl_liefertag asc&$top=10"
         r = requests.get(url, headers=hdrs, timeout=30)
         if r.status_code != 200:
