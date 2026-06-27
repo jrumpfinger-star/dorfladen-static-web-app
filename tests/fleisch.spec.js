@@ -10,7 +10,7 @@
 
 const { test, expect } = require('@playwright/test');
 
-const BASE = process.env.TEST_URL || 'http://localhost:4280';
+const BASE = process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net';
 const FLEISCH_URL = `${BASE}/fleisch-bestellen`;
 const SHOP_URL = `${BASE}/shop`;
 const KIOSK_URL = `${BASE}/kiosk`;
@@ -170,8 +170,12 @@ test.describe('T-09 API Benachrichtigungen (AK-FLEISCH-09)', () => {
     if (resp.status() === 200) {
       const data = await resp.json();
       expect(data.success).toBe(true);
-      expect(data).toHaveProperty('liefertag');
-      expect(data).toHaveProperty('bestellschluss');
+      expect(data).toHaveProperty('termine');
+      expect(Array.isArray(data.termine)).toBe(true);
+      if (data.termine.length > 0) {
+        expect(data.termine[0]).toHaveProperty('liefertag');
+        expect(data.termine[0]).toHaveProperty('bestellschluss');
+      }
     }
   });
 });

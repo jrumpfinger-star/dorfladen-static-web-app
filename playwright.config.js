@@ -11,7 +11,7 @@ module.exports = {
   timeout: 60000,
   retries: 0,
   use: {
-    baseURL: process.env.TEST_URL || 'http://localhost:4280',
+    baseURL: process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net',
     headless: true,
     viewport: { width: 1280, height: 800 },
     ignoreHTTPSErrors: true,
