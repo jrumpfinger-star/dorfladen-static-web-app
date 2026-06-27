@@ -382,34 +382,34 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Kiosk: Antworten-Button öffnet Inline-Formular, sendet PATCH + Push
 - [x] Kiosk: Gelesen-Button markiert Kommentar als gelesen
 - [x] Kiosk: „Alle als gelesen" Massenaktion im Nachrichten-Bereich
-- [ ] Bestellstatus-Seite: Kunde kann Kommentar senden
+- [x] Bestellstatus-Seite: Kunde kann Kommentar senden
 
 ### AK-FLEISCH-12: Bestellstatus-Seite für Fleisch
-- [ ] Bestellnummer mit FM-Prefix wird automatisch als Fleischbestellung erkannt
-- [ ] Lookup per Bestellnummer + Telefon (nicht E-Mail)
-- [ ] Positionen-Tabelle mit Artikel, Menge, Preis angezeigt
-- [ ] Gesamtsumme + Ersparnis angezeigt
-- [ ] Liefertag angezeigt
-- [ ] Status-Timeline: Neu → Beim Metzger → Eingetroffen → Abgeholt
-- [ ] Personal-Antwort wird angezeigt
-- [ ] Kunde kann Kommentar senden (PATCH an fleisch-order API)
-- [ ] Auto-Login per localStorage (fm_nr + fm_telefon)
+- [x] Bestellnummer mit FM-Prefix wird automatisch als Fleischbestellung erkannt
+- [x] Lookup per Bestellnummer + Telefon (nicht E-Mail)
+- [x] Positionen-Tabelle mit Artikel, Menge, Preis angezeigt
+- [x] Gesamtsumme + Ersparnis angezeigt
+- [x] Liefertag angezeigt
+- [x] Status-Timeline: Neu → Beim Metzger → Eingetroffen → Abgeholt
+- [x] Personal-Antwort wird angezeigt
+- [x] Kunde kann Kommentar senden (PATCH an fleisch-order API)
+- [x] Auto-Login per localStorage (fm_nr + fm_telefon)
 
 ### AK-FLEISCH-13: Homepage-Widget „Meine Fleischbestellung“
-- [ ] Widget in Fleisch-Kachel auf Startseite (Mobile)
-- [ ] Lädt wenn fm_telefon im localStorage gesetzt
-- [ ] Zeigt nur aktive Bestellungen (Status 0–2)
-- [ ] Link führt zu /bestellstatus?nr=FM-xxx
-- [ ] Versteckt wenn keine aktiven Bestellungen
+- [x] Widget in Fleisch-Kachel auf Startseite (Mobile)
+- [x] Lädt wenn fm_telefon im localStorage gesetzt
+- [x] Zeigt nur aktive Bestellungen (Status 0–2)
+- [x] Link führt zu /bestellstatus?nr=FM-xxx
+- [x] Versteckt wenn keine aktiven Bestellungen
 
 ### AK-FLEISCH-14: Android Zurück-Button (fleisch-bestellen.html)
-- [ ] Cart-Drawer: pushState beim Öffnen, popstate schließt Drawer
-- [ ] Bestätigungs-Ansicht: pushState nach Bestellerfolg, popstate zurück zur Artikelliste
-- [ ] Kein doppeltes history.back() bei UI-Close + Back-Button
+- [x] Cart-Drawer: pushState beim Öffnen, popstate schließt Drawer
+- [x] Bestätigungs-Ansicht: pushState nach Bestellerfolg, popstate zurück zur Artikelliste
+- [x] Kein doppeltes history.back() bei UI-Close + Back-Button
 
 ### AK-FLEISCH-15: Bestätigung → Bestellstatus-Link
-- [ ] Nach Bestellerfolg: Link „Bestellstatus ansehen“ in der Bestätigung
-- [ ] Bestellnummer + Telefon in localStorage gespeichert (fm_nr, fm_telefon)
+- [x] Nach Bestellerfolg: Link „Bestellstatus ansehen“ in der Bestätigung
+- [x] Bestellnummer + Telefon in localStorage gespeichert (fm_nr, fm_telefon)
 
 ### AK-FLEISCH-10: CMS-Integration
 - [x] Rabatt, Mindestmenge, Liefertage, Bestellschluss konfigurierbar
