@@ -331,7 +331,7 @@ Neu → Storniert
 
 | # | Task | Aufwand |
 |---|---|---|
-| 1 | Dataverse Entity `dl_fleischbestellungs` anlegen (manuell) | 20 min |
+| 1 | ~~Dataverse Entity `dl_fleischbestellungs` anlegen~~ ✅ (via Script) | 20 min |
 | 2 | API `api/fleisch-order` (POST/GET/PATCH + Liefertag-Logik) | 2h |
 | 3 | `fleisch-bestellen.html` (Katalog, Warenkorb, Favoriten, Nachbestellen) | 5h |
 | 4 | Kiosk-Tab „Metzger" (Bestellübersicht, Sammelbestellung, Druck) | 3h |
