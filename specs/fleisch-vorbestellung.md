@@ -164,12 +164,18 @@ Kunden können Fleisch- und Wurstwaren (gewogene Artikel) ab 1 kg vorbestellen u
 
 #### GET `/api/fleisch-order` – Bestellungen abrufen
 - `?mode=kiosk` → alle offenen Bestellungen (für Kiosk-Tab)
+- `?mode=messages` → alle Bestellungen mit Kundenkommentar (für Kiosk-Nachrichten)
+- `?mode=unread_messages` → Anzahl ungelesener Kundenkommentare (für Badge)
 - `?nr=FM-xxx&telefon=xxx` → einzelne Bestellung (Statusabfrage)
 - `?liefertag=2026-07-03` → alle Bestellungen für einen Liefertag (Sammelbestellung)
 
-#### PATCH `/api/fleisch-order` – Status ändern
+#### PATCH `/api/fleisch-order` – Status/Kommentar ändern
 - Body: `{"id": "...", "status": 1}` (0=Neu, 1=Beim Metzger, 2=Eingetroffen, 3=Abgeholt, 4=Storniert)
-- Bei Status 2 (Eingetroffen): Push/E-Mail an Kunde „Ihre Fleischbestellung ist abholbereit"
+- Body: `{"id": "...", "kunde_kommentar": "..."}` → setzt Kommentar + `kommentar_gelesen=false`
+- Body: `{"id": "...", "personal_antwort": "...", "kommentar_gelesen": true}` → Antwort + Push an Kunde
+- Body: `{"id": "...", "kommentar_gelesen": true}` → Nur als gelesen markieren
+- Bei Status 2 (Eingetroffen): Push an Kunde „Ihre Fleischbestellung ist abholbereit"
+- Bei Personal-Antwort: Push an Kunde „Neue Nachricht zu Ihrer Bestellung"
 
 ---
 
@@ -192,6 +198,7 @@ Kunden können Fleisch- und Wurstwaren (gewogene Artikel) ab 1 kg vorbestellen u
 | `dl_anmerkung` | Multiline | Kundenwünsche |
 | `dl_kunde_kommentar` | Multiline | Nachricht Kunde→Laden |
 | `dl_personal_antwort` | Multiline | Nachricht Laden→Kunde |
+| `dl_kommentar_gelesen` | Boolean | Ob der Kundenkommentar vom Personal gelesen wurde |
 
 ---
 
@@ -205,6 +212,7 @@ Kunden können Fleisch- und Wurstwaren (gewogene Artikel) ab 1 kg vorbestellen u
 - **Zu erledigen** (Neu + Beim Metzger + Eingetroffen)
 - **Heute abholen** (Liefertag = heute, Status Eingetroffen)
 - **Sammelbestellung** (Alle Positionen für nächsten Liefertag aggregiert)
+- **Nachrichten** (Kundenkommentare mit Antwort-Möglichkeit, ungelesen/gelesen getrennt)
 - **Historie** (Abgeholt + Storniert)
 
 ### Bestellkarten
@@ -212,7 +220,10 @@ Kunden können Fleisch- und Wurstwaren (gewogene Artikel) ab 1 kg vorbestellen u
 - Kundenname, Telefon, Bestellnummer
 - Positionen mit Menge und Preis
 - Status-Badge mit Farbe
-- Aktions-Buttons: Status ändern, Kunde anrufen
+- Aktions-Buttons: Status ändern, Nachricht senden/Antworten, Gelesen markieren
+- Kundenkommentar wird inline angezeigt (blau=ungelesen, grau=gelesen)
+- Personal-Antwort wird grün angezeigt
+- Inline-Antwort-Formular per Button
 
 ### Sammelbestellung (Metzger-Zettel)
 - **Pro Liefertag**: alle Positionen aller Kunden aggregiert
@@ -263,6 +274,7 @@ Neu → Storniert
 | Status: Eingetroffen | Push + E-Mail | Kunde |
 | Status: Storniert | Push + E-Mail | Kunde |
 | Neue Bestellung eingegangen | Kiosk-Aktualisierung | Verkäuferin |
+| Personal antwortet auf Kommentar | Push | Kunde |
 
 ---
 
@@ -317,6 +329,19 @@ Neu → Storniert
 - [ ] E-Mail bei Bestellaufgabe (optional)
 - [x] Push bei Status „Eingetroffen"
 - [x] Push bei Stornierung
+- [x] Push bei Personal-Antwort auf Kundenkommentar
+
+### AK-FLEISCH-11: Kommentar-System (Kunde ↔ Personal)
+- [x] PATCH-API: `kunde_kommentar`, `personal_antwort`, `kommentar_gelesen` aktualisierbar
+- [x] GET-API: `mode=messages` liefert alle Bestellungen mit Kommentar
+- [x] GET-API: `mode=unread_messages` liefert Anzahl ungelesener Kommentare
+- [x] Kiosk: Nachrichten-Filter im Metzger-Tab zeigt alle Kommentare
+- [x] Kiosk: Badge zeigt ungelesene Nachrichten + offene Bestellungen
+- [x] Kiosk: Bestellkarten zeigen Kundenkommentar + Antwort inline
+- [x] Kiosk: Antworten-Button öffnet Inline-Formular, sendet PATCH + Push
+- [x] Kiosk: Gelesen-Button markiert Kommentar als gelesen
+- [x] Kiosk: „Alle als gelesen" Massenaktion im Nachrichten-Bereich
+- [ ] Bestellstatus-Seite: Kunde kann Kommentar senden
 
 ### AK-FLEISCH-10: CMS-Integration
 - [x] Rabatt, Mindestmenge, Liefertage, Bestellschluss konfigurierbar
