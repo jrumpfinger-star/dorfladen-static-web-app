@@ -426,11 +426,11 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Link führt zu `/fleisch-bestellen`
 
 ### AK-FLEISCH-16: Produktbilder auf Bestellseite
-- [ ] `shop-images.js` in `fleisch-bestellen.html` einbinden
-- [ ] Nach Laden der Artikel `ShopImages.loadBatch()` aufrufen
-- [ ] Grid-Ansicht: Bild anstelle des Kategorie-Icons anzeigen (Fallback: bisheriges Beef-Icon)
-- [ ] Listen-Ansicht: kleines Thumbnail (38×38px) anstelle des Icons (Fallback: bisheriges Beef-Icon)
-- [ ] Bilder kommen über `/api/werbebilder?sharepoint=1` (identisch zu Shop)
+- [x] `shop-images.js` in `fleisch-bestellen.html` einbinden
+- [x] Nach Laden der Artikel `ShopImages.loadBatch()` aufrufen
+- [x] Grid-Ansicht: Bild anstelle des Kategorie-Icons anzeigen (Fallback: bisheriges Beef-Icon)
+- [x] Listen-Ansicht: kleines Thumbnail (38×38px) anstelle des Icons (Fallback: bisheriges Beef-Icon)
+- [x] Bilder kommen über `/api/werbebilder?sharepoint=1` (identisch zu Shop)
 
 ### AK-FLEISCH-17: CMS-Metzger Lesbarkeit & Bestelldetails
 - [ ] Header-Farbe: weiße Schrift auf dunkelrotem Hintergrund (`#7f1d1d`) statt rote Schrift auf grünem Hintergrund

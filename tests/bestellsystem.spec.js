@@ -813,7 +813,8 @@ test.describe('Fleisch-Bestellseite – Produktbilder', () => {
 
   test('T-17-02 (AK-FLEISCH-16): Artikelkarten haben data-img-artnr', async ({ page }) => {
     await page.goto(`${BASE}/fleisch-bestellen`);
-    await page.waitForTimeout(4000);
+    // Wait for articles to render (config + articles API calls)
+    await page.waitForSelector('[data-img-artnr]', { timeout: 15000 });
     const count = await page.evaluate(() => document.querySelectorAll('[data-img-artnr]').length);
     expect(count).toBeGreaterThan(0);
   });
