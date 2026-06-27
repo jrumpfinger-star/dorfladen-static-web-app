@@ -1311,6 +1311,7 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-27 | T-13-01, T-13-02 | ✅ passed |
 | 2026-06-27 | T-14-01, T-14-02 | ✅ passed |
 | 2026-06-27 | T-15-01 | ✅ passed |
+| 2026-06-27 | T-16-01, T-16-02, T-16-03 | ✅ passed |
 
 ---
 

@@ -419,11 +419,11 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Werte werden live aus CMS-Config geladen (nicht hard-coded)
 
 ### AK-FLEISCH-20: Fleisch-Banner im Shop immer sichtbar
-- [ ] Banner „15 % Rabatt auf Fleisch & Wurst" nicht nur in der Kategorien-Übersicht, sondern **in jeder Ansicht** des Shops sichtbar (auch bei aktiver Warengruppe wie Backwaren, Molkereiprodukte etc.)
-- [ ] Platzierung: oberhalb der Artikelliste, unterhalb der Breadcrumb/Kategorie-Leiste
-- [ ] Kompakte Darstellung wenn nicht in Fleisch-Kategorie (schmaler, einzeilig)
-- [ ] In der Fleisch-Kategorie: volle Breite wie aktuell
-- [ ] Link führt zu `/fleisch-bestellen`
+- [x] Banner „15 % Rabatt auf Fleisch & Wurst" nicht nur in der Kategorien-Übersicht, sondern **in jeder Ansicht** des Shops sichtbar (auch bei aktiver Warengruppe wie Backwaren, Molkereiprodukte etc.)
+- [x] Platzierung: oberhalb der Artikelliste, unterhalb der Breadcrumb/Kategorie-Leiste
+- [x] Kompakte Darstellung wenn nicht in Fleisch-Kategorie (schmaler, einzeilig)
+- [x] In der Fleisch-Kategorie: volle Breite wie aktuell
+- [x] Link führt zu `/fleisch-bestellen`
 
 ### AK-FLEISCH-16: Produktbilder auf Bestellseite
 - [ ] `shop-images.js` in `fleisch-bestellen.html` einbinden
