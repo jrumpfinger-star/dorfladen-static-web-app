@@ -1313,6 +1313,9 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-27 | T-15-01 | ✅ passed |
 | 2026-06-27 | T-16-01, T-16-02, T-16-03 | ✅ passed |
 | 2026-06-27 | T-17-01, T-17-02 | ✅ passed |
+| 2026-06-27 | T-18-01, T-18-02, T-18-03 | ✅ passed |
+| 2026-06-27 | T-19-01 | ✅ passed |
+| 2026-06-27 | T-20-01, T-20-02, T-20-03 | ✅ passed |
 
 ---
 
@@ -1383,3 +1386,25 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung:** `a[href="/fleisch-bestellen"]` im `#shop-content` mit großem Padding sichtbar
 - **Erwartung:** Großes Banner mit Icon, Text und CTA-Button
 > Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-20
+
+---
+
+## T20 – Kiosk Touch-Modal für Nachrichten (AK-FLEISCH-19)
+
+### T-20-01 openFmReplyModal Funktion existiert (AK-FLEISCH-19)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** `typeof K.openFmReplyModal === 'function'`
+- **Erwartung:** Funktion existiert in der K-API
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-19
+
+### T-20-02 sendFmModalReply Funktion existiert (AK-FLEISCH-19)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** `typeof K.sendFmModalReply === 'function'`
+- **Erwartung:** Funktion existiert in der K-API
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-19
+
+### T-20-03 Kein inline sendFmReply mehr (AK-FLEISCH-19)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** `typeof K.sendFmReply === 'function'` ist `false`
+- **Erwartung:** Alte inline-Funktion wurde entfernt
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-19

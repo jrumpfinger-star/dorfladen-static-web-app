@@ -433,20 +433,20 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Bilder kommen über `/api/werbebilder?sharepoint=1` (identisch zu Shop)
 
 ### AK-FLEISCH-17: CMS-Metzger Lesbarkeit & Bestelldetails
-- [ ] Header-Farbe: weiße Schrift auf dunkelrotem Hintergrund (`#7f1d1d`) statt rote Schrift auf grünem Hintergrund
-- [ ] Bestellkarten aufklappbar: Klick auf Zeile zeigt Details (Positionen, Preise, Anmerkung)
-- [ ] Status-Buttons in Bestelldetails: „Beim Metzger bestellt", „Eingetroffen", „Abgeholt", „Stornieren"
-- [ ] Nachricht-Button in Bestelldetails: öffnet Modal zum Antworten (PATCH personal_antwort)
-- [ ] Kundenkommentar + Personal-Antwort in Details sichtbar
-- [ ] „Gelesen"-Button bei ungelesenen Kundenkommentaren
-- [ ] „Vorbestellung aktiviert"-Checkbox prominent als Toggle oben in der Konfiguration
+- [x] Header-Farbe: weiße Schrift auf dunkelrotem Hintergrund (`#7f1d1d`) statt rote Schrift auf grünem Hintergrund
+- [x] Bestellkarten aufklappbar: Klick auf Zeile zeigt Details (Positionen, Preise, Anmerkung)
+- [x] Status-Buttons in Bestelldetails: „Beim Metzger bestellt", „Eingetroffen", „Abgeholt", „Stornieren"
+- [x] Nachricht-Button in Bestelldetails: öffnet Modal zum Antworten (PATCH personal_antwort)
+- [x] Kundenkommentar + Personal-Antwort in Details sichtbar
+- [x] „Gelesen"-Button bei ungelesenen Kundenkommentaren
+- [x] „Vorbestellung aktiviert"-Checkbox prominent als Toggle oben in der Konfiguration
 
 ### AK-FLEISCH-18: CMS Sammelbestellung aufsummiert
-- [ ] Sammelbestellung-Button im Bestellungsbereich
-- [ ] Gruppierung nach Liefertag (aufklappbar)
-- [ ] Gleiche Artikel aufsummieren (Gesamtmenge kg + Anzahl Bestellungen)
-- [ ] Keine einzelnen Kundenbestellungen unter der Summentabelle
-- [ ] Drucken-Button pro Liefertag
+- [x] Sammelbestellung-Button im Bestellungsbereich
+- [x] Gruppierung nach Liefertag (aufklappbar)
+- [x] Gleiche Artikel aufsummieren (Gesamtmenge kg + Anzahl Bestellungen)
+- [x] Keine einzelnen Kundenbestellungen unter der Summentabelle
+- [x] Drucken-Button pro Liefertag
 
 ### AK-FLEISCH-19: Kiosk Touch-Modal für Nachrichten
 - [x] Inline-Nachrichtenfeld in Metzger-Bestellkarten entfernt
@@ -454,7 +454,7 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Button öffnet großes Modal-Overlay mit Textarea (min-height 120px, font-size 16px)
 - [x] Modal: Abbrechen + Senden Buttons (touch-freundlich, min 44px Höhe)
 - [x] PATCH an `/api/fleisch-order` mit `personal_antwort` + `kommentar_gelesen: true`
-- [ ] Playwright-Test für Modal-Funktion
+- [x] Playwright-Test für Modal-Funktion
 
 ---
 

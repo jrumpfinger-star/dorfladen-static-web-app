@@ -1425,3 +1425,32 @@ test.describe('Social Feature-Abgleich (RD-11, RD-12, RD-13)', () => {
     await expect(verlaufPanel).toHaveCount(0);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  T-20: Kiosk Touch-Modal für Nachrichten (AK-FLEISCH-19)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Metzger Touch-Modal (AK-FLEISCH-19)', () => {
+
+  test('T-20-01 openFmReplyModal Funktion existiert (AK-FLEISCH-19)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.openFmReplyModal === 'function');
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-20-02 sendFmModalReply Funktion existiert (AK-FLEISCH-19)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.sendFmModalReply === 'function');
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-20-03 Kein inline sendFmReply mehr (AK-FLEISCH-19)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // The old inline sendFmReply should NOT be in K's public API
+    const hasOldFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.sendFmReply === 'function');
+    expect(hasOldFn).toBe(false);
+  });
+});
