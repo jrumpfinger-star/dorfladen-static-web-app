@@ -3229,7 +3229,7 @@ var K = (function(){
     });
     document.getElementById('metzger-sammel').style.display = f==='sammel' ? 'block' : 'none';
     document.getElementById('metzger-nachrichten').style.display = f==='nachrichten' ? 'block' : 'none';
-    document.getElementById('metzger-orders').style.display = (f==='nachrichten') ? 'none' : '';
+    document.getElementById('metzger-orders').style.display = (f==='nachrichten' || f==='sammel') ? 'none' : '';
     if(f==='sammel'){
       loadMetzgerSammel();
     } else if(f==='nachrichten'){

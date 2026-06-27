@@ -513,17 +513,19 @@ def _handle_get(req, token, base_url, hdrs):
         items = r.json().get("value", [])
         bestellungen = [_serialize(it) for it in items]
 
-        # Aggregate positions across all orders
+        # Aggregate positions across all orders – group by bezeichnung (name)
+        # to correctly sum identical articles even with different artikelnummer
         aggregiert = {}
         for best in bestellungen:
             for pos in best.get("positionen", []):
-                key = pos.get("artikelnummer") or pos.get("bezeichnung", "")
+                key = (pos.get("bezeichnung") or pos.get("artikelnummer") or "?").strip()
                 if key not in aggregiert:
                     aggregiert[key] = {
                         "artikelnummer": pos.get("artikelnummer", ""),
-                        "bezeichnung": pos.get("bezeichnung", ""),
+                        "bezeichnung": pos.get("bezeichnung", key),
                         "gesamt_kg": 0,
                         "anzahl_bestellungen": 0,
+                        "einheit": "kg",
                     }
                 aggregiert[key]["gesamt_kg"] = round(aggregiert[key]["gesamt_kg"] + pos.get("menge_kg", 0), 2)
                 aggregiert[key]["anzahl_bestellungen"] += 1
