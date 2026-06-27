@@ -18,7 +18,7 @@
 
 const { test, expect } = require('@playwright/test');
 
-const BASE = process.env.TEST_URL || 'http://localhost:4280';
+const BASE = process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net';
 
 // ════════════════════════════════════════════════════
 //  T-SHOP: Online-Shop (/shop)
