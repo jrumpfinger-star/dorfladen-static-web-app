@@ -1234,3 +1234,77 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Aktion:** Kiosk laden, Metzger-Tab öffnen, Bestellkarte aufklappen
 - **Prüfung:** Button mit Text "Antworten" oder "Nachricht senden" in `.k-oc-actions`
 - **Erwartung:** Button vorhanden, klickbar, öffnet Inline-Antwortformular
+
+---
+
+## T12 – Fleisch Bestellstatus (AK-FLEISCH-12)
+
+### T-12-01 Bestellstatus: FM-Bestellung Lookup per Nr + Telefon (AK-FLEISCH-12)
+- **Aktion:** `/bestellstatus?nr=FM-...` aufrufen, Telefon eingeben
+- **Prüfung:** Bestelldetails werden angezeigt (Status, Positionen, Gesamtsumme)
+- **Erwartung:** Bestellung wird korrekt geladen und angezeigt
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-12
+
+### T-12-02 Bestellstatus: Auth-Feld wechselt bei FM-Prefix (AK-FLEISCH-12)
+- **Aktion:** `/bestellstatus` aufrufen, "FM-" in Bestellnummer-Feld eingeben
+- **Prüfung:** E-Mail-Feld wird ausgeblendet, Telefon-Feld erscheint
+- **Erwartung:** `#bs-auth-email-wrap` display:none, `#bs-auth-telefon-wrap` sichtbar
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-12
+
+### T-12-03 Bestellstatus: Kommentar senden für FM-Bestellung (AK-FLEISCH-12)
+- **Aktion:** FM-Bestellung laden, Kommentar eingeben und senden
+- **Prüfung:** PATCH an `/api/fleisch-order` mit `{id, kunde_kommentar}`
+- **Erwartung:** `success: true`, Kommentar erscheint in Nachrichten
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-12
+
+### T-12-04 Bestellstatus: Auto-Login mit localStorage (AK-FLEISCH-12)
+- **Aktion:** `fm_nr` und `fm_telefon` in localStorage setzen, `/bestellstatus?nr=FM-...` aufrufen
+- **Prüfung:** Telefon wird automatisch aus localStorage befüllt
+- **Erwartung:** Bestellung wird ohne manuelle Eingabe geladen
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-12
+
+---
+
+## T13 – Fleisch Startseiten-Widget (AK-FLEISCH-13)
+
+### T-13-01 Homepage: Widget lädt aktive Fleischbestellungen (AK-FLEISCH-13)
+- **Aktion:** Startseite `/` mit `fm_telefon` in localStorage laden
+- **Prüfung:** `#mob-fm-orders` wird sichtbar, enthält Links zu Bestellstatus
+- **Erwartung:** Widget zeigt Liefertag + Status für offene Bestellungen
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-13
+
+### T-13-02 Homepage: Widget API mode=my (AK-FLEISCH-13)
+- **Aktion:** GET `/api/fleisch-order?mode=my&telefon=...`
+- **Prüfung:** Response hat `success: true`, `bestellungen` Array
+- **Erwartung:** Nur aktive (Status < Abgeholt) Bestellungen zurückgegeben
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-13
+
+---
+
+## T14 – Android Zurück-Button Fleisch (AK-FLEISCH-14)
+
+### T-14-01 Fleisch: Cart-Drawer pushState (AK-FLEISCH-14)
+- **Aktion:** `/fleisch-bestellen` laden, Artikel in Warenkorb, FAB klicken
+- **Prüfung:** `history.state` nach Cart-Open hat `{overlay:'cart'}`
+- **Erwartung:** pushState wird gesetzt, history.back() schließt Cart
+> Spec: specs/android-back-button.md, specs/fleisch-vorbestellung.md → AK-FLEISCH-14
+
+### T-14-02 Fleisch: Bestätigung pushState (AK-FLEISCH-14)
+- **Aktion:** Bestellung abschicken → Bestätigungsansicht
+- **Prüfung:** `history.state` hat `{overlay:'confirm'}`
+- **Erwartung:** pushState wird gesetzt, history.back() schließt Bestätigung
+> Spec: specs/android-back-button.md, specs/fleisch-vorbestellung.md → AK-FLEISCH-14
+
+---
+
+## T15 – Bestätigung → Bestellstatus-Link (AK-FLEISCH-15)
+
+### T-15-01 Fleisch: Bestätigungsansicht enthält Bestellstatus-Link (AK-FLEISCH-15)
+- **Aktion:** Fleisch-Bestellung abschicken
+- **Prüfung:** `#fm-confirm-status-link` wird sichtbar, href enthält Bestellnummer
+- **Erwartung:** Link führt zu `/bestellstatus?nr=FM-...`
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-15
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| | | |

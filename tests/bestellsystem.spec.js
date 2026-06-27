@@ -683,6 +683,104 @@ test.describe('Homepage – Meine Bestellungen Widget', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  T12: Fleisch Bestellstatus
+// ════════════════════════════════════════════════════
+
+test.describe('Fleisch Bestellstatus', () => {
+
+  test('T-12-02 (AK-FLEISCH-12): Auth-Feld wechselt bei FM-Prefix', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    // Default: email visible, telefon hidden
+    await expect(page.locator('#bs-auth-email-wrap')).toBeVisible();
+    await expect(page.locator('#bs-auth-telefon-wrap')).toBeHidden();
+    // Type FM- prefix → telefon visible, email hidden
+    await page.fill('#bs-nr', 'FM-260627-TEST');
+    await expect(page.locator('#bs-auth-email-wrap')).toBeHidden();
+    await expect(page.locator('#bs-auth-telefon-wrap')).toBeVisible();
+    // Clear → back to email
+    await page.fill('#bs-nr', '');
+    await expect(page.locator('#bs-auth-email-wrap')).toBeVisible();
+    await expect(page.locator('#bs-auth-telefon-wrap')).toBeHidden();
+  });
+
+  test('T-12-01 (AK-FLEISCH-12): Bestellstatus-Seite lädt ohne JS-Fehler', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(2000);
+    const criticalErrors = errors.filter(e =>
+      !e.includes('fetch') && !e.includes('NetworkError') && !e.includes('Failed to fetch')
+    );
+    expect(criticalErrors).toHaveLength(0);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  T13: Fleisch Startseiten-Widget
+// ════════════════════════════════════════════════════
+
+test.describe('Fleisch Startseiten-Widget', () => {
+
+  test('T-13-02 (AK-FLEISCH-13): API mode=my liefert Bestellungen-Array', async ({ request }) => {
+    // Use a dummy phone that likely has no orders – just verify API shape
+    const res = await request.get(`${BASE}/api/fleisch-order?mode=my&telefon=0000000000`);
+    expect(res.status()).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(Array.isArray(data.bestellungen)).toBe(true);
+  });
+
+  test('T-13-01 (AK-FLEISCH-13): Widget-Container existiert auf Startseite', async ({ page }) => {
+    await page.goto(`${BASE}/`);
+    await expect(page.locator('#mob-fm-orders')).toHaveCount(1);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  T14: Android Zurück-Button Fleisch
+// ════════════════════════════════════════════════════
+
+test.describe('Android Zurück-Button Fleisch', () => {
+
+  test('T-14-01 (AK-FLEISCH-14): Cart-Drawer pushState vorhanden', async ({ page }) => {
+    await page.goto(`${BASE}/fleisch-bestellen`);
+    await page.waitForTimeout(3000);
+    // Check pushState in fmOpenCart source
+    const hasPushState = await page.evaluate(() => {
+      return typeof window.fmOpenCart === 'function' &&
+             window.fmOpenCart.toString().includes('pushState');
+    });
+    expect(hasPushState).toBe(true);
+  });
+
+  test('T-14-02 (AK-FLEISCH-14): popstate listener registered', async ({ page }) => {
+    await page.goto(`${BASE}/fleisch-bestellen`);
+    await page.waitForTimeout(3000);
+    // Verify the page has a popstate handler that checks fm-cart-overlay
+    const html = await page.content();
+    expect(html).toContain('popstate');
+    expect(html).toContain('fm-cart-overlay');
+    expect(html).toContain('fm-confirm');
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  T15: Bestätigung → Bestellstatus-Link
+// ════════════════════════════════════════════════════
+
+test.describe('Bestätigung → Bestellstatus-Link', () => {
+
+  test('T-15-01 (AK-FLEISCH-15): Bestellstatus-Link Element existiert', async ({ page }) => {
+    await page.goto(`${BASE}/fleisch-bestellen`);
+    await page.waitForTimeout(3000);
+    // Link should exist but be hidden initially
+    const link = page.locator('#fm-confirm-status-link');
+    await expect(link).toHaveCount(1);
+    await expect(link).toBeHidden();
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  T-PACK: Pack-Seite (/pack)
 // ════════════════════════════════════════════════════
 
