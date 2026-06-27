@@ -1307,4 +1307,7 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 
 | Datum | Test | Ergebnis |
 |---|---|---|
-| | | |
+| 2026-06-27 | T-12-01, T-12-02 | ✅ passed |
+| 2026-06-27 | T-13-01, T-13-02 | ✅ passed |
+| 2026-06-27 | T-14-01, T-14-02 | ✅ passed |
+| 2026-06-27 | T-15-01 | ✅ passed |
