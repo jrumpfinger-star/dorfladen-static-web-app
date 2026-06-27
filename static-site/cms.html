@@ -2731,8 +2731,11 @@ document.head.appendChild(msalScript);
   <!-- Metzger (Fleisch-Vorbestellung) -->
   <div id="cms-panel-metzger" style="display:none">
     <div class="cms-card">
-      <div class="cms-card-header" style="color:#991b1b">Fleisch-Vorbestellung &#8211; Konfiguration</div>
+      <div class="cms-card-header" style="background:#7f1d1d!important">Konfiguration</div>
       <div class="cms-card-body">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:8px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px">
+          <label style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer;color:#991b1b"><input type="checkbox" id="fm-cfg-aktiv" checked> Vorbestellung aktiviert</label>
+        </div>
         <div class="cms-flex" style="gap:16px;flex-wrap:wrap;margin-bottom:16px">
           <div style="flex:1;min-width:200px">
             <label class="cms-label">Rabatt (%)</label>
@@ -2759,10 +2762,6 @@ document.head.appendChild(msalScript);
               <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="fm-cfg-lt-sa"> Sa</label>
             </div>
           </div>
-          <div style="flex:1;min-width:200px">
-            <label class="cms-label">Vorbestellung aktiv</label>
-            <label style="font-size:13px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="fm-cfg-aktiv" checked> Vorbestellung aktiviert</label>
-          </div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="cms-btn cms-btn-primary" onclick="cmsSaveFleischConfig()" id="fm-cfg-save-btn">Konfiguration speichern</button>
@@ -2771,12 +2770,13 @@ document.head.appendChild(msalScript);
       </div>
     </div>
     <div class="cms-card" style="margin-top:16px">
-      <div class="cms-card-header" style="color:#991b1b">Fleisch-Bestellungen</div>
+      <div class="cms-card-header" style="background:#7f1d1d!important">Bestellungen</div>
       <div class="cms-card-body">
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-          <button class="cms-btn" onclick="cmsLoadFleischOrders('offen')" id="fm-orders-btn-offen" style="font-size:12px">Offene</button>
+          <button class="cms-btn" onclick="cmsLoadFleischOrders('offen')" id="fm-orders-btn-offen" style="font-size:12px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca">Offene</button>
           <button class="cms-btn" onclick="cmsLoadFleischOrders('alle')" id="fm-orders-btn-alle" style="font-size:12px">Alle</button>
           <button class="cms-btn" onclick="cmsLoadFleischOrders('heute')" id="fm-orders-btn-heute" style="font-size:12px">Heute Liefertag</button>
+          <button class="cms-btn" onclick="cmsLoadFleischOrders('sammel')" id="fm-orders-btn-sammel" style="font-size:12px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0">Sammelbestellung</button>
         </div>
         <div id="fm-orders-list" style="font-size:13px;color:#6b7280">Klicken Sie auf einen Filter um Bestellungen zu laden.</div>
       </div>
