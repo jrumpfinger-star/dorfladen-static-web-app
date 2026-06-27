@@ -1315,6 +1315,22 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 
 ---
 
+## T17 – Produktbilder auf Fleisch-Bestellseite (AK-FLEISCH-16)
+
+### T-17-01 shop-images.js ist eingebunden (AK-FLEISCH-16)
+- **Aktion:** `/fleisch-bestellen` laden
+- **Prüfung:** `typeof ShopImages !== 'undefined'` im Browser evaluieren
+- **Erwartung:** ShopImages Objekt ist verfügbar
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-16
+
+### T-17-02 Artikelkarten haben data-img-artnr Attribut (AK-FLEISCH-16)
+- **Aktion:** `/fleisch-bestellen` laden, Artikel anzeigen lassen
+- **Prüfung:** `document.querySelectorAll('[data-img-artnr]').length > 0`
+- **Erwartung:** Mindestens 1 Element mit `data-img-artnr` Attribut vorhanden
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-16
+
+---
+
 ## T16 – Fleisch-Banner im Shop überall sichtbar (AK-FLEISCH-20)
 
 ### T-16-01 Shop-Übersicht zeigt Fleisch-Banner (AK-FLEISCH-20)

@@ -799,6 +799,27 @@ test.describe('Pack-Seite – Grundlagen', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  T-17: Produktbilder auf Fleisch-Bestellseite (AK-FLEISCH-16)
+// ════════════════════════════════════════════════════
+
+test.describe('Fleisch-Bestellseite – Produktbilder', () => {
+
+  test('T-17-01 (AK-FLEISCH-16): ShopImages ist eingebunden', async ({ page }) => {
+    await page.goto(`${BASE}/fleisch-bestellen`);
+    await page.waitForTimeout(3000);
+    const hasShopImages = await page.evaluate(() => typeof ShopImages !== 'undefined');
+    expect(hasShopImages).toBe(true);
+  });
+
+  test('T-17-02 (AK-FLEISCH-16): Artikelkarten haben data-img-artnr', async ({ page }) => {
+    await page.goto(`${BASE}/fleisch-bestellen`);
+    await page.waitForTimeout(4000);
+    const count = await page.evaluate(() => document.querySelectorAll('[data-img-artnr]').length);
+    expect(count).toBeGreaterThan(0);
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  T-16: Fleisch-Banner im Shop überall sichtbar (AK-FLEISCH-20)
 // ════════════════════════════════════════════════════
 

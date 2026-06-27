@@ -336,6 +336,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 <div class="fm-toast" id="fm-toast"></div>
 
 <script src="/js/env-banner.js"></script>
+<script src="/shop-images.js"></script>
 <script>
 (function(){
   'use strict';
@@ -497,6 +498,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
         updateViewToggle();
         renderArticles();
         if(window.lucide) lucide.createIcons();
+        loadArticleImages();
       })
       .catch(function(){ showError(); });
   }
@@ -574,6 +576,29 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     return items;
   }
 
+  // ── Load product images via ShopImages ──
+  var _imgCache={};
+  function loadArticleImages(){
+    if(typeof ShopImages==='undefined') return;
+    var infos=allArticles.map(function(a){return{artikelnummer:a.artikelnummer,strichcode:a.strichcode};});
+    ShopImages.loadBatch(infos,{
+      apiBase:API,
+      cacheKey:function(info){return info.artikelnummer;},
+      onImage:function(key,src){
+        _imgCache[key]=src;
+        document.querySelectorAll('[data-img-artnr="'+key+'"]').forEach(function(el){
+          if(el.classList.contains('fm-card-noimg')){
+            el.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover" alt="">';
+            el.style.background='#fff';
+          } else {
+            el.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px" alt="">';
+            el.style.background='none';
+          }
+        });
+      }
+    });
+  }
+
   // ── Render dispatcher ──
   function renderArticles(){
     var items=getFilteredItems();
@@ -597,7 +622,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       var rabattPreis=a.vk_base*(1-pct/100);
       html+='<div class="fm-list-item">';
       html+='<div class="fm-list-row1">';
-      html+='<div class="fm-list-icon"><i data-lucide="beef" style="width:18px;height:18px"></i></div>';
+      html+='<div class="fm-list-icon" data-img-artnr="'+esc(a.artikelnummer)+'"><i data-lucide="beef" style="width:18px;height:18px"></i></div>';
       html+='<div class="fm-list-info">';
       html+='<div class="fm-list-name">'+esc(a.bezeichnung)+'</div>';
       html+='<div class="fm-list-prices">';
@@ -630,7 +655,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       var isFav = favorites.indexOf(a.artikelnummer)!==-1;
       var rabattPreis = a.vk_base * (1 - pct/100);
       html+='<div class="fm-card">';
-      html+='<div class="fm-card-noimg"><i data-lucide="beef" style="width:36px;height:36px"></i></div>';
+      html+='<div class="fm-card-noimg" data-img-artnr="'+esc(a.artikelnummer)+'"><i data-lucide="beef" style="width:36px;height:36px"></i></div>';
       html+='<div class="fm-card-badge">-'+pct+'%</div>';
       html+='<button class="fm-card-fav'+(isFav?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav?'\u2764':'\u2661')+'</button>';
       html+='<div class="fm-card-body">';
