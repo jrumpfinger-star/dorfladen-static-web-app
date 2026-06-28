@@ -651,7 +651,8 @@ window.closeDtModal = function(id) {
           +'</div>';
         document.body.appendChild(ov);
         requestAnimationFrame(function(){ov.classList.add('open');});
-        ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('.news-overlay-close'))ov.classList.remove('open');setTimeout(function(){if(ov.parentNode)ov.remove();},300);});
+        if(window.dlLockScroll)dlLockScroll();
+        ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('.news-overlay-close')){ov.classList.remove('open');if(window.dlUnlockScroll)dlUnlockScroll();setTimeout(function(){if(ov.parentNode)ov.remove();},300);}});
       }
     })
     .catch(function(e){

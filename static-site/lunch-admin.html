@@ -248,8 +248,9 @@
       +'<button id="storno-la-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
     overlay.appendChild(modal);document.body.appendChild(overlay);
     overlay._laOverlay=true;
+    document.body.style.overflow='hidden';
     history.pushState({overlay:'storno'},'');
-    var _closeOverlay=function(viaBack){document.body.removeChild(overlay);if(!viaBack) history.back();};
+    var _closeOverlay=function(viaBack){document.body.removeChild(overlay);document.body.style.overflow='';if(!viaBack) history.back();};
     var optsDiv=modal.querySelector('#storno-la-opts');var selectedReason='';
     LA_STORNO_REASONS.forEach(function(r){
       var opt=document.createElement('label');
@@ -285,7 +286,7 @@
   // ── Android Back-Button ──
   window.addEventListener('popstate',function(){
     var ov=document.querySelector('[style*="position:fixed"]');
-    if(ov&&ov._laOverlay){document.body.removeChild(ov);}
+    if(ov&&ov._laOverlay){document.body.removeChild(ov);document.body.style.overflow='';}
   });
 
   // Auto-refresh every 30s

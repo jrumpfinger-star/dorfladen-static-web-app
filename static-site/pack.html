@@ -434,7 +434,8 @@
     var overlay=document.getElementById('pk-cam-overlay');
     var video=document.getElementById('pk-cam-video');
     overlay.classList.add('open');
-    history.pushState({overlay:'camera'},'');
+    document.body.style.overflow='hidden';
+    history.pushState({overlay:'camera'},'')
 
     // Check if BarcodeDetector is available
     if(!('BarcodeDetector' in window)){
@@ -470,6 +471,7 @@
 
   function closeCamera(){
     document.getElementById('pk-cam-overlay').classList.remove('open');
+    if(!document.getElementById('pk-kasse-overlay').classList.contains('open')) document.body.style.overflow='';
     if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
     if(cameraStream){cameraStream.getTracks().forEach(function(t){t.stop();});cameraStream=null;}
   }
@@ -541,6 +543,7 @@
 
   document.getElementById('pk-kasse-close').addEventListener('click',function(){
     document.getElementById('pk-kasse-overlay').classList.remove('open');
+    document.body.style.overflow='';
   });
 
   function showKasseModal(){
@@ -568,6 +571,7 @@
 
     body.innerHTML=html;
     document.getElementById('pk-kasse-overlay').classList.add('open');
+    document.body.style.overflow='hidden';
     history.pushState({overlay:'kasse'},'');
 
     // Wire copy events
@@ -660,7 +664,7 @@
   // ── Android Back-Button ──
   window.addEventListener('popstate',function(){
     if(document.getElementById('pk-cam-overlay').classList.contains('open')){closeCamera();return;}
-    if(document.getElementById('pk-kasse-overlay').classList.contains('open')){document.getElementById('pk-kasse-overlay').classList.remove('open');return;}
+    if(document.getElementById('pk-kasse-overlay').classList.contains('open')){document.getElementById('pk-kasse-overlay').classList.remove('open');document.body.style.overflow='';return;}
   });
 
   // ── Init ──

@@ -2845,6 +2845,7 @@
   window.cmsCloseModal = function(){
     document.getElementById('cms-modal-wrap').style.display='none';
     document.getElementById('cms-modal-wrap').innerHTML='';
+    document.body.style.overflow='';
   };
   // Backdrop click closes modal (unless Kachel-Editor is open — it has save/discard semantics)
   // Also skip if an autocomplete dropdown is currently open or was just closed (user may be clicking an item)
@@ -2864,6 +2865,7 @@
     if(!mw)return;
     var obs=new MutationObserver(function(){
       if(mw.style.display!=='none'&&mw.innerHTML!==''){
+        document.body.style.overflow='hidden';
         history.pushState({cmsModal:true},'','');
       }
     });

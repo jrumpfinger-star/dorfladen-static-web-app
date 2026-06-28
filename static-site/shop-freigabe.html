@@ -601,11 +601,13 @@
       prev.style.display='none';
     }
     document.getElementById('img-overlay').classList.add('show');
+    document.body.style.overflow='hidden';
     history.pushState({overlay:'img'},'');
   }
 
   function closeImageDialog(viaBack){
     document.getElementById('img-overlay').classList.remove('show');
+    document.body.style.overflow='';
     imgStrichcode='';imgFileData=null;
     if(!viaBack) history.back();
   }
