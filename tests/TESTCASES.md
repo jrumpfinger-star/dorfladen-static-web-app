@@ -1474,3 +1474,37 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-07-04 | T-21-06 Quick-Action-Button im Header | ✅ Pass |
 | 2026-07-04 | T-21-07 API PATCH akzeptiert positionen | ✅ Pass |
 | 2026-07-04 | T-21-08 API PATCH validiert Format | ✅ Pass |
+
+---
+
+## T22 – Kunden-Status-Labels (AK-FLEISCH-22)
+
+### T-22-01: API liefert status_label_kunde
+- **Aktion:** GET `/api/fleisch-order?mode=kiosk` und JSON parsen
+- **Prüfung:** Jede Bestellung hat Feld `status_label_kunde`
+- **Erwartung:** Feld ist vorhanden und nicht leer
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-22
+
+### T-22-02: status_label_kunde Mapping korrekt
+- **Aktion:** API-Response auswerten für verschiedene Status-Werte
+- **Prüfung:** status_label_kunde: 0→Neu, 1→Bestätigt, 2→Abholbereit, 3→Abgeholt, 4→Storniert
+- **Erwartung:** Kein „Beim Metzger" oder „Eingetroffen" in status_label_kunde
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-22
+
+### T-22-03: Homepage-Widget zeigt Kunden-Labels
+- **Aktion:** Startseite mit fm_telefon im localStorage laden, Fleisch-Popup öffnen
+- **Prüfung:** Status-Badges in der Bestellliste
+- **Erwartung:** „Bestätigt" und „Abholbereit" statt „Beim Metzger" und „Eingetroffen"
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-22
+
+### T-22-04: Bestellstatus-Seite zeigt Kunden-Labels
+- **Aktion:** `/bestellstatus?nr=FM-xxx` öffnen (mit gültiger Bestellnummer)
+- **Prüfung:** FM_STATUS_LABELS im JS-Code der Seite
+- **Erwartung:** Labels sind: Neu, Bestätigt, Abholbereit, Abgeholt, Storniert
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-22
+
+### T-22-05: Kiosk behält interne Labels
+- **Aktion:** Kiosk Metzger-Tab öffnen
+- **Prüfung:** STATUS_LABELS im Kiosk-JS
+- **Erwartung:** Kiosk zeigt weiterhin „Beim Metzger" und „Eingetroffen" (interne Labels)
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-22

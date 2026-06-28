@@ -370,6 +370,84 @@ test.describe('T-21 Kiosk Fleisch Per-Item-Bestellung (AK-FLEISCH-21)', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  T-22: Kunden-Status-Labels (AK-FLEISCH-22)
+// ════════════════════════════════════════════════════
+
+test.describe('T-22 Kunden-Status-Labels (AK-FLEISCH-22)', () => {
+
+  test('T-22-01 API liefert status_label_kunde (AK-FLEISCH-22)', async ({ request }) => {
+    const resp = await request.get(`${BASE}/api/fleisch-order?mode=kiosk`);
+    expect(resp.ok()).toBeTruthy();
+    const data = await resp.json();
+    expect(data.success).toBe(true);
+    const orders = data.bestellungen || [];
+    if (orders.length === 0) { test.skip(); return; }
+    for (const o of orders) {
+      expect(o).toHaveProperty('status_label_kunde');
+      expect(o.status_label_kunde).toBeTruthy();
+    }
+  });
+
+  test('T-22-02 status_label_kunde Mapping korrekt (AK-FLEISCH-22)', async ({ request }) => {
+    const resp = await request.get(`${BASE}/api/fleisch-order?mode=kiosk`);
+    const data = await resp.json();
+    const EXPECTED = { 0: 'Neu', 1: 'Bestätigt', 2: 'Abholbereit', 3: 'Abgeholt', 4: 'Storniert' };
+    const orders = data.bestellungen || [];
+    if (orders.length === 0) { test.skip(); return; }
+    for (const o of orders) {
+      const expected = EXPECTED[o.status];
+      if (expected) {
+        expect(o.status_label_kunde).toBe(expected);
+      }
+      expect(o.status_label_kunde).not.toBe('Beim Metzger');
+      expect(o.status_label_kunde).not.toBe('Eingetroffen');
+    }
+  });
+
+  test('T-22-03 Homepage-Widget zeigt Kunden-Labels (AK-FLEISCH-22)', async ({ page }) => {
+    await page.goto(BASE);
+    // Check that the FM_ST map in index.html uses customer labels
+    const labels = await page.evaluate(() => {
+      const scripts = document.querySelectorAll('script');
+      for (const s of scripts) {
+        const txt = s.textContent || '';
+        if (txt.includes('FM_ST') && txt.includes('Bestätigt')) return 'customer-labels';
+        if (txt.includes('FM_ST') && txt.includes('Beim Metzger')) return 'internal-labels';
+      }
+      return 'not-found';
+    });
+    expect(labels).toBe('customer-labels');
+  });
+
+  test('T-22-04 Bestellstatus-Seite zeigt Kunden-Labels (AK-FLEISCH-22)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    const labels = await page.evaluate(() => {
+      const scripts = document.querySelectorAll('script');
+      for (const s of scripts) {
+        const txt = s.textContent || '';
+        if (txt.includes('FM_STATUS_LABELS') && txt.includes('Bestätigt') && txt.includes('Abholbereit')) return 'customer-labels';
+        if (txt.includes('FM_STATUS_LABELS') && txt.includes('Beim Metzger')) return 'internal-labels';
+      }
+      return 'not-found';
+    });
+    expect(labels).toBe('customer-labels');
+  });
+
+  test('T-22-05 Kiosk behält interne Labels (AK-FLEISCH-22)', async ({ page }) => {
+    await page.goto(`${BASE}/kiosk`);
+    const labels = await page.evaluate(() => {
+      const scripts = document.querySelectorAll('script');
+      for (const s of scripts) {
+        const txt = s.textContent || '';
+        if (txt.includes("STATUS_LABELS") && txt.includes("'Beim Metzger'")) return 'internal-labels';
+      }
+      return 'not-found';
+    });
+    expect(labels).toBe('internal-labels');
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  T-18: CMS-Metzger Lesbarkeit & Bestelldetails (AK-FLEISCH-17)
 // ════════════════════════════════════════════════════
 

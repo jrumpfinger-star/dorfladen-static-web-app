@@ -292,7 +292,7 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - Positionen-Tabelle (Artikel, Menge kg, Preis)
 - Gesamtsumme + Ersparnis
 - Liefertag
-- Status-Timeline: Neu → Beim Metzger bestellt → Eingetroffen → Abgeholt (+ Storniert)
+- Status-Timeline (Kundenansicht): Neu → Bestätigt → Abholbereit → Abgeholt (+ Storniert)
 - Nachrichten (Personal-Antwort) anzeigen
 - Kommentar-Feld: Kunde kann Nachricht an den Laden senden
 
@@ -308,7 +308,7 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - Container `#mob-fm-orders` in der Fleisch-Kachel auf der Startseite (Mobile)
 - Widget lädt wenn `fm_telefon` im localStorage gesetzt
 - API-Call: `GET /api/fleisch-order?telefon=XXX&mode=my`
-- API liefert nur Status 0–2 (Neu, Beim Metzger, Eingetroffen) – NICHT Abgeholt/Storniert
+- API liefert nur Status 0–2 (Neu, Bestätigt, Abholbereit) – NICHT Abgeholt/Storniert
 - Bei aktiver Bestellung: Link zu `/bestellstatus?nr=FM-xxx`
 - Widget versteckt wenn keine aktiven Bestellungen
 
@@ -402,7 +402,7 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Positionen-Tabelle mit Artikel, Menge, Preis angezeigt
 - [x] Gesamtsumme + Ersparnis angezeigt
 - [x] Liefertag angezeigt
-- [x] Status-Timeline: Neu → Beim Metzger → Eingetroffen → Abgeholt
+- [x] Status-Timeline (Kundenansicht): Neu → Bestätigt → Abholbereit → Abgeholt
 - [x] Personal-Antwort wird angezeigt
 - [x] Kunde kann Kommentar senden (PATCH an fleisch-order API)
 - [x] Auto-Login per localStorage (fm_nr + fm_telefon)
@@ -473,6 +473,16 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Gleiche Artikel aufsummieren (Gesamtmenge kg + Anzahl Bestellungen)
 - [x] Keine einzelnen Kundenbestellungen unter der Summentabelle
 - [x] Drucken-Button pro Liefertag
+
+### AK-FLEISCH-22: Kunden-Status-Labels (kein interner Status sichtbar)
+- [x] Kunden sehen **kundengerechte** Status-Labels statt interner Bezeichnungen
+- [x] Mapping: `0=Neu, 1=Bestätigt, 2=Abholbereit, 3=Abgeholt, 4=Storniert`
+- [x] Interne Labels bleiben für Kiosk/CMS: `0=Neu, 1=Beim Metzger, 2=Eingetroffen, 3=Abgeholt, 4=Storniert`
+- [x] API liefert beide Felder: `status_label` (intern) + `status_label_kunde` (Kundenansicht)
+- [x] Homepage-Widget „Ihre Vorbestellungen" zeigt Kunden-Labels (Bestätigt/Abholbereit)
+- [x] Bestellstatus-Seite (`bestellstatus.html`) zeigt Kunden-Labels
+- [x] Storno-Hinweis: „Möglich, solange die Bestellung noch nicht bestätigt wurde"
+- [x] Status-Icon für Status 1: ✔️ (Haken) statt 🥩 (Fleisch)
 
 ### AK-FLEISCH-19: Kiosk Touch-Modal für Nachrichten
 - [x] Inline-Nachrichtenfeld in Metzger-Bestellkarten entfernt
