@@ -122,6 +122,12 @@
         <div id="bs-info-rows"></div>
       </div>
 
+      <!-- Cancel button (only for Fleisch orders in status Neu) -->
+      <div class="bs-card" id="bs-cancel-card" style="display:none;text-align:center">
+        <button id="bs-cancel-btn" onclick="cancelOrder()" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%">❌ Bestellung stornieren</button>
+        <p style="font-size:12px;color:#9ca3af;margin-top:8px">Möglich, solange die Ware noch nicht beim Metzger bestellt wurde.</p>
+      </div>
+
       <!-- Messages from staff -->
       <div class="bs-card" id="bs-messages-card" style="display:none">
         <h2>💬 Nachrichten</h2>
@@ -290,6 +296,8 @@ function renderFleischOrder(o){
   document.getElementById('bs-info-rows').innerHTML = rows;
 
   renderMessages(o);
+  // Show cancel button only for status Neu (0)
+  document.getElementById('bs-cancel-card').style.display = (st === 0 && _orderType === 'fm') ? '' : 'none';
   // Hide comment for terminal states
   if(st === 3 || st === 4) document.getElementById('bs-comment-card').style.display = 'none';
 }
@@ -315,6 +323,41 @@ function renderMessages(o){
     document.getElementById('bs-messages-card').style.display = '';
     document.getElementById('bs-messages').innerHTML = msgHtml;
   }
+}
+
+// ── Cancel Order (customer self-service) ──
+function cancelOrder(){
+  if(!_order || _orderType !== 'fm') return;
+  if(!confirm('Möchten Sie diese Bestellung wirklich stornieren?\n\nDies kann nicht rückgängig gemacht werden.')) return;
+
+  var btn = document.getElementById('bs-cancel-btn');
+  btn.disabled = true;
+  btn.textContent = 'Wird storniert…';
+
+  fetch('/api/fleisch-order', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({id: _order.id, status: 4, kunde_storno: true})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(data.success){
+      btn.textContent = '✅ Storniert';
+      btn.style.background = '#d1fae5';
+      btn.style.color = '#065f46';
+      btn.style.borderColor = '#6ee7b7';
+      setTimeout(function(){ lookupOrder(); }, 1500);
+    } else {
+      btn.disabled = false;
+      btn.textContent = '❌ Bestellung stornieren';
+      alert(data.error || 'Stornierung fehlgeschlagen');
+    }
+  })
+  .catch(function(e){
+    btn.disabled = false;
+    btn.textContent = '❌ Bestellung stornieren';
+    alert('Fehler: ' + e.message);
+  });
 }
 
 // ── Send Comment ──

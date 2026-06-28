@@ -688,6 +688,23 @@ def _handle_patch(req, token, base_url, hdrs):
             status_code=400, headers=get_cors_headers()
         )
 
+    # Customer self-cancellation: only allowed when order is still Neu (0)
+    kunde_storno = body.get("kunde_storno", False)
+    if kunde_storno and new_status is not None and int(new_status) == STATUS_STORNIERT:
+        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})?$select=dl_status"
+        check_r = requests.get(check_url, headers=hdrs, timeout=15)
+        if check_r.status_code != 200:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Bestellung konnte nicht geprüft werden"}, ensure_ascii=False),
+                status_code=500, headers=get_cors_headers()
+            )
+        current_status = check_r.json().get("dl_status", -1)
+        if current_status != STATUS_NEU:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Stornierung nicht mehr möglich – die Bestellung wurde bereits weitergeleitet"}, ensure_ascii=False),
+                status_code=400, headers=get_cors_headers()
+            )
+
     patch_data = {}
     if new_status is not None:
         patch_data["dl_status"] = int(new_status)
