@@ -74,10 +74,12 @@
     .bs-tl-item{position:relative;padding-bottom:14px}
     .bs-tl-item:last-child{padding-bottom:0}
     .bs-tl-dot{position:absolute;left:-24px;top:2px;width:16px;height:16px;border-radius:50%;border:2px solid #e5e7eb;background:#fff}
-    .bs-tl-item.active .bs-tl-dot{background:var(--c-green);border-color:var(--c-green)}
+    .bs-tl-item.done .bs-tl-dot{background:var(--c-green);border-color:var(--c-green)}
+    .bs-tl-item.active .bs-tl-dot{background:#3b82f6;border-color:#3b82f6}
     .bs-tl-item.cancelled .bs-tl-dot{background:var(--c-red);border-color:var(--c-red)}
-    .bs-tl-label{font-size:13px;font-weight:700;color:var(--c-text)}
-    .bs-tl-item.active .bs-tl-label{color:var(--c-green)}
+    .bs-tl-label{font-size:13px;font-weight:700;color:var(--c-muted)}
+    .bs-tl-item.done .bs-tl-label{color:var(--c-green)}
+    .bs-tl-item.active .bs-tl-label{color:#3b82f6}
     .bs-tl-item.cancelled .bs-tl-label{color:var(--c-red)}
     .bs-tl-time{font-size:11px;color:var(--c-muted)}
 
@@ -221,9 +223,27 @@ function lookupOrder(){
     });
 }
 
-// ── Mittagstisch rendering (unchanged) ──
+// ── Timeline helper ──
+function buildTimeline(steps, stepIdx, isCancelled){
+  var h='<div class="bs-timeline">';
+  if(isCancelled){
+    h+='<div class="bs-tl-item cancelled"><div class="bs-tl-dot"></div><div class="bs-tl-label">❌ Storniert</div></div>';
+  } else {
+    for(var i=0;i<steps.length;i++){
+      var cls=stepIdx>i?'done':stepIdx===i?'active':'';
+      h+='<div class="bs-tl-item '+cls+'"><div class="bs-tl-dot"></div>';
+      h+='<div class="bs-tl-label">'+(cls?steps[i].icon+' ':'')+steps[i].label+'</div>';
+      h+='</div>';
+    }
+  }
+  h+='</div>';
+  return h;
+}
+
+// ── Mittagstisch rendering ──
 var STATUS_LABELS = {0:'Eingegangen',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
 var STATUS_ICONS = {0:'⏳',1:'✅',2:'❌',3:'📦'};
+var MT_STEPS=[{icon:'⏳',label:'Eingegangen'},{icon:'✅',label:'Bestätigt'},{icon:'📦',label:'Abgeholt'}];
 
 function renderOrder(o){
   document.getElementById('bs-login-card').style.display = 'none';
@@ -231,8 +251,10 @@ function renderOrder(o){
 
   document.getElementById('bs-gericht').textContent = o.gericht || '–';
 
-  var stHtml = '<div class="bs-status st-'+o.status+'">'+(STATUS_ICONS[o.status]||'')+' '+(STATUS_LABELS[o.status]||'Unbekannt')+'</div>';
-  document.getElementById('bs-status-row').innerHTML = stHtml;
+  // Map MT status to timeline step: 0→0, 1→1, 3→2; 2=Storniert
+  var mtTlMap={0:0,1:1,3:2};
+  var tlIdx=mtTlMap[o.status]!=null?mtTlMap[o.status]:0;
+  document.getElementById('bs-status-row').innerHTML = buildTimeline(MT_STEPS, tlIdx, o.status===2);
 
   var rows = '';
   rows += '<div class="bs-row"><span class="bs-label">Bestellnummer</span><span class="bs-value">'+esc(o.bestellnummer)+'</span></div>';
@@ -254,6 +276,7 @@ function renderOrder(o){
 var FM_STATUS_LABELS = {0:'Neu',1:'Bestätigt',2:'Bestätigt',3:'Abgeholt',4:'Storniert'};
 var FM_STATUS_ICONS = {0:'⏳',1:'✔️',2:'✅',3:'📦',4:'❌'};
 var FM_STATUS_CLASS = {0:'st-0',1:'st-3',2:'st-1',3:'st-1',4:'st-2'};
+var FM_STEPS=[{icon:'⏳',label:'Neu'},{icon:'🔪',label:'Beim Metzger'},{icon:'✅',label:'Eingetroffen'},{icon:'📦',label:'Abgeholt'}];
 
 function fmtP(v){ return (v||0).toFixed(2).replace('.',','); }
 
@@ -264,8 +287,8 @@ function renderFleischOrder(o){
   document.getElementById('bs-gericht').textContent = '🥩 Fleisch-Vorbestellung';
 
   var st = o.status||0;
-  var stHtml = '<div class="bs-status '+(FM_STATUS_CLASS[st]||'st-0')+'">'+(FM_STATUS_ICONS[st]||'')+' '+(FM_STATUS_LABELS[st]||'Unbekannt')+'</div>';
-  document.getElementById('bs-status-row').innerHTML = stHtml;
+  // FM status 0-3 map directly to step index, 4=Storniert
+  document.getElementById('bs-status-row').innerHTML = buildTimeline(FM_STEPS, st>3?0:st, st===4);
 
   var rows = '';
   rows += '<div class="bs-row"><span class="bs-label">Bestellnummer</span><span class="bs-value">'+esc(o.bestellnummer)+'</span></div>';
