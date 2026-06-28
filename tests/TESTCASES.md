@@ -1665,3 +1665,9 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 
 | Datum | Test | Ergebnis |
 |---|---|---|
+| 2026-06-28 | T-25-01 S-04 +/- Buttons sichtbar (Grid) – Gewichtsware mit −/500/+ und Stückware mit −/1/+ | ✅ Pass |
+| 2026-06-28 | T-25-02 S-04 100g-Schritte: 500→600→700, Minus 700→600 | ✅ Pass |
+| 2026-06-28 | T-25-03 S-04 Listen-Ansicht: −/500/+/g Buttons vorhanden | ✅ Pass |
+| 2026-06-28 | T-25-04 K-05 Keyboard 1=Mittagstisch, 4=Metzger, 2=Online-Shop | ✅ Pass |
+| 2026-06-28 | T-25-05 K-05 Taste R → API-Refresh ohne Page-Reload | ✅ Pass |
+| 2026-06-28 | T-25-06 A-02 Umsatz-Kachel zeigt 270,34 € | ✅ Pass |
