@@ -3364,10 +3364,6 @@ var K = (function(){
       html += '<div style="display:flex;align-items:center;gap:5px">'+luc('hash',12)+' <span style="font-weight:600;color:var(--c-text)">'+esc(o.bestellnummer)+'</span></div>';
       html += '<div style="display:flex;align-items:center;gap:5px">'+luc('phone',12)+' '+esc(o.telefon)+'</div>';
       html += '<div style="display:flex;align-items:center;gap:5px">'+luc('truck',12)+' '+esc(o.liefertag)+'</div>';
-      html += '<div style="margin-top:4px;padding-top:6px;border-top:1px solid #f3f4f6">';
-      html += '<div style="font-size:14px;font-weight:800;color:var(--c-text)">'+Number(o.gesamtsumme||0).toFixed(2).replace('.',',')+' \u20AC</div>';
-      if(o.rabatt_summe > 0) html += '<div style="font-size:11px;color:#2e7d4f;font-weight:600">Ersparnis: '+Number(o.rabatt_summe).toFixed(2).replace('.',',')+' \u20AC</div>';
-      html += '</div>';
       if(o.anmerkung) html += '<div style="background:#fef3c7;color:#92400e;padding:5px 8px;border-radius:6px;font-size:11px;margin-top:2px">'+luc('message-circle',11)+' '+esc(o.anmerkung)+'</div>';
       html += '</div>';
 
@@ -3392,6 +3388,11 @@ var K = (function(){
         html += '<span style="font-size:12px;font-weight:600;white-space:nowrap;min-width:55px;text-align:right">'+Number(p.rabattpreis||p.normalpreis||0).toFixed(2).replace('.',',')+' \u20AC</span>';
         html += '</div>';
       });
+      // Preis + Ersparnis inline below items
+      html += '<div style="display:flex;align-items:baseline;gap:8px;justify-content:flex-end;padding:6px 8px 2px;border-top:1px solid #f3f4f6;margin-top:4px">';
+      html += '<span style="font-size:15px;font-weight:800;color:var(--c-text)">'+Number(o.gesamtsumme||0).toFixed(2).replace('.',',')+' \u20AC</span>';
+      if(o.rabatt_summe > 0) html += '<span style="font-size:11px;color:#2e7d4f;font-weight:600">Ersparnis: '+Number(o.rabatt_summe).toFixed(2).replace('.',',')+' \u20AC</span>';
+      html += '</div>';
       html += '</div>';
       html += '</div>'; // end grid
 
