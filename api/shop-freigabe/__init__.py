@@ -87,13 +87,31 @@ def _load_freigaben(base_url, headers):
     return _fetch_all_pages(url, headers)
 
 
+_FLEISCH_KW = ["fleisch", "wurst", "metzger", "aufschnitt", "schinken", "salami"]
+
+def _is_fleisch_wurst(wg):
+    wg_lower = (wg or "").lower()
+    return any(kw in wg_lower for kw in _FLEISCH_KW)
+
 def _load_articles(base_url, headers):
-    """Load articles from Artikelstamm sold in the last 6 weeks for the selection UI."""
+    """Load articles from Artikelstamm sold in the last 6 weeks for the selection UI.
+    Fleisch & Wurst articles are loaded without the date filter (they are pre-ordered, not sold at register)."""
     cutoff = (datetime.utcnow() - timedelta(weeks=6)).strftime("%Y-%m-%dT00:00:00Z")
     select = "cr5d4_strichcode,cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_warengruppebez,cr5d4_vk_dorf,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_tableid"
     filt = f"cr5d4_artikelletzterverkauf ge {cutoff}"
     url = f"{base_url}/api/data/v9.2/{ARTICLE_ENTITY}?$select={select}&$filter={filt}&$orderby=cr5d4_warengruppebez asc,cr5d4_artikelbezeichnung asc"
     items = _fetch_all_pages(url, headers)
+    # Also load Fleisch & Wurst articles without date filter
+    fleisch_filt = "contains(cr5d4_warengruppebez,'Fleisch') or contains(cr5d4_warengruppebez,'Wurst')"
+    fleisch_url = f"{base_url}/api/data/v9.2/{ARTICLE_ENTITY}?$select={select}&$filter={fleisch_filt}&$orderby=cr5d4_artikelbezeichnung asc"
+    fleisch_items = _fetch_all_pages(fleisch_url, headers)
+    # Merge & deduplicate by strichcode
+    seen = {(item.get("cr5d4_strichcode") or "").strip() for item in items}
+    for fi in fleisch_items:
+        sc = (fi.get("cr5d4_strichcode") or "").strip()
+        if sc and sc not in seen:
+            items.append(fi)
+            seen.add(sc)
     result = []
     for item in items:
         sc = (item.get("cr5d4_strichcode") or "").strip()
