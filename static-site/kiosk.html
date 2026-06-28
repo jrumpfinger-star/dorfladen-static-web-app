@@ -3261,14 +3261,14 @@ var K = (function(){
     if(_fmFilter==='offen'){
       list = list.filter(function(o){ return o.status < 3; });
     } else if(_fmFilter==='heute'){
-      list = list.filter(function(o){ return o.liefertag === today && o.status === 2; });
+      list = list.filter(function(o){ return o.liefertag === today && (o.status === 1 || o.status === 2); });
     } else if(_fmFilter==='historie'){
       list = list.filter(function(o){ return o.status >= 3; });
     }
 
     // Update counts
     var cOffen = _fmOrders.filter(function(o){ return o.status < 3; }).length;
-    var cHeute = _fmOrders.filter(function(o){ return o.liefertag === today && o.status === 2; }).length;
+    var cHeute = _fmOrders.filter(function(o){ return o.liefertag === today && (o.status === 1 || o.status === 2); }).length;
     var el1 = document.getElementById('fm-fc-offen'); if(el1) el1.textContent = cOffen;
     var el2 = document.getElementById('fm-fc-heute'); if(el2) el2.textContent = cHeute;
 
@@ -3279,7 +3279,7 @@ var K = (function(){
     }
 
     var STATUS_CSS = {0:'st-new',1:'st-confirm',2:'st-ready',3:'st-done',4:'st-cancel'};
-    var STATUS_LABELS = {0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+    var STATUS_LABELS = {0:'Neu',1:'Beim Metzger',2:'Beim Metzger',3:'Abgeholt',4:'Storniert'};
     var html = '';
 
     list.forEach(function(o){
@@ -3300,8 +3300,8 @@ var K = (function(){
       // Quick action in header
       html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
       if(o.status===0 && positionen.length>0) html += '<span style="font-size:11px;font-weight:700;color:'+(bestelltCount===positionen.length?'#16a34a':'#6b7280')+';white-space:nowrap">'+bestelltCount+'/'+positionen.length+'</span>';
-      else if(o.status===1) html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',2)" title="Eingetroffen">'+luc('package-check',14)+' <span class="oc-btn-label">Eingetroffen</span></button>';
-      else if(o.status===2) html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',3)" title="Abgeholt">'+luc('check-circle',14)+' <span class="oc-btn-label">Abgeholt</span></button>';
+      else if(o.status===1) html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',3)" title="Abgeholt">'+luc('check-circle',14)+' <span class="oc-btn-label">Abgeholt</span></button>';
+      else if(o.status===2) html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',3)" title="Abgeholt">'+luc('check-circle',14)+' <span class="oc-btn-label">Abgeholt</span></button>'; // legacy status 2
       else if(o.status>=3) html += '<span style="color:'+(o.status===4?'var(--c-red)':'var(--c-green)')+'">'+luc(o.status===4?'x-circle':'check-circle',18)+'</span>';
       html += '</span>';
       html += '</div>';
@@ -3375,9 +3375,7 @@ var K = (function(){
           html += '<button class="k-btn k-btn-outline" style="font-size:13px;padding:8px 16px;border-radius:8px" onclick="K.toggleAllFmItems(\''+o.id+'\',true)">'+luc('check-check',14)+' Alle markieren</button>';
         }
         html += '<button class="k-btn k-btn-cancel" style="font-size:13px;padding:8px 16px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',4)">'+luc('x',14)+' Stornieren</button>';
-      } else if(o.status===1){
-        html += '<button class="k-btn k-btn-confirm" style="font-size:13px;padding:8px 16px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',2)">'+luc('package-check',14)+' Eingetroffen</button>';
-      } else if(o.status===2){
+      } else if(o.status===1 || o.status===2){
         html += '<button class="k-btn k-btn-confirm" style="font-size:13px;padding:8px 16px;border-radius:8px" onclick="K.setMetzgerStatus(\''+o.id+'\',3)">'+luc('check-circle',14)+' Abgeholt</button>';
       }
       if(fmIsUnread) html += '<button class="k-btn k-btn-outline" style="font-size:13px;padding:8px 16px;border-radius:8px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';

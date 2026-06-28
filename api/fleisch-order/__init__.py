@@ -32,7 +32,7 @@ STATUS_STORNIERT = 4
 STATUS_LABELS = {
     0: "Neu",
     1: "Beim Metzger",
-    2: "Eingetroffen",
+    2: "Beim Metzger",  # legacy, nicht mehr aktiv genutzt
     3: "Abgeholt",
     4: "Storniert"
 }
@@ -40,7 +40,7 @@ STATUS_LABELS = {
 STATUS_LABELS_KUNDE = {
     0: "Neu",
     1: "Bestätigt",
-    2: "Abholbereit",
+    2: "Bestätigt",  # legacy, nicht mehr aktiv genutzt
     3: "Abgeholt",
     4: "Storniert"
 }

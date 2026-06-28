@@ -11820,7 +11820,7 @@
     });
   };
 
-  var FM_STATUS_L={0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+  var FM_STATUS_L={0:'Neu',1:'Beim Metzger',2:'Beim Metzger',3:'Abgeholt',4:'Storniert'};
   var FM_STATUS_C={0:'#d97706',1:'#2563eb',2:'#2e7d4f',3:'#6b7280',4:'#ef4444'};
   var _fmCurrentFilter='offen';
 
@@ -11902,7 +11902,7 @@
         // Action buttons
         html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
         if(o.status<3){
-          [1,2,3].forEach(function(ns){
+          [1,3].forEach(function(ns){
             if(ns===o.status) return;
             var bc=FM_STATUS_C[ns];
             html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:'+bc+';color:#fff;border:none;border-radius:6px" data-fm-status="'+esc(o.id)+'" data-fm-newstatus="'+ns+'">'+FM_STATUS_L[ns]+'</button>';
