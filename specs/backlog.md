@@ -62,7 +62,7 @@
 | A-01 | Batch-Aktionen | 🟡 | ✅ | In `shop-freigabe.html` implementiert (Alle freigeben/sperren, Batch-Bar) |
 | A-02 | Tagesstatistiken | 🟡 | ✅ | Umsatz-Kachel im Shop-Admin-Dashboard (API summary.summe); Mittagstisch hat Portionen+Umsatz |
 | A-03 | CSV/Excel-Export | 🟡 | ✅ | CSV-Export-Button in Shop-Admin + Lunch-Admin (BOM+Semikolon für Excel) |
-| A-04 | Benachrichtigungs-Indikator | 🟢 | ❌ | Ungelesene Kunden-Kommentare visuell hervorheben |
+| A-04 | Benachrichtigungs-Indikator | 🟢 | 🔧 | Kiosk: vollständig (NEU-Badge, Counter, Gelesen-Buttons); Shop-Admin: fehlt |
 
 ---
 

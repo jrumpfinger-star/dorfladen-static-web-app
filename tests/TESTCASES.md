@@ -1626,3 +1626,42 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-28 | T-24-04 N-02 10 Share-Buttons (5×WhatsApp + 5×Link kopieren) | ✅ Pass |
 | 2026-06-28 | T-24-05 Shop Fleisch 5 Artikel mit Gewichtseingabe + Hinzu | ✅ Pass |
 | 2026-06-28 | T-24-06 Shop Rabatt-Banner: Kein Hinweis ohne aktive Bestellungen | ✅ Pass (korrekt: hint bleibt hidden wenn API 0 Bestellungen zurückgibt) |
+
+---
+
+## T-25 – Backlog-Items: S-04, K-05, A-02
+
+### T-25-01: S-04 Gewichts-Schnellwahl – +/- Buttons sichtbar (Grid)
+- **Aktion:** `/shop` → Gewichtsware-Artikel (z.B. Fleisch) in Grid-Ansicht
+- **Prüfung:** Buttons `-` und `+` links/rechts neben Gewichtseingabe sichtbar
+- **Erwartung:** `.shop-qty-ctrl` Container mit 3 Elementen (−, Input, +)
+
+### T-25-02: S-04 Gewichts-Schnellwahl – 100g-Schritte
+- **Aktion:** Bei Gewichtsware auf `+` klicken (Startwert 500g)
+- **Prüfung:** Wert erhöht sich auf 600, nochmal → 700
+- **Erwartung:** Schrittweite 100g, Minimum 50g, Maximum 9999g
+
+### T-25-03: S-04 Gewichts-Schnellwahl – Liste-Ansicht
+- **Aktion:** Zur Listen-Ansicht wechseln, Gewichtsware prüfen
+- **Prüfung:** Auch in der Liste +/- Buttons vorhanden
+- **Erwartung:** Gleiche Funktionalität wie in Grid-Ansicht
+
+### T-25-04: K-05 Keyboard-Shortcuts – Tab-Wechsel
+- **Aktion:** `/kiosk` aufrufen, Tasten 1-5 drücken
+- **Prüfung:** Tab wechselt: 1=Mittagstisch, 2=Online-Shop, 3=Stammkunden, 4=Metzger, 5=Social
+- **Erwartung:** Korrekter Tab wird aktiviert
+
+### T-25-05: K-05 Keyboard-Shortcuts – Refresh
+- **Aktion:** Taste `R` drücken auf `/kiosk`
+- **Prüfung:** Daten werden neu geladen (Netzwerk-Request sichtbar)
+- **Erwartung:** Kein Page-Reload, nur API-Refresh
+
+### T-25-06: A-02 Umsatz-Kachel im Shop-Admin
+- **Aktion:** `/shop-admin` aufrufen
+- **Prüfung:** Vierte Statistik-Kachel "Umsatz" mit Euro-Betrag sichtbar
+- **Erwartung:** Umsatz-Wert in Format "X,XX €", grüne Farbe
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
