@@ -554,10 +554,13 @@ def _handle_get(req, token, base_url, hdrs):
                         "bezeichnung": pos.get("bezeichnung", key),
                         "gesamt_kg": 0,
                         "anzahl_bestellungen": 0,
+                        "bestellt_count": 0,
                         "einheit": "kg",
                     }
                 aggregiert[key]["gesamt_kg"] = round(aggregiert[key]["gesamt_kg"] + pos.get("menge_kg", 0), 2)
                 aggregiert[key]["anzahl_bestellungen"] += 1
+                if pos.get("bestellt"):
+                    aggregiert[key]["bestellt_count"] += 1
 
         return func.HttpResponse(
             json.dumps({
