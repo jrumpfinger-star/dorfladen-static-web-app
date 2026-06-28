@@ -11,9 +11,9 @@
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
 | H-01 | Pull-to-Refresh | 🟡 | ✅ | Browser-natives Pull-to-Refresh funktioniert (kein overscroll-behavior-Block) |
-| H-02 | Mittagstisch-Kachel Wochenende | 🟢 | ❌ | Wenn kein Gericht verfügbar: "Montag: ..." als Vorschau statt leere Kachel |
+| H-02 | Mittagstisch-Kachel Wochenende | 🟢 | ✅ | API liefert ab Samstag nächste Woche; Frontend zeigt automatisch nächsten Wochenplan |
 | H-03 | Öffnungszeiten-Indikator | 🟡 | ✅ | Countdown: "öffnet in X Std/Min", "schließt in X Min"; Feiertage + nächster Tag |
-| H-04 | Skeleton Loading | 🟢 | 🔧 | CSS-Klasse `.skeleton` existiert in `style.css`, aber nicht überall eingesetzt |
+| H-04 | Skeleton Loading | 🟢 | 🔧 | CSS-Klasse `.skeleton` in `index.html` (Wochenplan, News, Galerie), fehlt auf shop/aktuelles/etc. |
 | H-05 | Lazy-Loading Maps | 🟡 | ✅ | Beide iframes haben `loading="lazy"` |
 | H-06 | Desktop-Version pflegen | 🟢 | ❌ | Desktop-Ansicht (aside, info-cards) wirkt weniger gepflegt als Mobile |
 
@@ -27,7 +27,7 @@
 | K-02 | Sound/Vibrationsalarm | 🔴 | ✅ | Audio-Alert + Badge-Pulse bei neuen Bestellungen (Mittagstisch, Shop, Fleisch) |
 | K-03 | Auto-Refresh | 🟡 | ✅ | 30s Intervall implementiert |
 | K-04 | Bestätigungs-History/Audit-Trail | 🟡 | ❌ | Wer hat wann welche Bestellung bestätigt? |
-| K-05 | Keyboard-Shortcuts / Swipe | 🟢 | ❌ | Schnelles Navigieren am Tablet |
+| K-05 | Keyboard-Shortcuts / Swipe | 🟢 | ✅ | Tasten 1-5 für Tab-Wechsel, R für Refresh |
 
 ---
 
@@ -50,8 +50,8 @@
 | S-01 | Warenkorb-Persistenz | 🟡 | ✅ | localStorage wird bereits genutzt |
 | S-02 | Produktbilder | 🔴 | ✅ | Bilder aus SharePoint via `/api/werbebilder`, `shop-images.js`, base64-Cache |
 | S-03 | Suchfunktion | 🟡 | ✅ | Suchfeld mit Live-Filter nach Artikelname (`shop-search-input`) |
-| S-04 | Mengen-Schnellwahl (+/-) | 🟢 | ❌ | Aktuell manuelle Eingabe |
-| S-05 | Zeitslot-Verfügbarkeit | 🟢 | ❌ | Visuell zeigen, welche Slots voll sind |
+| S-04 | Mengen-Schnellwahl (+/-) | 🟢 | ✅ | +/- Buttons für Gewichtsware (100g-Schritte) und Stückware in Grid+Liste |
+| S-05 | Zeitslot-Verfügbarkeit | 🟢 | 🔧 | Slots mit abgelaufener Vorlaufzeit werden automatisch herausgefiltert; Kapazitätslimit (voll) fehlt (braucht Backend) |
 
 ---
 
@@ -60,7 +60,7 @@
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
 | A-01 | Batch-Aktionen | 🟡 | ✅ | In `shop-freigabe.html` implementiert (Alle freigeben/sperren, Batch-Bar) |
-| A-02 | Tagesstatistiken | 🟡 | ❌ | Umsatz pro Tag, durchschnittliche Bestellgröße |
+| A-02 | Tagesstatistiken | 🟡 | ✅ | Umsatz-Kachel im Shop-Admin-Dashboard (API summary.summe); Mittagstisch hat Portionen+Umsatz |
 | A-03 | CSV/Excel-Export | 🟡 | ✅ | CSV-Export-Button in Shop-Admin + Lunch-Admin (BOM+Semikolon für Excel) |
 | A-04 | Benachrichtigungs-Indikator | 🟢 | ❌ | Ungelesene Kunden-Kommentare visuell hervorheben |
 

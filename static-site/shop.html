@@ -1435,7 +1435,7 @@
       html+='</div>';
       html+='<div class="shop-card-footer">';
       if(a.gewichtsware){
-        html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
+        html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-wt-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"><button class="shop-qty-btn" data-wt-inc="'+esc(a.artikelnummer)+'">+</button></div><span style="font-size:11px;color:#6b7280">g</span> ';
         html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button>';
       } else {
         html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
@@ -1465,7 +1465,7 @@
       html+='<div class="shop-list-row"><div class="shop-list-price">'+priceHtml+'</div>';
       html+='<div class="shop-list-actions">';
       if(a.gewichtsware){
-        html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"><span style="font-size:10px;color:#6b7280">g</span>';
+        html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-wt-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"><button class="shop-qty-btn" data-wt-inc="'+esc(a.artikelnummer)+'">+</button></div><span style="font-size:10px;color:#6b7280">g</span>';
         html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzu</button>';
       } else {
         html+='<div class="shop-qty-ctrl"><button class="shop-qty-btn" data-qty-dec="'+esc(a.artikelnummer)+'">-</button><input type="number" class="shop-qty-val" data-artnr-qty="'+esc(a.artikelnummer)+'" value="1" min="1" max="99" step="1"><button class="shop-qty-btn" data-qty-inc="'+esc(a.artikelnummer)+'">+</button></div>';
@@ -1864,6 +1864,22 @@
   }
 
   function wireAddButtons(){
+    document.querySelectorAll('[data-wt-dec]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var artnr=btn.getAttribute('data-wt-dec');
+        var inp=document.querySelector('[data-artnr-wt="'+artnr+'"]');
+        if(!inp) return;
+        inp.value=Math.max(50,(parseInt(inp.value,10)||500)-100);
+      });
+    });
+    document.querySelectorAll('[data-wt-inc]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var artnr=btn.getAttribute('data-wt-inc');
+        var inp=document.querySelector('[data-artnr-wt="'+artnr+'"]');
+        if(!inp) return;
+        inp.value=Math.min(9999,(parseInt(inp.value,10)||500)+100);
+      });
+    });
     document.querySelectorAll('[data-qty-dec]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var artnr=btn.getAttribute('data-qty-dec');

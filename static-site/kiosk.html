@@ -3812,6 +3812,16 @@ var K = (function(){
   // Auto-refresh every 30s
   refreshTimer = setInterval(function(){ loadOrders(); loadShopOrders(); loadMetzgerOrders(); }, 30000);
 
+  // Keyboard shortcuts (1-5 = Tabs, R = Refresh)
+  var TAB_KEYS={'1':'mittag','2':'abhol','3':'kunden','4':'metzger','5':'social'};
+  document.addEventListener('keydown',function(e){
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||e.target.isContentEditable) return;
+    if(e.ctrlKey||e.metaKey||e.altKey) return;
+    var k=e.key;
+    if(TAB_KEYS[k]){e.preventDefault();switchTab(TAB_KEYS[k]);}
+    if(k==='r'||k==='R'){e.preventDefault();refresh();}
+  });
+
   // Public API
   return {
     switchTab: switchTab,

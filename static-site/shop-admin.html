@@ -267,6 +267,7 @@
       <div class="stat active" data-stat-filter="all"><div class="label">Bestellungen</div><div class="value" id="stat-count">-</div></div>
       <div class="stat open" data-stat-filter="open"><div class="label">Offen</div><div class="value" id="stat-open">-</div></div>
       <div class="stat ready" data-stat-filter="2"><div class="label">Abholbereit</div><div class="value" id="stat-ready">-</div></div>
+      <div class="stat" style="border-left:3px solid #16a34a"><div class="label">Umsatz</div><div class="value" id="stat-umsatz" style="color:#16a34a">-</div></div>
     </div>
     <div class="panel">
       <div class="toolbar">
@@ -408,7 +409,7 @@
     m.querySelector('.cd-ok').addEventListener('click',function(){close();onConfirm();});
   }
   function statusBadge(s){return '<span class="status s'+s+'">'+esc(statusLabels[s]||'Unbekannt')+'</span>';}
-  function setStats(summary){summary=summary||{};document.getElementById('stat-count').textContent=summary.count||0;document.getElementById('stat-open').textContent=summary.open||0;document.getElementById('stat-ready').textContent=summary.ready||0;var ob=document.getElementById('badge-shop');var oc=(summary.open||0);if(oc>0){ob.textContent=oc;ob.classList.add('show');}else{ob.classList.remove('show');}}
+  function setStats(summary){summary=summary||{};document.getElementById('stat-count').textContent=summary.count||0;document.getElementById('stat-open').textContent=summary.open||0;document.getElementById('stat-ready').textContent=summary.ready||0;var su=document.getElementById('stat-umsatz');if(su)su.textContent=(summary.summe||0).toFixed(2).replace('.',',')+' €';var ob=document.getElementById('badge-shop');var oc=(summary.open||0);if(oc>0){ob.textContent=oc;ob.classList.add('show');}else{ob.classList.remove('show');}}
   function fmtDateNice(raw){
     if(!raw) return '–';
     try{var d=new Date(raw.length===10?raw+'T12:00:00':raw);if(isNaN(d.getTime()))return raw;var tage=['So','Mo','Di','Mi','Do','Fr','Sa'];return tage[d.getDay()]+', '+d.getDate()+'.'+(d.getMonth()+1)+'.';}catch(e){return raw;}
