@@ -251,6 +251,7 @@
     @keyframes kPulse{0%,100%{background-color:#eff6ff}50%{background-color:#dbeafe}}
     @keyframes kBlink{0%,100%{opacity:1}50%{opacity:.4}}
     @keyframes kSpin{to{transform:rotate(360deg)}}
+    @keyframes kBadgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
 
     /* ═══ Status Timeline ═══ */
     .st-timeline{display:flex;align-items:flex-start;justify-content:space-between;margin:16px 0 20px;padding:0 4px;position:relative}
@@ -883,6 +884,27 @@ var K = (function(){
   var noQty = 1;
   var refreshTimer = null;
 
+  // ── K-02: Sound/Vibrationsalarm bei neuen Bestellungen ──
+  var _prevCounts = {mittag: -1, shop: -1, fleisch: -1}; // -1 = initial load, no alert
+  var _alertSound = null;
+  function _initAlertSound(){
+    if(_alertSound) return;
+    _alertSound = new Audio('data:audio/wav;base64,UklGRl4FAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YToFAACAgICAgICAgICAgICAgICAgICA/3+AgP9/gID/f4CA/3+AgP9/gID/f4CA/3+AgP9/gIBiYJagoGBWgKqAWICsgFSAroBSgLCAUICygE6AtIBMgLaASoC4AEqAuABIgLoASIC6AEiAugBKgLgASoC4AEyAtgBMgLQAToC0AFCAsABSgK4AVICtgFaAq4BYgKmAWoCngFyApYBegKWAYICjgGCAo4BigKGAZIChgGaAn4BogJ+AaICfgGqAnYBsgJ2AbICdgGyAnYBugJuAboCdgG6AnYBugJ2AboCdgGyAnYBsgJ2AbICfgGqAn4BqgJ+AaICfgGiAoYBmgKOAZICjgGKApYBggKeAXoCtgFqAr4BYgLOAVIC3gFCAu4BMgL+ASIDBAEWABQFBAAUDAQB/gAAAgAAAAID/fwCA/3+AgP9/gID/f4CA/3+AgP9/gID/f4CA/3+AgA==');
+    _alertSound.volume = 0.7;
+  }
+  function _playNewOrderAlert(source){
+    _initAlertSound();
+    try{ _alertSound.currentTime = 0; _alertSound.play().catch(function(){}); }catch(e){}
+    try{ navigator.vibrate && navigator.vibrate([200, 100, 200]); }catch(e){}
+    // Flash the tab badge
+    var tabs = ['mittag','abhol','metzger'];
+    tabs.forEach(function(t){
+      var badge = document.getElementById('badge-'+t);
+      if(badge && badge.classList.contains('show')) badge.style.animation = 'kBadgePulse .5s ease 3';
+      setTimeout(function(){ if(badge) badge.style.animation = ''; }, 2000);
+    });
+  }
+
   var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
   var SRC_LABELS = {0:'Online',1:'Telefon',2:'Personal'};
   var SRC_CLASS = {0:'src-online',1:'src-telefon',2:'src-personal'};
@@ -1171,7 +1193,12 @@ var K = (function(){
       .then(function(res){
         if(datum!==_mittagDatum) return; // stale response
         if(!res.success) return;
-        orders = res.orders || [];
+        var newOrders = res.orders || [];
+        // K-02: Check for new orders
+        var newCount = newOrders.filter(function(o){return o.status===0;}).length;
+        if(_prevCounts.mittag >= 0 && newCount > _prevCounts.mittag) _playNewOrderAlert('mittag');
+        _prevCounts.mittag = newCount;
+        orders = newOrders;
         updateMittagFilterCounts();
         renderOrders();
         renderStats();
@@ -2099,6 +2126,10 @@ var K = (function(){
       .then(function(res){
         if(!res.success) return;
         _allShopOrders = res.orders || [];
+        // K-02: Check for new shop orders
+        var shopNewCount = _allShopOrders.filter(function(o){return o.status===0;}).length;
+        if(_prevCounts.shop >= 0 && shopNewCount > _prevCounts.shop) _playNewOrderAlert('shop');
+        _prevCounts.shop = shopNewCount;
         applyShopFilter();
         // Update filter counts – exclude ALL old orders (abholdatum < today = Historie)
         var td = today();
@@ -3201,6 +3232,10 @@ var K = (function(){
     fetch(url).then(function(r){return r.json();}).then(function(data){
       if(!data.success) return;
       _fmOrders = data.bestellungen || [];
+      // K-02: Check for new Fleisch orders
+      var fmNewCount = _fmOrders.filter(function(o){return o.status===0;}).length;
+      if(_prevCounts.fleisch >= 0 && fmNewCount > _prevCounts.fleisch) _playNewOrderAlert('fleisch');
+      _prevCounts.fleisch = fmNewCount;
       updateMetzgerBadge();
       if(_fmFilter==='nachrichten'){
         _loadFmMessages();
@@ -3400,11 +3435,17 @@ var K = (function(){
     var pos = order.positionen || [];
     if(itemIdx < 0 || itemIdx >= pos.length) return;
     pos[itemIdx].bestellt = !pos[itemIdx].bestellt;
+    // If unchecking an item while status is 1 (Beim Metzger), reset status to 0
+    var patchBody = {id: orderId, positionen: pos};
+    if(order.status === 1 && !pos[itemIdx].bestellt){
+      patchBody.status = 0;
+      order.status = 0;
+    }
     // Save to API
     fetch(API + '/fleisch-order', {
       method: 'PATCH',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({id: orderId, positionen: pos})
+      body: JSON.stringify(patchBody)
     }).then(function(r){ return r.json(); }).then(function(data){
       if(!data.success) toast('Fehler: '+(data.error||''));
       renderMetzgerOrders();

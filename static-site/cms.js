@@ -671,7 +671,7 @@
     html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3>\u26a0\ufe0f Angebot l\u00f6schen?</h3>';
     html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(ak.titel)+'" mit '+ak.items.length+' Artikeln wirklich l\u00f6schen?</p>';
-    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</p>';
+    html+='<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Kann nach dem L\u00f6schen kurzzeitig r\u00fcckg\u00e4ngig gemacht werden.</p>';
     html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
     html+='<button class="cms-btn cms-btn-del" style="flex:1" data-action="confirmDeleteAkt" data-id="'+esc(aktId)+'">\ud83d\uddd1\ufe0f L\u00f6schen</button>';
     html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
@@ -685,12 +685,25 @@
     if(!ak)return;
     var delBtn=document.querySelector('[data-action="confirmDeleteAkt"]');
     btnBusy(delBtn,'Löschen...');
+    // Save items for undo
+    var savedItems=JSON.parse(JSON.stringify(ak.items));
+    var savedTitel=ak.titel;var savedVon=ak.gueltig_von;var savedBis=ak.gueltig_bis;
     refreshToken().then(function(){
       var promises=ak.items.filter(function(it){return !!it.id;}).map(function(it){
         return fetch(API+'/angebote/'+it.id,{method:'DELETE'});
       });
       return Promise.all(promises);
-    }).then(function(){toast('Aktion gelöscht');cmsCloseModal();loadAngebote();})
+    }).then(function(){
+      cmsCloseModal();loadAngebote();
+      toast('Aktion "'+savedTitel+'" gelöscht','ok',function(){
+        // Undo: re-create all items via POST
+        var restorePs=savedItems.map(function(it,idx){
+          var body={dl_produkt:it.produkt,dl_details:it.details||null,dl_preis:it.preis,dl_statt_preis:it.statt_preis,dl_aktion_id:aktId,dl_aktion_titel:savedTitel,dl_gueltig_von:savedVon||null,dl_gueltig_bis:savedBis||null,dl_artikelnummer:it.artikelnummer||null,dl_sortierung:idx+1,dl_status:101001};
+          return fetch(API+'/angebote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        });
+        Promise.all(restorePs).then(function(){toast('Aktion wiederhergestellt');loadAngebote();}).catch(function(e){toast('Wiederherstellen fehlgeschlagen: '+e.message,'error');});
+      });
+    })
       .catch(function(e){toast('Fehler: '+e.message,'error');})
       .then(function(){btnDone(delBtn);});
   };
@@ -963,13 +976,20 @@
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   function fmtDe(s){if(!s)return '–';try{var p=String(s).substring(0,10).split('-');if(p.length===3)return p[2]+'.'+p[1]+'.'+p[0];return s;}catch(e){return s;}}
 
-  function toast(msg,type){
+  function toast(msg,type,undoFn){
     var el=document.createElement('div');
     el.className='cms-toast';
     el.style.background=type==='error'?'#dc2626':type==='warn'?'#d97706':'#16a34a';
-    el.textContent=msg;
-    document.body.appendChild(el);
-    setTimeout(function(){el.remove();},3000);
+    if(undoFn){
+      el.innerHTML=esc(msg)+' <button style="margin-left:12px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700" class="cms-undo-btn">↩ Rückgängig</button>';
+      el.querySelector('.cms-undo-btn').addEventListener('click',function(e){e.stopPropagation();undoFn();el.remove();});
+      document.body.appendChild(el);
+      setTimeout(function(){el.remove();},8000);
+    } else {
+      el.textContent=msg;
+      document.body.appendChild(el);
+      setTimeout(function(){el.remove();},3000);
+    }
   }
 
   function cmsConfirm(msg,opts){
@@ -2935,7 +2955,7 @@
     html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3>\u26a0\ufe0f Wochenplan-Eintrag l\u00f6schen?</h3>';
     html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(m.gericht||'Eintrag')+'" am '+m.wochentag_name+' wirklich l\u00f6schen?</p>';
-    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</p>';
+    html+='<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Kann nach dem L\u00f6schen kurzzeitig r\u00fcckg\u00e4ngig gemacht werden.</p>';
     html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
     html+='<button class="cms-btn cms-btn-del" style="flex:1" data-action="confirmDeleteMeal" data-id="'+id+'">\ud83d\uddd1\ufe0f L\u00f6schen</button>';
     html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
@@ -2947,14 +2967,23 @@
   window.cmsConfirmDelete = function(id){
     var delBtn=document.querySelector('[data-action="confirmDeleteMeal"]');
     btnBusy(delBtn,'Löschen...');
+    // Save meal for undo
+    var savedMeal=meals.find(function(x){return x.id===id;});
+    var savedData=savedMeal?JSON.parse(JSON.stringify(savedMeal)):null;
     refreshToken().then(function(){
       return fetch(API+'/wochenplan/'+id,{method:'DELETE',headers:deleteHeaders()});
     })
       .then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
-        toast('Gericht gelöscht');
         cmsCloseModal();
         loadWP();
+        toast('Gericht gelöscht','ok',savedData?function(){
+          // Undo: re-create meal via POST
+          var body={dl_gericht:savedData.gericht,dl_wochentag:savedData.wochentag,dl_datum:savedData.datum,dl_preis:savedData.preis,dl_beschreibung:savedData.beschreibung||null,dl_kalenderwoche:savedData.kw,dl_jahr:savedData.jahr,dl_status:101001};
+          fetch(API+'/wochenplan',{method:'POST',headers:writeHeaders(),body:JSON.stringify(body)})
+            .then(function(){toast('Gericht wiederhergestellt');loadWP();})
+            .catch(function(e){toast('Wiederherstellen fehlgeschlagen: '+e.message,'error');});
+        }:null);
       })
       .catch(function(e){toast('Fehler: '+e.message,'error');})
       .then(function(){btnDone(delBtn);});
