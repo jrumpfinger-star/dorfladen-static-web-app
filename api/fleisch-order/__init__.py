@@ -37,6 +37,14 @@ STATUS_LABELS = {
     4: "Storniert"
 }
 
+STATUS_LABELS_KUNDE = {
+    0: "Neu",
+    1: "Bestätigt",
+    2: "Abholbereit",
+    3: "Abgeholt",
+    4: "Storniert"
+}
+
 # Defaults (overridden by CMS config)
 DEFAULT_RABATT_PROZENT = 15
 DEFAULT_MINDESTMENGE_KG = 1.0
@@ -878,6 +886,7 @@ def _serialize(item):
         "rabatt_summe": item.get("dl_rabatt_summe"),
         "status": item.get("dl_status", 0),
         "status_label": STATUS_LABELS.get(item.get("dl_status", 0), ""),
+        "status_label_kunde": STATUS_LABELS_KUNDE.get(item.get("dl_status", 0), ""),
         "anmerkung": item.get("dl_anmerkung", ""),
         "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
         "personal_antwort": item.get("dl_personal_antwort", ""),
