@@ -352,7 +352,7 @@
     var kwEl=document.getElementById('mob-ang-kw');
     if(kwEl) kwEl.textContent='Diese Woche · KW '+getKW();
     var subEl=document.getElementById('mob-offers-sub');
-    if(subEl&&items.length) subEl.textContent=items.length+' diese Woche';
+    if(subEl&&items.length) subEl.innerHTML='<span style="display:inline-block;background:#5ea88a;color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:6px;margin-right:4px">'+items.length+'</span> diese Woche';
     if(!grid) return;
     if(!items.length){grid.innerHTML='<p style="text-align:center;color:#6b7280;padding:20px">Aktuell keine Sonderangebote</p>';return;}
     var icons=['🥛','🧀','🍞','🥩','🍌','🥬','🥫','🍎'];
