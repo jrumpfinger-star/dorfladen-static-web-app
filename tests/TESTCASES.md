@@ -1508,3 +1508,13 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung:** STATUS_LABELS im Kiosk-JS
 - **Erwartung:** Kiosk zeigt weiterhin „Beim Metzger" und „Eingetroffen" (interne Labels)
 > Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-22
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-28 | T-22-01 API liefert status_label_kunde | ✅ Pass |
+| 2026-06-28 | T-22-02 status_label_kunde Mapping korrekt | ✅ Pass |
+| 2026-06-28 | T-22-03 Homepage-Widget zeigt Kunden-Labels | ✅ Pass |
+| 2026-06-28 | T-22-04 Bestellstatus-Seite zeigt Kunden-Labels | ✅ Pass |
+| 2026-06-28 | T-22-05 Kiosk behält interne Labels | ✅ Pass |
