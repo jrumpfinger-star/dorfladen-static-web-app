@@ -1675,3 +1675,11 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-28 | T-25-08 Fleisch-Hint im Shop: "Sie haben 9 aktive Vorbestellungen" + "Ansehen" sichtbar | ✅ Pass |
 | 2026-06-28 | T-25-09 Fleisch-Hint: Dunkle Schrift auf hellem Hintergrund (#fef2f2) gut lesbar | ✅ Pass |
 | 2026-06-28 | T-25-10 Zurück-Button auf /fleisch-bestellen → history.back() zum Shop | ✅ Pass |
+| 2026-06-28 | T-25-11 Shop "Bestellt": Fleisch-Vorbestellungen (11) Karten mit Preisen sichtbar | ✅ Pass |
+| 2026-06-28 | T-25-12 Shop "Bestellt": Fleisch-Preis zeigt gesamtsumme (nicht 0,00 €) | ✅ Pass |
+| 2026-06-28 | T-25-13 Shop "Bestellt": "Noch keine Bestellungen" wird ausgeblendet wenn Fleisch-Orders da | ✅ Pass |
+| 2026-06-28 | T-25-14 Shop "Bestellt": Überschrift "Online-Bestellungen" vor Shop-Orders hinzugefügt | ✅ Pass |
+| 2026-06-28 | T-25-15 Bestellstatus Timeline: FM Status Neu → blauer Dot, 3 graue Dots | ✅ Pass |
+| 2026-06-28 | T-25-16 Bestellstatus Timeline: FM Status Beim Metzger → grün Neu, blau BM, 2 grau | ✅ Pass |
+| 2026-06-28 | T-25-17 Bestellstatus Timeline: FM Status Eingetroffen → 2 grün, blau Eingetr, 1 grau | ✅ Pass |
+| 2026-06-28 | T-25-18 Bestellstatus Timeline: FM Status Storniert → roter Dot "❌ Storniert" | ✅ Pass |
