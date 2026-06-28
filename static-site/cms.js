@@ -1164,7 +1164,7 @@
             +'</span></div>'
             +'<div class="cms-card-body" id="seiten-body-'+s.key+'" style="display:none">'
             +rteBar('seiten-'+s.key)
-            +'<div class="cms-rte-editor" contenteditable="true" id="seiten-'+s.key+'" data-seiten-key="'+s.key+'" style="min-height:120px;max-height:400px;overflow-y:auto">'+val+'</div>'
+            +'<div class="cms-rte-editor" contenteditable="true" id="seiten-'+s.key+'" data-seiten-key="'+s.key+'" data-prev-val="'+val.replace(/"/g,'&quot;')+'" style="min-height:120px;max-height:400px;overflow-y:auto">'+val+'</div>'
             +hint
             +'<div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">'
             +'<button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsSeitenSave(\''+s.key+'\')">&#128190; Speichern</button>'
@@ -1204,6 +1204,7 @@
   window.cmsSeitenSave=function(key){
     var el=document.getElementById('seiten-'+key);
     if(!el) return;
+    var prevHtml=el.getAttribute('data-prev-val')||el.innerHTML;
     var html=el.innerHTML;
     var btn=el.closest('.cms-card').querySelector('.cms-btn-primary');
     var origText=btn.innerHTML;
@@ -1213,6 +1214,14 @@
         if(res.success){
           btn.innerHTML='&#9989; Gespeichert!';
           setTimeout(function(){btn.innerHTML=origText;btn.disabled=false;},2000);
+          el.setAttribute('data-prev-val',html);
+          toast('Gespeichert','ok',function(){
+            // Undo: restore previous content
+            _dvSave(key,prevHtml).then(function(r2){
+              if(r2.success){el.innerHTML=prevHtml;el.setAttribute('data-prev-val',prevHtml);toast('R\u00fcckg\u00e4ngig gemacht');}
+              else{toast('Fehler beim R\u00fcckg\u00e4ngig machen','error');}
+            }).catch(function(e){toast('Fehler: '+e.message,'error');});
+          });
         } else {
           btn.innerHTML='&#10060; Fehler';btn.disabled=false;
           alert('Speichern fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
@@ -3551,7 +3560,7 @@
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
     overlay.innerHTML='<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:400px">'
       +'<h3 style="margin:0 0 12px;font-size:15px">Beitrag l&ouml;schen?</h3>'
-      +'<p style="margin:0 0 16px;font-size:13px;color:#4b5563">&bdquo;'+esc(name)+'&ldquo; wird unwiderruflich gel&ouml;scht.</p>'
+      +'<p style="margin:0 0 16px;font-size:13px;color:#4b5563">&bdquo;'+esc(name)+'&ldquo; l&ouml;schen? Kann kurzzeitig r&uuml;ckg&auml;ngig gemacht werden.</p>'
       +'<div style="display:flex;gap:8px;justify-content:flex-end">'
       +'<button class="cms-btn cms-btn-gray" onclick="document.getElementById(\'cms-news-del-modal\').remove()">Abbrechen</button>'
       +'<button class="cms-btn" style="background:#dc2626;color:#fff" data-action="confirmDeleteNews" data-id="'+id+'">L&ouml;schen</button>'
@@ -3561,14 +3570,23 @@
   }
 
   function confirmDeleteNews(id){
+    // Save item for undo
+    var savedItem=_newsItems.find(function(n){return n.id===id;});
+    var savedData=savedItem?JSON.parse(JSON.stringify(savedItem)):null;
     fetch(API+'/news-delete?id='+id,{method:'DELETE'})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
-          toast('Beitrag gel&ouml;scht','success');
           var modal=document.getElementById('cms-news-del-modal');if(modal)modal.remove();
           _newsItems=_newsItems.filter(function(n){return n.id!==id;});
           renderNewsList();
+          toast('Beitrag gelöscht','ok',savedData?function(){
+            var payload={titel:savedData.titel,inhalt:savedData.inhalt||'',status:savedData.status||101001,dl_laufband:!!savedData.dl_laufband,dl_laufband_bis:savedData.dl_laufband_bis||'',dl_aktiv_bis:savedData.dl_aktiv_bis||''};
+            fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+              .then(function(r){return r.json();})
+              .then(function(r){if(r.success){toast('Beitrag wiederhergestellt');_newsLoaded=false;loadNews();}else{toast('Fehler: '+r.error,'error');}})
+              .catch(function(e){toast('Wiederherstellen fehlgeschlagen: '+e.message,'error');});
+          }:null);
         } else {toast('Fehler: '+res.error,'error');}
       })
       .catch(function(e){toast('Fehler: '+e.message,'error');});
