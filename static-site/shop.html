@@ -1434,9 +1434,7 @@
       html+='<div class="shop-card-price">'+priceHtml+'</div>';
       html+='</div>';
       html+='<div class="shop-card-footer">';
-      if(a.gewichtsware&&isFleischWurst(a.warengruppe)){
-        html+='<a href="/fleisch-bestellen" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:#7f1d1d;color:#fff;font-size:12px;font-weight:700;text-decoration:none;width:100%;justify-content:center">'+lucideHtml('beef',14)+' Vorbestellen mit 15% Rabatt</a>';
-      } else if(a.gewichtsware){
+      if(a.gewichtsware){
         html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"> <span style="font-size:11px;color:#6b7280">g</span> ';
         html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzufügen</button>';
       } else {
@@ -1466,9 +1464,7 @@
       html+='<div class="shop-list-info"><div style="display:flex;align-items:center;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+' <span class="shop-list-meta">'+esc(a.warengruppe)+'</span></div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div>';
       html+='<div class="shop-list-row"><div class="shop-list-price">'+priceHtml+'</div>';
       html+='<div class="shop-list-actions">';
-      if(a.gewichtsware&&isFleischWurst(a.warengruppe)){
-        html+='<a href="/fleisch-bestellen" style="display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:6px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap">'+lucideHtml('beef',12)+' Vorbestellen</a>';
-      } else if(a.gewichtsware){
+      if(a.gewichtsware){
         html+='<input type="number" class="shop-weight-input" data-artnr-wt="'+esc(a.artikelnummer)+'" value="500" min="50" max="9999" step="50"><span style="font-size:10px;color:#6b7280">g</span>';
         html+='<button class="shop-add-btn" data-add="'+esc(a.artikelnummer)+'">+ Hinzu</button>';
       } else {
@@ -1553,10 +1549,31 @@
         +'<div style="flex-shrink:0;width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center">'+lucideHtml('beef',24)+'</div>'
         +'<div style="flex:1;min-width:0">'
         +'<div style="font-size:15px;font-weight:800;letter-spacing:.3px">15 % Rabatt auf Fleisch & Wurst</div>'
-        +'<div style="font-size:12px;opacity:.85;margin-top:2px">Ab 1 kg vorbestellen &amp; im Laden abholen</div>'
+        +'<div style="font-size:12px;opacity:.85;margin-top:2px">Ab 1 kg vorbestellen &amp; 15 % sparen</div>'
         +'</div>'
         +'<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap">Bestellen '+lucideHtml('arrow-right',14)+'</div>'
-        +'</div></a></div>';
+        +'</div></a>'
+        +'<div id="shop-fleisch-hint" style="display:none"></div>'
+        +'</div>';
+      // Check if customer has active Fleisch orders
+      var fmTel=localStorage.getItem('fm_telefon');
+      if(fmTel){
+        fetch('/api/fleisch-order?mode=my&telefon='+encodeURIComponent(fmTel))
+          .then(function(r){return r.json();})
+          .then(function(res){
+            if(res.success&&res.bestellungen&&res.bestellungen.length){
+              var cnt=res.bestellungen.length;
+              var hint=document.getElementById('shop-fleisch-hint');
+              if(hint){
+                hint.style.display='block';
+                hint.innerHTML='<div style="margin-top:6px;padding:8px 12px;background:rgba(255,255,255,.12);border-radius:8px;font-size:12px;display:flex;align-items:center;gap:6px;color:#fff">'
+                  +lucideHtml('check-circle',14)+' <span>Sie haben <b>'+cnt+' aktive Vorbestellung'+(cnt>1?'en':'')+'</b></span>'
+                  +'<a href="/fleisch-bestellen" style="margin-left:auto;color:#fbbf24;font-weight:700;font-size:11px;text-decoration:none;white-space:nowrap">Ansehen '+lucideHtml('arrow-right',12)+'</a>'
+                  +'</div>';
+              }
+            }
+          }).catch(function(){});
+      }
     }
 
     // "Nur kurz verfügbar" section
@@ -1731,7 +1748,7 @@
           +'<div style="flex-shrink:0;width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center">'+lucideHtml('beef',28)+'</div>'
           +'<div style="flex:1;min-width:0">'
           +'<div style="font-size:16px;font-weight:800;letter-spacing:.3px">15 % Rabatt auf Fleisch & Wurst</div>'
-          +'<div style="font-size:13px;opacity:.9;margin-top:2px">Ab 1 kg vorbestellen &amp; im Laden abholen</div>'
+          +'<div style="font-size:13px;opacity:.9;margin-top:2px">Ab 1 kg vorbestellen &amp; 15 % sparen</div>'
           +'</div>'
           +'<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap">Jetzt bestellen '+lucideHtml('arrow-right',16)+'</div>'
           +'</div></a>';
@@ -1739,7 +1756,7 @@
         fleischBanner='<a href="/fleisch-bestellen" style="display:block;text-decoration:none;margin:8px 0 12px">'
           +'<div style="background:linear-gradient(135deg,#7f1d1d,#991b1b);border-radius:10px;padding:10px 16px;color:#fff;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(127,29,29,.2)">'
           +'<div style="flex-shrink:0;display:flex;align-items:center">'+lucideHtml('beef',18)+'</div>'
-          +'<div style="flex:1;font-size:13px;font-weight:700">15 % Rabatt auf Fleisch & Wurst <span style="opacity:.8;font-weight:400">\u2013 ab 1 kg vorbestellen</span></div>'
+          +'<div style="flex:1;font-size:13px;font-weight:700">15 % Rabatt auf Fleisch & Wurst <span style="opacity:.8;font-weight:400">\u2013 ab 1 kg</span></div>'
           +'<div style="flex-shrink:0;display:flex;align-items:center;gap:3px;font-size:12px;font-weight:700;white-space:nowrap">Bestellen '+lucideHtml('arrow-right',14)+'</div>'
           +'</div></a>';
       }
