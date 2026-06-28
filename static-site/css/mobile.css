@@ -969,6 +969,10 @@ main{padding:0!important;margin:0!important}
 
 /* === MOBILE CONTENT CARDS === */
 .mob-cards{padding:4px 16px 16px}
+@media(min-width:600px){
+  .mob-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mob-cards .mob-card{margin-bottom:0}
+}
 .mob-card{
   background:#fff;
   border-radius:16px;
