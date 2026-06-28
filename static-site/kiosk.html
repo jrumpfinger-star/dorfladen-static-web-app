@@ -3291,9 +3291,9 @@ var K = (function(){
       html += '</span>';
       // Quick action in header
       html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
-      if(o.status===0) html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',1)" title="Beim Metzger bestellt">'+luc('send',14)+' <span class="oc-btn-label">Bestellt</span></button>';
-      else if(o.status===1) html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',2)" title="Eingetroffen">'+luc('package-check',14)+' <span class="oc-btn-label">Eingetroffen</span></button>';
-      else if(o.status===2) html += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff" onclick="K.setMetzgerStatus(\''+o.id+'\',3)" title="Abgeholt">'+luc('check-circle',14)+' <span class="oc-btn-label">Abgeholt</span></button>';
+      if(o.status===0) html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',1)" title="Beim Metzger bestellt">'+luc('send',14)+' <span class="oc-btn-label">Bestellt</span></button>';
+      else if(o.status===1) html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',2)" title="Eingetroffen">'+luc('package-check',14)+' <span class="oc-btn-label">Eingetroffen</span></button>';
+      else if(o.status===2) html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',3)" title="Abgeholt">'+luc('check-circle',14)+' <span class="oc-btn-label">Abgeholt</span></button>';
       else if(o.status>=3) html += '<span style="color:'+(o.status===4?'var(--c-red)':'var(--c-green)')+'">'+luc(o.status===4?'x-circle':'check-circle',18)+'</span>';
       html += '</span>';
       html += '</div>';
