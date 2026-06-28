@@ -1636,11 +1636,30 @@
           // ── Desktop widget (inside meat-promo banner) ──
           var deskEl = document.getElementById('desk-fm-orders');
           if(deskEl){
-            var dh = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;font-weight:700;color:#7f1d1d">'
-              +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z"/><polyline points="12 6 12 12 16 14"/></svg>'
-              +' Ihre aktive'+(orders.length>1?'n':'')+' Vorbestellung'+(orders.length>1?'en':'')+':</div>';
-            orders.forEach(function(o){ dh += _fmRenderOrderLink(o); });
-            deskEl.innerHTML = dh;
+            if(orders.length === 1){
+              deskEl.innerHTML = _fmRenderOrderLink(orders[0]);
+            } else {
+              var fmPopId = 'popup-desk-fm-orders';
+              deskEl.innerHTML = '<div onclick="var p=document.getElementById(\''+fmPopId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;cursor:pointer;color:#7f1d1d;font-size:13px;font-weight:600">'
+                +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+                +'<span style="flex:1">Meine Vorbestellungen</span>'
+                +'<span style="font-size:11px;background:rgba(127,29,29,.12);color:#7f1d1d;padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
+                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+                +'</div>';
+              var fmPop = document.createElement('div');
+              fmPop.id = fmPopId;
+              fmPop.style.cssText = 'display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:20px';
+              fmPop.onclick = function(e){ if(e.target===fmPop){ fmPop.style.display='none'; document.body.style.overflow=''; } };
+              var fmCard = '<div style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
+                +'<div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">'
+                +'<span style="font-weight:800;font-size:15px;color:#111">Meine Vorbestellungen</span>'
+                +'<span onclick="document.getElementById(\''+fmPopId+'\').style.display=\'none\';document.body.style.overflow=\'\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
+                +'</div><div style="padding:8px">';
+              orders.forEach(function(o){ fmCard += _fmRenderOrderLink(o); });
+              fmCard += '</div></div>';
+              fmPop.innerHTML = fmCard;
+              document.body.appendChild(fmPop);
+            }
             deskEl.style.display = 'block';
           }
         }).catch(function(){});
