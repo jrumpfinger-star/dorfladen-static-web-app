@@ -1670,6 +1670,7 @@
     if(activeCat==='previous'&&previousOrders.length){
       var initialShow=2;
       var hasMore=previousOrders.length>initialShow;
+      reorderBanner+='<div style="padding:8px 16px 4px"><div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:#1f2937">'+lucideHtml('shopping-bag',18)+' Online-Bestellungen <span style="font-size:12px;font-weight:500;color:#6b7280">('+previousOrders.length+')</span></div></div>';
       reorderBanner+='<div class="reorder-wrap" id="reorder-wrap">';
       reorderBanner+='<div class="reorder-grid" id="reorder-grid">';
       for(var oi=0;oi<previousOrders.length;oi++){
