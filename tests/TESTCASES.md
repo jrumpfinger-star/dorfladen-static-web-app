@@ -1683,3 +1683,4 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-28 | T-25-16 Bestellstatus Timeline: FM Status Beim Metzger → grün Neu, blau BM, 2 grau | ✅ Pass |
 | 2026-06-28 | T-25-17 Bestellstatus Timeline: FM Status Eingetroffen → 2 grün, blau Eingetr, 1 grau | ✅ Pass |
 | 2026-06-28 | T-25-18 Bestellstatus Timeline: FM Status Storniert → roter Dot "❌ Storniert" | ✅ Pass |
+| 2026-06-28 | T-25-19 Artikelfreigabe: Fleisch & Wurst ohne 6-Wochen-Filter → 258 statt 5 nicht freigegeben | ✅ Pass |
