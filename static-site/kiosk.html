@@ -3620,8 +3620,6 @@ var K = (function(){
       }).catch(function(e){ console.error('[metzger] sammel failed', e); });
   }
 
-  var _fmSammelChecked = {}; // key → true/false for checked items
-
   function renderSammelbestellung(data){
     var body = document.getElementById('metzger-sammel-body');
     var agg = data.aggregiert || [];
@@ -3632,36 +3630,34 @@ var K = (function(){
 
     var html = '<div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--c-muted)">Liefertag: '+esc(data.liefertag)+' | '+data.gesamt_bestellungen+' Bestellungen</div>';
     html += '<table id="metzger-sammel-table" style="width:100%;font-size:14px;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">';
-    html += '<thead><tr style="background:#f9fafb"><th style="width:40px;padding:8px 6px;text-align:center"><input type="checkbox" id="fm-sammel-all-cb" title="Alle markieren" style="width:18px;height:18px;cursor:pointer"></th><th style="text-align:left;padding:8px 12px">Artikel</th><th style="text-align:right;padding:8px 12px">Gesamt kg</th><th style="text-align:right;padding:8px 12px">Bestellungen</th><th style="text-align:center;padding:8px 12px">Status</th></tr></thead><tbody>';
+    html += '<thead><tr style="background:#f9fafb"><th style="width:40px;padding:8px 6px;text-align:center"><input type="checkbox" id="fm-sammel-all-cb" title="Alle als bestellt markieren" style="width:18px;height:18px;cursor:pointer"></th><th style="text-align:left;padding:8px 12px">Artikel</th><th style="text-align:right;padding:8px 12px">Gesamt kg</th><th style="text-align:right;padding:8px 12px">Bestellungen</th><th style="text-align:center;padding:8px 12px">Status</th></tr></thead><tbody>';
     agg.forEach(function(a,i){
       var key = a.artikelnummer || a.bezeichnung || ('row-'+i);
-      var checked = _fmSammelChecked[key] || false;
-      html += '<tr data-fm-sammel-row="'+esc(key)+'" style="border-top:1px solid #f3f4f6;'+(checked?'background:#f0fdf4;':'cursor:pointer;')+'">';
-      html += '<td style="padding:8px 6px;text-align:center"><input type="checkbox" data-fm-sammel-cb="'+esc(key)+'" '+(checked?'checked':'')+' style="width:18px;height:18px;cursor:pointer"></td>';
-      html += '<td style="padding:8px 12px;'+(checked?'text-decoration:line-through;color:#9ca3af':'')+'">'+esc(a.bezeichnung)+'</td>';
-      html += '<td style="text-align:right;padding:8px 12px;font-weight:700;'+(checked?'text-decoration:line-through;color:#9ca3af':'')+'">'+Number(a.gesamt_kg).toFixed(1)+' kg</td>';
-      html += '<td style="text-align:right;padding:8px 12px;'+(checked?'color:#9ca3af':'')+'">'+a.anzahl_bestellungen+'</td>';
       var bc = a.bestellt_count||0;
       var allDone = bc>=a.anzahl_bestellungen;
+      html += '<tr data-fm-sammel-row="'+esc(key)+'" data-fm-sammel-art="'+esc(a.artikelnummer||'')+'" data-fm-sammel-bez="'+esc(a.bezeichnung||'')+'" style="border-top:1px solid #f3f4f6;'+(allDone?'background:#f0fdf4;':'cursor:pointer;')+'">';
+      html += '<td style="padding:8px 6px;text-align:center"><input type="checkbox" data-fm-sammel-cb="'+esc(key)+'" '+(allDone?'checked':'')+' style="width:18px;height:18px;cursor:pointer"'+(allDone?' disabled':'')+'></td>';
+      html += '<td style="padding:8px 12px;'+(allDone?'text-decoration:line-through;color:#9ca3af':'')+'">'+esc(a.bezeichnung)+'</td>';
+      html += '<td style="text-align:right;padding:8px 12px;font-weight:700;'+(allDone?'text-decoration:line-through;color:#9ca3af':'')+'">'+Number(a.gesamt_kg).toFixed(1)+' kg</td>';
+      html += '<td style="text-align:right;padding:8px 12px;'+(allDone?'color:#9ca3af':'')+'">'+a.anzahl_bestellungen+'</td>';
       html += '<td style="text-align:center;padding:8px 12px;font-size:12px;font-weight:700;color:'+(allDone?'#16a34a':bc>0?'#d97706':'#9ca3af')+'">'+(allDone?'\u2705':bc>0?bc+'/'+a.anzahl_bestellungen:'\u2014')+'</td></tr>';
     });
     html += '</tbody></table>';
     body.innerHTML = html;
 
-    // Wire checkbox events
+    // Wire checkbox: marks all positions of this article as bestellt across all orders
     document.querySelectorAll('[data-fm-sammel-cb]').forEach(function(cb){
+      if(cb.disabled) return; // already all done
       cb.addEventListener('change', function(){
-        var key = cb.getAttribute('data-fm-sammel-cb');
-        _fmSammelChecked[key] = cb.checked;
-        var row = document.querySelector('[data-fm-sammel-row="'+key+'"]');
-        if(row){
-          row.style.background = cb.checked ? '#f0fdf4' : '';
-          var cells = row.querySelectorAll('td');
-          if(cells[1]) cells[1].style.cssText = 'padding:8px 12px;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
-          if(cells[2]) cells[2].style.cssText = 'text-align:right;padding:8px 12px;font-weight:700;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
-          if(cells[3]) cells[3].style.cssText = 'text-align:right;padding:8px 12px;'+(cb.checked?'color:#9ca3af':'');
-        }
-        _fmUpdateSammelAllCb();
+        if(!cb.checked) { cb.checked = false; return; } // only allow checking, not unchecking
+        var row = cb.closest('[data-fm-sammel-row]');
+        var art = row.getAttribute('data-fm-sammel-art');
+        var bez = row.getAttribute('data-fm-sammel-bez');
+        cb.disabled = true;
+        _fmMarkArtikelBestellt(art, bez, function(){
+          loadMetzgerSammel();
+          loadMetzgerOrders();
+        });
       });
     });
 
@@ -3670,30 +3666,51 @@ var K = (function(){
       row.addEventListener('click', function(e){
         if(e.target.tagName==='INPUT') return;
         var cb = row.querySelector('[data-fm-sammel-cb]');
-        if(cb){ cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
+        if(cb && !cb.disabled && !cb.checked){ cb.checked = true; cb.dispatchEvent(new Event('change')); }
       });
     });
 
-    // "Select all" checkbox
+    // "Select all" checkbox → triggers metzgerAlleGesendet
     var allCb = document.getElementById('fm-sammel-all-cb');
     if(allCb){
+      // Check if all are already done
+      var allDoneGlobal = agg.length > 0 && agg.every(function(a){ return (a.bestellt_count||0) >= a.anzahl_bestellungen; });
+      allCb.checked = allDoneGlobal;
+      if(allDoneGlobal) allCb.disabled = true;
       allCb.addEventListener('change', function(){
-        document.querySelectorAll('[data-fm-sammel-cb]').forEach(function(cb){
-          cb.checked = allCb.checked;
-          cb.dispatchEvent(new Event('change'));
-        });
+        if(allCb.checked) metzgerAlleGesendet();
       });
-      _fmUpdateSammelAllCb();
     }
   }
 
-  function _fmUpdateSammelAllCb(){
-    var allCb = document.getElementById('fm-sammel-all-cb');
-    if(!allCb) return;
-    var cbs = document.querySelectorAll('[data-fm-sammel-cb]');
-    var allChecked = cbs.length > 0;
-    cbs.forEach(function(cb){ if(!cb.checked) allChecked = false; });
-    allCb.checked = allChecked;
+  // Mark all positions of a specific article as bestellt across all orders for current Liefertag
+  function _fmMarkArtikelBestellt(artikelnummer, bezeichnung, callback){
+    var updates = [];
+    _fmOrders.forEach(function(o){
+      if(o.liefertag !== _fmSammelLiefertag || o.status >= 3) return;
+      var pos = o.positionen || [];
+      var changed = false;
+      pos.forEach(function(p){
+        if(p.bestellt) return;
+        var match = (artikelnummer && p.artikelnummer === artikelnummer) ||
+                    (!artikelnummer && (p.bezeichnung||p.strichcode) === bezeichnung);
+        if(match){ p.bestellt = true; changed = true; }
+      });
+      if(changed){
+        var allBestellt = pos.every(function(p){ return !!p.bestellt; });
+        updates.push({id: o.id, positionen: pos, setStatus1: allBestellt && o.status === 0});
+      }
+    });
+    if(!updates.length){ toast('Bereits alle bestellt'); if(callback) callback(); return; }
+    var pending = updates.length;
+    updates.forEach(function(u){
+      var body = {id: u.id, positionen: u.positionen};
+      if(u.setStatus1) body.status = 1;
+      fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+        .then(function(r){return r.json();})
+        .then(function(){ pending--; if(pending<=0){ toast('\u2705 Artikel als bestellt markiert'); if(callback) callback(); } })
+        .catch(function(){ pending--; if(pending<=0 && callback) callback(); });
+    });
   }
 
   function printMetzgerSammel(){
@@ -3714,9 +3731,9 @@ var K = (function(){
   function metzgerAlleGesendet(){
     var orders = [];
     _fmOrders.forEach(function(o){
-      if(o.status===0 && o.liefertag===_fmSammelLiefertag) orders.push(o);
+      if(o.status < 2 && o.liefertag===_fmSammelLiefertag) orders.push(o);
     });
-    if(!orders.length){ toast('Keine neuen Bestellungen'); return; }
+    if(!orders.length){ toast('Keine offenen Bestellungen'); return; }
     var pending = orders.length;
     orders.forEach(function(o){
       var pos = (o.positionen||[]).map(function(p){ p.bestellt=true; return p; });
@@ -3724,7 +3741,7 @@ var K = (function(){
         .then(function(r){return r.json();})
         .then(function(){
           pending--;
-          if(pending<=0){ toast('\u2705 '+orders.length+' Bestellungen als bestellt markiert'); loadMetzgerOrders(); }
+          if(pending<=0){ toast('\u2705 '+orders.length+' Bestellungen als bestellt markiert'); loadMetzgerOrders(); loadMetzgerSammel(); }
         }).catch(function(){ pending--; });
     });
   }
