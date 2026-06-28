@@ -253,6 +253,118 @@ test.describe('Routing', () => {
 });
 
 // ════════════════════════════════════════════════════
+//  T-21: Kiosk Per-Item-Bestellung & 2-Spalten-Layout (AK-FLEISCH-21)
+// ════════════════════════════════════════════════════
+
+test.describe('T-21 Kiosk Fleisch Per-Item-Bestellung (AK-FLEISCH-21)', () => {
+
+  test('T-21-01 toggleFmItemBestellt Funktion existiert (AK-FLEISCH-21)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.toggleFmItemBestellt === 'function');
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-21-02 toggleAllFmItems Funktion existiert (AK-FLEISCH-21)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.toggleAllFmItems === 'function');
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-21-03 Metzger-Karte zeigt 2-Spalten-Grid-Layout (AK-FLEISCH-21)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    // Expand first order card if any
+    const cards = page.locator('#metzger-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen vorhanden');
+      return;
+    }
+    await cards.first().locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+    // Check for grid layout in the body
+    const gridEl = cards.first().locator('.k-order-body div[style*="grid-template-columns"]');
+    const gridCount = await gridEl.count();
+    expect(gridCount).toBeGreaterThanOrEqual(1);
+  });
+
+  test('T-21-04 Checkboxen bei Status 0/1 sichtbar (AK-FLEISCH-21)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    // Find cards with status 0 or 1
+    const openCards = page.locator('#metzger-orders .k-order[data-fmstatus="0"], #metzger-orders .k-order[data-fmstatus="1"]');
+    const count = await openCards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine offenen Metzger-Bestellungen');
+      return;
+    }
+    // Expand first open card
+    await openCards.first().locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+    // Should have checkboxes
+    const checkboxes = openCards.first().locator('input[type="checkbox"]');
+    const cbCount = await checkboxes.count();
+    expect(cbCount).toBeGreaterThanOrEqual(1);
+  });
+
+  test('T-21-05 Status-Badge mit korrekter CSS-Klasse (AK-FLEISCH-21)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    const badges = page.locator('#metzger-orders .k-badge');
+    const count = await badges.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen vorhanden');
+      return;
+    }
+    // Each badge should have one of the status classes
+    for (let i = 0; i < Math.min(count, 5); i++) {
+      const badge = badges.nth(i);
+      const classes = await badge.getAttribute('class');
+      const hasStatusClass = /st-(new|confirm|ready|done|cancel)/.test(classes);
+      expect(hasStatusClass).toBe(true);
+    }
+  });
+
+  test('T-21-06 Quick-Action-Button im Header (AK-FLEISCH-21)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    const openCards = page.locator('#metzger-orders .k-order[data-fmstatus="0"], #metzger-orders .k-order[data-fmstatus="1"], #metzger-orders .k-order[data-fmstatus="2"]');
+    const count = await openCards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine aktiven Metzger-Bestellungen');
+      return;
+    }
+    // Header should contain action button
+    const headerBtns = openCards.first().locator('.k-order-hdr .k-oc-actions button');
+    const btnCount = await headerBtns.count();
+    expect(btnCount).toBeGreaterThanOrEqual(1);
+  });
+
+  test('T-21-07 API PATCH akzeptiert positionen (AK-FLEISCH-21)', async ({ request }) => {
+    const resp = await request.patch(`${BASE}/api/fleisch-order`, {
+      data: { id: 'nonexistent-id-12345', positionen: [{ bezeichnung: 'Test', bestellt: true }] },
+      headers: { 'Content-Type': 'application/json' }
+    });
+    // Should be 400 or 404 (invalid ID), NOT 500
+    expect([400, 404]).toContain(resp.status());
+  });
+
+  test('T-21-08 API PATCH validiert positionen-Format (AK-FLEISCH-21)', async ({ request }) => {
+    const resp = await request.patch(`${BASE}/api/fleisch-order`, {
+      data: { id: 'test', positionen: 'invalid-not-array' },
+      headers: { 'Content-Type': 'application/json' }
+    });
+    expect(resp.status()).toBe(400);
+  });
+});
+
+// ════════════════════════════════════════════════════
 //  T-18: CMS-Metzger Lesbarkeit & Bestelldetails (AK-FLEISCH-17)
 // ════════════════════════════════════════════════════
 

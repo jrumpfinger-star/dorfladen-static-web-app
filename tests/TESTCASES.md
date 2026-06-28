@@ -1408,3 +1408,56 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung:** `typeof K.sendFmReply === 'function'` ist `false`
 - **Erwartung:** Alte inline-Funktion wurde entfernt
 > Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-19
+
+---
+
+## T21 – Kiosk Fleisch Per-Item-Bestellung & 2-Spalten-Layout (AK-FLEISCH-21)
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-01 toggleFmItemBestellt Funktion existiert (AK-FLEISCH-21)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** `typeof K.toggleFmItemBestellt === 'function'`
+- **Erwartung:** Funktion existiert in der K-API
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-02 toggleAllFmItems Funktion existiert (AK-FLEISCH-21)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** `typeof K.toggleAllFmItems === 'function'`
+- **Erwartung:** Funktion existiert in der K-API
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-03 Metzger-Karte zeigt 2-Spalten-Grid-Layout (AK-FLEISCH-21)
+- **Aktion:** Kiosk → Metzger-Tab → erste Bestellkarte aufklappen
+- **Prüfung:** `k-order-body` enthält ein Grid-Element mit `grid-template-columns: 200px 1fr`
+- **Erwartung:** 2-Spalten-Layout sichtbar (Meta links, Positionen rechts)
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-04 Checkboxen bei Status 0/1 sichtbar (AK-FLEISCH-21)
+- **Aktion:** Kiosk → Metzger-Tab → Bestellkarte mit Status 0 oder 1 aufklappen
+- **Prüfung:** `input[type="checkbox"]` Elemente in der Bestellkarte vorhanden
+- **Erwartung:** Mindestens 1 Checkbox pro Bestellung sichtbar (bei offenen Bestellungen)
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-05 Status-Badge mit korrekter CSS-Klasse (AK-FLEISCH-21)
+- **Aktion:** Kiosk → Metzger-Tab → Bestellkarten prüfen
+- **Prüfung:** `.k-badge` Elemente mit Klassen `st-new`, `st-confirm`, `st-ready`, `st-done` oder `st-cancel`
+- **Erwartung:** Jede Bestellkarte hat ein k-badge mit passender Status-Klasse
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-06 Quick-Action-Button im Header (AK-FLEISCH-21)
+- **Aktion:** Kiosk → Metzger-Tab → Header einer offenen Bestellkarte prüfen
+- **Prüfung:** `.k-oc-actions button` im Header vorhanden
+- **Erwartung:** Status-Änderungs-Button im Header sichtbar (z.B. „Bestellt", „Eingetroffen")
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-07 API PATCH akzeptiert positionen (AK-FLEISCH-21)
+- **Aktion:** PATCH `/api/fleisch-order` mit `{"id": "invalid", "positionen": [{"bezeichnung":"Test","bestellt":true}]}`
+- **Prüfung:** Response-Status ist 400 oder 404 (ungültige ID), NICHT 500
+- **Erwartung:** API verarbeitet positionen-Feld fehlerfrei (kein Server-Crash)
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-08 API PATCH validiert positionen-Format (AK-FLEISCH-21)
+- **Aktion:** PATCH `/api/fleisch-order` mit `{"id": "test", "positionen": "invalid"}`
+- **Prüfung:** Response-Status ist 400
+- **Erwartung:** API lehnt ungültiges Format ab mit Fehlermeldung
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21

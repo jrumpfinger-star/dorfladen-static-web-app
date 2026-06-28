@@ -169,13 +169,15 @@ Kunden können Fleisch- und Wurstwaren (gewogene Artikel) ab 1 kg vorbestellen u
 - `?nr=FM-xxx&telefon=xxx` → einzelne Bestellung (Statusabfrage)
 - `?liefertag=2026-07-03` → alle Bestellungen für einen Liefertag (Sammelbestellung)
 
-#### PATCH `/api/fleisch-order` – Status/Kommentar ändern
+#### PATCH `/api/fleisch-order` – Status/Kommentar/Positionen ändern
 - Body: `{"id": "...", "status": 1}` (0=Neu, 1=Beim Metzger, 2=Eingetroffen, 3=Abgeholt, 4=Storniert)
+- Body: `{"id": "...", "positionen": [...]}` → aktualisiert `dl_positionen_json` (für per-Item „bestellt"-Tracking)
 - Body: `{"id": "...", "kunde_kommentar": "..."}` → setzt Kommentar + `kommentar_gelesen=false`
 - Body: `{"id": "...", "personal_antwort": "...", "kommentar_gelesen": true}` → Antwort + Push an Kunde
 - Body: `{"id": "...", "kommentar_gelesen": true}` → Nur als gelesen markieren
 - Bei Status 2 (Eingetroffen): Push an Kunde „Ihre Fleischbestellung ist abholbereit"
 - Bei Personal-Antwort: Push an Kunde „Neue Nachricht zu Ihrer Bestellung"
+- Validierung: `positionen` muss ein Array von Objekten sein, sonst HTTP 400
 
 ---
 
@@ -217,13 +219,23 @@ Kunden können Fleisch- und Wurstwaren (gewogene Artikel) ab 1 kg vorbestellen u
 
 ### Bestellkarten
 - Klappbare Karten (wie Mittagstisch/Shop-Bestellungen)
-- Kundenname, Telefon, Bestellnummer
-- Positionen mit Menge und Preis
-- Status-Badge mit Farbe
-- Aktions-Buttons: Status ändern, Nachricht senden/Antworten, Gelesen markieren
+- **Header**: Kundenname, Positions-Anzahl, Bestellt-Zähler (X/Y), Status-Badge (k-badge), Quick-Action-Button
+- **Body: 2-Spalten-Layout** (Grid: 200px | 1fr):
+  - **Links (Meta)**: Bestellnummer, Telefon, Liefertag, Gesamtsumme, Ersparnis, Anmerkung
+  - **Rechts (Positionen)**: Artikelliste mit per-Item „bestellt"-Checkbox
+- **Per-Item-Bestellung**: Jede Position hat eine Checkbox „bestellt" (nur bei Status 0+1 aktiv)
+  - Checkbox-Änderung → sofortiger PATCH an API (positionen_json)
+  - Bestellte Items: grüner Hintergrund (#f0fdf4), grüner Text
+  - Unbestellte Items: weißer Hintergrund
+- **Aktions-Buttons** (am unteren Rand, mit border-top):
+  - Status 0: „Alle markieren" oder „Alle beim Metzger bestellt" (wenn alle markiert) + „Stornieren"
+  - Status 1: „Eingetroffen"
+  - Status 2: „Abgeholt"
+  - „Gelesen" bei ungelesenen Nachrichten, „Nachricht" bei offenen Bestellungen
+- Status-Badge mit Farbe (k-badge Klassen: st-new, st-confirm, st-ready, st-done, st-cancel)
 - Kundenkommentar wird inline angezeigt (blau=ungelesen, grau=gelesen)
 - Personal-Antwort wird grün angezeigt
-- Inline-Antwort-Formular per Button
+- Touch-Modal für Nachrichten (AK-FLEISCH-19)
 
 ### Sammelbestellung (Metzger-Zettel)
 - **Pro Liefertag**: alle Positionen aller Kunden aggregiert
@@ -410,6 +422,20 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 ### AK-FLEISCH-15: Bestätigung → Bestellstatus-Link
 - [x] Nach Bestellerfolg: Link „Bestellstatus ansehen“ in der Bestätigung
 - [x] Bestellnummer + Telefon in localStorage gespeichert (fm_nr, fm_telefon)
+
+### AK-FLEISCH-21: Kiosk Per-Item-Bestellung & 2-Spalten-Layout
+- [x] Aufgeklappte Fleisch-Bestellkarte zeigt 2-Spalten-Layout (Meta links, Positionen rechts)
+- [x] Linke Spalte (200px): Bestellnummer, Telefon, Liefertag, Gesamtsumme, Ersparnis, Anmerkung
+- [x] Rechte Spalte: Artikelliste mit per-Item Checkbox „bestellt"
+- [x] Checkboxen nur aktiv bei Status 0 (Neu) oder 1 (Beim Metzger bestellt)
+- [x] Bestellt-Zähler im Header: „X/Y bestellt" (nur wenn teilweise bestellt)
+- [x] Checkbox-Änderung speichert sofort per PATCH (positionen_json)
+- [x] „Alle markieren"-Button markiert alle Positionen als bestellt
+- [x] Wenn alle Positionen bestellt: „Alle beim Metzger bestellt"-Button erscheint
+- [x] Status-Badges mit farbcodierten CSS-Klassen (k-badge st-new/st-confirm/st-ready/st-done/st-cancel)
+- [x] Quick-Action-Buttons im Header (nächster Status-Schritt)
+- [x] API PATCH akzeptiert `positionen` Array und speichert als `dl_positionen_json`
+- [x] Funktionen `K.toggleFmItemBestellt` und `K.toggleAllFmItems` im K-Namespace registriert
 
 ### AK-FLEISCH-10: CMS-Integration
 - [x] Rabatt, Mindestmenge, Liefertage, Bestellschluss konfigurierbar
