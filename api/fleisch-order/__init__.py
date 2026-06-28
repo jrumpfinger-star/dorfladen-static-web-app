@@ -705,6 +705,9 @@ def _handle_patch(req, token, base_url, hdrs):
                 status_code=400, headers=get_cors_headers()
             )
 
+    # Per-item status update (e.g. marking individual items as "bestellt")
+    positionen_update = body.get("positionen")
+
     patch_data = {}
     if new_status is not None:
         patch_data["dl_status"] = int(new_status)
@@ -715,6 +718,8 @@ def _handle_patch(req, token, base_url, hdrs):
         patch_data["dl_personal_antwort"] = personal_antwort.strip()
     if kommentar_gelesen is not None:
         patch_data["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
+    if positionen_update is not None:
+        patch_data["dl_positionen_json"] = json.dumps(positionen_update, ensure_ascii=False)
 
     if not patch_data:
         return func.HttpResponse(
