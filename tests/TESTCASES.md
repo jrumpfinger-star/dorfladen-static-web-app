@@ -1581,3 +1581,48 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-29 | T-23-04 Button Text: Alle beim Metzger bestellt | ✅ Pass |
 | 2026-06-29 | T-23-05 Filter-Leiste sticky ohne Gap | ✅ Pass |
 | 2026-06-29 | T-23-06 metzgerAlleGesendet Funktion existiert | ✅ Pass |
+
+---
+
+## T-24 – Backlog-Items: F-01, N-01, N-02, Shop-Fleisch-Fix
+
+### T-24-01: F-01 Fleisch-Bestellverlauf – History-Button sichtbar
+- **Aktion:** `/fleisch-bestellen` aufrufen
+- **Prüfung:** Button `#fm-history-btn` im Header sichtbar
+- **Erwartung:** Button mit Clipboard-Icon vorhanden
+
+### T-24-02: F-01 Fleisch-Bestellverlauf – Overlay zeigt Bestellungen
+- **Aktion:** History-Button klicken (Telefonnummer in localStorage vorhanden)
+- **Prüfung:** Overlay `#fm-history-overlay` öffnet sich, Bestellungen werden angezeigt
+- **Erwartung:** Liste mit Datum, Bestellnummer, Positionen, Summe, Status-Badge
+
+### T-24-03: N-01 Bilder in News – Kein doppeltes Bild
+- **Aktion:** `/aktuelles` aufrufen, "Weiterlesen" klicken bei Beitrag mit Bild
+- **Prüfung:** Bild nicht doppelt (einmal auf Karte, nicht nochmal im Volltext)
+- **Erwartung:** Kein doppeltes Bild im aufgeklappten Inhalt
+
+### T-24-04: N-02 Teilen-Buttons auf News-Karten
+- **Aktion:** `/aktuelles` aufrufen
+- **Prüfung:** Jede News-Karte hat "WhatsApp" und "Link kopieren" Buttons
+- **Erwartung:** 5 Karten × 2 Buttons = 10 Share-Buttons sichtbar
+
+### T-24-05: Shop Fleisch/Wurst – Normale Bestellbarkeit
+- **Aktion:** `/shop` → Kategorie "Fleisch und Wurstwaren" klicken
+- **Prüfung:** Alle Fleisch-Artikel zeigen Gewichtseingabe + "+ Hinzu" Button
+- **Erwartung:** Kein "Vorbestellen"-Link mehr, stattdessen normale Warenkorb-Interaktion
+
+### T-24-06: Shop Rabatt-Banner – Aktive Vorbestellungen
+- **Aktion:** `/shop` aufrufen (fm_telefon in localStorage gesetzt)
+- **Prüfung:** Rabatt-Banner enthält Hinweis auf aktive Vorbestellungen
+- **Erwartung:** Unter dem Banner: "Sie haben X aktive Vorbestellung(en)" mit "Ansehen" Link
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-28 | T-24-01 F-01 History-Button sichtbar | ✅ Pass |
+| 2026-06-28 | T-24-02 F-01 Overlay zeigt 8 Bestellungen | ✅ Pass |
+| 2026-06-28 | T-24-03 N-01 Kein doppeltes Bild im Volltext | ✅ Pass |
+| 2026-06-28 | T-24-04 N-02 10 Share-Buttons (5×WhatsApp + 5×Link kopieren) | ✅ Pass |
+| 2026-06-28 | T-24-05 Shop Fleisch 5 Artikel mit Gewichtseingabe + Hinzu | ✅ Pass |
+| 2026-06-28 | T-24-06 Shop Rabatt-Banner: Kein Hinweis ohne aktive Bestellungen | ✅ Pass (korrekt: hint bleibt hidden wenn API 0 Bestellungen zurückgibt) |
