@@ -1896,7 +1896,7 @@
             bb.forEach(function(b){
               var dt='';try{var dd=new Date(b.bestelldatum);dt=('0'+dd.getDate()).slice(-2)+'.'+('0'+(dd.getMonth()+1)).slice(-2)+'.'+dd.getFullYear();}catch(e){dt=b.bestelldatum||'';}
               var pos=b.positionen?b.positionen.length:0;
-              var sum=(Number(b.gesamtpreis)||0).toFixed(2).replace('.',',')+' €';
+              var sum=(Number(b.gesamtsumme)||0).toFixed(2).replace('.',',')+' €';
               var st=b.status||0;
               var stLabel=FM_ST[st]||'';
               var stColor=FM_CLR[st]||'#6b7280';
