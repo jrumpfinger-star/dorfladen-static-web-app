@@ -1771,7 +1771,7 @@
       emptyHint='<div style="text-align:center;padding:40px 20px;color:#6b7280"><div style="font-size:48px;margin-bottom:12px">❤️</div><p style="font-size:16px;font-weight:600;margin-bottom:8px">Noch keine Favoriten</p><p style="font-size:13px">Tippen Sie das Herz-Symbol ♡ bei einem Artikel, um ihn als Favorit zu speichern.</p></div>';
     }
     if(activeCat==='previous'&&!items.length&&!previousOrders.length){
-      emptyHint='<div style="text-align:center;padding:40px 20px;color:#6b7280"><div style="font-size:48px;margin-bottom:12px">📦</div><p style="font-size:16px;font-weight:600;margin-bottom:8px">Noch keine Bestellungen</p><p style="font-size:13px">Ihre bestellten Artikel werden hier angezeigt, sobald Sie eine Bestellung aufgeben.</p></div>';
+      emptyHint='<div id="shop-empty-orders" style="text-align:center;padding:40px 20px;color:#6b7280"><div style="font-size:48px;margin-bottom:12px">📦</div><p style="font-size:16px;font-weight:600;margin-bottom:8px">Noch keine Bestellungen</p><p style="font-size:13px">Ihre bestellten Artikel werden hier angezeigt, sobald Sie eine Bestellung aufgeben.</p></div>';
     }
     var renderFn=articleViewMode==='list'?renderArticlesList:renderArticles;
     var articleHtml=items.length?renderFn(items,title,emoji):'';
@@ -1919,6 +1919,8 @@
             h+='</div>';
             el.innerHTML=h;
             el.style.display='block';
+            var emptyEl=document.getElementById('shop-empty-orders');
+            if(emptyEl) emptyEl.style.display='none';
             if(window.lucide) lucide.createIcons();
           }).catch(function(){});
       }
