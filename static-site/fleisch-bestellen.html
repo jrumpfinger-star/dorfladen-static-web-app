@@ -149,6 +149,27 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .fm-submit:active{transform:translateY(0)}
 .fm-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 
+/* History */
+.fm-history-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#fff;background:none;border:none;cursor:pointer;opacity:.8;font-size:14px;display:flex;align-items:center;gap:4px}
+.fm-history-btn:hover{opacity:1}
+.fm-history-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:16px}
+.fm-history-overlay.open{display:flex}
+.fm-history-card{background:#fff;border-radius:14px;max-width:440px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.fm-history-hdr{padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+.fm-history-hdr h3{font-size:15px;font-weight:800;color:#111;margin:0}
+.fm-history-close{cursor:pointer;font-size:20px;color:#9ca3af;line-height:1;background:none;border:none}
+.fm-history-body{padding:8px 12px}
+.fm-history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px;text-decoration:none;color:inherit;border-radius:8px}
+.fm-history-item:hover{background:#f9fafb}
+.fm-history-date{font-weight:600;color:#374151}
+.fm-history-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px}
+.fm-history-badge.st-0{background:#fef3c7;color:#92400e}
+.fm-history-badge.st-1{background:#dbeafe;color:#1e40af}
+.fm-history-badge.st-2{background:#dcfce7;color:#166534}
+.fm-history-badge.st-3{background:#f3f4f6;color:#6b7280}
+.fm-history-badge.st-4{background:#fee2e2;color:#991b1b}
+.fm-history-empty{text-align:center;padding:30px 16px;color:#9ca3af;font-size:14px}
+
 /* Confirmation */
 .fm-confirm{display:none;background:var(--c-card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;text-align:center;margin:20px 0}
 .fm-confirm.show{display:block}
@@ -214,6 +235,19 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   <a href="/" class="fm-back"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></a>
   <h1><i data-lucide="beef" style="width:22px;height:22px"></i> Fleisch &amp; Wurst</h1>
   <small>Vorbestellen &amp; im Laden abholen</small>
+  <button class="fm-history-btn" id="fm-history-btn" onclick="fmShowHistory()"><i data-lucide="clipboard-list" style="width:18px;height:18px"></i></button>
+</div>
+
+<div class="fm-history-overlay" id="fm-history-overlay">
+  <div class="fm-history-card">
+    <div class="fm-history-hdr">
+      <h3>Meine Bestellungen</h3>
+      <button class="fm-history-close" onclick="document.getElementById('fm-history-overlay').classList.remove('open')">&times;</button>
+    </div>
+    <div class="fm-history-body" id="fm-history-body">
+      <div class="fm-history-empty">Laden...</div>
+    </div>
+  </div>
 </div>
 
 <!-- Countdown Banner -->
@@ -958,6 +992,44 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     if(cartOpen){ fmCloseCart(true); return; }
     var confirmOpen = document.getElementById('fm-confirm').classList.contains('show');
     if(confirmOpen){ fmReset(true); return; }
+  });
+
+  // ── History ──
+  var FM_STATUS = {0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+  window.fmShowHistory = function(){
+    var telefon = localStorage.getItem('fm_telefon')||'';
+    var overlay = document.getElementById('fm-history-overlay');
+    var body = document.getElementById('fm-history-body');
+    if(!telefon){
+      body.innerHTML='<div class="fm-history-empty">Bitte zuerst eine Bestellung aufgeben, damit Ihre Telefonnummer gespeichert ist.</div>';
+      overlay.classList.add('open'); return;
+    }
+    body.innerHTML='<div class="fm-history-empty">Laden...</div>';
+    overlay.classList.add('open');
+    fetch('/api/fleisch-order?mode=my_history&telefon='+encodeURIComponent(telefon))
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success||!res.bestellungen||!res.bestellungen.length){
+          body.innerHTML='<div class="fm-history-empty">Keine Bestellungen gefunden.</div>'; return;
+        }
+        var html='';
+        res.bestellungen.forEach(function(b){
+          var dt=b.liefertag?new Date(b.liefertag).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+          var sum=(b.gesamtsumme||0).toFixed(2).replace('.',',')+' \u20ac';
+          var pos=b.positionen?b.positionen.length:0;
+          var stCls='st-'+(b.status||0);
+          var stTxt=FM_STATUS[b.status]||'';
+          html+='<a class="fm-history-item" href="/bestellstatus?nr='+esc(b.bestellnummer||'')+'">';
+          html+='<div><div class="fm-history-date">'+esc(dt)+'</div><div style="font-size:11px;color:#9ca3af">'+esc(b.bestellnummer||'')+' \u00b7 '+pos+' Pos.</div></div>';
+          html+='<div style="text-align:right"><div style="font-weight:700;font-size:13px;margin-bottom:2px">'+sum+'</div><span class="fm-history-badge '+stCls+'">'+esc(stTxt)+'</span></div>';
+          html+='</a>';
+        });
+        body.innerHTML=html;
+      })
+      .catch(function(){body.innerHTML='<div class="fm-history-empty">Fehler beim Laden.</div>';});
+  };
+  document.getElementById('fm-history-overlay').addEventListener('click',function(e){
+    if(e.target===this) this.classList.remove('open');
   });
 
   // ── Start ──

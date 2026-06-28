@@ -573,12 +573,19 @@ def _handle_get(req, token, base_url, hdrs):
             status_code=200, headers=get_cors_headers()
         )
 
-    # Customer mode: my active orders (for homepage widget)
-    if mode == "my" and telefon:
+    # Customer mode: my orders (active or all for history)
+    if mode in ("my", "my_history") and telefon:
         tel_filter = _phone_odata_filter("dl_telefon", telefon)
-        odata_filter = f"{tel_filter} and dl_status lt {STATUS_ABGEHOLT}"
+        if mode == "my":
+            odata_filter = f"{tel_filter} and dl_status lt {STATUS_ABGEHOLT}"
+            order_by = "dl_liefertag asc"
+            top = "10"
+        else:
+            odata_filter = tel_filter
+            order_by = "dl_liefertag desc"
+            top = "20"
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
-        r = requests.get(url, headers=hdrs, timeout=30, params={"$filter": odata_filter, "$orderby": "dl_liefertag asc", "$top": "10"})
+        r = requests.get(url, headers=hdrs, timeout=30, params={"$filter": odata_filter, "$orderby": order_by, "$top": top})
         if r.status_code != 200:
             return func.HttpResponse(
                 json.dumps({"success": False, "error": "Fehler beim Laden"}, ensure_ascii=False),

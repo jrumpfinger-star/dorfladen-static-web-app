@@ -70,7 +70,7 @@
 
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
-| F-01 | Bestellverlauf | 🟡 | ❌ | Kunde sieht nur aktuelle, nicht vergangene Bestellungen |
+| F-01 | Bestellverlauf | 🟡 | ✅ | History-Button im Header, Popup mit letzten 20 Bestellungen (API mode=my_history) |
 | F-02 | Mengenvorschläge | 🟢 | ❌ | "Beliebteste Menge: 1,5 kg" als Hilfe |
 | F-03 | Liefertag-Kalender | 🟢 | ❌ | Visueller Kalender statt Dropdown |
 | F-04 | Warenkorb-Zusammenfassung | 🟡 | ✅ | Vor Absenden Zusammenfassung mit Rabattberechnung vorhanden |
@@ -104,7 +104,7 @@
 
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
-| N-01 | Bilder in Beiträgen | 🟡 | ❌ | Aktuell nur Text |
+| N-01 | Bilder in Beiträgen | 🟡 | ✅ | Beitragsbild direkt auf News-Karte (Homepage + Aktuelles-Seite); CMS-Upload war bereits vorhanden |
 | N-02 | Teilen-Button | 🟢 | ❌ | WhatsApp/Copy-Link pro Beitrag |
 | N-03 | Push bei neuem Beitrag | 🟢 | 🔧 | Push-System existiert, Category "news" vorhanden, Trigger beim Speichern fehlt |
 

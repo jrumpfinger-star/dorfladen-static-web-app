@@ -584,9 +584,13 @@ window.closeDtModal = function(id) {
         }
         html+='<div class="news-card"><div class="news-card-top"><span class="news-date-badge"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>'+datum+'</span></div>';
         html+='<div class="news-title">'+esc(artikel.dl_titel||artikel.titel||'')+'</div>';
+        var _ni=artikel.dl_inhalt||'';
+        var _nim=_ni.match(/<div class="news-beitragsbild">.*?<img[^>]+src="([^"]+)"[^>]*>.*?<\/div>/i);
+        if(_nim&&_nim[1]) html+='<img style="width:100%;border-radius:10px;margin:8px 0 4px;max-height:200px;object-fit:cover" src="'+_nim[1]+'" alt="" loading="lazy">';
+        var _nic=_ni.replace(/<div class="news-beitragsbild">.*?<\/div>/gi,'').trim();
         if(artikel.dl_kurztext||artikel.beschreibung) html+='<div class="news-excerpt">'+esc(artikel.dl_kurztext||artikel.beschreibung)+'</div>';
-        if(artikel.dl_inhalt){
-          html+='<div class="news-full" id="news-'+idx+'">'+artikel.dl_inhalt+'</div>';
+        if(_nic){
+          html+='<div class="news-full" id="news-'+idx+'">'+_nic+'</div>';
           html+='<button class="news-more" onclick="var el=document.getElementById(\'news-'+idx+'\');var v=el.style.display===\'block\';el.style.display=v?\'none\':\'block\';this.innerHTML=v?\'Weiterlesen\':\'Weniger\'">Weiterlesen</button>';
         }
         html+='</div>';
