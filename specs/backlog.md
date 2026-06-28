@@ -127,13 +127,12 @@
 
 | Status | Anzahl |
 |--------|--------|
-| ✅ Umgesetzt | 8 |
-| 🔧 Teilweise | 7 |
-| ❌ Offen | 28 |
+| ✅ Umgesetzt | 22 |
+| 🔧 Teilweise | 5 |
+| ❌ Offen | 16 |
 | **Gesamt** | **43** |
 
-### Nächste Quick Wins (< 1h Aufwand)
-1. **H-05** – `loading="lazy"` auf Maps-iframe (1 Zeile)
-2. **X-05** – og:image URL korrigieren (5 Min)
-3. **H-04** – Skeleton-Klasse an Loading-States anhängen (30 Min)
-4. **K-02** – Sound-Alert bei neuer Bestellung (Audio-Element + Notification API, ~1h)
+### Verbleibende Quick Wins
+1. **H-04** – Skeleton-Klasse an Loading-States anhängen (30 Min)
+2. **K-04** – Bestätigungs-Audit-Trail (1–2h)
+3. **S-04** – Mengen-Schnellwahl +/- Buttons (30 Min)
