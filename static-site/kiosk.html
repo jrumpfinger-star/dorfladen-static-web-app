@@ -179,7 +179,8 @@
     .k-empty .k-empty-icon{font-size:48px;margin-bottom:12px}
 
     /* ═══ Filter tabs (underline style – NOT buttons) ═══ */
-    .k-filter-bar{display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--c-border);overflow:hidden}
+    .k-filter-bar{display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--c-border);overflow-x:auto;overflow-y:hidden;position:sticky;top:0;z-index:10;background:#fff;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .k-filter-bar::-webkit-scrollbar{display:none}
     .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px}
     .k-filter-btn:hover{color:var(--c-text)}
     .k-filter-btn:active{transform:none}
