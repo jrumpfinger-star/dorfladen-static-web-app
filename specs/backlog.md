@@ -105,7 +105,7 @@
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
 | N-01 | Bilder in Beiträgen | 🟡 | ✅ | Beitragsbild direkt auf News-Karte (Homepage + Aktuelles-Seite); CMS-Upload war bereits vorhanden |
-| N-02 | Teilen-Button | 🟢 | ❌ | WhatsApp/Copy-Link pro Beitrag |
+| N-02 | Teilen-Button | 🟢 | ✅ | WhatsApp + Link-kopieren Buttons auf jeder News-Karte (Aktuelles-Seite) |
 | N-03 | Push bei neuem Beitrag | 🟢 | 🔧 | Push-System existiert, Category "news" vorhanden, Trigger beim Speichern fehlt |
 
 ---
@@ -115,7 +115,7 @@
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
 | X-01 | Design-System / Tokens | 🟡 | ❌ | Jede Seite hat eigene CSS-Variablen (3 Grün-Töne, versch. Schriftgrößen) |
-| X-02 | Error-Handling | 🟡 | ❌ | API-Fehler zeigen oft nur "Fehler" – spezifischere Meldungen |
+| X-02 | Error-Handling | 🟡 | 🔧 | Grundlegende Fehlermeldungen vorhanden; spezifischere Meldungen wären Verbesserung |
 | X-03 | Offline-Modus (PWA) | 🟡 | 🔧 | Service Worker mit Cache existiert (`sw.js`), Network-first für Code, Cache-first für Assets. Kein dedizierter Offline-Fallback-Screen |
 | X-04 | Analytics | 🟡 | ✅ | Analytics-Dashboard im CMS implementiert (API `/api/analytics`, Charts, KPIs) |
 | X-05 | SEO og:image | 🟢 | ✅ | og:image/og:url zeigen korrekt auf Production-URL (kind-pebble = Live); bei Custom-Domain erneut anpassen |
