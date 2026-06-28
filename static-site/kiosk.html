@@ -203,6 +203,8 @@
       .k-filter-btn{padding:7px 4px;font-size:11px;gap:2px}
       .k-filter-btn .k-filter-count{font-size:10px;padding:1px 5px;min-width:16px}
       .k-filter-btn.active .k-filter-label{display:none}
+      .k-fm-grid{grid-template-columns:1fr!important}
+      .k-fm-grid>div:first-child{border-right:none!important;border-bottom:1px solid #f3f4f6;padding:8px 10px!important}
     }
     /* ═══ History sub-filter bar ═══ */
     .k-hist-bar{display:none;gap:6px;align-items:center;padding:8px 0 6px;flex-wrap:wrap}
@@ -3357,7 +3359,7 @@ var K = (function(){
       html += '<div class="k-order-body" style="display:block">';
 
       // ── Two-column layout: Meta left | Items right ──
-      html += '<div style="display:grid;grid-template-columns:200px 1fr;gap:0;min-height:0">';
+      html += '<div class="k-fm-grid" style="display:grid;grid-template-columns:150px 1fr;gap:0;min-height:0">';
 
       // LEFT: Meta info
       html += '<div style="padding:10px 14px;border-right:1px solid #f3f4f6;font-size:12px;color:var(--c-muted);display:flex;flex-direction:column;gap:6px">';
