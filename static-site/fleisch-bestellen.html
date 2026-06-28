@@ -232,7 +232,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
 <!-- Header (sticky via CSS, position:relative for back-btn) -->
 <div class="fm-header">
-  <a href="/" class="fm-back"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></a>
+  <a href="javascript:void(0)" onclick="history.length>1?history.back():location.href='/'" class="fm-back"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></a>
   <h1><i data-lucide="beef" style="width:22px;height:22px"></i> Fleisch &amp; Wurst</h1>
   <small>Vorbestellen &amp; im Laden abholen</small>
   <button class="fm-history-btn" id="fm-history-btn" onclick="fmShowHistory()"><i data-lucide="clipboard-list" style="width:18px;height:18px"></i></button>
