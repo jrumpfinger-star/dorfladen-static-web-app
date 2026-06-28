@@ -1671,3 +1671,7 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-28 | T-25-04 K-05 Keyboard 1=Mittagstisch, 4=Metzger, 2=Online-Shop | ✅ Pass |
 | 2026-06-28 | T-25-05 K-05 Taste R → API-Refresh ohne Page-Reload | ✅ Pass |
 | 2026-06-28 | T-25-06 A-02 Umsatz-Kachel zeigt 270,34 € | ✅ Pass |
+| 2026-06-28 | T-25-07 Fleisch-API email-Lookup: mode=my&email=...→ 8 Bestellungen | ✅ Pass |
+| 2026-06-28 | T-25-08 Fleisch-Hint im Shop: "Sie haben 9 aktive Vorbestellungen" + "Ansehen" sichtbar | ✅ Pass |
+| 2026-06-28 | T-25-09 Fleisch-Hint: Dunkle Schrift auf hellem Hintergrund (#fef2f2) gut lesbar | ✅ Pass |
+| 2026-06-28 | T-25-10 Zurück-Button auf /fleisch-bestellen → history.back() zum Shop | ✅ Pass |
