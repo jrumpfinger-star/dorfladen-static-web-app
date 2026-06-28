@@ -2587,6 +2587,7 @@
             datum:m.dl_datum,
             preis:m.dl_preis,
             beschreibung:m.dl_beschreibung||'',
+            allergene:m.dl_allergene||'',
             kalenderwoche:m.dl_kalenderwoche,
             jahr:m.dl_jahr,
             status:m.dl_status
@@ -2638,6 +2639,7 @@
             if(m.preis) b+='<span class="price">'+fmtP(m.preis)+'</span>';
             b+='</div>';
             if(m.beschreibung) b+='<div style="color:#9ca3af;font-size:11px;font-style:italic;padding:0 8px 4px">'+esc(m.beschreibung)+'</div>';
+            if(m.allergene) b+='<div style="color:#d97706;font-size:10px;padding:0 8px 4px">\u26a0\ufe0f '+esc(m.allergene)+'</div>';
             b+='<div class="cms-meal-actions">';
             b+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editMeal" data-id="'+m.id+'">Bearbeiten</button>';
             b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag l\u00f6schen" aria-label="L\u00f6schen" data-action="deleteMeal" data-id="'+m.id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
@@ -2684,7 +2686,7 @@
 
   var mealRowCtr=0;
   var _mealPasteTarget=null;
-  function addMealRow(name,price,id){
+  function addMealRow(name,price,id,allergene){
     mealRowCtr++;
     var c=document.getElementById('cms-meal-rows');
     var row=document.createElement('div');
@@ -2699,6 +2701,7 @@
     h+='<div class="cms-art-dd"></div></div>';
     h+='<input class="cms-input cms-price" data-f="price" type="text" inputmode="decimal" placeholder="Preis" value="'+(price!=null?fmtDePrice(price):'')+'">';
     h+='</div>';
+    h+='<input class="cms-input" data-f="allergene" type="text" placeholder="Allergene/Zusatzstoffe (z.B. A,C,G)" value="'+esc(allergene||'')+'" style="margin-top:6px;font-size:12px">';
     // Optional image row
     h+='<div style="display:flex;align-items:center;gap:6px;margin-top:6px">';
     h+='<img class="cms-meal-img-pv" data-row="'+rn+'" src="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;display:none">';
@@ -2829,7 +2832,7 @@
     mealRowCtr=0;
     _mealRowImages={};
     if(isEdit){
-      addMealRow(meal.gericht, meal.preis, meal.id);
+      addMealRow(meal.gericht, meal.preis, meal.id, meal.allergene);
       // Show existing image if available
       if(meal.gericht&&typeof _socMtBilder!=='undefined'&&_socMtBilder&&_socMtBilder[meal.gericht]&&_socMtBilder[meal.gericht].bild_url){
         var pvImg=document.querySelector('#cms-mr-1 .cms-meal-img-pv');
@@ -2894,9 +2897,10 @@
     rows.forEach(function(row){
       var name=(row.querySelector('[data-f="name"]').value||'').trim();
       var price=parseDePrice(row.querySelector('[data-f="price"]').value);
+      var allergeneVal=(row.querySelector('[data-f="allergene"]').value||'').trim();
       var mid=row.dataset.mealId||'';
       var rn=row.id.replace('cms-mr-','');
-      if(name) mealData.push({gericht:name,preis:price,id:mid,priceInput:row.querySelector('[data-f="price"]'),rowNum:rn});
+      if(name) mealData.push({gericht:name,preis:price,allergene:allergeneVal,id:mid,priceInput:row.querySelector('[data-f="price"]'),rowNum:rn});
     });
 
     for(var mi=0;mi<mealData.length;mi++){if(mealData[mi].preis==null||isNaN(mealData[mi].preis)){mealData[mi].priceInput.style.border='2px solid #ef4444';mealData[mi].priceInput.focus();toast('Bitte Preis f\u00fcr "'+mealData[mi].gericht+'" eingeben','warn');return;} else {mealData[mi].priceInput.style.border='';}}
@@ -2913,6 +2917,7 @@
           dl_datum:fmtISO(d),
           dl_preis:item.preis,
           dl_beschreibung:beschreibung||null,
+          dl_allergene:item.allergene||null,
           dl_kalenderwoche:kw,
           dl_jahr:jahr,
           dl_status:101001
@@ -2990,7 +2995,7 @@
         loadWP();
         toast('Gericht gelöscht','ok',savedData?function(){
           // Undo: re-create meal via POST
-          var body={dl_gericht:savedData.gericht,dl_wochentag:savedData.wochentag,dl_datum:savedData.datum,dl_preis:savedData.preis,dl_beschreibung:savedData.beschreibung||null,dl_kalenderwoche:savedData.kw,dl_jahr:savedData.jahr,dl_status:101001};
+          var body={dl_gericht:savedData.gericht,dl_wochentag:savedData.wochentag,dl_datum:savedData.datum,dl_preis:savedData.preis,dl_beschreibung:savedData.beschreibung||null,dl_allergene:savedData.allergene||null,dl_kalenderwoche:savedData.kw,dl_jahr:savedData.jahr,dl_status:101001};
           fetch(API+'/wochenplan',{method:'POST',headers:writeHeaders(),body:JSON.stringify(body)})
             .then(function(){toast('Gericht wiederhergestellt');loadWP();})
             .catch(function(e){toast('Wiederherstellen fehlgeschlagen: '+e.message,'error');});

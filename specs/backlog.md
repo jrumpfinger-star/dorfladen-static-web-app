@@ -24,7 +24,7 @@
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
 | K-01 | Sammelbestellung PDF/Druck | 🔴 | 🔧 | Sammelbestellung-Tab existiert, Druckansicht teilweise (CSS `@media print`) |
-| K-02 | Sound/Vibrationsalarm | 🔴 | ❌ | Kiosk soll bei neuen Bestellungen aufmerksam machen |
+| K-02 | Sound/Vibrationsalarm | 🔴 | ✅ | Audio-Alert + Badge-Pulse bei neuen Bestellungen (Mittagstisch, Shop, Fleisch) |
 | K-03 | Auto-Refresh | 🟡 | ✅ | 30s Intervall implementiert |
 | K-04 | Bestätigungs-History/Audit-Trail | 🟡 | ❌ | Wer hat wann welche Bestellung bestätigt? |
 | K-05 | Keyboard-Shortcuts / Swipe | 🟢 | ❌ | Schnelles Navigieren am Tablet |
@@ -35,7 +35,7 @@
 
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
-| C-01 | Undo/Rückgängig | 🔴 | ❌ | Kein Undo nach Löschung/Änderung |
+| C-01 | Undo/Rückgängig | 🔴 | ✅ | Undo-Toast (8s) für Angebote-, Wochenplan-, News-Löschung + Seiteninhalte-Save |
 | C-02 | Vorschau-Modus | 🟡 | ❌ | Änderungen vor Speichern in Live-Vorschau sehen |
 | C-03 | Bilder Drag & Drop | 🟡 | 🔧 | Drag & Drop für Artikel-Reihenfolge existiert, Bild-Upload via Zwischenablage/SharePoint vorhanden, kein direktes Bild-Drag&Drop |
 | C-04 | Änderungsprotokoll | 🟡 | ❌ | Wer hat wann was geändert? |
@@ -48,7 +48,7 @@
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
 | S-01 | Warenkorb-Persistenz | 🟡 | ✅ | localStorage wird bereits genutzt |
-| S-02 | Produktbilder | 🔴 | ❌ | Aktuell keine Bilder im Shop |
+| S-02 | Produktbilder | 🔴 | ✅ | Bilder aus SharePoint via `/api/werbebilder`, `shop-images.js`, base64-Cache |
 | S-03 | Suchfunktion | 🟡 | ❌ | Filter nach Produktname fehlt, nur Kategorien |
 | S-04 | Mengen-Schnellwahl (+/-) | 🟢 | ❌ | Aktuell manuelle Eingabe |
 | S-05 | Zeitslot-Verfügbarkeit | 🟢 | ❌ | Visuell zeigen, welche Slots voll sind |
@@ -93,7 +93,7 @@
 
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
-| M-01 | Allergene/Zusatzstoffe | 🔴 | ❌ | Pflichtangabe fehlt |
+| M-01 | Allergene/Zusatzstoffe | 🔴 | ✅ | Dataverse-Feld `dl_allergene`, CMS-Eingabe, Anzeige auf Homepage + Bestellseite |
 | M-02 | Foto des Gerichts | 🟡 | ❌ | Starker Conversion-Booster |
 | M-03 | Bestellschluss-Countdown | 🟡 | ❌ | Wie bei Fleisch |
 | M-04 | Stammkunden-Funktion | 🟡 | ✅ | Telefonnummer wird im localStorage gespeichert |

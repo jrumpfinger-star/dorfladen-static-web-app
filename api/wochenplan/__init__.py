@@ -65,7 +65,9 @@ def _serialize_item(item):
         "jahr": item.get("dl_jahr"),
         "dl_jahr": item.get("dl_jahr"),
         "status": item.get("dl_status"),
-        "dl_status": item.get("dl_status")
+        "dl_status": item.get("dl_status"),
+        "allergene": item.get("dl_allergene", ""),
+        "dl_allergene": item.get("dl_allergene", "")
     }
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -87,7 +89,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     params[key] = value
 
             if "$select" not in params:
-                params["$select"] = "dl_wochenplanid,dl_gericht,dl_wochentag,dl_datum,dl_preis,dl_beschreibung,dl_kalenderwoche,dl_jahr,dl_status"
+                params["$select"] = "dl_wochenplanid,dl_gericht,dl_wochentag,dl_datum,dl_preis,dl_beschreibung,dl_allergene,dl_kalenderwoche,dl_jahr,dl_status"
             if "$orderby" not in params:
                 params["$orderby"] = "dl_datum asc"
             if "$filter" not in params:

@@ -152,6 +152,7 @@
         <div class="dish-day" id="dish-day"></div>
         <div class="dish-name" id="dish-name"></div>
         <div class="dish-price" id="dish-price"></div>
+        <div id="dish-allergene" style="font-size:12px;color:#d97706;margin-top:6px;display:none"></div>
         <div class="dish-eco">🏷 0,50 € Öko-Rabatt mit eigenem Behälter</div>
       </div>
       <div class="qty-row">
@@ -308,7 +309,8 @@
               preis: found.dl_preis,
               datum: found.dl_datum || '',
               wochentag: found.dl_wochentag,
-              wochentag_label: DAY_FULL[found.dl_wochentag]||''
+              wochentag_label: DAY_FULL[found.dl_wochentag]||'',
+              allergene: found.dl_allergene||''
             });
             return;
           }
@@ -324,7 +326,8 @@
               preis: found2.dl_preis || paramPreis,
               datum: found2.dl_datum || paramDatum,
               wochentag: found2.dl_wochentag,
-              wochentag_label: DAY_FULL[found2.dl_wochentag]||paramTag
+              wochentag_label: DAY_FULL[found2.dl_wochentag]||paramTag,
+              allergene: found2.dl_allergene||''
             });
             return;
           }
@@ -361,7 +364,7 @@
       dayMeals.forEach(function(m){
         var p = m.dl_preis ? ('€ '+m.dl_preis.toFixed(2).replace('.',',')) : '';
         html += '<div class="menu-item" onclick="window._selectFromMenu(\'' + m.dl_wochenplanid + '\')">';
-        html += '<div class="menu-item-dish">' + esc(m.dl_gericht) + '</div>';
+        html += '<div class="menu-item-dish">' + esc(m.dl_gericht) + (m.dl_allergene ? '<div style="font-size:11px;color:#d97706;font-weight:400;margin-top:2px">⚠️ '+esc(m.dl_allergene)+'</div>' : '') + '</div>';
         html += '<div class="menu-item-price">' + p + '</div>';
         html += '<div class="menu-item-order"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div>';
         html += '</div>';
@@ -379,7 +382,8 @@
         preis: m.dl_preis,
         datum: m.dl_datum || '',
         wochentag: m.dl_wochentag,
-        wochentag_label: DAY_FULL[m.dl_wochentag]||''
+        wochentag_label: DAY_FULL[m.dl_wochentag]||'',
+        allergene: m.dl_allergene||''
       });
     };
   }
@@ -392,6 +396,8 @@
     document.getElementById('dish-day').textContent = dish.wochentag_label || '';
     document.getElementById('dish-name').textContent = dish.gericht;
     document.getElementById('dish-price').textContent = dish.preis ? (dish.preis.toFixed(2).replace('.',',')+' € pro Portion') : '';
+    var allergEl=document.getElementById('dish-allergene');
+    if(dish.allergene){allergEl.textContent='\u26a0\ufe0f '+dish.allergene;allergEl.style.display='';}else{allergEl.style.display='none';allergEl.textContent='';}
     updateQtyUI();
 
     // Update page title + OG
