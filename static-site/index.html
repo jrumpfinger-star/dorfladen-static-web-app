@@ -1539,7 +1539,7 @@
                 +'</a>';
             } else {
               var popupId = 'popup-'+containerId;
-              el.innerHTML = '<div onclick="document.getElementById(\''+popupId+'\').style.display=\'flex\'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;cursor:pointer;color:'+wrapColor+';font-size:13px;font-weight:600">'
+              el.innerHTML = '<div onclick="var p=document.getElementById(\''+popupId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;cursor:pointer;color:'+wrapColor+';font-size:13px;font-weight:600">'
                 +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
                 +'<span style="flex:1">Meine Bestellungen</span>'
                 +'<span style="font-size:11px;background:'+(isDark?'rgba(255,255,255,.2)':'#dbeafe')+';color:'+wrapColor+';padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
@@ -1548,11 +1548,11 @@
               var pop = document.createElement('div');
               pop.id = popupId;
               pop.style.cssText = 'display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:20px';
-              pop.onclick = function(e){ if(e.target===pop) pop.style.display='none'; };
+              pop.onclick = function(e){ if(e.target===pop){ pop.style.display='none'; document.body.style.overflow=''; } };
               var card = '<div style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
                 +'<div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">'
                 +'<span style="font-weight:800;font-size:15px;color:#111">Meine Bestellungen</span>'
-                +'<span onclick="document.getElementById(\''+popupId+'\').style.display=\'none\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
+                +'<span onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
                 +'</div><div style="padding:8px">';
               orders.forEach(function(o){
                 var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
