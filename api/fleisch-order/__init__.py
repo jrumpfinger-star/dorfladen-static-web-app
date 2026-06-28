@@ -574,14 +574,18 @@ def _handle_get(req, token, base_url, hdrs):
         )
 
     # Customer mode: my orders (active or all for history)
-    if mode in ("my", "my_history") and telefon:
-        tel_filter = _phone_odata_filter("dl_telefon", telefon)
+    email_param = (req.params.get("email") or "").strip().lower()
+    if mode in ("my", "my_history") and (telefon or email_param):
+        if telefon:
+            id_filter = _phone_odata_filter("dl_telefon", telefon)
+        else:
+            id_filter = f"dl_email eq '{email_param}'"
         if mode == "my":
-            odata_filter = f"{tel_filter} and dl_status lt {STATUS_ABGEHOLT}"
+            odata_filter = f"{id_filter} and dl_status lt {STATUS_ABGEHOLT}"
             order_by = "dl_liefertag asc"
             top = "10"
         else:
-            odata_filter = tel_filter
+            odata_filter = id_filter
             order_by = "dl_liefertag desc"
             top = "20"
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"

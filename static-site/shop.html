@@ -1557,9 +1557,11 @@
         +'<div id="shop-fleisch-hint" style="display:none"></div>'
         +'</div>';
       // Check if customer has active Fleisch orders
-      var fmTel=localStorage.getItem('fm_telefon');
-      if(fmTel){
-        fetch('/api/fleisch-order?mode=my&telefon='+encodeURIComponent(fmTel))
+      var _hintEmail=authUser&&authUser.email?authUser.email:'';
+      var _hintTel=localStorage.getItem('fm_telefon')||'';
+      if(_hintEmail||_hintTel){
+        var _hintParam=_hintEmail?'email='+encodeURIComponent(_hintEmail):'telefon='+encodeURIComponent(_hintTel);
+        fetch('/api/fleisch-order?mode=my&'+_hintParam)
           .then(function(r){return r.json();})
           .then(function(res){
             if(res.success&&res.bestellungen&&res.bestellungen.length){
@@ -1772,7 +1774,12 @@
     }
     var renderFn=articleViewMode==='list'?renderArticlesList:renderArticles;
     var articleHtml=items.length?renderFn(items,title,emoji):'';
-    content.innerHTML=bc+fleischBanner+reorderBanner+(emptyHint||articleHtml);
+    // Placeholder for Fleisch orders in "Schon bestellt"
+    var fleischOrdersHtml='';
+    if(activeCat==='previous'){
+      fleischOrdersHtml='<div id="shop-fm-orders" style="display:none"></div>';
+    }
+    content.innerHTML=bc+fleischBanner+reorderBanner+fleischOrdersHtml+(emptyHint||articleHtml);
     wireAddButtons();
     markCartItems();
     loadImages(items);
@@ -1862,6 +1869,52 @@
       else{ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Warengruppe\u2026';}
     }
     if(window.lucide) lucide.createIcons();
+    // Load Fleisch orders into "Schon bestellt" tab
+    if(activeCat==='previous'){
+      var fmEmail=authUser&&authUser.email?authUser.email:'';
+      var fmTel=localStorage.getItem('fm_telefon')||'';
+      if(fmEmail||fmTel){
+        var fmParam=fmEmail?'email='+encodeURIComponent(fmEmail):'telefon='+encodeURIComponent(fmTel);
+        fetch('/api/fleisch-order?mode=my&'+fmParam)
+          .then(function(r){return r.json();})
+          .then(function(res){
+            var el=document.getElementById('shop-fm-orders');
+            if(!el||!res.success) return;
+            var bb=res.bestellungen||[];
+            if(!bb.length) return;
+            var FM_ST={0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+            var FM_CLR={0:'#f59e0b',1:'#3b82f6',2:'#16a34a',3:'#6b7280',4:'#ef4444'};
+            var h='<div style="padding:8px 16px 4px"><div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:#7f1d1d">'+lucideHtml('beef',18)+' Fleisch-Vorbestellungen <span style="font-size:12px;font-weight:500;color:#6b7280">('+bb.length+')</span></div></div>';
+            h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;padding:8px 16px 16px">';
+            bb.forEach(function(b){
+              var dt='';try{var dd=new Date(b.bestelldatum);dt=('0'+dd.getDate()).slice(-2)+'.'+('0'+(dd.getMonth()+1)).slice(-2)+'.'+dd.getFullYear();}catch(e){dt=b.bestelldatum||'';}
+              var pos=b.positionen?b.positionen.length:0;
+              var sum=(Number(b.gesamtpreis)||0).toFixed(2).replace('.',',')+' €';
+              var st=b.status||0;
+              var stLabel=FM_ST[st]||'';
+              var stColor=FM_CLR[st]||'#6b7280';
+              var liefertag='';try{var ld=new Date(b.liefertag);liefertag=('0'+ld.getDate()).slice(-2)+'.'+('0'+(ld.getMonth()+1)).slice(-2)+'.';}catch(e){}
+              h+='<a href="/bestellstatus?nr='+esc(b.bestellnummer||'')+'" style="text-decoration:none;color:inherit">';
+              h+='<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .15s;cursor:pointer" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">';
+              h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+              h+='<span style="font-weight:700;font-size:14px">'+esc(dt)+'</span>';
+              h+='<span style="font-size:11px;color:#9ca3af">'+esc(b.bestellnummer||'')+'</span>';
+              h+='<span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:'+stColor+'1a;color:'+stColor+'">'+esc(stLabel)+'</span>';
+              h+='</div>';
+              h+='<div style="display:flex;align-items:center;gap:12px;font-size:13px;color:#6b7280">';
+              h+='<span>'+pos+' Artikel</span>';
+              h+='<span style="font-weight:700;color:#1f2937">'+sum+'</span>';
+              if(liefertag) h+='<span style="margin-left:auto;font-size:11px">'+lucideHtml('truck',12)+' '+liefertag+'</span>';
+              h+='</div>';
+              h+='</div></a>';
+            });
+            h+='</div>';
+            el.innerHTML=h;
+            el.style.display='block';
+            if(window.lucide) lucide.createIcons();
+          }).catch(function(){});
+      }
+    }
   }
 
   function wireAddButtons(){
