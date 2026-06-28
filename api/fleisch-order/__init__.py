@@ -719,6 +719,12 @@ def _handle_patch(req, token, base_url, hdrs):
     if kommentar_gelesen is not None:
         patch_data["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
     if positionen_update is not None:
+        if not isinstance(positionen_update, list) or \
+           not all(isinstance(p, dict) for p in positionen_update):
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "positionen muss ein Array von Objekten sein"}, ensure_ascii=False),
+                status_code=400, headers=get_cors_headers()
+            )
         patch_data["dl_positionen_json"] = json.dumps(positionen_update, ensure_ascii=False)
 
     if not patch_data:
