@@ -1461,3 +1461,16 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung:** Response-Status ist 400
 - **Erwartung:** API lehnt ungültiges Format ab mit Fehlermeldung
 > Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-07-04 | T-21-01 toggleFmItemBestellt existiert | ✅ Pass |
+| 2026-07-04 | T-21-02 toggleAllFmItems existiert | ✅ Pass |
+| 2026-07-04 | T-21-03 2-Spalten-Grid-Layout | ✅ Pass |
+| 2026-07-04 | T-21-04 Checkboxen bei Status 0/1 | ✅ Pass |
+| 2026-07-04 | T-21-05 Status-Badge CSS-Klasse | ✅ Pass |
+| 2026-07-04 | T-21-06 Quick-Action-Button im Header | ✅ Pass |
+| 2026-07-04 | T-21-07 API PATCH akzeptiert positionen | ✅ Pass |
+| 2026-07-04 | T-21-08 API PATCH validiert Format | ✅ Pass |
