@@ -86,6 +86,7 @@
   </select>
   <button class="refresh-btn" onclick="loadOrders()">🔄 Aktualisieren</button>
   <button class="print-btn" onclick="window.print()">🖨 Drucken</button>
+  <button class="print-btn" onclick="exportLunchCSV()" title="CSV-Export">📥 CSV</button>
 </div>
 
 <div class="stats" id="stats-row"></div>
@@ -112,6 +113,21 @@
 
   var STATUS_LABELS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
   var BADGE_CLASSES = {0:'badge-neu',1:'badge-ok',2:'badge-cancel',3:'badge-done'};
+
+  window.exportLunchCSV = function(){
+    if(!orders.length){alert('Keine Bestellungen zum Exportieren.');return;}
+    var sep=';';var nl='\r\n';
+    var hdr=['Bestellnummer','Name','E-Mail','Telefon','Gericht','Menge','Preis','Mitnehmen','Status','Datum','Anmerkung'];
+    var csv='\ufeff'+hdr.join(sep)+nl;
+    orders.forEach(function(o){
+      var row=[o.bestellnummer||'','"'+(o.name||'').replace(/"/g,'""')+'"',o.email||'',o.telefon||'','"'+(o.gericht||'').replace(/"/g,'""')+'"',o.menge||1,(((o.preis||0)*(o.menge||1)).toFixed(2)).replace('.',','),o.mitnehmen?'Ja':'Nein',STATUS_LABELS[o.status]||'',formatDate(o.bestelldatum),'"'+(o.anmerkung||'').replace(/"/g,'""')+'"'];
+      csv+=row.join(sep)+nl;
+    });
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download='mittagstisch_'+today+'.csv';a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Default date = today
   var today = new Date().toISOString().split('T')[0];

@@ -307,8 +307,8 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     var closeAt='';
     var nextOpen='';
     if(!isHoliday && s){
-      if(mins>=s[0] && mins<s[1]){isOpen=true;closeAt=Math.floor(s[1]/60)+':'+(s[1]%60<10?'0':'')+(s[1]%60);}
-      else if(s[2]!==null && mins>=s[2] && mins<s[3]){isOpen=true;closeAt=Math.floor(s[3]/60)+':'+(s[3]%60<10?'0':'')+(s[3]%60);}
+      if(mins>=s[0] && mins<s[1]){isOpen=true;var _r=s[1]-mins;closeAt=(_r<=60?'schlie\u00dft in '+_r+' Min':'bis '+Math.floor(s[1]/60)+':'+(s[1]%60<10?'0':'')+(s[1]%60)+' Uhr');}
+      else if(s[2]!==null && mins>=s[2] && mins<s[3]){isOpen=true;var _r2=s[3]-mins;closeAt=(_r2<=60?'schlie\u00dft in '+_r2+' Min':'bis '+Math.floor(s[3]/60)+':'+(s[3]%60<10?'0':'')+(s[3]%60)+' Uhr');}
     }
     if(!isOpen){
       for(var i=0;i<7;i++){
@@ -316,8 +316,8 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
         var cs=schedule[checkDow];
         if(!cs) continue;
         if(i===0 && !isHoliday){
-          if(mins<cs[0]){nextOpen='\u00f6ffnet heute um '+Math.floor(cs[0]/60)+':'+(cs[0]%60<10?'0':'')+(cs[0]%60)+' Uhr';break;}
-          if(cs[2]!==null && mins<cs[2]){nextOpen='\u00f6ffnet heute um '+Math.floor(cs[2]/60)+':'+(cs[2]%60<10?'0':'')+(cs[2]%60)+' Uhr';break;}
+          if(mins<cs[0]){var _d=cs[0]-mins;var _t=_d<60?'in '+_d+' Min':'in '+Math.floor(_d/60)+' Std';nextOpen='\u00f6ffnet '+_t+' ('+Math.floor(cs[0]/60)+':'+(cs[0]%60<10?'0':'')+(cs[0]%60)+' Uhr)';break;}
+          if(cs[2]!==null && mins<cs[2]){var _d2=cs[2]-mins;var _t2=_d2<60?'in '+_d2+' Min':'in '+Math.floor(_d2/60)+' Std';nextOpen='\u00f6ffnet '+_t2+' ('+Math.floor(cs[2]/60)+':'+(cs[2]%60<10?'0':'')+(cs[2]%60)+' Uhr)';break;}
         }
         if(i>0){
           var dayNames=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
@@ -330,7 +330,7 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
       }
     }
     if(isOpen){
-      el.innerHTML='<div class="dl-status dl-status-open"><span class="dl-status-dot"></span>Jetzt ge\u00f6ffnet<span class="dl-status-next">\u2013 bis '+closeAt+' Uhr</span></div>';
+      el.innerHTML='<div class="dl-status dl-status-open"><span class="dl-status-dot"></span>Jetzt ge\u00f6ffnet<span class="dl-status-next">\u2013 '+closeAt+'</span></div>';
     } else {
       var extra=nextOpen?('<span class="dl-status-next">\u2013 '+nextOpen+'</span>'):(isHoliday?'<span class="dl-status-next">\u2013 Feiertag</span>':'');
       el.innerHTML='<div class="dl-status dl-status-closed"><span class="dl-status-dot"></span>Geschlossen'+extra+'</div>';

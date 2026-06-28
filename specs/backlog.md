@@ -10,11 +10,11 @@
 
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
-| H-01 | Pull-to-Refresh | 🟡 | ❌ | Mobile Nutzer erwarten die Geste – aktuell muss man neu laden |
+| H-01 | Pull-to-Refresh | 🟡 | ✅ | Browser-natives Pull-to-Refresh funktioniert (kein overscroll-behavior-Block) |
 | H-02 | Mittagstisch-Kachel Wochenende | 🟢 | ❌ | Wenn kein Gericht verfügbar: "Montag: ..." als Vorschau statt leere Kachel |
-| H-03 | Öffnungszeiten-Indikator | 🟡 | ❌ | "Öffnet in 2 Stunden" statt nur "Aktuell geschlossen" |
+| H-03 | Öffnungszeiten-Indikator | 🟡 | ✅ | Countdown: "öffnet in X Std/Min", "schließt in X Min"; Feiertage + nächster Tag |
 | H-04 | Skeleton Loading | 🟢 | 🔧 | CSS-Klasse `.skeleton` existiert in `style.css`, aber nicht überall eingesetzt |
-| H-05 | Lazy-Loading Maps | 🟡 | ❌ | Google Maps iframe lädt sofort, obwohl weit unten → `loading="lazy"` |
+| H-05 | Lazy-Loading Maps | 🟡 | ✅ | Beide iframes haben `loading="lazy"` |
 | H-06 | Desktop-Version pflegen | 🟢 | ❌ | Desktop-Ansicht (aside, info-cards) wirkt weniger gepflegt als Mobile |
 
 ---
@@ -49,7 +49,7 @@
 |---|---------|------|--------|---------|
 | S-01 | Warenkorb-Persistenz | 🟡 | ✅ | localStorage wird bereits genutzt |
 | S-02 | Produktbilder | 🔴 | ✅ | Bilder aus SharePoint via `/api/werbebilder`, `shop-images.js`, base64-Cache |
-| S-03 | Suchfunktion | 🟡 | ❌ | Filter nach Produktname fehlt, nur Kategorien |
+| S-03 | Suchfunktion | 🟡 | ✅ | Suchfeld mit Live-Filter nach Artikelname (`shop-search-input`) |
 | S-04 | Mengen-Schnellwahl (+/-) | 🟢 | ❌ | Aktuell manuelle Eingabe |
 | S-05 | Zeitslot-Verfügbarkeit | 🟢 | ❌ | Visuell zeigen, welche Slots voll sind |
 
@@ -61,7 +61,7 @@
 |---|---------|------|--------|---------|
 | A-01 | Batch-Aktionen | 🟡 | ✅ | In `shop-freigabe.html` implementiert (Alle freigeben/sperren, Batch-Bar) |
 | A-02 | Tagesstatistiken | 🟡 | ❌ | Umsatz pro Tag, durchschnittliche Bestellgröße |
-| A-03 | CSV/Excel-Export | 🟡 | ❌ | Export der Bestellungen für Buchhaltung |
+| A-03 | CSV/Excel-Export | 🟡 | ✅ | CSV-Export-Button in Shop-Admin + Lunch-Admin (BOM+Semikolon für Excel) |
 | A-04 | Benachrichtigungs-Indikator | 🟢 | ❌ | Ungelesene Kunden-Kommentare visuell hervorheben |
 
 ---
@@ -95,7 +95,7 @@
 |---|---------|------|--------|---------|
 | M-01 | Allergene/Zusatzstoffe | 🔴 | ✅ | Dataverse-Feld `dl_allergene`, CMS-Eingabe, Anzeige auf Homepage + Bestellseite |
 | M-02 | Foto des Gerichts | 🟡 | ❌ | Starker Conversion-Booster |
-| M-03 | Bestellschluss-Countdown | 🟡 | ❌ | Wie bei Fleisch |
+| M-03 | Bestellschluss-Countdown | 🟡 | ✅ | Sticky-Banner mit Countdown bis 10:30, danach Hinweis "Bestellschluss erreicht" |
 | M-04 | Stammkunden-Funktion | 🟡 | ✅ | Telefonnummer wird im localStorage gespeichert |
 
 ---
@@ -118,7 +118,7 @@
 | X-02 | Error-Handling | 🟡 | ❌ | API-Fehler zeigen oft nur "Fehler" – spezifischere Meldungen |
 | X-03 | Offline-Modus (PWA) | 🟡 | 🔧 | Service Worker mit Cache existiert (`sw.js`), Network-first für Code, Cache-first für Assets. Kein dedizierter Offline-Fallback-Screen |
 | X-04 | Analytics | 🟡 | ✅ | Analytics-Dashboard im CMS implementiert (API `/api/analytics`, Charts, KPIs) |
-| X-05 | SEO og:image | 🟢 | ❌ | og:image zeigt auf Test-URL (kind-pebble) statt Live-Domain |
+| X-05 | SEO og:image | 🟢 | ✅ | og:image/og:url zeigen korrekt auf Production-URL (kind-pebble = Live); bei Custom-Domain erneut anpassen |
 | X-06 | Accessibility (ARIA) | 🟡 | ❌ | Kein ARIA auf den meisten interaktiven Elementen, fehlende alt-Texte |
 
 ---

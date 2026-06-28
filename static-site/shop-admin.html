@@ -277,6 +277,7 @@
             <option value="all">Alle Status</option><option value="0">Neu</option><option value="1">In Bearbeitung</option><option value="2">Abholbereit</option><option value="3">Abgeholt</option><option value="4">Storniert</option>
           </select>
           <button class="btn" id="load-orders">Suchen</button>
+          <button class="btn" id="export-csv" title="CSV-Export">📥 CSV</button>
           <button class="btn" id="show-history" style="margin-left:auto">📜 Historie</button>
         </div>
       </div>
@@ -975,6 +976,25 @@
   if(tbToggle&&tbBody){tbToggle.addEventListener('click',function(){tbBody.classList.toggle('open');tbToggle.querySelector('span').textContent=tbBody.classList.contains('open')?'▲':'▼';});}
   document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.addEventListener('click',function(){activeStatFilter=el.getAttribute('data-stat-filter');document.getElementById('status-filter').value='all';renderOrders();});});document.getElementById('refresh-btn').addEventListener('click',loadDashboard);document.getElementById('load-orders').addEventListener('click',loadOrders);document.getElementById('search').addEventListener('keydown',function(e){if(e.key==='Enter')loadOrders();});document.getElementById('status-filter').addEventListener('change',loadOrders);
   document.getElementById('show-history').addEventListener('click',function(){historyMode=!historyMode;this.classList.toggle('primary',historyMode);this.textContent=historyMode?'📜 Historie ausblenden':'📜 Historie';renderOrders();});
+  document.getElementById('export-csv').addEventListener('click',function(){
+    var list=filteredOrders();
+    if(!list.length){alert('Keine Bestellungen zum Exportieren.');return;}
+    var sep=';';var nl='\r\n';
+    var hdr=['Bestellnummer','Name','E-Mail','Status','Bestelldatum','Abholdatum','Abholzeit','Positionen','Gesamtsumme'];
+    var csv='\ufeff'+hdr.join(sep)+nl;
+    list.forEach(function(o){
+      var st=(statusLabels[o.status]||'').replace(/[^\w\s\u00c0-\u024f]/g,'').trim();
+      var bd=o.bestelldatum?new Date(o.bestelldatum).toLocaleDateString('de-DE'):'';
+      var ad=o.abholdatum?new Date(o.abholdatum).toLocaleDateString('de-DE'):'';
+      var zs=o.abhol_zeitslot||{};var zt=zs.von&&zs.bis?zs.von+'-'+zs.bis:'';
+      var row=[o.bestellnummer||'','"'+(o.kunde_name||'').replace(/"/g,'""')+'"',o.kunde_email||'',st,bd,ad,zt,o.positionen_count||0,(o.gesamtsumme||0).toFixed(2).replace('.',',')];
+      csv+=row.join(sep)+nl;
+    });
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download='bestellungen_'+todayStr()+'.csv';a.click();
+    URL.revokeObjectURL(url);
+  });
   loadDashboard();
   if(window.lucide)lucide.createIcons();
   // Auto-select order from URL ?order=ID

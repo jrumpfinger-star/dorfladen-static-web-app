@@ -40,6 +40,12 @@
     .header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:16px 20px;text-align:center;position:sticky;top:0;z-index:100}
     .header h1{font-size:18px;font-weight:800;margin-bottom:2px}
     .header small{font-size:12px;opacity:.85}
+    .lunch-cd{background:linear-gradient(135deg,#fef3c7,#fef9c3);border-bottom:1px solid #f59e0b33;padding:8px 16px;text-align:center;position:sticky;top:62px;z-index:99}
+    .lunch-cd-title{font-size:12px;font-weight:700;color:#92400e}
+    .lunch-cd-timer{font-size:14px;font-weight:800;color:#b45309;margin-top:1px;font-variant-numeric:tabular-nums}
+    .lunch-cd.closed{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#dc262633}
+    .lunch-cd.closed .lunch-cd-title{color:#991b1b}
+    .lunch-cd.closed .lunch-cd-timer{color:#b91c1c}
 
     .container{max-width:520px;margin:0 auto;padding:16px}
 
@@ -133,6 +139,11 @@
 <div class="header">
   <h1>🍽 Mittagessen bestellen</h1>
   <small>Dorfladen Oberornau · Dorfplatz 1</small>
+</div>
+
+<div class="lunch-cd" id="lunch-cd" style="display:none">
+  <div class="lunch-cd-title" id="lcd-title"></div>
+  <div class="lunch-cd-timer" id="lcd-timer"></div>
 </div>
 
 <div class="container">
@@ -248,6 +259,35 @@
   var selectedDish = null; // {id, gericht, preis, datum, wochentag_label}
   var DAY_LABELS = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa'};
   var DAY_FULL = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag',101005:'Samstag'};
+  var BESTELLSCHLUSS_H = 10, BESTELLSCHLUSS_M = 30;
+
+  // ── Bestellschluss-Countdown ──
+  function updateLunchCountdown(){
+    var el=document.getElementById('lunch-cd');
+    var title=document.getElementById('lcd-title');
+    var timer=document.getElementById('lcd-timer');
+    if(!el) return;
+    var now=new Date();
+    var dow=now.getDay(); // 0=Sun
+    if(dow===0){ el.style.display='none'; return; }
+    var schluss=new Date(now);
+    schluss.setHours(BESTELLSCHLUSS_H,BESTELLSCHLUSS_M,0,0);
+    var diff=schluss-now;
+    el.style.display='';
+    if(diff>0){
+      el.classList.remove('closed');
+      var h=Math.floor(diff/3600000);
+      var m=Math.floor((diff%3600000)/60000);
+      title.textContent='Bestellschluss f\u00fcr heute: '+BESTELLSCHLUSS_H+':'+(BESTELLSCHLUSS_M<10?'0':'')+BESTELLSCHLUSS_M+' Uhr';
+      timer.textContent='Noch '+h+'h '+m+'min';
+    } else {
+      el.classList.add('closed');
+      title.textContent='Bestellschluss f\u00fcr heute erreicht';
+      timer.textContent='Bestellungen f\u00fcr morgen sind weiterhin m\u00f6glich';
+    }
+  }
+  updateLunchCountdown();
+  setInterval(updateLunchCountdown,30000);
 
   // ── Persist customer data ──
   function loadCustomer(){
