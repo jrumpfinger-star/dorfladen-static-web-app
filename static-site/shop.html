@@ -1779,7 +1779,7 @@
     if(activeCat==='previous'){
       fleischOrdersHtml='<div id="shop-fm-orders" style="display:none"></div>';
     }
-    content.innerHTML=bc+fleischBanner+reorderBanner+fleischOrdersHtml+(emptyHint||articleHtml);
+    content.innerHTML=bc+fleischBanner+fleischOrdersHtml+reorderBanner+(emptyHint||articleHtml);
     wireAddButtons();
     markCartItems();
     loadImages(items);
@@ -1874,13 +1874,20 @@
       var fmEmail=authUser&&authUser.email?authUser.email:'';
       var fmTel=localStorage.getItem('fm_telefon')||'';
       if(fmEmail||fmTel){
-        var fmParam=fmEmail?'email='+encodeURIComponent(fmEmail):'telefon='+encodeURIComponent(fmTel);
-        fetch('/api/fleisch-order?mode=my&'+fmParam)
-          .then(function(r){return r.json();})
-          .then(function(res){
+        // Fetch by both email and telefon, merge results (dedup by bestellnummer)
+        var _fmFetches=[];
+        if(fmEmail) _fmFetches.push(fetch('/api/fleisch-order?mode=my_history&email='+encodeURIComponent(fmEmail)).then(function(r){return r.json();}).catch(function(){return{success:false};}));
+        if(fmTel) _fmFetches.push(fetch('/api/fleisch-order?mode=my_history&telefon='+encodeURIComponent(fmTel)).then(function(r){return r.json();}).catch(function(){return{success:false};}));
+        Promise.all(_fmFetches).then(function(results){
             var el=document.getElementById('shop-fm-orders');
-            if(!el||!res.success) return;
-            var bb=res.bestellungen||[];
+            if(!el) return;
+            var seen={};var bb=[];
+            results.forEach(function(res){
+              if(!res.success) return;
+              (res.bestellungen||[]).forEach(function(b){
+                if(!seen[b.bestellnummer]){seen[b.bestellnummer]=true;bb.push(b);}
+              });
+            });
             if(!bb.length) return;
             var FM_ST={0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
             var FM_CLR={0:'#f59e0b',1:'#3b82f6',2:'#16a34a',3:'#6b7280',4:'#ef4444'};
