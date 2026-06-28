@@ -203,8 +203,6 @@
 
     <span class="mob-action-sub" id="mob-meat-sub-default">15% ab 1kg</span>
 
-    <div id="mob-fm-orders" style="display:none;margin-top:6px" onclick="event.stopPropagation()"></div>
-
   </div>
 
   <div class="mob-action" onclick="mobOpenPopup('offers')">
@@ -374,6 +372,8 @@
       <p style="font-size:.92rem;color:#1a1a1a;margin:0" id="mob-meat-sub">Auf alle Fleisch- und Wurstprodukte bei Vorbestellung ab 1&thinsp;kg. Bequem online vorbestellen und im Laden abholen!</p>
 
     </div>
+
+    <div id="mob-fm-orders-popup" style="display:none;margin-bottom:16px"></div>
 
     <a href="/fleisch-bestellen" style="display:block;text-align:center;background:#7f1d1d;color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:1rem" id="mob-meat-cta"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/></svg> Jetzt online vorbestellen</a>
 
@@ -1616,15 +1616,21 @@
           var orders = res.bestellungen||[];
           if(!orders.length) return;
 
-          // ── Mobile widget ──
-          var el = document.getElementById('mob-fm-orders');
-          if(el){
-            var sub = document.getElementById('mob-meat-sub-default');
-            if(sub) sub.style.display='none';
-            var html = '';
-            orders.forEach(function(o){ html += _fmRenderOrderLink(o); });
-            el.innerHTML = html;
-            el.style.display = 'block';
+          // ── Mobile tile badge ──
+          var sub = document.getElementById('mob-meat-sub-default');
+          if(sub){
+            sub.innerHTML = '<span style="display:inline-block;background:#7f1d1d;color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:6px;margin-right:4px">'+orders.length+'</span> Bestellung'+(orders.length>1?'en':'');
+          }
+
+          // ── Mobile popup list ──
+          var popupEl = document.getElementById('mob-fm-orders-popup');
+          if(popupEl){
+            var ph = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:.85rem;font-weight:700;color:#7f1d1d">'
+              +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z"/><polyline points="12 6 12 12 16 14"/></svg>'
+              +' Ihre Vorbestellung'+(orders.length>1?'en':'')+':</div>';
+            orders.forEach(function(o){ ph += _fmRenderOrderLink(o); });
+            popupEl.innerHTML = ph;
+            popupEl.style.display = 'block';
           }
 
           // ── Desktop widget (inside meat-promo banner) ──
