@@ -330,20 +330,38 @@ test.describe('T-21 Kiosk Fleisch Per-Item-Bestellung (AK-FLEISCH-21)', () => {
     }
   });
 
-  test('T-21-06 Quick-Action-Button im Header (AK-FLEISCH-21)', async ({ page }) => {
+  test('T-21-06 Status 0: Header zeigt Fortschritt statt Button (AK-FLEISCH-21)', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="metzger"]').click();
     await page.waitForTimeout(2000);
-    const openCards = page.locator('#metzger-orders .k-order[data-fmstatus="0"], #metzger-orders .k-order[data-fmstatus="1"], #metzger-orders .k-order[data-fmstatus="2"]');
-    const count = await openCards.count();
+    const newCards = page.locator('#metzger-orders .k-order[data-fmstatus="0"]');
+    const count = await newCards.count();
     if (count === 0) {
-      test.skip(true, 'Keine aktiven Metzger-Bestellungen');
+      test.skip(true, 'Keine Metzger-Bestellungen mit Status 0');
       return;
     }
-    // Header should contain action button
-    const headerBtns = openCards.first().locator('.k-order-hdr .k-oc-actions button');
-    const btnCount = await headerBtns.count();
-    expect(btnCount).toBeGreaterThanOrEqual(1);
+    // Header should show progress span (X/Y), NOT a button
+    const headerActions = newCards.first().locator('.k-order-hdr .k-oc-actions');
+    const headerBtns = headerActions.locator('button');
+    const headerSpans = headerActions.locator('span[style*="font-size:11px"]');
+    expect(await headerBtns.count()).toBe(0);
+    expect(await headerSpans.count()).toBe(1);
+    const text = await headerSpans.first().textContent();
+    expect(text).toMatch(/\d+\/\d+/);
+  });
+
+  test('T-21-09 Status 1+: Header zeigt Quick-Action-Button (AK-FLEISCH-21)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    const activeCards = page.locator('#metzger-orders .k-order[data-fmstatus="1"], #metzger-orders .k-order[data-fmstatus="2"]');
+    const count = await activeCards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen mit Status 1/2');
+      return;
+    }
+    const headerBtns = activeCards.first().locator('.k-order-hdr .k-oc-actions button');
+    expect(await headerBtns.count()).toBeGreaterThanOrEqual(1);
   });
 
   test('T-21-07 API PATCH akzeptiert positionen (AK-FLEISCH-21)', async ({ request }) => {
@@ -547,5 +565,90 @@ test.describe('T-19 CMS Sammelbestellung (AK-FLEISCH-18)', () => {
     // Should contain either "Keine" or aggregated article table with "Gesamt-Menge"
     const hasAggregated = content.includes('Gesamt-Menge') || content.includes('Keine');
     expect(hasAggregated).toBe(true);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  T-23: Sammelbestellung Status & Batch (AK-FLEISCH-23)
+// ════════════════════════════════════════════════════
+
+test.describe('T-23 Kiosk Sammelbestellung Status (AK-FLEISCH-23)', () => {
+
+  test('T-23-01 API liefert bestellt_count in Sammelbestellung (AK-FLEISCH-23)', async ({ request }) => {
+    const resp = await request.get(`${BASE}/api/fleisch-order?liefertag=2026-07-02`);
+    if (!resp.ok()) { test.skip(true, 'Keine Daten für Liefertag'); return; }
+    const data = await resp.json();
+    expect(data.success).toBe(true);
+    const agg = data.aggregiert || [];
+    if (agg.length === 0) { test.skip(true, 'Keine aggregierten Artikel'); return; }
+    for (const a of agg) {
+      expect(a).toHaveProperty('bestellt_count');
+      expect(typeof a.bestellt_count).toBe('number');
+      expect(a.bestellt_count).toBeGreaterThanOrEqual(0);
+      expect(a.bestellt_count).toBeLessThanOrEqual(a.anzahl_bestellungen);
+    }
+  });
+
+  test('T-23-02 Sammelbestellung-Tabelle hat Status-Spalte (AK-FLEISCH-23)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    await page.locator('[data-fm-filter="sammel"]').click();
+    await page.waitForTimeout(3000);
+    // Table should have 5 columns (checkbox, Artikel, Gesamt kg, Bestellungen, Status)
+    const thCount = await page.locator('#metzger-sammel-body table thead th').count();
+    if (thCount === 0) { test.skip(true, 'Keine Sammelbestellung-Tabelle'); return; }
+    expect(thCount).toBe(5);
+    const lastTh = page.locator('#metzger-sammel-body table thead th').last();
+    await expect(lastTh).toContainText('Status');
+  });
+
+  test('T-23-03 Sammelbestellung zeigt Bestellt-Status pro Zeile (AK-FLEISCH-23)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    await page.locator('[data-fm-filter="sammel"]').click();
+    await page.waitForTimeout(3000);
+    const rows = page.locator('#metzger-sammel-body table tbody tr');
+    const rowCount = await rows.count();
+    if (rowCount === 0) { test.skip(true, 'Keine Sammelbestellung-Zeilen'); return; }
+    // Each row should have 5 cells (checkbox + 4 data columns)
+    for (let i = 0; i < Math.min(rowCount, 5); i++) {
+      const cells = rows.nth(i).locator('td');
+      expect(await cells.count()).toBe(5);
+      // Last cell = Status (should contain ✅, X/Y, or —)
+      const statusText = await cells.last().textContent();
+      expect(statusText.trim()).toMatch(/✅|\d+\/\d+|—/);
+    }
+  });
+
+  test('T-23-04 Button Text: Alle beim Metzger bestellt (AK-FLEISCH-23)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    await page.locator('[data-fm-filter="sammel"]').click();
+    await page.waitForTimeout(1000);
+    const btn = page.locator('#metzger-sammel button:has-text("Alle beim Metzger bestellt")');
+    await expect(btn).toBeVisible();
+  });
+
+  test('T-23-05 Filter-Leiste sticky ohne Gap (AK-FLEISCH-23)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(1000);
+    const filterBar = page.locator('#panel-metzger .k-filter-bar');
+    const style = await filterBar.evaluate(el => {
+      const cs = getComputedStyle(el);
+      return { position: cs.position, marginTop: cs.marginTop };
+    });
+    expect(style.position).toBe('sticky');
+    expect(style.marginTop).toBe('-12px');
+  });
+
+  test('T-23-06 metzgerAlleGesendet Funktion existiert (AK-FLEISCH-23)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.metzgerAlleGesendet === 'function');
+    expect(hasFn).toBe(true);
   });
 });

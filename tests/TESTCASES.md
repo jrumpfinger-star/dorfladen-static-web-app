@@ -1518,3 +1518,66 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-28 | T-22-03 Homepage-Widget zeigt Kunden-Labels | ✅ Pass |
 | 2026-06-28 | T-22-04 Bestellstatus-Seite zeigt Kunden-Labels | ✅ Pass |
 | 2026-06-28 | T-22-05 Kiosk behält interne Labels | ✅ Pass |
+
+---
+
+## T-23 – Kiosk Metzger: Sammelbestellung Status & Batch-Bestellt
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-23
+
+### T-23-01: API liefert bestellt_count in Sammelbestellung
+- **Aktion:** GET `/api/fleisch-order?liefertag=2026-07-02`
+- **Prüfung:** `aggregiert[].bestellt_count` vorhanden und numerisch
+- **Erwartung:** `bestellt_count >= 0` und `<= anzahl_bestellungen`
+
+### T-23-02: Sammelbestellung-Tabelle hat Status-Spalte
+- **Aktion:** Kiosk → Metzger → Sammelbestellung
+- **Prüfung:** Tabelle hat 5 Spalten: ☐ | Artikel | Gesamt kg | Bestellungen | Status
+- **Erwartung:** Letzte Spalten-Überschrift = „Status"
+
+### T-23-03: Sammelbestellung zeigt Bestellt-Status pro Zeile
+- **Aktion:** Kiosk → Metzger → Sammelbestellung
+- **Prüfung:** Jede Zeile hat 5 Zellen, letzte Zelle zeigt ✅, X/Y, oder —
+- **Erwartung:** ✅ = alle bestellt, X/Y = teilbestellt (orange), — = keine bestellt (grau)
+
+### T-23-04: Button Text: „Alle beim Metzger bestellt"
+- **Aktion:** Kiosk → Metzger → Sammelbestellung
+- **Prüfung:** Button-Text im Sammelbestellung-Header
+- **Erwartung:** „Alle beim Metzger bestellt" (nicht nur „Alle bestellt")
+
+### T-23-05: Filter-Leiste sticky ohne Gap
+- **Aktion:** Kiosk → Metzger-Tab öffnen, Filter-Leiste CSS prüfen
+- **Prüfung:** `position: sticky`, `margin-top: -12px`
+- **Erwartung:** Leiste klebt bündig oben ohne Gap zum Panel-Rand
+
+### T-23-06: metzgerAlleGesendet Funktion existiert
+- **Aktion:** Kiosk laden, `K.metzgerAlleGesendet` prüfen
+- **Prüfung:** `typeof K.metzgerAlleGesendet === 'function'`
+- **Erwartung:** `true`
+
+---
+
+## T-21 Update – Kiosk Metzger: Header-Fortschritt statt Button
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-21
+
+### T-21-06: Status 0 Header zeigt Fortschritt statt Button
+- **Aktion:** Kiosk → Metzger → Bestellung mit Status 0
+- **Prüfung:** Header `.k-oc-actions` enthält `<span>` mit X/Y, keinen `<button>`
+- **Erwartung:** Fortschrittsanzeige (z.B. „1/1" oder „0/3"), kein Quick-Action-Button
+
+### T-21-09: Status 1+ Header zeigt Quick-Action-Button
+- **Aktion:** Kiosk → Metzger → Bestellung mit Status 1 oder 2
+- **Prüfung:** Header `.k-oc-actions` enthält `<button>`
+- **Erwartung:** Button „Eingetroffen" (Status 1) oder „Abgeholt" (Status 2)
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-29 | T-21-06 Status 0 Header zeigt Fortschritt statt Button | ✅ Pass |
+| 2026-06-29 | T-21-09 Status 1+ Header zeigt Quick-Action-Button | ✅ Pass |
+| 2026-06-29 | T-23-01 API liefert bestellt_count | ✅ Pass |
+| 2026-06-29 | T-23-02 Sammelbestellung-Tabelle hat Status-Spalte | ✅ Pass |
+| 2026-06-29 | T-23-03 Bestellt-Status pro Zeile | ✅ Pass |
+| 2026-06-29 | T-23-04 Button Text: Alle beim Metzger bestellt | ✅ Pass |
+| 2026-06-29 | T-23-05 Filter-Leiste sticky ohne Gap | ✅ Pass |
+| 2026-06-29 | T-23-06 metzgerAlleGesendet Funktion existiert | ✅ Pass |

@@ -428,14 +428,22 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Linke Spalte (200px): Bestellnummer, Telefon, Liefertag, Gesamtsumme, Ersparnis, Anmerkung
 - [x] Rechte Spalte: Artikelliste mit per-Item Checkbox „bestellt"
 - [x] Checkboxen nur aktiv bei Status 0 (Neu) oder 1 (Beim Metzger bestellt)
-- [x] Bestellt-Zähler im Header: „X/Y bestellt" (nur wenn teilweise bestellt)
+- [x] Bestellt-Zähler im Header: „X/Y" Fortschrittsanzeige (statt Quick-Action-Button bei Status 0)
 - [x] Checkbox-Änderung speichert sofort per PATCH (positionen_json)
 - [x] „Alle markieren"-Button markiert alle Positionen als bestellt
-- [x] Wenn alle Positionen bestellt: „Alle beim Metzger bestellt"-Button erscheint
+- [x] Wenn alle Positionen bestellt: „Beim Metzger bestellt"-Button erscheint
+- [x] Teilweise bestellt: Fortschritts-Anzeige + „Rest markieren"-Button
 - [x] Status-Badges mit farbcodierten CSS-Klassen (k-badge st-new/st-confirm/st-ready/st-done/st-cancel)
-- [x] Quick-Action-Buttons im Header (nächster Status-Schritt)
+- [x] Kein doppelter „Bestellt"-Button: Header zeigt nur Fortschritt bei Status 0, Quick-Action erst ab Status 1
 - [x] API PATCH akzeptiert `positionen` Array und speichert als `dl_positionen_json`
 - [x] Funktionen `K.toggleFmItemBestellt` und `K.toggleAllFmItems` im K-Namespace registriert
+
+### AK-FLEISCH-23: Sammelbestellung Status-Spalte & Batch-Bestellt
+- [x] Sammelbestellung-Tabelle hat Status-Spalte (5. Spalte)
+- [x] Status pro Artikel: ✅ = alle Positionen bestellt, X/Y = teilbestellt, — = keine bestellt
+- [x] API `/fleisch-order?liefertag=...` liefert `bestellt_count` pro aggregiertem Artikel
+- [x] „Alle beim Metzger bestellt"-Button setzt alle Positionen auf `bestellt=true` UND Status auf 1
+- [x] Filter-Leiste: Full-width sticky ohne Gap (negative margin negiert Panel-Padding)
 
 ### AK-FLEISCH-10: CMS-Integration
 - [x] Rabatt, Mindestmenge, Liefertage, Bestellschluss konfigurierbar
