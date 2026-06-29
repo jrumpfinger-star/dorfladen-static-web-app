@@ -3181,15 +3181,35 @@ var K = (function(){
     else{el.classList.remove('show');}
   }
 
-  // Badge click actions: "tab:filter" → switchTab + setFilter
+  // Badge click: expand all cards after switching tab+filter
+  function _expandAfterBadge(tab){
+    setTimeout(function(){
+      if(tab==='abhol'){
+        document.querySelectorAll('.k-slot-group.collapsed').forEach(function(el){ el.classList.remove('collapsed'); });
+        shopOrders.forEach(function(o){ _shopCardOpen[o.id] = true; });
+        document.querySelectorAll('#abhol-orders .k-order.oc-collapsed').forEach(function(el){ el.classList.remove('oc-collapsed'); });
+      } else if(tab==='mittag'){
+        document.querySelectorAll('#mittag-orders .k-order.oc-collapsed').forEach(function(el){
+          el.classList.remove('oc-collapsed');
+          var oid = (el.id||'').replace('oc-','');
+          if(oid) _orderCardOpen[oid] = true;
+        });
+      } else if(tab==='metzger'){
+        _fmOrders.forEach(function(o){ _fmCardOpen[o.id] = true; });
+        document.querySelectorAll('#metzger-orders .k-order.oc-collapsed').forEach(function(el){ el.classList.remove('oc-collapsed'); });
+      }
+    }, 50);
+  }
+
+  // Badge click actions: "tab:filter" → switchTab + setFilter + expand
   var _badgeActions = {
-    'abhol:eingang':  function(){ switchTab('abhol'); setShopFilter('open','eingang'); },
-    'abhol:packen':   function(){ switchTab('abhol'); setShopFilter('open','packen'); },
-    'abhol:overdue':  function(){ switchTab('abhol'); setShopFilter('overdue'); },
-    'mittag:offen':   function(){ switchTab('mittag'); setMittagFilter('offen'); },
+    'abhol:eingang':  function(){ switchTab('abhol'); setShopFilter('open','eingang'); _expandAfterBadge('abhol'); },
+    'abhol:packen':   function(){ switchTab('abhol'); setShopFilter('open','packen'); _expandAfterBadge('abhol'); },
+    'abhol:overdue':  function(){ switchTab('abhol'); setShopFilter('overdue'); _expandAfterBadge('abhol'); },
+    'mittag:offen':   function(){ switchTab('mittag'); setMittagFilter('offen'); _expandAfterBadge('mittag'); },
     'mittag:nachrichten': function(){ switchTab('mittag'); setMittagFilter('nachrichten'); },
-    'metzger:neu':    function(){ switchTab('metzger'); setMetzgerFilter('offen','neu'); },
-    'metzger:offen':  function(){ switchTab('metzger'); setMetzgerFilter('offen'); },
+    'metzger:neu':    function(){ switchTab('metzger'); setMetzgerFilter('offen','neu'); _expandAfterBadge('metzger'); },
+    'metzger:offen':  function(){ switchTab('metzger'); setMetzgerFilter('offen'); _expandAfterBadge('metzger'); },
     'metzger:nachrichten': function(){ switchTab('metzger'); setMetzgerFilter('nachrichten'); }
   };
 
