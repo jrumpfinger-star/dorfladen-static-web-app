@@ -25,6 +25,14 @@
     .k-tab .k-tab-icon{font-size:22px}
     .k-tab .k-tab-badge{background:var(--c-orange);color:#fff;font-size:11px;font-weight:800;padding:1px 7px;border-radius:10px;min-width:20px;display:none}
     .k-tab .k-tab-badge.show{display:inline-block}
+    .k-tab-badges{display:flex;gap:3px;justify-content:center;flex-wrap:wrap}
+    .k-tab-badges .k-tab-badge{margin:0}
+    .k-tab-badge.badge-neu{background:#ef4444}
+    .k-tab-badge.badge-packen{background:#f59e0b}
+    .k-tab-badge.badge-overdue{background:#dc2626}
+    .k-tab-badge.badge-msg{background:#3b82f6}
+    .k-tab-badge.blink{animation:badgeBlink 1s ease-in-out infinite}
+    @keyframes badgeBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.15)}}
     @media(max-width:600px){
       .k-tab{padding:10px 4px;font-size:11px;gap:1px;min-height:44px}
       .k-tab .k-tab-icon i{width:18px!important;height:18px!important}
@@ -386,18 +394,18 @@
 <div class="k-tabs">
   <div class="k-tab" data-tab="mittag" onclick="K.switchTab('mittag')">
     <span class="k-tab-icon"><i data-lucide="utensils" style="width:22px;height:22px"></i></span> Mittagstisch
-    <span class="k-tab-badge" id="badge-mittag"></span>
+    <span class="k-tab-badges" id="badges-mittag"></span>
   </div>
   <div class="k-tab active" data-tab="abhol" onclick="K.switchTab('abhol')">
     <span class="k-tab-icon"><i data-lucide="shopping-cart" style="width:22px;height:22px"></i></span> Online-Shop
-    <span class="k-tab-badge" id="badge-abhol"></span>
+    <span class="k-tab-badges" id="badges-abhol"></span>
   </div>
   <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
     <span class="k-tab-icon"><i data-lucide="users" style="width:22px;height:22px"></i></span> Stammkunden
   </div>
   <div class="k-tab" data-tab="metzger" onclick="K.switchTab('metzger')">
     <span class="k-tab-icon"><i data-lucide="beef" style="width:22px;height:22px"></i></span> Metzger
-    <span class="k-tab-badge" id="badge-metzger"></span>
+    <span class="k-tab-badges" id="badges-metzger"></span>
   </div>
   <div class="k-tab" data-tab="social" onclick="K.switchTab('social')">
     <span class="k-tab-icon"><i data-lucide="share-2" style="width:22px;height:22px"></i></span> Social
@@ -1233,26 +1241,10 @@ var K = (function(){
   }
 
   function _updateMittagTabBadge(){
-    var total = _globalTodayNew + _globalUnreadMessages;
-    var el = document.getElementById('badge-mittag');
-    if(!el) return;
-    if(total>0){
-      var parts = [];
-      if(_globalTodayNew>0) parts.push(_globalTodayNew+' neu');
-      if(_globalUnreadMessages>0) parts.push(_globalUnreadMessages+' 💬');
-      el.textContent = total;
-      el.title = parts.join(', ');
-      el.classList.add('show');
-      // Color: blue if messages, orange if only orders
-      if(_globalUnreadMessages>0){
-        el.style.background = '#3b82f6';
-      } else {
-        el.style.background = '';
-      }
-    } else {
-      el.classList.remove('show');
-      el.style.background = '';
-    }
+    updateTabBadges('mittag', [
+      {count: _globalTodayNew, cls: 'badge-neu', title: _globalTodayNew+' neue Bestellung'+((_globalTodayNew!==1)?'en':''), blink: true},
+      {count: _globalUnreadMessages, cls: 'badge-msg', title: _globalUnreadMessages+' ungelesene Nachricht'+((_globalUnreadMessages!==1)?'en':''), blink: true}
+    ]);
   }
 
   function renderStats(){
@@ -2160,7 +2152,13 @@ var K = (function(){
         document.getElementById('fc-open').textContent = openC;
         document.getElementById('fc-today').textContent = todayC;
         document.getElementById('fc-overdue').textContent = overdueC;
-        updateBadge('abhol', todoC);
+        var neuC = active.filter(function(o){return o.status===0;}).length;
+        var packenC = active.filter(function(o){return o.status===1;}).length;
+        updateTabBadges('abhol', [
+          {count: neuC, cls: 'badge-neu', title: neuC+' neue Bestellung'+(neuC!==1?'en':''), blink: true},
+          {count: packenC, cls: 'badge-packen', title: packenC+' zu packen', blink: false},
+          {count: overdueC, cls: 'badge-overdue', title: overdueC+' überfällig', blink: true}
+        ]);
       })
       .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('alert-triangle',24)+'</div>Fehler beim Laden: '+esc(e.message)+'</div>'; reinitIcons(); });
   }
@@ -3172,10 +3170,24 @@ var K = (function(){
   });
 
   function updateBadge(tab, count){
+    // Legacy single-badge fallback
     var el = document.getElementById('badge-'+tab);
     if(!el) return;
     if(count>0){el.textContent=count;el.classList.add('show');}
     else{el.classList.remove('show');}
+  }
+
+  function updateTabBadges(tab, badges){
+    // badges = [{count, cls, title, blink}]
+    var wrap = document.getElementById('badges-'+tab);
+    if(!wrap) return;
+    var html = '';
+    for(var i=0;i<badges.length;i++){
+      var b = badges[i];
+      if(!b.count || b.count <= 0) continue;
+      html += '<span class="k-tab-badge show '+b.cls+(b.blink?' blink':'')+'" title="'+esc(b.title||'')+'">'+b.count+'</span>';
+    }
+    wrap.innerHTML = html;
   }
 
   var toastTimer = null;
@@ -3269,22 +3281,13 @@ var K = (function(){
   }
 
   function updateMetzgerBadge(){
-    var orderCount = _fmOrders.filter(function(o){ return o.status < 3; }).length;
-    var total = orderCount + _fmUnreadCount;
-    var el = document.getElementById('badge-metzger');
-    if(!el) return;
-    if(total>0){
-      el.textContent = total;
-      el.classList.add('show');
-      el.style.background = _fmUnreadCount > 0 ? '#3b82f6' : '';
-      var parts = [];
-      if(orderCount>0) parts.push(orderCount+' offen');
-      if(_fmUnreadCount>0) parts.push(_fmUnreadCount+' \uD83D\uDCAC');
-      el.title = parts.join(', ');
-    } else {
-      el.classList.remove('show');
-      el.style.background = '';
-    }
+    var neuCount = _fmOrders.filter(function(o){ return o.status === 0; }).length;
+    var offenCount = _fmOrders.filter(function(o){ return o.status > 0 && o.status < 3; }).length;
+    updateTabBadges('metzger', [
+      {count: neuCount, cls: 'badge-neu', title: neuCount+' neue Bestellung'+(neuCount!==1?'en':''), blink: true},
+      {count: offenCount, cls: 'badge-packen', title: offenCount+' offen', blink: false},
+      {count: _fmUnreadCount, cls: 'badge-msg', title: _fmUnreadCount+' ungelesene Nachricht'+((_fmUnreadCount!==1)?'en':''), blink: true}
+    ]);
   }
 
   function setMetzgerFilter(f){
