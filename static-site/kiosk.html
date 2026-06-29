@@ -1242,8 +1242,8 @@ var K = (function(){
 
   function _updateMittagTabBadge(){
     updateTabBadges('mittag', [
-      {count: _globalTodayNew, cls: 'badge-neu', title: _globalTodayNew+' neue Bestellung'+((_globalTodayNew!==1)?'en':''), blink: true},
-      {count: _globalUnreadMessages, cls: 'badge-msg', title: _globalUnreadMessages+' ungelesene Nachricht'+((_globalUnreadMessages!==1)?'en':''), blink: true}
+      {count: _globalTodayNew, cls: 'badge-neu', title: _globalTodayNew+' neue Bestellung'+((_globalTodayNew!==1)?'en':''), blink: true, action: "function(){K.switchTab('mittag');K.setMittagFilter('offen')}"},
+      {count: _globalUnreadMessages, cls: 'badge-msg', title: _globalUnreadMessages+' ungelesene Nachricht'+((_globalUnreadMessages!==1)?'en':''), blink: true, action: "function(){K.switchTab('mittag');K.setMittagFilter('nachrichten')}"}
     ]);
   }
 
@@ -2155,9 +2155,9 @@ var K = (function(){
         var neuC = active.filter(function(o){return o.status===0;}).length;
         var packenC = active.filter(function(o){return o.status===1;}).length;
         updateTabBadges('abhol', [
-          {count: neuC, cls: 'badge-neu', title: neuC+' neue Bestellung'+(neuC!==1?'en':''), blink: true},
-          {count: packenC, cls: 'badge-packen', title: packenC+' zu packen', blink: false},
-          {count: overdueC, cls: 'badge-overdue', title: overdueC+' überfällig', blink: true}
+          {count: neuC, cls: 'badge-neu', title: neuC+' neue Bestellung'+(neuC!==1?'en':''), blink: true, action: "function(){K.switchTab('abhol');K.setShopFilter('open')}"},
+          {count: packenC, cls: 'badge-packen', title: packenC+' zu packen', blink: false, action: "function(){K.switchTab('abhol');K.setShopFilter('open')}"},
+          {count: overdueC, cls: 'badge-overdue', title: overdueC+' überfällig', blink: true, action: "function(){K.switchTab('abhol');K.setShopFilter('overdue')}"}
         ]);
       })
       .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('alert-triangle',24)+'</div>Fehler beim Laden: '+esc(e.message)+'</div>'; reinitIcons(); });
@@ -3178,14 +3178,16 @@ var K = (function(){
   }
 
   function updateTabBadges(tab, badges){
-    // badges = [{count, cls, title, blink}]
+    // badges = [{count, cls, title, blink, action}]
+    // action = function to call on click (switches to correct tab+filter)
     var wrap = document.getElementById('badges-'+tab);
     if(!wrap) return;
     var html = '';
     for(var i=0;i<badges.length;i++){
       var b = badges[i];
       if(!b.count || b.count <= 0) continue;
-      html += '<span class="k-tab-badge show '+b.cls+(b.blink?' blink':'')+'" title="'+esc(b.title||'')+'">'+b.count+'</span>';
+      var onclick = b.action ? ' onclick="event.stopPropagation();('+b.action+')()" style="cursor:pointer"' : '';
+      html += '<span class="k-tab-badge show '+b.cls+(b.blink?' blink':'')+'"'+onclick+' title="'+esc(b.title||'')+'">'+b.count+'</span>';
     }
     wrap.innerHTML = html;
   }
@@ -3284,9 +3286,9 @@ var K = (function(){
     var neuCount = _fmOrders.filter(function(o){ return o.status === 0; }).length;
     var offenCount = _fmOrders.filter(function(o){ return o.status > 0 && o.status < 3; }).length;
     updateTabBadges('metzger', [
-      {count: neuCount, cls: 'badge-neu', title: neuCount+' neue Bestellung'+(neuCount!==1?'en':''), blink: true},
-      {count: offenCount, cls: 'badge-packen', title: offenCount+' offen', blink: false},
-      {count: _fmUnreadCount, cls: 'badge-msg', title: _fmUnreadCount+' ungelesene Nachricht'+((_fmUnreadCount!==1)?'en':''), blink: true}
+      {count: neuCount, cls: 'badge-neu', title: neuCount+' neue Bestellung'+(neuCount!==1?'en':''), blink: true, action: "function(){K.switchTab('metzger');K.setMetzgerFilter('offen')}"},
+      {count: offenCount, cls: 'badge-packen', title: offenCount+' offen', blink: false, action: "function(){K.switchTab('metzger');K.setMetzgerFilter('offen')}"},
+      {count: _fmUnreadCount, cls: 'badge-msg', title: _fmUnreadCount+' ungelesene Nachricht'+((_fmUnreadCount!==1)?'en':''), blink: true, action: "function(){K.switchTab('metzger');K.setMetzgerFilter('nachrichten')}"}
     ]);
   }
 
