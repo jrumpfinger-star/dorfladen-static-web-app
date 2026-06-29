@@ -2046,8 +2046,10 @@ var K = (function(){
   var _allShopOrders = [];
   var _histRange = '7';
   var _histStatus = 'all';
+  var _shopSubFilter = null; // 'eingang'|'packen'|null
 
-  function setShopFilter(f){
+  function setShopFilter(f, sub){
+    _shopSubFilter = sub || null;
     _shopFilter = f;
     document.querySelectorAll('#abhol-filter-bar .k-filter-btn').forEach(function(b){
       b.classList.toggle('active', b.dataset.filter===f);
@@ -2106,6 +2108,8 @@ var K = (function(){
         });
       } else {
         shopOrders = base.filter(function(o){return o.status<3;});
+        if(_shopSubFilter==='eingang') shopOrders = shopOrders.filter(function(o){return o.status===0;});
+        else if(_shopSubFilter==='packen') shopOrders = shopOrders.filter(function(o){return o.status===1;});
       }
     }
     renderShopOrders();
@@ -2155,8 +2159,8 @@ var K = (function(){
         var neuC = active.filter(function(o){return o.status===0;}).length;
         var packenC = active.filter(function(o){return o.status===1;}).length;
         updateTabBadges('abhol', [
-          {count: neuC, cls: 'badge-neu', title: neuC+' neue Bestellung'+(neuC!==1?'en':''), blink: true, action: 'abhol:open'},
-          {count: packenC, cls: 'badge-packen', title: packenC+' zu packen', blink: false, action: 'abhol:open'},
+          {count: neuC, cls: 'badge-neu', title: neuC+' neue Bestellung'+(neuC!==1?'en':''), blink: true, action: 'abhol:eingang'},
+          {count: packenC, cls: 'badge-packen', title: packenC+' zu packen', blink: false, action: 'abhol:packen'},
           {count: overdueC, cls: 'badge-overdue', title: overdueC+' überfällig', blink: true, action: 'abhol:overdue'}
         ]);
       })
@@ -3179,10 +3183,12 @@ var K = (function(){
 
   // Badge click actions: "tab:filter" → switchTab + setFilter
   var _badgeActions = {
-    'abhol:open':     function(){ switchTab('abhol'); setShopFilter('open'); },
+    'abhol:eingang':  function(){ switchTab('abhol'); setShopFilter('open','eingang'); },
+    'abhol:packen':   function(){ switchTab('abhol'); setShopFilter('open','packen'); },
     'abhol:overdue':  function(){ switchTab('abhol'); setShopFilter('overdue'); },
     'mittag:offen':   function(){ switchTab('mittag'); setMittagFilter('offen'); },
     'mittag:nachrichten': function(){ switchTab('mittag'); setMittagFilter('nachrichten'); },
+    'metzger:neu':    function(){ switchTab('metzger'); setMetzgerFilter('offen','neu'); },
     'metzger:offen':  function(){ switchTab('metzger'); setMetzgerFilter('offen'); },
     'metzger:nachrichten': function(){ switchTab('metzger'); setMetzgerFilter('nachrichten'); }
   };
@@ -3304,13 +3310,15 @@ var K = (function(){
     var neuCount = _fmOrders.filter(function(o){ return o.status === 0; }).length;
     var offenCount = _fmOrders.filter(function(o){ return o.status > 0 && o.status < 3; }).length;
     updateTabBadges('metzger', [
-      {count: neuCount, cls: 'badge-neu', title: neuCount+' neue Bestellung'+(neuCount!==1?'en':''), blink: true, action: 'metzger:offen'},
+      {count: neuCount, cls: 'badge-neu', title: neuCount+' neue Bestellung'+(neuCount!==1?'en':''), blink: true, action: 'metzger:neu'},
       {count: offenCount, cls: 'badge-packen', title: offenCount+' offen', blink: false, action: 'metzger:offen'},
       {count: _fmUnreadCount, cls: 'badge-msg', title: _fmUnreadCount+' ungelesene Nachricht'+((_fmUnreadCount!==1)?'en':''), blink: true, action: 'metzger:nachrichten'}
     ]);
   }
 
-  function setMetzgerFilter(f){
+  var _fmSubFilter = null; // 'neu'|null
+  function setMetzgerFilter(f, sub){
+    _fmSubFilter = sub || null;
     _fmFilter = f;
     document.querySelectorAll('[data-fm-filter]').forEach(function(btn){
       btn.classList.toggle('active', btn.getAttribute('data-fm-filter')===f);
@@ -3333,6 +3341,7 @@ var K = (function(){
 
     if(_fmFilter==='offen'){
       list = list.filter(function(o){ return o.status < 3; });
+      if(_fmSubFilter==='neu') list = list.filter(function(o){ return o.status === 0; });
     } else if(_fmFilter==='heute'){
       list = list.filter(function(o){ return o.liefertag === today && (o.status === 1 || o.status === 2); });
     } else if(_fmFilter==='historie'){
