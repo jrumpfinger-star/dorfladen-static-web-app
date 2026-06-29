@@ -11,6 +11,7 @@ Rabatt: 15% ab 1 kg (configurable via CMS)
 import azure.functions as func
 import json
 import os
+import sys
 import uuid
 import logging
 import msal
@@ -463,12 +464,88 @@ def _handle_post(req, token, base_url, hdrs):
             status_code=500, headers=get_cors_headers()
         )
 
+    # ── Bestätigungs-E-Mail an Kunden (best-effort) ──
+    liefertag_label = _format_date_de(liefertag)
+    if email:
+        try:
+            api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            if api_dir not in sys.path:
+                sys.path.insert(0, api_dir)
+            from importlib import import_module
+            notify_mod = import_module("shop-notify")
+            ci = notify_mod.get_contact_info()
+            laden_name = ci["name"]
+            anrede = f"Liebe/r {name}" if name else "Liebe Kundin, lieber Kunde"
+
+            def _fmt_kg(v):
+                s = f"{v:.2f}".replace(".", ",")
+                return s + " kg"
+
+            def _fmt_eur(v):
+                return f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
+
+            email_subject = f"{laden_name} – Fleisch-Vorbestellung {bestellnummer}"
+            email_body = (
+                f"{anrede},\n\n"
+                f"vielen Dank für Ihre Fleisch-Vorbestellung! "
+                f"Wir haben folgende Bestellung erhalten:\n\n"
+                f"[info:clipboard-list] Bestellnummer: {bestellnummer}\n"
+                f"[info:calendar] Abholung: {liefertag_label}\n"
+                f"[info:map-pin] Ort: {laden_name}, {ci['adresse']}\n"
+            )
+            if anmerkung:
+                email_body += f"\n[info:message-square] Ihre Anmerkung: {anmerkung}\n"
+            email_body += (
+                f"\nSie erhalten ggf. eine weitere Benachrichtigung, "
+                f"sobald Ihre Bestellung zur Abholung bereitsteht.\n\n"
+                f"Bei Fragen erreichen Sie uns unter {ci['telefon']} oder "
+                f"per E-Mail an {ci['email']}.\n\n"
+                f"Herzliche Grüße\n"
+                f"Ihr {laden_name}-Team"
+            )
+            # Positions-Tabelle
+            rows = ""
+            for p in validated_positionen:
+                rows += (
+                    f'<tr>'
+                    f'<td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;color:#1f2937">{p.get("bezeichnung","")}</td>'
+                    f'<td style="padding:8px 6px;border-bottom:1px solid #f3f4f6;text-align:center;color:#6b7280">{_fmt_kg(p.get("menge_kg",0))}</td>'
+                    f'<td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#1f2937;white-space:nowrap">{_fmt_eur(p.get("rabattpreis",0))}</td>'
+                    f'</tr>'
+                )
+            positions_html = (
+                f'<div style="margin-top:16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">'
+                f'<div style="background:#fef3c7;padding:10px 14px;font-size:12px;font-weight:700;color:#92400e;border-bottom:1px solid #e5e7eb">'
+                f'{notify_mod._icon("shopping-bag", "#92400e", 14)} Ihre Fleisch-Vorbestellung</div>'
+                f'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+                f'<thead><tr style="background:#f9fafb">'
+                f'<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6b7280">Artikel</th>'
+                f'<th style="padding:8px 6px;text-align:center;font-size:11px;font-weight:600;color:#6b7280">Menge</th>'
+                f'<th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6b7280">Preis</th>'
+                f'</tr></thead>'
+                f'<tbody>{rows}</tbody>'
+                f'<tfoot><tr style="background:#fef3c7">'
+                f'<td colspan="2" style="padding:10px;font-weight:700;color:#92400e;font-size:14px">Gesamt (ca.)</td>'
+                f'<td style="padding:10px;text-align:right;font-weight:700;color:#92400e;font-size:14px">{_fmt_eur(gesamtsumme)}</td>'
+                f'</tr></tfoot>'
+                f'</table></div>'
+            )
+            if rabatt_summe > 0:
+                positions_html += (
+                    f'<div style="margin-top:8px;padding:8px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;color:#166534">'
+                    f'💰 Sie sparen {_fmt_eur(rabatt_summe)} durch den Mengenrabatt!</div>'
+                )
+            notify_mod.send_email(email, name, email_subject, email_body, positions_html)
+            logging.info(f"[fleisch-order] Confirmation email sent to {email}")
+        except Exception as ne:
+            logging.warning(f"[fleisch-order] Confirmation email failed (non-blocking): {ne}")
+
     return func.HttpResponse(
         json.dumps({
             "success": True,
             "bestellnummer": bestellnummer,
             "liefertag": liefertag.strftime("%Y-%m-%d"),
-            "liefertag_label": _format_date_de(liefertag),
+            "liefertag_label": liefertag_label,
             "gesamtsumme": gesamtsumme,
             "rabatt_summe": rabatt_summe,
             "positionen": validated_positionen,

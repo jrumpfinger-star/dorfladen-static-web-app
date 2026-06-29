@@ -12,6 +12,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
+import sys
 import msal
 import requests
 
@@ -239,6 +240,57 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 order["bestellnummer"] = bestellnr
 
                 logging.info(f"[lunch-order] Created {bestellnr} for {name} ({gericht} x{menge})")
+
+                # ── Bestätigungs-E-Mail an Kunden (best-effort) ──
+                if email:
+                    try:
+                        api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        if api_dir not in sys.path:
+                            sys.path.insert(0, api_dir)
+                        from importlib import import_module
+                        notify_mod = import_module("shop-notify")
+                        ci = notify_mod.get_contact_info()
+                        laden_name = ci["name"]
+                        anrede = f"Liebe/r {name}" if name else "Liebe Kundin, lieber Kunde"
+                        # Datum formatieren
+                        datum_de = datum
+                        try:
+                            dp = datum[:10].split("-")
+                            if len(dp) == 3:
+                                datum_de = f"{dp[2]}.{dp[1]}.{dp[0]}"
+                        except Exception:
+                            pass
+                        wt = wochentag_label or datum_de
+                        mitnehmen_text = "Zum Mitnehmen" if mitnehmen else "Vor Ort essen"
+                        preis_str = f"{preis:.2f}".replace(".", ",") + " €" if preis else ""
+                        email_subject = f"{laden_name} – Mittagstisch-Bestellung {bestellnr}"
+                        email_body = (
+                            f"{anrede},\n\n"
+                            f"vielen Dank für Ihre Mittagstisch-Bestellung! "
+                            f"Wir haben folgende Bestellung erhalten:\n\n"
+                            f"[info:clipboard-list] Bestellnummer: {bestellnr}\n"
+                            f"[info:utensils] Gericht: {gericht}\n"
+                            f"[info:hash] Menge: {menge}x\n"
+                        )
+                        if preis_str:
+                            email_body += f"[info:coins] Preis: {preis_str}\n"
+                        email_body += (
+                            f"[info:calendar] Datum: {wt} ({datum_de})\n"
+                            f"[info:package] {mitnehmen_text}\n"
+                        )
+                        if anmerkung:
+                            email_body += f"\n[info:message-square] Ihre Anmerkung: {anmerkung}\n"
+                        email_body += (
+                            f"\nBitte holen Sie Ihr Essen zwischen 11:30 und 13:00 Uhr ab.\n\n"
+                            f"Bei Fragen erreichen Sie uns unter {ci['telefon']} oder "
+                            f"per E-Mail an {ci['email']}.\n\n"
+                            f"Guten Appetit!\n"
+                            f"Ihr {laden_name}-Team"
+                        )
+                        notify_mod.send_email(email, name, email_subject, email_body)
+                        logging.info(f"[lunch-order] Confirmation email sent to {email}")
+                    except Exception as ne:
+                        logging.warning(f"[lunch-order] Confirmation email failed (non-blocking): {ne}")
 
                 return func.HttpResponse(
                     json.dumps({
