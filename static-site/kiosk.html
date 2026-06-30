@@ -1406,7 +1406,7 @@ var K = (function(){
     // Inline reply input (visible for all active orders so staff can communicate)
     if(o.status<=1){
       html += '<div style="padding-top:8px;display:flex;gap:6px;align-items:center">';
-      html += '<input type="text" id="rpt-'+o.id+'" placeholder="'+(o.kunde_kommentar?'Antwort eingeben\u2026':'Nachricht an Kunde\u2026')+'" maxlength="300" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'){event.preventDefault();K.sendReply(\''+o.id+'\')}">';
+      html += '<textarea id="rpt-'+o.id+'" placeholder="'+(o.kunde_kommentar?'Antwort eingeben\u2026':'Nachricht an Kunde\u2026')+'" maxlength="300" rows="1" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden;min-height:36px" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();K.sendReply(\''+o.id+'\')}"></textarea>';
       html += '<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff;white-space:nowrap" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',14)+'</button>';
       html += '</div>';
     }
@@ -1417,7 +1417,7 @@ var K = (function(){
     if(o.status===0){
       html += '<div class="k-confirm-dialog" id="cfd-'+o.id+'" style="display:none;padding:12px 16px;background:#f0fdf4;border:2px solid #86efac;border-radius:0 0 12px 12px;margin-top:-6px">';
       html += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+luc('message-square',14)+' Nachricht an Kunde (optional)</div>';
-      html += '<input type="text" class="k-confirm-input" id="cft-'+o.id+'" placeholder="z.B. Gericht wird um 12:30 fertig…" maxlength="200" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">';
+      html += '<textarea class="k-confirm-input" id="cft-'+o.id+'" placeholder="z.B. Gericht wird um 12:30 fertig…" maxlength="200" rows="1" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;resize:none;overflow:hidden;min-height:40px" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>';
       html += '<div style="display:flex;gap:8px;margin-top:8px">';
       html += '<button class="k-btn k-btn-confirm k-btn-sm" style="flex:1;padding:10px" onclick="K.confirmOrder(\''+o.id+'\')">' +luc('check-circle',16)+' Jetzt bestätigen</button>';
       html += '<button class="k-btn k-btn-outline k-btn-sm" style="padding:10px" onclick="K.hideConfirmDialog(\''+o.id+'\')">Abbrechen</button>';
@@ -1585,7 +1585,7 @@ var K = (function(){
       +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(o.bestellnummer||'?')+' – '+esc(o.name)+'</div>'
       +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
       +'<div id="storno-mt-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
-      +'<textarea id="storno-mt-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box"></textarea>'
+      +'<textarea id="storno-mt-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
       +'<div style="display:flex;gap:8px;margin-top:14px"><button id="storno-mt-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>'
       +'<button id="storno-mt-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
     overlay.appendChild(modal);document.body.appendChild(overlay);
@@ -3817,7 +3817,7 @@ var K = (function(){
       +'<button onclick="document.getElementById(\'fm-reply-modal\').remove()" style="background:none;border:none;cursor:pointer;padding:8px"><i data-lucide="x" style="width:24px;height:24px;color:#6b7280"></i></button>'
       +'</div>'
       +'<div style="padding:20px 24px">'
-      +'<textarea id="fm-modal-reply-text" rows="4" maxlength="500" placeholder="Nachricht eingeben\u2026" style="width:100%;padding:14px 16px;border:2px solid #d1d5db;border-radius:12px;font-size:16px;font-family:inherit;resize:vertical;box-sizing:border-box;min-height:120px"></textarea>'
+      +'<textarea id="fm-modal-reply-text" rows="4" maxlength="500" placeholder="Nachricht eingeben\u2026" style="width:100%;padding:14px 16px;border:2px solid #d1d5db;border-radius:12px;font-size:16px;font-family:inherit;resize:none;box-sizing:border-box;min-height:120px;overflow:hidden" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
       +'</div>'
       +'<div style="padding:0 24px 20px;display:flex;gap:12px">'
       +'<button onclick="document.getElementById(\'fm-reply-modal\').remove()" style="flex:1;padding:14px;border:2px solid #d1d5db;border-radius:12px;background:#fff;font-size:16px;font-weight:600;color:#6b7280;cursor:pointer">Abbrechen</button>'

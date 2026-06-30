@@ -48,7 +48,7 @@
 
     .bs-comment-box{margin-top:16px}
     .bs-comment-box label{font-size:13px;font-weight:700;color:var(--c-muted);display:block;margin-bottom:6px}
-    .bs-comment-box textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:15px;font-family:inherit;resize:vertical;min-height:80px;outline:none;transition:border-color .15s}
+    .bs-comment-box textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:15px;font-family:inherit;resize:none;min-height:80px;outline:none;transition:border-color .15s;overflow:hidden}
     .bs-comment-box textarea:focus{border-color:var(--c-green)}
     .bs-comment-box button{margin-top:10px;width:100%;padding:14px;border:none;border-radius:12px;background:var(--c-green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
     .bs-comment-box button:active{transform:scale(.98);opacity:.9}
@@ -141,7 +141,7 @@
       <div class="bs-card" id="bs-comment-card">
         <h2><i data-lucide="pencil" style="width:20px;height:20px"></i> Nachricht an den Dorfladen</h2>
         <div class="bs-comment-box">
-          <textarea id="bs-comment" placeholder="Haben Sie eine Frage oder Anmerkung?"></textarea>
+          <textarea id="bs-comment" placeholder="Haben Sie eine Frage oder Anmerkung?" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
           <button id="bs-comment-btn" onclick="sendComment()">Nachricht senden</button>
           <div class="bs-comment-sent" id="bs-comment-sent"><i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:middle"></i> Nachricht gesendet!</div>
         </div>

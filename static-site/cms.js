@@ -12142,7 +12142,7 @@
     var box=document.createElement('div');
     box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)';
     box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#7f1d1d">Nachricht an Kunden</div>'
-      +'<textarea id="fm-cms-reply-text" rows="4" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:14px;resize:vertical;font-family:inherit" placeholder="Ihre Nachricht..."></textarea>'
+      +'<textarea id="fm-cms-reply-text" rows="4" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:14px;resize:none;font-family:inherit;overflow:hidden" placeholder="Ihre Nachricht..." oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
       +'<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
       +'<button id="fm-cms-reply-cancel" class="cms-btn" style="font-size:13px;padding:8px 16px">Abbrechen</button>'
       +'<button id="fm-cms-reply-send" class="cms-btn cms-btn-primary" style="font-size:13px;padding:8px 16px;background:#1e40af;color:#fff;border:none">Senden</button>'

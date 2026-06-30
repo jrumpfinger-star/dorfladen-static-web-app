@@ -74,7 +74,7 @@
 
     /* Anmerkung */
     .note-wrap{padding:0 20px 16px}
-    .note-wrap textarea{width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;outline:none}
+    .note-wrap textarea{width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none;min-height:60px;outline:none;overflow:hidden}
     .note-wrap textarea:focus{border-color:var(--c-green)}
     .note-wrap label{font-size:12px;color:var(--c-muted);margin-bottom:4px;display:block}
 
@@ -179,7 +179,7 @@
       </div>
       <div class="note-wrap">
         <label for="note-input">Anmerkung (optional)</label>
-        <textarea id="note-input" placeholder="z.B. ohne Zwiebeln, extra Soße…"></textarea>
+        <textarea id="note-input" placeholder="z.B. ohne Zwiebeln, extra Soße…" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
       </div>
 
       <div class="share-row" id="share-row-internal" style="padding:0 20px 16px;display:none">
