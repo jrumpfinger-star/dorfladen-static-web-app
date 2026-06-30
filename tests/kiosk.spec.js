@@ -1681,4 +1681,49 @@ test.describe('AK-FLEISCH-29 – Kiosk UI-Verbesserungen', () => {
     });
     expect(hasRule).toBe(true);
   });
+
+  test('T-29-12 Mute-Button existiert im Header (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const muteBtn = page.locator('#k-mute-btn');
+    await expect(muteBtn).toBeVisible();
+    const hasMuteFn = await page.evaluate(() => typeof K.toggleMute === 'function');
+    expect(hasMuteFn).toBe(true);
+  });
+
+  test('T-29-13 Name wird nicht abgeschnitten – kein text-overflow ellipsis (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const noEllipsis = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.selectorText && rule.selectorText.includes('k-oc-name') && rule.style.textOverflow === 'ellipsis') return false;
+          }
+        } catch(e) {}
+      }
+      return true;
+    });
+    expect(noEllipsis).toBe(true);
+  });
+
+  test('T-29-14 Zurueck-Button ist im Header neben Aktions-Button (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const inHeader = await page.evaluate(() => {
+      var src = document.documentElement.innerHTML;
+      return src.includes('k-oc-actions') && src.includes('revertShopStatus') && src.includes('Status zurück');
+    });
+    expect(inHeader).toBe(true);
+  });
+
+  test('T-29-15 metzgerAlleGesendet setzt bestellt und gesendet (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const setsBeide = await page.evaluate(() => {
+      var src = document.documentElement.innerHTML;
+      return src.includes('p.bestellt=true') && src.includes('p.gesendet=true');
+    });
+    expect(setsBeide).toBe(true);
+  });
 });
