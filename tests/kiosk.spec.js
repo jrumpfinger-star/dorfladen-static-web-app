@@ -971,17 +971,19 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
     // Switch to Shop tab
     await page.click('[data-tab="abhol"]');
     await page.waitForTimeout(1500);
+    // Expand all slot groups and cards via JS
+    await page.evaluate(() => {
+      document.querySelectorAll('.k-slot-group.collapsed').forEach(el => el.classList.remove('collapsed'));
+      document.querySelectorAll('.k-order.oc-collapsed').forEach(el => el.classList.remove('oc-collapsed'));
+    });
+    await page.waitForTimeout(300);
 
-    // Find any shop card and expand it
     const shopCards = page.locator('.k-order[id^="soc-"]');
     const count = await shopCards.count();
     if (count === 0) {
       test.skip();
       return;
     }
-    // Click first card header to expand
-    await shopCards.first().locator('.k-order-hdr').click();
-    await page.waitForTimeout(300);
 
     // Check that message icon button exists in the expanded body (icon-only, no text)
     const replyBtn = shopCards.first().locator('button svg.lucide-message-circle');
@@ -994,6 +996,12 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
     await page.waitForTimeout(2000);
     await page.click('[data-tab="abhol"]');
     await page.waitForTimeout(1500);
+    // Expand all slot groups and cards via JS
+    await page.evaluate(() => {
+      document.querySelectorAll('.k-slot-group.collapsed').forEach(el => el.classList.remove('collapsed'));
+      document.querySelectorAll('.k-order.oc-collapsed').forEach(el => el.classList.remove('oc-collapsed'));
+    });
+    await page.waitForTimeout(300);
 
     const shopCards = page.locator('.k-order[id^="soc-"]:not([data-ostatus="3"]):not([data-ostatus="4"])');
     const count = await shopCards.count();
@@ -1001,9 +1009,6 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
       test.skip();
       return;
     }
-    // Expand first active card
-    await shopCards.first().locator('.k-order-hdr').click();
-    await page.waitForTimeout(300);
 
     // Click reply/message icon button
     const msgBtn = shopCards.first().locator('button:has(svg.lucide-message-circle)');
@@ -1037,6 +1042,12 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
     await page.waitForTimeout(2000);
     await page.click('[data-tab="abhol"]');
     await page.waitForTimeout(1500);
+    // Expand all slot groups and cards via JS
+    await page.evaluate(() => {
+      document.querySelectorAll('.k-slot-group.collapsed').forEach(el => el.classList.remove('collapsed'));
+      document.querySelectorAll('.k-order.oc-collapsed').forEach(el => el.classList.remove('oc-collapsed'));
+    });
+    await page.waitForTimeout(300);
 
     const shopCards = page.locator('.k-order[id^="soc-"]');
     const count = await shopCards.count();
@@ -1044,9 +1055,6 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
       test.skip();
       return;
     }
-    // Expand first card
-    await shopCards.first().locator('.k-order-hdr').click();
-    await page.waitForTimeout(300);
 
     // Check for message elements (may or may not have messages depending on data)
     const kundeMsg = shopCards.first().locator('text=Kunde:');
