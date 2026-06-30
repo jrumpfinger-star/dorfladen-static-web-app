@@ -87,11 +87,12 @@
       .bs-card{padding:18px}
     }
   </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <div class="bs-header" style="position:relative">
     <a href="/" style="position:absolute;top:12px;right:12px;color:rgba(255,255,255,.8);text-decoration:none;font-size:28px;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.12)" title="Schließen">✕</a>
-    <div class="bs-logo">🍽</div>
+    <div class="bs-logo"><i data-lucide="store" style="width:28px;height:28px"></i></div>
     <h1>Dorfladen Oberornau</h1>
     <p>Bestellstatus</p>
   </div>
@@ -99,7 +100,7 @@
   <div class="bs-container">
     <!-- Login/Lookup form (shown when no order loaded) -->
     <div class="bs-card" id="bs-login-card">
-      <h2>📋 Bestellung aufrufen</h2>
+      <h2><i data-lucide="clipboard-list" style="width:20px;height:20px"></i> Bestellung aufrufen</h2>
       <div class="bs-login">
         <label for="bs-nr">Bestellnummer</label>
         <input type="text" id="bs-nr" placeholder="z.B. MT-260621-BF0D4 oder FM-..." autocomplete="off" oninput="bsUpdateAuthField()">
@@ -119,34 +120,34 @@
     <!-- Order detail (hidden until loaded) -->
     <div id="bs-detail" style="display:none">
       <div class="bs-card">
-        <h2>🍽 <span id="bs-gericht">–</span></h2>
+        <h2><i data-lucide="utensils" style="width:20px;height:20px"></i> <span id="bs-gericht">–</span></h2>
         <div id="bs-status-row" style="text-align:center;margin-bottom:16px"></div>
         <div id="bs-info-rows"></div>
       </div>
 
       <!-- Cancel button (only for Fleisch orders in status Neu) -->
       <div class="bs-card" id="bs-cancel-card" style="display:none;text-align:center">
-        <button id="bs-cancel-btn" onclick="cancelOrder()" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%">❌ Bestellung stornieren</button>
+        <button id="bs-cancel-btn" onclick="cancelOrder()" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px"><i data-lucide="x-circle" style="width:16px;height:16px"></i> Bestellung stornieren</button>
         <p style="font-size:12px;color:#9ca3af;margin-top:8px">M&ouml;glich, solange die Bestellung noch nicht best&auml;tigt wurde.</p>
       </div>
 
       <!-- Messages from staff -->
       <div class="bs-card" id="bs-messages-card" style="display:none">
-        <h2>💬 Nachrichten</h2>
+        <h2><i data-lucide="message-circle" style="width:20px;height:20px"></i> Nachrichten</h2>
         <div id="bs-messages"></div>
       </div>
 
       <!-- Customer comment -->
       <div class="bs-card" id="bs-comment-card">
-        <h2>✍️ Nachricht an den Dorfladen</h2>
+        <h2><i data-lucide="pencil" style="width:20px;height:20px"></i> Nachricht an den Dorfladen</h2>
         <div class="bs-comment-box">
           <textarea id="bs-comment" placeholder="Haben Sie eine Frage oder Anmerkung?"></textarea>
           <button id="bs-comment-btn" onclick="sendComment()">Nachricht senden</button>
-          <div class="bs-comment-sent" id="bs-comment-sent">✅ Nachricht gesendet!</div>
+          <div class="bs-comment-sent" id="bs-comment-sent"><i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:middle"></i> Nachricht gesendet!</div>
         </div>
       </div>
 
-      <a href="/" class="bs-link">← Zurück zur Startseite</a>
+      <a href="/" class="bs-link"><i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle"></i> Zurück zur Startseite</a>
     </div>
   </div>
 
@@ -242,7 +243,7 @@ function buildTimeline(steps, stepIdx, isCancelled){
 // ── Mittagstisch rendering ──
 var STATUS_LABELS = {0:'Eingegangen',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
 var STATUS_ICONS = {0:'⏳',1:'✅',2:'❌',3:'📦'};
-var MT_STEPS=[{icon:'⏳',label:'Eingegangen'},{icon:'✅',label:'Bestätigt'},{icon:'📦',label:'Abgeholt'}];
+var MT_STEPS=[{icon:'<i data-lucide="clock" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Eingegangen'},{icon:'<i data-lucide="check-circle" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Bestätigt'},{icon:'<i data-lucide="package" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Abgeholt'}];
 
 function renderOrder(o){
   document.getElementById('bs-login-card').style.display = 'none';
@@ -269,13 +270,14 @@ function renderOrder(o){
 
   renderMessages(o);
   if(o.status === 3) document.getElementById('bs-comment-card').style.display = 'none';
+  if(window.lucide) lucide.createIcons();
 }
 
 // ── Fleisch rendering ──
 var FM_STATUS_LABELS = {0:'Neu',1:'Bestätigt',2:'Bestätigt',3:'Abgeholt',4:'Storniert'};
 var FM_STATUS_ICONS = {0:'⏳',1:'✔️',2:'✅',3:'📦',4:'❌'};
 var FM_STATUS_CLASS = {0:'st-0',1:'st-3',2:'st-1',3:'st-1',4:'st-2'};
-var FM_STEPS=[{icon:'⏳',label:'Neu'},{icon:'🔪',label:'In Bestellung'},{icon:'✅',label:'Eingetroffen'},{icon:'📦',label:'Abgeholt'}];
+var FM_STEPS=[{icon:'<i data-lucide="clock" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Neu'},{icon:'<i data-lucide="shopping-cart" style="width:13px;height:13px;vertical-align:middle"></i>',label:'In Bestellung'},{icon:'<i data-lucide="check-circle" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Eingetroffen'},{icon:'<i data-lucide="package" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Abgeholt'}];
 
 function fmtP(v){ return (v||0).toFixed(2).replace('.',','); }
 
@@ -283,7 +285,7 @@ function renderFleischOrder(o){
   document.getElementById('bs-login-card').style.display = 'none';
   document.getElementById('bs-detail').style.display = 'block';
 
-  document.getElementById('bs-gericht').textContent = '🥩 Fleisch-Vorbestellung';
+  document.getElementById('bs-gericht').innerHTML = '<i data-lucide="beef" style="width:18px;height:18px;vertical-align:middle"></i> Fleisch-Vorbestellung';
 
   var st = o.status||0;
   // FM status 0-3 map directly to step index, 4=Storniert
@@ -323,6 +325,7 @@ function renderFleischOrder(o){
   document.getElementById('bs-cancel-card').style.display = (st === 0 && _orderType === 'fm') ? '' : 'none';
   // Hide comment for terminal states
   if(st === 3 || st === 4) document.getElementById('bs-comment-card').style.display = 'none';
+  if(window.lucide) lucide.createIcons();
 }
 
 // ── Messages (shared) ──
@@ -336,7 +339,7 @@ function renderMessages(o){
   }
   if(o.personal_antwort){
     hasMessages = true;
-    msgHtml += '<div class="bs-msg" style="margin-top:8px"><div class="bs-msg-label">💬 Antwort vom Dorfladen</div><div class="bs-msg-text">'+esc(o.personal_antwort)+'</div></div>';
+    msgHtml += '<div class="bs-msg" style="margin-top:8px"><div class="bs-msg-label"><i data-lucide="message-circle" style="width:12px;height:12px;vertical-align:middle"></i> Antwort vom Dorfladen</div><div class="bs-msg-text">'+esc(o.personal_antwort)+'</div></div>';
   }
   if(o.kunde_kommentar){
     hasMessages = true;
@@ -365,20 +368,23 @@ function cancelOrder(){
   .then(function(r){ return r.json(); })
   .then(function(data){
     if(data.success){
-      btn.textContent = '✅ Storniert';
+      btn.innerHTML = '<i data-lucide="check-circle" style="width:16px;height:16px"></i> Storniert';
+      if(window.lucide) lucide.createIcons();
       btn.style.background = '#d1fae5';
       btn.style.color = '#065f46';
       btn.style.borderColor = '#6ee7b7';
       setTimeout(function(){ lookupOrder(); }, 1500);
     } else {
       btn.disabled = false;
-      btn.textContent = '❌ Bestellung stornieren';
+      btn.innerHTML = '<i data-lucide="x-circle" style="width:16px;height:16px"></i> Bestellung stornieren';
+      if(window.lucide) lucide.createIcons();
       alert(data.error || 'Stornierung fehlgeschlagen');
     }
   })
   .catch(function(e){
     btn.disabled = false;
-    btn.textContent = '❌ Bestellung stornieren';
+    btn.innerHTML = '<i data-lucide="x-circle" style="width:16px;height:16px"></i> Bestellung stornieren';
+    if(window.lucide) lucide.createIcons();
     alert('Fehler: ' + e.message);
   });
 }
@@ -457,6 +463,7 @@ function sendComment(){
   if(nr && email) lookupOrder();
 })();
 </script>
+<script>if(window.lucide) lucide.createIcons();</script>
 <script src="/js/env-banner.js"></script>
 </body>
 </html>
