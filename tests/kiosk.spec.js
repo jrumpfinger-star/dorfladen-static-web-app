@@ -1727,3 +1727,23 @@ test.describe('AK-FLEISCH-29 – Kiosk UI-Verbesserungen', () => {
     expect(setsBeide).toBe(true);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  Bestellstatus – Lucide Icons
+// ════════════════════════════════════════════════════
+
+test.describe('Bestellstatus – Lucide Icons', () => {
+  test('T-29-16 Bestellstatus laedt Lucide Script (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(3000);
+    const hasLucide = await page.evaluate(() => typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function');
+    expect(hasLucide).toBe(true);
+  });
+
+  test('T-29-17 Bestellstatus hat Lucide Icons statt Emojis (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(3000);
+    const svgIcons = await page.locator('svg.lucide').count();
+    expect(svgIcons).toBeGreaterThan(0);
+  });
+});
