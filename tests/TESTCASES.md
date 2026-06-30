@@ -1953,6 +1953,11 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-29-09 Mittagstisch 2-Spalten Grid ab 900px | ✅ Pass |
 | 2026-06-30 | T-29-10 Metzger-Karten haben Zurueck-Button (revertMetzgerStatus) | ✅ Pass |
 | 2026-06-30 | T-29-11 revertMetzgerStatus ist im K-Namespace exportiert | ✅ Pass |
+| 2026-06-30 | T-30-01 Liefertag-Picker existiert oben auf der Seite | ✅ Pass |
+| 2026-06-30 | T-30-02 Reorder-Banner zeigt Artikeldetails | ✅ Pass |
+| 2026-06-30 | T-30-03 Reorder oeffnet Warenkorb (fmOpenCart) | ✅ Pass |
+| 2026-06-30 | T-30-04 fmSyncLiefertag Funktion existiert | ✅ Pass |
+| 2026-06-30 | T-30-05 fmToggleReorderDetails Funktion existiert | ✅ Pass |
 
 ### T-29-06: Aufklappen-Button ist in Stats-Zeile integriert (AK-FLEISCH-29)
 - **Aktion:** `/kiosk` laden (Online-Shop Tab)
