@@ -1621,3 +1621,62 @@ test.describe('Kiosk – Mittagstisch UI/UX (AK-FLEISCH-25)', () => {
     expect(height).toBeLessThanOrEqual(36);
   });
 });
+
+// ═══════════════════════════════════════════════════════════
+// AK-FLEISCH-29 – Kiosk UI-Verbesserungen (kiosk.spec.js)
+// ═══════════════════════════════════════════════════════════
+
+test.describe('AK-FLEISCH-29 – Kiosk UI-Verbesserungen', () => {
+
+  test('T-29-06 Aufklappen-Button ist in Stats-Zeile integriert (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // Button should be inside #abhol-stats, not standalone
+    const btn = page.locator('#abhol-stats button:has-text("Aufklappen"), #abhol-stats button:has-text("Zuklappen")');
+    const count = await btn.count();
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  test('T-29-07 Shop-Karten haben sichtbaren Zurueck-Button (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // revertShopStatus must exist in page source
+    const hasRevert = await page.evaluate(() => document.documentElement.innerHTML.includes('revertShopStatus'));
+    expect(hasRevert).toBe(true);
+    // undo-2 icon should be in the page (Zurück button uses it)
+    const hasUndo = await page.evaluate(() => document.documentElement.innerHTML.includes('undo-2'));
+    expect(hasUndo).toBe(true);
+  });
+
+  test('T-29-08 Ring-Label-Wide CSS existiert (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasClass = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.selectorText && rule.selectorText.includes('ring-label-wide')) return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    });
+    expect(hasClass).toBe(true);
+  });
+
+  test('T-29-09 Mittagstisch 2-Spalten Grid ab 900px (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasRule = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.cssText && rule.cssText.includes('mittag-orders') && rule.cssText.includes('grid-template-columns')) return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    });
+    expect(hasRule).toBe(true);
+  });
+});

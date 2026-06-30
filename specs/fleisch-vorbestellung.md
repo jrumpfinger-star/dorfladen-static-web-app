@@ -498,6 +498,10 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Metzger Day-Group-Header: Detail-Chips (Anzahl Positionen, Gesamt-kg) ab 700px sichtbar
 - [x] Metzger Bestellkarten-Header: Detail-Chips (Anzahl Artikel, Gesamt-kg) ab 700px sichtbar
 - [x] Leere States (.k-empty) spannen über volle Breite im Grid
+- [x] Shop: Aufklappen-Button in Stats-Zeile integriert (keine eigene Zeile)
+- [x] Shop: Sichtbarer Zurück-Button (undo-2 Icon) im Body für Status 1+2
+- [x] Shop: Ring-Textlabel ("0/2 gepackt") ab 1200px sichtbar neben Ring
+- [x] Shop: Body-Buttons mit Textlabels (Details, Stornieren, Zurück)
 
 ### AK-FLEISCH-25: Kiosk Mittagstisch UI/UX Optimierung
 - [x] Collapse/Expand-Button platzsparend (kleiner, Kurztext)

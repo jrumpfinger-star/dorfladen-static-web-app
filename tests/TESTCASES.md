@@ -1946,3 +1946,23 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-29-03 Detail-Chips CSS-Klasse fm-hdr-details existiert | ✅ Pass |
 | 2026-06-30 | T-29-04 Detail-Chips werden ab 700px sichtbar | ✅ Pass |
 | 2026-06-30 | T-29-05 metzgerAlleGesendet hat Bestaetigungsdialog | ✅ Pass |
+
+### T-29-06: Aufklappen-Button ist in Stats-Zeile integriert (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden (Online-Shop Tab)
+- **Prüfung:** Button "Aufklappen"/"Zuklappen" ist innerhalb `#abhol-stats`
+- **Erwartung:** Kein eigener Zeilenumbruch mehr, Button sitzt rechts in der Stats-Leiste
+
+### T-29-07: Shop-Karten haben sichtbaren Zurück-Button (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** `revertShopStatus` und `undo-2` Icon im HTML vorhanden
+- **Erwartung:** Sichtbarer Zurück-Button statt verstecktem Doppelklick
+
+### T-29-08: Ring-Label-Wide CSS existiert (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** CSS enthält `.ring-label-wide` Selektor
+- **Erwartung:** Textlabel neben Pack-Ring auf breiten Screens
+
+### T-29-09: Mittagstisch 2-Spalten Grid ab 900px (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** CSS-Regel `#mittag-orders` mit `grid-template-columns` existiert
+- **Erwartung:** 2-Spalten-Layout für Mittagstisch auf breiten Screens
