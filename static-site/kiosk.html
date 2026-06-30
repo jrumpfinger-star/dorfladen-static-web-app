@@ -508,7 +508,7 @@
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <h4 style="flex:1;font-size:15px;font-weight:700;margin:0"><i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Sammelbestellung</h4>
         <button class="k-btn k-btn-outline" style="min-height:36px;padding:6px 14px;border-radius:8px;font-size:13px" onclick="K.printMetzgerSammel()"><i data-lucide="printer" style="width:14px;height:14px"></i> Drucken</button>
-        <button class="k-btn k-btn-confirm" style="min-height:36px;padding:6px 14px;border-radius:8px;font-size:13px" onclick="K.metzgerAlleGesendet()"><i data-lucide="check-check" style="width:14px;height:14px"></i> Alle bestellt</button>
+        <button class="k-btn k-btn-confirm" style="min-height:36px;padding:6px 14px;border-radius:8px;font-size:13px" onclick="K.metzgerAlleGesendet()"><i data-lucide="check-check" style="width:14px;height:14px"></i> Alle abhaken</button>
       </div>
       <div id="metzger-sammel-body"></div>
     </div>
@@ -3989,6 +3989,11 @@ var K = (function(){
       if(o.status <= 1 && o.liefertag===_fmSammelLiefertag) orders.push(o);
     });
     if(!orders.length){ toast('Keine offenen Bestellungen'); return; }
+    // Count how many positions are not yet gesendet
+    var offenCount = 0;
+    orders.forEach(function(o){ (o.positionen||[]).forEach(function(p){ if(!p.gesendet) offenCount++; }); });
+    if(!offenCount){ toast('Alle bereits abgehakt'); return; }
+    if(!confirm('Alle '+offenCount+' offenen Positionen als bestellt abhaken?')) return;
     var pending = orders.length;
     orders.forEach(function(o){
       var pos = (o.positionen||[]).map(function(p){ p.gesendet=true; return p; });
