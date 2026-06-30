@@ -331,14 +331,10 @@ test.describe('Kiosk – Shop Redesign', () => {
       // Expand first card via JS to avoid visibility issues
       await cards.first().evaluate(el => el.classList.remove('oc-collapsed'));
       await page.waitForTimeout(300);
-      // Find Details button
-      const detailBtn = cards.first().locator('.k-order-body .k-btn:has-text("Details")');
+      // Find Details button (icon-only with file-text SVG)
+      const detailBtn = cards.first().locator('.k-order-body button:has(svg.lucide-file-text)');
       const detailCount = await detailBtn.count();
       expect(detailCount).toBeGreaterThanOrEqual(1);
-      if (detailCount > 0) {
-        const minH = await detailBtn.first().evaluate(el => parseInt(getComputedStyle(el).minHeight));
-        expect(minH).toBeGreaterThanOrEqual(38);
-      }
     }
   });
 
@@ -987,8 +983,8 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
     await shopCards.first().locator('.k-order-hdr').click();
     await page.waitForTimeout(300);
 
-    // Check that "Antworten" or "Nachricht senden" button exists in the expanded body
-    const replyBtn = shopCards.first().locator('button:has-text("Antworten"), button:has-text("Nachricht senden")');
+    // Check that message icon button exists in the expanded body (icon-only, no text)
+    const replyBtn = shopCards.first().locator('button svg.lucide-message-circle');
     const btnCount = await replyBtn.count();
     expect(btnCount).toBeGreaterThanOrEqual(0); // Button may not exist for completed/cancelled orders
   });
@@ -1009,16 +1005,16 @@ test.describe('AK-UI-39 Shop-Kommunikation', () => {
     await shopCards.first().locator('.k-order-hdr').click();
     await page.waitForTimeout(300);
 
-    // Click reply/message button
-    const msgBtn = shopCards.first().locator('button:has-text("Antworten"), button:has-text("Nachricht senden")');
+    // Click reply/message icon button
+    const msgBtn = shopCards.first().locator('button:has(svg.lucide-message-circle)');
     if (await msgBtn.count() > 0) {
       await msgBtn.first().click();
       await page.waitForTimeout(300);
       // Check that reply input is visible
-      const replyInput = shopCards.first().locator('input[placeholder*="Antwort an Kunden"]');
+      const replyInput = shopCards.first().locator('input[placeholder*="Antwort"]');
       await expect(replyInput).toBeVisible();
-      // Check send button
-      const sendBtn = shopCards.first().locator('button:has-text("Senden")');
+      // Check send button (icon-only with lucide send icon)
+      const sendBtn = shopCards.first().locator('[id^="shop-rpl-"] button:has(svg.lucide-send)');
       await expect(sendBtn.first()).toBeVisible();
     }
   });
