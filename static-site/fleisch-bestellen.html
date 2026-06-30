@@ -995,7 +995,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   });
 
   // ── History ──
-  var FM_STATUS = {0:'Neu',1:'Beim Metzger',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+  var FM_STATUS = {0:'Neu',1:'In Bestellung',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
   window.fmShowHistory = function(){
     var telefon = localStorage.getItem('fm_telefon')||'';
     var overlay = document.getElementById('fm-history-overlay');

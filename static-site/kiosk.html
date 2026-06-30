@@ -507,7 +507,7 @@
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <h4 style="flex:1;font-size:15px;font-weight:700;margin:0"><i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Sammelbestellung</h4>
         <button class="k-btn k-btn-outline" style="min-height:36px;padding:6px 14px;border-radius:8px;font-size:13px" onclick="K.printMetzgerSammel()"><i data-lucide="printer" style="width:14px;height:14px"></i> Drucken</button>
-        <button class="k-btn k-btn-confirm" style="min-height:36px;padding:6px 14px;border-radius:8px;font-size:13px" onclick="K.metzgerAlleGesendet()"><i data-lucide="check-check" style="width:14px;height:14px"></i> Alle beim Metzger bestellt</button>
+        <button class="k-btn k-btn-confirm" style="min-height:36px;padding:6px 14px;border-radius:8px;font-size:13px" onclick="K.metzgerAlleGesendet()"><i data-lucide="check-check" style="width:14px;height:14px"></i> Alle bestellt</button>
       </div>
       <div id="metzger-sammel-body"></div>
     </div>
@@ -3343,7 +3343,7 @@ var K = (function(){
     var offenCount = _fmOrders.filter(function(o){ return o.status === 1; }).length;
     updateTabBadges('metzger', [
       {count: neuCount, cls: 'badge-neu', title: neuCount+' neue Bestellung'+(neuCount!==1?'en':''), blink: false, action: 'metzger:neu'},
-      {count: offenCount, cls: 'badge-packen', title: offenCount+' beim Metzger', blink: false, action: 'metzger:offen'},
+      {count: offenCount, cls: 'badge-packen', title: offenCount+' in Bestellung', blink: false, action: 'metzger:offen'},
       {count: _fmUnreadCount, cls: 'badge-msg', title: _fmUnreadCount+' ungelesene Nachricht'+((_fmUnreadCount!==1)?'en':''), blink: true, action: 'metzger:nachrichten'}
     ]);
   }
@@ -3411,7 +3411,7 @@ var K = (function(){
     }
 
     var STATUS_CSS = {0:'st-new',1:'st-confirm',3:'st-done',4:'st-cancel'};
-    var STATUS_LABELS = {0:'Neu',1:'Beim Metzger',3:'Abgeholt',4:'Storniert'};
+    var STATUS_LABELS = {0:'Neu',1:'In Bestellung',3:'Abgeholt',4:'Storniert'};
 
     // Group by Abholtag
     var dayGroups = {};
@@ -3486,7 +3486,7 @@ var K = (function(){
           html += '<tr class="'+(isBestellt?'fm-row-done':'')+'">';
           // Checkbox column
           if(o.status <= 1){
-            html += '<td><input type="checkbox" '+(isBestellt?'checked':'')+' onchange="K.toggleFmItemBestellt(\''+o.id+'\','+idx+')" style="width:18px;height:18px;accent-color:var(--c-green);cursor:pointer" title="Beim Metzger bestellt"></td>';
+            html += '<td><input type="checkbox" '+(isBestellt?'checked':'')+' onchange="K.toggleFmItemBestellt(\''+o.id+'\','+idx+')" style="width:18px;height:18px;accent-color:var(--c-green);cursor:pointer" title="Bestellt"></td>';
           } else {
             html += '<td style="color:#16a34a">'+luc('check',14)+'</td>';
           }
@@ -3568,12 +3568,12 @@ var K = (function(){
     pos[itemIdx].bestellt = !pos[itemIdx].bestellt;
     var patchBody = {id: orderId, positionen: pos};
     var allBestellt = pos.length > 0 && pos.every(function(p){ return !!p.bestellt; });
-    // If all items are now bestellt and status is Neu → auto-advance to "Beim Metzger"
+    // If all items are now bestellt and status is Neu → auto-advance to "In Bestellung"
     if(allBestellt && order.status === 0){
       patchBody.status = 1;
       order.status = 1;
     }
-    // If unchecking an item while status is 1 (Beim Metzger), reset status to 0
+    // If unchecking an item while status is 1 (In Bestellung), reset status to 0
     if(order.status === 1 && !pos[itemIdx].bestellt){
       patchBody.status = 0;
       order.status = 0;

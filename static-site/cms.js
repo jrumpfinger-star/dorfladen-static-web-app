@@ -11874,7 +11874,7 @@
     });
   };
 
-  var FM_STATUS_L={0:'Neu',1:'Beim Metzger',2:'Beim Metzger',3:'Abgeholt',4:'Storniert'};
+  var FM_STATUS_L={0:'Neu',1:'In Bestellung',2:'In Bestellung',3:'Abgeholt',4:'Storniert'};
   var FM_STATUS_C={0:'#d97706',1:'#2563eb',2:'#2e7d4f',3:'#6b7280',4:'#ef4444'};
   var _fmCurrentFilter='offen';
 
