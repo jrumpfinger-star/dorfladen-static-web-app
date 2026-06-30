@@ -1751,3 +1751,12 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-25-MT-01 Mittagstisch Lucide Icons | ✅ Pass |
 | 2026-06-30 | T-25-MT-02 Preis im Header | ✅ Pass |
 | 2026-06-30 | T-25-MT-03 Kompakter Toggle | ✅ Pass |
+| 2026-06-30 | T-35-01 Shop Collapse-Pattern | ✅ Pass |
+| 2026-06-30 | T-35-02 Header Name/Status/Preis | ✅ Pass |
+| 2026-06-30 | T-35-03 Primär-Action im Header | ✅ Pass |
+| 2026-06-30 | T-35-04 Details-Button im Body | ✅ Pass |
+| 2026-06-30 | T-35-05 Aufklappen/Zuklappen Toggle | ✅ Pass |
+| 2026-06-30 | T-39-01 Shop Nachrichten-Buttons | ✅ Pass |
+| 2026-06-30 | T-39-02 Shop Antwort-Dialog | ✅ Pass |
+| 2026-06-30 | T-39-03 NEU-Badge sichtbar | ✅ Pass |
+| 2026-06-30 | T-39-04 Kunden-Nachricht angezeigt | ✅ Pass |
