@@ -1951,6 +1951,8 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-29-07 Shop-Karten haben sichtbaren Zurueck-Button | ✅ Pass |
 | 2026-06-30 | T-29-08 Ring-Label-Wide CSS existiert | ✅ Pass |
 | 2026-06-30 | T-29-09 Mittagstisch 2-Spalten Grid ab 900px | ✅ Pass |
+| 2026-06-30 | T-29-10 Metzger-Karten haben Zurueck-Button (revertMetzgerStatus) | ✅ Pass |
+| 2026-06-30 | T-29-11 revertMetzgerStatus ist im K-Namespace exportiert | ✅ Pass |
 
 ### T-29-06: Aufklappen-Button ist in Stats-Zeile integriert (AK-FLEISCH-29)
 - **Aktion:** `/kiosk` laden (Online-Shop Tab)

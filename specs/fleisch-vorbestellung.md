@@ -502,6 +502,8 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Shop: Sichtbarer Zurück-Button (undo-2 Icon) im Body für Status 1+2
 - [x] Shop: Ring-Textlabel ("0/2 gepackt") ab 1200px sichtbar neben Ring
 - [x] Shop: Body-Buttons mit Textlabels (Details, Stornieren, Zurück)
+- [x] Metzger: Sichtbarer Zurück-Button (undo-2) für Status 1 und 3
+- [x] Metzger: revertMetzgerStatus-Funktion mit Bestätigungsdialog
 
 ### AK-FLEISCH-25: Kiosk Mittagstisch UI/UX Optimierung
 - [x] Collapse/Expand-Button platzsparend (kleiner, Kurztext)
