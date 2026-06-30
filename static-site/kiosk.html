@@ -4207,12 +4207,12 @@ var K = (function(){
   function metzgerAlleGesendet(){
     var orders = [];
     _fmOrders.forEach(function(o){
-      if(o.status <= 1 && o.liefertag===_fmSammelLiefertag) orders.push(o);
+      if(o.status < 3 && o.liefertag===_fmSammelLiefertag) orders.push(o);
     });
     if(!orders.length){ toast('Keine offenen Bestellungen'); return; }
-    // Count how many positions are not yet bestellt
+    // Count positions not yet gesendet (matching what the UI checkboxes show)
     var offenCount = 0;
-    orders.forEach(function(o){ (o.positionen||[]).forEach(function(p){ if(!p.bestellt && !p.gesendet) offenCount++; }); });
+    orders.forEach(function(o){ (o.positionen||[]).forEach(function(p){ if(!p.gesendet) offenCount++; }); });
     if(!offenCount){ toast('Alle bereits abgehakt'); return; }
     if(!confirm('Alle '+offenCount+' offenen Positionen als bestellt abhaken?')) return;
     var pending = orders.length;
@@ -4224,7 +4224,7 @@ var K = (function(){
         .then(function(r){return r.json();})
         .then(function(){
           pending--;
-          if(pending<=0){ toast(orders.length+' Bestellungen als bestellt markiert'); loadMetzgerOrders(); loadMetzgerSammel(); }
+          if(pending<=0){ toast('\u2705 '+offenCount+' Positionen als bestellt markiert'); loadMetzgerOrders(); loadMetzgerSammel(); }
         }).catch(function(){ pending--; });
     });
   }
