@@ -59,6 +59,9 @@ Dies ist NICHT optional – es gehört zur Implementierung dazu:
 
 ### 5. Tests ausführen
 // turbo
+**⚠️ PFLICHT: JEDE Änderung MUSS live getestet werden – KEINE Ausnahme!**
+**Kein Commit ohne vorherigen Live-Test. Kein "das teste ich später". SOFORT testen.**
+
 **WICHTIG: Tests IMMER gegen die Live-Umgebung ausführen, NIEMALS gegen localhost:4280!**
 - Es gibt keinen lokalen SWA-Server. `npx playwright test` ohne `test-live.ps1` schlägt mit `ERR_CONNECTION_REFUSED` fehl.
 - IMMER `test-live.ps1` verwenden – das setzt `BASE_URL` auf die Feature-Branch-SWA.
