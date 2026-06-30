@@ -1947,6 +1947,11 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-29-04 Detail-Chips werden ab 700px sichtbar | ✅ Pass |
 | 2026-06-30 | T-29-05 metzgerAlleGesendet hat Bestaetigungsdialog | ✅ Pass |
 
+| 2026-06-30 | T-29-06 Aufklappen-Button ist in Stats-Zeile integriert | ✅ Pass |
+| 2026-06-30 | T-29-07 Shop-Karten haben sichtbaren Zurueck-Button | ✅ Pass |
+| 2026-06-30 | T-29-08 Ring-Label-Wide CSS existiert | ✅ Pass |
+| 2026-06-30 | T-29-09 Mittagstisch 2-Spalten Grid ab 900px | ✅ Pass |
+
 ### T-29-06: Aufklappen-Button ist in Stats-Zeile integriert (AK-FLEISCH-29)
 - **Aktion:** `/kiosk` laden (Online-Shop Tab)
 - **Prüfung:** Button "Aufklappen"/"Zuklappen" ist innerhalb `#abhol-stats`
