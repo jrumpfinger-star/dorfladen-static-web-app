@@ -462,6 +462,8 @@
     wrap.innerHTML=html;
   }
 
+  window.socialBuildPostItems = socialBuildPostItems;
+
   function socialRenderFreeItems(){ if(!_socFreeItems.length) return ''; var h=''; _socFreeItems.forEach(function(fi){ h+='<div data-id="'+esc(fi.id)+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;margin-bottom:3px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px">'; if(fi.bild_data) h+='<img src="'+fi.bild_data+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0">'; h+='<span style="font-weight:600;font-size:12px;flex:1">'+esc(fi.name)+(fi.ab_uhr?' <span style="font-size:10px;color:#9ca3af;font-style:italic">ab '+esc(fi.ab_uhr)+'</span>':'')+'</span>'; if(fi.preis) h+='<span style="font-size:11px;color:#2e7d32;font-weight:700">'+esc(fi.preis)+'\u20AC</span>'; h+='<span style="font-size:10px;color:#6b7280;background:#e0e7ff;padding:1px 6px;border-radius:8px">'+esc(fi.kategorie)+'</span>'; h+='<button onclick="socialFreeRemove(\''+esc(fi.id)+'\')" style="border:none;background:none;color:#dc2626;cursor:pointer;font-size:14px;padding:0 4px">&#10005;</button></div>'; }); return h; }
   window.socialFreeToggle=function(){var f=document.getElementById('soc-free-form');if(f) f.style.display=f.style.display==='none'?'block':'none';};
   window.socialFreeImgPreview=function(){var inp=document.getElementById('soc-free-bild');var lbl=document.getElementById('soc-free-img-name');if(inp&&inp.files&&inp.files[0]&&lbl) lbl.textContent=inp.files[0].name;window._socFreePastedData='';};
