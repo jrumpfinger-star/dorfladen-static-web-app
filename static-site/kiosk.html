@@ -107,6 +107,7 @@
     .fm-items-tbl tr.fm-row-done{background:#f0fdf4}
     .fm-items-tbl tr.fm-row-done .fm-col-name{color:#16a34a}
     .fm-footer{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid #f3f4f6;flex-wrap:wrap}
+    .fm-actions{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
     .fm-footer-sum{margin-left:auto;display:flex;align-items:baseline;gap:8px}
     .fm-footer-sum .fm-sum{font-size:14px;font-weight:800}
     .fm-footer-sum .fm-sav{font-size:11px;color:#2e7d4f;font-weight:600}
@@ -114,9 +115,6 @@
     @media(max-width:600px){
       .fm-items-tbl{font-size:12px}
       .fm-items-tbl .fm-col-cut{font-size:9px;padding:1px 4px}
-      .fm-footer{flex-direction:column;align-items:stretch;gap:6px}
-      .fm-footer-sum{margin-left:0;justify-content:flex-end}
-      .fm-footer .fm-actions{display:flex;gap:4px;flex-wrap:wrap}
     }
     .k-confirm-dialog{margin-top:8px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px}
     .k-confirm-input{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box}
@@ -3457,7 +3455,6 @@ var K = (function(){
         html += '<div class="k-order-hdr" onclick="K.toggleMetzgerCard(\''+o.id+'\')">';
         html += '<span class="k-oc-arrow">'+luc('chevron-down',16)+'</span>';
         html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
-        html += '<span class="k-oc-qty">'+positionen.length+' Pos.</span>';
         html += '<span class="k-oc-badges">';
         html += '<span class="k-badge '+(STATUS_CSS[o.status]||'st-new')+'">'+(STATUS_LABELS[o.status]||'Neu')+'</span>';
         html += '</span>';
