@@ -464,6 +464,7 @@
       <button class="k-filter-btn" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="color:#3b82f6"><i data-lucide="message-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Nachrichten</span> <span class="k-filter-count" id="mt-fc-nachrichten">0</span></button>
       <button class="k-filter-btn" data-mt-filter="erledigt" onclick="K.setMittagFilter('erledigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Erledigt</span> <span class="k-filter-count" id="mt-fc-erledigt">0</span></button>
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')"><span class="k-filter-label">Alle</span> <span class="k-filter-count" id="mt-fc-alle">0</span></button>
+      <span id="mt-toggle-wrap" style="margin-left:auto;display:none"></span>
     </div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
   </div>
@@ -1453,12 +1454,19 @@ var K = (function(){
     });
 
     var html = '';
-    // Collapse/expand all toggle – integrated top-right
+    // Collapse/expand all toggle – in filter bar (right-aligned)
     var totalCards = 0;
     dishOrder.forEach(function(d){totalCards += dishMap[d].filter(filterFn).length;});
-    if(totalCards>1){
-      var allCollapsed = Object.keys(_orderCardOpen).length===0 || Object.keys(_orderCardOpen).every(function(k){return !_orderCardOpen[k];});
-      html += '<div style="display:flex;justify-content:flex-end;padding:0 0 2px"><button class="k-btn k-btn-sm k-btn-outline" style="font-size:11px;min-height:28px;padding:2px 8px;gap:3px" onclick="K.'+(allCollapsed?'expandAllCards':'collapseAllCards')+'()">'+luc(allCollapsed?'chevrons-down':'chevrons-up',12)+' '+(allCollapsed?'Alle':'Zu')+'</button></div>';
+    var toggleWrap = document.getElementById('mt-toggle-wrap');
+    if(toggleWrap){
+      if(totalCards>1){
+        var allCollapsed = Object.keys(_orderCardOpen).length===0 || Object.keys(_orderCardOpen).every(function(k){return !_orderCardOpen[k];});
+        toggleWrap.innerHTML = '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:11px;min-height:28px;padding:2px 8px;gap:3px" onclick="K.'+(allCollapsed?'expandAllCards':'collapseAllCards')+'()">'+luc(allCollapsed?'chevrons-down':'chevrons-up',12)+' '+(allCollapsed?'Alle':'Zu')+'</button>';
+        toggleWrap.style.display = '';
+      } else {
+        toggleWrap.innerHTML = '';
+        toggleWrap.style.display = 'none';
+      }
     }
 
     dishOrder.forEach(function(dish){
