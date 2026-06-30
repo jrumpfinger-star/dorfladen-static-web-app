@@ -630,6 +630,7 @@ def _handle_get(req, token, base_url, hdrs):
                     "menge_kg": pos.get("menge_kg", 0),
                     "zuschnitt": pos.get("zuschnitt", ""),
                     "bestellt": bool(pos.get("bestellt")),
+                    "gesendet": bool(pos.get("gesendet")),
                     "kunde": best.get("name", ""),
                     "bestellnummer": best.get("bestellnummer", ""),
                     "order_id": best.get("id", ""),
