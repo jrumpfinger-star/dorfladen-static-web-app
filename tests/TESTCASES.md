@@ -1897,3 +1897,13 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Aktion:** `/kiosk` laden
 - **Prüfung:** HTML enthält `switchSammelDate`
 - **Erwartung:** Datumswechsel-Funktion für Sammelbestellung existiert
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-30 | T-28-01 API info liefert alle_termine mit mehreren Liefertagen | ✅ Pass |
+| 2026-06-30 | T-28-02 API info enthaelt weiterhin termine (Kompatibilitaet) | ✅ Pass |
+| 2026-06-30 | T-28-03 Frontend hat Liefertag-Dropdown im Checkout | ✅ Pass |
+| 2026-06-30 | T-28-04 Liefertag-Dropdown zeigt naechster-Label | ✅ Pass |
+| 2026-06-30 | T-28-05 Kiosk Sammelbestellung switchSammelDate existiert | ✅ Pass |
