@@ -68,8 +68,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .fm-reorder-btn-confirm{background:var(--c-green);color:#fff}
 .fm-reorder-btn-confirm:active{opacity:.85}
 .fm-liefertag-picker{background:#fff;border:1.5px solid var(--c-meat);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
-.fm-liefertag-picker label{font-size:12px;font-weight:700;color:var(--c-meat);white-space:nowrap;display:flex;align-items:center;gap:4px}
-.fm-liefertag-picker select{flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:600;background:#fff}
+.fm-liefertag-picker label{font-size:12px;font-weight:700;color:var(--c-meat);white-space:nowrap;display:flex;align-items:center;gap:4px;flex-shrink:0}
+.fm-liefertag-picker select{flex:1;min-width:0;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:600;background:#fff;box-sizing:border-box}
 
 /* Article Grid */
 .fm-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
