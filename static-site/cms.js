@@ -9911,7 +9911,7 @@
         html+=_cmsKatOptionsHtml(p.kategorie);
         html+='</select></div>';
         html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
-        var edP=parseFloat(p.preis);html+='<input id="soc-ed-preis-'+pid+'" type="number" step="0.01" min="0" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(edP&&isFinite(edP)?edP.toFixed(2):(p.preis||''))+'"></div>';
+        var edP=parseFloat(p.preis);html+='<input id="soc-ed-preis-'+pid+'" type="text" inputmode="decimal" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(edP&&isFinite(edP)?edP.toFixed(2).replace('.',','):(p.preis||''))+'"></div>';
         html+='<div class="soc-kat-edit-btns" style="display:flex;gap:4px">';
         html+='<button class="cms-btn cms-btn-sm" onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700">&#10003; Speichern</button>';
         html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatCancelEdit(\''+pid+'\')" style="padding:5px 10px;font-size:12px">Abbrechen</button>';
@@ -9963,7 +9963,9 @@
   window.socialKatSave = function(id){
     var name=(document.getElementById('soc-ed-name-'+id).value||'').trim();
     var kat=document.getElementById('soc-ed-kat-'+id).value;
-    var preis=(document.getElementById('soc-ed-preis-'+id).value||'').trim();
+    var preisRaw=(document.getElementById('soc-ed-preis-'+id).value||'').trim();
+    var preis=preisRaw?parseFloat(preisRaw.replace(',','.')):'';
+    if(preis&&isFinite(preis)) preis=preis.toFixed(2); else preis=preisRaw;
     if(!name){socialStatus('soc-kat-status','Name darf nicht leer sein',false);return;}
     socialStatus('soc-kat-status','Wird gespeichert...',true);
     fetch(API+'/social-katalog',{
@@ -10156,7 +10158,7 @@
     html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>';
     html+='<input id="soc-free-name" class="cms-input" placeholder="z.B. Kartoffelsalat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
     html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
-    html+='<input id="soc-free-preis" type="number" step="0.01" min="0" class="cms-input" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
+    html+='<input id="soc-free-preis" type="text" inputmode="decimal" class="cms-input" placeholder="3,50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
     html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
     html+='<select id="soc-free-kat" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
     html+=_cmsKatOptionsHtml('')+'<option value="Sonstiges">Sonstiges</option>';
@@ -10577,7 +10579,7 @@
     var html='';
     sel.forEach(function(p){
       html+='<span style="display:inline-block;background:#dcfce7;color:#15803d;font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;margin:2px 3px 2px 0">'+esc(p.name);
-      if(p.preis){var tp=parseFloat(p.preis);html+=' <span style="opacity:.7">'+(tp&&isFinite(tp)?tp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
+      if(p.preis){var tp=parseFloat(p.preis);html+=' <span style="opacity:.7">'+(tp&&isFinite(tp)?tp.toFixed(2).replace('.',','):esc(p.preis))+'\u20AC</span>';}
       html+='</span>';
     });
     tags.innerHTML=html;
