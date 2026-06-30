@@ -1964,6 +1964,8 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-29-15 metzgerAlleGesendet setzt bestellt+gesendet | ✅ Pass |
 | 2026-06-30 | T-29-16 Bestellstatus laedt Lucide Script | ✅ Pass |
 | 2026-06-30 | T-29-17 Bestellstatus hat Lucide Icons statt Emojis | ✅ Pass |
+| 2026-06-30 | T-29-18 History filtert abgeholte/stornierte Bestellungen | ✅ Pass |
+| 2026-06-30 | T-29-19 Bestellstatus Zurueck nutzt history.back | ✅ Pass |
 
 ### T-29-06: Aufklappen-Button ist in Stats-Zeile integriert (AK-FLEISCH-29)
 - **Aktion:** `/kiosk` laden (Online-Shop Tab)

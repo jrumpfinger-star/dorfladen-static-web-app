@@ -1014,3 +1014,30 @@ test.describe('T-30 Bestellseite UX (AK-FLEISCH-30)', () => {
     expect(exists).toBe(true);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  Fleisch History & Bestellstatus Navigation
+// ════════════════════════════════════════════════════
+
+test.describe('Fleisch History & Navigation', () => {
+  test('T-29-18 History filtert abgeholte/stornierte Bestellungen (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(3000);
+    const filtersActive = await page.evaluate(() => {
+      var src = document.documentElement.innerHTML;
+      return src.includes('return (b.status||0)<3');
+    });
+    expect(filtersActive).toBe(true);
+  });
+
+  test('T-29-19 Bestellstatus Zurueck nutzt history.back statt Startseite (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(3000);
+    const backLink = await page.locator('.bs-link');
+    const text = await backLink.textContent();
+    expect(text.trim()).toContain('Zurück');
+    expect(text.trim()).not.toContain('Startseite');
+    const onclick = await backLink.getAttribute('onclick');
+    expect(onclick).toContain('history.back()');
+  });
+});
