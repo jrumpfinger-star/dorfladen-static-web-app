@@ -2032,7 +2032,38 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung:** Page-Source enthält `CMS_FM_STORNO_REASONS` und `data-fm-storno`
 - **Erwartung:** CMS nutzt Dialog statt confirm() für Metzger-Storno
 
+### T-ST-09 Kiosk sendet storno_grund statt personal_antwort (AK-ST-04)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** Page-Source enthält `payload.storno_grund` und NICHT `payload.personal_antwort = grund`
+- **Erwartung:** Storno-Grund wird im dedizierten Feld gesendet
+
+### T-ST-10 CMS sendet storno_grund statt personal_antwort (AK-ST-04)
+- **Aktion:** `cms.js` laden
+- **Prüfung:** JS-Source enthält `storno_grund`
+- **Erwartung:** CMS nutzt dediziertes Storno-Feld
+
+### T-ST-11 CMS Shop hat Antwort-Dialog + Gelesen-Button (AK-MSG-01)
+- **Aktion:** `cms.js` laden
+- **Prüfung:** JS-Source enthält `cmsShowShopReplyDialog`, `cmsMarkShopMsgRead`, `Nachricht an Kunden`
+- **Erwartung:** CMS Shop hat Antwort-Dialog und Gelesen-Funktion
+
+### T-ST-12 CMS Shop zeigt Kundennachricht + Antwort an (AK-MSG-02)
+- **Aktion:** `cms.js` laden
+- **Prüfung:** JS-Source enthält `Kunde:</strong>`, `Antwort:</strong>`, `Als gelesen markieren`
+- **Erwartung:** CMS Shop-Bestelltabelle zeigt Nachrichten an
+
+### T-ST-13 Shop-Kundenansicht zeigt gesendete Nachricht + Antwort an (AK-MSG-03)
+- **Aktion:** `/shop.html` laden
+- **Prüfung:** Page-Source enthält `Antwort vom Dorfladen`, `Ihre Nachricht`, `Nachricht an den Dorfladen`
+- **Erwartung:** Kunde sieht gesendete und empfangene Nachrichten
+
+### T-ST-14 Shop API liefert kunde_kommentar + personal_antwort (AK-MSG-04)
+- **Aktion:** `/api/shop-order?mode=cms` aufrufen
+- **Prüfung:** JSON-Response enthält `kunde_kommentar`, `personal_antwort`, `kommentar_gelesen`
+- **Erwartung:** API liefert Nachrichtenfelder in der Response
+
 ### Testlauf-Tabelle
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
-| *ausstehend* | T-ST-01 bis T-ST-08 | – | Warte auf Deploy + Feld-Migration |
+| 30.06.2026 | T-ST-01 bis T-ST-10 | ✅ 10/10 | Alle bestanden nach Rerun (2 Timeouts beim 1. Lauf) |
+| *ausstehend* | T-ST-11 bis T-ST-14 | – | Nachrichten-Tests, warten auf Deploy |

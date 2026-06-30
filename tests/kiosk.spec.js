@@ -1832,4 +1832,44 @@ test.describe('AK-ST – Storno mit Begründung', () => {
     const jsContent = await resp.text();
     expect(jsContent).toContain('storno_grund');
   });
+
+  test('T-ST-11 CMS Shop hat Antwort-Dialog + Gelesen-Button (AK-MSG-01)', async ({ page }) => {
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    expect(jsContent).toContain('cmsShowShopReplyDialog');
+    expect(jsContent).toContain('cmsMarkShopMsgRead');
+    expect(jsContent).toContain('Nachricht an Kunden');
+  });
+
+  test('T-ST-12 CMS Shop zeigt Kundennachricht + Antwort an (AK-MSG-02)', async ({ page }) => {
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    // CMS render function shows customer message and staff reply
+    expect(jsContent).toContain('Kunde:</strong>');
+    expect(jsContent).toContain('Antwort:</strong>');
+    expect(jsContent).toContain('Als gelesen markieren');
+  });
+
+  test('T-ST-13 Shop-Kundenansicht zeigt gesendete Nachricht + Antwort an (AK-MSG-03)', async ({ page }) => {
+    await page.goto(`${BASE}/shop.html`);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    // Check that message display code exists
+    expect(content).toContain('Antwort vom Dorfladen');
+    expect(content).toContain('Ihre Nachricht');
+    expect(content).toContain('Nachricht an den Dorfladen');
+  });
+
+  test('T-ST-14 Shop API liefert kunde_kommentar + personal_antwort (AK-MSG-04)', async ({ page }) => {
+    // Verify API response includes message fields
+    const resp = await page.request.get(`${BASE}/api/shop-order?mode=cms`);
+    const data = await resp.json();
+    expect(data.success).toBe(true);
+    if (data.orders && data.orders.length > 0) {
+      const o = data.orders[0];
+      expect(o).toHaveProperty('kunde_kommentar');
+      expect(o).toHaveProperty('personal_antwort');
+      expect(o).toHaveProperty('kommentar_gelesen');
+    }
+  });
 });
