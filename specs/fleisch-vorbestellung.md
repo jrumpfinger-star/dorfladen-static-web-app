@@ -170,12 +170,11 @@ Kunden können Fleisch- und Wurstwaren (gewogene Artikel) ab 1 kg vorbestellen u
 - `?liefertag=2026-07-03` → alle Bestellungen für einen Liefertag (Sammelbestellung)
 
 #### PATCH `/api/fleisch-order` – Status/Kommentar/Positionen ändern
-- Body: `{"id": "...", "status": 1}` (0=Neu, 1=Beim Metzger, 2=Eingetroffen, 3=Abgeholt, 4=Storniert)
+- Body: `{"id": "...", "status": 1}` (0=Neu, 1=Beim Metzger, 3=Abgeholt, 4=Storniert)
 - Body: `{"id": "...", "positionen": [...]}` → aktualisiert `dl_positionen_json` (für per-Item „bestellt"-Tracking)
 - Body: `{"id": "...", "kunde_kommentar": "..."}` → setzt Kommentar + `kommentar_gelesen=false`
 - Body: `{"id": "...", "personal_antwort": "...", "kommentar_gelesen": true}` → Antwort + Push an Kunde
 - Body: `{"id": "...", "kommentar_gelesen": true}` → Nur als gelesen markieren
-- Bei Status 2 (Eingetroffen): Push an Kunde „Ihre Fleischbestellung ist abholbereit"
 - Bei Personal-Antwort: Push an Kunde „Neue Nachricht zu Ihrer Bestellung"
 - Validierung: `positionen` muss ein Array von Objekten sein, sonst HTTP 400
 
@@ -238,17 +237,20 @@ Kunden können Fleisch- und Wurstwaren (gewogene Artikel) ab 1 kg vorbestellen u
 - Touch-Modal für Nachrichten (AK-FLEISCH-19)
 
 ### Sammelbestellung (Metzger-Zettel)
-- **Pro Liefertag**: alle Positionen aller Kunden aggregiert
-- Beispiel: „Montag 30.06.: Schweineschnitzel 4.5 kg, Rinderfilet 2.0 kg, Bratwurst 3.0 kg"
+- **Pro Liefertag**: alle Einzelpositionen aller Kunden (NICHT aggregiert!)
+- Jede Position einzeln mit Kunde, Menge, Zuschnitt – da jede Bestellung separat vakuumverpackt wird
+- Checkbox pro Position → markiert als bestellt (PATCH an API)
 - **Druckbar** als Bestellzettel für den Metzger
 - Button: „Alle als 'Beim Metzger bestellt' markieren"
 
 ### Status-Workflow
 ```
-Neu → Beim Metzger bestellt → Eingetroffen → Abgeholt
-                                              ↗
-Neu → Storniert
+Neu (0) → Beim Metzger bestellt (1) → Abgeholt (3)
+                                        ↗
+Neu (0) → Storniert (4)
 ```
+> **Hinweis:** Status 2 (Eingetroffen) wurde entfernt. Wareneingang wird nicht dokumentiert.
+> Der Kunde holt die Ware direkt ab, nachdem sie beim Metzger bestellt wurde.
 
 ---
 
@@ -444,6 +446,24 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] API `/fleisch-order?liefertag=...` liefert `bestellt_count` pro aggregiertem Artikel
 - [x] „Alle beim Metzger bestellt"-Button setzt alle Positionen auf `bestellt=true` UND Status auf 1
 - [x] Filter-Leiste: Full-width sticky ohne Gap (negative margin negiert Panel-Padding)
+
+### AK-FLEISCH-24: Kiosk Metzger UI/UX Optimierung
+- [x] Badge blinkt nur bei Status 0 (Neu), nicht bei bearbeiteten Bestellungen
+- [x] Bestellnummer und Telefonnummer aus Karten-Anzeige entfernt
+- [x] „Anzahl Portionen" Info entfernt
+- [x] Bestellungen aufsteigend nach Datum sortiert
+- [x] Datumsformat immer dd.mm.yyyy
+- [x] Collapsible-Pfeile funktional mit Lucide-Icons
+- [x] Status-Workflow: Status 2 (Eingetroffen) entfernt, direkt von „Beim Metzger" zu „Abgeholt"
+- [x] Kompaktes Button-Layout für Mobile
+- [x] Sammelbestellung: Keine Aggregation gleicher Artikel (jede Position einzeln mit Kundenname)
+- [x] API: `einzelpositionen` statt `aggregiert` im Sammelbestellungs-Response
+
+### AK-FLEISCH-25: Kiosk Mittagstisch UI/UX Optimierung
+- [x] Collapse/Expand-Button platzsparend (kleiner, Kurztext)
+- [x] Preis im Header der Bestellkarte statt im Body
+- [x] Lucide-Icon für Collapse-Pfeil statt Unicode
+- [x] Kompaktere Badge- und Button-Darstellung
 
 ### AK-FLEISCH-10: CMS-Integration
 - [x] Rabatt, Mindestmenge, Liefertage, Bestellschluss konfigurierbar

@@ -1454,3 +1454,166 @@ test.describe('Kiosk – Metzger Touch-Modal (AK-FLEISCH-19)', () => {
     expect(hasOldFn).toBe(false);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  Metzger – UI/UX Optimierung (AK-FLEISCH-24)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Metzger UI/UX (AK-FLEISCH-24)', () => {
+
+  test('T-24-01 Metzger-Karten haben Lucide chevron-down Icons (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#metzger-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen');
+      return;
+    }
+    // Arrow should be Lucide icon, not unicode text
+    const arrow = cards.first().locator('.k-oc-arrow i[data-lucide="chevron-down"]');
+    await expect(arrow).toHaveCount(1);
+  });
+
+  test('T-24-02 Metzger-Karten zeigen keine Bestellnummer/Telefon im Header (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#metzger-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen');
+      return;
+    }
+    const headerText = await cards.first().locator('.k-order-hdr').textContent();
+    expect(headerText).not.toContain('FM-');
+    expect(headerText).not.toContain('Tel');
+  });
+
+  test('T-24-03 Metzger Toggle klappt Karte auf/zu (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#metzger-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen');
+      return;
+    }
+    const card = cards.first();
+    const wasCollapsed = await card.evaluate(el => el.classList.contains('oc-collapsed'));
+    // Click header to toggle
+    await card.locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+    const isCollapsed = await card.evaluate(el => el.classList.contains('oc-collapsed'));
+    expect(isCollapsed).toBe(!wasCollapsed);
+  });
+
+  test('T-24-04 Metzger-Bestellungen aufsteigend sortiert (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    // Check sort via data attribute dates
+    const dates = await page.evaluate(() => {
+      const cards = document.querySelectorAll('#metzger-orders .k-order');
+      return Array.from(cards).map(c => c.getAttribute('data-fmdate') || '');
+    });
+    if (dates.length >= 2) {
+      for (let i = 1; i < dates.length; i++) {
+        expect(dates[i] >= dates[i - 1]).toBe(true);
+      }
+    }
+  });
+
+  test('T-24-05 Sammelbestellung API liefert einzelpositionen statt aggregiert (AK-FLEISCH-24)', async ({ request }) => {
+    // Find next delivery date from API
+    const kiosk = await request.get(`${BASE}/api/fleisch-order?mode=kiosk`);
+    const kioskData = await kiosk.json();
+    if (!kioskData.success || !kioskData.bestellungen || kioskData.bestellungen.length === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen');
+      return;
+    }
+    const liefertag = kioskData.bestellungen[0].liefertag;
+    if (!liefertag) {
+      test.skip(true, 'Kein Liefertag');
+      return;
+    }
+    const resp = await request.get(`${BASE}/api/fleisch-order?liefertag=${liefertag}`);
+    expect(resp.status()).toBe(200);
+    const data = await resp.json();
+    expect(data.success).toBe(true);
+    // New field: einzelpositionen (not aggregiert)
+    expect(Array.isArray(data.einzelpositionen)).toBe(true);
+    expect(data.aggregiert).toBeUndefined();
+    if (data.einzelpositionen.length > 0) {
+      const ep = data.einzelpositionen[0];
+      expect(typeof ep.bezeichnung).toBe('string');
+      expect(typeof ep.kunde).toBe('string');
+      expect(typeof ep.menge_kg).toBe('number');
+    }
+  });
+
+  test('T-24-06 Metzger Status-Workflow: kein Status 2 Button (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    // No "Eingetroffen" or status 2 button should exist
+    const eingetroffenBtn = page.locator('#metzger-orders button:has-text("Eingetroffen")');
+    await expect(eingetroffenBtn).toHaveCount(0);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Mittagstisch – UI/UX Optimierung (AK-FLEISCH-25)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Mittagstisch UI/UX (AK-FLEISCH-25)', () => {
+
+  test('T-25-01 Mittagstisch Karten haben Lucide chevron-down Icons (AK-FLEISCH-25)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#mittag-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Mittagstisch-Bestellungen');
+      return;
+    }
+    // Arrow should be Lucide icon
+    const arrow = cards.first().locator('.k-oc-arrow i[data-lucide="chevron-down"]');
+    await expect(arrow).toHaveCount(1);
+  });
+
+  test('T-25-02 Mittagstisch Header zeigt Preis (AK-FLEISCH-25)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#mittag-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Mittagstisch-Bestellungen');
+      return;
+    }
+    const headerText = await cards.first().locator('.k-order-hdr').textContent();
+    expect(headerText).toContain('€');
+  });
+
+  test('T-25-03 Collapse-Toggle kompakt (AK-FLEISCH-25)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="alle"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#mittag-orders .k-order');
+    const count = await cards.count();
+    if (count <= 1) {
+      test.skip(true, 'Zu wenig Bestellungen für Toggle');
+      return;
+    }
+    // Toggle button should exist and be compact (short text)
+    const toggleBtn = page.locator('#mittag-orders button:has-text("Alle"), #mittag-orders button:has-text("Zu")');
+    await expect(toggleBtn).toHaveCount(1);
+    const height = await toggleBtn.evaluate(el => parseInt(getComputedStyle(el).minHeight) || el.offsetHeight);
+    expect(height).toBeLessThanOrEqual(36);
+  });
+});

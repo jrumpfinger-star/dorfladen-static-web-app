@@ -618,33 +618,29 @@ def _handle_get(req, token, base_url, hdrs):
         items = r.json().get("value", [])
         bestellungen = [_serialize(it) for it in items]
 
-        # Aggregate positions across all orders – group by strichcode (barcode)
-        # as the unique product identifier; fallback to bezeichnung
-        aggregiert = {}
+        # List ALL individual positions (no aggregation!) because each
+        # order is vacuum-packed separately for its customer.
+        einzelpositionen = []
         for best in bestellungen:
             for pos in best.get("positionen", []):
-                key = (pos.get("strichcode") or pos.get("bezeichnung") or pos.get("artikelnummer") or "?").strip()
-                if key not in aggregiert:
-                    aggregiert[key] = {
-                        "strichcode": pos.get("strichcode", ""),
-                        "artikelnummer": pos.get("artikelnummer", ""),
-                        "bezeichnung": pos.get("bezeichnung", key),
-                        "gesamt_kg": 0,
-                        "anzahl_bestellungen": 0,
-                        "bestellt_count": 0,
-                        "einheit": "kg",
-                    }
-                aggregiert[key]["gesamt_kg"] = round(aggregiert[key]["gesamt_kg"] + pos.get("menge_kg", 0), 2)
-                aggregiert[key]["anzahl_bestellungen"] += 1
-                if pos.get("bestellt"):
-                    aggregiert[key]["bestellt_count"] += 1
+                einzelpositionen.append({
+                    "strichcode": pos.get("strichcode", ""),
+                    "artikelnummer": pos.get("artikelnummer", ""),
+                    "bezeichnung": pos.get("bezeichnung", ""),
+                    "menge_kg": pos.get("menge_kg", 0),
+                    "zuschnitt": pos.get("zuschnitt", ""),
+                    "bestellt": bool(pos.get("bestellt")),
+                    "kunde": best.get("name", ""),
+                    "bestellnummer": best.get("bestellnummer", ""),
+                    "order_id": best.get("id", ""),
+                })
 
         return func.HttpResponse(
             json.dumps({
                 "success": True,
                 "liefertag": liefertag,
                 "bestellungen": bestellungen,
-                "aggregiert": list(aggregiert.values()),
+                "einzelpositionen": einzelpositionen,
                 "gesamt_bestellungen": len(bestellungen),
             }, ensure_ascii=False),
             status_code=200, headers=get_cors_headers()

@@ -1684,3 +1684,56 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-28 | T-25-17 Bestellstatus Timeline: FM Status Eingetroffen → 2 grün, blau Eingetr, 1 grau | ✅ Pass |
 | 2026-06-28 | T-25-18 Bestellstatus Timeline: FM Status Storniert → roter Dot "❌ Storniert" | ✅ Pass |
 | 2026-06-28 | T-25-19 Artikelfreigabe: Fleisch & Wurst ohne 6-Wochen-Filter → 258 statt 5 nicht freigegeben | ✅ Pass |
+
+## T-24 – Kiosk Metzger UI/UX (AK-FLEISCH-24)
+
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-24
+
+### T-24-01 Metzger Lucide Icons
+- **Aktion:** Kiosk öffnen → Metzger-Tab
+- **Prüfung:** Collapse-Pfeil in Bestellkarten prüfen
+- **Erwartung:** Lucide `chevron-down` Icon statt Unicode-Pfeil
+
+### T-24-02 Keine Bestellnummer/Telefon
+- **Aktion:** Kiosk → Metzger-Tab → Header einer Karte ansehen
+- **Prüfung:** Text im Header prüfen
+- **Erwartung:** Kein „FM-" Prefix, kein „Tel" im Header
+
+### T-24-03 Toggle funktioniert
+- **Aktion:** Kiosk → Metzger-Tab → Karten-Header klicken
+- **Prüfung:** CSS-Klasse `oc-collapsed` prüfen
+- **Erwartung:** Karte klappt auf/zu bei Klick
+
+### T-24-04 Aufsteigend sortiert
+- **Aktion:** Kiosk → Metzger-Tab
+- **Prüfung:** `data-fmdate` Attribute aller Karten vergleichen
+- **Erwartung:** Aufsteigende Reihenfolge
+
+### T-24-05 API einzelpositionen
+- **Aktion:** GET `/api/fleisch-order?liefertag=...`
+- **Prüfung:** Response-Felder prüfen
+- **Erwartung:** `einzelpositionen` Array vorhanden, `aggregiert` nicht vorhanden, jede Position hat `kunde`, `bezeichnung`, `menge_kg`
+
+### T-24-06 Kein Status 2 Button
+- **Aktion:** Kiosk → Metzger-Tab
+- **Prüfung:** Buttons in Bestellkarten prüfen
+- **Erwartung:** Kein „Eingetroffen"-Button vorhanden
+
+## T-25-MT – Kiosk Mittagstisch UI/UX (AK-FLEISCH-25)
+
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-25
+
+### T-25-MT-01 Lucide Icons in Mittagstisch
+- **Aktion:** Kiosk → Mittagstisch-Tab
+- **Prüfung:** Collapse-Pfeil in Bestellkarten prüfen
+- **Erwartung:** Lucide `chevron-down` Icon statt Unicode-Pfeil
+
+### T-25-MT-02 Preis im Header
+- **Aktion:** Kiosk → Mittagstisch-Tab → Header einer Karte ansehen
+- **Prüfung:** Header-Text auf €-Zeichen prüfen
+- **Erwartung:** Preis direkt im Header sichtbar
+
+### T-25-MT-03 Kompakter Toggle
+- **Aktion:** Kiosk → Mittagstisch → Filter „Alle"
+- **Prüfung:** Collapse-Toggle-Button Höhe prüfen
+- **Erwartung:** Button ≤ 36px Höhe, kurzer Text („Alle"/„Zu")
