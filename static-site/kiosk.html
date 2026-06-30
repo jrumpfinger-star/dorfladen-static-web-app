@@ -2217,7 +2217,14 @@ var K = (function(){
     if(warten>0) parts.push('<span class="k-stat"><span class="k-stat-val" style="color:#2563eb">'+warten+'</span> <span class="k-stat-label">Warten</span></span>');
     if(ueberfaellig>0) parts.push('<span class="k-stat red"><span class="k-stat-val">'+ueberfaellig+'</span> <span class="k-stat-label">Überfällig</span></span>');
     if(parts.length===0) parts.push('<span class="k-stat green"><span class="k-stat-val">✓</span> <span class="k-stat-label">Alles erledigt</span></span>');
-    document.getElementById('abhol-stats').innerHTML = parts.join('<span class="k-stat-dot"></span>');
+    var statsHtml = parts.join('<span class="k-stat-dot"></span>');
+    // Add expand/collapse toggle inline in stats bar (right-aligned)
+    if(shopOrders.length>1){
+      var allC = Object.keys(_shopCardOpen).length===0 || Object.keys(_shopCardOpen).every(function(k){return !_shopCardOpen[k];});
+      statsHtml += '<button class="k-btn k-btn-sm k-btn-outline" style="margin-left:auto;font-size:12px;min-height:28px;padding:2px 10px;gap:4px" onclick="K.'+(allC?'expandAllShopCards':'collapseAllShopCards')+'()" title="'+(allC?'Alle aufklappen':'Alle zuklappen')+'">'+luc(allC?'chevrons-down':'chevrons-up',14)+' '+(allC?'Aufklappen':'Zuklappen')+'</button>';
+    }
+    document.getElementById('abhol-stats').innerHTML = statsHtml;
+    reinitIcons();
   }
 
   function fmtDate(d){
@@ -2267,11 +2274,6 @@ var K = (function(){
     });
 
     var html = '';
-    // Collapse/expand all shop cards toggle
-    if(shopOrders.length>1){
-      var allShopCollapsed = Object.keys(_shopCardOpen).length===0 || Object.keys(_shopCardOpen).every(function(k){return !_shopCardOpen[k];});
-      html += '<div style="display:flex;justify-content:flex-end;padding:2px 0"><button class="k-btn k-btn-sm k-btn-outline" style="font-size:12px;min-height:32px;padding:4px 10px;gap:4px" onclick="K.'+(allShopCollapsed?'expandAllShopCards':'collapseAllShopCards')+'()" title="'+(allShopCollapsed?'Alle aufklappen':'Alle zuklappen')+'">'+luc(allShopCollapsed?'chevrons-down':'chevrons-up',14)+' '+(allShopCollapsed?'Aufklappen':'Zuklappen')+'</button></div>';
-    }
 
     groups.forEach(function(g,gi){
       var gid = 'slotg-'+gi;
