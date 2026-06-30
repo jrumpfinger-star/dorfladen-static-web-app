@@ -41,8 +41,10 @@
       .k-header .k-date,.k-header .k-clock,.k-header #k-sparkline{display:none!important}
       .k-header .k-btn{min-height:32px!important;min-width:32px!important;padding:4px!important}
       .k-header .k-btn i{width:16px!important;height:16px!important}
-      .k-tab{padding:10px 4px;font-size:11px;gap:1px;min-height:44px}
+      .k-tab{padding:10px 4px;font-size:10px;gap:1px;min-height:44px;white-space:nowrap}
       .k-tab .k-tab-icon i{width:18px!important;height:18px!important}
+      .k-tab .k-tab-badge{font-size:11px;padding:2px 6px;min-width:20px;min-height:20px}
+      .k-tab-badges{flex-wrap:nowrap;gap:2px;margin-top:1px}
       /* ── Mobile: slot group header wraps ── */
       .k-slot-header{flex-wrap:wrap;padding:8px 10px;font-size:12px;gap:4px 8px}
       .k-slot-count{flex-basis:100%;margin-left:22px;gap:4px;font-size:11px}
@@ -455,15 +457,15 @@
     <span class="k-tab-icon"><i data-lucide="shopping-cart" style="width:22px;height:22px"></i></span> Online-Shop
     <span class="k-tab-badges" id="badges-abhol"></span>
   </div>
-  <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
-    <span class="k-tab-icon"><i data-lucide="users" style="width:22px;height:22px"></i></span> Stammkunden
-  </div>
   <div class="k-tab" data-tab="metzger" onclick="K.switchTab('metzger')">
     <span class="k-tab-icon"><i data-lucide="beef" style="width:22px;height:22px"></i></span> Metzger
     <span class="k-tab-badges" id="badges-metzger"></span>
   </div>
   <div class="k-tab" data-tab="social" onclick="K.switchTab('social')">
     <span class="k-tab-icon"><i data-lucide="share-2" style="width:22px;height:22px"></i></span> Social
+  </div>
+  <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
+    <span class="k-tab-icon"><i data-lucide="users" style="width:22px;height:22px"></i></span> Stammkunden
   </div>
 </div>
 
