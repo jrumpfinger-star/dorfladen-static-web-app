@@ -3360,6 +3360,8 @@ var K = (function(){
       loadMetzgerSammel();
     } else if(f==='nachrichten'){
       _loadFmMessages();
+    } else if(f==='historie'){
+      _loadFmHistorie();
     } else {
       renderMetzgerOrders();
     }
@@ -3380,6 +3382,46 @@ var K = (function(){
     if(grp) grp.classList.toggle('collapsed', !_fmDayGroupOpen[day]);
   }
 
+  var _fmHistoryOrders = [];
+  function _loadFmHistorie(){
+    var container = document.getElementById('metzger-orders');
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--c-muted)">Lade Historie\u2026</div>';
+    fetch(API+'/fleisch-order?mode=kiosk_history')
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(!data.success){ container.innerHTML='<div class="k-empty">Fehler beim Laden</div>'; return; }
+        _fmHistoryOrders = data.bestellungen || [];
+        _renderFmHistorie();
+      }).catch(function(){ container.innerHTML='<div class="k-empty">Netzwerkfehler</div>'; });
+  }
+  function _renderFmHistorie(){
+    var container = document.getElementById('metzger-orders');
+    if(!_fmHistoryOrders.length){
+      container.innerHTML='<div class="k-empty"><div class="k-empty-icon"><i data-lucide="history" style="width:24px;height:24px"></i></div>Keine abgeschlossenen Bestellungen</div>';
+      reinitIcons(); return;
+    }
+    var STATUS_CSS_H = {3:'st-done',4:'st-cancel'};
+    var STATUS_LABELS_H = {3:'Abgeholt',4:'Storniert'};
+    var html = '';
+    _fmHistoryOrders.forEach(function(o){
+      var positionen = o.positionen || [];
+      html += '<div class="k-order" style="margin-bottom:8px;opacity:0.8">';
+      html += '<div class="k-order-hdr" style="padding:10px 14px">';
+      html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
+      html += '<span style="font-size:12px;color:var(--c-muted);white-space:nowrap">'+_fmDateLabel(o.liefertag)+'</span>';
+      html += '<span class="k-badge '+(STATUS_CSS_H[o.status]||'st-done')+'">'+(STATUS_LABELS_H[o.status]||'?')+'</span>';
+      html += '</div>';
+      html += '<div class="k-order-body" style="display:block;padding:6px 14px">';
+      positionen.forEach(function(p){
+        html += '<div style="font-size:12px;color:var(--c-muted);padding:2px 0">\u2022 '+esc(p.bezeichnung)+' '+Number(p.menge_kg||0).toFixed(1)+' kg</div>';
+      });
+      html += '<div style="text-align:right;font-weight:700;font-size:13px;padding:4px 0">'+Number(o.gesamtsumme||0).toFixed(2).replace('.',',')+' \u20AC</div>';
+      html += '</div></div>';
+    });
+    container.innerHTML = html;
+    reinitIcons();
+  }
+
   function renderMetzgerOrders(){
     var today = new Date().toISOString().slice(0,10);
     var list = _fmOrders;
@@ -3389,8 +3431,6 @@ var K = (function(){
       if(_fmSubFilter==='neu') list = list.filter(function(o){ return o.status === 0; });
     } else if(_fmFilter==='heute'){
       list = list.filter(function(o){ return o.liefertag === today && o.status === 1; });
-    } else if(_fmFilter==='historie'){
-      list = list.filter(function(o){ return o.status >= 3; });
     }
 
     // Sort by date ascending

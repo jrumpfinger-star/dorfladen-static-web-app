@@ -696,6 +696,26 @@ def _handle_get(req, token, base_url, hdrs):
             status_code=200, headers=get_cors_headers()
         )
 
+    # Kiosk history: completed/cancelled orders (last 30 days)
+    if mode == "kiosk_history":
+        cutoff = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%dT00:00:00Z")
+        odata_filter = f"dl_status ge {STATUS_ABGEHOLT} and dl_bestelldatum ge {cutoff}"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter={odata_filter}&$orderby=dl_liefertag desc,dl_bestelldatum desc&$top=100"
+        r = requests.get(url, headers=hdrs, timeout=30)
+        if r.status_code != 200:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Fehler beim Laden"}, ensure_ascii=False),
+                status_code=500, headers=get_cors_headers()
+            )
+        items = r.json().get("value", [])
+        return func.HttpResponse(
+            json.dumps({
+                "success": True,
+                "bestellungen": [_serialize(it) for it in items],
+            }, ensure_ascii=False),
+            status_code=200, headers=get_cors_headers()
+        )
+
     # Count unread customer messages (for tab badge)
     if mode == "unread_messages":
         msg_url = (
