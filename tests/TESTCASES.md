@@ -1958,6 +1958,10 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-30-03 Reorder oeffnet Warenkorb (fmOpenCart) | ✅ Pass |
 | 2026-06-30 | T-30-04 fmSyncLiefertag Funktion existiert | ✅ Pass |
 | 2026-06-30 | T-30-05 fmToggleReorderDetails Funktion existiert | ✅ Pass |
+| 2026-06-30 | T-29-12 Mute-Button existiert im Header | ✅ Pass |
+| 2026-06-30 | T-29-13 Name wird nicht abgeschnitten (kein ellipsis) | ✅ Pass |
+| 2026-06-30 | T-29-14 Zurueck-Button im Header neben Aktions-Button | ✅ Pass |
+| 2026-06-30 | T-29-15 metzgerAlleGesendet setzt bestellt+gesendet | ✅ Pass |
 
 ### T-29-06: Aufklappen-Button ist in Stats-Zeile integriert (AK-FLEISCH-29)
 - **Aktion:** `/kiosk` laden (Online-Shop Tab)
