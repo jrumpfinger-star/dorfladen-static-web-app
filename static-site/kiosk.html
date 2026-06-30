@@ -2166,7 +2166,7 @@ var K = (function(){
       // Active filters: exclude old orders
       var base = _allShopOrders.filter(function(o){ return !_isOld(o); });
       if(_shopFilter==='today'){
-        shopOrders = base.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;});
+        shopOrders = base.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<3;});
       } else if(_shopFilter==='overdue'){
         shopOrders = base.filter(function(o){
           if(o.status>=3) return false;
@@ -2216,7 +2216,7 @@ var K = (function(){
         });
         renderShopStats(active);
         var openC = active.filter(function(o){return o.status<3;}).length;
-        var todayC = active.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<4;}).length;
+        var todayC = active.filter(function(o){return (o.abholdatum||'').substring(0,10)===td && o.status<3;}).length;
         var overdueC = active.filter(function(o){return o.status<3 && _isOverdue(o, now);}).length;
         var todoC = active.filter(function(o){return o.status<=1;}).length;
         document.getElementById('fc-open').textContent = openC;
