@@ -2116,4 +2116,4 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 ### Testlauf-Tabelle
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
-| *ausstehend* | T-SP-01 bis T-SP-08 | – | Warten auf Deploy |
+| 01.07.2026 | T-SP-01 bis T-SP-08 | ✅ 8/8 | Alle bestanden |
