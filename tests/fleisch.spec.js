@@ -824,3 +824,58 @@ test.describe('T-27 Sammelbestellung Workflow-Fix & 2-Spalten (AK-FLEISCH-27)', 
     expect(hasGridRule).toBe(true);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  T-28: Liefertag-Auswahl & Vorbestellung bis 2 Wochen (AK-FLEISCH-28)
+// ════════════════════════════════════════════════════
+
+test.describe('T-28 Liefertag-Auswahl & Vorbestellung (AK-FLEISCH-28)', () => {
+
+  test('T-28-01 API info liefert alle_termine mit mehreren Liefertagen (AK-FLEISCH-28)', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/fleisch-order?info=1`);
+    expect(res.status()).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.alle_termine).toBeDefined();
+    expect(Array.isArray(data.alle_termine)).toBe(true);
+    // Should have more than 2 delivery dates (next ~2 weeks)
+    expect(data.alle_termine.length).toBeGreaterThan(2);
+    // Each termin should have required fields
+    const t = data.alle_termine[0];
+    expect(t.liefertag).toBeDefined();
+    expect(t.liefertag_label).toBeDefined();
+    expect(t.bestellschluss).toBeDefined();
+    expect(typeof t.noch_bestellbar).toBe('boolean');
+  });
+
+  test('T-28-02 API info enthaelt weiterhin termine (Kompatibilitaet) (AK-FLEISCH-28)', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/fleisch-order?info=1`);
+    const data = await res.json();
+    expect(data.termine).toBeDefined();
+    expect(data.termine.length).toBeLessThanOrEqual(2);
+  });
+
+  test('T-28-03 Frontend hat Liefertag-Dropdown im Checkout (AK-FLEISCH-28)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(4000);
+    const select = page.locator('#fm-liefertag-select');
+    await expect(select).toBeVisible();
+    // Should have multiple options
+    const optionCount = await select.locator('option').count();
+    expect(optionCount).toBeGreaterThan(1);
+  });
+
+  test('T-28-04 Liefertag-Dropdown zeigt naechster-Label (AK-FLEISCH-28)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(4000);
+    const firstOption = await page.locator('#fm-liefertag-select option').first().textContent();
+    expect(firstOption).toContain('naechster');
+  });
+
+  test('T-28-05 Kiosk Sammelbestellung switchSammelDate existiert (AK-FLEISCH-28)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => document.documentElement.innerHTML.includes('switchSammelDate'));
+    expect(hasFn).toBe(true);
+  });
+});

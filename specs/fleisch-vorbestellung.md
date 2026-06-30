@@ -481,6 +481,16 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] API: `einzelpositionen` enthält `gesendet`-Flag
 - [x] 2-Spalten-Grid für Bestellkarten bei Viewport ≥ 900px
 
+### AK-FLEISCH-28: Liefertag-Auswahl & Vorbestellung bis 2 Wochen
+- [x] API: `_calc_liefertage_voraus()` liefert alle Liefertage der nächsten ~2 Wochen
+- [x] API: `info=1` Response enthält `alle_termine` mit allen verfügbaren Liefertagen
+- [x] API: POST akzeptiert optionalen `liefertag`-Parameter und validiert gegen verfügbare Termine
+- [x] Frontend: Liefertag-Dropdown im Checkout-Formular mit allen bestellbaren Terminen
+- [x] Frontend: Gewählter Liefertag wird bei Bestellung an API gesendet
+- [x] Frontend: Footer-Liefertag-Label aktualisiert sich bei Dropdown-Wechsel
+- [x] Kiosk Sammelbestellung: Datumswechsel-Buttons wenn Bestellungen für mehrere Liefertage existieren
+- [x] Sammelbestellung: Bestellungen landen beim richtigen Liefertag
+
 ### AK-FLEISCH-25: Kiosk Mittagstisch UI/UX Optimierung
 - [x] Collapse/Expand-Button platzsparend (kleiner, Kurztext)
 - [x] Preis im Header der Bestellkarte statt im Body

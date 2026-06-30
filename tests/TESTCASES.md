@@ -1868,3 +1868,32 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-27-02 Sammelbestellung hat abhakbare Checkboxen | ✅ Pass |
 | 2026-06-30 | T-27-03 _fmMarkPositionGesendet Funktion existiert | ✅ Pass |
 | 2026-06-30 | T-27-04 2-Spalten-CSS existiert fuer breiten Viewport | ✅ Pass |
+
+## T-28 – Liefertag-Auswahl & Vorbestellung bis 2 Wochen (AK-FLEISCH-28)
+
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-28
+
+### T-28-01: API info liefert alle_termine mit mehreren Liefertagen (AK-FLEISCH-28)
+- **Aktion:** GET `/api/fleisch-order?info=1`
+- **Prüfung:** `alle_termine` Array mit >2 Einträgen, jeder mit `liefertag`, `liefertag_label`, `bestellschluss`, `noch_bestellbar`
+- **Erwartung:** Alle Liefertage der nächsten ~2 Wochen werden zurückgegeben
+
+### T-28-02: API info enthält weiterhin termine (Kompatibilität) (AK-FLEISCH-28)
+- **Aktion:** GET `/api/fleisch-order?info=1`
+- **Prüfung:** `termine` Array existiert weiterhin und hat ≤2 Einträge
+- **Erwartung:** Rückwärtskompatibilität mit bestehendem Frontend
+
+### T-28-03: Frontend hat Liefertag-Dropdown im Checkout (AK-FLEISCH-28)
+- **Aktion:** `/fleisch-bestellen` laden
+- **Prüfung:** `#fm-liefertag-select` Element existiert und hat mehrere `<option>`-Elemente
+- **Erwartung:** Dropdown ist sichtbar mit allen bestellbaren Terminen
+
+### T-28-04: Liefertag-Dropdown zeigt naechster-Label (AK-FLEISCH-28)
+- **Aktion:** `/fleisch-bestellen` laden
+- **Prüfung:** Erste Option im Dropdown enthält "(naechster)"
+- **Erwartung:** Nächster Liefertag ist vorausgewählt und markiert
+
+### T-28-05: Kiosk Sammelbestellung switchSammelDate existiert (AK-FLEISCH-28)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** HTML enthält `switchSammelDate`
+- **Erwartung:** Datumswechsel-Funktion für Sammelbestellung existiert
