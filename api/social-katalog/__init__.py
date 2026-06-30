@@ -6,6 +6,7 @@ import requests
 import base64
 import uuid
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ---------- config ----------
 TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
@@ -214,34 +215,72 @@ def load_kategorien():
     return DEFAULT_KATEGORIEN
 
 
+def _refresh_url(token, folder_id, item):
+    """Refresh download URL for a single item. Returns (item, changed)."""
+    if not item.get("bild_datei"):
+        return item, False
+    fresh_url = get_download_url(token, folder_id, item["bild_datei"])
+    if fresh_url and fresh_url != item.get("bild_url", ""):
+        item["bild_url"] = fresh_url
+        return item, True
+    return item, False
+
+
+def _download_base64(item):
+    """Download image and convert to base64 data URI. Returns (index, data_uri)."""
+    dl_url = item.get("bild_url", "")
+    if not dl_url or dl_url.startswith("data:"):
+        return None
+    try:
+        r = requests.get(dl_url, timeout=15)
+        if r.status_code == 200:
+            ct = r.headers.get("Content-Type", "image/jpeg")
+            b64 = base64.b64encode(r.content).decode("ascii")
+            return f"data:{ct};base64,{b64}"
+    except:
+        pass
+    return None
+
+
 def handle_get(req, token, folder_id):
     """GET: Return full katalog with image URLs refreshed.
-    If ?base64=1, download each image and return as data:URI (avoids CORS)."""
+    If ?base64=1, download each image and return as data:URI (avoids CORS).
+    Uses parallel I/O for performance."""
     katalog = load_katalog(token, folder_id)
-    # Always refresh download URLs (they expire after ~1h)
-    changed = False
-    for item in katalog:
-        if item.get("bild_datei"):
-            fresh_url = get_download_url(token, folder_id, item["bild_datei"])
-            if fresh_url and fresh_url != item.get("bild_url", ""):
-                item["bild_url"] = fresh_url
-                changed = True
-    if changed:
-        save_katalog(token, folder_id, katalog)
-    # Convert images to base64 data URIs if requested
     want_base64 = req.params.get("base64", "") == "1"
-    if want_base64:
-        for item in katalog:
-            dl_url = item.get("bild_url", "")
-            if dl_url and not dl_url.startswith("data:"):
+
+    # Parallel: refresh download URLs (they expire after ~1h)
+    items_with_bild = [item for item in katalog if item.get("bild_datei")]
+    changed = False
+    if items_with_bild:
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futures = {pool.submit(_refresh_url, token, folder_id, item): item for item in items_with_bild}
+            for f in as_completed(futures):
                 try:
-                    r = requests.get(dl_url, timeout=15)
-                    if r.status_code == 200:
-                        ct = r.headers.get("Content-Type", "image/jpeg")
-                        b64 = base64.b64encode(r.content).decode("ascii")
-                        item["bild_url"] = f"data:{ct};base64,{b64}"
+                    _, was_changed = f.result()
+                    if was_changed:
+                        changed = True
                 except:
                     pass
+    if changed:
+        save_katalog(token, folder_id, katalog)
+
+    # Parallel: convert images to base64 data URIs if requested
+    if want_base64:
+        items_to_convert = [(i, item) for i, item in enumerate(katalog)
+                            if item.get("bild_url") and not item["bild_url"].startswith("data:")]
+        if items_to_convert:
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futures = {pool.submit(_download_base64, item): i for i, item in items_to_convert}
+                for f in as_completed(futures):
+                    idx = futures[f]
+                    try:
+                        result = f.result()
+                        if result:
+                            katalog[idx]["bild_url"] = result
+                    except:
+                        pass
+
     kategorien = load_kategorien()
     return ok({"success": True, "kategorien": kategorien, "items": katalog})
 
@@ -437,27 +476,42 @@ def save_mt_bilder(token, folder_id, data):
     return r.status_code in (200, 201)
 
 
+def _download_mt_bild(token, sp_id):
+    """Download a single MT image by SP item id. Returns data URI or None."""
+    try:
+        h = graph_headers(token)
+        dl_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{sp_id}/content"
+        r = requests.get(dl_url, headers=h, timeout=20)
+        if r.status_code == 200:
+            ct = r.headers.get("Content-Type", "image/png")
+            b64 = base64.b64encode(r.content).decode("ascii")
+            return f"data:{ct};base64,{b64}"
+    except:
+        pass
+    return None
+
+
 def handle_mt_bilder_get(req, token, folder_id):
     """GET ?action=mt-bilder: Return all Mittagstisch images.
     If ?base64=1, download each image from SharePoint and return as data:URI
-    so the browser can use them on canvas without CORS issues."""
+    so the browser can use them on canvas without CORS issues.
+    Uses parallel I/O for performance."""
     bilder = load_mt_bilder(token, folder_id)
     want_base64 = req.params.get("base64", "") == "1"
     if want_base64 and bilder:
-        h = graph_headers(token)
-        for gericht, info in bilder.items():
-            sp_id = info.get("bild_sp_id")
-            if not sp_id:
-                continue
-            try:
-                dl_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{sp_id}/content"
-                r = requests.get(dl_url, headers=h, timeout=20)
-                if r.status_code == 200:
-                    ct = r.headers.get("Content-Type", "image/png")
-                    b64 = base64.b64encode(r.content).decode("ascii")
-                    info["bild_base64"] = f"data:{ct};base64,{b64}"
-            except:
-                pass
+        items_to_dl = [(g, info) for g, info in bilder.items() if info.get("bild_sp_id")]
+        if items_to_dl:
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futures = {pool.submit(_download_mt_bild, token, info["bild_sp_id"]): g
+                           for g, info in items_to_dl}
+                for f in as_completed(futures):
+                    gericht = futures[f]
+                    try:
+                        result = f.result()
+                        if result:
+                            bilder[gericht]["bild_base64"] = result
+                    except:
+                        pass
     return ok({"success": True, "bilder": bilder})
 
 

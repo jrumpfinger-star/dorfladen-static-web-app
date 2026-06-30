@@ -488,6 +488,12 @@
   // These are heavy functions, kept in a separate continuation
   window._socialModule={esc:esc,API:API,socialStatus:socialStatus,socialGatherSelected:socialGatherSelected,getFeatureFlags:getFeatureFlags,_socialKatalog:function(){return _socialKatalog;},_socMtBilder:function(){return _socMtBilder;},_socFreeItems:function(){return _socFreeItems;},socialGetTodayMeals:socialGetTodayMeals,socialDrawPoster:null,socialDrawMealPosterAuto:null,socialWrapText:null,socialBuildPostItems:socialBuildPostItems,socialInitBildHandlers:socialInitBildHandlers};
 
-  // Init when DOM ready
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',socialInitBildHandlers);}else{socialInitBildHandlers();}
+  // Init when DOM ready + preload data in background
+  function _socialInit(){
+    socialInitBildHandlers();
+    // Preload katalog + MT-Bilder so sub-tabs open instantly
+    if(!window._socialKatLoaded) socialLoadKatalog();
+    if(!window._socialMtBilderLoaded) socialLoadMtBilder();
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',_socialInit);}else{_socialInit();}
 })();
