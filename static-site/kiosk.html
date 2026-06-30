@@ -3322,6 +3322,8 @@ var K = (function(){
       updateMetzgerBadge();
       if(_fmFilter==='nachrichten'){
         _loadFmMessages();
+      } else if(_fmFilter==='historie'){
+        // don't overwrite historie view - it loads its own data
       } else {
         renderMetzgerOrders();
       }
