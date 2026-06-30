@@ -1742,12 +1742,12 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 
 | Datum | Testfall | Ergebnis |
 |---|---|---|
-| 2026-07-06 | T-24-01 Metzger Lucide SVG Icons | ✅ Pass |
-| 2026-07-06 | T-24-02 Keine Bestellnr/Telefon im Header | ✅ Pass |
-| 2026-07-06 | T-24-03 Toggle auf/zu | ⏭️ Skipped (keine Bestellungen) |
-| 2026-07-06 | T-24-04 Aufsteigend sortiert | ✅ Pass |
-| 2026-07-06 | T-24-05 API einzelpositionen | ✅ Pass |
-| 2026-07-06 | T-24-06 Kein Status 2 Button | ✅ Pass |
-| 2026-07-06 | T-25-MT-01 Mittagstisch Lucide Icons | ✅ Pass |
-| 2026-07-06 | T-25-MT-02 Preis im Header | ✅ Pass |
-| 2026-07-06 | T-25-MT-03 Kompakter Toggle | ⏭️ Skipped (zu wenig Bestellungen) |
+| 2026-06-30 | T-24-01 Metzger Lucide SVG Icons | ✅ Pass |
+| 2026-06-30 | T-24-02 Keine Bestellnr/Telefon im Header | ✅ Pass |
+| 2026-06-30 | T-24-03 Toggle auf/zu | ✅ Pass |
+| 2026-06-30 | T-24-04 Aufsteigend sortiert | ✅ Pass |
+| 2026-06-30 | T-24-05 API einzelpositionen | ✅ Pass |
+| 2026-06-30 | T-24-06 Kein Status 2 Button | ✅ Pass |
+| 2026-06-30 | T-25-MT-01 Mittagstisch Lucide Icons | ✅ Pass |
+| 2026-06-30 | T-25-MT-02 Preis im Header | ✅ Pass |
+| 2026-06-30 | T-25-MT-03 Kompakter Toggle | ✅ Pass |
