@@ -3566,8 +3566,14 @@ var K = (function(){
     var pos = order.positionen || [];
     if(itemIdx < 0 || itemIdx >= pos.length) return;
     pos[itemIdx].bestellt = !pos[itemIdx].bestellt;
-    // If unchecking an item while status is 1 (Beim Metzger), reset status to 0
     var patchBody = {id: orderId, positionen: pos};
+    var allBestellt = pos.length > 0 && pos.every(function(p){ return !!p.bestellt; });
+    // If all items are now bestellt and status is Neu → auto-advance to "Beim Metzger"
+    if(allBestellt && order.status === 0){
+      patchBody.status = 1;
+      order.status = 1;
+    }
+    // If unchecking an item while status is 1 (Beim Metzger), reset status to 0
     if(order.status === 1 && !pos[itemIdx].bestellt){
       patchBody.status = 0;
       order.status = 0;
@@ -3588,10 +3594,16 @@ var K = (function(){
     if(!order) return;
     var pos = order.positionen || [];
     pos.forEach(function(p){ p.bestellt = !!val; });
+    var body = {id: orderId, positionen: pos};
+    // Auto-advance status when all items bestellt
+    if(val && order.status === 0){
+      body.status = 1;
+      order.status = 1;
+    }
     fetch(API + '/fleisch-order', {
       method: 'PATCH',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({id: orderId, positionen: pos})
+      body: JSON.stringify(body)
     }).then(function(r){ return r.json(); }).then(function(data){
       if(!data.success) toast('Fehler: '+(data.error||''));
       renderMetzgerOrders();
