@@ -251,6 +251,8 @@
     .k-slot-header:active{opacity:.85}
     .k-slot-arrow{transition:transform .2s;font-size:11px}
     .k-slot-group.collapsed .k-slot-arrow{transform:rotate(-90deg)}
+    .k-slot-group.collapsed .k-oc-arrow{transform:rotate(-90deg)}
+    .k-slot-group.collapsed .k-slot-body{display:none}
     .k-slot-group.collapsed .k-order{display:none}
     .k-slot-count{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px}
     .k-slot-badge{display:inline-flex;align-items:center;gap:3px;background:#fff;padding:2px 10px;border-radius:6px;font-weight:800;font-size:12px}
@@ -344,8 +346,8 @@
       .k-header h1{font-size:22px}
       .k-header .k-clock{font-size:20px}
       .k-panel{padding:14px 28px}
-      .k-slot-group{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-      .k-slot-group .k-slot-header{grid-column:1/-1}
+      #abhol-orders .k-slot-group{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      #abhol-orders .k-slot-group .k-slot-header{grid-column:1/-1}
       .k-grp-header{font-size:14px;padding:8px 28px}
       .k-order-name{font-size:16px}
       .st-compact .st-dot{width:24px;height:24px;border-width:2px}
@@ -361,7 +363,7 @@
       .k-header h1{font-size:24px}
       .k-header .k-clock{font-size:22px}
       .k-panel{padding:16px 40px}
-      .k-slot-group{grid-template-columns:1fr 1fr 1fr;gap:12px}
+      #abhol-orders .k-slot-group{grid-template-columns:1fr 1fr 1fr;gap:12px}
       .k-grp-header{font-size:15px;padding:10px 40px}
       .k-order-info{padding:16px 18px}
       .k-order-name{font-size:17px}
@@ -3196,6 +3198,8 @@ var K = (function(){
         });
       } else if(tab==='metzger'){
         _fmOrders.forEach(function(o){ _fmCardOpen[o.id] = true; });
+        for(var d in _fmDayGroupOpen) _fmDayGroupOpen[d] = true;
+        document.querySelectorAll('#metzger-orders .k-slot-group.collapsed').forEach(function(el){ el.classList.remove('collapsed'); });
         document.querySelectorAll('#metzger-orders .k-order.oc-collapsed').forEach(function(el){ el.classList.remove('oc-collapsed'); });
       }
     }, 50);
@@ -3362,6 +3366,14 @@ var K = (function(){
     return iso;
   }
 
+  var _fmDayGroupOpen = {}; // track which day groups are open
+
+  function toggleMetzgerDayGroup(day){
+    _fmDayGroupOpen[day] = !_fmDayGroupOpen[day];
+    var grp = document.getElementById('fm-day-'+day.replace(/[^a-z0-9]/gi,''));
+    if(grp) grp.classList.toggle('collapsed', !_fmDayGroupOpen[day]);
+  }
+
   function renderMetzgerOrders(){
     var today = new Date().toISOString().slice(0,10);
     var list = _fmOrders;
@@ -3392,101 +3404,135 @@ var K = (function(){
 
     var STATUS_CSS = {0:'st-new',1:'st-confirm',3:'st-done',4:'st-cancel'};
     var STATUS_LABELS = {0:'Neu',1:'Beim Metzger',3:'Abgeholt',4:'Storniert'};
+
+    // Group by Abholtag
+    var dayGroups = {};
+    var dayOrder = [];
+    list.forEach(function(o){
+      var day = o.liefertag || 'unbekannt';
+      if(!dayGroups[day]){ dayGroups[day] = []; dayOrder.push(day); }
+      dayGroups[day].push(o);
+    });
+
     var html = '';
 
-    list.forEach(function(o){
-      var collapsed = _fmCardOpen[o.id] ? '' : ' oc-collapsed';
-      var positionen = o.positionen || [];
+    dayOrder.forEach(function(day){
+      var orders = dayGroups[day];
+      var dayId = 'fm-day-'+day.replace(/[^a-z0-9]/gi,'');
+      // Default: day group open (unless user closed it)
+      if(!(day in _fmDayGroupOpen)) _fmDayGroupOpen[day] = true;
+      var dayCollapsed = _fmDayGroupOpen[day] ? '' : ' collapsed';
+      var isToday = day === today;
+      var dayLabel = _fmDateLabel(day);
+      var wt = '';
+      try { var dt = new Date(day+'T12:00:00'); wt = ['So','Mo','Di','Mi','Do','Fr','Sa'][dt.getDay()]+' '; } catch(e){}
 
-      // Count bestellt items
-      var bestelltCount = positionen.filter(function(p){ return !!p.bestellt; }).length;
-      var allBestellt = positionen.length > 0 && bestelltCount === positionen.length;
-
-      html += '<div class="k-order'+collapsed+'" data-fmid="'+o.id+'" data-fmstatus="'+o.status+'" data-fmdate="'+(o.liefertag||'')+'">';
-      html += '<div class="k-order-hdr" onclick="K.toggleMetzgerCard(\''+o.id+'\')">';
-      html += '<span class="k-oc-arrow">'+luc('chevron-down',16)+'</span>';
-      html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
-      html += '<span style="font-size:11px;color:var(--c-muted);white-space:nowrap">'+_fmDateLabel(o.liefertag)+'</span>';
-      html += '<span class="k-oc-qty">'+positionen.length+' Pos.</span>';
-      html += '<span class="k-oc-badges">';
-      html += '<span class="k-badge '+(STATUS_CSS[o.status]||'st-new')+'">'+(STATUS_LABELS[o.status]||'Neu')+'</span>';
-      html += '</span>';
-      // Quick action in header
-      html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
-      if(o.status===0 && positionen.length>0) html += '<span style="font-size:11px;font-weight:700;color:'+(allBestellt?'#16a34a':'#6b7280')+';white-space:nowrap">'+bestelltCount+'/'+positionen.length+'</span>';
-      else if(o.status===1) html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',3)" title="Abgeholt">'+luc('check-circle',14)+' <span class="oc-btn-label">Abgeholt</span></button>';
-      else if(o.status>=3) html += '<span style="color:'+(o.status===4?'var(--c-red)':'var(--c-green)')+'">'+luc(o.status===4?'x-circle':'check-circle',18)+'</span>';
-      html += '</span>';
+      html += '<div class="k-slot-group'+dayCollapsed+'" id="'+dayId+'" style="margin-bottom:12px">';
+      html += '<div class="k-slot-header" onclick="K.toggleMetzgerDayGroup(\''+day+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+(isToday?'#f0fdf4':'#f9fafb')+';border:1px solid '+(isToday?'#bbf7d0':'#e5e7eb')+';border-radius:8px;cursor:pointer;user-select:none;margin-bottom:4px">';
+      html += '<span class="k-oc-arrow" style="font-size:10px;color:var(--c-muted);transition:transform .2s">'+luc('chevron-down',14)+'</span>';
+      html += '<span style="font-weight:800;font-size:14px;color:'+(isToday?'var(--c-green)':'var(--c-text)')+'">'+luc('calendar',14)+' '+wt+dayLabel+'</span>';
+      if(isToday) html += '<span style="font-size:11px;font-weight:700;color:var(--c-green);background:#dcfce7;padding:2px 8px;border-radius:8px">Heute</span>';
+      html += '<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--c-muted)">'+orders.length+' Best.</span>';
       html += '</div>';
 
-      html += '<div class="k-order-body" style="display:block">';
+      html += '<div class="k-slot-body" style="padding-left:4px">';
 
-      // ── Liefertag + Anmerkung (compact bar) ──
-      html += '<div style="padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--c-muted);border-bottom:1px solid #f3f4f6">';
-      html += luc('truck',12)+' <span style="font-weight:600;color:var(--c-text)">Abholtag: '+_fmDateLabel(o.liefertag)+'</span>';
-      if(o.anmerkung) html += '<span style="margin-left:auto;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:11px">'+luc('message-circle',11)+' '+esc(o.anmerkung)+'</span>';
-      html += '</div>';
+      orders.forEach(function(o){
+        var collapsed = _fmCardOpen[o.id] ? '' : ' oc-collapsed';
+        var positionen = o.positionen || [];
 
-      // ── Items with per-item bestellt toggle ──
-      html += '<div style="padding:6px 10px">';
-      positionen.forEach(function(p, idx){
-        var isBestellt = !!p.bestellt;
-        var rowBg = isBestellt ? '#f0fdf4' : '#fff';
-        var rowBorder = isBestellt ? '#bbf7d0' : '#f3f4f6';
-        html += '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:'+rowBg+';border:1px solid '+rowBorder+';border-radius:8px;margin-bottom:3px">';
-        if(o.status <= 1){
-          html += '<input type="checkbox" '+(isBestellt?'checked':'')+' onchange="K.toggleFmItemBestellt(\''+o.id+'\','+idx+')" style="width:18px;height:18px;accent-color:var(--c-green);cursor:pointer;flex-shrink:0" title="Beim Metzger bestellt">';
-        } else {
-          html += '<span style="width:18px;text-align:center;flex-shrink:0;color:#16a34a">'+luc('check',14)+'</span>';
-        }
-        html += '<span style="font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(isBestellt?'#16a34a':'var(--c-text)')+'">'+esc(p.bezeichnung)+'</span>';
-        if(p.zuschnitt) html += '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:#fef3c7;color:#92400e;white-space:nowrap">'+esc(p.zuschnitt)+'</span>';
-        html += '<span style="font-size:12px;color:var(--c-muted);white-space:nowrap">'+Number(p.menge_kg).toFixed(1)+' kg</span>';
-        html += '<span style="font-size:12px;font-weight:600;white-space:nowrap">'+Number(p.rabattpreis||p.normalpreis||0).toFixed(2).replace('.',',')+' \u20AC</span>';
+        // Count bestellt items
+        var bestelltCount = positionen.filter(function(p){ return !!p.bestellt; }).length;
+        var allBestellt = positionen.length > 0 && bestelltCount === positionen.length;
+
+        html += '<div class="k-order'+collapsed+'" data-fmid="'+o.id+'" data-fmstatus="'+o.status+'" data-fmdate="'+(o.liefertag||'')+'">';
+        html += '<div class="k-order-hdr" onclick="K.toggleMetzgerCard(\''+o.id+'\')">';
+        html += '<span class="k-oc-arrow">'+luc('chevron-down',16)+'</span>';
+        html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
+        html += '<span class="k-oc-qty">'+positionen.length+' Pos.</span>';
+        html += '<span class="k-oc-badges">';
+        html += '<span class="k-badge '+(STATUS_CSS[o.status]||'st-new')+'">'+(STATUS_LABELS[o.status]||'Neu')+'</span>';
+        html += '</span>';
+        // Quick action in header – only status icon, NO button (button is in body)
+        html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
+        if(o.status===0 && positionen.length>0) html += '<span style="font-size:11px;font-weight:700;color:'+(allBestellt?'#16a34a':'#6b7280')+';white-space:nowrap">'+bestelltCount+'/'+positionen.length+'</span>';
+        else if(o.status>=3) html += '<span style="color:'+(o.status===4?'var(--c-red)':'var(--c-green)')+'">'+luc(o.status===4?'x-circle':'check-circle',18)+'</span>';
+        html += '</span>';
         html += '</div>';
-      });
-      // Preis + Ersparnis
-      html += '<div style="display:flex;align-items:baseline;gap:8px;justify-content:flex-end;padding:4px 8px 2px;border-top:1px solid #f3f4f6;margin-top:2px">';
-      html += '<span style="font-size:14px;font-weight:800;color:var(--c-text)">'+Number(o.gesamtsumme||0).toFixed(2).replace('.',',')+' \u20AC</span>';
-      if(o.rabatt_summe > 0) html += '<span style="font-size:11px;color:#2e7d4f;font-weight:600">Ersparnis: '+Number(o.rabatt_summe).toFixed(2).replace('.',',')+' \u20AC</span>';
-      html += '</div>';
-      html += '</div>';
 
-      // ── Messages section ──
-      var fmIsUnread = o.kunde_kommentar && !o.kommentar_gelesen;
-      if(o.kunde_kommentar || o.personal_antwort){
-        html += '<div style="padding:0 12px 6px">';
-        if(o.kunde_kommentar){
-          html += '<div class="k-order-note" style="background:'+(fmIsUnread?'#eff6ff;border-left:3px solid #3b82f6;color:#1e40af':'#f8fafc;border-left:3px solid #d1d5db;color:#6b7280')+';margin:0 0 4px;padding:6px 10px;border-radius:4px;font-size:12px">';
-          html += luc('user',12)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar);
-          if(fmIsUnread) html += ' <span style="background:#3b82f6;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px">NEU</span>';
+        // Body – NO inline display:block so collapse CSS works!
+        html += '<div class="k-order-body">';
+
+        // ── Anmerkung (if any) ──
+        if(o.anmerkung){
+          html += '<div style="padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--c-muted);border-bottom:1px solid #f3f4f6">';
+          html += '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:11px">'+luc('message-circle',11)+' '+esc(o.anmerkung)+'</span>';
           html += '</div>';
         }
-        if(o.personal_antwort){
-          html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 0 4px;padding:6px 10px;border-radius:4px;font-size:12px">'+luc('reply',12)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-        }
-        html += '</div>';
-      }
 
-      // ── Action buttons (compact for mobile) ──
-      html += '<div style="padding:6px 10px 8px;display:flex;gap:4px;flex-wrap:wrap;align-items:center;border-top:1px solid #f3f4f6">';
-      if(o.status===0){
-        if(allBestellt){
-          html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',1)">'+luc('send',13)+' Bestellt</button>';
-        } else if(bestelltCount>0){
-          html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#16a34a;border-color:#bbf7d0" disabled>'+luc('loader',13)+' '+bestelltCount+'/'+positionen.length+'</button>';
-          html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.toggleAllFmItems(\''+o.id+'\',true)">'+luc('check-check',13)+' Rest</button>';
-        } else {
-          html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.toggleAllFmItems(\''+o.id+'\',true)">'+luc('check-check',13)+' Alle</button>';
+        // ── Items with per-item bestellt toggle ──
+        html += '<div style="padding:6px 10px">';
+        positionen.forEach(function(p, idx){
+          var isBestellt = !!p.bestellt;
+          var rowBg = isBestellt ? '#f0fdf4' : '#fff';
+          var rowBorder = isBestellt ? '#bbf7d0' : '#f3f4f6';
+          html += '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:'+rowBg+';border:1px solid '+rowBorder+';border-radius:8px;margin-bottom:3px">';
+          if(o.status <= 1){
+            html += '<input type="checkbox" '+(isBestellt?'checked':'')+' onchange="K.toggleFmItemBestellt(\''+o.id+'\','+idx+')" style="width:18px;height:18px;accent-color:var(--c-green);cursor:pointer;flex-shrink:0" title="Beim Metzger bestellt">';
+          } else {
+            html += '<span style="width:18px;text-align:center;flex-shrink:0;color:#16a34a">'+luc('check',14)+'</span>';
+          }
+          html += '<span style="font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+(isBestellt?'#16a34a':'var(--c-text)')+'">'+esc(p.bezeichnung)+'</span>';
+          if(p.zuschnitt) html += '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:#fef3c7;color:#92400e;white-space:nowrap">'+esc(p.zuschnitt)+'</span>';
+          html += '<span style="font-size:12px;color:var(--c-muted);white-space:nowrap">'+Number(p.menge_kg).toFixed(1)+' kg</span>';
+          html += '<span style="font-size:12px;font-weight:600;white-space:nowrap">'+Number(p.rabattpreis||p.normalpreis||0).toFixed(2).replace('.',',')+' \u20AC</span>';
+          html += '</div>';
+        });
+        // Preis + Ersparnis
+        html += '<div style="display:flex;align-items:baseline;gap:8px;justify-content:flex-end;padding:4px 8px 2px;border-top:1px solid #f3f4f6;margin-top:2px">';
+        html += '<span style="font-size:14px;font-weight:800;color:var(--c-text)">'+Number(o.gesamtsumme||0).toFixed(2).replace('.',',')+' \u20AC</span>';
+        if(o.rabatt_summe > 0) html += '<span style="font-size:11px;color:#2e7d4f;font-weight:600">Ersparnis: '+Number(o.rabatt_summe).toFixed(2).replace('.',',')+' \u20AC</span>';
+        html += '</div>';
+        html += '</div>';
+
+        // ── Messages section ──
+        var fmIsUnread = o.kunde_kommentar && !o.kommentar_gelesen;
+        if(o.kunde_kommentar || o.personal_antwort){
+          html += '<div style="padding:0 12px 6px">';
+          if(o.kunde_kommentar){
+            html += '<div class="k-order-note" style="background:'+(fmIsUnread?'#eff6ff;border-left:3px solid #3b82f6;color:#1e40af':'#f8fafc;border-left:3px solid #d1d5db;color:#6b7280')+';margin:0 0 4px;padding:6px 10px;border-radius:4px;font-size:12px">';
+            html += luc('user',12)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar);
+            if(fmIsUnread) html += ' <span style="background:#3b82f6;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px">NEU</span>';
+            html += '</div>';
+          }
+          if(o.personal_antwort){
+            html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 0 4px;padding:6px 10px;border-radius:4px;font-size:12px">'+luc('reply',12)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+          }
+          html += '</div>';
         }
-        html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',4)">'+luc('x',13)+'</button>';
-      } else if(o.status===1){
-        html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',3)">'+luc('check-circle',13)+' Abgeholt</button>';
-      }
-      if(fmIsUnread) html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')">'+luc('eye',13)+' Gelesen</button>';
-      if(o.status < 3) html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#2563eb;border-color:#93c5fd" onclick="event.stopPropagation();K.openFmReplyModal(\''+o.id+'\',\''+esc(o.name)+'\')">'+luc('message-circle',13)+'</button>';
-      html += '</div>';
-      html += '</div></div>';
+
+        // ── Action buttons (only in body, NOT duplicated in header) ──
+        html += '<div style="padding:6px 10px 8px;display:flex;gap:4px;flex-wrap:wrap;align-items:center;border-top:1px solid #f3f4f6">';
+        if(o.status===0){
+          if(allBestellt){
+            html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',1)">'+luc('send',13)+' Bestellt</button>';
+          } else if(bestelltCount>0){
+            html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#16a34a;border-color:#bbf7d0" disabled>'+luc('loader',13)+' '+bestelltCount+'/'+positionen.length+'</button>';
+            html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.toggleAllFmItems(\''+o.id+'\',true)">'+luc('check-check',13)+' Rest</button>';
+          } else {
+            html += '<button class="k-btn k-btn-outline k-btn-sm" onclick="K.toggleAllFmItems(\''+o.id+'\',true)">'+luc('check-check',13)+' Alle</button>';
+          }
+          html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',4)">'+luc('x',13)+'</button>';
+        } else if(o.status===1){
+          html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',3)">'+luc('check-circle',13)+' Abgeholt</button>';
+        }
+        if(fmIsUnread) html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')">'+luc('eye',13)+' Gelesen</button>';
+        if(o.status < 3) html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#2563eb;border-color:#93c5fd" onclick="event.stopPropagation();K.openFmReplyModal(\''+o.id+'\',\''+esc(o.name)+'\')">'+luc('message-circle',13)+'</button>';
+        html += '</div>';
+        html += '</div></div>';
+      });
+
+      html += '</div></div>'; // close k-slot-body + k-slot-group
     });
 
     container.innerHTML = html;
@@ -3940,6 +3986,7 @@ var K = (function(){
     deleteShopOrder: deleteShopOrder,
     setMetzgerFilter: setMetzgerFilter,
     toggleMetzgerCard: toggleMetzgerCard,
+    toggleMetzgerDayGroup: toggleMetzgerDayGroup,
     setMetzgerStatus: setMetzgerStatus,
     toggleFmItemBestellt: toggleFmItemBestellt,
     toggleAllFmItems: toggleAllFmItems,
