@@ -2224,10 +2224,12 @@ var K = (function(){
         document.getElementById('fc-overdue').textContent = overdueC;
         var neuC = active.filter(function(o){return o.status===0;}).length;
         var packenC = active.filter(function(o){return o.status===1;}).length;
+        var shopMsgC = _allShopOrders.filter(function(o){return o.kunde_kommentar && !o.kommentar_gelesen && o.status<3;}).length;
         updateTabBadges('abhol', [
           {count: neuC, cls: 'badge-neu', title: neuC+' neue Bestellung'+(neuC!==1?'en':''), blink: false, action: 'abhol:eingang'},
           {count: packenC, cls: 'badge-packen', title: packenC+' zu packen', blink: false, action: 'abhol:packen'},
-          {count: overdueC, cls: 'badge-overdue', title: overdueC+' überfällig', blink: false, action: 'abhol:overdue'}
+          {count: overdueC, cls: 'badge-overdue', title: overdueC+' überfällig', blink: false, action: 'abhol:overdue'},
+          {count: shopMsgC, cls: 'badge-msg', title: shopMsgC+' ungelesene Nachricht'+(shopMsgC!==1?'en':''), blink: true, action: 'abhol:open'}
         ]);
       })
       .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('alert-triangle',24)+'</div>Fehler beim Laden: '+esc(e.message)+'</div>'; reinitIcons(); });
