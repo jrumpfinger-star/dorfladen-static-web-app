@@ -3634,10 +3634,10 @@ var K = (function(){
       try { var dt = new Date(day+'T12:00:00'); wt = ['So','Mo','Di','Mi','Do','Fr','Sa'][dt.getDay()]+' '; } catch(e){}
 
       html += '<div class="k-slot-group'+dayCollapsed+'" id="'+dayId+'" style="margin-bottom:12px">';
-      html += '<div class="k-slot-header" onclick="K.toggleMetzgerDayGroup(\''+day+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+(isToday?'#f0fdf4':'#f9fafb')+';border:1px solid '+(isToday?'#bbf7d0':'#e5e7eb')+';border-radius:8px;cursor:pointer;user-select:none;margin-bottom:4px">';
-      html += '<span class="k-oc-arrow" style="font-size:10px;color:var(--c-muted);transition:transform .2s">'+luc('chevron-down',14)+'</span>';
-      html += '<span style="font-weight:800;font-size:14px;color:'+(isToday?'var(--c-green)':'var(--c-text)')+'">'+luc('calendar',14)+' '+wt+dayLabel+'</span>';
-      if(isToday) html += '<span style="font-size:11px;font-weight:700;color:var(--c-green);background:#dcfce7;padding:2px 8px;border-radius:8px">Heute</span>';
+      html += '<div class="k-slot-header" onclick="K.toggleMetzgerDayGroup(\''+day+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:'+(isToday?'#dcfce7':'#e5e7eb')+';border-left:4px solid '+(isToday?'#16a34a':'#6b7280')+';border-radius:8px;cursor:pointer;user-select:none;margin-bottom:6px">';
+      html += '<span class="k-oc-arrow" style="font-size:10px;color:'+(isToday?'#16a34a':'#6b7280')+';transition:transform .2s">'+luc('chevron-down',14)+'</span>';
+      html += '<span style="font-weight:800;font-size:14px;color:'+(isToday?'#15803d':'#1f2937')+'">'+luc('calendar',14)+' '+wt+dayLabel+'</span>';
+      if(isToday) html += '<span style="font-size:11px;font-weight:700;color:#fff;background:#16a34a;padding:2px 8px;border-radius:8px">Heute</span>';
       // Detail chips for day group – visible on wider screens
       var dayPositions = 0, dayKg = 0;
       orders.forEach(function(o){ (o.positionen||[]).forEach(function(p){ dayPositions++; dayKg += Number(p.menge_kg||0); }); });
