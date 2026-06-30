@@ -2883,6 +2883,19 @@ document.head.appendChild(msalScript);
             <input id="soc-post-titel" class="cms-input" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:4px;display:none">
           </div>
           <script>
+          window.socialTitelChange=function(){
+            var sel=document.getElementById('soc-post-titel-sel');
+            var inp=document.getElementById('soc-post-titel');
+            if(!sel||!inp)return;
+            if(sel.value==='_custom'){
+              inp.style.display='';
+              inp.value='';
+              inp.focus();
+            } else {
+              inp.style.display='none';
+              inp.value=sel.value;
+            }
+          };
           (function(){
             var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
             window._socSelectedDay='heute';
@@ -2916,19 +2929,6 @@ document.head.appendChild(msalScript);
 
             buildTitelOpts();
           })();
-          window.socialTitelChange=function(){
-            var sel=document.getElementById('soc-post-titel-sel');
-            var inp=document.getElementById('soc-post-titel');
-            if(!sel||!inp)return;
-            if(sel.value==='_custom'){
-              inp.style.display='';
-              inp.value='';
-              inp.focus();
-            } else {
-              inp.style.display='none';
-              inp.value=sel.value;
-            }
-          };
           </script>
           <div style="margin-bottom:12px">
             <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Freitext (optional)</label>

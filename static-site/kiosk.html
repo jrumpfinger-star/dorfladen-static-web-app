@@ -672,6 +672,7 @@
               <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:6px;display:none;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px">
             </div>
             <script>
+            window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}};
             (function(){
               var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
               window._socSelectedDay='heute';
@@ -687,13 +688,11 @@
                 var opts=[prefix+' im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
                 var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
                 opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
-                // Restore previous non-custom selection or set default
                 if(prev&&prev!=='_custom'){
                   var found=false;opts.forEach(function(o){if(o===prev)found=true;});
                   if(!found) sel.value=opts[0];
                 } else if(prev==='_custom'){ sel.value='_custom'; }
                 socialTitelChange();
-                // Update date label
                 var lbl=document.getElementById('soc-date-label');
                 if(lbl) lbl.textContent=d.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});
               }
@@ -710,7 +709,6 @@
 
               buildTitelOpts();
             })();
-            window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}};
             </script>
             <div>
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
