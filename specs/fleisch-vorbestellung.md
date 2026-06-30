@@ -505,6 +505,13 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Metzger: Sichtbarer Zurück-Button (undo-2) für Status 1 und 3
 - [x] Metzger: revertMetzgerStatus-Funktion mit Bestätigungsdialog
 
+### AK-FLEISCH-30: Bestellseite UX-Verbesserungen
+- [x] Liefertag-Auswahl schon oben auf der Bestellseite (nicht erst im Checkout)
+- [x] Beide Liefertag-Selects (oben + Checkout) bleiben synchron
+- [x] "Letzte Bestellung nochmal bestellen" zeigt Artikeldetails (Name, Menge, Preis)
+- [x] Reorder aufklappbar mit Bestätigungs-Button "In den Warenkorb"
+- [x] Reorder öffnet Warenkorb nach Hinzufügen (nicht direkt bestellen)
+
 ### AK-FLEISCH-25: Kiosk Mittagstisch UI/UX Optimierung
 - [x] Collapse/Expand-Button platzsparend (kleiner, Kurztext)
 - [x] Preis im Header der Bestellkarte statt im Body

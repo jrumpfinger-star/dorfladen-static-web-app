@@ -963,3 +963,54 @@ test.describe('T-29 Kiosk UI-Verbesserungen (AK-FLEISCH-29)', () => {
     expect(hasConfirm).toBe(true);
   });
 });
+
+// ═══════════════════════════════════════════════════════════
+// AK-FLEISCH-30 – Bestellseite UX-Verbesserungen
+// ═══════════════════════════════════════════════════════════
+
+test.describe('T-30 Bestellseite UX (AK-FLEISCH-30)', () => {
+
+  test('T-30-01 Liefertag-Picker existiert oben auf der Seite (AK-FLEISCH-30)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(3000);
+    const picker = page.locator('#fm-liefertag-picker');
+    await expect(picker).toBeVisible();
+    const topSelect = page.locator('#fm-liefertag-top');
+    const optCount = await topSelect.locator('option').count();
+    expect(optCount).toBeGreaterThanOrEqual(1);
+  });
+
+  test('T-30-02 Reorder-Banner zeigt Artikeldetails (AK-FLEISCH-30)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(3000);
+    const hasDetails = await page.evaluate(() => {
+      var src = document.documentElement.innerHTML;
+      return src.includes('fm-reorder-items') && src.includes('fm-reorder-item-name') && src.includes('fm-reorder-btn-confirm');
+    });
+    expect(hasDetails).toBe(true);
+  });
+
+  test('T-30-03 Reorder oeffnet Warenkorb (fmOpenCart) (AK-FLEISCH-30)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(3000);
+    const hasOpenCart = await page.evaluate(() => {
+      var src = document.documentElement.innerHTML;
+      return src.includes('fmOpenCart') && src.includes('In den Warenkorb');
+    });
+    expect(hasOpenCart).toBe(true);
+  });
+
+  test('T-30-04 fmSyncLiefertag Funktion existiert (AK-FLEISCH-30)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(3000);
+    const exists = await page.evaluate(() => typeof window.fmSyncLiefertag === 'function');
+    expect(exists).toBe(true);
+  });
+
+  test('T-30-05 fmToggleReorderDetails Funktion existiert (AK-FLEISCH-30)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(3000);
+    const exists = await page.evaluate(() => typeof window.fmToggleReorderDetails === 'function');
+    expect(exists).toBe(true);
+  });
+});

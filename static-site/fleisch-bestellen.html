@@ -53,10 +53,23 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .fm-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--c-muted)}
 
 /* Reorder Banner – compact */
-.fm-reorder{background:var(--c-green-light);border:1.5px solid #a7f3d0;border-radius:10px;padding:10px 14px;margin-bottom:10px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px}
-.fm-reorder:hover{box-shadow:var(--shadow)}
+.fm-reorder{background:var(--c-green-light);border:1.5px solid #a7f3d0;border-radius:10px;padding:10px 14px;margin-bottom:10px;transition:all .15s}
+.fm-reorder-hdr{display:flex;align-items:center;gap:10px;cursor:pointer}
+.fm-reorder-hdr:hover{opacity:.85}
 .fm-reorder-title{font-size:13px;font-weight:700;color:var(--c-green);display:flex;align-items:center;gap:6px;flex:1}
 .fm-reorder-sub{font-size:11px;color:var(--c-muted)}
+.fm-reorder-items{margin-top:8px;border-top:1px solid #a7f3d0;padding-top:8px}
+.fm-reorder-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:var(--c-text)}
+.fm-reorder-item-name{flex:1;font-weight:600}
+.fm-reorder-item-qty{color:var(--c-muted);white-space:nowrap}
+.fm-reorder-item-price{font-weight:700;white-space:nowrap}
+.fm-reorder-actions{display:flex;gap:8px;margin-top:10px}
+.fm-reorder-btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.fm-reorder-btn-confirm{background:var(--c-green);color:#fff}
+.fm-reorder-btn-confirm:active{opacity:.85}
+.fm-liefertag-picker{background:#fff;border:1.5px solid var(--c-meat);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.fm-liefertag-picker label{font-size:12px;font-weight:700;color:var(--c-meat);white-space:nowrap;display:flex;align-items:center;gap:4px}
+.fm-liefertag-picker select{flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:600;background:#fff}
 
 /* Article Grid */
 .fm-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
@@ -271,6 +284,14 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     <p>Die Fleisch-Vorbestellung ist momentan deaktiviert. Bitte versuchen Sie es spaeter erneut.</p>
   </div>
 
+  <!-- Liefertag Picker (above articles) -->
+  <div class="fm-liefertag-picker" id="fm-liefertag-picker" style="display:none">
+    <label><i data-lucide="calendar" style="width:14px;height:14px"></i> Liefertag</label>
+    <select id="fm-liefertag-top" onchange="fmSyncLiefertag(this.value)">
+      <option value="">Wird geladen...</option>
+    </select>
+  </div>
+
   <!-- Rabatt Banner -->
   <div class="fm-rabatt" id="fm-rabatt" style="display:none">
     <div class="fm-rabatt-pct" id="fm-rabatt-pct"></div>
@@ -278,11 +299,20 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   </div>
 
   <!-- Reorder Banner -->
-  <div class="fm-reorder" id="fm-reorder" style="display:none" onclick="fmReorder()">
-    <i data-lucide="repeat" style="width:16px;height:16px;color:var(--c-green);flex-shrink:0"></i>
-    <div style="flex:1;min-width:0">
-      <div class="fm-reorder-title"><span id="fm-reorder-label">Letzte Bestellung nochmal</span></div>
-      <div class="fm-reorder-sub" id="fm-reorder-sub"></div>
+  <div class="fm-reorder" id="fm-reorder" style="display:none">
+    <div class="fm-reorder-hdr" onclick="fmToggleReorderDetails()">
+      <i data-lucide="repeat" style="width:16px;height:16px;color:var(--c-green);flex-shrink:0"></i>
+      <div style="flex:1;min-width:0">
+        <div class="fm-reorder-title"><span id="fm-reorder-label">Letzte Bestellung nochmal bestellen</span></div>
+        <div class="fm-reorder-sub" id="fm-reorder-sub"></div>
+      </div>
+      <i data-lucide="chevron-down" style="width:16px;height:16px;color:var(--c-muted);flex-shrink:0" id="fm-reorder-arrow"></i>
+    </div>
+    <div id="fm-reorder-details" style="display:none">
+      <div class="fm-reorder-items" id="fm-reorder-items"></div>
+      <div class="fm-reorder-actions">
+        <button class="fm-reorder-btn fm-reorder-btn-confirm" onclick="fmReorder()"><i data-lucide="shopping-cart" style="width:14px;height:14px"></i> In den Warenkorb</button>
+      </div>
     </div>
   </div>
 
@@ -467,10 +497,15 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
   function populateLiefertagSelect(){
     var sel = document.getElementById('fm-liefertag-select');
+    var topSel = document.getElementById('fm-liefertag-top');
     if(!sel) return;
     var termine = config.alle_termine || config.termine || [];
     var bestellbare = termine.filter(function(t){ return t.noch_bestellbar; });
-    if(!bestellbare.length){ sel.innerHTML='<option value="">Kein Liefertag verfuegbar</option>'; return; }
+    if(!bestellbare.length){
+      sel.innerHTML='<option value="">Kein Liefertag verfuegbar</option>';
+      if(topSel) topSel.innerHTML='<option value="">Kein Liefertag verfuegbar</option>';
+      return;
+    }
     var html = '';
     bestellbare.forEach(function(t, i){
       var selected = i===0 ? ' selected' : '';
@@ -479,13 +514,27 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       html += '<option value="'+t.liefertag+'"'+selected+'>'+label+'</option>';
     });
     sel.innerHTML = html;
-    // Update footer label when selection changes
-    sel.addEventListener('change', function(){ updateLiefertagLabel(); });
+    if(topSel){
+      topSel.innerHTML = html;
+      document.getElementById('fm-liefertag-picker').style.display='flex';
+    }
+    // Update footer label and sync top picker when selection changes
+    sel.addEventListener('change', function(){ fmSyncLiefertag(sel.value); });
   }
 
-  function getSelectedLiefertag(){
+  // Sync both Liefertag selects
+  window.fmSyncLiefertag = function(val){
     var sel = document.getElementById('fm-liefertag-select');
-    return sel ? sel.value : '';
+    if(sel) sel.value = val;
+    var topSel = document.getElementById('fm-liefertag-top');
+    if(topSel && topSel.value !== val) topSel.value = val;
+    updateLiefertagLabel();
+  };
+
+  function getSelectedLiefertag(){
+    var topSel = document.getElementById('fm-liefertag-top');
+    var sel = document.getElementById('fm-liefertag-select');
+    return (topSel && topSel.value) ? topSel.value : (sel ? sel.value : '');
   }
 
   function updateLiefertagLabel(){
@@ -606,7 +655,27 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     document.getElementById('fm-reorder').style.display='block';
     document.getElementById('fm-reorder-label').textContent='Letzte Bestellung nochmal bestellen';
     document.getElementById('fm-reorder-sub').textContent=lastOrder.positionen.length+' Artikel vom '+lastOrder.liefertag_label;
+    // Render item details
+    var itemsHtml='';
+    lastOrder.positionen.forEach(function(p){
+      var price=Number(p.rabattpreis||p.normalpreis||0);
+      var total=(price*p.menge_kg).toFixed(2).replace('.',',');
+      itemsHtml+='<div class="fm-reorder-item">';
+      itemsHtml+='<span class="fm-reorder-item-name">'+esc(p.bezeichnung)+'</span>';
+      itemsHtml+='<span class="fm-reorder-item-qty">'+Number(p.menge_kg).toFixed(1)+' kg</span>';
+      itemsHtml+='<span class="fm-reorder-item-price">'+total+' \u20AC</span>';
+      itemsHtml+='</div>';
+    });
+    document.getElementById('fm-reorder-items').innerHTML=itemsHtml;
   }
+
+  window.fmToggleReorderDetails = function(){
+    var det=document.getElementById('fm-reorder-details');
+    var arrow=document.getElementById('fm-reorder-arrow');
+    var open=det.style.display==='none';
+    det.style.display=open?'block':'none';
+    if(arrow) arrow.style.transform=open?'rotate(180deg)':'';
+  };
 
   window.fmReorder = function(){
     if(!lastOrder||!lastOrder.positionen) return;
@@ -617,7 +686,10 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       addToCart(art, p.menge_kg);
       added++;
     });
-    if(added) showToast(added+' Artikel in den Warenkorb gelegt');
+    if(added){
+      showToast(added+' Artikel in den Warenkorb gelegt');
+      fmOpenCart();
+    }
   };
 
   // ── View toggle ──
@@ -982,6 +1054,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     document.getElementById('fm-articles').style.display='none';
     document.getElementById('fm-rabatt').style.display='none';
     document.getElementById('fm-reorder').style.display='none';
+    document.getElementById('fm-liefertag-picker').style.display='none';
     document.getElementById('fm-cats').style.display='none';
     document.getElementById('fm-search-row').style.display='none';
 
