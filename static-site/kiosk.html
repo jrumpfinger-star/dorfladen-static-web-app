@@ -657,6 +657,15 @@
         </div>
         <div class="k-order-body" style="display:block">
           <div style="padding:14px 16px">
+            <!-- Heute / Morgen Toggle -->
+            <div style="margin-bottom:14px">
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px"><i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"></i> Post f&#252;r</label>
+              <div id="soc-date-toggle" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
+                <button type="button" data-day="heute" onclick="socialToggleDay('heute')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff;transition:all .15s">Heute</button>
+                <button type="button" data-day="morgen" onclick="socialToggleDay('morgen')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151;transition:all .15s">Morgen</button>
+              </div>
+              <span id="soc-date-label" style="margin-left:10px;font-size:13px;color:#6b7280"></span>
+            </div>
             <div style="margin-bottom:14px">
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Titel w&#228;hlen</label>
               <select id="soc-post-titel-sel" onchange="socialTitelChange()" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px;background:#fff"></select>
@@ -665,13 +674,41 @@
             <script>
             (function(){
               var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-              var tag=tage[new Date().getDay()];
-              var sel=document.getElementById('soc-post-titel-sel');
-              if(!sel)return;
-              var opts=['Heute im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
-              var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
-              opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
-              var inp=document.getElementById('soc-post-titel');if(inp) inp.value=opts[0];
+              window._socSelectedDay='heute';
+
+              function buildTitelOpts(){
+                var d=window._socSelectedDay==='morgen'?new Date(Date.now()+86400000):new Date();
+                var tag=tage[d.getDay()];
+                var prefix=window._socSelectedDay==='morgen'?'Morgen':'Heute';
+                var sel=document.getElementById('soc-post-titel-sel');
+                if(!sel)return;
+                var prev=sel.value;
+                sel.innerHTML='';
+                var opts=[prefix+' im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
+                var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
+                opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
+                // Restore previous non-custom selection or set default
+                if(prev&&prev!=='_custom'){
+                  var found=false;opts.forEach(function(o){if(o===prev)found=true;});
+                  if(!found) sel.value=opts[0];
+                } else if(prev==='_custom'){ sel.value='_custom'; }
+                socialTitelChange();
+                // Update date label
+                var lbl=document.getElementById('soc-date-label');
+                if(lbl) lbl.textContent=d.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});
+              }
+
+              window.socialToggleDay=function(day){
+                window._socSelectedDay=day;
+                var btns=document.querySelectorAll('#soc-date-toggle button');
+                btns.forEach(function(b){
+                  if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
+                  else{b.style.background='#fff';b.style.color='#374151';}
+                });
+                buildTitelOpts();
+              };
+
+              buildTitelOpts();
             })();
             window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}};
             </script>
@@ -763,7 +800,7 @@
       </div>
       <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
       <div id="soc-today-posts" style="display:none;margin-top:12px;background:#f9fafb;border:1px solid var(--c-border);border-radius:10px;padding:10px 14px">
-        <div style="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:6px"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle"></i> Heute bereits gepostet</div>
+        <div style="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:6px"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle"></i> Geplante Posts</div>
         <div id="soc-today-posts-list"></div>
       </div>
     </div>

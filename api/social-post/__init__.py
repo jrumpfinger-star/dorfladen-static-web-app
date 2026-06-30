@@ -152,9 +152,21 @@ def handle_post(req, token, folder_id):
         poster_url, poster_sp_id = upload_image(token, folder_id, filename, img_bytes)
 
     post_id = str(uuid.uuid4())
-    now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     wochentag = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
-    tag = wochentag[datetime.utcnow().weekday()]
+
+    # Optional: ziel_datum (ISO date, e.g. "2026-07-01") for scheduling posts
+    ziel_datum = body.get("ziel_datum", "").strip()
+    if ziel_datum:
+        try:
+            zd = datetime.strptime(ziel_datum, "%Y-%m-%d")
+            now = zd.strftime("%Y-%m-%dT") + datetime.utcnow().strftime("%H:%M:%SZ")
+            tag = wochentag[zd.weekday()]
+        except ValueError:
+            now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            tag = wochentag[datetime.utcnow().weekday()]
+    else:
+        now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        tag = wochentag[datetime.utcnow().weekday()]
 
     # Upload inline base64 images from items as files
     for idx, it in enumerate(items):
@@ -185,7 +197,7 @@ def handle_post(req, token, folder_id):
 
     post = {
         "id": post_id,
-        "titel": titel or f"Heute im Dorfladen – {tag}",
+        "titel": titel or f"{'Morgen' if ziel_datum else 'Heute'} im Dorfladen – {tag}",
         "text": text,
         "items": items,
         "poster_url": poster_url,

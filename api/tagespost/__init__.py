@@ -229,28 +229,42 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     tomorrow = (now_local + timedelta(days=1)).strftime("%Y-%m-%d")
     current_hour = now_local.hour
 
-    # Find posts for today
+    # Find posts for today and tomorrow
     today_posts = [p for p in posts if p.get("datum", "")[:10] == today]
+    tomorrow_posts = [p for p in posts if p.get("datum", "")[:10] == tomorrow]
 
-    # After 18:00 (store closed), prefer tomorrow's post if available
-    if current_hour >= 18:
-        tomorrow_posts = [p for p in posts if p.get("datum", "")[:10] == tomorrow]
-        if tomorrow_posts:
-            post = merge_day_posts(tomorrow_posts)
-            enrich_post_images(post, token, folder_id)
-            return ok({"success": True, "post": post, "is_tomorrow": True})
+    # Build today post
+    today_post = None
+    if today_posts:
+        today_post = merge_day_posts(today_posts)
+        enrich_post_images(today_post, token, folder_id)
 
-    if not today_posts:
-        # No post for today – check if tomorrow's post exists
-        tomorrow_posts = [p for p in posts if p.get("datum", "")[:10] == tomorrow]
-        if tomorrow_posts:
-            post = merge_day_posts(tomorrow_posts)
-            enrich_post_images(post, token, folder_id)
-            return ok({"success": True, "post": post, "is_tomorrow": True})
+    # Build tomorrow post
+    tomorrow_post = None
+    if tomorrow_posts:
+        tomorrow_post = merge_day_posts(tomorrow_posts)
+        enrich_post_images(tomorrow_post, token, folder_id)
+
+    # After 18:00 (store closed), prefer tomorrow's post as primary
+    if current_hour >= 18 and tomorrow_post:
+        return ok({
+            "success": True,
+            "post": tomorrow_post, "is_tomorrow": True,
+            "today_post": today_post, "tomorrow_post": tomorrow_post,
+        })
+
+    if not today_post and tomorrow_post:
+        return ok({
+            "success": True,
+            "post": tomorrow_post, "is_tomorrow": True,
+            "today_post": None, "tomorrow_post": tomorrow_post,
+        })
+
+    if not today_post and not tomorrow_post:
         return ok({"success": True, "post": None})
 
-    # Merge all posts from today into one combined post
-    post = merge_day_posts(today_posts)
-    enrich_post_images(post, token, folder_id)
-
-    return ok({"success": True, "post": post, "is_tomorrow": False})
+    return ok({
+        "success": True,
+        "post": today_post, "is_tomorrow": False,
+        "today_post": today_post, "tomorrow_post": tomorrow_post,
+    })

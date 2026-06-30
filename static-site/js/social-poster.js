@@ -153,8 +153,17 @@
   // --- Download poster ---
   window.socialDownloadPoster=function(){var now=new Date();var dateStr=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();var mealCanvas=document.getElementById('soc-post-canvas-meal');if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0){var ml=document.createElement('a');ml.download='dorfladen-mittagessen-'+dateStr+'.png';ml.href=mealCanvas.toDataURL('image/png');ml.click();}var canvas=document.getElementById('soc-post-canvas');if(canvas&&canvas.style.display!=='none'&&canvas.width>0){var link=document.createElement('a');link.download='dorfladen-post-'+dateStr+'.png';link.href=canvas.toDataURL('image/png');setTimeout(function(){link.click();},200);}};
 
+  // --- Ziel-Datum berechnen (heute oder morgen) ---
+  function socialGetZielDatum(){
+    if(window._socSelectedDay==='morgen'){
+      var d=new Date(Date.now()+86400000);
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+    return '';
+  }
+
   // --- Save post ---
-  function socialSavePost(titel,freitext,items){fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({titel:titel,freitext:freitext,items:items.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})})}).catch(function(){});}
+  function socialSavePost(titel,freitext,items){var body={titel:titel,freitext:freitext,items:items.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(function(){});}
 
   // --- Publish as Tagesinfo only (no WhatsApp/Instagram) ---
   window.socialPublishTagesinfo=function(){
@@ -168,11 +177,11 @@
     // CSS-Animation für Spinner (einmalig einfügen)
     if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
     socialStatus('soc-post-status','⏳ Wird veröffentlicht…',true);
-    var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};
+    var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;
     fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
     .then(function(){
-      socialStatus('soc-post-status','✅ Tagesinfo veröffentlicht – erscheint auf der Homepage',true);
+      var msg=zd?'✅ Tagesinfo für morgen geplant – erscheint ab heute Abend auf der Homepage':'✅ Tagesinfo veröffentlicht – erscheint auf der Homepage';socialStatus('soc-post-status',msg,true);
       btns.forEach(function(b){b.innerHTML='<span style="vertical-align:middle;margin-right:6px">✅</span> Veröffentlicht!';b.style.opacity='1';b.style.background='#dcfce7';b.style.borderColor='#16a34a';b.style.color='#166534';});
       setTimeout(function(){btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});},3000);
       if(typeof socialLoadTodayPosts==='function') socialLoadTodayPosts();
@@ -183,23 +192,33 @@
     });
   };
 
-  // --- Heutige Posts laden ---
+  // --- Geplante Posts laden (heute + morgen) ---
   window.socialLoadTodayPosts=function(){
     var wrap=document.getElementById('soc-today-posts');
     var list=document.getElementById('soc-today-posts-list');
     if(!wrap||!list)return;
     var today=new Date();var td=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    var tom=new Date(Date.now()+86400000);var tmr=tom.getFullYear()+'-'+String(tom.getMonth()+1).padStart(2,'0')+'-'+String(tom.getDate()).padStart(2,'0');
     fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){
-      var posts=(res.items||[]).filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
-      if(!posts.length){wrap.style.display='none';return;}
+      var all=res.items||[];
+      var todayPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
+      var tomorrowPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===tmr;});
+      if(!todayPosts.length&&!tomorrowPosts.length){wrap.style.display='none';return;}
       wrap.style.display='';
-      var html='';posts.forEach(function(p){
-        var cnt=p.items?p.items.length:0;
-        html+='<div style="padding:4px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center">';
-        html+='<span style="font-weight:600;color:#374151">'+M.esc(p.titel||'Post')+'</span>';
-        html+='<span style="color:#6b7280">'+cnt+' Produkt'+(cnt!==1?'e':'')+'</span>';
-        html+='</div>';
-      });
+      var html='';
+      function renderGroup(posts,label,color){
+        if(!posts.length)return;
+        html+='<div style="font-size:10px;font-weight:700;color:'+color+';margin:6px 0 2px;text-transform:uppercase">'+M.esc(label)+'</div>';
+        posts.forEach(function(p){
+          var cnt=p.items?p.items.length:0;
+          html+='<div style="padding:3px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center">';
+          html+='<span style="font-weight:600;color:#374151">'+M.esc(p.titel||'Post')+'</span>';
+          html+='<span style="color:#6b7280">'+cnt+' Produkt'+(cnt!==1?'e':'')+'</span>';
+          html+='</div>';
+        });
+      }
+      renderGroup(todayPosts,'Heute','#16a34a');
+      renderGroup(tomorrowPosts,'Morgen','#2563eb');
       list.innerHTML=html;
     }).catch(function(){wrap.style.display='none';});
   };

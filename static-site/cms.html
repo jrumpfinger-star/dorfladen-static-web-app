@@ -2867,6 +2867,15 @@ document.head.appendChild(msalScript);
       <div class="cms-card" style="margin-bottom:14px">
         <div class="cms-card-header" style="background:#25D366"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle"></i> Tagespost zusammenstellen</div>
         <div class="cms-card-body">
+          <!-- Heute / Morgen Toggle -->
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px"><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:middle;margin-right:2px"></i> Post f&#252;r</label>
+            <div id="soc-date-toggle" style="display:inline-flex;border:2px solid #d1d5db;border-radius:8px;overflow:hidden">
+              <button type="button" data-day="heute" onclick="socialToggleDay('heute')" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff;transition:all .15s">Heute</button>
+              <button type="button" data-day="morgen" onclick="socialToggleDay('morgen')" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151;transition:all .15s">Morgen</button>
+            </div>
+            <span id="soc-date-label" style="margin-left:8px;font-size:12px;color:#6b7280"></span>
+          </div>
           <div style="margin-bottom:12px">
             <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Titel</label>
             <select id="soc-post-titel-sel" class="cms-input" onchange="socialTitelChange()" style="width:100%">
@@ -2876,30 +2885,36 @@ document.head.appendChild(msalScript);
           <script>
           (function(){
             var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-            var tag=tage[new Date().getDay()];
-            var sel=document.getElementById('soc-post-titel-sel');
-            if(!sel)return;
-            var opts=[
-              'Heute im Dorfladen \u2013 '+tag,
-              'Aktuelles',
-              'Wochenangebot',
-              'Frisch eingetroffen',
-              'Mittagstisch \u2013 '+tag,
-              'Sonderangebot',
-              '_custom'
-            ];
-            var labels={
-              '_custom':'\u270F\uFE0F Eigenen Titel eingeben...'
+            window._socSelectedDay='heute';
+
+            function buildTitelOpts(){
+              var d=window._socSelectedDay==='morgen'?new Date(Date.now()+86400000):new Date();
+              var tag=tage[d.getDay()];
+              var prefix=window._socSelectedDay==='morgen'?'Morgen':'Heute';
+              var sel=document.getElementById('soc-post-titel-sel');
+              if(!sel)return;
+              var prev=sel.value;
+              sel.innerHTML='';
+              var opts=[prefix+' im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
+              var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
+              opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
+              if(prev&&prev!=='_custom'){var found=false;opts.forEach(function(o){if(o===prev)found=true;});if(!found)sel.value=opts[0];}else if(prev==='_custom'){sel.value='_custom';}
+              socialTitelChange();
+              var lbl=document.getElementById('soc-date-label');
+              if(lbl)lbl.textContent=d.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});
+            }
+
+            window.socialToggleDay=function(day){
+              window._socSelectedDay=day;
+              var btns=document.querySelectorAll('#soc-date-toggle button');
+              btns.forEach(function(b){
+                if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
+                else{b.style.background='#fff';b.style.color='#374151';}
+              });
+              buildTitelOpts();
             };
-            opts.forEach(function(o){
-              var op=document.createElement('option');
-              op.value=o;
-              op.textContent=labels[o]||o;
-              sel.appendChild(op);
-            });
-            // Sync hidden input with default
-            var inp=document.getElementById('soc-post-titel');
-            if(inp) inp.value=opts[0];
+
+            buildTitelOpts();
           })();
           window.socialTitelChange=function(){
             var sel=document.getElementById('soc-post-titel-sel');

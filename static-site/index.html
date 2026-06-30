@@ -1888,6 +1888,10 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       <div><h2 id="tp-title">TagesInfo</h2><div class="tp-datum" id="tp-datum"></div></div>
       <button class="tp-modal-close" id="tp-close">✕</button>
     </div>
+    <div id="tp-day-tabs" style="display:none;background:#f0fdf4;border-bottom:1px solid #e5e7eb;padding:0 16px">
+      <button id="tp-tab-heute" onclick="tpSwitchDay('heute')" style="padding:8px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid #16a34a;background:transparent;color:#16a34a;cursor:pointer;margin-right:4px">Heute</button>
+      <button id="tp-tab-morgen" onclick="tpSwitchDay('morgen')" style="padding:8px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;background:transparent;color:#6b7280;cursor:pointer">Morgen</button>
+    </div>
     <div class="tp-modal-body" id="tp-body"></div>
   </div>
 </div>
@@ -1909,6 +1913,20 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   function fmtDate(d){return WOCHENTAGE[d.getDay()]+', '+d.getDate()+'. '+MONATE[d.getMonth()];}
 
   var _isTomorrow=false;
+  var _tpTodayPost=null,_tpTomorrowPost=null;
+
+  window.tpSwitchDay=function(day){
+    var bH=document.getElementById('tp-tab-heute'),bM=document.getElementById('tp-tab-morgen');
+    if(day==='morgen'&&_tpTomorrowPost){
+      renderPost(_tpTomorrowPost,true);
+      if(bH){bH.style.borderBottomColor='transparent';bH.style.color='#6b7280';}
+      if(bM){bM.style.borderBottomColor='#16a34a';bM.style.color='#16a34a';}
+    } else if(_tpTodayPost){
+      renderPost(_tpTodayPost,false);
+      if(bH){bH.style.borderBottomColor='#16a34a';bH.style.color='#16a34a';}
+      if(bM){bM.style.borderBottomColor='transparent';bM.style.color='#6b7280';}
+    }
+  };
 
   function renderPost(post,isTomorrow){
     _isTomorrow=!!isTomorrow;
@@ -2042,8 +2060,23 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
   fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
     if(!res.success||!res.post)return;
-    // Nach Ladenschluss heutige TagesInfo nicht mehr anzeigen
-    // Öffnungszeiten aus DB laden und Schlusszeit dynamisch ermitteln
+
+    // Store both posts for tab switching
+    _tpTodayPost=res.today_post||null;
+    _tpTomorrowPost=res.tomorrow_post||null;
+
+    // Show day tabs when both posts exist
+    var dayTabs=document.getElementById('tp-day-tabs');
+    if(dayTabs&&_tpTodayPost&&_tpTomorrowPost){
+      dayTabs.style.display='';
+      // If primary is tomorrow, activate morgen tab
+      if(res.is_tomorrow){
+        var bH=document.getElementById('tp-tab-heute'),bM=document.getElementById('tp-tab-morgen');
+        if(bH){bH.style.borderBottomColor='transparent';bH.style.color='#6b7280';}
+        if(bM){bM.style.borderBottomColor='#16a34a';bM.style.color='#16a34a';}
+      }
+    }
+
     function _showPost(){
     var post=res.post;
     var count=renderPost(post,res.is_tomorrow);
@@ -2054,7 +2087,8 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     if(promoTpCount&&count>0){promoTpCount.style.display='';promoTpCount.textContent=count;}
     var mobTp=document.getElementById('mob-action-tp');
     var mobTpSub=document.getElementById('mob-tp-sub');
-    if(mobTp){mobTp.style.display='';if(mobTpSub)mobTpSub.textContent=count+' Produkte heute';}
+    var dayLabel=res.is_tomorrow?'morgen':'heute';
+    if(mobTp){mobTp.style.display='';if(mobTpSub)mobTpSub.textContent=count+' Produkte '+dayLabel;}
 
     var seenKey='tagespost_seen_'+new Date().toISOString().substring(0,10);
     if(!localStorage.getItem(seenKey)){
