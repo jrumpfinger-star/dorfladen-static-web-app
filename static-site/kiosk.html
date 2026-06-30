@@ -1068,11 +1068,13 @@ var K = (function(){
     h += '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:'+(STATUS_COLORS[o.status]||'#6b7280')+'1a;color:'+(STATUS_COLORS[o.status]||'#6b7280')+'">'+esc(STATUS_LABELS[o.status]||'')+'</span>';
     h += '</div>';
     h += '<div style="font-size:13px;color:#6b7280;margin-bottom:6px">'+(o.menge||1)+'× '+esc(o.gericht||'')+' · '+esc(o.bestellnummer||'')+'</div>';
-    h += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;margin:0 0 6px">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    h += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;margin:0 0 6px;display:flex;align-items:flex-start;gap:6px">';
+    h += '<div style="flex:1;min-width:0">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(isUnread) h += '<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',11)+' Gelesen</button>';
+    h += '</div>';
     if(o.personal_antwort) h += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 0 6px">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
     h += '<div style="display:flex;gap:8px;padding-top:4px;align-items:center">';
     h += '<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff;font-size:13px" onclick="K.showMsgReply(\''+o.id+'\')">'+luc('reply',14)+' Antworten</button>';
-    if(isUnread) h += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
     h += '</div>';
     h += '<div id="msg-rpl-'+o.id+'" style="display:none;margin-top:8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
     h += '<input type="text" id="msg-rpt-'+o.id+'" placeholder="Antwort eingeben…" maxlength="300" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
@@ -1396,13 +1398,13 @@ var K = (function(){
     // Bestellnummer + Telefon removed (irrelevant for daily operations)
     if(o.anmerkung) html += '<div class="k-order-note" style="background:#fef3c7">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
     if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a;color:#166534">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
-    if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
-    if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    if(_hasUnseenComment(o)){
-      html += '<div style="padding-top:6px;display:flex;gap:6px;flex-wrap:wrap">';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
+    if(o.kunde_kommentar){
+      html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;display:flex;align-items:flex-start;gap:6px;animation:'+(o.kommentar_gelesen?'none':'kPulse 2s ease-in-out 3')+'">';
+      html += '<div style="flex:1;min-width:0">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+      if(_hasUnseenComment(o)) html += '<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',11)+' Gelesen</button>';
       html += '</div>';
     }
+    if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
     // Inline reply input (visible for all active orders so staff can communicate)
     if(o.status<=1){
       html += '<div style="padding-top:8px;display:flex;gap:6px;align-items:center">';
@@ -3870,15 +3872,10 @@ var K = (function(){
     h += '</div>';
     h += '<div class="k-order-body" style="display:block">';
     h += '<div class="k-order-note" style="background:'+(isUnread?'#eff6ff;border-left:3px solid #3b82f6;color:#1e40af':'#f8fafc;border-left:3px solid #d1d5db;color:#6b7280')+';margin:0 8px 6px;padding:6px 10px;border-radius:4px;font-size:12px">';
-    h += '<i data-lucide="user" style="width:12px;height:12px"></i> <strong>Kunde:</strong> '+esc(o.kunde_kommentar);
-    if(isUnread) h += ' <span style="background:#3b82f6;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px">NEU</span>';
-    h += '</div>';
+    h += '<div style="display:flex;align-items:flex-start;gap:6px"><div style="flex:1;min-width:0"><i data-lucide="user" style="width:12px;height:12px"></i> <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(isUnread) h += '<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:11px;height:11px"></i> Gelesen</button>';
+    h += '</div></div>';
     if(o.personal_antwort) h += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 8px 6px;padding:6px 10px;border-radius:4px;font-size:12px"><i data-lucide="reply" style="width:12px;height:12px"></i> <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    if(isUnread){
-      h += '<div style="display:flex;gap:8px;padding:4px 8px 4px;align-items:center">';
-      h += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="K.markFmRead(\''+o.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i> Gelesen</button>';
-      h += '</div>';
-    }
     h += '<div style="display:flex;gap:8px;padding:4px 8px 10px;align-items:center">';
     h += '<button class="k-btn k-btn-outline" style="font-size:13px;padding:8px 16px;border-radius:8px;color:#2563eb;border-color:#93c5fd" onclick="K.openFmReplyModal(\''+o.id+'\',\''+esc(o.name)+'\')"><i data-lucide="message-circle" style="width:14px;height:14px"></i> Antworten</button>';
     h += '</div>';
