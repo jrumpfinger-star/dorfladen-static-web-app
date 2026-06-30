@@ -354,7 +354,9 @@ function renderMessages(o){
 // ── Cancel Order (customer self-service) ──
 function cancelOrder(){
   if(!_order || _orderType !== 'fm') return;
-  if(!confirm('Möchten Sie diese Bestellung wirklich stornieren?\n\nDies kann nicht rückgängig gemacht werden.')) return;
+  var grund = prompt('Möchten Sie diese Bestellung wirklich stornieren?\n\nBitte geben Sie einen Grund an:');
+  if(grund === null) return;
+  if(!grund.trim()){ alert('Bitte geben Sie einen Stornierungsgrund an.'); return; }
 
   var btn = document.getElementById('bs-cancel-btn');
   btn.disabled = true;
@@ -363,7 +365,7 @@ function cancelOrder(){
   fetch('/api/fleisch-order', {
     method: 'PATCH',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({id: _order.id, status: 4, kunde_storno: true})
+    body: JSON.stringify({id: _order.id, status: 4, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund.trim()})
   })
   .then(function(r){ return r.json(); })
   .then(function(data){

@@ -503,6 +503,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             kommentar_gelesen = body.get("kommentar_gelesen")
             if kommentar_gelesen is not None:
                 patch_data["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
+            # Storno reason
+            storno_grund = body.get("storno_grund")
+            if storno_grund is not None:
+                patch_data["dl_storno_grund"] = storno_grund.strip()
 
             if not patch_data:
                 return func.HttpResponse(

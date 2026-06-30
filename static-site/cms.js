@@ -9389,7 +9389,7 @@
       if(o.status===0) html+='<a class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'" target="_blank"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</a>';
       if(o.status===1) html+='<button class="cms-btn cms-btn-sm" style="background:#d1fae5;color:#065f46" onclick="cmsOrderStatus(\''+o.id+'\',2,\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\',\''+esc(o.kunde_name)+'\',\''+esc(o.abholdatum)+'\')">✓ Abholbereit</button>';
       if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')"><i data-lucide="package-check" style="width:12px;height:12px;vertical-align:-2px"></i> Abgeholt</button>';
-      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsOrderStatus(\''+o.id+'\',4,\''+esc(o.bestellnummer)+'\')" title="Stornieren"><i data-lucide="x" style="width:12px;height:12px;vertical-align:-2px"></i></button>';
+      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsShowShopStornoDialog(\''+o.id+'\',\''+esc(o.bestellnummer)+'\')" title="Stornieren"><i data-lucide="x" style="width:12px;height:12px;vertical-align:-2px"></i></button>';
       html+='</td></tr>';
       // Expandable positions row
       if(posCount){
@@ -9408,10 +9408,12 @@
   // Filter change
   document.addEventListener('change',function(e){if(e.target&&e.target.id==='cms-orders-filter')cmsRenderOrders();});
 
-  window.cmsOrderStatus=function(id,status,bestellnr,email,name,abholdatum){
+  window.cmsOrderStatus=function(id,status,bestellnr,email,name,abholdatum,grund){
     var label=STATUS_LABELS[status]||'';
     if(!confirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?')) return;
-    fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:status})})
+    var payload={id:id,status:status};
+    if(grund) payload.personal_antwort=grund;
+    fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
@@ -9431,6 +9433,56 @@
         } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
       })
       .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+  };
+
+  // ── CMS Shop-Storno-Dialog mit Begründung ──
+  var CMS_SHOP_STORNO_REASONS=['Artikel nicht lieferbar','Bestellung wurde doppelt aufgegeben','Kunde hat telefonisch storniert','Abholung nicht möglich','Sonstiger Grund'];
+  window.cmsShowShopStornoDialog=function(id,bestellnr){
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
+    var modal=document.createElement('div');
+    modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
+    modal.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
+      +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr||'?')+'</div>'
+      +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
+      +'<div id="cms-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
+      +'<textarea id="cms-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>'
+      +'<button id="cms-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
+    overlay.appendChild(modal);document.body.appendChild(overlay);
+    var optsDiv=modal.querySelector('#cms-storno-opts');var selectedReason='';
+    CMS_SHOP_STORNO_REASONS.forEach(function(r){
+      var opt=document.createElement('label');
+      opt.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s';
+      opt.innerHTML='<input type="radio" name="cms-storno-reason" value="'+esc(r)+'" style="accent-color:#dc2626"> '+esc(r);
+      opt.querySelector('input').addEventListener('change',function(){
+        selectedReason=r;
+        modal.querySelector('#cms-storno-confirm').disabled=false;
+        modal.querySelector('#cms-storno-confirm').style.opacity='1';
+        optsDiv.querySelectorAll('label').forEach(function(l){l.style.borderColor='#e5e7eb';l.style.background='';});
+        opt.style.borderColor='#dc2626';opt.style.background='#fef2f2';
+      });
+      optsDiv.appendChild(opt);
+    });
+    modal.querySelector('#cms-storno-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
+    overlay.addEventListener('click',function(e){if(e.target===overlay) document.body.removeChild(overlay);});
+    modal.querySelector('#cms-storno-confirm').addEventListener('click',function(){
+      if(!selectedReason) return;
+      var comment=(modal.querySelector('#cms-storno-comment').value||'').trim();
+      var grund='Storniert: '+selectedReason+(comment?' – '+comment:'');
+      document.body.removeChild(overlay);
+      var payload={id:id,status:4,storno_grund:grund};
+      fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){
+            var o=_ordersData.find(function(x){return x.id===id;});
+            if(o){o.status=4;o.status_text=STATUS_LABELS[4];}
+            cmsRenderOrders();
+            cmsToast('✅ '+bestellnr+': Storniert');
+          } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+        }).catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+    });
   };
 
   // ── Pack-Seite öffnen ──
@@ -11966,7 +12018,7 @@
             var bc=FM_STATUS_C[ns];
             html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:'+bc+';color:#fff;border:none;border-radius:6px" data-fm-status="'+esc(o.id)+'" data-fm-newstatus="'+ns+'">'+FM_STATUS_L[ns]+'</button>';
           });
-          html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#ef4444;color:#fff;border:none;border-radius:6px" data-fm-status="'+esc(o.id)+'" data-fm-newstatus="4">Stornieren</button>';
+          html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#ef4444;color:#fff;border:none;border-radius:6px" data-fm-storno="'+esc(o.id)+'" data-fm-storno-nr="'+esc(o.bestellnummer||'')+'" data-fm-storno-name="'+esc(o.name||'')+'">Stornieren</button>';
         }
         html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#1e40af;color:#fff;border:none;border-radius:6px" data-fm-reply="'+esc(o.id)+'">Nachricht senden</button>';
         html+='</div>';
@@ -12092,19 +12144,68 @@
       });
     });
 
-    // Status change buttons
+    // Status change buttons (non-storno)
     document.querySelectorAll('[data-fm-status]').forEach(function(btn){
       btn.addEventListener('click',function(e){
         e.stopPropagation();
         var id=btn.getAttribute('data-fm-status');
         var ns=parseInt(btn.getAttribute('data-fm-newstatus'),10);
-        if(ns===4&&!confirm('Bestellung wirklich stornieren?')) return;
         btn.disabled=true;btn.textContent='...';
         fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:ns})})
         .then(function(r){return r.json();}).then(function(d){
           if(d.success) cmsLoadFleischOrders();
           else{btn.disabled=false;btn.textContent='Fehler';alert(d.error||'Fehler');}
         }).catch(function(){btn.disabled=false;btn.textContent='Fehler';});
+      });
+    });
+
+    // Metzger storno buttons – open dialog with reason
+    var CMS_FM_STORNO_REASONS=['Ware nicht verfügbar','Bestellung wurde doppelt aufgegeben','Kunde hat telefonisch storniert','Mindestbestellmenge nicht erreicht','Sonstiger Grund'];
+    document.querySelectorAll('[data-fm-storno]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var id=btn.getAttribute('data-fm-storno');
+        var bestellnr=btn.getAttribute('data-fm-storno-nr')||'?';
+        var name=btn.getAttribute('data-fm-storno-name')||'';
+        var overlay=document.createElement('div');
+        overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
+        var modal=document.createElement('div');
+        modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
+        modal.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
+          +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr)+' – '+esc(name)+'</div>'
+          +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
+          +'<div id="cms-fm-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
+          +'<textarea id="cms-fm-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
+          +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-fm-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>'
+          +'<button id="cms-fm-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
+        overlay.appendChild(modal);document.body.appendChild(overlay);
+        var optsDiv=modal.querySelector('#cms-fm-storno-opts');var selectedReason='';
+        CMS_FM_STORNO_REASONS.forEach(function(r){
+          var opt=document.createElement('label');
+          opt.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s';
+          opt.innerHTML='<input type="radio" name="cms-fm-storno-reason" value="'+esc(r)+'" style="accent-color:#dc2626"> '+esc(r);
+          opt.querySelector('input').addEventListener('change',function(){
+            selectedReason=r;
+            modal.querySelector('#cms-fm-storno-confirm').disabled=false;
+            modal.querySelector('#cms-fm-storno-confirm').style.opacity='1';
+            optsDiv.querySelectorAll('label').forEach(function(l){l.style.borderColor='#e5e7eb';l.style.background='';});
+            opt.style.borderColor='#dc2626';opt.style.background='#fef2f2';
+          });
+          optsDiv.appendChild(opt);
+        });
+        modal.querySelector('#cms-fm-storno-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
+        overlay.addEventListener('click',function(ev){if(ev.target===overlay) document.body.removeChild(overlay);});
+        modal.querySelector('#cms-fm-storno-confirm').addEventListener('click',function(){
+          if(!selectedReason) return;
+          var comment=(modal.querySelector('#cms-fm-storno-comment').value||'').trim();
+          var grund='Storniert: '+selectedReason+(comment?' – '+comment:'');
+          document.body.removeChild(overlay);
+          fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:4,storno_grund:grund})})
+          .then(function(r){return r.json();}).then(function(d){
+            if(d.success) cmsLoadFleischOrders();
+            else alert(d.error||'Fehler');
+          }).catch(function(){alert('Verbindungsfehler');});
+        });
       });
     });
 

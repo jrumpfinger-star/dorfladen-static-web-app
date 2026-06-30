@@ -2641,21 +2641,31 @@
             var nr=btn.getAttribute('data-cancel-nr')||'';
             // Replace button with inline confirm
             var wrapper=btn.parentNode;
-            var confirmHtml='<div data-cancel-confirm style="display:flex;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px">';
-            confirmHtml+='<span style="font-size:12px;color:#991b1b;font-weight:600">'+esc(nr)+' wirklich stornieren?</span>';
-            confirmHtml+='<button data-cancel-yes="'+esc(orderId)+'" style="padding:6px 12px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:12px;font-weight:700;cursor:pointer">Ja, stornieren</button>';
+            var confirmHtml='<div data-cancel-confirm style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px">';
+            confirmHtml+='<div style="font-size:12px;color:#991b1b;font-weight:600;margin-bottom:6px">'+esc(nr)+' wirklich stornieren?</div>';
+            confirmHtml+='<input type="text" data-cancel-reason placeholder="Grund f\u00fcr Stornierung (Pflichtfeld)" maxlength="200" style="width:100%;padding:6px 10px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;box-sizing:border-box;margin-bottom:6px">';
+            confirmHtml+='<div style="display:flex;gap:6px">';
+            confirmHtml+='<button data-cancel-yes="'+esc(orderId)+'" style="padding:6px 12px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:12px;font-weight:700;cursor:pointer;opacity:.4" disabled>Ja, stornieren</button>';
             confirmHtml+='<button data-cancel-no style="padding:6px 12px;border:none;border-radius:6px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:600;cursor:pointer">Abbrechen</button>';
-            confirmHtml+='</div>';
+            confirmHtml+='</div></div>';
             btn.style.display='none';
             wrapper.insertAdjacentHTML('beforeend',confirmHtml);
+            var reasonInput=wrapper.querySelector('[data-cancel-reason]');
+            var yesBtn=wrapper.querySelector('[data-cancel-yes]');
+            reasonInput.addEventListener('input',function(){
+              var hasText=reasonInput.value.trim().length>0;
+              yesBtn.disabled=!hasText;yesBtn.style.opacity=hasText?'1':'.4';
+            });
+            reasonInput.focus();
             wrapper.querySelector('[data-cancel-no]').addEventListener('click',function(){
               wrapper.querySelector('[data-cancel-confirm]').remove();
               btn.style.display='';
             });
-            wrapper.querySelector('[data-cancel-yes]').addEventListener('click',function(){
-              var yesBtn=wrapper.querySelector('[data-cancel-yes]');
+            yesBtn.addEventListener('click',function(){
+              var grund=reasonInput.value.trim();
+              if(!grund){showToast('Bitte Stornierungsgrund angeben');return;}
               yesBtn.disabled=true;yesBtn.textContent='Wird storniert\u2026';
-              fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,customer_action:'cancel'})})
+              fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,customer_action:'cancel',storno_grund:'Kundengrund: '+grund})})
                 .then(function(r){return r.json();})
                 .then(function(x){if(x.success){showToast('Bestellung storniert');document.getElementById('shop-history-btn').click();}else{showToast('Fehler: '+(x.error||'Storno nicht m\u00f6glich'));wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';}})
                 .catch(function(e){showToast('Fehler: '+e.message);wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';});

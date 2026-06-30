@@ -1747,3 +1747,91 @@ test.describe('Bestellstatus – Lucide Icons', () => {
     expect(svgIcons).toBeGreaterThan(0);
   });
 });
+
+// ═══════════════════════════════════════════════════════════
+// AK-ST – Storno mit Begründung
+// ═══════════════════════════════════════════════════════════
+test.describe('AK-ST – Storno mit Begründung', () => {
+  test('T-ST-01 Kiosk Shop-Storno ruft showShopStornoDialog auf (AK-ST-02)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('showShopStornoDialog');
+    expect(content).toContain('SHOP_STORNO_REASONS');
+    expect(content).toContain('Stornierungsgrund (Pflichtfeld)');
+  });
+
+  test('T-ST-02 Kiosk Metzger-Storno ruft showMetzgerStornoDialog auf (AK-ST-03)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('showMetzgerStornoDialog');
+    expect(content).toContain('METZGER_STORNO_REASONS');
+  });
+
+  test('T-ST-03 Kiosk Shop-Storno: Button disabled ohne Grund (AK-ST-02)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // Verify that the confirm button starts disabled in the dialog template
+    const content = await page.content();
+    expect(content).toContain('storno-shop-confirm');
+    expect(content).toContain('disabled>Stornieren');
+  });
+
+  test('T-ST-04 Kiosk Metzger-Storno: Button disabled ohne Grund (AK-ST-03)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('storno-fm-confirm');
+    expect(content).toContain('disabled>Stornieren');
+  });
+
+  test('T-ST-05 Shop-Kundenansicht: Storno hat Pflicht-Grund-Textfeld (AK-ST-07)', async ({ page }) => {
+    await page.goto(`${BASE}/shop.html`);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('data-cancel-reason');
+    expect(content).toContain('Grund f\u00fcr Stornierung (Pflichtfeld)');
+  });
+
+  test('T-ST-06 Bestellstatus Fleisch-Storno: prompt mit Begründung (AK-ST-08)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('Bitte geben Sie einen Grund an');
+    expect(content).toContain('Stornierungsgrund');
+  });
+
+  test('T-ST-07 CMS Shop-Storno: cmsShowShopStornoDialog (AK-ST-05)', async ({ page }) => {
+    await page.goto(`${BASE}/cms.html`);
+    await page.waitForTimeout(2000);
+    const content = await page.content();
+    expect(content).toContain('cmsShowShopStornoDialog');
+    expect(content).toContain('CMS_SHOP_STORNO_REASONS');
+  });
+
+  test('T-ST-08 CMS Metzger-Storno: Dialog mit Gründen (AK-ST-06)', async ({ page }) => {
+    await page.goto(`${BASE}/cms.html`);
+    await page.waitForTimeout(2000);
+    const content = await page.content();
+    expect(content).toContain('CMS_FM_STORNO_REASONS');
+    expect(content).toContain('data-fm-storno');
+  });
+
+  test('T-ST-09 Kiosk sendet storno_grund statt personal_antwort (AK-ST-04)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    // Shop und Metzger setShopStatus/setMetzgerStatus sollen storno_grund nutzen
+    expect(content).toContain('payload.storno_grund');
+    // Sicherstellen, dass personal_antwort NICHT für Storno verwendet wird
+    expect(content).not.toContain('payload.personal_antwort = grund');
+  });
+
+  test('T-ST-10 CMS sendet storno_grund statt personal_antwort (AK-ST-04)', async ({ page }) => {
+    await page.goto(`${BASE}/cms.html`);
+    await page.waitForTimeout(2000);
+    const content = await page.content();
+    expect(content).toContain('storno_grund');
+  });
+});

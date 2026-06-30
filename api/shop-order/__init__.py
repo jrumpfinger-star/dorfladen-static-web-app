@@ -594,10 +594,11 @@ def _handle_patch(req, dv_token, base_url, headers):
     kunde_kommentar = body.get("kunde_kommentar")
     personal_antwort = body.get("personal_antwort")
     kommentar_gelesen = body.get("kommentar_gelesen")
+    storno_grund = body.get("storno_grund")
 
     has_update = (new_status is not None or pack_json is not None or customer_action
                   or kunde_kommentar is not None or personal_antwort is not None
-                  or kommentar_gelesen is not None)
+                  or kommentar_gelesen is not None or storno_grund is not None)
     if not order_id or not has_update:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "id und Änderung erforderlich"}),
@@ -712,6 +713,8 @@ def _handle_patch(req, dv_token, base_url, headers):
         patch_payload["dl_personal_antwort"] = personal_antwort.strip()
     if kommentar_gelesen is not None:
         patch_payload["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
+    if storno_grund is not None:
+        patch_payload["dl_storno_grund"] = storno_grund.strip()
     if not patch_payload:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Nichts zu aktualisieren"}),

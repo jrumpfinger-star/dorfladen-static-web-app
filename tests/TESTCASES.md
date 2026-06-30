@@ -1986,3 +1986,53 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Aktion:** `/kiosk` laden
 - **Prüfung:** CSS-Regel `#mittag-orders` mit `grid-template-columns` existiert
 - **Erwartung:** 2-Spalten-Layout für Mittagstisch auf breiten Screens
+
+---
+
+## AK-ST – Storno mit Begründung
+> Spec: specs/storno-begruendung.md
+
+### T-ST-01 Kiosk Shop-Storno ruft showShopStornoDialog auf (AK-ST-02)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** Page-Source enthält `showShopStornoDialog`, `SHOP_STORNO_REASONS`, `Stornierungsgrund (Pflichtfeld)`
+- **Erwartung:** Shop-Storno nutzt Dialog statt direktem Status-Update
+
+### T-ST-02 Kiosk Metzger-Storno ruft showMetzgerStornoDialog auf (AK-ST-03)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** Page-Source enthält `showMetzgerStornoDialog`, `METZGER_STORNO_REASONS`
+- **Erwartung:** Metzger-Storno nutzt Dialog mit Pflicht-Begründung
+
+### T-ST-03 Kiosk Shop-Storno: Button disabled ohne Grund (AK-ST-02)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** Page-Source enthält `storno-shop-confirm` und `disabled>Stornieren`
+- **Erwartung:** Stornieren-Button ist initial deaktiviert
+
+### T-ST-04 Kiosk Metzger-Storno: Button disabled ohne Grund (AK-ST-03)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** Page-Source enthält `storno-fm-confirm` und `disabled>Stornieren`
+- **Erwartung:** Stornieren-Button ist initial deaktiviert
+
+### T-ST-05 Shop-Kundenansicht: Storno hat Pflicht-Grund-Textfeld (AK-ST-07)
+- **Aktion:** `/shop.html` laden
+- **Prüfung:** Page-Source enthält `data-cancel-reason` und `Grund für Stornierung (Pflichtfeld)`
+- **Erwartung:** Kundenansicht hat Pflicht-Textfeld für Stornierungsgrund
+
+### T-ST-06 Bestellstatus Fleisch-Storno: prompt mit Begründung (AK-ST-08)
+- **Aktion:** `/bestellstatus` laden
+- **Prüfung:** Page-Source enthält `Bitte geben Sie einen Grund an` und `Stornierungsgrund`
+- **Erwartung:** Fleisch-Kunden-Storno erfordert Begründung
+
+### T-ST-07 CMS Shop-Storno: cmsShowShopStornoDialog (AK-ST-05)
+- **Aktion:** `/cms.html` laden
+- **Prüfung:** Page-Source enthält `cmsShowShopStornoDialog` und `CMS_SHOP_STORNO_REASONS`
+- **Erwartung:** CMS nutzt Dialog statt confirm() für Shop-Storno
+
+### T-ST-08 CMS Metzger-Storno: Dialog mit Gründen (AK-ST-06)
+- **Aktion:** `/cms.html` laden
+- **Prüfung:** Page-Source enthält `CMS_FM_STORNO_REASONS` und `data-fm-storno`
+- **Erwartung:** CMS nutzt Dialog statt confirm() für Metzger-Storno
+
+### Testlauf-Tabelle
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| *ausstehend* | T-ST-01 bis T-ST-08 | – | Warte auf Deploy + Feld-Migration |
