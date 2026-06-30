@@ -34,6 +34,13 @@
     .k-tab-badge.blink{animation:badgeBlink 1s ease-in-out infinite}
     @keyframes badgeBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.15)}}
     @media(max-width:600px){
+      /* ── Mobile: compact header (≈50% smaller) ── */
+      .k-header{padding:6px 12px;gap:8px}
+      .k-header h1{font-size:16px}
+      .k-header h1 i{width:18px!important;height:18px!important}
+      .k-header .k-date,.k-header .k-clock,.k-header #k-sparkline{display:none!important}
+      .k-header .k-btn{min-height:32px!important;min-width:32px!important;padding:4px!important}
+      .k-header .k-btn i{width:16px!important;height:16px!important}
       .k-tab{padding:10px 4px;font-size:11px;gap:1px;min-height:44px}
       .k-tab .k-tab-icon i{width:18px!important;height:18px!important}
       /* ── Mobile: slot group header wraps ── */
