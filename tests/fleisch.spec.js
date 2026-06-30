@@ -652,3 +652,103 @@ test.describe('T-23 Kiosk Sammelbestellung Status (AK-FLEISCH-23)', () => {
     expect(hasFn).toBe(true);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  T-26: Metzger Label-Refactoring, Workflow & Historie (AK-FLEISCH-26)
+// ════════════════════════════════════════════════════
+
+test.describe('T-26 Metzger Label-Refactoring, Workflow & Historie (AK-FLEISCH-26)', () => {
+
+  test('T-26-01 Kiosk STATUS_LABELS enthält In Bestellung (AK-FLEISCH-26)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasLabel = await page.evaluate(() => document.documentElement.innerHTML.includes("1:'In Bestellung'"));
+    expect(hasLabel).toBe(true);
+  });
+
+  test('T-26-02 Kein Beim Metzger Text in kiosk.html (AK-FLEISCH-26)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasBM = await page.evaluate(() => document.documentElement.innerHTML.includes('Beim Metzger'));
+    expect(hasBM).toBe(false);
+  });
+
+  test('T-26-03 shop.html FM_ST enthält In Bestellung (AK-FLEISCH-26)', async ({ page }) => {
+    await page.goto(SHOP_URL);
+    await page.waitForTimeout(3000);
+    const hasLabel = await page.evaluate(() => document.documentElement.innerHTML.includes("1:'In Bestellung'"));
+    expect(hasLabel).toBe(true);
+  });
+
+  test('T-26-04 fleisch-bestellen.html FM_STATUS enthält In Bestellung (AK-FLEISCH-26)', async ({ page }) => {
+    await page.goto(FLEISCH_URL);
+    await page.waitForTimeout(3000);
+    const hasLabel = await page.evaluate(() => document.documentElement.innerHTML.includes("1:'In Bestellung'"));
+    expect(hasLabel).toBe(true);
+  });
+
+  test('T-26-05 bestellstatus.html Timeline-Label In Bestellung (AK-FLEISCH-26)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(3000);
+    const hasLabel = await page.evaluate(() => document.documentElement.innerHTML.includes("label:'In Bestellung'"));
+    expect(hasLabel).toBe(true);
+  });
+
+  test('T-26-06 Kiosk Metzger-Header zeigt keine X Pos Info (AK-FLEISCH-26)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // Click Metzger tab
+    await page.locator('[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    // Check that no order header contains "Pos." text (except progress counter like 0/1)
+    const headers = page.locator('.k-order-hdr, [class*="k-oc"]');
+    const count = await headers.count();
+    if (count > 0) {
+      for (let i = 0; i < Math.min(count, 5); i++) {
+        const text = await headers.nth(i).textContent();
+        // Should not contain "X Pos." pattern
+        expect(text).not.toMatch(/\d+\s*Pos\./);
+      }
+    }
+  });
+
+  test('T-26-08 API mode=kiosk_history liefert abgeschlossene Bestellungen (AK-FLEISCH-26)', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/fleisch-order?mode=kiosk_history`);
+    expect(res.status()).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(Array.isArray(data.bestellungen)).toBe(true);
+    // All returned orders should have status >= 3
+    for (const b of data.bestellungen) {
+      expect(b.status).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  test('T-26-09 Historie-Tab zeigt Bestellungen (AK-FLEISCH-26)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // Click Metzger tab
+    await page.locator('[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    // Click Historie filter
+    await page.locator('[data-fm-filter="historie"]').click();
+    await page.waitForTimeout(3000);
+    // Should show orders, not "Keine Bestellungen"
+    const container = page.locator('#metzger-orders');
+    const text = await container.textContent();
+    expect(text).not.toContain('Keine abgeschlossenen Bestellungen');
+    // Should contain at least one status badge (Abgeholt or Storniert)
+    const hasStatus = text.includes('Abgeholt') || text.includes('Storniert');
+    expect(hasStatus).toBe(true);
+  });
+
+  test('T-26-11 Button Text Alle bestellt (AK-FLEISCH-26)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // Check that the "Alle bestellt" button exists and NOT "Alle beim Metzger bestellt"
+    const hasNewText = await page.evaluate(() => document.documentElement.innerHTML.includes('Alle bestellt'));
+    expect(hasNewText).toBe(true);
+    const hasOldText = await page.evaluate(() => document.documentElement.innerHTML.includes('Alle beim Metzger bestellt'));
+    expect(hasOldText).toBe(false);
+  });
+});

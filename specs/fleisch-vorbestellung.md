@@ -459,6 +459,19 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Sammelbestellung: Keine Aggregation gleicher Artikel (jede Position einzeln mit Kundenname)
 - [x] API: `einzelpositionen` statt `aggregiert` im Sammelbestellungs-Response
 
+### AK-FLEISCH-26: Metzger Label-Refactoring, Workflow & Historie
+- [x] Label: "Beim Metzger" → "In Bestellung" in kiosk.html, shop.html, fleisch-bestellen.html, cms.js, bestellstatus.html
+- [x] Label: Checkbox-Titel "Beim Metzger bestellt" → "Bestellt"
+- [x] Label: Button "Alle beim Metzger bestellt" → "Alle bestellt"
+- [x] Workflow: Neu (0) → In Bestellung (1) → Abgeholt (3), kein Zwischenstatus "Eingetroffen" (2)
+- [x] Auto-Advance: Status 0→1 wenn alle Items bestellt (Einzelbestellung + Sammelbestellung)
+- [x] Auto-Reset: Status 1→0 wenn ein Item entcheckt wird
+- [x] UI: "X Pos." Label aus Mobile-Header entfernt
+- [x] UI: Footer-Buttons immer inline (kein Stacking auf iPad Mini)
+- [x] API: Neuer Mode `kiosk_history` für abgeschlossene/stornierte Bestellungen (Status ≥ 3)
+- [x] Frontend: Historie-Tab lädt Daten über separate API statt aus dem Kiosk-Dataset zu filtern
+- [x] Frontend: Auto-Refresh überschreibt Historie-View nicht
+
 ### AK-FLEISCH-25: Kiosk Mittagstisch UI/UX Optimierung
 - [x] Collapse/Expand-Button platzsparend (kleiner, Kurztext)
 - [x] Preis im Header der Bestellkarte statt im Body

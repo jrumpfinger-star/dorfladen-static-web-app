@@ -23,7 +23,7 @@
 
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
-| K-01 | Sammelbestellung PDF/Druck | 🔴 | 🔧 | Sammelbestellung-Tab existiert, Druckansicht teilweise (CSS `@media print`) |
+| K-01 | Sammelbestellung PDF/Druck | 🔴 | ✅ | Sammelbestellung-Tab mit Filter, renderSammelbestellung(), printMetzgerSammel() (Druckfenster), "Alle beim Metzger bestellt" Button |
 | K-02 | Sound/Vibrationsalarm | 🔴 | ✅ | Audio-Alert + Badge-Pulse bei neuen Bestellungen (Mittagstisch, Shop, Fleisch) |
 | K-03 | Auto-Refresh | 🟡 | ✅ | 30s Intervall implementiert |
 | K-04 | Bestätigungs-History/Audit-Trail | 🟡 | ❌ | Wer hat wann welche Bestellung bestätigt? |
@@ -36,8 +36,8 @@
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
 | C-01 | Undo/Rückgängig | 🔴 | ✅ | Undo-Toast (8s) für Angebote-, Wochenplan-, News-Löschung + Seiteninhalte-Save |
-| C-02 | Vorschau-Modus | 🟡 | ❌ | Änderungen vor Speichern in Live-Vorschau sehen |
-| C-03 | Bilder Drag & Drop | 🟡 | 🔧 | Drag & Drop für Artikel-Reihenfolge existiert, Bild-Upload via Zwischenablage/SharePoint vorhanden, kein direktes Bild-Drag&Drop |
+| C-02 | Vorschau-Modus | 🟡 | ✅ | Live-Vorschau für Wochenplan (Desktop/Mobil Toggle), Angebote-Plakat, Angebote-Flyer, Homepage-Angebote mit Template-Auswahl |
+| C-03 | Bilder Drag & Drop | 🟡 | ✅ | Drag & Drop für Artikel-Reihenfolge (draggable rows), Bild-Paste + Drag&Drop Zone für Social-Media-Bilder, Flyer-Bilder D&D |
 | C-04 | Änderungsprotokoll | 🟡 | ❌ | Wer hat wann was geändert? |
 | C-05 | Mobile-Optimierung CMS | 🟢 | ❌ | Tab-Navigation eng auf Tablet |
 
@@ -62,7 +62,7 @@
 | A-01 | Batch-Aktionen | 🟡 | ✅ | In `shop-freigabe.html` implementiert (Alle freigeben/sperren, Batch-Bar) |
 | A-02 | Tagesstatistiken | 🟡 | ✅ | Umsatz-Kachel im Shop-Admin-Dashboard (API summary.summe); Mittagstisch hat Portionen+Umsatz |
 | A-03 | CSV/Excel-Export | 🟡 | ✅ | CSV-Export-Button in Shop-Admin + Lunch-Admin (BOM+Semikolon für Excel) |
-| A-04 | Benachrichtigungs-Indikator | 🟢 | 🔧 | Kiosk: vollständig (NEU-Badge, Counter, Gelesen-Buttons); Shop-Admin: fehlt |
+| A-04 | Benachrichtigungs-Indikator | 🟢 | ✅ | Kiosk: NEU-Badge, Counter, Gelesen-Buttons; Shop-Admin: badge-shop (offene Bestellungen) + badge-mittag (offene MT-Orders) mit admin-tab-badge.show |
 
 ---
 
@@ -83,8 +83,8 @@
 | # | Feature | Prio | Status | Details |
 |---|---------|------|--------|---------|
 | B-01 | QR-Code | 🟢 | ❌ | Bestellnummer als QR für schnelles Vorzeigen im Laden |
-| B-02 | Push bei Status-Änderung | 🔴 | 🔧 | Push-Infrastruktur existiert (SW, VAPID, subscribe/unsubscribe), aber Status-Trigger fehlt |
-| B-03 | Timeline-Visualisierung | 🟡 | 🔧 | CSS existiert (`.bs-tl-*`), wird aber nicht genutzt |
+| B-02 | Push bei Status-Änderung | 🔴 | ✅ | Push bei Bestellung (lunch-order, shop-order, fleisch-order → push-send), Status-Änderung (shop-notify), Nachrichten-Push |
+| B-03 | Timeline-Visualisierung | 🟡 | ✅ | buildTimeline() mit CSS `.bs-tl-*`, Schritte done/active/cancelled, in renderOrder() + renderFleischOrder() integriert |
 | B-04 | Bestellung per WhatsApp teilen | 🟢 | ❌ | Link teilen ("Mein Liefertag ist...") |
 
 ---
@@ -127,12 +127,12 @@
 
 | Status | Anzahl |
 |--------|--------|
-| ✅ Umgesetzt | 22 |
-| 🔧 Teilweise | 5 |
-| ❌ Offen | 16 |
+| ✅ Umgesetzt | 28 |
+| 🔧 Teilweise | 3 |
+| ❌ Offen | 12 |
 | **Gesamt** | **43** |
 
 ### Verbleibende Quick Wins
 1. **H-04** – Skeleton-Klasse an Loading-States anhängen (30 Min)
-2. **K-04** – Bestätigungs-Audit-Trail (1–2h)
-3. **S-04** – Mengen-Schnellwahl +/- Buttons (30 Min)
+2. **B-01** – QR-Code für Bestellnummer (30 Min)
+3. **B-04** – WhatsApp-Teilen Bestellstatus (15 Min)

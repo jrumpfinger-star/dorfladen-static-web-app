@@ -1503,10 +1503,10 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Erwartung:** Labels sind: Neu, Bestätigt, Abholbereit, Abgeholt, Storniert
 > Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-22
 
-### T-22-05: Kiosk behält interne Labels
+### T-22-05: Kiosk zeigt aktualisierte interne Labels
 - **Aktion:** Kiosk Metzger-Tab öffnen
 - **Prüfung:** STATUS_LABELS im Kiosk-JS
-- **Erwartung:** Kiosk zeigt weiterhin „Beim Metzger" und „Eingetroffen" (interne Labels)
+- **Erwartung:** Kiosk zeigt „In Bestellung" (AK-FLEISCH-26: Refactoring von „Beim Metzger")
 > Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-22
 
 ### Testlauf-Tabelle
@@ -1539,10 +1539,10 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung:** Jede Zeile hat 5 Zellen, letzte Zelle zeigt ✅, X/Y, oder —
 - **Erwartung:** ✅ = alle bestellt, X/Y = teilbestellt (orange), — = keine bestellt (grau)
 
-### T-23-04: Button Text: „Alle beim Metzger bestellt"
+### T-23-04: Button Text: „Alle bestellt"
 - **Aktion:** Kiosk → Metzger → Sammelbestellung
 - **Prüfung:** Button-Text im Sammelbestellung-Header
-- **Erwartung:** „Alle beim Metzger bestellt" (nicht nur „Alle bestellt")
+- **Erwartung:** „Alle bestellt" (AK-FLEISCH-26: Refactoring von „Alle beim Metzger bestellt")
 
 ### T-23-05: Filter-Leiste sticky ohne Gap
 - **Aktion:** Kiosk → Metzger-Tab öffnen, Filter-Leiste CSS prüfen
@@ -1760,3 +1760,64 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-39-02 Shop Antwort-Dialog | ✅ Pass |
 | 2026-06-30 | T-39-03 NEU-Badge sichtbar | ✅ Pass |
 | 2026-06-30 | T-39-04 Kunden-Nachricht angezeigt | ✅ Pass |
+
+---
+
+## T-26 – Metzger Label-Refactoring, Workflow & Historie (AK-FLEISCH-26)
+
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-26
+
+### T-26-01: Kiosk STATUS_LABELS enthält „In Bestellung" (AK-FLEISCH-26)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** `document.documentElement.innerHTML.includes("'In Bestellung'")` im Kiosk-JS
+- **Erwartung:** STATUS_LABELS[1] === 'In Bestellung', kein 'Beim Metzger'
+
+### T-26-02: Kein „Beim Metzger" Text in kiosk.html (AK-FLEISCH-26)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** `!document.documentElement.innerHTML.includes('Beim Metzger')`
+- **Erwartung:** Kein Vorkommen von „Beim Metzger" im HTML
+
+### T-26-03: shop.html FM_ST enthält „In Bestellung" (AK-FLEISCH-26)
+- **Aktion:** `/shop` laden
+- **Prüfung:** `document.documentElement.innerHTML.includes("1:'In Bestellung'")` 
+- **Erwartung:** Status 1 = 'In Bestellung'
+
+### T-26-04: fleisch-bestellen.html FM_STATUS enthält „In Bestellung" (AK-FLEISCH-26)
+- **Aktion:** `/fleisch-bestellen` laden
+- **Prüfung:** `document.documentElement.innerHTML.includes("1:'In Bestellung'")`
+- **Erwartung:** Status 1 = 'In Bestellung'
+
+### T-26-05: bestellstatus.html Timeline-Label „In Bestellung" (AK-FLEISCH-26)
+- **Aktion:** `/bestellstatus` laden
+- **Prüfung:** `document.documentElement.innerHTML.includes("label:'In Bestellung'")`
+- **Erwartung:** Timeline-Step hat Label 'In Bestellung'
+
+### T-26-06: Kiosk Metzger-Header zeigt keine „X Pos." Info (AK-FLEISCH-26)
+- **Aktion:** Kiosk → Metzger-Tab → Bestellkarten-Header prüfen
+- **Prüfung:** Kein Text „Pos." im Header-Bereich (außer Fortschritts-Counter)
+- **Erwartung:** Nur Name + Status-Badge im Header, kein „X Pos."
+
+### T-26-07: Footer-Buttons immer inline (AK-FLEISCH-26)
+- **Aktion:** Kiosk → Metzger → Bestellung aufklappen, Viewport 768px
+- **Prüfung:** `.fm-footer` hat `display:flex` und Buttons sind nebeneinander
+- **Erwartung:** Buttons wrappen nicht vertikal
+
+### T-26-08: API mode=kiosk_history liefert abgeschlossene Bestellungen (AK-FLEISCH-26)
+- **Aktion:** GET `/api/fleisch-order?mode=kiosk_history`
+- **Prüfung:** Response `success: true`, `bestellungen` Array, jede Bestellung hat `status >= 3`
+- **Erwartung:** Nur Bestellungen mit Status Abgeholt (3) oder Storniert (4)
+
+### T-26-09: Historie-Tab zeigt Bestellungen (AK-FLEISCH-26)
+- **Aktion:** Kiosk → Metzger → Historie-Tab klicken
+- **Prüfung:** Container zeigt Bestellkarten mit Status „Abgeholt" oder „Storniert"
+- **Erwartung:** Mindestens 1 Bestellung sichtbar, kein „Keine Bestellungen"
+
+### T-26-10: Auto-Advance Neu→In Bestellung (AK-FLEISCH-26)
+- **Aktion:** Kiosk → Metzger → Bestellung Status 0 → alle Items abhaken
+- **Prüfung:** Status-Badge wechselt von „Neu" auf „In Bestellung"
+- **Erwartung:** Automatischer Status-Wechsel 0→1 nach letztem Item-Check
+
+### T-26-11: Button Text „Alle bestellt" (AK-FLEISCH-26)
+- **Aktion:** Kiosk → Metzger → Sammelbestellung
+- **Prüfung:** Button-Text prüfen
+- **Erwartung:** „Alle bestellt" (nicht „Alle beim Metzger bestellt")
