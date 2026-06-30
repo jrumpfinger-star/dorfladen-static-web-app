@@ -2030,6 +2030,16 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   function fmtPreis(p){var n=parseFloat(p);if(isNaN(n))return p;return n.toFixed(2).replace('.',',')+' €';}
   function esc(s){if(!s)return '';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
+  // Feature-Flag: TagesInfo immer anzeigen (auch nach Ladenschluss)
+  var _tagesInfoImmer=false;
+  fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfgRes){
+    if(cfgRes&&cfgRes.data){
+      var ff=cfgRes.data.feature_flags;
+      if(typeof ff==='string'){try{ff=JSON.parse(ff);}catch(e){ff={};}}
+      if(ff&&ff.tagesinfo_immer===true) _tagesInfoImmer=true;
+    }
+  }).catch(function(){}).then(function(){
+
   fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
     if(!res.success||!res.post)return;
     // Nach Ladenschluss heutige TagesInfo nicht mehr anzeigen
@@ -2055,6 +2065,9 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
     // Morgen-Posts immer anzeigen
     if(res.is_tomorrow){ _showPost(); return; }
+
+    // Flag: TagesInfo immer anzeigen → Zeitprüfung überspringen
+    if(_tagesInfoImmer){ _showPost(); return; }
 
     // Öffnungszeiten aus DB laden und prüfen
     fetch('/api/hours').then(function(r){return r.json();}).then(function(hRes){
@@ -2085,6 +2098,8 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       _showPost();
     }).catch(function(){ _showPost(); });
   }).catch(function(){});
+
+  }); // end cms-config then
 })();
 </script>
 

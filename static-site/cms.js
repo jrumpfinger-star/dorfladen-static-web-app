@@ -8985,12 +8985,14 @@
         var fm=document.getElementById('feat-mittagstisch');
         var fwi=document.getElementById('feat-wp-images');
         var fpi=document.getElementById('feat-post-images');
+        var fti=document.getElementById('feat-tagesinfo-immer');
         if(fp)fp.checked=flags.push!==false;
         if(fs)fs.checked=flags.scanner!==false;
         if(fo)fo.checked=flags.orders===true;
         if(fm)fm.checked=flags.mittagstisch===true;
         if(fwi)fwi.checked=flags.wp_images===true;
         if(fpi)fpi.checked=flags.post_images!==false;
+        if(fti)fti.checked=flags.tagesinfo_immer===true;
         _featureFlags=flags;
       }
     }).catch(function(e){
@@ -9005,7 +9007,8 @@
     var fm=document.getElementById('feat-mittagstisch');
     var fwi=document.getElementById('feat-wp-images');
     var fpi=document.getElementById('feat-post-images');
-    var flags={push:fp?fp.checked:true,scanner:fs?fs.checked:true,orders:fo?fo.checked:false,mittagstisch:fm?fm.checked:false,wp_images:fwi?fwi.checked:false,post_images:fpi?fpi.checked:true};
+    var fti=document.getElementById('feat-tagesinfo-immer');
+    var flags={push:fp?fp.checked:true,scanner:fs?fs.checked:true,orders:fo?fo.checked:false,mittagstisch:fm?fm.checked:false,wp_images:fwi?fwi.checked:false,post_images:fpi?fpi.checked:true,tagesinfo_immer:fti?fti.checked:false};
     var btn=document.getElementById('settings-save');
     var hint=document.getElementById('settings-saved-hint');
     var statusEl=document.getElementById('settings-status');

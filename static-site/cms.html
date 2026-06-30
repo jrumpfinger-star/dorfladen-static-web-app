@@ -1019,13 +1019,24 @@ document.head.appendChild(msalScript);
           </label>
         </div>
 
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f3f4f6">
           <div>
             <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128444;&#65039; Bilder im Social-Post</div>
             <div style="font-size:.78rem;color:#6b7280;margin-top:2px">Zeigt Produktbilder im generierten Social-Media-Poster an (falls vorhanden)</div>
           </div>
           <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
             <input type="checkbox" id="feat-post-images" checked style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128240; TagesInfo immer anzeigen</div>
+            <div style="font-size:.78rem;color:#6b7280;margin-top:2px">TagesInfo wird auch nach Ladenschluss angezeigt (zum Testen). Normalerweise 30 Min vor Schluss ausgeblendet.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-tagesinfo-immer" style="opacity:0;width:0;height:0">
             <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
           </label>
         </div>
