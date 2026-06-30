@@ -2597,15 +2597,17 @@
             if(o.status<3){
               html+='<div data-shop-comment-box="'+idx+'" style="margin-top:8px">';
               html+='<label style="font-size:13px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">'+lucideHtml('message-circle',14)+' Nachricht an den Dorfladen</label>';
-              html+='<textarea data-shop-comment="'+idx+'" data-shop-order-id="'+esc(o.id)+'" placeholder="Ihre Nachricht\u2026" maxlength="500" rows="2" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;resize:vertical;box-sizing:border-box"></textarea>';
-              html+='<button data-shop-comment-send="'+idx+'" style="margin-top:6px;padding:8px 18px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px">'+lucideHtml('send',14)+' Nachricht senden</button>';
-              html+='<div data-shop-comment-sent="'+idx+'" style="display:none;margin-top:6px;padding:8px 12px;background:#d1fae5;border-radius:8px;font-size:13px;color:#065f46;font-weight:600">\u2705 Nachricht gesendet</div>';
+              html+='<div style="display:flex;gap:6px;align-items:flex-end">';
+              html+='<textarea data-shop-comment="'+idx+'" data-shop-order-id="'+esc(o.id)+'" placeholder="Ihre Nachricht\u2026" maxlength="500" rows="1" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;resize:none;box-sizing:border-box;min-height:36px"></textarea>';
+              html+='<button data-shop-comment-send="'+idx+'" style="padding:8px 14px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0">'+lucideHtml('send',14)+' Senden</button>';
+              html+='</div>';
+              html+='<div data-shop-comment-sent="'+idx+'" style="display:none;margin-top:4px;padding:6px 10px;background:#d1fae5;border-radius:8px;font-size:12px;color:#065f46;font-weight:600">\u2705 Gesendet</div>';
               html+='</div>';
             }
             html+='</div>';
           }
           // Action buttons
-          html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
+          html+='<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:nowrap;align-items:center">';
           if(o.positionen&&o.positionen.length){
             html+='<button data-reorder="'+idx+'" data-reorder-nr="'+esc(o.bestellnummer)+'" data-reorder-pos=\''+JSON.stringify(o.positionen).replace(/'/g,"&#39;")+'\' style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:700;cursor:pointer">'+lucideHtml('repeat',14)+' Nochmal bestellen</button>';
           }
@@ -2683,7 +2685,7 @@
             fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,kunde_kommentar:text})})
               .then(function(r){return r.json();})
               .then(function(x){
-                btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Nachricht senden';
+                btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';
                 if(x.success){
                   ta.value='';
                   var sent=document.querySelector('[data-shop-comment-sent="'+idx+'"]');
@@ -2691,7 +2693,7 @@
                   showToast('\u2705 Nachricht gesendet');
                 } else {showToast('Fehler: '+(x.error||''));}
               })
-              .catch(function(e){btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Nachricht senden';showToast('Fehler: '+e.message);});
+              .catch(function(e){btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';showToast('Fehler: '+e.message);});
           });
         });
       })
