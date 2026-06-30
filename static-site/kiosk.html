@@ -952,7 +952,7 @@ var K = (function(){
     _soundMuted = !_soundMuted;
     localStorage.setItem('k_muted', _soundMuted ? '1' : '0');
     _initMuteBtn();
-    toast(_soundMuted ? '🔇 Ton aus' : '🔊 Ton an');
+    toast(_soundMuted ? 'Ton stumm geschaltet' : 'Ton aktiviert');
   }
   function _initAlertSound(){
     if(_alertSound) return;
@@ -1140,12 +1140,12 @@ var K = (function(){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        toast('✅ Antwort gesendet');
+        toast('Antwort wurde gesendet');
         _loadMessageOrders();
         loadMittagBadge();
-      } else { toast('Fehler: '+(res.error||'')); }
+      } else { toast('Senden fehlgeschlagen: '+(res.error||'Unbekannter Fehler')); }
     })
-    .catch(function(e){toast('Fehler: '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   function markMsgRead(id){
@@ -1178,7 +1178,7 @@ var K = (function(){
       .then(function(){
         done++;
         if(done>=unread.length){
-          toast('✅ Alle als gelesen markiert');
+          toast('Alle Nachrichten als gelesen markiert');
           _loadMessageOrders();
           loadMittagBadge();
           loadOrders();
@@ -1508,13 +1508,13 @@ var K = (function(){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        toast(status===1?'✅ Bestätigt':status===3?'📦 Abgeholt':'❌ Storniert');
+        toast(status===1?'Bestellung bestätigt':status===3?'Bestellung als abgeholt markiert':'Bestellung storniert');
         loadOrders();
       } else {
-        toast('Fehler: '+(res.error||''));
+        toast('Statusänderung fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
       }
     })
-    .catch(function(e){toast('Fehler: '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   function showConfirmDialog(id){
@@ -1544,7 +1544,7 @@ var K = (function(){
 
   function sendReply(id){
     var text = (document.getElementById('rpt-'+id)||{}).value || '';
-    if(!text.trim()){ toast('⚠️ Bitte Antwort eingeben'); return; }
+    if(!text.trim()){ toast('Bitte Antwort eingeben'); return; }
     fetch(API+'/lunch-order/'+id,{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
@@ -1553,13 +1553,13 @@ var K = (function(){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        toast('✅ Antwort gesendet (Push an Kunde)');
+        toast('Antwort gesendet – Kunde wird benachrichtigt');
         loadOrders();
       } else {
-        toast('Fehler: '+(res.error||''));
+        toast('Senden fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
       }
     })
-    .catch(function(e){toast('Fehler: '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   // ── Storno-Dialog mit Begründung ──
@@ -1760,7 +1760,7 @@ var K = (function(){
 
   function openNewOrder(){
     if(_isMittagCutoff()){
-      toast('🕐 Bestellschluss für heute ist 12:00 Uhr. Für morgen bitte zuerst den Tag wechseln.');
+      toast('Bestellschluss für heute erreicht (12:00 Uhr). Bitte zuerst den Tag wechseln.');
       return;
     }
     selectedKunde = null;
@@ -1913,7 +1913,7 @@ var K = (function(){
       var nn = document.getElementById('no-new-nachname').value.trim();
       var vn = document.getElementById('no-new-vorname').value.trim();
       kundenPhone = document.getElementById('no-new-phone').value.trim();
-      if(!nn){toast('❌ Nachname eingeben!');return;}
+      if(!nn){toast('Bitte Nachname eingeben');return;}
       kundenName = (vn?vn+' ':'')+nn;
       // Create Stammkunde first
       fetch(API+'/stammkunden',{
@@ -1930,20 +1930,20 @@ var K = (function(){
           stammkundeId = res.existing.id;
           doSubmitOrder(kundenName, kundenPhone, stammkundeId);
         } else {
-          toast('❌ '+(res.error||res.errors&&res.errors.join(', ')||'Kunde konnte nicht angelegt werden'));
+          toast('Kunde konnte nicht angelegt werden: '+(res.error||res.errors&&res.errors.join(', ')||'Unbekannter Fehler'));
         }
       });
       return;
     } else {
-      toast('❌ Bitte Kunden auswählen!');
+      toast('Bitte zuerst einen Kunden auswählen');
       return;
     }
-    if(!selectedDish){toast('❌ Bitte Gericht auswählen!');return;}
+    if(!selectedDish){toast('Bitte zuerst ein Gericht auswählen');return;}
     doSubmitOrder(kundenName, kundenPhone, stammkundeId);
   }
 
   function doSubmitOrder(name, phone, skId){
-    if(!selectedDish){toast('❌ Bitte Gericht auswählen!');return;}
+    if(!selectedDish){toast('Bitte zuerst ein Gericht auswählen');return;}
     var payload = {
       name: name,
       email: '',
@@ -1968,14 +1968,14 @@ var K = (function(){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        toast('✅ Bestellung aufgenommen: '+res.bestellnummer);
+        toast('Bestellung aufgenommen ('+res.bestellnummer+')');
         closeModal('modal-order');
         loadOrders();
       } else {
-        toast('❌ '+(res.errors?res.errors.join(', '):res.error||'Fehler'));
+        toast('Bestellung fehlgeschlagen: '+(res.errors?res.errors.join(', '):res.error||'Unbekannter Fehler'));
       }
     })
-    .catch(function(e){toast('❌ '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   // ══════════════════════════════════════════════════
@@ -1997,8 +1997,8 @@ var K = (function(){
     var phone = document.getElementById('nk-phone').value.trim();
     var email = document.getElementById('nk-email').value.trim();
     var note = document.getElementById('nk-note').value.trim();
-    if(!nachname){toast('❌ Nachname eingeben!');return;}
-    if(!phone){toast('❌ Telefon eingeben!');return;}
+    if(!nachname){toast('Bitte Nachname eingeben');return;}
+    if(!phone){toast('Bitte Telefonnummer eingeben');return;}
 
     fetch(API+'/stammkunden',{
       method:'POST',
@@ -2011,18 +2011,18 @@ var K = (function(){
     })
     .then(function(res){
       if(res.success){
-        toast('✅ Kunde angelegt: '+(res.customer&&res.customer.stammkunde_nr||''));
+        toast('Neuer Kunde angelegt ('+(res.customer&&res.customer.stammkunde_nr||'')+')');
         closeModal('modal-kunde');
         searchKunden();
       } else if(res.existing){
-        toast('ℹ️ Kunde existiert bereits: '+res.existing.name);
+        toast('Kunde existiert bereits: '+res.existing.name);
         closeModal('modal-kunde');
         searchKunden();
       } else {
-        toast('❌ '+(res.errors?res.errors.join(', '):res.error||'Fehler'));
+        toast('Kunde konnte nicht angelegt werden: '+(res.errors?res.errors.join(', '):res.error||'Unbekannter Fehler'));
       }
     })
-    .catch(function(e){toast('❌ '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   // ══════════════════════════════════════════════════
@@ -2034,7 +2034,7 @@ var K = (function(){
     if(!c){
       fetch(API+'/stammkunden/'+id).then(function(r){return r.json();}).then(function(res){
         if(res.success) _openEditKunde(res.customer);
-        else toast('❌ Kunde nicht gefunden');
+        else toast('Kunde nicht gefunden');
       });
       return;
     }
@@ -2058,8 +2058,8 @@ var K = (function(){
     var phone = document.getElementById('ek-phone').value.trim();
     var email = document.getElementById('ek-email').value.trim();
     var note = document.getElementById('ek-note').value.trim();
-    if(!nachname){toast('❌ Nachname eingeben!');return;}
-    if(!phone){toast('❌ Telefon eingeben!');return;}
+    if(!nachname){toast('Bitte Nachname eingeben');return;}
+    if(!phone){toast('Bitte Telefonnummer eingeben');return;}
 
     fetch(API+'/stammkunden/'+id,{
       method:'PATCH',
@@ -2069,29 +2069,29 @@ var K = (function(){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        toast('✅ Kunde aktualisiert');
+        toast('Kundendaten aktualisiert');
         closeModal('modal-edit-kunde');
         searchKunden();
       } else {
-        toast('❌ '+(res.error||'Fehler'));
+        toast('Aktualisierung fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
       }
     })
-    .catch(function(e){toast('❌ '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   function deleteKunde(id, name){
-    if(!confirm('Kunde "'+name+'" wirklich löschen?')) return;
+    if(!confirm('Kunde «'+name+'» wirklich deaktivieren?')) return;
     fetch(API+'/stammkunden/'+id,{method:'DELETE'})
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        toast('✅ Kunde deaktiviert');
+        toast('Kunde deaktiviert');
         searchKunden();
       } else {
-        toast('❌ '+(res.error||'Fehler'));
+        toast('Deaktivierung fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
       }
     })
-    .catch(function(e){toast('❌ '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   // ══════════════════════════════════════════════════
@@ -2585,14 +2585,14 @@ var K = (function(){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        var labels = {0:'↩ Zurück auf Neu',1:'📋 In Bearbeitung',2:'✅ Abholbereit',3:'📦 Abgeholt',4:'❌ Storniert'};
+        var labels = {0:'Status zurückgesetzt auf Neu',1:'Status: In Bearbeitung',2:'Status: Abholbereit',3:'Bestellung als abgeholt markiert',4:'Bestellung storniert'};
         toast(labels[status]||'Status aktualisiert');
         loadShopOrders();
       } else {
-        toast('Fehler: '+(res.error||''));
+        toast('Statusänderung fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
       }
     })
-    .catch(function(e){toast('Fehler: '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   // ── Shop message functions ──
@@ -2612,11 +2612,11 @@ var K = (function(){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success){
-        toast('✅ Antwort gesendet (Push an Kunde)');
+        toast('Antwort gesendet – Kunde wird benachrichtigt');
         loadShopOrders();
-      } else { toast('Fehler: '+(res.error||'')); }
+      } else { toast('Senden fehlgeschlagen: '+(res.error||'Unbekannter Fehler')); }
     })
-    .catch(function(e){toast('Fehler: '+e.message);});
+    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
   }
 
   function markShopMsgRead(id){
@@ -2649,16 +2649,16 @@ var K = (function(){
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
-          toast('🗑 Bestellung gelöscht');
+          toast('Bestellung wurde gelöscht');
           closeModal('modal-detail');
           loadShopOrders();
         } else {
-          toast('Fehler: '+(res.error||''));
+          toast('Löschen fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
           if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
         }
       })
       .catch(function(e){
-        toast('Fehler: '+e.message);
+        toast('Verbindungsfehler – bitte erneut versuchen');
         if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
       });
   }
@@ -3672,9 +3672,9 @@ var K = (function(){
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(patchBody)
     }).then(function(r){ return r.json(); }).then(function(data){
-      if(!data.success) toast('Fehler: '+(data.error||''));
+      if(!data.success) toast('Speichern fehlgeschlagen: '+(data.error||'Unbekannter Fehler'));
       renderMetzgerOrders();
-    }).catch(function(){ toast('Netzwerkfehler'); });
+    }).catch(function(){ toast('Verbindungsfehler – bitte erneut versuchen'); });
   }
 
   function toggleAllFmItems(orderId, val){
@@ -3693,9 +3693,9 @@ var K = (function(){
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(body)
     }).then(function(r){ return r.json(); }).then(function(data){
-      if(!data.success) toast('Fehler: '+(data.error||''));
+      if(!data.success) toast('Speichern fehlgeschlagen: '+(data.error||'Unbekannter Fehler'));
       renderMetzgerOrders();
-    }).catch(function(){ toast('Netzwerkfehler'); });
+    }).catch(function(){ toast('Verbindungsfehler – bitte erneut versuchen'); });
   }
 
   function revertMetzgerStatus(id, currentStatus){
@@ -3713,12 +3713,12 @@ var K = (function(){
       body: JSON.stringify({id:id, status:status})
     }).then(function(r){return r.json();}).then(function(data){
       if(data.success){
-        toast((status===4?'\u274C Storniert':'\u2705 Status aktualisiert'));
+        toast(status===4?'Bestellung storniert':'Status aktualisiert');
         loadMetzgerOrders();
       } else {
-        toast('Fehler: '+(data.error||''));
+        toast('Statusänderung fehlgeschlagen: '+(data.error||'Unbekannter Fehler'));
       }
-    }).catch(function(){ toast('Netzwerkfehler'); });
+    }).catch(function(){ toast('Verbindungsfehler – bitte erneut versuchen'); });
   }
 
   // ── Fleisch-Nachrichten (like Mittagstisch messages) ──
@@ -3835,15 +3835,15 @@ var K = (function(){
       var modal = document.getElementById('fm-reply-modal');
       if(modal) modal.remove();
       if(data.success){
-        toast('\u2705 Nachricht gesendet');
+        toast('Nachricht gesendet – Kunde wird benachrichtigt');
         loadMetzgerOrders();
       } else {
-        toast('Fehler: '+(data.error||''));
+        toast('Senden fehlgeschlagen: '+(data.error||'Unbekannter Fehler'));
       }
     }).catch(function(){
       var modal = document.getElementById('fm-reply-modal');
       if(modal) modal.remove();
-      toast('Netzwerkfehler');
+      toast('Verbindungsfehler – bitte erneut versuchen');
     });
   }
 
@@ -3854,10 +3854,10 @@ var K = (function(){
       body:JSON.stringify({id:id, kommentar_gelesen:true})
     }).then(function(r){return r.json();}).then(function(data){
       if(data.success){
-        toast('\u2705 Als gelesen markiert');
+        toast('Als gelesen markiert');
         loadMetzgerOrders();
       }
-    }).catch(function(){ toast('Netzwerkfehler'); });
+    }).catch(function(){ toast('Verbindungsfehler – bitte erneut versuchen'); });
   }
 
   function markAllFmRead(){
@@ -3871,7 +3871,7 @@ var K = (function(){
         body:JSON.stringify({id:o.id, kommentar_gelesen:true})
       }).then(function(r){return r.json();}).then(function(){
         pending--;
-        if(pending<=0){ toast('\u2705 Alle als gelesen markiert'); loadMetzgerOrders(); }
+        if(pending<=0){ toast('Alle Nachrichten als gelesen markiert'); loadMetzgerOrders(); }
       }).catch(function(){ pending--; });
     });
   }
@@ -4057,7 +4057,7 @@ var K = (function(){
         .then(function(r){return r.json();})
         .then(function(){
           pending--;
-          if(pending<=0){ toast('\u2705 '+orders.length+' Bestellungen als bestellt markiert'); loadMetzgerOrders(); loadMetzgerSammel(); }
+          if(pending<=0){ toast(orders.length+' Bestellungen als bestellt markiert'); loadMetzgerOrders(); loadMetzgerSammel(); }
         }).catch(function(){ pending--; });
     });
   }
