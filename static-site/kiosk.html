@@ -60,15 +60,15 @@
     .k-order{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:6px;overflow:hidden;border-left:4px solid transparent;position:relative;transition:transform .2s ease}
     .k-order .k-swipe-hint{position:absolute;right:0;top:0;bottom:0;width:60px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;border-radius:0 var(--radius) var(--radius) 0;opacity:0;transition:opacity .15s;pointer-events:none;z-index:0}
     .k-order.swiping .k-swipe-hint{opacity:1}
-    .k-order-hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none;min-height:44px}
+    .k-order-hdr{display:flex;align-items:center;gap:6px;padding:10px 12px;cursor:pointer;user-select:none;min-height:44px}
     .k-order-hdr:active{background:#f9fafb}
-    .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0}
+    .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0;width:18px;text-align:center}
     .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
     .k-order.oc-collapsed .k-order-body{display:none}
-    .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;white-space:nowrap;flex-shrink:0}
-    .k-order-hdr .k-oc-qty{font-weight:800;font-size:15px;color:var(--c-green)}
-    .k-order-hdr .k-oc-badges{display:flex;gap:5px;align-items:center;flex-shrink:0}
-    .k-order-hdr .k-oc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+    .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:90px;max-width:160px}
+    .k-order-hdr .k-oc-qty{font-weight:800;font-size:15px;color:var(--c-green);white-space:nowrap;min-width:28px}
+    .k-order-hdr .k-oc-badges{display:flex;gap:5px;align-items:center;flex-shrink:0;white-space:nowrap}
+    .k-order-hdr .k-oc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
     .k-order-hdr .k-oc-actions .k-btn{min-height:40px;min-width:40px;padding:6px 14px;font-size:13px;border-radius:8px;gap:5px}
     @media(max-width:600px){.k-order-hdr .k-oc-actions .k-btn .oc-btn-label{display:none}}
     .k-order-body{display:flex;align-items:stretch;border-top:1px solid var(--c-border)}
@@ -1366,8 +1366,8 @@ var K = (function(){
     html += '<div class="k-order-hdr" onclick="K.toggleOrderCard(\''+o.id+'\')">';
     html += '<span class="k-oc-arrow">'+luc('chevron-down',14)+'</span>';
     html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
-    if(o.preis) html += '<span style="font-size:12px;font-weight:700;color:var(--c-text);white-space:nowrap">'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' \u20AC</span>';
-    html += '<span class="k-oc-qty">'+(o.menge||1)+'\u00D7</span>';
+    if(o.preis) html += '<span style="font-size:12px;font-weight:700;color:var(--c-text);white-space:nowrap;min-width:52px;text-align:right">'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' \u20AC</span>';
+    html += '<span class="k-oc-qty" style="min-width:28px;text-align:center">'+(o.menge||1)+'\u00D7</span>';
     html += '<span class="k-oc-badges">';
     html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
     if(o.mitnehmen) html += '<span class="k-order-mitnehmen">'+luc('package',11)+' MIT</span>';
@@ -3543,6 +3543,8 @@ var K = (function(){
         html += '</span>';
         html += '<span class="k-oc-badges">';
         html += '<span class="k-badge '+(STATUS_CSS[o.status]||'st-new')+'">'+(STATUS_LABELS[o.status]||'Neu')+'</span>';
+        if(o.kunde_kommentar && !o.kommentar_gelesen) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
+        else if(o.kunde_kommentar || o.personal_antwort) html += '<span style="color:#6b7280;font-size:11px" title="Kommentar">'+luc('message-square',12)+'</span>';
         html += '</span>';
         // Quick action in header – only status icon, NO button (button is in body)
         html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
