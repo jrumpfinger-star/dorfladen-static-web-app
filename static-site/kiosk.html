@@ -1340,10 +1340,7 @@ var K = (function(){
     // ── Expandable body (details) ──
     html += '<div class="k-order-body">';
     html += '<div class="k-order-info">';
-    html += '<div class="k-order-meta">';
-    html += '<span>'+esc(o.bestellnummer||'')+'</span>';
-    if(o.telefon) html += '<span>'+luc('phone',12)+' '+esc(o.telefon)+'</span>';
-    html += '</div>';
+    // Bestellnummer + Telefon removed (irrelevant for daily operations)
     if(o.anmerkung) html += '<div class="k-order-note" style="background:#fef3c7">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
     if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a;color:#166534">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
     if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;animation:kPulse 2s ease-in-out 3">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
@@ -1353,8 +1350,8 @@ var K = (function(){
       html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
       html += '</div>';
     }
-    // Inline reply input (always visible for online confirmed orders)
-    if(o.status===1 && o.quelle===0){
+    // Inline reply input (visible for all active orders so staff can communicate)
+    if(o.status<=1){
       html += '<div style="padding-top:8px;display:flex;gap:6px;align-items:center">';
       html += '<input type="text" id="rpt-'+o.id+'" placeholder="'+(o.kunde_kommentar?'Antwort eingeben\u2026':'Nachricht an Kunde\u2026')+'" maxlength="300" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'){event.preventDefault();K.sendReply(\''+o.id+'\')}">';
       html += '<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff;white-space:nowrap" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',14)+'</button>';
