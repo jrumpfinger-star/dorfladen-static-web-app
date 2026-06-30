@@ -877,3 +877,75 @@ test.describe('T-28 Liefertag-Auswahl & Vorbestellung (AK-FLEISCH-28)', () => {
     expect(hasFn).toBe(true);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  T-29: Kiosk UI-Verbesserungen (AK-FLEISCH-29)
+// ════════════════════════════════════════════════════
+
+test.describe('T-29 Kiosk UI-Verbesserungen (AK-FLEISCH-29)', () => {
+
+  test('T-29-01 Alle abhaken Button existiert in Sammelbestellung (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const btn = await page.evaluate(() => document.documentElement.innerHTML.includes('Alle abhaken'));
+    expect(btn).toBe(true);
+  });
+
+  test('T-29-02 Mittagstisch 2-Spalten CSS-Regel existiert (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasRule = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.cssText && rule.cssText.includes('mittag-orders') && rule.cssText.includes('grid-template-columns')) return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    });
+    expect(hasRule).toBe(true);
+  });
+
+  test('T-29-03 Detail-Chips CSS-Klasse fm-hdr-details existiert (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasClass = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.selectorText && rule.selectorText.includes('fm-hdr-details')) return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    });
+    expect(hasClass).toBe(true);
+  });
+
+  test('T-29-04 Detail-Chips werden ab 700px sichtbar (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasMediaRule = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.cssText && rule.cssText.includes('700px') && rule.cssText.includes('fm-hdr-details')) return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    });
+    expect(hasMediaRule).toBe(true);
+  });
+
+  test('T-29-05 metzgerAlleGesendet hat Bestaetigungsdialog (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasConfirm = await page.evaluate(() => {
+      const src = document.documentElement.innerHTML;
+      return src.includes('metzgerAlleGesendet') && src.includes('offenen Positionen als bestellt abhaken');
+    });
+    expect(hasConfirm).toBe(true);
+  });
+});

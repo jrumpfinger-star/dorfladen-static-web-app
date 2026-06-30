@@ -491,6 +491,14 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Kiosk Sammelbestellung: Datumswechsel-Buttons wenn Bestellungen für mehrere Liefertage existieren
 - [x] Sammelbestellung: Bestellungen landen beim richtigen Liefertag
 
+### AK-FLEISCH-29: Kiosk UI-Verbesserungen (Sammelbestellung, Layout, Detail-Chips)
+- [x] Sammelbestellung: "Alle bestellt" Button umbenannt zu "Alle abhaken" mit Bestätigungsdialog
+- [x] Sammelbestellung: Schutz wenn bereits alles abgehakt (Toast statt erneuter Request)
+- [x] Mittagstisch: 2-Spalten-Grid ab 900px Viewport-Breite
+- [x] Metzger Day-Group-Header: Detail-Chips (Anzahl Positionen, Gesamt-kg) ab 700px sichtbar
+- [x] Metzger Bestellkarten-Header: Detail-Chips (Anzahl Artikel, Gesamt-kg) ab 700px sichtbar
+- [x] Leere States (.k-empty) spannen über volle Breite im Grid
+
 ### AK-FLEISCH-25: Kiosk Mittagstisch UI/UX Optimierung
 - [x] Collapse/Expand-Button platzsparend (kleiner, Kurztext)
 - [x] Preis im Header der Bestellkarte statt im Body

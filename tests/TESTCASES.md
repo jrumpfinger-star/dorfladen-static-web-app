@@ -1907,3 +1907,32 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-28-03 Frontend hat Liefertag-Dropdown im Checkout | ✅ Pass |
 | 2026-06-30 | T-28-04 Liefertag-Dropdown zeigt naechster-Label | ✅ Pass |
 | 2026-06-30 | T-28-05 Kiosk Sammelbestellung switchSammelDate existiert | ✅ Pass |
+
+## T-29 – Kiosk UI-Verbesserungen (AK-FLEISCH-29)
+
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-29
+
+### T-29-01: Alle abhaken Button existiert in Sammelbestellung (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** HTML enthält "Alle abhaken"
+- **Erwartung:** Button-Text wurde von "Alle bestellt" zu "Alle abhaken" geändert
+
+### T-29-02: Mittagstisch 2-Spalten CSS-Regel existiert (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** CSS enthält Regel für `#mittag-orders` mit `grid-template-columns`
+- **Erwartung:** 2-Spalten-Grid für Mittagstisch ab 900px
+
+### T-29-03: Detail-Chips CSS-Klasse fm-hdr-details existiert (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** CSS enthält `.fm-hdr-details` Selektor
+- **Erwartung:** Detail-Chips-Klasse ist definiert
+
+### T-29-04: Detail-Chips werden ab 700px sichtbar (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** Media-Query für 700px mit `fm-hdr-details` existiert
+- **Erwartung:** Detail-Chips sind ab 700px Viewport-Breite sichtbar
+
+### T-29-05: metzgerAlleGesendet hat Bestätigungsdialog (AK-FLEISCH-29)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** HTML enthält `metzgerAlleGesendet` und Bestätigungstext
+- **Erwartung:** Vor dem Abhaken aller Positionen wird ein Bestätigungsdialog angezeigt
