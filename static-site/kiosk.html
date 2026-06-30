@@ -3823,18 +3823,28 @@ var K = (function(){
   }
 
   // Sammelbestellung
+  var _fmSammelDates = [];
+
   function loadMetzgerSammel(){
-    // Find the next delivery day from open orders
+    // Find all delivery days from open orders
     var dates = [];
     _fmOrders.forEach(function(o){
       if(o.status < 3 && o.liefertag && dates.indexOf(o.liefertag)===-1) dates.push(o.liefertag);
     });
     dates.sort();
-    _fmSammelLiefertag = dates[0] || '';
+    _fmSammelDates = dates;
+
+    // Keep current selection if still valid, else pick first
+    if(!_fmSammelLiefertag || dates.indexOf(_fmSammelLiefertag)===-1){
+      _fmSammelLiefertag = dates[0] || '';
+    }
     if(!_fmSammelLiefertag){
       document.getElementById('metzger-sammel-body').innerHTML = '<div style="text-align:center;color:var(--c-muted);padding:20px">Keine offenen Bestellungen</div>';
       return;
     }
+
+    // Render date selector if multiple dates
+    _renderSammelDateSelector();
 
     fetch(API + '/fleisch-order?liefertag='+_fmSammelLiefertag)
       .then(function(r){return r.json();})
@@ -3842,6 +3852,34 @@ var K = (function(){
         if(!data.success) return;
         renderSammelbestellung(data);
       }).catch(function(e){ console.error('[metzger] sammel failed', e); });
+  }
+
+  function _renderSammelDateSelector(){
+    var container = document.getElementById('metzger-sammel-dates');
+    if(!container){
+      // Create container before sammel-body
+      var body = document.getElementById('metzger-sammel-body');
+      container = document.createElement('div');
+      container.id = 'metzger-sammel-dates';
+      container.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px';
+      body.parentNode.insertBefore(container, body);
+    }
+    if(_fmSammelDates.length <= 1){ container.style.display='none'; return; }
+    container.style.display='flex';
+    var html = '';
+    _fmSammelDates.forEach(function(d){
+      var active = d === _fmSammelLiefertag;
+      html += '<button data-sammel-date="'+d+'" style="padding:6px 12px;border-radius:8px;border:1.5px solid '+(active?'#b91c1c':'#e5e7eb')+';background:'+(active?'#7f1d1d':'#fff')+';color:'+(active?'#fff':'#374151')+';font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">'+_fmDateLabel(d)+'</button>';
+    });
+    container.innerHTML = html;
+    container.querySelectorAll('[data-sammel-date]').forEach(function(btn){
+      btn.addEventListener('click', function(){ switchSammelDate(btn.getAttribute('data-sammel-date')); });
+    });
+  }
+
+  function switchSammelDate(d){
+    _fmSammelLiefertag = d;
+    loadMetzgerSammel();
   }
 
   function renderSammelbestellung(data){

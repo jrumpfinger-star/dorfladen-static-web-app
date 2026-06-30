@@ -300,7 +300,15 @@ def _calc_liefertag(now, liefertage, bestellschluss_h):
 
 
 def _calc_next_two_liefertage(now, liefertage, bestellschluss_h):
-    """Calculate the next two delivery days for display."""
+    """Calculate the next two delivery days for display (legacy)."""
+    return _calc_liefertage_voraus(now, liefertage, bestellschluss_h, max_termine=2)
+
+
+def _calc_liefertage_voraus(now, liefertage, bestellschluss_h, max_termine=10):
+    """Calculate upcoming delivery days for the next ~2 weeks.
+
+    Returns all bestellbare Liefertage with their Bestellschluss.
+    """
     results = []
     for offset in range(1, 30):
         candidate = now + timedelta(days=offset)
@@ -314,7 +322,7 @@ def _calc_next_two_liefertage(now, liefertage, bestellschluss_h):
                 "bestellschluss_label": _format_date_de(schluss_tag) + f" {bestellschluss_h:02d}:00",
                 "noch_bestellbar": now < schluss_dt,
             })
-            if len(results) >= 2:
+            if len(results) >= max_termine:
                 break
     return results
 
@@ -359,6 +367,7 @@ def _handle_post(req, token, base_url, hdrs):
     email = (body.get("email") or "").strip()
     positionen = body.get("positionen") or []
     anmerkung = (body.get("anmerkung") or "").strip()
+    gewuenschter_liefertag = (body.get("liefertag") or "").strip()
 
     if not name:
         return func.HttpResponse(
@@ -388,7 +397,21 @@ def _handle_post(req, token, base_url, hdrs):
 
     # Calculate delivery day
     now = datetime.utcnow() + timedelta(hours=2)  # CET approximation
-    liefertag, bestellschluss = _calc_liefertag(now, cfg["liefertage"], cfg["bestellschluss_h"])
+    if gewuenschter_liefertag:
+        # Validate requested delivery date against available dates
+        alle = _calc_liefertage_voraus(now, cfg["liefertage"], cfg["bestellschluss_h"])
+        match = [t for t in alle if t["liefertag"] == gewuenschter_liefertag and t["noch_bestellbar"]]
+        if match:
+            liefertag = datetime.strptime(gewuenschter_liefertag, "%Y-%m-%d")
+            schluss_tag = _prev_werktag(liefertag)
+            bestellschluss = schluss_tag.replace(hour=cfg["bestellschluss_h"], minute=0, second=0, microsecond=0)
+        else:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Gewuenschter Liefertag ist nicht verfuegbar"}, ensure_ascii=False),
+                status_code=400, headers=get_cors_headers()
+            )
+    else:
+        liefertag, bestellschluss = _calc_liefertag(now, cfg["liefertage"], cfg["bestellschluss_h"])
 
     # Validate and calculate prices
     rabatt_faktor = 1 - (cfg["rabatt_prozent"] / 100)
@@ -570,6 +593,7 @@ def _handle_get(req, token, base_url, hdrs):
         cfg = _get_config_values(config)
         now = datetime.utcnow() + timedelta(hours=2)
         termine = _calc_next_two_liefertage(now, cfg["liefertage"], cfg["bestellschluss_h"])
+        alle_termine = _calc_liefertage_voraus(now, cfg["liefertage"], cfg["bestellschluss_h"])
         return func.HttpResponse(
             json.dumps({
                 "success": True,
@@ -578,6 +602,7 @@ def _handle_get(req, token, base_url, hdrs):
                 "mindestmenge_kg": cfg["mindestmenge_kg"],
                 "bestellschluss_h": cfg["bestellschluss_h"],
                 "termine": termine,
+                "alle_termine": alle_termine,
             }, ensure_ascii=False),
             status_code=200, headers=get_cors_headers()
         )

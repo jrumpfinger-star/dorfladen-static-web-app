@@ -348,6 +348,12 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
         <input type="email" id="fm-email" autocomplete="email" placeholder="Fuer Benachrichtigung bei Abholung">
       </div>
       <div class="fm-field">
+        <label><i data-lucide="calendar" style="width:14px;height:14px"></i> Gewuenschter Liefertag <span class="required">*</span></label>
+        <select id="fm-liefertag-select" style="width:100%;padding:11px 14px;border:1.5px solid var(--c-border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:#fff;cursor:pointer;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml;utf8,<svg fill=\\'%236b7280\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'><path fill-rule=\\'evenodd\\' d=\\'M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z\\' clip-rule=\\'evenodd\\'/></svg>');background-repeat:no-repeat;background-position:right 12px center;background-size:16px">
+          <option value="">Wird geladen...</option>
+        </select>
+      </div>
+      <div class="fm-field">
         <label>Anmerkungen (optional)</label>
         <textarea id="fm-anmerkung" placeholder="z.B. Bitte in Scheiben schneiden..." rows="2"></textarea>
       </div>
@@ -450,12 +456,45 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
           document.getElementById('fm-inactive').style.display='block';
           return;
         }
+        populateLiefertagSelect();
         updateCountdown();
         cdInterval = setInterval(updateCountdown, 30000);
         showRabattBanner();
         loadArticles();
       })
       .catch(function(){ showError(); });
+  }
+
+  function populateLiefertagSelect(){
+    var sel = document.getElementById('fm-liefertag-select');
+    if(!sel) return;
+    var termine = config.alle_termine || config.termine || [];
+    var bestellbare = termine.filter(function(t){ return t.noch_bestellbar; });
+    if(!bestellbare.length){ sel.innerHTML='<option value="">Kein Liefertag verfuegbar</option>'; return; }
+    var html = '';
+    bestellbare.forEach(function(t, i){
+      var selected = i===0 ? ' selected' : '';
+      var label = t.liefertag_label;
+      if(i===0) label += ' (naechster)';
+      html += '<option value="'+t.liefertag+'"'+selected+'>'+label+'</option>';
+    });
+    sel.innerHTML = html;
+    // Update footer label when selection changes
+    sel.addEventListener('change', function(){ updateLiefertagLabel(); });
+  }
+
+  function getSelectedLiefertag(){
+    var sel = document.getElementById('fm-liefertag-select');
+    return sel ? sel.value : '';
+  }
+
+  function updateLiefertagLabel(){
+    var val = getSelectedLiefertag();
+    var termine = config.alle_termine || config.termine || [];
+    var t = termine.find(function(t){ return t.liefertag === val; });
+    if(t){
+      document.getElementById('fm-cart-lt-label').textContent='Liefertag: '+t.liefertag_label;
+    }
   }
 
   function showError(){
@@ -823,11 +862,8 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     checkout.style.display='block';
     footer.style.display='block';
 
-    // Liefertag
-    var termin = config.termine && config.termine.find(function(t){ return t.noch_bestellbar; });
-    if(termin){
-      document.getElementById('fm-cart-lt-label').textContent='Liefertag: '+termin.liefertag_label;
-    }
+    // Liefertag – use selection from dropdown
+    updateLiefertagLabel();
 
     // Savings
     var savingsEl=document.getElementById('fm-cart-savings');
@@ -881,9 +917,12 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var email=document.getElementById('fm-email').value.trim();
     var anmerkung=document.getElementById('fm-anmerkung').value.trim();
 
+    var liefertag = getSelectedLiefertag();
+
     if(!name){ showToast('Bitte Name eingeben'); return; }
     if(!telefon){ showToast('Bitte Telefonnummer eingeben'); return; }
     if(!cart.length){ showToast('Warenkorb ist leer'); return; }
+    if(!liefertag){ showToast('Bitte Liefertag waehlen'); return; }
 
     saveCustomerData();
 
@@ -905,7 +944,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     fetch(API+'/fleisch-order', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name:name,telefon:telefon,email:email,positionen:positionen,anmerkung:anmerkung})
+      body:JSON.stringify({name:name,telefon:telefon,email:email,positionen:positionen,anmerkung:anmerkung,liefertag:liefertag})
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
