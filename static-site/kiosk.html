@@ -2450,70 +2450,51 @@ var K = (function(){
     html += '<div class="k-order-body">';
     html += '<div class="k-order-info" style="padding:10px 14px 12px">';
 
-    // Order info line
-    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
-    html += '<span style="font-size:12px;color:#6b7280">'+luc('hash',11)+' '+esc(o.bestellnummer||'–')+'</span>';
-    if(o.abholdatum){
-      var zs = o.abhol_zeitslot||{};
-      html += '<span style="font-size:12px;color:#6b7280">'+luc('calendar',11)+' '+fmtDateRelative(o.abholdatum)+(zs.label?', '+esc(zs.label):'')+'</span>';
-    }
-    if(o.kunde_telefon) html += '<span style="font-size:12px;color:#6b7280">'+luc('phone',11)+' '+esc(o.kunde_telefon)+'</span>';
-    html += '</div>';
-
     // Note
     if(o.anmerkungen){
-      html += '<div class="k-order-note" style="background:#fef3c7;border-left:3px solid #f59e0b;color:#92400e;margin:0 0 8px;padding:8px 10px;font-style:normal">'+luc('message-square',13)+' '+esc(o.anmerkungen)+'</div>';
+      html += '<div class="k-order-note" style="background:#fef3c7;border-left:3px solid #f59e0b;color:#92400e;margin:0 0 6px;padding:6px 10px;font-size:12px">'+luc('message-square',12)+' '+esc(o.anmerkungen)+'</div>';
     }
 
     // Positions preview
     if(posArr.length>0){
-      html += '<div style="margin-bottom:8px">';
+      html += '<div style="margin-bottom:6px">';
       posArr.slice(0,4).forEach(function(p){
         var name = p.bezeichnung||p.name||'?';
         var menge = p.menge||1;
         var einheit = p.einheit||'Stk';
         var preis = p.einzelpreis||p.preis||0;
-        html += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px"><span style="font-weight:600;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span>'+(preis?'<span style="color:#374151;font-weight:600;white-space:nowrap">'+(preis*menge).toFixed(2).replace('.',',')+' €</span>':'')+'<span style="color:#6b7280;white-space:nowrap">'+menge+' '+esc(einheit)+'</span></div>';
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:2px 0;font-size:13px"><span style="font-weight:600;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span>'+(preis?'<span style="color:#374151;font-weight:600;white-space:nowrap">'+(preis*menge).toFixed(2).replace('.',',')+' €</span>':'')+'<span style="color:#6b7280;white-space:nowrap">'+menge+' '+esc(einheit)+'</span></div>';
       });
-      if(posArr.length>4) html += '<div style="font-size:12px;color:#6b7280;padding:2px 0">+'+(posArr.length-4)+' weitere Artikel</div>';
+      if(posArr.length>4) html += '<div style="font-size:12px;color:#6b7280;padding:2px 0">+'+(posArr.length-4)+' weitere</div>';
       html += '</div>';
     }
 
-    // Customer message & staff reply
-    if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;margin:0 0 8px;padding:8px 10px;animation:'+(o.kommentar_gelesen?'none':'kPulse 2s ease-in-out 3')+'">'+luc('message-circle',14)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
-    if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 0 8px;padding:8px 10px">'+luc('reply',14)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    if(o.status<3){
-      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="event.stopPropagation();K.showShopReply(\''+o.id+'\')">'+luc(o.kunde_kommentar?'reply':'send',14)+' '+(o.kunde_kommentar?'Antworten':'Nachricht senden')+'</button>';
-      if(o.kunde_kommentar && !o.kommentar_gelesen) html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px;color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markShopMsgRead(\''+o.id+'\')">'+luc('eye',14)+' Gelesen</button>';
-      html += '</div>';
-    }
-    // Reply input (hidden by default)
-    html += '<div id="shop-rpl-'+o.id+'" style="display:none;margin-bottom:8px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
-    if(o.kunde_kommentar) html += '<div style="font-size:12px;color:#374151;margin-bottom:6px;padding:6px 8px;background:#fff;border-radius:6px;border-left:3px solid #3b82f6">'+esc(o.kunde_kommentar)+'</div>';
-    html += '<input type="text" id="shop-rpt-'+o.id+'" placeholder="Antwort an Kunden…" maxlength="500" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:8px">';
-    html += '<div style="display:flex;gap:8px"><button class="k-btn k-btn-sm" style="flex:1;background:#2563eb;color:#fff;font-size:13px" onclick="K.sendShopReply(\''+o.id+'\')">'+luc('send',14)+' Senden</button>';
-    html += '<button class="k-btn k-btn-sm k-btn-outline" style="font-size:13px" onclick="document.getElementById(\'shop-rpl-'+o.id+'\').style.display=\'none\'">Abbrechen</button></div></div>';
+    // Customer message & staff reply (compact)
+    if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;margin:0 0 4px;padding:6px 10px;font-size:12px;animation:'+(o.kommentar_gelesen?'none':'kPulse 2s ease-in-out 3')+'">'+luc('message-circle',12)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 0 4px;padding:6px 10px;font-size:12px">'+luc('reply',12)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
 
-    // Action buttons – large, clear, touch-friendly
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:4px;border-top:1px solid #f3f4f6">';
-    // Primary action (duplicated for expanded view)
+    // Reply input (hidden by default, toggled inline)
+    html += '<div id="shop-rpl-'+o.id+'" style="display:none;margin:4px 0;padding:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">';
+    if(o.kunde_kommentar) html += '<div style="font-size:11px;color:#374151;margin-bottom:4px;padding:4px 8px;background:#fff;border-radius:4px;border-left:3px solid #3b82f6">'+esc(o.kunde_kommentar)+'</div>';
+    html += '<div style="display:flex;gap:4px;align-items:center"><input type="text" id="shop-rpt-'+o.id+'" placeholder="Antwort…" maxlength="500" style="flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'){event.preventDefault();K.sendShopReply(\''+o.id+'\')}">';
+    html += '<button class="k-btn k-btn-sm" style="padding:8px 12px;background:#2563eb;color:#fff" onclick="K.sendShopReply(\''+o.id+'\')">'+luc('send',13)+'</button>';
+    html += '<button class="k-btn k-btn-sm k-btn-outline" style="padding:8px" onclick="document.getElementById(\'shop-rpl-'+o.id+'\').style.display=\'none\'">'+luc('x',13)+'</button></div></div>';
+
+    // Compact action row – all buttons in one line
+    html += '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding-top:4px;border-top:1px solid #f3f4f6">';
     if(o.status===0){
-      html += '<button class="k-btn k-btn-confirm k-btn-sm" style="min-width:120px" onclick="K.setShopStatus(\''+o.id+'\',1)">'+luc('clipboard-list',14)+' Annehmen</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
-      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:90px" onclick="K.setShopStatus(\''+o.id+'\',4)">'+luc('x-circle',14)+' Storno</button>';
-    } else if(o.status===1){
-      html += '<button class="k-btn k-btn-sm" style="min-width:120px;background:#d97706;color:#fff" onclick="K.openPackModal(\''+o.id+'\')">'+luc('package',14)+' Packen</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
-      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
-    } else if(o.status===2){
-      html += '<button class="k-btn k-btn-pickup k-btn-sm" style="min-width:120px" onclick="K.setShopStatus(\''+o.id+'\',3)">'+luc('hand',14)+' Ausgeben</button>';
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:90px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details</button>';
-      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
-    } else if(o.status===3){
-      html += '<button class="k-btn k-btn-sm k-btn-outline" style="min-width:120px" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',14)+' Details ansehen</button>';
-      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-width:40px" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',14)+'</button>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',13)+'</button>';
+      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff" onclick="K.setShopStatus(\''+o.id+'\',4)">'+luc('x-circle',13)+'</button>';
+    } else if(o.status<=2){
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',13)+'</button>';
+      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
+    } else {
+      html += '<button class="k-btn k-btn-sm k-btn-outline" onclick="K.showOrderDetail(\''+o.id+'\')">'+luc('file-text',13)+'</button>';
+      html += '<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff" onclick="event.stopPropagation();K.deleteShopOrder(\''+o.id+'\')" title="Löschen">'+luc('trash-2',13)+'</button>';
     }
+    // Message button inline with actions
+    if(o.status<3) html += '<button class="k-btn k-btn-sm k-btn-outline" style="color:#2563eb;border-color:#93c5fd;margin-left:auto" onclick="event.stopPropagation();K.showShopReply(\''+o.id+'\')">'+luc('message-circle',13)+'</button>';
+    if(o.kunde_kommentar && !o.kommentar_gelesen) html += '<button class="k-btn k-btn-sm k-btn-outline" style="color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markShopMsgRead(\''+o.id+'\')">'+luc('eye',13)+'</button>';
     html += '</div>';
     html += '</div>';
     html += '</div>';
