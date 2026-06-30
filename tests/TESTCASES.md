@@ -1821,3 +1821,17 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Aktion:** Kiosk → Metzger → Sammelbestellung
 - **Prüfung:** Button-Text prüfen
 - **Erwartung:** „Alle bestellt" (nicht „Alle beim Metzger bestellt")
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-30 | T-26-01 Kiosk STATUS_LABELS enthält In Bestellung | ✅ Pass |
+| 2026-06-30 | T-26-02 Kein Beim Metzger Text in kiosk.html | ✅ Pass |
+| 2026-06-30 | T-26-03 shop.html FM_ST enthält In Bestellung | ✅ Pass |
+| 2026-06-30 | T-26-04 fleisch-bestellen.html FM_STATUS enthält In Bestellung | ✅ Pass |
+| 2026-06-30 | T-26-05 bestellstatus.html Timeline-Label In Bestellung | ✅ Pass |
+| 2026-06-30 | T-26-06 Kiosk Metzger-Header zeigt keine X Pos Info | ✅ Pass |
+| 2026-06-30 | T-26-08 API mode=kiosk_history liefert abgeschlossene Bestellungen | ✅ Pass |
+| 2026-06-30 | T-26-09 Historie-Tab zeigt Bestellungen | ✅ Pass |
+| 2026-06-30 | T-26-11 Button Text Alle bestellt | ✅ Pass |
