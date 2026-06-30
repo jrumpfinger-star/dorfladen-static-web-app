@@ -192,6 +192,31 @@
     });
   };
 
+  // --- Als Entwurf speichern ---
+  window.socialSaveDraft=function(){
+    var selected=socialGatherSelected();
+    var titel=(document.getElementById('soc-post-titel')||{}).value||'';
+    var freitext=(document.getElementById('soc-post-text')||{}).value||'';
+    if(!selected.length&&!freitext.trim()){socialStatus('soc-post-status','Bitte mindestens ein Produkt oder Freitext eingeben',false);return;}
+    if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
+    socialStatus('soc-post-status','\u23F3 Entwurf wird gespeichert\u2026',true);
+    var body={titel:titel,freitext:freitext,status:'entwurf',items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};
+    var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;
+    fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
+    .then(function(){socialStatus('soc-post-status','\u2705 Entwurf gespeichert \u2013 kann sp\u00e4ter ver\u00f6ffentlicht werden',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
+    .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
+  };
+
+  // --- Entwurf veröffentlichen ---
+  window.socialPublishDraft=function(postId){
+    socialStatus('soc-post-status','\u23F3 Wird ver\u00f6ffentlicht\u2026',true);
+    fetch(API+'/social-post',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:postId,status:'veroeffentlicht'})})
+    .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
+    .then(function(){socialStatus('soc-post-status','\u2705 Ver\u00f6ffentlicht!',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
+    .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
+  };
+
   // --- Geplante Posts laden (heute + morgen) ---
   window.socialLoadTodayPosts=function(){
     var wrap=document.getElementById('soc-today-posts');
@@ -200,7 +225,7 @@
     var today=new Date();var td=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
     var tom=new Date(Date.now()+86400000);var tmr=tom.getFullYear()+'-'+String(tom.getMonth()+1).padStart(2,'0')+'-'+String(tom.getDate()).padStart(2,'0');
     fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){
-      var all=res.items||[];
+      var all=res.posts||res.items||[];
       var todayPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
       var tomorrowPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===tmr;});
       if(!todayPosts.length&&!tomorrowPosts.length){wrap.style.display='none';return;}
@@ -211,9 +236,12 @@
         html+='<div style="font-size:10px;font-weight:700;color:'+color+';margin:6px 0 2px;text-transform:uppercase">'+M.esc(label)+'</div>';
         posts.forEach(function(p){
           var cnt=p.items?p.items.length:0;
-          html+='<div style="padding:3px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center">';
-          html+='<span style="font-weight:600;color:#374151">'+M.esc(p.titel||'Post')+'</span>';
-          html+='<span style="color:#6b7280">'+cnt+' Produkt'+(cnt!==1?'e':'')+'</span>';
+          var isDraft=p.status==='entwurf';
+          html+='<div style="padding:4px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:6px">';
+          html+='<span style="font-weight:600;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+M.esc(p.titel||'Post')+'</span>';
+          if(isDraft) html+='<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-weight:700;white-space:nowrap">Entwurf</span>';
+          html+='<span style="color:#6b7280;white-space:nowrap;font-size:11px">'+cnt+' Produkt'+(cnt!==1?'e':'')+'</span>';
+          if(isDraft) html+='<button onclick="socialPublishDraft(\''+M.esc(p.id)+'\')" style="font-size:10px;padding:2px 8px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap">\u25B6 Senden</button>';
           html+='</div>';
         });
       }

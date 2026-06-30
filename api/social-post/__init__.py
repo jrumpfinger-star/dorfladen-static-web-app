@@ -195,6 +195,11 @@ def handle_post(req, token, folder_id):
             except Exception:
                 it["bild_url"] = ""
 
+    # Optional: status (entwurf or veroeffentlicht)
+    req_status = body.get("status", "veroeffentlicht").strip()
+    if req_status not in ("entwurf", "veroeffentlicht"):
+        req_status = "veroeffentlicht"
+
     post = {
         "id": post_id,
         "titel": titel or f"{'Morgen' if ziel_datum else 'Heute'} im Dorfladen – {tag}",
@@ -204,7 +209,7 @@ def handle_post(req, token, folder_id):
         "poster_sp_id": poster_sp_id,
         "datum": now,
         "wochentag": tag,
-        "status": "veroeffentlicht",
+        "status": req_status,
     }
 
     posts = load_posts(token, folder_id)
@@ -213,6 +218,38 @@ def handle_post(req, token, folder_id):
         return err("Post konnte nicht gespeichert werden", 500)
 
     return ok({"success": True, "post": post})
+
+
+def handle_patch(req, token, folder_id):
+    """PATCH: Update status of an existing post (e.g. entwurf -> veroeffentlicht)."""
+    try:
+        body = req.get_json()
+    except:
+        return err("Ungültiger Request-Body")
+
+    post_id = body.get("id", "").strip()
+    if not post_id:
+        return err("id ist erforderlich")
+
+    new_status = body.get("status", "").strip()
+    if new_status not in ("entwurf", "veroeffentlicht"):
+        return err("status muss 'entwurf' oder 'veroeffentlicht' sein")
+
+    posts = load_posts(token, folder_id)
+    found = None
+    for p in posts:
+        if p.get("id") == post_id:
+            p["status"] = new_status
+            found = p
+            break
+
+    if not found:
+        return err("Post nicht gefunden", 404)
+
+    if not save_posts(token, folder_id, posts):
+        return err("Posts konnten nicht gespeichert werden", 500)
+
+    return ok({"success": True, "post": found})
 
 
 def handle_delete(req, token, folder_id):
@@ -269,6 +306,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return handle_get(req, token, folder_id)
     elif req.method == "POST":
         return handle_post(req, token, folder_id)
+    elif req.method == "PATCH":
+        return handle_patch(req, token, folder_id)
     elif req.method == "DELETE":
         return handle_delete(req, token, folder_id)
 

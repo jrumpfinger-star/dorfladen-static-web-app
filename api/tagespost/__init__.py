@@ -229,9 +229,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     tomorrow = (now_local + timedelta(days=1)).strftime("%Y-%m-%d")
     current_hour = now_local.hour
 
-    # Find posts for today and tomorrow
-    today_posts = [p for p in posts if p.get("datum", "")[:10] == today]
-    tomorrow_posts = [p for p in posts if p.get("datum", "")[:10] == tomorrow]
+    # Find published posts for today and tomorrow (exclude drafts)
+    published = [p for p in posts if p.get("status", "veroeffentlicht") != "entwurf"]
+    today_posts = [p for p in published if p.get("datum", "")[:10] == today]
+    tomorrow_posts = [p for p in published if p.get("datum", "")[:10] == tomorrow]
 
     # Build today post
     today_post = None

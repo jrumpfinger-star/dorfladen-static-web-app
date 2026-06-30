@@ -705,6 +705,7 @@
                   else{b.style.background='#fff';b.style.color='#374151';}
                 });
                 buildTitelOpts();
+                if(typeof socialBuildPostItems==='function') socialBuildPostItems();
               };
 
               buildTitelOpts();
@@ -781,11 +782,17 @@
                 <button onclick="socialDownloadPoster()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:12px;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px"><i data-lucide="download" style="width:18px;height:18px"></i> Bild speichern</button>
               </div>
               <div style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:4px">
-                <button onclick="socialPublishTagesinfo()" style="width:100%;padding:14px;font-size:15px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;color:#16a34a;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px">
-                  <i data-lucide="file-text" style="width:18px;height:18px"></i>
-                  Nur als Tagesinfo ver&#246;ffentlichen
-                </button>
-                <div style="font-size:11px;color:#9ca3af;margin-top:5px;text-align:center">Erscheint auf der Homepage &ndash; ohne WhatsApp/Instagram</div>
+                <div style="display:flex;gap:8px;margin-bottom:6px">
+                  <button onclick="socialPublishTagesinfo()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;color:#16a34a;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px">
+                    <i data-lucide="file-text" style="width:18px;height:18px"></i>
+                    Tagesinfo ver&#246;ffentlichen
+                  </button>
+                  <button onclick="socialSaveDraft()" style="padding:14px 16px;font-size:13px;font-weight:700;cursor:pointer;background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;color:#92400e;min-height:52px;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap">
+                    <i data-lucide="bookmark" style="width:16px;height:16px"></i>
+                    Parken
+                  </button>
+                </div>
+                <div style="font-size:11px;color:#9ca3af;text-align:center">Ver&#246;ffentlichen = sofort auf Homepage &bull; Parken = Entwurf speichern, sp&#228;ter senden</div>
               </div>
             </div>
           </div>

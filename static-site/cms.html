@@ -2925,6 +2925,7 @@ document.head.appendChild(msalScript);
                 else{b.style.background='#fff';b.style.color='#374151';}
               });
               buildTitelOpts();
+              if(typeof socialBuildPostItems==='function') socialBuildPostItems();
             };
 
             buildTitelOpts();
@@ -2972,11 +2973,17 @@ document.head.appendChild(msalScript);
         <div id="soc-meal-poster-list" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       </div>
       <div style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:12px">
-        <button class="cms-btn" onclick="socialPublishTagesinfo()" style="width:100%;padding:12px;font-size:14px;font-weight:700;background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;color:#16a34a;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
-          <i data-lucide="file-text" style="width:16px;height:16px"></i>
-          Nur als Tagesinfo ver&#246;ffentlichen
-        </button>
-        <div style="font-size:11px;color:#9ca3af;margin-top:5px;text-align:center">Erscheint auf der Homepage &ndash; ohne WhatsApp/Instagram</div>
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <button class="cms-btn" onclick="socialPublishTagesinfo()" style="flex:1;padding:12px;font-size:13px;font-weight:700;background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;color:#16a34a;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+            <i data-lucide="file-text" style="width:16px;height:16px"></i>
+            Tagesinfo ver&#246;ffentlichen
+          </button>
+          <button class="cms-btn" onclick="socialSaveDraft()" style="padding:12px 14px;font-size:12px;font-weight:700;background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;color:#92400e;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;white-space:nowrap">
+            <i data-lucide="bookmark" style="width:14px;height:14px"></i>
+            Parken
+          </button>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;text-align:center">Ver&#246;ffentlichen = sofort auf Homepage &bull; Parken = Entwurf, sp&#228;ter senden</div>
       </div>
       <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
       <div id="soc-today-posts" style="display:none;margin-top:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px">
