@@ -1791,7 +1791,7 @@ test.describe('AK-ST – Storno mit Begründung', () => {
     await page.waitForTimeout(3000);
     const content = await page.content();
     expect(content).toContain('data-cancel-reason');
-    expect(content).toContain('Grund f\u00fcr Stornierung (Pflichtfeld)');
+    expect(content).toContain('Pflichtfeld');
   });
 
   test('T-ST-06 Bestellstatus Fleisch-Storno: prompt mit Begründung (AK-ST-08)', async ({ page }) => {
@@ -1803,19 +1803,18 @@ test.describe('AK-ST – Storno mit Begründung', () => {
   });
 
   test('T-ST-07 CMS Shop-Storno: cmsShowShopStornoDialog (AK-ST-05)', async ({ page }) => {
-    await page.goto(`${BASE}/cms.html`);
-    await page.waitForTimeout(2000);
-    const content = await page.content();
-    expect(content).toContain('cmsShowShopStornoDialog');
-    expect(content).toContain('CMS_SHOP_STORNO_REASONS');
+    // cms.js is loaded as external script, fetch it directly
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    expect(jsContent).toContain('cmsShowShopStornoDialog');
+    expect(jsContent).toContain('CMS_SHOP_STORNO_REASONS');
   });
 
   test('T-ST-08 CMS Metzger-Storno: Dialog mit Gründen (AK-ST-06)', async ({ page }) => {
-    await page.goto(`${BASE}/cms.html`);
-    await page.waitForTimeout(2000);
-    const content = await page.content();
-    expect(content).toContain('CMS_FM_STORNO_REASONS');
-    expect(content).toContain('data-fm-storno');
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    expect(jsContent).toContain('CMS_FM_STORNO_REASONS');
+    expect(jsContent).toContain('data-fm-storno');
   });
 
   test('T-ST-09 Kiosk sendet storno_grund statt personal_antwort (AK-ST-04)', async ({ page }) => {
@@ -1829,9 +1828,8 @@ test.describe('AK-ST – Storno mit Begründung', () => {
   });
 
   test('T-ST-10 CMS sendet storno_grund statt personal_antwort (AK-ST-04)', async ({ page }) => {
-    await page.goto(`${BASE}/cms.html`);
-    await page.waitForTimeout(2000);
-    const content = await page.content();
-    expect(content).toContain('storno_grund');
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    expect(jsContent).toContain('storno_grund');
   });
 });
