@@ -698,13 +698,13 @@ def _handle_get(req, token, base_url, hdrs):
 
     # Kiosk history: completed/cancelled orders (last 30 days)
     if mode == "kiosk_history":
-        cutoff = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%dT00:00:00Z")
-        odata_filter = f"dl_status ge {STATUS_ABGEHOLT} and dl_bestelldatum ge {cutoff}"
+        odata_filter = f"dl_status ge {STATUS_ABGEHOLT}"
         url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter={odata_filter}&$orderby=dl_liefertag desc,dl_bestelldatum desc&$top=100"
         r = requests.get(url, headers=hdrs, timeout=30)
         if r.status_code != 200:
+            logging.error(f"[kiosk_history] Dataverse error {r.status_code}: {r.text[:500]}")
             return func.HttpResponse(
-                json.dumps({"success": False, "error": "Fehler beim Laden"}, ensure_ascii=False),
+                json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}, ensure_ascii=False),
                 status_code=500, headers=get_cors_headers()
             )
         items = r.json().get("value", [])
