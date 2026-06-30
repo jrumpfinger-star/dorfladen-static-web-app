@@ -421,6 +421,7 @@
       <div class="k-date" id="k-date"></div>
       <div class="k-clock" id="k-clock"></div>
     </div>
+    <button class="k-btn k-btn-outline" id="k-mute-btn" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.toggleMute()" title="Ton ein/aus"><i data-lucide="volume-2" style="width:20px;height:20px"></i></button>
     <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.openModal('modal-help')" title="Hilfe & Workflows"><i data-lucide="help-circle" style="width:20px;height:20px"></i></button>
     <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.refresh()" title="Aktualisieren"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
   </div>
@@ -938,12 +939,28 @@ var K = (function(){
   // ── K-02: Sound/Vibrationsalarm bei neuen Bestellungen ──
   var _prevCounts = {mittag: -1, shop: -1, fleisch: -1}; // -1 = initial load, no alert
   var _alertSound = null;
+  var _soundMuted = localStorage.getItem('k_muted')==='1';
+  function _initMuteBtn(){
+    var btn = document.getElementById('k-mute-btn');
+    if(!btn) return;
+    btn.innerHTML = _soundMuted ? luc('volume-x',20) : luc('volume-2',20);
+    btn.title = _soundMuted ? 'Ton ist aus (klick = einschalten)' : 'Ton ist an (klick = ausschalten)';
+    if(_soundMuted) btn.style.opacity='0.5'; else btn.style.opacity='1';
+    reinitIcons();
+  }
+  function toggleMute(){
+    _soundMuted = !_soundMuted;
+    localStorage.setItem('k_muted', _soundMuted ? '1' : '0');
+    _initMuteBtn();
+    toast(_soundMuted ? '🔇 Ton aus' : '🔊 Ton an');
+  }
   function _initAlertSound(){
     if(_alertSound) return;
     _alertSound = new Audio('data:audio/wav;base64,UklGRl4FAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YToFAACAgICAgICAgICAgICAgICAgICA/3+AgP9/gID/f4CA/3+AgP9/gID/f4CA/3+AgP9/gIBiYJagoGBWgKqAWICsgFSAroBSgLCAUICygE6AtIBMgLaASoC4AEqAuABIgLoASIC6AEiAugBKgLgASoC4AEyAtgBMgLQAToC0AFCAsABSgK4AVICtgFaAq4BYgKmAWoCngFyApYBegKWAYICjgGCAo4BigKGAZIChgGaAn4BogJ+AaICfgGqAnYBsgJ2AbICdgGyAnYBugJuAboCdgG6AnYBugJ2AboCdgGyAnYBsgJ2AbICfgGqAn4BqgJ+AaICfgGiAoYBmgKOAZICjgGKApYBggKeAXoCtgFqAr4BYgLOAVIC3gFCAu4BMgL+ASIDBAEWABQFBAAUDAQB/gAAAgAAAAID/fwCA/3+AgP9/gID/f4CA/3+AgP9/gID/f4CA/3+AgA==');
     _alertSound.volume = 0.7;
   }
   function _playNewOrderAlert(source){
+    if(_soundMuted) return;
     _initAlertSound();
     try{ _alertSound.currentTime = 0; _alertSound.play().catch(function(){}); }catch(e){}
     try{ navigator.vibrate && navigator.vibrate([200, 100, 200]); }catch(e){}
@@ -4024,15 +4041,17 @@ var K = (function(){
       if(o.status <= 1 && o.liefertag===_fmSammelLiefertag) orders.push(o);
     });
     if(!orders.length){ toast('Keine offenen Bestellungen'); return; }
-    // Count how many positions are not yet gesendet
+    // Count how many positions are not yet bestellt
     var offenCount = 0;
-    orders.forEach(function(o){ (o.positionen||[]).forEach(function(p){ if(!p.gesendet) offenCount++; }); });
+    orders.forEach(function(o){ (o.positionen||[]).forEach(function(p){ if(!p.bestellt && !p.gesendet) offenCount++; }); });
     if(!offenCount){ toast('Alle bereits abgehakt'); return; }
     if(!confirm('Alle '+offenCount+' offenen Positionen als bestellt abhaken?')) return;
     var pending = orders.length;
     orders.forEach(function(o){
-      var pos = (o.positionen||[]).map(function(p){ p.gesendet=true; return p; });
-      fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:o.id,positionen:pos})})
+      var pos = (o.positionen||[]).map(function(p){ p.bestellt=true; p.gesendet=true; return p; });
+      var body = {id:o.id, positionen:pos};
+      if(o.status===0) { body.status=1; o.status=1; }
+      fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
         .then(function(r){return r.json();})
         .then(function(){
           pending--;
@@ -4047,6 +4066,7 @@ var K = (function(){
 
   buildDayBar();
   reinitIcons(); // Initialize static Lucide icons
+  _initMuteBtn();
   setMittagFilter('offen'); // Default: Offen
   loadOrders();
   loadDishes();
@@ -4144,6 +4164,7 @@ var K = (function(){
     sendFmModalReply: sendFmModalReply,
     markFmRead: markFmRead,
     markAllFmRead: markAllFmRead,
+    toggleMute: toggleMute,
     refresh: refresh
   };
 })();
