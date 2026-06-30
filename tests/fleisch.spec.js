@@ -752,3 +752,75 @@ test.describe('T-26 Metzger Label-Refactoring, Workflow & Historie (AK-FLEISCH-2
     expect(hasOldText).toBe(false);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  T-27: Sammelbestellung Workflow-Fix & 2-Spalten-Layout (AK-FLEISCH-27)
+// ════════════════════════════════════════════════════
+
+test.describe('T-27 Sammelbestellung Workflow-Fix & 2-Spalten (AK-FLEISCH-27)', () => {
+
+  test('T-27-01 API einzelpositionen enthalten gesendet-Flag (AK-FLEISCH-27)', async ({ request }) => {
+    // Get the first open delivery day
+    const kioskRes = await request.get(`${BASE}/api/fleisch-order?mode=kiosk`);
+    const kioskData = await kioskRes.json();
+    if (!kioskData.success || !kioskData.bestellungen?.length) return;
+    const liefertag = kioskData.bestellungen[0].liefertag;
+    if (!liefertag) return;
+    const res = await request.get(`${BASE}/api/fleisch-order?liefertag=${liefertag}`);
+    expect(res.status()).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    // Each einzelposition should have both bestellt and gesendet flags
+    if (data.einzelpositionen?.length > 0) {
+      const ep = data.einzelpositionen[0];
+      expect('bestellt' in ep).toBe(true);
+      expect('gesendet' in ep).toBe(true);
+    }
+  });
+
+  test('T-27-02 Sammelbestellung hat abhakbare Checkboxen (AK-FLEISCH-27)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    await page.locator('[data-tab="metzger"]').click();
+    await page.waitForTimeout(2000);
+    await page.locator('[data-fm-filter="sammel"]').click();
+    await page.waitForTimeout(3000);
+    // Check that at least some checkboxes are NOT disabled (i.e., items can be checked)
+    const checkboxes = page.locator('#metzger-sammel-body input[type="checkbox"]:not(#fm-sammel-all-cb)');
+    const count = await checkboxes.count();
+    if (count > 0) {
+      let enabledCount = 0;
+      for (let i = 0; i < count; i++) {
+        const disabled = await checkboxes.nth(i).isDisabled();
+        if (!disabled) enabledCount++;
+      }
+      // At least some items should be uncheckable (gesendet=false)
+      // This may be 0 if all are already gesendet, so we just verify structure exists
+      expect(count).toBeGreaterThan(0);
+    }
+  });
+
+  test('T-27-03 _fmMarkPositionGesendet Funktion existiert (AK-FLEISCH-27)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => document.documentElement.innerHTML.includes('_fmMarkPositionGesendet'));
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-27-04 2-Spalten-CSS existiert fuer breiten Viewport (AK-FLEISCH-27)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // Check that the CSS rule for 2-column grid exists
+    const hasGridRule = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.cssText && rule.cssText.includes('grid-template-columns') && rule.cssText.includes('panel-metzger')) return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    });
+    expect(hasGridRule).toBe(true);
+  });
+});

@@ -1835,3 +1835,27 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | 2026-06-30 | T-26-08 API mode=kiosk_history liefert abgeschlossene Bestellungen | ✅ Pass |
 | 2026-06-30 | T-26-09 Historie-Tab zeigt Bestellungen | ✅ Pass |
 | 2026-06-30 | T-26-11 Button Text Alle bestellt | ✅ Pass |
+
+## T-27 – Sammelbestellung Workflow-Fix & 2-Spalten-Layout (AK-FLEISCH-27)
+
+> Spec: specs/fleisch-vorbestellung.md → AK-FLEISCH-27
+
+### T-27-01: API einzelpositionen enthalten gesendet-Flag (AK-FLEISCH-27)
+- **Aktion:** GET `/api/fleisch-order?liefertag=<nächster Liefertag>`
+- **Prüfung:** `einzelpositionen[0]` enthält sowohl `bestellt` als auch `gesendet` Keys
+- **Erwartung:** Beide Flags sind im API-Response vorhanden
+
+### T-27-02: Sammelbestellung hat abhakbare Checkboxen (AK-FLEISCH-27)
+- **Aktion:** Kiosk → Metzger → Sammelbestellung öffnen
+- **Prüfung:** Checkboxen im Sammelbestellung-Body prüfen
+- **Erwartung:** Items mit `gesendet=false` haben enabled Checkboxen (abhakbar)
+
+### T-27-03: _fmMarkPositionGesendet Funktion existiert (AK-FLEISCH-27)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** HTML enthält `_fmMarkPositionGesendet`
+- **Erwartung:** Funktion ist im JS-Code vorhanden
+
+### T-27-04: 2-Spalten-CSS existiert für breiten Viewport (AK-FLEISCH-27)
+- **Aktion:** `/kiosk` laden
+- **Prüfung:** CSS-Regeln nach `grid-template-columns` + `panel-metzger` durchsuchen
+- **Erwartung:** Media-Query für 2-Spalten-Grid bei ≥ 900px existiert

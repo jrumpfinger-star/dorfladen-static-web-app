@@ -472,6 +472,15 @@ Die bestehende Bestellstatus-Seite wird erweitert, um auch Fleischbestellungen (
 - [x] Frontend: Historie-Tab lädt Daten über separate API statt aus dem Kiosk-Dataset zu filtern
 - [x] Frontend: Auto-Refresh überschreibt Historie-View nicht
 
+### AK-FLEISCH-27: Sammelbestellung Workflow-Fix & 2-Spalten-Layout
+- [x] Neues `gesendet`-Flag pro Item: Trennung von "auf Bestellliste" (bestellt) und "beim Metzger bestellt" (gesendet)
+- [x] Sammelbestellung: Checkbox zeigt `gesendet`-State statt `bestellt`-State
+- [x] Sammelbestellung: Items abhakbar auch wenn `bestellt=true` (solange `gesendet=false`)
+- [x] `_fmMarkPositionGesendet()`: Setzt `gesendet=true` auf einzelne Position
+- [x] `metzgerAlleGesendet()`: Setzt `gesendet=true` auf alle Positionen (nicht mehr `bestellt`)
+- [x] API: `einzelpositionen` enthält `gesendet`-Flag
+- [x] 2-Spalten-Grid für Bestellkarten bei Viewport ≥ 900px
+
 ### AK-FLEISCH-25: Kiosk Mittagstisch UI/UX Optimierung
 - [x] Collapse/Expand-Button platzsparend (kleiner, Kurztext)
 - [x] Preis im Header der Bestellkarte statt im Body
