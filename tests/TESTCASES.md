@@ -1936,3 +1936,13 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Aktion:** `/kiosk` laden
 - **Prüfung:** HTML enthält `metzgerAlleGesendet` und Bestätigungstext
 - **Erwartung:** Vor dem Abhaken aller Positionen wird ein Bestätigungsdialog angezeigt
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-30 | T-29-01 Alle abhaken Button existiert in Sammelbestellung | ✅ Pass |
+| 2026-06-30 | T-29-02 Mittagstisch 2-Spalten CSS-Regel existiert | ✅ Pass |
+| 2026-06-30 | T-29-03 Detail-Chips CSS-Klasse fm-hdr-details existiert | ✅ Pass |
+| 2026-06-30 | T-29-04 Detail-Chips werden ab 700px sichtbar | ✅ Pass |
+| 2026-06-30 | T-29-05 metzgerAlleGesendet hat Bestaetigungsdialog | ✅ Pass |
