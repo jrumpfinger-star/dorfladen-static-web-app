@@ -254,7 +254,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 <div class="fm-history-overlay" id="fm-history-overlay">
   <div class="fm-history-card">
     <div class="fm-history-hdr">
-      <h3>Meine Bestellungen</h3>
+      <h3>Offene Bestellungen</h3>
       <button class="fm-history-close" onclick="document.getElementById('fm-history-overlay').classList.remove('open')">&times;</button>
     </div>
     <div class="fm-history-body" id="fm-history-body">
@@ -1124,8 +1124,12 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
         if(!res.success||!res.bestellungen||!res.bestellungen.length){
           body.innerHTML='<div class="fm-history-empty">Keine Bestellungen gefunden.</div>'; return;
         }
+        var aktiv=res.bestellungen.filter(function(b){ return (b.status||0)<3; });
+        if(!aktiv.length){
+          body.innerHTML='<div class="fm-history-empty">Keine offenen Bestellungen.</div>'; return;
+        }
         var html='';
-        res.bestellungen.forEach(function(b){
+        aktiv.forEach(function(b){
           var dt=b.liefertag?new Date(b.liefertag).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
           var sum=(b.gesamtsumme||0).toFixed(2).replace('.',',')+' \u20ac';
           var pos=b.positionen?b.positionen.length:0;
