@@ -3600,7 +3600,10 @@ var K = (function(){
           }
           html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',4)">'+luc('x',13)+'</button>';
         } else if(o.status===1){
+          html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#6b7280" onclick="K.revertMetzgerStatus(\''+o.id+'\','+o.status+')">'+luc('undo-2',13)+' Zurück</button>';
           html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.setMetzgerStatus(\''+o.id+'\',3)">'+luc('check-circle',13)+' Abgeholt</button>';
+        } else if(o.status===3){
+          html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#6b7280" onclick="K.revertMetzgerStatus(\''+o.id+'\','+o.status+')">'+luc('undo-2',13)+' Zurück</button>';
         }
         if(fmIsUnread) html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markFmRead(\''+o.id+'\')">'+luc('eye',13)+' Gelesen</button>';
         if(o.status < 3) html += '<button class="k-btn k-btn-outline k-btn-sm" style="color:#2563eb;border-color:#93c5fd" onclick="event.stopPropagation();K.openFmReplyModal(\''+o.id+'\',\''+esc(o.name)+'\')">'+luc('message-circle',13)+'</button>';
@@ -3675,6 +3678,14 @@ var K = (function(){
       if(!data.success) toast('Fehler: '+(data.error||''));
       renderMetzgerOrders();
     }).catch(function(){ toast('Netzwerkfehler'); });
+  }
+
+  function revertMetzgerStatus(id, currentStatus){
+    if(currentStatus<=0) return;
+    var prev = currentStatus - 1;
+    var labels = {0:'Neu',1:'In Bestellung',2:'Bereit',3:'Abgeholt'};
+    if(!confirm('Status zurücksetzen auf „'+(labels[prev]||'?')+'"?')) return;
+    setMetzgerStatus(id, prev);
   }
 
   function setMetzgerStatus(id, status){
@@ -4123,6 +4134,7 @@ var K = (function(){
     toggleMetzgerCard: toggleMetzgerCard,
     toggleMetzgerDayGroup: toggleMetzgerDayGroup,
     setMetzgerStatus: setMetzgerStatus,
+    revertMetzgerStatus: revertMetzgerStatus,
     toggleFmItemBestellt: toggleFmItemBestellt,
     toggleAllFmItems: toggleAllFmItems,
     loadMetzgerOrders: loadMetzgerOrders,

@@ -939,6 +939,20 @@ test.describe('T-29 Kiosk UI-Verbesserungen (AK-FLEISCH-29)', () => {
     expect(hasMediaRule).toBe(true);
   });
 
+  test('T-29-10 Metzger-Karten haben Zurueck-Button (revertMetzgerStatus) (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasRevert = await page.evaluate(() => document.documentElement.innerHTML.includes('revertMetzgerStatus'));
+    expect(hasRevert).toBe(true);
+  });
+
+  test('T-29-11 revertMetzgerStatus ist im K-Namespace exportiert (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const exported = await page.evaluate(() => typeof window.K !== 'undefined' && typeof window.K.revertMetzgerStatus === 'function');
+    expect(exported).toBe(true);
+  });
+
   test('T-29-05 metzgerAlleGesendet hat Bestaetigungsdialog (AK-FLEISCH-29)', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(3000);
