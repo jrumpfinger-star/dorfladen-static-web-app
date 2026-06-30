@@ -1471,8 +1471,8 @@ test.describe('Kiosk – Metzger UI/UX (AK-FLEISCH-24)', () => {
       test.skip(true, 'Keine Metzger-Bestellungen');
       return;
     }
-    // Arrow should be Lucide icon, not unicode text
-    const arrow = cards.first().locator('.k-oc-arrow i[data-lucide="chevron-down"]');
+    // Arrow should be Lucide icon (rendered as SVG by lucide.createIcons)
+    const arrow = cards.first().locator('.k-oc-arrow svg');
     await expect(arrow).toHaveCount(1);
   });
 
@@ -1580,8 +1580,8 @@ test.describe('Kiosk – Mittagstisch UI/UX (AK-FLEISCH-25)', () => {
       test.skip(true, 'Keine Mittagstisch-Bestellungen');
       return;
     }
-    // Arrow should be Lucide icon
-    const arrow = cards.first().locator('.k-oc-arrow i[data-lucide="chevron-down"]');
+    // Arrow should be Lucide icon (rendered as SVG by lucide.createIcons)
+    const arrow = cards.first().locator('.k-oc-arrow svg');
     await expect(arrow).toHaveCount(1);
   });
 
