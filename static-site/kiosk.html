@@ -1238,6 +1238,7 @@ var K = (function(){
 
   function setMittagDatum(datum){
     _mittagDatum = datum;
+    _prevCounts.mittag = -1; // Reset so day switch doesn't trigger false alert
     document.querySelectorAll('#mittag-day-bar .k-day-pill').forEach(function(b){
       b.classList.toggle('active', b.dataset.datum===datum);
     });
