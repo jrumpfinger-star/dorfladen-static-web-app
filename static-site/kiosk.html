@@ -116,6 +116,11 @@
       .fm-items-tbl{font-size:12px}
       .fm-items-tbl .fm-col-cut{font-size:9px;padding:1px 4px}
     }
+    .fm-hdr-details{display:none;align-items:center;gap:4px;margin-left:4px}
+    .fm-hdr-chip{font-size:11px;font-weight:600;color:var(--c-muted);background:#f3f4f6;padding:2px 7px;border-radius:6px;white-space:nowrap}
+    @media(min-width:700px){
+      .fm-hdr-details{display:flex}
+    }
     @media(min-width:900px){
       #panel-metzger .k-slot-body{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       #mittag-orders{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -3485,6 +3490,13 @@ var K = (function(){
       html += '<span class="k-oc-arrow" style="font-size:10px;color:var(--c-muted);transition:transform .2s">'+luc('chevron-down',14)+'</span>';
       html += '<span style="font-weight:800;font-size:14px;color:'+(isToday?'var(--c-green)':'var(--c-text)')+'">'+luc('calendar',14)+' '+wt+dayLabel+'</span>';
       if(isToday) html += '<span style="font-size:11px;font-weight:700;color:var(--c-green);background:#dcfce7;padding:2px 8px;border-radius:8px">Heute</span>';
+      // Detail chips for day group – visible on wider screens
+      var dayPositions = 0, dayKg = 0;
+      orders.forEach(function(o){ (o.positionen||[]).forEach(function(p){ dayPositions++; dayKg += Number(p.menge_kg||0); }); });
+      html += '<span class="fm-hdr-details">';
+      html += '<span class="fm-hdr-chip">'+dayPositions+' Pos.</span>';
+      html += '<span class="fm-hdr-chip">'+dayKg.toFixed(1)+' kg</span>';
+      html += '</span>';
       html += '<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--c-muted)">'+orders.length+' Best.</span>';
       html += '</div>';
 
@@ -3502,6 +3514,13 @@ var K = (function(){
         html += '<div class="k-order-hdr" onclick="K.toggleMetzgerCard(\''+o.id+'\')">';
         html += '<span class="k-oc-arrow">'+luc('chevron-down',16)+'</span>';
         html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
+        // Detail chips visible on wider screens
+        var totalKg = 0;
+        positionen.forEach(function(p){ totalKg += Number(p.menge_kg||0); });
+        html += '<span class="fm-hdr-details">';
+        html += '<span class="fm-hdr-chip">'+positionen.length+' Art.</span>';
+        html += '<span class="fm-hdr-chip">'+totalKg.toFixed(1)+' kg</span>';
+        html += '</span>';
         html += '<span class="k-oc-badges">';
         html += '<span class="k-badge '+(STATUS_CSS[o.status]||'st-new')+'">'+(STATUS_LABELS[o.status]||'Neu')+'</span>';
         html += '</span>';
