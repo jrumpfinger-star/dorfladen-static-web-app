@@ -23,9 +23,9 @@
     .k-tab:hover{background:#f9fafb}
     .k-tab.active{border-bottom-color:var(--c-green);color:var(--c-green);background:#f0fdf4}
     .k-tab .k-tab-icon{font-size:22px}
-    .k-tab .k-tab-badge{background:var(--c-orange);color:#fff;font-size:11px;font-weight:800;padding:1px 7px;border-radius:10px;min-width:20px;display:none}
+    .k-tab .k-tab-badge{background:var(--c-orange);color:#fff;font-size:13px;font-weight:800;padding:4px 10px;border-radius:12px;min-width:28px;min-height:28px;display:none;line-height:1;text-align:center}
     .k-tab .k-tab-badge.show{display:inline-block}
-    .k-tab-badges{display:flex;gap:3px;justify-content:center;flex-wrap:wrap}
+    .k-tab-badges{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:2px}
     .k-tab-badges .k-tab-badge{margin:0}
     .k-tab-badge.badge-neu{background:#ef4444}
     .k-tab-badge.badge-packen{background:#f59e0b}
@@ -1242,7 +1242,7 @@ var K = (function(){
 
   function _updateMittagTabBadge(){
     updateTabBadges('mittag', [
-      {count: _globalTodayNew, cls: 'badge-neu', title: _globalTodayNew+' neue Bestellung'+((_globalTodayNew!==1)?'en':''), blink: true, action: 'mittag:offen'},
+      {count: _globalTodayNew, cls: 'badge-neu', title: _globalTodayNew+' neue Bestellung'+((_globalTodayNew!==1)?'en':''), blink: false, action: 'mittag:offen'},
       {count: _globalUnreadMessages, cls: 'badge-msg', title: _globalUnreadMessages+' ungelesene Nachricht'+((_globalUnreadMessages!==1)?'en':''), blink: true, action: 'mittag:nachrichten'}
     ]);
   }
@@ -2159,9 +2159,9 @@ var K = (function(){
         var neuC = active.filter(function(o){return o.status===0;}).length;
         var packenC = active.filter(function(o){return o.status===1;}).length;
         updateTabBadges('abhol', [
-          {count: neuC, cls: 'badge-neu', title: neuC+' neue Bestellung'+(neuC!==1?'en':''), blink: true, action: 'abhol:eingang'},
+          {count: neuC, cls: 'badge-neu', title: neuC+' neue Bestellung'+(neuC!==1?'en':''), blink: false, action: 'abhol:eingang'},
           {count: packenC, cls: 'badge-packen', title: packenC+' zu packen', blink: false, action: 'abhol:packen'},
-          {count: overdueC, cls: 'badge-overdue', title: overdueC+' überfällig', blink: true, action: 'abhol:overdue'}
+          {count: overdueC, cls: 'badge-overdue', title: overdueC+' überfällig', blink: false, action: 'abhol:overdue'}
         ]);
       })
       .catch(function(e){ document.getElementById('abhol-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('alert-triangle',24)+'</div>Fehler beim Laden: '+esc(e.message)+'</div>'; reinitIcons(); });
@@ -3330,7 +3330,7 @@ var K = (function(){
     var neuCount = _fmOrders.filter(function(o){ return o.status === 0; }).length;
     var offenCount = _fmOrders.filter(function(o){ return o.status === 1; }).length;
     updateTabBadges('metzger', [
-      {count: neuCount, cls: 'badge-neu', title: neuCount+' neue Bestellung'+(neuCount!==1?'en':''), blink: true, action: 'metzger:neu'},
+      {count: neuCount, cls: 'badge-neu', title: neuCount+' neue Bestellung'+(neuCount!==1?'en':''), blink: false, action: 'metzger:neu'},
       {count: offenCount, cls: 'badge-packen', title: offenCount+' beim Metzger', blink: false, action: 'metzger:offen'},
       {count: _fmUnreadCount, cls: 'badge-msg', title: _fmUnreadCount+' ungelesene Nachricht'+((_fmUnreadCount!==1)?'en':''), blink: true, action: 'metzger:nachrichten'}
     ]);
