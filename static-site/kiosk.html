@@ -2543,7 +2543,12 @@ var K = (function(){
     }
 
     // Customer message & staff reply (compact)
-    if(o.kunde_kommentar) html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;margin:0 0 4px;padding:6px 10px;font-size:12px;animation:'+(o.kommentar_gelesen?'none':'kPulse 2s ease-in-out 3')+'">'+luc('message-circle',12)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(o.kunde_kommentar){
+      html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;margin:0 0 4px;padding:6px 10px;font-size:12px;display:flex;align-items:flex-start;gap:6px;animation:'+(o.kommentar_gelesen?'none':'kPulse 2s ease-in-out 3')+'">';
+      html += '<div style="flex:1;min-width:0">'+luc('message-circle',12)+' <strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+      if(!o.kommentar_gelesen) html += '<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="event.stopPropagation();K.markShopMsgRead(\''+o.id+'\')">'+luc('eye',11)+' Gelesen</button>';
+      html += '</div>';
+    }
     if(o.personal_antwort) html += '<div class="k-order-note" style="background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;margin:0 0 4px;padding:6px 10px;font-size:12px">'+luc('reply',12)+' <strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
 
     // Reply input (hidden by default, toggled inline)
@@ -2564,7 +2569,6 @@ var K = (function(){
     }
     // Message button inline with actions
     if(o.status<3) html += '<button class="k-btn k-btn-sm k-btn-outline" style="color:#2563eb;border-color:#93c5fd;margin-left:auto" onclick="event.stopPropagation();K.showShopReply(\''+o.id+'\')">'+luc('message-circle',13)+'</button>';
-    if(o.kunde_kommentar && !o.kommentar_gelesen) html += '<button class="k-btn k-btn-sm k-btn-outline" style="color:#3b82f6;border-color:#93c5fd" onclick="event.stopPropagation();K.markShopMsgRead(\''+o.id+'\')">'+luc('eye',13)+'</button>';
     html += '</div>';
     html += '</div>';
     html += '</div>';
