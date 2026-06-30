@@ -2698,9 +2698,8 @@
                 btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';
                 if(x.success){
                   ta.value='';
-                  var sent=document.querySelector('[data-shop-comment-sent="'+idx+'"]');
-                  if(sent) sent.style.display='block';
                   showToast('\u2705 Nachricht gesendet');
+                  loadMyOrders();
                 } else {showToast('Fehler: '+(x.error||''));}
               })
               .catch(function(e){btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';showToast('Fehler: '+e.message);});

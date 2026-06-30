@@ -14,13 +14,21 @@ Requires env vars: DV_CLIENT_SECRET (and optionally DV_TENANT_ID, DV_CLIENT_ID, 
 """
 import os
 import sys
+import json
 import msal
 import requests
 
-TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-CLIENT_ID = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
-CLIENT_SECRET = os.environ.get("DV_CLIENT_SECRET", "")
-BASE_URL = os.environ.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com")
+# Load from local.settings.json as fallback
+_settings = {}
+_settings_path = os.path.join(os.path.dirname(__file__), "..", "api", "local.settings.json")
+if os.path.exists(_settings_path):
+    with open(_settings_path) as f:
+        _settings = json.load(f).get("Values", {})
+
+TENANT_ID = os.environ.get("DV_TENANT_ID", _settings.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e"))
+CLIENT_ID = os.environ.get("DV_CLIENT_ID", _settings.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4"))
+CLIENT_SECRET = os.environ.get("DV_CLIENT_SECRET", _settings.get("DV_CLIENT_SECRET", ""))
+BASE_URL = os.environ.get("DV_DEFAULT_URL", _settings.get("DV_DEFAULT_URL", "https://orgab4e2f00.crm16.dynamics.com"))
 
 
 def get_token():

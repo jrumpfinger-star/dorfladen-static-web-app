@@ -9399,6 +9399,19 @@
         if(o.anmerkungen) html+='<br><em style="color:#92400e">📝 '+esc(o.anmerkungen)+'</em>';
         html+='</td></tr>';
       }
+      // Messages row
+      var hasMsg=o.kunde_kommentar||o.personal_antwort;
+      if(hasMsg||o.status<3){
+        html+='<tr style="background:'+(o.kunde_kommentar&&!o.kommentar_gelesen?'#eff6ff':'#f9fafb')+'"><td colspan="7" style="padding:6px 8px 8px 24px;font-size:12px">';
+        if(o.kunde_kommentar){
+          html+='<div style="padding:4px 8px;background:#dbeafe;border-radius:6px;color:#1e40af;margin-bottom:4px"><strong>\u2709 Kunde:</strong> '+esc(o.kunde_kommentar);
+          if(!o.kommentar_gelesen) html+=' <button class="cms-btn cms-btn-sm" style="font-size:10px;padding:1px 6px;margin-left:4px" onclick="cmsMarkShopMsgRead(\''+o.id+'\')">Gelesen</button>';
+          html+='</div>';
+        }
+        if(o.personal_antwort) html+='<div style="padding:4px 8px;background:#dcfce7;border-radius:6px;color:#166534;margin-bottom:4px"><strong>\ud83d\udcac Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+        if(o.status<3) html+='<button class="cms-btn cms-btn-sm" style="background:#1e40af;color:#fff;font-size:11px;padding:3px 10px" onclick="cmsShowShopReplyDialog(\''+o.id+'\',\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\')"><i data-lucide="reply" style="width:12px;height:12px;vertical-align:-2px"></i> Antworten</button>';
+        html+='</td></tr>';
+      }
     });
     html+='</tbody></table>';
     list.innerHTML=html;
@@ -9412,7 +9425,7 @@
     var label=STATUS_LABELS[status]||'';
     if(!confirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?')) return;
     var payload={id:id,status:status};
-    if(grund) payload.personal_antwort=grund;
+    if(grund) payload.storno_grund=grund;
     fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json();})
       .then(function(res){
@@ -9480,6 +9493,55 @@
             if(o){o.status=4;o.status_text=STATUS_LABELS[4];}
             cmsRenderOrders();
             cmsToast('✅ '+bestellnr+': Storniert');
+          } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+        }).catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+    });
+  };
+
+  // ── Shop-Nachricht als gelesen markieren ──
+  window.cmsMarkShopMsgRead=function(id){
+    fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,kommentar_gelesen:true})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          var o=_ordersData.find(function(x){return x.id===id;});
+          if(o) o.kommentar_gelesen=true;
+          cmsRenderOrders();
+          cmsToast('Nachricht als gelesen markiert');
+        } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+      }).catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+  };
+
+  // ── Shop-Antwort-Dialog ──
+  window.cmsShowShopReplyDialog=function(id,bestellnr,email){
+    var o=_ordersData.find(function(x){return x.id===id;});
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
+    var modal=document.createElement('div');
+    modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
+    var h='<div style="font-size:16px;font-weight:800;margin-bottom:4px">\ud83d\udcac Nachricht an Kunden</div>';
+    h+='<div style="font-size:12px;color:#6b7f72;margin-bottom:12px">'+esc(bestellnr||'')+'</div>';
+    if(o&&o.kunde_kommentar) h+='<div style="padding:6px 10px;background:#dbeafe;border-radius:8px;font-size:12px;color:#1e40af;margin-bottom:10px"><strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(o&&o.personal_antwort) h+='<div style="padding:6px 10px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;margin-bottom:10px"><strong>Letzte Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+    h+='<textarea id="cms-shop-reply-text" placeholder="Ihre Antwort\u2026" rows="3" style="width:100%;border:1px solid #dfe7e2;border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>';
+    h+='<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-shop-reply-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>';
+    h+='<button id="cms-shop-reply-send" style="flex:1;padding:10px;border:none;border-radius:10px;background:#1e40af;color:#fff;font-weight:700;cursor:pointer">Senden</button></div>';
+    modal.innerHTML=h;
+    overlay.appendChild(modal);document.body.appendChild(overlay);
+    modal.querySelector('#cms-shop-reply-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
+    overlay.addEventListener('click',function(ev){if(ev.target===overlay) document.body.removeChild(overlay);});
+    modal.querySelector('#cms-shop-reply-send').addEventListener('click',function(){
+      var text=(modal.querySelector('#cms-shop-reply-text').value||'').trim();
+      if(!text){cmsToast('Bitte Antwort eingeben','warn');return;}
+      document.body.removeChild(overlay);
+      fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,personal_antwort:text,kommentar_gelesen:true})})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){
+            var o=_ordersData.find(function(x){return x.id===id;});
+            if(o){o.personal_antwort=text;o.kommentar_gelesen=true;}
+            cmsRenderOrders();
+            cmsToast('\u2705 Antwort gesendet');
           } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
         }).catch(function(e){cmsToast('Fehler: '+e.message,'error');});
     });
