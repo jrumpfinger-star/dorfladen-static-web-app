@@ -2067,3 +2067,53 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 |---|---|---|---|
 | 30.06.2026 | T-ST-01 bis T-ST-10 | ✅ 10/10 | Alle bestanden nach Rerun (2 Timeouts beim 1. Lauf) |
 | *ausstehend* | T-ST-11 bis T-ST-14 | – | Nachrichten-Tests, warten auf Deploy |
+
+---
+
+## Social Post Scheduling (Morgen-Posts)
+> Spec: specs/social-post-scheduling.md
+
+### T-SP-01 Kiosk: Heute/Morgen Toggle sichtbar (AK-SP-01)
+- **Aktion:** Kiosk laden, Social-Tab > Neuer Post
+- **Prüfung:** `#soc-date-toggle` mit Buttons "Heute" und "Morgen" sichtbar
+- **Erwartung:** Toggle-Leiste wird angezeigt
+
+### T-SP-02 Kiosk: Titel aendert sich bei Morgen-Toggle (AK-SP-02)
+- **Aktion:** Kiosk Social-Tab, Morgen-Button klicken
+- **Prüfung:** Erste Option in `#soc-post-titel-sel` enthält "Morgen im Dorfladen"
+- **Erwartung:** Titel-Optionen passen sich dynamisch an den gewählten Tag an
+
+### T-SP-03 Kiosk: Datum-Label zeigt gewählten Tag (AK-SP-03)
+- **Aktion:** Kiosk Social-Tab öffnen
+- **Prüfung:** `#soc-date-label` zeigt deutsches Datum
+- **Erwartung:** Label nicht leer, enthält Wochentag + Datum
+
+### T-SP-04 CMS: Heute/Morgen Toggle sichtbar (AK-SP-01)
+- **Aktion:** CMS laden, Social Media > Neuer Post
+- **Prüfung:** `#soc-date-toggle` sichtbar
+- **Erwartung:** Toggle-Leiste wird im CMS angezeigt
+
+### T-SP-05 API: social-post akzeptiert ziel_datum (AK-SP-05)
+- **Aktion:** `GET /api/social-post`
+- **Prüfung:** Response Status 200, JSON hat `items`
+- **Erwartung:** API antwortet korrekt
+
+### T-SP-06 API: tagespost liefert today_post und tomorrow_post (AK-SP-07)
+- **Aktion:** `GET /api/tagespost`
+- **Prüfung:** Response enthält `today_post` und `tomorrow_post` Felder
+- **Erwartung:** Beide Felder vorhanden (Werte können null sein)
+
+### T-SP-07 Homepage: TagesInfo-Modal hat Tab-Leiste (AK-SP-08)
+- **Aktion:** Homepage laden
+- **Prüfung:** `#tp-day-tabs` existiert im DOM
+- **Erwartung:** Tab-Leiste ist im DOM vorhanden (ggf. versteckt wenn nur ein Post)
+
+### T-SP-08 Kiosk: Geplante Posts Label existiert (AK-SP-11)
+- **Aktion:** Kiosk Social-Tab > Neuer Post
+- **Prüfung:** `#soc-today-posts` existiert im DOM
+- **Erwartung:** Container für geplante Posts vorhanden
+
+### Testlauf-Tabelle
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| *ausstehend* | T-SP-01 bis T-SP-08 | – | Warten auf Deploy |
