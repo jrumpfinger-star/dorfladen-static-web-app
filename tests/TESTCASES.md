@@ -1859,3 +1859,12 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Aktion:** `/kiosk` laden
 - **Prüfung:** CSS-Regeln nach `grid-template-columns` + `panel-metzger` durchsuchen
 - **Erwartung:** Media-Query für 2-Spalten-Grid bei ≥ 900px existiert
+
+### Testlauf-Tabelle
+
+| Datum | Test | Ergebnis |
+|---|---|---|
+| 2026-06-30 | T-27-01 API einzelpositionen enthalten gesendet-Flag | ✅ Pass |
+| 2026-06-30 | T-27-02 Sammelbestellung hat abhakbare Checkboxen | ✅ Pass |
+| 2026-06-30 | T-27-03 _fmMarkPositionGesendet Funktion existiert | ✅ Pass |
+| 2026-06-30 | T-27-04 2-Spalten-CSS existiert fuer breiten Viewport | ✅ Pass |
