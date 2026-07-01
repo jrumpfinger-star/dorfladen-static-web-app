@@ -2030,12 +2030,12 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var preis=it.preis?fmtPreis(it.preis):'';
     var orderBtn='';
     if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
-      // Bestellzeitsperre: kein Bestell-Button nach 10:30 Uhr
-      var _now=new Date(), _canOrder=(_now.getHours()+_now.getMinutes()/60)<10.5;
-      if(_canOrder){
-        var href='/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'');
-        orderBtn='<a class="tp-item-order" href="'+esc(href)+'" title="Bestellen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
-      }
+      var _now=new Date(), _canOrderToday=(_now.getHours()+_now.getMinutes()/60)<10.5;
+      var href=_canOrderToday
+        ?'/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'')
+        :'/mittagstisch-bestellen';
+      var tip=_canOrderToday?'Jetzt f\u00fcr heute bestellen':'Mittagessen bestellen';
+      orderBtn='<a class="tp-item-order" href="'+esc(href)+'" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
     }
     var gerichtAttr=(showOrder&&it.name)?' data-gericht="'+esc(it.name)+'"':'';
     return '<div class="tp-item"'+gerichtAttr+'>'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+orderBtn+'</div>';
