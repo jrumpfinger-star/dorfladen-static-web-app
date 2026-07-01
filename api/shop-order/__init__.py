@@ -553,6 +553,7 @@ def _handle_get(req, dv_token, base_url, headers):
                     "gesamtsumme": item.get("dl_gesamtsumme", 0),
                     "anmerkungen": item.get("dl_anmerkungen", ""),
                     "positionen": positionen,
+                    "pack_data": pack_data,
                     "gepackt": bool(pack_data),
                     "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
                     "personal_antwort": item.get("dl_personal_antwort", ""),
