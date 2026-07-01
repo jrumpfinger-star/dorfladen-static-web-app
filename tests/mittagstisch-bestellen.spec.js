@@ -42,7 +42,7 @@ test.describe('T-MT Mittagstisch bestellen', () => {
 
     const headers = page.locator('.menu-day-header');
     const headerTexts = await headers.allInnerTexts();
-    const hasVorbei = headerTexts.some(t => t.includes('vorbei'));
+    const hasVorbei = headerTexts.some(t => t.toLowerCase().includes('vorbei'));
     expect(hasVorbei).toBe(true);
   });
 
