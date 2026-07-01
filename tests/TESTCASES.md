@@ -2173,3 +2173,68 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 02.07.2026 | T-ST-12-01 bis T-ST-14-01 | ✅ 9/9 | Alle bestanden (Live) |
+
+---
+
+## Meine Bestellungen – Unified Order View
+> Spec: specs/meine-bestellungen.md → AK-MB-01 bis AK-MB-12
+> Testdatei: tests/meine-bestellungen.spec.js
+
+### T-MB-01-01 loadMyOrders Funktion existiert (AK-MB-01)
+- **Aktion:** Shop-Seite `/shop` aufrufen
+- **Prüfung:** `typeof loadMyOrders === 'function'`
+- **Erwartung:** `true`
+
+### T-MB-01-02 renderMyOrders Funktion existiert (AK-MB-01)
+- **Aktion:** Shop-Seite `/shop` aufrufen
+- **Prüfung:** `typeof renderMyOrders === 'function'`
+- **Erwartung:** `true`
+
+### T-MB-01-03 Default-Filter ist open (AK-MB-07)
+- **Aktion:** Shop-Seite `/shop` aufrufen
+- **Prüfung:** `_myOrdersFilter === 'open'`
+- **Erwartung:** `true`
+
+### T-MB-01-04 shop-history-btn existiert (AK-MB-01)
+- **Aktion:** Shop-Seite `/shop` aufrufen
+- **Prüfung:** `#shop-history-btn` existiert
+- **Erwartung:** Element vorhanden
+
+### T-MB-06-01 Filter-Buttons werden gerendert (AK-MB-06)
+- **Aktion:** Mock-Daten in `_myOrdersCache` setzen, `renderMyOrders()` aufrufen
+- **Prüfung:** Filter-Buttons `open`, `7d`, `30d`, `all` vorhanden
+- **Erwartung:** Alle 4 Filter-Buttons existieren
+
+### T-MB-07-01 Filter open zeigt nur offene Bestellungen (AK-MB-07)
+- **Aktion:** 4 Mock-Bestellungen (2 offen, 2 abgeschlossen), Filter `open`
+- **Prüfung:** Anzahl `.shop-order-card` Elemente
+- **Erwartung:** 2 Karten
+
+### T-MB-07-02 Filter all zeigt alle Bestellungen (AK-MB-10)
+- **Aktion:** 3 Mock-Bestellungen, Filter `all`
+- **Prüfung:** Anzahl `.shop-order-card` Elemente
+- **Erwartung:** 3 Karten
+
+### T-MB-07-03 Filter 7d zeigt nur letzte 7 Tage (AK-MB-08)
+- **Aktion:** 1 Bestellung 2 Tage alt, 1 Bestellung 10 Tage alt, Filter `7d`
+- **Prüfung:** Anzahl `.shop-order-card` Elemente
+- **Erwartung:** 1 Karte
+
+### T-MB-02-01 Fleisch-Badge sichtbar (AK-MB-02)
+- **Aktion:** FM Mock-Bestellung, `renderMyOrders()`
+- **Prüfung:** Karte enthält Text "Fleisch"
+- **Erwartung:** `true`
+
+### T-MB-04-01 FM Details-Link vorhanden (AK-MB-04)
+- **Aktion:** FM Mock-Bestellung mit Bestellnummer, Karte aufklappen
+- **Prüfung:** Link zu `/bestellstatus?nr=...` vorhanden
+- **Erwartung:** Link existiert
+
+### T-MB-12-01 Schon bestellt – FM abgeholte/stornierte gefiltert (AK-MB-12)
+- **Aktion:** Shop-Seite Quellcode prüfen
+- **Prüfung:** Code enthält `b.status<3` Filterung
+- **Erwartung:** Bedingung vorhanden
+
+### Testlauf-Tabelle
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|

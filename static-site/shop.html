@@ -1886,7 +1886,7 @@
             results.forEach(function(res){
               if(!res.success) return;
               (res.bestellungen||[]).forEach(function(b){
-                if(!seen[b.bestellnummer]){seen[b.bestellnummer]=true;bb.push(b);}
+                if(!seen[b.bestellnummer]&&b.status<3){seen[b.bestellnummer]=true;bb.push(b);}
               });
             });
             if(!bb.length) return;
@@ -2434,279 +2434,396 @@
   // Search
   var searchTimer;
 
-  // Order history
-  document.getElementById('shop-history-btn').addEventListener('click',function(){
+  // ── Order history (unified: Shop + Fleisch) ──
+  var _myOrdersCache=null;
+  var _myOrdersFilter='open'; // default: only open orders
+
+  function loadMyOrders(){
     if(!isLoggedIn()){showAuth('login');return;}
-    // Hide search and category nav in order history view
     document.getElementById('shop-search-wrap').style.display='none';
     document.getElementById('shop-cats').style.display='none';
     var content=document.getElementById('shop-content');
-    content.innerHTML='<div class="shop-loading"><div class="spinner"></div><p>Bestellungen laden...</p></div>';
-    fetch(API+'/shop-order?mode=customer',{headers:{'X-Shop-Token':authToken}})
-      .then(function(r){return r.json();})
-      .then(function(res){
-        if(!res.success||!res.orders||!res.orders.length){
-          content.innerHTML='<div class="shop-loading"><p>Noch keine Bestellungen</p><button onclick="location.reload()" style="margin-top:12px;padding:10px 24px;border:none;border-radius:8px;background:#2e7d4f;color:#fff;font-size:14px;cursor:pointer">Zum Shop</button></div>';
-          return;
-        }
-        var todayStr=new Date().toISOString().slice(0,10);
-        // Helper: format date nicely
-        function fmtOrderDate(raw){
-          if(!raw) return '–';
-          try{
-            var d=new Date(raw.length===10?raw+'T12:00:00':raw);
-            if(isNaN(d.getTime())) return raw;
-            var tage=['So','Mo','Di','Mi','Do','Fr','Sa'];
-            var tag=tage[d.getDay()];
-            return tag+', '+d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();
-          }catch(e){return raw;}
-        }
-        function fmtOrderDateTime(raw){
-          if(!raw) return '–';
-          try{
-            var d=new Date(raw);
-            if(isNaN(d.getTime())) return raw;
-            return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear()+' um '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+' Uhr';
-          }catch(e){return raw;}
-        }
-        // Short order number: "DL-20260617-4A35" → "#4A35"
-        function shortNr(nr){
-          if(!nr) return '';
-          var parts=nr.split('-');
-          return '#'+(parts.length>=3?parts[parts.length-1]:nr);
-        }
-        // Status icon
-        function statusIcon(s){
-          if(s===0) return '<i data-lucide="clock" style="width:14px;height:14px"></i>';
-          if(s===1) return '<i data-lucide="loader" style="width:14px;height:14px"></i>';
-          if(s===2) return '<i data-lucide="package-check" style="width:14px;height:14px"></i>';
-          if(s===3) return '<i data-lucide="check-circle" style="width:14px;height:14px"></i>';
-          if(s===4) return '<i data-lucide="x-circle" style="width:14px;height:14px"></i>';
-          return '';
-        }
+    if(!_myOrdersCache){
+      content.innerHTML='<div class="shop-loading"><div class="spinner"></div><p>Bestellungen laden...</p></div>';
+    }
 
-        var html='<div class="shop-orders" style="max-width:600px;margin:0 auto;padding:16px">';
-        html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
-        html+='<h2 style="font-size:18px;font-weight:800;color:#1f2937">Meine Bestellungen</h2>';
-        html+='<button onclick="location.reload()" style="padding:6px 16px;border:none;border-radius:8px;background:var(--shop-green);color:#fff;font-size:13px;font-weight:600;cursor:pointer">'+lucideHtml('arrow-left',14)+' Zum Shop</button>';
+    // Fetch shop orders + fleisch orders in parallel
+    var shopFetch=fetch(API+'/shop-order?mode=customer',{headers:{'X-Shop-Token':authToken}}).then(function(r){return r.json();}).catch(function(){return{success:false};});
+    var fmEmail=authUser&&authUser.email?authUser.email:'';
+    var fmTel=localStorage.getItem('fm_telefon')||'';
+    var fmFetches=[];
+    if(fmEmail) fmFetches.push(fetch('/api/fleisch-order?mode=my_history&email='+encodeURIComponent(fmEmail)).then(function(r){return r.json();}).catch(function(){return{success:false};}));
+    if(fmTel) fmFetches.push(fetch('/api/fleisch-order?mode=my_history&telefon='+encodeURIComponent(fmTel)).then(function(r){return r.json();}).catch(function(){return{success:false};}));
+    var fmFetch=fmFetches.length?Promise.all(fmFetches):Promise.resolve([]);
+
+    Promise.all([shopFetch,fmFetch]).then(function(results){
+      var shopRes=results[0];
+      var fmResults=results[1];
+
+      // Normalize shop orders
+      var allOrders=[];
+      if(shopRes.success&&shopRes.orders){
+        shopRes.orders.forEach(function(o){
+          o._type='shop';
+          // Shop: status 3=Abgeholt, 4=Storniert → isTerminal
+          o._isOpen=o.status<3;
+          o._sortDate=o.bestelldatum||'';
+          allOrders.push(o);
+        });
+      }
+      // Normalize fleisch orders
+      var fmSeen={};
+      (fmResults||[]).forEach(function(res){
+        if(!res.success) return;
+        (res.bestellungen||[]).forEach(function(b){
+          if(fmSeen[b.bestellnummer]) return;
+          fmSeen[b.bestellnummer]=true;
+          // Map FM statuses: 0=Neu,1=In Bestellung,2=Eingetroffen,3=Abgeholt,4=Storniert
+          b._type='fm';
+          b._isOpen=b.status<3;
+          b._sortDate=b.bestelldatum||'';
+          b.gesamtsumme=Number(b.gesamtsumme)||0;
+          allOrders.push(b);
+        });
+      });
+
+      // Sort by date desc
+      allOrders.sort(function(a,b){return(b._sortDate||'').localeCompare(a._sortDate||'');});
+      _myOrdersCache=allOrders;
+      renderMyOrders();
+    }).catch(function(e){content.innerHTML='<div class="shop-loading"><p>Fehler: '+esc(e.message)+'</p></div>';});
+  }
+
+  function renderMyOrders(){
+    var content=document.getElementById('shop-content');
+    var allOrders=_myOrdersCache||[];
+    var todayStr=new Date().toISOString().slice(0,10);
+    var now=new Date();
+
+    // Apply filter
+    var filtered=allOrders.filter(function(o){
+      if(_myOrdersFilter==='open') return o._isOpen;
+      if(_myOrdersFilter==='7d'){
+        var d7=new Date(now.getTime()-7*86400000).toISOString().slice(0,10);
+        return(o._sortDate||'').substring(0,10)>=d7;
+      }
+      if(_myOrdersFilter==='30d'){
+        var d30=new Date(now.getTime()-30*86400000).toISOString().slice(0,10);
+        return(o._sortDate||'').substring(0,10)>=d30;
+      }
+      return true; // 'all'
+    });
+
+    // Count open for badge
+    var openCount=allOrders.filter(function(o){return o._isOpen;}).length;
+
+    // Helpers
+    function fmtOrderDate(raw){
+      if(!raw) return '\u2013';
+      try{
+        var d=new Date(raw.length===10?raw+'T12:00:00':raw);
+        if(isNaN(d.getTime())) return raw;
+        var tage=['So','Mo','Di','Mi','Do','Fr','Sa'];
+        return tage[d.getDay()]+', '+d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();
+      }catch(e){return raw;}
+    }
+    function shortNr(nr){
+      if(!nr) return '';
+      var parts=nr.split('-');
+      return '#'+(parts.length>=3?parts[parts.length-1]:nr);
+    }
+
+    var html='<div class="shop-orders" style="max-width:600px;margin:0 auto;padding:16px">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+    html+='<h2 style="font-size:18px;font-weight:800;color:#1f2937">Meine Bestellungen</h2>';
+    html+='<button onclick="location.reload()" style="padding:6px 16px;border:none;border-radius:8px;background:var(--shop-green);color:#fff;font-size:13px;font-weight:600;cursor:pointer">'+lucideHtml('arrow-left',14)+' Zum Shop</button>';
+    html+='</div>';
+
+    // Filter tabs
+    var filters=[
+      {key:'open',label:'Offen',count:openCount},
+      {key:'7d',label:'7 Tage',count:null},
+      {key:'30d',label:'30 Tage',count:null},
+      {key:'all',label:'Alle',count:allOrders.length}
+    ];
+    html+='<div id="my-order-filters" style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">';
+    filters.forEach(function(f){
+      var active=_myOrdersFilter===f.key;
+      var bg=active?'#1f2937':'#f3f4f6';
+      var clr=active?'#fff':'#4b5563';
+      html+='<button data-order-filter="'+f.key+'" style="padding:6px 14px;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:'+bg+';color:'+clr+';transition:all .15s">';
+      html+=esc(f.label);
+      if(f.count!==null) html+=' <span style="font-size:10px;opacity:.7">('+f.count+')</span>';
+      html+='</button>';
+    });
+    html+='</div>';
+
+    if(!filtered.length){
+      html+='<div style="text-align:center;padding:32px 16px;color:#9ca3af">';
+      html+=lucideHtml('inbox',32)+'<p style="margin-top:8px;font-size:14px">Keine Bestellungen in diesem Zeitraum</p>';
+      html+='</div>';
+    }
+
+    filtered.forEach(function(o,idx){
+      var isFm=o._type==='fm';
+      // Cancel logic for shop orders
+      var canCancel=false;
+      if(!isFm&&o.status<2){
+        if(!o.abholdatum||todayStr<o.abholdatum){
+          canCancel=true;
+        } else if(todayStr===o.abholdatum){
+          var slotPeriod=(o.abhol_zeitslot&&o.abhol_zeitslot.period)||'vm';
+          var abholDate=new Date(o.abholdatum+'T00:00:00');
+          var abholDow=abholDate.getDay();
+          var slotHrs=SHOP_HOURS[abholDow];
+          if(slotHrs){
+            var openH=(slotPeriod==='nm'&&slotHrs[2]!=null)?slotHrs[2]:slotHrs[0];
+            var stornoH=openH-STORNO_VOR_H;
+            var nowHCancel=new Date();
+            var nowHVal=nowHCancel.getHours()+nowHCancel.getMinutes()/60;
+            if(nowHVal<stornoH) canCancel=true;
+          }
+        }
+      }
+      // FM cancel: only status 0
+      if(isFm&&o.status===0) canCancel=true;
+
+      var isFirst=idx===0&&_myOrdersFilter==='open';
+      var anzahl=o.positionen?o.positionen.length:0;
+      // Relative date
+      var relDate='';
+      try{
+        var bd=(o.bestelldatum||o._sortDate||'').substring(0,10);
+        if(bd===todayStr) relDate='Heute';
+        else{var yd=new Date(new Date(todayStr).getTime()-86400000).toISOString().substring(0,10);relDate=bd===yd?'Gestern':fmtOrderDate(o.bestelldatum||o._sortDate);}
+      }catch(e){relDate=fmtOrderDate(o.bestelldatum||o._sortDate);}
+      var orderTime='';
+      try{var dt=new Date(o.bestelldatum||o._sortDate);orderTime=('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2)+' Uhr';}catch(e){}
+
+      // Type badge
+      var typeBadge='';
+      if(isFm){
+        typeBadge='<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#92400e">'+lucideHtml('beef',10)+' Fleisch</span>';
+      }
+
+      // Timeline
+      var progHtml='<div class="soc-timeline">';
+      if(isFm){
+        var FM_STEPS=[{icon:'inbox',label:'Neu'},{icon:'truck',label:'Bestellt'},{icon:'package-check',label:'Eingetroffen'},{icon:'check-circle',label:'Abgeholt'}];
+        if(o.status===4){
+          progHtml+='<div class="soc-step"><div class="soc-dot cancel">'+lucideHtml('x',14)+'</div><div class="soc-label cancel">Storniert</div></div>';
+        } else {
+          FM_STEPS.forEach(function(st,si){
+            var dotCls=si<o.status?'done':si===o.status?'active':'';
+            var lineCls=si<o.status?'done':'';
+            progHtml+='<div class="soc-step">';
+            if(si<FM_STEPS.length-1) progHtml+='<div class="soc-line '+lineCls+'"></div>';
+            progHtml+='<div class="soc-dot '+dotCls+'">'+lucideHtml(st.icon,12)+'</div>';
+            progHtml+='<div class="soc-label '+dotCls+'">'+st.label+'</div>';
+            progHtml+='</div>';
+          });
+        }
+      } else {
+        var SHOP_STEPS=[{icon:'inbox',label:'Neu'},{icon:'package',label:'Packen'},{icon:'bell',label:'Bereit'},{icon:'check-circle',label:'Abgeholt'}];
+        if(o.status===4){
+          progHtml+='<div class="soc-step"><div class="soc-dot cancel">'+lucideHtml('x',14)+'</div><div class="soc-label cancel">Storniert</div></div>';
+        } else {
+          SHOP_STEPS.forEach(function(st,si){
+            var dotCls=si<o.status?'done':si===o.status?'active':'';
+            var lineCls=si<o.status?'done':'';
+            progHtml+='<div class="soc-step">';
+            if(si<SHOP_STEPS.length-1) progHtml+='<div class="soc-line '+lineCls+'"></div>';
+            progHtml+='<div class="soc-dot '+dotCls+'">'+lucideHtml(st.icon,12)+'</div>';
+            progHtml+='<div class="soc-label '+dotCls+'">'+st.label+'</div>';
+            progHtml+='</div>';
+          });
+        }
+      }
+      progHtml+='</div>';
+
+      var stClass=isFm?(o.status===4?'s4':'s'+Math.min(o.status,3)):'s'+o.status;
+      html+='<div class="shop-order-card '+stClass+'">';
+      html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:14px 16px 12px;cursor:pointer;text-align:left">';
+      // Row 1
+      html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">';
+      html+='<div style="min-width:0">';
+      html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+      html+='<span style="font-size:16px;font-weight:800;color:#1f2937">'+relDate+'</span>';
+      html+='<span style="font-size:12px;color:#9ca3af;font-weight:500">'+orderTime+'</span>';
+      if(typeBadge) html+=typeBadge;
+      html+='</div>';
+      html+='</div>';
+      html+='<div style="text-align:right;flex-shrink:0">';
+      html+='<div style="font-size:18px;font-weight:800;color:var(--shop-green)">'+fmtP(o.gesamtsumme)+' \u20AC</div>';
+      html+='<div style="font-size:11px;color:#9ca3af;font-weight:500">'+anzahl+' Artikel</div>';
+      html+='</div>';
+      html+='</div>';
+      html+=progHtml;
+      // Row 2: Meta
+      html+='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:#6b7280;align-items:center">';
+      if(isFm){
+        var ltag='';try{var ld=new Date(o.liefertag);ltag=('0'+ld.getDate()).slice(-2)+'.'+('0'+(ld.getMonth()+1)).slice(-2)+'.';}catch(e){}
+        if(ltag) html+='<span style="display:inline-flex;align-items:center;gap:4px">'+lucideHtml('truck',12)+' '+ltag+'</span>';
+      } else {
+        var abholDisp=fmtOrderDate(o.abholdatum);
+        if(o.abhol_zeitslot){var sl=o.abhol_zeitslot;abholDisp+=', '+(sl.period==='nm'?'NM':'VM')+' '+esc(sl.abhol_von||'')+'\u2013'+esc(sl.abhol_bis||'');}
+        html+='<span style="display:inline-flex;align-items:center;gap:4px">'+lucideHtml('calendar',12)+' '+abholDisp+'</span>';
+      }
+      html+='<span style="color:#d1d5db">\u00b7</span>';
+      html+='<span style="color:#b0b7c3;font-size:11px">'+esc(shortNr(o.bestellnummer))+'</span>';
+      html+='<span data-order-arrow="'+idx+'" style="margin-left:auto;font-size:12px;color:#9ca3af;transition:transform .2s">'+(isFirst?'\u25BC':'\u25B6')+'</span>';
+      html+='</div>';
+      html+='</button>';
+      // Body
+      html+='<div class="shop-order-body" data-order-body="'+idx+'" style="display:'+(isFirst?'':'none')+';padding:0 16px 14px">';
+      if(o.positionen&&o.positionen.length){
+        html+='<div style="border:1px solid #f0f0f0;border-radius:10px;overflow:hidden;background:#fafafa">';
+        o.positionen.forEach(function(p,pi){
+          var preis=p.positionspreis!=null?fmtP(p.positionspreis)+' \u20AC':(p.einzelpreis!=null?fmtP((Number(p.einzelpreis)||0)*(Number(p.menge)||0))+' \u20AC':'');
+          var bez=p.bezeichnung||p.artikel_name||'';
+          var menge=p.menge||'';
+          var einheit=p.einheit||'St.';
+          html+='<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 12px;'+(pi<o.positionen.length-1?'border-bottom:1px solid #f0f0f0':'')+'">';
+          html+='<div style="font-weight:600;color:#1f2937;font-size:13px">'+esc(bez)+'</div>';
+          html+='<div style="font-size:12px;color:#6b7280;white-space:nowrap">'+esc(menge)+'\u00d7 '+esc(einheit)+'</div>';
+          html+='<div style="font-size:13px;font-weight:700;color:var(--shop-green);white-space:nowrap;text-align:right">'+preis+'</div>';
+          html+='</div>';
+        });
         html+='</div>';
-        res.orders.forEach(function(o,idx){
-          var canCancel=false;
-          if(o.status<2){
-            if(!o.abholdatum||todayStr<o.abholdatum){
-              canCancel=true;
-            } else if(todayStr===o.abholdatum){
-              var slotPeriod=(o.abhol_zeitslot&&o.abhol_zeitslot.period)||'vm';
-              var abholDate=new Date(o.abholdatum+'T00:00:00');
-              var abholDow=abholDate.getDay();
-              var slotHrs=SHOP_HOURS[abholDow];
-              if(slotHrs){
-                var openH=(slotPeriod==='nm'&&slotHrs[2]!=null)?slotHrs[2]:slotHrs[0];
-                var stornoH=openH-STORNO_VOR_H;
-                var nowHCancel=new Date();
-                var nowHVal=nowHCancel.getHours()+nowHCancel.getMinutes()/60;
-                if(nowHVal<stornoH) canCancel=true;
-              }
-            }
-          }
-          var open=idx===0;
-          var anzahl=o.positionen?o.positionen.length:0;
-          // Relative date label
-          var relDate='';
-          try{
-            var bd=(o.bestelldatum||'').substring(0,10);
-            if(bd===todayStr) relDate='Heute';
-            else{var yd=new Date(new Date(todayStr).getTime()-86400000).toISOString().substring(0,10);relDate=bd===yd?'Gestern':fmtOrderDate(o.bestelldatum);}
-          }catch(e){relDate=fmtOrderDate(o.bestelldatum);}
-          // Time
-          var orderTime='';
-          try{var dt=new Date(o.bestelldatum);orderTime=('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2)+' Uhr';}catch(e){}
-          // Abhol info
-          var abholDisp=fmtOrderDate(o.abholdatum);
-          if(o.abhol_zeitslot){var sl=o.abhol_zeitslot;abholDisp+=', '+(sl.period==='nm'?'NM':'VM')+' '+esc(sl.abhol_von||'')+'\u2013'+esc(sl.abhol_bis||'');}
-          // Status Timeline (visual dots + icons + labels)
-          var tlSteps=[
-            {icon:'inbox',label:'Neu'},
-            {icon:'package',label:'Packen'},
-            {icon:'bell',label:'Bereit'},
-            {icon:'check-circle',label:'Abgeholt'}
-          ];
-          var progHtml='<div class="soc-timeline">';
-          if(o.status===4){
-            progHtml+='<div class="soc-step"><div class="soc-dot cancel">'+lucideHtml('x',14)+'</div><div class="soc-label cancel">Storniert</div></div>';
-          } else {
-            tlSteps.forEach(function(st,si){
-              var dotCls=si<o.status?'done':si===o.status?'active':'';
-              var lblCls=dotCls;
-              var lineCls=si<o.status?'done':'';
-              progHtml+='<div class="soc-step">';
-              if(si<tlSteps.length-1) progHtml+='<div class="soc-line '+lineCls+'"></div>';
-              progHtml+='<div class="soc-dot '+dotCls+'">'+lucideHtml(st.icon,12)+'</div>';
-              progHtml+='<div class="soc-label '+lblCls+'">'+st.label+'</div>';
-              progHtml+='</div>';
-            });
-          }
-          progHtml+='</div>';
-
-          html+='<div class="shop-order-card s'+o.status+'">';
-          // Header
-          html+='<button type="button" data-order-toggle="'+idx+'" style="width:100%;border:none;background:none;padding:14px 16px 12px;cursor:pointer;text-align:left">';
-          // Row 1: Date + Status + Price
-          html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">';
-          html+='<div style="min-width:0">';
-          html+='<div style="display:flex;align-items:center;gap:8px">';
-          html+='<span style="font-size:16px;font-weight:800;color:#1f2937">'+relDate+'</span>';
-          html+='<span style="font-size:12px;color:#9ca3af;font-weight:500">'+orderTime+'</span>';
-          html+='</div>';
-          html+='</div>';
-          html+='<div style="text-align:right;flex-shrink:0">';
-          html+='<div style="font-size:18px;font-weight:800;color:var(--shop-green)">'+fmtP(o.gesamtsumme)+' \u20AC</div>';
-          html+='<div style="font-size:11px;color:#9ca3af;font-weight:500">'+anzahl+' Artikel</div>';
-          html+='</div>';
-          html+='</div>';
-          // Progress bar
-          html+=progHtml;
-          // Row 2: Meta
-          html+='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:#6b7280;align-items:center">';
-          html+='<span style="display:inline-flex;align-items:center;gap:4px">'+lucideHtml('calendar',12)+' '+abholDisp+'</span>';
-          html+='<span style="color:#d1d5db">\u00b7</span>';
-          html+='<span style="color:#b0b7c3;font-size:11px">'+esc(shortNr(o.bestellnummer))+'</span>';
-          html+='<span data-order-arrow="'+idx+'" style="margin-left:auto;font-size:12px;color:#9ca3af;transition:transform .2s">'+(open?'\u25BC':'\u25B6')+'</span>';
-          html+='</div>';
-          html+='</button>';
-          // Body
-          html+='<div class="shop-order-body" data-order-body="'+idx+'" style="display:'+(open?'':'none')+';padding:0 16px 14px">';
-          if(o.positionen&&o.positionen.length){
-            html+='<div style="border:1px solid #f0f0f0;border-radius:10px;overflow:hidden;background:#fafafa">';
-            o.positionen.forEach(function(p,pi){
-              var preis=p.positionspreis!=null?fmtP(p.positionspreis)+' \u20AC':(p.einzelpreis!=null?fmtP((Number(p.einzelpreis)||0)*(Number(p.menge)||0))+' \u20AC':'');
-              html+='<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 12px;'+(pi<o.positionen.length-1?'border-bottom:1px solid #f0f0f0':'')+'">';
-              html+='<div style="font-weight:600;color:#1f2937;font-size:13px">'+esc(p.bezeichnung)+'</div>';
-              html+='<div style="font-size:12px;color:#6b7280;white-space:nowrap">'+esc(p.menge)+'× '+esc(p.einheit||'St.')+'</div>';
-              html+='<div style="font-size:13px;font-weight:700;color:var(--shop-green);white-space:nowrap;text-align:right">'+preis+'</div>';
-              html+='</div>';
-            });
+      }
+      // Messages (shop orders only)
+      if(!isFm){
+        var hasMsg=o.personal_antwort||o.kunde_kommentar;
+        if(hasMsg||o.status<3){
+          html+='<div style="margin-top:12px">';
+          if(o.personal_antwort) html+='<div style="background:#f0fdf4;border-left:4px solid var(--shop-green);border-radius:12px;padding:12px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">\ud83d\udcac Antwort vom Dorfladen</div><div style="font-size:14px;line-height:1.5;color:#1f2937">'+esc(o.personal_antwort)+'</div></div>';
+          if(o.kunde_kommentar) html+='<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:12px;padding:12px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Ihre Nachricht</div><div style="font-size:14px;line-height:1.5;color:#1f2937">'+esc(o.kunde_kommentar)+'</div></div>';
+          if(o.status<3){
+            html+='<div data-shop-comment-box="'+idx+'" style="margin-top:8px">';
+            html+='<label style="font-size:13px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">'+lucideHtml('message-circle',14)+' Nachricht an den Dorfladen</label>';
+            html+='<div style="display:flex;gap:6px;align-items:flex-end">';
+            html+='<textarea data-shop-comment="'+idx+'" data-shop-order-id="'+esc(o.id)+'" placeholder="Ihre Nachricht\u2026" maxlength="500" rows="1" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;resize:none;box-sizing:border-box;min-height:36px;overflow:hidden" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>';
+            html+='<button data-shop-comment-send="'+idx+'" style="padding:8px 14px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0">'+lucideHtml('send',14)+' Senden</button>';
+            html+='</div>';
             html+='</div>';
           }
-          // Messages (staff reply + customer comment)
-          var hasMsg=o.personal_antwort||o.kunde_kommentar;
-          if(hasMsg||o.status<3){
-            html+='<div style="margin-top:12px">';
-            if(o.personal_antwort) html+='<div style="background:#f0fdf4;border-left:4px solid var(--shop-green);border-radius:12px;padding:12px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">\ud83d\udcac Antwort vom Dorfladen</div><div style="font-size:14px;line-height:1.5;color:#1f2937">'+esc(o.personal_antwort)+'</div></div>';
-            if(o.kunde_kommentar) html+='<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:12px;padding:12px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Ihre Nachricht</div><div style="font-size:14px;line-height:1.5;color:#1f2937">'+esc(o.kunde_kommentar)+'</div></div>';
-            if(o.status<3){
-              html+='<div data-shop-comment-box="'+idx+'" style="margin-top:8px">';
-              html+='<label style="font-size:13px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">'+lucideHtml('message-circle',14)+' Nachricht an den Dorfladen</label>';
-              html+='<div style="display:flex;gap:6px;align-items:flex-end">';
-              html+='<textarea data-shop-comment="'+idx+'" data-shop-order-id="'+esc(o.id)+'" placeholder="Ihre Nachricht\u2026" maxlength="500" rows="1" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;resize:none;box-sizing:border-box;min-height:36px;overflow:hidden" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>';
-              html+='<button data-shop-comment-send="'+idx+'" style="padding:8px 14px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0">'+lucideHtml('send',14)+' Senden</button>';
-              html+='</div>';
-              html+='<div data-shop-comment-sent="'+idx+'" style="display:none;margin-top:4px;padding:6px 10px;background:#d1fae5;border-radius:8px;font-size:12px;color:#065f46;font-weight:600">\u2705 Gesendet</div>';
-              html+='</div>';
-            }
-            html+='</div>';
-          }
-          // Action buttons
-          html+='<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:nowrap;align-items:center">';
-          if(o.positionen&&o.positionen.length){
-            html+='<button data-reorder="'+idx+'" data-reorder-nr="'+esc(o.bestellnummer)+'" data-reorder-pos=\''+JSON.stringify(o.positionen).replace(/'/g,"&#39;")+'\' style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:700;cursor:pointer">'+lucideHtml('repeat',14)+' Nochmal bestellen</button>';
-          }
-          if(canCancel){
-            html+='<button data-cancel-order="'+esc(o.id)+'" data-cancel-nr="'+esc(shortNr(o.bestellnummer))+'" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;cursor:pointer">'+lucideHtml('x',14)+' Stornieren</button>';
-          } else if(o.status<4){
-            html+='<span style="font-size:11px;color:#9ca3af;align-self:center">Stornierung nicht mehr m\u00f6glich</span>';
-          }
           html+='</div>';
-          html+='</div></div>';
+        }
+      }
+      // FM: link to bestellstatus
+      if(isFm){
+        html+='<div style="margin-top:10px"><a href="/bestellstatus?nr='+esc(o.bestellnummer||'')+'" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer">'+lucideHtml('external-link',14)+' Details anzeigen</a></div>';
+      }
+      // Action buttons
+      html+='<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:nowrap;align-items:center">';
+      if(!isFm&&o.positionen&&o.positionen.length){
+        html+='<button data-reorder="'+idx+'" data-reorder-nr="'+esc(o.bestellnummer)+'" data-reorder-pos=\''+JSON.stringify(o.positionen).replace(/'/g,"&#39;")+'\' style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:700;cursor:pointer">'+lucideHtml('repeat',14)+' Nochmal bestellen</button>';
+      }
+      if(canCancel&&!isFm){
+        html+='<button data-cancel-order="'+esc(o.id)+'" data-cancel-nr="'+esc(shortNr(o.bestellnummer))+'" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;cursor:pointer">'+lucideHtml('x',14)+' Stornieren</button>';
+      } else if(!isFm&&o.status<4&&!canCancel){
+        html+='<span style="font-size:11px;color:#9ca3af;align-self:center">Stornierung nicht mehr m\u00f6glich</span>';
+      }
+      html+='</div>';
+      html+='</div></div>';
+    });
+    html+='</div>';
+    content.innerHTML=html;
+    if(window.lucide) lucide.createIcons();
+
+    // Filter tab click handlers
+    document.querySelectorAll('[data-order-filter]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        _myOrdersFilter=btn.getAttribute('data-order-filter');
+        renderMyOrders();
+      });
+    });
+    // Toggle handlers
+    document.querySelectorAll('[data-order-toggle]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=btn.getAttribute('data-order-toggle');
+        var body=document.querySelector('[data-order-body="'+idx+'"]');
+        var arrow=document.querySelector('[data-order-arrow="'+idx+'"]');
+        if(!body) return;
+        var open=body.style.display==='none';
+        body.style.display=open?'':'none';
+        if(arrow) arrow.textContent=open?'\u25BC':'\u25B6';
+      });
+    });
+    // Cancel with inline confirmation (shop orders only)
+    document.querySelectorAll('[data-cancel-order]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var orderId=btn.getAttribute('data-cancel-order');
+        var nr=btn.getAttribute('data-cancel-nr')||'';
+        var wrapper=btn.parentNode;
+        var confirmHtml='<div data-cancel-confirm style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px">';
+        confirmHtml+='<div style="font-size:12px;color:#991b1b;font-weight:600;margin-bottom:6px">'+esc(nr)+' wirklich stornieren?</div>';
+        confirmHtml+='<input type="text" data-cancel-reason placeholder="Grund f\u00fcr Stornierung (Pflichtfeld)" maxlength="200" style="width:100%;padding:6px 10px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;box-sizing:border-box;margin-bottom:6px">';
+        confirmHtml+='<div style="display:flex;gap:6px">';
+        confirmHtml+='<button data-cancel-yes="'+esc(orderId)+'" style="padding:6px 12px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:12px;font-weight:700;cursor:pointer;opacity:.4" disabled>Ja, stornieren</button>';
+        confirmHtml+='<button data-cancel-no style="padding:6px 12px;border:none;border-radius:6px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:600;cursor:pointer">Abbrechen</button>';
+        confirmHtml+='</div></div>';
+        btn.style.display='none';
+        wrapper.insertAdjacentHTML('beforeend',confirmHtml);
+        var reasonInput=wrapper.querySelector('[data-cancel-reason]');
+        var yesBtn=wrapper.querySelector('[data-cancel-yes]');
+        reasonInput.addEventListener('input',function(){
+          var hasText=reasonInput.value.trim().length>0;
+          yesBtn.disabled=!hasText;yesBtn.style.opacity=hasText?'1':'.4';
         });
-        html+='</div>';
-        content.innerHTML=html;
-        if(window.lucide) lucide.createIcons();
-        // Toggle handlers
-        document.querySelectorAll('[data-order-toggle]').forEach(function(btn){
-          btn.addEventListener('click',function(){
-            var idx=btn.getAttribute('data-order-toggle');
-            var body=document.querySelector('[data-order-body="'+idx+'"]');
-            var arrow=document.querySelector('[data-order-arrow="'+idx+'"]');
-            if(!body) return;
-            var open=body.style.display==='none';
-            body.style.display=open?'':'none';
-            if(arrow) arrow.textContent=open?'\u25BC':'\u25B6';
-          });
+        reasonInput.focus();
+        wrapper.querySelector('[data-cancel-no]').addEventListener('click',function(){
+          wrapper.querySelector('[data-cancel-confirm]').remove();
+          btn.style.display='';
         });
-        // Cancel with inline confirmation
-        document.querySelectorAll('[data-cancel-order]').forEach(function(btn){
-          btn.addEventListener('click',function(){
-            var orderId=btn.getAttribute('data-cancel-order');
-            var nr=btn.getAttribute('data-cancel-nr')||'';
-            // Replace button with inline confirm
-            var wrapper=btn.parentNode;
-            var confirmHtml='<div data-cancel-confirm style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px">';
-            confirmHtml+='<div style="font-size:12px;color:#991b1b;font-weight:600;margin-bottom:6px">'+esc(nr)+' wirklich stornieren?</div>';
-            confirmHtml+='<input type="text" data-cancel-reason placeholder="Grund f\u00fcr Stornierung (Pflichtfeld)" maxlength="200" style="width:100%;padding:6px 10px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;box-sizing:border-box;margin-bottom:6px">';
-            confirmHtml+='<div style="display:flex;gap:6px">';
-            confirmHtml+='<button data-cancel-yes="'+esc(orderId)+'" style="padding:6px 12px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:12px;font-weight:700;cursor:pointer;opacity:.4" disabled>Ja, stornieren</button>';
-            confirmHtml+='<button data-cancel-no style="padding:6px 12px;border:none;border-radius:6px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:600;cursor:pointer">Abbrechen</button>';
-            confirmHtml+='</div></div>';
-            btn.style.display='none';
-            wrapper.insertAdjacentHTML('beforeend',confirmHtml);
-            var reasonInput=wrapper.querySelector('[data-cancel-reason]');
-            var yesBtn=wrapper.querySelector('[data-cancel-yes]');
-            reasonInput.addEventListener('input',function(){
-              var hasText=reasonInput.value.trim().length>0;
-              yesBtn.disabled=!hasText;yesBtn.style.opacity=hasText?'1':'.4';
-            });
-            reasonInput.focus();
-            wrapper.querySelector('[data-cancel-no]').addEventListener('click',function(){
-              wrapper.querySelector('[data-cancel-confirm]').remove();
-              btn.style.display='';
-            });
-            yesBtn.addEventListener('click',function(){
-              var grund=reasonInput.value.trim();
-              if(!grund){showToast('Bitte Stornierungsgrund angeben');return;}
-              yesBtn.disabled=true;yesBtn.textContent='Wird storniert\u2026';
-              fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,customer_action:'cancel',storno_grund:'Kundengrund: '+grund})})
-                .then(function(r){return r.json();})
-                .then(function(x){if(x.success){showToast('Bestellung storniert');document.getElementById('shop-history-btn').click();}else{showToast('Fehler: '+(x.error||'Storno nicht m\u00f6glich'));wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';}})
-                .catch(function(e){showToast('Fehler: '+e.message);wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';});
-            });
-          });
+        yesBtn.addEventListener('click',function(){
+          var grund=reasonInput.value.trim();
+          if(!grund){showToast('Bitte Stornierungsgrund angeben');return;}
+          yesBtn.disabled=true;yesBtn.textContent='Wird storniert\u2026';
+          fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,customer_action:'cancel',storno_grund:'Kundengrund: '+grund})})
+            .then(function(r){return r.json();})
+            .then(function(x){if(x.success){showToast('Bestellung storniert');_myOrdersCache=null;loadMyOrders();}else{showToast('Fehler: '+(x.error||'Storno nicht m\u00f6glich'));wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';}})
+            .catch(function(e){showToast('Fehler: '+e.message);wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';});
         });
-        // Reorder handlers
-        document.querySelectorAll('[data-reorder]').forEach(function(btn){
-          btn.addEventListener('click',function(){
-            try{
-              var pos=JSON.parse(btn.getAttribute('data-reorder-pos'));
-              var nr=btn.getAttribute('data-reorder-nr')||'Bestellung';
-              reorderFromHistory(pos,nr);
-            }catch(e){showToast('Fehler beim Laden der Bestellung');}
-          });
-        });
-        // Comment send handlers
-        document.querySelectorAll('[data-shop-comment-send]').forEach(function(btn){
-          btn.addEventListener('click',function(){
-            var idx=btn.getAttribute('data-shop-comment-send');
-            var ta=document.querySelector('[data-shop-comment="'+idx+'"]');
-            if(!ta) return;
-            var text=ta.value.trim();
-            if(!text){showToast('Bitte Nachricht eingeben');return;}
-            var orderId=ta.getAttribute('data-shop-order-id');
-            btn.disabled=true;btn.textContent='Wird gesendet\u2026';
-            fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,kunde_kommentar:text})})
-              .then(function(r){return r.json();})
-              .then(function(x){
-                btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';
-                if(x.success){
-                  ta.value='';
-                  showToast('\u2705 Nachricht gesendet');
-                  loadMyOrders();
-                } else {showToast('Fehler: '+(x.error||''));}
-              })
-              .catch(function(e){btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';showToast('Fehler: '+e.message);});
-          });
-        });
-      })
-      .catch(function(e){content.innerHTML='<div class="shop-loading"><p>Fehler: '+esc(e.message)+'</p></div>';});
+      });
+    });
+    // Reorder handlers
+    document.querySelectorAll('[data-reorder]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        try{
+          var pos=JSON.parse(btn.getAttribute('data-reorder-pos'));
+          var nr=btn.getAttribute('data-reorder-nr')||'Bestellung';
+          reorderFromHistory(pos,nr);
+        }catch(e){showToast('Fehler beim Laden der Bestellung');}
+      });
+    });
+    // Comment send handlers
+    document.querySelectorAll('[data-shop-comment-send]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=btn.getAttribute('data-shop-comment-send');
+        var ta=document.querySelector('[data-shop-comment="'+idx+'"]');
+        if(!ta) return;
+        var text=ta.value.trim();
+        if(!text){showToast('Bitte Nachricht eingeben');return;}
+        var orderId=ta.getAttribute('data-shop-order-id');
+        btn.disabled=true;btn.textContent='Wird gesendet\u2026';
+        fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,kunde_kommentar:text})})
+          .then(function(r){return r.json();})
+          .then(function(x){
+            btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';
+            if(x.success){
+              ta.value='';
+              showToast('\u2705 Nachricht gesendet');
+              _myOrdersCache=null;loadMyOrders();
+            } else {showToast('Fehler: '+(x.error||''));}
+          })
+          .catch(function(e){btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';showToast('Fehler: '+e.message);});
+      });
+    });
+  }
+
+  document.getElementById('shop-history-btn').addEventListener('click',function(){
+    _myOrdersCache=null;_myOrdersFilter='open';loadMyOrders();
   });
 
   // ── Dropdown backdrop + scroll lock ──
