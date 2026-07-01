@@ -2154,18 +2154,19 @@ var K = (function(){
   }
 
   function deleteKunde(id, name){
-    if(!confirm('Kunde «'+name+'» wirklich deaktivieren?')) return;
-    fetch(API+'/stammkunden/'+id,{method:'DELETE'})
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.success){
-        toast('Kunde deaktiviert');
-        searchKunden();
-      } else {
-        toast('Deaktivierung fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
-      }
-    })
-    .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
+    dlConfirm({icon:'👤',title:'Kunde deaktivieren?',msg:'«'+name+'» wird deaktiviert.',ok:'Deaktivieren',color:'#dc2626'},function(){
+      fetch(API+'/stammkunden/'+id,{method:'DELETE'})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          toast('Kunde deaktiviert');
+          searchKunden();
+        } else {
+          toast('Deaktivierung fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
+        }
+      })
+      .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
+    });
   }
 
   // ══════════════════════════════════════════════════
@@ -2649,15 +2650,17 @@ var K = (function(){
     if(currentStatus<=0 || currentStatus>=4) return;
     var prev = currentStatus - 1;
     var labels = {0:'Neu',1:'In Bearbeitung',2:'Abholbereit'};
-    if(!confirm('Status zurücksetzen auf „'+labels[prev]+'"?')) return;
-    setShopStatus(id, prev);
+    dlConfirm({icon:'↩️',title:'Status zurücksetzen?',msg:'Status wird auf „'+labels[prev]+'" zurückgesetzt.',ok:'Zurücksetzen',color:'#d97706'},function(){
+      setShopStatus(id, prev);
+    });
   }
 
   function confirmRevert(id, targetStatus, closeModalAfter){
     var labels = {0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt'};
-    if(!confirm('Status zurücksetzen auf „'+(labels[targetStatus]||'?')+'"?')) return;
-    setShopStatus(id, targetStatus);
-    if(closeModalAfter) closeModal('modal-detail');
+    dlConfirm({icon:'↩️',title:'Status zurücksetzen?',msg:'Status wird auf „'+(labels[targetStatus]||'?')+'" zurückgesetzt.',ok:'Zurücksetzen',color:'#d97706'},function(){
+      setShopStatus(id, targetStatus);
+      if(closeModalAfter) closeModal('modal-detail');
+    });
   }
 
   function setShopStatus(id, status, grund){
@@ -2770,25 +2773,26 @@ var K = (function(){
     if(!delId) return;
     var o = _allShopOrders.find(function(x){return x.id===delId;});
     var label = o ? (o.bestellnummer||delId) : delId;
-    if(!confirm('Bestellung '+label+' wirklich endgültig löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.')) return;
-    var btn = document.getElementById('detail-delete-btn');
-    if(btn){btn.disabled=true;btn.textContent='Wird gelöscht…';}
-    fetch(API+'/shop-order',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:delId})})
-      .then(function(r){return r.json();})
-      .then(function(res){
-        if(res.success){
-          toast('Bestellung wurde gelöscht');
-          closeModal('modal-detail');
-          loadShopOrders();
-        } else {
-          toast('Löschen fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
+    dlConfirm({icon:'🗑️',title:'Bestellung löschen?',msg:'Bestellung '+label+' wird endgültig gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.',ok:'Endgültig löschen',color:'#dc2626'},function(){
+      var btn = document.getElementById('detail-delete-btn');
+      if(btn){btn.disabled=true;btn.textContent='Wird gelöscht…';}
+      fetch(API+'/shop-order',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:delId})})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){
+            toast('Bestellung wurde gelöscht');
+            closeModal('modal-detail');
+            loadShopOrders();
+          } else {
+            toast('Löschen fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
+            if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
+          }
+        })
+        .catch(function(e){
+          toast('Verbindungsfehler – bitte erneut versuchen');
           if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
-        }
-      })
-      .catch(function(e){
-        toast('Verbindungsfehler – bitte erneut versuchen');
-        if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
-      });
+        });
+    });
   }
 
   function _buildTimeline(status, orderId){
@@ -3120,42 +3124,42 @@ var K = (function(){
     if(!_packOrder) return;
     var r = pkBuildJson();
     var items = _packOrder.positionen||[];
+
+    function doFinish(notifyType, notifyExtra){
+      fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({
+        bestellnummer:_packOrder.bestellnummer,kunde_email:_packOrder.kunde_email,kunde_name:_packOrder.kunde_name,
+        abholdatum:_packOrder.abholdatum||'',type:notifyType
+      },notifyExtra||{}))}).catch(function(){});
+      fetch(API+'/shop-order',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:_packOrder.id, status:2, pack_json:r.pack})
+      })
+      .then(function(res){return res.json();})
+      .then(function(d){
+        if(d.success){
+          toast('✅ Bestellung ist abholbereit');
+          closeModal('modal-pack');
+          loadShopOrders();
+        } else {
+          toast('Fehler: '+(d.error||''));
+        }
+      })
+      .catch(function(e){toast('Fehler: '+e.message);});
+    }
+
     if(r.packedCount<items.length){
       var missing = [];
       items.forEach(function(p,i){
         var cb = document.querySelector('[data-pk-idx="'+i+'"]');
         if(!cb||!cb.checked) missing.push(p.bezeichnung);
       });
-      if(!confirm('Folgende Artikel sind nicht verfügbar:\n\n• '+missing.join('\n• ')+'\n\nTrotzdem als Abholbereit markieren?')) return;
-      // Notify customer about missing items
-      fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-        bestellnummer:_packOrder.bestellnummer,kunde_email:_packOrder.kunde_email,kunde_name:_packOrder.kunde_name,
-        abholdatum:_packOrder.abholdatum||'',type:'missing_items',missing_items:missing
-      })}).catch(function(){});
+      dlConfirm({icon:'⚠️',title:'Nicht alle Artikel verfügbar',msg:'Fehlend: '+missing.join(', ')+'. Trotzdem als Abholbereit markieren?',ok:'Trotzdem fertig',cancel:'Abbrechen',color:'#d97706'},function(){
+        doFinish('missing_items',{missing_items:missing});
+      });
     } else {
-      // Notify customer order is ready
-      fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-        bestellnummer:_packOrder.bestellnummer,kunde_email:_packOrder.kunde_email,kunde_name:_packOrder.kunde_name,
-        abholdatum:_packOrder.abholdatum||'',type:'ready',positionen:items.map(function(p){return{bezeichnung:p.bezeichnung,menge:p.menge,einheit:p.einheit,einzelpreis:p.einzelpreis,positionspreis:p.positionspreis};}),
-        gesamtsumme:_packOrder.gesamtsumme,anmerkungen:_packOrder.anmerkungen||''
-      })}).catch(function(){});
+      doFinish('ready',{positionen:items.map(function(p){return{bezeichnung:p.bezeichnung,menge:p.menge,einheit:p.einheit,einzelpreis:p.einzelpreis,positionspreis:p.positionspreis};}),gesamtsumme:_packOrder.gesamtsumme,anmerkungen:_packOrder.anmerkungen||''});
     }
-    fetch(API+'/shop-order',{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({id:_packOrder.id, status:2, pack_json:r.pack})
-    })
-    .then(function(res){return res.json();})
-    .then(function(d){
-      if(d.success){
-        toast('✅ Bestellung ist abholbereit');
-        closeModal('modal-pack');
-        loadShopOrders();
-      } else {
-        toast('Fehler: '+(d.error||''));
-      }
-    })
-    .catch(function(e){toast('Fehler: '+e.message);});
   }
 
   function printPackSlip(){
@@ -3830,8 +3834,9 @@ var K = (function(){
     if(currentStatus<=0) return;
     var prev = currentStatus - 1;
     var labels = {0:'Neu',1:'In Bestellung',2:'Bereit',3:'Abgeholt'};
-    if(!confirm('Status zurücksetzen auf „'+(labels[prev]||'?')+'"?')) return;
-    setMetzgerStatus(id, prev);
+    dlConfirm({icon:'\u21A9\uFE0F',title:'Status zur\u00fccksetzen?',msg:'Status wird auf \u201E'+(labels[prev]||'?')+'\u201C zur\u00fcckgesetzt.',ok:'Zur\u00fccksetzen',color:'#d97706'},function(){
+      setMetzgerStatus(id, prev);
+    });
   }
 
   function setMetzgerStatus(id, status, grund){
@@ -4214,18 +4219,19 @@ var K = (function(){
     var offenCount = 0;
     orders.forEach(function(o){ (o.positionen||[]).forEach(function(p){ if(!p.gesendet) offenCount++; }); });
     if(!offenCount){ toast('Alle bereits abgehakt'); return; }
-    if(!confirm('Alle '+offenCount+' offenen Positionen als bestellt abhaken?')) return;
-    var pending = orders.length;
-    orders.forEach(function(o){
-      var pos = (o.positionen||[]).map(function(p){ p.bestellt=true; p.gesendet=true; return p; });
-      var body = {id:o.id, positionen:pos};
-      if(o.status===0) { body.status=1; o.status=1; }
-      fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-        .then(function(r){return r.json();})
-        .then(function(){
-          pending--;
-          if(pending<=0){ toast('\u2705 '+offenCount+' Positionen als bestellt markiert'); loadMetzgerOrders(); loadMetzgerSammel(); }
-        }).catch(function(){ pending--; });
+    dlConfirm({icon:'\u2705',title:'Alle abhaken?',msg:'Alle '+offenCount+' offenen Positionen als bestellt markieren.',ok:'Alle abhaken',color:'#16a34a'},function(){
+      var pending = orders.length;
+      orders.forEach(function(o){
+        var pos = (o.positionen||[]).map(function(p){ p.bestellt=true; p.gesendet=true; return p; });
+        var body = {id:o.id, positionen:pos};
+        if(o.status===0) { body.status=1; o.status=1; }
+        fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+          .then(function(r){return r.json();})
+          .then(function(){
+            pending--;
+            if(pending<=0){ toast('\u2705 '+offenCount+' Positionen als bestellt markiert'); loadMetzgerOrders(); loadMetzgerSammel(); }
+          }).catch(function(){ pending--; });
+      });
     });
   }
 

@@ -219,12 +219,13 @@
 
   // --- Entwurf löschen ---
   window.socialDeletePost=function(postId){
-    if(!confirm('Post wirklich l\u00f6schen?'))return;
-    socialStatus('soc-post-status','\u23F3 Wird gel\u00f6scht\u2026',true);
-    fetch(API+'/social-post?id='+encodeURIComponent(postId),{method:'DELETE'})
-    .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
-    .then(function(){socialStatus('soc-post-status','\u2705 Gel\u00f6scht',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
-    .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
+    dlConfirm({icon:'🗑️',title:'Post löschen?',msg:'Der Post wird unwiderruflich gelöscht.',ok:'Löschen',cancel:'Abbrechen',color:'#dc2626'},function(){
+      socialStatus('soc-post-status','\u23F3 Wird gel\u00f6scht\u2026',true);
+      fetch(API+'/social-post?id='+encodeURIComponent(postId),{method:'DELETE'})
+      .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
+      .then(function(){socialStatus('soc-post-status','\u2705 Gel\u00f6scht',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
+      .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
+    });
   };
 
   // --- Geplante Posts laden (heute + morgen) ---

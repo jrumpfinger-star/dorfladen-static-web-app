@@ -540,8 +540,13 @@
       }
     });
     if(missingDate.length){
-      if(!confirm('Folgende "Kurz verfügbar"-Artikel haben kein Ablaufdatum:\n\n• '+missingDate.join('\n• ')+'\n\nOhne Datum bleiben diese Artikel unbegrenzt sichtbar. Trotzdem speichern?')) return;
+      dlConfirm({icon:'⚠️',title:'Kein Ablaufdatum',msg:missingDate.join(', ')+' \u2013 ohne Datum unbegrenzt sichtbar. Trotzdem speichern?',ok:'Trotzdem speichern',cancel:'Abbrechen',color:'#d97706'},function(){doSave();});
+      return;
     }
+    doSave();
+  }
+  function doSave(){
+    var keys=Object.keys(pendingChanges);
     var enableItems=[];
     var disableItems=[];
     keys.forEach(function(sc){

@@ -513,7 +513,7 @@
 
   // ── Done Button ──
   document.getElementById('pk-done-btn').addEventListener('click',function(){
-    if(!confirm('Bestellung als "Abholbereit" markieren?')) return;
+    dlConfirm({icon:'📦',title:'Abholbereit markieren?',msg:'Die Bestellung wird als fertig gepackt markiert.',ok:'Abholbereit',color:'#16a34a'},function(){
     savePackState(function(){
       // Set order status to Abholbereit (2)
       fetch(API+'/shop-order',{
@@ -533,6 +533,7 @@
             setTimeout(function(){window.close();},1500);
           }
         });
+    });
     });
   });
 
@@ -647,10 +648,10 @@
   // ── Back Button ──
   document.getElementById('pk-back-btn').addEventListener('click',function(){
     if(Object.keys(packState).length>0){
-      if(confirm('Pack-Status speichern vor dem Verlassen?')){
+      dlConfirm({icon:'💾',title:'Speichern?',msg:'Pack-Status speichern vor dem Verlassen?',ok:'Speichern',cancel:'Verwerfen',color:'#16a34a'},function(){
         savePackState(function(){history.back();});
-        return;
-      }
+      });
+      return;
     }
     history.back();
   });
