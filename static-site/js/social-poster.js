@@ -247,6 +247,8 @@
         }
         if(badge){badge.style.display='inline';badge.textContent='\u270F Bearbeite Entwurf';}
         socialStatus('soc-post-status','\u2705 Entwurf geladen \u2013 bearbeiten und erneut parken oder senden',true);
+        // Switch to Erfassen tab on desktop
+        if(typeof window.socDeskTab==='function') window.socDeskTab('edit');
         // Scroll to top of social panel
         var panel=document.getElementById('panel-social');
         if(panel) panel.scrollTop=0;
