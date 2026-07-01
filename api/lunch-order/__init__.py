@@ -131,6 +131,33 @@ def _send_push(email, title, body_text, tag="lunch", bestellnr=""):
     return False
 
 
+DEFAULT_BESTELLSCHLUSS = 10.5  # 10:30 Uhr – Fallback wenn CMS-Config nicht verfügbar
+
+
+def _get_bestellschluss(base_url, headers):
+    """Read bestellschluss_uhr from CMS config (Dataverse dl_seiteninhalt).
+    Returns float hours (e.g. 10.5 for 10:30). Falls back to DEFAULT_BESTELLSCHLUSS."""
+    try:
+        url = (
+            f"{base_url}/api/data/v9.2/dl_seiteninhalts"
+            f"?$filter=dl_schluessel eq 'bestellschluss_uhr'"
+            f"&$select=dl_wert"
+        )
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            items = r.json().get("value", [])
+            if items:
+                raw = items[0].get("dl_wert", "")
+                if raw:
+                    parts = str(raw).split(":")
+                    h = int(parts[0])
+                    m = int(parts[1]) if len(parts) > 1 else 0
+                    return h + m / 60.0
+    except Exception as e:
+        logging.debug(f"[lunch-order] CMS bestellschluss_uhr load failed: {e}")
+    return DEFAULT_BESTELLSCHLUSS
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -188,18 +215,21 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=400, headers=get_cors_headers(),
                 )
 
-            # ── Bestellzeitsperre: Online-Bestellungen für heute nur bis 10:30 ──
+            # ── Bestellzeitsperre: Online-Bestellungen für heute nur bis Bestellschluss ──
             if quelle == QUELLE_ONLINE and datum:
                 now_local = datetime.utcnow() + timedelta(hours=2)  # CET/CEST approximation
                 today_str = now_local.strftime("%Y-%m-%d")
                 if datum == today_str:
                     now_h = now_local.hour + now_local.minute / 60.0
-                    BESTELLSCHLUSS_H = 10.5  # 10:30 Uhr
-                    if now_h >= BESTELLSCHLUSS_H:
+                    bs_h = _get_bestellschluss(base_url, headers)
+                    if now_h >= bs_h:
+                        bs_hh = int(bs_h)
+                        bs_mm = int((bs_h - bs_hh) * 60)
+                        bs_label = f"{bs_hh}:{bs_mm:02d}"
                         return func.HttpResponse(
                             json.dumps({
                                 "success": False,
-                                "errors": ["Der Bestellschluss für heute (10:30 Uhr) ist leider überschritten."]
+                                "errors": [f"Der Bestellschluss für heute ({bs_label} Uhr) ist leider überschritten."]
                             }, ensure_ascii=False),
                             status_code=400, headers=get_cors_headers(),
                         )
