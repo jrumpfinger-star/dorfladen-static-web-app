@@ -106,16 +106,31 @@ def load_posts(token, folder_id):
     return load_json_file(token, folder_id, POSTS_FILE) or []
 
 
-def download_as_data_uri(url):
-    """Download an image URL and return as base64 data URI."""
+def download_as_data_uri(url, max_width=200):
+    """Download an image URL, resize to thumbnail, return as base64 data URI."""
     if not url or url.startswith("data:"):
         return url or ""
     try:
         r = requests.get(url, timeout=10)
         if r.status_code == 200:
-            ct = r.headers.get("Content-Type", "image/jpeg")
-            b64 = base64.b64encode(r.content).decode("ascii")
-            return f"data:{ct};base64,{b64}"
+            img_bytes = r.content
+            try:
+                from PIL import Image
+                import io
+                img = Image.open(io.BytesIO(img_bytes))
+                if img.width > max_width:
+                    ratio = max_width / img.width
+                    new_h = int(img.height * ratio)
+                    img = img.resize((max_width, new_h), Image.LANCZOS)
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG", quality=60, optimize=True)
+                img_bytes = buf.getvalue()
+            except Exception:
+                pass  # fallback: use original bytes
+            b64 = base64.b64encode(img_bytes).decode("ascii")
+            return f"data:image/jpeg;base64,{b64}"
     except:
         pass
     return ""
@@ -169,11 +184,42 @@ def merge_day_posts(day_posts):
     return merged
 
 
+def resize_data_uri(data_uri, max_width=200):
+    """Shrink an existing data: URI image to thumbnail size."""
+    try:
+        from PIL import Image
+        import io
+        # Parse data:image/jpeg;base64,xxxxx
+        header, b64data = data_uri.split(",", 1)
+        img_bytes = base64.b64decode(b64data)
+        img = Image.open(io.BytesIO(img_bytes))
+        if img.width <= max_width:
+            return data_uri  # already small enough
+        ratio = max_width / img.width
+        new_h = int(img.height * ratio)
+        img = img.resize((max_width, new_h), Image.LANCZOS)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=60, optimize=True)
+        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        return f"data:image/jpeg;base64,{b64}"
+    except Exception:
+        return data_uri
+
+
 def enrich_post_images(post, token, folder_id):
     """Fill missing bild_url or convert non-data-URI bild_url to inline base64."""
     items = post.get("items")
     if not items:
         return
+
+    # Compress oversized existing data: URIs (>50 KB)
+    for it in items:
+        bild = it.get("bild_url", "")
+        if bild.startswith("data:") and len(bild) > 50000:
+            it["bild_url"] = resize_data_uri(bild)
+
     # Items that need image enrichment: no bild_url, or bild_url is a
     # SharePoint/HTTP URL (not a data: URI) which expires and won't load
     # on external clients like mobile browsers.
