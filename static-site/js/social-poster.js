@@ -207,10 +207,13 @@
       // Fill titel
       var titelEl=document.getElementById('soc-post-titel');
       if(titelEl){
-        // Try to set matching option, fallback to first option
-        var found=false;
-        for(var i=0;i<titelEl.options.length;i++){if(titelEl.options[i].value===post.titel){titelEl.selectedIndex=i;found=true;break;}}
-        if(!found&&titelEl.options.length>0) titelEl.selectedIndex=0;
+        if(titelEl.tagName==='SELECT'&&titelEl.options){
+          var found=false;
+          for(var i=0;i<titelEl.options.length;i++){if(titelEl.options[i].value===post.titel){titelEl.selectedIndex=i;found=true;break;}}
+          if(!found&&titelEl.options.length>0) titelEl.selectedIndex=0;
+        }else{
+          titelEl.value=post.titel||'';
+        }
       }
       // Fill freitext
       var textEl=document.getElementById('soc-post-text');
