@@ -3463,20 +3463,27 @@ var K = (function(){
       var bestellStr = isKg?bestGramm+' g':bestellMenge+' '+(p.einheit||'Stk');
       var geliefertStr = isKg?packGramm+' g':packStueck+' '+(p.einheit||'Stk');
       var bc = p.strichcode||p.artikelnummer||'';
+      var bcHtml = esc(bc);
+      if(bc && bc.length >= 3){
+        bcHtml = '<div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">'
+          +'<img src="https://bwipjs-api.metafloor.com/?bcid=code128&text='+encodeURIComponent(bc)+'&scale=1.2&height=7&includetext=false" style="height:22px;max-width:130px;filter:contrast(1.5)" onerror="this.style.display=\'none\'">'
+          +'<span style="font-family:monospace;font-size:10px;color:#4b5563">'+esc(bc)+'</span>'
+          +'</div>';
+      }
       html += '<tr class="'+(checked?'packed':'notpacked')+'">';
       html += '<td class="check">'+(checked?'✅':'⬜')+'</td>';
       html += '<td>'+(i+1)+'</td>';
       if(checked){
         total += gp;
         html += '<td><b>'+esc(p.bezeichnung)+'</b>'+(abweichung?'<br><span style="color:#b45309;font-size:10px;font-weight:700">⚠ Menge abweichend</span>':'')+'</td>';
-        html += '<td>'+esc(bc)+'</td>';
+        html += '<td>'+bcHtml+'</td>';
         html += '<td class="r">'+bestellStr+'</td>';
         html += '<td class="r"'+(abweichung?' style="color:#b45309;font-weight:700"':'')+'>'+geliefertStr+'</td>';
         html += '<td class="r">'+fmtP(ep)+' €'+(isKg?'/kg':'')+'</td>';
         html += '<td class="r"><b>'+fmtP(gp)+' €</b></td>';
       } else {
         html += '<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">⚠ Nicht verfügbar</span></td>';
-        html += '<td style="color:#9ca3af">'+esc(bc)+'</td>';
+        html += '<td style="color:#9ca3af">'+bcHtml+'</td>';
         html += '<td class="r" style="color:#9ca3af">'+bestellStr+'</td>';
         html += '<td class="r" style="color:#9ca3af">–</td>';
         html += '<td class="r" style="text-decoration:line-through;color:#9ca3af">'+fmtP(ep)+' €</td>';
