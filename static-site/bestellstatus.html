@@ -269,7 +269,9 @@ function renderOrder(o){
   document.getElementById('bs-info-rows').innerHTML = rows;
 
   renderMessages(o);
-  if(o.status === 3) document.getElementById('bs-comment-card').style.display = 'none';
+  // Show cancel button for Eingegangen (0) MT orders
+  document.getElementById('bs-cancel-card').style.display = (o.status === 0 && _orderType === 'mt') ? '' : 'none';
+  if(o.status === 2 || o.status === 3) document.getElementById('bs-comment-card').style.display = 'none';
   if(window.lucide) lucide.createIcons();
 }
 
@@ -353,7 +355,7 @@ function renderMessages(o){
 
 // ── Cancel Order (customer self-service) ──
 function cancelOrder(){
-  if(!_order || _orderType !== 'fm') return;
+  if(!_order) return;
   var grund = prompt('Möchten Sie diese Bestellung wirklich stornieren?\n\nBitte geben Sie einen Grund an:');
   if(grund === null) return;
   if(!grund.trim()){ alert('Bitte geben Sie einen Stornierungsgrund an.'); return; }
@@ -362,10 +364,19 @@ function cancelOrder(){
   btn.disabled = true;
   btn.textContent = 'Wird storniert…';
 
-  fetch('/api/fleisch-order', {
+  var apiUrl, payload;
+  if(_orderType === 'fm'){
+    apiUrl = '/api/fleisch-order';
+    payload = {id: _order.id, status: 4, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund.trim()};
+  } else {
+    apiUrl = '/api/lunch-order/' + _order.id;
+    payload = {status: 2, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund.trim()};
+  }
+
+  fetch(apiUrl, {
     method: 'PATCH',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({id: _order.id, status: 4, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund.trim()})
+    body: JSON.stringify(payload)
   })
   .then(function(r){ return r.json(); })
   .then(function(data){

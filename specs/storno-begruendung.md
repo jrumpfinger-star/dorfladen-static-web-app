@@ -41,11 +41,14 @@ Der Storno-Grund wird im dedizierten Dataverse-Feld `dl_storno_grund` gespeicher
 ### Kunden-Ansicht
 - [x] **AK-ST-07** Shop-Kundenansicht (shop.html): Inline-Storno mit Pflicht-Textfeld für Begründung
 - [x] **AK-ST-08** Fleisch-Kundenansicht (bestellstatus.html): `prompt()` mit Pflicht-Begründung
+- [x] **AK-ST-12** Mittagstisch-Kundenansicht (bestellstatus.html): Storno-Button sichtbar bei Status „Eingegangen" (0), `prompt()` mit Pflicht-Begründung
+- [x] **AK-ST-13** Mittagstisch-Kundenansicht: Storno-Button verschwindet nach Bestätigung (Status ≥ 1)
 
 ### API-Backend
 - [x] **AK-ST-09** `shop-order` API PATCH akzeptiert `storno_grund` → schreibt `dl_storno_grund`
 - [x] **AK-ST-10** `fleisch-order` API PATCH akzeptiert `storno_grund` → schreibt `dl_storno_grund`
 - [x] **AK-ST-11** `lunch-order` API PATCH akzeptiert `storno_grund` → schreibt `dl_storno_grund`
+- [x] **AK-ST-14** `lunch-order` API PATCH mit `kunde_storno=true`: Stornierung nur bei Status 0 (Eingegangen), sonst Fehler 400
 
 ## Storno-Gründe
 
@@ -74,4 +77,5 @@ Der Storno-Grund wird im dedizierten Dataverse-Feld `dl_storno_grund` gespeicher
 - `static-site/kiosk.html` – Admin-Storno-Dialoge für Shop und Metzger
 - `static-site/cms.js` – CMS-Storno-Dialoge für Shop und Metzger
 - `static-site/shop.html` – Kunden-Inline-Storno mit Begründung
-- `static-site/bestellstatus.html` – Kunden-Fleisch-Storno mit Begründung
+- `static-site/bestellstatus.html` – Kunden-Storno für Fleisch und Mittagstisch mit Begründung
+- `api/lunch-order/__init__.py` – Kunden-Storno-Schutzprüfung (nur bei Status 0)

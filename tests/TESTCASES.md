@@ -2117,3 +2117,58 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 01.07.2026 | T-SP-01 bis T-SP-08 | ✅ 8/8 | Alle bestanden |
+
+---
+
+## Kunden-Stornierung (Bestellstatus-Seite)
+> Spec: specs/storno-begruendung.md → AK-ST-12, AK-ST-13, AK-ST-14
+> Testdatei: tests/kunden-storno.spec.js
+
+### T-ST-12-01 Cancel-Card HTML-Element existiert im DOM (AK-ST-12)
+- **Aktion:** Bestellstatus-Seite `/bestellstatus` aufrufen
+- **Prüfung:** `#bs-cancel-card` existiert im DOM
+- **Erwartung:** Element ist vorhanden (initial versteckt)
+
+### T-ST-12-02 Cancel-Button enthält korrekten Text und Icon (AK-ST-12)
+- **Aktion:** Bestellstatus-Seite laden
+- **Prüfung:** `#bs-cancel-btn` enthält "Bestellung stornieren" + Lucide x-circle Icon
+- **Erwartung:** Button-Text und Icon vorhanden
+
+### T-ST-12-03 cancelOrder Funktion existiert global (AK-ST-12)
+- **Aktion:** Bestellstatus-Seite laden, `typeof cancelOrder` prüfen
+- **Prüfung:** JS-Funktion ist global verfügbar
+- **Erwartung:** `typeof cancelOrder === 'function'`
+
+### T-ST-13-01 MT Status 0 zeigt Cancel-Card (AK-ST-13)
+- **Aktion:** `renderOrder()` mit Status 0 und `_orderType='mt'` aufrufen
+- **Prüfung:** `#bs-cancel-card` ist sichtbar (display !== 'none')
+- **Erwartung:** Cancel-Button wird angezeigt
+
+### T-ST-13-02 MT Status 1 versteckt Cancel-Card (AK-ST-13)
+- **Aktion:** `renderOrder()` mit Status 1 (Bestätigt) und `_orderType='mt'` aufrufen
+- **Prüfung:** `#bs-cancel-card` ist versteckt
+- **Erwartung:** Cancel-Button wird NICHT angezeigt
+
+### T-ST-13-03 MT Status 2 versteckt Cancel-Card (AK-ST-13)
+- **Aktion:** `renderOrder()` mit Status 2 (Storniert) und `_orderType='mt'` aufrufen
+- **Prüfung:** `#bs-cancel-card` ist versteckt
+- **Erwartung:** Cancel-Button wird NICHT angezeigt
+
+### T-ST-13-04 FM Status 0 zeigt Cancel-Card (AK-ST-08)
+- **Aktion:** `renderFleischOrder()` mit Status 0 und `_orderType='fm'` aufrufen
+- **Prüfung:** `#bs-cancel-card` ist sichtbar
+- **Erwartung:** Cancel-Button wird angezeigt
+
+### T-ST-13-05 FM Status 1 versteckt Cancel-Card (AK-ST-08)
+- **Aktion:** `renderFleischOrder()` mit Status 1 und `_orderType='fm'` aufrufen
+- **Prüfung:** `#bs-cancel-card` ist versteckt
+- **Erwartung:** Cancel-Button wird NICHT angezeigt
+
+### T-ST-14-01 cancelOrder baut korrekten API-Aufruf für MT (AK-ST-14)
+- **Aktion:** JS-Logik mit `_orderType='mt'` und Mock-Order prüfen
+- **Prüfung:** API-URL ist `/api/lunch-order/{id}`, Payload enthält `status:2, kunde_storno:true, storno_grund`
+- **Erwartung:** Korrekte URL und Payload-Struktur
+
+### Testlauf-Tabelle
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|

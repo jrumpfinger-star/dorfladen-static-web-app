@@ -473,6 +473,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             new_menge = body.get("menge")
             new_anmerkung = body.get("anmerkung")
 
+            # Customer self-cancellation: only allowed when order is still Eingegangen (0)
+            kunde_storno = body.get("kunde_storno", False)
+            if kunde_storno and new_status is not None and int(new_status) == STATUS_STORNIERT:
+                check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})?$select=dl_status"
+                check_r = requests.get(check_url, headers=headers, timeout=15)
+                if check_r.status_code != 200:
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Bestellung konnte nicht geprüft werden"}, ensure_ascii=False),
+                        status_code=500, headers=get_cors_headers(),
+                    )
+                current_status = check_r.json().get("dl_status", -1)
+                if current_status != STATUS_NEU:
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Stornierung nicht mehr möglich – die Bestellung wurde bereits bestätigt"}, ensure_ascii=False),
+                        status_code=400, headers=get_cors_headers(),
+                    )
+
             # Fetch existing order for push notification
             fetch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})"
             fetch_r = requests.get(fetch_url, headers=headers, timeout=15)
