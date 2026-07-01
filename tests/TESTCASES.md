@@ -2238,3 +2238,4 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 ### Testlauf-Tabelle
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
+| 03.07.2026 | T-MB-01-01 bis T-MB-12-01 | ✅ 11/11 | Alle bestanden (Live) |
