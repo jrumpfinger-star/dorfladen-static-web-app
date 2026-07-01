@@ -1868,6 +1868,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 .tp-item-price{font-size:15px;font-weight:700;color:#2e7d4f;white-space:nowrap}
 .tp-item-order{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#2e7d4f;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;text-decoration:none;transition:background .12s}
 .tp-item-order:hover{background:#1f5c39}
+.tp-ab-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#7c3aed;background:#ede9fe;padding:2px 7px;border-radius:6px;white-space:nowrap;flex-shrink:0}
 .tp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
 .tp-grid-card{text-align:center;padding:10px 6px;border:1px solid #e5e7eb;border-radius:10px;transition:background .12s}
 .tp-grid-card:hover{background:#f9fafb}
@@ -2037,14 +2038,16 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       var tip=_canOrderToday?'Jetzt f\u00fcr heute bestellen':'Mittagessen bestellen';
       orderBtn='<a class="tp-item-order" href="'+esc(href)+'" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
     }
+    var abBadge=it.ab_uhr?'<span class="tp-ab-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
     var gerichtAttr=(showOrder&&it.name)?' data-gericht="'+esc(it.name)+'"':'';
-    return '<div class="tp-item"'+gerichtAttr+'>'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+orderBtn+'</div>';
+    return '<div class="tp-item"'+gerichtAttr+'>'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie||abBadge?'<div class="tp-item-cat">'+(it.kategorie?esc(it.kategorie):'')+(it.kategorie&&abBadge?' ':'')+(abBadge||'')+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+orderBtn+'</div>';
   }
 
   function gridCard(it){
     var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="" ondblclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>';
     var preis=it.preis?fmtPreis(it.preis):'';
-    return '<div class="tp-grid-card">'+img+'<div class="card-name">'+esc(it.name||'')+'</div>'+(preis?'<div class="card-price">'+preis+'</div>':'')+'</div>';
+    var abBadge=it.ab_uhr?'<span class="tp-ab-badge" style="margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
+    return '<div class="tp-grid-card">'+img+'<div class="card-name">'+esc(it.name||'')+'</div>'+(preis?'<div class="card-price">'+preis+'</div>':'')+(abBadge||'')+'</div>';
   }
 
   function fmtPreis(p){var n=parseFloat(p);if(isNaN(n))return p;return n.toFixed(2).replace('.',',')+' €';}
