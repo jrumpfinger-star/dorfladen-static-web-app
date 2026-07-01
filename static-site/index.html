@@ -1863,7 +1863,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 .tp-item-img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#f3f4f6;flex-shrink:0}
 .tp-item-img.no-img{display:flex;align-items:center;justify-content:center;font-size:24px;color:#9ca3af}
 .tp-item-info{flex:1;min-width:0}
-.tp-item-name{font-size:14px;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-item-name{font-size:14px;font-weight:600;color:#1f2937;line-height:1.3;word-break:break-word}
 .tp-item-cat{font-size:12px;color:#6b7280}
 .tp-item-price{font-size:15px;font-weight:700;color:#2e7d4f;white-space:nowrap}
 .tp-item-order{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#2e7d4f;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;text-decoration:none;transition:background .12s}
@@ -2031,7 +2031,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var preis=it.preis?fmtPreis(it.preis):'';
     var orderBtn='';
     if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
-      var _now=new Date(), _canOrderToday=(_now.getHours()+_now.getMinutes()/60)<10.5;
+      var _now=new Date(), _bsCutoff=window._dlBestellschluss||10.5, _canOrderToday=(_now.getHours()+_now.getMinutes()/60)<_bsCutoff;
       var href=_canOrderToday
         ?'/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'')
         :'/mittagstisch-bestellen';
@@ -2039,8 +2039,9 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       orderBtn='<a class="tp-item-order" href="'+esc(href)+'" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
     }
     var abBadge=it.ab_uhr?'<span class="tp-ab-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
+    var showCat=!showOrder&&it.kategorie;
     var gerichtAttr=(showOrder&&it.name)?' data-gericht="'+esc(it.name)+'"':'';
-    return '<div class="tp-item"'+gerichtAttr+'>'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(it.kategorie||abBadge?'<div class="tp-item-cat">'+(it.kategorie?esc(it.kategorie):'')+(it.kategorie&&abBadge?' ':'')+(abBadge||'')+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+orderBtn+'</div>';
+    return '<div class="tp-item"'+gerichtAttr+'>'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(showCat||abBadge?'<div class="tp-item-cat">'+(showCat?esc(it.kategorie):'')+(showCat&&abBadge?' ':'')+(abBadge||'')+'</div>':'')+'</div>'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+orderBtn+'</div>';
   }
 
   function gridCard(it){

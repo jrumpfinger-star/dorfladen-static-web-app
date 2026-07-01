@@ -66,6 +66,13 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
       if(homeCfg.layout){
         document.documentElement.setAttribute('data-layout', homeCfg.layout);
       }
+      // Bestellschluss (default 10:30 = 10.5h)
+      var bsRaw=config['bestellschluss_uhr']||(homeCfg&&homeCfg.bestellschluss_uhr)||'';
+      if(bsRaw){
+        var bsParts=String(bsRaw).split(':');
+        var bsH=parseInt(bsParts[0],10),bsM=parseInt(bsParts[1]||'0',10);
+        if(!isNaN(bsH)) window._dlBestellschluss=bsH+bsM/60;
+      }
       // Store feature flags globally
       var ff=config['feature_flags']||config.feature_flags;
       if(typeof ff==='string'){try{ff=JSON.parse(ff);}catch(e){ff={};}}
@@ -419,8 +426,9 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
         // Am Wochenende zeigt API nächste Woche → kein Tag ist vergangen
         var isToday=!isWeekend&&dc===todayDc;
         var isPast=!isWeekend&&dc<todayDc;
-        // Bestellschluss: heute bis 10:30, zukünftige Tage erlaubt, vergangene nicht
-        var canOrder=isToday?(currentHour<10||(currentHour===10&&new Date().getMinutes()<30)):(!isPast);
+        // Bestellschluss: heute bis konfigurierbarer Uhrzeit, zukünftige Tage erlaubt, vergangene nicht
+        var _bsCut=window._dlBestellschluss||10.5;
+        var canOrder=isToday?((currentHour+new Date().getMinutes()/60)<_bsCut):(!isPast);
         var notice='';
         dayMeals.forEach(function(g){if(g.beschreibung&&!notice) notice=g.beschreibung;});
         var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim()&&g.preis;});

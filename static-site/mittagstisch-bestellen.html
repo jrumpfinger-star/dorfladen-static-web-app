@@ -259,7 +259,8 @@
   var selectedDish = null; // {id, gericht, preis, datum, wochentag_label}
   var DAY_LABELS = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa'};
   var DAY_FULL = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag',101005:'Samstag'};
-  var BESTELLSCHLUSS_H = 10, BESTELLSCHLUSS_M = 30;
+  var _bsCfg=window._dlBestellschluss||10.5;
+  var BESTELLSCHLUSS_H = Math.floor(_bsCfg), BESTELLSCHLUSS_M = Math.round((_bsCfg-Math.floor(_bsCfg))*60);
 
   // ── Bestellschluss-Countdown ──
   function updateLunchCountdown(){
@@ -443,14 +444,14 @@
     // Update page title + OG
     document.title = dish.gericht + ' bestellen – Dorfladen Oberornau';
 
-    // Bestellzeitsperre: Warnung wenn heute nach 10:30
+    // Bestellzeitsperre: Warnung wenn heute nach Bestellschluss
     var errEl = document.getElementById('error-box');
     if(dish.datum){
       var now = new Date();
       var todayISO = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
       var dishDate = (dish.datum||'').split('T')[0];
-      if(dishDate === todayISO && (now.getHours() + now.getMinutes()/60) >= 10.5){
-        errEl.innerHTML = '⚠️ Der Bestellschluss für heute (10:30 Uhr) ist leider überschritten. Bestellungen für heute sind nicht mehr möglich.';
+      if(dishDate === todayISO && (now.getHours() + now.getMinutes()/60) >= _bsCfg){
+        errEl.innerHTML = '⚠️ Der Bestellschluss für heute ('+BESTELLSCHLUSS_H+':'+(BESTELLSCHLUSS_M<10?'0':'')+BESTELLSCHLUSS_M+' Uhr) ist leider überschritten. Bestellungen für heute sind nicht mehr möglich.';
         errEl.style.display = '';
         var btn = document.getElementById('submit-btn');
         if(btn){ btn.disabled = true; btn.style.opacity = '.4'; }
@@ -490,14 +491,14 @@
     if(!name) errors.push('Bitte Name eingeben.');
     if(!email) errors.push('Bitte E-Mail eingeben.');
     if(!selectedDish) errors.push('Kein Gericht ausgewählt.');
-    // Bestellzeitsperre: heute nur bis 10:30
+    // Bestellzeitsperre: heute nur bis Bestellschluss
     if(selectedDish && selectedDish.datum){
       var now = new Date();
       var todayISO = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
       var dishDate2 = (selectedDish.datum||'').split('T')[0];
       if(dishDate2 === todayISO){
         var h = now.getHours() + now.getMinutes()/60;
-        if(h >= 10.5) errors.push('Der Bestellschluss für heute (10:30 Uhr) ist leider überschritten.');
+        if(h >= _bsCfg) errors.push('Der Bestellschluss für heute ('+BESTELLSCHLUSS_H+':'+(BESTELLSCHLUSS_M<10?'0':'')+BESTELLSCHLUSS_M+' Uhr) ist leider überschritten.');
       }
     }
     if(errors.length){
