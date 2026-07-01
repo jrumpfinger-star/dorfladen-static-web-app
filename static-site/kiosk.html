@@ -145,13 +145,33 @@
       #panel-metzger .k-slot-body{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       #mittag-orders{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       #mittag-orders>.k-empty,#panel-metzger .k-slot-body>.k-empty{grid-column:1/-1}
-      #social-panel-post{display:flex;gap:12px;align-items:flex-start}
-      #soc-col-left{flex:1;min-width:0}
+      /* === Social Split-View Desktop === */
+      #soc-desk-bar{display:flex!important}
+      #soc-desk-tabs{display:block!important}
+      #social-panel-post{display:flex;flex-wrap:wrap;gap:0 16px;align-items:flex-start}
+      #soc-desk-bar,#soc-desk-tabs{flex-basis:100%}
+      #soc-col-left{flex:1.2;min-width:0}
       #soc-col-right{flex:1;min-width:0;position:sticky;top:0;align-self:flex-start}
+      /* Hide step headers on desktop — show content flat */
+      #soc-col-left .k-order-hdr{display:none!important}
+      #soc-col-left .k-order{border:none!important;border-left:none!important;margin-bottom:0!important;box-shadow:none!important}
+      #soc-col-left .k-order-body{display:block!important}
+      #soc-col-left .k-order.oc-collapsed .k-order-body{display:block!important}
+      /* Hide Heute/Morgen in Step 1 on desktop (moved to action bar) */
+      #soc-day-section{display:none!important}
+      /* Right column: always show bodies, hide step headers */
+      #soc-col-right .k-order-hdr{display:none!important}
+      #soc-col-right .k-order{border:none!important;border-left:none!important;margin-bottom:0!important;box-shadow:none!important}
       #soc-col-right .k-order-body{display:block!important}
-      #soc-col-right .oc-collapsed .k-order-body{display:block!important}
-      #soc-post-footer{flex-basis:100%}
+      /* Right column sticky with padding */
+      #soc-col-right{padding:8px;background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb}
+      /* Hide posts in right column on desktop (shown in left col tab) */
+      #soc-col-right #soc-today-posts{display:none!important}
+      #soc-col-right #soc-post-status{display:none!important}
+      /* Desktop status shown in action bar area */
+      /* Product grid 2-col */
       #soc-pick-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:4px;max-height:none!important;overflow-y:visible!important}
+      #soc-post-footer{flex-basis:100%}
     }
     .k-confirm-dialog{margin-top:8px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px}
     .k-confirm-input{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box}
@@ -654,6 +674,30 @@
 
     <!-- ========== SUB: NEUER POST (Step-Wizard) ========== -->
     <div id="social-panel-post" style="flex-wrap:wrap">
+
+      <!-- Desktop Action Bar (hidden on mobile) -->
+      <div id="soc-desk-bar" style="display:none;width:100%;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div id="soc-desk-day" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
+            <button type="button" onclick="socialToggleDay('heute')" data-day="heute" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff">Heute</button>
+            <button type="button" onclick="socialToggleDay('morgen')" data-day="morgen" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151">Morgen</button>
+          </div>
+          <span id="soc-desk-date" style="font-size:12px;color:#6b7280"></span>
+          <span style="flex:1"></span>
+          <button onclick="socialSaveDraft()" style="padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;color:#92400e;display:inline-flex;align-items:center;gap:4px"><i data-lucide="bookmark" style="width:14px;height:14px"></i> Parken</button>
+          <button onclick="socialPublishTagesinfo()" style="padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;color:#16a34a;display:inline-flex;align-items:center;gap:4px"><i data-lucide="file-text" style="width:14px;height:14px"></i> Ver&#246;ffentlichen</button>
+        </div>
+        <div id="soc-desk-status" style="display:none;padding:6px 10px;border-radius:8px;font-size:12px;margin-top:6px;width:100%"></div>
+      </div>
+
+      <!-- Desktop Tab Bar (hidden on mobile) -->
+      <div id="soc-desk-tabs" style="display:none;width:100%;margin-bottom:8px">
+        <div style="display:flex;gap:0;border-bottom:2px solid #e5e7eb">
+          <button id="soc-desk-tab-edit" onclick="socDeskTab('edit')" style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid #16a34a;margin-bottom:-2px;cursor:pointer;background:none;color:#16a34a"><i data-lucide="edit-3" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Erfassen</button>
+          <button id="soc-desk-tab-posts" onclick="socDeskTab('posts')" style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;background:none;color:#6b7280"><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Posts &amp; Entw&#252;rfe</button>
+        </div>
+      </div>
+
       <div id="soc-col-left">
 
       <!-- ── STEP 1: Titel & Text ── -->
@@ -666,7 +710,7 @@
         <div class="k-order-body">
           <div style="padding:14px 16px">
             <!-- Heute / Morgen Toggle -->
-            <div style="margin-bottom:14px">
+            <div id="soc-day-section" style="margin-bottom:14px">
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px"><i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"></i> Post f&#252;r</label>
               <div id="soc-date-toggle" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
                 <button type="button" data-day="heute" onclick="socialToggleDay('heute')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff;transition:all .15s">Heute</button>
@@ -742,6 +786,11 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Desktop Posts Panel (shown when Posts tab active, hidden on mobile) -->
+      <div id="soc-desk-posts-panel" style="display:none">
+        <div id="soc-desk-posts-content"></div>
       </div>
 
       </div><!-- /soc-col-left -->
@@ -1753,6 +1802,56 @@ var K = (function(){
     }
   }
   window.socToggleStep = socToggleStep;
+
+  // ── Desktop Split-View: Tab switching ──
+  window.socDeskTab = function(tab){
+    var tabEdit = document.getElementById('soc-desk-tab-edit');
+    var tabPosts = document.getElementById('soc-desk-tab-posts');
+    var step1 = document.getElementById('soc-step-1');
+    var step2 = document.getElementById('soc-step-2');
+    var postsPanel = document.getElementById('soc-desk-posts-panel');
+    if(!tabEdit||!tabPosts) return;
+    if(tab === 'posts'){
+      tabEdit.style.borderBottomColor='transparent'; tabEdit.style.color='#6b7280';
+      tabPosts.style.borderBottomColor='#2563eb'; tabPosts.style.color='#2563eb';
+      if(step1) step1.style.display='none';
+      if(step2) step2.style.display='none';
+      if(postsPanel){
+        postsPanel.style.display='block';
+        // Clone posts from right column into desktop panel
+        var src = document.getElementById('soc-today-posts-list');
+        var dst = document.getElementById('soc-desk-posts-content');
+        if(src && dst){ dst.innerHTML = src.innerHTML; }
+      }
+    } else {
+      tabEdit.style.borderBottomColor='#16a34a'; tabEdit.style.color='#16a34a';
+      tabPosts.style.borderBottomColor='transparent'; tabPosts.style.color='#6b7280';
+      if(step1) step1.style.display='';
+      if(step2) step2.style.display='';
+      if(postsPanel) postsPanel.style.display='none';
+    }
+  };
+
+  // Sync desktop day toggle with mobile toggle
+  var _origToggleDay = window.socialToggleDay;
+  var _syncInterval = setInterval(function(){
+    if(window.socialToggleDay && window.socialToggleDay !== _origToggleDay){
+      var realToggle = window.socialToggleDay;
+      window.socialToggleDay = function(day){
+        realToggle(day);
+        // Sync desktop day buttons
+        var deskBtns = document.querySelectorAll('#soc-desk-day button');
+        deskBtns.forEach(function(b){
+          if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
+          else{b.style.background='#fff';b.style.color='#374151';}
+        });
+        var deskDate = document.getElementById('soc-desk-date');
+        var srcDate = document.getElementById('soc-date-label');
+        if(deskDate && srcDate) deskDate.textContent = srcDate.textContent;
+      };
+      clearInterval(_syncInterval);
+    }
+  }, 500);
 
   // Update step-2 badge with selected product count
   var _origSocialPickUpdate = window.socialPickUpdate;

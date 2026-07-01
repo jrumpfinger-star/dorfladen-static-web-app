@@ -126,6 +126,12 @@
     el.style.border='1px solid '+(ok?'#bbf7d0':'#fecaca');
     el.textContent=msg;
     el._statusTimer=setTimeout(function(){el.style.display='none';el._statusTimer=null;},4000);
+    // Mirror to desktop status bar
+    var ds=document.getElementById('soc-desk-status');
+    if(ds&&id==='soc-post-status'){
+      ds.style.display='block';ds.style.background=el.style.background;ds.style.color=el.style.color;ds.style.border=el.style.border;ds.textContent=msg;
+      if(ds._t)clearTimeout(ds._t);ds._t=setTimeout(function(){ds.style.display='none';},4000);
+    }
   }
 
   var _socPastedFile = null;
