@@ -3199,7 +3199,11 @@ var K = (function(){
       html += '<input type="checkbox" data-pk-idx="'+i+'"'+(checked?' checked':'')+disabled+' onclick="K.pkToggle('+i+')">';
       html += '<div class="pk-body">';
       html += '<div class="pk-name">'+esc(p.bezeichnung)+'</div>';
-      html += '<div class="pk-code">'+esc(bc)+'</div>';
+      var bcImgHtml = '';
+      if(bc && bc.length >= 3){
+        bcImgHtml = ' <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text='+encodeURIComponent(bc)+'&scale=1.2&height=6&includetext=false" style="height:16px;max-width:120px;vertical-align:middle;margin-left:8px;filter:contrast(1.5);border:1px solid #f3f4f6;padding:1px;background:#fff;border-radius:2px" onerror="this.style.display=\'none\'" title="Strichcode direkt vom Bildschirm scannen">';
+      }
+      html += '<div class="pk-code" style="display:flex;align-items:center">'+esc(bc)+bcImgHtml+'</div>';
       html += '<div data-pk-tag="'+i+'"></div>';
       html += '</div>';
       html += '<div class="pk-best">'+bestLabel+'</div>';
