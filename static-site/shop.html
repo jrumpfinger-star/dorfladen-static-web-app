@@ -2826,6 +2826,12 @@
     _myOrdersCache=null;_myOrdersFilter='open';loadMyOrders();
   });
 
+  // Expose for testability
+  window.loadMyOrders=loadMyOrders;
+  window.renderMyOrders=renderMyOrders;
+  Object.defineProperty(window,'_myOrdersFilter',{get:function(){return _myOrdersFilter;},set:function(v){_myOrdersFilter=v;}});
+  Object.defineProperty(window,'_myOrdersCache',{get:function(){return _myOrdersCache;},set:function(v){_myOrdersCache=v;}});
+
   // ── Dropdown backdrop + scroll lock ──
   var _ddScrollY=0;
   var _ddBackdrop=document.getElementById('dd-backdrop');
