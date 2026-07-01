@@ -2261,6 +2261,11 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 - **Prüfung:** `.tp-item-cat` unter Mittagessen-Sektion enthält nicht "Mittagessen"
 - **Erwartung:** Redundantes Kategorie-Label entfernt
 
+### Testlauf-Tabelle
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 01.07.2026 | T-MT-01 bis T-MT-08 | ✅ 8/8 | Alle bestanden (Live, Mi 11:58) |
+
 ---
 
 ## Meine Bestellungen – Unified Order View
