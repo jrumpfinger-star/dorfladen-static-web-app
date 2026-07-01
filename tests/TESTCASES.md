@@ -2217,6 +2217,52 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 
 ---
 
+## Mittagstisch bestellen – Bestellbare Tage
+> Spec: specs/mittagstisch-bestellen.md → AK-MT-01 bis AK-MT-06
+> Testdatei: tests/mittagstisch-bestellen.spec.js
+
+### T-MT-01 Vergangene Tage sind ausgegraut und nicht klickbar (AK-MT-01)
+- **Aktion:** `/mittagstisch-bestellen` öffnen
+- **Prüfung:** Vergangene Tage haben `opacity:.45`, `pointer-events:none`, `line-through`
+- **Erwartung:** Items nicht klickbar, Text durchgestrichen
+
+### T-MT-02 Vergangene Tage zeigen "vorbei" Label (AK-MT-01)
+- **Aktion:** `/mittagstisch-bestellen` öffnen
+- **Prüfung:** Header vergangener Tage enthalten "vorbei"
+- **Erwartung:** Mindestens ein Header mit "vorbei" vorhanden
+
+### T-MT-03 Vergangene Tage haben keinen Bestell-Button (AK-MT-01)
+- **Aktion:** `/mittagstisch-bestellen` öffnen
+- **Prüfung:** Vergangene Items haben kein `.menu-item-order` Element
+- **Erwartung:** Kein Warenkorb-Icon bei vergangenen Tagen
+
+### T-MT-04 Zukünftige Tage zeigen Bestell-Button (AK-MT-03)
+- **Aktion:** `/mittagstisch-bestellen` öffnen
+- **Prüfung:** Aktive Items haben `.menu-item-order`
+- **Erwartung:** Warenkorb-Icon bei bestellbaren Tagen sichtbar
+
+### T-MT-05 Bestellschluss wird dynamisch geladen (AK-MT-04)
+- **Aktion:** `/mittagstisch-bestellen` öffnen
+- **Prüfung:** `#lunch-cd` ist sichtbar und hat Text
+- **Erwartung:** Countdown oder "erreicht"-Meldung wird angezeigt
+
+### T-MT-06 TagesInfo zeigt Mittagessen-Bestell-Button (AK-MT-05)
+- **Aktion:** Startseite öffnen, TagesInfo-Modal öffnen
+- **Prüfung:** `.tp-item-order` mit href `/mittagstisch-bestellen` vorhanden
+- **Erwartung:** Bestell-Button im TagesInfo sichtbar
+
+### T-MT-07 TagesInfo Mittagessen-Name wird nicht abgeschnitten (AK-MT-06)
+- **Aktion:** Startseite öffnen, TagesInfo-Modal öffnen
+- **Prüfung:** `.tp-item-name` hat `white-space` ≠ `nowrap`
+- **Erwartung:** Name wird mehrzeilig angezeigt
+
+### T-MT-08 TagesInfo zeigt nicht redundant "Mittagessen" als Kategorie (AK-MT-06)
+- **Aktion:** Startseite öffnen, TagesInfo-Modal öffnen
+- **Prüfung:** `.tp-item-cat` unter Mittagessen-Sektion enthält nicht "Mittagessen"
+- **Erwartung:** Redundantes Kategorie-Label entfernt
+
+---
+
 ## Meine Bestellungen – Unified Order View
 > Spec: specs/meine-bestellungen.md → AK-MB-01 bis AK-MB-12
 > Testdatei: tests/meine-bestellungen.spec.js
