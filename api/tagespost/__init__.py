@@ -152,11 +152,16 @@ def merge_day_posts(day_posts):
 
 
 def enrich_post_images(post, token, folder_id):
-    """Fill missing bild_url on post items from katalog and mt-bilder."""
+    """Fill missing bild_url or convert non-data-URI bild_url to inline base64."""
     items = post.get("items")
     if not items:
         return
-    needs_images = [it for it in items if not it.get("bild_url")]
+    # Items that need image enrichment: no bild_url, or bild_url is a
+    # SharePoint/HTTP URL (not a data: URI) which expires and won't load
+    # on external clients like mobile browsers.
+    needs_images = [it for it in items
+                    if not it.get("bild_url")
+                    or (it.get("bild_url", "").startswith("http"))]
     if not needs_images:
         return
 
@@ -180,6 +185,14 @@ def enrich_post_images(post, token, folder_id):
         name_lower = name.lower()
         kat = (it.get("kategorie") or "").lower()
         bild_url = ""
+
+        # 0) If item already has an HTTP URL, convert it to data URI directly
+        existing = it.get("bild_url", "")
+        if existing.startswith("http"):
+            converted = download_as_data_uri(existing)
+            if converted:
+                it["bild_url"] = converted
+                continue
 
         # 1) Try katalog match by name
         if name_lower in katalog_by_name:
