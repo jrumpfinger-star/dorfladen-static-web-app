@@ -165,10 +165,14 @@
       #soc-col-right .k-order-body{display:block!important}
       /* Right column sticky with padding */
       #soc-col-right{padding:8px;background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb}
+      /* Hide duplicate publish/park section on desktop (in action bar) */
+      #soc-publish-section{display:none!important}
       /* Hide posts in right column on desktop (shown in left col tab) */
       #soc-col-right #soc-today-posts{display:none!important}
       #soc-col-right #soc-post-status{display:none!important}
-      /* Desktop status shown in action bar area */
+      /* Compact share buttons on desktop */
+      #soc-step-3 button[onclick*="WhatsApp"],#soc-step-3 button[onclick*="Instagram"]{padding:10px!important;font-size:13px!important;min-height:40px!important}
+      #soc-step-3 button[onclick*="Download"]{min-height:36px!important}
       /* Product grid 2-col */
       #soc-pick-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:4px;max-height:none!important;overflow-y:visible!important}
       #soc-post-footer{flex-basis:100%}
@@ -840,7 +844,7 @@
               <div style="display:flex;gap:10px">
                 <button onclick="socialDownloadPoster()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:12px;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px"><i data-lucide="download" style="width:18px;height:18px"></i> Bild speichern</button>
               </div>
-              <div style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:4px">
+              <div id="soc-publish-section" style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:4px">
                 <div style="display:flex;gap:8px;margin-bottom:6px">
                   <button onclick="socialPublishTagesinfo()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;color:#16a34a;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px">
                     <i data-lucide="file-text" style="width:18px;height:18px"></i>
@@ -1855,6 +1859,7 @@ var K = (function(){
 
   // Update step-2 badge with selected product count
   var _origSocialPickUpdate = window.socialPickUpdate;
+  var _socAutoPreviewTimer = null;
   function _socWrapPickUpdate(){
     if(typeof _origSocialPickUpdate==='function') _origSocialPickUpdate();
     var cnt = document.getElementById('soc-step2-count');
@@ -1864,6 +1869,11 @@ var K = (function(){
     try { freeCount = (window._socialModule && typeof window._socialModule._socFreeItems === 'function') ? window._socialModule._socFreeItems().length : 0; } catch(e){}
     var total = checks.length + freeCount;
     cnt.textContent = total ? total + ' ausgew\u00e4hlt' : '';
+    // Auto-preview on desktop (debounced)
+    if(window.innerWidth >= 900 && typeof socialGenPreview === 'function'){
+      if(_socAutoPreviewTimer) clearTimeout(_socAutoPreviewTimer);
+      _socAutoPreviewTimer = setTimeout(function(){ socialGenPreview(); }, 600);
+    }
   }
   // Override socialPickUpdate once social.js is loaded
   (function(){
