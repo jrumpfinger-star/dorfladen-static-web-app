@@ -132,7 +132,7 @@
     /* ── Section Headers ── */
     .shop-section{padding:14px 16px 6px}
     @media(max-width:600px){.shop-section{padding:8px 8px 4px}}
-    @media(min-width:1200px){.shop-section{max-width:1100px;margin:0 auto;padding:14px 40px 6px}}
+    @media(min-width:1200px){.shop-section{padding:14px 40px 6px}}
     .shop-section-title{font-size:16px;font-weight:700;color:var(--shop-text);display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:2px solid var(--shop-green);margin-bottom:2px;letter-spacing:.2px}
     @media(max-width:600px){.shop-section-title{font-size:14px;gap:5px;padding-bottom:5px;border-bottom-width:2px}}
     .shop-section-title .emoji{font-size:22px}
@@ -141,7 +141,7 @@
     /* ── Product Grid ── */
     .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:8px 16px 16px}
     @media(min-width:768px){.shop-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:8px 24px 24px}}
-    @media(min-width:1200px){.shop-grid{grid-template-columns:repeat(4,1fr);max-width:1100px;margin:0 auto;padding:8px 40px 24px}}
+    @media(min-width:1200px){.shop-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;padding:8px 40px 24px}}
 
     /* ── View Toggle ── */
     .shop-view-toggle{display:flex;gap:2px;background:#f3f4f6;border-radius:8px;padding:2px;margin-left:auto}
@@ -215,7 +215,7 @@
     /* ── Reorder Cards ── */
     .reorder-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:8px 16px 16px}
     @media(min-width:768px){.reorder-grid{grid-template-columns:1fr 1fr;padding:8px 24px 16px}}
-    @media(min-width:1200px){.reorder-grid{grid-template-columns:1fr 1fr 1fr;padding:8px 40px 16px;max-width:1100px;margin:0 auto}}
+    @media(min-width:1200px){.reorder-grid{grid-template-columns:1fr 1fr 1fr;padding:8px 40px 16px}}
     /* ── Section dividers in 'Schon bestellt' ── */
     #shop-fm-orders{margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
     .reorder-wrap{margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
@@ -1897,7 +1897,7 @@
             var FM_ST={0:'Neu',1:'In Bestellung',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
             var FM_CLR={0:'#f59e0b',1:'#3b82f6',2:'#16a34a',3:'#6b7280',4:'#ef4444'};
             var h='<div style="padding:8px 16px 4px"><div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:#7f1d1d">'+lucideHtml('beef',18)+' Fleisch-Vorbestellungen <span style="font-size:12px;font-weight:500;color:#6b7280">('+bb.length+')</span></div></div>';
-            h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;padding:8px 16px 16px;max-width:1100px;margin:0 auto">';
+            h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;padding:8px 16px 16px">';
             bb.forEach(function(b){
               var dt='';try{var dd=new Date(b.bestelldatum);dt=('0'+dd.getDate()).slice(-2)+'.'+('0'+(dd.getMonth()+1)).slice(-2)+'.'+dd.getFullYear();}catch(e){dt=b.bestelldatum||'';}
               var pos=b.positionen?b.positionen.length:0;
