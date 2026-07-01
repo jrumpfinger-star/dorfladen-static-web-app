@@ -946,7 +946,7 @@ window.dlImagePopup=function(src,alt){
   if(existing) existing.remove();
   var ov=document.createElement('div');
   ov.id='dl-img-popup';
-  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer;animation:wpLbFadeIn .2s';
+  ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer;animation:wpLbFadeIn .2s';
   ov.addEventListener('click',function(){ov.remove();});
   var img=document.createElement('img');
   img.src=src;

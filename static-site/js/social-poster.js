@@ -163,7 +163,7 @@
   }
 
   // --- Save post ---
-  function socialSavePost(titel,freitext,items){var body={titel:titel,freitext:freitext,items:items.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(function(){});}
+  function socialSavePost(titel,freitext,items){var body={titel:titel,freitext:freitext,items:items.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(function(){});}
 
   // --- Publish as Tagesinfo only (no WhatsApp/Instagram) ---
   window.socialPublishTagesinfo=function(){
@@ -177,7 +177,7 @@
     // CSS-Animation für Spinner (einmalig einfügen)
     if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
     socialStatus('soc-post-status','⏳ Wird veröffentlicht…',true);
-    var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;
+    var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;
     fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
     .then(function(){
@@ -200,7 +200,7 @@
     if(!selected.length&&!freitext.trim()){socialStatus('soc-post-status','Bitte mindestens ein Produkt oder Freitext eingeben',false);return;}
     if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
     socialStatus('soc-post-status','\u23F3 Entwurf wird gespeichert\u2026',true);
-    var body={titel:titel,freitext:freitext,status:'entwurf',items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;return o;})};
+    var body={titel:titel,freitext:freitext,status:'entwurf',items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};
     var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;
     fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
