@@ -207,6 +207,79 @@
         transform: scale(1.1);
         box-shadow: 0 4px 10px rgba(0,0,0,0.12);
       }
+
+      /* === Unabhängiges Scrollen für Social-Media === */
+      #panel-social {
+        display: flex !important;
+        flex-direction: column;
+        overflow: hidden !important;
+        height: 100%;
+        box-sizing: border-box;
+        padding-bottom: 0 !important;
+      }
+      /* Wenn panel-social nicht aktiv ist, soll display: none gelten */
+      #panel-social:not(.active) {
+        display: none !important;
+      }
+      
+      /* Header & Subtabs fixieren */
+      #soc-main-header, #soc-subtabs-container {
+        flex-shrink: 0;
+      }
+      
+      /* Hauptbereiche dehnen sich über den Rest der Höhe aus */
+      #social-panel-post, #social-panel-katalog {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        overflow: hidden;
+      }
+      #social-panel-katalog {
+        display: none;
+      }
+      /* Falls aktiv, dann flex */
+      #panel-social.active #social-panel-post[style*="display: block"], 
+      #panel-social.active #social-panel-post:not([style*="display: none"]) {
+        display: flex !important;
+        flex-direction: row;
+        width: 100%;
+        height: 100%;
+      }
+      #panel-social.active #social-panel-katalog[style*="display: block"],
+      #panel-social.active #social-panel-katalog:not([style*="display: none"]) {
+        display: flex !important;
+        flex-direction: row;
+        width: 100%;
+        height: 100%;
+      }
+      
+      /* Die beiden Spalten scrollen unabhängig */
+      #soc-col-left, #soc-col-right, #soc-kat-col-left, #soc-kat-col-right {
+        height: 100%;
+        overflow-y: auto;
+        padding-bottom: 24px;
+        box-sizing: border-box;
+      }
+      
+      /* Scrollbars verfeinern für modernere Optik */
+      #soc-col-left::-webkit-scrollbar, #soc-col-right::-webkit-scrollbar, 
+      #soc-kat-col-left::-webkit-scrollbar, #soc-kat-col-right::-webkit-scrollbar {
+        width: 6px;
+      }
+      #soc-col-left::-webkit-scrollbar-thumb, #soc-col-right::-webkit-scrollbar-thumb, 
+      #soc-kat-col-left::-webkit-scrollbar-thumb, #soc-kat-col-right::-webkit-scrollbar-thumb {
+        background: #e5e7eb;
+        border-radius: 4px;
+      }
+      #soc-col-left::-webkit-scrollbar-thumb:hover, #soc-col-right::-webkit-scrollbar-thumb:hover, 
+      #soc-kat-col-left::-webkit-scrollbar-thumb:hover, #soc-kat-col-right::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+      }
+      
+      /* Da die Spalten jetzt in einem scrollbaren Div sitzen, ist position: sticky nicht mehr nötig */
+      #soc-col-right, #soc-kat-col-left {
+        position: static !important;
+      }
     }
     /* Mobile-first defaults for catalog split container */
     #soc-kat-split-container {
@@ -621,14 +694,14 @@
 
   <!-- ── Social Media ── -->
   <div class="k-panel" id="panel-social">
-    <div id="kiosk-panel-social">
-    <div style="margin-bottom:12px">
+    <div id="kiosk-panel-social" style="height:100%;display:flex;flex-direction:column">
+    <div style="margin-bottom:12px" id="soc-main-header">
       <h3 style="font-size:17px;font-weight:800;color:#1f2937;margin:0;display:flex;align-items:center;gap:8px"><i data-lucide="share-2" style="width:20px;height:20px;color:var(--c-green)"></i> Social Media</h3>
       <p style="font-size:12px;color:#6b7280;margin:4px 0 0">Tagespost erstellen und teilen – in 4 einfachen Schritten.</p>
     </div>
 
     <!-- Sub-Tabs: Neuer Post | Katalog -->
-    <div class="k-filter-bar" style="margin-bottom:16px">
+    <div class="k-filter-bar" style="margin-bottom:16px" id="soc-subtabs-container">
       <button class="k-filter-btn active" id="social-subtab-post" onclick="socialSubTab('post')"><i data-lucide="plus-circle" style="width:14px;height:14px"></i> Neuer Post</button>
       <button class="k-filter-btn" id="social-subtab-katalog" onclick="socialSubTab('katalog')"><i data-lucide="book-open" style="width:14px;height:14px"></i> Katalog</button>
     </div>
