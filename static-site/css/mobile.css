@@ -1054,6 +1054,7 @@ main{padding:0!important;margin:0!important}
 }
 
 /* === MOBILE SOCIAL CTA === */
+.mob-only.mob-social-cta{display:flex!important}
 .mob-wa,.mob-wa a{
   display:inline-flex;
   align-items:center;
