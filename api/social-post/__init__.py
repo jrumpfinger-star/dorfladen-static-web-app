@@ -96,7 +96,15 @@ def save_posts(token, folder_id, data):
     url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{POSTS_FILE}:/content"
     content = json.dumps(data, ensure_ascii=False, indent=2)
     r = requests.put(url, headers=h, data=content.encode("utf-8"), timeout=15)
-    return r.status_code in (200, 201)
+    ok = r.status_code in (200, 201)
+    if ok:
+        # Invalidate tagespost cache so next request gets fresh data
+        try:
+            from tagespost import invalidate_cache
+            invalidate_cache()
+        except Exception:
+            pass
+    return ok
 
 
 def upload_image(token, folder_id, filename, image_bytes, content_type="image/png"):

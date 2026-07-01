@@ -24,6 +24,11 @@ def cache_set(key, data):
     with _cache_lock:
         _cache[key] = {"data": data, "ts": time.time()}
 
+def invalidate_cache():
+    """Clear tagespost cache. Call after saving new posts."""
+    with _cache_lock:
+        _cache.clear()
+
 # ---------- config ----------
 TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
 CLIENT_ID = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
@@ -360,9 +365,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     hour_bucket = "evening" if now_local.hour >= 18 else "day"
     cache_key = f"tagespost_{now_local.strftime('%Y-%m-%d')}_{hour_bucket}"
 
-    cached = cache_get(cache_key)
-    if cached is not None:
-        return ok(cached)
+    # ?refresh=1 to force cache invalidation
+    if req.params.get("refresh") == "1":
+        invalidate_cache()
+    else:
+        cached = cache_get(cache_key)
+        if cached is not None:
+            return ok(cached)
 
     data, error = _build_response()
     if error:
