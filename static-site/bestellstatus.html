@@ -86,6 +86,36 @@
       .bs-container{padding:0 12px 30px}
       .bs-card{padding:18px}
     }
+
+    /* Custom dialog overlay */
+    .bs-dialog-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;animation:bsFadeIn .15s ease}
+    .bs-dialog{background:#fff;border-radius:20px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:bsSlideUp .2s ease}
+    .bs-dialog-hd{padding:20px 24px 0;display:flex;align-items:flex-start;gap:12px}
+    .bs-dialog-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bs-dialog-icon.warn{background:#fef2f2;color:#dc2626}
+    .bs-dialog-icon.info{background:#eff6ff;color:#3b82f6}
+    .bs-dialog-icon.ok{background:#f0fdf4;color:#16a34a}
+    .bs-dialog-title{font-size:16px;font-weight:800;color:#1f2937;margin-top:4px}
+    .bs-dialog-body{padding:16px 24px}
+    .bs-dialog-body p{font-size:14px;color:#6b7280;line-height:1.5;margin-bottom:12px}
+    .bs-dialog-body textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:15px;font-family:inherit;resize:none;min-height:60px;outline:none;transition:border-color .15s;overflow:hidden;box-sizing:border-box}
+    .bs-dialog-body textarea:focus{border-color:#dc2626}
+    .bs-dialog-body .bs-dialog-hint{font-size:12px;color:#dc2626;font-weight:600;margin-top:4px;display:none}
+    .bs-dialog-ft{padding:0 24px 20px;display:flex;gap:10px}
+    .bs-dialog-ft button{flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+    .bs-dialog-ft button:active{transform:scale(.97)}
+    .bs-dialog-ft .bs-btn-cancel{background:#f3f4f6;color:#374151;border:none}
+    .bs-dialog-ft .bs-btn-danger{background:#dc2626;color:#fff;border:none}
+    .bs-dialog-ft .bs-btn-danger:disabled{opacity:.4;cursor:default}
+    .bs-dialog-ft .bs-btn-ok{background:var(--c-green);color:#fff;border:none}
+    @keyframes bsFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes bsSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+    /* Toast notification */
+    .bs-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:12px;font-size:14px;font-weight:700;color:#fff;z-index:9100;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:bsSlideUp .2s ease;max-width:90%}
+    .bs-toast.error{background:#dc2626}
+    .bs-toast.success{background:var(--c-green)}
+    .bs-toast.info{background:#3b82f6}
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -353,52 +383,102 @@ function renderMessages(o){
   }
 }
 
+// ── Toast helper (replaces alert) ──
+function bsToast(msg, type){
+  type = type || 'error';
+  var t = document.createElement('div');
+  t.className = 'bs-toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 3000);
+  setTimeout(function(){ t.remove(); }, 3400);
+}
+
 // ── Cancel Order (customer self-service) ──
 function cancelOrder(){
   if(!_order) return;
-  var grund = prompt('Möchten Sie diese Bestellung wirklich stornieren?\n\nBitte geben Sie einen Grund an:');
-  if(grund === null) return;
-  if(!grund.trim()){ alert('Bitte geben Sie einen Stornierungsgrund an.'); return; }
 
-  var btn = document.getElementById('bs-cancel-btn');
-  btn.disabled = true;
-  btn.textContent = 'Wird storniert…';
+  // Build custom storno dialog
+  var ov = document.createElement('div');
+  ov.className = 'bs-dialog-ov';
+  ov.innerHTML =
+    '<div class="bs-dialog">'
+    + '<div class="bs-dialog-hd">'
+    +   '<div class="bs-dialog-icon warn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div>'
+    +   '<div class="bs-dialog-title">Bestellung stornieren?</div>'
+    + '</div>'
+    + '<div class="bs-dialog-body">'
+    +   '<p>M\u00f6chten Sie diese Bestellung wirklich stornieren? Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</p>'
+    +   '<textarea id="bs-storno-grund" placeholder="Grund f\u00fcr die Stornierung\u2026"></textarea>'
+    +   '<div class="bs-dialog-hint" id="bs-storno-hint">Bitte geben Sie einen Grund an.</div>'
+    + '</div>'
+    + '<div class="bs-dialog-ft">'
+    +   '<button class="bs-btn-cancel" id="bs-storno-no">Abbrechen</button>'
+    +   '<button class="bs-btn-danger" id="bs-storno-yes" disabled>Stornieren</button>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  document.body.style.overflow = 'hidden';
 
-  var apiUrl, payload;
-  if(_orderType === 'fm'){
-    apiUrl = '/api/fleisch-order';
-    payload = {id: _order.id, status: 4, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund.trim()};
-  } else {
-    apiUrl = '/api/lunch-order/' + _order.id;
-    payload = {status: 2, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund.trim()};
-  }
+  var ta = document.getElementById('bs-storno-grund');
+  var yesBtn = document.getElementById('bs-storno-yes');
+  var hint = document.getElementById('bs-storno-hint');
 
-  fetch(apiUrl, {
-    method: 'PATCH',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(data){
-    if(data.success){
-      btn.innerHTML = '<i data-lucide="check-circle" style="width:16px;height:16px"></i> Storniert';
-      if(window.lucide) lucide.createIcons();
-      btn.style.background = '#d1fae5';
-      btn.style.color = '#065f46';
-      btn.style.borderColor = '#6ee7b7';
-      setTimeout(function(){ lookupOrder(); }, 1500);
+  ta.addEventListener('input', function(){
+    var hasText = ta.value.trim().length > 0;
+    yesBtn.disabled = !hasText;
+    if(hasText) hint.style.display = 'none';
+  });
+  setTimeout(function(){ ta.focus(); }, 100);
+
+  // Close dialog
+  function closeDialog(){ ov.remove(); document.body.style.overflow = ''; }
+  document.getElementById('bs-storno-no').addEventListener('click', closeDialog);
+  ov.addEventListener('click', function(e){ if(e.target === ov) closeDialog(); });
+
+  // Confirm storno
+  yesBtn.addEventListener('click', function(){
+    var grund = ta.value.trim();
+    if(!grund){ hint.style.display = 'block'; ta.focus(); return; }
+
+    yesBtn.disabled = true;
+    yesBtn.textContent = 'Wird storniert\u2026';
+
+    var apiUrl, payload;
+    if(_orderType === 'fm'){
+      apiUrl = '/api/fleisch-order';
+      payload = {id: _order.id, status: 4, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund};
     } else {
-      btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="x-circle" style="width:16px;height:16px"></i> Bestellung stornieren';
-      if(window.lucide) lucide.createIcons();
-      alert(data.error || 'Stornierung fehlgeschlagen');
+      apiUrl = '/api/lunch-order/' + _order.id;
+      payload = {status: 2, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund};
     }
-  })
-  .catch(function(e){
-    btn.disabled = false;
-    btn.innerHTML = '<i data-lucide="x-circle" style="width:16px;height:16px"></i> Bestellung stornieren';
-    if(window.lucide) lucide.createIcons();
-    alert('Fehler: ' + e.message);
+
+    fetch(apiUrl, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      closeDialog();
+      var btn = document.getElementById('bs-cancel-btn');
+      if(data.success){
+        btn.innerHTML = '<i data-lucide="check-circle" style="width:16px;height:16px"></i> Storniert';
+        if(window.lucide) lucide.createIcons();
+        btn.style.background = '#d1fae5';
+        btn.style.color = '#065f46';
+        btn.style.borderColor = '#6ee7b7';
+        btn.disabled = true;
+        bsToast('Bestellung wurde storniert.', 'success');
+        setTimeout(function(){ lookupOrder(); }, 1500);
+      } else {
+        bsToast(data.error || 'Stornierung fehlgeschlagen');
+      }
+    })
+    .catch(function(e){
+      closeDialog();
+      bsToast('Fehler: ' + e.message);
+    });
   });
 }
 
@@ -407,7 +487,7 @@ function sendComment(){
   if(!_order) return;
   var text = document.getElementById('bs-comment').value.trim();
   if(!text){
-    alert('Bitte geben Sie eine Nachricht ein.');
+    bsToast('Bitte geben Sie eine Nachricht ein.', 'info');
     return;
   }
 
@@ -436,13 +516,13 @@ function sendComment(){
       setTimeout(function(){ document.getElementById('bs-comment-sent').style.display = 'none'; }, 4000);
       lookupOrder();
     } else {
-      alert('Fehler: ' + (data.error || 'Konnte nicht gesendet werden'));
+      bsToast('Fehler: ' + (data.error || 'Konnte nicht gesendet werden'));
     }
   })
   .catch(function(e){
     btn.disabled = false;
     btn.textContent = 'Nachricht senden';
-    alert('Fehler: ' + e.message);
+    bsToast('Fehler: ' + e.message);
   });
 }
 

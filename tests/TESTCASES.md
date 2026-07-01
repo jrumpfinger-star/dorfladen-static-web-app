@@ -2173,6 +2173,47 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 02.07.2026 | T-ST-12-01 bis T-ST-14-01 | ✅ 9/9 | Alle bestanden (Live) |
+| *ausstehend* | T-ST-15-01 bis T-ST-15-08 | – | Custom-Dialog-Tests |
+
+### T-ST-15-01 cancelOrder öffnet Custom-Dialog statt prompt() (AK-ST-08)
+- **Aktion:** `cancelOrder()` aufrufen mit Mock-Order
+- **Prüfung:** `.bs-dialog-ov` Overlay erscheint, kein nativer Dialog
+- **Erwartung:** Custom-Modal wird angezeigt
+
+### T-ST-15-02 Custom-Dialog zeigt Titel und Textarea (AK-ST-08)
+- **Aktion:** `cancelOrder()` aufrufen
+- **Prüfung:** `.bs-dialog-title` enthält "stornieren", `#bs-storno-grund` sichtbar
+- **Erwartung:** Dialog hat Titel und Eingabefeld
+
+### T-ST-15-03 Stornieren-Button ist initial deaktiviert (AK-ST-08)
+- **Aktion:** `cancelOrder()` aufrufen
+- **Prüfung:** `#bs-storno-yes` ist disabled
+- **Erwartung:** Button ist erst nach Texteingabe aktiv
+
+### T-ST-15-04 Stornieren-Button wird aktiv nach Texteingabe (AK-ST-08)
+- **Aktion:** Text in `#bs-storno-grund` eingeben
+- **Prüfung:** `#bs-storno-yes` ist enabled
+- **Erwartung:** Button wird klickbar
+
+### T-ST-15-05 Abbrechen schließt Dialog (AK-ST-08)
+- **Aktion:** `#bs-storno-no` klicken
+- **Prüfung:** `.bs-dialog-ov` nicht mehr sichtbar
+- **Erwartung:** Dialog wird geschlossen
+
+### T-ST-15-06 bsToast Funktion existiert und zeigt Toast (AK-ST-15)
+- **Aktion:** `bsToast('Testmeldung', 'info')` aufrufen
+- **Prüfung:** `.bs-toast` sichtbar mit Text "Testmeldung"
+- **Erwartung:** Toast-Notification erscheint
+
+### T-ST-15-07 bsToast zeigt Fehlerfarbe bei error-Typ (AK-ST-15)
+- **Aktion:** `bsToast('Fehler!', 'error')` aufrufen
+- **Prüfung:** `.bs-toast.error` sichtbar
+- **Erwartung:** Toast hat rote Fehlerfarbe
+
+### T-ST-15-08 Kein nativer alert() oder prompt() im Code (AK-ST-15)
+- **Aktion:** Inline-Scripts der Seite analysieren
+- **Prüfung:** Kein `alert(` oder `prompt(` in Inline-Scripts
+- **Erwartung:** Alle nativen Dialoge sind durch Custom-Dialoge/Toasts ersetzt
 
 ---
 

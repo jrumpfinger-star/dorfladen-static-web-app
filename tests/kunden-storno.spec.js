@@ -139,3 +139,104 @@ test.describe('T-ST-14 lunch-order API Kunden-Storno Schutz (AK-ST-14)', () => {
     expect(result.payload.storno_grund).toContain('Kundengrund:');
   });
 });
+
+// ════════════════════════════════════════════════════
+//  T-ST-15: Custom Storno-Dialog statt prompt() (AK-ST-08, AK-ST-15)
+// ════════════════════════════════════════════════════
+
+test.describe('T-ST-15 Custom Storno-Dialog (AK-ST-08, AK-ST-15)', () => {
+
+  test('T-ST-15-01 cancelOrder öffnet Custom-Dialog statt prompt() (AK-ST-08)', async ({ page }) => {
+    await page.goto(STATUS_URL);
+    // Set up order so cancelOrder can run
+    await page.evaluate(() => {
+      window._orderType = 'mt';
+      window._order = {id: 'test', status: 0, gericht: 'Test', bestellnummer: 'MT-TEST', menge: 1, preis: 8.80, datum: '2026-07-01'};
+    });
+    // Call cancelOrder – should NOT trigger native prompt
+    page.on('dialog', () => { throw new Error('Native dialog was triggered – should use custom modal!'); });
+    await page.evaluate(() => { cancelOrder(); });
+    // Custom dialog overlay should be visible
+    const overlay = page.locator('.bs-dialog-ov');
+    await expect(overlay).toBeVisible();
+  });
+
+  test('T-ST-15-02 Custom-Dialog zeigt Titel und Textarea (AK-ST-08)', async ({ page }) => {
+    await page.goto(STATUS_URL);
+    await page.evaluate(() => {
+      window._orderType = 'mt';
+      window._order = {id: 'test', status: 0, gericht: 'Test'};
+      cancelOrder();
+    });
+    await expect(page.locator('.bs-dialog-title')).toContainText('stornieren');
+    await expect(page.locator('#bs-storno-grund')).toBeVisible();
+  });
+
+  test('T-ST-15-03 Stornieren-Button ist initial deaktiviert (AK-ST-08)', async ({ page }) => {
+    await page.goto(STATUS_URL);
+    await page.evaluate(() => {
+      window._orderType = 'mt';
+      window._order = {id: 'test', status: 0, gericht: 'Test'};
+      cancelOrder();
+    });
+    const btn = page.locator('#bs-storno-yes');
+    await expect(btn).toBeDisabled();
+  });
+
+  test('T-ST-15-04 Stornieren-Button wird aktiv nach Texteingabe (AK-ST-08)', async ({ page }) => {
+    await page.goto(STATUS_URL);
+    await page.evaluate(() => {
+      window._orderType = 'mt';
+      window._order = {id: 'test', status: 0, gericht: 'Test'};
+      cancelOrder();
+    });
+    await page.fill('#bs-storno-grund', 'doppelt');
+    const btn = page.locator('#bs-storno-yes');
+    await expect(btn).toBeEnabled();
+  });
+
+  test('T-ST-15-05 Abbrechen schließt Dialog (AK-ST-08)', async ({ page }) => {
+    await page.goto(STATUS_URL);
+    await page.evaluate(() => {
+      window._orderType = 'mt';
+      window._order = {id: 'test', status: 0, gericht: 'Test'};
+      cancelOrder();
+    });
+    await page.click('#bs-storno-no');
+    await expect(page.locator('.bs-dialog-ov')).not.toBeVisible();
+  });
+
+  test('T-ST-15-06 bsToast Funktion existiert und zeigt Toast (AK-ST-15)', async ({ page }) => {
+    await page.goto(STATUS_URL);
+    const hasFn = await page.evaluate(() => typeof bsToast === 'function');
+    expect(hasFn).toBe(true);
+    // Trigger toast
+    await page.evaluate(() => { bsToast('Testmeldung', 'info'); });
+    const toast = page.locator('.bs-toast');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('Testmeldung');
+  });
+
+  test('T-ST-15-07 bsToast zeigt Fehlerfarbe bei error-Typ (AK-ST-15)', async ({ page }) => {
+    await page.goto(STATUS_URL);
+    await page.evaluate(() => { bsToast('Fehler!', 'error'); });
+    const toast = page.locator('.bs-toast.error');
+    await expect(toast).toBeVisible();
+  });
+
+  test('T-ST-15-08 Kein nativer alert() oder prompt() im Code (AK-ST-15)', async ({ page }) => {
+    await page.goto(STATUS_URL);
+    // Check that no native alert/prompt calls remain in the page scripts
+    const result = await page.evaluate(() => {
+      var scripts = document.querySelectorAll('script:not([src])');
+      var hasNative = false;
+      scripts.forEach(function(s) {
+        var code = s.textContent;
+        // Check for standalone alert( or prompt( calls (not inside strings)
+        if (/(?<!\w)(alert|prompt)\s*\(/.test(code)) hasNative = true;
+      });
+      return hasNative;
+    });
+    expect(result).toBe(false);
+  });
+});

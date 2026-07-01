@@ -40,8 +40,9 @@ Der Storno-Grund wird im dedizierten Dataverse-Feld `dl_storno_grund` gespeicher
 
 ### Kunden-Ansicht
 - [x] **AK-ST-07** Shop-Kundenansicht (shop.html): Inline-Storno mit Pflicht-Textfeld für Begründung
-- [x] **AK-ST-08** Fleisch-Kundenansicht (bestellstatus.html): `prompt()` mit Pflicht-Begründung
-- [x] **AK-ST-12** Mittagstisch-Kundenansicht (bestellstatus.html): Storno-Button sichtbar bei Status „Eingegangen" (0), `prompt()` mit Pflicht-Begründung
+- [x] **AK-ST-08** Fleisch-Kundenansicht (bestellstatus.html): Custom-Modal-Dialog mit Pflicht-Begründung (kein nativer `prompt()`)
+- [x] **AK-ST-12** Mittagstisch-Kundenansicht (bestellstatus.html): Storno-Button sichtbar bei Status „Eingegangen" (0), Custom-Modal-Dialog mit Pflicht-Begründung
+- [x] **AK-ST-15** Bestellstatus: Alle Fehler-/Info-Meldungen als Toast-Notification statt nativer `alert()`
 - [x] **AK-ST-13** Mittagstisch-Kundenansicht: Storno-Button verschwindet nach Bestätigung (Status ≥ 1)
 
 ### API-Backend
@@ -77,5 +78,5 @@ Der Storno-Grund wird im dedizierten Dataverse-Feld `dl_storno_grund` gespeicher
 - `static-site/kiosk.html` – Admin-Storno-Dialoge für Shop und Metzger
 - `static-site/cms.js` – CMS-Storno-Dialoge für Shop und Metzger
 - `static-site/shop.html` – Kunden-Inline-Storno mit Begründung
-- `static-site/bestellstatus.html` – Kunden-Storno für Fleisch und Mittagstisch mit Begründung
+- `static-site/bestellstatus.html` – Kunden-Storno für Fleisch und Mittagstisch mit Custom-Modal-Dialog + Toast-Notifications
 - `api/lunch-order/__init__.py` – Kunden-Storno-Schutzprüfung (nur bei Status 0)
