@@ -48,6 +48,25 @@ Jeder Schritt ist eine **klappbare Karte** (k-order Pattern) mit nummerierter Sc
 - Titel mit Lucide-Icon `share-2` statt Emoji
 - Hinweis „in 4 einfachen Schritten"
 
+### Entwurf bearbeiten
+- Geparkte Entwürfe können über den **✏ Bearbeiten**-Button in der Post-Liste zurück in den Wizard geladen werden
+- `socialEditDraft(postId)` lädt den Entwurf per API und füllt:
+  - Titel-Dropdown (passende Option wird ausgewählt)
+  - Freitext-Feld
+  - Produkt-Checkboxen (Katalog + Mittagessen)
+- Badge „✏ Bearbeite Entwurf" erscheint im Step-4-Header (Klick = Bearbeitung abbrechen)
+- **Parken** aktualisiert den bestehenden Entwurf per PATCH (kein Duplikat)
+- **Jetzt senden** veröffentlicht den Entwurf direkt
+- Nach Speichern/Abbrechen wird die Edit-ID zurückgesetzt
+- Backend `PATCH /api/social-post` akzeptiert: `id` (Pflicht), `status`, `titel`, `freitext`/`text`, `items` (alle optional)
+
+### Responsive Layout (≥900px)
+- 2-Spalten-Flexbox-Layout: Steps 1+2 links, Steps 3+4 rechts
+- Spalten fließen unabhängig (kein CSS Grid Row-Sync)
+- Rechte Spalte ist sticky (`position:sticky;top:0`)
+- Steps 3+4 auf Desktop immer aufgeklappt
+- Footer-Elemente (Meal-Poster, Status, Today-Posts) volle Breite
+
 ## Verhalten
 - Steps 1+2 starten offen, Steps 3+4 zugeklappt
 - Klick auf Step-Header toggled auf/zu
@@ -67,6 +86,12 @@ Jeder Schritt ist eine **klappbare Karte** (k-order Pattern) mit nummerierter Sc
 - [x] AK-UI-50-05: Sub-Tabs mit Lucide-Icons und min-height:44px
 - [x] AK-UI-50-06: Teilen-Buttons vertikal gestapelt mit min-height:56px
 - [x] AK-UI-50-07: Badge „X ausgewählt" in Step 2 Header (dynamisch)
+- [x] AK-UI-50-08: Entwürfe zeigen „✏ Bearbeiten"-Button in der Post-Liste
+- [x] AK-UI-50-09: Klick auf „Bearbeiten" lädt Titel, Freitext und Produkte in den Wizard
+- [x] AK-UI-50-10: „Parken" bei geladenem Entwurf aktualisiert per PATCH (kein Duplikat)
+- [x] AK-UI-50-11: Badge „✏ Bearbeite Entwurf" in Step 4 sichtbar während Bearbeitung
+- [x] AK-UI-50-12: 2-Spalten-Layout ab 900px (Steps 1+2 links, Steps 3+4 rechts)
+- [x] AK-UI-50-13: Rechte Spalte sticky, keine Lücken zwischen Steps in linker Spalte
 
 ## Status
 | Komponente | Status |
@@ -76,3 +101,8 @@ Jeder Schritt ist eine **klappbare Karte** (k-order Pattern) mit nummerierter Sc
 | socialPickUpdate-Wrapper | ✅ Implementiert |
 | Touch-Target-Sizing | ✅ Implementiert |
 | Lucide-Icons in Sub-Tabs | ✅ Implementiert |
+| Entwurf bearbeiten (socialEditDraft) | ✅ Implementiert |
+| socialSaveDraft PATCH-Modus | ✅ Implementiert |
+| Bearbeiten-Button in Post-Liste | ✅ Implementiert |
+| 2-Spalten-Layout (≥900px) | ✅ Implementiert |
+| Backend PATCH erweitert | ✅ Implementiert |

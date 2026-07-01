@@ -192,6 +192,64 @@
     });
   };
 
+  // --- Entwurf bearbeiten (in Wizard laden) ---
+  var _socEditingDraftId=null;
+  window.socialGetEditingDraftId=function(){return _socEditingDraftId;};
+  window.socialClearEditingDraft=function(){_socEditingDraftId=null;var badge=document.getElementById('soc-editing-badge');if(badge)badge.style.display='none';};
+  window.socialEditDraft=function(postId){
+    socialStatus('soc-post-status','\u23F3 Entwurf wird geladen\u2026',true);
+    fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){
+      var all=res.posts||res.items||[];
+      var post=all.find(function(p){return p.id===postId;});
+      if(!post){socialStatus('soc-post-status','\u274C Entwurf nicht gefunden',false);return;}
+      _socEditingDraftId=postId;
+      // Fill titel
+      var titelEl=document.getElementById('soc-post-titel');
+      if(titelEl){
+        // Try to set matching option, fallback to first option
+        var found=false;
+        for(var i=0;i<titelEl.options.length;i++){if(titelEl.options[i].value===post.titel){titelEl.selectedIndex=i;found=true;break;}}
+        if(!found&&titelEl.options.length>0) titelEl.selectedIndex=0;
+      }
+      // Fill freitext
+      var textEl=document.getElementById('soc-post-text');
+      if(textEl) textEl.value=post.freitext||post.text||'';
+      // Rebuild post items and select matching products
+      if(typeof M.socialBuildPostItems==='function') M.socialBuildPostItems();
+      var draftItems=post.items||[];
+      // Check catalog checkboxes
+      setTimeout(function(){
+        draftItems.forEach(function(di){
+          // Try catalog checkbox
+          var cb=document.querySelector('.soc-post-cb[value="'+di.id+'"]');
+          if(cb&&!cb.checked){cb.checked=true;}
+          // Try meal checkbox
+          var wp=document.querySelector('.soc-post-wp[data-name="'+(di.name||'').replace(/"/g,'\\"')+'"]');
+          if(wp&&!wp.checked){wp.checked=true;}
+        });
+        if(typeof window.socialPickUpdate==='function') window.socialPickUpdate();
+        // Show editing badge
+        var badge=document.getElementById('soc-editing-badge');
+        if(!badge){
+          var step4hdr=document.querySelector('#soc-step-4 .k-order-hdr');
+          if(step4hdr){
+            badge=document.createElement('span');
+            badge.id='soc-editing-badge';
+            badge.style.cssText='font-size:10px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;font-weight:700;margin-left:8px;cursor:pointer';
+            badge.title='Klicken um Bearbeitung abzubrechen';
+            badge.onclick=function(e){e.stopPropagation();window.socialClearEditingDraft();socialStatus('soc-post-status','Bearbeitung abgebrochen',true);};
+            step4hdr.appendChild(badge);
+          }
+        }
+        if(badge){badge.style.display='inline';badge.textContent='\u270F Bearbeite Entwurf';}
+        socialStatus('soc-post-status','\u2705 Entwurf geladen \u2013 bearbeiten und erneut parken oder senden',true);
+        // Scroll to top of social panel
+        var panel=document.getElementById('panel-social');
+        if(panel) panel.scrollTop=0;
+      },200);
+    }).catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
+  };
+
   // --- Als Entwurf speichern ---
   window.socialSaveDraft=function(){
     var selected=socialGatherSelected();
@@ -199,12 +257,15 @@
     var freitext=(document.getElementById('soc-post-text')||{}).value||'';
     if(!selected.length&&!freitext.trim()){socialStatus('soc-post-status','Bitte mindestens ein Produkt oder Freitext eingeben',false);return;}
     if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
-    socialStatus('soc-post-status','\u23F3 Entwurf wird gespeichert\u2026',true);
+    var isEdit=!!_socEditingDraftId;
+    socialStatus('soc-post-status','\u23F3 Entwurf wird '+(isEdit?'aktualisiert':'gespeichert')+'\u2026',true);
     var body={titel:titel,freitext:freitext,status:'entwurf',items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};
-    var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;
-    fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    var method='POST';
+    if(isEdit){body.id=_socEditingDraftId;method='PATCH';}
+    else{var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;}
+    fetch(API+'/social-post',{method:method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
-    .then(function(){socialStatus('soc-post-status','\u2705 Entwurf gespeichert \u2013 kann sp\u00e4ter ver\u00f6ffentlicht werden',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
+    .then(function(){_socEditingDraftId=null;var badge=document.getElementById('soc-editing-badge');if(badge)badge.style.display='none';socialStatus('soc-post-status','\u2705 Entwurf '+(isEdit?'aktualisiert':'gespeichert')+' \u2013 kann sp\u00e4ter ver\u00f6ffentlicht werden',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
     .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
   };
 
@@ -272,6 +333,7 @@
           // Action buttons
           html+='<div style="display:flex;gap:4px;margin-top:4px">';
           if(cnt>0) html+='<button onclick="var d=document.getElementById(\'soc-draft-detail-'+pid+'\');if(d)d.style.display=d.style.display===\'none\'?\'\':\'none\'" style="font-size:10px;padding:2px 6px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;color:#374151">\u25BC Details</button>';
+          if(isDraft) html+='<button onclick="socialEditDraft(\''+pid+'\')" style="font-size:10px;padding:2px 8px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700">\u270F Bearbeiten</button>';
           if(isDraft) html+='<button onclick="socialPublishDraft(\''+pid+'\')" style="font-size:10px;padding:2px 8px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700">\u25B6 Jetzt senden</button>';
           html+='<button onclick="socialDeletePost(\''+pid+'\')" style="font-size:10px;padding:2px 6px;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;cursor:pointer;color:#dc2626">\u2715</button>';
           html+='</div></div>';

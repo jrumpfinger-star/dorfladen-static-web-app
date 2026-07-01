@@ -229,7 +229,7 @@ def handle_post(req, token, folder_id):
 
 
 def handle_patch(req, token, folder_id):
-    """PATCH: Update status of an existing post (e.g. entwurf -> veroeffentlicht)."""
+    """PATCH: Update an existing post. Supports status, titel, text/freitext, items."""
     try:
         body = req.get_json()
     except:
@@ -239,15 +239,24 @@ def handle_patch(req, token, folder_id):
     if not post_id:
         return err("id ist erforderlich")
 
-    new_status = body.get("status", "").strip()
-    if new_status not in ("entwurf", "veroeffentlicht"):
+    new_status = body.get("status", "").strip() if body.get("status") else ""
+    if new_status and new_status not in ("entwurf", "veroeffentlicht"):
         return err("status muss 'entwurf' oder 'veroeffentlicht' sein")
 
     posts = load_posts(token, folder_id)
     found = None
     for p in posts:
         if p.get("id") == post_id:
-            p["status"] = new_status
+            if new_status:
+                p["status"] = new_status
+            if "titel" in body:
+                p["titel"] = body["titel"]
+            if "text" in body:
+                p["text"] = body["text"]
+            if "freitext" in body:
+                p["text"] = body["freitext"]
+            if "items" in body:
+                p["items"] = body["items"]
             found = p
             break
 
