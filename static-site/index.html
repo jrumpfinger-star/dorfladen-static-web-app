@@ -2057,7 +2057,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     if(ff.tagesinfo_immer===true) _tagesInfoImmer=true;
   });
   var _tpP=fetch('/api/tagespost').then(function(r){return r.json();}).catch(function(){return null;});
-  var _hoursP=fetch('/api/hours').then(function(r){return r.json();}).catch(function(){return null;});
+  var _hoursP=window._dlHoursP||fetch('/api/hours').then(function(r){return r.json();}).catch(function(){return null;});
 
   Promise.all([_flagsP,_tpP,_hoursP]).then(function(results){
     var res=results[1], hRes=results[2];

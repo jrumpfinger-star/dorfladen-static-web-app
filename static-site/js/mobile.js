@@ -781,13 +781,14 @@
     closeBtn.addEventListener('click',function(){stopScanner();});
   }
 
-  /* === CMS CONFIG (meat promo overrides) === */
-  fetch(API_BASE+'/cms-config').then(function(r){return r.json();}).then(function(cfg){
+  /* === CMS CONFIG (meat promo overrides) – reuse cached config === */
+  (window._dlFlagsReady||Promise.resolve()).then(function(){
+    var cfg=window._dlCmsConfig;
     if(!cfg) return;
     var map={};
     (Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key]=c.dl_wert||c.value;});
     if(map.meatPct){var el=document.getElementById('mob-meat-pct');if(el) el.textContent=map.meatPct;}
     if(map.meatSub){var el2=document.getElementById('mob-meat-sub');if(el2) el2.textContent=map.meatSub;}
-  }).catch(function(){});
+  });
 
 })();

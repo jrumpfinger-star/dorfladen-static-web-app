@@ -511,8 +511,8 @@ window.closeDtModal = function(id) {
 
 /* === Öffnungszeiten loader === */
 (function(){
-  fetch(API_BASE+'/hours')
-    .then(function(r){return r.json();})
+  window._dlHoursP=fetch(API_BASE+'/hours').then(function(r){return r.json();}).catch(function(e){console.log('HRS-API:',e);return null;});
+  window._dlHoursP
     .then(function(payload){
       var items=unwrapApiData(payload);
       if(!items||!items.length) return;
@@ -552,8 +552,7 @@ window.closeDtModal = function(id) {
         html+='</table></div>';
       });
       hrsGrid.innerHTML=html;
-    })
-    .catch(function(e){console.log('HRS-API:',e);});
+    });
 })();
 
 /* === News loader === */
