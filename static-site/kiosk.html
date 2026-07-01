@@ -1950,25 +1950,26 @@ var K = (function(){
   };
 
   // Sync desktop day toggle with mobile toggle
-  var _origToggleDay = window.socialToggleDay;
-  var _syncInterval = setInterval(function(){
-    if(window.socialToggleDay && window.socialToggleDay !== _origToggleDay){
-      var realToggle = window.socialToggleDay;
-      window.socialToggleDay = function(day){
-        realToggle(day);
-        // Sync desktop day buttons
-        var deskBtns = document.querySelectorAll('#soc-desk-day button');
-        deskBtns.forEach(function(b){
-          if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
-          else{b.style.background='#fff';b.style.color='#374151';}
-        });
-        var deskDate = document.getElementById('soc-desk-date');
-        var srcDate = document.getElementById('soc-date-label');
-        if(deskDate && srcDate) deskDate.textContent = srcDate.textContent;
-      };
-      clearInterval(_syncInterval);
-    }
-  }, 500);
+  if(typeof window.socialToggleDay === 'function'){
+    var realToggle = window.socialToggleDay;
+    window.socialToggleDay = function(day){
+      realToggle(day);
+      // Sync desktop day buttons
+      var deskBtns = document.querySelectorAll('#soc-desk-day button');
+      deskBtns.forEach(function(b){
+        if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
+        else{b.style.background='#fff';b.style.color='#374151';}
+      });
+      var deskDate = document.getElementById('soc-desk-date');
+      var srcDate = document.getElementById('soc-date-label');
+      if(deskDate && srcDate) deskDate.textContent = srcDate.textContent;
+    };
+    // Trigger initial sync to set date on load
+    var dday = window._socSelectedDay || 'heute';
+    var deskDate = document.getElementById('soc-desk-date');
+    var srcDate = document.getElementById('soc-date-label');
+    if(deskDate && srcDate) deskDate.textContent = srcDate.textContent;
+  }
 
   // Update step-2 badge with selected product count
   var _origSocialPickUpdate = window.socialPickUpdate;
