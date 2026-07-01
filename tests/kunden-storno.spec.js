@@ -52,57 +52,61 @@ test.describe('T-ST-13 MT Cancel-Button verschwindet nach Bestätigung (AK-ST-13
   test('T-ST-13-01 renderOrder mit Status 0 zeigt Cancel-Card (AK-ST-13)', async ({ page }) => {
     await page.goto(STATUS_URL);
     // Simulate rendering an order with status 0 (Eingegangen) as MT type
-    const visible = await page.evaluate(() => {
-      window._orderType = 'mt';
-      window._order = {id: 'test', status: 0, gericht: 'Test', bestellnummer: 'MT-TEST', menge: 1, preis: 8.80, datum: '2026-07-01'};
-      renderOrder(window._order);
-      return document.getElementById('bs-cancel-card').style.display !== 'none';
+    const result = await page.evaluate(() => {
+      // _orderType is a global var in the script, accessible via window
+      _orderType = 'mt';
+      _order = {id: 'test', status: 0, gericht: 'Test', bestellnummer: 'MT-TEST', menge: 1, preis: 8.80, datum: '2026-07-01'};
+      renderOrder(_order);
+      var el = document.getElementById('bs-cancel-card');
+      return {display: el.style.display, typeVal: _orderType};
     });
-    expect(visible).toBe(true);
+    // display '' (empty) means visible, 'none' means hidden
+    expect(result.display).not.toBe('none');
+    expect(result.typeVal).toBe('mt');
   });
 
   test('T-ST-13-02 renderOrder mit Status 1 versteckt Cancel-Card (AK-ST-13)', async ({ page }) => {
     await page.goto(STATUS_URL);
-    const visible = await page.evaluate(() => {
-      window._orderType = 'mt';
-      window._order = {id: 'test', status: 1, gericht: 'Test', bestellnummer: 'MT-TEST', menge: 1, preis: 8.80, datum: '2026-07-01'};
-      renderOrder(window._order);
-      return document.getElementById('bs-cancel-card').style.display !== 'none';
+    const display = await page.evaluate(() => {
+      _orderType = 'mt';
+      _order = {id: 'test', status: 1, gericht: 'Test', bestellnummer: 'MT-TEST', menge: 1, preis: 8.80, datum: '2026-07-01'};
+      renderOrder(_order);
+      return document.getElementById('bs-cancel-card').style.display;
     });
-    expect(visible).toBe(false);
+    expect(display).toBe('none');
   });
 
   test('T-ST-13-03 renderOrder mit Status 2 (Storniert) versteckt Cancel-Card (AK-ST-13)', async ({ page }) => {
     await page.goto(STATUS_URL);
-    const visible = await page.evaluate(() => {
-      window._orderType = 'mt';
-      window._order = {id: 'test', status: 2, gericht: 'Storniertes Gericht', bestellnummer: 'MT-TEST', menge: 1, preis: 5.00, datum: '2026-07-01'};
-      renderOrder(window._order);
-      return document.getElementById('bs-cancel-card').style.display !== 'none';
+    const display = await page.evaluate(() => {
+      _orderType = 'mt';
+      _order = {id: 'test', status: 2, gericht: 'Storniertes Gericht', bestellnummer: 'MT-TEST', menge: 1, preis: 5.00, datum: '2026-07-01'};
+      renderOrder(_order);
+      return document.getElementById('bs-cancel-card').style.display;
     });
-    expect(visible).toBe(false);
+    expect(display).toBe('none');
   });
 
   test('T-ST-13-04 renderFleischOrder mit Status 0 zeigt Cancel-Card (AK-ST-08)', async ({ page }) => {
     await page.goto(STATUS_URL);
-    const visible = await page.evaluate(() => {
-      window._orderType = 'fm';
-      window._order = {id: 'test', status: 0, bestellnummer: 'FM-TEST', name: 'Test', positionen: [], gesamtsumme: 16.45};
-      renderFleischOrder(window._order);
-      return document.getElementById('bs-cancel-card').style.display !== 'none';
+    const display = await page.evaluate(() => {
+      _orderType = 'fm';
+      _order = {id: 'test', status: 0, bestellnummer: 'FM-TEST', name: 'Test', positionen: [], gesamtsumme: 16.45};
+      renderFleischOrder(_order);
+      return document.getElementById('bs-cancel-card').style.display;
     });
-    expect(visible).toBe(true);
+    expect(display).not.toBe('none');
   });
 
   test('T-ST-13-05 renderFleischOrder mit Status 1 versteckt Cancel-Card (AK-ST-08)', async ({ page }) => {
     await page.goto(STATUS_URL);
-    const visible = await page.evaluate(() => {
-      window._orderType = 'fm';
-      window._order = {id: 'test', status: 1, bestellnummer: 'FM-TEST', name: 'Test', positionen: [], gesamtsumme: 16.45};
-      renderFleischOrder(window._order);
-      return document.getElementById('bs-cancel-card').style.display !== 'none';
+    const display = await page.evaluate(() => {
+      _orderType = 'fm';
+      _order = {id: 'test', status: 1, bestellnummer: 'FM-TEST', name: 'Test', positionen: [], gesamtsumme: 16.45};
+      renderFleischOrder(_order);
+      return document.getElementById('bs-cancel-card').style.display;
     });
-    expect(visible).toBe(false);
+    expect(display).toBe('none');
   });
 });
 
