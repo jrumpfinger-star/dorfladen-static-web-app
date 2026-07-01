@@ -490,7 +490,7 @@
 
   // --- Poster drawing + sharing (loaded from social-poster.js) ---
   // These are heavy functions, kept in a separate continuation
-  window._socialModule={esc:esc,API:API,socialStatus:socialStatus,socialGatherSelected:socialGatherSelected,getFeatureFlags:getFeatureFlags,_socialKatalog:function(){return _socialKatalog;},_socMtBilder:function(){return _socMtBilder;},_socFreeItems:function(){return _socFreeItems;},socialGetTodayMeals:socialGetTodayMeals,socialDrawPoster:null,socialDrawMealPosterAuto:null,socialWrapText:null,socialBuildPostItems:socialBuildPostItems,socialInitBildHandlers:socialInitBildHandlers};
+  window._socialModule={esc:esc,API:API,socialStatus:socialStatus,socialGatherSelected:socialGatherSelected,getFeatureFlags:getFeatureFlags,_socialKatalog:function(){return _socialKatalog;},_socMtBilder:function(){return _socMtBilder;},_socFreeItems:function(){return _socFreeItems;},socialGetTodayMeals:socialGetTodayMeals,socialDrawPoster:null,socialDrawMealPosterAuto:null,socialWrapText:null,socialBuildPostItems:socialBuildPostItems,socialInitBildHandlers:socialInitBildHandlers,lucideIcon:lucideIcon};
 
   // Init when DOM ready + preload data in background
   function _socialInit(){

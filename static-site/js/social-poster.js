@@ -9,6 +9,7 @@
   var socialStatus=M.socialStatus;
   var socialGatherSelected=M.socialGatherSelected;
   var getFeatureFlags=M.getFeatureFlags;
+  var lucideIcon=M.lucideIcon;
 
   function socialWrapText(ctx,text,maxW){var words=text.split(' '),lines=[],cur='';words.forEach(function(w){var test=cur?cur+' '+w:w;if(ctx.measureText(test).width>maxW){if(cur)lines.push(cur);cur=w;}else{cur=test;}});if(cur)lines.push(cur);return lines;}
 
@@ -303,45 +304,59 @@
       if(!todayPosts.length&&!tomorrowPosts.length){wrap.style.display='none';return;}
       wrap.style.display='';
       var html='';
+      function timeStr(d){if(!d)return '';var m=d.match(/T(\d{2}:\d{2})/);return m?m[1]:'';}
+      function renderCard(p){
+        var cnt=p.items?p.items.length:0;
+        var isDraft=p.status==='entwurf';
+        var pid=M.esc(p.id);
+        var borderColor=isDraft?'#f59e0b':'#22c55e';
+        var zeit=timeStr(p.datum);
+        // Card container
+        html+='<div style="border-left:3px solid '+borderColor+';border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow .15s" onmouseenter="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.1)\'" onmouseleave="this.style.boxShadow=\'0 1px 3px rgba(0,0,0,.06)\'">';
+        // Header row: status icon + title + time + actions
+        html+='<div style="display:flex;align-items:center;gap:6px">';
+        if(isDraft) html+='<span title="Entwurf" style="flex-shrink:0">'+lucideIcon('file-edit',14,'#f59e0b')+'</span>';
+        else html+='<span title="Ver\u00f6ffentlicht" style="flex-shrink:0">'+lucideIcon('check-circle',14,'#22c55e')+'</span>';
+        html+='<span style="font-weight:600;font-size:12px;color:#1f2937;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+M.esc(p.titel||'Post')+'</span>';
+        if(zeit) html+='<span style="font-size:10px;color:#9ca3af;white-space:nowrap">'+M.esc(zeit)+'</span>';
+        html+='</div>';
+        // Product tags (always visible, compact)
+        if(cnt>0){
+          html+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">';
+          var maxShow=4;
+          (p.items||[]).slice(0,maxShow).forEach(function(it){
+            html+='<span style="font-size:10px;background:#f3f4f6;color:#374151;padding:1px 6px;border-radius:4px;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block">'+M.esc(it.name||'?');
+            if(it.preis) html+=' <b style="color:#2e7d32">'+M.esc(String(it.preis))+'\u20AC</b>';
+            html+='</span>';
+          });
+          if(cnt>maxShow) html+='<span style="font-size:10px;color:#9ca3af;padding:1px 4px">+'+(cnt-maxShow)+'</span>';
+          html+='</div>';
+        }
+        // Freitext snippet
+        if(p.freitext||p.text){
+          var txt=M.esc((p.freitext||p.text).substring(0,60));
+          if((p.freitext||p.text).length>60) txt+='...';
+          html+='<div style="font-size:10px;color:#6b7280;font-style:italic;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+txt+'</div>';
+        }
+        // Action row — icon buttons
+        html+='<div style="display:flex;gap:3px;margin-top:6px;align-items:center">';
+        if(isDraft){
+          html+='<button onclick="socialEditDraft(\''+pid+'\')" title="Bearbeiten" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;color:#2563eb;font-weight:600">'+lucideIcon('pencil',12)+' Bearbeiten</button>';
+          html+='<button onclick="socialPublishDraft(\''+pid+'\')" title="Jetzt senden" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;color:#16a34a;font-weight:600">'+lucideIcon('send',12)+' Senden</button>';
+        }
+        html+='<span style="flex:1"></span>';
+        html+='<button onclick="socialDeletePost(\''+pid+'\')" title="L\u00f6schen" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;background:none;border:1px solid transparent;border-radius:6px;cursor:pointer;color:#d1d5db;transition:all .15s" onmouseenter="this.style.color=\'#ef4444\';this.style.borderColor=\'#fecaca\'" onmouseleave="this.style.color=\'#d1d5db\';this.style.borderColor=\'transparent\'">'+lucideIcon('trash-2',13)+'</button>';
+        html+='</div></div>';
+      }
       function renderGroup(posts,label,color){
         if(!posts.length)return;
-        html+='<div style="font-size:10px;font-weight:700;color:'+color+';margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">'+M.esc(label)+'</div>';
-        posts.forEach(function(p){
-          var cnt=p.items?p.items.length:0;
-          var isDraft=p.status==='entwurf';
-          var pid=M.esc(p.id);
-          // Post row
-          html+='<div style="padding:6px 8px;font-size:12px;border:1px solid '+(isDraft?'#fde68a':'#d1fae5')+';border-radius:8px;margin-bottom:4px;background:'+(isDraft?'#fffbeb':'#f0fdf4')+'">';
-          html+='<div style="display:flex;align-items:center;gap:6px">';
-          html+='<span style="font-weight:600;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+M.esc(p.titel||'Post')+'</span>';
-          if(isDraft) html+='<span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-weight:700;white-space:nowrap">\u270F Entwurf</span>';
-          else html+='<span style="font-size:9px;background:#dcfce7;color:#166534;padding:1px 6px;border-radius:8px;font-weight:700;white-space:nowrap">\u2705 Live</span>';
-          html+='<span style="color:#6b7280;white-space:nowrap;font-size:10px">'+cnt+' Prod.</span>';
-          html+='</div>';
-          // Product details (collapsed by default for drafts)
-          if(cnt>0){
-            html+='<div id="soc-draft-detail-'+pid+'" style="display:none;margin-top:4px;padding-top:4px;border-top:1px solid '+(isDraft?'#fde68a':'#d1fae5')+'">';
-            (p.items||[]).forEach(function(it){
-              html+='<div style="font-size:11px;color:#374151;padding:1px 0;display:flex;gap:4px">';
-              html+='<span style="color:#9ca3af">\u2022</span> <span>'+M.esc(it.name||'?')+'</span>';
-              if(it.preis) html+=' <span style="color:#2e7d32;font-weight:600">'+M.esc(String(it.preis))+'\u20AC</span>';
-              html+='</div>';
-            });
-            if(p.freitext||p.text) html+='<div style="font-size:11px;color:#6b7280;font-style:italic;margin-top:2px">'+M.esc(p.freitext||p.text)+'</div>';
-            html+='</div>';
-          }
-          // Action buttons
-          html+='<div style="display:flex;gap:4px;margin-top:4px">';
-          if(cnt>0) html+='<button onclick="var d=document.getElementById(\'soc-draft-detail-'+pid+'\');if(d)d.style.display=d.style.display===\'none\'?\'\':\'none\'" style="font-size:10px;padding:2px 6px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;color:#374151">\u25BC Details</button>';
-          if(isDraft) html+='<button onclick="socialEditDraft(\''+pid+'\')" style="font-size:10px;padding:2px 8px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700">\u270F Bearbeiten</button>';
-          if(isDraft) html+='<button onclick="socialPublishDraft(\''+pid+'\')" style="font-size:10px;padding:2px 8px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700">\u25B6 Jetzt senden</button>';
-          html+='<button onclick="socialDeletePost(\''+pid+'\')" style="font-size:10px;padding:2px 6px;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;cursor:pointer;color:#dc2626">\u2715</button>';
-          html+='</div></div>';
-        });
+        html+='<div style="font-size:10px;font-weight:700;color:'+color+';margin:6px 0 4px;text-transform:uppercase;letter-spacing:.5px">'+M.esc(label)+'</div>';
+        posts.forEach(renderCard);
       }
       renderGroup(todayPosts,'Heute','#16a34a');
       renderGroup(tomorrowPosts,'Morgen','#2563eb');
       list.innerHTML=html;
+      if(typeof lucide!=='undefined') lucide.createIcons({attrs:{class:'lucide-inline'},nameAttr:'data-lucide'});
     }).catch(function(){wrap.style.display='none';});
   };
 
