@@ -2729,6 +2729,38 @@ document.head.appendChild(msalScript);
       </div>
     </div>
     <div class="cms-card">
+      <div class="cms-card-header">⏰ Bestellschlusszeiten</div>
+      <div class="cms-card-body">
+        <p style="font-size:12px;color:#6b7280;margin:0 0 12px">Bestellschlusszeiten für Mittagstisch und Online-Shop. Änderungen wirken sofort auf Frontend und Backend.</p>
+        <div class="cms-flex" style="gap:16px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Mittagstisch Bestellschluss</label>
+            <input class="cms-input" type="time" id="bs-cfg-mittag" value="10:30" step="900">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Shop Vorlauf (Stunden vor Öffnung)</label>
+            <input class="cms-input" type="number" id="bs-cfg-vorlauf" value="2" min="0.5" max="12" step="0.5">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Shop Abholung frühestens (Std. nach Öffnung)</label>
+            <input class="cms-input" type="number" id="bs-cfg-abhol-offset" value="1" min="0" max="6" step="0.5">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Storno bis (Std. vor Öffnung)</label>
+            <input class="cms-input" type="number" id="bs-cfg-storno" value="1" min="0" max="6" step="0.5">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Mindestbestellwert Shop (€)</label>
+            <input class="cms-input" type="number" id="bs-cfg-mindest" value="10" min="0" max="100" step="1">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="cms-btn cms-btn-primary" onclick="cmsSaveBestellConfig()" id="bs-cfg-save-btn">Speichern</button>
+          <span id="bs-cfg-status" style="font-size:12px;color:#2e7d4f"></span>
+        </div>
+      </div>
+    </div>
+    <div class="cms-card">
       <div class="cms-card-header">👥 Registrierte Kunden</div>
       <div class="cms-card-body">
         <div style="margin-bottom:12px"><button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadKunden()">🔄 Kunden laden</button></div>

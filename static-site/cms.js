@@ -1042,7 +1042,7 @@
     if(name==='settings' && !_kontaktLoaded) loadKontaktdaten();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
-    if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
+    if(name==='orders'){ if(!_ordersLoaded) cmsLoadOrders(); if(!window._bsCfgLoaded) cmsLoadBestellConfig(); }
     if(name==='metzger' && !window._fmCfgLoaded) cmsLoadFleischConfig();
     if(name==='social'){
       var katReady=window._socialKatLoaded;
@@ -11933,6 +11933,50 @@
         if(loading) loading.style.display='none';
         if(list) list.innerHTML='<p style="color:#ef4444;text-align:center">Fehler: '+esc(e.message)+'</p>';
       });
+  };
+
+  // ══════════════════════════════════════════════════
+  //  BESTELLSCHLUSS-KONFIGURATION (Mittagstisch + Shop)
+  // ══════════════════════════════════════════════════
+
+  window.cmsLoadBestellConfig = function(){
+    fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(data){
+      if(!data.success) return;
+      var d=data.data||{};
+      var el;
+      el=document.getElementById('bs-cfg-mittag'); if(el && d.bestellschluss_uhr) el.value=d.bestellschluss_uhr;
+      el=document.getElementById('bs-cfg-vorlauf'); if(el && d.shop_vorlauf_h!=null) el.value=d.shop_vorlauf_h;
+      el=document.getElementById('bs-cfg-abhol-offset'); if(el && d.shop_abhol_offset_h!=null) el.value=d.shop_abhol_offset_h;
+      el=document.getElementById('bs-cfg-storno'); if(el && d.shop_storno_vor_h!=null) el.value=d.shop_storno_vor_h;
+      el=document.getElementById('bs-cfg-mindest'); if(el && d.shop_mindestbestellwert!=null) el.value=d.shop_mindestbestellwert;
+      window._bsCfgLoaded=true;
+    }).catch(function(e){ console.error('[cms] Bestellschluss config load failed',e); });
+  };
+
+  window.cmsSaveBestellConfig = function(){
+    var btn=document.getElementById('bs-cfg-save-btn');
+    var status=document.getElementById('bs-cfg-status');
+    btn.disabled=true; status.textContent='Speichern...';
+
+    var mittag=document.getElementById('bs-cfg-mittag').value||'10:30';
+    var vorlauf=parseFloat(document.getElementById('bs-cfg-vorlauf').value)||2;
+    var abholOffset=parseFloat(document.getElementById('bs-cfg-abhol-offset').value)||1;
+    var storno=parseFloat(document.getElementById('bs-cfg-storno').value)||1;
+    var mindest=parseFloat(document.getElementById('bs-cfg-mindest').value)||10;
+
+    var saves=[
+      _dvSave('bestellschluss_uhr',mittag),
+      _dvSave('shop_vorlauf_h',String(vorlauf)),
+      _dvSave('shop_abhol_offset_h',String(abholOffset)),
+      _dvSave('shop_storno_vor_h',String(storno)),
+      _dvSave('shop_mindestbestellwert',String(mindest))
+    ];
+    Promise.all(saves).then(function(){
+      btn.disabled=false; status.textContent='Gespeichert!';
+      setTimeout(function(){ status.textContent=''; },3000);
+    }).catch(function(e){
+      btn.disabled=false; status.textContent='Fehler: '+e.message;
+    });
   };
 
   // ══════════════════════════════════════════════════
