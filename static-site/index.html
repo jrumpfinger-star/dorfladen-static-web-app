@@ -1475,29 +1475,33 @@
 
 <script>
   (function(){
-    fetch('/api/cms-config').then(function(r){return r.json();}).then(function(res){
-      var flags=res&&res.data?res.data.feature_flags:null;
-      if(typeof flags==='string'){try{flags=JSON.parse(flags);}catch(e){flags={};}}
-      if(!flags)flags={};
-      var isStaging=location.hostname.indexOf('witty-island')>=0;
-      // Staging: alle Features pauschal aktivieren
-      if(isStaging){['push','barcode','orders','mittagstisch','wp_images','social_poster'].forEach(function(k){flags[k]=true;});}
+    // Reuse cms-config from app.js _dlFlagsReady (no extra fetch)
+    (window._dlFlagsReady||Promise.resolve()).then(function(){
+      var flags=window._dlFeatureFlags||{};
       var show=!!(flags.orders===true);
       document.querySelectorAll('.feature-orders-link').forEach(function(el){el.style.display=show?'':'none';});
-      // Mittagstisch bestellen: show/hide order buttons and mobile quick-action
       var showMT=!!(flags.mittagstisch===true);
       window._featureMittagstisch=showMT;
       document.querySelectorAll('.feature-mittagstisch').forEach(function(el){el.style.display=showMT?'':'none';});
-    }).catch(function(){});
+    });
   })();
 </script>
 
 <script>
+  // Cache lunch-order fetch for reuse (widget + tagesinfo markers)
+  (function(){
+    var email = (localStorage.getItem('bs_email')||'').trim();
+    if(email){
+      window._dlLunchOrderP=fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
+        .then(function(r){return r.json();}).catch(function(){return {success:false};});
+    }
+  })();
+</script>
+<script>
   // Show active Mittagstisch orders for the logged-in customer (single-line + popup)
   (function(){
     try{
-      var email = (localStorage.getItem('bs_email')||'').trim();
-      if(!email) return;
+      if(!window._dlLunchOrderP) return;
 
       var STATUS_LABELS = {0:'Neu',1:'Best\u00e4tigt'};
       var STATUS_COLORS = {0:'#f59e0b',1:'#10b981'};
@@ -1509,8 +1513,7 @@
         return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : iso;
       }
 
-      fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
-        .then(function(r){ return r.json(); })
+      window._dlLunchOrderP
         .then(function(res){
           if(!res.success) return;
           var orders = res.orders||[];
@@ -1981,10 +1984,9 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   }
 
   function loadMyLunchOrderMarkers(){
-    var email=localStorage.getItem('bs_email')||localStorage.getItem('lunch_email')||'';
-    if(!email)return;
-    fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
-      .then(function(r){return r.json();})
+    // Reuse cached lunch-order fetch from _dlLunchOrderP (no duplicate request)
+    if(!window._dlLunchOrderP)return;
+    window._dlLunchOrderP
       .then(function(res){
         if(!res.success)return;
         var orders=res.orders||[];
@@ -2048,18 +2050,18 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   function fmtPreis(p){var n=parseFloat(p);if(isNaN(n))return p;return n.toFixed(2).replace('.',',')+' €';}
   function esc(s){if(!s)return '';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-  // Feature-Flag: TagesInfo immer anzeigen (auch nach Ladenschluss)
+  // Fetch tagespost + hours + feature flags in parallel (no extra cms-config call)
   var _tagesInfoImmer=false;
-  fetch('/api/cms-config').then(function(r){return r.json();}).then(function(cfgRes){
-    if(cfgRes&&cfgRes.data){
-      var ff=cfgRes.data.feature_flags;
-      if(typeof ff==='string'){try{ff=JSON.parse(ff);}catch(e){ff={};}}
-      if(ff&&ff.tagesinfo_immer===true) _tagesInfoImmer=true;
-    }
-  }).catch(function(){}).then(function(){
+  var _flagsP=(window._dlFlagsReady||Promise.resolve()).then(function(){
+    var ff=window._dlFeatureFlags||{};
+    if(ff.tagesinfo_immer===true) _tagesInfoImmer=true;
+  });
+  var _tpP=fetch('/api/tagespost').then(function(r){return r.json();}).catch(function(){return null;});
+  var _hoursP=fetch('/api/hours').then(function(r){return r.json();}).catch(function(){return null;});
 
-  fetch('/api/tagespost').then(function(r){return r.json();}).then(function(res){
-    if(!res.success||!res.post)return;
+  Promise.all([_flagsP,_tpP,_hoursP]).then(function(results){
+    var res=results[1], hRes=results[2];
+    if(!res||!res.success||!res.post)return;
 
     // Store both posts for tab switching
     _tpTodayPost=res.today_post||null;
@@ -2069,7 +2071,6 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var dayTabs=document.getElementById('tp-day-tabs');
     if(dayTabs&&_tpTodayPost&&_tpTomorrowPost){
       dayTabs.style.display='';
-      // If primary is tomorrow, activate morgen tab
       if(res.is_tomorrow){
         var bH=document.getElementById('tp-tab-heute'),bM=document.getElementById('tp-tab-morgen');
         if(bH){bH.style.borderBottomColor='transparent';bH.style.color='#6b7280';}
@@ -2103,37 +2104,27 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     // Flag: TagesInfo immer anzeigen → Zeitprüfung überspringen
     if(_tagesInfoImmer){ _showPost(); return; }
 
-    // Öffnungszeiten aus DB laden und prüfen
-    fetch('/api/hours').then(function(r){return r.json();}).then(function(hRes){
-      if(!hRes.success||!hRes.data){ _showPost(); return; }
-      var now=new Date();
-      // JS getDay: 0=So,1=Mo..6=Sa → Dataverse: 101000=Mo..101006=So
-      var jsDay=now.getDay();
-      var dvDay=jsDay===0?101006:(101000+jsDay-1);
-      // Finde Öffnungszeit für heute
-      var todayHours=hRes.data.filter(function(h){return h.wochentag===dvDay;});
-      if(!todayHours.length){ _showPost(); return; }
-      // Geschlossen → nicht anzeigen
-      if(todayHours[0].geschlossen) return;
-      // Letzte Schlusszeit ermitteln (nachmittag_bis oder vormittag_bis)
-      var closeTime='';
-      todayHours.forEach(function(h){
-        var t=h.nachmittag_bis||h.vormittag_bis||'';
-        if(t>closeTime) closeTime=t;
-      });
-      if(!closeTime){ _showPost(); return; }
-      // Aktuelle Uhrzeit als HH:MM
-      var hh=now.getHours(), mm=now.getMinutes();
-      var nowTime=(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
-      // 30 Min vor Schluss ausblenden
-      var cp=closeTime.split(':'), cMin=parseInt(cp[0],10)*60+parseInt(cp[1],10)-30;
-      var hideTime=(Math.floor(cMin/60)<10?'0':'')+Math.floor(cMin/60)+':'+(cMin%60<10?'0':'')+(cMin%60);
-      if(nowTime>=hideTime) return;
-      _showPost();
-    }).catch(function(){ _showPost(); });
-  }).catch(function(){});
-
-  }); // end cms-config then
+    // Öffnungszeiten aus parallelem Fetch prüfen
+    if(!hRes||!hRes.success||!hRes.data){ _showPost(); return; }
+    var now=new Date();
+    var jsDay=now.getDay();
+    var dvDay=jsDay===0?101006:(101000+jsDay-1);
+    var todayHours=hRes.data.filter(function(h){return h.wochentag===dvDay;});
+    if(!todayHours.length){ _showPost(); return; }
+    if(todayHours[0].geschlossen) return;
+    var closeTime='';
+    todayHours.forEach(function(h){
+      var t=h.nachmittag_bis||h.vormittag_bis||'';
+      if(t>closeTime) closeTime=t;
+    });
+    if(!closeTime){ _showPost(); return; }
+    var hh=now.getHours(), mm=now.getMinutes();
+    var nowTime=(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+    var cp=closeTime.split(':'), cMin=parseInt(cp[0],10)*60+parseInt(cp[1],10)-30;
+    var hideTime=(Math.floor(cMin/60)<10?'0':'')+Math.floor(cMin/60)+':'+(cMin%60<10?'0':'')+(cMin%60);
+    if(nowTime>=hideTime) return;
+    _showPost();
+  });
 })();
 </script>
 

@@ -40,6 +40,7 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     .then(function(payload){
       var config=(payload&&payload.data)?payload.data:payload;
       if(!config || Object.keys(config).length===0){resolveFlags();return;}
+      window._dlCmsConfig=config;
       console.log('CMS Config loaded:', config);
       
       // Apply Hero texts from Dataverse CMS
@@ -238,21 +239,21 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     var dcRaw=localStorage.getItem('dl_design_config');
     if(dcRaw) applyOfferTileColors(JSON.parse(dcRaw));
   }catch(e){}
-  fetch(API_BASE+'/cms-config')
-    .then(function(r){return r.json();})
-    .then(function(res){
-      var d=(res&&res.data)?res.data:res;
-      var hc=d&&d['hp_design_config'];
+  // Reuse the single cms-config fetch from _dlFlagsReady
+  (window._dlFlagsReady||Promise.resolve()).then(function(){
+      var d=window._dlCmsConfig;
+      if(!d) return;
+      var hc=d['hp_design_config'];
       if(hc&&typeof hc==='object'){
         applyHeroCfg(hc);
         try{localStorage.setItem('dl_hp_design_config',JSON.stringify(hc));}catch(e){}
       }
-      var dc=d&&d['design_config'];
+      var dc=d['design_config'];
       if(dc&&typeof dc==='object'){
         applyOfferTileColors(dc);
         try{localStorage.setItem('dl_design_config',JSON.stringify(dc));}catch(e){}
       }
-    }).catch(function(){});
+    });
 })();
 
 /* === Öffnungsstatus: Jetzt geöffnet / geschlossen === */
