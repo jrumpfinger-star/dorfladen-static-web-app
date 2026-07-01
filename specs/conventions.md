@@ -87,13 +87,34 @@
 - Emojis in reinem Text / Toast-Nachrichten sind erlaubt (z.B. Bestätigungsmeldungen)
 - Druckansichten (Küchenliste, Beipackzettel) dürfen Emojis verwenden
 
-### Migration:
-- Bestehende Emoji-Icons werden schrittweise migriert (nicht sofort alles umbauen)
-- Bei jeder Änderung an einer Datei: betroffene Emojis auf Lucide umstellen
+---
+
+## 4. Multi-Device UI-Tests (Pflicht)
+
+**Jede UI-Änderung muss auf drei Viewports visuell geprüft und getestet werden.**
+
+### Pflicht-Viewports:
+| Gerät | Breite × Höhe | Verwendung |
+|-------|---------------|------------|
+| **Mobile** | 375 × 812 | iPhone SE / Standard-Smartphone |
+| **iPad Mini** | 768 × 1024 | Tablet / Kiosk |
+| **Desktop** | 1280 × 800 | Laptop / Desktop |
+
+### Prüfkriterien pro Viewport:
+- Text wird **nicht abgeschnitten** oder umgebrochen in unlesbarer Weise
+- Buttons/Icons sind erreichbar und haben **ausreichend Klickfläche** (min. 36×36px)
+- Layout nutzt den **verfügbaren Platz sinnvoll** (kein verschenkter Platz auf Desktop)
+- **Kein horizontales Scrollen**
+- Zweizeilige Layouts verwenden wenn einzeilig den Text abschneidet
+
+### Umsetzung:
+- Screenshots auf allen drei Viewports erstellen und im Chat zeigen
+- Bei Playwright-Tests: `page.setViewportSize()` für verschiedene Viewports nutzen
+- Automatisierte Viewport-Tests in `tests/*.spec.js` anlegen wo sinnvoll
 
 ---
 
-## 4. UI-Design: Verkäuferinnen-Perspektive
+## 5. UI-Design: Verkäuferinnen-Perspektive
 
 **Das Kiosk-UI wird aus der Perspektive der Verkäuferin designt:**
 - Labels sind handlungsorientiert ("Zum Packen", "Warten auf Abholung") statt technisch ("Status 1", "In Bearbeitung")
@@ -103,7 +124,7 @@
 
 ---
 
-## 5. Popups & Overlays: Hintergrund-Scroll sperren
+## 6. Popups & Overlays: Hintergrund-Scroll sperren
 
 **Bei jedem Popup/Overlay/Modal muss der Hintergrund-Scroll gesperrt werden.**
 

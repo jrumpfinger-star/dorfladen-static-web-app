@@ -39,6 +39,20 @@ für zukünftige Tage.
 - Nach Bestellschluss: Link zur allgemeinen Bestellseite
 
 ### AK-MT-06: TagesInfo UI
-- Mittagessen-Name wird nicht abgeschnitten (kein text-overflow:ellipsis)
+- Mittagessen-Item hat **zweizeiliges Layout**:
+  - **Zeile 1:** Icon + Gerichtname (volle Breite, kein Abschneiden)
+  - **Zeile 2:** Preis + ab-Badge + Bestell-Button (rechts ausgerichtet, unter dem Namen eingerückt)
 - Unter der Sektion "Mittagessen" wird die Kategorie "Mittagessen" nicht redundant angezeigt
 - Bei gesetztem `ab_uhr` wird ein lila Badge "ab HH:MM" mit Uhr-Icon angezeigt
+
+### AK-MT-07: Multi-Device UI-Tests (Pflicht)
+- **Jede UI-Änderung** muss auf drei Viewports visuell geprüft werden:
+  - **Mobile** (375×812, iPhone-artig)
+  - **iPad Mini** (768×1024)
+  - **Desktop** (1280×800)
+- Prüfkriterien pro Viewport:
+  - Text wird nicht abgeschnitten oder umgebrochen in unlesbarer Weise
+  - Buttons/Icons sind erreichbar und haben ausreichend Klickfläche (min. 36×36px)
+  - Layout nutzt den verfügbaren Platz sinnvoll
+  - Kein horizontales Scrollen
+- Diese Regel gilt projektübergreifend für alle Seiten und Modals
