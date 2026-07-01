@@ -4,7 +4,25 @@ import os
 import msal
 import requests
 import base64
+import time
+import threading
 from datetime import datetime, timezone, timedelta
+
+# ---------- cache (5 min TTL) ----------
+_cache = {}
+_cache_lock = threading.Lock()
+CACHE_TTL = 300  # 5 minutes
+
+def cache_get(key):
+    with _cache_lock:
+        entry = _cache.get(key)
+        if entry and (time.time() - entry["ts"]) < CACHE_TTL:
+            return entry["data"]
+    return None
+
+def cache_set(key, data):
+    with _cache_lock:
+        _cache[key] = {"data": data, "ts": time.time()}
 
 # ---------- config ----------
 TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
@@ -214,21 +232,19 @@ def enrich_post_images(post, token, folder_id):
             it["bild_url"] = bild_url
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "OPTIONS":
-        return func.HttpResponse(status_code=200, headers=get_cors())
-
+def _build_response():
+    """Build the tagespost response (expensive: Graph API + image downloads)."""
     token = get_graph_token()
     if not token:
-        return err("Graph-Token konnte nicht abgerufen werden", 500)
+        return None, "Graph-Token konnte nicht abgerufen werden"
 
     folder_id = find_social_folder(token)
     if not folder_id:
-        return ok({"success": True, "post": None})
+        return {"success": True, "post": None}, None
 
     posts = load_posts(token, folder_id)
     if not posts:
-        return ok({"success": True, "post": None})
+        return {"success": True, "post": None}, None
 
     # CET/CEST timezone (UTC+1 / UTC+2)
     try:
@@ -261,24 +277,50 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     # After 18:00 (store closed), prefer tomorrow's post as primary
     if current_hour >= 18 and tomorrow_post:
-        return ok({
+        return {
             "success": True,
             "post": tomorrow_post, "is_tomorrow": True,
             "today_post": today_post, "tomorrow_post": tomorrow_post,
-        })
+        }, None
 
     if not today_post and tomorrow_post:
-        return ok({
+        return {
             "success": True,
             "post": tomorrow_post, "is_tomorrow": True,
             "today_post": None, "tomorrow_post": tomorrow_post,
-        })
+        }, None
 
     if not today_post and not tomorrow_post:
-        return ok({"success": True, "post": None})
+        return {"success": True, "post": None}, None
 
-    return ok({
+    return {
         "success": True,
         "post": today_post, "is_tomorrow": False,
         "today_post": today_post, "tomorrow_post": tomorrow_post,
-    })
+    }, None
+
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=200, headers=get_cors())
+
+    # Cache key: date + hour-bucket (before/after 18:00)
+    try:
+        from zoneinfo import ZoneInfo
+        cet = ZoneInfo("Europe/Berlin")
+    except:
+        cet = timezone(timedelta(hours=2))
+    now_local = datetime.now(cet)
+    hour_bucket = "evening" if now_local.hour >= 18 else "day"
+    cache_key = f"tagespost_{now_local.strftime('%Y-%m-%d')}_{hour_bucket}"
+
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return ok(cached)
+
+    data, error = _build_response()
+    if error:
+        return err(error, 500)
+
+    cache_set(cache_key, data)
+    return ok(data)
