@@ -232,25 +232,10 @@
         flex: 1;
         min-height: 0;
         display: flex;
+        flex-direction: row;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
-      }
-      #social-panel-katalog {
-        display: none;
-      }
-      /* Falls aktiv, dann flex */
-      #panel-social.active #social-panel-post[style*="display: block"], 
-      #panel-social.active #social-panel-post:not([style*="display: none"]) {
-        display: flex !important;
-        flex-direction: row;
-        width: 100%;
-        height: 100%;
-      }
-      #panel-social.active #social-panel-katalog[style*="display: block"],
-      #panel-social.active #social-panel-katalog:not([style*="display: none"]) {
-        display: flex !important;
-        flex-direction: row;
-        width: 100%;
-        height: 100%;
       }
       
       /* Die beiden Spalten scrollen unabhängig */
