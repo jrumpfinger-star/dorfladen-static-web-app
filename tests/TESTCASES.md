@@ -2173,7 +2173,7 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 02.07.2026 | T-ST-12-01 bis T-ST-14-01 | ✅ 9/9 | Alle bestanden (Live) |
-| *ausstehend* | T-ST-15-01 bis T-ST-15-08 | – | Custom-Dialog-Tests |
+| 01.07.2026 | T-ST-15-01 bis T-ST-15-08 | ✅ 8/8 | Custom-Dialog + Toast alle bestanden (Live) |
 
 ### T-ST-15-01 cancelOrder öffnet Custom-Dialog statt prompt() (AK-ST-08)
 - **Aktion:** `cancelOrder()` aufrufen mit Mock-Order
