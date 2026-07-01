@@ -2740,11 +2740,12 @@ var K = (function(){
     var pct = total ? packed/total : 0;
     var r = 17, c = 2*Math.PI*r;
     var offset = c*(1-pct);
-    return '<div class="pack-ring" title="'+packed+'/'+total+' gepackt">'
+    var clickAttr = (o.status>=1 && o.status<=2) ? ' onclick="event.stopPropagation();K.openPackModal(\''+o.id+'\')" style="cursor:pointer" title="Packliste \u00f6ffnen / bearbeiten"' : ' title="'+packed+'/'+total+' gepackt"';
+    return '<div class="pack-ring"'+clickAttr+'>'
       +'<svg viewBox="0 0 44 44"><circle class="ring-bg" cx="22" cy="22" r="'+r+'"/>'
       +'<circle class="ring-fg" cx="22" cy="22" r="'+r+'" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'"/></svg>'
       +'<div class="ring-text">'+packed+'/'+total+'</div></div>'
-      +'<span class="ring-label-wide">'+packed+'/'+total+' gepackt</span>';
+      +'<span class="ring-label-wide"'+(o.status>=1 && o.status<=2 ? ' onclick="event.stopPropagation();K.openPackModal(\''+o.id+'\')" style="cursor:pointer;text-decoration:underline" title="Packliste \u00f6ffnen / bearbeiten"' : '')+'>'+packed+'/'+total+' gepackt</span>';
   }
 
   function _buildCountdownRing(o){
