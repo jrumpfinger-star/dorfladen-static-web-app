@@ -1602,7 +1602,7 @@
         var st = FM_ST[o.status]||'?';
         var col = FM_COL[o.status]||'#6b7280';
         var bg = FM_BG[o.status]||'#f3f4f6';
-        return '<a href="javascript:void(0)" onclick="openBestellstatus(\''+esc(fmNr)+'\')" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;text-decoration:none;color:#7f1d1d;font-size:13px;font-weight:600;margin-bottom:4px;cursor:pointer">'
+        return '<a href="javascript:void(0)" onclick="var p=document.getElementById(\'popup-desk-fm-orders\');if(p){p.style.display=\'none\';document.body.style.overflow=\'\';}openBestellstatus(\''+esc(fmNr)+'\')" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;text-decoration:none;color:#7f1d1d;font-size:13px;font-weight:600;margin-bottom:4px;cursor:pointer">'
           +'<span style="font-size:11px;opacity:.7;min-width:60px">'+esc(o.bestellnummer||'')+'</span>'
           +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Liefertag: '+fmtDate(o.liefertag)+'</span>'
           +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
