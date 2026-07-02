@@ -163,6 +163,17 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-35f: Details-Button als vollwertiger Button (file-text Icon + "Details") statt Mini-Eye-Icon
 - [x] AK-UI-35g: Alle Buttons ≥38px Höhe (Touch-Target-konform)
 - [x] AK-UI-35h: Alle zuklappen/aufklappen Toggle für Shop-Karten
+- [x] AK-UI-35i: Shop-Karten-Header bricht dynamisch um (flex-wrap) wenn Platz nicht reicht
+- [x] AK-UI-35j: Rings, Status-Badge und Preis in .k-oc-meta Container gruppiert (brechen gemeinsam um)
+- [x] AK-UI-35k: Mobile: Rings auf 36px skaliert, Name flex-basis angepasst
+
+### Metzger-Tagesgruppen: Visuelle Trennung
+- [x] AK-UI-36: Metzger-Tagesgruppen-Header hat box-shadow und margin-bottom:10px zur Abgrenzung von Bestellkarten
+- [x] AK-UI-36b: Tagesgruppen-Container hat margin-bottom:20px für klare Trennung zwischen Gruppen
+
+### Bestellstatus: Sticky Header
+- [x] AK-UI-37: Bestellstatus-Header (.bs-header) ist sticky (position:sticky, top:0, z-index:100)
+- [x] AK-UI-37b: Kein inline position:relative auf .bs-header (verhindert sticky)
 
 ### Tab-Badge: Neue Bestellungen + Nachrichten
 - [x] Mittagstisch-Tab-Badge zeigt Summe aus neuen Bestellungen (heute, Status 0) + ungelesene Nachrichten (tagesübergreifend)

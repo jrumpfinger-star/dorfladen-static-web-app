@@ -2331,3 +2331,52 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 03.07.2026 | T-MB-01-01 bis T-MB-12-01 | ✅ 11/11 | Alle bestanden (Live) |
+
+---
+
+## T-UI – UI-Layout-Fixes (Kiosk & Bestellstatus)
+
+### T-UI-01 Shop-Karten-Header: Elemente nicht abgeschnitten (Desktop)
+- **Aktion:** Kiosk → Online-Shop, Viewport 1280×800
+- **Prüfung:** Bestellkarten-Header enthält Name, Pos., Countdown-Ring, Pack-Ring, Status-Badge, Preis, Buttons — alles sichtbar
+- **Erwartung:** Kein Element abgeschnitten, alle in einer Zeile
+
+### T-UI-02 Shop-Karten-Header: Dynamisches Umbrechen (Mobile)
+- **Aktion:** Kiosk → Online-Shop, Viewport 375×812
+- **Prüfung:** Header bricht in 2-3 Zeilen um, Rings/Badge/Preis bleiben als Gruppe zusammen (.k-oc-meta)
+- **Erwartung:** Alle Elemente sichtbar, kein Overflow, Rings auf 36px skaliert
+
+### T-UI-03 Shop-Karten-Header: iPad-Layout
+- **Aktion:** Kiosk → Online-Shop, Viewport 768×1024
+- **Prüfung:** Bestellkarten-Header Layout prüfen
+- **Erwartung:** Alle Elemente sichtbar, sauberes einzeiliges Layout
+
+### T-UI-04 Metzger-Tagesgruppen: Header visuell abgesetzt (Mobile)
+- **Aktion:** Kiosk → Metzger, Viewport 375×812
+- **Prüfung:** Tagesgruppen-Header (z.B. "DO 02.07.2026 HEUTE") hat sichtbaren Abstand und Schatten zu den Bestellkarten darunter
+- **Erwartung:** box-shadow sichtbar, margin-bottom ≥10px, Gruppen-Abstand ≥20px
+
+### T-UI-05 Metzger-Tagesgruppen: Header visuell abgesetzt (iPad)
+- **Aktion:** Kiosk → Metzger, Viewport 768×1024
+- **Prüfung:** Gleiche Prüfung wie T-UI-04
+- **Erwartung:** Tagesgruppen-Header klar von Bestellkarten getrennt
+
+### T-UI-06 Metzger-Tagesgruppen: Header visuell abgesetzt (Desktop)
+- **Aktion:** Kiosk → Metzger, Viewport 1280×800
+- **Prüfung:** Gleiche Prüfung wie T-UI-04, zusätzlich 2-Spalten-Layout
+- **Erwartung:** Tagesgruppen-Header klar getrennt, Spalten-Layout korrekt
+
+### T-UI-07 Bestellstatus: Header sticky (nicht scrollbar)
+- **Aktion:** Bestellstatus-Seite `/bestellstatus.html` laden
+- **Prüfung:** `getComputedStyle('.bs-header')` → position, top, z-index
+- **Erwartung:** `position: sticky`, `top: 0px`, `z-index: 100`
+
+### T-UI-08 Bestellstatus: Kein position:relative auf Header
+- **Aktion:** Bestellstatus-Seite laden
+- **Prüfung:** `.bs-header` Element hat kein inline `style="position:relative"`
+- **Erwartung:** Kein inline position-Override, CSS sticky greift
+
+### Testlauf-Tabelle (UI-Fixes)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 02.07.2026 | T-UI-01 bis T-UI-08 | ✅ 8/8 | Alle visuell verifiziert auf witty-island (Live) |
