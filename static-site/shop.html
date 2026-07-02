@@ -317,7 +317,9 @@
     .shop-cart-minorder.show{display:block}
     .shop-cart-unavail{font-size:12px;color:#dc2626;font-weight:600;margin-bottom:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;display:none}
     .shop-cart-unavail.show{display:block}
-    .shop-cart-item.unavailable{opacity:.55;border-left:3px solid #dc2626}
+    .shop-cart-item.unavailable{background:#fef2f2;border-radius:10px;padding:10px 12px;margin:4px -4px}
+    .shop-cart-item.unavailable .shop-cart-item-price{color:#dc2626}
+    .shop-cart-item-unavail-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#dc2626;background:#fecaca;padding:2px 8px;border-radius:10px;margin-top:3px;line-height:1}
     .shop-cart-note{width:100%;margin-top:8px;padding:8px 12px;border:1px solid var(--shop-border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:40px}
 
     /* ── Confirm Dialog ── */
@@ -1118,8 +1120,9 @@
       var detail=item.gewichtsware?Math.round(item.menge*1000)+' g x '+fmtP(item.vk_base||item.vk)+' EUR/kg':item.menge+' Stueck x '+fmtP(item.vk)+' EUR';
       var isUnavail=unavailItems.indexOf(item.artikelnummer)!==-1;
       html+='<div class="shop-cart-item'+(isUnavail?' unavailable':'')+'">';
-      if(isUnavail) html+='<div style="font-size:11px;color:#dc2626;font-weight:600;margin-bottom:4px">⚠ Nicht verf\u00fcgbar am gew\u00e4hlten Tag</div>';
-      html+='<div class="shop-cart-item-info"><div class="shop-cart-item-name">'+esc(item.bezeichnung)+'</div><div class="shop-cart-item-detail">'+detail+'</div><div style="margin-top:6px"><input type="number" class="shop-qty-input" data-cart-qty="'+esc(item.artikelnummer)+'" value="'+(item.gewichtsware?Math.round(item.menge*1000):item.menge)+'" min="'+step+'" step="'+step+'"> <span style="font-size:11px;color:#6b7280">'+unit+'</span></div></div>';
+      html+='<div class="shop-cart-item-info"><div class="shop-cart-item-name">'+esc(item.bezeichnung)+'</div>';
+      if(isUnavail) html+='<div class="shop-cart-item-unavail-badge">⚠ nicht verf\u00fcgbar</div>';
+      html+='<div class="shop-cart-item-detail">'+detail+'</div><div style="margin-top:6px"><input type="number" class="shop-qty-input" data-cart-qty="'+esc(item.artikelnummer)+'" value="'+(item.gewichtsware?Math.round(item.menge*1000):item.menge)+'" min="'+step+'" step="'+step+'"> <span style="font-size:11px;color:#6b7280">'+unit+'</span></div></div>';
       html+='<div class="shop-cart-item-price">'+price+' EUR</div>';
       html+='<button class="shop-cart-item-remove" data-remove="'+esc(item.artikelnummer)+'" title="Entfernen">x</button>';
       html+='</div>';
