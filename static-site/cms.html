@@ -538,14 +538,14 @@ document.head.appendChild(msalScript);
 
 <div class="cms-wrap" id="cms-app" lang="de" style="display:none">
   <div class="cms-flex cms-between cms-mb" style="align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 14px; margin-bottom: 18px;">
-    <div style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="location.href='/index.html'" title="Zurück zur Website">
+    <div style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="if(window!==window.parent){window.parent.postMessage('closeMittagPopup','*')}else{location.href='/index.html'}" title="Zurück zur Website">
       <img id="cms-header-logo" src="" alt="Dorfladen Oberornau" style="height:52px;width:auto;flex-shrink:0;border-radius:6px; transition: opacity 0.15s ease;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
       <h2 style="font-size:18px;font-weight:800;color:var(--c-m-pri);margin:0; transition: color 0.15s ease;" onmouseover="this.style.color='var(--c-m-sec)'" onmouseout="this.style.color='var(--c-m-pri)'">Dorfladen CMS</h2>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
       <span id="cms-status" style="font-size:11px;color:var(--c-m-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Lade...</span>
       <span id="cms-version" style="font-size:10px;color:var(--c-m-muted);opacity:0.5;font-weight:600;"></span>
-      <a href="/index.html" class="cms-btn cms-btn-gray" style="font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 8px; text-decoration: none; box-shadow: none; border: 1px solid #e5e7eb; background: #ffffff; color: var(--c-m-text); display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease-in-out; text-transform: uppercase; letter-spacing: 0.3px;">
+      <a href="/index.html" class="cms-btn cms-btn-gray" id="cms-back-website" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}" style="font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 8px; text-decoration: none; box-shadow: none; border: 1px solid #e5e7eb; background: #ffffff; color: var(--c-m-text); display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease-in-out; text-transform: uppercase; letter-spacing: 0.3px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--c-m-muted);"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Website
       </a>

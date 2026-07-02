@@ -532,7 +532,7 @@
 
       <li class="feature-orders-link" style="display:none"><a href="/kiosk" style="color:#2d5016;font-weight:700">&#127973; Kiosk</a></li>
 
-      <li><a href="/cms" style="color:var(--c-acc);font-weight:700">&#x1F680; CMS</a></li>
+      <li><a href="javascript:void(0)" onclick="openCmsPopup()" style="color:var(--c-acc);font-weight:700">&#x1F680; CMS</a></li>
 
     </ul>
 
@@ -1224,7 +1224,7 @@
 
     <span>&copy; <script>document.write(new Date().getFullYear())</script> Dorfladen Oberornau UG (haftungsbeschr&auml;nkt). Alle Rechte vorbehalten.</span>
 
-    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a> &middot; <a href="/cms">CMS</a></span>
+    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a> &middot; <a href="javascript:void(0)" onclick="openCmsPopup()">CMS</a></span>
 
     <span id="site-version" style="font-size:10px;color:#9ca3af"></span>
 
@@ -2164,6 +2164,9 @@ function closeMittagPopup(){
   document.getElementById('mt-popup-overlay').classList.remove('open');
   document.getElementById('mt-popup-iframe').src='';
   document.body.style.overflow='';
+}
+function openCmsPopup(){
+  openMittagPopup('/cms');
 }
 window.addEventListener('message',function(e){
   if(e.data==='closeMittagPopup') closeMittagPopup();
