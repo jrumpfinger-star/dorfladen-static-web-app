@@ -64,7 +64,19 @@ def _sub_hash(endpoint):
     return hashlib.sha256(endpoint.encode()).hexdigest()[:16]
 
 
-ALL_CATEGORIES = ["mittagstisch", "angebote", "news"]
+ALL_CATEGORIES = ["tagesinfo", "news"]
+# Migrate legacy category names from existing subscribers
+LEGACY_MAP = {"mittagstisch": "tagesinfo", "angebote": "tagesinfo"}
+
+
+def _migrate_cats(cats):
+    """Map old category names to new ones and deduplicate."""
+    migrated = []
+    for c in cats:
+        mapped = LEGACY_MAP.get(c, c)
+        if mapped not in migrated:
+            migrated.append(mapped)
+    return migrated
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -103,7 +115,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
         try:
             data = json.loads(items[0].get("dl_wert", "{}"))
-            cats = data.get("categories", ALL_CATEGORIES[:])
+            cats = _migrate_cats(data.get("categories", ALL_CATEGORIES[:]))
         except Exception:
             cats = ALL_CATEGORIES[:]
         return func.HttpResponse(

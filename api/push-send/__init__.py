@@ -10,6 +10,17 @@ DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
 PUSH_KEY_PREFIX = "push_sub_"
+LEGACY_CAT_MAP = {"mittagstisch": "tagesinfo", "angebote": "tagesinfo"}
+
+
+def _migrate_cats(cats):
+    """Map old category names to new ones and deduplicate."""
+    migrated = []
+    for c in cats:
+        mapped = LEGACY_CAT_MAP.get(c, c)
+        if mapped not in migrated:
+            migrated.append(mapped)
+    return migrated
 
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
@@ -81,11 +92,11 @@ def _fetch_all_subscriptions(base_url, hdrs, entity_set):
                 # Old format: {"endpoint": "...", "keys": {...}}
                 if "subscription" in raw:
                     sub = raw["subscription"]
-                    cats = raw.get("categories", ["mittagstisch", "angebote", "news"])
+                    cats = _migrate_cats(raw.get("categories", ["tagesinfo", "news"]))
                     email = raw.get("email", "")
                 elif raw.get("endpoint"):
                     sub = raw
-                    cats = ["mittagstisch", "angebote", "news"]
+                    cats = ["tagesinfo", "news"]
                     email = ""
                 else:
                     continue

@@ -8809,16 +8809,11 @@
     var msg=document.getElementById('push-message');
     var url=document.getElementById('push-url');
     var cat=document.getElementById('push-category');
-    if(type==='mittagstisch'){
-      title.value='Mittagstisch heute';
-      msg.value='Der heutige Mittagstisch ist da! Schaut vorbei.';
-      url.value='/essen-im-dorfladen';
-      cat.value='mittagstisch';
-    }else if(type==='angebote'){
-      title.value='Neue Angebote';
-      msg.value='Neue Angebote im Dorfladen! Jetzt entdecken.';
-      url.value='/sortiment';
-      cat.value='angebote';
+    if(type==='tagesinfo'){
+      title.value='TagesInfo';
+      msg.value='Die heutige TagesInfo ist da! Mittagstisch, Theke & mehr.';
+      url.value='/';
+      cat.value='tagesinfo';
     }else if(type==='news'){
       title.value='Neuigkeit vom Dorfladen';
       msg.value='';
@@ -8908,7 +8903,7 @@
     var message=document.getElementById('push-message').value.trim();
     var url=document.getElementById('push-url').value;
     var category=document.getElementById('push-category').value;
-    var catLabels={mittagstisch:'Mittagstisch',angebote:'Angebote',news:'News / Aktuelles'};
+    var catLabels={tagesinfo:'TagesInfo',news:'News / Aktuelles'};
     var catInfo=category?(catLabels[category]||category):'Alle Abonnenten';
     var btn=document.getElementById('push-send-btn');
     var status=document.getElementById('push-status');
