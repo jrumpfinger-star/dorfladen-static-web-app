@@ -2157,7 +2157,8 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 <script>
 function openMittagPopup(url){
   var iframe=document.getElementById('mt-popup-iframe');
-  iframe.src=url;
+  var sep=url.indexOf('?')>=0?'&':'?';
+  iframe.src=url+sep+'_cb='+Date.now();
   document.getElementById('mt-popup-overlay').classList.add('open');
   if(window.dlLockScroll) dlLockScroll(); else document.body.style.overflow='hidden';
 }
