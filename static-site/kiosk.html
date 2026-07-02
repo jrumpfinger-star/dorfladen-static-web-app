@@ -3899,8 +3899,8 @@ var K = (function(){
       var wt = '';
       try { var dt = new Date(day+'T12:00:00'); wt = ['So','Mo','Di','Mi','Do','Fr','Sa'][dt.getDay()]+' '; } catch(e){}
 
-      html += '<div class="k-slot-group'+dayCollapsed+'" id="'+dayId+'" style="margin-bottom:12px">';
-      html += '<div class="k-slot-header" onclick="K.toggleMetzgerDayGroup(\''+day+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:'+(isToday?'#dcfce7':'#e5e7eb')+';border-left:4px solid '+(isToday?'#16a34a':'#6b7280')+';border-radius:8px;cursor:pointer;user-select:none;margin-bottom:6px">';
+      html += '<div class="k-slot-group'+dayCollapsed+'" id="'+dayId+'" style="margin-bottom:20px">';
+      html += '<div class="k-slot-header" onclick="K.toggleMetzgerDayGroup(\''+day+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:'+(isToday?'#dcfce7':'#e5e7eb')+';border-left:4px solid '+(isToday?'#16a34a':'#6b7280')+';border-radius:8px;cursor:pointer;user-select:none;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.08)">';
       html += '<span class="k-oc-arrow" style="font-size:10px;color:'+(isToday?'#16a34a':'#6b7280')+';transition:transform .2s">'+luc('chevron-down',14)+'</span>';
       html += '<span style="font-weight:800;font-size:14px;color:'+(isToday?'#15803d':'#1f2937')+'">'+luc('calendar',14)+' '+wt+dayLabel+'</span>';
       if(isToday) html += '<span style="font-size:11px;font-weight:700;color:#fff;background:#16a34a;padding:2px 8px;border-radius:8px">Heute</span>';
