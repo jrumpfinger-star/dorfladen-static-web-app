@@ -113,7 +113,7 @@ self.addEventListener('pushsubscriptionchange',function(e){
         return fetch('/api/push-subscribe',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({subscription:newSub.toJSON(),categories:['mittagstisch','angebote','news']})
+          body:JSON.stringify({subscription:newSub.toJSON(),categories:['tagesinfo','news']})
         });
       });
     })
