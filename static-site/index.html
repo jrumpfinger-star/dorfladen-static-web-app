@@ -1530,11 +1530,11 @@
 
             if(orders.length === 1){
               var o = orders[0];
-              var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+              var nr = o.bestellnummer||'';
               var st = STATUS_LABELS[o.status]||'?';
               var col = STATUS_COLORS[o.status]||'#6b7280';
               var bg = STATUS_BG[o.status]||'#f3f4f6';
-              el.innerHTML = '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;text-decoration:none;color:'+wrapColor+';font-size:13px;font-weight:600">'
+              el.innerHTML = '<a href="javascript:void(0)" onclick="openBestellstatus(\''+esc(nr)+'\')" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;text-decoration:none;color:'+wrapColor+';font-size:13px;font-weight:600;cursor:pointer">'
                 +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
                 +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtDate(o.datum)+' \u2013 '+(o.gericht||'Mittagessen')+'</span>'
                 +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
@@ -1558,11 +1558,11 @@
                 +'<span onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
                 +'</div><div style="padding:8px">';
               orders.forEach(function(o){
-                var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+                var nr2 = o.bestellnummer||'';
                 var st = STATUS_LABELS[o.status]||'?';
                 var col = STATUS_COLORS[o.status]||'#6b7280';
                 var bg = STATUS_BG[o.status]||'#f3f4f6';
-                card += '<a href="'+href+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600;margin-bottom:2px;transition:background .15s" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'transparent\'">'
+                card += '<a href="javascript:void(0)" onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\';openBestellstatus(\''+esc(nr2)+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600;margin-bottom:2px;transition:background .15s;cursor:pointer" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'transparent\'">'
                   +'<span style="font-size:12px;color:#6b7280;min-width:70px">'+fmtDate(o.datum)+'</span>'
                   +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.gericht||'Mittagessen')+'</span>'
                   +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
@@ -1598,11 +1598,11 @@
       }
 
       function _fmRenderOrderLink(o){
-        var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+        var fmNr = o.bestellnummer||'';
         var st = FM_ST[o.status]||'?';
         var col = FM_COL[o.status]||'#6b7280';
         var bg = FM_BG[o.status]||'#f3f4f6';
-        return '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;text-decoration:none;color:#7f1d1d;font-size:13px;font-weight:600;margin-bottom:4px">'
+        return '<a href="javascript:void(0)" onclick="openBestellstatus(\''+esc(fmNr)+'\')" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;text-decoration:none;color:#7f1d1d;font-size:13px;font-weight:600;margin-bottom:4px;cursor:pointer">'
           +'<span style="font-size:11px;opacity:.7;min-width:60px">'+esc(o.bestellnummer||'')+'</span>'
           +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Liefertag: '+fmtDate(o.liefertag)+'</span>'
           +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
@@ -2010,10 +2010,11 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
           var col=info.status===1?'#16a34a':'#d97706';
           var bg=info.status===1?'#dcfce7':'#fef3c7';
           var badge=document.createElement('a');
-          badge.href='/bestellstatus?nr='+encodeURIComponent(info.nr);
+          badge.href='javascript:void(0)';
+          badge.setAttribute('data-bs-nr',info.nr);
           badge.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:'+bg+';color:'+col+';border-radius:6px;font-size:10px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0;white-space:nowrap';
           badge.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+lbl;
-          badge.onclick=function(e){e.stopPropagation();};
+          badge.onclick=function(e){e.stopPropagation();e.preventDefault();openBestellstatus(this.getAttribute('data-bs-nr'));};
           el.appendChild(badge);
         });
       }).catch(function(){});
@@ -2167,6 +2168,9 @@ function closeMittagPopup(){
 }
 function openCmsPopup(){
   openMittagPopup('/cms');
+}
+function openBestellstatus(nr){
+  openMittagPopup('/bestellstatus?nr='+encodeURIComponent(nr||''));
 }
 window.addEventListener('message',function(e){
   if(e.data==='closeMittagPopup') closeMittagPopup();
