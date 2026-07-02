@@ -288,7 +288,7 @@
             html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">';
             html+='<div class="mob-wp-day-menu" style="flex:1'+(d.notice?';font-style:italic;color:#888':'')+'">'+esc(d.name)+(d.allergene?'<div style="font-size:10px;color:#d97706;font-weight:400;margin-top:1px">\u26a0\ufe0f '+esc(d.allergene)+'</div>':'')+'</div>';
             html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
-            if(oLink&&canOrder) html+='<a href="'+oLink+'" class="feature-mittagstisch" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
+            if(oLink&&canOrder) html+='<a href="javascript:void(0)" onclick="openMittagPopup(\''+oLink.replace(/'/g,"\\'")+'\');return false" class="feature-mittagstisch" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
             html+='</div>';
           }
         });

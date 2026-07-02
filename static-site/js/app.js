@@ -460,7 +460,7 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
             if(_wpImgs) html+='<td class="wp-img-cell" data-gericht="'+esc(g.gericht)+'"></td>';
             html+='<td class="wp-dish wp-dish-a">'+esc(g.gericht)+(g.allergene?'<div style="font-size:10px;color:#d97706;font-weight:400;margin-top:1px">⚠️ '+esc(g.allergene)+'</div>':'')+'</td>';
             var orderBtn='';
-            if(canOrder) orderBtn=' <a href="'+orderLink+'" class="feature-mittagstisch wp-order-btn" title="Jetzt bestellen"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Bestellen</a>';
+            if(canOrder) orderBtn=' <a href="javascript:void(0)" onclick="openMittagPopup(\''+orderLink.replace(/'/g,"\\'")+'\');return false" class="feature-mittagstisch wp-order-btn" title="Jetzt bestellen"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Bestellen</a>';
             html+='<td class="wp-price wp-price-a">'+price+orderBtn+'</td></tr>';
           });
         }
@@ -469,7 +469,7 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
       html+='<div class="wp-footer"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>';
       html+='<span id="wp-oeko"><strong>0,50 \u20AC \u00D6ko-Rabatt</strong> mit eigenem Beh\u00E4lter</span>';
       html+='<span class="wp-hint" id="wp-phone">\u260E\uFE0F <a href="tel:+4980826229991">08082 622 99 91</a></span>';
-      html+='<span class="feature-mittagstisch" style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell"><a href="/mittagstisch-bestellen.html" style="color:#c0392b;text-decoration:none">\uD83C\uDF7D Jetzt online vorbestellen!</a></span>';
+      html+='<span class="feature-mittagstisch" style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell"><a href="javascript:void(0)" onclick="openMittagPopup(\'/mittagstisch-bestellen\')" style="color:#c0392b;text-decoration:none">\uD83C\uDF7D Jetzt online vorbestellen!</a></span>';
       html+='</div>';
       document.getElementById('wp-body').innerHTML=html;
       // Apply mittagstisch feature flag to dynamically rendered content
