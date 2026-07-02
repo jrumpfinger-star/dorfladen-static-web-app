@@ -121,7 +121,8 @@
 </head>
 <body>
   <div class="bs-header">
-    <a href="javascript:void(0)" onclick="if(window.parent!==window){window.parent.postMessage('closeMittagPopup','*')}else if(history.length>1){history.back()}else{location.href='/'}" style="position:absolute;top:12px;right:12px;color:rgba(255,255,255,.8);text-decoration:none;font-size:28px;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.12)" title="Schließen">✕</a>
+    <a id="bs-close-btn" href="javascript:void(0)" onclick="if(window.parent!==window){window.parent.postMessage('closeMittagPopup','*')}else if(history.length>1){history.back()}else{location.href='/'}" style="position:absolute;top:12px;right:12px;color:rgba(255,255,255,.8);text-decoration:none;font-size:28px;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.12)" title="Schließen">✕</a>
+    <script>if(window.parent!==window){var _cb=document.getElementById('bs-close-btn');if(_cb)_cb.style.display='none';}</script>
     <div class="bs-logo"><i data-lucide="store" style="width:28px;height:28px"></i></div>
     <h1>Dorfladen Oberornau</h1>
     <p>Bestellstatus</p>
