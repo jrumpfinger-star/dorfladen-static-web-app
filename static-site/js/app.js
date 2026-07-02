@@ -515,11 +515,12 @@ window.openDtModal = function(id) {
     return;
   }
   var el = document.getElementById('dt-modal-' + id);
-  if(el) el.classList.add('open');
+  if(el){ el.classList.add('open'); if(window.dlLockScroll) dlLockScroll(); }
 };
 window.closeDtModal = function(id) {
   var el = document.getElementById('dt-modal-' + id);
   if(el) el.classList.remove('open');
+  if(!document.querySelector('[id^="dt-modal-"].open')){ if(window.dlUnlockScroll) dlUnlockScroll(); }
 };
 
 
@@ -867,12 +868,12 @@ function openLightbox(idx){
   if(gi.description){cap.textContent=gi.description;cap.style.display='';}
   else{cap.textContent='';cap.style.display='none';}
   overlay.classList.add('active');
-  document.body.style.overflow='hidden';
+  if(window.dlLockScroll) dlLockScroll(); else document.body.style.overflow='hidden';
 }
 function closeLightbox(){
   var overlay=document.getElementById('lightbox-overlay');
   if(overlay)overlay.classList.remove('active');
-  document.body.style.overflow='';
+  if(window.dlUnlockScroll) dlUnlockScroll(); else document.body.style.overflow='';
 }
 function navLightbox(dir){
   var newIdx=_galleryIdx+dir;
@@ -947,7 +948,6 @@ window.dlImagePopup=function(src,alt){
   var ov=document.createElement('div');
   ov.id='dl-img-popup';
   ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer;animation:wpLbFadeIn .2s';
-  ov.addEventListener('click',function(){ov.remove();});
   var img=document.createElement('img');
   img.src=src;
   img.alt=alt||'';
@@ -958,9 +958,12 @@ window.dlImagePopup=function(src,alt){
   var cls=document.createElement('button');
   cls.innerHTML='&#10005;';
   cls.style.cssText='position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';
-  cls.addEventListener('click',function(e){e.stopPropagation();ov.remove();});
   ov.appendChild(cls);
   document.body.appendChild(ov);
-  document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){ov.remove();document.removeEventListener('keydown',onKey);}});
+  if(window.dlLockScroll) dlLockScroll();
+  function _imgClose(){ov.remove();if(window.dlUnlockScroll) dlUnlockScroll();}
+  ov.addEventListener('click',function(){_imgClose();});
+  cls.addEventListener('click',function(e){e.stopPropagation();_imgClose();});
+  document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){_imgClose();document.removeEventListener('keydown',onKey);}});
 };
 function wpOpenLightbox(src,alt){window.dlImagePopup(src,alt);}

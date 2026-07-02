@@ -44,10 +44,10 @@ if('serviceWorker' in navigator){
     }
     // News overlay
     var nOv=document.querySelector('.news-overlay.open');
-    if(nOv){nOv.classList.remove('open');setTimeout(function(){if(nOv.parentNode)nOv.remove();},300);return true;}
+    if(nOv){nOv.classList.remove('open');if(window.dlUnlockScroll)dlUnlockScroll();setTimeout(function(){if(nOv.parentNode)nOv.remove();},300);return true;}
     // Desktop modals
     var dtModal=document.querySelector('[id^="dt-modal-"].open');
-    if(dtModal){dtModal.classList.remove('open');return true;}
+    if(dtModal){dtModal.classList.remove('open');if(window.dlUnlockScroll)dlUnlockScroll();return true;}
     // Push settings overlay
     var pushOv=document.getElementById('push-settings-overlay');
     if(pushOv&&pushOv.offsetParent!==null){
