@@ -19,7 +19,7 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);min-height:100vh}
 
-    .bs-header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:20px 20px 28px;text-align:center}
+    .bs-header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:20px 20px 28px;text-align:center;position:sticky;top:0;z-index:100}
     .bs-header h1{font-size:20px;font-weight:800;margin-bottom:4px}
     .bs-header p{font-size:13px;opacity:.8}
     .bs-logo{width:48px;height:48px;margin:0 auto 10px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:24px}
@@ -120,7 +120,7 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
-  <div class="bs-header" style="position:relative">
+  <div class="bs-header">
     <a href="javascript:void(0)" onclick="if(window.parent!==window){window.parent.postMessage('closeMittagPopup','*')}else if(history.length>1){history.back()}else{location.href='/'}" style="position:absolute;top:12px;right:12px;color:rgba(255,255,255,.8);text-decoration:none;font-size:28px;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.12)" title="Schließen">✕</a>
     <div class="bs-logo"><i data-lucide="store" style="width:28px;height:28px"></i></div>
     <h1>Dorfladen Oberornau</h1>
