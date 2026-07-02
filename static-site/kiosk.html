@@ -4491,16 +4491,49 @@ var K = (function(){
   }
 
   function printMetzgerSammel(){
-    var table = document.getElementById('metzger-sammel-table');
-    if(!table){ toast('Nichts zum Drucken'); return; }
-    var w = window.open('','','width=600,height=400');
+    if(!_fmSammelBestellungen.length){ toast('Nichts zum Drucken'); return; }
+    // Collect only OPEN (not yet gesendet) positions
+    var openItems = [];
+    _fmSammelBestellungen.forEach(function(o){
+      if(o.status >= 3) return;
+      (o.positionen||[]).forEach(function(p){
+        if(!p.gesendet) openItems.push({bezeichnung:p.bezeichnung||'',zuschnitt:p.zuschnitt||'',menge_kg:Number(p.menge_kg||0),kunde:o.name||o.kunde_name||'–'});
+      });
+    });
+    if(!openItems.length){ toast('Alle Positionen bereits bestellt'); return; }
+    // Sort by article name, then customer
+    openItems.sort(function(a,b){ return (a.bezeichnung+a.kunde).localeCompare(b.bezeichnung+b.kunde); });
+    var totalKg = 0;
+    openItems.forEach(function(p){ totalKg += p.menge_kg; });
     var fmPrintDate = _fmDateLabel(_fmSammelLiefertag);
-    w.document.write('<html><head><title>Sammelbestellung '+fmPrintDate+'</title>');
-    w.document.write('<style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #ddd}th{background:#f3f3f3}h2{margin-bottom:10px}</style>');
-    w.document.write('</head><body>');
-    w.document.write('<h2>Sammelbestellung Metzger – '+fmPrintDate+'</h2>');
-    w.document.write(table.outerHTML);
-    w.document.write('<p style="margin-top:16px;font-size:12px;color:#999">Dorfladen Oberornau – generiert am '+new Date().toLocaleString('de-DE')+'</p>');
+    var w = window.open('','','width=700,height=500');
+    w.document.write('<html><head><title>Bestellliste Metzger – '+fmPrintDate+'</title>');
+    w.document.write('<style>');
+    w.document.write('body{font-family:"Segoe UI",system-ui,sans-serif;padding:20px 24px;color:#1f2937;font-size:13px}');
+    w.document.write('h2{margin:0 0 4px;font-size:18px;font-weight:800}');
+    w.document.write('.sub{color:#6b7280;font-size:13px;margin-bottom:14px}');
+    w.document.write('table{width:100%;border-collapse:collapse}');
+    w.document.write('th{background:#f3f4f6;padding:7px 10px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#374151;border-bottom:2px solid #d1d5db}');
+    w.document.write('td{padding:6px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top}');
+    w.document.write('tr:last-child td{border-bottom:none}');
+    w.document.write('.r{text-align:right}');
+    w.document.write('.cut{font-size:11px;color:#92400e;background:#fef3c7;padding:1px 5px;border-radius:3px;margin-left:4px}');
+    w.document.write('.sum{border-top:2px solid #374151;font-weight:800;font-size:14px}');
+    w.document.write('.foot{margin-top:12px;font-size:11px;color:#9ca3af}');
+    w.document.write('@media print{body{padding:10px}}');
+    w.document.write('</style></head><body>');
+    w.document.write('<h2>🥩 Bestellliste Metzger</h2>');
+    w.document.write('<div class="sub">Liefertag: <b>'+fmPrintDate+'</b> &nbsp;|&nbsp; '+openItems.length+' Positionen &nbsp;|&nbsp; '+totalKg.toFixed(1)+' kg</div>');
+    w.document.write('<table><thead><tr><th style="width:30px">Nr.</th><th>Artikel</th><th>Kunde</th><th class="r">kg</th></tr></thead><tbody>');
+    openItems.forEach(function(p,i){
+      w.document.write('<tr><td style="color:#9ca3af">'+(i+1)+'</td>');
+      w.document.write('<td><b>'+esc(p.bezeichnung)+'</b>'+(p.zuschnitt?' <span class="cut">'+esc(p.zuschnitt)+'</span>':'')+'</td>');
+      w.document.write('<td>'+esc(p.kunde)+'</td>');
+      w.document.write('<td class="r" style="font-weight:700;white-space:nowrap">'+p.menge_kg.toFixed(1)+'</td></tr>');
+    });
+    w.document.write('<tr class="sum"><td></td><td>Gesamt</td><td>'+openItems.length+' Pos.</td><td class="r">'+totalKg.toFixed(1)+' kg</td></tr>');
+    w.document.write('</tbody></table>');
+    w.document.write('<div class="foot">Dorfladen Oberornau – '+new Date().toLocaleString('de-DE')+'</div>');
     w.document.write('</body></html>');
     w.document.close();
     w.print();
