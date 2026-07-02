@@ -2038,7 +2038,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
         ?'/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'')
         :'/mittagstisch-bestellen';
       var tip=_canOrderToday?'Jetzt f\u00fcr heute bestellen':'Mittagessen bestellen';
-      orderBtn='<a class="tp-item-order" href="'+esc(href)+'" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
+      orderBtn='<a class="tp-item-order" href="javascript:void(0)" onclick="openMittagPopup(\''+esc(href).replace(/'/g,"\\'")+'\')" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
     }
     var abBadge=it.ab_uhr?'<span class="tp-ab-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
     var showCat=!showOrder&&it.kategorie;
@@ -2134,6 +2134,40 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     _showPost();
   });
 })();
+</script>
+
+<style>
+.mt-popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;justify-content:center;align-items:center;padding:16px}
+.mt-popup-overlay.open{display:flex}
+.mt-popup-modal{background:#fff;border-radius:16px;max-width:540px;width:100%;max-height:calc(100vh - 40px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative;display:flex;flex-direction:column}
+.mt-popup-close{position:absolute;top:10px;right:10px;z-index:10;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.5);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.mt-popup-close:hover{background:rgba(0,0,0,.7)}
+.mt-popup-iframe{border:none;width:100%;flex:1;min-height:0;border-radius:16px}
+@media(max-width:600px){.mt-popup-overlay{padding:0}.mt-popup-modal{max-width:100%;max-height:100%;border-radius:0;height:100%}.mt-popup-iframe{border-radius:0}}
+</style>
+
+<div class="mt-popup-overlay" id="mt-popup-overlay" onclick="if(event.target===this)closeMittagPopup()">
+  <div class="mt-popup-modal">
+    <button class="mt-popup-close" onclick="closeMittagPopup()" title="Schließen">✕</button>
+    <iframe class="mt-popup-iframe" id="mt-popup-iframe" style="height:85vh"></iframe>
+  </div>
+</div>
+
+<script>
+function openMittagPopup(url){
+  var iframe=document.getElementById('mt-popup-iframe');
+  iframe.src=url;
+  document.getElementById('mt-popup-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeMittagPopup(){
+  document.getElementById('mt-popup-overlay').classList.remove('open');
+  document.getElementById('mt-popup-iframe').src='';
+  document.body.style.overflow='';
+}
+window.addEventListener('message',function(e){
+  if(e.data==='closeMittagPopup') closeMittagPopup();
+});
 </script>
 
 </body>
