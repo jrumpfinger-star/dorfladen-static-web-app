@@ -2164,7 +2164,9 @@ function openMittagPopup(url){
 function closeMittagPopup(){
   document.getElementById('mt-popup-overlay').classList.remove('open');
   document.getElementById('mt-popup-iframe').src='';
-  if(window.dlUnlockScroll) dlUnlockScroll(); else document.body.style.overflow='';
+  if(window.dlUnlockScroll) dlUnlockScroll();
+  // Also clear any inline scroll-lock styles (e.g. from mobLockScroll)
+  document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';
 }
 function openCmsPopup(){
   openMittagPopup('/cms');
