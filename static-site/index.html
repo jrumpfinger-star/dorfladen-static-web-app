@@ -532,7 +532,7 @@
 
       <li class="feature-orders-link" style="display:none"><a href="/kiosk" style="color:#2d5016;font-weight:700">&#127973; Kiosk</a></li>
 
-      <li><a href="/cms" style="color:var(--c-acc);font-weight:700">&#x1F680; CMS</a></li>
+      <li><a href="javascript:void(0)" onclick="openCmsGate()" style="color:var(--c-acc);font-weight:700">&#x1F680; CMS</a></li>
 
     </ul>
 
@@ -1224,7 +1224,7 @@
 
     <span>&copy; <script>document.write(new Date().getFullYear())</script> Dorfladen Oberornau UG (haftungsbeschr&auml;nkt). Alle Rechte vorbehalten.</span>
 
-    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a> &middot; <a href="/cms">CMS</a></span>
+    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a> &middot; <a href="javascript:void(0)" onclick="openCmsGate()">CMS</a></span>
 
     <span id="site-version" style="font-size:10px;color:#9ca3af"></span>
 
@@ -2172,10 +2172,62 @@ function openCmsPopup(){
 function openBestellstatus(nr){
   openMittagPopup('/bestellstatus?nr='+encodeURIComponent(nr||''));
 }
+
+/* --- CMS Password Gate Popup --- */
+var CMS_PW_HASH='d324fb3c8c3a1ef449e1f776b2f29fd718d00e7967adbb0bbe8326c2452bea93';
+var CMS_PW_KEY='cms_auth_ok';
+function _cmsSha256(str){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(str)).then(function(h){
+    return Array.from(new Uint8Array(h)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  });
+}
+function openCmsGate(){
+  if(sessionStorage.getItem(CMS_PW_KEY)===CMS_PW_HASH){ location.href='/cms'; return; }
+  var ov=document.getElementById('cms-gate-overlay');
+  ov.style.display='flex';
+  document.body.style.overflow='hidden';
+  var inp=document.getElementById('cms-gate-pw');
+  inp.value=''; inp.focus();
+  document.getElementById('cms-gate-err').style.display='none';
+}
+function closeCmsGate(){
+  document.getElementById('cms-gate-overlay').style.display='none';
+  document.body.style.overflow='';
+}
+function submitCmsGate(){
+  var pw=document.getElementById('cms-gate-pw').value;
+  _cmsSha256(pw).then(function(hash){
+    if(hash===CMS_PW_HASH){
+      sessionStorage.setItem(CMS_PW_KEY,hash);
+      closeCmsGate();
+      location.href='/cms';
+    } else {
+      document.getElementById('cms-gate-err').style.display='block';
+      var inp=document.getElementById('cms-gate-pw');
+      inp.value=''; inp.focus();
+    }
+  });
+}
+
 window.addEventListener('message',function(e){
   if(e.data==='closeMittagPopup') closeMittagPopup();
 });
 </script>
+
+<!-- CMS Password Gate Popup -->
+<div id="cms-gate-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;justify-content:center;align-items:center;padding:16px" onclick="if(event.target===this)closeCmsGate()">
+  <div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;position:relative;animation:bsSlideUp .2s ease">
+    <button onclick="closeCmsGate()" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:22px;color:#9ca3af;cursor:pointer;line-height:1;padding:4px" title="Schlie\u00dfen">&times;</button>
+    <h2 style="font-size:20px;font-weight:700;color:#1f2937;margin:0 0 4px">Dorfladen CMS</h2>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 20px">Bitte Passwort eingeben</p>
+    <input type="password" id="cms-gate-pw" placeholder="Passwort" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitCmsGate()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;outline:none">
+    <div id="cms-gate-err" style="display:none;color:#ef4444;font-size:12px;margin-top:-8px;margin-bottom:8px">Falsches Passwort</div>
+    <button onclick="submitCmsGate()" style="width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Anmelden</button>
+  </div>
+</div>
+<style>
+@keyframes bsSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
 
 </body>
 
