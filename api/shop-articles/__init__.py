@@ -167,7 +167,7 @@ def _load_freigaben(base_url, headers):
     Returns None only if the entity does not exist yet (table not created)."""
     try:
         # Try with dl_kurzfristig first; fall back without it if field doesn't exist yet
-        url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_kurzfristig&$filter=dl_aktiv eq true"
+        url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_kurzfristig,dl_verfuegbare_tage&$filter=dl_aktiv eq true"
         r = requests.get(url, headers=headers, timeout=30)
         has_kurzfristig = True
         if r.status_code not in (200, 404):
@@ -194,7 +194,7 @@ def _load_freigaben(base_url, headers):
                 gb_str = str(gb)[:10]
                 if gb_str < today:
                     continue  # expired
-            result[sc] = {"gueltig_bis": gb, "kurzfristig": bool(f.get("dl_kurzfristig")) if has_kurzfristig else False}
+            result[sc] = {"gueltig_bis": gb, "kurzfristig": bool(f.get("dl_kurzfristig")) if has_kurzfristig else False, "verfuegbare_tage": (f.get("dl_verfuegbare_tage") or "").strip()}
         return result
     except Exception as e:
         logging.warning(f"[shop-articles] failed to load freigaben: {e}")
@@ -340,7 +340,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "rp": is_rp,
                 "discount": discount,
                 "kurzfristig": freigaben_map.get(strichcode, {}).get("kurzfristig", False) if freigaben_map else False,
-                "gueltig_bis": str(freigaben_map.get(strichcode, {}).get("gueltig_bis", "") or "")[:10] if freigaben_map else ""
+                "gueltig_bis": str(freigaben_map.get(strichcode, {}).get("gueltig_bis", "") or "")[:10] if freigaben_map else "",
+                "verfuegbare_tage": freigaben_map.get(strichcode, {}).get("verfuegbare_tage", "") if freigaben_map else ""
             }
             articles.append(article)
 

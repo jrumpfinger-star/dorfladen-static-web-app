@@ -83,7 +83,7 @@ def _fetch_all_pages(url, headers, max_pages=20):
 
 def _load_freigaben(base_url, headers):
     """Load all Freigaben from Dataverse."""
-    url = f"{base_url}/api/data/v9.2/{FREIGABE_ENTITY}?$select=dl_shopfreigabeid,dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_warengruppe,dl_bezeichnung,dl_edeka_nr,dl_freigegeben_von,dl_kurzfristig"
+    url = f"{base_url}/api/data/v9.2/{FREIGABE_ENTITY}?$select=dl_shopfreigabeid,dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_warengruppe,dl_bezeichnung,dl_edeka_nr,dl_freigegeben_von,dl_kurzfristig,dl_verfuegbare_tage"
     return _fetch_all_pages(url, headers)
 
 
@@ -161,6 +161,8 @@ def _upsert_freigabe(base_url, headers, item):
         payload["dl_freigegeben_von"] = item["freigegeben_von"]
     if "kurzfristig" in item:
         payload["dl_kurzfristig"] = bool(item["kurzfristig"])
+    if "verfuegbare_tage" in item:
+        payload["dl_verfuegbare_tage"] = item["verfuegbare_tage"] or ""
 
     if existing:
         record_id = existing[0]["dl_shopfreigabeid"]
@@ -221,6 +223,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "edeka_nr": f.get("dl_edeka_nr", ""),
                 "freigegeben_von": f.get("dl_freigegeben_von", ""),
                 "kurzfristig": bool(f.get("dl_kurzfristig")),
+                "verfuegbare_tage": f.get("dl_verfuegbare_tage") or "",
             })
         return func.HttpResponse(
             json.dumps({"success": True, "freigaben": result}, ensure_ascii=False),

@@ -63,6 +63,7 @@
 | A-02 | Tagesstatistiken | 🟡 | ✅ | Umsatz-Kachel im Shop-Admin-Dashboard (API summary.summe); Mittagstisch hat Portionen+Umsatz |
 | A-03 | CSV/Excel-Export | 🟡 | ✅ | CSV-Export-Button in Shop-Admin + Lunch-Admin (BOM+Semikolon für Excel) |
 | A-04 | Benachrichtigungs-Indikator | 🟢 | ✅ | Kiosk: NEU-Badge, Counter, Gelesen-Buttons; Shop-Admin: badge-shop (offene Bestellungen) + badge-mittag (offene MT-Orders) mit admin-tab-badge.show |
+| A-05 | Tagesverfügbarkeit | 🟡 | ✅ | Artikel nur an bestimmten Wochentagen verfügbar; Tages-Toggles in Freigabeliste; Shop-Filter + Warenkorb-Prüfung bei Slot-Wechsel; Backend-Validierung. Spec: `specs/tagesverfuegbarkeit.md` |
 
 ---
 
@@ -127,10 +128,10 @@
 
 | Status | Anzahl |
 |--------|--------|
-| ✅ Umgesetzt | 28 |
+| ✅ Umgesetzt | 29 |
 | 🔧 Teilweise | 3 |
 | ❌ Offen | 12 |
-| **Gesamt** | **43** |
+| **Gesamt** | **44** |
 
 ### Verbleibende Quick Wins
 1. **H-04** – Skeleton-Klasse an Loading-States anhängen (30 Min)

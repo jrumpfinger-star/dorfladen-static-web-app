@@ -315,6 +315,9 @@
     .shop-checkout-btn:disabled{background:#ccc;cursor:not-allowed}
     .shop-cart-minorder{font-size:12px;color:#dc2626;font-weight:600;margin-bottom:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;display:none}
     .shop-cart-minorder.show{display:block}
+    .shop-cart-unavail{font-size:12px;color:#dc2626;font-weight:600;margin-bottom:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;display:none}
+    .shop-cart-unavail.show{display:block}
+    .shop-cart-item.unavailable{opacity:.55;border-left:3px solid #dc2626}
     .shop-cart-note{width:100%;margin-top:8px;padding:8px 12px;border:1px solid var(--shop-border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:40px}
 
     /* ── Confirm Dialog ── */
@@ -524,6 +527,7 @@
       <span>Gesamt (ca.)</span>
       <span id="shop-cart-total-val">0,00 €</span>
     </div>
+    <div class="shop-cart-unavail" id="shop-cart-unavail"></div>
     <div class="shop-cart-minorder" id="shop-cart-minorder">⚠️ Mindestbestellwert wird geladen…</div>
     <button class="shop-checkout-btn" id="shop-checkout-btn">🛍 Jetzt bestellen</button>
   </div>
@@ -943,6 +947,9 @@
         // Re-render current view with new slot filter
         if(viewMode==='categories') showCategoryOverview();
         else showArticles();
+        renderCart();
+        var ua=checkCartAvailability();
+        if(ua.length) showToast('⚠️ '+ua.length+' Warenkorb-Artikel am gewählten Tag nicht verfügbar');
       }
     });
   }
@@ -993,7 +1000,7 @@
         var key=btn.getAttribute('data-slot-key');
         var parts=key.split('_');
         var found=slots.find(function(s){return s.dateStr===parts[0]&&s.period===parts[1];});
-        if(found){selectedSlot=found;updateBanner();renderSlotPicker();renderCart();}
+        if(found){selectedSlot=found;updateBanner();renderSlotPicker();renderCart();var ua2=checkCartAvailability();if(ua2.length) showToast('⚠️ '+ua2.length+' Warenkorb-Artikel am gewählten Tag nicht verfügbar');}
       });
     });
     // Update storno hint based on selected slot
@@ -1079,6 +1086,18 @@
 
   function cartTotal(){return cart.reduce(function(s,c){var p=c.gewichtsware?(c.vk_base||c.vk):c.vk;return s+p*c.menge;},0);}
 
+  function checkCartAvailability(){
+    if(!selectedSlot||!cart.length) return [];
+    var slotDay=String(selectedSlot.date.getDay());
+    var unavail=[];
+    cart.forEach(function(item){
+      var a=allArticles.find(function(x){return x.artikelnummer===item.artikelnummer;});
+      if(!a) return;
+      if(a.verfuegbare_tage&&a.verfuegbare_tage.split(',').indexOf(slotDay)===-1) unavail.push(item.artikelnummer);
+    });
+    return unavail;
+  }
+
   function renderCart(){
     var body=document.getElementById('shop-cart-body');
     var footer=document.getElementById('shop-cart-footer');
@@ -1090,13 +1109,16 @@
       return;
     }
     var html='';
+    var unavailItems=checkCartAvailability();
     cart.forEach(function(item){
       var calcPrice=item.gewichtsware?(item.vk_base||item.vk):item.vk;
       var price=fmtP(calcPrice*item.menge);
       var step=item.gewichtsware?'50':'1';
       var unit=item.gewichtsware?'g':'Stueck';
       var detail=item.gewichtsware?Math.round(item.menge*1000)+' g x '+fmtP(item.vk_base||item.vk)+' EUR/kg':item.menge+' Stueck x '+fmtP(item.vk)+' EUR';
-      html+='<div class="shop-cart-item">';
+      var isUnavail=unavailItems.indexOf(item.artikelnummer)!==-1;
+      html+='<div class="shop-cart-item'+(isUnavail?' unavailable':'')+'">';
+      if(isUnavail) html+='<div style="font-size:11px;color:#dc2626;font-weight:600;margin-bottom:4px">⚠ Nicht verf\u00fcgbar am gew\u00e4hlten Tag</div>';
       html+='<div class="shop-cart-item-info"><div class="shop-cart-item-name">'+esc(item.bezeichnung)+'</div><div class="shop-cart-item-detail">'+detail+'</div><div style="margin-top:6px"><input type="number" class="shop-qty-input" data-cart-qty="'+esc(item.artikelnummer)+'" value="'+(item.gewichtsware?Math.round(item.menge*1000):item.menge)+'" min="'+step+'" step="'+step+'"> <span style="font-size:11px;color:#6b7280">'+unit+'</span></div></div>';
       html+='<div class="shop-cart-item-price">'+price+' EUR</div>';
       html+='<button class="shop-cart-item-remove" data-remove="'+esc(item.artikelnummer)+'" title="Entfernen">x</button>';
@@ -1120,10 +1142,24 @@
       abholEl.style.display='';
     } else {abholEl.style.display='none';}
 
+    // Verfügbarkeits-Banner
+    var unavailEl=document.getElementById('shop-cart-unavail');
+    var hasUnavail=unavailItems.length>0;
+    if(hasUnavail){
+      unavailEl.textContent='⚠️ '+unavailItems.length+' Artikel nicht am gewählten Tag verfügbar — bitte entfernen oder Abholtermin ändern';
+      unavailEl.classList.add('show');
+    } else {
+      unavailEl.classList.remove('show');
+    }
+
     // Mindestbestellwert (aus CMS-Config oder Default)
     var minEl=document.getElementById('shop-cart-minorder');
     var ckBtn=document.getElementById('shop-checkout-btn');
-    if(total<MINDESTBESTELLWERT){
+    if(hasUnavail){
+      minEl.classList.remove('show');
+      ckBtn.disabled=true;
+      ckBtn.textContent='⚠️ '+unavailItems.length+' Artikel nicht verfügbar';
+    } else if(total<MINDESTBESTELLWERT){
       var diff=MINDESTBESTELLWERT-total;
       minEl.textContent='⚠️ Mindestbestellwert: '+fmtP(MINDESTBESTELLWERT)+' € — noch '+fmtP(diff)+' € benötigt';
       minEl.classList.add('show');
@@ -1376,6 +1412,8 @@
     if(!cart.length){showToast('Warenkorb ist leer');return;}
     if(cartTotal()<MINDESTBESTELLWERT){showToast('⚠️ Mindestbestellwert: '+fmtP(MINDESTBESTELLWERT)+' €');return;}
     if(!selectedSlot){showToast('⚠️ Bitte Abholtermin wählen');return;}
+    var unavail=checkCartAvailability();
+    if(unavail.length){showToast('⚠️ '+unavail.length+' Artikel am gewählten Tag nicht verfügbar');return;}
     var note=document.getElementById('shop-cart-note').value.trim();
     var positionen=cart.map(function(c){
       return{artikelnummer:c.artikelnummer,bezeichnung:c.bezeichnung,menge:c.menge,einheit:c.einheit,einzelpreis:c.gewichtsware?(c.vk_base||c.vk):c.vk,strichcode:c.strichcode||'',gewichtsware:!!c.gewichtsware};
@@ -1522,9 +1560,13 @@
   var articleViewMode=localStorage.getItem('dl_shop_viewmode')||'grid'; // 'grid' or 'list'
 
   function isAvailableForSlot(a){
-    if(!a.gueltig_bis) return true;
     if(!selectedSlot) return true;
-    return a.gueltig_bis>=selectedSlot.dateStr;
+    if(a.gueltig_bis&&a.gueltig_bis<selectedSlot.dateStr) return false;
+    if(a.verfuegbare_tage){
+      var slotDay=selectedSlot.date.getDay();
+      if(a.verfuegbare_tage.split(',').indexOf(String(slotDay))===-1) return false;
+    }
+    return true;
   }
   function visibleArticles(){return allArticles.filter(isAvailableForSlot);}
   function countByCat(cat){return visibleArticles().filter(function(a){return getShopGroup(a.warengruppe)===cat;}).length;}

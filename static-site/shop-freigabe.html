@@ -62,6 +62,10 @@
 .art-date{width:110px}
 .art-date input{width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit}
 .art-actions{display:flex;gap:4px}
+.day-toggles{display:flex;gap:3px;flex-wrap:nowrap}
+.day-btn{width:28px;height:24px;border:1px solid var(--border);border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;background:#f3f4f6;color:var(--muted);transition:.15s;padding:0;line-height:24px;text-align:center}
+.day-btn.on{background:#dcfce7;color:#166534;border-color:#86efac}
+.day-btn:disabled{opacity:.4;cursor:default}
 
 /* ── Image upload overlay ── */
 .img-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;place-items:center}
@@ -83,6 +87,7 @@
 @media(max-width:768px){
   .art-table th:nth-child(4),.art-row td:nth-child(4){display:none}
   .art-table th:nth-child(7),.art-row td:nth-child(7){display:none}
+  .art-table th:nth-child(8),.art-row td:nth-child(8){display:none}
   .art-name{max-width:160px}
   .art-date input{font-size:11px;padding:3px 4px}
 }
@@ -107,6 +112,7 @@
   .art-code{font-size:9px}
   .art-table th:nth-child(5),.art-row td:nth-child(5){display:none}
   .art-table th:nth-child(7),.art-row td:nth-child(7){display:none}
+  .art-table th:nth-child(8),.art-row td:nth-child(8){display:none}
   .batch-bar{padding:8px 10px;gap:8px}
   .batch-bar .btn{padding:6px 10px;font-size:12px}
 }
@@ -244,6 +250,41 @@
     return (f&&f.gueltig_bis)?f.gueltig_bis.substring(0,10):'';
   }
 
+  var DAY_LABELS=['Mo','Di','Mi','Do','Fr','Sa'];
+  var DAY_NUMS=['1','2','3','4','5','6'];
+  var ALL_DAYS_STR='1,2,3,4,5,6';
+
+  function getVerfuegbareTage(sc){
+    var p=pendingChanges[sc];
+    if(p&&p.verfuegbare_tage!==undefined) return p.verfuegbare_tage;
+    var f=freigabeMap[sc];
+    return (f&&f.verfuegbare_tage)||'';
+  }
+
+  function isDayActive(sc,dayNum){
+    var vt=getVerfuegbareTage(sc);
+    if(!vt) return true;
+    return vt.split(',').indexOf(dayNum)!==-1;
+  }
+
+  function dayToggleHtml(sc,disabled){
+    var vt=getVerfuegbareTage(sc);
+    var html='<div class="day-toggles">';
+    for(var i=0;i<DAY_LABELS.length;i++){
+      var on=!vt||vt.split(',').indexOf(DAY_NUMS[i])!==-1;
+      html+='<button type="button" class="day-btn'+(on?' on':'')+'" data-day-sc="'+esc(sc)+'" data-day="'+DAY_NUMS[i]+'"'+(disabled?' disabled':'')+'>'+DAY_LABELS[i]+'</button>';
+    }
+    html+='</div>';
+    return html;
+  }
+
+  function setVerfuegbareTage(sc,tage){
+    if(tage===ALL_DAYS_STR) tage='';
+    pendingChanges[sc]=pendingChanges[sc]||{action:'update'};
+    pendingChanges[sc].verfuegbare_tage=tage;
+    updateSaveBtn();
+  }
+
   // ── Group by Warengruppe ──
   function groupByWarengruppe(articles){
     var groups={};
@@ -296,7 +337,7 @@
       html+='<input type="checkbox" class="wg-cb" data-wg-cb="'+esc(g.name)+'" title="Alle in '+esc(g.name)+'" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;margin-left:6px"'+(allChecked?' checked':'')+'>';
       html+='</div></div>';
       html+='<div class="wg-body"><table class="art-table"><thead><tr>';
-      html+='<th style="width:30px"></th><th style="width:42px">Bild</th><th>Artikel</th><th>Preis</th><th style="width:50px" title="Nur kurz verfügbar">Kurz</th><th style="width:120px">Gültig bis</th><th style="width:30px"></th>';
+      html+='<th style="width:30px"></th><th style="width:42px">Bild</th><th>Artikel</th><th>Preis</th><th style="width:50px" title="Nur kurz verfügbar">Kurz</th><th style="width:120px">Gültig bis</th><th style="min-width:190px">Tage</th><th style="width:30px"></th>';
       html+='</tr></thead><tbody>';
 
       var visible=hasMore?g.items.slice(0,maxVisible):g.items;
@@ -315,11 +356,12 @@
         var kf=isKurzfristig(a.strichcode);
         html+='<td style="text-align:center"><input type="checkbox" class="art-kf" data-kf-sc="'+esc(a.strichcode)+'" title="Nur kurz verfügbar"'+(kf?' checked':'')+(en?'':' disabled')+'></td>';
         html+='<td class="art-date"><input type="date" value="'+esc(gb)+'" data-date-sc="'+esc(a.strichcode)+'" title="Ablaufdatum"'+(en?'':' disabled')+'></td>';
+        html+='<td class="art-days">'+dayToggleHtml(a.strichcode,!en)+'</td>';
         html+='<td></td>';
         html+='</tr>';
       });
       if(hasMore){
-        html+='<tr><td colspan="7" style="text-align:center;padding:8px"><button class="btn small show-all-btn" data-wg="'+esc(g.name)+'">Alle '+(g.items.length)+' anzeigen</button></td></tr>';
+        html+='<tr><td colspan="8" style="text-align:center;padding:8px"><button class="btn small show-all-btn" data-wg="'+esc(g.name)+'">Alle '+(g.items.length)+' anzeigen</button></td></tr>';
       }
       html+='</tbody></table></div></div>';
     });
@@ -433,6 +475,22 @@
       });
     });
 
+    // Day toggle buttons
+    document.querySelectorAll('.day-btn').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var sc=btn.getAttribute('data-day-sc');
+        var day=btn.getAttribute('data-day');
+        var vt=getVerfuegbareTage(sc);
+        var tage=vt?vt.split(',').filter(function(d){return d;}):[].concat(DAY_NUMS);
+        var idx=tage.indexOf(day);
+        if(idx>=0) tage.splice(idx,1); else tage.push(day);
+        tage.sort();
+        setVerfuegbareTage(sc,tage.join(','));
+        btn.classList.toggle('on');
+      });
+    });
+
     // Image click
     document.querySelectorAll('[data-img-sc]').forEach(function(el){
       el.addEventListener('click',function(e){
@@ -477,6 +535,7 @@
         +'<td class="art-price">'+Number(a.preis).toFixed(2)+' €</td>'
         +'<td style="text-align:center"><input type="checkbox" class="art-kf" data-kf-sc="'+esc(a.strichcode)+'" title="Nur kurz verfügbar"'+(isKurzfristig(a.strichcode)?' checked':'')+(en?'':' disabled')+'></td>'
         +'<td class="art-date"><input type="date" value="'+esc(gb)+'" data-date-sc="'+esc(a.strichcode)+'" title="Ablaufdatum"'+(en?'':' disabled')+'></td>'
+        +'<td class="art-days">'+dayToggleHtml(a.strichcode,!en)+'</td>'
         +'<td></td>';
       tbody.appendChild(tr);
     });
@@ -564,6 +623,7 @@
           edeka_nr:p.edeka_nr||''
         };
         if(p.kurzfristig!==undefined) item.kurzfristig=p.kurzfristig;
+        if(p.verfuegbare_tage!==undefined) item.verfuegbare_tage=p.verfuegbare_tage;
         enableItems.push(item);
       }
     });

@@ -275,6 +275,46 @@ def _handle_post(req, dv_token, base_url, headers):
             status_code=400, headers=get_cors_headers()
         )
 
+    # Tagesverfügbarkeit prüfen: Alle bestellten Artikel müssen am Abholtag verfügbar sein
+    if abholslot and isinstance(abholslot, dict) and abholslot.get("datum"):
+        try:
+            abhol_date_obj = datetime.strptime(abholslot["datum"][:10], "%Y-%m-%d")
+            # Python weekday: 0=Mon..6=Sun → JS getDay: 0=Sun,1=Mon..6=Sat
+            py_dow = abhol_date_obj.weekday()  # 0=Mon
+            js_dow = (py_dow + 1) % 7  # 1=Mon..6=Sat, 0=Sun
+            js_dow_str = str(js_dow)
+
+            # Load freigaben to check verfuegbare_tage
+            freigaben_url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_verfuegbare_tage&$filter=dl_aktiv eq true"
+            fr = requests.get(freigaben_url, headers=headers, timeout=15)
+            if fr.status_code == 200:
+                freigaben_map = {}
+                for fg in fr.json().get("value", []):
+                    sc = (fg.get("dl_strichcode") or "").strip()
+                    if sc:
+                        freigaben_map[sc] = (fg.get("dl_verfuegbare_tage") or "").strip()
+
+                unavail_articles = []
+                for pos in clean_positionen:
+                    sc = pos.get("strichcode", "")
+                    if not sc:
+                        continue
+                    vt = freigaben_map.get(sc, "")
+                    if vt and js_dow_str not in vt.split(","):
+                        unavail_articles.append(pos.get("bezeichnung", sc))
+
+                if unavail_articles:
+                    return func.HttpResponse(
+                        json.dumps({
+                            "success": False,
+                            "error": f"Folgende Artikel sind am gewählten Abholtag nicht verfügbar: {', '.join(unavail_articles)}",
+                            "unavailable": unavail_articles
+                        }, ensure_ascii=False),
+                        status_code=400, headers=get_cors_headers()
+                    )
+        except Exception as e:
+            logging.warning(f"[shop-order] Day availability check failed (non-blocking): {e}")
+
     bestellnummer = _generate_bestellnummer()
     now_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
