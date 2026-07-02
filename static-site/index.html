@@ -2165,7 +2165,12 @@ function closeMittagPopup(){
   document.getElementById('mt-popup-overlay').classList.remove('open');
   document.getElementById('mt-popup-iframe').src='';
   if(window.dlUnlockScroll) dlUnlockScroll();
-  // Also clear any inline scroll-lock styles (e.g. from mobLockScroll)
+  // Close underlying mobile popup if open (e.g. lunch popup that triggered the order)
+  if(window.mobClosePopup){
+    var openMob=document.querySelectorAll('.mob-popup-bg.open');
+    openMob.forEach(function(el){var id=(el.id||'').replace('mob-popup-','');if(id)mobClosePopup(id);});
+  }
+  // Clear any remaining inline scroll-lock styles
   document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';
 }
 function openCmsPopup(){
