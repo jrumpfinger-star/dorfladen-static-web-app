@@ -117,6 +117,26 @@ def upload_image(token, folder_id, filename, image_bytes, content_type="image/pn
     return None, None
 
 
+# ---------- auto-push ----------
+
+def _send_auto_push(req, post_titel, category="tagesinfo"):
+    """Fire-and-forget push notification after publishing a post."""
+    try:
+        swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+        protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+        internal_url = f"{protocol}://{swa_host}/api/push-send"
+        push_payload = {
+            "title": post_titel or "Dorfladen Oberornau",
+            "message": "Die heutige TagesInfo ist da! Mittagstisch, Theke & mehr." if category == "tagesinfo" else post_titel,
+            "url": "/",
+            "category": category,
+            "tag": "dorfladen-tagesinfo",
+        }
+        requests.post(internal_url, json=push_payload, timeout=15)
+    except Exception:
+        pass  # Push is best-effort, never block the main response
+
+
 # ---------- handlers ----------
 
 def handle_get(req, token, folder_id):
@@ -225,6 +245,10 @@ def handle_post(req, token, folder_id):
     if not save_posts(token, folder_id, posts):
         return err("Post konnte nicht gespeichert werden", 500)
 
+    # Auto-push when publishing (not for drafts)
+    if req_status == "veroeffentlicht":
+        _send_auto_push(req, post.get("titel", ""), "tagesinfo")
+
     return ok({"success": True, "post": post})
 
 
@@ -245,8 +269,10 @@ def handle_patch(req, token, folder_id):
 
     posts = load_posts(token, folder_id)
     found = None
+    old_status = None
     for p in posts:
         if p.get("id") == post_id:
+            old_status = p.get("status", "veroeffentlicht")
             if new_status:
                 p["status"] = new_status
             if "titel" in body:
@@ -265,6 +291,10 @@ def handle_patch(req, token, folder_id):
 
     if not save_posts(token, folder_id, posts):
         return err("Posts konnten nicht gespeichert werden", 500)
+
+    # Auto-push when draft is published
+    if new_status == "veroeffentlicht" and old_status == "entwurf":
+        _send_auto_push(req, found.get("titel", ""), "tagesinfo")
 
     return ok({"success": True, "post": found})
 

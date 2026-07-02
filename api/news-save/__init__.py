@@ -73,6 +73,24 @@ def get_cors_headers():
     }
 
 
+def _send_auto_push(req, news_titel, category="news"):
+    """Fire-and-forget push notification after publishing a news item."""
+    try:
+        swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+        protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+        internal_url = f"{protocol}://{swa_host}/api/push-send"
+        push_payload = {
+            "title": "Neuigkeit vom Dorfladen",
+            "message": news_titel or "Es gibt Neuigkeiten! Jetzt lesen.",
+            "url": "/aktuelles",
+            "category": category,
+            "tag": "dorfladen-news",
+        }
+        requests.post(internal_url, json=push_payload, timeout=15)
+    except Exception:
+        pass  # Push is best-effort
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -152,6 +170,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     eid = r.headers.get("OData-EntityId", "")
                     if "(" in eid and ")" in eid:
                         new_id = eid.split("(")[-1].rstrip(")")
+                # Auto-push when creating an active news item
+                if status == 101001:
+                    _send_auto_push(req, titel)
                 return func.HttpResponse(
                     json.dumps({"success": True, "action": "created", "id": new_id}, ensure_ascii=False),
                     status_code=200, mimetype="application/json", headers=get_cors_headers()

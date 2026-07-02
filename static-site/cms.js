@@ -3551,7 +3551,7 @@
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
-          toast(_editingNewsId?'Beitrag aktualisiert!':'Beitrag erstellt!','success');
+          toast(_editingNewsId?'Beitrag aktualisiert!':'Beitrag erstellt! Push an News-Abonnenten gesendet.','success');
           var modal=document.getElementById('cms-news-modal');if(modal)modal.remove();
           _newsLoaded=false;loadNews();
         } else {toast('Fehler: '+res.error,'error');}
@@ -10757,7 +10757,7 @@
     fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
     .then(function(){
-      socialStatus('soc-post-status','\u2705 Tagesinfo ver\u00f6ffentlicht \u2013 erscheint auf der Homepage',true);
+      socialStatus('soc-post-status','\u2705 Tagesinfo ver\u00f6ffentlicht \u2013 erscheint auf der Homepage \u00b7 Push an TagesInfo-Abonnenten gesendet',true);
       btns.forEach(function(b){b.innerHTML='<span style="vertical-align:middle;margin-right:6px">\u2705</span> Ver\u00f6ffentlicht!';b.style.opacity='1';b.style.background='#dcfce7';b.style.borderColor='#16a34a';b.style.color='#166534';});
       setTimeout(function(){btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});},3000);
       if(typeof socialLoadTodayPosts==='function') socialLoadTodayPosts();
