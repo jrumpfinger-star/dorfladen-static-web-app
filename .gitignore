@@ -1,4 +1,4 @@
-﻿.dorfladen-app-credentials.json
+.dorfladen-app-credentials.json
 __pycache__/
 *.pyc
 .env
@@ -19,3 +19,5 @@ static-site/js/mockup-shared.js
 static-site/handbuch/page-*.png
 static-site/handbuch/element-*.png
 
+# lokale Wegwerf-/Debug-Skripte
+_*.py
