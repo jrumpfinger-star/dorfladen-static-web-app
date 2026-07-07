@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dorfladen CMS</title>
+<script src="/js/theme.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <!-- Dorfladen CMS - Power Pages Web Template -->
@@ -16,6 +18,7 @@ msalScript.src = 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.0/lib/ms
 msalScript.onload = function() { window.msalLoaded = true; };
 msalScript.onerror = function() { console.warn('MSAL script failed to load - SharePoint images will not work'); };
 document.head.appendChild(msalScript);
+window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});});
 </script>
 <style>
   html,body{overflow-x:hidden;max-width:100vw}
@@ -32,6 +35,23 @@ document.head.appendChild(msalScript);
     background: var(--c-m-bg);
     color: var(--c-m-text);
   }
+  html[data-theme="dark"]{color-scheme:dark;--c-m-bg:#12171a;--c-m-pri:#5cb85f;--c-m-pri-light:#1e2a20;--c-m-sec:#c79b6c;--c-m-sec-light:#241d12;--c-m-text:#e6eae8;--c-m-muted:#9aa6a0}
+  #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-m-card,#fff);color:var(--c-m-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:0}
+  html[data-theme="dark"]{--c-m-card:#1b2228}
+  html[data-theme="dark"] .cms-card,html[data-theme="dark"] .cms-modal,html[data-theme="dark"] .cms-confirm-box,html[data-theme="dark"] .cms-login-box,html[data-theme="dark"] .cms-meal,html[data-theme="dark"] .cms-akt-row,html[data-theme="dark"] .cms-ang-item{background:#1b2228;border-color:#2a333a;color:var(--c-m-text)}
+  html[data-theme="dark"] .cms-input,html[data-theme="dark"] .cms-hours-time,html[data-theme="dark"] .rte-editor,html[data-theme="dark"] .cms-rte-editor,html[data-theme="dark"] .cms-login-box input{background:#12171a;color:var(--c-m-text);border-color:#2a333a}
+  html[data-theme="dark"] .cms-modal-header,html[data-theme="dark"] .cms-modal-footer{background:#161c20;border-color:#2a333a}
+  html[data-theme="dark"] .cms-tabs{border-bottom-color:#2a333a}
+  html[data-theme="dark"] .cms-btn-gray{background:#20272d;color:var(--c-m-text);border-color:#2a333a}
+  html[data-theme="dark"] .cms-news-tbl th{background:#161c20;border-color:#2a333a}
+  html[data-theme="dark"] .cms-news-tbl td{border-color:#2a333a}
+  html[data-theme="dark"] .cms-news-tbl tbody tr:nth-child(even){background:#161c20}
+  html[data-theme="dark"] .cms-news-tbl tbody tr:hover{background:#1e2a20}
+  html[data-theme="dark"] .cms-art-dd{background:#1b2228;border-color:#2a333a}
+  html[data-theme="dark"] .cms-art-opt{border-color:#2a333a}
+  html[data-theme="dark"] .cms-art-opt:hover{background:#1e2a20}
+  html[data-theme="dark"] .cms-art-opt-name{color:var(--c-m-text)}
+  @media (forced-colors: active){.cms-card,.cms-btn,.cms-input,.cms-modal,.cms-tab{border:1px solid CanvasText}}
   .cms-wrap{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;max-width:1000px;margin:0 auto;padding:16px;box-sizing:border-box}
   .cms-wrap input,.cms-wrap textarea,.cms-wrap select,.cms-wrap button,.cms-modal input,.cms-modal textarea,.cms-modal select,.cms-modal button,.cms-modal-bg input,.cms-modal-bg textarea,.cms-modal-bg select,.cms-modal-bg button,.cms-btn,.cms-input{font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
   .cms-tabs-wrap{margin-bottom:20px}
@@ -692,7 +712,7 @@ document.head.appendChild(msalScript);
         <button class="cms-week-quick" data-action="weekThis">Diese Woche</button>
         <button class="cms-week-quick" data-action="weekNxt">N&auml;chste Woche</button>
       </div>
-      <div style="display:flex;gap:8px"><button class="cms-btn-preview" data-action="previewWP"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button><button class="cms-btn cms-btn-gray" data-action="printWP" style="padding:4px 10px;font-size:11px">&#x1F5A8;&#xFE0F; Drucken</button><button class="cms-btn-wa" data-action="shareWP"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Teilen</button><button class="cms-btn cms-btn-primary" data-action="openAddMeal">+ Gericht</button><button class="cms-btn cms-btn-gray" onclick="cmsTab('help'); cmsSwitchHelpTopic('wp-help')" title="Wochenplan Hilfe" style="padding:4px 10px;font-size:14px;background:#e8f5e9;color:#16a34a;border-color:#c8e6c9">❓</button></div>
+      <div style="display:flex;gap:8px"><button class="cms-btn-preview" data-action="previewWP"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button><button class="cms-btn cms-btn-gray" data-action="printWP" style="padding:4px 10px;font-size:11px">&#x1F5A8;&#xFE0F; Drucken</button><button class="cms-btn-wa" data-action="shareWP"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Teilen</button><button class="cms-btn cms-btn-primary" data-action="openAddMeal">+ Gericht</button><button class="cms-btn cms-btn-gray" onclick="cmsTab('help'); cmsSwitchHelpTopic('wp-help')" title="Wochenplan Hilfe" style="padding:4px 10px;font-size:14px;background:#e8f5e9;color:#16a34a;border-color:#c8e6c9"><i data-lucide="circle-help" style="width:14px;height:14px;vertical-align:-2px"></i></button></div>
     </div>
     <div id="cms-wp-loading" style="display:none;text-align:center;padding:40px 0">
       <div style="display:inline-block;width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#2e7d32;border-radius:50%;animation:cms-spin 0.8s linear infinite"></div>
@@ -779,7 +799,7 @@ document.head.appendChild(msalScript);
   <div id="cms-panel-sort" style="display:none">
     <div class="cms-flex cms-between" style="margin-bottom:12px">
       <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0;display:flex;align-items:center;gap:6px">Sortiment-Seite <span onclick="cmsTab('help'); cmsSwitchHelpTopic('sort-help')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700">?</span></h3>
-      <button class="cms-btn cms-btn-gray" id="sort-edit-toggle" onclick="sortToggleEdit()">✏️ Bearbeiten</button>
+      <button class="cms-btn cms-btn-gray" id="sort-edit-toggle" onclick="sortToggleEdit()"><i data-lucide="pencil" style="width:13px;height:13px;vertical-align:-2px"></i> Bearbeiten</button>
     </div>
 
     <!-- === VIEW MODE (rendered HTML) === -->
@@ -821,8 +841,8 @@ document.head.appendChild(msalScript);
               <button class="rte-btn" onclick="sortRteCmd('sort-rte-intro','bold')" title="Fett"><b>F</b></button>
               <button class="rte-btn" onclick="sortRteCmd('sort-rte-intro','italic')" title="Kursiv"><i>K</i></button>
               <span class="rte-sep"></span>
-              <button class="rte-btn" onclick="sortRteLink('sort-rte-intro')" title="Link einfügen">🔗</button>
-              <button class="rte-btn" onclick="sortRteUnlink('sort-rte-intro')" title="Link entfernen">🚫</button>
+              <button class="rte-btn" onclick="sortRteLink('sort-rte-intro')" title="Link einfügen"><i data-lucide="link" style="width:13px;height:13px"></i></button>
+              <button class="rte-btn" onclick="sortRteUnlink('sort-rte-intro')" title="Link entfernen"><i data-lucide="unlink" style="width:13px;height:13px"></i></button>
             </div>
             <div class="rte-editor" id="sort-rte-intro" contenteditable="true"></div>
           </div>
@@ -845,7 +865,7 @@ document.head.appendChild(msalScript);
               <button class="rte-btn" onclick="sortRteCmd('sort-rte-eco','bold')" title="Fett"><b>F</b></button>
               <button class="rte-btn" onclick="sortRteCmd('sort-rte-eco','italic')" title="Kursiv"><i>K</i></button>
               <span class="rte-sep"></span>
-              <button class="rte-btn" onclick="sortRteLink('sort-rte-eco')" title="Link einfügen">🔗</button>
+              <button class="rte-btn" onclick="sortRteLink('sort-rte-eco')" title="Link einfügen"><i data-lucide="link" style="width:13px;height:13px"></i></button>
             </div>
             <div class="rte-editor" id="sort-rte-eco" contenteditable="true"></div>
           </div>
@@ -853,7 +873,7 @@ document.head.appendChild(msalScript);
       </div>
 
       <div style="position:sticky;bottom:0;z-index:100;background:#fff;border-top:1px solid #e5e7eb;padding:10px 0;margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-        <button class="cms-btn cms-btn-primary" onclick="sortSave()">💾 Speichern</button>
+        <button class="cms-btn cms-btn-primary" onclick="sortSave()"><i data-lucide="save" style="width:13px;height:13px;vertical-align:-2px"></i> Speichern</button>
         <button class="cms-btn cms-btn-gray" onclick="sortToggleEdit()">Abbrechen</button>
         <span id="sort-cms-status" style="font-size:12px;color:#6b7280;line-height:32px"></span>
       </div>
@@ -2779,7 +2799,7 @@ document.head.appendChild(msalScript);
   <!-- Bestellungen-Bereich -->
   <div id="cms-panel-orders" style="display:none">
     <div class="cms-card">
-      <div class="cms-card-header">🛍 Bestellungen verwalten</div>
+      <div class="cms-card-header"><i data-lucide="shopping-bag" style="width:14px;height:14px;vertical-align:-2px"></i> Bestellungen verwalten</div>
       <div class="cms-card-body">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
           <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -2791,11 +2811,11 @@ document.head.appendChild(msalScript);
               <option value="3">Abgeholt</option>
               <option value="4">Storniert</option>
             </select>
-            <button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadOrders()">🔄 Aktualisieren</button>
+            <button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadOrders()"><i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:-2px"></i> Aktualisieren</button>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <a href="/shop.html" target="_blank" class="cms-btn cms-btn-sm" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;text-decoration:none">🛒 Shop öffnen</a>
-            <button class="cms-btn cms-btn-sm" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0" onclick="cmsPrintOrders()">🖨 Kommissionierliste drucken</button>
+            <a href="/shop.html" target="_blank" class="cms-btn cms-btn-sm" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;text-decoration:none"><i data-lucide="shopping-cart" style="width:13px;height:13px;vertical-align:-2px"></i> Shop öffnen</a>
+            <button class="cms-btn cms-btn-sm" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0" onclick="cmsPrintOrders()"><i data-lucide="printer" style="width:13px;height:13px;vertical-align:-2px"></i> Kommissionierliste drucken</button>
           </div>
         </div>
         <div id="cms-orders-list" style="font-size:13px">
@@ -2836,9 +2856,9 @@ document.head.appendChild(msalScript);
       </div>
     </div>
     <div class="cms-card">
-      <div class="cms-card-header">👥 Registrierte Kunden</div>
+      <div class="cms-card-header"><i data-lucide="users" style="width:14px;height:14px;vertical-align:-2px"></i> Registrierte Kunden</div>
       <div class="cms-card-body">
-        <div style="margin-bottom:12px"><button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadKunden()">🔄 Kunden laden</button></div>
+        <div style="margin-bottom:12px"><button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadKunden()"><i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:-2px"></i> Kunden laden</button></div>
         <div id="cms-kunden-list" style="font-size:13px">
           <p style="color:#6b7280;text-align:center;padding:20px">Klicken Sie "Kunden laden" um die Kundenliste anzuzeigen</p>
         </div>

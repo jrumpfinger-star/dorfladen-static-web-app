@@ -106,11 +106,28 @@
 - Layout nutzt den **verfügbaren Platz sinnvoll** (kein verschenkter Platz auf Desktop)
 - **Kein horizontales Scrollen**
 - Zweizeilige Layouts verwenden wenn einzeilig den Text abschneidet
+- **Lesbarkeit für 60+ Nutzer:innen**: Texte müssen auf ihrem Hintergrund klar erkennbar sein
+   (kein „grau auf grau“, kein zu dünner Font, keine zu kleine Schrift)
+
+### Verbindliche Lesbarkeitsregeln (Pflicht)
+
+- Fließtext und Labels: mindestens `16px` auf Mobile, mindestens `15px` auf Desktop
+- Wichtige UI-Texte (Buttons, Status, Hinweise, Popup-Titel/-Text): mindestens WCAG AA Kontrast
+   (Normaltext `4.5:1`, große Schrift `3:1`)
+- Keine alleinige Farbcodierung ohne Text/Label (z. B. Status nur „rot/grün" ist unzulässig)
+- In Dark Mode und Light Mode separat prüfen
+- System-/OS-Kontrastmodi berücksichtigen (`forced-colors`, `prefers-contrast`)
+- In `forced-colors: active` dürfen Texte/Icons/Buttons nicht „verschwinden";
+   bei Bedarf Systemfarben (`Canvas`, `CanvasText`, `ButtonText`, `LinkText`) nutzen
 
 ### Umsetzung:
 - Screenshots auf allen drei Viewports erstellen und im Chat zeigen
 - Bei Playwright-Tests: `page.setViewportSize()` für verschiedene Viewports nutzen
 - Automatisierte Viewport-Tests in `tests/*.spec.js` anlegen wo sinnvoll
+- Zusätzlich pro geändertem Screen mindestens ein Lesbarkeits-Check:
+   - visuell (Text auf Hintergrund klar lesbar)
+   - technisch (Kontrastprüfung der kritischen Textelemente)
+   - High-Contrast-Check (`forced-colors`) für kritische Flows
 
 ---
 
@@ -226,6 +243,8 @@ function dlUnlockScroll() {
 - [ ] **Mobile** — Eingabefelder min. 40px Höhe, Touch-Targets min. 44px, kein horizontaler Overflow
 - [ ] **iPad** — Formulare und Tabellen brechen sauber um, keine abgeschnittenen Elemente
 - [ ] **Desktop** — Layout nutzt verfügbaren Platz, keine unnötig großen Lücken
+- [ ] **Lesbarkeit 60+** — alle Texte klar gegen den Hintergrund (Light + Dark Mode)
+- [ ] **Kontrast** — kritische Textelemente erfüllen mindestens WCAG AA
 
 ### Testen mit Browser-DevTools:
 

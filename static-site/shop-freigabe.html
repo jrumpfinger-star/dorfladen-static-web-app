@@ -4,12 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Dorfladen – Artikelfreigabe</title>
+<script src="/js/theme.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
-:root{--green:#2e7d4f;--green2:#1f5c39;--bg:#f4f7f5;--card:#fff;--border:#dfe7e2;--text:#24352b;--muted:#6b7f72;--warn:#f59e0b;--red:#dc2626;--blue:#2563eb}
+:root{--green:#2e7d4f;--green2:#1f5c39;--bg:#f4f7f5;--card:#fff;--border:#dfe7e2;--text:#24352b;--muted:#6b7f72;--warn:#f59e0b;--red:#dc2626;--blue:#2563eb;--surf2:#f9fafb;--tint:#e9f5ee}
+html[data-theme="dark"]{color-scheme:dark;--bg:#12171a;--card:#1b2228;--border:#2a333a;--text:#e6eae8;--muted:#9aa6a0;--green:#5cb85f;--surf2:#161c20;--tint:#1e2a20}
+#dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);padding:0;transition:transform .15s}
+#dl-theme-toggle:hover{transform:scale(1.08)}
+html[data-theme="dark"] .top,html[data-theme="dark"] .toolbar{background:var(--card)}
+html[data-theme="dark"] .brand-icon{background:var(--tint)}
+html[data-theme="dark"] .btn{background:var(--card)}
+html[data-theme="dark"] .search{background:var(--card);color:var(--text)}
+html[data-theme="dark"] .art-table th{background:var(--surf2)}
+html[data-theme="dark"] .art-row td{border-color:var(--border)}
+html[data-theme="dark"] .art-row.enabled{background:var(--tint)}
+html[data-theme="dark"] .wg-head{background:var(--surf2)}
+html[data-theme="dark"] .art-img-empty{background:var(--surf2);color:var(--muted)}
+html[data-theme="dark"] input[type=date]{background:var(--card);color:var(--text);border-color:var(--border)}
+@media (forced-colors: active){.btn,.art-row,.wg{border:1px solid CanvasText}}
 *{box-sizing:border-box;margin:0}html,body{overflow-x:clip}body{background:var(--bg);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text)}
 
 /* ── Top bar ── */
-.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.04);max-width:960px;margin:0 auto;width:100%}
+.top{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.04);max-width:960px;margin:0 auto;width:100%}
 .brand{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--green);font-size:15px}
 .brand-icon{width:34px;height:34px;border-radius:10px;background:#e9f5ee;display:grid;place-items:center;font-size:20px}
 .spacer{flex:1}
@@ -20,7 +36,7 @@
 .btn.red{color:var(--red);border-color:var(--red)}.btn.red:hover{background:#fef2f2}
 
 /* ── Toolbar ── */
-.toolbar{position:sticky;top:57px;z-index:15;background:#fff;border-bottom:1px solid var(--border);padding:8px 18px;display:flex;align-items:center;gap:8px;max-width:960px;margin:0 auto;width:100%}
+.toolbar{position:sticky;top:57px;z-index:15;background:var(--card);border-bottom:1px solid var(--border);padding:8px 18px;display:flex;align-items:center;gap:8px;max-width:960px;margin:0 auto;width:100%}
 .search-wrap{position:relative;width:220px;flex-shrink:0}
 .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
 .search{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 30px 8px 32px;font-size:13px;outline:none;box-sizing:border-box}
@@ -120,7 +136,7 @@
 </head>
 <body>
 <div class="top">
-  <div class="brand"><div class="brand-icon">🛒</div><div>Artikelfreigabe</div></div>
+  <div class="brand"><div class="brand-icon"><i data-lucide="shopping-cart" style="width:18px;height:18px"></i></div><div>Artikelfreigabe</div></div>
   <div class="spacer"></div>
   <a class="btn small" href="/shop-admin">Bestellungen</a>
   <a class="btn small" href="/cms">CMS</a>
@@ -128,7 +144,7 @@
 
 <div class="toolbar">
   <button class="filter-btn active" data-filter="enabled">Freigegeben</button>
-  <button class="filter-btn fb-kurz" data-filter="kurz">⏳ Nur kurz</button>
+  <button class="filter-btn fb-kurz" data-filter="kurz"><i data-lucide="clock" style="width:13px;height:13px;vertical-align:-2px"></i> Nur kurz</button>
   <button class="filter-btn" data-filter="disabled">Nicht freigegeben</button>
   <div class="stats" id="stats">Lade…</div>
   <div class="search-wrap">
@@ -159,7 +175,7 @@
     <h3 id="img-title">Produktbild</h3>
     <img class="img-preview" id="img-preview" src="" alt="Vorschau" style="display:none">
     <div class="img-drop" id="img-drop">
-      📷 Bild hierhin ziehen oder klicken
+      <i data-lucide="camera" style="width:16px;height:16px;vertical-align:-3px"></i> Bild hierhin ziehen oder klicken
       <input type="file" id="img-file" accept="image/*" style="display:none">
     </div>
     <div class="img-actions">
@@ -188,6 +204,8 @@
   var imgCache={};  // strichcode → base64/url
 
   function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+  function luc(n,s){return '<i data-lucide="'+n+'" style="width:'+(s||14)+'px;height:'+(s||14)+'px"></i>';}
+  function lreinit(){if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});}
   function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';},2500);}
 
   // ── Load data ──
@@ -349,7 +367,7 @@
         html+='<td><input type="checkbox" class="art-cb" data-sc="'+esc(a.strichcode)+'"'+(en?' checked':'')+'></td>';
         var imgHtml=imgCache[a.strichcode]
         ?'<img class="art-img" data-img-sc="'+esc(a.strichcode)+'" src="'+imgCache[a.strichcode]+'" title="Bild bearbeiten">'
-        :'<div class="art-img-empty" data-img-sc="'+esc(a.strichcode)+'" id="fimg-'+esc(a.strichcode)+'" title="Bild bearbeiten">📷</div>';
+        :'<div class="art-img-empty" data-img-sc="'+esc(a.strichcode)+'" id="fimg-'+esc(a.strichcode)+'" title="Bild bearbeiten">'+luc('camera',16)+'</div>';
       html+='<td>'+imgHtml+'</td>';
         html+='<td><div class="art-name">'+esc(a.bezeichnung)+'</div><div class="art-code">'+esc(a.strichcode)+(a.edeka_nr?' · '+esc(a.edeka_nr):'')+'</div></td>';
         html+='<td class="art-price">'+Number(a.preis).toFixed(2)+' €</td>';
@@ -366,6 +384,7 @@
       html+='</tbody></table></div></div>';
     });
     wrap.innerHTML=html;
+    lreinit();
     bindEvents();
     // Load images only for articles in open groups
     var rendered=[];
@@ -528,7 +547,7 @@
       tr.setAttribute('data-sc',a.strichcode);
       var eImgHtml=imgCache[a.strichcode]
         ?'<img class="art-img" data-img-sc="'+esc(a.strichcode)+'" src="'+imgCache[a.strichcode]+'" title="Bild bearbeiten">'
-        :'<div class="art-img-empty" data-img-sc="'+esc(a.strichcode)+'" id="fimg-'+esc(a.strichcode)+'" title="Bild bearbeiten">📷</div>';
+        :'<div class="art-img-empty" data-img-sc="'+esc(a.strichcode)+'" id="fimg-'+esc(a.strichcode)+'" title="Bild bearbeiten">'+luc('camera',16)+'</div>';
       tr.innerHTML='<td><input type="checkbox" class="art-cb" data-sc="'+esc(a.strichcode)+'"'+(en?' checked':'')+'></td>'
         +'<td>'+eImgHtml+'</td>'
         +'<td><div class="art-name">'+esc(a.bezeichnung)+'</div><div class="art-code">'+esc(a.strichcode)+(a.edeka_nr?' · '+esc(a.edeka_nr):'')+'</div></td>'
@@ -539,6 +558,7 @@
         +'<td></td>';
       tbody.appendChild(tr);
     });
+    lreinit();
     bindEvents();
     loadImagesAppend(articles.slice(existing));
   }
@@ -600,7 +620,7 @@
       }
     });
     if(missingDate.length){
-      dlConfirm({icon:'⚠️',title:'Kein Ablaufdatum',msg:missingDate.join(', ')+' \u2013 ohne Datum unbegrenzt sichtbar. Trotzdem speichern?',ok:'Trotzdem speichern',cancel:'Abbrechen',color:'#d97706'},function(){doSave();});
+      dlConfirm({icon:'warn',title:'Kein Ablaufdatum',msg:missingDate.join(', ')+' – ohne Datum unbegrenzt sichtbar. Trotzdem speichern?',ok:'Trotzdem speichern',cancel:'Abbrechen',color:'#d97706'},function(){doSave();});
       return;
     }
     doSave();
@@ -860,6 +880,7 @@
   });
 
   // ── Init ──
+  lreinit();
   loadData();
 })();
 </script>

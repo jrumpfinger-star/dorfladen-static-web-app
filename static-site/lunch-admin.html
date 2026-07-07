@@ -4,8 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mittagstisch-Bestellungen – Dorfladen</title>
+  <script src="/js/theme.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    :root{--c-pri:#2d5016;--c-green:#2e7d4f;--c-red:#dc2626;--c-bg:#f5f5f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--radius:12px}
+    :root{--c-pri:#2d5016;--c-green:#2e7d4f;--c-red:#dc2626;--c-bg:#f5f5f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--radius:12px;--c-border:#e5e7eb;--c-surf2:#f3f4f6}
+    html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-green:#5cb85f;--c-border:#2a333a;--c-surf2:#161c20}
+    #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-card);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);padding:0;transition:transform .15s}
+    #dl-theme-toggle:hover{transform:scale(1.08)}
+    html[data-theme="dark"] .toolbar{background:var(--c-card);border-bottom-color:var(--c-border)}
+    html[data-theme="dark"] .toolbar input[type=date],html[data-theme="dark"] .toolbar select{background:var(--c-card);color:var(--c-text);border-color:var(--c-border)}
+    html[data-theme="dark"] .stat{background:var(--c-card)}
+    html[data-theme="dark"] .order-card{background:var(--c-card)}
+    html[data-theme="dark"] .order-detail{border-top-color:var(--c-border)}
+    html[data-theme="dark"] .detail-row{border-color:var(--c-border)}
+    html[data-theme="dark"] .reply-input{background:var(--c-card);color:var(--c-text);border-color:var(--c-border)}
+    /* JS-Inline-Popups (Storno) im Dark Mode */
+    html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"]{background:var(--c-card)!important;color:var(--c-text)!important}
+    html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"] textarea,html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"] input{background:#12171a!important;color:var(--c-text)!important;border-color:var(--c-border)!important}
+    html[data-theme="dark"] [style*="border:1px solid #dfe7e2;border-radius:10px;background:#fff"]{background:var(--c-surf2)!important;color:var(--c-text)!important;border-color:var(--c-border)!important}
+    html[data-theme="dark"] [style*="border:2px solid #e5e7eb"]{border-color:var(--c-border)!important}
+    @media (forced-colors: active){.order-card,.stat,.action-btn{border:1px solid CanvasText}}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--c-bg);color:var(--c-text)}
 
@@ -20,7 +38,7 @@
     .toolbar .print-btn{padding:8px 14px;background:#374151;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
 
     .stats{display:flex;gap:12px;padding:12px 16px;flex-wrap:wrap}
-    .stat{background:#fff;border-radius:10px;padding:12px 16px;flex:1;min-width:100px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .stat{background:var(--c-card);border-radius:10px;padding:12px 16px;flex:1;min-width:100px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
     .stat-val{font-size:24px;font-weight:800}
     .stat-label{font-size:11px;color:var(--c-muted);font-weight:600;text-transform:uppercase}
     .stat.green .stat-val{color:var(--c-green)}
@@ -70,23 +88,23 @@
 <body>
 
 <div class="header">
-  <h1>🍽 Mittagstisch-Bestellungen</h1>
-  <a href="/kiosk" style="color:#fff;text-decoration:none;font-size:13px;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:8px;font-weight:700">🏪 Kiosk</a>
+  <h1><i data-lucide="utensils" style="width:18px;height:18px;vertical-align:-3px"></i> Mittagstisch-Bestellungen</h1>
+  <a href="/kiosk" style="color:#fff;text-decoration:none;font-size:13px;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:8px;font-weight:700"><i data-lucide="monitor" style="width:14px;height:14px;vertical-align:-2px"></i> Kiosk</a>
   <a href="/">← Startseite</a>
 </div>
 
 <div class="toolbar">
   <input type="date" id="filter-date" title="Datum filtern">
-  <select id="filter-status">
+  <select id="filter-status" title="Status filtern" aria-label="Status filtern">
     <option value="">Alle Status</option>
-    <option value="0">🟡 Neu</option>
-    <option value="1">✅ Bestätigt</option>
-    <option value="2">❌ Storniert</option>
-    <option value="3">✔ Abgeholt</option>
+    <option value="0">Neu</option>
+    <option value="1">Bestätigt</option>
+    <option value="2">Storniert</option>
+    <option value="3">Abgeholt</option>
   </select>
-  <button class="refresh-btn" onclick="loadOrders()">🔄 Aktualisieren</button>
-  <button class="print-btn" onclick="window.print()">🖨 Drucken</button>
-  <button class="print-btn" onclick="exportLunchCSV()" title="CSV-Export">📥 CSV</button>
+  <button class="refresh-btn" onclick="loadOrders()"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:-2px"></i> Aktualisieren</button>
+  <button class="print-btn" onclick="window.print()"><i data-lucide="printer" style="width:14px;height:14px;vertical-align:-2px"></i> Drucken</button>
+  <button class="print-btn" onclick="exportLunchCSV()" title="CSV-Export"><i data-lucide="download" style="width:14px;height:14px;vertical-align:-2px"></i> CSV</button>
 </div>
 
 <div class="stats" id="stats-row"></div>
@@ -110,6 +128,7 @@
     return dt.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   }
   function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+  function icon(name,size){return '<i data-lucide="'+name+'" style="width:'+(size||14)+'px;height:'+(size||14)+'px;vertical-align:-2px"></i>';}
 
   // Anwenderfreundliche, zentrierte Kurzmeldung (statt native alert)
   function laToast(msg,type){
@@ -152,7 +171,7 @@
     if(status !== '') params.push('status=' + status);
     if(params.length) url += '?' + params.join('&');
 
-    document.getElementById('orders-list').innerHTML = '<div class="empty">⏳ Laden…</div>';
+    document.getElementById('orders-list').innerHTML = '<div class="empty">Laden…</div>';
 
     fetch(url)
       .then(function(r){return r.json();})
@@ -193,7 +212,7 @@
     var html = '';
     orders.forEach(function(o,idx){
       var statusBadge = '<span class="order-badge ' + (BADGE_CLASSES[o.status]||'') + '">' + (STATUS_LABELS[o.status]||'?') + '</span>';
-      var mitnehmenBadge = o.mitnehmen ? ' <span class="order-mitnehmen">📦 Mitnehmen</span>' : '';
+      var mitnehmenBadge = o.mitnehmen ? ' <span class="order-mitnehmen">'+icon('package',12)+' Mitnehmen</span>' : '';
 
       html += '<div class="order-card status-' + o.status + '">';
       html += '<div class="order-top" onclick="toggleDetail(' + idx + ')">';
@@ -216,19 +235,20 @@
       if(o.status === 0){
         html += '<input class="reply-input" id="reply-' + idx + '" placeholder="Optionale Rückmeldung an Kunden…">';
         html += '<div class="action-row">';
-        html += '<button class="action-btn btn-confirm" onclick="updateStatus(' + idx + ',1)">✅ Bestätigen</button>';
-        html += '<button class="action-btn btn-cancel" onclick="showStornoDialog(' + idx + ')">❌ Stornieren</button>';
+        html += '<button class="action-btn btn-confirm" onclick="updateStatus(' + idx + ',1)">'+icon('check-circle',14)+' Bestätigen</button>';
+        html += '<button class="action-btn btn-cancel" onclick="showStornoDialog(' + idx + ')">'+icon('x-circle',14)+' Stornieren</button>';
         html += '</div>';
       } else if(o.status === 1){
         html += '<div class="action-row">';
-        html += '<button class="action-btn btn-done" onclick="updateStatus(' + idx + ',3)">✔ Abgeholt</button>';
-        html += '<button class="action-btn btn-cancel" onclick="showStornoDialog(' + idx + ')">❌ Stornieren</button>';
+        html += '<button class="action-btn btn-done" onclick="updateStatus(' + idx + ',3)">'+icon('package-check',14)+' Abgeholt</button>';
+        html += '<button class="action-btn btn-cancel" onclick="showStornoDialog(' + idx + ')">'+icon('x-circle',14)+' Stornieren</button>';
         html += '</div>';
       }
 
       html += '</div></div>';
     });
     document.getElementById('orders-list').innerHTML = html;
+    if(window.lucide) lucide.createIcons({nameAttr:'data-lucide'});
   }
 
   window.toggleDetail = function(idx){
@@ -321,6 +341,7 @@
 
   // Initial load
   loadOrders();
+  if(window.lucide) lucide.createIcons({nameAttr:'data-lucide'});
 })();
 </script>
 <script src="/js/env-banner.js"></script>

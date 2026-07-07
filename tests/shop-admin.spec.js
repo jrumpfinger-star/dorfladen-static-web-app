@@ -57,7 +57,6 @@ test.describe('Shop-Admin – Grundlagen', () => {
     await page.goto(ADMIN_URL);
     await expect(page.locator('#scan-btn')).toBeAttached();
   });
-
   test('Aktualisieren-Button vorhanden', async ({ page }) => {
     await page.goto(ADMIN_URL);
     await expect(page.locator('#refresh-btn')).toBeAttached();

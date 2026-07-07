@@ -6,7 +6,34 @@
   <title>Kiosk – Dorfladen Oberornau</title>
   <link rel="icon" href="/favicon.ico">
   <style>
-    :root{--c-pri:#2d5016;--c-green:#2e7d4f;--c-green-light:#dcfce7;--c-red:#dc2626;--c-orange:#e65100;--c-yellow:#f59e0b;--c-bg:#f0f2f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--c-border:#e5e7eb;--radius:14px;--touch-min:56px}
+    :root{--c-pri:#2d5016;--c-green:#2e7d4f;--c-green-light:#dcfce7;--c-red:#dc2626;--c-orange:#e65100;--c-yellow:#f59e0b;--c-bg:#f0f2f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--c-border:#e5e7eb;--radius:14px;--touch-min:56px;--c-surf2:#f9fafb;--c-tint:#f0fdf4}
+    html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-border:#2a333a;--c-green:#5cb85f;--c-green-light:#1e2a20;--c-surf2:#161c20;--c-tint:#1e2a20}
+    #dl-theme-toggle{position:fixed;left:12px;bottom:12px;z-index:9998;width:42px;height:42px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-card);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:0}
+    html[data-theme="dark"] .k-tabs{background:var(--c-card)}
+    html[data-theme="dark"] .k-tab:hover{background:var(--c-surf2)}
+    html[data-theme="dark"] .k-tab.active{background:var(--c-tint)}
+    html[data-theme="dark"] .k-order{background:var(--c-card)}
+    html[data-theme="dark"] .k-order-hdr:active{background:var(--c-surf2)}
+    html[data-theme="dark"] .k-stat{background:var(--c-surf2)}
+    html[data-theme="dark"] .k-modal{background:var(--c-card);color:var(--c-text)}
+    html[data-theme="dark"] .k-modal-close{background:var(--c-surf2);color:var(--c-text)}
+    html[data-theme="dark"] .k-field input,html[data-theme="dark"] .k-field textarea,html[data-theme="dark"] .k-field select{background:var(--c-card);color:var(--c-text);border-color:var(--c-border)}
+    html[data-theme="dark"] .k-filter-bar,html[data-theme="dark"] .k-hist-bar{background:var(--c-card)}
+    html[data-theme="dark"] .k-filter-btn .k-filter-count{background:var(--c-surf2);color:var(--c-muted)}
+    html[data-theme="dark"] .k-hist-pill{background:var(--c-card)}
+    html[data-theme="dark"] .k-search-results{background:var(--c-card)}
+    html[data-theme="dark"] .k-search-item:hover{background:var(--c-surf2)}
+    html[data-theme="dark"] .k-dish-sep-row{background:linear-gradient(90deg,#1e2a20,#18231b);border-color:#2f5d42}
+    html[data-theme="dark"] .k-dish-sep-label,html[data-theme="dark"] .k-dish-sep-arrow{color:#8fd6ad}
+    html[data-theme="dark"] .k-day-pill:not(.active):hover{background:var(--c-surf2)}
+    html[data-theme="dark"] .pk-item.packed{background:var(--c-tint)}
+    html[data-theme="dark"] .k-btn-outline{background:var(--c-card);color:var(--c-text)}
+    /* JS-Inline-Popups (Storno) im Dark Mode */
+    html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"]{background:var(--c-card)!important;color:var(--c-text)!important}
+    html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"] textarea,html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"] input{background:#12171a!important;color:var(--c-text)!important;border-color:var(--c-border)!important}
+    html[data-theme="dark"] [style*="border:1px solid #dfe7e2;border-radius:10px;background:#fff"]{background:var(--c-surf2)!important;color:var(--c-text)!important;border-color:var(--c-border)!important}
+    html[data-theme="dark"] [style*="border:2px solid #e5e7eb"]{border-color:var(--c-border)!important}
+    @media (forced-colors: active){.k-order,.k-modal,.k-btn,.k-tab,.k-stat{border:1px solid CanvasText}}
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;overflow:hidden;touch-action:manipulation}
     body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);display:flex;flex-direction:column;user-select:none}
@@ -566,6 +593,7 @@
       #k-sparkline{width:120px;height:40px}
     }
   </style>
+  <script src="/js/theme.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -641,8 +669,8 @@
       <button class="k-hist-pill" data-range="all" onclick="K.setHistRange('all')">Alle</button>
       <div class="k-hist-sep"></div>
       <button class="k-hist-pill st-done active" data-hstatus="all" onclick="K.setHistStatus('all')">Alle</button>
-      <button class="k-hist-pill st-done" data-hstatus="3" onclick="K.setHistStatus('3')">✅ Abgeholt</button>
-      <button class="k-hist-pill st-cancel" data-hstatus="4" onclick="K.setHistStatus('4')">❌ Storniert</button>
+      <button class="k-hist-pill st-done" data-hstatus="3" onclick="K.setHistStatus('3')"><i data-lucide="check-circle" style="width:13px;height:13px;vertical-align:-2px"></i> Abgeholt</button>
+      <button class="k-hist-pill st-cancel" data-hstatus="4" onclick="K.setHistStatus('4')"><i data-lucide="x-circle" style="width:13px;height:13px;vertical-align:-2px"></i> Storniert</button>
     </div>
     <div class="k-stats" id="abhol-stats" style="margin-bottom:8px"></div>
     <div id="abhol-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
@@ -1155,7 +1183,7 @@
     <div class="k-modal-body" id="detail-body" style="padding:16px 24px"></div>
     <div class="k-modal-footer" style="flex-wrap:wrap;gap:6px">
       <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-detail')">Schließen</button>
-      <button class="k-btn k-btn-lg" style="flex:1;background:#dc2626;color:#fff" id="detail-delete-btn" onclick="K.deleteShopOrder()">🗑 Löschen</button>
+      <button class="k-btn k-btn-lg" style="flex:1;background:#dc2626;color:#fff" id="detail-delete-btn" onclick="K.deleteShopOrder()"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:-3px"></i> Löschen</button>
     </div>
   </div>
 </div>
@@ -2400,7 +2428,7 @@ var K = (function(){
   }
 
   function deleteKunde(id, name){
-    dlConfirm({icon:'👤',title:'Kunde deaktivieren?',msg:'«'+name+'» wird deaktiviert.',ok:'Deaktivieren',color:'#dc2626'},function(){
+    dlConfirm({icon:'user',title:'Kunde deaktivieren?',msg:'«'+name+'» wird deaktiviert.',ok:'Deaktivieren',color:'#dc2626'},function(){
       fetch(API+'/stammkunden/'+id,{method:'DELETE'})
       .then(function(r){return r.json();})
       .then(function(res){
@@ -2899,14 +2927,14 @@ var K = (function(){
     if(currentStatus<=0 || currentStatus>=4) return;
     var prev = currentStatus - 1;
     var labels = {0:'Neu',1:'In Bearbeitung',2:'Abholbereit'};
-    dlConfirm({icon:'↩️',title:'Status zurücksetzen?',msg:'Status wird auf „'+labels[prev]+'" zurückgesetzt.',ok:'Zurücksetzen',color:'#d97706'},function(){
+    dlConfirm({icon:'rotate-ccw',title:'Status zurücksetzen?',msg:'Status wird auf „'+labels[prev]+'" zurückgesetzt.',ok:'Zurücksetzen',color:'#d97706'},function(){
       setShopStatus(id, prev);
     });
   }
 
   function confirmRevert(id, targetStatus, closeModalAfter){
     var labels = {0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt'};
-    dlConfirm({icon:'↩️',title:'Status zurücksetzen?',msg:'Status wird auf „'+(labels[targetStatus]||'?')+'" zurückgesetzt.',ok:'Zurücksetzen',color:'#d97706'},function(){
+    dlConfirm({icon:'rotate-ccw',title:'Status zurücksetzen?',msg:'Status wird auf „'+(labels[targetStatus]||'?')+'" zurückgesetzt.',ok:'Zurücksetzen',color:'#d97706'},function(){
       setShopStatus(id, targetStatus);
       if(closeModalAfter) closeModal('modal-detail');
     });
@@ -3022,7 +3050,7 @@ var K = (function(){
     if(!delId) return;
     var o = _allShopOrders.find(function(x){return x.id===delId;});
     var label = o ? (o.bestellnummer||delId) : delId;
-    dlConfirm({icon:'🗑️',title:'Bestellung löschen?',msg:'Bestellung '+label+' wird endgültig gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.',ok:'Endgültig löschen',color:'#dc2626'},function(){
+    dlConfirm({icon:'trash-2',title:'Bestellung löschen?',msg:'Bestellung '+label+' wird endgültig gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.',ok:'Endgültig löschen',color:'#dc2626'},function(){
       var btn = document.getElementById('detail-delete-btn');
       if(btn){btn.disabled=true;btn.textContent='Wird gelöscht…';}
       fetch(API+'/shop-order',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:delId})})
@@ -3034,12 +3062,12 @@ var K = (function(){
             loadShopOrders();
           } else {
             toast('Löschen fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
-            if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
+            if(btn){btn.disabled=false;btn.innerHTML=luc('trash-2',16)+' Löschen';reinitIcons();}
           }
         })
         .catch(function(e){
           toast('Verbindungsfehler – bitte erneut versuchen');
-          if(btn){btn.disabled=false;btn.textContent='🗑 Löschen';}
+          if(btn){btn.disabled=false;btn.innerHTML=luc('trash-2',16)+' Löschen';reinitIcons();}
         });
     });
   }
@@ -3273,12 +3301,12 @@ var K = (function(){
     tag.innerHTML = '';
     if(row) row.classList.remove('unavail');
     if(cb&&!cb.checked){
-      tag.innerHTML = '<span class="pk-tag-red">✕ Nicht lieferbar</span>';
+      tag.innerHTML = '<span class="pk-tag-red">Nicht lieferbar</span>';
       if(row) row.classList.add('unavail');
     } else if(inp){
       var best = parseFloat(inp.dataset.best)||0;
       var cur = parseFloat(inp.value)||0;
-      if(cur<best-0.5) tag.innerHTML = '<span class="pk-tag-orange">⚠ Teilmenge</span>';
+      if(cur<best-0.5) tag.innerHTML = '<span class="pk-tag-orange">Teilmenge</span>';
     }
   }
 
@@ -3369,7 +3397,7 @@ var K = (function(){
     })
     .then(function(res){return res.json();})
     .then(function(d){
-      if(d.success) toast('💾 Pack-Status gespeichert');
+      if(d.success) toast('Pack-Status gespeichert');
       else toast('Fehler beim Speichern');
     })
     .catch(function(e){toast('Fehler: '+e.message);});
@@ -3393,7 +3421,7 @@ var K = (function(){
       .then(function(res){return res.json();})
       .then(function(d){
         if(d.success){
-          toast('✅ Bestellung ist abholbereit');
+          toast('Bestellung ist abholbereit');
           closeModal('modal-pack');
           loadShopOrders();
         } else {
@@ -3409,7 +3437,7 @@ var K = (function(){
         var cb = document.querySelector('[data-pk-idx="'+i+'"]');
         if(!cb||!cb.checked) missing.push(p.bezeichnung);
       });
-      dlConfirm({icon:'⚠️',title:'Nicht alle Artikel verfügbar',msg:'Fehlend: '+missing.join(', ')+'. Trotzdem als Abholbereit markieren?',ok:'Trotzdem fertig',cancel:'Abbrechen',color:'#d97706'},function(){
+      dlConfirm({icon:'warn',title:'Nicht alle Artikel verfügbar',msg:'Fehlend: '+missing.join(', ')+'. Trotzdem als Abholbereit markieren?',ok:'Trotzdem fertig',cancel:'Abbrechen',color:'#d97706'},function(){
         doFinish('missing_items',{missing_items:missing});
       });
     } else {
@@ -3483,18 +3511,18 @@ var K = (function(){
           +'</div>';
       }
       html += '<tr class="'+(checked?'packed':'notpacked')+'">';
-      html += '<td class="check">'+(checked?'✅':'⬜')+'</td>';
+      html += '<td class="check">'+(checked?'✓':'―')+'</td>';
       html += '<td>'+(i+1)+'</td>';
       if(checked){
         total += gp;
-        html += '<td><b>'+esc(p.bezeichnung)+'</b>'+(abweichung?'<br><span style="color:#b45309;font-size:10px;font-weight:700">⚠ Menge abweichend</span>':'')+'</td>';
+        html += '<td><b>'+esc(p.bezeichnung)+'</b>'+(abweichung?'<br><span style="color:#b45309;font-size:10px;font-weight:700">Menge abweichend</span>':'')+'</td>';
         html += '<td>'+bcHtml+'</td>';
         html += '<td class="r">'+bestellStr+'</td>';
         html += '<td class="r"'+(abweichung?' style="color:#b45309;font-weight:700"':'')+'>'+geliefertStr+'</td>';
         html += '<td class="r">'+fmtP(ep)+' €'+(isKg?'/kg':'')+'</td>';
         html += '<td class="r"><b>'+fmtP(gp)+' €</b></td>';
       } else {
-        html += '<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">⚠ Nicht verfügbar</span></td>';
+        html += '<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">Nicht verfügbar</span></td>';
         html += '<td style="color:#9ca3af">'+bcHtml+'</td>';
         html += '<td class="r" style="color:#9ca3af">'+bestellStr+'</td>';
         html += '<td class="r" style="color:#9ca3af">–</td>';
@@ -3510,7 +3538,7 @@ var K = (function(){
     html += '<b>Dorfladen Oberornau</b> · Dorfplatz 1 · 84419 Obertaufkirchen<br>';
     html += 'Bei Fragen: info@dorfladen-oberornau.de · Tel: 08082 / 622 99 91';
     html += '</div>';
-    html += '<div class="noprint" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#2e7d4f;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">🖨 Beipackzettel drucken</button></div>';
+    html += '<div class="noprint" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#2e7d4f;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">Beipackzettel drucken</button></div>';
     html += '</body></html>';
     var w = window.open('','_blank','width=700,height=900');
     w.document.write(html);w.document.close();
@@ -3533,7 +3561,7 @@ var K = (function(){
       byDish[key].count += qty;
       if(o.mitnehmen) byDish[key].mitnehmen += qty; else byDish[key].vorOrt += qty;
       var name = o.name || '?';
-      byDish[key].kunden.push(name + (qty > 1 ? ' ('+qty+'x)' : '') + (o.mitnehmen ? ' 📦' : ''));
+      byDish[key].kunden.push(name + (qty > 1 ? ' ('+qty+'x)' : '') + (o.mitnehmen ? ' (mitnehmen)' : ''));
     });
 
     var selDate = new Date(_mittagDatum+'T12:00:00');
@@ -3548,7 +3576,7 @@ var K = (function(){
     html += '.kunde{padding:2px 0;border-bottom:1px dotted #ddd}';
     html += '.summary{margin-top:24px;padding:12px;background:#f5f5f5;border-radius:8px;font-weight:700}';
     html += '@media print{body{padding:10px}}</style></head><body>';
-    html += '<h1>🍽 Küchenliste – ' + datum + '</h1>';
+    html += '<h1>Küchenliste – ' + datum + '</h1>';
 
     var totalPortions = 0;
     var sortedDishes = Object.keys(byDish).sort();
@@ -3558,8 +3586,8 @@ var K = (function(){
       html += '<div class="dish">';
       html += '<div class="dish-head"><span>' + esc(dish) + '</span><span class="dish-count">' + d.count + 'x</span></div>';
       html += '<div class="dish-details">';
-      if(d.mitnehmen > 0) html += '📦 Mitnehmen: ' + d.mitnehmen + ' · ';
-      if(d.vorOrt > 0) html += '🍽 Vor Ort: ' + d.vorOrt;
+      if(d.mitnehmen > 0) html += 'Mitnehmen: ' + d.mitnehmen + ' · ';
+      if(d.vorOrt > 0) html += 'Vor Ort: ' + d.vorOrt;
       html += '<div style="margin-top:4px">';
       d.kunden.forEach(function(k){ html += '<div class="kunde">' + esc(k) + '</div>'; });
       html += '</div></div></div>';
@@ -3683,7 +3711,7 @@ var K = (function(){
     loadOrders();
     loadShopOrders();
     loadMetzgerOrders();
-    toast('🔄 Aktualisiert');
+    toast('Aktualisiert');
   }
 
   // ══════════════════════════════════════════════════
@@ -4522,7 +4550,7 @@ var K = (function(){
     w.document.write('.foot{margin-top:12px;font-size:11px;color:#9ca3af}');
     w.document.write('@media print{body{padding:10px}}');
     w.document.write('</style></head><body>');
-    w.document.write('<h2>🥩 Bestellliste Metzger</h2>');
+    w.document.write('<h2>Bestellliste Metzger</h2>');
     w.document.write('<div class="sub">Liefertag: <b>'+fmPrintDate+'</b> &nbsp;|&nbsp; '+openItems.length+' Positionen &nbsp;|&nbsp; '+totalKg.toFixed(1)+' kg</div>');
     w.document.write('<table><thead><tr><th style="width:30px">Nr.</th><th>Artikel</th><th>Kunde</th><th class="r">kg</th></tr></thead><tbody>');
     openItems.forEach(function(p,i){

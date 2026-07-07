@@ -5,10 +5,35 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Dorfladen – Shop Admin</title>
   <link rel="icon" href="/favicon.ico">
+  <script src="/js/theme.js"></script>
   <style>
-    :root{--green:#2e7d4f;--green2:#1f5c39;--bg:#f4f7f5;--card:#fff;--border:#dfe7e2;--text:#24352b;--muted:#6b7f72;--warn:#f59e0b;--red:#dc2626;--blue:#2563eb;--urgent:#ef4444}
+    :root{--green:#2e7d4f;--green2:#1f5c39;--bg:#f4f7f5;--card:#fff;--border:#dfe7e2;--text:#24352b;--muted:#6b7f72;--warn:#f59e0b;--red:#dc2626;--blue:#2563eb;--urgent:#ef4444;--surf2:#f9fafb;--tint:#e9f5ee;--active:#eaf6ef}
+    html[data-theme="dark"]{color-scheme:dark;--bg:#12171a;--card:#1b2228;--border:#2a333a;--text:#e6eae8;--muted:#9aa6a0;--green:#5cb85f;--surf2:#161c20;--tint:#1e2a20;--active:#1e2a20}
+    #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);padding:0;transition:transform .15s}
+    #dl-theme-toggle:hover{transform:scale(1.08)}
+    html[data-theme="dark"] .top{background:var(--card)}
+    html[data-theme="dark"] .brand-badge{background:var(--tint)}
+    html[data-theme="dark"] .search,html[data-theme="dark"] .select{background:var(--card);color:var(--text)}
+    html[data-theme="dark"] .tab-bar{background:var(--surf2)}
+    html[data-theme="dark"] .tab-bar-ctx{background:var(--tint)}
+    html[data-theme="dark"] .order:hover{background:var(--surf2)}
+    html[data-theme="dark"] .order.active{background:var(--active)}
+    html[data-theme="dark"] .order-expand{background:var(--surf2)}
+    html[data-theme="dark"] .item{background:var(--card)}
+    html[data-theme="dark"] .admin-tab:hover{background:var(--surf2)}
+    html[data-theme="dark"] .admin-tab.active{background:var(--tint)}
+    html[data-theme="dark"] .mt-card,html[data-theme="dark"] .mt-day-btn,html[data-theme="dark"] .mt-action-btn,html[data-theme="dark"] .mt-filter-btn{background:var(--card);color:var(--text)}
+    /* JS-Inline-Popups (Storno/Bestätigung) im Dark Mode */
+    html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"]{background:var(--card)!important;color:var(--text)!important}
+    html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"] textarea,html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"] input{background:#12171a!important;color:var(--text)!important;border-color:var(--border)!important}
+    html[data-theme="dark"] [style*="border:1px solid #dfe7e2;border-radius:10px;background:#fff"]{background:var(--surf2)!important;color:var(--text)!important;border-color:var(--border)!important}
+    html[data-theme="dark"] [style*="border:2px solid #e5e7eb"]{border-color:var(--border)!important}
+    html[data-theme="dark"] #panel-mittag{background:var(--card)!important;border-color:var(--border)!important}
+    html[data-theme="dark"] #mt-new-form{background:#241d12!important;border-color:#3a2f14!important}
+    html[data-theme="dark"] #mt-sk-dropdown{background:var(--card)!important;border-color:var(--border)!important}
+    @media (forced-colors: active){.btn,.stat,.panel,.order,.item{border:1px solid CanvasText}}
     *{box-sizing:border-box}html,body{overflow-x:hidden}body{margin:0;background:var(--bg);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text)}
-    .top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);max-width:1100px;margin:0 auto}
+    .top{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);max-width:1100px;margin:0 auto}
     .brand{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--green);font-size:15px}.brand-badge{width:32px;height:32px;border-radius:10px;background:#e9f5ee;display:grid;place-items:center;font-size:18px}.sub{font-size:11px;color:var(--muted);font-weight:400}
     .spacer{flex:1}.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:10px;padding:10px 13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none}.btn:hover{border-color:var(--green);color:var(--green)}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.btn.primary:hover{background:var(--green2)}.btn.small{padding:7px 9px;font-size:12px}.btn.red{color:#fff;background:var(--red);border-color:var(--red)}.btn-icon{font-style:normal;display:inline-flex;align-items:center}.btn-icon svg{vertical-align:middle}
     .wrap{max-width:1100px;margin:0 auto;padding:14px}.grid{display:flex;gap:8px;margin-bottom:10px;position:sticky;top:62px;z-index:9;background:var(--bg);padding-bottom:4px}.stat{min-width:90px;max-width:140px}.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.03);cursor:pointer;transition:transform .12s,border-color .12s}.stat:hover{transform:translateY(-1px);border-color:var(--green)}.stat.active{border-color:var(--green);background:var(--green);box-shadow:0 2px 8px rgba(30,70,58,.2)}.stat.active .label,.stat.active .value{color:#fff!important}.stat{text-align:center}.stat .label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase}.stat .value{font-size:22px;font-weight:400;margin-top:3px}.stat.open .value{color:var(--warn)}.stat.ready .value{color:var(--blue)}.stat.sum .value{color:var(--green)}
@@ -172,7 +197,7 @@
   <div class="scan-overlay" id="scan-overlay">
     <div class="scan-header"><i data-lucide="scan-barcode" style="width:20px;height:20px;vertical-align:-4px"></i> Abholscan<small>Beipackzettel-Barcode scannen → Abgeholt</small></div>
     <div class="scan-video-wrap"><div id="scan-reader"></div><div class="scan-crosshair"></div></div>
-    <button class="scan-close" id="scan-close">✕ Scanner schließen</button>
+    <button class="scan-close" id="scan-close"><i data-lucide="x" style="width:16px;height:16px;vertical-align:-3px"></i> Scanner schließen</button>
   </div>
   <div class="scan-result" id="scan-result"><div class="sr-msg"></div><div class="sr-detail"></div></div>
   <div class="wrap">
@@ -271,15 +296,15 @@
     </div>
     <div class="panel">
       <div class="toolbar">
-        <div class="toolbar-toggle" id="toolbar-toggle" style="display:none">🔍 Filter & Suche <span>▼</span></div>
+        <div class="toolbar-toggle" id="toolbar-toggle" style="display:none"><i data-lucide="search" style="width:15px;height:15px;vertical-align:-2px"></i> Filter & Suche <span>▼</span></div>
         <div class="toolbar-body" id="toolbar-body">
           <input class="search" id="search" placeholder="Bestellnr., Name oder E-Mail suchen…">
           <select class="select" id="status-filter">
             <option value="all">Alle Status</option><option value="0">Neu</option><option value="1">In Bearbeitung</option><option value="2">Abholbereit</option><option value="3">Abgeholt</option><option value="4">Storniert</option>
           </select>
           <button class="btn" id="load-orders">Suchen</button>
-          <button class="btn" id="export-csv" title="CSV-Export">📥 CSV</button>
-          <button class="btn" id="show-history" style="margin-left:auto">📜 Historie</button>
+          <button class="btn" id="export-csv" title="CSV-Export"><i data-lucide="download" style="width:15px;height:15px;vertical-align:-2px"></i> CSV</button>
+          <button class="btn" id="show-history" style="margin-left:auto"><i data-lucide="history" style="width:15px;height:15px;vertical-align:-2px"></i> Historie</button>
         </div>
       </div>
       <div class="content">
@@ -403,6 +428,7 @@
       +'<div style="display:flex;gap:8px"><button class="cd-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer;font-size:13px">Abbrechen</button>'
       +'<button class="cd-ok" style="flex:1;padding:10px;border:none;border-radius:10px;background:'+btnColor+';color:#fff;font-weight:700;cursor:pointer;font-size:13px">'+confirmText+'</button></div>';
     ov.appendChild(m);document.body.appendChild(ov);
+    if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});
     function close(){document.body.removeChild(ov);}
     m.querySelector('.cd-cancel').addEventListener('click',close);
     ov.addEventListener('click',function(e){if(e.target===ov)close();});
@@ -576,12 +602,12 @@
       tag.innerHTML='';
       if(row) row.classList.remove('unavail');
       if(cb&&!cb.checked){
-        tag.innerHTML='<span class="pack-tag pack-tag-red">✕ Nicht lieferbar</span>';
+        tag.innerHTML='<span class="pack-tag pack-tag-red">Nicht lieferbar</span>';
         if(row) row.classList.add('unavail');
       } else if(qtyInp){
         var best=parseFloat(qtyInp.getAttribute('data-best'))||0;
         var cur=parseFloat(qtyInp.value)||0;
-        if(cur<best-0.5) tag.innerHTML='<span class="pack-tag pack-tag-orange">⚠ Teilmenge</span>';
+        if(cur<best-0.5) tag.innerHTML='<span class="pack-tag pack-tag-orange">Teilmenge</span>';
       }
     }
     function recalcPackTotal(){
@@ -668,7 +694,7 @@
       if(r.packedCount<items.length){
         var missing=[];
         items.forEach(function(p,i){var cb=q('[data-pack-index="'+i+'"]');if(!cb||!cb.checked) missing.push(p.bezeichnung);});
-        var listHtml=missing.map(function(m){return '<div style="padding:3px 0">⚠️ '+esc(m)+'</div>';}).join('');
+        var listHtml=missing.map(function(m){return '<div style="padding:3px 0">'+luc('alert-triangle',13)+' '+esc(m)+'</div>';}).join('');
         var bodyHtml='<div style="font-weight:600;margin-bottom:8px">Folgende Artikel sind nicht verfügbar:</div>'
           +'<div style="background:#fef2f2;border-radius:8px;padding:8px 12px;margin-bottom:10px">'+listHtml+'</div>'
           +'<div>Der Kunde <b>'+esc(o.kunde_email)+'</b> wird per E-Mail informiert.</div>';
@@ -845,12 +871,12 @@
       var bestellStr=isKg?bestGramm+' g':bestellMenge+' '+esc(p.einheit||'Stk');
       var geliefertStr=isKg?packGramm+' g':packStueck+' '+esc(p.einheit||'Stk');
       html+='<tr class="'+(checked?'packed':'notpacked')+'">';
-      html+='<td class="check">'+(checked?'✅':'⬜')+'</td>';
+      html+='<td class="check">'+(checked?'✓':'―')+'</td>';
       html+='<td>'+(i+1)+'</td>';
       var bc=p.strichcode||p.artikelnummer||'';
       if(checked){
         total+=gp;
-        html+='<td><b>'+esc(p.bezeichnung)+'</b>'+(abweichung?'<br><span style="color:#b45309;font-size:10px;font-weight:700">⚠ Menge abweichend</span>':'')+'</td>';
+        html+='<td><b>'+esc(p.bezeichnung)+'</b>'+(abweichung?'<br><span style="color:#b45309;font-size:10px;font-weight:700">Menge abweichend</span>':'')+'</td>';
         html+='<td>'+esc(bc)+'</td>';
         html+='<td>'+barcodeSvg(bc,28,1)+'</td>';
         html+='<td class="r">'+bestellStr+'</td>';
@@ -858,7 +884,7 @@
         html+='<td class="r">'+fmtP(ep)+' €'+(isKg?'/100g':'')+'</td>';
         html+='<td class="r"><b>'+fmtP(gp)+' €</b></td>';
       } else {
-        html+='<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">⚠ Nicht verfügbar</span></td>';
+        html+='<td><b style="text-decoration:line-through;color:#991b1b">'+esc(p.bezeichnung)+'</b><br><span style="color:#dc2626;font-size:10px;font-weight:700">Nicht verfügbar</span></td>';
         html+='<td style="color:#9ca3af">'+esc(bc)+'</td>';
         html+='<td></td>';
         html+='<td class="r" style="color:#9ca3af">'+bestellStr+'</td>';
@@ -883,7 +909,7 @@
     html+='Bei Fragen: info@dorfladen-oberornau.de &middot; Tel: 08082 / 622 99 91';
     html+='</div>';
     html+='<div class="barcode-box"><div style="font-size:10px;color:#6b7280;margin-bottom:4px">Abholscan – Bestellnummer</div>'+code128Svg(o.bestellnummer,40,1.5)+'</div>';
-    html+='<div class="noprint" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#2e7d4f;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">🖨 Beipackzettel drucken</button></div>';
+    html+='<div class="noprint" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#2e7d4f;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">Beipackzettel drucken</button></div>';
     html+='<style>@media print{.noprint{display:none!important}}</style>';
     html+='</body></html>';
     var w=window.open('','_blank','width=700,height=900');
@@ -916,20 +942,20 @@
       html+='</div>';
       html+=_buildTimeline(o.status, o.id);
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
-      html+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Abholung</div><div style="font-size:14px;font-weight:800;color:var(--green)">'+esc(abholDay)+'</div><div style="font-size:12px;color:var(--text)">'+esc(periodLabel)+timeRange+'</div>'+(urg?'<div style="font-size:10px;font-weight:800;color:var(--urgent);margin-top:4px">⚡ JETZT PACKEN</div>':'')+'</div>';
+      html+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Abholung</div><div style="font-size:14px;font-weight:800;color:var(--green)">'+esc(abholDay)+'</div><div style="font-size:12px;color:var(--text)">'+esc(periodLabel)+timeRange+'</div>'+(urg?'<div style="font-size:10px;font-weight:800;color:var(--urgent);margin-top:4px">'+luc('zap',11)+' JETZT PACKEN</div>':'')+'</div>';
       html+='<div style="background:#f8fafc;border-radius:10px;padding:10px 12px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Kunde</div><div style="font-size:13px;font-weight:700">'+esc(o.kunde_name)+'</div><div style="font-size:11px;color:var(--muted);word-break:break-all">'+esc(o.kunde_email)+'</div></div>';
       html+='</div>';
     } else {
       html+='<div style="font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
       html+='<span style="font-weight:700;color:var(--green)">'+esc(abholDay)+' '+esc(periodLabel)+'</span>';
       if(timeRange) html+='<span>'+timeRange+'</span>';
-      if(urg) html+='<span style="font-weight:800;color:var(--urgent)">⚡ JETZT</span>';
+      if(urg) html+='<span style="font-weight:800;color:var(--urgent)">'+luc('zap',11)+' JETZT</span>';
       html+='<span>·</span><span>'+esc(o.kunde_email)+'</span>';
       html+='</div>';
       html+=_buildTimeline(o.status, o.id);
     }
     html+='<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Bestellt: '+fmtDateTimeFull(o.bestelldatum)+' · '+items.length+' Positionen · <b style="color:var(--green)">'+money(o.gesamtsumme)+'</b></div>';
-    if(o.anmerkungen) html+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;margin-bottom:10px"><b>📝 Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';
+    if(o.anmerkungen) html+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;margin-bottom:10px"><b>'+luc('message-square',13)+' Anmerkung:</b> '+esc(o.anmerkungen)+'</div>';
     // ── Pack progress bar ──
     html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div style="font-size:13px;font-weight:700">Packliste</div><div style="font-size:12px;color:var(--muted)">'+packedCount+'/'+items.length+' gepackt</div></div>';
     html+='<div class="pack-progress" style="margin:4px 0 8px"><div style="width:'+pct+'%"></div></div>';
@@ -951,15 +977,15 @@
       html+='<div class="item'+cls+'" data-item-row="'+i+'"><input type="checkbox" data-pack-index="'+i+'"'+checked+disabled+'><div><div class="item-name">'+esc(p.bezeichnung)+'</div><div class="item-code">'+esc(bc)+'</div><div data-tag-index="'+i+'"></div></div><div class="item-best">'+bestLabel+'</div><div style="text-align:right;white-space:nowrap"><input type="number" class="pack-qty" data-qty-index="'+i+'" data-is-kg="'+(isKg?1:0)+'" data-ep="'+ep+'" data-best="'+bestMenge+'" value="'+packMenge+'" min="'+min+'" step="'+step+'"'+disabled+' onfocus="this.select()"><span class="item-unit">'+esc(unit)+'</span></div><div style="text-align:right;white-space:nowrap"><b data-price-index="'+i+'" style="font-size:13px">'+money(gp)+'</b></div></div>';
     });
     html+='</div>';
-    html+='<div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">ℹ Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>';
+    html+='<div style="font-size:10px;color:#6b7f72;padding:4px 8px;margin-top:4px">'+luc('info',12)+' Mengen können bei Gewichtsware geringfügig abweichen. Berechnet wird die tatsächlich gepackte Menge.</div>';
     html+='<div style="text-align:right;font-size:16px;font-weight:900;padding:12px 12px 4px;border-top:2px solid #1e3a2f;margin-top:4px" id="pack-summe">Summe: '+money(summe)+'</div>';
     // ── Actions ──
     html+='<div class="pack-actions" style="margin-top:8px">';
     if(isEditable) html+='<span id="pack-autosave" style="font-size:11px;color:#6b7280;margin-right:auto"></span>';
-    if(isEditable) html+='<button class="btn primary" id="finish-pack">✅ Fertig – Abholbereit</button>';
+    if(isEditable) html+='<button class="btn primary" id="finish-pack">'+luc('check-circle',15)+' Fertig – Abholbereit</button>';
     html+='</div>';
     if(isEditable){
-      html+='<div class="actions" style="margin-top:8px"><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="print-slip-detail">📄 Beipackzettel</button></div>';
+      html+='<div class="actions" style="margin-top:8px"><button class="btn small" data-status="3">Abgeholt</button><button class="btn small red" data-status="4">Stornieren</button><button class="btn small" id="print-slip-detail">'+luc('file-text',14)+' Beipackzettel</button></div>';
       html+='<div style="font-size:11px;color:var(--muted);margin-bottom:4px;margin-top:8px">Anmerkung:</div><textarea class="note" id="note">'+esc(o.anmerkungen||'')+'</textarea>';
     }
     document.getElementById('detail').innerHTML=html;
@@ -976,7 +1002,7 @@
   var tbBody=document.getElementById('toolbar-body');
   if(tbToggle&&tbBody){tbToggle.addEventListener('click',function(){tbBody.classList.toggle('open');tbToggle.querySelector('span').textContent=tbBody.classList.contains('open')?'▲':'▼';});}
   document.querySelectorAll('[data-stat-filter]').forEach(function(el){el.addEventListener('click',function(){activeStatFilter=el.getAttribute('data-stat-filter');document.getElementById('status-filter').value='all';renderOrders();});});document.getElementById('refresh-btn').addEventListener('click',loadDashboard);document.getElementById('load-orders').addEventListener('click',loadOrders);document.getElementById('search').addEventListener('keydown',function(e){if(e.key==='Enter')loadOrders();});document.getElementById('status-filter').addEventListener('change',loadOrders);
-  document.getElementById('show-history').addEventListener('click',function(){historyMode=!historyMode;this.classList.toggle('primary',historyMode);this.textContent=historyMode?'📜 Historie ausblenden':'📜 Historie';renderOrders();});
+  document.getElementById('show-history').addEventListener('click',function(){historyMode=!historyMode;this.classList.toggle('primary',historyMode);this.innerHTML=luc('history',15)+(historyMode?' Historie ausblenden':' Historie');if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});renderOrders();});
   document.getElementById('export-csv').addEventListener('click',function(){
     var list=filteredOrders();
     if(!list.length){toast('Keine Bestellungen zum Exportieren.');return;}
@@ -1031,10 +1057,10 @@
           var d=res.data;
           if(d.success){
             var cls=d.already?'already':'success';
-            showResult(cls,'✅ '+d.message, d.kunde_name+' · '+money(d.gesamtsumme));
+            showResult(cls,d.message, d.kunde_name+' · '+money(d.gesamtsumme));
             loadDashboard();
           } else {
-            showResult('error','⚠ '+d.error, d.bestellnummer||code);
+            showResult('error',d.error, d.bestellnummer||code);
           }
         })
         .catch(function(e){

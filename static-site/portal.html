@@ -48,12 +48,26 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f293
 
 .footer{text-align:center;padding:20px;font-size:11px;color:#9ca3af}
 .footer a{color:#1e3a2f;font-weight:600;text-decoration:none}
+.tile-icon svg{display:inline-block}
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"] body{background:#12171a;color:#e6eae8}
+html[data-theme="dark"] .quick-stats{background:#1b2228;border-color:#2a333a}
+html[data-theme="dark"] .qs-l{color:#9aa6a0}
+html[data-theme="dark"] .tile{background:#1b2228;border-color:#2a333a;color:#e6eae8}
+html[data-theme="dark"] .tile-desc{color:#9aa6a0}
+html[data-theme="dark"] .tile-gray{background:linear-gradient(135deg,#20272d 0%,#1b2228 100%)}
+html[data-theme="dark"] .footer a{color:#6fd0a5}
+#dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-tog-bg,#fff);color:var(--c-tog-fg,#1f2937);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:0}
+html[data-theme="dark"] #dl-theme-toggle{--c-tog-bg:#1b2228;--c-tog-fg:#e6eae8}
+@media (forced-colors: active){.tile,.quick-stats{border:1px solid CanvasText}}
 </style>
+<script src="/js/theme.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
 <div class="hd">
-  <div class="hd-logo">🏪</div>
+  <div class="hd-logo"><i data-lucide="store" style="width:32px;height:32px"></i></div>
   <h1>Dorfladen Mitarbeiter</h1>
   <p>Bestellsystem & Verwaltung</p>
   <span class="badge-live" id="live-badge">● LIVE</span>
@@ -71,21 +85,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f293
 
 <!-- Bestellungen -->
 <div class="section">
-  <div class="section-title">📦 Bestellungen</div>
+  <div class="section-title"><i data-lucide="package" style="width:13px;height:13px;vertical-align:-2px"></i> Bestellungen</div>
   <div class="grid">
     <a class="tile tile-primary" href="/bestellungen">
       <span class="tile-badge" id="badge-neu"></span>
-      <span class="tile-icon">📋</span>
+      <span class="tile-icon"><i data-lucide="clipboard-list" style="width:36px;height:36px"></i></span>
       <div class="tile-name">Bestellübersicht</div>
       <div class="tile-desc">Offene Bestellungen, Status ändern</div>
     </a>
     <a class="tile tile-green" href="/bestellungen" onclick="sessionStorage.setItem('bst-filter','pack')">
-      <span class="tile-icon">📦</span>
+      <span class="tile-icon"><i data-lucide="package" style="width:36px;height:36px"></i></span>
       <div class="tile-name">Packen</div>
       <div class="tile-desc">Bestellungen packen & scannen</div>
     </a>
     <a class="tile tile-blue" href="/bestellungen" onclick="sessionStorage.setItem('bst-filter','bereit')">
-      <span class="tile-icon">✅</span>
+      <span class="tile-icon"><i data-lucide="check-circle" style="width:36px;height:36px"></i></span>
       <div class="tile-name">Abholbereit</div>
       <div class="tile-desc">Kunden abholen lassen</div>
     </a>
@@ -94,20 +108,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f293
 
 <!-- Shop & Artikel -->
 <div class="section">
-  <div class="section-title">🛒 Shop & Artikel</div>
+  <div class="section-title"><i data-lucide="shopping-cart" style="width:13px;height:13px;vertical-align:-2px"></i> Shop & Artikel</div>
   <div class="grid">
     <a class="tile tile-purple" href="/shop">
-      <span class="tile-icon">🛍️</span>
+      <span class="tile-icon"><i data-lucide="shopping-bag" style="width:36px;height:36px"></i></span>
       <div class="tile-name">Shop-Vorschau</div>
       <div class="tile-desc">So sehen Kunden den Shop</div>
     </a>
     <a class="tile tile-gray" href="/cms.html#articles">
-      <span class="tile-icon">📝</span>
+      <span class="tile-icon"><i data-lucide="file-pen" style="width:36px;height:36px"></i></span>
       <div class="tile-name">Artikel verwalten</div>
       <div class="tile-desc">Preise, Bestellbar-Status</div>
     </a>
     <a class="tile tile-gray" href="/cms.html#angebote">
-      <span class="tile-icon">🏷️</span>
+      <span class="tile-icon"><i data-lucide="tag" style="width:36px;height:36px"></i></span>
       <div class="tile-name">Angebote</div>
       <div class="tile-desc">Sonderangebote pflegen</div>
     </a>
@@ -116,20 +130,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f293
 
 <!-- Verwaltung -->
 <div class="section">
-  <div class="section-title">⚙️ Verwaltung</div>
+  <div class="section-title"><i data-lucide="settings" style="width:13px;height:13px;vertical-align:-2px"></i> Verwaltung</div>
   <div class="grid">
     <a class="tile tile-pink" href="/cms.html#kunden">
-      <span class="tile-icon">👥</span>
+      <span class="tile-icon"><i data-lucide="users" style="width:36px;height:36px"></i></span>
       <div class="tile-name">Kunden</div>
       <div class="tile-desc">Registrierte Kunden</div>
     </a>
     <a class="tile tile-gray" href="/cms.html">
-      <span class="tile-icon">🖥️</span>
+      <span class="tile-icon"><i data-lucide="monitor" style="width:36px;height:36px"></i></span>
       <div class="tile-name">CMS</div>
       <div class="tile-desc">Website-Inhalte bearbeiten</div>
     </a>
     <a class="tile tile-gray" href="/cms.html#werbebilder">
-      <span class="tile-icon">🖼️</span>
+      <span class="tile-icon"><i data-lucide="image" style="width:36px;height:36px"></i></span>
       <div class="tile-name">Werbebilder</div>
       <div class="tile-desc">Bilder & Medien</div>
     </a>
@@ -168,6 +182,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f293
 
   loadStats();
   setInterval(loadStats,60000);
+  if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});
 })();
 </script>
 <script src="/js/env-banner.js"></script>
