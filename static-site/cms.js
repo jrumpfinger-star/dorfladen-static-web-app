@@ -9765,9 +9765,8 @@
       var b=document.getElementById('social-subtab-'+t);
       if(p) p.style.display = t===name?'':'none';
       if(b){
-        b.style.background = t===name?'#fff':'transparent';
-        b.style.color = t===name?'#2e7d4f':'#6b7280';
-        b.style.boxShadow = t===name?'0 1px 3px rgba(0,0,0,.08)':'none';
+        // Kiosk-aligned: toggle the .active class (styling handled by .k-filter-btn CSS)
+        if(t===name){ b.classList.add('active'); } else { b.classList.remove('active'); }
       }
     });
     if(name==='post'){
