@@ -114,4 +114,38 @@ test.describe('CMS Social-UI – Kiosk-Wizard-Angleichung', () => {
     });
     expect(after).toBe(false);
   });
+
+  test('T-CS-11 socialSubTab togglet active-Klasse (Tabs bleiben sichtbar)', async ({ page }) => {
+    await page.goto(CMS_URL);
+    await page.waitForFunction(() => typeof window.socialSubTab === 'function', { timeout: 15000 }).catch(() => {});
+    // Wechsel auf Katalog: Post verliert active, Katalog erhält active
+    await page.evaluate(() => window.socialSubTab('katalog'));
+    let state = await page.evaluate(() => ({
+      post: document.getElementById('social-subtab-post').classList.contains('active'),
+      kat: document.getElementById('social-subtab-katalog').classList.contains('active')
+    }));
+    expect(state.post).toBe(false);
+    expect(state.kat).toBe(true);
+    // Zurück auf Neuer Post: umgekehrt
+    await page.evaluate(() => window.socialSubTab('post'));
+    state = await page.evaluate(() => ({
+      post: document.getElementById('social-subtab-post').classList.contains('active'),
+      kat: document.getElementById('social-subtab-katalog').classList.contains('active')
+    }));
+    expect(state.post).toBe(true);
+    expect(state.kat).toBe(false);
+  });
+
+  test('T-CS-12 socialSubTab setzt KEINE Inline-Hintergrundfarbe (kein weiß-auf-weiß)', async ({ page }) => {
+    await page.goto(CMS_URL);
+    await page.waitForFunction(() => typeof window.socialSubTab === 'function', { timeout: 15000 }).catch(() => {});
+    // Nach Wechsel darf der inaktive Tab keine per Inline-Style gesetzte weiße Schrift/BG haben
+    await page.evaluate(() => window.socialSubTab('katalog'));
+    const inline = await page.evaluate(() => {
+      const el = document.getElementById('social-subtab-post');
+      return { bg: el.style.background, color: el.style.color };
+    });
+    // Der Fix entfernt Inline-Styles; Styling kommt aus .k-filter-btn CSS
+    expect(inline.bg).toBe('');
+  });
 });
