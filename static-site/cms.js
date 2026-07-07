@@ -241,7 +241,7 @@
         }).sort(function(a,b){return (b.von||'').localeCompare(a.von||'');});
         renderAktionenList();
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){if(ldEl)ldEl.style.display='none';});
   }
 
@@ -542,7 +542,7 @@
         });
       }
       else {toast('Bild nicht in SharePoint gefunden','warn');}
-    }).catch(function(e){toast('Fehler beim Laden: '+e.message,'error');console.error(e);}).then(function(){
+    }).catch(function(e){toast('Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e),'error');console.error(e);}).then(function(){
       if(btn){btn.disabled=false;btn.textContent='🔍';}
     });
   };
@@ -659,7 +659,7 @@
       toast(editId?'Aktion aktualisiert':'Aktion erstellt');
       cmsCloseModal();
       loadAngebote();
-    }).catch(function(e){toast('Fehler: '+e.message,'error');console.error('[CMS] Save error:',e);})
+    }).catch(function(e){toast(_cmsErr(e),'error');console.error('[CMS] Save error:',e);})
       .then(function(){btnDone(saveBtn);});
   };
 
@@ -701,10 +701,10 @@
           var body={dl_produkt:it.produkt,dl_details:it.details||null,dl_preis:it.preis,dl_statt_preis:it.statt_preis,dl_aktion_id:aktId,dl_aktion_titel:savedTitel,dl_gueltig_von:savedVon||null,dl_gueltig_bis:savedBis||null,dl_artikelnummer:it.artikelnummer||null,dl_sortierung:idx+1,dl_status:101001};
           return fetch(API+'/angebote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
         });
-        Promise.all(restorePs).then(function(){toast('Aktion wiederhergestellt');loadAngebote();}).catch(function(e){toast('Wiederherstellen fehlgeschlagen: '+e.message,'error');});
+        Promise.all(restorePs).then(function(){toast('Aktion wiederhergestellt');loadAngebote();}).catch(function(e){toast('Wiederherstellen fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),'error');});
       });
     })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){btnDone(delBtn);});
   };
 
@@ -951,7 +951,7 @@
       document.getElementById('cms-status').style.color = '#16a34a';
     }catch(e){
       console.error('CMS init error',e);
-      document.getElementById('cms-status').textContent = 'Fehler: '+e.message;
+      document.getElementById('cms-status').textContent = _cmsErr(e);
       document.getElementById('cms-status').style.color = '#dc2626';
     }
   }
@@ -991,6 +991,11 @@
       setTimeout(function(){el.remove();},3000);
     }
   }
+
+  // Anwenderfreundliche Fehlermeldung; technische Details nur in der Konsole (Prinzip 6)
+  function _cmsErr(e){console.error('[CMS] Fehler:',e);return 'Es ist ein Fehler aufgetreten. Bitte erneut versuchen.';}
+  function _cmsNetErr(e){console.error('[CMS] Netzwerkfehler:',e);return 'Verbindungsproblem. Bitte pr\u00fcfe deine Internetverbindung.';}
+  function _cmsLog(e){console.error('[CMS]',e);return '';}
 
   function cmsConfirm(msg,opts){
     opts=opts||{};
@@ -1174,7 +1179,7 @@
         window._seitenLoaded=true;
       })
       .catch(function(e){
-        container.innerHTML='<p style="color:#dc2626">Fehler beim Laden: '+e.message+'</p>';
+        container.innerHTML='<p style="color:#dc2626">Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e)+'</p>';
       });
   }
 
@@ -1220,7 +1225,7 @@
             _dvSave(key,prevHtml).then(function(r2){
               if(r2.success){el.innerHTML=prevHtml;el.setAttribute('data-prev-val',prevHtml);toast('R\u00fcckg\u00e4ngig gemacht');}
               else{toast('Fehler beim R\u00fcckg\u00e4ngig machen','error');}
-            }).catch(function(e){toast('Fehler: '+e.message,'error');});
+            }).catch(function(e){toast(_cmsErr(e),'error');});
           });
         } else {
           btn.innerHTML='&#10060; Fehler';btn.disabled=false;
@@ -2608,7 +2613,7 @@
         });
         renderWP();
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){if(wpLd)wpLd.style.display='none';});
   }
 
@@ -2971,7 +2976,7 @@
         loadWP();
         loadGerichteHistory();
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){btnDone(saveBtn);});
   };
 
@@ -3011,10 +3016,10 @@
           var body={dl_gericht:savedData.gericht,dl_wochentag:savedData.wochentag,dl_datum:savedData.datum,dl_preis:savedData.preis,dl_beschreibung:savedData.beschreibung||null,dl_allergene:savedData.allergene||null,dl_kalenderwoche:savedData.kw,dl_jahr:savedData.jahr,dl_status:101001};
           fetch(API+'/wochenplan',{method:'POST',headers:writeHeaders(),body:JSON.stringify(body)})
             .then(function(){toast('Gericht wiederhergestellt');loadWP();})
-            .catch(function(e){toast('Wiederherstellen fehlgeschlagen: '+e.message,'error');});
+            .catch(function(e){toast('Wiederherstellen fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),'error');});
         }:null);
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){btnDone(delBtn);});
   };
 
@@ -3040,7 +3045,7 @@
         });
         renderHours();
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   function renderHours(){
@@ -3104,7 +3109,7 @@
       return Promise.all(promises);
     })
       .then(function(){toast('Öffnungszeiten gespeichert');saveBtn.style.display='none';})
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){btnDone(saveBtn);});
   };
 
@@ -3201,7 +3206,7 @@
             +'</div></div>';
         }).join('');
       })
-      .catch(function(e){container.innerHTML='<p style="color:#dc2626">Fehler: '+e.message+'</p>';});
+      .catch(function(e){container.innerHTML='<p style="color:#dc2626">'+_cmsErr(e)+'</p>';});
   }
 
   // Focus RTE editor before toolbar command
@@ -3231,7 +3236,7 @@
     chain.then(function(){
       if(errors.length)toast('Fehler: '+errors.join('; '),'error');
       else toast(saved+' Felder gespeichert!','success');
-    }).catch(function(e){toast('Fehler: '+e.message,'error');})
+    }).catch(function(e){toast(_cmsErr(e),'error');})
     .then(function(){if(btn)btn.disabled=false;});
   }
 
@@ -3251,7 +3256,7 @@
       .then(function(res){
         if(res.success){toast('Feld "'+name+'" angelegt!','success');_hpLoaded=false;loadHomepage();}
         else toast('Fehler: '+res.error,'error');
-      }).catch(function(e){toast('Fehler: '+e.message,'error');});
+      }).catch(function(e){toast(_cmsErr(e),'error');});
   };
 
   // --- Logo Upload ---
@@ -3403,7 +3408,7 @@
         _newsLoaded = true;
         renderNewsList();
       })
-      .catch(function(e){container.innerHTML='<p style="color:#dc2626">Fehler: '+e.message+'</p>';});
+      .catch(function(e){container.innerHTML='<p style="color:#dc2626">'+_cmsErr(e)+'</p>';});
   }
 
   function renderNewsList(){
@@ -3569,7 +3574,7 @@
           _newsLoaded=false;loadNews();
         } else {toast('Fehler: '+res.error,'error');}
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   function deleteNews(id){
@@ -3605,11 +3610,11 @@
             fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
               .then(function(r){return r.json();})
               .then(function(r){if(r.success){toast('Beitrag wiederhergestellt');_newsLoaded=false;loadNews();}else{toast('Fehler: '+r.error,'error');}})
-              .catch(function(e){toast('Wiederherstellen fehlgeschlagen: '+e.message,'error');});
+              .catch(function(e){toast('Wiederherstellen fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),'error');});
           }:null);
         } else {toast('Fehler: '+res.error,'error');}
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   function toggleNewsStatus(id){
@@ -3625,7 +3630,7 @@
           renderNewsList();
         } else {toast('Fehler: '+res.error,'error');}
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   // --- WhatsApp Share ---
@@ -7194,7 +7199,7 @@
         else if(win.document.readyState==='complete'){attach();}
         else{win.addEventListener('load',attach);setTimeout(attach,500);}
       }
-    }).catch(function(e){toast('Fehler: '+e.message,'error');});
+    }).catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   function truncText(ctx,text,maxW){
@@ -8463,7 +8468,7 @@
         galRenderGrid();
       })
       .catch(function(e){
-        grid.innerHTML='<div style="text-align:center;padding:24px;color:#dc2626">Fehler beim Laden: '+e.message+'</div>';
+        grid.innerHTML='<div style="text-align:center;padding:24px;color:#dc2626">Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e)+'</div>';
       });
   };
 
@@ -8539,7 +8544,7 @@
       if(res.success){toast('Untertitel gespeichert');}
       else{toast('Fehler: '+(res.error||''),'error');}
     })
-    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+    .catch(function(e){toast(_cmsNetErr(e),'error');});
   };
 
   window.galCreateFolder=function(){
@@ -8556,7 +8561,7 @@
       if(res.success){toast('Ordner "'+name+'" angelegt');inp.value='';loadGalleryAdmin();}
       else{toast('Fehler: '+(res.error||''),'error');}
     })
-    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+    .catch(function(e){toast(_cmsNetErr(e),'error');});
   };
 
   window.galDeleteFolder=function(id,name,count){
@@ -8574,7 +8579,7 @@
         if(res.success){toast('Ordner "'+name+'" gelöscht');loadGalleryAdmin();}
         else{toast('Fehler: '+(res.error||''),'error');}
       })
-      .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsNetErr(e),'error');});
     });
   };
 
@@ -8592,7 +8597,7 @@
         if(res.success){toast('Bild gelöscht: '+name);loadGalleryAdmin();}
         else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
       })
-      .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsNetErr(e),'error');});
     });
   };
 
@@ -8677,7 +8682,7 @@
         })
         .catch(function(e){
           errors++;
-          toast('Fehler bei '+files[idx].name+': '+e.message,'error');
+          toast('Datei konnte nicht verarbeitet werden. Bitte erneut versuchen.'+_cmsLog(e),'error');
           bar.style.width=Math.round(((idx+1)/total)*100)+'%';
           uploadNext(idx+1);
         });
@@ -8808,7 +8813,7 @@
     }).catch(function(e){
       status.textContent='\u274c Netzwerkfehler';
       status.style.color='#dc2626';
-      toast('Fehler: '+e.message,'error');
+      toast(_cmsErr(e),'error');
     });
     });
   };
@@ -8897,7 +8902,7 @@
       });
       html+='</tbody></table>';
       list.innerHTML=html;
-    }).catch(function(e){list.textContent='Fehler: '+e.message;});
+    }).catch(function(e){list.textContent=_cmsErr(e);});
   };
   window.pushDeleteSub = function(recordId){
     cmsConfirm('Subscriber wirklich l\u00f6schen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'L\u00f6schen',warn:true}).then(function(ok){
@@ -8907,7 +8912,7 @@
         .then(function(res){
           if(res.success){toast('Subscriber gel\u00f6scht','ok');pushLoadSubscribers();}
           else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
-        }).catch(function(e){toast('Fehler: '+e.message,'error');});
+        }).catch(function(e){toast(_cmsErr(e),'error');});
     });
   };
 
@@ -8956,7 +8961,7 @@
     .catch(function(e){
       status.textContent='\u274c Netzwerkfehler';
       status.style.color='#dc2626';
-      toast('Fehler: '+e.message,'error');
+      toast(_cmsErr(e),'error');
     })
     .then(function(){btn.disabled=false;pushImageRemove();});
     });
@@ -9005,7 +9010,7 @@
       }
     }).catch(function(e){
       statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
-      statusEl.textContent='\u274c Fehler beim Laden: '+e.message;
+      statusEl.textContent='\u274c Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e);
     });
   }
   function saveFeatureFlags(){
@@ -9040,7 +9045,7 @@
     }).catch(function(e){
       statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
       statusEl.textContent='\u274c Netzwerkfehler';
-      toast('Fehler: '+e.message,'error');
+      toast(_cmsErr(e),'error');
     }).then(function(){if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Speichern';}});
   }
 
@@ -9081,7 +9086,7 @@
       }else{
         toast('Fehler: '+res.error,'error');
       }
-    }).catch(function(e){toast('Fehler: '+e.message,'error');});
+    }).catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   // === ANALYTICS DASHBOARD ===
@@ -9504,7 +9509,7 @@
             cmsRenderOrders();
             cmsToast('✅ '+bestellnr+': Storniert');
           } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
-        }).catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+        }).catch(function(e){cmsToast(_cmsErr(e),'error');});
     });
   };
 
@@ -9519,7 +9524,7 @@
           cmsRenderOrders();
           cmsToast('Nachricht als gelesen markiert');
         } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
-      }).catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+      }).catch(function(e){cmsToast(_cmsErr(e),'error');});
   };
 
   // ── Shop-Antwort-Dialog ──
@@ -9553,7 +9558,7 @@
             cmsRenderOrders();
             cmsToast('\u2705 Antwort gesendet');
           } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
-        }).catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+        }).catch(function(e){cmsToast(_cmsErr(e),'error');});
     });
   };
 
@@ -9743,7 +9748,7 @@
           if(local){local.vorname=payload.vorname;local.nachname=payload.nachname;local.telefon=payload.telefon;local.strasse=payload.strasse;local.plz=payload.plz;local.ort=payload.ort;local.aktiv=payload.aktiv;}
           cmsRenderKunden();
         })
-        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+        .catch(function(e){cmsToast(_cmsErr(e),'error');});
     };
   };
 
@@ -9921,7 +9926,7 @@
         socialRenderKatalog();
       })
       .catch(function(e){
-        socialStatus('soc-kat-status','Fehler beim Laden: '+e.message,false);
+        socialStatus('soc-kat-status','Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e),false);
       })
       .then(function(){
         if(loading) loading.style.display='none';
@@ -10113,7 +10118,7 @@
       socialStatus('soc-kat-status','Gespeichert!',true);
       socialLoadKatalog();
     })
-    .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+    .catch(function(e){socialStatus('soc-kat-status',_cmsErr(e),false);});
   };
 
   // --- Produkt hinzufuegen ---
@@ -10144,7 +10149,7 @@
         socialClearBild();
         socialLoadKatalog();
       })
-      .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+      .catch(function(e){socialStatus('soc-kat-status',_cmsErr(e),false);});
   };
 
   // --- Produkt loeschen ---
@@ -10549,7 +10554,7 @@
         _socMtBilder[gericht]={bild_url:res.bild_url};
         socialUpdateMtThumb(gericht,res.bild_url);
       })
-      .catch(function(e){socialStatus('soc-post-status','Upload-Fehler: '+e.message,false);});
+      .catch(function(e){socialStatus('soc-post-status',_cmsErr(e),false);});
   };
 
   // --- Update Mittagstisch thumbnail in-place (preserves checkbox state) ---
@@ -10784,7 +10789,7 @@
       if(typeof socialLoadTodayPosts==='function') socialLoadTodayPosts();
     })
     .catch(function(e){
-      socialStatus('soc-post-status','\u274C '+e.message,false);
+      socialStatus('soc-post-status','\u274C Es ist ein Fehler aufgetreten. Bitte erneut versuchen.'+_cmsLog(e),false);
       btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});
     });
   };
@@ -11491,7 +11496,7 @@
       socialStatus('soc-post-status',msg,res.failed===0);
     })
     .catch(function(e){
-      socialStatus('soc-post-status','\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
+      socialStatus('soc-post-status','\u274C Katalog-Sync fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),false);
     });
   };
 
@@ -11528,7 +11533,7 @@
         waKatalogLoad();
       })
       .catch(function(e){
-        waKatalogStatus('\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
+        waKatalogStatus('\u274C Katalog-Sync fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),false);
       });
     });
   };
@@ -11588,7 +11593,7 @@
       })
       .catch(function(e){
         if(loading) loading.style.display='none';
-        waKatalogStatus('\u274C Fehler beim Laden: '+e.message,false);
+        waKatalogStatus('\u274C Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e),false);
       });
   };
 
@@ -11733,7 +11738,7 @@
     socialSavePost(titel,freitext,selected);
     }catch(e){
       console.error('[Social] WhatsApp share error:',e);
-      socialStatus('soc-post-status','Fehler: '+e.message,false);
+      socialStatus('soc-post-status',_cmsErr(e),false);
     }
   };
 
@@ -11997,7 +12002,7 @@
       btn.disabled=false; status.textContent='Gespeichert!';
       setTimeout(function(){ status.textContent=''; },3000);
     }).catch(function(e){
-      btn.disabled=false; status.textContent='Fehler: '+e.message;
+      btn.disabled=false; status.textContent=_cmsErr(e);
     });
   };
 
@@ -12054,7 +12059,7 @@
       btn.disabled=false; status.textContent='Gespeichert!';
       setTimeout(function(){ status.textContent=''; },3000);
     }).catch(function(e){
-      btn.disabled=false; status.textContent='Fehler: '+e.message;
+      btn.disabled=false; status.textContent=_cmsErr(e);
       status.style.color='#ef4444';
     });
   };
@@ -12157,7 +12162,7 @@
 
       list.innerHTML=html;
       _fmWireOrderEvents();
-    }).catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+e.message+'</p>';});
+    }).catch(function(e){list.innerHTML='<p style="color:#ef4444">'+_cmsErr(e)+'</p>';});
   };
 
   // ── Sammelbestellung: Aggregate articles per delivery day ──
