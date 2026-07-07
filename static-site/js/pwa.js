@@ -203,15 +203,21 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
   }
 
   function updatePushUI(subscribed){
+    var text=subscribed?'Benachrichtigungen aktiv':'Benachrichtigungen aktivieren';
+    var useLucide=!!window.lucide;
     [pushBtn,pushBtnDt].forEach(function(btn){
       if(!btn)return;
-      var label=subscribed?'\uD83D\uDD14 Benachrichtigungen aktiv':'\uD83D\uDD14 Benachrichtigungen aktivieren';
-      // For desktop: the <li> contains an <a> – update the <a> text, not the <li>
-      var a=btn.querySelector('a');
-      if(a){a.textContent=label;}else{btn.textContent=label;}
+      // For desktop: the <li> contains an <a> – update the <a>, not the <li>
+      var target=btn.querySelector('a')||btn;
+      if(useLucide){
+        target.innerHTML='<i data-lucide="bell" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i>'+text;
+      }else{
+        target.textContent='\uD83D\uDD14 '+text;
+      }
       if(subscribed){btn.setAttribute('data-subscribed','1');}
       else{btn.removeAttribute('data-subscribed');}
     });
+    if(useLucide){try{window.lucide.createIcons();}catch(e){}}
   }
 
   function showPushButtons(){
