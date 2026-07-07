@@ -131,9 +131,10 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     }
     if(bgGrad){
       var isBgG=c.bgColor_grad;
-      gradCss.push('body{background:'+(isBgG?bgGrad:c.bgColor)+'!important}');
+      // Nur im Light Mode anwenden – im Dark Mode bleibt der dunkle Body-Hintergrund (style.css) erhalten
+      gradCss.push('html[data-theme="light"] body{background:'+(isBgG?bgGrad:c.bgColor)+'!important}');
     }
-    if(c.textColor)gradCss.push('body{color:'+c.textColor+'!important}');
+    if(c.textColor)gradCss.push('html[data-theme="light"] body{color:'+c.textColor+'!important}');
     if(gradCss.length){var gs=document.createElement('style');gs.id='hp-grad-colors';gs.textContent=gradCss.join('');document.head.appendChild(gs);}
     var wpCss=[];
     // Template-specific colors: resolve from wpTplColors or fallback to flat values
