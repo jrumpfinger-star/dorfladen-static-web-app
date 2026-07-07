@@ -194,7 +194,7 @@
       <div class="mt-toolbar">
         <div id="mt-day-tabs" style="display:contents"></div>
         <div class="mt-toolbar-sep"></div>
-        <button class="mt-action-btn primary" onclick="mtShowNewOrder()"><i data-lucide="plus" style="width:12px;height:12px"></i> Neu</button>
+        <button class="mt-action-btn primary" onclick="mtShowNewOrder()"><i data-lucide="plus" style="width:12px;height:12px"></i> Neue Bestellung</button>
         <button class="mt-action-btn" onclick="loadMittagOrders()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i></button>
         <a class="mt-action-btn" href="/kiosk"><i data-lucide="monitor" style="width:12px;height:12px"></i></a>
         <div style="flex:1"></div>
@@ -1180,7 +1180,8 @@ function mtBuildDayTabs(){
     var isToday = ds === _fmtDate(today);
     var isActive = ds === _mtSelectedDate;
     var label = isToday ? 'Heute' : _dayNames[day.getDay()]+' '+_pad(day.getDate())+'.'+_pad(day.getMonth()+1);
-    html += '<button onclick="mtSelectDay(\''+ds+'\')" class="mt-day-btn'+(isActive?' active':'')+(isToday?' today':'')+'">'+label+'</button>';
+    var style = isActive ? 'style="background:var(--green);color:#fff;border-color:var(--green)"' : '';
+    html += '<button onclick="mtSelectDay(\''+ds+'\')" class="mt-day-btn'+(isActive?' active':'')+(isToday?' today':'')+'" '+style+'>'+label+'</button>';
   });
   container.innerHTML = html;
   loadMittagOrders();
