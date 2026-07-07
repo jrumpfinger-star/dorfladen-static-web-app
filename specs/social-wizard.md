@@ -77,6 +77,7 @@ Jeder Schritt ist eine **klappbare Karte** (k-order Pattern) mit nummerierter Sc
 
 ## Anpassungsstellen
 1. `static-site/kiosk.html` – Social-Panel HTML + `socToggleStep()` + socialPickUpdate-Wrapper
+2. `static-site/cms.html` – Social-Panel (`#cms-panel-social`) an das Kiosk-Wizard-Layout angeglichen: identisches HTML/IDs, `k-*`-CSS gescoped unter `#cms-panel-social`, Inline-JS (`socToggleStep`, `socDeskTab`, `socialToggleDay`-Sync, `socialPickUpdate`-Wrapper) portiert. Desktop-Split-View ohne die Kiosk-Full-Height-Regeln (CMS ist ein scrollendes Dokument).
 
 ## Akzeptanzkriterien
 - [x] AK-UI-50-01: 4 nummerierte Step-Karten sichtbar im Neuer-Post-Panel
