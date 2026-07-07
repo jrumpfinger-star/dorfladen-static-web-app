@@ -652,10 +652,16 @@ html[data-theme="dark"] .wp-grp-even td,
 html[data-theme="dark"] .wp-footer,
 html[data-theme="dark"] .wp-actions{background:#232c33}
 html[data-theme="dark"] .wp-grp-odd td{background:#1b2228}
+/* Textfarben mit !important, um die per JS injizierten Hell-Template-Farben
+   (#wp-tpl-colors, z.B. classic-red -> .wp-dish{color:#1a1a1a!important}) zu schlagen */
 html[data-theme="dark"] .wp-dish,
-html[data-theme="dark"] .wp-dish-a{color:#dbe1dd}
+html[data-theme="dark"] .wp-dish-a{color:#e6eae8!important}
 html[data-theme="dark"] .wp-price,
-html[data-theme="dark"] .wp-price-a{color:#6fd0a5}
+html[data-theme="dark"] .wp-price-a{color:#6fd0a5!important}
+html[data-theme="dark"] .wp-day,
+html[data-theme="dark"] .wp-day-a{color:#68c79b!important}
+/* Karten-Hintergrund: id-Selektor + !important, um injiziertes #wp-card{background:#fff!important} zu überschreiben */
+html[data-theme="dark"] #wp-card{background:var(--c-surf)!important}
 html[data-theme="dark"] .wp-day-first td,
 html[data-theme="dark"] .wp-table tr{border-bottom-color:rgba(255,255,255,.06)}
 html[data-theme="dark"] .wp-meal-thumb{border-color:rgba(255,255,255,.12)}
