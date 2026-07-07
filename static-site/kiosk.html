@@ -114,7 +114,7 @@
     .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0;width:18px;text-align:center}
     .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
     .k-order.oc-collapsed .k-order-body{display:none}
-    .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:60px;flex:1 1 auto;max-width:none}
+    .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;white-space:normal;overflow-wrap:anywhere;min-width:60px;flex:1 1 auto;max-width:none}
     .k-order-hdr .k-oc-qty{font-weight:800;font-size:15px;color:var(--c-green);white-space:nowrap;min-width:28px}
     .k-order-hdr .k-oc-badges{display:flex;gap:5px;align-items:center;flex-shrink:0;white-space:nowrap}
     .k-order-hdr .k-oc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
@@ -335,7 +335,9 @@
     .k-btn-confirm{background:var(--c-green);color:#fff}
     .k-btn-pickup{background:#2563eb;color:#fff}
     .k-btn-cancel{background:var(--c-red);color:#fff;font-size:14px}
-    .k-btn-sm{min-height:38px;padding:6px 14px;font-size:13px;border-radius:8px}
+    .k-btn-sm{min-height:32px;padding:6px 14px;font-size:13px;border-radius:8px}
+    /* Social-Sub-Tabs: Touch-Target >=44px (AK-UI-50-04/05) */
+    #soc-subtabs-container .k-filter-btn{min-height:44px}
     .k-btn-outline{background:#fff;color:var(--c-text);border:1.5px solid var(--c-border)}
     .k-btn-outline:hover{border-color:var(--c-green);color:var(--c-green)}
     .k-tool{width:30px;height:30px;padding:0;border:none;border-radius:6px;background:transparent;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
