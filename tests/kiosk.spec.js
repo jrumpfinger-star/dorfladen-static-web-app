@@ -1190,7 +1190,8 @@ test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
     await page.waitForTimeout(500);
   });
 
-  test('T-50-01: 4 nummerierte Step-Karten sichtbar (AK-UI-50-01)', async ({ page }) => {
+  test('T-50-01: 4 nummerierte Step-Karten sichtbar (AK-UI-50-01)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'Desktop nutzt Flat-Action-Bar-Layout statt Step-Wizard (Step 4 + Header ausgeblendet)');
     for (let i = 1; i <= 4; i++) {
       const step = page.locator('#soc-step-' + i);
       await expect(step).toBeVisible();
@@ -1214,7 +1215,8 @@ test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
     await expect(step4).toHaveClass(/oc-collapsed/);
   });
 
-  test('T-50-03: Klick auf Step-Header toggled auf/zu (AK-UI-50-03)', async ({ page }) => {
+  test('T-50-03: Klick auf Step-Header toggled auf/zu (AK-UI-50-03)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'Desktop nutzt Flat-Action-Bar-Layout: Step-Header ausgeblendet, kein Toggle');
     const step1 = page.locator('#soc-step-1');
     const step1Hdr = step1.locator('.k-order-hdr');
 
@@ -1264,7 +1266,8 @@ test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
     await expect(katalogIcon).toHaveCount(1);
   });
 
-  test('T-50-06: Teilen-Buttons vertikal mit min-height 56px (AK-UI-50-06)', async ({ page }) => {
+  test('T-50-06: Teilen-Buttons vertikal mit min-height 56px (AK-UI-50-06)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'Desktop: Step 4 ausgeblendet, Teilen-Aktionen in der Action-Bar');
     // Expand step 4
     const step4 = page.locator('#soc-step-4');
     const step4Hdr = step4.locator('.k-order-hdr');
@@ -1302,7 +1305,8 @@ test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
 // ═══════════════════════════════════════════════════════════
 test.describe('Social Feature-Abgleich (RD-11, RD-12, RD-13)', () => {
 
-  test('T-RD-11: Kiosk – Tagesinfo-Button vorhanden (AK-RD-10)', async ({ page }) => {
+  test('T-RD-11: Kiosk – Tagesinfo-Button vorhanden (AK-RD-10)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'Desktop: Step 4 ausgeblendet, Tagesinfo-Button in der Action-Bar');
     await page.goto(KIOSK_URL);
     await page.waitForTimeout(2000);
     await page.click('[data-tab="social"]');
