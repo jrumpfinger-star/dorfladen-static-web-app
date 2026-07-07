@@ -1193,6 +1193,7 @@
     var okBtn=document.getElementById('shop-confirm-ok');
     okBtn.textContent=opts.ok||'OK';
     okBtn.className='shop-confirm-ok'+(opts.color==='red'?' red':'');
+    document.getElementById('shop-confirm-cancel').style.display='';
     _confirmCb=cb;
     ov.classList.add('open');
     history.pushState({overlay:'confirm'},'');
@@ -1205,6 +1206,25 @@
   document.getElementById('shop-confirm-overlay').addEventListener('click',function(e){
     if(e.target===this) hideConfirm();
   });
+
+  // ── Info-Meldung (zentriert, ein Button) ──
+  // Anwenderfreundliche, zentrierte Meldung fuer Bestaetigungen/Hinweise/Fehler.
+  function shopInfo(opts,cb){
+    if(typeof opts==='string') opts={msg:opts};
+    var ov=document.getElementById('shop-confirm-overlay');
+    document.getElementById('shop-confirm-icon').textContent=opts.icon||'✅';
+    document.getElementById('shop-confirm-title').textContent=opts.title||'Hinweis';
+    var msgEl=document.getElementById('shop-confirm-msg');
+    msgEl.textContent=opts.msg||'';
+    msgEl.style.whiteSpace='pre-line';
+    document.getElementById('shop-confirm-cancel').style.display='none';
+    var okBtn=document.getElementById('shop-confirm-ok');
+    okBtn.textContent=opts.ok||'Verstanden';
+    okBtn.className='shop-confirm-ok'+(opts.color==='red'?' red':'');
+    _confirmCb=cb||null;
+    ov.classList.add('open');
+    history.pushState({overlay:'confirm'},'');
+  }
 
   // ── Toast ──
   function showToast(msg){
@@ -1355,10 +1375,10 @@
           errEl.innerHTML=(res.error||'E-Mail nicht bestätigt.')+'<br><button onclick="resendVerifyEmail()" style="margin-top:8px;padding:6px 16px;background:#2e7d4f;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600">Bestätigungslink erneut senden</button>';
           errEl.style.display='';
         } else {
-          errEl.textContent=res.error||res.errors?.join(' ')||'Fehler';errEl.style.display='';
+          errEl.textContent=res.error||res.errors?.join(' ')||'Anmeldung nicht möglich. Bitte versuchen Sie es erneut.';errEl.style.display='';
         }
       })
-      .catch(function(e){errEl.textContent='Verbindungsfehler: '+e.message;errEl.style.display='';});
+      .catch(function(e){console.error('Login fehlgeschlagen:',e);errEl.textContent='Verbindung fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';errEl.style.display='';});
   }
 
   window.resendVerifyEmail=function(){
@@ -1369,7 +1389,7 @@
     fetch(API+'/auth-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,passwort:pw,resend_verify:true})})
       .then(function(r){return r.json();})
       .then(function(res){errEl.textContent=res.error||'Bestätigungslink wurde gesendet.';errEl.style.display='';})
-      .catch(function(e){errEl.textContent='Fehler: '+e.message;errEl.style.display='';});
+      .catch(function(e){console.error('Bestätigungslink senden fehlgeschlagen:',e);errEl.textContent='Verbindung fehlgeschlagen. Bitte versuchen Sie es später erneut.';errEl.style.display='';});
   };
 
   function doRegister(){
@@ -1399,14 +1419,18 @@
         if(res.success){
           var mref=res.mandatsreferenz||'';
           showToast('📧 Bestätigungslink wurde gesendet!');
-          alert('✅ Registrierung erfolgreich!\n\n📧 Bitte prüfen Sie Ihren Posteingang und bestätigen Sie Ihre E-Mail-Adresse.\n\n'+(mref?'Ihre SEPA-Mandatsreferenz:\n'+mref+'\n\nGläubiger-ID: DE98ZZZ09999999999\nGläubiger: Dorfladen Oberornau UG\n\nBitte bewahren Sie diese Angaben auf.\n':'')+'Erst nach der E-Mail-Bestätigung können Sie sich anmelden.');
+          shopInfo({
+            icon:'✅',
+            title:'Registrierung erfolgreich!',
+            msg:'Bitte prüfen Sie Ihren Posteingang und bestätigen Sie Ihre E-Mail-Adresse.\n\n'+(mref?'Ihre SEPA-Mandatsreferenz:\n'+mref+'\n\nGläubiger-ID: DE98ZZZ09999999999\nGläubiger: Dorfladen Oberornau UG\n\nBitte bewahren Sie diese Angaben auf.\n\n':'')+'Erst nach der E-Mail-Bestätigung können Sie sich anmelden.'
+          });
           showAuth('login');
           document.getElementById('login-email').value=body.email;
         } else {
-          errEl.innerHTML=(res.errors||[res.error||'Fehler']).join('<br>');errEl.style.display='';
+          errEl.innerHTML=(res.errors||[res.error||'Registrierung nicht möglich. Bitte prüfen Sie Ihre Eingaben.']).join('<br>');errEl.style.display='';
         }
       })
-      .catch(function(e){errEl.textContent='Verbindungsfehler: '+e.message;errEl.style.display='';});
+      .catch(function(e){console.error('Registrierung fehlgeschlagen:',e);errEl.textContent='Verbindung fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';errEl.style.display='';});
   }
 
   // ── Checkout ──
@@ -1446,10 +1470,10 @@
           var abholTxt=res.abhol_display||res.abholdatum||'';
           content.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="font-size:64px;margin-bottom:16px">✅</div><h2 style="font-size:22px;margin-bottom:8px">Bestellung aufgegeben!</h2><p style="font-size:15px;color:#6b7280;margin-bottom:12px">'+esc(res.bestellnummer)+'</p><p style="font-size:16px;font-weight:600;color:#2e7d4f;margin-bottom:20px">📅 '+esc(abholTxt)+'</p><p style="font-size:14px;color:#6b7280;margin-bottom:24px">Gesamtbetrag (ca.): '+fmtP(res.gesamtsumme)+' €</p><button onclick="location.reload()" style="padding:12px 32px;border:none;border-radius:10px;background:#2e7d4f;color:#fff;font-size:15px;font-weight:700;cursor:pointer">↩ Zurück zum Shop</button></div>';
         } else {
-          showToast('Fehler: '+(res.error||'Unbekannt'));
+          showToast(res.error||'Bestellung konnte nicht aufgegeben werden. Bitte versuchen Sie es erneut.');
         }
       })
-      .catch(function(e){if(e.message==='__auth__')return;btn.disabled=false;btn.textContent='🛍 Jetzt bestellen';showToast('Fehler: '+e.message);});
+      .catch(function(e){if(e.message==='__auth__')return;console.error('Bestellung fehlgeschlagen:',e);btn.disabled=false;btn.textContent='🛍 Jetzt bestellen';showToast('Bestellung konnte nicht aufgegeben werden. Bitte prüfen Sie Ihre Internetverbindung.');});
   }
 
   // ── Render Articles ──
@@ -2314,7 +2338,8 @@
       });
     })
     .catch(function(e){
-      document.getElementById('shop-loading').innerHTML='<p>Fehler: '+esc(e.message)+'</p>';
+      console.error('Artikel konnten nicht geladen werden:',e);
+      document.getElementById('shop-loading').innerHTML='<p>Die Artikel konnten gerade nicht geladen werden. Bitte laden Sie die Seite neu.</p>';
     });
 
   // ── Push Notifications for order updates ──
@@ -2540,7 +2565,7 @@
       allOrders.sort(function(a,b){return(b._sortDate||'').localeCompare(a._sortDate||'');});
       _myOrdersCache=allOrders;
       renderMyOrders();
-    }).catch(function(e){content.innerHTML='<div class="shop-loading"><p>Fehler: '+esc(e.message)+'</p></div>';});
+    }).catch(function(e){console.error('Bestellungen konnten nicht geladen werden:',e);content.innerHTML='<div class="shop-loading"><p>Ihre Bestellungen konnten gerade nicht geladen werden. Bitte versuchen Sie es später erneut.</p></div>';});
   }
 
   function renderMyOrders(){
@@ -2831,8 +2856,8 @@
           yesBtn.disabled=true;yesBtn.textContent='Wird storniert\u2026';
           fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify({id:orderId,customer_action:'cancel',storno_grund:'Kundengrund: '+grund})})
             .then(function(r){return r.json();})
-            .then(function(x){if(x.success){showToast('Bestellung storniert');_myOrdersCache=null;loadMyOrders();}else{showToast('Fehler: '+(x.error||'Storno nicht m\u00f6glich'));wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';}})
-            .catch(function(e){showToast('Fehler: '+e.message);wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';});
+            .then(function(x){if(x.success){showToast('Bestellung storniert');_myOrdersCache=null;loadMyOrders();}else{showToast(x.error||'Stornierung ist gerade nicht m\u00f6glich.');wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';}})
+            .catch(function(e){console.error('Stornierung fehlgeschlagen:',e);showToast('Stornierung fehlgeschlagen. Bitte versuchen Sie es erneut.');wrapper.querySelector('[data-cancel-confirm]').remove();btn.style.display='';});
         });
       });
     });
@@ -2864,9 +2889,9 @@
               ta.value='';
               showToast('\u2705 Nachricht gesendet');
               _myOrdersCache=null;loadMyOrders();
-            } else {showToast('Fehler: '+(x.error||''));}
+            } else {showToast(x.error||'Nachricht konnte nicht gesendet werden.');}
           })
-          .catch(function(e){btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';showToast('Fehler: '+e.message);});
+          .catch(function(e){console.error('Nachricht senden fehlgeschlagen:',e);btn.disabled=false;btn.innerHTML=lucideHtml('send',14)+' Senden';showToast('Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.');});
       });
     });
   }

@@ -111,11 +111,21 @@
   }
   function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
+  // Anwenderfreundliche, zentrierte Kurzmeldung (statt native alert)
+  function laToast(msg,type){
+    var t=document.createElement('div');
+    t.textContent=msg;
+    t.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-width:90%;background:'+(type==='error'?'#dc2626':'#16a34a')+';color:#fff;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.25);text-align:center;opacity:0;transition:opacity .2s';
+    document.body.appendChild(t);
+    requestAnimationFrame(function(){t.style.opacity='1';});
+    setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},250);},3000);
+  }
+
   var STATUS_LABELS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
   var BADGE_CLASSES = {0:'badge-neu',1:'badge-ok',2:'badge-cancel',3:'badge-done'};
 
   window.exportLunchCSV = function(){
-    if(!orders.length){alert('Keine Bestellungen zum Exportieren.');return;}
+    if(!orders.length){laToast('Keine Bestellungen zum Exportieren.','error');return;}
     var sep=';';var nl='\r\n';
     var hdr=['Bestellnummer','Name','E-Mail','Telefon','Gericht','Menge','Preis','Mitnehmen','Status','Datum','Anmerkung'];
     var csv='\ufeff'+hdr.join(sep)+nl;
@@ -148,7 +158,7 @@
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success){
-          document.getElementById('orders-list').innerHTML = '<div class="empty">Fehler: ' + esc(res.error) + '</div>';
+          document.getElementById('orders-list').innerHTML = '<div class="empty">' + esc(res.error || 'Bestellungen konnten nicht geladen werden.') + '</div>';
           return;
         }
         orders = res.orders || [];
@@ -156,7 +166,8 @@
         renderStats();
       })
       .catch(function(e){
-        document.getElementById('orders-list').innerHTML = '<div class="empty">Fehler: ' + esc(e.message) + '</div>';
+        console.error('Bestellungen laden fehlgeschlagen:',e);
+        document.getElementById('orders-list').innerHTML = '<div class="empty">Bestellungen konnten nicht geladen werden. Bitte Seite neu laden.</div>';
       });
   };
 
@@ -241,10 +252,10 @@
       if(res.success){
         loadOrders(); // Refresh
       } else {
-        alert('Fehler: ' + (res.error || 'Unbekannt'));
+        laToast(res.error || 'Aktion fehlgeschlagen. Bitte erneut versuchen.','error');
       }
     })
-    .catch(function(e){alert('Fehler: ' + e.message);});
+    .catch(function(e){console.error('Statuswechsel fehlgeschlagen:',e);laToast('Aktion fehlgeschlagen. Bitte erneut versuchen.','error');});
   };
 
   var LA_STORNO_REASONS = ['Gericht ist leider ausverkauft','Bestellung wurde doppelt aufgegeben','Bestellschluss bereits überschritten','Kunde hat telefonisch storniert','Sonstiger Grund'];
@@ -294,8 +305,8 @@
         body: JSON.stringify({status: 2, bestaetigung_text: grund})
       })
       .then(function(r){return r.json();})
-      .then(function(res){ if(res.success){ loadOrders(); } else { alert('Fehler: '+(res.error||'')); } })
-      .catch(function(e){alert('Fehler: '+e.message);});
+      .then(function(res){ if(res.success){ loadOrders(); } else { laToast(res.error || 'Stornierung fehlgeschlagen.','error'); } })
+      .catch(function(e){console.error('Stornierung fehlgeschlagen:',e);laToast('Stornierung fehlgeschlagen. Bitte erneut versuchen.','error');});
     });
   };
 

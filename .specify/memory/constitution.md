@@ -28,11 +28,34 @@
    `test-results/`, Azurite DB files, and build output stay gitignored.
 5. **UI changes are deploy-aware.** After a user-requested UI change, be ready
    to deploy to the Static Web App when deploy assets/config are available.
+6. **User-friendly messages.** Every message shown to end users (confirmations,
+   errors, hints) MUST be user-friendly: plain German, no raw technical detail
+   (no `Fehler: <exception>`, stack traces, HTTP codes, or field IDs). Prefer
+   the in-app toast/dialog components over native `alert()`/`confirm()`.
+   User-facing feedback is presented in a clear, centered overlay/dialog for
+   important confirmations and errors; brief status feedback may use toasts.
+   Technical details go to the console/logs, not to the user.
+7. **Responsive across all target sizes.** Every UI change MUST be tested and
+   look correct at three viewports: **mobile** (375×667), **iPad mini**
+   (768×1024), and **desktop** (1280×800). On every one the UI must fit (no
+   overflow, no clipped/overlapping elements, no horizontal scroll) and be
+   modern and user-friendly. Playwright projects MUST cover these three
+   viewports.
+8. **Changes are tested automatically.** Every change MUST be covered by
+   automated tests that run without manual steps. Prefer Playwright for
+   UI/CMS behaviour and run the relevant specs across all three viewports
+   (Principle 7). No change is "done" until its automated tests pass.
 
 ## Quality Gates
 
 - Playwright specs relevant to the change pass locally.
 - Static site builds/serves without errors; API starts cleanly.
+- No user-facing `alert()`/`confirm()` or raw `Fehler: <exception>` text in
+  changed code; messages are friendly and use the in-app components.
+- UI changes verified at mobile (375×667), iPad mini (768×1024), and desktop
+  (1280×800); the layout fits and stays modern/user-friendly on each.
+- Changes ship with automated tests that pass; the relevant Playwright specs
+  run across all three viewports.
 
 ## Amending This Document
 

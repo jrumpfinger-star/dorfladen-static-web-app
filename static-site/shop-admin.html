@@ -979,7 +979,7 @@
   document.getElementById('show-history').addEventListener('click',function(){historyMode=!historyMode;this.classList.toggle('primary',historyMode);this.textContent=historyMode?'📜 Historie ausblenden':'📜 Historie';renderOrders();});
   document.getElementById('export-csv').addEventListener('click',function(){
     var list=filteredOrders();
-    if(!list.length){alert('Keine Bestellungen zum Exportieren.');return;}
+    if(!list.length){toast('Keine Bestellungen zum Exportieren.');return;}
     var sep=';';var nl='\r\n';
     var hdr=['Bestellnummer','Name','E-Mail','Status','Bestelldatum','Abholdatum','Abholzeit','Positionen','Gesamtsumme'];
     var csv='\ufeff'+hdr.join(sep)+nl;
@@ -1093,10 +1093,10 @@
           }
           _nativeLoop=requestAnimationFrame(tick);
         })
-        .catch(function(err){stopScan();alert('Kamera konnte nicht geöffnet werden.\n'+err);});
+        .catch(function(err){stopScan();console.error('Kamera-Fehler:',err);toast('Kamera konnte nicht geöffnet werden. Bitte Berechtigung prüfen.');});
     }
     function startQuaggaScan(){
-      if(typeof Quagga==='undefined'){alert('Scanner-Library wird geladen…');return;}
+      if(typeof Quagga==='undefined'){toast('Scanner wird geladen, bitte kurz warten…');return;}
       Quagga.init({
         inputStream:{name:'Live',type:'LiveStream',target:reader,
           constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},
@@ -1105,7 +1105,7 @@
         decoder:{readers:['code_128_reader']},
         locate:true,frequency:15
       },function(err){
-        if(err){stopScan();alert('Kamera konnte nicht geöffnet werden.\n'+err);return;}
+        if(err){stopScan();console.error('Kamera-Fehler:',err);toast('Kamera konnte nicht geöffnet werden. Bitte Berechtigung prüfen.');return;}
         Quagga.start();
         try{var s=Quagga.CameraAccess.getActiveStreamRef&&Quagga.CameraAccess.getActiveStreamRef();if(s)applyFocus(s);}catch(e){}
       });
@@ -1530,8 +1530,8 @@ function mtSubmitNewOrder(){
   var stammkundeId = document.getElementById('mt-new-sk-id').value;
   var saveAsCustomer = !stammkundeId && document.getElementById('mt-new-save-customer').checked;
 
-  if(!name){ alert('Bitte Name eingeben.'); return; }
-  if(!gerichtId){ alert('Bitte Gericht auswählen.'); return; }
+  if(!name){ toast('Bitte Name eingeben.'); return; }
+  if(!gerichtId){ toast('Bitte Gericht auswählen.'); return; }
 
   // Determine the day label for selected date
   var selDate = new Date(_mtSelectedDate+'T00:00:00');
@@ -1579,10 +1579,10 @@ function mtSubmitNewOrder(){
         .catch(function(e2){ console.log('Neukunde Fehler:', e2); });
       }
     } else {
-      alert('Fehler: ' + (res.error || JSON.stringify(res.errors||'')));
+      toast(res.error || 'Bestellung konnte nicht gespeichert werden. Bitte Eingaben prüfen.');
     }
   })
-  .catch(function(e){ alert('Fehler: '+e.message); });
+  .catch(function(e){ console.error('Mittagsbestellung speichern fehlgeschlagen:',e); toast('Bestellung konnte nicht gespeichert werden. Bitte erneut versuchen.'); });
 }
 
 // Pre-load Mittagstisch badge count (without full init)

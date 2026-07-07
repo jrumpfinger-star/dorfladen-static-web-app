@@ -249,7 +249,8 @@ function lookupOrder(){
       if(fm) renderFleischOrder(_order); else renderOrder(_order);
     })
     .catch(function(e){
-      errEl.textContent = 'Fehler: ' + e.message;
+      console.error('Bestellung konnte nicht geladen werden:',e);
+      errEl.textContent = 'Die Bestellung konnte gerade nicht geladen werden. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
       errEl.style.display = 'block';
     });
 }
@@ -478,7 +479,8 @@ function cancelOrder(){
     })
     .catch(function(e){
       closeDialog();
-      bsToast('Fehler: ' + e.message);
+      console.error('Stornierung fehlgeschlagen:',e);
+      bsToast('Stornierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
     });
   });
 }
@@ -517,13 +519,14 @@ function sendComment(){
       setTimeout(function(){ document.getElementById('bs-comment-sent').style.display = 'none'; }, 4000);
       lookupOrder();
     } else {
-      bsToast('Fehler: ' + (data.error || 'Konnte nicht gesendet werden'));
+      bsToast(data.error || 'Nachricht konnte nicht gesendet werden.');
     }
   })
   .catch(function(e){
     btn.disabled = false;
     btn.textContent = 'Nachricht senden';
-    bsToast('Fehler: ' + e.message);
+    console.error('Nachricht senden fehlgeschlagen:',e);
+    bsToast('Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.');
   });
 }
 

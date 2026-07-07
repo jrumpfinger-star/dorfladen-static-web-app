@@ -1224,13 +1224,14 @@
           });
         } else {
           btn.innerHTML='&#10060; Fehler';btn.disabled=false;
-          alert('Speichern fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
+          toast('Speichern fehlgeschlagen. Bitte erneut versuchen.','error');
           setTimeout(function(){btn.innerHTML=origText;},2000);
         }
       })
       .catch(function(e){
         btn.innerHTML='&#10060; Fehler';btn.disabled=false;
-        alert('Netzwerkfehler: '+e.message);
+        console.error('Speichern fehlgeschlagen:',e);
+        toast('Verbindungsproblem. Bitte prüfe deine Internetverbindung.','error');
         setTimeout(function(){btn.innerHTML=origText;},2000);
       });
   };
@@ -1604,16 +1605,20 @@
     toast(hasCustom?'Auf eigene Standardwerte zur\u00fcckgesetzt':'Auf Werks-Standardwerte zur\u00fcckgesetzt','ok');
   };
   window.cmsSaveAsDefault=function(){
-    if(!confirm('Aktuelle Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.'))return;
-    var c=cfgReadUI();
-    cfgSaveCustomDefaults(c);
-    toast('\u2705 Aktuelle Einstellungen als Standard gespeichert','ok');
+    cmsConfirm('Aktuelle Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.').then(function(ok){
+      if(!ok)return;
+      var c=cfgReadUI();
+      cfgSaveCustomDefaults(c);
+      toast('\u2705 Aktuelle Einstellungen als Standard gespeichert','ok');
+    });
   };
   window.cmsClearCustomDefault=function(){
-    if(!confirm('Eigene Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?'))return;
-    _cfgCustomDefaults=null;
-    _dvSave('design_config_defaults',null).catch(function(){});
-    toast('Eigene Standards gel\u00f6scht \u2013 Werkseinstellungen aktiv','ok');
+    cmsConfirm('Eigene Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?').then(function(ok){
+      if(!ok)return;
+      _cfgCustomDefaults=null;
+      _dvSave('design_config_defaults',null).catch(function(){});
+      toast('Eigene Standards gel\u00f6scht \u2013 Werkseinstellungen aktiv','ok');
+    });
   };
 
   // ── Section Navigation (Plakat / Flyer / Gemeinsam) ──
@@ -1713,11 +1718,13 @@
     var all=cfgPresetsGet();
     if(!all[section]||!all[section][idx])return;
     var name=all[section][idx].name;
-    if(!confirm('Vorlage "'+name+'" l\u00f6schen?'))return;
-    all[section].splice(idx,1);
-    cfgPresetsSave(all);
-    cfgPresetsRenderAll();
-    toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+    cmsConfirm('Vorlage "'+name+'" l\u00f6schen?').then(function(ok){
+      if(!ok)return;
+      all[section].splice(idx,1);
+      cfgPresetsSave(all);
+      cfgPresetsRenderAll();
+      toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+    });
   };
   function cfgPresetsRenderAll(){
     ['plakat','flyer','shared'].forEach(function(sec){cfgPresetsRender(sec);});
@@ -2386,16 +2393,20 @@
     toast(hasCustom?'Auf eigene Standards zur\u00fcckgesetzt':'Auf Werks-Standards zur\u00fcckgesetzt','ok');
   };
   window.hpSaveAsDefault=function(){
-    if(!confirm('Aktuelle HP-Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.'))return;
-    var c=hpCfgReadUI();
-    hpCfgSaveCustomDefaults(c);
-    toast('\u2705 HP-Einstellungen als Standard gespeichert','ok');
+    cmsConfirm('Aktuelle HP-Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.').then(function(ok){
+      if(!ok)return;
+      var c=hpCfgReadUI();
+      hpCfgSaveCustomDefaults(c);
+      toast('\u2705 HP-Einstellungen als Standard gespeichert','ok');
+    });
   };
   window.hpClearCustomDefault=function(){
-    if(!confirm('Eigene HP-Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?'))return;
-    _hpCfgCustomDefaults=null;
-    _dvSave('hp_design_config_defaults',null).catch(function(){});
-    toast('Eigene HP-Standards gel\u00f6scht','ok');
+    cmsConfirm('Eigene HP-Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?').then(function(ok){
+      if(!ok)return;
+      _hpCfgCustomDefaults=null;
+      _dvSave('hp_design_config_defaults',null).catch(function(){});
+      toast('Eigene HP-Standards gel\u00f6scht','ok');
+    });
   };
   window.resetWpTplColors=function(kind){
     kind=kind||'home';
@@ -2498,11 +2509,13 @@
     var all=wpPresetsGet();
     if(!all[section]||!all[section][idx])return;
     var name=all[section][idx].name;
-    if(!confirm('Vorlage "'+name+'" l\u00f6schen?'))return;
-    all[section].splice(idx,1);
-    wpPresetsSave(all);
-    wpPresetsRenderAll();
-    toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+    cmsConfirm('Vorlage "'+name+'" l\u00f6schen?').then(function(ok){
+      if(!ok)return;
+      all[section].splice(idx,1);
+      wpPresetsSave(all);
+      wpPresetsRenderAll();
+      toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+    });
   };
   function wpPresetsRenderAll(){
     ['wp-home','wp-flyer'].forEach(function(sec){wpPresetsRender(sec);});
@@ -5176,7 +5189,7 @@
         br.appendChild(pb);br.appendChild(bb);po.appendChild(br);document.body.appendChild(po);
       }else{
         var w=window.open('','_blank');
-        if(!w){alert('Popup-Blocker aktiv!');return;}
+        if(!w){toast('Bitte erlaube Popups f\u00fcr diese Seite, um drucken zu k\u00f6nnen.','error');return;}
         w.document.write('<html><head><title>Kachel drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"></body></html>');
         w.document.close();
         var pi=w.document.getElementById('pi');
@@ -9418,7 +9431,8 @@
 
   window.cmsOrderStatus=function(id,status,bestellnr,email,name,abholdatum,grund){
     var label=STATUS_LABELS[status]||'';
-    if(!confirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?')) return;
+    cmsConfirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?').then(function(ok){
+    if(!ok) return;
     var payload={id:id,status:status};
     if(grund) payload.storno_grund=grund;
     fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
@@ -9438,9 +9452,10 @@
           } else {
             cmsToast('✅ '+bestellnr+': Status → '+label);
           }
-        } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+        } else {cmsToast(res.error||'Aktion fehlgeschlagen. Bitte erneut versuchen.','error');}
       })
-      .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+      .catch(function(e){console.error('Statuswechsel fehlgeschlagen:',e);cmsToast('Aktion fehlgeschlagen. Bitte erneut versuchen.','error');});
+    });
   };
 
   // ── CMS Shop-Storno-Dialog mit Begründung ──
@@ -9686,30 +9701,34 @@
     if(window.lucide)lucide.createIcons();
     document.getElementById('kd-close').onclick=function(){wrap.style.display='none';wrap.innerHTML='';};
     document.getElementById('kd-delete').onclick=function(){
-      if(!confirm('Kunde "'+k.vorname+' '+k.nachname+'" ('+k.email+') wirklich endgültig löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!'))return;
+      cmsConfirm('Kunde "'+k.vorname+' '+k.nachname+'" ('+k.email+') wirklich endgültig löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!').then(function(ok){
+      if(!ok)return;
       fetch(API+'/shop-admin?id='+encodeURIComponent(id),{method:'DELETE'})
         .then(function(r){return r.json();})
         .then(function(res){
-          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          if(!res.success){cmsToast(res.error||'Kunde konnte nicht gelöscht werden.','error');return;}
           cmsToast('Kunde gelöscht');
           wrap.style.display='none';wrap.innerHTML='';
           _kundenData=_kundenData.filter(function(x){return x.id!==id;});
           cmsRenderKunden();
         })
-        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+        .catch(function(e){console.error('Kunde löschen fehlgeschlagen:',e);cmsToast('Kunde konnte nicht gelöscht werden. Bitte erneut versuchen.','error');});
+      });
     };
     document.getElementById('kd-reset-pw').onclick=function(){
       var newPw=document.getElementById('kd-new-pw').value.trim();
       if(!newPw||newPw.length<8){cmsToast('Passwort muss mindestens 8 Zeichen haben','error');return;}
-      if(!confirm('Passwort für '+k.vorname+' '+k.nachname+' wirklich zurücksetzen?'))return;
+      cmsConfirm('Passwort für '+k.vorname+' '+k.nachname+' wirklich zurücksetzen?').then(function(ok){
+      if(!ok)return;
       fetch(API+'/auth-reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'admin-reset',kunde_id:id,passwort:newPw})})
         .then(function(r){return r.json();})
         .then(function(res){
-          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          if(!res.success){cmsToast(res.error||'Passwort konnte nicht zurückgesetzt werden.','error');return;}
           cmsToast('Passwort wurde zurückgesetzt');
           document.getElementById('kd-new-pw').value='';
         })
-        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+        .catch(function(e){console.error('Passwort zurücksetzen fehlgeschlagen:',e);cmsToast('Passwort konnte nicht zurückgesetzt werden. Bitte erneut versuchen.','error');});
+      });
     };
     document.getElementById('kd-save').onclick=function(){
       var payload={_entity:'kunde',id:id,vorname:document.getElementById('kd-vorname').value.trim(),nachname:document.getElementById('kd-nachname').value.trim(),telefon:document.getElementById('kd-telefon').value.trim(),strasse:document.getElementById('kd-strasse').value.trim(),plz:document.getElementById('kd-plz').value.trim(),ort:document.getElementById('kd-ort').value.trim(),aktiv:document.getElementById('kd-aktiv').checked};
@@ -10130,7 +10149,8 @@
 
   // --- Produkt loeschen ---
   window.socialKatDelete = function(id){
-    if(!confirm('Produkt wirklich entfernen?'))return;
+    cmsConfirm('Produkt wirklich entfernen?').then(function(ok){
+    if(!ok)return;
     fetch(API+'/social-katalog?id='+encodeURIComponent(id),{method:'DELETE'})
       .then(function(r){return r.json();})
       .then(function(res){
@@ -10138,7 +10158,8 @@
         socialStatus('soc-kat-status','Entfernt',true);
         socialLoadKatalog();
       })
-      .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+      .catch(function(e){console.error('Produkt entfernen fehlgeschlagen:',e);socialStatus('soc-kat-status','Produkt konnte nicht entfernt werden. Bitte erneut versuchen.',false);});
+    });
   };
 
   // --- Katalog Bild ändern per Klick auf Thumbnail ---
@@ -11572,7 +11593,8 @@
   };
 
   window.waKatalogDelete = function(retailerId){
-    if(!confirm('Produkt "'+retailerId+'" aus dem WhatsApp Katalog l\u00F6schen?')) return;
+    cmsConfirm('Produkt "'+retailerId+'" aus dem WhatsApp Katalog l\u00F6schen?').then(function(ok){
+    if(!ok) return;
     waKatalogStatus('\u23F3 L\u00F6sche Produkt...',true);
     fetch(API+'/meta-catalog?retailer_id='+encodeURIComponent(retailerId),{method:'DELETE'})
       .then(function(r){return r.json();})
@@ -11581,16 +11603,19 @@
           waKatalogStatus('\u2705 Produkt gel\u00F6scht',true);
           waKatalogLoad();
         } else {
-          waKatalogStatus('\u274C Fehler: '+JSON.stringify(res.response||res),false);
+          waKatalogStatus('\u274C Produkt konnte nicht gel\u00F6scht werden.',false);
         }
       })
       .catch(function(e){
-        waKatalogStatus('\u274C L\u00F6schen fehlgeschlagen: '+e.message,false);
+        console.error('WA-Katalog l\u00F6schen fehlgeschlagen:',e);
+        waKatalogStatus('\u274C L\u00F6schen fehlgeschlagen. Bitte erneut versuchen.',false);
       });
+    });
   };
 
   window.waKatalogDeleteAll = function(){
-    if(!confirm('ALLE Produkte aus dem WhatsApp Katalog l\u00F6schen?')) return;
+    cmsConfirm('ALLE Produkte aus dem WhatsApp Katalog l\u00F6schen?').then(function(ok){
+    if(!ok) return;
     waKatalogStatus('\u23F3 Lade Katalog zum L\u00F6schen...',true);
     fetch(API+'/meta-catalog')
       .then(function(r){return r.json();})
@@ -11612,8 +11637,10 @@
         });
       })
       .catch(function(e){
-        waKatalogStatus('\u274C Fehler: '+e.message,false);
+        console.error('WA-Katalog leeren fehlgeschlagen:',e);
+        waKatalogStatus('\u274C L\u00F6schen fehlgeschlagen. Bitte erneut versuchen.',false);
       });
+    });
   };
 
   // --- WhatsApp Share ---
@@ -12255,7 +12282,7 @@
         fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:ns})})
         .then(function(r){return r.json();}).then(function(d){
           if(d.success) cmsLoadFleischOrders();
-          else{btn.disabled=false;btn.textContent='Fehler';alert(d.error||'Fehler');}
+          else{btn.disabled=false;btn.textContent='Fehler';cmsToast(d.error||'Aktion fehlgeschlagen. Bitte erneut versuchen.','error');}
         }).catch(function(){btn.disabled=false;btn.textContent='Fehler';});
       });
     });
@@ -12304,8 +12331,8 @@
           fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:4,storno_grund:grund})})
           .then(function(r){return r.json();}).then(function(d){
             if(d.success) cmsLoadFleischOrders();
-            else alert(d.error||'Fehler');
-          }).catch(function(){alert('Verbindungsfehler');});
+            else cmsToast(d.error||'Stornierung fehlgeschlagen.','error');
+          }).catch(function(){cmsToast('Verbindungsproblem. Bitte prüfe deine Internetverbindung.','error');});
         });
       });
     });
@@ -12356,15 +12383,15 @@
     document.getElementById('fm-cms-reply-cancel').addEventListener('click',function(){ov.remove();});
     document.getElementById('fm-cms-reply-send').addEventListener('click',function(){
       var text=(document.getElementById('fm-cms-reply-text').value||'').trim();
-      if(!text){alert('Bitte Nachricht eingeben');return;}
+      if(!text){cmsToast('Bitte Nachricht eingeben','error');return;}
       var sendBtn=document.getElementById('fm-cms-reply-send');
       sendBtn.disabled=true;sendBtn.textContent='Senden...';
       fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,personal_antwort:text,kommentar_gelesen:true})})
       .then(function(r){return r.json();}).then(function(d){
         ov.remove();
         if(d.success) cmsLoadFleischOrders();
-        else alert(d.error||'Fehler');
-      }).catch(function(e){sendBtn.disabled=false;sendBtn.textContent='Senden';alert('Fehler: '+e.message);});
+        else cmsToast(d.error||'Nachricht konnte nicht gesendet werden.','error');
+      }).catch(function(e){sendBtn.disabled=false;sendBtn.textContent='Senden';console.error('Antwort senden fehlgeschlagen:',e);cmsToast('Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.','error');});
     });
     setTimeout(function(){document.getElementById('fm-cms-reply-text').focus();},100);
   }

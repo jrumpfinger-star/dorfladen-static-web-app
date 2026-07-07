@@ -94,7 +94,7 @@ function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()
 function load(silent){
   if(!silent) document.getElementById('cards').innerHTML='<div class="empty"><i>⏳</i><p>Lädt…</p></div>';
   fetch(API+'/shop-order?mode=cms').then(function(r){return r.json();}).then(function(res){
-    if(!res.success){toast('Fehler: '+(res.error||''));return;}
+    if(!res.success){toast(res.error||'Bestellungen konnten nicht geladen werden.');return;}
     var nw=res.orders||[];
     if(prevIds.length){
       var nids=nw.map(function(o){return o.id;});
@@ -105,7 +105,7 @@ function load(silent){
     orders=nw;
     updCnt();render();updTime();
     document.getElementById('hd-sub').textContent=orders.length+' Bestellung'+(orders.length!==1?'en':'');
-  }).catch(function(e){if(!silent)document.getElementById('cards').innerHTML='<div class="empty"><i>⚠️</i><p>'+esc(e.message)+'</p></div>';});
+  }).catch(function(e){console.error('Bestellungen laden fehlgeschlagen:',e);if(!silent)document.getElementById('cards').innerHTML='<div class="empty"><i>⚠️</i><p>Bestellungen konnten nicht geladen werden. Bitte Seite neu laden.</p></div>';});
 }
 
 function updTime(){document.getElementById('ltime').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -187,8 +187,8 @@ function wire(){
                 fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:nr,kunde_email:em,kunde_name:nm,abholdatum:ah,type:'ready'})}).catch(function(){});
               }
               load(true);
-            } else {toast('Fehler: '+(res.error||''));btn.disabled=false;}
-          }).catch(function(e){toast('Fehler: '+e.message);btn.disabled=false;});
+            } else {toast(res.error||'Aktion fehlgeschlagen. Bitte erneut versuchen.');btn.disabled=false;}
+          }).catch(function(e){console.error('Statuswechsel fehlgeschlagen:',e);toast('Aktion fehlgeschlagen. Bitte erneut versuchen.');btn.disabled=false;});
       });
     }
   });});
