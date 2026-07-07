@@ -148,4 +148,28 @@ test.describe('CMS Social-UI – Kiosk-Wizard-Angleichung', () => {
     // Der Fix entfernt Inline-Styles; Styling kommt aus .k-filter-btn CSS
     expect(inline.bg).toBe('');
   });
+
+  test('T-CS-13 socialKatMgrToggle existiert und oeffnet den Kategorie-Manager', async ({ page }) => {
+    await page.goto(CMS_URL);
+    await page.waitForFunction(() => typeof window.socialKatMgrToggle === 'function', { timeout: 15000 }).catch(() => {});
+    // Funktionen muessen definiert sein (waren zuvor undefined -> Button ohne Wirkung)
+    const fns = await page.evaluate(() => ({
+      toggle: typeof window.socialKatMgrToggle === 'function',
+      add: typeof window.socialKatMgrAdd === 'function',
+      filter: typeof window.socialKatMgrFilterIcons === 'function',
+      remove: typeof window.socialKatMgrRemove === 'function',
+      pick: typeof window.socialKatMgrPickIcon === 'function'
+    }));
+    expect(fns.toggle).toBe(true);
+    expect(fns.add).toBe(true);
+    expect(fns.filter).toBe(true);
+    expect(fns.remove).toBe(true);
+    expect(fns.pick).toBe(true);
+    // Toggle oeffnet das Manager-Panel (startet display:none)
+    const before = await page.evaluate(() => getComputedStyle(document.getElementById('soc-kat-manager')).display);
+    expect(before).toBe('none');
+    await page.evaluate(() => window.socialKatMgrToggle());
+    const after = await page.evaluate(() => document.getElementById('soc-kat-manager').style.display);
+    expect(after).not.toBe('none');
+  });
 });

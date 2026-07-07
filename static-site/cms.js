@@ -9987,6 +9987,139 @@
     for(var i=0;i<kats.length;i++){if(kats[i].name===catName) return kats[i].icon||'tag';}
     return 'tag';
   }
+
+  // --- Kategorie-Manager (Kategorien anlegen/entfernen) – portiert aus js/social.js ---
+  var _cmsCatIconChoices=['utensils','cake-slice','apple','salad','coffee','beef','fish','egg-fried','milk','wheat','grape','carrot','cherry','citrus','cookie','croissant','drum','drumstick','ice-cream-cone','leaf','nut','pizza','popcorn','sandwich','soup','wine','beer','candy','shopping-basket','package','tag','store','heart','star','sun','flower','sprout','flame','snowflake','droplet','zap'];
+  var _cmsCatIconDeMap={'eis':'ice-cream','eiscreme':'ice-cream','getraenk':'cup-soda','trinken':'cup-soda','brot':'wheat','fleisch':'beef','rind':'beef','schwein':'ham','huhn':'drumstick','haehnchen':'drumstick','gemuese':'carrot','obst':'apple','frucht':'cherry','torte':'cake','kuchen':'cake','wein':'wine','bier':'beer','milch':'milk','kaese':'wedge','fisch':'fish','pizza':'pizza','suppe':'soup','kaffee':'coffee','tee':'coffee','salat':'salad','bonbon':'candy','blume':'flower','sonne':'sun','stern':'star','herz':'heart','feuer':'flame','wasser':'droplet','blatt':'leaf','nuss':'nut','traube':'grape','kirsche':'cherry','zitrone':'citrus','keks':'cookie','essen':'utensils','gabel':'utensils','messer':'utensils','tasse':'coffee','glas':'wine','flasche':'wine','korb':'shopping-basket','tuete':'shopping-bag','laden':'store','geschaeft':'store','paket':'package','lieferung':'truck','schneeflocke':'snowflake','kalt':'snowflake','heiss':'flame','frisch':'leaf','bio':'sprout','vegan':'sprout','popcorn':'popcorn'};
+  var _cmsCatIconFilter='';
+
+  function _cmsAllLucideIcons(){
+    if(!window.lucide||!window.lucide.icons) return [];
+    var names=[];
+    for(var key in window.lucide.icons){
+      var kebab=key.replace(/([a-z])([A-Z])/g,'$1-$2').replace(/([A-Z])([A-Z][a-z])/g,'$1-$2').toLowerCase();
+      names.push(kebab);
+    }
+    return names;
+  }
+
+  function _cmsRenderKatManager(){
+    var wrap=document.getElementById('soc-kat-manager-list');
+    if(!wrap)return;
+    var kats=_cmsGetKategorien();
+    if(!kats.length){wrap.innerHTML='<div style="color:#9ca3af;font-size:12px;padding:10px">Keine Kategorien geladen.</div>';return;}
+    var html='';
+    kats.forEach(function(k,idx){
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:'+(idx%2===0?'#fff':'#f9fafb')+';border-radius:6px;margin-bottom:2px">';
+      html+='<span style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#6b7280">'+_cmsLucideIcon(k.icon||'tag',18)+'</span>';
+      html+='<span style="flex:1;font-weight:600;font-size:13px">'+esc(k.name)+'</span>';
+      html+='<span style="font-size:10px;color:#9ca3af;background:#f3f4f6;padding:2px 6px;border-radius:4px">'+esc(k.icon||'tag')+'</span>';
+      html+='<button onclick="socialKatMgrRemove('+idx+')" title="Entfernen" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:2px 4px">&times;</button>';
+      html+='</div>';
+    });
+    wrap.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
+  }
+
+  function _cmsRenderIconPicker(){
+    var grid=document.getElementById('soc-kat-icon-grid');
+    if(!grid)return;
+    var q=_cmsCatIconFilter.toLowerCase().trim();
+    var filtered;
+    if(!q){ filtered=_cmsCatIconChoices; }
+    else {
+      var searchTerms=[q];
+      if(_cmsCatIconDeMap[q]) searchTerms.push(_cmsCatIconDeMap[q]);
+      for(var de in _cmsCatIconDeMap){ if(de.indexOf(q)!==-1||q.indexOf(de)!==-1) searchTerms.push(_cmsCatIconDeMap[de]); }
+      var allIcons=_cmsAllLucideIcons();
+      if(!allIcons.length) allIcons=_cmsCatIconChoices;
+      filtered=allIcons.filter(function(ic){ for(var i=0;i<searchTerms.length;i++){ if(ic.indexOf(searchTerms[i])!==-1) return true; } return false; });
+      if(filtered.length>60) filtered=filtered.slice(0,60);
+    }
+    var curIcon=document.getElementById('soc-kat-new-icon');
+    var curVal=curIcon?curIcon.value:'';
+    var html='';
+    filtered.forEach(function(ic){
+      var sel=curVal===ic;
+      html+='<button type="button" onclick="socialKatMgrPickIcon(\''+ic+'\')" title="'+ic+'" style="width:36px;height:36px;border-radius:6px;border:2px solid '+(sel?'#2e7d4f':'#e5e7eb')+';background:'+(sel?'#f0fdf4':'#fff')+';cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#374151">'+_cmsLucideIcon(ic,18)+'</button>';
+    });
+    if(!filtered.length) html='<div style="color:#9ca3af;font-size:11px;padding:8px">Kein Icon gefunden &ndash; versuche englische Begriffe (z.B. ice-cream, bread, cup)</div>';
+    grid.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
+  }
+
+  window.socialKatMgrPickIcon=function(iconName){
+    var inp=document.getElementById('soc-kat-new-icon');
+    if(inp) inp.value=iconName;
+    var preview=document.getElementById('soc-kat-icon-preview');
+    if(preview) preview.innerHTML=_cmsLucideIcon(iconName,20);
+    _cmsRenderIconPicker();
+  };
+
+  window.socialKatMgrFilterIcons=function(){
+    var inp=document.getElementById('soc-kat-icon-search');
+    _cmsCatIconFilter=inp?inp.value:'';
+    _cmsRenderIconPicker();
+  };
+
+  window.socialKatMgrAdd=function(){
+    var nameInp=document.getElementById('soc-kat-new-name');
+    var iconInp=document.getElementById('soc-kat-new-icon');
+    var name=(nameInp?nameInp.value:'').trim();
+    var icon=(iconInp?iconInp.value:'').trim()||'tag';
+    if(!name){socialStatus('soc-kat-status','Kategoriename eingeben',false);return;}
+    var kats=_cmsGetKategorien();
+    for(var i=0;i<kats.length;i++){if(kats[i].name===name){socialStatus('soc-kat-status','Kategorie "'+name+'" existiert bereits',false);return;}}
+    if(!window._cmsKategorien) window._cmsKategorien=[];
+    window._cmsKategorien.push({name:name,icon:icon});
+    _cmsKatMgrSave();
+    if(nameInp) nameInp.value='';
+    if(iconInp) iconInp.value='';
+    _cmsCatIconFilter='';
+    var search=document.getElementById('soc-kat-icon-search');
+    if(search) search.value='';
+    var preview=document.getElementById('soc-kat-icon-preview');
+    if(preview) preview.innerHTML=_cmsLucideIcon('tag',20);
+  };
+
+  window.socialKatMgrRemove=function(idx){
+    var kats=_cmsGetKategorien();
+    if(!kats[idx])return;
+    var catName=kats[idx].name;
+    cmsConfirm('Kategorie \u00ab'+catName+'\u00bb entfernen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'Entfernen',warn:true}).then(function(ok){
+      if(!ok)return;
+      if(window._cmsKategorien) window._cmsKategorien.splice(idx,1);
+      _cmsKatMgrSave();
+    });
+  };
+
+  function _cmsKatMgrSave(){
+    socialStatus('soc-kat-status','Kategorien werden gespeichert...',true);
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'katalog_kategorien',wert:JSON.stringify(window._cmsKategorien||[])})})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){socialStatus('soc-kat-status','Fehler: '+res.error,false);return;}
+      socialStatus('soc-kat-status','Kategorien gespeichert!',true);
+      var katSel=document.getElementById('soc-kat-kategorie');
+      if(katSel){var cur=katSel.value;katSel.innerHTML=_cmsKatOptionsHtml('');if(cur)katSel.value=cur;}
+      _cmsRenderKatManager();
+      socialRenderKatalog();
+    })
+    .catch(function(e){socialStatus('soc-kat-status','Speichern fehlgeschlagen.'+(typeof _cmsLog==='function'?_cmsLog(e):''),false);});
+  }
+
+  window.socialKatMgrToggle=function(){
+    var panel=document.getElementById('soc-kat-manager');
+    if(!panel)return;
+    if(panel.style.display==='none'){
+      panel.style.display='';
+      _cmsRenderKatManager();
+      _cmsRenderIconPicker();
+    } else {
+      panel.style.display='none';
+    }
+  };
+
   function socialRenderKatalog(){
     var list=document.getElementById('soc-kat-list');
     var empty=document.getElementById('soc-kat-empty');
