@@ -438,6 +438,43 @@
       .shop-grid{display:block}
       .shop-card{break-inside:avoid;border:1px solid #ccc;margin-bottom:8px;page-break-inside:avoid}
     }
+    /* ══════════ Dark Mode ══════════ */
+    html[data-theme="dark"]{--shop-gray:#232b31;--shop-border:rgba(255,255,255,.10);--shop-text:#e6eae8;--shop-muted:#9aa6a0;--shop-green-light:#17301f;--shop-shadow:0 2px 10px rgba(0,0,0,.5)}
+    html[data-theme="dark"] body{background:#12171a;color:var(--shop-text)}
+    html[data-theme="dark"] .shop-header,
+    html[data-theme="dark"] .shop-topbar,
+    html[data-theme="dark"] .shop-search,
+    html[data-theme="dark"] .shop-cats,
+    html[data-theme="dark"] .shop-breadcrumb{background:#1b2228;border-color:var(--shop-border);color:var(--shop-text)}
+    html[data-theme="dark"] .shop-search-input,
+    html[data-theme="dark"] .shop-cat-pill,
+    html[data-theme="dark"] .shop-cat-dd-btn{background-color:#232b31;color:var(--shop-text);border-color:var(--shop-border)}
+    html[data-theme="dark"] .shop-cat-pill:hover{background:#17301f;border-color:var(--shop-green);color:#5cc98a}
+    html[data-theme="dark"] .shop-card,
+    html[data-theme="dark"] .shop-list-item,
+    html[data-theme="dark"] .shop-cat-tile,
+    html[data-theme="dark"] .reorder-card,
+    html[data-theme="dark"] .shop-slot-dd-list,
+    html[data-theme="dark"] .shop-cat-dd-list,
+    html[data-theme="dark"] .push-prompt,
+    html[data-theme="dark"] .img-popup,
+    html[data-theme="dark"] .shop-cart-panel{background:#1b2228;color:var(--shop-text);border-color:var(--shop-border)}
+    html[data-theme="dark"] .shop-card{border-color:var(--shop-border)}
+    html[data-theme="dark"] .shop-list-item:hover{background:#232b31}
+    html[data-theme="dark"] .shop-slot-dd-item:hover,
+    html[data-theme="dark"] .shop-cat-dd-item:hover,
+    html[data-theme="dark"] .reorder-header:hover{background:#17301f}
+    html[data-theme="dark"] .shop-cart-header{border-color:var(--shop-border)}
+    html[data-theme="dark"] .shop-cart-item{border-color:rgba(255,255,255,.07)}
+    html[data-theme="dark"] .shop-qty-val,
+    html[data-theme="dark"] .shop-qty-ctrl .shop-weight-input{background:#232b31;color:var(--shop-text)}
+    html[data-theme="dark"] .shop-view-toggle button.active{background:#2a333a;color:#5cc98a}
+    html[data-theme="dark"] .shop-card .shop-fav-btn{background:rgba(20,25,28,.8)}
+    /* Produktbilder auf hellem Tile behalten (mix-blend-mode:multiply braucht hellen Hintergrund) */
+    html[data-theme="dark"] .shop-card-img,
+    html[data-theme="dark"] .shop-list-img,
+    html[data-theme="dark"] .reorder-item-img,
+    html[data-theme="dark"] .img-popup-img{background:#f3f4f6}
   </style>
 </head>
 <body>
