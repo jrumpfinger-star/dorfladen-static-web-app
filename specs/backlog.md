@@ -1,8 +1,38 @@
 # Dorfladen – Feature Backlog
 
-> Erstellt: 2026-06-28 | Zuletzt aktualisiert: 2026-06-28
+> Erstellt: 2026-06-28 | Zuletzt aktualisiert: 2026-07-07
 > Prioritäten: 🔴 Hoch | 🟡 Mittel | 🟢 Niedrig
 > Status: ✅ Umgesetzt | 🔧 Teilweise | ❌ Offen | 🚫 Verworfen
+
+---
+
+## 📚 Spec-Index (Bestand – retrospektiv dokumentiert)
+
+Retrospektive Specs für bereits umgesetzte Features (Status „Bestand"). Neue
+Änderungen an diesen Bereichen folgen dem SDD-Ablauf und aktualisieren die Spec.
+
+| Bereich | Spec | Umfasst |
+|---------|------|---------|
+| Auth / Konten | [auth-konten.md](auth-konten.md) | auth-login, auth-register, auth-verify, auth-reset |
+| Analytics | [analytics-tracking.md](analytics-tracking.md) | track, analytics |
+| News | [news-aktuelles.md](news-aktuelles.md) | news, news-save, news-delete, aktuelles.html |
+| Preisliste | [preisliste-sortiment.md](preisliste-sortiment.md) | preisliste, sortiment.html, preisliste-live.js |
+| Roter Punkt | [roter-punkt.md](roter-punkt.md) | roterpunkt, roter-punkt.html, roterpunkt-live.js |
+| Push / PWA | [push-infrastruktur.md](push-infrastruktur.md) | push-vapid-key/subscribe/send/image, sw.js, pwa.js |
+| Galerie | [galerie-bilder.md](galerie-bilder.md) | gallery, bilder.html |
+| Öffnungszeiten | [oeffnungszeiten.md](oeffnungszeiten.md) | hours, oeffnungszeiten.html |
+| Logo | [logo.md](logo.md) | logo, logo-loader.js |
+| Werbebilder | [werbebilder.md](werbebilder.md) | werbebilder, shop-images.js |
+| Social / Meta | [social-katalog.md](social-katalog.md) | social-katalog, meta-catalog |
+| CMS-Inhalte | [cms-inhalte-seiten.md](cms-inhalte-seiten.md) | cms-config, Rechts-/Info-Seiten |
+| Shop-Infrastruktur | [shop-infrastruktur.md](shop-infrastruktur.md) | shop-setup, shop-notify |
+| Mitarbeiter-Portal | [mitarbeiter-portal.md](mitarbeiter-portal.md) | portal.html |
+| Handbuch / Hilfe | [handbuch-hilfe.md](handbuch-hilfe.md) | handbuch/, help-workflows.html |
+| Frontend-Infra | [frontend-infrastruktur.md](frontend-infrastruktur.md) | app.js, mobile.js, env-banner.js, dl-confirm.js |
+| Tagesverfügbarkeit | [tagesverfuegbarkeit.md](tagesverfuegbarkeit.md) | Wochentags-Verfügbarkeit Shop-Artikel |
+
+> Offen (noch ohne dedizierte Spec): Bestellsystem-Kern (`bestellungen`, Shop-/
+> Fleisch-/Mittagstisch-Bestellung, Kiosk, Bestellstatus). Siehe Feature-Tabellen unten.
 
 ---
 

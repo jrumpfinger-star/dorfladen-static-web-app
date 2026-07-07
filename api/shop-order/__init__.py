@@ -39,6 +39,26 @@ BESTELLSCHLUSS_HOUR = 16  # Fallback, nur verwendet wenn Frontend keinen Slot se
 MINDESTBESTELLWERT_DEFAULT = 10.0  # Fallback – wird aus CMS-Config überschrieben
 
 
+def _decrypt_iban(enc):
+    """Decrypt an IBAN stored by auth-register.
+    Supports 'ENC2:' (Fernet, key from IBAN_ENCRYPTION_KEY) and legacy 'ENC:' (base64)."""
+    import base64
+    if not enc:
+        return ""
+    try:
+        if enc.startswith("ENC2:"):
+            key = os.environ.get("IBAN_ENCRYPTION_KEY", "").strip()
+            if not key:
+                return ""
+            from cryptography.fernet import Fernet
+            return Fernet(key.encode()).decrypt(enc[5:].encode()).decode()
+        if enc.startswith("ENC:"):
+            return base64.b64decode(enc[4:]).decode()
+    except Exception:
+        return ""
+    return ""
+
+
 def _load_mindestbestellwert(base_url, headers):
     """Load shop_mindestbestellwert from CMS-Config (dl_seiteninhalt). Returns float."""
     try:

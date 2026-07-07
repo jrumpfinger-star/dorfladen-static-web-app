@@ -314,7 +314,25 @@ def _scan_pickup(req, base_url, headers):
 KUNDEN_SELECT = "dl_shopkundeid,dl_email,dl_vorname,dl_nachname,dl_telefon,dl_strasse,dl_plz,dl_ort,dl_aktiv,dl_email_verifiziert,createdon,dl_iban_encrypted,dl_kontoinhaber,dl_mandatsreferenz,dl_mandatsdatum,dl_mandatsstatus"
 
 
-def _list_kunden(req, base_url, headers):
+def _decrypt_iban(enc):
+    """Decrypt an IBAN stored by auth-register.
+    Supports 'ENC2:' (Fernet, key from IBAN_ENCRYPTION_KEY) and legacy 'ENC:' (base64)."""
+    import base64
+    if not enc:
+        return ""
+    try:
+        if enc.startswith("ENC2:"):
+            key = os.environ.get("IBAN_ENCRYPTION_KEY", "").strip()
+            if not key:
+                return ""
+            from cryptography.fernet import Fernet
+            return Fernet(key.encode()).decrypt(enc[5:].encode()).decode()
+        if enc.startswith("ENC:"):
+            return base64.b64decode(enc[4:]).decode()
+    except Exception:
+        return ""
+    return ""
+
     q = (req.params.get("q") or "").strip().replace("'", "''")
     filters = []
     if q:
@@ -333,12 +351,11 @@ def _list_kunden(req, base_url, headers):
         # Mask IBAN for display
         iban_masked = ""
         enc_iban = k.get("dl_iban_encrypted", "") or ""
-        if enc_iban and enc_iban.startswith("ENC:"):
-            try:
-                raw = base64.b64decode(enc_iban[4:]).decode()
-                iban_masked = raw[:4] + " **** **** " + raw[-4:] if len(raw) >= 8 else raw
-            except Exception:
-                iban_masked = "(Fehler)"
+        raw = _decrypt_iban(enc_iban)
+        if raw:
+            iban_masked = raw[:4] + " **** **** " + raw[-4:] if len(raw) >= 8 else raw
+        elif enc_iban:
+            iban_masked = "(Fehler)"
         kunden.append({
             "id": k.get("dl_shopkundeid", ""),
             "email": k.get("dl_email", ""),

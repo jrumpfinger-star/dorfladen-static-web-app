@@ -95,12 +95,32 @@ def _generate_mandatsreferenz():
     return f"DL-{now.year}-{uuid.uuid4().hex[:5].upper()}"
 
 
+def _get_iban_cipher():
+    """Return a Fernet cipher built from the IBAN_ENCRYPTION_KEY app setting.
+    Returns None if the key is missing or invalid."""
+    key = os.environ.get("IBAN_ENCRYPTION_KEY", "").strip()
+    if not key:
+        return None
+    try:
+        from cryptography.fernet import Fernet
+        return Fernet(key.encode())
+    except Exception as e:
+        logging.warning(f"[iban] Cipher init failed: {e}")
+        return None
+
+
 def _encrypt_iban(iban):
-    """Simple reversible obfuscation for IBAN storage.
-    In production, use proper AES-256 with a key from Azure Key Vault.
-    For now: base64 + prefix marker so we know it's encrypted."""
+    """Encrypt IBAN for storage using Fernet (AES-128-CBC + HMAC-SHA256).
+    Key comes from the IBAN_ENCRYPTION_KEY app setting (no paid service needed).
+    Fernet values are prefixed 'ENC2:'. If no key is configured, falls back to
+    legacy base64 obfuscation ('ENC:') and logs a warning."""
     import base64
     clean = iban.replace(" ", "").upper()
+    cipher = _get_iban_cipher()
+    if cipher:
+        token = cipher.encrypt(clean.encode()).decode()
+        return f"ENC2:{token}"
+    logging.warning("[iban] IBAN_ENCRYPTION_KEY not set – storing base64-obfuscated IBAN")
     encoded = base64.b64encode(clean.encode()).decode()
     return f"ENC:{encoded}"
 

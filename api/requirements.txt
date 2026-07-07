@@ -6,3 +6,4 @@ azure-data-tables
 PyJWT
 bcrypt
 Pillow
+cryptography

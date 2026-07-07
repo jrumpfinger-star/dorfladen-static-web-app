@@ -166,7 +166,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     is_rp = False
                     if uvp and uvp > 0 and preis > 0 and preis < uvp:
                         discount = round((uvp - preis) / uvp * 100)
-                        if discount >= 5 and discount <= 70:
+                        if discount >= 5 and discount <= 60:
                             is_rp = True
                     ang = angebote_map.get(artnr)
                     mengentyp = item.get("cr5d4_mengentyp")
@@ -254,12 +254,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if warengruppe_bez not in groups:
                 groups[warengruppe_bez] = []
 
-            # Roter Punkt: VK < UVP with meaningful discount (>= 5% and <= 70%)
+            # Roter Punkt: VK < UVP with meaningful discount (>= 5% and <= 60%)
             is_rp = False
             discount = 0
             if uvp_preis and uvp_preis > 0 and preis > 0 and preis < uvp_preis:
                 discount = round((uvp_preis - preis) / uvp_preis * 100)
-                if discount >= 5 and discount <= 70:
+                if discount >= 5 and discount <= 60:
                     is_rp = True
                     rp_count += 1
 
