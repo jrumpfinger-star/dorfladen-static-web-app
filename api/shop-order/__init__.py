@@ -358,7 +358,6 @@ def _handle_post(req, dv_token, base_url, headers):
     iban_masked = ""
     kontoinhaber = ""
     try:
-        import base64
         cust_email = user["email"]
         cust_url = f"{base_url}/api/data/v9.2/dl_shopkundes?$filter=dl_email eq '{cust_email}'&$select=dl_iban_encrypted,dl_kontoinhaber&$top=1"
         cr = requests.get(cust_url, headers=headers, timeout=15)
@@ -367,8 +366,8 @@ def _handle_post(req, dv_token, base_url, headers):
             if cust_items:
                 kontoinhaber = cust_items[0].get("dl_kontoinhaber", "")
                 enc_iban = cust_items[0].get("dl_iban_encrypted", "")
-                if enc_iban and enc_iban.startswith("ENC:"):
-                    raw_iban = base64.b64decode(enc_iban[4:]).decode()
+                raw_iban = _decrypt_iban(enc_iban)
+                if raw_iban:
                     iban_masked = raw_iban[:4] + " **** **** **** " + raw_iban[-4:] if len(raw_iban) >= 8 else raw_iban
     except Exception as e:
         logging.warning(f"[shop-order] Could not load customer IBAN: {e}")
