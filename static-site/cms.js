@@ -9124,6 +9124,29 @@
   };
 
   // Mini canvas chart helper
+  // ── Chart-Interaktivitaet: Hover-Tooltip + Crosshair (shared) ──
+  function _statsEnsureTip(){
+    var t=document.getElementById('stats-hover-tip');
+    if(!t){
+      t=document.createElement('div');
+      t.id='stats-hover-tip';
+      t.style.cssText='position:fixed;z-index:99999;pointer-events:none;display:none;background:rgba(17,24,39,.96);color:#fff;font:12px/1.45 sans-serif;padding:7px 10px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.28)';
+      document.body.appendChild(t);
+    }
+    return t;
+  }
+  function _statsShowTip(html,clientX,clientY){
+    var t=_statsEnsureTip();
+    t.innerHTML=html;t.style.display='block';
+    var tw=t.offsetWidth,th=t.offsetHeight;
+    var nx=clientX+14,ny=clientY-th-12;
+    if(nx+tw>window.innerWidth-8)nx=clientX-tw-14;
+    if(nx<8)nx=8;
+    if(ny<8)ny=clientY+18;
+    t.style.left=nx+'px';t.style.top=ny+'px';
+  }
+  function _statsHideTip(){var t=document.getElementById('stats-hover-tip');if(t)t.style.display='none';}
+
   function _statsBar(canvas,labels,values,color,maxBarWidth){
     if(!canvas)return;
     var ctx=canvas.getContext('2d');
@@ -9162,6 +9185,23 @@
         ctx.fillStyle='#6b7280';ctx.font='9px sans-serif';ctx.textAlign='center';
         ctx.fillText(labels[i],x+barW/2,h-6);
       }
+    }
+    // ── Interaktivitaet: Tooltip pro Balken ──
+    canvas.__barData={labels:labels,values:values};
+    canvas.__barMeta={pad:pad,barW:barW,gap:gap,n:n};
+    if(!canvas.__barInteractive){
+      canvas.__barInteractive=true;
+      canvas.style.cursor='default';
+      canvas.addEventListener('mousemove',function(e){
+        var d=canvas.__barData,m=canvas.__barMeta;if(!d||!m)return;
+        var rect=canvas.getBoundingClientRect();
+        var mx=e.clientX-rect.left;
+        if(mx<m.pad-6){_statsHideTip();return;}
+        var idx=Math.round((mx-m.pad-m.barW/2)/(m.barW+m.gap));
+        if(idx<0)idx=0;if(idx>m.n-1)idx=m.n-1;
+        _statsShowTip('<div style="font-weight:700;margin-bottom:2px">'+d.labels[idx]+'</div><div>'+(d.values[idx]||0).toLocaleString('de-DE')+' Aufrufe</div>',e.clientX,e.clientY);
+      });
+      canvas.addEventListener('mouseleave',_statsHideTip);
     }
   }
 
@@ -9228,6 +9268,40 @@
       ctx.fillText(ds.label,lx2+14,11);
       lx2+=ctx.measureText(ds.label).width+28;
     });
+    // ── Interaktivitaet: Crosshair + Tooltip ──
+    canvas.__lineData={labels:labels,datasets:datasets};
+    canvas.__lineMeta={pad:pad,padTop:padTop,chartW:chartW,chartH:chartH,n:n,allMax:allMax};
+    if(!canvas.__lineInteractive){
+      canvas.__lineInteractive=true;
+      canvas.style.cursor='crosshair';
+      canvas.addEventListener('mousemove',function(e){
+        var d=canvas.__lineData,m=canvas.__lineMeta;if(!d||!m||m.n<2)return;
+        var rect=canvas.getBoundingClientRect();
+        var mx=e.clientX-rect.left;
+        var idx=Math.round((mx-m.pad)/m.chartW*(m.n-1));
+        if(idx<0)idx=0;if(idx>m.n-1)idx=m.n-1;
+        _statsLine(canvas,d.labels,d.datasets);
+        var c=canvas.getContext('2d');
+        var cx=m.pad+idx/(m.n-1)*m.chartW;
+        c.save();
+        c.strokeStyle='#94a3b8';c.lineWidth=1;c.setLineDash([4,3]);
+        c.beginPath();c.moveTo(cx,m.padTop);c.lineTo(cx,m.padTop+m.chartH);c.stroke();
+        c.setLineDash([]);
+        var rows='<div style="font-weight:700;margin-bottom:4px">'+d.labels[idx]+'</div>';
+        d.datasets.forEach(function(ds){
+          var vy=m.padTop+m.chartH-(ds.values[idx]||0)/m.allMax*m.chartH;
+          c.beginPath();c.arc(cx,vy,4,0,Math.PI*2);c.fillStyle=ds.color;c.fill();
+          c.lineWidth=2;c.strokeStyle='#fff';c.stroke();
+          rows+='<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+ds.color+'"></span>'+ds.label+': <b>'+(ds.values[idx]||0).toLocaleString('de-DE')+'</b></div>';
+        });
+        c.restore();
+        _statsShowTip(rows,e.clientX,e.clientY);
+      });
+      canvas.addEventListener('mouseleave',function(){
+        _statsHideTip();
+        if(canvas.__lineData)_statsLine(canvas,canvas.__lineData.labels,canvas.__lineData.datasets);
+      });
+    }
   }
 
   function statsDrawTimeline(timeline){
@@ -9287,6 +9361,26 @@
     ctx.fillStyle='#374151';ctx.textAlign='left';ctx.fillText('Desktop '+deskPct+'%',cx-48,ly);
     ctx.fillStyle='#f59e0b';ctx.fillRect(cx+10,ly-8,8,8);
     ctx.fillStyle='#374151';ctx.fillText('Mobil '+mobPct+'%',cx+22,ly);
+    // ── Interaktivitaet: Tooltip pro Segment ──
+    canvas.__pieMeta={cx:cx,cy:cy,r:r,deskPct:deskPct,mobPct:mobPct,desktop:devices.desktop,mobile:devices.mobile};
+    if(!canvas.__pieInteractive){
+      canvas.__pieInteractive=true;
+      canvas.style.cursor='default';
+      canvas.addEventListener('mousemove',function(e){
+        var m=canvas.__pieMeta;if(!m)return;
+        var rect=canvas.getBoundingClientRect();
+        var dx=(e.clientX-rect.left)-m.cx,dy=(e.clientY-rect.top)-m.cy;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist>m.r||dist<m.r*0.55){_statsHideTip();return;}
+        var ang=Math.atan2(dy,dx)+Math.PI/2;if(ang<0)ang+=Math.PI*2;
+        var frac=ang/(Math.PI*2)*100;
+        var html=(frac<=m.deskPct)
+          ? '<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6366f1"></span>Desktop: <b>'+m.deskPct+'%</b> ('+m.desktop.toLocaleString('de-DE')+')</div>'
+          : '<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f59e0b"></span>Mobil: <b>'+m.mobPct+'%</b> ('+m.mobile.toLocaleString('de-DE')+')</div>';
+        _statsShowTip(html,e.clientX,e.clientY);
+      });
+      canvas.addEventListener('mouseleave',_statsHideTip);
+    }
   }
 
   function statsDrawTopPages(pages){
