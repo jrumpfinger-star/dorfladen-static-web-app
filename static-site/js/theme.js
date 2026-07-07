@@ -92,3 +92,71 @@
     injectButton();
   }
 })();
+
+/*
+ * Lucide-Icons – zentrale Einbindung für ALLE Seiten (Projekt-Konvention §3).
+ * Lädt Lucide einmal via CDN, ersetzt verbliebene Emoji-Icons in Navigation
+ * und Footer durch <i data-lucide> und ruft lucide.createIcons() auf.
+ * Stellt window.dlRefreshIcons() bereit (z.B. für dynamische Updates in pwa.js).
+ */
+(function () {
+  var LUCIDE_SRC = 'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js';
+  // Emoji -> Lucide-Icon-Name (nur für Nav-/Footer-Aktionslinks)
+  var MAP = [
+    ['\uD83D\uDD14', 'bell'],           // 🔔 Push / Benachrichtigungen
+    ['\u2753', 'help-circle'],          // ❓ Hilfe
+    ['\uD83D\uDCE6', 'clipboard-list'], // 📦 Bestellungen
+    ['\uD83D\uDCDF', 'monitor'],        // 📟 Kiosk
+    ['\uD83D\uDE80', 'settings'],       // 🚀 CMS
+    ['\uD83D\uDCCB', 'clipboard-list']  // 📋 Preisliste
+  ];
+  function iconHtml(name) {
+    return '<i data-lucide="' + name + '" width="15" height="15" style="vertical-align:-3px;margin-right:4px"></i>';
+  }
+  function swapInLink(a) {
+    // Nur ein führendes Emoji im ersten Text-Node ersetzen; SVGs/hrefs bleiben unangetastet.
+    var node = a.firstChild;
+    while (node && node.nodeType === 3 && !node.nodeValue.trim()) node = node.nextSibling;
+    if (!node || node.nodeType !== 3) return;
+    for (var i = 0; i < MAP.length; i++) {
+      var emo = MAP[i][0];
+      if (node.nodeValue.indexOf(emo) !== -1) {
+        var span = document.createElement('span');
+        span.innerHTML = iconHtml(MAP[i][1]);
+        a.insertBefore(span.firstChild, node);
+        node.nodeValue = node.nodeValue.replace(emo, '').replace(/^\s+/, ' ');
+        return;
+      }
+    }
+  }
+  function convertEmoji() {
+    var links = document.querySelectorAll('.nv-links a, .mob-nav a, .ft a, .ft-bottom a');
+    for (var i = 0; i < links.length; i++) {
+      swapInLink(links[i]);
+      // Dunkelgrüne Aktions-Links (inline color:#2d5016) für den Dark Mode markieren.
+      // el.style.color liefert normalisiert 'rgb(45, 80, 22)'.
+      if (links[i].style && links[i].style.color === 'rgb(45, 80, 22)') {
+        links[i].classList.add('dl-nav-action');
+      }
+    }
+  }
+  function run() {
+    try { convertEmoji(); } catch (e) {}
+    if (window.lucide) { try { window.lucide.createIcons(); } catch (e) {} }
+  }
+  window.dlRefreshIcons = run;
+  function ready(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+  if (!window.lucide && !document.getElementById('dl-lucide-js')) {
+    var s = document.createElement('script');
+    s.id = 'dl-lucide-js';
+    s.src = LUCIDE_SRC;
+    s.async = true;
+    s.onload = function () { ready(run); };
+    document.head.appendChild(s);
+  } else {
+    ready(run);
+  }
+})();

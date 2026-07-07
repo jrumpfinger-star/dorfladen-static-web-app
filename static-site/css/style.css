@@ -608,9 +608,15 @@ html[data-theme="dark"] body{background:linear-gradient(180deg,#12171a 0%,#0e131
 /* Navigation */
 html[data-theme="dark"] .nv{background:rgba(22,28,32,.92);border-bottom-color:rgba(255,255,255,.08);box-shadow:0 1px 0 rgba(255,255,255,.03)}
 html[data-theme="dark"] .nv-links a{color:var(--c-text)}
-/* Aktions-Links tragen inline color:#2d5016 (Dunkelgrün) – im Dark Mode unlesbar.
-   !important schlägt den Inline-Style und macht sie hellgrün/lesbar. */
-html[data-theme="dark"] .nv-links a[style*="2d5016"]{color:var(--c-pri-h)!important}
+/* Aktions-Links (Nav + Footer + Mobil) tragen inline color:#2d5016 (Dunkelgrün) –
+   im Dark Mode unlesbar. !important schlägt den Inline-Style und macht sie hellgrün.
+   .dl-nav-action wird von theme.js gesetzt (für per JS eingeblendete Buttons, deren
+   style-Attribut zu rgb(...) normalisiert wird und daher vom Attribut-Selektor nicht
+   mehr getroffen wird). */
+html[data-theme="dark"] a[style*="color:#2d5016"],
+html[data-theme="dark"] .dl-nav-action{color:var(--c-pri-h)!important}
+/* Mobil-Push-Button hat inline hellen Hintergrund (#f0fdf4) – im Dark Mode abdunkeln. */
+html[data-theme="dark"] #mob-push-toggle{background:var(--c-pri-l)!important}
 @media(max-width:860px){
   html[data-theme="dark"] .nv-links{background:#161c20;border-top-color:var(--c-pri)}
   html[data-theme="dark"] .nv-links>li{border-bottom-color:rgba(255,255,255,.06)}
