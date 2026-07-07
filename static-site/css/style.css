@@ -587,3 +587,111 @@ body.modal-open{overflow:hidden!important}
 /* === LOADING SKELETON === */
 .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--r-sm);min-height:20px}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ============================================================
+   DARK MODE / COLOR THEME SUPPORT
+   Aktiviert über data-theme="dark" auf <html> (gesetzt von
+   /js/theme.js anhand der System-Einstellung prefers-color-scheme
+   oder der manuellen Wahl). data-theme="light" erzwingt Hell.
+   ============================================================ */
+:root{color-scheme:light}
+
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --c-pri:#4fae83; --c-pri-h:#68c79b; --c-pri-l:#1f2b25;
+  --c-acc:#f0736f; --c-acc-h:#f58a86; --c-acc-l:#2c1b1b;
+  --c-surf:#1b2228; --c-bg:#12171a; --c-text:#e6eae8; --c-sec:#9aa6a0; --c-brd:rgba(255,255,255,0.10);
+  --sh-s:0 2px 8px rgba(0,0,0,0.35); --sh-m:0 8px 24px rgba(0,0,0,0.45); --sh-l:0 20px 48px rgba(0,0,0,0.55);
+}
+html[data-theme="dark"] body{background:linear-gradient(180deg,#12171a 0%,#0e1316 60%,#0b0f11 100%) fixed;color:var(--c-text)}
+
+/* Navigation */
+html[data-theme="dark"] .nv{background:rgba(22,28,32,.92);border-bottom-color:rgba(255,255,255,.08);box-shadow:0 1px 0 rgba(255,255,255,.03)}
+html[data-theme="dark"] .nv-links a{color:var(--c-text)}
+@media(max-width:860px){
+  html[data-theme="dark"] .nv-links{background:#161c20;border-top-color:var(--c-pri)}
+  html[data-theme="dark"] .nv-links>li{border-bottom-color:rgba(255,255,255,.06)}
+  html[data-theme="dark"] .nv-links>li>a{color:var(--c-text)!important}
+  html[data-theme="dark"] .nv-dd{background:#1f262b!important}
+  html[data-theme="dark"] .nv-dd a{color:#aeb8b3!important}
+}
+
+/* News-Overlay + Ticker */
+html[data-theme="dark"] .news-overlay-card{background:var(--c-surf);color:var(--c-text)}
+html[data-theme="dark"] .news-overlay-close{color:#9aa6a0}
+html[data-theme="dark"] .news-overlay-close:hover{background:#232c33;color:#e6eae8}
+html[data-theme="dark"] .news-overlay-title{color:var(--c-pri-h)}
+html[data-theme="dark"] .news-overlay-short{color:#b7c0bb}
+html[data-theme="dark"] .news-overlay-body{color:#d5dbd7}
+html[data-theme="dark"] .news-overlay-body strong,
+html[data-theme="dark"] .wa-info-text strong,
+html[data-theme="dark"] .wa-qr-label strong{color:#e6eae8}
+
+/* Modals */
+html[data-theme="dark"] .dt-modal{background:var(--c-surf);border-color:rgba(255,255,255,.06);color:var(--c-text)}
+html[data-theme="dark"] .dt-modal p{color:var(--c-sec)}
+html[data-theme="dark"] .dt-modal-close{background:var(--c-pri-l);color:var(--c-pri-h)}
+
+/* Karten / generisch */
+html[data-theme="dark"] .cd,
+html[data-theme="dark"] .wp-card,
+html[data-theme="dark"] .news-card,
+html[data-theme="dark"] .ang-card,
+html[data-theme="dark"] .info-card,
+html[data-theme="dark"] .dgih,
+html[data-theme="dark"] .wa-info{background:var(--c-surf);border-color:var(--c-brd);color:var(--c-text)}
+html[data-theme="dark"] .cd-h{border-bottom-color:rgba(255,255,255,.08)}
+html[data-theme="dark"] .news-card::before{border-color:var(--c-surf)}
+
+/* Öffnungszeiten-Tabelle */
+html[data-theme="dark"] table.hrs td{border-bottom-color:rgba(255,255,255,.07)}
+
+/* Wochenplan */
+html[data-theme="dark"] .wp-table thead,
+html[data-theme="dark"] .wp-grp-even td,
+html[data-theme="dark"] .wp-footer,
+html[data-theme="dark"] .wp-actions{background:#232c33}
+html[data-theme="dark"] .wp-grp-odd td{background:#1b2228}
+html[data-theme="dark"] .wp-dish,
+html[data-theme="dark"] .wp-dish-a{color:#dbe1dd}
+html[data-theme="dark"] .wp-price,
+html[data-theme="dark"] .wp-price-a{color:#6fd0a5}
+html[data-theme="dark"] .wp-day-first td,
+html[data-theme="dark"] .wp-table tr{border-bottom-color:rgba(255,255,255,.06)}
+html[data-theme="dark"] .wp-meal-thumb{border-color:rgba(255,255,255,.12)}
+
+/* Angebote */
+html[data-theme="dark"] .ang-week-nav{background:#232c33;border-bottom-color:var(--c-brd)}
+html[data-theme="dark"] .ang-grid{background:#141a1e}
+html[data-theme="dark"] .ang-item{background:#1f262b;border-color:rgba(255,255,255,.08)}
+html[data-theme="dark"] .ang-name{color:#eef2f0}
+html[data-theme="dark"] .ang-det{color:#aeb8b3}
+html[data-theme="dark"] .ang-was,
+html[data-theme="dark"] .ang-statt{color:#8b958f}
+html[data-theme="dark"] .ang-img{background:#e9ecea}
+
+/* Info-Karten */
+html[data-theme="dark"] .info-card p{color:var(--c-sec)}
+
+/* Do geh i hi */
+html[data-theme="dark"] .dgih-h{background:linear-gradient(135deg,#3a1f28,#2e1a24);border-bottom-color:#4a2730}
+
+/* Roter Punkt Eyecatcher */
+html[data-theme="dark"] .rp-eye{background:var(--c-surf);color:var(--c-text)}
+html[data-theme="dark"] .rp-eye-sub{color:#9aa6a0}
+
+/* Cookie-Banner nutzt Variablen – ok. Gallery */
+html[data-theme="dark"] .gallery-filter-btn{background:var(--c-surf);border-color:var(--c-brd);color:var(--c-text)}
+html[data-theme="dark"] .gallery-item{background:#232c33}
+
+/* QR-Box */
+html[data-theme="dark"] .wa-qr-box{background:#232c33;border-color:rgba(255,255,255,.08)}
+
+/* Skeleton */
+html[data-theme="dark"] .skeleton{background:linear-gradient(90deg,#232c33 25%,#2c363d 50%,#232c33 75%);background-size:200% 100%}
+
+/* Theme-Umschalt-Button */
+#dl-theme-toggle{position:fixed;left:16px;bottom:64px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid var(--c-brd);background:var(--c-surf);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .15s var(--ease-spring),background .2s;padding:0}
+#dl-theme-toggle:hover{transform:scale(1.08)}
+#dl-theme-toggle:active{transform:scale(.95)}
+@media(max-width:600px){#dl-theme-toggle{width:40px;height:40px;left:12px;bottom:58px}}
