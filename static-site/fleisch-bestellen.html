@@ -10,8 +10,12 @@
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/images/icon-192.png">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="/js/theme.js"></script>
 <style>
 :root{--c-meat:#7f1d1d;--c-meat-light:#fef2f2;--c-meat-accent:#dc2626;--c-green:#2e7d4f;--c-green-light:#e8f5e9;--c-bg:#faf5f3;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--c-border:#e5e7eb;--radius:14px;--shadow:0 2px 12px rgba(0,0,0,.08)}
+html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-border:rgba(255,255,255,.1);--c-green:#5cb85f;--c-green-light:#1e2a20;--c-meat-light:#2a1717}
+#dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-card);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);padding:0;transition:transform .15s}
+#dl-theme-toggle:hover{transform:scale(1.08)}
 *{box-sizing:border-box;margin:0;padding:0}
 [data-lucide]{display:inline-block;vertical-align:-2px}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);min-height:100vh;-webkit-font-smoothing:antialiased}
