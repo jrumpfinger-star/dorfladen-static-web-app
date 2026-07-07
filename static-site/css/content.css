@@ -126,3 +126,28 @@ img{max-width:100%;display:block}
 
 .skip{position:absolute;left:-9999px;top:0;background:var(--c-pri);color:#fff;padding:8px 16px;z-index:10000;font-size:.85rem}
 .skip:focus{left:0}
+
+/* ============================================================
+   DARK MODE / COLOR THEME SUPPORT (Content-/Info-Seiten)
+   Aktiviert via data-theme="dark" auf <html> (siehe /js/theme.js)
+   ============================================================ */
+:root{color-scheme:light}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --c-pri:#5cb85f; --c-pri-h:#74c777; --c-pri-l:#1e2a20;
+  --c-acc:#ff9d4d; --c-surf:#1b2228; --c-bg:#12171a; --c-text:#e6eae8; --c-sec:#9aa6a0; --c-brd:rgba(255,255,255,0.10);
+  --sh-s:0 1px 3px rgba(0,0,0,.4); --sh-m:0 4px 12px rgba(0,0,0,.5);
+}
+html[data-theme="dark"] .nv{box-shadow:0 1px 0 rgba(255,255,255,.03)}
+@media(max-width:900px){
+  html[data-theme="dark"] .nv-links{background:var(--c-surf)}
+  html[data-theme="dark"] .nv-links>li>a{border-bottom-color:rgba(255,255,255,.06)}
+}
+html[data-theme="dark"] .ct h1{border-bottom-color:var(--c-brd)}
+html[data-theme="dark"] .gallery img{border:1px solid var(--c-brd)}
+
+/* Theme-Umschalt-Button */
+#dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid var(--c-brd);background:var(--c-surf);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .15s,background .2s;padding:0}
+#dl-theme-toggle:hover{transform:scale(1.08)}
+#dl-theme-toggle:active{transform:scale(.95)}
+@media(max-width:600px){#dl-theme-toggle{width:40px;height:40px}}
