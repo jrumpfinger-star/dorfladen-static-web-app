@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dorfladen – E-Mail Notifications Mockup</title>
+<style>
+  body{margin:0;background:#e5e7eb;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#1f2937}
+  .page-head{background:#1f2937;color:#fff;padding:28px 20px;text-align:center}
+  .page-head h1{margin:0 0 6px;font-size:22px}
+  .page-head p{margin:0;color:#9ca3af;font-size:13px}
+  .nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:16px;background:#f9fafb;border-bottom:1px solid #d1d5db;position:sticky;top:0;z-index:10}
+  .nav a{font-size:12px;font-weight:600;text-decoration:none;color:#2e7d4f;background:#e8f5e9;padding:6px 12px;border-radius:20px}
+  .nav a:hover{background:#2e7d4f;color:#fff}
+  .mock-label{max-width:600px;margin:36px auto 0;padding:0 12px;display:flex;align-items:center;gap:10px}
+  .mock-label .tag{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#6b7280}
+  .mock-label .type{font-size:11px;font-family:monospace;background:#1f2937;color:#93c5fd;padding:2px 8px;border-radius:6px}
+  hr.sep{max-width:600px;margin:8px auto 0;border:none;border-top:1px dashed #9ca3af}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>📧 Dorfladen – E-Mail Benachrichtigungen</h1>
+  <p>Live-Vorschau der versendeten E-Mails · gerendert wie <code>build_email_html()</code> in <code>api/shop-notify</code></p>
+</div>
+
+<nav class="nav">
+  <a href="#confirmation">Bestellbestätigung</a>
+  <a href="#ready">Abholbereit</a>
+  <a href="#missing">Fehlende Artikel</a>
+  <a href="#cancelled">Storniert</a>
+  <a href="#lunch">Mittagstisch</a>
+  <a href="#verify">E-Mail bestätigen</a>
+  <a href="#reset">Passwort zurücksetzen</a>
+</nav>
+
+<!-- ═══════════ TEMPLATE ═══════════ -->
+<!-- Alle E-Mails nutzen dieselbe Struktur. Beispiel-Icons als inline SVG. -->
+
+<!-- Bestellbestätigung -->
+<div class="mock-label" id="confirmation"><span class="tag">🛒 Online-Shop</span><span class="type">type: confirmation</span></div>
+<hr class="sep">
+<div id="email-confirmation"></div>
+
+<!-- Abholbereit -->
+<div class="mock-label" id="ready"><span class="tag">✅ Online-Shop</span><span class="type">type: ready</span></div>
+<hr class="sep">
+<div id="email-ready"></div>
+
+<!-- Fehlende Artikel -->
+<div class="mock-label" id="missing"><span class="tag">⚠️ Online-Shop</span><span class="type">type: missing_items</span></div>
+<hr class="sep">
+<div id="email-missing"></div>
+
+<!-- Storniert -->
+<div class="mock-label" id="cancelled"><span class="tag">❌ Online-Shop</span><span class="type">type: cancelled</span></div>
+<hr class="sep">
+<div id="email-cancelled"></div>
+
+<!-- Mittagstisch -->
+<div class="mock-label" id="lunch"><span class="tag">🍽 Mittagstisch</span><span class="type">lunch-order</span></div>
+<hr class="sep">
+<div id="email-lunch"></div>
+
+<!-- E-Mail bestätigen -->
+<div class="mock-label" id="verify"><span class="tag">🔐 Konto</span><span class="type">auth-register</span></div>
+<hr class="sep">
+<div id="email-verify"></div>
+
+<!-- Passwort zurücksetzen -->
+<div class="mock-label" id="reset"><span class="tag">🔑 Konto</span><span class="type">auth-reset</span></div>
+<hr class="sep">
+<div id="email-reset"></div>
+
+<div style="height:60px"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  Nachbau der Python-Funktion build_email_html() als JS
+//  (identische Struktur, Farben, Icons)
+// ─────────────────────────────────────────────────────────────
+
+const CI = {
+  name: "Dorfladen Oberornau",
+  adresse: "Dorfplatz 1 · 84419 Obertaufkirchen",
+  telefon: "08082 / 622 99 91",
+  telefon_link: "+4980826229991",
+  email: "info@dorfladen-oberornau.de",
+  website: "www.dorfladen-oberornau.de",
+  website_url: "https://www.dorfladen-oberornau.de",
+  shop_url: "https://www.dorfladen-oberornau.de/shop.html",
+  logo_url: "https://www.dorfladen-oberornau.de/images/dorfladen-logo.png",
+  slogan: "Ihr Nahversorger"
+};
+
+const ICONS = {
+  "clipboard-list":'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  "calendar":'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  "map-pin":'<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  "credit-card":'<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+  "message-square":'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  "alert-triangle":'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  "shopping-bag":'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  "circle-check":'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  "circle-x":'<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  "store":'<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/>',
+  "phone":'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  "mail":'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  "globe":'<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  "package-check":'<path d="m16 16 2 2 4-4"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/>',
+  "key":'<path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L21 5"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/>',
+  "utensils":'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>'
+};
+
+function icon(name, color, size){
+  color = color || "#2e7d4f"; size = size || 16;
+  const paths = ICONS[name]; if(!paths) return "";
+  return `<span style="display:inline-block;vertical-align:middle;line-height:0;margin-right:6px"><svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg></span>`;
+}
+
+function infoRow(iconName, text, color){
+  color = color || "#2e7d4f";
+  return `<div style="display:flex;align-items:center;padding:11px 14px;margin:7px 0;background:#f6fbf8;border:1px solid #e3f0e9;border-radius:12px;font-size:14px;color:#1f2937"><span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-right:12px;flex-shrink:0">${icon(iconName, color, 18)}</span><span style="line-height:1.4">${text}</span></div>`;
+}
+
+function buildEmailHtml(bodyText, subject, extraHtml){
+  extraHtml = extraHtml || "";
+  const lines = bodyText.split("\n");
+  const parts = [];
+  for(const line of lines){
+    const s = line.trim();
+    if(!s){ parts.push('<div style="height:12px"></div>'); continue; }
+    if(s.startsWith("•") || s.startsWith("  •")){
+      const t = s.replace(/^[\s•]+/, "").trim();
+      parts.push(`<div style="padding:6px 0 6px 16px;border-left:3px solid #2e7d4f">${icon("package-check","#2e7d4f",14)} ${t}</div>`);
+    } else if(s.startsWith("Grund:")){
+      parts.push(`<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px 14px;margin:8px 0;font-weight:600;color:#92400e">${icon("clipboard-list","#92400e",16)} ${s}</div>`);
+    } else if(s.startsWith("[info:")){
+      const m = s.match(/\[info:([\w-]+)\]\s*(.*)/);
+      if(m){ parts.push(infoRow(m[1], m[2])); }
+      else{ parts.push(`<div style="margin:4px 0;color:#1f2937">${s}</div>`); }
+    } else if(s.startsWith("[warn]")){
+      const t = s.replace("[warn]","").trim();
+      parts.push(`<div style="display:flex;align-items:flex-start;gap:8px;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:13px;color:#92400e">${icon("alert-triangle","#d97706",18)}<span>${t}</span></div>`);
+    } else if(s.startsWith("Herzliche") || s.startsWith("Guten Appetit")){
+      parts.push(`<div style="margin-top:20px;color:#374151">${s}</div>`);
+    } else if(s.startsWith("Ihr Dorfladen") || s.startsWith("Ihr "+CI.name)){
+      parts.push(`<div style="font-weight:700;color:#2e7d4f;font-size:15px">${s}</div>`);
+    } else {
+      parts.push(`<div style="margin:4px 0;color:#1f2937">${s}</div>`);
+    }
+  }
+  const bodyHtml = parts.join("\n");
+
+  // Theme (accent gradient + header icon) based on subject
+  let theme = {accent:"#2e7d4f", dark:"#1b5e20", ic:"package-check"};
+  const sl = subject.toLowerCase();
+  if(sl.includes("storniert") || sl.includes("storno")){ theme={accent:"#dc2626",dark:"#991b1b",ic:"circle-x"}; }
+  else if(sl.includes("abholbereit") || sl.includes("bereit")){ theme={accent:"#059669",dark:"#047857",ic:"circle-check"}; }
+  else if(sl.includes("bestellbest")){ theme={accent:"#2e7d4f",dark:"#1b5e20",ic:"shopping-bag"}; }
+  else if(sl.includes("nicht verf") || sl.includes("fehlende") || sl.includes("hinweis")){ theme={accent:"#d97706",dark:"#b45309",ic:"alert-triangle"}; }
+  else if(sl.includes("mittagstisch")){ theme={accent:"#2e7d4f",dark:"#1b5e20",ic:"utensils"}; }
+  else if(sl.includes("passwort")){ theme={accent:"#2563eb",dark:"#1d4ed8",ic:"key"}; }
+  else if(sl.includes("bestätig") || sl.includes("willkommen")){ theme={accent:"#2e7d4f",dark:"#1b5e20",ic:"circle-check"}; }
+  const accent = theme.accent, accentDark = theme.dark;
+  const headerIcon = icon(theme.ic, "#fff", 26);
+
+  // Short title for hero
+  let shortSubject = subject;
+  if(subject.includes("–")){ shortSubject = subject.split("–")[1].trim(); }
+
+  return `<div style="max-width:600px;margin:0 auto;padding:24px 12px">
+  <div style="background:${accent};background:linear-gradient(135deg,${accent},${accentDark});border-radius:20px 20px 0 0;padding:34px 30px 28px;text-align:center">
+    <a href="${CI.website_url}" style="text-decoration:none;display:inline-block">
+      <span style="display:inline-block;background:#fff;padding:10px 20px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.18)">
+        <img src="${CI.logo_url}" alt="${CI.name}" style="height:46px;max-width:180px;vertical-align:middle" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<span style=&quot;font-size:20px;font-weight:800;color:#2e7d4f&quot;>🌿 Dorfladen</span>')" />
+      </span>
+    </a>
+    <div style="margin-top:18px;font-size:11px;color:rgba(255,255,255,.85);letter-spacing:2px;text-transform:uppercase;font-weight:600">${CI.name} &middot; ${CI.slogan}</div>
+    <div style="margin-top:14px;font-size:22px;font-weight:800;color:#fff;line-height:1.35">${headerIcon}<br>${shortSubject}</div>
+  </div>
+  <div style="background:#fff;padding:28px 26px;font-size:14px;line-height:1.7;color:#1f2937">${bodyHtml}${extraHtml}</div>
+  <div style="background:#fff;padding:0 26px 28px;text-align:center">
+    <a href="${CI.shop_url}" style="display:inline-block;padding:14px 34px;background:${accent};background:linear-gradient(135deg,${accent},${accentDark});color:#fff;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 6px 16px ${accent}55">${icon('shopping-bag','#fff',16)} Zum Dorfladen-Shop</a>
+  </div>
+  <div style="background:#111827;border-radius:0 0 20px 20px;padding:24px 26px;color:#d1d5db;font-size:12px;line-height:1.7">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">${icon('store','#6ee7b7',20)}<span style="font-weight:700;color:#fff;font-size:14px">${CI.name}</span></div>
+    <div style="margin-left:2px">
+      <div style="margin:3px 0">${icon('map-pin','#6ee7b7',13)}${CI.adresse}</div>
+      <div style="margin:3px 0">${icon('phone','#6ee7b7',13)}<a href="tel:${CI.telefon_link}" style="color:#6ee7b7;text-decoration:none">${CI.telefon}</a></div>
+      <div style="margin:3px 0">${icon('mail','#6ee7b7',13)}<a href="mailto:${CI.email}" style="color:#6ee7b7;text-decoration:none">${CI.email}</a></div>
+      <div style="margin:3px 0">${icon('globe','#6ee7b7',13)}<a href="${CI.website_url}" style="color:#6ee7b7;text-decoration:none">${CI.website}</a></div>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid #374151;font-size:11px;color:#9ca3af">Diese E-Mail wurde automatisch erstellt. Bei Fragen antworten Sie einfach auf diese Mail.</div>
+  </div>
+</div>`;
+}
+
+// Positions-Tabelle (extra_html) wie in shop-order
+function positionsTable(rows, summe){
+  let html = '<div style="margin-top:16px;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
+  html += '<div style="background:#f0fdf4;padding:11px 14px;font-size:12px;font-weight:700;color:#166534;border-bottom:1px solid #e5e7eb">'+icon("clipboard-list","#166534",14)+' Ihre Bestellung im Überblick</div>';
+  for(const r of rows){
+    html += `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #f3f4f6;font-size:13px"><span>${r.menge}× ${r.name}</span><span style="font-weight:600;color:#1f2937">${r.preis}</span></div>`;
+  }
+  html += `<div style="display:flex;justify-content:space-between;padding:11px 14px;background:#f9fafb;font-size:14px;font-weight:800;color:#166534"><span>Gesamt</span><span>${summe}</span></div>`;
+  html += '</div>';
+  return html;
+}
+
+// ─────────── Beispiel-Daten & Rendering ───────────
+
+// 1. Bestellbestätigung
+document.getElementById("email-confirmation").innerHTML = buildEmailHtml(
+`Liebe/r Josef Rumpfinger,
+
+vielen Dank für Ihre Bestellung! Wir haben folgende Bestellung erhalten und beginnen in Kürze mit der Zusammenstellung.
+
+[info:clipboard-list] Bestellnummer: DL-260707-1042
+[info:calendar] Abholung: 08.07.2026, Vormittag (08:00–12:00 Uhr)
+[info:map-pin] Ort: Dorfladen Oberornau, Dorfplatz 1 · 84419 Obertaufkirchen
+[info:credit-card] Zahlung: SEPA-Lastschrift (DE** **** **** **** **42)
+
+[info:message-square] Ihre Anmerkung: Bitte reifen Käse einpacken, danke!
+
+Sie erhalten eine weitere E-Mail, sobald Ihre Bestellung zur Abholung bereitsteht.
+
+[warn] Bitte holen Sie Ihre Bestellung zum gewählten Abholtermin ab. Verderbliche Ware, die nicht abgeholt wird und nicht mehr verkaufbar ist, wird in Rechnung gestellt.
+
+Bei Fragen erreichen Sie uns unter 08082 / 622 99 91 oder per E-Mail an info@dorfladen-oberornau.de.
+
+Herzliche Grüße
+Ihr Dorfladen Oberornau-Team`,
+"Dorfladen Oberornau – Bestellbestätigung DL-260707-1042",
+positionsTable([
+  {menge:1, name:"Bergkäse am Stück (ca. 300g)", preis:"6,90 €"},
+  {menge:2, name:"Bio-Vollmilch 1 L", preis:"3,80 €"},
+  {menge:1, name:"Bauernbrot 750g", preis:"3,50 €"}
+], "14,20 €")
+);
+
+// 2. Abholbereit
+document.getElementById("email-ready").innerHTML = buildEmailHtml(
+`Liebe/r Josef Rumpfinger,
+
+gute Nachrichten – Ihre Bestellung liegt jetzt zur Abholung für Sie bereit!
+
+[info:clipboard-list] Bestellnummer: DL-260707-1042
+[info:map-pin] Abholung: Dorfladen Oberornau, Dorfplatz 1 · 84419 Obertaufkirchen
+[info:calendar] Öffnungszeiten: Mo–Fr 08:00–18:00 Uhr, Sa 08:00–12:00 Uhr
+
+Bitte nennen Sie an der Kasse einfach Ihre Bestellnummer.
+
+Herzliche Grüße
+Ihr Dorfladen Oberornau-Team`,
+"Dorfladen Oberornau – Ihre Bestellung DL-260707-1042 ist abholbereit"
+);
+
+// 3. Fehlende Artikel
+document.getElementById("email-missing").innerHTML = buildEmailHtml(
+`Liebe/r Josef Rumpfinger,
+
+vielen Dank für Ihre Bestellung DL-260707-1042!
+
+Leider sind folgende Artikel momentan nicht verfügbar:
+
+  • Bergkäse am Stück (ca. 300g)
+  • Bauernbrot 750g
+
+Diese Artikel werden Ihnen selbstverständlich nicht berechnet. Alle anderen Artikel Ihrer Bestellung liegen für Sie zur Abholung bereit.
+
+[info:calendar] Abholung: 08.07.2026 vormittags im Dorfladen Oberornau
+
+Wir bitten um Ihr Verständnis und freuen uns auf Ihren Besuch!
+
+Herzliche Grüße
+Ihr Dorfladen Oberornau-Team`,
+"Dorfladen Oberornau – Hinweis zu Ihrer Bestellung DL-260707-1042"
+);
+
+// 4. Storniert
+document.getElementById("email-cancelled").innerHTML = buildEmailHtml(
+`Liebe/r Josef Rumpfinger,
+
+leider müssen wir Ihnen mitteilen, dass Ihre Bestellung DL-260707-1042 storniert werden musste.
+
+Grund: Ware aufgrund eines Lieferengpasses nicht verfügbar
+
+Selbstverständlich wurde Ihnen nichts berechnet.
+
+Wir bitten um Ihr Verständnis und freuen uns, Sie bald wieder im Dorfladen Oberornau begrüßen zu dürfen!
+
+Herzliche Grüße
+Ihr Dorfladen Oberornau-Team`,
+"Dorfladen Oberornau – Ihre Bestellung DL-260707-1042 wurde storniert"
+);
+
+// 5. Mittagstisch
+document.getElementById("email-lunch").innerHTML = buildEmailHtml(
+`Liebe/r Josef Rumpfinger,
+
+vielen Dank für Ihre Mittagstisch-Bestellung! Wir haben folgende Bestellung erhalten:
+
+[info:clipboard-list] Bestellnummer: MT-260707-40825
+[info:utensils] Gericht: Fleischpflanzerl mit Kartoffelsalat und Gemüse
+[info:package-check] Menge: 2×
+[info:credit-card] Preis: 9,80 €
+[info:calendar] Datum: Mittwoch (08.07.2026)
+[info:map-pin] Vor Ort essen
+
+Bitte holen Sie Ihr Essen zwischen 11:30 und 13:00 Uhr ab.
+
+Bei Fragen erreichen Sie uns unter 08082 / 622 99 91 oder per E-Mail an info@dorfladen-oberornau.de.
+
+Guten Appetit!
+Ihr Dorfladen Oberornau-Team`,
+"Dorfladen Oberornau – Mittagstisch-Bestellung MT-260707-40825"
+);
+
+// 6. E-Mail bestätigen (auth-register)
+document.getElementById("email-verify").innerHTML = buildEmailHtml(
+`Liebe/r Josef Rumpfinger,
+
+herzlich willkommen im Dorfladen Oberornau Online-Shop! Nur noch ein Schritt: Bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.
+
+Klicken Sie dazu einfach auf den Button unten. Der Link ist 48 Stunden gültig.
+
+Falls Sie sich nicht registriert haben, können Sie diese E-Mail ignorieren.
+
+Herzliche Grüße
+Ihr Dorfladen Oberornau-Team`,
+"Dorfladen Oberornau – Bitte bestätigen Sie Ihre E-Mail-Adresse",
+`<div style="text-align:center;margin:24px 0">
+  <a href="#" style="display:inline-block;padding:14px 32px;background:#2e7d4f;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px">${icon('circle-check','#fff',18)} E-Mail-Adresse bestätigen</a>
+</div>`
+);
+
+// 7. Passwort zurücksetzen (auth-reset)
+document.getElementById("email-reset").innerHTML = buildEmailHtml(
+`Liebe/r Josef Rumpfinger,
+
+Sie haben angefordert, Ihr Passwort zurückzusetzen. Klicken Sie auf den Button unten, um ein neues Passwort zu vergeben.
+
+Der Link ist aus Sicherheitsgründen 60 Minuten gültig.
+
+Falls Sie diese Anfrage nicht gestellt haben, ignorieren Sie diese E-Mail einfach – Ihr Passwort bleibt unverändert.
+
+Herzliche Grüße
+Ihr Dorfladen Oberornau-Team`,
+"Dorfladen Oberornau – Passwort zurücksetzen",
+`<div style="text-align:center;margin:24px 0">
+  <a href="#" style="display:inline-block;padding:14px 32px;background:#2563eb;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px">${icon('key','#fff',18)} Neues Passwort vergeben</a>
+</div>`
+);
+</script>
+
+</body>
+</html>
