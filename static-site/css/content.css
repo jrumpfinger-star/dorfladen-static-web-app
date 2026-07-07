@@ -139,6 +139,11 @@ html[data-theme="dark"]{
   --sh-s:0 1px 3px rgba(0,0,0,.4); --sh-m:0 4px 12px rgba(0,0,0,.5);
 }
 html[data-theme="dark"] .nv{box-shadow:0 1px 0 rgba(255,255,255,.03)}
+/* Aktions-Links (Nav + Footer) tragen inline color:#2d5016 – im Dark Mode unlesbar.
+   .dl-nav-action wird von /js/theme.js gesetzt. */
+html[data-theme="dark"] a[style*="color:#2d5016"],
+html[data-theme="dark"] .dl-nav-action{color:var(--c-pri-h)!important}
+html[data-theme="dark"] #mob-push-toggle{background:var(--c-pri-l)!important}
 @media(max-width:900px){
   html[data-theme="dark"] .nv-links{background:var(--c-surf)}
   html[data-theme="dark"] .nv-links>li>a{border-bottom-color:rgba(255,255,255,.06)}
