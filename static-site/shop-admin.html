@@ -10,6 +10,10 @@
   <style>
     :root{--green:#2e7d4f;--green2:#1f5c39;--bg:#f4f7f5;--card:#fff;--border:#dfe7e2;--text:#24352b;--muted:#6b7f72;--warn:#f59e0b;--red:#dc2626;--blue:#2563eb;--urgent:#ef4444;--surf2:#f9fafb;--tint:#e9f5ee;--active:#eaf6ef}
     html[data-theme="dark"]{color-scheme:dark;--bg:#12171a;--card:#1b2228;--border:#2a333a;--text:#e6eae8;--muted:#9aa6a0;--green:#5cb85f;--surf2:#161c20;--tint:#1e2a20;--active:#1e2a20}
+    .mt-sk-opt{padding:8px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;transition:background .12s}
+    .mt-sk-opt:hover{background:#f0fdf4}
+    html[data-theme="dark"] .mt-sk-opt{border-bottom-color:var(--border)}
+    html[data-theme="dark"] .mt-sk-opt:hover{background:#17301f}
     #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);padding:0;transition:transform .15s}
     #dl-theme-toggle:hover{transform:scale(1.08)}
     html[data-theme="dark"] .top{background:var(--card)}
@@ -1508,7 +1512,7 @@ function mtSearchCustomer(q){
         document.getElementById('mt-neukunde-row').style.display = 'none';
         var html = '';
         customers.forEach(function(c){
-          html += '<div onclick="mtSelectCustomer(\''+c.id+'\',\''+_escAttr(c.name)+'\',\''+_escAttr(c.telefon||'')+'\')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#fff\'">';
+          html += '<div class="mt-sk-opt" onclick="mtSelectCustomer(\''+c.id+'\',\''+_escAttr(c.name)+'\',\''+_escAttr(c.telefon||'')+'\')">';
           html += '<div><strong>'+_escH(c.name)+'</strong>';
           if(c.telefon) html += ' <span style="color:var(--muted);font-size:11px">'+_escH(c.telefon)+'</span>';
           html += '</div>';

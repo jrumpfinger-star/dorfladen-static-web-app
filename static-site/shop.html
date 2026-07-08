@@ -229,6 +229,9 @@
     .reorder-wrap.expanded .reorder-more{display:none}
     .reorder-wrap.expanded .reorder-less{display:flex}
     .reorder-card{background:#fff;border:1px solid var(--shop-border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .shop-fm-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .15s;cursor:pointer}
+    .shop-fm-card:hover{transform:translateY(-2px)}
+    html[data-theme="dark"] .shop-fm-card{background:#1b2228;border-color:var(--shop-border);color:var(--shop-text)}
     .reorder-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s}
     .reorder-header:hover{background:#f0fdf4}
     .reorder-header-info{flex:1;min-width:0}
@@ -2103,7 +2106,7 @@
               var stColor=FM_CLR[st]||'#6b7280';
               var liefertag='';try{var ld=new Date(b.liefertag);liefertag=('0'+ld.getDate()).slice(-2)+'.'+('0'+(ld.getMonth()+1)).slice(-2)+'.';}catch(e){}
               h+='<a href="/bestellstatus?nr='+esc(b.bestellnummer||'')+'" style="text-decoration:none;color:inherit">';
-              h+='<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .15s;cursor:pointer" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">';
+              h+='<div class="shop-fm-card">';
               h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
               h+='<span style="font-weight:700;font-size:14px">'+esc(dt)+'</span>';
               h+='<span style="font-size:11px;color:#9ca3af">'+esc(b.bestellnummer||'')+'</span>';

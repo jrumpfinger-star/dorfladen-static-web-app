@@ -39,6 +39,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   html[data-theme="dark"]{color-scheme:dark;--c-m-bg:#12171a;--c-m-pri:#5cb85f;--c-m-pri-light:#1e2a20;--c-m-sec:#c79b6c;--c-m-sec-light:#241d12;--c-m-text:#e6eae8;--c-m-muted:#9aa6a0}
   #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-m-card,#fff);color:var(--c-m-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:0}
   html[data-theme="dark"]{--c-m-card:#1b2228}
+  .cms-help-result{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #1b5e20;border-radius:8px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s}
+  .cms-help-result:hover{box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  html[data-theme="dark"] .cms-help-result{background:#1b2228;border-color:#2a333a;color:var(--c-m-text)}
   html[data-theme="dark"] .cms-card,html[data-theme="dark"] .cms-modal,html[data-theme="dark"] .cms-confirm-box,html[data-theme="dark"] .cms-login-box,html[data-theme="dark"] .cms-meal,html[data-theme="dark"] .cms-akt-row,html[data-theme="dark"] .cms-ang-item{background:#1b2228;border-color:#2a333a;color:var(--c-m-text)}
   html[data-theme="dark"] .cms-input,html[data-theme="dark"] .cms-hours-time,html[data-theme="dark"] .rte-editor,html[data-theme="dark"] .cms-rte-editor,html[data-theme="dark"] .cms-login-box input{background:#12171a;color:var(--c-m-text);border-color:#2a333a}
   html[data-theme="dark"] .cms-modal-header,html[data-theme="dark"] .cms-modal-footer{background:#161c20;border-color:#2a333a}
@@ -3882,7 +3885,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     } else {
       var labels = {'wp-help':'Wochenplan','hours-help':'&#214;ffnungszeiten','ang-help':'Sonderangebote','news-help':'Aktuelles','hp-help':'Homepage','editor-help':'Kachel-Editor','design-help':'Design','push-help':'Push','sort-help':'Sortiment','gallery-help':'Impressionen','howto-help':'Probleml&#246;ser','faq-help':'FAQ'};
       res.innerHTML = hits.map(function(h){
-        return '<div onclick="cmsHelpSearchOpen(\''+h.id+'\')" style="background:#fff;border:1px solid #e5e7eb;border-left:4px solid #1b5e20;border-radius:8px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.1)\'" onmouseout="this.style.boxShadow=\'\'"><span style="background:#e8f5e9;color:#1b5e20;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">'+(labels[h.id]||h.id)+'</span><div style="font-weight:600;font-size:13px;margin-top:5px">'+h.kw.split(' ').slice(0,6).join(' &middot; ')+'</div></div>';
+        return '<div class="cms-help-result" onclick="cmsHelpSearchOpen(\''+h.id+'\')"><span style="background:#e8f5e9;color:#1b5e20;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">'+(labels[h.id]||h.id)+'</span><div style="font-weight:600;font-size:13px;margin-top:5px">'+h.kw.split(' ').slice(0,6).join(' &middot; ')+'</div></div>';
       }).join('');
     }
     res.style.display = 'block';
