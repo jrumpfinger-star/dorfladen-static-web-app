@@ -19,8 +19,8 @@ static-site/js/mockup-shared.js
 static-site/handbuch/page-*.png
 static-site/handbuch/element-*.png
 
-# lokale Wegwerf-/Debug-Skripte
-_*.py
+# lokale Wegwerf-/Debug-Skripte (nur Repo-Root, damit verschachtelte __init__.py nicht ignoriert werden)
+/_*.py
 tmp_*
 
 # Secrets / Keys (niemals committen)

@@ -24,8 +24,9 @@ def _migrate_cats(cats):
 
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(url_setting_name, DEFAULT_URL_FALLBACK)
     if not client_secret:

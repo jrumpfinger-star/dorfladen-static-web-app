@@ -30,8 +30,9 @@ def invalidate_cache():
         _cache.clear()
 
 # ---------- config ----------
-TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-CLIENT_ID = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+from shared.dataverse import get_tenant_id, get_client_id
+TENANT_ID = get_tenant_id()
+CLIENT_ID = get_client_id()
 CLIENT_SECRET = os.environ.get("DV_CLIENT_SECRET", "")
 
 SP_DRIVE = "b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A"

@@ -16,8 +16,9 @@ META_GRAPH_URL = "https://graph.facebook.com/v20.0"
 SWA_BASE_URL = os.environ.get("SWA_BASE_URL", "")
 
 # SharePoint / Graph config (same as social-katalog)
-TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-CLIENT_ID = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+from shared.dataverse import get_tenant_id, get_client_id
+TENANT_ID = get_tenant_id()
+CLIENT_ID = get_client_id()
 CLIENT_SECRET = os.environ.get("DV_CLIENT_SECRET", "")
 SP_DRIVE = "b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A"
 SP_SOCIAL_FOLDER_NAME = "SocialMedia"

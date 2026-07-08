@@ -9,8 +9,9 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ---------- config ----------
-TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-CLIENT_ID = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+from shared.dataverse import get_tenant_id, get_client_id
+TENANT_ID = get_tenant_id()
+CLIENT_ID = get_client_id()
 CLIENT_SECRET = os.environ.get("DV_CLIENT_SECRET", "")
 
 # SharePoint drive + root folder for Daily images (same drive as gallery)
