@@ -2177,8 +2177,9 @@
     imageCache[artnr]=src;
     var el=document.getElementById('simg-'+artnr);
     if(el){
+      var inList=!!el.closest('.shop-list-item');
       var img=document.createElement('img');
-      img.className='shop-card-img';
+      img.className=inList?'shop-list-img':'shop-card-img';
       img.src=src;
       img.alt='';
       img.addEventListener('click',function(e){e.stopPropagation();showImagePopup(artnr);});
