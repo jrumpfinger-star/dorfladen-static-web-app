@@ -86,7 +86,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         domain = urlparse(ref).netloc or ref
                     except Exception:
                         domain = ref
-                    if domain:
+                    # Eigene SWA-Hosts (*.azurestaticapps.net) ausschliessen –
+                    # das ist Dev-/Preview-Navigation, kein echter Referrer.
+                    if domain and "azurestaticapps.net" not in domain.lower():
                         referrers[domain] = referrers.get(domain, 0) + 1
 
                 # Device detection
