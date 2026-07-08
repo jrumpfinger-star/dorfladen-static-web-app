@@ -1,7 +1,7 @@
 # Serverseitige Auth für Admin-/CMS-Write-Endpoints – Spec
 
 > **Feature-ID**: SEC-AUTH
-> **Status**: Entwurf
+> **Status**: Geklärt – plan-reif
 > **Erstellt**: 2026-07-08
 > **Bezug**: Checkliste SEC-2
 
@@ -45,10 +45,22 @@ statisches Frontend (`static-site/`).
   `push-subscribe`, `track`) wird von diesem Feature **nicht** verändert – diese
   haben ihre eigene Logik bzw. sind bewusst öffentlich.
 - Kein vollwertiges Benutzer-/Rollen-System, keine Einzelnutzer-Logins fürs CMS
-  (ein gemeinsames CMS-Geheimnis genügt vorerst).
+  (ein **gemeinsames statisches** Admin-Token genügt vorerst).
 - Keine Änderung der SWA-`staticwebapp.config.json`-Routen-Rollen (wird in der
   Plan-Phase als Alternative bewertet, ist aber nicht Ziel dieser Spec).
 - Kein Audit-Trail (separater Backlog-Punkt C-04/K-04).
+
+## 3a. Entscheidungen (geklärt)
+
+- **Token-Art:** **statisches** gemeinsames Token (`CMS_AUTH_TOKEN`). Rotation
+  erfolgt manuell durch Ändern des App-Settings. (HMAC/ablaufend = späteres Upgrade.)
+- **Admin-Seiten:** `shop-admin.html`, `kiosk.html`, `shop-freigabe.html` nutzen
+  **denselben** Login/Token wie das CMS.
+- **Methoden-Regel:** Geschützt sind **alle** mutierenden Methoden
+  (`POST`/`PUT`/`PATCH`/`DELETE`) der in F3 gelisteten Admin-Endpunkte; `GET`
+  und `OPTIONS` bleiben offen. Die exakte Endpunkt/Methoden-Tabelle ist ein
+  Implementierungsdetail und wird im Plan aus den `function.json` + `main()`
+  abgeleitet (keine offene Spec-Frage).
 
 ---
 
@@ -162,9 +174,9 @@ Nicht betroffen (öffentlich / eigene Auth, siehe Non-Goals): `auth-*`,
 `shop-favorites`, `push-subscribe`, `track`, `analytics` (GET), `preisliste`,
 `roterpunkt`, `news` (GET), `stammkunden`.
 
-> [NEEDS CLARIFICATION: Die exakte Methoden-Matrix (welche HTTP-Methode je
-> Endpunkt mutierend ist) wird in der Plan-Phase aus den `function.json` +
-> `main()`-Verzweigungen abgeleitet und hier bestätigt.]
+> Die exakte Methoden-Matrix (welche HTTP-Methode je Endpunkt mutierend ist)
+> wird in der Plan-Phase aus den `function.json` + `main()`-Verzweigungen
+> abgeleitet und dort als Tabelle festgehalten.
 
 #### F3 Test Cases
 
@@ -236,11 +248,8 @@ Nach erfolgreichem Login (`/api/cms-auth`) speichert der Client das Token in
 
 ## 7. Open Questions
 
-- [NEEDS CLARIFICATION: Statisches gemeinsames Token vs. HMAC-signiertes,
-  ablaufendes Token? Statisch ist einfacher, rotiert aber nur manuell.]
-- [NEEDS CLARIFICATION: Sollen die Admin-Seiten (`shop-admin.html`,
-  `kiosk.html`, `shop-freigabe.html`) denselben Login nutzen wie das CMS?]
-- [NEEDS CLARIFICATION: Exakte Methoden-Matrix je Endpunkt (siehe F3).]
+_Keine offenen Punkte – alle Klärungen sind in Abschnitt 3a entschieden. Spec ist
+plan-reif (`/sdd-plan`)._
 
 ---
 
