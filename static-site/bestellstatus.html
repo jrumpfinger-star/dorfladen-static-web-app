@@ -182,7 +182,7 @@
         </div>
       </div>
 
-      <a href="javascript:void(0)" onclick="history.length>1?history.back():location.href='/'" class="bs-link"><i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle"></i> Zurück</a>
+      <a href="javascript:void(0)" onclick="if(window.parent!==window){window.parent.postMessage('closeMittagPopup','*')}else if(history.length>1){history.back()}else{location.href='/'}" class="bs-link"><i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle"></i> Zurück</a>
     </div>
   </div>
 
