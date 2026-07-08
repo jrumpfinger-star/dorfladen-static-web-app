@@ -33,6 +33,12 @@
     html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"] textarea,html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"] input{background:#12171a!important;color:var(--c-text)!important;border-color:var(--c-border)!important}
     html[data-theme="dark"] [style*="border:1px solid #dfe7e2;border-radius:10px;background:#fff"]{background:var(--c-surf2)!important;color:var(--c-text)!important;border-color:var(--c-border)!important}
     html[data-theme="dark"] [style*="border:2px solid #e5e7eb"]{border-color:var(--c-border)!important}
+    /* Metzger-Tageskopfzeile (JS-Inline hell) im Dark Mode lesbar machen */
+    html[data-theme="dark"] .k-slot-header[style*="#e5e7eb"],
+    html[data-theme="dark"] .k-slot-header[style*="#dcfce7"]{background:var(--c-card)!important}
+    html[data-theme="dark"] .k-slot-header[style*="#e5e7eb"] span,
+    html[data-theme="dark"] .k-slot-header[style*="#dcfce7"] span{color:var(--c-text)!important}
+    html[data-theme="dark"] .fm-hdr-chip{background:var(--c-surf2)!important;color:var(--c-muted)!important}
     @media (forced-colors: active){.k-order,.k-modal,.k-btn,.k-tab,.k-stat{border:1px solid CanvasText}}
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;overflow:hidden;touch-action:manipulation}
