@@ -1105,6 +1105,18 @@ main{padding:0!important;margin:0!important}
   }
   html[data-theme="dark"] body{background:var(--m-bg);color:var(--m-text)}
 
+  /* Fixer Header + Statusleiste: heller Glas-Hintergrund -> dunkel */
+  html[data-theme="dark"] .mob-header{
+    background:rgba(18,23,26,.92);
+    border-bottom-color:rgba(255,255,255,.08);
+    box-shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+  html[data-theme="dark"] .mob-header-title{color:#e6eae8}
+  /* Farbiges Logo bleibt auf hellem Chip lesbar */
+  html[data-theme="dark"] .mob-header-logo img{
+    background:#fff;padding:2px 6px;border-radius:8px;
+  }
+
   /* Karten & Flächen: hartkodiertes #fff -> dunkle Fläche */
   html[data-theme="dark"] .mob-nav,
   html[data-theme="dark"] .mob-popup,
