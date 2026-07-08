@@ -221,8 +221,7 @@
     #shop-fm-orders{margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
     .reorder-wrap{margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
     .reorder-wrap{position:relative}
-    .reorder-wrap:not(.expanded) .reorder-grid{overflow:hidden}
-    .reorder-wrap.expanded .reorder-grid{overflow-y:auto;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+    .reorder-wrap:not(.expanded) .reorder-grid > .reorder-card:nth-child(n+3){display:none}
     .reorder-more,.reorder-less{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px;font-size:12px;font-weight:600;color:var(--shop-green);cursor:pointer;border-top:1px solid var(--shop-border);margin:0 16px;transition:color .12s}
     .reorder-more:hover,.reorder-less:hover{color:#1b5e20}
     .reorder-less{display:none}
@@ -1988,39 +1987,17 @@
     markCartItems();
     loadImages(items);
 
-    // Limit reorder grid to show only first 2 cards, expanded shows 3 scrollable
-    (function(){
-      var grid=document.getElementById('reorder-grid');
-      var wrap=document.getElementById('reorder-wrap');
-      if(!grid||!wrap) return;
-      var cards=grid.querySelectorAll('.reorder-card');
-      if(cards.length<=2) return;
-      requestAnimationFrame(function(){
-        var h2=0;
-        for(var i=0;i<2&&i<cards.length;i++) h2+=cards[i].offsetHeight;
-        h2+=10;
-        var h3=0;
-        for(var j=0;j<3&&j<cards.length;j++) h3+=cards[j].offsetHeight;
-        h3+=20;
-        wrap.setAttribute('data-h2',h2);
-        wrap.setAttribute('data-h3',h3);
-        if(!wrap.classList.contains('expanded')) grid.style.maxHeight=h2+'px';
-      });
-    })();
+    // Reorder: eingeklappt = erste Karten (CSS nth-child), "Mehr" zeigt ALLE;
+    // die Seite scrollt natuerlich (kein fragiler innerer Scroll-Bereich mehr).
     window.dlExpandOrders=function(){
       var w=document.getElementById('reorder-wrap');
-      var g=document.getElementById('reorder-grid');
-      if(!w||!g) return;
-      w.classList.add('expanded');
-      g.style.maxHeight=w.getAttribute('data-h3')+'px';
-      g.scrollTop=0;
+      if(w) w.classList.add('expanded');
     };
     window.dlCollapseOrders=function(){
       var w=document.getElementById('reorder-wrap');
-      var g=document.getElementById('reorder-grid');
-      if(!w||!g) return;
+      if(!w) return;
       w.classList.remove('expanded');
-      g.style.maxHeight=w.getAttribute('data-h2')+'px';
+      try{ w.scrollIntoView({block:'nearest'}); }catch(e){}
     };
 
     // Wire reorder toggle + buttons
