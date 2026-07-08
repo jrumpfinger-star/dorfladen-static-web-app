@@ -1093,8 +1093,8 @@ main{padding:0!important;margin:0!important}
 } /* end @media(max-width:768px) */
 
 /* ============================================================
-   MOBILE DARK MODE — überschreibt die mobilen mob-*/rp-* Flächen
-   Aktiv via html[data-theme="dark"] (siehe /js/theme.js)
+   MOBILE DARK MODE — ueberschreibt die mobilen mob- und rp- Flaechen
+   Aktiv via html[data-theme="dark"] (siehe js/theme.js)
    ============================================================ */
 @media(max-width:768px){
   html[data-theme="dark"]{
