@@ -479,6 +479,73 @@
     html[data-theme="dark"] .shop-login-banner:hover{background:linear-gradient(135deg,#463719,#352d12)}
     html[data-theme="dark"] .shop-view-toggle button.active{background:#2a333a;color:#5cc98a}
     html[data-theme="dark"] .shop-card .shop-fav-btn{background:rgba(20,25,28,.8)}
+    /* Listen-Ansicht: dunkler Text / helle Flächen ohne Override */
+    html[data-theme="dark"] .shop-list-name,
+    html[data-theme="dark"] .img-popup-name{color:var(--shop-text)}
+    html[data-theme="dark"] .img-popup-meta{color:var(--shop-muted)}
+    html[data-theme="dark"] .shop-list-item.in-cart{background:#17301f;border-color:#2e7d4f}
+    html[data-theme="dark"] .shop-section-count,
+    html[data-theme="dark"] .shop-view-toggle{background:#232b31}
+    html[data-theme="dark"] .push-prompt-no{background:#232b31;color:var(--shop-text)}
+    /* Warenkorb-Panel + Dialoge: weiße Flächen -> dunkel */
+    html[data-theme="dark"] .shop-cart-footer{background:#1b2228}
+    html[data-theme="dark"] .shop-cart-item-img{background:#232b31}
+    html[data-theme="dark"] .shop-cart-item{border-bottom-color:rgba(255,255,255,.07)}
+    html[data-theme="dark"] .shop-cart-note{background:#12171a;color:var(--shop-text);border-color:var(--shop-border)}
+    html[data-theme="dark"] .shop-cart-close:hover{background:#232b31}
+    html[data-theme="dark"] .shop-confirm-box{background:#1b2228}
+    html[data-theme="dark"] .shop-confirm-cancel{background:#232b31;color:var(--shop-text)}
+    html[data-theme="dark"] .shop-confirm-cancel:hover{background:#2a333a}
+    html[data-theme="dark"] .shop-cart-minorder,
+    html[data-theme="dark"] .shop-cart-unavail,
+    html[data-theme="dark"] .shop-cart-item.unavailable{background:#2c1b1b;border-color:#5a2a2a}
+    html[data-theme="dark"] .shop-cart-item-unavail-badge{background:#5a2a2a;color:#f0736f}
+    /* Auth-Modal (Login/Registrierung) */
+    html[data-theme="dark"] .shop-auth-modal{background:#1b2228}
+    html[data-theme="dark"] .shop-auth-field input,
+    html[data-theme="dark"] .shop-auth-field select{background:#12171a;color:var(--shop-text);border-color:var(--shop-border)}
+    html[data-theme="dark"] .shop-auth-errors{background:#2c1b1b;border-color:#5a2a2a;color:#f0736f}
+    html[data-theme="dark"] .shop-auth-sepa{background:#12251c;border-color:#2f5d42;color:#8fd6ad}
+    /* Bestellhistorie ("Meine Bestellungen") */
+    html[data-theme="dark"] .shop-order-card{background:#1b2228;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+    html[data-theme="dark"] .shop-order-header{background:#161c20;border-bottom-color:var(--shop-border)}
+    html[data-theme="dark"] .shop-order-status.s0{background:#2a2410;color:#f5d98a}
+    html[data-theme="dark"] .shop-order-status.s1{background:#12233a;color:#8fbaf0}
+    html[data-theme="dark"] .shop-order-status.s2{background:#12251c;color:#6fd0a5}
+    html[data-theme="dark"] .shop-order-status.s3{background:#232b31;color:var(--shop-muted)}
+    html[data-theme="dark"] .shop-order-status.s4{background:#2c1b1b;color:#f0736f}
+    /* Status-Timeline (Kundenansicht) */
+    html[data-theme="dark"] .soc-dot{background:#1b2228;border-color:#3a444b}
+    html[data-theme="dark"] .soc-dot.active{background:#12233a;border-color:#3b82f6}
+    html[data-theme="dark"] .soc-dot.cancel{background:#2c1b1b;border-color:#ef4444}
+    html[data-theme="dark"] .soc-line{background:#2a333a}
+    html[data-theme="dark"] .shop-loading .spinner{border-color:#2a333a;border-top-color:var(--shop-green)}
+    /* Inline-/JS-gestylte Flächen (Bestellkarten, Formulare, Hinweise) */
+    html[data-theme="dark"] #shop-fm-orders [style*="background:#fff"],
+    html[data-theme="dark"] #reorder-wrap [style*="background:#fff"],
+    html[data-theme="dark"] [style*="background:#fff;border-radius:12px;border:1px solid #e5e7eb"]{background:#1b2228 !important;border-color:var(--shop-border) !important}
+    html[data-theme="dark"] [style*="border:1px solid #e5e7eb"]{border-color:var(--shop-border) !important}
+    html[data-theme="dark"] [style*="background:#fef2f2"],
+    html[data-theme="dark"] [style*="background:#fff5f5"]{background:#2c1b1b !important;border-color:#5a2a2a !important}
+    html[data-theme="dark"] [style*="background:#f0fdf4"],
+    html[data-theme="dark"] [style*="background:#f0faf3"]{background:#12251c !important;border-color:#2f5d42 !important}
+    html[data-theme="dark"] [style*="background:#fef3c7"],
+    html[data-theme="dark"] [style*="background:#fffbeb"]{background:#2a2410 !important;border-color:#7c5e1a !important}
+    html[data-theme="dark"] [style*="background:#eff6ff"],
+    html[data-theme="dark"] [style*="background:#dbeafe"]{background:#12233a !important}
+    html[data-theme="dark"] [style*="color:#1f2937"],
+    html[data-theme="dark"] [style*="color:#111827"],
+    html[data-theme="dark"] [style*="color:#374151"],
+    html[data-theme="dark"] [style*="color:#111\""]{color:var(--shop-text) !important}
+    html[data-theme="dark"] [style*="color:#6b7280"],
+    html[data-theme="dark"] [style*="color:#9ca3af"],
+    html[data-theme="dark"] [style*="color:#b0b7c3"]{color:var(--shop-muted) !important}
+    html[data-theme="dark"] [style*="color:#166534"],
+    html[data-theme="dark"] [style*="color:#15803d"]{color:#6fd0a5 !important}
+    html[data-theme="dark"] [style*="color:#991b1b"],
+    html[data-theme="dark"] [style*="color:#7f1d1d"],
+    html[data-theme="dark"] [style*="color:#b91c1c"]{color:#f0736f !important}
+    html[data-theme="dark"] [style*="color:#92400e"]{color:#f5d98a !important}
     /* Produktbilder: mix-blend-mode:multiply mischt mit dem (dunklen) Karten-Hintergrund
        und macht Fotos matschig. Im Dark Mode daher normal + weißes Foto-Tile. */
     html[data-theme="dark"] .shop-card-img,
