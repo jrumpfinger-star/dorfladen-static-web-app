@@ -33,3 +33,7 @@ __azurite_db_*.json
 *.zip
 check-6007-dv.jpg
 static-site/cms-backup-vor-design-redesign.html
+
+# Playwright-Testartefakte
+test-results/
+playwright-report/
