@@ -1,7 +1,7 @@
 /* Dorfladen Oberornau – Content Page Styles */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --c-pri:#2d6a30;--c-pri-h:#1b5e20;--c-pri-l:#e8f5e9;
+  --c-pri:var(--dl-green,#2d5016);--c-pri-h:var(--dl-green-h,#1b5e20);--c-pri-l:var(--dl-green-light,#e8f5e9);
   --c-acc:#ef6c00;--c-surf:#fff;--c-bg:#fafafa;--c-text:#212121;--c-sec:#616161;--c-brd:#e0e0e0;
   --sh-s:0 1px 3px rgba(0,0,0,.06);--sh-m:0 4px 12px rgba(0,0,0,.08);
   --r:8px;--max:1340px;--nh:54px;

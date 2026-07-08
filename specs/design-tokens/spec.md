@@ -127,10 +127,8 @@ Styles – oder zentral via `theme.js`-Injektion (analog Dark-Baseline).
 
 ## 7. Open Questions
 
-- [NEEDS CLARIFICATION: Welches Grün ist das **kanonische Primär-Grün**?
-  Kandidaten: `#2d5016` (dunkel, aktuell in kiosk/mittagstisch/bestellstatus/
-  handbuch) oder `#2d6a30` (content.css) oder `#1e463a` (style.css).
-  Vorschlag: `#2d5016` als Primär + `#2e7d4f` als Action-Grün.]
+_Geklärt: Kanonisches Primär-Grün = **`#2d5016`**, Action/Button-Grün =
+**`#2e7d4f`**, Dark-Grün = `#5cb85f`. Spec ist plan-reif._
 
 ---
 
