@@ -29,6 +29,27 @@
     try { localStorage.setItem(ALLOW_KEY, allowed ? '1' : '0'); } catch (e) {}
   }
 
+  // --- Zentrale Dark-Mode-Baseline (gilt auf ALLEN Seiten mit theme.js) ---
+  // Behebt seitenübergreifend die häufigsten Lücken, ohne jede Seite einzeln
+  // patchen zu müssen: Formularfelder (Selects/Inputs/Textareas) bekommen im
+  // Dark Mode dunklen Grund + helle Schrift. Element-Selektoren (robust gegen
+  // JS-Style-Mutation, anders als [style*=...]).
+  (function injectDarkBaseline() {
+    try {
+      if (document.getElementById('dl-dark-baseline')) return;
+      var css =
+        'html[data-theme="dark"] input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=submit]):not([type=button]),' +
+        'html[data-theme="dark"] select,' +
+        'html[data-theme="dark"] textarea{background-color:#12171a !important;color:#e6eae8 !important;border-color:#2a333a}' +
+        'html[data-theme="dark"] input::placeholder,html[data-theme="dark"] textarea::placeholder{color:#7f8a86 !important}' +
+        'html[data-theme="dark"] select option{background-color:#1b2228;color:#e6eae8}';
+      var s = document.createElement('style');
+      s.id = 'dl-dark-baseline';
+      s.textContent = css;
+      (document.head || document.documentElement).appendChild(s);
+    } catch (e) {}
+  })();
+
   // Effektives Theme: nur dunkel, wenn erlaubt UND System dunkel (strikt System).
   function effective(allowed) { return (allowed && systemDark()) ? 'dark' : 'light'; }
   function applyAllowed(allowed) {
