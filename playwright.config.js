@@ -16,10 +16,18 @@ module.exports = {
   testDir: './tests',
   timeout: 60000,
   retries: 0,
+  // Reporter: Liste im Terminal + HTML-Report (im VS-Code Simple Browser
+  // ansehbar via `npm run test:report` -> http://127.0.0.1:9323).
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+  ],
   use: {
     baseURL: process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net',
     headless: true,
     ignoreHTTPSErrors: true,
+    screenshot: 'only-on-failure',
+    trace: 'retain-on-failure',
   },
   projects: [
     {
