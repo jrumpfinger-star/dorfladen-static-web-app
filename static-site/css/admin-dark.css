@@ -1,0 +1,67 @@
+/* ============================================================
+   admin-dark.css — gemeinsame Dark-Mode-Overrides fuer die
+   Admin-/Erfassungsoberflaechen (cms, kiosk, shop-admin,
+   bestellungen, pack, portal, lunch-admin, shop-freigabe).
+   Deckt inline-hart-kodierte helle Farben (auch JS-generiert)
+   ab, die per-Klassen-Regeln nicht erreichen.
+   Aktiv via html[data-theme="dark"] (siehe js/theme.js).
+   Muss NACH den seiteneigenen Styles eingebunden werden.
+   ============================================================ */
+
+/* Erfassungs-Karten (k-order/soc-*) */
+html[data-theme="dark"] .k-order{background:#1b2228;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+html[data-theme="dark"] .k-order-hdr{background:#161c20 !important;color:#e6eae8}
+html[data-theme="dark"] .k-order-body{background:#1b2228}
+html[data-theme="dark"] .k-btn-outline,
+html[data-theme="dark"] .k-stat{background:#161c20;color:#e6eae8}
+
+/* Near-white Flaechen -> dunkle Flaeche */
+html[data-theme="dark"] [style*="background:#fff"],
+html[data-theme="dark"] [style*="background: #fff"],
+html[data-theme="dark"] [style*="background:#f9fafb"],
+html[data-theme="dark"] [style*="background:#f3f4f6"],
+html[data-theme="dark"] [style*="background:#fafbfc"],
+html[data-theme="dark"] [style*="background:#faf9f6"]{background:#1b2228 !important}
+
+/* Helle Farb-Tints (Badges/Buttons) -> dunkler Tint (farbiger Text bleibt) */
+html[data-theme="dark"] [style*="background:#fef2f2"],
+html[data-theme="dark"] [style*="background:#fef3c7"],
+html[data-theme="dark"] [style*="background:#fffbeb"],
+html[data-theme="dark"] [style*="background:#fef9c3"],
+html[data-theme="dark"] [style*="background:#fefce8"],
+html[data-theme="dark"] [style*="background:#eff6ff"],
+html[data-theme="dark"] [style*="background:#dbeafe"],
+html[data-theme="dark"] [style*="background:#f0fdf4"],
+html[data-theme="dark"] [style*="background:#dcfce7"],
+html[data-theme="dark"] [style*="background:#fce7f3"]{background:#232c33 !important}
+
+/* Neutrale dunkle Texte -> hell */
+html[data-theme="dark"] [style*="color:#374151"],
+html[data-theme="dark"] [style*="color:#1f2937"],
+html[data-theme="dark"] [style*="color:#111827"],
+html[data-theme="dark"] [style*="color:#111\""],
+html[data-theme="dark"] [style*="color:#4b5563"]{color:#e6eae8 !important}
+html[data-theme="dark"] [style*="color:#6b7280"],
+html[data-theme="dark"] [style*="color:#9ca3af"]{color:#9aa6a0 !important}
+
+/* Dunkle Akzent-Texte (fuer helle Tints gedacht) -> hellere Akzente */
+html[data-theme="dark"] [style*="color:#166534"],
+html[data-theme="dark"] [style*="color:#15803d"]{color:#5cb85f !important}
+html[data-theme="dark"] [style*="color:#991b1b"],
+html[data-theme="dark"] [style*="color:#be123c"],
+html[data-theme="dark"] [style*="color:#b91c1c"]{color:#f0736f !important}
+html[data-theme="dark"] [style*="color:#92400e"],
+html[data-theme="dark"] [style*="color:#b45309"]{color:#f5d98a !important}
+html[data-theme="dark"] [style*="color:#2563eb"],
+html[data-theme="dark"] [style*="color:#1d4ed8"]{color:#7aa7ff !important}
+
+/* Helle Raender -> dunkel */
+html[data-theme="dark"] [style*="solid #d1d5db"],
+html[data-theme="dark"] [style*="solid #e5e7eb"],
+html[data-theme="dark"] [style*="solid #f3f4f6"],
+html[data-theme="dark"] [style*="dashed #d1d5db"]{border-color:#2a333a !important}
+
+/* Inputs/Textareas/Selects in Erfassungskarten */
+html[data-theme="dark"] .k-order input,
+html[data-theme="dark"] .k-order textarea,
+html[data-theme="dark"] .k-order select{background:#12171a !important;color:#e6eae8 !important;border-color:#2a333a !important}
