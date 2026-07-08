@@ -1,4 +1,24 @@
 ﻿(function(){
+  /* ============================================================================
+   * INHALTSVERZEICHNIS (cms.js ~12.600 Zeilen, eine IIFE)
+   * Zum Springen: Strg+F nach dem Anker-Text in [Klammern] suchen.
+   * ----------------------------------------------------------------------------
+   *  1. Basis        [CMS Password Gate] · [Load Version] · [Load Artikel Data]
+   *  2. Angebote     [MSAL.js: Graph API] (SharePoint-Bilder) · showAktionModal
+   *  3. Tabs/Seiten  [Tabs] · cmsCfgSubTab · [Homepage Content] · cmsSeitenSave
+   *  4. Design-Cfg   cfgSwitchSection · cfgLivePreview (Kachel-/Flyer-Editor)
+   *  5. Homepage     [HP-Sonderangebote Card Design] · [Homepage/Wochenplan Config (hpCfg)]
+   *  6. Wochenplan   [Wochenplan] · [Add/Edit Meal Modal] · [Delete Meal]
+   *  7. Stammdaten   [Öffnungszeiten] · [Logo Upload] · [Aktuelles / News]
+   *  8. Sortiment    [Sortiment CMS (WYSIWYG)] · [RTE helpers]
+   *  9. Galerie      [GALLERY ADMIN]
+   * 10. Push         [Push Notifications: Queue] · [Push Notifications]
+   * 11. Settings     [Feature Flags (Settings tab)] · [Kontaktdaten]
+   * 12. Analytics    [ANALYTICS DASHBOARD]
+   * 13. Social/Post  [Katalog laden] · [Post-Builder] · [Canvas Poster Generator]
+   *                  [WhatsApp Share] · [Instagram Share] · [WA-Katalog Tab]
+   * 14. Infra        [Event Delegation (CSP-safe] · [Init (only if already authenticated]
+   * ============================================================================ */
   // ── Shared constants & helpers ──
   var FONT_BOLD='Arial Black, Arial, sans-serif';
   var FONT_NORMAL='Arial, sans-serif';
