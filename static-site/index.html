@@ -1554,9 +1554,9 @@
               pop.id = popupId;
               pop.style.cssText = 'display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:20px';
               pop.onclick = function(e){ if(e.target===pop){ pop.style.display='none'; document.body.style.overflow=''; } };
-              var card = '<div style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
+              var card = '<div class="dl-pop-card" style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
                 +'<div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">'
-                +'<span style="font-weight:800;font-size:15px;color:#111">Meine Bestellungen</span>'
+                +'<span style="font-weight:800;font-size:15px;color:inherit">Meine Bestellungen</span>'
                 +'<span onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
                 +'</div><div style="padding:8px">';
               orders.forEach(function(o){
@@ -1645,7 +1645,7 @@
               deskEl.innerHTML = _fmRenderOrderLink(orders[0]);
             } else {
               var fmPopId = 'popup-desk-fm-orders';
-              deskEl.innerHTML = '<div onclick="var p=document.getElementById(\''+fmPopId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;cursor:pointer;color:#7f1d1d;font-size:13px;font-weight:600">'
+              deskEl.innerHTML = '<div class="dl-fm-orders-btn" onclick="var p=document.getElementById(\''+fmPopId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;cursor:pointer;color:#7f1d1d;font-size:13px;font-weight:600">'
                 +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
                 +'<span style="flex:1">Meine Vorbestellungen</span>'
                 +'<span style="font-size:11px;background:rgba(127,29,29,.12);color:#7f1d1d;padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
@@ -1655,9 +1655,9 @@
               fmPop.id = fmPopId;
               fmPop.style.cssText = 'display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:20px';
               fmPop.onclick = function(e){ if(e.target===fmPop){ fmPop.style.display='none'; document.body.style.overflow=''; } };
-              var fmCard = '<div style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
+              var fmCard = '<div class="dl-pop-card" style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
                 +'<div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">'
-                +'<span style="font-weight:800;font-size:15px;color:#111">Meine Vorbestellungen</span>'
+                +'<span style="font-weight:800;font-size:15px;color:inherit">Meine Vorbestellungen</span>'
                 +'<span onclick="document.getElementById(\''+fmPopId+'\').style.display=\'none\';document.body.style.overflow=\'\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
                 +'</div><div style="padding:8px">';
               orders.forEach(function(o){ fmCard += _fmRenderOrderLink(o); });
@@ -2143,6 +2143,15 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 .mt-popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;justify-content:center;align-items:center;padding:16px}
 .mt-popup-overlay.open{display:flex}
 .mt-popup-modal{background:#fff;border-radius:16px;max-width:700px;width:100%;height:calc(100vh - 32px);max-height:calc(100vh - 32px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative;display:flex;flex-direction:column}
+html[data-theme="dark"] .orders-modal,
+html[data-theme="dark"] .od-modal,
+html[data-theme="dark"] .tp-modal,
+html[data-theme="dark"] .mt-popup-modal,
+html[data-theme="dark"] .dl-pop-card{background:#1b2228;color:#e6eae8}
+html[data-theme="dark"] .dl-pop-card [style*="border-bottom:1px solid #e5e7eb"]{border-bottom-color:#2a333a !important}
+html[data-theme="dark"] .dl-pop-card [style*="color:#7f1d1d"]{color:#f0a8a8 !important}
+html[data-theme="dark"] .dl-fm-orders-btn,
+html[data-theme="dark"] .dl-fm-orders-btn *{color:#f0a8a8 !important}
 .mt-popup-close{position:absolute;top:10px;right:10px;z-index:10;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.5);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .mt-popup-close:hover{background:rgba(0,0,0,.7)}
 .mt-popup-iframe{border:none;width:100%;flex:1;min-height:0;border-radius:16px}
