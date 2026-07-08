@@ -10,7 +10,7 @@
 - **GitHub:** `jrumpfinger-star/dorfladen-static-web-app`
 - **Produktion:** https://kind-pebble-072605b03.7.azurestaticapps.net
 - **Preview (PR):** `https://kind-pebble-072605b03-{PR-Nummer}.7.azurestaticapps.net`
-- **CMS:** `/static-site/cms.html` → Passwort: `DorfladenCMS!`
+- **CMS:** `/static-site/cms.html` → Passwort: siehe internen Passwort-Manager (nicht im Repo)
 - **Azure Static Web App Name:** `dorfladen-website`
 
 ---
@@ -269,5 +269,5 @@ Jeder Eintrag enthält: `{b: bezeichnung, nr: artikelnummer, sc: strichcode, pre
 | | |
 |---|---|
 | M365 Login | `info@dorfladen.oberornau.onmicrosoft.com` |
-| M365 Passwort | `Unser Dorfladen ist schoen.` |
-| CMS Passwort | `DorfladenCMS!` |
+| M365 Passwort | *siehe internen Passwort-Manager (nicht im Repo)* |
+| CMS Passwort | *siehe internen Passwort-Manager (nicht im Repo)* |

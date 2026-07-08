@@ -21,3 +21,15 @@ static-site/handbuch/element-*.png
 
 # lokale Wegwerf-/Debug-Skripte
 _*.py
+tmp_*
+
+# Secrets / Keys (niemals committen)
+.api-key.txt
+
+# Azurite lokaler Emulator-State
+__azurite_db_*.json
+
+# Build-Artefakte / Wegwerf-Dateien
+*.zip
+check-6007-dv.jpg
+static-site/cms-backup-vor-design-redesign.html

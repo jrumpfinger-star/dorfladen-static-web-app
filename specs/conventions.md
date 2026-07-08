@@ -220,7 +220,7 @@ function dlUnlockScroll() {
 
 | Zugang | Wert |
 |---|---|
-| CMS Passwort | `DorfladenCMS!` |
+| CMS Passwort | *siehe internen Passwort-Manager (nicht im Repo)* |
 | Live-URL (Bestellsystem) | `https://witty-island-064f9d903.7.azurestaticapps.net` |
 | Live-URL (Produktion) | `https://kind-pebble-072605b03.7.azurestaticapps.net` |
 
