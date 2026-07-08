@@ -151,6 +151,19 @@ html[data-theme="dark"] #mob-push-toggle{background:var(--c-pri-l)!important}
 html[data-theme="dark"] .ct h1{border-bottom-color:var(--c-brd)}
 html[data-theme="dark"] .gallery img{border:1px solid var(--c-brd)}
 
+/* Hartkodierte Textfarben in Content-Karten (waren dunkel-auf-dunkel) */
+html[data-theme="dark"] .ct p,
+html[data-theme="dark"] .ct li{color:#d5dbd7}
+html[data-theme="dark"] .ct h3{color:#cbb08f}
+html[data-theme="dark"] .ct blockquote{color:#c3ccc7}
+html[data-theme="dark"] .ct td,
+html[data-theme="dark"] .ct th{border-bottom-color:var(--c-brd)}
+html[data-theme="dark"] .cd-h{background:#232c33}
+html[data-theme="dark"] .hrs td{border-bottom-color:rgba(255,255,255,.06)}
+html[data-theme="dark"] .hrs td:first-child{color:var(--c-text)}
+html[data-theme="dark"] .hrs-closed{color:#8b958f}
+html[data-theme="dark"] .dyn-hrs td{border-bottom-color:rgba(255,255,255,.06)}
+
 /* Theme-Umschalt-Button */
 #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid var(--c-brd);background:var(--c-surf);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .15s,background .2s;padding:0}
 #dl-theme-toggle:hover{transform:scale(1.08)}

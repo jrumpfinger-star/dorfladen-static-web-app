@@ -1092,3 +1092,82 @@ main{padding:0!important;margin:0!important}
 
 } /* end @media(max-width:768px) */
 
+/* ============================================================
+   MOBILE DARK MODE — überschreibt die mobilen mob-*/rp-* Flächen
+   Aktiv via html[data-theme="dark"] (siehe /js/theme.js)
+   ============================================================ */
+@media(max-width:768px){
+  html[data-theme="dark"]{
+    --m-bg:#12171a; --m-primary:#4fae83; --m-primary-light:#1f2b23;
+    --m-secondary:#d9a978; --m-secondary-light:#2a2318;
+    --m-text:#e6eae8; --m-muted:#9aa6a0; --m-card-bg:#1b2228;
+    --m-red:#f0736f; --m-red-light:#2c1b1b;
+  }
+  html[data-theme="dark"] body{background:var(--m-bg);color:var(--m-text)}
+
+  /* Karten & Flächen: hartkodiertes #fff -> dunkle Fläche */
+  html[data-theme="dark"] .mob-nav,
+  html[data-theme="dark"] .mob-popup,
+  html[data-theme="dark"] .mob-action,
+  html[data-theme="dark"] .mob-section,
+  html[data-theme="dark"] .mob-card,
+  html[data-theme="dark"] .mob-ang-item,
+  html[data-theme="dark"] .mob-contact,
+  html[data-theme="dark"] .rp-group,
+  html[data-theme="dark"] .mob-pl-filter,
+  html[data-theme="dark"] .mob-pl-group,
+  html[data-theme="dark"] .mob-wp-day{background:#1b2228}
+  html[data-theme="dark"] .rp-toggle{background:#1b2228!important}
+  html[data-theme="dark"] .mob-pl-toggle,
+  html[data-theme="dark"] .mob-pl-header,
+  html[data-theme="dark"] .mob-ang-img{background:#232c33}
+  html[data-theme="dark"] .mob-pl-toggle:active{background:#232c33}
+  html[data-theme="dark"] .mob-pl-row:nth-child(odd){background:rgba(255,255,255,.02)}
+  html[data-theme="dark"] .mob-popup-handle::after{background:#3a444b}
+  html[data-theme="dark"] .rp-avg{background:#2a2318!important;color:#d9a978!important;border-color:rgba(255,255,255,.12)}
+
+  /* Grüne Aktions-Flächen: lesbares Grün mit weißer Schrift beibehalten */
+  html[data-theme="dark"] .mob-ticker,
+  html[data-theme="dark"] .mob-action-wide,
+  html[data-theme="dark"] .mob-preislink a,
+  html[data-theme="dark"] .mob-route-btn,
+  html[data-theme="dark"] .mob-pl-count,
+  html[data-theme="dark"] .mob-pl-filter.active{background:#2e7d4f;border-color:#2e7d4f}
+
+  /* Text-/Rahmenfarben (hartkodiert) korrigieren */
+  html[data-theme="dark"] .mob-pl-header,
+  html[data-theme="dark"] .mob-pl-header .mob-pl-name,
+  html[data-theme="dark"] .mob-pl-header .mob-pl-price{color:#9aa6a0;border-bottom-color:rgba(255,255,255,.08)}
+  html[data-theme="dark"] .mob-price-tbl th{color:#9aa6a0;border-bottom-color:rgba(255,255,255,.14)}
+  html[data-theme="dark"] .mob-price-tbl td{border-bottom-color:rgba(255,255,255,.07)}
+  html[data-theme="dark"] .mob-price-tbl .col-uvp{color:#9aa6a0}
+  html[data-theme="dark"] .mob-price-tbl .col-vk{color:#5cb85f}
+  html[data-theme="dark"] .mob-price-tbl .col-save{color:#f0736f}
+  html[data-theme="dark"] .mob-pl-toggle{background:#232c33}
+
+  /* Rahmen (rgba(0,0,0,…) ist auf Dunkel unsichtbar) */
+  html[data-theme="dark"] .mob-action,
+  html[data-theme="dark"] .mob-section,
+  html[data-theme="dark"] .mob-card,
+  html[data-theme="dark"] .mob-ang-item,
+  html[data-theme="dark"] .mob-contact,
+  html[data-theme="dark"] .rp-group,
+  html[data-theme="dark"] .mob-pl-group,
+  html[data-theme="dark"] .mob-wp-day{border-color:rgba(255,255,255,.08)}
+  html[data-theme="dark"] .mob-nav a{border-bottom-color:rgba(255,255,255,.06)}
+  html[data-theme="dark"] .mob-pl-filter{border-color:rgba(255,255,255,.12)}
+  html[data-theme="dark"] .mob-pl-row{border-bottom-color:rgba(255,255,255,.06)}
+  html[data-theme="dark"] .rp-table th{border-bottom-color:rgba(255,255,255,.15)!important}
+  html[data-theme="dark"] .rp-table td{border-bottom-color:rgba(255,255,255,.06)!important}
+  html[data-theme="dark"] .mob-popup table td{border-bottom-color:rgba(255,255,255,.06)}
+
+  /* Mobile Hero: dunkles Overlay statt hellem, damit Text lesbar bleibt */
+  html[data-theme="dark"] .mob-hero::before{background:linear-gradient(to right, rgba(18,23,26,.78) 40%, rgba(18,23,26,.18) 100%)}
+  html[data-theme="dark"] .mob-hero h1{color:#eaf3ee}
+  html[data-theme="dark"] .mob-hero p{color:#c3ccc7}
+
+  /* Theme-Toggle-Button oberhalb evtl. fixer Leisten */
+  html[data-theme="dark"] #dl-theme-toggle,
+  #dl-theme-toggle{bottom:20px}
+}
+
