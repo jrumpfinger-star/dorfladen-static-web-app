@@ -45,6 +45,10 @@ def get_cors_headers():
 DAY_LABELS = {101000: "Montag", 101001: "Dienstag", 101002: "Mittwoch", 101003: "Donnerstag", 101004: "Freitag", 101005: "Samstag", 101006: "Sonntag"}
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    from shared.auth import admin_auth_guard
+    _auth = admin_auth_guard(req)
+    if _auth is not None:
+        return _auth
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
 

@@ -40,6 +40,7 @@
     sha256(pw).then(function(hash){
       if(hash===cmsPwHash){
         sessionStorage.setItem(CMS_PW_KEY,hash);
+        if(window.dlAdminLogin){window.dlAdminLogin(pw).catch(function(){});}
         document.getElementById('cms-login-err').style.display='none';
         cmsShowApp();
         init();

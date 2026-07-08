@@ -231,6 +231,10 @@ def serve_image(req):
 
 # ---------- Main handler ----------
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    from shared.auth import admin_auth_guard
+    _auth = admin_auth_guard(req)
+    if _auth is not None:
+        return _auth
     if req.method == "OPTIONS":
         return cors_preflight()
     

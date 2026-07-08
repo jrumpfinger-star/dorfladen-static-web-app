@@ -125,6 +125,10 @@ def _delete_subscription(base_url, hdrs, entity_set, record_id):
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    from shared.auth import admin_auth_guard
+    _auth = admin_auth_guard(req)
+    if _auth is not None:
+        return _auth
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
 

@@ -2209,8 +2209,11 @@ function submitCmsGate(){
   _cmsSha256(pw).then(function(hash){
     if(hash===CMS_PW_HASH){
       sessionStorage.setItem(CMS_PW_KEY,hash);
-      closeCmsGate();
-      location.href='/cms';
+      fetch('/api/cms-auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})})
+        .then(function(r){return r.ok?r.json():null;})
+        .then(function(d){if(d&&d.token){try{sessionStorage.setItem('cms_auth_token',d.token);}catch(e){}}})
+        .catch(function(){})
+        .then(function(){ closeCmsGate(); location.href='/cms'; });
     } else {
       document.getElementById('cms-gate-err').style.display='block';
       var inp=document.getElementById('cms-gate-pw');
