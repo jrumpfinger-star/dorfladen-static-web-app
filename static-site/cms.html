@@ -55,6 +55,14 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   html[data-theme="dark"] .cms-art-opt{border-color:#2a333a}
   html[data-theme="dark"] .cms-art-opt:hover{background:#1e2a20}
   html[data-theme="dark"] .cms-art-opt-name{color:var(--c-m-text)}
+  /* Admin: statische helle #f9fafb-Config-/Hinweis-Boxen (JS-Inline) im Dark Mode.
+     Gescoped auf Modals/Karten/Social – Flyer-Vorschau-Thumbs (.cms-wp-thumb) bleiben hell. */
+  html[data-theme="dark"] .cms-modal [style*="background:#f9fafb"]:not(.cms-wp-thumb),
+  html[data-theme="dark"] .cms-card [style*="background:#f9fafb"]:not(.cms-wp-thumb),
+  html[data-theme="dark"] #cms-panel-social [style*="background:#f9fafb"]:not(.cms-wp-thumb){background:#161c20 !important;border-color:#2a333a !important}
+  html[data-theme="dark"] .cms-modal [style*="color:#1f2937"],
+  html[data-theme="dark"] .cms-modal [style*="color:#374151"],
+  html[data-theme="dark"] .cms-card [style*="color:#1f2937"]{color:var(--c-m-text) !important}
   @media (forced-colors: active){.cms-card,.cms-btn,.cms-input,.cms-modal,.cms-tab{border:1px solid CanvasText}}
   .cms-wrap{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;max-width:1000px;margin:0 auto;padding:16px;box-sizing:border-box}
   .cms-wrap input,.cms-wrap textarea,.cms-wrap select,.cms-wrap button,.cms-modal input,.cms-modal textarea,.cms-modal select,.cms-modal button,.cms-modal-bg input,.cms-modal-bg textarea,.cms-modal-bg select,.cms-modal-bg button,.cms-btn,.cms-input{font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
