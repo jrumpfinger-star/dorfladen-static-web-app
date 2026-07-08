@@ -1,34 +1,39 @@
 """Zentrale Auflösung der Dataverse-/Graph-Zugangsdaten.
 
 Tenant-ID und Client-ID sind **öffentliche Bezeichner** (kein Secret) – sie
-erscheinen ohnehin in Tokens/Redirects. Das eigentliche Secret
-``DV_CLIENT_SECRET`` hat bewusst **keinen** Fallback und muss als App-Setting
-gesetzt sein.
+erscheinen ohnehin in Tokens/Redirects. Sie werden dennoch ausschließlich aus
+den Azure-App-Settings gelesen (kein Hardcode mehr). Fehlt eine Einstellung,
+wird ein klarer Fehler ausgelöst (kein stiller Fallback).
 
-Die Tenant-/Client-Fallbacks bleiben aus Kompatibilitätsgründen zunächst hier
-an **einer** Stelle (statt in ~30 Function-Dateien). Sobald ``DV_TENANT_ID`` und
-``DV_CLIENT_ID`` in den Azure-App-Settings gesetzt sind, können die Fallbacks
-unten entfernt werden.
+Die aktiven Umgebungen ``dorfladen-website`` (Prod) und
+``dorfladen-bestellsystem`` haben ``DV_TENANT_ID``/``DV_CLIENT_ID``/
+``DV_CLIENT_SECRET``/``DV_DEFAULT_URL`` gesetzt; lokal via ``local.settings.json``.
 """
 
 import os
 
-# Öffentliche Bezeichner (keine Secrets) – zentraler, einziger Fallback.
-_TENANT_FALLBACK = "acfaedd4-c403-43b7-9544-fdb2b150124e"
-_CLIENT_FALLBACK = "137b2df6-be83-459a-ac89-9efd0bdf51c4"
-
-# Standard-Dataverse-URL (Produktion) – ebenfalls kein Secret.
+# Standard-Dataverse-URL (Produktion) – kein Secret, dient als URL-Default.
 DEFAULT_DATAVERSE_URL = "https://orgab4e2f00.crm16.dynamics.com"
+
+
+def _require(name):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise RuntimeError(
+            f"App-Setting '{name}' fehlt. Bitte in den Azure Static Web App "
+            f"App-Settings (bzw. lokal in local.settings.json) setzen."
+        )
+    return value
 
 
 def get_tenant_id():
     """Azure AD Tenant-ID (App-Setting ``DV_TENANT_ID``)."""
-    return os.environ.get("DV_TENANT_ID", _TENANT_FALLBACK)
+    return _require("DV_TENANT_ID")
 
 
 def get_client_id():
     """App-Registration Client-ID (App-Setting ``DV_CLIENT_ID``)."""
-    return os.environ.get("DV_CLIENT_ID", _CLIENT_FALLBACK)
+    return _require("DV_CLIENT_ID")
 
 
 def get_client_secret():
