@@ -24,8 +24,11 @@ erfolgt zuletzt.
   `admin-auth.js` ein. → TC-F4-01/02
 - [x] **T07** pytest `tests/test_auth.py` für `shared/auth.py`. → TC-F1-01…05
 - [x] **T08** Validierung: compileall, Auth-Tests (7), read-only Smoke (5) grün.
-- [ ] **T09** Aktivierung (separat, nach Browser-Check): `CMS_AUTH_ENFORCE=1`
-  zunächst auf `dorfladen-bestellsystem`, später Prod.
+- [x] **T09** Aktivierung `dorfladen-bestellsystem`: `CMS_AUTH_ENFORCE=1` gesetzt
+  und **end-to-end verifiziert** (HTTP: ohne Token 401 / mit Token akzeptiert;
+  Browser: CMS-Login holt Token, Schreib-Request trägt `X-CMS-Auth`).
+- [ ] **T10** Prod (`dorfladen-website`) aktivieren: `CMS_AUTH_ENFORCE=1` — bewusst
+  **offen**, erst nach kurzem CMS-Check im Prod-Browser (Kiosk ist operativ kritisch).
 
 ## Traceability
 | Requirement | Test Cases | Tasks |
