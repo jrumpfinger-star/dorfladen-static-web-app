@@ -479,11 +479,14 @@
     html[data-theme="dark"] .shop-login-banner:hover{background:linear-gradient(135deg,#463719,#352d12)}
     html[data-theme="dark"] .shop-view-toggle button.active{background:#2a333a;color:#5cc98a}
     html[data-theme="dark"] .shop-card .shop-fav-btn{background:rgba(20,25,28,.8)}
-    /* Produktbilder auf hellem Tile behalten (mix-blend-mode:multiply braucht hellen Hintergrund) */
+    /* Produktbilder: mix-blend-mode:multiply mischt mit dem (dunklen) Karten-Hintergrund
+       und macht Fotos matschig. Im Dark Mode daher normal + weißes Foto-Tile. */
     html[data-theme="dark"] .shop-card-img,
     html[data-theme="dark"] .shop-list-img,
     html[data-theme="dark"] .reorder-item-img,
-    html[data-theme="dark"] .img-popup-img{background:#f3f4f6}
+    html[data-theme="dark"] .img-popup-img{background:#fff;mix-blend-mode:normal}
+    html[data-theme="dark"] .shop-card-img{margin:6px 6px 0;width:calc(100% - 12px);border-radius:10px}
+    html[data-theme="dark"] .shop-card-noimg{margin:6px 6px 0;width:calc(100% - 12px);border-radius:10px;background:linear-gradient(135deg,#232c33,#1b2228)}
   </style>
 </head>
 <body>
