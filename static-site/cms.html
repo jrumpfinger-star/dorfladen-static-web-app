@@ -1252,6 +1252,12 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       </div>
     </div>
 
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--c-m-muted);margin:-4px 0 12px;cursor:pointer">
+      <input type="checkbox" id="stats-internal-toggle" onchange="try{if(this.checked)localStorage.setItem('dl_internal','1');else localStorage.removeItem('dl_internal');}catch(e){}">
+      Diesen Browser als <strong>intern</strong> markieren &ndash; eigene Dev-/Test-Besuche werden nicht mehr mitgez&auml;hlt
+    </label>
+    <script>try{document.getElementById('stats-internal-toggle').checked=(localStorage.getItem('dl_internal')==='1');}catch(e){}</script>
+
     <!-- KPI Cards -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px">
       <div class="cms-card" style="margin-bottom:0">
