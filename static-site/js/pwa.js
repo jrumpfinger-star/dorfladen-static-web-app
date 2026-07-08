@@ -584,8 +584,17 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 // === LIGHTWEIGHT ANALYTICS ===
 (function(){
   if(window.location.pathname.indexOf('/cms')===0)return; // Don't track CMS
+  // Interner Traffic (Entwicklung) markieren, damit die Statistik ihn ausschliesst.
+  // Prod bleibt gezaehlt (echte Besucher auf kind-pebble-072605b03 bzw. Custom-Domain).
+  function _dlInternal(){
+    try{ if(localStorage.getItem('dl_internal')==='1') return true; }catch(e){}
+    var h=location.hostname;
+    if(/proud-dune|witty-island|dorfladen-test|localhost|127\.0\.0\.1/.test(h)) return true;
+    if(/kind-pebble-[0-9a-z]+-\d+\./.test(h)) return true; // PR-Preview (Prod hat kein -<nr>)
+    return false;
+  }
   try{
-    var data={page:window.location.pathname,referrer:document.referrer||'',sw:window.screen?window.screen.width:0};
+    var data={page:window.location.pathname,referrer:document.referrer||'',sw:window.screen?window.screen.width:0,internal:_dlInternal()};
     navigator.sendBeacon('/api/track',JSON.stringify(data));
   }catch(e){}
 })();

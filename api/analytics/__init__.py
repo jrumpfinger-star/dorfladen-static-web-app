@@ -60,6 +60,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         try:
             entities = tc.query_entities(f"PartitionKey eq '{day_key}'")
             for e in entities:
+                if e.get("internal"):
+                    continue  # interner Dev-/Test-Traffic – nicht mitzaehlen
                 page = e.get("page", "/")
                 visitor = e.get("visitor", "")
                 hour = e.get("hour", 0)

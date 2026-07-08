@@ -61,6 +61,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     page = body.get("page", "/")
     referrer = body.get("referrer", "")
     screen_w = body.get("sw", 0)
+    internal = bool(body.get("internal", False))
     ua = req.headers.get("User-Agent", "")
 
     # Anonymize: hash IP + UA + date → unique visitor per day, no PII stored
@@ -90,6 +91,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "city": geo.get("city", "")[:100],
         "region": geo.get("region", "")[:100],
         "country": geo.get("country", "")[:10],
+        "internal": internal,
     }
 
     tc = _get_table_client()
