@@ -37,3 +37,10 @@ static-site/cms-backup-vor-design-redesign.html
 # Playwright-Testartefakte
 test-results/
 playwright-report/
+.playwright-mcp/
+
+# Python venv & Tooling-Caches
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

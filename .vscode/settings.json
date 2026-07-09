@@ -8,5 +8,17 @@
     "azureFunctions.projectLanguage": "JavaScript",
     "azureFunctions.projectRuntime": "~4",
     "debug.internalConsoleOptions": "neverOpen",
-    "azureFunctions.preDeployTask": "npm prune (functions)"
+    "azureFunctions.preDeployTask": "npm prune (functions)",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.analysis.extraPaths": ["${workspaceFolder}/api", "${workspaceFolder}"],
+    "python.analysis.typeCheckingMode": "off",
+    "flake8.args": [
+        "--max-line-length=120",
+        "--extend-ignore=E501,E402,E722,E301,E302,E303,E305,E306,W503,W504,E203,E231"
+    ],
+    "pylint.args": [
+        "--max-line-length=120",
+        "--disable=C,R,W0718,W0703,W1203,W1202,W1201,W0702,W0511,W0611"
+    ],
+    "mypy-type-checker.args": ["--ignore-missing-imports"]
 }
