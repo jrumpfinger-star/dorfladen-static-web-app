@@ -226,11 +226,23 @@ def get_cors_headers():
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     from shared.auth import admin_auth_guard
-    _auth = admin_auth_guard(req)
-    if _auth is not None:
-        return _auth
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
+
+    # Oeffentlicher Shop-Bild-Lookup (POST {articles:[...]}) ist read-only -> keine Auth noetig.
+    # Nur der CMS-Upsert (POST mit dl_artikelnummer/dl_bild_base64) und mutierende Aufrufe brauchen Auth.
+    _public_lookup = False
+    if req.method == "POST":
+        try:
+            _peek = req.get_json()
+            _public_lookup = isinstance(_peek, dict) and "articles" in _peek
+        except Exception:
+            _public_lookup = False
+
+    if not _public_lookup:
+        _auth = admin_auth_guard(req)
+        if _auth is not None:
+            return _auth
 
     base_url = _base_url()
     headers = get_headers()
