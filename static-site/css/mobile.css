@@ -1173,8 +1173,9 @@ main{padding:0!important;margin:0!important}
   html[data-theme="dark"] .rp-table td{border-bottom-color:rgba(255,255,255,.06)!important}
   html[data-theme="dark"] .mob-popup table td{border-bottom-color:rgba(255,255,255,.06)}
 
-  /* Mobile Hero: dunkles Overlay statt hellem, damit Text lesbar bleibt */
-  html[data-theme="dark"] .mob-hero::before{background:linear-gradient(to right, rgba(18,23,26,.78) 40%, rgba(18,23,26,.18) 100%)}
+  /* Mobile Hero: dunkles Overlay statt hellem, damit Text lesbar bleibt.
+     !important, da app.js applyHeroCfg() ein helles Overlay per !important injiziert. */
+  html[data-theme="dark"] .mob-hero::before{background:linear-gradient(to right, rgba(18,23,26,.82) 45%, rgba(18,23,26,.35) 100%)!important}
   html[data-theme="dark"] .mob-hero h1{color:#eaf3ee}
   html[data-theme="dark"] .mob-hero p{color:#c3ccc7}
 
