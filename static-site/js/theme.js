@@ -45,7 +45,9 @@
         'html[data-theme="dark"] select,' +
         'html[data-theme="dark"] textarea{background-color:#12171a !important;color:#e6eae8 !important;border-color:#2a333a}' +
         'html[data-theme="dark"] input::placeholder,html[data-theme="dark"] textarea::placeholder{color:#7f8a86 !important}' +
-        'html[data-theme="dark"] select option{background-color:#1b2228;color:#e6eae8}';
+        'html[data-theme="dark"] select option{background-color:#1b2228;color:#e6eae8}' +
+        /* Gruene Aktions-Buttons: dunkler Text statt weiss (weiss auf #5cb85f nur 2.5:1) */
+        'html[data-theme="dark"] .k-btn-confirm,html[data-theme="dark"] .shop-add-btn,html[data-theme="dark"] .push-prompt-yes,html[data-theme="dark"] .submit-btn,html[data-theme="dark"] .success-btn,html[data-theme="dark"] .btn-confirm,html[data-theme="dark"] .fm-reorder-btn-confirm,html[data-theme="dark"] .bs-login button,html[data-theme="dark"] .bs-comment-box button,html[data-theme="dark"] .bs-dialog-ft .bs-btn-ok,html[data-theme="dark"] .k-day-pill.active,html[data-theme="dark"] .k-hist-pill.active,html[data-theme="dark"] .shop-slot-dd-item.active{color:#0f1a12 !important}';
       var s = document.createElement('style');
       s.id = 'dl-dark-baseline';
       s.textContent = css;
