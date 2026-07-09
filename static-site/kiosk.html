@@ -27,6 +27,9 @@
     html[data-theme="dark"] .k-dish-sep-label,html[data-theme="dark"] .k-dish-sep-arrow{color:#8fd6ad}
     html[data-theme="dark"] .k-day-pill:not(.active):hover{background:var(--c-surf2)}
     html[data-theme="dark"] .pk-item.packed{background:var(--c-tint)}
+    html[data-theme="dark"] .pk-item.unavail{background:rgba(127,29,29,.32);opacity:1}
+    html[data-theme="dark"] .pk-item{border-bottom-color:rgba(255,255,255,.07)}
+    html[data-theme="dark"] .pk-name,html[data-theme="dark"] .pk-price{color:var(--c-text)}
     html[data-theme="dark"] .k-btn-outline{background:var(--c-card);color:var(--c-text)}
     /* JS-Inline-Popups (Storno) im Dark Mode */
     html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"]{background:var(--c-card)!important;color:var(--c-text)!important}
@@ -550,15 +553,15 @@
     .pk-barcode{flex-shrink:0;min-width:130px;text-align:center;padding:2px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:4px}
     .pk-barcode img{height:40px;max-width:140px;display:block;margin:0 auto;filter:contrast(1.5)}
     .pk-price{text-align:right;white-space:nowrap;font-size:13px;font-weight:700;min-width:60px}
-    /* Pack-Zeile auf schmalen Screens umbrechen: Name / Menge+Preis / Barcode (volle Breite) */
+    /* Kompaktes 2-Zeilen-Layout auf schmalen Screens: Name+Preis / Menge+Barcode */
     @media(max-width:600px){
-      .pk-item{flex-wrap:wrap;row-gap:6px;padding:10px 8px}
-      .pk-body{flex:1 1 calc(100% - 32px);order:0;min-width:0}
-      .pk-best{order:1;margin-left:32px;min-width:auto}
-      .pk-qty-wrap{order:2}
-      .pk-price{order:3;flex:1;min-width:0}
-      .pk-barcode{order:4;flex:1 1 100%;min-width:0;margin-top:2px}
-      .pk-barcode img{max-width:100%;height:38px}
+      .pk-item{flex-wrap:wrap;row-gap:3px;column-gap:8px;padding:7px 8px}
+      .pk-body{flex:1 1 auto;order:0;min-width:0}
+      .pk-price{order:1;min-width:0}
+      .pk-best{order:2;margin-left:30px;min-width:auto;font-size:12px}
+      .pk-qty-wrap{order:3}
+      .pk-barcode{order:4;min-width:0;margin-left:auto;padding:1px 3px}
+      .pk-barcode img{height:28px;max-width:150px}
     }
 
     /* ═══ Print ═══ */
