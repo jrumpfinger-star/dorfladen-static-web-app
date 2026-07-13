@@ -254,7 +254,7 @@
     row.id='cms-ar-'+angRowCounter;
     var produktVal=esc((item&&item.produkt)||'');
     var hasBild=!!(item&&item.bild_data);
-    row.setAttribute('draggable','true');
+    row.setAttribute('draggable','false');
     row.innerHTML=''
       +'<div class="cms-ang-row-num">'+angRowCounter+'</div>'
       +'<span class="cms-ang-drag" title="Reihenfolge ändern (ziehen)">&#9776;</span>'
@@ -296,6 +296,20 @@
 
   // ── Drag & Drop reordering for article rows ──
   var _angDragEl=null;
+  // Nur über den Griff (☰) ziehen: Zeile erst beim mousedown auf dem Griff draggable machen
+  document.addEventListener('mousedown',function(e){
+    var handle=e.target.closest&&e.target.closest('.cms-ang-drag');
+    if(handle){
+      var row=handle.closest('.cms-ang-row');
+      if(row&&row.closest('#cms-akt-items'))row.setAttribute('draggable','true');
+    }
+  });
+  function _angResetDraggable(){
+    document.querySelectorAll('#cms-akt-items .cms-ang-row[draggable="true"]').forEach(function(r){
+      r.setAttribute('draggable','false');
+    });
+  }
+  document.addEventListener('mouseup',_angResetDraggable);
   document.addEventListener('dragstart',function(e){
     var row=e.target.closest&&e.target.closest('.cms-ang-row');
     if(!row||!row.closest('#cms-akt-items'))return;
@@ -341,6 +355,7 @@
     document.querySelectorAll('#cms-akt-items .cms-ang-row').forEach(function(r){
       r.style.borderTop='';r.style.borderBottom='';
     });
+    _angResetDraggable();
   });
 
   function nextWeekMonSat(){

@@ -217,6 +217,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             body = req.get_json()
             payload = _build_offer_payload(body)
 
+            # Allow explicit clearing of optional text fields on PATCH.
+            # _build_offer_payload drops empty/None values (correct for POST),
+            # but on PATCH a cleared field must overwrite the existing value.
+            for _clear_key, _body_keys in (("dl_details", ("dl_details", "details")),):
+                if any(k in body for k in _body_keys):
+                    _val = None
+                    for k in _body_keys:
+                        if k in body and body.get(k) is not None:
+                            _val = body.get(k)
+                            break
+                    if _val is None or _val == "":
+                        payload[_clear_key] = None
+
             # Optionally bind or unbind werbebild lookup
             werbebild_id = body.get("dl_werbebildid") or body.get("werbebildid")
             if werbebild_id:
