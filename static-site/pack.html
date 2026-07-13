@@ -95,6 +95,8 @@
     .pk-btn-done{background:var(--pk-green);color:#fff}
     .pk-btn-done:hover{background:#15352c}
     .pk-btn-done:disabled{background:#ccc;cursor:not-allowed}
+    /* Dark Mode: pk-green ist dunkelgruen -> theme.js erzwingt sonst fast-schwarzen Text (unlesbar). Aktiv=weiss, disabled bleibt dunkel auf hellem #ccc. */
+    html[data-theme="dark"] #pk-done-btn:not(:disabled){color:#fff!important}
 
     /* ── Kassen-Modus ── */
     .pk-kasse-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
