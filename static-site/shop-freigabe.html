@@ -438,6 +438,7 @@ html[data-theme="dark"] .fb-kurz:hover{background:#f59e0b;border-color:#f59e0b}
             toggleArticle(sc,checked);
             var dateInput=document.querySelector('[data-date-sc="'+sc+'"]');
             if(dateInput) dateInput.disabled=!checked;
+            document.querySelectorAll('.day-btn[data-day-sc="'+sc+'"]').forEach(function(d){d.disabled=!checked;});
             var row=artCb.closest('.art-row');
             if(row) row.classList.toggle('enabled',checked);
           }
@@ -466,6 +467,8 @@ html[data-theme="dark"] .fb-kurz:hover{background:#f59e0b;border-color:#f59e0b}
         if(dateInput) dateInput.disabled=!cb.checked;
         var kfInput=document.querySelector('[data-kf-sc="'+sc+'"]');
         if(kfInput) kfInput.disabled=!cb.checked;
+        // Enable/disable Tage-Buttons (nur freigegebene Artikel haben waehlbare Tage)
+        document.querySelectorAll('.day-btn[data-day-sc="'+sc+'"]').forEach(function(d){d.disabled=!cb.checked;});
         // Update row style
         var row=cb.closest('.art-row');
         if(row) row.classList.toggle('enabled',cb.checked);
