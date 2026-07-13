@@ -82,12 +82,12 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   .cms-btn-trash{width:28px;height:28px;padding:0;border-radius:6px;border:1px solid #fca5a5;background:#fff5f5;color:#a8242a;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
   .cms-btn-trash:hover{background:#ffe4e6;border-color:#fda4af}
   .cms-btn-trash svg{width:14px;height:14px;fill:currentColor}
-  .cms-btn-gray{background:#ffffff;color:var(--c-m-text);border:1px solid #e5e7eb;box-shadow:0 2px 6px rgba(0,0,0,0.02)}.cms-btn-gray:hover{background:var(--c-m-primary-light,#f0f4f1);border-color:var(--c-m-pri)}
+  .cms-btn-gray{background:#ffffff;color:var(--c-m-text);border:1px solid #e5e7eb;box-shadow:0 2px 6px rgba(0,0,0,0.02)}.cms-btn-gray:hover{background:var(--c-m-pri-light,#f0f4f1);border-color:var(--c-m-pri)}
   .cms-btn[disabled]{opacity:.6;cursor:not-allowed;pointer-events:none}
   @keyframes cms-spin{to{transform:rotate(360deg)}}
   .cms-btn .cms-btn-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:cms-spin .6s linear infinite;margin-right:2px}
   .cms-rte-btn{background:#fff;border:1px solid #e5e7eb;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;transition:all 0.12s}
-  .cms-rte-btn:hover{background:var(--c-m-primary-light);border-color:var(--c-m-pri)}
+  .cms-rte-btn:hover{background:var(--c-m-pri-light);border-color:var(--c-m-pri)}
   .cms-input{width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;transition:all 0.15s;color:var(--c-m-text)}
   .cms-input::placeholder{color:#a1a1aa}
   .cms-input:focus{outline:none;border-color:var(--c-m-pri);box-shadow:0 0 0 3px rgba(30,70,58,0.12)}
@@ -132,7 +132,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   .cms-modal-header h3{margin:0;font-size:15px}
   .cms-modal-footer{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #e5e7eb;flex-shrink:0;box-sizing:border-box;flex-wrap:wrap}
   .cms-modal-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;line-height:1;padding:4px 8px;z-index:10;border-radius:6px;transition:all 0.15s}
-  .cms-modal-close:hover{background:#f3f4f6;color:#111}
+  .cms-modal-close:hover{background:var(--c-m-pri-light);color:var(--c-m-text)}
   .cms-btn-save{background:var(--c-m-pri);color:#fff;font-weight:700}.cms-btn-save:hover{background:#15352c}
   .cms-btn-del{background:#dc2626;color:#fff;font-weight:700}.cms-btn-del:hover{background:#b91c1c}
   .cms-hours-row{display:flex;align-items:center;gap:8px;padding:8px 16px;flex-wrap:wrap;border-bottom:1px solid #f3f4f6}
@@ -204,7 +204,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   .cms-news-actions{text-align:right;white-space:nowrap}
   @media(max-width:767px){.cms-news-act-col{display:none}.cms-news-tbl tbody tr:active{background:#dcfce7}}
   .cms-news-abtn{background:#ffffff;border:1px solid #d1d5db;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:6px;transition:all .12s;margin-left:2px;color:var(--c-m-text);font-weight:600}
-  .cms-news-abtn:hover{background:var(--c-m-primary-light);border-color:var(--c-m-pri)}
+  .cms-news-abtn:hover{background:var(--c-m-pri-light);border-color:var(--c-m-pri)}
   .cms-news-del:hover{background:#fdf2f2;border-color:#fca5a5;color:var(--m-red)}
   .cms-news-lbl{font-size:10px;font-weight:800;color:var(--c-m-muted);display:block;margin:12px 0 4px;text-transform:uppercase;letter-spacing:.5px}
   .cms-rte-toolbar{display:flex;gap:2px;padding:4px 6px;background:#f9fafb;border:1px solid #e5e7eb;border-bottom:none;border-radius:8px 8px 0 0;flex-wrap:wrap}
@@ -629,7 +629,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     #soc-kat-col-left{flex:1.1;min-width:0;position:sticky;top:10px}
     #soc-kat-col-right{flex:1.4;min-width:0}
     #soc-kat-list table tr{transition:all 0.15s ease-in-out}
-    #soc-kat-list table tr:hover{background-color:#f4fbf7!important}
+    #soc-kat-list table tr:hover{background-color:var(--c-m-pri-light)!important}
     #soc-kat-list table img{transition:transform 0.15s ease-in-out,box-shadow 0.15s ease-in-out}
     #soc-kat-list table img:hover{transform:scale(1.1);box-shadow:0 4px 10px rgba(0,0,0,0.12)}
   }
