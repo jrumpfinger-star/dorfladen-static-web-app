@@ -27,9 +27,6 @@
     html[data-theme="dark"] .k-dish-sep-label,html[data-theme="dark"] .k-dish-sep-arrow{color:#8fd6ad}
     html[data-theme="dark"] .k-day-pill:not(.active):hover{background:var(--c-surf2)}
     html[data-theme="dark"] .pk-item.packed{background:var(--c-tint)}
-    html[data-theme="dark"] .pk-item.unavail{background:rgba(127,29,29,.32);opacity:1}
-    html[data-theme="dark"] .pk-item{border-bottom-color:rgba(255,255,255,.07)}
-    html[data-theme="dark"] .pk-name,html[data-theme="dark"] .pk-price{color:var(--c-text)}
     html[data-theme="dark"] .k-btn-outline{background:var(--c-card);color:var(--c-text)}
     /* JS-Inline-Popups (Storno) im Dark Mode */
     html[data-theme="dark"] [style*="border-radius:14px;padding:20px 24px"]{background:var(--c-card)!important;color:var(--c-text)!important}
@@ -42,6 +39,59 @@
     html[data-theme="dark"] .k-slot-header[style*="#e5e7eb"] span,
     html[data-theme="dark"] .k-slot-header[style*="#dcfce7"] span{color:var(--c-text)!important}
     html[data-theme="dark"] .fm-hdr-chip{background:var(--c-surf2)!important;color:var(--c-muted)!important}
+    /* ═══ Social-Media-Panel – Dark Mode (Inline-Styles überschreiben) ═══ */
+    /* Hinweis: Sobald JS ein style-Attribut anfasst (z.B. display-Toggle),
+       serialisiert der Browser Hex → rgb(). Daher werden beide Formen abgedeckt. */
+    /* Dunkle Texte → hell (Hex + serialisierte rgb-Form) */
+    html[data-theme="dark"] #panel-social [style*="color:#1f2937"],
+    html[data-theme="dark"] #panel-social [style*="color:#111827"],
+    html[data-theme="dark"] #panel-social [style*="color:#374151"],
+    html[data-theme="dark"] #panel-social [style*="color:#4b5563"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(31, 41, 55)"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(17, 24, 39)"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(55, 65, 81)"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(75, 85, 99)"]{color:var(--c-text)!important}
+    html[data-theme="dark"] #panel-social [style*="color:#6b7280"],
+    html[data-theme="dark"] #panel-social [style*="color:#9ca3af"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(107, 114, 128)"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(156, 163, 175)"]{color:var(--c-muted)!important}
+    html[data-theme="dark"] #panel-social [style*="color:#15803d"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(21, 128, 61)"]{color:#5cb85f!important}
+    html[data-theme="dark"] #panel-social [style*="color:#be123c"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(190, 18, 60)"]{color:#f87171!important}
+    html[data-theme="dark"] #panel-social [style*="color:#1d4ed8"],
+    html[data-theme="dark"] #panel-social [style*="color: rgb(29, 78, 216)"]{color:#60a5fa!important}
+    /* Weiße Flächen → dunkle Karten (Hex + rgb) */
+    html[data-theme="dark"] #panel-social [style*="background:#fff;"],
+    html[data-theme="dark"] #panel-social [style*="background:#ffffff"],
+    html[data-theme="dark"] #panel-social [style*="background: rgb(255, 255, 255)"]{background:var(--c-card)!important}
+    /* Helle Grautöne → Sekundär-Oberfläche (Hex + rgb) */
+    html[data-theme="dark"] #panel-social [style*="background:#fafbfc"],
+    html[data-theme="dark"] #panel-social [style*="background:#f9fafb"],
+    html[data-theme="dark"] #panel-social [style*="background:#f3f4f6"],
+    html[data-theme="dark"] #panel-social [style*="background: rgb(250, 251, 252)"],
+    html[data-theme="dark"] #panel-social [style*="background: rgb(249, 250, 251)"],
+    html[data-theme="dark"] #panel-social [style*="background: rgb(243, 244, 246)"]{background:var(--c-surf2)!important;color:var(--c-text)!important}
+    /* Grüner Tint (Hex + rgb) */
+    html[data-theme="dark"] #panel-social [style*="background:#f0fdf4"],
+    html[data-theme="dark"] #panel-social [style*="background: rgb(240, 253, 244)"]{background:var(--c-tint)!important}
+    /* Step-Header (inline getönt) vereinheitlichen */
+    html[data-theme="dark"] #panel-social .k-order-hdr{background:var(--c-surf2)!important}
+    /* Eingabefelder */
+    html[data-theme="dark"] #panel-social input,
+    html[data-theme="dark"] #panel-social select,
+    html[data-theme="dark"] #panel-social textarea{background:var(--c-card)!important;color:var(--c-text)!important;border-color:var(--c-border)!important}
+    html[data-theme="dark"] #panel-social input::placeholder,
+    html[data-theme="dark"] #panel-social textarea::placeholder{color:var(--c-muted)!important}
+    /* Helle Rahmen (Hex + rgb) */
+    html[data-theme="dark"] #panel-social [style*="border:1px solid #e5e7eb"],
+    html[data-theme="dark"] #panel-social [style*="border:1px solid #d1d5db"],
+    html[data-theme="dark"] #panel-social [style*="border-bottom:2px solid #e5e7eb"],
+    html[data-theme="dark"] #panel-social [style*="rgb(229, 231, 235)"],
+    html[data-theme="dark"] #panel-social [style*="rgb(209, 213, 219)"]{border-color:var(--c-border)!important}
+    /* Desktop-Layout-Flächen aus CSS-Regeln (nicht inline) */
+    html[data-theme="dark"] #soc-col-right{background:var(--c-surf2)!important;border-color:var(--c-border)!important}
+    html[data-theme="dark"] #soc-kat-list table tr:hover{background-color:var(--c-tint)!important}
     @media (forced-colors: active){.k-order,.k-modal,.k-btn,.k-tab,.k-stat{border:1px solid CanvasText}}
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;overflow:hidden;touch-action:manipulation}
@@ -553,16 +603,6 @@
     .pk-barcode{flex-shrink:0;min-width:130px;text-align:center;padding:2px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:4px}
     .pk-barcode img{height:40px;max-width:140px;display:block;margin:0 auto;filter:contrast(1.5)}
     .pk-price{text-align:right;white-space:nowrap;font-size:13px;font-weight:700;min-width:60px}
-    /* Kompaktes 2-Zeilen-Layout auf schmalen Screens: Name+Preis / Menge+Barcode */
-    @media(max-width:600px){
-      .pk-item{flex-wrap:wrap;row-gap:3px;column-gap:8px;padding:7px 8px}
-      .pk-body{flex:1 1 auto;order:0;min-width:0}
-      .pk-price{order:1;min-width:0}
-      .pk-best{order:2;margin-left:30px;min-width:auto;font-size:12px}
-      .pk-qty-wrap{order:3}
-      .pk-barcode{order:4;min-width:0;margin-left:auto;padding:1px 3px}
-      .pk-barcode img{height:28px;max-width:150px}
-    }
 
     /* ═══ Print ═══ */
     @media print{
