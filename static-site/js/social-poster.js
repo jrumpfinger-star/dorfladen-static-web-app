@@ -37,7 +37,7 @@
   }
   function socialFmtPrice(v){var d=parseFloat(v);return (d&&isFinite(d))?d.toFixed(2).replace('.',','):(''+v);}
 
-  function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE){
+  function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE,hideFooter){
     SCALE=SCALE||1;
     var PAD=26, GAP=16, CPAD=10;
     var colW=(W-PAD*2-GAP)/2;         // Kartenbreite
@@ -144,8 +144,10 @@
         y+=4;
       });
       y+=12;
-      if(draw){ctx2.fillStyle='#6b8c42';ctx2.font='bold 12px "Segoe UI",system-ui,sans-serif';ctx2.textAlign='center';ctx2.fillText('\uD83C\uDF3F FRISCH \u00B7 REGIONAL \u00B7 NACHHALTIG \uD83C\uDF3F',W/2,y);}
-      y+=18;
+      if(!hideFooter){
+        if(draw){ctx2.fillStyle='#6b8c42';ctx2.font='bold 12px "Segoe UI",system-ui,sans-serif';ctx2.textAlign='center';ctx2.fillText('\uD83C\uDF3F FRISCH \u00B7 REGIONAL \u00B7 NACHHALTIG \uD83C\uDF3F',W/2,y);}
+        y+=18;
+      }
       return y;
     }
 
@@ -185,7 +187,7 @@
     return Promise.all(promises).then(function(){
       var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var hasMt=mtItems.length>0;var hasOther=otherItems.length>0;
       var mealCanvas=document.getElementById('soc-post-canvas-meal');var mealLabel=document.getElementById('soc-preview-label-meal');var dailyLabel=document.getElementById('soc-preview-label-daily');if(mealCanvas)mealCanvas.style.display='none';if(mealLabel)mealLabel.style.display='none';if(dailyLabel)dailyLabel.style.display='none';
-      if(hasMt&&hasOther){var tmpDaily=document.createElement('canvas');socialDrawPoster(tmpDaily,tmpDaily.getContext('2d'),W,otherItems,titel,freitext,loadedImgs,SCALE);var tmpMeal=document.createElement('canvas');socialDrawMealPosterAuto(tmpMeal,tmpMeal.getContext('2d'),W,mtItems,loadedImgs,SCALE);canvas.width=W*SCALE;canvas.height=tmpDaily.height+tmpMeal.height;ctx.drawImage(tmpDaily,0,0);ctx.drawImage(tmpMeal,0,tmpDaily.height);canvas.style.display='block';}
+      if(hasMt&&hasOther){var tmpDaily=document.createElement('canvas');socialDrawPoster(tmpDaily,tmpDaily.getContext('2d'),W,otherItems,titel,freitext,loadedImgs,SCALE,true);var tmpMeal=document.createElement('canvas');socialDrawMealPosterAuto(tmpMeal,tmpMeal.getContext('2d'),W,mtItems,loadedImgs,SCALE);canvas.width=W*SCALE;canvas.height=tmpDaily.height+tmpMeal.height;ctx.drawImage(tmpDaily,0,0);ctx.drawImage(tmpMeal,0,tmpDaily.height);canvas.style.display='block';}
       else if(hasMt){canvas.style.display='block';socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs,SCALE);}
       else if(selected.length>0){canvas.style.display='block';socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE);}
       else{canvas.style.display='none';}
@@ -229,7 +231,7 @@
   function canvasToFiles(canvases,selected,titel,freitext){
     var files=[];
     canvases.forEach(function(c){
-      var dataUrl;try{dataUrl=c.canvas.toDataURL('image/png');}catch(e){var cc=document.createElement('canvas');var cx=cc.getContext('2d');var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});if(mtI.length>0&&otherI.length>0){var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2);var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2);cc.width=1200;cc.height=tD.height+tM.height;cx.drawImage(tD,0,0);cx.drawImage(tM,0,tD.height);}else if(mtI.length>0){socialDrawMealPosterAuto(cc,cx,600,mtI,{},2);}else{socialDrawPoster(cc,cx,600,otherI,titel,freitext,{},2);}dataUrl=cc.toDataURL('image/png');}
+      var dataUrl;try{dataUrl=c.canvas.toDataURL('image/png');}catch(e){var cc=document.createElement('canvas');var cx=cc.getContext('2d');var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});if(mtI.length>0&&otherI.length>0){var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2,true);var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2);cc.width=1200;cc.height=tD.height+tM.height;cx.drawImage(tD,0,0);cx.drawImage(tM,0,tD.height);}else if(mtI.length>0){socialDrawMealPosterAuto(cc,cx,600,mtI,{},2);}else{socialDrawPoster(cc,cx,600,otherI,titel,freitext,{},2);}dataUrl=cc.toDataURL('image/png');}
       if(dataUrl){var parts=dataUrl.split(',');var mime=parts[0].match(/:(.*?);/)[1];var bstr=atob(parts[1]);var u8=new Uint8Array(bstr.length);for(var i=0;i<bstr.length;i++)u8[i]=bstr.charCodeAt(i);files.push(new File([new Blob([u8],{type:mime})],c.name,{type:'image/png'}));}
     });return files;
   }
@@ -243,7 +245,7 @@
     var dailyCanvas=document.getElementById('soc-post-canvas');var mealCanvas=document.getElementById('soc-post-canvas-meal');var canvases=[];
     if(dailyCanvas&&dailyCanvas.style.display!=='none'&&dailyCanvas.width>0)canvases.push({canvas:dailyCanvas,name:'dorfladen-post.png'});
     if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0)canvases.push({canvas:mealCanvas,name:'mittagessen-poster.png'});
-    if(!canvases.length){var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var fc=document.createElement('canvas');var fx=fc.getContext('2d');if(mtI.length>0&&otherI.length>0){var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2);var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2);fc.width=1200;fc.height=tD.height+tM.height;fx.drawImage(tD,0,0);fx.drawImage(tM,0,tD.height);}else if(mtI.length>0){socialDrawMealPosterAuto(fc,fx,600,mtI,{},2);}else{socialDrawPoster(fc,fx,600,otherI,titel,freitext,{},2);}canvases.push({canvas:fc,name:'dorfladen-post.png'});}
+    if(!canvases.length){var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var fc=document.createElement('canvas');var fx=fc.getContext('2d');if(mtI.length>0&&otherI.length>0){var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2,true);var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2);fc.width=1200;fc.height=tD.height+tM.height;fx.drawImage(tD,0,0);fx.drawImage(tM,0,tD.height);}else if(mtI.length>0){socialDrawMealPosterAuto(fc,fx,600,mtI,{},2);}else{socialDrawPoster(fc,fx,600,otherI,titel,freitext,{},2);}canvases.push({canvas:fc,name:'dorfladen-post.png'});}
     var files=canvasToFiles(canvases,selected,titel,freitext);
     if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
     socialShareFiles(files,msg,hasMt);socialSavePost(titel,freitext,selected);
