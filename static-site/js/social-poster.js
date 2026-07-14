@@ -211,7 +211,20 @@
   function socialFallbackDownloadFiles(files){files.forEach(function(f){var url=URL.createObjectURL(f);var a=document.createElement('a');a.href=url;a.download=f.name;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},2000);});socialStatus('soc-post-status','\u2705 '+files.length+' Poster heruntergeladen',true);}
   function socialShareViaDownload(files,msg){socialFallbackDownloadFiles(files);setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');},500);}
   function socialShareViaClipboard(files,msg){var blob=files[0];if(navigator.clipboard&&navigator.clipboard.write&&typeof ClipboardItem!=='undefined'){try{var item=new ClipboardItem({'image/png':blob});navigator.clipboard.write([item]).then(function(){socialStatus('soc-post-status','\u2705 Poster in Zwischenablage!',true);}).catch(function(){socialShareViaDownload(files,msg);});}catch(e){socialShareViaDownload(files,msg);}}else{socialShareViaDownload(files,msg);}setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');},300);}
-  function socialShareFiles(files,msg,hasMt){var canShareFiles=false;if(navigator.share&&navigator.canShare){try{canShareFiles=navigator.canShare({files:files});}catch(e){}}if(canShareFiles){var shareData={files:files.length>1?[files[0]]:files};if(msg)shareData.text=msg;navigator.share(shareData).then(function(){socialStatus('soc-post-status','\u2705 Poster geteilt!',true);}).catch(function(err){if(err.name==='AbortError')return;socialShareViaClipboard(files,msg);});socialStatus('soc-post-status','Poster wird geteilt...',true);return;}if(socialIsMobile()){socialShareViaClipboard(files,msg);return;}if(msg){try{navigator.clipboard.writeText(msg);}catch(e){}socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert!',true);}socialFallbackDownloadFiles(files);}
+  // Text zuverlässig in die Zwischenablage kopieren (mit execCommand-Fallback)
+  function socialCopyTextFallback(text){try{var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.top='-1000px';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();var ok=document.execCommand('copy');document.body.removeChild(ta);return ok;}catch(e){return false;}}
+  function socialCopyText(text){return new Promise(function(resolve){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){resolve(true);},function(){resolve(socialCopyTextFallback(text));});}else{resolve(socialCopyTextFallback(text));}});}
+  function socialShareFiles(files,msg,hasMt){
+    var isMobile=socialIsMobile();
+    if(isMobile){
+      var canShareFiles=false;if(navigator.share&&navigator.canShare){try{canShareFiles=navigator.canShare({files:files});}catch(e){}}
+      if(canShareFiles){var shareData={files:files.length>1?[files[0]]:files};if(msg)shareData.text=msg;navigator.share(shareData).then(function(){socialStatus('soc-post-status','\u2705 Poster geteilt!',true);}).catch(function(err){if(err.name==='AbortError')return;socialShareViaClipboard(files,msg);});socialStatus('soc-post-status','Poster wird geteilt...',true);return;}
+      socialShareViaClipboard(files,msg);return;
+    }
+    // Desktop: Poster herunterladen + Mittagessen-Bestelllink zuverlässig in die Zwischenablage (Strg+V)
+    socialFallbackDownloadFiles(files);
+    if(msg){socialCopyText(msg).then(function(ok){socialStatus('soc-post-status',ok?'\u2705 Poster gespeichert \u00B7 Bestell-Link in der Zwischenablage \u2013 jetzt mit Strg+V in WhatsApp/Facebook einf\u00fcgen':'\u26A0\uFE0F Poster gespeichert \u00B7 Link konnte nicht automatisch kopiert werden',true);});}
+  }
 
   function canvasToFiles(canvases,selected,titel,freitext){
     var files=[];
