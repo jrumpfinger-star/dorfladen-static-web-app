@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup – Social-Poster Produkt-Karten</title>
+<style>
+  :root{
+    --paper:#faf9f6;
+    --green:#2e7d32;
+    --green-d:#1b5e20;
+    --pink:#e1306c;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --price:#2e7d32;
+    --border:#e8e2d8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#eceff1;color:var(--text);padding:24px 12px 60px;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .intro{max-width:1300px;width:100%;background:#fff;border:1px solid #dbe0e4;border-radius:14px;padding:16px 20px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  .intro h1{font-size:19px;color:var(--green-d);margin-bottom:6px}
+  .intro p{font-size:14px;color:#4b5563;line-height:1.5}
+  .intro .legende{display:flex;gap:22px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+  .intro .legende b{color:var(--pink)}
+  .row{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;align-items:flex-start;width:100%}
+  .col{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .variant-label{font-size:14px;font-weight:800;color:#334155;background:#fff;border:1px solid #dbe0e4;border-radius:999px;padding:6px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .variant-sub{font-size:12px;color:var(--muted);max-width:600px;text-align:center;line-height:1.45}
+
+  /* ── Poster-Rahmen (echtes Format ~600px) ── */
+  .poster{width:600px;background:var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,.18);border:1px solid #e6e0d6}
+  .poster-hd{background:linear-gradient(135deg,#2e7d32,#3a8f3f);color:#fff;text-align:center;padding:18px 20px 16px}
+  .poster-hd h2{font-size:26px;font-weight:800;letter-spacing:.3px}
+  .poster-date{text-align:center;color:var(--muted);font-size:14px;padding:12px 0 4px}
+  .poster-free{text-align:center;color:#374151;font-size:15px;padding:2px 30px 6px;font-style:italic}
+  .cat{display:flex;align-items:center;gap:8px;margin:14px 26px 2px;color:var(--pink);font-weight:800;font-size:19px}
+  .cat .line{flex:1;height:2px;background:linear-gradient(90deg,var(--pink),rgba(225,48,108,.15))}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:12px 26px 6px}
+  .poster-ft{text-align:center;color:#6b8c42;font-size:12px;font-weight:700;padding:14px 0 18px;letter-spacing:.5px}
+
+  /* ── Foto-Platzhalter (repräsentiert echtes Produktfoto) ── */
+  .photo{position:relative;width:100%;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background-size:cover;background-position:center;box-shadow:0 3px 10px rgba(0,0,0,.14)}
+  .photo.p1{background-image:linear-gradient(135deg,#e9c46a,#f4a261)}
+  .photo.p2{background-image:linear-gradient(135deg,#a8d5a2,#6b8c42)}
+  .photo.p3{background-image:linear-gradient(135deg,#f6bd60,#e76f51)}
+  .photo.p4{background-image:linear-gradient(135deg,#d8b4a0,#b07d62)}
+  .photo .emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:66px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+
+  /* ══════════ VARIANTE A – Foto-Karte, Text darunter zentriert ══════════ */
+  .A .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;text-align:center}
+  .A .card .name{font-size:16px;font-weight:700;color:var(--text);margin:10px 4px 4px;line-height:1.25}
+  .A .card .sub{font-size:12px;color:var(--muted);font-style:italic}
+  .A .card .price{font-size:19px;font-weight:800;color:var(--price);margin-top:6px}
+  .A .card.span2{grid-column:1 / -1;flex-direction:row;align-items:center;text-align:left;gap:16px;padding:12px}
+  .A .card.span2 .photo{width:190px;flex-shrink:0;aspect-ratio:4/3}
+  .A .card.span2 .meta{flex:1}
+  .A .card.span2 .name{margin:0 0 4px}
+  .A .card.span2 .price{margin-top:8px}
+
+  /* ══════════ VARIANTE B – Foto groß, Preis als Badge auf dem Bild ══════════ */
+  .B .card{display:flex;flex-direction:column;text-align:center}
+  .B .card .photo{aspect-ratio:1/1;border-radius:14px}
+  .B .card .price-badge{position:absolute;bottom:10px;right:10px;background:rgba(255,255,255,.95);color:var(--price);font-weight:800;font-size:16px;padding:5px 12px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .B .card .name{font-size:16px;font-weight:700;color:var(--text);margin:10px 4px 2px;line-height:1.25}
+  .B .card .sub{font-size:12px;color:var(--muted);font-style:italic}
+
+  .note{max-width:1300px;width:100%;background:#fff8e1;border:1px solid #ffe082;border-radius:12px;padding:12px 16px;font-size:13px;color:#7a5c00;line-height:1.5}
+</style>
+</head>
+<body>
+
+  <div class="intro">
+    <h1>🎨 Mockup: Produkt-Poster mit großen Fotos</h1>
+    <p>Zwei Design-Vorschläge für den <b>Tages­übersicht-Poster</b> (WhatsApp / Instagram).
+       Statt kleiner Thumbnails links stehen die Fotos jetzt <b>groß</b>, mit
+       <b>Name &amp; Preis darunter</b> und <b>2&nbsp;Karten nebeneinander</b>, um den Platz optimal zu nutzen.
+       Die farbigen Kacheln sind Platzhalter – dort erscheinen später die echten Produktfotos.</p>
+    <div class="legende">
+      <span><b>Variante A</b> · Foto-Karte mit Rahmen, Text zentriert darunter</span>
+      <span><b>Variante B</b> · Foto randlos, Preis als schwebendes Badge</span>
+    </div>
+  </div>
+
+  <div class="row">
+
+    <!-- ══════════ VARIANTE A ══════════ -->
+    <div class="col A">
+      <div class="variant-label">Variante A · „Foto-Karten"</div>
+      <div class="variant-sub">Weiße Karte mit sanftem Schatten, Foto oben, Name &amp; Preis mittig darunter. Ungerade Anzahl → letzte Karte quer über volle Breite.</div>
+      <div class="poster">
+        <div class="poster-hd"><h2>Heute im Dorfladen</h2></div>
+        <div class="poster-date">Dienstag, 14.7.2026</div>
+        <div class="poster-free">Frisch aus der Küche – heute besonders empfehlenswert!</div>
+
+        <div class="cat">🥗 Salate <span class="line"></span></div>
+        <div class="grid">
+          <div class="card">
+            <div class="photo p2"><span class="emoji">🥗</span></div>
+            <div class="name">Frische Bratensülze 100 gr</div>
+            <div class="price">1,55 €</div>
+          </div>
+          <div class="card">
+            <div class="photo p1"><span class="emoji">🥙</span></div>
+            <div class="name">Antipasti 100 gr</div>
+            <div class="price">2,25 €</div>
+          </div>
+        </div>
+
+        <div class="cat">🧁 Kuchen &amp; Torten <span class="line"></span></div>
+        <div class="grid">
+          <div class="card">
+            <div class="photo p3"><span class="emoji">🍰</span></div>
+            <div class="name">Bienenstichtorte</div>
+            <div class="price">3,00 €</div>
+          </div>
+          <div class="card">
+            <div class="photo p4"><span class="emoji">🍓</span></div>
+            <div class="name">Frische Erdbeeren 250 gr</div>
+            <div class="price">2,80 €</div>
+          </div>
+          <div class="card span2">
+            <div class="photo p1"><span class="emoji">🍗</span></div>
+            <div class="meta">
+              <div class="name">1/2 Hendl mit Pommes</div>
+              <div class="sub">ab 11:00 Uhr · frisch zubereitet</div>
+              <div class="price">9,80 €</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="poster-ft">🌿 FRISCH · REGIONAL · NACHHALTIG 🌿</div>
+      </div>
+    </div>
+
+    <!-- ══════════ VARIANTE B ══════════ -->
+    <div class="col B">
+      <div class="variant-label">Variante B · „Foto + Preis-Badge"</div>
+      <div class="variant-sub">Fotos randlos &amp; quadratisch (Instagram-Look), Preis als schwebendes Badge auf dem Bild, Name schlicht darunter.</div>
+      <div class="poster">
+        <div class="poster-hd"><h2>Heute im Dorfladen</h2></div>
+        <div class="poster-date">Dienstag, 14.7.2026</div>
+        <div class="poster-free">Frisch aus der Küche – heute besonders empfehlenswert!</div>
+
+        <div class="cat">🥗 Salate <span class="line"></span></div>
+        <div class="grid">
+          <div class="card">
+            <div class="photo p2"><span class="emoji">🥗</span><span class="price-badge">1,55 €</span></div>
+            <div class="name">Frische Bratensülze 100 gr</div>
+          </div>
+          <div class="card">
+            <div class="photo p1"><span class="emoji">🥙</span><span class="price-badge">2,25 €</span></div>
+            <div class="name">Antipasti 100 gr</div>
+          </div>
+        </div>
+
+        <div class="cat">🧁 Kuchen &amp; Torten <span class="line"></span></div>
+        <div class="grid">
+          <div class="card">
+            <div class="photo p3"><span class="emoji">🍰</span><span class="price-badge">3,00 €</span></div>
+            <div class="name">Bienenstichtorte</div>
+          </div>
+          <div class="card">
+            <div class="photo p4"><span class="emoji">🍓</span><span class="price-badge">2,80 €</span></div>
+            <div class="name">Frische Erdbeeren 250 gr</div>
+          </div>
+          <div class="card">
+            <div class="photo p1"><span class="emoji">🍗</span><span class="price-badge">9,80 €</span></div>
+            <div class="name">1/2 Hendl mit Pommes</div>
+            <div class="sub">ab 11:00 Uhr</div>
+          </div>
+        </div>
+
+        <div class="poster-ft">🌿 FRISCH · REGIONAL · NACHHALTIG 🌿</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <b>Hinweis:</b> Dies ist nur ein Layout-Mockup (HTML) – der echte Poster wird als Bild (Canvas/PNG) für WhatsApp &amp; Instagram gerendert.
+    Nach deiner Wahl der Variante setze ich das Layout im Poster-Generator um. Sag mir auch gern, ob dir Details (Foto-Form 4:3 vs. quadratisch,
+    Preisfarbe, Kartenrahmen) so zusagen.
+  </div>
+
+</body>
+</html>

@@ -13,50 +13,147 @@
 
   function socialWrapText(ctx,text,maxW){var words=text.split(' '),lines=[],cur='';words.forEach(function(w){var test=cur?cur+' '+w:w;if(ctx.measureText(test).width>maxW){if(cur)lines.push(cur);cur=w;}else{cur=test;}});if(cur)lines.push(cur);return lines;}
 
+  // ── Helfer: abgerundetes Rechteck ──
+  function socialRoundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+  // ── Helfer: Bild formatfüllend (object-fit:cover) in abgerundete Box ──
+  function socialDrawCover(ctx,img,x,y,w,h,r){var iw=img.width||1,ih=img.height||1;var s=Math.max(w/iw,h/ih);var dw=iw*s,dh=ih*s;var dx=x+(w-dw)/2,dy=y+(h-dh)/2;ctx.save();socialRoundRect(ctx,x,y,w,h,r);ctx.clip();ctx.drawImage(img,dx,dy,dw,dh);ctx.restore();ctx.save();socialRoundRect(ctx,x,y,w,h,r);ctx.strokeStyle='rgba(0,0,0,.08)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}
+  // ── Helfer: Platzhalter-Kachel (kein Foto) mit Emoji ──
+  function socialDrawPlaceholder(ctx,x,y,w,h,r,emoji){ctx.save();socialRoundRect(ctx,x,y,w,h,r);var g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,'#f2efe8');g.addColorStop(1,'#e6dfd2');ctx.fillStyle=g;ctx.fill();ctx.clip();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(h*0.4)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx.globalAlpha=0.85;ctx.fillText(emoji||'\uD83D\uDED2',x+w/2,y+h/2+2);ctx.globalAlpha=1;ctx.restore();ctx.textBaseline='alphabetic';}
+  // ── Helfer: Text auf max. N Zeilen kürzen (mit …) ──
+  function socialClampLines(ctx,text,maxW,maxLines){
+    var words=(text||'').trim().split(/\s+/),lines=[],cur='';
+    for(var i=0;i<words.length;i++){
+      var test=cur?cur+' '+words[i]:words[i];
+      if(ctx.measureText(test).width>maxW&&cur){lines.push(cur);cur=words[i];}
+      else{cur=test;}
+      if(lines.length===maxLines-1){ // letzte erlaubte Zeile: Rest anhängen und ggf. mit … kürzen
+        var rest=cur;for(var j=i+1;j<words.length;j++)rest+=' '+words[j];
+        if(ctx.measureText(rest).width>maxW){while(ctx.measureText(rest+'\u2026').width>maxW&&rest.length>1)rest=rest.slice(0,-1);rest+='\u2026';}
+        lines.push(rest);cur='';break;
+      }
+    }
+    if(cur)lines.push(cur);
+    return lines.length?lines:[''];
+  }
+  function socialFmtPrice(v){var d=parseFloat(v);return (d&&isFinite(d))?d.toFixed(2).replace('.',','):(''+v);}
+
   function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE){
     SCALE=SCALE||1;
-    var hasAnyImg=Object.keys(loadedImgs).filter(function(k){return k!=='_tainted';}).length>0;
-    var IMG_SIZE=hasAnyImg?48:0;
-    var ITEM_H=hasAnyImg?Math.max(54,22):22;
-    var cats={};selected.forEach(function(p){var c=p.kategorie||'Sonstiges';if(!cats[c])cats[c]=[];cats[c].push(p);});
-    var catKeys=Object.keys(cats);
-    // Canvas cannot render SVG/Lucide – use emoji fallbacks (allowed per conventions §3 for print/poster)
+    var PAD=26, GAP=16, CPAD=10;
+    var colW=(W-PAD*2-GAP)/2;         // Kartenbreite
+    var photoW=colW-CPAD*2;           // Fotobreite in der Karte
+    var photoH=Math.round(photoW*3/4);// 4:3
+    var fwPhotoW=200, fwPhotoH=150;   // Vollbreiten-Karte (einzelnes Rest-Produkt)
+    var NAME_LH=19, NAME_FONT='bold 15px "Segoe UI",system-ui,sans-serif';
+    var FW_NAME_LH=22, FW_NAME_FONT='bold 17px "Segoe UI",system-ui,sans-serif';
+    // Canvas kann kein SVG/Lucide – Emoji-Fallbacks (laut Konventionen §3 für Poster erlaubt)
     var _iconToEmoji={'utensils':'\uD83C\uDF5D','cake-slice':'\uD83C\uDF70','apple':'\uD83C\uDF4E','jar':'\uD83E\uDD57','salad':'\uD83E\uDD57','coffee':'\u2615','beef':'\uD83E\uDD69','fish':'\uD83D\uDC1F','pizza':'\uD83C\uDF55','sandwich':'\uD83E\uDD6A','cookie':'\uD83C\uDF6A','ice-cream-cone':'\uD83C\uDF66','wine':'\uD83C\uDF77','beer':'\uD83C\uDF7A','cherry':'\uD83C\uDF52','grape':'\uD83C\uDF47','carrot':'\uD83E\uDD55','wheat':'\uD83C\uDF3E','leaf':'\uD83C\uDF3F','tag':'\uD83C\uDFF7\uFE0F'};
     var catIcons={};
     var kats=window._socKategorien_ref?window._socKategorien_ref():[];
     kats.forEach(function(k){catIcons[k.name]=_iconToEmoji[k.icon]||'';});
     if(!catIcons['Mittagessen'])catIcons['Mittagessen']='\uD83C\uDF5D';
     if(!catIcons['Kuchen'])catIcons['Kuchen']='\uD83C\uDF70';
-    var freitextLines=[];
-    if(freitext){ctx.font='14px "Segoe UI",system-ui,sans-serif';freitextLines=socialWrapText(ctx,freitext,W-60);}
-    var contentH=100;contentH+=freitextLines.length*18+(freitext?8:0);
-    catKeys.forEach(function(cat,ci){contentH+=ci===0?4:20;contentH+=28;cats[cat].forEach(function(p){contentH+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;});});
-    contentH+=20;var H=Math.max(160,contentH);
-    canvas.width=W*SCALE;canvas.height=H*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
-    ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#2e7d32';ctx.fillRect(0,0,W,60);
-    ctx.fillStyle='#fff';ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(titel||'Heute im Dorfladen',W/2,40);
-    var now=new Date();var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-    var dateStr=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear();
-    ctx.fillStyle='#6b7280';ctx.font='13px "Segoe UI",system-ui,sans-serif';ctx.fillText(dateStr,W/2,80);
-    var y=100;
-    if(freitextLines.length){ctx.fillStyle='#374151';ctx.font='14px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';freitextLines.forEach(function(line){ctx.fillText(line,W/2,y);y+=18;});y+=8;}
-    ctx.textAlign='left';
-    catKeys.forEach(function(cat,ci){
-      y+=ci===0?4:20;ctx.fillStyle='#e1306c';ctx.font='bold 16px "Segoe UI",system-ui,sans-serif';ctx.fillText((catIcons[cat]||'')+' '+cat,24,y);y+=6;ctx.strokeStyle='#e1306c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(24,y);ctx.lineTo(W-24,y);ctx.stroke();y+=12;
-      cats[cat].forEach(function(p){
-        var itemImg=loadedImgs[p.id];var textX=28;var textY=y;
-        if(hasAnyImg){
-          if(itemImg){var ix=28,iy=y-4;ctx.save();ctx.beginPath();ctx.moveTo(ix+4,iy);ctx.lineTo(ix+IMG_SIZE-4,iy);ctx.quadraticCurveTo(ix+IMG_SIZE,iy,ix+IMG_SIZE,iy+4);ctx.lineTo(ix+IMG_SIZE,iy+IMG_SIZE-4);ctx.quadraticCurveTo(ix+IMG_SIZE,iy+IMG_SIZE,ix+IMG_SIZE-4,iy+IMG_SIZE);ctx.lineTo(ix+4,iy+IMG_SIZE);ctx.quadraticCurveTo(ix,iy+IMG_SIZE,ix,iy+IMG_SIZE-4);ctx.lineTo(ix,iy+4);ctx.quadraticCurveTo(ix,iy,ix+4,iy);ctx.closePath();ctx.clip();ctx.drawImage(itemImg,ix,iy,IMG_SIZE,IMG_SIZE);ctx.restore();ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ix+4,iy);ctx.lineTo(ix+IMG_SIZE-4,iy);ctx.quadraticCurveTo(ix+IMG_SIZE,iy,ix+IMG_SIZE,iy+4);ctx.lineTo(ix+IMG_SIZE,iy+IMG_SIZE-4);ctx.quadraticCurveTo(ix+IMG_SIZE,iy+IMG_SIZE,ix+IMG_SIZE-4,iy+IMG_SIZE);ctx.lineTo(ix+4,iy+IMG_SIZE);ctx.quadraticCurveTo(ix,iy+IMG_SIZE,ix,iy+IMG_SIZE-4);ctx.lineTo(ix,iy+4);ctx.quadraticCurveTo(ix,iy,ix+4,iy);ctx.closePath();ctx.stroke();}
-          textX=28+IMG_SIZE+10;textY=y+IMG_SIZE/2-6;
+    var cats={};selected.forEach(function(p){var c=p.kategorie||'Sonstiges';if(!cats[c])cats[c]=[];cats[c].push(p);});
+    var catKeys=Object.keys(cats);
+
+    // ── leer ──
+    if(!selected.length){
+      var H0=170;canvas.width=W*SCALE;canvas.height=H0*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
+      ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H0);
+      ctx.fillStyle='#2e7d32';ctx.fillRect(0,0,W,60);
+      ctx.fillStyle='#fff';ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(titel||'Heute im Dorfladen',W/2,38);
+      ctx.fillStyle='#9ca3af';ctx.font='italic 14px "Segoe UI",system-ui,sans-serif';ctx.fillText('Bitte Produkte oben ausw\u00e4hlen\u2026',W/2,120);
+      return;
+    }
+
+    // Karten-Maße (misst Namenszeilen)
+    function gridInfo(mctx,p){mctx.font=NAME_FONT;var lines=socialClampLines(mctx,p.name||'',photoW,2);var h=CPAD+photoH+10+lines.length*NAME_LH+CPAD;if(p.ab_uhr)h+=2+13;if(p.preis)h+=6+22;return {lines:lines,h:h};}
+    function fwInfo(mctx,p){mctx.font=FW_NAME_FONT;var tw=W-PAD*2-fwPhotoW-16-CPAD*2;var lines=socialClampLines(mctx,p.name||'',tw,2);var textH=lines.length*FW_NAME_LH+(p.ab_uhr?2+15:0)+(p.preis?8+24:0);var h=Math.max(CPAD+fwPhotoH+CPAD,textH+CPAD*2);return {lines:lines,h:h,tw:tw};}
+
+    // ── eine Karte zeichnen (Grid) ──
+    function drawGridCard(ctx2,p,x,y,rowH,info,cat){
+      ctx2.save();socialRoundRect(ctx2,x,y,colW,rowH,14);ctx2.fillStyle='#ffffff';ctx2.shadowColor='rgba(0,0,0,0.10)';ctx2.shadowBlur=8;ctx2.shadowOffsetY=2;ctx2.fill();ctx2.restore();
+      ctx2.save();socialRoundRect(ctx2,x,y,colW,rowH,14);ctx2.strokeStyle='#ece7de';ctx2.lineWidth=1;ctx2.stroke();ctx2.restore();
+      var px=x+CPAD, py=y+CPAD, img=loadedImgs[p.id];
+      if(img) socialDrawCover(ctx2,img,px,py,photoW,photoH,10); else socialDrawPlaceholder(ctx2,px,py,photoW,photoH,10,catIcons[cat]||'\uD83D\uDED2');
+      var cx=x+colW/2, ty=py+photoH+10+14;
+      ctx2.textAlign='center';ctx2.fillStyle='#1f2937';ctx2.font=NAME_FONT;
+      info.lines.forEach(function(l){ctx2.fillText(l,cx,ty);ty+=NAME_LH;});
+      var by=y+rowH-CPAD; // bottom-aligned Preis (damit Preise nebeneinander fluchten)
+      if(p.preis){ctx2.fillStyle='#2e7d32';ctx2.font='bold 18px "Segoe UI",system-ui,sans-serif';ctx2.fillText(socialFmtPrice(p.preis)+' \u20AC',cx,by);}
+      if(p.ab_uhr){ctx2.fillStyle='#9ca3af';ctx2.font='italic 11px "Segoe UI",system-ui,sans-serif';ctx2.fillText('ab '+p.ab_uhr,cx,p.preis?by-22:by);}
+    }
+    // ── einzelne Rest-Karte über volle Breite ──
+    function drawFullCard(ctx2,p,x,y,info,cat){
+      var w=W-PAD*2;
+      ctx2.save();socialRoundRect(ctx2,x,y,w,info.h,14);ctx2.fillStyle='#ffffff';ctx2.shadowColor='rgba(0,0,0,0.10)';ctx2.shadowBlur=8;ctx2.shadowOffsetY=2;ctx2.fill();ctx2.restore();
+      ctx2.save();socialRoundRect(ctx2,x,y,w,info.h,14);ctx2.strokeStyle='#ece7de';ctx2.lineWidth=1;ctx2.stroke();ctx2.restore();
+      var px=x+CPAD, py=y+(info.h-fwPhotoH)/2, img=loadedImgs[p.id];
+      if(img) socialDrawCover(ctx2,img,px,py,fwPhotoW,fwPhotoH,10); else socialDrawPlaceholder(ctx2,px,py,fwPhotoW,fwPhotoH,10,catIcons[cat]||'\uD83D\uDED2');
+      var tx=x+CPAD+fwPhotoW+16;
+      var blockH=info.lines.length*FW_NAME_LH+(p.ab_uhr?2+15:0)+(p.preis?8+24:0);
+      var ty=y+(info.h-blockH)/2+16;
+      ctx2.textAlign='left';ctx2.fillStyle='#1f2937';ctx2.font=FW_NAME_FONT;
+      info.lines.forEach(function(l){ctx2.fillText(l,tx,ty);ty+=FW_NAME_LH;});
+      if(p.ab_uhr){ctx2.fillStyle='#9ca3af';ctx2.font='italic 12px "Segoe UI",system-ui,sans-serif';ctx2.fillText('ab '+p.ab_uhr+' Uhr',tx,ty+2);ty+=15;}
+      if(p.preis){ty+=8;ctx2.fillStyle='#2e7d32';ctx2.font='bold 22px "Segoe UI",system-ui,sans-serif';ctx2.fillText(socialFmtPrice(p.preis)+' \u20AC',tx,ty+16);}
+    }
+
+    // ── Layout-Durchlauf: misst (draw=false) bzw. zeichnet (draw=true) ──
+    function layout(ctx2,draw,H){
+      if(draw){
+        ctx2.fillStyle='#faf9f6';ctx2.fillRect(0,0,W,H);
+        var hg=ctx2.createLinearGradient(0,0,W,60);hg.addColorStop(0,'#2e7d32');hg.addColorStop(1,'#3a8f3f');
+        ctx2.fillStyle=hg;ctx2.fillRect(0,0,W,60);
+        ctx2.fillStyle='#fff';ctx2.font='bold 22px "Segoe UI",system-ui,sans-serif';ctx2.textAlign='center';ctx2.fillText(titel||'Heute im Dorfladen',W/2,38);
+        var now=new Date();var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+        var dateStr=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear();
+        ctx2.fillStyle='#6b7280';ctx2.font='13px "Segoe UI",system-ui,sans-serif';ctx2.fillText(dateStr,W/2,80);
+      }
+      var y=88;
+      if(freitext){
+        ctx2.font='italic 14px "Segoe UI",system-ui,sans-serif';
+        var fl=socialWrapText(ctx2,freitext,W-70);
+        y+=6;
+        if(draw){ctx2.fillStyle='#374151';ctx2.textAlign='center';fl.forEach(function(l){ctx2.fillText(l,W/2,y+14);y+=18;});}else{y+=fl.length*18;}
+        y+=4;
+      }
+      catKeys.forEach(function(cat){
+        y+=18;
+        if(draw){
+          ctx2.textAlign='left';ctx2.fillStyle='#e1306c';ctx2.font='bold 17px "Segoe UI",system-ui,sans-serif';
+          var label=((catIcons[cat]||'')+' '+cat).replace(/^ /,'');
+          ctx2.fillText(label,PAD,y);
+          var lw=ctx2.measureText(label).width, lineX=PAD+lw+12;
+          if(lineX<W-PAD-20){var lg=ctx2.createLinearGradient(lineX,0,W-PAD,0);lg.addColorStop(0,'#e1306c');lg.addColorStop(1,'rgba(225,48,108,0.12)');ctx2.strokeStyle=lg;ctx2.lineWidth=2;ctx2.beginPath();ctx2.moveTo(lineX,y-5);ctx2.lineTo(W-PAD,y-5);ctx2.stroke();}
         }
-        ctx.fillStyle='#1f2937';ctx.font='14px "Segoe UI",system-ui,sans-serif';var maxNameW=W-textX-80;var dispName=p.name;while(ctx.measureText(dispName).width>maxNameW&&dispName.length>10)dispName=dispName.substring(0,dispName.length-1);if(dispName!==p.name)dispName+='\u2026';ctx.fillText(dispName,textX,textY+14);
-        if(p.ab_uhr){ctx.fillStyle='#9ca3af';ctx.font='italic 11px "Segoe UI",system-ui,sans-serif';ctx.fillText('ab '+p.ab_uhr,textX,textY+28);}
-        if(p.preis){ctx.fillStyle='#2e7d32';ctx.font='bold 14px "Segoe UI",system-ui,sans-serif';ctx.textAlign='right';var dp=parseFloat(p.preis);ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):p.preis)+' \u20AC',W-28,textY+14);ctx.textAlign='left';}
-        y+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;
-      });y+=10;
-    });
-    if(!selected.length){ctx.fillStyle='#9ca3af';ctx.font='italic 14px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('Bitte Produkte oben auswaehlen...',W/2,H/2);}
+        y+=14;
+        var items=cats[cat];
+        for(var i=0;i<items.length;i+=2){
+          if(i===items.length-1){
+            var fi=fwInfo(ctx2,items[i]);
+            if(draw) drawFullCard(ctx2,items[i],PAD,y,fi,cat);
+            y+=fi.h+GAP;
+          } else {
+            var a=gridInfo(ctx2,items[i]), b=gridInfo(ctx2,items[i+1]);
+            var rowH=Math.max(a.h,b.h);
+            if(draw){drawGridCard(ctx2,items[i],PAD,y,rowH,a,cat);drawGridCard(ctx2,items[i+1],PAD+colW+GAP,y,rowH,b,cat);}
+            y+=rowH+GAP;
+          }
+        }
+        y+=4;
+      });
+      y+=12;
+      if(draw){ctx2.fillStyle='#6b8c42';ctx2.font='bold 12px "Segoe UI",system-ui,sans-serif';ctx2.textAlign='center';ctx2.fillText('\uD83C\uDF3F FRISCH \u00B7 REGIONAL \u00B7 NACHHALTIG \uD83C\uDF3F',W/2,y);}
+      y+=18;
+      return y;
+    }
+
+    // Mess-Durchlauf → Gesamthöhe, dann zeichnen
+    var scratch=document.createElement('canvas').getContext('2d');
+    var H=Math.max(170,Math.round(layout(scratch,false,0)));
+    canvas.width=W*SCALE;canvas.height=H*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
+    layout(ctx,true,H);
   }
 
   function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE){
