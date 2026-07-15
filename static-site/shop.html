@@ -173,6 +173,7 @@
     .shop-list-price{font-size:15px;font-weight:800;color:var(--shop-green);white-space:nowrap;flex-shrink:0}
     .shop-list-price .unit{font-size:11px;font-weight:500;color:var(--shop-muted)}
     .shop-list-price .old{text-decoration:line-through;color:#999;font-size:11px;font-weight:400;margin-left:4px}
+    .shop-list-price .shop-grundpreis{display:block;font-size:10px;font-weight:500;color:var(--shop-muted)}
     .shop-list-actions{display:flex;align-items:center;gap:3px;flex-shrink:0;justify-content:flex-end}
     .shop-list-actions .shop-qty-ctrl{border-radius:6px}
     .shop-list-actions .shop-qty-btn{width:26px;height:26px;font-size:14px}
@@ -262,6 +263,7 @@
     .shop-card-price{font-size:15px;font-weight:800;color:var(--shop-green)}
     .shop-card-price .unit{font-size:11px;font-weight:400;color:var(--shop-muted)}
     .shop-card-price .old{text-decoration:line-through;color:#999;font-size:12px;font-weight:400;margin-left:6px}
+    .shop-grundpreis{font-size:10px;font-weight:500;color:var(--shop-muted);line-height:1.2}
     .shop-card-badges{position:absolute;top:6px;left:6px;display:flex;flex-direction:column;gap:3px;z-index:2}
     .shop-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.3px}
     .shop-badge-bestseller{background:#fff3e0;color:#e65100}
@@ -1606,6 +1608,16 @@
   }
 
   // ── Render Articles ──
+  // Grundpreis (kg-Preis) fuer gewogene Ware - gesetzlich verpflichtend (PAngV).
+  // vk_base ist der kg-Preis. Nur anzeigen, wenn die Basiseinheit nicht bereits "1 kg" ist.
+  function grundpreisHtml(a){
+    if(!a.gewichtsware) return'';
+    var kg=Number(a.vk_base||a.vk);
+    if(!kg||!isFinite(kg)) return'';
+    var m=(a.menge||'').toLowerCase().replace(/\s/g,'');
+    if(m==='1kg'||m==='kg') return'';
+    return fmtP(kg)+'\u00a0\u20ac/kg';
+  }
   function renderArticles(items,sectionTitle,sectionEmoji){
     if(!items.length) return'<div class="shop-loading"><p>Keine Artikel gefunden</p></div>';
     var html='<div class="shop-section"><div class="shop-section-title"><span class="emoji">'+sectionEmoji+'</span> '+esc(sectionTitle)+' <span class="shop-section-count">('+items.length+')</span></div></div>';
@@ -1631,6 +1643,8 @@
       html+='<div class="shop-card-name">'+esc(a.bezeichnung)+'</div>';
       html+='<div class="shop-card-meta">'+esc(a.warengruppe)+'</div>';
       html+='<div class="shop-card-price">'+priceHtml+'</div>';
+      var gpG=grundpreisHtml(a);
+      if(gpG) html+='<div class="shop-grundpreis">('+gpG+')</div>';
       html+='</div>';
       html+='<div class="shop-card-footer">';
       if(a.gewichtsware){
@@ -1655,6 +1669,8 @@
       var priceHtml=fmtP(a.vk)+' €';
       if(a.menge) priceHtml+=' <span class="unit">/'+esc(a.menge)+'</span>';
       if(a.angebot&&a.angebot_preis) priceHtml=fmtP(a.angebot_preis)+' € <span class="old">'+fmtP(a.vk)+' €</span>';
+      var gpL=grundpreisHtml(a);
+      if(gpL) priceHtml+='<span class="shop-grundpreis">('+gpL+')</span>';
 
       html+='<div class="shop-list-item" data-artnr="'+esc(a.artikelnummer)+'">';
       html+='<span class="shop-cart-badge">'+lucideHtml('shopping-cart',10)+'</span>';
