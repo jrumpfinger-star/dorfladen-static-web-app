@@ -21,6 +21,12 @@ Produkte im Shop sollen nur an bestimmten Wochentagen verfügbar sein. Die Verf�
 - Backend prüft Verfügbarkeit bei Bestelleingang nochmals
 - Fleisch-Vorbestellung (`fleisch-bestellen.html`) ist nicht betroffen – dort gilt weiterhin das eigene Liefertag-System (Mo + Do)
 
+> **Hinweis (Sichtbarkeit):** Der Tagesfilter arbeitet auf der Gesamtmenge der
+> **freigegebenen** Artikel. `GET /api/shop-articles` liefert alle freigegebenen
+> Artikel (kein „letzter Verkauf ≤ 6 Monate"-Filter mehr, solange eine
+> Freigabetabelle existiert) – siehe `shop-anzeige.md` F1. Der hier beschriebene
+> Tages-/Kurzfrist-Filter blendet daraus je Abholtag aus.
+
 ---
 
 ## 2. Datenmodell

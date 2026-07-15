@@ -30,6 +30,7 @@ Retrospektive Specs für bereits umgesetzte Features (Status „Bestand"). Neue
 | Handbuch / Hilfe | [handbuch-hilfe.md](handbuch-hilfe.md) | handbuch/, help-workflows.html |
 | Frontend-Infra | [frontend-infrastruktur.md](frontend-infrastruktur.md) | app.js, mobile.js, env-banner.js, dl-confirm.js |
 | Tagesverfügbarkeit | [tagesverfuegbarkeit.md](tagesverfuegbarkeit.md) | Wochentags-Verfügbarkeit Shop-Artikel |
+| Shop-Anzeige (Kunde) | [shop-anzeige.md](shop-anzeige.md) | shop.html Produktanzeige, kg-Grundpreis (PAngV), Bild-Popup, Fleisch-Banner, Sichtbarkeit freigegebener Artikel, Redesign |
 
 > Offen (noch ohne dedizierte Spec): Bestellsystem-Kern (`bestellungen`, Shop-/
 > Fleisch-/Mittagstisch-Bestellung, Kiosk, Bestellstatus). Siehe Feature-Tabellen unten.

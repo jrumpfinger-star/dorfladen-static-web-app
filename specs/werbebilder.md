@@ -59,6 +59,24 @@ und zeigt sie in `shop.html`. Das CMS pflegt Bild-Metadaten.
 **TC-WERBEBILDER-F2-01: Shop zeigt Produktbilder**
 - **Expected:** Artikel mit Bild zeigen es an; ohne Bild Platzhalter.
 
+### F3: Bild-Upload-Dialog (Artikelfreigabe `shop-freigabe.html`)
+
+#### F3 Behaviour / Acceptance
+
+- Der Bild-Upload-Dialog akzeptiert ein Bild auf drei Wegen: **Klick** (Datei-
+  auswahl), **Drag & Drop** und **Einfügen aus der Zwischenablage (Strg+V)**.
+- Der Paste-Handler ist nur aktiv, solange der Dialog geöffnet ist; er liest ein
+  Bild aus `clipboardData.items` und verarbeitet es wie einen Datei-Upload
+  (Komprimierung + Vorschau), danach Upload via `POST /api/werbebilder`.
+- Hinweistext der Dropzone: „Bild hierhin ziehen, einfügen (Strg+V) oder klicken".
+
+#### F3 Test Cases
+
+**TC-WERBEBILDER-F3-01: Einfügen per Strg+V**
+- **Setup:** Bild in der Zwischenablage, Dialog geöffnet.
+- **Action:** Strg+V.
+- **Expected:** Vorschau erscheint, „Hochladen"-Button wird sichtbar.
+
 ## 4. Traceability
 
 | Requirement | Test Cases | Plan section | Tasks |
