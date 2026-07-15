@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop-Redesign · Variante B – „Modern Frisch"</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --green:#0f8a4d;         /* kräftiges Frischgrün */
+    --green-d:#0a6b3b;
+    --green-l:#e6f7ee;
+    --ink:#111c17;
+    --muted:#67766d;
+    --bg:#f4f7f5;
+    --card:#ffffff;
+    --line:#e4eae6;
+    --sale:#e11d48;
+    --amber:#f59e0b;
+    --radius:16px;
+    --shadow:0 4px 14px rgba(17,28,23,.07);
+    --shadow-hov:0 16px 40px rgba(17,28,23,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [data-lucide]{display:inline-block;vertical-align:-3px}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;padding-bottom:86px}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+
+  /* ── Header (grüner Gradient) ── */
+  header{position:sticky;top:0;z-index:50}
+  .hero-bar{background:linear-gradient(120deg,var(--green-d) 0%,var(--green) 60%,#17a55c 100%);color:#fff;padding:16px 0 18px}
+  .hbin{display:flex;align-items:center;gap:18px;max-width:1240px;margin:0 auto;padding:0 20px}
+  .brand{display:flex;align-items:center;gap:11px;color:#fff}
+  .brand-mark{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+  .brand-txt b{font-size:18px;font-weight:800;display:block;line-height:1.1;letter-spacing:.2px}
+  .brand-txt span{font-size:11.5px;opacity:.85}
+  .search{flex:1;position:relative;max-width:540px}
+  .search input{width:100%;padding:12px 16px 12px 44px;border:none;border-radius:13px;font-size:14.5px;background:rgba(255,255,255,.95);outline:none;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+  .search [data-lucide]{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .icons{display:flex;align-items:center;gap:8px;margin-left:auto}
+  .iconbtn{width:44px;height:44px;border-radius:12px;border:none;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:.15s}
+  .iconbtn:hover{background:rgba(255,255,255,.28)}
+  .iconbtn .dot{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--amber);color:#3a2a00;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--green)}
+  .slotpill{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:12px;background:#fff;color:var(--green-d);font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+
+  /* ── Kategorie-Leiste mit Farbcode ── */
+  .catbar{background:var(--card);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+  .cats{display:flex;gap:9px;overflow-x:auto;padding:12px 20px;max-width:1240px;margin:0 auto;scrollbar-width:none}
+  .cats::-webkit-scrollbar{display:none}
+  .cat{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:12px;background:var(--bg);border:2px solid transparent;color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s}
+  .cat .cdot{width:9px;height:9px;border-radius:50%}
+  .cat:hover{background:#eef3f0}
+  .cat.active{background:var(--green);color:#fff;box-shadow:0 6px 16px rgba(15,138,77,.32)}
+  .cat.active .cdot{background:#fff!important}
+
+  /* ── Fleisch-Hero ── */
+  .meat{position:relative;overflow:hidden;border-radius:20px;margin:22px 0;color:#fff;
+    background:linear-gradient(115deg,#8f1d1d 0%,#c0281f 100%)}
+  .meat-in{display:flex;align-items:center;gap:20px;padding:24px 28px;position:relative;z-index:2}
+  .meat-badge{flex-shrink:0;width:60px;height:60px;border-radius:16px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+  .meat h2{font-size:23px;font-weight:900;letter-spacing:.2px}
+  .meat p{font-size:14px;opacity:.92;margin-top:3px}
+  .meat-cta{margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:8px;background:#fff;color:#b91c1c;font-weight:900;font-size:14px;padding:14px 24px;border-radius:13px;text-decoration:none;box-shadow:0 8px 20px rgba(0,0,0,.22)}
+  .meat .glow{position:absolute;right:-40px;top:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 70%);z-index:1}
+  @media(max-width:640px){.meat-in{flex-wrap:wrap}.meat-cta{margin-left:0;width:100%;justify-content:center}}
+
+  /* ── Sektion ── */
+  .sec-head{display:flex;align-items:center;gap:12px;margin:26px 0 16px}
+  .sec-head h3{font-size:20px;font-weight:900;color:var(--ink)}
+  .sec-head [data-lucide]{color:var(--green)}
+  .sec-head .count{font-size:13px;color:var(--muted);font-weight:700}
+  .sec-head .see{margin-left:auto;color:var(--green);font-size:13px;font-weight:800;text-decoration:none;display:flex;align-items:center;gap:4px}
+
+  /* ── Produkt-Grid ── */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:.18s;box-shadow:var(--shadow);position:relative}
+  .card:hover{transform:translateY(-5px);box-shadow:var(--shadow-hov)}
+  .thumb{height:128px;display:flex;align-items:center;justify-content:center;font-size:50px;position:relative;background:linear-gradient(160deg,#fafdfb,#eef5f0)}
+  .fav{position:absolute;top:9px;right:9px;width:33px;height:33px;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;color:#9aa8a0;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  .fav.on{color:var(--sale)}
+  .tags{position:absolute;top:9px;left:9px;display:flex;flex-direction:column;gap:5px}
+  .tag{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;padding:4px 9px;border-radius:8px;color:#fff}
+  .tag.bio{background:#16a34a}
+  .tag.pop{background:var(--amber);color:#3a2a00}
+  .tag.sale{background:var(--sale)}
+  .body{padding:12px 14px 4px;flex:1;display:flex;flex-direction:column;gap:2px}
+  .name{font-size:14px;font-weight:800;line-height:1.3}
+  .cat-label{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:5px}
+  .cat-label .cdot{width:8px;height:8px;border-radius:50%}
+  .price-row{margin-top:7px}
+  .price{font-size:21px;font-weight:900;color:var(--ink);letter-spacing:-.4px}
+  .price.sale{color:var(--sale)}
+  .price .u{font-size:12px;font-weight:600;color:var(--muted)}
+  .price .old{font-size:13px;color:#aab4ad;text-decoration:line-through;font-weight:600;margin-left:6px}
+  .grund{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:1px}
+  .foot{padding:10px 14px 14px;display:flex;align-items:center;gap:8px}
+  .stepper{display:flex;align-items:center;border:2px solid var(--line);border-radius:11px;overflow:hidden;background:#fff}
+  .stepper button{width:32px;height:36px;border:none;background:#fff;color:var(--green-d);font-size:18px;cursor:pointer;font-weight:700}
+  .stepper button:hover{background:var(--green-l)}
+  .stepper input{width:44px;height:36px;border:none;text-align:center;font-size:13px;font-weight:800;color:var(--ink);outline:none;border-left:2px solid var(--line);border-right:2px solid var(--line)}
+  .unit-g{font-size:11px;color:var(--muted);font-weight:700}
+  .add{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--green);color:#fff;border:none;border-radius:11px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;transition:.15s}
+  .add:hover{background:var(--green-d);transform:translateY(-1px)}
+
+  /* ── Sticky Warenkorb-Leiste ── */
+  .cartbar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid var(--line);box-shadow:0 -8px 26px rgba(17,28,23,.1)}
+  .cartbar-in{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px}
+  .cb-info{display:flex;align-items:center;gap:12px}
+  .cb-ic{width:44px;height:44px;border-radius:12px;background:var(--green-l);color:var(--green-d);display:flex;align-items:center;justify-content:center}
+  .cb-info b{font-size:15px;font-weight:900;display:block}
+  .cb-info span{font-size:12px;color:var(--muted);font-weight:600}
+  .cb-total{margin-left:auto;text-align:right}
+  .cb-total span{font-size:12px;color:var(--muted);font-weight:600;display:block}
+  .cb-total b{font-size:20px;font-weight:900;color:var(--green-d)}
+  .cb-go{display:flex;align-items:center;gap:8px;background:var(--green);color:#fff;border:none;border-radius:13px;padding:14px 26px;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(15,138,77,.3)}
+
+  .note{max-width:1240px;margin:30px auto 6px;padding:16px 20px;font-size:12.5px;color:var(--muted);text-align:center;border-top:1px dashed var(--line)}
+  .variant-flag{position:fixed;left:16px;bottom:96px;background:var(--ink);color:#fff;font-size:12px;font-weight:800;padding:9px 16px;border-radius:999px;box-shadow:var(--shadow-hov);z-index:99;letter-spacing:.3px}
+</style>
+</head>
+<body>
+  <header>
+    <div class="hero-bar">
+      <div class="hbin">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="store" style="width:24px;height:24px"></i></div>
+          <div class="brand-txt"><b>Dorfladen Oberornau</b><span>Online bestellen · im Laden abholen</span></div>
+        </div>
+        <div class="search"><i data-lucide="search" style="width:19px;height:19px"></i><input placeholder="Wonach suchst du?"></div>
+        <div class="icons">
+          <button class="slotpill"><i data-lucide="calendar-check" style="width:16px;height:16px"></i> Do 16.7. · VM</button>
+          <button class="iconbtn"><i data-lucide="heart" style="width:20px;height:20px"></i></button>
+          <button class="iconbtn"><i data-lucide="user" style="width:20px;height:20px"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="catbar">
+      <div class="cats">
+        <span class="cat active"><span class="cdot" style="background:#f59e0b"></span> Beliebt</span>
+        <span class="cat"><span class="cdot" style="background:#d97706"></span> Backwaren</span>
+        <span class="cat"><span class="cdot" style="background:#3b82f6"></span> Molkerei</span>
+        <span class="cat"><span class="cdot" style="background:#22c55e"></span> Obst &amp; Gemüse</span>
+        <span class="cat"><span class="cdot" style="background:#eab308"></span> Butter</span>
+        <span class="cat"><span class="cdot" style="background:#b91c1c"></span> Fleisch &amp; Wurst</span>
+        <span class="cat"><span class="cdot" style="background:#dc2626"></span> Gewürze</span>
+        <span class="cat"><span class="cdot" style="background:#8b5cf6"></span> Lebensmittel</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="meat">
+      <div class="glow"></div>
+      <div class="meat-in">
+        <div class="meat-badge"><i data-lucide="beef" style="width:30px;height:30px"></i></div>
+        <div>
+          <h2>15 % Rabatt auf Fleisch &amp; Wurst</h2>
+          <p>Ab 1 kg vorbestellen &amp; sparen – frisch vom Metzger, vakuumverpackt.</p>
+        </div>
+        <a class="meat-cta" href="#">Vorbestellen <i data-lucide="arrow-right" style="width:17px;height:17px"></i></a>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <i data-lucide="flame" style="width:22px;height:22px"></i>
+      <h3>Beliebt</h3><span class="count">(8)</span>
+      <a class="see" href="#">Alle ansehen <i data-lucide="chevron-right" style="width:16px;height:16px"></i></a>
+    </div>
+    <div class="grid" id="grid"></div>
+
+    <div class="note">🎨 Design-Vorschlag „Modern Frisch" – kräftiges Grün, farbcodierte Warengruppen, hoher Kontrast, App-Feeling mit fixer Warenkorb-Leiste. Nur Mockup, ohne Funktion.</div>
+  </div>
+
+  <div class="variant-flag">VARIANTE B · Modern Frisch</div>
+
+  <div class="cartbar">
+    <div class="cartbar-in">
+      <div class="cb-info">
+        <div class="cb-ic"><i data-lucide="shopping-cart" style="width:22px;height:22px"></i></div>
+        <div><b>3 Artikel</b><span>im Warenkorb</span></div>
+      </div>
+      <div class="cb-total"><span>Summe (ca.)</span><b>11,75 €</b></div>
+      <button class="cb-go">Zur Kasse <i data-lucide="arrow-right" style="width:18px;height:18px"></i></button>
+    </div>
+  </div>
+
+<script>
+  const products = [
+    {emo:'🥩', name:'Aufschnitt', cat:'Fleisch und Wurstwaren', cdot:'#b91c1c', price:'1,95 €', unit:'/100 g', grund:'19,50 €/kg', weight:true, tag:{cls:'pop',txt:'Beliebt'}},
+    {emo:'🌭', name:'Currywurst', cat:'Fleisch und Wurstwaren', cdot:'#b91c1c', price:'1,72 €', unit:'/100 g', grund:'17,20 €/kg', weight:true},
+    {emo:'🥓', name:'Hinterschinken', cat:'Fleisch und Wurstwaren', cdot:'#b91c1c', price:'2,25 €', unit:'/100 g', grund:'22,50 €/kg', weight:true},
+    {emo:'🍎', name:'Äpfel Gala BIO', cat:'Obst und Gemüse', cdot:'#22c55e', price:'3,60 €', unit:'/1 kg', weight:true, tag:{cls:'bio',txt:'Bio'}},
+    {emo:'🍏', name:'Äpfel Pink Lady', cat:'Obst und Gemüse', cdot:'#22c55e', price:'4,00 €', unit:'/1 kg', weight:true, fav:true},
+    {emo:'🥖', name:'Baguette 400 g', cat:'Backwaren', cdot:'#d97706', price:'3,45 €', unit:'/400 g', fav:true},
+    {emo:'🥨', name:'Breze', cat:'Backwaren', cdot:'#d97706', price:'0,90 €', unit:''},
+    {emo:'🥐', name:'Buttercroissant', cat:'Backwaren', cdot:'#d97706', price:'1,60 €', sale:true, unit:'', old:'1,88 €', tag:{cls:'sale',txt:'-15%'}},
+  ];
+  document.getElementById('grid').innerHTML = products.map(p=>`
+    <div class="card">
+      <div class="thumb">${p.emo}
+        <button class="fav ${p.fav?'on':''}"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+        ${p.tag?`<div class="tags"><span class="tag ${p.tag.cls}">${p.tag.txt}</span></div>`:''}
+      </div>
+      <div class="body">
+        <div class="name">${p.name}</div>
+        <div class="cat-label"><span class="cdot" style="background:${p.cdot}"></span>${p.cat}</div>
+        <div class="price-row">
+          <div class="price ${p.sale?'sale':''}">${p.price}${p.unit?` <span class="u">${p.unit}</span>`:''}${p.old?` <span class="old">${p.old}</span>`:''}</div>
+          ${p.grund?`<div class="grund">(${p.grund})</div>`:''}
+        </div>
+      </div>
+      <div class="foot">
+        ${p.weight
+          ? `<div class="stepper"><button>−</button><input value="500"><button>+</button></div><span class="unit-g">g</span>`
+          : `<div class="stepper"><button>−</button><input value="1"><button>+</button></div>`}
+        <button class="add"><i data-lucide="plus" style="width:16px;height:16px"></i> Hinzu</button>
+      </div>
+    </div>`).join('');
+  lucide.createIcons();
+</script>
+</body>
+</html>
