@@ -1128,15 +1128,20 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   var FM_STATUS = {0:'Neu',1:'In Bestellung',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
   window.fmShowHistory = function(){
     var telefon = localStorage.getItem('fm_telefon')||'';
+    var email = localStorage.getItem('fm_email')||'';
+    if(!email){
+      try{var su=JSON.parse(localStorage.getItem('dl_shop_user')||'null');if(su&&su.email)email=su.email;}catch(e){}
+    }
     var overlay = document.getElementById('fm-history-overlay');
     var body = document.getElementById('fm-history-body');
-    if(!telefon){
-      body.innerHTML='<div class="fm-history-empty">Bitte zuerst eine Bestellung aufgeben, damit Ihre Telefonnummer gespeichert ist.</div>';
+    if(!telefon && !email){
+      body.innerHTML='<div class="fm-history-empty">Bitte zuerst eine Bestellung aufgeben, damit Ihre Vorbestellungen angezeigt werden koennen.</div>';
       overlay.classList.add('open'); return;
     }
+    var idParam = telefon ? 'telefon='+encodeURIComponent(telefon) : 'email='+encodeURIComponent(email);
     body.innerHTML='<div class="fm-history-empty">Laden...</div>';
     overlay.classList.add('open');
-    fetch('/api/fleisch-order?mode=my_history&telefon='+encodeURIComponent(telefon))
+    fetch('/api/fleisch-order?mode=my_history&'+idParam)
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.bestellungen||!res.bestellungen.length){
@@ -1170,6 +1175,8 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   document.addEventListener('DOMContentLoaded', function(){
     init();
     if(window.lucide) lucide.createIcons();
+    // Direkt-Aufruf aus dem Shop: /fleisch-bestellen#meine -> Vorbestellungen anzeigen
+    if(location.hash==='#meine') fmShowHistory();
   });
 
 })();
