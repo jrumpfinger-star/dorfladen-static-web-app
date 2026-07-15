@@ -2213,6 +2213,8 @@
         priceHtml=fmtP(a.vk)+' €';
         if(a.menge) priceHtml+=' / '+esc(a.menge);
       }
+      var gpPopup=grundpreisHtml(a);
+      if(gpPopup) priceHtml+='<div style="font-size:12px;font-weight:600;color:#6b7280;margin-top:2px">('+gpPopup+')</div>';
     }
     document.getElementById('img-popup-price').innerHTML=priceHtml;
     var meta='';
