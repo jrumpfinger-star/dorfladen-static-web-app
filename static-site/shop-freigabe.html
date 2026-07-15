@@ -180,7 +180,7 @@ html[data-theme="dark"] .fb-kurz:hover{background:#f59e0b;border-color:#f59e0b}
     <h3 id="img-title">Produktbild</h3>
     <img class="img-preview" id="img-preview" src="" alt="Vorschau" style="display:none">
     <div class="img-drop" id="img-drop">
-      <i data-lucide="camera" style="width:16px;height:16px;vertical-align:-3px"></i> Bild hierhin ziehen oder klicken
+      <i data-lucide="camera" style="width:16px;height:16px;vertical-align:-3px"></i> Bild hierhin ziehen, einfügen (Strg+V) oder klicken
       <input type="file" id="img-file" accept="image/*" style="display:none">
     </div>
     <div class="img-actions">
@@ -870,6 +870,18 @@ html[data-theme="dark"] .fb-kurz:hover{background:#f59e0b;border-color:#f59e0b}
   dropZone.addEventListener('dragover',function(e){e.preventDefault();dropZone.classList.add('drag');});
   dropZone.addEventListener('dragleave',function(){dropZone.classList.remove('drag');});
   dropZone.addEventListener('drop',function(e){e.preventDefault();dropZone.classList.remove('drag');if(e.dataTransfer.files[0])handleImageFile(e.dataTransfer.files[0]);});
+  // Einfügen aus der Zwischenablage (Strg+V), wenn der Bild-Dialog offen ist
+  document.addEventListener('paste',function(e){
+    if(!document.getElementById('img-overlay').classList.contains('show')) return;
+    var items=(e.clipboardData||window.clipboardData)&&(e.clipboardData||window.clipboardData).items;
+    if(!items) return;
+    for(var i=0;i<items.length;i++){
+      if(items[i].type&&items[i].type.indexOf('image')===0){
+        var file=items[i].getAsFile();
+        if(file){e.preventDefault();handleImageFile(file);break;}
+      }
+    }
+  });
 
   // Batch actions
   document.getElementById('batch-enable').addEventListener('click',function(){
