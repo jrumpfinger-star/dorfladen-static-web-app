@@ -242,7 +242,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         cutoff_date = datetime.utcnow() - timedelta(days=183)
         cutoff_iso = cutoff_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        # Fetch articles with server-side 6-month filter + load Angebote in parallel
+        # Fetch articles + load Angebote in parallel.
+        # Freigaben werden ZUERST geladen: freigegebene Artikel muessen IMMER im
+        # Shop erscheinen - auch wenn sie laenger nicht verkauft wurden. Deshalb
+        # wird der 6-Monats-Filter (letzter Verkauf) nur im Fallback angewandt,
+        # wenn keine Freigabe-Tabelle existiert (sonst wuerde der ganze Stamm laden).
+        freigaben_map = _load_freigaben(base_url, headers)
+
         base_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_tableid"
         extended_fields = base_fields + ",cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung"
         select_attempts = [
@@ -251,23 +257,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             base_fields + ",cr5d4_bestellbar,cr5d4_bestelleinheit",
             base_fields,
         ]
-        date_filter = f"cr5d4_artikelletzterverkauf ge {cutoff_iso}"
+        # Nur einschraenken, wenn keine Freigabe-Tabelle vorhanden ist (Fallback).
+        date_filter = None if freigaben_map is not None else f"cr5d4_artikelletzterverkauf ge {cutoff_iso}"
 
         def _load_articles():
             for select_fields in select_attempts:
-                url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$filter={date_filter}&$orderby=cr5d4_artikelbezeichnung asc"
+                url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$orderby=cr5d4_artikelbezeichnung asc"
+                if date_filter:
+                    url += f"&$filter={date_filter}"
                 result = _fetch_all_pages(url, headers)
                 if result:
                     return result
             return []
 
-        with ThreadPoolExecutor(max_workers=3) as pool:
+        with ThreadPoolExecutor(max_workers=2) as pool:
             fut_articles = pool.submit(_load_articles)
             fut_angebote = pool.submit(_load_angebote, base_url, headers)
-            fut_freigaben = pool.submit(_load_freigaben, base_url, headers)
             items = fut_articles.result()
             angebote_map = fut_angebote.result()
-            freigaben_map = fut_freigaben.result()
         articles = []
         categories = {}
         bestseller_candidates = []
