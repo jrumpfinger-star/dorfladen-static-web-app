@@ -17,6 +17,18 @@
   var DOW = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   var POLL_MS = 45000;
 
+  // Vorlagen für häufige (wiederkehrende) Aufgaben. Die Liste wird im Dialog um
+  // die tatsächlich vorhandenen wiederkehrenden Einträge ergänzt (selbstlernend).
+  var BUILTIN_TEMPLATES = [
+    { name: '🥖 Bäcker-Bestellung', titel: 'Bestellung bei Bäcker', kategorie: 'aufgabe', allday: true, recur: 'weekdays', weekdays: [1, 2, 3, 4, 5, 6] },
+    { name: '💶 Kasse abrechnen', titel: 'Kasse abrechnen', kategorie: 'aufgabe', allday: true, recur: 'daily', weekdays: [] },
+    { name: '🧽 Kühltheke reinigen', titel: 'Kühltheke reinigen', kategorie: 'aufgabe', allday: true, recur: 'weekly', weekdays: [] },
+    { name: '📦 Wochenware bestellen', titel: 'Wochenware bestellen', kategorie: 'aufgabe', allday: true, recur: 'weekly', weekdays: [] },
+    { name: '🥬 Gemüselieferung', titel: 'Gemüselieferung annehmen', kategorie: 'lieferung', allday: false, uhrzeit: '08:00', recur: 'weekly', weekdays: [] },
+    { name: '🥩 Metzger-Bestellung', titel: 'Metzger-Bestellung aufgeben', kategorie: 'vorbestellung', allday: true, recur: 'weekly', weekdays: [] }
+  ];
+  var dialogTemplates = [];  // aktuelle Vorlagenliste im offenen Dialog
+
   var state = {
     weekOffset: 0,
     selected: null,     // ISO date string
@@ -108,6 +120,8 @@
         '<div class="kal-modal-card" role="dialog" aria-modal="true" aria-label="Neuer Kalendereintrag">' +
           '<div class="kal-modal-head"><span>Neuer Eintrag</span>' +
             '<button class="kal-modal-x" data-act="closedialog" aria-label="Schließen">×</button></div>' +
+          '<div class="kal-fld"><span>Vorlage wählen (optional)</span>' +
+            '<div class="kal-pills kal-tpls" id="kal-tpls"></div></div>' +
           '<label class="kal-fld"><span>Was ist zu tun / reserviert?</span>' +
             '<textarea id="kal-title" rows="1" placeholder="z. B. „Brotbestellung Fam. Huber abholbereit“…"></textarea></label>' +
           '<div class="kal-fld"><span>Zeitpunkt</span>' +
@@ -173,7 +187,7 @@
   }
 
   function onClick(e) {
-    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde]');
+    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-tpl]');
     if (!b) return;
     if (b.dataset.act === 'prev') { state.weekOffset--; load(); }
     else if (b.dataset.act === 'next') { state.weekOffset++; load(); }
@@ -188,6 +202,49 @@
     else if (b.dataset.newrecur !== undefined) { setRecur(b.dataset.newrecur); }
     else if (b.dataset.wd !== undefined) { toggleWeekday(parseInt(b.dataset.wd, 10), b); }
     else if (b.dataset.kunde !== undefined) { setKunde(b.dataset.kunde, b.dataset.kid); }
+    else if (b.dataset.tpl !== undefined) { applyTemplate(dialogTemplates[parseInt(b.dataset.tpl, 10)], b); }
+  }
+
+  // Vorlagenliste = Standard-Vorlagen + tatsächlich vorhandene wiederkehrende Aufgaben.
+  function collectTemplates() {
+    var list = BUILTIN_TEMPLATES.slice();
+    var seen = {};
+    list.forEach(function (t) { seen[(t.titel || '').toLowerCase()] = true; });
+    (state.entries || []).forEach(function (e) {
+      if (!e.wiederholung) return;
+      var key = (e.titel || '').toLowerCase();
+      if (!key || seen[key]) return;
+      seen[key] = true;
+      list.push({
+        name: e.titel, titel: e.titel, kategorie: e.kategorie,
+        allday: !!e.ganztags, uhrzeit: e.uhrzeit, recur: e.wiederholung,
+        weekdays: String(e.wochentage || '').split('').filter(function (c) { return c >= '1' && c <= '7'; }).map(function (c) { return parseInt(c, 10); })
+      });
+    });
+    return list;
+  }
+  function renderTemplates() {
+    var wrap = document.getElementById('kal-tpls');
+    if (!wrap) return;
+    dialogTemplates = collectTemplates();
+    wrap.innerHTML = dialogTemplates.map(function (t, i) {
+      return '<button type="button" class="kal-pill kal-tpl" data-tpl="' + i + '">' + esc(t.name) + '</button>';
+    }).join('');
+  }
+  function applyTemplate(t, btn) {
+    if (!t) return;
+    document.querySelectorAll('#kal-tpls .kal-tpl').forEach(function (p) { p.classList.toggle('active', p === btn); });
+    document.getElementById('kal-title').value = t.titel || '';
+    autoGrow();
+    setCat(t.kategorie || 'aufgabe');
+    var allday = t.allday !== false;
+    setAllday(allday);
+    if (!allday) document.getElementById('kal-time').value = t.uhrzeit || '09:00';
+    setRecur(t.recur || '');
+    state.newWeekdays = (t.weekdays || []).slice();
+    document.querySelectorAll('#kal-weekdays .kal-wd').forEach(function (w) {
+      w.classList.toggle('active', state.newWeekdays.indexOf(parseInt(w.dataset.wd, 10)) !== -1);
+    });
   }
 
   function setCat(cat) {
@@ -249,6 +306,7 @@
     autoGrow();
     state.newWeekdays = [];
     document.querySelectorAll('#kal-weekdays .kal-wd').forEach(function (w) { w.classList.remove('active'); });
+    renderTemplates();
     hideKundeDd();
     setCat('aufgabe');
     setRecur('');
@@ -628,6 +686,8 @@
       '.kal-pills{display:flex;flex-wrap:wrap;gap:6px}',
       '.kal-pill{padding:8px 12px;border:1.5px solid var(--kb);border-radius:20px;background:var(--ks);font-size:13px;font-weight:700;cursor:pointer;color:var(--kt);display:inline-flex;align-items:center;gap:6px}',
       '.kal-pill.active{border-color:var(--kp);background:var(--c-pri-l,#f0f4f1);color:var(--kp)}.kal-pill .kd{width:9px;height:9px;border-radius:3px}',
+      '.kal-tpls{max-height:108px;overflow-y:auto}',
+      '.kal-tpl.active{background:var(--kp);color:#fff;border-color:var(--kp)}',
       '.kal-weekdays{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;align-items:center}',
       '.kal-wd{width:42px;padding:8px 0;border:1.5px solid var(--kb);border-radius:10px;background:var(--ks);font-weight:700;font-size:13px;cursor:pointer;color:var(--kt);text-align:center}',
       '.kal-wd.active{background:var(--kp);color:#fff;border-color:var(--kp)}',

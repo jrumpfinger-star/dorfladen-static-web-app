@@ -443,5 +443,33 @@ test.describe('Kiosk-Kalender', () => {
     await expect(page.locator('.kal-toast.err')).toBeVisible();
     expect(st.posts.find((x) => x.titel === 'Serie ohne Tage')).toBeUndefined();
   });
+
+  // Vorlagen: Auswahl füllt den Dialog und legt passenden Eintrag an
+  test('TC-F9-01: Vorlage füllt Felder und legt wiederkehrende Aufgabe an', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    // erste Standard-Vorlage = „Bäcker-Bestellung“ (Wochentage Mo–Sa)
+    await page.locator('.kal-tpl', { hasText: 'Bäcker-Bestellung' }).click();
+    await expect(page.locator('#kal-title')).toHaveValue('Bestellung bei Bäcker');
+    await expect(page.locator('.kal-pill[data-newrecur="weekdays"]')).toHaveClass(/active/);
+    await expect(page.locator('#kal-weekdays')).toBeVisible();
+    await expect(page.locator('.kal-wd[data-wd="2"]')).toHaveClass(/active/); // Di aktiv
+    await page.locator('.kal-add').click();
+    const p = st.posts.find((x) => x.titel === 'Bestellung bei Bäcker');
+    expect(p && p.wiederholung).toBe('weekdays');
+    expect(p && p.wochentage).toBe('123456');
+    expect(p && p.kategorie).toBe('aufgabe');
+  });
+
+  // Vorlagen: eigene wiederkehrende Aufgabe erscheint als Vorlage
+  test('TC-F9-02: bestehende Serie erscheint als Vorlage', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    // makeState enthält die wöchentliche Serie „Kühltheke reinigen“
+    await expect(page.locator('.kal-tpl', { hasText: 'Kühltheke reinigen' })).toHaveCount(1);
+  });
 });
+
 
