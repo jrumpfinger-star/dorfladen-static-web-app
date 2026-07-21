@@ -411,6 +411,18 @@
   }
   function stopPoll() { if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; } }
 
+  // Filter-Chips an den State angleichen (build() läuft nur einmal).
+  function syncFilterUI() {
+    document.querySelectorAll('#kal-filters .kal-chip[data-cat]').forEach(function (c) {
+      c.classList.toggle('active', c.dataset.cat === state.filter);
+    });
+    var dc = document.querySelector('.kal-donechip');
+    if (dc) {
+      dc.classList.toggle('active', state.showDone);
+      dc.textContent = state.showDone ? '✓ Erledigte ausblenden' : '✓ Erledigte zeigen';
+    }
+  }
+
   // ── Tab-Badge: heutige offene Punkte (wie andere Tabs) ──
   function updateBadge(n) {
     var wrap = document.getElementById('badges-kalender');
@@ -443,7 +455,9 @@
       // Klick auf Tab/Badge → heute + offene anzeigen
       state.weekOffset = 0;
       state.selected = todayIso();
-      build(); load(); startPoll();
+      state.filter = 'all';
+      state.showDone = false;
+      build(); syncFilterUI(); load(); startPoll();
     },
     reload: load
   };
