@@ -94,8 +94,10 @@
       .toString().toUpperCase();
     var url = (typeof input === 'string') ? input : ((input && input.url) || '');
     var isAdminCall = url.indexOf('/api/') !== -1 && MUT.indexOf(method) !== -1;
+    // Kalender ist rein intern: auch lesende GETs tragen den Admin-Token.
+    var isKalenderRead = method === 'GET' && url.indexOf('/api/kalender') !== -1;
 
-    if (isAdminCall) {
+    if (isAdminCall || isKalenderRead) {
       var tok = getToken();
       if (tok) {
         var h = headersToObj(init.headers);

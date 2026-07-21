@@ -695,6 +695,9 @@
   <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
     <span class="k-tab-icon"><i data-lucide="users" style="width:22px;height:22px"></i></span> Stammkunden
   </div>
+  <div class="k-tab" data-tab="kalender" onclick="K.switchTab('kalender')">
+    <span class="k-tab-icon"><i data-lucide="calendar-days" style="width:22px;height:22px"></i></span> Kalender
+  </div>
 </div>
 
 <!-- ═══ Panels ═══ -->
@@ -750,6 +753,11 @@
       <button class="k-btn k-btn-outline" style="min-height:40px;padding:8px 16px;font-size:13px;border-radius:10px" onclick="document.getElementById('kunden-search').value='';K.searchKunden()"><i data-lucide="users" style="width:16px;height:16px"></i> Alle Kunden laden</button>
     </div>
     <div id="kunden-list"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="users" style="width:24px;height:24px"></i></div>Suchbegriff eingeben oder „Alle Kunden laden" klicken</div></div>
+  </div>
+
+  <!-- ── Kalender (Aufgaben/Reservierungen/Vorbestellungen) ── -->
+  <div class="k-panel" id="panel-kalender">
+    <div id="kal-root"></div>
   </div>
 
   <!-- ── Metzger (Fleisch-Vorbestellungen) ── -->
@@ -1352,6 +1360,7 @@ var K = (function(){
     if(id==='abhol') loadShopOrders();
     if(id==='kunden' && kunden.length===0) searchKunden();
     if(id==='social' && typeof socialSubTab==='function') socialSubTab('post');
+    if(id==='kalender' && window.KalenderKiosk) window.KalenderKiosk.onShow();
   }
 
   // ══════════════════════════════════════════════════
@@ -4771,6 +4780,7 @@ var K = (function(){
 <script src="/js/social.js"></script>
 <script src="/js/social-poster.js"></script>
 <script src="/js/admin-auth.js"></script>
+<script src="/js/kiosk-kalender.js"></script>
 <script src="/js/env-banner.js"></script>
 </body>
 </html>

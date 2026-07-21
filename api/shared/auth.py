@@ -58,3 +58,18 @@ def admin_auth_guard(req):
         if not token_valid(req):
             return unauthorized_response()
     return None
+
+
+def read_auth_guard(req):
+    """Zusätzliche **Lese**-Prüfung für rein interne Endpunkte (z. B. Kalender).
+
+    Blockiert ``GET`` ohne gültiges Token, aber **nur** wenn ``CMS_AUTH_ENFORCE``
+    aktiv ist. ``OPTIONS`` bleibt immer offen. Additiv gedacht: Endpunkte, die
+    auch das Lesen absichern wollen, rufen dies zusätzlich zu
+    ``admin_auth_guard`` auf; bestehende (öffentlich lesbare) Endpunkte bleiben
+    unberührt, weil sie diese Funktion nicht verwenden.
+    """
+    if req.method == "GET" and enforcement_enabled():
+        if not token_valid(req):
+            return unauthorized_response()
+    return None
