@@ -197,7 +197,7 @@
     var von = isoList[0], bis = isoList[6];
     fetch(apiBase() + '?von=' + von + '&bis=' + bis, { headers: { 'Accept': 'application/json' } })
       .then(function (r) { if (r.status === 401) throw new Error('401'); return r.json(); })
-      .then(function (d) { state.entries = (d && d.data) || []; renderDays(); renderList(); })
+      .then(function (d) { state.entries = (d && d.data) || []; renderDays(); renderList(); updateBadgeFromEntries(); })
       .catch(function (err) {
         if (String(err.message) === '401') { toast('Bitte anmelden, um den Kalender zu sehen.', 'err'); }
         else { toast('Kalender konnte nicht geladen werden.', 'err'); }
@@ -258,7 +258,7 @@
 
     var html = head;
     if (allday.length) html += section('Ganztägig', allday.length) + allday.map(entryHtml).join('');
-    if (timed.length) html += section('Mit Uhrzeit', timed.length) + timed.map(entryHtml).join('');
+    if (timed.length) html += section('Mit Uhrzeit', timed.length) + '<div class="kal-timeline">' + timed.map(timelineRowHtml).join('') + '</div>';
     list.innerHTML = html;
 
     list.querySelectorAll('[data-check]').forEach(function (el) {
@@ -272,27 +272,51 @@
 
   function doneRank(e) { return e.status === 'erledigt' ? 1 : 0; }
   function section(t, n) { return '<div class="kal-sec">' + t + ' <span>' + n + '</span></div>'; }
-
-  function entryHtml(e) {
-    var done = e.status === 'erledigt';
-    var dstr = deShort(e.datum); // z. B. „Di, 21.07.2026“
-    var time = e.ganztags
-      ? '<span class="time allday">Ganztägig</span>'
-      : '<span class="time">' + esc(e.uhrzeit) + ' Uhr</span>';
-    var datum = '<span class="kal-datum">' + esc(dstr) + '</span>';
-    var erledigt = (done && e.erledigt_am)
-      ? '<div class="note">Erledigt am ' + esc(fmtErledigt(e.erledigt_am)) + '</div>' : '';
+  function _checkKey(e) { return e.wiederholung ? (e._serien_id || e.id) : e.id; }
+  function _checkHtml(e) {
+    return '<div class="check" data-check="' + esc(_checkKey(e)) + '" data-datum="' + esc(e.datum) + '" title="Als erledigt markieren"><span class="box">✓</span></div>';
+  }
+  function _badgesHtml(e) {
     var kunde = (e.kunde_id || e.kunde_freitext)
       ? '<span class="badge kunde">🔗 ' + esc(e.kunde_freitext || e.kunde_id) + '</span>' : '';
     var recur = e.wiederholung ? '<span class="badge recur">↻ ' + (RECUR[e.wiederholung] || e.wiederholung) + '</span>' : '';
+    return '<div class="badges"><span class="badge cat">' + esc(CATS[e.kategorie] || e.kategorie) + '</span>' + recur + kunde + '</div>';
+  }
+  function _notesHtml(e) {
     var note = e.notiz ? '<div class="note">' + esc(e.notiz) + '</div>' : '';
-    var checkKey = e.wiederholung ? (e._serien_id || e.id) : e.id;
+    var erledigt = (e.status === 'erledigt' && e.erledigt_am)
+      ? '<div class="note">Erledigt am ' + esc(fmtErledigt(e.erledigt_am)) + '</div>' : '';
+    return note + erledigt;
+  }
+  function _actsHtml(e) {
+    return '<div class="acts"><button class="ic" data-del="' + esc(_checkKey(e)) + '" data-del-serie="' + (e.wiederholung ? '1' : '') + '" data-del-datum="' + esc(e.datum) + '" title="Löschen"><i data-lucide="trash-2" style="width:15px;height:15px"></i></button></div>';
+  }
+
+  // Ganztägige Einträge: normale Karte mit Datum-Label.
+  function entryHtml(e) {
+    var done = e.status === 'erledigt';
+    var datum = '<span class="kal-datum">' + esc(deShort(e.datum)) + '</span>';
     return '<div class="kal-entry cat-' + esc(e.kategorie) + (done ? ' done' : '') + '">' +
-      '<div class="check" data-check="' + esc(checkKey) + '" data-datum="' + esc(e.datum) + '" title="Als erledigt markieren"><span class="box">✓</span></div>' +
-      '<div class="body"><div class="top">' + datum + time + '<span class="title">' + esc(e.titel) + '</span></div>' +
-      '<div class="badges"><span class="badge cat">' + esc(CATS[e.kategorie] || e.kategorie) + '</span>' + recur + kunde + '</div>' + note + erledigt + '</div>' +
-      '<div class="acts"><button class="ic" data-del="' + esc(checkKey) + '" data-del-serie="' + (e.wiederholung ? '1' : '') + '" data-del-datum="' + esc(e.datum) + '" title="Löschen"><i data-lucide="trash-2" style="width:15px;height:15px"></i></button></div>' +
+      _checkHtml(e) +
+      '<div class="body"><div class="top">' + datum + '<span class="time allday">Ganztägig</span><span class="title">' + esc(e.titel) + '</span></div>' +
+      _badgesHtml(e) + _notesHtml(e) + '</div>' +
+      _actsHtml(e) +
       '</div>';
+  }
+
+  // Terminierte Einträge: Zeile einer vertikalen Timeline (Uhrzeit links auf der Leiste).
+  function timelineRowHtml(e) {
+    var done = e.status === 'erledigt';
+    return '<div class="kal-tl-row' + (done ? ' done' : '') + '">' +
+      '<div class="kal-tl-time">' + esc(e.uhrzeit) + '<small>Uhr</small></div>' +
+      '<div class="kal-tl-rail"><span class="kal-tl-dot cat-' + esc(e.kategorie) + '"></span></div>' +
+      '<div class="kal-entry cat-' + esc(e.kategorie) + (done ? ' done' : '') + ' kal-tl-card">' +
+        _checkHtml(e) +
+        '<div class="body"><div class="top"><span class="title">' + esc(e.titel) + '</span></div>' +
+        _badgesHtml(e) + _notesHtml(e) + '</div>' +
+        _actsHtml(e) +
+      '</div>' +
+    '</div>';
   }
 
   // ── Aktionen ──
@@ -387,11 +411,46 @@
   }
   function stopPoll() { if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; } }
 
+  // ── Tab-Badge: heutige offene Punkte (wie andere Tabs) ──
+  function updateBadge(n) {
+    var wrap = document.getElementById('badges-kalender');
+    if (!wrap) return;
+    wrap.innerHTML = (n > 0)
+      ? '<span class="k-tab-badge show badge-neu" title="' + n + ' heute offen">' + n + '</span>' : '';
+  }
+  function updateBadgeFromEntries() {
+    var t = todayIso();
+    if (weekDates().map(iso).indexOf(t) === -1) return; // heute nicht im View → nicht überschreiben
+    var open = state.entries.filter(function (e) {
+      return (e.datum || '').slice(0, 10) === t && e.status !== 'erledigt';
+    }).length;
+    updateBadge(open);
+  }
+  function fetchTodayBadge() {
+    var t = todayIso();
+    fetch(apiBase() + '?von=' + t + '&bis=' + t, { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+      .then(function (d) {
+        var open = ((d && d.data) || []).filter(function (e) { return e.status !== 'erledigt'; }).length;
+        updateBadge(open);
+      })
+      .catch(function () {});
+  }
+
   // ── Öffentliche API (von switchTab aufgerufen) ──
   window.KalenderKiosk = {
-    onShow: function () { build(); load(); startPoll(); },
+    onShow: function () {
+      // Klick auf Tab/Badge → heute + offene anzeigen
+      state.weekOffset = 0;
+      state.selected = todayIso();
+      build(); load(); startPoll();
+    },
     reload: load
   };
+
+  // Badge beim Laden der Kiosk-Seite füllen (auch ohne Tab-Besuch) + periodisch.
+  fetchTodayBadge();
+  setInterval(fetchTodayBadge, 120000);
 
   // ── Styles (scoped auf #kal-root, theme-fähig via --c-*/--dl-*) ──
   function injectStyle() {
@@ -446,6 +505,17 @@
       '.kal-entry .acts{display:flex;align-items:center;padding:0 8px}.kal-entry .ic{width:32px;height:32px;border:none;background:transparent;border-radius:8px;cursor:pointer;color:var(--km);display:flex;align-items:center;justify-content:center}',
       '.kal-entry.done{opacity:.62}.kal-entry.done .title{text-decoration:line-through;color:var(--km)}.kal-entry.done .time{color:var(--km)}',
       '.kal-entry.done .check .box{background:#2e7d4f;border-color:#2e7d4f;color:#fff}',
+      '.kal-timeline{position:relative;margin-top:2px}',
+      '.kal-tl-row{display:flex;align-items:stretch;gap:8px}',
+      '.kal-tl-time{width:50px;flex-shrink:0;text-align:right;font-weight:800;font-size:14px;color:var(--kp);padding-top:12px;font-variant-numeric:tabular-nums;line-height:1.1}',
+      '.kal-tl-time small{display:block;font-size:10px;font-weight:600;color:var(--km)}',
+      '.kal-tl-rail{position:relative;width:14px;flex-shrink:0;display:flex;justify-content:center}',
+      '.kal-tl-rail::before{content:"";position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--kb)}',
+      '.kal-tl-row:first-child .kal-tl-rail::before{top:15px}.kal-tl-row:last-child .kal-tl-rail::before{bottom:calc(100% - 27px)}',
+      '.kal-tl-dot{position:relative;z-index:1;width:12px;height:12px;border-radius:50%;background:var(--kp);margin-top:15px;border:2px solid var(--ks);box-shadow:0 0 0 1px var(--kb)}',
+      '.kal-tl-dot.cat-reservierung{background:#1d4ed8}.kal-tl-dot.cat-vorbestellung{background:#e65100}.kal-tl-dot.cat-lieferung{background:#6d28d9}',
+      '.kal-tl-card{flex:1;min-width:0;margin-bottom:8px}',
+      '.kal-tl-row.done .kal-tl-time{color:var(--km)}.kal-tl-row.done .kal-tl-dot{background:#9ca3af}',
       '.kal-empty{text-align:center;color:var(--km);padding:30px;font-size:14px;border:1.5px dashed var(--kb);border-radius:14px}',
       '.kal-toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--kp);color:#fff;padding:11px 20px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:.3s;z-index:99999}',
       '.kal-toast.show{opacity:1;transform:translate(-50%,0)}.kal-toast.err{background:#b91c1c}'

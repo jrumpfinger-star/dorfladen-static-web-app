@@ -177,9 +177,10 @@ test.describe('Kiosk-Kalender', () => {
     const secs = page.locator('.kal-sec');
     await expect(secs.first()).toContainText('Ganztägig');
     await expect(secs.nth(1)).toContainText('Mit Uhrzeit');
-    const times = await page.locator('.kal-entry:not(.done) .time:not(.allday)').allTextContents();
-    // 10:00 vor 14:30 (e3 ist erledigt/ausgeblendet)
-    expect(times).toEqual(['10:00 Uhr']);
+    // terminierte Einträge liegen als Timeline-Zeilen vor; nur 10:00 offen (14:30 erledigt/ausgeblendet)
+    const times = await page.locator('.kal-tl-row:not(.done) .kal-tl-time').allTextContents();
+    expect(times.length).toBe(1);
+    expect(times[0]).toContain('10:00');
   });
 
   // F3 – Erledigt
@@ -222,9 +223,9 @@ test.describe('Kiosk-Kalender', () => {
     await page.locator('.kal-toggle button', { hasText: 'Uhrzeit' }).click();
     await page.locator('#kal-time').fill('11:00');
     await page.locator('.kal-add').click();
-    const e = page.locator('.kal-entry', { hasText: 'Blumenstrauß abholbereit' });
-    await expect(e).toHaveCount(1);
-    await expect(e.locator('.time')).toContainText('11:00');
+    const row = page.locator('.kal-tl-row', { hasText: 'Blumenstrauß abholbereit' });
+    await expect(row).toHaveCount(1);
+    await expect(row.locator('.kal-tl-time')).toContainText('11:00');
   });
 
   test('TC-F1-03: Leerer Titel wird nicht gespeichert', async ({ page }) => {
