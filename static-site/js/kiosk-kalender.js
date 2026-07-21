@@ -26,13 +26,17 @@
     entries: [],
     built: false,
     pollTimer: null,
-    kundenMap: {}       // name(lower) → id
+    kundenMap: {},      // name(lower) → id
+    newCat: 'aufgabe',  // Dialog: gewählte Kategorie
+    newRecur: '',       // Dialog: gewählte Wiederholung
+    newWeekdays: []     // Dialog: gewählte ISO-Wochentage (1=Mo … 7=So)
   };
 
   // ── Datums-Helfer ──
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function todayIso() { return iso(new Date()); }
+  function nowHM() { var n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); }
   function mondayOf(offset) {
     var d = new Date();
     d.setHours(12, 0, 0, 0);
@@ -105,18 +109,35 @@
           '<div class="kal-modal-head"><span>Neuer Eintrag</span>' +
             '<button class="kal-modal-x" data-act="closedialog" aria-label="Schließen">×</button></div>' +
           '<label class="kal-fld"><span>Was ist zu tun / reserviert?</span>' +
-            '<input type="text" id="kal-title" placeholder="z. B. „Brotbestellung Fam. Huber abholbereit“…"></label>' +
+            '<textarea id="kal-title" rows="1" placeholder="z. B. „Brotbestellung Fam. Huber abholbereit“…"></textarea></label>' +
           '<div class="kal-fld"><span>Zeitpunkt</span>' +
             '<div class="kal-modal-time">' +
-              '<div class="kal-toggle"><button class="on" data-ad="1">Ganztags</button><button data-ad="0">Uhrzeit</button></div>' +
-              '<input type="time" id="kal-time" value="09:00" style="display:none">' +
+              '<div class="kal-toggle"><button type="button" class="on" data-ad="1">Ganztags</button><button type="button" data-ad="0">Uhrzeit</button></div>' +
+              '<input type="time" id="kal-time" value="09:00" step="300" lang="de-DE" style="display:none">' +
             '</div></div>' +
-          '<label class="kal-fld"><span>Kategorie</span>' +
-            '<select id="kal-cat"><option value="aufgabe">🗒️ Aufgabe</option><option value="reservierung">📌 Reservierung</option><option value="vorbestellung">🛒 Vorbestellung</option><option value="lieferung">🚚 Lieferung</option></select></label>' +
-          '<label class="kal-fld"><span>Kunde (optional)</span>' +
-            '<input type="text" id="kal-kunde" placeholder="🔗 Name eingeben…" list="kal-kundenlist" autocomplete="off"><datalist id="kal-kundenlist"></datalist></label>' +
-          '<label class="kal-fld"><span>Wiederholung</span>' +
-            '<select id="kal-recur"><option value="">↻ Einmalig</option><option value="daily">Täglich</option><option value="weekly">Wöchentlich</option><option value="biweekly">14-tägig</option><option value="monthly">Monatlich</option></select></label>' +
+          '<div class="kal-fld"><span>Kategorie</span>' +
+            '<div class="kal-pills" id="kal-catpills">' +
+              '<button type="button" class="kal-pill active" data-newcat="aufgabe"><span class="kd" style="background:var(--kp)"></span>Aufgabe</button>' +
+              '<button type="button" class="kal-pill" data-newcat="reservierung"><span class="kd" style="background:#1d4ed8"></span>Reservierung</button>' +
+              '<button type="button" class="kal-pill" data-newcat="vorbestellung"><span class="kd" style="background:#e65100"></span>Vorbestellung</button>' +
+              '<button type="button" class="kal-pill" data-newcat="lieferung"><span class="kd" style="background:#6d28d9"></span>Lieferung</button>' +
+            '</div></div>' +
+          '<div class="kal-fld kal-kunde-wrap"><span>Kunde (optional)</span>' +
+            '<input type="text" id="kal-kunde" placeholder="🔗 Name eingeben…" autocomplete="off">' +
+            '<div class="kal-kunde-dd" id="kal-kunde-dd" hidden></div></div>' +
+          '<div class="kal-fld"><span>Wiederholung</span>' +
+            '<div class="kal-pills" id="kal-recurpills">' +
+              '<button type="button" class="kal-pill active" data-newrecur="">Einmalig</button>' +
+              '<button type="button" class="kal-pill" data-newrecur="daily">Täglich</button>' +
+              '<button type="button" class="kal-pill" data-newrecur="weekly">Wöchentlich</button>' +
+              '<button type="button" class="kal-pill" data-newrecur="biweekly">14-tägig</button>' +
+              '<button type="button" class="kal-pill" data-newrecur="monthly">Monatlich</button>' +
+              '<button type="button" class="kal-pill" data-newrecur="weekdays">Wochentage</button>' +
+            '</div>' +
+            '<div class="kal-weekdays" id="kal-weekdays" hidden>' +
+              DOW.map(function (n, i) { return '<button type="button" class="kal-wd" data-wd="' + (i + 1) + '">' + n + '</button>'; }).join('') +
+              '<div class="kal-wd-hint">Serie an den gewählten Wochentagen</div>' +
+            '</div></div>' +
           '<div class="kal-modal-foot">' +
             '<button class="kal-btn-ghost" data-act="closedialog">Abbrechen</button>' +
             '<button class="kal-add" data-act="add">Speichern</button>' +
@@ -127,12 +148,15 @@
     // Events (delegiert)
     root.addEventListener('click', onClick);
     var title = document.getElementById('kal-title');
-    title.addEventListener('keydown', function (e) { if (e.key === 'Enter') addEntry(); });
+    // Strg/Cmd+Enter speichert; Enter erzeugt eine neue Zeile (mehrzeiliger Text).
+    title.addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addEntry(); } });
+    title.addEventListener('input', autoGrow);
     var kunde = document.getElementById('kal-kunde');
     var kt = null;
     kunde.addEventListener('input', function () {
       clearTimeout(kt); kt = setTimeout(function () { searchKunden(kunde.value); }, 250);
     });
+    kunde.addEventListener('blur', function () { setTimeout(hideKundeDd, 150); });
     // Dialog: Klick auf Overlay (außerhalb der Karte) + Escape schließen
     var modal = document.getElementById('kal-modal');
     modal.addEventListener('click', function (e) { if (e.target === modal) closeDialog(); });
@@ -144,7 +168,7 @@
   }
 
   function onClick(e) {
-    var b = e.target.closest('[data-act],[data-cat],[data-ad]');
+    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde]');
     if (!b) return;
     if (b.dataset.act === 'prev') { state.weekOffset--; load(); }
     else if (b.dataset.act === 'next') { state.weekOffset++; load(); }
@@ -155,16 +179,60 @@
     else if (b.dataset.act === 'toggledone') { state.showDone = !state.showDone; b.classList.toggle('active', state.showDone); b.textContent = state.showDone ? '✓ Erledigte ausblenden' : '✓ Erledigte zeigen'; renderList(); }
     else if (b.dataset.cat) { state.filter = b.dataset.cat; document.querySelectorAll('#kal-filters .kal-chip[data-cat]').forEach(function (c) { c.classList.toggle('active', c === b); }); renderList(); }
     else if (b.dataset.ad) { setAllday(b.dataset.ad === '1'); }
+    else if (b.dataset.newcat !== undefined) { setCat(b.dataset.newcat); }
+    else if (b.dataset.newrecur !== undefined) { setRecur(b.dataset.newrecur); }
+    else if (b.dataset.wd !== undefined) { toggleWeekday(parseInt(b.dataset.wd, 10), b); }
+    else if (b.dataset.kunde !== undefined) { setKunde(b.dataset.kunde, b.dataset.kid); }
+  }
+
+  function setCat(cat) {
+    state.newCat = cat;
+    document.querySelectorAll('#kal-catpills .kal-pill').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.newcat === cat);
+    });
+  }
+  function setRecur(rec) {
+    state.newRecur = rec;
+    document.querySelectorAll('#kal-recurpills .kal-pill').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.newrecur === rec);
+    });
+    var wd = document.getElementById('kal-weekdays');
+    if (wd) wd.hidden = (rec !== 'weekdays');
+  }
+  function toggleWeekday(day, btn) {
+    var i = state.newWeekdays.indexOf(day);
+    if (i === -1) state.newWeekdays.push(day); else state.newWeekdays.splice(i, 1);
+    if (btn) btn.classList.toggle('active', state.newWeekdays.indexOf(day) !== -1);
+  }
+  function setKunde(name, id) {
+    var inp = document.getElementById('kal-kunde');
+    if (inp) inp.value = name;
+    if (name && id) state.kundenMap[name.toLowerCase()] = id;
+    hideKundeDd();
+  }
+  function hideKundeDd() {
+    var dd = document.getElementById('kal-kunde-dd');
+    if (dd) { dd.hidden = true; dd.innerHTML = ''; }
+  }
+  function autoGrow() {
+    var t = document.getElementById('kal-title');
+    if (!t) return;
+    t.style.height = 'auto';
+    t.style.height = Math.min(t.scrollHeight, 200) + 'px';
   }
 
   function openDialog() {
     var m = document.getElementById('kal-modal'); if (!m) return;
-    // Felder zurücksetzen; Standard = Ganztags
+    // Felder zurücksetzen; Standard = Ganztags, Kategorie Aufgabe, Einmalig
     document.getElementById('kal-title').value = '';
     document.getElementById('kal-kunde').value = '';
-    document.getElementById('kal-cat').value = 'aufgabe';
-    document.getElementById('kal-recur').value = '';
     document.getElementById('kal-time').value = '09:00';
+    autoGrow();
+    state.newWeekdays = [];
+    document.querySelectorAll('#kal-weekdays .kal-wd').forEach(function (w) { w.classList.remove('active'); });
+    hideKundeDd();
+    setCat('aufgabe');
+    setRecur('');
     setAllday(true);
     m.hidden = false;
     setTimeout(function () { document.getElementById('kal-title').focus(); }, 30);
@@ -279,8 +347,21 @@
   function _badgesHtml(e) {
     var kunde = (e.kunde_id || e.kunde_freitext)
       ? '<span class="badge kunde">🔗 ' + esc(e.kunde_freitext || e.kunde_id) + '</span>' : '';
-    var recur = e.wiederholung ? '<span class="badge recur">↻ ' + (RECUR[e.wiederholung] || e.wiederholung) + '</span>' : '';
-    return '<div class="badges"><span class="badge cat">' + esc(CATS[e.kategorie] || e.kategorie) + '</span>' + recur + kunde + '</div>';
+    var recur = e.wiederholung ? '<span class="badge recur">↻ ' + esc(recurLabel(e)) + '</span>' : '';
+    var over = isOverdue(e) ? '<span class="badge overdue">‼️ überfällig</span>' : '';
+    return '<div class="badges"><span class="badge cat">' + esc(CATS[e.kategorie] || e.kategorie) + '</span>' + recur + kunde + over + '</div>';
+  }
+  function fmtWeekdays(digits) {
+    return String(digits || '').split('').filter(function (c) { return c >= '1' && c <= '7'; })
+      .map(function (c) { return DOW[parseInt(c, 10) - 1]; }).join(', ');
+  }
+  function recurLabel(e) {
+    if (e.wiederholung === 'weekdays') return fmtWeekdays(e.wochentage);
+    return RECUR[e.wiederholung] || e.wiederholung;
+  }
+  function isOverdue(e) {
+    return !e.ganztags && e.status !== 'erledigt' &&
+      (e.datum || '').slice(0, 10) === todayIso() && String(e.uhrzeit || '') < nowHM();
   }
   function _notesHtml(e) {
     var note = e.notiz ? '<div class="note">' + esc(e.notiz) + '</div>' : '';
@@ -307,10 +388,11 @@
   // Terminierte Einträge: Zeile einer vertikalen Timeline (Uhrzeit links auf der Leiste).
   function timelineRowHtml(e) {
     var done = e.status === 'erledigt';
-    return '<div class="kal-tl-row' + (done ? ' done' : '') + '">' +
+    var over = !done && isOverdue(e);
+    return '<div class="kal-tl-row' + (done ? ' done' : '') + (over ? ' overdue' : '') + '">' +
       '<div class="kal-tl-time">' + esc(e.uhrzeit) + '<small>Uhr</small></div>' +
       '<div class="kal-tl-rail"><span class="kal-tl-dot cat-' + esc(e.kategorie) + '"></span></div>' +
-      '<div class="kal-entry cat-' + esc(e.kategorie) + (done ? ' done' : '') + ' kal-tl-card">' +
+      '<div class="kal-entry cat-' + esc(e.kategorie) + (done ? ' done' : '') + (over ? ' overdue' : '') + ' kal-tl-card">' +
         _checkHtml(e) +
         '<div class="body"><div class="top"><span class="title">' + esc(e.titel) + '</span></div>' +
         _badgesHtml(e) + _notesHtml(e) + '</div>' +
@@ -326,13 +408,19 @@
     if (!t) { title.focus(); return; }
     var timeEl = document.getElementById('kal-time');
     if (!state.allday && !timeEl.value) { toast('Bitte eine Uhrzeit angeben oder „Ganztags“ wählen.', 'err'); return; }
+    if (state.newRecur === 'weekdays' && !state.newWeekdays.length) {
+      toast('Bitte mindestens einen Wochentag wählen.', 'err'); return;
+    }
     var kundeVal = document.getElementById('kal-kunde').value.trim();
     var kundeId = state.kundenMap[kundeVal.toLowerCase()] || '';
+    var wochentage = state.newRecur === 'weekdays'
+      ? state.newWeekdays.slice().sort().join('') : '';
     var body = {
       titel: t, datum: state.selected, ganztags: state.allday,
       uhrzeit: state.allday ? '' : timeEl.value,
-      kategorie: document.getElementById('kal-cat').value,
-      wiederholung: document.getElementById('kal-recur').value,
+      kategorie: state.newCat,
+      wiederholung: state.newRecur,
+      wochentage: wochentage,
       // Anzeigename immer speichern (lesbares Badge); kunde_id verknüpft zusätzlich
       // mit dem Stammkunden, falls ein Treffer gewählt wurde.
       kunde_id: kundeId, kunde_freitext: kundeVal
@@ -344,7 +432,7 @@
           var msg = (res.d.errors && res.d.errors[0]) || res.d.error || 'Speichern fehlgeschlagen.';
           toast(msg, 'err'); return;
         }
-        title.value = ''; document.getElementById('kal-kunde').value = ''; document.getElementById('kal-recur').value = '';
+        title.value = ''; document.getElementById('kal-kunde').value = '';
         toast('Eintrag gespeichert.');
         closeDialog();
         load();
@@ -388,14 +476,21 @@
 
   function searchKunden(q) {
     q = (q || '').trim();
-    if (q.length < 2) return;
+    var dd = document.getElementById('kal-kunde-dd');
+    if (q.length < 2) { if (dd) { dd.hidden = true; dd.innerHTML = ''; } return; }
     fetch((window.API_BASE || '') + '/api/stammkunden?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        var list = document.getElementById('kal-kundenlist'); if (!list) return;
-        var cs = (d && d.customers) || [];
-        list.innerHTML = cs.map(function (c) { return '<option value="' + esc(c.name) + '">'; }).join('');
+        if (!dd) return;
+        var cs = ((d && d.customers) || []).slice(0, 8);
         cs.forEach(function (c) { if (c.name) state.kundenMap[c.name.toLowerCase()] = c.id; });
+        // Exakt getippter Name → Liste nicht (mehr) aufdrängen
+        var exact = cs.some(function (c) { return (c.name || '').toLowerCase() === q.toLowerCase(); });
+        if (!cs.length || exact) { dd.hidden = true; dd.innerHTML = ''; return; }
+        dd.innerHTML = cs.map(function (c) {
+          return '<button type="button" class="kal-kunde-item" data-kunde="' + esc(c.name) + '" data-kid="' + esc(c.id) + '">🔗 ' + esc(c.name) + '</button>';
+        }).join('');
+        dd.hidden = false;
       })
       .catch(function () {});
   }
@@ -423,29 +518,33 @@
     }
   }
 
-  // ── Tab-Badge: heutige offene Punkte (wie andere Tabs) ──
-  function updateBadge(n) {
+  // ── Tab-Badge: heute offen + (blinkend) überfällig ──
+  function countToday(entries) {
+    var t = todayIso(), hm = nowHM(), open = 0, overdue = 0;
+    (entries || []).forEach(function (e) {
+      if ((e.datum || '').slice(0, 10) !== t || e.status === 'erledigt') return;
+      open++;
+      if (!e.ganztags && String(e.uhrzeit || '') < hm) overdue++;
+    });
+    return { open: open, overdue: overdue };
+  }
+  function updateBadge(c) {
     var wrap = document.getElementById('badges-kalender');
     if (!wrap) return;
-    wrap.innerHTML = (n > 0)
-      ? '<span class="k-tab-badge show badge-neu" title="' + n + ' heute offen">' + n + '</span>' : '';
+    var h = '';
+    if (c.open > 0) h += '<span class="k-tab-badge show badge-neu" title="' + c.open + ' heute offen">' + c.open + '</span>';
+    if (c.overdue > 0) h += '<span class="k-tab-badge show badge-overdue blink" title="' + c.overdue + ' überfällig (Zeit verstrichen)">' + c.overdue + '</span>';
+    wrap.innerHTML = h;
   }
   function updateBadgeFromEntries() {
-    var t = todayIso();
-    if (weekDates().map(iso).indexOf(t) === -1) return; // heute nicht im View → nicht überschreiben
-    var open = state.entries.filter(function (e) {
-      return (e.datum || '').slice(0, 10) === t && e.status !== 'erledigt';
-    }).length;
-    updateBadge(open);
+    if (weekDates().map(iso).indexOf(todayIso()) === -1) return; // heute nicht im View
+    updateBadge(countToday(state.entries));
   }
   function fetchTodayBadge() {
     var t = todayIso();
     fetch(apiBase() + '?von=' + t + '&bis=' + t, { headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-      .then(function (d) {
-        var open = ((d && d.data) || []).filter(function (e) { return e.status !== 'erledigt'; }).length;
-        updateBadge(open);
-      })
+      .then(function (d) { updateBadge(countToday((d && d.data) || [])); })
       .catch(function () {});
   }
 
@@ -495,11 +594,23 @@
       '.kal-modal-head{display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:800;color:var(--kp);margin-bottom:12px}',
       '.kal-modal-x{border:none;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:var(--km);width:32px;height:32px;border-radius:8px}',
       '.kal-fld{display:block;margin-bottom:12px}.kal-fld>span{display:block;font-size:12px;font-weight:700;color:var(--km);margin-bottom:5px}',
-      '.kal-fld input[type=text],.kal-fld select{width:100%;border:1.5px solid var(--kb);border-radius:10px;padding:10px 12px;font-size:14px;background:var(--ks);color:var(--kt);font-family:inherit;box-sizing:border-box}',
+      '.kal-fld input[type=text],.kal-fld select,.kal-fld textarea{width:100%;border:1.5px solid var(--kb);border-radius:10px;padding:10px 12px;font-size:14px;background:var(--ks);color:var(--kt);font-family:inherit;box-sizing:border-box}',
+      '.kal-fld textarea{resize:vertical;min-height:44px;line-height:1.4;overflow:hidden}',
       '.kal-modal-time{display:flex;gap:8px;align-items:center;flex-wrap:wrap}',
       '.kal-modal-time input[type=time]{border:1.5px solid var(--kb);border-radius:10px;padding:9px 10px;font-size:14px;background:var(--ks);color:var(--kt)}',
       '.kal-modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}',
       '.kal-btn-ghost{padding:10px 16px;border:1.5px solid var(--kb);background:transparent;color:var(--kt);border-radius:12px;font-weight:700;font-size:14px;cursor:pointer}',
+      '.kal-pills{display:flex;flex-wrap:wrap;gap:6px}',
+      '.kal-pill{padding:8px 12px;border:1.5px solid var(--kb);border-radius:20px;background:var(--ks);font-size:13px;font-weight:700;cursor:pointer;color:var(--kt);display:inline-flex;align-items:center;gap:6px}',
+      '.kal-pill.active{border-color:var(--kp);background:var(--c-pri-l,#f0f4f1);color:var(--kp)}.kal-pill .kd{width:9px;height:9px;border-radius:3px}',
+      '.kal-weekdays{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;align-items:center}',
+      '.kal-wd{width:42px;padding:8px 0;border:1.5px solid var(--kb);border-radius:10px;background:var(--ks);font-weight:700;font-size:13px;cursor:pointer;color:var(--kt);text-align:center}',
+      '.kal-wd.active{background:var(--kp);color:#fff;border-color:var(--kp)}',
+      '.kal-wd-hint{flex-basis:100%;font-size:11px;color:var(--km);margin-top:2px}',
+      '.kal-kunde-wrap{position:relative}',
+      '.kal-kunde-dd{position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--ks);border:1.5px solid var(--kb);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:184px;overflow-y:auto;margin-top:4px}',
+      '.kal-kunde-item{display:block;width:100%;text-align:left;padding:10px 12px;border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--kt);border-bottom:1px solid var(--kb)}',
+      '.kal-kunde-item:last-child{border-bottom:none}.kal-kunde-item:hover{background:var(--c-pri-l,#f0f4f1);color:var(--kp)}',
       '.kal-sec{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--km);margin:16px 2px 8px}.kal-sec span{background:var(--kb);border-radius:20px;padding:1px 9px;font-size:11px}',
       '.kal-dayhead{font-size:16px;font-weight:800;color:var(--kp);margin:2px 2px 10px;text-transform:capitalize}',
       '.kal-datum{font-size:12px;font-weight:700;color:var(--km);margin-right:2px;white-space:nowrap}',
@@ -510,11 +621,13 @@
       '.kal-entry .check:hover .box{border-color:#2e7d4f}',
       '.kal-entry .body{flex:1;padding:11px 14px;min-width:0}.kal-entry .top{display:flex;align-items:center;gap:8px}',
       '.kal-entry .time{font-weight:800;font-size:15px;color:var(--kp)}.kal-entry .time.allday{color:var(--km);font-size:12px;font-weight:700;text-transform:uppercase}',
-      '.kal-entry .title{font-weight:700;font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--kt)}',
+      '.kal-entry .title{font-weight:700;font-size:15px;flex:1;min-width:0;color:var(--kt);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.35}',
+      '.kal-entry .top{align-items:flex-start!important}',
       '.kal-entry .badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}',
       '.kal-entry .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}',
       '.kal-entry .badge.cat{color:#fff}.cat-aufgabe .badge.cat{background:var(--kp)}.cat-reservierung .badge.cat{background:#1d4ed8}.cat-vorbestellung .badge.cat{background:#e65100}.cat-lieferung .badge.cat{background:#6d28d9}',
       '.kal-entry .badge.kunde{background:#dcfce7;color:#2e7d4f}.kal-entry .badge.recur{background:#f3e8ff;color:#6d28d9}',
+      '.kal-entry .badge.overdue{background:#fee2e2;color:#b91c1c}',
       '.kal-entry .note{font-size:13px;color:var(--km);margin-top:3px}',
       '.kal-entry .acts{display:flex;align-items:center;padding:0 8px}.kal-entry .ic{width:32px;height:32px;border:none;background:transparent;border-radius:8px;cursor:pointer;color:var(--km);display:flex;align-items:center;justify-content:center}',
       '.kal-entry.done{opacity:.62}.kal-entry.done .title{text-decoration:line-through;color:var(--km)}.kal-entry.done .time{color:var(--km)}',
@@ -530,6 +643,10 @@
       '.kal-tl-dot.cat-reservierung{background:#1d4ed8}.kal-tl-dot.cat-vorbestellung{background:#e65100}.kal-tl-dot.cat-lieferung{background:#6d28d9}',
       '.kal-tl-card{flex:1;min-width:0;margin-bottom:8px}',
       '.kal-tl-row.done .kal-tl-time{color:var(--km)}.kal-tl-row.done .kal-tl-dot{background:#9ca3af}',
+      '.kal-tl-row.overdue .kal-tl-time{color:#b91c1c}',
+      '.kal-tl-row.overdue .kal-tl-dot{background:#b91c1c;animation:kalPulse 1.2s ease-in-out infinite}',
+      '.kal-entry.overdue{border-left-color:#b91c1c!important;background:#fff6f6}',
+      '@keyframes kalPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.5}}',
       '.kal-empty{text-align:center;color:var(--km);padding:30px;font-size:14px;border:1.5px dashed var(--kb);border-radius:14px}',
       '.kal-toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--kp);color:#fff;padding:11px 20px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:.3s;z-index:99999}',
       '.kal-toast.show{opacity:1;transform:translate(-50%,0)}.kal-toast.err{background:#b91c1c}'

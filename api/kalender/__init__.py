@@ -112,6 +112,11 @@ def _ok(payload, status=200):
 
 def _serialize(item):
     """Dataverse-Datensatz → API-Objekt (Klartext + Roh-Felder)."""
+    raw_recur = item.get("dl_wiederholung", "") or ""
+    if raw_recur.startswith("weekdays:"):
+        wiederholung, wochentage = "weekdays", raw_recur.split(":", 1)[1]
+    else:
+        wiederholung, wochentage = raw_recur, ""
     return {
         "id": item.get(PK, ""),
         "titel": item.get("dl_titel", ""),
@@ -119,7 +124,8 @@ def _serialize(item):
         "ganztags": bool(item.get("dl_ganztags", False)),
         "uhrzeit": item.get("dl_uhrzeit", "") or "",
         "kategorie": item.get("dl_kategorie", "aufgabe") or "aufgabe",
-        "wiederholung": item.get("dl_wiederholung", "") or "",
+        "wiederholung": wiederholung,
+        "wochentage": wochentage,
         "kunde_id": item.get("dl_stammkundeid", "") or "",
         "kunde_freitext": item.get("dl_kunde_freitext", "") or "",
         "status": item.get("dl_status", "offen") or "offen",
@@ -136,6 +142,7 @@ def _payload_from_body(body):
     datum = (body.get("datum") or "").strip()
     kategorie = (body.get("kategorie") or "aufgabe").strip().lower()
     wiederholung = (body.get("wiederholung") or "").strip().lower()
+    wochentage = "".join(c for c in (body.get("wochentage") or "") if c in "1234567")
 
     errors = []
     if not titel:
@@ -146,8 +153,15 @@ def _payload_from_body(body):
         errors.append("Bitte eine Uhrzeit angeben oder „Ganztags“ wählen.")
     if kategorie not in KATEGORIEN:
         kategorie = "aufgabe"
-    if wiederholung and wiederholung not in serien.RECURRENCES:
-        wiederholung = ""
+    # Wiederholung: feste Intervalle ODER Wochentage (weekdays:<ISO-Ziffern>)
+    if wiederholung == "weekdays":
+        if not wochentage:
+            errors.append("Bitte mindestens einen Wochentag wählen.")
+        recur_store = "weekdays:" + wochentage
+    elif wiederholung in serien.RECURRENCES:
+        recur_store = wiederholung
+    else:
+        recur_store = ""
 
     payload = {
         "dl_titel": titel,
@@ -155,7 +169,7 @@ def _payload_from_body(body):
         "dl_ganztags": ganztags,
         "dl_uhrzeit": "" if ganztags else uhrzeit,
         "dl_kategorie": kategorie,
-        "dl_wiederholung": wiederholung,
+        "dl_wiederholung": recur_store,
         "dl_stammkundeid": (body.get("kunde_id") or "").strip(),
         "dl_kunde_freitext": (body.get("kunde_freitext") or "").strip(),
         "dl_status": "offen",

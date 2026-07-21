@@ -31,10 +31,12 @@ def _month_day(year: int, month: int, day: int) -> date:
     return date(year, month, min(day, last))
 
 
-def occurrences(start, wiederholung, von, bis):
+def occurrences(start, wiederholung, von, bis, weekdays=None):
     """Liste der Datumswerte in ``[von, bis]``, an denen die Serie auftritt.
 
     ``wiederholung`` leer/None → Einzeltermin (nur ``start``, falls im Bereich).
+    ``weekdays`` (nur bei ``wiederholung == 'weekdays'``): Iterable/Text von
+    ISO-Wochentagen (Mo=1 … So=7), z. B. ``"235"`` oder ``{2, 3, 5}`` für Di/Mi/Fr.
     """
     start = parse_date(start)
     von = parse_date(von)
@@ -50,6 +52,18 @@ def occurrences(start, wiederholung, von, bis):
         out = []
         while cur <= bis:
             out.append(cur)
+            cur += timedelta(days=1)
+        return out
+
+    if wiederholung == "weekdays":
+        wd = {int(c) for c in str(weekdays or "") if c.isdigit() and c != "0"}
+        if not wd:
+            return []
+        cur = max(start, von)
+        out = []
+        while cur <= bis:
+            if cur.isoweekday() in wd:
+                out.append(cur)
             cur += timedelta(days=1)
         return out
 
@@ -102,7 +116,7 @@ def expand_entry(entry: dict, von, bis, overrides=None):
     overrides = overrides or {}
     wiederholung = entry.get("wiederholung") or ""
     result = []
-    for d in occurrences(entry.get("datum"), wiederholung, von, bis):
+    for d in occurrences(entry.get("datum"), wiederholung, von, bis, entry.get("wochentage")):
         iso = d.isoformat()
         ov = overrides.get(iso)
         if ov and ov.get("status") == "geloescht":

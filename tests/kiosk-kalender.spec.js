@@ -400,4 +400,48 @@ test.describe('Kiosk-Kalender', () => {
     await expect(page.locator('.kal-toast.err')).toBeVisible();
     await expect(page.locator('.kal-entry')).toHaveCount(0);
   });
+
+  // Kategorie als Pills
+  test('TC-F1-05: Kategorie über Pills wählbar; POST enthält Kategorie', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    await page.locator('#kal-title').fill('Blumen bestellen');
+    await page.locator('.kal-pill[data-newcat="lieferung"]').click();
+    await expect(page.locator('.kal-pill[data-newcat="lieferung"]')).toHaveClass(/active/);
+    await page.locator('.kal-add').click();
+    await expect(page.locator('.kal-entry', { hasText: 'Blumen bestellen' })).toHaveCount(1);
+    const p = st.posts.find((x) => x.titel === 'Blumen bestellen');
+    expect(p && p.kategorie).toBe('lieferung');
+  });
+
+  // Wochentags-Serie (Di/Mi/Fr)
+  test('TC-F5-05: Serie an bestimmten Wochentagen (Di/Mi/Fr)', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    await page.locator('#kal-title').fill('Bestellung bei Bäcker');
+    await page.locator('.kal-pill[data-newrecur="weekdays"]').click();
+    await expect(page.locator('#kal-weekdays')).toBeVisible();
+    await page.locator('.kal-wd[data-wd="2"]').click(); // Di
+    await page.locator('.kal-wd[data-wd="3"]').click(); // Mi
+    await page.locator('.kal-wd[data-wd="5"]').click(); // Fr
+    await page.locator('.kal-add').click();
+    const p = st.posts.find((x) => x.titel === 'Bestellung bei Bäcker');
+    expect(p && p.wiederholung).toBe('weekdays');
+    expect(p && p.wochentage).toBe('235');
+  });
+
+  // Wochentags-Serie ohne Auswahl → Hinweis
+  test('TC-F5-06: Wochentage ohne Auswahl speichert nicht', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    await page.locator('#kal-title').fill('Serie ohne Tage');
+    await page.locator('.kal-pill[data-newrecur="weekdays"]').click();
+    await page.locator('.kal-add').click();
+    await expect(page.locator('.kal-toast.err')).toBeVisible();
+    expect(st.posts.find((x) => x.titel === 'Serie ohne Tage')).toBeUndefined();
+  });
 });
+

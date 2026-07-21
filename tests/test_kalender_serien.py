@@ -67,6 +67,21 @@ def test_monthly_klemmt_auf_monatsende():
     ]
 
 
+def test_weekdays_di_mi_fr():
+    # Bestellung bei Bäcker: Di(2), Mi(3), Fr(5) in der Woche 20.–26.07.2026
+    # Mo=20, Di=21, Mi=22, Do=23, Fr=24, Sa=25, So=26
+    got = [d.isoformat() for d in serien.occurrences("2026-07-20", "weekdays", "2026-07-20", "2026-07-26", "235")]
+    assert got == ["2026-07-21", "2026-07-22", "2026-07-24"]
+
+
+def test_weekdays_ueber_zwei_wochen_und_ohne_auswahl():
+    got = [d.isoformat() for d in serien.occurrences("2026-07-20", "weekdays", "2026-07-20", "2026-08-02", "235")]
+    assert got == ["2026-07-21", "2026-07-22", "2026-07-24",
+                   "2026-07-28", "2026-07-29", "2026-07-31"]
+    # keine Wochentage gewählt → keine Vorkommen
+    assert serien.occurrences("2026-07-20", "weekdays", "2026-07-20", "2026-07-26", "") == []
+
+
 def test_expand_entry_overrides():
     entry = {"id": "S1", "datum": "2026-07-20", "wiederholung": "daily",
              "titel": "Kasse abrechnen", "status": "offen"}
