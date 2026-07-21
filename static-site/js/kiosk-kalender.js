@@ -113,7 +113,10 @@
           '<div class="kal-fld"><span>Zeitpunkt</span>' +
             '<div class="kal-modal-time">' +
               '<div class="kal-toggle"><button type="button" class="on" data-ad="1">Ganztags</button><button type="button" data-ad="0">Uhrzeit</button></div>' +
-              '<input type="time" id="kal-time" value="09:00" step="300" lang="de-DE" style="display:none">' +
+              '<span class="kal-timebox" id="kal-timebox" style="display:none">' +
+                '<input type="text" id="kal-time" inputmode="numeric" maxlength="5" value="09:00" placeholder="HH:MM" class="kal-time-txt" aria-label="Uhrzeit (24 Stunden)">' +
+                '<b class="kal-time-uhr">Uhr</b>' +
+              '</span>' +
             '</div></div>' +
           '<div class="kal-fld"><span>Kategorie</span>' +
             '<div class="kal-pills" id="kal-catpills">' +
@@ -151,6 +154,8 @@
     // Strg/Cmd+Enter speichert; Enter erzeugt eine neue Zeile (mehrzeiliger Text).
     title.addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addEntry(); } });
     title.addEventListener('input', autoGrow);
+    var timeEl = document.getElementById('kal-time');
+    timeEl.addEventListener('input', function () { timeEl.value = fmtTimeInput(timeEl.value); });
     var kunde = document.getElementById('kal-kunde');
     var kt = null;
     kunde.addEventListener('input', function () {
@@ -220,6 +225,20 @@
     t.style.height = 'auto';
     t.style.height = Math.min(t.scrollHeight, 200) + 'px';
   }
+  // 24h-Zeit: Live-Formatierung „HHMM“ → „HH:MM“ (geräteunabhängig, kein AM/PM).
+  function fmtTimeInput(v) {
+    var d = String(v || '').replace(/\D/g, '').slice(0, 4);
+    return d.length <= 2 ? d : d.slice(0, 2) + ':' + d.slice(2);
+  }
+  // Normalisiert auf gültige „HH:MM“ (24h) oder '' wenn ungültig.
+  function normTime(v) {
+    var d = String(v || '').replace(/\D/g, '');
+    if (d.length === 3) d = '0' + d;
+    if (d.length !== 4) return '';
+    var h = parseInt(d.slice(0, 2), 10), m = parseInt(d.slice(2), 10);
+    if (h > 23 || m > 59) return '';
+    return pad(h) + ':' + pad(m);
+  }
 
   function openDialog() {
     var m = document.getElementById('kal-modal'); if (!m) return;
@@ -246,7 +265,8 @@
     state.allday = v;
     var btns = document.querySelectorAll('.kal-toggle button');
     btns[0].classList.toggle('on', v); btns[1].classList.toggle('on', !v);
-    document.getElementById('kal-time').style.display = v ? 'none' : '';
+    var box = document.getElementById('kal-timebox');
+    if (box) box.style.display = v ? 'none' : '';
   }
 
   // ── Laden / Rendern ──
@@ -407,7 +427,8 @@
     var t = title.value.trim();
     if (!t) { title.focus(); return; }
     var timeEl = document.getElementById('kal-time');
-    if (!state.allday && !timeEl.value) { toast('Bitte eine Uhrzeit angeben oder „Ganztags“ wählen.', 'err'); return; }
+    var uhr = normTime(timeEl.value);
+    if (!state.allday && !uhr) { toast('Bitte eine gültige Uhrzeit als HH:MM eingeben (z. B. 14:30).', 'err'); return; }
     if (state.newRecur === 'weekdays' && !state.newWeekdays.length) {
       toast('Bitte mindestens einen Wochentag wählen.', 'err'); return;
     }
@@ -417,7 +438,7 @@
       ? state.newWeekdays.slice().sort().join('') : '';
     var body = {
       titel: t, datum: state.selected, ganztags: state.allday,
-      uhrzeit: state.allday ? '' : timeEl.value,
+      uhrzeit: state.allday ? '' : uhr,
       kategorie: state.newCat,
       wiederholung: state.newRecur,
       wochentage: wochentage,
@@ -598,6 +619,10 @@
       '.kal-fld textarea{resize:vertical;min-height:44px;line-height:1.4;overflow:hidden}',
       '.kal-modal-time{display:flex;gap:8px;align-items:center;flex-wrap:wrap}',
       '.kal-modal-time input[type=time]{border:1.5px solid var(--kb);border-radius:10px;padding:9px 10px;font-size:14px;background:var(--ks);color:var(--kt)}',
+      '.kal-timebox{display:inline-flex;align-items:center;gap:6px}',
+      '.kal-time-txt{width:78px;border:1.5px solid var(--kb);border-radius:10px;padding:9px 10px;font-size:16px;font-weight:700;text-align:center;letter-spacing:1px;font-variant-numeric:tabular-nums;background:var(--ks);color:var(--kt);font-family:inherit}',
+      '.kal-time-txt:focus{outline:none;border-color:var(--kp)}',
+      '.kal-time-uhr{font-size:13px;font-weight:700;color:var(--km)}',
       '.kal-modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}',
       '.kal-btn-ghost{padding:10px 16px;border:1.5px solid var(--kb);background:transparent;color:var(--kt);border-radius:12px;font-weight:700;font-size:14px;cursor:pointer}',
       '.kal-pills{display:flex;flex-wrap:wrap;gap:6px}',
