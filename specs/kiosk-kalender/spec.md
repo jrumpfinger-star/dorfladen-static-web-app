@@ -96,6 +96,10 @@ Datenspeicher. Referenz-Mockup: [mockups/kiosk-kalender-mockup.html](../../mocku
 11. **Titel-Autocomplete:** Beim Tippen im Titelfeld werden passende, bereits
     vorhandene Titel als Vorschläge angeboten (aus den aktuell geladenen
     Einträgen); Auswahl per Tap füllt das Feld.
+12. **Mehrzeiliger Titel:** Der Eintragstitel darf mehrzeilig sein. In der Liste
+    wird der vollständige Titel angezeigt (Umbruch statt Abschneiden mit „…");
+    das Titel-Eingabefeld (Schnellerfassung + Dialog) erlaubt mehrzeilige
+    Eingabe.
 
 ## Requirements
 
@@ -728,6 +732,47 @@ Kategorie-Pills und Buttons per Touch komfortabel bedienbar sind. Auf Mobile
 - **Setup:** Dialog geöffnet, Viewport 375×667.
 - **Action:** Breite messen.
 - **Expected:** ≤ Viewport-Breite, kein horizontaler Overflow.
+
+### F14: Mehrzeilige Titelanzeige
+
+#### F14 Description
+
+Ein Eintragstitel kann lang bzw. mehrzeilig sein. In der Tagesliste wird der
+vollständige Titel dargestellt – der Text bricht bei Bedarf auf mehrere Zeilen
+um, statt mit „…" abgeschnitten zu werden. Die Eingabefelder (Schnellerfassung
+und Dialog) erlauben mehrzeiligen Text; ein Zeilenumbruch im Feld löst kein
+vorzeitiges Speichern aus.
+
+#### F14 Inputs
+
+| Eingabe | Pflicht | Beschreibung |
+| --- | --- | --- |
+| Titel (ggf. mehrzeilig) | Ja | Freitext, darf Zeilenumbrüche enthalten |
+
+#### F14 Behaviour / Acceptance
+
+- Given ein Eintrag mit langem Titel, When die Liste gerendert wird, Then wird
+  der komplette Titel sichtbar (Umbruch), ohne horizontalen Overflow und ohne
+  `text-overflow: ellipsis`.
+- Given der Titel bricht um, Then bleibt das Kartenlayout stabil (Badges/Check
+  weiterhin korrekt ausgerichtet, Karte wächst in der Höhe mit).
+- Given das mehrzeilige Titel-Eingabefeld, When Enter/Umbruch gedrückt wird,
+  Then wird **nicht** vorzeitig gespeichert (Speichern nur über Button).
+
+#### F14 Test Cases
+
+**TC-F14-01: Langer Titel bricht um**
+
+- **Setup:** Eintrag mit sehr langem Titel (z. B. > 60 Zeichen) in der Liste.
+- **Action:** Titel-Element rendern und Anzeige prüfen.
+- **Expected:** Voller Titel sichtbar über mehrere Zeilen; kein `…`; keine
+  horizontale Scrollleiste; Badges/Check bleiben korrekt positioniert.
+
+**TC-F14-02: Kurzer Titel unverändert**
+
+- **Setup:** Eintrag mit kurzem Titel.
+- **Action:** Anzeige prüfen.
+- **Expected:** Einzeilige Darstellung wie bisher; kein zusätzlicher Leerraum.
 
 ## Data & Contracts
 

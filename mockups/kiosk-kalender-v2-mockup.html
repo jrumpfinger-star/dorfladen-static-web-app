@@ -76,8 +76,8 @@
   .quickadd{background:var(--surf);border:1.5px dashed var(--border);border-radius:var(--r);padding:12px;margin-bottom:16px;box-shadow:var(--sh-s)}
   .qa-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .qa-field{position:relative;flex:1;min-width:200px}
-  .qa-field input{width:100%;min-height:var(--tap);border:1.5px solid var(--border);border-radius:var(--r-btn);padding:10px 12px;font-size:.95rem;font-family:inherit}
-  .qa-field input:focus{outline:none;border-color:var(--pri)}
+  .qa-field input,.qa-field textarea{width:100%;min-height:var(--tap);border:1.5px solid var(--border);border-radius:var(--r-btn);padding:10px 12px;font-size:.95rem;font-family:inherit;resize:vertical;line-height:1.35}
+  .qa-field input:focus,.qa-field textarea:focus{outline:none;border-color:var(--pri)}
   .ac-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-btn);box-shadow:var(--sh-m);z-index:30;overflow:hidden;display:none}
   .ac-dd.open{display:block}
   .ac-item{min-height:var(--tap);display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:.9rem;cursor:pointer}
@@ -116,10 +116,10 @@
   .entry .check .box{width:26px;height:26px;border:2px solid var(--muted);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:transparent}
   .entry.cat-info .check{visibility:hidden} /* Info = kein Aktionscharakter */
   .entry .body{flex:1;padding:11px 14px;min-width:0}
-  .entry .top{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+  .entry .top{display:flex;align-items:flex-start;gap:8px;margin-bottom:2px}
   .entry .time{font-weight:800;font-size:.95rem;font-variant-numeric:tabular-nums;color:var(--pri)}
   .entry .time.allday{color:var(--muted);font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-  .entry .title{font-weight:700;font-size:.98rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .entry .title{font-weight:700;font-size:.98rem;flex:1;min-width:0;overflow-wrap:anywhere;white-space:normal}
   .entry .badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
   .badge{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
   .badge.cat{color:#fff}
@@ -208,8 +208,8 @@
       <div class="quickadd">
         <div class="qa-row">
           <div class="qa-field">
-            <input id="qaTitle" type="text" placeholder="Was ist zu tun / reserviert?" autocomplete="off"
-                   oninput="onType(this)" onkeydown="onKey(event)" onblur="setTimeout(closeAc,150)">
+            <textarea id="qaTitle" rows="1" placeholder="Was ist zu tun / reserviert?" autocomplete="off"
+                   oninput="onType(this)" onkeydown="onKey(event)" onblur="setTimeout(closeAc,150)"></textarea>
             <div class="ac-dd" id="acDd"></div>
           </div>
           <div class="qa-toggle">
@@ -276,6 +276,7 @@
   <div class="note-card"><span class="tag">F11</span><b>Autocomplete:</b> im Titelfeld tippen (z. B. „Blum") → Vorschläge aus bestehenden Einträgen; Tap/Enter übernimmt.</div>
   <div class="note-card info"><span class="tag">F12</span><b>Neue Kategorie „Info" (teal):</b> als Filter, im Dialog wählbar, teal Rand/Badge. Info = rein informativ (keine Erledigt-Checkbox).</div>
   <div class="note-card"><span class="tag">F13</span><b>Breiterer Dialog:</b> 420 px (Mobile) → ~560 px (iPad mini) → ~640 px (Desktop), für komfortable Touch-Bedienung.</div>
+  <div class="note-card"><span class="tag">F14</span><b>Mehrzeiliger Titel:</b> lange Titel brechen um und werden vollständig angezeigt (kein „…"); Eingabefelder erlauben mehrzeiligen Text.</div>
 </div>
 
 <script>
@@ -291,7 +292,7 @@
   ];
   var allday = [
     {title:'Kasse abrechnen',cat:'aufgabe'},
-    {title:'Feiertag Do: Laden bleibt geschlossen',cat:'info'}
+    {title:'Feiertag Donnerstag: Der Laden bleibt ganztägig geschlossen – bitte Kundschaft rechtzeitig informieren und Aushang an der Eingangstür anbringen',cat:'info'}
   ];
 
   function badge(cat){var n={aufgabe:'Aufgabe',reservierung:'Reservierung',vorbestellung:'Vorbestellung',lieferung:'Lieferung',info:'Info'};return '<span class="badge cat b-'+cat+'">'+n[cat]+'</span>';}
