@@ -83,7 +83,19 @@ Datenspeicher. Referenz-Mockup: [mockups/kiosk-kalender-mockup.html](../../mocku
    für **das jeweilige Datum** (eine Ausnahme/Override pro Vorkommen), nicht für
    die ganze Serie.
 8. **Kategorien:** Feste Auswahl `aufgabe` / `reservierung` / `vorbestellung` /
-   `lieferung` mit Farbcodierung.
+   `lieferung` / `info` mit Farbcodierung. `info` = teal `#0891b2` (rein
+   informativer Eintrag ohne Aktionscharakter, wird aber wie andere Einträge
+   erfasst/angezeigt/gefiltert).
+9. **Touch-first:** Der Kiosk wird primär per Touch bedient. Alle interaktiven
+   Elemente haben ein Mindest-Tap-Target von 44×44px; es gibt keine Aktionen,
+   die ausschließlich per Hover erreichbar sind.
+10. **Split-View:** Ab iPad mini (≥768px) wird die Tagesliste zweispaltig
+    dargestellt: **links** „Mit Uhrzeit" (terminierte Einträge), **rechts**
+    „Ganztägig". Unter 768px bleibt die bestehende gestapelte Ansicht
+    (Ganztägig oben, Mit Uhrzeit darunter).
+11. **Titel-Autocomplete:** Beim Tippen im Titelfeld werden passende, bereits
+    vorhandene Titel als Vorschläge angeboten (aus den aktuell geladenen
+    Einträgen); Auswahl per Tap füllt das Feld.
 
 ## Requirements
 
@@ -478,6 +490,244 @@ benutzerfreundlich (Konstitution §6), keine nativen `alert()`/`confirm()`.
 - **Action:** auslösen.
 - **Expected:** In-App-Toast/Dialog; kein `alert()`/`confirm()`; kein roher
   `Fehler: <exception>`-Text.
+
+### F9: Split-View der Tagesliste (Uhrzeit | Ganztägig)
+
+#### F9 Description
+
+Ab iPad mini (Breite ≥768px, also iPad mini und Desktop) wird die Tagesliste
+zweispaltig dargestellt: **links** die Spalte „Mit Uhrzeit" (terminierte
+Einträge, chronologisch), **rechts** die Spalte „Ganztägig". Dadurch wird die
+Bildschirmbreite besser genutzt. Unter 768px (Mobile) bleibt die bisherige
+gestapelte Reihenfolge (Ganztägig oben, Mit Uhrzeit darunter). Die Aufteilung
+ist rein visuell; Datenmodell, Sortierung und Filter bleiben unverändert.
+
+#### F9 Inputs
+
+| Input | Required | Description |
+| --- | --- | --- |
+| Viewport-Breite | — | <768px = gestapelt; ≥768px = zweispaltig |
+| Einträge des Tages | — | werden in `timed` (links) und `allday` (rechts) gruppiert |
+
+#### F9 Behaviour / Acceptance
+
+- Given Viewport ≥768px, When ein Tag mit terminierten **und** ganztägigen
+  Einträgen gerendert wird, Then erscheinen „Mit Uhrzeit" links und „Ganztägig"
+  rechts nebeneinander (zwei Spalten), ohne horizontales Scrollen.
+- Given Viewport <768px, Then bleibt die gestapelte Ansicht (Ganztägig oben,
+  Mit Uhrzeit darunter) wie bisher.
+- Given eine Spalte hat keine Einträge, Then zeigt sie einen dezenten
+  Leerzustand (z. B. „Keine ganztägigen Einträge") statt zu kollabieren; die
+  andere Spalte bleibt voll nutzbar.
+- Die Zuordnung/Reihenfolge der Einträge (Sortierung nach `uhrzeit`, Filter,
+  Erledigt-Status) ist in beiden Layouts identisch.
+
+#### F9 Test Cases
+
+**TC-F9-01: Zweispaltig ab iPad mini**
+
+- **Setup:** Tag mit ≥1 terminierten und ≥1 ganztägigen Eintrag, Viewport 768×1024.
+- **Action:** Tag rendern.
+- **Expected:** Zwei nebeneinanderliegende Spalten; links „Mit Uhrzeit" (terminiert),
+  rechts „Ganztägig"; kein horizontaler Scroll.
+
+**TC-F9-02: Desktop ebenfalls zweispaltig**
+
+- **Setup:** wie oben, Viewport 1280×800.
+- **Action:** Tag rendern.
+- **Expected:** Zwei Spalten (links Uhrzeit, rechts Ganztägig).
+
+**TC-F9-03: Mobile bleibt gestapelt**
+
+- **Setup:** wie oben, Viewport 375×667.
+- **Action:** Tag rendern.
+- **Expected:** Eine Spalte; „Ganztägig" oben, „Mit Uhrzeit" darunter; kein
+  horizontaler Scroll.
+
+**TC-F9-04: Leere Spalte zeigt Leerzustand**
+
+- **Setup:** Tag nur mit terminierten Einträgen, Viewport 768×1024.
+- **Action:** Tag rendern.
+- **Expected:** Linke Spalte gefüllt; rechte Spalte zeigt dezenten Leerzustand,
+  kollabiert nicht.
+
+### F10: Touch-optimierte Bedienung
+
+#### F10 Description
+
+Der Kiosk wird primär per Touch bedient. Alle interaktiven Elemente im Kalender
+(Tages-Pills, Filter-Chips/Tabs, Kategorie-Pills im Dialog, Toggle
+„Ganztags/Uhrzeit", „Hinzufügen"-Button, Erledigt-Checkbox, Autocomplete-
+Vorschläge, Dialog-Buttons) sind mit dem Finger sicher treffbar. Es gibt keine
+Aktionen, die ausschließlich per Hover erreichbar sind.
+
+#### F10 Inputs
+
+| Input | Required | Description |
+| --- | --- | --- |
+| Interaktive Elemente | — | Buttons, Pills, Chips, Toggles, Checkbox, Vorschläge |
+
+#### F10 Behaviour / Acceptance
+
+- Alle primären interaktiven Elemente haben ein effektives Tap-Target von
+  mindestens 44×44px (inkl. Padding), an allen drei Viewports.
+- Keine Funktion ist nur per `:hover` erreichbar; Aktionen sind per Tap
+  auslösbar (Hover-Effekte dürfen zusätzlich existieren).
+- Aktive Zustände (gewählter Tag, aktiver Filter, gewählte Kategorie) sind auch
+  ohne Hover klar erkennbar.
+
+#### F10 Test Cases
+
+**TC-F10-01: Mindest-Tap-Targets**
+
+- **Setup:** Kalender mit Beispieldaten, je Viewport (375, 768, 1280 breit).
+- **Action:** Bounding-Box der primären interaktiven Elemente messen.
+- **Expected:** Höhe **und** Breite jeweils ≥44px.
+
+**TC-F10-02: Keine Hover-only-Aktion**
+
+- **Setup:** Eintrag mit Aktionen (z. B. Erledigt, Löschen/Bearbeiten).
+- **Action:** Aktionen ohne vorheriges Hover per Tap auslösen.
+- **Expected:** Aktionen sind sichtbar/erreichbar und per Tap auslösbar (nicht
+  nur bei Hover eingeblendet).
+
+### F11: Autovervollständigung im Titelfeld
+
+#### F11 Description
+
+Beim Tippen im Titelfeld („Was ist zu tun / reserviert?") werden passende,
+bereits vorhandene Titel als Vorschlagsliste angeboten. Quelle sind die aktuell
+geladenen Kalendereinträge (distinct nach Titel). Auswahl eines Vorschlags per
+Tap füllt das Titelfeld. Die Vorschläge ersetzen keine Freitexteingabe – man
+kann jederzeit weiter frei tippen.
+
+#### F11 Inputs
+
+| Input | Required | Description |
+| --- | --- | --- |
+| Titel-Teiltext | — | laufende Eingabe im Titelfeld |
+| Vorhandene Titel | — | distinct-Titel aus geladenen Einträgen |
+
+#### F11 Behaviour / Acceptance
+
+- Given ≥2 eingegebene Zeichen, When passende vorhandene Titel existieren, Then
+  erscheint eine Vorschlagsliste (max. ~6, Substring-Treffer, case-insensitiv).
+- Given ein Vorschlag wird angetippt, Then wird der Titel ins Feld übernommen
+  und die Liste schließt.
+- Given kein Treffer oder Feld geleert, Then ist keine Vorschlagsliste sichtbar.
+- Die Vorschlagsliste blockiert das normale Absenden (Enter/„Hinzufügen") nicht,
+  wenn kein Vorschlag aktiv gewählt ist.
+
+#### F11 Test Cases
+
+**TC-F11-01: Vorschläge erscheinen**
+
+- **Setup:** Es existieren Einträge mit Titel „Blumen gießen", „Blumenstrauß abholbereit".
+- **Action:** Im Titelfeld „Blum" tippen.
+- **Expected:** Vorschlagsliste zeigt beide Titel; Substring-Treffer, case-insensitiv.
+
+**TC-F11-02: Vorschlag übernehmen**
+
+- **Setup:** wie oben, Liste offen.
+- **Action:** „Blumen gießen" antippen.
+- **Expected:** Titelfeld enthält „Blumen gießen"; Liste geschlossen.
+
+**TC-F11-03: Kein Treffer / leer**
+
+- **Setup:** wie oben.
+- **Action:** „xyz" tippen bzw. Feld leeren.
+- **Expected:** keine Vorschlagsliste sichtbar; normales Tippen/Absenden möglich.
+
+### F12: Kategorie „Info"
+
+#### F12 Description
+
+Zusätzlich zu `aufgabe` / `reservierung` / `vorbestellung` / `lieferung` gibt es
+die Kategorie `info` (rein informativer Eintrag). „Info" ist überall dort
+verfügbar, wo Kategorien vorkommen: als Filter, als Kategorie-Auswahl im Dialog
+und in der Farbcodierung der Einträge (teal `#0891b2`). Serverseitig ist `info`
+in der erlaubten Kategorienliste, damit es nicht auf `aufgabe` zurückfällt.
+
+#### F12 Inputs
+
+| Input | Required | Description |
+| --- | --- | --- |
+| `kategorie` | Ja | jetzt zusätzlich `info` erlaubt |
+
+#### F12 Behaviour / Acceptance
+
+- „Info" ist im Dialog als Kategorie wählbar und als Filter (Chip/Tab) vorhanden.
+- Given `POST /api/kalender` mit `kategorie:"info"`, Then wird der Eintrag mit
+  `dl_kategorie="info"` gespeichert (kein Fallback auf `aufgabe`).
+- Info-Einträge sind in der Liste farblich (teal) von den übrigen Kategorien
+  unterscheidbar (Rand/Badge/Punkt).
+- Der Filter „Info" zeigt genau die Info-Einträge; „Alle" schließt sie ein.
+
+#### F12 Test Cases
+
+**TC-F12-01: Info anlegen und speichern**
+
+- **Setup:** Dialog geöffnet, eingeloggt.
+- **Action:** Titel setzen, Kategorie „Info", „Hinzufügen".
+- **Expected:** POST-Body `kategorie:"info"`; Eintrag erscheint mit teal-Codierung.
+
+**TC-F12-02: Server behält `info`**
+
+- **Setup:** `POST /api/kalender` mit `kategorie:"info"`.
+- **Action:** Eintrag anschließend laden.
+- **Expected:** `kategorie === "info"` (kein Fallback auf `aufgabe`).
+
+**TC-F12-03: Filter „Info"**
+
+- **Setup:** Tag mit gemischten Kategorien inkl. Info.
+- **Action:** Filter „Info" aktivieren.
+- **Expected:** nur Info-Einträge sichtbar; „Alle" zeigt sie wieder mit an.
+
+### F13: Breiterer, touch-freundlicher Dialog
+
+#### F13 Description
+
+Der Erfassungs-/Bearbeiten-Dialog ist ab iPad mini (≥768px) und Desktop
+(≥1280px) breiter als bisher (aktuell `max-width:420px`), damit Felder,
+Kategorie-Pills und Buttons per Touch komfortabel bedienbar sind. Auf Mobile
+(<768px) bleibt der Dialog wie gehabt (nahezu volle Breite, aber begrenzt).
+
+#### F13 Inputs
+
+| Input | Required | Description |
+| --- | --- | --- |
+| Viewport-Breite | — | steuert die Dialog-Maximalbreite |
+
+#### F13 Behaviour / Acceptance
+
+- Given Viewport ≥768px, Then ist die Dialog-Karte breiter als 420px
+  (Zielbereich ~560px) und zentriert, ohne den Viewport zu überschreiten.
+- Given Viewport ≥1280px, Then ist die Dialog-Karte nochmals breiter
+  (Zielbereich ~640px), weiterhin ohne Überlauf.
+- Given Viewport <768px, Then bleibt die bisherige Breite/Handhabung (kein
+  horizontaler Overflow).
+- In allen Breiten bleiben Titelfeld, Kategorie-Pills und Buttons touch-treffbar
+  (F10).
+
+#### F13 Test Cases
+
+**TC-F13-01: Breiter bei iPad mini**
+
+- **Setup:** Dialog geöffnet, Viewport 768×1024.
+- **Action:** Breite der Dialog-Karte messen.
+- **Expected:** >420px (~560px), zentriert, kein horizontaler Overflow.
+
+**TC-F13-02: Breiter bei Desktop**
+
+- **Setup:** Dialog geöffnet, Viewport 1280×800.
+- **Action:** Breite messen.
+- **Expected:** breiter als bei iPad mini (~640px), kein Overflow.
+
+**TC-F13-03: Mobile unverändert**
+
+- **Setup:** Dialog geöffnet, Viewport 375×667.
+- **Action:** Breite messen.
+- **Expected:** ≤ Viewport-Breite, kein horizontaler Overflow.
 
 ## Data & Contracts
 
