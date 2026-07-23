@@ -29,9 +29,9 @@
 
 ## Validation & Rollout
 
-- [ ] T030 Änderungen auf Feature-Branch committen und pushen
-- [ ] T031 Bereitstellung abwarten und fokussierte Tests gegen Feature-URL wiederholen
-- [ ] T032 Live-Inhalt mit Cache-Buster prüfen und Ergebnisse dokumentieren
+- [x] T030 Änderungen auf Feature-Branch committen und pushen
+- [x] T031 Bereitstellung abwarten und fokussierte Tests gegen Feature-URL wiederholen
+- [x] T032 Live-Inhalt mit Cache-Buster prüfen und Ergebnisse dokumentieren
 
 ## Traceability
 
