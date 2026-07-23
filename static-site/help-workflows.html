@@ -3,675 +3,473 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bestellsystem – Workflow-Diagramme</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<title>Dorfladen Kiosk &ndash; Handbuch</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#f8fafc; color:#1e293b; }
-  .header { background:linear-gradient(135deg,#166534,#15803d); color:#fff; padding:28px 32px; }
+  body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#f8fafc; color:#1e293b; line-height:1.55; }
+  .header { background:linear-gradient(135deg,#166534,#15803d); color:#fff; padding:26px 32px; }
   .header h1 { font-size:24px; font-weight:800; }
-  .header p { font-size:13px; opacity:.8; margin-top:4px; }
-  .nav { display:flex; flex-wrap:wrap; gap:6px; padding:16px 32px; background:#fff; border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:10; }
-  .nav button { padding:8px 16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .header p { font-size:13.5px; opacity:.9; margin-top:5px; }
+  .nav { display:flex; flex-wrap:wrap; gap:6px; padding:14px 32px; background:#fff; border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:10; }
+  .nav button { padding:9px 16px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; font-size:13.5px; font-weight:700; cursor:pointer; transition:all .15s; }
   .nav button:hover { background:#f0fdf4; border-color:#86efac; }
   .nav button.active { background:#166534; color:#fff; border-color:#166534; }
-  .section { padding:24px 32px; max-width:1200px; margin:0 auto; height:0; overflow:hidden; opacity:0; position:absolute; left:-9999px; }
-  .section.active { height:auto; overflow:visible; opacity:1; position:relative; left:auto; }
-  .section h2 { font-size:20px; font-weight:800; margin-bottom:6px; color:#166534; }
-  .section .desc { font-size:13px; color:#64748b; margin-bottom:20px; line-height:1.5; }
-  .mermaid { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; margin-bottom:24px; overflow-x:auto; }
-  .legend { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-size:12px; }
-  .legend h4 { font-size:13px; font-weight:700; margin-bottom:6px; color:#166534; }
-  .legend span { display:inline-block; padding:2px 10px; border-radius:6px; margin:2px 4px 2px 0; font-weight:600; }
-  .api-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff; border-radius:10px; overflow:hidden; border:1px solid #e2e8f0; }
-  .api-table th { background:#f0fdf4; padding:10px 14px; text-align:left; font-weight:700; color:#166534; border-bottom:2px solid #bbf7d0; }
-  .api-table td { padding:10px 14px; border-bottom:1px solid #f1f5f9; }
-  .api-table tr:hover td { background:#f8fafc; }
-  .badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; }
-  .b-get { background:#dbeafe; color:#1d4ed8; }
-  .b-post { background:#dcfce7; color:#166534; }
-  .b-patch { background:#fef3c7; color:#92400e; }
-  .sub-h { font-size:16px; font-weight:800; color:#166534; margin:26px 0 10px; }
-  .steps { counter-reset:step; list-style:none; margin:0 0 18px; padding:0; }
-  .steps li { position:relative; padding:9px 12px 9px 42px; margin-bottom:8px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; line-height:1.5; }
-  .steps li::before { counter-increment:step; content:counter(step); position:absolute; left:10px; top:9px; width:22px; height:22px; background:#166534; color:#fff; border-radius:50%; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
-  .steps li ul { margin:6px 0 0 16px; padding:0; list-style:disc; }
-  .steps li ul li { background:none; border:none; padding:2px 0; margin:0; }
-  .steps li ul li::before { content:none; }
-  .tip { background:#fef9c3; border:1px solid #fde047; border-radius:8px; padding:10px 14px; font-size:12px; margin:6px 0 18px; line-height:1.5; }
-  .nav-sep { align-self:center; color:#94a3b8; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:0 10px; border-left:1px solid #e2e8f0; margin-left:4px; }
-  .ampel { list-style:none; margin:0 0 18px; padding:0; font-size:13px; }
-  .ampel li { display:flex; align-items:center; gap:8px; padding:4px 0; }
-  .ampel .dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.1); }
-  @media(max-width:768px) { .nav { padding:10px 16px; } .section { padding:16px; } .nav-sep { display:none; } }
+  .section { padding:24px 32px; max-width:900px; margin:0 auto; display:none; }
+  .section.active { display:block; }
+  .section h2 { font-size:22px; font-weight:800; margin-bottom:8px; color:#166534; }
+  .lead { font-size:14.5px; color:#334155; margin-bottom:22px; }
+  .sub-h { font-size:17px; font-weight:800; color:#166534; margin:30px 0 6px; padding-top:6px; border-top:2px solid #f0fdf4; }
+  .q { font-size:15px; font-weight:800; color:#0f172a; margin:22px 0 8px; }
+  .q::before { content:"\25B6"; color:#16a34a; font-size:11px; margin-right:7px; vertical-align:2px; }
+  p.txt { font-size:14px; color:#334155; margin:0 0 12px; }
+  .steps { counter-reset:step; list-style:none; margin:0 0 16px; padding:0; }
+  .steps > li { position:relative; padding:11px 14px 11px 46px; margin-bottom:8px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; font-size:14px; }
+  .steps > li::before { counter-increment:step; content:counter(step); position:absolute; left:11px; top:10px; width:24px; height:24px; background:#166534; color:#fff; border-radius:50%; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .steps ul { margin:7px 0 0 4px; padding-left:18px; }
+  .steps ul li { padding:2px 0; font-size:13.5px; color:#475569; }
+  .tip { background:#fef9c3; border:1px solid #fde047; border-radius:10px; padding:11px 15px; font-size:13.5px; margin:8px 0 18px; }
+  .warn { background:#fff1f2; border:1px solid #fecdd3; border-radius:10px; padding:11px 15px; font-size:13.5px; margin:8px 0 18px; }
+  .ampel { list-style:none; margin:6px 0 18px; padding:0; font-size:14px; }
+  .ampel li { display:flex; align-items:center; gap:9px; padding:5px 0; }
+  .ampel .dot { width:15px; height:15px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.1); }
+
+  /* ── Nachgebaute Bildschirm-Ansichten (UI-Illustrationen) ── */
+  .ui { background:#fff; border:1px solid #e2e8f0; border-radius:12px; margin:10px 0 6px; box-shadow:0 6px 18px rgba(15,23,42,.06); overflow:hidden; }
+  .ui-cap { font-size:12px; color:#94a3b8; margin:0 0 20px 2px; font-style:italic; }
+  .ui-top { display:flex; align-items:center; gap:8px; background:linear-gradient(135deg,#166534,#15803d); color:#fff; padding:10px 14px; font-weight:800; font-size:14px; }
+  .ui-clock { margin-left:auto; font-weight:600; font-size:12px; opacity:.9; }
+  .ui-round { width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.22); display:inline-flex; align-items:center; justify-content:center; font-size:14px; }
+  .ui-tabs { display:flex; gap:2px; flex-wrap:wrap; padding:10px; border-bottom:1px solid #eef2f7; }
+  .ui-tab { display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 11px; border-radius:9px; font-size:12px; font-weight:700; color:#64748b; text-align:center; }
+  .ui-tab.on { color:#166534; background:#f0fdf4; border-bottom:3px solid #16a34a; }
+  .ui-tab .ic { font-size:19px; }
+  .ui-filter { display:flex; gap:6px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid #eef2f7; }
+  .ui-pill { padding:7px 13px; border-radius:9px 9px 0 0; font-size:12.5px; font-weight:700; color:#64748b; background:#f1f5f9; }
+  .ui-pill.on { background:#166534; color:#fff; }
+  .ui-cnt { background:rgba(0,0,0,.08); border-radius:8px; padding:1px 7px; margin-left:5px; font-size:11px; }
+  .ui-pill.on .ui-cnt { background:rgba(255,255,255,.28); }
+  .ui-body { padding:14px; }
+  .ui-card { border:1px solid #eef2f7; border-radius:10px; padding:12px 14px; margin-bottom:10px; background:#fff; }
+  .ui-card:last-child { margin-bottom:0; }
+  .ui-hd { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .ui-name { font-weight:800; font-size:14.5px; }
+  .ui-price { margin-left:auto; font-weight:800; font-size:14px; }
+  .ui-chip { font-size:11px; font-weight:800; padding:3px 9px; border-radius:7px; }
+  .ui-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:11px; }
+  .ui-btn { display:inline-flex; align-items:center; gap:5px; padding:8px 13px; border-radius:9px; font-size:12.5px; font-weight:700; color:#fff; }
+  .ui-btn.green { background:#16a34a; } .ui-btn.orange { background:#d97706; } .ui-btn.blue { background:#2563eb; }
+  .ui-btn.red { background:#dc2626; } .ui-btn.gray { background:#fff; color:#334155; border:1px solid #cbd5e1; }
+  .ui-dialog { max-width:380px; }
+  .ui-dtitle { font-weight:800; font-size:15px; padding:14px 16px 2px; }
+  .ui-dsub { font-size:12.5px; font-weight:700; color:#334155; padding:6px 16px 2px; }
+  .ui-radio { display:flex; align-items:center; gap:9px; padding:7px 16px; font-size:13.5px; }
+  .ui-radio .r { width:15px; height:15px; border-radius:50%; border:2px solid #94a3b8; flex-shrink:0; }
+  .ui-radio.sel .r { border-color:#dc2626; box-shadow:inset 0 0 0 3px #dc2626; }
+  .ui-drow { display:flex; gap:9px; padding:12px 16px 16px; }
+  .ui-drow .ui-btn { flex:1; justify-content:center; }
+  .ui-field { border:1px solid #cbd5e1; border-radius:9px; padding:9px 12px; font-size:13.5px; color:#64748b; margin-bottom:9px; background:#fff; }
+  .kb { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; }
+  .kb .b { min-width:22px; height:22px; padding:0 6px; border-radius:11px; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; }
+
+  @media(max-width:768px) { .header, .nav, .section { padding-left:16px; padding-right:16px; } }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>Dorfladen Bestellsystem – Workflows</h1>
-  <p>Interaktive Ablaufdiagramme aller Geschaeftsprozesse</p>
+  <h1>Dorfladen Kiosk &ndash; Handbuch</h1>
+  <p>Schritt f&uuml;r Schritt: So bedienen Sie den Kiosk im Laden. Geschrieben f&uuml;r den t&auml;glichen Gebrauch &ndash; keine Technik-Kenntnisse n&ouml;tig.</p>
 </div>
 
 <div class="nav" id="nav">
-  <button class="active" onclick="show('kiosk',this)">Kiosk-Kalender</button>
+  <button class="active" onclick="show('start',this)">&Uuml;berblick</button>
   <button onclick="show('mittag',this)">Mittagstisch</button>
   <button onclick="show('shop',this)">Online-Shop</button>
   <button onclick="show('metzger',this)">Metzger</button>
   <button onclick="show('kunden',this)">Stammkunden</button>
   <button onclick="show('social',this)">Social Media</button>
-  <span class="nav-sep">Technik &amp; Admin</span>
-  <button onclick="show('status',this)">Status-Lebenszyklus</button>
-  <button onclick="show('bestellung',this)">Bestellvorgang</button>
-  <button onclick="show('bearbeitung',this)">Bearbeitung & Packen</button>
-  <button onclick="show('abholscan',this)">Abholscan</button>
-  <button onclick="show('email',this)">E-Mail-Benachrichtigungen</button>
-  <button onclick="show('filter',this)">Kiosk-Filterlogik</button>
-  <button onclick="show('architektur',this)">Gesamtarchitektur</button>
-  <button onclick="show('api',this)">API-Endpunkte</button>
+  <button onclick="show('kalender',this)">Kalender</button>
 </div>
 
-<!-- 0. Kiosk-Kalender (Anleitung fuer Verkaeuferinnen) -->
-<div class="section active" id="sec-kiosk">
-  <h2>Kiosk-Kalender &ndash; Anleitung f&uuml;r Verk&auml;uferinnen</h2>
-  <p class="desc">Der Kalender im Kiosk zeigt Aufgaben, Reservierungen, Vorbestellungen und Infos je Tag. Hier die wichtigsten Handgriffe &ndash; vom Schichtstart bis zum Umgang mit Dauereintr&auml;gen (Serien).</p>
+<!-- ══════════════ ÜBERBLICK ══════════════ -->
+<div class="section active" id="sec-start">
+  <h2>&Uuml;berblick &ndash; so ist der Kiosk aufgebaut</h2>
+  <p class="lead">Der Kiosk ist Ihre Zentrale im Laden: Hier sehen Sie alle Bestellungen (Mittagstisch, Online-Shop, Metzger), pflegen Stammkunden, erstellen Social-Media-Beitr&auml;ge und f&uuml;hren den Kalender. Sie bedienen alles per Fingertipp am Tablet oder mit der Maus am PC. Keine Sorge &ndash; Sie k&ouml;nnen nichts kaputtmachen; jede Aktion l&auml;sst sich nachvollziehen.</p>
 
-  <div class="sub-h">1. Typischer Tagesablauf</div>
-  <ol class="steps">
-    <li><strong>Schichtstart:</strong> Kiosk &ouml;ffnen und den aktuellen Tag pr&uuml;fen.</li>
-    <li><strong>Aufgaben lesen:</strong> Links stehen Termine mit Uhrzeit, rechts ganzt&auml;gige Hinweise.</li>
-    <li><strong>Neue Punkte erfassen:</strong> &Uuml;ber &bdquo;+ Neuer Eintrag&ldquo; neue Infos oder Termine anlegen.</li>
-    <li><strong>Erledigen:</strong> Nach Ausf&uuml;hrung den Eintrag auf <strong>Erledigt</strong> setzen (Haken).</li>
-    <li><strong>Schichtende:</strong> Kurz kontrollieren, ob noch offene Eintr&auml;ge vorhanden sind.</li>
-  </ol>
-  <div class="mermaid">
-flowchart TB
-    A["Schicht starten"] --> B["Kiosk-Kalender oeffnen"]
-    B --> C["Eintraege lesen<br/>mit Uhrzeit | ganztaegig"]
-    C --> D["Neue Eintraege bei Bedarf anlegen"]
-    D --> E["Erledigte Eintraege abhaken"]
-    E --> F["Offene Punkte an naechste Schicht uebergeben"]
-    style A fill:#dcfce7,stroke:#22c55e
-    style F fill:#e0e7ff,stroke:#6366f1
+  <div class="sub-h">Die Kopfzeile ganz oben</div>
+  <p class="txt">Oben sehen Sie Datum und Uhrzeit sowie drei runde Kn&ouml;pfe:</p>
+  <ul class="steps">
+    <li><strong>Glocke (Ton):</strong> schaltet den Signalton ein oder aus. Bei eingeschaltetem Ton macht der Kiosk auf <em>neue</em> Bestellungen aufmerksam.</li>
+    <li><strong>Fragezeichen (Hilfe):</strong> &ouml;ffnet genau dieses Handbuch.</li>
+    <li><strong>Kreis-Pfeil (Aktualisieren):</strong> l&auml;dt die Ansicht neu, falls Sie ganz sicher den neuesten Stand sehen m&ouml;chten. Der Kiosk aktualisiert sich aber auch von selbst.</li>
+  </ul>
+
+  <div class="ui">
+    <div class="ui-top"><span>&#127978; Dorfladen Kiosk</span><span class="ui-clock">Do, 23. Juli &middot; 14:14</span><span class="ui-round">&#128276;</span><span class="ui-round">?</span><span class="ui-round">&#8635;</span></div>
+    <div class="ui-tabs">
+      <span class="ui-tab"><span class="ic">&#127869;</span>Mittagstisch</span>
+      <span class="ui-tab on"><span class="ic">&#128722;</span>Online-Shop</span>
+      <span class="ui-tab"><span class="ic">&#129385;</span>Metzger</span>
+      <span class="ui-tab"><span class="ic">&#128226;</span>Social</span>
+      <span class="ui-tab"><span class="ic">&#128101;</span>Stammkunden</span>
+      <span class="ui-tab"><span class="ic">&#128197;</span>Kalender</span>
+    </div>
   </div>
+  <p class="ui-cap">So sieht die Kopfzeile mit den sechs Reitern aus. Der aktive Reiter ist gr&uuml;n unterstrichen.</p>
 
-  <div class="sub-h">2. Neuen Eintrag anlegen (Touch)</div>
+  <div class="sub-h">Die sechs Reiter</div>
+  <ul class="steps">
+    <li><strong>Mittagstisch:</strong> Bestellungen f&uuml;r das t&auml;gliche Mittagessen.</li>
+    <li><strong>Online-Shop:</strong> Abholbestellungen aus dem Internet-Shop &ndash; annehmen, packen, ausgeben.</li>
+    <li><strong>Metzger:</strong> Fleisch-Vorbestellungen sammeln und bei der Metzgerei bestellen.</li>
+    <li><strong>Social:</strong> Beitr&auml;ge f&uuml;r WhatsApp/Instagram und die Homepage erstellen.</li>
+    <li><strong>Stammkunden:</strong> Kunden suchen, anlegen und Bestellungen f&uuml;r sie aufnehmen.</li>
+    <li><strong>Kalender:</strong> Aufgaben, Reservierungen und Notizen je Tag.</li>
+  </ul>
+
+  <div class="sub-h">Die farbigen Zahlen (Z&auml;hler) an den Reitern</div>
+  <p class="txt">Kleine farbige Kreise an einem Reiter zeigen, dass dort etwas auf Sie wartet:</p>
+  <div class="ui"><div class="ui-body">
+    <div class="badge-row" style="display:flex;gap:16px;flex-wrap:wrap">
+      <span class="kb"><span class="b" style="background:#ef4444">3</span> Rot = neue Bestellungen</span>
+      <span class="kb"><span class="b" style="background:#f59e0b">2</span> Orange = noch zu packen</span>
+      <span class="kb"><span class="b" style="background:#dc2626">1</span> Dunkelrot = &uuml;berf&auml;llig</span>
+      <span class="kb"><span class="b" style="background:#3b82f6">1</span> Blau = ungelesene Nachricht</span>
+    </div>
+  </div></div>
+  <p class="ui-cap">Tippen Sie auf so einen Z&auml;hler, springt der Kiosk direkt zur passenden Liste.</p>
+
+  <div class="sub-h">Das Grundprinzip in jedem Reiter</div>
+  <ul class="steps">
+    <li><strong>Oben die Filter</strong> (z.&nbsp;B. &bdquo;Zu erledigen&ldquo;, &bdquo;Heute&ldquo;, &bdquo;Erledigt&ldquo;) w&auml;hlen aus, <em>welche</em> Bestellungen Sie sehen.</li>
+    <li><strong>Darunter die Karten</strong> &ndash; jede Karte ist eine Bestellung oder ein Kunde. Tippen Sie eine Karte an, klappt sie auf und zeigt Details und Kn&ouml;pfe.</li>
+    <li><strong>Die Kn&ouml;pfe sind farbig</strong> und selbsterkl&auml;rend beschriftet. Gr&uuml;n bedeutet &bdquo;weiter/erledigt&ldquo;, Rot bedeutet &bdquo;stornieren&ldquo;.</li>
+  </ul>
+  <div class="tip">&#128161; Sie k&ouml;nnen jederzeit den Reiter wechseln, ohne etwas zu verlieren. Alles wird sofort gespeichert.</div>
+</div>
+
+<!-- ══════════════ MITTAGSTISCH ══════════════ -->
+<div class="section" id="sec-mittag">
+  <h2>Mittagstisch</h2>
+  <p class="lead">Hier laufen die Bestellungen f&uuml;r das Mittagessen zusammen. Sie w&auml;hlen oben den Tag, sehen alle Bestellungen dazu und arbeiten sie ab: best&auml;tigen, ausgeben, bei Bedarf stornieren &ndash; und Sie k&ouml;nnen dem Kunden antworten.</p>
+
+  <div class="sub-h">Die Leiste oben</div>
+  <p class="txt">Ganz oben w&auml;hlen Sie mit den Tages-Kn&ouml;pfen (z.&nbsp;B. <strong>Heute</strong>) den Tag. Darunter gibt es vier Filter:</p>
+  <div class="ui"><div class="ui-filter">
+    <span class="ui-pill on">Offen <span class="ui-cnt">5</span></span>
+    <span class="ui-pill" style="color:#3b82f6">Nachrichten <span class="ui-cnt">1</span></span>
+    <span class="ui-pill">Erledigt <span class="ui-cnt">8</span></span>
+    <span class="ui-pill">Alle <span class="ui-cnt">13</span></span>
+  </div></div>
+  <p class="ui-cap">&bdquo;Offen&ldquo; ist Ihr Tagesgesch&auml;ft. &bdquo;Nachrichten&ldquo; (blau) sammelt Bestellungen mit ungelesenen Kundennachrichten.</p>
+
+  <div class="q">Wenn eine neue Bestellung eingeht &ndash; best&auml;tigen</div>
+  <ol class="steps">
+    <li>Filter <strong>Offen</strong> w&auml;hlen. Neue Bestellungen sind hervorgehoben.</li>
+    <li>Auf der Bestellkarte auf den gr&uuml;nen Knopf <strong>Best&auml;tigen</strong> tippen.</li>
+    <li>Wenn Sie m&ouml;chten, schreiben Sie im Feld <strong>&bdquo;Nachricht an Kunde (optional)&ldquo;</strong> noch etwas.</li>
+    <li>Auf <strong>Jetzt best&auml;tigen</strong> tippen. Die Bestellung ist jetzt best&auml;tigt (Karte wird gr&uuml;n).</li>
+  </ol>
+  <div class="ui"><div class="ui-body"><div class="ui-card">
+    <div class="ui-hd"><span class="ui-name">Familie Huber</span><span class="ui-chip" style="background:#fef3c7;color:#92400e">Neu</span><span class="ui-price">2&times; Schnitzel</span></div>
+    <div class="ui-actions"><span class="ui-btn green">&#10003; Best&auml;tigen</span><span class="ui-btn blue">&#128230; Abgeholt</span><span class="ui-btn red">&#10005;</span></div>
+  </div></div></div>
+  <p class="ui-cap">Eine Bestellkarte mit den Kn&ouml;pfen Best&auml;tigen (gr&uuml;n), Abgeholt (blau) und Stornieren (rotes &times;).</p>
+  <div class="tip">&#128161; Viele gleiche Gerichte? &Uuml;ber die &Uuml;berschrift der Gericht-Gruppe k&ouml;nnen Sie mit &bdquo;<strong>X best&auml;tigen</strong>&ldquo; alle offenen auf einmal best&auml;tigen.</div>
+
+  <div class="q">Wenn der Kunde sein Essen abholt</div>
+  <ol class="steps">
+    <li>Bestellung im Filter <strong>Offen</strong> finden.</li>
+    <li>Auf den blauen Knopf <strong>Abgeholt</strong> tippen &ndash; die Bestellung wandert nach <strong>Erledigt</strong>.</li>
+  </ol>
+
+  <div class="q">Wenn Sie eine Bestellung stornieren m&uuml;ssen</div>
+  <ol class="steps">
+    <li>Auf das rote <strong>&times;</strong> der Bestellung tippen.</li>
+    <li>Es &ouml;ffnet sich ein Fenster. W&auml;hlen Sie einen <strong>Grund</strong> (Pflicht).</li>
+    <li>Optional noch einen Kommentar erg&auml;nzen.</li>
+    <li>Auf <strong>Stornieren</strong> tippen. Der Knopf ist erst aktiv, wenn ein Grund gew&auml;hlt ist.</li>
+  </ol>
+  <div class="ui ui-dialog">
+    <div class="ui-dtitle">Bestellung stornieren</div>
+    <div class="ui-dsub">Stornierungsgrund (Pflichtfeld):</div>
+    <div class="ui-radio sel"><span class="r"></span> Gericht ist leider ausverkauft</div>
+    <div class="ui-radio"><span class="r"></span> Bestellung wurde doppelt aufgegeben</div>
+    <div class="ui-radio"><span class="r"></span> Bestellschluss bereits &uuml;berschritten</div>
+    <div class="ui-radio"><span class="r"></span> Kunde hat telefonisch storniert</div>
+    <div class="ui-radio"><span class="r"></span> Sonstiger Grund</div>
+    <div class="ui-drow"><span class="ui-btn gray">Abbrechen</span><span class="ui-btn red">Stornieren</span></div>
+  </div>
+  <p class="ui-cap">Das Storno-Fenster: erst nach Auswahl eines Grundes wird &bdquo;Stornieren&ldquo; aktiv.</p>
+
+  <div class="q">Wenn ein Kunde Ihnen geschrieben hat</div>
+  <ol class="steps">
+    <li>Filter <strong>Nachrichten</strong> (blau; er blinkt bei Neuem).</li>
+    <li>Der Kundentext steht in einem blauen Kasten.</li>
+    <li>Ins Feld <strong>&bdquo;Antwort eingeben&hellip;&ldquo;</strong> schreiben und Enter dr&uuml;cken. Ihre Antwort erscheint gr&uuml;n darunter.</li>
+  </ol>
+
+  <div class="sub-h">Was die Farben der Karten bedeuten</div>
+  <ul class="ampel">
+    <li><span class="dot" style="background:#f59e0b"></span> <strong>Gelb</strong> = neu, noch zu bearbeiten</li>
+    <li><span class="dot" style="background:#16a34a"></span> <strong>Gr&uuml;n</strong> = best&auml;tigt</li>
+    <li><span class="dot" style="background:#9ca3af"></span> <strong>Grau</strong> = abgeholt (erledigt)</li>
+    <li><span class="dot" style="background:#dc2626"></span> <strong>Rot</strong> = storniert</li>
+  </ul>
+  <p class="txt">Ein oranges Zeichen <strong>&bdquo;Mitnehmen&ldquo;</strong> bedeutet: Der Kunde nimmt das Essen mit (isst nicht vor Ort).</p>
+</div>
+
+<!-- ══════════════ ONLINE-SHOP ══════════════ -->
+<div class="section" id="sec-shop">
+  <h2>Online-Shop</h2>
+  <p class="lead">Kunden bestellen im Internet-Shop und w&auml;hlen einen Abholtermin. Ihre Aufgabe: die Bestellung <strong>annehmen</strong>, die Ware <strong>packen</strong>, als <strong>abholbereit</strong> melden (der Kunde bekommt automatisch Bescheid) und beim Abholen <strong>ausgeben</strong>.</p>
+
+  <div class="sub-h">Der Weg jeder Bestellung</div>
+  <p class="txt">Eine Bestellung durchl&auml;uft immer dieselben vier Stufen. Sie schieben sie mit einem Knopf jeweils eine Stufe weiter:</p>
+  <div class="ui"><div class="ui-body">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:700;color:#334155">
+      <span class="ui-chip" style="background:#fef3c7;color:#92400e">Neu</span> &rarr;
+      <span class="ui-chip" style="background:#fef3c7;color:#92400e">In Bearbeitung</span> &rarr;
+      <span class="ui-chip" style="background:#e0e7ff;color:#3730a3">Abholbereit</span> &rarr;
+      <span class="ui-chip" style="background:#dcfce7;color:#166534">Abgeholt</span>
+    </div>
+    <p class="txt" style="margin:10px 0 0">Knopf-Reihenfolge: <strong>Annehmen</strong> &rarr; <strong>Packen</strong> (fertig) &rarr; <strong>Ausgeben</strong>. Stornieren ist jederzeit m&ouml;glich.</p>
+  </div></div>
+
+  <div class="sub-h">Die Filter oben</div>
+  <div class="ui"><div class="ui-filter">
+    <span class="ui-pill on">&#128230; Zu erledigen <span class="ui-cnt">4</span></span>
+    <span class="ui-pill">&#128197; Heute abholen <span class="ui-cnt">2</span></span>
+    <span class="ui-pill">&#9888; &Uuml;berf&auml;llig <span class="ui-cnt">0</span></span>
+    <span class="ui-pill">&#128336; Historie</span>
+  </div></div>
+  <ul class="steps">
+    <li><strong>Zu erledigen:</strong> alle offenen Bestellungen (neu, in Bearbeitung, abholbereit).</li>
+    <li><strong>Heute abholen:</strong> nur die, die heute abgeholt werden.</li>
+    <li><strong>&Uuml;berf&auml;llig:</strong> die Abholzeit ist schon vorbei (rot, dringend).</li>
+    <li><strong>Historie:</strong> abgeschlossene Bestellungen zum Nachschlagen (mit Zeitraum und &bdquo;Abgeholt/Storniert&ldquo;).</li>
+  </ul>
+
+  <div class="q">Wenn eine neue Bestellung kommt &ndash; annehmen</div>
+  <ol class="steps">
+    <li>Filter <strong>Zu erledigen</strong>.</li>
+    <li>Auf <strong>Annehmen</strong> tippen. Die Bestellung ist jetzt <strong>In Bearbeitung</strong>.</li>
+  </ol>
+
+  <div class="q">Wenn Sie packen &ndash; die Packliste abarbeiten</div>
+  <ol class="steps">
+    <li>Auf <strong>Packen</strong> tippen. Es &ouml;ffnet sich das Fenster <strong>&bdquo;Bestellung packen&ldquo;</strong> mit allen Artikeln.</li>
+    <li>Jeden Artikel, den Sie eingepackt haben, <strong>abhaken</strong>. Die Menge k&ouml;nnen Sie anpassen &ndash; fehlt etwas oder gibt es nur eine Teilmenge, wird das farbig markiert.</li>
+    <li>Oben sehen Sie den Fortschritt, z.&nbsp;B. <strong>&bdquo;4/7 gepackt&ldquo;</strong>. Ihre Eingaben werden automatisch gespeichert.</li>
+    <li>Optional auf <strong>Drucken</strong> tippen &ndash; ergibt einen Packzettel auf Papier.</li>
+    <li>Am Ende auf <strong>Fertig</strong> tippen. Die Bestellung ist <strong>Abholbereit</strong>; der Kunde wird automatisch benachrichtigt.</li>
+  </ol>
+  <div class="ui">
+    <div class="ui-top" style="background:#334155"><span>&#128230; Bestellung packen &middot; Familie Huber</span></div>
+    <div class="ui-body">
+      <div style="font-size:12.5px;font-weight:700;color:#166534;margin-bottom:8px">Fortschritt: 2/3 gepackt</div>
+      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;background:#16a34a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px">&#10003;</span><span class="ui-name">Bio-Eier 10er</span><span class="ui-price">1 Stk</span></div></div>
+      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;background:#16a34a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px">&#10003;</span><span class="ui-name">Kartoffeln</span><span class="ui-price">2,5 kg</span></div></div>
+      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;border:2px solid #cbd5e1"></span><span class="ui-name">Butter</span><span class="ui-price">2 Stk</span></div></div>
+    </div>
+    <div class="ui-drow"><span class="ui-btn gray">&#128424; Drucken</span><span class="ui-btn green">&#10003; Fertig</span></div>
+  </div>
+  <p class="ui-cap">Im Pack-Fenster haken Sie jeden Artikel ab. &bdquo;Fertig&ldquo; meldet die Bestellung als abholbereit.</p>
+
+  <div class="q">Wenn der Kunde abholt &ndash; ausgeben</div>
+  <ol class="steps">
+    <li>Auf <strong>Ausgeben</strong> tippen. Die Bestellung ist <strong>Abgeholt</strong> und damit erledigt.</li>
+    <li>Versehentlich getippt? Mit dem <strong>Zur&uuml;ck-Pfeil</strong> eine Stufe zur&uuml;cksetzen.</li>
+  </ol>
+
+  <div class="q">Wenn Sie stornieren</div>
+  <ol class="steps">
+    <li>Auf <strong>Stornieren</strong> tippen und einen Grund w&auml;hlen: &bdquo;Artikel nicht lieferbar&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo;, &bdquo;Abholung nicht m&ouml;glich&ldquo; oder &bdquo;Sonstiger Grund&ldquo;.</li>
+    <li>Auf <strong>Stornieren</strong> best&auml;tigen.</li>
+  </ol>
+  <div class="tip">&#128161; &Uuml;ber die farbigen Z&auml;hler ganz oben (z.&nbsp;B. <strong>Packen</strong> oder <strong>&Uuml;berf&auml;llig</strong>) springen Sie sofort in die richtige Liste. Mit <strong>Details</strong> sehen Sie die komplette Bestellung.</div>
+</div>
+
+<!-- ══════════════ METZGER ══════════════ -->
+<div class="section" id="sec-metzger">
+  <h2>Metzger</h2>
+  <p class="lead">Hier sammeln sich die Fleisch-Vorbestellungen der Kunden. Sie b&uuml;ndeln alle offenen Positionen zu einer <strong>Sammelbestellung</strong>, geben diese bei der Metzgerei auf und markieren die Ware sp&auml;ter als abgeholt.</p>
+
+  <div class="sub-h">Die Filter oben</div>
+  <div class="ui"><div class="ui-filter">
+    <span class="ui-pill on">Zu erledigen <span class="ui-cnt">6</span></span>
+    <span class="ui-pill">Heute abholen <span class="ui-cnt">2</span></span>
+    <span class="ui-pill">Sammelbestellung</span>
+    <span class="ui-pill" style="color:#3b82f6">Nachrichten</span>
+    <span class="ui-pill">Historie</span>
+  </div></div>
+
+  <div class="q">Wenn Sie bei der Metzgerei bestellen &ndash; Sammelbestellung</div>
+  <ol class="steps">
+    <li>Filter <strong>Sammelbestellung</strong> w&auml;hlen. Alle offenen Positionen sind nach <strong>Liefertag</strong> gruppiert (Artikel, Menge in kg, Preis).</li>
+    <li>Auf <strong>Drucken</strong> tippen &ndash; Sie erhalten eine saubere Liste auf Papier f&uuml;r die Metzgerei.</li>
+    <li>Nachdem Sie bestellt haben, haken Sie die Positionen ab &ndash; einzeln, oder mit <strong>Alle abhaken</strong> auf einen Schlag.</li>
+  </ol>
+  <div class="ui">
+    <div class="ui-body">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><strong style="flex:1;font-size:14px">&#128203; Sammelbestellung</strong><span class="ui-btn gray">&#128424; Drucken</span><span class="ui-btn green">&#10003;&#10003; Alle abhaken</span></div>
+      <div style="font-size:12.5px;font-weight:700;color:#166534;margin-bottom:6px">&#128197; Freitag, 25. Juli</div>
+      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;border:2px solid #cbd5e1"></span><span class="ui-name">Schweinefilet</span><span class="ui-price">2,0 kg</span></div></div>
+      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;border:2px solid #cbd5e1"></span><span class="ui-name">Rinderhack</span><span class="ui-price">3,5 kg</span></div></div>
+    </div>
+  </div>
+  <p class="ui-cap">Die Sammelbestellung b&uuml;ndelt alle offenen Positionen pro Liefertag &ndash; ideal zum Ausdrucken.</p>
+
+  <div class="q">Wenn die Ware da ist</div>
+  <ol class="steps">
+    <li>Die Bestellung des Kunden &ouml;ffnen und auf <strong>Abgeholt</strong> tippen.</li>
+  </ol>
+
+  <div class="q">Wenn Sie stornieren</div>
+  <ol class="steps">
+    <li>Grund w&auml;hlen: &bdquo;Ware nicht verf&uuml;gbar&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo;, &bdquo;Mindestbestellmenge nicht erreicht&ldquo; oder &bdquo;Sonstiger Grund&ldquo;, dann <strong>Stornieren</strong>.</li>
+  </ol>
+  <p class="txt">Der Weg einer Fleischbestellung: <strong>Neu</strong> &rarr; <strong>In Bestellung</strong> (bei der Metzgerei geordert) &rarr; <strong>Abgeholt</strong> (oder <strong>Storniert</strong>).</p>
+</div>
+
+<!-- ══════════════ STAMMKUNDEN ══════════════ -->
+<div class="section" id="sec-kunden">
+  <h2>Stammkunden</h2>
+  <p class="lead">Hier finden und verwalten Sie Ihre Stammkunden. Praktisch, wenn ein Kunde anruft: Sie suchen ihn, sehen seine Daten und nehmen direkt eine Bestellung auf.</p>
+
+  <div class="q">Wenn Sie einen Kunden suchen</div>
+  <ol class="steps">
+    <li>Ins Suchfeld <strong>&bdquo;Kunde suchen (Name oder Telefon)&hellip;&ldquo;</strong> tippen. Die Liste filtert w&auml;hrend des Tippens.</li>
+    <li>Oder auf <strong>Alle Kunden laden</strong> tippen, um die vollst&auml;ndige Liste zu sehen.</li>
+  </ol>
+  <div class="ui"><div class="ui-body">
+    <div class="ui-field">&#128269; Kunde suchen (Name oder Telefon)&hellip;</div>
+    <div style="display:flex;gap:8px"><span class="ui-btn green">&#128100; Neuer Kunde</span><span class="ui-btn gray">&#128101; Alle Kunden laden</span></div>
+  </div></div>
+  <p class="ui-cap">Suchfeld und die Kn&ouml;pfe &bdquo;Neuer Kunde&ldquo; und &bdquo;Alle Kunden laden&ldquo;.</p>
+
+  <div class="q">Wenn ein neuer Kunde dazukommt</div>
+  <ol class="steps">
+    <li>Auf <strong>Neuer Kunde</strong> tippen. Es &ouml;ffnet sich das Fenster <strong>&bdquo;Neuer Stammkunde&ldquo;</strong>.</li>
+    <li><strong>Nachname</strong> und <strong>Telefon</strong> ausf&uuml;llen (Pflicht). Vorname, E-Mail und Notiz sind freiwillig.</li>
+    <li>Auf <strong>Kunde anlegen</strong> tippen &ndash; der Kunde bekommt eine Stammkunden-Nummer.</li>
+  </ol>
+  <div class="warn">&#9888;&#65039; Ohne <strong>Nachname</strong> l&auml;sst sich kein Kunde speichern &ndash; der Kiosk weist Sie freundlich darauf hin.</div>
+
+  <div class="q">Wenn Sie Kundendaten &auml;ndern</div>
+  <ol class="steps">
+    <li>Kundenkarte antippen (klappt auf) &rarr; <strong>Bearbeiten</strong> &rarr; Werte anpassen &rarr; <strong>Speichern</strong>.</li>
+  </ol>
+
+  <div class="q">Wenn Sie eine Bestellung aufnehmen (z.&nbsp;B. am Telefon)</div>
+  <ol class="steps">
+    <li>Auf der Kundenkarte auf <strong>Bestellen</strong> tippen.</li>
+    <li><strong>Gericht</strong> w&auml;hlen und die <strong>Menge</strong> mit den Kn&ouml;pfen <strong>&minus;</strong> und <strong>+</strong> einstellen.</li>
+    <li>Optional eine Anmerkung eingeben und <strong>Zum Mitnehmen</strong> setzen.</li>
+    <li>Auf <strong>Bestellung aufnehmen</strong> tippen &ndash; fertig, Sie erhalten die Bestellnummer.</li>
+  </ol>
+</div>
+
+<!-- ══════════════ SOCIAL MEDIA ══════════════ -->
+<div class="section" id="sec-social">
+  <h2>Social Media</h2>
+  <p class="lead">Erstellen Sie in vier einfachen Schritten einen Tagespost, teilen Sie ihn (WhatsApp/Instagram) oder ver&ouml;ffentlichen Sie ihn als Tagesinfo auf der Homepage. Im Unterbereich <strong>Katalog</strong> pflegen Sie die Produkte, die Sie in die Beitr&auml;ge einbauen k&ouml;nnen.</p>
+
+  <div class="ui"><div class="ui-filter">
+    <span class="ui-pill on">&#10133; Neuer Post</span>
+    <span class="ui-pill">&#128214; Katalog</span>
+  </div></div>
+
+  <div class="q">Einen Tagespost erstellen &ndash; in 4 Schritten</div>
+  <ol class="steps">
+    <li><strong>Schritt 1 &ndash; Titel &amp; Text:</strong> <strong>Heute</strong> oder <strong>Morgen</strong> w&auml;hlen, einen Titel aus der Liste nehmen (oder einen eigenen eingeben) und optional einen Freitext erg&auml;nzen.</li>
+    <li><strong>Schritt 2 &ndash; Produkte:</strong> Produkte aus dem Katalog antippen &ndash; sie erscheinen im Bild. Oben sehen Sie z.&nbsp;B. &bdquo;2 ausgew&auml;hlt&ldquo;.</li>
+    <li><strong>Schritt 3 &ndash; Vorschau:</strong> Das fertige Bild wird automatisch erzeugt. So sieht es der Kunde.</li>
+    <li><strong>Schritt 4 &ndash; Teilen &amp; Ver&ouml;ffentlichen:</strong> siehe unten.</li>
+  </ol>
+
+  <div class="ui"><div class="ui-body">
+    <div class="ui-actions">
+      <span class="ui-btn green" style="background:#25d366">&#128241; Auf WhatsApp teilen</span>
+      <span class="ui-btn" style="background:#e1306c">&#128247; Auf Instagram teilen</span>
+    </div>
+    <div class="ui-actions">
+      <span class="ui-btn gray">&#128190; Bild speichern</span>
+      <span class="ui-btn green">&#128196; Tagesinfo ver&ouml;ffentlichen</span>
+      <span class="ui-btn orange">&#128278; Parken</span>
+    </div>
+  </div></div>
+  <ul class="steps">
+    <li><strong>Auf WhatsApp / Instagram teilen:</strong> Das Bild wird kopiert &ndash; Sie f&uuml;gen es dort nur noch ein.</li>
+    <li><strong>Bild speichern:</strong> l&auml;dt das Bild als Datei herunter.</li>
+    <li><strong>Tagesinfo ver&ouml;ffentlichen:</strong> erscheint sofort auf der Homepage.</li>
+    <li><strong>Parken:</strong> speichert den Beitrag als Entwurf, damit Sie ihn sp&auml;ter senden k&ouml;nnen.</li>
+  </ul>
+
+  <div class="q">Den Katalog pflegen</div>
+  <ol class="steps">
+    <li>Unterbereich <strong>Katalog</strong> w&auml;hlen.</li>
+    <li><strong>Neues Produkt:</strong> Name, Kategorie, Preis und Bild angeben (per Kamera, Datei oder Einf&uuml;gen) &rarr; <strong>Hinzuf&uuml;gen</strong>.</li>
+    <li>Neue <strong>Kategorien</strong> legen Sie &uuml;ber <strong>Kategorien verwalten</strong> an (Name + Symbol).</li>
+  </ol>
+</div>
+
+<!-- ══════════════ KALENDER ══════════════ -->
+<div class="section" id="sec-kalender">
+  <h2>Kalender</h2>
+  <p class="lead">Der Kalender zeigt pro Tag Aufgaben, Reservierungen, Vorbestellungen und Infos. Links stehen Termine mit Uhrzeit, rechts ganzt&auml;gige Hinweise. So behalten Sie und die n&auml;chste Schicht den &Uuml;berblick.</p>
+
+  <div class="q">Der typische Tagesablauf</div>
+  <ol class="steps">
+    <li><strong>Schichtstart:</strong> Kalender &ouml;ffnen und den aktuellen Tag pr&uuml;fen.</li>
+    <li><strong>Aufgaben lesen:</strong> Termine mit Uhrzeit links, ganzt&auml;gige Hinweise rechts.</li>
+    <li><strong>Neue Punkte erfassen:</strong> &uuml;ber <strong>+ Neuer Eintrag</strong>.</li>
+    <li><strong>Erledigen:</strong> nach dem Erledigen den Eintrag <strong>abhaken</strong>.</li>
+    <li><strong>Schichtende:</strong> pr&uuml;fen, ob noch etwas offen ist.</li>
+  </ol>
+
+  <div class="q">Einen neuen Eintrag anlegen</div>
   <ol class="steps">
     <li>Auf <strong>+ Neuer Eintrag</strong> tippen.</li>
-    <li><strong>Titel</strong> eintragen (mehrzeilig m&ouml;glich).</li>
+    <li><strong>Titel</strong> eingeben.</li>
     <li><strong>Zeitpunkt</strong> w&auml;hlen:
       <ul>
         <li>F&uuml;r Tagesinfos: <strong>Ganzt&auml;gig</strong> aktivieren.</li>
-        <li>F&uuml;r feste Uhrzeit: Uhrzeit per <strong>+/&minus;</strong> oder Schnellzeiten setzen.</li>
+        <li>F&uuml;r eine feste Uhrzeit: Zeit mit <strong>+/&minus;</strong> oder Schnellzeiten setzen.</li>
       </ul>
     </li>
     <li><strong>Kategorie</strong> w&auml;hlen (z.&nbsp;B. Aufgabe, Lieferung, Info).</li>
-    <li>Optional: <strong>Kunde</strong> und <strong>Wiederholung</strong> setzen.</li>
+    <li>Optional <strong>Kunde</strong> und <strong>Wiederholung</strong> setzen.</li>
     <li>Mit <strong>Speichern</strong> abschlie&szlig;en.</li>
   </ol>
-  <div class="mermaid">
-flowchart TB
-    A["+ Neuer Eintrag"] --> B["Titel eingeben"]
-    B --> C{"Ganztaegig oder Uhrzeit?"}
-    C -->|Ganztaegig| D["Ganztaegig aktivieren"]
-    C -->|Uhrzeit| E["Uhrzeit setzen"]
-    D --> F["Kategorie waehlen"]
-    E --> F
-    F --> G["Optional: Kunde + Wiederholung"]
-    G --> H["Speichern"]
-    style A fill:#dcfce7,stroke:#22c55e
-    style H fill:#dcfce7,stroke:#22c55e
-  </div>
 
-  <div class="sub-h">3. Dauereintrag / Serie l&ouml;schen</div>
-  <p class="desc">Bei einem wiederkehrenden Eintrag (Serie) fragt der Kiosk gezielt nach der gew&uuml;nschten Aktion:</p>
+  <div class="q">Einen Dauereintrag (Serie) l&ouml;schen</div>
+  <p class="txt">Bei einem wiederkehrenden Eintrag fragt der Kiosk gezielt nach:</p>
   <ol class="steps">
-    <li><strong>Nur diesen Tag l&ouml;schen:</strong> Der Termin wird nur am aktuellen Datum entfernt, die Serie bleibt.</li>
-    <li><strong>Ganze Serie l&ouml;schen:</strong> Die Serie wird <strong>ab dem gew&auml;hlten Tag</strong> beendet &ndash; dieser und alle k&uuml;nftigen Termine entfallen. Vergangene (auch bereits bearbeitete) Termine bleiben sichtbar.</li>
+    <li><strong>Nur diesen Tag l&ouml;schen:</strong> Der Termin wird nur am heutigen Datum entfernt, die Serie bleibt.</li>
+    <li><strong>Ganze Serie l&ouml;schen:</strong> Die Serie wird <strong>ab dem gew&auml;hlten Tag</strong> beendet &ndash; dieser und alle k&uuml;nftigen Termine entfallen. <strong>Vergangene (auch bereits bearbeitete) Termine bleiben sichtbar.</strong></li>
     <li><strong>Abbrechen:</strong> Es wird nichts gel&ouml;scht.</li>
   </ol>
-  <div class="tip">&#128161; Wenn Sie unsicher sind, w&auml;hlen Sie zuerst &bdquo;Nur diesen Tag l&ouml;schen&ldquo;.</div>
-  <div class="mermaid">
-flowchart TB
-    A["Loeschen antippen"] --> B{"Ist es eine Serie?"}
-    B -->|Nein| C["Einzeltermin direkt loeschen"]
-    B -->|Ja| D["Auswahl anzeigen"]
-    D --> E["Nur diesen Tag:<br/>nur dieser Termin geloescht"]
-    D --> F["Ganze Serie:<br/>ab hier geloescht,<br/>Vergangenes bleibt"]
-    D --> G["Abbrechen:<br/>keine Aenderung"]
-    style E fill:#e0e7ff,stroke:#6366f1
-    style F fill:#fee2e2,stroke:#ef4444
-    style C fill:#fef3c7,stroke:#f59e0b
+  <div class="ui ui-dialog">
+    <div class="ui-dtitle">Serie l&ouml;schen?</div>
+    <div class="ui-dsub" style="font-weight:400;color:#475569">Dieser Eintrag wiederholt sich. Was m&ouml;chten Sie tun?</div>
+    <div class="ui-drow" style="flex-direction:column;gap:8px">
+      <span class="ui-btn green" style="justify-content:center">Nur diesen Tag</span>
+      <span class="ui-btn red" style="justify-content:center">Ganze Serie l&ouml;schen</span>
+      <span class="ui-btn gray" style="justify-content:center">Abbrechen</span>
+    </div>
   </div>
-</div>
-
-<!-- Mittagstisch -->
-<div class="section" id="sec-mittag">
-  <h2>Mittagstisch &ndash; Bestellungen des Tages</h2>
-  <p class="desc">Hier verwalten Sie die Mittagstisch-Bestellungen f&uuml;r einen Tag: best&auml;tigen, als abgeholt markieren, stornieren &ndash; und mit dem Kunden schreiben.</p>
-
-  <div class="sub-h">Die Leiste oben verstehen</div>
-  <ol class="steps">
-    <li><strong>Tagesleiste:</strong> &Uuml;ber die Tages-Buttons (z.&nbsp;B. <strong>Heute</strong>) w&auml;hlen Sie den Tag.</li>
-    <li><strong>Offen:</strong> neue und best&auml;tigte Bestellungen &ndash; das laufende Tagesgesch&auml;ft.</li>
-    <li><strong>Nachrichten</strong> (blau): Bestellungen mit ungelesenen Kundennachrichten, aus allen Tagen.</li>
-    <li><strong>Erledigt:</strong> abgeholte und stornierte Bestellungen.</li>
-    <li><strong>Alle:</strong> alles zusammen.</li>
-  </ol>
-
-  <div class="sub-h">Wenn eine neue Bestellung eingeht &rarr; best&auml;tigen</div>
-  <ol class="steps">
-    <li>Filter <strong>Offen</strong> w&auml;hlen &ndash; neue Bestellungen sind farblich hervorgehoben.</li>
-    <li>Auf der Bestellkarte auf den gr&uuml;nen Haken (<strong>Best&auml;tigen</strong>) tippen.</li>
-    <li>Optional im Feld <strong>&bdquo;Nachricht an Kunde (optional)&ldquo;</strong> etwas schreiben.</li>
-    <li><strong>&bdquo;Jetzt best&auml;tigen&ldquo;</strong> tippen &ndash; der Status wechselt auf <strong>Best&auml;tigt</strong>.</li>
-  </ol>
-  <div class="tip">&#128161; Mehrere gleiche Gerichte? &Uuml;ber den Gericht-Kopf k&ouml;nnen Sie mit &bdquo;<strong>X best&auml;tigen</strong>&ldquo; alle offenen dieses Gerichts auf einmal best&auml;tigen.</div>
-
-  <div class="sub-h">Wenn der Kunde abholt &rarr; als abgeholt markieren</div>
-  <ol class="steps">
-    <li>Bestellung im Filter <strong>Offen</strong> finden.</li>
-    <li>Auf <strong>&bdquo;Abgeholt&ldquo;</strong> tippen &ndash; die Bestellung wandert nach <strong>Erledigt</strong>.</li>
-  </ol>
-
-  <div class="sub-h">Wenn Sie stornieren m&uuml;ssen</div>
-  <ol class="steps">
-    <li>Auf das rote <strong>&#10005;</strong> der Bestellung tippen.</li>
-    <li>Im Dialog <strong>&bdquo;Bestellung stornieren&ldquo;</strong> einen <strong>Grund</strong> w&auml;hlen (Pflicht): &bdquo;Gericht ist leider ausverkauft&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Bestellschluss bereits &uuml;berschritten&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo; oder &bdquo;Sonstiger Grund&ldquo;.</li>
-    <li>Optional <strong>&bdquo;Zus&auml;tzlicher Kommentar&ldquo;</strong>.</li>
-    <li><strong>&bdquo;Stornieren&ldquo;</strong> tippen (erst nach Grundauswahl aktiv).</li>
-  </ol>
-
-  <div class="sub-h">Wenn ein Kunde geschrieben hat &rarr; antworten</div>
-  <ol class="steps">
-    <li>Filter <strong>Nachrichten</strong> (blau, blinkt bei Neuem).</li>
-    <li>Der Kundentext steht im blauen Kasten.</li>
-    <li>In <strong>&bdquo;Antwort eingeben&hellip;&ldquo;</strong> schreiben und mit <strong>Enter</strong> senden &ndash; Ihre Antwort erscheint gr&uuml;n.</li>
-  </ol>
-
-  <div class="sub-h">Farben der Bestellkarten (Ampel)</div>
-  <ul class="ampel">
-    <li><span class="dot" style="background:#f59e0b"></span> Gelb = neu, noch zu bearbeiten</li>
-    <li><span class="dot" style="background:#16a34a"></span> Gr&uuml;n = best&auml;tigt</li>
-    <li><span class="dot" style="background:#9ca3af"></span> Grau = abgeholt (erledigt)</li>
-    <li><span class="dot" style="background:#dc2626"></span> Rot = storniert</li>
-  </ul>
-  <p class="desc">Ein orangefarbenes Zeichen <strong>&bdquo;Mitnehmen&ldquo;</strong> bedeutet: Der Kunde m&ouml;chte das Essen mitnehmen (nicht vor Ort essen).</p>
-</div>
-
-<!-- Online-Shop -->
-<div class="section" id="sec-shop">
-  <h2>Online-Shop &ndash; Abholbestellungen</h2>
-  <p class="desc">Kunden bestellen im Online-Shop und w&auml;hlen einen Abholtermin. Hier nehmen Sie an, packen, melden abholbereit und geben aus.</p>
-
-  <div class="sub-h">Der Weg einer Bestellung</div>
-  <p class="desc"><strong>Neu</strong> &rarr; <strong>In Bearbeitung</strong> (Annehmen) &rarr; <strong>Abholbereit</strong> (fertig gepackt) &rarr; <strong>Abgeholt</strong> (Ausgeben). Stornieren ist jederzeit m&ouml;glich.</p>
-
-  <div class="sub-h">Die Filter oben</div>
-  <ol class="steps">
-    <li><strong>Zu erledigen:</strong> alle offenen (neu, in Bearbeitung, abholbereit).</li>
-    <li><strong>Heute abholen:</strong> nur die heute abzuholenden.</li>
-    <li><strong>&Uuml;berf&auml;llig</strong> (rot): die Abholzeit ist bereits vorbei.</li>
-    <li><strong>Historie:</strong> abgeschlossene Bestellungen &ndash; mit Zeitraum (7&nbsp;Tage / 30&nbsp;Tage / Alle) und Filter &bdquo;Abgeholt / Storniert&ldquo;.</li>
-  </ol>
-
-  <div class="sub-h">Wenn eine neue Bestellung kommt &rarr; annehmen</div>
-  <ol class="steps">
-    <li>Filter <strong>Zu erledigen</strong>.</li>
-    <li><strong>&bdquo;Annehmen&ldquo;</strong> tippen &ndash; Status wird <strong>In Bearbeitung</strong>.</li>
-  </ol>
-
-  <div class="sub-h">Wenn Sie packen &rarr; Packliste abarbeiten</div>
-  <ol class="steps">
-    <li><strong>&bdquo;Packen&ldquo;</strong> tippen &ndash; es &ouml;ffnet sich der Dialog <strong>&bdquo;Bestellung packen&ldquo;</strong>.</li>
-    <li>Jede Position <strong>abhaken</strong>; die Menge bei Bedarf anpassen. Fehlt etwas oder gibt es nur eine Teilmenge, wird das markiert. Der Fortschritt zeigt <strong>&bdquo;x/y gepackt&ldquo;</strong>.</li>
-    <li>Optional <strong>&bdquo;Drucken&ldquo;</strong> f&uuml;r den Packzettel.</li>
-    <li><strong>&bdquo;Fertig&ldquo;</strong> &ndash; Status wird <strong>Abholbereit</strong>, der Kunde wird automatisch benachrichtigt.</li>
-  </ol>
-
-  <div class="sub-h">Wenn der Kunde abholt &rarr; ausgeben</div>
-  <ol class="steps">
-    <li><strong>&bdquo;Ausgeben&ldquo;</strong> tippen &ndash; Status wird <strong>Abgeholt</strong>.</li>
-    <li>Versehentlich? Mit dem <strong>Zur&uuml;ck-Pfeil</strong> einen Schritt zur&uuml;cksetzen.</li>
-  </ol>
-
-  <div class="sub-h">Wenn Sie stornieren</div>
-  <ol class="steps">
-    <li>Auf <strong>&bdquo;Stornieren&ldquo;</strong> tippen, einen Grund w&auml;hlen: &bdquo;Artikel nicht lieferbar&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo;, &bdquo;Abholung nicht m&ouml;glich&ldquo; oder &bdquo;Sonstiger Grund&ldquo;.</li>
-    <li>Optional Kommentar, dann <strong>&bdquo;Stornieren&ldquo;</strong>.</li>
-  </ol>
-  <div class="tip">&#128161; &Uuml;ber die farbigen Z&auml;hler ganz oben im Kiosk (z.&nbsp;B. <strong>Packen</strong>, <strong>&Uuml;berf&auml;llig</strong>) springen Sie direkt in die passende Liste. Mit <strong>&bdquo;Details&ldquo;</strong> sehen Sie die komplette Bestellung; Kundennachrichten beantworten Sie wie beim Mittagstisch.</div>
-</div>
-
-<!-- Metzger -->
-<div class="section" id="sec-metzger">
-  <h2>Metzger &ndash; Fleisch-Vorbestellungen</h2>
-  <p class="desc">Fleischbestellungen sammeln, bei der Metzgerei bestellen und ausgeben. Besonderheit: Sie sehen einzelne Positionen und k&ouml;nnen sie einzeln abhaken.</p>
-
-  <div class="sub-h">Die Filter oben</div>
-  <ol class="steps">
-    <li><strong>Zu erledigen:</strong> offene Bestellungen.</li>
-    <li><strong>Heute abholen:</strong> heute abzuholende.</li>
-    <li><strong>Sammelbestellung:</strong> alle offenen Positionen geb&uuml;ndelt pro Liefertag &ndash; zum Bestellen bei der Metzgerei.</li>
-    <li><strong>Nachrichten</strong> und <strong>Historie</strong> wie in den anderen Bereichen.</li>
-  </ol>
-
-  <div class="sub-h">Wenn Sie bei der Metzgerei bestellen &rarr; Sammelbestellung</div>
-  <ol class="steps">
-    <li>Filter <strong>Sammelbestellung</strong> w&auml;hlen. Alle offenen Positionen sind nach <strong>Liefertag</strong> gruppiert (Artikel, Menge in kg, Preis).</li>
-    <li><strong>&bdquo;Drucken&ldquo;</strong> &ndash; ergibt eine saubere A4-Liste f&uuml;r die Metzgerei.</li>
-    <li>Nach dem Bestellen einzelne Positionen abhaken &ndash; oder <strong>&bdquo;Alle abhaken&ldquo;</strong>, um alles als bestellt zu markieren.</li>
-  </ol>
-
-  <div class="sub-h">Wenn die Ware da ist &rarr; als abgeholt markieren</div>
-  <ol class="steps">
-    <li>Bestellung &ouml;ffnen und <strong>&bdquo;Abgeholt&ldquo;</strong> tippen.</li>
-  </ol>
-
-  <div class="sub-h">Wenn Sie stornieren</div>
-  <ol class="steps">
-    <li>Grund w&auml;hlen: &bdquo;Ware nicht verf&uuml;gbar&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo;, &bdquo;Mindestbestellmenge nicht erreicht&ldquo; oder &bdquo;Sonstiger Grund&ldquo;, dann <strong>&bdquo;Stornieren&ldquo;</strong>.</li>
-  </ol>
-  <p class="desc">Status-Weg: <strong>Neu</strong> &rarr; <strong>In Bestellung</strong> &rarr; <strong>Abgeholt</strong> (oder <strong>Storniert</strong>).</p>
-</div>
-
-<!-- Stammkunden -->
-<div class="section" id="sec-kunden">
-  <h2>Stammkunden &ndash; Kunden finden &amp; anlegen</h2>
-  <p class="desc">Stammkunden suchen, neu anlegen, bearbeiten &ndash; und direkt eine Bestellung aufnehmen (z.&nbsp;B. am Telefon).</p>
-
-  <div class="sub-h">Wenn Sie einen Kunden suchen</div>
-  <ol class="steps">
-    <li>In <strong>&bdquo;Kunde suchen (Name oder Telefon)&hellip;&ldquo;</strong> tippen &ndash; die Liste filtert live.</li>
-    <li>Oder auf <strong>&bdquo;Alle Kunden laden&ldquo;</strong> tippen.</li>
-  </ol>
-
-  <div class="sub-h">Wenn ein neuer Kunde dazukommt</div>
-  <ol class="steps">
-    <li><strong>&bdquo;Neuer Kunde&ldquo;</strong> tippen &ndash; Dialog <strong>&bdquo;Neuer Stammkunde&ldquo;</strong>.</li>
-    <li><strong>Nachname</strong> und <strong>Telefon</strong> ausf&uuml;llen (Pflicht), optional Vorname, E-Mail, Notiz.</li>
-    <li><strong>&bdquo;Kunde anlegen&ldquo;</strong> &ndash; Sie erhalten die Stammkunden-Nummer.</li>
-  </ol>
-
-  <div class="sub-h">Wenn Sie Kundendaten &auml;ndern</div>
-  <ol class="steps">
-    <li>Kundenkarte &ouml;ffnen &rarr; <strong>&bdquo;Bearbeiten&ldquo;</strong> &rarr; Werte anpassen &rarr; <strong>&bdquo;Speichern&ldquo;</strong>.</li>
-  </ol>
-
-  <div class="sub-h">Wenn Sie eine Bestellung aufnehmen (z.&nbsp;B. am Telefon)</div>
-  <ol class="steps">
-    <li>Kundenkarte &rarr; <strong>&bdquo;Bestellen&ldquo;</strong> (oder oben &bdquo;Neue Bestellung&ldquo;).</li>
-    <li><strong>Gericht</strong> w&auml;hlen, <strong>Menge</strong> mit <strong>&minus;/+</strong> einstellen.</li>
-    <li>Optional Anmerkung und <strong>&bdquo;Zum Mitnehmen&ldquo;</strong> setzen.</li>
-    <li><strong>&bdquo;Bestellung aufnehmen&ldquo;</strong> &ndash; Sie erhalten die Bestellnummer.</li>
-  </ol>
-</div>
-
-<!-- Social Media -->
-<div class="section" id="sec-social">
-  <h2>Social Media &ndash; Tagespost erstellen</h2>
-  <p class="desc">In vier Schritten einen Tagespost erstellen, teilen (WhatsApp/Instagram), als Tagesinfo auf der Homepage ver&ouml;ffentlichen &ndash; und den Produktkatalog pflegen.</p>
-
-  <div class="sub-h">Wenn Sie einen Tagespost erstellen &rarr; 4 Schritte</div>
-  <ol class="steps">
-    <li><strong>Schritt&nbsp;1 &ndash; Titel &amp; Text:</strong> <strong>Heute</strong> oder <strong>Morgen</strong> w&auml;hlen, einen Titel aus der Liste nehmen (oder eigenen Titel eingeben), optional Freitext erg&auml;nzen.</li>
-    <li><strong>Schritt&nbsp;2 &ndash; Produkte:</strong> Produkte aus dem Katalog antippen &ndash; sie erscheinen im Bild.</li>
-    <li><strong>Schritt&nbsp;3 &ndash; Vorschau:</strong> Das fertige Bild wird automatisch erzeugt.</li>
-    <li><strong>Schritt&nbsp;4 &ndash; Teilen &amp; Ver&ouml;ffentlichen:</strong>
-      <ul>
-        <li><strong>Auf WhatsApp teilen</strong> / <strong>Auf Instagram teilen</strong> &ndash; das Bild wird kopiert, Sie f&uuml;gen es dort ein.</li>
-        <li><strong>Bild speichern</strong> &ndash; l&auml;dt das Bild als Datei herunter.</li>
-        <li><strong>Tagesinfo ver&ouml;ffentlichen</strong> &ndash; erscheint sofort auf der Homepage.</li>
-        <li><strong>Parken</strong> &ndash; als Entwurf speichern und sp&auml;ter senden.</li>
-      </ul>
-    </li>
-  </ol>
-
-  <div class="sub-h">Wenn Sie den Katalog pflegen</div>
-  <ol class="steps">
-    <li>Unterreiter <strong>Katalog</strong> w&auml;hlen.</li>
-    <li><strong>Neues Produkt:</strong> Name, Kategorie, Preis und Bild (Kamera, Datei oder Einf&uuml;gen) angeben &rarr; <strong>&bdquo;Hinzuf&uuml;gen&ldquo;</strong>.</li>
-    <li><strong>Kategorien</strong> &uuml;ber <strong>&bdquo;Kategorien verwalten&ldquo;</strong> anlegen (Name + Icon).</li>
-  </ol>
-</div>
-
-<!-- 1. Status-Lebenszyklus -->
-<div class="section" id="sec-status">
-  <h2>1. Bestellstatus-Lebenszyklus</h2>
-  <p class="desc">Jede Bestellung durchlaeuft diese Status. Der Normalfall ist der gruene Pfad von links nach rechts.</p>
-  <div class="legend">
-    <h4>Legende</h4>
-    <span style="background:#dbeafe;color:#1d4ed8">0 Neu</span>
-    <span style="background:#fef3c7;color:#92400e">1 In Bearbeitung</span>
-    <span style="background:#e0e7ff;color:#3730a3">2 Abholbereit</span>
-    <span style="background:#dcfce7;color:#166534">3 Abgeholt</span>
-    <span style="background:#fee2e2;color:#991b1b">4 Storniert</span>
-  </div>
-  <div class="mermaid">
-stateDiagram-v2
-    [*] --> Neu: Kunde bestellt
-    Neu --> InBearbeitung: Annehmen (Kiosk oder Admin)
-    Neu --> Storniert: Stornieren
-    InBearbeitung --> Abholbereit: Packen fertig (finishPack)
-    InBearbeitung --> Storniert: Stornieren
-    Abholbereit --> Abgeholt: Ausgeben oder Scan (setShopStatus 3)
-    Abholbereit --> Storniert: Stornieren
-    Abgeholt --> [*]
-    Storniert --> [*]
-
-    state Neu {
-        direction LR
-        [*] --> status0
-        status0: Status 0 - Neue Bestellung
-    }
-    state InBearbeitung {
-        direction LR
-        [*] --> status1
-        status1: Status 1 - Wird gepackt
-    }
-    state Abholbereit {
-        direction LR
-        [*] --> status2
-        status2: Status 2 - Kunde benachrichtigt
-    }
-    state Abgeholt {
-        direction LR
-        [*] --> status3
-        status3: Status 3 - Erledigt
-    }
-    state Storniert {
-        direction LR
-        [*] --> status4
-        status4: Status 4 - Abgebrochen
-    }
-  </div>
-</div>
-
-<!-- 2. Bestellvorgang -->
-<div class="section" id="sec-bestellung">
-  <h2>2. Bestellvorgang (Kunde zum System)</h2>
-  <p class="desc">Der Kunde fuellt den Warenkorb, waehlt einen Abholtermin und sendet die Bestellung ab. Das System validiert, speichert und benachrichtigt.</p>
-  <div class="mermaid">
-sequenceDiagram
-    participant K as Kunde
-    participant API as API shop-order
-    participant DV as Dataverse
-    participant Mail as shop-notify
-
-    K->>K: Warenkorb fuellen
-    K->>K: Abholtermin waehlen (Datum + Zeitslot)
-    K->>API: POST /shop-order + JWT + Positionen + Slot
-    
-    API->>API: JWT verifizieren
-    API->>DV: Mindestbestellwert laden (dl_seiteninhalt)
-    DV-->>API: shop_mindestbestellwert
-    API->>API: Betrag pruefen >= Minimum
-    API->>API: Bestellnummer generieren DL-YYYYMMDD-XXXX
-    API->>DV: POST dl_shopbestellungs Status=0 (Neu)
-    DV-->>API: 201 Created
-    
-    API->>Mail: E-Mail Bestellbestaetigung
-    Mail-->>K: Bestaetigung + Positionen
-    API->>API: Push-Notification senden
-    API-->>K: bestellnummer + abholdatum
-    K->>K: Bestaetigung anzeigen
-  </div>
-</div>
-
-<!-- 3. Bearbeitung & Packen -->
-<div class="section" id="sec-bearbeitung">
-  <h2>3. Bearbeitung und Pack-Workflow</h2>
-  <p class="desc">Im Kiosk oder Shop-Admin werden Bestellungen angenommen, gepackt und zur Abholung bereitgestellt.</p>
-  <div class="mermaid">
-flowchart TD
-    A["Neue Bestellung<br/>Status 0"] --> B{"Aktion?"}
-    B -->|Annehmen| C["In Bearbeitung<br/>Status 1"]
-    B -->|Stornieren| X["Storniert<br/>Status 4"]
-    
-    C --> D{"Aktion?"}
-    D -->|Packen oeffnen| E["Pack-Modal"]
-    D -->|Direkt Bereit| G
-    
-    E --> F{"Fuer jede Position"}
-    F --> F1["Checkbox: gepackt?"]
-    F --> F2["Menge anpassen<br/>Gewichtsware in Gramm"]
-    F --> F3["Auto-Save<br/>alle 1,2 Sek via PATCH"]
-    
-    F1 & F2 & F3 --> H{"Fertig packen?"}
-    
-    H -->|Alle Artikel da| G["Abholbereit<br/>Status 2"]
-    H -->|Artikel fehlen| I["Bestaetigung:<br/>Trotzdem bereit?"]
-    I -->|Ja| G
-    I -->|Nein| E
-    
-    G --> J["E-Mail an Kunde"]
-    J --> K{"Alle Artikel?"}
-    K -->|Ja| K1["Bestellung bereit"]
-    K -->|Nein| K2["Fehlende Artikel Info"]
-    
-    G --> L{"Ausgabe"}
-    L -->|Ausgeben-Button| M["Abgeholt<br/>Status 3"]
-    L -->|Barcode scannen| M
-
-    style A fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
-    style C fill:#fef3c7,stroke:#f59e0b,color:#78350f
-    style G fill:#e0e7ff,stroke:#6366f1,color:#312e81
-    style M fill:#dcfce7,stroke:#22c55e,color:#14532d
-    style X fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
-    style E fill:#f5f3ff,stroke:#8b5cf6,color:#4c1d95
-  </div>
-</div>
-
-<!-- 4. Abholscan -->
-<div class="section" id="sec-abholscan">
-  <h2>4. Abholscan-Workflow</h2>
-  <p class="desc">Bestellungen koennen per Barcode-Scan oder manuelle Eingabe der Bestellnummer als abgeholt markiert werden.</p>
-  <div class="mermaid">
-flowchart TD
-    A["Barcode scannen<br/>oder Bestellnr eingeben"] --> B["GET /shop-admin<br/>action=scan_pickup"]
-    
-    B --> C{"Bestellung gefunden?"}
-    C -->|Nein| D["Nicht gefunden"]
-    C -->|Ja| E{"Aktueller Status?"}
-    
-    E -->|Status 1 oder 2| F["Auf Abgeholt setzen<br/>PATCH Status = 3"]
-    E -->|Status 3| G["Bereits abgeholt"]
-    E -->|Status 0| H["Noch nicht angenommen"]
-    E -->|Status 4| I["Storniert"]
-    
-    F --> J["Erfolg anzeigen<br/>Kunde + Summe"]
-
-    style A fill:#f0f9ff,stroke:#0ea5e9,color:#0c4a6e
-    style F fill:#dcfce7,stroke:#22c55e,color:#14532d
-    style G fill:#fef3c7,stroke:#f59e0b,color:#78350f
-    style D fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
-    style H fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
-    style I fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
-  </div>
-</div>
-
-<!-- 5. E-Mail-Benachrichtigungen -->
-<div class="section" id="sec-email">
-  <h2>5. E-Mail-Benachrichtigungen</h2>
-  <p class="desc">Das System sendet automatisch E-Mails an Kunden bei bestimmten Statusaenderungen.</p>
-  <div class="mermaid">
-flowchart LR
-    subgraph Ausloeser["Ausloeser"]
-        A1["Bestellung aufgegeben"]
-        A2["Packen fertig<br/>alle Artikel da"]
-        A3["Packen fertig<br/>Artikel fehlen"]
-    end
-
-    subgraph API
-        B1["POST /shop-order"]
-        B2["finishPack, Status 2"]
-        B3["finishPack, Status 2"]
-    end
-
-    subgraph EMail["E-Mail an Kunde"]
-        C1["Bestellbestaetigung<br/>Bestellnummer, Abholtermin,<br/>Positionen, Zahlungsart"]
-        C2["Abholbereit<br/>Bestellung ist bereit"]
-        C3["Fehlende Artikel<br/>Liste nicht verfuegbar"]
-    end
-
-    A1 --> B1 --> C1
-    A2 --> B2 --> C2
-    A3 --> B3 --> C3
-
-    style C1 fill:#dcfce7,stroke:#22c55e
-    style C2 fill:#dbeafe,stroke:#3b82f6
-    style C3 fill:#fef3c7,stroke:#f59e0b
-  </div>
-</div>
-
-<!-- 6. Kiosk-Filterlogik -->
-<div class="section" id="sec-filter">
-  <h2>6. Kiosk-Filterlogik (Online-Shop Tab)</h2>
-  <p class="desc">Die Filterlogik im Kiosk bestimmt, welche Bestellungen in welchem Modus angezeigt werden.</p>
-  <div class="mermaid">
-flowchart TD
-    A["allShopOrders<br/>alle Bestellungen vom API"] --> B{showHistory?}
-    
-    B -->|Standard| C["base = abholdatum ab heute"]
-    B -->|Historie| D["base = ALLE Bestellungen"]
-    
-    C --> E{"Aktiver Filter?"}
-    D --> F{"Aktiver Filter?"}
-    
-    E -->|Zu erledigen| E1["status unter 3<br/>Neu, Bearbeitung, Bereit"]
-    E -->|Heute abholen| E2["abholdatum = heute<br/>und status unter 4"]
-    E -->|Ueberfaellig| E3["status unter 3<br/>und Zeitslot abgelaufen"]
-    
-    F -->|Zu erledigen + Historie| F1["Alle Status anzeigen<br/>inkl. Abgeholt + Storniert"]
-    F -->|Heute + Historie| F2["abholdatum = heute<br/>und status unter 4"]
-    F -->|Ueberfaellig + Historie| F3["status unter 3<br/>und Zeitslot abgelaufen"]
-    
-    E1 & E2 & E3 & F1 & F2 & F3 --> G["renderShopOrders<br/>Gruppiert nach Zeitslot"]
-    
-    G --> H["Slot-Header Badges"]
-    H --> H1["Packen"]
-    H --> H2["Warten"]
-    H --> H3["Bereit"]
-    H --> H4["Abgeholt"]
-    H --> H5["Storniert"]
-
-    style A fill:#f0f9ff,stroke:#0ea5e9
-    style C fill:#dcfce7,stroke:#22c55e
-    style D fill:#fef3c7,stroke:#f59e0b
-    style F1 fill:#e0e7ff,stroke:#6366f1
-  </div>
-</div>
-
-<!-- 7. Gesamtarchitektur -->
-<div class="section" id="sec-architektur">
-  <h2>7. Gesamtarchitektur</h2>
-  <p class="desc">Ueberblick ueber alle Komponenten und deren Zusammenspiel.</p>
-  <div class="mermaid">
-flowchart TB
-    subgraph Kunde
-        S1["shop.html<br/>Warenkorb und Bestellung"]
-        S2["Push-Notifications"]
-        S3["E-Mail"]
-    end
-
-    subgraph Frontend["Frontend (Static Web App)"]
-        K1["kiosk.html<br/>Mittagstisch, Online-Shop,<br/>Stammkunden, Social"]
-        K2["shop-admin.html<br/>Bestellverwaltung,<br/>Packen, Abholscan"]
-        K3["cms.js<br/>Content Management,<br/>Social Media Posting"]
-    end
-
-    subgraph API["Azure Functions API"]
-        A1["shop-order"]
-        A2["shop-admin"]
-        A3["shop-notify"]
-        A4["push-send"]
-        A5["meta-catalog"]
-        A6["social-post"]
-    end
-
-    subgraph Backend["Dataverse (CRM)"]
-        D1[("dl_shopbestellungs")]
-        D2[("dl_shopkundes")]
-        D3[("dl_seiteninhalt")]
-    end
-
-    S1 -->|"JWT + POST"| A1
-    A1 -->|CRUD| D1
-    A1 -->|E-Mail| A3
-    A3 --> S3
-    A1 -->|Push| A4
-    A4 --> S2
-
-    K1 -->|"GET/PATCH"| A1
-    K1 -->|GET| A2
-    K2 -->|"GET/PATCH"| A1
-    K2 -->|Scan| A2
-    K2 -->|Notify| A3
-
-    A2 -->|"Read/Write"| D1
-    A2 -->|Kunden| D2
-    A1 -->|Config| D3
-
-    K3 -->|Social| A6
-    K3 -->|Katalog| A5
-    K1 -->|Social| A6
-    K1 -->|Katalog| A5
-
-    style S1 fill:#dbeafe,stroke:#3b82f6
-    style K1 fill:#dcfce7,stroke:#22c55e
-    style K2 fill:#fef3c7,stroke:#f59e0b
-    style K3 fill:#e0e7ff,stroke:#6366f1
-    style D1 fill:#f3e8ff,stroke:#a855f7
-    style D2 fill:#f3e8ff,stroke:#a855f7
-    style D3 fill:#f3e8ff,stroke:#a855f7
-  </div>
-</div>
-
-<!-- 8. API-Endpunkte -->
-<div class="section" id="sec-api">
-  <h2>8. API-Endpunkte</h2>
-  <p class="desc">Alle verfuegbaren API-Endpunkte mit Methode, Zweck und Authentifizierung.</p>
-  <table class="api-table">
-    <thead>
-      <tr><th>Endpunkt</th><th>Methode</th><th>Zweck</th><th>Auth</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-post">POST</span></td><td>Neue Bestellung aufgeben</td><td>JWT (Kunde)</td></tr>
-      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-get">GET</span></td><td>Bestellungen laden (Kunde: eigene, CMS: alle)</td><td>JWT oder CMS</td></tr>
-      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-patch">PATCH</span></td><td>Status aendern, Pack-Daten speichern</td><td>CMS</td></tr>
-      <tr><td><code>/api/shop-admin</code></td><td><span class="badge b-get">GET</span></td><td>Dashboard, Kunden, Abholscan</td><td>CMS</td></tr>
-      <tr><td><code>/api/shop-admin</code></td><td><span class="badge b-patch">PATCH</span></td><td>Kundendaten aktualisieren, SEPA-Mandat</td><td>CMS</td></tr>
-      <tr><td><code>/api/shop-notify</code></td><td><span class="badge b-post">POST</span></td><td>E-Mail senden (Bereit / Fehlend)</td><td>Intern</td></tr>
-      <tr><td><code>/api/push-send</code></td><td><span class="badge b-post">POST</span></td><td>Push-Notification an Kunde</td><td>Intern</td></tr>
-      <tr><td><code>/api/meta-catalog</code></td><td><span class="badge b-get">GET</span> <span class="badge b-post">POST</span></td><td>WhatsApp Business Katalog verwalten</td><td>CMS</td></tr>
-      <tr><td><code>/api/social-post</code></td><td><span class="badge b-get">GET</span> <span class="badge b-post">POST</span></td><td>Social-Media Posts speichern/laden</td><td>CMS</td></tr>
-    </tbody>
-  </table>
+  <p class="ui-cap">Beim L&ouml;schen einer Serie w&auml;hlen Sie gezielt zwischen einem Tag und der ganzen Serie.</p>
+  <div class="tip">&#128161; Unsicher? W&auml;hlen Sie zuerst &bdquo;Nur diesen Tag&ldquo; &ndash; das ist die sichere Variante.</div>
 </div>
 
 <script>
-  mermaid.initialize({ 
-    startOnLoad: true, 
-    theme: 'base',
-    themeVariables: {
-      primaryColor: '#dcfce7',
-      primaryTextColor: '#166534',
-      primaryBorderColor: '#86efac',
-      lineColor: '#94a3b8',
-      secondaryColor: '#f0f9ff',
-      tertiaryColor: '#faf5ff',
-      fontFamily: '"Segoe UI",system-ui,sans-serif',
-      fontSize: '13px'
-    },
-    flowchart: { curve: 'basis', padding: 16 },
-    sequence: { mirrorActors: false, messageAlign: 'left' }
-  });
-
   function show(id, btn) {
     document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
     document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
     document.getElementById('sec-'+id).classList.add('active');
     if(btn) btn.classList.add('active');
+    window.scrollTo(0,0);
   }
 </script>
 <script src="/js/env-banner.js"></script>
