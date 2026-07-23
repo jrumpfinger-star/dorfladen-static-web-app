@@ -833,3 +833,9 @@ Alle Methoden erfordern gültiges `X-CMS-Auth` (via `admin_auth_guard`).
 | F6 Tagesansicht | TC-F6-01, TC-F6-02, TC-F6-03 | — | — |
 | F7 Auth/Refresh | TC-F7-01, TC-F7-02, TC-F7-03 | — | — |
 | F8 Responsive | TC-F8-01, TC-F8-02 | — | — |
+| F9 Split-View | TC-F9-01, TC-F9-02, TC-F9-03, TC-F9-04 | Inkrement 2 | tasks.md |
+| F10 Touch | TC-F10-01, TC-F10-02 | Inkrement 2 | tasks.md |
+| F11 Autocomplete | TC-F11-01, TC-F11-02, TC-F11-03 | Inkrement 2 | tasks.md |
+| F12 Info | TC-F12-01, TC-F12-02, TC-F12-03 | Inkrement 2 | tasks.md |
+| F13 Dialog-Breite | TC-F13-01, TC-F13-02, TC-F13-03 | Inkrement 2 | tasks.md |
+| F14 Mehrzeilig | TC-F14-01, TC-F14-02 | Inkrement 2 | tasks.md |
