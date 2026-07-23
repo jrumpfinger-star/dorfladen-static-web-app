@@ -39,7 +39,11 @@
   .steps li ul li { background:none; border:none; padding:2px 0; margin:0; }
   .steps li ul li::before { content:none; }
   .tip { background:#fef9c3; border:1px solid #fde047; border-radius:8px; padding:10px 14px; font-size:12px; margin:6px 0 18px; line-height:1.5; }
-  @media(max-width:768px) { .nav { padding:10px 16px; } .section { padding:16px; } }
+  .nav-sep { align-self:center; color:#94a3b8; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:0 10px; border-left:1px solid #e2e8f0; margin-left:4px; }
+  .ampel { list-style:none; margin:0 0 18px; padding:0; font-size:13px; }
+  .ampel li { display:flex; align-items:center; gap:8px; padding:4px 0; }
+  .ampel .dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.1); }
+  @media(max-width:768px) { .nav { padding:10px 16px; } .section { padding:16px; } .nav-sep { display:none; } }
 </style>
 </head>
 <body>
@@ -51,6 +55,12 @@
 
 <div class="nav" id="nav">
   <button class="active" onclick="show('kiosk',this)">Kiosk-Kalender</button>
+  <button onclick="show('mittag',this)">Mittagstisch</button>
+  <button onclick="show('shop',this)">Online-Shop</button>
+  <button onclick="show('metzger',this)">Metzger</button>
+  <button onclick="show('kunden',this)">Stammkunden</button>
+  <button onclick="show('social',this)">Social Media</button>
+  <span class="nav-sep">Technik &amp; Admin</span>
   <button onclick="show('status',this)">Status-Lebenszyklus</button>
   <button onclick="show('bestellung',this)">Bestellvorgang</button>
   <button onclick="show('bearbeitung',this)">Bearbeitung & Packen</button>
@@ -133,6 +143,196 @@ flowchart TB
     style F fill:#fee2e2,stroke:#ef4444
     style C fill:#fef3c7,stroke:#f59e0b
   </div>
+</div>
+
+<!-- Mittagstisch -->
+<div class="section" id="sec-mittag">
+  <h2>Mittagstisch &ndash; Bestellungen des Tages</h2>
+  <p class="desc">Hier verwalten Sie die Mittagstisch-Bestellungen f&uuml;r einen Tag: best&auml;tigen, als abgeholt markieren, stornieren &ndash; und mit dem Kunden schreiben.</p>
+
+  <div class="sub-h">Die Leiste oben verstehen</div>
+  <ol class="steps">
+    <li><strong>Tagesleiste:</strong> &Uuml;ber die Tages-Buttons (z.&nbsp;B. <strong>Heute</strong>) w&auml;hlen Sie den Tag.</li>
+    <li><strong>Offen:</strong> neue und best&auml;tigte Bestellungen &ndash; das laufende Tagesgesch&auml;ft.</li>
+    <li><strong>Nachrichten</strong> (blau): Bestellungen mit ungelesenen Kundennachrichten, aus allen Tagen.</li>
+    <li><strong>Erledigt:</strong> abgeholte und stornierte Bestellungen.</li>
+    <li><strong>Alle:</strong> alles zusammen.</li>
+  </ol>
+
+  <div class="sub-h">Wenn eine neue Bestellung eingeht &rarr; best&auml;tigen</div>
+  <ol class="steps">
+    <li>Filter <strong>Offen</strong> w&auml;hlen &ndash; neue Bestellungen sind farblich hervorgehoben.</li>
+    <li>Auf der Bestellkarte auf den gr&uuml;nen Haken (<strong>Best&auml;tigen</strong>) tippen.</li>
+    <li>Optional im Feld <strong>&bdquo;Nachricht an Kunde (optional)&ldquo;</strong> etwas schreiben.</li>
+    <li><strong>&bdquo;Jetzt best&auml;tigen&ldquo;</strong> tippen &ndash; der Status wechselt auf <strong>Best&auml;tigt</strong>.</li>
+  </ol>
+  <div class="tip">&#128161; Mehrere gleiche Gerichte? &Uuml;ber den Gericht-Kopf k&ouml;nnen Sie mit &bdquo;<strong>X best&auml;tigen</strong>&ldquo; alle offenen dieses Gerichts auf einmal best&auml;tigen.</div>
+
+  <div class="sub-h">Wenn der Kunde abholt &rarr; als abgeholt markieren</div>
+  <ol class="steps">
+    <li>Bestellung im Filter <strong>Offen</strong> finden.</li>
+    <li>Auf <strong>&bdquo;Abgeholt&ldquo;</strong> tippen &ndash; die Bestellung wandert nach <strong>Erledigt</strong>.</li>
+  </ol>
+
+  <div class="sub-h">Wenn Sie stornieren m&uuml;ssen</div>
+  <ol class="steps">
+    <li>Auf das rote <strong>&#10005;</strong> der Bestellung tippen.</li>
+    <li>Im Dialog <strong>&bdquo;Bestellung stornieren&ldquo;</strong> einen <strong>Grund</strong> w&auml;hlen (Pflicht): &bdquo;Gericht ist leider ausverkauft&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Bestellschluss bereits &uuml;berschritten&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo; oder &bdquo;Sonstiger Grund&ldquo;.</li>
+    <li>Optional <strong>&bdquo;Zus&auml;tzlicher Kommentar&ldquo;</strong>.</li>
+    <li><strong>&bdquo;Stornieren&ldquo;</strong> tippen (erst nach Grundauswahl aktiv).</li>
+  </ol>
+
+  <div class="sub-h">Wenn ein Kunde geschrieben hat &rarr; antworten</div>
+  <ol class="steps">
+    <li>Filter <strong>Nachrichten</strong> (blau, blinkt bei Neuem).</li>
+    <li>Der Kundentext steht im blauen Kasten.</li>
+    <li>In <strong>&bdquo;Antwort eingeben&hellip;&ldquo;</strong> schreiben und mit <strong>Enter</strong> senden &ndash; Ihre Antwort erscheint gr&uuml;n.</li>
+  </ol>
+
+  <div class="sub-h">Farben der Bestellkarten (Ampel)</div>
+  <ul class="ampel">
+    <li><span class="dot" style="background:#f59e0b"></span> Gelb = neu, noch zu bearbeiten</li>
+    <li><span class="dot" style="background:#16a34a"></span> Gr&uuml;n = best&auml;tigt</li>
+    <li><span class="dot" style="background:#9ca3af"></span> Grau = abgeholt (erledigt)</li>
+    <li><span class="dot" style="background:#dc2626"></span> Rot = storniert</li>
+  </ul>
+  <p class="desc">Ein orangefarbenes Zeichen <strong>&bdquo;Mitnehmen&ldquo;</strong> bedeutet: Der Kunde m&ouml;chte das Essen mitnehmen (nicht vor Ort essen).</p>
+</div>
+
+<!-- Online-Shop -->
+<div class="section" id="sec-shop">
+  <h2>Online-Shop &ndash; Abholbestellungen</h2>
+  <p class="desc">Kunden bestellen im Online-Shop und w&auml;hlen einen Abholtermin. Hier nehmen Sie an, packen, melden abholbereit und geben aus.</p>
+
+  <div class="sub-h">Der Weg einer Bestellung</div>
+  <p class="desc"><strong>Neu</strong> &rarr; <strong>In Bearbeitung</strong> (Annehmen) &rarr; <strong>Abholbereit</strong> (fertig gepackt) &rarr; <strong>Abgeholt</strong> (Ausgeben). Stornieren ist jederzeit m&ouml;glich.</p>
+
+  <div class="sub-h">Die Filter oben</div>
+  <ol class="steps">
+    <li><strong>Zu erledigen:</strong> alle offenen (neu, in Bearbeitung, abholbereit).</li>
+    <li><strong>Heute abholen:</strong> nur die heute abzuholenden.</li>
+    <li><strong>&Uuml;berf&auml;llig</strong> (rot): die Abholzeit ist bereits vorbei.</li>
+    <li><strong>Historie:</strong> abgeschlossene Bestellungen &ndash; mit Zeitraum (7&nbsp;Tage / 30&nbsp;Tage / Alle) und Filter &bdquo;Abgeholt / Storniert&ldquo;.</li>
+  </ol>
+
+  <div class="sub-h">Wenn eine neue Bestellung kommt &rarr; annehmen</div>
+  <ol class="steps">
+    <li>Filter <strong>Zu erledigen</strong>.</li>
+    <li><strong>&bdquo;Annehmen&ldquo;</strong> tippen &ndash; Status wird <strong>In Bearbeitung</strong>.</li>
+  </ol>
+
+  <div class="sub-h">Wenn Sie packen &rarr; Packliste abarbeiten</div>
+  <ol class="steps">
+    <li><strong>&bdquo;Packen&ldquo;</strong> tippen &ndash; es &ouml;ffnet sich der Dialog <strong>&bdquo;Bestellung packen&ldquo;</strong>.</li>
+    <li>Jede Position <strong>abhaken</strong>; die Menge bei Bedarf anpassen. Fehlt etwas oder gibt es nur eine Teilmenge, wird das markiert. Der Fortschritt zeigt <strong>&bdquo;x/y gepackt&ldquo;</strong>.</li>
+    <li>Optional <strong>&bdquo;Drucken&ldquo;</strong> f&uuml;r den Packzettel.</li>
+    <li><strong>&bdquo;Fertig&ldquo;</strong> &ndash; Status wird <strong>Abholbereit</strong>, der Kunde wird automatisch benachrichtigt.</li>
+  </ol>
+
+  <div class="sub-h">Wenn der Kunde abholt &rarr; ausgeben</div>
+  <ol class="steps">
+    <li><strong>&bdquo;Ausgeben&ldquo;</strong> tippen &ndash; Status wird <strong>Abgeholt</strong>.</li>
+    <li>Versehentlich? Mit dem <strong>Zur&uuml;ck-Pfeil</strong> einen Schritt zur&uuml;cksetzen.</li>
+  </ol>
+
+  <div class="sub-h">Wenn Sie stornieren</div>
+  <ol class="steps">
+    <li>Auf <strong>&bdquo;Stornieren&ldquo;</strong> tippen, einen Grund w&auml;hlen: &bdquo;Artikel nicht lieferbar&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo;, &bdquo;Abholung nicht m&ouml;glich&ldquo; oder &bdquo;Sonstiger Grund&ldquo;.</li>
+    <li>Optional Kommentar, dann <strong>&bdquo;Stornieren&ldquo;</strong>.</li>
+  </ol>
+  <div class="tip">&#128161; &Uuml;ber die farbigen Z&auml;hler ganz oben im Kiosk (z.&nbsp;B. <strong>Packen</strong>, <strong>&Uuml;berf&auml;llig</strong>) springen Sie direkt in die passende Liste. Mit <strong>&bdquo;Details&ldquo;</strong> sehen Sie die komplette Bestellung; Kundennachrichten beantworten Sie wie beim Mittagstisch.</div>
+</div>
+
+<!-- Metzger -->
+<div class="section" id="sec-metzger">
+  <h2>Metzger &ndash; Fleisch-Vorbestellungen</h2>
+  <p class="desc">Fleischbestellungen sammeln, bei der Metzgerei bestellen und ausgeben. Besonderheit: Sie sehen einzelne Positionen und k&ouml;nnen sie einzeln abhaken.</p>
+
+  <div class="sub-h">Die Filter oben</div>
+  <ol class="steps">
+    <li><strong>Zu erledigen:</strong> offene Bestellungen.</li>
+    <li><strong>Heute abholen:</strong> heute abzuholende.</li>
+    <li><strong>Sammelbestellung:</strong> alle offenen Positionen geb&uuml;ndelt pro Liefertag &ndash; zum Bestellen bei der Metzgerei.</li>
+    <li><strong>Nachrichten</strong> und <strong>Historie</strong> wie in den anderen Bereichen.</li>
+  </ol>
+
+  <div class="sub-h">Wenn Sie bei der Metzgerei bestellen &rarr; Sammelbestellung</div>
+  <ol class="steps">
+    <li>Filter <strong>Sammelbestellung</strong> w&auml;hlen. Alle offenen Positionen sind nach <strong>Liefertag</strong> gruppiert (Artikel, Menge in kg, Preis).</li>
+    <li><strong>&bdquo;Drucken&ldquo;</strong> &ndash; ergibt eine saubere A4-Liste f&uuml;r die Metzgerei.</li>
+    <li>Nach dem Bestellen einzelne Positionen abhaken &ndash; oder <strong>&bdquo;Alle abhaken&ldquo;</strong>, um alles als bestellt zu markieren.</li>
+  </ol>
+
+  <div class="sub-h">Wenn die Ware da ist &rarr; als abgeholt markieren</div>
+  <ol class="steps">
+    <li>Bestellung &ouml;ffnen und <strong>&bdquo;Abgeholt&ldquo;</strong> tippen.</li>
+  </ol>
+
+  <div class="sub-h">Wenn Sie stornieren</div>
+  <ol class="steps">
+    <li>Grund w&auml;hlen: &bdquo;Ware nicht verf&uuml;gbar&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo;, &bdquo;Mindestbestellmenge nicht erreicht&ldquo; oder &bdquo;Sonstiger Grund&ldquo;, dann <strong>&bdquo;Stornieren&ldquo;</strong>.</li>
+  </ol>
+  <p class="desc">Status-Weg: <strong>Neu</strong> &rarr; <strong>In Bestellung</strong> &rarr; <strong>Abgeholt</strong> (oder <strong>Storniert</strong>).</p>
+</div>
+
+<!-- Stammkunden -->
+<div class="section" id="sec-kunden">
+  <h2>Stammkunden &ndash; Kunden finden &amp; anlegen</h2>
+  <p class="desc">Stammkunden suchen, neu anlegen, bearbeiten &ndash; und direkt eine Bestellung aufnehmen (z.&nbsp;B. am Telefon).</p>
+
+  <div class="sub-h">Wenn Sie einen Kunden suchen</div>
+  <ol class="steps">
+    <li>In <strong>&bdquo;Kunde suchen (Name oder Telefon)&hellip;&ldquo;</strong> tippen &ndash; die Liste filtert live.</li>
+    <li>Oder auf <strong>&bdquo;Alle Kunden laden&ldquo;</strong> tippen.</li>
+  </ol>
+
+  <div class="sub-h">Wenn ein neuer Kunde dazukommt</div>
+  <ol class="steps">
+    <li><strong>&bdquo;Neuer Kunde&ldquo;</strong> tippen &ndash; Dialog <strong>&bdquo;Neuer Stammkunde&ldquo;</strong>.</li>
+    <li><strong>Nachname</strong> und <strong>Telefon</strong> ausf&uuml;llen (Pflicht), optional Vorname, E-Mail, Notiz.</li>
+    <li><strong>&bdquo;Kunde anlegen&ldquo;</strong> &ndash; Sie erhalten die Stammkunden-Nummer.</li>
+  </ol>
+
+  <div class="sub-h">Wenn Sie Kundendaten &auml;ndern</div>
+  <ol class="steps">
+    <li>Kundenkarte &ouml;ffnen &rarr; <strong>&bdquo;Bearbeiten&ldquo;</strong> &rarr; Werte anpassen &rarr; <strong>&bdquo;Speichern&ldquo;</strong>.</li>
+  </ol>
+
+  <div class="sub-h">Wenn Sie eine Bestellung aufnehmen (z.&nbsp;B. am Telefon)</div>
+  <ol class="steps">
+    <li>Kundenkarte &rarr; <strong>&bdquo;Bestellen&ldquo;</strong> (oder oben &bdquo;Neue Bestellung&ldquo;).</li>
+    <li><strong>Gericht</strong> w&auml;hlen, <strong>Menge</strong> mit <strong>&minus;/+</strong> einstellen.</li>
+    <li>Optional Anmerkung und <strong>&bdquo;Zum Mitnehmen&ldquo;</strong> setzen.</li>
+    <li><strong>&bdquo;Bestellung aufnehmen&ldquo;</strong> &ndash; Sie erhalten die Bestellnummer.</li>
+  </ol>
+</div>
+
+<!-- Social Media -->
+<div class="section" id="sec-social">
+  <h2>Social Media &ndash; Tagespost erstellen</h2>
+  <p class="desc">In vier Schritten einen Tagespost erstellen, teilen (WhatsApp/Instagram), als Tagesinfo auf der Homepage ver&ouml;ffentlichen &ndash; und den Produktkatalog pflegen.</p>
+
+  <div class="sub-h">Wenn Sie einen Tagespost erstellen &rarr; 4 Schritte</div>
+  <ol class="steps">
+    <li><strong>Schritt&nbsp;1 &ndash; Titel &amp; Text:</strong> <strong>Heute</strong> oder <strong>Morgen</strong> w&auml;hlen, einen Titel aus der Liste nehmen (oder eigenen Titel eingeben), optional Freitext erg&auml;nzen.</li>
+    <li><strong>Schritt&nbsp;2 &ndash; Produkte:</strong> Produkte aus dem Katalog antippen &ndash; sie erscheinen im Bild.</li>
+    <li><strong>Schritt&nbsp;3 &ndash; Vorschau:</strong> Das fertige Bild wird automatisch erzeugt.</li>
+    <li><strong>Schritt&nbsp;4 &ndash; Teilen &amp; Ver&ouml;ffentlichen:</strong>
+      <ul>
+        <li><strong>Auf WhatsApp teilen</strong> / <strong>Auf Instagram teilen</strong> &ndash; das Bild wird kopiert, Sie f&uuml;gen es dort ein.</li>
+        <li><strong>Bild speichern</strong> &ndash; l&auml;dt das Bild als Datei herunter.</li>
+        <li><strong>Tagesinfo ver&ouml;ffentlichen</strong> &ndash; erscheint sofort auf der Homepage.</li>
+        <li><strong>Parken</strong> &ndash; als Entwurf speichern und sp&auml;ter senden.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <div class="sub-h">Wenn Sie den Katalog pflegen</div>
+  <ol class="steps">
+    <li>Unterreiter <strong>Katalog</strong> w&auml;hlen.</li>
+    <li><strong>Neues Produkt:</strong> Name, Kategorie, Preis und Bild (Kamera, Datei oder Einf&uuml;gen) angeben &rarr; <strong>&bdquo;Hinzuf&uuml;gen&ldquo;</strong>.</li>
+    <li><strong>Kategorien</strong> &uuml;ber <strong>&bdquo;Kategorien verwalten&ldquo;</strong> anlegen (Name + Icon).</li>
+  </ol>
 </div>
 
 <!-- 1. Status-Lebenszyklus -->
