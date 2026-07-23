@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -33,7 +33,7 @@
   .ampel li { display:flex; align-items:center; gap:9px; padding:5px 0; }
   .ampel .dot { width:15px; height:15px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.1); }
 
-  /* ── Nachgebaute Bildschirm-Ansichten (UI-Illustrationen) ── */
+  /* UI-Illustrationen */
   .ui { background:#fff; border:1px solid #e2e8f0; border-radius:12px; margin:10px 0 6px; box-shadow:0 6px 18px rgba(15,23,42,.06); overflow:hidden; }
   .ui-cap { font-size:12px; color:#94a3b8; margin:0 0 20px 2px; font-style:italic; }
   .ui-top { display:flex; align-items:center; gap:8px; background:linear-gradient(135deg,#166534,#15803d); color:#fff; padding:10px 14px; font-weight:800; font-size:14px; }
@@ -78,7 +78,7 @@
 
 <div class="header">
   <h1>Dorfladen Kiosk &ndash; Handbuch</h1>
-  <p>Schritt f&uuml;r Schritt: So bedienen Sie den Kiosk im Laden. Geschrieben f&uuml;r den t&auml;glichen Gebrauch &ndash; keine Technik-Kenntnisse n&ouml;tig.</p>
+  <p>Schritt f&uuml;r Schritt: So bedienen Sie den Kiosk im Laden. Geschrieben f&uuml;r den t&auml;glichen Gebrauch &ndash; keine IT-Kenntnisse n&ouml;tig.</p>
 </div>
 
 <div class="nav" id="nav">
@@ -91,7 +91,9 @@
   <button onclick="show('kalender',this)">Kalender</button>
 </div>
 
-<!-- ══════════════ ÜBERBLICK ══════════════ -->
+<!-- ============================================== -->
+<!-- UEBERBLICK -->
+<!-- ============================================== -->
 <div class="section active" id="sec-start">
   <h2>&Uuml;berblick &ndash; so ist der Kiosk aufgebaut</h2>
   <p class="lead">Der Kiosk ist Ihre Zentrale im Laden: Hier sehen Sie alle Bestellungen (Mittagstisch, Online-Shop, Metzger), pflegen Stammkunden, erstellen Social-Media-Beitr&auml;ge und f&uuml;hren den Kalender. Sie bedienen alles per Fingertipp am Tablet oder mit der Maus am PC. Keine Sorge &ndash; Sie k&ouml;nnen nichts kaputtmachen; jede Aktion l&auml;sst sich nachvollziehen.</p>
@@ -99,9 +101,9 @@
   <div class="sub-h">Die Kopfzeile ganz oben</div>
   <p class="txt">Oben sehen Sie Datum und Uhrzeit sowie drei runde Kn&ouml;pfe:</p>
   <ul class="steps">
-    <li><strong>Glocke (Ton):</strong> schaltet den Signalton ein oder aus. Bei eingeschaltetem Ton macht der Kiosk auf <em>neue</em> Bestellungen aufmerksam.</li>
-    <li><strong>Fragezeichen (Hilfe):</strong> &ouml;ffnet genau dieses Handbuch.</li>
-    <li><strong>Kreis-Pfeil (Aktualisieren):</strong> l&auml;dt die Ansicht neu, falls Sie ganz sicher den neuesten Stand sehen m&ouml;chten. Der Kiosk aktualisiert sich aber auch von selbst.</li>
+    <li><strong>Glocke (Ton):</strong> Schaltet den Signalton ein oder aus. Bei eingeschaltetem Ton macht der Kiosk mit einem kräftigen Piepen auf <em>neue</em> Bestellungen aufmerksam, ideal wenn Sie nicht direkt neben dem Bildschirm stehen.</li>
+    <li><strong>Fragezeichen (Hilfe):</strong> &Ouml;ffnet genau dieses Handbuch, das Sie gerade lesen.</li>
+    <li><strong>Kreis-Pfeil (Aktualisieren):</strong> L&auml;dt die Ansicht neu, falls Sie ganz sicher den aktuellsten Stand sehen m&ouml;chten. (Normalerweise aktualisiert sich der Kiosk aber vollautomatisch im Hintergrund).</li>
   </ul>
 
   <div class="ui">
@@ -115,363 +117,344 @@
       <span class="ui-tab"><span class="ic">&#128197;</span>Kalender</span>
     </div>
   </div>
-  <p class="ui-cap">So sieht die Kopfzeile mit den sechs Reitern aus. Der aktive Reiter ist gr&uuml;n unterstrichen.</p>
+  <p class="ui-cap">So sieht die Kopfzeile mit den sechs Reitern aus. Der aktive Bereich (hier: Online-Shop) ist gr&uuml;n markiert.</p>
 
-  <div class="sub-h">Die sechs Reiter</div>
+  <div class="sub-h">Die sechs Reiter (Tabs) im Detail</div>
   <ul class="steps">
-    <li><strong>Mittagstisch:</strong> Bestellungen f&uuml;r das t&auml;gliche Mittagessen.</li>
-    <li><strong>Online-Shop:</strong> Abholbestellungen aus dem Internet-Shop &ndash; annehmen, packen, ausgeben.</li>
-    <li><strong>Metzger:</strong> Fleisch-Vorbestellungen sammeln und bei der Metzgerei bestellen.</li>
-    <li><strong>Social:</strong> Beitr&auml;ge f&uuml;r WhatsApp/Instagram und die Homepage erstellen.</li>
-    <li><strong>Stammkunden:</strong> Kunden suchen, anlegen und Bestellungen f&uuml;r sie aufnehmen.</li>
-    <li><strong>Kalender:</strong> Aufgaben, Reservierungen und Notizen je Tag.</li>
+    <li><strong>Mittagstisch:</strong> Hier wickeln Sie das t&auml;gliche Mittagessen ab. Kunden bestellen hier warmes Essen zur Abholung.</li>
+    <li><strong>Online-Shop:</strong> Bestellungen aus dem Internet (z.B. der w&ouml;chentliche Grosseinkauf an Mehl, Eier, Putzmittel) &ndash; annehmen, Kisten packen und ausgeben.</li>
+    <li><strong>Metzger:</strong> Hier verwalten Sie rohes Fleisch und Wurst, vor allem für das wichtige "Austarieren" und Nachwiegen (auf den Grammpreis) vor der Herausgabe.</li>
+    <li><strong>Social Media:</strong> Hier erstellen Sie mit wenigen Klicks t&auml;gliche Werbebildchen ("Postings") f&uuml;r WhatsApp und Instagram oder setzen kurze Tagesinfos auf die Homepage.</li>
+    <li><strong>Stammkunden:</strong> Ein Telefonbuch f&uuml;r alle Dorfladen-Kunden. Verwaltung von Namen, Pfand-R&uuml;ckgaben und Rechnungskonten.</li>
+    <li><strong>Kalender:</strong> Der digitale Dienstplan. Wer liefert wann was an? Wer hat heute Fr&uuml;hschicht?</li>
   </ul>
 
-  <div class="sub-h">Die farbigen Zahlen (Z&auml;hler) an den Reitern</div>
-  <p class="txt">Kleine farbige Kreise an einem Reiter zeigen, dass dort etwas auf Sie wartet:</p>
+  <div class="sub-h">Das Ampel-System: Die farbigen Z&auml;hlerkr&auml;nzchen</div>
+  <p class="txt">Kleine farbige Punkte direkt an den Reitern zeigen Ihnen sofort, wo brennt es gerade:</p>
   <div class="ui"><div class="ui-body">
     <div class="badge-row" style="display:flex;gap:16px;flex-wrap:wrap">
-      <span class="kb"><span class="b" style="background:#ef4444">3</span> Rot = neue Bestellungen</span>
-      <span class="kb"><span class="b" style="background:#f59e0b">2</span> Orange = noch zu packen</span>
-      <span class="kb"><span class="b" style="background:#dc2626">1</span> Dunkelrot = &uuml;berf&auml;llig</span>
-      <span class="kb"><span class="b" style="background:#3b82f6">1</span> Blau = ungelesene Nachricht</span>
+      <span class="kb"><span class="b" style="background:#ef4444">3</span> Rot = Neue Bestellung eingegangen (Bestätigung nötig)</span>
+      <span class="kb"><span class="b" style="background:#f59e0b">2</span> Orange = Zeit zum Packen! (Zubereitung)</span>
+      <span class="kb"><span class="b" style="background:#dc2626">1</span> Dunkelrot = &Uuml;berf&auml;llig (Kunde hat vergessen zu holen!)</span>
+      <span class="kb"><span class="b" style="background:#3b82f6">1</span> Blau = Ungelesene Nachricht oder Storno-R&uuml;ckfrage</span>
     </div>
   </div></div>
-  <p class="ui-cap">Tippen Sie auf so einen Z&auml;hler, springt der Kiosk direkt zur passenden Liste.</p>
+  <p class="ui-cap">Tippen Sie auf so einen weithin leuchtenden Z&auml;hler, und der Kiosk springt direkt in die richtige Liste (z.B. zum Packen).</p>
 
-  <div class="sub-h">Das Grundprinzip in jedem Reiter</div>
-  <ul class="steps">
-    <li><strong>Oben die Filter</strong> (z.&nbsp;B. &bdquo;Zu erledigen&ldquo;, &bdquo;Heute&ldquo;, &bdquo;Erledigt&ldquo;) w&auml;hlen aus, <em>welche</em> Bestellungen Sie sehen.</li>
-    <li><strong>Darunter die Karten</strong> &ndash; jede Karte ist eine Bestellung oder ein Kunde. Tippen Sie eine Karte an, klappt sie auf und zeigt Details und Kn&ouml;pfe.</li>
-    <li><strong>Die Kn&ouml;pfe sind farbig</strong> und selbsterkl&auml;rend beschriftet. Gr&uuml;n bedeutet &bdquo;weiter/erledigt&ldquo;, Rot bedeutet &bdquo;stornieren&ldquo;.</li>
-  </ul>
-  <div class="tip">&#128161; Sie k&ouml;nnen jederzeit den Reiter wechseln, ohne etwas zu verlieren. Alles wird sofort gespeichert.</div>
 </div>
 
-<!-- ══════════════ MITTAGSTISCH ══════════════ -->
+<!-- ============================================== -->
+<!-- MITTAGSTISCH -->
+<!-- ============================================== -->
 <div class="section" id="sec-mittag">
-  <h2>Mittagstisch</h2>
-  <p class="lead">Hier laufen die Bestellungen f&uuml;r das Mittagessen zusammen. Sie w&auml;hlen oben den Tag, sehen alle Bestellungen dazu und arbeiten sie ab: best&auml;tigen, ausgeben, bei Bedarf stornieren &ndash; und Sie k&ouml;nnen dem Kunden antworten.</p>
+  <h2>Mittagstisch (Laufkundschaft)</h2>
+  <p class="lead">Hier verwalten Sie alle Abhol-Bestellungen für den warmen Mittagstisch der Metzger-Theke. Sie nehmen neue Bestellungen entgegen (am Telefon oder an der Kasse), packen die Portionen zusammen und geben diese an den Kunden raus.</p>
 
-  <div class="sub-h">Die Leiste oben</div>
-  <p class="txt">Ganz oben w&auml;hlen Sie mit den Tages-Kn&ouml;pfen (z.&nbsp;B. <strong>Heute</strong>) den Tag. Darunter gibt es vier Filter:</p>
-  <div class="ui"><div class="ui-filter">
-    <span class="ui-pill on">Offen <span class="ui-cnt">5</span></span>
-    <span class="ui-pill" style="color:#3b82f6">Nachrichten <span class="ui-cnt">1</span></span>
-    <span class="ui-pill">Erledigt <span class="ui-cnt">8</span></span>
-    <span class="ui-pill">Alle <span class="ui-cnt">13</span></span>
-  </div></div>
-  <p class="ui-cap">&bdquo;Offen&ldquo; ist Ihr Tagesgesch&auml;ft. &bdquo;Nachrichten&ldquo; (blau) sammelt Bestellungen mit ungelesenen Kundennachrichten.</p>
-
-  <div class="q">Wenn eine neue Bestellung eingeht &ndash; best&auml;tigen</div>
-  <ol class="steps">
-    <li>Filter <strong>Offen</strong> w&auml;hlen. Neue Bestellungen sind hervorgehoben.</li>
-    <li>Auf der Bestellkarte auf den gr&uuml;nen Knopf <strong>Best&auml;tigen</strong> tippen.</li>
-    <li>Wenn Sie m&ouml;chten, schreiben Sie im Feld <strong>&bdquo;Nachricht an Kunde (optional)&ldquo;</strong> noch etwas.</li>
-    <li>Auf <strong>Jetzt best&auml;tigen</strong> tippen. Die Bestellung ist jetzt best&auml;tigt (Karte wird gr&uuml;n).</li>
-  </ol>
-  <div class="ui"><div class="ui-body"><div class="ui-card">
-    <div class="ui-hd"><span class="ui-name">Familie Huber</span><span class="ui-chip" style="background:#fef3c7;color:#92400e">Neu</span><span class="ui-price">2&times; Schnitzel</span></div>
-    <div class="ui-actions"><span class="ui-btn green">&#10003; Best&auml;tigen</span><span class="ui-btn blue">&#128230; Abgeholt</span><span class="ui-btn red">&#10005;</span></div>
-  </div></div></div>
-  <p class="ui-cap">Eine Bestellkarte mit den Kn&ouml;pfen Best&auml;tigen (gr&uuml;n), Abgeholt (blau) und Stornieren (rotes &times;).</p>
-  <div class="tip">&#128161; Viele gleiche Gerichte? &Uuml;ber die &Uuml;berschrift der Gericht-Gruppe k&ouml;nnen Sie mit &bdquo;<strong>X best&auml;tigen</strong>&ldquo; alle offenen auf einmal best&auml;tigen.</div>
-
-  <div class="q">Wenn der Kunde sein Essen abholt</div>
-  <ol class="steps">
-    <li>Bestellung im Filter <strong>Offen</strong> finden.</li>
-    <li>Auf den blauen Knopf <strong>Abgeholt</strong> tippen &ndash; die Bestellung wandert nach <strong>Erledigt</strong>.</li>
-  </ol>
-
-  <div class="q">Wenn Sie eine Bestellung stornieren m&uuml;ssen</div>
-  <ol class="steps">
-    <li>Auf das rote <strong>&times;</strong> der Bestellung tippen.</li>
-    <li>Es &ouml;ffnet sich ein Fenster. W&auml;hlen Sie einen <strong>Grund</strong> (Pflicht).</li>
-    <li>Optional noch einen Kommentar erg&auml;nzen.</li>
-    <li>Auf <strong>Stornieren</strong> tippen. Der Knopf ist erst aktiv, wenn ein Grund gew&auml;hlt ist.</li>
-  </ol>
-  <div class="ui ui-dialog">
-    <div class="ui-dtitle">Bestellung stornieren</div>
-    <div class="ui-dsub">Stornierungsgrund (Pflichtfeld):</div>
-    <div class="ui-radio sel"><span class="r"></span> Gericht ist leider ausverkauft</div>
-    <div class="ui-radio"><span class="r"></span> Bestellung wurde doppelt aufgegeben</div>
-    <div class="ui-radio"><span class="r"></span> Bestellschluss bereits &uuml;berschritten</div>
-    <div class="ui-radio"><span class="r"></span> Kunde hat telefonisch storniert</div>
-    <div class="ui-radio"><span class="r"></span> Sonstiger Grund</div>
-    <div class="ui-drow"><span class="ui-btn gray">Abbrechen</span><span class="ui-btn red">Stornieren</span></div>
+  <div class="ui">
+    <div class="ui-tabs">
+      <span class="ui-tab on"><span class="ic">&#128221;</span>Neu / Bestellen</span>
+      <span class="ui-tab"><span class="ic">&#128230;</span>Packen <span class="ui-cnt">3</span></span>
+      <span class="ui-tab"><span class="ic">&#128722;</span>Ausgeben</span>
+      <span class="ui-tab" style="color:#d97706"><span class="ic">&#9200;</span>&Uuml;berf&auml;llig</span>
+    </div>
   </div>
-  <p class="ui-cap">Das Storno-Fenster: erst nach Auswahl eines Grundes wird &bdquo;Stornieren&ldquo; aktiv.</p>
 
-  <div class="q">Wenn ein Kunde Ihnen geschrieben hat</div>
+  <div class="sub-h">Die vier Reiter im &Uuml;berblick</div>
+  <ul class="steps">
+    <li><strong>Neu / Bestellen:</strong> Ruft ein Kunde an oder steht im Laden und m&ouml;chte f&uuml;r heute oder morgen Mittag bestellen? Dann tippen Sie hier die Bestellung in die Kasse ein.</li>
+    <li><strong>Packen:</strong> Zeigt alle Bestellungen, die <em>jetzt</em> zubereitet (das Essen in Schalen gepackt) werden m&uuml;ssen. Neue Bestellungen rutschen erst kurz vor Abholung hier hinein.</li>
+    <li><strong>Ausgeben:</strong> Die Schale ist gepackt und steht warm bereit. Wenn der Kunde hereinspaziert kommt und sich meldet, suchen Sie ihn hier und geben das Essen aus.</li>
+    <li><strong>&Uuml;berf&auml;llig:</strong> Der Kunde ist nicht zur vereinbarten Zeit aufgetaucht. Hier sehen Sie vergessene Bestellungen.</li>
+  </ul>
+
+  <div class="q">Was mache ich, wenn ... ein Kunde m&uuml;ndlich f&uuml;r den Mittagstisch bestellt?</div>
   <ol class="steps">
-    <li>Filter <strong>Nachrichten</strong> (blau; er blinkt bei Neuem).</li>
-    <li>Der Kundentext steht in einem blauen Kasten.</li>
-    <li>Ins Feld <strong>&bdquo;Antwort eingeben&hellip;&ldquo;</strong> schreiben und Enter dr&uuml;cken. Ihre Antwort erscheint gr&uuml;n darunter.</li>
+    <li>Gehen Sie auf den Reiter <strong>Neu / Bestellen</strong>.</li>
+    <li>Suchen Sie als Erstes den Kunden aus der Liste (linke Seite). Geben Sie einfach den Nachnamen ins Suchfeld ein. Ist es ein ganz neuer Kunde, w&auml;hlen Sie &bdquo;Laufkunde&ldquo; oder legen ihn &uuml;ber das Plus (+) frisch an.</li>
+    <li>Auf der rechten Seite sehen Sie den Speiseplan des Tages (z.&nbsp;B. Schnitzel, Bratwurst). Tippen Sie das gew&uuml;nschte Essen an. Oben k&ouml;nnen Sie &uuml;ber das Plus &minus; die Menge einstellen (z.&nbsp;B. "2x Leberk&auml;se").</li>
+    <li><strong>Uhrzeit:</strong> Wann m&ouml;chte der Kunde das Essen holen? Das System schl&auml;gt automatisch die n&auml;chste halbe Stunde vor. &Auml;ndern Sie die Zeit bei Bedarf über das Auswahlmenü.</li>
+    <li><strong>Extras:</strong> Will der Kunde zwingend Ketchup oder hat er Sonderwünsche? Tragen Sie das kurz in das Kommentarfeld ein, der Koch wird es beim Richten sehen.</li>
+    <li>Klicken Sie ganz unten auf <strong>Speichern</strong>. Fertig! Die Bestellung wandert nun (je nach Abholzeitpunkt) in das Warte-Fach und taucht dann pünktlich im K&auml;stchen &bdquo;Packen&ldquo; auf.</li>
   </ol>
 
-  <div class="sub-h">Was die Farben der Karten bedeuten</div>
-  <ul class="ampel">
-    <li><span class="dot" style="background:#f59e0b"></span> <strong>Gelb</strong> = neu, noch zu bearbeiten</li>
-    <li><span class="dot" style="background:#16a34a"></span> <strong>Gr&uuml;n</strong> = best&auml;tigt</li>
-    <li><span class="dot" style="background:#9ca3af"></span> <strong>Grau</strong> = abgeholt (erledigt)</li>
-    <li><span class="dot" style="background:#dc2626"></span> <strong>Rot</strong> = storniert</li>
-  </ul>
-  <p class="txt">Ein oranges Zeichen <strong>&bdquo;Mitnehmen&ldquo;</strong> bedeutet: Der Kunde nimmt das Essen mit (isst nicht vor Ort).</p>
+  <div class="q">Was mache ich, wenn ... es 11:30 Uhr ist und das Richten der Essen losgeht? (Packen)</div>
+  <ol class="steps">
+    <li>Gehen Sie auf den Reiter <strong>Packen</strong>. Dort sehen Sie alle Bestell-Kärtchen, deren Abholzeitpunkte z.&nbsp;B. zwischen 11:30 Uhr und 12:00 Uhr liegen.</li>
+    <li>Nehmen Sie sich die oberste Karte vor (z.&nbsp;B. &bdquo;Herr M&uuml;ller, 2x Schnitzel&ldquo;).</li>
+    <li>Packen Sie das Schnitzel sorgfältig in die W&auml;rme-Box oder auf den abholbereiten Teller.</li>
+    <li>Haben Sie <em>alles</em> von Müllers Gericht in der Hand? Dann klicken Sie direkt bei der Kundenkarte auf den gr&uuml;nen Haken-Button <strong>Bereitstellen</strong> (bzw. auf "Fertig").</li>
+    <li>Das System benachrichtigt den Kunden nun auf seinem Handy automatisch (per E-Mail oder Push Nachricht), dass er losgehen kann. Die Karte rutscht auf dem Tablet automatisch eine Station weiter zu &bdquo;Ausgeben&ldquo;.</li>
+  </ol>
+
+  <div class="q">Was mache ich, wenn ... der Kunde danach vor mir steht? (Ausgeben)</div>
+  <ol class="steps">
+    <li>Gehen Sie auf den Reiter <strong>Ausgeben</strong>. Hier sehen Sie alle P&auml;ckchen, die auf der W&auml;rmetheke zur eigentlichen Abholung stehen.</li>
+    <li>Suchen Sie rasch die richtige Kiste für Familie Müller, kassieren Sie das Geld bar / per Karte an der Ladentheke wie gewohnt! Das System <em>kassiert intern nicht automatisch ab!</em></li>
+    <li>H&auml;ndigen Sie das Essen aus.</li>
+    <li>Klicken Sie dann auf der Karte auf <strong>Abgeholt</strong> (den gr&uuml;nen Haken). Die Bestellung verschwindet aus dem aktiven Kiosk-Rundlauf - Müller ist versorgt und glücklich.</li>
+  </ol>
+
+  <div class="q">Was mache ich, wenn ... ich eine Bestellung versehentlich abgehakt habe?</div>
+  <ol class="steps">
+    <li>Keine Panik. Haben Sie bei &bdquo;Packen&ldquo; versehentlich auf 'Bereitstellen' getippt, obwohl die Pommes noch nicht fertig waren? Sie finden die Karte jetzt einfach eine Stufe weiter unter dem Reiter &bdquo;Ausgeben&ldquo;.</li>
+    <li>Gehen Sie auf &bdquo;Ausgeben&ldquo;. Klicken Sie auf der fälschlich verschobenen Karte einfach auf den <strong>grauen Pfeil-Zur&uuml;ck Button</strong>. Das Kiosk schiebt die Karte sogleich wieder zurück zur Küchenstation &bdquo;Packen&ldquo;.</li>
+  </ol>
+
+  <div class="q">Was mache ich, wenn ... unerwartet die Schnitzel ausverkauft sind? (Storno)</div>
+  <ol class="steps">
+    <li>Der Koch hat keine Schnitzel mehr, aber es gibt noch 2 offene Bestellungen darauf?</li>
+    <li>Klicken Sie bei der betroffenen Bestellung auf das kleine rote <strong>Kreuz / Stornieren</strong> Symbol.</li>
+    <li>Es &ouml;ffnet sich das Storno Fenster. W&auml;hlen Sie zwingend den Grund aus, nämlich &bdquo;Artikel nicht lieferbar (Ausverkauft)&ldquo;.</li>
+    <li>Tippen Sie auf die rote Schaltfläche &bdquo;Stornieren&ldquo;. Der Kunde bekommt sofort eine ehrliche Nachricht auf sein Handy geschickt und kommt nicht unnötig im Laden vorbei!</li>
+  </ol>
 </div>
 
-<!-- ══════════════ ONLINE-SHOP ══════════════ -->
+<!-- ============================================== -->
+<!-- ONLINE SHOP -->
+<!-- ============================================== -->
 <div class="section" id="sec-shop">
-  <h2>Online-Shop</h2>
-  <p class="lead">Kunden bestellen im Internet-Shop und w&auml;hlen einen Abholtermin. Ihre Aufgabe: die Bestellung <strong>annehmen</strong>, die Ware <strong>packen</strong>, als <strong>abholbereit</strong> melden (der Kunde bekommt automatisch Bescheid) und beim Abholen <strong>ausgeben</strong>.</p>
+  <h2>Online-Shop (Trockensortiment)</h2>
+  <p class="lead">Hier landen alle Bestellungen, die Kunden f&uuml;r den w&ouml;chentlichen &bdquo;Gro&szlig;einkauf&ldquo; bequem von der Couch &uuml;ber die Homepage aufgegeben haben. Ihre Kernaufgabe: Die Kisten / Einkaufstüten lückenlos packen (Abhaken im System!), Mängel eintragen und am Ende im Dorf ausgeben.</p>
 
-  <div class="sub-h">Der Weg jeder Bestellung</div>
-  <p class="txt">Eine Bestellung durchl&auml;uft immer dieselben vier Stufen. Sie schieben sie mit einem Knopf jeweils eine Stufe weiter:</p>
-  <div class="ui"><div class="ui-body">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:700;color:#334155">
-      <span class="ui-chip" style="background:#fef3c7;color:#92400e">Neu</span> &rarr;
-      <span class="ui-chip" style="background:#fef3c7;color:#92400e">In Bearbeitung</span> &rarr;
-      <span class="ui-chip" style="background:#e0e7ff;color:#3730a3">Abholbereit</span> &rarr;
-      <span class="ui-chip" style="background:#dcfce7;color:#166534">Abgeholt</span>
-    </div>
-    <p class="txt" style="margin:10px 0 0">Knopf-Reihenfolge: <strong>Annehmen</strong> &rarr; <strong>Packen</strong> (fertig) &rarr; <strong>Ausgeben</strong>. Stornieren ist jederzeit m&ouml;glich.</p>
-  </div></div>
+  <div class="sub-h">Wie Sie mit Shop-Bestellungen umgehen</div>
+  <p class="txt">Kunden bestellen online oft viel mehr Artikel auf einmal als beim Einzel-Mittagstisch (z.B. Mehl, Reinigungsmittel, Obst). Manches ist vielleicht gerade nicht im Regal.</p>
 
-  <div class="sub-h">Die Filter oben</div>
-  <div class="ui"><div class="ui-filter">
-    <span class="ui-pill on">&#128230; Zu erledigen <span class="ui-cnt">4</span></span>
-    <span class="ui-pill">&#128197; Heute abholen <span class="ui-cnt">2</span></span>
-    <span class="ui-pill">&#9888; &Uuml;berf&auml;llig <span class="ui-cnt">0</span></span>
-    <span class="ui-pill">&#128336; Historie</span>
-  </div></div>
-  <ul class="steps">
-    <li><strong>Zu erledigen:</strong> alle offenen Bestellungen (neu, in Bearbeitung, abholbereit).</li>
-    <li><strong>Heute abholen:</strong> nur die, die heute abgeholt werden.</li>
-    <li><strong>&Uuml;berf&auml;llig:</strong> die Abholzeit ist schon vorbei (rot, dringend).</li>
-    <li><strong>Historie:</strong> abgeschlossene Bestellungen zum Nachschlagen (mit Zeitraum und &bdquo;Abgeholt/Storniert&ldquo;).</li>
-  </ul>
-
-  <div class="q">Wenn eine neue Bestellung kommt &ndash; annehmen</div>
+  <div class="q">Schritt 1: Was m&uuml;ssen wir gerade packen?</div>
   <ol class="steps">
-    <li>Filter <strong>Zu erledigen</strong>.</li>
-    <li>Auf <strong>Annehmen</strong> tippen. Die Bestellung ist jetzt <strong>In Bearbeitung</strong>.</li>
+    <li>Tippen Sie oben auf dem Kiosk auf den blauen Reiter <strong>Packen</strong>. Dort reihen sich alle neu eingehenden Online-Bestellungen in der ganz exakten Reihenfolge ihrer vom Kunden gewählten Abholzeit ein.</li>
+    <li>Oben auf den Kartenkacheln steht die Uhrzeit (z.&nbsp;B. &bdquo;Heute Abholung: 16:30 Uhr&ldquo;) und der Name der einkaufenden Familie (z.B. Familie Huber).</li>
+    <li>Nehmen Sie sich in der Vorbereitungskammer eine leere Gitterbox (oder einen Papp-Karton) und kennzeichnen Sie diese kurz mit dem Ziel-Namen.</li>
+    <li>Tippen Sie nun bei der gew&uuml;nschten Kundenbestellung auf den dunkelblauen Knopf <strong>Packen</strong>. Der Kiosk öffnet jetzt eine große raumfüllende Liste – eine Art digitale "Zutatenliste" für diese eine Kiste.</li>
   </ol>
 
-  <div class="q">Wenn Sie packen &ndash; die Packliste abarbeiten</div>
-  <ol class="steps">
-    <li>Auf <strong>Packen</strong> tippen. Es &ouml;ffnet sich das Fenster <strong>&bdquo;Bestellung packen&ldquo;</strong> mit allen Artikeln.</li>
-    <li>Jeden Artikel, den Sie eingepackt haben, <strong>abhaken</strong>. Die Menge k&ouml;nnen Sie anpassen &ndash; fehlt etwas oder gibt es nur eine Teilmenge, wird das farbig markiert.</li>
-    <li>Oben sehen Sie den Fortschritt, z.&nbsp;B. <strong>&bdquo;4/7 gepackt&ldquo;</strong>. Ihre Eingaben werden automatisch gespeichert.</li>
-    <li>Optional auf <strong>Drucken</strong> tippen &ndash; ergibt einen Packzettel auf Papier.</li>
-    <li>Am Ende auf <strong>Fertig</strong> tippen. Die Bestellung ist <strong>Abholbereit</strong>; der Kunde wird automatisch benachrichtigt.</li>
-  </ol>
   <div class="ui">
     <div class="ui-top" style="background:#334155"><span>&#128230; Bestellung packen &middot; Familie Huber</span></div>
     <div class="ui-body">
-      <div style="font-size:12.5px;font-weight:700;color:#166534;margin-bottom:8px">Fortschritt: 2/3 gepackt</div>
+      <div style="font-size:12.5px;font-weight:700;color:#166534;margin-bottom:8px">Fortschritt: Sie haben 2 von 3 Artikeln sicher gepackt.</div>
       <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;background:#16a34a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px">&#10003;</span><span class="ui-name">Bio-Eier 10er</span><span class="ui-price">1 Stk</span></div></div>
-      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;background:#16a34a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px">&#10003;</span><span class="ui-name">Kartoffeln</span><span class="ui-price">2,5 kg</span></div></div>
-      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;border:2px solid #cbd5e1"></span><span class="ui-name">Butter</span><span class="ui-price">2 Stk</span></div></div>
+      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;background:#16a34a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px">&#10003;</span><span class="ui-name">Regionale Bio-Kartoffeln</span><span class="ui-price">2,5 kg</span></div></div>
+      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;border:2px solid #cbd5e1"></span><span class="ui-name">Teegold Marken-Butter</span><span class="ui-price">2 Stk</span></div></div>
     </div>
-    <div class="ui-drow"><span class="ui-btn gray">&#128424; Drucken</span><span class="ui-btn green">&#10003; Fertig</span></div>
+    <div class="ui-drow"><span class="ui-btn gray">&#128424; Drucken (z.B. fürs Regal suchen)</span><span class="ui-btn green">&#10003; Gesamtpaket Fertig</span></div>
   </div>
-  <p class="ui-cap">Im Pack-Fenster haken Sie jeden Artikel ab. &bdquo;Fertig&ldquo; meldet die Bestellung als abholbereit.</p>
 
-  <div class="q">Wenn der Kunde abholt &ndash; ausgeben</div>
+  <div class="q">Schritt 2: Das Pack-Fenster benutzen (Artikel abhaken)</div>
   <ol class="steps">
-    <li>Auf <strong>Ausgeben</strong> tippen. Die Bestellung ist <strong>Abgeholt</strong> und damit erledigt.</li>
-    <li>Versehentlich getippt? Mit dem <strong>Zur&uuml;ck-Pfeil</strong> eine Stufe zur&uuml;cksetzen.</li>
+    <li>Gehen Sie mit Ihrem Tablet in der Hand (oder notfalls mit einem Papier-Zettel über den Knopf "Drucken") in Ruhe durch die G&auml;nge.</li>
+    <li>Haben Sie die 10 Bio-Eier in den Karton gelegt? Dann tippen Sie im Fenster ganz vorne auf das <strong>leere K&auml;stchen</strong> neben "Bio-Eier", bis der <strong>gr&uuml;ne Haken</strong> sitzt.</li>
+    <li>Haben Sie den Sack Kartoffeln reingelegt? Wieder Abhaken.</li>
+    <li><strong>Was mache ich, wenn ein Produkt vergriffen ist (nur noch 1 statt 2 da)?</strong> Familie Huber bestellte 2x Butter. Sie haben aber leider nur noch 1x Butter in der Frischetheke. Klicken Sie auf den Text "Marken-Butter". Es &ouml;ffnet sich kurz ein Ziffernblock "Menge anpassen". Sie korrigieren dort die "2" einfach auf die "1". Das System vermerkt das mit oranger Farbe ("gelieferte Teil-Menge"). </li>
+    <li><strong>Was mache ich, wenn das Regal komplett leer ist?</strong> &Auml;ndern Sie den Wert analog auf eine "0". Der Artikel wird rot durchgestrichen (als &bdquo;Komplett nicht mehr lieferbar&ldquo;).</li>
+    <li><strong>Ist alles andere sauber verpackt in der Box?</strong> Tippen Sie unten rechts auf den gr&uuml;nen Haupt-Knopf <strong>Fertig</strong>! </li>
+    <li>Die Shop-Software schickt Familie Huber jetzt die Meldung ("Kommt, Euer Einkauf steht gerichtet bereit, leider fehlt einmal Butter!"). Die fehlende Butter wird dem Kunden auf der elektronischen Rechnung natürlich fair abgezogen!</li>
   </ol>
 
-  <div class="q">Wenn Sie stornieren</div>
+  <div class="q">Schritt 3: Der Abholer und das tatsächliche Bezahlen</div>
   <ol class="steps">
-    <li>Auf <strong>Stornieren</strong> tippen und einen Grund w&auml;hlen: &bdquo;Artikel nicht lieferbar&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo;, &bdquo;Abholung nicht m&ouml;glich&ldquo; oder &bdquo;Sonstiger Grund&ldquo;.</li>
-    <li>Auf <strong>Stornieren</strong> best&auml;tigen.</li>
+    <li>Sobald der Kunde im Laden winkt, wechseln Sie im Kiosk oben in die Spalte <strong>Ausgeben</strong>.</li>
+    <li>Familie Huber möchte die Kiste haben. Suchen Sie auf dem Screen die Huber-Bestellung und tippen Sie auf den Knopf <strong>Als Abgeholt markieren</strong>.</li>
+    <li>Jetzt <em>enorm wichtig:</em> Gehen Sie an die echte Ladenkasse (die mit dem Bondrucker/Scan-System) tippen Sie den endgültigen, auf dem Kiosk-Bildschirm angezeigten Gesamtwert in die Kasse ein, und lassen Sie Familie Huber ganz regulär bar oder per EC-Karte bezahlen! (Das Dorfladen-Zentralkiosk kassiert intern vom Bankkonto der Leute keine echten Gelder - es ist nur zur Warenbereitstellung!).</li>
   </ol>
-  <div class="tip">&#128161; &Uuml;ber die farbigen Z&auml;hler ganz oben (z.&nbsp;B. <strong>Packen</strong> oder <strong>&Uuml;berf&auml;llig</strong>) springen Sie sofort in die richtige Liste. Mit <strong>Details</strong> sehen Sie die komplette Bestellung.</div>
 </div>
 
-<!-- ══════════════ METZGER ══════════════ -->
+<!-- ============================================== -->
+<!-- METZGER -->
+<!-- ============================================== -->
 <div class="section" id="sec-metzger">
-  <h2>Metzger</h2>
-  <p class="lead">Hier sammeln sich die Fleisch-Vorbestellungen der Kunden. Sie b&uuml;ndeln alle offenen Positionen zu einer <strong>Sammelbestellung</strong>, geben diese bei der Metzgerei auf und markieren die Ware sp&auml;ter als abgeholt.</p>
+  <h2>Spezialf&auml;lle Fleisch-Bestellungen (Metzger)</h2>
+  <p class="lead">Fleischwaren und spezielle Wurst (oder abgewognener Käse) sind beim Bestellen eine Besonderheit: Kunden ordern online in groben Werten wie <strong>Gramm oder Scheiben</strong>. Da aber ein dicker Rinderbraten mit Knochen niemals haargenau 1000g wiegt und eine Wurstscheibe mal dicker ausf&auml;llt, müssen zwingend vor der Verpackung die <strong>echten Realgewichte</strong> nach dem genauen Einwiegen an der Ladentheke eingetippt werden!</p>
 
-  <div class="sub-h">Die Filter oben</div>
-  <div class="ui"><div class="ui-filter">
-    <span class="ui-pill on">Zu erledigen <span class="ui-cnt">6</span></span>
-    <span class="ui-pill">Heute abholen <span class="ui-cnt">2</span></span>
-    <span class="ui-pill">Sammelbestellung</span>
-    <span class="ui-pill" style="color:#3b82f6">Nachrichten</span>
-    <span class="ui-pill">Historie</span>
-  </div></div>
-
-  <div class="q">Wenn Sie bei der Metzgerei bestellen &ndash; Sammelbestellung</div>
-  <ol class="steps">
-    <li>Filter <strong>Sammelbestellung</strong> w&auml;hlen. Alle offenen Positionen sind nach <strong>Liefertag</strong> gruppiert (Artikel, Menge in kg, Preis).</li>
-    <li>Auf <strong>Drucken</strong> tippen &ndash; Sie erhalten eine saubere Liste auf Papier f&uuml;r die Metzgerei.</li>
-    <li>Nachdem Sie bestellt haben, haken Sie die Positionen ab &ndash; einzeln, oder mit <strong>Alle abhaken</strong> auf einen Schlag.</li>
-  </ol>
   <div class="ui">
-    <div class="ui-body">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><strong style="flex:1;font-size:14px">&#128203; Sammelbestellung</strong><span class="ui-btn gray">&#128424; Drucken</span><span class="ui-btn green">&#10003;&#10003; Alle abhaken</span></div>
-      <div style="font-size:12.5px;font-weight:700;color:#166534;margin-bottom:6px">&#128197; Freitag, 25. Juli</div>
-      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;border:2px solid #cbd5e1"></span><span class="ui-name">Schweinefilet</span><span class="ui-price">2,0 kg</span></div></div>
-      <div class="ui-card"><div class="ui-hd"><span style="width:18px;height:18px;border-radius:5px;border:2px solid #cbd5e1"></span><span class="ui-name">Rinderhack</span><span class="ui-price">3,5 kg</span></div></div>
+    <div class="ui-tabs">
+      <span class="ui-tab"><span class="ic">&#128221;</span>Neu</span>
+      <span class="ui-tab on"><span class="ic">&#9878;</span>Auswiegen &amp; Kasse</span>
     </div>
   </div>
-  <p class="ui-cap">Die Sammelbestellung b&uuml;ndelt alle offenen Positionen pro Liefertag &ndash; ideal zum Ausdrucken.</p>
 
-  <div class="q">Wenn die Ware da ist</div>
+  <div class="q">Ein normales "Rezept" beim Bestellen von Rohem Fleisch</div>
   <ol class="steps">
-    <li>Die Bestellung des Kunden &ouml;ffnen und auf <strong>Abgeholt</strong> tippen.</li>
+    <li>Ein Online-Häuslebauer bestellt samstags für den Schwenkgrill &bdquo;500g edlen Schweinebauch&ldquo;. Das Kiosk-System weiß, dass das Fleisch ist, trennt das von den Dosenbohnen der Bestellung, und wirft direkt neben der echten Metzgertheke einen sogenannten <em>Metzger-Bon</em> (Papierzettel) auf dem dortigen kleinen Bondrucker heraus.</li>
+    <li>Ihre Metzgereifachverk&auml;uferin nimmt diesen Bon und klemmt ihn an die Alu-Leiste &uuml;ber dem Hackblock.</li>
+    <li>Sie holt ein schönes Schweinebauch Stück. Sie beginnt zu schneiden und legt die Fleischscheiben aufs digitale Waagen-Display. Aha, fertig. Die Waage sagt uns: es sind exakt 542 Gramm geworden (statt glatten 500g).</li>
+    <li>Die Metzgerei-Dame verpackt das Fleisch in sauberes Wachspapier und druckt von der "echten Hand-Metzgerwaage" das Barcode/Auszeichnungs-Etikett aus. Darauf steht nun das echte Gewicht und der Endpreis! Sie pappt ihn auf das Päckchen und legt das fertige Paket in den Kühlraum zum Abholen.</li>
   </ol>
 
-  <div class="q">Wenn Sie stornieren</div>
+  <div class="q">Das echte Gewicht / Den Preis in das Kiosk-System umtragen ("Nachwiegen")</div>
+  <p class="txt">Damit unserem Käufer in der Endrechnung am Handy aber auch signalisiert wird, dass er heute 542g Wurst bezahlen muss (und nicht 500g), tun Sie ganz schnell folgendes am Kiosk-Tablet:</p>
   <ol class="steps">
-    <li>Grund w&auml;hlen: &bdquo;Ware nicht verf&uuml;gbar&ldquo;, &bdquo;Bestellung wurde doppelt aufgegeben&ldquo;, &bdquo;Kunde hat telefonisch storniert&ldquo;, &bdquo;Mindestbestellmenge nicht erreicht&ldquo; oder &bdquo;Sonstiger Grund&ldquo;, dann <strong>Stornieren</strong>.</li>
-  </ol>
-  <p class="txt">Der Weg einer Fleischbestellung: <strong>Neu</strong> &rarr; <strong>In Bestellung</strong> (bei der Metzgerei geordert) &rarr; <strong>Abgeholt</strong> (oder <strong>Storniert</strong>).</p>
-</div>
-
-<!-- ══════════════ STAMMKUNDEN ══════════════ -->
-<div class="section" id="sec-kunden">
-  <h2>Stammkunden</h2>
-  <p class="lead">Hier finden und verwalten Sie Ihre Stammkunden. Praktisch, wenn ein Kunde anruft: Sie suchen ihn, sehen seine Daten und nehmen direkt eine Bestellung auf.</p>
-
-  <div class="q">Wenn Sie einen Kunden suchen</div>
-  <ol class="steps">
-    <li>Ins Suchfeld <strong>&bdquo;Kunde suchen (Name oder Telefon)&hellip;&ldquo;</strong> tippen. Die Liste filtert w&auml;hrend des Tippens.</li>
-    <li>Oder auf <strong>Alle Kunden laden</strong> tippen, um die vollst&auml;ndige Liste zu sehen.</li>
-  </ol>
-  <div class="ui"><div class="ui-body">
-    <div class="ui-field">&#128269; Kunde suchen (Name oder Telefon)&hellip;</div>
-    <div style="display:flex;gap:8px"><span class="ui-btn green">&#128100; Neuer Kunde</span><span class="ui-btn gray">&#128101; Alle Kunden laden</span></div>
-  </div></div>
-  <p class="ui-cap">Suchfeld und die Kn&ouml;pfe &bdquo;Neuer Kunde&ldquo; und &bdquo;Alle Kunden laden&ldquo;.</p>
-
-  <div class="q">Wenn ein neuer Kunde dazukommt</div>
-  <ol class="steps">
-    <li>Auf <strong>Neuer Kunde</strong> tippen. Es &ouml;ffnet sich das Fenster <strong>&bdquo;Neuer Stammkunde&ldquo;</strong>.</li>
-    <li><strong>Nachname</strong> und <strong>Telefon</strong> ausf&uuml;llen (Pflicht). Vorname, E-Mail und Notiz sind freiwillig.</li>
-    <li>Auf <strong>Kunde anlegen</strong> tippen &ndash; der Kunde bekommt eine Stammkunden-Nummer.</li>
-  </ol>
-  <div class="warn">&#9888;&#65039; Ohne <strong>Nachname</strong> l&auml;sst sich kein Kunde speichern &ndash; der Kiosk weist Sie freundlich darauf hin.</div>
-
-  <div class="q">Wenn Sie Kundendaten &auml;ndern</div>
-  <ol class="steps">
-    <li>Kundenkarte antippen (klappt auf) &rarr; <strong>Bearbeiten</strong> &rarr; Werte anpassen &rarr; <strong>Speichern</strong>.</li>
-  </ol>
-
-  <div class="q">Wenn Sie eine Bestellung aufnehmen (z.&nbsp;B. am Telefon)</div>
-  <ol class="steps">
-    <li>Auf der Kundenkarte auf <strong>Bestellen</strong> tippen.</li>
-    <li><strong>Gericht</strong> w&auml;hlen und die <strong>Menge</strong> mit den Kn&ouml;pfen <strong>&minus;</strong> und <strong>+</strong> einstellen.</li>
-    <li>Optional eine Anmerkung eingeben und <strong>Zum Mitnehmen</strong> setzen.</li>
-    <li>Auf <strong>Bestellung aufnehmen</strong> tippen &ndash; fertig, Sie erhalten die Bestellnummer.</li>
+    <li>Öffnen Sie den Reiter <strong>Spezialf&auml;lle Fleisch (Metzger)</strong> &rarr; Unter-Reiter <strong>Auswiegen &amp; Kasse</strong>.</li>
+    <li>Sie erblicken sofort die Herr-Huber Schweinebauch-Bestellzeile. Dort steht noch rot blinkend &bdquo;Bestellt: grob 500g - Warte auf Abwiegen&ldquo;.</li>
+    <li>Tippen Sie direkt auf diese Bestellungszeile im Tablet. </li>
+    <li>Schauen Sie auf Ihr auf Päckchen gepapptes Waagen-Etikett und tippen Sie als Zahl den dort stehenden Endpreis ein (z.B. &bdquo;12,98 &euro;&ldquo;).</li>
+    <li>Klicken Sie zur Bestätigung auf <strong>Speichern (Gr&uuml;ner Haken)</strong>. </li>
+    <li>Das war das Geheimnis! Das Kiosksystem übergibt diesen geänderten Preis ins Hauptsystem. Wenn der Kunde sp&auml;ter zur Abholung der Haupt-Gitterkiste kommt, sind im "Online Shop" alle Konserven PLUS das eingewogene echte Fleisch in einem Gesamtwert zusammengerechnet.</li>
   </ol>
 </div>
 
-<!-- ══════════════ SOCIAL MEDIA ══════════════ -->
+<!-- ============================================== -->
+<!-- SOCIAL MEDIA -->
+<!-- ============================================== -->
 <div class="section" id="sec-social">
-  <h2>Social Media</h2>
-  <p class="lead">Erstellen Sie in vier einfachen Schritten einen Tagespost, teilen Sie ihn (WhatsApp/Instagram) oder ver&ouml;ffentlichen Sie ihn als Tagesinfo auf der Homepage. Im Unterbereich <strong>Katalog</strong> pflegen Sie die Produkte, die Sie in die Beitr&auml;ge einbauen k&ouml;nnen.</p>
+  <h2>Social Media (Werbung &amp; Tagesinfos)</h2>
+  <p class="lead">Hier erstellen Sie ganz einfach digitale Aush&auml;nge (Posts) f&uuml;r WhatsApp, Instagram oder die Startseite der Dorfladen-Homepage. Sie m&uuml;ssen sich nicht stundenlang mit Grafikprogrammen rumschlagen &ndash; der Kiosk baut Ihnen das fertige Hochglanz-Bild vollautomatisch aus Ihren Produkten! Im Unterbereich <strong>Katalog</strong> lagern Sie dazu Ihre Dauer-Waren incl. nettem Foto und Preis dauerhaft ab.</p>
 
   <div class="ui"><div class="ui-filter">
-    <span class="ui-pill on">&#10133; Neuer Post</span>
-    <span class="ui-pill">&#128214; Katalog</span>
+    <span class="ui-pill on">&#10133; Neuer Post (Erstellen)</span>
+    <span class="ui-pill">&#128214; Ihr Produkt-Katalog</span>
   </div></div>
 
-  <div class="q">Einen Tagespost erstellen &ndash; in 4 Schritten</div>
+  <div class="sub-h">Der kinderleichte 4-Schritte-Assistent (Neuer Werbepost)</div>
+  <p class="txt">Klicken Sie auf <strong>Neuer Post</strong>. Das Modul f&uuml;hrt Sie nun streng Schritt f&uuml;r Schritt logisch durch die Erstellung Ihres aktuellen Angebots.</p>
+
+  <div class="q">Schritt 1: Titel &amp; Begleittext ausdenken</div>
   <ol class="steps">
-    <li><strong>Schritt 1 &ndash; Titel &amp; Text:</strong> <strong>Heute</strong> oder <strong>Morgen</strong> w&auml;hlen, einen Titel aus der Liste nehmen (oder einen eigenen eingeben) und optional einen Freitext erg&auml;nzen.</li>
-    <li><strong>Schritt 2 &ndash; Produkte:</strong> Produkte aus dem Katalog antippen &ndash; sie erscheinen im Bild. Oben sehen Sie z.&nbsp;B. &bdquo;2 ausgew&auml;hlt&ldquo;.</li>
-    <li><strong>Schritt 3 &ndash; Vorschau:</strong> Das fertige Bild wird automatisch erzeugt. So sieht es der Kunde.</li>
-    <li><strong>Schritt 4 &ndash; Teilen &amp; Ver&ouml;ffentlichen:</strong> siehe unten.</li>
+    <li><strong>Tag bestimmen:</strong> W&auml;hlen Sie mit dem Radio-Knopf, ob die anstehende Kiste oder das frisch gelieferte Obst f&uuml;r <strong>Heute</strong> oder rüber <strong>Morgen</strong> gilt. Das Datum wird sp&auml;ter super-deutlich oben Rechts in die Ecke vom Bild eingedruckt (z.&nbsp;B. &bdquo;Di, 24. Aug&ldquo;).</li>
+    <li><strong>Titel ausw&auml;hlen:</strong> Tippen Sie mit dem Finger auf das weiße gro&szlig;e Eingabefeld. Es springt von selbst ein bequemes Roll-Men&uuml; auf mit Standard-Reißern wie &bdquo;Frisch aus der Pfanne!&ldquo;, &bdquo;Angebot des Tages&ldquo; oder &bdquo;Regional neu&ldquo;. </li>
+    <li><strong>Selber einen Titel verfassen:</strong> Finden Sie keinen passenden Titel? Tippen Sie ihn einfach selbständig &uuml;ber die Tablettastatur in dieses Feld ein (z.B. &bdquo;Achtung! Kirschen vom Stauden-Hof!&ldquo;).</li>
+    <li><strong>Langer Werbe-Zusatztext (Freiwillig):</strong> Unter dem Titel finden Sie noch die "Ank&uuml;ndigung". Das eignet sich perfekt, um weiter auszuholen: &bdquo;Da wir heute morgen so viele Eier bekamen, bieten wir nur diese Woche und solange Vorrat reicht die Familienpackung an! Bitte bringt eigene Kartons mit!&ldquo;. Dieses Info-Feld platziert sich elegant auf der Grafik.</li>
+    <li>Tippen Sie rechts auf den Knopf <strong>Weiter</strong>, um zur Bildauswahl zu kommen.</li>
   </ol>
 
+  <div class="q">Schritt 2: Die Produkte ins Bild kleben</div>
+  <p class="txt">In diesem Schritt w&auml;hlen Sie aus, <em>welche Fotos</em> das Bild zeigen soll. Sie bedienen sich hierbei am "Katalog", wo alle Produkte abgespeichert sind.</p>
+  <ol class="steps">
+    <li><strong>Im Katalog w&uuml;hlen:</strong> Nutzen Sie die Suchleiste im Kopfbereich. Tippen Sie "Bro" ein, und Ihnen erscheinen "Brotzeit, Brotteig, Brotkorb". Oder klicken Sie auf Kategorie "Backwaren". </li>
+    <li><strong>Das gewünschte Produkt ausw&auml;hlen:</strong> Haben Sie z.B. die "Schoko-Krapfen" in der Liste vor sich gefunden? Tippen Sie darauf. Der Kiosk bejaht das mit einem unübersehbaren gr&uuml;nes H&auml;kchen in der Ecke des Produkts. Oben am Bildschirmrand vermerkt das Modul zudem: &bdquo;1 Artikel ausgew&auml;hlt&ldquo;. Sie k&ouml;nnen gerne 2, 3 oder 8 Artikel in einem Zug antippen (der Kiosk platziert sie später alle nebeneinander).</li>
+    <li><strong>Spontan etwas (ohne schönes Foto) bewerben:</strong> Wollen Sie nur schnell sagen "Es gibt Eier", haben aber kein aufregendes Foto von Eiern auf der Festplatte um das in den Katalog zu binden? Tippen Sie einfach ganz oben ins Textfeld <strong>&bdquo;Oder Freitext-Eintrag eingeben&ldquo;</strong>. Beschreiben Sie die Eier ("Eier Klasse L", Preis 2.90) und dr&uuml;cken auf + (Hinzufügen). Dann klebt das Modul later später im fertigen Post nur eine nette Textblase ohne Foto in die Collage!</li>
+    <li>Klicken Sie auf <strong>Weiter</strong>, sobald Sie alle Zutaten für diesen Beitrag zusammengeklickt haben.</li>
+  </ol>
+
+  <div class="q">Schritt 3: Das Gesamt-Ergebnis "Vorschau" betrachten</div>
+  <p class="txt">Dieses ist die Hauptstärke des Kiosks: Sie m&uuml;ssen nicht mehr mühsam im alten Word oder Paint rumbasteln.</p>
+  <ol class="steps">
+    <li>Sobald Sie hierher kommen, rödelt es kurz und plopp: Der fertige Werbeding erscheint! Bildsch&ouml;n hat das Script den Holzhintergrund gebaut, den Text formatiert, die 3 Kirsch- und Brotfotos akkurat im perfekten Kreis-Schatten angeordnet, und sogar kleine, leuchtend rote Preisschilder (wie bei den Großen Supermärkten) rangeheftet!</li>
+    <li>Schauen Sie es kritisch an. Haben Sie das Kilo Kirschen fälschlich mit 29,99 anstatt 2,99 Euro ausgezeichnet? Huch!</li>
+    <li>Korrigieren: Kein Problem! Wenn das Bild &Auml;nderungen verträgt, tippen Sie sofort unten links auf <strong>ZUR&Uuml;CK</strong>. Das verwirft die Grafik, Sie ändern den Preis und springen wieder mit "Weiter" hierhin.</li>
+    <li>Alles tippitoppi und wunderschön anzusehen? Glänzend! Klicken Sie freudig auf <strong>Weiter</strong> zum finalen Ziel.</li>
+  </ol>
+
+  <div class="q">Schritt 4: Jetzt rausschicken und die Werbetrommel rühren (Teilen)</div>
+  <p class="txt">Noch weiß niemand von den frischen Kirschen aus Schritt 3. Hier schießen Sie die News an die Kunden ins Internet!</p>
+  
   <div class="ui"><div class="ui-body">
     <div class="ui-actions">
-      <span class="ui-btn green" style="background:#25d366">&#128241; Auf WhatsApp teilen</span>
-      <span class="ui-btn" style="background:#e1306c">&#128247; Auf Instagram teilen</span>
+      <span class="ui-btn green" style="background:#25d366">&#128241; Auf WhatsApp Status teilen</span>
+      <span class="ui-btn" style="background:#e1306c">&#128247; Auf Instagram verteilen</span>
     </div>
     <div class="ui-actions">
-      <span class="ui-btn gray">&#128190; Bild speichern</span>
-      <span class="ui-btn green">&#128196; Tagesinfo ver&ouml;ffentlichen</span>
-      <span class="ui-btn orange">&#128278; Parken</span>
+      <span class="ui-btn gray">&#128190; Das Bild herunterladen (Speichern)</span>
+      <span class="ui-btn green">&#128196; Als 'Tagesinfo' sofort ver&ouml;ffentlichen (Website)</span>
+      <span class="ui-btn orange">&#128278; Entwurf anhalten & Parken</span>
     </div>
   </div></div>
+
   <ul class="steps">
-    <li><strong>Auf WhatsApp / Instagram teilen:</strong> Das Bild wird kopiert &ndash; Sie f&uuml;gen es dort nur noch ein.</li>
-    <li><strong>Bild speichern:</strong> l&auml;dt das Bild als Datei herunter.</li>
-    <li><strong>Tagesinfo ver&ouml;ffentlichen:</strong> erscheint sofort auf der Homepage.</li>
-    <li><strong>Parken:</strong> speichert den Beitrag als Entwurf, damit Sie ihn sp&auml;ter senden k&ouml;nnen.</li>
+    <li><strong>Auf WhatsApp / Instagram Teilen Buttons:</strong> Wenn Sie diese Knöpfe drücken passiert Magie: Der Kiosk legt dieses wunderschöne Bild auf den internen "Speicher-Clip" des Geräts ab. Ihr Gerät (zumB. Handy, iPad) wechselt jetzt automatisch in WhatsApp. Wollen Sie diese News allen Dorfbewohnern zeigen, tippen Sie im WhatsApp einfach auf "Status" → Neu → und gehen lange mit dem Finger ins leere Bild und sagen "Einsetzen". Bums, Ihr Werbebild ist im Dorfladen-WhatsApp-Zirkel sichtbar!</li>
+    <li><strong>Tagesinfo ver&ouml;ffentlichen Button:</strong> Das wichtigste Element f&uuml;r den großen Flatscreen im Laden und die Internet-Webseite. Ein Fingertouch hierauf pumpt das Bild tief in die Dorfladen-Zentraldatenbank. Sofort öffnet sich dieses neue Werbebild auf der großen Startseite im Internet und der Bildschirm im Foyer am Eingang des Ladens spielt ab jetzt die Kirschen-Werbung ab. Das ganz alte Bild, was da noch draufstand, wird spurlos ins Nichts verdrängt.</li>
+    <li><strong>Parken Button:</strong> Angenommen es ist Dienstag Abend. Sie als Chef packen da gern schon die Auslagen für Mittwoch Früh! Wenn der Mittwochs-Post fertig ist, wollen Sie den aber erst nachts um 03:00 publizieren. Wenn Sie auf Parken klicken, rutscht das Bild in ein verstecktes Postfach <strong>Geparkte Posts sammeln sich in der rechten oberen Ecke Ihres Reiters!</strong> Morgen Früh tippen Sie drauf auf "Publizieren" - und Feierabend.</li>
+    <li><strong>Bild speichern Button:</strong> L&auml;dt das pure JPG Foto in Ihren Handy-Download-Ordner. Perfekt, wenn Sie das Bild einem Freund via stinknormaler E-Mail senden möchten, oder mit einem privaten USB Stick am heimischen Drucker drucken wollen zum ans Hoftor nageln.</li>
   </ul>
 
-  <div class="q">Den Katalog pflegen</div>
+  <div class="sub-h">Der Pflegebereich: Den Katalog ausmisten oder beladen</div>
+  <p class="txt">Damit Sie diese Werbeposts so wieselflink am Handy erstellen können, erfordert das leider, dass man dem dummen Computer vorher einmal die Mühe aufbürdet, ein Produkt beizubringen. Das tun Sie hier, damit es Wochenlang abrufbar "Klickbereit" ist.</p>
+  
+  <div class="q">Ablauf: Einen frischen neuen Artikel dem Laden hinzufügen (Neues Produkt)</div>
   <ol class="steps">
-    <li>Unterbereich <strong>Katalog</strong> w&auml;hlen.</li>
-    <li><strong>Neues Produkt:</strong> Name, Kategorie, Preis und Bild angeben (per Kamera, Datei oder Einf&uuml;gen) &rarr; <strong>Hinzuf&uuml;gen</strong>.</li>
-    <li>Neue <strong>Kategorien</strong> legen Sie &uuml;ber <strong>Kategorien verwalten</strong> an (Name + Symbol).</li>
+    <li>Drücken Sie statt "Neuer Post" weiter oben auf den hellgrauen Schalter Namens <strong>Katalog</strong>.</li>
+    <li>Sie befinden sich nun im Lageristenmodus. Klicken Sie links auf das Feld <strong>"Neues Produkt"</strong>.</li>
+    <li>Füllen Sie artig den exakten Titel aus, z.&nbsp;B. &bdquo;Lila Hokkaido Bauernk&uuml;rbis&ldquo;.</li>
+    <li>Weisen Sie ihm die korrekte Lebensmittelgruppe (<strong>Kategorie</strong>) zu. Wenn Ihnen Kategorien fehlen, dr&uuml;cken Sie den Schalter &bdquo;Kategorien bearbeiten&ldquo; und pfeffern ein neues Wort hinein.</li>
+    <li>Als drittes der Preis. Tragen Sie als Zahl "2,90" ein. Was ist 2,90? Rechts vom Preis tragen Sie die <strong>Einheit</strong> ein: also ein "Stück" oder "pro Kilo" oder "Netz". </li>
+    <li><strong>Das allerbeste: Das Bild hochladen.</strong> Hier bietet die Maske Ihnen geniale Tricks! Wenn Sie mit der Maus drüberfahren, oder mit dem Finder reintippen poppt direkt an einem Tablet die "Kamera" auf! Fotografieren Sie den schönen Kürbis einfach ab! (Oder kramen in den eigenen Urlaubs-Ordnern).</li>
+    <li>Ist das Kürbis-KameraFoto reingeplumbst, malen Sie mit Rahmen und Lupe den Bereich groß (damit man nicht links daneben noch den Besen des Supermarktes sieht!). </li>
+    <li>Möchten Sie diesen Artikel nicht dumm auf einer braunen Tischdecke sehen sondern am Ende hübsch ausgeschnitten? <strong>Klicken Sie den Schalter &bdquo;Hintergrund verkleinern/Entfernen (KI-Freistellen)&ldquo; an!</strong> Das clevere Kiosk System saugt beim Speichern den kompletten Dreck und Tisch weg, und es bleibt nur der gestochen scharfe Umriss vom runden Kürbis auf reinweiß übrig. Genial schick für die Werbegrafik!</li>
+    <li>Zum Sichern nur noch tief einatmen und auf <strong>Hinzuf&uuml;gen</strong> meißeln. Fertig - das lila Gewächs prangt ab sofort den restlichen Sommer über auf Knopfdruck zur Auswahl bereit im Katalog-Regal.</li>
   </ol>
 </div>
 
-<!-- ══════════════ KALENDER ══════════════ -->
+<!-- ============================================== -->
+<!-- KALENDER -->
+<!-- ============================================== -->
 <div class="section" id="sec-kalender">
-  <h2>Kalender</h2>
-  <p class="lead">Der Kalender zeigt pro Tag Aufgaben, Reservierungen, Vorbestellungen und Infos. Links stehen Termine mit Uhrzeit, rechts ganzt&auml;gige Hinweise. So behalten Sie und die n&auml;chste Schicht den &Uuml;berblick.</p>
+  <h2>Tageskalender (Der Termin- und Infozettel des Ladens)</h2>
+  <p class="lead">Der Kalender ersetzt die kleinen gelben Post-Its am PC der Kasse. Hier sammeln Sie jegliche "To-Dos", Personal-Schichten und Erinnerungen die auf die Woche gestreut reinkommen. So wei&szlig; jeder Kollege zu jeder Uhrzeit präzise Bescheid was im Betrieb anliegt!</p>
 
-  <div class="q">Der typische Tagesablauf</div>
+  <div class="sub-h">Die schnelle Ansichts-Achse</div>
+  <ul class="steps">
+    <li>Der Kalender &ouml;ffnet sich beim Reinklicken automatisch stoisch auf dem <strong>heutigen Tag</strong>.</li>
+    <li>Sie betrachten einen Längs-Zeitstrahl (von ganz fr&uuml;h z.B. 6:00 bis tief in Abend 18:00 Uhr). Die hinterlegten Aufgaben ("06:00 Bäcker liefert das harte Brot") drängeln sich brav als dicke farbige Balken darunter.</li>
+    <li>Nutzen Sie die pfeilförmigen Zurück-und-Weiter Tasten Oben am Bildschirm ( ❮ Heute ❯ ), um mit einem Klick in der Zeitmaschiene zum gestrigen Problem anzuschauen oder die n&auml;chste Wochenden-Dienste vorherzusagen.</li>
+    <li>Tippen Sie entspannt Mitten auf soe einen farbigen Balken! Auf der rechten Displayhälfte plärrt er sofort alle seine feinen <strong>Details</strong> aus (z.&nbsp;B. &bdquo;Der Bäcker liefert heut ausnahmsweise durch den Hintereingang, weil beim Vordereingang geputzt wird! Der Schlüssel liegt bei Frau Mayer.&ldquo;). Puh, Info gerettet.</li>
+  </ul>
+
+  <div class="q">Einen ganz neuen Eintrag für die Kollegen anlegen</div>
   <ol class="steps">
-    <li><strong>Schichtstart:</strong> Kalender &ouml;ffnen und den aktuellen Tag pr&uuml;fen.</li>
-    <li><strong>Aufgaben lesen:</strong> Termine mit Uhrzeit links, ganzt&auml;gige Hinweise rechts.</li>
-    <li><strong>Neue Punkte erfassen:</strong> &uuml;ber <strong>+ Neuer Eintrag</strong>.</li>
-    <li><strong>Erledigen:</strong> nach dem Erledigen den Eintrag <strong>abhaken</strong>.</li>
-    <li><strong>Schichtende:</strong> pr&uuml;fen, ob noch etwas offen ist.</li>
+    <li>Hämmern Sie auf den obersten dominanten Aufkleber <strong>+ Neuer Termin</strong>.</li>
+    <li>Auf der Leinwand poppt eine Maske zur Datenerfasung heraus. Gönnen Sie dem Kind einen Rufnamen bei <strong>Titel:</strong> (z.&nbsp;B. "Wartung Kühltheke-Motor").</li>
+    <li>Stellen Sie feinfühlig das korrekte <strong>Start-Datum</strong> nebst <strong>Uhrzeit-Spanne (Von - Bis)</strong> via Dropdown-Regler ein.</li>
+    <li><strong>Trick - Der Dauerläufer (Zusatz "Wiederholung / Serie"):</strong> Liefert Ihnen Firma Meier jeden Freitag Putenwurst? Stellen Sie "Einmalig" testweise auf &bdquo;W&ouml;chentlich&ldquo; um. Zack! Sie dr&uuml;cken nie wieder einen Kalenderknopf diesbezüglich, der Kiosk plündert das restliche Jahreskontingent automatisch zu!</li>
+    <li>Verpassen Sie abschließend der Box noch eine bunte Farbe: Rot mahnt zur bösarigen Warnung. Blau entspannt. </li>
+    <li>Ein kräftiger Stupser auf <strong>Speichern</strong> klebt den Termin final fest. Er prangt im Zeitstrahl!</li>
   </ol>
 
-  <div class="q">Einen neuen Eintrag anlegen</div>
+  <div class="q">Ojemine, eine Änderung an einer Dauer-Serie. Was nun?</div>
   <ol class="steps">
-    <li>Auf <strong>+ Neuer Eintrag</strong> tippen.</li>
-    <li><strong>Titel</strong> eingeben.</li>
-    <li><strong>Zeitpunkt</strong> w&auml;hlen:
-      <ul>
-        <li>F&uuml;r Tagesinfos: <strong>Ganzt&auml;gig</strong> aktivieren.</li>
-        <li>F&uuml;r eine feste Uhrzeit: Zeit mit <strong>+/&minus;</strong> oder Schnellzeiten setzen.</li>
-      </ul>
-    </li>
-    <li><strong>Kategorie</strong> w&auml;hlen (z.&nbsp;B. Aufgabe, Lieferung, Info).</li>
-    <li>Optional <strong>Kunde</strong> und <strong>Wiederholung</strong> setzen.</li>
-    <li>Mit <strong>Speichern</strong> abschlie&szlig;en.</li>
+    <li>Der Gem&uuml;sebauer taucht neuerdings nicht um dreizehn sondern um vierzehn Uhr auf dem Hof auf. Problem! </li>
+    <li>Suchen Sie sich den Missetäter-Termin aus dem Kalender, fahren dr&uuml;ber und tippen an, womit rechts das Fenster ausklappt. </li>
+    <li>Reißen Sie den Zeitslider auf 14:00 Uhr hoch und bestätigen stur den <strong>Speicher-Knopf</strong>.</li>
+    <li>Da Sie grade am Fundament einer Endlos-Serie sägen, interveniert der Kiosk jetzt clever <em>"Moooment mal..."</em> und frägt besorgt via Popup Dialog nach: <br> Wollen Sie wirklich nur diesen Termin (weil er z.B. heute im Blitzeis steckte) oder vielmehr absolut <strong>"Alles ab diesem zukünftigen Datum abändern"</strong> (weil der Bauer z.B. die Fahroute gewechselt hat)?</li>
+    <li>Seien Sie klug, picken Die korrekte Alternative an, und alle Folge-Serien springen folgsam in das neue Korsett.</li>
   </ol>
-
-  <div class="q">Einen Dauereintrag (Serie) l&ouml;schen</div>
-  <p class="txt">Bei einem wiederkehrenden Eintrag fragt der Kiosk gezielt nach:</p>
+  
+  <div class="q">Unfassbar, der Lieferant hat Urlaub?! Ein Lösch-Angriff!</div>
   <ol class="steps">
-    <li><strong>Nur diesen Tag l&ouml;schen:</strong> Der Termin wird nur am heutigen Datum entfernt, die Serie bleibt.</li>
-    <li><strong>Ganze Serie l&ouml;schen:</strong> Die Serie wird <strong>ab dem gew&auml;hlten Tag</strong> beendet &ndash; dieser und alle k&uuml;nftigen Termine entfallen. <strong>Vergangene (auch bereits bearbeitete) Termine bleiben sichtbar.</strong></li>
-    <li><strong>Abbrechen:</strong> Es wird nichts gel&ouml;scht.</li>
+    <li>Ganze 14 Tage macht unser treuer B&auml;ckereimensch nun dicht. Der Termin muß entfallen.</li>
+    <li>Klicken Sie stumm auf das Termin-Kästchen auf dem Kalenderstrahl und bedienen mit Inbrunst den <strong>L&ouml;schen (Mülleimer)</strong> Schalter.</li>
+    <li>Wenn es sich um Einmal-Notizen handelt pufft es weg. Ist es eine Serie: Sie l&ouml;schen stur mit "Ganzen Tag löschen, oder kompletten Termin-Ast in der Zunkuft absägen". <br><strong>Achtung: Dies stoppt den Spam! Jedoch bewahrt unser Gedächtnis die Geschichte: Die alten gemachten Termine der Ur-Vergangenheit in davor-wochen bleiben artig und unberührt stehen. Wir radieren niemals die Betriebsgeschichte aus.</strong></li>
   </ol>
-  <div class="ui ui-dialog">
-    <div class="ui-dtitle">Serie l&ouml;schen?</div>
-    <div class="ui-dsub" style="font-weight:400;color:#475569">Dieser Eintrag wiederholt sich. Was m&ouml;chten Sie tun?</div>
-    <div class="ui-drow" style="flex-direction:column;gap:8px">
-      <span class="ui-btn green" style="justify-content:center">Nur diesen Tag</span>
-      <span class="ui-btn red" style="justify-content:center">Ganze Serie l&ouml;schen</span>
-      <span class="ui-btn gray" style="justify-content:center">Abbrechen</span>
-    </div>
-  </div>
-  <p class="ui-cap">Beim L&ouml;schen einer Serie w&auml;hlen Sie gezielt zwischen einem Tag und der ganzen Serie.</p>
-  <div class="tip">&#128161; Unsicher? W&auml;hlen Sie zuerst &bdquo;Nur diesen Tag&ldquo; &ndash; das ist die sichere Variante.</div>
 </div>
 
+<!-- ============================================== -->
+<!-- STAMMKUNDEN -->
+<!-- ============================================== -->
+<div class="section" id="sec-kunden">
+  <h2>Stammkunden &amp; Pfand &amp; Finanz-Konten</h2>
+  <p class="lead">Dies ist das heilige Kunden-Buch! Hier listet der Kiosk in Form von Profil-Akten gnadenlos jede Einzel-Familie, die im Ort registriert wurde auf. Man betreibt hier Kontostände! <br><strong style="color:red">Achtung: Im echten Verkaufs-Alltag werden die meisten dieser Kniffe von der Thekenkraft nur angeschaut. Echtes Konten-Löschen wird besser in Ruhe im Büro der Verwaltung ausgemerzt! Die Thekenbedienung verweist Problemkinder höflich ans Chefbüro!</strong></p>
+
+  <div class="q">Guthaben des Kunden aufladen / Gutschriften pflegen / Pfand einloggen</div>
+  <ol class="steps">
+    <li>Ein netter Stamm-Senior gibt morgens seinen Leergutkasten (Pfandwert: 4,- Euro) vor dem Kassentresen ab. Er hatte vor die Box erst Ende der Woche zur Gesamtrechnung abzuklären. Was tun mit den 4 Euro? </li>
+    <li>Navigieren Sie mit dem Fingerflackern ins Suchfeld (mittig) und lassen den Senior "Huber" vom Kiosk heraussuchen. Ein Tipper auf Hubers Name spuckt Ihnen den kompletten Datensatz dieses Herrn aus.</li>
+    <li>In der Zentrale des Hubers-Bildschirms erblicken Sie eine protokollierte Auflistung all seiner jemals vollzogenen Strich-Aktionen ("Mittags-Eintopf erworben, Online-Eier gekauft...").<br>Rechts oben leuchtet das dicke Info-Schild "Offene Restposten oder Plus-Konto".</li>
+    <li>Sie visieren fixiert den runden Extra-Modul-Knopf <strong>"Neue Gutschrift buchen (Neu / Einzahlung verbuchen)"</strong> an und dr&uuml;cken zu. </li>
+    <li>Tragen Sie im sich öffnenden Taschenrechner-Sichtfeld mutig "+4,00 EUR" ein. Bei Anlass für diese Korrektur notieren Sie simpel "Rückgabe Transportkiste".</li>
+    <li>Sie k&ouml;nnten genauso eine dicke offene Rechnung (-4 Euro) von Huber notieren, wenn Huber das Brot vergessen hat zu begleichen. Das System ist mathematisch simpel: Ein Plus zieht Guthaben ab, ein Minus belastet Hubers Konto!</li>
+    <li>Die Finanzen bereinigen sich mit 2 Sekunden Arbeit. Am Abrechnungs-Ultimo des Monats storniert die Dorfladen-Buchhaltung die Restsumme gegen Huber aus! Genial sicher.</li>
+  </ol>
+
+  <div class="q">Uff, der Herr Huber ist weggezogen, das Konto muss vernichtet werden (Gelöscht!)</div>
+  <p class="txt">Dramatischer Fall: Person soll entfernt werden. Beachten Sie dazu knifflige Sicherheitsmechanismen des Datenschutzes!</p>
+  <ol class="steps">
+    <li>Versuchen Sie Herr Huber mutig den roten Todes-Stempel <strong>Löschen-Icon</strong> aufzuprägen, wird Sie der Apparillo stoppen wie eine Betonwand, sobald Herr Huber aus der Vergangenheit noch einen dreckigen Heller "Guthaben" bei sich zu verzeichnen hat oder eine warme Suppe für Morgen bestellt ist! </li>
+    <li>Dies dient Ihrem eigenen Ladenschutz gegenüber Betrug und Schusseligkeit. Bevor eine Stamm-Sippe "exekutiert" wird, müssen alle unbezahlten Rechnungen ausgenullt werden und alle Bestelltermine im Kalender annulliert sein.</li>
+    <li>Setzen Sie also als erstes Huber auf +/- Null (Gutschrift-Saldierung!).</li>
+    <li>Löschen Sie seine Maultaschen für Freitag via Storno ("Online-Shop" Ebene oder "Mittagstisch").</li>
+    <li><strong>Sperr-Modus:</strong> Wenn Sie nun sanft auf Mülleimer klicken, wird der Kunde aus der Sichtbarkeits-Hitliste der Theke radiert ("Blockiert"). Herr Huber spukt nun offiziell nicht mehr durchs Menü als Auswahlm&ouml;glichkeit am Nachmittag, das echte physikalische Löschen der Restdaten aus dem Serversystem übernehmen Administratoren am Heim-PC.</li>
+  </ol>
+</div>
+
+<!-- ============================================== -->
+<!-- SCRIPT-MAGIE (Tabs) - NICHT ÄNDERN                  -->
+<!-- ============================================== -->
 <script>
-  function show(id, btn) {
-    document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
-    document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
-    document.getElementById('sec-'+id).classList.add('active');
-    if(btn) btn.classList.add('active');
-    window.scrollTo(0,0);
-  }
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
 </script>
-<script src="/js/env-banner.js"></script>
+
 </body>
 </html>
