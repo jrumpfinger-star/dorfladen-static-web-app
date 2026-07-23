@@ -107,7 +107,9 @@
     }
 
     var call = _fetch.call(this, input, init);
-    if (!isAdminCall) return call;
+    // 401-Fallback (Login-Dialog + Retry) gilt auch für lesende Kalender-GETs,
+    // damit reine Betrachter sich anmelden können und nicht nur bei Schreib-Aktionen.
+    if (!isAdminCall && !isKalenderRead) return call;
 
     return call.then(function (resp) {
       if (resp.status !== 401) return resp;

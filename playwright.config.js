@@ -28,6 +28,9 @@ module.exports = {
     ignoreHTTPSErrors: true,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
+    // Optional: Zeitlupe zum Zuschauen im Headed-Modus, z. B.
+    //   $env:PW_SLOWMO=800; npx playwright test --headed
+    launchOptions: { slowMo: Number(process.env.PW_SLOWMO) || 0 },
   },
   projects: [
     {

@@ -384,11 +384,9 @@ test.describe('Kiosk-Kalender', () => {
     await expect(page.locator('#kal-range')).toHaveText(range0);
   });
 
-  // F7 – 401 ohne gültige Sitzung
-  test('TC-F7-01: 401 beim Laden zeigt freundlichen Hinweis, kein Absturz', async ({ page }) => {
-    const st = makeState();
-    await page.addInitScript(() => { try { sessionStorage.setItem('cms_auth_token', 'test-token'); } catch (e) {} });
-    // Kalender-GET liefert 401
+  // F7 – 401 beim Lesen bietet Anmeldung an
+  test('TC-F7-01: 401 beim Laden öffnet Login-Dialog; Abbrechen zeigt Hinweis', async ({ page }) => {
+    // Kalender-GET liefert immer 401 (kein gültiges Token)
     await page.route('**/api/kalender**', (route) =>
       route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'unauthorized' }) }));
     await page.route('**/api/**', (route) => {
@@ -396,9 +394,56 @@ test.describe('Kiosk-Kalender', () => {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [], customers: [], orders: [] }) });
     });
     await page.goto(origin + '/kiosk');
+    // Der Badge-Fetch beim Laden trifft schon einen 401 auf den lesenden
+    // Kalender-GET → der Login-Dialog erscheint automatisch (statt nur Toast).
+    const dlg = page.locator('[role="dialog"]', { hasText: 'Admin-Anmeldung' });
+    await expect(dlg).toBeVisible();
+    await dlg.locator('.dl-pw-cancel').click();
+    await expect(dlg).toBeHidden();
+    // Kalender-Tab öffnen → load() erhält erneut 401 → Dialog; Abbrechen →
+    // freundlicher Hinweis-Toast, kein Absturz, keine Einträge.
     await page.locator('.k-tab[data-tab="kalender"]').click();
+    const dlg2 = page.locator('[role="dialog"]', { hasText: 'Admin-Anmeldung' });
+    await expect(dlg2).toBeVisible();
+    await dlg2.locator('.dl-pw-cancel').click();
     await expect(page.locator('.kal-toast.err')).toBeVisible();
     await expect(page.locator('.kal-entry')).toHaveCount(0);
+  });
+
+  // F7 – erfolgreiche Anmeldung lädt den Kalender
+  test('TC-F7-03: Login-Dialog anmelden lädt Kalender-Einträge', async ({ page }) => {
+    const st = makeState();
+    // Kalender antwortet erst mit gültigem Token (X-CMS-Auth: good)
+    await page.route('**/api/kalender**', (route) => {
+      const req = route.request();
+      if ((req.headers()['x-cms-auth'] || '') !== 'good') {
+        return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'unauthorized' }) });
+      }
+      const url = new URL(req.url());
+      const von = url.searchParams.get('von'), bis = url.searchParams.get('bis');
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: expandForRange(st, von, bis), von, bis }) });
+    });
+    // Login liefert das Token
+    await page.route('**/api/cms-auth**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ token: 'good' }) }));
+    await page.route('**/api/**', (route) => {
+      const u = route.request().url();
+      if (u.includes('/api/kalender') || u.includes('/api/cms-auth')) return route.fallback();
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [], customers: [], orders: [] }) });
+    });
+    await page.goto(origin + '/kiosk');
+    // Login-Dialog erscheint durch den 401 des Badge-Fetch beim Laden → anmelden.
+    const dlg = page.locator('[role="dialog"]', { hasText: 'Admin-Anmeldung' });
+    await expect(dlg).toBeVisible();
+    await dlg.locator('input[type="password"]').fill('geheim');
+    await dlg.locator('.dl-pw-ok').click();
+    await expect(dlg).toBeHidden();
+    // Nach der Anmeldung liegt das Token vor → Kalender-Tab lädt Einträge ohne Fehler.
+    await page.locator('.k-tab[data-tab="kalender"]').click();
+    await expect(page.locator('#panel-kalender')).toHaveClass(/active/);
+    await page.locator('.kal-day.active').first().waitFor();
+    await page.locator(`.kal-day[data-day="${st.di}"]`).click();
+    await expect(page.locator('.kal-entry').first()).toBeVisible();
   });
 
   // Kategorie als Pills

@@ -410,22 +410,36 @@ serverseitig via `admin_auth_guard` (`X-CMS-Auth`) geschützt — kein
 
 - Given ein Request ohne/mit ungültigem Token, Then antwortet der Endpunkt
   `401` und die UI zeigt eine freundliche Hinweismeldung (kein roher Fehlertext).
+- Given ein lesender Zugriff (`GET /api/kalender`) erhält `401`, Then öffnet die
+  UI den Admin-Anmeldedialog, damit sich Verkäuferinnen anmelden können; nach
+  erfolgreicher Anmeldung wird der ursprüngliche Request wiederholt und der
+  Kalender geladen. Bei Abbruch erscheint die freundliche Hinweismeldung.
 - Given ein anderer Client hat einen Eintrag geändert, When das Poll-Intervall
   abläuft, Then zeigt die Ansicht den aktuellen Stand ohne manuelles Neuladen.
 
 #### F7 Test Cases
 
-**TC-F7-01: Schreiben ohne Token → 401**
+**TC-F7-01: 401 beim Lesen öffnet Login-Dialog; Abbrechen zeigt Hinweis**
 
-- **Setup:** kein gültiges `X-CMS-Auth`.
-- **Action:** `POST /api/kalender`.
-- **Expected:** HTTP `401`; keine Speicherung.
+- **Setup:** kein gültiges `X-CMS-Auth`; `GET /api/kalender` liefert `401`.
+- **Action:** Kalender-Tab öffnen; im Login-Dialog „Abbrechen".
+- **Expected:** Admin-Anmeldedialog erscheint; nach Abbruch freundliche
+  Hinweismeldung, keine Einträge, kein Absturz.
 
 **TC-F7-02: Auto-Refresh zeigt fremde Änderung**
 
 - **Setup:** zwei Sitzungen; Sitzung B legt einen Eintrag für heute an.
 - **Action:** in Sitzung A das Poll-Intervall abwarten (bzw. Refresh-Trigger).
 - **Expected:** Sitzung A zeigt den neuen Eintrag ohne manuelles Neuladen.
+
+**TC-F7-03: Erfolgreiche Anmeldung lädt den Kalender**
+
+- **Setup:** `GET /api/kalender` liefert `401` ohne Token, `200` mit gültigem
+  Token; `POST /api/cms-auth` liefert ein Token.
+- **Action:** Kalender-Tab öffnen; im Login-Dialog Passwort eingeben und
+  „Anmelden".
+- **Expected:** Dialog schließt, Request wird wiederholt, Kalender-Einträge
+  werden geladen; kein Fehler-Toast.
 
 ### F8: Responsive & benutzerfreundlich
 
@@ -522,5 +536,5 @@ Alle Methoden erfordern gültiges `X-CMS-Auth` (via `admin_auth_guard`).
 | F4 Kunde | TC-F4-01, TC-F4-02, TC-F4-03 | — | — |
 | F5 Wiederkehrend | TC-F5-01, TC-F5-02, TC-F5-03, TC-F5-04 | — | — |
 | F6 Tagesansicht | TC-F6-01, TC-F6-02, TC-F6-03 | — | — |
-| F7 Auth/Refresh | TC-F7-01, TC-F7-02 | — | — |
+| F7 Auth/Refresh | TC-F7-01, TC-F7-02, TC-F7-03 | — | — |
 | F8 Responsive | TC-F8-01, TC-F8-02 | — | — |
