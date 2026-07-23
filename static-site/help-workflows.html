@@ -31,6 +31,14 @@
   .b-get { background:#dbeafe; color:#1d4ed8; }
   .b-post { background:#dcfce7; color:#166534; }
   .b-patch { background:#fef3c7; color:#92400e; }
+  .sub-h { font-size:16px; font-weight:800; color:#166534; margin:26px 0 10px; }
+  .steps { counter-reset:step; list-style:none; margin:0 0 18px; padding:0; }
+  .steps li { position:relative; padding:9px 12px 9px 42px; margin-bottom:8px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; line-height:1.5; }
+  .steps li::before { counter-increment:step; content:counter(step); position:absolute; left:10px; top:9px; width:22px; height:22px; background:#166534; color:#fff; border-radius:50%; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .steps li ul { margin:6px 0 0 16px; padding:0; list-style:disc; }
+  .steps li ul li { background:none; border:none; padding:2px 0; margin:0; }
+  .steps li ul li::before { content:none; }
+  .tip { background:#fef9c3; border:1px solid #fde047; border-radius:8px; padding:10px 14px; font-size:12px; margin:6px 0 18px; line-height:1.5; }
   @media(max-width:768px) { .nav { padding:10px 16px; } .section { padding:16px; } }
 </style>
 </head>
@@ -42,7 +50,8 @@
 </div>
 
 <div class="nav" id="nav">
-  <button class="active" onclick="show('status',this)">Status-Lebenszyklus</button>
+  <button class="active" onclick="show('kiosk',this)">Kiosk-Kalender</button>
+  <button onclick="show('status',this)">Status-Lebenszyklus</button>
   <button onclick="show('bestellung',this)">Bestellvorgang</button>
   <button onclick="show('bearbeitung',this)">Bearbeitung & Packen</button>
   <button onclick="show('abholscan',this)">Abholscan</button>
@@ -52,8 +61,82 @@
   <button onclick="show('api',this)">API-Endpunkte</button>
 </div>
 
+<!-- 0. Kiosk-Kalender (Anleitung fuer Verkaeuferinnen) -->
+<div class="section active" id="sec-kiosk">
+  <h2>Kiosk-Kalender &ndash; Anleitung f&uuml;r Verk&auml;uferinnen</h2>
+  <p class="desc">Der Kalender im Kiosk zeigt Aufgaben, Reservierungen, Vorbestellungen und Infos je Tag. Hier die wichtigsten Handgriffe &ndash; vom Schichtstart bis zum Umgang mit Dauereintr&auml;gen (Serien).</p>
+
+  <div class="sub-h">1. Typischer Tagesablauf</div>
+  <ol class="steps">
+    <li><strong>Schichtstart:</strong> Kiosk &ouml;ffnen und den aktuellen Tag pr&uuml;fen.</li>
+    <li><strong>Aufgaben lesen:</strong> Links stehen Termine mit Uhrzeit, rechts ganzt&auml;gige Hinweise.</li>
+    <li><strong>Neue Punkte erfassen:</strong> &Uuml;ber &bdquo;+ Neuer Eintrag&ldquo; neue Infos oder Termine anlegen.</li>
+    <li><strong>Erledigen:</strong> Nach Ausf&uuml;hrung den Eintrag auf <strong>Erledigt</strong> setzen (Haken).</li>
+    <li><strong>Schichtende:</strong> Kurz kontrollieren, ob noch offene Eintr&auml;ge vorhanden sind.</li>
+  </ol>
+  <div class="mermaid">
+flowchart TB
+    A["Schicht starten"] --> B["Kiosk-Kalender oeffnen"]
+    B --> C["Eintraege lesen<br/>mit Uhrzeit | ganztaegig"]
+    C --> D["Neue Eintraege bei Bedarf anlegen"]
+    D --> E["Erledigte Eintraege abhaken"]
+    E --> F["Offene Punkte an naechste Schicht uebergeben"]
+    style A fill:#dcfce7,stroke:#22c55e
+    style F fill:#e0e7ff,stroke:#6366f1
+  </div>
+
+  <div class="sub-h">2. Neuen Eintrag anlegen (Touch)</div>
+  <ol class="steps">
+    <li>Auf <strong>+ Neuer Eintrag</strong> tippen.</li>
+    <li><strong>Titel</strong> eintragen (mehrzeilig m&ouml;glich).</li>
+    <li><strong>Zeitpunkt</strong> w&auml;hlen:
+      <ul>
+        <li>F&uuml;r Tagesinfos: <strong>Ganzt&auml;gig</strong> aktivieren.</li>
+        <li>F&uuml;r feste Uhrzeit: Uhrzeit per <strong>+/&minus;</strong> oder Schnellzeiten setzen.</li>
+      </ul>
+    </li>
+    <li><strong>Kategorie</strong> w&auml;hlen (z.&nbsp;B. Aufgabe, Lieferung, Info).</li>
+    <li>Optional: <strong>Kunde</strong> und <strong>Wiederholung</strong> setzen.</li>
+    <li>Mit <strong>Speichern</strong> abschlie&szlig;en.</li>
+  </ol>
+  <div class="mermaid">
+flowchart TB
+    A["+ Neuer Eintrag"] --> B["Titel eingeben"]
+    B --> C{"Ganztaegig oder Uhrzeit?"}
+    C -->|Ganztaegig| D["Ganztaegig aktivieren"]
+    C -->|Uhrzeit| E["Uhrzeit setzen"]
+    D --> F["Kategorie waehlen"]
+    E --> F
+    F --> G["Optional: Kunde + Wiederholung"]
+    G --> H["Speichern"]
+    style A fill:#dcfce7,stroke:#22c55e
+    style H fill:#dcfce7,stroke:#22c55e
+  </div>
+
+  <div class="sub-h">3. Dauereintrag / Serie l&ouml;schen</div>
+  <p class="desc">Bei einem wiederkehrenden Eintrag (Serie) fragt der Kiosk gezielt nach der gew&uuml;nschten Aktion:</p>
+  <ol class="steps">
+    <li><strong>Nur diesen Tag l&ouml;schen:</strong> Der Termin wird nur am aktuellen Datum entfernt, die Serie bleibt.</li>
+    <li><strong>Ganze Serie l&ouml;schen:</strong> Die Serie wird <strong>ab dem gew&auml;hlten Tag</strong> beendet &ndash; dieser und alle k&uuml;nftigen Termine entfallen. Vergangene (auch bereits bearbeitete) Termine bleiben sichtbar.</li>
+    <li><strong>Abbrechen:</strong> Es wird nichts gel&ouml;scht.</li>
+  </ol>
+  <div class="tip">&#128161; Wenn Sie unsicher sind, w&auml;hlen Sie zuerst &bdquo;Nur diesen Tag l&ouml;schen&ldquo;.</div>
+  <div class="mermaid">
+flowchart TB
+    A["Loeschen antippen"] --> B{"Ist es eine Serie?"}
+    B -->|Nein| C["Einzeltermin direkt loeschen"]
+    B -->|Ja| D["Auswahl anzeigen"]
+    D --> E["Nur diesen Tag:<br/>nur dieser Termin geloescht"]
+    D --> F["Ganze Serie:<br/>ab hier geloescht,<br/>Vergangenes bleibt"]
+    D --> G["Abbrechen:<br/>keine Aenderung"]
+    style E fill:#e0e7ff,stroke:#6366f1
+    style F fill:#fee2e2,stroke:#ef4444
+    style C fill:#fef3c7,stroke:#f59e0b
+  </div>
+</div>
+
 <!-- 1. Status-Lebenszyklus -->
-<div class="section active" id="sec-status">
+<div class="section" id="sec-status">
   <h2>1. Bestellstatus-Lebenszyklus</h2>
   <p class="desc">Jede Bestellung durchlaeuft diese Status. Der Normalfall ist der gruene Pfad von links nach rechts.</p>
   <div class="legend">
