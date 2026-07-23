@@ -108,3 +108,90 @@
 | T039 | F8 | TC-F8-01 |
 | T050–T058 | F1–F8 | alle TC-* |
 | T060–T063 | — | Quality Gate / Rollout |
+
+---
+
+# Inkrement 2 — Kiosk-Kalender v2 (F9–F14)
+
+> Abgeleitet aus [plan.md](./plan.md) „Inkrement 2". **Rein additiv**: UI-/
+> Darstellungs-Erweiterungen in `static-site/js/kiosk-kalender.js` plus **eine**
+> Backend-Zeile (`info` in `KATEGORIEN`). Referenz-UI:
+> [mockups/kiosk-kalender-v2-mockup.html](../../mockups/kiosk-kalender-v2-mockup.html).
+> **F14 ist bereits im Code umgesetzt** → nur Verifikation + Test.
+> Reihenfolge: Backend → `info`-Vollstack → Split-View → Autocomplete →
+> Dialog-Breite → Tap-Targets → F14-Verifikation → E2E. Frontend-Tasks
+> (T110–T115) teilen sich `kiosk-kalender.js` → **nicht** parallel.
+
+## Backend: API `api/kalender/`
+
+- [ ] **T100** `api/kalender/__init__.py`: `KATEGORIEN`-Tuple (Z.49) um `"info"`
+      erweitern, damit `POST kategorie:"info"` nicht auf `aufgabe` zurückfällt
+      (Coercion Z.154). — `F12` · TC-F12-02
+- [ ] **T101** [P] Schlanker Python-Check (bestehendes Serien-Testmuster o. ä.):
+      `info` bleibt nach Validierung erhalten, fällt nicht auf `aufgabe`. — `F12` · TC-F12-02
+
+## Frontend: `static-site/js/kiosk-kalender.js`
+
+- [ ] **T110** **F12 Info (Full-Stack-Frontend):** `CATS` (Z.12–15) um
+      `info:'Info'`; Filter-Chip (Z.110–117) + Dialog-Kategorie-Pill (Z.135–141)
+      ergänzen; `injectStyle()` Border-left (Z.703), `badge.cat` (Z.713) und
+      Timeline-Dot (Z.728) um `cat-info` teal `#0891b2`; „Info" ohne Erledigt-
+      Check-Semantik (Mockup). Vollständigkeit via `grep cat-` / `kategorie`
+      sichern. — `F12` · TC-F12-01, TC-F12-03
+- [ ] **T111** **F9 Split-View:** `renderList()` (~Z.389–408) rendert einen
+      `.kal-splits`-Container mit zwei Spalten — **links** „Mit Uhrzeit" (timed,
+      Timeline unverändert), **rechts** „Ganztägig" (allday) — je mit dezentem
+      Leerzustand. `injectStyle()` (~Z.700ff.) Grid-CSS:
+      `@media(min-width:768px){grid-template-columns:1fr 1fr}`, Mobile via `order`
+      gestapelt (Ganztägig oben), kein H-Scroll. — `F9` · TC-F9-01..04
+- [ ] **T112** **F11 Titel-Autocomplete:** Vorschlags-Dropdown an `#kal-title`
+      (distinct Titel aus `state.entries`, ≥2 Zeichen, case-insensitiv,
+      ≤6 Substring-Treffer), analog `searchKunden`/`kal-kunde-dd`. Übernahme
+      **per Tap/Klick** (Enter bleibt Zeilenumbruch, Strg+Enter speichert). — `F11` · TC-F11-01..03
+- [ ] **T113** **F13 Dialog-Breite:** `.kal-modal-card` (Z.672) `max-width`
+      responsive: 420px (mobil) → ~560px (≥768px) → ~640px (≥1280px), zentriert,
+      kein Overflow. — `F13` · TC-F13-01..03
+- [ ] **T114** **F10 Touch-Audit:** kleine Tap-Targets (Lösch-Icon `.ic`=32px u. a.)
+      auf ≥44×44px anheben (Padding statt fixer Größe); keine Hover-only-Aktion,
+      an allen drei Viewports geprüft. — `F10` · TC-F10-01, TC-F10-02
+- [ ] **T115** **F14 Mehrzeilig (nur Verifikation):** bestätigen, dass langer
+      Titel umbricht (kein `…`, kein H-Scroll, Badges/Check korrekt) und kurzer
+      Titel einzeilig bleibt — kein neuer Code. — `F14` · TC-F14-01, TC-F14-02
+
+## Tests: `tests/kiosk-kalender.spec.js`
+
+- [ ] **T120** [P] E2E F9: zweispaltig @ipad-mini/desktop (links Uhrzeit, rechts
+      Ganztägig), kein H-Scroll; gestapelt @mobile; leere Spalte → Leerzustand. — TC-F9-01..04
+- [ ] **T121** [P] E2E F10: Bounding-Box primärer Elemente ≥44×44px je Viewport;
+      Aktion per Tap ohne Hover. — TC-F10-01, TC-F10-02
+- [ ] **T122** [P] E2E F11: Vorschläge bei Substring (case-insensitiv), Übernahme
+      per Tap; kein Treffer/leer → keine Liste. — TC-F11-01..03
+- [ ] **T123** [P] E2E F12: Info im Dialog + Filter-Chip wählbar; POST-Body
+      `kategorie:"info"`; teal-Codierung; Filter „Info" zeigt nur Info, „Alle"
+      schließt ein. — TC-F12-01, TC-F12-03
+- [ ] **T124** [P] E2E F13: Kartenbreite >420px (~560px) @768, breiter (~640px)
+      @1280, ≤Viewport @375, kein Overflow. — TC-F13-01..03
+- [ ] **T125** [P] E2E F14: langer Titel bricht um; kurzer Titel einzeilig. — TC-F14-01, TC-F14-02
+- [ ] **T126** Gesamtsuite **headed**, `--workers=1`, über alle drei Viewport-
+      Projekte grün.
+
+## Validation & Rollout (Inkrement 2)
+
+- [ ] **T130** Nach grüner Suite automatisch committen + pushen (deutsche Msg +
+      Co-authored-by-Trailer) — Projektpräferenz.
+- [ ] **T131** Deploy über bestehenden SWA-Workflow (kein Infra-/Contract-Bruch).
+
+## Traceability (Inkrement 2)
+
+| Task | Requirement | Test Cases |
+| --- | --- | --- |
+| T100 | F12 | TC-F12-02 |
+| T101 | F12 | TC-F12-02 |
+| T110 | F12 | TC-F12-01, TC-F12-03 |
+| T111 | F9 | TC-F9-01, TC-F9-02, TC-F9-03, TC-F9-04 |
+| T112 | F11 | TC-F11-01, TC-F11-02, TC-F11-03 |
+| T113 | F13 | TC-F13-01, TC-F13-02, TC-F13-03 |
+| T114 | F10 | TC-F10-01, TC-F10-02 |
+| T115 | F14 | TC-F14-01, TC-F14-02 |
+| T120–T126 | F9–F14 | alle TC-F9..F14-* |
+| T130–T131 | — | Quality Gate / Rollout |
