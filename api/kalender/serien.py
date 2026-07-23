@@ -105,9 +105,11 @@ def expand_entry(entry: dict, von, bis, overrides=None):
     """Expandiert einen (Serien-)Eintrag zu Vorkommen im Bereich.
 
     ``entry`` erwartet mind. ``id``, ``datum`` (Start), ``wiederholung``.
-    ``overrides``: Mapping ``{iso_datum: {"status": "erledigt"|"geloescht", ...}}``
-    für die Serie. ``geloescht`` blendet das Vorkommen aus; ``erledigt`` setzt
-    den Status des Vorkommens.
+    ``overrides``: Mapping ``{iso_datum: {"status": "erledigt"|"geloescht"|
+    "serie_ende", ...}}`` für die Serie. ``geloescht`` blendet das Vorkommen aus;
+    ``erledigt`` setzt den Status des Vorkommens; ``serie_ende`` beendet die Serie
+    ab diesem Datum – Vorkommen ab dem frühesten ``serie_ende``-Datum entfallen,
+    frühere (auch bearbeitete) bleiben erhalten.
 
     Rückgabe: Liste von Kopien des Eintrags, je Vorkommen mit gesetztem
     ``datum`` (Vorkommensdatum) und Zusatzfeldern ``_ist_vorkommen``,
@@ -115,9 +117,16 @@ def expand_entry(entry: dict, von, bis, overrides=None):
     """
     overrides = overrides or {}
     wiederholung = entry.get("wiederholung") or ""
+    # Serien-Ende: frühestes Datum mit Status "serie_ende" (ab hier keine Vorkommen mehr).
+    ende = None
+    for iso_d, ov in overrides.items():
+        if ov and ov.get("status") == "serie_ende" and (ende is None or iso_d < ende):
+            ende = iso_d
     result = []
     for d in occurrences(entry.get("datum"), wiederholung, von, bis, entry.get("wochentage")):
         iso = d.isoformat()
+        if ende is not None and iso >= ende:
+            continue
         ov = overrides.get(iso)
         if ov and ov.get("status") == "geloescht":
             continue

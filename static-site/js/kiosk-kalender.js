@@ -641,10 +641,10 @@
     if (isSerie) {
       kalConfirm(
         'Serie löschen?',
-        'Dieser Eintrag wiederholt sich. Möchtest du nur diesen Tag entfernen oder die ganze Serie mit allen Terminen löschen?',
+        'Dieser Eintrag wiederholt sich. Möchtest du nur diesen Tag entfernen oder die Serie ab hier beenden? Vergangene (auch bearbeitete) Termine bleiben erhalten.',
         [
           { label: 'Nur diesen Tag', kind: 'primary', act: function () { delOccurrence(id, datum); } },
-          { label: 'Ganze Serie löschen', kind: 'danger', act: function () { delSeries(id); } },
+          { label: 'Ganze Serie löschen', kind: 'danger', act: function () { endSeries(id, datum); } },
           { label: 'Abbrechen', kind: 'ghost', act: null }
         ]
       );
@@ -664,11 +664,15 @@
       .catch(function () { toast('Löschen fehlgeschlagen.', 'err'); });
   }
 
-  // Ganze Serie (Master-Eintrag) endgültig löschen.
-  function delSeries(id) {
-    fetch(apiBase() + '/' + id, { method: 'DELETE' })
+  // Serie ab dem gewählten Datum beenden: alle Termine ab hier (inkl. Zukunft)
+  // entfallen, frühere (auch bearbeitete) bleiben sichtbar.
+  function endSeries(id, datum) {
+    fetch(apiBase() + '/' + id + '?override=' + datum, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'serie_ende' })
+    })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (!d.success) throw new Error(); toast('Serie gelöscht.'); load(); })
+      .then(function (d) { if (!d.success) throw new Error(); toast('Serie ab hier beendet.'); load(); })
       .catch(function () { toast('Löschen fehlgeschlagen.', 'err'); });
   }
 

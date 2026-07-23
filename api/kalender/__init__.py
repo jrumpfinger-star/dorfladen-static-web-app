@@ -272,7 +272,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if record_id and override_datum:
                 body = req.get_json() if req.get_body() else {}
                 status = (body.get("status") or "erledigt").strip().lower()
-                if status not in ("erledigt", "geloescht", "offen"):
+                if status not in ("erledigt", "geloescht", "offen", "serie_ende"):
                     return _err("Ungültiger Status.")
                 # „offen“ = bestehendes Override entfernen (Rückgängig)
                 if status == "offen":

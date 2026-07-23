@@ -100,6 +100,23 @@ def test_expand_entry_overrides():
     assert by_date["2026-07-21"]["_serien_id"] == "S1"
 
 
+def test_expand_entry_serie_ende_behaelt_historie():
+    # Serie ab 2026-07-22 beendet: frühere Vorkommen (auch bearbeitete) bleiben,
+    # das Ende-Datum selbst und alles danach entfällt.
+    entry = {"id": "S1", "datum": "2026-07-20", "wiederholung": "daily",
+             "titel": "Kasse abrechnen", "status": "offen"}
+    overrides = {
+        "2026-07-21": {"status": "erledigt", "erledigt_am": "2026-07-21T18:00"},
+        "2026-07-22": {"status": "serie_ende"},
+    }
+    items = serien.expand_entry(entry, "2026-07-20", "2026-07-25", overrides)
+    dates = [i["datum"] for i in items]
+    # 22. (Ende) und später entfallen; 20./21. (bearbeitet) bleiben sichtbar
+    assert dates == ["2026-07-20", "2026-07-21"]
+    by_date = {i["datum"]: i for i in items}
+    assert by_date["2026-07-21"]["status"] == "erledigt"
+
+
 def _run():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

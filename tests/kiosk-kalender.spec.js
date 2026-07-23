@@ -68,12 +68,19 @@ function expandForRange(st, von, bis) {
   for (const e of st.entries) {
     if (e.wiederholung === 'weekly') {
       // einfache wöchentliche Expansion für Testbereich
+      const ovs = st.overrides[e.id] || {};
+      // Serien-Ende: frühestes Datum mit Status "serie_ende" (ab hier keine Vorkommen).
+      let ende = null;
+      for (const [ds, ov] of Object.entries(ovs)) {
+        if (ov === 'serie_ende' && (ende === null || ds < ende)) ende = ds;
+      }
       let d = new Date(e.datum + 'T12:00');
       const end = new Date(bis + 'T12:00');
       while (d <= end) {
         const ds = st.iso(d);
         if (inRange(ds) && ds >= e.datum) {
-          const ov = (st.overrides[e.id] || {})[ds];
+          if (ende !== null && ds >= ende) { d.setDate(d.getDate() + 7); continue; }
+          const ov = ovs[ds];
           if (ov === 'geloescht') { d.setDate(d.getDate() + 7); continue; }
           out.push(Object.assign({}, e, { datum: ds, _ist_vorkommen: true, _serien_id: e.id, status: ov === 'erledigt' ? 'erledigt' : 'offen' }));
         }
@@ -389,6 +396,24 @@ test.describe('Kiosk-Kalender', () => {
     const nextDi = new Date(st.di + 'T12:00'); nextDi.setDate(nextDi.getDate() + 7);
     await page.locator(`.kal-day[data-day="${st.iso(nextDi)}"]`).click();
     await expect(page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' })).toHaveCount(0);
+  });
+
+  // F5 – Serie ab späterem Termin beenden lässt frühere (Historie) bestehen
+  test('TC-F5-10: Serie ab Folgewoche beenden behält vergangene Termine', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    // In die Folgewoche wechseln und dort die Serie „ab hier" beenden
+    await page.locator('.kal-nav[data-act="next"]').click();
+    const nextDi = new Date(st.di + 'T12:00'); nextDi.setDate(nextDi.getDate() + 7);
+    await page.locator(`.kal-day[data-day="${st.iso(nextDi)}"]`).click();
+    await page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' }).locator('.ic[data-del]').click();
+    await expect(page.locator('.kal-confirm')).toBeVisible();
+    await page.locator('.kal-confirm-btn', { hasText: 'Ganze Serie löschen' }).click();
+    await expect(page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' })).toHaveCount(0);
+    // Ursprüngliche Woche (Vergangenheit relativ zum Ende) zeigt die Serie weiterhin
+    await page.locator('.kal-nav[data-act="prev"]').click();
+    await page.locator(`.kal-day[data-day="${st.di}"]`).click();
+    await expect(page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' })).toHaveCount(1);
   });
 
   // F5 – Abbrechen im Auswahl-Dialog löscht nichts
