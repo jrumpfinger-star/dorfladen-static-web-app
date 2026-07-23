@@ -129,10 +129,29 @@
           '<div class="kal-fld"><span>Zeitpunkt</span>' +
             '<div class="kal-modal-time">' +
               '<div class="kal-toggle"><button type="button" class="on" data-ad="1">Ganztags</button><button type="button" data-ad="0">Uhrzeit</button></div>' +
-              '<span class="kal-timebox" id="kal-timebox" style="display:none">' +
-                '<input type="text" id="kal-time" inputmode="numeric" maxlength="5" value="09:00" placeholder="HH:MM" class="kal-time-txt" aria-label="Uhrzeit (24 Stunden)">' +
-                '<b class="kal-time-uhr">Uhr</b>' +
-              '</span>' +
+              '<div class="kal-timebox" id="kal-timebox" style="display:none">' +
+                '<div class="kal-tp">' +
+                  '<span class="kal-tp-unit">' +
+                    '<button type="button" class="kal-tp-btn" data-tp="h+" aria-label="Stunde plus">+</button>' +
+                    '<span class="kal-tp-lbl">Std</span>' +
+                    '<button type="button" class="kal-tp-btn" data-tp="h-" aria-label="Stunde minus">\u2212</button>' +
+                  '</span>' +
+                  '<span class="kal-tp-face">' +
+                    '<input type="text" id="kal-time" inputmode="numeric" maxlength="5" value="09:00" placeholder="HH:MM" class="kal-time-txt" aria-label="Uhrzeit (24 Stunden)">' +
+                    '<b class="kal-time-uhr">Uhr</b>' +
+                  '</span>' +
+                  '<span class="kal-tp-unit">' +
+                    '<button type="button" class="kal-tp-btn" data-tp="m+" aria-label="Minute plus">+</button>' +
+                    '<span class="kal-tp-lbl">Min</span>' +
+                    '<button type="button" class="kal-tp-btn" data-tp="m-" aria-label="Minute minus">\u2212</button>' +
+                  '</span>' +
+                '</div>' +
+                '<div class="kal-tp-quick" id="kal-tp-quick">' +
+                  ['06:00', '07:00', '08:00', '09:00', '10:00', '12:00', '14:00', '16:00', '18:00'].map(function (t) {
+                    return '<button type="button" class="kal-tp-q" data-tpq="' + t + '">' + t + '</button>';
+                  }).join('') +
+                '</div>' +
+              '</div>' +
             '</div></div>' +
           '<div class="kal-fld"><span>Kategorie</span>' +
             '<div class="kal-pills" id="kal-catpills">' +
@@ -177,16 +196,16 @@
     });
     title.addEventListener('blur', function () { setTimeout(hideTitleDd, 150); });
     var timeEl = document.getElementById('kal-time');
-    timeEl.addEventListener('input', function () { timeEl.value = fmtTimeInput(timeEl.value); });
+    timeEl.addEventListener('input', function () { timeEl.value = fmtTimeInput(timeEl.value); refreshTimeQuick(); });
     var kunde = document.getElementById('kal-kunde');
     var kt = null;
     kunde.addEventListener('input', function () {
       clearTimeout(kt); kt = setTimeout(function () { searchKunden(kunde.value); }, 250);
     });
     kunde.addEventListener('blur', function () { setTimeout(hideKundeDd, 150); });
-    // Dialog: Klick auf Overlay (außerhalb der Karte) + Escape schließen
+    // Dialog ist modal: Klick auf das Overlay (neben der Karte) schließt NICHT.
+    // Nur „Abbrechen“, das X oder Escape schließen den Dialog.
     var modal = document.getElementById('kal-modal');
-    modal.addEventListener('click', function (e) { if (e.target === modal) closeDialog(); });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && !modal.hidden) closeDialog();
     });
@@ -195,7 +214,7 @@
   }
 
   function onClick(e) {
-    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-titlepick],[data-tpl]');
+    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-titlepick],[data-tpl],[data-tp],[data-tpq]');
     if (!b) return;
     if (b.dataset.act === 'prev') { state.weekOffset--; load(); }
     else if (b.dataset.act === 'next') { state.weekOffset++; load(); }
@@ -212,6 +231,8 @@
     else if (b.dataset.kunde !== undefined) { setKunde(b.dataset.kunde, b.dataset.kid); }
     else if (b.dataset.titlepick !== undefined) { setTitle(b.dataset.titlepick); }
     else if (b.dataset.tpl !== undefined) { applyTemplate(dialogTemplates[parseInt(b.dataset.tpl, 10)], b); }
+    else if (b.dataset.tp) { stepTime(b.dataset.tp); }
+    else if (b.dataset.tpq) { setTimeQuick(b.dataset.tpq); }
   }
 
   // Vorlagenliste = Standard-Vorlagen + tatsächlich vorhandene wiederkehrende Aufgaben.
@@ -336,6 +357,33 @@
     return pad(h) + ':' + pad(m);
   }
 
+  // Touch-Stepper für die Uhrzeit: Stunde ±1, Minute ±5 (mit Überlauf 0–23 / 0–55).
+  function stepTime(kind) {
+    var el = document.getElementById('kal-time'); if (!el) return;
+    var hm = normTime(el.value) || '09:00';
+    var h = parseInt(hm.slice(0, 2), 10), m = parseInt(hm.slice(3), 10);
+    if (kind === 'h+') h = (h + 1) % 24;
+    else if (kind === 'h-') h = (h + 23) % 24;
+    else if (kind === 'm+') { m = m - (m % 5) + 5; if (m >= 60) { m -= 60; h = (h + 1) % 24; } }
+    else if (kind === 'm-') { m = (m % 5 === 0) ? m - 5 : m - (m % 5); if (m < 0) { m += 60; h = (h + 23) % 24; } }
+    el.value = pad(h) + ':' + pad(m);
+    refreshTimeQuick();
+  }
+  // Schnellwahl-Chip → Uhrzeit direkt setzen.
+  function setTimeQuick(hm) {
+    var el = document.getElementById('kal-time'); if (!el) return;
+    el.value = normTime(hm) || hm;
+    refreshTimeQuick();
+  }
+  // Markiert den Schnellwahl-Chip, der der aktuellen Uhrzeit entspricht.
+  function refreshTimeQuick() {
+    var el = document.getElementById('kal-time'); if (!el) return;
+    var cur = normTime(el.value);
+    document.querySelectorAll('#kal-tp-quick .kal-tp-q').forEach(function (q) {
+      q.classList.toggle('active', q.dataset.tpq === cur);
+    });
+  }
+
   function openDialog() {
     var m = document.getElementById('kal-modal'); if (!m) return;
     // Felder zurücksetzen; Standard = Ganztags, Kategorie Aufgabe, Einmalig
@@ -365,6 +413,7 @@
     btns[0].classList.toggle('on', v); btns[1].classList.toggle('on', !v);
     var box = document.getElementById('kal-timebox');
     if (box) box.style.display = v ? 'none' : '';
+    if (!v) refreshTimeQuick();
   }
 
   // ── Laden / Rendern ──
@@ -589,16 +638,84 @@
   }
 
   function del(id, isSerie, datum) {
-    // Serien-Vorkommen: nur dieses Datum ausblenden (Override), Serie bleibt.
-    var req = isSerie
-      ? fetch(apiBase() + '/' + id + '?override=' + datum, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'geloescht' })
-        })
-      : fetch(apiBase() + '/' + id, { method: 'DELETE' });
-    req.then(function (r) { return r.json(); })
+    if (isSerie) {
+      kalConfirm(
+        'Serie löschen?',
+        'Dieser Eintrag wiederholt sich. Möchtest du nur diesen Tag entfernen oder die ganze Serie mit allen Terminen löschen?',
+        [
+          { label: 'Nur diesen Tag', kind: 'primary', act: function () { delOccurrence(id, datum); } },
+          { label: 'Ganze Serie löschen', kind: 'danger', act: function () { delSeries(id); } },
+          { label: 'Abbrechen', kind: 'ghost', act: null }
+        ]
+      );
+      return;
+    }
+    delSingle(id);
+  }
+
+  // Einzelnes Serien-Vorkommen: nur dieses Datum ausblenden (Override), Serie bleibt.
+  function delOccurrence(id, datum) {
+    fetch(apiBase() + '/' + id + '?override=' + datum, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'geloescht' })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (!d.success) throw new Error(); toast('Tag entfernt.'); load(); })
+      .catch(function () { toast('Löschen fehlgeschlagen.', 'err'); });
+  }
+
+  // Ganze Serie (Master-Eintrag) endgültig löschen.
+  function delSeries(id) {
+    fetch(apiBase() + '/' + id, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (!d.success) throw new Error(); toast('Serie gelöscht.'); load(); })
+      .catch(function () { toast('Löschen fehlgeschlagen.', 'err'); });
+  }
+
+  // Einzeleintrag (keine Serie) löschen.
+  function delSingle(id) {
+    fetch(apiBase() + '/' + id, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
       .then(function (d) { if (!d.success) throw new Error(); toast('Gelöscht.'); load(); })
       .catch(function () { toast('Löschen fehlgeschlagen.', 'err'); });
+  }
+
+  // Touch-freundlicher In-App-Bestätigungsdialog (constitution §6: keine nativen Dialoge).
+  function kalConfirm(title, message, buttons) {
+    var old = document.getElementById('kal-confirm');
+    if (old) old.remove();
+    var ov = document.createElement('div');
+    ov.className = 'kal-confirm';
+    ov.id = 'kal-confirm';
+    var card = document.createElement('div');
+    card.className = 'kal-confirm-card';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-label', title);
+    var h = document.createElement('div');
+    h.className = 'kal-confirm-head';
+    h.textContent = title;
+    var p = document.createElement('div');
+    p.className = 'kal-confirm-msg';
+    p.textContent = message;
+    var foot = document.createElement('div');
+    foot.className = 'kal-confirm-foot';
+    function close() { ov.remove(); document.removeEventListener('keydown', onKey); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    (buttons || []).forEach(function (btn) {
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'kal-confirm-btn ' + (btn.kind || 'ghost');
+      el.textContent = btn.label;
+      el.addEventListener('click', function () { close(); if (btn.act) btn.act(); });
+      foot.appendChild(el);
+    });
+    card.appendChild(h);
+    card.appendChild(p);
+    card.appendChild(foot);
+    ov.appendChild(card);
+    document.body.appendChild(ov);
+    document.addEventListener('keydown', onKey);
   }
 
   function searchKunden(q) {
@@ -720,6 +837,17 @@
       '.kal-modal-card{background:var(--ks);color:var(--kt);width:100%;max-width:420px;max-height:90vh;overflow-y:auto;border:1px solid var(--kb);border-radius:16px;box-shadow:0 20px 48px rgba(0,0,0,.28);padding:18px 20px}',
       '@media(min-width:768px){.kal-modal-card{max-width:560px;padding:22px 26px}}',
       '@media(min-width:1280px){.kal-modal-card{max-width:640px}}',
+      '.kal-confirm{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}',
+      '.kal-confirm-card{background:var(--ks);color:var(--kt);width:100%;max-width:440px;border:1px solid var(--kb);border-radius:16px;box-shadow:0 20px 48px rgba(0,0,0,.3);padding:20px 22px}',
+      '@media(min-width:768px){.kal-confirm-card{max-width:520px;padding:24px 28px}}',
+      '.kal-confirm-head{font-size:18px;font-weight:800;color:var(--kp);margin-bottom:10px}',
+      '.kal-confirm-msg{font-size:15px;line-height:1.5;margin-bottom:18px;color:var(--kt)}',
+      '.kal-confirm-foot{display:flex;flex-direction:column;gap:10px}',
+      '.kal-confirm-btn{min-height:52px;padding:12px 18px;border-radius:12px;border:1px solid var(--kb);font-size:16px;font-weight:700;cursor:pointer;width:100%;background:var(--ks);color:var(--kt)}',
+      '.kal-confirm-btn.primary{background:var(--kp);color:#fff;border-color:var(--kp)}',
+      '.kal-confirm-btn.danger{background:#b91c1c;color:#fff;border-color:#b91c1c}',
+      '.kal-confirm-btn.ghost{background:transparent}',
+      '@media(min-width:768px){.kal-confirm-foot{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}.kal-confirm-btn{width:auto;min-width:150px}}',
       '.kal-modal-head{display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:800;color:var(--kp);margin-bottom:12px}',
       '.kal-modal-x{border:none;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:var(--km);width:44px;height:44px;border-radius:10px}',
       '.kal-fld{display:block;margin-bottom:12px}.kal-fld>span{display:block;font-size:12px;font-weight:700;color:var(--km);margin-bottom:5px}',
@@ -727,10 +855,20 @@
       '.kal-fld textarea{resize:vertical;min-height:44px;line-height:1.4;overflow:hidden}',
       '.kal-modal-time{display:flex;gap:8px;align-items:center;flex-wrap:wrap}',
       '.kal-modal-time input[type=time]{border:1.5px solid var(--kb);border-radius:10px;padding:9px 10px;font-size:14px;background:var(--ks);color:var(--kt)}',
-      '.kal-timebox{display:inline-flex;align-items:center;gap:6px}',
-      '.kal-time-txt{width:78px;border:1.5px solid var(--kb);border-radius:10px;padding:9px 10px;font-size:16px;font-weight:700;text-align:center;letter-spacing:1px;font-variant-numeric:tabular-nums;background:var(--ks);color:var(--kt);font-family:inherit}',
+      '.kal-timebox{display:flex;flex-direction:column;gap:10px;width:100%}',
+      '.kal-tp{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}',
+      '.kal-tp-unit{display:flex;flex-direction:column;align-items:center;gap:4px}',
+      '.kal-tp-btn{width:52px;height:44px;border:1.5px solid var(--kb);border-radius:12px;background:var(--ks);color:var(--kt);font-size:24px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none}',
+      '.kal-tp-btn:active{background:var(--kp);color:#fff;border-color:var(--kp)}',
+      '.kal-tp-lbl{font-size:11px;font-weight:700;color:var(--km);text-transform:uppercase;letter-spacing:.5px}',
+      '.kal-tp-face{display:flex;align-items:center;gap:6px}',
+      '.kal-timebox .kal-tp-face .kal-time-txt{width:96px;flex:0 0 auto;height:56px;border:1.5px solid var(--kb);border-radius:12px;padding:0 8px;font-size:24px;font-weight:800;text-align:center;letter-spacing:1px;font-variant-numeric:tabular-nums;background:var(--ks);color:var(--kt);font-family:inherit;box-sizing:border-box}',
       '.kal-time-txt:focus{outline:none;border-color:var(--kp)}',
       '.kal-time-uhr{font-size:13px;font-weight:700;color:var(--km)}',
+      '.kal-tp-quick{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}',
+      '.kal-tp-q{min-width:56px;min-height:44px;padding:0 12px;border:1.5px solid var(--kb);border-radius:999px;background:var(--ks);color:var(--kt);font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;cursor:pointer}',
+      '.kal-tp-q.active{background:var(--kp);color:#fff;border-color:var(--kp)}',
+      '.kal-tp-q:active{border-color:var(--kp)}',
       '.kal-modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}',
       '.kal-btn-ghost{padding:10px 16px;border:1.5px solid var(--kb);background:transparent;color:var(--kt);border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center}',
       '.kal-pills{display:flex;flex-wrap:wrap;gap:6px}',
@@ -763,10 +901,10 @@
       '.kal-entry .check{width:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-right:1px solid var(--kb)}',
       '.kal-entry .check .box{width:26px;height:26px;border:2px solid var(--km);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:transparent}',
       '.kal-entry .check:hover .box{border-color:#2e7d4f}',
-      '.kal-entry .body{flex:1;padding:11px 14px;min-width:0}.kal-entry .top{display:flex;align-items:center;gap:8px}',
+      '.kal-entry .body{flex:1;padding:11px 14px;min-width:0}.kal-entry .top{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}',
       '.kal-entry .time{font-weight:800;font-size:15px;color:var(--kp)}.kal-entry .time.allday{color:var(--km);font-size:12px;font-weight:700;text-transform:uppercase}',
-      '.kal-entry .title{font-weight:700;font-size:15px;flex:1;min-width:0;color:var(--kt);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.35}',
-      '.kal-entry .top{align-items:flex-start!important}',
+      '.kal-entry .title{font-weight:700;font-size:15px;flex:1 1 100%;min-width:0;color:var(--kt);white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;line-height:1.35}',
+      '.kal-entry .top>.title{width:100%}',
       '.kal-entry .badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}',
       '.kal-entry .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}',
       '.kal-entry .badge.cat{color:#fff}.cat-aufgabe .badge.cat{background:var(--kp)}.cat-reservierung .badge.cat{background:#1d4ed8}.cat-vorbestellung .badge.cat{background:#e65100}.cat-lieferung .badge.cat{background:#6d28d9}.cat-info .badge.cat{background:#0891b2}',

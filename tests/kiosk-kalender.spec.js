@@ -365,11 +365,40 @@ test.describe('Kiosk-Kalender', () => {
     const st = makeState();
     await openKalender(page, st);
     await page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' }).locator('.ic[data-del]').click();
+    // Auswahl-Dialog erscheint → „Nur diesen Tag“
+    await expect(page.locator('.kal-confirm')).toBeVisible();
+    await page.locator('.kal-confirm-btn', { hasText: 'Nur diesen Tag' }).click();
     await expect(page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' })).toHaveCount(0);
     // Folgewoche zeigt Serie weiterhin
     await page.locator('.kal-nav[data-act="next"]').click();
     const nextDi = new Date(st.di + 'T12:00'); nextDi.setDate(nextDi.getDate() + 7);
     await page.locator(`.kal-day[data-day="${st.iso(nextDi)}"]`).click();
+    await expect(page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' })).toHaveCount(1);
+  });
+
+  // F5 – Ganze Serie löschen entfernt alle Vorkommen
+  test('TC-F5-08: „Ganze Serie löschen“ entfernt Serie in allen Wochen', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' }).locator('.ic[data-del]').click();
+    await expect(page.locator('.kal-confirm')).toBeVisible();
+    await page.locator('.kal-confirm-btn', { hasText: 'Ganze Serie löschen' }).click();
+    await expect(page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' })).toHaveCount(0);
+    // Folgewoche zeigt Serie NICHT mehr
+    await page.locator('.kal-nav[data-act="next"]').click();
+    const nextDi = new Date(st.di + 'T12:00'); nextDi.setDate(nextDi.getDate() + 7);
+    await page.locator(`.kal-day[data-day="${st.iso(nextDi)}"]`).click();
+    await expect(page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' })).toHaveCount(0);
+  });
+
+  // F5 – Abbrechen im Auswahl-Dialog löscht nichts
+  test('TC-F5-09: „Abbrechen“ im Lösch-Dialog behält das Vorkommen', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' }).locator('.ic[data-del]').click();
+    await expect(page.locator('.kal-confirm')).toBeVisible();
+    await page.locator('.kal-confirm-btn', { hasText: 'Abbrechen' }).click();
+    await expect(page.locator('.kal-confirm')).toHaveCount(0);
     await expect(page.locator('.kal-entry', { hasText: 'Kühltheke reinigen' })).toHaveCount(1);
   });
 

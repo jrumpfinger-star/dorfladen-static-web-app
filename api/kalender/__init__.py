@@ -282,7 +282,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "dl_serie_id": record_id,
                     "dl_datum": override_datum,
                     "dl_status": status,
-                    "dl_erledigt_am": datetime.utcnow().isoformat() if status == "erledigt" else "",
+                    "dl_erledigt_am": datetime.utcnow().isoformat() if status == "erledigt" else None,
                 }
                 # Bestehendes Override für dieses Datum ersetzen
                 _delete_override(base_url, headers, record_id, override_datum)
@@ -335,7 +335,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     return _err("Ungültiger Status.")
                 patch["dl_status"] = status
                 patch["dl_erledigt_am"] = (
-                    datetime.utcnow().isoformat() if status == "erledigt" else ""
+                    datetime.utcnow().isoformat() if status == "erledigt" else None
                 )
             if not patch:
                 return _err("Keine Änderung übergeben.")
