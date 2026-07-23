@@ -76,7 +76,7 @@
   .quickadd{background:var(--surf);border:1.5px dashed var(--border);border-radius:var(--r);padding:12px;margin-bottom:16px;box-shadow:var(--sh-s)}
   .qa-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .qa-field{position:relative;flex:1;min-width:200px}
-  .qa-field input,.qa-field textarea{width:100%;min-height:var(--tap);border:1.5px solid var(--border);border-radius:var(--r-btn);padding:10px 12px;font-size:.95rem;font-family:inherit;resize:vertical;line-height:1.35}
+  .qa-field input,.qa-field textarea{width:100%;min-height:var(--tap);border:1.5px solid var(--border);border-radius:var(--r-btn);padding:10px 12px;font-size:.95rem;font-family:inherit;resize:none;overflow:hidden;line-height:1.35;box-sizing:border-box}
   .qa-field input:focus,.qa-field textarea:focus{outline:none;border-color:var(--pri)}
   .ac-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-btn);box-shadow:var(--sh-m);z-index:30;overflow:hidden;display:none}
   .ac-dd.open{display:block}
@@ -145,7 +145,8 @@
   .modal .m-head{background:var(--pri);color:#fff;padding:14px 18px;font-weight:700;display:flex;align-items:center;gap:8px}
   .modal .m-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
   .modal label{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-  .modal textarea,.modal input[type=text],.modal input[type=time]{width:100%;border:1.5px solid var(--border);border-radius:var(--r-btn);padding:11px 12px;font-size:.98rem;font-family:inherit;min-height:var(--tap)}
+  .modal textarea,.modal input[type=text],.modal input[type=time]{width:100%;border:1.5px solid var(--border);border-radius:var(--r-btn);padding:11px 12px;font-size:.98rem;font-family:inherit;min-height:var(--tap);box-sizing:border-box}
+  .modal textarea{resize:none;overflow:hidden;line-height:1.35}
   .catpills{display:flex;gap:8px;flex-wrap:wrap}
   .catpill{min-height:var(--tap);padding:0 16px;border:2px solid var(--border);border-radius:var(--r-btn);background:#fff;font-weight:700;font-size:.86rem;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
   .catpill .k{width:12px;height:12px;border-radius:4px}
@@ -333,7 +334,9 @@
   // Autocomplete
   var acTarget=null, acBox=null, acIdx=-1;
   function acDdFor(el){return el.id==='mTitle'?document.getElementById('acDd2'):document.getElementById('acDd');}
+  function autoGrow(el){ if(!el)return; el.style.height='auto'; var max=180; var h=Math.min(el.scrollHeight,max); el.style.height=h+'px'; el.style.overflowY = el.scrollHeight>max ? 'auto' : 'hidden'; }
   function onType(el){
+    autoGrow(el);
     acTarget=el; acBox=acDdFor(el); acIdx=-1;
     var q=el.value.trim().toLowerCase();
     if(q.length<2){closeAc();return;}
@@ -342,7 +345,7 @@
     acBox.innerHTML=hits.map(function(t){return '<div class="ac-item" onmousedown="pick(this)"><span class="ic">🔎</span>'+t+'</div>';}).join('');
     acBox.classList.add('open');
   }
-  function pick(node){ if(acTarget){acTarget.value=node.textContent.replace('🔎','').trim();} closeAc(); }
+  function pick(node){ if(acTarget){acTarget.value=node.textContent.replace('🔎','').trim();autoGrow(acTarget);} closeAc(); }
   function closeAc(){ if(acBox){acBox.classList.remove('open');acBox.innerHTML='';} }
   function onKey(ev){
     if(!acBox||!acBox.classList.contains('open'))return;
@@ -355,7 +358,7 @@
   }
 
   // Dialog
-  function openModal(){document.getElementById('backdrop').classList.add('open');}
+  function openModal(){document.getElementById('backdrop').classList.add('open');autoGrow(document.getElementById('mTitle'));}
   function closeModal(){document.getElementById('backdrop').classList.remove('open');}
 
   // Kategorie-Pills im Dialog
@@ -369,6 +372,7 @@
   function clock(){var n=new Date();document.getElementById('clock').firstChild.textContent=n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});document.getElementById('clockDate').textContent=n.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'short'});}
 
   renderDays(); renderLists(); clock(); setInterval(clock,1000);
+  autoGrow(document.getElementById('qaTitle')); autoGrow(document.getElementById('mTitle'));
 </script>
 </body>
 </html>
