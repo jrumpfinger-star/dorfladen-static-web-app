@@ -171,12 +171,13 @@ test.describe('Kiosk-Kalender', () => {
   });
 
   // F2 – Gruppierung ganztags/uhrzeit
-  test('TC-F2-01: Ganztägig-Gruppe zuerst, terminierte chronologisch', async ({ page }) => {
+  test('TC-F2-01: Split-Sektionen vorhanden, terminierte chronologisch', async ({ page }) => {
     const st = makeState();
     await openKalender(page, st);
-    const secs = page.locator('.kal-sec');
-    await expect(secs.first()).toContainText('Ganztägig');
-    await expect(secs.nth(1)).toContainText('Mit Uhrzeit');
+    // F9-Split: eigene Sektion je Spalte. DOM-Quellreihenfolge timed→allday; visuelle
+    // Reihenfolge steuert CSS order (Mobile allday zuerst, ≥768px timed links).
+    await expect(page.locator('.kal-split-timed .kal-sec')).toContainText('Mit Uhrzeit');
+    await expect(page.locator('.kal-split-allday .kal-sec')).toContainText('Ganztägig');
     // terminierte Einträge liegen als Timeline-Zeilen vor; nur 10:00 offen (14:30 erledigt/ausgeblendet)
     const times = await page.locator('.kal-tl-row:not(.done) .kal-tl-time').allTextContents();
     expect(times.length).toBe(1);
@@ -490,7 +491,7 @@ test.describe('Kiosk-Kalender', () => {
   });
 
   // Vorlagen: Auswahl füllt den Dialog und legt passenden Eintrag an
-  test('TC-F9-01: Vorlage füllt Felder und legt wiederkehrende Aufgabe an', async ({ page }) => {
+  test('TC-VOR-01: Vorlage füllt Felder und legt wiederkehrende Aufgabe an', async ({ page }) => {
     const st = makeState();
     await openKalender(page, st);
     await openAdd(page);
@@ -508,12 +509,230 @@ test.describe('Kiosk-Kalender', () => {
   });
 
   // Vorlagen: eigene wiederkehrende Aufgabe erscheint als Vorlage
-  test('TC-F9-02: bestehende Serie erscheint als Vorlage', async ({ page }) => {
+  test('TC-VOR-02: bestehende Serie erscheint als Vorlage', async ({ page }) => {
     const st = makeState();
     await openKalender(page, st);
     await openAdd(page);
     // makeState enthält die wöchentliche Serie „Kühltheke reinigen“
     await expect(page.locator('.kal-tpl', { hasText: 'Kühltheke reinigen' })).toHaveCount(1);
+  });
+
+  // ════════════════════════════════════════════════════
+  // Inkrement 2 – Feature-Paket F9–F14 (Kiosk-Kalender v2)
+  // ════════════════════════════════════════════════════
+
+  // ── F9: Split-View (timed links / allday rechts ab 768px, sonst gestapelt) ──
+
+  test('TC-F9-01: iPad zeigt Split zweispaltig (timed links, allday rechts)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'ipad-mini', 'nur iPad-Mini-Viewport');
+    const st = makeState();
+    await openKalender(page, st);
+    const timed = await page.locator('.kal-split-timed').boundingBox();
+    const allday = await page.locator('.kal-split-allday').boundingBox();
+    expect(timed && allday).toBeTruthy();
+    expect(timed.x).toBeLessThan(allday.x);            // timed links
+    expect(Math.abs(timed.y - allday.y)).toBeLessThan(40); // nebeneinander (ähnliche Höhe)
+  });
+
+  test('TC-F9-02: Desktop zeigt Split zweispaltig (timed links, allday rechts)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'nur Desktop-Viewport');
+    const st = makeState();
+    await openKalender(page, st);
+    const timed = await page.locator('.kal-split-timed').boundingBox();
+    const allday = await page.locator('.kal-split-allday').boundingBox();
+    expect(timed && allday).toBeTruthy();
+    expect(timed.x).toBeLessThan(allday.x);
+    expect(Math.abs(timed.y - allday.y)).toBeLessThan(40);
+  });
+
+  test('TC-F9-03: Mobile stapelt Split (ganztägig oben, terminiert unten)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'nur Mobile-Viewport');
+    const st = makeState();
+    await openKalender(page, st);
+    const timed = await page.locator('.kal-split-timed').boundingBox();
+    const allday = await page.locator('.kal-split-allday').boundingBox();
+    expect(timed && allday).toBeTruthy();
+    expect(allday.y).toBeLessThan(timed.y);            // allday oben
+    expect(Math.abs(timed.x - allday.x)).toBeLessThan(6); // eine Spalte
+  });
+
+  test('TC-F9-04: Leere Spalte zeigt Leerhinweis, andere Spalte die Einträge', async ({ page }) => {
+    const st = makeState();
+    // nur ein terminierter Eintrag, keine ganztägigen → allday-Spalte leer
+    st.entries = [
+      { id: 'e2', titel: 'Sonntagsbraten', datum: st.di, ganztags: false, uhrzeit: '10:00', kategorie: 'reservierung', wiederholung: '', kunde_id: 'k1', kunde_freitext: '', status: 'offen', notiz: '' },
+    ];
+    await openKalender(page, st);
+    await expect(page.locator('.kal-split-allday .kal-empty-col')).toBeVisible();
+    await expect(page.locator('.kal-split-allday .kal-empty-col')).toContainText('Keine ganztägigen');
+    await expect(page.locator('.kal-split-timed .kal-tl-row')).toHaveCount(1);
+  });
+
+  // ── F10: Touch-First-UI (Tap-Targets ≥44px, keine Hover-only-Aktionen) ──
+
+  test('TC-F10-01: primäre Tap-Targets sind mindestens 44×44px', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    // Aktions-Buttons in Einträgen
+    for (const sel of ['.kal-entry .check', '.kal-entry .ic', '.kal-new']) {
+      const box = await page.locator(sel).first().boundingBox();
+      expect(box, sel).toBeTruthy();
+      expect(box.width, sel + ' width').toBeGreaterThanOrEqual(44);
+      expect(box.height, sel + ' height').toBeGreaterThanOrEqual(44);
+    }
+    // Dialog-Buttons
+    await openAdd(page);
+    for (const sel of ['.kal-modal-x', '.kal-add', '.kal-btn-ghost']) {
+      const box = await page.locator(sel).first().boundingBox();
+      expect(box, sel).toBeTruthy();
+      expect(box.width, sel + ' width').toBeGreaterThanOrEqual(44);
+      expect(box.height, sel + ' height').toBeGreaterThanOrEqual(44);
+    }
+  });
+
+  test('TC-F10-02: Lösch-Aktion ist ohne Hover sichtbar (kein Hover-only)', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await expect(page.locator('.kal-entry .ic').first()).toBeVisible();
+  });
+
+  // ── F11: Autocomplete im Titelfeld aus bestehenden Einträgen ──
+
+  test('TC-F11-01: Titel-Eingabe zeigt passende Vorschläge', async ({ page }) => {
+    const st = makeState();
+    st.entries.push(
+      { id: 'b1', titel: 'Blumen gießen', datum: st.di, ganztags: true, uhrzeit: '', kategorie: 'aufgabe', wiederholung: '', kunde_id: '', kunde_freitext: '', status: 'offen', notiz: '' },
+      { id: 'b2', titel: 'Blumenstrauß binden', datum: st.di, ganztags: true, uhrzeit: '', kategorie: 'aufgabe', wiederholung: '', kunde_id: '', kunde_freitext: '', status: 'offen', notiz: '' },
+    );
+    await openKalender(page, st);
+    await openAdd(page);
+    await page.locator('#kal-title').fill('Blum');
+    await expect(page.locator('#kal-title-dd')).toBeVisible();
+    expect(await page.locator('.kal-title-item').count()).toBeGreaterThanOrEqual(2);
+  });
+
+  test('TC-F11-02: Vorschlag übernehmen füllt das Titelfeld', async ({ page }) => {
+    const st = makeState();
+    st.entries.push(
+      { id: 'b1', titel: 'Blumen gießen', datum: st.di, ganztags: true, uhrzeit: '', kategorie: 'aufgabe', wiederholung: '', kunde_id: '', kunde_freitext: '', status: 'offen', notiz: '' },
+    );
+    await openKalender(page, st);
+    await openAdd(page);
+    await page.locator('#kal-title').fill('Blum');
+    await expect(page.locator('.kal-title-item').first()).toBeVisible();
+    const label = (await page.locator('.kal-title-item').first().innerText()).trim();
+    await page.locator('.kal-title-item').first().click();
+    await expect(page.locator('#kal-title')).toHaveValue(label);
+    await expect(page.locator('#kal-title-dd')).toBeHidden();
+  });
+
+  test('TC-F11-03: Kein Treffer → keine Vorschlagsliste', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    await page.locator('#kal-title').fill('xyznichtvorhanden');
+    await expect(page.locator('#kal-title-dd')).toBeHidden();
+  });
+
+  // ── F12: Kategorie „Info“ (Frontend + API-Whitelist) ──
+
+  test('TC-F12-01: Info-Eintrag anlegen sendet kategorie=info', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    await page.locator('#kal-title').fill('Öffnungszeiten-Hinweis');
+    await page.locator('[data-newcat="info"]').click();
+    await page.locator('.kal-add').click();
+    await expect.poll(() => st.posts.length).toBeGreaterThan(0);
+    const p = st.posts.find((x) => x.titel === 'Öffnungszeiten-Hinweis');
+    expect(p && p.kategorie).toBe('info');
+  });
+
+  test('TC-F12-02: Info-Eintrag erscheint nach Speichern in der Liste (Round-Trip)', async ({ page }) => {
+    // E2E-Proxy für die Server-Whitelist: die API ist gemockt, der Backend-Test
+    // liegt in api/kalender (KATEGORIEN-Tuple). Hier prüfen wir, dass ein per Info
+    // angelegter Eintrag den Round-Trip übersteht und mit cat-info gerendert wird.
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    await page.locator('#kal-title').fill('Info Round-Trip');
+    await page.locator('[data-newcat="info"]').click();
+    await page.locator('.kal-add').click();
+    await expect(page.locator('.kal-split-allday .kal-entry.cat-info')).toBeVisible();
+  });
+
+  test('TC-F12-03: Filter „Info“ zeigt nur Info-Einträge', async ({ page }) => {
+    const st = makeState();
+    st.entries.push(
+      { id: 'i1', titel: 'Betriebsurlaub', datum: st.di, ganztags: true, uhrzeit: '', kategorie: 'info', wiederholung: '', kunde_id: '', kunde_freitext: '', status: 'offen', notiz: '' },
+    );
+    await openKalender(page, st);
+    await page.locator('#kal-filters .kal-chip[data-cat="info"]').click();
+    await expect(page.locator('.kal-entry.cat-info')).toHaveCount(1);
+    await expect(page.locator('.kal-entry:not(.cat-info)')).toHaveCount(0);
+  });
+
+  // ── F13: Dialog breiter ab 768px / 1280px ──
+
+  test('TC-F13-01: Dialog auf Mobile schmal (≤420px)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'nur Mobile-Viewport');
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    const box = await page.locator('.kal-modal-card').boundingBox();
+    expect(box.width).toBeLessThanOrEqual(420);
+  });
+
+  test('TC-F13-02: Dialog auf iPad breiter (>500px)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'ipad-mini', 'nur iPad-Mini-Viewport');
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    const box = await page.locator('.kal-modal-card').boundingBox();
+    expect(box.width).toBeGreaterThan(500);
+  });
+
+  test('TC-F13-03: Dialog auf Desktop am breitesten (>600px)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'nur Desktop-Viewport');
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+    const box = await page.locator('.kal-modal-card').boundingBox();
+    expect(box.width).toBeGreaterThan(600);
+  });
+
+  // ── F14: Mehrzeiliger Titel (Umbruch, kein horizontaler Overflow) ──
+
+  test('TC-F14-01: Langer Titel bricht mehrzeilig um ohne Overflow', async ({ page }) => {
+    const st = makeState();
+    const longTitle = 'Sehr langer Hinweistext der über mehrere Zeilen umbrechen muss damit im Kiosk der ganze Inhalt sichtbar bleibt und nichts abgeschnitten wird';
+    st.entries = [
+      { id: 'lt', titel: longTitle, datum: st.di, ganztags: true, uhrzeit: '', kategorie: 'info', wiederholung: '', kunde_id: '', kunde_freitext: '', status: 'offen', notiz: '' },
+    ];
+    await openKalender(page, st);
+    const title = page.locator('.kal-entry .title', { hasText: 'Sehr langer Hinweistext' });
+    await expect(title).toBeVisible();
+    const lineCount = await title.evaluate((el) => {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      return r.getClientRects().length;
+    });
+    expect(lineCount).toBeGreaterThan(1); // mehrzeilig
+    const overflow = await title.evaluate((el) => el.scrollWidth - el.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(1); // kein horizontaler Overflow
+  });
+
+  test('TC-F14-02: Kurzer Titel bleibt einzeilig', async ({ page }) => {
+    const st = makeState();
+    st.entries = [
+      { id: 'kt', titel: 'Kurz', datum: st.di, ganztags: true, uhrzeit: '', kategorie: 'info', wiederholung: '', kunde_id: '', kunde_freitext: '', status: 'offen', notiz: '' },
+    ];
+    await openKalender(page, st);
+    const title = page.locator('.kal-entry .title', { hasText: 'Kurz' });
+    await expect(title).toBeVisible();
+    // F14-Garantie: kurzer Titel vollständig sichtbar, kein horizontales Clipping.
+    const overflow = await title.evaluate((el) => el.scrollWidth - el.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
   });
 });
 

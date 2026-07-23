@@ -11,7 +11,7 @@
 
   var CATS = {
     aufgabe: 'Aufgabe', reservierung: 'Reservierung',
-    vorbestellung: 'Vorbestellung', lieferung: 'Lieferung'
+    vorbestellung: 'Vorbestellung', lieferung: 'Lieferung', info: 'Info'
   };
   var RECUR = { daily: 'täglich', weekly: 'wöchentlich', biweekly: '14-tägig', monthly: 'monatlich' };
   var DOW = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -113,6 +113,7 @@
         '<button class="kal-chip" data-cat="reservierung"><span class="k" style="background:#1d4ed8"></span>Reservierungen</button>' +
         '<button class="kal-chip" data-cat="vorbestellung"><span class="k" style="background:#e65100"></span>Vorbestellungen</button>' +
         '<button class="kal-chip" data-cat="lieferung"><span class="k" style="background:#6d28d9"></span>Lieferungen</button>' +
+        '<button class="kal-chip" data-cat="info"><span class="k" style="background:#0891b2"></span>Infos</button>' +
         '<button class="kal-chip kal-donechip" data-act="toggledone">✓ Erledigte zeigen</button>' +
       '</div>' +
       '<div id="kal-list"></div>' +
@@ -122,8 +123,9 @@
             '<button class="kal-modal-x" data-act="closedialog" aria-label="Schließen">×</button></div>' +
           '<div class="kal-fld"><span>Vorlage wählen (optional)</span>' +
             '<div class="kal-pills kal-tpls" id="kal-tpls"></div></div>' +
-          '<label class="kal-fld"><span>Was ist zu tun / reserviert?</span>' +
-            '<textarea id="kal-title" rows="1" placeholder="z. B. „Brotbestellung Fam. Huber abholbereit“…"></textarea></label>' +
+          '<label class="kal-fld kal-title-wrap"><span>Was ist zu tun / reserviert?</span>' +
+            '<textarea id="kal-title" rows="1" placeholder="z. B. „Brotbestellung Fam. Huber abholbereit“…" autocomplete="off"></textarea>' +
+            '<div class="kal-title-dd" id="kal-title-dd" hidden></div></label>' +
           '<div class="kal-fld"><span>Zeitpunkt</span>' +
             '<div class="kal-modal-time">' +
               '<div class="kal-toggle"><button type="button" class="on" data-ad="1">Ganztags</button><button type="button" data-ad="0">Uhrzeit</button></div>' +
@@ -138,6 +140,7 @@
               '<button type="button" class="kal-pill" data-newcat="reservierung"><span class="kd" style="background:#1d4ed8"></span>Reservierung</button>' +
               '<button type="button" class="kal-pill" data-newcat="vorbestellung"><span class="kd" style="background:#e65100"></span>Vorbestellung</button>' +
               '<button type="button" class="kal-pill" data-newcat="lieferung"><span class="kd" style="background:#6d28d9"></span>Lieferung</button>' +
+              '<button type="button" class="kal-pill" data-newcat="info"><span class="kd" style="background:#0891b2"></span>Info</button>' +
             '</div></div>' +
           '<div class="kal-fld kal-kunde-wrap"><span>Kunde (optional)</span>' +
             '<input type="text" id="kal-kunde" placeholder="🔗 Name eingeben…" autocomplete="off">' +
@@ -168,6 +171,11 @@
     // Strg/Cmd+Enter speichert; Enter erzeugt eine neue Zeile (mehrzeiliger Text).
     title.addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addEntry(); } });
     title.addEventListener('input', autoGrow);
+    var tt = null;
+    title.addEventListener('input', function () {
+      clearTimeout(tt); tt = setTimeout(function () { searchTitles(title.value); }, 200);
+    });
+    title.addEventListener('blur', function () { setTimeout(hideTitleDd, 150); });
     var timeEl = document.getElementById('kal-time');
     timeEl.addEventListener('input', function () { timeEl.value = fmtTimeInput(timeEl.value); });
     var kunde = document.getElementById('kal-kunde');
@@ -187,7 +195,7 @@
   }
 
   function onClick(e) {
-    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-tpl]');
+    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-titlepick],[data-tpl]');
     if (!b) return;
     if (b.dataset.act === 'prev') { state.weekOffset--; load(); }
     else if (b.dataset.act === 'next') { state.weekOffset++; load(); }
@@ -202,6 +210,7 @@
     else if (b.dataset.newrecur !== undefined) { setRecur(b.dataset.newrecur); }
     else if (b.dataset.wd !== undefined) { toggleWeekday(parseInt(b.dataset.wd, 10), b); }
     else if (b.dataset.kunde !== undefined) { setKunde(b.dataset.kunde, b.dataset.kid); }
+    else if (b.dataset.titlepick !== undefined) { setTitle(b.dataset.titlepick); }
     else if (b.dataset.tpl !== undefined) { applyTemplate(dialogTemplates[parseInt(b.dataset.tpl, 10)], b); }
   }
 
@@ -276,6 +285,36 @@
     var dd = document.getElementById('kal-kunde-dd');
     if (dd) { dd.hidden = true; dd.innerHTML = ''; }
   }
+  // Titel-Autocomplete: distinkte Titel bestehender Einträge (kein Endpunkt).
+  function searchTitles(q) {
+    q = (q || '').trim().toLowerCase();
+    var dd = document.getElementById('kal-title-dd');
+    if (!dd) return;
+    if (q.length < 2) { dd.hidden = true; dd.innerHTML = ''; return; }
+    var seen = {}, out = [];
+    (state.entries || []).forEach(function (e) {
+      var t = (e.titel || '').trim();
+      if (!t) return;
+      var key = t.toLowerCase();
+      if (seen[key] || key === q || key.indexOf(q) === -1) return;
+      seen[key] = true; out.push(t);
+    });
+    out = out.slice(0, 6);
+    if (!out.length) { dd.hidden = true; dd.innerHTML = ''; return; }
+    dd.innerHTML = out.map(function (t) {
+      return '<button type="button" class="kal-title-item" data-titlepick="' + esc(t) + '">' + esc(t) + '</button>';
+    }).join('');
+    dd.hidden = false;
+  }
+  function hideTitleDd() {
+    var dd = document.getElementById('kal-title-dd');
+    if (dd) { dd.hidden = true; dd.innerHTML = ''; }
+  }
+  function setTitle(t) {
+    var inp = document.getElementById('kal-title');
+    if (inp) { inp.value = t; autoGrow(); inp.focus(); }
+    hideTitleDd();
+  }
   function autoGrow() {
     var t = document.getElementById('kal-title');
     if (!t) return;
@@ -308,6 +347,7 @@
     document.querySelectorAll('#kal-weekdays .kal-wd').forEach(function (w) { w.classList.remove('active'); });
     renderTemplates();
     hideKundeDd();
+    hideTitleDd();
     setCat('aufgabe');
     setRecur('');
     setAllday(true);
@@ -403,8 +443,16 @@
       .sort(function (a, b) { return (doneRank(a) - doneRank(b)) || String(a.uhrzeit).localeCompare(String(b.uhrzeit)); });
 
     var html = head;
-    if (allday.length) html += section('Ganztägig', allday.length) + allday.map(entryHtml).join('');
-    if (timed.length) html += section('Mit Uhrzeit', timed.length) + '<div class="kal-timeline">' + timed.map(timelineRowHtml).join('') + '</div>';
+    var colTimed = timed.length
+      ? section('Mit Uhrzeit', timed.length) + '<div class="kal-timeline">' + timed.map(timelineRowHtml).join('') + '</div>'
+      : section('Mit Uhrzeit', 0) + '<div class="kal-empty kal-empty-col">Keine terminierten Einträge.</div>';
+    var colAllday = allday.length
+      ? section('Ganztägig', allday.length) + allday.map(entryHtml).join('')
+      : section('Ganztägig', 0) + '<div class="kal-empty kal-empty-col">Keine ganztägigen Einträge.</div>';
+    html += '<div class="kal-splits">' +
+      '<div class="kal-split kal-split-timed">' + colTimed + '</div>' +
+      '<div class="kal-split kal-split-allday">' + colAllday + '</div>' +
+      '</div>';
     list.innerHTML = html;
 
     list.querySelectorAll('[data-check]').forEach(function (el) {
@@ -664,14 +712,16 @@
       '.kal-filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}',
       '.kal-chip{padding:6px 12px;border:1.5px solid var(--kb);border-radius:20px;background:var(--ks);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;color:var(--kt)}',
       '.kal-chip.active{border-color:var(--kp);background:var(--c-pri-l,#f0f4f1);color:var(--kp)}.kal-chip .k{width:10px;height:10px;border-radius:3px}',
-      '.kal-new{margin-left:8px;padding:9px 16px;border:none;background:var(--kp);color:#fff;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}',
+      '.kal-new{margin-left:8px;padding:9px 16px;border:none;background:var(--kp);color:#fff;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;min-height:44px;display:inline-flex;align-items:center;justify-content:center}',
       '.kal-toggle{display:inline-flex;border:1.5px solid var(--kb);border-radius:12px;overflow:hidden}',
       '.kal-toggle button{border:none;background:var(--ks);padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--km)}.kal-toggle button.on{background:var(--kp);color:#fff}',
-      '.kal-add{background:var(--kp);color:#fff;border:none;border-radius:12px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer}',
+      '.kal-add{background:var(--kp);color:#fff;border:none;border-radius:12px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center}',
       '.kal-modal[hidden]{display:none}.kal-modal{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}',
       '.kal-modal-card{background:var(--ks);color:var(--kt);width:100%;max-width:420px;max-height:90vh;overflow-y:auto;border:1px solid var(--kb);border-radius:16px;box-shadow:0 20px 48px rgba(0,0,0,.28);padding:18px 20px}',
+      '@media(min-width:768px){.kal-modal-card{max-width:560px;padding:22px 26px}}',
+      '@media(min-width:1280px){.kal-modal-card{max-width:640px}}',
       '.kal-modal-head{display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:800;color:var(--kp);margin-bottom:12px}',
-      '.kal-modal-x{border:none;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:var(--km);width:32px;height:32px;border-radius:8px}',
+      '.kal-modal-x{border:none;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:var(--km);width:44px;height:44px;border-radius:10px}',
       '.kal-fld{display:block;margin-bottom:12px}.kal-fld>span{display:block;font-size:12px;font-weight:700;color:var(--km);margin-bottom:5px}',
       '.kal-fld input[type=text],.kal-fld select,.kal-fld textarea{width:100%;border:1.5px solid var(--kb);border-radius:10px;padding:10px 12px;font-size:14px;background:var(--ks);color:var(--kt);font-family:inherit;box-sizing:border-box}',
       '.kal-fld textarea{resize:vertical;min-height:44px;line-height:1.4;overflow:hidden}',
@@ -682,7 +732,7 @@
       '.kal-time-txt:focus{outline:none;border-color:var(--kp)}',
       '.kal-time-uhr{font-size:13px;font-weight:700;color:var(--km)}',
       '.kal-modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}',
-      '.kal-btn-ghost{padding:10px 16px;border:1.5px solid var(--kb);background:transparent;color:var(--kt);border-radius:12px;font-weight:700;font-size:14px;cursor:pointer}',
+      '.kal-btn-ghost{padding:10px 16px;border:1.5px solid var(--kb);background:transparent;color:var(--kt);border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center}',
       '.kal-pills{display:flex;flex-wrap:wrap;gap:6px}',
       '.kal-pill{padding:8px 12px;border:1.5px solid var(--kb);border-radius:20px;background:var(--ks);font-size:13px;font-weight:700;cursor:pointer;color:var(--kt);display:inline-flex;align-items:center;gap:6px}',
       '.kal-pill.active{border-color:var(--kp);background:var(--c-pri-l,#f0f4f1);color:var(--kp)}.kal-pill .kd{width:9px;height:9px;border-radius:3px}',
@@ -696,11 +746,20 @@
       '.kal-kunde-dd{position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--ks);border:1.5px solid var(--kb);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:184px;overflow-y:auto;margin-top:4px}',
       '.kal-kunde-item{display:block;width:100%;text-align:left;padding:10px 12px;border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--kt);border-bottom:1px solid var(--kb)}',
       '.kal-kunde-item:last-child{border-bottom:none}.kal-kunde-item:hover{background:var(--c-pri-l,#f0f4f1);color:var(--kp)}',
+      '.kal-title-wrap{position:relative}',
+      '.kal-title-dd{position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--ks);border:1.5px solid var(--kb);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;margin-top:4px}',
+      '.kal-title-dd[hidden]{display:none}',
+      '.kal-title-item{display:block;width:100%;text-align:left;padding:12px;border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--kt);border-bottom:1px solid var(--kb);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.35}',
+      '.kal-title-item:last-child{border-bottom:none}.kal-title-item:hover{background:var(--c-pri-l,#f0f4f1);color:var(--kp)}',
+      '.kal-splits{display:grid;grid-template-columns:1fr;gap:6px 18px}',
+      '.kal-split-allday{order:1}.kal-split-timed{order:2}',
+      '@media(min-width:768px){.kal-splits{grid-template-columns:1fr 1fr;gap:8px 22px}.kal-split-timed{order:1}.kal-split-allday{order:2}}',
+      '.kal-empty-col{padding:20px 14px;font-size:13px}',
       '.kal-sec{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--km);margin:16px 2px 8px}.kal-sec span{background:var(--kb);border-radius:20px;padding:1px 9px;font-size:11px}',
       '.kal-dayhead{font-size:16px;font-weight:800;color:var(--kp);margin:2px 2px 10px;text-transform:capitalize}',
       '.kal-datum{font-size:12px;font-weight:700;color:var(--km);margin-right:2px;white-space:nowrap}',
       '.kal-entry{background:var(--ks);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:8px;overflow:hidden;border-left:5px solid var(--km);display:flex;align-items:stretch}',
-      '.kal-entry.cat-aufgabe{border-left-color:var(--kp)}.kal-entry.cat-reservierung{border-left-color:#1d4ed8}.kal-entry.cat-vorbestellung{border-left-color:#e65100}.kal-entry.cat-lieferung{border-left-color:#6d28d9}',
+      '.kal-entry.cat-aufgabe{border-left-color:var(--kp)}.kal-entry.cat-reservierung{border-left-color:#1d4ed8}.kal-entry.cat-vorbestellung{border-left-color:#e65100}.kal-entry.cat-lieferung{border-left-color:#6d28d9}.kal-entry.cat-info{border-left-color:#0891b2}',
       '.kal-entry .check{width:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-right:1px solid var(--kb)}',
       '.kal-entry .check .box{width:26px;height:26px;border:2px solid var(--km);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:transparent}',
       '.kal-entry .check:hover .box{border-color:#2e7d4f}',
@@ -710,11 +769,11 @@
       '.kal-entry .top{align-items:flex-start!important}',
       '.kal-entry .badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}',
       '.kal-entry .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}',
-      '.kal-entry .badge.cat{color:#fff}.cat-aufgabe .badge.cat{background:var(--kp)}.cat-reservierung .badge.cat{background:#1d4ed8}.cat-vorbestellung .badge.cat{background:#e65100}.cat-lieferung .badge.cat{background:#6d28d9}',
+      '.kal-entry .badge.cat{color:#fff}.cat-aufgabe .badge.cat{background:var(--kp)}.cat-reservierung .badge.cat{background:#1d4ed8}.cat-vorbestellung .badge.cat{background:#e65100}.cat-lieferung .badge.cat{background:#6d28d9}.cat-info .badge.cat{background:#0891b2}',
       '.kal-entry .badge.kunde{background:#dcfce7;color:#2e7d4f}.kal-entry .badge.recur{background:#f3e8ff;color:#6d28d9}',
       '.kal-entry .badge.overdue{background:#fee2e2;color:#b91c1c}',
       '.kal-entry .note{font-size:13px;color:var(--km);margin-top:3px}',
-      '.kal-entry .acts{display:flex;align-items:center;padding:0 8px}.kal-entry .ic{width:32px;height:32px;border:none;background:transparent;border-radius:8px;cursor:pointer;color:var(--km);display:flex;align-items:center;justify-content:center}',
+      '.kal-entry .acts{display:flex;align-items:center;padding:0 8px}.kal-entry .ic{width:44px;height:44px;border:none;background:transparent;border-radius:10px;cursor:pointer;color:var(--km);display:flex;align-items:center;justify-content:center}',
       '.kal-entry.done{opacity:.62}.kal-entry.done .title{text-decoration:line-through;color:var(--km)}.kal-entry.done .time{color:var(--km)}',
       '.kal-entry.done .check .box{background:#2e7d4f;border-color:#2e7d4f;color:#fff}',
       '.kal-timeline{position:relative;margin-top:2px}',
@@ -725,7 +784,7 @@
       '.kal-tl-rail::before{content:"";position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--kb)}',
       '.kal-tl-row:first-child .kal-tl-rail::before{top:15px}.kal-tl-row:last-child .kal-tl-rail::before{bottom:calc(100% - 27px)}',
       '.kal-tl-dot{position:relative;z-index:1;width:12px;height:12px;border-radius:50%;background:var(--kp);margin-top:15px;border:2px solid var(--ks);box-shadow:0 0 0 1px var(--kb)}',
-      '.kal-tl-dot.cat-reservierung{background:#1d4ed8}.kal-tl-dot.cat-vorbestellung{background:#e65100}.kal-tl-dot.cat-lieferung{background:#6d28d9}',
+      '.kal-tl-dot.cat-reservierung{background:#1d4ed8}.kal-tl-dot.cat-vorbestellung{background:#e65100}.kal-tl-dot.cat-lieferung{background:#6d28d9}.kal-tl-dot.cat-info{background:#0891b2}',
       '.kal-tl-card{flex:1;min-width:0;margin-bottom:8px}',
       '.kal-tl-row.done .kal-tl-time{color:var(--km)}.kal-tl-row.done .kal-tl-dot{background:#9ca3af}',
       '.kal-tl-row.overdue .kal-tl-time{color:#b91c1c}',
