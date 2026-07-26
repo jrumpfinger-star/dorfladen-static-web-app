@@ -154,6 +154,20 @@ Führung der bestehenden Funktionen – **keine neue Geschäftslogik**.
 #### F6 Test Cases
 - **TC-SHOP-MOBIL-UX-F6-01:** Bei 375 px erscheint die 3-Schritt-Anzeige.
 
+### F7: Produktkarten-Platzhalter mit Lucide-Icons (statt Emoji)
+
+#### F7 Behaviour / Acceptance
+- Produkte **ohne Bild** zeigen auf der Karte einen kategoriebasierten
+  **Lucide-Icon**-Platzhalter (z. B. `coffee`, `egg`, `apple`) statt der bisherigen
+  Emoji (☕🥚🍎). Gilt für Grid-, Listen- und „Schon bestellt"-Reorder-Ansicht.
+- Icon-Farbe dezent grün passend zum Platzhalter-Verlauf; Größe je Ansicht
+  (Karte ~34 px, Liste ~20 px, Reorder ~18 px, letzterer grau).
+- Sobald ein Produktbild geladen ist, ersetzt es den Icon-Platzhalter unverändert.
+
+#### F7 Test Cases
+- **TC-SHOP-MOBIL-UX-F7-01:** Ein Produkt ohne Bild zeigt ein Lucide-SVG (kein
+  Emoji) passend zur Warengruppe; nach Bild-Load ist das Bild sichtbar.
+
 ## 5. UI/Design
 
 - Farben/Komponenten aus bestehendem Shop-Theme (`--shop-green #0f8a4d`,
@@ -186,3 +200,4 @@ Führung der bestehenden Funktionen – **keine neue Geschäftslogik**.
 | F4 | TC-SHOP-MOBIL-UX-F4-01..02 | shop.html – leere „Nur kurz"-Sektion entfällt, Grid | umgesetzt |
 | F5 | TC-SHOP-MOBIL-UX-F5-01..04 | shop.html – `#shop-cart-bar` + `updateCartBar()` | umgesetzt |
 | F6 | TC-SHOP-MOBIL-UX-F6-01 | shop.html – `#shop-steps` (3-Schritt-Faden) | umgesetzt |
+| F7 | TC-SHOP-MOBIL-UX-F7-01 | shop.html – `getCatTileIcon()`/`getCatLucideName()` auf `.shop-card-noimg`/`.shop-list-noimg`/`.reorder-item-noimg`; `CAT_EMOJI`/`getCatEmoji` entfernt | umgesetzt |
