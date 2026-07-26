@@ -153,7 +153,7 @@
     <div class="k-filter-bar" style="margin-bottom:16px" id="soc-subtabs-container">
       <button class="k-filter-btn active" id="social-subtab-post" onclick="socialSubTab('post')"><i data-lucide="plus-circle" style="width:14px;height:14px"></i> Neuer Post</button>
       <button class="k-filter-btn" id="social-subtab-katalog" onclick="socialSubTab('katalog')"><i data-lucide="book-open" style="width:14px;height:14px"></i> Katalog</button>
-      <button class="k-filter-btn" id="social-subtab-bestellungen" onclick="socialSubTab('bestellungen')"><i data-lucide="utensils" style="width:14px;height:14px"></i> Bestellungen</button>
+      <button class="k-filter-btn" id="social-subtab-bestellungen" onclick="socialSubTab('bestellungen')"><i data-lucide="utensils" style="width:14px;height:14px"></i> Bestellungen<span id="best-badge-total" title="" style="display:none;margin-left:5px;background:#e5e7eb;color:#374151;font-size:11px;font-weight:800;line-height:1;padding:3px 7px;border-radius:9px"></span><span id="best-badge-open" title="" style="display:none;margin-left:3px;background:#f97316;color:#fff;font-size:11px;font-weight:800;line-height:1;padding:3px 7px;border-radius:9px"></span></button>
     </div>
 
     <!-- ========== SUB: KATALOG ========== -->
@@ -514,6 +514,40 @@
     }
     window.socToggleStep = socToggleStep;
 
+    // ── Badge fuer Reiter "Bestellungen": Anzahl gesamt + offen (heute) ──
+    // Laedt /api/lunch-order?datum=<heute> (oeffentlich, kein Auth-Guard) und zeigt
+    // die Gesamtzahl (grau) sowie die offenen Bestellungen (orange) am Reiter an.
+    function _bestPad(n){ return ('0'+n).slice(-2); }
+    function updateBestellungenBadge(){
+      var d = new Date();
+      var datum = d.getFullYear()+'-'+_bestPad(d.getMonth()+1)+'-'+_bestPad(d.getDate());
+      fetch('/api/lunch-order?datum='+datum)
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          var list = (res && res.success && res.orders) ? res.orders : [];
+          var total = list.length;
+          var open = list.filter(function(o){ return o.status === 0; }).length;
+          var tb = document.getElementById('best-badge-total');
+          var ob = document.getElementById('best-badge-open');
+          if(tb){
+            if(total > 0){ tb.textContent = total; tb.style.display=''; tb.title = total+' Bestellung'+(total!==1?'en':'')+' heute'; }
+            else { tb.style.display='none'; }
+          }
+          if(ob){
+            if(open > 0){ ob.textContent = open+' offen'; ob.style.display=''; ob.title = open+' offene Bestellung'+(open!==1?'en':''); }
+            else { ob.style.display='none'; }
+          }
+        })
+        .catch(function(){});
+    }
+    window.updateBestellungenBadge = updateBestellungenBadge;
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', updateBestellungenBadge);
+    } else {
+      updateBestellungenBadge();
+    }
+    setInterval(updateBestellungenBadge, 60000);
+
     // ── Sub-Tab "Bestellungen": Kiosk-Mittagstisch als iframe einbetten ──
     // socialSubTab (social.js) kennt nur post/katalog/wakatalog. Hier erweitern wir
     // um den Reiter "Bestellungen", der den Kiosk-Mittagstisch (?embed=mittag) lazy laedt.
@@ -535,6 +569,7 @@
       }
       if(bestPanel) bestPanel.style.display='none';
       if(bestBtn) bestBtn.classList.remove('active');
+      updateBestellungenBadge();
       if(typeof _realSocialSubTab === 'function') _realSocialSubTab(name);
     };
 
