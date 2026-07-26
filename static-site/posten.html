@@ -575,6 +575,27 @@
       if(typeof _realSocialSubTab === 'function') _realSocialSubTab(name);
     };
 
+    // ── Bestellungen-iframe im Hintergrund vorladen ──
+    // Die eingebettete Kiosk-Seite ist gross; wird sie erst beim Klick auf den
+    // Reiter geladen, wirkt das Oeffnen traege. Darum laden wir sie – sobald der
+    // Browser Leerlauf hat – bereits im Hintergrund (das Panel bleibt versteckt).
+    function preloadBestellungenIframe(){
+      var f = document.getElementById('bestellungen-iframe');
+      if(f && !f.getAttribute('src')){
+        try{ f.setAttribute('loading','eager'); }catch(e){}
+        f.setAttribute('src','/kiosk.html?embed=mittag');
+      }
+    }
+    function scheduleBestellungenPreload(){
+      if(window.requestIdleCallback){ window.requestIdleCallback(preloadBestellungenIframe, {timeout:4000}); }
+      else { setTimeout(preloadBestellungenIframe, 1500); }
+    }
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', scheduleBestellungenPreload);
+    } else {
+      scheduleBestellungenPreload();
+    }
+
     // ── Desktop Split-View: Tab switching ──
     window.socDeskTab = function(tab){
       var tabEdit = document.getElementById('soc-desk-tab-edit');

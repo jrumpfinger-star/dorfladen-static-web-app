@@ -4871,8 +4871,14 @@ var K = (function(){
     if(req){ try{ req.call(el); }catch(e){} }
   }
 
+  // Im Embed-Modus (iframe in der Posten-Seite, ?embed=mittag) darf NICHT in den
+  // Vollbildmodus gewechselt werden: sonst springt beim ersten Klick auf eine
+  // Bestellung das eingebettete Kiosk-Fenster unerwartet in den Vollbild.
+  var _kioskEmbedded = false;
+  try { _kioskEmbedded = (window.self !== window.top) || new URLSearchParams(location.search).get('embed') === 'mittag'; } catch(e){ _kioskEmbedded = true; }
+
   // Fullscreen benoetigt eine Nutzerinteraktion: beim ersten Tippen/Klick aktivieren.
-  if(!isDisplayFullscreen()){
+  if(!_kioskEmbedded && !isDisplayFullscreen()){
     var once=function(){
       enterFullscreen();
       document.removeEventListener('click',once);
