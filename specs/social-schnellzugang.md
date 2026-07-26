@@ -1,8 +1,8 @@
 # Social „Schnell posten“ – Schnellzugang für Verkaufspersonal – Spec
 
 > **Feature-ID**: SOCIAL-QUICK
-> **Status**: Bereit zur Freigabe (Funktionsbeschreibung vollständig, alle
-> Klärungspunkte entschieden – finale Bestätigung durch Nutzer ausstehend)
+> **Status**: Umgesetzt & live auf Staging verifiziert (F1–F4). Route `/posten`,
+> Login-Gate, Gerät-merken, PWA-Manifest und versteckte Logo-Geste aktiv.
 > **Owner**: —
 > **Erstellt**: 2026-07-26
 > **Bezug**: [kiosk-social.md](kiosk-social.md), [mitarbeiter-portal.md](mitarbeiter-portal.md),
@@ -293,9 +293,9 @@ _Keine offenen Punkte – alle Entscheidungen getroffen (siehe „Geklärt“)._
 
 ## 7. Traceability
 
-| Requirement | Test Cases | Plan-Abschnitt | Tasks |
+| Requirement | Test Cases | Umsetzung | Status |
 | --- | --- | --- | --- |
-| F1 | TC-SOCIAL-QUICK-F1-01..05 | — | — |
-| F2 | TC-SOCIAL-QUICK-F2-01..04 | — | — |
-| F3 | TC-SOCIAL-QUICK-F3-01..03 | — | — |
-| F4 | TC-SOCIAL-QUICK-F4-01..02 | — | — |
+| F1 | TC-SOCIAL-QUICK-F1-01..05 | `static-site/posten.html` (Social-Panel + Wizard aus cms.html, `social.js`/`social-poster.js`) | umgesetzt |
+| F2 | TC-SOCIAL-QUICK-F2-01..04 | `posten.html` Login-Gate + `dlAdminLogin`; `localStorage['dl_posten_token']` → `sessionStorage['cms_auth_token']`; `noindex` | umgesetzt |
+| F3 | TC-SOCIAL-QUICK-F3-01..03 | `static-site/index.html` Logo-Long-Press (`.mob-header-logo`, `#nv-logo`) → `/posten` | umgesetzt |
+| F4 | TC-SOCIAL-QUICK-F4-01..02 | `static-site/posten-manifest.json` (`start_url=/posten`); Route in `staticwebapp.config.json` | umgesetzt |
