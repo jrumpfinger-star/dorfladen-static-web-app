@@ -1387,6 +1387,26 @@
     showToast('✓ '+article.bezeichnung+' hinzugefügt');
   }
 
+  // Kann eine Shop-Bestellung vom Kunden noch storniert werden?
+  // (Status < 2 = Neu/Packen, und Stornofrist vor Abholung nicht abgelaufen)
+  function shopCanCancelOrder(o){
+    if(!o||o.status>=2) return false;
+    var todayStr=new Date().toISOString().slice(0,10);
+    if(!o.abholdatum||todayStr<o.abholdatum) return true;
+    if(todayStr===o.abholdatum){
+      var slotPeriod=(o.abhol_zeitslot&&o.abhol_zeitslot.period)||'vm';
+      var abholDate=new Date(o.abholdatum+'T00:00:00');
+      var slotHrs=SHOP_HOURS[abholDate.getDay()];
+      if(slotHrs){
+        var openH=(slotPeriod==='nm'&&slotHrs[2]!=null)?slotHrs[2]:slotHrs[0];
+        var stornoH=openH-STORNO_VOR_H;
+        var now=new Date();
+        if(now.getHours()+now.getMinutes()/60<stornoH) return true;
+      }
+    }
+    return false;
+  }
+
   function reorderFromHistory(positionen,bestellnummer){
     var added=0,skipped=[];
     positionen.forEach(function(p){
@@ -2153,6 +2173,33 @@
           reorderBanner+='</div>';
         });
         reorderBanner+='<button data-reorder-btn="'+oi+'" class="reorder-all-btn">🔄 Alle '+poCount+' Artikel in den Warenkorb</button>';
+        // ── Kunden-Aktionen: Antwort/Nachricht anzeigen, Stornieren + Nachricht ──
+        if(po.personal_antwort) reorderBanner+='<div class="shop-preorder-reply" style="margin-top:10px"><strong>'+lucideHtml('message-circle',13)+' Antwort vom Dorfladen</strong>'+esc(po.personal_antwort)+'</div>';
+        if(po.kunde_kommentar) reorderBanner+='<div class="shop-preorder-mymsg" style="margin-top:10px"><strong>'+lucideHtml('message-circle',13)+' Ihre Nachricht</strong>'+esc(po.kunde_kommentar)+'</div>';
+        var rbOid=esc(po.id||'');
+        var rbCanCancel=shopCanCancelOrder(po);
+        if(rbOid&&(po.status<3||rbCanCancel)){
+          reorderBanner+='<div class="shop-preorder-actions">';
+          if(po.status<3) reorderBanner+='<button class="spo-actbtn msg" data-rb-act="toggle-msg">'+lucideHtml('message-circle',14)+' Nachricht</button>';
+          if(rbCanCancel) reorderBanner+='<button class="spo-actbtn cancel" data-rb-act="toggle-storno">'+lucideHtml('x-circle',14)+' Stornieren</button>';
+          reorderBanner+='</div>';
+          if(po.status<3){
+            reorderBanner+='<div class="spo-panel" data-rb-panel="msg" style="display:none">'
+              +'<textarea data-rb-msg-text placeholder="Ihre Nachricht an den Dorfladen\u2026" maxlength="500"></textarea>'
+              +'<div class="spo-panel-ft"><button class="spo-mini" data-rb-act="msg-cancel">Abbrechen</button>'
+              +'<button class="spo-mini primary" data-rb-act="msg-send" data-rb-oid="'+rbOid+'">Senden</button></div>'
+              +'</div>';
+          }
+          if(rbCanCancel){
+            reorderBanner+='<div class="spo-panel" data-rb-panel="storno" style="display:none">'
+              +'<div class="spo-panel-warn">Diese Bestellung wirklich stornieren? Das kann nicht r\u00fcckg\u00e4ngig gemacht werden.</div>'
+              +'<textarea data-rb-storno-grund placeholder="Grund f\u00fcr die Stornierung\u2026" maxlength="200"></textarea>'
+              +'<div class="spo-hint" data-rb-storno-hint style="display:none">Bitte geben Sie einen Grund an.</div>'
+              +'<div class="spo-panel-ft"><button class="spo-mini" data-rb-act="storno-cancel">Abbrechen</button>'
+              +'<button class="spo-mini danger" data-rb-act="storno-confirm" data-rb-oid="'+rbOid+'">Stornieren</button></div>'
+              +'</div>';
+          }
+        }
         reorderBanner+='</div>';
         reorderBanner+='</div>';
       }
@@ -2244,6 +2291,51 @@
         setTimeout(function(){btn.style.background='#2e7d4f';btn.textContent='+';},1200);
       });
     });
+    // ── Kunden-Aktionen im Online-Bestellungen-Banner: Stornieren + Nachricht ──
+    (function(){
+      var grid=document.getElementById('reorder-grid');
+      if(!grid) return;
+      function rbShowPanel(card,name){
+        if(!card) return;
+        card.querySelectorAll('[data-rb-panel]').forEach(function(p){ p.style.display=(p.getAttribute('data-rb-panel')===name?'block':'none'); });
+        var ta=card.querySelector('[data-rb-panel="'+name+'"] textarea');
+        if(ta) setTimeout(function(){ta.focus();},50);
+      }
+      function rbHidePanels(card){ if(card) card.querySelectorAll('[data-rb-panel]').forEach(function(p){p.style.display='none';}); }
+      function rbPatch(payload,btn,okMsg){
+        if(btn) btn.disabled=true;
+        fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':authToken},body:JSON.stringify(payload)})
+          .then(function(r){return r.json();})
+          .then(function(x){
+            if(x&&x.success){ if(okMsg)showToast(okMsg); if(typeof loadPreviousArticles==='function'){loadPreviousArticles().then(function(){showArticles();});} else {showArticles();} }
+            else { showToast((x&&x.error)||'Aktion fehlgeschlagen'); if(btn)btn.disabled=false; }
+          })
+          .catch(function(){ showToast('Aktion fehlgeschlagen. Bitte erneut versuchen.'); if(btn)btn.disabled=false; });
+      }
+      grid.addEventListener('click',function(e){
+        var t=e.target.closest?e.target.closest('[data-rb-act]'):null;
+        if(!t||!grid.contains(t)) return;
+        e.stopPropagation();
+        var act=t.getAttribute('data-rb-act');
+        var card=t.closest('[data-reorder-detail]');
+        if(act==='toggle-msg'){ rbShowPanel(card,'msg'); }
+        else if(act==='toggle-storno'){ rbShowPanel(card,'storno'); }
+        else if(act==='msg-cancel'||act==='storno-cancel'){ rbHidePanels(card); }
+        else if(act==='msg-send'){
+          var mt=card.querySelector('[data-rb-msg-text]');
+          var text=(mt&&mt.value||'').trim();
+          if(!text){ if(mt)mt.focus(); return; }
+          rbPatch({id:t.getAttribute('data-rb-oid'),kunde_kommentar:text},t,'\u2705 Nachricht gesendet');
+        }
+        else if(act==='storno-confirm'){
+          var sg=card.querySelector('[data-rb-storno-grund]');
+          var grund=(sg&&sg.value||'').trim();
+          var hint=card.querySelector('[data-rb-storno-hint]');
+          if(!grund){ if(hint)hint.style.display='block'; if(sg)sg.focus(); return; }
+          rbPatch({id:t.getAttribute('data-rb-oid'),customer_action:'cancel',storno_grund:'Kundengrund: '+grund},t,'Bestellung storniert');
+        }
+      });
+    })();
     // View toggle click
     var vtGrid=document.getElementById('vt-grid');
     var vtList=document.getElementById('vt-list');
