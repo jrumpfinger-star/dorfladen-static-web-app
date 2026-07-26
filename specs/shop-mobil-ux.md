@@ -168,6 +168,31 @@ Führung der bestehenden Funktionen – **keine neue Geschäftslogik**.
 - **TC-SHOP-MOBIL-UX-F7-01:** Ein Produkt ohne Bild zeigt ein Lucide-SVG (kein
   Emoji) passend zur Warengruppe; nach Bild-Load ist das Bild sichtbar.
 
+### F8: Aktive Vorbestellung im Shop ansehen (ohne Seitenwechsel)
+
+#### F8 Behaviour / Acceptance
+- Der Hinweis „Sie haben N aktive Vorbestellung(en)" im Shop hatte bisher einen
+  „Ansehen"-Link, der auf eine **andere Seite** (`/fleisch-bestellen#meine`)
+  navigierte. Von dort war der Rückweg umständlich (Overlay öffnete sich beim
+  Zurück erneut und verdeckte den Zurück-Pfeil; kein direkter „Zum Shop"-Weg).
+- Neu: „Ansehen" öffnet ein **Overlay direkt im Shop** (`#shop-preorder-overlay`),
+  **ohne Seitenwechsel**. Es zeigt je Vorbestellung: Liefertag, Bestellnummer,
+  Status (Kundentext), Positionen (Bezeichnung, Menge kg, Preis), Summe und –
+  falls vorhanden – die „Antwort vom Laden".
+- Schließen per ✕, Klick auf den Hintergrund, `Esc` oder Button
+  „◀ Weiter einkaufen" bringt sofort zurück in den Shop (kein `history.back()`).
+- Daten aus `GET /api/fleisch-order?mode=my&<email|telefon>` (nur offene
+  Bestellungen). Identität aus `authUser.email` bzw. `fm_telefon`/`dl_shop_user`.
+- Dark-Mode-Overrides vorhanden.
+
+#### F8 Test Cases
+- **TC-SHOP-MOBIL-UX-F8-01:** Klick auf „Ansehen" öffnet das Overlay im Shop; die
+  URL bleibt `/shop` (kein Seitenwechsel).
+- **TC-SHOP-MOBIL-UX-F8-02:** Overlay listet je Bestellung Liefertag, Status,
+  Positionen und Summe; „Antwort vom Laden" erscheint nur wenn gesetzt.
+- **TC-SHOP-MOBIL-UX-F8-03:** ✕ / Hintergrund / Esc / „Weiter einkaufen" schließen
+  das Overlay und man ist unmittelbar wieder im Shop.
+
 ## 5. UI/Design
 
 - Farben/Komponenten aus bestehendem Shop-Theme (`--shop-green #0f8a4d`,
@@ -201,3 +226,4 @@ Führung der bestehenden Funktionen – **keine neue Geschäftslogik**.
 | F5 | TC-SHOP-MOBIL-UX-F5-01..04 | shop.html – `#shop-cart-bar` + `updateCartBar()` | umgesetzt |
 | F6 | TC-SHOP-MOBIL-UX-F6-01 | shop.html – `#shop-steps` (3-Schritt-Faden) | umgesetzt |
 | F7 | TC-SHOP-MOBIL-UX-F7-01 | shop.html – `getCatTileIcon()`/`getCatLucideName()` auf `.shop-card-noimg`/`.shop-list-noimg`/`.reorder-item-noimg`; `CAT_EMOJI`/`getCatEmoji` entfernt | umgesetzt |
+| F8 | TC-SHOP-MOBIL-UX-F8-01..03 | shop.html – `#shop-preorder-overlay` + `shopShowPreorders()`; „Ansehen" öffnet In-Shop-Overlay statt Navigation zu `/fleisch-bestellen#meine` | umgesetzt |

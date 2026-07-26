@@ -385,6 +385,40 @@
     .shop-auth-sepa{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin:12px 0;font-size:12px;line-height:1.5;color:#166534}
     .shop-auth-sepa strong{display:block;margin-bottom:4px;font-size:13px}
 
+    /* ── Vorbestellungen-Overlay (Fleisch, im Shop) ── */
+    .shop-preorder-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:320;display:none;align-items:center;justify-content:center;padding:20px}
+    .shop-preorder-overlay.open{display:flex}
+    .shop-preorder-modal{background:#fff;border-radius:16px;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative}
+    .shop-preorder-hdr{padding:15px 18px;border-bottom:1px solid var(--shop-border);display:flex;align-items:center;gap:8px;position:sticky;top:0;background:#fff;border-radius:16px 16px 0 0;z-index:1}
+    .shop-preorder-hdr h3{margin:0;font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;color:#7f1d1d}
+    .shop-preorder-close{margin-left:auto;background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:var(--shop-muted);padding:2px 6px;border-radius:6px}
+    .shop-preorder-close:hover{background:var(--shop-border)}
+    .shop-preorder-body{padding:14px 18px 18px}
+    .shop-preorder-empty{text-align:center;color:var(--shop-muted);font-size:14px;padding:24px 8px}
+    .shop-preorder-card{border:1px solid var(--shop-border);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+    .shop-preorder-card:last-child{margin-bottom:0}
+    .shop-preorder-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+    .shop-preorder-day{font-size:14px;font-weight:800}
+    .shop-preorder-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+    .shop-preorder-badge.st0{background:#fef3c7;color:#92400e}
+    .shop-preorder-badge.st1,.shop-preorder-badge.st2{background:#dbeafe;color:#1e40af}
+    .shop-preorder-badge.st3{background:#dcfce7;color:#166534}
+    .shop-preorder-badge.st4{background:#fee2e2;color:#991b1b}
+    .shop-preorder-nr{font-size:11px;color:var(--shop-muted);margin-bottom:8px}
+    .shop-preorder-pos{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;border-top:1px dashed var(--shop-border)}
+    .shop-preorder-pos-name{color:var(--shop-text)}
+    .shop-preorder-pos-qty{color:var(--shop-muted);font-size:12px}
+    .shop-preorder-pos-price{font-weight:600;white-space:nowrap}
+    .shop-preorder-sum{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:8px;padding-top:8px;border-top:2px solid var(--shop-border)}
+    .shop-preorder-reply{margin-top:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.5;color:#166534}
+    .shop-preorder-reply strong{display:block;margin-bottom:2px}
+    .shop-preorder-foot{margin-top:14px;text-align:center}
+    .shop-preorder-shopbtn{display:inline-flex;align-items:center;gap:6px;background:var(--shop-green);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer}
+    .shop-preorder-shopbtn:hover{background:#256b42}
+    html[data-theme="dark"] .shop-preorder-modal,html[data-theme="dark"] .shop-preorder-hdr{background:#1b2228;color:var(--shop-text)}
+    html[data-theme="dark"] .shop-preorder-hdr h3{color:#fca5a5}
+    html[data-theme="dark"] .shop-preorder-reply{background:rgba(22,101,52,.18);border-color:#166534;color:#bbf7d0}
+
     /* ── Order History ── */
     .shop-orders{padding:16px;max-width:800px;margin:0 auto}
     .shop-order-card{background:#fff;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07);border:none;position:relative}
@@ -768,6 +802,19 @@
   <span class="shop-cart-bar-info"><span class="shop-cart-bar-total" id="shop-cart-bar-total">0,00 €</span><span class="shop-cart-bar-sub" id="shop-cart-bar-sub">0 Artikel</span></span>
   <span class="shop-cart-bar-go">Zur Bestellung <i data-lucide="chevron-right"></i></span>
 </button>
+
+<!-- ── Vorbestellungen-Overlay (Fleisch, im Shop) ── -->
+<div class="shop-preorder-overlay" id="shop-preorder-overlay">
+  <div class="shop-preorder-modal">
+    <div class="shop-preorder-hdr">
+      <h3><i data-lucide="beef" style="width:18px;height:18px"></i> Meine Vorbestellungen</h3>
+      <button class="shop-preorder-close" id="shop-preorder-close" title="Schließen">&times;</button>
+    </div>
+    <div class="shop-preorder-body" id="shop-preorder-body">
+      <div class="shop-preorder-empty">Laden…</div>
+    </div>
+  </div>
+</div>
 
 <!-- ── Auth Modal ── -->
 <div class="shop-auth-overlay" id="shop-auth-overlay">
@@ -1924,7 +1971,7 @@
                 hint.style.display='block';
                 hint.innerHTML='<div style="margin-top:8px;padding:10px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:8px;color:#7f1d1d">'
                   +lucideHtml('beef',16)+' <span>Sie haben <b>'+cnt+' aktive Vorbestellung'+(cnt>1?'en':'')+'</b></span>'
-                  +'<a href="/fleisch-bestellen#meine" style="margin-left:auto;color:#b91c1c;font-weight:700;font-size:12px;text-decoration:none;white-space:nowrap;display:flex;align-items:center;gap:4px">Ansehen '+lucideHtml('arrow-right',14)+'</a>'
+                  +'<button type="button" onclick="shopShowPreorders()" style="margin-left:auto;background:none;border:none;color:#b91c1c;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;padding:0">Ansehen '+lucideHtml('arrow-right',14)+'</button>'
                   +'</div>';
               }
             }
@@ -2681,6 +2728,68 @@
   document.getElementById('shop-cart-close').addEventListener('click',function(){toggleCart(false);});
   document.getElementById('shop-cart-overlay').addEventListener('click',function(){toggleCart(false);});
   document.getElementById('shop-checkout-btn').addEventListener('click',doCheckout);
+
+  // ── Vorbestellungen im Shop anzeigen (Option A: kein Seitenwechsel) ──
+  (function(){
+    var ov=document.getElementById('shop-preorder-overlay');
+    var body=document.getElementById('shop-preorder-body');
+    if(!ov||!body) return;
+    function close(){ov.classList.remove('open');document.body.classList.remove('auth-open');}
+    function fmtDay(s){
+      if(!s) return '';
+      var d=new Date(s);
+      if(isNaN(d)) return s;
+      return d.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit',year:'2-digit'});
+    }
+    function fmtEuro(n){return (Number(n)||0).toFixed(2).replace('.',',')+' €';}
+    function render(orders){
+      if(!orders||!orders.length){
+        body.innerHTML='<div class="shop-preorder-empty">Keine offenen Vorbestellungen.</div>'
+          +'<div class="shop-preorder-foot"><button class="shop-preorder-shopbtn" id="shop-preorder-shopbtn">'+lucideHtml('arrow-left',15)+' Weiter einkaufen</button></div>';
+        wireFoot(); return;
+      }
+      var html='';
+      orders.forEach(function(b){
+        var st=b.status||0;
+        var stTxt=b.status_label_kunde||b.status_label||'';
+        html+='<div class="shop-preorder-card">';
+        html+='<div class="shop-preorder-top"><span class="shop-preorder-day">'+lucideHtml('calendar',15)+' '+esc(fmtDay(b.liefertag))+'</span>'
+          +(stTxt?'<span class="shop-preorder-badge st'+st+'">'+esc(stTxt)+'</span>':'')+'</div>';
+        if(b.bestellnummer) html+='<div class="shop-preorder-nr">Nr. '+esc(b.bestellnummer)+'</div>';
+        (b.positionen||[]).forEach(function(p){
+          var menge=Number(p.menge_kg||0).toFixed(1).replace('.',',');
+          var preis=(p.rabattpreis!=null?p.rabattpreis:p.normalpreis);
+          html+='<div class="shop-preorder-pos"><span class="shop-preorder-pos-name">'+esc(p.bezeichnung||'')
+            +' <span class="shop-preorder-pos-qty">'+menge+' kg</span></span>'
+            +'<span class="shop-preorder-pos-price">'+fmtEuro(preis)+'</span></div>';
+        });
+        html+='<div class="shop-preorder-sum"><span>Summe</span><span>'+fmtEuro(b.gesamtsumme)+'</span></div>';
+        if(b.personal_antwort) html+='<div class="shop-preorder-reply"><strong>'+lucideHtml('message-circle',13)+' Antwort vom Laden</strong>'+esc(b.personal_antwort)+'</div>';
+        html+='</div>';
+      });
+      html+='<div class="shop-preorder-foot"><button class="shop-preorder-shopbtn" id="shop-preorder-shopbtn">'+lucideHtml('arrow-left',15)+' Weiter einkaufen</button></div>';
+      body.innerHTML=html;
+      if(window.lucide) lucide.createIcons();
+      wireFoot();
+    }
+    function wireFoot(){var b=document.getElementById('shop-preorder-shopbtn');if(b)b.addEventListener('click',close);}
+    window.shopShowPreorders=function(){
+      ov.classList.add('open');document.body.classList.add('auth-open');
+      body.innerHTML='<div class="shop-preorder-empty">Laden…</div>';
+      var email=(typeof authUser!=='undefined'&&authUser&&authUser.email)?authUser.email:(localStorage.getItem('fm_email')||'');
+      if(!email){try{var su=JSON.parse(localStorage.getItem('dl_shop_user')||'null');if(su&&su.email)email=su.email;}catch(e){}}
+      var tel=localStorage.getItem('fm_telefon')||'';
+      if(!email&&!tel){body.innerHTML='<div class="shop-preorder-empty">Bitte zuerst eine Bestellung aufgeben.</div>';return;}
+      var param=email?'email='+encodeURIComponent(email):'telefon='+encodeURIComponent(tel);
+      fetch('/api/fleisch-order?mode=my&'+param)
+        .then(function(r){return r.json();})
+        .then(function(res){render(res&&res.success?res.bestellungen:[]);})
+        .catch(function(){body.innerHTML='<div class="shop-preorder-empty">Fehler beim Laden.</div>';});
+    };
+    document.getElementById('shop-preorder-close').addEventListener('click',close);
+    ov.addEventListener('click',function(e){if(e.target===ov)close();});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('open'))close();});
+  })();
 
   // Warenkorb-Balken (F5) → Warenkorb öffnen
   var _cartBar=document.getElementById('shop-cart-bar');
