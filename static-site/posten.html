@@ -583,6 +583,21 @@
       started = true;
       // Direkt im "Neuer Post"-Assistenten starten (baut Produktliste auf).
       if(typeof socialSubTab === 'function'){ try{ socialSubTab('post'); }catch(e){} }
+      // Robust gegen Ladereihenfolge: sobald der Katalog geladen ist, Produkte
+      // einmalig nachbauen (falls der erste Aufbau vor dem Laden geschah).
+      if(!window._socialKatLoaded){
+        var _tries = 0;
+        var _wait = setInterval(function(){
+          _tries++;
+          if(window._socialKatLoaded){
+            clearInterval(_wait);
+            if(window._socialModule && typeof window._socialModule.socialBuildPostItems === 'function'){
+              try{ window._socialModule.socialBuildPostItems(); }catch(e){}
+            }
+          } else if(_tries > 40){ clearInterval(_wait); }
+        }, 250);
+      }
+    }
     }
     if(typeof lucide !== 'undefined'){ try{ lucide.createIcons(); }catch(e){} }
   }
