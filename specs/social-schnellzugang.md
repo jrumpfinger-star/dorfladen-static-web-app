@@ -275,6 +275,56 @@ Personal die Funktion mit **einem Tipp** vom Handy-Startbildschirm öffnet.
 - **Expected:** `/posten` öffnet im Standalone-Modus direkt im Assistenten
   (bei gültiger Session).
 
+### F5: Reiter „Bestellungen“ – Mittagstisch aus dem Kiosk eingebettet
+
+#### F5 Description
+
+Verkaufspersonal soll die **Mittagessen-Bestellungen** direkt auf `/posten`
+einsehen und beantworten können, ohne in den Kiosk-Modus zu wechseln (der
+Vollbild/kioskspezifisch ist). Dazu wird der bestehende Kiosk-Mittagstisch als
+`<iframe>` in einem dritten Sub-Tab **„Bestellungen“** (neben „Neuer Post“ und
+„Katalog“) eingebettet. Es wird bewusst **kein** paralleler Code gepflegt,
+sondern die vorhandene Kiosk-Ansicht wiederverwendet.
+
+#### F5 Inputs
+
+| Input | Required | Notes |
+| --- | --- | --- |
+| Mittagstisch-Bestellungen | Ja | `GET /api/lunch-order` (öffentlich, kein Auth-Guard) |
+| Wochenplan (Gerichte) | Nein | bei Bedarf on-demand für „Neue Telefonbestellung“ |
+
+#### F5 Behaviour / Acceptance
+
+- Kiosk läuft im **Embed-Modus** über `/kiosk.html?embed=mittag`:
+  - `<html>` erhält Klasse `k-embed`; **Kiosk-Kopfzeile** (`.k-header`) und
+    **Tab-Leiste** (`.k-tabs`) werden ausgeblendet.
+  - Es wird fest der Tab **mittag** gewählt (`switchTab('mittag')`), ohne
+    CMS-Feature-Logik (`applyKioskFeatures()` wird übersprungen).
+  - Nicht benötigte Loader für andere Tabs (Abhol-/Metzger-/Katalog-Daten)
+    werden übersprungen; `loadOrders()` (Mittag) inkl. 30-Sekunden-Refresh läuft.
+- Das iframe wird **lazy** geladen: `src` wird erst beim ersten Öffnen des Reiters
+  gesetzt.
+- **Kein zweiter Login**: `GET/PATCH /api/lunch-order` haben keinen Auth-Guard.
+- Tageswahl, Filter (Offen/Nachrichten/Erledigt/Alle), Antworten/Status ändern,
+  Küchenliste drucken und „Neue Telefonbestellung“ (mit 12:00-Bestellschluss)
+  funktionieren wie im Kiosk.
+- `socialSubTab` wird auf `/posten` um den Wert `'bestellungen'` erweitert
+  (Panels/Buttons sauber umschalten); Zurückschalten auf „Neuer Post“/„Katalog“
+  blendet den Reiter wieder aus.
+
+#### F5 Test Cases
+
+**TC-SOCIAL-QUICK-F5-01: Reiter zeigt Kiosk-Mittagstisch ohne Kiosk-Chrome**
+- **Action:** `/posten` öffnen, auf **Bestellungen** klicken.
+- **Expected:** Der Kiosk-Mittagstisch erscheint im iframe **ohne** Kiosk-Kopf
+  und Tab-Leiste (`html.k-embed`); Tageswahl, Filterzeile und Bestellliste
+  werden angezeigt; kein zusätzlicher Login.
+
+**TC-SOCIAL-QUICK-F5-02: Umschalten zwischen den Reitern**
+- **Action:** Zwischen „Neuer Post“, „Katalog“ und „Bestellungen“ wechseln.
+- **Expected:** Jeweils genau ein Panel sichtbar, Button aktiv hervorgehoben;
+  „Neuer Post“ zeigt weiterhin den Wizard inkl. Mittagessen-Sektion.
+
 ## 5. Data & Contracts
 
 - **Auth:** `POST /api/cms-auth` (Body `{password}`) → `{token}`;
@@ -283,6 +333,8 @@ Personal die Funktion mit **einem Tipp** vom Handy-Startbildschirm öffnet.
 - **Posten:** bestehende Endpunkte `POST /api/social-post` und
   `POST /api/tagespost` (Tagesinfo), `GET /api/social-katalog` (Produkte),
   Wochenplan-API (heutiges Mittagessen) – unverändert.
+- **Bestellungen-Reiter:** `GET/PATCH /api/lunch-order` (öffentlich, ohne
+  Auth-Guard) – vom eingebetteten Kiosk (`/kiosk.html?embed=mittag`) genutzt.
 - **Manifest:** `posten-manifest.json` analog `kiosk-manifest.json`.
 
 ## 6. Open Questions
@@ -310,3 +362,4 @@ _Keine offenen Punkte – alle Entscheidungen getroffen (siehe „Geklärt“)._
 | F2 | TC-SOCIAL-QUICK-F2-01..04 | `posten.html` Login-Gate + `dlAdminLogin`; `localStorage['dl_posten_token']` → `sessionStorage['cms_auth_token']`; `noindex` | umgesetzt |
 | F3 | TC-SOCIAL-QUICK-F3-01..03 | `static-site/index.html` Logo-Long-Press (`.mob-header-logo`, `#nv-logo`) → `/posten` | umgesetzt |
 | F4 | TC-SOCIAL-QUICK-F4-01..02 | `static-site/posten-manifest.json` (`start_url=/posten`); Route in `staticwebapp.config.json` | umgesetzt |
+| F5 | TC-SOCIAL-QUICK-F5-01..02 | `static-site/kiosk.html` Embed-Modus `?embed=mittag` (`html.k-embed`); `static-site/posten.html` dritter Sub-Tab + lazy iframe + `socialSubTab('bestellungen')` | umgesetzt |
