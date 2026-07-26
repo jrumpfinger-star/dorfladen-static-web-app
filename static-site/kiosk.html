@@ -4792,5 +4792,43 @@ var K = (function(){
 <script src="/js/admin-auth.js"></script>
 <script src="/js/kiosk-kalender.js"></script>
 <script src="/js/env-banner.js"></script>
+<script>
+/* Kiosk-Vollbild: Service Worker registrieren (ermoeglicht echte PWA-Installation
+   im Vollbild) + Fullscreen-API-Fallback fuer den Start im normalen Browser-Tab. */
+(function(){
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.register('/sw.js').catch(function(){});
+    });
+  }
+
+  // Erkennt, ob die Seite bereits als installierte App im Vollbild laeuft.
+  function isDisplayFullscreen(){
+    return (window.matchMedia && (
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: standalone)').matches
+    )) || window.navigator.standalone === true;
+  }
+
+  function enterFullscreen(){
+    if(isDisplayFullscreen()) return;
+    if(document.fullscreenElement) return;
+    var el=document.documentElement;
+    var req=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+    if(req){ try{ req.call(el); }catch(e){} }
+  }
+
+  // Fullscreen benoetigt eine Nutzerinteraktion: beim ersten Tippen/Klick aktivieren.
+  if(!isDisplayFullscreen()){
+    var once=function(){
+      enterFullscreen();
+      document.removeEventListener('click',once);
+      document.removeEventListener('touchend',once);
+    };
+    document.addEventListener('click',once);
+    document.addEventListener('touchend',once);
+  }
+})();
+</script>
 </body>
 </html>
