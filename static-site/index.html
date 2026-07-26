@@ -1966,7 +1966,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
     if(mittagessen.length){
       html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Mittagessen</div>';
-      mittagessen.forEach(function(it){html+=itemCard(it,!_isTomorrow);});
+      mittagessen.forEach(function(it){html+=itemCard(it,true);});
       html+='</div>';
     }
 
@@ -2039,11 +2039,21 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var preis=it.preis?fmtPreis(it.preis):'';
     var orderBtn='';
     if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
-      var _now=new Date(), _bsCutoff=window._dlBestellschluss||10.5, _canOrderToday=(_now.getHours()+_now.getMinutes()/60)<_bsCutoff;
-      var href=_canOrderToday
-        ?'/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'')
-        :'/mittagstisch-bestellen';
-      var tip=_canOrderToday?'Jetzt f\u00fcr heute bestellen':'Mittagessen bestellen';
+      var href,tip;
+      if(_isTomorrow){
+        var _qp=[];
+        if(it.id)_qp.push('gericht_id='+encodeURIComponent(it.id));
+        if(it.name)_qp.push('gericht='+encodeURIComponent(it.name));
+        if(it.preis)_qp.push('preis='+it.preis);
+        href='/mittagstisch-bestellen'+(_qp.length?'?'+_qp.join('&'):'');
+        tip='F\u00fcr morgen vorbestellen';
+      }else{
+        var _now=new Date(), _bsCutoff=window._dlBestellschluss||10.5, _canOrderToday=(_now.getHours()+_now.getMinutes()/60)<_bsCutoff;
+        href=_canOrderToday
+          ?'/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'')
+          :'/mittagstisch-bestellen';
+        tip=_canOrderToday?'Jetzt f\u00fcr heute bestellen':'Mittagessen bestellen';
+      }
       orderBtn='<a class="tp-item-order" href="javascript:void(0)" onclick="openMittagPopup(\''+esc(href).replace(/'/g,"\\'")+'\')" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
     }
     var abBadge=it.ab_uhr?'<span class="tp-ab-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
