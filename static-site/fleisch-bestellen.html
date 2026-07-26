@@ -211,7 +211,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .fm-confirm-summary h4{font-size:13px;font-weight:700;margin-bottom:8px}
 .fm-confirm-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #f3f4f6}
 .fm-confirm-total{font-weight:700;border-bottom:none;margin-top:4px}
-.fm-confirm-back{padding:12px 24px;border:1.5px solid var(--c-meat);border-radius:10px;background:#fff;color:var(--c-meat);font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
+.fm-confirm-back{padding:12px 24px;border:1.5px solid var(--c-meat);border-radius:10px;background:#fff;color:var(--c-meat);font-size:14px;font-weight:700;cursor:pointer}
+.fm-confirm-actions{display:flex;flex-direction:column;gap:10px;align-items:stretch;margin-top:4px}
+.fm-confirm-done{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:14px 24px;border:none;border-radius:10px;background:var(--c-meat);color:#fff;font-size:15px;font-weight:800;cursor:pointer}
 
 /* Loading */
 .fm-loading{text-align:center;padding:60px 0;color:var(--c-muted)}
@@ -263,7 +265,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
 <!-- Header (sticky via CSS, position:relative for back-btn) -->
 <div class="fm-header">
-  <a href="javascript:void(0)" onclick="history.length>1?history.back():location.href='/'" class="fm-back"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></a>
+  <a href="javascript:void(0)" onclick="fmBack()" class="fm-back"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></a>
   <h1><i data-lucide="beef" style="width:22px;height:22px"></i> Fleisch &amp; Wurst</h1>
   <small>Vorbestellen &amp; im Laden abholen</small>
   <button class="fm-history-btn" id="fm-history-btn" onclick="fmShowHistory()"><i data-lucide="clipboard-list" style="width:18px;height:18px"></i></button>
@@ -358,8 +360,11 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     <h2>Bestellung aufgenommen!</h2>
     <div class="fm-confirm-nr" id="fm-confirm-nr"></div>
     <div class="fm-confirm-summary" id="fm-confirm-summary"></div>
-    <a id="fm-confirm-status-link" href="#" style="display:none;align-items:center;justify-content:center;gap:6px;margin-top:12px;padding:12px 24px;border-radius:10px;background:var(--c-green);color:#fff;font-size:14px;font-weight:700;text-decoration:none;transition:all .15s"><i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Bestellstatus ansehen</a>
-    <button class="fm-confirm-back" onclick="fmReset()"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Weitere Bestellung</button>
+    <div class="fm-confirm-actions">
+      <button class="fm-confirm-done" onclick="fmDone()"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Fertig &ndash; zur&uuml;ck zur &Uuml;bersicht</button>
+      <a id="fm-confirm-status-link" href="#" style="display:none;align-items:center;justify-content:center;gap:6px;padding:12px 24px;border-radius:10px;background:var(--c-green);color:#fff;font-size:14px;font-weight:700;text-decoration:none;transition:all .15s"><i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Bestellstatus ansehen</a>
+      <button class="fm-confirm-back" onclick="fmReset()"><i data-lucide="plus" style="width:14px;height:14px"></i> Weitere Bestellung</button>
+    </div>
   </div>
 </div>
 
@@ -433,6 +438,26 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   var cart = [];
   var allArticles = [];
   var activeCat = 'alle';
+
+  // Aufrufende Seite merken, damit der Kunde nach der Bestellung dorthin zurueckkehrt
+  var fmReturnUrl = (function(){
+    try{
+      var ref = document.referrer;
+      if(ref){
+        var u = new URL(ref);
+        if(u.origin === location.origin && u.pathname.indexOf('/fleisch-bestellen') !== 0){
+          return u.pathname + u.search + u.hash;
+        }
+      }
+    }catch(e){}
+    return '/shop';
+  })();
+  function fmLeave(){ location.href = fmReturnUrl; }
+  window.fmDone = fmLeave;
+  window.fmBack = function(){
+    if(document.getElementById('fm-confirm').classList.contains('show')){ fmLeave(); return; }
+    if(history.length > 1){ history.back(); } else { fmLeave(); }
+  };
   var searchTerm = '';
   var config = {};
   var favorites = JSON.parse(localStorage.getItem('fm_favorites') || '[]');
@@ -1121,7 +1146,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var cartOpen = document.getElementById('fm-cart-overlay').classList.contains('open');
     if(cartOpen){ fmCloseCart(true); return; }
     var confirmOpen = document.getElementById('fm-confirm').classList.contains('show');
-    if(confirmOpen){ fmReset(true); return; }
+    if(confirmOpen){ fmLeave(); return; }
   });
 
   // ── History ──
