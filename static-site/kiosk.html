@@ -1373,6 +1373,36 @@ var K = (function(){
     if(id==='kalender' && window.KalenderKiosk) window.KalenderKiosk.onShow();
   }
 
+  // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
+  // Support-Tabs (Stammkunden, Kalender) bleiben immer sichtbar.
+  function applyKioskFeatures(){
+    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social'};
+    function setTabs(flags,pickDefault){
+      Object.keys(map).forEach(function(tab){
+        var on=flags[map[tab]]===true;
+        var t=document.querySelector('.k-tab[data-tab="'+tab+'"]');
+        if(t) t.style.display=on?'':'none';
+      });
+      if(pickDefault){
+        var active=document.querySelector('.k-tab.active');
+        if(!active || active.style.display==='none'){
+          var vis=Array.prototype.slice.call(document.querySelectorAll('.k-tab')).filter(function(x){return x.style.display!=='none';});
+          if(vis.length) switchTab(vis[0].dataset.tab);
+        }
+      }
+    }
+    setTabs({},false); // vorerst alle vier ausblenden (kein Flash), Default-Tab noch nicht wechseln
+    fetch('/api/cms-config').then(function(r){return r.json();}).then(function(res){
+      var flags={};
+      if(res&&res.success&&res.data){
+        flags=res.data.feature_flags;
+        if(typeof flags==='string'){try{flags=JSON.parse(flags);}catch(e){flags={};}}
+        if(!flags)flags={};
+      }
+      setTabs(flags,true);
+    }).catch(function(){ setTabs({},true); });
+  }
+
   // ══════════════════════════════════════════════════
   //  MITTAGSTISCH
   // ══════════════════════════════════════════════════
@@ -4682,6 +4712,7 @@ var K = (function(){
   buildDayBar();
   reinitIcons(); // Initialize static Lucide icons
   _initMuteBtn();
+  applyKioskFeatures(); // Nur im CMS freigeschaltete Tabs anzeigen
   setMittagFilter('offen'); // Default: Offen
   loadOrders();
   loadDishes();

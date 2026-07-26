@@ -197,7 +197,7 @@
 
   </div>
 
-  <div class="mob-action" onclick="mobOpenPopup('meat')">
+  <div class="mob-action" id="mob-action-meat" onclick="mobOpenPopup('meat')">
 
     <span class="mob-action-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/><path d="M6 22v-3c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v3"/></svg></span>
 
@@ -1485,6 +1485,9 @@
       var showMT=!!(flags.mittagstisch===true);
       window._featureMittagstisch=showMT;
       document.querySelectorAll('.feature-mittagstisch').forEach(function(el){el.style.display=showMT?'':'none';});
+      var showFleisch=!!(flags.fleisch_home===true);
+      var fa=document.getElementById('fleisch-aktion');if(fa)fa.style.display=showFleisch?'':'none';
+      var mam=document.getElementById('mob-action-meat');if(mam)mam.style.display=showFleisch?'':'none';
     });
   })();
 </script>
@@ -2063,14 +2066,17 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
   // Fetch tagespost + hours + feature flags in parallel (no extra cms-config call)
   var _tagesInfoImmer=false;
+  var _tagesInfoEnabled=false;
   var _flagsP=(window._dlFlagsReady||Promise.resolve()).then(function(){
     var ff=window._dlFeatureFlags||{};
     if(ff.tagesinfo_immer===true) _tagesInfoImmer=true;
+    if(ff.tagesinfo_home===true) _tagesInfoEnabled=true;
   });
   var _tpP=fetch('/api/tagespost').then(function(r){return r.json();}).catch(function(){return null;});
   var _hoursP=window._dlHoursP||fetch('/api/hours').then(function(r){return r.json();}).catch(function(){return null;});
 
   Promise.all([_flagsP,_tpP,_hoursP]).then(function(results){
+    if(!_tagesInfoEnabled)return; // Homepage-Tagesinfo im CMS nicht freigeschaltet
     var res=results[1], hRes=results[2];
     if(!res||!res.success||!res.post)return;
 
