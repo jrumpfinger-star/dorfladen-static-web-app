@@ -627,6 +627,8 @@
       /* F3: Quick-Chips zeigen, Alle-Warengruppen-Button klarer */
       .shop-quickcat{display:inline-flex}
       .shop-cat-dd-btn{background:#fff;font-weight:700}
+      /* F3/F4: großen Fleisch-Promo-Banner mobil ausblenden (ersetzt durch -15% Chip) */
+      .shop-fleisch-promo>a{display:none!important}
       /* F5: Platz für Balken schaffen */
       body.has-cart-bar #shop-content{padding-bottom:80px}
       body.has-cart-bar{--has-bar:1}
@@ -1896,7 +1898,7 @@
     // Fleisch-Vorbestellungs-Banner (immer sichtbar in Übersicht)
     var hasFleisch=allArticles.some(function(a){return isFleischWurst(a.warengruppe);});
     if(hasFleisch){
-      html+='<div style="padding:0 16px 4px"><a href="/fleisch-bestellen" style="display:block;text-decoration:none">'
+      html+='<div class="shop-fleisch-promo" style="padding:0 16px 4px"><a href="/fleisch-bestellen" style="display:block;text-decoration:none">'
         +'<div style="background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 50%,#b91c1c 100%);border-radius:12px;padding:14px 18px;color:#fff;display:flex;align-items:center;gap:14px;box-shadow:0 4px 12px rgba(127,29,29,.25)">'
         +'<div style="flex-shrink:0;width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center">'+lucideHtml('beef',24)+'</div>'
         +'<div style="flex:1;min-width:0">'
