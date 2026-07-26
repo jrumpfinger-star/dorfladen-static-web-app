@@ -83,11 +83,6 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
       var ff=config['feature_flags']||config.feature_flags;
       if(typeof ff==='string'){try{ff=JSON.parse(ff);}catch(e){ff={};}}
       if(ff) window._dlFeatureFlags=ff;
-      // Staging: alle Features aktivieren
-      if(location.hostname.indexOf('witty-island')>=0){
-        if(!window._dlFeatureFlags) window._dlFeatureFlags={};
-        ['push','barcode','orders','mittagstisch','wp_images','social_poster'].forEach(function(k){window._dlFeatureFlags[k]=true;});
-      }
       resolveFlags();
     })
     .catch(function(e){console.log('CMS Config fetch failed:', e);resolveFlags();});
