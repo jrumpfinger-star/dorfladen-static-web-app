@@ -67,6 +67,10 @@
       "rewrite": "/shop-admin.html"
     },
     {
+      "route": "/posten",
+      "rewrite": "/posten.html"
+    },
+    {
       "route": "/pack",
       "rewrite": "/pack.html"
     },
