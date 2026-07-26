@@ -114,6 +114,7 @@
     .bs-dialog-ft .bs-btn-ok{background:var(--c-green);color:#fff;border:none}
     @keyframes bsFadeIn{from{opacity:0}to{opacity:1}}
     @keyframes bsSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes bsSpin{to{transform:rotate(360deg)}}
 
     /* Toast notification */
     .bs-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:12px;font-size:14px;font-weight:700;color:#fff;z-index:9100;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:bsSlideUp .2s ease;max-width:90%}
@@ -149,6 +150,14 @@
         </div>
         <button onclick="lookupOrder()">Bestellung anzeigen</button>
         <div class="bs-error" id="bs-login-error"></div>
+      </div>
+    </div>
+
+    <!-- Loading state (shown during auto-login) -->
+    <div class="bs-card" id="bs-loading-card" style="display:none;text-align:center">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 0">
+        <i data-lucide="loader-2" style="width:32px;height:32px;color:var(--c-green);animation:bsSpin 1s linear infinite"></i>
+        <span style="font-size:14px;color:var(--c-muted)">Bestellung wird geladen…</span>
       </div>
     </div>
 
@@ -199,6 +208,20 @@ function getParam(name){
 
 function isFleisch(nr){ return (nr||'').toUpperCase().indexOf('FM-')===0; }
 
+// Auth-Karten umschalten (verhindert kurzes Aufblitzen des Login-Dialogs beim Auto-Login)
+function bsShowLoading(){
+  document.getElementById('bs-login-card').style.display = 'none';
+  var l = document.getElementById('bs-loading-card'); if(l) l.style.display = '';
+}
+function bsShowLogin(){
+  var l = document.getElementById('bs-loading-card'); if(l) l.style.display = 'none';
+  document.getElementById('bs-login-card').style.display = '';
+}
+function bsHideAuth(){
+  document.getElementById('bs-login-card').style.display = 'none';
+  var l = document.getElementById('bs-loading-card'); if(l) l.style.display = 'none';
+}
+
 // Toggle auth field based on order number prefix
 function bsUpdateAuthField(){
   var nr = document.getElementById('bs-nr').value.trim();
@@ -239,6 +262,7 @@ function lookupOrder(){
     .then(function(r){ return r.json(); })
     .then(function(data){
       if(!data.success){
+        bsShowLogin();
         errEl.textContent = 'Bestellung nicht gefunden. Bitte Eingaben prüfen.';
         errEl.style.display = 'block';
         return;
@@ -246,6 +270,7 @@ function lookupOrder(){
       // FM returns .bestellung, MT returns .order
       _order = data.bestellung || data.order;
       if(!_order){
+        bsShowLogin();
         errEl.textContent = 'Bestellung nicht gefunden.';
         errEl.style.display = 'block';
         return;
@@ -254,6 +279,7 @@ function lookupOrder(){
     })
     .catch(function(e){
       console.error('Bestellung konnte nicht geladen werden:',e);
+      bsShowLogin();
       errEl.textContent = 'Die Bestellung konnte gerade nicht geladen werden. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
       errEl.style.display = 'block';
     });
@@ -282,7 +308,7 @@ var STATUS_ICONS = {0:'⏳',1:'✅',2:'❌',3:'📦'};
 var MT_STEPS=[{icon:'<i data-lucide="clock" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Eingegangen'},{icon:'<i data-lucide="check-circle" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Bestätigt'},{icon:'<i data-lucide="package" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Abgeholt'}];
 
 function renderOrder(o){
-  document.getElementById('bs-login-card').style.display = 'none';
+  bsHideAuth();
   document.getElementById('bs-detail').style.display = 'block';
 
   document.getElementById('bs-gericht').textContent = o.gericht || '–';
@@ -320,7 +346,7 @@ var FM_STEPS=[{icon:'<i data-lucide="clock" style="width:13px;height:13px;vertic
 function fmtP(v){ return (v||0).toFixed(2).replace('.',','); }
 
 function renderFleischOrder(o){
-  document.getElementById('bs-login-card').style.display = 'none';
+  bsHideAuth();
   document.getElementById('bs-detail').style.display = 'block';
 
   document.getElementById('bs-gericht').innerHTML = '<i data-lucide="beef" style="width:18px;height:18px;vertical-align:middle"></i> Fleisch-Vorbestellung';
@@ -546,7 +572,7 @@ function sendComment(){
     if(nr) document.getElementById('bs-nr').value = nr;
     if(telefon) document.getElementById('bs-telefon').value = telefon;
     bsUpdateAuthField();
-    if(nr && telefon) lookupOrder();
+    if(nr && telefon){ bsShowLoading(); lookupOrder(); }
     return;
   }
 
@@ -562,7 +588,7 @@ function sendComment(){
   if(nr) document.getElementById('bs-nr').value = nr;
   if(email) document.getElementById('bs-email').value = email;
   bsUpdateAuthField();
-  if(nr && email) lookupOrder();
+  if(nr && email){ bsShowLoading(); lookupOrder(); }
 })();
 </script>
 <script>if(window.lucide) lucide.createIcons();</script>
