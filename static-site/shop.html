@@ -585,12 +585,12 @@
     .shop-menu-btn{display:none;background:rgba(255,255,255,.14);border:none;color:#fff;cursor:pointer;padding:8px;border-radius:11px;align-items:center;justify-content:center}
     .shop-menu-btn:hover{background:rgba(255,255,255,.28)}
     .shop-menu-btn svg{width:22px;height:22px;pointer-events:none}
-    .shop-menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;display:none}
+    .shop-menu-overlay{position:fixed;inset:0;background:transparent;z-index:400;display:none}
     .shop-menu-overlay.open{display:block}
-    .shop-menu-sheet{position:fixed;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;z-index:401;transform:translateY(100%);transition:transform .25s ease;padding:6px 0 max(12px,env(safe-area-inset-bottom))}
-    .shop-menu-overlay.open .shop-menu-sheet{transform:translateY(0)}
-    .shop-menu-grab{width:44px;height:5px;border-radius:5px;background:#d5dcd8;margin:8px auto 4px}
-    .shop-menu-item{display:flex;align-items:center;gap:14px;padding:15px 20px;font-size:15px;font-weight:600;color:var(--shop-text);cursor:pointer;border:none;background:none;width:100%;text-align:left;text-decoration:none;font-family:inherit}
+    .shop-menu-sheet{position:fixed;top:56px;right:10px;left:auto;bottom:auto;width:230px;max-width:calc(100vw - 20px);background:#fff;border:1px solid var(--shop-border);border-radius:14px;z-index:401;transform-origin:top right;transform:scale(.96);opacity:0;pointer-events:none;transition:transform .16s ease,opacity .16s ease;padding:6px;box-shadow:0 14px 40px rgba(17,28,23,.22)}
+    .shop-menu-overlay.open .shop-menu-sheet{transform:scale(1);opacity:1;pointer-events:auto}
+    .shop-menu-grab{display:none}
+    .shop-menu-item{display:flex;align-items:center;gap:12px;padding:12px 14px;font-size:14.5px;font-weight:600;color:var(--shop-text);cursor:pointer;border:none;background:none;width:100%;text-align:left;text-decoration:none;font-family:inherit;border-radius:9px}
     .shop-menu-item:hover{background:var(--shop-gray)}
     .shop-menu-item svg{width:20px;height:20px;color:var(--shop-green-d);flex-shrink:0}
     /* 3-Schritt-Faden (F6) */
