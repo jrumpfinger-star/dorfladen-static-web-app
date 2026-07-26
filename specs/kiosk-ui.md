@@ -12,6 +12,18 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 
 ### Header
 - [x] Refresh-Button (🔄) im Header rechts neben Uhr, nicht in Bottom-Bar
+- [x] **Stammkunden-Platzierung (Variante A):** Der Stammkunden-Bereich ist
+  administrativ und wird selten gebraucht. Er wird daher **nicht mehr als
+  gleichwertiger Tab** in der Haupt-Tab-Leiste angezeigt, sondern als dezenter
+  **„Kunden"-Button in der Kopfzeile** (gestrichelter Rahmen, neben Ton/Hilfe/
+  Aktualisieren, durch Trenner abgesetzt). So liegt der Fokus der Tab-Leiste auf
+  den operativen Funktionen (Mittagstisch, Online-Shop, Metzger, Social),
+  während die Verwaltung mit einem Tipp erreichbar bleibt.
+  - Klick auf „Kunden" öffnet das bestehende Stammkunden-Panel (`panel-kunden`)
+    über `K.switchTab('kunden')`; der Button wird dabei hervorgehoben
+    (`admin-active`), beim Wechsel auf einen Tab wieder zurückgesetzt.
+  - Auf schmalen Viewports (≤640px) zeigt der Button nur das Icon.
+  - Funktionsumfang unverändert (Suche, Anlegen, Bearbeiten, Löschen).
 
 ### Bottom-Bar
 - [x] Nur 2 Buttons: "☎ Neue Telefonbestellung" + "🖨 Küchenliste drucken"

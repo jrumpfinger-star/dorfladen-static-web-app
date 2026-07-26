@@ -662,6 +662,13 @@
       .st-compact .st-line{top:13px;height:2px}
       #k-sparkline{width:120px;height:40px}
     }
+    /* SHOP-MOBIL-UX / Stammkunden-Platzierung (Variante A): Verwaltungs-Button im Header */
+    .k-header-admin{display:flex;align-items:center;gap:6px;min-height:40px;padding:8px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.5);cursor:pointer;transition:background .15s,color .15s}
+    .k-header-admin:hover{background:rgba(255,255,255,.2)}
+    .k-header-admin i,.k-header-admin svg{width:18px;height:18px;pointer-events:none}
+    .k-header-admin.admin-active{background:#fff;color:var(--c-pri);border-style:solid;border-color:#fff}
+    .k-header-sep{width:1px;height:26px;background:rgba(255,255,255,.28);flex-shrink:0}
+    @media(max-width:640px){.k-header-admin .k-header-admin-lbl{display:none}.k-header-admin{padding:8px}}
   </style>
   <script src="/js/theme.js"></script>
   <link rel="stylesheet" href="/css/admin-dark.css">
@@ -678,6 +685,8 @@
       <div class="k-date" id="k-date"></div>
       <div class="k-clock" id="k-clock"></div>
     </div>
+    <button class="k-header-admin" id="k-kunden-btn" onclick="K.switchTab('kunden')" title="Stammkunden-Verwaltung"><i data-lucide="users"></i> <span class="k-header-admin-lbl">Kunden</span></button>
+    <span class="k-header-sep"></span>
     <button class="k-btn k-btn-outline" id="k-mute-btn" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.toggleMute()" title="Ton ein/aus"><i data-lucide="volume-2" style="width:20px;height:20px"></i></button>
     <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.openModal('modal-help')" title="Hilfe & Workflows"><i data-lucide="help-circle" style="width:20px;height:20px"></i></button>
     <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.refresh()" title="Aktualisieren"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
@@ -700,9 +709,6 @@
   </div>
   <div class="k-tab" data-tab="social" onclick="K.switchTab('social')">
     <span class="k-tab-icon"><i data-lucide="share-2" style="width:22px;height:22px"></i></span> Social
-  </div>
-  <div class="k-tab" data-tab="kunden" onclick="K.switchTab('kunden')">
-    <span class="k-tab-icon"><i data-lucide="users" style="width:22px;height:22px"></i></span> Stammkunden
   </div>
   <div class="k-tab" data-tab="kalender" onclick="K.switchTab('kalender')">
     <span class="k-tab-icon"><i data-lucide="calendar-days" style="width:22px;height:22px"></i></span> Kalender
@@ -1364,6 +1370,8 @@ var K = (function(){
   function switchTab(id){
     document.querySelectorAll('.k-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===id);});
     document.querySelectorAll('.k-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+id);});
+    var kbtn=document.getElementById('k-kunden-btn');
+    if(kbtn) kbtn.classList.toggle('admin-active', id==='kunden');
     // Bottom bar only for Mittagstisch
     var bottom = document.querySelector('.k-bottom');
     if(bottom) bottom.style.display = id==='mittag' ? '' : 'none';
