@@ -418,6 +418,30 @@
     html[data-theme="dark"] .shop-preorder-modal,html[data-theme="dark"] .shop-preorder-hdr{background:#1b2228;color:var(--shop-text)}
     html[data-theme="dark"] .shop-preorder-hdr h3{color:#fca5a5}
     html[data-theme="dark"] .shop-preorder-reply{background:rgba(22,101,52,.18);border-color:#166534;color:#bbf7d0}
+    /* Kunden-Aktionen (Stornieren / Nachricht) */
+    .shop-preorder-mymsg{margin-top:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.5;color:#1e40af}
+    .shop-preorder-mymsg strong{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+    .shop-preorder-actions{display:flex;gap:8px;margin-top:12px}
+    .spo-actbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--shop-border);background:#fff;color:var(--shop-text)}
+    .spo-actbtn.cancel{border-color:#fca5a5;color:#b91c1c;background:#fef2f2}
+    .spo-actbtn.cancel:hover{background:#fee2e2}
+    .spo-actbtn.msg{border-color:#bfdbfe;color:#1e40af;background:#eff6ff}
+    .spo-actbtn.msg:hover{background:#dbeafe}
+    .spo-panel{margin-top:10px;border:1px solid var(--shop-border);border-radius:10px;padding:10px;background:var(--shop-bg,#fafafa)}
+    .spo-panel textarea{width:100%;box-sizing:border-box;min-height:64px;resize:vertical;border:1px solid var(--shop-border);border-radius:8px;padding:8px;font-size:13px;font-family:inherit;background:#fff;color:#111}
+    .spo-panel-warn{font-size:13px;color:#991b1b;font-weight:600;margin-bottom:8px}
+    .spo-hint{font-size:11px;color:#b91c1c;margin-top:4px}
+    .spo-panel-ft{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+    .spo-mini{border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;background:var(--shop-border);color:var(--shop-text)}
+    .spo-mini.primary{background:var(--shop-green);color:#fff}
+    .spo-mini.danger{background:#dc2626;color:#fff}
+    .spo-mini:disabled{opacity:.5;cursor:default}
+    html[data-theme="dark"] .spo-actbtn{background:#232b33;color:var(--shop-text)}
+    html[data-theme="dark"] .spo-actbtn.cancel{background:rgba(153,27,27,.2);border-color:#7f1d1d;color:#fca5a5}
+    html[data-theme="dark"] .spo-actbtn.msg{background:rgba(30,64,175,.22);border-color:#1e3a8a;color:#93c5fd}
+    html[data-theme="dark"] .spo-panel{background:#20272e}
+    html[data-theme="dark"] .spo-panel textarea{background:#1b2228;color:var(--shop-text);border-color:var(--shop-border)}
+    html[data-theme="dark"] .shop-preorder-mymsg{background:rgba(30,64,175,.18);border-color:#1e3a8a;color:#bfdbfe}
 
     /* ── Order History ── */
     .shop-orders{padding:16px;max-width:800px;margin:0 auto}
@@ -2765,6 +2789,28 @@
         });
         html+='<div class="shop-preorder-sum"><span>Summe</span><span>'+fmtEuro(b.gesamtsumme)+'</span></div>';
         if(b.personal_antwort) html+='<div class="shop-preorder-reply"><strong>'+lucideHtml('message-circle',13)+' Antwort vom Laden</strong>'+esc(b.personal_antwort)+'</div>';
+        if(b.kunde_kommentar) html+='<div class="shop-preorder-mymsg"><strong>'+lucideHtml('message-circle',13)+' Ihre Nachricht</strong>'+esc(b.kunde_kommentar)+'</div>';
+        var oid=esc(b.id||'');
+        if(oid){
+          html+='<div class="shop-preorder-actions">';
+          html+='<button class="spo-actbtn msg" data-act="toggle-msg" data-oid="'+oid+'">'+lucideHtml('message-circle',14)+' Nachricht</button>';
+          if(st===0) html+='<button class="spo-actbtn cancel" data-act="toggle-storno" data-oid="'+oid+'">'+lucideHtml('x-circle',14)+' Stornieren</button>';
+          html+='</div>';
+          html+='<div class="spo-panel" data-panel="msg" style="display:none">'
+            +'<textarea data-msg-text placeholder="Ihre Nachricht an den Laden\u2026"></textarea>'
+            +'<div class="spo-panel-ft"><button class="spo-mini" data-act="msg-cancel">Abbrechen</button>'
+            +'<button class="spo-mini primary" data-act="msg-send" data-oid="'+oid+'">Senden</button></div>'
+            +'</div>';
+          if(st===0){
+            html+='<div class="spo-panel" data-panel="storno" style="display:none">'
+              +'<div class="spo-panel-warn">Diese Bestellung wirklich stornieren? Das kann nicht r\u00fcckg\u00e4ngig gemacht werden.</div>'
+              +'<textarea data-storno-grund placeholder="Grund f\u00fcr die Stornierung\u2026"></textarea>'
+              +'<div class="spo-hint" data-storno-hint style="display:none">Bitte geben Sie einen Grund an.</div>'
+              +'<div class="spo-panel-ft"><button class="spo-mini" data-act="storno-cancel">Abbrechen</button>'
+              +'<button class="spo-mini danger" data-act="storno-confirm" data-oid="'+oid+'">Stornieren</button></div>'
+              +'</div>';
+          }
+        }
         html+='</div>';
       });
       html+='<div class="shop-preorder-foot"><button class="shop-preorder-shopbtn" id="shop-preorder-shopbtn">'+lucideHtml('arrow-left',15)+' Weiter einkaufen</button></div>';
@@ -2773,8 +2819,7 @@
       wireFoot();
     }
     function wireFoot(){var b=document.getElementById('shop-preorder-shopbtn');if(b)b.addEventListener('click',close);}
-    window.shopShowPreorders=function(){
-      ov.classList.add('open');document.body.classList.add('auth-open');
+    function loadPreorders(){
       body.innerHTML='<div class="shop-preorder-empty">Laden…</div>';
       var email=(typeof authUser!=='undefined'&&authUser&&authUser.email)?authUser.email:(localStorage.getItem('fm_email')||'');
       if(!email){try{var su=JSON.parse(localStorage.getItem('dl_shop_user')||'null');if(su&&su.email)email=su.email;}catch(e){}}
@@ -2785,6 +2830,51 @@
         .then(function(r){return r.json();})
         .then(function(res){render(res&&res.success?res.bestellungen:[]);})
         .catch(function(){body.innerHTML='<div class="shop-preorder-empty">Fehler beim Laden.</div>';});
+    }
+    function toast(msg,type){ if(typeof showToast==='function'){showToast(msg,type);} }
+    function patchOrder(payload,btn,okMsg){
+      if(btn){btn.disabled=true;}
+      fetch('/api/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d&&d.success){ if(okMsg)toast(okMsg,'success'); loadPreorders(); }
+          else { toast((d&&d.error)||'Aktion fehlgeschlagen'); if(btn)btn.disabled=false; }
+        })
+        .catch(function(){ toast('Aktion fehlgeschlagen. Bitte erneut versuchen.'); if(btn)btn.disabled=false; });
+    }
+    function showPanel(card,name){
+      if(!card) return;
+      card.querySelectorAll('.spo-panel').forEach(function(p){ p.style.display=(p.getAttribute('data-panel')===name?'block':'none'); });
+      var ta=card.querySelector('.spo-panel[data-panel="'+name+'"] textarea');
+      if(ta){ setTimeout(function(){ta.focus();},50); }
+    }
+    function hidePanels(card){ if(card) card.querySelectorAll('.spo-panel').forEach(function(p){p.style.display='none';}); }
+    body.addEventListener('click',function(e){
+      var t=e.target.closest?e.target.closest('[data-act]'):null;
+      if(!t||!body.contains(t)) return;
+      var act=t.getAttribute('data-act');
+      var oid=t.getAttribute('data-oid');
+      var card=t.closest('.shop-preorder-card');
+      if(act==='toggle-msg'){ showPanel(card,'msg'); }
+      else if(act==='toggle-storno'){ showPanel(card,'storno'); }
+      else if(act==='msg-cancel'||act==='storno-cancel'){ hidePanels(card); }
+      else if(act==='msg-send'){
+        var mt=card.querySelector('[data-msg-text]');
+        var text=(mt&&mt.value||'').trim();
+        if(!text){ if(mt)mt.focus(); return; }
+        patchOrder({id:oid,kunde_kommentar:text},t,'Nachricht gesendet');
+      }
+      else if(act==='storno-confirm'){
+        var sg=card.querySelector('[data-storno-grund]');
+        var grund=(sg&&sg.value||'').trim();
+        var hint=card.querySelector('[data-storno-hint]');
+        if(!grund){ if(hint)hint.style.display='block'; if(sg)sg.focus(); return; }
+        patchOrder({id:oid,status:4,kunde_storno:true,storno_grund:'Kundengrund: '+grund},t,'Bestellung storniert');
+      }
+    });
+    window.shopShowPreorders=function(){
+      ov.classList.add('open');document.body.classList.add('auth-open');
+      loadPreorders();
     };
     document.getElementById('shop-preorder-close').addEventListener('click',close);
     ov.addEventListener('click',function(e){if(e.target===ov)close();});
