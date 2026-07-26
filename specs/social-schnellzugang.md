@@ -337,6 +337,45 @@ sondern die vorhandene Kiosk-Ansicht wiederverwendet.
   Anzahl offener Bestellungen (orange, `X offen`). Ohne Bestellungen sind die
   Badges ausgeblendet.
 
+### F6: Responsives Spalten-Layout des „Neuer Post“-Assistenten
+
+#### F6 Description
+
+Der „Neuer Post“-Assistent soll die verfügbare Bildschirmbreite nutzen, statt auf
+breiteren Displays viel Leerraum zu lassen. Ab Tablet-Breite wird das Formular
+(Titel & Text, Produkte) links und die Vorschau/Aktionen rechts als mitlaufende
+(sticky) Seitenspalte angezeigt; auf dem Handy bleibt alles einspaltig gestapelt.
+Sämtliche Funktionen (inkl. Mittagessen-Sektion, Produktauswahl, Teilen/
+Veröffentlichen, Verlauf) bleiben unverändert erhalten.
+
+#### F6 Behaviour / Acceptance
+
+- **Breakpoint** für das Zwei-Spalten-Board liegt bei **720 px** (zuvor 900 px):
+  `@media(min-width:720px)` schaltet `#social-panel-post` auf Flex-Spalten
+  (`#soc-col-left` Formular, `#soc-col-right` sticky Vorschau) und blendet die
+  Desktop-Aktionsleiste (`#soc-desk-bar`) sowie Desktop-Tabs (`#soc-desk-tabs`) ein.
+- Die Auto-Vorschau beim Tippen (Titel/Freitext/Produktauswahl) wird konsistent
+  ab **720 px** ausgelöst (`window.innerWidth >= 720`).
+- **Kein Leerraum in den Feldern:** Der Inhaltsblock der Schrittkarten
+  (`.k-order-body`) wird als `block` mit voller Breite dargestellt, damit Selects
+  und Textfelder die gesamte Kartenbreite füllen (vorher `display:flex` →
+  Inhalt schrumpfte auf Content-Breite).
+- **< 720 px:** einspaltig gestapelt mit aufklappbaren Schritten und sichtbarem
+  „Heute/Morgen“-Umschalter – Funktionalität unverändert.
+
+#### F6 Test Cases
+
+**TC-SOCIAL-QUICK-F6-01: Zwei-Spalten-Board ab 720 px**
+- **Action:** `/posten` → „Neuer Post“ bei Breite ≥ 720 px öffnen.
+- **Expected:** Formular links, Vorschau als sticky Seitenspalte rechts, Desktop-
+  Aktionsleiste oben; Titel-Select und Freitext füllen die volle Spaltenbreite.
+
+**TC-SOCIAL-QUICK-F6-02: Einspaltig auf dem Handy**
+- **Action:** `/posten` → „Neuer Post“ bei Breite < 720 px öffnen.
+- **Expected:** Alle Schritte gestapelt, aufklappbar, „Heute/Morgen“ sichtbar;
+  Felder füllen die volle Kartenbreite (kein Leerraum); alle Funktionen inkl.
+  Mittagessen-Sektion vorhanden.
+
 ## 5. Data & Contracts
 
 - **Auth:** `POST /api/cms-auth` (Body `{password}`) → `{token}`;
@@ -375,3 +414,4 @@ _Keine offenen Punkte – alle Entscheidungen getroffen (siehe „Geklärt“)._
 | F3 | TC-SOCIAL-QUICK-F3-01..03 | `static-site/index.html` Logo-Long-Press (`.mob-header-logo`, `#nv-logo`) → `/posten` | umgesetzt |
 | F4 | TC-SOCIAL-QUICK-F4-01..02 | `static-site/posten-manifest.json` (`start_url=/posten`); Route in `staticwebapp.config.json` | umgesetzt |
 | F5 | TC-SOCIAL-QUICK-F5-01..03 | `static-site/kiosk.html` Embed-Modus `?embed=mittag` (`html.k-embed`); `static-site/posten.html` dritter Sub-Tab + lazy iframe + `socialSubTab('bestellungen')` + Reiter-Badges (gesamt/offen via `/api/lunch-order`) | umgesetzt |
+| F6 | TC-SOCIAL-QUICK-F6-01..02 | `static-site/posten.html` Breakpoint 720 px (`@media(min-width:720px)`), `.k-order-body{display:block}`, Auto-Vorschau-Schwelle `innerWidth>=720` | umgesetzt |
