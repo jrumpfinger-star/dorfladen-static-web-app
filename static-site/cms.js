@@ -11739,7 +11739,7 @@
     // Kurzer WhatsApp-Text: Die Gerichte stehen bereits auf dem Bild - der Text braucht nur
     // den Bestell-Link zur TagesInfo. (WhatsApp zeigt den Link als vollen, klickbaren Text.)
     if(hasMittagessen){
-      var tiLink=(window.location.origin||'')+'/?tagesinfo=1';
+      var tiLink=(window.location.origin||'')+'/tagesinfo';
       return '\uD83D\uDC49 Bestellung Mittagessen hier:\n'+tiLink;
     }
     return '';

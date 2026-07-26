@@ -201,7 +201,7 @@
     // Kurzer Text: die Gerichte stehen bereits auf dem Bild - nur der Bestell-Link zur TagesInfo.
     if(hasMittagessen){
       var origin=window.location.origin||'';
-      return '\uD83D\uDC49 Bestellung Mittagessen hier:\n'+origin+'/?tagesinfo=1';
+      return '\uD83D\uDC49 Bestellung Mittagessen hier:\n'+origin+'/tagesinfo';
     }
     return '';
   }
