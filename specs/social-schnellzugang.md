@@ -311,6 +311,11 @@ sondern die vorhandene Kiosk-Ansicht wiederverwendet.
 - `socialSubTab` wird auf `/posten` um den Wert `'bestellungen'` erweitert
   (Panels/Buttons sauber umschalten); Zurückschalten auf „Neuer Post“/„Katalog“
   blendet den Reiter wieder aus.
+- Am Reiter werden zwei **Badges** angezeigt: Gesamtzahl der heutigen
+  Bestellungen (grau) und Anzahl offener Bestellungen (orange, `status=0`).
+  Daten via `GET /api/lunch-order?datum=<heute>`; Aktualisierung beim Laden,
+  alle 60 s und beim Verlassen des Reiters. Bei 0 Bestellungen sind die Badges
+  ausgeblendet.
 
 #### F5 Test Cases
 
@@ -324,6 +329,13 @@ sondern die vorhandene Kiosk-Ansicht wiederverwendet.
 - **Action:** Zwischen „Neuer Post“, „Katalog“ und „Bestellungen“ wechseln.
 - **Expected:** Jeweils genau ein Panel sichtbar, Button aktiv hervorgehoben;
   „Neuer Post“ zeigt weiterhin den Wizard inkl. Mittagessen-Sektion.
+
+**TC-SOCIAL-QUICK-F5-03: Badges am Reiter (gesamt/offen)**
+- **Setup:** Für heute sind Mittagessen-Bestellungen vorhanden (mind. eine offen).
+- **Action:** `/posten` öffnen.
+- **Expected:** Am Reiter „Bestellungen“ erscheinen die Gesamtzahl (grau) und die
+  Anzahl offener Bestellungen (orange, `X offen`). Ohne Bestellungen sind die
+  Badges ausgeblendet.
 
 ## 5. Data & Contracts
 
@@ -362,4 +374,4 @@ _Keine offenen Punkte – alle Entscheidungen getroffen (siehe „Geklärt“)._
 | F2 | TC-SOCIAL-QUICK-F2-01..04 | `posten.html` Login-Gate + `dlAdminLogin`; `localStorage['dl_posten_token']` → `sessionStorage['cms_auth_token']`; `noindex` | umgesetzt |
 | F3 | TC-SOCIAL-QUICK-F3-01..03 | `static-site/index.html` Logo-Long-Press (`.mob-header-logo`, `#nv-logo`) → `/posten` | umgesetzt |
 | F4 | TC-SOCIAL-QUICK-F4-01..02 | `static-site/posten-manifest.json` (`start_url=/posten`); Route in `staticwebapp.config.json` | umgesetzt |
-| F5 | TC-SOCIAL-QUICK-F5-01..02 | `static-site/kiosk.html` Embed-Modus `?embed=mittag` (`html.k-embed`); `static-site/posten.html` dritter Sub-Tab + lazy iframe + `socialSubTab('bestellungen')` | umgesetzt |
+| F5 | TC-SOCIAL-QUICK-F5-01..03 | `static-site/kiosk.html` Embed-Modus `?embed=mittag` (`html.k-embed`); `static-site/posten.html` dritter Sub-Tab + lazy iframe + `socialSubTab('bestellungen')` + Reiter-Badges (gesamt/offen via `/api/lunch-order`) | umgesetzt |
