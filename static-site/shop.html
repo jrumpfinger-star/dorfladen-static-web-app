@@ -579,6 +579,63 @@
     html[data-theme="dark"] .img-popup-img{background:#fff;mix-blend-mode:normal}
     html[data-theme="dark"] .shop-card-img{margin:6px 6px 0;width:calc(100% - 12px);border-radius:10px}
     html[data-theme="dark"] .shop-card-noimg{margin:6px 6px 0;width:calc(100% - 12px);border-radius:10px;background:linear-gradient(135deg,#232c33,#1b2228)}
+
+    /* ============ SHOP-MOBIL-UX (Redesign, mobil) ============ */
+    /* Menü-Button (F2) – nur mobil sichtbar */
+    .shop-menu-btn{display:none;background:rgba(255,255,255,.14);border:none;color:#fff;cursor:pointer;padding:8px;border-radius:11px;align-items:center;justify-content:center}
+    .shop-menu-btn:hover{background:rgba(255,255,255,.28)}
+    .shop-menu-btn svg{width:22px;height:22px;pointer-events:none}
+    .shop-menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;display:none}
+    .shop-menu-overlay.open{display:block}
+    .shop-menu-sheet{position:fixed;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;z-index:401;transform:translateY(100%);transition:transform .25s ease;padding:6px 0 max(12px,env(safe-area-inset-bottom))}
+    .shop-menu-overlay.open .shop-menu-sheet{transform:translateY(0)}
+    .shop-menu-grab{width:44px;height:5px;border-radius:5px;background:#d5dcd8;margin:8px auto 4px}
+    .shop-menu-item{display:flex;align-items:center;gap:14px;padding:15px 20px;font-size:15px;font-weight:600;color:var(--shop-text);cursor:pointer;border:none;background:none;width:100%;text-align:left;text-decoration:none;font-family:inherit}
+    .shop-menu-item:hover{background:var(--shop-gray)}
+    .shop-menu-item svg{width:20px;height:20px;color:var(--shop-green-d);flex-shrink:0}
+    /* 3-Schritt-Faden (F6) */
+    .shop-steps{display:none;gap:4px;padding:9px 14px 5px;background:var(--shop-gray)}
+    .shop-step{flex:1;text-align:center;font-size:10px;color:var(--shop-muted);position:relative}
+    .shop-step .b{width:22px;height:22px;border-radius:50%;background:#fff;border:1.5px solid var(--shop-border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin:0 auto 3px;color:var(--shop-muted)}
+    .shop-step.on{color:var(--shop-green-d);font-weight:700}
+    .shop-step.on .b{background:var(--shop-green);border-color:var(--shop-green);color:#fff}
+    .shop-step::after{content:"";position:absolute;top:11px;left:calc(50% + 15px);right:calc(-50% + 15px);height:1.5px;background:var(--shop-border)}
+    .shop-step:last-child::after{display:none}
+    /* Quick-Chips (F3) – nur mobil */
+    .shop-quickcat{display:none}
+    .shop-chip-badge{background:var(--shop-orange);color:#fff;border-radius:8px;font-size:9px;font-weight:800;padding:1px 5px;margin-left:2px}
+    /* Warenkorb-Balken (F5) */
+    .shop-cart-bar{position:fixed;left:0;right:0;bottom:0;z-index:150;width:100%;border:none;cursor:pointer;
+      background:var(--shop-green);color:#fff;padding:11px 16px calc(11px + env(safe-area-inset-bottom));
+      display:none;align-items:center;gap:12px;box-shadow:0 -6px 20px rgba(15,138,77,.35);font-family:inherit}
+    .shop-cart-bar-ic{position:relative;display:flex;align-items:center}
+    .shop-cart-bar-ic svg{width:24px;height:24px}
+    .shop-cart-bar-badge{position:absolute;top:-8px;right:-10px;background:var(--shop-orange);border-radius:12px;font-size:10px;font-weight:700;padding:1px 6px;min-width:18px;text-align:center}
+    .shop-cart-bar-info{display:flex;flex-direction:column;line-height:1.2;text-align:left}
+    .shop-cart-bar-total{font-size:15px;font-weight:800}
+    .shop-cart-bar-sub{font-size:11px;opacity:.9}
+    .shop-cart-bar-go{margin-left:auto;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.2);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700}
+    .shop-cart-bar-go svg{width:16px;height:16px}
+    @media(min-width:601px){.shop-cart-bar{display:none!important}}
+    @media(max-width:600px){
+      /* F2: Einzel-Icons + Cart-Icon + Login-Banner mobil raus, Menü zeigen */
+      #shop-admin-btn,#shop-history-btn,#shop-user-btn,#shop-cart-btn{display:none!important}
+      #shop-login-banner{display:none!important}
+      .shop-menu-btn{display:flex}
+      /* F6: Faden zeigen */
+      .shop-steps{display:flex}
+      /* F3: Quick-Chips zeigen, Alle-Warengruppen-Button klarer */
+      .shop-quickcat{display:inline-flex}
+      .shop-cat-dd-btn{background:#fff;font-weight:700}
+      /* F5: Platz für Balken schaffen */
+      body.has-cart-bar #shop-content{padding-bottom:80px}
+      body.has-cart-bar{--has-bar:1}
+    }
+    html[data-theme="dark"] .shop-menu-sheet{background:#1b2228;color:var(--shop-text)}
+    html[data-theme="dark"] .shop-menu-item{color:var(--shop-text)}
+    html[data-theme="dark"] .shop-menu-item:hover{background:#232b31}
+    html[data-theme="dark"] .shop-steps{background:#232b31}
+    html[data-theme="dark"] .shop-step .b{background:#1b2228}
   </style>
 </head>
 <body>
@@ -621,6 +678,17 @@
   <button class="shop-topbar-btn" id="shop-cart-btn" title="Warenkorb">
     <i data-lucide="shopping-cart" style="width:20px;height:20px"></i><span class="shop-cart-badge" id="shop-cart-count" style="display:none">0</span>
   </button>
+  <button class="shop-menu-btn" id="shop-menu-btn" title="Menü" aria-label="Menü"><i data-lucide="menu"></i></button>
+</div>
+
+<!-- ── Mobiles Menü (F2) ── -->
+<div class="shop-menu-overlay" id="shop-menu-overlay">
+  <div class="shop-menu-sheet" id="shop-menu-sheet">
+    <div class="shop-menu-grab"></div>
+    <button class="shop-menu-item" id="shop-menu-account"><i data-lucide="user"></i> <span id="shop-menu-account-label">Anmelden / Konto</span></button>
+    <button class="shop-menu-item" id="shop-menu-history"><i data-lucide="clipboard-list"></i> Meine Bestellungen</button>
+    <a href="/shop-admin.html" class="shop-menu-item"><i data-lucide="settings"></i> Verwaltung</a>
+  </div>
 </div>
 
 <!-- ── Login Banner ── -->
@@ -634,12 +702,19 @@
   <span class="shop-cat-pill active" data-cat="bestseller"><i data-lucide="flame" style="width:14px;height:14px"></i> Beliebt</span>
   <div class="shop-cats-desktop" id="shop-cats-desktop"></div>
   <div class="shop-cat-dd" id="shop-cat-dd">
-    <button class="shop-cat-dd-btn" id="shop-cat-dd-btn" type="button"><i data-lucide="layout-grid" style="width:14px;height:14px"></i> Warengruppe…</button>
+    <button class="shop-cat-dd-btn" id="shop-cat-dd-btn" type="button"><i data-lucide="layout-grid" style="width:14px;height:14px"></i> Alle Warengruppen</button>
     <div class="shop-cat-dd-list" id="shop-cat-dd-list"></div>
   </div>
 </div>
 </div><!-- /shop-header -->
 <div class="shop-header-spacer" id="shop-header-spacer"></div>
+
+<!-- ── 3-Schritt-Faden (F6, mobil) ── -->
+<div class="shop-steps" id="shop-steps" aria-hidden="true">
+  <div class="shop-step on"><div class="b">1</div>Abholzeit</div>
+  <div class="shop-step on"><div class="b">2</div>Auswählen</div>
+  <div class="shop-step" id="shop-step-3"><div class="b">3</div>Abholen&nbsp;&amp;&nbsp;zahlen</div>
+</div>
 
 <!-- ── Content ── -->
 <div id="shop-content">
@@ -684,6 +759,13 @@
     <button class="shop-checkout-btn" id="shop-checkout-btn">🛍 Jetzt bestellen</button>
   </div>
 </div>
+
+<!-- ── Warenkorb-Balken (F5, mobil) ── -->
+<button class="shop-cart-bar" id="shop-cart-bar" type="button">
+  <span class="shop-cart-bar-ic"><i data-lucide="shopping-cart"></i><span class="shop-cart-bar-badge" id="shop-cart-bar-count">0</span></span>
+  <span class="shop-cart-bar-info"><span class="shop-cart-bar-total" id="shop-cart-bar-total">0,00 €</span><span class="shop-cart-bar-sub" id="shop-cart-bar-sub">0 Artikel</span></span>
+  <span class="shop-cart-bar-go">Zur Bestellung <i data-lucide="chevron-right"></i></span>
+</button>
 
 <!-- ── Auth Modal ── -->
 <div class="shop-auth-overlay" id="shop-auth-overlay">
@@ -1190,6 +1272,25 @@
     var total=cart.length;
     if(total>0){badge.textContent=total>99?'99+':total;badge.style.display='flex';}
     else{badge.style.display='none';}
+    updateCartBar();
+  }
+
+  function updateCartBar(){
+    var bar=document.getElementById('shop-cart-bar');
+    if(!bar) return;
+    var count=cart.length;
+    if(count>0){
+      var totalItems=cart.reduce(function(s,c){return s+(c.gewichtsware?1:(c.menge||1));},0);
+      document.getElementById('shop-cart-bar-count').textContent=count>99?'99+':count;
+      document.getElementById('shop-cart-bar-total').textContent=fmtP(cartTotal())+' €';
+      document.getElementById('shop-cart-bar-sub').textContent=count===1?'1 Artikel':count+' Artikel';
+      bar.style.display='flex';
+      document.body.classList.add('has-cart-bar');
+    } else {
+      bar.style.display='none';
+      document.body.classList.remove('has-cart-bar');
+    }
+    if(window.lucide) lucide.createIcons();
   }
 
   function markCartItems(){
@@ -1829,14 +1930,12 @@
       }
     }
 
-    // "Nur kurz verfügbar" section
+    // "Nur kurz verfügbar" section – nur zeigen, wenn es kurzfristige Artikel gibt (F4)
     var kurzArtikel=visibleArticles().filter(function(a){return a.kurzfristig;});
-    html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title">'+lucideHtml('clock',18)+' Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
     if(kurzArtikel.length){
+      html+='<div class="shop-section" style="padding:12px 16px 4px"><div class="shop-section-title">'+lucideHtml('clock',18)+' Nur kurz verfügbar <span class="shop-section-count">('+kurzArtikel.length+')</span></div></div>';
       var kurzContent=articleViewMode==='list'?renderArticlesList(kurzArtikel,'',''):renderArticles(kurzArtikel,'','');
       html+=kurzContent.replace(/<div class="shop-section">.*?<\/div><\/div>/,'');
-    } else {
-      html+='<div style="padding:8px 16px 12px;color:#9ca3af;font-size:13px">Aktuell keine kurzfristig verfügbaren Artikel.</div>';
     }
 
     // Beliebt section
@@ -1861,7 +1960,7 @@
     });
     // Update nav state
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')==='bestseller');});
-    var ddBtn=document.getElementById('shop-cat-dd-btn');if(ddBtn){ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Warengruppe\u2026';}
+    var ddBtn=document.getElementById('shop-cat-dd-btn');if(ddBtn){ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Alle Warengruppen';}
     if(window.lucide) lucide.createIcons();
   }
 
@@ -2087,7 +2186,7 @@
     if(ddBtn){
       if(!isPillCat&&activeCat!=='all'){ddBtn.classList.add('active');ddBtn.innerHTML=lucideHtml(getCatLucideName(activeCat),14)+' '+esc(activeCat);}
       else if(activeCat==='all'){ddBtn.classList.add('active');ddBtn.innerHTML=lucideHtml('shopping-cart',14)+' Alle Artikel';}
-      else{ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Warengruppe\u2026';}
+      else{ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Alle Warengruppen';}
     }
     if(window.lucide) lucide.createIcons();
     // Load Fleisch orders into "Schon bestellt" tab
@@ -2327,16 +2426,19 @@
   function toggleCart(open){
     var overlay=document.getElementById('shop-cart-overlay');
     var panel=document.getElementById('shop-cart-panel');
+    var step3=document.getElementById('shop-step-3');
     if(open){
       _savedScrollY=window.scrollY;
       overlay.classList.add('open');panel.classList.add('open');
       document.body.classList.add('cart-open');
       document.body.style.top=(-_savedScrollY)+'px';
+      if(step3) step3.classList.add('on');
       renderCart();
     } else {
       overlay.classList.remove('open');panel.classList.remove('open');
       document.body.classList.remove('cart-open');
       document.body.style.top='';
+      if(step3) step3.classList.remove('on');
       window.scrollTo(0,_savedScrollY);
     }
   }
@@ -2404,6 +2506,25 @@
       if(!favorites.length) favPill.style.display='none';
       catsEl.insertBefore(favPill,ddEl);
 
+      // Quick-Chips (F3, mobil): meistbestückte Warengruppen + Fleisch-Badge
+      (function(){
+        var ranked=categories.map(function(c){return {c:c,n:countByCat(c)};})
+          .filter(function(x){return x.n>0;})
+          .sort(function(a,b){return b.n-a.n;});
+        var picked=[];
+        // Fleisch immer zuerst (wegen -15%-Aktion), falls vorhanden
+        ranked.forEach(function(x){if(isFleischWurst(x.c)&&picked.indexOf(x.c)===-1) picked.push(x.c);});
+        ranked.forEach(function(x){if(picked.length<4&&picked.indexOf(x.c)===-1) picked.push(x.c);});
+        picked.forEach(function(cat){
+          var qp=document.createElement('span');
+          qp.className='shop-cat-pill shop-quickcat';
+          qp.setAttribute('data-cat',cat);
+          var badge=isFleischWurst(cat)?' <span class="shop-chip-badge">-15%</span>':'';
+          qp.innerHTML=lucideHtml(getCatLucideName(cat),14)+' '+esc(cat)+badge;
+          catsEl.insertBefore(qp,ddEl);
+        });
+      })();
+
       // Populate custom dropdown with categories
       var ddList=document.getElementById('shop-cat-dd-list');
       categories.forEach(function(cat){
@@ -2412,7 +2533,8 @@
         var item=document.createElement('div');
         item.className='shop-cat-dd-item';
         item.setAttribute('data-cat-dd',cat);
-        item.innerHTML=lucideHtml(getCatLucideName(cat),16)+' '+esc(cat)+'<span class="cat-dd-count">'+cnt+'</span>';
+        var ddBadge=isFleischWurst(cat)?' <span class="shop-chip-badge">-15%</span>':'';
+        item.innerHTML=lucideHtml(getCatLucideName(cat),16)+' '+esc(cat)+ddBadge+'<span class="cat-dd-count">'+cnt+'</span>';
         ddList.appendChild(item);
       });
       // "Alle Artikel" option
@@ -2558,6 +2680,23 @@
   document.getElementById('shop-cart-overlay').addEventListener('click',function(){toggleCart(false);});
   document.getElementById('shop-checkout-btn').addEventListener('click',doCheckout);
 
+  // Warenkorb-Balken (F5) → Warenkorb öffnen
+  var _cartBar=document.getElementById('shop-cart-bar');
+  if(_cartBar) _cartBar.addEventListener('click',function(){toggleCart(true);});
+
+  // Mobiles Menü (F2)
+  (function(){
+    var mBtn=document.getElementById('shop-menu-btn');
+    var mOv=document.getElementById('shop-menu-overlay');
+    if(!mBtn||!mOv) return;
+    function openM(){mOv.classList.add('open');}
+    function closeM(){mOv.classList.remove('open');}
+    mBtn.addEventListener('click',function(e){e.stopPropagation();openM();});
+    mOv.addEventListener('click',function(e){if(e.target===mOv) closeM();});
+    document.getElementById('shop-menu-account').addEventListener('click',function(){closeM();document.getElementById('shop-user-btn').click();});
+    document.getElementById('shop-menu-history').addEventListener('click',function(){closeM();document.getElementById('shop-history-btn').click();});
+  })();
+
   document.getElementById('shop-user-btn').addEventListener('click',function(){
     if(isLoggedIn()){
       shopConfirm({icon:'👋',title:'Abmelden?',msg:'Du wirst ausgeloggt und deine Sitzung beendet.',ok:'Abmelden',color:'red'},function(){
@@ -2650,7 +2789,7 @@
     if(!pill) return;
     activeCat=pill.getAttribute('data-cat');
     document.querySelectorAll('.shop-cat-pill').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-cat')===activeCat);});
-    var ddBtn=document.getElementById('shop-cat-dd-btn');if(ddBtn){ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Warengruppe\u2026';if(window.lucide) lucide.createIcons();}
+    var ddBtn=document.getElementById('shop-cat-dd-btn');if(ddBtn){ddBtn.classList.remove('active');ddBtn.innerHTML=lucideHtml('layout-grid',14)+' Alle Warengruppen';if(window.lucide) lucide.createIcons();}
     if(activeCat==='bestseller'){showCategoryOverview();} else {showArticles();}
     window.scrollTo(0,0);
   });
