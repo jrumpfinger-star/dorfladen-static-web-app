@@ -1683,8 +1683,9 @@
         .then(function(r){ return r.json(); })
         .then(function(res){
           if(!res.success) return;
-          var todayStr = new Date().toISOString().substring(0,10);
-          var open = (res.orders||[]).filter(function(o){ return o.status < 3 && (o.abholdatum||'').substring(0,10) >= todayStr; });
+          // Offene Bestellungen = noch nicht abgeholt (Status < 3) - wie im Shop unter "Meine Bestellungen",
+          // unabhaengig vom Abholdatum (sonst verschwinden noch offene Bestellungen mit vergangenem Abholtag)
+          var open = (res.orders||[]).filter(function(o){ return o.status < 3; });
           if(!open.length) return;
           var promoLink = document.getElementById('promo-orders-link');
           var promoCount = document.getElementById('promo-orders-count');
