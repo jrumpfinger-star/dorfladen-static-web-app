@@ -66,15 +66,17 @@ Führung der bestehenden Funktionen – **keine neue Geschäftslogik**.
   über den dauerhaften Warenkorb-Balken (F5) bedient.
 - Der bestehende Login-Banner wird in das Menü bzw. den Anmelde-Eintrag
   integriert (kein separater, dauerhaft sichtbarer Banner mehr über dem Fold).
-- Menü öffnet ein einfaches Overlay/Dropdown mit den drei Aktionen; jede Aktion
-  ruft die **bestehende** Funktion auf (`shop-admin.html`, `#shop-history-btn`-
-  Aktion, `showAuth('login')`).
+- Menü öffnet als **Dropdown-Popup direkt unter dem Menü-Button (oben rechts)**,
+  nicht als Bottom-Sheet – entspricht dem gewohnten Standard. Klick daneben
+  schließt es. Jede Aktion ruft die **bestehende** Funktion auf
+  (`shop-admin.html`, `#shop-history-btn`-Aktion, `showAuth('login')`).
 - Auf Desktop bleiben die Einzel-Icons erhalten.
 
 #### F2 Test Cases
 - **TC-SHOP-MOBIL-UX-F2-01:** Bei 375 px zeigt die Topbar Logo + Titel + ein
   Menü-Icon; keine 4 Einzel-Icons.
-- **TC-SHOP-MOBIL-UX-F2-02:** Menü öffnet Einträge „Anmelden/Konto",
+- **TC-SHOP-MOBIL-UX-F2-02:** Menü öffnet als Popup oben rechts (Dropdown unter
+  dem ☰-Button) mit Einträgen „Anmelden/Konto",
   „Meine Bestellungen", „Verwaltung"; jeder Eintrag löst die bisherige Aktion aus.
 - **TC-SHOP-MOBIL-UX-F2-03:** Kein separater Login-Banner mehr unter der Topbar.
 
