@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v23';
+var CACHE_NAME='dorfladen-v24';
 var PRECACHE=[
   '/',
   '/css/style.css',
@@ -48,9 +48,12 @@ self.addEventListener('fetch',function(e){
     return;
   }
   // Network-first for HTML, JS, CSS (always get fresh code)
-  // Note: Firefox may leave request.destination empty, so also check URL extensions
+  // Note: Firefox / manche In-App-Browser (z.B. WhatsApp) lassen request.destination leer und
+  // Navigationen (/, /?tagesinfo=1) enden nicht auf .html - daher zusaetzlich request.mode==='navigate'
+  // pruefen, sonst wuerde die alte, vorab gecachte Startseite ausgeliefert.
   var dest=e.request.destination;
-  var isCode=dest==='document'||dest==='script'||dest==='style'||dest==='worker'
+  var isNav=e.request.mode==='navigate';
+  var isCode=isNav||dest==='document'||dest==='script'||dest==='style'||dest==='worker'
      ||url.endsWith('.html')||url.endsWith('.js')||url.endsWith('.css')||url.endsWith('.json')
      ||url.indexOf('/handbuch/')!==-1;
   if(isCode){
@@ -59,7 +62,13 @@ self.addEventListener('fetch',function(e){
         var clone=response.clone();
         caches.open(CACHE_NAME).then(function(cache){cache.put(e.request,clone);});
         return response;
-      }).catch(function(){return caches.match(e.request);})
+      }).catch(function(){
+        return caches.match(e.request).then(function(c){
+          if(c)return c;
+          if(isNav)return caches.match('/');
+          return undefined;
+        });
+      })
     );
     return;
   }
