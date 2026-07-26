@@ -2118,6 +2118,12 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var dayLabel=res.is_tomorrow?'morgen':'heute';
     if(mobTp){mobTp.style.display='';if(mobTpSub)mobTpSub.textContent=count+' Produkte '+dayLabel;}
 
+    // TagesInfo per Link öffnen (z.B. aus WhatsApp): ?tagesinfo=1 oder #tagesinfo
+    var _tpForce=/(?:[?&])tagesinfo=1(?:&|$)/.test(location.search)||location.hash==='#tagesinfo';
+    if(_tpForce){
+      setTimeout(openModal,400);
+      return;
+    }
     var seenKey='tagespost_seen_'+new Date().toISOString().substring(0,10);
     if(!localStorage.getItem(seenKey)){
       localStorage.setItem(seenKey,1);

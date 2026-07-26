@@ -11737,30 +11737,32 @@
     var hasMittagessen=!!cats['Mittagessen'];
     var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
 
-    // Mittagessen-only: order links
+    // Mittagessen-only: Menü + Link zur TagesInfo (dort kann das Gericht bestellt werden)
     if(onlyMittagessen){
-      var msg='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
+      var msg='\uD83D\uDC49 *Mittagessen heute:*\n\n';
       var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var lnk=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(parseFloat(p.preis).toFixed(2)):'');
-        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';
+        msg+=nr+' *'+p.name+'*'+prStr+'\n';
       });
+      var tiLink=(window.location.origin||'')+'/?tagesinfo=1';
+      msg+='\n\uD83D\uDED2 In der TagesInfo bestellen:\n'+tiLink;
       return msg.trim();
     }
 
-    // For clipboard: only Mittagessen order info with wa.me links
+    // For clipboard: only Mittagessen order info with TagesInfo link
     var msg='';
     if(hasMittagessen){
       var menuNr2=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
-      msg+='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
+      msg+='\uD83D\uDC49 *Mittagessen heute:*\n\n';
       cats['Mittagessen'].forEach(function(p,i){
         var nr=menuNr2[i]||('\u2022');
         var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var lnk=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(parseFloat(p.preis).toFixed(2)):'');
-        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';
+        msg+=nr+' *'+p.name+'*'+prStr+'\n';
       });
+      var tiLink2=(window.location.origin||'')+'/?tagesinfo=1';
+      msg+='\n\uD83D\uDED2 In der TagesInfo bestellen:\n'+tiLink2;
     }
     return msg.trim();
   }

@@ -201,9 +201,10 @@
     var hasMittagessen=!!cats['Mittagessen'];var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
     var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
     if(onlyMittagessen||hasMittagessen){
-      var msg='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
+      var msg='\uD83D\uDC49 *Mittagessen heute:*\n\n';
       var origin=window.location.origin||'';
-      cats['Mittagessen'].forEach(function(p,i){var nr=menuNr[i]||'\u2022';var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';var lnk=origin+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(p.preis):'');msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';});
+      cats['Mittagessen'].forEach(function(p,i){var nr=menuNr[i]||'\u2022';var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';msg+=nr+' *'+p.name+'*'+prStr+'\n';});
+      msg+='\n\uD83D\uDED2 In der TagesInfo bestellen:\n'+origin+'/?tagesinfo=1';
       return msg.trim();
     }
     return '';
