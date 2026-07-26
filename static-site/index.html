@@ -1913,6 +1913,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   var _scrollY=0;
   function openModal(){overlay.classList.add('open');_scrollY=window.scrollY;document.body.style.overflow='hidden';document.body.style.position='fixed';document.body.style.width='100%';document.body.style.top='-'+_scrollY+'px';}
   function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';window.scrollTo(0,_scrollY);}
+  window.tpCloseModal=closeModal;
   fab.addEventListener('click',openModal);
   closeBtn.addEventListener('click',closeModal);
   overlay.addEventListener('click',function(e){if(e.target===overlay)closeModal();});
@@ -2280,6 +2281,9 @@ function submitCmsGate(){
 
 window.addEventListener('message',function(e){
   if(e.data==='closeMittagPopup') closeMittagPopup();
+  // Bestellung im eingebetteten Dialog abgeschlossen: Bestell-Dialog UND
+  // den TagesInfo-Dialog schliessen, sodass man sauber auf der Startseite landet.
+  else if(e.data==='mittagOrderDone'){ closeMittagPopup(); if(window.tpCloseModal) window.tpCloseModal(); }
 });
 </script>
 

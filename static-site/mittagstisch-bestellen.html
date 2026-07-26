@@ -592,6 +592,15 @@ if(window!==window.parent){
         try{ localStorage.setItem('bs_nr', res.bestellnummer||''); localStorage.setItem('bs_email', email); }catch(e){}
         document.getElementById('success-overlay').classList.add('show');
         history.pushState({overlay:'success'},'');
+        // Im eingebetteten Bestell-Dialog (geoeffnet aus der TagesInfo): nach kurzer
+        // Bestaetigung automatisch schliessen. Klickt der Nutzer vorher auf einen der
+        // Buttons (z.B. "Bestellstatus" oder "Weitere Bestellung"), wird der Auto-Close
+        // abgebrochen, damit die gewaehlte Aktion nicht unterbrochen wird.
+        if(window!==window.parent){
+          var _soOv=document.getElementById('success-overlay');
+          var _autoClose=setTimeout(function(){ try{ window.parent.postMessage('mittagOrderDone','*'); }catch(e){} }, 4000);
+          _soOv.addEventListener('click',function(){ clearTimeout(_autoClose); },{once:true});
+        }
       } else {
         errEl.innerHTML = (res.errors || [res.error || 'Bestellung nicht möglich. Bitte prüfen Sie Ihre Eingaben.']).join('<br>');
         errEl.style.display='';
