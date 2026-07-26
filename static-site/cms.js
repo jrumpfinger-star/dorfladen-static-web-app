@@ -11735,36 +11735,14 @@
       cats[c].push(p);
     });
     var hasMittagessen=!!cats['Mittagessen'];
-    var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
 
-    // Mittagessen-only: Menü + Link zur TagesInfo (dort kann das Gericht bestellt werden)
-    if(onlyMittagessen){
-      var msg='\uD83D\uDC49 *Mittagessen heute:*\n\n';
-      var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
-      cats['Mittagessen'].forEach(function(p,i){
-        var nr=menuNr[i]||('\u2022');
-        var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        msg+=nr+' *'+p.name+'*'+prStr+'\n';
-      });
-      var tiLink=(window.location.origin||'')+'/?tagesinfo=1';
-      msg+='\n\uD83D\uDED2 In der TagesInfo bestellen:\n'+tiLink;
-      return msg.trim();
-    }
-
-    // For clipboard: only Mittagessen order info with TagesInfo link
-    var msg='';
+    // Kurzer WhatsApp-Text: Die Gerichte stehen bereits auf dem Bild - der Text braucht nur
+    // den Bestell-Link zur TagesInfo. (WhatsApp zeigt den Link als vollen, klickbaren Text.)
     if(hasMittagessen){
-      var menuNr2=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
-      msg+='\uD83D\uDC49 *Mittagessen heute:*\n\n';
-      cats['Mittagessen'].forEach(function(p,i){
-        var nr=menuNr2[i]||('\u2022');
-        var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        msg+=nr+' *'+p.name+'*'+prStr+'\n';
-      });
-      var tiLink2=(window.location.origin||'')+'/?tagesinfo=1';
-      msg+='\n\uD83D\uDED2 In der TagesInfo bestellen:\n'+tiLink2;
+      var tiLink=(window.location.origin||'')+'/?tagesinfo=1';
+      return '\uD83D\uDC49 Bestellung Mittagessen hier:\n'+tiLink;
     }
-    return msg.trim();
+    return '';
   }
 
   // --- WhatsApp Business Katalog Sync ---
@@ -12055,20 +12033,22 @@
     console.log('[Social] canShareFiles='+canShareFiles);
     // Best case: share with files
     if(canShareFiles){
-      // Copy order text BEFORE share dialog (page has focus now, clipboard works)
+      // Copy order text BEFORE share dialog (page has focus now, clipboard works).
+      // WhatsApp (v.a. Android) verwirft die Bild-Beschriftung - so laesst sich der Text zur Not einfuegen.
       if(msg){
-        try{navigator.clipboard.writeText(msg);}catch(e){}
+        try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).catch(function(){}); } }catch(e){}
       }
       var shareData={files:files.length>1?[files[0]]:files};
+      if(msg)shareData.text=msg;
       navigator.share(shareData).then(function(){
-        socialStatus('soc-post-status','\u2705 Poster geteilt! Bestelltext mit Strg+V einf\u00fcgen.',true);
+        socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00b7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
       }).catch(function(err){
         if(err.name==='AbortError') return;
         console.warn('[Social] share error:',err.message);
         // Fallback to clipboard+WhatsApp
         socialShareViaClipboard(files,msg,hasMt);
       });
-      socialStatus('soc-post-status','Poster wird geteilt...',true);
+      socialStatus('soc-post-status','Wird geteilt...',true);
       return;
     }
     // Mobile fallback: copy poster to clipboard + open WhatsApp

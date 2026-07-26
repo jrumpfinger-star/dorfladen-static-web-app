@@ -197,15 +197,11 @@
 
   // --- WhatsApp message builder ---
   function socialBuildWhatsAppMsg(selected){
-    var cats={};selected.forEach(function(p){var c=p.kategorie||'Sonstiges';if(!cats[c])cats[c]=[];cats[c].push(p);});
-    var hasMittagessen=!!cats['Mittagessen'];var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
-    var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
-    if(onlyMittagessen||hasMittagessen){
-      var msg='\uD83D\uDC49 *Mittagessen heute:*\n\n';
+    var hasMittagessen=selected.some(function(p){return (p.kategorie||'Sonstiges')==='Mittagessen';});
+    // Kurzer Text: die Gerichte stehen bereits auf dem Bild - nur der Bestell-Link zur TagesInfo.
+    if(hasMittagessen){
       var origin=window.location.origin||'';
-      cats['Mittagessen'].forEach(function(p,i){var nr=menuNr[i]||'\u2022';var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';msg+=nr+' *'+p.name+'*'+prStr+'\n';});
-      msg+='\n\uD83D\uDED2 In der TagesInfo bestellen:\n'+origin+'/?tagesinfo=1';
-      return msg.trim();
+      return '\uD83D\uDC49 Bestellung Mittagessen hier:\n'+origin+'/?tagesinfo=1';
     }
     return '';
   }
@@ -219,16 +215,29 @@
   function socialCopyText(text){return new Promise(function(resolve){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){resolve(true);},function(){resolve(socialCopyTextFallback(text));});}else{resolve(socialCopyTextFallback(text));}});}
   function socialShareFiles(files,msg,hasMt){
     var isMobile=socialIsMobile();
-    if(isMobile){
-      var canShareFiles=false;if(navigator.share&&navigator.canShare){try{canShareFiles=navigator.canShare({files:files});}catch(e){}}
-      if(canShareFiles){var shareData={files:files.length>1?[files[0]]:files};if(msg)shareData.text=msg;navigator.share(shareData).then(function(){socialStatus('soc-post-status','\u2705 Poster geteilt!',true);}).catch(function(err){if(err.name==='AbortError')return;socialShareViaClipboard(files,msg);});socialStatus('soc-post-status','Poster wird geteilt...',true);return;}
-      socialShareViaClipboard(files,msg);return;
-    }
-    // Desktop/Tablet: Text kopieren (Seite hat noch Fokus), Poster herunterladen, dann WhatsApp Web oeffnen.
-    // Der Text ist ueber die wa.me-URL bereits in WhatsApp vorausgefuellt; das Poster muss manuell angehaengt werden.
+    var shareOne=files.length>1?[files[0]]:files;
+    var canShareFiles=false;if(navigator.share&&navigator.canShare){try{canShareFiles=navigator.canShare({files:shareOne});}catch(e){}}
+    // Text zusaetzlich in die Zwischenablage kopieren: WhatsApp (v.a. Android) verwirft die
+    // Bild-Beschriftung beim Teilen mit Datei - so laesst sich der Text/Link zur Not im Chat einfuegen.
     if(msg){ try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).catch(function(){}); } }catch(e){} }
+    // Bevorzugt: natives Teilen mit Datei (oeffnet die System-Auswahl inkl. WhatsApp) - Mobil UND Desktop.
+    if(canShareFiles){
+      var shareData={files:shareOne};if(msg)shareData.text=msg;
+      navigator.share(shareData).then(function(){
+        socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
+      }).catch(function(err){
+        if(err.name==='AbortError')return;
+        if(isMobile){socialShareViaClipboard(files,msg);}
+        else{socialFallbackDownloadFiles(files);window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');}
+      });
+      socialStatus('soc-post-status','Wird geteilt\u2026',true);
+      return;
+    }
+    // Kein natives Teilen mit Datei verfuegbar:
+    if(isMobile){socialShareViaClipboard(files,msg);return;}
+    // Desktop-Browser ohne Web-Share: Poster herunterladen, dann WhatsApp Web mit vorausgefuelltem Text.
     socialFallbackDownloadFiles(files);
-    socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE), Text ist bereits eingef\u00fcgt':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
+    socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE), Text ist in der Zwischenablage':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
     window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
   }
 
