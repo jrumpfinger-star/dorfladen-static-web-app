@@ -2,9 +2,18 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Kiosk – Dorfladen Oberornau</title>
   <link rel="icon" href="/favicon.ico">
+
+  <!-- Vollbild-/Kiosk-Web-App (randloser Start via "Zum Startbildschirm hinzufügen") -->
+  <link rel="manifest" href="/kiosk-manifest.json">
+  <meta name="theme-color" content="#2d5016">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kiosk">
+  <link rel="apple-touch-icon" href="/images/icon-192.png">
   <style>
     :root{--c-pri:var(--dl-green,#2d5016);--c-green:var(--dl-green-action,#2e7d4f);--c-green-light:#dcfce7;--c-red:var(--dl-red,#dc2626);--c-orange:var(--dl-orange,#e65100);--c-yellow:#f59e0b;--c-bg:#f0f2f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--c-border:#e5e7eb;--radius:14px;--touch-min:56px;--c-surf2:#f9fafb;--c-tint:#f0fdf4}
     html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-border:#2a333a;--c-green:#5cb85f;--c-green-light:#1e2a20;--c-surf2:#161c20;--c-tint:#1e2a20}
