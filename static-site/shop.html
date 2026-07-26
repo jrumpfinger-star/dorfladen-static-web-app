@@ -1773,7 +1773,7 @@
       html+='<button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button>';
       html+='<div class="shop-card-badges">'+badges+'</div>';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-card-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
-      else html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">'+getCatEmoji(a.warengruppe)+'</div>';
+      else html+='<div class="shop-card-noimg" id="simg-'+esc(a.artikelnummer)+'">'+getCatTileIcon(a.warengruppe,34)+'</div>';
       html+='<div class="shop-card-body">';
       html+='<div class="shop-card-name">'+esc(a.bezeichnung)+'</div>';
       html+='<div class="shop-card-meta">'+esc(a.warengruppe)+'</div>';
@@ -1810,7 +1810,7 @@
       html+='<div class="shop-list-item" data-artnr="'+esc(a.artikelnummer)+'">';
       html+='<span class="shop-cart-badge">'+lucideHtml('shopping-cart',10)+'</span>';
       if(imageCache[a.artikelnummer]) html+='<img class="shop-list-img" id="simg-'+esc(a.artikelnummer)+'" src="'+imageCache[a.artikelnummer]+'" alt="">';
-      else html+='<div class="shop-list-noimg" id="simg-'+esc(a.artikelnummer)+'">'+getCatEmoji(a.warengruppe)+'</div>';
+      else html+='<div class="shop-list-noimg" id="simg-'+esc(a.artikelnummer)+'">'+getCatTileIcon(a.warengruppe,20)+'</div>';
       html+='<div class="shop-list-info"><div style="display:flex;align-items:center;gap:4px"><div class="shop-list-name" style="flex:1">'+esc(a.bezeichnung)+' <span class="shop-list-meta">'+esc(a.warengruppe)+'</span></div><button class="shop-fav-btn'+(isFav(a.artikelnummer)?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav(a.artikelnummer)?'\u2764':'\u2661')+'</button></div>';
       html+='<div class="shop-list-row"><div class="shop-list-price">'+priceHtml+'</div>';
       html+='<div class="shop-list-actions">';
@@ -1858,9 +1858,9 @@
   }
   function lucideHtml(name,size){return '<i data-lucide="'+name+'" style="width:'+(size||14)+'px;height:'+(size||14)+'px"></i>';}
   function getCatIcon(cat){return lucideHtml(getCatLucideName(cat),16);}
+  // Groesseres Kategorie-Icon fuer Bild-Platzhalter auf Produktkarten (statt Emoji)
+  function getCatTileIcon(cat,size,color){return '<i data-lucide="'+getCatLucideName(cat)+'" style="width:'+(size||24)+'px;height:'+(size||24)+'px;color:'+(color||'#79b394')+'"></i>';}
   var DEFAULT_CAT_ICON=lucideHtml('package',16);
-  var CAT_EMOJI={'Backwaren':'🥐','Brot':'🍞','Molkereiprodukte':'🥛','Obst und Gemüse':'🍎','Obst':'🍎','Gemüse':'🥬','Fleisch':'🥩','Wurst':'🥩','Metzgerei':'🥩','Fleisch und Wurstwaren':'🥩','Eier':'🥚','Bier':'🍺','Getränke':'🥤','Wein':'🍷','Spirituosen':'🍷','Saft':'🧃','Tiefkühl':'❄️','Süßwaren':'🍬','Snacks':'🍬','Kaffee':'☕','Tee':'🍵','Gewürze':'🌿','Konserven':'🥫','Nudeln':'🍝','Reis':'🍚','Drogerie':'🧴','Haushalt':'🧹','Eis':'🍦','Cafeteria':'☕','Sonstiges':'📦','Lebensmittel':'🍽️'};
-  function getCatEmoji(cat){if(CAT_EMOJI[cat]) return CAT_EMOJI[cat];var keys=Object.keys(CAT_EMOJI);for(var i=0;i<keys.length;i++){if(cat.toLowerCase().indexOf(keys[i].toLowerCase())!==-1) return CAT_EMOJI[keys[i]];}return '📦';}
   var FLEISCH_KW=['fleisch','wurst','metzger','aufschnitt','schinken','salami'];
   function isFleischWurst(wg){var w=(wg||'').toLowerCase();return FLEISCH_KW.some(function(k){return w.indexOf(k)!==-1;});}
   var viewMode='categories'; // 'categories' or 'articles'
@@ -2075,7 +2075,7 @@
           var pArt=allArticles.find(function(x){return x.artikelnummer===pArtnr||x.strichcode===pArtnr;});
           reorderBanner+='<div class="reorder-item">';
           if(imgSrc) reorderBanner+='<img class="reorder-item-img" src="'+imgSrc+'" alt="">';
-          else reorderBanner+='<div class="reorder-item-noimg">'+getCatEmoji(pArt?pArt.warengruppe:'')+'</div>';
+          else reorderBanner+='<div class="reorder-item-noimg">'+getCatTileIcon(pArt?pArt.warengruppe:'',18,'#9ca3af')+'</div>';
           reorderBanner+='<div class="reorder-item-info"><div class="reorder-item-name">'+esc(p.bezeichnung||'')+'</div><div class="reorder-item-qty">'+esc(p.menge)+' '+esc(p.einheit||'')+'</div></div>';
           if(pPreis) reorderBanner+='<div class="reorder-item-price">'+pPreis+' €</div>';
           reorderBanner+='<button data-reorder-single="'+esc(pArtnr)+'" data-reorder-single-qty="'+(Number(p.menge)||1)+'" class="reorder-item-add" title="In den Warenkorb">+</button>';
