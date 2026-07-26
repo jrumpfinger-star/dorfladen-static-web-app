@@ -137,6 +137,17 @@ Bereichs-Umschalter erreichbar.
 - **Action:** Bereich Verlauf öffnen.
 - **Expected:** Der veröffentlichte Post erscheint in der Liste.
 
+**TC-SOCIAL-QUICK-F1-06: Mittagessen (Heute/Morgen) im Produkt-Picker**
+- **Setup:** Für die Zielwoche ist im Wochenplan mindestens ein Gericht mit Preis
+  hinterlegt (z. B. Montag).
+- **Action:** `/posten` öffnen, im „Neuer Post“-Assistenten auf **Morgen**
+  umschalten (Tag mit Gericht wählen).
+- **Expected:** Die Sektion „🍽 Morgiges Mittagessen (<Tag>)“ zeigt das/die
+  Gericht(e) des Tages mit Preis als auswählbare Zeile(n). Voraussetzung:
+  `posten.html` lädt `/api/wochenplan` und stellt `window.SOCIAL_MEALS` bereit,
+  damit `social.js` das Mittagessen des gewählten Tages einblendet (die
+  Wochenplan-API verschiebt am Sa/So automatisch auf die nächste Woche).
+
 ### F2: Zugriffsschutz – nicht für Kund:innen
 
 #### F2 Description

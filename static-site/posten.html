@@ -460,6 +460,35 @@
 <script src="/js/social.js"></script>
 <script src="/js/social-poster.js"></script>
 <script src="/js/admin-auth.js"></script>
+  <!-- Wochenplan/Mittagessen laden: stellt window.SOCIAL_MEALS fuer social.js bereit,
+       damit die Mittagessen-Sektion (Heute/Morgen) im Post-Assistenten erscheint.
+       GET /api/wochenplan ist oeffentlich und liefert ab Sa/So automatisch die naechste Woche. -->
+  <script>
+  (function(){
+    function loadDishesForSocial(){
+      fetch('/api/wochenplan')
+        .then(function(r){return r.json();})
+        .then(function(res){
+          var dishes = (res && res.data ? res.data : []).filter(function(d){return d.dl_gericht && d.dl_preis;});
+          window.SOCIAL_MEALS = function(){
+            return dishes.map(function(d){
+              return {id:d.dl_wochenplanid||'', gericht:d.dl_gericht, preis:d.dl_preis, wochentag:d.dl_wochentag, datum:d.dl_datum||''};
+            });
+          };
+          // Post-Assistent neu aufbauen, damit die Mittagessen-Sektion sofort erscheint.
+          if(window._socialModule && typeof window._socialModule.socialBuildPostItems === 'function'){
+            try{ window._socialModule.socialBuildPostItems(); }catch(e){}
+          }
+        })
+        .catch(function(){});
+    }
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', loadDishesForSocial);
+    } else {
+      loadDishesForSocial();
+    }
+  })();
+  </script>
   <!-- Social wizard inline JS (ported from kiosk.html, not part of social.js) -->
   <script>
   (function(){
