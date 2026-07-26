@@ -4828,6 +4828,46 @@ var K = (function(){
     document.addEventListener('click',once);
     document.addEventListener('touchend',once);
   }
+
+  /* Auto-Update: prueft regelmaessig die Build-Nummer und laedt die Seite neu,
+     sobald ein neues Deploy vorliegt. Reload nur, wenn keine Bedienung laeuft
+     (kein offenes Modal, kein fokussiertes Eingabefeld), sonst spaeter erneut. */
+  var CHECK_INTERVAL_MS = 3 * 60 * 1000; // alle 3 Minuten
+  var initialBuild = null;
+  var updatePending = false;
+
+  function isBusy(){
+    if(document.querySelector('.k-modal-bg.open')) return true;
+    var a = document.activeElement;
+    if(a){
+      var tag = (a.tagName || '').toLowerCase();
+      if(tag === 'input' || tag === 'textarea' || tag === 'select' || a.isContentEditable) return true;
+    }
+    return false;
+  }
+
+  function reloadIfIdle(){
+    if(!updatePending) return;
+    if(isBusy()) return;
+    window.location.reload(true);
+  }
+
+  function checkVersion(){
+    fetch('/version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(v){
+        if(v == null || typeof v.build === 'undefined') return;
+        if(initialBuild === null){ initialBuild = v.build; return; }
+        if(v.build !== initialBuild){ updatePending = true; reloadIfIdle(); }
+      })
+      .catch(function(){});
+  }
+
+  checkVersion();
+  setInterval(checkVersion, CHECK_INTERVAL_MS);
+  // Falls ein Update ansteht, beim Schliessen eines Modals / Fokusverlust nachziehen.
+  document.addEventListener('click', reloadIfIdle);
+  document.addEventListener('focusout', function(){ setTimeout(reloadIfIdle, 300); });
 })();
 </script>
 </body>
