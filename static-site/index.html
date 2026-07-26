@@ -8,6 +8,36 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Fokus-Modus: Wird die Seite ueber den TagesInfo-Link (z.B. aus WhatsApp) mit
+       ?tagesinfo=1 geoeffnet, soll direkt nur der TagesInfo-Dialog erscheinen - ohne
+       die Startseite dahinter. Ein deckendes Cover verdeckt die Startseite, bis der
+       Dialog offen ist; danach schliesst der Dialog zurueck auf die Startseite. -->
+  <style id="tp-focus-style">
+    html.tp-focus{background:#0b3d2e}
+    html.tp-focus body{overflow:hidden !important}
+    #tp-focus-cover{display:none}
+    html.tp-focus #tp-focus-cover{display:flex;position:fixed;inset:0;z-index:900;background:linear-gradient(160deg,#124e37,#0b3d2e);flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+    #tp-focus-cover .tpfc-spin{width:40px;height:40px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:tpfcSpin 1s linear infinite}
+    @keyframes tpfcSpin{to{transform:rotate(360deg)}}
+    #tp-focus-cover .tpfc-txt{font-size:15px;font-weight:600;opacity:.9}
+  </style>
+  <script>
+    (function(){
+      try{
+        var s=location.search,h=location.hash;
+        if(/(?:[?&])tagesinfo=1(?:&|$)/.test(s)||h==='#tagesinfo'){
+          document.documentElement.classList.add('tp-focus');
+          // Sicherheitsnetz: Falls der Dialog nicht oeffnet (Funktion deaktiviert, kein
+          // Post), nach 4s die Startseite wieder freigeben statt leerem Cover.
+          setTimeout(function(){
+            var ov=document.getElementById('tp-overlay');
+            if(!ov||!ov.classList.contains('open')) document.documentElement.classList.remove('tp-focus');
+          },4000);
+        }
+      }catch(e){}
+    })();
+  </script>
+
   <title>Dorfladen Oberornau – Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
 
   <meta name="description" content="Dorfladen Oberornau – regionale Nahversorgung, gemütlicher Treffpunkt, Postfiliale. Frühstück, Mittagessen, Brotzeit und mehr.">
@@ -41,6 +71,12 @@
 </head>
 
 <body class="mob-home">
+
+<!-- Deckendes Cover fuer den TagesInfo-Fokus-Modus (siehe tp-focus im head) -->
+<div id="tp-focus-cover" aria-hidden="true">
+  <div class="tpfc-spin"></div>
+  <div class="tpfc-txt">TagesInfo wird geladen…</div>
+</div>
 
 <!-- Skip to content (Accessibility) -->
 
@@ -1912,7 +1948,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   var fab=document.getElementById('tp-fab'),overlay=document.getElementById('tp-overlay'),modal=document.getElementById('tp-modal'),closeBtn=document.getElementById('tp-close');
   var _scrollY=0;
   function openModal(){overlay.classList.add('open');_scrollY=window.scrollY;document.body.style.overflow='hidden';document.body.style.position='fixed';document.body.style.width='100%';document.body.style.top='-'+_scrollY+'px';}
-  function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';window.scrollTo(0,_scrollY);}
+  function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';window.scrollTo(0,_scrollY);document.documentElement.classList.remove('tp-focus');}
   window.tpCloseModal=closeModal;
   fab.addEventListener('click',openModal);
   closeBtn.addEventListener('click',closeModal);
@@ -2123,7 +2159,9 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     // TagesInfo per Link öffnen (z.B. aus WhatsApp): ?tagesinfo=1 oder #tagesinfo
     var _tpForce=/(?:[?&])tagesinfo=1(?:&|$)/.test(location.search)||location.hash==='#tagesinfo';
     if(_tpForce){
-      setTimeout(openModal,400);
+      // Im Fokus-Modus sofort oeffnen (das Cover verdeckt die Startseite bis dahin).
+      if(document.documentElement.classList.contains('tp-focus')) openModal();
+      else setTimeout(openModal,400);
       return;
     }
     var seenKey='tagespost_seen_'+new Date().toISOString().substring(0,10);
