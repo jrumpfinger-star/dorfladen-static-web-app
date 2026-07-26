@@ -1688,7 +1688,7 @@
   })();
 
   // Shop-Bestellungen: Floating badge showing count of open orders
-  (function(){
+  function reloadShopOrders(){
     try{
       var token = localStorage.getItem('dl_shop_token')||'';
       if(!token) return;
@@ -1699,17 +1699,24 @@
           // Offene Bestellungen = noch nicht abgeholt (Status < 3) - wie im Shop unter "Meine Bestellungen",
           // unabhaengig vom Abholdatum (sonst verschwinden noch offene Bestellungen mit vergangenem Abholtag)
           var open = (res.orders||[]).filter(function(o){ return o.status < 3; });
-          if(!open.length) return;
           var promoLink = document.getElementById('promo-orders-link');
           var promoCount = document.getElementById('promo-orders-count');
-          if(promoLink){ promoLink.style.display=''; promoCount.textContent=open.length; }
           var mobOrders = document.getElementById('mob-action-orders');
           var mobOrdersSub = document.getElementById('mob-orders-sub');
+          if(!open.length){
+            if(promoLink) promoLink.style.display='none';
+            if(mobOrders) mobOrders.style.display='none';
+            renderOrdersPopup([]);
+            return;
+          }
+          if(promoLink){ promoLink.style.display=''; promoCount.textContent=open.length; }
           if(mobOrders){ mobOrders.style.display=''; if(mobOrdersSub) mobOrdersSub.textContent=open.length+' offen'; }
           renderOrdersPopup(open);
         }).catch(function(){});
     }catch(e){}
-  })();
+  }
+  window.reloadShopOrders=reloadShopOrders;
+  reloadShopOrders();
 
   // Scroll lock helpers for overlays
   window.dlLockScroll=function(){document.documentElement.style.setProperty('--scroll-y','-'+window.scrollY+'px');document.body.classList.add('overlay-open');};
@@ -1799,10 +1806,42 @@
     h+='</div>';
     h+=posHtml;
     if(total) h+='<div style="display:flex;justify-content:space-between;padding:10px 0;border-top:2px solid #e5e7eb;margin-top:4px"><span style="font-weight:700;color:#374151">Gesamt</span><span style="font-size:18px;font-weight:800;color:#2e7d4f">'+total+'</span></div>';
+    // Kunden-Kommunikation: Antwort des Ladens + eigene Nachricht anzeigen
+    if(o.personal_antwort) h+='<div class="od-msg-reply"><strong>\ud83d\udcac Antwort vom Dorfladen</strong><br>'+odEsc(o.personal_antwort)+'</div>';
+    if(o.kunde_kommentar) h+='<div class="od-msg-mine"><strong>\ud83d\udcac Ihre Nachricht</strong><br>'+odEsc(o.kunde_kommentar)+'</div>';
+    // Aktionen: Nachricht (Status<3 = noch nicht abgeholt/storniert), Stornieren (Status<2 = Neu/Packen)
+    var canMsg=st<3, canCancel=st<2;
+    if(canMsg||canCancel){
+      h+='<div class="od-actions">';
+      if(canMsg) h+='<button class="od-actbtn msg" onclick="odToggleMsg()">\ud83d\udcac Nachricht</button>';
+      if(canCancel) h+='<button class="od-actbtn cancel" onclick="odToggleStorno()">\u2715 Stornieren</button>';
+      h+='</div>';
+      if(canMsg) h+='<div class="od-panel" id="od-panel-msg" style="display:none"><textarea id="od-msg-text" maxlength="500" placeholder="Ihre Nachricht an den Dorfladen\u2026"></textarea><div class="od-panel-ft"><button class="od-mini" onclick="odHidePanels()">Abbrechen</button><button class="od-mini primary" onclick="odSendMsg()">Senden</button></div></div>';
+      if(canCancel) h+='<div class="od-panel" id="od-panel-storno" style="display:none"><div class="od-panel-warn">Diese Bestellung wirklich stornieren? Das kann nicht r\u00fcckg\u00e4ngig gemacht werden.</div><textarea id="od-storno-grund" maxlength="200" placeholder="Grund f\u00fcr die Stornierung\u2026"></textarea><div class="od-hint" id="od-storno-hint" style="display:none">Bitte geben Sie einen Grund an.</div><div class="od-panel-ft"><button class="od-mini" onclick="odHidePanels()">Abbrechen</button><button class="od-mini danger" onclick="odConfirmStorno()">Stornieren</button></div></div>';
+    }
+    window._odOrderId=o.id;
     document.getElementById('od-body').innerHTML=h;
     document.getElementById('od-overlay').classList.add('open');
     dlLockScroll();
   }
+
+  function odEsc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;}
+  function odToast(msg){var t=document.createElement('div');t.className='od-toast';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(function(){t.classList.add('show');});setTimeout(function(){t.classList.remove('show');setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},250);},2600);}
+  window.odToggleMsg=function(){var m=document.getElementById('od-panel-msg'),s=document.getElementById('od-panel-storno');if(s)s.style.display='none';if(m){m.style.display=(m.style.display==='none'?'block':'none');var ta=document.getElementById('od-msg-text');if(ta&&m.style.display==='block')ta.focus();}};
+  window.odToggleStorno=function(){var m=document.getElementById('od-panel-msg'),s=document.getElementById('od-panel-storno');if(m)m.style.display='none';if(s){s.style.display=(s.style.display==='none'?'block':'none');var ta=document.getElementById('od-storno-grund');if(ta&&s.style.display==='block')ta.focus();}};
+  window.odHidePanels=function(){var m=document.getElementById('od-panel-msg'),s=document.getElementById('od-panel-storno');if(m)m.style.display='none';if(s)s.style.display='none';};
+  function odPatch(payload,okMsg){
+    var token=localStorage.getItem('dl_shop_token')||'';
+    fetch('/api/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':token},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();})
+      .then(function(x){
+        if(x&&x.success){ odToast(okMsg); var ov=document.getElementById('od-overlay'); if(ov)ov.classList.remove('open'); dlUnlockScroll(); if(typeof reloadShopOrders==='function')reloadShopOrders(); }
+        else { odToast((x&&x.error)||'Aktion fehlgeschlagen'); }
+      })
+      .catch(function(){ odToast('Aktion fehlgeschlagen. Bitte erneut versuchen.'); });
+  }
+  window.odSendMsg=function(){var ta=document.getElementById('od-msg-text');var v=(ta&&ta.value||'').trim();if(!v){if(ta)ta.focus();return;}odPatch({id:window._odOrderId,kunde_kommentar:v},'\u2705 Nachricht gesendet');};
+  window.odConfirmStorno=function(){var ta=document.getElementById('od-storno-grund');var v=(ta&&ta.value||'').trim();var hint=document.getElementById('od-storno-hint');if(!v){if(hint)hint.style.display='block';if(ta)ta.focus();return;}odPatch({id:window._odOrderId,customer_action:'cancel',storno_grund:'Kundengrund: '+v},'Bestellung storniert');};
 </script>
 
 <!-- ====== BESTELLUNGEN POPUP ====== -->
@@ -1834,6 +1873,22 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 .od-close{position:absolute;top:10px;right:10px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:6px 10px;border-radius:8px;line-height:1}
 .od-close:hover{background:rgba(255,255,255,.15)}
 .od-body{padding:16px}
+.od-msg-reply{margin-top:12px;background:#eef7f1;border:1px solid #cfe8d8;border-radius:10px;padding:10px;font-size:13px;color:#1e3a2f;line-height:1.4}
+.od-msg-mine{margin-top:12px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:10px;font-size:13px;color:#374151;line-height:1.4}
+.od-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.od-actbtn{flex:1;min-width:120px;padding:10px;border-radius:10px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;font-weight:600;cursor:pointer}
+.od-actbtn.msg{color:#1e3a2f}
+.od-actbtn.cancel{color:#b91c1c;border-color:#fecaca;background:#fef2f2}
+.od-panel{margin-top:12px;border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fafafa}
+.od-panel textarea{width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:60px}
+.od-panel-warn{font-size:12px;color:#b91c1c;font-weight:600;margin-bottom:8px}
+.od-hint{font-size:12px;color:#b91c1c;margin-top:6px}
+.od-panel-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.od-mini{padding:8px 14px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.od-mini.primary{background:#2e7d4f;color:#fff;border-color:#2e7d4f}
+.od-mini.danger{background:#dc2626;color:#fff;border-color:#dc2626}
+.od-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:2000;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;max-width:90vw;text-align:center}
+.od-toast.show{opacity:1}
 @keyframes odpulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media(max-width:600px){.od-modal{max-height:calc(100vh - 40px);border-radius:12px}.od-head{border-radius:12px 12px 0 0}}
 </style>
