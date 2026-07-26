@@ -213,6 +213,27 @@
   // Text zuverlässig in die Zwischenablage kopieren (mit execCommand-Fallback)
   function socialCopyTextFallback(text){try{var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.top='-1000px';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();var ok=document.execCommand('copy');document.body.removeChild(ta);return ok;}catch(e){return false;}}
   function socialCopyText(text){return new Promise(function(resolve){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){resolve(true);},function(){resolve(socialCopyTextFallback(text));});}else{resolve(socialCopyTextFallback(text));}});}
+  // Dauerhaft sichtbarer Ausweich-Button: Da der Browser nicht erkennen kann, ob die WhatsApp-App
+  // im System-Teilen-Dialog verfuegbar ist, bekommt der Nutzer zusaetzlich immer einen sicheren Weg -
+  // WhatsApp Web mit vorausgefuelltem Text oeffnen (Poster wird dafuer heruntergeladen zum Anhaengen).
+  function socialShowWaWebBtn(files,msg){
+    try{
+      var anchor=document.getElementById('soc-post-status');var parent=anchor&&anchor.parentNode;if(!parent)return;
+      var btn=document.getElementById('soc-wa-web-btn');
+      if(!btn){
+        btn=document.createElement('button');btn.id='soc-wa-web-btn';btn.type='button';
+        btn.style.cssText='display:block;margin:8px 0 0;padding:10px 14px;width:100%;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer';
+        if(anchor.nextSibling)parent.insertBefore(btn,anchor.nextSibling);else parent.appendChild(btn);
+      }
+      btn.innerHTML='\uD83D\uDCAC WhatsApp Web \u00f6ffnen (Poster wird geladen)';
+      btn.onclick=function(){
+        if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
+        socialFallbackDownloadFiles(files);
+        window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+      };
+      btn.style.display='block';
+    }catch(e){}
+  }
   function socialShareFiles(files,msg,hasMt){
     var isMobile=socialIsMobile();
     var shareOne=files.length>1?[files[0]]:files;
@@ -231,6 +252,8 @@
         else{socialFallbackDownloadFiles(files);window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');}
       });
       socialStatus('soc-post-status','Wird geteilt\u2026',true);
+      // Auf Desktop zusaetzlich den sicheren WhatsApp-Web-Weg anbieten (App evtl. nicht installiert).
+      if(!isMobile)socialShowWaWebBtn(files,msg);
       return;
     }
     // Kein natives Teilen mit Datei verfuegbar:

@@ -12023,6 +12023,27 @@
   function socialIsMobile(){
     return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
+  // Dauerhaft sichtbarer Ausweich-Button: Der Browser kann nicht erkennen, ob die WhatsApp-App im
+  // System-Teilen-Dialog verfuegbar ist - deshalb bekommt der Nutzer zusaetzlich immer einen sicheren
+  // Weg: WhatsApp Web mit vorausgefuelltem Text (Poster wird zum Anhaengen heruntergeladen).
+  function socialShowWaWebBtn(files,msg){
+    try{
+      var anchor=document.getElementById('soc-post-status');var parent=anchor&&anchor.parentNode;if(!parent)return;
+      var btn=document.getElementById('soc-wa-web-btn');
+      if(!btn){
+        btn=document.createElement('button');btn.id='soc-wa-web-btn';btn.type='button';
+        btn.style.cssText='display:block;margin:8px 0 0;padding:10px 14px;width:100%;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer';
+        if(anchor.nextSibling)parent.insertBefore(btn,anchor.nextSibling);else parent.appendChild(btn);
+      }
+      btn.innerHTML='\uD83D\uDCAC WhatsApp Web \u00f6ffnen (Poster wird geladen)';
+      btn.onclick=function(){
+        if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
+        socialFallbackDownloadFiles(files);
+        window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+      };
+      btn.style.display='block';
+    }catch(e){}
+  }
   function socialShareFiles(files,msg,hasMt){
     console.log('[Social] share: '+files.length+' files, hasMt='+hasMt+', hasShare='+!!navigator.share);
     // Check if navigator.share supports files
@@ -12049,6 +12070,8 @@
         socialShareViaClipboard(files,msg,hasMt);
       });
       socialStatus('soc-post-status','Wird geteilt...',true);
+      // Auf Desktop zusaetzlich den sicheren WhatsApp-Web-Weg anbieten (App evtl. nicht installiert).
+      if(!socialIsMobile())socialShowWaWebBtn(files,msg);
       return;
     }
     // Mobile fallback: copy poster to clipboard + open WhatsApp
