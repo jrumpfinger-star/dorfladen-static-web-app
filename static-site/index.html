@@ -2281,6 +2281,37 @@ window.addEventListener('message',function(e){
 @keyframes bsSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
 </style>
 
+<script>
+/* Versteckter Personal-Einstieg (SOCIAL-QUICK F3):
+   Logo lange druecken (~650ms) oeffnet den internen Bereich /posten.
+   Fuer Kund:innen unsichtbar; normaler Klick/Tap navigiert unveraendert zur Startseite. */
+(function(){
+  var HOLD_MS = 650;
+  var logos = document.querySelectorAll('.mob-header-logo, #nv-logo');
+  if(!logos.length) return;
+  logos.forEach(function(el){
+    var timer = null, fired = false;
+    function start(){
+      fired = false;
+      clearTimeout(timer);
+      timer = setTimeout(function(){
+        fired = true;
+        window.location.href = '/posten';
+      }, HOLD_MS);
+    }
+    function cancel(){ clearTimeout(timer); timer = null; }
+    el.addEventListener('pointerdown', start);
+    el.addEventListener('pointerup', cancel);
+    el.addEventListener('pointerleave', cancel);
+    el.addEventListener('pointercancel', cancel);
+    // Long-Press-Navigation nicht durch den normalen Link-Klick ueberschreiben lassen.
+    el.addEventListener('click', function(e){ if(fired){ e.preventDefault(); e.stopPropagation(); fired = false; } }, true);
+    // Kontextmenue/Textauswahl bei langem Druck unterdruecken.
+    el.addEventListener('contextmenu', function(e){ if(timer!==null||fired) e.preventDefault(); });
+  });
+})();
+</script>
+
 </body>
 
 </html>
