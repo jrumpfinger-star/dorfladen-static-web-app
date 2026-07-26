@@ -12076,12 +12076,12 @@
       socialShareViaClipboard(files,msg,hasMt);
       return;
     }
-    // Desktop fallback: copy text first (page has focus), then download files
-    if(msg){
-      try{navigator.clipboard.writeText(msg);}catch(e){}
-      socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 Strg+V in WhatsApp!',true);
-    }
+    // Desktop/Tablet fallback: copy text first (page has focus), download files, then open WhatsApp Web.
+    // wa.me/?text prefills the message in WhatsApp; the poster must be attached manually.
+    if(msg){ try{navigator.clipboard.writeText(msg).catch(function(){});}catch(e){} }
     socialFallbackDownloadFiles(files);
+    socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE), Text ist bereits eingef\u00fcgt':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
+    window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
   }
   function socialShareViaClipboard(files,msg,hasMt){
     // Copy poster image to clipboard, then open WhatsApp

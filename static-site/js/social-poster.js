@@ -224,9 +224,12 @@
       if(canShareFiles){var shareData={files:files.length>1?[files[0]]:files};if(msg)shareData.text=msg;navigator.share(shareData).then(function(){socialStatus('soc-post-status','\u2705 Poster geteilt!',true);}).catch(function(err){if(err.name==='AbortError')return;socialShareViaClipboard(files,msg);});socialStatus('soc-post-status','Poster wird geteilt...',true);return;}
       socialShareViaClipboard(files,msg);return;
     }
-    // Desktop: Poster herunterladen + Mittagessen-Bestelllink zuverlässig in die Zwischenablage (Strg+V)
+    // Desktop/Tablet: Text kopieren (Seite hat noch Fokus), Poster herunterladen, dann WhatsApp Web oeffnen.
+    // Der Text ist ueber die wa.me-URL bereits in WhatsApp vorausgefuellt; das Poster muss manuell angehaengt werden.
+    if(msg){ try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).catch(function(){}); } }catch(e){} }
     socialFallbackDownloadFiles(files);
-    if(msg){socialCopyText(msg).then(function(ok){socialStatus('soc-post-status',ok?'\u2705 Poster gespeichert \u00B7 Bestell-Link in der Zwischenablage \u2013 jetzt mit Strg+V in WhatsApp/Facebook einf\u00fcgen':'\u26A0\uFE0F Poster gespeichert \u00B7 Link konnte nicht automatisch kopiert werden',true);});}
+    socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE), Text ist bereits eingef\u00fcgt':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
+    window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
   }
 
   function canvasToFiles(canvases,selected,titel,freitext){
