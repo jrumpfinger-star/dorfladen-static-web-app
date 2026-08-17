@@ -77,13 +77,14 @@ def get_cors_headers():
 def _send_auto_push(req, news_titel, category="news"):
     """Fire-and-forget push notification after publishing a news item."""
     try:
-        swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-        protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
-        internal_url = f"{protocol}://{swa_host}/api/push-send"
+        from shared.urls import get_public_origin
+        origin = get_public_origin(req)
+        internal_url = f"{origin}/api/push-send"
         push_payload = {
             "title": "Neuigkeit vom Dorfladen",
             "message": news_titel or "Es gibt Neuigkeiten! Jetzt lesen.",
             "url": "/aktuelles",
+            "origin": origin,
             "category": category,
             "tag": "dorfladen-news",
         }

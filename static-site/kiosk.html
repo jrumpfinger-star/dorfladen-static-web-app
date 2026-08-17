@@ -734,6 +734,7 @@
       <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Offen</span> <span class="k-filter-count" id="mt-fc-offen">0</span></button>
       <button class="k-filter-btn" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="color:#3b82f6"><i data-lucide="message-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Nachrichten</span> <span class="k-filter-count" id="mt-fc-nachrichten">0</span></button>
       <button class="k-filter-btn" data-mt-filter="erledigt" onclick="K.setMittagFilter('erledigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Erledigt</span> <span class="k-filter-count" id="mt-fc-erledigt">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')" style="color:#dc2626"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')"><span class="k-filter-label">Alle</span> <span class="k-filter-count" id="mt-fc-alle">0</span></button>
       <span id="mt-toggle-wrap" style="margin-left:auto;display:none"></span>
     </div>
@@ -1593,18 +1594,22 @@ var K = (function(){
   }
 
   function updateMittagFilterCounts(){
-    var cOffen=0,cErledigt=0;
+    var cOffen=0,cErledigt=0,cStorno=0,cAlle=0;
     orders.forEach(function(o){
+      if(o.status===2){ cStorno++; return; }   // storniert: nicht in Alle mitzaehlen
+      cAlle++;
       if(o.status===0 || o.status===1) cOffen++;
-      else if(o.status===2 || o.status===3) cErledigt++;
+      else if(o.status===3) cErledigt++;        // erledigt = abgeholt
     });
     var elOffen = document.getElementById('mt-fc-offen');
     var elErledigt = document.getElementById('mt-fc-erledigt');
+    var elStorno = document.getElementById('mt-fc-storniert');
     var elAlle = document.getElementById('mt-fc-alle');
     var elNachr = document.getElementById('mt-fc-nachrichten');
     if(elOffen) elOffen.textContent = cOffen;
     if(elErledigt) elErledigt.textContent = cErledigt;
-    if(elAlle) elAlle.textContent = orders.length;
+    if(elStorno) elStorno.textContent = cStorno;
+    if(elAlle) elAlle.textContent = cAlle;
     if(elNachr) elNachr.textContent = _globalUnreadMessages;
     // Highlight "Offen" in red when new orders exist
     var newCount = orders.filter(function(o){return o.status===0;}).length;
@@ -1838,19 +1843,19 @@ var K = (function(){
       reinitIcons();
       return;
     }
-    // Build dish groups from ALL orders (so headers always appear)
+    // Build dish groups from the orders visible under the active filter.
     var dishMap = {};
     var dishOrder = [];
-    var includeStorno = (_mittagFilter==='erledigt' || _mittagFilter==='alle');
-    orders.filter(function(o){return includeStorno || o.status!==2;}).forEach(function(o){
+    var filterFn;
+    if(_mittagFilter==='offen') filterFn = function(o){return o.status===0 || o.status===1;};
+    else if(_mittagFilter==='erledigt') filterFn = function(o){return o.status===3;};          // abgeholt
+    else if(_mittagFilter==='storniert') filterFn = function(o){return o.status===2;};          // storniert
+    else filterFn = function(o){return o.status!==2;};                                          // alle (ohne Storno)
+    orders.filter(filterFn).forEach(function(o){
       var dish = o.gericht || 'Sonstiges';
       if(!dishMap[dish]){ dishMap[dish] = []; dishOrder.push(dish); }
       dishMap[dish].push(o);
     });
-    // Filter function for visible cards
-    var filterFn = function(o){return true;};
-    if(_mittagFilter==='offen') filterFn = function(o){return o.status===0 || o.status===1;};
-    else if(_mittagFilter==='erledigt') filterFn = function(o){return o.status===2 || o.status===3;};
     // Sort orders within each group: neu first, then bestätigt, then rest
     var statusPrio = {0:0,1:1,3:2,2:3};
     dishOrder.forEach(function(dish){
@@ -1903,7 +1908,7 @@ var K = (function(){
       html += '</div>';
     });
     if(!html && totalCards===0){
-      var emptyMsg = _mittagFilter==='erledigt' ? 'Keine erledigten Bestellungen' : _mittagFilter==='offen' ? 'Keine offenen Bestellungen' : 'Keine Bestellungen';
+      var emptyMsg = _mittagFilter==='erledigt' ? 'Keine erledigten Bestellungen' : _mittagFilter==='storniert' ? 'Keine stornierten Bestellungen' : _mittagFilter==='offen' ? 'Keine offenen Bestellungen' : 'Keine Bestellungen';
       html = '<div class="k-empty"><div class="k-empty-icon">'+luc('inbox',24)+'</div>'+emptyMsg+'</div>';
     }
     document.getElementById('mittag-orders').innerHTML = html;

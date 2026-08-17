@@ -105,15 +105,14 @@ def _serialize(item):
     }
 
 
-def _send_push(email, title, body_text, tag="lunch", bestellnr=""):
+def _send_push(email, title, body_text, tag="lunch", bestellnr="", origin=""):
     """Best-effort push notification to customer."""
     try:
-        # Use SWA_HOSTNAME for the public URL, fallback to WEBSITE_HOSTNAME
-        swa_host = os.environ.get("SWA_HOSTNAME", "")
-        if not swa_host:
-            swa_host = os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-        protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
-        internal_url = f"{protocol}://{swa_host}/api/push-send"
+        from shared.urls import get_public_origin
+        # origin: Basis-URL der ausloesenden Umgebung; Fallback auf Env-Hosts.
+        if not origin:
+            origin = get_public_origin(None)
+        internal_url = f"{origin}/api/push-send"
         push_url = "/bestellstatus"
         if bestellnr:
             push_url += f"?nr={bestellnr}"
@@ -121,6 +120,7 @@ def _send_push(email, title, body_text, tag="lunch", bestellnr=""):
             "title": title,
             "message": body_text,
             "url": push_url,
+            "origin": origin,
             "target_email": email,
             "tag": tag,
         }
@@ -174,6 +174,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     base_url = _base_url()
     headers = _headers(dv_token)
+
+    # Oeffentliche Origin der ausloesenden Umgebung (fuer Push-Links).
+    from shared.urls import get_public_origin
+    _push_origin = get_public_origin(req)
 
     try:
         # ── POST: Create order ──
@@ -579,18 +583,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         push_body = f"Ihre Bestellung ({gericht_name}) wurde bestätigt!"
                         if bestaetigung_text:
                             push_body += f" {bestaetigung_text}"
-                        _send_push(customer_email, "✅ Mittagessen bestätigt", push_body, f"lunch-{bestellnr}", bestellnr)
+                        _send_push(customer_email, "✅ Mittagessen bestätigt", push_body, f"lunch-{bestellnr}", bestellnr, _push_origin)
                     elif int(new_status) == STATUS_STORNIERT:
                         push_body = f"Ihre Bestellung ({gericht_name}) wurde leider storniert."
                         if bestaetigung_text:
                             push_body += f" {bestaetigung_text}"
-                        _send_push(customer_email, "❌ Bestellung storniert", push_body, f"lunch-{bestellnr}", bestellnr)
+                        _send_push(customer_email, "❌ Bestellung storniert", push_body, f"lunch-{bestellnr}", bestellnr, _push_origin)
                     elif int(new_status) == STATUS_ABGEHOLT:
-                        _send_push(customer_email, "🍽 Guten Appetit!", f"Ihr Mittagessen ({gericht_name}) wurde abgeholt. Guten Appetit!", f"lunch-{bestellnr}", bestellnr)
+                        _send_push(customer_email, "🍽 Guten Appetit!", f"Ihr Mittagessen ({gericht_name}) wurde abgeholt. Guten Appetit!", f"lunch-{bestellnr}", bestellnr, _push_origin)
 
                 # Push to customer when staff sends a reply
                 if customer_email and personal_antwort:
-                    _send_push(customer_email, "💬 Nachricht vom Dorfladen", personal_antwort, f"lunch-reply-{bestellnr}", bestellnr)
+                    _send_push(customer_email, "💬 Nachricht vom Dorfladen", personal_antwort, f"lunch-reply-{bestellnr}", bestellnr, _push_origin)
 
                 return func.HttpResponse(
                     json.dumps({"success": True, "message": "Status aktualisiert"}, ensure_ascii=False),

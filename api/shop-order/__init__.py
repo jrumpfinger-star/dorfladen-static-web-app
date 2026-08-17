@@ -482,16 +482,17 @@ def _handle_post(req, dv_token, base_url, headers):
 
             # Send push notification to customer (best-effort)
             try:
+                from shared.urls import get_public_origin
+                _origin = get_public_origin(req)
                 push_payload = {
                     "title": "✅ Bestellung bestätigt",
                     "message": f"Ihre Bestellung {bestellnummer} wurde aufgenommen. Abholung: {abhol_display}.",
                     "url": "/shop.html",
+                    "origin": _origin,
                     "target_email": user["email"],
                     "tag": f"order-{bestellnummer}",
                 }
-                swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-                protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
-                internal_url = f"{protocol}://{swa_host}/api/push-send"
+                internal_url = f"{_origin}/api/push-send"
                 requests.post(internal_url, json=push_payload, timeout=10)
             except Exception:
                 pass
@@ -799,13 +800,14 @@ def _handle_patch(req, dv_token, base_url, headers):
                         cust_email = odata.get("dl_kunde_email", "")
                         bestellnr = odata.get("dl_bestellnummer", "")
                         if cust_email:
-                            swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-                            protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
-                            internal_url = f"{protocol}://{swa_host}/api/push-send"
+                            from shared.urls import get_public_origin
+                            _origin = get_public_origin(req)
+                            internal_url = f"{_origin}/api/push-send"
                             requests.post(internal_url, json={
                                 "title": "💬 Nachricht zu Ihrer Bestellung",
                                 "message": personal_antwort.strip(),
                                 "url": "/shop.html",
+                                "origin": _origin,
                                 "target_email": cust_email,
                                 "tag": f"shop-reply-{bestellnr}",
                             }, timeout=10)

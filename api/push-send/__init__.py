@@ -252,6 +252,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     title = body.get("title", "Dorfladen Oberornau")
     message = body.get("message", "")
     url = body.get("url", "/")
+    origin = (body.get("origin", "") or "").strip()
     tag = body.get("tag", "dorfladen")
     image = body.get("image", "")
     category = body.get("category", "")
@@ -290,12 +291,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
-    # Build absolute base URL from request
+    # Build absolute base URL. Prefer the origin passed by the triggering
+    # request (so the notification links to the environment it was triggered
+    # from), fall back to this function's own request URL.
     req_url = req.url or ""
-    # e.g. https://host/api/push-send -> https://host
-    site_origin = ""
-    if "/api/" in req_url:
+    site_origin = origin
+    if not site_origin and "/api/" in req_url:
         site_origin = req_url.split("/api/")[0]
+
+    # Klick-Ziel absolut machen, damit die Notification immer in der
+    # ausloesenden Umgebung oeffnet (nicht in einer fest verdrahteten).
+    if url and url.startswith("/") and site_origin:
+        url = site_origin + url
 
     payload_data = {
         "title": title,

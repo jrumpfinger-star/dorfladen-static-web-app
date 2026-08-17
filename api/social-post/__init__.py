@@ -123,13 +123,14 @@ def upload_image(token, folder_id, filename, image_bytes, content_type="image/pn
 def _send_auto_push(req, post_titel, category="tagesinfo"):
     """Fire-and-forget push notification after publishing a post."""
     try:
-        swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
-        protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
-        internal_url = f"{protocol}://{swa_host}/api/push-send"
+        from shared.urls import get_public_origin
+        origin = get_public_origin(req)
+        internal_url = f"{origin}/api/push-send"
         push_payload = {
             "title": post_titel or "Dorfladen Oberornau",
             "message": "Die heutige TagesInfo ist da! Mittagstisch, Theke & mehr." if category == "tagesinfo" else post_titel,
-            "url": "/",
+            "url": "/tagesinfo",
+            "origin": origin,
             "category": category,
             "tag": "dorfladen-tagesinfo",
         }
