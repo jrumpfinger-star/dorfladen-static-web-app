@@ -435,7 +435,7 @@
       var all=res.posts||res.items||[];
       var todayPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
       var tomorrowPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===tmr;});
-      if(!todayPosts.length&&!tomorrowPosts.length){wrap.style.display='none';return;}
+      if(!todayPosts.length&&!tomorrowPosts.length){list.innerHTML='';wrap.style.display='none';if(typeof window.socSyncDeskPosts==='function')window.socSyncDeskPosts();return;}
       wrap.style.display='';
       var html='';
       function timeStr(d){if(!d)return '';var m=d.match(/T(\d{2}:\d{2})/);return m?m[1]:'';}
@@ -491,6 +491,7 @@
       renderGroup(tomorrowPosts,'Morgen','#2563eb');
       list.innerHTML=html;
       if(typeof lucide!=='undefined') lucide.createIcons({attrs:{class:'lucide-inline'},nameAttr:'data-lucide'});
+      if(typeof window.socSyncDeskPosts==='function') window.socSyncDeskPosts();
     }).catch(function(){wrap.style.display='none';});
   };
 

@@ -2086,6 +2086,13 @@ var K = (function(){
   window.socToggleStep = socToggleStep;
 
   // ── Desktop Split-View: Tab switching ──
+  window.socSyncDeskPosts = function(){
+    // Desktop-Panel spiegelt die Posts-Liste – nach Aenderungen (z.B. Loeschen)
+    // aktuell halten, damit geloeschte Posts sofort verschwinden.
+    var src = document.getElementById('soc-today-posts-list');
+    var dst = document.getElementById('soc-desk-posts-content');
+    if(src && dst) dst.innerHTML = src.innerHTML;
+  };
   window.socDeskTab = function(tab){
     var tabEdit = document.getElementById('soc-desk-tab-edit');
     var tabPosts = document.getElementById('soc-desk-tab-posts');
