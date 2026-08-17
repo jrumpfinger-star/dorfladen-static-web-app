@@ -274,19 +274,30 @@ def handle_post(req, token, folder_id):
     post_id = str(uuid.uuid4())
     wochentag = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
 
+    # Tages-Zuordnung nach LOKALER Zeit (Europe/Berlin): Die TagesInfo (tagespost)
+    # matcht Posts anhand des Berliner Kalendertags. Wuerde hier UTC verwendet,
+    # bekaeme ein kurz nach Mitternacht erstellter Post das Datum von "gestern"
+    # (UTC hinkt der Berliner Zeit 1-2h hinterher) und erschiene nicht.
+    try:
+        from zoneinfo import ZoneInfo
+        _tz = ZoneInfo("Europe/Berlin")
+    except Exception:
+        _tz = timezone(timedelta(hours=2))  # Fallback CEST
+    now_local = datetime.now(_tz)
+
     # Optional: ziel_datum (ISO date, e.g. "2026-07-01") for scheduling posts
     ziel_datum = body.get("ziel_datum", "").strip()
     if ziel_datum:
         try:
             zd = datetime.strptime(ziel_datum, "%Y-%m-%d")
-            now = zd.strftime("%Y-%m-%dT") + datetime.utcnow().strftime("%H:%M:%SZ")
+            now = zd.strftime("%Y-%m-%dT") + now_local.strftime("%H:%M:%SZ")
             tag = wochentag[zd.weekday()]
         except ValueError:
-            now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-            tag = wochentag[datetime.utcnow().weekday()]
+            now = now_local.strftime("%Y-%m-%dT%H:%M:%SZ")
+            tag = wochentag[now_local.weekday()]
     else:
-        now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-        tag = wochentag[datetime.utcnow().weekday()]
+        now = now_local.strftime("%Y-%m-%dT%H:%M:%SZ")
+        tag = wochentag[now_local.weekday()]
 
     # Upload inline base64 images from items as files
     for idx, it in enumerate(items):
