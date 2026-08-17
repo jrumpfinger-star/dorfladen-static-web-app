@@ -198,10 +198,11 @@
   // --- WhatsApp message builder ---
   function socialBuildWhatsAppMsg(selected){
     var hasMittagessen=selected.some(function(p){return (p.kategorie||'Sonstiges')==='Mittagessen';});
-    // Kurzer Text: die Gerichte stehen bereits auf dem Bild - nur der Bestell-Link zur TagesInfo.
+    // Kurze, EINZEILIGE Bildunterschrift mit Link: erhoeht die Chance, dass
+    // WhatsApp den Text als Caption zum Bild behaelt (statt separater Nachricht).
     if(hasMittagessen){
       var origin=window.location.origin||'';
-      return '\uD83D\uDC49 Bestellung Mittagessen hier:\n'+origin+'/tagesinfo';
+      return '\uD83D\uDC49 Mittagessen vorbestellen: '+origin+'/tagesinfo';
     }
     return '';
   }
