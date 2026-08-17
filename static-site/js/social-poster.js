@@ -217,13 +217,16 @@
     var isMobile=socialIsMobile();
     var shareOne=files.length>1?[files[0]]:files;
     var canShareFiles=false;if(navigator.share&&navigator.canShare){try{canShareFiles=navigator.canShare({files:shareOne});}catch(e){}}
-    // Text zusaetzlich in die Zwischenablage kopieren: WhatsApp (v.a. Android) verwirft die
-    // Bild-Beschriftung beim Teilen mit Datei - so laesst sich der Text/Link zur Not im Chat einfuegen.
-    if(msg){ try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).catch(function(){}); } }catch(e){} }
+    // WICHTIG: KEIN navigator.clipboard.writeText() VOR navigator.share() aufrufen!
+    // Auf Android verbraucht der Clipboard-Schreibzugriff die transiente Nutzeraktivierung,
+    // wodurch navigator.share() mit NotAllowedError fehlschlaegt und die App in den
+    // Download-Fallback faellt (Bild wird nicht geteilt, nur Text via wa.me). Der Text wird
+    // ueber shareData.text uebergeben und erst NACH erfolgreichem Teilen als Backup kopiert.
     // Bevorzugt: natives Teilen mit Datei (oeffnet die System-Auswahl inkl. WhatsApp) - Mobil UND Desktop.
     if(canShareFiles){
       var shareData={files:shareOne};if(msg)shareData.text=msg;
       navigator.share(shareData).then(function(){
+        if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
         socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
       }).catch(function(err){
         if(err.name==='AbortError')return;
