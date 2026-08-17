@@ -47,8 +47,8 @@
     });
   }
 
-  // Check session
-  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
+  // Check session (localStorage: bleibt ueber Browser-Neustarts erhalten)
+  if(localStorage.getItem(CMS_PW_KEY)===cmsPwHash){
     cmsShowApp();
   } else {
     cmsShowLogin();
@@ -59,7 +59,7 @@
     var pw=document.getElementById('cms-login-pw').value;
     sha256(pw).then(function(hash){
       if(hash===cmsPwHash){
-        sessionStorage.setItem(CMS_PW_KEY,hash);
+        localStorage.setItem(CMS_PW_KEY,hash);
         if(window.dlAdminLogin){window.dlAdminLogin(pw).catch(function(){});}
         document.getElementById('cms-login-err').style.display='none';
         cmsShowApp();
@@ -12735,8 +12735,8 @@
     setTimeout(function(){document.getElementById('fm-cms-reply-text').focus();},100);
   }
 
-  // --- Init (only if already authenticated via session) ---
-  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
+  // --- Init (only if already authenticated) ---
+  if(localStorage.getItem(CMS_PW_KEY)===cmsPwHash){
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
   }
 })();

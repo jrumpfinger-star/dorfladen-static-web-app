@@ -2363,7 +2363,7 @@ function _cmsSha256(str){
   });
 }
 function openCmsGate(){
-  if(sessionStorage.getItem(CMS_PW_KEY)===CMS_PW_HASH){ location.href='/cms'; return; }
+  if(localStorage.getItem(CMS_PW_KEY)===CMS_PW_HASH){ location.href='/cms'; return; }
   var ov=document.getElementById('cms-gate-overlay');
   ov.style.display='flex';
   document.body.style.overflow='hidden';
@@ -2379,10 +2379,10 @@ function submitCmsGate(){
   var pw=document.getElementById('cms-gate-pw').value;
   _cmsSha256(pw).then(function(hash){
     if(hash===CMS_PW_HASH){
-      sessionStorage.setItem(CMS_PW_KEY,hash);
+      localStorage.setItem(CMS_PW_KEY,hash);
       fetch('/api/cms-auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})})
         .then(function(r){return r.ok?r.json():null;})
-        .then(function(d){if(d&&d.token){try{sessionStorage.setItem('cms_auth_token',d.token);}catch(e){}}})
+        .then(function(d){if(d&&d.token){try{localStorage.setItem('cms_auth_token',d.token);}catch(e){}}})
         .catch(function(){})
         .then(function(){ closeCmsGate(); location.href='/cms'; });
     } else {

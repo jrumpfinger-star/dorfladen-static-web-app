@@ -679,8 +679,8 @@
   </script>
 <script>
 (function(){
-  // Langlebiges "GerÃ¤t merken": Token in localStorage spiegeln, bei Start
-  // zurueck in sessionStorage (admin-auth.js liest cms_auth_token dort).
+  // Langlebiges "Geraet merken": admin-auth.js liest cms_auth_token aus
+  // localStorage. Wir spiegeln das gemerkte Token beim Start dorthin.
   var SS_KEY = 'cms_auth_token';
   var LS_KEY = 'dl_posten_token';
   function ls(k){ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } }
@@ -728,7 +728,7 @@
 
   // Bereits als Personal gemerkt? -> Token wiederherstellen und direkt oeffnen.
   var saved = ls(LS_KEY);
-  if(saved){ ssSet(SS_KEY, saved); showApp(); }
+  if(saved){ lsSet(SS_KEY, saved); showApp(); }
   else { showGate(); }
 
   function doLogin(){
@@ -754,7 +754,7 @@
   var logout = document.getElementById('pb-logout');
   if(logout){
     logout.addEventListener('click', function(){
-      lsDel(LS_KEY); ssDel(SS_KEY);
+      lsDel(LS_KEY); lsDel(SS_KEY); ssDel(SS_KEY);
       started = false;
       location.reload();
     });

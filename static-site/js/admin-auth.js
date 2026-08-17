@@ -7,11 +7,13 @@
   var TOKEN_KEY = 'cms_auth_token';
   var MUT = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+  // localStorage: Login bleibt ueber Browser-/Tab-Neustarts erhalten
+  // (sessionStorage wurde beim Schliessen geloescht -> staendiges Neu-Anmelden).
   function getToken() {
-    try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
+    try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
   }
   function setToken(t) {
-    try { sessionStorage.setItem(TOKEN_KEY, t); } catch (e) {}
+    try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {}
   }
   function headersToObj(h) {
     if (!h) return {};
