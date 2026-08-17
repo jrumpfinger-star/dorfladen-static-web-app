@@ -170,6 +170,16 @@ def handle_post(req, token, folder_id):
     except:
         return err("Ungültiger Request-Body")
 
+    # Fallback-Routing: Einige deployte Function-Instanzen registrieren nur
+    # GET/POST (PATCH/DELETE liefern dort einen leeren 404). Damit Löschen,
+    # Aktualisieren und Veröffentlichen zuverlässig funktionieren, können diese
+    # Aktionen auch per POST mit dem Feld "_action" ausgelöst werden.
+    _action = body.get("_action", "") if isinstance(body, dict) else ""
+    if _action == "delete":
+        return handle_delete(req, token, folder_id)
+    if _action in ("patch", "update"):
+        return handle_patch(req, token, folder_id)
+
     titel = body.get("titel", "").strip()
     text = body.get("text", "").strip()
     items = body.get("items", [])

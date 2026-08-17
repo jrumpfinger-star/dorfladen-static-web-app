@@ -395,7 +395,7 @@
     socialStatus('soc-post-status','\u23F3 Entwurf wird '+(isEdit?'aktualisiert':'gespeichert')+'\u2026',true);
     var body={titel:titel,freitext:freitext,status:'entwurf',items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};
     var method='POST';
-    if(isEdit){body.id=_socEditingDraftId;method='PATCH';}
+    if(isEdit){body.id=_socEditingDraftId;body._action='patch';}
     else{var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;}
     fetch(API+'/social-post',{method:method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
@@ -406,7 +406,7 @@
   // --- Entwurf veröffentlichen ---
   window.socialPublishDraft=function(postId){
     socialStatus('soc-post-status','\u23F3 Wird ver\u00f6ffentlicht\u2026',true);
-    fetch(API+'/social-post',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:postId,status:'veroeffentlicht'})})
+    fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({_action:'patch',id:postId,status:'veroeffentlicht'})})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
     .then(function(){socialStatus('soc-post-status','\u2705 Ver\u00f6ffentlicht!',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
     .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
@@ -416,7 +416,7 @@
   window.socialDeletePost=function(postId){
     dlConfirm({icon:'🗑️',title:'Post löschen?',msg:'Der Post wird unwiderruflich gelöscht.',ok:'Löschen',cancel:'Abbrechen',color:'#dc2626'},function(){
       socialStatus('soc-post-status','\u23F3 Wird gel\u00f6scht\u2026',true);
-      fetch(API+'/social-post?id='+encodeURIComponent(postId),{method:'DELETE'})
+      fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({_action:'delete',id:postId})})
       .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
       .then(function(){socialStatus('soc-post-status','\u2705 Gel\u00f6scht',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
       .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
