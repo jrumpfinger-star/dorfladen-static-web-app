@@ -11092,25 +11092,79 @@
     });
   };
 
-  // --- Heutige Posts laden ---
+  // --- Heutige + morgige Posts laden (mit Löschen) ---
+  function _socDatePart(offsetDays){
+    var d=new Date(Date.now()+(offsetDays||0)*86400000);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function _socSyncDeskPosts(){
+    // Desktop-Panel spiegelt die Liste – nach Änderungen aktualisieren
+    var src=document.getElementById('soc-today-posts-list');
+    var dst=document.getElementById('soc-desk-posts-content');
+    if(src&&dst) dst.innerHTML=src.innerHTML;
+  }
   window.socialLoadTodayPosts=function(){
     var wrap=document.getElementById('soc-today-posts');
     var list=document.getElementById('soc-today-posts-list');
-    if(!wrap||!list)return;
-    var today=new Date();var td=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    if(!list)return;
+    var td=_socDatePart(0), tmr=_socDatePart(1);
     fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){
-      var posts=(res.items||[]).filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
-      if(!posts.length){wrap.style.display='none';return;}
-      wrap.style.display='';
-      var html='';posts.forEach(function(p){
+      var all=res.posts||res.items||[];
+      var todayPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
+      var tomorrowPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===tmr;});
+      if(!todayPosts.length&&!tomorrowPosts.length){if(wrap)wrap.style.display='none';list.innerHTML='';_socSyncDeskPosts();return;}
+      if(wrap)wrap.style.display='';
+      function timeStr(d){if(!d)return '';var m=String(d).match(/T(\d{2}:\d{2})/);return m?m[1]:'';}
+      function renderCard(p){
         var cnt=p.items?p.items.length:0;
-        html+='<div style="padding:4px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center">';
-        html+='<span style="font-weight:600;color:#374151">'+esc(p.titel||'Post')+'</span>';
-        html+='<span style="color:#6b7280">'+cnt+' Produkt'+(cnt!==1?'e':'')+'</span>';
-        html+='</div>';
-      });
-      list.innerHTML=html;
+        var isDraft=p.status==='entwurf';
+        var pid=esc(p.id||'');
+        var border=isDraft?'#f59e0b':'#22c55e';
+        var zeit=timeStr(p.datum);
+        var h='<div style="border-left:3px solid '+border+';border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
+        h+='<div style="display:flex;align-items:center;gap:6px">';
+        h+='<span style="font-weight:600;font-size:12px;color:#1f2937;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.titel||'Post')+'</span>';
+        if(zeit) h+='<span style="font-size:10px;color:#9ca3af;white-space:nowrap">'+esc(zeit)+'</span>';
+        h+='</div>';
+        if(cnt>0){
+          h+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">';
+          (p.items||[]).slice(0,4).forEach(function(it){
+            h+='<span style="font-size:10px;background:#f3f4f6;color:#374151;padding:1px 6px;border-radius:4px;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block">'+esc(it.name||'?');
+            if(it.preis) h+=' <b style="color:#2e7d32">'+esc(String(it.preis))+'\u20AC</b>';
+            h+='</span>';
+          });
+          if(cnt>4) h+='<span style="font-size:10px;color:#9ca3af;padding:1px 4px">+'+(cnt-4)+'</span>';
+          h+='</div>';
+        }
+        // Aktionszeile: klar sichtbarer, touch-freundlicher Löschbutton
+        h+='<div style="display:flex;gap:6px;margin-top:8px;align-items:center">';
+        h+='<span style="flex:1"></span>';
+        h+='<button onclick="socialDeletePost(\''+pid+'\')" title="L\u00f6schen" style="display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:4px 12px;font-size:12px;font-weight:600;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;cursor:pointer;color:#dc2626">\uD83D\uDDD1\uFE0F L\u00f6schen</button>';
+        h+='</div></div>';
+        return h;
+      }
+      function renderGroup(posts,label,color){
+        if(!posts.length)return '';
+        var g='<div style="font-size:10px;font-weight:700;color:'+color+';margin:6px 0 4px;text-transform:uppercase;letter-spacing:.5px">'+esc(label)+'</div>';
+        posts.forEach(function(p){g+=renderCard(p);});
+        return g;
+      }
+      list.innerHTML=renderGroup(todayPosts,'Heute','#16a34a')+renderGroup(tomorrowPosts,'Morgen','#2563eb');
+      _socSyncDeskPosts();
     }).catch(function(){});
+  };
+
+  // --- Post löschen (CMS) ---
+  window.socialDeletePost=function(postId){
+    if(!postId){socialStatus('soc-post-status','\u274C Post-ID fehlt \u2013 bitte Liste neu laden',false);return;}
+    cmsConfirm('Diesen Post unwiderruflich l\u00f6schen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'L\u00f6schen',cancel:'Abbrechen',warn:true}).then(function(ok){
+      if(!ok)return;
+      socialStatus('soc-post-status','\u23F3 Wird gel\u00f6scht\u2026',true);
+      fetch(API+'/social-post?id='+encodeURIComponent(postId),{method:'DELETE'})
+      .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
+      .then(function(){socialStatus('soc-post-status','\u2705 Gel\u00f6scht',true);if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();})
+      .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});
+    });
   };
 
   // --- Canvas Poster Generator ---

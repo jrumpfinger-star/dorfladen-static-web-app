@@ -143,6 +143,14 @@ def _send_auto_push(req, post_titel, category="tagesinfo"):
 def handle_get(req, token, folder_id):
     """GET: Return all posts, newest first. Optional ?limit=N"""
     posts = load_posts(token, folder_id)
+    # Self-healing: backfill missing ids on legacy posts so they stay deletable.
+    changed = False
+    for p in posts:
+        if not p.get("id"):
+            p["id"] = str(uuid.uuid4())
+            changed = True
+    if changed:
+        save_posts(token, folder_id, posts)
     posts.sort(key=lambda p: p.get("datum", ""), reverse=True)
     limit = req.params.get("limit", "")
     if limit:

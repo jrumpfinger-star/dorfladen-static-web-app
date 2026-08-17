@@ -475,7 +475,7 @@
           html+='<button onclick="socialPublishDraft(\''+pid+'\')" title="Jetzt senden" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;color:#16a34a;font-weight:600">'+lucideIcon('send',12)+' Senden</button>';
         }
         html+='<span style="flex:1"></span>';
-        html+='<button onclick="socialDeletePost(\''+pid+'\')" title="L\u00f6schen" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;background:none;border:1px solid transparent;border-radius:6px;cursor:pointer;color:#d1d5db;transition:all .15s" onmouseenter="this.style.color=\'#ef4444\';this.style.borderColor=\'#fecaca\'" onmouseleave="this.style.color=\'#d1d5db\';this.style.borderColor=\'transparent\'">'+lucideIcon('trash-2',13)+'</button>';
+        html+='<button onclick="socialDeletePost(\''+pid+'\')" title="L\u00f6schen" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:40px;min-width:40px;padding:0 12px;font-size:12px;font-weight:600;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;cursor:pointer;color:#dc2626">'+lucideIcon('trash-2',15)+' L\u00f6schen</button>';
         html+='</div></div>';
       }
       function renderGroup(posts,label,color){
