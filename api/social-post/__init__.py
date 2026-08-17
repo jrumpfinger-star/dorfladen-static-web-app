@@ -5,7 +5,7 @@ import msal
 import requests
 import base64
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 # ---------- config ----------
 from shared.dataverse import get_tenant_id, get_client_id
@@ -140,11 +140,75 @@ def _send_auto_push(req, post_titel, category="tagesinfo"):
 
 # ---------- handlers ----------
 
+PRUNE_DAYS = 7
+
+
+def _parse_dt(s):
+    """Parst einen ISO-Zeitstempel (auch mit 'Z') zu einem tz-bewussten datetime."""
+    if not s:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(s).strip().replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        return None
+
+
+def _delete_poster_image(token, sp_id):
+    """Loescht ein Poster-Bild aus SharePoint (best effort)."""
+    if not sp_id:
+        return
+    try:
+        requests.delete(
+            f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{sp_id}",
+            headers=graph_headers(token), timeout=15,
+        )
+    except Exception:
+        pass
+
+
+def _split_old_posts(posts, days=PRUNE_DAYS):
+    """Teilt Posts in (behalten, veraltet) anhand des Datums (aelter als `days` Tage)."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    keep, old = [], []
+    for p in posts:
+        dt = _parse_dt(p.get("datum", ""))
+        if dt is not None and dt < cutoff:
+            old.append(p)
+        else:
+            keep.append(p)
+    return keep, old
+
+
+def _handle_prune(token, folder_id, days=PRUNE_DAYS, delete_all=False):
+    """Wartung: entfernt veraltete Posts (aelter als `days` Tage) oder alle."""
+    posts = load_posts(token, folder_id)
+    if delete_all:
+        keep, old = [], list(posts)
+    else:
+        keep, old = _split_old_posts(posts, days)
+    for p in old:
+        _delete_poster_image(token, p.get("poster_sp_id", ""))
+    if old and not save_posts(token, folder_id, keep):
+        return err("Posts konnten nicht gespeichert werden", 500)
+    return ok({"success": True, "removed": len(old), "remaining": len(keep)})
+
+
 def handle_get(req, token, folder_id):
     """GET: Return all posts, newest first. Optional ?limit=N"""
     posts = load_posts(token, folder_id)
-    # Self-healing: backfill missing ids on legacy posts so they stay deletable.
     changed = False
+    # Auto-Aufraeumen: Posts aelter als PRUNE_DAYS Tage automatisch entfernen,
+    # damit die Ablage nicht unbegrenzt waechst. Laeuft bei jedem Laden mit.
+    keep, old = _split_old_posts(posts)
+    if old:
+        for p in old:
+            _delete_poster_image(token, p.get("poster_sp_id", ""))
+        posts = keep
+        changed = True
+    # Self-healing: backfill missing ids on legacy posts so they stay deletable.
     for p in posts:
         if not p.get("id"):
             p["id"] = str(uuid.uuid4())
@@ -179,6 +243,14 @@ def handle_post(req, token, folder_id):
         return handle_delete(req, token, folder_id)
     if _action in ("patch", "update"):
         return handle_patch(req, token, folder_id)
+    if _action == "prune":
+        try:
+            days = int(body.get("days", PRUNE_DAYS))
+        except Exception:
+            days = PRUNE_DAYS
+        return _handle_prune(token, folder_id, days=days)
+    if _action == "delete_all":
+        return _handle_prune(token, folder_id, delete_all=True)
 
     titel = body.get("titel", "").strip()
     text = body.get("text", "").strip()
