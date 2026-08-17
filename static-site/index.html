@@ -1534,6 +1534,16 @@
         return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : iso;
       }
 
+      function fmtDateLong(iso){
+        if(!iso) return '';
+        var p = iso.split('-');
+        if(p.length!==3) return fmtDate(iso);
+        var wd=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+        var mo=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+        var d=new Date(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10));
+        return wd[d.getDay()]+', '+parseInt(p[2],10)+'. '+mo[parseInt(p[1],10)-1]+' '+p[0];
+      }
+
       window._dlLunchOrderP
         .then(function(res){
           if(!res.success) return;
@@ -1555,12 +1565,42 @@
               var st = STATUS_LABELS[o.status]||'?';
               var col = STATUS_COLORS[o.status]||'#6b7280';
               var bg = STATUS_BG[o.status]||'#f3f4f6';
-              el.innerHTML = '<a href="javascript:void(0)" onclick="openBestellstatus(\''+esc(nr)+'\')" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;text-decoration:none;color:'+wrapColor+';font-size:13px;font-weight:600;cursor:pointer">'
-                +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
-                +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtDate(o.datum)+' \u2013 '+(o.gericht||'Mittagessen')+'</span>'
-                +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
-                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+chevronColor+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>'
-                +'</a>';
+              var menge = o.menge||1;
+              var portTxt = menge+' Portion'+(menge>1?'en':'');
+              var mitTxt = o.mitnehmen ? ' \u00b7 Mitnehmen' : '';
+              var total = (parseFloat(o.preis)||0)*menge;
+              var priceTxt = total>0 ? total.toFixed(2).replace('.',',')+'\u00a0\u20ac' : '';
+              var t = isDark ? {
+                card:'rgba(255,255,255,.12)', border:'rgba(255,255,255,.25)',
+                title:'#fff', sub:'rgba(255,255,255,.82)', dish:'#fff',
+                iconBg:'rgba(255,255,255,.18)', iconStroke:'#fff',
+                btnBg:'#fff', btnColor:'#1d4ed8', price:'#fff'
+              } : {
+                card:'#fff', border:'#bfdbfe',
+                title:'#0f172a', sub:'#64748b', dish:'#1e293b',
+                iconBg:'#eff6ff', iconStroke:'#2563eb',
+                btnBg:'#2563eb', btnColor:'#fff', price:'#0f172a'
+              };
+              el.innerHTML = '<div onclick="openBestellstatus(\''+esc(nr)+'\')" role="button" tabindex="0" title="Bestellung anzeigen" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openBestellstatus(\''+esc(nr)+'\');}" style="display:flex;align-items:flex-start;gap:12px;background:'+t.card+';border:1px solid '+t.border+';border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)">'
+                +'<div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:'+t.iconBg+';display:flex;align-items:center;justify-content:center">'
+                  +'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+t.iconStroke+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
+                +'</div>'
+                +'<div style="flex:1;min-width:0">'
+                  +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+                    +'<span style="font-weight:800;font-size:14px;color:'+t.title+'">Ihre Bestellung</span>'
+                    +'<span style="font-size:10px;padding:2px 8px;border-radius:8px;font-weight:700;background:'+bg+';color:'+col+'">'+esc(st)+'</span>'
+                  +'</div>'
+                  +'<div style="font-size:12px;color:'+t.sub+';margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(fmtDateLong(o.datum))+'</div>'
+                  +'<div style="font-weight:600;font-size:13px;color:'+t.dish+';margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.gericht||'Mittagessen')+'</div>'
+                  +'<div style="font-size:11px;color:'+t.sub+';margin-top:1px">'+esc(portTxt+mitTxt)+'</div>'
+                +'</div>'
+                +'<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px">'
+                  +(priceTxt?'<span style="font-weight:800;font-size:15px;color:'+t.price+';white-space:nowrap">'+priceTxt+'</span>':'')
+                  +'<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:'+t.btnBg+';color:'+t.btnColor+'" aria-label="Bestellung anzeigen">'
+                    +'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>'
+                  +'</span>'
+                +'</div>'
+                +'</div>';
             } else {
               var popupId = 'popup-'+containerId;
               el.innerHTML = '<div onclick="var p=document.getElementById(\''+popupId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;cursor:pointer;color:'+wrapColor+';font-size:13px;font-weight:600">'
