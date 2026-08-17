@@ -13,8 +13,9 @@ PUSH_KEY_PREFIX = "push_sub_"
 
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(url_setting_name, DEFAULT_URL_FALLBACK)
     if not client_secret:
@@ -64,7 +65,19 @@ def _sub_hash(endpoint):
     return hashlib.sha256(endpoint.encode()).hexdigest()[:16]
 
 
-ALL_CATEGORIES = ["mittagstisch", "angebote", "news"]
+ALL_CATEGORIES = ["tagesinfo", "news"]
+# Migrate legacy category names from existing subscribers
+LEGACY_MAP = {"mittagstisch": "tagesinfo", "angebote": "tagesinfo"}
+
+
+def _migrate_cats(cats):
+    """Map old category names to new ones and deduplicate."""
+    migrated = []
+    for c in cats:
+        mapped = LEGACY_MAP.get(c, c)
+        if mapped not in migrated:
+            migrated.append(mapped)
+    return migrated
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -103,7 +116,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
         try:
             data = json.loads(items[0].get("dl_wert", "{}"))
-            cats = data.get("categories", ALL_CATEGORIES[:])
+            cats = _migrate_cats(data.get("categories", ALL_CATEGORIES[:]))
         except Exception:
             cats = ALL_CATEGORIES[:]
         return func.HttpResponse(

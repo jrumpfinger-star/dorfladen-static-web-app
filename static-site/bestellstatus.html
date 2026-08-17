@@ -14,12 +14,16 @@
   <meta property="og:image" content="https://kind-pebble-072605b03.7.azurestaticapps.net/images/icon-512.png">
   <meta property="og:site_name" content="Dorfladen Oberornau">
   <meta property="og:locale" content="de_DE">
+  <script src="/js/theme.js"></script>
   <style>
-    :root{--c-pri:#2d5016;--c-green:#2e7d4f;--c-green-light:#dcfce7;--c-red:#dc2626;--c-orange:#e65100;--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--radius:16px}
+    :root{--c-pri:var(--dl-green,#2d5016);--c-green:var(--dl-green-action,#2e7d4f);--c-green-light:#dcfce7;--c-red:var(--dl-red,#dc2626);--c-orange:var(--dl-orange,#e65100);--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--radius:16px}
+    html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-green:#5cb85f;--c-green-light:#1e2a20}
+    #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-card);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);padding:0;transition:transform .15s}
+    #dl-theme-toggle:hover{transform:scale(1.08)}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);min-height:100vh}
 
-    .bs-header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:20px 20px 28px;text-align:center}
+    .bs-header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:20px 20px 28px;text-align:center;position:sticky;top:0;z-index:100}
     .bs-header h1{font-size:20px;font-weight:800;margin-bottom:4px}
     .bs-header p{font-size:13px;opacity:.8}
     .bs-logo{width:48px;height:48px;margin:0 auto 10px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:24px}
@@ -48,7 +52,7 @@
 
     .bs-comment-box{margin-top:16px}
     .bs-comment-box label{font-size:13px;font-weight:700;color:var(--c-muted);display:block;margin-bottom:6px}
-    .bs-comment-box textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:15px;font-family:inherit;resize:vertical;min-height:80px;outline:none;transition:border-color .15s}
+    .bs-comment-box textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:15px;font-family:inherit;resize:none;min-height:80px;outline:none;transition:border-color .15s;overflow:hidden}
     .bs-comment-box textarea:focus{border-color:var(--c-green)}
     .bs-comment-box button{margin-top:10px;width:100%;padding:14px;border:none;border-radius:12px;background:var(--c-green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
     .bs-comment-box button:active{transform:scale(.98);opacity:.9}
@@ -69,15 +73,16 @@
     .bs-link{display:block;text-align:center;margin-top:16px;color:var(--c-green);font-size:14px;font-weight:600;text-decoration:none}
     .bs-link:hover{text-decoration:underline}
 
-    .bs-timeline{position:relative;padding-left:24px;margin-top:12px}
-    .bs-timeline::before{content:'';position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:#e5e7eb}
-    .bs-tl-item{position:relative;padding-bottom:14px}
-    .bs-tl-item:last-child{padding-bottom:0}
-    .bs-tl-dot{position:absolute;left:-24px;top:2px;width:16px;height:16px;border-radius:50%;border:2px solid #e5e7eb;background:#fff}
-    .bs-tl-item.active .bs-tl-dot{background:var(--c-green);border-color:var(--c-green)}
+    .bs-timeline{display:flex;gap:4px;align-items:center;margin-top:10px;flex-wrap:wrap}
+    .bs-tl-item{display:flex;align-items:center;gap:4px}
+    .bs-tl-item:not(:last-child)::after{content:'›';color:#d1d5db;font-size:14px;font-weight:700;margin-left:4px}
+    .bs-tl-dot{width:10px;height:10px;border-radius:50%;border:2px solid #e5e7eb;background:#fff;flex-shrink:0}
+    .bs-tl-item.done .bs-tl-dot{background:var(--c-green);border-color:var(--c-green)}
+    .bs-tl-item.active .bs-tl-dot{background:#3b82f6;border-color:#3b82f6}
     .bs-tl-item.cancelled .bs-tl-dot{background:var(--c-red);border-color:var(--c-red)}
-    .bs-tl-label{font-size:13px;font-weight:700;color:var(--c-text)}
-    .bs-tl-item.active .bs-tl-label{color:var(--c-green)}
+    .bs-tl-label{font-size:12px;font-weight:600;color:var(--c-muted)}
+    .bs-tl-item.done .bs-tl-label{color:var(--c-green)}
+    .bs-tl-item.active .bs-tl-label{color:#3b82f6}
     .bs-tl-item.cancelled .bs-tl-label{color:var(--c-red)}
     .bs-tl-time{font-size:11px;color:var(--c-muted)}
 
@@ -85,11 +90,45 @@
       .bs-container{padding:0 12px 30px}
       .bs-card{padding:18px}
     }
+
+    /* Custom dialog overlay */
+    .bs-dialog-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;animation:bsFadeIn .15s ease}
+    .bs-dialog{background:#fff;border-radius:20px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:bsSlideUp .2s ease}
+    .bs-dialog-hd{padding:20px 24px 0;display:flex;align-items:flex-start;gap:12px}
+    .bs-dialog-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bs-dialog-icon.warn{background:#fef2f2;color:#dc2626}
+    .bs-dialog-icon.info{background:#eff6ff;color:#3b82f6}
+    .bs-dialog-icon.ok{background:#f0fdf4;color:#16a34a}
+    .bs-dialog-title{font-size:16px;font-weight:800;color:#1f2937;margin-top:4px}
+    .bs-dialog-body{padding:16px 24px}
+    .bs-dialog-body p{font-size:14px;color:#6b7280;line-height:1.5;margin-bottom:12px}
+    .bs-dialog-body textarea{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;font-size:15px;font-family:inherit;resize:none;min-height:60px;outline:none;transition:border-color .15s;overflow:hidden;box-sizing:border-box}
+    .bs-dialog-body textarea:focus{border-color:#dc2626}
+    .bs-dialog-body .bs-dialog-hint{font-size:12px;color:#dc2626;font-weight:600;margin-top:4px;display:none}
+    .bs-dialog-ft{padding:0 24px 20px;display:flex;gap:10px}
+    .bs-dialog-ft button{flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+    .bs-dialog-ft button:active{transform:scale(.97)}
+    .bs-dialog-ft .bs-btn-cancel{background:#f3f4f6;color:#374151;border:none}
+    .bs-dialog-ft .bs-btn-danger{background:#dc2626;color:#fff;border:none}
+    .bs-dialog-ft .bs-btn-danger:disabled{opacity:.4;cursor:default}
+    .bs-dialog-ft .bs-btn-ok{background:var(--c-green);color:#fff;border:none}
+    @keyframes bsFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes bsSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes bsSpin{to{transform:rotate(360deg)}}
+
+    /* Toast notification */
+    .bs-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:12px;font-size:14px;font-weight:700;color:#fff;z-index:9100;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:bsSlideUp .2s ease;max-width:90%}
+    .bs-toast.error{background:#dc2626}
+    .bs-toast.success{background:var(--c-green)}
+    .bs-toast.info{background:#3b82f6}
   </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <div class="bs-header">
-    <div class="bs-logo">🍽</div>
+    <a id="bs-close-btn" href="javascript:void(0)" onclick="if(window.parent!==window){window.parent.postMessage('closeMittagPopup','*')}else if(history.length>1){history.back()}else{location.href='/'}" style="position:absolute;top:12px;right:12px;color:rgba(255,255,255,.8);text-decoration:none;font-size:28px;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.12)" title="Schließen">✕</a>
+    <script>if(window.parent!==window){var _cb=document.getElementById('bs-close-btn');if(_cb)_cb.style.display='none';}</script>
+    <div class="bs-logo"><i data-lucide="store" style="width:28px;height:28px"></i></div>
     <h1>Dorfladen Oberornau</h1>
     <p>Bestellstatus</p>
   </div>
@@ -97,48 +136,68 @@
   <div class="bs-container">
     <!-- Login/Lookup form (shown when no order loaded) -->
     <div class="bs-card" id="bs-login-card">
-      <h2>📋 Bestellung aufrufen</h2>
+      <h2><i data-lucide="clipboard-list" style="width:20px;height:20px"></i> Bestellung aufrufen</h2>
       <div class="bs-login">
         <label for="bs-nr">Bestellnummer</label>
-        <input type="text" id="bs-nr" placeholder="z.B. MT-260621-BF0D4" autocomplete="off">
-        <label for="bs-email">E-Mail-Adresse</label>
-        <input type="email" id="bs-email" placeholder="ihre@email.de" autocomplete="email">
+        <input type="text" id="bs-nr" placeholder="z.B. MT-260621-BF0D4 oder FM-..." autocomplete="off" oninput="bsUpdateAuthField()">
+        <div id="bs-auth-email-wrap">
+          <label for="bs-email">E-Mail-Adresse</label>
+          <input type="email" id="bs-email" placeholder="ihre@email.de" autocomplete="email">
+        </div>
+        <div id="bs-auth-telefon-wrap" style="display:none">
+          <label for="bs-telefon">Telefonnummer</label>
+          <input type="tel" id="bs-telefon" placeholder="z.B. 0171 1234567" autocomplete="tel">
+        </div>
         <button onclick="lookupOrder()">Bestellung anzeigen</button>
         <div class="bs-error" id="bs-login-error"></div>
+      </div>
+    </div>
+
+    <!-- Loading state (shown during auto-login) -->
+    <div class="bs-card" id="bs-loading-card" style="display:none;text-align:center">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 0">
+        <i data-lucide="loader-2" style="width:32px;height:32px;color:var(--c-green);animation:bsSpin 1s linear infinite"></i>
+        <span style="font-size:14px;color:var(--c-muted)">Bestellung wird geladen…</span>
       </div>
     </div>
 
     <!-- Order detail (hidden until loaded) -->
     <div id="bs-detail" style="display:none">
       <div class="bs-card">
-        <h2>🍽 <span id="bs-gericht">–</span></h2>
+        <h2><i data-lucide="utensils" style="width:20px;height:20px"></i> <span id="bs-gericht">–</span></h2>
         <div id="bs-status-row" style="text-align:center;margin-bottom:16px"></div>
         <div id="bs-info-rows"></div>
       </div>
 
+      <!-- Cancel button (only for Fleisch orders in status Neu) -->
+      <div class="bs-card" id="bs-cancel-card" style="display:none;text-align:center">
+        <button id="bs-cancel-btn" onclick="cancelOrder()" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px"><i data-lucide="x-circle" style="width:16px;height:16px"></i> Bestellung stornieren</button>
+        <p style="font-size:12px;color:#9ca3af;margin-top:8px">M&ouml;glich, solange die Bestellung noch nicht best&auml;tigt wurde.</p>
+      </div>
+
       <!-- Messages from staff -->
       <div class="bs-card" id="bs-messages-card" style="display:none">
-        <h2>💬 Nachrichten</h2>
+        <h2><i data-lucide="message-circle" style="width:20px;height:20px"></i> Nachrichten</h2>
         <div id="bs-messages"></div>
       </div>
 
       <!-- Customer comment -->
       <div class="bs-card" id="bs-comment-card">
-        <h2>✍️ Nachricht an den Dorfladen</h2>
+        <h2><i data-lucide="pencil" style="width:20px;height:20px"></i> Nachricht an den Dorfladen</h2>
         <div class="bs-comment-box">
-          <textarea id="bs-comment" placeholder="Haben Sie eine Frage oder Anmerkung?"></textarea>
+          <textarea id="bs-comment" placeholder="Haben Sie eine Frage oder Anmerkung?" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
           <button id="bs-comment-btn" onclick="sendComment()">Nachricht senden</button>
-          <div class="bs-comment-sent" id="bs-comment-sent">✅ Nachricht gesendet!</div>
+          <div class="bs-comment-sent" id="bs-comment-sent"><i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:middle"></i> Nachricht gesendet!</div>
         </div>
       </div>
 
-      <a href="/" class="bs-link">← Zurück zur Startseite</a>
+      <a href="javascript:void(0)" onclick="if(window.parent!==window){window.parent.postMessage('closeMittagPopup','*')}else if(history.length>1){history.back()}else{location.href='/'}" class="bs-link"><i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle"></i> Zurück</a>
     </div>
   </div>
 
 <script>
-var API = '/api/lunch-order';
 var _order = null;
+var _orderType = 'mt'; // 'mt' or 'fm'
 
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
@@ -147,52 +206,118 @@ function getParam(name){
   return url.searchParams.get(name) || '';
 }
 
+function isFleisch(nr){ return (nr||'').toUpperCase().indexOf('FM-')===0; }
+
+// Auth-Karten umschalten (verhindert kurzes Aufblitzen des Login-Dialogs beim Auto-Login)
+function bsShowLoading(){
+  document.getElementById('bs-login-card').style.display = 'none';
+  var l = document.getElementById('bs-loading-card'); if(l) l.style.display = '';
+}
+function bsShowLogin(){
+  var l = document.getElementById('bs-loading-card'); if(l) l.style.display = 'none';
+  document.getElementById('bs-login-card').style.display = '';
+}
+function bsHideAuth(){
+  document.getElementById('bs-login-card').style.display = 'none';
+  var l = document.getElementById('bs-loading-card'); if(l) l.style.display = 'none';
+}
+
+// Toggle auth field based on order number prefix
+function bsUpdateAuthField(){
+  var nr = document.getElementById('bs-nr').value.trim();
+  var fm = isFleisch(nr);
+  document.getElementById('bs-auth-email-wrap').style.display = fm ? 'none' : '';
+  document.getElementById('bs-auth-telefon-wrap').style.display = fm ? '' : 'none';
+}
+
 function lookupOrder(){
   var nr = document.getElementById('bs-nr').value.trim();
-  var email = document.getElementById('bs-email').value.trim().toLowerCase();
   var errEl = document.getElementById('bs-login-error');
   errEl.style.display = 'none';
 
-  if(!nr || !email){
-    errEl.textContent = 'Bitte Bestellnummer und E-Mail eingeben.';
-    errEl.style.display = 'block';
-    return;
+  var fm = isFleisch(nr);
+  _orderType = fm ? 'fm' : 'mt';
+
+  if(fm){
+    var telefon = document.getElementById('bs-telefon').value.trim();
+    if(!nr || !telefon){
+      errEl.textContent = 'Bitte Bestellnummer und Telefonnummer eingeben.';
+      errEl.style.display = 'block';
+      return;
+    }
+    try{ localStorage.setItem('fm_nr', nr); localStorage.setItem('fm_telefon', telefon); }catch(e){}
+    var apiUrl = '/api/fleisch-order?nr='+encodeURIComponent(nr)+'&telefon='+encodeURIComponent(telefon);
+  } else {
+    var email = document.getElementById('bs-email').value.trim().toLowerCase();
+    if(!nr || !email){
+      errEl.textContent = 'Bitte Bestellnummer und E-Mail eingeben.';
+      errEl.style.display = 'block';
+      return;
+    }
+    try{ localStorage.setItem('bs_email', email); localStorage.setItem('bs_nr', nr); }catch(e){}
+    var apiUrl = '/api/lunch-order?nr='+encodeURIComponent(nr)+'&email='+encodeURIComponent(email);
   }
 
-  // Save to localStorage for auto-login
-  try{ localStorage.setItem('bs_email', email); localStorage.setItem('bs_nr', nr); }catch(e){}
-
-  fetch(API + '?nr=' + encodeURIComponent(nr) + '&email=' + encodeURIComponent(email))
+  fetch(apiUrl)
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if(!data.success || !data.order){
-        errEl.textContent = 'Bestellung nicht gefunden. Bitte prüfen Sie Bestellnummer und E-Mail.';
+      if(!data.success){
+        bsShowLogin();
+        errEl.textContent = 'Bestellung nicht gefunden. Bitte Eingaben prüfen.';
         errEl.style.display = 'block';
         return;
       }
-      _order = data.order;
-      renderOrder(_order);
+      // FM returns .bestellung, MT returns .order
+      _order = data.bestellung || data.order;
+      if(!_order){
+        bsShowLogin();
+        errEl.textContent = 'Bestellung nicht gefunden.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if(fm) renderFleischOrder(_order); else renderOrder(_order);
     })
     .catch(function(e){
-      errEl.textContent = 'Fehler: ' + e.message;
+      console.error('Bestellung konnte nicht geladen werden:',e);
+      bsShowLogin();
+      errEl.textContent = 'Die Bestellung konnte gerade nicht geladen werden. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
       errEl.style.display = 'block';
     });
 }
 
+// ── Timeline helper ──
+function buildTimeline(steps, stepIdx, isCancelled){
+  var h='<div class="bs-timeline">';
+  if(isCancelled){
+    h+='<div class="bs-tl-item cancelled"><div class="bs-tl-dot"></div><div class="bs-tl-label">❌ Storniert</div></div>';
+  } else {
+    for(var i=0;i<steps.length;i++){
+      var cls=stepIdx>i?'done':stepIdx===i?'active':'';
+      h+='<div class="bs-tl-item '+cls+'"><div class="bs-tl-dot"></div>';
+      h+='<div class="bs-tl-label">'+(cls?steps[i].icon+' ':'')+steps[i].label+'</div>';
+      h+='</div>';
+    }
+  }
+  h+='</div>';
+  return h;
+}
+
+// ── Mittagstisch rendering ──
 var STATUS_LABELS = {0:'Eingegangen',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
 var STATUS_ICONS = {0:'⏳',1:'✅',2:'❌',3:'📦'};
+var MT_STEPS=[{icon:'<i data-lucide="clock" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Eingegangen'},{icon:'<i data-lucide="check-circle" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Bestätigt'},{icon:'<i data-lucide="package" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Abgeholt'}];
 
 function renderOrder(o){
-  document.getElementById('bs-login-card').style.display = 'none';
+  bsHideAuth();
   document.getElementById('bs-detail').style.display = 'block';
 
   document.getElementById('bs-gericht').textContent = o.gericht || '–';
 
-  // Status badge
-  var stHtml = '<div class="bs-status st-'+o.status+'">'+(STATUS_ICONS[o.status]||'')+' '+(STATUS_LABELS[o.status]||'Unbekannt')+'</div>';
-  document.getElementById('bs-status-row').innerHTML = stHtml;
+  // Map MT status to timeline step: 0→0, 1→1, 3→2; 2=Storniert
+  var mtTlMap={0:0,1:1,3:2};
+  var tlIdx=mtTlMap[o.status]!=null?mtTlMap[o.status]:0;
+  document.getElementById('bs-status-row').innerHTML = buildTimeline(MT_STEPS, tlIdx, o.status===2);
 
-  // Info rows
   var rows = '';
   rows += '<div class="bs-row"><span class="bs-label">Bestellnummer</span><span class="bs-value">'+esc(o.bestellnummer)+'</span></div>';
   rows += '<div class="bs-row"><span class="bs-label">Menge</span><span class="bs-value">'+o.menge+' Portion'+(o.menge>1?'en':'')+'</span></div>';
@@ -205,17 +330,80 @@ function renderOrder(o){
   if(o.anmerkung) rows += '<div class="bs-row"><span class="bs-label">Ihre Anmerkung</span><span class="bs-value">'+esc(o.anmerkung)+'</span></div>';
   document.getElementById('bs-info-rows').innerHTML = rows;
 
-  // Messages
+  renderMessages(o);
+  // Show cancel button for Eingegangen (0) MT orders
+  document.getElementById('bs-cancel-card').style.display = (o.status === 0 && _orderType === 'mt') ? '' : 'none';
+  if(o.status === 2 || o.status === 3) document.getElementById('bs-comment-card').style.display = 'none';
+  if(window.lucide) lucide.createIcons();
+}
+
+// ── Fleisch rendering ──
+var FM_STATUS_LABELS = {0:'Neu',1:'Bestätigt',2:'Bestätigt',3:'Abgeholt',4:'Storniert'};
+var FM_STATUS_ICONS = {0:'⏳',1:'✔️',2:'✅',3:'📦',4:'❌'};
+var FM_STATUS_CLASS = {0:'st-0',1:'st-3',2:'st-1',3:'st-1',4:'st-2'};
+var FM_STEPS=[{icon:'<i data-lucide="clock" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Neu'},{icon:'<i data-lucide="shopping-cart" style="width:13px;height:13px;vertical-align:middle"></i>',label:'In Bestellung'},{icon:'<i data-lucide="check-circle" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Eingetroffen'},{icon:'<i data-lucide="package" style="width:13px;height:13px;vertical-align:middle"></i>',label:'Abgeholt'}];
+
+function fmtP(v){ return (v||0).toFixed(2).replace('.',','); }
+
+function renderFleischOrder(o){
+  bsHideAuth();
+  document.getElementById('bs-detail').style.display = 'block';
+
+  document.getElementById('bs-gericht').innerHTML = '<i data-lucide="beef" style="width:18px;height:18px;vertical-align:middle"></i> Fleisch-Vorbestellung';
+
+  var st = o.status||0;
+  // FM status 0-3 map directly to step index, 4=Storniert
+  document.getElementById('bs-status-row').innerHTML = buildTimeline(FM_STEPS, st>3?0:st, st===4);
+
+  var rows = '';
+  rows += '<div class="bs-row"><span class="bs-label">Bestellnummer</span><span class="bs-value">'+esc(o.bestellnummer)+'</span></div>';
+  if(o.liefertag){
+    var lp = o.liefertag.split('-');
+    rows += '<div class="bs-row"><span class="bs-label">Liefertag</span><span class="bs-value">'+lp[2]+'.'+lp[1]+'.'+lp[0]+'</span></div>';
+  }
+  rows += '<div class="bs-row"><span class="bs-label">Name</span><span class="bs-value">'+esc(o.name)+'</span></div>';
+
+  // Positionen
+  var pos = o.positionen||[];
+  if(pos.length){
+    rows += '<div style="margin-top:12px;padding-top:8px;border-top:2px solid #f3f4f6">';
+    rows += '<div style="font-size:13px;font-weight:700;color:var(--c-muted);margin-bottom:8px">Positionen</div>';
+    pos.forEach(function(p){
+      var preis = p.rabattpreis || (p.menge_kg * p.preis_kg);
+      rows += '<div class="bs-row"><span class="bs-label">'+esc(p.bezeichnung)+' ('+p.menge_kg.toFixed(1).replace('.',',')+' kg)</span><span class="bs-value">'+fmtP(preis)+' €</span></div>';
+    });
+    rows += '</div>';
+  }
+
+  if(o.rabatt_summe > 0){
+    rows += '<div class="bs-row" style="color:#2e7d4f;font-weight:600"><span class="bs-label">Ersparnis</span><span class="bs-value">-'+fmtP(o.rabatt_summe)+' €</span></div>';
+  }
+  rows += '<div class="bs-row" style="font-weight:700;font-size:15px"><span class="bs-label">Gesamt</span><span class="bs-value">'+fmtP(o.gesamtsumme)+' €</span></div>';
+
+  if(o.anmerkung) rows += '<div class="bs-row"><span class="bs-label">Anmerkung</span><span class="bs-value">'+esc(o.anmerkung)+'</span></div>';
+  rows += '<div style="margin-top:8px;font-size:12px;color:var(--c-muted)">Bezahlung: Bar bei Abholung im Laden</div>';
+  document.getElementById('bs-info-rows').innerHTML = rows;
+
+  renderMessages(o);
+  // Show cancel button only for status Neu (0)
+  document.getElementById('bs-cancel-card').style.display = (st === 0 && _orderType === 'fm') ? '' : 'none';
+  // Hide comment for terminal states
+  if(st === 3 || st === 4) document.getElementById('bs-comment-card').style.display = 'none';
+  if(window.lucide) lucide.createIcons();
+}
+
+// ── Messages (shared) ──
+function renderMessages(o){
   var msgHtml = '';
   var hasMessages = false;
   if(o.bestaetigung_text){
     hasMessages = true;
-    var cls = o.status===2 ? 'bs-msg warn' : 'bs-msg';
+    var cls = (o.status===2 || o.status===4) ? 'bs-msg warn' : 'bs-msg';
     msgHtml += '<div class="'+cls+'"><div class="bs-msg-label">Dorfladen</div><div class="bs-msg-text">'+esc(o.bestaetigung_text)+'</div></div>';
   }
   if(o.personal_antwort){
     hasMessages = true;
-    msgHtml += '<div class="bs-msg" style="margin-top:8px"><div class="bs-msg-label">💬 Antwort vom Dorfladen</div><div class="bs-msg-text">'+esc(o.personal_antwort)+'</div></div>';
+    msgHtml += '<div class="bs-msg" style="margin-top:8px"><div class="bs-msg-label"><i data-lucide="message-circle" style="width:12px;height:12px;vertical-align:middle"></i> Antwort vom Dorfladen</div><div class="bs-msg-text">'+esc(o.personal_antwort)+'</div></div>';
   }
   if(o.kunde_kommentar){
     hasMessages = true;
@@ -225,23 +413,115 @@ function renderOrder(o){
     document.getElementById('bs-messages-card').style.display = '';
     document.getElementById('bs-messages').innerHTML = msgHtml;
   }
-
-  // Pre-fill comment if already exists
-  if(o.kunde_kommentar){
-    document.getElementById('bs-comment').value = o.kunde_kommentar;
-  }
-
-  // Hide comment box if order is completed
-  if(o.status === 3){
-    document.getElementById('bs-comment-card').style.display = 'none';
-  }
 }
 
+// ── Toast helper (replaces alert) ──
+function bsToast(msg, type){
+  type = type || 'error';
+  var t = document.createElement('div');
+  t.className = 'bs-toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 3000);
+  setTimeout(function(){ t.remove(); }, 3400);
+}
+
+// ── Cancel Order (customer self-service) ──
+function cancelOrder(){
+  if(!_order) return;
+
+  // Build custom storno dialog
+  var ov = document.createElement('div');
+  ov.className = 'bs-dialog-ov';
+  ov.innerHTML =
+    '<div class="bs-dialog">'
+    + '<div class="bs-dialog-hd">'
+    +   '<div class="bs-dialog-icon warn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div>'
+    +   '<div class="bs-dialog-title">Bestellung stornieren?</div>'
+    + '</div>'
+    + '<div class="bs-dialog-body">'
+    +   '<p>M\u00f6chten Sie diese Bestellung wirklich stornieren? Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</p>'
+    +   '<label for="bs-storno-grund" class="bs-dialog-label">Stornierungsgrund</label>'
+    +   '<textarea id="bs-storno-grund" placeholder="Grund f\u00fcr die Stornierung\u2026"></textarea>'
+    +   '<div class="bs-dialog-hint" id="bs-storno-hint">Bitte geben Sie einen Grund an.</div>'
+    + '</div>'
+    + '<div class="bs-dialog-ft">'
+    +   '<button class="bs-btn-cancel" id="bs-storno-no">Abbrechen</button>'
+    +   '<button class="bs-btn-danger" id="bs-storno-yes" disabled>Stornieren</button>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  document.body.style.overflow = 'hidden';
+
+  var ta = document.getElementById('bs-storno-grund');
+  var yesBtn = document.getElementById('bs-storno-yes');
+  var hint = document.getElementById('bs-storno-hint');
+
+  ta.addEventListener('input', function(){
+    var hasText = ta.value.trim().length > 0;
+    yesBtn.disabled = !hasText;
+    if(hasText) hint.style.display = 'none';
+  });
+  setTimeout(function(){ ta.focus(); }, 100);
+
+  // Close dialog
+  function closeDialog(){ ov.remove(); document.body.style.overflow = ''; }
+  document.getElementById('bs-storno-no').addEventListener('click', closeDialog);
+  ov.addEventListener('click', function(e){ if(e.target === ov) closeDialog(); });
+
+  // Confirm storno
+  yesBtn.addEventListener('click', function(){
+    var grund = ta.value.trim();
+    if(!grund){ hint.style.display = 'block'; ta.focus(); return; }
+
+    yesBtn.disabled = true;
+    yesBtn.textContent = 'Wird storniert\u2026';
+
+    var apiUrl, payload;
+    if(_orderType === 'fm'){
+      apiUrl = '/api/fleisch-order';
+      payload = {id: _order.id, status: 4, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund};
+    } else {
+      apiUrl = '/api/lunch-order/' + _order.id;
+      payload = {status: 2, kunde_storno: true, storno_grund: 'Kundengrund: ' + grund};
+    }
+
+    fetch(apiUrl, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      closeDialog();
+      var btn = document.getElementById('bs-cancel-btn');
+      if(data.success){
+        btn.innerHTML = '<i data-lucide="check-circle" style="width:16px;height:16px"></i> Storniert';
+        if(window.lucide) lucide.createIcons();
+        btn.style.background = '#d1fae5';
+        btn.style.color = '#065f46';
+        btn.style.borderColor = '#6ee7b7';
+        btn.disabled = true;
+        bsToast('Bestellung wurde storniert.', 'success');
+        setTimeout(function(){ lookupOrder(); }, 1500);
+      } else {
+        bsToast(data.error || 'Stornierung fehlgeschlagen');
+      }
+    })
+    .catch(function(e){
+      closeDialog();
+      console.error('Stornierung fehlgeschlagen:',e);
+      bsToast('Stornierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+    });
+  });
+}
+
+// ── Send Comment ──
 function sendComment(){
   if(!_order) return;
   var text = document.getElementById('bs-comment').value.trim();
   if(!text){
-    alert('Bitte geben Sie eine Nachricht ein.');
+    bsToast('Bitte geben Sie eine Nachricht ein.', 'info');
     return;
   }
 
@@ -249,10 +529,16 @@ function sendComment(){
   btn.disabled = true;
   btn.textContent = 'Wird gesendet…';
 
-  fetch(API + '/' + _order.id, {
+  var apiBase = _orderType === 'fm' ? '/api/fleisch-order' : '/api/lunch-order';
+  var body = _orderType === 'fm'
+    ? {id: _order.id, kunde_kommentar: text}
+    : {kunde_kommentar: text};
+  var fetchUrl = _orderType === 'fm' ? apiBase : apiBase + '/' + _order.id;
+
+  fetch(fetchUrl, {
     method: 'PATCH',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({kunde_kommentar: text})
+    body: JSON.stringify(body)
   })
   .then(function(r){ return r.json(); })
   .then(function(data){
@@ -262,25 +548,36 @@ function sendComment(){
       document.getElementById('bs-comment').value = '';
       document.getElementById('bs-comment-sent').style.display = 'block';
       setTimeout(function(){ document.getElementById('bs-comment-sent').style.display = 'none'; }, 4000);
-      // Refresh order to show updated messages
       lookupOrder();
     } else {
-      alert('Fehler: ' + (data.error || 'Konnte nicht gesendet werden'));
+      bsToast(data.error || 'Nachricht konnte nicht gesendet werden.');
     }
   })
   .catch(function(e){
     btn.disabled = false;
     btn.textContent = 'Nachricht senden';
-    alert('Fehler: ' + e.message);
+    console.error('Nachricht senden fehlgeschlagen:',e);
+    bsToast('Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.');
   });
 }
 
-// Auto-load if params present
+// ── Auto-load ──
 (function(){
   var nr = getParam('nr');
-  var email = getParam('email');
 
-  // Try from localStorage if no URL params
+  // FM: try telefon from params or localStorage
+  if(isFleisch(nr)){
+    var telefon = getParam('telefon');
+    if(!telefon){ try{ telefon = localStorage.getItem('fm_telefon')||''; }catch(e){} }
+    if(nr) document.getElementById('bs-nr').value = nr;
+    if(telefon) document.getElementById('bs-telefon').value = telefon;
+    bsUpdateAuthField();
+    if(nr && telefon){ bsShowLoading(); lookupOrder(); }
+    return;
+  }
+
+  // MT: try email from params or localStorage
+  var email = getParam('email');
   if(!nr || !email){
     try{
       nr = nr || localStorage.getItem('bs_nr') || '';
@@ -288,16 +585,13 @@ function sendComment(){
     }catch(e){}
   }
 
-  if(nr){
-    document.getElementById('bs-nr').value = nr;
-  }
-  if(email){
-    document.getElementById('bs-email').value = email;
-  }
-  if(nr && email){
-    lookupOrder();
-  }
+  if(nr) document.getElementById('bs-nr').value = nr;
+  if(email) document.getElementById('bs-email').value = email;
+  bsUpdateAuthField();
+  if(nr && email){ bsShowLoading(); lookupOrder(); }
 })();
 </script>
+<script>if(window.lucide) lucide.createIcons();</script>
+<script src="/js/env-banner.js"></script>
 </body>
 </html>

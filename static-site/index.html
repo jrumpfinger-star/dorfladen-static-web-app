@@ -8,6 +8,19 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- TagesInfo-Link (z.B. aus WhatsApp): auf die eigenstaendige Seite /tagesinfo
+       umleiten. Aeltere Links mit ?tagesinfo=1 / #tagesinfo bleiben so gueltig. -->
+  <script>
+    (function(){
+      try{
+        var s=location.search,h=location.hash;
+        if(/(?:[?&])tagesinfo=1(?:&|$)/.test(s)||h==='#tagesinfo'){
+          location.replace('/tagesinfo');
+        }
+      }catch(e){}
+    })();
+  </script>
+
   <title>Dorfladen Oberornau – Ihr Nahversorger, Treffpunkt &amp; Postfiliale</title>
 
   <meta name="description" content="Dorfladen Oberornau – regionale Nahversorgung, gemütlicher Treffpunkt, Postfiliale. Frühstück, Mittagessen, Brotzeit und mehr.">
@@ -23,6 +36,8 @@
   <link rel="stylesheet" href="/css/style.css">
 
   <link rel="stylesheet" href="/css/mobile.css">
+
+  <script src="/js/theme.js"></script>
 
   <link rel="manifest" href="/manifest.json">
 
@@ -82,8 +97,6 @@
 
   <div class="mob-nav-close"><button onclick="document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-nav-ov').classList.remove('open');if(window.removePopupState)window.removePopupState()">&times;</button></div>
 
-  <a href="/" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Start</a>
-
   <a href="/aktuelles"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg> Aktuelles</a>
 
   <a href="/essen-im-dorfladen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Essen</a>
@@ -92,9 +105,9 @@
 
   <a href="/shop" class="feature-orders-link" style="display:none;color:#2d5016;font-weight:700"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2d5016" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Online bestellen</a>
 
-  <a href="/shop-admin" class="feature-orders-link" style="display:none;color:#2d5016;font-weight:700">&#128230; Bestellungen</a>
+  <a href="/shop-admin" class="feature-orders-link" style="display:none;color:#2d5016;font-weight:700"><i data-lucide="clipboard-list" width="18" height="18" style="vertical-align:-4px;margin-right:6px"></i>Bestellungen</a>
 
-  <a href="/kiosk" class="feature-orders-link" style="display:none;color:#2d5016;font-weight:700">&#127973; Kiosk</a>
+  <a href="/kiosk" class="feature-orders-link" style="display:none;color:#2d5016;font-weight:700"><i data-lucide="monitor" width="18" height="18" style="vertical-align:-4px;margin-right:6px"></i>Kiosk</a>
 
   <a href="/sortiment"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Sortiment &amp; Preisliste</a>
 
@@ -110,9 +123,9 @@
 
   <a href="javascript:void(0)" id="mob-pwa-install" onclick="pwaInstall()" style="margin-top:12px;display:none;background:linear-gradient(135deg,#2d5016,#3a6b1e);color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;font-size:.88rem;text-align:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Als App installieren</a>
 
-  <a href="javascript:void(0)" id="mob-push-toggle" onclick="pushToggle()" style="display:none;background:#f0fdf4;color:#2d5016;border-radius:10px;padding:10px 14px;font-weight:600;font-size:.88rem;text-align:center">&#128276; Benachrichtigungen aktivieren</a>
+  <a href="javascript:void(0)" id="mob-push-toggle" onclick="pushToggle()" style="display:none;background:#f0fdf4;color:#2d5016;border-radius:10px;padding:10px 14px;font-weight:600;font-size:.88rem;text-align:center"><i data-lucide="bell" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i>Benachrichtigungen aktivieren</a>
 
-  <a href="javascript:void(0)" onclick="openHilfePopup()" style="font-size:.88rem;color:#2d5016;font-weight:600">&#10067; Hilfe</a>
+  <a href="javascript:void(0)" onclick="openHilfePopup()" style="font-size:.88rem;color:#2d5016;font-weight:600"><i data-lucide="help-circle" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i>Hilfe</a>
 
   <div style="display:flex;gap:14px;margin-top:16px;padding:0 14px">
     <a href="https://wa.me/491714910935?text=Hallo%2C%20ich%20habe%20eine%20Frage%20%F0%9F%91%8B" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:10px;background:#25D366;color:#fff;font-size:.82rem;font-weight:700;text-decoration:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</a>
@@ -167,23 +180,43 @@
 
       <span class="mob-action-sub" id="mob-lunch-sub">Wochenplan</span>
 
+      <div id="mob-my-orders" style="display:none;margin-top:6px" onclick="event.stopPropagation()"></div>
+
     </div>
 
   </div>
-
-  <div id="mob-my-orders" style="display:none;margin-top:6px"></div>
 
 </div>
 
 <div class="mob-only mob-actions-row">
 
-  <div class="mob-action" onclick="mobOpenPopup('meat')">
+  <div class="mob-action highlight" id="mob-action-tp" style="display:none;border-color:rgba(30,58,47,.15);background:#f0fdf4" onclick="document.getElementById('tp-overlay').classList.add('open')">
+
+    <span class="mob-action-icon" style="color:#1e3a2f;background:rgba(30,58,47,.1)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span>
+
+    <span class="mob-action-label" style="color:#1e3a2f">TagesInfo</span>
+
+    <span class="mob-action-sub" id="mob-tp-sub">Heute im Dorfladen</span>
+
+  </div>
+
+  <div class="mob-action" id="mob-action-orders" style="display:none" onclick="document.getElementById('orders-overlay').classList.add('open');dlLockScroll()">
+
+    <span class="mob-action-icon" style="color:#1e3a2f;background:rgba(30,58,47,.1)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>
+
+    <span class="mob-action-label">Online-Einkauf</span>
+
+    <span class="mob-action-sub" id="mob-orders-sub">Offene Bestellungen</span>
+
+  </div>
+
+  <div class="mob-action" id="mob-action-meat" onclick="mobOpenPopup('meat')">
 
     <span class="mob-action-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/><path d="M6 22v-3c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v3"/></svg></span>
 
     <span class="mob-action-label">Fleisch &amp; Wurst</span>
 
-    <span class="mob-action-sub">15% ab 1kg</span>
+    <span class="mob-action-sub" id="mob-meat-sub-default">15% ab 1kg</span>
 
   </div>
 
@@ -351,11 +384,13 @@
 
       <p style="font-size:1.15rem;font-weight:800;color:#c62828;margin-bottom:6px" id="mob-meat-pct">15&thinsp;% Rabatt</p>
 
-      <p style="font-size:.92rem;color:#1a1a1a;margin:0" id="mob-meat-sub">Auf alle Fleisch- und Wurstprodukte bei Vorbestellung ab 1&thinsp;kg. Einfach im Laden oder telefonisch vorbestellen!</p>
+      <p style="font-size:.92rem;color:#1a1a1a;margin:0" id="mob-meat-sub">Auf alle Fleisch- und Wurstprodukte bei Vorbestellung ab 1&thinsp;kg. Bequem online vorbestellen und im Laden abholen!</p>
 
     </div>
 
-    <a href="tel:+4980826229991" style="display:block;text-align:center;background:#2e7d4f;color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:1rem" id="mob-meat-cta"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Jetzt vorbestellen</a>
+    <div id="mob-fm-orders-popup" style="display:none;margin-bottom:16px"></div>
+
+    <a href="/fleisch-bestellen" style="display:block;text-align:center;background:#7f1d1d;color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:1rem" id="mob-meat-cta"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/></svg> Jetzt online vorbestellen</a>
 
   </div>
 
@@ -458,9 +493,7 @@
 
     <ul class="nv-links">
 
-      <li class="act"><a href="/" aria-current="page">Start</a></li>
-
-      <li><a href="/aktuelles">Aktuelles</a></li>
+      <li class="act"><a href="/aktuelles">Aktuelles</a></li>
 
       <li>
 
@@ -478,6 +511,8 @@
 
           <li><a href="/bilder">Impressionen</a></li>
 
+          <li><a href="/roter-punkt" style="color:#b91c1c;font-weight:700"><svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a></li>
+
         </ul>
 
       </li>
@@ -492,6 +527,8 @@
 
         <ul class="nv-dd">
 
+          <li><a href="/essen-im-dorfladen">Essen im Dorfladen</a></li>
+
           <li><a href="/beirat">Beirat</a></li>
 
           <li><a href="/geschaeftsfuehrung">Gesch&auml;ftsf&uuml;hrung</a></li>
@@ -502,19 +539,17 @@
 
       </li>
 
-      <li><a href="/roter-punkt" style="color:var(--c-acc);font-weight:700"><svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a></li>
-
       <li id="dt-pwa-install" style="display:none"><a href="javascript:void(0)" onclick="pwaInstall()" style="color:#2d5016;font-weight:700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> App</a></li>
 
-      <li id="dt-push-toggle" style="display:none"><a href="javascript:void(0)" onclick="pushToggle()" style="color:#2d5016;font-weight:600">&#128276; Push</a></li>
+      <li id="dt-push-toggle" style="display:none"><a href="javascript:void(0)" onclick="pushToggle()" style="color:#2d5016;font-weight:600"><i data-lucide="bell" width="15" height="15" style="vertical-align:-3px;margin-right:3px"></i>Push</a></li>
 
-      <li><a href="/handbuch/hilfe.html" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a></li>
+      <li><a href="/handbuch/hilfe.html" style="color:#2d5016;font-weight:600"><i data-lucide="help-circle" width="15" height="15" style="vertical-align:-3px;margin-right:3px"></i>Hilfe</a></li>
 
-      <li class="feature-orders-link" style="display:none"><a href="/shop-admin" style="color:#2d5016;font-weight:700">&#128230; Bestellungen</a></li>
+      <li class="feature-orders-link" style="display:none"><a href="/shop-admin" style="color:#2d5016;font-weight:700"><i data-lucide="clipboard-list" width="15" height="15" style="vertical-align:-3px;margin-right:3px"></i>Bestellungen</a></li>
 
-      <li class="feature-orders-link" style="display:none"><a href="/kiosk" style="color:#2d5016;font-weight:700">&#127973; Kiosk</a></li>
+      <li class="feature-orders-link" style="display:none"><a href="/kiosk" style="color:#2d5016;font-weight:700"><i data-lucide="monitor" width="15" height="15" style="vertical-align:-3px;margin-right:3px"></i>Kiosk</a></li>
 
-      <li><a href="/cms" style="color:var(--c-acc);font-weight:700">&#x1F680; CMS</a></li>
+      <li><a href="javascript:void(0)" onclick="openCmsGate()" style="color:var(--c-acc);font-weight:700"><i data-lucide="settings" width="15" height="15" style="vertical-align:-3px;margin-right:3px"></i>CMS</a></li>
 
     </ul>
 
@@ -554,6 +589,26 @@
 <div class="promo-bar" id="hp-promo-bar">
 
   <div class="promo-bar-in">
+
+    <a href="javascript:void(0)" class="promo-item promo-tp" id="promo-tp-link" style="display:none" onclick="document.getElementById('tp-overlay').classList.add('open')">
+
+      <span class="promo-tp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span>
+
+      TagesInfo
+
+      <span class="promo-count" id="promo-tp-count" style="display:none">0</span>
+
+    </a>
+
+    <a href="javascript:void(0)" class="promo-item promo-orders" id="promo-orders-link" style="display:none" onclick="document.getElementById('orders-overlay').classList.add('open');dlLockScroll()">
+
+      <span class="promo-orders-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>
+
+      Online-Einkauf
+
+      <span class="promo-count" id="promo-orders-count">0</span>
+
+    </a>
 
     <a href="#angebote" class="promo-item promo-ang" id="promo-ang-link" style="display:none">
 
@@ -597,9 +652,11 @@
 
       <div class="meat-promo-title" id="meat-title">Fleisch &amp; Wurst: <span class="meat-pct" id="meat-pct">15&thinsp;% Rabatt</span> bei Vorbestellung ab 1&thinsp;kg <span class="meat-promo-tag" id="meat-tag">Daueraktion</span></div>
 
-      <div class="meat-promo-sub" id="meat-sub">Auf alle Fleisch- und Wurstprodukte, die je Artikel mit mehr als 1&thinsp;kg vorbestellt werden, gew&auml;hren wir dauerhaft 15&thinsp;% Rabatt. Einfach im Laden oder telefonisch vorbestellen! &nbsp;<a href="tel:+4980826229991" class="meat-promo-cta" id="meat-cta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Jetzt vorbestellen</a></div>
+      <div class="meat-promo-sub" id="meat-sub">Auf alle Fleisch- und Wurstprodukte, die je Artikel mit mehr als 1&thinsp;kg vorbestellt werden, gew&auml;hren wir dauerhaft 15&thinsp;% Rabatt. Bequem online vorbestellen und im Laden abholen! &nbsp;<a href="/fleisch-bestellen" class="meat-promo-cta" id="meat-cta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/></svg> Jetzt online vorbestellen</a></div>
 
     </div>
+
+    <div id="desk-fm-orders" style="display:none;margin-top:8px"></div>
 
   </div>
 
@@ -643,9 +700,9 @@
 
       </div>
 
-    </div>
+      <div id="desk-my-orders" style="display:none;padding:0 16px 12px" onclick="event.stopPropagation()"></div>
 
-    <div id="desk-my-orders" style="display:none;margin-top:10px"></div>
+    </div>
 
     <!-- ====== WHATSAPP SPEISEPLAN INFO ====== -->
 
@@ -1013,7 +1070,7 @@
 
 
 
-    <a href="/bilder" class="mob-card" style="text-decoration:none;color:inherit;display:block">
+    <a href="/bilder" class="mob-card" style="text-decoration:none;color:inherit">
 
       <div class="mob-card-header">
 
@@ -1071,7 +1128,7 @@
 
   <!-- MOBILE: Social CTA -->
 
-  <div class="mob-only" style="display:flex;gap:10px;padding:0 var(--mob-px,16px);margin-top:16px">
+  <div class="mob-only mob-social-cta" style="gap:10px;padding:0 var(--mob-px,16px);margin-top:16px">
 
     <a href="https://wa.me/491714910935?text=Hallo%2C%20ich%20m%C3%B6chte%20der%20WhatsApp-Gruppe%20beitreten%20%F0%9F%91%8B" target="_blank" rel="noopener" class="mob-wa" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
 
@@ -1184,7 +1241,7 @@
 
     <span>&copy; <script>document.write(new Date().getFullYear())</script> Dorfladen Oberornau UG (haftungsbeschr&auml;nkt). Alle Rechte vorbehalten.</span>
 
-    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a> &middot; <a href="/cms">CMS</a></span>
+    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600"><i data-lucide="help-circle" width="14" height="14" style="vertical-align:-2px;margin-right:3px"></i>Hilfe</a> &middot; <a href="javascript:void(0)" onclick="openCmsGate()">CMS</a></span>
 
     <span id="site-version" style="font-size:10px;color:#9ca3af"></span>
 
@@ -1435,27 +1492,37 @@
 
 <script>
   (function(){
-    fetch('/api/cms-config').then(function(r){return r.json();}).then(function(res){
-      var flags=res&&res.data?res.data.feature_flags:null;
-      if(typeof flags==='string'){try{flags=JSON.parse(flags);}catch(e){flags={};}}
-      if(!flags)flags={};
+    // Reuse cms-config from app.js _dlFlagsReady (no extra fetch)
+    (window._dlFlagsReady||Promise.resolve()).then(function(){
+      var flags=window._dlFeatureFlags||{};
       var isStaging=location.hostname.indexOf('witty-island')>=0;
       var show=!!(flags.orders===true)||isStaging;
       document.querySelectorAll('.feature-orders-link').forEach(function(el){el.style.display=show?'':'none';});
-      // Mittagstisch bestellen: show/hide order buttons and mobile quick-action
       var showMT=!!(flags.mittagstisch===true);
       window._featureMittagstisch=showMT;
       document.querySelectorAll('.feature-mittagstisch').forEach(function(el){el.style.display=showMT?'':'none';});
-    }).catch(function(){});
+      var showFleisch=!!(flags.fleisch_home===true);
+      var fa=document.getElementById('fleisch-aktion');if(fa)fa.style.display=showFleisch?'':'none';
+      var mam=document.getElementById('mob-action-meat');if(mam)mam.style.display=showFleisch?'':'none';
+    });
   })();
 </script>
 
 <script>
+  // Cache lunch-order fetch for reuse (widget + tagesinfo markers)
+  (function(){
+    var email = (localStorage.getItem('bs_email')||'').trim();
+    if(email){
+      window._dlLunchOrderP=fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
+        .then(function(r){return r.json();}).catch(function(){return {success:false};});
+    }
+  })();
+</script>
+<script>
   // Show active Mittagstisch orders for the logged-in customer (single-line + popup)
   (function(){
     try{
-      var email = (localStorage.getItem('bs_email')||'').trim();
-      if(!email) return;
+      if(!window._dlLunchOrderP) return;
 
       var STATUS_LABELS = {0:'Neu',1:'Best\u00e4tigt'};
       var STATUS_COLORS = {0:'#f59e0b',1:'#10b981'};
@@ -1467,8 +1534,7 @@
         return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : iso;
       }
 
-      fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
-        .then(function(r){ return r.json(); })
+      window._dlLunchOrderP
         .then(function(res){
           if(!res.success) return;
           var orders = res.orders||[];
@@ -1477,45 +1543,47 @@
           function renderWidget(containerId){
             var el = document.getElementById(containerId);
             if(!el) return;
+            var isDark = containerId === 'mob-my-orders';
+            var wrapBg = isDark ? 'rgba(255,255,255,.15)' : '#eff6ff';
+            var wrapBorder = isDark ? 'rgba(255,255,255,.2)' : '#bfdbfe';
+            var wrapColor = isDark ? '#fff' : '#1d4ed8';
+            var chevronColor = isDark ? 'rgba(255,255,255,.5)' : 'currentColor';
 
             if(orders.length === 1){
-              // Single order → direct link
               var o = orders[0];
-              var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+              var nr = o.bestellnummer||'';
               var st = STATUS_LABELS[o.status]||'?';
               var col = STATUS_COLORS[o.status]||'#6b7280';
               var bg = STATUS_BG[o.status]||'#f3f4f6';
-              el.innerHTML = '<a href="'+href+'" style="display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 14px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600">'
+              el.innerHTML = '<a href="javascript:void(0)" onclick="openBestellstatus(\''+esc(nr)+'\')" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;text-decoration:none;color:'+wrapColor+';font-size:13px;font-weight:600;cursor:pointer">'
                 +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
                 +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtDate(o.datum)+' \u2013 '+(o.gericht||'Mittagessen')+'</span>'
                 +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
-                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+chevronColor+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>'
                 +'</a>';
             } else {
-              // Multiple orders → single line with popup trigger
               var popupId = 'popup-'+containerId;
-              el.innerHTML = '<div onclick="document.getElementById(\''+popupId+'\').style.display=\'flex\'" style="display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 14px;cursor:pointer;color:#1d4ed8;font-size:13px;font-weight:600">'
+              el.innerHTML = '<div onclick="var p=document.getElementById(\''+popupId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;cursor:pointer;color:'+wrapColor+';font-size:13px;font-weight:600">'
                 +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
                 +'<span style="flex:1">Meine Bestellungen</span>'
-                +'<span style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
-                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+                +'<span style="font-size:11px;background:'+(isDark?'rgba(255,255,255,.2)':'#dbeafe')+';color:'+wrapColor+';padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
+                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+chevronColor+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>'
                 +'</div>';
-              // Build popup overlay
               var pop = document.createElement('div');
               pop.id = popupId;
               pop.style.cssText = 'display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:20px';
-              pop.onclick = function(e){ if(e.target===pop) pop.style.display='none'; };
-              var card = '<div style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
+              pop.onclick = function(e){ if(e.target===pop){ pop.style.display='none'; document.body.style.overflow=''; } };
+              var card = '<div class="dl-pop-card" style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
                 +'<div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">'
-                +'<span style="font-weight:800;font-size:15px;color:#111">Meine Bestellungen</span>'
-                +'<span onclick="document.getElementById(\''+popupId+'\').style.display=\'none\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
+                +'<span style="font-weight:800;font-size:15px;color:inherit">Meine Bestellungen</span>'
+                +'<span onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
                 +'</div><div style="padding:8px">';
               orders.forEach(function(o){
-                var href = '/bestellstatus?nr='+encodeURIComponent(o.bestellnummer||'');
+                var nr2 = o.bestellnummer||'';
                 var st = STATUS_LABELS[o.status]||'?';
                 var col = STATUS_COLORS[o.status]||'#6b7280';
                 var bg = STATUS_BG[o.status]||'#f3f4f6';
-                card += '<a href="'+href+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600;margin-bottom:2px;transition:background .15s" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'transparent\'">'
+                card += '<a href="javascript:void(0)" onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\';openBestellstatus(\''+esc(nr2)+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600;margin-bottom:2px;transition:background .15s;cursor:pointer" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'transparent\'">'
                   +'<span style="font-size:12px;color:#6b7280;min-width:70px">'+fmtDate(o.datum)+'</span>'
                   +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.gericht||'Mittagessen')+'</span>'
                   +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
@@ -1534,8 +1602,96 @@
     }catch(e){}
   })();
 
-  // Shop-Bestellungen: Floating badge showing count of open orders
+  // Fleisch-Bestellungen: Widget in Fleisch-Kachel
   (function(){
+    try{
+      var telefon = (localStorage.getItem('fm_telefon')||'').trim();
+      if(!telefon) return;
+
+      var FM_ST = {0:'Neu',1:'Bestätigt',2:'Bestätigt'};
+      var FM_COL = {0:'#f59e0b',1:'#6366f1',2:'#10b981'};
+      var FM_BG = {0:'#fef3c7',1:'#e0e7ff',2:'#d1fae5'};
+
+      function fmtDate(iso){
+        if(!iso) return '';
+        var p = iso.split('-');
+        return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : iso;
+      }
+
+      function _fmRenderOrderLink(o){
+        var fmNr = o.bestellnummer||'';
+        var st = FM_ST[o.status]||'?';
+        var col = FM_COL[o.status]||'#6b7280';
+        var bg = FM_BG[o.status]||'#f3f4f6';
+        return '<a href="javascript:void(0)" onclick="var p=document.getElementById(\'popup-desk-fm-orders\');if(p){p.style.display=\'none\';document.body.style.overflow=\'\';}openBestellstatus(\''+esc(fmNr)+'\')" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;text-decoration:none;color:#7f1d1d;font-size:13px;font-weight:600;margin-bottom:4px;cursor:pointer">'
+          +'<span style="font-size:11px;opacity:.7;min-width:60px">'+esc(o.bestellnummer||'')+'</span>'
+          +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Liefertag: '+fmtDate(o.liefertag)+'</span>'
+          +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
+          +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+          +'</a>';
+      }
+
+      function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+      fetch('/api/fleisch-order?mode=my&telefon='+encodeURIComponent(telefon))
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res.success) return;
+          var orders = res.bestellungen||[];
+          if(!orders.length) return;
+
+          // ── Mobile tile badge ──
+          var sub = document.getElementById('mob-meat-sub-default');
+          if(sub){
+            sub.innerHTML = '<span style="display:inline-block;background:#7f1d1d;color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:6px;margin-right:4px">'+orders.length+'</span> Bestellung'+(orders.length>1?'en':'');
+          }
+
+          // ── Mobile popup list ──
+          var popupEl = document.getElementById('mob-fm-orders-popup');
+          if(popupEl){
+            var ph = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:.85rem;font-weight:700;color:#7f1d1d">'
+              +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z"/><polyline points="12 6 12 12 16 14"/></svg>'
+              +' Ihre Vorbestellung'+(orders.length>1?'en':'')+':</div>';
+            orders.forEach(function(o){ ph += _fmRenderOrderLink(o); });
+            popupEl.innerHTML = ph;
+            popupEl.style.display = 'block';
+          }
+
+          // ── Desktop widget (inside meat-promo banner) ──
+          var deskEl = document.getElementById('desk-fm-orders');
+          if(deskEl){
+            if(orders.length === 1){
+              deskEl.innerHTML = _fmRenderOrderLink(orders[0]);
+            } else {
+              var fmPopId = 'popup-desk-fm-orders';
+              deskEl.innerHTML = '<div class="dl-fm-orders-btn" onclick="var p=document.getElementById(\''+fmPopId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:rgba(127,29,29,.08);border:1px solid rgba(127,29,29,.15);border-radius:10px;padding:8px 14px;cursor:pointer;color:#7f1d1d;font-size:13px;font-weight:600">'
+                +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+                +'<span style="flex:1">Meine Vorbestellungen</span>'
+                +'<span style="font-size:11px;background:rgba(127,29,29,.12);color:#7f1d1d;padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
+                +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>'
+                +'</div>';
+              var fmPop = document.createElement('div');
+              fmPop.id = fmPopId;
+              fmPop.style.cssText = 'display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:20px';
+              fmPop.onclick = function(e){ if(e.target===fmPop){ fmPop.style.display='none'; document.body.style.overflow=''; } };
+              var fmCard = '<div class="dl-pop-card" style="background:#fff;border-radius:14px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">'
+                +'<div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">'
+                +'<span style="font-weight:800;font-size:15px;color:inherit">Meine Vorbestellungen</span>'
+                +'<span onclick="document.getElementById(\''+fmPopId+'\').style.display=\'none\';document.body.style.overflow=\'\'" style="cursor:pointer;font-size:20px;color:#9ca3af;line-height:1">\u2715</span>'
+                +'</div><div style="padding:8px">';
+              orders.forEach(function(o){ fmCard += _fmRenderOrderLink(o); });
+              fmCard += '</div></div>';
+              fmPop.innerHTML = fmCard;
+              document.body.appendChild(fmPop);
+            }
+            deskEl.style.display = 'block';
+          }
+        }).catch(function(){});
+    }catch(e){}
+  })();
+
+  // Shop-Bestellungen: Floating badge showing count of open orders
+  function reloadShopOrders(){
     try{
       var token = localStorage.getItem('dl_shop_token')||'';
       if(!token) return;
@@ -1543,24 +1699,712 @@
         .then(function(r){ return r.json(); })
         .then(function(res){
           if(!res.success) return;
+          // Offene Bestellungen = noch nicht abgeholt (Status < 3) - wie im Shop unter "Meine Bestellungen",
+          // unabhaengig vom Abholdatum (sonst verschwinden noch offene Bestellungen mit vergangenem Abholtag)
           var open = (res.orders||[]).filter(function(o){ return o.status < 3; });
-          if(!open.length) return;
-          // Create floating badge
-          var badge = document.createElement('a');
-          badge.href = '/shop#meine-bestellungen';
-          badge.title = open.length + ' offene Bestellung'+(open.length>1?'en':'');
-          badge.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:500;width:56px;height:56px;border-radius:50%;background:#1e3a2f;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.25);text-decoration:none;font-size:20px;transition:transform .15s';
-          badge.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
-          var count = document.createElement('span');
-          count.style.cssText = 'position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:12px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px';
-          count.textContent = open.length;
-          badge.appendChild(count);
-          badge.addEventListener('mouseenter',function(){badge.style.transform='scale(1.1)';});
-          badge.addEventListener('mouseleave',function(){badge.style.transform='scale(1)';});
-          document.body.appendChild(badge);
+          var promoLink = document.getElementById('promo-orders-link');
+          var promoCount = document.getElementById('promo-orders-count');
+          var mobOrders = document.getElementById('mob-action-orders');
+          var mobOrdersSub = document.getElementById('mob-orders-sub');
+          if(!open.length){
+            if(promoLink) promoLink.style.display='none';
+            if(mobOrders) mobOrders.style.display='none';
+            renderOrdersPopup([]);
+            return;
+          }
+          if(promoLink){ promoLink.style.display=''; promoCount.textContent=open.length; }
+          if(mobOrders){ mobOrders.style.display=''; if(mobOrdersSub) mobOrdersSub.textContent=open.length+' offen'; }
+          renderOrdersPopup(open);
         }).catch(function(){});
     }catch(e){}
-  })();
+  }
+  window.reloadShopOrders=reloadShopOrders;
+  reloadShopOrders();
+
+  // Scroll lock helpers for overlays
+  window.dlLockScroll=function(){document.documentElement.style.setProperty('--scroll-y','-'+window.scrollY+'px');document.body.classList.add('overlay-open');};
+  window.dlUnlockScroll=function(){document.body.classList.remove('overlay-open');var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;document.documentElement.style.removeProperty('--scroll-y');window.scrollTo(0,y);};
+  window._shopOrders=[];
+  window.showOrderDetail=showOrderDetail;
+  function renderOrdersPopup(orders){
+    window._shopOrders=orders;
+    var statusLabels=['Neu','In Bearbeitung','Bereit','Abgeholt'];
+    var statusColors=['#f59e0b','#3b82f6','#22c55e','#6b7280'];
+    var statusIcons=['\u23f3','\u2699\ufe0f','\u2705','\u2611\ufe0f'];
+    var html='';
+    orders.forEach(function(o,i){
+      var st=o.status||0;
+      var positionen=[];
+      try{positionen=Array.isArray(o.positionen)?o.positionen:(typeof o.positionen_json==='string'?JSON.parse(o.positionen_json):[]);}catch(e){}
+      var artikelCount=positionen.reduce(function(s,p){return s+(p.menge||1);},0);
+      var datum=o.abholdatum||'';
+      try{var dp=datum.substring(0,10).split('-');if(dp.length===3)datum=dp[2]+'.'+dp[1]+'.'+dp[0];}catch(e){}
+      var slot='';
+      try{var zs=typeof o.abhol_zeitslot==='string'?JSON.parse(o.abhol_zeitslot):o.abhol_zeitslot;if(zs)slot=zs.label||'';if(zs&&zs.von)slot+=' ('+zs.von+'\u2013'+zs.bis+')';}catch(e){}
+      var summe=o.gesamtsumme?parseFloat(o.gesamtsumme).toFixed(2).replace('.',',')+'\u00a0\u20ac':'';
+      html+='<div class="ord-card" style="border-left:4px solid '+statusColors[st]+';cursor:pointer" onclick="showOrderDetail('+i+')">';
+      html+='<div class="ord-head"><span class="ord-nr">'+((o.bestellnummer||'').replace('DL-',''))+'</span><span class="ord-status" style="color:'+statusColors[st]+'">'+statusIcons[st]+' '+statusLabels[st]+'</span></div>';
+      html+='<div class="ord-details">';
+      html+='<span>'+artikelCount+' Artikel \u00b7 '+summe+'</span>';
+      if(datum)html+='<span>Abholung: '+datum+(slot?' '+slot:'')+'</span>';
+      html+='</div></div>';
+    });
+    html+='<a href="/shop#meine-bestellungen" class="ord-all">Alle Bestellungen \u2192</a>';
+    document.getElementById('orders-body').innerHTML=html;
+  }
+
+  function showOrderDetail(idx){
+    var o=window._shopOrders[idx];if(!o){console.warn('Order not found at index',idx);return;}
+    var statusLabels=['Neu','In Bearbeitung','Abholbereit','Abgeholt','Storniert'];
+    var statusColors=['#f59e0b','#3b82f6','#22c55e','#6b7280','#ef4444'];
+    var st=o.status||0;
+    var positionen=[];
+    try{positionen=Array.isArray(o.positionen)?o.positionen:(typeof o.positionen_json==='string'?JSON.parse(o.positionen_json):[]);}catch(e){}
+    // Format dates
+    function fd(raw){if(!raw)return'\u2013';try{var p=raw.substring(0,10).split('-');return p[2]+'.'+p[1]+'.'+p[0];}catch(e){return raw;}}
+    var datum=fd(o.abholdatum);
+    var bestDatum=fd(o.bestelldatum);
+    var slot='';
+    try{var zs=typeof o.abhol_zeitslot==='string'?JSON.parse(o.abhol_zeitslot):o.abhol_zeitslot;if(zs&&zs.von)slot=(zs.period==='nm'?'NM':'VM')+' '+zs.von+'\u2013'+zs.bis;}catch(e){}
+    // Timeline
+    var tlSteps=[{icon:'\u23f3',l:'Neu'},{icon:'\u2699\ufe0f',l:'Packen'},{icon:'\u2705',l:'Bereit'},{icon:'\ud83d\udce6',l:'Abgeholt'}];
+    var tlHtml='<div style="display:flex;align-items:flex-start;margin:16px 0 12px;position:relative">';
+    if(st===4){
+      tlHtml+='<div style="flex:1;text-align:center"><div style="width:28px;height:28px;border-radius:50%;background:#fee2e2;border:2px solid #ef4444;display:inline-flex;align-items:center;justify-content:center;font-size:14px">\u274c</div><div style="font-size:10px;color:#ef4444;font-weight:700;margin-top:3px">Storniert</div></div>';
+    } else {
+      tlSteps.forEach(function(s,si){
+        var done=si<st,active=si===st;
+        var bg=done?statusColors[0<1?si:0]:active?'#dbeafe':'#f3f4f6';
+        if(done) bg='#d1fae5';
+        var border=done?'#22c55e':active?'#3b82f6':'#d1d5db';
+        var lblCol=done?'#22c55e':active?'#3b82f6':'#9ca3af';
+        tlHtml+='<div style="flex:1;text-align:center;position:relative;z-index:1">';
+        if(si<tlSteps.length-1) tlHtml+='<div style="position:absolute;top:13px;left:calc(50% + 16px);right:calc(-50% + 16px);height:2px;background:'+(done?'#22c55e':'#e5e7eb')+';z-index:0"></div>';
+        tlHtml+='<div style="width:28px;height:28px;border-radius:50%;background:'+bg+';border:2px solid '+border+';display:inline-flex;align-items:center;justify-content:center;font-size:13px;position:relative;z-index:1'+(active?';animation:odpulse 1.5s infinite':'')+'">'+s.icon+'</div>';
+        tlHtml+='<div style="font-size:10px;color:'+lblCol+';font-weight:'+(active?'700':'600')+';margin-top:3px">'+s.l+'</div>';
+        tlHtml+='</div>';
+      });
+    }
+    tlHtml+='</div>';
+    // Positions
+    var posHtml='';
+    if(positionen.length){
+      posHtml='<div style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin:12px 0">';
+      positionen.forEach(function(p,pi){
+        var pr=p.positionspreis!=null?Number(p.positionspreis).toFixed(2).replace('.',',')+' \u20ac':(p.einzelpreis!=null?(Number(p.einzelpreis)*Number(p.menge||1)).toFixed(2).replace('.',',')+' \u20ac':'');
+        posHtml+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:13px;'+(pi<positionen.length-1?'border-bottom:1px solid #f0f0f0;':'')+'background:#fafafa">';
+        posHtml+='<div style="flex:1;min-width:0"><div style="font-weight:600;color:#1f2937">'+(p.bezeichnung||'\u2013')+'</div><div style="font-size:11px;color:#6b7280;margin-top:1px">'+(p.menge||1)+'\u00d7 '+(p.einheit||'St.')+'</div></div>';
+        posHtml+='<div style="font-weight:700;color:#2e7d4f;white-space:nowrap">'+pr+'</div>';
+        posHtml+='</div>';
+      });
+      posHtml+='</div>';
+    }
+    var total=o.gesamtsumme?parseFloat(o.gesamtsumme).toFixed(2).replace('.',',')+' \u20ac':'';
+    // Build modal
+    var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:17px;font-weight:800;color:#1f2937">'+o.bestellnummer+'</span></div>';
+    h+=tlHtml;
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:8px">';
+    h+='<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="color:#6b7280;font-size:11px;font-weight:600">Bestellt am</div><div style="font-weight:700;color:#1f2937;margin-top:2px">'+bestDatum+'</div></div>';
+    h+='<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="color:#6b7280;font-size:11px;font-weight:600">Abholung</div><div style="font-weight:700;color:#1f2937;margin-top:2px">'+datum+(slot?' '+slot:'')+'</div></div>';
+    h+='</div>';
+    h+=posHtml;
+    if(total) h+='<div style="display:flex;justify-content:space-between;padding:10px 0;border-top:2px solid #e5e7eb;margin-top:4px"><span style="font-weight:700;color:#374151">Gesamt</span><span style="font-size:18px;font-weight:800;color:#2e7d4f">'+total+'</span></div>';
+    // Kunden-Kommunikation: Antwort des Ladens + eigene Nachricht anzeigen
+    if(o.personal_antwort) h+='<div class="od-msg-reply"><strong>\ud83d\udcac Antwort vom Dorfladen</strong><br>'+odEsc(o.personal_antwort)+'</div>';
+    if(o.kunde_kommentar) h+='<div class="od-msg-mine"><strong>\ud83d\udcac Ihre Nachricht</strong><br>'+odEsc(o.kunde_kommentar)+'</div>';
+    // Aktionen: Nachricht (Status<3 = noch nicht abgeholt/storniert), Stornieren (Status<2 = Neu/Packen)
+    var canMsg=st<3, canCancel=st<2;
+    if(canMsg||canCancel){
+      h+='<div class="od-actions">';
+      if(canMsg) h+='<button class="od-actbtn msg" onclick="odToggleMsg()">\ud83d\udcac Nachricht</button>';
+      if(canCancel) h+='<button class="od-actbtn cancel" onclick="odToggleStorno()">\u2715 Stornieren</button>';
+      h+='</div>';
+      if(canMsg) h+='<div class="od-panel" id="od-panel-msg" style="display:none"><textarea id="od-msg-text" maxlength="500" placeholder="Ihre Nachricht an den Dorfladen\u2026"></textarea><div class="od-panel-ft"><button class="od-mini" onclick="odHidePanels()">Abbrechen</button><button class="od-mini primary" onclick="odSendMsg()">Senden</button></div></div>';
+      if(canCancel) h+='<div class="od-panel" id="od-panel-storno" style="display:none"><div class="od-panel-warn">Diese Bestellung wirklich stornieren? Das kann nicht r\u00fcckg\u00e4ngig gemacht werden.</div><textarea id="od-storno-grund" maxlength="200" placeholder="Grund f\u00fcr die Stornierung\u2026"></textarea><div class="od-hint" id="od-storno-hint" style="display:none">Bitte geben Sie einen Grund an.</div><div class="od-panel-ft"><button class="od-mini" onclick="odHidePanels()">Abbrechen</button><button class="od-mini danger" onclick="odConfirmStorno()">Stornieren</button></div></div>';
+    }
+    window._odOrderId=o.id;
+    document.getElementById('od-body').innerHTML=h;
+    document.getElementById('od-overlay').classList.add('open');
+    dlLockScroll();
+  }
+
+  function odEsc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;}
+  function odToast(msg){var t=document.createElement('div');t.className='od-toast';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(function(){t.classList.add('show');});setTimeout(function(){t.classList.remove('show');setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},250);},2600);}
+  window.odToggleMsg=function(){var m=document.getElementById('od-panel-msg'),s=document.getElementById('od-panel-storno');if(s)s.style.display='none';if(m){m.style.display=(m.style.display==='none'?'block':'none');var ta=document.getElementById('od-msg-text');if(ta&&m.style.display==='block')ta.focus();}};
+  window.odToggleStorno=function(){var m=document.getElementById('od-panel-msg'),s=document.getElementById('od-panel-storno');if(m)m.style.display='none';if(s){s.style.display=(s.style.display==='none'?'block':'none');var ta=document.getElementById('od-storno-grund');if(ta&&s.style.display==='block')ta.focus();}};
+  window.odHidePanels=function(){var m=document.getElementById('od-panel-msg'),s=document.getElementById('od-panel-storno');if(m)m.style.display='none';if(s)s.style.display='none';};
+  function odPatch(payload,okMsg){
+    var token=localStorage.getItem('dl_shop_token')||'';
+    fetch('/api/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json','X-Shop-Token':token},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();})
+      .then(function(x){
+        if(x&&x.success){ odToast(okMsg); var ov=document.getElementById('od-overlay'); if(ov)ov.classList.remove('open'); dlUnlockScroll(); if(typeof reloadShopOrders==='function')reloadShopOrders(); }
+        else { odToast((x&&x.error)||'Aktion fehlgeschlagen'); }
+      })
+      .catch(function(){ odToast('Aktion fehlgeschlagen. Bitte erneut versuchen.'); });
+  }
+  window.odSendMsg=function(){var ta=document.getElementById('od-msg-text');var v=(ta&&ta.value||'').trim();if(!v){if(ta)ta.focus();return;}odPatch({id:window._odOrderId,kunde_kommentar:v},'\u2705 Nachricht gesendet');};
+  window.odConfirmStorno=function(){var ta=document.getElementById('od-storno-grund');var v=(ta&&ta.value||'').trim();var hint=document.getElementById('od-storno-hint');if(!v){if(hint)hint.style.display='block';if(ta)ta.focus();return;}odPatch({id:window._odOrderId,customer_action:'cancel',storno_grund:'Kundengrund: '+v},'Bestellung storniert');};
+</script>
+
+<!-- ====== BESTELLUNGEN POPUP ====== -->
+<style>
+.orders-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:flex-start;padding:60px 16px 16px}
+.orders-overlay.open{display:flex}
+body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0)}
+.orders-modal{background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+.orders-modal-head{position:sticky;top:0;background:#1e3a2f;color:#fff;padding:16px 48px 16px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;gap:12px;z-index:2}
+.orders-modal-head h2{margin:0;font-size:17px;font-weight:600;flex:1}
+.orders-modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:6px 10px;border-radius:8px;line-height:1}
+.orders-modal-close:hover{background:rgba(255,255,255,.15)}
+.orders-body{padding:12px}
+.ord-card{display:block;background:#f9fafb;border-radius:10px;padding:12px 14px;margin-bottom:8px;text-decoration:none;color:inherit;transition:background .15s}
+.ord-card:hover{background:#f0fdf4}
+.ord-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.ord-nr{font-weight:700;font-size:.95rem;color:#1f2937}
+.ord-status{font-size:.82rem;font-weight:600}
+.ord-details{font-size:.82rem;color:#6b7280;display:flex;flex-direction:column;gap:2px}
+.ord-all{display:block;text-align:center;padding:12px;color:#2e7d4f;font-weight:600;font-size:.88rem;text-decoration:none;border-top:1px solid #e5e7eb;margin-top:4px}
+.ord-all:hover{background:#f0fdf4;border-radius:0 0 16px 16px}
+@media(max-width:600px){.orders-overlay{padding:20px 8px 8px}.orders-modal{max-height:calc(100vh - 30px);border-radius:12px}.orders-modal-head{border-radius:12px 12px 0 0}}
+/* ── Order Detail Overlay ── */
+.od-overlay{display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px}
+.od-overlay.open{display:flex}
+.od-modal{background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+.od-head{position:sticky;top:0;background:#1e3a2f;color:#fff;padding:14px 48px 14px 18px;border-radius:16px 16px 0 0;display:flex;align-items:center;gap:10px;z-index:2}
+.od-head h2{margin:0;font-size:16px;font-weight:700;flex:1}
+.od-close{position:absolute;top:10px;right:10px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:6px 10px;border-radius:8px;line-height:1}
+.od-close:hover{background:rgba(255,255,255,.15)}
+.od-body{padding:16px}
+.od-msg-reply{margin-top:12px;background:#eef7f1;border:1px solid #cfe8d8;border-radius:10px;padding:10px;font-size:13px;color:#1e3a2f;line-height:1.4}
+.od-msg-mine{margin-top:12px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:10px;font-size:13px;color:#374151;line-height:1.4}
+.od-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.od-actbtn{flex:1;min-width:120px;padding:10px;border-radius:10px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;font-weight:600;cursor:pointer}
+.od-actbtn.msg{color:#1e3a2f}
+.od-actbtn.cancel{color:#b91c1c;border-color:#fecaca;background:#fef2f2}
+.od-panel{margin-top:12px;border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fafafa}
+.od-panel textarea{width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:60px}
+.od-panel-warn{font-size:12px;color:#b91c1c;font-weight:600;margin-bottom:8px}
+.od-hint{font-size:12px;color:#b91c1c;margin-top:6px}
+.od-panel-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.od-mini{padding:8px 14px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.od-mini.primary{background:#2e7d4f;color:#fff;border-color:#2e7d4f}
+.od-mini.danger{background:#dc2626;color:#fff;border-color:#dc2626}
+.od-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:2000;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;max-width:90vw;text-align:center}
+.od-toast.show{opacity:1}
+@keyframes odpulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(max-width:600px){.od-modal{max-height:calc(100vh - 40px);border-radius:12px}.od-head{border-radius:12px 12px 0 0}}
+</style>
+
+<!-- ====== ORDER DETAIL OVERLAY ====== -->
+<div class="od-overlay" id="od-overlay" onclick="if(event.target===this){this.classList.remove('open');dlUnlockScroll()}">
+  <div class="od-modal">
+    <div class="od-head">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <h2>Bestelldetails</h2>
+      <button class="od-close" onclick="document.getElementById('od-overlay').classList.remove('open');dlUnlockScroll()">&times;</button>
+    </div>
+    <div class="od-body" id="od-body"></div>
+  </div>
+</div>
+
+<div class="orders-overlay" id="orders-overlay" onclick="if(event.target===this){this.classList.remove('open');dlUnlockScroll()}">
+  <div class="orders-modal">
+    <div class="orders-modal-head">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+      <h2>Online-Einkauf</h2>
+      <button class="orders-modal-close" onclick="document.getElementById('orders-overlay').classList.remove('open');dlUnlockScroll()">&#10005;</button>
+    </div>
+    <div class="orders-body" id="orders-body"></div>
+  </div>
+</div>
+
+<!-- ====== TAGESPOST FAB + MODAL ====== -->
+<style>
+.tp-fab{display:none}
+.promo-tp{background:#1e3a2f;color:#fff;font-weight:700}.promo-tp:hover{background:#2a5040;color:#fff}
+.promo-orders{background:#1e3a2f;color:#fff;font-weight:700}.promo-orders:hover{background:#2a5040;color:#fff}
+.tp-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:flex-start;padding:60px 16px 16px}
+.tp-overlay.open{display:flex}
+.tp-modal{background:#fff;border-radius:16px;max-width:500px;width:100%;max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+.tp-modal-head{position:sticky;top:0;background:#1e3a2f;color:#fff;padding:16px 48px 16px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;gap:12px;z-index:2}
+.tp-modal-head h2{margin:0;font-size:18px;font-weight:600;flex:1}
+.tp-modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:6px 10px;border-radius:8px;line-height:1}
+.tp-modal-close:hover{background:rgba(255,255,255,.15)}
+.tp-modal-body{padding:20px}
+.tp-freitext{font-size:14px;color:#374151;margin-bottom:16px;line-height:1.5;padding:12px;background:#f0fdf4;border-radius:10px;border-left:3px solid #2e7d4f}
+.tp-section{margin-bottom:16px}
+.tp-section-title{font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.tp-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:6px;transition:background .12s;flex-wrap:wrap}
+.tp-item:hover{background:#f9fafb}
+.tp-item-img{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#f3f4f6;flex-shrink:0}
+.tp-item-img.no-img{display:flex;align-items:center;justify-content:center;font-size:20px;color:#9ca3af}
+.tp-item-info{flex:1;min-width:0}
+.tp-item-name{font-size:14px;font-weight:600;color:#1f2937;line-height:1.3}
+.tp-item-cat{font-size:12px;color:#6b7280}
+.tp-item-row2{display:flex;align-items:center;gap:8px;width:100%;padding-left:52px}
+.tp-item-price{font-size:15px;font-weight:700;color:#2e7d4f;white-space:nowrap}
+.tp-item-order{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#2e7d4f;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;text-decoration:none;transition:background .12s}
+.tp-item-order:hover{background:#1f5c39}
+.tp-ab-badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:#dc2626;background:#fff;padding:3px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0;border:1.5px solid #dc2626}
+.tp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.tp-grid-card{text-align:center;padding:10px 6px;border:1px solid #e5e7eb;border-radius:10px;transition:background .12s}
+.tp-grid-card:hover{background:#f9fafb}
+.tp-grid-card img{width:64px;height:64px;border-radius:8px;object-fit:cover;margin-bottom:4px}
+.tp-grid-card .card-name{font-size:12px;font-weight:600;color:#1f2937;line-height:1.2;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tp-grid-card .card-price{font-size:13px;font-weight:700;color:#2e7d4f}
+.tp-cta{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.tp-cta a{flex:1;text-align:center;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;transition:.15s;min-width:140px}
+.tp-cta-shop{background:#2e7d4f;color:#fff}.tp-cta-shop:hover{background:#1f5c39}
+.tp-cta-wa{background:#25d366;color:#fff}.tp-cta-wa:hover{background:#1da851}
+.tp-datum{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px}
+@media(max-width:600px){.tp-overlay{padding:20px 8px 8px}.tp-modal{max-height:calc(100vh - 30px);border-radius:12px}.tp-modal-head{border-radius:12px 12px 0 0}.tp-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}}
+</style>
+
+<span class="tp-fab" id="tp-fab"></span>
+
+<div class="tp-overlay" id="tp-overlay">
+  <div class="tp-modal" id="tp-modal">
+    <div class="tp-modal-head">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+      <div><h2 id="tp-title">TagesInfo</h2><div class="tp-datum" id="tp-datum"></div></div>
+      <button class="tp-modal-close" id="tp-close">✕</button>
+    </div>
+    <div id="tp-day-tabs" style="display:none;background:#f0fdf4;border-bottom:1px solid #e5e7eb;padding:0 16px">
+      <button id="tp-tab-heute" onclick="tpSwitchDay('heute')" style="padding:8px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid #16a34a;background:transparent;color:#16a34a;cursor:pointer;margin-right:4px">Heute</button>
+      <button id="tp-tab-morgen" onclick="tpSwitchDay('morgen')" style="padding:8px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;background:transparent;color:#6b7280;cursor:pointer">Morgen</button>
+    </div>
+    <div class="tp-modal-body" id="tp-body"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var fab=document.getElementById('tp-fab'),overlay=document.getElementById('tp-overlay'),modal=document.getElementById('tp-modal'),closeBtn=document.getElementById('tp-close');
+  var _scrollY=0;
+  function openModal(){overlay.classList.add('open');_scrollY=window.scrollY;document.body.style.overflow='hidden';document.body.style.position='fixed';document.body.style.width='100%';document.body.style.top='-'+_scrollY+'px';}
+  function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';window.scrollTo(0,_scrollY);document.documentElement.classList.remove('tp-focus');}
+  window.tpCloseModal=closeModal;
+  fab.addEventListener('click',openModal);
+  closeBtn.addEventListener('click',closeModal);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)closeModal();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();var oo=document.getElementById('orders-overlay');if(oo)oo.classList.remove('open');}});
+
+  var WOCHENTAGE=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var MONATE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  function fmtDate(d){return WOCHENTAGE[d.getDay()]+', '+d.getDate()+'. '+MONATE[d.getMonth()];}
+
+  var _isTomorrow=false;
+  var _tpTodayPost=null,_tpTomorrowPost=null;
+
+  window.tpSwitchDay=function(day){
+    var bH=document.getElementById('tp-tab-heute'),bM=document.getElementById('tp-tab-morgen');
+    if(day==='morgen'&&_tpTomorrowPost){
+      renderPost(_tpTomorrowPost,true);
+      if(bH){bH.style.borderBottomColor='transparent';bH.style.color='#6b7280';}
+      if(bM){bM.style.borderBottomColor='#16a34a';bM.style.color='#16a34a';}
+    } else if(_tpTodayPost){
+      renderPost(_tpTodayPost,false);
+      if(bH){bH.style.borderBottomColor='#16a34a';bH.style.color='#16a34a';}
+      if(bM){bM.style.borderBottomColor='transparent';bM.style.color='#6b7280';}
+    }
+  };
+
+  function renderPost(post,isTomorrow){
+    _isTomorrow=!!isTomorrow;
+    var titlePrefix=_isTomorrow?'Morgen':'Heute';
+    var pTitel=(post.titel||'TagesInfo').replace(/Aktuelles/gi,'TagesInfo');
+    if(!_isTomorrow){pTitel=pTitel.replace(/^Morgen/i,'Heute');}
+    document.getElementById('tp-title').textContent=pTitel;
+    if(_isTomorrow&&pTitel){document.getElementById('tp-title').textContent='Morgen: '+pTitel.replace(/^Heute/i,'').replace(/^\s*[:–-]\s*/,'');}
+    var d=new Date(post.datum);
+    document.getElementById('tp-datum').textContent=(_isTomorrow?'Vorschau – ':'')+fmtDate(d);
+
+    var items=post.items||[];
+    if(typeof items==='string'){try{items=JSON.parse(items);}catch(e){items=[];}}
+    if(!Array.isArray(items))items=[];
+
+    var _now2=new Date(), nowH=_now2.getHours(), nowM=_now2.getMinutes();
+    var lunchOver=_isTomorrow?false:(nowH>12||(nowH===12&&nowM>=30));
+
+    var mittagessen=lunchOver?[]:items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
+    var theke=items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
+
+    var visibleItems=mittagessen.length+theke.length;
+
+    var html='';
+
+    if(post.text){html+='<div class="tp-freitext">'+esc(post.text)+'</div>';}
+
+    if(mittagessen.length){
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Mittagessen</div>';
+      mittagessen.forEach(function(it){html+=itemCard(it,true);});
+      html+='</div>';
+    }
+
+    if(theke.length){
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="12" cy="11" r="3"/><path d="M6.58 18.5A8 8 0 0 1 2 21"/><path d="M22 21a8 8 0 0 0-5-7.5"/><path d="M12 8V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="m19.07 10.93-1.41 1.41"/></svg> Theke & Kuchen</div>';
+      if(theke.length<=3){theke.forEach(function(it){html+=itemCard(it);});}
+      else{html+='<div class="tp-grid">';theke.forEach(function(it){html+=gridCard(it);});html+='</div>';}
+      html+='</div>';
+    }
+
+    if(!mittagessen.length&&!theke.length&&items.length){
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Produkte</div>';
+      items.forEach(function(it){html+=itemCard(it);});
+      html+='</div>';
+    }
+
+
+    document.getElementById('tp-body').innerHTML=html;
+
+    if(!_isTomorrow){loadMyLunchOrderMarkers();}
+
+    return visibleItems;
+  }
+
+  function loadMyLunchOrderMarkers(){
+    // Reuse cached lunch-order fetch from _dlLunchOrderP (no duplicate request)
+    if(!window._dlLunchOrderP)return;
+    window._dlLunchOrderP
+      .then(function(res){
+        if(!res.success)return;
+        var orders=res.orders||[];
+        var today=new Date().toISOString().substring(0,10);
+        var todayOrders=orders.filter(function(o){return (o.datum||'').substring(0,10)===today&&o.status!==2;});
+        if(!todayOrders.length)return;
+        var byGericht={};
+        todayOrders.forEach(function(o){
+          var g=(o.gericht||'').trim().toLowerCase();
+          if(!byGericht[g])byGericht[g]={count:0,nr:o.bestellnummer||'',status:o.status};
+          byGericht[g].count+=(o.menge||1);
+        });
+        document.querySelectorAll('.tp-item[data-gericht]').forEach(function(el){
+          var g=el.getAttribute('data-gericht').toLowerCase();
+          if(!byGericht[g])return;
+          var info=byGericht[g];
+          var lbl=info.count>1?info.count+'x bestellt':'bestellt';
+          var col=info.status===1?'#16a34a':'#d97706';
+          var bg=info.status===1?'#dcfce7':'#fef3c7';
+          var badge=document.createElement('a');
+          badge.href='javascript:void(0)';
+          badge.setAttribute('data-bs-nr',info.nr);
+          badge.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:'+bg+';color:'+col+';border-radius:6px;font-size:10px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0;white-space:nowrap';
+          badge.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+lbl;
+          badge.onclick=function(e){e.stopPropagation();e.preventDefault();openBestellstatus(this.getAttribute('data-bs-nr'));};
+          el.appendChild(badge);
+        });
+      }).catch(function(){});
+  }
+
+  function catIcon(kat){
+    var k=(kat||'').toLowerCase();
+    var s='width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+    if(k.indexOf('mittag')>=0)return '<svg '+s+'><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>';
+    if(k.indexOf('kuchen')>=0||k.indexOf('back')>=0||k.indexOf('torte')>=0)return '<svg '+s+'><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="12" cy="11" r="3"/><path d="M12 8V2"/></svg>';
+    if(k.indexOf('theke')>=0||k.indexOf('salat')>=0)return '<svg '+s+'><path d="M15.2 22H8.8a2 2 0 0 1-2-1.79L5 3h14l-1.81 17.21A2 2 0 0 1 15.2 22Z"/><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"/></svg>';
+    if(k.indexOf('getr')>=0)return '<svg '+s+'><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/></svg>';
+    return '<svg '+s+'><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
+  }
+  function itemCard(it,showOrder){
+    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div class="tp-item-img no-img">'+catIcon(it.kategorie)+'</div>';
+    var preis=it.preis?fmtPreis(it.preis):'';
+    var orderBtn='';
+    if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
+      var href,tip;
+      if(_isTomorrow){
+        var _qp=[];
+        if(it.id)_qp.push('gericht_id='+encodeURIComponent(it.id));
+        if(it.name)_qp.push('gericht='+encodeURIComponent(it.name));
+        if(it.preis)_qp.push('preis='+it.preis);
+        href='/mittagstisch-bestellen'+(_qp.length?'?'+_qp.join('&'):'');
+        tip='F\u00fcr morgen vorbestellen';
+      }else{
+        var _now=new Date(), _bsCutoff=window._dlBestellschluss||10.5, _canOrderToday=(_now.getHours()+_now.getMinutes()/60)<_bsCutoff;
+        href=_canOrderToday
+          ?'/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'')
+          :'/mittagstisch-bestellen';
+        tip=_canOrderToday?'Jetzt f\u00fcr heute bestellen':'Mittagessen bestellen';
+      }
+      orderBtn='<a class="tp-item-order" href="javascript:void(0)" onclick="openMittagPopup(\''+esc(href).replace(/'/g,"\\'")+'\')" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
+    }
+    var abBadge=it.ab_uhr?'<span class="tp-ab-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
+    var showCat=!showOrder&&it.kategorie;
+    var gerichtAttr=(showOrder&&it.name)?' data-gericht="'+esc(it.name)+'"':'';
+    var hasRow2=preis||orderBtn||abBadge;
+    var row2=hasRow2?'<div class="tp-item-row2">'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+(abBadge||'')+'<div style="flex:1"></div>'+orderBtn+'</div>':'';
+    return '<div class="tp-item"'+gerichtAttr+'>'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(showCat?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+row2+'</div>';
+  }
+
+  function gridCard(it){
+    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>';
+    var preis=it.preis?fmtPreis(it.preis):'';
+    var abBadge=it.ab_uhr?'<span class="tp-ab-badge" style="margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
+    return '<div class="tp-grid-card">'+img+'<div class="card-name">'+esc(it.name||'')+'</div>'+(preis?'<div class="card-price">'+preis+'</div>':'')+(abBadge||'')+'</div>';
+  }
+
+  function fmtPreis(p){var n=parseFloat(p);if(isNaN(n))return p;return n.toFixed(2).replace('.',',')+' €';}
+  function esc(s){if(!s)return '';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+  // Fetch tagespost + hours + feature flags in parallel (no extra cms-config call)
+  var _tagesInfoImmer=false;
+  var _tagesInfoEnabled=false;
+  var _flagsP=(window._dlFlagsReady||Promise.resolve()).then(function(){
+    var ff=window._dlFeatureFlags||{};
+    if(ff.tagesinfo_immer===true) _tagesInfoImmer=true;
+    if(ff.tagesinfo_home===true) _tagesInfoEnabled=true;
+  });
+  var _tpP=window._tpEarlyP||fetch('/api/tagespost').then(function(r){return r.json();}).catch(function(){return null;});
+  var _hoursP=window._dlHoursP||fetch('/api/hours').then(function(r){return r.json();}).catch(function(){return null;});
+
+  // Posts fuer Tab-Umschaltung merken + Day-Tabs setzen
+  function _prepPosts(res){
+    _tpTodayPost=res.today_post||null;
+    _tpTomorrowPost=res.tomorrow_post||null;
+    var dayTabs=document.getElementById('tp-day-tabs');
+    if(dayTabs&&_tpTodayPost&&_tpTomorrowPost){
+      dayTabs.style.display='';
+      if(res.is_tomorrow){
+        var bH=document.getElementById('tp-tab-heute'),bM=document.getElementById('tp-tab-morgen');
+        if(bH){bH.style.borderBottomColor='transparent';bH.style.color='#6b7280';}
+        if(bM){bM.style.borderBottomColor='#16a34a';bM.style.color='#16a34a';}
+      }
+    }
+  }
+
+  // Post rendern + Promo/Mobile-Kacheln setzen. Gibt die Produktanzahl zurueck.
+  function _renderAndTiles(res){
+    var count=renderPost(res.post,res.is_tomorrow);
+    if(!count) return 0;
+    var promoTp=document.getElementById('promo-tp-link');
+    var promoTpCount=document.getElementById('promo-tp-count');
+    if(promoTp){promoTp.style.display='';}
+    if(promoTpCount&&count>0){promoTpCount.style.display='';promoTpCount.textContent=count;}
+    var mobTp=document.getElementById('mob-action-tp');
+    var mobTpSub=document.getElementById('mob-tp-sub');
+    var dayLabel=res.is_tomorrow?'morgen':'heute';
+    if(mobTp){mobTp.style.display='';if(mobTpSub)mobTpSub.textContent=count+' Produkte '+dayLabel;}
+    return count;
+  }
+
+  Promise.all([_flagsP,_tpP]).then(function(results){
+    if(!_tagesInfoEnabled) return; // Homepage-Tagesinfo im CMS nicht freigeschaltet
+    var res=results[1];
+    if(!res||!res.success||!res.post) return;
+
+    _prepPosts(res);
+
+    function _showPost(){
+    if(!_renderAndTiles(res)) return;
+    var seenKey='tagespost_seen_'+new Date().toISOString().substring(0,10);
+    if(!localStorage.getItem(seenKey)){
+      localStorage.setItem(seenKey,1);
+      setTimeout(openModal,1200);
+    }
+    } // end _showPost
+
+    // Morgen-Posts immer anzeigen
+    if(res.is_tomorrow){ _showPost(); return; }
+
+    // Flag: TagesInfo immer anzeigen → Zeitprüfung überspringen
+    if(_tagesInfoImmer){ _showPost(); return; }
+
+    // Öffnungszeiten erst jetzt (parallel geladen) auswerten – blockiert den
+    // Morgen-/Immer-Fall oben nicht mehr.
+    _hoursP.then(function(hRes){
+    if(!hRes||!hRes.success||!hRes.data){ _showPost(); return; }
+    var now=new Date();
+    var jsDay=now.getDay();
+    var dvDay=jsDay===0?101006:(101000+jsDay-1);
+    var todayHours=hRes.data.filter(function(h){return h.wochentag===dvDay;});
+    if(!todayHours.length){ _showPost(); return; }
+    if(todayHours[0].geschlossen) return;
+    var closeTime='';
+    todayHours.forEach(function(h){
+      var t=h.nachmittag_bis||h.vormittag_bis||'';
+      if(t>closeTime) closeTime=t;
+    });
+    if(!closeTime){ _showPost(); return; }
+    var hh=now.getHours(), mm=now.getMinutes();
+    var nowTime=(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+    var cp=closeTime.split(':'), cMin=parseInt(cp[0],10)*60+parseInt(cp[1],10)-30;
+    var hideTime=(Math.floor(cMin/60)<10?'0':'')+Math.floor(cMin/60)+':'+(cMin%60<10?'0':'')+(cMin%60);
+    if(nowTime>=hideTime) return;
+    _showPost();
+    });
+  });
+})();
+</script>
+
+<style>
+.mt-popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;justify-content:center;align-items:center;padding:16px}
+.mt-popup-overlay.open{display:flex}
+.mt-popup-modal{background:#fff;border-radius:16px;max-width:700px;width:100%;height:calc(100vh - 32px);max-height:calc(100vh - 32px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative;display:flex;flex-direction:column}
+html[data-theme="dark"] .orders-modal,
+html[data-theme="dark"] .od-modal,
+html[data-theme="dark"] .tp-modal,
+html[data-theme="dark"] .mt-popup-modal,
+html[data-theme="dark"] .dl-pop-card{background:#1b2228;color:#e6eae8}
+html[data-theme="dark"] .dl-pop-card [style*="border-bottom:1px solid #e5e7eb"]{border-bottom-color:#2a333a !important}
+html[data-theme="dark"] .dl-pop-card [style*="color:#7f1d1d"]{color:#f5bcbc !important}
+html[data-theme="dark"] .dl-pop-card [style*="background:rgba(127,29,29,.08)"]{background:#2a1a1a !important;border-color:#5a2a2a !important}
+html[data-theme="dark"] .dl-fm-orders-btn,
+html[data-theme="dark"] .dl-fm-orders-btn *{color:#f0a8a8 !important}
+/* index.html: verstreute Inline-Hell-Flaechen + dunkle Texte robust nachziehen */
+html[data-theme="dark"] .ord-card{background:#161c20;color:#e6eae8}
+html[data-theme="dark"] .ord-card:hover,
+html[data-theme="dark"] .ord-all:hover,
+html[data-theme="dark"] .tp-item:hover,
+html[data-theme="dark"] .tp-grid-card:hover{background:#12251c}
+html[data-theme="dark"] .ord-nr,
+html[data-theme="dark"] .tp-item-name,
+html[data-theme="dark"] .tp-grid-card .card-name{color:#e6eae8}
+html[data-theme="dark"] .tp-item-img{background:#232b31}
+html[data-theme="dark"] .tp-freitext{background:#12251c;color:#cfe9d8}
+html[data-theme="dark"] #tp-day-tabs{background:#12251c !important;border-bottom-color:#2a333a !important}
+html[data-theme="dark"] [style*="background:#f9fafb"],
+html[data-theme="dark"] [style*="background:#fafafa"],
+html[data-theme="dark"] [style*="background:#f3f4f6"],
+html[data-theme="dark"] [style*="background:#f0f0f0"]{background:#161c20 !important}
+html[data-theme="dark"] [style*="background:#fff5f5"]{background:#2c1b1b !important;border-color:#5a2a2a !important}
+html[data-theme="dark"] [style*="background:#f0fdf4"]{background:#12251c !important;border-color:#2f5d42 !important}
+html[data-theme="dark"] [style*="color:#111"],
+html[data-theme="dark"] [style*="color:#1a1a1a"],
+html[data-theme="dark"] [style*="color:#1f2937"]{color:#e6eae8 !important}
+html[data-theme="dark"] [style*="border-bottom:1px solid #f0f0f0"],
+html[data-theme="dark"] [style*="border-bottom:1px solid #e5e7eb"]{border-color:#2a333a !important}
+.mt-popup-close{position:absolute;top:10px;right:10px;z-index:10;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.5);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.mt-popup-close:hover{background:rgba(0,0,0,.7)}
+.mt-popup-iframe{border:none;width:100%;flex:1;min-height:0;border-radius:16px}
+@media(max-width:600px){.mt-popup-overlay{padding:0}.mt-popup-modal{max-width:100%;max-height:100%;border-radius:0;height:100%}.mt-popup-iframe{border-radius:0}}
+</style>
+
+<div class="mt-popup-overlay" id="mt-popup-overlay" onclick="if(event.target===this)closeMittagPopup()">
+  <div class="mt-popup-modal">
+    <button class="mt-popup-close" onclick="closeMittagPopup()" title="Schließen">✕</button>
+    <iframe class="mt-popup-iframe" id="mt-popup-iframe" style="height:90vh"></iframe>
+  </div>
+</div>
+
+<script>
+function openMittagPopup(url){
+  var iframe=document.getElementById('mt-popup-iframe');
+  var sep=url.indexOf('?')>=0?'&':'?';
+  iframe.src=url+sep+'_cb='+Date.now();
+  document.getElementById('mt-popup-overlay').classList.add('open');
+  if(window.dlLockScroll) dlLockScroll(); else document.body.style.overflow='hidden';
+}
+function closeMittagPopup(){
+  document.getElementById('mt-popup-overlay').classList.remove('open');
+  document.getElementById('mt-popup-iframe').src='';
+  if(window.dlUnlockScroll) dlUnlockScroll();
+  // Close underlying mobile popup if open (e.g. lunch popup that triggered the order)
+  if(window.mobClosePopup){
+    var openMob=document.querySelectorAll('.mob-popup-bg.open');
+    openMob.forEach(function(el){var id=(el.id||'').replace('mob-popup-','');if(id)mobClosePopup(id);});
+  }
+  // Clear any remaining inline scroll-lock styles
+  document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';
+}
+function openCmsPopup(){
+  openMittagPopup('/cms');
+}
+function openBestellstatus(nr){
+  openMittagPopup('/bestellstatus?nr='+encodeURIComponent(nr||''));
+}
+
+/* --- CMS Password Gate Popup --- */
+var CMS_PW_HASH='d324fb3c8c3a1ef449e1f776b2f29fd718d00e7967adbb0bbe8326c2452bea93';
+var CMS_PW_KEY='cms_auth_ok';
+function _cmsSha256(str){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(str)).then(function(h){
+    return Array.from(new Uint8Array(h)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  });
+}
+function openCmsGate(){
+  if(sessionStorage.getItem(CMS_PW_KEY)===CMS_PW_HASH){ location.href='/cms'; return; }
+  var ov=document.getElementById('cms-gate-overlay');
+  ov.style.display='flex';
+  document.body.style.overflow='hidden';
+  var inp=document.getElementById('cms-gate-pw');
+  inp.value=''; inp.focus();
+  document.getElementById('cms-gate-err').style.display='none';
+}
+function closeCmsGate(){
+  document.getElementById('cms-gate-overlay').style.display='none';
+  document.body.style.overflow='';
+}
+function submitCmsGate(){
+  var pw=document.getElementById('cms-gate-pw').value;
+  _cmsSha256(pw).then(function(hash){
+    if(hash===CMS_PW_HASH){
+      sessionStorage.setItem(CMS_PW_KEY,hash);
+      fetch('/api/cms-auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})})
+        .then(function(r){return r.ok?r.json():null;})
+        .then(function(d){if(d&&d.token){try{sessionStorage.setItem('cms_auth_token',d.token);}catch(e){}}})
+        .catch(function(){})
+        .then(function(){ closeCmsGate(); location.href='/cms'; });
+    } else {
+      document.getElementById('cms-gate-err').style.display='block';
+      var inp=document.getElementById('cms-gate-pw');
+      inp.value=''; inp.focus();
+    }
+  });
+}
+
+window.addEventListener('message',function(e){
+  if(e.data==='closeMittagPopup') closeMittagPopup();
+  // Bestellung im eingebetteten Dialog abgeschlossen: Bestell-Dialog UND
+  // den TagesInfo-Dialog schliessen, sodass man sauber auf der Startseite landet.
+  else if(e.data==='mittagOrderDone'){ closeMittagPopup(); if(window.tpCloseModal) window.tpCloseModal(); }
+});
+</script>
+
+<!-- CMS Password Gate Popup -->
+<div id="cms-gate-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;justify-content:center;align-items:center;padding:16px" onclick="if(event.target===this)closeCmsGate()">
+  <div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;position:relative;animation:bsSlideUp .2s ease">
+    <button onclick="closeCmsGate()" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:22px;color:#9ca3af;cursor:pointer;line-height:1;padding:4px" title="Schlie\u00dfen">&times;</button>
+    <h2 style="font-size:20px;font-weight:700;color:#1f2937;margin:0 0 4px">Dorfladen CMS</h2>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 20px">Bitte Passwort eingeben</p>
+    <input type="password" id="cms-gate-pw" placeholder="Passwort" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitCmsGate()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;outline:none">
+    <div id="cms-gate-err" style="display:none;color:#ef4444;font-size:12px;margin-top:-8px;margin-bottom:8px">Falsches Passwort</div>
+    <button onclick="submitCmsGate()" style="width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Anmelden</button>
+  </div>
+</div>
+<style>
+@keyframes bsSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+
+<script>
+/* Versteckter Personal-Einstieg (SOCIAL-QUICK F3):
+   Logo lange druecken (~650ms) oeffnet den internen Bereich /posten.
+   Fuer Kund:innen unsichtbar; normaler Klick/Tap navigiert unveraendert zur Startseite. */
+(function(){
+  var HOLD_MS = 650;
+  var logos = document.querySelectorAll('.mob-header-logo, #nv-logo');
+  if(!logos.length) return;
+  logos.forEach(function(el){
+    var timer = null, fired = false;
+    function start(){
+      fired = false;
+      clearTimeout(timer);
+      timer = setTimeout(function(){
+        fired = true;
+        window.location.href = '/posten';
+      }, HOLD_MS);
+    }
+    function cancel(){ clearTimeout(timer); timer = null; }
+    el.addEventListener('pointerdown', start);
+    el.addEventListener('pointerup', cancel);
+    el.addEventListener('pointerleave', cancel);
+    el.addEventListener('pointercancel', cancel);
+    // Long-Press-Navigation nicht durch den normalen Link-Klick ueberschreiben lassen.
+    el.addEventListener('click', function(e){ if(fired){ e.preventDefault(); e.stopPropagation(); fired = false; } }, true);
+    // Kontextmenue/Textauswahl bei langem Druck unterdruecken.
+    el.addEventListener('contextmenu', function(e){ if(timer!==null||fired) e.preventDefault(); });
+  });
+})();
 </script>
 
 </body>

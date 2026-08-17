@@ -22,13 +22,13 @@ CONTACT_DEFAULTS = {
     "adresse": "Dorfplatz 1 · 84419 Obertaufkirchen",
     "telefon": "08082 / 622 99 91",
     "telefon_link": "+4980826229991",
-    "email": "bestellung@dorfladen-oberornau.de",
+    "email": "info@dorfladen-oberornau.de",
     "website": "www.dorfladen-oberornau.de",
     "website_url": "https://www.dorfladen-oberornau.de",
     "shop_url": "https://www.dorfladen-oberornau.de/shop.html",
     "logo_url": "https://www.dorfladen-oberornau.de/images/dorfladen-logo.png",
     "mailbox": "info@dorfladenoberornau.onmicrosoft.com",
-    "reply_to": "bestellung@dorfladen-oberornau.de",
+    "reply_to": "info@dorfladen-oberornau.de",
     "slogan": "Ihr Nahversorger"
 }
 
@@ -74,8 +74,9 @@ def get_contact_info():
 
 
 def get_token():
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
     if not client_secret:
@@ -94,8 +95,9 @@ def get_token():
 
 def get_graph_token():
     """Get Microsoft Graph token for sending emails."""
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     if not client_secret:
         return None
@@ -127,6 +129,8 @@ _LUCIDE_ICONS = {
     "mail": '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
     "globe": '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>',
     "package-check": '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 2 2 4-4"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/></svg>',
+    "utensils": '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>',
+    "key": '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L21 5"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>',
 }
 
 
@@ -142,12 +146,14 @@ def _icon(name, color="#2e7d4f", size=16):
 
 
 def _info_row(icon_name, text, color="#2e7d4f"):
-    """Build a styled info row with icon for email body."""
+    """Build a styled info row with icon chip for email body."""
     return (
-        f'<div style="display:flex;align-items:center;padding:8px 12px;margin:4px 0;'
-        f'background:#f0fdf4;border-radius:8px;font-size:14px;color:#1f2937">'
-        f'{_icon(icon_name, color, 18)}'
-        f'<span>{text}</span></div>'
+        f'<div style="display:flex;align-items:center;padding:11px 14px;margin:7px 0;'
+        f'background:#f6fbf8;border:1px solid #e3f0e9;border-radius:12px;font-size:14px;color:#1f2937">'
+        f'<span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;'
+        f'background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-right:12px;flex-shrink:0">'
+        f'{_icon(icon_name, color, 18)}</span>'
+        f'<span style="line-height:1.4">{text}</span></div>'
     )
 
 
@@ -205,69 +211,91 @@ def build_email_html(body_text, subject="", extra_html=""):
 
     body_html = "\n".join(body_parts)
 
-    # Determine accent color and header icon based on subject
-    accent_color = "#2e7d4f"
-    header_icon = _icon("package-check", "#fff", 22)
-    if "storniert" in subject.lower() or "storno" in subject.lower():
-        accent_color = "#dc2626"
-        header_icon = _icon("circle-x", "#fff", 22)
-    elif "abholbereit" in subject.lower() or "bereit" in subject.lower():
-        accent_color = "#059669"
-        header_icon = _icon("circle-check", "#fff", 22)
-    elif "bestellbest" in subject.lower():
-        accent_color = "#2e7d4f"
-        header_icon = _icon("shopping-bag", "#fff", 22)
-    elif "nicht verf" in subject.lower() or "fehlende" in subject.lower():
-        accent_color = "#d97706"
-        header_icon = _icon("alert-triangle", "#fff", 22)
+    # Determine theme (accent gradient + header icon) based on subject
+    theme = {"accent": "#2e7d4f", "dark": "#1b5e20", "icon": "package-check"}
+    sl = subject.lower()
+    if "storniert" in sl or "storno" in sl:
+        theme = {"accent": "#dc2626", "dark": "#991b1b", "icon": "circle-x"}
+    elif "abholbereit" in sl or "bereit" in sl:
+        theme = {"accent": "#059669", "dark": "#047857", "icon": "circle-check"}
+    elif "bestellbest" in sl:
+        theme = {"accent": "#2e7d4f", "dark": "#1b5e20", "icon": "shopping-bag"}
+    elif "nicht verf" in sl or "fehlende" in sl or "hinweis" in sl:
+        theme = {"accent": "#d97706", "dark": "#b45309", "icon": "alert-triangle"}
+    elif "mittagstisch" in sl:
+        theme = {"accent": "#2e7d4f", "dark": "#1b5e20", "icon": "utensils"}
+    elif "passwort" in sl:
+        theme = {"accent": "#2563eb", "dark": "#1d4ed8", "icon": "key"}
+    elif "bestätig" in sl or "willkommen" in sl:
+        theme = {"accent": "#2e7d4f", "dark": "#1b5e20", "icon": "circle-check"}
+
+    accent_color = theme["accent"]
+    accent_dark = theme["dark"]
+    header_icon = _icon(theme["icon"], "#fff", 26)
+
+    # Short title for hero (strip "Dorfladen … – " prefix)
+    short_subject = subject
+    if "–" in subject:
+        short_subject = subject.split("–", 1)[1].strip()
 
     return f'''<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',system-ui,-apple-system,sans-serif">
-<div style="max-width:600px;margin:0 auto;padding:20px 16px">
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  @media only screen and (max-width:620px) {{
+    .email-wrap {{ padding:8px 0 !important; }}
+    .email-hero {{ padding:28px 18px 24px !important; border-radius:0 !important; }}
+    .email-body {{ padding:22px 16px !important; }}
+    .email-cta {{ padding:0 16px 22px !important; }}
+    .email-footer {{ padding:20px 18px !important; border-radius:0 !important; }}
+    .email-hero-title {{ font-size:19px !important; }}
+  }}
+</style>
+</head>
+<body style="margin:0;padding:0;background:#eef1f4;font-family:'Segoe UI',system-ui,-apple-system,sans-serif">
+<div class="email-wrap" style="max-width:600px;margin:0 auto;padding:24px 12px">
 
-  <!-- Header with logo -->
-  <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 28px 16px;text-align:center;border-bottom:4px solid {accent_color}">
-    <a href="{ci['website_url']}" style="text-decoration:none">
-      <img src="{ci['logo_url']}" alt="{ci['name']}" style="height:60px;max-width:200px;margin-bottom:8px" />
+  <!-- Hero header with gradient -->
+  <div class="email-hero" style="background:{accent_color};background:linear-gradient(135deg,{accent_color},{accent_dark});border-radius:20px 20px 0 0;padding:34px 30px 28px;text-align:center">
+    <a href="{ci['website_url']}" style="text-decoration:none;display:inline-block">
+      <span style="display:inline-block;background:#fff;padding:10px 20px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.18)">
+        <img src="{ci['logo_url']}" alt="{ci['name']}" style="height:46px;max-width:180px;vertical-align:middle" />
+      </span>
     </a>
-    <div style="font-size:11px;color:#6b7280;letter-spacing:1px;text-transform:uppercase;font-weight:600">
+    <div style="margin-top:18px;font-size:11px;color:rgba(255,255,255,.85);letter-spacing:2px;text-transform:uppercase;font-weight:600">
       {ci['name']} &middot; {ci['slogan']}
+    </div>
+    <div class="email-hero-title" style="margin-top:14px;font-size:22px;font-weight:800;color:#fff;line-height:1.35">
+      {header_icon}<br>{short_subject}
     </div>
   </div>
 
-  <!-- Subject banner -->
-  <div style="background:{accent_color};padding:14px 28px;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px">
-    {header_icon} {subject}
-  </div>
-
   <!-- Body content -->
-  <div style="background:#fff;padding:24px 28px;font-size:14px;line-height:1.7;color:#1f2937">
+  <div class="email-body" style="background:#fff;padding:28px 26px;font-size:14px;line-height:1.7;color:#1f2937">
     {body_html}
     {extra_html}
   </div>
 
   <!-- CTA Button -->
-  <div style="background:#fff;padding:0 28px 24px;text-align:center">
-    <a href="{ci['shop_url']}" style="display:inline-block;padding:12px 28px;background:{accent_color};color:#fff;
-       text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;margin-top:8px">
+  <div class="email-cta" style="background:#fff;padding:0 26px 28px;text-align:center">
+    <a href="{ci['shop_url']}" style="display:inline-block;padding:14px 34px;background:{accent_color};background:linear-gradient(135deg,{accent_color},{accent_dark});color:#fff;
+       text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 6px 16px {accent_color}55">
       {_icon('shopping-bag', '#fff', 16)} Zum Dorfladen-Shop
     </a>
   </div>
 
   <!-- Footer -->
-  <div style="background:#1f2937;border-radius:0 0 16px 16px;padding:20px 28px;color:#d1d5db;font-size:12px;line-height:1.6">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      {_icon('store', '#93c5fd', 20)}
-      <span style="font-weight:700;color:#fff;font-size:13px">{ci['name']}</span>
+  <div class="email-footer" style="background:#111827;border-radius:0 0 20px 20px;padding:24px 26px;color:#d1d5db;font-size:12px;line-height:1.7">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      {_icon('store', '#6ee7b7', 20)}
+      <span style="font-weight:700;color:#fff;font-size:14px">{ci['name']}</span>
     </div>
     <div style="margin-left:2px">
-      <div>{_icon('map-pin', '#93c5fd', 13)}{ci['adresse']}</div>
-      <div>{_icon('phone', '#93c5fd', 13)}<a href="tel:{ci['telefon_link']}" style="color:#93c5fd;text-decoration:none">{ci['telefon']}</a></div>
-      <div>{_icon('mail', '#93c5fd', 13)}<a href="mailto:{ci['email']}" style="color:#93c5fd;text-decoration:none">{ci['email']}</a></div>
-      <div>{_icon('globe', '#93c5fd', 13)}<a href="{ci['website_url']}" style="color:#93c5fd;text-decoration:none">{ci['website']}</a></div>
+      <div style="margin:3px 0">{_icon('map-pin', '#6ee7b7', 13)}{ci['adresse']}</div>
+      <div style="margin:3px 0">{_icon('phone', '#6ee7b7', 13)}<a href="tel:{ci['telefon_link']}" style="color:#6ee7b7;text-decoration:none">{ci['telefon']}</a></div>
+      <div style="margin:3px 0">{_icon('mail', '#6ee7b7', 13)}<a href="mailto:{ci['email']}" style="color:#6ee7b7;text-decoration:none">{ci['email']}</a></div>
+      <div style="margin:3px 0">{_icon('globe', '#6ee7b7', 13)}<a href="{ci['website_url']}" style="color:#6ee7b7;text-decoration:none">{ci['website']}</a></div>
     </div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #374151;font-size:11px;color:#9ca3af">
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid #374151;font-size:11px;color:#9ca3af">
       Diese E-Mail wurde automatisch erstellt. Bei Fragen antworten Sie einfach auf diese Mail.
     </div>
   </div>

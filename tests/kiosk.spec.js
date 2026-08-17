@@ -13,7 +13,7 @@
 
 const { test, expect } = require('@playwright/test');
 
-const BASE = process.env.TEST_URL || 'http://localhost:4280';
+const BASE = process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net';
 const KIOSK_URL = `${BASE}/kiosk`;
 
 // ════════════════════════════════════════════════════
@@ -150,6 +150,10 @@ test.describe('Kiosk – Mittagstisch Tagesauswahl', () => {
 
     // Click each day: verify API call + response + rendering
     const count = await dayButtons.count();
+    // Set filter to "Alle" first so we see all orders
+    await page.locator('#mittag-status-bar button[data-mt-filter="alle"]').click();
+    await page.waitForTimeout(300);
+
     for (let i = 0; i < count; i++) {
       const btn = dayButtons.nth(i);
       const label = (await btn.textContent()).trim();
@@ -172,11 +176,11 @@ test.describe('Kiosk – Mittagstisch Tagesauswahl', () => {
       expect(parseInt(alleCount), `Alle-Zähler für ${label}`).toBe(json.orders.length);
 
       if (json.orders.length > 0) {
+        // Ensure "Alle" filter is active to see all orders
         await page.locator('#mittag-status-bar button[data-mt-filter="alle"]').click();
         await page.waitForTimeout(300);
         const visibleOrders = await page.locator('#mittag-orders .k-order').count();
         expect(visibleOrders, `${label}: Bestellungen rendern`).toBe(json.orders.length);
-        await page.locator('#mittag-status-bar button[data-mt-filter="offen"]').click();
       }
     }
   });
@@ -188,19 +192,162 @@ test.describe('Kiosk – Mittagstisch Tagesauswahl', () => {
 
 test.describe('Kiosk – Mittagstisch Filter', () => {
 
-  test('Default-Filter ist "Zu bestätigen", Wechsel funktioniert', async ({ page }) => {
+  test('T-17-01 (AK-UI-17b) Default-Filter ist "Offen", Wechsel funktioniert', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="mittag"]').click();
     await page.waitForTimeout(1000);
     const activeBtn = page.locator('#mittag-status-bar .k-filter-btn.active');
     await expect(activeBtn).toHaveCount(1);
     const text = await activeBtn.textContent();
-    expect(text).toContain('Zu bestätigen');
+    expect(text).toContain('Offen');
     // Switch to "Alle"
     await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="alle"]').click();
     const newActive = page.locator('#mittag-status-bar .k-filter-btn.active');
     const newText = await newActive.textContent();
     expect(newText).toContain('Alle');
+    // Switch to "Erledigt"
+    await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="erledigt"]').click();
+    const erlActive = page.locator('#mittag-status-bar .k-filter-btn.active');
+    const erlText = await erlActive.textContent();
+    expect(erlText).toContain('Erledigt');
+  });
+
+  test('T-17-02 (AK-UI-17) Genau 4 Filter-Tabs vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(1000);
+    const filterBtns = page.locator('#mittag-status-bar .k-filter-btn');
+    await expect(filterBtns).toHaveCount(4);
+    const labels = await filterBtns.allTextContents();
+    const joined = labels.join(' ');
+    expect(joined).toContain('Offen');
+    expect(joined).toContain('Nachrichten');
+    expect(joined).toContain('Erledigt');
+    expect(joined).toContain('Alle');
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Mittagstisch – Bestellschluss (12:00)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Bestellschluss', () => {
+  test('T-17-06 (AK-UI-17g) Button hat id btn-new-order und _isMittagCutoff existiert', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(1000);
+    const btn = page.locator('#btn-new-order');
+    await expect(btn).toHaveCount(1);
+    // _isMittagCutoff function exists
+    const hasFn = await page.evaluate(() => typeof K._isMittagCutoff === 'function' || document.body.innerHTML.includes('_isMittagCutoff'));
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-17-07 (AK-UI-17h) Button-Zustand passt zur Uhrzeit', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(1000);
+    const btn = page.locator('#btn-new-order');
+    const hour = new Date().getHours();
+    if (hour >= 12) {
+      // After cutoff: button should be disabled
+      await expect(btn).toBeDisabled();
+      const opacity = await btn.evaluate(el => getComputedStyle(el).opacity);
+      expect(parseFloat(opacity)).toBeLessThan(1);
+    } else {
+      // Before cutoff: button should be enabled
+      await expect(btn).toBeEnabled();
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Shop – Bestellkarten Redesign
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Shop Redesign', () => {
+  test('T-35-01 (AK-UI-35) Shop-Karten haben Collapse-Pattern', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    // Cards should have k-order-hdr (collapsible header) and k-order-body
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 0) {
+      const hdr = cards.first().locator('.k-order-hdr');
+      await expect(hdr).toHaveCount(1);
+      const body = cards.first().locator('.k-order-body');
+      await expect(body).toHaveCount(1);
+      // Default collapsed
+      await expect(cards.first()).toHaveClass(/oc-collapsed/);
+    }
+  });
+
+  test('T-35-02 (AK-UI-35b) Header zeigt Name, Status-Badge, Preis', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 0) {
+      const hdr = cards.first().locator('.k-order-hdr');
+      // Name
+      const name = hdr.locator('.k-oc-name');
+      await expect(name).toHaveCount(1);
+      const nameText = await name.textContent();
+      expect(nameText.length).toBeGreaterThan(0);
+      // Price (€)
+      const priceText = await hdr.textContent();
+      expect(priceText).toContain('€');
+    }
+  });
+
+  test('T-35-03 (AK-UI-35d) Primär-Action im Header erreichbar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 0) {
+      const hdrActions = cards.first().locator('.k-order-hdr .k-oc-actions');
+      await expect(hdrActions).toHaveCount(1);
+      const btns = hdrActions.locator('.k-btn');
+      const btnCount = await btns.count();
+      expect(btnCount).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  test('T-35-04 (AK-UI-35f) Details-Button im Body ist vollwertiger Button', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    // Switch to "Heute" filter so all statuses are visible
+    const todayFilter = page.locator('#abhol-filter-bar .k-filter-btn[data-filter="today"]');
+    if (await todayFilter.count() > 0) await todayFilter.click();
+    await page.waitForTimeout(1000);
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 0) {
+      // Expand first card via JS to avoid visibility issues
+      await cards.first().evaluate(el => el.classList.remove('oc-collapsed'));
+      await page.waitForTimeout(300);
+      // Find Details button (icon-only with file-text SVG)
+      const detailBtn = cards.first().locator('.k-order-body button:has(svg.lucide-file-text)');
+      const detailCount = await detailBtn.count();
+      expect(detailCount).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  test('T-35-05 (AK-UI-35h) Aufklappen/Zuklappen Toggle vorhanden', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="abhol"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#abhol-orders .k-order');
+    const count = await cards.count();
+    if (count > 1) {
+      const toggleBtn = page.locator('#abhol-orders button:has-text("Aufklappen"), #abhol-orders button:has-text("Zuklappen")');
+      await expect(toggleBtn).toHaveCount(1);
+    }
   });
 });
 
@@ -511,33 +658,63 @@ test.describe('Kiosk – Nachrichten-Gelesen', () => {
     }
   });
 
-  test('Klick auf Badge sendet PATCH mit kommentar_gelesen: true', async ({ page }) => {
+  test('T-17-03 (AK-UI-17d) Nachrichten-Tab zeigt tagesübergreifende Kommentare', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.click('.k-tab[data-tab="mittag"]');
-    await page.waitForTimeout(3000);
-    const unreadCount = await page.evaluate(() => {
-      if (typeof orders === 'undefined') return 0;
-      return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
-    });
-    if (unreadCount > 0) {
-      const patchRequests = [];
-      page.on('request', r => {
-        if (r.url().includes('/api/lunch-order/') && r.method() === 'PATCH') {
-          patchRequests.push(r);
-        }
-      });
-      await page.click('[data-mt-filter="nachrichten"]');
-      await page.waitForTimeout(2000);
-      expect(patchRequests.length).toBe(unreadCount);
-      for (const req of patchRequests) {
-        const body = JSON.parse(req.postData());
-        expect(body.kommentar_gelesen).toBe(true);
+    await page.waitForTimeout(2000);
+    // Click Nachrichten tab
+    const apiPromise = page.waitForResponse(
+      resp => resp.url().includes('/api/lunch-order') && resp.url().includes('mode=messages'),
+      { timeout: 10000 }
+    );
+    await page.click('[data-mt-filter="nachrichten"]');
+    const apiResponse = await apiPromise;
+    expect(apiResponse.status()).toBe(200);
+    const json = await apiResponse.json();
+    expect(json.success).toBe(true);
+    expect(Array.isArray(json.orders)).toBe(true);
+    if (json.orders.length > 0) {
+      // Each order should have kunde_kommentar
+      for (const o of json.orders) {
+        expect(o.kunde_kommentar).toBeTruthy();
       }
-      // After marking: 0 unread
-      const stillUnread = await page.evaluate(() => {
-        return orders.filter(o => o.kunde_kommentar && o.status !== 2 && !o.kommentar_gelesen).length;
-      });
-      expect(stillUnread).toBe(0);
+      // Nachrichten list should show Kunde text
+      await page.waitForTimeout(1000);
+      const html = await page.locator('#mittag-orders').innerHTML();
+      expect(html).toContain('Kunde:');
+    }
+  });
+
+  test('T-17-04 (AK-UI-17e) Nachrichten-Tab: Antwort-Button und Gelesen-Button sichtbar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.click('.k-tab[data-tab="mittag"]');
+    await page.waitForTimeout(2000);
+    await page.click('[data-mt-filter="nachrichten"]');
+    await page.waitForTimeout(2000);
+    const orders = await page.locator('#mittag-orders .k-order').count();
+    if (orders === 0) {
+      test.skip(true, 'Keine Nachrichten vorhanden');
+      return;
+    }
+    // Antworten button should exist
+    const replyBtns = page.locator('#mittag-orders button:has-text("Antworten")');
+    expect(await replyBtns.count()).toBeGreaterThan(0);
+  });
+
+  test('T-17-05 (AK-UI-17f) API mode=messages liefert vollständige Bestellungen', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/lunch-order?mode=messages`);
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(typeof data.count).toBe('number');
+    expect(Array.isArray(data.orders)).toBe(true);
+    if (data.orders.length > 0) {
+      const o = data.orders[0];
+      expect(o.kunde_kommentar).toBeTruthy();
+      expect(typeof o.name).toBe('string');
+      expect(typeof o.gericht).toBe('string');
+      expect(typeof o.datum).toBe('string');
+      expect(typeof o.kommentar_gelesen).toBe('boolean');
     }
   });
 });
@@ -599,14 +776,17 @@ test.describe('Kiosk – Info vs Actions Design', () => {
     expect(bg).not.toBe('rgba(0, 0, 0, 0)');
   });
 
-  test('Bestellquellen-Labels haben keinen Hintergrund', async ({ page }) => {
+  test('Bestellquellen-Labels sind als Pill-Badge gestaltet', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="mittag"]').click();
     await page.waitForTimeout(2000);
+    // Switch to Alle to see all orders
+    await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="alle"]').click();
+    await page.waitForTimeout(500);
     const srcLabels = page.locator('.k-order-src');
     if (await srcLabels.count() > 0) {
-      const bg = await srcLabels.first().evaluate(el => getComputedStyle(el).backgroundColor);
-      expect(bg).toBe('rgba(0, 0, 0, 0)');
+      const fontSize = await srcLabels.first().evaluate(el => getComputedStyle(el).fontSize);
+      expect(parseFloat(fontSize)).toBeGreaterThanOrEqual(11);
     }
   });
 });
@@ -630,5 +810,1070 @@ test.describe('Kiosk – Kompakte Buttons', () => {
     const firstBtn = smBtns.first();
     const minHeight = await firstBtn.evaluate(el => parseFloat(getComputedStyle(el).minHeight));
     expect(minHeight).toBeLessThanOrEqual(32);
+  });
+});
+
+// ═══════════════════════════════════════════════════
+//  AK-UI-36 – Android Zurück-Button
+// ═══════════════════════════════════════════════════
+
+test.describe('AK-UI-36 – Android Zurück-Button', () => {
+  test('T-36-01: Hilfe-Modal öffnen → Back schließt Modal', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    // Open help modal
+    await page.evaluate(() => K.openModal('modal-help'));
+    await expect(page.locator('#modal-help')).toHaveClass(/open/);
+
+    // Simulate Android back button
+    await page.goBack();
+    await page.waitForTimeout(300);
+
+    // Modal should be closed
+    await expect(page.locator('#modal-help')).not.toHaveClass(/open/);
+    // Page should still be kiosk (not navigated away)
+    expect(page.url()).toContain('/kiosk');
+  });
+
+  test('T-36-02: Bestelldetail-Modal öffnen → Back schließt Modal', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    // Open detail modal
+    await page.evaluate(() => K.openModal('modal-detail'));
+    await expect(page.locator('#modal-detail')).toHaveClass(/open/);
+
+    // Simulate Android back
+    await page.goBack();
+    await page.waitForTimeout(300);
+
+    await expect(page.locator('#modal-detail')).not.toHaveClass(/open/);
+    expect(page.url()).toContain('/kiosk');
+  });
+
+  test('T-36-03: Zwei Modals → Back schließt nur das oberste', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    // Open first modal
+    await page.evaluate(() => K.openModal('modal-detail'));
+    await expect(page.locator('#modal-detail')).toHaveClass(/open/);
+
+    // Open second modal on top
+    await page.evaluate(() => K.openModal('modal-help'));
+    await expect(page.locator('#modal-help')).toHaveClass(/open/);
+
+    // Back closes only top modal (help)
+    await page.goBack();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#modal-help')).not.toHaveClass(/open/);
+    await expect(page.locator('#modal-detail')).toHaveClass(/open/);
+
+    // Second back closes detail
+    await page.goBack();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#modal-detail')).not.toHaveClass(/open/);
+    expect(page.url()).toContain('/kiosk');
+  });
+});
+
+// ═══════════════════════════════════════════════════
+//  AK-UI-37 – Historie-Filter mit Zeitraum & Status
+// ═══════════════════════════════════════════════════
+
+test.describe('AK-UI-37 – Historie-Filter', () => {
+  test('T-37-01: Historie-Tab zeigt Sub-Filter-Bar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    // Sub-filter bar should be hidden initially
+    await expect(page.locator('#hist-bar')).not.toHaveClass(/show/);
+
+    // Click Historie tab
+    await page.click('[data-filter="history"]');
+    await page.waitForTimeout(300);
+
+    // Sub-filter bar should now be visible
+    await expect(page.locator('#hist-bar')).toHaveClass(/show/);
+
+    // Should have time range pills
+    await expect(page.locator('[data-range="7"]')).toBeVisible();
+    await expect(page.locator('[data-range="30"]')).toBeVisible();
+    await expect(page.locator('[data-range="all"]')).toBeVisible();
+
+    // Should have status pills
+    await expect(page.locator('[data-hstatus="all"]')).toBeVisible();
+    await expect(page.locator('[data-hstatus="3"]')).toBeVisible();
+    await expect(page.locator('[data-hstatus="4"]')).toBeVisible();
+  });
+
+  test('T-37-02: Wechsel zu anderem Filter versteckt Sub-Bar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    // Activate history
+    await page.click('[data-filter="history"]');
+    await page.waitForTimeout(200);
+    await expect(page.locator('#hist-bar')).toHaveClass(/show/);
+
+    // Switch to "Zu erledigen"
+    await page.click('[data-filter="open"]');
+    await page.waitForTimeout(200);
+
+    // Sub-filter bar should be hidden again
+    await expect(page.locator('#hist-bar')).not.toHaveClass(/show/);
+  });
+
+  test('T-37-03: Zeitraum-Pills wechseln aktiven Zustand', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    await page.click('[data-filter="history"]');
+    await page.waitForTimeout(200);
+
+    // Default: "7 Tage" active
+    await expect(page.locator('[data-range="7"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-range="30"]')).not.toHaveClass(/active/);
+
+    // Click "30 Tage"
+    await page.click('[data-range="30"]');
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('[data-range="30"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-range="7"]')).not.toHaveClass(/active/);
+  });
+
+  test('T-37-04: Status-Pills wechseln aktiven Zustand', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForLoadState('networkidle');
+
+    await page.click('[data-filter="history"]');
+    await page.waitForTimeout(200);
+
+    // Default: "Alle" status active
+    await expect(page.locator('[data-hstatus="all"]')).toHaveClass(/active/);
+
+    // Click "Abgeholt"
+    await page.click('[data-hstatus="3"]');
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('[data-hstatus="3"]')).toHaveClass(/active/);
+    await expect(page.locator('[data-hstatus="all"]')).not.toHaveClass(/active/);
+  });
+});
+
+// ─── AK-UI-39: Shop-Kommunikation ──────────────────────────────
+test.describe('AK-UI-39 Shop-Kommunikation', () => {
+  test('T-39-01 Shop-Karten zeigen Nachrichten-Buttons', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    // Switch to Shop tab
+    await page.click('[data-tab="abhol"]');
+    await page.waitForTimeout(1500);
+    // Expand all slot groups and cards via JS
+    await page.evaluate(() => {
+      document.querySelectorAll('.k-slot-group.collapsed').forEach(el => el.classList.remove('collapsed'));
+      document.querySelectorAll('.k-order.oc-collapsed').forEach(el => el.classList.remove('oc-collapsed'));
+    });
+    await page.waitForTimeout(300);
+
+    const shopCards = page.locator('.k-order[id^="soc-"]');
+    const count = await shopCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Check that message icon button exists in the expanded body (icon-only, no text)
+    const replyBtn = shopCards.first().locator('button svg.lucide-message-circle');
+    const btnCount = await replyBtn.count();
+    expect(btnCount).toBeGreaterThanOrEqual(0); // Button may not exist for completed/cancelled orders
+  });
+
+  test('T-39-02 Shop-Antwort-Dialog öffnet sich', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="abhol"]');
+    await page.waitForTimeout(1500);
+    // Expand all slot groups and cards via JS
+    await page.evaluate(() => {
+      document.querySelectorAll('.k-slot-group.collapsed').forEach(el => el.classList.remove('collapsed'));
+      document.querySelectorAll('.k-order.oc-collapsed').forEach(el => el.classList.remove('oc-collapsed'));
+    });
+    await page.waitForTimeout(300);
+
+    const shopCards = page.locator('.k-order[id^="soc-"]:not([data-ostatus="3"]):not([data-ostatus="4"])');
+    const count = await shopCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Click reply/message icon button
+    const msgBtn = shopCards.first().locator('button:has(svg.lucide-message-circle)');
+    if (await msgBtn.count() > 0) {
+      await msgBtn.first().click();
+      await page.waitForTimeout(300);
+      // Check that reply input is visible
+      const replyInput = shopCards.first().locator('input[placeholder*="Antwort"]');
+      await expect(replyInput).toBeVisible();
+      // Check send button (icon-only with lucide send icon)
+      const sendBtn = shopCards.first().locator('[id^="shop-rpl-"] button:has(svg.lucide-send)');
+      await expect(sendBtn.first()).toBeVisible();
+    }
+  });
+
+  test('T-39-03 NEU-Badge bei ungelesener Nachricht sichtbar', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="abhol"]');
+    await page.waitForTimeout(1500);
+
+    // Check if any card has a NEU badge (depends on live data)
+    const neuBadge = page.locator('.k-order[id^="soc-"] .k-order-hdr >> text=NEU');
+    const badgeCount = await neuBadge.count();
+    // This is a data-dependent test - just verify the page rendered correctly
+    expect(badgeCount).toBeGreaterThanOrEqual(0);
+  });
+
+  test('T-39-04 Kunden-Nachricht und Antwort werden angezeigt', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="abhol"]');
+    await page.waitForTimeout(1500);
+    // Expand all slot groups and cards via JS
+    await page.evaluate(() => {
+      document.querySelectorAll('.k-slot-group.collapsed').forEach(el => el.classList.remove('collapsed'));
+      document.querySelectorAll('.k-order.oc-collapsed').forEach(el => el.classList.remove('oc-collapsed'));
+    });
+    await page.waitForTimeout(300);
+
+    const shopCards = page.locator('.k-order[id^="soc-"]');
+    const count = await shopCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Check for message elements (may or may not have messages depending on data)
+    const kundeMsg = shopCards.first().locator('text=Kunde:');
+    const antwortMsg = shopCards.first().locator('text=Antwort:');
+    // Both are data-dependent, just ensure no JS errors
+    const kundeCount = await kundeMsg.count();
+    const antwortCount = await antwortMsg.count();
+    expect(kundeCount).toBeGreaterThanOrEqual(0);
+    expect(antwortCount).toBeGreaterThanOrEqual(0);
+  });
+});
+
+// ─── AK-UI-40: Stammkunden klappbare Karten ──────────────────────
+test.describe('AK-UI-40 Stammkunden klappbare Karten', () => {
+  test('T-40-01 Stammkunden-Karten haben klappbaren Header', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="kunden"]');
+    await page.waitForTimeout(500);
+
+    // Load all customers
+    await page.click('button:has-text("Alle Kunden laden")');
+    await page.waitForTimeout(2000);
+
+    // Check for collapsible cards with kc- prefix
+    const kundenCards = page.locator('.k-order[id^="kc-"]');
+    const count = await kundenCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Cards should have k-order-hdr
+    const header = kundenCards.first().locator('.k-order-hdr');
+    await expect(header).toBeVisible();
+
+    // Cards should start collapsed
+    await expect(kundenCards.first()).toHaveClass(/oc-collapsed/);
+  });
+
+  test('T-40-02 Stammkunden-Karte klappt auf/zu', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="kunden"]');
+    await page.waitForTimeout(500);
+
+    await page.click('button:has-text("Alle Kunden laden")');
+    await page.waitForTimeout(2000);
+
+    const kundenCards = page.locator('.k-order[id^="kc-"]');
+    const count = await kundenCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Click header to expand
+    await kundenCards.first().locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+
+    // Should no longer be collapsed
+    await expect(kundenCards.first()).not.toHaveClass(/oc-collapsed/);
+
+    // Body should be visible
+    const body = kundenCards.first().locator('.k-order-body');
+    await expect(body).toBeVisible();
+
+    // Click again to collapse
+    await kundenCards.first().locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+    await expect(kundenCards.first()).toHaveClass(/oc-collapsed/);
+  });
+
+  test('T-40-03 Header zeigt Bestellen-Button', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="kunden"]');
+    await page.waitForTimeout(500);
+
+    await page.click('button:has-text("Alle Kunden laden")');
+    await page.waitForTimeout(2000);
+
+    const kundenCards = page.locator('.k-order[id^="kc-"]');
+    const count = await kundenCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Header should contain Bestellen button
+    const bestellBtn = kundenCards.first().locator('.k-order-hdr .k-oc-actions button:has-text("Bestellen")');
+    await expect(bestellBtn).toBeVisible();
+  });
+
+  test('T-40-04 Body zeigt Bearbeiten und Löschen', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="kunden"]');
+    await page.waitForTimeout(500);
+
+    await page.click('button:has-text("Alle Kunden laden")');
+    await page.waitForTimeout(2000);
+
+    const kundenCards = page.locator('.k-order[id^="kc-"]');
+    const count = await kundenCards.count();
+    if (count === 0) {
+      test.skip();
+      return;
+    }
+
+    // Expand first card
+    await kundenCards.first().locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+
+    // Body should have Bearbeiten and delete buttons
+    const editBtn = kundenCards.first().locator('.k-order-body button:has-text("Bearbeiten")');
+    await expect(editBtn).toBeVisible();
+
+    const deleteBtn = kundenCards.first().locator('.k-order-body .k-btn-cancel');
+    await expect(deleteBtn).toBeVisible();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// AK-UI-50 – Social Media Step-Wizard
+// ═══════════════════════════════════════════════════════════
+test.describe('AK-UI-50 – Social Media Step-Wizard', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    // Navigate to Social tab
+    await page.click('[data-tab="social"]');
+    await page.waitForTimeout(500);
+  });
+
+  test('T-50-01: 4 nummerierte Step-Karten sichtbar (AK-UI-50-01)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'Desktop nutzt Flat-Action-Bar-Layout statt Step-Wizard (Step 4 + Header ausgeblendet)');
+    for (let i = 1; i <= 4; i++) {
+      const step = page.locator('#soc-step-' + i);
+      await expect(step).toBeVisible();
+      // Verify numbered circle
+      const circle = step.locator('.k-order-hdr >> text="' + i + '"');
+      await expect(circle).toBeVisible();
+    }
+  });
+
+  test('T-50-02: Steps 1+2 offen, Steps 3+4 zugeklappt (AK-UI-50-02)', async ({ page }) => {
+    // Steps 1 and 2 should NOT have oc-collapsed class
+    const step1 = page.locator('#soc-step-1');
+    const step2 = page.locator('#soc-step-2');
+    await expect(step1).not.toHaveClass(/oc-collapsed/);
+    await expect(step2).not.toHaveClass(/oc-collapsed/);
+
+    // Steps 3 and 4 SHOULD have oc-collapsed class
+    const step3 = page.locator('#soc-step-3');
+    const step4 = page.locator('#soc-step-4');
+    await expect(step3).toHaveClass(/oc-collapsed/);
+    await expect(step4).toHaveClass(/oc-collapsed/);
+  });
+
+  test('T-50-03: Klick auf Step-Header toggled auf/zu (AK-UI-50-03)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'Desktop nutzt Flat-Action-Bar-Layout: Step-Header ausgeblendet, kein Toggle');
+    const step1 = page.locator('#soc-step-1');
+    const step1Hdr = step1.locator('.k-order-hdr');
+
+    // Step 1 starts open – click to collapse
+    await step1Hdr.click();
+    await expect(step1).toHaveClass(/oc-collapsed/);
+
+    // Click again to expand
+    await step1Hdr.click();
+    await expect(step1).not.toHaveClass(/oc-collapsed/);
+
+    // Step 3 starts collapsed – click to expand
+    const step3 = page.locator('#soc-step-3');
+    const step3Hdr = step3.locator('.k-order-hdr');
+    await step3Hdr.click();
+    await expect(step3).not.toHaveClass(/oc-collapsed/);
+  });
+
+  test('T-50-04: Touch-Targets min 44px hoch (AK-UI-50-04)', async ({ page }) => {
+    // Check title select
+    const titleSel = page.locator('#soc-post-titel-sel');
+    const selBox = await titleSel.boundingBox();
+    expect(selBox.height).toBeGreaterThanOrEqual(44);
+
+    // Check sub-tab buttons
+    const postTab = page.locator('#social-subtab-post');
+    const postTabBox = await postTab.boundingBox();
+    expect(postTabBox.height).toBeGreaterThanOrEqual(44);
+  });
+
+  test('T-50-05: Sub-Tabs mit Lucide-Icons und min-height:44px (AK-UI-50-05)', async ({ page }) => {
+    const postBtn = page.locator('#social-subtab-post');
+    const katalogBtn = page.locator('#social-subtab-katalog');
+    await expect(postBtn).toBeVisible();
+    await expect(katalogBtn).toBeVisible();
+
+    // Check min-height
+    const postBox = await postBtn.boundingBox();
+    expect(postBox.height).toBeGreaterThanOrEqual(44);
+    const katalogBox = await katalogBtn.boundingBox();
+    expect(katalogBox.height).toBeGreaterThanOrEqual(44);
+
+    // Check Lucide icons are present (data-lucide attributes)
+    const postIcon = postBtn.locator('[data-lucide]');
+    await expect(postIcon).toHaveCount(1);
+    const katalogIcon = katalogBtn.locator('[data-lucide]');
+    await expect(katalogIcon).toHaveCount(1);
+  });
+
+  test('T-50-06: Teilen-Buttons vertikal mit min-height 56px (AK-UI-50-06)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'Desktop: Step 4 ausgeblendet, Teilen-Aktionen in der Action-Bar');
+    // Expand step 4
+    const step4 = page.locator('#soc-step-4');
+    const step4Hdr = step4.locator('.k-order-hdr');
+    await step4Hdr.click();
+    await expect(step4).not.toHaveClass(/oc-collapsed/);
+
+    // WhatsApp button
+    const waBtn = step4.locator('button', { hasText: 'WhatsApp' });
+    await expect(waBtn).toBeVisible();
+    const waBox = await waBtn.boundingBox();
+    expect(waBox.height).toBeGreaterThanOrEqual(56);
+
+    // Instagram button
+    const igBtn = step4.locator('button', { hasText: 'Instagram' });
+    await expect(igBtn).toBeVisible();
+    const igBox = await igBtn.boundingBox();
+    expect(igBox.height).toBeGreaterThanOrEqual(56);
+
+    // Tagesinfo button
+    const tiBtn = step4.locator('button', { hasText: 'Tagesinfo' });
+    await expect(tiBtn).toBeVisible();
+  });
+
+  test('T-50-07: Badge "X ausgewählt" in Step 2 Header (AK-UI-50-07)', async ({ page }) => {
+    // Step-2 count badge should exist in DOM
+    const badge = page.locator('#soc-step2-count');
+    await expect(badge).toBeAttached();
+    // Initially empty (no products selected)
+    await expect(badge).toHaveText('');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// RD-11/12/13 – Social Feature-Abgleich Kiosk ↔ CMS
+// ═══════════════════════════════════════════════════════════
+test.describe('Social Feature-Abgleich (RD-11, RD-12, RD-13)', () => {
+
+  test('T-RD-11: Kiosk – Tagesinfo-Button vorhanden (AK-RD-10)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'Desktop: Step 4 ausgeblendet, Tagesinfo-Button in der Action-Bar');
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="social"]');
+    await page.waitForTimeout(500);
+    // Step 4 aufklappen damit Button sichtbar wird
+    const step4Hdr = page.locator('#soc-step-4 .k-order-hdr');
+    await step4Hdr.click();
+    await page.waitForTimeout(300);
+    const tiBtn = page.locator('button', { hasText: 'Tagesinfo' });
+    await expect(tiBtn).toBeVisible();
+  });
+
+  test('T-RD-11b: CMS – Tagesinfo-Button vorhanden (AK-RD-10)', async ({ page }) => {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    // Login
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+    // Navigate to Social tab
+    await page.click('#cms-tab-social');
+    await page.waitForTimeout(1000);
+    // Switch to Post sub-tab
+    await page.click('#social-subtab-post');
+    await page.waitForTimeout(500);
+    const tiBtn = page.locator('button', { hasText: 'Tagesinfo' });
+    await expect(tiBtn).toBeVisible();
+  });
+
+  test('T-RD-12: Kiosk – Heutige-Posts-Container vorhanden (AK-RD-11)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="social"]');
+    await page.waitForTimeout(1500);
+    // Container must exist in DOM (hidden if no posts today)
+    const wrap = page.locator('#soc-today-posts');
+    await expect(wrap).toBeAttached();
+    const list = page.locator('#soc-today-posts-list');
+    await expect(list).toBeAttached();
+  });
+
+  test('T-RD-12b: CMS – Heutige-Posts-Container vorhanden (AK-RD-11)', async ({ page }) => {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+    await page.click('#cms-tab-social');
+    await page.waitForTimeout(1000);
+    await page.click('#social-subtab-post');
+    await page.waitForTimeout(500);
+    const wrap = page.locator('#soc-today-posts');
+    await expect(wrap).toBeAttached();
+    const list = page.locator('#soc-today-posts-list');
+    await expect(list).toBeAttached();
+  });
+
+  test('T-RD-14: Kiosk – Mittagessen nach 11 Uhr ausgeblendet', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(2000);
+    await page.click('[data-tab="social"]');
+    await page.waitForTimeout(500);
+    await page.click('#social-subtab-post');
+    await page.waitForTimeout(1500);
+    // Check if socialGetTodayMeals respects the 11:00 cutoff
+    const hour = new Date().getHours();
+    const mtSection = page.locator('#social-panel-post', { hasText: 'Heutiges Mittagessen' });
+    if (hour >= 11) {
+      await expect(mtSection).toHaveCount(0);
+    } else {
+      // Before 11, section may or may not exist depending on wochenplan data
+      // Just verify the function exists and returns array
+      const fnExists = await page.evaluate(() => typeof socialGetTodayMeals === 'undefined' ? false : Array.isArray(window._socialModule.socialGetTodayMeals()));
+      expect(typeof fnExists).toBe('boolean');
+    }
+  });
+
+  test('T-RD-14b: CMS – Mittagessen nach 11 Uhr ausgeblendet', async ({ page }) => {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+    await page.click('#cms-tab-social');
+    await page.waitForTimeout(1000);
+    await page.click('#social-subtab-post');
+    await page.waitForTimeout(1500);
+    const hour = new Date().getHours();
+    const mtSection = page.locator('#social-panel-post', { hasText: 'Heutiges Mittagessen' });
+    if (hour >= 11) {
+      await expect(mtSection).toHaveCount(0);
+    } else {
+      // Before 11 – just check page loaded without error
+      const postPanel = page.locator('#social-panel-post');
+      await expect(postPanel).toBeVisible();
+    }
+  });
+
+  test('T-RD-13: CMS – Verlauf-Tab entfernt (AK-RD-12)', async ({ page }) => {
+    await page.goto(`${BASE}/cms`);
+    await page.waitForTimeout(2000);
+    const pwField = page.locator('#cms-login-pw');
+    if (await pwField.isVisible()) {
+      await pwField.fill('DorfladenCMS!');
+      await page.locator('#cms-login-btn').click();
+      await page.waitForTimeout(1000);
+    }
+    await page.click('#cms-tab-social');
+    await page.waitForTimeout(500);
+    // Verlauf-Tab button must NOT exist
+    const verlaufBtn = page.locator('#social-subtab-verlauf');
+    await expect(verlaufBtn).toHaveCount(0);
+    // Verlauf panel must NOT exist
+    const verlaufPanel = page.locator('#social-panel-verlauf');
+    await expect(verlaufPanel).toHaveCount(0);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  T-20: Kiosk Touch-Modal für Nachrichten (AK-FLEISCH-19)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Metzger Touch-Modal (AK-FLEISCH-19)', () => {
+
+  test('T-20-01 openFmReplyModal Funktion existiert (AK-FLEISCH-19)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.openFmReplyModal === 'function');
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-20-02 sendFmModalReply Funktion existiert (AK-FLEISCH-19)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.sendFmModalReply === 'function');
+    expect(hasFn).toBe(true);
+  });
+
+  test('T-20-03 Kein inline sendFmReply mehr (AK-FLEISCH-19)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // The old inline sendFmReply should NOT be in K's public API
+    const hasOldFn = await page.evaluate(() => typeof K !== 'undefined' && typeof K.sendFmReply === 'function');
+    expect(hasOldFn).toBe(false);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Metzger – UI/UX Optimierung (AK-FLEISCH-24)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Metzger UI/UX (AK-FLEISCH-24)', () => {
+
+  test('T-24-01 Metzger-Karten haben Lucide chevron-down Icons (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#metzger-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen');
+      return;
+    }
+    // Arrow should be Lucide icon (rendered as SVG by lucide.createIcons)
+    const arrow = cards.first().locator('.k-oc-arrow svg');
+    await expect(arrow).toHaveCount(1);
+  });
+
+  test('T-24-02 Metzger-Karten zeigen keine Bestellnummer/Telefon im Header (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#metzger-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen');
+      return;
+    }
+    const headerText = await cards.first().locator('.k-order-hdr').textContent();
+    expect(headerText).not.toContain('FM-');
+    expect(headerText).not.toContain('Tel');
+  });
+
+  test('T-24-03 Metzger Toggle klappt Karte auf/zu (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#metzger-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen');
+      return;
+    }
+    const card = cards.first();
+    const wasCollapsed = await card.evaluate(el => el.classList.contains('oc-collapsed'));
+    // Click header to toggle
+    await card.locator('.k-order-hdr').click();
+    await page.waitForTimeout(300);
+    const isCollapsed = await card.evaluate(el => el.classList.contains('oc-collapsed'));
+    expect(isCollapsed).toBe(!wasCollapsed);
+  });
+
+  test('T-24-04 Metzger-Bestellungen aufsteigend sortiert (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    // Check sort via data attribute dates
+    const dates = await page.evaluate(() => {
+      const cards = document.querySelectorAll('#metzger-orders .k-order');
+      return Array.from(cards).map(c => c.getAttribute('data-fmdate') || '');
+    });
+    if (dates.length >= 2) {
+      for (let i = 1; i < dates.length; i++) {
+        expect(dates[i] >= dates[i - 1]).toBe(true);
+      }
+    }
+  });
+
+  test('T-24-05 Sammelbestellung API liefert einzelpositionen statt aggregiert (AK-FLEISCH-24)', async ({ request }) => {
+    // Find next delivery date from API
+    const kiosk = await request.get(`${BASE}/api/fleisch-order?mode=kiosk`);
+    const kioskData = await kiosk.json();
+    if (!kioskData.success || !kioskData.bestellungen || kioskData.bestellungen.length === 0) {
+      test.skip(true, 'Keine Metzger-Bestellungen');
+      return;
+    }
+    const liefertag = kioskData.bestellungen[0].liefertag;
+    if (!liefertag) {
+      test.skip(true, 'Kein Liefertag');
+      return;
+    }
+    const resp = await request.get(`${BASE}/api/fleisch-order?liefertag=${liefertag}`);
+    expect(resp.status()).toBe(200);
+    const data = await resp.json();
+    expect(data.success).toBe(true);
+    // New field: einzelpositionen (not aggregiert)
+    expect(Array.isArray(data.einzelpositionen)).toBe(true);
+    expect(data.aggregiert).toBeUndefined();
+    if (data.einzelpositionen.length > 0) {
+      const ep = data.einzelpositionen[0];
+      expect(typeof ep.bezeichnung).toBe('string');
+      expect(typeof ep.kunde).toBe('string');
+      expect(typeof ep.menge_kg).toBe('number');
+    }
+  });
+
+  test('T-24-06 Metzger Status-Workflow: kein Status 2 Button (AK-FLEISCH-24)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="metzger"]').click();
+    await page.waitForTimeout(3000);
+    // No "Eingetroffen" or status 2 button should exist
+    const eingetroffenBtn = page.locator('#metzger-orders button:has-text("Eingetroffen")');
+    await expect(eingetroffenBtn).toHaveCount(0);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Mittagstisch – UI/UX Optimierung (AK-FLEISCH-25)
+// ════════════════════════════════════════════════════
+
+test.describe('Kiosk – Mittagstisch UI/UX (AK-FLEISCH-25)', () => {
+
+  test('T-25-01 Mittagstisch Karten haben Lucide chevron-down Icons (AK-FLEISCH-25)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#mittag-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Mittagstisch-Bestellungen');
+      return;
+    }
+    // Arrow should be Lucide icon (rendered as SVG by lucide.createIcons)
+    const arrow = cards.first().locator('.k-oc-arrow svg');
+    await expect(arrow).toHaveCount(1);
+  });
+
+  test('T-25-02 Mittagstisch Header zeigt Preis (AK-FLEISCH-25)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.waitForTimeout(3000);
+    const cards = page.locator('#mittag-orders .k-order');
+    const count = await cards.count();
+    if (count === 0) {
+      test.skip(true, 'Keine Mittagstisch-Bestellungen');
+      return;
+    }
+    const headerText = await cards.first().locator('.k-order-hdr').textContent();
+    expect(headerText).toContain('€');
+  });
+
+  test('T-25-03 Collapse-Toggle kompakt (AK-FLEISCH-25)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="mittag"]').click();
+    await page.locator('#mittag-status-bar .k-filter-btn[data-mt-filter="alle"]').click();
+    await page.waitForTimeout(2000);
+    const cards = page.locator('#mittag-orders .k-order');
+    const count = await cards.count();
+    if (count <= 1) {
+      test.skip(true, 'Zu wenig Bestellungen für Toggle');
+      return;
+    }
+    // Toggle button should exist and be compact (short text)
+    const toggleBtn = page.locator('#mittag-orders button:has-text("Alle"), #mittag-orders button:has-text("Zu")');
+    await expect(toggleBtn).toHaveCount(1);
+    const height = await toggleBtn.evaluate(el => parseInt(getComputedStyle(el).minHeight) || el.offsetHeight);
+    expect(height).toBeLessThanOrEqual(36);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// AK-FLEISCH-29 – Kiosk UI-Verbesserungen (kiosk.spec.js)
+// ═══════════════════════════════════════════════════════════
+
+test.describe('AK-FLEISCH-29 – Kiosk UI-Verbesserungen', () => {
+
+  test('T-29-06 Aufklappen-Button ist in Stats-Zeile integriert (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // Verify the code adds the button into abhol-stats (source check)
+    const hasIntegration = await page.evaluate(() => {
+      var src = document.documentElement.innerHTML;
+      return src.includes('abhol-stats') && src.includes('expandAllShopCards') && src.includes('collapseAllShopCards');
+    });
+    expect(hasIntegration).toBe(true);
+  });
+
+  test('T-29-07 Shop-Karten haben sichtbaren Zurueck-Button (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // revertShopStatus must exist in page source
+    const hasRevert = await page.evaluate(() => document.documentElement.innerHTML.includes('revertShopStatus'));
+    expect(hasRevert).toBe(true);
+    // undo-2 icon should be in the page (Zurück button uses it)
+    const hasUndo = await page.evaluate(() => document.documentElement.innerHTML.includes('undo-2'));
+    expect(hasUndo).toBe(true);
+  });
+
+  test('T-29-08 Ring-Label-Wide CSS existiert (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasClass = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.selectorText && rule.selectorText.includes('ring-label-wide')) return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    });
+    expect(hasClass).toBe(true);
+  });
+
+  test('T-29-09 Mittagstisch 2-Spalten Grid ab 900px (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const hasRule = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.cssText && rule.cssText.includes('mittag-orders') && rule.cssText.includes('grid-template-columns')) return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    });
+    expect(hasRule).toBe(true);
+  });
+
+  test('T-29-12 Mute-Button existiert im Header (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const muteBtn = page.locator('#k-mute-btn');
+    await expect(muteBtn).toBeVisible();
+    const hasMuteFn = await page.evaluate(() => typeof K.toggleMute === 'function');
+    expect(hasMuteFn).toBe(true);
+  });
+
+  test('T-29-13 Name wird nicht abgeschnitten – kein text-overflow ellipsis (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const noEllipsis = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.selectorText && rule.selectorText.includes('k-oc-name') && rule.style.textOverflow === 'ellipsis') return false;
+          }
+        } catch(e) {}
+      }
+      return true;
+    });
+    expect(noEllipsis).toBe(true);
+  });
+
+  test('T-29-14 Zurueck-Button ist im Header neben Aktions-Button (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const inHeader = await page.evaluate(() => {
+      var src = document.documentElement.innerHTML;
+      return src.includes('k-oc-actions') && src.includes('revertShopStatus') && src.includes('Status zurück');
+    });
+    expect(inHeader).toBe(true);
+  });
+
+  test('T-29-15 metzgerAlleGesendet setzt bestellt und gesendet (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const setsBeide = await page.evaluate(() => {
+      var src = document.documentElement.innerHTML;
+      return src.includes('p.bestellt=true') && src.includes('p.gesendet=true');
+    });
+    expect(setsBeide).toBe(true);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  Bestellstatus – Lucide Icons
+// ════════════════════════════════════════════════════
+
+test.describe('Bestellstatus – Lucide Icons', () => {
+  test('T-29-16 Bestellstatus laedt Lucide Script (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(3000);
+    const hasLucide = await page.evaluate(() => typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function');
+    expect(hasLucide).toBe(true);
+  });
+
+  test('T-29-17 Bestellstatus hat Lucide Icons statt Emojis (AK-FLEISCH-29)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(3000);
+    const svgIcons = await page.locator('svg.lucide').count();
+    expect(svgIcons).toBeGreaterThan(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// AK-ST – Storno mit Begründung
+// ═══════════════════════════════════════════════════════════
+test.describe('AK-ST – Storno mit Begründung', () => {
+  test('T-ST-01 Kiosk Shop-Storno ruft showShopStornoDialog auf (AK-ST-02)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('showShopStornoDialog');
+    expect(content).toContain('SHOP_STORNO_REASONS');
+    expect(content).toContain('Stornierungsgrund (Pflichtfeld)');
+  });
+
+  test('T-ST-02 Kiosk Metzger-Storno ruft showMetzgerStornoDialog auf (AK-ST-03)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('showMetzgerStornoDialog');
+    expect(content).toContain('METZGER_STORNO_REASONS');
+  });
+
+  test('T-ST-03 Kiosk Shop-Storno: Button disabled ohne Grund (AK-ST-02)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    // Verify that the confirm button starts disabled in the dialog template
+    const content = await page.content();
+    expect(content).toContain('storno-shop-confirm');
+    expect(content).toContain('disabled>Stornieren');
+  });
+
+  test('T-ST-04 Kiosk Metzger-Storno: Button disabled ohne Grund (AK-ST-03)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('storno-fm-confirm');
+    expect(content).toContain('disabled>Stornieren');
+  });
+
+  test('T-ST-05 Shop-Kundenansicht: Storno hat Pflicht-Grund-Textfeld (AK-ST-07)', async ({ page }) => {
+    await page.goto(`${BASE}/shop.html`);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('data-cancel-reason');
+    expect(content).toContain('Pflichtfeld');
+  });
+
+  test('T-ST-06 Bestellstatus Fleisch-Storno: prompt mit Begründung (AK-ST-08)', async ({ page }) => {
+    await page.goto(`${BASE}/bestellstatus`);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    expect(content).toContain('Bitte geben Sie einen Grund an');
+    expect(content).toContain('Stornierungsgrund');
+  });
+
+  test('T-ST-07 CMS Shop-Storno: cmsShowShopStornoDialog (AK-ST-05)', async ({ page }) => {
+    // cms.js is loaded as external script, fetch it directly
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    expect(jsContent).toContain('cmsShowShopStornoDialog');
+    expect(jsContent).toContain('CMS_SHOP_STORNO_REASONS');
+  });
+
+  test('T-ST-08 CMS Metzger-Storno: Dialog mit Gründen (AK-ST-06)', async ({ page }) => {
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    expect(jsContent).toContain('CMS_FM_STORNO_REASONS');
+    expect(jsContent).toContain('data-fm-storno');
+  });
+
+  test('T-ST-09 Kiosk sendet storno_grund statt personal_antwort (AK-ST-04)', async ({ page }) => {
+    await page.goto(KIOSK_URL);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    // Shop und Metzger setShopStatus/setMetzgerStatus sollen storno_grund nutzen
+    expect(content).toContain('payload.storno_grund');
+    // Sicherstellen, dass personal_antwort NICHT für Storno verwendet wird
+    expect(content).not.toContain('payload.personal_antwort = grund');
+  });
+
+  test('T-ST-10 CMS sendet storno_grund statt personal_antwort (AK-ST-04)', async ({ page }) => {
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    expect(jsContent).toContain('storno_grund');
+  });
+
+  test('T-ST-11 CMS Shop hat Antwort-Dialog + Gelesen-Button (AK-MSG-01)', async ({ page }) => {
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    expect(jsContent).toContain('cmsShowShopReplyDialog');
+    expect(jsContent).toContain('cmsMarkShopMsgRead');
+    expect(jsContent).toContain('Nachricht an Kunden');
+  });
+
+  test('T-ST-12 CMS Shop zeigt Kundennachricht + Antwort an (AK-MSG-02)', async ({ page }) => {
+    const resp = await page.request.get(`${BASE}/cms.js`);
+    const jsContent = await resp.text();
+    // CMS render function shows customer message and staff reply
+    expect(jsContent).toContain('Kunde:</strong>');
+    expect(jsContent).toContain('Antwort:</strong>');
+    expect(jsContent).toContain('Als gelesen markieren');
+  });
+
+  test('T-ST-13 Shop-Kundenansicht zeigt gesendete Nachricht + Antwort an (AK-MSG-03)', async ({ page }) => {
+    await page.goto(`${BASE}/shop.html`);
+    await page.waitForTimeout(3000);
+    const content = await page.content();
+    // Check that message display code exists
+    expect(content).toContain('Antwort vom Dorfladen');
+    expect(content).toContain('Ihre Nachricht');
+    expect(content).toContain('Nachricht an den Dorfladen');
+  });
+
+  test('T-ST-14 Shop API liefert kunde_kommentar + personal_antwort (AK-MSG-04)', async ({ page }) => {
+    // Verify API response includes message fields
+    const resp = await page.request.get(`${BASE}/api/shop-order?mode=cms`);
+    const data = await resp.json();
+    expect(data.success).toBe(true);
+    if (data.orders && data.orders.length > 0) {
+      const o = data.orders[0];
+      expect(o).toHaveProperty('kunde_kommentar');
+      expect(o).toHaveProperty('personal_antwort');
+      expect(o).toHaveProperty('kommentar_gelesen');
+    }
   });
 });

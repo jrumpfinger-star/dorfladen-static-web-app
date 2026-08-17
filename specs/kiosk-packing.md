@@ -35,6 +35,12 @@ Die Kiosk-Seite (`static-site/kiosk.html`) zeigt Online-Shop-Bestellungen an. Bi
 - [x] AK-PK-09: Teilmenge-Artikel (weniger als bestellt) zeigen "⚠ Teilmenge" Tag
 - [x] AK-PK-10: Finish-Dialog zeigt fehlende Artikel namentlich auf
 - [x] AK-PK-11: Fortschrittsbalken und Zähler aktualisieren sich live bei Checkbox-Änderung (nicht nur initial)
+- [x] AK-PK-12: Nicht-abgehakte Artikel behalten ihre bestellte Menge (werden NICHT auf 0 gesetzt)
+
+## Bekannte Fehler / Learnings
+| Datum | Problem | Ursache | Fix |
+|---|---|---|---|
+| 2026-06-23 | Nicht-abgehakte Mengen werden auf 0 gesetzt beim Schließen/Wiederöffnen | `pkBuildJson()` setzte `gepackt_menge: checked ? rawVal : 0` – bei unchecked wurde Menge auf 0 erzwungen und so in Dataverse gespeichert | `gepackt_menge: rawVal` – immer den tatsächlichen Feldwert speichern, unabhängig vom Checkbox-Status. Fix in kiosk.html + shop-admin.html (2 Stellen) |
 
 ## Nicht-Ziele
 - Kein Barcode-Scanning im Kiosk-Pack-Modal

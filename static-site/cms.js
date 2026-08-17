@@ -1,4 +1,24 @@
 ﻿(function(){
+  /* ============================================================================
+   * INHALTSVERZEICHNIS (cms.js ~12.600 Zeilen, eine IIFE)
+   * Zum Springen: Strg+F nach dem Anker-Text in [Klammern] suchen.
+   * ----------------------------------------------------------------------------
+   *  1. Basis        [CMS Password Gate] · [Load Version] · [Load Artikel Data]
+   *  2. Angebote     [MSAL.js: Graph API] (SharePoint-Bilder) · showAktionModal
+   *  3. Tabs/Seiten  [Tabs] · cmsCfgSubTab · [Homepage Content] · cmsSeitenSave
+   *  4. Design-Cfg   cfgSwitchSection · cfgLivePreview (Kachel-/Flyer-Editor)
+   *  5. Homepage     [HP-Sonderangebote Card Design] · [Homepage/Wochenplan Config (hpCfg)]
+   *  6. Wochenplan   [Wochenplan] · [Add/Edit Meal Modal] · [Delete Meal]
+   *  7. Stammdaten   [Öffnungszeiten] · [Logo Upload] · [Aktuelles / News]
+   *  8. Sortiment    [Sortiment CMS (WYSIWYG)] · [RTE helpers]
+   *  9. Galerie      [GALLERY ADMIN]
+   * 10. Push         [Push Notifications: Queue] · [Push Notifications]
+   * 11. Settings     [Feature Flags (Settings tab)] · [Kontaktdaten]
+   * 12. Analytics    [ANALYTICS DASHBOARD]
+   * 13. Social/Post  [Katalog laden] · [Post-Builder] · [Canvas Poster Generator]
+   *                  [WhatsApp Share] · [Instagram Share] · [WA-Katalog Tab]
+   * 14. Infra        [Event Delegation (CSP-safe] · [Init (only if already authenticated]
+   * ============================================================================ */
   // ── Shared constants & helpers ──
   var FONT_BOLD='Arial Black, Arial, sans-serif';
   var FONT_NORMAL='Arial, sans-serif';
@@ -40,6 +60,7 @@
     sha256(pw).then(function(hash){
       if(hash===cmsPwHash){
         sessionStorage.setItem(CMS_PW_KEY,hash);
+        if(window.dlAdminLogin){window.dlAdminLogin(pw).catch(function(){});}
         document.getElementById('cms-login-err').style.display='none';
         cmsShowApp();
         init();
@@ -241,7 +262,7 @@
         }).sort(function(a,b){return (b.von||'').localeCompare(a.von||'');});
         renderAktionenList();
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){if(ldEl)ldEl.style.display='none';});
   }
 
@@ -557,7 +578,7 @@
         });
       }
       else {toast('Bild nicht in SharePoint gefunden','warn');}
-    }).catch(function(e){toast('Fehler beim Laden: '+e.message,'error');console.error(e);}).then(function(){
+    }).catch(function(e){toast('Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e),'error');console.error(e);}).then(function(){
       if(btn){btn.disabled=false;btn.textContent='🔍';}
     });
   };
@@ -674,7 +695,7 @@
       toast(editId?'Aktion aktualisiert':'Aktion erstellt');
       cmsCloseModal();
       loadAngebote();
-    }).catch(function(e){toast('Fehler: '+e.message,'error');console.error('[CMS] Save error:',e);})
+    }).catch(function(e){toast(_cmsErr(e),'error');console.error('[CMS] Save error:',e);})
       .then(function(){btnDone(saveBtn);});
   };
 
@@ -686,7 +707,7 @@
     html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3>\u26a0\ufe0f Angebot l\u00f6schen?</h3>';
     html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(ak.titel)+'" mit '+ak.items.length+' Artikeln wirklich l\u00f6schen?</p>';
-    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</p>';
+    html+='<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Kann nach dem L\u00f6schen kurzzeitig r\u00fcckg\u00e4ngig gemacht werden.</p>';
     html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
     html+='<button class="cms-btn cms-btn-del" style="flex:1" data-action="confirmDeleteAkt" data-id="'+esc(aktId)+'">\ud83d\uddd1\ufe0f L\u00f6schen</button>';
     html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
@@ -700,13 +721,26 @@
     if(!ak)return;
     var delBtn=document.querySelector('[data-action="confirmDeleteAkt"]');
     btnBusy(delBtn,'Löschen...');
+    // Save items for undo
+    var savedItems=JSON.parse(JSON.stringify(ak.items));
+    var savedTitel=ak.titel;var savedVon=ak.gueltig_von;var savedBis=ak.gueltig_bis;
     refreshToken().then(function(){
       var promises=ak.items.filter(function(it){return !!it.id;}).map(function(it){
         return fetch(API+'/angebote/'+it.id,{method:'DELETE'});
       });
       return Promise.all(promises);
-    }).then(function(){toast('Aktion gelöscht');cmsCloseModal();loadAngebote();})
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+    }).then(function(){
+      cmsCloseModal();loadAngebote();
+      toast('Aktion "'+savedTitel+'" gelöscht','ok',function(){
+        // Undo: re-create all items via POST
+        var restorePs=savedItems.map(function(it,idx){
+          var body={dl_produkt:it.produkt,dl_details:it.details||null,dl_preis:it.preis,dl_statt_preis:it.statt_preis,dl_aktion_id:aktId,dl_aktion_titel:savedTitel,dl_gueltig_von:savedVon||null,dl_gueltig_bis:savedBis||null,dl_artikelnummer:it.artikelnummer||null,dl_sortierung:idx+1,dl_status:101001};
+          return fetch(API+'/angebote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        });
+        Promise.all(restorePs).then(function(){toast('Aktion wiederhergestellt');loadAngebote();}).catch(function(e){toast('Wiederherstellen fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),'error');});
+      });
+    })
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){btnDone(delBtn);});
   };
 
@@ -953,7 +987,7 @@
       document.getElementById('cms-status').style.color = '#16a34a';
     }catch(e){
       console.error('CMS init error',e);
-      document.getElementById('cms-status').textContent = 'Fehler: '+e.message;
+      document.getElementById('cms-status').textContent = _cmsErr(e);
       document.getElementById('cms-status').style.color = '#dc2626';
     }
   }
@@ -978,14 +1012,26 @@
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   function fmtDe(s){if(!s)return '–';try{var p=String(s).substring(0,10).split('-');if(p.length===3)return p[2]+'.'+p[1]+'.'+p[0];return s;}catch(e){return s;}}
 
-  function toast(msg,type){
+  function toast(msg,type,undoFn){
     var el=document.createElement('div');
     el.className='cms-toast';
     el.style.background=type==='error'?'#dc2626':type==='warn'?'#d97706':'#16a34a';
-    el.textContent=msg;
-    document.body.appendChild(el);
-    setTimeout(function(){el.remove();},3000);
+    if(undoFn){
+      el.innerHTML=esc(msg)+' <button style="margin-left:12px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700" class="cms-undo-btn">↩ Rückgängig</button>';
+      el.querySelector('.cms-undo-btn').addEventListener('click',function(e){e.stopPropagation();undoFn();el.remove();});
+      document.body.appendChild(el);
+      setTimeout(function(){el.remove();},8000);
+    } else {
+      el.textContent=msg;
+      document.body.appendChild(el);
+      setTimeout(function(){el.remove();},3000);
+    }
   }
+
+  // Anwenderfreundliche Fehlermeldung; technische Details nur in der Konsole (Prinzip 6)
+  function _cmsErr(e){console.error('[CMS] Fehler:',e);return 'Es ist ein Fehler aufgetreten. Bitte erneut versuchen.';}
+  function _cmsNetErr(e){console.error('[CMS] Netzwerkfehler:',e);return 'Verbindungsproblem. Bitte pr\u00fcfe deine Internetverbindung.';}
+  function _cmsLog(e){console.error('[CMS]',e);return '';}
 
   function cmsConfirm(msg,opts){
     opts=opts||{};
@@ -1021,7 +1067,7 @@
       openHilfePopup();return;
     }
     _cmsCurrentTab=name;
-    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','social','help'].forEach(function(t){
+    ['wp','hours','ang','hp','news','sort','gallery','push','settings','cfg','stats','orders','metzger','social','help'].forEach(function(t){
       var panel=document.getElementById('cms-panel-'+t);
       if(panel) panel.style.display = t===name?'':'none';
       var tab=document.getElementById('cms-tab-'+t);
@@ -1037,7 +1083,8 @@
     if(name==='settings' && !_kontaktLoaded) loadKontaktdaten();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
-    if(name==='orders' && !_ordersLoaded) cmsLoadOrders();
+    if(name==='orders'){ if(!_ordersLoaded) cmsLoadOrders(); if(!window._bsCfgLoaded) cmsLoadBestellConfig(); }
+    if(name==='metzger' && !window._fmCfgLoaded) cmsLoadFleischConfig();
     if(name==='social'){
       var katReady=window._socialKatLoaded;
       var mtReady=false;
@@ -1158,7 +1205,7 @@
             +'</span></div>'
             +'<div class="cms-card-body" id="seiten-body-'+s.key+'" style="display:none">'
             +rteBar('seiten-'+s.key)
-            +'<div class="cms-rte-editor" contenteditable="true" id="seiten-'+s.key+'" data-seiten-key="'+s.key+'" style="min-height:120px;max-height:400px;overflow-y:auto">'+val+'</div>'
+            +'<div class="cms-rte-editor" contenteditable="true" id="seiten-'+s.key+'" data-seiten-key="'+s.key+'" data-prev-val="'+val.replace(/"/g,'&quot;')+'" style="min-height:120px;max-height:400px;overflow-y:auto">'+val+'</div>'
             +hint
             +'<div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">'
             +'<button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsSeitenSave(\''+s.key+'\')">&#128190; Speichern</button>'
@@ -1168,7 +1215,7 @@
         window._seitenLoaded=true;
       })
       .catch(function(e){
-        container.innerHTML='<p style="color:#dc2626">Fehler beim Laden: '+e.message+'</p>';
+        container.innerHTML='<p style="color:#dc2626">Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e)+'</p>';
       });
   }
 
@@ -1198,6 +1245,7 @@
   window.cmsSeitenSave=function(key){
     var el=document.getElementById('seiten-'+key);
     if(!el) return;
+    var prevHtml=el.getAttribute('data-prev-val')||el.innerHTML;
     var html=el.innerHTML;
     var btn=el.closest('.cms-card').querySelector('.cms-btn-primary');
     var origText=btn.innerHTML;
@@ -1207,15 +1255,24 @@
         if(res.success){
           btn.innerHTML='&#9989; Gespeichert!';
           setTimeout(function(){btn.innerHTML=origText;btn.disabled=false;},2000);
+          el.setAttribute('data-prev-val',html);
+          toast('Gespeichert','ok',function(){
+            // Undo: restore previous content
+            _dvSave(key,prevHtml).then(function(r2){
+              if(r2.success){el.innerHTML=prevHtml;el.setAttribute('data-prev-val',prevHtml);toast('R\u00fcckg\u00e4ngig gemacht');}
+              else{toast('Fehler beim R\u00fcckg\u00e4ngig machen','error');}
+            }).catch(function(e){toast(_cmsErr(e),'error');});
+          });
         } else {
           btn.innerHTML='&#10060; Fehler';btn.disabled=false;
-          alert('Speichern fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
+          toast('Speichern fehlgeschlagen. Bitte erneut versuchen.','error');
           setTimeout(function(){btn.innerHTML=origText;},2000);
         }
       })
       .catch(function(e){
         btn.innerHTML='&#10060; Fehler';btn.disabled=false;
-        alert('Netzwerkfehler: '+e.message);
+        console.error('Speichern fehlgeschlagen:',e);
+        toast('Verbindungsproblem. Bitte prüfe deine Internetverbindung.','error');
         setTimeout(function(){btn.innerHTML=origText;},2000);
       });
   };
@@ -1589,16 +1646,20 @@
     toast(hasCustom?'Auf eigene Standardwerte zur\u00fcckgesetzt':'Auf Werks-Standardwerte zur\u00fcckgesetzt','ok');
   };
   window.cmsSaveAsDefault=function(){
-    if(!confirm('Aktuelle Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.'))return;
-    var c=cfgReadUI();
-    cfgSaveCustomDefaults(c);
-    toast('\u2705 Aktuelle Einstellungen als Standard gespeichert','ok');
+    cmsConfirm('Aktuelle Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.').then(function(ok){
+      if(!ok)return;
+      var c=cfgReadUI();
+      cfgSaveCustomDefaults(c);
+      toast('\u2705 Aktuelle Einstellungen als Standard gespeichert','ok');
+    });
   };
   window.cmsClearCustomDefault=function(){
-    if(!confirm('Eigene Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?'))return;
-    _cfgCustomDefaults=null;
-    _dvSave('design_config_defaults',null).catch(function(){});
-    toast('Eigene Standards gel\u00f6scht \u2013 Werkseinstellungen aktiv','ok');
+    cmsConfirm('Eigene Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?').then(function(ok){
+      if(!ok)return;
+      _cfgCustomDefaults=null;
+      _dvSave('design_config_defaults',null).catch(function(){});
+      toast('Eigene Standards gel\u00f6scht \u2013 Werkseinstellungen aktiv','ok');
+    });
   };
 
   // ── Section Navigation (Plakat / Flyer / Gemeinsam) ──
@@ -1698,11 +1759,13 @@
     var all=cfgPresetsGet();
     if(!all[section]||!all[section][idx])return;
     var name=all[section][idx].name;
-    if(!confirm('Vorlage "'+name+'" l\u00f6schen?'))return;
-    all[section].splice(idx,1);
-    cfgPresetsSave(all);
-    cfgPresetsRenderAll();
-    toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+    cmsConfirm('Vorlage "'+name+'" l\u00f6schen?').then(function(ok){
+      if(!ok)return;
+      all[section].splice(idx,1);
+      cfgPresetsSave(all);
+      cfgPresetsRenderAll();
+      toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+    });
   };
   function cfgPresetsRenderAll(){
     ['plakat','flyer','shared'].forEach(function(sec){cfgPresetsRender(sec);});
@@ -2371,16 +2434,20 @@
     toast(hasCustom?'Auf eigene Standards zur\u00fcckgesetzt':'Auf Werks-Standards zur\u00fcckgesetzt','ok');
   };
   window.hpSaveAsDefault=function(){
-    if(!confirm('Aktuelle HP-Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.'))return;
-    var c=hpCfgReadUI();
-    hpCfgSaveCustomDefaults(c);
-    toast('\u2705 HP-Einstellungen als Standard gespeichert','ok');
+    cmsConfirm('Aktuelle HP-Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.').then(function(ok){
+      if(!ok)return;
+      var c=hpCfgReadUI();
+      hpCfgSaveCustomDefaults(c);
+      toast('\u2705 HP-Einstellungen als Standard gespeichert','ok');
+    });
   };
   window.hpClearCustomDefault=function(){
-    if(!confirm('Eigene HP-Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?'))return;
-    _hpCfgCustomDefaults=null;
-    _dvSave('hp_design_config_defaults',null).catch(function(){});
-    toast('Eigene HP-Standards gel\u00f6scht','ok');
+    cmsConfirm('Eigene HP-Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?').then(function(ok){
+      if(!ok)return;
+      _hpCfgCustomDefaults=null;
+      _dvSave('hp_design_config_defaults',null).catch(function(){});
+      toast('Eigene HP-Standards gel\u00f6scht','ok');
+    });
   };
   window.resetWpTplColors=function(kind){
     kind=kind||'home';
@@ -2483,11 +2550,13 @@
     var all=wpPresetsGet();
     if(!all[section]||!all[section][idx])return;
     var name=all[section][idx].name;
-    if(!confirm('Vorlage "'+name+'" l\u00f6schen?'))return;
-    all[section].splice(idx,1);
-    wpPresetsSave(all);
-    wpPresetsRenderAll();
-    toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+    cmsConfirm('Vorlage "'+name+'" l\u00f6schen?').then(function(ok){
+      if(!ok)return;
+      all[section].splice(idx,1);
+      wpPresetsSave(all);
+      wpPresetsRenderAll();
+      toast('Vorlage "'+name+'" gel\u00f6scht','ok');
+    });
   };
   function wpPresetsRenderAll(){
     ['wp-home','wp-flyer'].forEach(function(sec){wpPresetsRender(sec);});
@@ -2572,6 +2641,7 @@
             datum:m.dl_datum,
             preis:m.dl_preis,
             beschreibung:m.dl_beschreibung||'',
+            allergene:m.dl_allergene||'',
             kalenderwoche:m.dl_kalenderwoche,
             jahr:m.dl_jahr,
             status:m.dl_status
@@ -2579,7 +2649,7 @@
         });
         renderWP();
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){if(wpLd)wpLd.style.display='none';});
   }
 
@@ -2623,6 +2693,7 @@
             if(m.preis) b+='<span class="price">'+fmtP(m.preis)+'</span>';
             b+='</div>';
             if(m.beschreibung) b+='<div style="color:#9ca3af;font-size:11px;font-style:italic;padding:0 8px 4px">'+esc(m.beschreibung)+'</div>';
+            if(m.allergene) b+='<div style="color:#d97706;font-size:10px;padding:0 8px 4px">\u26a0\ufe0f '+esc(m.allergene)+'</div>';
             b+='<div class="cms-meal-actions">';
             b+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editMeal" data-id="'+m.id+'">Bearbeiten</button>';
             b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag l\u00f6schen" aria-label="L\u00f6schen" data-action="deleteMeal" data-id="'+m.id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
@@ -2669,7 +2740,7 @@
 
   var mealRowCtr=0;
   var _mealPasteTarget=null;
-  function addMealRow(name,price,id){
+  function addMealRow(name,price,id,allergene){
     mealRowCtr++;
     var c=document.getElementById('cms-meal-rows');
     var row=document.createElement('div');
@@ -2684,6 +2755,7 @@
     h+='<div class="cms-art-dd"></div></div>';
     h+='<input class="cms-input cms-price" data-f="price" type="text" inputmode="decimal" placeholder="Preis" value="'+(price!=null?fmtDePrice(price):'')+'">';
     h+='</div>';
+    h+='<input class="cms-input" data-f="allergene" type="text" placeholder="Allergene/Zusatzstoffe (z.B. A,C,G)" value="'+esc(allergene||'')+'" style="margin-top:6px;font-size:12px">';
     // Optional image row
     h+='<div style="display:flex;align-items:center;gap:6px;margin-top:6px">';
     h+='<img class="cms-meal-img-pv" data-row="'+rn+'" src="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;display:none">';
@@ -2814,7 +2886,7 @@
     mealRowCtr=0;
     _mealRowImages={};
     if(isEdit){
-      addMealRow(meal.gericht, meal.preis, meal.id);
+      addMealRow(meal.gericht, meal.preis, meal.id, meal.allergene);
       // Show existing image if available
       if(meal.gericht&&typeof _socMtBilder!=='undefined'&&_socMtBilder&&_socMtBilder[meal.gericht]&&_socMtBilder[meal.gericht].bild_url){
         var pvImg=document.querySelector('#cms-mr-1 .cms-meal-img-pv');
@@ -2830,6 +2902,7 @@
   window.cmsCloseModal = function(){
     document.getElementById('cms-modal-wrap').style.display='none';
     document.getElementById('cms-modal-wrap').innerHTML='';
+    document.body.style.overflow='';
   };
   // Backdrop click closes modal (unless Kachel-Editor is open — it has save/discard semantics)
   // Also skip if an autocomplete dropdown is currently open or was just closed (user may be clicking an item)
@@ -2849,6 +2922,7 @@
     if(!mw)return;
     var obs=new MutationObserver(function(){
       if(mw.style.display!=='none'&&mw.innerHTML!==''){
+        document.body.style.overflow='hidden';
         history.pushState({cmsModal:true},'','');
       }
     });
@@ -2877,9 +2951,10 @@
     rows.forEach(function(row){
       var name=(row.querySelector('[data-f="name"]').value||'').trim();
       var price=parseDePrice(row.querySelector('[data-f="price"]').value);
+      var allergeneVal=(row.querySelector('[data-f="allergene"]').value||'').trim();
       var mid=row.dataset.mealId||'';
       var rn=row.id.replace('cms-mr-','');
-      if(name) mealData.push({gericht:name,preis:price,id:mid,priceInput:row.querySelector('[data-f="price"]'),rowNum:rn});
+      if(name) mealData.push({gericht:name,preis:price,allergene:allergeneVal,id:mid,priceInput:row.querySelector('[data-f="price"]'),rowNum:rn});
     });
 
     for(var mi=0;mi<mealData.length;mi++){if(mealData[mi].preis==null||isNaN(mealData[mi].preis)){mealData[mi].priceInput.style.border='2px solid #ef4444';mealData[mi].priceInput.focus();toast('Bitte Preis f\u00fcr "'+mealData[mi].gericht+'" eingeben','warn');return;} else {mealData[mi].priceInput.style.border='';}}
@@ -2896,6 +2971,7 @@
           dl_datum:fmtISO(d),
           dl_preis:item.preis,
           dl_beschreibung:beschreibung||null,
+          dl_allergene:item.allergene||null,
           dl_kalenderwoche:kw,
           dl_jahr:jahr,
           dl_status:101001
@@ -2936,7 +3012,7 @@
         loadWP();
         loadGerichteHistory();
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){btnDone(saveBtn);});
   };
 
@@ -2949,7 +3025,7 @@
     html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3>\u26a0\ufe0f Wochenplan-Eintrag l\u00f6schen?</h3>';
     html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(m.gericht||'Eintrag')+'" am '+m.wochentag_name+' wirklich l\u00f6schen?</p>';
-    html+='<p style="font-size:12px;color:#b91c1c;margin-bottom:16px">Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</p>';
+    html+='<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Kann nach dem L\u00f6schen kurzzeitig r\u00fcckg\u00e4ngig gemacht werden.</p>';
     html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
     html+='<button class="cms-btn cms-btn-del" style="flex:1" data-action="confirmDeleteMeal" data-id="'+id+'">\ud83d\uddd1\ufe0f L\u00f6schen</button>';
     html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
@@ -2961,16 +3037,25 @@
   window.cmsConfirmDelete = function(id){
     var delBtn=document.querySelector('[data-action="confirmDeleteMeal"]');
     btnBusy(delBtn,'Löschen...');
+    // Save meal for undo
+    var savedMeal=meals.find(function(x){return x.id===id;});
+    var savedData=savedMeal?JSON.parse(JSON.stringify(savedMeal)):null;
     refreshToken().then(function(){
       return fetch(API+'/wochenplan/'+id,{method:'DELETE',headers:deleteHeaders()});
     })
       .then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
-        toast('Gericht gelöscht');
         cmsCloseModal();
         loadWP();
+        toast('Gericht gelöscht','ok',savedData?function(){
+          // Undo: re-create meal via POST
+          var body={dl_gericht:savedData.gericht,dl_wochentag:savedData.wochentag,dl_datum:savedData.datum,dl_preis:savedData.preis,dl_beschreibung:savedData.beschreibung||null,dl_allergene:savedData.allergene||null,dl_kalenderwoche:savedData.kw,dl_jahr:savedData.jahr,dl_status:101001};
+          fetch(API+'/wochenplan',{method:'POST',headers:writeHeaders(),body:JSON.stringify(body)})
+            .then(function(){toast('Gericht wiederhergestellt');loadWP();})
+            .catch(function(e){toast('Wiederherstellen fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),'error');});
+        }:null);
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){btnDone(delBtn);});
   };
 
@@ -2996,7 +3081,7 @@
         });
         renderHours();
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   function renderHours(){
@@ -3060,7 +3145,7 @@
       return Promise.all(promises);
     })
       .then(function(){toast('Öffnungszeiten gespeichert');saveBtn.style.display='none';})
-      .catch(function(e){toast('Fehler: '+e.message,'error');})
+      .catch(function(e){toast(_cmsErr(e),'error');})
       .then(function(){btnDone(saveBtn);});
   };
 
@@ -3157,7 +3242,7 @@
             +'</div></div>';
         }).join('');
       })
-      .catch(function(e){container.innerHTML='<p style="color:#dc2626">Fehler: '+e.message+'</p>';});
+      .catch(function(e){container.innerHTML='<p style="color:#dc2626">'+_cmsErr(e)+'</p>';});
   }
 
   // Focus RTE editor before toolbar command
@@ -3187,7 +3272,7 @@
     chain.then(function(){
       if(errors.length)toast('Fehler: '+errors.join('; '),'error');
       else toast(saved+' Felder gespeichert!','success');
-    }).catch(function(e){toast('Fehler: '+e.message,'error');})
+    }).catch(function(e){toast(_cmsErr(e),'error');})
     .then(function(){if(btn)btn.disabled=false;});
   }
 
@@ -3207,7 +3292,7 @@
       .then(function(res){
         if(res.success){toast('Feld "'+name+'" angelegt!','success');_hpLoaded=false;loadHomepage();}
         else toast('Fehler: '+res.error,'error');
-      }).catch(function(e){toast('Fehler: '+e.message,'error');});
+      }).catch(function(e){toast(_cmsErr(e),'error');});
   };
 
   // --- Logo Upload ---
@@ -3359,7 +3444,7 @@
         _newsLoaded = true;
         renderNewsList();
       })
-      .catch(function(e){container.innerHTML='<p style="color:#dc2626">Fehler: '+e.message+'</p>';});
+      .catch(function(e){container.innerHTML='<p style="color:#dc2626">'+_cmsErr(e)+'</p>';});
   }
 
   function renderNewsList(){
@@ -3520,12 +3605,12 @@
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
-          toast(_editingNewsId?'Beitrag aktualisiert!':'Beitrag erstellt!','success');
+          toast(_editingNewsId?'Beitrag aktualisiert!':'Beitrag erstellt! Push an News-Abonnenten gesendet.','success');
           var modal=document.getElementById('cms-news-modal');if(modal)modal.remove();
           _newsLoaded=false;loadNews();
         } else {toast('Fehler: '+res.error,'error');}
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   function deleteNews(id){
@@ -3536,7 +3621,7 @@
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
     overlay.innerHTML='<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:400px">'
       +'<h3 style="margin:0 0 12px;font-size:15px">Beitrag l&ouml;schen?</h3>'
-      +'<p style="margin:0 0 16px;font-size:13px;color:#4b5563">&bdquo;'+esc(name)+'&ldquo; wird unwiderruflich gel&ouml;scht.</p>'
+      +'<p style="margin:0 0 16px;font-size:13px;color:#4b5563">&bdquo;'+esc(name)+'&ldquo; l&ouml;schen? Kann kurzzeitig r&uuml;ckg&auml;ngig gemacht werden.</p>'
       +'<div style="display:flex;gap:8px;justify-content:flex-end">'
       +'<button class="cms-btn cms-btn-gray" onclick="document.getElementById(\'cms-news-del-modal\').remove()">Abbrechen</button>'
       +'<button class="cms-btn" style="background:#dc2626;color:#fff" data-action="confirmDeleteNews" data-id="'+id+'">L&ouml;schen</button>'
@@ -3546,17 +3631,26 @@
   }
 
   function confirmDeleteNews(id){
+    // Save item for undo
+    var savedItem=_newsItems.find(function(n){return n.id===id;});
+    var savedData=savedItem?JSON.parse(JSON.stringify(savedItem)):null;
     fetch(API+'/news-delete?id='+id,{method:'DELETE'})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
-          toast('Beitrag gel&ouml;scht','success');
           var modal=document.getElementById('cms-news-del-modal');if(modal)modal.remove();
           _newsItems=_newsItems.filter(function(n){return n.id!==id;});
           renderNewsList();
+          toast('Beitrag gelöscht','ok',savedData?function(){
+            var payload={titel:savedData.titel,inhalt:savedData.inhalt||'',status:savedData.status||101001,dl_laufband:!!savedData.dl_laufband,dl_laufband_bis:savedData.dl_laufband_bis||'',dl_aktiv_bis:savedData.dl_aktiv_bis||''};
+            fetch(API+'/news-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+              .then(function(r){return r.json();})
+              .then(function(r){if(r.success){toast('Beitrag wiederhergestellt');_newsLoaded=false;loadNews();}else{toast('Fehler: '+r.error,'error');}})
+              .catch(function(e){toast('Wiederherstellen fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),'error');});
+          }:null);
         } else {toast('Fehler: '+res.error,'error');}
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   function toggleNewsStatus(id){
@@ -3572,7 +3666,7 @@
           renderNewsList();
         } else {toast('Fehler: '+res.error,'error');}
       })
-      .catch(function(e){toast('Fehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   // --- WhatsApp Share ---
@@ -5136,7 +5230,7 @@
         br.appendChild(pb);br.appendChild(bb);po.appendChild(br);document.body.appendChild(po);
       }else{
         var w=window.open('','_blank');
-        if(!w){alert('Popup-Blocker aktiv!');return;}
+        if(!w){toast('Bitte erlaube Popups f\u00fcr diese Seite, um drucken zu k\u00f6nnen.','error');return;}
         w.document.write('<html><head><title>Kachel drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"></body></html>');
         w.document.close();
         var pi=w.document.getElementById('pi');
@@ -7141,7 +7235,7 @@
         else if(win.document.readyState==='complete'){attach();}
         else{win.addEventListener('load',attach);setTimeout(attach,500);}
       }
-    }).catch(function(e){toast('Fehler: '+e.message,'error');});
+    }).catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   function truncText(ctx,text,maxW){
@@ -8410,7 +8504,7 @@
         galRenderGrid();
       })
       .catch(function(e){
-        grid.innerHTML='<div style="text-align:center;padding:24px;color:#dc2626">Fehler beim Laden: '+e.message+'</div>';
+        grid.innerHTML='<div style="text-align:center;padding:24px;color:#dc2626">Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e)+'</div>';
       });
   };
 
@@ -8486,7 +8580,7 @@
       if(res.success){toast('Untertitel gespeichert');}
       else{toast('Fehler: '+(res.error||''),'error');}
     })
-    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+    .catch(function(e){toast(_cmsNetErr(e),'error');});
   };
 
   window.galCreateFolder=function(){
@@ -8503,7 +8597,7 @@
       if(res.success){toast('Ordner "'+name+'" angelegt');inp.value='';loadGalleryAdmin();}
       else{toast('Fehler: '+(res.error||''),'error');}
     })
-    .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+    .catch(function(e){toast(_cmsNetErr(e),'error');});
   };
 
   window.galDeleteFolder=function(id,name,count){
@@ -8521,7 +8615,7 @@
         if(res.success){toast('Ordner "'+name+'" gelöscht');loadGalleryAdmin();}
         else{toast('Fehler: '+(res.error||''),'error');}
       })
-      .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsNetErr(e),'error');});
     });
   };
 
@@ -8539,7 +8633,7 @@
         if(res.success){toast('Bild gelöscht: '+name);loadGalleryAdmin();}
         else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
       })
-      .catch(function(e){toast('Netzwerkfehler: '+e.message,'error');});
+      .catch(function(e){toast(_cmsNetErr(e),'error');});
     });
   };
 
@@ -8624,7 +8718,7 @@
         })
         .catch(function(e){
           errors++;
-          toast('Fehler bei '+files[idx].name+': '+e.message,'error');
+          toast('Datei konnte nicht verarbeitet werden. Bitte erneut versuchen.'+_cmsLog(e),'error');
           bar.style.width=Math.round(((idx+1)/total)*100)+'%';
           uploadNext(idx+1);
         });
@@ -8755,7 +8849,7 @@
     }).catch(function(e){
       status.textContent='\u274c Netzwerkfehler';
       status.style.color='#dc2626';
-      toast('Fehler: '+e.message,'error');
+      toast(_cmsErr(e),'error');
     });
     });
   };
@@ -8769,16 +8863,11 @@
     var msg=document.getElementById('push-message');
     var url=document.getElementById('push-url');
     var cat=document.getElementById('push-category');
-    if(type==='mittagstisch'){
-      title.value='Mittagstisch heute';
-      msg.value='Der heutige Mittagstisch ist da! Schaut vorbei.';
-      url.value='/essen-im-dorfladen';
-      cat.value='mittagstisch';
-    }else if(type==='angebote'){
-      title.value='Neue Angebote';
-      msg.value='Neue Angebote im Dorfladen! Jetzt entdecken.';
-      url.value='/sortiment';
-      cat.value='angebote';
+    if(type==='tagesinfo'){
+      title.value='TagesInfo';
+      msg.value='Die heutige TagesInfo ist da! Mittagstisch, Theke & mehr.';
+      url.value='/';
+      cat.value='tagesinfo';
     }else if(type==='news'){
       title.value='Neuigkeit vom Dorfladen';
       msg.value='';
@@ -8849,7 +8938,7 @@
       });
       html+='</tbody></table>';
       list.innerHTML=html;
-    }).catch(function(e){list.textContent='Fehler: '+e.message;});
+    }).catch(function(e){list.textContent=_cmsErr(e);});
   };
   window.pushDeleteSub = function(recordId){
     cmsConfirm('Subscriber wirklich l\u00f6schen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'L\u00f6schen',warn:true}).then(function(ok){
@@ -8859,7 +8948,7 @@
         .then(function(res){
           if(res.success){toast('Subscriber gel\u00f6scht','ok');pushLoadSubscribers();}
           else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
-        }).catch(function(e){toast('Fehler: '+e.message,'error');});
+        }).catch(function(e){toast(_cmsErr(e),'error');});
     });
   };
 
@@ -8868,7 +8957,7 @@
     var message=document.getElementById('push-message').value.trim();
     var url=document.getElementById('push-url').value;
     var category=document.getElementById('push-category').value;
-    var catLabels={mittagstisch:'Mittagstisch',angebote:'Angebote',news:'News / Aktuelles'};
+    var catLabels={tagesinfo:'TagesInfo',news:'News / Aktuelles'};
     var catInfo=category?(catLabels[category]||category):'Alle Abonnenten';
     var btn=document.getElementById('push-send-btn');
     var status=document.getElementById('push-status');
@@ -8908,7 +8997,7 @@
     .catch(function(e){
       status.textContent='\u274c Netzwerkfehler';
       status.style.color='#dc2626';
-      toast('Fehler: '+e.message,'error');
+      toast(_cmsErr(e),'error');
     })
     .then(function(){btn.disabled=false;pushImageRemove();});
     });
@@ -8941,31 +9030,70 @@
         if(!flags)flags={};
         var fp=document.getElementById('feat-push');
         var fs=document.getElementById('feat-scanner');
-        var fo=document.getElementById('feat-orders');
-        var fm=document.getElementById('feat-mittagstisch');
         var fwi=document.getElementById('feat-wp-images');
         var fpi=document.getElementById('feat-post-images');
+        var fti=document.getElementById('feat-tagesinfo-immer');
+        var fd=document.getElementById('feat-darkmode');
+        var hpShop=document.getElementById('feat-hp-shop');
+        var hpMittag=document.getElementById('feat-hp-mittag');
+        var hpFleisch=document.getElementById('feat-hp-fleisch');
+        var hpTages=document.getElementById('feat-hp-tagesinfo');
+        var kShop=document.getElementById('feat-k-shop');
+        var kMittag=document.getElementById('feat-k-mittag');
+        var kFleisch=document.getElementById('feat-k-fleisch');
+        var kTages=document.getElementById('feat-k-tagesinfo');
         if(fp)fp.checked=flags.push!==false;
         if(fs)fs.checked=flags.scanner!==false;
-        if(fo)fo.checked=flags.orders===true;
-        if(fm)fm.checked=flags.mittagstisch===true;
         if(fwi)fwi.checked=flags.wp_images===true;
         if(fpi)fpi.checked=flags.post_images!==false;
+        if(fti)fti.checked=flags.tagesinfo_immer===true;
+        if(fd)fd.checked=flags.dark_mode===true;
+        if(hpShop)hpShop.checked=flags.orders===true;
+        if(hpMittag)hpMittag.checked=flags.mittagstisch===true;
+        if(hpFleisch)hpFleisch.checked=flags.fleisch_home===true;
+        if(hpTages)hpTages.checked=flags.tagesinfo_home===true;
+        if(kShop)kShop.checked=flags.kiosk_shop===true;
+        if(kMittag)kMittag.checked=flags.kiosk_mittag===true;
+        if(kFleisch)kFleisch.checked=flags.kiosk_metzger===true;
+        if(kTages)kTages.checked=flags.kiosk_social===true;
         _featureFlags=flags;
       }
     }).catch(function(e){
       statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
-      statusEl.textContent='\u274c Fehler beim Laden: '+e.message;
+      statusEl.textContent='\u274c Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e);
     });
   }
   function saveFeatureFlags(){
     var fp=document.getElementById('feat-push');
     var fs=document.getElementById('feat-scanner');
-    var fo=document.getElementById('feat-orders');
-    var fm=document.getElementById('feat-mittagstisch');
     var fwi=document.getElementById('feat-wp-images');
     var fpi=document.getElementById('feat-post-images');
-    var flags={push:fp?fp.checked:true,scanner:fs?fs.checked:true,orders:fo?fo.checked:false,mittagstisch:fm?fm.checked:false,wp_images:fwi?fwi.checked:false,post_images:fpi?fpi.checked:true};
+    var fti=document.getElementById('feat-tagesinfo-immer');
+    var fd=document.getElementById('feat-darkmode');
+    var hpShop=document.getElementById('feat-hp-shop');
+    var hpMittag=document.getElementById('feat-hp-mittag');
+    var hpFleisch=document.getElementById('feat-hp-fleisch');
+    var hpTages=document.getElementById('feat-hp-tagesinfo');
+    var kShop=document.getElementById('feat-k-shop');
+    var kMittag=document.getElementById('feat-k-mittag');
+    var kFleisch=document.getElementById('feat-k-fleisch');
+    var kTages=document.getElementById('feat-k-tagesinfo');
+    var flags={};
+    for(var _fk in _featureFlags){if(Object.prototype.hasOwnProperty.call(_featureFlags,_fk))flags[_fk]=_featureFlags[_fk];}
+    flags.push=fp?fp.checked:true;
+    flags.scanner=fs?fs.checked:true;
+    flags.wp_images=fwi?fwi.checked:false;
+    flags.post_images=fpi?fpi.checked:true;
+    flags.tagesinfo_immer=fti?fti.checked:false;
+    flags.dark_mode=fd?fd.checked:false;
+    flags.orders=hpShop?hpShop.checked:false;
+    flags.mittagstisch=hpMittag?hpMittag.checked:false;
+    flags.fleisch_home=hpFleisch?hpFleisch.checked:false;
+    flags.tagesinfo_home=hpTages?hpTages.checked:false;
+    flags.kiosk_shop=kShop?kShop.checked:false;
+    flags.kiosk_mittag=kMittag?kMittag.checked:false;
+    flags.kiosk_metzger=kFleisch?kFleisch.checked:false;
+    flags.kiosk_social=kTages?kTages.checked:false;
     var btn=document.getElementById('settings-save');
     var hint=document.getElementById('settings-saved-hint');
     var statusEl=document.getElementById('settings-status');
@@ -8989,7 +9117,7 @@
     }).catch(function(e){
       statusEl.style.display='block';statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
       statusEl.textContent='\u274c Netzwerkfehler';
-      toast('Fehler: '+e.message,'error');
+      toast(_cmsErr(e),'error');
     }).then(function(){if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Speichern';}});
   }
 
@@ -9030,7 +9158,7 @@
       }else{
         toast('Fehler: '+res.error,'error');
       }
-    }).catch(function(e){toast('Fehler: '+e.message,'error');});
+    }).catch(function(e){toast(_cmsErr(e),'error');});
   }
 
   // === ANALYTICS DASHBOARD ===
@@ -9068,6 +9196,29 @@
   };
 
   // Mini canvas chart helper
+  // ── Chart-Interaktivitaet: Hover-Tooltip + Crosshair (shared) ──
+  function _statsEnsureTip(){
+    var t=document.getElementById('stats-hover-tip');
+    if(!t){
+      t=document.createElement('div');
+      t.id='stats-hover-tip';
+      t.style.cssText='position:fixed;z-index:99999;pointer-events:none;display:none;background:rgba(17,24,39,.96);color:#fff;font:12px/1.45 sans-serif;padding:7px 10px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.28)';
+      document.body.appendChild(t);
+    }
+    return t;
+  }
+  function _statsShowTip(html,clientX,clientY){
+    var t=_statsEnsureTip();
+    t.innerHTML=html;t.style.display='block';
+    var tw=t.offsetWidth,th=t.offsetHeight;
+    var nx=clientX+14,ny=clientY-th-12;
+    if(nx+tw>window.innerWidth-8)nx=clientX-tw-14;
+    if(nx<8)nx=8;
+    if(ny<8)ny=clientY+18;
+    t.style.left=nx+'px';t.style.top=ny+'px';
+  }
+  function _statsHideTip(){var t=document.getElementById('stats-hover-tip');if(t)t.style.display='none';}
+
   function _statsBar(canvas,labels,values,color,maxBarWidth){
     if(!canvas)return;
     var ctx=canvas.getContext('2d');
@@ -9106,6 +9257,23 @@
         ctx.fillStyle='#6b7280';ctx.font='9px sans-serif';ctx.textAlign='center';
         ctx.fillText(labels[i],x+barW/2,h-6);
       }
+    }
+    // ── Interaktivitaet: Tooltip pro Balken ──
+    canvas.__barData={labels:labels,values:values};
+    canvas.__barMeta={pad:pad,barW:barW,gap:gap,n:n};
+    if(!canvas.__barInteractive){
+      canvas.__barInteractive=true;
+      canvas.style.cursor='default';
+      canvas.addEventListener('mousemove',function(e){
+        var d=canvas.__barData,m=canvas.__barMeta;if(!d||!m)return;
+        var rect=canvas.getBoundingClientRect();
+        var mx=e.clientX-rect.left;
+        if(mx<m.pad-6){_statsHideTip();return;}
+        var idx=Math.round((mx-m.pad-m.barW/2)/(m.barW+m.gap));
+        if(idx<0)idx=0;if(idx>m.n-1)idx=m.n-1;
+        _statsShowTip('<div style="font-weight:700;margin-bottom:2px">'+d.labels[idx]+'</div><div>'+(d.values[idx]||0).toLocaleString('de-DE')+' Aufrufe</div>',e.clientX,e.clientY);
+      });
+      canvas.addEventListener('mouseleave',_statsHideTip);
     }
   }
 
@@ -9172,6 +9340,40 @@
       ctx.fillText(ds.label,lx2+14,11);
       lx2+=ctx.measureText(ds.label).width+28;
     });
+    // ── Interaktivitaet: Crosshair + Tooltip ──
+    canvas.__lineData={labels:labels,datasets:datasets};
+    canvas.__lineMeta={pad:pad,padTop:padTop,chartW:chartW,chartH:chartH,n:n,allMax:allMax};
+    if(!canvas.__lineInteractive){
+      canvas.__lineInteractive=true;
+      canvas.style.cursor='crosshair';
+      canvas.addEventListener('mousemove',function(e){
+        var d=canvas.__lineData,m=canvas.__lineMeta;if(!d||!m||m.n<2)return;
+        var rect=canvas.getBoundingClientRect();
+        var mx=e.clientX-rect.left;
+        var idx=Math.round((mx-m.pad)/m.chartW*(m.n-1));
+        if(idx<0)idx=0;if(idx>m.n-1)idx=m.n-1;
+        _statsLine(canvas,d.labels,d.datasets);
+        var c=canvas.getContext('2d');
+        var cx=m.pad+idx/(m.n-1)*m.chartW;
+        c.save();
+        c.strokeStyle='#94a3b8';c.lineWidth=1;c.setLineDash([4,3]);
+        c.beginPath();c.moveTo(cx,m.padTop);c.lineTo(cx,m.padTop+m.chartH);c.stroke();
+        c.setLineDash([]);
+        var rows='<div style="font-weight:700;margin-bottom:4px">'+d.labels[idx]+'</div>';
+        d.datasets.forEach(function(ds){
+          var vy=m.padTop+m.chartH-(ds.values[idx]||0)/m.allMax*m.chartH;
+          c.beginPath();c.arc(cx,vy,4,0,Math.PI*2);c.fillStyle=ds.color;c.fill();
+          c.lineWidth=2;c.strokeStyle='#fff';c.stroke();
+          rows+='<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+ds.color+'"></span>'+ds.label+': <b>'+(ds.values[idx]||0).toLocaleString('de-DE')+'</b></div>';
+        });
+        c.restore();
+        _statsShowTip(rows,e.clientX,e.clientY);
+      });
+      canvas.addEventListener('mouseleave',function(){
+        _statsHideTip();
+        if(canvas.__lineData)_statsLine(canvas,canvas.__lineData.labels,canvas.__lineData.datasets);
+      });
+    }
   }
 
   function statsDrawTimeline(timeline){
@@ -9231,6 +9433,26 @@
     ctx.fillStyle='#374151';ctx.textAlign='left';ctx.fillText('Desktop '+deskPct+'%',cx-48,ly);
     ctx.fillStyle='#f59e0b';ctx.fillRect(cx+10,ly-8,8,8);
     ctx.fillStyle='#374151';ctx.fillText('Mobil '+mobPct+'%',cx+22,ly);
+    // ── Interaktivitaet: Tooltip pro Segment ──
+    canvas.__pieMeta={cx:cx,cy:cy,r:r,deskPct:deskPct,mobPct:mobPct,desktop:devices.desktop,mobile:devices.mobile};
+    if(!canvas.__pieInteractive){
+      canvas.__pieInteractive=true;
+      canvas.style.cursor='default';
+      canvas.addEventListener('mousemove',function(e){
+        var m=canvas.__pieMeta;if(!m)return;
+        var rect=canvas.getBoundingClientRect();
+        var dx=(e.clientX-rect.left)-m.cx,dy=(e.clientY-rect.top)-m.cy;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist>m.r||dist<m.r*0.55){_statsHideTip();return;}
+        var ang=Math.atan2(dy,dx)+Math.PI/2;if(ang<0)ang+=Math.PI*2;
+        var frac=ang/(Math.PI*2)*100;
+        var html=(frac<=m.deskPct)
+          ? '<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6366f1"></span>Desktop: <b>'+m.deskPct+'%</b> ('+m.desktop.toLocaleString('de-DE')+')</div>'
+          : '<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f59e0b"></span>Mobil: <b>'+m.mobPct+'%</b> ('+m.mobile.toLocaleString('de-DE')+')</div>';
+        _statsShowTip(html,e.clientX,e.clientY);
+      });
+      canvas.addEventListener('mouseleave',_statsHideTip);
+    }
   }
 
   function statsDrawTopPages(pages){
@@ -9346,7 +9568,7 @@
       if(o.status===0) html+='<a class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'" target="_blank"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</a>';
       if(o.status===1) html+='<button class="cms-btn cms-btn-sm" style="background:#d1fae5;color:#065f46" onclick="cmsOrderStatus(\''+o.id+'\',2,\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\',\''+esc(o.kunde_name)+'\',\''+esc(o.abholdatum)+'\')">✓ Abholbereit</button>';
       if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')"><i data-lucide="package-check" style="width:12px;height:12px;vertical-align:-2px"></i> Abgeholt</button>';
-      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsOrderStatus(\''+o.id+'\',4,\''+esc(o.bestellnummer)+'\')" title="Stornieren"><i data-lucide="x" style="width:12px;height:12px;vertical-align:-2px"></i></button>';
+      if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsShowShopStornoDialog(\''+o.id+'\',\''+esc(o.bestellnummer)+'\')" title="Stornieren"><i data-lucide="x" style="width:12px;height:12px;vertical-align:-2px"></i></button>';
       html+='</td></tr>';
       // Expandable positions row
       if(posCount){
@@ -9354,6 +9576,19 @@
         html+='<strong>'+posCount+' Position(en):</strong> ';
         o.positionen.forEach(function(p){html+=esc(p.bezeichnung)+' ('+p.menge+' '+esc(p.einheit)+') '+((+p.positionspreis).toFixed(2).replace('.',','))+'€, ';});
         if(o.anmerkungen) html+='<br><em style="color:#92400e">📝 '+esc(o.anmerkungen)+'</em>';
+        html+='</td></tr>';
+      }
+      // Messages row
+      var hasMsg=o.kunde_kommentar||o.personal_antwort;
+      if(hasMsg||o.status<3){
+        html+='<tr style="background:'+(o.kunde_kommentar&&!o.kommentar_gelesen?'#eff6ff':'#f9fafb')+'"><td colspan="7" style="padding:6px 8px 8px 24px;font-size:12px">';
+        if(o.kunde_kommentar){
+          html+='<div style="padding:4px 8px;background:#dbeafe;border-radius:6px;color:#1e40af;margin-bottom:4px"><strong>\u2709 Kunde:</strong> '+esc(o.kunde_kommentar);
+          if(!o.kommentar_gelesen) html+=' <button class="cms-btn cms-btn-sm" style="font-size:10px;padding:1px 6px;margin-left:4px" onclick="cmsMarkShopMsgRead(\''+o.id+'\')">Gelesen</button>';
+          html+='</div>';
+        }
+        if(o.personal_antwort) html+='<div style="padding:4px 8px;background:#dcfce7;border-radius:6px;color:#166534;margin-bottom:4px"><strong>\ud83d\udcac Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+        if(o.status<3) html+='<button class="cms-btn cms-btn-sm" style="background:#1e40af;color:#fff;font-size:11px;padding:3px 10px" onclick="cmsShowShopReplyDialog(\''+o.id+'\',\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\')"><i data-lucide="reply" style="width:12px;height:12px;vertical-align:-2px"></i> Antworten</button>';
         html+='</td></tr>';
       }
     });
@@ -9365,10 +9600,13 @@
   // Filter change
   document.addEventListener('change',function(e){if(e.target&&e.target.id==='cms-orders-filter')cmsRenderOrders();});
 
-  window.cmsOrderStatus=function(id,status,bestellnr,email,name,abholdatum){
+  window.cmsOrderStatus=function(id,status,bestellnr,email,name,abholdatum,grund){
     var label=STATUS_LABELS[status]||'';
-    if(!confirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?')) return;
-    fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:status})})
+    cmsConfirm('Bestellung '+bestellnr+' auf "'+label+'" setzen?').then(function(ok){
+    if(!ok) return;
+    var payload={id:id,status:status};
+    if(grund) payload.storno_grund=grund;
+    fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.success){
@@ -9385,9 +9623,109 @@
           } else {
             cmsToast('✅ '+bestellnr+': Status → '+label);
           }
-        } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+        } else {cmsToast(res.error||'Aktion fehlgeschlagen. Bitte erneut versuchen.','error');}
       })
-      .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+      .catch(function(e){console.error('Statuswechsel fehlgeschlagen:',e);cmsToast('Aktion fehlgeschlagen. Bitte erneut versuchen.','error');});
+    });
+  };
+
+  // ── CMS Shop-Storno-Dialog mit Begründung ──
+  var CMS_SHOP_STORNO_REASONS=['Artikel nicht lieferbar','Bestellung wurde doppelt aufgegeben','Kunde hat telefonisch storniert','Abholung nicht möglich','Sonstiger Grund'];
+  window.cmsShowShopStornoDialog=function(id,bestellnr){
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
+    var modal=document.createElement('div');
+    modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
+    modal.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
+      +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr||'?')+'</div>'
+      +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
+      +'<div id="cms-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
+      +'<textarea id="cms-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>'
+      +'<button id="cms-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
+    overlay.appendChild(modal);document.body.appendChild(overlay);
+    var optsDiv=modal.querySelector('#cms-storno-opts');var selectedReason='';
+    CMS_SHOP_STORNO_REASONS.forEach(function(r){
+      var opt=document.createElement('label');
+      opt.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s';
+      opt.innerHTML='<input type="radio" name="cms-storno-reason" value="'+esc(r)+'" style="accent-color:#dc2626"> '+esc(r);
+      opt.querySelector('input').addEventListener('change',function(){
+        selectedReason=r;
+        modal.querySelector('#cms-storno-confirm').disabled=false;
+        modal.querySelector('#cms-storno-confirm').style.opacity='1';
+        optsDiv.querySelectorAll('label').forEach(function(l){l.style.borderColor='#e5e7eb';l.style.background='';});
+        opt.style.borderColor='#dc2626';opt.style.background='#fef2f2';
+      });
+      optsDiv.appendChild(opt);
+    });
+    modal.querySelector('#cms-storno-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
+    overlay.addEventListener('click',function(e){if(e.target===overlay) document.body.removeChild(overlay);});
+    modal.querySelector('#cms-storno-confirm').addEventListener('click',function(){
+      if(!selectedReason) return;
+      var comment=(modal.querySelector('#cms-storno-comment').value||'').trim();
+      var grund='Storniert: '+selectedReason+(comment?' – '+comment:'');
+      document.body.removeChild(overlay);
+      var payload={id:id,status:4,storno_grund:grund};
+      fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){
+            var o=_ordersData.find(function(x){return x.id===id;});
+            if(o){o.status=4;o.status_text=STATUS_LABELS[4];}
+            cmsRenderOrders();
+            cmsToast('✅ '+bestellnr+': Storniert');
+          } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+        }).catch(function(e){cmsToast(_cmsErr(e),'error');});
+    });
+  };
+
+  // ── Shop-Nachricht als gelesen markieren ──
+  window.cmsMarkShopMsgRead=function(id){
+    fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,kommentar_gelesen:true})})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          var o=_ordersData.find(function(x){return x.id===id;});
+          if(o) o.kommentar_gelesen=true;
+          cmsRenderOrders();
+          cmsToast('Nachricht als gelesen markiert');
+        } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+      }).catch(function(e){cmsToast(_cmsErr(e),'error');});
+  };
+
+  // ── Shop-Antwort-Dialog ──
+  window.cmsShowShopReplyDialog=function(id,bestellnr,email){
+    var o=_ordersData.find(function(x){return x.id===id;});
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
+    var modal=document.createElement('div');
+    modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
+    var h='<div style="font-size:16px;font-weight:800;margin-bottom:4px">\ud83d\udcac Nachricht an Kunden</div>';
+    h+='<div style="font-size:12px;color:#6b7f72;margin-bottom:12px">'+esc(bestellnr||'')+'</div>';
+    if(o&&o.kunde_kommentar) h+='<div style="padding:6px 10px;background:#dbeafe;border-radius:8px;font-size:12px;color:#1e40af;margin-bottom:10px"><strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(o&&o.personal_antwort) h+='<div style="padding:6px 10px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;margin-bottom:10px"><strong>Letzte Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+    h+='<textarea id="cms-shop-reply-text" placeholder="Ihre Antwort\u2026" rows="3" style="width:100%;border:1px solid #dfe7e2;border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>';
+    h+='<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-shop-reply-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>';
+    h+='<button id="cms-shop-reply-send" style="flex:1;padding:10px;border:none;border-radius:10px;background:#1e40af;color:#fff;font-weight:700;cursor:pointer">Senden</button></div>';
+    modal.innerHTML=h;
+    overlay.appendChild(modal);document.body.appendChild(overlay);
+    modal.querySelector('#cms-shop-reply-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
+    overlay.addEventListener('click',function(ev){if(ev.target===overlay) document.body.removeChild(overlay);});
+    modal.querySelector('#cms-shop-reply-send').addEventListener('click',function(){
+      var text=(modal.querySelector('#cms-shop-reply-text').value||'').trim();
+      if(!text){cmsToast('Bitte Antwort eingeben','warn');return;}
+      document.body.removeChild(overlay);
+      fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,personal_antwort:text,kommentar_gelesen:true})})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){
+            var o=_ordersData.find(function(x){return x.id===id;});
+            if(o){o.personal_antwort=text;o.kommentar_gelesen=true;}
+            cmsRenderOrders();
+            cmsToast('\u2705 Antwort gesendet');
+          } else {cmsToast('Fehler: '+(res.error||'Unbekannt'),'error');}
+        }).catch(function(e){cmsToast(_cmsErr(e),'error');});
+    });
   };
 
   // ── Pack-Seite öffnen ──
@@ -9534,30 +9872,34 @@
     if(window.lucide)lucide.createIcons();
     document.getElementById('kd-close').onclick=function(){wrap.style.display='none';wrap.innerHTML='';};
     document.getElementById('kd-delete').onclick=function(){
-      if(!confirm('Kunde "'+k.vorname+' '+k.nachname+'" ('+k.email+') wirklich endgültig löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!'))return;
+      cmsConfirm('Kunde "'+k.vorname+' '+k.nachname+'" ('+k.email+') wirklich endgültig löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!').then(function(ok){
+      if(!ok)return;
       fetch(API+'/shop-admin?id='+encodeURIComponent(id),{method:'DELETE'})
         .then(function(r){return r.json();})
         .then(function(res){
-          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          if(!res.success){cmsToast(res.error||'Kunde konnte nicht gelöscht werden.','error');return;}
           cmsToast('Kunde gelöscht');
           wrap.style.display='none';wrap.innerHTML='';
           _kundenData=_kundenData.filter(function(x){return x.id!==id;});
           cmsRenderKunden();
         })
-        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+        .catch(function(e){console.error('Kunde löschen fehlgeschlagen:',e);cmsToast('Kunde konnte nicht gelöscht werden. Bitte erneut versuchen.','error');});
+      });
     };
     document.getElementById('kd-reset-pw').onclick=function(){
       var newPw=document.getElementById('kd-new-pw').value.trim();
       if(!newPw||newPw.length<8){cmsToast('Passwort muss mindestens 8 Zeichen haben','error');return;}
-      if(!confirm('Passwort für '+k.vorname+' '+k.nachname+' wirklich zurücksetzen?'))return;
+      cmsConfirm('Passwort für '+k.vorname+' '+k.nachname+' wirklich zurücksetzen?').then(function(ok){
+      if(!ok)return;
       fetch(API+'/auth-reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'admin-reset',kunde_id:id,passwort:newPw})})
         .then(function(r){return r.json();})
         .then(function(res){
-          if(!res.success){cmsToast('Fehler: '+(res.error||''),'error');return;}
+          if(!res.success){cmsToast(res.error||'Passwort konnte nicht zurückgesetzt werden.','error');return;}
           cmsToast('Passwort wurde zurückgesetzt');
           document.getElementById('kd-new-pw').value='';
         })
-        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+        .catch(function(e){console.error('Passwort zurücksetzen fehlgeschlagen:',e);cmsToast('Passwort konnte nicht zurückgesetzt werden. Bitte erneut versuchen.','error');});
+      });
     };
     document.getElementById('kd-save').onclick=function(){
       var payload={_entity:'kunde',id:id,vorname:document.getElementById('kd-vorname').value.trim(),nachname:document.getElementById('kd-nachname').value.trim(),telefon:document.getElementById('kd-telefon').value.trim(),strasse:document.getElementById('kd-strasse').value.trim(),plz:document.getElementById('kd-plz').value.trim(),ort:document.getElementById('kd-ort').value.trim(),aktiv:document.getElementById('kd-aktiv').checked};
@@ -9572,7 +9914,7 @@
           if(local){local.vorname=payload.vorname;local.nachname=payload.nachname;local.telefon=payload.telefon;local.strasse=payload.strasse;local.plz=payload.plz;local.ort=payload.ort;local.aktiv=payload.aktiv;}
           cmsRenderKunden();
         })
-        .catch(function(e){cmsToast('Fehler: '+e.message,'error');});
+        .catch(function(e){cmsToast(_cmsErr(e),'error');});
     };
   };
 
@@ -9584,14 +9926,13 @@
 
   // --- Sub-tab switching ---
   window.socialSubTab = function(name){
-    ['katalog','post','verlauf','wakatalog'].forEach(function(t){
+    ['katalog','post','wakatalog'].forEach(function(t){
       var p=document.getElementById('social-panel-'+t);
       var b=document.getElementById('social-subtab-'+t);
       if(p) p.style.display = t===name?'':'none';
       if(b){
-        b.style.background = t===name?'#fff':'transparent';
-        b.style.color = t===name?'#e1306c':'#6b7280';
-        b.style.boxShadow = t===name?'0 1px 3px rgba(0,0,0,.08)':'none';
+        // Kiosk-aligned: toggle the .active class (styling handled by .k-filter-btn CSS)
+        if(t===name){ b.classList.add('active'); } else { b.classList.remove('active'); }
       }
     });
     if(name==='post'){
@@ -9607,8 +9948,8 @@
           socialLoadMtBilder(function(){ mtReady2=true; tryBuild2(); });
         } else { mtReady2=true; tryBuild2(); }
       }
+      socialLoadTodayPosts();
     }
-    if(name==='verlauf' && !window._socialVerlaufLoaded) socialLoadVerlauf();
     if(name==='wakatalog') waKatalogLoad();
   };
 
@@ -9638,7 +9979,7 @@
       thumb.src=e.target.result;
       wrap.style.display='block';
       if(hint) hint.style.display='none';
-      if(zone){ zone.style.borderColor='#e1306c'; zone.style.background='#fef2f2'; }
+      if(zone){ zone.style.borderColor='#2e7d4f'; zone.style.background='#f0fdf4'; }
     };
     r.readAsDataURL(file);
   }
@@ -9647,6 +9988,8 @@
     _socPastedFile=null;
     var inp=document.getElementById('soc-kat-bild');
     if(inp) inp.value='';
+    var cam=document.getElementById('soc-kat-bild-cam');
+    if(cam) cam.value='';
     var wrap=document.getElementById('soc-kat-bild-preview');
     var hint=document.getElementById('soc-kat-paste-hint');
     var zone=document.getElementById('soc-kat-paste-zone');
@@ -9660,6 +10003,14 @@
     var inp=document.getElementById('soc-kat-bild');
     if(inp) inp.addEventListener('change',function(){
       _socPastedFile=null;
+      var cam=document.getElementById('soc-kat-bild-cam'); if(cam) cam.value='';
+      var f=this.files&&this.files[0];
+      if(f) socialShowBildPreview(f);
+    });
+    var camInp=document.getElementById('soc-kat-bild-cam');
+    if(camInp) camInp.addEventListener('change',function(){
+      _socPastedFile=null;
+      if(inp) inp.value='';
       var f=this.files&&this.files[0];
       if(f) socialShowBildPreview(f);
     });
@@ -9690,8 +10041,8 @@
     if(zone){
       zone.addEventListener('dragover',function(e){
         e.preventDefault();
-        zone.style.borderColor='#e1306c';
-        zone.style.background='#fef2f2';
+        zone.style.borderColor='#2e7d4f';
+        zone.style.background='#f0fdf4';
       });
       zone.addEventListener('dragleave',function(){
         if(!_socPastedFile && !(inp&&inp.files&&inp.files.length)){
@@ -9731,10 +10082,16 @@
         }
         window._socialKatLoaded=true;
         _socialKatalog = res.items||[];
+        if(res.kategorien&&res.kategorien.length){
+          window._cmsKategorien=res.kategorien;
+        }
+        // Populate category select
+        var katSel=document.getElementById('soc-kat-kategorie');
+        if(katSel){var cur=katSel.value;katSel.innerHTML=_cmsKatOptionsHtml('');if(cur)katSel.value=cur;}
         socialRenderKatalog();
       })
       .catch(function(e){
-        socialStatus('soc-kat-status','Fehler beim Laden: '+e.message,false);
+        socialStatus('soc-kat-status','Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e),false);
       })
       .then(function(){
         if(loading) loading.style.display='none';
@@ -9743,12 +10100,192 @@
   };
 
   // --- Katalog rendern ---
-  var _socKatOpts=[
-    {v:'Mittagessen',l:'&#127869; Mittagessen'},
-    {v:'Kuchen',l:'&#127856; Kuchen'},
-    {v:'Obst & Gemuese',l:'&#129382; Obst & Gem\u00fcse'},
-    {v:'Aufstriche',l:'&#129367; Aufstriche'}
-  ];
+  // Kategorien kommen dynamisch aus der API (social.js shared oder _cmsKategorien)
+  function _cmsGetKategorien(){
+    if(window._socKategorien_ref) return window._socKategorien_ref();
+    return window._cmsKategorien||[];
+  }
+  function _cmsKatOptionsHtml(selectedVal){
+    return _cmsGetKategorien().map(function(k){
+      var sel=k.name===selectedVal?' selected':'';
+      return '<option value="'+esc(k.name)+'"'+sel+'>'+esc(k.name)+'</option>';
+    }).join('');
+  }
+  // Universal image popup – same as app.js version (cms.html does not load app.js)
+  if(!window.dlImagePopup){
+    window.dlImagePopup=function(src,alt){
+      if(!src)return;
+      var existing=document.getElementById('dl-img-popup');
+      if(existing) existing.remove();
+      var ov=document.createElement('div');
+      ov.id='dl-img-popup';
+      ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer;animation:wpLbFadeIn .2s';
+      ov.addEventListener('click',function(){ov.remove();});
+      var img=document.createElement('img');
+      img.src=src; img.alt=alt||'';
+      img.style.cssText='max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)';
+      img.addEventListener('click',function(e){e.stopPropagation();});
+      ov.appendChild(img);
+      if(alt){var cap=document.createElement('div');cap.textContent=alt;cap.style.cssText='color:#fff;font-size:15px;font-weight:600;margin-top:12px;text-align:center;max-width:90vw;word-break:break-word';ov.appendChild(cap);}
+      var cls=document.createElement('button');cls.innerHTML='&#10005;';
+      cls.style.cssText='position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';
+      cls.addEventListener('click',function(e){e.stopPropagation();ov.remove();});
+      ov.appendChild(cls);
+      document.body.appendChild(ov);
+      document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){ov.remove();document.removeEventListener('keydown',onKey);}});
+    };
+  }
+
+  function _cmsLucideIcon(name,size){
+    size=size||16;
+    if(window.lucide&&window.lucide.icons){
+      var pascal=name.split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join('');
+      var ic=window.lucide.icons[pascal];
+      if(ic&&Array.isArray(ic)){
+        var paths=ic.map(function(p){var tag=p[0],attrs=p[1]||{};var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]+'"';return '<'+tag+a+'/>';}).join('');
+        return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+paths+'</svg>';
+      }
+    }
+    return '<i data-lucide="'+esc(name)+'" style="width:'+size+'px;height:'+size+'px"></i>';
+  }
+  function _cmsCatIconName(catName){
+    var kats=_cmsGetKategorien();
+    for(var i=0;i<kats.length;i++){if(kats[i].name===catName) return kats[i].icon||'tag';}
+    return 'tag';
+  }
+
+  // --- Kategorie-Manager (Kategorien anlegen/entfernen) – portiert aus js/social.js ---
+  var _cmsCatIconChoices=['utensils','cake-slice','apple','salad','coffee','beef','fish','egg-fried','milk','wheat','grape','carrot','cherry','citrus','cookie','croissant','drum','drumstick','ice-cream-cone','leaf','nut','pizza','popcorn','sandwich','soup','wine','beer','candy','shopping-basket','package','tag','store','heart','star','sun','flower','sprout','flame','snowflake','droplet','zap'];
+  var _cmsCatIconDeMap={'eis':'ice-cream','eiscreme':'ice-cream','getraenk':'cup-soda','trinken':'cup-soda','brot':'wheat','fleisch':'beef','rind':'beef','schwein':'ham','huhn':'drumstick','haehnchen':'drumstick','gemuese':'carrot','obst':'apple','frucht':'cherry','torte':'cake','kuchen':'cake','wein':'wine','bier':'beer','milch':'milk','kaese':'wedge','fisch':'fish','pizza':'pizza','suppe':'soup','kaffee':'coffee','tee':'coffee','salat':'salad','bonbon':'candy','blume':'flower','sonne':'sun','stern':'star','herz':'heart','feuer':'flame','wasser':'droplet','blatt':'leaf','nuss':'nut','traube':'grape','kirsche':'cherry','zitrone':'citrus','keks':'cookie','essen':'utensils','gabel':'utensils','messer':'utensils','tasse':'coffee','glas':'wine','flasche':'wine','korb':'shopping-basket','tuete':'shopping-bag','laden':'store','geschaeft':'store','paket':'package','lieferung':'truck','schneeflocke':'snowflake','kalt':'snowflake','heiss':'flame','frisch':'leaf','bio':'sprout','vegan':'sprout','popcorn':'popcorn'};
+  var _cmsCatIconFilter='';
+
+  function _cmsAllLucideIcons(){
+    if(!window.lucide||!window.lucide.icons) return [];
+    var names=[];
+    for(var key in window.lucide.icons){
+      var kebab=key.replace(/([a-z])([A-Z])/g,'$1-$2').replace(/([A-Z])([A-Z][a-z])/g,'$1-$2').toLowerCase();
+      names.push(kebab);
+    }
+    return names;
+  }
+
+  function _cmsRenderKatManager(){
+    var wrap=document.getElementById('soc-kat-manager-list');
+    if(!wrap)return;
+    var kats=_cmsGetKategorien();
+    if(!kats.length){wrap.innerHTML='<div style="color:#9ca3af;font-size:12px;padding:10px">Keine Kategorien geladen.</div>';return;}
+    var html='';
+    kats.forEach(function(k,idx){
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:'+(idx%2===0?'#fff':'#f9fafb')+';border-radius:6px;margin-bottom:2px">';
+      html+='<span style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#6b7280">'+_cmsLucideIcon(k.icon||'tag',18)+'</span>';
+      html+='<span style="flex:1;font-weight:600;font-size:13px">'+esc(k.name)+'</span>';
+      html+='<span style="font-size:10px;color:#9ca3af;background:#f3f4f6;padding:2px 6px;border-radius:4px">'+esc(k.icon||'tag')+'</span>';
+      html+='<button onclick="socialKatMgrRemove('+idx+')" title="Entfernen" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:2px 4px">&times;</button>';
+      html+='</div>';
+    });
+    wrap.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
+  }
+
+  function _cmsRenderIconPicker(){
+    var grid=document.getElementById('soc-kat-icon-grid');
+    if(!grid)return;
+    var q=_cmsCatIconFilter.toLowerCase().trim();
+    var filtered;
+    if(!q){ filtered=_cmsCatIconChoices; }
+    else {
+      var searchTerms=[q];
+      if(_cmsCatIconDeMap[q]) searchTerms.push(_cmsCatIconDeMap[q]);
+      for(var de in _cmsCatIconDeMap){ if(de.indexOf(q)!==-1||q.indexOf(de)!==-1) searchTerms.push(_cmsCatIconDeMap[de]); }
+      var allIcons=_cmsAllLucideIcons();
+      if(!allIcons.length) allIcons=_cmsCatIconChoices;
+      filtered=allIcons.filter(function(ic){ for(var i=0;i<searchTerms.length;i++){ if(ic.indexOf(searchTerms[i])!==-1) return true; } return false; });
+      if(filtered.length>60) filtered=filtered.slice(0,60);
+    }
+    var curIcon=document.getElementById('soc-kat-new-icon');
+    var curVal=curIcon?curIcon.value:'';
+    var html='';
+    filtered.forEach(function(ic){
+      var sel=curVal===ic;
+      html+='<button type="button" onclick="socialKatMgrPickIcon(\''+ic+'\')" title="'+ic+'" style="width:36px;height:36px;border-radius:6px;border:2px solid '+(sel?'#2e7d4f':'#e5e7eb')+';background:'+(sel?'#f0fdf4':'#fff')+';cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#374151">'+_cmsLucideIcon(ic,18)+'</button>';
+    });
+    if(!filtered.length) html='<div style="color:#9ca3af;font-size:11px;padding:8px">Kein Icon gefunden &ndash; versuche englische Begriffe (z.B. ice-cream, bread, cup)</div>';
+    grid.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
+  }
+
+  window.socialKatMgrPickIcon=function(iconName){
+    var inp=document.getElementById('soc-kat-new-icon');
+    if(inp) inp.value=iconName;
+    var preview=document.getElementById('soc-kat-icon-preview');
+    if(preview) preview.innerHTML=_cmsLucideIcon(iconName,20);
+    _cmsRenderIconPicker();
+  };
+
+  window.socialKatMgrFilterIcons=function(){
+    var inp=document.getElementById('soc-kat-icon-search');
+    _cmsCatIconFilter=inp?inp.value:'';
+    _cmsRenderIconPicker();
+  };
+
+  window.socialKatMgrAdd=function(){
+    var nameInp=document.getElementById('soc-kat-new-name');
+    var iconInp=document.getElementById('soc-kat-new-icon');
+    var name=(nameInp?nameInp.value:'').trim();
+    var icon=(iconInp?iconInp.value:'').trim()||'tag';
+    if(!name){socialStatus('soc-kat-status','Kategoriename eingeben',false);return;}
+    var kats=_cmsGetKategorien();
+    for(var i=0;i<kats.length;i++){if(kats[i].name===name){socialStatus('soc-kat-status','Kategorie "'+name+'" existiert bereits',false);return;}}
+    if(!window._cmsKategorien) window._cmsKategorien=[];
+    window._cmsKategorien.push({name:name,icon:icon});
+    _cmsKatMgrSave();
+    if(nameInp) nameInp.value='';
+    if(iconInp) iconInp.value='';
+    _cmsCatIconFilter='';
+    var search=document.getElementById('soc-kat-icon-search');
+    if(search) search.value='';
+    var preview=document.getElementById('soc-kat-icon-preview');
+    if(preview) preview.innerHTML=_cmsLucideIcon('tag',20);
+  };
+
+  window.socialKatMgrRemove=function(idx){
+    var kats=_cmsGetKategorien();
+    if(!kats[idx])return;
+    var catName=kats[idx].name;
+    cmsConfirm('Kategorie \u00ab'+catName+'\u00bb entfernen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'Entfernen',warn:true}).then(function(ok){
+      if(!ok)return;
+      if(window._cmsKategorien) window._cmsKategorien.splice(idx,1);
+      _cmsKatMgrSave();
+    });
+  };
+
+  function _cmsKatMgrSave(){
+    socialStatus('soc-kat-status','Kategorien werden gespeichert...',true);
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'katalog_kategorien',wert:JSON.stringify(window._cmsKategorien||[])})})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){socialStatus('soc-kat-status','Fehler: '+res.error,false);return;}
+      socialStatus('soc-kat-status','Kategorien gespeichert!',true);
+      var katSel=document.getElementById('soc-kat-kategorie');
+      if(katSel){var cur=katSel.value;katSel.innerHTML=_cmsKatOptionsHtml('');if(cur)katSel.value=cur;}
+      _cmsRenderKatManager();
+      socialRenderKatalog();
+    })
+    .catch(function(e){socialStatus('soc-kat-status','Speichern fehlgeschlagen.'+(typeof _cmsLog==='function'?_cmsLog(e):''),false);});
+  }
+
+  window.socialKatMgrToggle=function(){
+    var panel=document.getElementById('soc-kat-manager');
+    if(!panel)return;
+    if(panel.style.display==='none'){
+      panel.style.display='';
+      _cmsRenderKatManager();
+      _cmsRenderIconPicker();
+    } else {
+      panel.style.display='none';
+    }
+  };
+
   function socialRenderKatalog(){
     var list=document.getElementById('soc-kat-list');
     var empty=document.getElementById('soc-kat-empty');
@@ -9765,13 +10302,13 @@
       if(!cats[c]) cats[c]=[];
       cats[c].push(p);
     });
-    var catIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+    var catIcons={}; _cmsGetKategorien().forEach(function(k){catIcons[k.name]=_cmsLucideIcon(k.icon||'tag',16);});
     var html='';
     Object.keys(cats).forEach(function(cat){
       var catId='soc-kat-cat-'+esc(cat).replace(/[^a-zA-Z0-9]/g,'_');
       html+='<div class="cms-card" style="margin-bottom:10px">';
-      html+='<div class="cms-card-header soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:#1f2937;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">';
-      html+='<span>'+(catIcons[cat]||'&#128230;')+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
+      html+='<div class="cms-card-header soc-kat-cat-hdr" onclick="socialKatToggleCat(\''+catId+'\')" style="background:linear-gradient(135deg,#2d5016 0%,#2e7d4f 100%);cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">';
+      html+='<span>'+(catIcons[cat]||_cmsLucideIcon('package',16))+' '+esc(cat)+' <span style="opacity:.6;font-size:11px">('+cats[cat].length+')</span></span>';
       html+='<span class="soc-kat-arrow" id="'+catId+'-arrow" style="transition:transform .2s;font-size:14px">&#9654;</span>';
       html+='</div>';
       html+='<div class="cms-card-body" id="'+catId+'" style="padding:0;display:none">';
@@ -9783,9 +10320,9 @@
         html+='<tr id="soc-row-'+pid+'" class="soc-kat-item" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
         html+='<td style="padding:8px;width:50px">';
         if(p.bild_url){
-          html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" onerror="this.style.display=\'none\'">';
+          html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         } else {
-          html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#9ca3af">&#128247;</div>';
+          html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9ca3af">'+_cmsLucideIcon('camera',20)+'</div>';
         }
         html+='</td>';
         html+='<td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
@@ -9793,9 +10330,9 @@
         if(p.preis){var lp=parseFloat(p.preis);html+='<span style="font-weight:700;color:#2e7d32">'+(lp&&isFinite(lp)?lp.toFixed(2):esc(p.preis))+' &#8364;</span>';}
         html+='</td>';
         html+='<td style="padding:8px;width:110px;text-align:right;white-space:nowrap">';
-        html+='<label class="cms-btn cms-btn-gray cms-btn-sm" title="Bild \u00e4ndern" style="padding:4px 8px;font-size:14px;margin-right:3px;cursor:pointer;display:inline-flex;align-items:center">&#128247;<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label>';
-        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;font-size:14px;margin-right:3px">&#9998;</button>';
-        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="L\u00f6schen" style="color:#dc2626;padding:4px 8px;font-size:14px">&#10005;</button>';
+        html+='<label class="cms-btn cms-btn-gray cms-btn-sm" title="Bild \u00e4ndern" style="padding:4px 8px;margin-right:3px;cursor:pointer;display:inline-flex;align-items:center">'+_cmsLucideIcon('camera',16)+'<input type="file" accept="image/*" capture="environment" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatEdit(\''+pid+'\')" title="Bearbeiten" style="padding:4px 8px;margin-right:3px;display:inline-flex;align-items:center">'+_cmsLucideIcon('pencil',16)+'</button>';
+        html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatDelete(\''+pid+'\')" title="L\u00f6schen" style="color:#dc2626;padding:4px 8px;display:inline-flex;align-items:center">'+_cmsLucideIcon('trash-2',16)+'</button>';
         html+='</td></tr>';
         // Edit row (hidden)
         html+='<tr id="soc-edit-'+pid+'" class="soc-kat-edit-tr" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b">';
@@ -9805,21 +10342,25 @@
         html+='<input id="soc-ed-name-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+esc(p.name)+'"></div>';
         html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
         html+='<select id="soc-ed-kat-'+pid+'" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px">';
-        _socKatOpts.forEach(function(o){
-          html+='<option value="'+esc(o.v)+'"'+(o.v===p.kategorie?' selected':'')+'>'+o.l+'</option>';
-        });
+        html+=_cmsKatOptionsHtml(p.kategorie);
         html+='</select></div>';
         html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
-        var edP=parseFloat(p.preis);html+='<input id="soc-ed-preis-'+pid+'" type="number" step="0.01" min="0" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(edP&&isFinite(edP)?edP.toFixed(2):(p.preis||''))+'"></div>';
+        var edP=parseFloat(p.preis);html+='<input id="soc-ed-preis-'+pid+'" type="text" inputmode="decimal" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px" value="'+(edP&&isFinite(edP)?edP.toFixed(2).replace('.',','):(p.preis||''))+'"></div>';
         html+='<div class="soc-kat-edit-btns" style="display:flex;gap:4px">';
         html+='<button class="cms-btn cms-btn-sm" onclick="socialKatSave(\''+pid+'\')" style="background:#2e7d32;color:#fff;padding:5px 12px;font-size:12px;font-weight:700">&#10003; Speichern</button>';
         html+='<button class="cms-btn cms-btn-gray cms-btn-sm" onclick="socialKatCancelEdit(\''+pid+'\')" style="padding:5px 10px;font-size:12px">Abbrechen</button>';
-        html+='</div></div></td></tr>';
+        html+='</div></div>';
+        html+='<div id="soc-ed-paste-'+pid+'" tabindex="0" onpaste="socialKatEditPaste(\''+pid+'\',event)" style="margin-top:6px;border:2px dashed #d1d5db;border-radius:8px;padding:8px;text-align:center;cursor:pointer;background:#fafbfc;outline:none;font-size:11px;color:#9ca3af" onclick="document.getElementById(\'soc-ed-paste-'+pid+'\').focus()" title="Strg+V zum Bild einf\u00fcgen"><i data-lucide="clipboard-paste" style="width:14px;height:14px;vertical-align:middle"></i> <strong>Strg+V</strong> Bild einf\u00fcgen oder <label style="color:#2563eb;cursor:pointer;text-decoration:underline">Datei w\u00e4hlen<input type="file" accept="image/*" onchange="socialKatImgChange(\''+pid+'\',this)" style="display:none"></label></div>';
+        html+='</td></tr>';
       });
       html+='</table></div></div>';
     });
     list.innerHTML=html;
+    if(window.lucide) try{lucide.createIcons();}catch(e){}
   }
+
+  // Strg+V paste handler for edit row (cms.js version)
+  window.socialKatEditPaste=function(id,e){ var items=e.clipboardData&&e.clipboardData.items; if(!items)return; for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image')!==-1){e.preventDefault();var f=items[i].getAsFile();if(f){var reader=new FileReader();reader.onload=function(ev){var b64=ev.target.result;var zone=document.getElementById('soc-ed-paste-'+id);if(zone){zone.style.borderColor='#22c55e';zone.innerHTML='<img src="'+b64+'" style="max-width:80px;max-height:80px;border-radius:6px;border:1px solid #e5e7eb">';} socialKatImgChange(id,{files:[f]});};reader.readAsDataURL(f);}return;}} };
 
   // --- Inline Edit ---
   window.socialKatEdit = function(id){
@@ -9856,7 +10397,9 @@
   window.socialKatSave = function(id){
     var name=(document.getElementById('soc-ed-name-'+id).value||'').trim();
     var kat=document.getElementById('soc-ed-kat-'+id).value;
-    var preis=(document.getElementById('soc-ed-preis-'+id).value||'').trim();
+    var preisRaw=(document.getElementById('soc-ed-preis-'+id).value||'').trim();
+    var preis=preisRaw?parseFloat(preisRaw.replace(',','.')):'';
+    if(preis&&isFinite(preis)) preis=preis.toFixed(2); else preis=preisRaw;
     if(!name){socialStatus('soc-kat-status','Name darf nicht leer sein',false);return;}
     socialStatus('soc-kat-status','Wird gespeichert...',true);
     fetch(API+'/social-katalog',{
@@ -9873,7 +10416,7 @@
       socialStatus('soc-kat-status','Gespeichert!',true);
       socialLoadKatalog();
     })
-    .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+    .catch(function(e){socialStatus('soc-kat-status',_cmsErr(e),false);});
   };
 
   // --- Produkt hinzufuegen ---
@@ -9882,12 +10425,13 @@
     var kat=document.getElementById('soc-kat-kategorie').value;
     var preis=document.getElementById('soc-kat-preis').value.trim();
     var bildInput=document.getElementById('soc-kat-bild');
+    var camInput=document.getElementById('soc-kat-bild-cam');
     if(!name){socialStatus('soc-kat-status','Bitte Namen eingeben',false);return;}
     var fd=new FormData();
     fd.append('name',name);
     fd.append('kategorie',kat);
     if(preis){var pn=parseFloat(preis.replace(',','.'));fd.append('preis',pn&&isFinite(pn)?pn.toFixed(2):preis);}
-    var bildFile = _socPastedFile || (bildInput && bildInput.files && bildInput.files[0]);
+    var bildFile = _socPastedFile || (bildInput && bildInput.files && bildInput.files[0]) || (camInput && camInput.files && camInput.files[0]);
     if(bildFile){
       fd.append('bild',bildFile);
     }
@@ -9903,12 +10447,13 @@
         socialClearBild();
         socialLoadKatalog();
       })
-      .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+      .catch(function(e){socialStatus('soc-kat-status',_cmsErr(e),false);});
   };
 
   // --- Produkt loeschen ---
   window.socialKatDelete = function(id){
-    if(!confirm('Produkt wirklich entfernen?'))return;
+    cmsConfirm('Produkt wirklich entfernen?').then(function(ok){
+    if(!ok)return;
     fetch(API+'/social-katalog?id='+encodeURIComponent(id),{method:'DELETE'})
       .then(function(r){return r.json();})
       .then(function(res){
@@ -9916,7 +10461,8 @@
         socialStatus('soc-kat-status','Entfernt',true);
         socialLoadKatalog();
       })
-      .catch(function(e){socialStatus('soc-kat-status','Fehler: '+e.message,false);});
+      .catch(function(e){console.error('Produkt entfernen fehlgeschlagen:',e);socialStatus('soc-kat-status','Produkt konnte nicht entfernt werden. Bitte erneut versuchen.',false);});
+    });
   };
 
   // --- Katalog Bild ändern per Klick auf Thumbnail ---
@@ -9959,6 +10505,8 @@
 
   // --- Post-Builder: Checkboxen aus Katalog + Wochenplan-Mittagessen ---
   function socialGetTodayMeals(){
+    // Nach 11:00 Uhr keine Mittagessen mehr anzeigen (zu spät für Tagespost)
+    if(new Date().getHours()>=11) return [];
     // Get today's wochentag code: Mo=101000 ... Fr=101004, Sa=101005, So=101006
     var d=new Date().getDay(); // 0=So,1=Mo,...,6=Sa
     var todayCode = d===0 ? 101006 : 101000+(d-1);
@@ -9969,7 +10517,7 @@
     });
   }
 
-  var _socCatIcons={'Mittagessen':'&#127869;','Kuchen':'&#127856;','Obst & Gemuese':'&#129382;','Aufstriche':'&#129367;'};
+  // _socCatIcons now built dynamically from _cmsGetKategorien() via _cmsCatIconName()
   var _socMtBilder={}; // gericht -> {bild_url,...}
   var _socFreeItems=[]; // ad-hoc items [{id,name,preis,kategorie,bild_data}]
   var _socFreeCounter=0;
@@ -10023,7 +10571,7 @@
         html+='<label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer">';
         html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" data-img="'+esc(mtImg&&mtImg.bild_url?mtImg.bild_url:'')+'" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#f57f17">';
         if(mtImg&&mtImg.bild_url){
-          html+='<img src="'+esc(mtImg.bild_url)+'" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';
+          html+='<img src="'+esc(mtImg.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         }
         html+='<span style="font-weight:700;font-size:13px;flex:1">'+esc(m.gericht)+'</span>';
         if(m.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
@@ -10046,10 +10594,10 @@
     html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>';
     html+='<input id="soc-free-name" class="cms-input" placeholder="z.B. Kartoffelsalat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
     html+='<div style="width:70px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Preis &euro;</label>';
-    html+='<input id="soc-free-preis" type="number" step="0.01" min="0" class="cms-input" placeholder="3.50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
+    html+='<input id="soc-free-preis" type="text" inputmode="decimal" class="cms-input" placeholder="3,50" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
     html+='<div style="flex:1;min-width:100px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Kategorie</label>';
     html+='<select id="soc-free-kat" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
-    html+='<option value="Mittagessen">&#127869; Mittagessen</option><option value="Kuchen">&#127856; Kuchen</option><option value="Obst & Gemuese">&#129382; Obst & Gem\u00fcse</option><option value="Aufstriche">&#129367; Aufstriche</option><option value="Sonstiges">Sonstiges</option>';
+    html+=_cmsKatOptionsHtml('')+'<option value="Sonstiges">Sonstiges</option>';
     html+='</select></div>';
     html+='<div style="width:56px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">ab</label>';
     html+='<select id="soc-free-ab" class="cms-input" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box">';
@@ -10076,7 +10624,7 @@
       html+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">';
       html+='<button class="soc-cat-chip soc-cat-active" data-cat="" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#1f2937;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Alle</button>';
       allCats.forEach(function(cat){
-        html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer">'+(_socCatIcons[cat]||'')+' '+esc(cat)+'</button>';
+        html+='<button class="soc-cat-chip" data-cat="'+esc(cat)+'" onclick="socialPickCat(this)" style="padding:4px 10px;border-radius:16px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+_cmsLucideIcon(_cmsCatIconName(cat),14)+' '+esc(cat)+'</button>';
       });
       html+='</div>';
 
@@ -10085,21 +10633,21 @@
         var pid=esc(p.id);
         var priceStr='';
         if(p.preis){var cp=parseFloat(p.preis);priceStr=(cp&&isFinite(cp)?cp.toFixed(2):esc(p.preis))+'\u20AC';}
-        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px 8px;border-radius:8px;margin-bottom:3px;transition:background .15s,border-color .15s;border:1px solid transparent" onmouseover="if(!this.querySelector(\'input[type=checkbox]\').checked)this.style.background=\'#fef2f2\'" onmouseout="var c=this.querySelector(\'input[type=checkbox]\').checked;this.style.background=c?\'#f0fdf4\':\'#fff\';this.style.borderColor=c?\'#86efac\':\'transparent\'">';
+        html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px 8px;border-radius:8px;margin-bottom:3px;transition:background .15s,border-color .15s;border:1px solid transparent" onmouseover="if(!this.querySelector(\'input[type=checkbox]\').checked)this.style.background=\'#f0fdf4\'" onmouseout="var c=this.querySelector(\'input[type=checkbox]\').checked;this.style.background=c?\'#f0fdf4\':\'#fff\';this.style.borderColor=c?\'#86efac\':\'transparent\'">';
         // Checkbox
-        html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate()" style="width:20px;height:20px;accent-color:#e1306c;flex-shrink:0;margin-top:2px">';
+        html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate()" style="width:20px;height:20px;accent-color:#2e7d4f;flex-shrink:0;margin-top:2px">';
         // Thumbnail
         html+='<div class="soc-pick-thumb-wrap" style="flex-shrink:0;position:relative">';
         html+='<div tabindex="0" class="soc-pick-thumb" data-pid="'+pid+'" onpaste="socialPickImgPaste(\''+pid+'\',event)" style="cursor:pointer;outline:none;border-radius:6px;position:relative">';
         if(p.bild_url){
-          html+='<img id="soc-pick-img-'+pid+'" src="'+esc(p.bild_url)+'" onclick="socialPickImgPreview(\''+pid+'\')" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in" onerror="this.style.display=\'none\'">';
+          html+='<img id="soc-pick-img-'+pid+'" src="'+esc(p.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         } else {
-          html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#9ca3af;border:1px solid #e5e7eb">&#128247;</div>';
+          html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9ca3af;border:1px solid #e5e7eb">'+_cmsLucideIcon('camera',18)+'</div>';
         }
         html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+pid+'\',this)" style="display:none">';
         html+='</div>';
         // Camera button overlay
-        html+='<button type="button" onclick="this.parentNode.querySelector(\'input[type=file]\').click()" class="soc-pick-cam" style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d5db;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)" title="Bild \u00e4ndern (Kamera/Datei)">&#128247;</button>';
+        html+='<button type="button" onclick="this.parentNode.querySelector(\'input[type=file]\').click()" class="soc-pick-cam" style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d5db;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)" title="Bild \u00e4ndern (Kamera/Datei)">'+_cmsLucideIcon('camera',12)+'</button>';
         html+='</div>';
         // Name + price + ab (stacked on mobile)
         html+='<div style="flex:1;min-width:0">';
@@ -10220,7 +10768,7 @@
         img.id='soc-pick-img-'+prodId;
         img.src=b64;
         img.style.cssText='width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in';
-        img.onclick=function(){socialPickImgPreview(prodId);};
+        img.ondblclick=function(){window.dlImagePopup(img.src,prodId);};
         thumb.parentNode.replaceChild(img,thumb);
       }
     }
@@ -10304,7 +10852,7 @@
         _socMtBilder[gericht]={bild_url:res.bild_url};
         socialUpdateMtThumb(gericht,res.bild_url);
       })
-      .catch(function(e){socialStatus('soc-post-status','Upload-Fehler: '+e.message,false);});
+      .catch(function(e){socialStatus('soc-post-status',_cmsErr(e),false);});
   };
 
   // --- Update Mittagstisch thumbnail in-place (preserves checkbox state) ---
@@ -10467,7 +11015,7 @@
     var html='';
     sel.forEach(function(p){
       html+='<span style="display:inline-block;background:#dcfce7;color:#15803d;font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;margin:2px 3px 2px 0">'+esc(p.name);
-      if(p.preis){var tp=parseFloat(p.preis);html+=' <span style="opacity:.7">'+(tp&&isFinite(tp)?tp.toFixed(2):esc(p.preis))+'\u20AC</span>';}
+      if(p.preis){var tp=parseFloat(p.preis);html+=' <span style="opacity:.7">'+(tp&&isFinite(tp)?tp.toFixed(2).replace('.',','):esc(p.preis))+'\u20AC</span>';}
       html+='</span>';
     });
     tags.innerHTML=html;
@@ -10518,6 +11066,52 @@
     });
     return selected;
   }
+
+  // --- Publish as Tagesinfo only (no WhatsApp/Instagram) ---
+  window.socialPublishTagesinfo=function(){
+    var selected=socialGatherSelected();
+    var titel=(document.getElementById('soc-post-titel')||{}).value||'';
+    var freitext=(document.getElementById('soc-post-text')||{}).value||'';
+    if(!selected.length&&!freitext.trim()){socialStatus('soc-post-status','Bitte mindestens ein Produkt auswählen oder Freitext eingeben',false);return;}
+    var btns=document.querySelectorAll('button[onclick="socialPublishTagesinfo()"]');
+    btns.forEach(function(b){b.disabled=true;b._origHtml=b.innerHTML;b.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:socSpin 0.6s linear infinite;vertical-align:middle;margin-right:6px"></span> Wird ver\u00f6ffentlicht\u2026';b.style.opacity='0.7';b.style.cursor='wait';});
+    if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
+    socialStatus('soc-post-status','\u23F3 Wird ver\u00f6ffentlicht\u2026',true);
+    var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};
+    fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
+    .then(function(){
+      socialStatus('soc-post-status','\u2705 Tagesinfo ver\u00f6ffentlicht \u2013 erscheint auf der Homepage \u00b7 Push an TagesInfo-Abonnenten gesendet',true);
+      btns.forEach(function(b){b.innerHTML='<span style="vertical-align:middle;margin-right:6px">\u2705</span> Ver\u00f6ffentlicht!';b.style.opacity='1';b.style.background='#dcfce7';b.style.borderColor='#16a34a';b.style.color='#166534';});
+      setTimeout(function(){btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});},3000);
+      if(typeof socialLoadTodayPosts==='function') socialLoadTodayPosts();
+    })
+    .catch(function(e){
+      socialStatus('soc-post-status','\u274C Es ist ein Fehler aufgetreten. Bitte erneut versuchen.'+_cmsLog(e),false);
+      btns.forEach(function(b){b.disabled=false;b.innerHTML=b._origHtml;b.style.opacity='';b.style.cursor='';b.style.background='';b.style.borderColor='';b.style.color='';});
+    });
+  };
+
+  // --- Heutige Posts laden ---
+  window.socialLoadTodayPosts=function(){
+    var wrap=document.getElementById('soc-today-posts');
+    var list=document.getElementById('soc-today-posts-list');
+    if(!wrap||!list)return;
+    var today=new Date();var td=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){
+      var posts=(res.items||[]).filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
+      if(!posts.length){wrap.style.display='none';return;}
+      wrap.style.display='';
+      var html='';posts.forEach(function(p){
+        var cnt=p.items?p.items.length:0;
+        html+='<div style="padding:4px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center">';
+        html+='<span style="font-weight:600;color:#374151">'+esc(p.titel||'Post')+'</span>';
+        html+='<span style="color:#6b7280">'+cnt+' Produkt'+(cnt!==1?'e':'')+'</span>';
+        html+='</div>';
+      });
+      list.innerHTML=html;
+    }).catch(function(){});
+  };
 
   // --- Canvas Poster Generator ---
   window.socialGenPreview = function(){
@@ -10712,7 +11306,12 @@
       cats[c].push(p);
     });
     var catKeys=Object.keys(cats);
-    var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
+    // Canvas cannot render SVG/Lucide – use emoji fallbacks (allowed per conventions §3 for print/poster)
+    var _iconToEmoji={'utensils':'\uD83C\uDF5D','cake-slice':'\uD83C\uDF70','apple':'\uD83C\uDF4E','jar':'\uD83E\uDD57','salad':'\uD83E\uDD57','coffee':'\u2615','beef':'\uD83E\uDD69','fish':'\uD83D\uDC1F','pizza':'\uD83C\uDF55','sandwich':'\uD83E\uDD6A','cookie':'\uD83C\uDF6A','ice-cream-cone':'\uD83C\uDF66','wine':'\uD83C\uDF77','beer':'\uD83C\uDF7A','cherry':'\uD83C\uDF52','grape':'\uD83C\uDF47','carrot':'\uD83E\uDD55','wheat':'\uD83C\uDF3E','leaf':'\uD83C\uDF3F','tag':'\uD83C\uDFF7\uFE0F'};
+    var catIcons={};
+    _cmsGetKategorien().forEach(function(k){catIcons[k.name]=_iconToEmoji[k.icon]||'';});
+    if(!catIcons['Mittagessen'])catIcons['Mittagessen']='\uD83C\uDF5D';
+    if(!catIcons['Kuchen'])catIcons['Kuchen']='\uD83C\uDF70';
 
     // Calculate dynamic height
     var freitextLines=[];
@@ -10773,11 +11372,11 @@
       // Space above category (bigger gap between categories)
       y+=ci===0?4:20;
       // Category header
-      ctx.fillStyle='#e1306c';
+      ctx.fillStyle='#2e7d4f';
       ctx.font='bold 16px "Segoe UI",system-ui,sans-serif';
       ctx.fillText((catIcons[cat]||'')+' '+cat,24,y);
       y+=6;
-      ctx.strokeStyle='#e1306c';
+      ctx.strokeStyle='#2e7d4f';
       ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(24,y);ctx.lineTo(W-24,y);ctx.stroke();
       y+=12;
@@ -11136,34 +11735,14 @@
       cats[c].push(p);
     });
     var hasMittagessen=!!cats['Mittagessen'];
-    var onlyMittagessen=hasMittagessen&&Object.keys(cats).length===1;
 
-    // Mittagessen-only: order links
-    if(onlyMittagessen){
-      var msg='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
-      var menuNr=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
-      cats['Mittagessen'].forEach(function(p,i){
-        var nr=menuNr[i]||('\u2022');
-        var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var lnk=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(parseFloat(p.preis).toFixed(2)):'');
-        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';
-      });
-      return msg.trim();
-    }
-
-    // For clipboard: only Mittagessen order info with wa.me links
-    var msg='';
+    // Kurzer WhatsApp-Text: Die Gerichte stehen bereits auf dem Bild - der Text braucht nur
+    // den Bestell-Link zur TagesInfo. (WhatsApp zeigt den Link als vollen, klickbaren Text.)
     if(hasMittagessen){
-      var menuNr2=['\u0031\uFE0F\u20E3','\u0032\uFE0F\u20E3','\u0033\uFE0F\u20E3','\u0034\uFE0F\u20E3','\u0035\uFE0F\u20E3'];
-      msg+='\uD83D\uDC49 *Mittagessen bestellen per Klick:*\n\n';
-      cats['Mittagessen'].forEach(function(p,i){
-        var nr=menuNr2[i]||('\u2022');
-        var prStr=p.preis?(' \u2013 '+parseFloat(p.preis).toFixed(2)+'\u20AC'):'';
-        var lnk=(window.location.origin||'')+'/mittagstisch-bestellen.html?gericht='+encodeURIComponent(p.name)+(p.preis?'&preis='+encodeURIComponent(parseFloat(p.preis).toFixed(2)):'');
-        msg+=nr+' *'+p.name+'*'+prStr+'\n\uD83D\uDED2 '+lnk+'\n\n';
-      });
+      var tiLink=(window.location.origin||'')+'/tagesinfo';
+      return '\uD83D\uDC49 Bestellung Mittagessen hier:\n'+tiLink;
     }
-    return msg.trim();
+    return '';
   }
 
   // --- WhatsApp Business Katalog Sync ---
@@ -11195,7 +11774,7 @@
       socialStatus('soc-post-status',msg,res.failed===0);
     })
     .catch(function(e){
-      socialStatus('soc-post-status','\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
+      socialStatus('soc-post-status','\u274C Katalog-Sync fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),false);
     });
   };
 
@@ -11232,7 +11811,7 @@
         waKatalogLoad();
       })
       .catch(function(e){
-        waKatalogStatus('\u274C Katalog-Sync fehlgeschlagen: '+e.message,false);
+        waKatalogStatus('\u274C Katalog-Sync fehlgeschlagen. Bitte erneut versuchen.'+_cmsLog(e),false);
       });
     });
   };
@@ -11292,12 +11871,13 @@
       })
       .catch(function(e){
         if(loading) loading.style.display='none';
-        waKatalogStatus('\u274C Fehler beim Laden: '+e.message,false);
+        waKatalogStatus('\u274C Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e),false);
       });
   };
 
   window.waKatalogDelete = function(retailerId){
-    if(!confirm('Produkt "'+retailerId+'" aus dem WhatsApp Katalog l\u00F6schen?')) return;
+    cmsConfirm('Produkt "'+retailerId+'" aus dem WhatsApp Katalog l\u00F6schen?').then(function(ok){
+    if(!ok) return;
     waKatalogStatus('\u23F3 L\u00F6sche Produkt...',true);
     fetch(API+'/meta-catalog?retailer_id='+encodeURIComponent(retailerId),{method:'DELETE'})
       .then(function(r){return r.json();})
@@ -11306,16 +11886,19 @@
           waKatalogStatus('\u2705 Produkt gel\u00F6scht',true);
           waKatalogLoad();
         } else {
-          waKatalogStatus('\u274C Fehler: '+JSON.stringify(res.response||res),false);
+          waKatalogStatus('\u274C Produkt konnte nicht gel\u00F6scht werden.',false);
         }
       })
       .catch(function(e){
-        waKatalogStatus('\u274C L\u00F6schen fehlgeschlagen: '+e.message,false);
+        console.error('WA-Katalog l\u00F6schen fehlgeschlagen:',e);
+        waKatalogStatus('\u274C L\u00F6schen fehlgeschlagen. Bitte erneut versuchen.',false);
       });
+    });
   };
 
   window.waKatalogDeleteAll = function(){
-    if(!confirm('ALLE Produkte aus dem WhatsApp Katalog l\u00F6schen?')) return;
+    cmsConfirm('ALLE Produkte aus dem WhatsApp Katalog l\u00F6schen?').then(function(ok){
+    if(!ok) return;
     waKatalogStatus('\u23F3 Lade Katalog zum L\u00F6schen...',true);
     fetch(API+'/meta-catalog')
       .then(function(r){return r.json();})
@@ -11337,8 +11920,10 @@
         });
       })
       .catch(function(e){
-        waKatalogStatus('\u274C Fehler: '+e.message,false);
+        console.error('WA-Katalog leeren fehlgeschlagen:',e);
+        waKatalogStatus('\u274C L\u00F6schen fehlgeschlagen. Bitte erneut versuchen.',false);
       });
+    });
   };
 
   // --- WhatsApp Share ---
@@ -11431,7 +12016,7 @@
     socialSavePost(titel,freitext,selected);
     }catch(e){
       console.error('[Social] WhatsApp share error:',e);
-      socialStatus('soc-post-status','Fehler: '+e.message,false);
+      socialStatus('soc-post-status',_cmsErr(e),false);
     }
   };
 
@@ -11448,20 +12033,22 @@
     console.log('[Social] canShareFiles='+canShareFiles);
     // Best case: share with files
     if(canShareFiles){
-      // Copy order text BEFORE share dialog (page has focus now, clipboard works)
+      // Copy order text BEFORE share dialog (page has focus now, clipboard works).
+      // WhatsApp (v.a. Android) verwirft die Bild-Beschriftung - so laesst sich der Text zur Not einfuegen.
       if(msg){
-        try{navigator.clipboard.writeText(msg);}catch(e){}
+        try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).catch(function(){}); } }catch(e){}
       }
       var shareData={files:files.length>1?[files[0]]:files};
+      if(msg)shareData.text=msg;
       navigator.share(shareData).then(function(){
-        socialStatus('soc-post-status','\u2705 Poster geteilt! Bestelltext mit Strg+V einf\u00fcgen.',true);
+        socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00b7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
       }).catch(function(err){
         if(err.name==='AbortError') return;
         console.warn('[Social] share error:',err.message);
         // Fallback to clipboard+WhatsApp
         socialShareViaClipboard(files,msg,hasMt);
       });
-      socialStatus('soc-post-status','Poster wird geteilt...',true);
+      socialStatus('soc-post-status','Wird geteilt...',true);
       return;
     }
     // Mobile fallback: copy poster to clipboard + open WhatsApp
@@ -11469,12 +12056,12 @@
       socialShareViaClipboard(files,msg,hasMt);
       return;
     }
-    // Desktop fallback: copy text first (page has focus), then download files
-    if(msg){
-      try{navigator.clipboard.writeText(msg);}catch(e){}
-      socialStatus('soc-post-status','\uD83D\uDCCB Bestelltext kopiert \u2013 Strg+V in WhatsApp!',true);
-    }
+    // Desktop/Tablet fallback: copy text first (page has focus), download files, then open WhatsApp Web.
+    // wa.me/?text prefills the message in WhatsApp; the poster must be attached manually.
+    if(msg){ try{navigator.clipboard.writeText(msg).catch(function(){});}catch(e){} }
     socialFallbackDownloadFiles(files);
+    socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE), Text ist bereits eingef\u00fcgt':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
+    window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
   }
   function socialShareViaClipboard(files,msg,hasMt){
     // Copy poster image to clipboard, then open WhatsApp
@@ -11654,6 +12241,445 @@
         if(list) list.innerHTML='<p style="color:#ef4444;text-align:center">Fehler: '+esc(e.message)+'</p>';
       });
   };
+
+  // ══════════════════════════════════════════════════
+  //  BESTELLSCHLUSS-KONFIGURATION (Mittagstisch + Shop)
+  // ══════════════════════════════════════════════════
+
+  window.cmsLoadBestellConfig = function(){
+    fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(data){
+      if(!data.success) return;
+      var d=data.data||{};
+      var el;
+      el=document.getElementById('bs-cfg-mittag'); if(el && d.bestellschluss_uhr) el.value=d.bestellschluss_uhr;
+      el=document.getElementById('bs-cfg-vorlauf'); if(el && d.shop_vorlauf_h!=null) el.value=d.shop_vorlauf_h;
+      el=document.getElementById('bs-cfg-abhol-offset'); if(el && d.shop_abhol_offset_h!=null) el.value=d.shop_abhol_offset_h;
+      el=document.getElementById('bs-cfg-storno'); if(el && d.shop_storno_vor_h!=null) el.value=d.shop_storno_vor_h;
+      el=document.getElementById('bs-cfg-mindest'); if(el && d.shop_mindestbestellwert!=null) el.value=d.shop_mindestbestellwert;
+      window._bsCfgLoaded=true;
+    }).catch(function(e){ console.error('[cms] Bestellschluss config load failed',e); });
+  };
+
+  window.cmsSaveBestellConfig = function(){
+    var btn=document.getElementById('bs-cfg-save-btn');
+    var status=document.getElementById('bs-cfg-status');
+    btn.disabled=true; status.textContent='Speichern...';
+
+    var mittag=document.getElementById('bs-cfg-mittag').value||'10:30';
+    var vorlauf=parseFloat(document.getElementById('bs-cfg-vorlauf').value)||2;
+    var abholOffset=parseFloat(document.getElementById('bs-cfg-abhol-offset').value)||1;
+    var storno=parseFloat(document.getElementById('bs-cfg-storno').value)||1;
+    var mindest=parseFloat(document.getElementById('bs-cfg-mindest').value)||10;
+
+    var saves=[
+      _dvSave('bestellschluss_uhr',mittag),
+      _dvSave('shop_vorlauf_h',String(vorlauf)),
+      _dvSave('shop_abhol_offset_h',String(abholOffset)),
+      _dvSave('shop_storno_vor_h',String(storno)),
+      _dvSave('shop_mindestbestellwert',String(mindest))
+    ];
+    Promise.all(saves).then(function(){
+      btn.disabled=false; status.textContent='Gespeichert!';
+      setTimeout(function(){ status.textContent=''; },3000);
+    }).catch(function(e){
+      btn.disabled=false; status.textContent=_cmsErr(e);
+    });
+  };
+
+  // ══════════════════════════════════════════════════
+  //  METZGER CMS (Fleisch-Vorbestellung Config & Orders)
+  // ══════════════════════════════════════════════════
+
+  var LT_MAP={0:'fm-cfg-lt-mo',1:'fm-cfg-lt-di',2:'fm-cfg-lt-mi',3:'fm-cfg-lt-do',4:'fm-cfg-lt-fr',5:'fm-cfg-lt-sa'};
+
+  window.cmsLoadFleischConfig = function(){
+    fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(data){
+      if(!data.success) return;
+      var d=data.data||{};
+      var el;
+      el=document.getElementById('fm-cfg-rabatt'); if(el) el.value=d.fleisch_rabatt_prozent||15;
+      el=document.getElementById('fm-cfg-mindestmenge'); if(el) el.value=d.fleisch_mindestmenge_kg||1;
+      el=document.getElementById('fm-cfg-bestellschluss'); if(el) el.value=d.fleisch_bestellschluss_h||10;
+      el=document.getElementById('fm-cfg-aktiv'); if(el) el.checked=(d.fleisch_aktiv!==false&&d.fleisch_aktiv!=='false'&&d.fleisch_aktiv!=='0');
+
+      // Liefertage
+      var lt=(d.fleisch_liefertage||'0,3').split(',').map(function(s){return parseInt(s.trim(),10);});
+      for(var i=0;i<6;i++){
+        var cb=document.getElementById(LT_MAP[i]);
+        if(cb) cb.checked=lt.indexOf(i)!==-1;
+      }
+      window._fmCfgLoaded=true;
+    }).catch(function(e){ console.error('[cms-metzger] config load failed',e); });
+  };
+
+  window.cmsSaveFleischConfig = function(){
+    var btn=document.getElementById('fm-cfg-save-btn');
+    var status=document.getElementById('fm-cfg-status');
+    btn.disabled=true; status.textContent='Speichern...';
+
+    var rabatt=parseFloat(document.getElementById('fm-cfg-rabatt').value)||15;
+    var mindest=parseFloat(document.getElementById('fm-cfg-mindestmenge').value)||1;
+    var schluss=parseInt(document.getElementById('fm-cfg-bestellschluss').value,10)||10;
+    var aktiv=document.getElementById('fm-cfg-aktiv').checked;
+    var lt=[];
+    for(var i=0;i<6;i++){
+      var cb=document.getElementById(LT_MAP[i]);
+      if(cb&&cb.checked) lt.push(i);
+    }
+    if(!lt.length) lt=[0,3];
+
+    var saves=[
+      _dvSave('fleisch_rabatt_prozent',String(rabatt)),
+      _dvSave('fleisch_mindestmenge_kg',String(mindest)),
+      _dvSave('fleisch_bestellschluss_h',String(schluss)),
+      _dvSave('fleisch_aktiv',aktiv?'true':'false'),
+      _dvSave('fleisch_liefertage',lt.join(','))
+    ];
+    Promise.all(saves).then(function(){
+      btn.disabled=false; status.textContent='Gespeichert!';
+      setTimeout(function(){ status.textContent=''; },3000);
+    }).catch(function(e){
+      btn.disabled=false; status.textContent=_cmsErr(e);
+      status.style.color='#ef4444';
+    });
+  };
+
+  var FM_STATUS_L={0:'Neu',1:'In Bestellung',2:'In Bestellung',3:'Abgeholt',4:'Storniert'};
+  var FM_STATUS_C={0:'#d97706',1:'#2563eb',2:'#2e7d4f',3:'#6b7280',4:'#ef4444'};
+  var _fmCurrentFilter='offen';
+
+  window.cmsLoadFleischOrders = function(filter){
+    _fmCurrentFilter=filter||_fmCurrentFilter;
+    // Highlight active filter button
+    ['offen','alle','heute','sammel'].forEach(function(f){
+      var btn=document.getElementById('fm-orders-btn-'+f);
+      if(btn) btn.style.fontWeight=f===_fmCurrentFilter?'800':'400';
+    });
+    var list=document.getElementById('fm-orders-list');
+    list.innerHTML='<p style="color:#6b7280;text-align:center">Laden...</p>';
+
+    var url=API+'/fleisch-order?mode=kiosk';
+    fetch(url).then(function(r){return r.json();}).then(function(data){
+      if(!data.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
+      var orders=data.bestellungen||[];
+      var today=new Date().toISOString().slice(0,10);
+
+      if(_fmCurrentFilter==='offen') orders=orders.filter(function(o){return o.status<3;});
+      else if(_fmCurrentFilter==='heute') orders=orders.filter(function(o){return o.liefertag===today;});
+      else if(_fmCurrentFilter==='sammel'){_fmRenderSammel(orders,list);return;}
+
+      if(!orders.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine Bestellungen</p>';return;}
+
+      var html='';
+      orders.forEach(function(o,idx){
+        var hasMsg=o.kunde_kommentar&&!o.kommentar_gelesen;
+        var sc=FM_STATUS_C[o.status]||'#6b7280';
+        var sl=FM_STATUS_L[o.status]||'?';
+        // Short date
+        var ld=o.liefertag||'';
+        try{var dd=new Date(ld+'T12:00:00');var wt=['So','Mo','Di','Mi','Do','Fr','Sa'];ld=wt[dd.getDay()]+' '+dd.getDate()+'.'+(dd.getMonth()+1)+'.';}catch(e){}
+
+        html+='<div class="fm-cms-order" style="border:1px solid '+(hasMsg?'#fbbf24':'#e5e7eb')+';border-radius:10px;margin-bottom:8px;overflow:hidden'+(hasMsg?';box-shadow:0 0 0 2px rgba(251,191,36,.3)':'')+'">';
+        // Header row (clickable)
+        html+='<div data-fm-toggle="'+idx+'" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:#faf5f3">';
+        html+='<span style="background:'+sc+';color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap">'+esc(sl)+'</span>';
+        html+='<span style="font-weight:700;font-size:13px;flex-shrink:0">'+esc(o.bestellnummer)+'</span>';
+        html+='<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.name)+'</span>';
+        html+='<span style="font-size:12px;color:#6b7280;flex-shrink:0">'+esc(ld)+'</span>';
+        html+='<span style="font-size:13px;font-weight:700;flex-shrink:0">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</span>';
+        if(hasMsg) html+='<span style="background:#fbbf24;color:#7c2d12;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800" title="Neue Nachricht">\u2709</span>';
+        html+='<span data-fm-arrow="'+idx+'" style="transition:transform .2s;font-size:14px;color:#9ca3af">\u25B6</span>';
+        html+='</div>';
+
+        // Detail (collapsed)
+        html+='<div data-fm-detail="'+idx+'" style="display:none;padding:12px;border-top:1px solid #e5e7eb;background:#fff">';
+
+        // Positionen table
+        var pos=o.positionen||[];
+        if(pos.length){
+          html+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px"><thead><tr style="background:#f9fafb"><th style="text-align:left;padding:4px 6px">Artikel</th><th style="text-align:right;padding:4px 6px">Menge</th><th style="text-align:right;padding:4px 6px">Preis/kg</th><th style="text-align:right;padding:4px 6px">Summe</th></tr></thead><tbody>';
+          pos.forEach(function(p){
+            var ps=Number(p.endpreis||p.preis_kg*p.menge_kg||0).toFixed(2);
+            html+='<tr style="border-top:1px solid #f3f4f6"><td style="padding:4px 6px">'+esc(p.bezeichnung||p.artikelnummer)+'</td><td style="text-align:right;padding:4px 6px">'+Number(p.menge_kg||0).toFixed(1)+' kg</td><td style="text-align:right;padding:4px 6px">'+Number(p.preis_kg||0).toFixed(2)+' \u20AC</td><td style="text-align:right;padding:4px 6px;font-weight:600">'+ps+' \u20AC</td></tr>';
+          });
+          html+='</tbody></table>';
+        }
+
+        // Anmerkung
+        if(o.anmerkung) html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#fef3c7;border-radius:6px;color:#92400e"><strong>Anmerkung:</strong> '+esc(o.anmerkung)+'</div>';
+
+        // Kundenkommentar
+        if(o.kunde_kommentar){
+          html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#dbeafe;border-radius:6px;color:#1e40af"><strong>Kunde:</strong> '+esc(o.kunde_kommentar);
+          if(!o.kommentar_gelesen) html+=' <button class="cms-btn" style="font-size:10px;padding:2px 6px;margin-left:6px" data-fm-gelesen="'+esc(o.id)+'">Als gelesen markieren</button>';
+          html+='</div>';
+        }
+        // Personal-Antwort
+        if(o.personal_antwort) html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#dcfce7;border-radius:6px;color:#166534"><strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+
+        // Kontakt
+        html+='<div style="font-size:12px;margin-bottom:12px;color:#6b7280">';
+        html+='<strong>Telefon:</strong> '+esc(o.telefon||'-');
+        if(o.email) html+=' &middot; <strong>E-Mail:</strong> '+esc(o.email);
+        html+='</div>';
+
+        // Action buttons
+        html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+        if(o.status<3){
+          [1,3].forEach(function(ns){
+            if(ns===o.status) return;
+            var bc=FM_STATUS_C[ns];
+            html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:'+bc+';color:#fff;border:none;border-radius:6px" data-fm-status="'+esc(o.id)+'" data-fm-newstatus="'+ns+'">'+FM_STATUS_L[ns]+'</button>';
+          });
+          html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#ef4444;color:#fff;border:none;border-radius:6px" data-fm-storno="'+esc(o.id)+'" data-fm-storno-nr="'+esc(o.bestellnummer||'')+'" data-fm-storno-name="'+esc(o.name||'')+'">Stornieren</button>';
+        }
+        html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#1e40af;color:#fff;border:none;border-radius:6px" data-fm-reply="'+esc(o.id)+'">Nachricht senden</button>';
+        html+='</div>';
+
+        html+='</div>'; // detail
+        html+='</div>'; // order card
+      });
+
+      list.innerHTML=html;
+      _fmWireOrderEvents();
+    }).catch(function(e){list.innerHTML='<p style="color:#ef4444">'+_cmsErr(e)+'</p>';});
+  };
+
+  // ── Sammelbestellung: Aggregate articles per delivery day ──
+  var _fmCmsSammelChecked = {};
+
+  function _fmRenderSammel(orders,list){
+    var open=orders.filter(function(o){return o.status<3;});
+    if(!open.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine offenen Bestellungen</p>';return;}
+
+    // Group by liefertag
+    var byDay={};
+    open.forEach(function(o){
+      var lt=o.liefertag||'unbekannt';
+      if(!byDay[lt]) byDay[lt]={orders:[],articles:{}};
+      byDay[lt].orders.push(o);
+      (o.positionen||[]).forEach(function(p){
+        var key=(p.strichcode||p.bezeichnung||p.artikelnummer||'?').trim();
+        if(!byDay[lt].articles[key]) byDay[lt].articles[key]={bezeichnung:p.bezeichnung||key,menge:0,einheit:'kg'};
+        byDay[lt].articles[key].menge+=Number(p.menge_kg||0);
+      });
+    });
+
+    var days=Object.keys(byDay).sort();
+    var html='';
+    days.forEach(function(day,di){
+      var g=byDay[day];
+      var dayLabel=day;
+      try{var dd=new Date(day+'T12:00:00');var wt=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];dayLabel=wt[dd.getDay()]+', '+dd.getDate()+'.'+(dd.getMonth()+1)+'.'+dd.getFullYear();}catch(e){}
+
+      html+='<div style="border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;overflow:hidden">';
+      html+='<div style="background:#7f1d1d;color:#fff;padding:10px 14px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center">';
+      html+='<span>'+esc(dayLabel)+'</span>';
+      html+='<span style="font-size:12px;font-weight:400;opacity:.8">'+g.orders.length+' Bestellung'+(g.orders.length>1?'en':'')+'</span>';
+      html+='</div>';
+
+      var arts=Object.values(g.articles).sort(function(a,b){return a.bezeichnung.localeCompare(b.bezeichnung,'de');});
+      html+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#fef2f2"><th style="width:32px;padding:6px;text-align:center"><input type="checkbox" class="fm-cms-sammel-all" data-day="'+di+'" title="Alle markieren" style="width:16px;height:16px;cursor:pointer"></th><th style="text-align:left;padding:6px 10px">Artikel</th><th style="text-align:right;padding:6px 10px">Gesamt-Menge</th></tr></thead><tbody>';
+      arts.forEach(function(a,ai){
+        var rk=di+'-'+ai;
+        var chk=_fmCmsSammelChecked[rk]||false;
+        html+='<tr data-fm-cms-srow="'+rk+'" style="border-top:1px solid #fecaca;cursor:pointer;'+(chk?'background:#f0fdf4':'')+'">';
+        html+='<td style="padding:6px;text-align:center"><input type="checkbox" data-fm-cms-scb="'+rk+'" '+(chk?'checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>';
+        html+='<td style="padding:6px 10px;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+esc(a.bezeichnung)+'</td>';
+        html+='<td style="text-align:right;padding:6px 10px;font-weight:700;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+a.menge.toFixed(1)+' '+esc(a.einheit)+'</td>';
+        html+='</tr>';
+      });
+      html+='</tbody></table>';
+
+      html+='<div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right">';
+      html+='<button class="cms-btn" style="font-size:11px;padding:4px 12px" onclick="window.print()">Drucken</button>';
+      html+='</div>';
+      html+='</div>';
+    });
+
+    list.innerHTML=html;
+    _fmWireSammelCbs();
+  }
+
+  function _fmWireSammelCbs(){
+    document.querySelectorAll('[data-fm-cms-scb]').forEach(function(cb){
+      cb.addEventListener('change',function(){
+        var rk=cb.getAttribute('data-fm-cms-scb');
+        _fmCmsSammelChecked[rk]=cb.checked;
+        var row=document.querySelector('[data-fm-cms-srow="'+rk+'"]');
+        if(row){
+          row.style.background=cb.checked?'#f0fdf4':'';
+          var cells=row.querySelectorAll('td');
+          if(cells[1]) cells[1].style.cssText='padding:6px 10px;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
+          if(cells[2]) cells[2].style.cssText='text-align:right;padding:6px 10px;font-weight:700;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
+        }
+        _fmUpdateCmsSammelAll(cb.getAttribute('data-fm-cms-scb').split('-')[0]);
+      });
+    });
+    document.querySelectorAll('[data-fm-cms-srow]').forEach(function(row){
+      row.addEventListener('click',function(e){
+        if(e.target.tagName==='INPUT') return;
+        var cb=row.querySelector('[data-fm-cms-scb]');
+        if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}
+      });
+    });
+    document.querySelectorAll('.fm-cms-sammel-all').forEach(function(allCb){
+      allCb.addEventListener('change',function(){
+        var di=allCb.getAttribute('data-day');
+        document.querySelectorAll('[data-fm-cms-scb^="'+di+'-"]').forEach(function(cb){
+          cb.checked=allCb.checked;cb.dispatchEvent(new Event('change'));
+        });
+      });
+    });
+  }
+
+  function _fmUpdateCmsSammelAll(di){
+    var allCb=document.querySelector('.fm-cms-sammel-all[data-day="'+di+'"]');
+    if(!allCb) return;
+    var cbs=document.querySelectorAll('[data-fm-cms-scb^="'+di+'-"]');
+    var allChk=cbs.length>0;
+    cbs.forEach(function(cb){if(!cb.checked) allChk=false;});
+    allCb.checked=allChk;
+  }
+
+  // ── Wire events for order cards ──
+  function _fmWireOrderEvents(){
+    // Toggle expand/collapse
+    document.querySelectorAll('[data-fm-toggle]').forEach(function(el){
+      el.addEventListener('click',function(){
+        var idx=el.getAttribute('data-fm-toggle');
+        var detail=document.querySelector('[data-fm-detail="'+idx+'"]');
+        var arrow=document.querySelector('[data-fm-arrow="'+idx+'"]');
+        if(!detail) return;
+        var open=detail.style.display==='none';
+        detail.style.display=open?'':'none';
+        if(arrow) arrow.style.transform=open?'rotate(90deg)':'';
+      });
+    });
+
+    // Status change buttons (non-storno)
+    document.querySelectorAll('[data-fm-status]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var id=btn.getAttribute('data-fm-status');
+        var ns=parseInt(btn.getAttribute('data-fm-newstatus'),10);
+        btn.disabled=true;btn.textContent='...';
+        fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:ns})})
+        .then(function(r){return r.json();}).then(function(d){
+          if(d.success) cmsLoadFleischOrders();
+          else{btn.disabled=false;btn.textContent='Fehler';cmsToast(d.error||'Aktion fehlgeschlagen. Bitte erneut versuchen.','error');}
+        }).catch(function(){btn.disabled=false;btn.textContent='Fehler';});
+      });
+    });
+
+    // Metzger storno buttons – open dialog with reason
+    var CMS_FM_STORNO_REASONS=['Ware nicht verfügbar','Bestellung wurde doppelt aufgegeben','Kunde hat telefonisch storniert','Mindestbestellmenge nicht erreicht','Sonstiger Grund'];
+    document.querySelectorAll('[data-fm-storno]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var id=btn.getAttribute('data-fm-storno');
+        var bestellnr=btn.getAttribute('data-fm-storno-nr')||'?';
+        var name=btn.getAttribute('data-fm-storno-name')||'';
+        var overlay=document.createElement('div');
+        overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
+        var modal=document.createElement('div');
+        modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
+        modal.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
+          +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr)+' – '+esc(name)+'</div>'
+          +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
+          +'<div id="cms-fm-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
+          +'<textarea id="cms-fm-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
+          +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-fm-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>'
+          +'<button id="cms-fm-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
+        overlay.appendChild(modal);document.body.appendChild(overlay);
+        var optsDiv=modal.querySelector('#cms-fm-storno-opts');var selectedReason='';
+        CMS_FM_STORNO_REASONS.forEach(function(r){
+          var opt=document.createElement('label');
+          opt.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s';
+          opt.innerHTML='<input type="radio" name="cms-fm-storno-reason" value="'+esc(r)+'" style="accent-color:#dc2626"> '+esc(r);
+          opt.querySelector('input').addEventListener('change',function(){
+            selectedReason=r;
+            modal.querySelector('#cms-fm-storno-confirm').disabled=false;
+            modal.querySelector('#cms-fm-storno-confirm').style.opacity='1';
+            optsDiv.querySelectorAll('label').forEach(function(l){l.style.borderColor='#e5e7eb';l.style.background='';});
+            opt.style.borderColor='#dc2626';opt.style.background='#fef2f2';
+          });
+          optsDiv.appendChild(opt);
+        });
+        modal.querySelector('#cms-fm-storno-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
+        overlay.addEventListener('click',function(ev){if(ev.target===overlay) document.body.removeChild(overlay);});
+        modal.querySelector('#cms-fm-storno-confirm').addEventListener('click',function(){
+          if(!selectedReason) return;
+          var comment=(modal.querySelector('#cms-fm-storno-comment').value||'').trim();
+          var grund='Storniert: '+selectedReason+(comment?' – '+comment:'');
+          document.body.removeChild(overlay);
+          fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:4,storno_grund:grund})})
+          .then(function(r){return r.json();}).then(function(d){
+            if(d.success) cmsLoadFleischOrders();
+            else cmsToast(d.error||'Stornierung fehlgeschlagen.','error');
+          }).catch(function(){cmsToast('Verbindungsproblem. Bitte prüfe deine Internetverbindung.','error');});
+        });
+      });
+    });
+
+    // Gelesen button
+    document.querySelectorAll('[data-fm-gelesen]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var id=btn.getAttribute('data-fm-gelesen');
+        btn.disabled=true;btn.textContent='...';
+        fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,kommentar_gelesen:true})})
+        .then(function(r){return r.json();}).then(function(d){
+          if(d.success) cmsLoadFleischOrders();
+        }).catch(function(){btn.disabled=false;});
+      });
+    });
+
+    // Reply button → modal
+    document.querySelectorAll('[data-fm-reply]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        _fmShowReplyModal(btn.getAttribute('data-fm-reply'));
+      });
+    });
+  }
+
+  // ── Reply modal ──
+  function _fmShowReplyModal(orderId){
+    var existing=document.getElementById('fm-cms-reply-overlay');
+    if(existing) existing.remove();
+
+    var ov=document.createElement('div');
+    ov.id='fm-cms-reply-overlay';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+
+    var box=document.createElement('div');
+    box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)';
+    box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#7f1d1d">Nachricht an Kunden</div>'
+      +'<textarea id="fm-cms-reply-text" rows="4" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:14px;resize:none;font-family:inherit;overflow:hidden" placeholder="Ihre Nachricht..." oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
+      +'<button id="fm-cms-reply-cancel" class="cms-btn" style="font-size:13px;padding:8px 16px">Abbrechen</button>'
+      +'<button id="fm-cms-reply-send" class="cms-btn cms-btn-primary" style="font-size:13px;padding:8px 16px;background:#1e40af;color:#fff;border:none">Senden</button>'
+      +'</div>';
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+
+    ov.addEventListener('click',function(e){if(e.target===ov) ov.remove();});
+    document.getElementById('fm-cms-reply-cancel').addEventListener('click',function(){ov.remove();});
+    document.getElementById('fm-cms-reply-send').addEventListener('click',function(){
+      var text=(document.getElementById('fm-cms-reply-text').value||'').trim();
+      if(!text){cmsToast('Bitte Nachricht eingeben','error');return;}
+      var sendBtn=document.getElementById('fm-cms-reply-send');
+      sendBtn.disabled=true;sendBtn.textContent='Senden...';
+      fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,personal_antwort:text,kommentar_gelesen:true})})
+      .then(function(r){return r.json();}).then(function(d){
+        ov.remove();
+        if(d.success) cmsLoadFleischOrders();
+        else cmsToast(d.error||'Nachricht konnte nicht gesendet werden.','error');
+      }).catch(function(e){sendBtn.disabled=false;sendBtn.textContent='Senden';console.error('Antwort senden fehlgeschlagen:',e);cmsToast('Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.','error');});
+    });
+    setTimeout(function(){document.getElementById('fm-cms-reply-text').focus();},100);
+  }
 
   // --- Init (only if already authenticated via session) ---
   if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){

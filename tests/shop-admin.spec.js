@@ -16,7 +16,7 @@
 
 const { test, expect } = require('@playwright/test');
 
-const BASE = process.env.TEST_URL || 'http://localhost:4280';
+const BASE = process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net';
 const ADMIN_URL = `${BASE}/shop-admin.html`;
 
 // ════════════════════════════════════════════════════
@@ -57,7 +57,6 @@ test.describe('Shop-Admin – Grundlagen', () => {
     await page.goto(ADMIN_URL);
     await expect(page.locator('#scan-btn')).toBeAttached();
   });
-
   test('Aktualisieren-Button vorhanden', async ({ page }) => {
     await page.goto(ADMIN_URL);
     await expect(page.locator('#refresh-btn')).toBeAttached();

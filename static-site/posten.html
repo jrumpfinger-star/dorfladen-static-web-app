@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Posten &ndash; Dorfladen</title>
+<meta name="theme-color" content="#2e7d4f">
+<link rel="manifest" href="/posten-manifest.json">
+<link rel="apple-touch-icon" href="/images/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Posten">
+<link rel="stylesheet" href="/css/admin-dark.css">
+<script src="/js/theme.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--dl-bg,#f3f4f6);color:#1f2937}
+  html[data-theme="dark"] body{background:#0e1114;color:#e6eae8}
+  /* Kopfleiste */
+  #posten-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#2e7d4f;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);padding-top:calc(10px + env(safe-area-inset-top))}
+  #posten-bar img{height:34px;width:auto;border-radius:6px;flex-shrink:0}
+  #posten-bar .pb-title{font-size:17px;font-weight:800;letter-spacing:.2px}
+  #posten-bar .pb-spacer{flex:1}
+  #posten-bar button{min-height:40px;padding:8px 14px;border:1px solid rgba(255,255,255,.35);border-radius:9px;background:rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  #posten-bar button:active{transform:scale(.96)}
+  #posten-main{max-width:1120px;margin:0 auto;padding:16px 16px 64px}
+  /* Login-Gate */
+  #posten-gate{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;background:var(--dl-bg,#f3f4f6)}
+  html[data-theme="dark"] #posten-gate{background:#0e1114}
+  #posten-gate .pg-box{width:100%;max-width:360px;margin-top:12vh;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.14);padding:30px 26px;text-align:center}
+  html[data-theme="dark"] #posten-gate .pg-box{background:#161c20;color:#e6eae8}
+  #posten-gate img{height:56px;width:auto;border-radius:8px;margin-bottom:14px}
+  #posten-gate h1{font-size:20px;font-weight:800;margin:0 0 4px}
+  #posten-gate p{font-size:13px;color:#6b7280;margin:0 0 20px}
+  #posten-gate input{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:16px;outline:none;font-family:inherit;background:#fff;color:#1f2937}
+  html[data-theme="dark"] #posten-gate input{background:#12171a;color:#e6eae8;border-color:#2a333a}
+  #posten-gate input:focus{border-color:#2e7d4f}
+  #posten-gate .pg-err{color:#dc2626;font-size:12px;font-weight:600;min-height:16px;margin:8px 0 0;display:none}
+  #posten-gate button{width:100%;margin-top:16px;padding:13px;background:#2e7d4f;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer}
+  #posten-gate button:active{transform:scale(.98)}
+  /* Social-Panel (aus cms.html uebernommen) */
+  #cms-panel-social input[type="checkbox"]{min-width:18px;min-height:18px}
+  #cms-panel-social label{-webkit-tap-highlight-color:transparent}
+  html[data-theme="dark"] #cms-panel-social [style*="background:#f9fafb"]:not(.cms-wp-thumb){background:#161c20 !important;border-color:#2a333a !important}
+  /* ═══ Kiosk-Social-UI (k-*) – nur im Social-Panel ═══ */
+  #cms-panel-social{--c-green:var(--dl-green-action,#2e7d4f);--c-border:#e5e7eb;--c-muted:#6b7280;--c-text:#1f2937;--touch-min:56px}
+  /* Order cards (collapsible steps) */
+  #cms-panel-social .k-order{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:6px;overflow:hidden;border-left:4px solid transparent;position:relative;transition:transform .2s ease}
+  #cms-panel-social .k-order-hdr{display:flex;align-items:center;gap:6px 8px;padding:10px 12px;cursor:pointer;user-select:none;min-height:44px;flex-wrap:wrap}
+  #cms-panel-social .k-order-hdr:active{background:#f9fafb}
+  #cms-panel-social .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0;width:18px;text-align:center}
+  #cms-panel-social .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
+  #cms-panel-social .k-order.oc-collapsed .k-order-body{display:none}
+  #cms-panel-social .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:60px;flex:1 1 auto;max-width:none}
+  #cms-panel-social .k-order-hdr .k-oc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
+  #cms-panel-social .k-order-hdr .k-oc-actions .k-btn{min-height:40px;min-width:40px;padding:6px 14px;font-size:13px;border-radius:8px;gap:5px}
+  #cms-panel-social .k-order-body{display:block;border-top:1px solid var(--c-border)}
+  /* Inhaltsblock der Schrittkarten immer auf volle Kartenbreite strecken (kein Leerraum) */
+  #cms-panel-social .k-order-body>div{width:100%}
+  /* Buttons */
+  #cms-panel-social .k-btn{min-height:var(--touch-min);min-width:var(--touch-min);padding:8px 18px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;white-space:nowrap}
+  #cms-panel-social .k-btn:active{transform:scale(.96)}
+  #cms-panel-social .k-btn-confirm{background:var(--c-green);color:#fff}
+  #cms-panel-social .k-btn-sm{min-height:38px;padding:6px 14px;font-size:13px;border-radius:8px}
+  #cms-panel-social .k-btn-outline{background:#fff;color:var(--c-text);border:1.5px solid var(--c-border)}
+  #cms-panel-social .k-btn-outline:hover{border-color:var(--c-green);color:var(--c-green)}
+  /* Filter tabs (sub-tabs) */
+  #cms-panel-social .k-filter-bar{display:flex;gap:0;border-bottom:2px solid var(--c-border);overflow:hidden;background:#fff}
+  #cms-panel-social .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px}
+  #cms-panel-social .k-filter-btn:hover{color:var(--c-text)}
+  #cms-panel-social .k-filter-btn:active{transform:none}
+  #cms-panel-social .k-filter-btn.active{border-bottom-color:var(--c-green);color:#fff !important;background:var(--c-green);border-radius:8px 8px 0 0}
+  /* Fields */
+  #cms-panel-social .k-field{margin-bottom:16px}
+  #cms-panel-social .k-field label{font-size:13px;font-weight:700;color:var(--c-muted);margin-bottom:6px;display:block}
+  #cms-panel-social .k-field input,#cms-panel-social .k-field textarea,#cms-panel-social .k-field select{width:100%;padding:14px 16px;border:2px solid var(--c-border);border-radius:12px;font-size:16px;font-family:inherit;outline:none}
+  #cms-panel-social .k-field input:focus,#cms-panel-social .k-field textarea:focus,#cms-panel-social .k-field select:focus{border-color:var(--c-green)}
+  #cms-panel-social .k-field textarea{resize:vertical;min-height:60px}
+  #cms-panel-social .k-field select{background:#fff;appearance:auto}
+  /* Katalog split container – mobile-first defaults */
+  #soc-kat-split-container{display:flex;flex-direction:column;gap:14px}
+  #soc-kat-col-left,#soc-kat-col-right{width:100%}
+
+  /* Social Split-View Desktop (scrollendes Dokument – ohne Full-Height/overflow) */
+  @media(min-width:720px){
+    #cms-panel-social #soc-desk-bar{display:block!important}
+    #cms-panel-social #soc-desk-tabs{display:block!important}
+    #social-panel-post{display:flex;flex-wrap:wrap;gap:0 16px;align-items:flex-start}
+    #soc-desk-bar,#soc-desk-tabs{flex-basis:100%}
+    #soc-col-left{flex:1.2;min-width:0}
+    #soc-col-right{flex:1;min-width:0;position:sticky;top:0;align-self:flex-start}
+    /* Hide step headers on desktop — show content flat */
+    #soc-col-left .k-order-hdr{display:none!important}
+    #soc-col-left .k-order{border:none!important;border-left:none!important;margin-bottom:0!important;box-shadow:none!important}
+    #soc-col-left .k-order-body{display:block!important}
+    #soc-col-left .k-order.oc-collapsed .k-order-body{display:block!important}
+    /* Hide Heute/Morgen in Step 1 on desktop (moved to action bar) */
+    #soc-day-section{display:none!important}
+    /* Right column: always show bodies, hide step headers */
+    #soc-col-right .k-order-hdr{display:none!important}
+    #soc-col-right .k-order{border:none!important;border-left:none!important;margin-bottom:0!important;box-shadow:none!important}
+    #soc-col-right .k-order-body{display:block!important}
+    #soc-col-right{padding:8px;background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb}
+    /* Hide Step 4 entirely on desktop (all actions in action bar) */
+    #soc-step-4{display:none!important}
+    /* Hide posts in right column on desktop (shown in left col tab) */
+    #soc-col-right #soc-today-posts{display:none!important}
+    #soc-col-right #soc-post-status{display:none!important}
+    /* Hide preview update button on desktop (auto-updates) */
+    #soc-col-right button[onclick*="socialGenPreview"]{display:none!important}
+    /* Product grid 2-col */
+    #soc-pick-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:4px;max-height:none!important;overflow-y:visible!important}
+    #soc-post-footer{flex-basis:100%}
+    /* Katalog Split-View Desktop */
+    #soc-kat-split-container{display:flex;flex-direction:row;gap:20px;align-items:flex-start;width:100%}
+    #soc-kat-col-left{flex:1.1;min-width:0;position:sticky;top:10px}
+    #soc-kat-col-right{flex:1.4;min-width:0}
+    #soc-kat-list table tr{transition:all 0.15s ease-in-out}
+    #soc-kat-list table tr:hover{background-color:var(--c-m-pri-light)!important}
+    #soc-kat-list table img{transition:transform 0.15s ease-in-out,box-shadow 0.15s ease-in-out}
+    #soc-kat-list table img:hover{transform:scale(1.1);box-shadow:0 4px 10px rgba(0,0,0,0.12)}
+  }
+</style>
+</head>
+<body>
+
+<div id="posten-gate">
+  <div class="pg-box">
+    <img src="/images/icon-192.png" alt="Dorfladen Oberornau" onerror="this.style.display='none'">
+    <h1>Posten</h1>
+    <p>Interner Bereich &ndash; bitte Personal-Passwort eingeben.</p>
+    <input type="password" id="pg-pw" placeholder="Passwort" autocomplete="current-password" enterkeyhint="go">
+    <div class="pg-err" id="pg-err">Falsches Passwort</div>
+    <button type="button" id="pg-btn">Anmelden</button>
+  </div>
+</div>
+
+<div id="posten-app" style="display:none">
+  <div id="posten-bar">
+    <img src="/images/icon-192.png" alt="Dorfladen" onerror="this.style.display='none'">
+    <span class="pb-title">Posten</span>
+    <span class="pb-spacer"></span>
+    <button type="button" onclick="location.href='/index.html'" title="Zur Startseite"><i data-lucide="home" style="width:16px;height:16px"></i> Start</button>
+    <button type="button" id="pb-logout" title="Abmelden"><i data-lucide="log-out" style="width:16px;height:16px"></i> Abmelden</button>
+  </div>
+  <div id="posten-main">
+  <div id="cms-panel-social">
+    <div style="margin-bottom:12px" id="soc-main-header">
+      <h3 style="font-size:17px;font-weight:800;color:#1f2937;margin:0;display:flex;align-items:center;gap:8px"><i data-lucide="share-2" style="width:20px;height:20px;color:var(--c-green)"></i> Social Media</h3>
+      <p style="font-size:12px;color:#6b7280;margin:4px 0 0">Tagespost erstellen und teilen &#8211; in 4 einfachen Schritten.</p>
+    </div>
+
+    <!-- Sub-Tabs: Neuer Post | Katalog | Bestellungen -->
+    <div class="k-filter-bar" style="margin-bottom:16px" id="soc-subtabs-container">
+      <button class="k-filter-btn active" id="social-subtab-post" onclick="socialSubTab('post')"><i data-lucide="plus-circle" style="width:14px;height:14px"></i> Neuer Post</button>
+      <button class="k-filter-btn" id="social-subtab-katalog" onclick="socialSubTab('katalog')"><i data-lucide="book-open" style="width:14px;height:14px"></i> Katalog</button>
+      <button class="k-filter-btn" id="social-subtab-bestellungen" onclick="socialSubTab('bestellungen')"><i data-lucide="utensils" style="width:14px;height:14px"></i> Bestellungen<span id="best-badge-total" title="" style="display:none;margin-left:5px;background:#e5e7eb;color:#374151;font-size:11px;font-weight:800;line-height:1;padding:3px 7px;border-radius:9px"></span><span id="best-badge-open" title="" style="display:none;margin-left:3px;background:#f97316;color:#fff;font-size:11px;font-weight:800;line-height:1;padding:3px 7px;border-radius:9px"></span></button>
+    </div>
+
+    <!-- ========== SUB: KATALOG ========== -->
+    <div id="social-panel-katalog" style="display:none">
+      <div id="soc-kat-split-container">
+
+        <!-- LEFT COLUMN: Categories & Adding New Product -->
+        <div id="soc-kat-col-left">
+          <!-- Kategorie-Manager (aufklappbar) -->
+          <div style="margin-bottom:10px">
+            <button class="k-btn k-btn-outline" onclick="socialKatMgrToggle()" style="width:100%;text-align:left;display:flex;align-items:center;gap:8px">
+              <i data-lucide="settings" style="width:16px;height:16px"></i> Kategorien verwalten
+              <span style="margin-left:auto;font-size:11px;color:var(--c-muted)">CMS</span>
+            </button>
+            <div id="soc-kat-manager" style="display:none;margin-top:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px">
+              <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Aktuelle Kategorien</div>
+              <div id="soc-kat-manager-list" style="margin-bottom:10px"></div>
+              <div style="border-top:1px solid #e5e7eb;padding-top:10px">
+                <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Neue Kategorie hinzuf&#252;gen</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                  <div style="flex:1;min-width:140px">
+                    <label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>
+                    <input id="soc-kat-new-name" placeholder="z.B. Salate" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;box-sizing:border-box;min-height:40px">
+                  </div>
+                  <div style="width:50px">
+                    <label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Icon</label>
+                    <div style="display:flex;align-items:center;gap:4px">
+                      <span id="soc-kat-icon-preview" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#6b7280"><i data-lucide="tag" style="width:18px;height:18px"></i></span>
+                      <input id="soc-kat-new-icon" type="hidden" value="">
+                    </div>
+                  </div>
+                  <button class="k-btn k-btn-confirm" onclick="socialKatMgrAdd()" style="padding:5px 14px;font-size:12px;white-space:nowrap"><i data-lucide="plus" style="width:14px;height:14px"></i> Hinzuf&#252;gen</button>
+                </div>
+                <div style="margin-top:8px">
+                  <label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Icon suchen</label>
+                  <input id="soc-kat-icon-search" type="text" placeholder="z.B. salad, cake, apple..." oninput="socialKatMgrFilterIcons()" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;box-sizing:border-box;margin-bottom:6px;min-height:40px">
+                  <div id="soc-kat-icon-grid" style="display:flex;flex-wrap:wrap;gap:4px;max-height:160px;overflow-y:auto"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="k-order" style="margin-bottom:14px;border-left-color:var(--c-green)">
+            <div style="background:var(--c-green);color:#fff;padding:10px 14px;font-weight:700;font-size:13px;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:16px;height:16px"></i> Neues Produkt zum Katalog hinzuf&#252;gen</div>
+            <div style="padding:14px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="k-field" style="grid-column:1/-1;margin-bottom:0">
+                  <label>Name *</label>
+                  <input id="soc-kat-name" placeholder="z.B. Geschnetzeltes mit Champignonrahm">
+                </div>
+                <div class="k-field" style="margin-bottom:0">
+                  <label>Kategorie *</label>
+                  <select id="soc-kat-kategorie">
+                    <!-- dynamisch bef&#252;llt via social.js -->
+                  </select>
+                </div>
+                <div class="k-field" style="margin-bottom:0">
+                  <label>Preis &#8364;</label>
+                  <input id="soc-kat-preis" type="text" inputmode="decimal" placeholder="9,80">
+                </div>
+              </div>
+              <input id="soc-kat-bild" type="file" accept="image/*" style="display:none">
+              <input id="soc-kat-bild-cam" type="file" accept="image/*" capture="environment" style="display:none">
+              <div id="soc-kat-paste-zone" tabindex="0"
+                style="margin-top:10px;border:2px dashed var(--c-border);border-radius:10px;padding:14px;text-align:center;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
+                title="Foto aufnehmen, Datei w&#228;hlen oder Strg+V zum Einf&#252;gen">
+                <div id="soc-kat-paste-hint" style="color:#9ca3af;font-size:12px">
+                  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:6px">
+                    <button type="button" class="k-btn" onclick="event.stopPropagation();document.getElementById('soc-kat-bild-cam').click()" style="padding:10px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid var(--c-green);color:var(--c-green);border-radius:8px;cursor:pointer;min-height:var(--touch-min)"><i data-lucide="camera" style="width:18px;height:18px"></i> Kamera</button>
+                    <button type="button" class="k-btn" onclick="event.stopPropagation();document.getElementById('soc-kat-bild').click()" style="padding:10px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--c-border);color:#374151;border-radius:8px;cursor:pointer;min-height:var(--touch-min)"><i data-lucide="image" style="width:18px;height:18px"></i> Datei</button>
+                  </div>
+                  <span style="font-size:11px;color:#9ca3af"><i data-lucide="clipboard-paste" style="width:12px;height:12px;vertical-align:middle"></i> oder <strong>Strg+V</strong> zum Einf&#252;gen</span>
+                </div>
+                <div id="soc-kat-bild-preview" style="display:none;margin-top:6px">
+                  <img id="soc-kat-bild-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
+                  <button onclick="event.stopPropagation();socialClearBild()" style="display:block;margin:6px auto 0;background:none;border:none;color:#dc2626;font-size:11px;cursor:pointer;text-decoration:underline">&#10005; Bild entfernen</button>
+                </div>
+              </div>
+              <button class="k-btn k-btn-confirm" onclick="socialKatAdd()" style="width:100%;margin-top:10px;font-size:14px;min-height:var(--touch-min)"><i data-lucide="plus" style="width:16px;height:16px"></i> Hinzuf&#252;gen</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Catalog Directory -->
+        <div id="soc-kat-col-right">
+          <div id="soc-kat-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+          <div id="soc-kat-loading" style="display:none;text-align:center;padding:30px 0">
+            <div style="display:inline-block;width:28px;height:28px;border:3px solid var(--c-border);border-top-color:var(--c-green);border-radius:50%;animation:cms-spin 0.8s linear infinite"></div>
+            <div style="margin-top:8px;color:#6b7280;font-size:13px">Katalog wird geladen&#8230;</div>
+          </div>
+          <div id="soc-kat-list"></div>
+          <div id="soc-kat-empty" style="display:none;text-align:center;padding:30px 0;color:#9ca3af;font-size:13px">Noch keine Produkte im Katalog. F&#252;gen Sie oben Ihr erstes Produkt hinzu.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========== SUB: NEUER POST (Step-Wizard) ========== -->
+    <div id="social-panel-post" style="flex-wrap:wrap">
+
+      <!-- Desktop Action Bar (hidden on mobile) -->
+      <div id="soc-desk-bar" style="display:none;width:100%;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div id="soc-desk-day" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
+            <button type="button" onclick="socialToggleDay('heute')" data-day="heute" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff">Heute</button>
+            <button type="button" onclick="socialToggleDay('morgen')" data-day="morgen" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151">Morgen</button>
+          </div>
+          <span id="soc-desk-date" style="font-size:12px;color:#6b7280"></span>
+          <span style="flex:1"></span>
+          <button onclick="socialSaveDraft()" title="Entwurf speichern, sp\u00e4ter senden" style="padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;color:#92400e;display:inline-flex;align-items:center;gap:4px"><i data-lucide="bookmark" style="width:14px;height:14px"></i> Parken</button>
+          <button onclick="socialPublishTagesinfo()" title="Sofort auf der Homepage ver\u00f6ffentlichen" style="padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;color:#16a34a;display:inline-flex;align-items:center;gap:4px"><i data-lucide="file-text" style="width:14px;height:14px"></i> Ver&#246;ffentlichen</button>
+          <span style="width:1px;height:20px;background:#d1d5db"></span>
+          <button onclick="socialShareWhatsApp()" title="Post-Bild per WhatsApp teilen" style="padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#25D366;border:none;border-radius:10px;color:#fff;display:inline-flex;align-items:center;gap:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</button>
+          <button onclick="socialShareInstagram()" title="Post-Bild f\u00fcr Instagram kopieren" style="padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);border:none;border-radius:10px;color:#fff;display:inline-flex;align-items:center;gap:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg> Instagram</button>
+          <button onclick="socialDownloadPoster()" title="Post-Bild herunterladen" style="padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;color:#374151;display:inline-flex;align-items:center;gap:4px"><i data-lucide="download" style="width:14px;height:14px"></i> Bild</button>
+        </div>
+        <div id="soc-desk-status" style="display:none;padding:6px 10px;border-radius:8px;font-size:12px;margin-top:6px;width:100%"></div>
+      </div>
+
+      <!-- Desktop Tab Bar (hidden on mobile) -->
+      <div id="soc-desk-tabs" style="display:none;width:100%;margin-bottom:8px">
+        <div style="display:flex;gap:0;border-bottom:2px solid #e5e7eb">
+          <button id="soc-desk-tab-edit" onclick="socDeskTab('edit')" style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid #16a34a;margin-bottom:-2px;cursor:pointer;background:none;color:#16a34a"><i data-lucide="edit-3" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Erfassen</button>
+          <button id="soc-desk-tab-posts" onclick="socDeskTab('posts')" style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;background:none;color:#6b7280"><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Posts &amp; Entw&#252;rfe</button>
+        </div>
+      </div>
+
+      <div id="soc-col-left">
+
+      <!-- STEP 1: Titel & Text -->
+      <div class="k-order" style="border-left-color:#25D366;margin-bottom:8px" id="soc-step-1">
+        <div class="k-order-hdr" onclick="socToggleStep(1)" style="background:#f0fdf4">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#25D366;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">1</span>
+          <span class="k-oc-name" style="color:#15803d"><i data-lucide="type" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Titel &amp; Text</span>
+        </div>
+        <div class="k-order-body">
+          <div style="padding:14px 16px">
+            <!-- Heute / Morgen Toggle -->
+            <div id="soc-day-section" style="margin-bottom:14px">
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px"><i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"></i> Post f&#252;r</label>
+              <div id="soc-date-toggle" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
+                <button type="button" data-day="heute" onclick="socialToggleDay('heute')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff;transition:all .15s">Heute</button>
+                <button type="button" data-day="morgen" onclick="socialToggleDay('morgen')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151;transition:all .15s">Morgen</button>
+              </div>
+              <span id="soc-date-label" style="margin-left:10px;font-size:13px;color:#6b7280"></span>
+            </div>
+            <div style="margin-bottom:14px">
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Titel w&#228;hlen</label>
+              <select id="soc-post-titel-sel" onchange="socialTitelChange()" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px;background:#fff"></select>
+              <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:6px;display:none;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px">
+            </div>
+            <script>
+            window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}if(window.innerWidth>=720&&typeof socialGenPreview==='function'){if(window._socTitelTimer)clearTimeout(window._socTitelTimer);window._socTitelTimer=setTimeout(socialGenPreview,600);}};
+            (function(){
+              var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+              window._socSelectedDay='heute';
+
+              function buildTitelOpts(){
+                var d=window._socSelectedDay==='morgen'?new Date(Date.now()+86400000):new Date();
+                var tag=tage[d.getDay()];
+                var prefix=window._socSelectedDay==='morgen'?'Morgen':'Heute';
+                var sel=document.getElementById('soc-post-titel-sel');
+                if(!sel)return;
+                var prev=sel.value;
+                sel.innerHTML='';
+                var opts=[prefix+' im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
+                var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
+                opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
+                if(prev&&prev!=='_custom'){
+                  var found=false;opts.forEach(function(o){if(o===prev)found=true;});
+                  if(!found) sel.value=opts[0];
+                } else if(prev==='_custom'){ sel.value='_custom'; }
+                socialTitelChange();
+                var lbl=document.getElementById('soc-date-label');
+                if(lbl) lbl.textContent=d.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});
+              }
+
+              window.socialToggleDay=function(day){
+                window._socSelectedDay=day;
+                var btns=document.querySelectorAll('#soc-date-toggle button');
+                btns.forEach(function(b){
+                  if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
+                  else{b.style.background='#fff';b.style.color='#374151';}
+                });
+                buildTitelOpts();
+                if(typeof socialBuildPostItems==='function') socialBuildPostItems();
+              };
+
+              buildTitelOpts();
+            })();
+            </script>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
+              <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="if(window.innerWidth>=720&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Produkte auswählen -->
+      <div class="k-order" style="border-left-color:#e1306c;margin-bottom:8px" id="soc-step-2">
+        <div class="k-order-hdr" onclick="socToggleStep(2)" style="background:#fef2f2">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#e1306c;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">2</span>
+          <span class="k-oc-name" style="color:#be123c"><i data-lucide="shopping-basket" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Produkte ausw&#228;hlen</span>
+          <span id="soc-step2-count" style="font-size:12px;color:#9ca3af;white-space:nowrap"></span>
+        </div>
+        <div class="k-order-body">
+          <div style="padding:14px 16px">
+            <div id="soc-post-items" style="display:flex;flex-direction:column;gap:6px">
+              <p style="color:#9ca3af;font-size:13px;font-style:italic">Laden Sie zuerst den Katalog...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Posts Panel (shown when Posts tab active, hidden on mobile) -->
+      <div id="soc-desk-posts-panel" style="display:none">
+        <div id="soc-desk-posts-content"></div>
+      </div>
+
+      </div><!-- /soc-col-left -->
+      <div id="soc-col-right">
+      <!-- STEP 3: Vorschau -->
+      <div class="k-order oc-collapsed" style="border-left-color:#1f2937;margin-bottom:8px" id="soc-step-3">
+        <div class="k-order-hdr" onclick="socToggleStep(3)" style="background:#f3f4f6">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#1f2937;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">3</span>
+          <span class="k-oc-name"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Vorschau</span>
+          <span class="k-oc-actions" onclick="event.stopPropagation()">
+            <button onclick="socialGenPreview()" class="k-btn k-btn-sm" style="background:#e1306c;color:#fff;min-height:40px;border-radius:8px;font-size:13px"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> <span class="oc-btn-label">Aktualisieren</span></button>
+          </span>
+        </div>
+        <div class="k-order-body">
+          <div style="text-align:center;padding:16px">
+            <div id="soc-preview-label-meal" style="display:none;font-size:11px;font-weight:700;color:#f57f17;margin-bottom:4px">&#127869; MITTAGESSEN-POSTER</div>
+            <canvas id="soc-post-canvas-meal" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6;margin-bottom:12px"></canvas>
+            <div id="soc-preview-label-daily" style="display:none;font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px">&#128230; TAGES&#220;BERSICHT</div>
+            <canvas id="soc-post-canvas" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6"></canvas>
+            <div style="margin-top:10px">
+              <button onclick="socialGenPreview()" style="background:#e1306c;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px"><i data-lucide="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i> Vorschau aktualisieren</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Teilen & Veröffentlichen -->
+      <div class="k-order oc-collapsed" style="border-left-color:#2563eb;margin-bottom:8px" id="soc-step-4">
+        <div class="k-order-hdr" onclick="socToggleStep(4)" style="background:#eff6ff">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">4</span>
+          <span class="k-oc-name" style="color:#1d4ed8"><i data-lucide="send" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Teilen &amp; Ver&#246;ffentlichen</span>
+        </div>
+        <div class="k-order-body">
+          <div style="padding:14px 16px">
+            <!-- Share buttons – large, touch-friendly -->
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <button onclick="socialShareWhatsApp()" style="background:#25D366;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(37,211,102,.3)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Auf WhatsApp teilen
+              </button>
+              <button onclick="socialShareInstagram()" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(225,48,108,.3)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                Auf Instagram teilen
+              </button>
+              <div style="display:flex;gap:10px">
+                <button onclick="socialDownloadPoster()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:12px;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px"><i data-lucide="download" style="width:18px;height:18px"></i> Bild speichern</button>
+              </div>
+              <div id="soc-publish-section" style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:4px">
+                <div style="display:flex;gap:8px;margin-bottom:6px">
+                  <button onclick="socialPublishTagesinfo()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;color:#16a34a;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px">
+                    <i data-lucide="file-text" style="width:18px;height:18px"></i>
+                    Tagesinfo ver&#246;ffentlichen
+                  </button>
+                  <button onclick="socialSaveDraft()" style="padding:14px 16px;font-size:13px;font-weight:700;cursor:pointer;background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;color:#92400e;min-height:52px;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap">
+                    <i data-lucide="bookmark" style="width:16px;height:16px"></i>
+                    Parken
+                  </button>
+                </div>
+                <div style="font-size:11px;color:#9ca3af;text-align:center">Ver&#246;ffentlichen = sofort auf Homepage &bull; Parken = Entwurf speichern, sp&#228;ter senden</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
+      <div id="soc-today-posts" style="display:none;margin-top:12px;background:#f9fafb;border:1px solid var(--c-border);border-radius:10px;padding:10px 14px">
+        <div style="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:6px"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle"></i> Posts &amp; Entw&#252;rfe</div>
+        <div id="soc-today-posts-list"></div>
+      </div>
+      </div><!-- /soc-col-right -->
+      <div id="soc-post-footer" style="width:100%">
+      <div id="soc-meal-posters" style="display:none;margin-top:12px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">&#127860; Einzel-Poster pro Gericht</div>
+        <div id="soc-meal-poster-list" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+      </div><!-- /soc-post-footer -->
+    </div>
+
+    <!-- ========== SUB: BESTELLUNGEN (Mittagstisch aus Kiosk, eingebettet) ========== -->
+    <div id="social-panel-bestellungen" style="display:none">
+      <div style="font-size:12px;color:#6b7280;margin:0 0 8px;display:flex;align-items:center;gap:6px"><i data-lucide="utensils" style="width:14px;height:14px;color:var(--c-green)"></i> Mittagessen-Bestellungen einsehen und beantworten &#8211; direkt aus dem Kiosk.</div>
+      <div style="border:1px solid var(--c-border);border-radius:12px;overflow:hidden;background:#fff">
+        <iframe id="bestellungen-iframe" title="Mittagstisch-Bestellungen" loading="lazy" style="width:100%;height:calc(100vh - 210px);min-height:520px;border:0;display:block"></iframe>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script src="/js/dl-confirm.js"></script>
+<script src="/js/social.js"></script>
+<script src="/js/social-poster.js"></script>
+<script src="/js/admin-auth.js"></script>
+  <!-- Wochenplan/Mittagessen laden: stellt window.SOCIAL_MEALS fuer social.js bereit,
+       damit die Mittagessen-Sektion (Heute/Morgen) im Post-Assistenten erscheint.
+       GET /api/wochenplan ist oeffentlich und liefert ab Sa/So automatisch die naechste Woche. -->
+  <script>
+  (function(){
+    function loadDishesForSocial(){
+      fetch('/api/wochenplan')
+        .then(function(r){return r.json();})
+        .then(function(res){
+          var dishes = (res && res.data ? res.data : []).filter(function(d){return d.dl_gericht && d.dl_preis;});
+          window.SOCIAL_MEALS = function(){
+            return dishes.map(function(d){
+              return {id:d.dl_wochenplanid||'', gericht:d.dl_gericht, preis:d.dl_preis, wochentag:d.dl_wochentag, datum:d.dl_datum||''};
+            });
+          };
+          // Post-Assistent neu aufbauen, damit die Mittagessen-Sektion sofort erscheint.
+          if(window._socialModule && typeof window._socialModule.socialBuildPostItems === 'function'){
+            try{ window._socialModule.socialBuildPostItems(); }catch(e){}
+          }
+        })
+        .catch(function(){});
+    }
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', loadDishesForSocial);
+    } else {
+      loadDishesForSocial();
+    }
+  })();
+  </script>
+  <!-- Social wizard inline JS (ported from kiosk.html, not part of social.js) -->
+  <script>
+  (function(){
+    // ── Social wizard step toggle ──
+    var _socStepOpen = {1:true, 2:true, 3:false, 4:false};
+    function socToggleStep(n){
+      var el = document.getElementById('soc-step-'+n);
+      if(!el) return;
+      el.classList.toggle('oc-collapsed');
+      _socStepOpen[n] = !el.classList.contains('oc-collapsed');
+      if(_socStepOpen[n] && n===3){
+        if(typeof socialGenPreview==='function') socialGenPreview();
+      }
+    }
+    window.socToggleStep = socToggleStep;
+
+    // ── Badge fuer Reiter "Bestellungen": Anzahl gesamt + offen (heute) ──
+    // Laedt /api/lunch-order?datum=<heute> (oeffentlich, kein Auth-Guard) und zeigt
+    // die Gesamtzahl (grau) sowie die offenen Bestellungen (orange) am Reiter an.
+    function _bestPad(n){ return ('0'+n).slice(-2); }
+    function updateBestellungenBadge(){
+      var d = new Date();
+      var datum = d.getFullYear()+'-'+_bestPad(d.getMonth()+1)+'-'+_bestPad(d.getDate());
+      fetch('/api/lunch-order?datum='+datum)
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          var list = (res && res.success && res.orders) ? res.orders : [];
+          var total = list.length;
+          var open = list.filter(function(o){ return o.status === 0; }).length;
+          var tb = document.getElementById('best-badge-total');
+          var ob = document.getElementById('best-badge-open');
+          if(tb){
+            if(total > 0){ tb.textContent = total; tb.style.display=''; tb.title = total+' Bestellung'+(total!==1?'en':'')+' heute'; }
+            else { tb.style.display='none'; }
+          }
+          if(ob){
+            if(open > 0){ ob.textContent = open+' offen'; ob.style.display=''; ob.title = open+' offene Bestellung'+(open!==1?'en':''); }
+            else { ob.style.display='none'; }
+          }
+        })
+        .catch(function(){});
+    }
+    window.updateBestellungenBadge = updateBestellungenBadge;
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', updateBestellungenBadge);
+    } else {
+      updateBestellungenBadge();
+    }
+    setInterval(updateBestellungenBadge, 60000);
+
+    // ── Sub-Tab "Bestellungen": Kiosk-Mittagstisch als iframe einbetten ──
+    // socialSubTab (social.js) kennt nur post/katalog/wakatalog. Hier erweitern wir
+    // um den Reiter "Bestellungen", der den Kiosk-Mittagstisch (?embed=mittag) lazy laedt.
+    var _realSocialSubTab = window.socialSubTab;
+    window.socialSubTab = function(name){
+      var bestPanel = document.getElementById('social-panel-bestellungen');
+      var bestBtn = document.getElementById('social-subtab-bestellungen');
+      if(name === 'bestellungen'){
+        ['katalog','post','wakatalog'].forEach(function(t){
+          var p = document.getElementById('social-panel-'+t); if(p) p.style.display='none';
+          var b = document.getElementById('social-subtab-'+t); if(b) b.classList.remove('active');
+        });
+        if(bestPanel) bestPanel.style.display='';
+        if(bestBtn) bestBtn.classList.add('active');
+        var f = document.getElementById('bestellungen-iframe');
+        if(f && !f.getAttribute('src')){ f.setAttribute('src','/kiosk.html?embed=mittag'); }
+        if(window.lucide && typeof window.lucide.createIcons==='function'){ try{ window.lucide.createIcons(); }catch(e){} }
+        return;
+      }
+      if(bestPanel) bestPanel.style.display='none';
+      if(bestBtn) bestBtn.classList.remove('active');
+      updateBestellungenBadge();
+      if(typeof _realSocialSubTab === 'function') _realSocialSubTab(name);
+    };
+
+    // ── Bestellungen-iframe im Hintergrund vorladen ──
+    // Die eingebettete Kiosk-Seite ist gross; wird sie erst beim Klick auf den
+    // Reiter geladen, wirkt das Oeffnen traege. Darum laden wir sie – sobald der
+    // Browser Leerlauf hat – bereits im Hintergrund (das Panel bleibt versteckt).
+    function preloadBestellungenIframe(){
+      var f = document.getElementById('bestellungen-iframe');
+      if(f && !f.getAttribute('src')){
+        try{ f.setAttribute('loading','eager'); }catch(e){}
+        f.setAttribute('src','/kiosk.html?embed=mittag');
+      }
+    }
+    function scheduleBestellungenPreload(){
+      if(window.requestIdleCallback){ window.requestIdleCallback(preloadBestellungenIframe, {timeout:4000}); }
+      else { setTimeout(preloadBestellungenIframe, 1500); }
+    }
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', scheduleBestellungenPreload);
+    } else {
+      scheduleBestellungenPreload();
+    }
+
+    // ── Desktop Split-View: Tab switching ──
+    window.socDeskTab = function(tab){
+      var tabEdit = document.getElementById('soc-desk-tab-edit');
+      var tabPosts = document.getElementById('soc-desk-tab-posts');
+      var step1 = document.getElementById('soc-step-1');
+      var step2 = document.getElementById('soc-step-2');
+      var postsPanel = document.getElementById('soc-desk-posts-panel');
+      if(!tabEdit||!tabPosts) return;
+      if(tab === 'posts'){
+        tabEdit.style.borderBottomColor='transparent'; tabEdit.style.color='#6b7280';
+        tabPosts.style.borderBottomColor='#2563eb'; tabPosts.style.color='#2563eb';
+        if(step1) step1.style.display='none';
+        if(step2) step2.style.display='none';
+        if(postsPanel){
+          postsPanel.style.display='block';
+          // Clone posts from right column into desktop panel
+          var src = document.getElementById('soc-today-posts-list');
+          var dst = document.getElementById('soc-desk-posts-content');
+          if(src && dst){ dst.innerHTML = src.innerHTML; }
+        }
+      } else {
+        tabEdit.style.borderBottomColor='#16a34a'; tabEdit.style.color='#16a34a';
+        tabPosts.style.borderBottomColor='transparent'; tabPosts.style.color='#6b7280';
+        if(step1) step1.style.display='';
+        if(step2) step2.style.display='';
+        if(postsPanel) postsPanel.style.display='none';
+      }
+    };
+
+    // Sync desktop day toggle with mobile toggle
+    if(typeof window.socialToggleDay === 'function'){
+      var realToggle = window.socialToggleDay;
+      window.socialToggleDay = function(day){
+        realToggle(day);
+        // Sync desktop day buttons
+        var deskBtns = document.querySelectorAll('#soc-desk-day button');
+        deskBtns.forEach(function(b){
+          if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
+          else{b.style.background='#fff';b.style.color='#374151';}
+        });
+        var deskDate = document.getElementById('soc-desk-date');
+        var srcDate = document.getElementById('soc-date-label');
+        if(deskDate && srcDate) deskDate.textContent = srcDate.textContent;
+      };
+      // Trigger initial sync to set date on load
+      var deskDate = document.getElementById('soc-desk-date');
+      var srcDate = document.getElementById('soc-date-label');
+      if(deskDate && srcDate) deskDate.textContent = srcDate.textContent;
+    }
+
+    // Update step-2 badge with selected product count
+    var _origSocialPickUpdate = window.socialPickUpdate;
+    var _socAutoPreviewTimer = null;
+    function _socWrapPickUpdate(){
+      if(typeof _origSocialPickUpdate==='function') _origSocialPickUpdate();
+      var cnt = document.getElementById('soc-step2-count');
+      if(!cnt) return;
+      var checks = document.querySelectorAll('.soc-post-cb:checked,.soc-post-wp:checked');
+      var freeCount = 0;
+      try { freeCount = (window._socialModule && typeof window._socialModule._socFreeItems === 'function') ? window._socialModule._socFreeItems().length : 0; } catch(e){}
+      var total = checks.length + freeCount;
+      cnt.textContent = total ? total + ' ausgew\u00e4hlt' : '';
+      // Auto-preview on desktop (debounced)
+      if(window.innerWidth >= 720 && typeof socialGenPreview === 'function'){
+        if(_socAutoPreviewTimer) clearTimeout(_socAutoPreviewTimer);
+        _socAutoPreviewTimer = setTimeout(function(){ socialGenPreview(); }, 600);
+      }
+    }
+    // Override socialPickUpdate once social.js is loaded
+    (function(){
+      var origInterval = setInterval(function(){
+        if(window.socialPickUpdate && window.socialPickUpdate !== _socWrapPickUpdate){
+          _origSocialPickUpdate = window.socialPickUpdate;
+          window.socialPickUpdate = _socWrapPickUpdate;
+          clearInterval(origInterval);
+        }
+      }, 200);
+      setTimeout(function(){ clearInterval(origInterval); }, 10000);
+    })();
+  })();
+  </script>
+<script>
+(function(){
+  // Langlebiges "GerÃ¤t merken": Token in localStorage spiegeln, bei Start
+  // zurueck in sessionStorage (admin-auth.js liest cms_auth_token dort).
+  var SS_KEY = 'cms_auth_token';
+  var LS_KEY = 'dl_posten_token';
+  function ls(k){ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  function ssSet(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} }
+  function ssDel(k){ try{ sessionStorage.removeItem(k); }catch(e){} }
+
+  var gate = document.getElementById('posten-gate');
+  var app  = document.getElementById('posten-app');
+  var pw   = document.getElementById('pg-pw');
+  var err  = document.getElementById('pg-err');
+  var btn  = document.getElementById('pg-btn');
+  var started = false;
+
+  function showApp(){
+    gate.style.display = 'none';
+    app.style.display = '';
+    if(!started){
+      started = true;
+      // Direkt im "Neuer Post"-Assistenten starten (baut Produktliste auf).
+      if(typeof socialSubTab === 'function'){ try{ socialSubTab('post'); }catch(e){} }
+      // Robust gegen Ladereihenfolge: sobald der Katalog geladen ist, Produkte
+      // einmalig nachbauen (falls der erste Aufbau vor dem Laden geschah).
+      if(!window._socialKatLoaded){
+        var _tries = 0;
+        var _wait = setInterval(function(){
+          _tries++;
+          if(window._socialKatLoaded){
+            clearInterval(_wait);
+            if(window._socialModule && typeof window._socialModule.socialBuildPostItems === 'function'){
+              try{ window._socialModule.socialBuildPostItems(); }catch(e){}
+            }
+          } else if(_tries > 40){ clearInterval(_wait); }
+        }, 250);
+      }
+    }
+    if(typeof lucide !== 'undefined'){ try{ lucide.createIcons(); }catch(e){} }
+  }
+  function showGate(){
+    app.style.display = 'none';
+    gate.style.display = '';
+    setTimeout(function(){ try{ pw.focus(); }catch(e){} }, 60);
+  }
+
+  // Bereits als Personal gemerkt? -> Token wiederherstellen und direkt oeffnen.
+  var saved = ls(LS_KEY);
+  if(saved){ ssSet(SS_KEY, saved); showApp(); }
+  else { showGate(); }
+
+  function doLogin(){
+    var val = (pw.value||'').trim();
+    if(!val){ return; }
+    err.style.display = 'none';
+    btn.disabled = true; btn.textContent = 'Wird geprueftâ€¦';
+    if(typeof window.dlAdminLogin !== 'function'){ btn.disabled=false; btn.textContent='Anmelden'; return; }
+    window.dlAdminLogin(val).then(function(token){
+      lsSet(LS_KEY, token); // Geraet dauerhaft merken
+      pw.value = '';
+      btn.disabled = false; btn.textContent = 'Anmelden';
+      showApp();
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = 'Anmelden';
+      err.style.display = 'block';
+      try{ pw.select(); }catch(e){}
+    });
+  }
+  btn.addEventListener('click', doLogin);
+  pw.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
+
+  var logout = document.getElementById('pb-logout');
+  if(logout){
+    logout.addEventListener('click', function(){
+      lsDel(LS_KEY); ssDel(SS_KEY);
+      started = false;
+      location.reload();
+    });
+  }
+})();
+</script>
+</body>
+</html>

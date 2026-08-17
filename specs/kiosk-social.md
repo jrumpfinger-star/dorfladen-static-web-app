@@ -14,7 +14,12 @@ Die Social-Media-Funktionen "Neuer Post" und "Katalog" aus dem CMS sollen 1:1 im
 - [x] Produkte hinzufügen (Name, Kategorie, Preis, Bild)
 - [x] Produkte bearbeiten, löschen
 - [x] Bild per Drag&Drop, Datei-Upload oder Strg+V einfügen
-- [x] Kategorien: Mittagessen, Kuchen, Obst & Gemüse, Aufstriche
+- [x] Bild per Strg+V in Edit-Row austauschen (Paste-Zone mit Vorschau)
+- [x] Kategorien dynamisch aus Dataverse laden (API liefert `kategorien` Array)
+- [x] Default-Kategorien: Mittagessen, Kuchen, Obst & Gemüse, Aufstriche, Salate
+- [x] Kategorie-Manager: Kategorien hinzufügen/entfernen mit Icon-Picker
+- [x] Alle Icons als Lucide-Icons dargestellt (keine Emojis im UI)
+- [x] Icon-Picker mit Suchfilter und visueller Vorschau
 
 ### Neuer Post (Sub-Tab)
 - [x] Titel-Auswahl (vorgefertigte + eigener Titel)
@@ -26,19 +31,31 @@ Die Social-Media-Funktionen "Neuer Post" und "Katalog" aus dem CMS sollen 1:1 im
 - [x] WhatsApp-Teilen (mit Bestelllinks)
 - [x] Instagram-Teilen
 - [x] Poster herunterladen
+- [x] "Nur als Tagesinfo veröffentlichen" – speichert Post ohne WhatsApp/Instagram, erscheint auf Homepage
 
 ### Shared Code
 - [x] `static-site/js/social.js` – Katalog-Verwaltung, Post-Builder, Produkt-Picker
 - [x] `static-site/js/social-poster.js` – Canvas-Poster-Rendering, Sharing, WA-Katalog
 
 ## Akzeptanzkriterien
-- [ ] Social-Tab wird im Kiosk angezeigt und ist klickbar
-- [ ] Katalog laden, Produkt hinzufügen, bearbeiten, löschen funktioniert
-- [ ] Post-Builder zeigt Katalog-Produkte und ermöglicht Auswahl
-- [ ] Poster-Vorschau wird korrekt gerendert
-- [ ] WhatsApp/Instagram-Sharing funktioniert
-- [ ] CMS Social-Funktionalität bleibt unverändert (nach Migration auf social.js)
+- [x] AK-SO-01: Social-Tab wird im Kiosk angezeigt und ist klickbar
+- [x] AK-SO-02: Katalog laden, Produkt hinzufügen, bearbeiten, löschen funktioniert
+- [x] AK-SO-03: Post-Builder zeigt Katalog-Produkte und ermöglicht Auswahl
+- [x] AK-SO-04: Poster-Vorschau wird korrekt gerendert
+- [x] AK-SO-05: WhatsApp/Instagram-Sharing funktioniert
+- [x] AK-SO-07: "Nur als Tagesinfo veröffentlichen" speichert Post und zeigt Bestätigung
+- [ ] AK-SO-06: CMS Social-Funktionalität bleibt unverändert (nach Migration auf social.js – nicht migriert, CMS hat eigenen Code)
+- [x] AK-SO-08: Kategorien werden dynamisch aus API geladen, Dropdowns dynamisch befüllt
+- [x] AK-SO-09: Kategorie-Manager erlaubt Hinzufügen/Entfernen von Kategorien mit Lucide-Icon-Auswahl
+- [x] AK-SO-10: Strg+V in Edit-Row ersetzt Bild des bestehenden Artikels
+- [x] AK-SO-11: Alle Kategorie-Icons im UI sind Lucide-Icons (Emojis nur im Canvas-Poster-Export)
 
 ## Nicht enthalten
 - "Verlauf" Sub-Tab (nur im CMS)
-- CMS-Migration auf social.js (separater Schritt)
+- CMS-Migration auf social.js (separater Schritt, noch offen)
+- Canvas-Poster verwendet weiterhin Emoji-Fallbacks (SVG nicht in Canvas darstellbar)
+
+## Status
+- [x] Spec erstellt
+- [x] Implementierung (Social-Tab, Katalog, Post-Builder, Sharing)
+- [ ] AK-SO-06 offen (CMS-Migration auf shared social.js)

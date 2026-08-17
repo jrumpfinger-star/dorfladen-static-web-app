@@ -44,10 +44,10 @@ if('serviceWorker' in navigator){
     }
     // News overlay
     var nOv=document.querySelector('.news-overlay.open');
-    if(nOv){nOv.classList.remove('open');setTimeout(function(){if(nOv.parentNode)nOv.remove();},300);return true;}
+    if(nOv){nOv.classList.remove('open');if(window.dlUnlockScroll)dlUnlockScroll();setTimeout(function(){if(nOv.parentNode)nOv.remove();},300);return true;}
     // Desktop modals
     var dtModal=document.querySelector('[id^="dt-modal-"].open');
-    if(dtModal){dtModal.classList.remove('open');return true;}
+    if(dtModal){dtModal.classList.remove('open');if(window.dlUnlockScroll)dlUnlockScroll();return true;}
     // Push settings overlay
     var pushOv=document.getElementById('push-settings-overlay');
     if(pushOv&&pushOv.offsetParent!==null){
@@ -179,9 +179,9 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 (function(){
   var pushBtn=document.getElementById('mob-push-toggle');
   var pushBtnDt=document.getElementById('dt-push-toggle');
-  var CAT_LABELS={mittagstisch:'Mittagstisch',angebote:'Angebote',news:'News / Aktuelles'};
-  var CAT_ICONS={mittagstisch:'\uD83C\uDF7D\uFE0F',angebote:'\uD83C\uDF1F',news:'\uD83D\uDCE2'};
-  var CAT_DESC={mittagstisch:'T\u00e4glicher Mittagstisch & Speisekarte',angebote:'Sonderangebote & Aktionen',news:'Neuigkeiten & Infos'};
+  var CAT_LABELS={tagesinfo:'TagesInfo',news:'News / Aktuelles'};
+  var CAT_ICONS={tagesinfo:'\uD83D\uDCCB',news:'\uD83D\uDCE2'};
+  var CAT_DESC={tagesinfo:'T\u00e4glicher Mittagstisch, Theke & Angebote',news:'Neuigkeiten & Infos'};
 
   // --- Toast system (replaces ugly alert()) ---
   function showToast(msg,type,duration){
@@ -203,15 +203,22 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
   }
 
   function updatePushUI(subscribed){
+    var text=subscribed?'Benachrichtigungen aktiv':'Benachrichtigungen aktivieren';
+    var canLucide=!!(window.lucide||window.dlRefreshIcons);
     [pushBtn,pushBtnDt].forEach(function(btn){
       if(!btn)return;
-      var label=subscribed?'\uD83D\uDD14 Benachrichtigungen aktiv':'\uD83D\uDD14 Benachrichtigungen aktivieren';
-      // For desktop: the <li> contains an <a> – update the <a> text, not the <li>
-      var a=btn.querySelector('a');
-      if(a){a.textContent=label;}else{btn.textContent=label;}
+      // For desktop: the <li> contains an <a> – update the <a>, not the <li>
+      var target=btn.querySelector('a')||btn;
+      if(canLucide){
+        target.innerHTML='<i data-lucide="bell" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i>'+text;
+      }else{
+        target.textContent='\uD83D\uDD14 '+text;
+      }
       if(subscribed){btn.setAttribute('data-subscribed','1');}
       else{btn.removeAttribute('data-subscribed');}
     });
+    if(window.dlRefreshIcons){try{window.dlRefreshIcons();}catch(e){}}
+    else if(window.lucide){try{window.lucide.createIcons();}catch(e){}}
   }
 
   function showPushButtons(){
@@ -221,30 +228,26 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 
   if(!('PushManager' in window)||!('serviceWorker' in navigator)){return;}
 
-  // Check feature flags before showing push buttons
+  // Check feature flags before showing push buttons (reuse cached config)
   (function(){
-    var flagsUrl='/api/cms-config';
     try{
-      fetch(flagsUrl).then(function(r){return r.json();}).then(function(res){
-        if(res.success&&res.data){
-          var ff=res.data.feature_flags;
-          if(typeof ff==='string'){try{ff=JSON.parse(ff);}catch(e){ff={};}}
-          if(ff&&ff.push===false){
-            if(pushBtn)pushBtn.style.display='none';
-            if(pushBtnDt)pushBtnDt.style.display='none';
-            return;
-          }
-          // Scanner feature flag
-          if(ff&&ff.scanner===false){
-            window._dlFeatScanner=false;
-            var sb=document.getElementById('mob-pl-barcode-btn');if(sb)sb.style.display='none';
-            var sbd=document.querySelector('.so-barcode-btn');if(sbd)sbd.style.display='none';
-          }else{
-            window._dlFeatScanner=true;
-          }
+      (window._dlFlagsReady||Promise.resolve()).then(function(){
+        var ff=window._dlFeatureFlags||{};
+        if(ff.push===false){
+          if(pushBtn)pushBtn.style.display='none';
+          if(pushBtnDt)pushBtnDt.style.display='none';
+          return;
+        }
+        // Scanner feature flag
+        if(ff.scanner===false){
+          window._dlFeatScanner=false;
+          var sb=document.getElementById('mob-pl-barcode-btn');if(sb)sb.style.display='none';
+          var sbd=document.querySelector('.so-barcode-btn');if(sbd)sbd.style.display='none';
+        }else{
+          window._dlFeatScanner=true;
         }
         showPushButtons();
-      }).catch(function(){showPushButtons();});
+      });
     }catch(e){showPushButtons();}
   })();
 
@@ -271,7 +274,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 
   function savePushCategories(endpoint){
     var cats=[];
-    ['mittagstisch','angebote','news'].forEach(function(c){
+    ['tagesinfo','news'].forEach(function(c){
       var cb=document.getElementById('push-cat-'+c);
       if(cb&&cb.checked)cats.push(c);
     });
@@ -339,7 +342,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     dialog.appendChild(hdr);
 
     // Category cards
-    ['mittagstisch','angebote','news'].forEach(function(c){
+    ['tagesinfo','news'].forEach(function(c){
       var card=document.createElement('label');
       card.style.cssText='display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px;border-radius:12px;border:2px solid #f0f0f0;cursor:pointer;transition:all .15s ease;background:#fafafa';
       card.onmouseover=function(){card.style.borderColor='#5ea88a';card.style.background='#f0faf4';};
@@ -415,7 +418,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.categories){
-          ['mittagstisch','angebote','news'].forEach(function(c){
+          ['tagesinfo','news'].forEach(function(c){
             var cb=document.getElementById('push-cat-'+c);
             if(cb){
               cb.checked=res.categories.indexOf(c)!==-1;
@@ -563,22 +566,35 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 
 // === DEV ENVIRONMENT INDICATOR ===
 (function(){
-  if(location.hostname.indexOf('proud-dune')!==-1||location.hostname.indexOf('dorfladen-test')!==-1){
+  if(location.hostname.indexOf('proud-dune')!==-1||location.hostname.indexOf('witty-island')!==-1||location.hostname.indexOf('dorfladen-test')!==-1){
+    var isPopup=!!window.opener||(window.parent!==window);
     var b=document.createElement('div');
-    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#e53e3e;color:#fff;text-align:center;padding:4px 0;font-size:13px;font-weight:700;letter-spacing:1px;';
+    b.id='env-banner';
+    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#e53e3e;color:#fff;text-align:center;padding:4px 0;font-size:13px;font-weight:700;letter-spacing:1px;'+(isPopup?'display:none;':'');
     b.textContent='\u26A0 TEST-UMGEBUNG \u2013 Nicht die Live-Seite!';
     document.body.appendChild(b);
     document.body.style.borderTop='none';
-    document.documentElement.style.cssText+='border:4px solid #e53e3e !important;';
-    document.body.style.paddingTop='28px';
+    if(!isPopup){
+      document.documentElement.style.cssText+='outline:4px solid #e53e3e !important;outline-offset:-4px;';
+      document.body.style.paddingTop='28px';
+    }
   }
 })();
 
 // === LIGHTWEIGHT ANALYTICS ===
 (function(){
   if(window.location.pathname.indexOf('/cms')===0)return; // Don't track CMS
+  // Interner Traffic (Entwicklung) markieren, damit die Statistik ihn ausschliesst.
+  // Prod bleibt gezaehlt (echte Besucher auf kind-pebble-072605b03 bzw. Custom-Domain).
+  function _dlInternal(){
+    try{ if(localStorage.getItem('dl_internal')==='1') return true; }catch(e){}
+    var h=location.hostname;
+    if(/proud-dune|witty-island|dorfladen-test|localhost|127\.0\.0\.1/.test(h)) return true;
+    if(/kind-pebble-[0-9a-z]+-\d+\./.test(h)) return true; // PR-Preview (Prod hat kein -<nr>)
+    return false;
+  }
   try{
-    var data={page:window.location.pathname,referrer:document.referrer||'',sw:window.screen?window.screen.width:0};
+    var data={page:window.location.pathname,referrer:document.referrer||'',sw:window.screen?window.screen.width:0,internal:_dlInternal()};
     navigator.sendBeacon('/api/track',JSON.stringify(data));
   }catch(e){}
 })();

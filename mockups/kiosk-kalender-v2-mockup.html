@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kiosk-Kalender v2 – Mockup (Split-View · Info · Touch · Autocomplete · Dialog)</title>
+<style>
+  :root{
+    --pri:#1e463a; --pri-h:#12332a; --pri-l:#f0f4f1;
+    --acc:#b91c1c;
+    --green:#2e7d4f; --green-l:#dcfce7;
+    --blue:#1d4ed8; --blue-l:#dbeafe;
+    --orange:#e65100; --orange-l:#fff3e0;
+    --purple:#6d28d9; --purple-l:#f3e8ff;
+    --info:#0891b2; --info-l:#cffafe;      /* NEU: Kategorie Info (teal) */
+    --yellow:#f59e0b;
+    --surf:#fff; --bg:#faf9f6; --text:#1f2521; --muted:#6b7280; --border:#e6e4de;
+    --r:16px; --r-sm:10px; --r-btn:12px;
+    --f:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+    --sh-s:0 2px 8px rgba(0,0,0,.05); --sh-m:0 8px 24px rgba(27,70,58,.08);
+    --tap:44px; /* F10: Mindest-Tap-Target */
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--f);background:linear-gradient(180deg,#eef1ec,#e3e8de);color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:60px}
+
+  .mock-banner{background:var(--yellow);color:#4a2f00;text-align:center;padding:6px;font-size:.78rem;font-weight:700}
+
+  /* Viewport-Umschalter */
+  .vpbar{position:sticky;top:0;z-index:60;background:#12332a;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px}
+  .vpbar strong{font-size:.9rem;letter-spacing:.3px}
+  .vpbar .seg{display:inline-flex;background:rgba(255,255,255,.12);border-radius:12px;overflow:hidden}
+  .vpbar .seg button{border:none;background:transparent;color:#cfe6dd;font-weight:700;font-size:.82rem;padding:9px 14px;min-height:var(--tap);cursor:pointer}
+  .vpbar .seg button.on{background:#fff;color:#12332a}
+  .vpbar .hint{font-size:.75rem;opacity:.8;margin-left:auto}
+
+  /* Bühne = simuliertes Gerät. Breite steuert Layout über data-w */
+  .stagewrap{display:flex;justify-content:center;padding:22px 12px}
+  .stage{width:100%;max-width:1180px;background:var(--bg);border:1px solid var(--border);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.12);overflow:hidden;transition:max-width .25s ease}
+  .stage[data-w="mobile"]{max-width:390px}
+  .stage[data-w="mini"]{max-width:780px}
+  .stage[data-w="desktop"]{max-width:1180px}
+  .stage .devlabel{background:#f3f1ea;border-bottom:1px solid var(--border);text-align:center;font-size:.72rem;font-weight:700;color:var(--muted);padding:4px}
+
+  /* Header */
+  .head{background:linear-gradient(135deg,var(--pri),#3d7a62);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px}
+  .head h1{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:9px}
+  .head .spacer{flex:1}
+  .head .clock{font-variant-numeric:tabular-nums;font-weight:700;font-size:1rem;text-align:right;line-height:1.1}
+  .head .clock small{display:block;font-size:.68rem;font-weight:400;opacity:.85}
+
+  .wrap{padding:16px 16px 34px}
+
+  /* Toolbar */
+  .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .nav-btn{width:var(--tap);height:var(--tap);border:1.5px solid var(--border);background:var(--surf);border-radius:var(--r-btn);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--pri)}
+  .week-label{font-weight:700;font-size:.92rem;padding:0 6px}
+  .week-label small{display:block;font-weight:400;color:var(--muted);font-size:.74rem}
+  .today-btn{margin-left:auto;padding:0 18px;height:var(--tap);border:1.5px solid var(--pri);background:var(--surf);color:var(--pri);border-radius:var(--r-btn);font-weight:700;font-size:.85rem;cursor:pointer}
+
+  /* Tagesauswahl */
+  .days{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
+  .day-pill{flex:1;min-width:60px;min-height:var(--tap);padding:6px;border:1.5px solid var(--border);background:var(--surf);border-radius:var(--r-sm);text-align:center;cursor:pointer}
+  .day-pill.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+  .day-pill .dow{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .day-pill .dnum{font-size:1.2rem;font-weight:800;line-height:1.1}
+  .day-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--acc);margin:2px auto 0}
+  .day-pill.active .dot{background:#fff}
+
+  /* Filter-Chips (jetzt inkl. Info) */
+  .filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .chip{padding:0 14px;min-height:var(--tap);border:1.5px solid var(--border);border-radius:22px;background:var(--surf);font-size:.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip.active{border-color:var(--pri);background:var(--pri-l);color:var(--pri)}
+  .chip .k{width:11px;height:11px;border-radius:3px}
+
+  /* Schnellerfassung + Autocomplete */
+  .quickadd{background:var(--surf);border:1.5px dashed var(--border);border-radius:var(--r);padding:12px;margin-bottom:16px;box-shadow:var(--sh-s)}
+  .qa-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .qa-field{position:relative;flex:1;min-width:200px}
+  .qa-field input,.qa-field textarea{width:100%;min-height:var(--tap);border:1.5px solid var(--border);border-radius:var(--r-btn);padding:10px 12px;font-size:.95rem;font-family:inherit;resize:none;overflow:hidden;line-height:1.35;box-sizing:border-box}
+  .qa-field input:focus,.qa-field textarea:focus{outline:none;border-color:var(--pri)}
+  .ac-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-btn);box-shadow:var(--sh-m);z-index:30;overflow:hidden;display:none}
+  .ac-dd.open{display:block}
+  .ac-item{min-height:var(--tap);display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:.9rem;cursor:pointer}
+  .ac-item:hover,.ac-item.hl{background:var(--pri-l)}
+  .ac-item .ic{opacity:.6}
+  .ac-empty{padding:10px 12px;color:var(--muted);font-size:.85rem}
+  .qa-toggle{display:inline-flex;border:1.5px solid var(--border);border-radius:var(--r-btn);overflow:hidden}
+  .qa-toggle button{border:none;background:var(--surf);padding:0 14px;min-height:var(--tap);font-size:.82rem;font-weight:700;cursor:pointer;color:var(--muted)}
+  .qa-toggle button.on{background:var(--pri);color:#fff}
+  .qa-add{background:var(--pri);color:#fff;border:none;border-radius:var(--r-btn);padding:0 20px;min-height:var(--tap);font-weight:700;font-size:.92rem;cursor:pointer}
+  .qa-open{background:var(--surf);color:var(--pri);border:1.5px solid var(--pri);border-radius:var(--r-btn);padding:0 16px;min-height:var(--tap);font-weight:700;font-size:.85rem;cursor:pointer}
+
+  /* Split-View: Grid – 1 Spalte < mini, 2 Spalten ab mini */
+  .split{display:grid;grid-template-columns:1fr;gap:16px}
+  .stage[data-w="mini"] .split,
+  .stage[data-w="desktop"] .split{grid-template-columns:1fr 1fr}
+  /* Reihenfolge: Mobile = Ganztägig zuerst; Split = links Uhrzeit, rechts Ganztägig */
+  .col-timed{order:2}
+  .col-allday{order:1}
+  .stage[data-w="mini"] .col-timed,
+  .stage[data-w="desktop"] .col-timed{order:1}
+  .stage[data-w="mini"] .col-allday,
+  .stage[data-w="desktop"] .col-allday{order:2}
+
+  .col h2{font-size:.76rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:6px 2px 8px;display:flex;align-items:center;gap:7px}
+  .col h2 .count{background:var(--border);color:var(--text);border-radius:20px;padding:1px 9px;font-size:.72rem}
+
+  /* Eintrag */
+  .entry{background:var(--surf);border-radius:var(--r);box-shadow:var(--sh-s);margin-bottom:8px;overflow:hidden;border-left:5px solid var(--muted);display:flex;align-items:stretch}
+  .entry.cat-aufgabe{border-left-color:var(--pri)}
+  .entry.cat-reservierung{border-left-color:var(--blue)}
+  .entry.cat-vorbestellung{border-left-color:var(--orange)}
+  .entry.cat-lieferung{border-left-color:var(--purple)}
+  .entry.cat-info{border-left-color:var(--info)}
+  .entry .check{flex-shrink:0;width:var(--tap);display:flex;align-items:center;justify-content:center;cursor:pointer;border-right:1px solid var(--border)}
+  .entry .check .box{width:26px;height:26px;border:2px solid var(--muted);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:transparent}
+  .entry.cat-info .check{visibility:hidden} /* Info = kein Aktionscharakter */
+  .entry .body{flex:1;padding:11px 14px;min-width:0}
+  .entry .top{display:flex;align-items:flex-start;gap:8px;margin-bottom:2px}
+  .entry .time{font-weight:800;font-size:.95rem;font-variant-numeric:tabular-nums;color:var(--pri)}
+  .entry .time.allday{color:var(--muted);font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .entry .title{font-weight:700;font-size:.98rem;flex:1;min-width:0;overflow-wrap:anywhere;white-space:normal}
+  .entry .badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+  .badge{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+  .badge.cat{color:#fff}
+  .badge.b-aufgabe{background:var(--pri)}
+  .badge.b-reservierung{background:var(--blue)}
+  .badge.b-vorbestellung{background:var(--orange)}
+  .badge.b-lieferung{background:var(--purple)}
+  .badge.b-info{background:var(--info)}
+  .badge.kunde{background:var(--green-l);color:var(--green)}
+  .entry.done{opacity:.62;background:#f6f7f5}
+  .entry.done .title{text-decoration:line-through;color:var(--muted)}
+  .entry.done .check .box{background:var(--green);border-color:var(--green);color:#fff}
+
+  .col-empty{text-align:center;color:var(--muted);padding:26px 12px;font-size:.85rem;border:1.5px dashed var(--border);border-radius:var(--r);background:#fbfaf7}
+
+  /* Dialog (breiter ab mini/desktop) */
+  .backdrop{position:fixed;inset:0;background:rgba(15,25,20,.5);display:none;align-items:flex-start;justify-content:center;padding:34px 14px;z-index:80;overflow:auto}
+  .backdrop.open{display:flex}
+  .modal{background:#fff;border-radius:18px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden}
+  /* F13: Dialogbreite je Viewport */
+  .stage[data-w="mini"] ~ .backdrop .modal{max-width:560px}
+  .stage[data-w="desktop"] ~ .backdrop .modal{max-width:640px}
+  .modal .m-head{background:var(--pri);color:#fff;padding:14px 18px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .modal .m-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+  .modal label{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .modal textarea,.modal input[type=text],.modal input[type=time]{width:100%;border:1.5px solid var(--border);border-radius:var(--r-btn);padding:11px 12px;font-size:.98rem;font-family:inherit;min-height:var(--tap);box-sizing:border-box}
+  .modal textarea{resize:none;overflow:hidden;line-height:1.35}
+  .catpills{display:flex;gap:8px;flex-wrap:wrap}
+  .catpill{min-height:var(--tap);padding:0 16px;border:2px solid var(--border);border-radius:var(--r-btn);background:#fff;font-weight:700;font-size:.86rem;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .catpill .k{width:12px;height:12px;border-radius:4px}
+  .catpill.sel{background:var(--pri-l);border-color:var(--pri)}
+  .m-foot{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--border)}
+  .m-foot button{flex:1;min-height:var(--tap);border-radius:var(--r-btn);font-weight:700;font-size:.95rem;cursor:pointer;border:1.5px solid var(--border);background:#fff}
+  .m-foot button.primary{background:var(--pri);color:#fff;border-color:var(--pri)}
+
+  /* Annotationen */
+  .notes{max-width:1180px;margin:6px auto 0;padding:0 14px}
+  .note-card{background:#fff;border:1px solid var(--border);border-left:4px solid var(--pri);border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--sh-s)}
+  .note-card b{color:var(--pri)}
+  .note-card .tag{display:inline-block;font-size:.7rem;font-weight:800;color:#fff;background:var(--pri);border-radius:6px;padding:2px 7px;margin-right:6px}
+  .note-card.info{border-left-color:var(--info)} .note-card.info .tag{background:var(--info)} .note-card.info b{color:var(--info)}
+</style>
+</head>
+<body>
+<div class="mock-banner">🧪 MOCKUP v2 – zeigt die 5 neuen Konzepte (F9–F13). Umschalter oben ändert den simulierten Viewport. Klicks sind interaktiv, keine echte Speicherung.</div>
+
+<div class="vpbar">
+  <strong>📱 Viewport:</strong>
+  <div class="seg" id="vpseg">
+    <button data-w="mobile" onclick="setVp('mobile')">Mobile · 375</button>
+    <button data-w="mini" class="on" onclick="setVp('mini')">iPad mini · 768</button>
+    <button data-w="desktop" onclick="setVp('desktop')">Desktop · 1280</button>
+  </div>
+  <span class="hint">Split-View + breiter Dialog erscheinen ab iPad mini.</span>
+</div>
+
+<div class="stagewrap">
+  <div class="stage" id="stage" data-w="mini">
+    <div class="devlabel" id="devlabel">iPad mini · 768 × 1024</div>
+
+    <div class="head">
+      <h1>📅 Dorfladen-Kalender</h1>
+      <div class="spacer"></div>
+      <div class="clock" id="clock">–<small id="clockDate">–</small></div>
+    </div>
+
+    <div class="wrap">
+      <div class="toolbar">
+        <button class="nav-btn">‹</button>
+        <div class="week-label">KW 30 · 2026<small>20.–26. Juli</small></div>
+        <button class="nav-btn">›</button>
+        <button class="today-btn">Heute</button>
+      </div>
+
+      <div class="days" id="days"></div>
+
+      <div class="filters" id="filters">
+        <div class="chip active" data-cat="all">Alle</div>
+        <div class="chip" data-cat="aufgabe"><span class="k" style="background:var(--pri)"></span>Aufgaben</div>
+        <div class="chip" data-cat="reservierung"><span class="k" style="background:var(--blue)"></span>Reservierungen</div>
+        <div class="chip" data-cat="vorbestellung"><span class="k" style="background:var(--orange)"></span>Vorbestellungen</div>
+        <div class="chip" data-cat="lieferung"><span class="k" style="background:var(--purple)"></span>Lieferungen</div>
+        <div class="chip" data-cat="info"><span class="k" style="background:var(--info)"></span>Info</div>
+      </div>
+
+      <!-- Schnellerfassung mit Autocomplete -->
+      <div class="quickadd">
+        <div class="qa-row">
+          <div class="qa-field">
+            <textarea id="qaTitle" rows="1" placeholder="Was ist zu tun / reserviert?" autocomplete="off"
+                   oninput="onType(this)" onkeydown="onKey(event)" onblur="setTimeout(closeAc,150)"></textarea>
+            <div class="ac-dd" id="acDd"></div>
+          </div>
+          <div class="qa-toggle">
+            <button class="on">Ganztags</button>
+            <button>Uhrzeit</button>
+          </div>
+          <button class="qa-add">+ Hinzufügen</button>
+          <button class="qa-open" onclick="openModal()">Details…</button>
+        </div>
+      </div>
+
+      <!-- Split-View -->
+      <div class="split">
+        <div class="col col-timed">
+          <h2>🕐 Mit Uhrzeit <span class="count">3</span></h2>
+          <div id="timedList"></div>
+        </div>
+        <div class="col col-allday">
+          <h2>📌 Ganztägig <span class="count">2</span></h2>
+          <div id="alldayList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dialog (Breite folgt Viewport via Selektor .stage[data-w] ~ .backdrop) -->
+<div class="backdrop" id="backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="m-head">✏️ Eintrag erfassen</div>
+    <div class="m-body">
+      <div>
+        <label>Was ist zu tun / reserviert?</label>
+        <div class="qa-field" style="min-width:0">
+          <textarea id="mTitle" rows="2" placeholder="z. B. Blumen gießen" oninput="onType(this)" onkeydown="onKey(event)" onblur="setTimeout(closeAc,150)"></textarea>
+          <div class="ac-dd" id="acDd2"></div>
+        </div>
+      </div>
+      <div>
+        <label>Kategorie</label>
+        <div class="catpills">
+          <div class="catpill sel"><span class="k" style="background:var(--pri)"></span>Aufgabe</div>
+          <div class="catpill"><span class="k" style="background:var(--blue)"></span>Reservierung</div>
+          <div class="catpill"><span class="k" style="background:var(--orange)"></span>Vorbestellung</div>
+          <div class="catpill"><span class="k" style="background:var(--purple)"></span>Lieferung</div>
+          <div class="catpill"><span class="k" style="background:var(--info)"></span>Info</div>
+        </div>
+      </div>
+      <div>
+        <label>Uhrzeit (optional)</label>
+        <input type="time" value="10:30">
+      </div>
+    </div>
+    <div class="m-foot">
+      <button onclick="closeModal()">Abbrechen</button>
+      <button class="primary" onclick="closeModal()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <div class="note-card"><span class="tag">F9</span><b>Split-View ab iPad mini:</b> links „Mit Uhrzeit" (terminiert), rechts „Ganztägig". Mobile bleibt gestapelt (Ganztägig oben). Leere Spalte zeigt Leerzustand statt zu kollabieren.</div>
+  <div class="note-card"><span class="tag">F10</span><b>Touch-first:</b> alle Buttons, Pills, Chips, Tages- und Kategorie-Auswahl ≥ 44 px; keine Hover-only-Aktionen.</div>
+  <div class="note-card"><span class="tag">F11</span><b>Autocomplete:</b> im Titelfeld tippen (z. B. „Blum") → Vorschläge aus bestehenden Einträgen; Tap/Enter übernimmt.</div>
+  <div class="note-card info"><span class="tag">F12</span><b>Neue Kategorie „Info" (teal):</b> als Filter, im Dialog wählbar, teal Rand/Badge. Info = rein informativ (keine Erledigt-Checkbox).</div>
+  <div class="note-card"><span class="tag">F13</span><b>Breiterer Dialog:</b> 420 px (Mobile) → ~560 px (iPad mini) → ~640 px (Desktop), für komfortable Touch-Bedienung.</div>
+  <div class="note-card"><span class="tag">F14</span><b>Mehrzeiliger Titel:</b> lange Titel brechen um und werden vollständig angezeigt (kein „…"); Eingabefelder erlauben mehrzeiligen Text.</div>
+</div>
+
+<script>
+  // Beispiel-Titel für Autocomplete (aus "bestehenden Einträgen")
+  var TITLES = ['Blumen gießen','Blumenstrauß abholbereit (Fam. Huber)','Bäcker-Bestellung aufgeben',
+    'Kasse abrechnen','Kühltheke reinigen','Gemüselieferung annehmen','Metzger-Bestellung',
+    'Öffnungszeiten Feiertag aushängen','Wochenware bestellen'];
+
+  var timed = [
+    {t:'08:00',title:'Gemüselieferung annehmen',cat:'lieferung',kunde:''},
+    {t:'10:30',title:'Blumenstrauß abholbereit',cat:'vorbestellung',kunde:'Fam. Huber'},
+    {t:'16:00',title:'Tisch für 6 Personen',cat:'reservierung',kunde:'Fam. Berger',done:true}
+  ];
+  var allday = [
+    {title:'Kasse abrechnen',cat:'aufgabe'},
+    {title:'Feiertag Donnerstag: Der Laden bleibt ganztägig geschlossen – bitte Kundschaft rechtzeitig informieren und Aushang an der Eingangstür anbringen',cat:'info'}
+  ];
+
+  function badge(cat){var n={aufgabe:'Aufgabe',reservierung:'Reservierung',vorbestellung:'Vorbestellung',lieferung:'Lieferung',info:'Info'};return '<span class="badge cat b-'+cat+'">'+n[cat]+'</span>';}
+  function entryTimed(e){
+    return '<div class="entry cat-'+e.cat+(e.done?' done':'')+'">'+
+      '<div class="check"><div class="box">✓</div></div>'+
+      '<div class="body"><div class="top"><span class="time">'+e.t+'</span><span class="title">'+e.title+'</span></div>'+
+      '<div class="badges">'+badge(e.cat)+(e.kunde?'<span class="badge kunde">👤 '+e.kunde+'</span>':'')+'</div></div></div>';
+  }
+  function entryAllday(e){
+    return '<div class="entry cat-'+e.cat+'">'+
+      '<div class="check"><div class="box">✓</div></div>'+
+      '<div class="body"><div class="top"><span class="time allday">'+(e.cat==='info'?'Info':'Ganztägig')+'</span><span class="title">'+e.title+'</span></div>'+
+      '<div class="badges">'+badge(e.cat)+'</div></div></div>';
+  }
+  function renderLists(){
+    document.getElementById('timedList').innerHTML = timed.length? timed.map(entryTimed).join('')
+      : '<div class="col-empty">Keine terminierten Einträge</div>';
+    document.getElementById('alldayList').innerHTML = allday.length? allday.map(entryAllday).join('')
+      : '<div class="col-empty">Keine ganztägigen Einträge</div>';
+  }
+
+  // Tagesauswahl
+  function renderDays(){
+    var dows=['Mo','Di','Mi','Do','Fr','Sa','So'], nums=[20,21,22,23,24,25,26], html='';
+    for(var i=0;i<7;i++){html+='<div class="day-pill'+(i===2?' active':'')+'"><div class="dow">'+dows[i]+'</div><div class="dnum">'+nums[i]+'</div>'+(i<5?'<div class="dot"></div>':'')+'</div>';}
+    document.getElementById('days').innerHTML=html;
+  }
+
+  // Viewport-Umschalter
+  function setVp(w){
+    var stage=document.getElementById('stage'); stage.setAttribute('data-w',w);
+    document.querySelectorAll('#vpseg button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-w')===w);});
+    document.getElementById('devlabel').textContent =
+      w==='mobile'?'Mobile · 375 × 667':w==='mini'?'iPad mini · 768 × 1024':'Desktop · 1280 × 800';
+  }
+
+  // Autocomplete
+  var acTarget=null, acBox=null, acIdx=-1;
+  function acDdFor(el){return el.id==='mTitle'?document.getElementById('acDd2'):document.getElementById('acDd');}
+  function autoGrow(el){ if(!el)return; el.style.height='auto'; var max=180; var h=Math.min(el.scrollHeight,max); el.style.height=h+'px'; el.style.overflowY = el.scrollHeight>max ? 'auto' : 'hidden'; }
+  function onType(el){
+    autoGrow(el);
+    acTarget=el; acBox=acDdFor(el); acIdx=-1;
+    var q=el.value.trim().toLowerCase();
+    if(q.length<2){closeAc();return;}
+    var hits=TITLES.filter(function(t){return t.toLowerCase().indexOf(q)!==-1;}).slice(0,6);
+    if(!hits.length){acBox.innerHTML='<div class="ac-empty">Kein Vorschlag – frei weitertippen</div>';acBox.classList.add('open');return;}
+    acBox.innerHTML=hits.map(function(t){return '<div class="ac-item" onmousedown="pick(this)"><span class="ic">🔎</span>'+t+'</div>';}).join('');
+    acBox.classList.add('open');
+  }
+  function pick(node){ if(acTarget){acTarget.value=node.textContent.replace('🔎','').trim();autoGrow(acTarget);} closeAc(); }
+  function closeAc(){ if(acBox){acBox.classList.remove('open');acBox.innerHTML='';} }
+  function onKey(ev){
+    if(!acBox||!acBox.classList.contains('open'))return;
+    var items=acBox.querySelectorAll('.ac-item'); if(!items.length)return;
+    if(ev.key==='ArrowDown'){ev.preventDefault();acIdx=(acIdx+1)%items.length;}
+    else if(ev.key==='ArrowUp'){ev.preventDefault();acIdx=(acIdx-1+items.length)%items.length;}
+    else if(ev.key==='Enter'){ if(acIdx>=0){ev.preventDefault();pick(items[acIdx]);} return;}
+    else return;
+    items.forEach(function(it,i){it.classList.toggle('hl',i===acIdx);});
+  }
+
+  // Dialog
+  function openModal(){document.getElementById('backdrop').classList.add('open');autoGrow(document.getElementById('mTitle'));}
+  function closeModal(){document.getElementById('backdrop').classList.remove('open');}
+
+  // Kategorie-Pills im Dialog
+  document.addEventListener('click',function(e){
+    var p=e.target.closest('.catpill'); if(p){p.parentNode.querySelectorAll('.catpill').forEach(function(x){x.classList.remove('sel');});p.classList.add('sel');}
+    var c=e.target.closest('.chip'); if(c){c.parentNode.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});c.classList.add('active');}
+    var d=e.target.closest('.day-pill'); if(d){d.parentNode.querySelectorAll('.day-pill').forEach(function(x){x.classList.remove('active');});d.classList.add('active');}
+    var ck=e.target.closest('.entry .check'); if(ck){ck.closest('.entry').classList.toggle('done');}
+  });
+
+  function clock(){var n=new Date();document.getElementById('clock').firstChild.textContent=n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});document.getElementById('clockDate').textContent=n.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'short'});}
+
+  renderDays(); renderLists(); clock(); setInterval(clock,1000);
+  autoGrow(document.getElementById('qaTitle')); autoGrow(document.getElementById('mTitle'));
+</script>
+</body>
+</html>

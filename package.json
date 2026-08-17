@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui-host=127.0.0.1 --ui-port=9250",
+    "test:report": "playwright show-report --host 127.0.0.1 --port 9323"
+  },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "playwright": "^1.60.0"

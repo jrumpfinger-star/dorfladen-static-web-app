@@ -1,12 +1,20 @@
 {
 	"servers": {
-		"Default ENV": {
-			"url": "https://orgab4e2f00.crm16.dynamics.com",
-			"type": "http"
+	
+		"markitdown": {
+			"type": "stdio",
+			"command": "uvx",
+			"args": [
+				"markitdown-mcp"
+			]
 		},
-		"Dev ENV": {
-			"url": "https://org392a4789.crm16.dynamics.com",
-			"type": "http"
+		"playwright": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"-y",
+				"@playwright/mcp@latest"
+			]
 		}
 	},
 	"inputs": []

@@ -6,10 +6,12 @@ import requests
 import base64
 import uuid
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ---------- config ----------
-TENANT_ID = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-CLIENT_ID = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+from shared.dataverse import get_tenant_id, get_client_id
+TENANT_ID = get_tenant_id()
+CLIENT_ID = get_client_id()
 CLIENT_SECRET = os.environ.get("DV_CLIENT_SECRET", "")
 
 # SharePoint drive + root folder for Daily images (same drive as gallery)
@@ -17,7 +19,13 @@ SP_DRIVE = "b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A"
 # We store everything under a "SocialMedia" folder in SP
 SP_SOCIAL_FOLDER_NAME = "SocialMedia"
 
-KATEGORIEN = ["Mittagessen", "Kuchen", "Obst & Gemuese", "Aufstriche"]
+DEFAULT_KATEGORIEN = [
+    {"name": "Mittagessen", "icon": "utensils"},
+    {"name": "Kuchen", "icon": "cake-slice"},
+    {"name": "Obst & Gemuese", "icon": "apple"},
+    {"name": "Aufstriche", "icon": "sandwich"},
+    {"name": "Salate", "icon": "salad"},
+]
 KATALOG_FILE = "katalog.json"
 MITTAGSTISCH_BILDER_FILE = "mittagstisch-bilder.json"
 
@@ -149,35 +157,133 @@ def get_download_url(token, folder_id, filename):
 
 # ---------- handlers ----------
 
+def _normalize_kategorien(raw):
+    """Ensure kategorien is a list of {name, icon} objects.
+    Handles legacy string arrays and new object arrays."""
+    if not isinstance(raw, list) or not raw:
+        return DEFAULT_KATEGORIEN
+    # Build icon lookup from defaults
+    icon_map = {k["name"]: k["icon"] for k in DEFAULT_KATEGORIEN}
+    result = []
+    for item in raw:
+        if isinstance(item, str):
+            result.append({"name": item, "icon": icon_map.get(item, "tag")})
+        elif isinstance(item, dict) and item.get("name"):
+            if not item.get("icon"):
+                item["icon"] = icon_map.get(item["name"], "tag")
+            result.append(item)
+    return result if result else DEFAULT_KATEGORIEN
+
+
+def load_kategorien():
+    """Load categories from cms-config (Dataverse). Fallback to DEFAULT_KATEGORIEN."""
+    try:
+        dv_url = os.environ.get("DV_DEFAULT_URL", "") or os.environ.get("DV_DEV_URL", "")
+        if not dv_url:
+            return DEFAULT_KATEGORIEN
+        tenant_id = os.environ.get("DV_TENANT_ID", "")
+        client_id = os.environ.get("DV_CLIENT_ID", "")
+        client_secret = os.environ.get("DV_CLIENT_SECRET", "")
+        if not client_secret:
+            return DEFAULT_KATEGORIEN
+        import msal as _msal
+        app = _msal.ConfidentialClientApplication(
+            client_id,
+            authority=f"https://login.microsoftonline.com/{tenant_id}",
+            client_credential=client_secret,
+        )
+        tok = app.acquire_token_for_client(scopes=[f"{dv_url}/.default"])
+        access_token = tok.get("access_token")
+        if not access_token:
+            return DEFAULT_KATEGORIEN
+        h = {
+            "Authorization": f"Bearer {access_token}",
+            "OData-MaxVersion": "4.0", "OData-Version": "4.0",
+            "Accept": "application/json",
+        }
+        url = f"{dv_url}/api/data/v9.2/dl_seiteninhalts?$filter=dl_schluessel eq 'katalog_kategorien'&$select=dl_wert&$top=1"
+        r = requests.get(url, headers=h, timeout=10)
+        if r.status_code == 200:
+            items = r.json().get("value", [])
+            if items:
+                import json as _json
+                val = items[0].get("dl_wert", "")
+                parsed = _json.loads(val) if val.strip().startswith("[") else None
+                if isinstance(parsed, list) and len(parsed) > 0:
+                    return _normalize_kategorien(parsed)
+    except Exception:
+        pass
+    return DEFAULT_KATEGORIEN
+
+
+def _refresh_url(token, folder_id, item):
+    """Refresh download URL for a single item. Returns (item, changed)."""
+    if not item.get("bild_datei"):
+        return item, False
+    fresh_url = get_download_url(token, folder_id, item["bild_datei"])
+    if fresh_url and fresh_url != item.get("bild_url", ""):
+        item["bild_url"] = fresh_url
+        return item, True
+    return item, False
+
+
+def _download_base64(item):
+    """Download image and convert to base64 data URI. Returns (index, data_uri)."""
+    dl_url = item.get("bild_url", "")
+    if not dl_url or dl_url.startswith("data:"):
+        return None
+    try:
+        r = requests.get(dl_url, timeout=15)
+        if r.status_code == 200:
+            ct = r.headers.get("Content-Type", "image/jpeg")
+            b64 = base64.b64encode(r.content).decode("ascii")
+            return f"data:{ct};base64,{b64}"
+    except:
+        pass
+    return None
+
+
 def handle_get(req, token, folder_id):
     """GET: Return full katalog with image URLs refreshed.
-    If ?base64=1, download each image and return as data:URI (avoids CORS)."""
+    If ?base64=1, download each image and return as data:URI (avoids CORS).
+    Uses parallel I/O for performance."""
     katalog = load_katalog(token, folder_id)
-    # Always refresh download URLs (they expire after ~1h)
-    changed = False
-    for item in katalog:
-        if item.get("bild_datei"):
-            fresh_url = get_download_url(token, folder_id, item["bild_datei"])
-            if fresh_url and fresh_url != item.get("bild_url", ""):
-                item["bild_url"] = fresh_url
-                changed = True
-    if changed:
-        save_katalog(token, folder_id, katalog)
-    # Convert images to base64 data URIs if requested
     want_base64 = req.params.get("base64", "") == "1"
-    if want_base64:
-        for item in katalog:
-            dl_url = item.get("bild_url", "")
-            if dl_url and not dl_url.startswith("data:"):
+
+    # Parallel: refresh download URLs (they expire after ~1h)
+    items_with_bild = [item for item in katalog if item.get("bild_datei")]
+    changed = False
+    if items_with_bild:
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futures = {pool.submit(_refresh_url, token, folder_id, item): item for item in items_with_bild}
+            for f in as_completed(futures):
                 try:
-                    r = requests.get(dl_url, timeout=15)
-                    if r.status_code == 200:
-                        ct = r.headers.get("Content-Type", "image/jpeg")
-                        b64 = base64.b64encode(r.content).decode("ascii")
-                        item["bild_url"] = f"data:{ct};base64,{b64}"
+                    _, was_changed = f.result()
+                    if was_changed:
+                        changed = True
                 except:
                     pass
-    return ok({"success": True, "kategorien": KATEGORIEN, "items": katalog})
+    if changed:
+        save_katalog(token, folder_id, katalog)
+
+    # Parallel: convert images to base64 data URIs if requested
+    if want_base64:
+        items_to_convert = [(i, item) for i, item in enumerate(katalog)
+                            if item.get("bild_url") and not item["bild_url"].startswith("data:")]
+        if items_to_convert:
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futures = {pool.submit(_download_base64, item): i for i, item in items_to_convert}
+                for f in as_completed(futures):
+                    idx = futures[f]
+                    try:
+                        result = f.result()
+                        if result:
+                            katalog[idx]["bild_url"] = result
+                    except:
+                        pass
+
+    kategorien = load_kategorien()
+    return ok({"success": True, "kategorien": kategorien, "items": katalog})
 
 
 def handle_post(req, token, folder_id):
@@ -371,27 +477,42 @@ def save_mt_bilder(token, folder_id, data):
     return r.status_code in (200, 201)
 
 
+def _download_mt_bild(token, sp_id):
+    """Download a single MT image by SP item id. Returns data URI or None."""
+    try:
+        h = graph_headers(token)
+        dl_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{sp_id}/content"
+        r = requests.get(dl_url, headers=h, timeout=20)
+        if r.status_code == 200:
+            ct = r.headers.get("Content-Type", "image/png")
+            b64 = base64.b64encode(r.content).decode("ascii")
+            return f"data:{ct};base64,{b64}"
+    except:
+        pass
+    return None
+
+
 def handle_mt_bilder_get(req, token, folder_id):
     """GET ?action=mt-bilder: Return all Mittagstisch images.
     If ?base64=1, download each image from SharePoint and return as data:URI
-    so the browser can use them on canvas without CORS issues."""
+    so the browser can use them on canvas without CORS issues.
+    Uses parallel I/O for performance."""
     bilder = load_mt_bilder(token, folder_id)
     want_base64 = req.params.get("base64", "") == "1"
     if want_base64 and bilder:
-        h = graph_headers(token)
-        for gericht, info in bilder.items():
-            sp_id = info.get("bild_sp_id")
-            if not sp_id:
-                continue
-            try:
-                dl_url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{sp_id}/content"
-                r = requests.get(dl_url, headers=h, timeout=20)
-                if r.status_code == 200:
-                    ct = r.headers.get("Content-Type", "image/png")
-                    b64 = base64.b64encode(r.content).decode("ascii")
-                    info["bild_base64"] = f"data:{ct};base64,{b64}"
-            except:
-                pass
+        items_to_dl = [(g, info) for g, info in bilder.items() if info.get("bild_sp_id")]
+        if items_to_dl:
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futures = {pool.submit(_download_mt_bild, token, info["bild_sp_id"]): g
+                           for g, info in items_to_dl}
+                for f in as_completed(futures):
+                    gericht = futures[f]
+                    try:
+                        result = f.result()
+                        if result:
+                            bilder[gericht]["bild_base64"] = result
+                    except:
+                        pass
     return ok({"success": True, "bilder": bilder})
 
 
@@ -464,6 +585,10 @@ def handle_mt_bilder_delete(req, token, folder_id):
 # ---------- main ----------
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    from shared.auth import admin_auth_guard
+    _auth = admin_auth_guard(req)
+    if _auth is not None:
+        return _auth
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors())
 

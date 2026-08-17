@@ -16,8 +16,26 @@
   <meta property="og:url" content="https://kind-pebble-072605b03.7.azurestaticapps.net/mittagstisch-bestellen">
   <meta property="og:site_name" content="Dorfladen Oberornau">
   <meta property="og:locale" content="de_DE">
+  <script src="/js/theme.js"></script>
   <style>
-    :root{--c-pri:#2d5016;--c-acc:#bd8b5c;--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--c-green:#2e7d4f;--c-red:#dc2626;--radius:14px}
+    :root{--c-pri:var(--dl-green,#2d5016);--c-acc:#bd8b5c;--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--c-green:var(--dl-green-action,#2e7d4f);--c-red:var(--dl-red,#dc2626);--radius:14px}
+    html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-green:#5cb85f}
+    /* Dark-Mode: Klassen mit hartcodiertem #fff/#f3f4f6 auf Theme-Werte umbiegen */
+    html[data-theme="dark"] .push-prompt,
+    html[data-theme="dark"] .success-card,
+    html[data-theme="dark"] .share-btn{background:var(--c-card);color:var(--c-text)}
+    html[data-theme="dark"] .qty-btn{background:var(--c-card)}
+    html[data-theme="dark"] .push-prompt-no,
+    html[data-theme="dark"] .share-btn:hover{background:#161c20}
+    html[data-theme="dark"] .dish-header,
+    html[data-theme="dark"] .lunch-cd{background:linear-gradient(135deg,#2a2410,#201d0e) !important;border-bottom-color:#4a3a10 !important;color:#e6eae8}
+    html[data-theme="dark"] .dish-header *{color:#e6eae8}
+    html[data-theme="dark"] .success-nr{background:#12251c !important;color:#e6eae8}
+    html[data-theme="dark"] .menu-item.selected{background:#12251c}
+    html[data-theme="dark"] .menu-item:hover{background:#161c20}
+    html[data-theme="dark"] .menu-day-header{background:#201d0e !important;border-top-color:#2a333a !important}
+    #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-card);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);padding:0;transition:transform .15s}
+    #dl-theme-toggle:hover{transform:scale(1.08)}
     /* ── Push notification pre-prompt ── */
     .push-prompt-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:flex-end;justify-content:center;padding:16px}
     .push-prompt-bg.open{display:flex}
@@ -40,6 +58,14 @@
     .header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:16px 20px;text-align:center;position:sticky;top:0;z-index:100}
     .header h1{font-size:18px;font-weight:800;margin-bottom:2px}
     .header small{font-size:12px;opacity:.85}
+    .header-back{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:rgba(255,255,255,.15);color:#fff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .header-back:hover{background:rgba(255,255,255,.3)}
+    .lunch-cd{background:linear-gradient(135deg,#fef3c7,#fef9c3);border-bottom:1px solid #f59e0b33;padding:8px 16px;text-align:center;position:sticky;top:62px;z-index:99}
+    .lunch-cd-title{font-size:12px;font-weight:700;color:#92400e}
+    .lunch-cd-timer{font-size:14px;font-weight:800;color:#b45309;margin-top:1px;font-variant-numeric:tabular-nums}
+    .lunch-cd.closed{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#dc262633}
+    .lunch-cd.closed .lunch-cd-title{color:#991b1b}
+    .lunch-cd.closed .lunch-cd-timer{color:#b91c1c}
 
     .container{max-width:520px;margin:0 auto;padding:16px}
 
@@ -68,7 +94,7 @@
 
     /* Anmerkung */
     .note-wrap{padding:0 20px 16px}
-    .note-wrap textarea{width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;outline:none}
+    .note-wrap textarea{width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none;min-height:60px;outline:none;overflow:hidden}
     .note-wrap textarea:focus{border-color:var(--c-green)}
     .note-wrap label{font-size:12px;color:var(--c-muted);margin-bottom:4px;display:block}
 
@@ -130,9 +156,23 @@
 </head>
 <body>
 
-<div class="header">
+<div class="header" id="mt-header">
+  <button class="header-back" id="mt-back-btn" onclick="if(window!==window.parent){window.parent.postMessage('closeMittagPopup','*')}else{history.length>1?history.back():location.href='/'}" title="Zurück">
+    <svg id="mt-back-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  </button>
   <h1>🍽 Mittagessen bestellen</h1>
   <small>Dorfladen Oberornau · Dorfplatz 1</small>
+</div>
+<script>
+if(window!==window.parent){
+  var b=document.getElementById('mt-back-btn');
+  if(b) b.style.display='none'; // modal has its own close button
+}
+</script>
+
+<div class="lunch-cd" id="lunch-cd" style="display:none">
+  <div class="lunch-cd-title" id="lcd-title"></div>
+  <div class="lunch-cd-timer" id="lcd-timer"></div>
 </div>
 
 <div class="container">
@@ -152,6 +192,7 @@
         <div class="dish-day" id="dish-day"></div>
         <div class="dish-name" id="dish-name"></div>
         <div class="dish-price" id="dish-price"></div>
+        <div id="dish-allergene" style="font-size:12px;color:#d97706;margin-top:6px;display:none"></div>
         <div class="dish-eco">🏷 0,50 € Öko-Rabatt mit eigenem Behälter</div>
       </div>
       <div class="qty-row">
@@ -167,7 +208,7 @@
       </div>
       <div class="note-wrap">
         <label for="note-input">Anmerkung (optional)</label>
-        <textarea id="note-input" placeholder="z.B. ohne Zwiebeln, extra Soße…"></textarea>
+        <textarea id="note-input" placeholder="z.B. ohne Zwiebeln, extra Soße…" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
       </div>
 
       <div class="share-row" id="share-row-internal" style="padding:0 20px 16px;display:none">
@@ -199,7 +240,7 @@
     <button class="submit-btn" id="submit-btn" onclick="submitOrder()">🍽 Jetzt bestellen</button>
 
     <div class="footer">
-      <a href="/">← Zurück zum Dorfladen</a> · <a href="tel:+4980826229991">☎ 08082 622 99 91</a>
+      <a href="/" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zurück zum Dorfladen</a> · <a href="tel:+4980826229991">☎ 08082 622 99 91</a>
     </div>
   </div>
 
@@ -215,7 +256,7 @@
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <a class="success-btn" href="/bestellstatus" style="background:#2563eb">📋 Bestellstatus ansehen</a>
       <button class="success-btn" onclick="newOrder()">🍽 Weitere Bestellung</button>
-      <a class="success-btn" href="/" style="background:#6b7280">← Zur Startseite</a>
+      <a class="success-btn" href="/" style="background:#6b7280" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zur Startseite</a>
     </div>
   </div>
 </div>
@@ -247,6 +288,36 @@
   var selectedDish = null; // {id, gericht, preis, datum, wochentag_label}
   var DAY_LABELS = {101000:'Mo',101001:'Di',101002:'Mi',101003:'Do',101004:'Fr',101005:'Sa'};
   var DAY_FULL = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag',101005:'Samstag'};
+  var _bsCfg=window._dlBestellschluss||10.5;
+  var BESTELLSCHLUSS_H = Math.floor(_bsCfg), BESTELLSCHLUSS_M = Math.round((_bsCfg-Math.floor(_bsCfg))*60);
+
+  // ── Bestellschluss-Countdown ──
+  function updateLunchCountdown(){
+    var el=document.getElementById('lunch-cd');
+    var title=document.getElementById('lcd-title');
+    var timer=document.getElementById('lcd-timer');
+    if(!el) return;
+    var now=new Date();
+    var dow=now.getDay(); // 0=Sun
+    if(dow===0){ el.style.display='none'; return; }
+    var schluss=new Date(now);
+    schluss.setHours(BESTELLSCHLUSS_H,BESTELLSCHLUSS_M,0,0);
+    var diff=schluss-now;
+    el.style.display='';
+    if(diff>0){
+      el.classList.remove('closed');
+      var h=Math.floor(diff/3600000);
+      var m=Math.floor((diff%3600000)/60000);
+      title.textContent='Bestellschluss f\u00fcr heute: '+BESTELLSCHLUSS_H+':'+(BESTELLSCHLUSS_M<10?'0':'')+BESTELLSCHLUSS_M+' Uhr';
+      timer.textContent='Noch '+h+'h '+m+'min';
+    } else {
+      el.classList.add('closed');
+      title.textContent='Bestellschluss f\u00fcr heute erreicht';
+      timer.textContent='Bestellungen f\u00fcr morgen sind weiterhin m\u00f6glich';
+    }
+  }
+  updateLunchCountdown();
+  setInterval(updateLunchCountdown,30000);
 
   // ── Persist customer data ──
   function loadCustomer(){
@@ -274,6 +345,7 @@
   var paramPreis = parseFloat(params.get('preis') || '0');
   var paramDatum = params.get('datum') || '';
   var paramTag = params.get('tag') || '';
+  var paramHeute = params.get('heute') === '1';
 
   // ── Load Wochenplan ──
   function loadMenu(){
@@ -281,6 +353,16 @@
       .then(function(r){return r.json();})
       .then(function(data){
         var items = (data.data || []).filter(function(m){return m.dl_gericht && m.dl_preis;});
+
+        // Filter to today only if ?heute=1
+        if(paramHeute){
+          var todayDay = new Date().getDay(); // 0=Sun,1=Mon...6=Sat
+          var dvDay = todayDay===0?null:(100999+todayDay);
+          if(dvDay){
+            var todayItems = items.filter(function(m){return m.dl_wochentag===dvDay;});
+            if(todayItems.length) items = todayItems;
+          }
+        }
         if(items.length===0){
           document.getElementById('menu-section').style.display='';
           document.getElementById('menu-list').innerHTML='<div style="padding:20px;text-align:center;color:#888">Kein aktueller Mittagstisch verfügbar.</div>';
@@ -297,7 +379,8 @@
               preis: found.dl_preis,
               datum: found.dl_datum || '',
               wochentag: found.dl_wochentag,
-              wochentag_label: DAY_FULL[found.dl_wochentag]||''
+              wochentag_label: DAY_FULL[found.dl_wochentag]||'',
+              allergene: found.dl_allergene||''
             });
             return;
           }
@@ -313,7 +396,8 @@
               preis: found2.dl_preis || paramPreis,
               datum: found2.dl_datum || paramDatum,
               wochentag: found2.dl_wochentag,
-              wochentag_label: DAY_FULL[found2.dl_wochentag]||paramTag
+              wochentag_label: DAY_FULL[found2.dl_wochentag]||paramTag,
+              allergene: found2.dl_allergene||''
             });
             return;
           }
@@ -342,17 +426,35 @@
       byDay[dc].push(m);
     });
     var weekDays = [101000,101001,101002,101003,101004,101005];
+    var now = new Date();
+    var todayISO = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
+    var nowDecimal = now.getHours()+now.getMinutes()/60;
     var html = '';
     weekDays.forEach(function(dc){
       var dayMeals = byDay[dc] || [];
       if(dayMeals.length===0) return;
-      html += '<div class="menu-day-header">' + (DAY_FULL[dc]||'?') + '</div>';
+      var sampleDatum = '';
+      dayMeals.forEach(function(m){ if(!sampleDatum && m.dl_datum) sampleDatum = (m.dl_datum||'').split('T')[0]; });
+      var isPast = sampleDatum && sampleDatum < todayISO;
+      var isToday = sampleDatum && sampleDatum === todayISO;
+      var todayClosed = isToday && nowDecimal >= _bsCfg;
+      var canOrder = !isPast && !todayClosed;
+      var dayLabel = DAY_FULL[dc]||'?';
+      if(isPast) dayLabel += ' <span style="font-size:10px;font-weight:400;color:#9ca3af;margin-left:4px">vorbei</span>';
+      else if(todayClosed) dayLabel += ' <span style="font-size:10px;font-weight:400;color:#dc2626;margin-left:4px">Bestellschluss erreicht</span>';
+      html += '<div class="menu-day-header"' + (canOrder?'':' style="opacity:.5"') + '>' + dayLabel + '</div>';
       dayMeals.forEach(function(m){
         var p = m.dl_preis ? ('€ '+m.dl_preis.toFixed(2).replace('.',',')) : '';
-        html += '<div class="menu-item" onclick="window._selectFromMenu(\'' + m.dl_wochenplanid + '\')">';
-        html += '<div class="menu-item-dish">' + esc(m.dl_gericht) + '</div>';
-        html += '<div class="menu-item-price">' + p + '</div>';
-        html += '<div class="menu-item-order"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div>';
+        if(canOrder){
+          html += '<div class="menu-item" onclick="window._selectFromMenu(\'' + m.dl_wochenplanid + '\')">';
+          html += '<div class="menu-item-dish">' + esc(m.dl_gericht) + (m.dl_allergene ? '<div style="font-size:11px;color:#d97706;font-weight:400;margin-top:2px">⚠️ '+esc(m.dl_allergene)+'</div>' : '') + '</div>';
+          html += '<div class="menu-item-price">' + p + '</div>';
+          html += '<div class="menu-item-order"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div>';
+        } else {
+          html += '<div class="menu-item" style="opacity:.45;cursor:default;pointer-events:none">';
+          html += '<div class="menu-item-dish" style="text-decoration:line-through">' + esc(m.dl_gericht) + '</div>';
+          html += '<div class="menu-item-price" style="color:#9ca3af">' + p + '</div>';
+        }
         html += '</div>';
       });
     });
@@ -368,7 +470,8 @@
         preis: m.dl_preis,
         datum: m.dl_datum || '',
         wochentag: m.dl_wochentag,
-        wochentag_label: DAY_FULL[m.dl_wochentag]||''
+        wochentag_label: DAY_FULL[m.dl_wochentag]||'',
+        allergene: m.dl_allergene||''
       });
     };
   }
@@ -381,10 +484,30 @@
     document.getElementById('dish-day').textContent = dish.wochentag_label || '';
     document.getElementById('dish-name').textContent = dish.gericht;
     document.getElementById('dish-price').textContent = dish.preis ? (dish.preis.toFixed(2).replace('.',',')+' € pro Portion') : '';
+    var allergEl=document.getElementById('dish-allergene');
+    if(dish.allergene){allergEl.textContent='\u26a0\ufe0f '+dish.allergene;allergEl.style.display='';}else{allergEl.style.display='none';allergEl.textContent='';}
     updateQtyUI();
 
     // Update page title + OG
     document.title = dish.gericht + ' bestellen – Dorfladen Oberornau';
+
+    // Bestellzeitsperre: Warnung wenn heute nach Bestellschluss
+    var errEl = document.getElementById('error-box');
+    if(dish.datum){
+      var now = new Date();
+      var todayISO = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
+      var dishDate = (dish.datum||'').split('T')[0];
+      if(dishDate === todayISO && (now.getHours() + now.getMinutes()/60) >= _bsCfg){
+        errEl.innerHTML = '⚠️ Der Bestellschluss für heute ('+BESTELLSCHLUSS_H+':'+(BESTELLSCHLUSS_M<10?'0':'')+BESTELLSCHLUSS_M+' Uhr) ist leider überschritten. Bestellungen für heute sind nicht mehr möglich.';
+        errEl.style.display = '';
+        var btn = document.getElementById('submit-btn');
+        if(btn){ btn.disabled = true; btn.style.opacity = '.4'; }
+      } else {
+        errEl.style.display = 'none';
+        var btn2 = document.getElementById('submit-btn');
+        if(btn2){ btn2.disabled = false; btn2.style.opacity = ''; }
+      }
+    }
 
     // Register push if possible
     registerPush();
@@ -415,6 +538,16 @@
     if(!name) errors.push('Bitte Name eingeben.');
     if(!email) errors.push('Bitte E-Mail eingeben.');
     if(!selectedDish) errors.push('Kein Gericht ausgewählt.');
+    // Bestellzeitsperre: heute nur bis Bestellschluss
+    if(selectedDish && selectedDish.datum){
+      var now = new Date();
+      var todayISO = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
+      var dishDate2 = (selectedDish.datum||'').split('T')[0];
+      if(dishDate2 === todayISO){
+        var h = now.getHours() + now.getMinutes()/60;
+        if(h >= _bsCfg) errors.push('Der Bestellschluss für heute ('+BESTELLSCHLUSS_H+':'+(BESTELLSCHLUSS_M<10?'0':'')+BESTELLSCHLUSS_M+' Uhr) ist leider überschritten.');
+      }
+    }
     if(errors.length){
       errEl.innerHTML = errors.join('<br>');
       errEl.style.display='';
@@ -458,15 +591,26 @@
         // Save for bestellstatus page auto-login
         try{ localStorage.setItem('bs_nr', res.bestellnummer||''); localStorage.setItem('bs_email', email); }catch(e){}
         document.getElementById('success-overlay').classList.add('show');
+        history.pushState({overlay:'success'},'');
+        // Im eingebetteten Bestell-Dialog (geoeffnet aus der TagesInfo): nach kurzer
+        // Bestaetigung automatisch schliessen. Klickt der Nutzer vorher auf einen der
+        // Buttons (z.B. "Bestellstatus" oder "Weitere Bestellung"), wird der Auto-Close
+        // abgebrochen, damit die gewaehlte Aktion nicht unterbrochen wird.
+        if(window!==window.parent){
+          var _soOv=document.getElementById('success-overlay');
+          var _autoClose=setTimeout(function(){ try{ window.parent.postMessage('mittagOrderDone','*'); }catch(e){} }, 4000);
+          _soOv.addEventListener('click',function(){ clearTimeout(_autoClose); },{once:true});
+        }
       } else {
-        errEl.innerHTML = (res.errors || [res.error || 'Fehler']).join('<br>');
+        errEl.innerHTML = (res.errors || [res.error || 'Bestellung nicht möglich. Bitte prüfen Sie Ihre Eingaben.']).join('<br>');
         errEl.style.display='';
       }
     })
     .catch(function(e){
       btn.disabled = false;
       btn.textContent = '🍽 Jetzt bestellen';
-      errEl.textContent = 'Verbindungsfehler: ' + e.message;
+      console.error('Bestellung fehlgeschlagen:',e);
+      errEl.textContent = 'Verbindung fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
       errEl.style.display='';
     });
   };
@@ -583,11 +727,17 @@
     registerPush();
   });
 
+  // ── Android Back-Button ──
+  window.addEventListener('popstate',function(){
+    if(document.getElementById('success-overlay').classList.contains('show')) newOrder();
+  });
+
   // Service Worker
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('/sw.js').catch(function(){});
   }
 })();
 </script>
+<script src="/js/env-banner.js"></script>
 </body>
 </html>

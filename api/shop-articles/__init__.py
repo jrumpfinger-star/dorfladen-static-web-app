@@ -30,8 +30,9 @@ DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
 
 def get_token():
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
     if not client_secret:
@@ -167,7 +168,7 @@ def _load_freigaben(base_url, headers):
     Returns None only if the entity does not exist yet (table not created)."""
     try:
         # Try with dl_kurzfristig first; fall back without it if field doesn't exist yet
-        url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_kurzfristig&$filter=dl_aktiv eq true"
+        url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_kurzfristig,dl_verfuegbare_tage&$filter=dl_aktiv eq true"
         r = requests.get(url, headers=headers, timeout=30)
         has_kurzfristig = True
         if r.status_code not in (200, 404):
@@ -194,7 +195,7 @@ def _load_freigaben(base_url, headers):
                 gb_str = str(gb)[:10]
                 if gb_str < today:
                     continue  # expired
-            result[sc] = {"gueltig_bis": gb, "kurzfristig": bool(f.get("dl_kurzfristig")) if has_kurzfristig else False}
+            result[sc] = {"gueltig_bis": gb, "kurzfristig": bool(f.get("dl_kurzfristig")) if has_kurzfristig else False, "verfuegbare_tage": (f.get("dl_verfuegbare_tage") or "").strip()}
         return result
     except Exception as e:
         logging.warning(f"[shop-articles] failed to load freigaben: {e}")
@@ -241,7 +242,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         cutoff_date = datetime.utcnow() - timedelta(days=183)
         cutoff_iso = cutoff_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        # Fetch articles with server-side 6-month filter + load Angebote in parallel
+        # Fetch articles + load Angebote in parallel.
+        # Freigaben werden ZUERST geladen: freigegebene Artikel muessen IMMER im
+        # Shop erscheinen - auch wenn sie laenger nicht verkauft wurden. Deshalb
+        # wird der 6-Monats-Filter (letzter Verkauf) nur im Fallback angewandt,
+        # wenn keine Freigabe-Tabelle existiert (sonst wuerde der ganze Stamm laden).
+        freigaben_map = _load_freigaben(base_url, headers)
+
         base_fields = "cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_vk_dorf,cr5d4_warengruppebez,cr5d4_uvp_total,cr5d4_artikelletzterverkauf,cr5d4_strichcode,cr5d4_tableid"
         extended_fields = base_fields + ",cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_gpfaktor,cr5d4_mengenerfassung"
         select_attempts = [
@@ -250,23 +257,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             base_fields + ",cr5d4_bestellbar,cr5d4_bestelleinheit",
             base_fields,
         ]
-        date_filter = f"cr5d4_artikelletzterverkauf ge {cutoff_iso}"
+        # Nur einschraenken, wenn keine Freigabe-Tabelle vorhanden ist (Fallback).
+        date_filter = None if freigaben_map is not None else f"cr5d4_artikelletzterverkauf ge {cutoff_iso}"
 
         def _load_articles():
             for select_fields in select_attempts:
-                url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$filter={date_filter}&$orderby=cr5d4_artikelbezeichnung asc"
+                url = f"{base_url}/api/data/v9.2/cr5d4_tables?$select={select_fields}&$orderby=cr5d4_artikelbezeichnung asc"
+                if date_filter:
+                    url += f"&$filter={date_filter}"
                 result = _fetch_all_pages(url, headers)
                 if result:
                     return result
             return []
 
-        with ThreadPoolExecutor(max_workers=3) as pool:
+        with ThreadPoolExecutor(max_workers=2) as pool:
             fut_articles = pool.submit(_load_articles)
             fut_angebote = pool.submit(_load_angebote, base_url, headers)
-            fut_freigaben = pool.submit(_load_freigaben, base_url, headers)
             items = fut_articles.result()
             angebote_map = fut_angebote.result()
-            freigaben_map = fut_freigaben.result()
         articles = []
         categories = {}
         bestseller_candidates = []
@@ -340,7 +348,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "rp": is_rp,
                 "discount": discount,
                 "kurzfristig": freigaben_map.get(strichcode, {}).get("kurzfristig", False) if freigaben_map else False,
-                "gueltig_bis": str(freigaben_map.get(strichcode, {}).get("gueltig_bis", "") or "")[:10] if freigaben_map else ""
+                "gueltig_bis": str(freigaben_map.get(strichcode, {}).get("gueltig_bis", "") or "")[:10] if freigaben_map else "",
+                "verfuegbare_tage": freigaben_map.get(strichcode, {}).get("verfuegbare_tage", "") if freigaben_map else ""
             }
             articles.append(article)
 

@@ -15,8 +15,9 @@ def _env_candidates():
 
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(url_setting_name, "https://orgab4e2f00.crm16.dynamics.com")
     if not client_secret:
@@ -73,6 +74,10 @@ def get_cors_headers():
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    from shared.auth import admin_auth_guard
+    _auth = admin_auth_guard(req)
+    if _auth is not None:
+        return _auth
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
 

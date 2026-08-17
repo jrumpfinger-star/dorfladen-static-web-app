@@ -5,10 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Dorfladen – Bestellung packen</title>
   <meta name="theme-color" content="#1e3a2f">
+  <script src="/js/theme.js"></script>
+  <link rel="stylesheet" href="/css/admin-dark.css">
   <style>
-    :root{--pk-green:#1e3a2f;--pk-green-light:#d1fae5;--pk-orange:#ea580c;--pk-red:#dc2626;--pk-blue:#2563eb;--pk-gray:#f3f4f6;--pk-border:#e5e7eb;--pk-text:#1f2937;--pk-muted:#6b7280}
+    :root{--pk-green:var(--dl-green,#1e3a2f);--pk-green-light:#d1fae5;--pk-orange:#ea580c;--pk-red:#dc2626;--pk-blue:#2563eb;--pk-gray:#f3f4f6;--pk-border:#e5e7eb;--pk-text:#1f2937;--pk-muted:#6b7280;--pk-bg:#f5f5f5;--pk-card:#fff;--pk-surf2:#f9fafb}
+    html[data-theme="dark"]{color-scheme:dark;--pk-green:#20463a;--pk-border:#2a333a;--pk-text:#e6eae8;--pk-muted:#9aa6a0;--pk-bg:#12171a;--pk-card:#1b2228;--pk-gray:#161c20;--pk-surf2:#161c20}
+    #dl-theme-toggle{position:fixed;left:16px;bottom:76px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--pk-card);color:var(--pk-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:0}
+    html[data-theme="dark"] .pk-progress,html[data-theme="dark"] .pk-info,html[data-theme="dark"] .pk-scanner,html[data-theme="dark"] .pk-item,html[data-theme="dark"] .pk-actions,html[data-theme="dark"] .pk-kasse-modal{background:var(--pk-card)}
+    html[data-theme="dark"] .pk-scanner-input,html[data-theme="dark"] .pk-kasse-qty{background:var(--pk-card);color:var(--pk-text)}
+    html[data-theme="dark"] .pk-item.packed{background:var(--pk-surf2)}
+    html[data-theme="dark"] .pk-kasse-item{border-color:var(--pk-border)}
+    @media (forced-colors: active){.pk-item,.pk-action-btn,.pk-scanner-input{border:1px solid CanvasText}}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:var(--pk-text);-webkit-font-smoothing:antialiased;min-height:100vh}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--pk-bg);color:var(--pk-text);-webkit-font-smoothing:antialiased;min-height:100vh}
 
     /* ── Header ── */
     .pk-header{position:sticky;top:0;z-index:100;background:var(--pk-green);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
@@ -18,21 +27,21 @@
     .pk-header-btn:hover{background:rgba(255,255,255,.25)}
 
     /* ── Progress Bar ── */
-    .pk-progress{background:#fff;padding:12px 16px;border-bottom:1px solid var(--pk-border)}
+    .pk-progress{background:var(--pk-card);padding:12px 16px;border-bottom:1px solid var(--pk-border)}
     .pk-progress-bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:6px}
     .pk-progress-fill{height:100%;background:linear-gradient(90deg,#10b981,#059669);border-radius:4px;transition:width .4s ease}
     .pk-progress-text{font-size:12px;color:var(--pk-muted);display:flex;justify-content:space-between}
     .pk-progress-text strong{color:var(--pk-text)}
 
     /* ── Order Info ── */
-    .pk-info{background:#fff;padding:12px 16px;border-bottom:1px solid var(--pk-border);display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px}
+    .pk-info{background:var(--pk-card);padding:12px 16px;border-bottom:1px solid var(--pk-border);display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px}
     .pk-info-item{display:flex;flex-direction:column;gap:2px}
     .pk-info-label{color:var(--pk-muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
     .pk-info-val{font-weight:600;font-size:13px}
     .pk-note{grid-column:1/-1;background:#fef3c7;padding:8px 10px;border-radius:6px;font-size:12px;color:#92400e;font-style:italic}
 
     /* ── Scanner Section ── */
-    .pk-scanner{background:#fff;padding:12px 16px;border-bottom:1px solid var(--pk-border)}
+    .pk-scanner{background:var(--pk-card);padding:12px 16px;border-bottom:1px solid var(--pk-border)}
     .pk-scanner-title{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
     .pk-scanner-row{display:flex;gap:8px}
     .pk-scanner-input{flex:1;padding:10px 12px;border:2px solid var(--pk-border);border-radius:8px;font-size:15px;font-family:monospace;outline:none;transition:border-color .2s}
@@ -79,12 +88,15 @@
     .pk-actions{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--pk-border);padding:12px 16px;display:flex;gap:8px;z-index:50;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
     .pk-action-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
     .pk-btn-save{background:#f3f4f6;color:var(--pk-text)}
+    html[data-theme="dark"] .pk-btn-save{background:#232c33}
     .pk-btn-save:hover{background:#e5e7eb}
     .pk-btn-kasse{background:var(--pk-orange);color:#fff}
     .pk-btn-kasse:hover{background:#c2410c}
     .pk-btn-done{background:var(--pk-green);color:#fff}
     .pk-btn-done:hover{background:#15352c}
     .pk-btn-done:disabled{background:#ccc;cursor:not-allowed}
+    /* Dark Mode: pk-green ist dunkelgruen -> theme.js erzwingt sonst fast-schwarzen Text (unlesbar). Aktiv=weiss, disabled bleibt dunkel auf hellem #ccc. */
+    html[data-theme="dark"] #pk-done-btn:not(:disabled){color:#fff!important}
 
     /* ── Kassen-Modus ── */
     .pk-kasse-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
@@ -124,13 +136,14 @@
       .pk-item{break-inside:avoid;page-break-inside:avoid}
     }
   </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
 <!-- ── Header ── -->
 <div class="pk-header">
   <div>
-    <h1>📦 Bestellung packen</h1>
+    <h1><i data-lucide="package" style="width:20px;height:20px;vertical-align:-3px"></i> Bestellung packen</h1>
     <small id="pk-order-nr">Wird geladen…</small>
   </div>
   <button class="pk-header-btn" id="pk-back-btn">← Zurück</button>
@@ -155,11 +168,11 @@
 
 <!-- ── Scanner ── -->
 <div class="pk-scanner">
-  <div class="pk-scanner-title">📷 Barcode scannen oder eingeben</div>
+  <div class="pk-scanner-title"><i data-lucide="camera" style="width:16px;height:16px;vertical-align:-3px"></i> Barcode scannen oder eingeben</div>
   <div class="pk-scanner-row">
     <input type="text" class="pk-scanner-input" id="pk-barcode-input" placeholder="Barcode hier scannen…" inputmode="numeric" autocomplete="off">
-    <button class="pk-scan-btn" id="pk-scan-btn">✓ Scan</button>
-    <button class="pk-cam-btn" id="pk-cam-btn" title="Kamera-Scanner">📷</button>
+    <button class="pk-scan-btn" id="pk-scan-btn"><i data-lucide="check" style="width:15px;height:15px;vertical-align:-2px"></i> Scan</button>
+    <button class="pk-cam-btn" id="pk-cam-btn" title="Kamera-Scanner"><i data-lucide="camera" style="width:16px;height:16px"></i></button>
   </div>
   <div class="pk-scanner-feedback" id="pk-scan-feedback"></div>
 </div>
@@ -171,9 +184,9 @@
 
 <!-- ── Bottom Actions ── -->
 <div class="pk-actions">
-  <button class="pk-action-btn pk-btn-save" id="pk-save-btn">💾 Speichern</button>
-  <button class="pk-action-btn pk-btn-kasse" id="pk-kasse-btn">🏪 Kasse</button>
-  <button class="pk-action-btn pk-btn-done" id="pk-done-btn" disabled>✅ Fertig</button>
+  <button class="pk-action-btn pk-btn-save" id="pk-save-btn"><i data-lucide="save" style="width:16px;height:16px;vertical-align:-3px"></i> Speichern</button>
+  <button class="pk-action-btn pk-btn-kasse" id="pk-kasse-btn"><i data-lucide="store" style="width:16px;height:16px;vertical-align:-3px"></i> Kasse</button>
+  <button class="pk-action-btn pk-btn-done" id="pk-done-btn" disabled><i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:-3px"></i> Fertig</button>
 </div>
 
 <!-- ── Camera Overlay ── -->
@@ -188,18 +201,18 @@
 <div class="pk-kasse-overlay" id="pk-kasse-overlay">
   <div class="pk-kasse-modal">
     <div class="pk-kasse-header">
-      <h2>🏪 Kassen-Übergabe</h2>
+      <h2><i data-lucide="store" style="width:18px;height:18px;vertical-align:-3px"></i> Kassen-Übergabe</h2>
       <button class="pk-kasse-close" id="pk-kasse-close">✕</button>
     </div>
     <div class="pk-kasse-body" id="pk-kasse-body">
       <div class="pk-kasse-hint">
-        💡 <strong>Tipp:</strong> Klicken Sie auf einen Barcode zum Kopieren.<br>
+        <i data-lucide="lightbulb" style="width:14px;height:14px;vertical-align:-2px"></i> <strong>Tipp:</strong> Klicken Sie auf einen Barcode zum Kopieren.<br>
         Oder nutzen Sie "Alle kopieren" um die gesamte Barcode-Liste in die Zwischenablage zu kopieren und im Kassensystem einzufügen.
       </div>
     </div>
     <div class="pk-kasse-footer">
-      <button class="pk-kasse-copy-all" id="pk-kasse-copy">📋 Alle kopieren</button>
-      <button class="pk-kasse-print" id="pk-kasse-print">🖨 Drucken</button>
+      <button class="pk-kasse-copy-all" id="pk-kasse-copy"><i data-lucide="copy" style="width:15px;height:15px;vertical-align:-2px"></i> Alle kopieren</button>
+      <button class="pk-kasse-print" id="pk-kasse-print"><i data-lucide="printer" style="width:15px;height:15px;vertical-align:-2px"></i> Drucken</button>
     </div>
   </div>
 </div>
@@ -207,6 +220,7 @@
 <!-- ── Toast ── -->
 <div class="pk-toast" id="pk-toast"></div>
 
+<script src="/js/dl-confirm.js"></script>
 <script>
 (function(){
   'use strict';
@@ -220,6 +234,8 @@
 
   // ── Helpers ──
   function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+  function luc(n,s){return '<i data-lucide="'+n+'" style="width:'+(s||14)+'px;height:'+(s||14)+'px;vertical-align:-2px"></i>';}
+  function lreinit(){if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});}
   function fmtP(v){return(+v).toFixed(2).replace('.',',');}
   function toast(msg){
     var t=document.getElementById('pk-toast');
@@ -230,14 +246,14 @@
   // ── Load Order ──
   function loadOrder(){
     if(!orderId){
-      document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>⚠️ Keine Bestell-ID angegeben.<br>Bitte über CMS → Bestellungen → Packen starten.</p></div>';
+      document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>'+luc('alert-triangle',20)+' Keine Bestell-ID angegeben.<br>Bitte über CMS → Bestellungen → Packen starten.</p></div>';lreinit();
       return;
     }
     fetch(API+'/shop-order?mode=pack&id='+encodeURIComponent(orderId))
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.order){
-          document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>⚠️ Bestellung nicht gefunden</p></div>';
+          document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>'+luc('alert-triangle',20)+' Bestellung nicht gefunden</p></div>';lreinit();
           return;
         }
         order=res.order;
@@ -250,7 +266,7 @@
         renderOrder();
       })
       .catch(function(e){
-        document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>⚠️ Fehler: '+esc(e.message)+'</p></div>';
+        document.getElementById('pk-items').innerHTML='<div class="pk-loading"><p>'+luc('alert-triangle',20)+' Fehler: '+esc(e.message)+'</p></div>';lreinit();
       });
   }
 
@@ -266,7 +282,7 @@
     if(order.anmerkungen){
       var noteDiv=document.createElement('div');
       noteDiv.className='pk-note';
-      noteDiv.textContent='📝 '+order.anmerkungen;
+      noteDiv.textContent='Anmerkung: '+order.anmerkungen;
       document.getElementById('pk-info').appendChild(noteDiv);
     }
 
@@ -379,7 +395,7 @@
           found=true;
           toast('✓ '+p.bezeichnung);
         } else {
-          feedback.textContent='ℹ '+p.bezeichnung+' bereits gepackt';
+          feedback.textContent=p.bezeichnung+' bereits gepackt';
           feedback.className='pk-scanner-feedback ok';
           input.className='pk-scanner-input success';
           found=true;
@@ -388,7 +404,7 @@
     });
 
     if(!found){
-      feedback.textContent='⚠️ Barcode '+barcode+' nicht in dieser Bestellung';
+      feedback.textContent='Barcode '+barcode+' nicht in dieser Bestellung';
       feedback.className='pk-scanner-feedback err';
       input.className='pk-scanner-input error';
       // Vibrate on error (mobile)
@@ -434,10 +450,12 @@
     var overlay=document.getElementById('pk-cam-overlay');
     var video=document.getElementById('pk-cam-video');
     overlay.classList.add('open');
+    document.body.style.overflow='hidden';
+    history.pushState({overlay:'camera'},'')
 
     // Check if BarcodeDetector is available
     if(!('BarcodeDetector' in window)){
-      toast('⚠️ Kamera-Scanner wird nicht unterstützt. Nutzen Sie die manuelle Eingabe.');
+      toast('Kamera-Scanner wird nicht unterstützt. Nutzen Sie die manuelle Eingabe.');
       overlay.classList.remove('open');
       return;
     }
@@ -462,13 +480,14 @@
         }
       },300);
     }).catch(function(e){
-      toast('📷 Kamera nicht verfügbar: '+e.message);
+      toast('Kamera nicht verfügbar: '+e.message);
       overlay.classList.remove('open');
     });
   }
 
   function closeCamera(){
     document.getElementById('pk-cam-overlay').classList.remove('open');
+    if(!document.getElementById('pk-kasse-overlay').classList.contains('open')) document.body.style.overflow='';
     if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
     if(cameraStream){cameraStream.getTracks().forEach(function(t){t.stop();});cameraStream=null;}
   }
@@ -500,7 +519,7 @@
       body:JSON.stringify({id:order.id,pack_json:packJson})
     }).then(function(r){return r.json();})
       .then(function(res){
-        if(res.success){toast('💾 Pack-Status gespeichert');if(callback)callback();}
+        if(res.success){toast('Pack-Status gespeichert');if(callback)callback();}
         else toast('Fehler beim Speichern');
       })
       .catch(function(e){toast('Fehler: '+e.message);});
@@ -510,7 +529,7 @@
 
   // ── Done Button ──
   document.getElementById('pk-done-btn').addEventListener('click',function(){
-    if(!confirm('Bestellung als "Abholbereit" markieren?')) return;
+    dlConfirm({icon:'package',title:'Abholbereit markieren?',msg:'Die Bestellung wird als fertig gepackt markiert.',ok:'Abholbereit',color:'#16a34a'},function(){
     savePackState(function(){
       // Set order status to Abholbereit (2)
       fetch(API+'/shop-order',{
@@ -520,7 +539,7 @@
       }).then(function(r){return r.json();})
         .then(function(res){
           if(res.success){
-            toast('✅ Bestellung abholbereit!');
+            toast('Bestellung abholbereit!');
             // Trigger notification
             fetch(API+'/shop-notify',{
               method:'POST',
@@ -531,6 +550,7 @@
           }
         });
     });
+    });
   });
 
   // ── Kassen-Modus ──
@@ -540,6 +560,7 @@
 
   document.getElementById('pk-kasse-close').addEventListener('click',function(){
     document.getElementById('pk-kasse-overlay').classList.remove('open');
+    document.body.style.overflow='';
   });
 
   function showKasseModal(){
@@ -550,9 +571,9 @@
       return st&&st.gepackt;
     });
 
-    if(!packedItems.length){toast('⚠️ Noch keine Artikel gepackt');return;}
+    if(!packedItems.length){toast('Noch keine Artikel gepackt');return;}
 
-    var html='<div class="pk-kasse-hint">💡 <strong>Tipp:</strong> Klicken Sie auf einen Barcode zum Kopieren. Oder nutzen Sie "Alle kopieren" für das Kassensystem.</div>';
+    var html='<div class="pk-kasse-hint">'+luc('lightbulb',14)+' <strong>Tipp:</strong> Klicken Sie auf einen Barcode zum Kopieren. Oder nutzen Sie "Alle kopieren" für das Kassensystem.</div>';
 
     packedItems.forEach(function(p){
       var st=packState[p.artikelnummer];
@@ -566,7 +587,10 @@
     });
 
     body.innerHTML=html;
+    lreinit();
     document.getElementById('pk-kasse-overlay').classList.add('open');
+    document.body.style.overflow='hidden';
+    history.pushState({overlay:'kasse'},'');
 
     // Wire copy events
     body.querySelectorAll('[data-copy]').forEach(function(el){
@@ -574,7 +598,7 @@
         var text=el.getAttribute('data-copy');
         navigator.clipboard.writeText(text).then(function(){
           el.classList.add('copied');
-          toast('📋 '+text+' kopiert');
+          toast(text+' kopiert');
           setTimeout(function(){el.classList.remove('copied');},1500);
         });
       });
@@ -599,7 +623,7 @@
     });
     if(!lines.length){toast('Keine Barcodes');return;}
     navigator.clipboard.writeText(lines.join('\n')).then(function(){
-      toast('📋 '+lines.length+' Barcode(s) kopiert!');
+      toast(lines.length+' Barcode(s) kopiert!');
     });
   });
 
@@ -615,7 +639,7 @@
     html+='.info{font-size:11px;color:#666}';
     html+='.total{font-weight:700;font-size:16px;margin-top:12px;padding-top:8px;border-top:2px solid #333}';
     html+='</style></head><body>';
-    html+='<h2>🏪 '+esc(order.bestellnummer)+'</h2>';
+    html+='<h2>'+esc(order.bestellnummer)+'</h2>';
     html+='<div class="meta">'+esc(order.kunde_name)+' · Abholung: '+esc(order.abholdatum)+'</div>';
 
     var total=0;
@@ -641,10 +665,10 @@
   // ── Back Button ──
   document.getElementById('pk-back-btn').addEventListener('click',function(){
     if(Object.keys(packState).length>0){
-      if(confirm('Pack-Status speichern vor dem Verlassen?')){
+      dlConfirm({icon:'save',title:'Speichern?',msg:'Pack-Status speichern vor dem Verlassen?',ok:'Speichern',cancel:'Verwerfen',color:'#16a34a'},function(){
         savePackState(function(){history.back();});
-        return;
-      }
+      });
+      return;
     }
     history.back();
   });
@@ -655,11 +679,18 @@
     if(inp) inp.focus();
   },500);
 
+  // ── Android Back-Button ──
+  window.addEventListener('popstate',function(){
+    if(document.getElementById('pk-cam-overlay').classList.contains('open')){closeCamera();return;}
+    if(document.getElementById('pk-kasse-overlay').classList.contains('open')){document.getElementById('pk-kasse-overlay').classList.remove('open');document.body.style.overflow='';return;}
+  });
+
   // ── Init ──
+  lreinit();
   loadOrder();
 
 })();
 </script>
-
+<script src="/js/env-banner.js"></script>
 </body>
 </html>

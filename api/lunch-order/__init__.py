@@ -12,6 +12,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
+import sys
 import msal
 import requests
 
@@ -22,8 +23,9 @@ DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
 
 def get_token():
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
     if not client_secret:
@@ -130,6 +132,33 @@ def _send_push(email, title, body_text, tag="lunch", bestellnr=""):
     return False
 
 
+DEFAULT_BESTELLSCHLUSS = 10.5  # 10:30 Uhr – Fallback wenn CMS-Config nicht verfügbar
+
+
+def _get_bestellschluss(base_url, headers):
+    """Read bestellschluss_uhr from CMS config (Dataverse dl_seiteninhalt).
+    Returns float hours (e.g. 10.5 for 10:30). Falls back to DEFAULT_BESTELLSCHLUSS."""
+    try:
+        url = (
+            f"{base_url}/api/data/v9.2/dl_seiteninhalts"
+            f"?$filter=dl_schluessel eq 'bestellschluss_uhr'"
+            f"&$select=dl_wert"
+        )
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            items = r.json().get("value", [])
+            if items:
+                raw = items[0].get("dl_wert", "")
+                if raw:
+                    parts = str(raw).split(":")
+                    h = int(parts[0])
+                    m = int(parts[1]) if len(parts) > 1 else 0
+                    return h + m / 60.0
+    except Exception as e:
+        logging.debug(f"[lunch-order] CMS bestellschluss_uhr load failed: {e}")
+    return DEFAULT_BESTELLSCHLUSS
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -187,6 +216,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=400, headers=get_cors_headers(),
                 )
 
+            # ── Bestellzeitsperre: Online-Bestellungen für heute nur bis Bestellschluss ──
+            if quelle == QUELLE_ONLINE and datum:
+                now_local = datetime.utcnow() + timedelta(hours=2)  # CET/CEST approximation
+                today_str = now_local.strftime("%Y-%m-%d")
+                if datum == today_str:
+                    now_h = now_local.hour + now_local.minute / 60.0
+                    bs_h = _get_bestellschluss(base_url, headers)
+                    if now_h >= bs_h:
+                        bs_hh = int(bs_h)
+                        bs_mm = int((bs_h - bs_hh) * 60)
+                        bs_label = f"{bs_hh}:{bs_mm:02d}"
+                        return func.HttpResponse(
+                            json.dumps({
+                                "success": False,
+                                "errors": [f"Der Bestellschluss für heute ({bs_label} Uhr) ist leider überschritten."]
+                            }, ensure_ascii=False),
+                            status_code=400, headers=get_cors_headers(),
+                        )
+
             bestellnr = f"MT-{datetime.utcnow().strftime('%y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
 
             # Telefonbestellungen werden sofort als bestätigt gespeichert
@@ -223,6 +271,57 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 order["bestellnummer"] = bestellnr
 
                 logging.info(f"[lunch-order] Created {bestellnr} for {name} ({gericht} x{menge})")
+
+                # ── Bestätigungs-E-Mail an Kunden (best-effort) ──
+                if email:
+                    try:
+                        api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        if api_dir not in sys.path:
+                            sys.path.insert(0, api_dir)
+                        from importlib import import_module
+                        notify_mod = import_module("shop-notify")
+                        ci = notify_mod.get_contact_info()
+                        laden_name = ci["name"]
+                        anrede = f"Liebe/r {name}" if name else "Liebe Kundin, lieber Kunde"
+                        # Datum formatieren
+                        datum_de = datum
+                        try:
+                            dp = datum[:10].split("-")
+                            if len(dp) == 3:
+                                datum_de = f"{dp[2]}.{dp[1]}.{dp[0]}"
+                        except Exception:
+                            pass
+                        wt = wochentag_label or datum_de
+                        mitnehmen_text = "Zum Mitnehmen" if mitnehmen else "Vor Ort essen"
+                        preis_str = f"{preis:.2f}".replace(".", ",") + " €" if preis else ""
+                        email_subject = f"{laden_name} – Mittagstisch-Bestellung {bestellnr}"
+                        email_body = (
+                            f"{anrede},\n\n"
+                            f"vielen Dank für Ihre Mittagstisch-Bestellung! "
+                            f"Wir haben folgende Bestellung erhalten:\n\n"
+                            f"[info:clipboard-list] Bestellnummer: {bestellnr}\n"
+                            f"[info:utensils] Gericht: {gericht}\n"
+                            f"[info:hash] Menge: {menge}x\n"
+                        )
+                        if preis_str:
+                            email_body += f"[info:coins] Preis: {preis_str}\n"
+                        email_body += (
+                            f"[info:calendar] Datum: {wt} ({datum_de})\n"
+                            f"[info:package] {mitnehmen_text}\n"
+                        )
+                        if anmerkung:
+                            email_body += f"\n[info:message-square] Ihre Anmerkung: {anmerkung}\n"
+                        email_body += (
+                            f"\nBitte holen Sie Ihr Essen zwischen 11:30 und 13:00 Uhr ab.\n\n"
+                            f"Bei Fragen erreichen Sie uns unter {ci['telefon']} oder "
+                            f"per E-Mail an {ci['email']}.\n\n"
+                            f"Guten Appetit!\n"
+                            f"Ihr {laden_name}-Team"
+                        )
+                        notify_mod.send_email(email, name, email_subject, email_body)
+                        logging.info(f"[lunch-order] Confirmation email sent to {email}")
+                    except Exception as ne:
+                        logging.warning(f"[lunch-order] Confirmation email failed (non-blocking): {ne}")
 
                 return func.HttpResponse(
                     json.dumps({
@@ -310,6 +409,31 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=200, headers=get_cors_headers(),
                 )
 
+            # Full message orders across all dates (for Nachrichten tab)
+            if req.params.get("mode") == "messages":
+                select_fields = "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,createdon"
+                msg_url = (
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+                    f"?$filter=dl_kunde_kommentar ne null"
+                    f" and dl_kunde_kommentar ne ''"
+                    f" and dl_status ne {STATUS_STORNIERT}"
+                    f"&$select={select_fields}"
+                    f"&$orderby=createdon desc"
+                    f"&$top=50"
+                )
+                mr = requests.get(msg_url, headers=headers, timeout=30)
+                msg_orders = []
+                if mr.status_code == 200:
+                    for item in mr.json().get("value", []):
+                        o = _serialize(item)
+                        o["bestellnummer"] = item.get("dl_bestellnummer", "")
+                        o["mitnehmen"] = item.get("dl_mitnehmen", False)
+                        msg_orders.append(o)
+                return func.HttpResponse(
+                    json.dumps({"success": True, "orders": msg_orders, "count": len(msg_orders)}, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+
             if nr_filter and email_filter:
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
@@ -380,6 +504,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             new_menge = body.get("menge")
             new_anmerkung = body.get("anmerkung")
 
+            # Customer self-cancellation: only allowed when order is still Eingegangen (0)
+            kunde_storno = body.get("kunde_storno", False)
+            if kunde_storno and new_status is not None and int(new_status) == STATUS_STORNIERT:
+                check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})?$select=dl_status"
+                check_r = requests.get(check_url, headers=headers, timeout=15)
+                if check_r.status_code != 200:
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Bestellung konnte nicht geprüft werden"}, ensure_ascii=False),
+                        status_code=500, headers=get_cors_headers(),
+                    )
+                current_status = check_r.json().get("dl_status", -1)
+                if current_status != STATUS_NEU:
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Stornierung nicht mehr möglich – die Bestellung wurde bereits bestätigt"}, ensure_ascii=False),
+                        status_code=400, headers=get_cors_headers(),
+                    )
+
             # Fetch existing order for push notification
             fetch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})"
             fetch_r = requests.get(fetch_url, headers=headers, timeout=15)
@@ -410,6 +551,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             kommentar_gelesen = body.get("kommentar_gelesen")
             if kommentar_gelesen is not None:
                 patch_data["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
+            # Storno reason
+            storno_grund = body.get("storno_grund")
+            if storno_grund is not None:
+                patch_data["dl_storno_grund"] = storno_grund.strip()
 
             if not patch_data:
                 return func.HttpResponse(

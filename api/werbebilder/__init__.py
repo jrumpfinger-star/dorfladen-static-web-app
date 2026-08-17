@@ -18,8 +18,9 @@ SP_BARCODE_FOLDER = "01USAQ6ESD7NCQ4ZM6GRHK5IRCMJMSRSVH"
 
 
 def get_token():
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
     if not client_secret:
@@ -44,8 +45,9 @@ _graph_msal_app = None
 
 def get_graph_token():
     global _graph_msal_app
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     if not client_secret:
         return None
@@ -169,8 +171,9 @@ _graph_msal_app = None
 
 def _get_graph_token():
     global _graph_msal_app
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     if not client_secret:
         return None
@@ -222,8 +225,24 @@ def get_cors_headers():
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    from shared.auth import admin_auth_guard
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
+
+    # Oeffentlicher Shop-Bild-Lookup (POST {articles:[...]}) ist read-only -> keine Auth noetig.
+    # Nur der CMS-Upsert (POST mit dl_artikelnummer/dl_bild_base64) und mutierende Aufrufe brauchen Auth.
+    _public_lookup = False
+    if req.method == "POST":
+        try:
+            _peek = req.get_json()
+            _public_lookup = isinstance(_peek, dict) and "articles" in _peek
+        except Exception:
+            _public_lookup = False
+
+    if not _public_lookup:
+        _auth = admin_auth_guard(req)
+        if _auth is not None:
+            return _auth
 
     base_url = _base_url()
     headers = get_headers()

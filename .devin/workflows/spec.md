@@ -26,7 +26,7 @@ Warum wird das gebraucht? Was ist der aktuelle Zustand?
 
 ## Betroffene Dateien
 - `static-site/datei.html`
-- `api/endpoint/__init__.py`
+- `function_app.py` (Azure Functions v2 – alle Endpunkte in einer Datei, kein `api/*/__init__.py`)
 
 ## Akzeptanzkriterien
 - [ ] Kriterium 1 (testbar)
@@ -59,10 +59,12 @@ Dies ist NICHT optional – es gehört zur Implementierung dazu:
 
 ### 5. Tests ausführen
 // turbo
+**⚠️ PFLICHT: JEDE Änderung MUSS live getestet werden – KEINE Ausnahme!**
+**Kein Commit ohne vorherigen Live-Test. Kein "das teste ich später". SOFORT testen.**
+
 **WICHTIG: Tests IMMER gegen die Live-Umgebung ausführen, NIEMALS gegen localhost:4280!**
 - Es gibt keinen lokalen SWA-Server. `npx playwright test` ohne `test-live.ps1` schlägt mit `ERR_CONNECTION_REFUSED` fehl.
-- IMMER `test-live.ps1` verwenden – das setzt `BASE_URL` auf die Feature-Branch-SWA.
-- Nach `git push` erst ~2 Min auf den Deploy warten, dann testen.
+- IMMER `test-live.ps1` verwenden – das setzt `TEST_URL` (von `playwright.config.js` gelesen) auf eine fest hinterlegte Live-URL: `https://witty-island-064f9d903.7.azurestaticapps.net`.
 
 Betroffene Tests gegen die Live-Umgebung ausführen (NUR betroffene, nicht die ganze Suite):
 ```

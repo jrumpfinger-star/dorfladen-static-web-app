@@ -60,6 +60,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         try:
             entities = tc.query_entities(f"PartitionKey eq '{day_key}'")
             for e in entities:
+                if e.get("internal"):
+                    continue  # interner Dev-/Test-Traffic – nicht mitzaehlen
                 page = e.get("page", "/")
                 visitor = e.get("visitor", "")
                 hour = e.get("hour", 0)
@@ -86,7 +88,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         domain = urlparse(ref).netloc or ref
                     except Exception:
                         domain = ref
-                    if domain:
+                    # Eigene SWA-Hosts (*.azurestaticapps.net) ausschliessen –
+                    # das ist Dev-/Preview-Navigation, kein echter Referrer.
+                    if domain and "azurestaticapps.net" not in domain.lower():
                         referrers[domain] = referrers.get(domain, 0) + 1
 
                 # Device detection

@@ -12,10 +12,23 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 
 ### Header
 - [x] Refresh-Button (🔄) im Header rechts neben Uhr, nicht in Bottom-Bar
+- [x] **Stammkunden-Platzierung (Variante A):** Der Stammkunden-Bereich ist
+  administrativ und wird selten gebraucht. Er wird daher **nicht mehr als
+  gleichwertiger Tab** in der Haupt-Tab-Leiste angezeigt, sondern als dezenter
+  **„Kunden"-Button in der Kopfzeile** (gestrichelter Rahmen, neben Ton/Hilfe/
+  Aktualisieren, durch Trenner abgesetzt). So liegt der Fokus der Tab-Leiste auf
+  den operativen Funktionen (Mittagstisch, Online-Shop, Metzger, Social),
+  während die Verwaltung mit einem Tipp erreichbar bleibt.
+  - Klick auf „Kunden" öffnet das bestehende Stammkunden-Panel (`panel-kunden`)
+    über `K.switchTab('kunden')`; der Button wird dabei hervorgehoben
+    (`admin-active`), beim Wechsel auf einen Tab wieder zurückgesetzt.
+  - Auf schmalen Viewports (≤640px) zeigt der Button nur das Icon.
+  - Funktionsumfang unverändert (Suche, Anlegen, Bearbeiten, Löschen).
 
 ### Bottom-Bar
 - [x] Nur 2 Buttons: "☎ Neue Telefonbestellung" + "🖨 Küchenliste drucken"
 - [x] Küchenliste öffnet Druck-Fenster mit Bestellungen gruppiert nach Gericht (Portionen, Mitnehmen/Vor-Ort, Kundennamen)
+- [x] Responsive auf Mobile (≤600px): kleinere Höhe (40px statt 64px), kompakteres Padding, Font 13px
 
 ### Datum-Normalisierung
 - [x] Online-Bestellungen speichern Datum als `YYYY-MM-DD` (nicht `YYYY-MM-DDT00:00:00Z`)
@@ -42,6 +55,12 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] Bestätigungstext wird auf der Karte grün hinterlegt angezeigt
 - [x] Abbrechen-Button schließt Dialog ohne Aktion
 
+### Nachricht an Kunde
+- [x] "Nachricht senden"-Button nur bei Online-Bestellungen (quelle===0), nicht bei Telefon/Personal
+- [x] Bei Kundenkommentar: Button-Label "Antworten" mit Reply-Icon
+- [x] Ohne Kundenkommentar: Button-Label "Nachricht senden" mit Send-Icon
+- [x] Reply-Dialog zeigt Kundenkommentar (wenn vorhanden) + Textfeld + Senden-Button
+
 ### Zeitslot-Gruppen
 - [x] Bestellungen gruppiert nach Abholdatum + Zeitslot
 - [x] Gruppen aufklappbar (collapsible) mit Pfeil-Indikator (▶/▼) und Bestellanzahl-Badge
@@ -57,6 +76,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] Neue-Kunde-Formular: Separate Felder für Nachname (Pflicht) und Vorname
 - [x] Inline-Kunden-Anlage im Bestellformular: ebenfalls Nachname/Vorname getrennt
 - [x] Fehlerbehandlung: HTTP-Status prüfen, Duplikate erkennen (409), verständliche Meldungen
+- [x] Stammkunden-Karte: Bearbeiten-Button → Edit-Modal mit allen Feldern (Name, Telefon, E-Mail, Notiz)
+- [x] Stammkunden-Karte: Löschen-Button → Bestätigungsdialog, Soft-Delete (Kunde wird deaktiviert)
+- [x] Edit-Modal nutzt PATCH `/api/stammkunden/{id}`, Löschen nutzt DELETE `/api/stammkunden/{id}`
 
 ## Betroffene Dateien
 - `static-site/kiosk.html` – Tabs, Filter, Gruppen, Tagesauswahl, Kundenformulare
@@ -65,6 +87,9 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - `GET /api/shop-order` – Shop-Bestellungen laden
 - `POST /api/stammkunden` – Neuen Stammkunden anlegen
 - `GET /api/stammkunden?q=...` – Stammkunden suchen
+- `GET /api/stammkunden/{id}` – Einzelner Kunde laden
+- `PATCH /api/stammkunden/{id}` – Kundendaten aktualisieren
+- `DELETE /api/stammkunden/{id}` – Kunde deaktivieren (Soft-Delete)
 - `GET /api/lunch-order?datum=YYYY-MM-DD` – Mittagstisch-Bestellungen nach Datum
 
 ## Akzeptanzkriterien
@@ -96,9 +121,16 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-10b: Küchenliste-Button in Bottom-Bar vorhanden
 - [x] AK-UI-10c: printKitchen verwendet _mittagDatum (nicht new Date())
 - [x] AK-UI-10d: printKitchen verwendet o.name und o.menge (nicht o.kundenname/o.portionen)
-- [x] AK-UI-17: Mittagstisch Status-Filter-Bar (Zu bestätigen/Bestätigt/Alle/Abgeholt/Storniert)
-- [x] AK-UI-17b: Default-Filter ist "Zu bestätigen" (status 0)
-- [x] AK-UI-17c: Filter-Badges zeigen Anzahl pro Status
+- [x] AK-UI-17: Mittagstisch Filter-Bar: 4 Tabs (Offen/Nachrichten/Erledigt/Alle)
+- [x] AK-UI-17b: Default-Filter ist "Offen" (Status 0+1)
+- [x] AK-UI-17c: Filter-Badges zeigen Anzahl pro Gruppe
+- [x] AK-UI-17d: Nachrichten-Tab zeigt alle Kundenkommentare tagesübergreifend
+- [x] AK-UI-17e: Nachrichten-Tab: Inline-Antwort + Gelesen-Markierung
+- [x] AK-UI-17f: API mode=messages liefert vollständige Nachrichten-Bestellungen
+- [x] AK-UI-17g: Alle Bestellkarten zuklappen/aufklappen Toggle-Button
+- [x] AK-UI-17g2: Bestellschluss 12:00 – Neue Telefonbestellung für heute ab 12 Uhr gesperrt
+- [x] AK-UI-17h: Button visuell deaktiviert (disabled + opacity) ab Bestellschluss
+- [x] AK-UI-17i: Toast-Hinweis bei Klick auf gesperrten Button
 - [x] AK-UI-18: Doppelklick auf Shop-Bestellkarte öffnet Detail-Modal
 - [x] AK-UI-18b: Detail-Modal zeigt Positionen-Tabelle mit Menge, Einheit, Preis
 - [x] AK-UI-16e: Confirm-Dialog als vollbreites Element unter der Karte (nicht inline in Actions)
@@ -110,7 +142,7 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-21b: Aktuelle Schicht ist standardmäßig aufgeklappt, andere collapsed
 - [x] AK-UI-21c: "Jetzt"-Badge mit Uhr-Icon pulsiert in der aktuellen Slot-Gruppe
 - [x] AK-UI-22: Slot-Header-Badges haben weißen Hintergrund mit farbiger Schrift (lesbar auf orange/grün)
-- [x] AK-UI-22b: Badges zeigen Textlabels: "Packen", "Warten", "Bereit" (Status 0=Packen, 1=Warten, 2=Bereit)
+- [x] AK-UI-22b: Badges zeigen Textlabels: "Neu", "Packen", "Warten" (Status 0=Neu, 1=Packen, 2=Warten/Abholbereit)
 - [x] AK-UI-23: Filter-Zähler (Zu erledigen/Überfällig) schließen alte erledigte Bestellungen aus
 - [x] AK-UI-24: Online-Shop ist Default-Tab beim Laden des Kiosk
 - [x] AK-UI-25: Shop-Karten haben expliziten "Details"-Button (Auge-Icon) statt nur Doppelklick
@@ -120,12 +152,40 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 - [x] AK-UI-26: Stats haben keinen box-shadow und keinen border-radius (flacher Text)
 - [x] AK-UI-26b: Stats verwenden Dot-Separatoren zwischen den Werten
 - [x] AK-UI-27: Filter-Bar hat border-bottom-Underline statt Button-Borders
-- [x] AK-UI-27b: Aktiver Filter hat grüne Unterstreichung, kein Hintergrund
+- [x] AK-UI-27b: Aktiver Filter hat grünen Hintergrund + weiße Schrift + grüne Unterstreichung (siehe specs/filter-visibility.md)
 - [x] AK-UI-28: Tagesauswahl verwendet k-day-pill (keine Borders, runde Pills)
 - [x] AK-UI-28b: Aktiver Tag hat grünen Hintergrund mit weißer Schrift
 - [x] AK-UI-29: Gerichtzusammenfassung als Inline-Text mit Pipe-Trennern
 - [x] AK-UI-30: Bestellquellen-Labels (Online/Telefon/Personal) nur farbiger Text, kein Hintergrund
 - [x] AK-UI-30b: Mitnehmen-Label ohne Hintergrund, nur farbiger Text
+- [x] AK-UI-31: Bottom-Bar responsive auf Mobile (≤600px)
+- [x] AK-UI-32: Gericht auto-select wenn nur 1 Gericht verfügbar
+- [x] AK-UI-33: Nachricht-senden nur bei Online-Bestellungen (nicht Telefon/Personal)
+- [x] AK-UI-33b: Button-Label kontextabhängig: "Antworten" vs "Nachricht senden"
+- [x] AK-UI-34: Stammkunden-Karte zeigt Bearbeiten-Button → Edit-Modal
+- [x] AK-UI-34b: Stammkunden-Karte zeigt Löschen-Button → Soft-Delete mit Bestätigung
+- [x] AK-UI-34c: Edit-Modal lädt Kundendaten, speichert via PATCH
+
+### Shop-Bestellkarten Redesign
+- [x] AK-UI-35: Shop-Karten verwenden Collapse-Pattern wie Mittagstisch (Header immer sichtbar, Details aufklappbar)
+- [x] AK-UI-35b: Header zeigt Name, Pos.-Anzahl, Status-Badge, Preis und Primär-Action
+- [x] AK-UI-35c: Status als farbiger Badge (Icon + Text) statt Timeline in Karte
+- [x] AK-UI-35d: Primär-Action im Header ohne Aufklappen erreichbar (Annehmen/Packen/Ausgeben)
+- [x] AK-UI-35e: Aufgeklappte Karte zeigt Bestellnr, Abholdatum, Telefon, Positionen-Liste, volle Action-Buttons
+- [x] AK-UI-35f: Details-Button als vollwertiger Button (file-text Icon + "Details") statt Mini-Eye-Icon
+- [x] AK-UI-35g: Alle Buttons ≥38px Höhe (Touch-Target-konform)
+- [x] AK-UI-35h: Alle zuklappen/aufklappen Toggle für Shop-Karten
+- [x] AK-UI-35i: Shop-Karten-Header bricht dynamisch um (flex-wrap) wenn Platz nicht reicht
+- [x] AK-UI-35j: Rings, Status-Badge und Preis in .k-oc-meta Container gruppiert (brechen gemeinsam um)
+- [x] AK-UI-35k: Mobile: Rings auf 36px skaliert, Name flex-basis angepasst
+
+### Metzger-Tagesgruppen: Visuelle Trennung
+- [x] AK-UI-36: Metzger-Tagesgruppen-Header hat box-shadow und margin-bottom:10px zur Abgrenzung von Bestellkarten
+- [x] AK-UI-36b: Tagesgruppen-Container hat margin-bottom:20px für klare Trennung zwischen Gruppen
+
+### Bestellstatus: Sticky Header
+- [x] AK-UI-37: Bestellstatus-Header (.bs-header) ist sticky (position:sticky, top:0, z-index:100)
+- [x] AK-UI-37b: Kein inline position:relative auf .bs-header (verhindert sticky)
 
 ### Tab-Badge: Neue Bestellungen + Nachrichten
 - [x] Mittagstisch-Tab-Badge zeigt Summe aus neuen Bestellungen (heute, Status 0) + ungelesene Nachrichten (tagesübergreifend)
@@ -149,11 +209,49 @@ Die Kiosk-Seite (`static-site/kiosk.html`) soll als zentrales Bedien-Interface i
 
 ## API-Endpunkte
 - `GET /api/lunch-order?mode=unread_messages` – Anzahl ungelesener Kundennachrichten (tagesübergreifend)
+- `GET /api/lunch-order?mode=messages` – Vollständige Bestellungen mit Kundenkommentaren (tagesübergreifend, für Nachrichten-Tab)
 
-## Nicht-Ziele
-- Keine Änderung am Stammkunden-Tab-Layout (nur Formular)
+### Mittagstisch Gerichtauswahl
+- [x] Wenn nur 1 Gericht für heute verfügbar: automatisch als Default vorausgewählt (spart einen Klick)
+
+### Stornierung mit Begründung (Pflicht)
+- [x] Storno-Button öffnet Dialog mit 5 vordefinierten Gründen (Pflichtauswahl)
+- [x] Optionaler Kommentar als Freitext
+- [x] Stornieren-Button erst aktiv wenn Grund gewählt
+- [x] Grund wird als `bestaetigung_text` gespeichert → Push an Kunden mit Begründung
+- [x] Implementiert in: Kiosk, lunch-admin.html, shop-admin.html (Mittagstisch-Bereich)
+
+### Mittagstisch Filter-Redesign (iPad-optimiert)
+- [x] 4 Filter statt 5+1: "Offen" (Neu+Bestätigt), "Nachrichten", "Erledigt" (Abgeholt+Storniert), "Alle"
+- [x] Default-Filter ist "Offen" (zeigt alles was noch zu erledigen ist)
+- [x] Nachrichten-Tab zeigt alle Kundenkommentare über alle Tage hinweg (nicht nur aktueller Tag)
+- [x] Nachrichten-Tab sortiert: ungelesen oben, dann nach Datum absteigend
+- [x] Nachrichten-Tab: "Alle als gelesen" Button bei ungelesenen Nachrichten
+- [x] Nachrichten-Tab: Inline-Antwort-Funktion (Reply-Box direkt in der Karte)
+- [x] Nachrichten-Tab: "Gelesen" Button pro Nachricht
+- [x] Nachrichten-Tab: Ungelesene Karten blau hervorgehoben mit NEU-Badge
+- [x] Nachrichten-Count wird via `mode=unread_messages` geladen (tagesübergreifend)
+- [x] Nachrichten-Tab nutzt neuen API-Modus `mode=messages` für vollständige Bestelldaten
+- [x] "Offen"-Tab rot hervorgehoben wenn neue Bestellungen (Status 0) vorhanden
+- [x] "Nachrichten"-Tab blau hervorgehoben wenn ungelesene Nachrichten vorhanden
+
+### iPad Mini Optimierung (Schriftbild + Touch-Targets)
+- [x] Einheitliche Schriftgrößen: Name 15px, Qty 15px, Badges 11px, Notes 13px
+- [x] Touch-Targets mindestens 34px (Action-Buttons) / 44px (Day-Pills)
+- [x] Badges (ONLINE, MIT) mit Hintergrund-Pill statt nur Text
+- [x] Kommentar-Abschnitte mit Border-Left und Hintergrundfarbe zur Unterscheidung
+- [x] Card-Abstände 6px, rounded 10px
+
+### Bestellzeitsperre (Mittagstisch)
+- [x] Online-Bestellungen für heute nur bis 10:30 Uhr möglich
+- [x] Frontend: `mittagstisch-bestellen.html` zeigt Fehlermeldung + deaktiviert Submit-Button
+- [x] Frontend: `index.html` Tagespost-Modal blendet Bestell-Button nach 10:30 aus
+- [x] Frontend: Wochenplan (`app.js`, `mobile.js`) bereits implementiert
+- [x] Backend: `api/lunch-order` POST lehnt Online-Bestellungen für heute nach 10:30 ab (HTTP 400)
+- [x] Personal-/Telefonbestellungen sind nicht betroffen
 
 ## Status
 - [x] Spec reviewed
 - [x] Implementierung
 - [x] Validierung (Tab-Badge + kompakte Buttons + Info vs Actions: 2026-06-22)
+- [x] Validierung (Bottom-Bar responsive + Gericht-Default + Nachricht-senden + Stammkunden CRUD: 2026-06-25)

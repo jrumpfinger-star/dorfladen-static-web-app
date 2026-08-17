@@ -5,7 +5,31 @@
 
 ---
 
-## 1. Testpflicht bei Änderungen
+## 1. Funktionsbeschreibung vor Code-Änderung (Pflicht)
+
+**Vor jeder Code-Änderung muss eine detaillierte Funktionsbeschreibung erstellt oder aktualisiert werden.**
+
+### Pflicht-Schritte VOR einer Änderung:
+1. **Funktionsbeschreibung** in `specs/*-funktionen.md` erstellen oder aktualisieren:
+   - Was macht das Feature? Wie bedient man es? Welche Regeln gelten?
+   - Alle Bildschirme, Buttons, Dialoge, Fehlerfälle beschreiben
+   - Dient als Basis für spätere Kundendokumentation
+2. **Benutzer muss die Funktionsbeschreibung bestätigen** bevor Code geschrieben wird
+3. Erst nach Bestätigung: Code implementieren
+
+### Funktionsdoku-Dateien:
+| Datei | Bereich |
+|-------|---------|
+| `specs/kiosk-funktionen.md` | Kiosk (Mittagstisch, Online-Shop, Stammkunden, Social) |
+| _weitere nach Bedarf_ | Shop-Admin, Bestellstatus, CMS, etc. |
+
+### Nachholpflicht:
+- Fehlende Funktionsbeschreibungen müssen **nachträglich** erstellt werden
+- Bei jeder Änderung an einem Bereich ohne Funktionsdoku: zuerst Doku erstellen
+
+---
+
+## 2. Testpflicht bei Änderungen
 
 **Bei jeder Code-Änderung müssen die zugehörigen Testcases aktualisiert werden.**
 
@@ -18,6 +42,9 @@
 3. **Spec** in `specs/*.md` aktualisieren:
    - Akzeptanzkriterien ergänzen / abhaken
    - Anforderungen bei Änderungen nachziehen
+4. **Tests ausführen** – betroffene Tests müssen nach der Änderung laufen:
+   - Gezielt: `npx playwright test tests/<file>.spec.js -g "Testname"`
+   - Ergebnis in TESTCASES.md dokumentieren (Datum, Ergebnis, ggf. Fehler)
 
 ### Keine Fallbacks – Funktionalität muss funktionieren:
 - **Fehlende Abhängigkeiten (Datenbankfelder, APIs, Configs) müssen angelegt werden** – nicht per Fallback/Default umgangen
@@ -46,7 +73,7 @@
 
 ---
 
-## 2. Icons: Lucide Icons verwenden
+## 3. Icons: Lucide Icons verwenden
 
 **Alle UI-Icons müssen [Lucide Icons](https://lucide.dev/) verwenden** – keine Emoji-Icons (🔄, 📦, etc.) in produktiven UI-Elementen.
 
@@ -60,13 +87,51 @@
 - Emojis in reinem Text / Toast-Nachrichten sind erlaubt (z.B. Bestätigungsmeldungen)
 - Druckansichten (Küchenliste, Beipackzettel) dürfen Emojis verwenden
 
-### Migration:
-- Bestehende Emoji-Icons werden schrittweise migriert (nicht sofort alles umbauen)
-- Bei jeder Änderung an einer Datei: betroffene Emojis auf Lucide umstellen
+---
+
+## 4. Multi-Device UI-Tests (Pflicht)
+
+**Jede UI-Änderung muss auf drei Viewports visuell geprüft und getestet werden.**
+
+### Pflicht-Viewports:
+| Gerät | Breite × Höhe | Verwendung |
+|-------|---------------|------------|
+| **Mobile** | 375 × 812 | iPhone SE / Standard-Smartphone |
+| **iPad Mini** | 768 × 1024 | Tablet / Kiosk |
+| **Desktop** | 1280 × 800 | Laptop / Desktop |
+
+### Prüfkriterien pro Viewport:
+- Text wird **nicht abgeschnitten** oder umgebrochen in unlesbarer Weise
+- Buttons/Icons sind erreichbar und haben **ausreichend Klickfläche** (min. 36×36px)
+- Layout nutzt den **verfügbaren Platz sinnvoll** (kein verschenkter Platz auf Desktop)
+- **Kein horizontales Scrollen**
+- Zweizeilige Layouts verwenden wenn einzeilig den Text abschneidet
+- **Lesbarkeit für 60+ Nutzer:innen**: Texte müssen auf ihrem Hintergrund klar erkennbar sein
+   (kein „grau auf grau“, kein zu dünner Font, keine zu kleine Schrift)
+
+### Verbindliche Lesbarkeitsregeln (Pflicht)
+
+- Fließtext und Labels: mindestens `16px` auf Mobile, mindestens `15px` auf Desktop
+- Wichtige UI-Texte (Buttons, Status, Hinweise, Popup-Titel/-Text): mindestens WCAG AA Kontrast
+   (Normaltext `4.5:1`, große Schrift `3:1`)
+- Keine alleinige Farbcodierung ohne Text/Label (z. B. Status nur „rot/grün" ist unzulässig)
+- In Dark Mode und Light Mode separat prüfen
+- System-/OS-Kontrastmodi berücksichtigen (`forced-colors`, `prefers-contrast`)
+- In `forced-colors: active` dürfen Texte/Icons/Buttons nicht „verschwinden";
+   bei Bedarf Systemfarben (`Canvas`, `CanvasText`, `ButtonText`, `LinkText`) nutzen
+
+### Umsetzung:
+- Screenshots auf allen drei Viewports erstellen und im Chat zeigen
+- Bei Playwright-Tests: `page.setViewportSize()` für verschiedene Viewports nutzen
+- Automatisierte Viewport-Tests in `tests/*.spec.js` anlegen wo sinnvoll
+- Zusätzlich pro geändertem Screen mindestens ein Lesbarkeits-Check:
+   - visuell (Text auf Hintergrund klar lesbar)
+   - technisch (Kontrastprüfung der kritischen Textelemente)
+   - High-Contrast-Check (`forced-colors`) für kritische Flows
 
 ---
 
-## 3. UI-Design: Verkäuferinnen-Perspektive
+## 5. UI-Design: Verkäuferinnen-Perspektive
 
 **Das Kiosk-UI wird aus der Perspektive der Verkäuferin designt:**
 - Labels sind handlungsorientiert ("Zum Packen", "Warten auf Abholung") statt technisch ("Status 1", "In Bearbeitung")
@@ -76,7 +141,59 @@
 
 ---
 
-## 4. Commit-Konventionen
+## 6. Popups & Overlays: Hintergrund-Scroll sperren
+
+**Bei jedem Popup/Overlay/Modal muss der Hintergrund-Scroll gesperrt werden.**
+
+### Regeln:
+- Beim **Öffnen** eines Overlays: `body` bekommt `overflow:hidden` + `position:fixed` (verhindert iOS-Scroll-Bug)
+- Beim **Schließen**: Scroll-Position wiederherstellen
+- Gilt für **alle** Seiten: `index.html`, `shop.html`, `kiosk.html`, etc.
+- Standard-Pattern: `dlLockScroll()` beim Öffnen, `dlUnlockScroll()` beim Schließen
+
+### Implementierung:
+```css
+body.overlay-open { overflow: hidden; position: fixed; width: 100%; top: var(--scroll-y, 0); }
+```
+```js
+function dlLockScroll() {
+  document.documentElement.style.setProperty('--scroll-y', '-' + window.scrollY + 'px');
+  document.body.classList.add('overlay-open');
+}
+function dlUnlockScroll() {
+  document.body.classList.remove('overlay-open');
+  var y = parseInt(document.documentElement.style.getPropertyValue('--scroll-y') || '0') * -1;
+  document.documentElement.style.removeProperty('--scroll-y');
+  window.scrollTo(0, y);
+}
+```
+
+### Checkliste bei neuem Popup:
+- [ ] `dlLockScroll()` bei jedem Open-Trigger (Button, Link, JS)
+- [ ] `dlUnlockScroll()` bei Close-Button UND Overlay-Backdrop-Klick
+- [ ] Testen auf Mobile (iOS Safari hat eigenes Scroll-Verhalten)
+
+---
+
+## 6. Sticky Headers (nicht scrollbar)
+
+**Seiten-Header (Navigation, Titel) müssen immer sichtbar bleiben und dürfen nicht mit dem Content scrollen.**
+
+### Regeln:
+- Header mit `position: sticky; top: 0; z-index: 100` fixieren
+- Sekundäre Banner (Countdown, Status) direkt darunter sticky: `position: sticky; top: <header-höhe>px; z-index: 99`
+- Der scrollbare Content beginnt erst unter den fixierten Elementen
+- Gilt für **alle** Seiten: Shop, Kiosk, Fleisch-Bestellen, CMS, etc.
+- Kein `position: relative` auf Header-Elemente setzen (verhindert sticky)
+
+### Begründung:
+- Mobile-Nutzer verlieren sonst die Orientierung
+- Zurück-Button und Seitentitel müssen immer erreichbar sein
+- Countdown/Deadline-Info muss während des Scrollens sichtbar bleiben
+
+---
+
+## 7. Commit-Konventionen
 
 - `feat:` – Neue Funktionalität
 - `fix:` – Bugfix
@@ -86,7 +203,7 @@
 
 ---
 
-## 5. Branch-Strategie
+## 8. Branch-Strategie
 
 | Branch | Zweck |
 |---|---|
@@ -96,3 +213,48 @@
 
 - Nie direkt auf `main` committen
 - Feature-Branches von `feature/bestellsystem` abzweigen
+
+---
+
+## 9. Test-Zugangsdaten
+
+| Zugang | Wert |
+|---|---|
+| CMS Passwort | *siehe internen Passwort-Manager (nicht im Repo)* |
+| Live-URL (Bestellsystem) | `https://witty-island-064f9d903.7.azurestaticapps.net` |
+| Live-URL (Produktion) | `https://kind-pebble-072605b03.7.azurestaticapps.net` |
+
+---
+
+## 10. Responsive UI-Test-Pflicht
+
+**Jede UI-Änderung muss auf allen drei Gerätekategorien getestet werden, bevor sie committed wird.**
+
+### Geräte-Breakpoints:
+
+| Gerät | Breite | Typisch |
+|---|---|---|
+| **Mobile** | ≤ 480px | iPhone SE/14, Android |
+| **Tablet/iPad** | 481–1024px | iPad Mini/Air/Pro |
+| **Desktop** | > 1024px | Laptop, Monitor |
+
+### Checkliste bei jeder UI-Änderung:
+
+- [ ] **Mobile** — Eingabefelder min. 40px Höhe, Touch-Targets min. 44px, kein horizontaler Overflow
+- [ ] **iPad** — Formulare und Tabellen brechen sauber um, keine abgeschnittenen Elemente
+- [ ] **Desktop** — Layout nutzt verfügbaren Platz, keine unnötig großen Lücken
+- [ ] **Lesbarkeit 60+** — alle Texte klar gegen den Hintergrund (Light + Dark Mode)
+- [ ] **Kontrast** — kritische Textelemente erfüllen mindestens WCAG AA
+
+### Testen mit Browser-DevTools:
+
+1. Chrome/Edge DevTools öffnen (F12)
+2. Device Toolbar aktivieren (Strg+Shift+M)
+3. Mindestens testen: **iPhone SE** (375px), **iPad Air** (820px), **Desktop** (1280px)
+
+### Touch-Mindestgrößen:
+
+- Eingabefelder: `min-height: 40px`, `padding: 10px 12px`, `font-size: 14px`
+- Buttons: `min-height: var(--touch-min, 44px)`
+- Checkboxen: `width: 20px; height: 20px`
+- Klickbare Icons/Labels: min. 32×32px Touch-Area

@@ -61,8 +61,9 @@ def calc_menge_vk(preis, mengentyp, mengeneinheit, gpfaktor, mengenerfassung, wa
 
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(url_setting_name, "https://orgab4e2f00.crm16.dynamics.com")
     if not client_secret:
@@ -166,7 +167,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     is_rp = False
                     if uvp and uvp > 0 and preis > 0 and preis < uvp:
                         discount = round((uvp - preis) / uvp * 100)
-                        if discount >= 5 and discount <= 70:
+                        if discount >= 5 and discount <= 60:
                             is_rp = True
                     ang = angebote_map.get(artnr)
                     mengentyp = item.get("cr5d4_mengentyp")
@@ -254,12 +255,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if warengruppe_bez not in groups:
                 groups[warengruppe_bez] = []
 
-            # Roter Punkt: VK < UVP with meaningful discount (>= 5% and <= 70%)
+            # Roter Punkt: VK < UVP with meaningful discount (>= 5% and <= 60%)
             is_rp = False
             discount = 0
             if uvp_preis and uvp_preis > 0 and preis > 0 and preis < uvp_preis:
                 discount = round((uvp_preis - preis) / uvp_preis * 100)
-                if discount >= 5 and discount <= 70:
+                if discount >= 5 and discount <= 60:
                     is_rp = True
                     rp_count += 1
 

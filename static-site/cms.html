@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dorfladen CMS</title>
+<script src="/js/theme.js"></script>
+<link rel="stylesheet" href="/css/admin-dark.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <!-- Dorfladen CMS - Power Pages Web Template -->
@@ -16,6 +19,7 @@ msalScript.src = 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.0/lib/ms
 msalScript.onload = function() { window.msalLoaded = true; };
 msalScript.onerror = function() { console.warn('MSAL script failed to load - SharePoint images will not work'); };
 document.head.appendChild(msalScript);
+window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});});
 </script>
 <style>
   html,body{overflow-x:hidden;max-width:100vw}
@@ -32,6 +36,35 @@ document.head.appendChild(msalScript);
     background: var(--c-m-bg);
     color: var(--c-m-text);
   }
+  html[data-theme="dark"]{color-scheme:dark;--c-m-bg:#12171a;--c-m-pri:#5cb85f;--c-m-pri-light:#1e2a20;--c-m-sec:#c79b6c;--c-m-sec-light:#241d12;--c-m-text:#e6eae8;--c-m-muted:#9aa6a0}
+  #dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-m-card,#fff);color:var(--c-m-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:0}
+  html[data-theme="dark"]{--c-m-card:#1b2228}
+  .cms-help-result{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #1b5e20;border-radius:8px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s}
+  .cms-help-result:hover{box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  html[data-theme="dark"] .cms-help-result{background:#1b2228;border-color:#2a333a;color:var(--c-m-text)}
+  html[data-theme="dark"] .cms-card,html[data-theme="dark"] .cms-modal,html[data-theme="dark"] .cms-confirm-box,html[data-theme="dark"] .cms-login-box,html[data-theme="dark"] .cms-meal,html[data-theme="dark"] .cms-akt-row,html[data-theme="dark"] .cms-ang-item{background:#1b2228;border-color:#2a333a;color:var(--c-m-text)}
+  html[data-theme="dark"] .cms-input,html[data-theme="dark"] .cms-hours-time,html[data-theme="dark"] .rte-editor,html[data-theme="dark"] .cms-rte-editor,html[data-theme="dark"] .cms-login-box input{background:#12171a;color:var(--c-m-text);border-color:#2a333a}
+  html[data-theme="dark"] .cms-modal-header,html[data-theme="dark"] .cms-modal-footer{background:#161c20;border-color:#2a333a}
+  html[data-theme="dark"] .cms-tabs{border-bottom-color:#2a333a}
+  html[data-theme="dark"] .cms-btn-gray{background:#20272d;color:var(--c-m-text);border-color:#2a333a}
+  html[data-theme="dark"] .cms-news-tbl th{background:#161c20;border-color:#2a333a}
+  html[data-theme="dark"] .cms-news-tbl td{border-color:#2a333a}
+  html[data-theme="dark"] .cms-news-tbl tbody tr:nth-child(even){background:#161c20}
+  html[data-theme="dark"] .cms-news-tbl tbody tr:hover{background:#1e2a20}
+  html[data-theme="dark"] .cms-art-dd{background:#1b2228;border-color:#2a333a}
+  html[data-theme="dark"] .cms-art-opt{border-color:#2a333a}
+  html[data-theme="dark"] .cms-art-opt:hover{background:#1e2a20}
+  html[data-theme="dark"] .cms-art-opt-name{color:var(--c-m-text)}
+  html[data-theme="dark"] .cms-ang-toggle:hover{background:#1e2a20}
+  /* Admin: statische helle #f9fafb-Config-/Hinweis-Boxen (JS-Inline) im Dark Mode.
+     Gescoped auf Modals/Karten/Social – Flyer-Vorschau-Thumbs (.cms-wp-thumb) bleiben hell. */
+  html[data-theme="dark"] .cms-modal [style*="background:#f9fafb"]:not(.cms-wp-thumb),
+  html[data-theme="dark"] .cms-card [style*="background:#f9fafb"]:not(.cms-wp-thumb),
+  html[data-theme="dark"] #cms-panel-social [style*="background:#f9fafb"]:not(.cms-wp-thumb){background:#161c20 !important;border-color:#2a333a !important}
+  html[data-theme="dark"] .cms-modal [style*="color:#1f2937"],
+  html[data-theme="dark"] .cms-modal [style*="color:#374151"],
+  html[data-theme="dark"] .cms-card [style*="color:#1f2937"]{color:var(--c-m-text) !important}
+  @media (forced-colors: active){.cms-card,.cms-btn,.cms-input,.cms-modal,.cms-tab{border:1px solid CanvasText}}
   .cms-wrap{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;max-width:1000px;margin:0 auto;padding:16px;box-sizing:border-box}
   .cms-wrap input,.cms-wrap textarea,.cms-wrap select,.cms-wrap button,.cms-modal input,.cms-modal textarea,.cms-modal select,.cms-modal button,.cms-modal-bg input,.cms-modal-bg textarea,.cms-modal-bg select,.cms-modal-bg button,.cms-btn,.cms-input{font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
   .cms-tabs-wrap{margin-bottom:20px}
@@ -49,12 +82,12 @@ document.head.appendChild(msalScript);
   .cms-btn-trash{width:28px;height:28px;padding:0;border-radius:6px;border:1px solid #fca5a5;background:#fff5f5;color:#a8242a;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
   .cms-btn-trash:hover{background:#ffe4e6;border-color:#fda4af}
   .cms-btn-trash svg{width:14px;height:14px;fill:currentColor}
-  .cms-btn-gray{background:#ffffff;color:var(--c-m-text);border:1px solid #e5e7eb;box-shadow:0 2px 6px rgba(0,0,0,0.02)}.cms-btn-gray:hover{background:var(--c-m-primary-light,#f0f4f1);border-color:var(--c-m-pri)}
+  .cms-btn-gray{background:#ffffff;color:var(--c-m-text);border:1px solid #e5e7eb;box-shadow:0 2px 6px rgba(0,0,0,0.02)}.cms-btn-gray:hover{background:var(--c-m-pri-light,#f0f4f1);border-color:var(--c-m-pri)}
   .cms-btn[disabled]{opacity:.6;cursor:not-allowed;pointer-events:none}
   @keyframes cms-spin{to{transform:rotate(360deg)}}
   .cms-btn .cms-btn-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:cms-spin .6s linear infinite;margin-right:2px}
   .cms-rte-btn{background:#fff;border:1px solid #e5e7eb;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;transition:all 0.12s}
-  .cms-rte-btn:hover{background:var(--c-m-primary-light);border-color:var(--c-m-pri)}
+  .cms-rte-btn:hover{background:var(--c-m-pri-light);border-color:var(--c-m-pri)}
   .cms-input{width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;transition:all 0.15s;color:var(--c-m-text)}
   .cms-input::placeholder{color:#a1a1aa}
   .cms-input:focus{outline:none;border-color:var(--c-m-pri);box-shadow:0 0 0 3px rgba(30,70,58,0.12)}
@@ -99,7 +132,7 @@ document.head.appendChild(msalScript);
   .cms-modal-header h3{margin:0;font-size:15px}
   .cms-modal-footer{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #e5e7eb;flex-shrink:0;box-sizing:border-box;flex-wrap:wrap}
   .cms-modal-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;line-height:1;padding:4px 8px;z-index:10;border-radius:6px;transition:all 0.15s}
-  .cms-modal-close:hover{background:#f3f4f6;color:#111}
+  .cms-modal-close:hover{background:var(--c-m-pri-light);color:var(--c-m-text)}
   .cms-btn-save{background:var(--c-m-pri);color:#fff;font-weight:700}.cms-btn-save:hover{background:#15352c}
   .cms-btn-del{background:#dc2626;color:#fff;font-weight:700}.cms-btn-del:hover{background:#b91c1c}
   .cms-hours-row{display:flex;align-items:center;gap:8px;padding:8px 16px;flex-wrap:wrap;border-bottom:1px solid #f3f4f6}
@@ -171,7 +204,7 @@ document.head.appendChild(msalScript);
   .cms-news-actions{text-align:right;white-space:nowrap}
   @media(max-width:767px){.cms-news-act-col{display:none}.cms-news-tbl tbody tr:active{background:#dcfce7}}
   .cms-news-abtn{background:#ffffff;border:1px solid #d1d5db;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:6px;transition:all .12s;margin-left:2px;color:var(--c-m-text);font-weight:600}
-  .cms-news-abtn:hover{background:var(--c-m-primary-light);border-color:var(--c-m-pri)}
+  .cms-news-abtn:hover{background:var(--c-m-pri-light);border-color:var(--c-m-pri)}
   .cms-news-del:hover{background:#fdf2f2;border-color:#fca5a5;color:var(--m-red)}
   .cms-news-lbl{font-size:10px;font-weight:800;color:var(--c-m-muted);display:block;margin:12px 0 4px;text-transform:uppercase;letter-spacing:.5px}
   .cms-rte-toolbar{display:flex;gap:2px;padding:4px 6px;background:#f9fafb;border:1px solid #e5e7eb;border-bottom:none;border-radius:8px 8px 0 0;flex-wrap:wrap}
@@ -523,6 +556,83 @@ document.head.appendChild(msalScript);
   .cms-pw-wrap{position:relative}
   .cms-pw-wrap input{padding-right:40px}
   .cms-pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:18px;padding:4px;line-height:1}
+
+  /* ═══ Kiosk-Social-UI (k-*) – nur im Social-Panel ═══ */
+  #cms-panel-social{--c-green:var(--dl-green-action,#2e7d4f);--c-border:#e5e7eb;--c-muted:#6b7280;--c-text:#1f2937;--touch-min:56px}
+  /* Order cards (collapsible steps) */
+  #cms-panel-social .k-order{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:6px;overflow:hidden;border-left:4px solid transparent;position:relative;transition:transform .2s ease}
+  #cms-panel-social .k-order-hdr{display:flex;align-items:center;gap:6px 8px;padding:10px 12px;cursor:pointer;user-select:none;min-height:44px;flex-wrap:wrap}
+  #cms-panel-social .k-order-hdr:active{background:#f9fafb}
+  #cms-panel-social .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0;width:18px;text-align:center}
+  #cms-panel-social .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
+  #cms-panel-social .k-order.oc-collapsed .k-order-body{display:none}
+  #cms-panel-social .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:60px;flex:1 1 auto;max-width:none}
+  #cms-panel-social .k-order-hdr .k-oc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
+  #cms-panel-social .k-order-hdr .k-oc-actions .k-btn{min-height:40px;min-width:40px;padding:6px 14px;font-size:13px;border-radius:8px;gap:5px}
+  #cms-panel-social .k-order-body{display:flex;align-items:stretch;border-top:1px solid var(--c-border)}
+  /* Buttons */
+  #cms-panel-social .k-btn{min-height:var(--touch-min);min-width:var(--touch-min);padding:8px 18px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;white-space:nowrap}
+  #cms-panel-social .k-btn:active{transform:scale(.96)}
+  #cms-panel-social .k-btn-confirm{background:var(--c-green);color:#fff}
+  #cms-panel-social .k-btn-sm{min-height:38px;padding:6px 14px;font-size:13px;border-radius:8px}
+  #cms-panel-social .k-btn-outline{background:#fff;color:var(--c-text);border:1.5px solid var(--c-border)}
+  #cms-panel-social .k-btn-outline:hover{border-color:var(--c-green);color:var(--c-green)}
+  /* Filter tabs (sub-tabs) */
+  #cms-panel-social .k-filter-bar{display:flex;gap:0;border-bottom:2px solid var(--c-border);overflow:hidden;background:#fff}
+  #cms-panel-social .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px}
+  #cms-panel-social .k-filter-btn:hover{color:var(--c-text)}
+  #cms-panel-social .k-filter-btn:active{transform:none}
+  #cms-panel-social .k-filter-btn.active{border-bottom-color:var(--c-green);color:#fff !important;background:var(--c-green);border-radius:8px 8px 0 0}
+  /* Fields */
+  #cms-panel-social .k-field{margin-bottom:16px}
+  #cms-panel-social .k-field label{font-size:13px;font-weight:700;color:var(--c-muted);margin-bottom:6px;display:block}
+  #cms-panel-social .k-field input,#cms-panel-social .k-field textarea,#cms-panel-social .k-field select{width:100%;padding:14px 16px;border:2px solid var(--c-border);border-radius:12px;font-size:16px;font-family:inherit;outline:none}
+  #cms-panel-social .k-field input:focus,#cms-panel-social .k-field textarea:focus,#cms-panel-social .k-field select:focus{border-color:var(--c-green)}
+  #cms-panel-social .k-field textarea{resize:vertical;min-height:60px}
+  #cms-panel-social .k-field select{background:#fff;appearance:auto}
+  /* Katalog split container – mobile-first defaults */
+  #soc-kat-split-container{display:flex;flex-direction:column;gap:14px}
+  #soc-kat-col-left,#soc-kat-col-right{width:100%}
+
+  /* Social Split-View Desktop (scrollendes Dokument – ohne Full-Height/overflow) */
+  @media(min-width:900px){
+    #cms-panel-social #soc-desk-bar{display:block!important}
+    #cms-panel-social #soc-desk-tabs{display:block!important}
+    #social-panel-post{display:flex;flex-wrap:wrap;gap:0 16px;align-items:flex-start}
+    #soc-desk-bar,#soc-desk-tabs{flex-basis:100%}
+    #soc-col-left{flex:1.2;min-width:0}
+    #soc-col-right{flex:1;min-width:0;position:sticky;top:0;align-self:flex-start}
+    /* Hide step headers on desktop — show content flat */
+    #soc-col-left .k-order-hdr{display:none!important}
+    #soc-col-left .k-order{border:none!important;border-left:none!important;margin-bottom:0!important;box-shadow:none!important}
+    #soc-col-left .k-order-body{display:block!important}
+    #soc-col-left .k-order.oc-collapsed .k-order-body{display:block!important}
+    /* Hide Heute/Morgen in Step 1 on desktop (moved to action bar) */
+    #soc-day-section{display:none!important}
+    /* Right column: always show bodies, hide step headers */
+    #soc-col-right .k-order-hdr{display:none!important}
+    #soc-col-right .k-order{border:none!important;border-left:none!important;margin-bottom:0!important;box-shadow:none!important}
+    #soc-col-right .k-order-body{display:block!important}
+    #soc-col-right{padding:8px;background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb}
+    /* Hide Step 4 entirely on desktop (all actions in action bar) */
+    #soc-step-4{display:none!important}
+    /* Hide posts in right column on desktop (shown in left col tab) */
+    #soc-col-right #soc-today-posts{display:none!important}
+    #soc-col-right #soc-post-status{display:none!important}
+    /* Hide preview update button on desktop (auto-updates) */
+    #soc-col-right button[onclick*="socialGenPreview"]{display:none!important}
+    /* Product grid 2-col */
+    #soc-pick-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:4px;max-height:none!important;overflow-y:visible!important}
+    #soc-post-footer{flex-basis:100%}
+    /* Katalog Split-View Desktop */
+    #soc-kat-split-container{display:flex;flex-direction:row;gap:20px;align-items:flex-start;width:100%}
+    #soc-kat-col-left{flex:1.1;min-width:0;position:sticky;top:10px}
+    #soc-kat-col-right{flex:1.4;min-width:0}
+    #soc-kat-list table tr{transition:all 0.15s ease-in-out}
+    #soc-kat-list table tr:hover{background-color:var(--c-m-pri-light)!important}
+    #soc-kat-list table img{transition:transform 0.15s ease-in-out,box-shadow 0.15s ease-in-out}
+    #soc-kat-list table img:hover{transform:scale(1.1);box-shadow:0 4px 10px rgba(0,0,0,0.12)}
+  }
 </style>
 
 <div id="cms-login" class="cms-wrap" lang="de" style="display:none">
@@ -538,14 +648,14 @@ document.head.appendChild(msalScript);
 
 <div class="cms-wrap" id="cms-app" lang="de" style="display:none">
   <div class="cms-flex cms-between cms-mb" style="align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 14px; margin-bottom: 18px;">
-    <div style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="location.href='/index.html'" title="Zurück zur Website">
+    <div style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="if(window!==window.parent){window.parent.postMessage('closeMittagPopup','*')}else{location.href='/index.html'}" title="Zurück zur Website">
       <img id="cms-header-logo" src="" alt="Dorfladen Oberornau" style="height:52px;width:auto;flex-shrink:0;border-radius:6px; transition: opacity 0.15s ease;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
       <h2 style="font-size:18px;font-weight:800;color:var(--c-m-pri);margin:0; transition: color 0.15s ease;" onmouseover="this.style.color='var(--c-m-sec)'" onmouseout="this.style.color='var(--c-m-pri)'">Dorfladen CMS</h2>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
       <span id="cms-status" style="font-size:11px;color:var(--c-m-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Lade...</span>
       <span id="cms-version" style="font-size:10px;color:var(--c-m-muted);opacity:0.5;font-weight:600;"></span>
-      <a href="/index.html" class="cms-btn cms-btn-gray" style="font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 8px; text-decoration: none; box-shadow: none; border: 1px solid #e5e7eb; background: #ffffff; color: var(--c-m-text); display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease-in-out; text-transform: uppercase; letter-spacing: 0.3px;">
+      <a href="/index.html" class="cms-btn cms-btn-gray" id="cms-back-website" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}" style="font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 8px; text-decoration: none; box-shadow: none; border: 1px solid #e5e7eb; background: #ffffff; color: var(--c-m-text); display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease-in-out; text-transform: uppercase; letter-spacing: 0.3px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--c-m-muted);"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Website
       </a>
@@ -590,7 +700,10 @@ document.head.appendChild(msalScript);
     <button class="cms-tab" data-action="tab" data-id="orders" id="cms-tab-orders" style="color:#d97706;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Bestellungen
     </button>
-    <button class="cms-tab" data-action="tab" data-id="social" id="cms-tab-social" style="color:#e1306c;">
+    <button class="cms-tab" data-action="tab" data-id="metzger" id="cms-tab-metzger" style="color:#991b1b;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/></svg> Metzger
+    </button>
+    <button class="cms-tab" data-action="tab" data-id="social" id="cms-tab-social" style="color:#2e7d4f;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Social
     </button>
     <button class="cms-tab" data-action="tab" data-id="help" id="cms-tab-help" style="color:#16a34a;">
@@ -612,7 +725,7 @@ document.head.appendChild(msalScript);
         <button class="cms-week-quick" data-action="weekThis">Diese Woche</button>
         <button class="cms-week-quick" data-action="weekNxt">N&auml;chste Woche</button>
       </div>
-      <div style="display:flex;gap:8px"><button class="cms-btn-preview" data-action="previewWP"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button><button class="cms-btn cms-btn-gray" data-action="printWP" style="padding:4px 10px;font-size:11px">&#x1F5A8;&#xFE0F; Drucken</button><button class="cms-btn-wa" data-action="shareWP"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Teilen</button><button class="cms-btn cms-btn-primary" data-action="openAddMeal">+ Gericht</button><button class="cms-btn cms-btn-gray" onclick="cmsTab('help'); cmsSwitchHelpTopic('wp-help')" title="Wochenplan Hilfe" style="padding:4px 10px;font-size:14px;background:#e8f5e9;color:#16a34a;border-color:#c8e6c9">❓</button></div>
+      <div style="display:flex;gap:8px"><button class="cms-btn-preview" data-action="previewWP"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button><button class="cms-btn cms-btn-gray" data-action="printWP" style="padding:4px 10px;font-size:11px">&#x1F5A8;&#xFE0F; Drucken</button><button class="cms-btn-wa" data-action="shareWP"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Teilen</button><button class="cms-btn cms-btn-primary" data-action="openAddMeal">+ Gericht</button><button class="cms-btn cms-btn-gray" onclick="cmsTab('help'); cmsSwitchHelpTopic('wp-help')" title="Wochenplan Hilfe" style="padding:4px 10px;font-size:14px;background:#e8f5e9;color:#16a34a;border-color:#c8e6c9"><i data-lucide="circle-help" style="width:14px;height:14px;vertical-align:-2px"></i></button></div>
     </div>
     <div id="cms-wp-loading" style="display:none;text-align:center;padding:40px 0">
       <div style="display:inline-block;width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#2e7d32;border-radius:50%;animation:cms-spin 0.8s linear infinite"></div>
@@ -699,7 +812,7 @@ document.head.appendChild(msalScript);
   <div id="cms-panel-sort" style="display:none">
     <div class="cms-flex cms-between" style="margin-bottom:12px">
       <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0;display:flex;align-items:center;gap:6px">Sortiment-Seite <span onclick="cmsTab('help'); cmsSwitchHelpTopic('sort-help')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700">?</span></h3>
-      <button class="cms-btn cms-btn-gray" id="sort-edit-toggle" onclick="sortToggleEdit()">✏️ Bearbeiten</button>
+      <button class="cms-btn cms-btn-gray" id="sort-edit-toggle" onclick="sortToggleEdit()"><i data-lucide="pencil" style="width:13px;height:13px;vertical-align:-2px"></i> Bearbeiten</button>
     </div>
 
     <!-- === VIEW MODE (rendered HTML) === -->
@@ -741,8 +854,8 @@ document.head.appendChild(msalScript);
               <button class="rte-btn" onclick="sortRteCmd('sort-rte-intro','bold')" title="Fett"><b>F</b></button>
               <button class="rte-btn" onclick="sortRteCmd('sort-rte-intro','italic')" title="Kursiv"><i>K</i></button>
               <span class="rte-sep"></span>
-              <button class="rte-btn" onclick="sortRteLink('sort-rte-intro')" title="Link einfügen">🔗</button>
-              <button class="rte-btn" onclick="sortRteUnlink('sort-rte-intro')" title="Link entfernen">🚫</button>
+              <button class="rte-btn" onclick="sortRteLink('sort-rte-intro')" title="Link einfügen"><i data-lucide="link" style="width:13px;height:13px"></i></button>
+              <button class="rte-btn" onclick="sortRteUnlink('sort-rte-intro')" title="Link entfernen"><i data-lucide="unlink" style="width:13px;height:13px"></i></button>
             </div>
             <div class="rte-editor" id="sort-rte-intro" contenteditable="true"></div>
           </div>
@@ -765,7 +878,7 @@ document.head.appendChild(msalScript);
               <button class="rte-btn" onclick="sortRteCmd('sort-rte-eco','bold')" title="Fett"><b>F</b></button>
               <button class="rte-btn" onclick="sortRteCmd('sort-rte-eco','italic')" title="Kursiv"><i>K</i></button>
               <span class="rte-sep"></span>
-              <button class="rte-btn" onclick="sortRteLink('sort-rte-eco')" title="Link einfügen">🔗</button>
+              <button class="rte-btn" onclick="sortRteLink('sort-rte-eco')" title="Link einfügen"><i data-lucide="link" style="width:13px;height:13px"></i></button>
             </div>
             <div class="rte-editor" id="sort-rte-eco" contenteditable="true"></div>
           </div>
@@ -773,7 +886,7 @@ document.head.appendChild(msalScript);
       </div>
 
       <div style="position:sticky;bottom:0;z-index:100;background:#fff;border-top:1px solid #e5e7eb;padding:10px 0;margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-        <button class="cms-btn cms-btn-primary" onclick="sortSave()">💾 Speichern</button>
+        <button class="cms-btn cms-btn-primary" onclick="sortSave()"><i data-lucide="save" style="width:13px;height:13px;vertical-align:-2px"></i> Speichern</button>
         <button class="cms-btn cms-btn-gray" onclick="sortToggleEdit()">Abbrechen</button>
         <span id="sort-cms-status" style="font-size:12px;color:#6b7280;line-height:32px"></span>
       </div>
@@ -856,8 +969,7 @@ document.head.appendChild(msalScript);
     <div class="cms-card" style="margin-bottom:16px">
       <div class="cms-card-header" style="background:#7c3aed">Schnell-Vorlagen</div>
       <div class="cms-card-body" style="display:flex;flex-wrap:wrap;gap:8px">
-        <button class="cms-btn" onclick="pushTemplate('mittagstisch')" style="background:#f0fdf4;color:#2d5016;border:1px solid #bbf7d0;font-size:13px">&#127869; Mittagstisch</button>
-        <button class="cms-btn" onclick="pushTemplate('angebote')" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:13px">&#127873; Neue Angebote</button>
+        <button class="cms-btn" onclick="pushTemplate('tagesinfo')" style="background:#f0fdf4;color:#2d5016;border:1px solid #bbf7d0;font-size:13px">&#128203; TagesInfo</button>
         <button class="cms-btn" onclick="pushTemplate('news')" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-size:13px">&#128240; Neuigkeit</button>
       </div>
     </div>
@@ -892,8 +1004,7 @@ document.head.appendChild(msalScript);
           <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Kategorie (nur Nutzer mit dieser Auswahl erhalten die Nachricht)</label>
           <select id="push-category" class="cms-input" style="width:100%">
             <option value="">Alle Abonnenten</option>
-            <option value="mittagstisch">&#127869; Mittagstisch</option>
-            <option value="angebote">&#127873; Angebote</option>
+            <option value="tagesinfo">&#128203; TagesInfo</option>
             <option value="news">&#128240; News / Aktuelles</option>
           </select>
         </div>
@@ -985,28 +1096,6 @@ document.head.appendChild(msalScript);
 
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f3f4f6">
           <div>
-            <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128230; Bestellungen</div>
-            <div style="font-size:.78rem;color:#6b7280;margin-top:2px">Zeigt den Men&uuml;punkt &bdquo;Bestellungen&ldquo; und die Shop-Admin-Bestelloberfl&auml;che an</div>
-          </div>
-          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
-            <input type="checkbox" id="feat-orders" style="opacity:0;width:0;height:0">
-            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
-          </label>
-        </div>
-
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f3f4f6">
-          <div>
-            <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#127869; Mittagstisch bestellen</div>
-            <div style="font-size:.78rem;color:#6b7280;margin-top:2px">Zeigt &bdquo;Jetzt bestellen&ldquo;-Buttons im Wochenplan und erm&ouml;glicht Online-Bestellung des Mittagessens</div>
-          </div>
-          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
-            <input type="checkbox" id="feat-mittagstisch" style="opacity:0;width:0;height:0">
-            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
-          </label>
-        </div>
-
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f3f4f6">
-          <div>
             <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128444;&#65039; Bilder im Wochenplan</div>
             <div style="font-size:.78rem;color:#6b7280;margin-top:2px">Zeigt Produktbilder neben den Gerichten in der Wochenplan-&Uuml;bersicht an</div>
           </div>
@@ -1016,13 +1105,111 @@ document.head.appendChild(msalScript);
           </label>
         </div>
 
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f3f4f6">
           <div>
             <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128444;&#65039; Bilder im Social-Post</div>
             <div style="font-size:.78rem;color:#6b7280;margin-top:2px">Zeigt Produktbilder im generierten Social-Media-Poster an (falls vorhanden)</div>
           </div>
           <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
             <input type="checkbox" id="feat-post-images" checked style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128240; TagesInfo immer anzeigen</div>
+            <div style="font-size:.78rem;color:#6b7280;margin-top:2px">TagesInfo wird auch nach Ladenschluss angezeigt (zum Testen). Normalerweise 30 Min vor Schluss ausgeblendet.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-tagesinfo-immer" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid #f3f4f6">
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:#1f2937">&#127769; Dark Mode erlauben</div>
+            <div style="font-size:.78rem;color:#6b7280;margin-top:2px">Wenn aktiv, folgt die gesamte Website der Dunkel-/Hell-Einstellung des Ger&auml;ts. Wenn aus, wird alles hell dargestellt.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-darkmode" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="cms-card" style="margin-top:18px">
+      <div class="cms-card-header" style="background:#0ea5e9!important">&#128273; Funktionen freischalten (Homepage &amp; Kiosk)</div>
+      <div class="cms-card-body" style="display:flex;flex-direction:column;gap:0">
+        <p style="font-size:12px;color:#6b7280;margin:0 0 6px">W&auml;hlen Sie, welche Funktionen auf der &ouml;ffentlichen <strong>Homepage</strong> und im internen <strong>Kiosk</strong> erscheinen. Nur aktivierte Funktionen sind sichtbar.</p>
+
+        <div style="font-weight:800;font-size:.82rem;color:#0369a1;text-transform:uppercase;letter-spacing:.03em;padding:10px 0 2px">&#127968; Homepage</div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f3f4f6">
+          <div><div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128722; Online-Shop</div><div style="font-size:.78rem;color:#6b7280;margin-top:2px">Online-Bestellungen &amp; Shop-Links auf der Homepage</div></div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-hp-shop" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f3f4f6">
+          <div><div style="font-weight:700;font-size:.9rem;color:#1f2937">&#127869; Mittagessen</div><div style="font-size:.78rem;color:#6b7280;margin-top:2px">&bdquo;Jetzt bestellen&ldquo;-Buttons im Wochenplan</div></div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-hp-mittag" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f3f4f6">
+          <div><div style="font-weight:700;font-size:.9rem;color:#1f2937">&#129385; Fleischbestellung</div><div style="font-size:.78rem;color:#6b7280;margin-top:2px">Fleisch-Vorbestellung &amp; Aktions-Banner auf der Homepage</div></div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-hp-fleisch" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+          <div><div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128240; Tagesinfo</div><div style="font-size:.78rem;color:#6b7280;margin-top:2px">TagesInfo/Social auf der Homepage anzeigen</div></div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-hp-tagesinfo" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="font-weight:800;font-size:.82rem;color:#0369a1;text-transform:uppercase;letter-spacing:.03em;padding:16px 0 2px;border-top:1px solid #e5e7eb;margin-top:8px">&#128421;&#65039; Kiosk</div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f3f4f6">
+          <div><div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128722; Online-Shop</div><div style="font-size:.78rem;color:#6b7280;margin-top:2px">Tab &bdquo;Online-Shop&ldquo; im Kiosk anzeigen</div></div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-k-shop" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f3f4f6">
+          <div><div style="font-weight:700;font-size:.9rem;color:#1f2937">&#127869; Mittagessen</div><div style="font-size:.78rem;color:#6b7280;margin-top:2px">Tab &bdquo;Mittagstisch&ldquo; im Kiosk anzeigen</div></div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-k-mittag" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f3f4f6">
+          <div><div style="font-weight:700;font-size:.9rem;color:#1f2937">&#129385; Fleischbestellung</div><div style="font-size:.78rem;color:#6b7280;margin-top:2px">Tab &bdquo;Metzger&ldquo; im Kiosk anzeigen</div></div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-k-fleisch" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+          <div><div style="font-weight:700;font-size:.9rem;color:#1f2937">&#128240; Tagesinfo</div><div style="font-size:.78rem;color:#6b7280;margin-top:2px">Tab &bdquo;Social&ldquo; im Kiosk anzeigen</div></div>
+          <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0">
+            <input type="checkbox" id="feat-k-tagesinfo" style="opacity:0;width:0;height:0">
             <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:26px;transition:.25s" class="feat-slider"></span>
           </label>
         </div>
@@ -1071,11 +1258,11 @@ document.head.appendChild(msalScript);
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">E-Mail (Kontakt)</label>
-            <input type="text" id="kontakt-email" class="cms-input" placeholder="bestellung@dorfladen-oberornau.de">
+            <input type="text" id="kontakt-email" class="cms-input" placeholder="info@dorfladen-oberornau.de">
           </div>
           <div>
             <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">E-Mail (Reply-To)</label>
-            <input type="text" id="kontakt-reply-to" class="cms-input" placeholder="bestellung@dorfladen-oberornau.de">
+            <input type="text" id="kontakt-reply-to" class="cms-input" placeholder="info@dorfladen-oberornau.de">
           </div>
         </div>
 
@@ -1127,6 +1314,12 @@ document.head.appendChild(msalScript);
         <button class="cms-btn cms-btn-gray" onclick="statsLoad()">&#x21bb; Aktualisieren</button>
       </div>
     </div>
+
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--c-m-muted);margin:-4px 0 12px;cursor:pointer">
+      <input type="checkbox" id="stats-internal-toggle" onchange="try{if(this.checked)localStorage.setItem('dl_internal','1');else localStorage.removeItem('dl_internal');}catch(e){}">
+      Diesen Browser als <strong>intern</strong> markieren &ndash; eigene Dev-/Test-Besuche werden nicht mehr mitgez&auml;hlt
+    </label>
+    <script>try{document.getElementById('stats-internal-toggle').checked=(localStorage.getItem('dl_internal')==='1');}catch(e){}</script>
 
     <!-- KPI Cards -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px">
@@ -2690,7 +2883,7 @@ document.head.appendChild(msalScript);
   <!-- Bestellungen-Bereich -->
   <div id="cms-panel-orders" style="display:none">
     <div class="cms-card">
-      <div class="cms-card-header">🛍 Bestellungen verwalten</div>
+      <div class="cms-card-header"><i data-lucide="shopping-bag" style="width:14px;height:14px;vertical-align:-2px"></i> Bestellungen verwalten</div>
       <div class="cms-card-body">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
           <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -2702,11 +2895,11 @@ document.head.appendChild(msalScript);
               <option value="3">Abgeholt</option>
               <option value="4">Storniert</option>
             </select>
-            <button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadOrders()">🔄 Aktualisieren</button>
+            <button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadOrders()"><i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:-2px"></i> Aktualisieren</button>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <a href="/shop.html" target="_blank" class="cms-btn cms-btn-sm" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;text-decoration:none">🛒 Shop öffnen</a>
-            <button class="cms-btn cms-btn-sm" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0" onclick="cmsPrintOrders()">🖨 Kommissionierliste drucken</button>
+            <a href="/shop.html" target="_blank" class="cms-btn cms-btn-sm" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;text-decoration:none"><i data-lucide="shopping-cart" style="width:13px;height:13px;vertical-align:-2px"></i> Shop öffnen</a>
+            <button class="cms-btn cms-btn-sm" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0" onclick="cmsPrintOrders()"><i data-lucide="printer" style="width:13px;height:13px;vertical-align:-2px"></i> Kommissionierliste drucken</button>
           </div>
         </div>
         <div id="cms-orders-list" style="font-size:13px">
@@ -2715,9 +2908,41 @@ document.head.appendChild(msalScript);
       </div>
     </div>
     <div class="cms-card">
-      <div class="cms-card-header">👥 Registrierte Kunden</div>
+      <div class="cms-card-header">⏰ Bestellschlusszeiten</div>
       <div class="cms-card-body">
-        <div style="margin-bottom:12px"><button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadKunden()">🔄 Kunden laden</button></div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 12px">Bestellschlusszeiten für Mittagstisch und Online-Shop. Änderungen wirken sofort auf Frontend und Backend.</p>
+        <div class="cms-flex" style="gap:16px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Mittagstisch Bestellschluss</label>
+            <input class="cms-input" type="time" id="bs-cfg-mittag" value="10:30" step="900">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Shop Vorlauf (Stunden vor Öffnung)</label>
+            <input class="cms-input" type="number" id="bs-cfg-vorlauf" value="2" min="0.5" max="12" step="0.5">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Shop Abholung frühestens (Std. nach Öffnung)</label>
+            <input class="cms-input" type="number" id="bs-cfg-abhol-offset" value="1" min="0" max="6" step="0.5">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Storno bis (Std. vor Öffnung)</label>
+            <input class="cms-input" type="number" id="bs-cfg-storno" value="1" min="0" max="6" step="0.5">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="cms-label">Mindestbestellwert Shop (€)</label>
+            <input class="cms-input" type="number" id="bs-cfg-mindest" value="10" min="0" max="100" step="1">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="cms-btn cms-btn-primary" onclick="cmsSaveBestellConfig()" id="bs-cfg-save-btn">Speichern</button>
+          <span id="bs-cfg-status" style="font-size:12px;color:#2e7d4f"></span>
+        </div>
+      </div>
+    </div>
+    <div class="cms-card">
+      <div class="cms-card-header"><i data-lucide="users" style="width:14px;height:14px;vertical-align:-2px"></i> Registrierte Kunden</div>
+      <div class="cms-card-body">
+        <div style="margin-bottom:12px"><button class="cms-btn cms-btn-primary cms-btn-sm" onclick="cmsLoadKunden()"><i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:-2px"></i> Kunden laden</button></div>
         <div id="cms-kunden-list" style="font-size:13px">
           <p style="color:#6b7280;text-align:center;padding:20px">Klicken Sie "Kunden laden" um die Kundenliste anzuzeigen</p>
         </div>
@@ -2725,179 +2950,470 @@ document.head.appendChild(msalScript);
     </div>
   </div>
 
+  <!-- Metzger (Fleisch-Vorbestellung) -->
+  <div id="cms-panel-metzger" style="display:none">
+    <div class="cms-card">
+      <div class="cms-card-header" style="background:#7f1d1d!important">Konfiguration</div>
+      <div class="cms-card-body">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:8px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px">
+          <label style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer;color:#991b1b"><input type="checkbox" id="fm-cfg-aktiv" checked> Vorbestellung aktiviert</label>
+        </div>
+        <div class="cms-flex" style="gap:16px;flex-wrap:wrap;margin-bottom:16px">
+          <div style="flex:1;min-width:200px">
+            <label class="cms-label">Rabatt (%)</label>
+            <input class="cms-input" type="number" id="fm-cfg-rabatt" value="15" min="0" max="50" step="1">
+          </div>
+          <div style="flex:1;min-width:200px">
+            <label class="cms-label">Mindestmenge (kg)</label>
+            <input class="cms-input" type="number" id="fm-cfg-mindestmenge" value="1" min="0.5" max="10" step="0.5">
+          </div>
+          <div style="flex:1;min-width:200px">
+            <label class="cms-label">Bestellschluss (Uhrzeit)</label>
+            <input class="cms-input" type="number" id="fm-cfg-bestellschluss" value="10" min="0" max="23" step="1">
+          </div>
+        </div>
+        <div class="cms-flex" style="gap:16px;flex-wrap:wrap;margin-bottom:16px">
+          <div style="flex:1;min-width:200px">
+            <label class="cms-label">Liefertage</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="fm-cfg-lt-mo" checked> Mo</label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="fm-cfg-lt-di"> Di</label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="fm-cfg-lt-mi"> Mi</label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="fm-cfg-lt-do" checked> Do</label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="fm-cfg-lt-fr"> Fr</label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="fm-cfg-lt-sa"> Sa</label>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="cms-btn cms-btn-primary" onclick="cmsSaveFleischConfig()" id="fm-cfg-save-btn">Konfiguration speichern</button>
+          <span id="fm-cfg-status" style="font-size:12px;color:#2e7d4f;align-self:center"></span>
+        </div>
+      </div>
+    </div>
+    <div class="cms-card" style="margin-top:16px">
+      <div class="cms-card-header" style="background:#7f1d1d!important">Bestellungen</div>
+      <div class="cms-card-body">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="cms-btn" onclick="cmsLoadFleischOrders('offen')" id="fm-orders-btn-offen" style="font-size:12px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca">Offene</button>
+          <button class="cms-btn" onclick="cmsLoadFleischOrders('alle')" id="fm-orders-btn-alle" style="font-size:12px">Alle</button>
+          <button class="cms-btn" onclick="cmsLoadFleischOrders('heute')" id="fm-orders-btn-heute" style="font-size:12px">Heute Liefertag</button>
+          <button class="cms-btn" onclick="cmsLoadFleischOrders('sammel')" id="fm-orders-btn-sammel" style="font-size:12px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0">Sammelbestellung</button>
+        </div>
+        <div id="fm-orders-list" style="font-size:13px;color:#6b7280">Klicken Sie auf einen Filter um Bestellungen zu laden.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Social Media -->
   <div id="cms-panel-social" style="display:none">
-    <div class="cms-flex cms-between cms-mb">
-      <h3 style="font-size:15px;font-weight:700;color:#1f2937;margin:0">&#128247; Social Media &#8211; Tagespost</h3>
+    <div style="margin-bottom:12px" id="soc-main-header">
+      <h3 style="font-size:17px;font-weight:800;color:#1f2937;margin:0;display:flex;align-items:center;gap:8px"><i data-lucide="share-2" style="width:20px;height:20px;color:var(--c-green)"></i> Social Media</h3>
+      <p style="font-size:12px;color:#6b7280;margin:4px 0 0">Tagespost erstellen und teilen &#8211; in 4 einfachen Schritten.</p>
     </div>
-    <p style="font-size:12px;color:#6b7280;margin:0 0 14px">T&#228;gliche Angebote zusammenstellen und auf WhatsApp &amp; Instagram teilen. Pflegen Sie Ihren Produktkatalog und erstellen Sie ansprechende Posts.</p>
 
-    <!-- Sub-Tabs: Neuer Post | Katalog | Verlauf -->
-    <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:8px;padding:3px;margin-bottom:16px">
-      <button class="cms-btn" id="social-subtab-post" onclick="socialSubTab('post')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:#fff;color:#e1306c;box-shadow:0 1px 3px rgba(0,0,0,.08)">&#10133; Neuer Post</button>
-      <button class="cms-btn" id="social-subtab-katalog" onclick="socialSubTab('katalog')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:transparent;color:#6b7280">&#128218; Katalog</button>
-      <button class="cms-btn" id="social-subtab-verlauf" onclick="socialSubTab('verlauf')" style="flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;background:transparent;color:#6b7280">&#128203; Verlauf</button>
+    <!-- Sub-Tabs: Neuer Post | Katalog -->
+    <div class="k-filter-bar" style="margin-bottom:16px" id="soc-subtabs-container">
+      <button class="k-filter-btn active" id="social-subtab-post" onclick="socialSubTab('post')"><i data-lucide="plus-circle" style="width:14px;height:14px"></i> Neuer Post</button>
+      <button class="k-filter-btn" id="social-subtab-katalog" onclick="socialSubTab('katalog')"><i data-lucide="book-open" style="width:14px;height:14px"></i> Katalog</button>
     </div>
 
     <!-- ========== SUB: KATALOG ========== -->
     <div id="social-panel-katalog" style="display:none">
-      <div class="cms-card" style="margin-bottom:14px">
-        <div class="cms-card-header" style="background:#e1306c">&#10133; Neues Produkt zum Katalog hinzuf&#252;gen</div>
-        <div class="cms-card-body">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-            <div style="flex:2;min-width:160px">
-              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Name *</label>
-              <input id="soc-kat-name" class="cms-input" placeholder="z.B. Geschnetzeltes mit Champignonrahm" style="width:100%">
-            </div>
-            <div style="flex:1;min-width:120px">
-              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Kategorie *</label>
-              <select id="soc-kat-kategorie" class="cms-input" style="width:100%">
-                <option value="Mittagessen">&#127869; Mittagessen</option>
-                <option value="Kuchen">&#127856; Kuchen</option>
-                <option value="Obst &amp; Gemuese">&#129382; Obst &amp; Gem&#252;se</option>
-                <option value="Aufstriche">&#129367; Aufstriche</option>
-              </select>
-            </div>
-            <div style="width:80px">
-              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Preis &#8364;</label>
-              <input id="soc-kat-preis" class="cms-input" type="number" step="0.01" min="0" placeholder="9.80" style="width:100%">
-            </div>
-            <div style="min-width:140px">
-              <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Bild</label>
-              <input id="soc-kat-bild" type="file" accept="image/*" capture="environment" class="cms-input" style="width:100%;font-size:11px">
+      <div id="soc-kat-split-container">
+
+        <!-- LEFT COLUMN: Categories & Adding New Product -->
+        <div id="soc-kat-col-left">
+          <!-- Kategorie-Manager (aufklappbar) -->
+          <div style="margin-bottom:10px">
+            <button class="k-btn k-btn-outline" onclick="socialKatMgrToggle()" style="width:100%;text-align:left;display:flex;align-items:center;gap:8px">
+              <i data-lucide="settings" style="width:16px;height:16px"></i> Kategorien verwalten
+              <span style="margin-left:auto;font-size:11px;color:var(--c-muted)">CMS</span>
+            </button>
+            <div id="soc-kat-manager" style="display:none;margin-top:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px">
+              <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Aktuelle Kategorien</div>
+              <div id="soc-kat-manager-list" style="margin-bottom:10px"></div>
+              <div style="border-top:1px solid #e5e7eb;padding-top:10px">
+                <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Neue Kategorie hinzuf&#252;gen</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                  <div style="flex:1;min-width:140px">
+                    <label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>
+                    <input id="soc-kat-new-name" placeholder="z.B. Salate" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;box-sizing:border-box;min-height:40px">
+                  </div>
+                  <div style="width:50px">
+                    <label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Icon</label>
+                    <div style="display:flex;align-items:center;gap:4px">
+                      <span id="soc-kat-icon-preview" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#6b7280"><i data-lucide="tag" style="width:18px;height:18px"></i></span>
+                      <input id="soc-kat-new-icon" type="hidden" value="">
+                    </div>
+                  </div>
+                  <button class="k-btn k-btn-confirm" onclick="socialKatMgrAdd()" style="padding:5px 14px;font-size:12px;white-space:nowrap"><i data-lucide="plus" style="width:14px;height:14px"></i> Hinzuf&#252;gen</button>
+                </div>
+                <div style="margin-top:8px">
+                  <label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Icon suchen</label>
+                  <input id="soc-kat-icon-search" type="text" placeholder="z.B. salad, cake, apple..." oninput="socialKatMgrFilterIcons()" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;box-sizing:border-box;margin-bottom:6px;min-height:40px">
+                  <div id="soc-kat-icon-grid" style="display:flex;flex-wrap:wrap;gap:4px;max-height:160px;overflow-y:auto"></div>
+                </div>
+              </div>
             </div>
           </div>
-          <button class="cms-btn cms-btn-primary" onclick="socialKatAdd()" style="white-space:nowrap;margin-top:10px;width:100%">&#10133; Hinzuf&#252;gen</button>
-          <!-- Paste-Zone -->
-          <div id="soc-kat-paste-zone" tabindex="0"
-            style="margin-top:8px;border:2px dashed #d1d5db;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
-            onclick="document.getElementById('soc-kat-bild').click()"
-            title="Klicken zum Datei w&#228;hlen oder Strg+V zum Einf&#252;gen">
-            <div id="soc-kat-paste-hint" style="color:#9ca3af;font-size:12px">
-              &#128203; <strong>Strg+V</strong> zum Einf&#252;gen oder <strong>klicken</strong> zum Datei w&#228;hlen
-            </div>
-            <div id="soc-kat-bild-preview" style="display:none;margin-top:6px">
-              <img id="soc-kat-bild-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
-              <button onclick="event.stopPropagation();socialClearBild()" style="display:block;margin:6px auto 0;background:none;border:none;color:#dc2626;font-size:11px;cursor:pointer;text-decoration:underline">&#10005; Bild entfernen</button>
+          <div class="k-order" style="margin-bottom:14px;border-left-color:var(--c-green)">
+            <div style="background:var(--c-green);color:#fff;padding:10px 14px;font-weight:700;font-size:13px;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:16px;height:16px"></i> Neues Produkt zum Katalog hinzuf&#252;gen</div>
+            <div style="padding:14px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="k-field" style="grid-column:1/-1;margin-bottom:0">
+                  <label>Name *</label>
+                  <input id="soc-kat-name" placeholder="z.B. Geschnetzeltes mit Champignonrahm">
+                </div>
+                <div class="k-field" style="margin-bottom:0">
+                  <label>Kategorie *</label>
+                  <select id="soc-kat-kategorie">
+                    <!-- dynamisch bef&#252;llt via social.js -->
+                  </select>
+                </div>
+                <div class="k-field" style="margin-bottom:0">
+                  <label>Preis &#8364;</label>
+                  <input id="soc-kat-preis" type="text" inputmode="decimal" placeholder="9,80">
+                </div>
+              </div>
+              <input id="soc-kat-bild" type="file" accept="image/*" style="display:none">
+              <input id="soc-kat-bild-cam" type="file" accept="image/*" capture="environment" style="display:none">
+              <div id="soc-kat-paste-zone" tabindex="0"
+                style="margin-top:10px;border:2px dashed var(--c-border);border-radius:10px;padding:14px;text-align:center;transition:border-color .2s,background .2s;background:#fafbfc;outline:none"
+                title="Foto aufnehmen, Datei w&#228;hlen oder Strg+V zum Einf&#252;gen">
+                <div id="soc-kat-paste-hint" style="color:#9ca3af;font-size:12px">
+                  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:6px">
+                    <button type="button" class="k-btn" onclick="event.stopPropagation();document.getElementById('soc-kat-bild-cam').click()" style="padding:10px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid var(--c-green);color:var(--c-green);border-radius:8px;cursor:pointer;min-height:var(--touch-min)"><i data-lucide="camera" style="width:18px;height:18px"></i> Kamera</button>
+                    <button type="button" class="k-btn" onclick="event.stopPropagation();document.getElementById('soc-kat-bild').click()" style="padding:10px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--c-border);color:#374151;border-radius:8px;cursor:pointer;min-height:var(--touch-min)"><i data-lucide="image" style="width:18px;height:18px"></i> Datei</button>
+                  </div>
+                  <span style="font-size:11px;color:#9ca3af"><i data-lucide="clipboard-paste" style="width:12px;height:12px;vertical-align:middle"></i> oder <strong>Strg+V</strong> zum Einf&#252;gen</span>
+                </div>
+                <div id="soc-kat-bild-preview" style="display:none;margin-top:6px">
+                  <img id="soc-kat-bild-thumb" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
+                  <button onclick="event.stopPropagation();socialClearBild()" style="display:block;margin:6px auto 0;background:none;border:none;color:#dc2626;font-size:11px;cursor:pointer;text-decoration:underline">&#10005; Bild entfernen</button>
+                </div>
+              </div>
+              <button class="k-btn k-btn-confirm" onclick="socialKatAdd()" style="width:100%;margin-top:10px;font-size:14px;min-height:var(--touch-min)"><i data-lucide="plus" style="width:16px;height:16px"></i> Hinzuf&#252;gen</button>
             </div>
           </div>
         </div>
+
+        <!-- RIGHT COLUMN: Catalog Directory -->
+        <div id="soc-kat-col-right">
+          <div id="soc-kat-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+          <div id="soc-kat-loading" style="display:none;text-align:center;padding:30px 0">
+            <div style="display:inline-block;width:28px;height:28px;border:3px solid var(--c-border);border-top-color:var(--c-green);border-radius:50%;animation:cms-spin 0.8s linear infinite"></div>
+            <div style="margin-top:8px;color:#6b7280;font-size:13px">Katalog wird geladen&#8230;</div>
+          </div>
+          <div id="soc-kat-list"></div>
+          <div id="soc-kat-empty" style="display:none;text-align:center;padding:30px 0;color:#9ca3af;font-size:13px">Noch keine Produkte im Katalog. F&#252;gen Sie oben Ihr erstes Produkt hinzu.</div>
+        </div>
+
       </div>
-      <div id="soc-kat-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
-      <div id="soc-kat-loading" style="display:none;text-align:center;padding:30px 0">
-        <div style="display:inline-block;width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#e1306c;border-radius:50%;animation:cms-spin 0.8s linear infinite"></div>
-        <div style="margin-top:8px;color:#6b7280;font-size:13px">Katalog wird geladen&#8230;</div>
-      </div>
-      <div id="soc-kat-list"></div>
-      <div class="cms-empty" id="soc-kat-empty" style="display:none">Noch keine Produkte im Katalog. F&#252;gen Sie oben Ihr erstes Produkt hinzu.</div>
     </div>
 
-    <!-- ========== SUB: NEUER POST ========== -->
-    <div id="social-panel-post">
-      <div class="cms-card" style="margin-bottom:14px">
-        <div class="cms-card-header" style="background:#25D366">&#128221; Tagespost zusammenstellen</div>
-        <div class="cms-card-body">
-          <div style="margin-bottom:12px">
-            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Titel</label>
-            <select id="soc-post-titel-sel" class="cms-input" onchange="socialTitelChange()" style="width:100%">
-            </select>
-            <input id="soc-post-titel" class="cms-input" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:4px;display:none">
+    <!-- ========== SUB: NEUER POST (Step-Wizard) ========== -->
+    <div id="social-panel-post" style="flex-wrap:wrap">
+
+      <!-- Desktop Action Bar (hidden on mobile) -->
+      <div id="soc-desk-bar" style="display:none;width:100%;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div id="soc-desk-day" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
+            <button type="button" onclick="socialToggleDay('heute')" data-day="heute" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff">Heute</button>
+            <button type="button" onclick="socialToggleDay('morgen')" data-day="morgen" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151">Morgen</button>
           </div>
-          <script>
-          (function(){
-            var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-            var tag=tage[new Date().getDay()];
-            var sel=document.getElementById('soc-post-titel-sel');
-            if(!sel)return;
-            var opts=[
-              'Heute im Dorfladen \u2013 '+tag,
-              'Aktuelles',
-              'Wochenangebot',
-              'Frisch eingetroffen',
-              'Mittagstisch \u2013 '+tag,
-              'Sonderangebot',
-              '_custom'
-            ];
-            var labels={
-              '_custom':'\u270F\uFE0F Eigenen Titel eingeben...'
-            };
-            opts.forEach(function(o){
-              var op=document.createElement('option');
-              op.value=o;
-              op.textContent=labels[o]||o;
-              sel.appendChild(op);
-            });
-            // Sync hidden input with default
-            var inp=document.getElementById('soc-post-titel');
-            if(inp) inp.value=opts[0];
-          })();
-          window.socialTitelChange=function(){
-            var sel=document.getElementById('soc-post-titel-sel');
-            var inp=document.getElementById('soc-post-titel');
-            if(!sel||!inp)return;
-            if(sel.value==='_custom'){
-              inp.style.display='';
-              inp.value='';
-              inp.focus();
-            } else {
-              inp.style.display='none';
-              inp.value=sel.value;
-            }
-          };
-          </script>
-          <div style="margin-bottom:12px">
-            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Freitext (optional)</label>
-            <textarea id="soc-post-text" class="cms-input" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" style="width:100%;resize:vertical"></textarea>
-          </div>
-          <p style="font-size:12px;font-weight:700;color:#374151;margin:0 0 8px">Produkte ausw&#228;hlen:</p>
-          <div id="soc-post-items" style="display:flex;flex-direction:column;gap:6px">
-            <p style="color:#9ca3af;font-size:12px;font-style:italic">Laden Sie zuerst den Katalog...</p>
+          <span id="soc-desk-date" style="font-size:12px;color:#6b7280"></span>
+          <span style="flex:1"></span>
+          <button onclick="socialSaveDraft()" title="Entwurf speichern, sp\u00e4ter senden" style="padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;color:#92400e;display:inline-flex;align-items:center;gap:4px"><i data-lucide="bookmark" style="width:14px;height:14px"></i> Parken</button>
+          <button onclick="socialPublishTagesinfo()" title="Sofort auf der Homepage ver\u00f6ffentlichen" style="padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;color:#16a34a;display:inline-flex;align-items:center;gap:4px"><i data-lucide="file-text" style="width:14px;height:14px"></i> Ver&#246;ffentlichen</button>
+          <span style="width:1px;height:20px;background:#d1d5db"></span>
+          <button onclick="socialShareWhatsApp()" title="Post-Bild per WhatsApp teilen" style="padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#25D366;border:none;border-radius:10px;color:#fff;display:inline-flex;align-items:center;gap:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</button>
+          <button onclick="socialShareInstagram()" title="Post-Bild f\u00fcr Instagram kopieren" style="padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);border:none;border-radius:10px;color:#fff;display:inline-flex;align-items:center;gap:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg> Instagram</button>
+          <button onclick="socialDownloadPoster()" title="Post-Bild herunterladen" style="padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;color:#374151;display:inline-flex;align-items:center;gap:4px"><i data-lucide="download" style="width:14px;height:14px"></i> Bild</button>
+        </div>
+        <div id="soc-desk-status" style="display:none;padding:6px 10px;border-radius:8px;font-size:12px;margin-top:6px;width:100%"></div>
+      </div>
+
+      <!-- Desktop Tab Bar (hidden on mobile) -->
+      <div id="soc-desk-tabs" style="display:none;width:100%;margin-bottom:8px">
+        <div style="display:flex;gap:0;border-bottom:2px solid #e5e7eb">
+          <button id="soc-desk-tab-edit" onclick="socDeskTab('edit')" style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid #16a34a;margin-bottom:-2px;cursor:pointer;background:none;color:#16a34a"><i data-lucide="edit-3" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Erfassen</button>
+          <button id="soc-desk-tab-posts" onclick="socDeskTab('posts')" style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;background:none;color:#6b7280"><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Posts &amp; Entw&#252;rfe</button>
+        </div>
+      </div>
+
+      <div id="soc-col-left">
+
+      <!-- STEP 1: Titel & Text -->
+      <div class="k-order" style="border-left-color:#25D366;margin-bottom:8px" id="soc-step-1">
+        <div class="k-order-hdr" onclick="socToggleStep(1)" style="background:#f0fdf4">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#25D366;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">1</span>
+          <span class="k-oc-name" style="color:#15803d"><i data-lucide="type" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Titel &amp; Text</span>
+        </div>
+        <div class="k-order-body">
+          <div style="padding:14px 16px">
+            <!-- Heute / Morgen Toggle -->
+            <div id="soc-day-section" style="margin-bottom:14px">
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px"><i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"></i> Post f&#252;r</label>
+              <div id="soc-date-toggle" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
+                <button type="button" data-day="heute" onclick="socialToggleDay('heute')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff;transition:all .15s">Heute</button>
+                <button type="button" data-day="morgen" onclick="socialToggleDay('morgen')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151;transition:all .15s">Morgen</button>
+              </div>
+              <span id="soc-date-label" style="margin-left:10px;font-size:13px;color:#6b7280"></span>
+            </div>
+            <div style="margin-bottom:14px">
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Titel w&#228;hlen</label>
+              <select id="soc-post-titel-sel" onchange="socialTitelChange()" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px;background:#fff"></select>
+              <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:6px;display:none;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px">
+            </div>
+            <script>
+            window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}if(window.innerWidth>=900&&typeof socialGenPreview==='function'){if(window._socTitelTimer)clearTimeout(window._socTitelTimer);window._socTitelTimer=setTimeout(socialGenPreview,600);}};
+            (function(){
+              var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+              window._socSelectedDay='heute';
+
+              function buildTitelOpts(){
+                var d=window._socSelectedDay==='morgen'?new Date(Date.now()+86400000):new Date();
+                var tag=tage[d.getDay()];
+                var prefix=window._socSelectedDay==='morgen'?'Morgen':'Heute';
+                var sel=document.getElementById('soc-post-titel-sel');
+                if(!sel)return;
+                var prev=sel.value;
+                sel.innerHTML='';
+                var opts=[prefix+' im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
+                var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
+                opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
+                if(prev&&prev!=='_custom'){
+                  var found=false;opts.forEach(function(o){if(o===prev)found=true;});
+                  if(!found) sel.value=opts[0];
+                } else if(prev==='_custom'){ sel.value='_custom'; }
+                socialTitelChange();
+                var lbl=document.getElementById('soc-date-label');
+                if(lbl) lbl.textContent=d.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});
+              }
+
+              window.socialToggleDay=function(day){
+                window._socSelectedDay=day;
+                var btns=document.querySelectorAll('#soc-date-toggle button');
+                btns.forEach(function(b){
+                  if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
+                  else{b.style.background='#fff';b.style.color='#374151';}
+                });
+                buildTitelOpts();
+                if(typeof socialBuildPostItems==='function') socialBuildPostItems();
+              };
+
+              buildTitelOpts();
+            })();
+            </script>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
+              <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="if(window.innerWidth>=900&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Vorschau -->
-      <div class="cms-card" style="margin-bottom:14px">
-        <div class="cms-card-header">&#128065; Vorschau</div>
-        <div class="cms-card-body" style="text-align:center;padding:16px">
-          <div id="soc-preview-label-meal" style="display:none;font-size:11px;font-weight:700;color:#f57f17;margin-bottom:4px">&#127869; MITTAGESSEN-POSTER</div>
-          <canvas id="soc-post-canvas-meal" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6;margin-bottom:12px"></canvas>
-          <div id="soc-preview-label-daily" style="display:none;font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px">&#128230; TAGES&#220;BERSICHT</div>
-          <canvas id="soc-post-canvas" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6"></canvas>
-          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-            <button class="cms-btn cms-btn-primary" onclick="socialGenPreview()" style="background:#e1306c">&#128260; Vorschau aktualisieren</button>
+      <!-- STEP 2: Produkte auswählen -->
+      <div class="k-order" style="border-left-color:#e1306c;margin-bottom:8px" id="soc-step-2">
+        <div class="k-order-hdr" onclick="socToggleStep(2)" style="background:#fef2f2">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#e1306c;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">2</span>
+          <span class="k-oc-name" style="color:#be123c"><i data-lucide="shopping-basket" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Produkte ausw&#228;hlen</span>
+          <span id="soc-step2-count" style="font-size:12px;color:#9ca3af;white-space:nowrap"></span>
+        </div>
+        <div class="k-order-body">
+          <div style="padding:14px 16px">
+            <div id="soc-post-items" style="display:flex;flex-direction:column;gap:6px">
+              <p style="color:#9ca3af;font-size:13px;font-style:italic">Laden Sie zuerst den Katalog...</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Teilen -->
-      <div class="soc-share-bar" style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="cms-btn cms-btn-primary" onclick="socialShareWhatsApp()" style="background:#25D366;flex:1;min-width:140px;padding:12px;font-size:14px">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Auf WhatsApp teilen
-        </button>
-        <button class="cms-btn cms-btn-primary" onclick="socialShareInstagram()" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);flex:1;min-width:140px;padding:12px;font-size:14px">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-          Auf Instagram teilen
-        </button>
-        <button class="cms-btn cms-btn-gray" onclick="socialDownloadPoster()" style="min-width:100px;padding:12px;font-size:14px">&#128190; Bild speichern</button>
+      <!-- Desktop Posts Panel (shown when Posts tab active, hidden on mobile) -->
+      <div id="soc-desk-posts-panel" style="display:none">
+        <div id="soc-desk-posts-content"></div>
       </div>
+
+      </div><!-- /soc-col-left -->
+      <div id="soc-col-right">
+      <!-- STEP 3: Vorschau -->
+      <div class="k-order oc-collapsed" style="border-left-color:#1f2937;margin-bottom:8px" id="soc-step-3">
+        <div class="k-order-hdr" onclick="socToggleStep(3)" style="background:#f3f4f6">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#1f2937;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">3</span>
+          <span class="k-oc-name"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Vorschau</span>
+          <span class="k-oc-actions" onclick="event.stopPropagation()">
+            <button onclick="socialGenPreview()" class="k-btn k-btn-sm" style="background:#e1306c;color:#fff;min-height:40px;border-radius:8px;font-size:13px"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> <span class="oc-btn-label">Aktualisieren</span></button>
+          </span>
+        </div>
+        <div class="k-order-body">
+          <div style="text-align:center;padding:16px">
+            <div id="soc-preview-label-meal" style="display:none;font-size:11px;font-weight:700;color:#f57f17;margin-bottom:4px">&#127869; MITTAGESSEN-POSTER</div>
+            <canvas id="soc-post-canvas-meal" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6;margin-bottom:12px"></canvas>
+            <div id="soc-preview-label-daily" style="display:none;font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px">&#128230; TAGES&#220;BERSICHT</div>
+            <canvas id="soc-post-canvas" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6"></canvas>
+            <div style="margin-top:10px">
+              <button onclick="socialGenPreview()" style="background:#e1306c;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px"><i data-lucide="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i> Vorschau aktualisieren</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Teilen & Veröffentlichen -->
+      <div class="k-order oc-collapsed" style="border-left-color:#2563eb;margin-bottom:8px" id="soc-step-4">
+        <div class="k-order-hdr" onclick="socToggleStep(4)" style="background:#eff6ff">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">4</span>
+          <span class="k-oc-name" style="color:#1d4ed8"><i data-lucide="send" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Teilen &amp; Ver&#246;ffentlichen</span>
+        </div>
+        <div class="k-order-body">
+          <div style="padding:14px 16px">
+            <!-- Share buttons – large, touch-friendly -->
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <button onclick="socialShareWhatsApp()" style="background:#25D366;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(37,211,102,.3)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Auf WhatsApp teilen
+              </button>
+              <button onclick="socialShareInstagram()" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(225,48,108,.3)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                Auf Instagram teilen
+              </button>
+              <div style="display:flex;gap:10px">
+                <button onclick="socialDownloadPoster()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:12px;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px"><i data-lucide="download" style="width:18px;height:18px"></i> Bild speichern</button>
+              </div>
+              <div id="soc-publish-section" style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:4px">
+                <div style="display:flex;gap:8px;margin-bottom:6px">
+                  <button onclick="socialPublishTagesinfo()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;color:#16a34a;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px">
+                    <i data-lucide="file-text" style="width:18px;height:18px"></i>
+                    Tagesinfo ver&#246;ffentlichen
+                  </button>
+                  <button onclick="socialSaveDraft()" style="padding:14px 16px;font-size:13px;font-weight:700;cursor:pointer;background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;color:#92400e;min-height:52px;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap">
+                    <i data-lucide="bookmark" style="width:16px;height:16px"></i>
+                    Parken
+                  </button>
+                </div>
+                <div style="font-size:11px;color:#9ca3af;text-align:center">Ver&#246;ffentlichen = sofort auf Homepage &bull; Parken = Entwurf speichern, sp&#228;ter senden</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
+      <div id="soc-today-posts" style="display:none;margin-top:12px;background:#f9fafb;border:1px solid var(--c-border);border-radius:10px;padding:10px 14px">
+        <div style="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:6px"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle"></i> Posts &amp; Entw&#252;rfe</div>
+        <div id="soc-today-posts-list"></div>
+      </div>
+      </div><!-- /soc-col-right -->
+      <div id="soc-post-footer" style="width:100%">
       <div id="soc-meal-posters" style="display:none;margin-top:12px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px">
         <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">&#127860; Einzel-Poster pro Gericht</div>
         <div id="soc-meal-poster-list" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       </div>
-      <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
-    </div>
-
-    <!-- ========== SUB: VERLAUF ========== -->
-    <div id="social-panel-verlauf" style="display:none">
-      <div id="soc-verlauf-loading" style="display:none;text-align:center;padding:30px 0">
-        <div style="display:inline-block;width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#e1306c;border-radius:50%;animation:cms-spin 0.8s linear infinite"></div>
-      </div>
-      <div id="soc-verlauf-list"></div>
-      <div class="cms-empty" id="soc-verlauf-empty" style="display:none">Noch keine Posts erstellt.</div>
+      </div><!-- /soc-post-footer -->
     </div>
   </div>
+
+  <!-- Social wizard inline JS (ported from kiosk.html, not part of social.js) -->
+  <script>
+  (function(){
+    // ── Social wizard step toggle ──
+    var _socStepOpen = {1:true, 2:true, 3:false, 4:false};
+    function socToggleStep(n){
+      var el = document.getElementById('soc-step-'+n);
+      if(!el) return;
+      el.classList.toggle('oc-collapsed');
+      _socStepOpen[n] = !el.classList.contains('oc-collapsed');
+      if(_socStepOpen[n] && n===3){
+        if(typeof socialGenPreview==='function') socialGenPreview();
+      }
+    }
+    window.socToggleStep = socToggleStep;
+
+    // ── Desktop Split-View: Tab switching ──
+    window.socDeskTab = function(tab){
+      var tabEdit = document.getElementById('soc-desk-tab-edit');
+      var tabPosts = document.getElementById('soc-desk-tab-posts');
+      var step1 = document.getElementById('soc-step-1');
+      var step2 = document.getElementById('soc-step-2');
+      var postsPanel = document.getElementById('soc-desk-posts-panel');
+      if(!tabEdit||!tabPosts) return;
+      if(tab === 'posts'){
+        tabEdit.style.borderBottomColor='transparent'; tabEdit.style.color='#6b7280';
+        tabPosts.style.borderBottomColor='#2563eb'; tabPosts.style.color='#2563eb';
+        if(step1) step1.style.display='none';
+        if(step2) step2.style.display='none';
+        if(postsPanel){
+          postsPanel.style.display='block';
+          // Clone posts from right column into desktop panel
+          var src = document.getElementById('soc-today-posts-list');
+          var dst = document.getElementById('soc-desk-posts-content');
+          if(src && dst){ dst.innerHTML = src.innerHTML; }
+        }
+      } else {
+        tabEdit.style.borderBottomColor='#16a34a'; tabEdit.style.color='#16a34a';
+        tabPosts.style.borderBottomColor='transparent'; tabPosts.style.color='#6b7280';
+        if(step1) step1.style.display='';
+        if(step2) step2.style.display='';
+        if(postsPanel) postsPanel.style.display='none';
+      }
+    };
+
+    // Sync desktop day toggle with mobile toggle
+    if(typeof window.socialToggleDay === 'function'){
+      var realToggle = window.socialToggleDay;
+      window.socialToggleDay = function(day){
+        realToggle(day);
+        // Sync desktop day buttons
+        var deskBtns = document.querySelectorAll('#soc-desk-day button');
+        deskBtns.forEach(function(b){
+          if(b.getAttribute('data-day')===day){b.style.background='#16a34a';b.style.color='#fff';}
+          else{b.style.background='#fff';b.style.color='#374151';}
+        });
+        var deskDate = document.getElementById('soc-desk-date');
+        var srcDate = document.getElementById('soc-date-label');
+        if(deskDate && srcDate) deskDate.textContent = srcDate.textContent;
+      };
+      // Trigger initial sync to set date on load
+      var deskDate = document.getElementById('soc-desk-date');
+      var srcDate = document.getElementById('soc-date-label');
+      if(deskDate && srcDate) deskDate.textContent = srcDate.textContent;
+    }
+
+    // Update step-2 badge with selected product count
+    var _origSocialPickUpdate = window.socialPickUpdate;
+    var _socAutoPreviewTimer = null;
+    function _socWrapPickUpdate(){
+      if(typeof _origSocialPickUpdate==='function') _origSocialPickUpdate();
+      var cnt = document.getElementById('soc-step2-count');
+      if(!cnt) return;
+      var checks = document.querySelectorAll('.soc-post-cb:checked,.soc-post-wp:checked');
+      var freeCount = 0;
+      try { freeCount = (window._socialModule && typeof window._socialModule._socFreeItems === 'function') ? window._socialModule._socFreeItems().length : 0; } catch(e){}
+      var total = checks.length + freeCount;
+      cnt.textContent = total ? total + ' ausgew\u00e4hlt' : '';
+      // Auto-preview on desktop (debounced)
+      if(window.innerWidth >= 900 && typeof socialGenPreview === 'function'){
+        if(_socAutoPreviewTimer) clearTimeout(_socAutoPreviewTimer);
+        _socAutoPreviewTimer = setTimeout(function(){ socialGenPreview(); }, 600);
+      }
+    }
+    // Override socialPickUpdate once social.js is loaded
+    (function(){
+      var origInterval = setInterval(function(){
+        if(window.socialPickUpdate && window.socialPickUpdate !== _socWrapPickUpdate){
+          _origSocialPickUpdate = window.socialPickUpdate;
+          window.socialPickUpdate = _socWrapPickUpdate;
+          clearInterval(origInterval);
+        }
+      }, 200);
+      setTimeout(function(){ clearInterval(origInterval); }, 10000);
+    })();
+  })();
+  </script>
 
   <!-- Hilfe-Bereich -->
   <div id="cms-panel-help" style="display:none">
@@ -3438,7 +3954,7 @@ document.head.appendChild(msalScript);
     } else {
       var labels = {'wp-help':'Wochenplan','hours-help':'&#214;ffnungszeiten','ang-help':'Sonderangebote','news-help':'Aktuelles','hp-help':'Homepage','editor-help':'Kachel-Editor','design-help':'Design','push-help':'Push','sort-help':'Sortiment','gallery-help':'Impressionen','howto-help':'Probleml&#246;ser','faq-help':'FAQ'};
       res.innerHTML = hits.map(function(h){
-        return '<div onclick="cmsHelpSearchOpen(\''+h.id+'\')" style="background:#fff;border:1px solid #e5e7eb;border-left:4px solid #1b5e20;border-radius:8px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.1)\'" onmouseout="this.style.boxShadow=\'\'"><span style="background:#e8f5e9;color:#1b5e20;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">'+(labels[h.id]||h.id)+'</span><div style="font-weight:600;font-size:13px;margin-top:5px">'+h.kw.split(' ').slice(0,6).join(' &middot; ')+'</div></div>';
+        return '<div class="cms-help-result" onclick="cmsHelpSearchOpen(\''+h.id+'\')"><span style="background:#e8f5e9;color:#1b5e20;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">'+(labels[h.id]||h.id)+'</span><div style="font-weight:600;font-size:13px;margin-top:5px">'+h.kw.split(' ').slice(0,6).join(' &middot; ')+'</div></div>';
       }).join('');
     }
     res.style.display = 'block';
@@ -3470,7 +3986,9 @@ document.head.appendChild(msalScript);
 
 <script src="hilfe-popup.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="/js/admin-auth.js"></script>
 <script src="cms.js"></script>
+<script src="/js/env-banner.js"></script>
 </body>
 </html>
 

@@ -16,7 +16,9 @@
     { "route": "/aktuelles", "rewrite": "/aktuelles.html" },
     { "route": "/shop", "rewrite": "/shop.html" },
     { "route": "/shop-freigabe", "rewrite": "/shop-freigabe.html" },
-    { "route": "/shop-admin", "rewrite": "/shop-admin.html" }
+    { "route": "/shop-admin", "rewrite": "/shop-admin.html" },
+    { "route": "/posten", "rewrite": "/posten.html" },
+    { "route": "/tagesinfo", "rewrite": "/tagesinfo.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",

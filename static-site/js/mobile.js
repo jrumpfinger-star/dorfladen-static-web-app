@@ -37,8 +37,8 @@
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){
       document.querySelectorAll('.mob-popup-bg.open').forEach(function(el){el.classList.remove('open');});
-      document.getElementById('mob-nav').classList.remove('open');
-      document.getElementById('mob-nav-ov').classList.remove('open');
+      var mn=document.getElementById('mob-nav');if(mn)mn.classList.remove('open');
+      var mo=document.getElementById('mob-nav-ov');if(mo)mo.classList.remove('open');
       mobUnlockScroll();
       if(window.removePopupState)window.removePopupState();
     }
@@ -90,13 +90,27 @@
     },{passive:true});
   })();
 
-  /* === AUTO-CLOSE NAV ON LINK CLICK === */
+  /* === HAMBURGER NAV SCROLL-LOCK === */
   var mobNavEl=document.getElementById('mob-nav');
+  var mobNavOv=document.getElementById('mob-nav-ov');
+  var mobMenuBtn=document.querySelector('.mob-header-menu');
+  if(mobMenuBtn){
+    mobMenuBtn.addEventListener('click',function(){mobLockScroll();});
+  }
+  if(mobNavOv){
+    mobNavOv.addEventListener('click',function(){mobUnlockScroll();});
+  }
+  var mobNavClose=mobNavEl?mobNavEl.querySelector('.mob-nav-close button'):null;
+  if(mobNavClose){
+    mobNavClose.addEventListener('click',function(){mobUnlockScroll();});
+  }
+  /* === AUTO-CLOSE NAV ON LINK CLICK === */
   if(mobNavEl){
     mobNavEl.querySelectorAll('a[href]').forEach(function(a){
       a.addEventListener('click',function(){
         mobNavEl.classList.remove('open');
-        var ov=document.getElementById('mob-nav-ov');if(ov)ov.classList.remove('open');
+        if(mobNavOv)mobNavOv.classList.remove('open');
+        mobUnlockScroll();
         if(window.removePopupState)window.removePopupState();
       });
     });
@@ -272,9 +286,9 @@
           }else{
             var oLink=d.id?('/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(d.id)+'&gericht='+encodeURIComponent(d.name)+'&preis='+parseFloat(String(d.price||'0').replace(',','.'))+'&datum='+encodeURIComponent(d.datum||'')+'&tag='+encodeURIComponent(wpDays[i]||'')):'';
             html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">';
-            html+='<div class="mob-wp-day-menu" style="flex:1'+(d.notice?';font-style:italic;color:#888':'')+'">'+esc(d.name)+'</div>';
+            html+='<div class="mob-wp-day-menu" style="flex:1'+(d.notice?';font-style:italic;color:#888':'')+'">'+esc(d.name)+(d.allergene?'<div style="font-size:10px;color:#d97706;font-weight:400;margin-top:1px">\u26a0\ufe0f '+esc(d.allergene)+'</div>':'')+'</div>';
             html+='<div class="mob-wp-day-price" style="flex-shrink:0">€ '+fmtP(d.price)+'</div>';
-            if(oLink&&canOrder) html+='<a href="'+oLink+'" class="feature-mittagstisch" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
+            if(oLink&&canOrder) html+='<a href="javascript:void(0)" onclick="openMittagPopup(\''+oLink.replace(/'/g,"\\'")+'\');return false" class="feature-mittagstisch" style="flex-shrink:0;padding:4px 10px;background:#2e7d4f;color:#fff;border-radius:6px;font-size:.65rem;font-weight:700;text-decoration:none">\uD83C\uDF7D</a>';
             html+='</div>';
           }
         });
@@ -338,7 +352,7 @@
         var wt=item.dl_wochentag;
         var label=item._dl_wochentag_label;
         var dIdx=wpDayMap[wt]||wpDayMap[(label||'').toLowerCase()]||wpDayMap[(String(wt)||'').toLowerCase()];
-        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||''),notice:item.dl_beschreibung||'',id:item.dl_wochenplanid||item.id||'',datum:item.dl_datum||'',wochentag:wt});
+        if(dIdx) menu[dIdx].push({name:item.dl_gericht||'',price:String(item.dl_preis||''),notice:item.dl_beschreibung||'',allergene:item.dl_allergene||'',id:item.dl_wochenplanid||item.id||'',datum:item.dl_datum||'',wochentag:wt});
       });
       renderWP(menu);
     }else{
@@ -352,7 +366,7 @@
     var kwEl=document.getElementById('mob-ang-kw');
     if(kwEl) kwEl.textContent='Diese Woche · KW '+getKW();
     var subEl=document.getElementById('mob-offers-sub');
-    if(subEl&&items.length) subEl.textContent=items.length+' diese Woche';
+    if(subEl&&items.length) subEl.innerHTML='<span style="display:inline-block;background:#5ea88a;color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:6px;margin-right:4px">'+items.length+'</span> diese Woche';
     if(!grid) return;
     if(!items.length){grid.innerHTML='<p style="text-align:center;color:#6b7280;padding:20px">Aktuell keine Sonderangebote</p>';return;}
     var icons=['🥛','🧀','🍞','🥩','🍌','🥬','🥫','🍎'];
@@ -767,13 +781,14 @@
     closeBtn.addEventListener('click',function(){stopScanner();});
   }
 
-  /* === CMS CONFIG (meat promo overrides) === */
-  fetch(API_BASE+'/cms-config').then(function(r){return r.json();}).then(function(cfg){
+  /* === CMS CONFIG (meat promo overrides) – reuse cached config === */
+  (window._dlFlagsReady||Promise.resolve()).then(function(){
+    var cfg=window._dlCmsConfig;
     if(!cfg) return;
     var map={};
     (Array.isArray(cfg)?cfg:(cfg.data||[])).forEach(function(c){map[c.dl_schluessel||c.key]=c.dl_wert||c.value;});
     if(map.meatPct){var el=document.getElementById('mob-meat-pct');if(el) el.textContent=map.meatPct;}
     if(map.meatSub){var el2=document.getElementById('mob-meat-sub');if(el2) el2.textContent=map.meatSub;}
-  }).catch(function(){});
+  });
 
 })();

@@ -39,6 +39,26 @@ BESTELLSCHLUSS_HOUR = 16  # Fallback, nur verwendet wenn Frontend keinen Slot se
 MINDESTBESTELLWERT_DEFAULT = 10.0  # Fallback – wird aus CMS-Config überschrieben
 
 
+def _decrypt_iban(enc):
+    """Decrypt an IBAN stored by auth-register.
+    Supports 'ENC2:' (Fernet, key from IBAN_ENCRYPTION_KEY) and legacy 'ENC:' (base64)."""
+    import base64
+    if not enc:
+        return ""
+    try:
+        if enc.startswith("ENC2:"):
+            key = os.environ.get("IBAN_ENCRYPTION_KEY", "").strip()
+            if not key:
+                return ""
+            from cryptography.fernet import Fernet
+            return Fernet(key.encode()).decrypt(enc[5:].encode()).decode()
+        if enc.startswith("ENC:"):
+            return base64.b64decode(enc[4:]).decode()
+    except Exception:
+        return ""
+    return ""
+
+
 def _load_mindestbestellwert(base_url, headers):
     """Load shop_mindestbestellwert from CMS-Config (dl_seiteninhalt). Returns float."""
     try:
@@ -55,8 +75,9 @@ def _load_mindestbestellwert(base_url, headers):
 
 
 def get_token():
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
     if not client_secret:
@@ -275,6 +296,46 @@ def _handle_post(req, dv_token, base_url, headers):
             status_code=400, headers=get_cors_headers()
         )
 
+    # Tagesverfügbarkeit prüfen: Alle bestellten Artikel müssen am Abholtag verfügbar sein
+    if abholslot and isinstance(abholslot, dict) and abholslot.get("datum"):
+        try:
+            abhol_date_obj = datetime.strptime(abholslot["datum"][:10], "%Y-%m-%d")
+            # Python weekday: 0=Mon..6=Sun → JS getDay: 0=Sun,1=Mon..6=Sat
+            py_dow = abhol_date_obj.weekday()  # 0=Mon
+            js_dow = (py_dow + 1) % 7  # 1=Mon..6=Sat, 0=Sun
+            js_dow_str = str(js_dow)
+
+            # Load freigaben to check verfuegbare_tage
+            freigaben_url = f"{base_url}/api/data/v9.2/dl_shopfreigabes?$select=dl_strichcode,dl_verfuegbare_tage&$filter=dl_aktiv eq true"
+            fr = requests.get(freigaben_url, headers=headers, timeout=15)
+            if fr.status_code == 200:
+                freigaben_map = {}
+                for fg in fr.json().get("value", []):
+                    sc = (fg.get("dl_strichcode") or "").strip()
+                    if sc:
+                        freigaben_map[sc] = (fg.get("dl_verfuegbare_tage") or "").strip()
+
+                unavail_articles = []
+                for pos in clean_positionen:
+                    sc = pos.get("strichcode", "")
+                    if not sc:
+                        continue
+                    vt = freigaben_map.get(sc, "")
+                    if vt and js_dow_str not in vt.split(","):
+                        unavail_articles.append(pos.get("bezeichnung", sc))
+
+                if unavail_articles:
+                    return func.HttpResponse(
+                        json.dumps({
+                            "success": False,
+                            "error": f"Folgende Artikel sind am gewählten Abholtag nicht verfügbar: {', '.join(unavail_articles)}",
+                            "unavailable": unavail_articles
+                        }, ensure_ascii=False),
+                        status_code=400, headers=get_cors_headers()
+                    )
+        except Exception as e:
+            logging.warning(f"[shop-order] Day availability check failed (non-blocking): {e}")
+
     bestellnummer = _generate_bestellnummer()
     now_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -298,7 +359,6 @@ def _handle_post(req, dv_token, base_url, headers):
     iban_masked = ""
     kontoinhaber = ""
     try:
-        import base64
         cust_email = user["email"]
         cust_url = f"{base_url}/api/data/v9.2/dl_shopkundes?$filter=dl_email eq '{cust_email}'&$select=dl_iban_encrypted,dl_kontoinhaber&$top=1"
         cr = requests.get(cust_url, headers=headers, timeout=15)
@@ -307,8 +367,8 @@ def _handle_post(req, dv_token, base_url, headers):
             if cust_items:
                 kontoinhaber = cust_items[0].get("dl_kontoinhaber", "")
                 enc_iban = cust_items[0].get("dl_iban_encrypted", "")
-                if enc_iban and enc_iban.startswith("ENC:"):
-                    raw_iban = base64.b64decode(enc_iban[4:]).decode()
+                raw_iban = _decrypt_iban(enc_iban)
+                if raw_iban:
                     iban_masked = raw_iban[:4] + " **** **** **** " + raw_iban[-4:] if len(raw_iban) >= 8 else raw_iban
     except Exception as e:
         logging.warning(f"[shop-order] Could not load customer IBAN: {e}")
@@ -511,11 +571,11 @@ def _handle_get(req, dv_token, base_url, headers):
 
     if mode == "cms":
         # CMS mode: return all orders (no JWT required for now, add admin check later)
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json&$orderby=createdon desc&$top=200"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select=dl_shopbestellungid,dl_bestellnummer,dl_kunde_email,dl_kunde_name,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_pack_json,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen&$orderby=createdon desc&$top=200"
     elif user:
         # Customer mode: own orders
         email = user["email"]
-        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json&$orderby=createdon desc&$top=50"
+        url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$filter=dl_kunde_email eq '{email}'&$select=dl_shopbestellungid,dl_bestellnummer,dl_bestelldatum,dl_abholdatum,dl_abhol_zeitslot,dl_status,dl_gesamtsumme,dl_anmerkungen,dl_positionen_json,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen&$orderby=createdon desc&$top=50"
     else:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Bitte melden Sie sich an."}),
@@ -553,17 +613,28 @@ def _handle_get(req, dv_token, base_url, headers):
                     "gesamtsumme": item.get("dl_gesamtsumme", 0),
                     "anmerkungen": item.get("dl_anmerkungen", ""),
                     "positionen": positionen,
-                    "gepackt": bool(pack_data)
+                    "pack_data": pack_data,
+                    "gepackt": bool(pack_data),
+                    "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
+                    "personal_antwort": item.get("dl_personal_antwort", ""),
+                    "kommentar_gelesen": item.get("dl_kommentar_gelesen", False)
                 })
             return func.HttpResponse(
                 json.dumps({"success": True, "orders": orders}, ensure_ascii=False),
                 status_code=200, headers=get_cors_headers()
             )
+        dv_detail = ""
+        try:
+            dv_detail = r.text[:500]
+        except:
+            pass
+        logging.error("shop-order GET cms Dataverse %s: %s", r.status_code, dv_detail)
         return func.HttpResponse(
-            json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}),
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}", "detail": dv_detail}),
             status_code=r.status_code, headers=get_cors_headers()
         )
     except Exception as e:
+        logging.exception("shop-order GET cms exception")
         return func.HttpResponse(
             json.dumps({"success": False, "error": str(e)}),
             status_code=500, headers=get_cors_headers()
@@ -584,12 +655,40 @@ def _handle_patch(req, dv_token, base_url, headers):
     new_status = body.get("status")
     customer_action = (body.get("customer_action") or "").strip().lower()
     pack_json = body.get("pack_json")
+    kunde_kommentar = body.get("kunde_kommentar")
+    personal_antwort = body.get("personal_antwort")
+    kommentar_gelesen = body.get("kommentar_gelesen")
+    storno_grund = body.get("storno_grund")
 
-    if not order_id or (new_status is None and pack_json is None and not customer_action):
+    has_update = (new_status is not None or pack_json is not None or customer_action
+                  or kunde_kommentar is not None or personal_antwort is not None
+                  or kommentar_gelesen is not None or storno_grund is not None)
+    if not order_id or not has_update:
         return func.HttpResponse(
-            json.dumps({"success": False, "error": "id und status erforderlich"}),
+            json.dumps({"success": False, "error": "id und Änderung erforderlich"}),
             status_code=400, headers=get_cors_headers()
         )
+
+    # Customer comment requires JWT + ownership check
+    if kunde_kommentar is not None and not personal_antwort and not kommentar_gelesen and new_status is None and not pack_json:
+        user = _verify_jwt(req)
+        if not user:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Bitte melden Sie sich an."}, ensure_ascii=False),
+                status_code=401, headers=get_cors_headers()
+            )
+        check_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email"
+        cr = requests.get(check_url, headers=headers, timeout=15)
+        if cr.status_code != 200:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Bestellung nicht gefunden"}, ensure_ascii=False),
+                status_code=404, headers=get_cors_headers()
+            )
+        if (cr.json().get("dl_kunde_email") or "").lower() != (user.get("email") or "").lower():
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Diese Bestellung gehört nicht zu Ihrem Konto."}, ensure_ascii=False),
+                status_code=403, headers=get_cors_headers()
+            )
 
     if customer_action == "cancel":
         user = _verify_jwt(req)
@@ -671,6 +770,15 @@ def _handle_patch(req, dv_token, base_url, headers):
         patch_payload["dl_status"] = new_status
     if pack_json is not None:
         patch_payload["dl_pack_json"] = json.dumps(pack_json, ensure_ascii=False) if isinstance(pack_json, dict) else str(pack_json)
+    if kunde_kommentar is not None:
+        patch_payload["dl_kunde_kommentar"] = kunde_kommentar.strip()
+        patch_payload["dl_kommentar_gelesen"] = False  # new comment → unread
+    if personal_antwort is not None:
+        patch_payload["dl_personal_antwort"] = personal_antwort.strip()
+    if kommentar_gelesen is not None:
+        patch_payload["dl_kommentar_gelesen"] = bool(kommentar_gelesen)
+    if storno_grund is not None:
+        patch_payload["dl_storno_grund"] = storno_grund.strip()
     if not patch_payload:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Nichts zu aktualisieren"}),
@@ -681,6 +789,28 @@ def _handle_patch(req, dv_token, base_url, headers):
     try:
         r = requests.patch(patch_url, headers=patch_headers, json=patch_payload, timeout=30)
         if r.status_code in (200, 204):
+            # Send push to customer when staff replies
+            if personal_antwort:
+                try:
+                    fetch_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})?$select=dl_kunde_email,dl_bestellnummer"
+                    fr = requests.get(fetch_url, headers=headers, timeout=15)
+                    if fr.status_code == 200:
+                        odata = fr.json()
+                        cust_email = odata.get("dl_kunde_email", "")
+                        bestellnr = odata.get("dl_bestellnummer", "")
+                        if cust_email:
+                            swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get("WEBSITE_HOSTNAME", "localhost:7071")
+                            protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
+                            internal_url = f"{protocol}://{swa_host}/api/push-send"
+                            requests.post(internal_url, json={
+                                "title": "💬 Nachricht zu Ihrer Bestellung",
+                                "message": personal_antwort.strip(),
+                                "url": "/shop.html",
+                                "target_email": cust_email,
+                                "tag": f"shop-reply-{bestellnr}",
+                            }, timeout=10)
+                except Exception as pe:
+                    logging.warning(f"[shop-order] Push for reply failed: {pe}")
             return func.HttpResponse(
                 json.dumps({"success": True, "status": new_status, "status_text": STATUS_LABELS.get(new_status, "")}, ensure_ascii=False),
                 status_code=200, headers=get_cors_headers()
@@ -692,6 +822,40 @@ def _handle_patch(req, dv_token, base_url, headers):
     except Exception as e:
         return func.HttpResponse(
             json.dumps({"success": False, "error": str(e)}),
+            status_code=500, headers=get_cors_headers()
+        )
+
+
+def _handle_delete(req, dv_token, base_url, headers):
+    """Permanently delete a shop order (CMS/admin action)."""
+    try:
+        body = req.get_json()
+    except:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "Ungültiger JSON-Body"}, ensure_ascii=False),
+            status_code=400, headers=get_cors_headers()
+        )
+    order_id = (body.get("id") or "").strip()
+    if not order_id:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": "id erforderlich"}, ensure_ascii=False),
+            status_code=400, headers=get_cors_headers()
+        )
+    delete_url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({order_id})"
+    try:
+        r = requests.delete(delete_url, headers=headers, timeout=30)
+        if r.status_code in (200, 204):
+            return func.HttpResponse(
+                json.dumps({"success": True}, ensure_ascii=False),
+                status_code=200, headers=get_cors_headers()
+            )
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": f"Dataverse {r.status_code}"}, ensure_ascii=False),
+            status_code=r.status_code, headers=get_cors_headers()
+        )
+    except Exception as e:
+        return func.HttpResponse(
+            json.dumps({"success": False, "error": str(e)}, ensure_ascii=False),
             status_code=500, headers=get_cors_headers()
         )
 
@@ -716,6 +880,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return _handle_get(req, dv_token, base_url, headers)
     elif req.method == "PATCH":
         return _handle_patch(req, dv_token, base_url, headers)
+    elif req.method == "DELETE":
+        return _handle_delete(req, dv_token, base_url, headers)
 
     return func.HttpResponse(
         json.dumps({"success": False, "error": "Methode nicht unterstützt"}),

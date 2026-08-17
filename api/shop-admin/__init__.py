@@ -21,8 +21,9 @@ STATUS_LABELS = {
 
 
 def get_token():
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
     if not client_secret:
@@ -314,7 +315,25 @@ def _scan_pickup(req, base_url, headers):
 KUNDEN_SELECT = "dl_shopkundeid,dl_email,dl_vorname,dl_nachname,dl_telefon,dl_strasse,dl_plz,dl_ort,dl_aktiv,dl_email_verifiziert,createdon,dl_iban_encrypted,dl_kontoinhaber,dl_mandatsreferenz,dl_mandatsdatum,dl_mandatsstatus"
 
 
-def _list_kunden(req, base_url, headers):
+def _decrypt_iban(enc):
+    """Decrypt an IBAN stored by auth-register.
+    Supports 'ENC2:' (Fernet, key from IBAN_ENCRYPTION_KEY) and legacy 'ENC:' (base64)."""
+    import base64
+    if not enc:
+        return ""
+    try:
+        if enc.startswith("ENC2:"):
+            key = os.environ.get("IBAN_ENCRYPTION_KEY", "").strip()
+            if not key:
+                return ""
+            from cryptography.fernet import Fernet
+            return Fernet(key.encode()).decrypt(enc[5:].encode()).decode()
+        if enc.startswith("ENC:"):
+            return base64.b64decode(enc[4:]).decode()
+    except Exception:
+        return ""
+    return ""
+
     q = (req.params.get("q") or "").strip().replace("'", "''")
     filters = []
     if q:
@@ -333,12 +352,11 @@ def _list_kunden(req, base_url, headers):
         # Mask IBAN for display
         iban_masked = ""
         enc_iban = k.get("dl_iban_encrypted", "") or ""
-        if enc_iban and enc_iban.startswith("ENC:"):
-            try:
-                raw = base64.b64decode(enc_iban[4:]).decode()
-                iban_masked = raw[:4] + " **** **** " + raw[-4:] if len(raw) >= 8 else raw
-            except Exception:
-                iban_masked = "(Fehler)"
+        raw = _decrypt_iban(enc_iban)
+        if raw:
+            iban_masked = raw[:4] + " **** **** " + raw[-4:] if len(raw) >= 8 else raw
+        elif enc_iban:
+            iban_masked = "(Fehler)"
         kunden.append({
             "id": k.get("dl_shopkundeid", ""),
             "email": k.get("dl_email", ""),
@@ -424,6 +442,10 @@ def _delete_kunde(req, base_url, headers):
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    from shared.auth import admin_auth_guard
+    _auth = admin_auth_guard(req)
+    if _auth is not None:
+        return _auth
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
 

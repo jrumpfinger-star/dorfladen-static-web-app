@@ -25,6 +25,12 @@ function fmtTime(t){
 function fmtDE(d){return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear();}
 function fmtPrice(v){var i=Math.floor(v);var f=Math.round((v-i)*100);return i+','+(f<10?'0':'')+f+' \u20AC';}
 
+/* === Global Confirm Dialog – loaded from /js/dl-confirm.js === */
+/* If dl-confirm.js is not already loaded, inject it dynamically */
+if(typeof window.dlConfirm!=='function'){
+  var _s=document.createElement('script');_s.src='/js/dl-confirm.js';document.head.appendChild(_s);
+}
+
 /* === Cookie Banner === */
 (function(){
   if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_declined')){
@@ -40,6 +46,7 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     .then(function(payload){
       var config=(payload&&payload.data)?payload.data:payload;
       if(!config || Object.keys(config).length===0){resolveFlags();return;}
+      window._dlCmsConfig=config;
       console.log('CMS Config loaded:', config);
       
       // Apply Hero texts from Dataverse CMS
@@ -64,6 +71,13 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
       }
       if(homeCfg.layout){
         document.documentElement.setAttribute('data-layout', homeCfg.layout);
+      }
+      // Bestellschluss (default 10:30 = 10.5h)
+      var bsRaw=config['bestellschluss_uhr']||(homeCfg&&homeCfg.bestellschluss_uhr)||'';
+      if(bsRaw){
+        var bsParts=String(bsRaw).split(':');
+        var bsH=parseInt(bsParts[0],10),bsM=parseInt(bsParts[1]||'0',10);
+        if(!isNaN(bsH)) window._dlBestellschluss=bsH+bsM/60;
       }
       // Store feature flags globally
       var ff=config['feature_flags']||config.feature_flags;
@@ -112,9 +126,10 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     }
     if(bgGrad){
       var isBgG=c.bgColor_grad;
-      gradCss.push('body{background:'+(isBgG?bgGrad:c.bgColor)+'!important}');
+      // Nur im Light Mode anwenden – im Dark Mode bleibt der dunkle Body-Hintergrund (style.css) erhalten
+      gradCss.push('html[data-theme="light"] body{background:'+(isBgG?bgGrad:c.bgColor)+'!important}');
     }
-    if(c.textColor)gradCss.push('body{color:'+c.textColor+'!important}');
+    if(c.textColor)gradCss.push('html[data-theme="light"] body{color:'+c.textColor+'!important}');
     if(gradCss.length){var gs=document.createElement('style');gs.id='hp-grad-colors';gs.textContent=gradCss.join('');document.head.appendChild(gs);}
     var wpCss=[];
     // Template-specific colors: resolve from wpTplColors or fallback to flat values
@@ -233,21 +248,21 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     var dcRaw=localStorage.getItem('dl_design_config');
     if(dcRaw) applyOfferTileColors(JSON.parse(dcRaw));
   }catch(e){}
-  fetch(API_BASE+'/cms-config')
-    .then(function(r){return r.json();})
-    .then(function(res){
-      var d=(res&&res.data)?res.data:res;
-      var hc=d&&d['hp_design_config'];
+  // Reuse the single cms-config fetch from _dlFlagsReady
+  (window._dlFlagsReady||Promise.resolve()).then(function(){
+      var d=window._dlCmsConfig;
+      if(!d) return;
+      var hc=d['hp_design_config'];
       if(hc&&typeof hc==='object'){
         applyHeroCfg(hc);
         try{localStorage.setItem('dl_hp_design_config',JSON.stringify(hc));}catch(e){}
       }
-      var dc=d&&d['design_config'];
+      var dc=d['design_config'];
       if(dc&&typeof dc==='object'){
         applyOfferTileColors(dc);
         try{localStorage.setItem('dl_design_config',JSON.stringify(dc));}catch(e){}
       }
-    }).catch(function(){});
+    });
 })();
 
 /* === Öffnungsstatus: Jetzt geöffnet / geschlossen === */
@@ -302,8 +317,8 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     var closeAt='';
     var nextOpen='';
     if(!isHoliday && s){
-      if(mins>=s[0] && mins<s[1]){isOpen=true;closeAt=Math.floor(s[1]/60)+':'+(s[1]%60<10?'0':'')+(s[1]%60);}
-      else if(s[2]!==null && mins>=s[2] && mins<s[3]){isOpen=true;closeAt=Math.floor(s[3]/60)+':'+(s[3]%60<10?'0':'')+(s[3]%60);}
+      if(mins>=s[0] && mins<s[1]){isOpen=true;var _r=s[1]-mins;closeAt=(_r<=60?'schlie\u00dft in '+_r+' Min':'bis '+Math.floor(s[1]/60)+':'+(s[1]%60<10?'0':'')+(s[1]%60)+' Uhr');}
+      else if(s[2]!==null && mins>=s[2] && mins<s[3]){isOpen=true;var _r2=s[3]-mins;closeAt=(_r2<=60?'schlie\u00dft in '+_r2+' Min':'bis '+Math.floor(s[3]/60)+':'+(s[3]%60<10?'0':'')+(s[3]%60)+' Uhr');}
     }
     if(!isOpen){
       for(var i=0;i<7;i++){
@@ -311,8 +326,8 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
         var cs=schedule[checkDow];
         if(!cs) continue;
         if(i===0 && !isHoliday){
-          if(mins<cs[0]){nextOpen='\u00f6ffnet heute um '+Math.floor(cs[0]/60)+':'+(cs[0]%60<10?'0':'')+(cs[0]%60)+' Uhr';break;}
-          if(cs[2]!==null && mins<cs[2]){nextOpen='\u00f6ffnet heute um '+Math.floor(cs[2]/60)+':'+(cs[2]%60<10?'0':'')+(cs[2]%60)+' Uhr';break;}
+          if(mins<cs[0]){var _d=cs[0]-mins;var _t=_d<60?'in '+_d+' Min':'in '+Math.floor(_d/60)+' Std';nextOpen='\u00f6ffnet '+_t+' ('+Math.floor(cs[0]/60)+':'+(cs[0]%60<10?'0':'')+(cs[0]%60)+' Uhr)';break;}
+          if(cs[2]!==null && mins<cs[2]){var _d2=cs[2]-mins;var _t2=_d2<60?'in '+_d2+' Min':'in '+Math.floor(_d2/60)+' Std';nextOpen='\u00f6ffnet '+_t2+' ('+Math.floor(cs[2]/60)+':'+(cs[2]%60<10?'0':'')+(cs[2]%60)+' Uhr)';break;}
         }
         if(i>0){
           var dayNames=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
@@ -325,7 +340,7 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
       }
     }
     if(isOpen){
-      el.innerHTML='<div class="dl-status dl-status-open"><span class="dl-status-dot"></span>Jetzt ge\u00f6ffnet<span class="dl-status-next">\u2013 bis '+closeAt+' Uhr</span></div>';
+      el.innerHTML='<div class="dl-status dl-status-open"><span class="dl-status-dot"></span>Jetzt ge\u00f6ffnet<span class="dl-status-next">\u2013 '+closeAt+'</span></div>';
     } else {
       var extra=nextOpen?('<span class="dl-status-next">\u2013 '+nextOpen+'</span>'):(isHoliday?'<span class="dl-status-next">\u2013 Feiertag</span>':'');
       el.innerHTML='<div class="dl-status dl-status-closed"><span class="dl-status-dot"></span>Geschlossen'+extra+'</div>';
@@ -353,6 +368,7 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
           wochentag:item.dl_wochentag!=null?item.dl_wochentag:item.wochentag,
           preis:item.dl_preis!=null?item.dl_preis:item.preis,
           beschreibung:item.dl_beschreibung||item.beschreibung||'',
+          allergene:item.dl_allergene||item.allergene||'',
           datum:item.dl_datum||item.datum||'',
           kalenderwoche:item.dl_kalenderwoche!=null?item.dl_kalenderwoche:item.kalenderwoche
         };
@@ -412,8 +428,9 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
         // Am Wochenende zeigt API nächste Woche → kein Tag ist vergangen
         var isToday=!isWeekend&&dc===todayDc;
         var isPast=!isWeekend&&dc<todayDc;
-        // Bestellschluss: heute bis 10:30, zukünftige Tage erlaubt, vergangene nicht
-        var canOrder=isToday?(currentHour<10||(currentHour===10&&new Date().getMinutes()<30)):(!isPast);
+        // Bestellschluss: heute bis konfigurierbarer Uhrzeit, zukünftige Tage erlaubt, vergangene nicht
+        var _bsCut=window._dlBestellschluss||10.5;
+        var canOrder=isToday?((currentHour+new Date().getMinutes()/60)<_bsCut):(!isPast);
         var notice='';
         dayMeals.forEach(function(g){if(g.beschreibung&&!notice) notice=g.beschreibung;});
         var realMeals=dayMeals.filter(function(g){return g.gericht&&g.gericht.trim()&&g.preis;});
@@ -437,9 +454,9 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
             html+='<td class="'+(isFirst?'wp-day':'wp-day-empty')+'">'+(isFirst?day:'')+'</td>';
             var orderLink='/mittagstisch-bestellen.html?gericht_id='+encodeURIComponent(g.id||'')+'&gericht='+encodeURIComponent(g.gericht)+'&preis='+(g.preis||0)+'&datum='+encodeURIComponent(g.datum||'')+'&tag='+encodeURIComponent(DAYS[dc]||'');
             if(_wpImgs) html+='<td class="wp-img-cell" data-gericht="'+esc(g.gericht)+'"></td>';
-            html+='<td class="wp-dish wp-dish-a">'+esc(g.gericht)+'</td>';
+            html+='<td class="wp-dish wp-dish-a">'+esc(g.gericht)+(g.allergene?'<div style="font-size:10px;color:#d97706;font-weight:400;margin-top:1px">⚠️ '+esc(g.allergene)+'</div>':'')+'</td>';
             var orderBtn='';
-            if(canOrder) orderBtn=' <a href="'+orderLink+'" class="feature-mittagstisch wp-order-btn" title="Jetzt bestellen"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Bestellen</a>';
+            if(canOrder) orderBtn=' <a href="javascript:void(0)" onclick="openMittagPopup(\''+orderLink.replace(/'/g,"\\'")+'\');return false" class="feature-mittagstisch wp-order-btn" title="Jetzt bestellen"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Bestellen</a>';
             html+='<td class="wp-price wp-price-a">'+price+orderBtn+'</td></tr>';
           });
         }
@@ -448,7 +465,7 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
       html+='<div class="wp-footer"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>';
       html+='<span id="wp-oeko"><strong>0,50 \u20AC \u00D6ko-Rabatt</strong> mit eigenem Beh\u00E4lter</span>';
       html+='<span class="wp-hint" id="wp-phone">\u260E\uFE0F <a href="tel:+4980826229991">08082 622 99 91</a></span>';
-      html+='<span class="feature-mittagstisch" style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell"><a href="/mittagstisch-bestellen.html" style="color:#c0392b;text-decoration:none">\uD83C\uDF7D Jetzt online vorbestellen!</a></span>';
+      html+='<span class="feature-mittagstisch" style="color:#c0392b;font-weight:700;font-size:.92rem" id="wp-vorbestell"><a href="javascript:void(0)" onclick="openMittagPopup(\'/mittagstisch-bestellen\')" style="color:#c0392b;text-decoration:none">\uD83C\uDF7D Jetzt online vorbestellen!</a></span>';
       html+='</div>';
       document.getElementById('wp-body').innerHTML=html;
       // Apply mittagstisch feature flag to dynamically rendered content
@@ -494,18 +511,19 @@ window.openDtModal = function(id) {
     return;
   }
   var el = document.getElementById('dt-modal-' + id);
-  if(el) el.classList.add('open');
+  if(el){ el.classList.add('open'); if(window.dlLockScroll) dlLockScroll(); }
 };
 window.closeDtModal = function(id) {
   var el = document.getElementById('dt-modal-' + id);
   if(el) el.classList.remove('open');
+  if(!document.querySelector('[id^="dt-modal-"].open')){ if(window.dlUnlockScroll) dlUnlockScroll(); }
 };
 
 
 /* === Öffnungszeiten loader === */
 (function(){
-  fetch(API_BASE+'/hours')
-    .then(function(r){return r.json();})
+  window._dlHoursP=fetch(API_BASE+'/hours').then(function(r){return r.json();}).catch(function(e){console.log('HRS-API:',e);return null;});
+  window._dlHoursP
     .then(function(payload){
       var items=unwrapApiData(payload);
       if(!items||!items.length) return;
@@ -545,8 +563,7 @@ window.closeDtModal = function(id) {
         html+='</table></div>';
       });
       hrsGrid.innerHTML=html;
-    })
-    .catch(function(e){console.log('HRS-API:',e);});
+    });
 })();
 
 /* === News loader === */
@@ -578,9 +595,13 @@ window.closeDtModal = function(id) {
         }
         html+='<div class="news-card"><div class="news-card-top"><span class="news-date-badge"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>'+datum+'</span></div>';
         html+='<div class="news-title">'+esc(artikel.dl_titel||artikel.titel||'')+'</div>';
+        var _ni=artikel.dl_inhalt||'';
+        var _nim=_ni.match(/<div class="news-beitragsbild">.*?<img[^>]+src="([^"]+)"[^>]*>.*?<\/div>/i);
+        if(_nim&&_nim[1]) html+='<img style="width:100%;border-radius:10px;margin:8px 0 4px;max-height:200px;object-fit:cover" src="'+_nim[1]+'" alt="" loading="lazy">';
+        var _nic=_ni.replace(/<div class="news-beitragsbild">.*?<\/div>/gi,'').trim();
         if(artikel.dl_kurztext||artikel.beschreibung) html+='<div class="news-excerpt">'+esc(artikel.dl_kurztext||artikel.beschreibung)+'</div>';
-        if(artikel.dl_inhalt){
-          html+='<div class="news-full" id="news-'+idx+'">'+artikel.dl_inhalt+'</div>';
+        if(_nic){
+          html+='<div class="news-full" id="news-'+idx+'">'+_nic+'</div>';
           html+='<button class="news-more" onclick="var el=document.getElementById(\'news-'+idx+'\');var v=el.style.display===\'block\';el.style.display=v?\'none\':\'block\';this.innerHTML=v?\'Weiterlesen\':\'Weniger\'">Weiterlesen</button>';
         }
         html+='</div>';
@@ -646,7 +667,8 @@ window.closeDtModal = function(id) {
           +'</div>';
         document.body.appendChild(ov);
         requestAnimationFrame(function(){ov.classList.add('open');});
-        ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('.news-overlay-close'))ov.classList.remove('open');setTimeout(function(){if(ov.parentNode)ov.remove();},300);});
+        if(window.dlLockScroll)dlLockScroll();
+        ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('.news-overlay-close')){ov.classList.remove('open');if(window.dlUnlockScroll)dlUnlockScroll();setTimeout(function(){if(ov.parentNode)ov.remove();},300);}});
       }
     })
     .catch(function(e){
@@ -842,12 +864,12 @@ function openLightbox(idx){
   if(gi.description){cap.textContent=gi.description;cap.style.display='';}
   else{cap.textContent='';cap.style.display='none';}
   overlay.classList.add('active');
-  document.body.style.overflow='hidden';
+  if(window.dlLockScroll) dlLockScroll(); else document.body.style.overflow='hidden';
 }
 function closeLightbox(){
   var overlay=document.getElementById('lightbox-overlay');
   if(overlay)overlay.classList.remove('active');
-  document.body.style.overflow='';
+  if(window.dlUnlockScroll) dlUnlockScroll(); else document.body.style.overflow='';
 }
 function navLightbox(dir){
   var newIdx=_galleryIdx+dir;
@@ -914,23 +936,30 @@ document.addEventListener('keydown',function(e){
     });
 })();
 
-/* === Wochenplan Image Lightbox === */
-function wpOpenLightbox(src,alt){
-  var existing=document.getElementById('wp-lightbox');
+/* === Universal Image Popup (Lightbox) === */
+window.dlImagePopup=function(src,alt){
+  if(!src)return;
+  var existing=document.getElementById('dl-img-popup');
   if(existing) existing.remove();
-  var overlay=document.createElement('div');
-  overlay.id='wp-lightbox';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;animation:wpLbFadeIn .2s';
-  overlay.addEventListener('click',function(){overlay.remove();});
+  var ov=document.createElement('div');
+  ov.id='dl-img-popup';
+  ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer;animation:wpLbFadeIn .2s';
   var img=document.createElement('img');
   img.src=src;
   img.alt=alt||'';
-  img.style.cssText='max-width:90vw;max-height:85vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)';
-  var cap=document.createElement('div');
-  cap.textContent=alt||'';
-  cap.style.cssText='position:absolute;bottom:24px;left:50%;transform:translateX(-50%);color:#fff;font-size:1rem;font-weight:600;background:rgba(0,0,0,.5);padding:6px 18px;border-radius:8px';
-  overlay.appendChild(img);
-  if(alt) overlay.appendChild(cap);
-  document.body.appendChild(overlay);
-  document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){overlay.remove();document.removeEventListener('keydown',onKey);}});
-}
+  img.style.cssText='max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)';
+  img.addEventListener('click',function(e){e.stopPropagation();});
+  ov.appendChild(img);
+  if(alt){var cap=document.createElement('div');cap.textContent=alt;cap.style.cssText='color:#fff;font-size:15px;font-weight:600;margin-top:12px;text-align:center;max-width:90vw;word-break:break-word';ov.appendChild(cap);}
+  var cls=document.createElement('button');
+  cls.innerHTML='&#10005;';
+  cls.style.cssText='position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';
+  ov.appendChild(cls);
+  document.body.appendChild(ov);
+  if(window.dlLockScroll) dlLockScroll();
+  function _imgClose(){ov.remove();if(window.dlUnlockScroll) dlUnlockScroll();}
+  ov.addEventListener('click',function(){_imgClose();});
+  cls.addEventListener('click',function(e){e.stopPropagation();_imgClose();});
+  document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){_imgClose();document.removeEventListener('keydown',onKey);}});
+};
+function wpOpenLightbox(src,alt){window.dlImagePopup(src,alt);}

@@ -3,393 +3,540 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bestellsystem – Workflow-Diagramme</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<title>Dorfladen Kiosk – Handbuch</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#f8fafc; color:#1e293b; }
-  .header { background:linear-gradient(135deg,#166534,#15803d); color:#fff; padding:28px 32px; }
-  .header h1 { font-size:24px; font-weight:800; }
-  .header p { font-size:13px; opacity:.8; margin-top:4px; }
-  .nav { display:flex; flex-wrap:wrap; gap:6px; padding:16px 32px; background:#fff; border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:10; }
-  .nav button { padding:8px 16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
-  .nav button:hover { background:#f0fdf4; border-color:#86efac; }
-  .nav button.active { background:#166534; color:#fff; border-color:#166534; }
-  .section { padding:24px 32px; max-width:1200px; margin:0 auto; height:0; overflow:hidden; opacity:0; position:absolute; left:-9999px; }
-  .section.active { height:auto; overflow:visible; opacity:1; position:relative; left:auto; }
-  .section h2 { font-size:20px; font-weight:800; margin-bottom:6px; color:#166534; }
-  .section .desc { font-size:13px; color:#64748b; margin-bottom:20px; line-height:1.5; }
-  .mermaid { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; margin-bottom:24px; overflow-x:auto; }
-  .legend { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-size:12px; }
-  .legend h4 { font-size:13px; font-weight:700; margin-bottom:6px; color:#166534; }
-  .legend span { display:inline-block; padding:2px 10px; border-radius:6px; margin:2px 4px 2px 0; font-weight:600; }
-  .api-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff; border-radius:10px; overflow:hidden; border:1px solid #e2e8f0; }
-  .api-table th { background:#f0fdf4; padding:10px 14px; text-align:left; font-weight:700; color:#166534; border-bottom:2px solid #bbf7d0; }
-  .api-table td { padding:10px 14px; border-bottom:1px solid #f1f5f9; }
-  .api-table tr:hover td { background:#f8fafc; }
-  .badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; }
-  .b-get { background:#dbeafe; color:#1d4ed8; }
-  .b-post { background:#dcfce7; color:#166534; }
-  .b-patch { background:#fef3c7; color:#92400e; }
-  @media(max-width:768px) { .nav { padding:10px 16px; } .section { padding:16px; } }
+  :root { --green:#166534; --green-light:#f0fdf4; --text:#1e293b; --muted:#64748b; --line:#dbe4de; --bg:#f8fafc; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.58; }
+  button { font:inherit; }
+  .header { background:linear-gradient(135deg,#14532d,var(--green)); color:#fff; padding:28px max(20px,calc((100% - 1080px)/2)); }
+  .header h1 { margin:0; font-size:clamp(24px,4vw,34px); line-height:1.2; }
+  .header p { max-width:760px; margin:8px 0 0; color:#dcfce7; }
+  .nav-wrap { position:sticky; top:0; z-index:20; background:#fff; border-bottom:1px solid var(--line); box-shadow:0 2px 10px rgba(15,23,42,.05); }
+  .nav { display:flex; gap:6px; max-width:1080px; margin:auto; padding:11px 16px; overflow-x:auto; }
+  .nav button { flex:0 0 auto; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#334155; padding:9px 14px; font-size:14px; font-weight:700; cursor:pointer; }
+  .nav button:hover { background:var(--green-light); border-color:#86efac; }
+  .nav button:focus-visible { outline:3px solid #86efac; outline-offset:2px; }
+  .nav button.active { background:var(--green); border-color:var(--green); color:#fff; }
+  main { max-width:980px; margin:auto; padding:26px 22px 56px; }
+  .section { display:none; }
+  .section.active { display:block; }
+  h2 { margin:0 0 8px; color:var(--green); font-size:clamp(23px,3.5vw,31px); line-height:1.25; }
+  h3 { margin:34px 0 10px; padding-top:10px; border-top:2px solid #dcfce7; color:#14532d; font-size:20px; }
+  h4 { margin:25px 0 9px; font-size:17px; color:#0f172a; }
+  .lead { margin:0 0 20px; font-size:16px; color:#334155; }
+  .orientation { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin:16px 0 22px; }
+  .orientation article { background:#fff; border:1px solid var(--line); border-radius:11px; padding:13px 14px; }
+  .orientation strong { display:block; color:#14532d; margin-bottom:3px; }
+  .scenario { margin:18px 0 28px; padding:18px; background:#fff; border:1px solid var(--line); border-left:5px solid #16a34a; border-radius:12px; box-shadow:0 5px 16px rgba(15,23,42,.04); }
+  .scenario h4 { margin:0 0 5px; }
+  .scenario .case { margin:0 0 13px; color:var(--muted); font-size:14px; }
+  .steps { counter-reset:step; list-style:none; margin:0; padding:0; }
+  .steps > li { position:relative; min-height:34px; margin:0 0 11px; padding-left:39px; }
+  .steps > li::before { counter-increment:step; content:counter(step); position:absolute; left:0; top:0; width:27px; height:27px; display:grid; place-items:center; border-radius:50%; background:var(--green); color:#fff; font-size:13px; font-weight:800; }
+  .result { margin:12px 0 0; padding:10px 12px; border-radius:8px; background:var(--green-light); color:#14532d; font-size:14px; }
+  .note,.warning { margin:13px 0; padding:11px 13px; border-radius:9px; font-size:14px; }
+  .note { background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; }
+  .warning { background:#fff7ed; border:1px solid #fed7aa; color:#7c2d12; }
+  .ui { margin:16px 0 22px; overflow:hidden; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 5px 16px rgba(15,23,42,.05); }
+  .ui-title { padding:10px 14px; background:#14532d; color:#fff; font-weight:800; }
+  .ui-row { display:flex; gap:7px; flex-wrap:wrap; padding:12px; border-bottom:1px solid #eef2f7; }
+  .ui-row:last-child { border-bottom:0; }
+  .pill,.action,.status { display:inline-flex; align-items:center; padding:7px 11px; border-radius:8px; font-size:13px; font-weight:700; }
+  .pill { background:#f1f5f9; color:#475569; }
+  .pill.on { background:var(--green); color:#fff; }
+  .action { background:#16a34a; color:#fff; }
+  .action.orange { background:#d97706; }
+  .action.blue { background:#2563eb; }
+  .action.outline { background:#fff; color:#334155; border:1px solid #cbd5e1; }
+  .status { background:#fef3c7; color:#92400e; }
+  .ui-card { width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:9px; }
+  .ui-card strong { margin-right:10px; }
+  .checklist { margin:8px 0 18px; padding-left:22px; }
+  .checklist li { margin:6px 0; }
+  .quick { width:100%; border-collapse:collapse; margin:12px 0 24px; background:#fff; font-size:14px; }
+  .quick th,.quick td { padding:10px 12px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+  .quick th { background:#f0fdf4; color:#14532d; }
+  code { font-family:inherit; font-weight:700; color:#14532d; background:#f0fdf4; border-radius:4px; padding:1px 4px; }
+  @media (max-width:600px) {
+    main { padding:20px 14px 42px; }
+    .header { padding:22px 16px; }
+    .nav { padding:9px 10px; }
+    .scenario { padding:15px 13px; }
+    .quick { display:block; overflow-x:auto; }
+  }
 </style>
 </head>
 <body>
+<header class="header">
+  <h1>Dorfladen Kiosk – Handbuch</h1>
+  <p>Praxisnahe Anleitungen für den täglichen Ladenbetrieb. Alle Bezeichnungen entsprechen den Schaltflächen und Filtern im Kiosk.</p>
+</header>
 
-<div class="header">
-  <h1>Dorfladen Bestellsystem – Workflows</h1>
-  <p>Interaktive Ablaufdiagramme aller Geschaeftsprozesse</p>
+<div class="nav-wrap">
+  <nav class="nav" id="nav" role="tablist" aria-label="Kapitel des Kiosk-Handbuchs">
+    <button id="tab-start" class="active" role="tab" aria-selected="true" aria-controls="sec-start" tabindex="0" data-section="start">Überblick</button>
+    <button id="tab-mittag" role="tab" aria-selected="false" aria-controls="sec-mittag" tabindex="-1" data-section="mittag">Mittagstisch</button>
+    <button id="tab-shop" role="tab" aria-selected="false" aria-controls="sec-shop" tabindex="-1" data-section="shop">Online-Shop</button>
+    <button id="tab-metzger" role="tab" aria-selected="false" aria-controls="sec-metzger" tabindex="-1" data-section="metzger">Metzger</button>
+    <button id="tab-kunden" role="tab" aria-selected="false" aria-controls="sec-kunden" tabindex="-1" data-section="kunden">Stammkunden</button>
+    <button id="tab-social" role="tab" aria-selected="false" aria-controls="sec-social" tabindex="-1" data-section="social">Social Media</button>
+    <button id="tab-kalender" role="tab" aria-selected="false" aria-controls="sec-kalender" tabindex="-1" data-section="kalender">Kalender</button>
+  </nav>
 </div>
 
-<div class="nav" id="nav">
-  <button class="active" onclick="show('status',this)">Status-Lebenszyklus</button>
-  <button onclick="show('bestellung',this)">Bestellvorgang</button>
-  <button onclick="show('bearbeitung',this)">Bearbeitung & Packen</button>
-  <button onclick="show('abholscan',this)">Abholscan</button>
-  <button onclick="show('email',this)">E-Mail-Benachrichtigungen</button>
-  <button onclick="show('filter',this)">Kiosk-Filterlogik</button>
-  <button onclick="show('architektur',this)">Gesamtarchitektur</button>
-  <button onclick="show('api',this)">API-Endpunkte</button>
-</div>
-
-<!-- 1. Status-Lebenszyklus -->
-<div class="section active" id="sec-status">
-  <h2>1. Bestellstatus-Lebenszyklus</h2>
-  <p class="desc">Jede Bestellung durchlaeuft diese Status. Der Normalfall ist der gruene Pfad von links nach rechts.</p>
-  <div class="legend">
-    <h4>Legende</h4>
-    <span style="background:#dbeafe;color:#1d4ed8">0 Neu</span>
-    <span style="background:#fef3c7;color:#92400e">1 In Bearbeitung</span>
-    <span style="background:#e0e7ff;color:#3730a3">2 Abholbereit</span>
-    <span style="background:#dcfce7;color:#166534">3 Abgeholt</span>
-    <span style="background:#fee2e2;color:#991b1b">4 Storniert</span>
+<main>
+<section class="section active" id="sec-start" role="tabpanel" aria-labelledby="tab-start">
+  <h2>Überblick</h2>
+  <p class="lead">Der Kiosk bündelt die Aufgaben, die während eines Verkaufstags regelmäßig anfallen. Wählen Sie oben den passenden Bereich. Zahlen oder farbige Hinweise an einem Bereich machen auf neue oder noch offene Vorgänge aufmerksam.</p>
+  <h3>Kopfzeile und Hauptbereiche</h3>
+  <div class="ui" aria-label="Beispiel der Kiosk-Kopfzeile">
+    <div class="ui-title">Dorfladen Kiosk · Datum und Uhrzeit</div>
+    <div class="ui-row"><span class="pill">Ton</span><span class="pill">Hilfe</span><span class="pill">Aktualisieren</span></div>
+    <div class="ui-row"><span class="pill">Mittagstisch</span><span class="pill on">Online-Shop</span><span class="pill">Metzger</span><span class="pill">Social</span><span class="pill">Stammkunden</span><span class="pill">Kalender</span></div>
   </div>
-  <div class="mermaid">
-stateDiagram-v2
-    [*] --> Neu: Kunde bestellt
-    Neu --> InBearbeitung: Annehmen (Kiosk oder Admin)
-    Neu --> Storniert: Stornieren
-    InBearbeitung --> Abholbereit: Packen fertig (finishPack)
-    InBearbeitung --> Storniert: Stornieren
-    Abholbereit --> Abgeholt: Ausgeben oder Scan (setShopStatus 3)
-    Abholbereit --> Storniert: Stornieren
-    Abgeholt --> [*]
-    Storniert --> [*]
-
-    state Neu {
-        direction LR
-        [*] --> status0
-        status0: Status 0 - Neue Bestellung
-    }
-    state InBearbeitung {
-        direction LR
-        [*] --> status1
-        status1: Status 1 - Wird gepackt
-    }
-    state Abholbereit {
-        direction LR
-        [*] --> status2
-        status2: Status 2 - Kunde benachrichtigt
-    }
-    state Abgeholt {
-        direction LR
-        [*] --> status3
-        status3: Status 3 - Erledigt
-    }
-    state Storniert {
-        direction LR
-        [*] --> status4
-        status4: Status 4 - Abgebrochen
-    }
+  <div class="orientation">
+    <article><strong>Mittagstisch</strong>Bestellungen für ein Tagesgericht bestätigen, beantworten, stornieren und als abgeholt kennzeichnen.</article>
+    <article><strong>Online-Shop</strong>Bestellungen annehmen, mit einer Packliste vorbereiten und bei der Abholung abschließen.</article>
+    <article><strong>Metzger</strong>Fleischvorbestellungen sammeln, beim Lieferanten bestellen und bei Abholung abschließen.</article>
+    <article><strong>Social</strong>Beiträge aus Produkten und Mittagstisch-Angeboten erstellen, teilen oder auf der Homepage veröffentlichen.</article>
+    <article><strong>Stammkunden</strong>Kontaktdaten pflegen und direkt eine Mittagstisch-Bestellung beginnen.</article>
+    <article><strong>Kalender</strong>Aufgaben, Reservierungen, Vorbestellungen, Lieferungen und Hinweise festhalten.</article>
   </div>
-</div>
-
-<!-- 2. Bestellvorgang -->
-<div class="section" id="sec-bestellung">
-  <h2>2. Bestellvorgang (Kunde zum System)</h2>
-  <p class="desc">Der Kunde fuellt den Warenkorb, waehlt einen Abholtermin und sendet die Bestellung ab. Das System validiert, speichert und benachrichtigt.</p>
-  <div class="mermaid">
-sequenceDiagram
-    participant K as Kunde
-    participant API as API shop-order
-    participant DV as Dataverse
-    participant Mail as shop-notify
-
-    K->>K: Warenkorb fuellen
-    K->>K: Abholtermin waehlen (Datum + Zeitslot)
-    K->>API: POST /shop-order + JWT + Positionen + Slot
-    
-    API->>API: JWT verifizieren
-    API->>DV: Mindestbestellwert laden (dl_seiteninhalt)
-    DV-->>API: shop_mindestbestellwert
-    API->>API: Betrag pruefen >= Minimum
-    API->>API: Bestellnummer generieren DL-YYYYMMDD-XXXX
-    API->>DV: POST dl_shopbestellungs Status=0 (Neu)
-    DV-->>API: 201 Created
-    
-    API->>Mail: E-Mail Bestellbestaetigung
-    Mail-->>K: Bestaetigung + Positionen
-    API->>API: Push-Notification senden
-    API-->>K: bestellnummer + abholdatum
-    K->>K: Bestaetigung anzeigen
+  <div class="scenario">
+    <h4>Szenario: Arbeitsbeginn im Laden</h4>
+    <p class="case">Sie übernehmen den Kiosk zu Beginn Ihrer Schicht.</p>
+    <ol class="steps">
+      <li>Prüfen Sie Datum und Uhrzeit in der Kopfzeile.</li>
+      <li>Sehen Sie nach, an welchen Hauptbereichen Zahlen oder farbige Hinweise angezeigt werden.</li>
+      <li>Bearbeiten Sie zuerst neue Bestellungen und ungelesene Nachrichten. Prüfen Sie danach Vorgänge mit bevorstehender oder überschrittener Abholzeit.</li>
+      <li>Verwenden Sie <strong>Aktualisieren</strong>, wenn Sie den Datenstand sofort neu laden möchten.</li>
+    </ol>
+    <p class="result"><strong>Ergebnis:</strong> Sie haben einen geordneten Überblick über neue, offene und zeitkritische Aufgaben.</p>
   </div>
-</div>
-
-<!-- 3. Bearbeitung & Packen -->
-<div class="section" id="sec-bearbeitung">
-  <h2>3. Bearbeitung und Pack-Workflow</h2>
-  <p class="desc">Im Kiosk oder Shop-Admin werden Bestellungen angenommen, gepackt und zur Abholung bereitgestellt.</p>
-  <div class="mermaid">
-flowchart TD
-    A["Neue Bestellung<br/>Status 0"] --> B{"Aktion?"}
-    B -->|Annehmen| C["In Bearbeitung<br/>Status 1"]
-    B -->|Stornieren| X["Storniert<br/>Status 4"]
-    
-    C --> D{"Aktion?"}
-    D -->|Packen oeffnen| E["Pack-Modal"]
-    D -->|Direkt Bereit| G
-    
-    E --> F{"Fuer jede Position"}
-    F --> F1["Checkbox: gepackt?"]
-    F --> F2["Menge anpassen<br/>Gewichtsware in Gramm"]
-    F --> F3["Auto-Save<br/>alle 1,2 Sek via PATCH"]
-    
-    F1 & F2 & F3 --> H{"Fertig packen?"}
-    
-    H -->|Alle Artikel da| G["Abholbereit<br/>Status 2"]
-    H -->|Artikel fehlen| I["Bestaetigung:<br/>Trotzdem bereit?"]
-    I -->|Ja| G
-    I -->|Nein| E
-    
-    G --> J["E-Mail an Kunde"]
-    J --> K{"Alle Artikel?"}
-    K -->|Ja| K1["Bestellung bereit"]
-    K -->|Nein| K2["Fehlende Artikel Info"]
-    
-    G --> L{"Ausgabe"}
-    L -->|Ausgeben-Button| M["Abgeholt<br/>Status 3"]
-    L -->|Barcode scannen| M
-
-    style A fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
-    style C fill:#fef3c7,stroke:#f59e0b,color:#78350f
-    style G fill:#e0e7ff,stroke:#6366f1,color:#312e81
-    style M fill:#dcfce7,stroke:#22c55e,color:#14532d
-    style X fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
-    style E fill:#f5f3ff,stroke:#8b5cf6,color:#4c1d95
+  <div class="scenario">
+    <h4>Szenario: Eine Schaltfläche oder ein Status ist unklar</h4>
+    <ol class="steps">
+      <li>Öffnen Sie über das Fragezeichen dieses Handbuch.</li>
+      <li>Wählen Sie oben das Kapitel des betroffenen Kiosk-Bereichs.</li>
+      <li>Vergleichen Sie den Status und die Schaltflächen mit dem dargestellten Standardablauf.</li>
+      <li>Prüfen Sie vor einem Storno oder endgültigen Löschen immer Name, Bestellnummer und Begründung.</li>
+    </ol>
   </div>
-</div>
+  <p class="warning"><strong>Wichtig:</strong> Nicht jede Aktion ist rückgängig zu machen. Beachten Sie deshalb Bestätigungsfenster, insbesondere beim Löschen und Stornieren.</p>
+</section>
 
-<!-- 4. Abholscan -->
-<div class="section" id="sec-abholscan">
-  <h2>4. Abholscan-Workflow</h2>
-  <p class="desc">Bestellungen koennen per Barcode-Scan oder manuelle Eingabe der Bestellnummer als abgeholt markiert werden.</p>
-  <div class="mermaid">
-flowchart TD
-    A["Barcode scannen<br/>oder Bestellnr eingeben"] --> B["GET /shop-admin<br/>action=scan_pickup"]
-    
-    B --> C{"Bestellung gefunden?"}
-    C -->|Nein| D["Nicht gefunden"]
-    C -->|Ja| E{"Aktueller Status?"}
-    
-    E -->|Status 1 oder 2| F["Auf Abgeholt setzen<br/>PATCH Status = 3"]
-    E -->|Status 3| G["Bereits abgeholt"]
-    E -->|Status 0| H["Noch nicht angenommen"]
-    E -->|Status 4| I["Storniert"]
-    
-    F --> J["Erfolg anzeigen<br/>Kunde + Summe"]
-
-    style A fill:#f0f9ff,stroke:#0ea5e9,color:#0c4a6e
-    style F fill:#dcfce7,stroke:#22c55e,color:#14532d
-    style G fill:#fef3c7,stroke:#f59e0b,color:#78350f
-    style D fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
-    style H fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
-    style I fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+<section class="section" id="sec-mittag" role="tabpanel" aria-labelledby="tab-mittag" hidden>
+  <h2>Mittagstisch</h2>
+  <p class="lead">Hier sehen Sie Mittagstisch-Bestellungen nach Tag und Gericht. Neue Bestellungen werden bestätigt oder storniert. Bestätigte Bestellungen werden nach der Ausgabe als abgeholt gekennzeichnet.</p>
+  <div class="ui">
+    <div class="ui-title">Mittagstisch · gewählter Tag</div>
+    <div class="ui-row"><span class="pill on">Offen</span><span class="pill">Nachrichten</span><span class="pill">Erledigt</span><span class="pill">Alle</span></div>
+    <div class="ui-row"><div class="ui-card"><strong>2× Tagesgericht · Frau Huber</strong><span class="status">Neu</span><div class="ui-row"><span class="action">OK</span><span class="action outline">Stornieren</span></div></div></div>
   </div>
-</div>
-
-<!-- 5. E-Mail-Benachrichtigungen -->
-<div class="section" id="sec-email">
-  <h2>5. E-Mail-Benachrichtigungen</h2>
-  <p class="desc">Das System sendet automatisch E-Mails an Kunden bei bestimmten Statusaenderungen.</p>
-  <div class="mermaid">
-flowchart LR
-    subgraph Ausloeser["Ausloeser"]
-        A1["Bestellung aufgegeben"]
-        A2["Packen fertig<br/>alle Artikel da"]
-        A3["Packen fertig<br/>Artikel fehlen"]
-    end
-
-    subgraph API
-        B1["POST /shop-order"]
-        B2["finishPack, Status 2"]
-        B3["finishPack, Status 2"]
-    end
-
-    subgraph EMail["E-Mail an Kunde"]
-        C1["Bestellbestaetigung<br/>Bestellnummer, Abholtermin,<br/>Positionen, Zahlungsart"]
-        C2["Abholbereit<br/>Bestellung ist bereit"]
-        C3["Fehlende Artikel<br/>Liste nicht verfuegbar"]
-    end
-
-    A1 --> B1 --> C1
-    A2 --> B2 --> C2
-    A3 --> B3 --> C3
-
-    style C1 fill:#dcfce7,stroke:#22c55e
-    style C2 fill:#dbeafe,stroke:#3b82f6
-    style C3 fill:#fef3c7,stroke:#f59e0b
+  <h3>Orientierung</h3>
+  <ul class="checklist">
+    <li><strong>Offen:</strong> neue und bereits bestätigte Bestellungen.</li>
+    <li><strong>Nachrichten:</strong> Bestellungen mit Kundenmitteilungen, die geprüft werden müssen.</li>
+    <li><strong>Erledigt:</strong> abgeholte und stornierte Bestellungen.</li>
+    <li><strong>Alle:</strong> vollständige Übersicht für den gewählten Tag.</li>
+    <li><strong>Neue Telefonbestellung:</strong> Bestellung für einen vorhandenen oder neuen Stammkunden erfassen.</li>
+    <li><strong>Küchenliste drucken:</strong> Tagesübersicht für die Vorbereitung ausgeben.</li>
+  </ul>
+  <div class="scenario">
+    <h4>Szenario: Eine Kundin bestellt telefonisch</h4>
+    <p class="case">Frau Huber bestellt zwei Portionen des Tagesgerichts zum Mitnehmen.</p>
+    <ol class="steps">
+      <li>Wählen Sie im Mittagstisch den gewünschten Tag und tippen Sie auf <strong>Neue Telefonbestellung</strong>.</li>
+      <li>Suchen Sie Frau Huber über den Namen. Ist sie noch nicht gespeichert, wählen Sie die Möglichkeit zum Anlegen und erfassen mindestens Nachname und die vorhandene Telefonnummer.</li>
+      <li>Wählen Sie das Gericht und stellen Sie die Menge auf zwei.</li>
+      <li>Aktivieren Sie <strong>Zum Mitnehmen</strong>. Tragen Sie einen Sonderwunsch nur dann in die Anmerkung ein, wenn er für die Zubereitung wichtig ist.</li>
+      <li>Speichern Sie die Bestellung und kontrollieren Sie, ob sie beim gewählten Tag unter <strong>Offen</strong> erscheint.</li>
+    </ol>
+    <p class="result"><strong>Ergebnis:</strong> Die Telefonbestellung ist dem Kunden, dem Gericht und dem Abholtag zugeordnet.</p>
   </div>
-</div>
-
-<!-- 6. Kiosk-Filterlogik -->
-<div class="section" id="sec-filter">
-  <h2>6. Kiosk-Filterlogik (Online-Shop Tab)</h2>
-  <p class="desc">Die Filterlogik im Kiosk bestimmt, welche Bestellungen in welchem Modus angezeigt werden.</p>
-  <div class="mermaid">
-flowchart TD
-    A["allShopOrders<br/>alle Bestellungen vom API"] --> B{showHistory?}
-    
-    B -->|Standard| C["base = abholdatum ab heute"]
-    B -->|Historie| D["base = ALLE Bestellungen"]
-    
-    C --> E{"Aktiver Filter?"}
-    D --> F{"Aktiver Filter?"}
-    
-    E -->|Zu erledigen| E1["status unter 3<br/>Neu, Bearbeitung, Bereit"]
-    E -->|Heute abholen| E2["abholdatum = heute<br/>und status unter 4"]
-    E -->|Ueberfaellig| E3["status unter 3<br/>und Zeitslot abgelaufen"]
-    
-    F -->|Zu erledigen + Historie| F1["Alle Status anzeigen<br/>inkl. Abgeholt + Storniert"]
-    F -->|Heute + Historie| F2["abholdatum = heute<br/>und status unter 4"]
-    F -->|Ueberfaellig + Historie| F3["status unter 3<br/>und Zeitslot abgelaufen"]
-    
-    E1 & E2 & E3 & F1 & F2 & F3 --> G["renderShopOrders<br/>Gruppiert nach Zeitslot"]
-    
-    G --> H["Slot-Header Badges"]
-    H --> H1["Packen"]
-    H --> H2["Warten"]
-    H --> H3["Bereit"]
-    H --> H4["Abgeholt"]
-    H --> H5["Storniert"]
-
-    style A fill:#f0f9ff,stroke:#0ea5e9
-    style C fill:#dcfce7,stroke:#22c55e
-    style D fill:#fef3c7,stroke:#f59e0b
-    style F1 fill:#e0e7ff,stroke:#6366f1
+  <div class="scenario">
+    <h4>Szenario: Mehrere neue Bestellungen für dasselbe Gericht bestätigen</h4>
+    <ol class="steps">
+      <li>Öffnen Sie <strong>Offen</strong>. Bestellungen sind nach Gericht zusammengefasst.</li>
+      <li>Prüfen Sie die Anzahl und besondere Anmerkungen innerhalb der Gerichtsgruppe.</li>
+      <li>Bestätigen Sie einzelne Bestellungen über <strong>OK</strong>. Bei mehreren neuen Bestellungen können Sie die angebotene Sammelbestätigung der Gerichtsgruppe verwenden.</li>
+      <li>Tragen Sie im Bestätigungsfenster bei Bedarf eine kurze Nachricht ein, etwa eine abweichende Fertigstellungszeit.</li>
+    </ol>
+    <p class="result"><strong>Kontrolle:</strong> Bestätigte Bestellungen bleiben unter <strong>Offen</strong> sichtbar und bieten die Aktion <strong>Abgeholt</strong>.</p>
   </div>
-</div>
-
-<!-- 7. Gesamtarchitektur -->
-<div class="section" id="sec-architektur">
-  <h2>7. Gesamtarchitektur</h2>
-  <p class="desc">Ueberblick ueber alle Komponenten und deren Zusammenspiel.</p>
-  <div class="mermaid">
-flowchart TB
-    subgraph Kunde
-        S1["shop.html<br/>Warenkorb und Bestellung"]
-        S2["Push-Notifications"]
-        S3["E-Mail"]
-    end
-
-    subgraph Frontend["Frontend (Static Web App)"]
-        K1["kiosk.html<br/>Mittagstisch, Online-Shop,<br/>Stammkunden, Social"]
-        K2["shop-admin.html<br/>Bestellverwaltung,<br/>Packen, Abholscan"]
-        K3["cms.js<br/>Content Management,<br/>Social Media Posting"]
-    end
-
-    subgraph API["Azure Functions API"]
-        A1["shop-order"]
-        A2["shop-admin"]
-        A3["shop-notify"]
-        A4["push-send"]
-        A5["meta-catalog"]
-        A6["social-post"]
-    end
-
-    subgraph Backend["Dataverse (CRM)"]
-        D1[("dl_shopbestellungs")]
-        D2[("dl_shopkundes")]
-        D3[("dl_seiteninhalt")]
-    end
-
-    S1 -->|"JWT + POST"| A1
-    A1 -->|CRUD| D1
-    A1 -->|E-Mail| A3
-    A3 --> S3
-    A1 -->|Push| A4
-    A4 --> S2
-
-    K1 -->|"GET/PATCH"| A1
-    K1 -->|GET| A2
-    K2 -->|"GET/PATCH"| A1
-    K2 -->|Scan| A2
-    K2 -->|Notify| A3
-
-    A2 -->|"Read/Write"| D1
-    A2 -->|Kunden| D2
-    A1 -->|Config| D3
-
-    K3 -->|Social| A6
-    K3 -->|Katalog| A5
-    K1 -->|Social| A6
-    K1 -->|Katalog| A5
-
-    style S1 fill:#dbeafe,stroke:#3b82f6
-    style K1 fill:#dcfce7,stroke:#22c55e
-    style K2 fill:#fef3c7,stroke:#f59e0b
-    style K3 fill:#e0e7ff,stroke:#6366f1
-    style D1 fill:#f3e8ff,stroke:#a855f7
-    style D2 fill:#f3e8ff,stroke:#a855f7
-    style D3 fill:#f3e8ff,stroke:#a855f7
+  <div class="scenario">
+    <h4>Szenario: Ein Gericht ist nicht mehr verfügbar</h4>
+    <ol class="steps">
+      <li>Öffnen Sie jede betroffene Bestellung und prüfen Sie Name, Menge und Anmerkung.</li>
+      <li>Tippen Sie auf die rote Storno-Schaltfläche.</li>
+      <li>Geben Sie eine klare Begründung ein, die für die weitere Bearbeitung nachvollziehbar ist.</li>
+      <li>Bestätigen Sie das Storno und kontrollieren Sie die Bestellung anschließend unter <strong>Erledigt</strong>.</li>
+    </ol>
+    <p class="warning">Eine Telefonbestellung hat nicht zwingend einen digitalen Benachrichtigungskanal. Informieren Sie den Kunden bei Bedarf zusätzlich über die hinterlegte Telefonnummer.</p>
   </div>
-</div>
+  <div class="scenario">
+    <h4>Szenario: Abholung und Kundenrückfrage</h4>
+    <ol class="steps">
+      <li>Suchen Sie die bestätigte Bestellung unter <strong>Offen</strong>.</li>
+      <li>Öffnen Sie die Karte, wenn eine Anmerkung oder Nachricht angezeigt wird. Antworten Sie über das Nachrichtenfeld, wenn eine Rückmeldung erforderlich ist.</li>
+      <li>Geben Sie das richtige Gericht und die richtige Menge aus.</li>
+      <li>Tippen Sie erst danach auf <strong>Abgeholt</strong>.</li>
+    </ol>
+  </div>
+</section>
 
-<!-- 8. API-Endpunkte -->
-<div class="section" id="sec-api">
-  <h2>8. API-Endpunkte</h2>
-  <p class="desc">Alle verfuegbaren API-Endpunkte mit Methode, Zweck und Authentifizierung.</p>
-  <table class="api-table">
-    <thead>
-      <tr><th>Endpunkt</th><th>Methode</th><th>Zweck</th><th>Auth</th></tr>
-    </thead>
+<section class="section" id="sec-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
+  <h2>Online-Shop</h2>
+  <p class="lead">Online-Bestellungen durchlaufen die Schritte Neu, In Bearbeitung, Abholbereit und Abgeholt. Die sichtbaren Hauptaktionen heißen <strong>Annehmen</strong>, <strong>Packen</strong> und <strong>Ausgeben</strong>.</p>
+  <div class="ui">
+    <div class="ui-title">Online-Shop</div>
+    <div class="ui-row"><span class="pill on">Zu erledigen</span><span class="pill">Heute abholen</span><span class="pill">Überfällig</span><span class="pill">Historie</span></div>
+    <div class="ui-row"><span class="action">Annehmen</span><span class="action orange">Packen</span><span class="action blue">Ausgeben</span><span class="action outline">Details</span></div>
+  </div>
+  <table class="quick">
+    <thead><tr><th>Status</th><th>Ihre Prüfung</th><th>Nächste Aktion</th></tr></thead>
     <tbody>
-      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-post">POST</span></td><td>Neue Bestellung aufgeben</td><td>JWT (Kunde)</td></tr>
-      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-get">GET</span></td><td>Bestellungen laden (Kunde: eigene, CMS: alle)</td><td>JWT oder CMS</td></tr>
-      <tr><td><code>/api/shop-order</code></td><td><span class="badge b-patch">PATCH</span></td><td>Status aendern, Pack-Daten speichern</td><td>CMS</td></tr>
-      <tr><td><code>/api/shop-admin</code></td><td><span class="badge b-get">GET</span></td><td>Dashboard, Kunden, Abholscan</td><td>CMS</td></tr>
-      <tr><td><code>/api/shop-admin</code></td><td><span class="badge b-patch">PATCH</span></td><td>Kundendaten aktualisieren, SEPA-Mandat</td><td>CMS</td></tr>
-      <tr><td><code>/api/shop-notify</code></td><td><span class="badge b-post">POST</span></td><td>E-Mail senden (Bereit / Fehlend)</td><td>Intern</td></tr>
-      <tr><td><code>/api/push-send</code></td><td><span class="badge b-post">POST</span></td><td>Push-Notification an Kunde</td><td>Intern</td></tr>
-      <tr><td><code>/api/meta-catalog</code></td><td><span class="badge b-get">GET</span> <span class="badge b-post">POST</span></td><td>WhatsApp Business Katalog verwalten</td><td>CMS</td></tr>
-      <tr><td><code>/api/social-post</code></td><td><span class="badge b-get">GET</span> <span class="badge b-post">POST</span></td><td>Social-Media Posts speichern/laden</td><td>CMS</td></tr>
+      <tr><td>Neu</td><td>Abholtag, Zeitfenster, Artikel und Kundennachricht</td><td><strong>Annehmen</strong> oder mit Begründung stornieren</td></tr>
+      <tr><td>In Bearbeitung</td><td>Packfortschritt und abweichende Mengen</td><td><strong>Packen</strong> und Packliste fertigstellen</td></tr>
+      <tr><td>Abholbereit</td><td>Name und vollständige Bestellung</td><td><strong>Ausgeben</strong></td></tr>
+      <tr><td>Abgeholt/Storniert</td><td>Abschluss und Begründung</td><td>In der <strong>Historie</strong> nachsehen</td></tr>
     </tbody>
   </table>
-</div>
+  <div class="scenario">
+    <h4>Szenario: Eine neue Bestellung annehmen</h4>
+    <ol class="steps">
+      <li>Öffnen Sie <strong>Zu erledigen</strong> und wählen Sie die neue Bestellung.</li>
+      <li>Prüfen Sie Name, Abholdatum, Zeitfenster, Positionen und Kundenanmerkungen. Über <strong>Details</strong> sehen Sie die vollständigen Angaben.</li>
+      <li>Tippen Sie auf <strong>Annehmen</strong>, wenn die Bestellung bearbeitet werden kann.</li>
+      <li>Ordnen Sie der Bestellung einen eindeutig beschrifteten Korb oder Behälter zu.</li>
+    </ol>
+    <p class="result"><strong>Ergebnis:</strong> Die Bestellung steht auf <strong>In Bearbeitung</strong> und kann über <strong>Packen</strong> geöffnet werden.</p>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Bestellung vollständig packen</h4>
+    <ol class="steps">
+      <li>Tippen Sie bei der angenommenen Bestellung auf <strong>Packen</strong>.</li>
+      <li>Legen Sie jeden Artikel in den Behälter und haken Sie ihn in der Packliste ab.</li>
+      <li>Prüfen Sie den Fortschritt. Änderungen werden während der Bearbeitung gespeichert.</li>
+      <li>Nutzen Sie bei Bedarf <strong>Drucken</strong>, wenn Sie mit einer Papierliste arbeiten möchten.</li>
+      <li>Schließen Sie die Packliste erst ab, nachdem Artikel und Mengen kontrolliert wurden.</li>
+    </ol>
+    <p class="result"><strong>Ergebnis:</strong> Die Bestellung wechselt auf <strong>Abholbereit</strong>.</p>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Ein Artikel fehlt oder ist nur teilweise verfügbar</h4>
+    <ol class="steps">
+      <li>Öffnen Sie die Packliste und wählen Sie die betroffene Position.</li>
+      <li>Tragen Sie die tatsächlich gepackte Menge ein. Bei Menge null wird die Position als <strong>Nicht lieferbar</strong>, bei einer kleineren Menge als <strong>Teilmenge</strong> gekennzeichnet.</li>
+      <li>Kontrollieren Sie den aktualisierten Gesamtbetrag in der Packansicht.</li>
+      <li>Senden Sie bei Klärungsbedarf über die Bestellung eine kurze Nachricht an den Kunden.</li>
+      <li>Beenden Sie das Packen erst, wenn die Abweichung korrekt dokumentiert ist.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Kunde holt ab oder eine Bestellung ist überfällig</h4>
+    <ol class="steps">
+      <li>Für die Ausgabe öffnen Sie <strong>Heute abholen</strong> und gleichen den Namen mit dem beschrifteten Behälter ab.</li>
+      <li>Prüfen Sie insbesondere dokumentierte Teilmengen und Nachrichten.</li>
+      <li>Übergeben Sie die Bestellung und tippen Sie anschließend auf <strong>Ausgeben</strong>.</li>
+      <li>Bei nicht erfolgter Abholung öffnen Sie <strong>Überfällig</strong>, prüfen Zeitfenster und Kontaktdaten und stimmen das weitere Vorgehen mit dem Kunden ab.</li>
+      <li>Abgeschlossene und stornierte Bestellungen finden Sie unter <strong>Historie</strong>; dort können Sie zwischen 7 Tagen, 30 Tagen und allen Einträgen wählen.</li>
+    </ol>
+    <p class="note">Ein versehentlich weitergesetzter aktiver Status kann über die Zurück-Funktion korrigiert werden. Prüfen Sie vorher, welcher Bearbeitungsstand tatsächlich gilt.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-metzger" role="tabpanel" aria-labelledby="tab-metzger" hidden>
+  <h2>Metzger</h2>
+  <p class="lead">Dieser Bereich verwaltet Fleischvorbestellungen nach Liefertag. Sie kennzeichnen, welche Positionen beim Lieferanten bestellt wurden, beantworten Kundenmitteilungen und schließen die Bestellung bei Abholung ab.</p>
+  <div class="ui">
+    <div class="ui-title">Metzger</div>
+    <div class="ui-row"><span class="pill on">Zu erledigen</span><span class="pill">Heute abholen</span><span class="pill">Sammelbestellung</span><span class="pill">Nachrichten</span><span class="pill">Historie</span></div>
+    <div class="ui-row"><span class="action outline">Alle</span><span class="action">Bestellt</span><span class="action">Abgeholt</span><span class="action outline">Antworten</span></div>
+  </div>
+  <h3>Was die Zustände bedeuten</h3>
+  <ul class="checklist">
+    <li><strong>Neu:</strong> Mindestens eine Position muss noch beim Metzger bestellt werden.</li>
+    <li><strong>In Bestellung:</strong> Alle Positionen sind als beim Metzger bestellt markiert.</li>
+    <li><strong>Abgeholt:</strong> Die Kundin oder der Kunde hat die Ware erhalten.</li>
+    <li><strong>Storniert:</strong> Die Bestellung wurde mit einer Begründung beendet.</li>
+  </ul>
+  <div class="scenario">
+    <h4>Szenario: Neue Fleischvorbestellungen einzeln bearbeiten</h4>
+    <ol class="steps">
+      <li>Öffnen Sie <strong>Zu erledigen</strong>. Die Bestellungen sind nach Liefertag gruppiert.</li>
+      <li>Klappen Sie eine Bestellung auf und prüfen Sie Artikel, Zuschnitt, Kilogramm-Angabe und Anmerkung.</li>
+      <li>Haken Sie jede Position ab, sobald sie beim Lieferanten bestellt wurde. Mit <strong>Alle</strong> können Sie alle offenen Positionen dieser Bestellung markieren.</li>
+      <li>Sobald alle Positionen markiert sind, wechselt die Bestellung auf <strong>In Bestellung</strong>.</li>
+    </ol>
+    <p class="result"><strong>Kontrolle:</strong> Der Zähler zeigt, wie viele Positionen bereits bearbeitet wurden.</p>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Sammelbestellung für einen Liefertag erstellen</h4>
+    <p class="case">Mehrere Kunden haben Fleisch für denselben Liefertag vorbestellt.</p>
+    <ol class="steps">
+      <li>Öffnen Sie <strong>Sammelbestellung</strong> und wählen Sie bei mehreren Terminen den richtigen Liefertag.</li>
+      <li>Prüfen Sie die zusammengefassten Positionen mit Artikel, Kunde, Zuschnitt und Kilogramm-Angabe.</li>
+      <li>Verwenden Sie <strong>Drucken</strong>, um ausschließlich noch offene Positionen als Bestellliste auszugeben.</li>
+      <li>Markieren Sie einzelne Positionen nach der Übermittlung. <strong>Alle abhaken</strong> verwenden Sie nur, wenn wirklich alle offenen Positionen bestellt wurden.</li>
+      <li>Eine falsch markierte Position können Sie über <strong>Zurücksetzen</strong> wieder öffnen.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Kundenfrage beantworten oder Bestellung stornieren</h4>
+    <ol class="steps">
+      <li>Öffnen Sie <strong>Nachrichten</strong>. Ungelesene Mitteilungen stehen vor bereits gelesenen.</li>
+      <li>Lesen Sie die Nachricht im Zusammenhang mit der zugehörigen Bestellung.</li>
+      <li>Tippen Sie auf <strong>Antworten</strong>, geben Sie eine eindeutige Rückmeldung ein und senden Sie diese. Markieren Sie die Nachricht danach als gelesen.</li>
+      <li>Wenn die Bestellung nicht erfüllt werden kann, stornieren Sie sie unter <strong>Zu erledigen</strong>. Wählen Sie einen passenden Pflichtgrund und ergänzen Sie bei Bedarf einen Kommentar.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Fleischbestellung ausgeben</h4>
+    <ol class="steps">
+      <li>Öffnen Sie am Liefertag <strong>Heute abholen</strong>.</li>
+      <li>Vergleichen Sie Kundenname, Artikel und Menge mit der bereitliegenden Ware.</li>
+      <li>Tippen Sie erst nach der Übergabe auf <strong>Abgeholt</strong>.</li>
+      <li>Bei einem versehentlichen Abschluss können Sie den Status über <strong>Zurück</strong> korrigieren. Abgeschlossene Vorgänge finden Sie in der <strong>Historie</strong>.</li>
+    </ol>
+    <p class="note">Der Kiosk dokumentiert die vorbestellten Mengen und den Bearbeitungsstand bis zur Abholung.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-kunden" role="tabpanel" aria-labelledby="tab-kunden" hidden>
+  <h2>Stammkunden</h2>
+  <p class="lead">Im Bereich Stammkunden pflegen Sie Kontaktdaten und beginnen mit einem Klick eine Mittagstisch-Bestellung.</p>
+  <div class="ui">
+    <div class="ui-title">Stammkunden</div>
+    <div class="ui-row"><span class="pill">Suche nach Name oder Telefon</span><span class="action outline">Alle Kunden laden</span><span class="action">Neuer Kunde</span></div>
+    <div class="ui-row"><div class="ui-card"><strong>Anna Huber</strong> 08000 123456<div class="ui-row"><span class="action">Bestellen</span><span class="action outline">Bearbeiten</span><span class="action outline">Deaktivieren</span></div></div></div>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Einen neuen Stammkunden anlegen</h4>
+    <ol class="steps">
+      <li>Suchen Sie zuerst nach Nachname oder Telefonnummer, damit kein doppelter Eintrag entsteht.</li>
+      <li>Wenn kein passender Kunde vorhanden ist, tippen Sie auf <strong>Neuer Kunde</strong>.</li>
+      <li>Tragen Sie Nachname und Telefonnummer ein; beide Angaben sind erforderlich. Vorname, E-Mail-Adresse und Notiz sind optional.</li>
+      <li>Speichern Sie und kontrollieren Sie Name, Telefonnummer und automatisch vergebene Stammkundennummer in der Kundenkarte.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Aus dem Kundenprofil eine Mittagstisch-Bestellung aufnehmen</h4>
+    <p class="case">Herr Maier ruft regelmäßig an und bestellt sein Tagesgericht.</p>
+    <ol class="steps">
+      <li>Suchen Sie Herrn Maier im Bereich Stammkunden.</li>
+      <li>Tippen Sie an seiner Kundenkarte auf <strong>Bestellen</strong>.</li>
+      <li>Der Kiosk wechselt zum Mittagstisch und übernimmt den Kunden in die neue Telefonbestellung.</li>
+      <li>Wählen Sie Gericht und Menge, ergänzen Sie bei Bedarf Mitnehmen und Anmerkung und speichern Sie.</li>
+    </ol>
+    <p class="result"><strong>Ergebnis:</strong> Die Bestellung ist direkt mit dem vorhandenen Kunden verknüpft.</p>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Telefonnummer oder Notiz korrigieren</h4>
+    <ol class="steps">
+      <li>Öffnen Sie die Kundenkarte und tippen Sie auf <strong>Bearbeiten</strong>.</li>
+      <li>Ändern Sie die betroffenen Angaben. Nachname und Telefonnummer müssen weiterhin ausgefüllt sein.</li>
+      <li>Speichern Sie und suchen Sie den Kunden erneut, um die Änderung zu kontrollieren.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Einen nicht mehr benötigten Kundeneintrag deaktivieren</h4>
+    <ol class="steps">
+      <li>Prüfen Sie sorgfältig Namen, Telefonnummer und Stammkundennummer.</li>
+      <li>Tippen Sie auf die rote Deaktivieren-Schaltfläche.</li>
+      <li>Bestätigen Sie <strong>Deaktivieren</strong> nur für den richtigen Datensatz.</li>
+    </ol>
+    <p class="warning"><strong>Wirkung:</strong> Der Kunde wird deaktiviert und nicht mehr in der normalen aktiven Suche angeboten. Dies ist keine Buchung und keine Bearbeitung vergangener Bestellungen.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-social" role="tabpanel" aria-labelledby="tab-social" hidden>
+  <h2>Social Media und Tagesinfo</h2>
+  <p class="lead">Der Social-Bereich erstellt aus Titel, Text und ausgewählten Produkten ein fertiges Poster. Sie können es je nach Gerät teilen, als Bild speichern, als Tagesinfo auf der Homepage veröffentlichen oder als Entwurf parken.</p>
+  <div class="ui">
+    <div class="ui-title">Social · Neuer Post</div>
+    <div class="ui-row"><span class="pill on">1 Titel &amp; Text</span><span class="pill">2 Produkte auswählen</span><span class="pill">3 Vorschau</span><span class="pill">4 Teilen &amp; Veröffentlichen</span></div>
+    <div class="ui-row"><span class="action">Auf WhatsApp teilen</span><span class="action blue">Auf Instagram teilen</span><span class="action outline">Bild speichern</span><span class="action">Tagesinfo veröffentlichen</span><span class="action orange">Parken</span></div>
+  </div>
+  <h3>Der Ablauf in vier Schritten</h3>
+  <ol class="steps">
+    <li><strong>Titel &amp; Text:</strong> Wählen Sie Heute oder Morgen, einen vorgeschlagenen Titel oder einen eigenen Titel und ergänzen Sie bei Bedarf einen kurzen Begleittext.</li>
+    <li><strong>Produkte auswählen:</strong> Wählen Sie passende Katalogprodukte, Mittagstisch-Gerichte oder freie Einträge. Beschränken Sie sich auf die Informationen, die im Beitrag wirklich benötigt werden.</li>
+    <li><strong>Vorschau:</strong> Prüfen Sie Schreibweise, Datum, Preis, Bild, Auswahl und Lesbarkeit.</li>
+    <li><strong>Teilen &amp; Veröffentlichen:</strong> Entscheiden Sie bewusst zwischen externem Teilen, Bildspeicherung, Homepage-Veröffentlichung und Entwurf.</li>
+  </ol>
+  <div class="scenario">
+    <h4>Szenario: Einen Tagesbeitrag für frische Ware erstellen</h4>
+    <p class="case">Heute sind Erdbeeren und Bauernbrot eingetroffen.</p>
+    <ol class="steps">
+      <li>Öffnen Sie <strong>Neuer Post</strong> und wählen Sie <strong>Heute</strong>.</li>
+      <li>Wählen Sie beispielsweise den Titel <strong>Frisch eingetroffen</strong> und ergänzen Sie einen sachlichen Text wie „Heute frisch geliefert – nur solange der Vorrat reicht.“</li>
+      <li>Wählen Sie Erdbeeren und Bauernbrot aus dem Katalog.</li>
+      <li>Öffnen Sie die <strong>Vorschau</strong> und kontrollieren Sie Produktnamen, Preise und Bilder.</li>
+      <li>Wählen Sie danach den gewünschten Ausgabeweg.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: WhatsApp oder Instagram verwenden</h4>
+    <ol class="steps">
+      <li>Erstellen und prüfen Sie zuerst die Vorschau.</li>
+      <li>Tippen Sie auf <strong>Auf WhatsApp teilen</strong> oder <strong>Auf Instagram teilen</strong>.</li>
+      <li>Auf Smartphones und Tablets kann sich die Teilen-Auswahl des Geräts öffnen. Wählen Sie dort die gewünschte App und anschließend Empfänger oder Status.</li>
+      <li>Wenn das Gerät keine direkte Dateifreigabe unterstützt, wird das Poster je nach Browser heruntergeladen oder in die Zwischenablage gelegt. Öffnen Sie dann die Ziel-App selbst und fügen Sie Bild und gegebenenfalls Text ein.</li>
+      <li>Prüfen Sie in der Ziel-App nochmals den endgültigen Beitrag, bevor Sie ihn absenden oder veröffentlichen.</li>
+    </ol>
+    <p class="note">Das Verhalten wird vom Gerät, Browser und den installierten Apps bestimmt. Eine externe App öffnet sich daher nicht auf jedem Gerät automatisch.</p>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Tagesinfo auf der Homepage veröffentlichen</h4>
+    <ol class="steps">
+      <li>Wählen Sie Heute oder Morgen und erstellen Sie den Beitrag vollständig.</li>
+      <li>Prüfen Sie in der Vorschau Datum, Titel, Freitext und Produkte.</li>
+      <li>Tippen Sie auf <strong>Tagesinfo veröffentlichen</strong>.</li>
+      <li>Warten Sie auf die grüne Erfolgsmeldung. Ein Beitrag für heute erscheint auf der Homepage; ein Beitrag für morgen wird für das Zieldatum geplant und laut Kiosk ab dem Vorabend angezeigt.</li>
+      <li>Kontrollieren Sie den Eintrag anschließend unter <strong>Posts &amp; Entwürfe</strong>.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Fehler vor der Veröffentlichung korrigieren</h4>
+    <p class="case">In der Vorschau steht ein falscher Preis.</p>
+    <ol class="steps">
+      <li>Veröffentlichen oder teilen Sie das Poster noch nicht.</li>
+      <li>Öffnen Sie den Schritt mit der Produktauswahl oder wechseln Sie in den <strong>Katalog</strong>, wenn die gespeicherten Produktdaten falsch sind.</li>
+      <li>Korrigieren Sie die Angabe und erzeugen Sie die Vorschau erneut.</li>
+      <li>Vergleichen Sie die neue Vorschau mit der Ware und dem aktuellen Preis.</li>
+    </ol>
+    <p class="warning">Ein bereits extern geteilter Beitrag wird durch eine Korrektur im Kiosk nicht aus WhatsApp oder Instagram entfernt. Korrigieren Sie ihn zusätzlich in der jeweiligen App.</p>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Beitrag vorbereiten und später veröffentlichen</h4>
+    <ol class="steps">
+      <li>Erstellen Sie Titel, Text und Produktauswahl.</li>
+      <li>Tippen Sie auf <strong>Parken</strong>. Der Beitrag wird als Entwurf gespeichert.</li>
+      <li>Öffnen Sie später <strong>Posts &amp; Entwürfe</strong>, laden Sie den Entwurf zum Bearbeiten und prüfen Sie Aktualität und Datum.</li>
+      <li>Aktualisieren Sie den Entwurf erneut mit <strong>Parken</strong> oder veröffentlichen Sie ihn über die angebotene Veröffentlichungsaktion.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Neues Produkt im Katalog anlegen</h4>
+    <ol class="steps">
+      <li>Wechseln Sie von <strong>Neuer Post</strong> zu <strong>Katalog</strong>.</li>
+      <li>Prüfen Sie über Suche und Kategorien, ob das Produkt bereits vorhanden ist.</li>
+      <li>Erfassen Sie Produktname, Kategorie und Preis.</li>
+      <li>Fügen Sie bei Bedarf ein Bild über Kamera, Datei oder Zwischenablage hinzu.</li>
+      <li>Speichern Sie das Produkt und suchen Sie es anschließend im Katalog, bevor Sie es in einem Beitrag verwenden.</li>
+      <li>Fehlt eine passende Kategorie, öffnen Sie <strong>Kategorien verwalten</strong> und ergänzen Sie sie nach den im Laden verwendeten Bezeichnungen.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" id="sec-kalender" role="tabpanel" aria-labelledby="tab-kalender" hidden>
+  <h2>Kalender</h2>
+  <p class="lead">Der Kalender hält gemeinsame Aufgaben, Reservierungen, Vorbestellungen, Lieferungen und Informationen fest. Einträge können ganztägig oder mit Uhrzeit und bei Bedarf wiederkehrend angelegt werden.</p>
+  <div class="ui">
+    <div class="ui-title">Kalender · Kalenderwoche</div>
+    <div class="ui-row"><span class="action outline">Vorherige Woche</span><span class="action outline">Heute</span><span class="action outline">Nächste Woche</span><span class="action">+ Neuer Eintrag</span></div>
+    <div class="ui-row"><span class="pill on">Alle</span><span class="pill">Aufgaben</span><span class="pill">Reservierungen</span><span class="pill">Vorbestellungen</span><span class="pill">Lieferungen</span><span class="pill">Infos</span><span class="pill">Erledigte zeigen</span></div>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Einmalige Lieferung mit Uhrzeit eintragen</h4>
+    <p class="case">Eine Gemüselieferung kommt am Donnerstag um 08:00 Uhr.</p>
+    <ol class="steps">
+      <li>Wählen Sie in der Wochenübersicht den Donnerstag.</li>
+      <li>Tippen Sie auf <strong>+ Neuer Eintrag</strong>.</li>
+      <li>Tragen Sie einen eindeutigen Titel ein, wählen Sie <strong>Uhrzeit</strong> und stellen Sie 08:00 Uhr ein.</li>
+      <li>Wählen Sie die Kategorie <strong>Lieferung</strong> und lassen Sie die Wiederholung auf <strong>Einmalig</strong>.</li>
+      <li>Speichern Sie und kontrollieren Sie den Eintrag unter <strong>Mit Uhrzeit</strong>.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Wiederkehrende Aufgabe mit Vorlage anlegen</h4>
+    <p class="case">Die Kühltheke soll jede Woche gereinigt werden.</p>
+    <ol class="steps">
+      <li>Wählen Sie den ersten Ausführungstag und öffnen Sie <strong>+ Neuer Eintrag</strong>.</li>
+      <li>Wählen Sie eine passende Vorlage oder tragen Sie den Titel selbst ein.</li>
+      <li>Prüfen Sie Kategorie, Ganztags/Uhrzeit und die von der Vorlage übernommenen Werte.</li>
+      <li>Wählen Sie <strong>Wöchentlich</strong>. Für mehrere feste Wochentage wählen Sie <strong>Wochentage</strong> und markieren die benötigten Tage.</li>
+      <li>Speichern Sie und wechseln Sie zur Folgewoche, um die Serie zu kontrollieren.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Reservierung einem Stammkunden zuordnen</h4>
+    <ol class="steps">
+      <li>Wählen Sie den Tag und öffnen Sie einen neuen Eintrag.</li>
+      <li>Tragen Sie eine eindeutige Beschreibung ein und wählen Sie <strong>Reservierung</strong>.</li>
+      <li>Geben Sie im optionalen Feld <strong>Kunde</strong> mindestens zwei Zeichen ein und wählen Sie den passenden Stammkunden aus der Trefferliste.</li>
+      <li>Speichern Sie. Der Kundenname wird am Kalendereintrag angezeigt.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Aufgabe erledigen und später wieder anzeigen</h4>
+    <ol class="steps">
+      <li>Tippen Sie am Kalendereintrag auf das Kontrollkästchen, sobald die Aufgabe abgeschlossen ist.</li>
+      <li>Erledigte Einträge werden in der normalen Ansicht ausgeblendet.</li>
+      <li>Tippen Sie auf <strong>Erledigte zeigen</strong>, wenn Sie den Abschluss kontrollieren oder den Eintrag wieder öffnen möchten.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Nur einen Termin einer Serie auslassen</h4>
+    <p class="case">Eine wöchentliche Lieferung entfällt nur an einem Feiertag.</p>
+    <ol class="steps">
+      <li>Wählen Sie den betroffenen Feiertag und tippen Sie am Serieneintrag auf den Papierkorb.</li>
+      <li>Im Fenster <strong>Serie löschen?</strong> wählen Sie <strong>Nur diesen Tag</strong>.</li>
+      <li>Kontrollieren Sie den Folgetermin. Die Serie läuft dort unverändert weiter.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h4>Szenario: Eine Serie ab einem Datum beenden</h4>
+    <p class="case">Eine regelmäßige Liefervereinbarung endet zum Monatswechsel.</p>
+    <ol class="steps">
+      <li>Wählen Sie den ersten Tag, an dem der Termin nicht mehr stattfinden soll.</li>
+      <li>Tippen Sie am Serieneintrag auf den Papierkorb.</li>
+      <li>Wählen Sie <strong>Ganze Serie löschen</strong>. In diesem Dialog bedeutet die Aktion: Serie ab dem gewählten Datum beenden.</li>
+      <li>Prüfen Sie eine spätere Woche. Ab dem gewählten Datum werden keine weiteren Vorkommen angezeigt.</li>
+    </ol>
+    <p class="result"><strong>Historie:</strong> Frühere Termine der Serie bleiben erhalten, einschließlich bereits erledigter Vorkommen.</p>
+  </div>
+</section>
+</main>
 
 <script>
-  mermaid.initialize({ 
-    startOnLoad: true, 
-    theme: 'base',
-    themeVariables: {
-      primaryColor: '#dcfce7',
-      primaryTextColor: '#166534',
-      primaryBorderColor: '#86efac',
-      lineColor: '#94a3b8',
-      secondaryColor: '#f0f9ff',
-      tertiaryColor: '#faf5ff',
-      fontFamily: '"Segoe UI",system-ui,sans-serif',
-      fontSize: '13px'
-    },
-    flowchart: { curve: 'basis', padding: 16 },
-    sequence: { mirrorActors: false, messageAlign: 'left' }
-  });
-
-  function show(id, btn) {
-    document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
-    document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
-    document.getElementById('sec-'+id).classList.add('active');
-    if(btn) btn.classList.add('active');
+(function () {
+  'use strict';
+  var tabs = Array.from(document.querySelectorAll('#nav [role="tab"]'));
+  function show(id, focusTab) {
+    tabs.forEach(function (tab) {
+      var active = tab.dataset.section === id;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+    });
+    document.querySelectorAll('.section').forEach(function (section) {
+      var active = section.id === 'sec-' + id;
+      section.classList.toggle('active', active);
+      section.hidden = !active;
+    });
+    var selected = tabs.find(function (tab) { return tab.dataset.section === id; });
+    if (focusTab && selected) selected.focus();
+    window.scrollTo({ top:0, behavior:'auto' });
   }
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener('click', function () { show(tab.dataset.section, false); });
+    tab.addEventListener('keydown', function (event) {
+      var next = index;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+      else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = tabs.length - 1;
+      else return;
+      event.preventDefault();
+      show(tabs[next].dataset.section, true);
+      tabs[next].scrollIntoView({ block:'nearest', inline:'nearest' });
+    });
+  });
+})();
 </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* Dorfladen Oberornau – Content Page Styles */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --c-pri:#2d6a30;--c-pri-h:#1b5e20;--c-pri-l:#e8f5e9;
+  --c-pri:var(--dl-green,#2d5016);--c-pri-h:var(--dl-green-h,#1b5e20);--c-pri-l:var(--dl-green-light,#e8f5e9);
   --c-acc:#ef6c00;--c-surf:#fff;--c-bg:#fafafa;--c-text:#212121;--c-sec:#616161;--c-brd:#e0e0e0;
   --sh-s:0 1px 3px rgba(0,0,0,.06);--sh-m:0 4px 12px rgba(0,0,0,.08);
   --r:8px;--max:1340px;--nh:54px;
@@ -126,3 +126,137 @@ img{max-width:100%;display:block}
 
 .skip{position:absolute;left:-9999px;top:0;background:var(--c-pri);color:#fff;padding:8px 16px;z-index:10000;font-size:.85rem}
 .skip:focus{left:0}
+
+/* ============================================================
+   DARK MODE / COLOR THEME SUPPORT (Content-/Info-Seiten)
+   Aktiviert via data-theme="dark" auf <html> (siehe /js/theme.js)
+   ============================================================ */
+:root{color-scheme:light}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --c-pri:#5cb85f; --c-pri-h:#74c777; --c-pri-l:#1e2a20;
+  --c-acc:#ff9d4d; --c-surf:#1b2228; --c-bg:#12171a; --c-text:#e6eae8; --c-sec:#9aa6a0; --c-brd:rgba(255,255,255,0.10);
+  --sh-s:0 1px 3px rgba(0,0,0,.4); --sh-m:0 4px 12px rgba(0,0,0,.5);
+}
+html[data-theme="dark"] .nv{box-shadow:0 1px 0 rgba(255,255,255,.03)}
+/* Aktions-Links (Nav + Footer) tragen inline color:#2d5016 – im Dark Mode unlesbar.
+   .dl-nav-action wird von /js/theme.js gesetzt. */
+html[data-theme="dark"] a[style*="color:#2d5016"],
+html[data-theme="dark"] .dl-nav-action{color:var(--c-pri-h)!important}
+html[data-theme="dark"] #mob-push-toggle{background:var(--c-pri-l)!important}
+@media(max-width:900px){
+  html[data-theme="dark"] .nv-links{background:var(--c-surf)}
+  html[data-theme="dark"] .nv-links>li>a{border-bottom-color:rgba(255,255,255,.06)}
+}
+html[data-theme="dark"] .ct h1{border-bottom-color:var(--c-brd)}
+html[data-theme="dark"] .gallery img{border:1px solid var(--c-brd)}
+
+/* Hartkodierte Textfarben in Content-Karten (waren dunkel-auf-dunkel) */
+html[data-theme="dark"] .ct p,
+html[data-theme="dark"] .ct li{color:#d5dbd7}
+html[data-theme="dark"] .ct h3{color:#cbb08f}
+html[data-theme="dark"] .ct blockquote{color:#c3ccc7}
+html[data-theme="dark"] .ct td,
+html[data-theme="dark"] .ct th{border-bottom-color:var(--c-brd)}
+html[data-theme="dark"] .cd-h{background:#232c33}
+html[data-theme="dark"] .hrs td{border-bottom-color:rgba(255,255,255,.06)}
+html[data-theme="dark"] .hrs td:first-child{color:var(--c-text)}
+html[data-theme="dark"] .hrs-closed{color:#8b958f}
+html[data-theme="dark"] .dyn-hrs td{border-bottom-color:rgba(255,255,255,.06)}
+
+/* ============================================================
+   Seiten-spezifische helle Komponenten im Dark Mode
+   (aktuelles .news-*, bilder .gallery-filter-btn,
+    sortiment .so-*, oeffnungszeiten inline-Tabelle)
+   ============================================================ */
+/* aktuelles: News-Karten */
+html[data-theme="dark"] .news-card{background:var(--c-surf);border-color:var(--c-brd);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+html[data-theme="dark"] .news-page-header h2,
+html[data-theme="dark"] .news-title{color:var(--c-text)}
+html[data-theme="dark"] .news-page-header p,
+html[data-theme="dark"] .news-excerpt,
+html[data-theme="dark"] .news-full{color:#c3ccc7}
+html[data-theme="dark"] .news-full{border-top-color:var(--c-brd)}
+html[data-theme="dark"] .news-date-badge{background:#17301f;color:#8fd6ad;border-color:#2f5d42}
+html[data-theme="dark"] .news-date-badge svg{fill:#8fd6ad}
+html[data-theme="dark"] .news-more{color:#6fd39a}
+html[data-theme="dark"] .news-more:hover{color:#8fd6ad}
+html[data-theme="dark"] .news-share-btn{background:var(--c-surf);border-color:var(--c-brd);color:#9aa6a0}
+html[data-theme="dark"] .news-share-btn:hover{background:#17301f;border-color:#2f5d42;color:#8fd6ad}
+
+/* bilder: Filter-Pills */
+html[data-theme="dark"] .gallery-filter-btn{background:#1b2228;border-color:var(--c-brd);color:var(--c-text)}
+html[data-theme="dark"] .gallery-filter-btn:hover{background:#232c33}
+
+/* sortiment: Preislisten-Browser */
+html[data-theme="dark"] .so-header h2,
+html[data-theme="dark"] .so-wg-name{color:var(--c-text)}
+html[data-theme="dark"] .so-subtitle,
+html[data-theme="dark"] .so-wg-meta,
+html[data-theme="dark"] .so-td-bc{color:#9aa6a0}
+html[data-theme="dark"] .so-filter-btn{background:#1b2228;border-color:var(--c-brd);color:#c3ccc7}
+html[data-theme="dark"] .so-filter-btn:hover{background:#232c33;border-color:#3a444b}
+html[data-theme="dark"] .so-filter-active{background:#17301f !important;border-color:#2f5d42 !important;color:#8fd6ad !important}
+html[data-theme="dark"] .so-search input{background:#12171a;border-color:var(--c-brd);color:var(--c-text)}
+html[data-theme="dark"] .so-group{border-color:var(--c-brd)}
+html[data-theme="dark"] .so-toggle{background:#1b2228;color:var(--c-text)}
+html[data-theme="dark"] .so-toggle:hover{background:#17301f}
+html[data-theme="dark"] .so-table thead{background:#161c20}
+html[data-theme="dark"] .so-table th{color:#9aa6a0;border-bottom-color:var(--c-brd)}
+html[data-theme="dark"] .so-table td{border-top-color:rgba(255,255,255,.06)}
+html[data-theme="dark"] .so-table tr:hover{background:#17301f}
+html[data-theme="dark"] .so-td-name{color:#d5dbd7}
+html[data-theme="dark"] .so-td-price{color:#6fd39a}
+html[data-theme="dark"] .so-statt{color:#9aa6a0}
+html[data-theme="dark"] .so-row-rp:hover{background:#2c1b1b !important}
+html[data-theme="dark"] .so-row-ang:hover{background:#2a2318 !important}
+html[data-theme="dark"] .so-bc-notfound{background:#2a2410;border-color:#7c5e1a;color:#f5d98a}
+html[data-theme="dark"] .so-bc-found{background:#12251c;border-color:#2f5d42;color:#8fd6ad}
+html[data-theme="dark"] .so-bc-found .so-table{background:var(--c-surf)}
+
+/* sortiment: Intro-Karte + Öko-Hinweis (klassen-/inline-hell) */
+html[data-theme="dark"] .sort-orig{color:#c3ccc7}
+html[data-theme="dark"] .sort-orig strong{color:#e6eae8}
+html[data-theme="dark"] .sort-highlights{background:#1b2228;border-color:var(--c-brd)}
+html[data-theme="dark"] .sort-eco{background:#1f2b23 !important;border-color:#2f5d42}
+html[data-theme="dark"] .sort-divider{border-top-color:var(--c-brd)}
+/* dunkelgrüne Inline-Farbe/Icons (#1e463a) auf Dunkel unlesbar -> helleres Grün */
+html[data-theme="dark"] [style*="color:#1e463a"]{color:#8fd6ad !important}
+html[data-theme="dark"] [stroke="#1e463a"]{stroke:#8fd6ad !important}
+
+/* roter-punkt: Preislisten-Tabelle (klassen-hell, auch Desktop) */
+html[data-theme="dark"] .rp-group{border-color:var(--c-brd)}
+html[data-theme="dark"] .rp-toggle{background:#1b2228;color:var(--c-text)}
+html[data-theme="dark"] .rp-toggle:hover{background:#232c33}
+html[data-theme="dark"] .rp-wg-name{color:var(--c-text)}
+html[data-theme="dark"] .rp-arrow{color:#9aa6a0}
+html[data-theme="dark"] .rp-table thead{background:#161c20}
+html[data-theme="dark"] .rp-table th{color:#9aa6a0;border-bottom-color:var(--c-brd)}
+html[data-theme="dark"] .rp-table td{border-top-color:rgba(255,255,255,.06)}
+html[data-theme="dark"] .rp-table tr:hover{background:#2c1b1b}
+html[data-theme="dark"] .rp-name{color:#d5dbd7}
+html[data-theme="dark"] .rp-vk{color:#6fd39a}
+html[data-theme="dark"] .rp-uvp,
+html[data-theme="dark"] .rp-saving{color:#9aa6a0}
+
+
+/* oeffnungszeiten: inline-gestylte Tabelle (helle Zebra-Zeilen/Ränder) */
+html[data-theme="dark"] [style*="background:#f9f9f9"]{background:#161c20 !important}
+html[data-theme="dark"] [style*="solid #e0e0e0"]{border-bottom-color:rgba(255,255,255,.06) !important}
+/* roter-punkt Banner + andere helle Rot-Tints (inline) */
+html[data-theme="dark"] [style*="background:#fef2f2"],
+html[data-theme="dark"] [style*="background:#fff5f5"],
+html[data-theme="dark"] [style*="background:#fdf2f2"]{background:#2c1b1b !important}
+html[data-theme="dark"] [style*="color:#1f2521"]{color:#e6eae8 !important}
+/* generische inline-helle Flächen auf Info-Seiten -> dunkel */
+html[data-theme="dark"] [style*="background:#fff;"],
+html[data-theme="dark"] [style*="background:#ffffff"],
+html[data-theme="dark"] [style*="background:#fafafa"],
+html[data-theme="dark"] [style*="background:#f5f5f5"]{background:#1b2228 !important}
+
+
+/* Theme-Umschalt-Button */
+#dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid var(--c-brd);background:var(--c-surf);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .15s,background .2s;padding:0}
+#dl-theme-toggle:hover{transform:scale(1.08)}
+#dl-theme-toggle:active{transform:scale(.95)}
+@media(max-width:600px){#dl-theme-toggle{width:40px;height:40px}}

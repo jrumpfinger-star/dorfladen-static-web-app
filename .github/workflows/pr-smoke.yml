@@ -1,0 +1,41 @@
+name: PR Smoke Tests (read-only)
+
+# Read-only Playwright-Smoke-Tests gegen eine deployte Umgebung.
+# Läuft NICHT die mutierenden Bestandstests (die verändern Live-Daten),
+# sondern nur tests/smoke.spec.js (Seiten laden/rendern).
+#
+# Standard-Ziel: Default-baseURL aus playwright.config.js.
+# Override: Repository-Variable SMOKE_TEST_URL oder manueller Dispatch-Input.
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      test_url:
+        description: "Ziel-URL für die Smoke-Tests"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    name: Read-only Smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright (chromium)
+        run: npx playwright install --with-deps chromium
+      - name: Run smoke tests
+        env:
+          TEST_URL: ${{ github.event.inputs.test_url || vars.SMOKE_TEST_URL }}
+        run: npx playwright test tests/smoke.spec.js --project=mobile

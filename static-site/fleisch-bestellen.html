@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleisch &amp; Wurst vorbestellen – Dorfladen Oberornau</title>
+<meta name="description" content="Fleisch und Wurst vorbestellen mit 15% Rabatt ab 1 kg. Frisch vom Metzger, vakuumverpackt.">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#7f1d1d">
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/images/icon-192.png">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="/js/theme.js"></script>
+<style>
+:root{--c-meat:#7f1d1d;--c-meat-light:#fef2f2;--c-meat-accent:#dc2626;--c-green:var(--dl-green-action,#2e7d4f);--c-green-light:var(--dl-green-light,#e8f5e9);--c-bg:#faf5f3;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--c-border:#e5e7eb;--radius:14px;--shadow:0 2px 12px rgba(0,0,0,.08)}
+html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-border:rgba(255,255,255,.1);--c-green:#5cb85f;--c-green-light:#1e2a20;--c-meat-light:#2a1717}
+/* Dark-Mode: Klassen mit hartcodiertem #fff/#f9fafb auf Theme-Werte umbiegen */
+html[data-theme="dark"] .fm-cat,
+html[data-theme="dark"] .fm-liefertag-picker,
+html[data-theme="dark"] .fm-ci,
+html[data-theme="dark"] .fm-cart-section,
+html[data-theme="dark"] .fm-cart-footer,
+html[data-theme="dark"] .fm-history-card,
+html[data-theme="dark"] .fm-confirm-back,
+html[data-theme="dark"] .fm-view-btn{background:var(--c-card);color:var(--c-text)}
+html[data-theme="dark"] .fm-confirm-summary,
+html[data-theme="dark"] .fm-history-item:hover,
+html[data-theme="dark"] .fm-card-img{background:#161c20}
+/* Dunkelrotes Label auf dunklem Grund unlesbar -> helleres Rot */
+html[data-theme="dark"] .fm-liefertag-picker label{color:#f0736f}
+#dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-card);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);padding:0;transition:transform .15s}
+#dl-theme-toggle:hover{transform:scale(1.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+[data-lucide]{display:inline-block;vertical-align:-2px}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* Header */
+.fm-header{background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 100%);color:#fff;padding:16px 20px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(127,29,29,.3)}
+.fm-header h1{font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px}
+.fm-header small{font-size:12px;opacity:.85;display:block;margin-top:2px}
+.fm-back{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#fff;text-decoration:none;font-size:24px;opacity:.8}
+.fm-back:hover{opacity:1}
+
+/* Countdown Banner */
+.fm-countdown{background:linear-gradient(135deg,#fef3c7,#fef9c3);border-bottom:1px solid #f59e0b33;padding:10px 16px;text-align:center;position:sticky;top:62px;z-index:99}
+.fm-countdown-title{font-size:13px;font-weight:700;color:#92400e}
+.fm-countdown-sub{font-size:11px;color:#a16207;margin-top:1px}
+.fm-countdown-timer{font-size:16px;font-weight:800;color:#b45309;margin-top:2px;font-variant-numeric:tabular-nums}
+.fm-countdown.closed{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#dc262633}
+.fm-countdown.closed .fm-countdown-title{color:#991b1b}
+.fm-countdown.closed .fm-countdown-sub{color:#b91c1c}
+
+.fm-container{max-width:600px;margin:0 auto;padding:12px 16px}
+
+/* Rabatt Banner – compact */
+.fm-rabatt{background:var(--c-meat-light);border:1.5px solid #fecaca;border-radius:10px;padding:10px 14px;margin-bottom:10px;text-align:center;display:flex;align-items:center;gap:10px;justify-content:center}
+.fm-rabatt-pct{font-size:16px;font-weight:900;color:var(--c-meat-accent);white-space:nowrap}
+.fm-rabatt-sub{font-size:12px;color:var(--c-text);text-align:left}
+
+/* Category Pills */
+.fm-cats{display:flex;gap:8px;overflow-x:auto;padding:0 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fm-cats::-webkit-scrollbar{display:none}
+.fm-cat{flex-shrink:0;padding:8px 16px;border-radius:20px;border:1.5px solid var(--c-border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.fm-cat.active{background:var(--c-meat);color:#fff;border-color:var(--c-meat)}
+
+/* Search + Toggle Row */
+.fm-search-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.fm-search{position:relative;flex:1;min-width:0}
+.fm-search input{width:100%;padding:10px 12px 10px 38px;border:1.5px solid var(--c-border);border-radius:10px;font-size:14px;background:#fff;outline:none;transition:border-color .15s}
+.fm-search input:focus{border-color:var(--c-meat)}
+.fm-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--c-muted)}
+
+/* Reorder Banner – compact */
+.fm-reorder{background:var(--c-green-light);border:1.5px solid #a7f3d0;border-radius:10px;padding:10px 14px;margin-bottom:10px;transition:all .15s}
+.fm-reorder-hdr{display:flex;align-items:center;gap:10px;cursor:pointer}
+.fm-reorder-hdr:hover{opacity:.85}
+.fm-reorder-title{font-size:13px;font-weight:700;color:var(--c-green);display:flex;align-items:center;gap:6px;flex:1}
+.fm-reorder-sub{font-size:11px;color:var(--c-muted)}
+.fm-reorder-items{margin-top:8px;border-top:1px solid #a7f3d0;padding-top:8px}
+.fm-reorder-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:var(--c-text)}
+.fm-reorder-item-name{flex:1;font-weight:600}
+.fm-reorder-item-qty{color:var(--c-muted);white-space:nowrap}
+.fm-reorder-item-price{font-weight:700;white-space:nowrap}
+.fm-reorder-actions{display:flex;gap:8px;margin-top:10px}
+.fm-reorder-btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.fm-reorder-btn-confirm{background:var(--c-green);color:#fff}
+.fm-reorder-btn-confirm:active{opacity:.85}
+.fm-liefertag-picker{background:#fff;border:1.5px solid var(--c-meat);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.fm-liefertag-picker label{font-size:12px;font-weight:700;color:var(--c-meat);white-space:nowrap;display:flex;align-items:center;gap:4px;flex-shrink:0}
+.fm-liefertag-picker select{flex:1;min-width:0;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:600;background:#fff;box-sizing:border-box}
+
+/* Article Grid */
+.fm-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
+@media(min-width:480px){.fm-grid{grid-template-columns:1fr 1fr}}
+
+/* Article Card */
+.fm-card{background:var(--c-card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;position:relative;transition:box-shadow .15s}
+.fm-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.fm-card-img{width:100%;height:120px;object-fit:cover;background:#f3f4f6}
+.fm-card-noimg{width:100%;height:120px;background:linear-gradient(135deg,#fef2f2,#fff5f5);display:flex;align-items:center;justify-content:center;font-size:36px;color:#dc2626}
+.fm-card-body{padding:12px 14px}
+.fm-card-name{font-size:14px;font-weight:700;line-height:1.3}
+.fm-card-cat{font-size:11px;color:var(--c-muted);margin-top:2px}
+.fm-card-price{display:flex;align-items:baseline;gap:6px;margin-top:8px}
+.fm-card-price-orig{font-size:13px;color:var(--c-muted);text-decoration:line-through}
+.fm-card-price-new{font-size:16px;font-weight:800;color:var(--c-meat-accent)}
+.fm-card-price-unit{font-size:11px;color:var(--c-muted)}
+.fm-card-footer{padding:8px 14px 14px;display:flex;align-items:center;gap:8px}
+.fm-card-kg{display:flex;align-items:center;gap:6px;flex:1}
+.fm-card-kg input{width:70px;padding:8px;border:1.5px solid var(--c-border);border-radius:8px;font-size:14px;text-align:center;outline:none}
+.fm-card-kg input:focus{border-color:var(--c-meat)}
+.fm-card-kg span{font-size:12px;color:var(--c-muted)}
+.fm-card-add{padding:8px 14px;border:none;border-radius:8px;background:var(--c-meat);color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s}
+.fm-card-add:hover{background:#991b1b}
+.fm-card-add:disabled{opacity:.4;cursor:not-allowed}
+.fm-card-fav{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.9);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.fm-card-fav.active{color:#dc2626}
+.fm-card-badge{position:absolute;top:8px;left:8px;background:var(--c-meat-accent);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px}
+
+/* Cart Drawer */
+.fm-cart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.fm-cart-overlay.open{display:block}
+.fm-cart-panel{position:fixed;right:-100%;top:0;bottom:0;width:min(400px,100vw);background:var(--c-bg);z-index:201;transition:right .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.2)}
+.fm-cart-panel.open{right:0}
+.fm-cart-hdr{background:linear-gradient(135deg,#7f1d1d,#991b1b);color:#fff;padding:18px 20px;display:flex;align-items:center;gap:10px}
+.fm-cart-hdr h3{flex:1;font-size:17px;font-weight:800;display:flex;align-items:center;gap:8px}
+.fm-cart-badge-count{background:rgba(255,255,255,.25);font-size:12px;padding:2px 8px;border-radius:10px;font-weight:700}
+.fm-cart-close{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;cursor:pointer;padding:6px;border-radius:8px;transition:background .15s}
+.fm-cart-close:hover{background:rgba(255,255,255,.25)}
+.fm-cart-scroll{flex:1;overflow-y:auto;padding:16px}
+.fm-cart-empty{text-align:center;padding:60px 20px;color:var(--c-muted)}
+.fm-cart-empty-icon{width:64px;height:64px;background:var(--c-meat-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--c-meat-accent)}
+.fm-ci{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;gap:12px;position:relative}
+.fm-ci-icon{flex-shrink:0;width:44px;height:44px;background:linear-gradient(135deg,#fef2f2,#fff1f2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#dc2626}
+.fm-ci-body{flex:1;min-width:0}
+.fm-ci-name{font-size:14px;font-weight:700}
+.fm-ci-detail{font-size:12px;color:var(--c-muted);margin-top:2px}
+.fm-ci-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.fm-ci-prices{display:flex;align-items:baseline;gap:5px}
+.fm-ci-orig{font-size:12px;color:var(--c-muted);text-decoration:line-through}
+.fm-ci-price{font-size:16px;font-weight:800;color:var(--c-meat-accent)}
+.fm-ci-qty{display:flex;align-items:center;gap:4px;margin-left:auto}
+.fm-ci-qty input{width:54px;padding:6px;border:1.5px solid var(--c-border);border-radius:8px;font-size:13px;text-align:center;outline:none;background:#fff}
+.fm-ci-qty input:focus{border-color:var(--c-meat)}
+.fm-ci-qty span{font-size:11px;color:var(--c-muted)}
+.fm-ci-rm{position:absolute;top:10px;right:10px;background:none;border:none;color:#d1d5db;cursor:pointer;padding:4px;border-radius:6px;transition:all .15s}
+.fm-ci-rm:hover{color:var(--c-meat-accent);background:#fef2f2}
+.fm-ci-warn{font-size:10px;color:#b45309;background:#fef3c7;padding:2px 6px;border-radius:4px;font-weight:600}
+
+/* Cart Checkout section */
+.fm-cart-section{background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.fm-cart-section h4{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;color:var(--c-meat)}
+
+/* Cart Footer */
+.fm-cart-footer{border-top:none;padding:16px;background:#fff;box-shadow:0 -4px 20px rgba(0,0,0,.08)}
+.fm-cart-liefertag{font-size:12px;color:var(--c-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;background:var(--c-meat-light);padding:8px 12px;border-radius:8px}
+.fm-cart-liefertag i{color:var(--c-meat)}
+.fm-cart-savings{background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:14px;font-weight:700;color:#065f46;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+.fm-cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;padding:0 4px}
+.fm-cart-total-label{font-size:15px;font-weight:700;color:var(--c-text)}
+.fm-cart-total-price{font-size:26px;font-weight:900;color:var(--c-meat);letter-spacing:-.5px}
+
+/* Cart FAB */
+.fm-fab{position:fixed;top:12px;right:12px;background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;border:none;width:48px;height:48px;border-radius:14px;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(127,29,29,.5);z-index:150;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.fm-fab:hover{transform:scale(1.08);box-shadow:0 8px 28px rgba(127,29,29,.55)}
+.fm-fab:active{transform:scale(.95)}
+.fm-fab-badge{position:absolute;top:-4px;right:-4px;background:#fff;color:var(--c-meat);font-size:12px;font-weight:900;min-width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+
+/* Checkout form inside cart */
+.fm-checkout{padding:0}
+.fm-checkout h4{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;color:var(--c-meat)}
+.fm-field{margin-bottom:10px}
+.fm-field label{font-size:12px;font-weight:600;color:var(--c-muted);margin-bottom:4px;display:block}
+.fm-field input,.fm-field textarea{width:100%;padding:11px 14px;border:1.5px solid var(--c-border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:#fff;transition:border-color .15s,box-shadow .15s}
+.fm-field input:focus,.fm-field textarea:focus{border-color:var(--c-meat);box-shadow:0 0 0 3px rgba(127,29,29,.08)}
+.fm-field textarea{min-height:50px;resize:vertical}
+.fm-field .required{color:var(--c-meat-accent)}
+.fm-submit{width:100%;padding:16px;border:none;border-radius:12px;background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(127,29,29,.3)}
+.fm-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(127,29,29,.35)}
+.fm-submit:active{transform:translateY(0)}
+.fm-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* History */
+.fm-history-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#fff;background:none;border:none;cursor:pointer;opacity:.8;font-size:14px;display:flex;align-items:center;gap:4px}
+.fm-history-btn:hover{opacity:1}
+.fm-history-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:16px}
+.fm-history-overlay.open{display:flex}
+.fm-history-card{background:#fff;border-radius:14px;max-width:440px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.fm-history-hdr{padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+.fm-history-hdr h3{font-size:15px;font-weight:800;color:#111;margin:0}
+.fm-history-close{cursor:pointer;font-size:20px;color:#9ca3af;line-height:1;background:none;border:none}
+.fm-history-body{padding:8px 12px}
+.fm-history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px;text-decoration:none;color:inherit;border-radius:8px}
+.fm-history-item:hover{background:#f9fafb}
+.fm-history-date{font-weight:600;color:#374151}
+.fm-history-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px}
+.fm-history-badge.st-0{background:#fef3c7;color:#92400e}
+.fm-history-badge.st-1{background:#dbeafe;color:#1e40af}
+.fm-history-badge.st-2{background:#dcfce7;color:#166534}
+.fm-history-badge.st-3{background:#f3f4f6;color:#6b7280}
+.fm-history-badge.st-4{background:#fee2e2;color:#991b1b}
+.fm-history-empty{text-align:center;padding:30px 16px;color:#9ca3af;font-size:14px}
+
+/* Confirmation */
+.fm-confirm{display:none;background:var(--c-card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;text-align:center;margin:20px 0}
+.fm-confirm.show{display:block}
+.fm-confirm-icon{font-size:48px;margin-bottom:12px}
+.fm-confirm h2{font-size:20px;font-weight:800;color:var(--c-green);margin-bottom:8px}
+.fm-confirm-nr{font-size:14px;color:var(--c-muted);margin-bottom:16px}
+.fm-confirm-summary{text-align:left;background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:16px}
+.fm-confirm-summary h4{font-size:13px;font-weight:700;margin-bottom:8px}
+.fm-confirm-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #f3f4f6}
+.fm-confirm-total{font-weight:700;border-bottom:none;margin-top:4px}
+.fm-confirm-back{padding:12px 24px;border:1.5px solid var(--c-meat);border-radius:10px;background:#fff;color:var(--c-meat);font-size:14px;font-weight:700;cursor:pointer}
+.fm-confirm-actions{display:flex;flex-direction:column;gap:10px;align-items:stretch;margin-top:4px}
+.fm-confirm-done{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:14px 24px;border:none;border-radius:10px;background:var(--c-meat);color:#fff;font-size:15px;font-weight:800;cursor:pointer}
+
+/* Loading */
+.fm-loading{text-align:center;padding:60px 0;color:var(--c-muted)}
+.fm-loading i{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+.fm-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.fm-toast.show{opacity:1}
+
+/* Inactive banner */
+.fm-inactive{background:#fee2e2;border:1.5px solid #fecaca;border-radius:var(--radius);padding:20px;text-align:center;margin:20px 0}
+.fm-inactive h3{color:#991b1b;font-size:16px;margin-bottom:6px}
+.fm-inactive p{color:#b91c1c;font-size:13px}
+
+body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0)}
+
+/* View Toggle */
+.fm-view-toggle{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.fm-view-btn{background:#fff;border:1.5px solid var(--c-border);border-radius:8px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--c-muted);transition:all .15s}
+.fm-view-btn.active{background:var(--c-meat);color:#fff;border-color:var(--c-meat)}
+
+/* List View – mobile-first 2-row layout */
+.fm-list{display:flex;flex-direction:column;gap:0;margin-bottom:16px;box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden}
+.fm-list-item{background:var(--c-card);border-bottom:1px solid #f3f4f6;padding:14px;transition:background .1s}
+.fm-list-item:last-child{border-bottom:none}
+.fm-list-item:active{background:#fef2f2}
+.fm-list-row1{display:flex;align-items:center;gap:10px}
+.fm-list-icon{flex-shrink:0;width:38px;height:38px;background:linear-gradient(135deg,#fef2f2,#fff1f2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#dc2626}
+.fm-list-info{flex:1;min-width:0}
+.fm-list-name{font-size:14px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-list-prices{display:flex;align-items:baseline;gap:5px;margin-top:2px;flex-wrap:wrap}
+.fm-list-orig{font-size:12px;color:var(--c-muted);text-decoration:line-through}
+.fm-list-new{font-size:15px;font-weight:800;color:var(--c-meat-accent)}
+.fm-list-unit{font-size:10px;color:var(--c-muted)}
+.fm-list-fav{background:none;border:none;font-size:16px;cursor:pointer;padding:2px;flex-shrink:0}
+.fm-list-row2{display:flex;align-items:center;gap:8px;margin-top:10px;padding-left:48px}
+.fm-list-badge{background:var(--c-meat-accent);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:5px;flex-shrink:0}
+.fm-list-kg-wrap{display:flex;align-items:center;gap:4px;flex:1}
+.fm-list-kg{width:60px;padding:8px 4px;border:1.5px solid var(--c-border);border-radius:8px;font-size:14px;text-align:center;outline:none;background:#fff}
+.fm-list-kg:focus{border-color:var(--c-meat);box-shadow:0 0 0 3px rgba(127,29,29,.08)}
+.fm-list-kg-label{font-size:12px;color:var(--c-muted);font-weight:600}
+.fm-list-add{padding:9px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s;box-shadow:0 2px 8px rgba(127,29,29,.25);flex-shrink:0}
+.fm-list-add:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(127,29,29,.3)}
+.fm-list-add:active{transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- Header (sticky via CSS, position:relative for back-btn) -->
+<div class="fm-header">
+  <a href="javascript:void(0)" onclick="fmBack()" class="fm-back"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></a>
+  <h1><i data-lucide="beef" style="width:22px;height:22px"></i> Fleisch &amp; Wurst</h1>
+  <small>Vorbestellen &amp; im Laden abholen</small>
+  <button class="fm-history-btn" id="fm-history-btn" onclick="fmShowHistory()"><i data-lucide="clipboard-list" style="width:18px;height:18px"></i></button>
+</div>
+
+<div class="fm-history-overlay" id="fm-history-overlay">
+  <div class="fm-history-card">
+    <div class="fm-history-hdr">
+      <h3>Offene Bestellungen</h3>
+      <button class="fm-history-close" onclick="document.getElementById('fm-history-overlay').classList.remove('open')">&times;</button>
+    </div>
+    <div class="fm-history-body" id="fm-history-body">
+      <div class="fm-history-empty">Laden...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Countdown Banner -->
+<div class="fm-countdown" id="fm-countdown">
+  <div class="fm-countdown-title" id="fm-cd-title">Wird geladen...</div>
+  <div class="fm-countdown-sub" id="fm-cd-sub"></div>
+  <div class="fm-countdown-timer" id="fm-cd-timer"></div>
+</div>
+
+<!-- Main Content -->
+<div class="fm-container" id="fm-main">
+  <!-- Loading -->
+  <div class="fm-loading" id="fm-loading">
+    <i data-lucide="loader-2" style="width:32px;height:32px"></i>
+    <p style="margin-top:8px">Artikel werden geladen...</p>
+  </div>
+
+  <!-- Inactive Banner (hidden by default) -->
+  <div class="fm-inactive" id="fm-inactive" style="display:none">
+    <h3>Vorbestellung derzeit nicht verfuegbar</h3>
+    <p>Die Fleisch-Vorbestellung ist momentan deaktiviert. Bitte versuchen Sie es spaeter erneut.</p>
+  </div>
+
+  <!-- Liefertag Picker (above articles) -->
+  <div class="fm-liefertag-picker" id="fm-liefertag-picker" style="display:none">
+    <label><i data-lucide="calendar" style="width:14px;height:14px"></i> Liefertag</label>
+    <select id="fm-liefertag-top" onchange="fmSyncLiefertag(this.value)">
+      <option value="">Wird geladen...</option>
+    </select>
+  </div>
+
+  <!-- Rabatt Banner -->
+  <div class="fm-rabatt" id="fm-rabatt" style="display:none">
+    <div class="fm-rabatt-pct" id="fm-rabatt-pct"></div>
+    <div class="fm-rabatt-sub" id="fm-rabatt-sub"></div>
+  </div>
+
+  <!-- Reorder Banner -->
+  <div class="fm-reorder" id="fm-reorder" style="display:none">
+    <div class="fm-reorder-hdr" onclick="fmToggleReorderDetails()">
+      <i data-lucide="repeat" style="width:16px;height:16px;color:var(--c-green);flex-shrink:0"></i>
+      <div style="flex:1;min-width:0">
+        <div class="fm-reorder-title"><span id="fm-reorder-label">Letzte Bestellung nochmal bestellen</span></div>
+        <div class="fm-reorder-sub" id="fm-reorder-sub"></div>
+      </div>
+      <i data-lucide="chevron-down" style="width:16px;height:16px;color:var(--c-muted);flex-shrink:0" id="fm-reorder-arrow"></i>
+    </div>
+    <div id="fm-reorder-details" style="display:none">
+      <div class="fm-reorder-items" id="fm-reorder-items"></div>
+      <div class="fm-reorder-actions">
+        <button class="fm-reorder-btn fm-reorder-btn-confirm" onclick="fmReorder()"><i data-lucide="shopping-cart" style="width:14px;height:14px"></i> In den Warenkorb</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Pills -->
+  <div class="fm-cats" id="fm-cats" style="display:none"></div>
+
+  <!-- Search + View Toggle -->
+  <div class="fm-search-row" id="fm-search-row" style="display:none">
+    <div class="fm-search">
+      <i data-lucide="search" style="width:16px;height:16px"></i>
+      <input type="text" id="fm-search-input" placeholder="Artikel suchen...">
+    </div>
+    <div class="fm-view-toggle">
+      <button class="fm-view-btn" id="fm-vt-list" title="Listenansicht"><i data-lucide="list" style="width:16px;height:16px"></i></button>
+      <button class="fm-view-btn" id="fm-vt-grid" title="Kachelansicht"><i data-lucide="grid-2x2" style="width:16px;height:16px"></i></button>
+    </div>
+  </div>
+
+  <!-- Article Grid / List -->
+  <div id="fm-articles"></div>
+
+  <!-- Confirmation -->
+  <div class="fm-confirm" id="fm-confirm">
+    <div class="fm-confirm-icon"><i data-lucide="check-circle" style="width:48px;height:48px;color:#2e7d4f"></i></div>
+    <h2>Bestellung aufgenommen!</h2>
+    <div class="fm-confirm-nr" id="fm-confirm-nr"></div>
+    <div class="fm-confirm-summary" id="fm-confirm-summary"></div>
+    <div class="fm-confirm-actions">
+      <button class="fm-confirm-done" onclick="fmDone()"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Fertig &ndash; zur&uuml;ck zur &Uuml;bersicht</button>
+      <a id="fm-confirm-status-link" href="#" style="display:none;align-items:center;justify-content:center;gap:6px;padding:12px 24px;border-radius:10px;background:var(--c-green);color:#fff;font-size:14px;font-weight:700;text-decoration:none;transition:all .15s"><i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Bestellstatus ansehen</a>
+      <button class="fm-confirm-back" onclick="fmReset()"><i data-lucide="plus" style="width:14px;height:14px"></i> Weitere Bestellung</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cart FAB -->
+<button class="fm-fab" id="fm-fab" style="display:none" onclick="fmOpenCart()">
+  <i data-lucide="shopping-cart" style="width:24px;height:24px"></i>
+  <span class="fm-fab-badge" id="fm-fab-badge">0</span>
+</button>
+
+<!-- Cart Drawer -->
+<div class="fm-cart-overlay" id="fm-cart-overlay" onclick="fmCloseCart()"></div>
+<div class="fm-cart-panel" id="fm-cart-panel">
+  <div class="fm-cart-hdr">
+    <h3><i data-lucide="shopping-cart" style="width:18px;height:18px"></i> Warenkorb <span class="fm-cart-badge-count" id="fm-cart-count">0</span></h3>
+    <button class="fm-cart-close" onclick="fmCloseCart()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+  </div>
+  <div class="fm-cart-scroll">
+    <div id="fm-cart-body">
+      <div class="fm-cart-empty"><div class="fm-cart-empty-icon"><i data-lucide="shopping-bag" style="width:28px;height:28px"></i></div><p style="font-size:15px;font-weight:600">Warenkorb ist leer</p><p style="font-size:12px;margin-top:4px">Fuegen Sie Artikel hinzu um zu bestellen</p></div>
+    </div>
+    <!-- Checkout form -->
+    <div class="fm-checkout fm-cart-section" id="fm-checkout" style="display:none">
+      <h4><i data-lucide="user" style="width:16px;height:16px"></i> Ihre Daten</h4>
+      <div class="fm-field">
+        <label>Name <span class="required">*</span></label>
+        <input type="text" id="fm-name" autocomplete="name" placeholder="Ihr Name">
+      </div>
+      <div class="fm-field">
+        <label>Telefon <span class="required">*</span></label>
+        <input type="tel" id="fm-telefon" autocomplete="tel" placeholder="Telefonnummer">
+      </div>
+      <div class="fm-field">
+        <label>E-Mail (optional)</label>
+        <input type="email" id="fm-email" autocomplete="email" placeholder="Fuer Benachrichtigung bei Abholung">
+      </div>
+      <div class="fm-field">
+        <label><i data-lucide="calendar" style="width:14px;height:14px"></i> Gewuenschter Liefertag <span class="required">*</span></label>
+        <select id="fm-liefertag-select" style="width:100%;padding:11px 14px;border:1.5px solid var(--c-border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:#fff;cursor:pointer;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml;utf8,<svg fill=\\'%236b7280\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'><path fill-rule=\\'evenodd\\' d=\\'M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z\\' clip-rule=\\'evenodd\\'/></svg>');background-repeat:no-repeat;background-position:right 12px center;background-size:16px">
+          <option value="">Wird geladen...</option>
+        </select>
+      </div>
+      <div class="fm-field">
+        <label>Anmerkungen (optional)</label>
+        <textarea id="fm-anmerkung" placeholder="z.B. Bitte in Scheiben schneiden..." rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="fm-cart-footer" id="fm-cart-footer" style="display:none">
+    <div class="fm-cart-liefertag" id="fm-cart-liefertag"><i data-lucide="truck" style="width:14px;height:14px"></i> <span id="fm-cart-lt-label"></span></div>
+    <div class="fm-cart-savings" id="fm-cart-savings" style="display:none"></div>
+    <div class="fm-cart-total">
+      <span class="fm-cart-total-label">Gesamt</span>
+      <span class="fm-cart-total-price" id="fm-cart-total">0,00 &euro;</span>
+    </div>
+    <button class="fm-submit" id="fm-submit-btn" onclick="fmSubmit()">
+      <i data-lucide="send" style="width:18px;height:18px"></i> Jetzt vorbestellen
+    </button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="fm-toast" id="fm-toast"></div>
+
+<script src="/js/env-banner.js"></script>
+<script src="/shop-images.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  var API = '/api';
+  var cart = [];
+  var allArticles = [];
+  var activeCat = 'alle';
+
+  // Aufrufende Seite merken, damit der Kunde nach der Bestellung dorthin zurueckkehrt
+  var fmReturnUrl = (function(){
+    try{
+      var ref = document.referrer;
+      if(ref){
+        var u = new URL(ref);
+        if(u.origin === location.origin && u.pathname.indexOf('/fleisch-bestellen') !== 0){
+          return u.pathname + u.search + u.hash;
+        }
+      }
+    }catch(e){}
+    return '/shop';
+  })();
+  function fmLeave(){ location.href = fmReturnUrl; }
+  window.fmDone = fmLeave;
+  window.fmBack = function(){
+    if(document.getElementById('fm-confirm').classList.contains('show')){ fmLeave(); return; }
+    if(history.length > 1){ history.back(); } else { fmLeave(); }
+  };
+  var searchTerm = '';
+  var config = {};
+  var favorites = JSON.parse(localStorage.getItem('fm_favorites') || '[]');
+  var lastOrder = JSON.parse(localStorage.getItem('fm_last_order') || 'null');
+  var cdInterval = null;
+  var viewMode = localStorage.getItem('fm_viewmode') || 'list';
+
+  // ── Helpers ──
+  function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+  function fmtP(v){ return (Math.round(v*100)/100).toFixed(2).replace('.',','); }
+
+  function showToast(msg){
+    var t=document.getElementById('fm-toast');
+    t.textContent=msg; t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2500);
+  }
+
+  function lockScroll(){
+    document.documentElement.style.setProperty('--scroll-y','-'+window.scrollY+'px');
+    document.body.classList.add('overlay-open');
+  }
+  function unlockScroll(){
+    document.body.classList.remove('overlay-open');
+    var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;
+    document.documentElement.style.removeProperty('--scroll-y');
+    window.scrollTo(0,y);
+  }
+
+  // ── Init ──
+  function init(){
+    loadConfig();
+    loadSavedData();
+    document.getElementById('fm-search-input').addEventListener('input', function(){
+      searchTerm = this.value.trim().toLowerCase();
+      renderArticles();
+    });
+    // View toggle
+    document.getElementById('fm-vt-list').addEventListener('click', function(){ setView('list'); });
+    document.getElementById('fm-vt-grid').addEventListener('click', function(){ setView('grid'); });
+  }
+
+  function loadSavedData(){
+    var n=localStorage.getItem('fm_name');
+    var t=localStorage.getItem('fm_telefon');
+    var e=localStorage.getItem('fm_email');
+    if(n) document.getElementById('fm-name').value=n;
+    if(t) document.getElementById('fm-telefon').value=t;
+    if(e) document.getElementById('fm-email').value=e;
+  }
+
+  function saveCustomerData(){
+    var n=document.getElementById('fm-name').value.trim();
+    var t=document.getElementById('fm-telefon').value.trim();
+    var e=document.getElementById('fm-email').value.trim();
+    if(n) localStorage.setItem('fm_name',n);
+    if(t) localStorage.setItem('fm_telefon',t);
+    if(e) localStorage.setItem('fm_email',e);
+  }
+
+  // ── Load config from API ──
+  function loadConfig(){
+    fetch(API+'/fleisch-order?info=1')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(!data.success){ showError(); return; }
+        config = data;
+        if(!config.aktiv){
+          document.getElementById('fm-loading').style.display='none';
+          document.getElementById('fm-inactive').style.display='block';
+          return;
+        }
+        populateLiefertagSelect();
+        updateCountdown();
+        cdInterval = setInterval(updateCountdown, 30000);
+        showRabattBanner();
+        loadArticles();
+      })
+      .catch(function(){ showError(); });
+  }
+
+  function populateLiefertagSelect(){
+    var sel = document.getElementById('fm-liefertag-select');
+    var topSel = document.getElementById('fm-liefertag-top');
+    if(!sel) return;
+    var termine = config.alle_termine || config.termine || [];
+    var bestellbare = termine.filter(function(t){ return t.noch_bestellbar; });
+    if(!bestellbare.length){
+      sel.innerHTML='<option value="">Kein Liefertag verfuegbar</option>';
+      if(topSel) topSel.innerHTML='<option value="">Kein Liefertag verfuegbar</option>';
+      return;
+    }
+    var html = '';
+    bestellbare.forEach(function(t, i){
+      var selected = i===0 ? ' selected' : '';
+      var label = t.liefertag_label;
+      if(i===0) label += ' (naechster)';
+      html += '<option value="'+t.liefertag+'"'+selected+'>'+label+'</option>';
+    });
+    sel.innerHTML = html;
+    if(topSel){
+      topSel.innerHTML = html;
+      document.getElementById('fm-liefertag-picker').style.display='flex';
+    }
+    // Update footer label and sync top picker when selection changes
+    sel.addEventListener('change', function(){ fmSyncLiefertag(sel.value); });
+  }
+
+  // Sync both Liefertag selects
+  window.fmSyncLiefertag = function(val){
+    var sel = document.getElementById('fm-liefertag-select');
+    if(sel) sel.value = val;
+    var topSel = document.getElementById('fm-liefertag-top');
+    if(topSel && topSel.value !== val) topSel.value = val;
+    updateLiefertagLabel();
+  };
+
+  function getSelectedLiefertag(){
+    var topSel = document.getElementById('fm-liefertag-top');
+    var sel = document.getElementById('fm-liefertag-select');
+    return (topSel && topSel.value) ? topSel.value : (sel ? sel.value : '');
+  }
+
+  function updateLiefertagLabel(){
+    var val = getSelectedLiefertag();
+    var termine = config.alle_termine || config.termine || [];
+    var t = termine.find(function(t){ return t.liefertag === val; });
+    if(t){
+      document.getElementById('fm-cart-lt-label').textContent='Liefertag: '+t.liefertag_label;
+    }
+  }
+
+  function showError(){
+    document.getElementById('fm-loading').innerHTML='<p>Fehler beim Laden. Bitte Seite neu laden.</p>';
+  }
+
+  // ── Countdown ──
+  function updateCountdown(){
+    var el=document.getElementById('fm-countdown');
+    var title=document.getElementById('fm-cd-title');
+    var sub=document.getElementById('fm-cd-sub');
+    var timer=document.getElementById('fm-cd-timer');
+    if(!config.termine||!config.termine.length) return;
+
+    var termin = config.termine.find(function(t){ return t.noch_bestellbar; }) || config.termine[0];
+    title.textContent = 'Naechster Liefertag: ' + termin.liefertag_label;
+    sub.textContent = 'Bestellen bis ' + termin.bestellschluss_label;
+
+    if(termin.noch_bestellbar){
+      el.classList.remove('closed');
+      var schluss = new Date(termin.bestellschluss);
+      var now = new Date();
+      var diff = schluss - now;
+      if(diff>0){
+        var h=Math.floor(diff/3600000);
+        var m=Math.floor((diff%3600000)/60000);
+        timer.textContent = 'Noch '+h+'h '+m+'min';
+      } else {
+        timer.textContent='';
+      }
+    } else {
+      el.classList.add('closed');
+      timer.textContent = 'Bestellschluss erreicht';
+      if(config.termine.length>1){
+        var next = config.termine[1];
+        sub.textContent = 'Naechste Bestellung ab sofort fuer ' + next.liefertag_label;
+      }
+    }
+  }
+
+  function showRabattBanner(){
+    var el=document.getElementById('fm-rabatt');
+    var pct=config.rabatt_prozent||15;
+    var min=config.mindestmenge_kg||1;
+    document.getElementById('fm-rabatt-pct').textContent=pct+' % Rabatt';
+    document.getElementById('fm-rabatt-sub').textContent='Auf alle Fleisch- und Wurstprodukte bei Vorbestellung ab '+min+' kg';
+    el.style.display='block';
+  }
+
+  // ── Load articles from shop-articles API ──
+  function loadArticles(){
+    fetch(API+'/shop-articles')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(!data.success){ showError(); return; }
+        // Filter: only Fleisch/Wurst + gewichtsware
+        var keywords=['fleisch','wurst','metzger','aufschnitt','schinken','salami'];
+        allArticles = (data.articles||[]).filter(function(a){
+          if(!a.gewichtsware) return false;
+          var wg=(a.warengruppe||'').toLowerCase();
+          return keywords.some(function(kw){ return wg.indexOf(kw)!==-1; });
+        });
+
+        document.getElementById('fm-loading').style.display='none';
+        if(!allArticles.length){
+          document.getElementById('fm-articles').innerHTML='<div style="text-align:center;padding:40px;color:var(--c-muted)">Keine Fleisch-/Wurstwaren verfuegbar</div>';
+          return;
+        }
+
+        buildCategories();
+        showReorderBanner();
+        document.getElementById('fm-cats').style.display='flex';
+        document.getElementById('fm-search-row').style.display='flex';
+        updateViewToggle();
+        renderArticles();
+        if(window.lucide) lucide.createIcons();
+        loadArticleImages();
+      })
+      .catch(function(){ showError(); });
+  }
+
+  // ── Categories ──
+  function buildCategories(){
+    var cats={};
+    allArticles.forEach(function(a){ cats[a.warengruppe]=true; });
+    var list=Object.keys(cats).sort(function(a,b){ return a.localeCompare(b,'de'); });
+
+    var html='<span class="fm-cat active" data-cat="alle">Alle</span>';
+    list.forEach(function(c){
+      html+='<span class="fm-cat" data-cat="'+esc(c)+'">'+esc(c)+'</span>';
+    });
+    if(favorites.length){
+      html+='<span class="fm-cat" data-cat="favoriten">Favoriten</span>';
+    }
+    document.getElementById('fm-cats').innerHTML=html;
+
+    document.getElementById('fm-cats').addEventListener('click', function(e){
+      var pill=e.target.closest('.fm-cat');
+      if(!pill) return;
+      activeCat=pill.getAttribute('data-cat');
+      document.querySelectorAll('.fm-cat').forEach(function(p){ p.classList.toggle('active',p.getAttribute('data-cat')===activeCat); });
+      renderArticles();
+    });
+  }
+
+  // ── Reorder ──
+  function showReorderBanner(){
+    if(!lastOrder||!lastOrder.positionen||!lastOrder.positionen.length) return;
+    document.getElementById('fm-reorder').style.display='block';
+    document.getElementById('fm-reorder-label').textContent='Letzte Bestellung nochmal bestellen';
+    document.getElementById('fm-reorder-sub').textContent=lastOrder.positionen.length+' Artikel vom '+lastOrder.liefertag_label;
+    // Render item details
+    var itemsHtml='';
+    lastOrder.positionen.forEach(function(p){
+      var price=Number(p.rabattpreis||p.normalpreis||0);
+      var total=(price*p.menge_kg).toFixed(2).replace('.',',');
+      itemsHtml+='<div class="fm-reorder-item">';
+      itemsHtml+='<span class="fm-reorder-item-name">'+esc(p.bezeichnung)+'</span>';
+      itemsHtml+='<span class="fm-reorder-item-qty">'+Number(p.menge_kg).toFixed(1)+' kg</span>';
+      itemsHtml+='<span class="fm-reorder-item-price">'+total+' \u20AC</span>';
+      itemsHtml+='</div>';
+    });
+    document.getElementById('fm-reorder-items').innerHTML=itemsHtml;
+  }
+
+  window.fmToggleReorderDetails = function(){
+    var det=document.getElementById('fm-reorder-details');
+    var arrow=document.getElementById('fm-reorder-arrow');
+    var open=det.style.display==='none';
+    det.style.display=open?'block':'none';
+    if(arrow) arrow.style.transform=open?'rotate(180deg)':'';
+  };
+
+  window.fmReorder = function(){
+    if(!lastOrder||!lastOrder.positionen) return;
+    var added=0;
+    lastOrder.positionen.forEach(function(p){
+      var art=allArticles.find(function(a){ return a.artikelnummer===p.artikelnummer; });
+      if(!art) return;
+      addToCart(art, p.menge_kg);
+      added++;
+    });
+    if(added){
+      showToast(added+' Artikel in den Warenkorb gelegt');
+      fmOpenCart();
+    }
+  };
+
+  // ── View toggle ──
+  function setView(mode){
+    viewMode=mode;
+    localStorage.setItem('fm_viewmode',mode);
+    updateViewToggle();
+    renderArticles();
+  }
+  function updateViewToggle(){
+    document.getElementById('fm-vt-list').classList.toggle('active',viewMode==='list');
+    document.getElementById('fm-vt-grid').classList.toggle('active',viewMode==='grid');
+  }
+
+  // ── Filter logic ──
+  function getFilteredItems(){
+    var items=allArticles;
+    if(activeCat==='favoriten'){
+      items=items.filter(function(a){ return favorites.indexOf(a.artikelnummer)!==-1; });
+    } else if(activeCat!=='alle'){
+      items=items.filter(function(a){ return a.warengruppe===activeCat; });
+    }
+    if(searchTerm){
+      items=items.filter(function(a){
+        return (a.bezeichnung||'').toLowerCase().indexOf(searchTerm)!==-1 ||
+               (a.warengruppe||'').toLowerCase().indexOf(searchTerm)!==-1;
+      });
+    }
+    return items;
+  }
+
+  // ── Load product images via ShopImages ──
+  var _imgCache={};
+  function loadArticleImages(){
+    if(typeof ShopImages==='undefined') return;
+    var infos=allArticles.map(function(a){return{artikelnummer:a.artikelnummer,strichcode:a.strichcode};});
+    ShopImages.loadBatch(infos,{
+      apiBase:API,
+      cacheKey:function(info){return info.artikelnummer;},
+      onImage:function(key,src){
+        _imgCache[key]=src;
+        document.querySelectorAll('[data-img-artnr="'+key+'"]').forEach(function(el){
+          if(el.classList.contains('fm-card-noimg')){
+            el.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover" alt="">';
+            el.style.background='#fff';
+          } else {
+            el.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px" alt="">';
+            el.style.background='none';
+          }
+        });
+      }
+    });
+  }
+
+  // ── Render dispatcher ──
+  function renderArticles(){
+    var items=getFilteredItems();
+    var container=document.getElementById('fm-articles');
+    if(!items.length){
+      container.innerHTML='<div style="text-align:center;padding:40px;color:var(--c-muted)">Keine Artikel gefunden</div>';
+      return;
+    }
+    if(viewMode==='list') renderList(items, container);
+    else renderGrid(items, container);
+  }
+
+  // ── Render List (compact, fast ordering) ──
+  function renderList(items, container){
+    var pct=config.rabatt_prozent||15;
+    var minKg=config.mindestmenge_kg||1;
+    var html='<div class="fm-list">';
+
+    items.forEach(function(a){
+      var isFav=favorites.indexOf(a.artikelnummer)!==-1;
+      var rabattPreis=a.vk_base*(1-pct/100);
+      html+='<div class="fm-list-item">';
+      html+='<div class="fm-list-row1">';
+      html+='<div class="fm-list-icon" data-img-artnr="'+esc(a.artikelnummer)+'"><i data-lucide="beef" style="width:18px;height:18px"></i></div>';
+      html+='<div class="fm-list-info">';
+      html+='<div class="fm-list-name">'+esc(a.bezeichnung)+'</div>';
+      html+='<div class="fm-list-prices">';
+      html+='<span class="fm-list-orig">'+fmtP(a.vk_base)+' &euro;</span> ';
+      html+='<span class="fm-list-new">'+fmtP(rabattPreis)+' &euro;</span>';
+      html+='<span class="fm-list-unit">/kg</span>';
+      html+='</div></div>';
+      html+='<button class="fm-list-fav" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav?'\u2764':'\u2661')+'</button>';
+      html+='</div>';
+      html+='<div class="fm-list-row2">';
+      html+='<span class="fm-list-badge">-'+pct+'%</span>';
+      html+='<div class="fm-list-kg-wrap"><input type="text" inputmode="decimal" class="fm-list-kg" value="1,0" data-artnr="'+esc(a.artikelnummer)+'" onfocus="this.select()"> <span class="fm-list-kg-label">kg</span></div>';
+      html+='<button class="fm-list-add" data-add="'+esc(a.artikelnummer)+'"><i data-lucide="plus" style="width:12px;height:12px"></i> Bestellen</button>';
+      html+='</div></div>';
+    });
+
+    html+='</div>';
+    container.innerHTML=html;
+    if(window.lucide) lucide.createIcons();
+    wireArticleEvents();
+  }
+
+  // ── Render Grid (card view) ──
+  function renderGrid(items, container){
+    var pct=config.rabatt_prozent||15;
+    var minKg=config.mindestmenge_kg||1;
+    var html='<div class="fm-grid">';
+
+    items.forEach(function(a){
+      var isFav = favorites.indexOf(a.artikelnummer)!==-1;
+      var rabattPreis = a.vk_base * (1 - pct/100);
+      html+='<div class="fm-card">';
+      html+='<div class="fm-card-noimg" data-img-artnr="'+esc(a.artikelnummer)+'"><i data-lucide="beef" style="width:36px;height:36px"></i></div>';
+      html+='<div class="fm-card-badge">-'+pct+'%</div>';
+      html+='<button class="fm-card-fav'+(isFav?' active':'')+'" data-fav="'+esc(a.artikelnummer)+'" title="Favorit">'+(isFav?'\u2764':'\u2661')+'</button>';
+      html+='<div class="fm-card-body">';
+      html+='<div class="fm-card-name">'+esc(a.bezeichnung)+'</div>';
+      html+='<div class="fm-card-cat">'+esc(a.warengruppe)+'</div>';
+      html+='<div class="fm-card-price">';
+      html+='<span class="fm-card-price-orig">'+fmtP(a.vk_base)+' &euro;</span>';
+      html+='<span class="fm-card-price-new">'+fmtP(rabattPreis)+' &euro;</span>';
+      html+='<span class="fm-card-price-unit">/kg ab '+minKg+' kg</span>';
+      html+='</div></div>';
+      html+='<div class="fm-card-footer">';
+      html+='<div class="fm-card-kg"><input type="text" inputmode="decimal" value="1,0" data-artnr="'+esc(a.artikelnummer)+'" onfocus="this.select()"> <span>kg</span></div>';
+      html+='<button class="fm-card-add" data-add="'+esc(a.artikelnummer)+'"><i data-lucide="plus" style="width:14px;height:14px"></i> Bestellen</button>';
+      html+='</div></div>';
+    });
+
+    html+='</div>';
+    container.innerHTML=html;
+    if(window.lucide) lucide.createIcons();
+    wireArticleEvents();
+  }
+
+  // ── Wire events for both views ──
+  function wireArticleEvents(){
+    // Add to cart
+    document.querySelectorAll('[data-add]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var nr=btn.getAttribute('data-add');
+        var art=allArticles.find(function(a){ return a.artikelnummer===nr; });
+        if(!art) return;
+        var inp=document.querySelector('input[data-artnr="'+nr+'"]');
+        var kg=parseFloat((inp?inp.value:'1').replace(',','.'))||1;
+        if(kg<0.5) kg=0.5; if(kg>50) kg=50;
+        addToCart(art, kg);
+      });
+    });
+    // Favorites
+    document.querySelectorAll('[data-fav]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var nr=btn.getAttribute('data-fav');
+        var idx=favorites.indexOf(nr);
+        if(idx===-1){ favorites.push(nr); btn.classList.add('active'); btn.textContent='\u2764'; }
+        else{ favorites.splice(idx,1); btn.classList.remove('active'); btn.textContent='\u2661'; }
+        localStorage.setItem('fm_favorites',JSON.stringify(favorites));
+      });
+    });
+  }
+
+  // ── Cart ──
+  function addToCart(article, kg){
+    var existing = cart.find(function(c){ return c.artikelnummer===article.artikelnummer; });
+    if(existing){
+      existing.menge_kg += kg;
+    } else {
+      cart.push({
+        artikelnummer: article.artikelnummer,
+        bezeichnung: article.bezeichnung,
+        warengruppe: article.warengruppe,
+        preis_kg: article.vk_base,
+        menge_kg: kg,
+        strichcode: article.strichcode||''
+      });
+    }
+    updateCartUI();
+    showToast(article.bezeichnung+' hinzugefuegt');
+  }
+
+  function removeFromCart(artnr){
+    cart = cart.filter(function(c){ return c.artikelnummer!==artnr; });
+    updateCartUI();
+  }
+
+  function updateCartUI(){
+    var fab=document.getElementById('fm-fab');
+    var badge=document.getElementById('fm-fab-badge');
+    if(cart.length){
+      fab.style.display='flex';
+      badge.textContent=cart.length;
+    } else {
+      fab.style.display='none';
+    }
+    renderCart();
+  }
+
+  function renderCart(){
+    var body=document.getElementById('fm-cart-body');
+    var footer=document.getElementById('fm-cart-footer');
+    var checkout=document.getElementById('fm-checkout');
+
+    if(!cart.length){
+      body.innerHTML='<div class="fm-cart-empty"><div class="fm-cart-empty-icon"><i data-lucide="shopping-bag" style="width:28px;height:28px"></i></div><p style="font-size:15px;font-weight:600">Warenkorb ist leer</p><p style="font-size:12px;margin-top:4px">Fuegen Sie Artikel hinzu um zu bestellen</p></div>';
+      footer.style.display='none';
+      checkout.style.display='none';
+      document.getElementById('fm-cart-count').textContent='0';
+      if(window.lucide) lucide.createIcons();
+      return;
+    }
+
+    var pct=config.rabatt_prozent||15;
+    var minKg=config.mindestmenge_kg||1;
+    var total=0, savings=0;
+    var html='';
+
+    cart.forEach(function(item){
+      var normal=item.preis_kg*item.menge_kg;
+      var hatRabatt=item.menge_kg>=minKg;
+      var rabatt=hatRabatt ? item.preis_kg*(1-pct/100)*item.menge_kg : normal;
+      var spar=hatRabatt ? normal-rabatt : 0;
+      total+=rabatt;
+      savings+=spar;
+
+      html+='<div class="fm-ci">';
+      html+='<div class="fm-ci-icon"><i data-lucide="beef" style="width:22px;height:22px"></i></div>';
+      html+='<div class="fm-ci-body">';
+      html+='<div class="fm-ci-name">'+esc(item.bezeichnung)+'</div>';
+      html+='<div class="fm-ci-detail">'+fmtP(item.preis_kg)+' &euro;/kg</div>';
+      html+='<div class="fm-ci-row">';
+      html+='<div class="fm-ci-prices">';
+      if(hatRabatt) html+='<span class="fm-ci-orig">'+fmtP(normal)+' &euro;</span>';
+      html+='<span class="fm-ci-price">'+fmtP(rabatt)+' &euro;</span>';
+      html+='</div>';
+      if(!hatRabatt) html+='<span class="fm-ci-warn">unter '+minKg+' kg</span>';
+      html+='<div class="fm-ci-qty"><input type="text" inputmode="decimal" value="'+item.menge_kg.toFixed(1).replace('.',',')+'" data-cart-qty="'+esc(item.artikelnummer)+'" onfocus="this.select()"> <span>kg</span></div>';
+      html+='</div></div>';
+      html+='<button class="fm-ci-rm" data-rm="'+esc(item.artikelnummer)+'" title="Entfernen"><i data-lucide="x" style="width:16px;height:16px"></i></button>';
+      html+='</div>';
+    });
+
+    document.getElementById('fm-cart-count').textContent=cart.length;
+    body.innerHTML=html;
+    checkout.style.display='block';
+    footer.style.display='block';
+
+    // Liefertag – use selection from dropdown
+    updateLiefertagLabel();
+
+    // Savings
+    var savingsEl=document.getElementById('fm-cart-savings');
+    if(savings>0){
+      savingsEl.innerHTML='\u2728 Sie sparen: <strong>'+fmtP(savings)+' &euro;</strong>';
+      savingsEl.style.display='block';
+    } else {
+      savingsEl.style.display='none';
+    }
+
+    document.getElementById('fm-cart-total').innerHTML=fmtP(total)+' &euro;';
+
+    if(window.lucide) lucide.createIcons();
+
+    // Events
+    document.querySelectorAll('.fm-ci [data-rm]').forEach(function(btn){
+      btn.addEventListener('click', function(){ removeFromCart(btn.getAttribute('data-rm')); });
+    });
+    document.querySelectorAll('[data-cart-qty]').forEach(function(inp){
+      inp.addEventListener('change', function(){
+        var nr=inp.getAttribute('data-cart-qty');
+        var ci=cart.find(function(c){ return c.artikelnummer===nr; });
+        if(ci){
+          ci.menge_kg=Math.max(0.5, Math.min(50, parseFloat(inp.value.replace(',','.'))||1));
+          renderCart();
+        }
+      });
+    });
+  }
+
+  // ── Cart open/close ──
+  window.fmOpenCart = function(){
+    document.getElementById('fm-cart-overlay').classList.add('open');
+    document.getElementById('fm-cart-panel').classList.add('open');
+    lockScroll();
+    renderCart();
+    history.pushState({overlay:'cart'},'');
+  };
+
+  window.fmCloseCart = function(viaBack){
+    document.getElementById('fm-cart-overlay').classList.remove('open');
+    document.getElementById('fm-cart-panel').classList.remove('open');
+    unlockScroll();
+    if(!viaBack) history.back();
+  };
+
+  // ── Submit ──
+  window.fmSubmit = function(){
+    var name=document.getElementById('fm-name').value.trim();
+    var telefon=document.getElementById('fm-telefon').value.trim();
+    var email=document.getElementById('fm-email').value.trim();
+    var anmerkung=document.getElementById('fm-anmerkung').value.trim();
+
+    var liefertag = getSelectedLiefertag();
+
+    if(!name){ showToast('Bitte Name eingeben'); return; }
+    if(!telefon){ showToast('Bitte Telefonnummer eingeben'); return; }
+    if(!cart.length){ showToast('Warenkorb ist leer'); return; }
+    if(!liefertag){ showToast('Bitte Liefertag waehlen'); return; }
+
+    saveCustomerData();
+
+    var btn=document.getElementById('fm-submit-btn');
+    btn.disabled=true;
+    btn.innerHTML='<i data-lucide="loader-2" style="width:18px;height:18px"></i> Wird gesendet...';
+    if(window.lucide) lucide.createIcons();
+
+    var positionen=cart.map(function(c){
+      return {
+        artikelnummer: c.artikelnummer,
+        bezeichnung: c.bezeichnung,
+        menge_kg: c.menge_kg,
+        preis_kg: c.preis_kg,
+        strichcode: c.strichcode
+      };
+    });
+
+    fetch(API+'/fleisch-order', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:name,telefon:telefon,email:email,positionen:positionen,anmerkung:anmerkung,liefertag:liefertag})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      btn.disabled=false;
+      btn.innerHTML='<i data-lucide="send" style="width:18px;height:18px"></i> Jetzt vorbestellen';
+      if(window.lucide) lucide.createIcons();
+
+      if(!data.success){
+        showToast(data.error||'Fehler beim Bestellen');
+        return;
+      }
+
+      // Save last order for reorder
+      localStorage.setItem('fm_last_order', JSON.stringify(data));
+      lastOrder = data;
+
+      // Save for bestellstatus auto-login
+      try{ localStorage.setItem('fm_nr', data.bestellnummer||''); }catch(e){}
+
+      fmCloseCart(true);
+      showConfirmation(data);
+      cart=[];
+      updateCartUI();
+    })
+    .catch(function(){
+      btn.disabled=false;
+      btn.innerHTML='<i data-lucide="send" style="width:18px;height:18px"></i> Jetzt vorbestellen';
+      if(window.lucide) lucide.createIcons();
+      showToast('Netzwerkfehler - bitte erneut versuchen');
+    });
+  };
+
+  // ── Confirmation ──
+  function showConfirmation(data){
+    document.getElementById('fm-articles').style.display='none';
+    document.getElementById('fm-rabatt').style.display='none';
+    document.getElementById('fm-reorder').style.display='none';
+    document.getElementById('fm-liefertag-picker').style.display='none';
+    document.getElementById('fm-cats').style.display='none';
+    document.getElementById('fm-search-row').style.display='none';
+
+    var el=document.getElementById('fm-confirm');
+    document.getElementById('fm-confirm-nr').textContent='Bestellnummer: '+data.bestellnummer+' | Liefertag: '+data.liefertag_label;
+
+    var html='<h4>Ihre Bestellung</h4>';
+    (data.positionen||[]).forEach(function(p){
+      html+='<div class="fm-confirm-row"><span>'+esc(p.bezeichnung)+' ('+p.menge_kg.toFixed(1)+' kg)</span><span>'+fmtP(p.rabattpreis)+' &euro;</span></div>';
+    });
+    if(data.rabatt_summe>0){
+      html+='<div class="fm-confirm-row" style="color:#2e7d4f;font-weight:600"><span>Ersparnis</span><span>-'+fmtP(data.rabatt_summe)+' &euro;</span></div>';
+    }
+    html+='<div class="fm-confirm-row fm-confirm-total"><span>Gesamt</span><span>'+fmtP(data.gesamtsumme)+' &euro;</span></div>';
+    html+='<div style="margin-top:12px;font-size:12px;color:var(--c-muted)">Bezahlung: Bar bei Abholung im Laden</div>';
+    document.getElementById('fm-confirm-summary').innerHTML=html;
+
+    // Bestellstatus-Link
+    var statusUrl='/bestellstatus?nr='+encodeURIComponent(data.bestellnummer||'');
+    document.getElementById('fm-confirm-status-link').href=statusUrl;
+    document.getElementById('fm-confirm-status-link').style.display='inline-flex';
+
+    // Save telefon for bestellstatus auto-login
+    try{ localStorage.setItem('fm_telefon', document.getElementById('fm-telefon').value.trim()); }catch(e){}
+
+    el.classList.add('show');
+    history.pushState({overlay:'confirm'},'');
+    if(window.lucide) lucide.createIcons();
+  }
+
+  // ── Reset ──
+  window.fmReset = function(viaBack){
+    document.getElementById('fm-confirm').classList.remove('show');
+    document.getElementById('fm-confirm-status-link').style.display='none';
+    document.getElementById('fm-articles').style.display='';
+    document.getElementById('fm-rabatt').style.display='block';
+    document.getElementById('fm-cats').style.display='flex';
+    document.getElementById('fm-search-row').style.display='flex';
+    showReorderBanner();
+    renderArticles();
+    if(!viaBack) history.back();
+  };
+
+  // ── Android Back Button ──
+  window.addEventListener('popstate', function(){
+    var cartOpen = document.getElementById('fm-cart-overlay').classList.contains('open');
+    if(cartOpen){ fmCloseCart(true); return; }
+    var confirmOpen = document.getElementById('fm-confirm').classList.contains('show');
+    if(confirmOpen){ fmLeave(); return; }
+  });
+
+  // ── History ──
+  var FM_STATUS = {0:'Neu',1:'In Bestellung',2:'Eingetroffen',3:'Abgeholt',4:'Storniert'};
+  window.fmShowHistory = function(){
+    var telefon = localStorage.getItem('fm_telefon')||'';
+    var email = localStorage.getItem('fm_email')||'';
+    if(!email){
+      try{var su=JSON.parse(localStorage.getItem('dl_shop_user')||'null');if(su&&su.email)email=su.email;}catch(e){}
+    }
+    var overlay = document.getElementById('fm-history-overlay');
+    var body = document.getElementById('fm-history-body');
+    if(!telefon && !email){
+      body.innerHTML='<div class="fm-history-empty">Bitte zuerst eine Bestellung aufgeben, damit Ihre Vorbestellungen angezeigt werden koennen.</div>';
+      overlay.classList.add('open'); return;
+    }
+    var idParam = telefon ? 'telefon='+encodeURIComponent(telefon) : 'email='+encodeURIComponent(email);
+    body.innerHTML='<div class="fm-history-empty">Laden...</div>';
+    overlay.classList.add('open');
+    fetch('/api/fleisch-order?mode=my_history&'+idParam)
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res.success||!res.bestellungen||!res.bestellungen.length){
+          body.innerHTML='<div class="fm-history-empty">Keine Bestellungen gefunden.</div>'; return;
+        }
+        var aktiv=res.bestellungen.filter(function(b){ return (b.status||0)<3; });
+        if(!aktiv.length){
+          body.innerHTML='<div class="fm-history-empty">Keine offenen Bestellungen.</div>'; return;
+        }
+        var html='';
+        aktiv.forEach(function(b){
+          var dt=b.liefertag?new Date(b.liefertag).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+          var sum=(b.gesamtsumme||0).toFixed(2).replace('.',',')+' \u20ac';
+          var pos=b.positionen?b.positionen.length:0;
+          var stCls='st-'+(b.status||0);
+          var stTxt=FM_STATUS[b.status]||'';
+          html+='<a class="fm-history-item" href="/bestellstatus?nr='+esc(b.bestellnummer||'')+'">';
+          html+='<div><div class="fm-history-date">'+esc(dt)+'</div><div style="font-size:11px;color:#9ca3af">'+esc(b.bestellnummer||'')+' \u00b7 '+pos+' Pos.</div></div>';
+          html+='<div style="text-align:right"><div style="font-weight:700;font-size:13px;margin-bottom:2px">'+sum+'</div><span class="fm-history-badge '+stCls+'">'+esc(stTxt)+'</span></div>';
+          html+='</a>';
+        });
+        body.innerHTML=html;
+      })
+      .catch(function(){body.innerHTML='<div class="fm-history-empty">Fehler beim Laden.</div>';});
+  };
+  document.getElementById('fm-history-overlay').addEventListener('click',function(e){
+    if(e.target===this) this.classList.remove('open');
+  });
+
+  // ── Start ──
+  document.addEventListener('DOMContentLoaded', function(){
+    init();
+    if(window.lucide) lucide.createIcons();
+    // Direkt-Aufruf aus dem Shop: /fleisch-bestellen#meine -> Vorbestellungen anzeigen
+    if(location.hash==='#meine') fmShowHistory();
+  });
+
+})();
+</script>
+</body>
+</html>

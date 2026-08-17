@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- Tagespost so frueh wie moeglich laden, damit der Inhalt ohne Verzoegerung
+       erscheint (nur ~111 KB, nicht das grosse cms-config). -->
+  <script>
+    try{ window._tpEarlyP=fetch('/api/tagespost').then(function(r){return r.json();}).catch(function(){return null;}); }catch(e){}
+  </script>
+
+  <title>TagesInfo – Dorfladen Oberornau</title>
+  <meta name="description" content="TagesInfo des Dorfladen Oberornau: Mittagessen, Theke &amp; Kuchen – direkt vorbestellen.">
+  <meta name="robots" content="noindex">
+
+  <meta property="og:title" content="TagesInfo – Dorfladen Oberornau">
+  <meta property="og:description" content="Mittagessen, Theke &amp; Kuchen – direkt vorbestellen.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://kind-pebble-072605b03.7.azurestaticapps.net/images/icon-512.png">
+
+  <link rel="icon" href="/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/images/icon-192.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1e3a2f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="TagesInfo">
+
+  <script src="/js/theme.js"></script>
+
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{background:#0b3d2e;color:#1f2937;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+    html[data-theme="dark"] body{background:#0a2a20}
+
+    /* Kopfzeile mit Logo – wirkt wie eine eigene Seite */
+    .ti-header{background:#1e3a2f;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.25);position:sticky;top:0;z-index:5}
+    .ti-header .ti-logo{display:flex;align-items:center;gap:9px;color:#fff;text-decoration:none;font-weight:700;font-size:17px;letter-spacing:.2px}
+    .ti-header .ti-logo svg{flex-shrink:0}
+    .ti-header .ti-home{margin-left:auto;color:rgba(255,255,255,.85);text-decoration:none;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid rgba(255,255,255,.25);border-radius:9px;transition:background .15s}
+    .ti-header .ti-home:hover{background:rgba(255,255,255,.12)}
+    .ti-header .ti-close{margin-left:8px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:9px;cursor:pointer;transition:background .15s}
+    .ti-header .ti-close:hover{background:rgba(255,255,255,.24)}
+
+    .ti-wrap{flex:1;width:100%;max-width:560px;margin:0 auto;padding:18px 14px 40px}
+    .ti-card{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.28);overflow:hidden}
+    html[data-theme="dark"] .ti-card{background:#1b2228;color:#e6eae8}
+
+    .ti-card-head{background:#1e3a2f;color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+    .ti-card-head h1{margin:0;font-size:19px;font-weight:600;flex:1}
+    .tp-datum{font-size:13px;color:rgba(255,255,255,.72);margin-top:2px}
+
+    #tp-day-tabs{background:#f0fdf4;border-bottom:1px solid #e5e7eb;padding:0 16px}
+    html[data-theme="dark"] #tp-day-tabs{background:#12251c !important;border-bottom-color:#2a333a !important}
+
+    .tp-modal-body{padding:20px}
+    .tp-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:48px 20px;color:#6b7280}
+    .tp-loading .tpfc-spin{width:38px;height:38px;border:4px solid rgba(30,58,47,.18);border-top-color:#1e3a2f;border-radius:50%;animation:tpfcSpin 1s linear infinite}
+    @keyframes tpfcSpin{to{transform:rotate(360deg)}}
+    .tp-empty{text-align:center;padding:40px 20px;color:#6b7280;font-size:15px;line-height:1.5}
+
+    .tp-freitext{font-size:14px;color:#374151;margin-bottom:16px;line-height:1.5;padding:12px;background:#f0fdf4;border-radius:10px;border-left:3px solid #2e7d4f}
+    .tp-section{margin-bottom:16px}
+    .tp-section-title{font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .tp-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:6px;transition:background .12s;flex-wrap:wrap}
+    .tp-item:hover{background:#f9fafb}
+    .tp-item-img{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#f3f4f6;flex-shrink:0}
+    .tp-item-img.no-img{display:flex;align-items:center;justify-content:center;font-size:20px;color:#9ca3af}
+    .tp-item-info{flex:1;min-width:0}
+    .tp-item-name{font-size:14px;font-weight:600;color:#1f2937;line-height:1.3}
+    .tp-item-cat{font-size:12px;color:#6b7280}
+    .tp-item-row2{display:flex;align-items:center;gap:8px;width:100%;padding-left:52px}
+    .tp-item-price{font-size:15px;font-weight:700;color:#2e7d4f;white-space:nowrap}
+    .tp-item-order{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#2e7d4f;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;text-decoration:none;transition:background .12s}
+    .tp-item-order:hover{background:#1f5c39}
+    .tp-ab-badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:#dc2626;background:#fff;padding:3px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0;border:1.5px solid #dc2626}
+    .tp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+    .tp-grid-card{text-align:center;padding:10px 6px;border:1px solid #e5e7eb;border-radius:10px;transition:background .12s}
+    .tp-grid-card:hover{background:#f9fafb}
+    .tp-grid-card img{width:64px;height:64px;border-radius:8px;object-fit:cover;margin-bottom:4px}
+    .tp-grid-card .card-name{font-size:12px;font-weight:600;color:#1f2937;line-height:1.2;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .tp-grid-card .card-price{font-size:13px;font-weight:700;color:#2e7d4f}
+
+    /* Dark-Mode-Feinschliff */
+    html[data-theme="dark"] .tp-item{border-color:#2a333a}
+    html[data-theme="dark"] .tp-item:hover,
+    html[data-theme="dark"] .tp-grid-card:hover{background:#12251c}
+    html[data-theme="dark"] .tp-item-name,
+    html[data-theme="dark"] .tp-grid-card .card-name{color:#e6eae8}
+    html[data-theme="dark"] .tp-item-img{background:#232b31}
+    html[data-theme="dark"] .tp-freitext{background:#12251c;color:#cfe9d8}
+    html[data-theme="dark"] .tp-grid-card{border-color:#2a333a}
+
+    /* Bestell-Popup (iframe) */
+    .mt-popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;justify-content:center;align-items:center;padding:16px}
+    .mt-popup-overlay.open{display:flex}
+    .mt-popup-modal{background:#fff;border-radius:16px;max-width:700px;width:100%;height:calc(100vh - 32px);max-height:calc(100vh - 32px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative;display:flex;flex-direction:column}
+    .mt-popup-close{position:absolute;top:10px;right:10px;z-index:10;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.5);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .mt-popup-close:hover{background:rgba(0,0,0,.7)}
+    .mt-popup-iframe{border:none;width:100%;flex:1;min-height:0;border-radius:16px}
+
+    @media(max-width:600px){
+      .ti-wrap{padding:12px 8px 30px}
+      .ti-card{border-radius:14px}
+      .tp-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}
+      .mt-popup-overlay{padding:0}
+      .mt-popup-modal{max-width:100%;max-height:100%;border-radius:0;height:100%}
+      .mt-popup-iframe{border-radius:0}
+    }
+    body.overlay-open{position:fixed;top:var(--scroll-y,0);left:0;right:0;width:100%;overflow:hidden}
+  </style>
+</head>
+
+<body>
+
+<header class="ti-header">
+  <a href="/" class="ti-logo" aria-label="Dorfladen Oberornau Startseite" id="ti-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>
+    Dorfladen Oberornau
+  </a>
+  <a href="/" class="ti-home">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>
+    Startseite
+  </a>
+  <button type="button" class="ti-close" onclick="tiClosePage()" aria-label="Schließen" title="Schließen">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+  </button>
+</header>
+
+<main class="ti-wrap">
+  <div class="ti-card">
+    <div class="ti-card-head">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+      <div><h1 id="tp-title">TagesInfo</h1><div class="tp-datum" id="tp-datum"></div></div>
+    </div>
+    <div id="tp-day-tabs" style="display:none">
+      <button id="tp-tab-heute" onclick="tpSwitchDay('heute')" style="padding:8px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid #16a34a;background:transparent;color:#16a34a;cursor:pointer;margin-right:4px">Heute</button>
+      <button id="tp-tab-morgen" onclick="tpSwitchDay('morgen')" style="padding:8px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;background:transparent;color:#6b7280;cursor:pointer">Morgen</button>
+    </div>
+    <div class="tp-modal-body" id="tp-body">
+      <div class="tp-loading"><div class="tpfc-spin"></div><div>TagesInfo wird geladen…</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- Bestell-Popup -->
+<div class="mt-popup-overlay" id="mt-popup-overlay" onclick="if(event.target===this)closeMittagPopup()">
+  <div class="mt-popup-modal">
+    <button class="mt-popup-close" onclick="closeMittagPopup()" title="Schließen">✕</button>
+    <iframe class="mt-popup-iframe" id="mt-popup-iframe"></iframe>
+  </div>
+</div>
+
+<script>
+/* === Scroll-Lock (leichtgewichtig) === */
+window.dlLockScroll=function(){document.documentElement.style.setProperty('--scroll-y','-'+window.scrollY+'px');document.body.classList.add('overlay-open');};
+window.dlUnlockScroll=function(){document.body.classList.remove('overlay-open');var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;document.documentElement.style.removeProperty('--scroll-y');window.scrollTo(0,y);};
+
+/* === Bild-Popup === */
+window.dlImagePopup=function(src,alt){
+  if(!src)return;
+  var existing=document.getElementById('dl-img-popup');
+  if(existing) existing.remove();
+  var ov=document.createElement('div');
+  ov.id='dl-img-popup';
+  ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer';
+  var img=document.createElement('img');
+  img.src=src; img.alt=alt||'';
+  img.style.cssText='max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)';
+  img.addEventListener('click',function(e){e.stopPropagation();});
+  ov.appendChild(img);
+  if(alt){var cap=document.createElement('div');cap.textContent=alt;cap.style.cssText='color:#fff;font-size:15px;font-weight:600;margin-top:12px;text-align:center;max-width:90vw;word-break:break-word';ov.appendChild(cap);}
+  var cls=document.createElement('button');
+  cls.innerHTML='&#10005;';
+  cls.style.cssText='position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';
+  ov.appendChild(cls);
+  document.body.appendChild(ov);
+  if(window.dlLockScroll) dlLockScroll();
+  function _imgClose(){ov.remove();if(window.dlUnlockScroll) dlUnlockScroll();}
+  ov.addEventListener('click',function(){_imgClose();});
+  cls.addEventListener('click',function(e){e.stopPropagation();_imgClose();});
+  document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){_imgClose();document.removeEventListener('keydown',onKey);}});
+};
+
+/* === Bestell-Popup (iframe auf /mittagstisch-bestellen) === */
+function openMittagPopup(url){
+  var iframe=document.getElementById('mt-popup-iframe');
+  var sep=url.indexOf('?')>=0?'&':'?';
+  iframe.src=url+sep+'_cb='+Date.now();
+  document.getElementById('mt-popup-overlay').classList.add('open');
+  if(window.dlLockScroll) dlLockScroll(); else document.body.style.overflow='hidden';
+}
+function closeMittagPopup(){
+  document.getElementById('mt-popup-overlay').classList.remove('open');
+  document.getElementById('mt-popup-iframe').src='';
+  if(window.dlUnlockScroll) dlUnlockScroll();
+  document.body.style.overflow='';
+}
+function openBestellstatus(nr){ openMittagPopup('/bestellstatus?nr='+encodeURIComponent(nr||'')); }
+
+// Seite schliessen: Wenn per Link/App in eigenem Tab geoeffnet, Tab schliessen.
+// Sonst (normale Navigation) zurueck bzw. zur Startseite.
+function tiClosePage(){
+  // Ist ein Bestell-Popup offen? Dann nur dieses schliessen.
+  var ov=document.getElementById('mt-popup-overlay');
+  if(ov&&ov.classList.contains('open')){ closeMittagPopup(); return; }
+  // Versuch, den Tab/das Fenster zu schliessen (funktioniert bei per Script/App
+  // geoeffneten Tabs, z.B. aus WhatsApp).
+  try{ window.close(); }catch(e){}
+  // Fallback nach kurzer Zeit: wenn der Tab noch da ist, zur Startseite.
+  setTimeout(function(){ location.href='/'; }, 150);
+}
+
+window.addEventListener('message',function(e){
+  if(e.data==='closeMittagPopup'){ closeMittagPopup(); }
+  else if(e.data==='mittagOrderDone'){ closeMittagPopup(); _reloadLunchMarkers(); }
+});
+</script>
+
+<script>
+(function(){
+  var WOCHENTAGE=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var MONATE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  function fmtDate(d){return WOCHENTAGE[d.getDay()]+', '+d.getDate()+'. '+MONATE[d.getMonth()];}
+  function fmtPreis(p){var n=parseFloat(p);if(isNaN(n))return p;return n.toFixed(2).replace('.',',')+' €';}
+  function esc(s){if(!s)return '';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+  var _isTomorrow=false;
+  var _tpTodayPost=null,_tpTomorrowPost=null;
+
+  function catIcon(kat){
+    var k=(kat||'').toLowerCase();
+    var s='width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+    if(k.indexOf('mittag')>=0)return '<svg '+s+'><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>';
+    if(k.indexOf('kuchen')>=0||k.indexOf('back')>=0||k.indexOf('torte')>=0)return '<svg '+s+'><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="12" cy="11" r="3"/><path d="M12 8V2"/></svg>';
+    if(k.indexOf('theke')>=0||k.indexOf('salat')>=0)return '<svg '+s+'><path d="M15.2 22H8.8a2 2 0 0 1-2-1.79L5 3h14l-1.81 17.21A2 2 0 0 1 15.2 22Z"/><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"/></svg>';
+    if(k.indexOf('getr')>=0)return '<svg '+s+'><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/></svg>';
+    return '<svg '+s+'><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
+  }
+
+  function itemCard(it,showOrder){
+    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div class="tp-item-img no-img">'+catIcon(it.kategorie)+'</div>';
+    var preis=it.preis?fmtPreis(it.preis):'';
+    var orderBtn='';
+    if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
+      var href,tip;
+      if(_isTomorrow){
+        var _qp=[];
+        if(it.id)_qp.push('gericht_id='+encodeURIComponent(it.id));
+        if(it.name)_qp.push('gericht='+encodeURIComponent(it.name));
+        if(it.preis)_qp.push('preis='+it.preis);
+        href='/mittagstisch-bestellen'+(_qp.length?'?'+_qp.join('&'):'');
+        tip='F\u00fcr morgen vorbestellen';
+      }else{
+        var _now=new Date(), _bsCutoff=window._dlBestellschluss||10.5, _canOrderToday=(_now.getHours()+_now.getMinutes()/60)<_bsCutoff;
+        href=_canOrderToday
+          ?'/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'')
+          :'/mittagstisch-bestellen';
+        tip=_canOrderToday?'Jetzt f\u00fcr heute bestellen':'Mittagessen bestellen';
+      }
+      orderBtn='<a class="tp-item-order" href="javascript:void(0)" onclick="openMittagPopup(\''+esc(href).replace(/'/g,"\\'")+'\')" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
+    }
+    var abBadge=it.ab_uhr?'<span class="tp-ab-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
+    var showCat=!showOrder&&it.kategorie;
+    var gerichtAttr=(showOrder&&it.name)?' data-gericht="'+esc(it.name)+'"':'';
+    var hasRow2=preis||orderBtn||abBadge;
+    var row2=hasRow2?'<div class="tp-item-row2">'+(preis?'<div class="tp-item-price">'+preis+'</div>':'')+(abBadge||'')+'<div style="flex:1"></div>'+orderBtn+'</div>':'';
+    return '<div class="tp-item"'+gerichtAttr+'>'+img+'<div class="tp-item-info"><div class="tp-item-name">'+esc(it.name||'')+'</div>'+(showCat?'<div class="tp-item-cat">'+esc(it.kategorie)+'</div>':'')+'</div>'+row2+'</div>';
+  }
+
+  function gridCard(it){
+    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>';
+    var preis=it.preis?fmtPreis(it.preis):'';
+    var abBadge=it.ab_uhr?'<span class="tp-ab-badge" style="margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
+    return '<div class="tp-grid-card">'+img+'<div class="card-name">'+esc(it.name||'')+'</div>'+(preis?'<div class="card-price">'+preis+'</div>':'')+(abBadge||'')+'</div>';
+  }
+
+  function renderPost(post,isTomorrow){
+    _isTomorrow=!!isTomorrow;
+    var pTitel=(post.titel||'TagesInfo').replace(/Aktuelles/gi,'TagesInfo');
+    if(!_isTomorrow){pTitel=pTitel.replace(/^Morgen/i,'Heute');}
+    var titleEl=document.getElementById('tp-title');
+    titleEl.textContent=pTitel;
+    if(_isTomorrow&&pTitel){titleEl.textContent='Morgen: '+pTitel.replace(/^Heute/i,'').replace(/^\s*[:–-]\s*/,'');}
+    var d=new Date(post.datum);
+    document.getElementById('tp-datum').textContent=(_isTomorrow?'Vorschau – ':'')+fmtDate(d);
+
+    var items=post.items||[];
+    if(typeof items==='string'){try{items=JSON.parse(items);}catch(e){items=[];}}
+    if(!Array.isArray(items))items=[];
+
+    var _now2=new Date(), nowH=_now2.getHours(), nowM=_now2.getMinutes();
+    var lunchOver=_isTomorrow?false:(nowH>12||(nowH===12&&nowM>=30));
+
+    var mittagessen=lunchOver?[]:items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
+    var theke=items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
+    var visibleItems=mittagessen.length+theke.length;
+
+    var html='';
+    if(post.text){html+='<div class="tp-freitext">'+esc(post.text)+'</div>';}
+
+    if(mittagessen.length){
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Mittagessen</div>';
+      mittagessen.forEach(function(it){html+=itemCard(it,true);});
+      html+='</div>';
+    }
+    if(theke.length){
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="12" cy="11" r="3"/><path d="M6.58 18.5A8 8 0 0 1 2 21"/><path d="M22 21a8 8 0 0 0-5-7.5"/><path d="M12 8V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="m19.07 10.93-1.41 1.41"/></svg> Theke & Kuchen</div>';
+      if(theke.length<=3){theke.forEach(function(it){html+=itemCard(it);});}
+      else{html+='<div class="tp-grid">';theke.forEach(function(it){html+=gridCard(it);});html+='</div>';}
+      html+='</div>';
+    }
+    if(!mittagessen.length&&!theke.length&&items.length){
+      html+='<div class="tp-section"><div class="tp-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Produkte</div>';
+      items.forEach(function(it){html+=itemCard(it);});
+      html+='</div>';
+    }
+    if(!visibleItems){
+      html='<div class="tp-empty">Aktuell liegt keine TagesInfo vor.<br>Schauen Sie später noch einmal vorbei.</div>';
+    }
+
+    document.getElementById('tp-body').innerHTML=html;
+    if(!_isTomorrow){loadMyLunchOrderMarkers();}
+    return visibleItems;
+  }
+
+  window.tpSwitchDay=function(day){
+    var bH=document.getElementById('tp-tab-heute'),bM=document.getElementById('tp-tab-morgen');
+    if(day==='morgen'&&_tpTomorrowPost){
+      renderPost(_tpTomorrowPost,true);
+      if(bH){bH.style.borderBottomColor='transparent';bH.style.color='#6b7280';}
+      if(bM){bM.style.borderBottomColor='#16a34a';bM.style.color='#16a34a';}
+    } else if(_tpTodayPost){
+      renderPost(_tpTodayPost,false);
+      if(bH){bH.style.borderBottomColor='#16a34a';bH.style.color='#16a34a';}
+      if(bM){bM.style.borderBottomColor='transparent';bM.style.color='#6b7280';}
+    }
+  };
+
+  /* === "bestellt"-Markierungen fuer eigene Mittagsbestellungen (nur heute) === */
+  function _ensureLunchOrderP(){
+    if(window._dlLunchOrderP) return window._dlLunchOrderP;
+    var email=(localStorage.getItem('bs_email')||'').trim();
+    if(!email) return null;
+    window._dlLunchOrderP=fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
+      .then(function(r){return r.json();}).catch(function(){return {success:false};});
+    return window._dlLunchOrderP;
+  }
+  function loadMyLunchOrderMarkers(){
+    var p=_ensureLunchOrderP();
+    if(!p)return;
+    p.then(function(res){
+      if(!res||!res.success)return;
+      var orders=res.orders||[];
+      var today=new Date().toISOString().substring(0,10);
+      var todayOrders=orders.filter(function(o){return (o.datum||'').substring(0,10)===today&&o.status!==2;});
+      if(!todayOrders.length)return;
+      var byGericht={};
+      todayOrders.forEach(function(o){
+        var g=(o.gericht||'').trim().toLowerCase();
+        if(!byGericht[g])byGericht[g]={count:0,nr:o.bestellnummer||'',status:o.status};
+        byGericht[g].count+=(o.menge||1);
+      });
+      document.querySelectorAll('.tp-item[data-gericht]').forEach(function(el){
+        if(el.querySelector('[data-bs-nr]'))return;
+        var g=el.getAttribute('data-gericht').toLowerCase();
+        if(!byGericht[g])return;
+        var info=byGericht[g];
+        var lbl=info.count>1?info.count+'x bestellt':'bestellt';
+        var col=info.status===1?'#16a34a':'#d97706';
+        var bg=info.status===1?'#dcfce7':'#fef3c7';
+        var badge=document.createElement('a');
+        badge.href='javascript:void(0)';
+        badge.setAttribute('data-bs-nr',info.nr);
+        badge.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:'+bg+';color:'+col+';border-radius:6px;font-size:10px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0;white-space:nowrap';
+        badge.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+lbl;
+        badge.onclick=function(e){e.stopPropagation();e.preventDefault();openBestellstatus(this.getAttribute('data-bs-nr'));};
+        el.appendChild(badge);
+      });
+    }).catch(function(){});
+  }
+  // Nach einer Bestellung: Order-Cache verwerfen und Markierungen neu laden
+  window._reloadLunchMarkers=function(){
+    window._dlLunchOrderP=null;
+    if(!_isTomorrow) loadMyLunchOrderMarkers();
+  };
+
+  function showEmpty(){
+    document.getElementById('tp-body').innerHTML='<div class="tp-empty">Aktuell liegt keine TagesInfo vor.<br>Schauen Sie später noch einmal vorbei.</div>';
+  }
+
+  /* === Laden === */
+  var _tpP=window._tpEarlyP||fetch('/api/tagespost').then(function(r){return r.json();}).catch(function(){return null;});
+  _tpP.then(function(res){
+    if(!res||!res.success||!res.post){ showEmpty(); return; }
+    _tpTodayPost=res.today_post||null;
+    _tpTomorrowPost=res.tomorrow_post||null;
+
+    // Day-Tabs anzeigen, wenn beide Posts existieren
+    var dayTabs=document.getElementById('tp-day-tabs');
+    if(dayTabs&&_tpTodayPost&&_tpTomorrowPost){
+      dayTabs.style.display='';
+      var bH=document.getElementById('tp-tab-heute'),bM=document.getElementById('tp-tab-morgen');
+      if(res.is_tomorrow){
+        if(bH){bH.style.borderBottomColor='transparent';bH.style.color='#6b7280';}
+        if(bM){bM.style.borderBottomColor='#16a34a';bM.style.color='#16a34a';}
+      }
+    }
+    renderPost(res.post,res.is_tomorrow);
+  }).catch(function(){ showEmpty(); });
+})();
+</script>
+
+</body>
+</html>

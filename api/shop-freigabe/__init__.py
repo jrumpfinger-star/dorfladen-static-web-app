@@ -23,8 +23,9 @@ ARTICLE_ENTITY = "cr5d4_tables"
 
 
 def get_token():
-    tenant_id = os.environ.get("DV_TENANT_ID", "acfaedd4-c403-43b7-9544-fdb2b150124e")
-    client_id = os.environ.get("DV_CLIENT_ID", "137b2df6-be83-459a-ac89-9efd0bdf51c4")
+    from shared.dataverse import get_tenant_id, get_client_id
+    tenant_id = get_tenant_id()
+    client_id = get_client_id()
     client_secret = os.environ.get("DV_CLIENT_SECRET", "")
     target_url = os.environ.get(DEFAULT_URL_SETTING, DEFAULT_URL_FALLBACK)
     if not client_secret:
@@ -83,17 +84,35 @@ def _fetch_all_pages(url, headers, max_pages=20):
 
 def _load_freigaben(base_url, headers):
     """Load all Freigaben from Dataverse."""
-    url = f"{base_url}/api/data/v9.2/{FREIGABE_ENTITY}?$select=dl_shopfreigabeid,dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_warengruppe,dl_bezeichnung,dl_edeka_nr,dl_freigegeben_von,dl_kurzfristig"
+    url = f"{base_url}/api/data/v9.2/{FREIGABE_ENTITY}?$select=dl_shopfreigabeid,dl_strichcode,dl_aktiv,dl_gueltig_bis,dl_warengruppe,dl_bezeichnung,dl_edeka_nr,dl_freigegeben_von,dl_kurzfristig,dl_verfuegbare_tage"
     return _fetch_all_pages(url, headers)
 
 
+_FLEISCH_KW = ["fleisch", "wurst", "metzger", "aufschnitt", "schinken", "salami"]
+
+def _is_fleisch_wurst(wg):
+    wg_lower = (wg or "").lower()
+    return any(kw in wg_lower for kw in _FLEISCH_KW)
+
 def _load_articles(base_url, headers):
-    """Load articles from Artikelstamm sold in the last 6 weeks for the selection UI."""
+    """Load articles from Artikelstamm sold in the last 6 weeks for the selection UI.
+    Fleisch & Wurst articles are loaded without the date filter (they are pre-ordered, not sold at register)."""
     cutoff = (datetime.utcnow() - timedelta(weeks=6)).strftime("%Y-%m-%dT00:00:00Z")
     select = "cr5d4_strichcode,cr5d4_artikelnummeredeka,cr5d4_artikelbezeichnung,cr5d4_warengruppebez,cr5d4_vk_dorf,cr5d4_mengentyp,cr5d4_mengeneinheit,cr5d4_tableid"
     filt = f"cr5d4_artikelletzterverkauf ge {cutoff}"
     url = f"{base_url}/api/data/v9.2/{ARTICLE_ENTITY}?$select={select}&$filter={filt}&$orderby=cr5d4_warengruppebez asc,cr5d4_artikelbezeichnung asc"
     items = _fetch_all_pages(url, headers)
+    # Also load Fleisch & Wurst articles without date filter
+    fleisch_filt = "contains(cr5d4_warengruppebez,'Fleisch') or contains(cr5d4_warengruppebez,'Wurst')"
+    fleisch_url = f"{base_url}/api/data/v9.2/{ARTICLE_ENTITY}?$select={select}&$filter={fleisch_filt}&$orderby=cr5d4_artikelbezeichnung asc"
+    fleisch_items = _fetch_all_pages(fleisch_url, headers)
+    # Merge & deduplicate by strichcode
+    seen = {(item.get("cr5d4_strichcode") or "").strip() for item in items}
+    for fi in fleisch_items:
+        sc = (fi.get("cr5d4_strichcode") or "").strip()
+        if sc and sc not in seen:
+            items.append(fi)
+            seen.add(sc)
     result = []
     for item in items:
         sc = (item.get("cr5d4_strichcode") or "").strip()
@@ -143,6 +162,8 @@ def _upsert_freigabe(base_url, headers, item):
         payload["dl_freigegeben_von"] = item["freigegeben_von"]
     if "kurzfristig" in item:
         payload["dl_kurzfristig"] = bool(item["kurzfristig"])
+    if "verfuegbare_tage" in item:
+        payload["dl_verfuegbare_tage"] = item["verfuegbare_tage"] or ""
 
     if existing:
         record_id = existing[0]["dl_shopfreigabeid"]
@@ -169,6 +190,10 @@ def _delete_freigabe(base_url, headers, strichcode):
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    from shared.auth import admin_auth_guard
+    _auth = admin_auth_guard(req)
+    if _auth is not None:
+        return _auth
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
 
@@ -203,6 +228,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "edeka_nr": f.get("dl_edeka_nr", ""),
                 "freigegeben_von": f.get("dl_freigegeben_von", ""),
                 "kurzfristig": bool(f.get("dl_kurzfristig")),
+                "verfuegbare_tage": f.get("dl_verfuegbare_tage") or "",
             })
         return func.HttpResponse(
             json.dumps({"success": True, "freigaben": result}, ensure_ascii=False),

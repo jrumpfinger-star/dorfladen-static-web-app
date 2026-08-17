@@ -67,6 +67,10 @@
       "rewrite": "/shop-admin.html"
     },
     {
+      "route": "/posten",
+      "rewrite": "/posten.html"
+    },
+    {
       "route": "/pack",
       "rewrite": "/pack.html"
     },
@@ -81,6 +85,10 @@
     {
       "route": "/mittagstisch-bestellen",
       "rewrite": "/mittagstisch-bestellen.html"
+    },
+    {
+      "route": "/fleisch-bestellen",
+      "rewrite": "/fleisch-bestellen.html"
     },
     {
       "route": "/bestellstatus",

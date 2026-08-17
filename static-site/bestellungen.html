@@ -61,14 +61,30 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f293
 .new-pop{position:fixed;top:56px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:200;display:none;box-shadow:0 4px 12px rgba(220,38,38,.3);cursor:pointer;animation:bo .5s ease infinite alternate}
 @keyframes bo{from{transform:translateX(-50%) translateY(0)}to{transform:translateX(-50%) translateY(-4px)}}
 @media print{.hd,.cnt-row,.live,.cd-btns,.new-pop,.toast{display:none!important}body{background:#fff}.cards{padding:0}.cd{break-inside:avoid;border-radius:0;border:1px solid #ccc;margin-bottom:4px}.cd-det{display:block!important}}
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"] body{background:#12171a;color:#e6eae8}
+html[data-theme="dark"] .cnt-row,html[data-theme="dark"] .live{background:#1b2228;border-bottom-color:#2a333a}
+html[data-theme="dark"] .cd{background:#1b2228}
+html[data-theme="dark"] .cd-kd,html[data-theme="dark"] .cd-t{color:#9aa6a0}
+html[data-theme="dark"] .cd-det{background:#161c20;border-top-color:#2a333a}
+html[data-theme="dark"] .di{border-color:#2a333a}
+html[data-theme="dark"] .cd-sum{color:#6fd0a5}
+html[data-theme="dark"] .cd-note{background:#2a2410;color:#f5d98a}
+html[data-theme="dark"] .cd-pack{background:#12251c;color:#8fd6ad}
+#dl-theme-toggle{position:fixed;left:16px;bottom:16px;z-index:9998;width:44px;height:44px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-tog-bg,#fff);color:var(--c-tog-fg,#1f2937);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:0}
+html[data-theme="dark"] #dl-theme-toggle{--c-tog-bg:#1b2228;--c-tog-fg:#e6eae8}
+@media (forced-colors: active){.cd,.cnt,.cb{border:1px solid CanvasText}}
 </style>
+<script src="/js/theme.js"></script>
+<link rel="stylesheet" href="/css/admin-dark.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <div class="hd">
-  <span style="font-size:20px">📋</span>
+  <span style="font-size:20px"><i data-lucide="clipboard-list" style="width:20px;height:20px;vertical-align:-3px"></i></span>
   <div><h1>Bestellungen</h1><small id="hd-sub">Wird geladen…</small></div>
-  <button class="hd-btn" id="btn-p" title="Drucken">🖨</button>
-  <button class="hd-btn" id="btn-r" title="Aktualisieren">🔄</button>
+  <button class="hd-btn" id="btn-p" title="Drucken"><i data-lucide="printer" style="width:16px;height:16px"></i></button>
+  <button class="hd-btn" id="btn-r" title="Aktualisieren"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i></button>
 </div>
 <div class="cnt-row">
   <div class="cnt c0 on" data-f="0" id="cn0"><div class="cnt-n" id="cn0n">0</div><div class="cnt-l">Neu</div></div>
@@ -77,23 +93,26 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1f293
   <div class="cnt c3" data-f="h" id="cnh"><div class="cnt-n" id="cnhn">0</div><div class="cnt-l">Heute</div></div>
 </div>
 <div class="live"><span class="live-dot"></span><span>Auto-Refresh 30s</span><span class="live-r" id="ltime">--:--</span></div>
-<div class="new-pop" id="npop">🔔 Neue Bestellung!</div>
-<div class="cards" id="cards"><div class="empty"><i>⏳</i><p>Bestellungen werden geladen…</p></div></div>
+<div class="new-pop" id="npop"><i data-lucide="bell" style="width:14px;height:14px;vertical-align:-2px"></i> Neue Bestellung!</div>
+<div class="cards" id="cards"><div class="empty"><i data-lucide="loader" style="width:48px;height:48px"></i><p>Bestellungen werden geladen…</p></div></div>
 <div class="toast" id="toast"></div>
+<script src="/js/dl-confirm.js"></script>
 <script>
 (function(){
 var API=location.hostname==='localhost'?'http://localhost:7071/api':'/api';
 var orders=[],filter='open',prevIds=[],timer=null;
 var ST={0:'Neu',1:'In Bearbeitung',2:'Abholbereit',3:'Abgeholt',4:'Storniert'};
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function luc(n,s){return '<i data-lucide="'+n+'" style="width:'+(s||14)+'px;height:'+(s||14)+'px;vertical-align:-2px"></i>';}
+function lreinit(){if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});}
 function fmt(v){return(+v).toFixed(2).replace('.',',');}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 function load(silent){
-  if(!silent) document.getElementById('cards').innerHTML='<div class="empty"><i>⏳</i><p>Lädt…</p></div>';
+  if(!silent) document.getElementById('cards').innerHTML='<div class="empty">'+luc('loader',48)+'<p>Lädt…</p></div>',lreinit();
   fetch(API+'/shop-order?mode=cms').then(function(r){return r.json();}).then(function(res){
-    if(!res.success){toast('Fehler: '+(res.error||''));return;}
+    if(!res.success){toast(res.error||'Bestellungen konnten nicht geladen werden.');return;}
     var nw=res.orders||[];
     if(prevIds.length){
       var nids=nw.map(function(o){return o.id;});
@@ -104,7 +123,7 @@ function load(silent){
     orders=nw;
     updCnt();render();updTime();
     document.getElementById('hd-sub').textContent=orders.length+' Bestellung'+(orders.length!==1?'en':'');
-  }).catch(function(e){if(!silent)document.getElementById('cards').innerHTML='<div class="empty"><i>⚠️</i><p>'+esc(e.message)+'</p></div>';});
+  }).catch(function(e){console.error('Bestellungen laden fehlgeschlagen:',e);if(!silent){document.getElementById('cards').innerHTML='<div class="empty">'+luc('alert-triangle',48)+'<p>Bestellungen konnten nicht geladen werden. Bitte Seite neu laden.</p></div>';lreinit();}});
 }
 
 function updTime(){document.getElementById('ltime').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -132,34 +151,35 @@ function filtered(){
 function render(){
   var list=filtered();
   list.sort(function(a,b){if(a.status!==b.status)return a.status-b.status;return(a.bestelldatum||'').localeCompare(b.bestelldatum||'');});
-  if(!list.length){document.getElementById('cards').innerHTML='<div class="empty"><i>✅</i><p>Keine Bestellungen</p></div>';return;}
+  if(!list.length){document.getElementById('cards').innerHTML='<div class="empty">'+luc('check-circle',48)+'<p>Keine Bestellungen</p></div>';lreinit();return;}
   var h='';
   list.forEach(function(o){
     var pos=o.positionen||[],pk='';
-    if(o.pack_data&&o.pack_data.alle_gepackt) pk='✅ Gepackt '+o.pack_data.gepackt_um;
-    else if(o.pack_data&&o.pack_data.items){var dn=o.pack_data.items.filter(function(i){return i.gepackt;}).length;pk='📦 '+dn+'/'+o.pack_data.items.length+' gepackt';}
+    if(o.pack_data&&o.pack_data.alle_gepackt) pk=luc('check-circle',12)+' Gepackt '+o.pack_data.gepackt_um;
+    else if(o.pack_data&&o.pack_data.items){var dn=o.pack_data.items.filter(function(i){return i.gepackt;}).length;pk=luc('package',12)+' '+dn+'/'+o.pack_data.items.length+' gepackt';}
     h+='<div class="cd s'+o.status+'" data-id="'+esc(o.id)+'">';
     h+='<div class="cd-top" data-tog="'+esc(o.id)+'">';
     h+='<div class="cd-dot d'+o.status+'"></div>';
     h+='<div class="cd-body"><div class="cd-nr">'+esc(o.bestellnummer)+' <span class="bg b'+o.status+'">'+esc(ST[o.status]||'?')+'</span></div>';
     h+='<div class="cd-kd">'+esc(o.kunde_name||o.kunde_email)+'</div></div>';
     h+='<div class="cd-rt"><div class="cd-sum">'+fmt(o.gesamtsumme)+' €</div>';
-    h+='<div class="cd-ab">📅 '+esc(o.abholdatum)+'</div>';
+    h+='<div class="cd-ab">'+luc('calendar',11)+' '+esc(o.abholdatum)+'</div>';
     h+='<div class="cd-t">'+esc(o.bestelldatum)+'</div></div></div>';
     h+='<div class="cd-det">';
-    if(o.anmerkungen) h+='<div class="cd-note">📝 '+esc(o.anmerkungen)+'</div>';
+    if(o.anmerkungen) h+='<div class="cd-note">'+luc('message-square',11)+' '+esc(o.anmerkungen)+'</div>';
     if(pk) h+='<div class="cd-pack">'+pk+'</div>';
     h+='<div style="font-size:11px;font-weight:700;margin-bottom:4px;color:#6b7280">'+pos.length+' Artikel:</div>';
     pos.forEach(function(p){h+='<div class="di"><span class="di-n">'+esc(p.bezeichnung)+'</span><span class="di-q">'+p.menge+' '+esc(p.einheit)+'</span></div>';});
     h+='<div class="cd-btns">';
-    if(o.status<=1) h+='<button class="cb cb-pk" data-a="pack" data-o="'+esc(o.id)+'">📦 Packen</button>';
-    if(o.status===0) h+='<button class="cb cb-nb" data-a="st" data-o="'+esc(o.id)+'" data-s="1">→ Bearbeiten</button>';
-    if(o.status===1) h+='<button class="cb cb-gb" data-a="st" data-o="'+esc(o.id)+'" data-s="2" data-nr="'+esc(o.bestellnummer)+'" data-em="'+esc(o.kunde_email)+'" data-nm="'+esc(o.kunde_name)+'" data-ah="'+esc(o.abholdatum)+'">✓ Abholbereit</button>';
-    if(o.status===2) h+='<button class="cb cb-dn" data-a="st" data-o="'+esc(o.id)+'" data-s="3">✅ Abgeholt</button>';
-    if(o.status<3) h+='<button class="cb cb-x" data-a="st" data-o="'+esc(o.id)+'" data-s="4">✕</button>';
+    if(o.status<=1) h+='<button class="cb cb-pk" data-a="pack" data-o="'+esc(o.id)+'">'+luc('package',13)+' Packen</button>';
+    if(o.status===0) h+='<button class="cb cb-nb" data-a="st" data-o="'+esc(o.id)+'" data-s="1">'+luc('arrow-right',13)+' Bearbeiten</button>';
+    if(o.status===1) h+='<button class="cb cb-gb" data-a="st" data-o="'+esc(o.id)+'" data-s="2" data-nr="'+esc(o.bestellnummer)+'" data-em="'+esc(o.kunde_email)+'" data-nm="'+esc(o.kunde_name)+'" data-ah="'+esc(o.abholdatum)+'">'+luc('check',13)+' Abholbereit</button>';
+    if(o.status===2) h+='<button class="cb cb-dn" data-a="st" data-o="'+esc(o.id)+'" data-s="3">'+luc('check-circle',13)+' Abgeholt</button>';
+    if(o.status<3) h+='<button class="cb cb-x" data-a="st" data-o="'+esc(o.id)+'" data-s="4">'+luc('x',13)+'</button>';
     h+='</div></div></div>';
   });
   document.getElementById('cards').innerHTML=h;
+  lreinit();
   wire();
 }
 
@@ -175,19 +195,20 @@ function wire(){
     }
     if(a==='st'){
       var s=parseInt(btn.getAttribute('data-s')),lb=ST[s]||'';
-      if(!confirm('Status → '+lb+'?'))return;
-      btn.disabled=true;btn.textContent='…';
-      fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:oid,status:s})})
-        .then(function(r){return r.json();}).then(function(res){
-          if(res.success){
-            toast('✅ → '+lb);
-            if(s===2){
-              var nr=btn.getAttribute('data-nr'),em=btn.getAttribute('data-em'),nm=btn.getAttribute('data-nm'),ah=btn.getAttribute('data-ah');
-              fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:nr,kunde_email:em,kunde_name:nm,abholdatum:ah,type:'ready'})}).catch(function(){});
-            }
-            load(true);
-          } else {toast('Fehler: '+(res.error||''));btn.disabled=false;}
-        }).catch(function(e){toast('Fehler: '+e.message);btn.disabled=false;});
+      dlConfirm({icon:'clipboard-list',title:'Status ändern?',msg:'Status wird auf „'+lb+'" gesetzt.',ok:lb,color:'#2563eb'},function(){
+        btn.disabled=true;btn.textContent='…';
+        fetch(API+'/shop-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:oid,status:s})})
+          .then(function(r){return r.json();}).then(function(res){
+            if(res.success){
+              toast('Status: '+lb);
+              if(s===2){
+                var nr=btn.getAttribute('data-nr'),em=btn.getAttribute('data-em'),nm=btn.getAttribute('data-nm'),ah=btn.getAttribute('data-ah');
+                fetch(API+'/shop-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bestellnummer:nr,kunde_email:em,kunde_name:nm,abholdatum:ah,type:'ready'})}).catch(function(){});
+              }
+              load(true);
+            } else {toast(res.error||'Aktion fehlgeschlagen. Bitte erneut versuchen.');btn.disabled=false;}
+          }).catch(function(e){console.error('Statuswechsel fehlgeschlagen:',e);toast('Aktion fehlgeschlagen. Bitte erneut versuchen.');btn.disabled=false;});
+      });
     }
   });});
 }
@@ -210,9 +231,11 @@ document.getElementById('btn-p').addEventListener('click',function(){window.prin
 // Auto-refresh
 function startTimer(){if(timer)clearInterval(timer);timer=setInterval(function(){load(true);},30000);}
 
+lreinit();
 load(false);
 startTimer();
 })();
 </script>
+<script src="/js/env-banner.js"></script>
 </body>
 </html>
