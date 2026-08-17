@@ -338,6 +338,11 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
 .wp-footer{padding:14px 18px;background:#fafafa;border-top:1px solid var(--c-brd);font-size:.82rem;color:var(--c-sec);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .wp-footer p{display:flex;align-items:center;gap:4px}
 .wp-hint{display:inline-flex;align-items:center;gap:4px}
+.wp-oeko-banner{flex-basis:100%;display:flex;align-items:center;gap:11px;padding:10px 14px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #a7f3d0;border-radius:12px}
+.wp-oeko-banner .wp-oeko-leaf{flex:none;width:26px;height:26px;color:#059669}
+.wp-oeko-txt{display:flex;flex-direction:column;line-height:1.25}
+.wp-oeko-title{font-weight:800;font-size:.92rem;color:#065f46}
+.wp-oeko-sub{font-size:.78rem;color:#047857}
 .wp-actions{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--c-brd);background:#fafafa}
 .wp-btn-share{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:#25D366;color:#fff;border-radius:var(--r-btn);border:none;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .3s var(--ease-spring);text-decoration:none}
 .wp-btn-share:hover{background:#1ea952;transform:translateY(-2px);box-shadow:0 6px 18px rgba(37,211,102,.25)}
@@ -379,6 +384,10 @@ table.hrs td:first-child{font-weight:600;width:60px;color:var(--c-text)}
   .wp-day-first td{border-top:none}
   .wp-grp-even td,.wp-grp-odd td{padding:1px 0}
   .wp-footer{padding:4px 10px;font-size:.58rem}
+  .wp-oeko-banner{padding:7px 10px;gap:8px;border-radius:10px}
+  .wp-oeko-banner .wp-oeko-leaf{width:20px;height:20px}
+  .wp-oeko-title{font-size:.72rem}
+  .wp-oeko-sub{font-size:.62rem}
   .wp-actions{flex-direction:row;align-items:center;padding:5px 10px;gap:6px}
   .wp-btn-share,.wp-btn-menu{padding:5px 10px;font-size:.68rem}
 }
@@ -660,6 +669,10 @@ html[data-theme="dark"] .wp-table thead,
 html[data-theme="dark"] .wp-grp-even td,
 html[data-theme="dark"] .wp-footer,
 html[data-theme="dark"] .wp-actions{background:#232c33}
+html[data-theme="dark"] .wp-oeko-banner{background:linear-gradient(135deg,#0e3529,#124237);border-color:#1d6b52}
+html[data-theme="dark"] .wp-oeko-title{color:#d1fae5}
+html[data-theme="dark"] .wp-oeko-sub{color:#6ee7b7}
+html[data-theme="dark"] .wp-oeko-banner .wp-oeko-leaf{color:#34d399}
 html[data-theme="dark"] .wp-grp-odd td{background:#1b2228}
 /* Textfarben mit !important, um die per JS injizierten Hell-Template-Farben
    (#wp-tpl-colors, z.B. classic-red -> .wp-dish{color:#1a1a1a!important}) zu schlagen */
