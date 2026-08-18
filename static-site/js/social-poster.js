@@ -356,7 +356,6 @@
     rendered.forEach(function(r){if(cur.length&&curH+r.h>maxH){pages.push(cur);cur=[];curH=0;}cur.push(r);curH+=r.h;});
     if(cur.length)pages.push(cur);
     var total=pages.length;
-    console.log('[socialBuildPages] blocks.length='+blocks.length+', pages.length='+total+', pages=',pages.map(function(p){return p.length;}));
     return pages.map(function(secs,pi){return socialComposePage(secs,pi+1,total,W,SCALE);});
   }
 
@@ -392,7 +391,7 @@
   }
 
   function socialCanvasToFile(cv,name){var dataUrl=cv.toDataURL('image/png');var parts=dataUrl.split(',');var mime=parts[0].match(/:(.*?);/)[1];var bstr=atob(parts[1]);var u8=new Uint8Array(bstr.length);for(var i=0;i<bstr.length;i++)u8[i]=bstr.charCodeAt(i);return new File([new Blob([u8],{type:mime})],name,{type:'image/png'});}
-  function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');var files=pages.map(function(cv,i){var pageNum=pages.length>1?('-'+String(i+1).padStart(String(pages.length).length,'0')):'';var name='dorfladen-'+ds+pageNum+'.png';console.log('[socialPagesToFiles] Page '+(i+1)+'/'+pages.length+' -> '+name);return socialCanvasToFile(cv,name);});console.log('[socialPagesToFiles] Created '+files.length+' files');return files;}
+  function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');return pages.map(function(cv,i){var pageNum=pages.length>1?('-'+String(i+1).padStart(String(pages.length).length,'0')):'';return socialCanvasToFile(cv,'dorfladen-'+ds+pageNum+'.png');});}
   M.socialBuildPages=socialBuildPages;
 
   // WhatsApp-Teilen in EINEM Vorgang (ein Nutzer-Tipp): Alle Bilder werden auf
@@ -411,12 +410,41 @@
     // KEIN await auf socialGenPreview() vor navigator.share() - sonst verfaellt auf Android
     // die transiente Nutzeraktivierung und navigator.share() schlaegt mit NotAllowedError fehl.
     var loaded=window._socLoadedImgs||{};
-    var files;
-    try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,loaded,2));}
-    catch(e){try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,{},2));}catch(e2){files=[];}}
-    if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
-    socialSavePost(titel,freitext,selected);
-    socialShareFiles(files,msg,hasMt);
+    var allPages;
+    try{allPages=socialBuildPages(selected,titel,freitext,loaded,2);}
+    catch(e){try{allPages=socialBuildPages(selected,titel,freitext,{},2);}catch(e2){allPages=[];}}
+    if(!allPages.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
+    
+    // WhatsApp sortiert 5+ Bilder unerklärlich um. Limit auf max. 4 Bilder pro Share.
+    // Falls mehr: in mehrere Posts aufteilen.
+    var MAX_IMAGES_PER_SHARE=4;
+    if(allPages.length>MAX_IMAGES_PER_SHARE){
+      var chunks=[],i=0;
+      while(i<allPages.length){
+        chunks.push(allPages.slice(i,i+MAX_IMAGES_PER_SHARE));
+        i+=MAX_IMAGES_PER_SHARE;
+      }
+      console.log('[socialShareWhatsApp] '+allPages.length+' Seiten in '+chunks.length+' Posts aufgeteilt');
+      var chunkIdx=0;
+      var shareChunk=function(){
+        if(chunkIdx>=chunks.length){
+          socialStatus('soc-post-status','✅ Alle Posts geteilt!',true);
+          return;
+        }
+        var chunk=chunks[chunkIdx];var chunkNum=chunkIdx+1,chunkTotal=chunks.length;
+        var chunkFiles=socialPagesToFiles(chunk);
+        var chunkMsg=msg;if(chunkTotal>1)chunkMsg='[Teil '+chunkNum+'/'+chunkTotal+']\n'+msg;
+        chunkIdx++;
+        socialShareFiles(chunkFiles,chunkMsg,hasMt);
+        setTimeout(shareChunk,500);
+      };
+      socialSavePost(titel,freitext,selected);
+      shareChunk();
+    }else{
+      var files=socialPagesToFiles(allPages);
+      socialSavePost(titel,freitext,selected);
+      socialShareFiles(files,msg,hasMt);
+    }
     }catch(e){console.error('[Social] WhatsApp share error:',e);socialStatus('soc-post-status','Fehler: '+e.message,false);}
   };
 
