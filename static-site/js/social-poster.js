@@ -46,7 +46,7 @@
   }
   function socialFmtPrice(v){var d=parseFloat(v);return (d&&isFinite(d))?d.toFixed(2).replace('.',','):(''+v);}
 
-  function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE,hideFooter){
+  function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE,hideFooter,hideHeader){
     SCALE=SCALE||1;
     var PAD=16, GAP=12, CARD_R=16, CARD_PAD=14;
     var IMG_W=W-PAD*2, IMG_H=Math.round(IMG_W*0.55);
@@ -54,8 +54,8 @@
     var catKeys=Object.keys(cats);
     var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
     var mc=document.createElement('canvas'),mx=mc.getContext('2d');
-    var freitextLines=[];if(freitext){mx.font='15px "Segoe UI",system-ui,sans-serif';freitextLines=socialWrapText(mx,freitext,W-PAD*2-8);}
-    var HEADER_H=92;var contentH=HEADER_H+(freitextLines.length?(10+freitextLines.length*20+6):8);var layout=[];
+    var freitextLines=[];if(freitext&&!hideHeader){mx.font='15px "Segoe UI",system-ui,sans-serif';freitextLines=socialWrapText(mx,freitext,W-PAD*2-8);}
+    var HEADER_H=hideHeader?8:92;var contentH=HEADER_H+(freitextLines.length?(10+freitextLines.length*20+6):8);var layout=[];
     catKeys.forEach(function(cat,ci){
       contentH+=ci===0?4:20;layout.push({type:'cat',cat:cat,y:contentH});contentH+=34;
       cats[cat].forEach(function(p){
@@ -66,11 +66,13 @@
     contentH+=8;var H=Math.max(200,contentH);
     canvas.width=W*SCALE;canvas.height=H*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
     ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H);
+    if(!hideHeader){
     var grad=ctx.createLinearGradient(0,0,W,HEADER_H);grad.addColorStop(0,'#2e7d4f');grad.addColorStop(1,'#245f3d');ctx.fillStyle=grad;ctx.fillRect(0,0,W,HEADER_H);
     ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 30px "Segoe UI",system-ui,sans-serif';ctx.fillText(titel||'Heute im Dorfladen',W/2,50);
     var now=new Date();var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];var months=['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
     ctx.font='600 15px "Segoe UI",system-ui,sans-serif';ctx.fillStyle='rgba(255,255,255,0.92)';ctx.fillText(days[now.getDay()]+' \u00b7 '+now.getDate()+'. '+months[now.getMonth()],W/2,76);
     if(freitextLines.length){ctx.fillStyle='#374151';ctx.font='15px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';var fty=HEADER_H+24;freitextLines.forEach(function(line){ctx.fillText(line,W/2,fty);fty+=20;});}
+    }
     function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
     function roundTop(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
     function drawCover(img,x,y,w,h){var iw=img.width,ih=img.height;var s=Math.max(w/iw,h/ih);var sw=w/s,sh=h/s;var sx=(iw-sw)/2,sy=(ih-sh)/2;ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
@@ -96,19 +98,27 @@
     if(!selected.length){ctx.fillStyle='#9ca3af';ctx.font='italic 16px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('Bitte Produkte oben auswaehlen...',W/2,H/2);}
   }
 
-  function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE){
+  function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE,headerOpts){
     // Zeichnet das Mittagessen im GLEICHEN Kartenstil wie die Artikel
     // (socialDrawPoster): gruene Kategorie-Kopfzeile + weisse Karten mit Bild
     // oben (bzw. Teller-Icon als Platzhalter), Name fett, Preis gross gruen.
+    // headerOpts (optional): {titel,freitext} -> zeichnet den grossen gruenen
+    // Titel-Kopf oben (wenn Mittagessen an erster Stelle im Poster steht).
     SCALE=SCALE||1;
     var PAD=16, GAP=12, CARD_R=16, CARD_PAD=14;
     var IMG_W=W-PAD*2, IMG_H=Math.round(IMG_W*0.55);
     var multi=mtItems.length>1;
     var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    var months=['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
     var headLabel='\uD83C\uDF7D\uFE0F Mittagessen \u00b7 '+days[new Date().getDay()];
     var mc=document.createElement('canvas'),mx=mc.getContext('2d');
+    // Optionaler grosser Titel-Kopf oben
+    var HEADER_H=92;
+    var freitextLines=[];
+    if(headerOpts&&headerOpts.freitext){mx.font='15px "Segoe UI",system-ui,sans-serif';freitextLines=socialWrapText(mx,headerOpts.freitext,W-PAD*2-8);}
+    var topOffset=headerOpts?(HEADER_H+(freitextLines.length?(10+freitextLines.length*20+6):8)):0;
     // Mess-Durchlauf
-    var contentH=12+34;var layout=[];
+    var contentH=topOffset+12+34;var layout=[];
     mtItems.forEach(function(meal,idx){
       var hasImg=!!(loadedImgs&&loadedImgs[meal.id]);
       mx.font='bold 22px "Segoe UI",system-ui,sans-serif';
@@ -125,11 +135,18 @@
     function roundTop(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
     function drawCover(img,x,y,w,h){var iw=img.width,ih=img.height;var s=Math.max(w/iw,h/ih);var sw=w/s,sh=h/s;var sx=(iw-sw)/2,sy=(ih-sh)/2;ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
     function timeBadge(x,topY,time){var label='\u23F0 ab '+time+' Uhr';ctx.font='bold 13px "Segoe UI",system-ui,sans-serif';var tw=ctx.measureText(label).width;var padX=9,bh=23,bw=tw+padX*2;ctx.save();roundRect(x,topY,bw,bh,7);ctx.fillStyle='#fef2f2';ctx.fill();ctx.strokeStyle='#dc2626';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#dc2626';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(label,x+padX,topY+bh/2+1);ctx.restore();ctx.textBaseline='alphabetic';}
+    // Optionaler grosser gruener Titel-Kopf (identisch zu socialDrawPoster)
+    if(headerOpts){
+      var grad=ctx.createLinearGradient(0,0,W,HEADER_H);grad.addColorStop(0,'#2e7d4f');grad.addColorStop(1,'#245f3d');ctx.fillStyle=grad;ctx.fillRect(0,0,W,HEADER_H);
+      ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 30px "Segoe UI",system-ui,sans-serif';ctx.fillText(headerOpts.titel||'Heute im Dorfladen',W/2,50);
+      var hnow=new Date();ctx.font='600 15px "Segoe UI",system-ui,sans-serif';ctx.fillStyle='rgba(255,255,255,0.92)';ctx.fillText(days[hnow.getDay()]+' \u00b7 '+hnow.getDate()+'. '+months[hnow.getMonth()],W/2,76);
+      if(freitextLines.length){ctx.fillStyle='#374151';ctx.font='15px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';var fty=HEADER_H+24;freitextLines.forEach(function(line){ctx.fillText(line,W/2,fty);fty+=20;});}
+    }
     // Kategorie-Kopfzeile (identisch zum Artikel-Stil)
-    var hy=12;ctx.textAlign='left';ctx.fillStyle='#2e7d4f';ctx.font='900 18px "Segoe UI",system-ui,sans-serif';
+    var hy=topOffset+12;ctx.textAlign='left';ctx.fillStyle='#2e7d4f';ctx.font='900 18px "Segoe UI",system-ui,sans-serif';
     ctx.fillText(headLabel,PAD,hy+18);var htw=ctx.measureText(headLabel).width;
     ctx.strokeStyle='rgba(46,125,79,0.25)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(PAD+htw+12,hy+13);ctx.lineTo(W-PAD,hy+13);ctx.stroke();
-    var y=12+34;
+    var y=topOffset+12+34;
     layout.forEach(function(it){
       var meal=it.meal,cx=PAD,cy=y,cw=IMG_W,ch=it.cardH;
       ctx.save();roundRect(cx,cy,cw,ch,CARD_R);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#eee';ctx.lineWidth=1;ctx.stroke();ctx.restore();
@@ -163,8 +180,8 @@
     return Promise.all(promises.concat([_socMealIconPromise])).then(function(){
       var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var hasMt=mtItems.length>0;var hasOther=otherItems.length>0;
       var mealCanvas=document.getElementById('soc-post-canvas-meal');var mealLabel=document.getElementById('soc-preview-label-meal');var dailyLabel=document.getElementById('soc-preview-label-daily');if(mealCanvas)mealCanvas.style.display='none';if(mealLabel)mealLabel.style.display='none';if(dailyLabel)dailyLabel.style.display='none';
-      if(hasMt&&hasOther){var tmpDaily=document.createElement('canvas');socialDrawPoster(tmpDaily,tmpDaily.getContext('2d'),W,otherItems,titel,freitext,loadedImgs,SCALE,true);var tmpMeal=document.createElement('canvas');socialDrawMealPosterAuto(tmpMeal,tmpMeal.getContext('2d'),W,mtItems,loadedImgs,SCALE);canvas.width=W*SCALE;canvas.height=tmpDaily.height+tmpMeal.height;ctx.drawImage(tmpDaily,0,0);ctx.drawImage(tmpMeal,0,tmpDaily.height);canvas.style.display='block';}
-      else if(hasMt){canvas.style.display='block';socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs,SCALE);}
+      if(hasMt&&hasOther){var tmpMeal=document.createElement('canvas');socialDrawMealPosterAuto(tmpMeal,tmpMeal.getContext('2d'),W,mtItems,loadedImgs,SCALE,{titel:titel,freitext:freitext});var tmpDaily=document.createElement('canvas');socialDrawPoster(tmpDaily,tmpDaily.getContext('2d'),W,otherItems,titel,freitext,loadedImgs,SCALE,true,true);canvas.width=W*SCALE;canvas.height=tmpMeal.height+tmpDaily.height;ctx.drawImage(tmpMeal,0,0);ctx.drawImage(tmpDaily,0,tmpMeal.height);canvas.style.display='block';}
+      else if(hasMt){canvas.style.display='block';socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs,SCALE,{titel:titel,freitext:freitext});}
       else if(selected.length>0){canvas.style.display='block';socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE);}
       else{canvas.style.display='none';}
       window._socLoadedImgs=loadedImgs;
@@ -224,7 +241,7 @@
   function canvasToFiles(canvases,selected,titel,freitext){
     var files=[];
     canvases.forEach(function(c){
-      var dataUrl;try{dataUrl=c.canvas.toDataURL('image/png');}catch(e){var cc=document.createElement('canvas');var cx=cc.getContext('2d');var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});if(mtI.length>0&&otherI.length>0){var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2,true);var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2);cc.width=1200;cc.height=tD.height+tM.height;cx.drawImage(tD,0,0);cx.drawImage(tM,0,tD.height);}else if(mtI.length>0){socialDrawMealPosterAuto(cc,cx,600,mtI,{},2);}else{socialDrawPoster(cc,cx,600,otherI,titel,freitext,{},2);}dataUrl=cc.toDataURL('image/png');}
+      var dataUrl;try{dataUrl=c.canvas.toDataURL('image/png');}catch(e){var cc=document.createElement('canvas');var cx=cc.getContext('2d');var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});if(mtI.length>0&&otherI.length>0){var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2,{titel:titel,freitext:freitext});var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2,true,true);cc.width=1200;cc.height=tM.height+tD.height;cx.drawImage(tM,0,0);cx.drawImage(tD,0,tM.height);}else if(mtI.length>0){socialDrawMealPosterAuto(cc,cx,600,mtI,{},2,{titel:titel,freitext:freitext});}else{socialDrawPoster(cc,cx,600,otherI,titel,freitext,{},2);}dataUrl=cc.toDataURL('image/png');}
       if(dataUrl){var parts=dataUrl.split(',');var mime=parts[0].match(/:(.*?);/)[1];var bstr=atob(parts[1]);var u8=new Uint8Array(bstr.length);for(var i=0;i<bstr.length;i++)u8[i]=bstr.charCodeAt(i);files.push(new File([new Blob([u8],{type:mime})],c.name,{type:'image/png'}));}
     });return files;
   }
@@ -238,7 +255,7 @@
     var dailyCanvas=document.getElementById('soc-post-canvas');var mealCanvas=document.getElementById('soc-post-canvas-meal');var canvases=[];
     if(dailyCanvas&&dailyCanvas.style.display!=='none'&&dailyCanvas.width>0)canvases.push({canvas:dailyCanvas,name:'dorfladen-post.png'});
     if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0)canvases.push({canvas:mealCanvas,name:'mittagessen-poster.png'});
-    if(!canvases.length){var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var fc=document.createElement('canvas');var fx=fc.getContext('2d');if(mtI.length>0&&otherI.length>0){var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2,true);var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2);fc.width=1200;fc.height=tD.height+tM.height;fx.drawImage(tD,0,0);fx.drawImage(tM,0,tD.height);}else if(mtI.length>0){socialDrawMealPosterAuto(fc,fx,600,mtI,{},2);}else{socialDrawPoster(fc,fx,600,otherI,titel,freitext,{},2);}canvases.push({canvas:fc,name:'dorfladen-post.png'});}
+    if(!canvases.length){var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var fc=document.createElement('canvas');var fx=fc.getContext('2d');if(mtI.length>0&&otherI.length>0){var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2,{titel:titel,freitext:freitext});var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2,true,true);fc.width=1200;fc.height=tM.height+tD.height;fx.drawImage(tM,0,0);fx.drawImage(tD,0,tM.height);}else if(mtI.length>0){socialDrawMealPosterAuto(fc,fx,600,mtI,{},2,{titel:titel,freitext:freitext});}else{socialDrawPoster(fc,fx,600,otherI,titel,freitext,{},2);}canvases.push({canvas:fc,name:'dorfladen-post.png'});}
     var files=canvasToFiles(canvases,selected,titel,freitext);
     if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
     socialShareFiles(files,msg,hasMt);socialSavePost(titel,freitext,selected);
