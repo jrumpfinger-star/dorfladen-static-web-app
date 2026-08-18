@@ -368,22 +368,14 @@
     return out;
   }
 
-  // Stapelt die Bloecke einer Seite zu einem Canvas + optionale Seiten-Fusszeile.
+  // Stapelt die Bloecke einer Seite zu einem Canvas.
   function socialComposePage(secs,pageNo,total,W,SCALE){
     var dw=W*SCALE;
     var bodyDev=secs.reduce(function(a,s){return a+s.cv.height;},0);
-    var footDev=(total>1)?30*SCALE:0;
-    var pc=document.createElement('canvas');pc.width=dw;pc.height=bodyDev+footDev;
+    var pc=document.createElement('canvas');pc.width=dw;pc.height=bodyDev;
     var x=pc.getContext('2d');
     x.fillStyle='#faf9f6';x.fillRect(0,0,dw,pc.height);
     var y=0;secs.forEach(function(s){x.drawImage(s.cv,0,y);y+=s.cv.height;});
-    if(total>1){
-      x.fillStyle='#eef2ee';x.fillRect(0,y,dw,footDev);
-      x.fillStyle='#6b7280';x.textAlign='center';x.textBaseline='middle';
-      x.font='600 '+Math.round(15*SCALE)+'px "Segoe UI",system-ui,sans-serif';
-      x.fillText('Seite '+pageNo+' / '+total+'  \u00b7  Dorfladen Oberornau',dw/2,y+footDev/2);
-      x.textBaseline='alphabetic';
-    }
     return pc;
   }
 
