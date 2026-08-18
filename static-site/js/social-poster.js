@@ -48,186 +48,83 @@
 
   function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE,hideFooter){
     SCALE=SCALE||1;
-    var PAD=26, GAP=16, CPAD=10;
-    var colW=(W-PAD*2-GAP)/2;         // Kartenbreite
-    var photoW=colW-CPAD*2;           // Fotobreite in der Karte
-    var photoH=Math.round(photoW*3/4);// 4:3
-    var fwPhotoW=200, fwPhotoH=150;   // Vollbreiten-Karte (einzelnes Rest-Produkt)
-    var NAME_LH=19, NAME_FONT='bold 15px "Segoe UI",system-ui,sans-serif';
-    var FW_NAME_LH=22, FW_NAME_FONT='bold 17px "Segoe UI",system-ui,sans-serif';
-    // Canvas kann kein SVG/Lucide – Emoji-Fallbacks (laut Konventionen §3 für Poster erlaubt)
-    var _iconToEmoji={'utensils':'\uD83C\uDF5D','cake-slice':'\uD83C\uDF70','apple':'\uD83C\uDF4E','jar':'\uD83E\uDD57','salad':'\uD83E\uDD57','coffee':'\u2615','beef':'\uD83E\uDD69','fish':'\uD83D\uDC1F','pizza':'\uD83C\uDF55','sandwich':'\uD83E\uDD6A','cookie':'\uD83C\uDF6A','ice-cream-cone':'\uD83C\uDF66','wine':'\uD83C\uDF77','beer':'\uD83C\uDF7A','cherry':'\uD83C\uDF52','grape':'\uD83C\uDF47','carrot':'\uD83E\uDD55','wheat':'\uD83C\uDF3E','leaf':'\uD83C\uDF3F','tag':'\uD83C\uDFF7\uFE0F'};
-    var catIcons={};
-    var kats=window._socKategorien_ref?window._socKategorien_ref():[];
-    kats.forEach(function(k){catIcons[k.name]=_iconToEmoji[k.icon]||'';});
-    if(!catIcons['Mittagessen'])catIcons['Mittagessen']='\uD83C\uDF5D';
-    if(!catIcons['Kuchen'])catIcons['Kuchen']='\uD83C\uDF70';
+    var PAD=16, GAP=12, CARD_R=16, CARD_PAD=14;
+    var IMG_W=W-PAD*2, IMG_H=Math.round(IMG_W*0.55);
     var cats={};selected.forEach(function(p){var c=p.kategorie||'Sonstiges';if(!cats[c])cats[c]=[];cats[c].push(p);});
     var catKeys=Object.keys(cats);
-
-    // ── leer ──
-    if(!selected.length){
-      var H0=170;canvas.width=W*SCALE;canvas.height=H0*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
-      ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H0);
-      ctx.fillStyle='#2e7d32';ctx.fillRect(0,0,W,60);
-      ctx.fillStyle='#fff';ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(titel||'Heute im Dorfladen',W/2,38);
-      ctx.fillStyle='#9ca3af';ctx.font='italic 14px "Segoe UI",system-ui,sans-serif';ctx.fillText('Bitte Produkte oben ausw\u00e4hlen\u2026',W/2,120);
-      return;
-    }
-
-    // Karten-Maße (misst Namenszeilen)
-    function gridInfo(mctx,p){mctx.font=NAME_FONT;var lines=socialClampLines(mctx,p.name||'',photoW,2);var h=CPAD+photoH+10+lines.length*NAME_LH+CPAD;if(p.ab_uhr)h+=2+13;if(p.preis)h+=6+22;return {lines:lines,h:h};}
-    function fwInfo(mctx,p){mctx.font=FW_NAME_FONT;var tw=W-PAD*2-fwPhotoW-16-CPAD*2;var lines=socialClampLines(mctx,p.name||'',tw,2);var textH=lines.length*FW_NAME_LH+(p.ab_uhr?2+15:0)+(p.preis?8+24:0);var h=Math.max(CPAD+fwPhotoH+CPAD,textH+CPAD*2);return {lines:lines,h:h,tw:tw};}
-
-    // ── eine Karte zeichnen (Grid) ──
-    function drawGridCard(ctx2,p,x,y,rowH,info,cat){
-      ctx2.save();socialRoundRect(ctx2,x,y,colW,rowH,14);ctx2.fillStyle='#ffffff';ctx2.shadowColor='rgba(0,0,0,0.10)';ctx2.shadowBlur=8;ctx2.shadowOffsetY=2;ctx2.fill();ctx2.restore();
-      ctx2.save();socialRoundRect(ctx2,x,y,colW,rowH,14);ctx2.strokeStyle='#ece7de';ctx2.lineWidth=1;ctx2.stroke();ctx2.restore();
-      var px=x+CPAD, py=y+CPAD, img=loadedImgs[p.id];
-      if(img) socialDrawCover(ctx2,img,px,py,photoW,photoH,10); else socialDrawPlaceholder(ctx2,px,py,photoW,photoH,10,catIcons[cat]||'\uD83D\uDED2');
-      var cx=x+colW/2, ty=py+photoH+10+14;
-      ctx2.textAlign='center';ctx2.fillStyle='#1f2937';ctx2.font=NAME_FONT;
-      info.lines.forEach(function(l){ctx2.fillText(l,cx,ty);ty+=NAME_LH;});
-      var by=y+rowH-CPAD; // bottom-aligned Preis (damit Preise nebeneinander fluchten)
-      if(p.preis){ctx2.fillStyle='#2e7d32';ctx2.font='bold 18px "Segoe UI",system-ui,sans-serif';ctx2.fillText(socialFmtPrice(p.preis)+' \u20AC',cx,by);}
-      if(p.ab_uhr){ctx2.fillStyle='#9ca3af';ctx2.font='italic 11px "Segoe UI",system-ui,sans-serif';ctx2.fillText('ab '+p.ab_uhr,cx,p.preis?by-22:by);}
-    }
-    // ── einzelne Rest-Karte über volle Breite ──
-    function drawFullCard(ctx2,p,x,y,info,cat){
-      var w=W-PAD*2;
-      ctx2.save();socialRoundRect(ctx2,x,y,w,info.h,14);ctx2.fillStyle='#ffffff';ctx2.shadowColor='rgba(0,0,0,0.10)';ctx2.shadowBlur=8;ctx2.shadowOffsetY=2;ctx2.fill();ctx2.restore();
-      ctx2.save();socialRoundRect(ctx2,x,y,w,info.h,14);ctx2.strokeStyle='#ece7de';ctx2.lineWidth=1;ctx2.stroke();ctx2.restore();
-      var px=x+CPAD, py=y+(info.h-fwPhotoH)/2, img=loadedImgs[p.id];
-      if(img) socialDrawCover(ctx2,img,px,py,fwPhotoW,fwPhotoH,10); else socialDrawPlaceholder(ctx2,px,py,fwPhotoW,fwPhotoH,10,catIcons[cat]||'\uD83D\uDED2');
-      var tx=x+CPAD+fwPhotoW+16;
-      var blockH=info.lines.length*FW_NAME_LH+(p.ab_uhr?2+15:0)+(p.preis?8+24:0);
-      var ty=y+(info.h-blockH)/2+16;
-      ctx2.textAlign='left';ctx2.fillStyle='#1f2937';ctx2.font=FW_NAME_FONT;
-      info.lines.forEach(function(l){ctx2.fillText(l,tx,ty);ty+=FW_NAME_LH;});
-      if(p.ab_uhr){ctx2.fillStyle='#9ca3af';ctx2.font='italic 12px "Segoe UI",system-ui,sans-serif';ctx2.fillText('ab '+p.ab_uhr+' Uhr',tx,ty+2);ty+=15;}
-      if(p.preis){ty+=8;ctx2.fillStyle='#2e7d32';ctx2.font='bold 22px "Segoe UI",system-ui,sans-serif';ctx2.fillText(socialFmtPrice(p.preis)+' \u20AC',tx,ty+16);}
-    }
-
-    // ── Layout-Durchlauf: misst (draw=false) bzw. zeichnet (draw=true) ──
-    function layout(ctx2,draw,H){
-      if(draw){
-        ctx2.fillStyle='#faf9f6';ctx2.fillRect(0,0,W,H);
-        var hg=ctx2.createLinearGradient(0,0,W,60);hg.addColorStop(0,'#2e7d32');hg.addColorStop(1,'#3a8f3f');
-        ctx2.fillStyle=hg;ctx2.fillRect(0,0,W,60);
-        ctx2.fillStyle='#fff';ctx2.font='bold 22px "Segoe UI",system-ui,sans-serif';ctx2.textAlign='center';ctx2.fillText(titel||'Heute im Dorfladen',W/2,38);
-        var now=new Date();var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-        var dateStr=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear();
-        ctx2.fillStyle='#6b7280';ctx2.font='13px "Segoe UI",system-ui,sans-serif';ctx2.fillText(dateStr,W/2,80);
-      }
-      var y=88;
-      if(freitext){
-        ctx2.font='italic 14px "Segoe UI",system-ui,sans-serif';
-        var fl=socialWrapText(ctx2,freitext,W-70);
-        y+=6;
-        if(draw){ctx2.fillStyle='#374151';ctx2.textAlign='center';fl.forEach(function(l){ctx2.fillText(l,W/2,y+14);y+=18;});}else{y+=fl.length*18;}
-        y+=4;
-      }
-      catKeys.forEach(function(cat){
-        y+=18;
-        if(draw){
-          ctx2.textAlign='left';ctx2.fillStyle='#e1306c';ctx2.font='bold 17px "Segoe UI",system-ui,sans-serif';
-          var label=((catIcons[cat]||'')+' '+cat).replace(/^ /,'');
-          ctx2.fillText(label,PAD,y);
-          var lw=ctx2.measureText(label).width, lineX=PAD+lw+12;
-          if(lineX<W-PAD-20){var lg=ctx2.createLinearGradient(lineX,0,W-PAD,0);lg.addColorStop(0,'#e1306c');lg.addColorStop(1,'rgba(225,48,108,0.12)');ctx2.strokeStyle=lg;ctx2.lineWidth=2;ctx2.beginPath();ctx2.moveTo(lineX,y-5);ctx2.lineTo(W-PAD,y-5);ctx2.stroke();}
-        }
-        y+=14;
-        var items=cats[cat];
-        for(var i=0;i<items.length;i+=2){
-          if(i===items.length-1){
-            var fi=fwInfo(ctx2,items[i]);
-            if(draw) drawFullCard(ctx2,items[i],PAD,y,fi,cat);
-            y+=fi.h+GAP;
-          } else {
-            var a=gridInfo(ctx2,items[i]), b=gridInfo(ctx2,items[i+1]);
-            var rowH=Math.max(a.h,b.h);
-            if(draw){drawGridCard(ctx2,items[i],PAD,y,rowH,a,cat);drawGridCard(ctx2,items[i+1],PAD+colW+GAP,y,rowH,b,cat);}
-            y+=rowH+GAP;
-          }
-        }
-        y+=4;
+    var catIcons={'Mittagessen':'\uD83C\uDF5D','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57'};
+    var mc=document.createElement('canvas'),mx=mc.getContext('2d');
+    var freitextLines=[];if(freitext){mx.font='15px "Segoe UI",system-ui,sans-serif';freitextLines=socialWrapText(mx,freitext,W-PAD*2-8);}
+    var HEADER_H=92;var contentH=HEADER_H+(freitextLines.length?(10+freitextLines.length*20+6):8);var layout=[];
+    catKeys.forEach(function(cat,ci){
+      contentH+=ci===0?4:20;layout.push({type:'cat',cat:cat,y:contentH});contentH+=34;
+      cats[cat].forEach(function(p){
+        if(loadedImgs[p.id]){mx.font='bold 22px "Segoe UI",system-ui,sans-serif';var nl=socialWrapText(mx,p.name,IMG_W-CARD_PAD*2);if(nl.length>2)nl=nl.slice(0,2);var cardH=IMG_H+CARD_PAD+nl.length*28+(p.ab_uhr?28:0)+(p.preis?30:0)+CARD_PAD;layout.push({type:'card',p:p,y:contentH,hasImg:true,nl:nl,cardH:cardH});contentH+=cardH+GAP;}
+        else{var cardH2=(p.ab_uhr?72:58);layout.push({type:'card',p:p,y:contentH,hasImg:false,cardH:cardH2});contentH+=cardH2+GAP;}
       });
-      y+=12;
-      if(!hideFooter){
-        if(draw){ctx2.fillStyle='#6b8c42';ctx2.font='bold 12px "Segoe UI",system-ui,sans-serif';ctx2.textAlign='center';ctx2.fillText('\uD83C\uDF3F FRISCH \u00B7 REGIONAL \u00B7 NACHHALTIG \uD83C\uDF3F',W/2,y);}
-        y+=18;
-      }
-      return y;
-    }
-
-    // Mess-Durchlauf → Gesamthöhe, dann zeichnen
-    var scratch=document.createElement('canvas').getContext('2d');
-    var H=Math.max(170,Math.round(layout(scratch,false,0)));
+    });
+    contentH+=8;var H=Math.max(200,contentH);
     canvas.width=W*SCALE;canvas.height=H*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
-    layout(ctx,true,H);
+    ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H);
+    var grad=ctx.createLinearGradient(0,0,W,HEADER_H);grad.addColorStop(0,'#2e7d4f');grad.addColorStop(1,'#245f3d');ctx.fillStyle=grad;ctx.fillRect(0,0,W,HEADER_H);
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 30px "Segoe UI",system-ui,sans-serif';ctx.fillText(titel||'Heute im Dorfladen',W/2,50);
+    var now=new Date();var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];var months=['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    ctx.font='600 15px "Segoe UI",system-ui,sans-serif';ctx.fillStyle='rgba(255,255,255,0.92)';ctx.fillText(days[now.getDay()]+' \u00b7 '+now.getDate()+'. '+months[now.getMonth()],W/2,76);
+    if(freitextLines.length){ctx.fillStyle='#374151';ctx.font='15px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';var fty=HEADER_H+24;freitextLines.forEach(function(line){ctx.fillText(line,W/2,fty);fty+=20;});}
+    function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+    function roundTop(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+    function drawCover(img,x,y,w,h){var iw=img.width,ih=img.height;var s=Math.max(w/iw,h/ih);var sw=w/s,sh=h/s;var sx=(iw-sw)/2,sy=(ih-sh)/2;ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
+    function timeBadge(x,topY,time){var label='\u23F0 ab '+time+' Uhr';ctx.font='bold 13px "Segoe UI",system-ui,sans-serif';var tw=ctx.measureText(label).width;var padX=9,bh=23,bw=tw+padX*2;ctx.save();roundRect(x,topY,bw,bh,7);ctx.fillStyle='#fef2f2';ctx.fill();ctx.strokeStyle='#dc2626';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#dc2626';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(label,x+padX,topY+bh/2+1);ctx.restore();ctx.textBaseline='alphabetic';}
+    layout.forEach(function(it){
+      if(it.type==='cat'){ctx.textAlign='left';ctx.fillStyle='#2e7d4f';ctx.font='900 18px "Segoe UI",system-ui,sans-serif';var label=(catIcons[it.cat]||'')+' '+it.cat;ctx.fillText(label,PAD,it.y+18);var tw=ctx.measureText(label).width;ctx.strokeStyle='rgba(46,125,79,0.25)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(PAD+tw+12,it.y+13);ctx.lineTo(W-PAD,it.y+13);ctx.stroke();return;}
+      var p=it.p,cx=PAD,cy=it.y,cw=IMG_W,ch=it.cardH;
+      ctx.save();roundRect(cx,cy,cw,ch,CARD_R);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#eee';ctx.lineWidth=1;ctx.stroke();ctx.restore();
+      if(it.hasImg){
+        ctx.save();roundTop(cx,cy,cw,IMG_H,CARD_R);ctx.clip();drawCover(loadedImgs[p.id],cx,cy,cw,IMG_H);ctx.restore();
+        var tx=cx+CARD_PAD,tyy=cy+IMG_H+CARD_PAD;ctx.textAlign='left';ctx.fillStyle='#1f2937';ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';
+        it.nl.forEach(function(line){ctx.fillText(line,tx,tyy+20);tyy+=28;});
+        if(p.ab_uhr){timeBadge(tx,tyy,p.ab_uhr);tyy+=28;}
+        if(p.preis){ctx.fillStyle='#2e7d4f';ctx.font='900 24px "Segoe UI",system-ui,sans-serif';var dp=parseFloat(p.preis);ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):p.preis)+' \u20AC',tx,tyy+24);}
+      } else {
+        var tx2=cx+CARD_PAD,midY=cy+ch/2;ctx.textAlign='left';ctx.fillStyle='#1f2937';ctx.font='bold 19px "Segoe UI",system-ui,sans-serif';
+        var nm=p.name,maxNameW=cw-CARD_PAD*2-90;while(ctx.measureText(nm).width>maxNameW&&nm.length>8)nm=nm.substring(0,nm.length-1);if(nm!==p.name)nm+='\u2026';
+        ctx.fillText(nm,tx2,p.ab_uhr?midY-2:midY+7);
+        if(p.ab_uhr){timeBadge(tx2,midY+3,p.ab_uhr);}
+        if(p.preis){ctx.textAlign='right';ctx.fillStyle='#2e7d4f';ctx.font='900 21px "Segoe UI",system-ui,sans-serif';var dp2=parseFloat(p.preis);ctx.fillText((dp2&&isFinite(dp2)?dp2.toFixed(2):p.preis)+' \u20AC',cx+cw-CARD_PAD,midY+7);ctx.textAlign='left';}
+      }
+    });
+    if(!selected.length){ctx.fillStyle='#9ca3af';ctx.font='italic 16px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('Bitte Produkte oben auswaehlen...',W/2,H/2);}
   }
 
   function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE){
     SCALE=SCALE||1;
-    var PAD=26, GAP=16, CPAD=10, fwPhotoW=200, fwPhotoH=150;
-    var NAME_LH=22, NAME_FONT='bold 18px "Segoe UI",system-ui,sans-serif';
-    var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-    var headerLabel='\uD83C\uDF7D\uFE0F Mittagessen \u00B7 '+days[new Date().getDay()];
-    var totalMenus=mtItems.length;
-
-    function mealInfo(mctx,meal){
-      mctx.font=NAME_FONT;
-      var tw=W-PAD*2-fwPhotoW-16-CPAD*2;
-      var lines=socialClampLines(mctx,meal.name||'',tw,3);
-      var showMenu=totalMenus>1;
-      var textH=(showMenu?26:0)+lines.length*NAME_LH+(meal.ab_uhr?6+20:0)+10+30;
-      var h=Math.max(CPAD+fwPhotoH+CPAD,textH+CPAD*2);
-      return {lines:lines,h:h,showMenu:showMenu,textH:textH};
-    }
-    // Platzhalter-Kachel (kein Foto): helle Kachel + Teller-Icon (Fallback: Emoji)
-    function drawMealPlaceholder(ctx2,x,y,w,h,r){
-      ctx2.save();socialRoundRect(ctx2,x,y,w,h,r);
-      var g=ctx2.createLinearGradient(x,y,x,y+h);g.addColorStop(0,'#f0fdf4');g.addColorStop(1,'#dcf3e3');
-      ctx2.fillStyle=g;ctx2.fill();ctx2.clip();
-      if(_socMealIconReady()){
-        var iw=_socMealIcon.naturalWidth,ih=_socMealIcon.naturalHeight;
-        var pad=Math.round(Math.min(w,h)*0.12);
-        var aw=w-pad*2,ah=h-pad*2;var s=Math.min(aw/iw,ah/ih);
-        var dw=iw*s,dh=ih*s;ctx2.drawImage(_socMealIcon,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
-      }else{
-        ctx2.textAlign='center';ctx2.textBaseline='middle';ctx2.font=Math.round(h*0.42)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx2.globalAlpha=0.95;ctx2.fillText('\uD83C\uDF7D\uFE0F',x+w/2,y+h/2+2);ctx2.globalAlpha=1;ctx2.textBaseline='alphabetic';
-      }
-      ctx2.restore();
-    }
-    // Gut lesbarer "ab HH:MM Uhr"-Badge (rot mit Rahmen) statt hellgrauem Text
-    function drawAbBadge(ctx2,x,yBaseline,text){ctx2.font='bold 11px "Segoe UI",system-ui,sans-serif';var t='ab '+text+' Uhr';var bw=ctx2.measureText(t).width+16;var by=yBaseline-14;ctx2.save();socialRoundRect(ctx2,x,by,bw,20,6);ctx2.fillStyle='#fff';ctx2.fill();ctx2.strokeStyle='#dc2626';ctx2.lineWidth=1.5;ctx2.stroke();ctx2.restore();ctx2.fillStyle='#dc2626';ctx2.textAlign='left';ctx2.fillText(t,x+8,yBaseline);}
-    function drawMealCard(ctx2,meal,x,y,info,idx){
-      var w=W-PAD*2;
-      ctx2.save();socialRoundRect(ctx2,x,y,w,info.h,14);ctx2.fillStyle='#ffffff';ctx2.shadowColor='rgba(0,0,0,0.10)';ctx2.shadowBlur=8;ctx2.shadowOffsetY=2;ctx2.fill();ctx2.restore();
-      ctx2.save();socialRoundRect(ctx2,x,y,w,info.h,14);ctx2.strokeStyle='#ece7de';ctx2.lineWidth=1;ctx2.stroke();ctx2.restore();
-      var px=x+CPAD, py=y+(info.h-fwPhotoH)/2, img=loadedImgs&&loadedImgs[meal.id];
-      if(img) socialDrawCover(ctx2,img,px,py,fwPhotoW,fwPhotoH,10); else drawMealPlaceholder(ctx2,px,py,fwPhotoW,fwPhotoH,10);
-      var tx=x+CPAD+fwPhotoW+16;
-      var ty=y+(info.h-info.textH)/2+(info.showMenu?18:16);
-      if(info.showMenu){var t='Men\u00fc '+(idx+1);ctx2.font='bold 12px "Segoe UI",system-ui,sans-serif';var pw=ctx2.measureText(t).width+18;ctx2.save();socialRoundRect(ctx2,tx,ty-14,pw,20,10);ctx2.fillStyle='rgba(46,125,50,0.12)';ctx2.fill();ctx2.restore();ctx2.fillStyle='#2e7d32';ctx2.textAlign='left';ctx2.fillText(t,tx+9,ty);ty+=26;}
-      ctx2.textAlign='left';ctx2.fillStyle='#1f2937';ctx2.font=NAME_FONT;
-      info.lines.forEach(function(l){ctx2.fillText(l,tx,ty);ty+=NAME_LH;});
-      if(meal.ab_uhr){ty+=6;drawAbBadge(ctx2,tx,ty,meal.ab_uhr);ty+=20;}
-      ty+=10;ctx2.fillStyle='#2e7d32';ctx2.font='bold 28px "Segoe UI",system-ui,sans-serif';ctx2.textAlign='left';ctx2.fillText(socialFmtPrice(meal.preis)+' \u20AC',tx,ty+8);
-    }
-    // Mess-Durchlauf (Scratch) -> Gesamthoehe
-    var scratch=document.createElement('canvas').getContext('2d');
-    var H=34+18;
-    mtItems.forEach(function(m){H+=mealInfo(scratch,m).h+GAP;});
-    H+=6;H=Math.max(150,H);
+    var PAD=16, GAP=14, CARD_R=16, CARD_PAD=14;
+    var IMG_W=W-PAD*2, IMG_H=Math.round(IMG_W*0.58);
+    var mc=document.createElement('canvas'),mx=mc.getContext('2d');
+    var HEADER_H=118;var contentH=HEADER_H+6;var layout=[];
+    mtItems.forEach(function(meal,idx){var hasImg=!!loadedImgs[meal.id];var heroH=hasImg?IMG_H:150;mx.font='bold 24px "Segoe UI",system-ui,sans-serif';var nl=socialWrapText(mx,meal.name,IMG_W-CARD_PAD*2);if(nl.length>3)nl=nl.slice(0,3);var cardH=heroH+CARD_PAD+26+nl.length*30+(meal.preis?32:0)+CARD_PAD;layout.push({meal:meal,idx:idx,hasImg:hasImg,nl:nl,cardH:cardH});contentH+=cardH+GAP;});
+    contentH+=6;var H=Math.max(200,contentH);
     canvas.width=W*SCALE;canvas.height=H*SCALE;ctx=canvas.getContext('2d');ctx.setTransform(SCALE,0,0,SCALE,0,0);
-    ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H);
-    // Sektionsueberschrift (gruen) mit Trennlinie – Tag gut lesbar integriert
-    var yy=34;ctx.textAlign='left';ctx.fillStyle='#2e7d32';ctx.font='bold 17px "Segoe UI",system-ui,sans-serif';ctx.fillText(headerLabel,PAD,yy);
-    var lw=ctx.measureText(headerLabel).width, lineX=PAD+lw+12;
-    if(lineX<W-PAD-20){var lg=ctx.createLinearGradient(lineX,0,W-PAD,0);lg.addColorStop(0,'#2e7d32');lg.addColorStop(1,'rgba(46,125,50,0.12)');ctx.strokeStyle=lg;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lineX,yy-5);ctx.lineTo(W-PAD,yy-5);ctx.stroke();}
-    yy+=18;
-    mtItems.forEach(function(m,i){var info=mealInfo(ctx,m);drawMealCard(ctx,m,PAD,yy,info,i);yy+=info.h+GAP;});
+    ctx.fillStyle='#faf5ef';ctx.fillRect(0,0,W,H);
+    var ty=30;ctx.textAlign='center';ctx.fillStyle='#6b8c42';ctx.font='bold 12px "Segoe UI",system-ui,sans-serif';ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,ty);
+    ctx.fillStyle='#5b7a3a';ctx.font='italic bold 40px Georgia,"Times New Roman",serif';ctx.fillText('Mittagessen',W/2,ty+42);
+    var now=new Date();var days=['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];ctx.fillStyle='#374151';ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';ctx.fillText(days[now.getDay()],W/2,ty+78);
+    function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+    function roundTop(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+    function drawCover(img,x,y,w,h){var iw=img.width,ih=img.height;var s=Math.max(w/iw,h/ih);var sw=w/s,sh=h/s;var sx=(iw-sw)/2,sy=(ih-sh)/2;ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
+    var y=HEADER_H+6;
+    layout.forEach(function(it){
+      var meal=it.meal,cx=PAD,cy=y,cw=IMG_W,ch=it.cardH;
+      ctx.save();roundRect(cx,cy,cw,ch,CARD_R);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#efe7db';ctx.lineWidth=1;ctx.stroke();ctx.restore();
+      var heroH=it.hasImg?IMG_H:150;
+      var tyy=cy+CARD_PAD;
+      if(it.hasImg){ctx.save();roundTop(cx,cy,cw,heroH,CARD_R);ctx.clip();drawCover(loadedImgs[meal.id],cx,cy,cw,heroH);ctx.restore();tyy=cy+heroH+CARD_PAD;}
+      else{ctx.save();roundTop(cx,cy,cw,heroH,CARD_R);ctx.fillStyle='#f2efe8';ctx.fill();ctx.strokeStyle='#ebe5da';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#c8b79b';ctx.font='56px "Segoe UI Emoji","Segoe UI Symbol","Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('🍽',W/2,cy+82);ctx.restore();tyy=cy+heroH+CARD_PAD;}
+      ctx.textAlign='center';ctx.fillStyle='#2e7d32';ctx.font='900 15px "Segoe UI",system-ui,sans-serif';ctx.fillText('Men\u00fc '+(it.idx+1),W/2,tyy+16);tyy+=26;
+      ctx.fillStyle='#1a1a1a';ctx.font='bold 24px "Segoe UI",system-ui,sans-serif';it.nl.forEach(function(line){ctx.fillText(line,W/2,tyy+22);tyy+=30;});
+      if(meal.preis){var mp=parseFloat(meal.preis);ctx.fillStyle='#2e7d4f';ctx.font='900 24px "Segoe UI",system-ui,sans-serif';ctx.fillText((mp&&isFinite(mp)?mp.toFixed(2):meal.preis)+' \u20AC',W/2,tyy+24);}
+      y+=ch+GAP;
+    });
   }
 
   // Expose draw functions on module

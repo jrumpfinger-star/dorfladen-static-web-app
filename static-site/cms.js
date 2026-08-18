@@ -82,6 +82,72 @@
   });
 
   var API = '/api';
+  var _socPreviewDevice='mobile';
+  var _socPreviewContent='poster';
+  var _socPreviewDeviceMap={
+    mobile:{label:'Mobile',maxWidth:390,iframeHeight:920},
+    ipad:{label:'iPad Mini',maxWidth:768,iframeHeight:900},
+    desktop:{label:'Desktop',maxWidth:1024,iframeHeight:860},
+    wide:{label:'Desktop breit',maxWidth:1320,iframeHeight:860}
+  };
+
+  function socialPreviewSetActive(idPrefix,value,current){
+    var el=document.getElementById(idPrefix+value);
+    if(!el)return;
+    var active=value===current;
+    el.style.background=active?'#2e7d32':'#fff';
+    el.style.borderColor=active?'#2e7d32':'#d1d5db';
+    el.style.color=active?'#fff':'#374151';
+    el.style.boxShadow=active?'0 1px 3px rgba(46,125,50,.18)':'none';
+  }
+
+  function socialApplyPreviewMode(){
+    var shell=document.getElementById('soc-preview-shell');
+    var device=_socPreviewDeviceMap[_socPreviewDevice]||_socPreviewDeviceMap.mobile;
+    var poster=document.getElementById('soc-post-canvas');
+    var meal=document.getElementById('soc-post-canvas-meal');
+    var dailyLabel=document.getElementById('soc-preview-label-daily');
+    var mealLabel=document.getElementById('soc-preview-label-meal');
+    var frame=document.getElementById('soc-tagesinfo-frame');
+    if(shell) shell.style.maxWidth=device.maxWidth+'px';
+    if(frame) frame.style.height=device.iframeHeight+'px';
+    if(_socPreviewContent==='tagesinfo'){
+      if(poster) poster.style.display='none';
+      if(meal) meal.style.display='none';
+      if(dailyLabel) dailyLabel.style.display='none';
+      if(mealLabel) mealLabel.style.display='none';
+      if(frame) frame.style.display='block';
+    } else {
+      if(frame) frame.style.display='none';
+    }
+    socialPreviewSetActive('soc-preview-mode-','poster',_socPreviewContent);
+    socialPreviewSetActive('soc-preview-mode-','tagesinfo',_socPreviewContent);
+    socialPreviewSetActive('soc-preview-device-','mobile',_socPreviewDevice);
+    socialPreviewSetActive('soc-preview-device-','ipad',_socPreviewDevice);
+    socialPreviewSetActive('soc-preview-device-','desktop',_socPreviewDevice);
+    socialPreviewSetActive('soc-preview-device-','wide',_socPreviewDevice);
+  }
+
+  function socialRenderTagesinfoPreview(){
+    var frame=document.getElementById('soc-tagesinfo-frame');
+    if(!frame)return;
+    if(!frame.getAttribute('data-src-base')) frame.setAttribute('data-src-base','/essen-im-dorfladen.html');
+    frame.src=frame.getAttribute('data-src-base')+'?preview='+Date.now();
+  }
+
+  window.socialSetPreviewDevice=function(device){
+    if(!device||!_socPreviewDeviceMap[device])return;
+    _socPreviewDevice=device;
+    socialApplyPreviewMode();
+  };
+
+  window.socialSetPreviewContent=function(content){
+    if(content!=='poster'&&content!=='tagesinfo')return;
+    _socPreviewContent=content;
+    socialApplyPreviewMode();
+    if(content==='tagesinfo') socialRenderTagesinfoPreview();
+    else window.socialGenPreview();
+  };
 
   // --- Load Version ---
   (function(){
@@ -11252,6 +11318,12 @@
     var titel=(document.getElementById('soc-post-titel').value||'').trim();
     var freitext=(document.getElementById('soc-post-text').value||'').trim();
 
+    if(_socPreviewContent==='tagesinfo'){
+      socialApplyPreviewMode();
+      socialRenderTagesinfoPreview();
+      return Promise.resolve();
+    }
+
     // Collect image URLs for all selected items (only if post_images feature enabled)
     var imgMap={};
     if(_featureFlags.post_images!==false){
@@ -11375,6 +11447,7 @@
 
       // Store loaded images for share function to reuse
       window._socLoadedImgs=loadedImgs;
+      socialApplyPreviewMode();
     });
   };
 
@@ -11411,9 +11484,9 @@
 
   function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE){
     SCALE=SCALE||1;
-    var hasAnyImg=Object.keys(loadedImgs).filter(function(k){return k!=='_tainted';}).length>0;
-    var IMG_SIZE=hasAnyImg?48:0;
-    var ITEM_H=hasAnyImg?Math.max(54,22):22;
+    var PAD=16, GAP=12, CARD_R=16, CARD_PAD=14;
+    var IMG_W=W-PAD*2;
+    var IMG_H=Math.round(IMG_W*0.55);
 
     // Group by category
     var cats={};
@@ -11430,23 +11503,35 @@
     if(!catIcons['Mittagessen'])catIcons['Mittagessen']='\uD83C\uDF5D';
     if(!catIcons['Kuchen'])catIcons['Kuchen']='\uD83C\uDF70';
 
-    // Calculate dynamic height
+    // --- Measure pass (compute dynamic height + card layout) ---
+    var mc=document.createElement('canvas'), mx=mc.getContext('2d');
     var freitextLines=[];
-    if(freitext){
-      ctx.font='14px "Segoe UI",system-ui,sans-serif';
-      freitextLines=socialWrapText(ctx,freitext,W-60);
-    }
-    var contentH=100; // header+date
-    contentH+=freitextLines.length*18+(freitext?8:0);
+    if(freitext){ mx.font='15px "Segoe UI",system-ui,sans-serif'; freitextLines=socialWrapText(mx,freitext,W-PAD*2-8); }
+
+    var HEADER_H=92;
+    var contentH=HEADER_H + (freitextLines.length? (10+freitextLines.length*20+6) : 8);
+    var layout=[];
     catKeys.forEach(function(cat,ci){
-      contentH+=ci===0?4:20; // space above category (more gap between categories)
-      contentH+=28; // cat header
+      contentH+= ci===0?4:20;
+      layout.push({type:'cat',cat:cat,y:contentH});
+      contentH+=34; // category header row
       cats[cat].forEach(function(p){
-        contentH+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;
+        if(loadedImgs[p.id]){
+          mx.font='bold 22px "Segoe UI",system-ui,sans-serif';
+          var nl=socialWrapText(mx,p.name,IMG_W-CARD_PAD*2);
+          if(nl.length>2) nl=nl.slice(0,2);
+          var cardH=IMG_H+CARD_PAD+nl.length*28+(p.ab_uhr?28:0)+(p.preis?30:0)+CARD_PAD;
+          layout.push({type:'card',p:p,y:contentH,hasImg:true,nl:nl,cardH:cardH});
+          contentH+=cardH+GAP;
+        } else {
+          var cardH2=(p.ab_uhr?72:58);
+          layout.push({type:'card',p:p,y:contentH,hasImg:false,cardH:cardH2});
+          contentH+=cardH2+GAP;
+        }
       });
     });
-    contentH+=20; // footer
-    var H=Math.max(160,contentH);
+    contentH+=8;
+    var H=Math.max(200,contentH);
     canvas.width=W*SCALE; canvas.height=H*SCALE;
     ctx.setTransform(SCALE,0,0,SCALE,0,0);
 
@@ -11454,123 +11539,73 @@
     ctx.fillStyle='#faf9f6';
     ctx.fillRect(0,0,W,H);
 
-    // Header bar
-    ctx.fillStyle='#2e7d32';
-    ctx.fillRect(0,0,W,60);
-    ctx.fillStyle='#fff';
-    ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText(titel||'Heute im Dorfladen',W/2,40);
-
-    // Date
+    // Header (green gradient) + title + date
+    var grad=ctx.createLinearGradient(0,0,W,HEADER_H);
+    grad.addColorStop(0,'#2e7d4f'); grad.addColorStop(1,'#245f3d');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,HEADER_H);
+    ctx.fillStyle='#fff'; ctx.textAlign='center';
+    ctx.font='900 30px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(titel||'Heute im Dorfladen',W/2,50);
     var now=new Date();
     var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-    var dateStr=days[now.getDay()]+', '+now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear();
-    ctx.fillStyle='#6b7280';
-    ctx.font='13px "Segoe UI",system-ui,sans-serif';
-    ctx.fillText(dateStr,W/2,80);
-
-    var y=100;
+    var months=['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    ctx.font='600 15px "Segoe UI",system-ui,sans-serif';
+    ctx.fillStyle='rgba(255,255,255,0.92)';
+    ctx.fillText(days[now.getDay()]+' \u00b7 '+now.getDate()+'. '+months[now.getMonth()],W/2,76);
 
     // Freitext
     if(freitextLines.length){
-      ctx.fillStyle='#374151';
-      ctx.font='14px "Segoe UI",system-ui,sans-serif';
-      ctx.textAlign='center';
-      freitextLines.forEach(function(line){
-        ctx.fillText(line,W/2,y);
-        y+=18;
-      });
-      y+=8;
+      ctx.fillStyle='#374151'; ctx.font='15px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='center';
+      var fty=HEADER_H+24;
+      freitextLines.forEach(function(line){ ctx.fillText(line,W/2,fty); fty+=20; });
     }
 
-    ctx.textAlign='left';
-    catKeys.forEach(function(cat,ci){
-      // Space above category (bigger gap between categories)
-      y+=ci===0?4:20;
-      // Category header
-      ctx.fillStyle='#2e7d4f';
-      ctx.font='bold 16px "Segoe UI",system-ui,sans-serif';
-      ctx.fillText((catIcons[cat]||'')+' '+cat,24,y);
-      y+=6;
-      ctx.strokeStyle='#2e7d4f';
-      ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(24,y);ctx.lineTo(W-24,y);ctx.stroke();
-      y+=12;
+    // Rounded-rect helpers
+    function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+    function roundTop(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h); ctx.lineTo(x,y+h); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath(); }
+    function drawCover(img,x,y,w,h){ var iw=img.width,ih=img.height; var s=Math.max(w/iw,h/ih); var sw=w/s, sh=h/s; var sx=(iw-sw)/2, sy=(ih-sh)/2; ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h); }
+    function timeBadge(x,topY,time){ var label='\u23F0 ab '+time+' Uhr'; ctx.font='bold 13px "Segoe UI",system-ui,sans-serif'; var tw=ctx.measureText(label).width; var padX=9, bh=23, bw=tw+padX*2; ctx.save(); roundRect(x,topY,bw,bh,7); ctx.fillStyle='#fef2f2'; ctx.fill(); ctx.strokeStyle='#dc2626'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#dc2626'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(label,x+padX,topY+bh/2+1); ctx.restore(); ctx.textBaseline='alphabetic'; }
 
-      // Items
-      cats[cat].forEach(function(p){
-        var itemImg=loadedImgs[p.id];
-        var textX=28;
-        var textY=y;
+    layout.forEach(function(it){
+      if(it.type==='cat'){
+        ctx.textAlign='left';
+        ctx.fillStyle='#2e7d4f'; ctx.font='900 18px "Segoe UI",system-ui,sans-serif';
+        var label=(catIcons[it.cat]||'')+' '+it.cat;
+        ctx.fillText(label,PAD,it.y+18);
+        var tw=ctx.measureText(label).width;
+        ctx.strokeStyle='rgba(46,125,79,0.25)'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(PAD+tw+12,it.y+13); ctx.lineTo(W-PAD,it.y+13); ctx.stroke();
+        return;
+      }
+      var p=it.p, cx=PAD, cy=it.y, cw=IMG_W, ch=it.cardH;
+      // Card background
+      ctx.save(); roundRect(cx,cy,cw,ch,CARD_R); ctx.fillStyle='#fff'; ctx.fill();
+      ctx.strokeStyle='#eee'; ctx.lineWidth=1; ctx.stroke(); ctx.restore();
 
-        if(hasAnyImg){
-          // Draw image or placeholder
-          if(itemImg){
-            var ix=28, iy=y-4;
-            // Rounded rect clip
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(ix+4,iy);ctx.lineTo(ix+IMG_SIZE-4,iy);
-            ctx.quadraticCurveTo(ix+IMG_SIZE,iy,ix+IMG_SIZE,iy+4);
-            ctx.lineTo(ix+IMG_SIZE,iy+IMG_SIZE-4);
-            ctx.quadraticCurveTo(ix+IMG_SIZE,iy+IMG_SIZE,ix+IMG_SIZE-4,iy+IMG_SIZE);
-            ctx.lineTo(ix+4,iy+IMG_SIZE);
-            ctx.quadraticCurveTo(ix,iy+IMG_SIZE,ix,iy+IMG_SIZE-4);
-            ctx.lineTo(ix,iy+4);
-            ctx.quadraticCurveTo(ix,iy,ix+4,iy);
-            ctx.closePath();
-            ctx.clip();
-            ctx.drawImage(itemImg,ix,iy,IMG_SIZE,IMG_SIZE);
-            ctx.restore();
-            // Light border
-            ctx.strokeStyle='#e5e7eb';
-            ctx.lineWidth=1;
-            ctx.beginPath();
-            ctx.moveTo(ix+4,iy);ctx.lineTo(ix+IMG_SIZE-4,iy);
-            ctx.quadraticCurveTo(ix+IMG_SIZE,iy,ix+IMG_SIZE,iy+4);
-            ctx.lineTo(ix+IMG_SIZE,iy+IMG_SIZE-4);
-            ctx.quadraticCurveTo(ix+IMG_SIZE,iy+IMG_SIZE,ix+IMG_SIZE-4,iy+IMG_SIZE);
-            ctx.lineTo(ix+4,iy+IMG_SIZE);
-            ctx.quadraticCurveTo(ix,iy+IMG_SIZE,ix,iy+IMG_SIZE-4);
-            ctx.lineTo(ix,iy+4);
-            ctx.quadraticCurveTo(ix,iy,ix+4,iy);
-            ctx.closePath();
-            ctx.stroke();
-          }
-          textX=28+IMG_SIZE+10;
-          textY=y+IMG_SIZE/2-6;
-        }
-
-        ctx.fillStyle='#1f2937';
-        ctx.font='14px "Segoe UI",system-ui,sans-serif';
-        var maxNameW=W-textX-80;
-        var dispName=p.name;
-        while(ctx.measureText(dispName).width>maxNameW&&dispName.length>10){
-          dispName=dispName.substring(0,dispName.length-1);
-        }
-        if(dispName!==p.name) dispName+='\u2026';
-        ctx.fillText(dispName,textX,textY+14);
-        if(p.ab_uhr){
-          ctx.fillStyle='#9ca3af';
-          ctx.font='italic 11px "Segoe UI",system-ui,sans-serif';
-          ctx.fillText('ab '+p.ab_uhr,textX,textY+28);
-        }
-        if(p.preis){
-          ctx.fillStyle='#2e7d32';
-          ctx.font='bold 14px "Segoe UI",system-ui,sans-serif';
-          ctx.textAlign='right';
-          var dp=parseFloat(p.preis);ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):p.preis)+' \u20AC',W-28,textY+14);
-          ctx.textAlign='left';
-        }
-        y+=p.ab_uhr?Math.max(ITEM_H,38):ITEM_H;
-      });
-      y+=10;
+      if(it.hasImg){
+        // Full-width image (rounded top), text below
+        ctx.save(); roundTop(cx,cy,cw,IMG_H,CARD_R); ctx.clip(); drawCover(loadedImgs[p.id],cx,cy,cw,IMG_H); ctx.restore();
+        var tx=cx+CARD_PAD, tyy=cy+IMG_H+CARD_PAD;
+        ctx.textAlign='left'; ctx.fillStyle='#1f2937'; ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';
+        it.nl.forEach(function(line){ ctx.fillText(line,tx,tyy+20); tyy+=28; });
+        if(p.ab_uhr){ timeBadge(tx,tyy,p.ab_uhr); tyy+=28; }
+        if(p.preis){ ctx.fillStyle='#2e7d4f'; ctx.font='900 24px "Segoe UI",system-ui,sans-serif'; var dp=parseFloat(p.preis); ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):p.preis)+' \u20AC',tx,tyy+24); }
+      } else {
+        // Compact row (no photo): name left, price right
+        var tx2=cx+CARD_PAD, midY=cy+ch/2;
+        ctx.textAlign='left'; ctx.fillStyle='#1f2937'; ctx.font='bold 19px "Segoe UI",system-ui,sans-serif';
+        var nm=p.name, maxNameW=cw-CARD_PAD*2-90;
+        while(ctx.measureText(nm).width>maxNameW && nm.length>8) nm=nm.substring(0,nm.length-1);
+        if(nm!==p.name) nm+='\u2026';
+        ctx.fillText(nm,tx2, p.ab_uhr? midY-2 : midY+7);
+        if(p.ab_uhr){ timeBadge(tx2,midY+3,p.ab_uhr); }
+        if(p.preis){ ctx.textAlign='right'; ctx.fillStyle='#2e7d4f'; ctx.font='900 21px "Segoe UI",system-ui,sans-serif'; var dp2=parseFloat(p.preis); ctx.fillText((dp2&&isFinite(dp2)?dp2.toFixed(2):p.preis)+' \u20AC',cx+cw-CARD_PAD,midY+7); ctx.textAlign='left'; }
+      }
     });
 
     if(!selected.length){
       ctx.fillStyle='#9ca3af';
-      ctx.font='italic 14px "Segoe UI",system-ui,sans-serif';
+      ctx.font='italic 16px "Segoe UI",system-ui,sans-serif';
       ctx.textAlign='center';
       ctx.fillText('Bitte Produkte oben auswaehlen...',W/2,H/2);
     }
@@ -11580,82 +11615,84 @@
   // --- Auto Meal Poster (replaces normal poster when Mittagessen is selected) ---
   function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE){
     SCALE=SCALE||1;
-    // Pre-calculate height
-    var tmpC=document.createElement('canvas');tmpC.width=W;tmpC.height=10;
-    var tmpX=tmpC.getContext('2d');
-    var calcH=24+28+32+30; // claim + title + day + gap
-    tmpX.font='bold 18px "Segoe UI",system-ui,sans-serif';
-    mtItems.forEach(function(meal){
-      calcH+=22; // menu badge
-      var nl=socialWrapText(tmpX,meal.name,W-50);
-      calcH+=nl.length*22;
-      calcH+=meal.preis?20:8;
-      calcH+=6;
+    var PAD=16, GAP=14, CARD_R=16, CARD_PAD=14;
+    var IMG_W=W-PAD*2;
+    var IMG_H=Math.round(IMG_W*0.58);
+
+    // --- Measure pass ---
+    var mc=document.createElement('canvas'), mx=mc.getContext('2d');
+    var HEADER_H=118;
+    var contentH=HEADER_H+6;
+    var layout=[];
+    mtItems.forEach(function(meal,idx){
+      var hasImg=!!loadedImgs[meal.id];
+      var heroH=hasImg?IMG_H:150;
+      mx.font='bold 24px "Segoe UI",system-ui,sans-serif';
+      var nl=socialWrapText(mx,meal.name,IMG_W-CARD_PAD*2);
+      if(nl.length>3) nl=nl.slice(0,3);
+      var cardH=heroH+CARD_PAD+26+nl.length*30+(meal.preis?32:0)+CARD_PAD;
+      layout.push({meal:meal,idx:idx,hasImg:hasImg,nl:nl,cardH:cardH});
+      contentH+=cardH+GAP;
     });
-    calcH+=10; // bottom padding
-    canvas.width=W*SCALE;canvas.height=calcH*SCALE;
+    contentH+=6;
+    var H=Math.max(200,contentH);
+    canvas.width=W*SCALE;canvas.height=H*SCALE;
     ctx=canvas.getContext('2d');
     ctx.setTransform(SCALE,0,0,SCALE,0,0);
 
     // Background
     ctx.fillStyle='#faf5ef';
-    ctx.fillRect(0,0,W,calcH);
+    ctx.fillRect(0,0,W,H);
 
-    // Claim
-    var ty=24;
-    ctx.textAlign='center';
-    ctx.fillStyle='#6b8c42';
-    ctx.font='10px "Segoe UI",system-ui,sans-serif';
+    // Header: claim + "Mittagessen" + day
+    var ty=30; ctx.textAlign='center';
+    ctx.fillStyle='#6b8c42'; ctx.font='bold 12px "Segoe UI",system-ui,sans-serif';
     ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,ty);
-
-    // "Mittagessen" title
-    ty+=28;
-    ctx.fillStyle='#5b7a3a';
-    ctx.font='italic bold 30px Georgia,"Times New Roman",serif';
-    ctx.fillText('Mittagessen',W/2,ty);
-
-    // Day
+    ctx.fillStyle='#5b7a3a'; ctx.font='italic bold 40px Georgia,"Times New Roman",serif';
+    ctx.fillText('Mittagessen',W/2,ty+42);
     var now=new Date();
     var days=['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];
-    ty+=32;
-    ctx.fillStyle='#374151';
-    ctx.font='bold 20px "Segoe UI",system-ui,sans-serif';
-    ctx.fillText(days[now.getDay()],W/2,ty);
+    ctx.fillStyle='#374151'; ctx.font='bold 22px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(days[now.getDay()],W/2,ty+78);
 
-    // List all meals
-    ty+=30;
-    mtItems.forEach(function(meal,idx){
-      // Menu number badge
-      ctx.fillStyle='rgba(107,140,66,0.18)';
-      ctx.beginPath();
-      ctx.ellipse(W/2,ty-6,70,16,0,0,Math.PI*2);
-      ctx.fill();
-      ctx.fillStyle='#2e7d32';
-      ctx.font='bold 15px "Segoe UI",system-ui,sans-serif';
-      ctx.textAlign='center';
-      ctx.fillText('Men\u00fc '+(idx+1),W/2,ty);
-      ty+=22;
+    // Rounded-rect helpers
+    function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+    function roundTop(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h); ctx.lineTo(x,y+h); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath(); }
+    function drawCover(img,x,y,w,h){ var iw=img.width,ih=img.height; var s=Math.max(w/iw,h/ih); var sw=w/s, sh=h/s; var sx=(iw-sw)/2, sy=(ih-sh)/2; ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h); }
 
-      // Dish name (prominent)
-      ctx.fillStyle='#1a1a1a';
-      ctx.font='bold 18px "Segoe UI",system-ui,sans-serif';
-      var nameLines=socialWrapText(ctx,meal.name,W-50);
-      nameLines.forEach(function(line){
-        ctx.fillText(line,W/2,ty);
-        ty+=22;
-      });
-
-      // Price
-      if(meal.preis){
-        var mp=parseFloat(meal.preis);
-        ctx.fillStyle='#6b7280';
-        ctx.font='12px "Segoe UI",system-ui,sans-serif';
-        ctx.fillText((mp&&isFinite(mp)?mp.toFixed(2):meal.preis)+' \u20AC',W/2,ty);
-        ty+=20;
+    // Meal cards: full-width dish image, "Menue N", name + price below
+    var y=HEADER_H+6;
+    layout.forEach(function(it){
+      var meal=it.meal, cx=PAD, cy=y, cw=IMG_W, ch=it.cardH;
+      ctx.save(); roundRect(cx,cy,cw,ch,CARD_R); ctx.fillStyle='#fff'; ctx.fill();
+      ctx.strokeStyle='#efe7db'; ctx.lineWidth=1; ctx.stroke(); ctx.restore();
+      var heroH=it.hasImg?IMG_H:150;
+      var tyy=cy+CARD_PAD;
+      if(it.hasImg){
+        ctx.save(); roundTop(cx,cy,cw,heroH,CARD_R); ctx.clip(); drawCover(loadedImgs[meal.id],cx,cy,cw,heroH); ctx.restore();
+        tyy=cy+heroH+CARD_PAD;
       } else {
-        ty+=8;
+        ctx.save();
+        roundTop(cx,cy,cw,heroH,CARD_R);
+        ctx.fillStyle='#f2efe8';
+        ctx.fill();
+        ctx.strokeStyle='#ebe5da';
+        ctx.lineWidth=1;
+        ctx.stroke();
+        ctx.fillStyle='#c8b79b';
+        ctx.font='56px "Segoe UI Emoji","Segoe UI Symbol","Segoe UI",system-ui,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('🍽',W/2,cy+82);
+        ctx.restore();
+        tyy=cy+heroH+CARD_PAD;
       }
-      ty+=6;
+      ctx.textAlign='center';
+      ctx.fillStyle='#2e7d32'; ctx.font='900 15px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText('Men\u00fc '+(it.idx+1),W/2,tyy+16); tyy+=26;
+      ctx.fillStyle='#1a1a1a'; ctx.font='bold 24px "Segoe UI",system-ui,sans-serif';
+      it.nl.forEach(function(line){ ctx.fillText(line,W/2,tyy+22); tyy+=30; });
+      if(meal.preis){ var mp=parseFloat(meal.preis); ctx.fillStyle='#2e7d4f'; ctx.font='900 24px "Segoe UI",system-ui,sans-serif'; ctx.fillText((mp&&isFinite(mp)?mp.toFixed(2):meal.preis)+' \u20AC',W/2,tyy+24); }
+      y+=ch+GAP;
     });
 
   }
@@ -12359,448 +12396,10 @@
       });
   };
 
-  // ══════════════════════════════════════════════════
-  //  BESTELLSCHLUSS-KONFIGURATION (Mittagstisch + Shop)
-  // ══════════════════════════════════════════════════
+  socialApplyPreviewMode();
 
-  window.cmsLoadBestellConfig = function(){
-    fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(data){
-      if(!data.success) return;
-      var d=data.data||{};
-      var el;
-      el=document.getElementById('bs-cfg-mittag'); if(el && d.bestellschluss_uhr) el.value=d.bestellschluss_uhr;
-      el=document.getElementById('bs-cfg-vorlauf'); if(el && d.shop_vorlauf_h!=null) el.value=d.shop_vorlauf_h;
-      el=document.getElementById('bs-cfg-abhol-offset'); if(el && d.shop_abhol_offset_h!=null) el.value=d.shop_abhol_offset_h;
-      el=document.getElementById('bs-cfg-storno'); if(el && d.shop_storno_vor_h!=null) el.value=d.shop_storno_vor_h;
-      el=document.getElementById('bs-cfg-mindest'); if(el && d.shop_mindestbestellwert!=null) el.value=d.shop_mindestbestellwert;
-      window._bsCfgLoaded=true;
-    }).catch(function(e){ console.error('[cms] Bestellschluss config load failed',e); });
-  };
-
-  window.cmsSaveBestellConfig = function(){
-    var btn=document.getElementById('bs-cfg-save-btn');
-    var status=document.getElementById('bs-cfg-status');
-    btn.disabled=true; status.textContent='Speichern...';
-
-    var mittag=document.getElementById('bs-cfg-mittag').value||'10:30';
-    var vorlauf=parseFloat(document.getElementById('bs-cfg-vorlauf').value)||2;
-    var abholOffset=parseFloat(document.getElementById('bs-cfg-abhol-offset').value)||1;
-    var storno=parseFloat(document.getElementById('bs-cfg-storno').value)||1;
-    var mindest=parseFloat(document.getElementById('bs-cfg-mindest').value)||10;
-
-    var saves=[
-      _dvSave('bestellschluss_uhr',mittag),
-      _dvSave('shop_vorlauf_h',String(vorlauf)),
-      _dvSave('shop_abhol_offset_h',String(abholOffset)),
-      _dvSave('shop_storno_vor_h',String(storno)),
-      _dvSave('shop_mindestbestellwert',String(mindest))
-    ];
-    Promise.all(saves).then(function(){
-      btn.disabled=false; status.textContent='Gespeichert!';
-      setTimeout(function(){ status.textContent=''; },3000);
-    }).catch(function(e){
-      btn.disabled=false; status.textContent=_cmsErr(e);
-    });
-  };
-
-  // ══════════════════════════════════════════════════
-  //  METZGER CMS (Fleisch-Vorbestellung Config & Orders)
-  // ══════════════════════════════════════════════════
-
-  var LT_MAP={0:'fm-cfg-lt-mo',1:'fm-cfg-lt-di',2:'fm-cfg-lt-mi',3:'fm-cfg-lt-do',4:'fm-cfg-lt-fr',5:'fm-cfg-lt-sa'};
-
-  window.cmsLoadFleischConfig = function(){
-    fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(data){
-      if(!data.success) return;
-      var d=data.data||{};
-      var el;
-      el=document.getElementById('fm-cfg-rabatt'); if(el) el.value=d.fleisch_rabatt_prozent||15;
-      el=document.getElementById('fm-cfg-mindestmenge'); if(el) el.value=d.fleisch_mindestmenge_kg||1;
-      el=document.getElementById('fm-cfg-bestellschluss'); if(el) el.value=d.fleisch_bestellschluss_h||10;
-      el=document.getElementById('fm-cfg-aktiv'); if(el) el.checked=(d.fleisch_aktiv!==false&&d.fleisch_aktiv!=='false'&&d.fleisch_aktiv!=='0');
-
-      // Liefertage
-      var lt=(d.fleisch_liefertage||'0,3').split(',').map(function(s){return parseInt(s.trim(),10);});
-      for(var i=0;i<6;i++){
-        var cb=document.getElementById(LT_MAP[i]);
-        if(cb) cb.checked=lt.indexOf(i)!==-1;
-      }
-      window._fmCfgLoaded=true;
-    }).catch(function(e){ console.error('[cms-metzger] config load failed',e); });
-  };
-
-  window.cmsSaveFleischConfig = function(){
-    var btn=document.getElementById('fm-cfg-save-btn');
-    var status=document.getElementById('fm-cfg-status');
-    btn.disabled=true; status.textContent='Speichern...';
-
-    var rabatt=parseFloat(document.getElementById('fm-cfg-rabatt').value)||15;
-    var mindest=parseFloat(document.getElementById('fm-cfg-mindestmenge').value)||1;
-    var schluss=parseInt(document.getElementById('fm-cfg-bestellschluss').value,10)||10;
-    var aktiv=document.getElementById('fm-cfg-aktiv').checked;
-    var lt=[];
-    for(var i=0;i<6;i++){
-      var cb=document.getElementById(LT_MAP[i]);
-      if(cb&&cb.checked) lt.push(i);
-    }
-    if(!lt.length) lt=[0,3];
-
-    var saves=[
-      _dvSave('fleisch_rabatt_prozent',String(rabatt)),
-      _dvSave('fleisch_mindestmenge_kg',String(mindest)),
-      _dvSave('fleisch_bestellschluss_h',String(schluss)),
-      _dvSave('fleisch_aktiv',aktiv?'true':'false'),
-      _dvSave('fleisch_liefertage',lt.join(','))
-    ];
-    Promise.all(saves).then(function(){
-      btn.disabled=false; status.textContent='Gespeichert!';
-      setTimeout(function(){ status.textContent=''; },3000);
-    }).catch(function(e){
-      btn.disabled=false; status.textContent=_cmsErr(e);
-      status.style.color='#ef4444';
-    });
-  };
-
-  var FM_STATUS_L={0:'Neu',1:'In Bestellung',2:'In Bestellung',3:'Abgeholt',4:'Storniert'};
-  var FM_STATUS_C={0:'#d97706',1:'#2563eb',2:'#2e7d4f',3:'#6b7280',4:'#ef4444'};
-  var _fmCurrentFilter='offen';
-
-  window.cmsLoadFleischOrders = function(filter){
-    _fmCurrentFilter=filter||_fmCurrentFilter;
-    // Highlight active filter button
-    ['offen','alle','heute','sammel'].forEach(function(f){
-      var btn=document.getElementById('fm-orders-btn-'+f);
-      if(btn) btn.style.fontWeight=f===_fmCurrentFilter?'800':'400';
-    });
-    var list=document.getElementById('fm-orders-list');
-    list.innerHTML='<p style="color:#6b7280;text-align:center">Laden...</p>';
-
-    var url=API+'/fleisch-order?mode=kiosk';
-    fetch(url).then(function(r){return r.json();}).then(function(data){
-      if(!data.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
-      var orders=data.bestellungen||[];
-      var today=new Date().toISOString().slice(0,10);
-
-      if(_fmCurrentFilter==='offen') orders=orders.filter(function(o){return o.status<3;});
-      else if(_fmCurrentFilter==='heute') orders=orders.filter(function(o){return o.liefertag===today;});
-      else if(_fmCurrentFilter==='sammel'){_fmRenderSammel(orders,list);return;}
-
-      if(!orders.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine Bestellungen</p>';return;}
-
-      var html='';
-      orders.forEach(function(o,idx){
-        var hasMsg=o.kunde_kommentar&&!o.kommentar_gelesen;
-        var sc=FM_STATUS_C[o.status]||'#6b7280';
-        var sl=FM_STATUS_L[o.status]||'?';
-        // Short date
-        var ld=o.liefertag||'';
-        try{var dd=new Date(ld+'T12:00:00');var wt=['So','Mo','Di','Mi','Do','Fr','Sa'];ld=wt[dd.getDay()]+' '+dd.getDate()+'.'+(dd.getMonth()+1)+'.';}catch(e){}
-
-        html+='<div class="fm-cms-order" style="border:1px solid '+(hasMsg?'#fbbf24':'#e5e7eb')+';border-radius:10px;margin-bottom:8px;overflow:hidden'+(hasMsg?';box-shadow:0 0 0 2px rgba(251,191,36,.3)':'')+'">';
-        // Header row (clickable)
-        html+='<div data-fm-toggle="'+idx+'" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:#faf5f3">';
-        html+='<span style="background:'+sc+';color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap">'+esc(sl)+'</span>';
-        html+='<span style="font-weight:700;font-size:13px;flex-shrink:0">'+esc(o.bestellnummer)+'</span>';
-        html+='<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.name)+'</span>';
-        html+='<span style="font-size:12px;color:#6b7280;flex-shrink:0">'+esc(ld)+'</span>';
-        html+='<span style="font-size:13px;font-weight:700;flex-shrink:0">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</span>';
-        if(hasMsg) html+='<span style="background:#fbbf24;color:#7c2d12;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800" title="Neue Nachricht">\u2709</span>';
-        html+='<span data-fm-arrow="'+idx+'" style="transition:transform .2s;font-size:14px;color:#9ca3af">\u25B6</span>';
-        html+='</div>';
-
-        // Detail (collapsed)
-        html+='<div data-fm-detail="'+idx+'" style="display:none;padding:12px;border-top:1px solid #e5e7eb;background:#fff">';
-
-        // Positionen table
-        var pos=o.positionen||[];
-        if(pos.length){
-          html+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px"><thead><tr style="background:#f9fafb"><th style="text-align:left;padding:4px 6px">Artikel</th><th style="text-align:right;padding:4px 6px">Menge</th><th style="text-align:right;padding:4px 6px">Preis/kg</th><th style="text-align:right;padding:4px 6px">Summe</th></tr></thead><tbody>';
-          pos.forEach(function(p){
-            var ps=Number(p.endpreis||p.preis_kg*p.menge_kg||0).toFixed(2);
-            html+='<tr style="border-top:1px solid #f3f4f6"><td style="padding:4px 6px">'+esc(p.bezeichnung||p.artikelnummer)+'</td><td style="text-align:right;padding:4px 6px">'+Number(p.menge_kg||0).toFixed(1)+' kg</td><td style="text-align:right;padding:4px 6px">'+Number(p.preis_kg||0).toFixed(2)+' \u20AC</td><td style="text-align:right;padding:4px 6px;font-weight:600">'+ps+' \u20AC</td></tr>';
-          });
-          html+='</tbody></table>';
-        }
-
-        // Anmerkung
-        if(o.anmerkung) html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#fef3c7;border-radius:6px;color:#92400e"><strong>Anmerkung:</strong> '+esc(o.anmerkung)+'</div>';
-
-        // Kundenkommentar
-        if(o.kunde_kommentar){
-          html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#dbeafe;border-radius:6px;color:#1e40af"><strong>Kunde:</strong> '+esc(o.kunde_kommentar);
-          if(!o.kommentar_gelesen) html+=' <button class="cms-btn" style="font-size:10px;padding:2px 6px;margin-left:6px" data-fm-gelesen="'+esc(o.id)+'">Als gelesen markieren</button>';
-          html+='</div>';
-        }
-        // Personal-Antwort
-        if(o.personal_antwort) html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#dcfce7;border-radius:6px;color:#166534"><strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-
-        // Kontakt
-        html+='<div style="font-size:12px;margin-bottom:12px;color:#6b7280">';
-        html+='<strong>Telefon:</strong> '+esc(o.telefon||'-');
-        if(o.email) html+=' &middot; <strong>E-Mail:</strong> '+esc(o.email);
-        html+='</div>';
-
-        // Action buttons
-        html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
-        if(o.status<3){
-          [1,3].forEach(function(ns){
-            if(ns===o.status) return;
-            var bc=FM_STATUS_C[ns];
-            html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:'+bc+';color:#fff;border:none;border-radius:6px" data-fm-status="'+esc(o.id)+'" data-fm-newstatus="'+ns+'">'+FM_STATUS_L[ns]+'</button>';
-          });
-          html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#ef4444;color:#fff;border:none;border-radius:6px" data-fm-storno="'+esc(o.id)+'" data-fm-storno-nr="'+esc(o.bestellnummer||'')+'" data-fm-storno-name="'+esc(o.name||'')+'">Stornieren</button>';
-        }
-        html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#1e40af;color:#fff;border:none;border-radius:6px" data-fm-reply="'+esc(o.id)+'">Nachricht senden</button>';
-        html+='</div>';
-
-        html+='</div>'; // detail
-        html+='</div>'; // order card
-      });
-
-      list.innerHTML=html;
-      _fmWireOrderEvents();
-    }).catch(function(e){list.innerHTML='<p style="color:#ef4444">'+_cmsErr(e)+'</p>';});
-  };
-
-  // ── Sammelbestellung: Aggregate articles per delivery day ──
-  var _fmCmsSammelChecked = {};
-
-  function _fmRenderSammel(orders,list){
-    var open=orders.filter(function(o){return o.status<3;});
-    if(!open.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine offenen Bestellungen</p>';return;}
-
-    // Group by liefertag
-    var byDay={};
-    open.forEach(function(o){
-      var lt=o.liefertag||'unbekannt';
-      if(!byDay[lt]) byDay[lt]={orders:[],articles:{}};
-      byDay[lt].orders.push(o);
-      (o.positionen||[]).forEach(function(p){
-        var key=(p.strichcode||p.bezeichnung||p.artikelnummer||'?').trim();
-        if(!byDay[lt].articles[key]) byDay[lt].articles[key]={bezeichnung:p.bezeichnung||key,menge:0,einheit:'kg'};
-        byDay[lt].articles[key].menge+=Number(p.menge_kg||0);
-      });
-    });
-
-    var days=Object.keys(byDay).sort();
-    var html='';
-    days.forEach(function(day,di){
-      var g=byDay[day];
-      var dayLabel=day;
-      try{var dd=new Date(day+'T12:00:00');var wt=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];dayLabel=wt[dd.getDay()]+', '+dd.getDate()+'.'+(dd.getMonth()+1)+'.'+dd.getFullYear();}catch(e){}
-
-      html+='<div style="border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;overflow:hidden">';
-      html+='<div style="background:#7f1d1d;color:#fff;padding:10px 14px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center">';
-      html+='<span>'+esc(dayLabel)+'</span>';
-      html+='<span style="font-size:12px;font-weight:400;opacity:.8">'+g.orders.length+' Bestellung'+(g.orders.length>1?'en':'')+'</span>';
-      html+='</div>';
-
-      var arts=Object.values(g.articles).sort(function(a,b){return a.bezeichnung.localeCompare(b.bezeichnung,'de');});
-      html+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#fef2f2"><th style="width:32px;padding:6px;text-align:center"><input type="checkbox" class="fm-cms-sammel-all" data-day="'+di+'" title="Alle markieren" style="width:16px;height:16px;cursor:pointer"></th><th style="text-align:left;padding:6px 10px">Artikel</th><th style="text-align:right;padding:6px 10px">Gesamt-Menge</th></tr></thead><tbody>';
-      arts.forEach(function(a,ai){
-        var rk=di+'-'+ai;
-        var chk=_fmCmsSammelChecked[rk]||false;
-        html+='<tr data-fm-cms-srow="'+rk+'" style="border-top:1px solid #fecaca;cursor:pointer;'+(chk?'background:#f0fdf4':'')+'">';
-        html+='<td style="padding:6px;text-align:center"><input type="checkbox" data-fm-cms-scb="'+rk+'" '+(chk?'checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>';
-        html+='<td style="padding:6px 10px;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+esc(a.bezeichnung)+'</td>';
-        html+='<td style="text-align:right;padding:6px 10px;font-weight:700;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+a.menge.toFixed(1)+' '+esc(a.einheit)+'</td>';
-        html+='</tr>';
-      });
-      html+='</tbody></table>';
-
-      html+='<div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right">';
-      html+='<button class="cms-btn" style="font-size:11px;padding:4px 12px" onclick="window.print()">Drucken</button>';
-      html+='</div>';
-      html+='</div>';
-    });
-
-    list.innerHTML=html;
-    _fmWireSammelCbs();
-  }
-
-  function _fmWireSammelCbs(){
-    document.querySelectorAll('[data-fm-cms-scb]').forEach(function(cb){
-      cb.addEventListener('change',function(){
-        var rk=cb.getAttribute('data-fm-cms-scb');
-        _fmCmsSammelChecked[rk]=cb.checked;
-        var row=document.querySelector('[data-fm-cms-srow="'+rk+'"]');
-        if(row){
-          row.style.background=cb.checked?'#f0fdf4':'';
-          var cells=row.querySelectorAll('td');
-          if(cells[1]) cells[1].style.cssText='padding:6px 10px;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
-          if(cells[2]) cells[2].style.cssText='text-align:right;padding:6px 10px;font-weight:700;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
-        }
-        _fmUpdateCmsSammelAll(cb.getAttribute('data-fm-cms-scb').split('-')[0]);
-      });
-    });
-    document.querySelectorAll('[data-fm-cms-srow]').forEach(function(row){
-      row.addEventListener('click',function(e){
-        if(e.target.tagName==='INPUT') return;
-        var cb=row.querySelector('[data-fm-cms-scb]');
-        if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}
-      });
-    });
-    document.querySelectorAll('.fm-cms-sammel-all').forEach(function(allCb){
-      allCb.addEventListener('change',function(){
-        var di=allCb.getAttribute('data-day');
-        document.querySelectorAll('[data-fm-cms-scb^="'+di+'-"]').forEach(function(cb){
-          cb.checked=allCb.checked;cb.dispatchEvent(new Event('change'));
-        });
-      });
-    });
-  }
-
-  function _fmUpdateCmsSammelAll(di){
-    var allCb=document.querySelector('.fm-cms-sammel-all[data-day="'+di+'"]');
-    if(!allCb) return;
-    var cbs=document.querySelectorAll('[data-fm-cms-scb^="'+di+'-"]');
-    var allChk=cbs.length>0;
-    cbs.forEach(function(cb){if(!cb.checked) allChk=false;});
-    allCb.checked=allChk;
-  }
-
-  // ── Wire events for order cards ──
-  function _fmWireOrderEvents(){
-    // Toggle expand/collapse
-    document.querySelectorAll('[data-fm-toggle]').forEach(function(el){
-      el.addEventListener('click',function(){
-        var idx=el.getAttribute('data-fm-toggle');
-        var detail=document.querySelector('[data-fm-detail="'+idx+'"]');
-        var arrow=document.querySelector('[data-fm-arrow="'+idx+'"]');
-        if(!detail) return;
-        var open=detail.style.display==='none';
-        detail.style.display=open?'':'none';
-        if(arrow) arrow.style.transform=open?'rotate(90deg)':'';
-      });
-    });
-
-    // Status change buttons (non-storno)
-    document.querySelectorAll('[data-fm-status]').forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.stopPropagation();
-        var id=btn.getAttribute('data-fm-status');
-        var ns=parseInt(btn.getAttribute('data-fm-newstatus'),10);
-        btn.disabled=true;btn.textContent='...';
-        fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:ns})})
-        .then(function(r){return r.json();}).then(function(d){
-          if(d.success) cmsLoadFleischOrders();
-          else{btn.disabled=false;btn.textContent='Fehler';cmsToast(d.error||'Aktion fehlgeschlagen. Bitte erneut versuchen.','error');}
-        }).catch(function(){btn.disabled=false;btn.textContent='Fehler';});
-      });
-    });
-
-    // Metzger storno buttons – open dialog with reason
-    var CMS_FM_STORNO_REASONS=['Ware nicht verfügbar','Bestellung wurde doppelt aufgegeben','Kunde hat telefonisch storniert','Mindestbestellmenge nicht erreicht','Sonstiger Grund'];
-    document.querySelectorAll('[data-fm-storno]').forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.stopPropagation();
-        var id=btn.getAttribute('data-fm-storno');
-        var bestellnr=btn.getAttribute('data-fm-storno-nr')||'?';
-        var name=btn.getAttribute('data-fm-storno-name')||'';
-        var overlay=document.createElement('div');
-        overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
-        var modal=document.createElement('div');
-        modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
-        modal.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
-          +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr)+' – '+esc(name)+'</div>'
-          +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
-          +'<div id="cms-fm-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
-          +'<textarea id="cms-fm-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
-          +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-fm-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>'
-          +'<button id="cms-fm-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
-        overlay.appendChild(modal);document.body.appendChild(overlay);
-        var optsDiv=modal.querySelector('#cms-fm-storno-opts');var selectedReason='';
-        CMS_FM_STORNO_REASONS.forEach(function(r){
-          var opt=document.createElement('label');
-          opt.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s';
-          opt.innerHTML='<input type="radio" name="cms-fm-storno-reason" value="'+esc(r)+'" style="accent-color:#dc2626"> '+esc(r);
-          opt.querySelector('input').addEventListener('change',function(){
-            selectedReason=r;
-            modal.querySelector('#cms-fm-storno-confirm').disabled=false;
-            modal.querySelector('#cms-fm-storno-confirm').style.opacity='1';
-            optsDiv.querySelectorAll('label').forEach(function(l){l.style.borderColor='#e5e7eb';l.style.background='';});
-            opt.style.borderColor='#dc2626';opt.style.background='#fef2f2';
-          });
-          optsDiv.appendChild(opt);
-        });
-        modal.querySelector('#cms-fm-storno-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-        overlay.addEventListener('click',function(ev){if(ev.target===overlay) document.body.removeChild(overlay);});
-        modal.querySelector('#cms-fm-storno-confirm').addEventListener('click',function(){
-          if(!selectedReason) return;
-          var comment=(modal.querySelector('#cms-fm-storno-comment').value||'').trim();
-          var grund='Storniert: '+selectedReason+(comment?' – '+comment:'');
-          document.body.removeChild(overlay);
-          fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:4,storno_grund:grund})})
-          .then(function(r){return r.json();}).then(function(d){
-            if(d.success) cmsLoadFleischOrders();
-            else cmsToast(d.error||'Stornierung fehlgeschlagen.','error');
-          }).catch(function(){cmsToast('Verbindungsproblem. Bitte prüfe deine Internetverbindung.','error');});
-        });
-      });
-    });
-
-    // Gelesen button
-    document.querySelectorAll('[data-fm-gelesen]').forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.stopPropagation();
-        var id=btn.getAttribute('data-fm-gelesen');
-        btn.disabled=true;btn.textContent='...';
-        fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,kommentar_gelesen:true})})
-        .then(function(r){return r.json();}).then(function(d){
-          if(d.success) cmsLoadFleischOrders();
-        }).catch(function(){btn.disabled=false;});
-      });
-    });
-
-    // Reply button → modal
-    document.querySelectorAll('[data-fm-reply]').forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.stopPropagation();
-        _fmShowReplyModal(btn.getAttribute('data-fm-reply'));
-      });
-    });
-  }
-
-  // ── Reply modal ──
-  function _fmShowReplyModal(orderId){
-    var existing=document.getElementById('fm-cms-reply-overlay');
-    if(existing) existing.remove();
-
-    var ov=document.createElement('div');
-    ov.id='fm-cms-reply-overlay';
-    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
-
-    var box=document.createElement('div');
-    box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)';
-    box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#7f1d1d">Nachricht an Kunden</div>'
-      +'<textarea id="fm-cms-reply-text" rows="4" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:14px;resize:none;font-family:inherit;overflow:hidden" placeholder="Ihre Nachricht..." oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
-      +'<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
-      +'<button id="fm-cms-reply-cancel" class="cms-btn" style="font-size:13px;padding:8px 16px">Abbrechen</button>'
-      +'<button id="fm-cms-reply-send" class="cms-btn cms-btn-primary" style="font-size:13px;padding:8px 16px;background:#1e40af;color:#fff;border:none">Senden</button>'
-      +'</div>';
-    ov.appendChild(box);
-    document.body.appendChild(ov);
-
-    ov.addEventListener('click',function(e){if(e.target===ov) ov.remove();});
-    document.getElementById('fm-cms-reply-cancel').addEventListener('click',function(){ov.remove();});
-    document.getElementById('fm-cms-reply-send').addEventListener('click',function(){
-      var text=(document.getElementById('fm-cms-reply-text').value||'').trim();
-      if(!text){cmsToast('Bitte Nachricht eingeben','error');return;}
-      var sendBtn=document.getElementById('fm-cms-reply-send');
-      sendBtn.disabled=true;sendBtn.textContent='Senden...';
-      fetch(API+'/fleisch-order',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:orderId,personal_antwort:text,kommentar_gelesen:true})})
-      .then(function(r){return r.json();}).then(function(d){
-        ov.remove();
-        if(d.success) cmsLoadFleischOrders();
-        else cmsToast(d.error||'Nachricht konnte nicht gesendet werden.','error');
-      }).catch(function(e){sendBtn.disabled=false;sendBtn.textContent='Senden';console.error('Antwort senden fehlgeschlagen:',e);cmsToast('Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.','error');});
-    });
-    setTimeout(function(){document.getElementById('fm-cms-reply-text').focus();},100);
-  }
-
-  // --- Init (only if already authenticated) ---
-  if(localStorage.getItem(CMS_PW_KEY)===cmsPwHash){
+  // --- Init (only if already authenticated via session) ---
+  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
   }
 })();
-
