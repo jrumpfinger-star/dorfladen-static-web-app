@@ -596,25 +596,32 @@ window.closeDtModal = function(id) {
         html+='<div class="news-card"><div class="news-card-top"><span class="news-date-badge"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>'+datum+'</span></div>';
         html+='<div class="news-title">'+esc(artikel.dl_titel||artikel.titel||'')+'</div>';
         var _ni=artikel.dl_inhalt||'';
-        var _nic=_ni;
-        var tmp = document.createElement('div');
-        tmp.innerHTML = _ni;
-        var bb = tmp.querySelector('.news-beitragsbild');
-        if(bb) {
-          var img = bb.querySelector('img');
-          if(img && img.src) html+='<img style="width:100%;border-radius:10px;margin:8px 0 4px;max-height:200px;object-fit:cover" src="'+img.src+'" alt="" loading="lazy">';
-          bb.parentNode.removeChild(bb);
-          _nic = tmp.innerHTML.trim();
-        }
+        var _nim=_ni.match(/<div class="news-beitragsbild">.*?<img[^>]+src="([^"]+)"[^>]*>.*?<\/div>/i);
+        var _nhasImg=_nim&&_nim[1];
+        if(_nhasImg) html+='<img class="news-img" style="width:100%;border-radius:10px;margin:8px 0 4px;max-height:200px;object-fit:cover;cursor:zoom-in" src="'+_nim[1]+'" alt="" loading="lazy" data-news-img="1" title="Zum Vergr&ouml;&szlig;ern anklicken">';
+        var _nic=_ni.replace(/<div class="news-beitragsbild">.*?<\/div>/gi,'').trim();
         if(artikel.dl_kurztext||artikel.beschreibung) html+='<div class="news-excerpt">'+esc(artikel.dl_kurztext||artikel.beschreibung)+'</div>';
         if(_nic){
           html+='<div class="news-full" id="news-'+idx+'">'+_nic+'</div>';
           html+='<button class="news-more" onclick="var el=document.getElementById(\'news-'+idx+'\');var v=el.style.display===\'block\';el.style.display=v?\'none\':\'block\';this.innerHTML=v?\'Weiterlesen\':\'Weniger\'">Weiterlesen</button>';
+        } else if(_nhasImg){
+          html+='<button class="news-more" data-news-zoom="1">\uD83D\uDD0D Ganzes Bild anzeigen</button>';
         }
         html+='</div>';
       });
       html+='</div>';
       container.innerHTML=html;
+      // Beitragsbilder anklickbar machen -> volles Bild in Lightbox (dlImagePopup)
+      container.querySelectorAll('img[data-news-img]').forEach(function(im){
+        im.addEventListener('click',function(){if(window.dlImagePopup)window.dlImagePopup(im.src);});
+      });
+      container.querySelectorAll('button[data-news-zoom]').forEach(function(b){
+        b.addEventListener('click',function(){
+          var card=b.closest('.news-card');
+          var im=card?card.querySelector('img[data-news-img]'):null;
+          if(im&&window.dlImagePopup)window.dlImagePopup(im.src);
+        });
+      });
 
       /* News ticker above hero – only items marked as Laufband */
       var ticker=document.getElementById('news-ticker');

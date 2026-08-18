@@ -194,20 +194,16 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
         html+='<div class="news-title">'+(n.dl_titel||n.titel||'')+'</div>';
         // Extract beitragsbild from dl_inhalt and show directly on card
         var inhalt=n.dl_inhalt||'';
-        var cleanInhalt = inhalt;
-        var tmp = document.createElement('div');
-        tmp.innerHTML = inhalt;
-        var bb = tmp.querySelector('.news-beitragsbild');
-        if(bb) {
-          var img = bb.querySelector('img');
-          if(img && img.src) html+='<img class="news-img" src="'+img.src+'" alt="" loading="lazy">';
-          bb.parentNode.removeChild(bb);
-          cleanInhalt = tmp.innerHTML.trim();
-        }
+        var imgMatch=inhalt.match(/<div class="news-beitragsbild">.*?<img[^>]+src="([^"]+)"[^>]*>.*?<\/div>/i);
+        var hasBild=imgMatch&&imgMatch[1];
+        if(hasBild) html+='<img class="news-img" src="'+imgMatch[1]+'" alt="" loading="lazy" data-news-img="1" title="Zum Vergr&ouml;&szlig;ern anklicken">';
+        var cleanInhalt=inhalt.replace(/<div class="news-beitragsbild">.*?<\/div>/gi,'').trim();
         if(n.dl_kurztext||n.beschreibung)html+='<div class="news-excerpt">'+(n.dl_kurztext||n.beschreibung)+'</div>';
         if(cleanInhalt){
           html+='<div class="news-full" id="news-full-'+i+'">'+cleanInhalt+'</div>';
           html+='<button class="news-more" onclick="var el=document.getElementById(\'news-full-'+i+'\');var v=el.style.display===\'block\';el.style.display=v?\'none\':\'block\';this.textContent=v?\'Weiterlesen \u2192\':\'Weniger anzeigen \u2191\'">Weiterlesen \u2192</button>';
+        } else if(hasBild){
+          html+='<button class="news-more" data-news-zoom="1">\uD83D\uDD0D Ganzes Bild anzeigen</button>';
         }
         var shareTitle=(n.dl_titel||n.titel||'Neuigkeit');
         var shareUrl=location.origin+'/aktuelles';
@@ -219,8 +215,48 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
         html+='</div>';
       });
       container.innerHTML=html;
+      // Bilder anklickbar machen -> volles, unbeschnittenes Bild in Lightbox
+      container.querySelectorAll('img[data-news-img]').forEach(function(im){
+        im.style.cursor='zoom-in';
+        im.addEventListener('click',function(){dlNewsLightbox(im.src);});
+      });
+      container.querySelectorAll('button[data-news-zoom]').forEach(function(b){
+        b.addEventListener('click',function(){
+          var card=b.closest('.news-card');
+          var im=card?card.querySelector('img[data-news-img]'):null;
+          if(im)dlNewsLightbox(im.src);
+        });
+      });
     })
     .catch(function(e){console.error('News load failed',e)});
+
+  // Eigenstaendige Lightbox: zeigt das komplette Beitragsbild ungeschnitten
+  function dlNewsLightbox(src){
+    if(!src)return;
+    var ex=document.getElementById('dl-news-lightbox');
+    if(ex)ex.remove();
+    var ov=document.createElement('div');
+    ov.id='dl-news-lightbox';
+    ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out';
+    var img=document.createElement('img');
+    img.src=src;
+    img.style.cssText='max-width:95vw;max-height:90vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5);cursor:default';
+    img.addEventListener('click',function(e){e.stopPropagation();});
+    ov.appendChild(img);
+    var cls=document.createElement('button');
+    cls.innerHTML='&#10005;';
+    cls.setAttribute('aria-label','Schlie\u00dfen');
+    cls.style.cssText='position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';
+    ov.appendChild(cls);
+    document.body.appendChild(ov);
+    document.body.style.overflow='hidden';
+    function close(){ov.remove();document.body.style.overflow='';document.removeEventListener('keydown',onKey);}
+    function onKey(e){if(e.key==='Escape')close();}
+    ov.addEventListener('click',close);
+    cls.addEventListener('click',function(e){e.stopPropagation();close();});
+    document.addEventListener('keydown',onKey);
+  }
+  window.dlNewsLightbox=dlNewsLightbox;
 
   function dlShareWA(text,url){
     window.open('https://wa.me/?text='+encodeURIComponent(text+'\n'+url),'_blank');
