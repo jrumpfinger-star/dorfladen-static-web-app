@@ -410,45 +410,12 @@
     // KEIN await auf socialGenPreview() vor navigator.share() - sonst verfaellt auf Android
     // die transiente Nutzeraktivierung und navigator.share() schlaegt mit NotAllowedError fehl.
     var loaded=window._socLoadedImgs||{};
-    var allPages;
-    try{allPages=socialBuildPages(selected,titel,freitext,loaded,2);}
-    catch(e){try{allPages=socialBuildPages(selected,titel,freitext,{},2);}catch(e2){allPages=[];}}
-    if(!allPages.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
-    
-    // WhatsApp sortiert 5+ Bilder unerklärlich um. Limit auf max. 4 Bilder pro Share.
-    // Falls mehr: in mehrere Posts aufteilen.
-    var MAX_IMAGES_PER_SHARE=4;
-    if(allPages.length>MAX_IMAGES_PER_SHARE){
-      var chunks=[],i=0;
-      while(i<allPages.length){
-        chunks.push(allPages.slice(i,i+MAX_IMAGES_PER_SHARE));
-        i+=MAX_IMAGES_PER_SHARE;
-      }
-      console.log('[socialShareWhatsApp] '+allPages.length+' Seiten in '+chunks.length+' Posts aufgeteilt');
-      var chunkIdx=0;
-      var shareChunk=function(){
-        if(chunkIdx>=chunks.length){
-          socialStatus('soc-post-status','✅ Alle Posts geteilt!',true);
-          return;
-        }
-        var chunk=chunks[chunkIdx];var chunkNum=chunkIdx+1,chunkTotal=chunks.length;
-        // Badges neu berechnen fuer diesen Chunk!
-        var rerenderedChunk=chunk.map(function(cv,pi){
-          return socialComposePage([{cv:cv}],pi+1,chunk.length,SOC_PAGE_W,2);
-        });
-        var chunkFiles=socialPagesToFiles(rerenderedChunk);
-        var chunkMsg=msg;if(chunkTotal>1)chunkMsg='[Teil '+chunkNum+'/'+chunkTotal+']\n'+msg;
-        chunkIdx++;
-        socialShareFiles(chunkFiles,chunkMsg,hasMt);
-        setTimeout(shareChunk,500);
-      };
-      socialSavePost(titel,freitext,selected);
-      shareChunk();
-    }else{
-      var files=socialPagesToFiles(allPages);
-      socialSavePost(titel,freitext,selected);
-      socialShareFiles(files,msg,hasMt);
-    }
+    var files;
+    try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,loaded,2));}
+    catch(e){try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,{},2));}catch(e2){files=[];}}
+    if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
+    socialSavePost(titel,freitext,selected);
+    socialShareFiles(files,msg,hasMt);
     }catch(e){console.error('[Social] WhatsApp share error:',e);socialStatus('soc-post-status','Fehler: '+e.message,false);}
   };
 
