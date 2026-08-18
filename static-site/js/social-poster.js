@@ -391,7 +391,7 @@
   }
 
   function socialCanvasToFile(cv,name){var dataUrl=cv.toDataURL('image/png');var parts=dataUrl.split(',');var mime=parts[0].match(/:(.*?);/)[1];var bstr=atob(parts[1]);var u8=new Uint8Array(bstr.length);for(var i=0;i<bstr.length;i++)u8[i]=bstr.charCodeAt(i);return new File([new Blob([u8],{type:mime})],name,{type:'image/png'});}
-  function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');return pages.map(function(cv,i){return socialCanvasToFile(cv,'dorfladen-'+ds+(pages.length>1?('-'+(i+1)):'')+'.png');});}
+  function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');return pages.map(function(cv,i){var pageNum=pages.length>1?('-'+String(i+1).padStart(String(pages.length).length,'0')):'';return socialCanvasToFile(cv,'dorfladen-'+ds+pageNum+'.png');});}
   M.socialBuildPages=socialBuildPages;
 
   // WhatsApp-Teilen in EINEM Vorgang (ein Nutzer-Tipp): Alle Bilder werden auf
