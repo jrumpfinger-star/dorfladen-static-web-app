@@ -1,6 +1,7 @@
 import azure.functions as func
 import json
 import os
+import re
 import msal
 import requests
 import base64
@@ -151,6 +152,43 @@ def get_download_url(token, folder_id, filename):
     return ""
 
 
+def _extract_uniqueid(url):
+    """Liest die SharePoint UniqueId (GUID) aus einer download.aspx-URL."""
+    m = re.search(
+        r"UniqueId=(?:%7B|\{)?"
+        r"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+        url or "")
+    return m.group(1).lower() if m else ""
+
+
+def list_children_by_uniqueid(token, folder_id):
+    """Mappt SharePoint-UniqueId (GUID) -> Dateiname fuer alle Dateien im Ordner.
+
+    Ermoeglicht das Neu-Aufloesen abgelaufener download.aspx-URLs: Die in der
+    gespeicherten URL enthaltene UniqueId identifiziert die Datei eindeutig,
+    unabhaengig vom (abgelaufenen) Auth-Token in der URL.
+    """
+    result = {}
+    h = graph_headers(token)
+    url = (f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}"
+           f"/children?$select=id,name,sharepointIds&$top=200")
+    while url:
+        try:
+            r = requests.get(url, headers=h, timeout=15)
+        except Exception:
+            break
+        if r.status_code != 200:
+            break
+        j = r.json()
+        for c in j.get("value", []):
+            sp = c.get("sharepointIds") or {}
+            uid = (sp.get("listItemUniqueId") or "").lower()
+            if uid and c.get("name"):
+                result[uid] = c["name"]
+        url = j.get("@odata.nextLink")
+    return result
+
+
 def merge_day_posts(day_posts):
     """Merge multiple posts from the same day into one combined post.
     Uses the newest post's titel/freitext, but combines all items (deduplicated)."""
@@ -250,6 +288,10 @@ def enrich_post_images(post, token, folder_id):
     except:
         pass
 
+    # Lazily-initialisierte Map SharePoint-UniqueId -> Dateiname (nur bei Bedarf,
+    # wenn eine gespeicherte download.aspx-URL nicht mehr direkt ladbar ist).
+    uid_map = [None]
+
     for it in needs_images:
         name = (it.get("name") or "").strip()
         name_lower = name.lower()
@@ -263,6 +305,20 @@ def enrich_post_images(post, token, folder_id):
             if converted:
                 it["bild_url"] = converted
                 continue
+            # 0b) URL vermutlich abgelaufen (401): Datei ueber die in der URL
+            #     enthaltene UniqueId eindeutig finden und frisch aufloesen.
+            guid = _extract_uniqueid(existing)
+            if guid:
+                if uid_map[0] is None:
+                    uid_map[0] = list_children_by_uniqueid(token, folder_id)
+                fname = uid_map[0].get(guid)
+                if fname:
+                    dl = get_download_url(token, folder_id, fname)
+                    if dl:
+                        fresh = download_as_data_uri(dl)
+                        if fresh:
+                            it["bild_url"] = fresh
+                            continue
 
         # 1) Try katalog match by name
         if name_lower in katalog_by_name:
