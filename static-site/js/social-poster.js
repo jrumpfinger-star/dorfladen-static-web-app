@@ -244,17 +244,21 @@
       var singleImg=shareSet.length===1;
       var shareFiles=shareSet;
       var shareData={files:shareFiles};
-      if(singleImg){ if(msg)shareData.text=msg; }
+      // Bestell-Link nur auf MOBILE als Text/Caption mitgeben. Am DESKTOP nicht -
+      // dort wird mit Strg-V gearbeitet, der Link kommt nur in die Zwischenablage
+      // (sonst erscheint er als eigene Nachricht oben im Chat).
+      if(singleImg){ if(msg&&isMobile)shareData.text=msg; }
       else { shareData.text='-'; }
       // Bestell-Link SYNCHRON vor navigator.share() in die Zwischenablage schreiben
       // (fire-and-forget, KEIN await): So bleibt die Nutzer-Aktivierung fuer share()
       // erhalten UND das Clipboard enthaelt den vollstaendigen Text inkl.
       // "Mittagessen vorbestellen". Wuerde writeText erst NACH share() im .then()
       // laufen, ist die Aktivierung auf Android verbraucht -> nur die URL bliebe.
-      if(msg&&!singleImg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
+      // Ausnahme: Mobile + Einzelbild -> Link geht bereits als Caption mit.
+      if(msg&&!(singleImg&&isMobile)){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
       navigator.share(shareData).then(function(){
         if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
-        socialStatus('soc-post-status', singleImg?(msg?'\u2705 Geteilt \u00B7 Bestell-Link angeh\u00e4ngt':'\u2705 Bild geteilt!'):(msg?'\u2705 Bilder einzeln geteilt \u00B7 Bestell-Text (mit Link) ist kopiert \u2013 als eigene Nachricht einf\u00fcgen (langes Tippen \u2192 Einf\u00fcgen)':'\u2705 Bilder einzeln geteilt!'),true);
+        socialStatus('soc-post-status', singleImg?(msg?(isMobile?'\u2705 Geteilt \u00B7 Bestell-Link angeh\u00e4ngt':'\u2705 Bild geteilt \u00B7 Bestell-Link ist in der Zwischenablage (Strg-V)'):'\u2705 Bild geteilt!'):(msg?'\u2705 Bilder einzeln geteilt \u00B7 Bestell-Text (mit Link) ist kopiert \u2013 als eigene Nachricht einf\u00fcgen (langes Tippen \u2192 Einf\u00fcgen)':'\u2705 Bilder einzeln geteilt!'),true);
       }).catch(function(err){
         if(err.name==='AbortError')return;
         // Mehrfach-Datei-Teilen fehlgeschlagen -> mit EINEM Bild erneut versuchen
@@ -291,10 +295,14 @@
       }
       socialShareViaClipboard(files,msg);return;
     }
-    // Desktop-Browser ohne Web-Share: Poster herunterladen, dann WhatsApp Web mit vorausgefuelltem Text.
+    // Desktop-Browser ohne Web-Share: Poster herunterladen, dann WhatsApp Web OHNE
+    // vorgefuellten Text oeffnen. Der Bestell-Link wird NICHT als Nachricht mitgegeben
+    // (wuerde sonst oben im Chat als Text-Nachricht erscheinen), sondern nur in die
+    // Zwischenablage kopiert - am Desktop wird ohnehin mit Strg-V gearbeitet.
+    if(msg){socialCopyText(msg);}
     socialFallbackDownloadFiles(files);
-    socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE), Text ist in der Zwischenablage':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
-    window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+    socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE). Bestell-Link ist in der Zwischenablage (Strg-V)':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
+    window.open('https://web.whatsapp.com/','_blank');
   }
 
   function canvasToFiles(canvases,selected,titel,freitext){
