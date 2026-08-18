@@ -435,7 +435,7 @@
   window.socialLoadMtBilder = socialLoadMtBilder;
   window._socMtBilder_ref = function(){ return _socMtBilder; };
 
-  function socialBuildPostItems(){ var wrap=document.getElementById('soc-post-items'); if(!wrap)return; var todayMeals=socialGetTodayMeals(); _socialKatalog.sort(function(a,b){return (a.name||'').localeCompare(b.name||'','de');}); var allCats=[]; _socialKatalog.forEach(function(p){var c=p.kategorie||'Sonstiges';if(allCats.indexOf(c)===-1)allCats.push(c);}); var html='';
+  function socialBuildPostItems(){ var wrap=document.getElementById('soc-post-items'); if(!wrap)return; var _prevChecked={}; wrap.querySelectorAll('input.soc-post-wp:checked, input.soc-post-cb:checked').forEach(function(cb){_prevChecked[cb.value]=true;}); var todayMeals=socialGetTodayMeals(); _socialKatalog.sort(function(a,b){return (a.name||'').localeCompare(b.name||'','de');}); var allCats=[]; _socialKatalog.forEach(function(p){var c=p.kategorie||'Sonstiges';if(allCats.indexOf(c)===-1)allCats.push(c);}); var html='';
     html+='<div id="soc-pick-selected" style="display:none;margin-bottom:10px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:8px 12px"><div style="font-size:11px;font-weight:700;color:#16a34a;margin-bottom:4px">&#10003; Ausgew\u00e4hlt:</div><div id="soc-pick-tags"></div></div>';
     if(todayMeals.length){ var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag']; var isMorgen2=window._socSelectedDay==='morgen'; var mealDate=isMorgen2?new Date(Date.now()+86400000):new Date(); var mealDay=days[mealDate.getDay()]; var mealLabel=isMorgen2?'Morgiges':'Heutiges'; html+='<div style="margin-bottom:10px;background:#f6f7f5;border:1px solid #e6e7e4;border-radius:10px;padding:8px 12px"><div style="font-size:12px;font-weight:700;color:#2e7d4f;margin-bottom:5px">&#127869; '+mealLabel+' Mittagessen ('+esc(mealDay)+')</div>';
       todayMeals.forEach(function(m){ var wpId='wp-'+m.id; var mtImg=_socMtBilder[m.gericht]; html+='<div class="soc-mt-row" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid #cfe6d6;border-radius:10px;margin-bottom:4px;min-height:44px"><label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer"><input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" data-img="'+esc(mtImg&&mtImg.bild_url?mtImg.bild_url:'')+'" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#2e7d4f">';
@@ -468,6 +468,13 @@
       html+='</div><div id="soc-pick-count" style="font-size:10px;color:#9ca3af;text-align:right;margin-top:2px">'+_socialKatalog.length+' Produkte</div>';
     } else if(!todayMeals.length){ html+='<p style="color:#9ca3af;font-size:12px;font-style:italic">Noch keine Produkte im Katalog.</p>'; }
     wrap.innerHTML=html;
+    // Zuvor gesetzte Haken wiederherstellen: Wird die Liste nach dem Laden des
+    // Katalogs neu aufgebaut, darf eine schon getroffene Auswahl (z.B. Mittagessen)
+    // nicht verloren gehen.
+    if(Object.keys(_prevChecked).length){
+      wrap.querySelectorAll('input.soc-post-wp, input.soc-post-cb').forEach(function(cb){ if(_prevChecked[cb.value]) cb.checked=true; });
+      if(typeof socialPickUpdate==='function') socialPickUpdate();
+    }
   }
 
   window.socialBuildPostItems = socialBuildPostItems;
