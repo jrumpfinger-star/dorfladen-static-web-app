@@ -191,10 +191,14 @@
   // --- WhatsApp message builder ---
   function socialBuildWhatsAppMsg(selected){
     var hasMittagessen=selected.some(function(p){return (p.kategorie||'Sonstiges')==='Mittagessen';});
-    // Zweizeilige Bildunterschrift: Hinweis + Link darunter (wie vom Nutzer gewuenscht).
     if(hasMittagessen){
       var origin=window.location.origin||'';
-      return '\uD83D\uDC49 Mittagessen vorbestellen:\n'+origin+'/tagesinfo';
+      // Taeglich wechselnder Parameter: zwingt WhatsApp, die Link-Vorschau NEU zu
+      // laden (statt die alte, gecachte grosse Bild-Karte zu zeigen). Die Seite
+      // ignoriert den Parameter - der Link funktioniert normal. Da die Seite keine
+      // og:*/twitter:*-Tags mehr hat, erscheint keine grosse Vorschau-Karte.
+      var d=new Date();var stamp=''+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+      return '\uD83D\uDC49 Mittagessen vorbestellen:\n'+origin+'/tagesinfo?d='+stamp;
     }
     return '';
   }
