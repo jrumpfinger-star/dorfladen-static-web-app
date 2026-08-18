@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flyer - Mittagstisch online bestellen</title>
+    <style>
+        /* A4 Format */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .page {
+            width: 210mm;
+            height: 297mm;
+            padding: 20mm;
+            margin: 10mm auto;
+            border: 1px #D3D3D3 solid;
+            border-radius: 5px;
+            background: white;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            position: relative;
+        }
+        
+        /* Print adjustments */
+        @media print {
+            body {
+                background: none;
+            }
+            .page {
+                margin: 0;
+                border: initial;
+                border-radius: initial;
+                width: initial;
+                min-height: initial;
+                box-shadow: initial;
+                background: initial;
+                page-break-after: always;
+            }
+        }
+
+        /* Typography & Layout */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #e06c00;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #e06c00;
+            font-size: 38px;
+            margin: 0 0 10px 0;
+            line-height: 1.2;
+        }
+        .header h2 {
+            color: #555;
+            font-size: 22px;
+            font-weight: 400;
+            margin: 0;
+        }
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .section-title {
+            color: #2c3e50;
+            font-size: 24px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        
+        /* Benefits List */
+        .benefits {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .benefits li {
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .benefits li strong {
+            color: #e06c00;
+            display: block;
+        }
+        .icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        /* How to Steps */
+        .steps-container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #2c3e50;
+        }
+        .step {
+            font-size: 18px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        .step-number {
+            display: inline-block;
+            background: #2c3e50;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* App Hint */
+        .app-hint {
+            margin-top: 10px;
+            background: #e8f4f8;
+            border-left: 5px solid #2980b9;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+
+        /* Footer & CTA */
+        .cta {
+            margin-top: 40px;
+            text-align: center;
+            background: #e06c00;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .qr-placeholder {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .qr-box {
+            display: inline-block;
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #999;
+            background: #eee;
+            line-height: 150px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 20mm;
+            left: 20mm;
+            right: 20mm;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <h1>NEU: Mittagstisch online bestellen! 🍽️</h1>
+            <h2>Genießen Sie Ihre Mittagspause ohne Wartezeit. Reservieren Sie Ihr Wunsch-Menü ab sofort bequem über unsere Homepage.</h2>
+        </div>
+
+        <div class="content">
+            <div>
+                <h3 class="section-title">Ihre Vorteile auf einen Blick</h3>
+                <ul class="benefits">
+                    <li>
+                        <span class="icon">✅</span>
+                        <div>
+                            <strong>Immer Ihre Wunschportion</strong>
+                            Nie wieder "leider ausverkauft". Sichern Sie sich garantiert Ihr Lieblingsessen.
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">⏱️</span>
+                        <div>
+                            <strong>Flexibel genießen</strong>
+                            Essen Sie gemütlich bei uns vor Ort oder nehmen Sie Ihr Menü einfach mit.
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">📱</span>
+                        <div>
+                            <strong>Volle Übersicht & Kontrolle</strong>
+                            Sehen Sie den Wochenplan und Ihre aktuellen Bestellungen jederzeit bequem auf der Homepage ein.
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🖱️</span>
+                        <div>
+                            <strong>Einfach & Schnell</strong>
+                            Mit nur wenigen Klicks bestellen – jederzeit und von überall.
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="steps-container">
+                <h3 class="section-title" style="border-color: #dcdcdc;">So einfach geht's:</h3>
+                <div class="step"><span class="step-number">1</span><strong>QR-Code scannen</strong> oder unsere Homepage besuchen.</div>
+                <div class="step"><span class="step-number">2</span><strong>Mittagstisch auswählen</strong> und die gewünschte Portion in den Warenkorb legen.</div>
+                <div class="step"><span class="step-number">3</span><strong>Kontaktdaten eingeben</strong> (Name, E-Mail/Tel. & To-Go/Vor Ort) und absenden. <br><small style="color: #555; margin-left: 38px; display: inline-block; margin-top: 4px;"><em>(Nur beim ersten Mal nötig – bei weiteren Bestellungen sind Ihre Daten bereits vorausgefüllt!)</em></small></div>
+                <div class="step"><span class="step-number">4</span><strong>Vorbeikommen</strong> und entspannt genießen!</div>
+            </div>
+
+            <div class="app-hint">
+                <strong>💡 Tipp: Als App auf dem Handy installieren!</strong><br>
+                Klicken Sie auf unserer Homepage oben in der Menüleiste einfach auf den Button <strong>"📥 App"</strong>. So haben Sie unseren Speiseplan immer mit einem Klick griffbereit auf Ihrem Homescreen!
+            </div>
+
+            <div class="cta">
+                Probieren Sie es direkt aus und sichern Sie sich Ihr Mittagessen für morgen!
+            </div>
+            
+            <div class="qr-placeholder">
+                <div class="qr-box">
+                    [ QR-Code hier ]
+                </div>
+                <p><strong>www.dorfladen-muster.de</strong></p> <!-- Placeholder URL -->
+            </div>
+        </div>
+
+        <div class="footer">
+            Ihr Dorfladen-Team freut sich auf Ihre Bestellung! | Fragen? Sprechen Sie uns gerne an.
+        </div>
+    </div>
+</body>
+</html>

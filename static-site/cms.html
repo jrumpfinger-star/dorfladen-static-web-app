@@ -475,7 +475,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   /* ── Mobile: Social Media Tab ── */
   @media(max-width:600px){
     /* Sub-tabs */
-    #cms-panel-social .cms-btn[id^="social-subtab"]{padding:7px 4px!important;font-size:11px!important}
+    #cms-panel-social .k-filter-btn[id^="social-subtab"]{padding:7px 4px!important;font-size:11px!important}
     /* Katalog: add-form stacks vertically */
     #social-panel-katalog .cms-card-body>div:first-child{flex-direction:column!important;gap:8px!important}
     #social-panel-katalog .cms-card-body>div:first-child>div{width:100%!important;min-width:0!important;flex:none!important}
@@ -578,8 +578,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   #cms-panel-social .k-btn-outline{background:#fff;color:var(--c-text);border:1.5px solid var(--c-border)}
   #cms-panel-social .k-btn-outline:hover{border-color:var(--c-green);color:var(--c-green)}
   /* Filter tabs (sub-tabs) */
-  #cms-panel-social .k-filter-bar{display:flex;gap:0;border-bottom:2px solid var(--c-border);overflow:hidden;background:#fff}
-  #cms-panel-social .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px}
+  #cms-panel-social .k-filter-bar{display:flex;gap:0;border-bottom:2px solid var(--c-border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:#fff}
+  #cms-panel-social .k-filter-bar::-webkit-scrollbar{display:none}
+  #cms-panel-social .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px;flex:0 0 auto}
   #cms-panel-social .k-filter-btn:hover{color:var(--c-text)}
   #cms-panel-social .k-filter-btn:active{transform:none}
   #cms-panel-social .k-filter-btn.active{border-bottom-color:var(--c-green);color:#fff !important;background:var(--c-green);border-radius:8px 8px 0 0}

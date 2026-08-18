@@ -482,8 +482,9 @@
     .k-empty .k-empty-icon{font-size:48px;margin-bottom:12px}
 
     /* ═══ Filter tabs (underline style – NOT buttons) ═══ */
-    .k-filter-bar{display:flex;gap:0;margin:-12px -16px 0;padding:0 16px;border-bottom:2px solid var(--c-border);overflow:hidden;position:sticky;top:-12px;z-index:10;background:#fff}
-    .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px}
+    .k-filter-bar{display:flex;gap:0;margin:-12px -16px 0;padding:0 16px;border-bottom:2px solid var(--c-border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:-12px;z-index:10;background:#fff}
+    .k-filter-bar::-webkit-scrollbar{display:none}
+    .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px;flex:0 0 auto}
     .k-filter-btn:hover{color:var(--c-text)}
     .k-filter-btn:active{transform:none}
     .k-filter-btn.active{border-bottom-color:var(--c-green);color:#fff !important;background:var(--c-green);border-radius:8px 8px 0 0}

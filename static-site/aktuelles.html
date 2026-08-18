@@ -194,9 +194,16 @@ if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_decl
         html+='<div class="news-title">'+(n.dl_titel||n.titel||'')+'</div>';
         // Extract beitragsbild from dl_inhalt and show directly on card
         var inhalt=n.dl_inhalt||'';
-        var imgMatch=inhalt.match(/<div class="news-beitragsbild">.*?<img[^>]+src="([^"]+)"[^>]*>.*?<\/div>/i);
-        if(imgMatch&&imgMatch[1]) html+='<img class="news-img" src="'+imgMatch[1]+'" alt="" loading="lazy">';
-        var cleanInhalt=inhalt.replace(/<div class="news-beitragsbild">.*?<\/div>/gi,'').trim();
+        var cleanInhalt = inhalt;
+        var tmp = document.createElement('div');
+        tmp.innerHTML = inhalt;
+        var bb = tmp.querySelector('.news-beitragsbild');
+        if(bb) {
+          var img = bb.querySelector('img');
+          if(img && img.src) html+='<img class="news-img" src="'+img.src+'" alt="" loading="lazy">';
+          bb.parentNode.removeChild(bb);
+          cleanInhalt = tmp.innerHTML.trim();
+        }
         if(n.dl_kurztext||n.beschreibung)html+='<div class="news-excerpt">'+(n.dl_kurztext||n.beschreibung)+'</div>';
         if(cleanInhalt){
           html+='<div class="news-full" id="news-full-'+i+'">'+cleanInhalt+'</div>';

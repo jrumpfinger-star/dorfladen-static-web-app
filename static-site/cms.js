@@ -3559,12 +3559,15 @@
   function showNewsModal(title,titel,inhalt,laufband,laufbandBis,aktivBis){
     // Extract existing beitragsbild from inhalt
     var existingImg = '';
-    var cleanInhalt = inhalt.replace(/<div class="news-beitragsbild">.*?<\/div>/gi, function(m){
-      var match = m.match(/src="([^"]+)"/);
-      if(match) existingImg = match[1];
-      return '';
-    });
-    inhalt = cleanInhalt;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = inhalt;
+    var bb = tmp.querySelector('.news-beitragsbild');
+    if(bb) {
+      var img = bb.querySelector('img');
+      if(img && img.src) existingImg = img.src;
+      bb.parentNode.removeChild(bb);
+    }
+    inhalt = tmp.innerHTML.trim();
     var overlay = document.createElement('div');
     overlay.id='cms-news-modal';
     overlay.className='cms-modal-bg';
@@ -12096,10 +12099,10 @@
     var mealCanvas=document.getElementById('soc-post-canvas-meal');
     var canvases=[];
     if(dailyCanvas&&dailyCanvas.style.display!=='none'&&dailyCanvas.width>0){
-      canvases.push({canvas:dailyCanvas,name:'dorfladen-post.png'});
+      canvases.push({canvas:dailyCanvas,name:'1-artikel.png'});
     }
     if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0){
-      canvases.push({canvas:mealCanvas,name:'mittagessen-poster.png'});
+      canvases.push({canvas:mealCanvas,name:'2-mittagessen.png'});
     }
     if(!canvases.length){
       // Fallback: draw poster synchronously without images
@@ -12120,7 +12123,7 @@
       } else {
         socialDrawPoster(fc,fx,600,otherI,titel,freitext,{},2);
       }
-      canvases.push({canvas:fc,name:'dorfladen-post.png'});
+      canvases.push({canvas:fc,name:'1-artikel.png'});
     }
     // Convert canvas to blob synchronously via toDataURL→fetch
     var isTainted=window._socLoadedImgs&&window._socLoadedImgs['_tainted'];
@@ -12192,7 +12195,7 @@
       if(msg){
         try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).catch(function(){}); } }catch(e){}
       }
-      var shareData={files:files.length>1?[files[0]]:files};
+      var shareData={files:files};
       if(msg)shareData.text=msg;
       navigator.share(shareData).then(function(){
         socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00b7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
@@ -12214,8 +12217,8 @@
     // wa.me/?text prefills the message in WhatsApp; the poster must be attached manually.
     if(msg){ try{navigator.clipboard.writeText(msg).catch(function(){});}catch(e){} }
     socialFallbackDownloadFiles(files);
-    socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE), Text ist bereits eingef\u00fcgt':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
-    window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+    socialStatus('soc-post-status', msg?'\u2705 Poster (1, 2) gespeichert \u00B7 WA \u00f6ffnet \u2013 Bitte zuerst Poster anh\u00e4ngen und dann den Text (3) einf\u00fcgen':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
+    window.open('https://web.whatsapp.com/','_blank');
   }
   function socialShareViaClipboard(files,msg,hasMt){
     // Copy poster image to clipboard, then open WhatsApp
@@ -12238,13 +12241,21 @@
     }
     // Open WhatsApp with order text
     setTimeout(function(){
-      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+      if(!socialIsMobile()){
+        window.open('https://web.whatsapp.com/','_blank');
+      } else {
+        window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+      }
     },300);
   }
   function socialShareViaDownload(files,msg,hasMt){
     socialFallbackDownloadFiles(files);
     setTimeout(function(){
-      window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+      if(!socialIsMobile()){
+        window.open('https://web.whatsapp.com/','_blank');
+      } else {
+        window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');
+      }
     },500);
   }
   function socialFallbackDownloadFiles(files){
