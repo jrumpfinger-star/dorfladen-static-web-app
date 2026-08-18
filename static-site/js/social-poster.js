@@ -226,17 +226,20 @@
     if(canShareFiles){
       // In Build-Reihenfolge teilen: WhatsApp zeigt die Serie in Sende-Reihenfolge
       // (oben = zuerst gesendet). Reihenfolge: Artikel (mit Kopf) -> Mittagessen.
-      // Link-Handhabung: Bei MEHREREN Bildern KEIN shareData.text - sonst wuerde
-      // WhatsApp den Bestell-Link unter JEDES Bild (auch Artikel) haengen. Der Link
-      // wird stattdessen in die Zwischenablage kopiert und als eigene Nachricht
-      // eingefuegt. Nur bei EINEM einzelnen Bild darf der Link direkt als Caption
-      // mitgehen (kann sich nicht wiederholen).
+      // Bei MEHREREN Bildern eine Dummy-Caption ("-") mitgeben: dadurch stellt
+      // WhatsApp die Bilder EINZELN dar (statt sie zu einer Galerie/Album
+      // zusammenzufassen). Der echte Bestell-Link wird NICHT als Caption gesetzt
+      // (wuerde sonst unter jedem Bild stehen), sondern in die Zwischenablage
+      // kopiert und als eigene Nachricht eingefuegt. Bei EINEM Bild darf der
+      // Link direkt als Caption mitgehen.
       var shareFiles=shareSet;
       var singleImg=shareFiles.length===1;
-      var shareData={files:shareFiles};if(msg&&singleImg)shareData.text=msg;
+      var shareData={files:shareFiles};
+      if(singleImg){ if(msg)shareData.text=msg; }
+      else { shareData.text='-'; }
       navigator.share(shareData).then(function(){
         if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
-        socialStatus('soc-post-status', msg?(singleImg?'\u2705 Geteilt \u00B7 Bestell-Link angeh\u00e4ngt':'\u2705 Bilder geteilt \u00B7 Bestell-Link ist kopiert \u2013 im Chat einf\u00fcgen (langes Tippen \u2192 Einf\u00fcgen)'):'\u2705 Bild geteilt!',true);
+        socialStatus('soc-post-status', singleImg?(msg?'\u2705 Geteilt \u00B7 Bestell-Link angeh\u00e4ngt':'\u2705 Bild geteilt!'):(msg?'\u2705 Bilder einzeln geteilt \u00B7 Bestell-Link ist kopiert \u2013 als eigene Nachricht einf\u00fcgen (langes Tippen \u2192 Einf\u00fcgen)':'\u2705 Bilder einzeln geteilt!'),true);
       }).catch(function(err){
         if(err.name==='AbortError')return;
         // Mehrfach-Datei-Teilen fehlgeschlagen -> mit EINEM Bild erneut versuchen
@@ -356,43 +359,15 @@
   function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');return pages.map(function(cv,i){return socialCanvasToFile(cv,'dorfladen-'+ds+(pages.length>1?('-'+(i+1)):'')+'.png');});}
   M.socialBuildPages=socialBuildPages;
 
-  // Garantiert GETRENNTE WhatsApp-Posts: WhatsApp buendelt mehrere in EINEM Vorgang
-  // geteilte Bilder unvorhersehbar (mal Album, mal getrennt). Zuverlaessig getrennt
-  // wird nur, wenn jedes Bild in einem EIGENEN Teilen-Vorgang (eigener Nutzer-Tipp)
-  // geteilt wird. Der Bestell-Link haengt nur am LETZTEN Bild (Mittagessen).
-  var _socShareQ=null; // {files,msg,idx}
-  function _socShareNext(){
-    var q=_socShareQ;if(!q)return;
-    var i=q.idx,isLast=(i===q.files.length-1),file=q.files[i];
-    var canShare=false;try{canShare=navigator.share&&navigator.canShare&&navigator.canShare({files:[file]});}catch(e){}
-    if(!canShare){
-      // Kein natives Datei-Teilen (Desktop/Firefox): restliche Bilder speichern + Link kopieren.
-      socialFallbackDownloadFiles(q.files.slice(i));
-      if(q.msg){try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(q.msg).catch(function(){});}catch(e){}}
-      _socShareQ=null;
-      socialStatus('soc-post-status','\u2705 Bilder gespeichert \u00B7 Bestell-Link kopiert \u2013 im Chat einf\u00fcgen',true);
-      return;
-    }
-    var shareData={files:[file]};if(isLast&&q.msg)shareData.text=q.msg;
-    navigator.share(shareData).then(function(){
-      q.idx++;
-      if(q.idx<q.files.length){
-        socialStatus('soc-post-status','\u2705 Bild '+(i+1)+' von '+q.files.length+' gesendet \u00B7 Erneut auf \u201eAuf WhatsApp teilen\u201c tippen f\u00fcr Bild '+(q.idx+1),true);
-      }else{
-        if(q.msg){try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(q.msg).catch(function(){});}catch(e){}}
-        _socShareQ=null;
-        socialStatus('soc-post-status','\u2705 Fertig \u2013 alle '+q.files.length+' Bilder als eigene Posts gesendet!',true);
-      }
-    }).catch(function(err){
-      if(err.name==='AbortError')return; // abgebrochen -> Queue bleibt, erneut tippen
-      socialShareViaClipboard(q.files.slice(i),q.msg);_socShareQ=null;
-    });
-  }
-
+  // WhatsApp-Teilen in EINEM Vorgang (ein Nutzer-Tipp): Alle Bilder werden auf
+  // einmal geteilt. Damit WhatsApp die Bilder EINZELN darstellt (statt sie zu
+  // einer Galerie/Album zusammenzufassen), wird bei mehreren Bildern eine
+  // Dummy-Caption ("-") mitgegeben (siehe socialShareFiles). Der Bestell-Link
+  // (nur bei Mittagessen) wird NICHT als Caption gesetzt, sondern in die
+  // Zwischenablage kopiert und kann als eigene Nachricht eingefuegt werden.
+  // Die Bild-Reihenfolge bleibt wie gebaut: Artikel (mit Kopf) -> Mittagessen.
   window.socialShareWhatsApp=function(){
     try{
-    // Laeuft bereits eine Teilen-Sequenz? -> naechstes Bild teilen (neuer Nutzer-Tipp).
-    if(_socShareQ&&_socShareQ.idx<_socShareQ.files.length){_socShareNext();return;}
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';var freitext=(document.getElementById('soc-post-text').value||'').trim();var selected=socialGatherSelected();
     if(!selected.length){socialStatus('soc-post-status','Bitte Produkte ausw\u00e4hlen',false);return;}
     var msg=socialBuildWhatsAppMsg(selected);var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
@@ -405,10 +380,7 @@
     catch(e){try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,{},2));}catch(e2){files=[];}}
     if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
     socialSavePost(titel,freitext,selected);
-    if(files.length===1){ socialShareFiles(files,msg,hasMt); return; }
-    // Mehrere Bilder -> Sequenz: erstes Bild sofort, weitere je erneutem Tipp.
-    _socShareQ={files:files,msg:msg,idx:0};
-    _socShareNext();
+    socialShareFiles(files,msg,hasMt);
     }catch(e){console.error('[Social] WhatsApp share error:',e);socialStatus('soc-post-status','Fehler: '+e.message,false);}
   };
 
