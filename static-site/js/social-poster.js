@@ -432,7 +432,11 @@
           return;
         }
         var chunk=chunks[chunkIdx];var chunkNum=chunkIdx+1,chunkTotal=chunks.length;
-        var chunkFiles=socialPagesToFiles(chunk);
+        // Badges neu berechnen fuer diesen Chunk!
+        var rerenderedChunk=chunk.map(function(cv,pi){
+          return socialComposePage([{cv:cv}],pi+1,chunk.length,SOC_PAGE_W,2);
+        });
+        var chunkFiles=socialPagesToFiles(rerenderedChunk);
         var chunkMsg=msg;if(chunkTotal>1)chunkMsg='[Teil '+chunkNum+'/'+chunkTotal+']\n'+msg;
         chunkIdx++;
         socialShareFiles(chunkFiles,chunkMsg,hasMt);
