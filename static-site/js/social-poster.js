@@ -359,7 +359,7 @@
     return pages.map(function(secs,pi){return socialComposePage(secs,pi+1,total,W,SCALE);});
   }
 
-  // Stapelt die Bloecke einer Seite zu einem Canvas.
+  // Stapelt die Bloecke einer Seite zu einem Canvas + kleine Seiten-Nummer (oben rechts).
   function socialComposePage(secs,pageNo,total,W,SCALE){
     var dw=W*SCALE;
     var bodyDev=secs.reduce(function(a,s){return a+s.cv.height;},0);
@@ -367,6 +367,26 @@
     var x=pc.getContext('2d');
     x.fillStyle='#faf9f6';x.fillRect(0,0,dw,pc.height);
     var y=0;secs.forEach(function(s){x.drawImage(s.cv,0,y);y+=s.cv.height;});
+    // Kleine Seiten-Nummer "n/N" als dezentes Badge oben rechts (nur bei mehreren
+    // Bildern). WhatsApp kann die Reihenfolge bei 4+ Einzelbildern umsortieren -
+    // die Nummer macht die richtige Reihenfolge fuer den Empfaenger erkennbar.
+    if(total>1){
+      x.save();
+      var fs=Math.round(15*SCALE);
+      x.font='bold '+fs+'px "Segoe UI",system-ui,sans-serif';
+      var label=pageNo+'/'+total;
+      var padX=Math.round(9*SCALE),padY=Math.round(5*SCALE);
+      var tw=x.measureText(label).width;
+      var bw=tw+padX*2,bh=fs+padY*2;
+      var m=Math.round(10*SCALE);
+      var bx=dw-bw-m,by=m,r=Math.round(7*SCALE);
+      x.beginPath();x.moveTo(bx+r,by);x.arcTo(bx+bw,by,bx+bw,by+bh,r);x.arcTo(bx+bw,by+bh,bx,by+bh,r);x.arcTo(bx,by+bh,bx,by,r);x.arcTo(bx,by,bx+bw,by,r);x.closePath();
+      x.fillStyle='rgba(255,255,255,0.92)';x.fill();
+      x.strokeStyle='#2e7d4f';x.lineWidth=Math.max(1,Math.round(1.5*SCALE));x.stroke();
+      x.fillStyle='#2e7d4f';x.textAlign='center';x.textBaseline='middle';
+      x.fillText(label,bx+bw/2,by+bh/2+1);
+      x.restore();
+    }
     return pc;
   }
 
