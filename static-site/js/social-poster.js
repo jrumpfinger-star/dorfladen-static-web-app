@@ -180,7 +180,7 @@
     return Promise.all(promises.concat([_socMealIconPromise])).then(function(){
       var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var hasMt=mtItems.length>0;var hasOther=otherItems.length>0;
       var mealCanvas=document.getElementById('soc-post-canvas-meal');var mealLabel=document.getElementById('soc-preview-label-meal');var dailyLabel=document.getElementById('soc-preview-label-daily');if(mealCanvas)mealCanvas.style.display='none';if(mealLabel)mealLabel.style.display='none';if(dailyLabel)dailyLabel.style.display='none';
-      if(hasMt&&hasOther){var tmpMeal=document.createElement('canvas');socialDrawMealPosterAuto(tmpMeal,tmpMeal.getContext('2d'),W,mtItems,loadedImgs,SCALE,{titel:titel,freitext:freitext});var tmpDaily=document.createElement('canvas');socialDrawPoster(tmpDaily,tmpDaily.getContext('2d'),W,otherItems,titel,freitext,loadedImgs,SCALE,true,true);canvas.width=W*SCALE;canvas.height=tmpMeal.height+tmpDaily.height;ctx.drawImage(tmpMeal,0,0);ctx.drawImage(tmpDaily,0,tmpMeal.height);canvas.style.display='block';}
+      if(hasMt&&hasOther){var tmpDaily=document.createElement('canvas');socialDrawPoster(tmpDaily,tmpDaily.getContext('2d'),W,otherItems,titel,freitext,loadedImgs,SCALE,true,false);var tmpMeal=document.createElement('canvas');socialDrawMealPosterAuto(tmpMeal,tmpMeal.getContext('2d'),W,mtItems,loadedImgs,SCALE,null);canvas.width=W*SCALE;canvas.height=tmpDaily.height+tmpMeal.height;ctx.drawImage(tmpDaily,0,0);ctx.drawImage(tmpMeal,0,tmpDaily.height);canvas.style.display='block';}
       else if(hasMt){canvas.style.display='block';socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs,SCALE,{titel:titel,freitext:freitext});}
       else if(selected.length>0){canvas.style.display='block';socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE);}
       else{canvas.style.display='none';}
@@ -227,23 +227,27 @@
     if(canShareFiles){
       // In Build-Reihenfolge teilen: WhatsApp zeigt die Serie in Sende-Reihenfolge
       // (oben = zuerst gesendet). Reihenfolge: Artikel (mit Kopf) -> Mittagessen.
-      // Der Bestell-Link wird als shareData.text uebergeben - native WhatsApp (Handy)
-      // haengt ihn als EINE klickbare Link-Vorschau ans Album an.
+      // Link-Handhabung: Bei MEHREREN Bildern KEIN shareData.text - sonst wuerde
+      // WhatsApp den Bestell-Link unter JEDES Bild (auch Artikel) haengen. Der Link
+      // wird stattdessen in die Zwischenablage kopiert und als eigene Nachricht
+      // eingefuegt. Nur bei EINEM einzelnen Bild darf der Link direkt als Caption
+      // mitgehen (kann sich nicht wiederholen).
       var shareFiles=shareSet;
-      var shareData={files:shareFiles};if(msg)shareData.text=msg;
+      var singleImg=shareFiles.length===1;
+      var shareData={files:shareFiles};if(msg&&singleImg)shareData.text=msg;
       navigator.share(shareData).then(function(){
         if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
-        socialStatus('soc-post-status', msg?'\u2705 Bilder geteilt \u00B7 Bestell-Link als Vorschau angehaengt (auch kopiert)':'\u2705 Bild geteilt!',true);
+        socialStatus('soc-post-status', msg?(singleImg?'\u2705 Geteilt \u00B7 Bestell-Link angeh\u00e4ngt':'\u2705 Bilder geteilt \u00B7 Bestell-Link ist kopiert \u2013 im Chat einf\u00fcgen (langes Tippen \u2192 Einf\u00fcgen)'):'\u2705 Bild geteilt!',true);
       }).catch(function(err){
         if(err.name==='AbortError')return;
         // Mehrfach-Datei-Teilen fehlgeschlagen -> mit EINEM Bild erneut versuchen
         // (manche Android/WhatsApp-Versionen lehnen mehrere Dateien ab). So wird zumindest
         // ein Bild via WhatsApp geteilt statt in den Download-Dialog zu fallen.
         if(shareFiles.length>1){
-          var oneData={files:[files[0]]};if(msg)oneData.text=msg;
+          var oneData={files:[files[0]]};
           navigator.share(oneData).then(function(){
             if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
-            socialStatus('soc-post-status','\u2705 Bild geteilt',true);
+            socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Bestell-Link ist kopiert \u2013 im Chat einf\u00fcgen':'\u2705 Bild geteilt',true);
           }).catch(function(err2){
             if(err2.name==='AbortError')return;
             if(isMobile){socialShareViaClipboard(files,msg);}
