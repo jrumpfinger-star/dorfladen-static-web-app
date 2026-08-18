@@ -90,18 +90,18 @@
     #soc-desk-bar,#soc-desk-tabs{flex-basis:100%}
     #soc-col-left{flex:1.2;min-width:0}
     #soc-col-right{flex:1;min-width:0;position:sticky;top:0;align-self:flex-start}
-    /* Hide step headers on desktop — show content flat */
-    #soc-col-left .k-order-hdr{display:none!important}
-    #soc-col-left .k-order{border:none!important;border-left:none!important;margin-bottom:0!important;box-shadow:none!important}
+    /* Show unified green step headers as section titles on desktop */
+    #soc-col-left .k-order-hdr,#soc-col-right .k-order-hdr{cursor:default}
+    #soc-col-left .k-order-hdr .k-oc-arrow,#soc-col-right .k-order-hdr .k-oc-arrow{display:none!important}
+    #soc-col-left .k-order{margin-bottom:12px!important}
     #soc-col-left .k-order-body{display:block!important}
     #soc-col-left .k-order.oc-collapsed .k-order-body{display:block!important}
     /* Hide Heute/Morgen in Step 1 on desktop (moved to action bar) */
     #soc-day-section{display:none!important}
-    /* Right column: always show bodies, hide step headers */
-    #soc-col-right .k-order-hdr{display:none!important}
-    #soc-col-right .k-order{border:none!important;border-left:none!important;margin-bottom:0!important;box-shadow:none!important}
+    /* Right column: keep card look, bodies always open */
+    #soc-col-right .k-order{margin-bottom:12px!important}
     #soc-col-right .k-order-body{display:block!important}
-    #soc-col-right{padding:8px;background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb}
+    #soc-col-right{padding:0;background:transparent;border:none}
     /* Hide Step 4 entirely on desktop (all actions in action bar) */
     #soc-step-4{display:none!important}
     /* Hide posts in right column on desktop (shown in left col tab) */
