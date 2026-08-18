@@ -222,7 +222,11 @@
     // ueber shareData.text uebergeben und erst NACH erfolgreichem Teilen als Backup kopiert.
     // Bevorzugt: natives Teilen mit Datei (oeffnet die System-Auswahl inkl. WhatsApp) - Mobil UND Desktop.
     if(canShareFiles){
-      var shareData={files:shareSet};if(msg)shareData.text=msg;
+      // WhatsApp zeigt mehrere als Serie geteilte Bilder in UMGEKEHRTER Reihenfolge
+      // an. Damit Seite 1 (Mittagessen) oben erscheint, drehen wir die Reihenfolge
+      // fuer den Teilen-Aufruf um.
+      var shareFiles=(shareSet.length>1)?shareSet.slice().reverse():shareSet;
+      var shareData={files:shareFiles};if(msg)shareData.text=msg;
       navigator.share(shareData).then(function(){
         if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
         socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
