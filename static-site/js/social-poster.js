@@ -356,6 +356,7 @@
     rendered.forEach(function(r){if(cur.length&&curH+r.h>maxH){pages.push(cur);cur=[];curH=0;}cur.push(r);curH+=r.h;});
     if(cur.length)pages.push(cur);
     var total=pages.length;
+    console.log('[socialBuildPages] blocks.length='+blocks.length+', pages.length='+total+', pages=',pages.map(function(p){return p.length;}));
     return pages.map(function(secs,pi){return socialComposePage(secs,pi+1,total,W,SCALE);});
   }
 
@@ -391,7 +392,7 @@
   }
 
   function socialCanvasToFile(cv,name){var dataUrl=cv.toDataURL('image/png');var parts=dataUrl.split(',');var mime=parts[0].match(/:(.*?);/)[1];var bstr=atob(parts[1]);var u8=new Uint8Array(bstr.length);for(var i=0;i<bstr.length;i++)u8[i]=bstr.charCodeAt(i);return new File([new Blob([u8],{type:mime})],name,{type:'image/png'});}
-  function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');return pages.map(function(cv,i){var pageNum=pages.length>1?('-'+String(i+1).padStart(String(pages.length).length,'0')):'';return socialCanvasToFile(cv,'dorfladen-'+ds+pageNum+'.png');});}
+  function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');var files=pages.map(function(cv,i){var pageNum=pages.length>1?('-'+String(i+1).padStart(String(pages.length).length,'0')):'';var name='dorfladen-'+ds+pageNum+'.png';console.log('[socialPagesToFiles] Page '+(i+1)+'/'+pages.length+' -> '+name);return socialCanvasToFile(cv,name);});console.log('[socialPagesToFiles] Created '+files.length+' files');return files;}
   M.socialBuildPages=socialBuildPages;
 
   // WhatsApp-Teilen in EINEM Vorgang (ein Nutzer-Tipp): Alle Bilder werden auf

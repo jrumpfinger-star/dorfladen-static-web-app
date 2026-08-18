@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tagespost – Neues Design (Mockup)</title>
+<style>
+  :root{
+    --green:#2e7d4f;        /* einzige Akzentfarbe */
+    --green-soft:#eef6f0;
+    --green-line:#cfe6d6;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --line:#e6e7e4;
+    --bg:#f4f5f2;
+    --card:#ffffff;
+    --radius:14px;
+    --touch:48px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:96px; /* Platz für Sticky-Leiste */
+  }
+  .wrap{max-width:480px;margin:0 auto;padding:14px 14px 0}
+
+  /* ---------- Kopf ---------- */
+  .app-head{display:flex;align-items:center;gap:10px;padding:4px 2px 12px}
+  .app-head .logo{width:34px;height:34px;border-radius:9px;background:var(--green);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+  .app-head h1{font-size:17px;margin:0;font-weight:800;letter-spacing:-.2px}
+  .app-head p{margin:1px 0 0;font-size:12px;color:var(--muted)}
+
+  /* ---------- Segmentierte Umschalter (Tag) ---------- */
+  .seg{display:flex;background:#eceee9;border-radius:11px;padding:3px;gap:3px;margin-bottom:16px}
+  .seg button{flex:1;border:0;background:transparent;padding:9px 8px;border-radius:8px;
+    font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;min-height:40px}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .seg .date{align-self:center;font-size:12px;color:var(--muted);padding-right:8px;flex:0 0 auto}
+
+  /* ---------- Karte / Schritt ---------- */
+  .step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    margin-bottom:14px;overflow:hidden}
+  .step-head{display:flex;align-items:center;gap:10px;padding:14px 16px}
+  .step-num{width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;
+    font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step-title{font-size:15px;font-weight:800}
+  .step-sub{font-size:12px;color:var(--muted);margin-left:auto;text-align:right}
+  .step-body{padding:0 16px 16px}
+
+  label.fld{display:block;font-size:12px;font-weight:700;color:#374151;margin:4px 0 6px}
+  select.input,input.input,textarea.input{
+    width:100%;padding:12px;border:1px solid #d7dad3;border-radius:10px;font-size:15px;
+    background:#fff;color:var(--ink);min-height:var(--touch)}
+  textarea.input{min-height:64px;resize:vertical;font-family:inherit}
+
+  .link-add{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:none;border:0;
+    color:var(--green);font-weight:700;font-size:13px;cursor:pointer;padding:6px 0}
+  .hidden{display:none}
+
+  /* ---------- Mittagessen: eine hervorgehobene Zeile, kein voller Kasten ---------- */
+  .highlight-label{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--green);margin:2px 0 8px;display:flex;align-items:center;gap:6px}
+
+  /* ---------- Produktzeile ---------- */
+  .row{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:12px;
+    border:1px solid transparent;cursor:pointer;position:relative}
+  .row + .row{margin-top:2px}
+  .row:hover{background:#fafbfa}
+  .row.sel{background:var(--green-soft);border-color:var(--green-line)}
+  .row.sel::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;
+    border-radius:3px;background:var(--green)}
+  .row.feature{border:1px solid var(--green-line);background:#fff}
+  .row.feature.sel{background:var(--green-soft)}
+
+  .cbx{width:22px;height:22px;border-radius:6px;border:2px solid #cbd0c8;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;background:#fff}
+  .row.sel .cbx{background:var(--green);border-color:var(--green)}
+  .cbx svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;opacity:0}
+  .row.sel .cbx svg{opacity:1}
+
+  .thumb{width:44px;height:44px;border-radius:9px;flex-shrink:0;object-fit:cover;
+    background:#eef0ec;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .info{flex:1;min-width:0}
+  .name{font-size:14px;font-weight:700;line-height:1.25}
+  .meta{display:flex;align-items:center;gap:8px;margin-top:3px}
+  .price{font-size:13px;font-weight:800;color:var(--green)}
+  .ab{font-size:12px;color:var(--muted);border:1px solid #d7dad3;border-radius:7px;
+    padding:3px 6px;background:#fff}
+
+  /* ---------- Suche + Kategorien ---------- */
+  .search{position:relative;margin:6px 0 10px}
+  .search input{padding-left:38px}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;
+    stroke:var(--muted);fill:none;stroke-width:2}
+  .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
+  .chip{white-space:nowrap;border:1px solid #d7dad3;background:#fff;color:#374151;
+    border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;min-height:36px}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .divider{height:1px;background:var(--line);margin:14px 0}
+  .section-hint{font-size:12px;color:var(--muted);margin:0 0 8px}
+  .listbox{max-height:296px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;
+    padding:4px;background:#fff;-webkit-overflow-scrolling:touch}
+  .list-hint{font-size:11px;color:var(--muted);margin:0 2px 6px;display:flex;align-items:center;gap:5px}
+
+  /* ---------- Sticky Auswahl-Leiste ---------- */
+  .bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+    box-shadow:0 -6px 18px rgba(0,0,0,.06);padding:10px 14px;z-index:20}
+  .bar-inner{max-width:480px;margin:0 auto;display:flex;align-items:center;gap:12px}
+  .bar .count{flex:1;min-width:0}
+  .bar .count b{font-size:15px}
+  .bar .count span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .go{background:var(--green);color:#fff;border:0;border-radius:11px;padding:0 20px;
+    height:50px;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px}
+  .bar .go:disabled{background:#c7ccc5;cursor:default}
+  .bar .go svg{width:18px;height:18px;stroke:#fff;stroke-width:2.5;fill:none}
+
+  .note{max-width:480px;margin:6px auto 20px;font-size:11px;color:#9aa0a6;text-align:center;line-height:1.5}
+
+  /* ---------- Responsive: Tablet/Desktop zweispaltig ---------- */
+  @media (min-width:760px){
+    .wrap{max-width:940px}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+    .col{min-width:0}
+    .bar-inner{max-width:940px}
+    .note{max-width:940px}
+    .listbox{max-height:360px}
+  }
+  @media (min-width:1500px){
+    .wrap{max-width:1180px}
+    .bar-inner{max-width:1180px}
+    .note{max-width:1180px}
+  }
+
+  /* ---------- Inline "frei erfassen" Formular ---------- */
+  .freeform{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:14px;background:#fbfcfb}
+  .ff-grid{display:grid;grid-template-columns:1fr 96px;gap:10px}
+  .ff-grid .full{grid-column:1 / -1}
+  .ff-lbl{font-size:11px;font-weight:700;color:#374151;margin:0 0 4px}
+  .ff-in{width:100%;padding:10px;border:1px solid #d7dad3;border-radius:9px;font-size:14px;min-height:44px;background:#fff}
+  .ff-photo{display:flex;gap:8px;margin-top:10px}
+  .ff-photo button{flex:1;border:1px solid #d7dad3;background:#fff;border-radius:9px;padding:10px;
+    font-size:13px;font-weight:600;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px}
+  .ff-actions{display:flex;gap:8px;margin-top:12px}
+  .btn-primary{flex:1;background:var(--green);color:#fff;border:0;border-radius:10px;padding:12px;
+    font-size:14px;font-weight:800;cursor:pointer;min-height:46px}
+  .btn-ghost{background:none;border:0;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;padding:0 10px}
+  .badge-new{font-size:10px;font-weight:800;color:#fff;background:var(--green);border-radius:6px;padding:2px 6px;margin-left:6px;letter-spacing:.3px}
+
+  /* ---------- Schritt 3: Vorschau ---------- */
+  .preview-frame{max-width:300px;margin:4px auto 0;aspect-ratio:1/1;border-radius:14px;border:1px solid var(--line);
+    background:#faf9f6;display:flex;flex-direction:column;overflow:hidden}
+  .pf-top{background:var(--green);color:#fff;padding:14px 16px;font-weight:800;font-size:15px}
+  .pf-body{flex:1;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+  .pf-item{display:flex;align-items:center;gap:8px;font-size:13px}
+  .pf-item .d{width:26px;height:26px;border-radius:6px;background:#eef0ec;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .pf-item .p{margin-left:auto;font-weight:800;color:var(--green)}
+  .pf-foot{padding:8px 16px;font-size:10px;color:var(--muted);border-top:1px solid var(--line);text-align:center}
+  .btn-refresh{display:block;margin:12px auto 0;background:#fff;border:1px solid var(--green);color:var(--green);
+    border-radius:10px;padding:10px 18px;font-weight:700;font-size:13px;cursor:pointer;min-height:44px}
+
+  /* ---------- Schritt 4: Teilen (Aktionsfarben erlaubt) ---------- */
+  .share-btn{width:100%;border:0;border-radius:12px;padding:15px;font-size:15px;font-weight:800;color:#fff;
+    cursor:pointer;min-height:54px;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+  .share-wa{background:#25D366}
+  .share-ig{background:linear-gradient(135deg,#f09433,#dc2743,#bc1888)}
+  .share-save{background:#fff;color:#374151;border:1px solid #d7dad3}
+  .share-btn svg{width:20px;height:20px}
+
+  /* Schritt 4 – gruppierte Aktionen */
+  .act-primary{width:100%;background:var(--green);color:#fff;border:0;border-radius:12px;padding:16px;
+    font-size:16px;font-weight:800;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;
+    box-shadow:0 2px 8px rgba(46,125,79,.28)}
+  .act-primary .sub{font-weight:500;font-size:12px;opacity:.9}
+  .act-caption{font-size:11px;color:var(--muted);text-align:center;margin:6px 2px 14px}
+  .grp-label{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);
+    margin:0 2px 8px;display:flex;align-items:center;gap:8px}
+  .grp-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .act-row{display:flex;gap:10px;margin-bottom:10px}
+  .act-secondary{flex:1;background:#fff;border:1px solid #d7dad3;color:#374151;border-radius:11px;padding:13px;
+    font-size:14px;font-weight:700;cursor:pointer;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .act-park{width:100%;background:#fff;border:1px solid #e2c98a;color:#92620e;border-radius:11px;padding:13px;
+    font-size:14px;font-weight:700;cursor:pointer;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px}
+
+  /* Posts & Entwürfe */
+  .drafts{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+  .draft-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);
+    border-radius:10px;margin-bottom:8px;background:#fbfcfb}
+  .draft-row .st{font-size:10px;font-weight:800;padding:3px 7px;border-radius:6px;white-space:nowrap}
+  .st-pub{background:var(--green-soft);color:var(--green)}
+  .st-draft{background:#fdf6e3;color:#92620e}
+  .draft-row .t{flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .draft-row .go2{font-size:12px;color:var(--green);font-weight:700;background:none;border:0;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="app-head">
+    <div class="logo">D</div>
+    <div>
+      <h1>Tagespost erstellen</h1>
+      <p>In 4 Schritten fertig</p>
+    </div>
+  </div>
+
+  <!-- Tag-Umschalter -->
+  <div class="seg">
+    <button class="on">Heute</button>
+    <button>Morgen</button>
+    <span class="date">Dienstag, 18. August</span>
+  </div>
+
+  <div class="cols">
+  <div class="col">
+
+  <!-- ============ SCHRITT 1 ============ -->
+  <div class="step">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div class="step-title">Überschrift</div>
+      <div class="step-sub">Pflicht</div>
+    </div>
+    <div class="step-body">
+      <label class="fld" for="titel">Welche Überschrift soll der Post haben?</label>
+      <select class="input" id="titel">
+        <option>Heute im Dorfladen – Dienstag</option>
+        <option>Frisch aus der Küche</option>
+        <option>Unser Mittagstisch heute</option>
+      </select>
+
+      <button class="link-add" onclick="toggleText()">＋ Kurzen Text hinzufügen <span style="color:#9aa0a6;font-weight:400">(optional)</span></button>
+      <div id="textbox" class="hidden" style="margin-top:6px">
+        <textarea class="input" placeholder="z.B. Frisch aus der Küche! Heute als Dessert: Erdbeer-Sahne-Torte 🍰"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCHRITT 2 ============ -->
+  <div class="step">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div class="step-title">Was zeigen wir?</div>
+      <div class="step-sub" id="s2sub">nichts gewählt</div>
+    </div>
+    <div class="step-body">
+
+      <!-- Mittagessen: nur EINE hervorgehobene Zeile, oben angepinnt -->
+      <div class="highlight-label">🍽 Heutiges Mittagessen</div>
+      <div class="row feature" data-name="Cordon bleu" data-price="9,80 €" onclick="toggle(this)">
+        <div class="cbx"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="thumb">🍽</div>
+        <div class="info">
+          <div class="name">Cordon bleu mit Pommes oder Kartoffelsalat</div>
+          <div class="meta"><span class="price">9,80 €</span></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Katalog: Suche + Kategorien + Liste -->
+      <p class="section-hint">Weitere Produkte aus dem Katalog auswählen:</p>
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="input" placeholder="Produkt suchen …">
+      </div>
+      <div class="chips">
+        <div class="chip on">Alle</div>
+        <div class="chip">Aufstriche</div>
+        <div class="chip">Kuchen</div>
+        <div class="chip">Salate</div>
+        <div class="chip">Obst &amp; Gemüse</div>
+      </div>
+
+      <!-- Produkt frei erfassen: OBERHALB der Liste, immer sichtbar -->
+      <button class="link-add" id="ff-toggle" onclick="toggleFree()">
+        ＋ Produkt frei erfassen <span style="color:#9aa0a6;font-weight:400">(nicht im Katalog)</span>
+      </button>
+      <div class="freeform hidden" id="freeform">
+        <div class="ff-grid">
+          <div class="full">
+            <p class="ff-lbl">Name des Produkts *</p>
+            <input class="ff-in" id="ff-name" placeholder="z.B. Kartoffelsalat">
+          </div>
+          <div>
+            <p class="ff-lbl">Preis €</p>
+            <input class="ff-in" id="ff-preis" inputmode="decimal" placeholder="3,50">
+          </div>
+          <div>
+            <p class="ff-lbl">ab Uhrzeit</p>
+            <select class="ff-in" id="ff-ab">
+              <option value="">–</option><option>10:00</option><option>12:00</option>
+            </select>
+          </div>
+          <div class="full">
+            <p class="ff-lbl">Kategorie</p>
+            <select class="ff-in" id="ff-kat">
+              <option>Aufstriche</option><option>Kuchen</option><option>Salate</option>
+              <option>Obst &amp; Gemüse</option><option selected>Sonstiges</option>
+            </select>
+          </div>
+        </div>
+        <div class="ff-photo">
+          <button type="button">📷 Foto aufnehmen</button>
+          <button type="button">🖼 Bild wählen</button>
+        </div>
+        <div class="ff-actions">
+          <button class="btn-ghost" onclick="toggleFree()">Abbrechen</button>
+          <button class="btn-primary" onclick="addFree()">✓ Hinzufügen &amp; auswählen</button>
+        </div>
+      </div>
+
+      <div class="list-hint">📋 <span id="list-count">6</span> Produkte im Katalog · zum Blättern scrollen</div>
+      <div id="list" class="listbox">
+        <div class="row" data-name="Antipasti" data-price="2,25 €" onclick="toggle(this)">
+          <div class="cbx"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="thumb">🫒</div>
+          <div class="info"><div class="name">Antipasti, 100g</div>
+            <div class="meta"><span class="price">2,25 €</span><span class="ab">ab –</span></div></div>
+        </div>
+        <div class="row" data-name="Bienenstichtorte" data-price="3,00 €" onclick="toggle(this)">
+          <div class="cbx"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="thumb">🍰</div>
+          <div class="info"><div class="name">Bienenstichtorte</div>
+            <div class="meta"><span class="price">3,00 €</span><span class="ab">ab –</span></div></div>
+        </div>
+        <div class="row" data-name="Bratensülze" data-price="1,55 €" onclick="toggle(this)">
+          <div class="cbx"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="thumb">🥩</div>
+          <div class="info"><div class="name">Frische Bratensülze, 100g</div>
+            <div class="meta"><span class="price">1,55 €</span><span class="ab">ab –</span></div></div>
+        </div>
+        <div class="row" data-name="Erdbeeren" data-price="2,80 €" onclick="toggle(this)">
+          <div class="cbx"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="thumb">🍓</div>
+          <div class="info"><div class="name">Frische Erdbeeren, 250g</div>
+            <div class="meta"><span class="price">2,80 €</span><span class="ab">ab –</span></div></div>
+        </div>
+        <div class="row" data-name="Fleischsalat" data-price="2,25 €" onclick="toggle(this)">
+          <div class="cbx"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="thumb">🥗</div>
+          <div class="info"><div class="name">Frischer Fleischsalat, 100g</div>
+            <div class="meta"><span class="price">2,25 €</span><span class="ab">ab –</span></div></div>
+        </div>
+        <div class="row" data-name="Gyrossalat" data-price="1,52 €" onclick="toggle(this)">
+          <div class="cbx"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="thumb">🥙</div>
+          <div class="info"><div class="name">Gyrossalat, 100g</div>
+            <div class="meta"><span class="price">1,52 €</span><span class="ab">ab –</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /col links -->
+  <div class="col">
+
+  <!-- ============ SCHRITT 3 ============ -->
+  <div class="step">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div class="step-title">So sieht der Post aus</div>
+      <div class="step-sub">Vorschau</div>
+    </div>
+    <div class="step-body">
+      <div class="preview-frame">
+        <div class="pf-top">Heute im Dorfladen – Dienstag</div>
+        <div class="pf-body" id="pf-list">
+          <div class="pf-item" style="color:#9aa0a6;font-style:italic">Noch nichts ausgewählt …</div>
+        </div>
+        <div class="pf-foot">Dorfladen Oberornau · Dorfplatz 1</div>
+      </div>
+      <button class="btn-refresh" onclick="renderPreview()">↻ Vorschau aktualisieren</button>
+    </div>
+  </div>
+
+  <!-- ============ SCHRITT 4 ============ -->
+  <div class="step">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div class="step-title">Veröffentlichen &amp; teilen</div>
+      <div class="step-sub">Letzter Schritt</div>
+    </div>
+    <div class="step-body">
+
+      <!-- Primär: auf die Homepage -->
+      <button class="act-primary" onclick="alert('TagesInfo veröffentlicht – jetzt auf der Homepage (Mockup)')">
+        📄 Auf Homepage veröffentlichen
+      </button>
+      <p class="act-caption">Erscheint sofort als TagesInfo auf der Website.</p>
+
+      <!-- Teilen -->
+      <div class="grp-label">Zusätzlich teilen</div>
+      <div class="act-row">
+        <button class="act-secondary" style="color:#128C4B" onclick="alert('WhatsApp öffnen (Mockup)')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+          Auf WhatsApp teilen
+        </button>
+      </div>
+      <div class="act-row">
+        <button class="act-secondary" onclick="alert('Bild gespeichert (Mockup)')">⬇ Bild speichern</button>
+      </div>
+
+      <!-- Später -->
+      <div class="grp-label">Noch nicht fertig?</div>
+      <button class="act-park" onclick="alert('Als Entwurf geparkt (Mockup)')">🔖 Parken (Entwurf für später)</button>
+
+      <!-- Posts & Entwürfe -->
+      <div class="drafts">
+        <div class="grp-label" style="margin-bottom:10px">🕒 Posts &amp; Entwürfe (heute)</div>
+        <div class="draft-row">
+          <span class="st st-pub">Veröffentlicht</span>
+          <span class="t">Heute im Dorfladen – Montag</span>
+          <button class="go2">Ansehen</button>
+        </div>
+        <div class="draft-row">
+          <span class="st st-draft">Entwurf</span>
+          <span class="t">Frisch aus der Küche</span>
+          <button class="go2">Bearbeiten</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /col rechts -->
+  </div><!-- /cols -->
+
+</div>
+
+<!-- Sticky Auswahl + Weiter -->
+<div class="bar">
+  <div class="bar-inner">
+    <div class="count">
+      <b id="cnt">0 Produkte</b>
+      <span id="names">Noch nichts ausgewählt</span>
+    </div>
+    <button class="go" id="go" disabled onclick="alert('Weiter zu Schritt 3: Vorschau')">
+      Weiter
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+</div>
+
+<p class="note">Design-Mockup · eine Akzentfarbe (Grün), klare Schritte, Auswahl immer unten sichtbar.<br>
+Statt vieler farbiger Kästen: das Wichtige durch Weißraum &amp; dünne Linien abgegrenzt.</p>
+
+<script>
+  function toggleText(){document.getElementById('textbox').classList.toggle('hidden');}
+  function toggleFree(){
+    document.getElementById('freeform').classList.toggle('hidden');
+    document.getElementById('ff-toggle').classList.toggle('hidden');
+  }
+  function addFree(){
+    var name=document.getElementById('ff-name').value.trim();
+    if(!name){document.getElementById('ff-name').focus();return;}
+    var preis=document.getElementById('ff-preis').value.trim();
+    var ab=document.getElementById('ff-ab').value;
+    var priceTxt=preis?preis+' €':'';
+    var row=document.createElement('div');
+    row.className='row sel';
+    row.setAttribute('data-name',name);
+    row.setAttribute('data-price',priceTxt);
+    row.onclick=function(){toggle(row);};
+    row.innerHTML=''
+      +'<div class="cbx"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>'
+      +'<div class="thumb">🖼</div>'
+      +'<div class="info"><div class="name">'+name+'<span class="badge-new">NEU</span></div>'
+      +'<div class="meta">'+(priceTxt?'<span class="price">'+priceTxt+'</span>':'')
+      +(ab?'<span class="ab">ab '+ab+'</span>':'')+'</div></div>';
+    var list=document.getElementById('list');
+    list.insertBefore(row,list.firstChild);
+    list.scrollTop=0;
+    var lc=document.getElementById('list-count'); if(lc) lc.textContent=(parseInt(lc.textContent,10)||0)+1;
+    // Formular zurücksetzen & schließen
+    document.getElementById('ff-name').value='';
+    document.getElementById('ff-preis').value='';
+    document.getElementById('ff-ab').value='';
+    toggleFree();
+    update();
+  }
+  function toggle(el){
+    el.classList.toggle('sel');
+    update();
+  }
+  function update(){
+    var sel=document.querySelectorAll('.row.sel');
+    var n=sel.length;
+    var cnt=document.getElementById('cnt');
+    var names=document.getElementById('names');
+    var go=document.getElementById('go');
+    var sub=document.getElementById('s2sub');
+    cnt.textContent = n+' '+(n===1?'Produkt':'Produkte');
+    if(n===0){
+      names.textContent='Noch nichts ausgewählt';
+      sub.textContent='nichts gewählt';
+      go.disabled=true;
+    }else{
+      var list=[];
+      sel.forEach(function(r){list.push(r.getAttribute('data-name'));});
+      names.textContent=list.join(', ');
+      sub.textContent=n+' gewählt';
+      go.disabled=false;
+    }
+    renderPreview();
+  }
+  function renderPreview(){
+    var sel=document.querySelectorAll('.row.sel');
+    var box=document.getElementById('pf-list');
+    if(!sel.length){box.innerHTML='<div class="pf-item" style="color:#9aa0a6;font-style:italic">Noch nichts ausgewählt …</div>';return;}
+    var h='';
+    sel.forEach(function(r){
+      var name=r.getAttribute('data-name');
+      var price=r.getAttribute('data-price')||'';
+      var icon=(r.querySelector('.thumb')||{}).textContent||'•';
+      h+='<div class="pf-item"><span class="d">'+icon+'</span><span>'+name+'</span>'
+        +(price?'<span class="p">'+price+'</span>':'')+'</div>';
+    });
+    box.innerHTML=h;
+  }
+</script>
+</body>
+</html>

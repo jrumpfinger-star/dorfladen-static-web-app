@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Katalog – Neues Design (Mockup)</title>
+<style>
+  :root{
+    --green:#2e7d4f;--green-soft:#eef6f0;--green-line:#cfe6d6;
+    --ink:#1f2937;--muted:#6b7280;--line:#e6e7e4;--bg:#f4f5f2;--card:#fff;
+    --radius:14px;--touch:48px;--amber:#b8860b;--amber-soft:#fbf4e2;--danger:#c23b3b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;padding-bottom:40px}
+  .wrap{max-width:480px;margin:0 auto;padding:14px 14px 0}
+
+  /* Kopf */
+  .app-head{display:flex;align-items:center;gap:10px;padding:4px 2px 12px}
+  .app-head .logo{width:34px;height:34px;border-radius:9px;background:var(--green);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+  .app-head h1{font-size:17px;margin:0;font-weight:800;letter-spacing:-.2px}
+  .app-head p{margin:1px 0 0;font-size:12px;color:var(--muted)}
+
+  /* Reiter */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+  .tabs button{border:0;background:none;padding:11px 14px;font-size:14px;font-weight:700;color:var(--muted);
+    cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px}
+  .tabs button.on{color:var(--green);border-bottom-color:var(--green)}
+
+  /* Suche + primäre Aktion */
+  .search{position:relative;margin-bottom:12px}
+  .search input{width:100%;padding:12px 12px 12px 38px;border:1px solid #d7dad3;border-radius:11px;
+    font-size:15px;min-height:var(--touch);background:#fff}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;
+    stroke:var(--muted);fill:none;stroke-width:2}
+
+  .add-primary{width:100%;background:var(--green);color:#fff;border:0;border-radius:12px;padding:14px;
+    font-size:15px;font-weight:800;cursor:pointer;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 2px 8px rgba(46,125,79,.25);margin-bottom:8px}
+  .hidden{display:none}
+
+  /* Formular „Neues Produkt" */
+  .form{background:#fbfcfb;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px}
+  .fgrid{display:grid;grid-template-columns:1fr 100px;gap:10px}
+  .fgrid .full{grid-column:1/-1}
+  .flbl{font-size:11px;font-weight:700;color:#374151;margin:0 0 4px}
+  .fin{width:100%;padding:11px;border:1px solid #d7dad3;border-radius:9px;font-size:14px;min-height:44px;background:#fff}
+  .photo-zone{margin-top:10px;border:1.5px dashed #cdd2ca;border-radius:10px;padding:14px;text-align:center;background:#fff}
+  .photo-btns{display:flex;gap:8px;justify-content:center}
+  .photo-btns button{border:1px solid #d7dad3;background:#fff;border-radius:9px;padding:9px 14px;font-size:13px;
+    font-weight:600;color:#374151;cursor:pointer;min-height:42px}
+  .photo-hint{font-size:11px;color:#9aa0a6;margin-top:8px}
+  .factions{display:flex;gap:8px;margin-top:12px}
+  .btn-ghost{background:none;border:0;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;padding:0 10px}
+  .btn-primary{flex:1;background:var(--green);color:#fff;border:0;border-radius:10px;padding:12px;font-size:14px;
+    font-weight:800;cursor:pointer;min-height:46px}
+
+  /* Kategorien verwalten – dezenter Ausklapp-Link */
+  .catmgr-link{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--muted);
+    font-weight:700;font-size:12px;cursor:pointer;padding:4px 2px;margin-bottom:14px}
+  .catmgr{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 16px}
+  .cat-chiplist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .cat-chip{display:inline-flex;align-items:center;gap:6px;background:#f2f4f0;border:1px solid var(--line);
+    border-radius:999px;padding:6px 10px;font-size:12px;font-weight:600}
+  .cat-chip .x{color:var(--muted);cursor:pointer;font-weight:800}
+  .cat-add{display:flex;gap:8px}
+  .cat-add input{flex:1;padding:9px 11px;border:1px solid #d7dad3;border-radius:9px;font-size:13px;min-height:42px}
+  .cat-add button{background:var(--green);color:#fff;border:0;border-radius:9px;padding:0 16px;font-weight:700;font-size:13px;cursor:pointer;min-height:42px}
+
+  /* Kategorie-Gruppe */
+  .group{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+  .group-hd{display:flex;align-items:center;gap:8px;padding:13px 14px;cursor:pointer;user-select:none}
+  .group-hd .ic{width:26px;height:26px;border-radius:7px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .group-hd .nm{font-size:14px;font-weight:800}
+  .group-hd .ct{font-size:12px;color:var(--muted);font-weight:600}
+  .group-hd .arw{margin-left:auto;color:var(--muted);font-size:12px;transition:transform .2s}
+  .group.closed .arw{transform:rotate(-90deg)}
+  .group.closed .group-bd{display:none}
+  .group-bd{border-top:1px solid var(--line)}
+
+  /* Produktzeile */
+  .prow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid #f1f2ef}
+  .prow:last-child{border-bottom:0}
+  .pthumb{width:46px;height:46px;border-radius:9px;background:#eef0ec;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:20px;object-fit:cover}
+  .pinfo{flex:1;min-width:0}
+  .pname{font-size:14px;font-weight:700;line-height:1.25}
+  .pprice{font-size:13px;font-weight:800;color:var(--green);margin-top:2px}
+  .pacts{display:flex;gap:4px;flex-shrink:0}
+  .iconbtn{width:38px;height:38px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:#4b5563}
+  .iconbtn.del{color:var(--danger);border-color:#eecccc}
+  .iconbtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+
+  /* Inline-Bearbeiten */
+  .editrow{padding:12px 14px;background:var(--amber-soft);border-bottom:1px solid #f0e6c8}
+  .editrow .eg{display:grid;grid-template-columns:1fr 90px;gap:8px}
+  .editrow .full{grid-column:1/-1}
+  .editrow label{font-size:10px;font-weight:700;color:#7a6a3a;display:block;margin-bottom:3px}
+  .editrow input,.editrow select{width:100%;padding:8px 10px;border:1px solid #ddd0a8;border-radius:8px;font-size:13px;min-height:40px;background:#fff}
+  .editrow .ebtns{display:flex;gap:8px;margin-top:10px;justify-content:flex-end}
+  .esave{background:var(--green);color:#fff;border:0;border-radius:8px;padding:9px 16px;font-weight:800;font-size:13px;cursor:pointer;min-height:40px}
+  .ecancel{background:none;border:0;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer}
+
+  .empty{text-align:center;color:#9aa0a6;font-size:13px;padding:26px 10px}
+  .note{max-width:480px;margin:14px auto 20px;font-size:11px;color:#9aa0a6;text-align:center;line-height:1.5}
+
+  /* Responsive: Tablet/Desktop zweispaltig */
+  @media (min-width:760px){
+    .wrap{max-width:940px}
+    .cols{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+    .col-left{position:sticky;top:14px}
+    .col{min-width:0}
+    .note{max-width:940px}
+  }
+  @media (min-width:1500px){
+    .wrap{max-width:1180px}
+    .cols{grid-template-columns:380px 1fr}
+    .note{max-width:1180px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="app-head">
+    <div class="logo">D</div>
+    <div>
+      <h1>Tagespost</h1>
+      <p>Produkte im Katalog verwalten</p>
+    </div>
+  </div>
+
+  <!-- Reiter -->
+  <div class="tabs">
+    <button onclick="location.href='social-tagespost-redesign-mockup.html'">✎ Neuer Post</button>
+    <button class="on">📖 Katalog</button>
+  </div>
+
+  <!-- Suche -->
+  <div class="cols">
+  <div class="col col-left">
+  <div class="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input placeholder="Im Katalog suchen …">
+  </div>
+
+  <!-- Primäre Aktion: neues Produkt -->
+  <button class="add-primary" id="add-toggle" onclick="toggleForm()">＋ Neues Produkt anlegen</button>
+
+  <div class="form hidden" id="addform">
+    <div class="fgrid">
+      <div class="full">
+        <p class="flbl">Name *</p>
+        <input class="fin" placeholder="z.B. Geschnetzeltes mit Champignonrahm">
+      </div>
+      <div class="full">
+        <p class="flbl">Kategorie *</p>
+        <select class="fin">
+          <option>Aufstriche</option><option>Kuchen</option><option>Salate</option>
+          <option>Obst &amp; Gemüse</option><option selected>Sonstiges</option>
+        </select>
+      </div>
+      <div class="full">
+        <p class="flbl">Preis €</p>
+        <input class="fin" inputmode="decimal" placeholder="9,80" style="max-width:140px">
+      </div>
+    </div>
+    <div class="photo-zone">
+      <div class="photo-btns">
+        <button type="button">📷 Kamera</button>
+        <button type="button">🖼 Datei</button>
+      </div>
+      <div class="photo-hint">oder Bild mit Strg+V einfügen</div>
+    </div>
+    <div class="factions">
+      <button class="btn-ghost" onclick="toggleForm()">Abbrechen</button>
+      <button class="btn-primary" onclick="alert('Produkt zum Katalog hinzugefügt (Mockup)')">✓ Zum Katalog hinzufügen</button>
+    </div>
+  </div>
+
+  <!-- Kategorien verwalten (dezent) -->
+  <button class="catmgr-link" onclick="toggleCatMgr()">⚙ Kategorien verwalten</button>
+  <div class="catmgr hidden" id="catmgr">
+    <div class="cat-chiplist">
+      <span class="cat-chip">🥪 Aufstriche <span class="x">✕</span></span>
+      <span class="cat-chip">🍰 Kuchen <span class="x">✕</span></span>
+      <span class="cat-chip">🥗 Salate <span class="x">✕</span></span>
+      <span class="cat-chip">🍎 Obst &amp; Gemüse <span class="x">✕</span></span>
+      <span class="cat-chip">📦 Sonstiges <span class="x">✕</span></span>
+    </div>
+    <div class="cat-add">
+      <input placeholder="Neue Kategorie, z.B. Getränke">
+      <button onclick="alert('Kategorie hinzugefügt (Mockup)')">＋ Hinzufügen</button>
+    </div>
+  </div>
+
+  </div><!-- /col-left -->
+  <div class="col col-right">
+
+  <!-- Katalog-Verzeichnis, nach Kategorie gruppiert -->
+  <div class="group" id="g1">
+    <div class="group-hd" onclick="toggleGroup('g1')">
+      <span class="ic">🥗</span>
+      <span class="nm">Salate</span>
+      <span class="ct">· 3</span>
+      <span class="arw">▼</span>
+    </div>
+    <div class="group-bd">
+      <!-- Anzeige-Zeile -->
+      <div class="prow" id="p1">
+        <div class="pthumb">🥗</div>
+        <div class="pinfo"><div class="pname">Frischer Fleischsalat, 100g</div><div class="pprice">2,25 €</div></div>
+        <div class="pacts">
+          <button class="iconbtn" title="Bearbeiten" onclick="editRow('p1')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="iconbtn del" title="Löschen" onclick="alert('Produkt löschen? (Mockup)')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
+      </div>
+      <!-- Inline-Bearbeiten (versteckt) -->
+      <div class="editrow hidden" id="e1">
+        <div class="eg">
+          <div class="full"><label>Name</label><input value="Frischer Fleischsalat, 100g"></div>
+          <div class="full"><label>Kategorie</label>
+            <select><option selected>Salate</option><option>Aufstriche</option><option>Kuchen</option><option>Sonstiges</option></select></div>
+          <div><label>Preis €</label><input value="2,25"></div>
+        </div>
+        <div class="ebtns">
+          <button class="ecancel" onclick="cancelEdit('p1')">Abbrechen</button>
+          <button class="esave" onclick="cancelEdit('p1')">✓ Speichern</button>
+        </div>
+      </div>
+
+      <div class="prow">
+        <div class="pthumb">🥙</div>
+        <div class="pinfo"><div class="pname">Gyrossalat, 100g</div><div class="pprice">1,52 €</div></div>
+        <div class="pacts">
+          <button class="iconbtn" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="iconbtn del" title="Löschen"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
+      </div>
+      <div class="prow">
+        <div class="pthumb" style="color:#b6bab2">📷</div>
+        <div class="pinfo"><div class="pname">Kartoffelsalat, 100g</div><div class="pprice">1,90 €</div></div>
+        <div class="pacts">
+          <button class="iconbtn" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="iconbtn del" title="Löschen"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group" id="g2">
+    <div class="group-hd" onclick="toggleGroup('g2')">
+      <span class="ic">🍰</span>
+      <span class="nm">Kuchen</span>
+      <span class="ct">· 2</span>
+      <span class="arw">▼</span>
+    </div>
+    <div class="group-bd">
+      <div class="prow">
+        <div class="pthumb">🍰</div>
+        <div class="pinfo"><div class="pname">Bienenstichtorte</div><div class="pprice">3,00 €</div></div>
+        <div class="pacts">
+          <button class="iconbtn" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="iconbtn del" title="Löschen"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
+      </div>
+      <div class="prow">
+        <div class="pthumb">🍓</div>
+        <div class="pinfo"><div class="pname">Erdbeer-Sahne-Torte</div><div class="pprice">3,40 €</div></div>
+        <div class="pacts">
+          <button class="iconbtn" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="iconbtn del" title="Löschen"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group closed" id="g3">
+    <div class="group-hd" onclick="toggleGroup('g3')">
+      <span class="ic">🥪</span>
+      <span class="nm">Aufstriche</span>
+      <span class="ct">· 1</span>
+      <span class="arw">▼</span>
+    </div>
+    <div class="group-bd">
+      <div class="prow">
+        <div class="pthumb">🫒</div>
+        <div class="pinfo"><div class="pname">Antipasti, 100g</div><div class="pprice">2,25 €</div></div>
+        <div class="pacts">
+          <button class="iconbtn" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="iconbtn del" title="Löschen"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /col-right -->
+  </div><!-- /cols -->
+
+</div>
+
+<p class="note">Design-Mockup · Katalog-Reiter · gleiche Bildsprache wie „Neuer Post": eine Akzentfarbe,<br>
+Produkte nach Kategorie gruppiert &amp; aufklappbar, Bearbeiten inline, klare Icon-Aktionen.</p>
+
+<script>
+  function toggleForm(){
+    document.getElementById('addform').classList.toggle('hidden');
+    document.getElementById('add-toggle').classList.toggle('hidden');
+  }
+  function toggleCatMgr(){ document.getElementById('catmgr').classList.toggle('hidden'); }
+  function toggleGroup(id){ document.getElementById(id).classList.toggle('closed'); }
+  function editRow(pid){
+    document.getElementById(pid).classList.add('hidden');
+    document.getElementById('e'+pid.slice(1)).classList.remove('hidden');
+  }
+  function cancelEdit(pid){
+    document.getElementById(pid).classList.remove('hidden');
+    document.getElementById('e'+pid.slice(1)).classList.add('hidden');
+  }
+</script>
+</body>
+</html>

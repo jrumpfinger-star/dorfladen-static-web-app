@@ -26,6 +26,13 @@ tmp_*
 # Secrets / Keys (niemals committen)
 .api-key.txt
 
+# Kassenjournal: lokale Discovery-/Verbindungs-Reports (koennen Hostnamen/Pfade enthalten)
+schapfl-discovery_*.txt
+schapfl-discovery_*.json
+schapfl-connection_*.txt
+schapfl-dbschema_*.txt
+schapfl-sqllogin_*.txt
+
 # Azurite lokaler Emulator-State
 __azurite_db_*.json
 

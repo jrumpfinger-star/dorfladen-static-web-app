@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "G:/OneDrive - CGM/Cascade Memory/Dorfladen-Projekt"
+		}
+	],
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			"Set-ExecutionPolicy": true,
+			"where": true
+		},
+		"debug.internalConsoleOptions": "neverOpen",
+		"liveServer.settings.multiRootWorkspaceName": "dorfladen-static-web-app",
+		"powershell.cwd": "dorfladen-static-web-app",
+		"sarif-viewer.connectToGithubCodeScanning": "off"
+	}
+}

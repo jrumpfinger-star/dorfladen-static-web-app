@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vorschau mit Geräte-Umschalter – Mockup</title>
+<style>
+  :root{ --green:#2e7d4f; --green-dark:#245f3d; --cream:#faf9f6; --ink:#1f2937; --muted:#6b7280; --line:#e6e7e4; }
+  *{box-sizing:border-box}
+  body{margin:0;background:#f4f5f2;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);padding:16px}
+  .wrap{max-width:520px;margin:0 auto}
+
+  .panel-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .panel-head .n{width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .panel-head h2{font-size:16px;font-weight:800;margin:0}
+
+  /* Umschalter-Reihen */
+  .switch{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .switch.artifact{background:#eceee9;border-radius:10px;padding:3px;gap:3px;max-width:100%}
+  .switch.artifact button{flex:1;border:0;background:transparent;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;min-height:38px}
+  .switch.artifact button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+  .devbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .devbtn{display:inline-flex;align-items:center;gap:5px;border:1px solid #d7dad3;background:#fff;color:#374151;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;cursor:pointer;min-height:40px}
+  .devbtn.on{background:var(--green);color:#fff;border-color:var(--green)}
+  .devbtn .dim{font-size:10px;opacity:.7;font-weight:500}
+  .devbtn.on .dim{opacity:.85}
+
+  /* Bühne */
+  .stage{background:#dfe3dd;border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;justify-content:center;align-items:flex-start;overflow:hidden;min-height:360px}
+  .device{background:#fff;box-shadow:0 6px 20px rgba(0,0,0,.15);transform-origin:top center;transition:width .2s}
+  .device.phone{border-radius:24px;border:8px solid #1f2937;overflow:hidden}
+  .device.tablet{border-radius:18px;border:10px solid #1f2937;overflow:hidden}
+  .device.desktop{border-radius:8px;border:2px solid #cbd0c8;overflow:hidden}
+  .scaleinfo{text-align:center;font-size:11px;color:var(--muted);margin-top:8px}
+
+  /* ---- Inhalt: WhatsApp-Poster (fixe Grafik) ---- */
+  .poster{background:var(--cream);width:100%}
+  .poster .hd{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;text-align:center;padding:16px 12px 14px}
+  .poster .hd .t{font-size:24px;font-weight:900;line-height:1.1}
+  .poster .hd .d{font-size:14px;opacity:.95;margin-top:4px;font-weight:600}
+  .poster .body{padding:14px}
+  .poster .cat{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:900;color:var(--green);margin:16px 2px 10px}
+  .poster .cat:first-child{margin-top:2px}
+  .poster .cat::after{content:"";flex:1;height:2px;background:var(--green);opacity:.25;border-radius:2px}
+  /* Einspaltig: volle Breite fuers Bild, Text+Preis darunter */
+  .poster .pcard{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.10);border:1px solid #eee;margin-bottom:14px}
+  .poster .pcard .ph{width:100%;aspect-ratio:16/10;background:#eef0ec;display:flex;align-items:center;justify-content:center;font-size:96px}
+  .poster .pcard .prow{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 16px 14px}
+  .poster .pcard .nm{font-size:22px;font-weight:800;color:var(--ink);line-height:1.15}
+  .poster .pcard .sub{font-size:13px;color:var(--muted);font-weight:500}
+  .poster .pcard .pr{font-size:26px;font-weight:900;color:var(--green);white-space:nowrap}
+  .poster .ft{background:var(--green);color:#fff;text-align:center;padding:14px;margin-top:8px;font-size:14px;font-weight:800}
+  .poster .ft small{display:block;font-weight:400;opacity:.85;font-size:11px;margin-top:3px}
+
+  /* ---- Mittagessen-Poster (gleicher Stil, Marken-Serifentitel) ---- */
+  .meal{background:#faf5ef;width:100%}
+  .meal .hd{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;text-align:center;padding:14px 12px 16px}
+  .meal .hd .claim{font-size:11px;letter-spacing:1px;opacity:.9;font-weight:600}
+  .meal .hd .t{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:800;font-size:30px;margin-top:2px;line-height:1}
+  .meal .hd .d{font-size:14px;font-weight:700;margin-top:4px;letter-spacing:1px}
+  .meal .body{padding:14px}
+  .meal .pcard{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.10);border:1px solid #eee;margin-bottom:14px}
+  .meal .pcard .ph{width:100%;aspect-ratio:16/10;background:#eef0ec;display:flex;align-items:center;justify-content:center;font-size:104px}
+  .meal .pcard .menu{display:inline-block;background:#eef6f0;color:var(--green);font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;margin:12px 16px 0}
+  .meal .pcard .prow{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 16px 14px}
+  .meal .pcard .nm{font-size:22px;font-weight:800;color:var(--ink);line-height:1.15}
+  .meal .pcard .pr{font-size:26px;font-weight:900;color:var(--green);white-space:nowrap}
+  .meal .ft{background:var(--green);color:#fff;text-align:center;padding:14px;margin-top:8px;font-size:14px;font-weight:800}
+  .meal .ft small{display:block;font-weight:400;opacity:.85;font-size:11px;margin-top:3px}
+
+  /* ---- Inhalt: TagesInfo-Seite (responsiv) ---- */
+  .ti{background:#fff;width:100%;font-size:13px}
+  .ti .top{background:var(--green);color:#fff;display:flex;align-items:center;gap:8px;padding:12px 14px}
+  .ti .top .logo{width:26px;height:26px;border-radius:7px;background:#fff;color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
+  .ti .top .ti-t{font-weight:800;font-size:14px}
+  .ti .hero{padding:14px;text-align:center;background:var(--cream)}
+  .ti .hero h1{margin:0;font-size:18px;color:var(--ink)}
+  .ti .hero p{margin:4px 0 0;font-size:12px;color:var(--muted)}
+  .ti .list{padding:12px;display:grid;grid-template-columns:1fr;gap:10px}
+  .ti .item{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px}
+  .ti .item .im{width:52px;height:52px;border-radius:9px;background:#eef0ec;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+  .ti .item .nm{flex:1;font-weight:700}
+  .ti .item .cat{font-size:11px;color:var(--muted);font-weight:600}
+  .ti .item .pr{font-weight:900;color:var(--green);font-size:15px}
+  .ti .cta{margin:4px 12px 14px;background:var(--green);color:#fff;text-align:center;border-radius:12px;padding:12px;font-weight:800}
+  /* responsiv: ab „iPad"-Breite mehrspaltig */
+  .ti.w-tablet .list{grid-template-columns:1fr 1fr}
+  .ti.w-desktop .list{grid-template-columns:1fr 1fr 1fr}
+  .ti.w-wide .list{grid-template-columns:1fr 1fr 1fr 1fr}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="panel-head">
+    <div class="n">3</div>
+    <h2>Vorschau</h2>
+  </div>
+
+  <!-- Umschalter: was wird gezeigt -->
+  <div class="switch artifact">
+    <button class="on" data-art="poster" onclick="setArt('poster',this)">📷 Tagespost</button>
+    <button data-art="meal" onclick="setArt('meal',this)">🍽 Mittagessen</button>
+    <button data-art="ti" onclick="setArt('ti',this)">🌐 TagesInfo</button>
+  </div>
+
+  <!-- Umschalter: Gerät -->
+  <div class="devbar">
+    <button class="devbtn on" data-dev="phone"   data-w="390"  onclick="setDev(this)">📱 Handy <span class="dim">390</span></button>
+    <button class="devbtn"    data-dev="tablet"  data-w="768"  onclick="setDev(this)">📲 iPad <span class="dim">768</span></button>
+    <button class="devbtn"    data-dev="desktop" data-w="1280" onclick="setDev(this)">🖥 Desktop <span class="dim">1280</span></button>
+    <button class="devbtn"    data-dev="desktop" data-w="1920" data-wide="1" onclick="setDev(this)">🖥 Breit <span class="dim">1920</span></button>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="device phone" id="device" style="width:390px">
+      <!-- content injected -->
+    </div>
+  </div>
+  <div class="scaleinfo" id="scaleinfo"></div>
+
+</div>
+
+<script>
+  var STAGE_W = 460; // verfügbare Bühnenbreite (Panel)
+  var cur = { art:'poster', dev:'phone', w:390, wide:false };
+
+  function mealPosterHtml(){
+    function menu(n,emoji,name,price){
+      return '<div class="pcard"><div class="ph">'+emoji+'</div>'
+        +'<div class="menu">Menü '+n+'</div>'
+        +'<div class="prow"><div class="nm">'+name+'</div><div class="pr">'+price+'</div></div></div>';
+    }
+    return '<div class="meal">'
+      +'<div class="hd"><div class="claim">🌿 FRISCH · REGIONAL · NACHHALTIG 🌿</div><div class="t">Mittagessen</div><div class="d">DIENSTAG · 18. AUGUST</div></div>'
+      +'<div class="body">'
+      +menu(1,'🍽','Cordon bleu mit Pommes oder Kartoffelsalat','9,80 €')
+      +menu(2,'🥗','Gemüsepfanne mit Reis (vegetarisch)','7,90 €')
+      +'</div>'
+      +'<div class="ft">🍽 Jetzt vorbestellen · dorfladen-oberornau.de/tagesinfo<small>Dorfladen Oberornau · Frisch · Regional</small></div>'
+      +'</div>';
+  }
+  function posterHtml(){
+    function card(emoji,name,sub,price){
+      return '<div class="pcard"><div class="ph">'+emoji+'</div><div class="prow">'
+        +'<div><div class="nm">'+name+'</div>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>'
+        +'<div class="pr">'+price+'</div></div></div>';
+    }
+    return '<div class="poster">'
+      +'<div class="hd"><div class="t">Heute im Dorfladen</div><div class="d">Dienstag · 18. August</div></div>'
+      +'<div class="body">'
+      +'<div class="cat">🥪 Aufstriche</div>'
+      +card('🥪','Lauchzwiebelaufstrich','100 g','1,59 €')
+      +card('🫒','Antipasti','100 g','2,25 €')
+      +'<div class="cat">🍰 Kuchen</div>'
+      +card('🍰','Obstschnitte mit Mascarpone','','3,30 €')
+      +'<div class="cat">📦 Sonstiges</div>'
+      +card('🍳','Bratensülze','','2,50 €')
+      +'</div>'
+      +'<div class="ft">🍽 Jetzt vorbestellen · dorfladen-oberornau.de/tagesinfo<small>Dorfladen Oberornau · Frisch · Regional</small></div>'
+      +'</div>';
+  }
+  function tiHtml(){
+    var wcls = cur.wide ? 'w-wide' : (cur.w>=1280?'w-desktop':(cur.w>=768?'w-tablet':''));
+    var items=[['🥪','Lauchzwiebelaufstrich','Aufstriche','1,59 €'],['🫒','Antipasti','Aufstriche','2,25 €'],
+               ['🍰','Obstschnitte','Kuchen','3,30 €'],['🍓','Erdbeertorte','Kuchen','3,40 €'],
+               ['🍳','Bratensülze','Sonstiges','2,50 €'],['🥗','Fleischsalat','Sonstiges','2,25 €']];
+    var list=items.map(function(it){return '<div class="item"><div class="im">'+it[0]+'</div><div class="nm">'+it[1]+'<div class="cat">'+it[2]+'</div></div><div class="pr">'+it[3]+'</div></div>';}).join('');
+    return '<div class="ti '+wcls+'">'
+      +'<div class="top"><div class="logo">D</div><div class="ti-t">Dorfladen Oberornau</div></div>'
+      +'<div class="hero"><h1>TagesInfo · Dienstag</h1><p>Frisch heute im Laden – jetzt vorbestellen</p></div>'
+      +'<div class="list">'+list+'</div>'
+      +'<div class="cta">🍽 Mittagessen vorbestellen</div>'
+      +'</div>';
+  }
+
+  function render(){
+    var dev=document.getElementById('device');
+    dev.className='device '+(cur.dev==='phone'?'phone':(cur.dev==='tablet'?'tablet':'desktop'));
+    dev.style.width=cur.w+'px';
+    dev.innerHTML = cur.art==='poster' ? posterHtml() : (cur.art==='meal' ? mealPosterHtml() : tiHtml());
+    // scale-to-fit
+    var frameExtra = cur.dev==='phone'?16:(cur.dev==='tablet'?20:4);
+    var scale = Math.min(1, STAGE_W/(cur.w+frameExtra));
+    dev.style.transform='scale('+scale+')';
+    var stage=document.getElementById('stage');
+    stage.style.height = (dev.getBoundingClientRect().height + 32) + 'px';
+    var artNote = cur.art==='ti' ? ' · Seite passt Layout an die Breite an' : ' · Bild ist auf allen Geräten gleich, nur Größe ändert sich';
+    document.getElementById('scaleinfo').textContent =
+      'Gerät: '+cur.w+' px breit · Darstellung '+Math.round(scale*100)+' %'+artNote;
+  }
+
+  function setArt(a,btn){
+    cur.art=a;
+    document.querySelectorAll('.switch.artifact button').forEach(function(b){b.classList.toggle('on',b===btn);});
+    render();
+  }
+  function setDev(btn){
+    cur.dev=btn.getAttribute('data-dev');
+    cur.w=parseInt(btn.getAttribute('data-w'),10);
+    cur.wide=btn.getAttribute('data-wide')==='1';
+    document.querySelectorAll('.devbtn').forEach(function(b){b.classList.toggle('on',b===btn);});
+    render();
+  }
+  render();
+</script>
+</body>
+</html>
