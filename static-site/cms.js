@@ -10625,14 +10625,14 @@
     if(todayMeals.length){
       var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
       var today=days[new Date().getDay()];
-      html+='<div style="margin-bottom:10px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:8px 12px">';
-      html+='<div style="font-size:12px;font-weight:700;color:#f57f17;margin-bottom:5px">&#127869; Heutiges Mittagessen ('+esc(today)+')</div>';
+      html+='<div style="margin-bottom:10px;background:#f6f7f5;border:1px solid #e6e7e4;border-radius:10px;padding:8px 12px">';
+      html+='<div style="font-size:12px;font-weight:700;color:#2e7d4f;margin-bottom:5px">&#127869; Heutiges Mittagessen ('+esc(today)+')</div>';
       todayMeals.forEach(function(m){
         var wpId='wp-'+m.id;
         var mtImg=_socMtBilder[m.gericht];
-        html+='<div class="soc-mt-row" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:2px solid #ffe082;border-radius:10px;margin-bottom:4px;min-height:44px">';
+        html+='<div class="soc-mt-row" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid #cfe6d6;border-radius:10px;margin-bottom:4px;min-height:44px">';
         html+='<label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer">';
-        html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" data-img="'+esc(mtImg&&mtImg.bild_url?mtImg.bild_url:'')+'" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#f57f17">';
+        html+='<input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" data-img="'+esc(mtImg&&mtImg.bild_url?mtImg.bild_url:'')+'" onchange="socialPickUpdate()" style="width:18px;height:18px;accent-color:#2e7d4f">';
         if(mtImg&&mtImg.bild_url){
           html+='<img src="'+esc(mtImg.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         }
@@ -10640,10 +10640,10 @@
         if(m.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:700">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>';
         html+='</label>';
         // Image upload / paste button for this meal
-        html+='<label title="Bild hochladen oder einf\u00fcgen (Strg+V)" style="cursor:pointer;padding:6px 10px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:18px;flex-shrink:0;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">';
+        html+='<label title="Bild hochladen oder einf\u00fcgen (Strg+V)" style="cursor:pointer;padding:6px 10px;border-radius:6px;background:#eef6f0;border:1px solid #cfe6d6;font-size:18px;flex-shrink:0;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">';
         html+='&#128247;<input type="file" accept="image/*" onchange="socialMtBildUpload(this,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="display:none">';
         html+='</label>';
-        html+='<button class="soc-mt-paste" data-gericht="'+esc(m.gericht).replace(/'/g,"&#39;")+'" onclick="socialMtPasteFocus(this)" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="padding:4px 8px;border-radius:6px;background:#fff8e1;border:1px solid #ffe082;font-size:12px;cursor:pointer;flex-shrink:0">&#128203;</button>';
+        html+='<button class="soc-mt-paste" data-gericht="'+esc(m.gericht).replace(/'/g,"&#39;")+'" onclick="socialMtPasteFocus(this)" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="padding:4px 8px;border-radius:6px;background:#eef6f0;border:1px solid #cfe6d6;font-size:12px;cursor:pointer;flex-shrink:0">&#128203;</button>';
         html+='</div>';
       });
       html+='</div>';
@@ -10651,8 +10651,8 @@
 
     // === Freierfassung: Schnell-Eintrag ===
     html+='<div style="margin-bottom:10px">';
-    html+='<button onclick="socialFreeToggle()" style="width:100%;padding:12px 14px;background:#eff6ff;border:1px dashed #93c5fd;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#2563eb;text-align:left;min-height:44px;box-sizing:border-box">&#10010; Produkt frei erfassen <span style="opacity:.5;font-weight:400">(ohne Katalog)</span></button>';
-    html+='<div id="soc-free-form" style="display:none;margin-top:6px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px">';
+    html+='<button onclick="socialFreeToggle()" style="width:100%;padding:12px 14px;background:#fff;border:1px dashed #cfd4cd;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#2e7d4f;text-align:left;min-height:44px;box-sizing:border-box">&#10010; Produkt frei erfassen <span style="opacity:.5;font-weight:400">(ohne Katalog)</span></button>';
+    html+='<div id="soc-free-form" style="display:none;margin-top:6px;background:#fbfcfb;border:1px solid #e6e7e4;border-radius:8px;padding:10px">';
     html+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end">';
     html+='<div style="flex:2;min-width:140px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>';
     html+='<input id="soc-free-name" class="cms-input" placeholder="z.B. Kartoffelsalat" style="width:100%;font-size:12px;padding:5px 8px;box-sizing:border-box"></div>';
@@ -10670,7 +10670,7 @@
     html+='<label style="cursor:pointer;padding:4px 10px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;color:#374151">&#128247; Bild <input type="file" id="soc-free-bild" accept="image/*" capture="environment" onchange="socialFreeImgPreview()" style="display:none"></label>';
     html+='<button onclick="socialFreePaste(this)" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="padding:4px 8px;border-radius:6px;background:#fff;border:1px solid #d1d5db;font-size:11px;cursor:pointer;color:#374151">&#128203; Einf\u00fcgen</button>';
     html+='<span id="soc-free-img-name" style="font-size:10px;color:#9ca3af;flex:1"></span>';
-    html+='<button onclick="socialFreeAdd()" class="cms-btn cms-btn-sm" style="background:#2563eb;color:#fff;padding:5px 14px;font-size:12px;font-weight:700">&#10003; Hinzuf\u00fcgen</button>';
+    html+='<button onclick="socialFreeAdd()" class="cms-btn cms-btn-sm" style="background:#2e7d4f;color:#fff;padding:5px 14px;font-size:12px;font-weight:700">&#10003; Hinzuf\u00fcgen</button>';
     html+='</div></div></div>';
 
     // === Free items already added ===
@@ -10738,7 +10738,7 @@
     if(!_socFreeItems.length) return '';
     var h='';
     _socFreeItems.forEach(function(fi){
-      h+='<div class="soc-free-item" data-id="'+esc(fi.id)+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;margin-bottom:3px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px">';
+      h+='<div class="soc-free-item" data-id="'+esc(fi.id)+'" style="display:flex;align-items:center;gap:6px;padding:5px 8px;margin-bottom:3px;background:#eef6f0;border:1px solid #cfe6d6;border-radius:8px">';
       if(fi.bild_data){
         h+='<img src="'+fi.bild_data+'" style="width:28px;height:28px;object-fit:cover;border-radius:4px;flex-shrink:0">';
       }
