@@ -232,6 +232,21 @@
         socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
       }).catch(function(err){
         if(err.name==='AbortError')return;
+        // Mehrfach-Datei-Teilen fehlgeschlagen -> mit EINEM Bild erneut versuchen
+        // (manche Android/WhatsApp-Versionen lehnen mehrere Dateien ab). So wird zumindest
+        // ein Bild via WhatsApp geteilt statt in den Download-Dialog zu fallen.
+        if(shareFiles.length>1){
+          var oneData={files:[files[0]]};if(msg)oneData.text=msg;
+          navigator.share(oneData).then(function(){
+            if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
+            socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
+          }).catch(function(err2){
+            if(err2.name==='AbortError')return;
+            if(isMobile){socialShareViaClipboard(files,msg);}
+            else{socialFallbackDownloadFiles(files);window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');}
+          });
+          return;
+        }
         if(isMobile){socialShareViaClipboard(files,msg);}
         else{socialFallbackDownloadFiles(files);window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');}
       });
@@ -333,17 +348,17 @@
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';var freitext=(document.getElementById('soc-post-text').value||'').trim();var selected=socialGatherSelected();
     if(!selected.length){socialStatus('soc-post-status','Bitte Produkte ausw\u00e4hlen',false);return;}
     var msg=socialBuildWhatsAppMsg(selected);var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
-    socialStatus('soc-post-status','Poster wird vorbereitet\u2026',true);
-    // Erst Vorschau generieren -> stellt sicher, dass Bilder geladen sind (_socLoadedImgs)
-    var gen=(typeof socialGenPreview==='function'?socialGenPreview():null)||Promise.resolve();
-    gen.then(function(){
-      var loaded=window._socLoadedImgs||{};
-      var files;
-      try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,loaded,2));}
-      catch(e){try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,{},2));}catch(e2){files=[];}}
-      if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
-      socialShareFiles(files,msg,hasMt);socialSavePost(titel,freitext,selected);
-    }).catch(function(e){socialStatus('soc-post-status','Fehler: '+e.message,false);});
+    // WICHTIG: Dateien SYNCHRON aus den bereits (per Vorschau) geladenen Bildern erzeugen.
+    // KEIN await auf socialGenPreview() vor navigator.share() - sonst verfaellt auf Android
+    // die transiente Nutzeraktivierung und navigator.share() schlaegt mit NotAllowedError fehl
+    // (Bilder landen im Download statt in WhatsApp). Die Vorschau wurde bei der Produktauswahl
+    // bereits erzeugt (socialPickUpdate -> socialGenPreview), _socLoadedImgs ist also gefuellt.
+    var loaded=window._socLoadedImgs||{};
+    var files;
+    try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,loaded,2));}
+    catch(e){try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,{},2));}catch(e2){files=[];}}
+    if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
+    socialShareFiles(files,msg,hasMt);socialSavePost(titel,freitext,selected);
     }catch(e){console.error('[Social] WhatsApp share error:',e);socialStatus('soc-post-status','Fehler: '+e.message,false);}
   };
 
