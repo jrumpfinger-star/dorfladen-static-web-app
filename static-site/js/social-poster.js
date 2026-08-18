@@ -237,9 +237,15 @@
       var shareData={files:shareFiles};
       if(singleImg){ if(msg)shareData.text=msg; }
       else { shareData.text='-'; }
+      // Bestell-Link SYNCHRON vor navigator.share() in die Zwischenablage schreiben
+      // (fire-and-forget, KEIN await): So bleibt die Nutzer-Aktivierung fuer share()
+      // erhalten UND das Clipboard enthaelt den vollstaendigen Text inkl.
+      // "Mittagessen vorbestellen". Wuerde writeText erst NACH share() im .then()
+      // laufen, ist die Aktivierung auf Android verbraucht -> nur die URL bliebe.
+      if(msg&&!singleImg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
       navigator.share(shareData).then(function(){
         if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
-        socialStatus('soc-post-status', singleImg?(msg?'\u2705 Geteilt \u00B7 Bestell-Link angeh\u00e4ngt':'\u2705 Bild geteilt!'):(msg?'\u2705 Bilder einzeln geteilt \u00B7 Bestell-Link ist kopiert \u2013 als eigene Nachricht einf\u00fcgen (langes Tippen \u2192 Einf\u00fcgen)':'\u2705 Bilder einzeln geteilt!'),true);
+        socialStatus('soc-post-status', singleImg?(msg?'\u2705 Geteilt \u00B7 Bestell-Link angeh\u00e4ngt':'\u2705 Bild geteilt!'):(msg?'\u2705 Bilder einzeln geteilt \u00B7 Bestell-Text (mit Link) ist kopiert \u2013 als eigene Nachricht einf\u00fcgen (langes Tippen \u2192 Einf\u00fcgen)':'\u2705 Bilder einzeln geteilt!'),true);
       }).catch(function(err){
         if(err.name==='AbortError')return;
         // Mehrfach-Datei-Teilen fehlgeschlagen -> mit EINEM Bild erneut versuchen
