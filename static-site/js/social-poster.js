@@ -201,6 +201,9 @@
   }
 
   function socialIsMobile(){return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);}
+  // Firefox fuer Android unterstuetzt KEIN Teilen von Dateien via Web-Share-API
+  // (nur Text/Links). Bilder koennen daher nicht direkt an WhatsApp uebergeben werden.
+  function socialIsFirefox(){return /Firefox|FxiOS/i.test(navigator.userAgent);}
   function socialFallbackDownloadFiles(files){files.forEach(function(f){var url=URL.createObjectURL(f);var a=document.createElement('a');a.href=url;a.download=f.name;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},2000);});socialStatus('soc-post-status','\u2705 '+files.length+' Poster heruntergeladen',true);}
   function socialShareViaDownload(files,msg){socialFallbackDownloadFiles(files);setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');},500);}
   function socialShareViaClipboard(files,msg){var blob=files[0];if(navigator.clipboard&&navigator.clipboard.write&&typeof ClipboardItem!=='undefined'){try{var item=new ClipboardItem({'image/png':blob});navigator.clipboard.write([item]).then(function(){socialStatus('soc-post-status','\u2705 Poster in Zwischenablage!',true);}).catch(function(){socialShareViaDownload(files,msg);});}catch(e){socialShareViaDownload(files,msg);}}else{socialShareViaDownload(files,msg);}setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');},300);}
@@ -253,8 +256,19 @@
       socialStatus('soc-post-status','Wird geteilt\u2026',true);
       return;
     }
-    // Kein natives Teilen mit Datei verfuegbar:
-    if(isMobile){socialShareViaClipboard(files,msg);return;}
+    // Kein natives Teilen mit Datei verfuegbar (z.B. Firefox fuer Android):
+    if(isMobile){
+      if(socialIsFirefox()){
+        // Firefox Android kann keine Dateien teilen -> Bilder speichern, WhatsApp mit
+        // Text/Link oeffnen und klar anleiten, die Bilder aus der Galerie anzuhaengen.
+        if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
+        socialFallbackDownloadFiles(files);
+        socialStatus('soc-post-status','\u2705 '+files.length+' Bild(er) gespeichert \u00B7 WhatsApp \u00f6ffnet \u2013 \u00fcber \uD83D\uDCCE die Bilder aus der Galerie anh\u00e4ngen. Tipp: In Chrome werden die Bilder direkt geteilt.',true);
+        setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent(msg||''),'_blank');},400);
+        return;
+      }
+      socialShareViaClipboard(files,msg);return;
+    }
     // Desktop-Browser ohne Web-Share: Poster herunterladen, dann WhatsApp Web mit vorausgefuelltem Text.
     socialFallbackDownloadFiles(files);
     socialStatus('soc-post-status', msg?'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 Poster anh\u00e4ngen (\uD83D\uDCCE), Text ist in der Zwischenablage':'\u2705 Poster gespeichert \u00B7 WhatsApp wird ge\u00f6ffnet \u2013 bitte Poster anh\u00e4ngen',true);
