@@ -227,21 +227,23 @@
     if(canShareFiles){
       // In Build-Reihenfolge teilen: WhatsApp zeigt die Serie in Sende-Reihenfolge
       // (oben = zuerst gesendet). Reihenfolge: Artikel (mit Kopf) -> Mittagessen.
+      // WICHTIG: KEIN shareData.text - der Bestell-Link ist bereits ins letzte Bild
+      // eingezeichnet. Eine Caption wuerde von WhatsApp bei JEDEM Bild wiederholt.
       var shareFiles=shareSet;
-      var shareData={files:shareFiles};if(msg)shareData.text=msg;
+      var shareData={files:shareFiles};
       navigator.share(shareData).then(function(){
         if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
-        socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
+        socialStatus('soc-post-status', msg?'\u2705 Bilder geteilt \u00B7 Link steht im letzten Bild (auch kopiert)':'\u2705 Bild geteilt!',true);
       }).catch(function(err){
         if(err.name==='AbortError')return;
         // Mehrfach-Datei-Teilen fehlgeschlagen -> mit EINEM Bild erneut versuchen
         // (manche Android/WhatsApp-Versionen lehnen mehrere Dateien ab). So wird zumindest
         // ein Bild via WhatsApp geteilt statt in den Download-Dialog zu fallen.
         if(shareFiles.length>1){
-          var oneData={files:[files[0]]};if(msg)oneData.text=msg;
+          var oneData={files:[files[0]]};
           navigator.share(oneData).then(function(){
             if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
-            socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
+            socialStatus('soc-post-status','\u2705 Bild geteilt',true);
           }).catch(function(err2){
             if(err2.name==='AbortError')return;
             if(isMobile){socialShareViaClipboard(files,msg);}
@@ -286,7 +288,7 @@
   // WhatsApp beschneidet die Chat-Vorschau bei hohen Bildern (~4:5). Daher wird
   // der Post in mehrere Seiten aufgeteilt, jede bleibt unter dem Grenz-Verhaeltnis
   // und wird als Bild-Serie geteilt. So kommen alle Infos vollstaendig an.
-  var SOC_PAGE_W=600, SOC_PAGE_MAXH=750, SOC_PAGE_RESERVE=100;
+  var SOC_PAGE_W=720, SOC_PAGE_MAXH=750, SOC_PAGE_RESERVE=100;
 
   // Teilt items so in Bloecke, dass jeder gerendert <= (maxH-reserve) hoch ist.
   function socialChunkItems(items,renderSub,maxH,reserve,SCALE){
@@ -333,7 +335,37 @@
     rendered.forEach(function(r){if(cur.length&&curH+r.h>maxH){pages.push(cur);cur=[];curH=0;}cur.push(r);curH+=r.h;});
     if(cur.length)pages.push(cur);
     var total=pages.length;
-    return pages.map(function(secs,pi){return socialComposePage(secs,pi+1,total,W,SCALE);});
+    var pageCanvases=pages.map(function(secs,pi){return socialComposePage(secs,pi+1,total,W,SCALE);});
+    // Bestell-Link EINMAL auf die letzte Seite zeichnen (nur wenn Mittagessen dabei).
+    // Bewusst NICHT als Share-Caption uebergeben - WhatsApp wiederholt eine Caption
+    // sonst bei JEDEM Bild der Serie. Im Bild erscheint der Link genau einmal.
+    if(mt.length&&pageCanvases.length){
+      var origin=window.location.origin||'';
+      var linkText='\uD83D\uDC49 Mittagessen vorbestellen: '+origin+'/tagesinfo';
+      var li=pageCanvases.length-1;
+      pageCanvases[li]=socialAppendLinkBand(pageCanvases[li],linkText,SCALE);
+    }
+    return pageCanvases;
+  }
+
+  // Haengt unten an ein Seiten-Canvas ein hervorgehobenes Band mit dem Bestell-Link.
+  function socialAppendLinkBand(cv,text,SCALE){
+    var dw=cv.width,pad=Math.round(18*SCALE),lineH=Math.round(30*SCALE);
+    var tmp=document.createElement('canvas'),tx=tmp.getContext('2d');
+    tx.font='700 '+Math.round(21*SCALE)+'px "Segoe UI",system-ui,sans-serif';
+    var maxW=dw-2*pad,lines=socialWrapText(tx,text,maxW);
+    var bandH=pad*2+lines.length*lineH;
+    var out=document.createElement('canvas');out.width=dw;out.height=cv.height+bandH;
+    var x=out.getContext('2d');
+    x.drawImage(cv,0,0);
+    x.fillStyle='#f0fdf4';x.fillRect(0,cv.height,dw,bandH);
+    x.fillStyle='#86efac';x.fillRect(0,cv.height,dw,Math.max(2,Math.round(2*SCALE)));
+    x.fillStyle='#15803d';x.textAlign='center';x.textBaseline='middle';
+    x.font='700 '+Math.round(21*SCALE)+'px "Segoe UI",system-ui,sans-serif';
+    var y=cv.height+pad+lineH/2;
+    lines.forEach(function(ln){x.fillText(ln,dw/2,y);y+=lineH;});
+    x.textBaseline='alphabetic';
+    return out;
   }
 
   // Stapelt die Bloecke einer Seite zu einem Canvas + optionale Seiten-Fusszeile.
