@@ -134,41 +134,33 @@ Produktbilder pflegen (Upload/Paste), WhatsApp-/Meta-Katalog-Sync.
 - **Action:** Neues Produkt mit Name/Preis/Kategorie/Icon anlegen, speichern.
 - **Expected:** Produkt erscheint im Katalog und in Schritt 2 wählbar.
 
-### F4: Vorschau (Schritt 3) — inkl. CMS-Extras
+### F4: Vorschau (Schritt 3)
 
 #### F4 Description
 
-Live-Vorschau der Poster. **Aus CMS zu übernehmen:** Umschalter
-**Poster/TagesInfo**, Geräte-Vorschau **Mobile / iPad Mini / Desktop /
-Desktop breit**, TagesInfo-Live-Vorschau per iframe (`/essen-im-dorfladen.html`),
-Desktop-Split-View „Bearbeiten | Posts".
+Live-Vorschau der Poster über die geteilte `socialGenPreview`-Logik (Poster-
+Canvases `soc-post-canvas` + `soc-post-canvas-meal`).
 
-#### F4 Inputs
-
-| Input | Required | Description |
-| --- | --- | --- |
-| Vorschau-Modus | Ja | `poster` oder `tagesinfo` |
-| Geräte-Breite | Ja | `mobile` / `ipad` / `desktop` / `wide` |
+**Entscheidung (bestätigt):** Die im CMS vorhandenen Buttons Geräte-Vorschau
+(Mobile/iPad/Desktop/Desktop breit) und Poster/TagesInfo-Umschalter sind
+aktuell **nicht implementiert** (`socialSetPreviewDevice` /
+`socialSetPreviewContent` sind nirgends definiert → Klick wirft Fehler).
+Diese toten Buttons und der zugehörige TagesInfo-`iframe` werden **entfernt**.
+Es bleibt die funktionierende Canvas-Vorschau wie im Kiosk-Standard.
 
 #### F4 Behaviour / Acceptance
 
-- Muss enthalten: `socialGenPreview`, `socialSetPreviewContent`,
-  `socialSetPreviewDevice`, `socDeskTab`, TagesInfo-iframe, Poster-Canvases
-  (`soc-post-canvas`, `soc-post-canvas-meal`).
-- Auf Touch-Seiten (Kiosk) dürfen die Geräte-/Split-View-Extras vorhanden,
-  aber unaufdringlich sein; sie dürfen die Bedienung nicht stören.
+- Enthält: `socialGenPreview` (Standard), Poster-Canvases.
+- Entfernt aus CMS: `soc-preview-toolbar` mit Geräte-/Poster/TagesInfo-Buttons
+  und `soc-tagesinfo-frame`.
 
 #### F4 Test Cases
 
-**TC-F4-01: Geräte-Umschaltung ändert Vorschaubreite**
+**TC-F4-01: Vorschau wird erzeugt**
 
-- **Action:** „iPad Mini" → „Desktop breit" wählen.
-- **Expected:** Vorschau-Container ändert die max. Breite entsprechend.
-
-**TC-F4-02: TagesInfo-Vorschau**
-
-- **Action:** Umschalter auf „TagesInfo".
-- **Expected:** iframe zeigt die TagesInfo-Seite; Poster-Canvas ausgeblendet.
+- **Action:** In Schritt 3 „Vorschau aktualisieren".
+- **Expected:** Poster-Canvas(es) zeigen den aktuellen Beitrag; keine
+  ReferenceError in der Konsole (keine toten Buttons mehr).
 
 ### F5: Teilen & Veröffentlichen (Schritt 4)
 
