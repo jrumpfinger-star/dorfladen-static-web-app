@@ -191,11 +191,10 @@
   // --- WhatsApp message builder ---
   function socialBuildWhatsAppMsg(selected){
     var hasMittagessen=selected.some(function(p){return (p.kategorie||'Sonstiges')==='Mittagessen';});
-    // Kurze, EINZEILIGE Bildunterschrift mit Link: erhoeht die Chance, dass
-    // WhatsApp den Text als Caption zum Bild behaelt (statt separater Nachricht).
+    // Zweizeilige Bildunterschrift: Hinweis + Link darunter (wie vom Nutzer gewuenscht).
     if(hasMittagessen){
       var origin=window.location.origin||'';
-      return '\uD83D\uDC49 Mittagessen vorbestellen: '+origin+'/tagesinfo';
+      return '\uD83D\uDC49 Mittagessen vorbestellen:\n'+origin+'/tagesinfo';
     }
     return '';
   }
@@ -357,22 +356,59 @@
   function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');return pages.map(function(cv,i){return socialCanvasToFile(cv,'dorfladen-'+ds+(pages.length>1?('-'+(i+1)):'')+'.png');});}
   M.socialBuildPages=socialBuildPages;
 
+  // Schritt-fuer-Schritt-Teilen: WhatsApp buendelt mehrere in EINEM Vorgang geteilte
+  // Bilder zu einem Album. Damit die Bilder als GETRENNTE Nachrichten ankommen, wird
+  // jedes Bild in einem EIGENEN Teilen-Vorgang (eigener Nutzer-Tipp) geteilt.
+  var _socShareQ=null; // {files,msg,idx}
+  function _socShareCurrent(){
+    var q=_socShareQ;if(!q)return;
+    var i=q.idx,isLast=(i===q.files.length-1),file=q.files[i];
+    var canShare=false;try{canShare=navigator.share&&navigator.canShare&&navigator.canShare({files:[file]});}catch(e){}
+    if(!canShare){
+      // Kein natives Datei-Teilen (z.B. Desktop/Firefox): restliche Bilder speichern, Link kopieren.
+      socialFallbackDownloadFiles(q.files.slice(i));
+      if(q.msg){try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(q.msg).catch(function(){});}catch(e){}}
+      _socShareQ=null;
+      socialStatus('soc-post-status','\u2705 Bilder gespeichert \u00B7 Bestell-Link kopiert \u2013 im Chat einf\u00fcgen',true);
+      return;
+    }
+    // Bestell-Link nur ans LETZTE Bild (Mittagessen) haengen.
+    var shareData={files:[file]};if(isLast&&q.msg)shareData.text=q.msg;
+    navigator.share(shareData).then(function(){
+      q.idx++;
+      if(q.idx<q.files.length){
+        socialStatus('soc-post-status','\u2705 Bild '+(i+1)+' gesendet \u00B7 Nochmal auf \u201eAuf WhatsApp teilen\u201c tippen f\u00fcr Bild '+(q.idx+1)+' von '+q.files.length,true);
+      }else{
+        if(q.msg){try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(q.msg).catch(function(){});}catch(e){}}
+        _socShareQ=null;
+        socialStatus('soc-post-status','\u2705 Alle '+q.files.length+' Bilder gesendet!',true);
+      }
+    }).catch(function(err){
+      if(err.name==='AbortError')return; // abgebrochen -> Queue bleibt, erneut tippen
+      socialShareViaClipboard(q.files.slice(i),q.msg);_socShareQ=null;
+    });
+  }
+
   window.socialShareWhatsApp=function(){
     try{
+    // Laeuft bereits eine Teilen-Sequenz? -> naechstes Bild teilen (neuer Nutzer-Tipp).
+    if(_socShareQ&&_socShareQ.idx<_socShareQ.files.length){_socShareCurrent();return;}
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';var freitext=(document.getElementById('soc-post-text').value||'').trim();var selected=socialGatherSelected();
     if(!selected.length){socialStatus('soc-post-status','Bitte Produkte ausw\u00e4hlen',false);return;}
     var msg=socialBuildWhatsAppMsg(selected);var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
     // WICHTIG: Dateien SYNCHRON aus den bereits (per Vorschau) geladenen Bildern erzeugen.
     // KEIN await auf socialGenPreview() vor navigator.share() - sonst verfaellt auf Android
-    // die transiente Nutzeraktivierung und navigator.share() schlaegt mit NotAllowedError fehl
-    // (Bilder landen im Download statt in WhatsApp). Die Vorschau wurde bei der Produktauswahl
-    // bereits erzeugt (socialPickUpdate -> socialGenPreview), _socLoadedImgs ist also gefuellt.
+    // die transiente Nutzeraktivierung und navigator.share() schlaegt mit NotAllowedError fehl.
     var loaded=window._socLoadedImgs||{};
     var files;
     try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,loaded,2));}
     catch(e){try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,{},2));}catch(e2){files=[];}}
     if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
-    socialShareFiles(files,msg,hasMt);socialSavePost(titel,freitext,selected);
+    socialSavePost(titel,freitext,selected);
+    if(files.length===1){ socialShareFiles(files,msg,hasMt); return; }
+    // Mehrere Bilder -> Sequenz starten (erstes Bild sofort, Rest je Tipp).
+    _socShareQ={files:files,msg:msg,idx:0};
+    _socShareCurrent();
     }catch(e){console.error('[Social] WhatsApp share error:',e);socialStatus('soc-post-status','Fehler: '+e.message,false);}
   };
 
