@@ -209,8 +209,12 @@
   function socialCopyText(text){return new Promise(function(resolve){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){resolve(true);},function(){resolve(socialCopyTextFallback(text));});}else{resolve(socialCopyTextFallback(text));}});}
   function socialShareFiles(files,msg,hasMt){
     var isMobile=socialIsMobile();
-    var shareOne=files.length>1?[files[0]]:files;
-    var canShareFiles=false;if(navigator.share&&navigator.canShare){try{canShareFiles=navigator.canShare({files:shareOne});}catch(e){}}
+    // Alle Bilder als Serie teilen; falls das nicht unterstuetzt wird, das erste Bild.
+    var shareSet=files,canShareFiles=false;
+    if(navigator.share&&navigator.canShare){
+      try{canShareFiles=navigator.canShare({files:files});}catch(e){}
+      if(!canShareFiles){try{if(navigator.canShare({files:[files[0]]})){shareSet=[files[0]];canShareFiles=true;}}catch(e){}}
+    }
     // WICHTIG: KEIN navigator.clipboard.writeText() VOR navigator.share() aufrufen!
     // Auf Android verbraucht der Clipboard-Schreibzugriff die transiente Nutzeraktivierung,
     // wodurch navigator.share() mit NotAllowedError fehlschlaegt und die App in den
@@ -218,7 +222,7 @@
     // ueber shareData.text uebergeben und erst NACH erfolgreichem Teilen als Backup kopiert.
     // Bevorzugt: natives Teilen mit Datei (oeffnet die System-Auswahl inkl. WhatsApp) - Mobil UND Desktop.
     if(canShareFiles){
-      var shareData={files:shareOne};if(msg)shareData.text=msg;
+      var shareData={files:shareSet};if(msg)shareData.text=msg;
       navigator.share(shareData).then(function(){
         if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
         socialStatus('soc-post-status', msg?'\u2705 Bild geteilt \u00B7 Falls der Text fehlt: im Chat einf\u00fcgen (Text ist kopiert)':'\u2705 Bild geteilt!',true);
@@ -246,19 +250,96 @@
     });return files;
   }
 
+  // ── WhatsApp-Aufteilung: Post in mehrere Bilder (max. ~4:5) aufteilen ──
+  // WhatsApp beschneidet die Chat-Vorschau bei hohen Bildern (~4:5). Daher wird
+  // der Post in mehrere Seiten aufgeteilt, jede bleibt unter dem Grenz-Verhaeltnis
+  // und wird als Bild-Serie geteilt. So kommen alle Infos vollstaendig an.
+  var SOC_PAGE_W=600, SOC_PAGE_MAXH=750, SOC_PAGE_RESERVE=100;
+
+  // Teilt items so in Bloecke, dass jeder gerendert <= (maxH-reserve) hoch ist.
+  function socialChunkItems(items,renderSub,maxH,reserve,SCALE){
+    var eff=maxH-(reserve||0),chunks=[],i=0;
+    while(i<items.length){
+      var best=1;
+      for(var count=1;count<=items.length-i;count++){
+        var cv=renderSub(items.slice(i,i+count));
+        if(cv.height/SCALE<=eff){best=count;}else{break;}
+      }
+      chunks.push(items.slice(i,i+best));i+=best;
+    }
+    return chunks;
+  }
+
+  // Baut die Seiten-Canvases (jede <= ~4:5). Mittagessen zuerst, dann Artikel.
+  function socialBuildPages(selected,titel,freitext,loadedImgs,SCALE){
+    SCALE=SCALE||2;var W=SOC_PAGE_W,maxH=SOC_PAGE_MAXH,reserve=SOC_PAGE_RESERVE;
+    var mt=selected.filter(function(p){return p.kategorie==='Mittagessen';});
+    var others=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
+    var blocks=[];
+    if(mt.length){
+      var mchunks=socialChunkItems(mt,function(sub){var cv=document.createElement('canvas');socialDrawMealPosterAuto(cv,cv.getContext('2d'),W,sub,loadedImgs,SCALE);return cv;},maxH,reserve,SCALE);
+      mchunks.forEach(function(sub){blocks.push({kind:'meal',items:sub});});
+    }
+    var seen={},order=[];others.forEach(function(p){var c=p.kategorie||'Sonstiges';if(!seen[c]){seen[c]=[];order.push(c);}seen[c].push(p);});
+    order.forEach(function(c){
+      var achunks=socialChunkItems(seen[c],function(sub){var cv=document.createElement('canvas');socialDrawPoster(cv,cv.getContext('2d'),W,sub,titel,freitext,loadedImgs,SCALE,true,true);return cv;},maxH,reserve,SCALE);
+      achunks.forEach(function(sub){blocks.push({kind:'cat',cat:c,items:sub});});
+    });
+    if(!blocks.length)return [];
+    // Bloecke rendern (erster Block erhaelt den grossen gruenen Kopf)
+    var rendered=blocks.map(function(b,i){
+      var withHeader=(i===0),cv=document.createElement('canvas');
+      if(b.kind==='meal'){socialDrawMealPosterAuto(cv,cv.getContext('2d'),W,b.items,loadedImgs,SCALE,withHeader?{titel:titel,freitext:freitext}:null);}
+      else{socialDrawPoster(cv,cv.getContext('2d'),W,b.items,titel,freitext,loadedImgs,SCALE,true,!withHeader);}
+      return {cv:cv,h:cv.height/SCALE};
+    });
+    // Bloecke auf Seiten packen (<= maxH)
+    var pages=[],cur=[],curH=0;
+    rendered.forEach(function(r){if(cur.length&&curH+r.h>maxH){pages.push(cur);cur=[];curH=0;}cur.push(r);curH+=r.h;});
+    if(cur.length)pages.push(cur);
+    var total=pages.length;
+    return pages.map(function(secs,pi){return socialComposePage(secs,pi+1,total,W,SCALE);});
+  }
+
+  // Stapelt die Bloecke einer Seite zu einem Canvas + optionale Seiten-Fusszeile.
+  function socialComposePage(secs,pageNo,total,W,SCALE){
+    var dw=W*SCALE;
+    var bodyDev=secs.reduce(function(a,s){return a+s.cv.height;},0);
+    var footDev=(total>1)?30*SCALE:0;
+    var pc=document.createElement('canvas');pc.width=dw;pc.height=bodyDev+footDev;
+    var x=pc.getContext('2d');
+    x.fillStyle='#faf9f6';x.fillRect(0,0,dw,pc.height);
+    var y=0;secs.forEach(function(s){x.drawImage(s.cv,0,y);y+=s.cv.height;});
+    if(total>1){
+      x.fillStyle='#eef2ee';x.fillRect(0,y,dw,footDev);
+      x.fillStyle='#6b7280';x.textAlign='center';x.textBaseline='middle';
+      x.font='600 '+Math.round(15*SCALE)+'px "Segoe UI",system-ui,sans-serif';
+      x.fillText('Seite '+pageNo+' / '+total+'  \u00b7  Dorfladen Oberornau',dw/2,y+footDev/2);
+      x.textBaseline='alphabetic';
+    }
+    return pc;
+  }
+
+  function socialCanvasToFile(cv,name){var dataUrl=cv.toDataURL('image/png');var parts=dataUrl.split(',');var mime=parts[0].match(/:(.*?);/)[1];var bstr=atob(parts[1]);var u8=new Uint8Array(bstr.length);for(var i=0;i<bstr.length;i++)u8[i]=bstr.charCodeAt(i);return new File([new Blob([u8],{type:mime})],name,{type:'image/png'});}
+  function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');return pages.map(function(cv,i){return socialCanvasToFile(cv,'dorfladen-'+ds+(pages.length>1?('-'+(i+1)):'')+'.png');});}
+  M.socialBuildPages=socialBuildPages;
+
   window.socialShareWhatsApp=function(){
     try{
     var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';var freitext=(document.getElementById('soc-post-text').value||'').trim();var selected=socialGatherSelected();
     if(!selected.length){socialStatus('soc-post-status','Bitte Produkte ausw\u00e4hlen',false);return;}
     var msg=socialBuildWhatsAppMsg(selected);var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
-    socialStatus('soc-post-status','Poster wird geteilt...',true);
-    var dailyCanvas=document.getElementById('soc-post-canvas');var mealCanvas=document.getElementById('soc-post-canvas-meal');var canvases=[];
-    if(dailyCanvas&&dailyCanvas.style.display!=='none'&&dailyCanvas.width>0)canvases.push({canvas:dailyCanvas,name:'dorfladen-post.png'});
-    if(mealCanvas&&mealCanvas.style.display!=='none'&&mealCanvas.width>0)canvases.push({canvas:mealCanvas,name:'mittagessen-poster.png'});
-    if(!canvases.length){var mtI=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherI=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var fc=document.createElement('canvas');var fx=fc.getContext('2d');if(mtI.length>0&&otherI.length>0){var tM=document.createElement('canvas');socialDrawMealPosterAuto(tM,tM.getContext('2d'),600,mtI,{},2,{titel:titel,freitext:freitext});var tD=document.createElement('canvas');socialDrawPoster(tD,tD.getContext('2d'),600,otherI,titel,freitext,{},2,true,true);fc.width=1200;fc.height=tM.height+tD.height;fx.drawImage(tM,0,0);fx.drawImage(tD,0,tM.height);}else if(mtI.length>0){socialDrawMealPosterAuto(fc,fx,600,mtI,{},2,{titel:titel,freitext:freitext});}else{socialDrawPoster(fc,fx,600,otherI,titel,freitext,{},2);}canvases.push({canvas:fc,name:'dorfladen-post.png'});}
-    var files=canvasToFiles(canvases,selected,titel,freitext);
-    if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
-    socialShareFiles(files,msg,hasMt);socialSavePost(titel,freitext,selected);
+    socialStatus('soc-post-status','Poster wird vorbereitet\u2026',true);
+    // Erst Vorschau generieren -> stellt sicher, dass Bilder geladen sind (_socLoadedImgs)
+    var gen=(typeof socialGenPreview==='function'?socialGenPreview():null)||Promise.resolve();
+    gen.then(function(){
+      var loaded=window._socLoadedImgs||{};
+      var files;
+      try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,loaded,2));}
+      catch(e){try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,{},2));}catch(e2){files=[];}}
+      if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
+      socialShareFiles(files,msg,hasMt);socialSavePost(titel,freitext,selected);
+    }).catch(function(e){socialStatus('soc-post-status','Fehler: '+e.message,false);});
     }catch(e){console.error('[Social] WhatsApp share error:',e);socialStatus('soc-post-status','Fehler: '+e.message,false);}
   };
 
