@@ -438,6 +438,46 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=200, headers=get_cors_headers(),
                 )
 
+            # Aggregierte Statistik: Internet-Bestellungen (quelle=online) nach Status
+            if req.params.get("mode") == "stats":
+                try:
+                    days = int(req.params.get("days", "30"))
+                except ValueError:
+                    days = 30
+                if days < 1:
+                    days = 30
+                from_dt = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%dT00:00:00Z")
+                stats_url = (
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+                    f"?$filter=dl_quelle eq {QUELLE_ONLINE} and createdon ge {from_dt}"
+                    f"&$select=dl_status"
+                    f"&$top=5000"
+                )
+                by_status = {STATUS_NEU: 0, STATUS_BESTAETIGT: 0, STATUS_STORNIERT: 0, STATUS_ABGEHOLT: 0}
+                total = 0
+                next_url = stats_url
+                while next_url:
+                    sr = requests.get(next_url, headers=headers, timeout=30)
+                    if sr.status_code != 200:
+                        break
+                    body = sr.json()
+                    for item in body.get("value", []):
+                        st = item.get("dl_status", STATUS_NEU)
+                        by_status[st] = by_status.get(st, 0) + 1
+                        total += 1
+                    next_url = body.get("@odata.nextLink")
+                return func.HttpResponse(
+                    json.dumps({
+                        "success": True,
+                        "quelle": "online",
+                        "days": days,
+                        "total": total,
+                        "by_status": {str(k): v for k, v in by_status.items()},
+                        "status_labels": {"0": "Neu", "1": "Bestätigt", "2": "Storniert", "3": "Abgeholt"},
+                    }, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+
             if nr_filter and email_filter:
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"

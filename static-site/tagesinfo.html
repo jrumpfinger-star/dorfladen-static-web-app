@@ -249,8 +249,13 @@ window.addEventListener('message',function(e){
     return '<svg '+s+'><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
   }
 
+  function mealIconTile(cls,size){
+    return '<div class="tp-item-img no-img'+(cls?(' '+cls):'')+'" style="padding:4px;background:#f0fdf4;'+(size?('width:'+size+'px;height:'+size+'px;'):'')+'"><img src="/images/mittagessen-icon.png" alt="" style="width:100%;height:100%;object-fit:contain"></div>';
+  }
+
   function itemCard(it,showOrder){
-    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div class="tp-item-img no-img">'+catIcon(it.kategorie)+'</div>';
+    var isMittag=(it.kategorie||'').toLowerCase().indexOf('mittag')>=0;
+    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':(isMittag?mealIconTile('',0):'<div class="tp-item-img no-img">'+catIcon(it.kategorie)+'</div>');
     var preis=it.preis?fmtPreis(it.preis):'';
     var orderBtn='';
     if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
@@ -280,7 +285,8 @@ window.addEventListener('message',function(e){
   }
 
   function gridCard(it){
-    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>';
+    var isMittag=(it.kategorie||'').toLowerCase().indexOf('mittag')>=0;
+    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':(isMittag?'<div style="width:64px;height:64px;border-radius:8px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;padding:5px"><img src="/images/mittagessen-icon.png" alt="" style="width:100%;height:100%;object-fit:contain"></div>':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>');
     var preis=it.preis?fmtPreis(it.preis):'';
     var abBadge=it.ab_uhr?'<span class="tp-ab-badge" style="margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
     return '<div class="tp-grid-card">'+img+'<div class="card-name">'+esc(it.name||'')+'</div>'+(preis?'<div class="card-price">'+preis+'</div>':'')+(abBadge||'')+'</div>';

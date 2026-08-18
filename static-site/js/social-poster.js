@@ -11,6 +11,15 @@
   var getFeatureFlags=M.getFeatureFlags;
   var lucideIcon=M.lucideIcon;
 
+  // Teller-Icon fuer Mittagessen-Menues (Poster-Platzhalter, wenn kein Foto)
+  var _socMealIcon=new Image();
+  _socMealIcon.src='/images/mittagessen-icon.png';
+  function _socMealIconReady(){return _socMealIcon.complete&&_socMealIcon.naturalWidth>0;}
+  var _socMealIconPromise=new Promise(function(res){
+    if(_socMealIcon.complete){res();return;}
+    _socMealIcon.onload=function(){res();};_socMealIcon.onerror=function(){res();};
+  });
+
   function socialWrapText(ctx,text,maxW){var words=text.split(' '),lines=[],cur='';words.forEach(function(w){var test=cur?cur+' '+w:w;if(ctx.measureText(test).width>maxW){if(cur)lines.push(cur);cur=w;}else{cur=test;}});if(cur)lines.push(cur);return lines;}
 
   // ── Helfer: abgerundetes Rechteck ──
@@ -175,8 +184,21 @@
       var h=Math.max(CPAD+fwPhotoH+CPAD,textH+CPAD*2);
       return {lines:lines,h:h,showMenu:showMenu,textH:textH};
     }
-    // Platzhalter-Kachel (kein Foto): gruener Verlauf + Teller-Emoji – passt zu Artikeln
-    function drawMealPlaceholder(ctx2,x,y,w,h,r){ctx2.save();socialRoundRect(ctx2,x,y,w,h,r);var g=ctx2.createLinearGradient(x,y,x,y+h);g.addColorStop(0,'#3a8f3f');g.addColorStop(1,'#256a2a');ctx2.fillStyle=g;ctx2.fill();ctx2.clip();ctx2.textAlign='center';ctx2.textBaseline='middle';ctx2.font=Math.round(h*0.42)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx2.globalAlpha=0.95;ctx2.fillText('\uD83C\uDF7D\uFE0F',x+w/2,y+h/2+2);ctx2.globalAlpha=1;ctx2.restore();ctx2.textBaseline='alphabetic';}
+    // Platzhalter-Kachel (kein Foto): helle Kachel + Teller-Icon (Fallback: Emoji)
+    function drawMealPlaceholder(ctx2,x,y,w,h,r){
+      ctx2.save();socialRoundRect(ctx2,x,y,w,h,r);
+      var g=ctx2.createLinearGradient(x,y,x,y+h);g.addColorStop(0,'#f0fdf4');g.addColorStop(1,'#dcf3e3');
+      ctx2.fillStyle=g;ctx2.fill();ctx2.clip();
+      if(_socMealIconReady()){
+        var iw=_socMealIcon.naturalWidth,ih=_socMealIcon.naturalHeight;
+        var pad=Math.round(Math.min(w,h)*0.12);
+        var aw=w-pad*2,ah=h-pad*2;var s=Math.min(aw/iw,ah/ih);
+        var dw=iw*s,dh=ih*s;ctx2.drawImage(_socMealIcon,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+      }else{
+        ctx2.textAlign='center';ctx2.textBaseline='middle';ctx2.font=Math.round(h*0.42)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx2.globalAlpha=0.95;ctx2.fillText('\uD83C\uDF7D\uFE0F',x+w/2,y+h/2+2);ctx2.globalAlpha=1;ctx2.textBaseline='alphabetic';
+      }
+      ctx2.restore();
+    }
     // Gut lesbarer "ab HH:MM Uhr"-Badge (rot mit Rahmen) statt hellgrauem Text
     function drawAbBadge(ctx2,x,yBaseline,text){ctx2.font='bold 11px "Segoe UI",system-ui,sans-serif';var t='ab '+text+' Uhr';var bw=ctx2.measureText(t).width+16;var by=yBaseline-14;ctx2.save();socialRoundRect(ctx2,x,by,bw,20,6);ctx2.fillStyle='#fff';ctx2.fill();ctx2.strokeStyle='#dc2626';ctx2.lineWidth=1.5;ctx2.stroke();ctx2.restore();ctx2.fillStyle='#dc2626';ctx2.textAlign='left';ctx2.fillText(t,x+8,yBaseline);}
     function drawMealCard(ctx2,meal,x,y,info,idx){
@@ -222,7 +244,7 @@
     if(ff.post_images!==false){selected.forEach(function(p){var url='';var pName=p.name||p.gericht||'';if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url)url=_socMtBilder[pName].bild_url;if(!url){var katItem=_socialKatalog.find(function(k){return k.id===p.id;});if(katItem&&katItem.bild_url)url=katItem.bild_url;}if(!url&&p.bild_url)url=p.bild_url;if(!url){var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});if(freeItem&&freeItem.bild_data)url=freeItem.bild_data;}if(url)imgMap[p.id]=url;});}
     var imgUrls=Object.keys(imgMap).map(function(id){return{id:id,url:imgMap[id]};});var loadedImgs={};
     var promises=imgUrls.map(function(entry){return new Promise(function(resolve){if(entry.url.indexOf('data:')===0){var img=new Image();img.onload=function(){loadedImgs[entry.id]=img;resolve();};img.onerror=function(){resolve();};img.src=entry.url;return;}fetch(entry.url).then(function(r){return r.blob();}).then(function(blob){var objUrl=URL.createObjectURL(blob);var img=new Image();img.onload=function(){loadedImgs[entry.id]=img;resolve();};img.onerror=function(){URL.revokeObjectURL(objUrl);resolve();};img.src=objUrl;}).catch(function(){var img=new Image();img.crossOrigin='anonymous';img.onload=function(){loadedImgs[entry.id]=img;loadedImgs['_tainted']=true;resolve();};img.onerror=function(){var img2=new Image();img2.onload=function(){loadedImgs[entry.id]=img2;loadedImgs['_tainted']=true;resolve();};img2.onerror=function(){resolve();};img2.src=entry.url;};img.src=entry.url;});});});
-    return Promise.all(promises).then(function(){
+    return Promise.all(promises.concat([_socMealIconPromise])).then(function(){
       var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var hasMt=mtItems.length>0;var hasOther=otherItems.length>0;
       var mealCanvas=document.getElementById('soc-post-canvas-meal');var mealLabel=document.getElementById('soc-preview-label-meal');var dailyLabel=document.getElementById('soc-preview-label-daily');if(mealCanvas)mealCanvas.style.display='none';if(mealLabel)mealLabel.style.display='none';if(dailyLabel)dailyLabel.style.display='none';
       if(hasMt&&hasOther){var tmpDaily=document.createElement('canvas');socialDrawPoster(tmpDaily,tmpDaily.getContext('2d'),W,otherItems,titel,freitext,loadedImgs,SCALE,true);var tmpMeal=document.createElement('canvas');socialDrawMealPosterAuto(tmpMeal,tmpMeal.getContext('2d'),W,mtItems,loadedImgs,SCALE);canvas.width=W*SCALE;canvas.height=tmpDaily.height+tmpMeal.height;ctx.drawImage(tmpDaily,0,0);ctx.drawImage(tmpMeal,0,tmpDaily.height);canvas.style.display='block';}

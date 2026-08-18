@@ -9166,6 +9166,7 @@
   window.statsLoad=function(){
     var days=document.getElementById('stats-period');
     var d=days?days.value:'30';
+    if(typeof statsLoadLunch==='function') statsLoadLunch(d);
     var loading=document.getElementById('stats-loading');
     if(loading)loading.style.display='';
     fetch(API+'/analytics?days='+d).then(function(r){return r.json();}).then(function(data){
@@ -9194,6 +9195,28 @@
       console.error('Analytics load error',e);
     });
   };
+
+  // Mittagessen-Bestellstatistik (Internet) laden und in die KPI-Kacheln schreiben
+  function statsLoadLunch(d){
+    var ids=['stats-lunch-total','stats-lunch-0','stats-lunch-1','stats-lunch-2','stats-lunch-3'];
+    ids.forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='…';});
+    fetch(API+'/lunch-order?mode=stats&days='+d).then(function(r){return r.json();}).then(function(res){
+      if(!res||!res.success){throw new Error('no data');}
+      var bs=res.by_status||{};
+      function set(id,val){var el=document.getElementById(id);if(el)el.textContent=(val||0).toLocaleString('de-DE');}
+      set('stats-lunch-total',res.total);
+      set('stats-lunch-0',bs['0']);
+      set('stats-lunch-1',bs['1']);
+      set('stats-lunch-2',bs['2']);
+      set('stats-lunch-3',bs['3']);
+      var note=document.getElementById('stats-lunch-note');
+      if(note)note.textContent='Bestellungen der letzten '+(res.days||d)+' Tage · nur über Internet eingegangen';
+    }).catch(function(e){
+      ids.forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='–';});
+      console.error('Lunch stats load error',e);
+    });
+  }
+  window.statsLoadLunch=statsLoadLunch;
 
   // Mini canvas chart helper
   // ── Chart-Interaktivitaet: Hover-Tooltip + Crosshair (shared) ──
