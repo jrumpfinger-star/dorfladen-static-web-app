@@ -119,7 +119,7 @@
       var heroH=it.hasImg?IMG_H:150;
       var tyy=cy+CARD_PAD;
       if(it.hasImg){ctx.save();roundTop(cx,cy,cw,heroH,CARD_R);ctx.clip();drawCover(loadedImgs[meal.id],cx,cy,cw,heroH);ctx.restore();tyy=cy+heroH+CARD_PAD;}
-      else{ctx.save();roundTop(cx,cy,cw,heroH,CARD_R);ctx.fillStyle='#f2efe8';ctx.fill();ctx.strokeStyle='#ebe5da';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#c8b79b';ctx.font='56px "Segoe UI Emoji","Segoe UI Symbol","Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('🍽',W/2,cy+82);ctx.restore();tyy=cy+heroH+CARD_PAD;}
+      else{ctx.save();roundTop(cx,cy,cw,heroH,CARD_R);ctx.fillStyle='#f2efe8';ctx.fill();ctx.strokeStyle='#ebe5da';ctx.lineWidth=1;ctx.stroke();if(_socMealIconReady()){var _iw=_socMealIcon.naturalWidth,_ih=_socMealIcon.naturalHeight,_box=Math.min(heroH-28,120),_s=Math.min(_box/_iw,_box/_ih),_dw=_iw*_s,_dh=_ih*_s;ctx.drawImage(_socMealIcon,W/2-_dw/2,cy+(heroH-_dh)/2,_dw,_dh);}else{ctx.fillStyle='#c8b79b';ctx.font='56px "Segoe UI Emoji","Segoe UI Symbol","Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('🍽',W/2,cy+82);}ctx.restore();tyy=cy+heroH+CARD_PAD;}
       ctx.textAlign='center';ctx.fillStyle='#2e7d32';ctx.font='900 15px "Segoe UI",system-ui,sans-serif';ctx.fillText('Men\u00fc '+(it.idx+1),W/2,tyy+16);tyy+=26;
       ctx.fillStyle='#1a1a1a';ctx.font='bold 24px "Segoe UI",system-ui,sans-serif';it.nl.forEach(function(line){ctx.fillText(line,W/2,tyy+22);tyy+=30;});
       if(meal.preis){var mp=parseFloat(meal.preis);ctx.fillStyle='#2e7d4f';ctx.font='900 24px "Segoe UI",system-ui,sans-serif';ctx.fillText((mp&&isFinite(mp)?mp.toFixed(2):meal.preis)+' \u20AC',W/2,tyy+24);}
