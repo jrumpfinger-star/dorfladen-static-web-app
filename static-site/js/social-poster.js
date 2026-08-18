@@ -241,8 +241,12 @@
       // (wuerde sonst unter jedem Bild stehen), sondern in die Zwischenablage
       // kopiert und als eigene Nachricht eingefuegt. Bei EINEM Bild darf der
       // Link direkt als Caption mitgehen.
-      var shareFiles=shareSet;
-      var singleImg=shareFiles.length===1;
+      // WhatsApp kehrt beim Teilen MEHRERER Bilder die Reihenfolge um (es verarbeitet
+      // die Datei-Liste rueckwaerts, oben im Chat = zuletzt aus der Liste). Daher die
+      // Liste bei mehreren Bildern VORAB umdrehen -> WhatsApp zeigt sie dann in der
+      // richtigen Reihenfolge (Artikel mit gruenem Kopf zuerst, Mittagessen zuletzt).
+      var singleImg=shareSet.length===1;
+      var shareFiles=singleImg?shareSet:shareSet.slice().reverse();
       var shareData={files:shareFiles};
       if(singleImg){ if(msg)shareData.text=msg; }
       else { shareData.text='-'; }
