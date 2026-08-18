@@ -241,8 +241,12 @@
       // (wuerde sonst unter jedem Bild stehen), sondern in die Zwischenablage
       // kopiert und als eigene Nachricht eingefuegt. Bei EINEM Bild darf der
       // Link direkt als Caption mitgehen.
-      var shareFiles=shareSet;
-      var singleImg=shareFiles.length===1;
+      var singleImg=shareSet.length===1;
+      // WhatsApp DESKTOP verarbeitet die Datei-Liste beim Teilen mehrerer Bilder
+      // RUECKWAERTS (oben im Chat = letztes Element der Liste), Android dagegen
+      // vorwaerts (korrekt). Daher NUR auf dem Desktop die Liste vorab umdrehen,
+      // damit WhatsApp Desktop sie zurueckdreht -> korrekte Reihenfolge auf beiden.
+      var shareFiles=(!isMobile&&!singleImg)?shareSet.slice().reverse():shareSet;
       var shareData={files:shareFiles};
       if(singleImg){ if(msg)shareData.text=msg; }
       else { shareData.text='-'; }
