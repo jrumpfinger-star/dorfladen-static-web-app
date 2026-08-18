@@ -159,15 +159,53 @@
   }
 
   function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE){
-    SCALE=SCALE||1;var tmpC=document.createElement('canvas');tmpC.width=W;tmpC.height=10;var tmpX=tmpC.getContext('2d');
-    var calcH=24+28+32+30;tmpX.font='bold 18px "Segoe UI",system-ui,sans-serif';
-    mtItems.forEach(function(meal){calcH+=22;var nl=socialWrapText(tmpX,meal.name,W-50);calcH+=nl.length*22;calcH+=meal.preis?20:8;calcH+=6;});calcH+=10;
-    canvas.width=W*SCALE;canvas.height=calcH*SCALE;ctx=canvas.getContext('2d');ctx.setTransform(SCALE,0,0,SCALE,0,0);
-    ctx.fillStyle='#faf5ef';ctx.fillRect(0,0,W,calcH);
-    var ty=24;ctx.textAlign='center';ctx.fillStyle='#6b8c42';ctx.font='10px "Segoe UI",system-ui,sans-serif';ctx.fillText('\uD83C\uDF3F FRISCH \u2022 REGIONAL \u2022 NACHHALTIG \uD83C\uDF3F',W/2,ty);
-    ty+=28;ctx.fillStyle='#5b7a3a';ctx.font='italic bold 30px Georgia,"Times New Roman",serif';ctx.fillText('Mittagessen',W/2,ty);
-    var now=new Date();var days=['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];ty+=32;ctx.fillStyle='#374151';ctx.font='bold 20px "Segoe UI",system-ui,sans-serif';ctx.fillText(days[now.getDay()],W/2,ty);
-    ty+=30;mtItems.forEach(function(meal,idx){ctx.fillStyle='rgba(107,140,66,0.18)';ctx.beginPath();ctx.ellipse(W/2,ty-6,70,16,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#2e7d32';ctx.font='bold 15px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('Men\u00fc '+(idx+1),W/2,ty);ty+=22;ctx.fillStyle='#1a1a1a';ctx.font='bold 18px "Segoe UI",system-ui,sans-serif';var nameLines=socialWrapText(ctx,meal.name,W-50);nameLines.forEach(function(line){ctx.fillText(line,W/2,ty);ty+=22;});if(meal.preis){var mp=parseFloat(meal.preis);ctx.fillStyle='#6b7280';ctx.font='12px "Segoe UI",system-ui,sans-serif';ctx.fillText((mp&&isFinite(mp)?mp.toFixed(2):meal.preis)+' \u20AC',W/2,ty);ty+=20;}else{ty+=8;}ty+=6;});
+    SCALE=SCALE||1;
+    var PAD=26, GAP=16, CPAD=10, fwPhotoW=200, fwPhotoH=150;
+    var NAME_LH=22, NAME_FONT='bold 18px "Segoe UI",system-ui,sans-serif';
+    var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    var headerLabel='\uD83C\uDF7D\uFE0F Mittagessen \u00B7 '+days[new Date().getDay()];
+    var totalMenus=mtItems.length;
+
+    function mealInfo(mctx,meal){
+      mctx.font=NAME_FONT;
+      var tw=W-PAD*2-fwPhotoW-16-CPAD*2;
+      var lines=socialClampLines(mctx,meal.name||'',tw,3);
+      var showMenu=totalMenus>1;
+      var textH=(showMenu?26:0)+lines.length*NAME_LH+(meal.ab_uhr?6+20:0)+10+30;
+      var h=Math.max(CPAD+fwPhotoH+CPAD,textH+CPAD*2);
+      return {lines:lines,h:h,showMenu:showMenu,textH:textH};
+    }
+    // Platzhalter-Kachel (kein Foto): gruener Verlauf + Teller-Emoji – passt zu Artikeln
+    function drawMealPlaceholder(ctx2,x,y,w,h,r){ctx2.save();socialRoundRect(ctx2,x,y,w,h,r);var g=ctx2.createLinearGradient(x,y,x,y+h);g.addColorStop(0,'#3a8f3f');g.addColorStop(1,'#256a2a');ctx2.fillStyle=g;ctx2.fill();ctx2.clip();ctx2.textAlign='center';ctx2.textBaseline='middle';ctx2.font=Math.round(h*0.42)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx2.globalAlpha=0.95;ctx2.fillText('\uD83C\uDF7D\uFE0F',x+w/2,y+h/2+2);ctx2.globalAlpha=1;ctx2.restore();ctx2.textBaseline='alphabetic';}
+    // Gut lesbarer "ab HH:MM Uhr"-Badge (rot mit Rahmen) statt hellgrauem Text
+    function drawAbBadge(ctx2,x,yBaseline,text){ctx2.font='bold 11px "Segoe UI",system-ui,sans-serif';var t='ab '+text+' Uhr';var bw=ctx2.measureText(t).width+16;var by=yBaseline-14;ctx2.save();socialRoundRect(ctx2,x,by,bw,20,6);ctx2.fillStyle='#fff';ctx2.fill();ctx2.strokeStyle='#dc2626';ctx2.lineWidth=1.5;ctx2.stroke();ctx2.restore();ctx2.fillStyle='#dc2626';ctx2.textAlign='left';ctx2.fillText(t,x+8,yBaseline);}
+    function drawMealCard(ctx2,meal,x,y,info,idx){
+      var w=W-PAD*2;
+      ctx2.save();socialRoundRect(ctx2,x,y,w,info.h,14);ctx2.fillStyle='#ffffff';ctx2.shadowColor='rgba(0,0,0,0.10)';ctx2.shadowBlur=8;ctx2.shadowOffsetY=2;ctx2.fill();ctx2.restore();
+      ctx2.save();socialRoundRect(ctx2,x,y,w,info.h,14);ctx2.strokeStyle='#ece7de';ctx2.lineWidth=1;ctx2.stroke();ctx2.restore();
+      var px=x+CPAD, py=y+(info.h-fwPhotoH)/2, img=loadedImgs&&loadedImgs[meal.id];
+      if(img) socialDrawCover(ctx2,img,px,py,fwPhotoW,fwPhotoH,10); else drawMealPlaceholder(ctx2,px,py,fwPhotoW,fwPhotoH,10);
+      var tx=x+CPAD+fwPhotoW+16;
+      var ty=y+(info.h-info.textH)/2+(info.showMenu?18:16);
+      if(info.showMenu){var t='Men\u00fc '+(idx+1);ctx2.font='bold 12px "Segoe UI",system-ui,sans-serif';var pw=ctx2.measureText(t).width+18;ctx2.save();socialRoundRect(ctx2,tx,ty-14,pw,20,10);ctx2.fillStyle='rgba(46,125,50,0.12)';ctx2.fill();ctx2.restore();ctx2.fillStyle='#2e7d32';ctx2.textAlign='left';ctx2.fillText(t,tx+9,ty);ty+=26;}
+      ctx2.textAlign='left';ctx2.fillStyle='#1f2937';ctx2.font=NAME_FONT;
+      info.lines.forEach(function(l){ctx2.fillText(l,tx,ty);ty+=NAME_LH;});
+      if(meal.ab_uhr){ty+=6;drawAbBadge(ctx2,tx,ty,meal.ab_uhr);ty+=20;}
+      ty+=10;ctx2.fillStyle='#2e7d32';ctx2.font='bold 28px "Segoe UI",system-ui,sans-serif';ctx2.textAlign='left';ctx2.fillText(socialFmtPrice(meal.preis)+' \u20AC',tx,ty+8);
+    }
+    // Mess-Durchlauf (Scratch) -> Gesamthoehe
+    var scratch=document.createElement('canvas').getContext('2d');
+    var H=34+18;
+    mtItems.forEach(function(m){H+=mealInfo(scratch,m).h+GAP;});
+    H+=6;H=Math.max(150,H);
+    canvas.width=W*SCALE;canvas.height=H*SCALE;ctx=canvas.getContext('2d');ctx.setTransform(SCALE,0,0,SCALE,0,0);
+    ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H);
+    // Sektionsueberschrift (gruen) mit Trennlinie – Tag gut lesbar integriert
+    var yy=34;ctx.textAlign='left';ctx.fillStyle='#2e7d32';ctx.font='bold 17px "Segoe UI",system-ui,sans-serif';ctx.fillText(headerLabel,PAD,yy);
+    var lw=ctx.measureText(headerLabel).width, lineX=PAD+lw+12;
+    if(lineX<W-PAD-20){var lg=ctx.createLinearGradient(lineX,0,W-PAD,0);lg.addColorStop(0,'#2e7d32');lg.addColorStop(1,'rgba(46,125,50,0.12)');ctx.strokeStyle=lg;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lineX,yy-5);ctx.lineTo(W-PAD,yy-5);ctx.stroke();}
+    yy+=18;
+    mtItems.forEach(function(m,i){var info=mealInfo(ctx,m);drawMealCard(ctx,m,PAD,yy,info,i);yy+=info.h+GAP;});
   }
 
   // Expose draw functions on module
