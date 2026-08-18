@@ -9211,12 +9211,52 @@
       set('stats-lunch-3',bs['3']);
       var note=document.getElementById('stats-lunch-note');
       if(note)note.textContent='Bestellungen der letzten '+(res.days||d)+' Tage · nur über Internet eingegangen';
+      statsRenderLunchDays(res.by_day||[]);
     }).catch(function(e){
       ids.forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='–';});
+      var dd=document.getElementById('stats-lunch-days');if(dd)dd.innerHTML='<div class="cms-empty" style="padding:8px 0">Konnte nicht geladen werden.</div>';
       console.error('Lunch stats load error',e);
     });
   }
   window.statsLoadLunch=statsLoadLunch;
+
+  // Tageswerte (je Mittagstisch-Tag) als kompakte Tabelle rendern
+  function statsRenderLunchDays(rows){
+    var box=document.getElementById('stats-lunch-days');
+    if(!box)return;
+    if(!rows||!rows.length){box.innerHTML='<div class="cms-empty" style="padding:8px 0">Keine Bestellungen im Zeitraum.</div>';return;}
+    var WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
+    function fmtDay(iso){var p=(iso||'').split('-');if(p.length<3)return iso;var dt=new Date(+p[0],+p[1]-1,+p[2]);return WD[dt.getDay()]+' '+p[2]+'.'+p[1]+'.'+p[0];}
+    var todayISO=new Date().toISOString().slice(0,10);
+    var h='<table style="width:100%;border-collapse:collapse;font-size:12px">'
+      +'<thead><tr style="text-align:right;color:#6b7280">'
+      +'<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #eef0f2">Tag</th>'
+      +'<th style="padding:6px 8px;border-bottom:1px solid #eef0f2">Gesamt</th>'
+      +'<th style="padding:6px 8px;border-bottom:1px solid #eef0f2;color:#f59e0b">Neu</th>'
+      +'<th style="padding:6px 8px;border-bottom:1px solid #eef0f2;color:#3b82f6">Best.</th>'
+      +'<th style="padding:6px 8px;border-bottom:1px solid #eef0f2;color:#6b7280">Abgeh.</th>'
+      +'<th style="padding:6px 8px;border-bottom:1px solid #eef0f2;color:#ef4444">Storn.</th>'
+      +'<th style="padding:6px 8px;border-bottom:1px solid #eef0f2" title="Summe der Mengen ohne Stornos">Portionen</th>'
+      +'</tr></thead><tbody>';
+    rows.forEach(function(r){
+      var storn=(r['2']||0);
+      var aktivMenge=(r.menge||0); // Portionen ohne Storno (aus API)
+      var isToday=r.datum===todayISO;
+      var bg=isToday?'background:#f0fdf4;':'';
+      h+='<tr style="text-align:right;'+bg+'">'
+        +'<td style="text-align:left;padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:'+(isToday?'700':'500')+'">'+fmtDay(r.datum)+(isToday?' <span style="font-size:10px;color:#16a34a">heute</span>':'')+'</td>'
+        +'<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">'+(r.total||0)+'</td>'
+        +'<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">'+(r['0']||0)+'</td>'
+        +'<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">'+(r['1']||0)+'</td>'
+        +'<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">'+(r['3']||0)+'</td>'
+        +'<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">'+storn+'</td>'
+        +'<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700;color:#16a34a">'+aktivMenge+'</td>'
+        +'</tr>';
+    });
+    h+='</tbody></table>';
+    box.innerHTML=h;
+  }
+  window.statsRenderLunchDays=statsRenderLunchDays;
 
   // Mini canvas chart helper
   // ── Chart-Interaktivitaet: Hover-Tooltip + Crosshair (shared) ──

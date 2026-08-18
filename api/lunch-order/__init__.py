@@ -450,10 +450,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 stats_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
                     f"?$filter=dl_quelle eq {QUELLE_ONLINE} and createdon ge {from_dt}"
-                    f"&$select=dl_status"
+                    f"&$select=dl_status,dl_datum,dl_menge"
                     f"&$top=5000"
                 )
                 by_status = {STATUS_NEU: 0, STATUS_BESTAETIGT: 0, STATUS_STORNIERT: 0, STATUS_ABGEHOLT: 0}
+                # Tageswerte nach Mittagstisch-Tag (dl_datum): pro Tag Status-Aufschluesselung
+                by_day = {}
                 total = 0
                 next_url = stats_url
                 while next_url:
@@ -465,7 +467,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         st = item.get("dl_status", STATUS_NEU)
                         by_status[st] = by_status.get(st, 0) + 1
                         total += 1
+                        day = (item.get("dl_datum") or "").split("T")[0]
+                        if day:
+                            slot = by_day.get(day)
+                            if slot is None:
+                                slot = {"total": 0, "0": 0, "1": 0, "2": 0, "3": 0, "menge": 0}
+                                by_day[day] = slot
+                            slot["total"] += 1
+                            slot[str(st)] = slot.get(str(st), 0) + 1
+                            # Portionen nur fuer aktive Bestellungen (ohne Storno) zaehlen
+                            if st != STATUS_STORNIERT:
+                                try:
+                                    slot["menge"] += int(item.get("dl_menge", 1) or 1)
+                                except (TypeError, ValueError):
+                                    slot["menge"] += 1
                     next_url = body.get("@odata.nextLink")
+                # Nach Mittagstisch-Tag absteigend sortieren (kommende/aktuelle Tage oben)
+                by_day_list = [dict(datum=d, **v) for d, v in sorted(by_day.items(), reverse=True)]
                 return func.HttpResponse(
                     json.dumps({
                         "success": True,
@@ -473,6 +491,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "days": days,
                         "total": total,
                         "by_status": {str(k): v for k, v in by_status.items()},
+                        "by_day": by_day_list,
                         "status_labels": {"0": "Neu", "1": "Bestätigt", "2": "Storniert", "3": "Abgeholt"},
                     }, ensure_ascii=False),
                     status_code=200, headers=get_cors_headers(),
