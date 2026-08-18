@@ -225,10 +225,9 @@
     // ueber shareData.text uebergeben und erst NACH erfolgreichem Teilen als Backup kopiert.
     // Bevorzugt: natives Teilen mit Datei (oeffnet die System-Auswahl inkl. WhatsApp) - Mobil UND Desktop.
     if(canShareFiles){
-      // WhatsApp zeigt mehrere als Serie geteilte Bilder in UMGEKEHRTER Reihenfolge
-      // an. Damit Seite 1 (Mittagessen) oben erscheint, drehen wir die Reihenfolge
-      // fuer den Teilen-Aufruf um.
-      var shareFiles=(shareSet.length>1)?shareSet.slice().reverse():shareSet;
+      // In Build-Reihenfolge teilen: WhatsApp zeigt die Serie in Sende-Reihenfolge
+      // (oben = zuerst gesendet). Reihenfolge: Artikel (mit Kopf) -> Mittagessen.
+      var shareFiles=shareSet;
       var shareData={files:shareFiles};if(msg)shareData.text=msg;
       navigator.share(shareData).then(function(){
         if(msg){try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).catch(function(){});}}catch(e){}}
@@ -303,21 +302,24 @@
     return chunks;
   }
 
-  // Baut die Seiten-Canvases (jede <= ~4:5). Mittagessen zuerst, dann Artikel.
+  // Baut die Seiten-Canvases (jede <= ~4:5). Reihenfolge: Artikel zuerst (mit
+  // grossem Kopf), Mittagessen zuletzt. Der Bestell-Link folgt als Text am Ende.
   function socialBuildPages(selected,titel,freitext,loadedImgs,SCALE){
     SCALE=SCALE||2;var W=SOC_PAGE_W,maxH=SOC_PAGE_MAXH,reserve=SOC_PAGE_RESERVE;
     var mt=selected.filter(function(p){return p.kategorie==='Mittagessen';});
     var others=selected.filter(function(p){return p.kategorie!=='Mittagessen';});
     var blocks=[];
-    if(mt.length){
-      var mchunks=socialChunkItems(mt,function(sub){var cv=document.createElement('canvas');socialDrawMealPosterAuto(cv,cv.getContext('2d'),W,sub,loadedImgs,SCALE);return cv;},maxH,reserve,SCALE);
-      mchunks.forEach(function(sub){blocks.push({kind:'meal',items:sub});});
-    }
+    // 1) Artikel zuerst (nach Kategorie gruppiert)
     var seen={},order=[];others.forEach(function(p){var c=p.kategorie||'Sonstiges';if(!seen[c]){seen[c]=[];order.push(c);}seen[c].push(p);});
     order.forEach(function(c){
       var achunks=socialChunkItems(seen[c],function(sub){var cv=document.createElement('canvas');socialDrawPoster(cv,cv.getContext('2d'),W,sub,titel,freitext,loadedImgs,SCALE,true,true);return cv;},maxH,reserve,SCALE);
       achunks.forEach(function(sub){blocks.push({kind:'cat',cat:c,items:sub});});
     });
+    // 2) Mittagessen zuletzt
+    if(mt.length){
+      var mchunks=socialChunkItems(mt,function(sub){var cv=document.createElement('canvas');socialDrawMealPosterAuto(cv,cv.getContext('2d'),W,sub,loadedImgs,SCALE);return cv;},maxH,reserve,SCALE);
+      mchunks.forEach(function(sub){blocks.push({kind:'meal',items:sub});});
+    }
     if(!blocks.length)return [];
     // Bloecke rendern (erster Block erhaelt den grossen gruenen Kopf)
     var rendered=blocks.map(function(b,i){
