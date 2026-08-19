@@ -134,7 +134,14 @@ def _send_auto_push(req, post_titel, category="tagesinfo"):
             "category": category,
             "tag": "dorfladen-tagesinfo",
         }
-        requests.post(internal_url, json=push_payload, timeout=15)
+        # Interner Server-zu-Server-Aufruf: Admin-Token mitsenden, sonst blockt
+        # der admin_auth_guard von /api/push-send (bei aktivem CMS_AUTH_ENFORCE)
+        # den Aufruf -> es wuerde keine Push versendet.
+        _hdrs = {}
+        _tok = os.environ.get("CMS_AUTH_TOKEN", "").strip()
+        if _tok:
+            _hdrs["X-CMS-Auth"] = _tok
+        requests.post(internal_url, json=push_payload, timeout=15, headers=_hdrs)
     except Exception:
         pass  # Push is best-effort, never block the main response
 

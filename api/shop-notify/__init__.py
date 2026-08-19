@@ -557,7 +557,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "tag": f"order-{bestellnummer}",
             }
             internal_url = f"{_origin}/api/push-send"
-            r = requests.post(internal_url, json=push_payload, timeout=15)
+            _hdrs = {}
+            _tok = os.environ.get("CMS_AUTH_TOKEN", "").strip()
+            if _tok:
+                _hdrs["X-CMS-Auth"] = _tok
+            r = requests.post(internal_url, json=push_payload, timeout=15, headers=_hdrs)
             if r.status_code in (200, 201):
                 resp_data = r.json() if r.text else {}
                 if resp_data.get("sent", 0) > 0:

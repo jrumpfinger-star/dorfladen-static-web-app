@@ -88,7 +88,11 @@ def _send_auto_push(req, news_titel, category="news"):
             "category": category,
             "tag": "dorfladen-news",
         }
-        requests.post(internal_url, json=push_payload, timeout=15)
+        _hdrs = {}
+        _tok = os.environ.get("CMS_AUTH_TOKEN", "").strip()
+        if _tok:
+            _hdrs["X-CMS-Auth"] = _tok
+        requests.post(internal_url, json=push_payload, timeout=15, headers=_hdrs)
     except Exception:
         pass  # Push is best-effort
 
