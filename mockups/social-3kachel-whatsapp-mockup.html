@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Social 3-Kachel WhatsApp Mockup</title>
+<style>
+  :root{
+    --green1:#2e7d4f; --green2:#245f3d; --bg:#faf9f6;
+    --name:#1f2937; --cat:#2e7d4f; --muted:#6b7280;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#d9dbd5;font-family:"Segoe UI",system-ui,sans-serif;padding:24px;display:flex;gap:32px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+
+  /* WhatsApp-Chatvorschau-Rahmen */
+  .wa{width:340px;background:#efeae2;border-radius:14px;padding:16px 10px;
+      background-image:radial-gradient(#e2ddd4 1px,transparent 1px);background-size:18px 18px;}
+  .wa-bubble{margin-left:auto;width:300px;background:#d9fdd3;border-radius:10px;padding:4px;box-shadow:0 1px 1px rgba(0,0,0,.12);}
+  .wa-bubble img{width:100%;display:block;border-radius:7px;}
+  .wa-time{font-size:11px;color:#667781;text-align:right;padding:2px 6px 3px;}
+  .wa-caption{background:#fff;border-radius:0 0 10px 10px;padding:8px 10px;margin-top:-4px;}
+  .wa-caption a{color:#027eb5;text-decoration:none;font-size:13px;word-break:break-all;}
+  .wa-note{font-size:12px;color:#667781;text-align:center;margin-top:10px;}
+
+  /* Die eigentliche Grafik (4:5) - 1080x1350 skaliert */
+  .stage{width:432px;} /* = 1080 * .4 */
+  .poster{
+    width:1080px;height:1350px;transform:scale(.4);transform-origin:top left;
+    background:var(--bg);border-radius:0;overflow:hidden;position:relative;
+    box-shadow:0 6px 24px rgba(0,0,0,.18);
+  }
+  .p-head{height:150px;background:linear-gradient(90deg,var(--green1),var(--green2));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;}
+  .p-head h1{font-size:52px;font-weight:900;letter-spacing:.5px;}
+  .p-head .date{font-size:26px;font-weight:600;opacity:.92;margin-top:8px;}
+
+  .tiles{padding:26px 26px 26px;display:flex;flex-direction:column;gap:24px;}
+  .tile{background:#fff;border:1px solid #ececec;border-radius:22px;overflow:hidden;
+    display:flex;height:352px;box-shadow:0 3px 10px rgba(0,0,0,.05);}
+  .tile .photo{width:50%;height:100%;background-size:cover;background-position:center;position:relative;}
+  .tile .body{width:50%;padding:34px 34px;display:flex;flex-direction:column;justify-content:center;}
+  .tile .cat{display:inline-flex;align-items:center;gap:10px;color:var(--cat);font-weight:800;
+    font-size:30px;margin-bottom:14px;}
+  .tile .cat .em{font-size:32px;}
+  .tile .name{color:var(--name);font-weight:800;font-size:46px;line-height:1.12;margin-bottom:16px;}
+  .tile .uhr{display:inline-block;background:#fef2f2;border:2px solid #dc2626;color:#dc2626;
+    font-weight:700;font-size:24px;padding:6px 14px;border-radius:12px;margin-bottom:16px;width:max-content;}
+  .tile .price{color:var(--green1);font-weight:900;font-size:56px;}
+
+  h2.section{width:100%;text-align:center;color:#333;font-weight:700;margin:4px 0 -8px;}
+</style>
+</head>
+<body>
+
+  <h2 class="section">Die Grafik (4:5 – wird in WhatsApp komplett angezeigt)</h2>
+
+  <!-- Variante A: OHNE Mittagessen -->
+  <div class="stage">
+    <div class="poster">
+      <div class="p-head">
+        <h1>Heute im Dorfladen – Dienstag</h1>
+        <div class="date">Dienstag · 19. August</div>
+      </div>
+      <div class="tiles">
+        <div class="tile">
+          <div class="photo" style="background-image:linear-gradient(135deg,#cfe8c9,#a9d69c)"></div>
+          <div class="body">
+            <span class="cat"><span class="em">🥫</span>Aufstriche</span>
+            <div class="name">Lauchzwiebel­aufstrich 100 gr</div>
+            <div class="price">1,59 €</div>
+          </div>
+        </div>
+        <div class="tile">
+          <div class="photo" style="background-image:linear-gradient(135deg,#f6e3b4,#eec27a)"></div>
+          <div class="body">
+            <span class="cat"><span class="em">🍰</span>Kuchen</span>
+            <div class="name">Obstschnitte mit Mascarpone</div>
+            <div class="price">3,30 €</div>
+          </div>
+        </div>
+        <div class="tile">
+          <div class="photo" style="background-image:linear-gradient(135deg,#e9c9c0,#d69b8c)"></div>
+          <div class="body">
+            <span class="cat"><span class="em">🍽️</span>Mittagessen</span>
+            <div class="name">Bratensülze</div>
+            <div class="uhr">⏰ ab 12:00 Uhr</div>
+            <div class="price">2,50 €</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WhatsApp-Vorschau -->
+  <div>
+    <h2 class="section" style="font-size:14px">So kommt es in WhatsApp an</h2>
+    <div class="wa" style="margin-top:10px">
+      <div class="wa-bubble">
+        <!-- Platzhalter für die 4:5-Grafik -->
+        <div style="width:100%;aspect-ratio:4/5;border-radius:7px;overflow:hidden;background:var(--bg)">
+          <div style="height:16%;background:linear-gradient(90deg,var(--green1),var(--green2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:13px;text-align:center">Heute im Dorfladen – Dienstag</div>
+          <div style="padding:7px 7px;display:flex;flex-direction:column;gap:6px;height:84%">
+            <div style="flex:1;display:flex;background:#fff;border:1px solid #eee;border-radius:8px;overflow:hidden">
+              <div style="width:50%;background:linear-gradient(135deg,#cfe8c9,#a9d69c)"></div>
+              <div style="width:50%;padding:8px;display:flex;flex-direction:column;justify-content:center">
+                <div style="color:var(--cat);font-weight:800;font-size:9px">🥫 Aufstriche</div>
+                <div style="color:var(--name);font-weight:800;font-size:12px;line-height:1.1;margin:3px 0">Lauchzwiebel­aufstrich 100 gr</div>
+                <div style="color:var(--green1);font-weight:900;font-size:15px">1,59 €</div>
+              </div>
+            </div>
+            <div style="flex:1;display:flex;background:#fff;border:1px solid #eee;border-radius:8px;overflow:hidden">
+              <div style="width:50%;background:linear-gradient(135deg,#f6e3b4,#eec27a)"></div>
+              <div style="width:50%;padding:8px;display:flex;flex-direction:column;justify-content:center">
+                <div style="color:var(--cat);font-weight:800;font-size:9px">🍰 Kuchen</div>
+                <div style="color:var(--name);font-weight:800;font-size:12px;line-height:1.1;margin:3px 0">Obstschnitte mit Mascarpone</div>
+                <div style="color:var(--green1);font-weight:900;font-size:15px">3,30 €</div>
+              </div>
+            </div>
+            <div style="flex:1;display:flex;background:#fff;border:1px solid #eee;border-radius:8px;overflow:hidden">
+              <div style="width:50%;background:linear-gradient(135deg,#e9c9c0,#d69b8c)"></div>
+              <div style="width:50%;padding:8px;display:flex;flex-direction:column;justify-content:center">
+                <div style="color:var(--cat);font-weight:800;font-size:9px">🍽️ Mittagessen</div>
+                <div style="color:var(--name);font-weight:800;font-size:12px;line-height:1.1;margin:3px 0">Bratensülze</div>
+                <div style="color:var(--green1);font-weight:900;font-size:15px">2,50 €</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="wa-time">10:24 ✓✓</div>
+      </div>
+
+      <!-- Wenn Mittagessen dabei: Bestell-Link als EIGENE Nachricht (aus Clipboard, Strg-V) -->
+      <div class="wa-bubble" style="margin-top:8px;background:#fff">
+        <div style="padding:8px 10px">
+          <div style="font-size:13px;color:#111;margin-bottom:4px">👉 Mittagessen vorbestellen:</div>
+          <a style="color:#027eb5;text-decoration:none;font-size:13px;word-break:break-all">https://…/tagesinfo</a>
+        </div>
+        <div class="wa-time">10:24 ✓✓</div>
+      </div>
+
+      <div class="wa-note">Nur wenn Mittagessen ausgewählt ist:<br>Bestell-Link liegt in der Zwischenablage → mit Strg-V als eigene Nachricht senden.</div>
+    </div>
+  </div>
+
+</body>
+</html>

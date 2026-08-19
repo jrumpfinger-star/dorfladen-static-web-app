@@ -45,6 +45,35 @@
     return lines.length?lines:[''];
   }
   function socialFmtPrice(v){var d=parseFloat(v);return (d&&isFinite(d))?d.toFixed(2).replace('.',','):(''+v);}
+  // Umbruch inkl. hartem Trennen zu langer Einzelwoerter (die sonst ueberlaufen)
+  function socialWrapHard(ctx,text,maxW){
+    var words=(text||'').trim().split(/\s+/),lines=[],cur='';
+    words.forEach(function(w){
+      if(ctx.measureText(w).width>maxW){
+        if(cur){lines.push(cur);cur='';}
+        var piece='';
+        for(var k=0;k<w.length;k++){var t=piece+w[k];if(ctx.measureText(t).width>maxW&&piece){lines.push(piece);piece=w[k];}else{piece=t;}}
+        cur=piece;
+      }else{
+        var test=cur?cur+' '+w:w;
+        if(ctx.measureText(test).width>maxW){if(cur)lines.push(cur);cur=w;}else{cur=test;}
+      }
+    });
+    if(cur)lines.push(cur);
+    return lines.length?lines:[''];
+  }
+  // Waehlt die groesste Schrift, bei der der Name in <=maxLines passt (sonst kuerzt).
+  function socialFitName(ctx,text,maxW,maxLines,sizes){
+    for(var i=0;i<sizes.length;i++){
+      ctx.font='800 '+sizes[i]+'px "Segoe UI",system-ui,sans-serif';
+      var lines=socialWrapHard(ctx,text,maxW);
+      if(lines.length<=maxLines)return {lines:lines,size:sizes[i]};
+    }
+    var last=sizes[sizes.length-1];ctx.font='800 '+last+'px "Segoe UI",system-ui,sans-serif';
+    var ls=socialWrapHard(ctx,text,maxW);
+    if(ls.length>maxLines){ls=ls.slice(0,maxLines);var l=ls[maxLines-1];while(ctx.measureText(l+'\u2026').width>maxW&&l.length>1)l=l.slice(0,-1);ls[maxLines-1]=l+'\u2026';}
+    return {lines:ls,size:last};
+  }
 
   // Ziel-Datum des Posters: heute, oder MORGEN wenn im Wizard "Morgen" gewaehlt ist.
   // Damit stimmen Wochentag/Datum im Poster mit dem tatsaechlichen Post-Tag ueberein
@@ -102,6 +131,71 @@
     });
     if(!selected.length){ctx.fillStyle='#9ca3af';ctx.font='italic 16px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('Bitte Produkte oben auswaehlen...',W/2,H/2);}
   }
+
+  // ── Kompakt-Grafik (EIN Bild, ~4:5) fuer WhatsApp ──────────────────────────
+  // Header + bis zu 3 Quer-Kacheln (links Foto, rechts grosser Text). Passt
+  // komplett in WhatsApps 4:5-Vorschau, daher kein Aufteilen/Umsortieren noetig.
+  var SOC_COMPACT_ICONS={'Mittagessen':'\uD83C\uDF7D\uFE0F','Kuchen':'\uD83C\uDF70','Obst & Gemuese':'\uD83E\uDD66','Aufstriche':'\uD83E\uDD57','Salate':'\uD83E\uDD57','Sonstiges':'\uD83D\uDED2','Fleisch':'\uD83E\uDD69','Brot':'\uD83C\uDF5E'};
+  function socialRoundLeft(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w,y);ctx.lineTo(x+w,y+h);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+  function socialDrawCompact(canvas,ctx,W,selected,titel,loadedImgs,SCALE){
+    SCALE=SCALE||2;
+    var items=selected.slice(0,(window.SOC_MAX_ITEMS||3));
+    var PAD=16, GAP=13, HEADER_H=80, TILE_R=20;
+    var n=Math.max(1,items.length);
+    // Kachelhoehe: fuer 3 Kacheln ~4:5, bei weniger etwas hoeher (bleibt <=4:5)
+    var tileH = n>=3?168 : (n===2?210 : 300);
+    var topAfterHeader=HEADER_H+GAP;
+    var H = topAfterHeader + n*tileH + (n-1)*GAP + GAP;
+    // Sicherheitsnetz: Verhaeltnis nie ueber 4:5 (sonst beschneidet WhatsApp)
+    var maxH=Math.round(W*1.25);
+    if(H>maxH){tileH=Math.floor((maxH-topAfterHeader-(n-1)*GAP-GAP)/n);H=topAfterHeader+n*tileH+(n-1)*GAP+GAP;}
+    canvas.width=W*SCALE;canvas.height=H*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
+    ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H);
+    // Kopf
+    var grad=ctx.createLinearGradient(0,0,W,HEADER_H);grad.addColorStop(0,'#2e7d4f');grad.addColorStop(1,'#245f3d');ctx.fillStyle=grad;ctx.fillRect(0,0,W,HEADER_H);
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.font='900 30px "Segoe UI",system-ui,sans-serif';ctx.fillText(titel||'Heute im Dorfladen',W/2,44);
+    var now=socialPosterDate();var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];var months=['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    ctx.font='600 16px "Segoe UI",system-ui,sans-serif';ctx.fillStyle='rgba(255,255,255,0.92)';ctx.fillText(days[now.getDay()]+' \u00b7 '+now.getDate()+'. '+months[now.getMonth()],W/2,68);
+    // Kacheln
+    var tx=PAD, ty=topAfterHeader, tw=W-PAD*2;
+    var photoW=Math.round(tw*0.46);
+    items.forEach(function(p){
+      // Karte
+      ctx.save();socialRoundRect(ctx,tx,ty,tw,tileH,TILE_R);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#ececec';ctx.lineWidth=1;ctx.stroke();ctx.restore();
+      // Foto links (oder Platzhalter)
+      var cat=p.kategorie||'Sonstiges';var emoji=SOC_COMPACT_ICONS[cat]||'\uD83D\uDED2';
+      ctx.save();socialRoundLeft(ctx,tx,ty,photoW,tileH,TILE_R);ctx.clip();
+      var img=loadedImgs&&loadedImgs[p.id];
+      if(img&&img.width){var iw=img.width,ih=img.height,s=Math.max(photoW/iw,tileH/ih);var dw=iw*s,dh=ih*s;ctx.drawImage(img,tx+(photoW-dw)/2,ty+(tileH-dh)/2,dw,dh);}
+      else{var g=ctx.createLinearGradient(tx,ty,tx,ty+tileH);g.addColorStop(0,'#f2efe8');g.addColorStop(1,'#e6dfd2');ctx.fillStyle=g;ctx.fillRect(tx,ty,photoW,tileH);ctx.fillStyle='rgba(0,0,0,.5)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(tileH*0.34)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx.globalAlpha=.85;ctx.fillText(emoji,tx+photoW/2,ty+tileH/2);ctx.globalAlpha=1;}
+      ctx.restore();ctx.textBaseline='alphabetic';
+      // Text rechts (vertikal zentriert)
+      var bx=tx+photoW+22, bw=tw-photoW-22-18;
+      var maxLines=(n>=3?2:3);
+      var fit=socialFitName(ctx,p.name,bw,maxLines,[28,26,24,22]);
+      var lh=Math.round(fit.size*1.14);
+      var catH=26, nameH=fit.size+(fit.lines.length-1)*lh;
+      var badgeBH=26, badgeBlock=p.ab_uhr?(badgeBH+8):0;
+      var priceSize=(n>=3?30:34), priceBlock=p.preis?(priceSize+2):0;
+      var blockH=catH+nameH+badgeBlock+priceBlock;
+      var sy=ty+Math.max(12,Math.round((tileH-blockH)/2));
+      // Kategorie
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle='#2e7d4f';ctx.font='800 19px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText(emoji+' '+cat, bx, sy+18);
+      // Name (auto-fit, groß)
+      ctx.fillStyle='#1f2937';ctx.font='800 '+fit.size+'px "Segoe UI",system-ui,sans-serif';
+      var nameTop=sy+catH;fit.lines.forEach(function(line,i){ctx.fillText(line,bx,nameTop+fit.size+i*lh);});
+      var cy2=nameTop+nameH+10;
+      // ab-Uhr Badge
+      if(p.ab_uhr){var label='\u23F0 ab '+p.ab_uhr+' Uhr';ctx.font='bold 14px "Segoe UI",system-ui,sans-serif';var lw=ctx.measureText(label).width;var padX=9,bwb=lw+padX*2;ctx.save();socialRoundRect(ctx,bx,cy2,bwb,badgeBH,8);ctx.fillStyle='#fef2f2';ctx.fill();ctx.strokeStyle='#dc2626';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#dc2626';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(label,bx+padX,cy2+badgeBH/2+1);ctx.restore();ctx.textBaseline='alphabetic';cy2+=badgeBH+8;}
+      // Preis (groß grün)
+      if(p.preis){ctx.fillStyle='#2e7d4f';ctx.font='900 '+priceSize+'px "Segoe UI",system-ui,sans-serif';ctx.fillText(socialFmtPrice(p.preis)+' \u20AC', bx, cy2+priceSize-4);}
+      ty+=tileH+GAP;
+    });
+    return {W:W,H:H};
+  }
+  M.socialDrawCompact=socialDrawCompact;
 
   function socialDrawMealPosterAuto(canvas,ctx,W,mtItems,loadedImgs,SCALE,headerOpts){
     // Zeichnet das Mittagessen im GLEICHEN Kartenstil wie die Artikel
@@ -183,11 +277,9 @@
     var imgUrls=Object.keys(imgMap).map(function(id){return{id:id,url:imgMap[id]};});var loadedImgs={};
     var promises=imgUrls.map(function(entry){return new Promise(function(resolve){if(entry.url.indexOf('data:')===0){var img=new Image();img.onload=function(){loadedImgs[entry.id]=img;resolve();};img.onerror=function(){resolve();};img.src=entry.url;return;}fetch(entry.url).then(function(r){return r.blob();}).then(function(blob){var objUrl=URL.createObjectURL(blob);var img=new Image();img.onload=function(){loadedImgs[entry.id]=img;resolve();};img.onerror=function(){URL.revokeObjectURL(objUrl);resolve();};img.src=objUrl;}).catch(function(){var img=new Image();img.crossOrigin='anonymous';img.onload=function(){loadedImgs[entry.id]=img;loadedImgs['_tainted']=true;resolve();};img.onerror=function(){var img2=new Image();img2.onload=function(){loadedImgs[entry.id]=img2;loadedImgs['_tainted']=true;resolve();};img2.onerror=function(){resolve();};img2.src=entry.url;};img.src=entry.url;});});});
     return Promise.all(promises.concat([_socMealIconPromise])).then(function(){
-      var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});var otherItems=selected.filter(function(p){return p.kategorie!=='Mittagessen';});var hasMt=mtItems.length>0;var hasOther=otherItems.length>0;
       var mealCanvas=document.getElementById('soc-post-canvas-meal');var mealLabel=document.getElementById('soc-preview-label-meal');var dailyLabel=document.getElementById('soc-preview-label-daily');if(mealCanvas)mealCanvas.style.display='none';if(mealLabel)mealLabel.style.display='none';if(dailyLabel)dailyLabel.style.display='none';
-      if(hasMt&&hasOther){var tmpDaily=document.createElement('canvas');socialDrawPoster(tmpDaily,tmpDaily.getContext('2d'),W,otherItems,titel,freitext,loadedImgs,SCALE,true,false);var tmpMeal=document.createElement('canvas');socialDrawMealPosterAuto(tmpMeal,tmpMeal.getContext('2d'),W,mtItems,loadedImgs,SCALE,null);canvas.width=W*SCALE;canvas.height=tmpDaily.height+tmpMeal.height;ctx.drawImage(tmpDaily,0,0);ctx.drawImage(tmpMeal,0,tmpDaily.height);canvas.style.display='block';}
-      else if(hasMt){canvas.style.display='block';socialDrawMealPosterAuto(canvas,canvas.getContext('2d'),W,mtItems,loadedImgs,SCALE,{titel:titel,freitext:freitext});}
-      else if(selected.length>0){canvas.style.display='block';socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE);}
+      // Kompakt-Grafik (EIN Bild, ~4:5): identisch zu dem, was geteilt wird (WYSIWYG).
+      if(selected.length>0){canvas.style.display='block';socialDrawCompact(canvas,canvas.getContext('2d'),540,selected,titel||'Heute im Dorfladen',loadedImgs,SCALE);}
       else{canvas.style.display='none';}
       window._socLoadedImgs=loadedImgs;
     });
@@ -402,27 +494,25 @@
   function socialPagesToFiles(pages){var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');return pages.map(function(cv,i){var pageNum=pages.length>1?('-'+String(i+1).padStart(String(pages.length).length,'0')):'';return socialCanvasToFile(cv,'dorfladen-'+ds+pageNum+'.png');});}
   M.socialBuildPages=socialBuildPages;
 
-  // WhatsApp-Teilen in EINEM Vorgang (ein Nutzer-Tipp): Alle Bilder werden auf
-  // einmal geteilt. Damit WhatsApp die Bilder EINZELN darstellt (statt sie zu
-  // einer Galerie/Album zusammenzufassen), wird bei mehreren Bildern eine
-  // Dummy-Caption ("-") mitgegeben (siehe socialShareFiles). Der Bestell-Link
-  // (nur bei Mittagessen) wird NICHT als Caption gesetzt, sondern in die
-  // Zwischenablage kopiert und kann als eigene Nachricht eingefuegt werden.
-  // Die Bild-Reihenfolge bleibt wie gebaut: Artikel (mit Kopf) -> Mittagessen.
+  // WhatsApp-Teilen: EINE Kompakt-Grafik (~4:5) mit bis zu 3 Kacheln. Passt
+  // vollstaendig in WhatsApps Vorschau -> kein Aufteilen, kein Umsortieren.
+  // Bestell-Link (nur bei Mittagessen): auf MOBILE direkt als Bild-Caption,
+  // am DESKTOP in die Zwischenablage (Strg-V).
   window.socialShareWhatsApp=function(){
     try{
-    var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';var freitext=(document.getElementById('soc-post-text').value||'').trim();var selected=socialGatherSelected();
+    var titel=(document.getElementById('soc-post-titel').value||'').trim()||'Heute im Dorfladen';var selected=socialGatherSelected();
     if(!selected.length){socialStatus('soc-post-status','Bitte Produkte ausw\u00e4hlen',false);return;}
     var msg=socialBuildWhatsAppMsg(selected);var hasMt=selected.some(function(p){return p.kategorie==='Mittagessen';});
-    // WICHTIG: Dateien SYNCHRON aus den bereits (per Vorschau) geladenen Bildern erzeugen.
+    // WICHTIG: Datei SYNCHRON aus den bereits (per Vorschau) geladenen Bildern erzeugen.
     // KEIN await auf socialGenPreview() vor navigator.share() - sonst verfaellt auf Android
     // die transiente Nutzeraktivierung und navigator.share() schlaegt mit NotAllowedError fehl.
     var loaded=window._socLoadedImgs||{};
-    var files;
-    try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,loaded,2));}
-    catch(e){try{files=socialPagesToFiles(socialBuildPages(selected,titel,freitext,{},2));}catch(e2){files=[];}}
-    if(!files.length){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}
-    socialSavePost(titel,freitext,selected);
+    var cv=document.createElement('canvas');
+    try{socialDrawCompact(cv,cv.getContext('2d'),540,selected,titel,loaded,2);}
+    catch(e){try{socialDrawCompact(cv,cv.getContext('2d'),540,selected,titel,{},2);}catch(e2){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}}
+    var now=new Date();var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    var files=[socialCanvasToFile(cv,'dorfladen-'+ds+'.png')];
+    socialSavePost(titel,'',selected);
     socialShareFiles(files,msg,hasMt);
     }catch(e){console.error('[Social] WhatsApp share error:',e);socialStatus('soc-post-status','Fehler: '+e.message,false);}
   };
