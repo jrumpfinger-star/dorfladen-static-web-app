@@ -274,13 +274,6 @@
     #mittag-cook .k-cook-chip.g{background:#dcfce7;color:#166534}
     #mittag-cook .k-cook-chip.o{background:#fff7ed;color:#9a3412}
     #mittag-cook .k-cook-foot{font-size:11px;color:#6b7280;margin-top:8px}
-    @media print{
-      body *{visibility:hidden}
-      #mittag-cook,#mittag-cook *{visibility:visible}
-      #mittag-cook{position:absolute;left:0;top:0;width:100%}
-      #mittag-cook .k-cook-actions{display:none}
-      #mittag-cook .k-cook.collapsed .k-cook-grid,#mittag-cook .k-cook.collapsed .k-cook-foot{display:flex}
-    }
     @media(min-width:900px){
       #panel-metzger .k-slot-body{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       #mittag-orders .k-dish-body{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
@@ -1861,7 +1854,6 @@ var K = (function(){
 
   var _cookCollapsed = false;
   function toggleCookBar(){ _cookCollapsed = !_cookCollapsed; renderCookBar(); }
-  function printCookBar(){ window.print(); }
 
   // Persistent "Kochbedarf" summary bar: aggregates portions per dish across
   // all statuses except Storniert (2), independent of the active status filter.
@@ -1890,7 +1882,6 @@ var K = (function(){
     html += '<div class="k-cook-title">'+luc('chef-hat',18)+' Kochbedarf <span class="sub">\u00b7 \u00fcber alle Status (ohne Storniert)</span></div>';
     html += '<div class="k-cook-actions">';
     html += '<button class="k-cook-btn" onclick="K.toggleCookBar()">'+(_cookCollapsed?luc('chevron-down',14)+' Ausklappen':luc('chevron-up',14)+' Einklappen')+'</button>';
-    html += '<button class="k-cook-btn primary" onclick="K.printCookBar()">'+luc('printer',14)+' F\u00fcr K\u00fcche drucken</button>';
     html += '</div></div>';
     html += '<div class="k-cook-grid">';
     order.forEach(function(dish){
@@ -4870,7 +4861,6 @@ var K = (function(){
     setStatus: setStatus,
     resetStatus: resetStatus,
     toggleCookBar: toggleCookBar,
-    printCookBar: printCookBar,
     showConfirmDialog: showConfirmDialog,
     hideConfirmDialog: hideConfirmDialog,
     confirmOrder: confirmOrder,
