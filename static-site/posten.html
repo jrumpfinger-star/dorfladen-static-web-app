@@ -351,6 +351,7 @@
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
               <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="if(window.innerWidth>=720&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
             </div>
+                          <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
           </div>
         </div>
       </div>
@@ -434,7 +435,6 @@
         </div>
       </div>
 
-      <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
       <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
       <div id="soc-today-posts" style="display:none;margin-top:12px;background:#f9fafb;border:1px solid var(--c-border);border-radius:10px;padding:10px 14px">
         <div style="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:6px"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle"></i> Posts &amp; Entw&#252;rfe</div>
