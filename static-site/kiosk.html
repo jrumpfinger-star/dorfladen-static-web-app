@@ -254,11 +254,39 @@
     @media(min-width:700px){
       .fm-hdr-details{display:flex}
     }
+    /* === Kochbedarf-Leiste === */
+    #mittag-cook .k-cook{margin:12px 0;border:1px solid #cfe6d6;background:linear-gradient(180deg,#f0fdf4,#ffffff);border-radius:14px;padding:12px 14px}
+    #mittag-cook .k-cook.collapsed .k-cook-grid,#mittag-cook .k-cook.collapsed .k-cook-foot{display:none}
+    #mittag-cook .k-cook-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+    #mittag-cook .k-cook-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;color:#166534}
+    #mittag-cook .k-cook-title .sub{font-size:12px;font-weight:500;color:#6b7280}
+    #mittag-cook .k-cook-actions{display:flex;gap:8px}
+    #mittag-cook .k-cook-btn{border:1px solid #e5e7eb;background:#fff;border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#374151}
+    #mittag-cook .k-cook-btn.primary{background:#2e7d4f;color:#fff;border-color:#2e7d4f}
+    #mittag-cook .k-cook-grid{display:flex;gap:10px;flex-wrap:wrap}
+    #mittag-cook .k-cook-card{flex:1 1 260px;display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px}
+    #mittag-cook .k-cook-n{flex:0 0 auto;min-width:56px;height:56px;border-radius:12px;background:#f0fdf4;border:1px solid #dcfce7;color:#2e7d4f;font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center}
+    #mittag-cook .k-cook-info{flex:1;min-width:0}
+    #mittag-cook .k-cook-name{font-size:15px;font-weight:700;line-height:1.15}
+    #mittag-cook .k-cook-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+    #mittag-cook .k-cook-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:14px;background:#f3f4f6;color:#374151;display:inline-flex;align-items:center;gap:4px}
+    #mittag-cook .k-cook-chip.b{background:#eef2ff;color:#3730a3}
+    #mittag-cook .k-cook-chip.g{background:#dcfce7;color:#166534}
+    #mittag-cook .k-cook-chip.o{background:#fff7ed;color:#9a3412}
+    #mittag-cook .k-cook-foot{font-size:11px;color:#6b7280;margin-top:8px}
+    @media print{
+      body *{visibility:hidden}
+      #mittag-cook,#mittag-cook *{visibility:visible}
+      #mittag-cook{position:absolute;left:0;top:0;width:100%}
+      #mittag-cook .k-cook-actions{display:none}
+      #mittag-cook .k-cook.collapsed .k-cook-grid,#mittag-cook .k-cook.collapsed .k-cook-foot{display:flex}
+    }
     @media(min-width:900px){
       #panel-metzger .k-slot-body{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       #mittag-orders .k-dish-body{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
       #mittag-orders .k-dish-group{width:100%}
       #mittag-orders>.k-empty,#panel-metzger .k-slot-body>.k-empty{grid-column:1/-1}
+      #mittag-cook .k-cook-card{flex:1 1 300px}
       /* === Social Split-View Desktop === */
       #soc-desk-bar{display:block!important}
       #soc-desk-tabs{display:block!important}
@@ -729,6 +757,8 @@
     <div id="mittag-day-bar" class="k-day-bar"></div>
     <!-- Zusammenfassung -->
     <div class="k-stats" id="mittag-stats" style="display:none"></div>
+    <!-- Kochbedarf-Leiste (immer sichtbar, unabhängig vom Status-Filter) -->
+    <div id="mittag-cook"></div>
     <!-- Status-Filter -->
     <div class="k-filter-bar" id="mittag-status-bar">
       <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Offen</span> <span class="k-filter-count" id="mt-fc-offen">0</span></button>
@@ -1787,6 +1817,7 @@ var K = (function(){
       html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.showStornoDialog(\''+o.id+'\')">' +luc('x',13)+'</button>';
     } else if(o.status===3){
       html += '<span style="color:#16a34a">'+luc('check-circle',16)+'</span>';
+      html += '<button class="k-btn k-btn-sm k-btn-outline" title="Versehentlich abgeholt? Zur\u00fcck auf Offen" onclick="K.resetStatus(\''+o.id+'\')">'+luc('rotate-ccw',13)+' <span class="oc-btn-label">Zur\u00fcck</span></button>';
     }
     html += '</span>';
     html += '</div>';
@@ -1828,8 +1859,63 @@ var K = (function(){
     return html;
   }
 
+  var _cookCollapsed = false;
+  function toggleCookBar(){ _cookCollapsed = !_cookCollapsed; renderCookBar(); }
+  function printCookBar(){ window.print(); }
+
+  // Persistent "Kochbedarf" summary bar: aggregates portions per dish across
+  // all statuses except Storniert (2), independent of the active status filter.
+  function renderCookBar(){
+    var host = document.getElementById('mittag-cook');
+    if(!host) return;
+    if(_mittagFilter==='nachrichten' || !orders || orders.length===0){ host.innerHTML=''; return; }
+    var relevant = orders.filter(function(o){return o.status!==2;});
+    if(relevant.length===0){ host.innerHTML=''; return; }
+    var map = {}, order = [];
+    relevant.forEach(function(o){
+      var dish = o.gericht || 'Sonstiges';
+      if(!map[dish]){ map[dish] = {total:0,online:0,vorort:0,offen:0,abgeholt:0}; order.push(dish); }
+      var q = o.menge||1, g = map[dish];
+      g.total += q;
+      if(o.quelle===0) g.online += q; else g.vorort += q;
+      if(o.status===3) g.abgeholt += q; else g.offen += q;
+    });
+    order.sort(function(a,b){return map[b].total - map[a].total;});
+    var grandTotal = order.reduce(function(s,d){return s+map[d].total;},0);
+    var now = new Date();
+    var stamp = ('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+
+    var html = '<div class="k-cook'+(_cookCollapsed?' collapsed':'')+'">';
+    html += '<div class="k-cook-head">';
+    html += '<div class="k-cook-title">'+luc('chef-hat',18)+' Kochbedarf <span class="sub">\u00b7 \u00fcber alle Status (ohne Storniert)</span></div>';
+    html += '<div class="k-cook-actions">';
+    html += '<button class="k-cook-btn" onclick="K.toggleCookBar()">'+(_cookCollapsed?luc('chevron-down',14)+' Ausklappen':luc('chevron-up',14)+' Einklappen')+'</button>';
+    html += '<button class="k-cook-btn primary" onclick="K.printCookBar()">'+luc('printer',14)+' F\u00fcr K\u00fcche drucken</button>';
+    html += '</div></div>';
+    html += '<div class="k-cook-grid">';
+    order.forEach(function(dish){
+      var g = map[dish];
+      html += '<div class="k-cook-card">';
+      html += '<div class="k-cook-n">'+g.total+'</div>';
+      html += '<div class="k-cook-info">';
+      html += '<div class="k-cook-name">'+esc(dish)+'</div>';
+      html += '<div class="k-cook-chips">';
+      if(g.online>0) html += '<span class="k-cook-chip b">'+luc('globe',11)+' '+g.online+' online</span>';
+      if(g.vorort>0) html += '<span class="k-cook-chip o">'+luc('store',11)+' '+g.vorort+' vor Ort</span>';
+      if(g.abgeholt>0) html += '<span class="k-cook-chip g">'+luc('check',11)+' '+g.abgeholt+' abgeholt</span>';
+      if(g.offen>0) html += '<span class="k-cook-chip">'+luc('utensils',11)+' '+g.offen+' offen</span>';
+      html += '</div></div></div>';
+    });
+    html += '</div>';
+    html += '<div class="k-cook-foot">Gesamt: <b>'+grandTotal+' Portionen</b> \u00b7 '+order.length+' '+(order.length===1?'Gericht':'Gerichte')+' \u00b7 Stand '+stamp+' Uhr \u00b7 aktualisiert sich automatisch mit neuen Bestellungen</div>';
+    html += '</div>';
+    host.innerHTML = html;
+    reinitIcons();
+  }
+
   function renderOrders(){
-    if(_mittagFilter==='nachrichten') return;
+    if(_mittagFilter==='nachrichten'){ renderCookBar(); return; }
+    renderCookBar();
     if(orders.length===0){
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen für heute</div>';
       reinitIcons();
@@ -1926,6 +2012,26 @@ var K = (function(){
       }
     })
     .catch(function(e){toast('Verbindungsfehler – bitte erneut versuchen');});
+  }
+
+  // Reset an accidentally "abgeholt" (3) order back to "Bestätigt" (1),
+  // which reappears under the "Offen" filter. Uses the same PATCH endpoint.
+  function resetStatus(id){
+    var o = orders.find(function(x){return x.id===id;});
+    var name = o ? o.name : '';
+    dlConfirm({icon:'rotate-ccw',title:'Bestellung zur\u00fccksetzen?',msg:'«'+esc(name)+'» wechselt von „Abgeholt" zur\u00fcck auf „Offen".',ok:'Zur\u00fccksetzen',color:'#d97706'},function(){
+      fetch(API+'/lunch-order/'+id,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({status:1})
+      })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){ toast('Bestellung zur\u00fcckgesetzt auf Offen'); loadOrders(); }
+        else { toast('Zur\u00fccksetzen fehlgeschlagen: '+(res.error||'Unbekannter Fehler')); }
+      })
+      .catch(function(e){toast('Verbindungsfehler \u2013 bitte erneut versuchen');});
+    });
   }
 
   function showConfirmDialog(id){
@@ -4762,6 +4868,9 @@ var K = (function(){
     switchTab: switchTab,
     setMittagDatum: setMittagDatum,
     setStatus: setStatus,
+    resetStatus: resetStatus,
+    toggleCookBar: toggleCookBar,
+    printCookBar: printCookBar,
     showConfirmDialog: showConfirmDialog,
     hideConfirmDialog: hideConfirmDialog,
     confirmOrder: confirmOrder,
