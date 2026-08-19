@@ -321,7 +321,8 @@
                 if(!sel)return;
                 var prev=sel.value;
                 sel.innerHTML='';
-                var opts=[prefix+' im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
+                var _tp=(window._socTitelPresets&&window._socTitelPresets.length)?window._socTitelPresets:['{prefix} im Dorfladen \u2013 {tag}','Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 {tag}','Sonderangebot'];
+                var opts=_tp.map(function(t){return String(t).replace(/\{prefix\}/g,prefix).replace(/\{tag\}/g,tag);});opts.push('_custom');
                 var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
                 opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
                 if(prev&&prev!=='_custom'){
@@ -344,6 +345,7 @@
                 if(typeof socialBuildPostItems==='function') socialBuildPostItems();
               };
 
+              window._socTitelBuilders=(window._socTitelBuilders||[]);window._socTitelBuilders.push(buildTitelOpts);
               buildTitelOpts();
             })();
             </script>
@@ -461,8 +463,8 @@
 </div>
 
 <script src="/js/dl-confirm.js"></script>
-<script src="/js/social.js?v=20260819f"></script>
-<script src="/js/social-poster.js?v=20260819f"></script>
+<script src="/js/social.js?v=20260819g"></script>
+<script src="/js/social-poster.js?v=20260819g"></script>
 <script src="/js/admin-auth.js"></script>
   <!-- Wochenplan/Mittagessen laden: stellt window.SOCIAL_MEALS fuer social.js bereit,
        damit die Mittagessen-Sektion (Heute/Morgen) im Post-Assistenten erscheint.

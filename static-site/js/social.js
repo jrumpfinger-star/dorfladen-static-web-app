@@ -422,6 +422,92 @@
   // Expose _socKategorien for external access
   window._socKategorien_ref=function(){return _socKategorien;};
 
+  // ── Titel-Vorlagen (dynamisch pflegbar via CMS, gespeichert in cms-config) ──
+  // Platzhalter {tag} = Wochentag, {prefix} = Heute/Morgen werden beim Aufbau ersetzt.
+  window.SOC_TITEL_DEFAULTS=['{prefix} im Dorfladen \u2013 {tag}','Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 {tag}','Sonderangebot'];
+  window._socTitelPresets=window._socTitelPresets||null;
+  // Re-run every registered dropdown builder (set up inline in cms/kiosk/posten).
+  window.socialRebuildTitelOpts=function(){(window._socTitelBuilders||[]).forEach(function(fn){try{fn();}catch(e){}});};
+  window.socialLoadTitelPresets=function(){
+    return fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(cfg){
+      var raw=cfg&&cfg.social_titel_presets;
+      var list=null;
+      if(typeof raw==='string'){try{list=JSON.parse(raw);}catch(e){}}
+      else if(Array.isArray(raw)) list=raw;
+      if(Array.isArray(list)) list=list.filter(function(x){return typeof x==='string'&&x.trim();});
+      if(!Array.isArray(list)||!list.length) list=window.SOC_TITEL_DEFAULTS.slice();
+      window._socTitelPresets=list;
+      window.socialRebuildTitelOpts();
+      socRenderTitelManager();
+      return list;
+    }).catch(function(){
+      window._socTitelPresets=window.SOC_TITEL_DEFAULTS.slice();
+      window.socialRebuildTitelOpts();
+      return window._socTitelPresets;
+    });
+  };
+
+  function socRenderTitelManager(){
+    var wrap=document.getElementById('soc-titel-manager-list');
+    if(!wrap)return;
+    var list=window._socTitelPresets||[];
+    if(!list.length){wrap.innerHTML='<div style="color:#9ca3af;font-size:12px;padding:10px">Keine Vorlagen.</div>';return;}
+    var html='';
+    list.forEach(function(t,idx){
+      var isDyn=/\{tag\}|\{prefix\}/.test(t);
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:'+(idx%2===0?'#fff':'#f9fafb')+';border-radius:6px;margin-bottom:2px">';
+      html+='<span style="flex:1;font-weight:600;font-size:13px">'+esc(t)+(isDyn?' <span title="Enth\u00e4lt Platzhalter" style="font-size:10px;color:#2563eb;background:#eff6ff;padding:1px 5px;border-radius:4px">dynamisch</span>':'')+'</span>';
+      html+='<button onclick="socialTitelMgrMove('+idx+',-1)" title="Nach oben"'+(idx===0?' disabled':'')+' style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:13px;padding:2px 4px'+(idx===0?';opacity:.3':'')+'">\u25B2</button>';
+      html+='<button onclick="socialTitelMgrMove('+idx+',1)" title="Nach unten"'+(idx===list.length-1?' disabled':'')+' style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:13px;padding:2px 4px'+(idx===list.length-1?';opacity:.3':'')+'">\u25BC</button>';
+      html+='<button onclick="socialTitelMgrRemove('+idx+')" title="Entfernen" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:15px;padding:2px 4px">&times;</button>';
+      html+='</div>';
+    });
+    wrap.innerHTML=html;
+  }
+
+  window.socialTitelMgrAdd=function(){
+    var inp=document.getElementById('soc-titel-new');
+    var name=(inp?inp.value:'').trim();
+    if(!name){socialStatus('soc-titel-status','Bitte Titel eingeben',false);return;}
+    if(!window._socTitelPresets) window._socTitelPresets=window.SOC_TITEL_DEFAULTS.slice();
+    if(window._socTitelPresets.indexOf(name)!==-1){socialStatus('soc-titel-status','"'+name+'" existiert bereits',false);return;}
+    window._socTitelPresets.push(name);
+    if(inp) inp.value='';
+    socialTitelMgrSave();
+  };
+  window.socialTitelMgrRemove=function(idx){
+    var t=window._socTitelPresets[idx];
+    dlConfirm({icon:'🗑️',title:'Vorlage entfernen?',msg:'«'+t+'» wird entfernt.',ok:'Entfernen',color:'#dc2626'},function(){
+      window._socTitelPresets.splice(idx,1);
+      socialTitelMgrSave();
+    });
+  };
+  window.socialTitelMgrMove=function(idx,dir){
+    var l=window._socTitelPresets;if(!l)return;var j=idx+dir;
+    if(j<0||j>=l.length)return;
+    var tmp=l[idx];l[idx]=l[j];l[j]=tmp;
+    socialTitelMgrSave();
+  };
+  function socialTitelMgrSave(){
+    socialStatus('soc-titel-status','Vorlagen werden gespeichert...',true);
+    fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'social_titel_presets',wert:JSON.stringify(window._socTitelPresets)})})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){socialStatus('soc-titel-status','Fehler: '+res.error,false);return;}
+      socialStatus('soc-titel-status','Vorlagen gespeichert!',true);
+      socRenderTitelManager();
+      window.socialRebuildTitelOpts();
+    })
+    .catch(function(e){socialStatus('soc-titel-status','Speichern fehlgeschlagen: '+e.message,false);});
+  }
+  window.socialTitelMgrToggle=function(){
+    var panel=document.getElementById('soc-titel-manager');
+    if(!panel)return;
+    if(panel.style.display==='none'){panel.style.display='';socRenderTitelManager();}
+    else{panel.style.display='none';}
+  };
+
+
   // --- Post Builder ---
   function socialGetTodayMeals(){ var isMorgen=window._socSelectedDay==='morgen'; if(!isMorgen&&new Date().getHours()>=11) return []; var d=isMorgen?new Date(Date.now()+86400000):new Date(); var dayIdx=d.getDay(); var code=dayIdx===0?101006:101000+(dayIdx-1); var m=getMeals(); if(!m||!m.length) return []; return m.filter(function(mi){return mi.wochentag===code&&mi.gericht&&mi.gericht.trim()&&mi.preis;}); }
   // _socCatIcons now built dynamically from _socKategorien via socCatIcon()
@@ -523,6 +609,7 @@
     // Preload katalog + MT-Bilder so sub-tabs open instantly
     if(!window._socialKatLoaded) socialLoadKatalog();
     if(!window._socialMtBilderLoaded) socialLoadMtBilder();
+    if(!window._socTitelPresets) socialLoadTitelPresets();
   }
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',_socialInit);}else{_socialInit();}
 })();

@@ -3212,6 +3212,16 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Titel w&#228;hlen</label>
               <select id="soc-post-titel-sel" onchange="socialTitelChange()" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px;background:#fff"></select>
               <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:6px;display:none;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px">
+              <button type="button" class="k-btn k-btn-outline" onclick="socialTitelMgrToggle()" style="margin-top:6px;font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px;color:#374151"><i data-lucide="settings-2" style="width:13px;height:13px"></i> Titel-Vorlagen verwalten</button>
+              <div id="soc-titel-manager" style="display:none;margin-top:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px">
+                <div style="font-size:11px;color:#6b7280;margin-bottom:8px">Vorlagen f&#252;r die Titel-Auswahl. Platzhalter <code style="background:#eff6ff;color:#2563eb;padding:1px 4px;border-radius:4px">{tag}</code> = Wochentag, <code style="background:#eff6ff;color:#2563eb;padding:1px 4px;border-radius:4px">{prefix}</code> = Heute/Morgen.</div>
+                <div id="soc-titel-manager-list" style="margin-bottom:10px"></div>
+                <div style="display:flex;gap:6px">
+                  <input id="soc-titel-new" placeholder="Neue Vorlage, z.B. Angebot der Woche" style="flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter'){event.preventDefault();socialTitelMgrAdd();}">
+                  <button type="button" class="k-btn k-btn-primary" onclick="socialTitelMgrAdd()" style="font-size:13px;padding:8px 14px;background:#2e7d4f;color:#fff;border:none;border-radius:8px;cursor:pointer">+ Hinzuf&#252;gen</button>
+                </div>
+                <div id="soc-titel-status" style="display:none;margin-top:8px;font-size:12px"></div>
+              </div>
             </div>
             <script>
             window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}if(window.innerWidth>=900&&typeof socialGenPreview==='function'){if(window._socTitelTimer)clearTimeout(window._socTitelTimer);window._socTitelTimer=setTimeout(socialGenPreview,600);}};
@@ -3227,7 +3237,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                 if(!sel)return;
                 var prev=sel.value;
                 sel.innerHTML='';
-                var opts=[prefix+' im Dorfladen \u2013 '+tag,'Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 '+tag,'Sonderangebot','_custom'];
+                var _tp=(window._socTitelPresets&&window._socTitelPresets.length)?window._socTitelPresets:['{prefix} im Dorfladen \u2013 {tag}','Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 {tag}','Sonderangebot'];
+                var opts=_tp.map(function(t){return String(t).replace(/\{prefix\}/g,prefix).replace(/\{tag\}/g,tag);});opts.push('_custom');
                 var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
                 opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
                 if(prev&&prev!=='_custom'){
@@ -3250,6 +3261,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                 if(typeof socialBuildPostItems==='function') socialBuildPostItems();
               };
 
+              window._socTitelBuilders=(window._socTitelBuilders||[]);window._socTitelBuilders.push(buildTitelOpts);
               buildTitelOpts();
             })();
             </script>
@@ -3298,30 +3310,22 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           <script>
           (function(){
             var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-            var tag=tage[new Date().getDay()];
-            var sel=document.getElementById('soc-post-titel-sel');
-            if(!sel)return;
-            var opts=[
-              'Heute im Dorfladen \u2013 '+tag,
-              'Aktuelles',
-              'Wochenangebot',
-              'Frisch eingetroffen',
-              'Mittagstisch \u2013 '+tag,
-              'Sonderangebot',
-              '_custom'
-            ];
-            var labels={
-              '_custom':'\u270F\uFE0F Eigenen Titel eingeben...'
-            };
-            opts.forEach(function(o){
-              var op=document.createElement('option');
-              op.value=o;
-              op.textContent=labels[o]||o;
-              sel.appendChild(op);
-            });
-            // Sync hidden input with default
-            var inp=document.getElementById('soc-post-titel');
-            if(inp) inp.value=opts[0];
+            function buildTitelOpts2(){
+              var tag=tage[new Date().getDay()];
+              var sel=document.getElementById('soc-post-titel-sel');
+              if(!sel)return;
+              var prev=sel.value;
+              sel.innerHTML='';
+              var _tp=(window._socTitelPresets&&window._socTitelPresets.length)?window._socTitelPresets:['{prefix} im Dorfladen \u2013 {tag}','Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 {tag}','Sonderangebot'];
+              var opts=_tp.map(function(t){return String(t).replace(/\{prefix\}/g,'Heute').replace(/\{tag\}/g,tag);});opts.push('_custom');
+              var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
+              opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
+              if(prev&&opts.indexOf(prev)!==-1){sel.value=prev;}
+              var inp=document.getElementById('soc-post-titel');
+              if(inp&&sel.value!=='_custom') inp.value=sel.value;
+            }
+            window._socTitelBuilders=(window._socTitelBuilders||[]);window._socTitelBuilders.push(buildTitelOpts2);
+            buildTitelOpts2();
           })();
           window.socialTitelChange=function(){
             var sel=document.getElementById('soc-post-titel-sel');
@@ -4083,8 +4087,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 <script src="/js/admin-auth.js"></script>
 <script src="cms.js"></script>
 <script src="/js/dl-confirm.js"></script>
-<script src="/js/social.js?v=20260819f"></script>
-<script src="/js/social-poster.js?v=20260819f"></script>
+<script src="/js/social.js?v=20260819g"></script>
+<script src="/js/social-poster.js?v=20260819g"></script>
 <script src="/js/env-banner.js"></script>
 </body>
 </html>
