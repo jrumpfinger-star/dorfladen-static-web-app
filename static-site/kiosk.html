@@ -2139,7 +2139,7 @@ var K = (function(){
   var _origSocialPickUpdate = window.socialPickUpdate;
   var _socAutoPreviewTimer = null;
   function _socWrapPickUpdate(){
-    if(typeof _origSocialPickUpdate==='function') _origSocialPickUpdate();
+    if(typeof _origSocialPickUpdate==='function') _origSocialPickUpdate.apply(this,arguments);
     var cnt = document.getElementById('soc-step2-count');
     if(!cnt) return;
     var checks = document.querySelectorAll('.soc-post-cb:checked,.soc-post-wp:checked');
