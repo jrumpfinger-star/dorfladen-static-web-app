@@ -258,6 +258,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     image = body.get("image", "")
     category = body.get("category", "")
     target_email = (body.get("target_email", "") or "").lower().strip()
+    target_endpoint = (body.get("target_endpoint", "") or "").strip()
 
     if not message:
         return func.HttpResponse(
@@ -284,6 +285,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # Filter by target email if specified (for customer-specific notifications)
     if target_email:
         all_subs = [s for s in all_subs if s.get("email", "").lower() == target_email]
+
+    # Filter by target endpoint if specified (for "only this device" test sends).
+    # This targets exactly one browser subscription (e.g. the admin's own device),
+    # so a test push in production only reaches that single endpoint.
+    if target_endpoint:
+        all_subs = [s for s in all_subs if s["subscription"].get("endpoint", "") == target_endpoint]
 
     if not all_subs:
         return func.HttpResponse(

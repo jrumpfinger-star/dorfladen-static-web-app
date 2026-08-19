@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Kochbedarf integriert – Mockup</title>
+<style>
+  :root{--green1:#2e7d4f;--green2:#245f3d;--ink:#1f2937;--muted:#6b7280;--bg:#f3f4f6;--line:#e5e7eb;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,sans-serif;}
+  body{background:var(--bg);color:var(--ink);padding:18px;display:flex;flex-direction:column;gap:14px;align-items:center;}
+  .wrap{width:1180px;max-width:100%;}
+  .caption{font-size:13px;color:var(--muted);text-align:center;margin-bottom:6px;}
+
+  /* Tages-Tabs */
+  .days{display:flex;gap:6px;border-bottom:2px solid var(--line);padding-bottom:8px;}
+  .day{min-width:60px;text-align:center;padding:5px 8px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:13px;}
+  .day small{display:block;font-size:11px;}
+  .day.active{background:var(--green1);color:#fff;font-weight:700;}
+
+  /* NEU: Kochbedarf-Leiste (immer sichtbar, unabhaengig vom Status-Filter) */
+  .cook{margin:12px 0;border:1px solid #cfe6d6;background:linear-gradient(180deg,#f0fdf4,#ffffff);border-radius:14px;padding:12px 14px;}
+  .cook-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .cook-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;color:#166534;}
+  .cook-title .sub{font-size:12px;font-weight:500;color:var(--muted);}
+  .cook-actions{display:flex;gap:8px;}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .btn.primary{background:var(--green1);color:#fff;border-color:var(--green1);}
+  .cook-grid{display:flex;gap:10px;flex-wrap:wrap;}
+  .cook-card{flex:1 1 260px;display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+  .cook-n{flex:0 0 auto;min-width:56px;height:56px;border-radius:12px;background:#f0fdf4;border:1px solid #dcfce7;color:var(--green1);font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .cook-info{flex:1;min-width:0;}
+  .cook-name{font-size:15px;font-weight:700;line-height:1.15;}
+  .cook-sub{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+  .chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:14px;background:#f3f4f6;color:#374151;display:inline-flex;align-items:center;gap:4px;}
+  .chip.b{background:#eef2ff;color:#3730a3;}
+  .chip.g{background:#dcfce7;color:#166534;}
+  .chip.o{background:#fff7ed;color:#9a3412;}
+  .chip.t{background:#fef2f2;color:#dc2626;}
+  .cook-foot{font-size:11px;color:var(--muted);margin-top:8px;}
+
+  /* Status-Filter (bestehend) */
+  .status{display:flex;gap:8px;margin:6px 0 12px;flex-wrap:wrap;}
+  .st{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .st.active{background:var(--green1);color:#fff;border-color:var(--green1);}
+  .st .badge{background:#e5e7eb;color:#374151;border-radius:10px;padding:0 7px;font-size:11px;}
+  .st.active .badge{background:rgba(255,255,255,.3);color:#fff;}
+
+  /* Bestell-Gruppen (bestehend, vereinfacht) */
+  .group{border:1px solid #dcfce7;background:#f6fef9;border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px;margin:10px 0 6px;}
+  .order{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-left:4px solid var(--green1);background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:8px;}
+  .order .who{font-weight:700;}
+  .order .meta{display:flex;align-items:center;gap:10px;font-size:13px;color:#374151;}
+  .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:#eef2ff;color:#3730a3;}
+  .tag.mit{background:#ecfeff;color:#0e7490;}
+  .qbtn{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:13px;}
+  .xbtn{background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 10px;font-weight:700;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="caption">MOCKUP – „Kochbedarf" integriert oben im Bestellungen-Tab (kein Umschalten nötig)</div>
+
+    <!-- Tages-Tabs -->
+    <div class="days">
+      <div class="day">Gestern<small>18.08</small></div>
+      <div class="day active">Heute<small>19.08</small></div>
+      <div class="day">Morgen<small>20.08</small></div>
+      <div class="day">Fr<small>21.08</small></div>
+      <div class="day">Sa<small>22.08</small></div>
+      <div class="day">So<small>23.08</small></div>
+      <div class="day">Mo<small>24.08</small></div>
+    </div>
+
+    <!-- ===== NEU: Kochbedarf-Leiste (immer sichtbar) ===== -->
+    <div class="cook">
+      <div class="cook-head">
+        <div class="cook-title">🍳 Kochbedarf heute <span class="sub">· über alle Status gezählt (ohne Storniert)</span></div>
+        <div class="cook-actions">
+          <button class="btn">▾ Einklappen</button>
+          <button class="btn primary">🖨️ Für Küche drucken</button>
+        </div>
+      </div>
+      <div class="cook-grid">
+        <div class="cook-card">
+          <div class="cook-n">6</div>
+          <div class="cook-info">
+            <div class="cook-name">Jägerschnitzel mit Spätzle und Gemüse</div>
+            <div class="cook-sub">
+              <span class="chip t">⏰ ab 12:00</span>
+              <span class="chip b">🌐 5 online</span>
+              <span class="chip o">🏠 1 vor Ort</span>
+              <span class="chip g">✔ 2 abgeholt</span>
+              <span class="chip">🍽 4 offen</span>
+            </div>
+          </div>
+        </div>
+        <div class="cook-card">
+          <div class="cook-n">3</div>
+          <div class="cook-info">
+            <div class="cook-name">Vegetarische Käsespätzle</div>
+            <div class="cook-sub">
+              <span class="chip t">⏰ ab 12:00</span>
+              <span class="chip b">🌐 2 online</span>
+              <span class="chip o">🏠 1 vor Ort</span>
+              <span class="chip">🍽 3 offen</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cook-foot">Gesamt: <b>9 Portionen</b> · 2 Gerichte · Stand 11:05 Uhr · aktualisiert sich automatisch mit neuen Bestellungen</div>
+    </div>
+
+    <!-- Status-Filter (bestehend) -->
+    <div class="status">
+      <div class="st active">✉ Offen <span class="badge">5</span></div>
+      <div class="st">💬 Nachrichten <span class="badge">0</span></div>
+      <div class="st">✔ Erledigt <span class="badge">1</span></div>
+      <div class="st">✖ Storniert <span class="badge">0</span></div>
+      <div class="st">Alle <span class="badge">6</span></div>
+    </div>
+
+    <!-- Bestell-Liste (bestehend) -->
+    <div class="group">▾ 6× Jägerschnitzel mit Spätzle und Gemüse <span style="font-weight:400;color:#6b7280">(2 Min.)</span></div>
+    <div class="order"><div class="who">Helmut Schramm</div><div class="meta"><span>9,80 € · 1×</span><span class="tag">ONLINE</span><button class="qbtn">📦 Abgeholt</button><button class="xbtn">✕</button></div></div>
+    <div class="order"><div class="who">Andrea Reithmeier</div><div class="meta"><span>9,80 € · 1×</span><span class="tag">ONLINE</span><span class="tag mit">MIT</span><button class="qbtn">📦 Abgeholt</button><button class="xbtn">✕</button></div></div>
+    <div class="order"><div class="who">Florian Radeck</div><div class="meta"><span>19,60 € · 2×</span><span class="tag">ONLINE</span><span class="tag mit">MIT</span><button class="qbtn">📦 Abgeholt</button><button class="xbtn">✕</button></div></div>
+
+    <!-- NEU: bereits abgeholte Bestellung mit "Zurücksetzen" (Undo bei Vertippen) -->
+    <div class="caption" style="text-align:left;margin:18px 0 6px;font-weight:700;color:#374151">↓ So sieht eine bereits als <b>Abgeholt</b> markierte Bestellung aus (z. B. im Tab „Erledigt"):</div>
+    <div class="order" style="border-left-color:#16a34a;background:#f6fef9">
+      <div class="who">Marin Eder <span style="font-size:12px;font-weight:600;color:#16a34a;margin-left:6px">✔ abgeholt · 11:02</span></div>
+      <div class="meta">
+        <span>9,80 € · 1×</span>
+        <span class="tag">ONLINE</span>
+        <span class="tag mit">MIT</span>
+        <button class="btn" style="border-color:#16a34a;color:#166534;font-weight:700">↩︎ Zurücksetzen</button>
+      </div>
+    </div>
+    <div class="hint" style="font-size:12px;color:#6b7280;margin-top:6px;display:flex;gap:6px">↩︎ „Zurücksetzen" setzt die Bestellung wieder auf <b>Offen</b> (wandert zurück in den Offen-Tab). Praktisch, wenn versehentlich auf „Abgeholt" getippt wurde.</div>
+  </div>
+</body>
+</html>

@@ -8917,28 +8917,98 @@
       throw new Error(res.error||'Bild-Upload fehlgeschlagen');
     });
   }
+  window._pushSubs = [];
+  window._pushOwnEndpoint = null;
+  // Resolve this browser's own push subscription endpoint (for "only me" sends
+  // and for marking the current device in the subscriber list).
+  window.pushResolveOwnEndpoint = function(){
+    if(!('serviceWorker' in navigator)||!navigator.serviceWorker||!navigator.serviceWorker.ready){
+      return Promise.resolve(null);
+    }
+    return navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription();
+    }).then(function(sub){
+      window._pushOwnEndpoint = sub?sub.endpoint:null;
+      return window._pushOwnEndpoint;
+    }).catch(function(){return null;});
+  };
+  function _pushPlatform(domain){
+    var d=(domain||'').toLowerCase();
+    if(d.indexOf('fcm')>=0||d.indexOf('google')>=0||d.indexOf('android')>=0)return {icon:'\uD83E\uDD16',label:'Chrome / Android'};
+    if(d.indexOf('mozilla')>=0||d.indexOf('firefox')>=0)return {icon:'\uD83E\uDD8A',label:'Firefox'};
+    if(d.indexOf('apple')>=0)return {icon:'\uD83C\uDF4F',label:'Safari / iOS'};
+    if(d.indexOf('windows')>=0||d.indexOf('microsoft')>=0||d.indexOf('wns')>=0)return {icon:'\uD83E\uDE9F',label:'Edge / Windows'};
+    return {icon:'\uD83C\uDF10',label:domain||'?'};
+  }
   window.pushLoadSubscribers = function(){
     var list=document.getElementById('push-sub-list');
     var count=document.getElementById('push-sub-count');
     list.textContent='Lade...';
+    window.pushResolveOwnEndpoint();
     fetch(API+'/push-send').then(function(r){return r.json();}).then(function(res){
       count.textContent=res.total||0;
-      if(!res.subscribers||res.subscribers.length===0){list.innerHTML='<em>Keine Subscriber vorhanden.</em>';return;}
-      var html='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;border-bottom:2px solid #e5e7eb">'
-        +'<th style="padding:4px 6px">#</th><th style="padding:4px 6px">Domain</th><th style="padding:4px 6px">Kategorien</th><th style="padding:4px 6px">Keys</th><th style="padding:4px 6px"></th></tr></thead><tbody>';
-      res.subscribers.forEach(function(s,i){
-        var keyOk=s.has_p256dh&&s.has_auth;
-        html+='<tr style="border-bottom:1px solid #f3f4f6">'
-          +'<td style="padding:4px 6px">'+(i+1)+'</td>'
-          +'<td style="padding:4px 6px;word-break:break-all">'+((s.endpoint_domain||'?').replace(/</g,'&lt;'))+'</td>'
-          +'<td style="padding:4px 6px">'+(s.categories||[]).join(', ')+'</td>'
-          +'<td style="padding:4px 6px;color:'+(keyOk?'#16a34a':'#dc2626')+'">'+(keyOk?'&#10003;':'&#10007;')+'</td>'
-          +'<td style="padding:4px 6px"><button onclick="pushDeleteSub(\''+s.record_id+'\')" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">&#128465;</button></td>'
-          +'</tr>';
-      });
-      html+='</tbody></table>';
-      list.innerHTML=html;
+      window._pushSubs=res.subscribers||[];
+      window.pushRenderSubscribers();
     }).catch(function(e){list.textContent=_cmsErr(e);});
+  };
+  window.pushRenderSubscribers = function(){
+    var list=document.getElementById('push-sub-list');
+    if(!list)return;
+    var subs=window._pushSubs||[];
+    if(subs.length===0){list.innerHTML='<em>Keine Subscriber vorhanden.</em>';return;}
+    var searchEl=document.getElementById('push-sub-search');
+    var catEl=document.getElementById('push-sub-filter-cat');
+    var q=(searchEl?searchEl.value:'').toLowerCase().trim();
+    var catF=catEl?catEl.value:'';
+    var ownEp=window._pushOwnEndpoint||'';
+    var ownTail=ownEp?ownEp.slice(-60):'';
+    var rows=subs.map(function(s){
+      var plat=_pushPlatform(s.endpoint_domain);
+      var isOwn=!!(ownTail&&s.endpoint_short&&s.endpoint_short.slice(-60)===ownTail);
+      return {s:s,plat:plat,isOwn:isOwn};
+    }).filter(function(r){
+      if(catF&&(r.s.categories||[]).indexOf(catF)<0)return false;
+      if(q){
+        var hay=(r.plat.label+' '+(r.s.endpoint_domain||'')+' '+(r.s.email||'')+' '+(r.s.categories||[]).join(' ')).toLowerCase();
+        if(hay.indexOf(q)<0)return false;
+      }
+      return true;
+    });
+    var html='<div style="font-size:11px;color:#6b7280;margin-bottom:6px">'+rows.length+' von '+subs.length+' angezeigt</div>';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;border-bottom:2px solid #e5e7eb">'
+      +'<th style="padding:4px 6px">#</th><th style="padding:4px 6px">Plattform</th><th style="padding:4px 6px">Kategorien</th><th style="padding:4px 6px">E-Mail</th><th style="padding:4px 6px">Keys</th><th style="padding:4px 6px"></th></tr></thead><tbody>';
+    rows.forEach(function(r,i){
+      var s=r.s;
+      var keyOk=s.has_p256dh&&s.has_auth;
+      var esc=function(t){return String(t||'').replace(/</g,'&lt;');};
+      var ownBadge=r.isOwn?' <span style="background:#ede9fe;color:#7c3aed;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700">\uD83D\uDCF1 Dieses Ger\u00e4t</span>':'';
+      html+='<tr style="border-bottom:1px solid #f3f4f6;'+(r.isOwn?'background:#faf5ff':'')+'">'
+        +'<td style="padding:4px 6px">'+(i+1)+'</td>'
+        +'<td style="padding:4px 6px">'+r.plat.icon+' '+esc(r.plat.label)+ownBadge+'<div style="color:#9ca3af;font-size:10px;word-break:break-all">'+esc(s.endpoint_domain)+'</div></td>'
+        +'<td style="padding:4px 6px">'+esc((s.categories||[]).join(', '))+'</td>'
+        +'<td style="padding:4px 6px;word-break:break-all">'+(s.email?esc(s.email):'<span style="color:#9ca3af">\u2013</span>')+'</td>'
+        +'<td style="padding:4px 6px;color:'+(keyOk?'#16a34a':'#dc2626')+'">'+(keyOk?'&#10003;':'&#10007;')+'</td>'
+        +'<td style="padding:4px 6px;white-space:nowrap">'
+        +(r.isOwn?'<button onclick="pushTestOwnDevice()" title="Test-Push nur an dieses Ger\u00e4t" style="background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-right:4px">&#128276; Test</button>':'')
+        +'<button onclick="pushDeleteSub(\''+s.record_id+'\')" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">&#128465;</button>'
+        +'</td>'
+        +'</tr>';
+    });
+    html+='</tbody></table>';
+    list.innerHTML=html;
+  };
+  // Send a fixed test push to only this device (from the subscriber list).
+  window.pushTestOwnDevice = function(){
+    window.pushResolveOwnEndpoint().then(function(ep){
+      if(!ep){toast('Dieses Ger\u00e4t ist nicht abonniert. Bitte zuerst Benachrichtigungen aktivieren.','warn');return;}
+      return fetch(API+'/push-send',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({title:'Dorfladen Test',message:'Test-Push nur an dieses Ger\u00e4t \u2013 bitte ignorieren.',url:'/',tag:'dorfladen-test',target_endpoint:ep})
+      }).then(function(r){return r.json();}).then(function(res){
+        if(res.success&&res.sent>0){toast('Test an dieses Ger\u00e4t gesendet','ok');}
+        else{toast('Test nicht zugestellt ('+(res.failed||0)+' fehlgeschlagen)','warn');}
+      });
+    }).catch(function(e){toast(_cmsErr(e),'error');});
   };
   window.pushDeleteSub = function(recordId){
     cmsConfirm('Subscriber wirklich l\u00f6schen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'L\u00f6schen',warn:true}).then(function(ok){
@@ -8957,20 +9027,27 @@
     var message=document.getElementById('push-message').value.trim();
     var url=document.getElementById('push-url').value;
     var category=document.getElementById('push-category').value;
+    var onlyMeEl=document.getElementById('push-only-me');
+    var onlyMe=!!(onlyMeEl&&onlyMeEl.checked);
     var catLabels={tagesinfo:'TagesInfo',news:'News / Aktuelles'};
-    var catInfo=category?(catLabels[category]||category):'Alle Abonnenten';
+    var catInfo=onlyMe?'\uD83D\uDD12 NUR dieses Ger\u00e4t (Test)':(category?(catLabels[category]||category):'Alle Abonnenten');
     var btn=document.getElementById('push-send-btn');
     var status=document.getElementById('push-status');
     if(!message){toast('Bitte Nachricht eingeben','warn');return;}
-    cmsConfirm('Push-Nachricht senden?\n\nEmpf\u00e4nger: '+catInfo+'\nTitel: '+title+'\nNachricht: '+message+'\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!',{icon:'\u26a0\ufe0f',ok:'Jetzt senden',warn:true}).then(function(ok){
+    cmsConfirm('Push-Nachricht senden?\n\nEmpf\u00e4nger: '+catInfo+'\nTitel: '+title+'\nNachricht: '+message+(onlyMe?'':'\n\n\u274c Kann nach dem Senden NICHT zur\u00fcckgezogen werden!'),{icon:onlyMe?'\uD83D\uDD12':'\u26a0\ufe0f',ok:'Jetzt senden',warn:!onlyMe}).then(function(ok){
     if(!ok)return;
     btn.disabled=true;
-    status.textContent='Bild wird hochgeladen...';
     status.style.color='#6b7280';
-    pushUploadImage().then(function(imageUrl){
+    var prep=onlyMe?window.pushResolveOwnEndpoint():Promise.resolve(null);
+    prep.then(function(ownEp){
+      if(onlyMe&&!ownEp){var e=new Error('__NO_DEVICE__');throw e;}
+      status.textContent='Bild wird hochgeladen...';
+      return pushUploadImage();
+    }).then(function(imageUrl){
       status.textContent='Wird gesendet...';
       var payload={title:title,message:message,url:url,tag:'dorfladen-cms'};
-      if(category)payload.category=category;
+      if(onlyMe){payload.target_endpoint=window._pushOwnEndpoint;}
+      else if(category){payload.category=category;}
       if(imageUrl)payload.image=imageUrl;
       return fetch(API+'/push-send',{
         method:'POST',
@@ -8987,7 +9064,7 @@
         if(res.errors&&res.errors.length)info+='\n'+res.errors.join('\n');
         status.textContent='\u2705 '+info;
         status.style.color=res.failed?'#d97706':'#16a34a';
-        var toastMsg=res.sent>0?'Push gesendet! ('+res.sent+' Empf\u00e4nger)':(res.total==0?'Keine Abonnenten vorhanden':(res.sent==0&&res.failed>0?'Push konnte nicht zugestellt werden (Firefox-Push evtl. abgelaufen). Bitte Abo erneuern.':'Fehler beim Senden ('+res.failed+' fehlgeschlagen)'));toast(toastMsg,res.sent>0?'ok':'warn');
+        var toastMsg=res.sent>0?(onlyMe?'Test an dein Ger\u00e4t gesendet':'Push gesendet! ('+res.sent+' Empf\u00e4nger)'):(res.total==0?(onlyMe?'Dieses Ger\u00e4t nicht gefunden \u2013 Abo erneuern':'Keine Abonnenten vorhanden'):(res.sent==0&&res.failed>0?'Push konnte nicht zugestellt werden (Firefox-Push evtl. abgelaufen). Bitte Abo erneuern.':'Fehler beim Senden ('+res.failed+' fehlgeschlagen)'));toast(toastMsg,res.sent>0?'ok':'warn');
       }else{
         status.textContent='\u274c '+res.error;
         status.style.color='#dc2626';
@@ -8995,9 +9072,15 @@
       }
     })
     .catch(function(e){
-      status.textContent='\u274c Netzwerkfehler';
-      status.style.color='#dc2626';
-      toast(_cmsErr(e),'error');
+      if(e&&e.message==='__NO_DEVICE__'){
+        status.textContent='\u274c Dieses Ger\u00e4t ist nicht abonniert';
+        status.style.color='#dc2626';
+        toast('Dieses Ger\u00e4t ist nicht abonniert. Bitte zuerst Benachrichtigungen aktivieren.','warn');
+      }else{
+        status.textContent='\u274c Netzwerkfehler';
+        status.style.color='#dc2626';
+        toast(_cmsErr(e),'error');
+      }
     })
     .then(function(){btn.disabled=false;pushImageRemove();});
     });

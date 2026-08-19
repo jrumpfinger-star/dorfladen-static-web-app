@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Kochliste – Mockup</title>
+<style>
+  :root{--green1:#2e7d4f;--green2:#245f3d;--ink:#1f2937;--muted:#6b7280;--bg:#f3f4f6;--line:#e5e7eb;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,sans-serif;}
+  body{background:var(--bg);color:var(--ink);padding:20px;display:flex;flex-direction:column;gap:26px;align-items:center;}
+  .wrap{width:960px;max-width:100%;}
+  .caption{font-size:13px;color:var(--muted);text-align:center;margin-bottom:8px;}
+
+  /* Tages-Tabs (wie bestehend) */
+  .days{display:flex;gap:6px;border-bottom:2px solid var(--line);padding-bottom:10px;overflow:auto;}
+  .day{min-width:64px;text-align:center;padding:6px 8px;border-radius:10px;cursor:pointer;color:var(--muted);}
+  .day small{display:block;font-size:11px;}
+  .day.active{background:var(--green1);color:#fff;font-weight:700;}
+
+  .toolbar{display:flex;align-items:center;justify-content:space-between;margin:16px 0 12px;flex-wrap:wrap;gap:10px;}
+  .toolbar h2{font-size:20px;display:flex;align-items:center;gap:10px;}
+  .toolbar .actions{display:flex;gap:8px;}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .btn.primary{background:var(--green1);color:#fff;border-color:var(--green1);}
+
+  /* Gesamt-Streifen */
+  .total{background:linear-gradient(90deg,var(--green1),var(--green2));color:#fff;border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .total .big{font-size:34px;font-weight:800;line-height:1;}
+  .total .lbl{font-size:13px;opacity:.9;}
+  .total .right{font-size:12px;opacity:.92;text-align:right;line-height:1.5;}
+
+  /* Gericht-Karten */
+  .dish{background:#fff;border:1px solid var(--line);border-radius:16px;padding:0;margin-bottom:16px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.04);}
+  .dish-head{display:flex;align-items:stretch;}
+  .qty{flex:0 0 150px;background:#f0fdf4;border-right:1px solid #dcfce7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 10px;}
+  .qty .n{font-size:52px;font-weight:800;color:var(--green1);line-height:1;}
+  .qty .u{font-size:13px;color:#166534;font-weight:600;margin-top:2px;}
+  .dish-main{flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:10px;justify-content:center;}
+  .dish-name{font-size:22px;font-weight:700;}
+  .dish-sub{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;background:#f3f4f6;color:#374151;display:inline-flex;align-items:center;gap:5px;}
+  .chip.b{background:#eef2ff;color:#3730a3;}
+  .chip.g{background:#dcfce7;color:#166534;}
+  .chip.o{background:#fff7ed;color:#9a3412;}
+  .chip.time{background:#fef2f2;color:#dc2626;}
+
+  /* Aufklappbare Namensliste */
+  .names{border-top:1px dashed var(--line);padding:12px 18px;display:flex;flex-wrap:wrap;gap:6px;background:#fafafa;}
+  .name{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px 9px;color:#374151;}
+  .name b{color:var(--green1);}
+
+  .hint{font-size:12px;color:var(--muted);margin-top:6px;display:flex;gap:6px;align-items:flex-start;}
+  .legend{font-size:12px;color:var(--muted);margin-top:4px;}
+</style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="caption">MOCKUP – „Kochliste" (Tagesbedarf je Gericht, unabhängig vom Bestellstatus)</div>
+
+    <div class="days">
+      <div class="day">Gestern<small>18.08</small></div>
+      <div class="day active">Heute<small>19.08</small></div>
+      <div class="day">Morgen<small>20.08</small></div>
+      <div class="day">Fr<small>21.08</small></div>
+      <div class="day">Sa<small>22.08</small></div>
+      <div class="day">So<small>23.08</small></div>
+      <div class="day">Mo<small>24.08</small></div>
+    </div>
+
+    <div class="toolbar">
+      <h2>🍳 Kochliste – Mittwoch, 19. August</h2>
+      <div class="actions">
+        <button class="btn">📋 Bestellungen</button>
+        <button class="btn primary">🖨️ Kochliste drucken</button>
+      </div>
+    </div>
+
+    <div class="total">
+      <div>
+        <div class="big">9 Portionen</div>
+        <div class="lbl">Gesamt heute zu kochen · 2 Gerichte</div>
+      </div>
+      <div class="right">
+        7 online vorbestellt · 2 vor Ort<br>
+        Stand: 11:05 Uhr · Stornierte nicht gezählt
+      </div>
+    </div>
+
+    <!-- Gericht 1 -->
+    <div class="dish">
+      <div class="dish-head">
+        <div class="qty"><div class="n">6</div><div class="u">Portionen</div></div>
+        <div class="dish-main">
+          <div class="dish-name">Jägerschnitzel mit Spätzle und Gemüse</div>
+          <div class="dish-sub">
+            <span class="chip time">⏰ ab 12:00 Uhr</span>
+            <span class="chip b">🌐 5 online</span>
+            <span class="chip o">🏠 1 vor Ort</span>
+            <span class="chip g">✔ 2 bereits abgeholt</span>
+            <span class="chip">🍽 4 offen</span>
+          </div>
+        </div>
+      </div>
+      <div class="names">
+        <span class="name">Helmut Schramm <b>1×</b></span>
+        <span class="name">Andrea Reithmeier <b>1×</b></span>
+        <span class="name">Bianca Sax <b>1×</b></span>
+        <span class="name">Lidia <b>1×</b></span>
+        <span class="name">Florian Radeck <b>2×</b></span>
+      </div>
+    </div>
+
+    <!-- Gericht 2 (Beispiel: zweites Menü / Sonderwunsch) -->
+    <div class="dish">
+      <div class="dish-head">
+        <div class="qty"><div class="n">3</div><div class="u">Portionen</div></div>
+        <div class="dish-main">
+          <div class="dish-name">Vegetarische Käsespätzle</div>
+          <div class="dish-sub">
+            <span class="chip time">⏰ ab 12:00 Uhr</span>
+            <span class="chip b">🌐 2 online</span>
+            <span class="chip o">🏠 1 vor Ort</span>
+            <span class="chip">🍽 3 offen</span>
+          </div>
+        </div>
+      </div>
+      <div class="names">
+        <span class="name">Petra Huber <b>2×</b></span>
+        <span class="name">Laufkundschaft <b>1×</b></span>
+      </div>
+    </div>
+
+    <div class="hint">ℹ️ Die Mengen summieren <b>alle</b> Bestellungen des Tages (offen + abgeholt + erledigt). <b>Stornierte</b> werden nicht mitgezählt. So sieht die Küche unabhängig vom Status, wie viel wirklich zu kochen ist.</div>
+    <div class="legend">Legende: 🌐 online vorbestellt · 🏠 vor Ort erfasst · ✔ abgeholt · 🍽 offen</div>
+  </div>
+
+</body>
+</html>

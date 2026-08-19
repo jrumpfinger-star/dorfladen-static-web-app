@@ -1020,6 +1020,11 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           </select>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label id="push-only-me-wrap" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:6px;padding:6px 10px;cursor:pointer" title="Testversand: Es wird ausschlie&szlig;lich an dieses Ger&auml;t (deinen Browser) gesendet, nicht an alle Abonnenten.">
+            <input type="checkbox" id="push-only-me" style="cursor:pointer">&#128274; Nur an mich (dieses Ger&auml;t)
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="cms-btn cms-btn-primary" id="push-send-btn" onclick="pushSendNow()" style="background:#7c3aed">&#128276; Sofort senden</button>
           <button class="cms-btn" id="push-queue-btn" onclick="pushAddToQueue()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db">&#128203; Zur Warteschlange</button>
           <span id="push-status" style="font-size:13px;color:#6b7280"></span>
@@ -1047,8 +1052,15 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <div class="cms-card" style="margin-bottom:16px">
       <div class="cms-card-header" style="background:#059669">&#128101; Subscriber <span id="push-sub-count" style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:10px;font-size:12px;margin-left:6px">-</span></div>
       <div class="cms-card-body">
-        <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
           <button class="cms-btn" onclick="pushLoadSubscribers()" style="background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;font-size:12px">&#128260; Aktualisieren</button>
+          <input type="text" id="push-sub-search" oninput="pushRenderSubscribers()" placeholder="&#128269; Suche (Plattform, E-Mail, Domain)" class="cms-input" style="flex:1;min-width:180px;font-size:12px">
+          <select id="push-sub-filter-cat" onchange="pushRenderSubscribers()" class="cms-input" style="font-size:12px;width:auto">
+            <option value="">Alle Kategorien</option>
+            <option value="tagesinfo">&#128203; TagesInfo</option>
+            <option value="news">&#128240; News</option>
+            <option value="bestellung">&#128717; Bestellung</option>
+          </select>
         </div>
         <div id="push-sub-list" style="font-size:13px;color:#6b7280">Klicke &bdquo;Aktualisieren&ldquo; um Subscriber zu laden.</div>
       </div>
