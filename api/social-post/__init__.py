@@ -126,6 +126,9 @@ def _send_auto_push(req, post_titel, category="tagesinfo"):
     Ruft den Versand IN-PROCESS auf (shared.push). Ein HTTP-Self-Call gegen die
     eigene oeffentliche /api/push-send-URL funktioniert in Azure Static Web Apps
     nicht zuverlaessig und wuerde still fehlschlagen.
+
+    Gibt das Ergebnis-dict von send_push_notification zurueck (oder None bei
+    Fehler), damit Aufrufer Zustellinfos (sent/failed/total) auswerten koennen.
     """
     try:
         from shared.urls import get_public_origin
@@ -133,7 +136,7 @@ def _send_auto_push(req, post_titel, category="tagesinfo"):
         origin = get_public_origin(req)
         message = ("Die heutige TagesInfo ist da! Mittagstisch, Theke & mehr."
                    if category == "tagesinfo" else post_titel)
-        send_push_notification(
+        return send_push_notification(
             title=post_titel or "Dorfladen Oberornau",
             message=message,
             url="/tagesinfo",
@@ -142,7 +145,17 @@ def _send_auto_push(req, post_titel, category="tagesinfo"):
             tag="dorfladen-tagesinfo",
         )
     except Exception:
-        pass  # Push is best-effort, never block the main response
+        return None  # Push is best-effort, never block the main response
+
+
+def _now_iso():
+    """Aktueller Zeitstempel als ISO-String (Europe/Berlin, mit 'Z'-Suffix-Stil)."""
+    try:
+        from zoneinfo import ZoneInfo
+        _tz = ZoneInfo("Europe/Berlin")
+    except Exception:
+        _tz = timezone(timedelta(hours=2))
+    return datetime.now(_tz).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 # ---------- handlers ----------
@@ -250,6 +263,8 @@ def handle_post(req, token, folder_id):
         return handle_delete(req, token, folder_id)
     if _action in ("patch", "update"):
         return handle_patch(req, token, folder_id)
+    if _action in ("push", "repush"):
+        return handle_repush(req, token, folder_id)
     if _action == "prune":
         try:
             days = int(body.get("days", PRUNE_DAYS))
@@ -341,6 +356,7 @@ def handle_post(req, token, folder_id):
     # normalen Speichern/Teilen. Push nur, wenn der Nutzer sie im CMS aktiv
     # anfordert (Checkbox). Sichtbarkeit auf /tagesinfo bleibt davon unberuehrt.
     req_notify = bool(body.get("notify", False))
+    will_push = (req_status == "veroeffentlicht" and req_notify)
 
     post = {
         "id": post_id,
@@ -352,6 +368,8 @@ def handle_post(req, token, folder_id):
         "datum": now,
         "wochentag": tag,
         "status": req_status,
+        "push_count": 1 if will_push else 0,
+        "last_push_at": _now_iso() if will_push else "",
     }
 
     posts = load_posts(token, folder_id)
@@ -360,7 +378,7 @@ def handle_post(req, token, folder_id):
         return err("Post konnte nicht gespeichert werden", 500)
 
     # Auto-push nur wenn ausdruecklich angefordert (notify) UND veroeffentlicht.
-    if req_status == "veroeffentlicht" and req_notify:
+    if will_push:
         _send_auto_push(req, post.get("titel", ""), "tagesinfo")
 
     return ok({"success": True, "post": post})
@@ -403,14 +421,55 @@ def handle_patch(req, token, folder_id):
     if not found:
         return err("Post nicht gefunden", 404)
 
+    # Auto-push when draft is published → Push-Zaehler mitfuehren
+    will_push = (new_status == "veroeffentlicht" and old_status == "entwurf")
+    if will_push:
+        found["push_count"] = int(found.get("push_count", 0) or 0) + 1
+        found["last_push_at"] = _now_iso()
+
     if not save_posts(token, folder_id, posts):
         return err("Posts konnten nicht gespeichert werden", 500)
 
-    # Auto-push when draft is published
-    if new_status == "veroeffentlicht" and old_status == "entwurf":
+    if will_push:
         _send_auto_push(req, found.get("titel", ""), "tagesinfo")
 
     return ok({"success": True, "post": found})
+
+
+def handle_repush(req, token, folder_id):
+    """Sendet die Tagesinfo-Push fuer einen bestehenden Post (erneut) und
+    erhoeht den Push-Zaehler. Nuetzlich, weil Push-Zustellung unzuverlaessig
+    sein kann und ein Post ggf. erneut angestossen werden muss."""
+    try:
+        body = req.get_json()
+    except Exception:
+        return err("Ungültiger Request-Body")
+
+    post_id = (body.get("id", "") or "").strip()
+    if not post_id:
+        return err("id ist erforderlich")
+
+    posts = load_posts(token, folder_id)
+    found = None
+    for p in posts:
+        if p.get("id") == post_id:
+            found = p
+            break
+    if not found:
+        return err("Post nicht gefunden", 404)
+
+    result = _send_auto_push(req, found.get("titel", ""), "tagesinfo")
+
+    found["push_count"] = int(found.get("push_count", 0) or 0) + 1
+    found["last_push_at"] = _now_iso()
+    save_posts(token, folder_id, posts)
+
+    resp = {"success": True, "post": found, "push_count": found["push_count"]}
+    if isinstance(result, dict):
+        resp["sent"] = result.get("sent", 0)
+        resp["failed"] = result.get("failed", 0)
+        resp["total"] = result.get("total", 0)
+    return ok(resp)
 
 
 def handle_delete(req, token, folder_id):

@@ -683,6 +683,26 @@
     });
   };
 
+  // --- Post (erneut) als Tagesinfo-Push senden ---
+  window.socialRepush=function(postId,btn){
+    var doPush=function(){
+      var _orig=btn?btn.innerHTML:'';
+      if(btn){btn.disabled=true;btn.style.opacity='.6';btn.innerHTML='\u23F3 Sende\u2026';}
+      fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({_action:'push',id:postId})})
+        .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
+        .then(function(res){
+          var sent=(typeof res.sent==='number')?res.sent:null;
+          var msg=sent!==null?('\u2705 Push gesendet ('+sent+' Empf\u00e4nger'+(res.failed?', '+res.failed+' fehlgeschlagen':'')+')'):'\u2705 Push ausgel\u00f6st';
+          socialStatus('soc-post-status',msg,true);
+          if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();
+        })
+        .catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);if(btn){btn.disabled=false;btn.style.opacity='';btn.innerHTML=_orig;}});
+    };
+    if(typeof dlConfirm==='function'){
+      dlConfirm({icon:'bell-ring',title:'Tagesinfo-Push senden?',msg:'Alle Tagesinfo-Abonnenten erhalten eine Push-Benachrichtigung f\u00fcr diesen Post.',ok:'Push senden',cancel:'Abbrechen',color:'#7c3aed'},doPush);
+    } else { doPush(); }
+  };
+
   // --- Geplante Posts laden (heute + morgen) ---
   window.socialLoadTodayPosts=function(){
     var wrap=document.getElementById('soc-today-posts');
@@ -704,6 +724,8 @@
         var pid=M.esc(p.id);
         var borderColor=isDraft?'#f59e0b':'#22c55e';
         var zeit=timeStr(p.datum);
+        var pushCount=parseInt(p.push_count||0,10)||0;
+        var lastPush=timeStr(p.last_push_at)||'';
         // Card container
         html+='<div style="border-left:3px solid '+borderColor+';border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:box-shadow .15s" onmouseenter="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.1)\'" onmouseleave="this.style.boxShadow=\'0 1px 3px rgba(0,0,0,.06)\'">';
         // Header row: status icon + title + time + actions
@@ -713,6 +735,16 @@
         html+='<span style="font-weight:600;font-size:12px;color:#1f2937;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+M.esc(p.titel||'Post')+'</span>';
         if(zeit) html+='<span style="font-size:10px;color:#9ca3af;white-space:nowrap">'+M.esc(zeit)+'</span>';
         html+='</div>';
+        // Push-Status Badge
+        if(!isDraft){
+          html+='<div style="margin-top:5px">';
+          if(pushCount>0){
+            html+='<span title="Als Tagesinfo-Push gesendet'+(lastPush?' um '+M.esc(lastPush):'')+'" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:1px 7px;border-radius:10px">'+lucideIcon('bell',11,'#16a34a')+' gepusht'+(pushCount>1?' \u00d7'+pushCount:'')+(lastPush?' \u00b7 '+M.esc(lastPush):'')+'</span>';
+          } else {
+            html+='<span title="Wurde noch nicht als Push gesendet" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;background:#f9fafb;color:#9ca3af;border:1px solid #e5e7eb;padding:1px 7px;border-radius:10px">'+lucideIcon('bell-off',11,'#9ca3af')+' nicht gepusht</span>';
+          }
+          html+='</div>';
+        }
         // Product tags (always visible, compact)
         if(cnt>0){
           html+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">';
@@ -736,6 +768,9 @@
         if(isDraft){
           html+='<button onclick="socialEditDraft(\''+pid+'\')" title="Bearbeiten" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;color:#2563eb;font-weight:600">'+lucideIcon('pencil',12)+' Bearbeiten</button>';
           html+='<button onclick="socialPublishDraft(\''+pid+'\')" title="Jetzt senden" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;color:#16a34a;font-weight:600">'+lucideIcon('send',12)+' Senden</button>';
+        } else {
+          var pushLabel=pushCount>0?'Erneut pushen':'Push senden';
+          html+='<button onclick="socialRepush(\''+pid+'\',this)" title="Tagesinfo-Push an Abonnenten senden" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:6px;cursor:pointer;color:#7c3aed;font-weight:600">'+lucideIcon('bell-ring',12)+' '+pushLabel+'</button>';
         }
         html+='<span style="flex:1"></span>';
         html+='<button onclick="socialDeletePost(\''+pid+'\')" title="L\u00f6schen" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:40px;min-width:40px;padding:0 12px;font-size:12px;font-weight:600;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;cursor:pointer;color:#dc2626">'+lucideIcon('trash-2',15)+' L\u00f6schen</button>';
