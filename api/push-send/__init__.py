@@ -158,7 +158,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "endpoint_domain": ep.split("/")[2] if ep.count("/") >= 2 else "",
                     "has_p256dh": has_p256dh,
                     "has_auth": has_auth,
-                    "categories": cats
+                    "categories": cats,
+                    "email": s.get("email", "")
                 })
             # If ?test=1, try sending a test push without deleting on failure
             if req.params.get("test") == "1" and all_subs:
