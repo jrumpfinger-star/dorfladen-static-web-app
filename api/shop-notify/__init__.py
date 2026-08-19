@@ -547,25 +547,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if push_msg and kunde_email:
         try:
             from shared.urls import get_public_origin
+            from shared.push import send_push_notification
             _origin = get_public_origin(req)
-            push_payload = {
-                "title": push_msg["title"],
-                "message": push_msg["body"],
-                "url": "/shop.html",
-                "origin": _origin,
-                "target_email": kunde_email,
-                "tag": f"order-{bestellnummer}",
-            }
-            internal_url = f"{_origin}/api/push-send"
-            _hdrs = {}
-            _tok = os.environ.get("CMS_AUTH_TOKEN", "").strip()
-            if _tok:
-                _hdrs["X-CMS-Auth"] = _tok
-            r = requests.post(internal_url, json=push_payload, timeout=15, headers=_hdrs)
-            if r.status_code in (200, 201):
-                resp_data = r.json() if r.text else {}
-                if resp_data.get("sent", 0) > 0:
-                    notifications_sent.append("push")
+            _pres = send_push_notification(
+                title=push_msg["title"],
+                message=push_msg["body"],
+                url="/shop.html",
+                origin=_origin,
+                target_email=kunde_email,
+                tag=f"order-{bestellnummer}",
+            )
+            if _pres.get("sent", 0) > 0:
+                notifications_sent.append("push")
         except Exception:
             pass  # Push is best-effort
 

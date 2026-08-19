@@ -121,27 +121,26 @@ def upload_image(token, folder_id, filename, image_bytes, content_type="image/pn
 # ---------- auto-push ----------
 
 def _send_auto_push(req, post_titel, category="tagesinfo"):
-    """Fire-and-forget push notification after publishing a post."""
+    """Fire-and-forget push notification after publishing a post.
+
+    Ruft den Versand IN-PROCESS auf (shared.push). Ein HTTP-Self-Call gegen die
+    eigene oeffentliche /api/push-send-URL funktioniert in Azure Static Web Apps
+    nicht zuverlaessig und wuerde still fehlschlagen.
+    """
     try:
         from shared.urls import get_public_origin
+        from shared.push import send_push_notification
         origin = get_public_origin(req)
-        internal_url = f"{origin}/api/push-send"
-        push_payload = {
-            "title": post_titel or "Dorfladen Oberornau",
-            "message": "Die heutige TagesInfo ist da! Mittagstisch, Theke & mehr." if category == "tagesinfo" else post_titel,
-            "url": "/tagesinfo",
-            "origin": origin,
-            "category": category,
-            "tag": "dorfladen-tagesinfo",
-        }
-        # Interner Server-zu-Server-Aufruf: Admin-Token mitsenden, sonst blockt
-        # der admin_auth_guard von /api/push-send (bei aktivem CMS_AUTH_ENFORCE)
-        # den Aufruf -> es wuerde keine Push versendet.
-        _hdrs = {}
-        _tok = os.environ.get("CMS_AUTH_TOKEN", "").strip()
-        if _tok:
-            _hdrs["X-CMS-Auth"] = _tok
-        requests.post(internal_url, json=push_payload, timeout=15, headers=_hdrs)
+        message = ("Die heutige TagesInfo ist da! Mittagstisch, Theke & mehr."
+                   if category == "tagesinfo" else post_titel)
+        send_push_notification(
+            title=post_titel or "Dorfladen Oberornau",
+            message=message,
+            url="/tagesinfo",
+            origin=origin,
+            category=category,
+            tag="dorfladen-tagesinfo",
+        )
     except Exception:
         pass  # Push is best-effort, never block the main response
 

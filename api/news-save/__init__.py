@@ -75,24 +75,19 @@ def get_cors_headers():
 
 
 def _send_auto_push(req, news_titel, category="news"):
-    """Fire-and-forget push notification after publishing a news item."""
+    """Fire-and-forget push notification after publishing a news item (in-process)."""
     try:
         from shared.urls import get_public_origin
+        from shared.push import send_push_notification
         origin = get_public_origin(req)
-        internal_url = f"{origin}/api/push-send"
-        push_payload = {
-            "title": "Neuigkeit vom Dorfladen",
-            "message": news_titel or "Es gibt Neuigkeiten! Jetzt lesen.",
-            "url": "/aktuelles",
-            "origin": origin,
-            "category": category,
-            "tag": "dorfladen-news",
-        }
-        _hdrs = {}
-        _tok = os.environ.get("CMS_AUTH_TOKEN", "").strip()
-        if _tok:
-            _hdrs["X-CMS-Auth"] = _tok
-        requests.post(internal_url, json=push_payload, timeout=15, headers=_hdrs)
+        send_push_notification(
+            title="Neuigkeit vom Dorfladen",
+            message=news_titel or "Es gibt Neuigkeiten! Jetzt lesen.",
+            url="/aktuelles",
+            origin=origin,
+            category=category,
+            tag="dorfladen-news",
+        )
     except Exception:
         pass  # Push is best-effort
 
