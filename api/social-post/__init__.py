@@ -331,6 +331,11 @@ def handle_post(req, token, folder_id):
     if req_status not in ("entwurf", "veroeffentlicht"):
         req_status = "veroeffentlicht"
 
+    # Optional: notify (Push an Abonnenten). Default False -> KEINE Push beim
+    # normalen Speichern/Teilen. Push nur, wenn der Nutzer sie im CMS aktiv
+    # anfordert (Checkbox). Sichtbarkeit auf /tagesinfo bleibt davon unberuehrt.
+    req_notify = bool(body.get("notify", False))
+
     post = {
         "id": post_id,
         "titel": titel or f"{'Morgen' if ziel_datum else 'Heute'} im Dorfladen – {tag}",
@@ -348,8 +353,8 @@ def handle_post(req, token, folder_id):
     if not save_posts(token, folder_id, posts):
         return err("Post konnte nicht gespeichert werden", 500)
 
-    # Auto-push when publishing (not for drafts)
-    if req_status == "veroeffentlicht":
+    # Auto-push nur wenn ausdruecklich angefordert (notify) UND veroeffentlicht.
+    if req_status == "veroeffentlicht" and req_notify:
         _send_auto_push(req, post.get("titel", ""), "tagesinfo")
 
     return ok({"success": True, "post": post})
