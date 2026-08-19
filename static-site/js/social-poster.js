@@ -141,15 +141,35 @@
   function socialDrawCompact(canvas,ctx,W,selected,titel,loadedImgs,SCALE){
     SCALE=SCALE||2;
     var items=selected.slice(0,(window.SOC_MAX_ITEMS||3));
-    var PAD=16, GAP=13, HEADER_H=80, TILE_R=20;
+    var PAD=16, GAP=13, HEADER_H=80, TILE_R=20, INNER=20;
     var n=Math.max(1,items.length);
-    // Kachelhoehe: fuer 3 Kacheln ~4:5, bei weniger etwas hoeher (bleibt <=4:5)
-    var tileH = n>=3?168 : (n===2?210 : 300);
+    var tw=W-PAD*2;
+    var photoW=Math.round(tw*0.46);
+    var bx=PAD+photoW+22, bw=tw-photoW-22-18;
+    var maxLines=(n>=3?2:3);
+    var priceSize=(n>=3?27:31);
+    // 1) Mess-Durchlauf: Inhaltshoehe je Kachel bestimmen (Name auto-fit).
+    //    So wird die Kachel nur so hoch wie noetig -> Gesamtbild moeglichst kurz
+    //    -> WhatsApp zeigt es in voller Breite (statt hochkant schmal).
+    var meas=items.map(function(p){
+      var fit=socialFitName(ctx,p.name,bw,maxLines,[26,24,22,20],'700');
+      var lh=Math.round(fit.size*1.16);
+      var catH=25, nameH=fit.size+(fit.lines.length-1)*lh;
+      var badgeBlock=p.ab_uhr?(25+8):0;
+      var priceBlock=p.preis?(priceSize+2):0;
+      var blockH=catH+nameH+badgeBlock+priceBlock;
+      var tileH=Math.max(112, blockH+INNER*2);
+      return {p:p,fit:fit,lh:lh,catH:catH,nameH:nameH,blockH:blockH,tileH:tileH};
+    });
+    // Variable Kachelhoehen: jede Kachel nur so hoch wie ihr Inhalt -> Gesamtbild
+    // moeglichst kurz -> WhatsApp zeigt es breiter (statt hochkant schmal).
+    var tilesH=0;meas.forEach(function(m){tilesH+=m.tileH;});
     var topAfterHeader=HEADER_H+GAP;
-    var H = topAfterHeader + n*tileH + (n-1)*GAP + GAP;
-    // Sicherheitsnetz: Verhaeltnis nie ueber 4:5 (sonst beschneidet WhatsApp)
+    var H=topAfterHeader+tilesH+(n-1)*GAP+GAP;
+    // Sicherheitsnetz: nie hoeher als 4:5 (sonst beschneidet WhatsApp) -> Kacheln
+    // gleichmaessig stauchen.
     var maxH=Math.round(W*1.25);
-    if(H>maxH){tileH=Math.floor((maxH-topAfterHeader-(n-1)*GAP-GAP)/n);H=topAfterHeader+n*tileH+(n-1)*GAP+GAP;}
+    if(H>maxH){var avail=maxH-topAfterHeader-(n-1)*GAP-GAP,f=avail/tilesH;meas.forEach(function(m){m.tileH=Math.floor(m.tileH*f);});tilesH=0;meas.forEach(function(m){tilesH+=m.tileH;});H=topAfterHeader+tilesH+(n-1)*GAP+GAP;}
     canvas.width=W*SCALE;canvas.height=H*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
     ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H);
     // Kopf
@@ -158,44 +178,31 @@
     ctx.font='700 27px "Segoe UI",system-ui,sans-serif';ctx.fillText(titel||'Heute im Dorfladen',W/2,44);
     var now=socialPosterDate();var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];var months=['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
     ctx.font='500 15px "Segoe UI",system-ui,sans-serif';ctx.fillStyle='rgba(255,255,255,0.90)';ctx.fillText(days[now.getDay()]+' \u00b7 '+now.getDate()+'. '+months[now.getMonth()],W/2,68);
-    // Kacheln
-    var tx=PAD, ty=topAfterHeader, tw=W-PAD*2;
-    var photoW=Math.round(tw*0.46);
-    items.forEach(function(p){
+    // 2) Kacheln zeichnen
+    var tx=PAD, ty=topAfterHeader;
+    meas.forEach(function(m){
+      var p=m.p;var th=m.tileH;
       // Karte
-      ctx.save();socialRoundRect(ctx,tx,ty,tw,tileH,TILE_R);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#ececec';ctx.lineWidth=1;ctx.stroke();ctx.restore();
+      ctx.save();socialRoundRect(ctx,tx,ty,tw,th,TILE_R);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#ececec';ctx.lineWidth=1;ctx.stroke();ctx.restore();
       // Foto links (oder Platzhalter)
       var cat=p.kategorie||'Sonstiges';var emoji=SOC_COMPACT_ICONS[cat]||'\uD83D\uDED2';
-      ctx.save();socialRoundLeft(ctx,tx,ty,photoW,tileH,TILE_R);ctx.clip();
+      ctx.save();socialRoundLeft(ctx,tx,ty,photoW,th,TILE_R);ctx.clip();
       var img=loadedImgs&&loadedImgs[p.id];var iw=img?(img.naturalWidth||img.width):0,ih=img?(img.naturalHeight||img.height):0;
-      if(img&&iw&&ih){var s=Math.max(photoW/iw,tileH/ih);var dw=iw*s,dh=ih*s;ctx.drawImage(img,tx+(photoW-dw)/2,ty+(tileH-dh)/2,dw,dh);}
-      else{var g=ctx.createLinearGradient(tx,ty,tx,ty+tileH);g.addColorStop(0,'#f2efe8');g.addColorStop(1,'#e6dfd2');ctx.fillStyle=g;ctx.fillRect(tx,ty,photoW,tileH);
-        // Mittagessen ohne Foto: gebrandetes Teller-Icon (PNG), sonst Kategorie-Emoji
-        if(cat==='Mittagessen'&&_socMealIconReady()){var _iw=_socMealIcon.naturalWidth,_ih=_socMealIcon.naturalHeight,_box=Math.min(photoW-40,tileH-40,180),_s=Math.min(_box/_iw,_box/_ih),_dw=_iw*_s,_dh=_ih*_s;ctx.globalAlpha=.9;ctx.drawImage(_socMealIcon,tx+photoW/2-_dw/2,ty+(tileH-_dh)/2,_dw,_dh);ctx.globalAlpha=1;}
-        else{ctx.fillStyle='rgba(0,0,0,.5)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(Math.min(tileH,photoW)*0.34)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx.globalAlpha=.85;ctx.fillText(emoji,tx+photoW/2,ty+tileH/2);ctx.globalAlpha=1;}}
+      if(img&&iw&&ih){var s=Math.max(photoW/iw,th/ih);var dw=iw*s,dh=ih*s;ctx.drawImage(img,tx+(photoW-dw)/2,ty+(th-dh)/2,dw,dh);}
+      else{var g=ctx.createLinearGradient(tx,ty,tx,ty+th);g.addColorStop(0,'#f2efe8');g.addColorStop(1,'#e6dfd2');ctx.fillStyle=g;ctx.fillRect(tx,ty,photoW,th);
+        if(cat==='Mittagessen'&&_socMealIconReady()){var _iw=_socMealIcon.naturalWidth,_ih=_socMealIcon.naturalHeight,_box=Math.min(photoW-40,th-24,170),_s=Math.min(_box/_iw,_box/_ih),_dw=_iw*_s,_dh=_ih*_s;ctx.globalAlpha=.9;ctx.drawImage(_socMealIcon,tx+photoW/2-_dw/2,ty+(th-_dh)/2,_dw,_dh);ctx.globalAlpha=1;}
+        else{ctx.fillStyle='rgba(0,0,0,.5)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(Math.min(th,photoW)*0.34)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx.globalAlpha=.85;ctx.fillText(emoji,tx+photoW/2,ty+th/2);ctx.globalAlpha=1;}}
       ctx.restore();ctx.textBaseline='alphabetic';
       // Text rechts (vertikal zentriert)
-      var bx=tx+photoW+22, bw=tw-photoW-22-18;
-      var maxLines=(n>=3?2:3);
-      var fit=socialFitName(ctx,p.name,bw,maxLines,[26,24,22,20],'700');
-      var lh=Math.round(fit.size*1.16);
-      var catH=25, nameH=fit.size+(fit.lines.length-1)*lh;
-      var badgeBH=25, badgeBlock=p.ab_uhr?(badgeBH+8):0;
-      var priceSize=(n>=3?27:31), priceBlock=p.preis?(priceSize+2):0;
-      var blockH=catH+nameH+badgeBlock+priceBlock;
-      var sy=ty+Math.max(12,Math.round((tileH-blockH)/2));
-      // Kategorie
+      var sy=ty+Math.max(10,Math.round((th-m.blockH)/2));
       ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle='#2e7d4f';ctx.font='700 17px "Segoe UI",system-ui,sans-serif';
       ctx.fillText(emoji+' '+cat, bx, sy+17);
-      // Name (auto-fit)
-      ctx.fillStyle='#233';ctx.font='700 '+fit.size+'px "Segoe UI",system-ui,sans-serif';
-      var nameTop=sy+catH;fit.lines.forEach(function(line,i){ctx.fillText(line,bx,nameTop+fit.size+i*lh);});
-      var cy2=nameTop+nameH+10;
-      // ab-Uhr Badge
-      if(p.ab_uhr){var label='\u23F0 ab '+p.ab_uhr+' Uhr';ctx.font='600 13px "Segoe UI",system-ui,sans-serif';var lw=ctx.measureText(label).width;var padX=9,bwb=lw+padX*2;ctx.save();socialRoundRect(ctx,bx,cy2,bwb,badgeBH,8);ctx.fillStyle='#fef2f2';ctx.fill();ctx.strokeStyle='#dc2626';ctx.lineWidth=1.3;ctx.stroke();ctx.fillStyle='#dc2626';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(label,bx+padX,cy2+badgeBH/2+1);ctx.restore();ctx.textBaseline='alphabetic';cy2+=badgeBH+8;}
-      // Preis
+      ctx.fillStyle='#233';ctx.font='700 '+m.fit.size+'px "Segoe UI",system-ui,sans-serif';
+      var nameTop=sy+m.catH;m.fit.lines.forEach(function(line,i){ctx.fillText(line,bx,nameTop+m.fit.size+i*m.lh);});
+      var cy2=nameTop+m.nameH+10;
+      if(p.ab_uhr){var label='\u23F0 ab '+p.ab_uhr+' Uhr';ctx.font='600 13px "Segoe UI",system-ui,sans-serif';var lw=ctx.measureText(label).width;var padX=9,bwb=lw+padX*2,badgeBH=25;ctx.save();socialRoundRect(ctx,bx,cy2,bwb,badgeBH,8);ctx.fillStyle='#fef2f2';ctx.fill();ctx.strokeStyle='#dc2626';ctx.lineWidth=1.3;ctx.stroke();ctx.fillStyle='#dc2626';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(label,bx+padX,cy2+badgeBH/2+1);ctx.restore();ctx.textBaseline='alphabetic';cy2+=badgeBH+8;}
       if(p.preis){ctx.fillStyle='#2e7d4f';ctx.font='700 '+priceSize+'px "Segoe UI",system-ui,sans-serif';ctx.fillText(socialFmtPrice(p.preis)+' \u20AC', bx, cy2+priceSize-4);}
-      ty+=tileH+GAP;
+      ty+=th+GAP;
     });
     return {W:W,H:H};
   }
