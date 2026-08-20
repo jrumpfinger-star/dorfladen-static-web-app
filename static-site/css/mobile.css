@@ -974,6 +974,7 @@ main{padding:0!important;margin:0!important}
   .mob-cards .mob-card{margin-bottom:0}
 }
 .mob-card{
+  display:block; /* wichtig fuer <a class="mob-card">, sonst entsteht oben Leerraum */
   background:#fff;
   border-radius:16px;
   padding:18px;
@@ -1183,4 +1184,3 @@ main{padding:0!important;margin:0!important}
   html[data-theme="dark"] #dl-theme-toggle,
   #dl-theme-toggle{bottom:20px}
 }
-
