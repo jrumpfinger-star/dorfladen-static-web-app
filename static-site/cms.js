@@ -9267,11 +9267,83 @@
 
   // === ANALYTICS DASHBOARD ===
   var _statsLoaded=false;
+  function _statsNum(v){
+    var n=Number(v||0);
+    return isFinite(n)?n:0;
+  }
+  function _statsFmtDateYmd(ymd){
+    if(!ymd) return '-';
+    var p=String(ymd).split('-');
+    if(p.length!==3) return ymd;
+    return p[2]+'.'+p[1]+'.'+p[0];
+  }
+  function _statsLoadLunch(days){
+    var vTotal=document.getElementById('stats-lunch-total');
+    var v0=document.getElementById('stats-lunch-0');
+    var v1=document.getElementById('stats-lunch-1');
+    var v2=document.getElementById('stats-lunch-2');
+    var v3=document.getElementById('stats-lunch-3');
+    var note=document.getElementById('stats-lunch-note');
+    var daysWrap=document.getElementById('stats-lunch-days');
+    if(!vTotal||!v0||!v1||!v2||!v3||!note||!daysWrap) return;
+    daysWrap.innerHTML='<div class="cms-empty" style="padding:8px 0">Lade&hellip;</div>';
+    note.style.color='#9ca3af';
+    note.textContent='Bestellungen der letzten '+days+' Tage · nur über Internet eingegangen';
+
+    var controller=window.AbortController?new AbortController():null;
+    var timeoutId=controller?setTimeout(function(){controller.abort();},12000):null;
+    fetch(API+'/lunch-order?mode=stats&days='+encodeURIComponent(days), controller?{signal:controller.signal}:undefined)
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(!data||!data.success||!data.by_status){
+          throw new Error('stats-shape');
+        }
+        vTotal.textContent=_statsNum(data.total).toLocaleString('de-DE');
+        v0.textContent=_statsNum(data.by_status['0']).toLocaleString('de-DE');
+        v1.textContent=_statsNum(data.by_status['1']).toLocaleString('de-DE');
+        v2.textContent=_statsNum(data.by_status['2']).toLocaleString('de-DE');
+        v3.textContent=_statsNum(data.by_status['3']).toLocaleString('de-DE');
+
+        var rows=Array.isArray(data.by_day)?data.by_day:[];
+        if(!rows.length){
+          daysWrap.innerHTML='<div class="cms-empty" style="padding:8px 0">Keine Internet-Bestellungen im Zeitraum.</div>';
+          return;
+        }
+        var html='<table style="width:100%;border-collapse:collapse;font-size:12px">'+
+          '<thead><tr style="text-align:left;border-bottom:1px solid #e5e7eb;color:#6b7280">'+
+          '<th style="padding:6px 8px">Tag</th><th style="padding:6px 8px;text-align:right">Best.</th><th style="padding:6px 8px;text-align:right">Port.</th><th style="padding:6px 8px;text-align:right">Neu</th><th style="padding:6px 8px;text-align:right">Best.</th><th style="padding:6px 8px;text-align:right">Abg.</th><th style="padding:6px 8px;text-align:right">Storno</th></tr></thead><tbody>';
+        rows.forEach(function(r){
+          html+='<tr style="border-bottom:1px solid #f3f4f6">'+
+            '<td style="padding:6px 8px;white-space:nowrap">'+_statsFmtDateYmd(r.datum)+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;font-weight:700">'+_statsNum(r.total).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right">'+_statsNum(r.menge).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;color:#f59e0b">'+_statsNum(r['0']).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;color:#3b82f6">'+_statsNum(r['1']).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;color:#6b7280">'+_statsNum(r['3']).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;color:#ef4444">'+_statsNum(r['2']).toLocaleString('de-DE')+'</td>'+
+          '</tr>';
+        });
+        html+='</tbody></table>';
+        daysWrap.innerHTML=html;
+      })
+      .catch(function(e){
+        var txt='Statistik konnte nicht geladen werden.';
+        if(e&&e.name==='AbortError') txt='Statistik lädt zu lange (Timeout).';
+        daysWrap.innerHTML='<div class="cms-empty" style="padding:8px 0">'+txt+'</div>';
+        note.style.color='#b45309';
+        note.textContent='Bitte später erneut laden oder Zeitraum reduzieren.';
+        if(!(e&&e.name==='AbortError')) console.warn('Lunch stats load error',e);
+      })
+      .finally(function(){
+        if(timeoutId) clearTimeout(timeoutId);
+      });
+  }
   window.statsLoad=function(){
     var days=document.getElementById('stats-period');
     var d=days?days.value:'30';
     var loading=document.getElementById('stats-loading');
     if(loading)loading.style.display='';
+    _statsLoadLunch(d);
     fetch(API+'/analytics?days='+d).then(function(r){return r.json();}).then(function(data){
       _statsLoaded=true;
       if(loading)loading.style.display='none';
