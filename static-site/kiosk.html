@@ -146,7 +146,8 @@
       .k-slot-badge{padding:1px 6px;font-size:11px}
       /* ── Mobile: order header compact 2-row ── */
       .k-order-hdr{flex-wrap:wrap;gap:4px 6px;padding:8px 10px}
-      .k-order-hdr .k-oc-name{font-size:14px;max-width:none;flex-basis:calc(100% - 100px);min-width:60px}
+      .k-order-hdr .k-oc-name{font-size:14px;max-width:none;flex:1 1 auto;min-width:60px}
+      .k-order-hdr .k-oc-r2{display:flex;flex-basis:100%;align-items:center;gap:6px;margin-top:5px}
       .k-order-hdr .k-oc-meta{gap:4px}
       .k-order-hdr .k-oc-meta .countdown-ring,.k-order-hdr .k-oc-meta .pack-ring{width:36px;height:36px}
       .k-order-hdr .k-oc-actions{margin-left:auto}
@@ -188,6 +189,8 @@
     .k-order.oc-collapsed .k-order-body{display:none}
     .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;white-space:normal;overflow-wrap:anywhere;min-width:60px;flex:1 1 auto;max-width:none}
     .k-order-hdr .k-oc-qty{font-weight:800;font-size:15px;color:var(--c-green);white-space:nowrap;min-width:28px}
+    .k-order-hdr .k-oc-price{font-size:12px;font-weight:700;color:var(--c-text);white-space:nowrap;min-width:52px;text-align:right}
+    .k-order-hdr .k-oc-r2{display:contents}
     .k-order-hdr .k-oc-badges{display:flex;gap:5px;align-items:center;flex-shrink:0;white-space:nowrap}
     .k-order-hdr .k-oc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
     .k-order-hdr .k-oc-meta{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:nowrap}
@@ -1795,8 +1798,9 @@ var K = (function(){
     html += '<div class="k-order-hdr" onclick="K.toggleOrderCard(\''+o.id+'\')">';
     html += '<span class="k-oc-arrow">'+luc('chevron-down',14)+'</span>';
     html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
-    if(o.preis) html += '<span style="font-size:12px;font-weight:700;color:var(--c-text);white-space:nowrap;min-width:52px;text-align:right">'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' \u20AC</span>';
+    if(o.preis) html += '<span class="k-oc-price">'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' \u20AC</span>';
     html += '<span class="k-oc-qty" style="min-width:28px;text-align:center">'+(o.menge||1)+'\u00D7</span>';
+    html += '<span class="k-oc-r2">';
     html += '<span class="k-oc-badges">';
     html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
     if(o.mitnehmen) html += '<span class="k-order-mitnehmen">'+luc('package',11)+' MIT</span>';
@@ -1815,6 +1819,7 @@ var K = (function(){
       html += '<span style="color:#16a34a">'+luc('check-circle',16)+'</span>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" title="Versehentlich abgeholt? Zur\u00fcck auf Offen" onclick="K.resetStatus(\''+o.id+'\')">'+luc('rotate-ccw',13)+' <span class="oc-btn-label">Zur\u00fcck</span></button>';
     }
+    html += '</span>';
     html += '</span>';
     html += '</div>';
 
@@ -4946,8 +4951,8 @@ var K = (function(){
   };
 })();
 </script>
-<script src="/js/social.js?v=20260820a"></script>
-<script src="/js/social-poster.js?v=20260820a"></script>
+<script src="/js/social.js?v=20260820b"></script>
+<script src="/js/social-poster.js?v=20260820b"></script>
 <script src="/js/admin-auth.js"></script>
 <script src="/js/kiosk-kalender.js"></script>
 <script src="/js/env-banner.js"></script>

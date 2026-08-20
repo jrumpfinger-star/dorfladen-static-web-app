@@ -147,10 +147,9 @@
     var photoW=Math.round(tw*0.46);
     var bx=PAD+photoW+22, bw=tw-photoW-22-18;
     var maxLines=(n>=3?2:3);
-    var priceSize=(n>=3?27:31);
-    // 1) Mess-Durchlauf: Inhaltshoehe je Kachel bestimmen (Name auto-fit).
-    //    So wird die Kachel nur so hoch wie noetig -> Gesamtbild moeglichst kurz
-    //    -> WhatsApp zeigt es in voller Breite (statt hochkant schmal).
+    var priceSize=(n>=3?28:31);
+    // 1) Mess-Durchlauf: nur den Textblock je Kachel bestimmen (fuer vertikale
+    //    Zentrierung). Die Kachelhoehe selbst wird danach GLEICH GROSS verteilt.
     var meas=items.map(function(p){
       var fit=socialFitName(ctx,p.name,bw,maxLines,[26,24,22,20],'700');
       var lh=Math.round(fit.size*1.16);
@@ -158,18 +157,20 @@
       var badgeBlock=p.ab_uhr?(25+8):0;
       var priceBlock=p.preis?(priceSize+2):0;
       var blockH=catH+nameH+badgeBlock+priceBlock;
-      var tileH=Math.max(104, blockH+INNER*2);
-      return {p:p,fit:fit,lh:lh,catH:catH,nameH:nameH,blockH:blockH,tileH:tileH};
+      return {p:p,fit:fit,lh:lh,catH:catH,nameH:nameH,blockH:blockH};
     });
-    // Variable Kachelhoehen: jede Kachel nur so hoch wie ihr Inhalt -> Gesamtbild
-    // moeglichst kurz -> WhatsApp zeigt es breiter (statt hochkant schmal).
-    var tilesH=0;meas.forEach(function(m){tilesH+=m.tileH;});
+    // GLEICH GROSSE Kacheln + volle WhatsApp-Hoehe: Zielformat 4:5 (Hochkant,
+    // das groesste Format, das WhatsApp ohne Beschnitt in voller Hoehe anzeigt).
+    // Die verfuegbare Hoehe wird gleichmaessig auf alle Kacheln verteilt -> die
+    // Fotos werden groesser und dadurch vollstaendiger dargestellt.
     var topAfterHeader=HEADER_H+GAP;
+    var targetH=Math.round(W*(n>=2?1.25:0.66));
+    var minContentH=0;meas.forEach(function(m){minContentH=Math.max(minContentH,m.blockH+INNER*2);});
+    var availH=targetH-topAfterHeader-(n-1)*GAP-GAP;
+    var tileH=Math.max(minContentH,Math.floor(availH/n));
+    meas.forEach(function(m){m.tileH=tileH;});
+    var tilesH=tileH*n;
     var H=topAfterHeader+tilesH+(n-1)*GAP+GAP;
-    // Sicherheitsnetz: nie hoeher als 4:5 (sonst beschneidet WhatsApp) -> Kacheln
-    // gleichmaessig stauchen.
-    var maxH=Math.round(W*1.25);
-    if(H>maxH){var avail=maxH-topAfterHeader-(n-1)*GAP-GAP,f=avail/tilesH;meas.forEach(function(m){m.tileH=Math.floor(m.tileH*f);});tilesH=0;meas.forEach(function(m){tilesH+=m.tileH;});H=topAfterHeader+tilesH+(n-1)*GAP+GAP;}
     canvas.width=W*SCALE;canvas.height=H*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
     ctx.fillStyle='#faf9f6';ctx.fillRect(0,0,W,H);
     // Kopf
@@ -188,7 +189,17 @@
       var cat=p.kategorie||'Sonstiges';var emoji=SOC_COMPACT_ICONS[cat]||'\uD83D\uDED2';
       ctx.save();socialRoundLeft(ctx,tx,ty,photoW,th,TILE_R);ctx.clip();
       var img=loadedImgs&&loadedImgs[p.id];var iw=img?(img.naturalWidth||img.width):0,ih=img?(img.naturalHeight||img.height):0;
-      if(img&&iw&&ih){var s=Math.max(photoW/iw,th/ih);var dw=iw*s,dh=ih*s;ctx.drawImage(img,tx+(photoW-dw)/2,ty+(th-dh)/2,dw,dh);}
+      if(img&&iw&&ih){
+        // Ratio des Bildes beibehalten (contain), aber KEINE leeren Balken:
+        // Randbereiche mit einer unscharfen, formatfuellenden Version desselben
+        // Bildes fuellen (wie Instagram/YouTube). Foto in voller Form darueber.
+        var cs=Math.max(photoW/iw,th/ih);var cdw=iw*cs,cdh=ih*cs;
+        ctx.save();try{ctx.filter='blur(18px)';}catch(e){}
+        ctx.drawImage(img,tx+(photoW-cdw)/2,ty+(th-cdh)/2,cdw,cdh);
+        ctx.restore();
+        ctx.fillStyle='rgba(255,255,255,0.10)';ctx.fillRect(tx,ty,photoW,th);
+        var s=Math.min(photoW/iw,th/ih);var dw=iw*s,dh=ih*s;ctx.drawImage(img,tx+(photoW-dw)/2,ty+(th-dh)/2,dw,dh);
+      }
       else{var g=ctx.createLinearGradient(tx,ty,tx,ty+th);g.addColorStop(0,'#f2efe8');g.addColorStop(1,'#e6dfd2');ctx.fillStyle=g;ctx.fillRect(tx,ty,photoW,th);
         if(cat==='Mittagessen'&&_socMealIconReady()){var _iw=_socMealIcon.naturalWidth,_ih=_socMealIcon.naturalHeight,_box=Math.min(photoW-40,th-24,170),_s=Math.min(_box/_iw,_box/_ih),_dw=_iw*_s,_dh=_ih*_s;ctx.globalAlpha=.9;ctx.drawImage(_socMealIcon,tx+photoW/2-_dw/2,ty+(th-_dh)/2,_dw,_dh);ctx.globalAlpha=1;}
         else{ctx.fillStyle='rgba(0,0,0,.5)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(Math.min(th,photoW)*0.34)+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx.globalAlpha=.85;ctx.fillText(emoji,tx+photoW/2,ty+th/2);ctx.globalAlpha=1;}}
