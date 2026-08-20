@@ -695,8 +695,11 @@
     .k-header-admin:hover{background:rgba(255,255,255,.2)}
     .k-header-admin i,.k-header-admin svg{width:18px;height:18px;pointer-events:none}
     .k-header-admin.admin-active{background:#fff;color:var(--c-pri);border-style:solid;border-color:#fff}
+    .k-header-link{display:flex;align-items:center;gap:6px;min-height:40px;padding:8px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;text-decoration:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);transition:background .15s}
+    .k-header-link:hover{background:rgba(255,255,255,.26)}
+    .k-header-link i,.k-header-link svg{width:18px;height:18px}
     .k-header-sep{width:1px;height:26px;background:rgba(255,255,255,.28);flex-shrink:0}
-    @media(max-width:640px){.k-header-admin .k-header-admin-lbl{display:none}.k-header-admin{padding:8px}}
+    @media(max-width:640px){.k-header-admin .k-header-admin-lbl,.k-header-link .k-header-link-lbl{display:none}.k-header-admin,.k-header-link{padding:8px}}
   </style>
   <script src="/js/theme.js"></script>
   <link rel="stylesheet" href="/css/admin-dark.css">
@@ -714,6 +717,8 @@
       <div class="k-clock" id="k-clock"></div>
     </div>
     <button class="k-header-admin" id="k-kunden-btn" onclick="K.switchTab('kunden')" title="Stammkunden-Verwaltung"><i data-lucide="users"></i> <span class="k-header-admin-lbl">Kunden</span></button>
+    <a class="k-header-link" href="/index.html" title="Zur Website"><i data-lucide="house"></i> <span class="k-header-link-lbl">Website</span></a>
+    <a class="k-header-link" href="/cms.html" title="Zum CMS"><i data-lucide="settings"></i> <span class="k-header-link-lbl">CMS</span></a>
     <span class="k-header-sep"></span>
     <button class="k-btn k-btn-outline" id="k-mute-btn" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.toggleMute()" title="Ton ein/aus"><i data-lucide="volume-2" style="width:20px;height:20px"></i></button>
     <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.openModal('modal-help')" title="Hilfe & Workflows"><i data-lucide="help-circle" style="width:20px;height:20px"></i></button>
