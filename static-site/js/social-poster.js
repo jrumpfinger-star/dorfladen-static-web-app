@@ -222,7 +222,8 @@
           // Weiches Auslaufen der Bildkanten in den Hintergrund (kein harter Cut):
           // an jeder Kante ein schmaler Verlauf von Hintergrundfarbe -> transparent.
           if(_fill!=='blur'){
-            var fade=Math.round(Math.min(dw,dh)*0.14);if(fade>34)fade=34;if(fade<10)fade=10;
+            // Dezentere Kantenweichzeichnung (weniger extrem als bisher)
+            var fade=Math.round(Math.min(dw,dh)*0.08);if(fade>22)fade=22;if(fade<4)fade=4;
             var hexA=function(hex,a){var h=hex.replace('#','');var r=parseInt(h.substr(0,2),16),g2=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return 'rgba('+r+','+g2+','+b+','+a+')';};
             // nur ueberlappende Bereiche mit Foto abdecken
             var ix0=Math.max(dx,tx),ix1=Math.min(dx+dw,tx+photoW),iy0=Math.max(dy,ty),iy1=Math.min(dy+dh,ty+th);

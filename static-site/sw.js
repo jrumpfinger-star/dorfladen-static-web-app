@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v26';
+var CACHE_NAME='dorfladen-v27';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',
@@ -132,13 +132,27 @@ self.addEventListener('pushsubscriptionchange',function(e){
 
 self.addEventListener('notificationclick',function(e){
   e.notification.close();
-  var url=e.notification.data&&e.notification.data.url?e.notification.data.url:'/';
+  var rawUrl=e.notification.data&&e.notification.data.url?e.notification.data.url:'/';
+  var targetUrl;
+  try{ targetUrl=new URL(rawUrl,self.location.origin).href; }catch(_){ targetUrl=self.location.origin+'/'; }
   e.waitUntil(
     clients.matchAll({type:'window',includeUncontrolled:true}).then(function(cl){
       for(var i=0;i<cl.length;i++){
-        if(cl[i].url.indexOf(url)!==-1&&'focus' in cl[i])return cl[i].focus();
+        var c=cl[i];
+        if(!c || !c.url) continue;
+        try{
+          var current=new URL(c.url);
+          var target=new URL(targetUrl);
+          if(current.origin===target.origin){
+            // For bestehendes App-Fenster immer auf Ziel-URL navigieren (verhindert "schwarzen Screen")
+            if('navigate' in c){
+              return c.navigate(targetUrl).then(function(){ return c.focus && c.focus(); });
+            }
+            if('focus' in c) return c.focus();
+          }
+        }catch(_){}
       }
-      if(clients.openWindow)return clients.openWindow(url);
+      if(clients.openWindow)return clients.openWindow(targetUrl);
     })
   );
 });

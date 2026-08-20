@@ -4,6 +4,7 @@ import os
 import msal
 import requests
 from pywebpush import webpush, WebPushException
+from shared.urls import get_public_origin, absolutize
 
 
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
@@ -299,31 +300,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
-    # Build absolute base URL. Prefer the origin passed by the triggering
-    # request (so the notification links to the environment it was triggered
-    # from), fall back to this function's own request URL.
-    req_url = req.url or ""
-    site_origin = origin
-    if not site_origin and "/api/" in req_url:
-        site_origin = req_url.split("/api/")[0]
+    # Oeffentliche Origin robust aus Forwarded-Headern bestimmen (Custom Domain),
+    # damit Notification-Klicks nicht auf die interne Azure-SWA-Domain gehen.
+    site_origin = (origin or "").strip() or get_public_origin(req)
+    site_origin = site_origin.rstrip("/")
 
-    # Klick-Ziel absolut machen, damit die Notification immer in der
-    # ausloesenden Umgebung oeffnet (nicht in einer fest verdrahteten).
-    if url and url.startswith("/") and site_origin:
-        url = site_origin + url
+    # Klick-Ziel absolut machen.
+    url = absolutize(url, site_origin)
 
     payload_data = {
         "title": title,
         "body": message,
         "url": url,
         "tag": tag,
-        "icon": site_origin + "/images/icon-192.png",
-        "badge": site_origin + "/images/icon-192.png"
+        "icon": absolutize("/images/icon-192.png", site_origin),
+        "badge": absolutize("/images/icon-192.png", site_origin)
     }
     if image:
         # Make image URL absolute if relative
-        if image.startswith("/"):
-            image = site_origin + image
+        image = absolutize(image, site_origin)
         payload_data["image"] = image
     notification_payload = json.dumps(payload_data, ensure_ascii=False)
 

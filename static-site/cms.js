@@ -8775,8 +8775,8 @@
   window.pushAddToQueue=function(){
     var title=document.getElementById('push-title').value.trim();
     var message=document.getElementById('push-message').value.trim();
-    var url=document.getElementById('push-url').value;
     var category=document.getElementById('push-category').value;
+    var url=(document.getElementById('push-url').value||'').trim()||pushDefaultUrlForCategory(category);
     if(!message){toast('Bitte Nachricht eingeben','warn');return;}
     var q=pushGetQueue();
     q.push({title:title,message:message,url:url,category:category});
@@ -8858,6 +8858,21 @@
   pushRenderQueue();
 
   // --- Push Notifications ---
+  function pushDefaultUrlForCategory(category){
+    if(category==='news') return '/aktuelles';
+    if(category==='tagesinfo') return '/tagesinfo';
+    return '/';
+  }
+  function pushSyncUrlWithCategory(force){
+    var catEl=document.getElementById('push-category');
+    var urlEl=document.getElementById('push-url');
+    if(!catEl||!urlEl) return;
+    var next=pushDefaultUrlForCategory(catEl.value);
+    var cur=(urlEl.value||'').trim();
+    if(force||!cur||cur==='/'||cur==='/tagesinfo'||cur==='/aktuelles'){
+      urlEl.value=next;
+    }
+  }
   window.pushTemplate = function(type){
     var title=document.getElementById('push-title');
     var msg=document.getElementById('push-message');
@@ -8866,7 +8881,7 @@
     if(type==='tagesinfo'){
       title.value='TagesInfo';
       msg.value='Die heutige TagesInfo ist da! Mittagstisch, Theke & mehr.';
-      url.value='/';
+      url.value='/tagesinfo';
       cat.value='tagesinfo';
     }else if(type==='news'){
       title.value='Neuigkeit vom Dorfladen';
@@ -8876,6 +8891,12 @@
       msg.focus();
     }
   };
+  (function bindPushCategoryAutoUrl(){
+    var catEl=document.getElementById('push-category');
+    if(!catEl) return;
+    catEl.addEventListener('change',function(){ pushSyncUrlWithCategory(false); });
+    pushSyncUrlWithCategory(false);
+  })();
   window.pushImagePreview = function(input){
     if(!input.files||!input.files[0])return;
     var file=input.files[0];
@@ -9025,8 +9046,8 @@
   window.pushSendNow = function(){
     var title=document.getElementById('push-title').value.trim();
     var message=document.getElementById('push-message').value.trim();
-    var url=document.getElementById('push-url').value;
     var category=document.getElementById('push-category').value;
+    var url=(document.getElementById('push-url').value||'').trim()||pushDefaultUrlForCategory(category);
     var onlyMeEl=document.getElementById('push-only-me');
     var onlyMe=!!(onlyMeEl&&onlyMeEl.checked);
     var catLabels={tagesinfo:'TagesInfo',news:'News / Aktuelles'};
@@ -10482,4 +10503,3 @@
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
   }
 })();
-
