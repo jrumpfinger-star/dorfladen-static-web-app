@@ -353,7 +353,8 @@
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
               <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="if(window.innerWidth>=720&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
             </div>
-                          <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
+                          <label id="soc-tagesinfo-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-tagesinfo" checked style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128260; Tagesinfo aktualisieren <span style="color:#9ca3af">(aus = Test, erscheint nicht auf der Homepage)</span></span></label>
+                          <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
           </div>
         </div>
       </div>
@@ -463,8 +464,8 @@
 </div>
 
 <script src="/js/dl-confirm.js"></script>
-<script src="/js/social.js?v=20260819h"></script>
-<script src="/js/social-poster.js?v=20260819h"></script>
+<script src="/js/social.js?v=20260820a"></script>
+<script src="/js/social-poster.js?v=20260820a"></script>
 <script src="/js/admin-auth.js"></script>
   <!-- Wochenplan/Mittagessen laden: stellt window.SOCIAL_MEALS fuer social.js bereit,
        damit die Mittagessen-Sektion (Heute/Morgen) im Post-Assistenten erscheint.

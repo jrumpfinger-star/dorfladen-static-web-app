@@ -357,6 +357,9 @@ def handle_post(req, token, folder_id):
     # anfordert (Checkbox). Sichtbarkeit auf /tagesinfo bleibt davon unberuehrt.
     req_notify = bool(body.get("notify", False))
     will_push = (req_status == "veroeffentlicht" and req_notify)
+    # Test-Modus: tagesinfo_hidden=True -> Post erscheint NICHT auf /tagesinfo,
+    # bleibt aber gespeichert/teilbar. Default False (normal sichtbar).
+    tagesinfo_hidden = bool(body.get("tagesinfo_hidden", False))
 
     post = {
         "id": post_id,
@@ -368,6 +371,7 @@ def handle_post(req, token, folder_id):
         "datum": now,
         "wochentag": tag,
         "status": req_status,
+        "tagesinfo_hidden": tagesinfo_hidden,
         "push_count": 1 if will_push else 0,
         "last_push_at": _now_iso() if will_push else "",
     }
@@ -415,6 +419,8 @@ def handle_patch(req, token, folder_id):
                 p["text"] = body["freitext"]
             if "items" in body:
                 p["items"] = body["items"]
+            if "tagesinfo_hidden" in body:
+                p["tagesinfo_hidden"] = bool(body["tagesinfo_hidden"])
             found = p
             break
 

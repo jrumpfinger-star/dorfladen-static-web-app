@@ -366,8 +366,11 @@ def _build_response():
     tomorrow = (now_local + timedelta(days=1)).strftime("%Y-%m-%d")
     current_hour = now_local.hour
 
-    # Find published posts for today and tomorrow (exclude drafts)
-    published = [p for p in posts if p.get("status", "veroeffentlicht") != "entwurf"]
+    # Find published posts for today and tomorrow (exclude drafts + Test-Posts,
+    # die per tagesinfo_hidden bewusst nicht auf der Tagesinfo erscheinen sollen)
+    published = [p for p in posts
+                 if p.get("status", "veroeffentlicht") != "entwurf"
+                 and not p.get("tagesinfo_hidden", False)]
     today_posts = [p for p in published if p.get("datum", "")[:10] == today]
     tomorrow_posts = [p for p in published if p.get("datum", "")[:10] == tomorrow]
 

@@ -3269,7 +3269,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
               <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="if(window.innerWidth>=900&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
             </div>
-                          <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
+                          <label id="soc-tagesinfo-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-tagesinfo" checked style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128260; Tagesinfo aktualisieren <span style="color:#9ca3af">(aus = Test, erscheint nicht auf der Homepage)</span></span></label>
+                          <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
           </div>
         </div>
       </div>
@@ -3296,74 +3297,27 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         <div id="soc-desk-posts-content"></div>
       </div>
 
-    <!-- ========== SUB: NEUER POST ========== -->
-    <div id="social-panel-post">
-      <div class="cms-card" style="margin-bottom:14px">
-        <div class="cms-card-header" style="background:#25D366">&#128221; Tagespost zusammenstellen</div>
-        <div class="cms-card-body">
-          <div style="margin-bottom:12px">
-            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Titel</label>
-            <select id="soc-post-titel-sel" class="cms-input" onchange="socialTitelChange()" style="width:100%">
-            </select>
-            <input id="soc-post-titel" class="cms-input" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:4px;display:none">
-          </div>
-          <script>
-          (function(){
-            var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-            function buildTitelOpts2(){
-              var tag=tage[new Date().getDay()];
-              var sel=document.getElementById('soc-post-titel-sel');
-              if(!sel)return;
-              var prev=sel.value;
-              sel.innerHTML='';
-              var _tp=(window._socTitelPresets&&window._socTitelPresets.length)?window._socTitelPresets:['{prefix} im Dorfladen \u2013 {tag}','Aktuelles','Wochenangebot','Frisch eingetroffen','Mittagstisch \u2013 {tag}','Sonderangebot'];
-              var opts=_tp.map(function(t){return String(t).replace(/\{prefix\}/g,'Heute').replace(/\{tag\}/g,tag);});opts.push('_custom');
-              var labels={'_custom':'\u270F\uFE0F Eigenen Titel eingeben...'};
-              opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=labels[o]||o;sel.appendChild(op);});
-              if(prev&&opts.indexOf(prev)!==-1){sel.value=prev;}
-              var inp=document.getElementById('soc-post-titel');
-              if(inp&&sel.value!=='_custom') inp.value=sel.value;
-            }
-            window._socTitelBuilders=(window._socTitelBuilders||[]);window._socTitelBuilders.push(buildTitelOpts2);
-            buildTitelOpts2();
-          })();
-          window.socialTitelChange=function(){
-            var sel=document.getElementById('soc-post-titel-sel');
-            var inp=document.getElementById('soc-post-titel');
-            if(!sel||!inp)return;
-            if(sel.value==='_custom'){
-              inp.style.display='';
-              inp.value='';
-              inp.focus();
-            } else {
-              inp.style.display='none';
-              inp.value=sel.value;
-            }
-          };
-          </script>
-          <div style="margin-bottom:12px">
-            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Freitext (optional)</label>
-            <textarea id="soc-post-text" class="cms-input" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" style="width:100%;resize:vertical"></textarea>
-          </div>
-          <p style="font-size:12px;font-weight:700;color:#374151;margin:0 0 8px">Produkte ausw&#228;hlen:</p>
-          <div id="soc-post-items" style="display:flex;flex-direction:column;gap:6px">
-            <p style="color:#9ca3af;font-size:12px;font-style:italic">Laden Sie zuerst den Katalog...</p>
-          </div>
+      </div><!-- /soc-col-left -->
+      <div id="soc-col-right">
+      <!-- STEP 3: Vorschau -->
+      <div class="k-order oc-collapsed" style="border-left-color:#2e7d4f;margin-bottom:8px" id="soc-step-3">
+              <div class="k-order-hdr" onclick="socToggleStep(3)" style="background:#f6f7f5">
+          <span class="k-oc-arrow">&#9660;</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">3</span>
+          <span class="k-oc-name"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Vorschau</span>
+          <span class="k-oc-actions" onclick="event.stopPropagation()">
+            <button onclick="socialGenPreview()" class="k-btn k-btn-sm" style="background:#2e7d4f;color:#fff;min-height:40px;border-radius:8px;font-size:13px"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> <span class="oc-btn-label">Aktualisieren</span></button>
+          </span>
         </div>
-      </div>
-
-      <!-- Vorschau -->
-      <div class="cms-card" style="margin-bottom:14px">
-        <div class="cms-card-header">&#128065; Vorschau</div>
-        <div class="cms-card-body" style="text-align:center;padding:16px">
-          <div id="soc-preview-shell" style="margin:0 auto;max-width:100%;transition:max-width .2s ease">
+        <div class="k-order-body">
+          <div style="text-align:center;padding:16px">
             <div id="soc-preview-label-meal" style="display:none;font-size:11px;font-weight:700;color:#f57f17;margin-bottom:4px">&#127869; MITTAGESSEN-POSTER</div>
             <canvas id="soc-post-canvas-meal" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6;margin-bottom:12px"></canvas>
             <div id="soc-preview-label-daily" style="display:none;font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px">&#128230; TAGES&#220;BERSICHT</div>
             <canvas id="soc-post-canvas" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6"></canvas>
-          </div>
-          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-            <button class="cms-btn cms-btn-primary" onclick="socialGenPreview()" style="background:#e1306c">&#128260; Vorschau aktualisieren</button>
+            <div style="margin-top:10px">
+              <button onclick="socialGenPreview()" style="background:#2e7d4f;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px"><i data-lucide="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i> Vorschau aktualisieren</button>
+            </div>
           </div>
         </div>
       </div>
@@ -4087,8 +4041,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 <script src="/js/admin-auth.js"></script>
 <script src="cms.js"></script>
 <script src="/js/dl-confirm.js"></script>
-<script src="/js/social.js?v=20260819h"></script>
-<script src="/js/social-poster.js?v=20260819h"></script>
+<script src="/js/social.js?v=20260820a"></script>
+<script src="/js/social-poster.js?v=20260820a"></script>
 <script src="/js/env-banner.js"></script>
 </body>
 </html>
