@@ -174,6 +174,7 @@
     }
     var el=document.getElementById('mob-status');
     var txt=document.getElementById('mob-status-text');
+    if(!el||!txt) return;
     if(open){
       el.className='mob-only mob-status';
       txt.textContent='Jetzt geöffnet · bis '+closeAt+' Uhr';

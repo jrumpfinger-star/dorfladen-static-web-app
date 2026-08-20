@@ -496,8 +496,10 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     })
     .catch(function(e){
       console.log('WP-API:',e);
-      document.getElementById('wp-subtitle').textContent='Fehler beim Laden';
-      document.getElementById('wp-body').innerHTML='<div style="padding:20px;text-align:center;color:#888">Wochenplan konnte nicht geladen werden.</div>';
+      var wpSubtitle=document.getElementById('wp-subtitle');
+      var wpBody=document.getElementById('wp-body');
+      if(wpSubtitle) wpSubtitle.textContent='Fehler beim Laden';
+      if(wpBody) wpBody.innerHTML='<div style="padding:20px;text-align:center;color:#888">Wochenplan konnte nicht geladen werden.</div>';
     });
 })();
 
@@ -687,7 +689,8 @@ window.closeDtModal = function(id) {
     })
     .catch(function(e){
       console.log('NEWS-API:',e);
-      document.getElementById('news-container').innerHTML='<div class="news-empty-msg">News konnten nicht geladen werden.</div>';
+      var newsContainer=document.getElementById('news-container');
+      if(newsContainer) newsContainer.innerHTML='<div class="news-empty-msg">News konnten nicht geladen werden.</div>';
     });
 })();
 
