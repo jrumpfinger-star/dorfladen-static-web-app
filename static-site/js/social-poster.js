@@ -190,15 +190,53 @@
       ctx.save();socialRoundLeft(ctx,tx,ty,photoW,th,TILE_R);ctx.clip();
       var img=loadedImgs&&loadedImgs[p.id];var iw=img?(img.naturalWidth||img.width):0,ih=img?(img.naturalHeight||img.height):0;
       if(img&&iw&&ih){
-        // Ratio des Bildes beibehalten (contain), aber KEINE leeren Balken:
-        // Randbereiche mit einer unscharfen, formatfuellenden Version desselben
-        // Bildes fuellen (wie Instagram/YouTube). Foto in voller Form darueber.
-        var cs=Math.max(photoW/iw,th/ih);var cdw=iw*cs,cdh=ih*cs;
-        ctx.save();try{ctx.filter='blur(18px)';}catch(e){}
-        ctx.drawImage(img,tx+(photoW-cdw)/2,ty+(th-cdh)/2,cdw,cdh);
-        ctx.restore();
-        ctx.fillStyle='rgba(255,255,255,0.10)';ctx.fillRect(tx,ty,photoW,th);
-        var s=Math.min(photoW/iw,th/ih);var dw=iw*s,dh=ih*s;ctx.drawImage(img,tx+(photoW-dw)/2,ty+(th-dh)/2,dw,dh);
+        // Ratio des Bildes beibehalten (contain). Randbereiche je nach Modus:
+        // 'blur' = unscharfe formatfuellende Version, 'plain' = weiss,
+        // 'tint' = heller Grauton-Verlauf (Default). 'cover' = beschnitten.
+        var _fill=window.SOC_PHOTO_FILL||'tint';
+        if(_fill==='cover'){
+          var cs2=Math.max(photoW/iw,th/ih);var c2dw=iw*cs2,c2dh=ih*cs2;
+          ctx.drawImage(img,tx+(photoW-c2dw)/2,ty+(th-c2dh)/2,c2dw,c2dh);
+        }else{
+          // Hintergrundfarbe (fuer Fade referenziert)
+          var _bgTop='#eef1ef',_bgBot='#dde3df';
+          if(_fill==='blur'){
+            var cs=Math.max(photoW/iw,th/ih);var cdw=iw*cs,cdh=ih*cs;
+            ctx.save();try{ctx.filter='blur(18px)';}catch(e){}
+            ctx.drawImage(img,tx+(photoW-cdw)/2,ty+(th-cdh)/2,cdw,cdh);
+            ctx.restore();
+            ctx.fillStyle='rgba(255,255,255,0.10)';ctx.fillRect(tx,ty,photoW,th);
+          }else if(_fill==='tint'){
+            var _tc=window.SOC_TINT_GRAD||[['#f1f3f1',0],['#e0e5e2',1]];
+            _bgTop=_tc[0][0];_bgBot=_tc[_tc.length-1][0];
+            var tg=ctx.createLinearGradient(tx,ty,tx+photoW,ty+th);
+            _tc.forEach(function(st){tg.addColorStop(st[1],st[0]);});
+            ctx.fillStyle=tg;ctx.fillRect(tx,ty,photoW,th);
+          }else{
+            _bgTop=_bgBot='#ffffff';
+            ctx.fillStyle='#fff';ctx.fillRect(tx,ty,photoW,th);
+          }
+          var s=Math.min(photoW/iw,th/ih);var dw=iw*s,dh=ih*s;
+          var dx=tx+(photoW-dw)/2,dy=ty+(th-dh)/2;
+          ctx.drawImage(img,dx,dy,dw,dh);
+          // Weiches Auslaufen der Bildkanten in den Hintergrund (kein harter Cut):
+          // an jeder Kante ein schmaler Verlauf von Hintergrundfarbe -> transparent.
+          if(_fill!=='blur'){
+            var fade=Math.round(Math.min(dw,dh)*0.14);if(fade>34)fade=34;if(fade<10)fade=10;
+            var hexA=function(hex,a){var h=hex.replace('#','');var r=parseInt(h.substr(0,2),16),g2=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return 'rgba('+r+','+g2+','+b+','+a+')';};
+            // nur ueberlappende Bereiche mit Foto abdecken
+            var ix0=Math.max(dx,tx),ix1=Math.min(dx+dw,tx+photoW),iy0=Math.max(dy,ty),iy1=Math.min(dy+dh,ty+th);
+            var iwR=ix1-ix0,ihR=iy1-iy0;
+            // oben
+            var gT=ctx.createLinearGradient(0,dy,0,dy+fade);gT.addColorStop(0,hexA(_bgTop,1));gT.addColorStop(1,hexA(_bgTop,0));ctx.fillStyle=gT;ctx.fillRect(ix0,dy,iwR,fade);
+            // unten
+            var gB=ctx.createLinearGradient(0,dy+dh,0,dy+dh-fade);gB.addColorStop(0,hexA(_bgBot,1));gB.addColorStop(1,hexA(_bgBot,0));ctx.fillStyle=gB;ctx.fillRect(ix0,dy+dh-fade,iwR,fade);
+            // links
+            var gL=ctx.createLinearGradient(dx,0,dx+fade,0);gL.addColorStop(0,hexA(_bgTop,1));gL.addColorStop(1,hexA(_bgTop,0));ctx.fillStyle=gL;ctx.fillRect(dx,iy0,fade,ihR);
+            // rechts
+            var gR=ctx.createLinearGradient(dx+dw,0,dx+dw-fade,0);gR.addColorStop(0,hexA(_bgBot,1));gR.addColorStop(1,hexA(_bgBot,0));ctx.fillStyle=gR;ctx.fillRect(dx+dw-fade,iy0,fade,ihR);
+          }
+        }
       }
       else{var g=ctx.createLinearGradient(tx,ty,tx,ty+th);g.addColorStop(0,'#f2efe8');g.addColorStop(1,'#e6dfd2');ctx.fillStyle=g;ctx.fillRect(tx,ty,photoW,th);
         if(cat==='Mittagessen'&&_socMealIconReady()){var _iw=_socMealIcon.naturalWidth,_ih=_socMealIcon.naturalHeight,_box=Math.min(photoW-40,th-24,170),_s=Math.min(_box/_iw,_box/_ih),_dw=_iw*_s,_dh=_ih*_s;ctx.globalAlpha=.9;ctx.drawImage(_socMealIcon,tx+photoW/2-_dw/2,ty+(th-_dh)/2,_dw,_dh);ctx.globalAlpha=1;}
