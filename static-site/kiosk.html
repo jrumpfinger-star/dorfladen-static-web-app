@@ -2201,12 +2201,15 @@ var K = (function(){
     var step1 = document.getElementById('soc-step-1');
     var step2 = document.getElementById('soc-step-2');
     var postsPanel = document.getElementById('soc-desk-posts-panel');
+    var colRight = document.getElementById('soc-col-right');
     if(!tabEdit||!tabPosts) return;
     if(tab === 'posts'){
       tabEdit.style.borderBottomColor='transparent'; tabEdit.style.color='#6b7280';
       tabPosts.style.borderBottomColor='#2563eb'; tabPosts.style.color='#2563eb';
       if(step1) step1.style.display='none';
       if(step2) step2.style.display='none';
+      // Rechte Vorschau-Spalte ausblenden -> Posts-Liste nutzt die volle Breite
+      if(colRight) colRight.style.display='none';
       if(postsPanel){
         postsPanel.style.display='block';
         // Clone posts from right column into desktop panel
@@ -2219,6 +2222,7 @@ var K = (function(){
       tabPosts.style.borderBottomColor='transparent'; tabPosts.style.color='#6b7280';
       if(step1) step1.style.display='';
       if(step2) step2.style.display='';
+      if(colRight) colRight.style.display='';
       if(postsPanel) postsPanel.style.display='none';
     }
   };
