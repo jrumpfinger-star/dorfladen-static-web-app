@@ -212,7 +212,11 @@
     if(loading) loading.style.display='block';
     if(list) list.innerHTML='';
     if(empty) empty.style.display='none';
-    fetch(API+'/social-katalog?base64=1').then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    // Katalog OHNE Base64 laden: der Picker braucht nur Thumbnails (per <img src>),
+    // die vollen Bilder werden erst in der Vorschau fuer die <=3 gewaehlten Artikel
+    // geladen. Base64=1 lieferte alle Bilder in voller Aufloesung (~150 MB, ~35 s)
+    // und blockierte die Produktauswahl beim Start.
+    fetch(API+'/social-katalog').then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(function(res){ if(res.error){socialStatus('soc-kat-status','API-Fehler: '+res.error,false);return;} window._socialKatLoaded=true; _socialKatalog=res.items||[]; if(res.kategorien&&res.kategorien.length){_socKategorien=res.kategorien;} socPopulateKatSelects(); socialRenderKatalog(); })
       .catch(function(e){socialStatus('soc-kat-status','Fehler beim Laden: '+e.message,false);})
       .then(function(){ if(loading) loading.style.display='none'; if(typeof cb==='function') cb(); });
@@ -242,7 +246,7 @@
         var bg=i%2===0?'#fff':'#fafbfc'; var pid=esc(p.id);
         html+='<tr id="soc-row-'+pid+'" style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
         html+='<td style="padding:8px;width:50px">';
-        if(p.bild_url) html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;cursor:zoom-in" onerror="this.style.display=\'none\'">';
+        if(p.bild_url) html+='<img id="soc-kat-thumb-'+pid+'" src="'+esc(p.bild_url)+'" loading="lazy" decoding="async" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         else html+='<div id="soc-kat-thumb-'+pid+'" style="width:44px;height:44px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9ca3af">'+lucideIcon('camera',20)+'</div>';
         html+='</td><td style="padding:8px"><span style="font-weight:700">'+esc(p.name)+'</span></td>';
         html+='<td style="padding:8px;text-align:right;white-space:nowrap">';
@@ -515,7 +519,7 @@
   var _socFreeItems=[];
   var _socFreeCounter=0;
   window._socialMtBilderLoaded=false;
-  function socialLoadMtBilder(cb){ fetch(API+'/social-katalog?action=mt-bilder&base64=1').then(function(r){return r.json();}).then(function(res){ var bilder=res.bilder||{}; Object.keys(bilder).forEach(function(k){if(bilder[k].bild_base64) bilder[k].bild_url=bilder[k].bild_base64;}); _socMtBilder=bilder; window._socialMtBilderLoaded=true; if(cb)cb(); }).catch(function(){if(cb)cb();}); }
+  function socialLoadMtBilder(cb){ fetch(API+'/social-katalog?action=mt-bilder').then(function(r){return r.json();}).then(function(res){ var bilder=res.bilder||{}; Object.keys(bilder).forEach(function(k){if(bilder[k].bild_base64) bilder[k].bild_url=bilder[k].bild_base64;}); _socMtBilder=bilder; window._socialMtBilderLoaded=true; if(cb)cb(); }).catch(function(){if(cb)cb();}); }
 
   // Expose for CMS wochenplan image rendering
   window.socialLoadMtBilder = socialLoadMtBilder;
@@ -543,7 +547,7 @@
         html+='<div class="soc-pick-row" data-cat="'+esc(p.kategorie||'Sonstiges')+'" data-search="'+(p.name||'').toLowerCase()+'" style="display:flex;align-items:flex-start;gap:8px;padding:8px;border-radius:8px;margin-bottom:3px;border:1px solid transparent">';
         html+='<input type="checkbox" class="soc-post-cb" value="'+pid+'" onchange="socialPickUpdate(this)" style="width:20px;height:20px;accent-color:var(--c-green,#2e7d4f);flex-shrink:0;margin-top:2px">';
         html+='<div style="flex-shrink:0;position:relative"><div tabindex="0" data-pid="'+pid+'" onpaste="socialPickImgPaste(\''+pid+'\',event)" style="cursor:pointer;outline:none;border-radius:6px;position:relative">';
-        if(p.bild_url) html+='<img id="soc-pick-img-'+pid+'" src="'+esc(p.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in" onerror="this.style.display=\'none\'">';
+        if(p.bild_url) html+='<img id="soc-pick-img-'+pid+'" src="'+esc(p.bild_url)+'" loading="lazy" decoding="async" ondblclick="dlImagePopup(this.src,\''+esc(p.name).replace(/'/g,"\\'")+'\')" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;display:block;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         else html+='<div id="soc-pick-img-'+pid+'" style="width:40px;height:40px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9ca3af;border:1px solid #e5e7eb">'+lucideIcon('camera',18)+'</div>';
         html+='<input type="file" accept="image/*" capture="environment" onchange="socialPickImgChange(\''+pid+'\',this)" style="display:none"></div>';
         html+='<button type="button" onclick="this.parentNode.querySelector(\'input[type=file]\').click()" style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d5db;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)" title="Bild \u00e4ndern">&#128247;</button></div>';
