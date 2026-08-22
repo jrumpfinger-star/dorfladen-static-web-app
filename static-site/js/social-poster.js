@@ -141,7 +141,7 @@
   function socialDrawCompact(canvas,ctx,W,selected,titel,loadedImgs,SCALE){
     SCALE=SCALE||2;
     var items=selected.slice(0,(window.SOC_MAX_ITEMS||3));
-    var PAD=16, GAP=12, HEADER_H=70, TILE_R=20, INNER=13;
+    var PAD=16, GAP=12, HEADER_H=92, TILE_R=20, INNER=13;
     var n=Math.max(1,items.length);
     var tw=W-PAD*2;
     var photoW=Math.round(tw*0.46);
@@ -176,9 +176,9 @@
     // Kopf
     var grad=ctx.createLinearGradient(0,0,W,HEADER_H);grad.addColorStop(0,'#2e7d4f');grad.addColorStop(1,'#245f3d');ctx.fillStyle=grad;ctx.fillRect(0,0,W,HEADER_H);
     ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='alphabetic';
-    ctx.font='700 25px "Segoe UI",system-ui,sans-serif';ctx.fillText(titel||'Heute im Dorfladen',W/2,38);
+    var _htitle=titel||'Heute im Dorfladen';var _hsize=34;ctx.font='800 '+_hsize+'px "Segoe UI",system-ui,sans-serif';while(_hsize>22&&ctx.measureText(_htitle).width>W-44){_hsize-=1;ctx.font='800 '+_hsize+'px "Segoe UI",system-ui,sans-serif';}ctx.fillText(_htitle,W/2,50);
     var now=socialPosterDate();var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];var months=['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-    ctx.font='500 14px "Segoe UI",system-ui,sans-serif';ctx.fillStyle='rgba(255,255,255,0.90)';ctx.fillText(days[now.getDay()]+' \u00b7 '+now.getDate()+'. '+months[now.getMonth()],W/2,58);
+    ctx.font='600 16px "Segoe UI",system-ui,sans-serif';ctx.fillStyle='rgba(255,255,255,0.90)';ctx.fillText(days[now.getDay()]+' \u00b7 '+now.getDate()+'. '+months[now.getMonth()],W/2,76);
     // 2) Kacheln zeichnen
     var tx=PAD, ty=topAfterHeader;
     meas.forEach(function(m){
