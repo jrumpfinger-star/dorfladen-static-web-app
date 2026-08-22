@@ -611,9 +611,30 @@
     return !cb.checked;
   }
 
+  // Baut ein schlankes Item-Objekt fuer den Speicher-/Veroeffentlichen-Request.
+  // WICHTIG: Base64-Bilder NUR fuer Freitext-Artikel (id beginnt mit 'free-')
+  // mitschicken. Katalog- und Mittagstisch-Bilder werden serverseitig (Tagesinfo)
+  // per Artikelname neu aufgeloest – wuerde man ihr Base64 mitsenden, wird der
+  // Request riesig und die Plattform lehnt ihn mit HTTP 413 ab.
+  function socItemForPayload(p){
+    var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};
+    if(p.ab_uhr)o.ab_uhr=p.ab_uhr;
+    if(p.bild_datei)o.bild_datei=p.bild_datei;
+    var b=p.bild_url||'';
+    if(b){
+      if(b.indexOf('data:')===0){
+        if(String(p.id||'').indexOf('free-')===0)o.bild_url=b; // nur Freitext: Bild wird hochgeladen
+        // sonst: Base64 weglassen -> Server loest per Name auf
+      }else{
+        o.bild_url=b; // echte (kleine) URL -> unproblematisch
+      }
+    }
+    return o;
+  }
+
   // --- Save post ---
   function socialSavePost(titel,freitext,items){
-    var body={titel:titel,freitext:freitext,items:items.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};
+    var body={titel:titel,freitext:freitext,items:items.map(socItemForPayload)};
     var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;
     var nb=document.getElementById('soc-notify');body.notify=!!(nb&&nb.checked);
     body.tagesinfo_hidden=socialTagesinfoHidden();
@@ -648,7 +669,7 @@
     // CSS-Animation für Spinner (einmalig einfügen)
     if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
     socialStatus('soc-post-status','⏳ Wird veröffentlicht…',true);
-    var body={titel:titel,freitext:freitext,items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;var nb=document.getElementById('soc-notify');body.notify=!!(nb&&nb.checked);body.tagesinfo_hidden=socialTagesinfoHidden();if(nb)nb.checked=false;
+    var body={titel:titel,freitext:freitext,items:selected.map(socItemForPayload)};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;var nb=document.getElementById('soc-notify');body.notify=!!(nb&&nb.checked);body.tagesinfo_hidden=socialTagesinfoHidden();if(nb)nb.checked=false;
     fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){if(!r.ok)throw new Error('Fehler ('+r.status+')');return r.json();})
     .then(function(){
@@ -735,7 +756,7 @@
     if(!document.getElementById('soc-spin-css')){var st=document.createElement('style');st.id='soc-spin-css';st.textContent='@keyframes socSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
     var isEdit=!!_socEditingDraftId;
     socialStatus('soc-post-status','\u23F3 Entwurf wird '+(isEdit?'aktualisiert':'gespeichert')+'\u2026',true);
-    var body={titel:titel,freitext:freitext,status:'entwurf',items:selected.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};
+    var body={titel:titel,freitext:freitext,status:'entwurf',items:selected.map(socItemForPayload)};
     var method='POST';
     if(isEdit){body.id=_socEditingDraftId;body._action='patch';}
     else{var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;}
