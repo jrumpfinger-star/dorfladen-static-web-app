@@ -146,13 +146,31 @@ def delete_sp_item(token, item_id):
 
 
 def get_download_url(token, folder_id, filename):
-    """Get fresh download URL for an image."""
+    """Get fresh download URL + small thumbnail URL for an image.
+
+    Returns (download_url, thumb_url). Der Thumbnail (SharePoint/Graph, ~96-176px,
+    CDN-gehostet) wird fuer die Produktauswahl-Liste genutzt: winzige Bilder ->
+    schneller Start und fluessiges Scrollen. Das volle Bild (download_url) wird
+    nur fuer die Vorschau/WhatsApp-Grafik der gewaehlten Artikel geladen.
+    """
     h = graph_headers(token)
-    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{filename}"
+    url = (f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/"
+           f"{folder_id}:/{filename}?$expand=thumbnails")
     r = requests.get(url, headers=h, timeout=15)
     if r.status_code == 200:
-        return r.json().get("@microsoft.graph.downloadUrl", "")
-    return ""
+        j = r.json()
+        dl = j.get("@microsoft.graph.downloadUrl", "")
+        thumb = ""
+        thumbs = j.get("thumbnails") or []
+        if thumbs:
+            t0 = thumbs[0] or {}
+            for size in ("small", "medium", "large"):
+                u = (t0.get(size) or {}).get("url")
+                if u:
+                    thumb = u
+                    break
+        return dl, thumb
+    return "", ""
 
 
 # ---------- handlers ----------
@@ -217,14 +235,19 @@ def load_kategorien():
 
 
 def _refresh_url(token, folder_id, item):
-    """Refresh download URL for a single item. Returns (item, changed)."""
+    """Refresh download URL + thumbnail URL for a single item. Returns (item, changed)."""
     if not item.get("bild_datei"):
         return item, False
-    fresh_url = get_download_url(token, folder_id, item["bild_datei"])
+    fresh_url, thumb_url = get_download_url(token, folder_id, item["bild_datei"])
+    changed = False
     if fresh_url and fresh_url != item.get("bild_url", ""):
         item["bild_url"] = fresh_url
-        return item, True
-    return item, False
+        changed = True
+    # thumb_url ist fluechtig (laeuft ab) -> nur im Speicher setzen, nicht als
+    # "changed" markieren (kein persistenter Schreibvorgang noetig).
+    if thumb_url:
+        item["thumb_url"] = thumb_url
+    return item, changed
 
 
 def _download_base64(item):
@@ -264,7 +287,9 @@ def handle_get(req, token, folder_id):
                 except:
                     pass
     if changed:
-        save_katalog(token, folder_id, katalog)
+        # thumb_url ist fluechtig -> nicht mit persistieren (bleibt in der Response).
+        persist = [{k: v for k, v in it.items() if k != "thumb_url"} for it in katalog]
+        save_katalog(token, folder_id, persist)
 
     # Parallel: convert images to base64 data URIs if requested
     if want_base64:
