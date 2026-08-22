@@ -612,7 +612,29 @@
   }
 
   // --- Save post ---
-  function socialSavePost(titel,freitext,items){var body={titel:titel,freitext:freitext,items:items.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;var nb=document.getElementById('soc-notify');body.notify=!!(nb&&nb.checked);body.tagesinfo_hidden=socialTagesinfoHidden();fetch(API+'/social-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(function(){});if(nb)nb.checked=false;}
+  function socialSavePost(titel,freitext,items){
+    var body={titel:titel,freitext:freitext,items:items.map(function(p){var o={id:p.id,name:p.name,kategorie:p.kategorie,preis:p.preis};if(p.bild_url)o.bild_url=p.bild_url;if(p.ab_uhr)o.ab_uhr=p.ab_uhr;return o;})};
+    var zd=socialGetZielDatum();if(zd)body.ziel_datum=zd;
+    var nb=document.getElementById('soc-notify');body.notify=!!(nb&&nb.checked);
+    body.tagesinfo_hidden=socialTagesinfoHidden();
+    var hidden=body.tagesinfo_hidden;
+    // keepalive: Beim WhatsApp-Teilen wird die Seite in den Hintergrund gedraengt
+    // (WhatsApp uebernimmt den Fokus). Ohne keepalive bricht der Browser den noch
+    // laufenden Speicher-Request ab -> der Post wird still NICHT gespeichert.
+    var _opt={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)};
+    try{ if(_opt.body.length<60000) _opt.keepalive=true; }catch(_e){}
+    fetch(API+'/social-post',_opt)
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(res){
+        if(res&&res.success===false)throw new Error(res.error||'Speichern fehlgeschlagen');
+        socialStatus('soc-post-status',hidden?'✅ Grafik geteilt · Post gespeichert (Test-Modus – nicht auf der Tagesinfo)':'✅ Grafik geteilt · Post gespeichert – erscheint unter „Posts & Entwürfe" und auf der Tagesinfo',true);
+        if(typeof socialLoadTodayPosts==='function')socialLoadTodayPosts();
+      })
+      .catch(function(e){
+        socialStatus('soc-post-status','⚠️ Grafik geteilt, aber Speichern fehlgeschlagen ('+(e&&e.message?e.message:'Netzwerk')+'). Bitte „Tagesinfo veröffentlichen" nutzen, damit der Post erhalten bleibt.',false);
+      });
+    if(nb)nb.checked=false;
+  }
 
   // --- Publish as Tagesinfo only (no WhatsApp/Instagram) ---
   window.socialPublishTagesinfo=function(){
