@@ -159,6 +159,132 @@ def _get_bestellschluss(base_url, headers):
     return DEFAULT_BESTELLSCHLUSS
 
 
+# ── Archivierung: Bestellungen aelter als ~1 Monat werden zu dauerhaften
+#    Tages-Aggregaten verdichtet (Zahlen fuer die Statistik bleiben erhalten),
+#    die Detaildatensaetze werden geloescht. ────────────────────────────────
+ARCHIVE_CONFIG_KEY = "lunch_stats_archive"
+ARCHIVE_AFTER_DAYS = 31  # ~1 Monat
+
+
+def _read_config_json(base_url, headers, key):
+    """Liest einen JSON-Config-Wert (dl_seiteninhalts). Gibt (record_id, dict)."""
+    try:
+        url = (
+            f"{base_url}/api/data/v9.2/dl_seiteninhalts"
+            f"?$filter=dl_schluessel eq '{key}'&$select=dl_seiteninhaltid,dl_wert"
+        )
+        r = requests.get(url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            items = r.json().get("value", [])
+            if items:
+                rec_id = items[0].get("dl_seiteninhaltid", "")
+                try:
+                    data = json.loads(items[0].get("dl_wert", "") or "{}")
+                except Exception:
+                    data = {}
+                return rec_id, (data if isinstance(data, dict) else {})
+    except Exception as e:
+        logging.debug(f"[lunch-order] read config {key} failed: {e}")
+    return "", {}
+
+
+def _write_config_json(base_url, headers, key, rec_id, data):
+    """Speichert einen JSON-Config-Wert (dl_seiteninhalts)."""
+    try:
+        payload = {
+            "dl_schluessel": key,
+            "dl_bezeichnung": "Lunch Stats Archive",
+            "dl_wert": json.dumps(data, ensure_ascii=False),
+        }
+        if rec_id:
+            ph = {**headers, "If-Match": "*"}
+            requests.patch(
+                f"{base_url}/api/data/v9.2/dl_seiteninhalts({rec_id})",
+                headers=ph, json=payload, timeout=20,
+            )
+        else:
+            requests.post(
+                f"{base_url}/api/data/v9.2/dl_seiteninhalts",
+                headers=headers, json=payload, timeout=20,
+            )
+        return True
+    except Exception as e:
+        logging.warning(f"[lunch-order] write config {key} failed: {e}")
+        return False
+
+
+def _archive_old_orders(base_url, headers):
+    """Verdichtet Online-Bestellungen aelter als ~1 Monat zu Tages-Aggregaten
+    und loescht die Detaildatensaetze. Best-effort, hoechstens 1x pro Tag.
+
+    Gibt das (aktualisierte) Archiv-dict zurueck, damit die Statistik es sofort
+    mit den Live-Zahlen zusammenfuehren kann.
+    """
+    rec_id, archive = _read_config_json(base_url, headers, ARCHIVE_CONFIG_KEY)
+    if not isinstance(archive, dict):
+        archive = {}
+    meta = archive.get("_meta") or {}
+    today_local = (datetime.utcnow() + timedelta(hours=2)).date()
+    # Gate: nur einmal pro Tag den (teureren) Loesch-/Aggregationslauf machen.
+    if str(meta.get("last_run", ""))[:10] == today_local.isoformat():
+        return archive
+
+    cutoff_iso = (today_local - timedelta(days=ARCHIVE_AFTER_DAYS)).isoformat()
+    url = (
+        f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+        f"?$filter=dl_quelle eq {QUELLE_ONLINE} and dl_datum lt {cutoff_iso}T00:00:00Z"
+        f"&$select=dl_mittagsbestellungid,dl_status,dl_datum,dl_menge&$top=5000"
+    )
+    processed = 0
+    while url:
+        try:
+            r = requests.get(url, headers=headers, timeout=40)
+        except Exception:
+            break
+        if r.status_code != 200:
+            break
+        body = r.json()
+        for item in body.get("value", []):
+            oid = item.get("dl_mittagsbestellungid", "")
+            if not oid:
+                continue
+            # Erst loeschen, nur bei Erfolg zaehlen -> kein Doppelzaehlen bei
+            # teilweise fehlgeschlagenen Laeufen.
+            try:
+                dr = requests.delete(
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}({oid})",
+                    headers=headers, timeout=20,
+                )
+            except Exception:
+                continue
+            if dr.status_code not in (200, 204):
+                continue
+            day = (item.get("dl_datum") or "").split("T")[0]
+            if not day:
+                continue
+            st = item.get("dl_status", STATUS_NEU)
+            slot = archive.get(day)
+            if not isinstance(slot, dict):
+                slot = {"total": 0, "0": 0, "1": 0, "2": 0, "3": 0, "menge": 0}
+                archive[day] = slot
+            slot["total"] = slot.get("total", 0) + 1
+            slot[str(st)] = slot.get(str(st), 0) + 1
+            if st != STATUS_STORNIERT:
+                try:
+                    slot["menge"] = slot.get("menge", 0) + int(item.get("dl_menge", 1) or 1)
+                except (TypeError, ValueError):
+                    slot["menge"] = slot.get("menge", 0) + 1
+            processed += 1
+        url = body.get("@odata.nextLink")
+
+    meta["last_run"] = datetime.utcnow().isoformat() + "Z"
+    meta["archived_through"] = cutoff_iso
+    meta["last_archived_count"] = processed
+    archive["_meta"] = meta
+    _write_config_json(base_url, headers, ARCHIVE_CONFIG_KEY, rec_id, archive)
+    return archive
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -482,6 +608,39 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                                 except (TypeError, ValueError):
                                     slot["menge"] += 1
                     next_url = body.get("@odata.nextLink")
+
+                # Archiv (dauerhafte Zahlen aelterer Bestellungen) einmischen.
+                # Loest zugleich den taeglichen Archivierungslauf aus (best-effort).
+                try:
+                    archive = _archive_old_orders(base_url, headers)
+                except Exception:
+                    try:
+                        _, archive = _read_config_json(base_url, headers, ARCHIVE_CONFIG_KEY)
+                    except Exception:
+                        archive = {}
+                window_from = (datetime.utcnow() - timedelta(days=days)).date().isoformat()
+                if isinstance(archive, dict):
+                    for aday, aslot in archive.items():
+                        if aday == "_meta" or not isinstance(aslot, dict):
+                            continue
+                        if aday < window_from:
+                            continue  # ausserhalb des angefragten Zeitraums
+                        a_total = int(aslot.get("total", 0) or 0)
+                        total += a_total
+                        for stk in ("0", "1", "2", "3"):
+                            cnt = int(aslot.get(stk, 0) or 0)
+                            if cnt:
+                                ik = int(stk)
+                                by_status[ik] = by_status.get(ik, 0) + cnt
+                        d = by_day.get(aday)
+                        if d is None:
+                            d = {"total": 0, "0": 0, "1": 0, "2": 0, "3": 0, "menge": 0}
+                            by_day[aday] = d
+                        d["total"] += a_total
+                        for stk in ("0", "1", "2", "3"):
+                            d[stk] = d.get(stk, 0) + int(aslot.get(stk, 0) or 0)
+                        d["menge"] = d.get("menge", 0) + int(aslot.get("menge", 0) or 0)
+
                 # Nach Mittagstisch-Tag absteigend sortieren (kommende/aktuelle Tage oben)
                 by_day_list = [dict(datum=d, **v) for d, v in sorted(by_day.items(), reverse=True)]
                 return func.HttpResponse(

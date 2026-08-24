@@ -230,6 +230,14 @@ window.addEventListener('message',function(e){
   var _isTomorrow=false;
   var _tpTodayPost=null,_tpTomorrowPost=null;
 
+  // Bestellbar/echtes Tagesgericht = stammt aus dem Wochenplan (id "wp-...").
+  // Katalog-/Freitext-Artikel (auch versehentlich als "Mittagessen" kategorisiert)
+  // sind KEINE Tagesgerichte -> sie erscheinen unter "Theke & Kuchen" und sind
+  // nicht bestellbar. Verhindert versehentliche Bestellbarkeit bei Kategorie-Vertippern.
+  function isLunchDish(it){
+    return String((it&&it.id)||'').indexOf('wp-')===0;
+  }
+
   function catIcon(kat){
     var k=(kat||'').toLowerCase();
     var s='width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
@@ -245,11 +253,11 @@ window.addEventListener('message',function(e){
   }
 
   function itemCard(it,showOrder){
-    var isMittag=(it.kategorie||'').toLowerCase().indexOf('mittag')>=0;
+    var isMittag=isLunchDish(it);
     var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':(isMittag?mealIconTile('',0):'<div class="tp-item-img no-img">'+catIcon(it.kategorie)+'</div>');
     var preis=it.preis?fmtPreis(it.preis):'';
     var orderBtn='';
-    if(showOrder&&(it.kategorie||'').toLowerCase().indexOf('mittag')>=0){
+    if(showOrder&&isLunchDish(it)){
       var href,tip;
       if(_isTomorrow){
         var _qp=[];
@@ -276,7 +284,7 @@ window.addEventListener('message',function(e){
   }
 
   function gridCard(it){
-    var isMittag=(it.kategorie||'').toLowerCase().indexOf('mittag')>=0;
+    var isMittag=isLunchDish(it);
     var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':(isMittag?'<div style="width:64px;height:64px;border-radius:8px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;padding:5px"><img src="/images/mittagessen-icon.png" alt="" style="width:100%;height:100%;object-fit:contain"></div>':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>');
     var preis=it.preis?fmtPreis(it.preis):'';
     var abBadge=it.ab_uhr?'<span class="tp-ab-badge" style="margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
@@ -300,8 +308,8 @@ window.addEventListener('message',function(e){
     var _now2=new Date(), nowH=_now2.getHours(), nowM=_now2.getMinutes();
     var lunchOver=_isTomorrow?false:(nowH>12||(nowH===12&&nowM>=30));
 
-    var mittagessen=lunchOver?[]:items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')>=0;});
-    var theke=items.filter(function(i){return (i.kategorie||'').toLowerCase().indexOf('mittag')<0;});
+    var mittagessen=lunchOver?[]:items.filter(isLunchDish);
+    var theke=items.filter(function(i){return !isLunchDish(i);});
     var visibleItems=mittagessen.length+theke.length;
 
     var html='';
