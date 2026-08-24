@@ -106,7 +106,7 @@ def _serialize(item):
 
 
 def _send_push(email, title, body_text, tag="lunch", bestellnr="", origin=""):
-    """Best-effort push notification to customer."""
+    """Best-effort push notification to customer (Kategorie 'bestellung')."""
     try:
         from shared.urls import get_public_origin
         # origin: Basis-URL der ausloesenden Umgebung; Fallback auf Env-Hosts.
@@ -122,6 +122,7 @@ def _send_push(email, title, body_text, tag="lunch", bestellnr="", origin=""):
             "url": push_url,
             "origin": origin,
             "target_email": email,
+            "category": "bestellung",
             "tag": tag,
         }
         r = requests.post(internal_url, json=payload, timeout=10)
@@ -324,6 +325,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             anmerkung = (body.get("anmerkung") or "").strip()
             wochentag_label = (body.get("wochentag_label") or "").strip()
             mitnehmen = body.get("mitnehmen", False)
+            notify_email = bool(body.get("notify_email", False))
             quelle = int(body.get("quelle", QUELLE_ONLINE))
             stammkunde_id = (body.get("stammkunde_id") or "").strip()
             erfasst_von = (body.get("erfasst_von") or "").strip()
@@ -402,8 +404,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
                 logging.info(f"[lunch-order] Created {bestellnr} for {name} ({gericht} x{menge})")
 
-                # ── Bestätigungs-E-Mail an Kunden (best-effort) ──
-                if email:
+                # ── Bestätigungs-E-Mail an Kunden – NUR wenn ausdrücklich gewünscht ──
+                if email and notify_email:
                     try:
                         api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                         if api_dir not in sys.path:

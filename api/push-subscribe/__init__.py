@@ -113,7 +113,7 @@ def _dedupe_by_device(base_url, hdrs, entity_set, device_id, keep_sub_key):
     return removed
 
 
-ALL_CATEGORIES = ["tagesinfo", "news"]
+ALL_CATEGORIES = ["tagesinfo", "news", "bestellung"]
 # Migrate legacy category names from existing subscribers
 LEGACY_MAP = {"mittagstisch": "tagesinfo", "angebote": "tagesinfo"}
 

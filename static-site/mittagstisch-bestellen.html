@@ -107,6 +107,19 @@
     .field input:focus{border-color:var(--c-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
     .field-hint{font-size:11px;color:var(--c-muted);margin-top:2px}
     .saved-badge{display:inline-block;font-size:11px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:6px;font-weight:600}
+    .field-row{display:flex;gap:10px}
+    .field-row .field{flex:1;min-width:0}
+    @media(max-width:430px){.field-row{flex-direction:column;gap:0}}
+    /* Kommunikationsmethode */
+    .notify-box{margin-top:4px;background:var(--c-bg);border:1px solid rgba(0,0,0,.07);border-radius:12px;padding:12px 14px}
+    html[data-theme="dark"] .notify-box{background:#12171a;border-color:#2a333a}
+    .notify-title{font-size:13px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+    .notify-opt{display:flex;align-items:flex-start;gap:10px;padding:7px 0;cursor:pointer;user-select:none}
+    .notify-opt input{width:20px;height:20px;margin-top:1px;accent-color:var(--c-green);flex-shrink:0}
+    .notify-opt span{display:flex;flex-direction:column;line-height:1.25}
+    .notify-opt b{font-size:14px;font-weight:700}
+    .notify-opt small{font-size:11px;color:var(--c-muted)}
+    .notify-hint{font-size:11px;color:var(--c-muted);margin-top:6px;line-height:1.4}
 
     /* Submit */
     .submit-btn{width:100%;padding:16px;background:var(--c-green);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:12px}
@@ -224,14 +237,30 @@ if(window!==window.parent){
         <label for="cust-name">Name *</label>
         <input type="text" id="cust-name" placeholder="Vor- und Nachname" autocomplete="name">
       </div>
-      <div class="field">
-        <label for="cust-email">E-Mail *</label>
-        <input type="email" id="cust-email" placeholder="ihre@email.de" autocomplete="email">
-        <div class="field-hint">Für Bestätigung und Benachrichtigungen</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="cust-email">E-Mail *</label>
+          <input type="email" id="cust-email" placeholder="ihre@email.de" autocomplete="email">
+          <div class="field-hint">Zum Aufrufen Ihres Bestellstatus</div>
+        </div>
+        <div class="field">
+          <label for="cust-phone">Telefon (optional)</label>
+          <input type="tel" id="cust-phone" placeholder="08082 …" autocomplete="tel">
+        </div>
       </div>
-      <div class="field">
-        <label for="cust-phone">Telefon (optional)</label>
-        <input type="tel" id="cust-phone" placeholder="08082 …" autocomplete="tel">
+
+      <!-- Kommunikationsmethode -->
+      <div class="notify-box">
+        <div class="notify-title">🔔 Benachrichtigungen zu Ihrer Bestellung</div>
+        <label class="notify-opt">
+          <input type="checkbox" id="opt-push">
+          <span><b>📲 App-Benachrichtigung</b><small>Sofort aufs Handy – auch bei Nachrichten vom Dorfladen</small></span>
+        </label>
+        <label class="notify-opt">
+          <input type="checkbox" id="opt-email">
+          <span><b>✉️ E-Mail</b><small>An die oben angegebene Adresse</small></span>
+        </label>
+        <div class="notify-hint">Ohne Auswahl erhalten Sie keine automatischen Nachrichten – Ihren Bestellstatus können Sie jederzeit online aufrufen.</div>
       </div>
     </div>
 
@@ -533,6 +562,8 @@ if(window!==window.parent){
     var phone = document.getElementById('cust-phone').value.trim();
     var note = document.getElementById('note-input').value.trim();
     var mitnehmen = document.getElementById('opt-mitnehmen').checked;
+    var notifyEmail = !!(document.getElementById('opt-email')&&document.getElementById('opt-email').checked);
+    var notifyPush = !!(document.getElementById('opt-push')&&document.getElementById('opt-push').checked);
 
     var errors = [];
     if(!name) errors.push('Bitte Name eingeben.');
@@ -576,6 +607,7 @@ if(window!==window.parent){
         anmerkung: note,
         wochentag_label: selectedDish.wochentag_label || '',
         mitnehmen: mitnehmen,
+        notify_email: notifyEmail,
         quelle: 0
       })
     })
@@ -590,6 +622,7 @@ if(window!==window.parent){
           (mitnehmen ? ' (Zum Mitnehmen)' : ' (Verzehr im Laden)');
         // Save for bestellstatus page auto-login
         try{ localStorage.setItem('bs_nr', res.bestellnummer||''); localStorage.setItem('bs_email', email); }catch(e){}
+        if(notifyPush){ try{ registerPush(); }catch(e){} }
         document.getElementById('success-overlay').classList.add('show');
         history.pushState({overlay:'success'},'');
         // Im eingebetteten Bestell-Dialog (geoeffnet aus der TagesInfo): nach kurzer
@@ -667,7 +700,7 @@ if(window!==window.parent){
       reg.pushManager.getSubscription().then(function(existing){
         if(existing){
           fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['mittagstisch']})});
+            body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['bestellung'],device_id:(window.dlPushDeviceId?dlPushDeviceId():'')})});
           return;
         }
         if(Notification.permission==='granted'){
@@ -703,7 +736,7 @@ if(window!==window.parent){
       for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
       reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
         fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['mittagstisch']})});
+          body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['bestellung'],device_id:(window.dlPushDeviceId?dlPushDeviceId():'')})});
       });
     });
   }
@@ -721,11 +754,14 @@ if(window!==window.parent){
   loadCustomer();
   loadMenu();
 
-  // Re-register push when email changes
+  // Re-register push when email changes (nur wenn App-Benachrichtigung gewählt)
   document.getElementById('cust-email').addEventListener('blur', function(){
     saveCustomer();
-    registerPush();
+    var op=document.getElementById('opt-push');
+    if(op&&op.checked) registerPush();
   });
+  // App-Benachrichtigung aktivieren -> direkt Push einrichten (Permission-Prompt)
+  (function(){var op=document.getElementById('opt-push');if(op){op.addEventListener('change',function(){if(op.checked)registerPush();});}})();
 
   // ── Android Back-Button ──
   window.addEventListener('popstate',function(){

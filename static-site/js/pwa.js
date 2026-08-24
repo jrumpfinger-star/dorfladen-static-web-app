@@ -212,9 +212,9 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 (function(){
   var pushBtn=document.getElementById('mob-push-toggle');
   var pushBtnDt=document.getElementById('dt-push-toggle');
-  var CAT_LABELS={tagesinfo:'TagesInfo',news:'News / Aktuelles'};
-  var CAT_ICONS={tagesinfo:'\uD83D\uDCCB',news:'\uD83D\uDCE2'};
-  var CAT_DESC={tagesinfo:'T\u00e4glicher Mittagstisch, Theke & Angebote',news:'Neuigkeiten & Infos'};
+  var CAT_LABELS={tagesinfo:'TagesInfo',news:'News / Aktuelles',bestellung:'Meine Bestellungen'};
+  var CAT_ICONS={tagesinfo:'\uD83D\uDCCB',news:'\uD83D\uDCE2',bestellung:'\uD83D\uDECD\uFE0F'};
+  var CAT_DESC={tagesinfo:'T\u00e4glicher Mittagstisch, Theke & Angebote',news:'Neuigkeiten & Infos',bestellung:'Status & Nachrichten zu Ihren Bestellungen'};
 
   // --- Toast system (replaces ugly alert()) ---
   function showToast(msg,type,duration){
@@ -307,7 +307,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
 
   function savePushCategories(endpoint){
     var cats=[];
-    ['tagesinfo','news'].forEach(function(c){
+    ['tagesinfo','news','bestellung'].forEach(function(c){
       var cb=document.getElementById('push-cat-'+c);
       if(cb&&cb.checked)cats.push(c);
     });
@@ -375,7 +375,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     dialog.appendChild(hdr);
 
     // Category cards
-    ['tagesinfo','news'].forEach(function(c){
+    ['tagesinfo','news','bestellung'].forEach(function(c){
       var card=document.createElement('label');
       card.style.cssText='display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px;border-radius:12px;border:2px solid #f0f0f0;cursor:pointer;transition:all .15s ease;background:#fafafa';
       card.onmouseover=function(){card.style.borderColor='#5ea88a';card.style.background='#f0faf4';};
@@ -451,7 +451,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.categories){
-          ['tagesinfo','news'].forEach(function(c){
+          ['tagesinfo','news','bestellung'].forEach(function(c){
             var cb=document.getElementById('push-cat-'+c);
             if(cb){
               cb.checked=res.categories.indexOf(c)!==-1;
