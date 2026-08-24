@@ -100,7 +100,8 @@
     .bs-ordernr b{color:var(--c-text);font-weight:700;letter-spacing:.4px}
 
     /* Kommunikation (Chat) */
-    .bs-chat{display:flex;flex-direction:column;gap:8px}
+    .bs-chat{display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto;overflow-x:hidden;padding-right:2px}
+    .bs-chat>:first-child{margin-top:auto}
     .bs-chat-empty{font-size:13px;color:var(--c-muted);text-align:center;padding:6px 0 2px}
     .bs-bubble{max-width:88%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.45;word-break:break-word}
     .bs-bubble .who{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;opacity:.7;margin-bottom:2px}
@@ -453,6 +454,8 @@ function renderMessages(o){
   var box = document.getElementById('bs-messages');
   if(box){
     box.innerHTML = h || '<div class="bs-chat-empty">Noch keine Nachrichten – schreiben Sie uns unten.</div>';
+    // Wie in WhatsApp: neueste Nachricht unten, automatisch nach unten scrollen.
+    box.scrollTop = box.scrollHeight;
   }
   // Antwort gilt als gelesen, sobald der Kunde die Bestellung geoeffnet hat.
   bsMarkSeen(o);
