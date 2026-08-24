@@ -1550,6 +1550,15 @@
           var orders = res.orders||[];
           if(!orders.length) return;
 
+          // Ungelesene Antwort vom Dorfladen erkennen (client-seitig, ohne Backend-Flag):
+          // gilt als ungelesen, bis der Kunde die Bestellung im Bestellstatus geoeffnet hat.
+          function dlOrderUnread(o){
+            try{
+              if(!o || !o.personal_antwort) return false;
+              return localStorage.getItem('dl_msg_seen_'+(o.bestellnummer||'')) !== o.personal_antwort;
+            }catch(e){ return false; }
+          }
+
           function renderWidget(containerId){
             var el = document.getElementById(containerId);
             if(!el) return;
@@ -1562,6 +1571,7 @@
             if(orders.length === 1){
               var o = orders[0];
               var nr = o.bestellnummer||'';
+              var unread = dlOrderUnread(o);
               var st = STATUS_LABELS[o.status]||'?';
               var col = STATUS_COLORS[o.status]||'#6b7280';
               var bg = STATUS_BG[o.status]||'#f3f4f6';
@@ -1581,7 +1591,7 @@
                 iconBg:'#eff6ff', iconStroke:'#2563eb',
                 btnBg:'#2563eb', btnColor:'#fff', price:'#0f172a'
               };
-              el.innerHTML = '<div onclick="openBestellstatus(\''+esc(nr)+'\')" role="button" tabindex="0" title="Bestellung anzeigen" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openBestellstatus(\''+esc(nr)+'\');}" style="display:flex;align-items:flex-start;gap:12px;background:'+t.card+';border:1px solid '+t.border+';border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)">'
+              el.innerHTML = '<div onclick="openBestellstatus(\''+esc(nr)+'\')" role="button" tabindex="0" title="Bestellung anzeigen" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openBestellstatus(\''+esc(nr)+'\');}" style="display:flex;align-items:flex-start;gap:12px;background:'+t.card+';border:1px solid '+(unread?'#f87171':t.border)+';border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)">'
                 +'<div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:'+t.iconBg+';display:flex;align-items:center;justify-content:center">'
                   +'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+t.iconStroke+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
                 +'</div>'
@@ -1589,6 +1599,7 @@
                   +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
                     +'<span style="font-weight:800;font-size:14px;color:'+t.title+'">Ihre Bestellung</span>'
                     +'<span style="font-size:10px;padding:2px 8px;border-radius:8px;font-weight:700;background:'+bg+';color:'+col+'">'+esc(st)+'</span>'
+                    +(unread?'<span style="font-size:10px;padding:2px 8px;border-radius:8px;font-weight:800;background:#fee2e2;color:#b91c1c;display:inline-flex;align-items:center;gap:3px">\uD83D\uDCAC Neue Nachricht</span>':'')
                   +'</div>'
                   +'<div style="font-size:12px;color:'+t.sub+';margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(fmtDateLong(o.datum))+'</div>'
                   +'<div style="font-weight:600;font-size:13px;color:'+t.dish+';margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.gericht||'Mittagessen')+'</div>'
@@ -1603,9 +1614,11 @@
                 +'</div>';
             } else {
               var popupId = 'popup-'+containerId;
-              el.innerHTML = '<div onclick="var p=document.getElementById(\''+popupId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+wrapBorder+';border-radius:10px;padding:8px 14px;cursor:pointer;color:'+wrapColor+';font-size:13px;font-weight:600">'
+              var unreadCount = orders.filter(dlOrderUnread).length;
+              el.innerHTML = '<div onclick="var p=document.getElementById(\''+popupId+'\');p.style.display=\'flex\';document.body.style.overflow=\'hidden\'" style="display:flex;align-items:center;gap:8px;background:'+wrapBg+';border:1px solid '+(unreadCount?'#f87171':wrapBorder)+';border-radius:10px;padding:8px 14px;cursor:pointer;color:'+wrapColor+';font-size:13px;font-weight:600">'
                 +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
                 +'<span style="flex:1">Meine Bestellungen</span>'
+                +(unreadCount?'<span style="font-size:10px;padding:2px 7px;border-radius:8px;font-weight:800;background:#fee2e2;color:#b91c1c;white-space:nowrap">\uD83D\uDCAC '+unreadCount+'</span>':'')
                 +'<span style="font-size:11px;background:'+(isDark?'rgba(255,255,255,.2)':'#dbeafe')+';color:'+wrapColor+';padding:2px 8px;border-radius:8px;font-weight:700">'+orders.length+'</span>'
                 +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+chevronColor+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>'
                 +'</div>';
@@ -1623,9 +1636,10 @@
                 var st = STATUS_LABELS[o.status]||'?';
                 var col = STATUS_COLORS[o.status]||'#6b7280';
                 var bg = STATUS_BG[o.status]||'#f3f4f6';
+                var un2 = dlOrderUnread(o);
                 card += '<a href="javascript:void(0)" onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\';openBestellstatus(\''+esc(nr2)+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600;margin-bottom:2px;transition:background .15s;cursor:pointer" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'transparent\'">'
                   +'<span style="font-size:12px;color:#6b7280;min-width:70px">'+fmtDate(o.datum)+'</span>'
-                  +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.gericht||'Mittagessen')+'</span>'
+                  +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.gericht||'Mittagessen')+(un2?' <span style="color:#b91c1c;font-weight:800">\uD83D\uDCAC</span>':'')+'</span>'
                   +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
                   +'</a>';
               });

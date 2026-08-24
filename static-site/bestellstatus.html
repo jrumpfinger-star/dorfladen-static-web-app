@@ -435,6 +435,9 @@ function renderFleischOrder(o){
 }
 
 // ── Messages (shared) – als Chat-Bubbles ──
+function bsMarkSeen(o){
+  try{ if(o && o.bestellnummer){ localStorage.setItem('dl_msg_seen_'+o.bestellnummer, o.personal_antwort||''); } }catch(e){}
+}
 function renderMessages(o){
   var h = '';
   if(o.bestaetigung_text){
@@ -451,6 +454,8 @@ function renderMessages(o){
   if(box){
     box.innerHTML = h || '<div class="bs-chat-empty">Noch keine Nachrichten – schreiben Sie uns unten.</div>';
   }
+  // Antwort gilt als gelesen, sobald der Kunde die Bestellung geoeffnet hat.
+  bsMarkSeen(o);
 }
 
 // ── Toast helper (replaces alert) ──
