@@ -1700,8 +1700,11 @@ var K = (function(){
     _loadOrdersAC = new AbortController();
     var sig = _loadOrdersAC.signal;
     var datum = _mittagDatum;
-    // Show loading state immediately (unless Nachrichten tab is active)
-    if(_mittagFilter!=='nachrichten'){
+    // Show loading state immediately (unless Nachrichten tab is active).
+    // Nur beim Erstladen zeigen – wenn bereits Karten sichtbar sind (z.B. bei der
+    // Auto-Aktualisierung), bleibt die Ansicht stehen, damit laufende Eingaben
+    // nicht durch den "Laden…"-Platzhalter verworfen werden.
+    if(_mittagFilter!=='nachrichten' && !document.querySelector('#mittag-orders .k-order')){
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px;animation:kSpin 1s linear infinite"></i></div>Laden…</div>';
       reinitIcons();
     }
@@ -1948,6 +1951,43 @@ var K = (function(){
     reinitIcons();
   }
 
+  // Bewahrt Formulareingaben (Textareas/Inputs), offene Bestätigen-Dialoge und
+  // Fokus/Cursor über ein Neu-Rendern (z.B. Auto-Aktualisierung) hinweg, damit
+  // laufende Eingaben nicht verloren gehen.
+  function _preserveInputs(host){
+    if(!host) return null;
+    var snap = { vals:{}, dialogs:[], active:null, s0:null, s1:null };
+    host.querySelectorAll('input,textarea,select').forEach(function(el){
+      if(el.id) snap.vals[el.id] = el.value;
+    });
+    host.querySelectorAll('.k-confirm-dialog').forEach(function(d){
+      if(d.id && d.style.display!=='none') snap.dialogs.push(d.id);
+    });
+    var ae = document.activeElement;
+    if(ae && ae.id && host.contains(ae)){
+      snap.active = ae.id;
+      try{ snap.s0 = ae.selectionStart; snap.s1 = ae.selectionEnd; }catch(e){}
+    }
+    return snap;
+  }
+  function _restoreInputs(snap, host){
+    if(!snap || !host) return;
+    Object.keys(snap.vals).forEach(function(id){
+      var v = snap.vals[id];
+      if(!v) return;
+      var el = document.getElementById(id);
+      if(el && !el.value){
+        el.value = v;
+        if(el.tagName==='TEXTAREA'){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+      }
+    });
+    snap.dialogs.forEach(function(id){ var d=document.getElementById(id); if(d) d.style.display='block'; });
+    if(snap.active){
+      var ael = document.getElementById(snap.active);
+      if(ael){ try{ ael.focus(); if(snap.s0!=null) ael.setSelectionRange(snap.s0, snap.s1); }catch(e){} }
+    }
+  }
+
   function renderOrders(){
     if(_mittagFilter==='nachrichten'){ renderCookBar(); return; }
     renderCookBar();
@@ -2024,8 +2064,11 @@ var K = (function(){
       var emptyMsg = _mittagFilter==='erledigt' ? 'Keine erledigten Bestellungen' : _mittagFilter==='storniert' ? 'Keine stornierten Bestellungen' : _mittagFilter==='offen' ? 'Keine offenen Bestellungen' : 'Keine Bestellungen';
       html = '<div class="k-empty"><div class="k-empty-icon">'+luc('inbox',24)+'</div>'+emptyMsg+'</div>';
     }
-    document.getElementById('mittag-orders').innerHTML = html;
+    var _mtHost = document.getElementById('mittag-orders');
+    var _mtSnap = _preserveInputs(_mtHost);
+    _mtHost.innerHTML = html;
     reinitIcons();
+    _restoreInputs(_mtSnap, _mtHost);
   }
 
   function setStatus(id, status, text){
@@ -2943,8 +2986,11 @@ var K = (function(){
       });
       html += '</div>';
     });
-    document.getElementById('abhol-orders').innerHTML = html;
+    var _shHost = document.getElementById('abhol-orders');
+    var _shSnap = _preserveInputs(_shHost);
+    _shHost.innerHTML = html;
     reinitIcons();
+    _restoreInputs(_shSnap, _shHost);
     _renderSparkline();
   }
 
@@ -4332,8 +4378,10 @@ var K = (function(){
       html += '</div></div>'; // close k-slot-body + k-slot-group
     });
 
+    var _fmSnap = _preserveInputs(container);
     container.innerHTML = html;
     reinitIcons();
+    _restoreInputs(_fmSnap, container);
   }
 
   function toggleMetzgerCard(id){
