@@ -2140,10 +2140,14 @@ var K = (function(){
   function sendReply(id){
     var text = (document.getElementById('rpt-'+id)||{}).value || '';
     if(!text.trim()){ toast('Bitte Antwort eingeben'); return; }
+    // Eine Antwort setzt voraus, dass die Kundennachricht gelesen wurde:
+    // vorherige Nachricht(en) automatisch als gelesen markieren.
+    var lo = orders && orders.find ? orders.find(function(x){return x.id===id;}) : null;
+    if(lo){ lo.personal_antwort = text.trim(); lo.kommentar_gelesen = true; renderOrders(); }
     fetch(API+'/lunch-order/'+id,{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({personal_antwort: text.trim()})
+      body:JSON.stringify({personal_antwort: text.trim(), kommentar_gelesen: true})
     })
     .then(function(r){return r.json();})
     .then(function(res){
