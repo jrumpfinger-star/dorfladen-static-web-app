@@ -79,7 +79,7 @@ def _fetch_all_subscriptions(base_url, hdrs, entity_set):
     url = (
         f"{base_url}/api/data/v9.2/{entity_set}"
         f"?$filter=startswith(dl_schluessel,'{PUSH_KEY_PREFIX}')"
-        f"&$select=dl_seiteninhaltid,dl_schluessel,dl_wert"
+        f"&$select=dl_seiteninhaltid,dl_schluessel,dl_wert,createdon,modifiedon"
         f"&$top=5000"
     )
     while url:
@@ -96,17 +96,22 @@ def _fetch_all_subscriptions(base_url, hdrs, entity_set):
                     sub = raw["subscription"]
                     cats = _migrate_cats(raw.get("categories", ["tagesinfo", "news"]))
                     email = raw.get("email", "")
+                    device_id = raw.get("device_id", "")
                 elif raw.get("endpoint"):
                     sub = raw
                     cats = ["tagesinfo", "news"]
                     email = ""
+                    device_id = ""
                 else:
                     continue
                 subs.append({
                     "record_id": item.get("dl_seiteninhaltid"),
                     "subscription": sub,
                     "categories": cats,
-                    "email": email
+                    "email": email,
+                    "device_id": device_id,
+                    "created": item.get("createdon", ""),
+                    "modified": item.get("modifiedon", ""),
                 })
             except (json.JSONDecodeError, TypeError):
                 pass
@@ -157,10 +162,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "record_id": s.get("record_id", ""),
                     "endpoint_short": ep[-60:] if len(ep) > 60 else ep,
                     "endpoint_domain": ep.split("/")[2] if ep.count("/") >= 2 else "",
+                    "endpoint_tail": ep[-16:] if ep else "",
                     "has_p256dh": has_p256dh,
                     "has_auth": has_auth,
                     "categories": cats,
-                    "email": s.get("email", "")
+                    "email": s.get("email", ""),
+                    "device_id": s.get("device_id", ""),
+                    "created": s.get("created", ""),
+                    "modified": s.get("modified", ""),
                 })
             # If ?test=1, try sending a test push without deleting on failure
             if req.params.get("test") == "1" and all_subs:

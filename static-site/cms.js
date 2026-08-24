@@ -8983,31 +8983,49 @@
     var catF=catEl?catEl.value:'';
     var ownEp=window._pushOwnEndpoint||'';
     var ownTail=ownEp?ownEp.slice(-60):'';
+    var esc=function(t){return String(t||'').replace(/</g,'&lt;');};
+    var fmtDate=function(iso){ if(!iso)return ''; var d=new Date(iso); if(isNaN(d))return ''; var p=function(n){return (n<10?'0':'')+n;}; return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes()); };
+    // Duplikat-Erkennung ueber ALLE Subscriber (stabile Zaehlung, unabhaengig vom Filter):
+    // gleiche device_id ODER gleiche E-Mail+Plattform-Domain => moeglich doppeltes Geraet.
+    var devCount={}, edCount={};
+    subs.forEach(function(s){
+      if(s.device_id){devCount[s.device_id]=(devCount[s.device_id]||0)+1;}
+      if(s.email){var k=(s.email||'').toLowerCase()+'|'+(s.endpoint_domain||'');edCount[k]=(edCount[k]||0)+1;}
+    });
     var rows=subs.map(function(s){
       var plat=_pushPlatform(s.endpoint_domain);
       var isOwn=!!(ownTail&&s.endpoint_short&&s.endpoint_short.slice(-60)===ownTail);
-      return {s:s,plat:plat,isOwn:isOwn};
+      var edKey=(s.email||'').toLowerCase()+'|'+(s.endpoint_domain||'');
+      var isDup=!!((s.device_id&&devCount[s.device_id]>1)||(s.email&&edCount[edKey]>1));
+      return {s:s,plat:plat,isOwn:isOwn,isDup:isDup};
     }).filter(function(r){
       if(catF&&(r.s.categories||[]).indexOf(catF)<0)return false;
       if(q){
-        var hay=(r.plat.label+' '+(r.s.endpoint_domain||'')+' '+(r.s.email||'')+' '+(r.s.categories||[]).join(' ')).toLowerCase();
+        var hay=(r.plat.label+' '+(r.s.endpoint_domain||'')+' '+(r.s.email||'')+' '+(r.s.categories||[]).join(' ')+' '+(r.s.device_id||'')+' '+(r.s.created||'')).toLowerCase();
         if(hay.indexOf(q)<0)return false;
       }
       return true;
     });
-    var html='<div style="font-size:11px;color:#6b7280;margin-bottom:6px">'+rows.length+' von '+subs.length+' angezeigt</div>';
+    var dupTotal=rows.filter(function(r){return r.isDup;}).length;
+    var html='<div style="font-size:11px;color:#6b7280;margin-bottom:6px">'+rows.length+' von '+subs.length+' angezeigt'
+      +(dupTotal?' \u00b7 <span style="color:#b45309;font-weight:700">'+dupTotal+' m\u00f6glich doppelt</span>':'')+'</div>';
     html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;border-bottom:2px solid #e5e7eb">'
-      +'<th style="padding:4px 6px">#</th><th style="padding:4px 6px">Plattform</th><th style="padding:4px 6px">Kategorien</th><th style="padding:4px 6px">E-Mail</th><th style="padding:4px 6px">Keys</th><th style="padding:4px 6px"></th></tr></thead><tbody>';
+      +'<th style="padding:4px 6px">#</th><th style="padding:4px 6px">Plattform / Ger\u00e4t</th><th style="padding:4px 6px">Kategorien</th><th style="padding:4px 6px">E-Mail</th><th style="padding:4px 6px">Registriert</th><th style="padding:4px 6px">Keys</th><th style="padding:4px 6px"></th></tr></thead><tbody>';
     rows.forEach(function(r,i){
       var s=r.s;
       var keyOk=s.has_p256dh&&s.has_auth;
-      var esc=function(t){return String(t||'').replace(/</g,'&lt;');};
       var ownBadge=r.isOwn?' <span style="background:#ede9fe;color:#7c3aed;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700">\uD83D\uDCF1 Dieses Ger\u00e4t</span>':'';
-      html+='<tr style="border-bottom:1px solid #f3f4f6;'+(r.isOwn?'background:#faf5ff':'')+'">'
+      var dupBadge=(r.isDup&&!r.isOwn)?' <span title="Mehrere Abos mit gleicher Ger\u00e4te-ID bzw. E-Mail+Plattform" style="background:#fef3c7;color:#b45309;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700">\u26A0 m\u00f6glich doppelt</span>':'';
+      var devLine=s.device_id?('Ger\u00e4t-ID: '+esc(String(s.device_id).slice(0,8))):'';
+      var epLine=s.endpoint_tail?('\u2026'+esc(s.endpoint_tail)):'';
+      var detail=[esc(s.endpoint_domain),devLine,epLine].filter(function(x){return x;}).join(' \u00b7 ');
+      var bg=r.isOwn?'background:#faf5ff':(r.isDup?'background:#fffbeb':'');
+      html+='<tr style="border-bottom:1px solid #f3f4f6;'+bg+'">'
         +'<td style="padding:4px 6px">'+(i+1)+'</td>'
-        +'<td style="padding:4px 6px">'+r.plat.icon+' '+esc(r.plat.label)+ownBadge+'<div style="color:#9ca3af;font-size:10px;word-break:break-all">'+esc(s.endpoint_domain)+'</div></td>'
+        +'<td style="padding:4px 6px">'+r.plat.icon+' '+esc(r.plat.label)+ownBadge+dupBadge+'<div style="color:#9ca3af;font-size:10px;word-break:break-all">'+detail+'</div></td>'
         +'<td style="padding:4px 6px">'+esc((s.categories||[]).join(', '))+'</td>'
         +'<td style="padding:4px 6px;word-break:break-all">'+(s.email?esc(s.email):'<span style="color:#9ca3af">\u2013</span>')+'</td>'
+        +'<td style="padding:4px 6px;white-space:nowrap;color:#6b7280">'+(fmtDate(s.created)||'<span style="color:#9ca3af">\u2013</span>')+'</td>'
         +'<td style="padding:4px 6px;color:'+(keyOk?'#16a34a':'#dc2626')+'">'+(keyOk?'&#10003;':'&#10007;')+'</td>'
         +'<td style="padding:4px 6px;white-space:nowrap">'
         +(r.isOwn?'<button onclick="pushTestOwnDevice()" title="Test-Push nur an dieses Ger\u00e4t" style="background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-right:4px">&#128276; Test</button>':'')
