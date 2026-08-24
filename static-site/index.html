@@ -2349,14 +2349,18 @@ html[data-theme="dark"] [style*="border-bottom:1px solid #e5e7eb"]{border-color:
 </div>
 
 <script>
+var _mtPopupHist=false;
 function openMittagPopup(url){
   var iframe=document.getElementById('mt-popup-iframe');
   var sep=url.indexOf('?')>=0?'&':'?';
   iframe.src=url+sep+'_cb='+Date.now();
   document.getElementById('mt-popup-overlay').classList.add('open');
   if(window.dlLockScroll) dlLockScroll(); else document.body.style.overflow='hidden';
+  // Android-/Browser-Zurueck soll den Dialog schliessen statt die App zu beenden:
+  // einen History-Eintrag erzeugen, den der Zurueck-Button "verbraucht".
+  if(!_mtPopupHist){ _mtPopupHist=true; try{ history.pushState({dlMittagPopup:true},''); }catch(e){} }
 }
-function closeMittagPopup(){
+function closeMittagPopup(_fromPop){
   document.getElementById('mt-popup-overlay').classList.remove('open');
   document.getElementById('mt-popup-iframe').src='';
   if(window.dlUnlockScroll) dlUnlockScroll();
@@ -2367,7 +2371,12 @@ function closeMittagPopup(){
   }
   // Clear any remaining inline scroll-lock styles
   document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';
+  // History-Eintrag wieder abbauen, wenn per UI (nicht per Zurueck) geschlossen wurde.
+  if(_mtPopupHist){ _mtPopupHist=false; if(!_fromPop){ try{ history.back(); }catch(e){} } }
 }
+window.addEventListener('popstate',function(){
+  if(document.getElementById('mt-popup-overlay').classList.contains('open')) closeMittagPopup(true);
+});
 function openCmsPopup(){
   openMittagPopup('/cms');
 }
