@@ -441,15 +441,29 @@ function bsMarkSeen(o){
 }
 function renderMessages(o){
   var h = '';
-  if(o.bestaetigung_text){
-    var warn = (o.status===2 || o.status===4);
-    h += bsBubble('staff'+(warn?' warn':''), 'Dorfladen', o.bestaetigung_text);
-  }
-  if(o.kunde_kommentar){
-    h += bsBubble('me', 'Ihre Nachricht', o.kunde_kommentar);
-  }
-  if(o.personal_antwort){
-    h += bsBubble('staff', 'Antwort vom Dorfladen', o.personal_antwort);
+  var verlauf = (o && Array.isArray(o.verlauf)) ? o.verlauf : [];
+  if(verlauf.length){
+    // Fortlaufender Verlauf: chronologisch, neueste unten (wie WhatsApp)
+    verlauf.forEach(function(m){
+      if(!m || !m.text) return;
+      if(m.who==='kunde'){
+        h += bsBubble('me', 'Ihre Nachricht', m.text);
+      } else {
+        h += bsBubble('staff', 'Antwort vom Dorfladen', m.text);
+      }
+    });
+  } else {
+    // Fallback (z.B. Fleisch-Bestellungen ohne Verlauf)
+    if(o.bestaetigung_text){
+      var warn = (o.status===2 || o.status===4);
+      h += bsBubble('staff'+(warn?' warn':''), 'Dorfladen', o.bestaetigung_text);
+    }
+    if(o.kunde_kommentar){
+      h += bsBubble('me', 'Ihre Nachricht', o.kunde_kommentar);
+    }
+    if(o.personal_antwort){
+      h += bsBubble('staff', 'Antwort vom Dorfladen', o.personal_antwort);
+    }
   }
   var box = document.getElementById('bs-messages');
   if(box){

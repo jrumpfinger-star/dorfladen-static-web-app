@@ -79,6 +79,38 @@ QUELLE_PERSONAL = 2
 QUELLE_LABELS = {0: "Online", 1: "Telefon", 2: "Personal"}
 
 
+def _parse_verlauf(raw):
+    """Parse the stored chat thread JSON into a list of message dicts."""
+    if not raw:
+        return []
+    try:
+        v = json.loads(raw)
+        if isinstance(v, list):
+            return v
+    except Exception:
+        pass
+    return []
+
+
+def _verlauf_or_legacy(item):
+    """Return the chat thread. For orders created before dl_chatverlauf existed,
+    synthesize a best-effort thread from the single legacy fields so nothing is lost."""
+    v = _parse_verlauf(item.get("dl_chatverlauf"))
+    if v:
+        return v
+    out = []
+    bt = item.get("dl_bestaetigung_text")
+    kk = item.get("dl_kunde_kommentar")
+    pa = item.get("dl_personal_antwort")
+    if bt:
+        out.append({"who": "dorfladen", "text": bt})
+    if kk:
+        out.append({"who": "kunde", "text": kk})
+    if pa:
+        out.append({"who": "dorfladen", "text": pa})
+    return out
+
+
 def _serialize(item):
     return {
         "id": item.get("dl_mittagsbestellungid", ""),
@@ -95,6 +127,7 @@ def _serialize(item):
         "bestaetigung_text": item.get("dl_bestaetigung_text", ""),
         "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
         "personal_antwort": item.get("dl_personal_antwort", ""),
+        "verlauf": _verlauf_or_legacy(item),
         "kommentar_gelesen": bool(item.get("dl_kommentar_gelesen", False)),
         "bestellt_am": item.get("createdon", ""),
         "wochentag_label": item.get("dl_wochentag_label", ""),
@@ -543,7 +576,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             # Full message orders across all dates (for Nachrichten tab)
             if req.params.get("mode") == "messages":
-                select_fields = "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,createdon"
+                select_fields = "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,createdon"
                 msg_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
                     f"?$filter=dl_kunde_kommentar ne null"
@@ -695,7 +728,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
             params = {
-                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,createdon",
+                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,createdon",
                 "$orderby": "createdon desc",
                 "$top": "200",
             }
@@ -779,6 +812,32 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             storno_grund = body.get("storno_grund")
             if storno_grund is not None:
                 patch_data["dl_storno_grund"] = storno_grund.strip()
+
+            # ── Fortlaufender Nachrichtenverlauf (dl_chatverlauf) ──
+            # Jede neue Nachricht wird mit Zeitstempel an ein JSON-Array angehaengt.
+            thread = _parse_verlauf(existing.get("dl_chatverlauf"))
+            if not thread:
+                # Einmalige Migration: bestehende Einzelfelder in den Verlauf uebernehmen,
+                # damit kein alter Text verloren geht. Neue Nachrichten werden danach angehaengt.
+                if existing.get("dl_bestaetigung_text"):
+                    thread.append({"who": "dorfladen", "text": existing.get("dl_bestaetigung_text")})
+                if existing.get("dl_kunde_kommentar"):
+                    thread.append({"who": "kunde", "text": existing.get("dl_kunde_kommentar")})
+                if existing.get("dl_personal_antwort"):
+                    thread.append({"who": "dorfladen", "text": existing.get("dl_personal_antwort")})
+            _now_iso = datetime.utcnow().isoformat() + "Z"
+            _thread_changed = False
+            if bestaetigung_text:
+                thread.append({"t": _now_iso, "who": "dorfladen", "text": bestaetigung_text})
+                _thread_changed = True
+            if kunde_kommentar is not None and kunde_kommentar.strip():
+                thread.append({"t": _now_iso, "who": "kunde", "text": kunde_kommentar.strip()})
+                _thread_changed = True
+            if personal_antwort is not None and personal_antwort.strip():
+                thread.append({"t": _now_iso, "who": "dorfladen", "text": personal_antwort.strip()})
+                _thread_changed = True
+            if _thread_changed:
+                patch_data["dl_chatverlauf"] = json.dumps(thread, ensure_ascii=False)
 
             if not patch_data:
                 return func.HttpResponse(
