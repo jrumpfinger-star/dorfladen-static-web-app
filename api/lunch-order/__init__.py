@@ -135,29 +135,47 @@ def _serialize(item):
         "quelle_label": QUELLE_LABELS.get(item.get("dl_quelle", QUELLE_ONLINE), "Online"),
         "stammkunde_id": item.get("dl_stammkunde_id", ""),
         "erfasst_von": item.get("dl_erfasst_von", ""),
+        "device_id": item.get("dl_device_id", ""),
     }
 
 
-def _send_push(email, title, body_text, tag="lunch", bestellnr="", origin=""):
-    """Best-effort push notification to customer (Kategorie 'bestellung')."""
+def _send_push(email, title, body_text, tag="lunch", bestellnr="", origin="", device_id=""):
+    """Best-effort push notification to customer (Kategorie 'bestellung').
+    Adressierung per E-Mail, sonst per Geraete-ID (device_id)."""
     try:
         from shared.urls import get_public_origin
         # origin: Basis-URL der ausloesenden Umgebung; Fallback auf Env-Hosts.
         if not origin:
             origin = get_public_origin(None)
         internal_url = f"{origin}/api/push-send"
+        from urllib.parse import quote
         push_url = "/bestellstatus"
+        _params = []
         if bestellnr:
-            push_url += f"?nr={bestellnr}"
+            _params.append("nr=" + quote(str(bestellnr)))
+        # E-Mail bzw. Geraete-ID direkt mitgeben, damit der Klick auf die Notification
+        # die Bestellung sofort oeffnet (unabhaengig von localStorage auf dem Geraet).
+        if email:
+            _params.append("email=" + quote(str(email)))
+        elif device_id:
+            _params.append("device_id=" + quote(str(device_id)))
+        if _params:
+            push_url += "?" + "&".join(_params)
         payload = {
             "title": title,
             "message": body_text,
             "url": push_url,
             "origin": origin,
-            "target_email": email,
             "category": "bestellung",
             "tag": tag,
         }
+        # Ziel: bevorzugt E-Mail, sonst Geraete-ID.
+        if email:
+            payload["target_email"] = email
+        elif device_id:
+            payload["target_device_id"] = device_id
+        else:
+            return False
         r = requests.post(internal_url, json=payload, timeout=10)
         if r.status_code in (200, 201):
             return True
@@ -359,6 +377,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             wochentag_label = (body.get("wochentag_label") or "").strip()
             mitnehmen = body.get("mitnehmen", False)
             notify_email = bool(body.get("notify_email", False))
+            device_id = (body.get("device_id") or "").strip()
             quelle = int(body.get("quelle", QUELLE_ONLINE))
             stammkunde_id = (body.get("stammkunde_id") or "").strip()
             erfasst_von = (body.get("erfasst_von") or "").strip()
@@ -366,9 +385,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             errors = []
             if not name:
                 errors.append("Name ist erforderlich.")
-            # E-Mail nur bei Online-Bestellungen pflicht
-            if quelle == QUELLE_ONLINE and not email:
-                errors.append("E-Mail ist erforderlich.")
+            # E-Mail ist nur Pflicht, wenn der Kunde E-Mail-Benachrichtigung waehlt.
+            # Ohne E-Mail laufen Status/Push ueber die Geraete-ID (device_id).
+            if quelle == QUELLE_ONLINE and notify_email and not email:
+                errors.append("Für E-Mail-Benachrichtigungen bitte eine E-Mail-Adresse angeben.")
             if not gericht:
                 errors.append("Kein Gericht ausgewählt.")
             if menge < 1 or menge > 99:
@@ -422,6 +442,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "dl_quelle": quelle,
                 "dl_stammkunde_id": stammkunde_id,
                 "dl_erfasst_von": erfasst_von,
+                "dl_device_id": device_id,
             }
 
             post_headers = {**headers, "Prefer": "return=representation"}
@@ -522,19 +543,34 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Lookup by bestellnummer (for customer status page)
             nr_filter = req.params.get("nr", "").strip()
             email_filter = req.params.get("email", "").strip().lower()
+            device_filter = req.params.get("device_id", "").strip()
 
-            # All active orders for a customer (homepage widget)
-            if email_filter and not nr_filter and req.params.get("mode") == "my":
+            def _odata_str(s):
+                return (s or "").replace("'", "''")
+
+            # All active orders for a customer (homepage widget).
+            # Schluessel: E-Mail ODER Geraete-ID (device_id), damit Bestellungen
+            # auch ohne E-Mail auffindbar sind. Stornierte Bestellungen (status 2)
+            # bleiben bis Ende des Bestelltags sichtbar (datum >= heute).
+            if (email_filter or device_filter) and not nr_filter and req.params.get("mode") == "my":
                 today_str = datetime.utcnow().strftime("%Y-%m-%d")
+                if email_filter:
+                    id_clause = f"dl_email eq '{_odata_str(email_filter)}'"
+                else:
+                    id_clause = f"dl_device_id eq '{_odata_str(device_filter)}'"
+                status_clause = (
+                    f"(dl_status eq {STATUS_NEU} or dl_status eq {STATUS_BESTAETIGT}"
+                    f" or dl_status eq {STATUS_STORNIERT})"
+                )
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
-                    f"?$filter=dl_email eq '{email_filter}'"
-                    f" and (dl_status eq {STATUS_NEU} or dl_status eq {STATUS_BESTAETIGT})"
+                    f"?$filter={id_clause}"
+                    f" and {status_clause}"
                     f" and dl_datum ge '{today_str}'"
                     f"&$orderby=dl_datum asc"
                     f"&$top=20"
                 )
-                logging.info(f"[lunch-order] mode=my email={email_filter} today={today_str} url={lookup_url}")
+                logging.info(f"[lunch-order] mode=my email={email_filter} device={device_filter} today={today_str}")
                 lr = requests.get(lookup_url, headers=headers, timeout=30)
                 logging.info(f"[lunch-order] mode=my response={lr.status_code} body={lr.text[:300]}")
                 if lr.status_code == 200:
@@ -691,10 +727,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=200, headers=get_cors_headers(),
                 )
 
-            if nr_filter and email_filter:
+            # Statusseite: Bestellung per Bestellnummer + Verifikation (E-Mail ODER Geraete-ID).
+            if nr_filter and (email_filter or device_filter):
+                if email_filter:
+                    verify_clause = f"dl_email eq '{_odata_str(email_filter)}'"
+                else:
+                    verify_clause = f"dl_device_id eq '{_odata_str(device_filter)}'"
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
-                    f"?$filter=dl_bestellnummer eq '{nr_filter}' and dl_email eq '{email_filter}'"
+                    f"?$filter=dl_bestellnummer eq '{_odata_str(nr_filter)}' and {verify_clause}"
                     f"&$top=1"
                 )
                 lr = requests.get(lookup_url, headers=headers, timeout=30)
@@ -854,26 +895,28 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if pr.status_code in (200, 204):
                 # Send push notification on confirm/cancel
                 customer_email = existing.get("dl_email", "")
+                customer_device = existing.get("dl_device_id", "")
                 gericht_name = existing.get("dl_gericht", "Mittagessen")
                 bestellnr = existing.get("dl_bestellnummer", "")
+                _can_push = bool(customer_email or customer_device)
 
-                if customer_email and new_status is not None:
+                if _can_push and new_status is not None:
                     if int(new_status) == STATUS_BESTAETIGT:
                         push_body = f"Ihre Bestellung ({gericht_name}) wurde bestätigt!"
                         if bestaetigung_text:
                             push_body += f" {bestaetigung_text}"
-                        _send_push(customer_email, "✅ Mittagessen bestätigt", push_body, f"lunch-{bestellnr}", bestellnr, _push_origin)
+                        _send_push(customer_email, "✅ Mittagessen bestätigt", push_body, f"lunch-{bestellnr}", bestellnr, _push_origin, customer_device)
                     elif int(new_status) == STATUS_STORNIERT:
                         push_body = f"Ihre Bestellung ({gericht_name}) wurde leider storniert."
                         if bestaetigung_text:
                             push_body += f" {bestaetigung_text}"
-                        _send_push(customer_email, "❌ Bestellung storniert", push_body, f"lunch-{bestellnr}", bestellnr, _push_origin)
+                        _send_push(customer_email, "❌ Bestellung storniert", push_body, f"lunch-{bestellnr}", bestellnr, _push_origin, customer_device)
                     elif int(new_status) == STATUS_ABGEHOLT:
-                        _send_push(customer_email, "🍽 Guten Appetit!", f"Ihr Mittagessen ({gericht_name}) wurde abgeholt. Guten Appetit!", f"lunch-{bestellnr}", bestellnr, _push_origin)
+                        _send_push(customer_email, "🍽 Guten Appetit!", f"Ihr Mittagessen ({gericht_name}) wurde abgeholt. Guten Appetit!", f"lunch-{bestellnr}", bestellnr, _push_origin, customer_device)
 
                 # Push to customer when staff sends a reply
-                if customer_email and personal_antwort:
-                    _send_push(customer_email, "💬 Nachricht vom Dorfladen", personal_antwort, f"lunch-reply-{bestellnr}", bestellnr, _push_origin)
+                if _can_push and personal_antwort:
+                    _send_push(customer_email, "💬 Nachricht vom Dorfladen", personal_antwort, f"lunch-reply-{bestellnr}", bestellnr, _push_origin, customer_device)
 
                 return func.HttpResponse(
                     json.dumps({"success": True, "message": "Status aktualisiert"}, ensure_ascii=False),

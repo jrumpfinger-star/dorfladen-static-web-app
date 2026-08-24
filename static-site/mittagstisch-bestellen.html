@@ -241,9 +241,9 @@ if(window!==window.parent){
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="cust-email">E-Mail *</label>
+          <label for="cust-email">E-Mail <span id="email-req" style="color:#9ca3af;font-weight:400">(optional)</span></label>
           <input type="email" id="cust-email" placeholder="ihre@email.de" autocomplete="email">
-          <div class="field-hint">Zum Aufrufen Ihres Bestellstatus</div>
+          <div class="field-hint">Nur nötig für E-Mail-Benachrichtigung – Status &amp; App-Push gehen auch ohne</div>
         </div>
         <div class="field">
           <label for="cust-phone">Telefon (optional)</label>
@@ -569,7 +569,8 @@ if(window!==window.parent){
 
     var errors = [];
     if(!name) errors.push('Bitte Name eingeben.');
-    if(!email) errors.push('Bitte E-Mail eingeben.');
+    // E-Mail ist nur Pflicht, wenn E-Mail-Benachrichtigung gewaehlt wurde.
+    if(notifyEmail && !email) errors.push('Für E-Mail-Benachrichtigung bitte E-Mail-Adresse eingeben.');
     if(!selectedDish) errors.push('Kein Gericht ausgewählt.');
     // Bestellzeitsperre: heute nur bis Bestellschluss
     if(selectedDish && selectedDish.datum){
@@ -610,6 +611,7 @@ if(window!==window.parent){
         wochentag_label: selectedDish.wochentag_label || '',
         mitnehmen: mitnehmen,
         notify_email: notifyEmail,
+        device_id: (window.dlPushDeviceId?dlPushDeviceId():''),
         quelle: 0
       })
     })
@@ -622,8 +624,8 @@ if(window!==window.parent){
         document.getElementById('success-msg').textContent = 
           'Wir bestätigen Ihre Bestellung in Kürze.' + 
           (mitnehmen ? ' (Zum Mitnehmen)' : ' (Verzehr im Laden)');
-        // Save for bestellstatus page auto-login
-        try{ localStorage.setItem('bs_nr', res.bestellnummer||''); localStorage.setItem('bs_email', email); }catch(e){}
+        // Save for bestellstatus page auto-login (E-Mail nur wenn vorhanden)
+        try{ localStorage.setItem('bs_nr', res.bestellnummer||''); if(email){ localStorage.setItem('bs_email', email); } }catch(e){}
         if(notifyPush){ try{ registerPush(); }catch(e){} }
         document.getElementById('success-overlay').classList.add('show');
         history.pushState({overlay:'success'},'');
@@ -694,8 +696,8 @@ if(window!==window.parent){
   // ── Push registration (with friendly pre-prompt) ──
   function registerPush(){
     if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    // E-Mail optional: Push wird ueber die Geraete-ID (device_id) zugestellt.
     var email = document.getElementById('cust-email').value.trim();
-    if(!email) return;
     if(Notification.permission === 'denied') return;
     
     navigator.serviceWorker.ready.then(function(reg){
@@ -724,7 +726,6 @@ if(window!==window.parent){
     Notification.requestPermission().then(function(perm){
       if(perm!=='granted') return;
       var email = document.getElementById('cust-email').value.trim();
-      if(!email) return;
       navigator.serviceWorker.ready.then(function(reg){
         doPushSubscribe(reg,email);
       });
@@ -764,6 +765,14 @@ if(window!==window.parent){
   });
   // App-Benachrichtigung aktivieren -> direkt Push einrichten (Permission-Prompt)
   (function(){var op=document.getElementById('opt-push');if(op){op.addEventListener('change',function(){if(op.checked)registerPush();});}})();
+  // E-Mail-Pflichtkennzeichen dynamisch: bei gewaehlter E-Mail-Benachrichtigung wird sie Pflicht.
+  (function(){
+    var oe=document.getElementById('opt-email'), req=document.getElementById('email-req');
+    if(oe&&req){
+      var upd=function(){ if(oe.checked){ req.textContent='*'; req.style.color='#dc2626'; } else { req.textContent='(optional)'; req.style.color='#9ca3af'; } };
+      oe.addEventListener('change',upd); upd();
+    }
+  })();
 
   // ── Android Back-Button ──
   window.addEventListener('popstate',function(){

@@ -1512,8 +1512,11 @@
   // Cache lunch-order fetch for reuse (widget + tagesinfo markers)
   (function(){
     var email = (localStorage.getItem('bs_email')||'').trim();
-    if(email){
-      window._dlLunchOrderP=fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
+    var dev = (localStorage.getItem('dl_push_device_id')||'').trim();
+    // Schluessel: E-Mail, sonst Geraete-ID (Bestellungen ohne E-Mail).
+    var q = email ? ('email='+encodeURIComponent(email)) : (dev ? ('device_id='+encodeURIComponent(dev)) : '');
+    if(q){
+      window._dlLunchOrderP=fetch('/api/lunch-order?mode=my&'+q)
         .then(function(r){return r.json();}).catch(function(){return {success:false};});
     }
   })();
@@ -1524,9 +1527,9 @@
     try{
       if(!window._dlLunchOrderP) return;
 
-      var STATUS_LABELS = {0:'Neu',1:'Best\u00e4tigt'};
-      var STATUS_COLORS = {0:'#f59e0b',1:'#10b981'};
-      var STATUS_BG = {0:'#fef3c7',1:'#d1fae5'};
+      var STATUS_LABELS = {0:'Neu',1:'Best\u00e4tigt',2:'Storniert',3:'Abgeholt'};
+      var STATUS_COLORS = {0:'#f59e0b',1:'#10b981',2:'#ef4444',3:'#6b7280'};
+      var STATUS_BG = {0:'#fef3c7',1:'#d1fae5',2:'#fee2e2',3:'#f3f4f6'};
 
       function fmtDate(iso){
         if(!iso) return '';

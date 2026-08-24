@@ -365,8 +365,10 @@ window.addEventListener('message',function(e){
   function _ensureLunchOrderP(){
     if(window._dlLunchOrderP) return window._dlLunchOrderP;
     var email=(localStorage.getItem('bs_email')||'').trim();
-    if(!email) return null;
-    window._dlLunchOrderP=fetch('/api/lunch-order?email='+encodeURIComponent(email)+'&mode=my')
+    var dev=(localStorage.getItem('dl_push_device_id')||'').trim();
+    var q = email ? ('email='+encodeURIComponent(email)) : (dev ? ('device_id='+encodeURIComponent(dev)) : '');
+    if(!q) return null;
+    window._dlLunchOrderP=fetch('/api/lunch-order?mode=my&'+q)
       .then(function(r){return r.json();}).catch(function(){return {success:false};});
     return window._dlLunchOrderP;
   }
@@ -377,13 +379,21 @@ window.addEventListener('message',function(e){
       if(!res||!res.success)return;
       var orders=res.orders||[];
       var today=new Date().toISOString().substring(0,10);
-      var todayOrders=orders.filter(function(o){return (o.datum||'').substring(0,10)===today&&o.status!==2;});
+      var todayOrders=orders.filter(function(o){return (o.datum||'').substring(0,10)===today;});
       if(!todayOrders.length)return;
       var byGericht={};
       todayOrders.forEach(function(o){
         var g=(o.gericht||'').trim().toLowerCase();
+        // Stornierte Bestellung: als storniert markieren (auch wenn es sonst keine offene gibt)
+        if(o.status===2){
+          if(!byGericht[g]) byGericht[g]={count:0,nr:o.bestellnummer||'',status:2,unread:false,storniert:true};
+          else byGericht[g].storniert=true;
+          return;
+        }
         if(!byGericht[g])byGericht[g]={count:0,nr:o.bestellnummer||'',status:o.status,unread:false};
         byGericht[g].count+=(o.menge||1);
+        byGericht[g].status=o.status;
+        byGericht[g].nr=o.bestellnummer||byGericht[g].nr;
         if(o.personal_antwort && localStorage.getItem('dl_msg_seen_'+(o.bestellnummer||''))!==o.personal_antwort){
           byGericht[g].unread=true;
           byGericht[g].nr=o.bestellnummer||byGericht[g].nr;
@@ -394,16 +404,32 @@ window.addEventListener('message',function(e){
         var g=el.getAttribute('data-gericht').toLowerCase();
         if(!byGericht[g])return;
         var info=byGericht[g];
-        var lbl=info.count>1?info.count+'x bestellt':'bestellt';
-        var col=info.status===1?'#16a34a':'#d97706';
-        var bg=info.status===1?'#dcfce7':'#fef3c7';
+        var lbl, col, bg;
+        if(info.count>0){
+          lbl=info.count>1?info.count+'x bestellt':'bestellt';
+          col=info.status===1?'#16a34a':'#d97706';
+          bg=info.status===1?'#dcfce7':'#fef3c7';
+        } else {
+          // nur stornierte Bestellung(en) fuer dieses Gericht
+          lbl='storniert';
+          col='#dc2626'; bg='#fee2e2';
+        }
         var badge=document.createElement('a');
         badge.href='javascript:void(0)';
         badge.setAttribute('data-bs-nr',info.nr);
         badge.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:'+bg+';color:'+col+';border-radius:6px;font-size:10px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0;white-space:nowrap';
-        badge.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+lbl;
+        var _icon = info.count>0
+          ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          : '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        badge.innerHTML=_icon+lbl;
         badge.onclick=function(e){e.stopPropagation();e.preventDefault();openBestellstatus(this.getAttribute('data-bs-nr'));};
         el.appendChild(badge);
+        if(info.storniert && info.count>0){
+          var sb=document.createElement('span');
+          sb.style.cssText='display:inline-flex;align-items:center;padding:2px 8px;background:#fee2e2;color:#dc2626;border-radius:6px;font-size:10px;font-weight:700;margin-left:6px;flex-shrink:0;white-space:nowrap';
+          sb.textContent='+ storniert';
+          el.appendChild(sb);
+        }
         if(info.unread){
           var msg=document.createElement('a');
           msg.href='javascript:void(0)';

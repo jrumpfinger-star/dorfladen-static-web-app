@@ -243,6 +243,12 @@ function getParam(name){
   return url.searchParams.get(name) || '';
 }
 
+// Geraete-ID lesen (gleiche Kennung wie beim Bestellen gesetzt) – NUR lesen,
+// damit ein Aufruf ohne bestehende ID nicht faelschlich eine neue erzeugt.
+function bsDeviceId(){
+  try{ return localStorage.getItem('dl_push_device_id') || ''; }catch(e){ return ''; }
+}
+
 function isFleisch(nr){ return (nr||'').toUpperCase().indexOf('FM-')===0; }
 
 // Auth-Karten umschalten (verhindert kurzes Aufblitzen des Login-Dialogs beim Auto-Login)
@@ -286,13 +292,16 @@ function lookupOrder(){
     var apiUrl = '/api/fleisch-order?nr='+encodeURIComponent(nr)+'&telefon='+encodeURIComponent(telefon);
   } else {
     var email = document.getElementById('bs-email').value.trim().toLowerCase();
-    if(!nr || !email){
+    var deviceId = bsDeviceId();
+    // E-Mail optional: mit E-Mail ODER (falls leer) mit der Geraete-ID verifizieren.
+    if(!nr || (!email && !deviceId)){
       errEl.textContent = 'Bitte Bestellnummer und E-Mail eingeben.';
       errEl.style.display = 'block';
       return;
     }
-    try{ localStorage.setItem('bs_email', email); localStorage.setItem('bs_nr', nr); }catch(e){}
-    var apiUrl = '/api/lunch-order?nr='+encodeURIComponent(nr)+'&email='+encodeURIComponent(email);
+    try{ if(email){ localStorage.setItem('bs_email', email); } localStorage.setItem('bs_nr', nr); }catch(e){}
+    var apiUrl = '/api/lunch-order?nr='+encodeURIComponent(nr)
+      + (email ? '&email='+encodeURIComponent(email) : '&device_id='+encodeURIComponent(deviceId));
   }
 
   fetch(apiUrl)
@@ -648,7 +657,8 @@ function sendComment(){
   if(nr) document.getElementById('bs-nr').value = nr;
   if(email) document.getElementById('bs-email').value = email;
   bsUpdateAuthField();
-  if(nr && email){ bsShowLoading(); lookupOrder(); }
+  // E-Mail optional: mit E-Mail ODER Geraete-ID (device_id) automatisch oeffnen.
+  if(nr && (email || bsDeviceId())){ bsShowLoading(); lookupOrder(); }
 })();
 </script>
 <script>if(window.lucide) lucide.createIcons();</script>
