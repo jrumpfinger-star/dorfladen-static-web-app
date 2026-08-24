@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v29';
+var CACHE_NAME='dorfladen-v30';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',

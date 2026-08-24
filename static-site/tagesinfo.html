@@ -179,11 +179,13 @@ window.dlImagePopup=function(src,alt){
   ov.appendChild(cls);
   document.body.appendChild(ov);
   if(window.dlLockScroll) dlLockScroll();
-  function _imgClose(){ov.remove();if(window.dlUnlockScroll) dlUnlockScroll();}
+  if(!_dlImgHist){ _dlImgHist=true; try{ history.pushState({dlImg:true},''); }catch(e){} }
+  function _imgClose(_fromPop){ov.remove();if(window.dlUnlockScroll) dlUnlockScroll();if(_dlImgHist){_dlImgHist=false;if(!_fromPop){try{history.back();}catch(e){}}}}
   ov.addEventListener('click',function(){_imgClose();});
   cls.addEventListener('click',function(e){e.stopPropagation();_imgClose();});
   document.addEventListener('keydown',function onKey(e){if(e.key==='Escape'){_imgClose();document.removeEventListener('keydown',onKey);}});
 };
+var _dlImgHist=false;
 
 /* === Bestell-Popup (iframe auf /mittagstisch-bestellen) === */
 var _mtPopupHist=false;
@@ -204,6 +206,9 @@ function closeMittagPopup(_fromPop){
   if(_mtPopupHist){ _mtPopupHist=false; if(!_fromPop){ try{ history.back(); }catch(e){} } }
 }
 window.addEventListener('popstate',function(){
+  // Zuerst das Bild-Popup (oberste Ebene) schliessen, falls offen.
+  var ip=document.getElementById('dl-img-popup');
+  if(ip){ ip.remove(); if(window.dlUnlockScroll) dlUnlockScroll(); _dlImgHist=false; return; }
   if(document.getElementById('mt-popup-overlay').classList.contains('open')) closeMittagPopup(true);
 });
 function openBestellstatus(nr){ openMittagPopup('/bestellstatus?nr='+encodeURIComponent(nr||'')); }

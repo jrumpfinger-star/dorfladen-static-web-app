@@ -103,10 +103,64 @@ document.addEventListener('visibilitychange',function(){ if(document.visibilityS
       else{hilfeOv.classList.remove('open');document.body.style.overflow='';}
       return true;
     }
+    // Bestelldetail-Overlay (Shop) / Bestell-Uebersichten / TagesInfo-Overlay
+    var odOv=document.getElementById('od-overlay');
+    if(odOv&&odOv.classList.contains('open')){ odOv.classList.remove('open'); if(window.dlUnlockScroll)dlUnlockScroll(); return true; }
+    var ordersOv=document.getElementById('orders-overlay');
+    if(ordersOv&&ordersOv.classList.contains('open')){ ordersOv.classList.remove('open'); if(window.dlUnlockScroll)dlUnlockScroll(); return true; }
+    var tpOv=document.getElementById('tp-overlay');
+    if(tpOv&&tpOv.classList.contains('open')){ tpOv.classList.remove('open'); if(window.dlUnlockScroll)dlUnlockScroll(); return true; }
+    // Vollbild-Bild-Popup (Zoom)
+    var imgPop=document.getElementById('dl-img-popup');
+    if(imgPop){ imgPop.remove(); if(window.dlUnlockScroll)dlUnlockScroll(); return true; }
+    // Dynamisch erzeugte "Meine Bestellungen"-Popups (display:flex/none)
+    var dynPops=document.querySelectorAll('[id^="popup-"]');
+    for(var dp=0;dp<dynPops.length;dp++){
+      if(_dlOverlayVisible(dynPops[dp])){ dynPops[dp].style.display='none'; document.body.style.overflow=''; return true; }
+    }
     // PWA install banner
     var pwaBanner=document.getElementById('pwa-install-banner');
     if(pwaBanner&&pwaBanner.style.display!=='none'&&pwaBanner.offsetParent){
       pwaBanner.style.display='none';return true;
+    }
+    return false;
+  }
+
+  // Sichtbarkeit eines (auch position:fixed) Overlays robust pruefen.
+  function _dlOverlayVisible(el){
+    if(!el) return false;
+    try{ var s=getComputedStyle(el); return s.display!=='none' && s.visibility!=='hidden' && s.opacity!=='0'; }
+    catch(_){ return false; }
+  }
+
+  // Zentrale Liste aller Overlays, die den Zurueck-Button abfangen sollen.
+  // WICHTIG: Jedes NEUE Overlay hier eintragen ODER eine der bestehenden
+  // Konventionen (.open / display) nutzen – der Observer unten sichert es dann
+  // automatisch ab. Das mt-popup (.mt-popup-overlay) ist bewusst NICHT enthalten,
+  // da es auf index/tagesinfo eine eigene History-Behandlung besitzt.
+  var _DL_OVERLAY_SELECTORS=[
+    {sel:'.mob-popup-bg.open'},
+    {sel:'#mob-nav.open'},
+    {sel:'#lightbox-overlay.active'},
+    {sel:'.news-overlay.open'},
+    {sel:'[id^="dt-modal-"].open'},
+    {sel:'.cms-confirm-overlay.open'},
+    {sel:'#hilfe-overlay.open'},
+    {sel:'#od-overlay.open'},
+    {sel:'#orders-overlay.open'},
+    {sel:'#tp-overlay.open'},
+    {sel:'#push-settings-overlay', vis:true},
+    {sel:'#dl-img-popup', vis:true},
+    {sel:'[id^="popup-"]', vis:true}
+  ];
+  function dlAnyOverlayOpen(){
+    for(var i=0;i<_DL_OVERLAY_SELECTORS.length;i++){
+      var o=_DL_OVERLAY_SELECTORS[i];
+      var nodes=document.querySelectorAll(o.sel);
+      for(var j=0;j<nodes.length;j++){
+        if(o.vis){ if(_dlOverlayVisible(nodes[j])) return true; }
+        else { return true; }
+      }
     }
     return false;
   }
@@ -136,11 +190,36 @@ document.addEventListener('visibilitychange',function(){ if(document.visibilityS
     if(_popupStateActive){
       _popupStateActive=false;
       closeAnyPopup();
+      // Falls noch ein weiteres Overlay offen ist, erneut absichern.
+      if(dlAnyOverlayOpen()){ window.pushPopupState(); }
       return;
     }
     // No popup: let browser/PWA history continue normally.
     // Important: do not push a homepage guard here; Firefox Android would require extra Back clicks.
   });
+
+  // === Automatische Absicherung ALLER Overlays gegen den Zurueck-Button ===
+  // Ein MutationObserver erkennt, sobald irgendein Overlay geoeffnet oder
+  // geschlossen wird, und verwaltet den History-Eintrag automatisch. Dadurch
+  // muss nicht mehr an jeder einzelnen Oeffnen-/Schliessen-Stelle daran gedacht
+  // werden – neue Overlays sind ohne Zusatzcode abgesichert.
+  var _dlOvlTimer=0;
+  function _dlOverlaySync(){
+    _dlOvlTimer=0;
+    var open=dlAnyOverlayOpen();
+    if(open && !_popupStateActive){ window.pushPopupState(); }
+    else if(!open && _popupStateActive){ window.removePopupState(); }
+  }
+  function _dlOverlaySchedule(){
+    if(_dlOvlTimer) return;
+    // setTimeout statt requestAnimationFrame: feuert auch in inaktiven Tabs
+    // zuverlaessig, sodass der History-Eintrag garantiert gesetzt wird.
+    _dlOvlTimer=setTimeout(_dlOverlaySync,0);
+  }
+  try{
+    var _dlOvlObserver=new MutationObserver(_dlOverlaySchedule);
+    _dlOvlObserver.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+  }catch(_){}
 })();
 
 var _pwaPrompt=null;
