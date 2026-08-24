@@ -36,7 +36,23 @@ if('serviceWorker' in navigator){
   });
 }
 
-// PWA: Android back gesture – close popups/overlays first, then navigate
+// ── App-Icon-Badge zuruecksetzen, sobald die App geoeffnet/sichtbar ist ──
+// (die ungelesenen Push-Nachrichten gelten dann als gesehen). Nutzt die
+// Web-Badging-API; auf nicht unterstuetzten Plattformen ein No-Op.
+function dlClearAppBadge(){
+  try{ if(navigator.clearAppBadge) navigator.clearAppBadge(); }catch(e){}
+  try{
+    if(navigator.serviceWorker){
+      navigator.serviceWorker.ready.then(function(reg){
+        var sw=(reg&&reg.active)||navigator.serviceWorker.controller;
+        if(sw) sw.postMessage({type:'CLEAR_BADGE'});
+      }).catch(function(){});
+    }
+  }catch(e){}
+}
+window.addEventListener('load',function(){ setTimeout(dlClearAppBadge,400); });
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') dlClearAppBadge(); });
+
 (function(){
   var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
 

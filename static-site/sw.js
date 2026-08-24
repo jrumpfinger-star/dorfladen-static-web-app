@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v27';
+var CACHE_NAME='dorfladen-v28';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',
@@ -22,10 +22,55 @@ self.addEventListener('install',function(e){
   self.skipWaiting();
 });
 
-// Allow page to force-activate a waiting SW
+// Allow page to force-activate a waiting SW + Badge zuruecksetzen, wenn die App
+// geoeffnet/sichtbar wird (Notifications gelten dann als gesehen).
 self.addEventListener('message',function(e){
   if(e.data&&e.data.type==='SKIP_WAITING') self.skipWaiting();
+  if(e.data&&e.data.type==='CLEAR_BADGE'){
+    e.waitUntil(idbBadge('set',0).then(function(){return clearAppBadge();}));
+  }
 });
+
+// ── App-Icon-Badge (ungelesene Push-Nachrichten) ─────────────────────────────
+// Persistenter Zaehler in IndexedDB (der SW hat kein localStorage). Bei jeder
+// Push-Nachricht +1, beim Oeffnen/Anklicken zurueck auf 0. Zeigt auf installierten
+// PWAs (Android/Chrome, Desktop, iOS 16.4+) eine Zahl am App-Icon.
+function idbBadge(mode,val){
+  return new Promise(function(resolve){
+    try{
+      var open=indexedDB.open('dl-badge',1);
+      open.onupgradeneeded=function(){ try{ open.result.createObjectStore('kv'); }catch(_){} };
+      open.onerror=function(){ resolve(0); };
+      open.onsuccess=function(){
+        try{
+          var db=open.result;
+          var tx=db.transaction('kv',mode==='get'?'readonly':'readwrite');
+          var store=tx.objectStore('kv');
+          if(mode==='get'){
+            var g=store.get('unread');
+            g.onsuccess=function(){ resolve(Number(g.result)||0); };
+            g.onerror=function(){ resolve(0); };
+          }else{
+            store.put(Number(val)||0,'unread');
+            tx.oncomplete=function(){ resolve(Number(val)||0); };
+            tx.onerror=function(){ resolve(Number(val)||0); };
+          }
+        }catch(_){ resolve(0); }
+      };
+    }catch(_){ resolve(0); }
+  });
+}
+function setAppBadge(n){
+  try{
+    if(n>0 && self.navigator && self.navigator.setAppBadge) return self.navigator.setAppBadge(n);
+    if(self.navigator && self.navigator.clearAppBadge) return self.navigator.clearAppBadge();
+  }catch(_){}
+  return Promise.resolve();
+}
+function clearAppBadge(){
+  try{ if(self.navigator && self.navigator.clearAppBadge) return self.navigator.clearAppBadge(); }catch(_){}
+  return Promise.resolve();
+}
 
 self.addEventListener('activate',function(e){
   e.waitUntil(
@@ -102,7 +147,15 @@ self.addEventListener('push',function(e){
     requireInteraction:false
   };
   if(data.image)opts.image=data.image;
-  e.waitUntil(self.registration.showNotification(data.title,opts));
+  // Notification anzeigen UND ungelesen-Zaehler am App-Icon erhoehen.
+  e.waitUntil(
+    self.registration.showNotification(data.title,opts).then(function(){
+      return idbBadge('get').then(function(n){
+        var c=(Number(n)||0)+1;
+        return idbBadge('set',c).then(function(){ return setAppBadge(c); });
+      });
+    })
+  );
 });
 
 // Auto-renew expired push subscriptions (Firefox lets them expire)
@@ -135,8 +188,7 @@ self.addEventListener('notificationclick',function(e){
   var rawUrl=e.notification.data&&e.notification.data.url?e.notification.data.url:'/';
   var targetUrl;
   try{ targetUrl=new URL(rawUrl,self.location.origin).href; }catch(_){ targetUrl=self.location.origin+'/'; }
-  e.waitUntil(
-    clients.matchAll({type:'window',includeUncontrolled:true}).then(function(cl){
+  var openApp=clients.matchAll({type:'window',includeUncontrolled:true}).then(function(cl){
       for(var i=0;i<cl.length;i++){
         var c=cl[i];
         if(!c || !c.url) continue;
@@ -153,6 +205,7 @@ self.addEventListener('notificationclick',function(e){
         }catch(_){}
       }
       if(clients.openWindow)return clients.openWindow(targetUrl);
-    })
-  );
+    });
+  // Klick = gelesen -> Badge zuruecksetzen.
+  e.waitUntil(Promise.all([openApp, idbBadge('set',0).then(function(){return clearAppBadge();})]));
 });
