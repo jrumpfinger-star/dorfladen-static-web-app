@@ -1058,6 +1058,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <div class="cms-card-body">
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
           <button class="cms-btn" onclick="pushLoadSubscribers()" style="background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;font-size:12px">&#128260; Aktualisieren</button>
+          <button class="cms-btn" onclick="pushDedupeSubs()" title="Pro Ger&auml;t/E-Mail nur das neueste Abo behalten, &auml;ltere Doppel-Abos entfernen" style="background:#fffbeb;color:#b45309;border:1px solid #fde68a;font-size:12px">&#129529; Duplikate bereinigen</button>
           <input type="text" id="push-sub-search" oninput="pushRenderSubscribers()" placeholder="&#128269; Suche (Plattform, E-Mail, Domain)" class="cms-input" style="flex:1;min-width:180px;font-size:12px">
           <select id="push-sub-filter-cat" onchange="pushRenderSubscribers()" class="cms-input" style="font-size:12px;width:auto">
             <option value="">Alle Kategorien</option>
@@ -3274,7 +3275,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="if(window.innerWidth>=900&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
             </div>
                           <label id="soc-tagesinfo-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-tagesinfo" checked style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128260; Tagesinfo aktualisieren <span style="color:#9ca3af">(aus = Test, erscheint nicht auf der Homepage)</span></span></label>
-                          <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
+                          <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" checked style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
           </div>
         </div>
       </div>

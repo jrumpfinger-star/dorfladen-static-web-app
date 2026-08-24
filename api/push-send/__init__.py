@@ -130,6 +130,49 @@ def _delete_subscription(base_url, hdrs, entity_set, record_id):
         pass
 
 
+def _dedupe_subscribers(base_url, hdrs, entity_set):
+    """Entfernt veraltete Doppel-Abos: pro Geraet bzw. E-Mail+Plattform bleibt
+    nur das NEUESTE Abo (nach createdon) erhalten, aeltere werden geloescht.
+
+    Gruppierung:
+      - device_id (falls vorhanden) -> exakt dasselbe Geraet.
+      - sonst E-Mail + Push-Domain (z. B. fcm.googleapis.com) -> selbe Person/
+        Browser-Plattform (deckt Alt-Abos ohne device_id ab).
+      - Ohne device_id UND ohne E-Mail: unveraendert lassen (Endpoint ist
+        ohnehin eindeutig, keine sichere Zusammenfassung moeglich).
+    """
+    subs = _fetch_all_subscriptions(base_url, hdrs, entity_set)
+    groups = {}
+    for s in subs:
+        ep = (s.get("subscription") or {}).get("endpoint", "")
+        domain = ep.split("/")[2] if ep.count("/") >= 2 else ""
+        dev = s.get("device_id") or ""
+        email = (s.get("email") or "").lower().strip()
+        if dev:
+            key = "dev:" + dev
+        elif email:
+            key = "ed:" + email + "|" + domain
+        else:
+            continue
+        groups.setdefault(key, []).append(s)
+
+    removed = 0
+    kept = 0
+    for _key, items in groups.items():
+        if len(items) <= 1:
+            kept += len(items)
+            continue
+        # Neuestes zuerst (fehlendes Datum = aeltestes).
+        items.sort(key=lambda x: x.get("created") or "", reverse=True)
+        kept += 1
+        for old in items[1:]:
+            rid = old.get("record_id")
+            if rid:
+                _delete_subscription(base_url, hdrs, entity_set, rid)
+                removed += 1
+    return {"removed": removed, "kept": kept, "checked": len(subs)}
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     from shared.auth import admin_auth_guard
     _auth = admin_auth_guard(req)
@@ -258,6 +301,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "Invalid JSON"}),
             status_code=400, mimetype="application/json", headers=get_cors_headers()
+        )
+
+    # Admin-Aktion: Duplikate bereinigen (kein Push, kein VAPID noetig).
+    if isinstance(body, dict) and body.get("_action") == "dedupe_subscribers":
+        base_url = os.environ.get(DEFAULT_URL_SETTING, "").strip() or DEFAULT_URL_FALLBACK
+        hdrs = get_headers(DEFAULT_URL_SETTING)
+        entity_set = _resolve_entity_set(base_url, hdrs)
+        if not entity_set:
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": "Dataverse not reachable"}),
+                status_code=500, mimetype="application/json", headers=get_cors_headers()
+            )
+        result = _dedupe_subscribers(base_url, hdrs, entity_set)
+        result["success"] = True
+        return func.HttpResponse(
+            json.dumps(result), status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
     title = body.get("title", "Dorfladen Oberornau")

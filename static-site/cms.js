@@ -9049,6 +9049,21 @@
       });
     }).catch(function(e){toast(_cmsErr(e),'error');});
   };
+  window.pushDedupeSubs = function(){
+    cmsConfirm('Doppelte Abos bereinigen?\n\nPro Ger\u00e4t bzw. E-Mail+Plattform bleibt nur das NEUESTE Abo erhalten, \u00e4ltere werden gel\u00f6scht.',{icon:'\uD83E\uDDF9',ok:'Bereinigen',warn:true}).then(function(ok){
+      if(!ok)return;
+      toast('Bereinige Duplikate\u2026','info');
+      fetch(API+'/push-send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({_action:'dedupe_subscribers'})})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){
+            var rem=res.removed||0;
+            toast(rem>0?('\u2705 '+rem+' Duplikat'+(rem===1?'':'e')+' entfernt'):'Keine Duplikate gefunden',rem>0?'ok':'info');
+            pushLoadSubscribers();
+          }else{toast('Fehler: '+(res.error||'Unbekannt'),'error');}
+        }).catch(function(e){toast(_cmsErr(e),'error');});
+    });
+  };
   window.pushDeleteSub = function(recordId){
     cmsConfirm('Subscriber wirklich l\u00f6schen?',{icon:'\uD83D\uDDD1\uFE0F',ok:'L\u00f6schen',warn:true}).then(function(ok){
       if(!ok)return;
