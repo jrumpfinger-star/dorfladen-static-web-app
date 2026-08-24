@@ -77,14 +77,15 @@
     .dish-price{font-size:17px;font-weight:800;color:var(--c-green);margin-top:3px}
     .dish-eco{font-size:11px;color:var(--c-muted);margin-top:3px}
 
-    /* Menge */
-    .qty-row{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 16px 4px}
+    /* Menge + Gesamt in einer Zeile */
+    .qty-total-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px}
+    .qty-stepper{display:flex;align-items:center;gap:14px}
     .qty-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--c-green);background:#fff;color:var(--c-green);font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
     .qty-btn:hover{background:var(--c-green);color:#fff}
     .qty-btn:disabled{opacity:.3;cursor:not-allowed}
-    .qty-val{font-size:24px;font-weight:800;min-width:44px;text-align:center}
-    .qty-label{font-size:12px;color:var(--c-muted);text-align:center;padding-bottom:8px}
-    .total-row{text-align:center;font-size:14px;font-weight:600;color:var(--c-text);padding:0 16px 10px}
+    .qty-val{font-size:24px;font-weight:800;min-width:34px;text-align:center}
+    .total-box{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+    .total-label{font-size:11px;color:var(--c-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
     .total-price{font-size:20px;font-weight:800;color:var(--c-green)}
 
     /* Option Mitnehmen */
@@ -208,13 +209,14 @@ if(window!==window.parent){
         <div id="dish-allergene" style="font-size:12px;color:#d97706;margin-top:6px;display:none"></div>
         <div class="dish-eco">🏷 0,50 € Öko-Rabatt mit eigenem Behälter</div>
       </div>
-      <div class="qty-row">
-        <button class="qty-btn" id="qty-minus" type="button" onclick="changeQty(-1)">−</button>
-        <div class="qty-val" id="qty-val">1</div>
-        <button class="qty-btn" id="qty-plus" type="button" onclick="changeQty(1)">+</button>
+      <div class="qty-total-row">
+        <div class="qty-stepper">
+          <button class="qty-btn" id="qty-minus" type="button" onclick="changeQty(-1)">−</button>
+          <div class="qty-val" id="qty-val">1</div>
+          <button class="qty-btn" id="qty-plus" type="button" onclick="changeQty(1)">+</button>
+        </div>
+        <div class="total-box"><span class="total-label">Gesamt</span><span class="total-price" id="total-price">0,00 €</span></div>
       </div>
-      <div class="qty-label">Anzahl Portionen</div>
-      <div class="total-row">Gesamt: <span class="total-price" id="total-price">0,00 €</span></div>
       <div class="option-row">
         <input type="checkbox" id="opt-mitnehmen">
         <label for="opt-mitnehmen">📦 Zum Mitnehmen</label>
