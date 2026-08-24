@@ -57,6 +57,7 @@
     .tp-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:48px 20px;color:#6b7280}
     .tp-loading .tpfc-spin{width:38px;height:38px;border:4px solid rgba(30,58,47,.18);border-top-color:#1e3a2f;border-radius:50%;animation:tpfcSpin 1s linear infinite}
     @keyframes tpfcSpin{to{transform:rotate(360deg)}}
+    @keyframes dlPulse{0%,100%{opacity:1}50%{opacity:.55}}
     .tp-empty{text-align:center;padding:40px 20px;color:#6b7280;font-size:15px;line-height:1.5}
 
     .tp-freitext{font-size:14px;color:#374151;margin-bottom:16px;line-height:1.5;padding:12px;background:#f0fdf4;border-radius:10px;border-left:3px solid #2e7d4f}
@@ -374,8 +375,12 @@ window.addEventListener('message',function(e){
       var byGericht={};
       todayOrders.forEach(function(o){
         var g=(o.gericht||'').trim().toLowerCase();
-        if(!byGericht[g])byGericht[g]={count:0,nr:o.bestellnummer||'',status:o.status};
+        if(!byGericht[g])byGericht[g]={count:0,nr:o.bestellnummer||'',status:o.status,unread:false};
         byGericht[g].count+=(o.menge||1);
+        if(o.personal_antwort && localStorage.getItem('dl_msg_seen_'+(o.bestellnummer||''))!==o.personal_antwort){
+          byGericht[g].unread=true;
+          byGericht[g].nr=o.bestellnummer||byGericht[g].nr;
+        }
       });
       document.querySelectorAll('.tp-item[data-gericht]').forEach(function(el){
         if(el.querySelector('[data-bs-nr]'))return;
@@ -392,6 +397,15 @@ window.addEventListener('message',function(e){
         badge.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+lbl;
         badge.onclick=function(e){e.stopPropagation();e.preventDefault();openBestellstatus(this.getAttribute('data-bs-nr'));};
         el.appendChild(badge);
+        if(info.unread){
+          var msg=document.createElement('a');
+          msg.href='javascript:void(0)';
+          msg.setAttribute('data-bs-nr',info.nr);
+          msg.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#fee2e2;color:#dc2626;border-radius:6px;font-size:10px;font-weight:700;text-decoration:none;margin-left:6px;flex-shrink:0;white-space:nowrap;animation:dlPulse 1.6s ease-in-out infinite';
+          msg.innerHTML='\ud83d\udcac Neue Nachricht';
+          msg.onclick=function(e){e.stopPropagation();e.preventDefault();openBestellstatus(this.getAttribute('data-bs-nr'));};
+          el.appendChild(msg);
+        }
       });
     }).catch(function(){});
   }
