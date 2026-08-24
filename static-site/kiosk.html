@@ -1453,7 +1453,7 @@ var K = (function(){
   var _msgOrders = []; // Nachrichten über alle Tage
 
   function _hasUnseenComment(o){
-    return !!(o.kunde_kommentar && o.status!==2 && !o.kommentar_gelesen);
+    return !!((o.kunde_kommentar || o.anmerkung) && o.status!==2 && !o.kommentar_gelesen);
   }
 
   function setMittagFilter(f){
@@ -1581,6 +1581,8 @@ var K = (function(){
   }
 
   function markMsgRead(id){
+    var lo = orders && orders.find ? orders.find(function(x){return x.id===id;}) : null;
+    if(lo){ lo.kommentar_gelesen = true; renderOrders(); }
     fetch(API+'/lunch-order/'+id,{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
@@ -1594,6 +1596,16 @@ var K = (function(){
         loadOrders();
       }
     }).catch(function(){});
+  }
+
+  function promptReadFirst(id){
+    _orderCardOpen[id] = true;
+    renderOrders();
+    toast('Bitte Kundennachricht lesen und auf „Gelesen" tippen, dann bestätigen');
+    setTimeout(function(){
+      var el = document.getElementById('oc-'+id);
+      if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'center'});
+    }, 60);
   }
 
   function markAllMsgRead(){
@@ -1755,7 +1767,13 @@ var K = (function(){
   function bulkConfirmDish(dishName){
     var toConfirm = orders.filter(function(o){return o.gericht===dishName && o.status===0;});
     if(toConfirm.length===0) return;
-    toConfirm.forEach(function(o){ setStatus(o.id, 1); });
+    var blocked = toConfirm.filter(_hasUnseenComment);
+    if(blocked.length){
+      toast(blocked.length+' Bestellung(en) mit ungelesener Nachricht – bitte zuerst lesen');
+      blocked.forEach(function(o){ _orderCardOpen[o.id] = true; });
+      renderOrders();
+    }
+    toConfirm.filter(function(o){return !_hasUnseenComment(o);}).forEach(function(o){ setStatus(o.id, 1); });
   }
 
   function bulkPickupDish(dishName){
@@ -1794,8 +1812,8 @@ var K = (function(){
     var srcLabel = SRC_LABELS[o.quelle]||'Online';
     var srcCls = SRC_CLASS[o.quelle]||'src-online';
     var hasNote = o.anmerkung || o.kunde_kommentar;
-    // Default collapsed unless user opened or has unseen comment
-    var isOpen = o.id in _orderCardOpen ? _orderCardOpen[o.id] : false;
+    // Default collapsed unless user opened or has an unread customer message
+    var isOpen = o.id in _orderCardOpen ? _orderCardOpen[o.id] : _hasUnseenComment(o);
     var html = '';
     html += '<div class="k-order st-'+o.status+(isOpen?'':' oc-collapsed')+'" id="oc-'+o.id+'">';
 
@@ -1815,7 +1833,11 @@ var K = (function(){
     // Inline actions (stop propagation)
     html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
     if(o.status===0){
-      html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">'+luc('check-circle',13)+' <span class="oc-btn-label">OK</span></button>';
+      if(_hasUnseenComment(o)){
+        html += '<button class="k-btn k-btn-sm k-btn-outline" style="opacity:.55;cursor:not-allowed" title="Bitte zuerst die Kundennachricht lesen" onclick="event.stopPropagation();K.promptReadFirst(\''+o.id+'\')">'+luc('lock',13)+' <span class="oc-btn-label">OK</span></button>';
+      } else {
+        html += '<button class="k-btn k-btn-confirm k-btn-sm" onclick="K.showConfirmDialog(\''+o.id+'\')">'+luc('check-circle',13)+' <span class="oc-btn-label">OK</span></button>';
+      }
       html += '<button class="k-btn k-btn-cancel k-btn-sm" onclick="K.showStornoDialog(\''+o.id+'\')">' +luc('x',13)+'</button>';
     } else if(o.status===1){
       html += '<button class="k-btn k-btn-pickup k-btn-sm" onclick="K.setStatus(\''+o.id+'\',3)">'+luc('package-check',13)+' <span class="oc-btn-label">Abgeholt</span></button>';
@@ -1832,7 +1854,16 @@ var K = (function(){
     html += '<div class="k-order-body">';
     html += '<div class="k-order-info">';
     // Bestellnummer + Telefon removed (irrelevant for daily operations)
-    if(o.anmerkung) html += '<div class="k-order-note" style="background:#fef3c7">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
+    if(o.anmerkung){
+      if(!o.kommentar_gelesen && o.status!==2){
+        html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;display:flex;align-items:flex-start;gap:6px;animation:kPulse 2s ease-in-out 3">';
+        html += '<div style="flex:1;min-width:0">'+luc('message-circle',14)+' <strong>Nachricht vom Kunden:</strong> '+esc(o.anmerkung)+'</div>';
+        html += '<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',11)+' Gelesen</button>';
+        html += '</div>';
+      } else {
+        html += '<div class="k-order-note" style="background:#fef3c7">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
+      }
+    }
     if(o.bestaetigung_text) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a;color:#166534">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
     if(o.kunde_kommentar){
       html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;display:flex;align-items:flex-start;gap:6px;animation:'+(o.kommentar_gelesen?'none':'kPulse 2s ease-in-out 3')+'">';
@@ -4881,6 +4912,7 @@ var K = (function(){
     showConfirmDialog: showConfirmDialog,
     hideConfirmDialog: hideConfirmDialog,
     confirmOrder: confirmOrder,
+    promptReadFirst: promptReadFirst,
     showReplyDialog: showReplyDialog,
     hideReplyDialog: hideReplyDialog,
     sendReply: sendReply,
