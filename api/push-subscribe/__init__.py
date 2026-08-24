@@ -65,6 +65,54 @@ def _sub_hash(endpoint):
     return hashlib.sha256(endpoint.encode()).hexdigest()[:16]
 
 
+def _dedupe_by_device(base_url, hdrs, entity_set, device_id, keep_sub_key):
+    """Entfernt veraltete Subscriptions DESSELBEN Geraets.
+
+    Beim erneuten Abonnieren (Endpoint-Refresh, Service-Worker-Neuregistrierung,
+    "Push erneuern") vergibt der Push-Dienst einen NEUEN Endpoint -> neuer
+    Datensatz, waehrend der alte in Dataverse bestehen bleibt und weiter pusht
+    (= doppelte Benachrichtigung). Anhand der stabilen, im Browser gespeicherten
+    ``device_id`` werden alle anderen Eintraege dieses Geraets entfernt, sodass
+    pro Geraet genau eine aktive Subscription verbleibt.
+    """
+    if not device_id:
+        return 0
+    removed = 0
+    try:
+        url = (
+            f"{base_url}/api/data/v9.2/{entity_set}"
+            f"?$filter=startswith(dl_schluessel,'{PUSH_KEY_PREFIX}')"
+            f"&$select=dl_seiteninhaltid,dl_schluessel,dl_wert&$top=5000"
+        )
+        while url:
+            r = requests.get(url, headers=hdrs, timeout=30)
+            if r.status_code != 200:
+                break
+            data = r.json()
+            for item in data.get("value", []):
+                if item.get("dl_schluessel") == keep_sub_key:
+                    continue
+                try:
+                    raw = json.loads(item.get("dl_wert", "{}"))
+                except (ValueError, TypeError):
+                    continue
+                if raw.get("device_id") and raw["device_id"] == device_id:
+                    rec_id = item.get("dl_seiteninhaltid", "")
+                    if rec_id:
+                        try:
+                            requests.delete(
+                                f"{base_url}/api/data/v9.2/{entity_set}({rec_id})",
+                                headers=hdrs, timeout=30,
+                            )
+                            removed += 1
+                        except Exception:
+                            pass
+            url = data.get("@odata.nextLink")
+    except Exception:
+        pass
+    return removed
+
+
 ALL_CATEGORIES = ["tagesinfo", "news"]
 # Migrate legacy category names from existing subscribers
 LEGACY_MAP = {"mittagstisch": "tagesinfo", "angebote": "tagesinfo"}
@@ -181,6 +229,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     endpoint = subscription.get("endpoint", "")
     categories = body.get("categories", ALL_CATEGORIES[:])
     email = body.get("email", "")
+    device_id = (body.get("device_id", "") or "").strip()[:64]
     if not endpoint:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "endpoint required"}),
@@ -215,6 +264,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     }
     if email:
         sub_data["email"] = email.lower().strip()
+    if device_id:
+        sub_data["device_id"] = device_id
     sub_json = json.dumps(sub_data, ensure_ascii=False)
 
     filter_url = (
@@ -278,8 +329,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         json.dumps({"success": False, "endpoint_invalid": True, "error": f"Push endpoint dead ({st})"}),
                         status_code=200, mimetype="application/json", headers=get_cors_headers()
                     )
+        # Veraltete Subscriptions desselben Geraets entfernen (Doppel-Push-Fix).
+        deduped = _dedupe_by_device(base_url, hdrs, entity_set, device_id, sub_key)
         return func.HttpResponse(
-            json.dumps({"success": True, "action": action, "categories": categories}),
+            json.dumps({"success": True, "action": action, "categories": categories, "deduped": deduped}),
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 

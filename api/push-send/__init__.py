@@ -300,10 +300,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200, mimetype="application/json", headers=get_cors_headers()
         )
 
-    # Oeffentliche Origin robust aus Forwarded-Headern bestimmen (Custom Domain),
-    # damit Notification-Klicks nicht auf die interne Azure-SWA-Domain gehen.
-    site_origin = (origin or "").strip() or get_public_origin(req)
-    site_origin = site_origin.rstrip("/")
+    # Oeffentliche Origin robust bestimmen (Custom Domain), damit
+    # Notification-Klicks nicht auf dem internen Functions-Host landen.
+    from shared.urls import _is_internal_host
+    _origin_in = (origin or "").strip()
+    # Eine (versehentlich) mitgeschickte interne Origin ignorieren.
+    if _origin_in:
+        try:
+            _host_in = _origin_in.split("://", 1)[-1]
+        except Exception:
+            _host_in = _origin_in
+        if _is_internal_host(_host_in):
+            _origin_in = ""
+    site_origin = (_origin_in or get_public_origin(req)).rstrip("/")
 
     # Klick-Ziel absolut machen.
     url = absolutize(url, site_origin)

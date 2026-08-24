@@ -1,4 +1,21 @@
 // PWA Install – shared across all pages
+
+// Stabile Geraete-Kennung (pro Browser-Profil, ueberlebt Endpoint-Refresh /
+// Neu-Abonnieren). Wird beim Abonnieren mitgeschickt, damit der Server alte
+// Subscriptions DESSELBEN Geraets ersetzt -> keine doppelten Push-Nachrichten.
+function dlPushDeviceId(){
+  try{
+    var k='dl_push_device_id';
+    var v=localStorage.getItem(k);
+    if(!v){
+      if(window.crypto&&crypto.randomUUID){ v=crypto.randomUUID(); }
+      else { v='dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10); }
+      localStorage.setItem(k,v);
+    }
+    return v;
+  }catch(e){ return ''; }
+}
+
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').then(function(reg){
     // Force waiting SW to activate immediately
@@ -296,7 +313,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
         return fetch('/api/push-subscribe',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({subscription:sub.toJSON(),categories:cats})
+          body:JSON.stringify({subscription:sub.toJSON(),categories:cats,device_id:dlPushDeviceId()})
         }).then(function(r2){return r2.json();}).then(function(res2){
           if(res2.success){onSaved();}
           else{showToast('Fehler beim Speichern','error');}
@@ -464,7 +481,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
       return fetch('/api/push-subscribe',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({subscription:newSub.toJSON(),categories:cats||['mittagstisch','angebote','news']})
+        body:JSON.stringify({subscription:newSub.toJSON(),categories:cats||['mittagstisch','angebote','news'],device_id:dlPushDeviceId()})
       }).then(function(r){return r.json();}).then(function(res){
         if(!res.success)throw new Error(res.error||'Server-Fehler');
         updatePushUI(true);
@@ -477,7 +494,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     return fetch('/api/push-subscribe',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news']})
+      body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news'],device_id:dlPushDeviceId()})
     }).then(function(r){return r.json();}).then(function(res){
       updatePushUI(true);
       return sub;
@@ -528,7 +545,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
                 return fetch('/api/push-subscribe',{
                   method:'POST',
                   headers:{'Content-Type':'application/json'},
-                  body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news'],validate:true})
+                  body:JSON.stringify({subscription:sub.toJSON(),categories:['mittagstisch','angebote','news'],validate:true,device_id:dlPushDeviceId()})
                 }).then(function(r){return r.json();}).then(function(res2){
                   if(res2.endpoint_invalid){
                     // Dead endpoint – nuke service worker and get fresh one
