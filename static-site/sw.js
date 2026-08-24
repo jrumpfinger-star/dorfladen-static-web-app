@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v28';
+var CACHE_NAME='dorfladen-v29';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',
@@ -188,24 +188,40 @@ self.addEventListener('notificationclick',function(e){
   var rawUrl=e.notification.data&&e.notification.data.url?e.notification.data.url:'/';
   var targetUrl;
   try{ targetUrl=new URL(rawUrl,self.location.origin).href; }catch(_){ targetUrl=self.location.origin+'/'; }
+  var targetOrigin;
+  try{ targetOrigin=new URL(targetUrl).origin; }catch(_){ targetOrigin=self.location.origin; }
+
+  function openFresh(){
+    return clients.openWindow ? clients.openWindow(targetUrl) : undefined;
+  }
+
   var openApp=clients.matchAll({type:'window',includeUncontrolled:true}).then(function(cl){
+      // Alle gleichnamigen (same-origin) Fenster sammeln.
+      var same=[];
       for(var i=0;i<cl.length;i++){
         var c=cl[i];
         if(!c || !c.url) continue;
-        try{
-          var current=new URL(c.url);
-          var target=new URL(targetUrl);
-          if(current.origin===target.origin){
-            // For bestehendes App-Fenster immer auf Ziel-URL navigieren (verhindert "schwarzen Screen")
-            if('navigate' in c){
-              return c.navigate(targetUrl).then(function(){ return c.focus && c.focus(); });
-            }
-            if('focus' in c) return c.focus();
-          }
-        }catch(_){}
+        try{ if(new URL(c.url).origin===targetOrigin) same.push(c); }catch(_){}
       }
-      if(clients.openWindow)return clients.openWindow(targetUrl);
-    });
+      // Nacheinander versuchen: fokussieren + navigieren. Schlaegt navigate fehl
+      // (z.B. nicht vom SW kontrolliertes Fenster), zum naechsten Fenster bzw.
+      // am Ende zu openWindow ausweichen -> Link oeffnet zuverlaessig.
+      function tryAt(idx){
+        if(idx>=same.length) return openFresh();
+        var c=same[idx];
+        var focusP = ('focus' in c) ? Promise.resolve().then(function(){return c.focus();}).catch(function(){return c;}) : Promise.resolve(c);
+        return focusP.then(function(fc){
+          var t = fc && fc.navigate ? fc : c;
+          if('navigate' in t){
+            return Promise.resolve().then(function(){ return t.navigate(targetUrl); })
+              .then(function(nc){ return (nc && nc.focus) ? nc.focus() : nc; })
+              .catch(function(){ return tryAt(idx+1); });
+          }
+          return tryAt(idx+1);
+        }).catch(function(){ return tryAt(idx+1); });
+      }
+      return tryAt(0);
+    }).catch(openFresh);
   // Klick = gelesen -> Badge zuruecksetzen.
   e.waitUntil(Promise.all([openApp, idbBadge('set',0).then(function(){return clearAppBadge();})]));
 });
