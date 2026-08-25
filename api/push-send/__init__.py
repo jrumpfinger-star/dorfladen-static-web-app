@@ -348,8 +348,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     all_subs = _fetch_all_subscriptions(base_url, hdrs, entity_set)
 
-    # Filter by category if specified
-    if category:
+    # Filter by category if specified.
+    # Ausnahme: Bei geraete-/endpoint-genauem Versand (target_device_id/target_endpoint)
+    # wird NICHT nach Kategorie gefiltert – eine 1:1-Antwort (z.B. Chat) soll genau
+    # dieses eine Geraet erreichen, unabhaengig davon, welche Kategorien es abonniert hat.
+    if category and not (target_device_id or target_endpoint):
         all_subs = [s for s in all_subs if category in s.get("categories", [])]
 
     # Filter by target email if specified (for customer-specific notifications)

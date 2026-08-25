@@ -140,28 +140,32 @@
 
   function shortCode(id){ id=(id||'').replace(/[^a-zA-Z0-9]/g,''); return id?('#'+id.slice(-4)):'#????'; }
   function devTag(t){ return (t.geraet?(t.geraet+' · '):'')+shortCode(t.device_id); }
+  function devHue(id){ id=(id||''); var h=0; for(var i=0;i<id.length;i++){ h=(h*31+id.charCodeAt(i))>>>0; } return h%360; }
 
   function card(t){
     var unread = !t.kommentar_gelesen;
     var isOpen = _open[t.id];
     var last = (t.verlauf&&t.verlauf.length)?t.verlauf[t.verlauf.length-1]:null;
     var lastTxt = last ? ((last.who==='dorfladen'?'Du: ':'')+(last.text || (last.datei?'📷 Foto':''))) : '';
-    var h='<div class="k-order" style="margin-bottom:10px;border-left:4px solid '+(unread?'#3b82f6':'#e5e7eb')+'">';
+    var hue=devHue(t.device_id);
+    var dcMain='hsl('+hue+',60%,40%)', dcBg='hsl('+hue+',72%,95%)';
+    var h='<div class="k-order" style="margin-bottom:10px;border-left:5px solid '+dcMain+'">';
     // header
     h+='<div class="k-order-hdr" style="cursor:pointer" onclick="KKontakt.toggle(\''+t.id+'\')">';
     h+='<input type="checkbox" class="kk-sel" title="Auswählen" style="margin-right:8px;width:16px;height:16px;flex-shrink:0;cursor:pointer" '+(_sel[t.id]?'checked':'')+' onclick="event.stopPropagation();KKontakt.toggleSel(\''+t.id+'\',this.checked)">';
     h+='<span class="k-oc-arrow"><i data-lucide="chevron-'+(isOpen?'down':'right')+'" style="width:14px;height:14px"></i></span>';
+    h+='<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+dcMain+';margin-right:7px;flex-shrink:0"></span>';
     h+='<span class="k-oc-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
-    h+='<span title="Gerät des Kunden" style="font-size:10px;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap;flex-shrink:0"><i data-lucide="smartphone" style="width:10px;height:10px;vertical-align:-1px"></i> '+esc(devTag(t))+'</span>';
+    h+='<span title="Gerät des Kunden – jede Farbe/Code ist ein eigenes Gerät" style="font-size:11px;font-weight:800;color:'+dcMain+';background:'+dcBg+';border:1px solid '+dcMain+';border-radius:6px;padding:1px 8px;margin-left:8px;white-space:nowrap;flex-shrink:0">📱 '+esc(devTag(t))+'</span>';
     h+='<span style="flex:1;min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px">'+esc(lastTxt)+'</span>';
     h+='<span style="font-size:11px;color:#9ca3af;margin-right:8px">'+fmtTime(lastTs(t))+'</span>';
     if(unread) h+='<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite"><i data-lucide="message-circle" style="width:10px;height:10px"></i> NEU</span>';
     h+='</div>';
     if(isOpen){
       h+='<div style="padding:10px 12px;max-width:680px">';
-      h+='<div style="font-size:12px;color:#6b7280;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">';
+      h+='<div style="font-size:12px;color:#6b7280;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">';
       if(t.email) h+='<span><i data-lucide="mail" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(t.email)+(t.notify_email?' · E-Mail-Antwort gewünscht':'')+'</span>';
-      h+='<span title="Antwort geht genau an dieses Gerät zurück"><i data-lucide="smartphone" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(devTag(t))+'</span>';
+      h+='<span title="Antwort geht genau an dieses Gerät zurück" style="font-weight:700;color:'+dcMain+';background:'+dcBg+';border:1px solid '+dcMain+';border-radius:6px;padding:1px 8px">📱 '+esc(devTag(t))+'</span>';
       h+='</div>';
       h+=bubbles(t.verlauf);
       // Vorschau des vorgemerkten Bildes (Antwort mit Untertitel)
