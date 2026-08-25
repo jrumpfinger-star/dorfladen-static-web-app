@@ -40,12 +40,19 @@
 
   function buildFloat(){
     if(document.getElementById('hp-chat-float')) return;
+    if(!document.getElementById('hp-chat-float-style')){
+      var st=document.createElement('style'); st.id='hp-chat-float-style';
+      st.textContent='@keyframes hpChatPulse{0%{box-shadow:0 6px 20px rgba(0,0,0,.28),0 0 0 0 rgba(46,125,79,.45)}70%{box-shadow:0 6px 20px rgba(0,0,0,.28),0 0 0 14px rgba(46,125,79,0)}100%{box-shadow:0 6px 20px rgba(0,0,0,.28),0 0 0 0 rgba(46,125,79,0)}}'
+        +'#hp-chat-float{animation:hpChatPulse 2.4s ease-out 3}#hp-chat-float:hover{background:#256b43}';
+      document.head.appendChild(st);
+    }
     var b=document.createElement('button');
     b.id='hp-chat-float';
-    b.setAttribute('aria-label','Chat mit dem Dorfladen');
-    b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;width:56px;height:56px;border-radius:50%;border:none;background:#2e7d4f;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer;display:flex;align-items:center;justify-content:center';
-    b.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'
-      +'<span id="hp-chat-dot" style="display:none;position:absolute;top:8px;right:8px;width:12px;height:12px;border-radius:50%;background:#dc2626;border:2px solid #fff"></span>';
+    b.setAttribute('aria-label','Schreib uns – Chat mit dem Dorfladen');
+    b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;display:flex;align-items:center;gap:9px;padding:13px 20px 13px 16px;border:none;border-radius:30px;background:#2e7d4f;color:#fff;font-size:15px;font-weight:700;line-height:1;box-shadow:0 6px 20px rgba(0,0,0,.28);cursor:pointer';
+    b.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'
+      +'<span>Schreib uns</span>'
+      +'<span id="hp-chat-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#dc2626;border:2px solid #fff"></span>';
     b.onclick=openChat;
     document.body.appendChild(b);
   }
@@ -75,7 +82,7 @@
         +'<div style="display:flex;gap:6px;align-items:flex-end">'
           +'<input type="file" accept="image/*" id="hp-chat-file" style="display:none">'
           +'<button id="hp-chat-imgbtn" title="Foto senden" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;width:38px;height:38px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></button>'
-          +'<textarea id="hp-chat-input" rows="1" maxlength="1000" placeholder="Nachricht schreiben…" style="flex:1;min-width:0;padding:9px 11px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;resize:none;overflow:hidden;max-height:120px;box-sizing:border-box"></textarea>'
+          +'<textarea id="hp-chat-input" rows="2" maxlength="1000" placeholder="Nachricht schreiben…" style="flex:1;min-width:0;min-height:60px;padding:12px 13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;line-height:1.4;resize:none;overflow:hidden;max-height:150px;box-sizing:border-box"></textarea>'
           +'<button id="hp-chat-send" style="background:#2e7d4f;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>'
         +'</div>'
       +'</div>';
