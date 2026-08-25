@@ -6,6 +6,7 @@
   var API='/api';
   var _open=false, _thread=null, _pollTimer=null, _histPushed=false;
   var _sending=false;
+  var _pendingImg=null;
 
   function devId(){ try{ return (window.dlPushDeviceId?dlPushDeviceId():localStorage.getItem('dl_push_device_id'))||''; }catch(e){ return ''; } }
   function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -80,6 +81,7 @@
           +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;margin-top:6px"><input type="checkbox" id="hp-chat-email-opt"> Antworten auch per E-Mail</label>'
         +'</details>'
         +'<label id="hp-chat-push-row" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;margin-bottom:6px"><input type="checkbox" id="hp-chat-push-opt" checked> 📲 Antworten als App-Benachrichtigung</label>'
+        +'<div id="hp-chat-preview" style="display:none;align-items:center;gap:8px;margin-bottom:6px;padding:6px;background:#f3f4f6;border-radius:10px"><img id="hp-chat-prev-img" alt="" style="height:52px;width:52px;object-fit:cover;border-radius:6px"><span style="flex:1;font-size:12px;color:#6b7280">Bild bereit – Unterschrift optional</span><button id="hp-chat-prev-x" type="button" aria-label="Bild entfernen" style="background:none;border:none;font-size:18px;color:#6b7280;cursor:pointer;line-height:1">✕</button></div>'
         +'<div style="display:flex;gap:6px;align-items:flex-end">'
           +'<input type="file" accept="image/*" id="hp-chat-file" style="display:none">'
           +'<button id="hp-chat-imgbtn" title="Foto senden" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;width:38px;height:38px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></button>'
@@ -95,7 +97,8 @@
     inp.addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doSend(); } });
     document.getElementById('hp-chat-send').onclick=doSend;
     document.getElementById('hp-chat-imgbtn').onclick=function(){ document.getElementById('hp-chat-file').click(); };
-    document.getElementById('hp-chat-file').addEventListener('change',function(){ if(this.files&&this.files[0]) doSendImage(this.files[0]); this.value=''; });
+    document.getElementById('hp-chat-file').addEventListener('change',function(){ if(this.files&&this.files[0]) stagePendingImage(this.files[0]); this.value=''; });
+    document.getElementById('hp-chat-prev-x').onclick=clearPending;
     // Push-Zeile ausblenden, wenn Berechtigung blockiert
     try{ if(typeof Notification!=='undefined' && Notification.permission==='denied'){ var pr=document.getElementById('hp-chat-push-row'); if(pr) pr.style.display='none'; } }catch(e){}
     // Gespeicherte Kundendaten vorbelegen
@@ -209,6 +212,7 @@
     if(_sending) return;
     var inp=document.getElementById('hp-chat-input');
     var text=(inp&&inp.value||'').trim();
+    if(_pendingImg){ return doSendImage(text); }
     if(!text) return;
     var meta=collectMeta();
     _sending=true; if(inp){ inp.value=''; inp.style.height='auto'; }
@@ -223,26 +227,46 @@
       }).catch(function(){ _sending=false; });
   }
 
-  function doSendImage(file){
-    var meta=collectMeta();
+  // Bild auswaehlen -> komprimieren -> als Vorschau vormerken (noch nicht senden).
+  function stagePendingImage(file){
+    if(!file) return;
     var reader=new FileReader();
     reader.onload=function(){
       var img=new Image();
       img.onload=function(){
         var max=1280,w=img.width,h=img.height; if(w>max){ h=Math.round(h*max/w); w=max; }
         var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
-        var dataUrl=cv.toDataURL('image/jpeg',0.85);
-        fetch(API+'/contact-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:devId(),image:dataUrl})})
-          .then(function(r){return r.json();}).then(function(u){
-            if(u&&u.success&&u.datei){
-              return fetch(API+'/contact-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:devId(),name:meta.name,email:meta.email,bild_datei:u.datei,notify_email:meta.notify_email})})
-                .then(function(r){return r.json();}).then(function(res){ if(res&&res.success){ _thread=_thread||{verlauf:[]}; _thread.verlauf=res.verlauf||_thread.verlauf; renderMsgs(); if(meta.notify_push) subscribePush(meta.email); } });
-            }
-          }).catch(function(){});
+        _pendingImg=cv.toDataURL('image/jpeg',0.85);
+        var pv=document.getElementById('hp-chat-preview'), pi=document.getElementById('hp-chat-prev-img');
+        if(pi) pi.src=_pendingImg; if(pv) pv.style.display='flex';
+        var inp=document.getElementById('hp-chat-input'); if(inp){ inp.placeholder='Bildunterschrift (optional)…'; inp.focus(); }
       };
       img.src=reader.result;
     };
     reader.readAsDataURL(file);
+  }
+  function clearPending(){
+    _pendingImg=null;
+    var pv=document.getElementById('hp-chat-preview'); if(pv) pv.style.display='none';
+    var inp=document.getElementById('hp-chat-input'); if(inp) inp.placeholder='Nachricht schreiben…';
+  }
+
+  // Vorgemerktes Bild + optionale Bildunterschrift zusammen senden (wie WhatsApp).
+  function doSendImage(caption){
+    if(_sending || !_pendingImg) return;
+    _sending=true;
+    var meta=collectMeta();
+    var dataUrl=_pendingImg;
+    var inp=document.getElementById('hp-chat-input');
+    clearPending(); if(inp){ inp.value=''; inp.style.height='auto'; }
+    fetch(API+'/contact-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:devId(),image:dataUrl})})
+      .then(function(r){return r.json();}).then(function(u){
+        if(u&&u.success&&u.datei){
+          return fetch(API+'/contact-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:devId(),name:meta.name,email:meta.email,bild_datei:u.datei,text:caption||'',notify_email:meta.notify_email})})
+            .then(function(r){return r.json();}).then(function(res){ _sending=false; if(res&&res.success){ _thread=_thread||{verlauf:[]}; _thread.verlauf=res.verlauf||_thread.verlauf; renderMsgs(); if(meta.notify_push) subscribePush(meta.email); } });
+        }
+        _sending=false;
+      }).catch(function(){ _sending=false; });
   }
 
   // Push-Abo (Kategorie kontakt) einrichten, damit Antworten als Push kommen.
