@@ -71,11 +71,12 @@
       +'<div id="hp-chat-msgs" style="flex:1;overflow-y:auto;padding:12px;background:#f7faf8;display:flex;flex-direction:column;gap:8px"></div>'
       +'<div style="border-top:1px solid #eef2f7;padding:8px 10px;background:#fff">'
         +'<details id="hp-chat-ident" style="margin-bottom:6px">'
-          +'<summary style="font-size:12px;color:#6b7280;cursor:pointer">Ihre Daten (optional) – für Antwort per E-Mail</summary>'
+          +'<summary style="font-size:12px;color:#6b7280;cursor:pointer">Ihre Daten (optional)</summary>'
           +'<div style="display:flex;gap:6px;margin-top:6px">'
             +'<input id="hp-chat-name" placeholder="Name" style="flex:1;min-width:0;padding:7px 9px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">'
             +'<input id="hp-chat-email" type="email" placeholder="E-Mail" style="flex:1.4;min-width:0;padding:7px 9px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">'
           +'</div>'
+          +'<div style="font-size:11px;color:#9ca3af;margin-top:5px;line-height:1.35">Damit die Verkäuferin weiß, wer schreibt. Ohne Angabe erscheinen Sie als „Website-Besucher".</div>'
           +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;margin-top:6px"><input type="checkbox" id="hp-chat-email-opt"> Antworten auch per E-Mail</label>'
         +'</details>'
         +'<label id="hp-chat-push-row" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;margin-bottom:6px"><input type="checkbox" id="hp-chat-push-opt" checked> 📲 Antworten als App-Benachrichtigung</label>'
@@ -99,17 +100,41 @@
     try{ if(typeof Notification!=='undefined' && Notification.permission==='denied'){ var pr=document.getElementById('hp-chat-push-row'); if(pr) pr.style.display='none'; } }catch(e){}
     // Gespeicherte Kundendaten vorbelegen
     try{ var d=JSON.parse(localStorage.getItem('dl_lunch_customer')||'{}'); if(d.name)document.getElementById('hp-chat-name').value=d.name; if(d.email)document.getElementById('hp-chat-email').value=d.email; }catch(e){}
-    // isMobile: Vollbild
-    if(window.matchMedia && window.matchMedia('(max-width:600px)').matches){
-      ov.style.cssText+=';right:0;bottom:0;top:0;left:0;width:100vw;height:100vh;max-width:100vw;max-height:100vh;border-radius:0';
+    // isMobile: Vollbild (Hoehe dynamisch via visualViewport, s. fitMobile)
+    if(isMobile()){
+      ov.style.cssText+=';right:0;left:0;top:0;bottom:auto;width:100vw;max-width:100vw;max-height:none;border-radius:0';
     }
+  }
+
+  function isMobile(){ return !!(window.matchMedia && window.matchMedia('(max-width:600px)').matches); }
+
+  var _vvBound=false;
+  function fitMobile(){
+    if(!isMobile()) return;
+    var ov=document.getElementById('hp-chat-ov'); if(!ov) return;
+    var vv=window.visualViewport;
+    var h=vv?vv.height:window.innerHeight;
+    var top=vv?vv.offsetTop:0;
+    ov.style.height=h+'px';
+    ov.style.top=top+'px';
+    var box=document.getElementById('hp-chat-msgs'); if(box) box.scrollTop=box.scrollHeight;
+  }
+  function bindVV(){
+    if(_vvBound || !isMobile()) return; _vvBound=true;
+    if(window.visualViewport){ window.visualViewport.addEventListener('resize',fitMobile); window.visualViewport.addEventListener('scroll',fitMobile); }
+    window.addEventListener('resize',fitMobile);
+  }
+  function unbindVV(){
+    if(!_vvBound) return; _vvBound=false;
+    if(window.visualViewport){ window.visualViewport.removeEventListener('resize',fitMobile); window.visualViewport.removeEventListener('scroll',fitMobile); }
+    window.removeEventListener('resize',fitMobile);
   }
 
   function openChat(){
     var ov=document.getElementById('hp-chat-ov'); if(!ov) return;
     ov.style.display='flex'; _open=true;
     document.getElementById('hp-chat-dot').style.display='none';
-    if(window.dlLockScroll && window.matchMedia('(max-width:600px)').matches) dlLockScroll();
+    if(isMobile()){ if(window.dlLockScroll) dlLockScroll(); fitMobile(); bindVV(); }
     if(!_histPushed){ _histPushed=true; try{ history.pushState({dlChat:1},''); }catch(e){} }
     loadThread(true);
     if(_pollTimer) clearInterval(_pollTimer);
@@ -119,6 +144,7 @@
   function closeChat(_fromPop){
     var ov=document.getElementById('hp-chat-ov'); if(!ov) return;
     ov.style.display='none'; _open=false;
+    unbindVV();
     if(_pollTimer){ clearInterval(_pollTimer); _pollTimer=null; }
     if(window.dlUnlockScroll) dlUnlockScroll();
     markSeen();
