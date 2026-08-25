@@ -773,7 +773,21 @@ if(window!==window.parent){
   (function initPushCheckbox(){
     var op=document.getElementById('opt-push');
     if(!op) return;
-    if(typeof Notification!=='undefined' && Notification.permission==='denied'){ op.checked=false; return; }
+    // Hilfsfunktion: kleinen Hinweis unter der App-Benachrichtigung anzeigen.
+    function pushHint(text,color){
+      var lbl=op.closest('.notify-opt'); if(!lbl) return;
+      var span=lbl.querySelector('span'); if(!span) return;
+      var h=lbl.querySelector('.push-active-hint');
+      if(!h){ h=document.createElement('small'); h.className='push-active-hint'; h.style.cssText='display:block;font-weight:600;margin-top:2px'; span.appendChild(h); }
+      h.textContent=text; h.style.color=color;
+    }
+    // Browser-Berechtigung blockiert: Haken abwaehlen + sperren + erklaeren, warum.
+    if(typeof Notification!=='undefined' && Notification.permission==='denied'){
+      op.checked=false; op.disabled=true;
+      var lbl=op.closest('.notify-opt'); if(lbl) lbl.style.opacity='.7';
+      pushHint('⚠️ Im Browser blockiert – bitte in den Browser-/App-Einstellungen für diese Seite „Benachrichtigungen erlauben".','#b45309');
+      return;
+    }
     if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.getSubscription();
@@ -790,13 +804,7 @@ if(window!==window.parent){
             var lbl = op.closest('.notify-opt');
             if(lbl){
               lbl.style.opacity = '.85';
-              if(!lbl.querySelector('.push-active-hint')){
-                var h=document.createElement('small');
-                h.className='push-active-hint';
-                h.style.cssText='display:block;color:#16a34a;font-weight:600;margin-top:2px';
-                h.textContent='✓ Bereits aktiv – Abbestellen im Benachrichtigungs-Menü';
-                var span=lbl.querySelector('span'); if(span) span.appendChild(h);
-              }
+              pushHint('✓ Bereits aktiv – Abbestellen im Benachrichtigungs-Menü','#16a34a');
             }
           }
         }).catch(function(){});
