@@ -147,10 +147,30 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         r = requests.get(dl, timeout=20)
         if r.status_code != 200:
             return _err("Bild-Download fehlgeschlagen", 502)
+        content = r.content
+        ctype = _mime_for(datei)
+        # Auf Lightbox-taugliche Groesse verkleinern (Originale koennen 10-20 MB
+        # gross sein). Ergebnis ~100-300 KB statt viele MB -> schnell auf Mobil.
+        try:
+            from PIL import Image
+            import io
+            im = Image.open(io.BytesIO(content))
+            max_w = 1400
+            if im.width > max_w:
+                ratio = max_w / float(im.width)
+                im = im.resize((max_w, int(im.height * ratio)), Image.LANCZOS)
+            if im.mode in ("RGBA", "P", "LA"):
+                im = im.convert("RGB")
+            buf = io.BytesIO()
+            im.save(buf, format="JPEG", quality=82, optimize=True)
+            content = buf.getvalue()
+            ctype = "image/jpeg"
+        except Exception:
+            pass  # PIL fehlt/Fehler: Original unveraendert ausliefern
         headers = _cors()
-        headers["Content-Type"] = _mime_for(datei)
+        headers["Content-Type"] = ctype
         # Bild darf gecacht werden (Inhalt aendert sich pro Dateiname nicht).
         headers["Cache-Control"] = "public, max-age=86400"
-        return func.HttpResponse(r.content, status_code=200, headers=headers)
+        return func.HttpResponse(content, status_code=200, headers=headers)
     except Exception:
         return _err("Bild-Download fehlgeschlagen", 502)
