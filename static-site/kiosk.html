@@ -740,6 +740,10 @@
     <span class="k-tab-icon"><i data-lucide="beef" style="width:22px;height:22px"></i></span> Metzger
     <span class="k-tab-badges" id="badges-metzger"></span>
   </div>
+  <div class="k-tab" data-tab="kontakt" onclick="K.switchTab('kontakt')" style="display:none">
+    <span class="k-tab-icon"><i data-lucide="message-square" style="width:22px;height:22px"></i></span> Kontakt
+    <span class="k-tab-badges" id="badges-kontakt"></span>
+  </div>
   <div class="k-tab" data-tab="social" onclick="K.switchTab('social')">
     <span class="k-tab-icon"><i data-lucide="share-2" style="width:22px;height:22px"></i></span> Social
   </div>
@@ -834,6 +838,18 @@
     <!-- Fleisch-Nachrichten Bereich -->
     <div id="metzger-nachrichten" style="display:none"></div>
     <div id="metzger-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="beef" style="width:24px;height:24px"></i></div>Keine Fleisch-Vorbestellungen</div></div>
+  </div>
+
+  <!-- ── Kontakt (Kundennachrichten) ── -->
+  <div class="k-panel" id="panel-kontakt">
+    <div class="k-filter-bar" id="kontakt-filter-bar">
+      <button class="k-filter-btn active" data-kk-filter="neu" onclick="KKontakt.setFilter('neu')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Neu</span> <span class="k-filter-count" id="kk-fc-neu">0</span></button>
+      <button class="k-filter-btn" data-kk-filter="alle" onclick="KKontakt.setFilter('alle')"><i data-lucide="messages-square" style="width:14px;height:14px"></i> <span class="k-filter-label">Alle</span></button>
+      <button class="k-filter-btn" data-kk-filter="erledigt" onclick="KKontakt.setFilter('erledigt')"><i data-lucide="check-check" style="width:14px;height:14px"></i> <span class="k-filter-label">Erledigt</span></button>
+      <div style="flex:1"></div>
+      <button class="k-btn k-btn-outline" style="min-height:36px;padding:6px 12px;border-radius:8px;font-size:13px" onclick="KKontakt.reload()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Aktualisieren</button>
+    </div>
+    <div id="kontakt-list"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="message-square" style="width:24px;height:24px"></i></div>Noch keine Nachrichten</div></div>
   </div>
 
   <!-- ── Social Media ── -->
@@ -1410,12 +1426,13 @@ var K = (function(){
     if(id==='kunden' && kunden.length===0) searchKunden();
     if(id==='social' && typeof socialSubTab==='function') socialSubTab('post');
     if(id==='kalender' && window.KalenderKiosk) window.KalenderKiosk.onShow();
+    if(id==='kontakt' && window.KKontakt) window.KKontakt.onShow();
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
   // Support-Tabs (Stammkunden, Kalender) bleiben immer sichtbar.
   function applyKioskFeatures(){
-    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social'};
+    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social',kontakt:'kiosk_kontakt'};
     function setTabs(flags,pickDefault){
       Object.keys(map).forEach(function(tab){
         var on=flags[map[tab]]===true;
@@ -4971,7 +4988,8 @@ var K = (function(){
     loadMetzgerOrders();
   }
   // Auto-refresh every 30s
-  refreshTimer = setInterval(function(){ loadOrders(); if(!_embedMittag){ loadShopOrders(); loadMetzgerOrders(); } }, 30000);
+  refreshTimer = setInterval(function(){ loadOrders(); if(!_embedMittag){ loadShopOrders(); loadMetzgerOrders(); } if(window.KKontakt) window.KKontakt.pollBadge(); }, 30000);
+  if(window.KKontakt) window.KKontakt.pollBadge();
 
   // Keyboard shortcuts (1-5 = Tabs, R = Refresh)
   var TAB_KEYS={'1':'mittag','2':'abhol','3':'kunden','4':'metzger','5':'social'};
@@ -5077,6 +5095,7 @@ var K = (function(){
 <script src="/js/social-poster.js?v=20260824b"></script>
 <script src="/js/admin-auth.js"></script>
 <script src="/js/kiosk-kalender.js"></script>
+<script src="/js/kiosk-kontakt.js"></script>
 <script src="/js/env-banner.js"></script>
 <script>
 /* Kiosk-Vollbild: Service Worker registrieren (ermoeglicht echte PWA-Installation
