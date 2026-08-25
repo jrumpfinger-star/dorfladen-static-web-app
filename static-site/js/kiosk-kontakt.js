@@ -3,7 +3,6 @@
    Nutzt /api/contact-message (mode=list/unread, PATCH). */
 (function(){
   var API = '/api';
-  var _filter = 'neu';
   var _threads = [];
   var _open = {};        // id -> expanded?
   var _lastUnread = -1;
@@ -30,8 +29,9 @@
 
   function setBadge(n){
     var wrap=document.getElementById('badges-kontakt');
-    if(!wrap) return;
-    wrap.innerHTML = (n>0) ? ('<span class="k-tab-badge show badge-msg blink" title="'+n+' ungelesene Nachricht(en)">'+n+'</span>') : '';
+    if(wrap){ wrap.innerHTML = (n>0) ? ('<span class="k-tab-badge show badge-msg blink" title="'+n+' ungelesene Nachricht(en)">'+n+'</span>') : ''; }
+    var hdr=document.getElementById('kk-hdr-count');
+    if(hdr){ hdr.innerHTML = (n>0) ? ('<span style="background:#dc2626;color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px">'+n+' neu</span>') : ''; }
   }
 
   function pollBadge(){
@@ -49,22 +49,24 @@
 
   function onShow(){ reload(); }
 
-  function setFilter(f){
-    _filter=f;
-    document.querySelectorAll('#kontakt-filter-bar [data-kk-filter]').forEach(function(b){
-      b.classList.toggle('active', b.getAttribute('data-kk-filter')===f);
-    });
-    reload();
+  function lastTs(t){
+    if(t.verlauf && t.verlauf.length){ var m=t.verlauf[t.verlauf.length-1]; if(m && m.t) return m.t; }
+    return t.modified || t.created || '';
   }
 
   function reload(silent){
-    var q = (_filter==='neu'||_filter==='erledigt') ? ('&status='+_filter) : '';
     if(!silent){
       document.getElementById('kontakt-list').innerHTML='<div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px;animation:kSpin 1s linear infinite"></i></div>Laden…</div>';
       if(window.lucide) lucide.createIcons();
     }
-    fetch(API+'/contact-message?mode=list'+q).then(function(r){return r.json();}).then(function(res){
+    fetch(API+'/contact-message?mode=list').then(function(r){return r.json();}).then(function(res){
       _threads = (res&&res.success&&res.threads)?res.threads:[];
+      // WhatsApp-artig: unbeantwortete oben, danach nach letzter Aktivitaet.
+      _threads.sort(function(a,b){
+        var ua=!a.kommentar_gelesen?1:0, ub=!b.kommentar_gelesen?1:0;
+        if(ua!==ub) return ub-ua;
+        return (lastTs(b)||'').localeCompare(lastTs(a)||'');
+      });
       _loaded=true;
       render();
     }).catch(function(){
@@ -94,23 +96,21 @@
   }
 
   function card(t){
-    var unread = !t.kommentar_gelesen && t.status!==2;
+    var unread = !t.kommentar_gelesen;
     var isOpen = _open[t.id];
     var last = (t.verlauf&&t.verlauf.length)?t.verlauf[t.verlauf.length-1]:null;
-    var lastTxt = last ? (last.text || (last.datei?'📷 Foto':'')) : '';
-    var statusLbl = t.status===0?'Neu':(t.status===1?'Beantwortet':'Erledigt');
-    var statusCol = t.status===0?'#dc2626':(t.status===1?'#16a34a':'#6b7280');
-    var h='<div class="k-order'+(unread?'':'')+'" style="margin-bottom:10px;border-left:4px solid '+(unread?'#3b82f6':'#e5e7eb')+'">';
+    var lastTxt = last ? ((last.who==='dorfladen'?'Du: ':'')+(last.text || (last.datei?'📷 Foto':''))) : '';
+    var h='<div class="k-order" style="margin-bottom:10px;border-left:4px solid '+(unread?'#3b82f6':'#e5e7eb')+'">';
     // header
     h+='<div class="k-order-hdr" style="cursor:pointer" onclick="KKontakt.toggle(\''+t.id+'\')">';
     h+='<span class="k-oc-arrow"><i data-lucide="chevron-'+(isOpen?'down':'right')+'" style="width:14px;height:14px"></i></span>';
-    h+='<span class="k-oc-name">'+esc(t.name||'Website-Besucher')+'</span>';
-    h+='<span style="flex:1;min-width:0;color:#6b7280;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px">'+esc(lastTxt)+'</span>';
-    if(unread) h+='<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite;margin-right:6px"><i data-lucide="message-circle" style="width:10px;height:10px"></i> NEU</span>';
-    h+='<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:'+statusCol+'1a;color:'+statusCol+'">'+statusLbl+'</span>';
+    h+='<span class="k-oc-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
+    h+='<span style="flex:1;min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px">'+esc(lastTxt)+'</span>';
+    h+='<span style="font-size:11px;color:#9ca3af;margin-right:8px">'+fmtTime(lastTs(t))+'</span>';
+    if(unread) h+='<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite"><i data-lucide="message-circle" style="width:10px;height:10px"></i> NEU</span>';
     h+='</div>';
     if(isOpen){
-      h+='<div style="padding:10px 12px">';
+      h+='<div style="padding:10px 12px;max-width:680px">';
       if(t.email) h+='<div style="font-size:12px;color:#6b7280;margin-bottom:6px"><i data-lucide="mail" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(t.email)+(t.notify_email?' · E-Mail-Antwort gewünscht':'')+'</div>';
       h+=bubbles(t.verlauf);
       // reply row
@@ -119,11 +119,6 @@
       h+='<input type="file" accept="image/*" id="kk-img-'+t.id+'" style="display:none" onchange="KKontakt.sendImage(\''+t.id+'\',this.files[0])">';
       h+='<button class="k-btn k-btn-outline k-btn-sm" title="Foto senden" style="padding:8px 10px" onclick="document.getElementById(\'kk-img-'+t.id+'\').click()"><i data-lucide="image" style="width:16px;height:16px"></i></button>';
       h+='<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff" onclick="KKontakt.send(\''+t.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
-      h+='</div>';
-      // actions
-      h+='<div style="display:flex;gap:8px;margin-top:8px">';
-      if(t.status!==2) h+='<button class="k-btn k-btn-outline k-btn-sm" onclick="KKontakt.setStatus(\''+t.id+'\',2)"><i data-lucide="check-check" style="width:13px;height:13px"></i> Als erledigt</button>';
-      else h+='<button class="k-btn k-btn-outline k-btn-sm" onclick="KKontakt.setStatus(\''+t.id+'\',1)"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Wieder öffnen</button>';
       h+='</div>';
       h+='</div>';
     }
@@ -135,7 +130,7 @@
     var host=document.getElementById('kontakt-list');
     if(!host) return;
     if(!_threads.length){
-      host.innerHTML='<div class="k-empty"><div class="k-empty-icon"><i data-lucide="message-square" style="width:24px;height:24px"></i></div>'+(_filter==='erledigt'?'Keine erledigten':(_filter==='neu'?'Keine neuen Nachrichten':'Keine Nachrichten'))+'</div>';
+      host.innerHTML='<div class="k-empty"><div class="k-empty-icon"><i data-lucide="message-square" style="width:24px;height:24px"></i></div>Noch keine Nachrichten</div>';
       if(window.lucide) lucide.createIcons();
       return;
     }
@@ -197,11 +192,6 @@
     reader.readAsDataURL(file);
   }
 
-  function setStatus(id, status){
-    fetch(API+'/contact-message/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})})
-      .then(function(r){return r.json();}).then(function(res){ if(res&&res.success){ reload(); pollBadge(); } }).catch(function(){});
-  }
-
   function zoom(src){
     if(window.dlImagePopup){ window.dlImagePopup(src,'',src); return; }
     var ov=document.createElement('div');
@@ -212,7 +202,7 @@
   }
 
   window.KKontakt = {
-    onShow:onShow, reload:reload, setFilter:setFilter, toggle:toggle,
-    send:send, sendImage:sendImage, setStatus:setStatus, pollBadge:pollBadge, zoom:zoom
+    onShow:onShow, reload:reload, toggle:toggle,
+    send:send, sendImage:sendImage, pollBadge:pollBadge, zoom:zoom
   };
 })();
