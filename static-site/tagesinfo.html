@@ -156,8 +156,23 @@
 
 <script>
 /* === Scroll-Lock (leichtgewichtig) === */
-window.dlLockScroll=function(){document.documentElement.style.setProperty('--scroll-y','-'+window.scrollY+'px');document.body.classList.add('overlay-open');};
-window.dlUnlockScroll=function(){document.body.classList.remove('overlay-open');var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;document.documentElement.style.removeProperty('--scroll-y');window.scrollTo(0,y);};
+window._dlScrollLocks=window._dlScrollLocks||0;
+window.dlLockScroll=function(){
+  if(window._dlScrollLocks===0){
+    document.documentElement.style.setProperty('--scroll-y','-'+window.scrollY+'px');
+    document.body.classList.add('overlay-open');
+  }
+  window._dlScrollLocks++;
+};
+window.dlUnlockScroll=function(){
+  window._dlScrollLocks=Math.max(0,window._dlScrollLocks-1);
+  if(window._dlScrollLocks===0){
+    document.body.classList.remove('overlay-open');
+    var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;
+    document.documentElement.style.removeProperty('--scroll-y');
+    window.scrollTo(0,y);
+  }
+};
 
 /* === Bild-Popup === */
 window.dlImagePopup=function(src,alt,fallbackSrc){
