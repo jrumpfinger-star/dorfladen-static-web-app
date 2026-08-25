@@ -120,6 +120,7 @@ def _serialize(item, include_email=False):
         "name": item.get("dl_name", ""),
         "betreff": item.get("dl_betreff", ""),
         "device_id": item.get("dl_device_id", ""),
+        "geraet": item.get("dl_geraet", ""),
         "status": item.get("dl_status", STATUS_NEU),
         "kommentar_gelesen": bool(item.get("dl_kommentar_gelesen", False)),
         "notify_email": bool(item.get("dl_notify_email", False)),
@@ -252,6 +253,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             text = (body.get("text") or "").strip()[:MAX_TEXT]
             bild_datei = (body.get("bild_datei") or "").strip()[:200]
             notify_email = bool(body.get("notify_email", False))
+            geraet = (body.get("geraet") or "").strip()[:200]
 
             if not device_id:
                 return func.HttpResponse(
@@ -292,6 +294,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     patch["dl_email"] = email
                 if betreff:
                     patch["dl_betreff"] = betreff
+                if geraet:
+                    patch["dl_geraet"] = geraet
                 patch["dl_notify_email"] = notify_email
                 rid = existing.get("dl_kontaktnachrichtid")
                 pr = requests.patch(
@@ -306,6 +310,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "dl_email": email,
                     "dl_device_id": device_id,
                     "dl_betreff": betreff,
+                    "dl_geraet": geraet,
                     "dl_chatverlauf": json.dumps(thread, ensure_ascii=False),
                     "dl_status": STATUS_NEU,
                     "dl_kommentar_gelesen": False,

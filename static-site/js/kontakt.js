@@ -9,6 +9,14 @@
   var _pendingImg=null;
 
   function devId(){ try{ return (window.dlPushDeviceId?dlPushDeviceId():localStorage.getItem('dl_push_device_id'))||''; }catch(e){ return ''; } }
+  function geraet(){
+    var ua=navigator.userAgent||'';
+    var os='Gerät';
+    if(/Android/i.test(ua))os='Android'; else if(/iPhone|iPad|iPod/i.test(ua))os='iOS'; else if(/Windows/i.test(ua))os='Windows'; else if(/Mac OS X|Macintosh/i.test(ua))os='Mac'; else if(/Linux/i.test(ua))os='Linux';
+    var br='';
+    if(/Edg\//i.test(ua))br='Edge'; else if(/OPR\/|Opera/i.test(ua))br='Opera'; else if(/Chrome\//i.test(ua)&&!/Chromium/i.test(ua))br='Chrome'; else if(/Firefox\//i.test(ua))br='Firefox'; else if(/Safari\//i.test(ua)&&!/Chrome/i.test(ua))br='Safari';
+    return br?(os+' · '+br):os;
+  }
   function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function lastReply(t){ if(!t||!t.verlauf) return null; for(var i=t.verlauf.length-1;i>=0;i--){ if(t.verlauf[i].who==='dorfladen') return t.verlauf[i]; } return null; }
   function seenKey(){ return 'dl_kontakt_seen'; }
@@ -219,7 +227,7 @@
     // Optimistisch anzeigen
     if(!_thread) _thread={verlauf:[]}; if(!_thread.verlauf)_thread.verlauf=[];
     _thread.verlauf.push({who:'kunde',typ:'text',text:text}); renderMsgs();
-    var body={device_id:devId(),name:meta.name,email:meta.email,text:text,notify_email:meta.notify_email};
+    var body={device_id:devId(),name:meta.name,email:meta.email,text:text,notify_email:meta.notify_email,geraet:geraet()};
     fetch(API+'/contact-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
       .then(function(r){return r.json();}).then(function(res){
         _sending=false;
@@ -262,7 +270,7 @@
     fetch(API+'/contact-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:devId(),image:dataUrl})})
       .then(function(r){return r.json();}).then(function(u){
         if(u&&u.success&&u.datei){
-          return fetch(API+'/contact-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:devId(),name:meta.name,email:meta.email,bild_datei:u.datei,text:caption||'',notify_email:meta.notify_email})})
+          return fetch(API+'/contact-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:devId(),name:meta.name,email:meta.email,bild_datei:u.datei,text:caption||'',notify_email:meta.notify_email,geraet:geraet()})})
             .then(function(r){return r.json();}).then(function(res){ _sending=false; if(res&&res.success){ _thread=_thread||{verlauf:[]}; _thread.verlauf=res.verlauf||_thread.verlauf; renderMsgs(); if(meta.notify_push) subscribePush(meta.email); } });
         }
         _sending=false;

@@ -95,6 +95,9 @@
     return h;
   }
 
+  function shortCode(id){ id=(id||'').replace(/[^a-zA-Z0-9]/g,''); return id?('#'+id.slice(-4)):'#????'; }
+  function devTag(t){ return (t.geraet?(t.geraet+' · '):'')+shortCode(t.device_id); }
+
   function card(t){
     var unread = !t.kommentar_gelesen;
     var isOpen = _open[t.id];
@@ -105,13 +108,17 @@
     h+='<div class="k-order-hdr" style="cursor:pointer" onclick="KKontakt.toggle(\''+t.id+'\')">';
     h+='<span class="k-oc-arrow"><i data-lucide="chevron-'+(isOpen?'down':'right')+'" style="width:14px;height:14px"></i></span>';
     h+='<span class="k-oc-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
+    h+='<span title="Gerät des Kunden" style="font-size:10px;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap;flex-shrink:0"><i data-lucide="smartphone" style="width:10px;height:10px;vertical-align:-1px"></i> '+esc(devTag(t))+'</span>';
     h+='<span style="flex:1;min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px">'+esc(lastTxt)+'</span>';
     h+='<span style="font-size:11px;color:#9ca3af;margin-right:8px">'+fmtTime(lastTs(t))+'</span>';
     if(unread) h+='<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite"><i data-lucide="message-circle" style="width:10px;height:10px"></i> NEU</span>';
     h+='</div>';
     if(isOpen){
       h+='<div style="padding:10px 12px;max-width:680px">';
-      if(t.email) h+='<div style="font-size:12px;color:#6b7280;margin-bottom:6px"><i data-lucide="mail" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(t.email)+(t.notify_email?' · E-Mail-Antwort gewünscht':'')+'</div>';
+      h+='<div style="font-size:12px;color:#6b7280;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px">';
+      if(t.email) h+='<span><i data-lucide="mail" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(t.email)+(t.notify_email?' · E-Mail-Antwort gewünscht':'')+'</span>';
+      h+='<span title="Antwort geht genau an dieses Gerät zurück"><i data-lucide="smartphone" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(devTag(t))+'</span>';
+      h+='</div>';
       h+=bubbles(t.verlauf);
       // reply row
       h+='<div style="display:flex;gap:6px;align-items:center;margin-top:8px">';
