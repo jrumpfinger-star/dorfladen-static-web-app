@@ -704,7 +704,7 @@ if(window!==window.parent){
       reg.pushManager.getSubscription().then(function(existing){
         if(existing){
           fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['bestellung'],device_id:(window.dlPushDeviceId?dlPushDeviceId():'')})});
+            body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['bestellung'],merge:true,device_id:(window.dlPushDeviceId?dlPushDeviceId():'')})});
           return;
         }
         if(Notification.permission==='granted'){
@@ -739,7 +739,7 @@ if(window!==window.parent){
       for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
       reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
         fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['bestellung'],device_id:(window.dlPushDeviceId?dlPushDeviceId():'')})});
+          body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['bestellung'],merge:true,device_id:(window.dlPushDeviceId?dlPushDeviceId():'')})});
       });
     });
   }
@@ -765,6 +765,27 @@ if(window!==window.parent){
   });
   // App-Benachrichtigung aktivieren -> direkt Push einrichten (Permission-Prompt)
   (function(){var op=document.getElementById('opt-push');if(op){op.addEventListener('change',function(){if(op.checked)registerPush();});}})();
+
+  // Haken spiegelt den echten Abo-Status: bei aktivem 'bestellung'-Abo automatisch
+  // anhaken. Entfernen des Hakens bestellt NICHT ab (das geht nur im
+  // Benachrichtigungs-Menue) – hier ist der Haken rein zum Aktivieren.
+  (function initPushCheckbox(){
+    var op=document.getElementById('opt-push');
+    if(!op || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if(typeof Notification!=='undefined' && Notification.permission==='denied') return;
+    navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription();
+    }).then(function(sub){
+      if(!sub) return;
+      fetch(API+'/push-subscribe?endpoint='+encodeURIComponent(sub.endpoint))
+        .then(function(r){ return r.ok?r.json():null; })
+        .then(function(res){
+          if(res && res.success && res.categories && res.categories.indexOf('bestellung')>=0){
+            op.checked = true;
+          }
+        }).catch(function(){});
+    }).catch(function(){});
+  })();
   // E-Mail-Pflichtkennzeichen dynamisch: bei gewaehlter E-Mail-Benachrichtigung wird sie Pflicht.
   (function(){
     var oe=document.getElementById('opt-email'), req=document.getElementById('email-req');

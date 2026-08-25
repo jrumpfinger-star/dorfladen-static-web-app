@@ -1832,6 +1832,9 @@ var K = (function(){
     if(o.mitnehmen) html += '<span class="k-order-mitnehmen">'+luc('package',11)+' MIT</span>';
     if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
     if(hasNote) html += '<span style="color:#92400e;font-size:11px" title="Anmerkung">'+luc('message-square',12)+'</span>';
+    // Kommunikationswege: 📲 Push (aktives Abo) / ✉️ E-Mail (gewuenscht)
+    if(o.push_available) html += '<span title="Kunde erhält Push-Nachrichten" style="display:inline-flex;align-items:center;gap:2px;background:#ede9fe;color:#6d28d9;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px">'+luc('smartphone',10)+' Push</span>';
+    if(o.notify_email && o.email) html += '<span title="Kunde erhält E-Mails: '+esc(o.email)+'" style="display:inline-flex;align-items:center;gap:2px;background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px">'+luc('mail',10)+' E-Mail</span>';
     html += '</span>';
     // Inline actions (stop propagation)
     html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';

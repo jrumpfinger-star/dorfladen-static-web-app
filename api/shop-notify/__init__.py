@@ -304,8 +304,9 @@ def build_email_html(body_text, subject="", extra_html=""):
 </body></html>'''
 
 
-def send_email(to_email, to_name, subject, body_text, extra_html=""):
-    """Send email via Microsoft Graph API. Contact info from Dataverse."""
+def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=None):
+    """Send email via Microsoft Graph API. Contact info from Dataverse.
+    reply_to: optionale Reply-To-Adresse (z.B. no-reply); Standard = Kontakt-Reply-To."""
     import logging
     token = get_graph_token()
     if not token:
@@ -315,7 +316,7 @@ def send_email(to_email, to_name, subject, body_text, extra_html=""):
     ci = get_contact_info()
     sender_mailbox = ci["mailbox"]
     sender_name = ci["name"]
-    reply_to = ci["reply_to"]
+    reply_to_addr = reply_to or ci["reply_to"]
 
     # Build branded HTML email
     email_html = build_email_html(body_text, subject, extra_html)
@@ -338,7 +339,7 @@ def send_email(to_email, to_name, subject, body_text, extra_html=""):
             }],
             "replyTo": [{
                 "emailAddress": {
-                    "address": reply_to,
+                    "address": reply_to_addr,
                     "name": sender_name
                 }
             }]

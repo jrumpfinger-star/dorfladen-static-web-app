@@ -258,23 +258,47 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     # POST – save subscription with categories and optional email
+    # merge=True: neue Kategorien zu den bestehenden HINZUFUEGEN (z.B. Bestellformular
+    # fuegt 'bestellung' hinzu, ohne 'tagesinfo'/'news' zu verlieren). Ohne merge
+    # werden die Kategorien exakt gesetzt (Benachrichtigungs-Menue).
+    merge = bool(body.get("merge", False))
+
+    filter_url = (
+        f"{base_url}/api/data/v9.2/{entity_set}"
+        f"?$filter=dl_schluessel eq '{sub_key}'"
+        f"&$select=dl_seiteninhaltid,dl_wert"
+    )
+    r = requests.get(filter_url, headers=hdrs, timeout=30)
+    existing = (r.json() or {}).get("value", []) if r.status_code == 200 else []
+
+    final_categories = list(categories)
+    if existing:
+        try:
+            prev = json.loads(existing[0].get("dl_wert", "{}") or "{}")
+        except Exception:
+            prev = {}
+        if merge:
+            prev_cats = _migrate_cats(prev.get("categories", []))
+            merged = list(prev_cats)
+            for c in categories:
+                if c not in merged:
+                    merged.append(c)
+            final_categories = merged
+        # Bestehende E-Mail/Geraete-ID erhalten, wenn jetzt keine mitgeschickt wird.
+        if not email and prev.get("email"):
+            email = prev.get("email")
+        if not device_id and prev.get("device_id"):
+            device_id = prev.get("device_id")
+
     sub_data = {
         "subscription": subscription,
-        "categories": categories
+        "categories": final_categories
     }
     if email:
         sub_data["email"] = email.lower().strip()
     if device_id:
         sub_data["device_id"] = device_id
     sub_json = json.dumps(sub_data, ensure_ascii=False)
-
-    filter_url = (
-        f"{base_url}/api/data/v9.2/{entity_set}"
-        f"?$filter=dl_schluessel eq '{sub_key}'"
-        f"&$select=dl_seiteninhaltid"
-    )
-    r = requests.get(filter_url, headers=hdrs, timeout=30)
-    existing = (r.json() or {}).get("value", []) if r.status_code == 200 else []
 
     payload = {
         "dl_schluessel": sub_key,

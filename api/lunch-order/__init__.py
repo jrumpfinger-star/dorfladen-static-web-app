@@ -136,6 +136,7 @@ def _serialize(item):
         "stammkunde_id": item.get("dl_stammkunde_id", ""),
         "erfasst_von": item.get("dl_erfasst_von", ""),
         "device_id": item.get("dl_device_id", ""),
+        "notify_email": bool(item.get("dl_notify_email", False)),
     }
 
 
@@ -184,7 +185,108 @@ def _send_push(email, title, body_text, tag="lunch", bestellnr="", origin="", de
     return False
 
 
+NO_REPLY_ADDRESS = "no-reply@dorfladen-oberornau.de"
+
+
+def _send_reply_email(email, name, gericht, reply_text, bestellnr, origin):
+    """Verkaeufer-Antwort zusaetzlich per No-Reply-E-Mail zustellen.
+    Der Kunde kann nicht per Mail antworten – stattdessen Link zum Bestellstatus."""
+    try:
+        api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if api_dir not in sys.path:
+            sys.path.insert(0, api_dir)
+        from importlib import import_module
+        notify_mod = import_module("shop-notify")
+        ci = notify_mod.get_contact_info()
+        laden_name = ci["name"]
+        anrede = f"Liebe/r {name}" if name else "Liebe Kundin, lieber Kunde"
+        base = (origin or "").rstrip("/")
+        from urllib.parse import quote
+        status_link = f"{base}/bestellstatus?nr={quote(str(bestellnr))}"
+        if email:
+            status_link += f"&email={quote(str(email))}"
+        gericht_txt = f" zu Ihrer Bestellung „{gericht}“" if gericht else ""
+        body_text = (
+            f"{anrede},\n\n"
+            f"Sie haben eine neue Nachricht vom Dorfladen{gericht_txt} erhalten:\n\n"
+            f"„{reply_text}“\n\n"
+            f"Bitte antworten Sie NICHT direkt auf diese E-Mail – sie wird nicht gelesen.\n"
+            f"Wenn Sie antworten möchten, öffnen Sie Ihren Bestellstatus:\n"
+            f"{status_link}\n\n"
+            f"Ihr {laden_name}-Team"
+        )
+        extra_html = (
+            f'<div style="margin-top:16px">'
+            f'<a href="{status_link}" style="display:inline-block;background:#2e7d4f;color:#fff;'
+            f'text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">'
+            f'💬 Zum Bestellstatus &amp; antworten</a></div>'
+            f'<p style="margin-top:14px;font-size:12px;color:#6b7280">Diese E-Mail wurde '
+            f'automatisch versendet. Bitte antworten Sie nicht direkt darauf.</p>'
+        )
+        subject = f"{laden_name} – Neue Nachricht zu Bestellung {bestellnr}"
+        notify_mod.send_email(email, name, subject, body_text, extra_html,
+                              reply_to=NO_REPLY_ADDRESS)
+        return True
+    except Exception as e:
+        logging.warning(f"[lunch-order] Reply email failed (non-blocking): {e}")
+    return False
+
+
 DEFAULT_BESTELLSCHLUSS = 10.5  # 10:30 Uhr – Fallback wenn CMS-Config nicht verfügbar
+
+
+# Kurzer Cache der Push-Abonnenten (E-Mails + Geraete-IDs mit Kategorie 'bestellung'),
+# damit die haeufig gepollte Tagesansicht nicht bei jedem Abruf alle Subscriptions laedt.
+_bestell_targets_cache = {"ts": 0.0, "emails": set(), "devices": set()}
+_BESTELL_TARGETS_TTL = 60  # Sekunden
+
+
+def _load_bestellung_targets(base_url, headers):
+    """Liefert (emails, devices), die ein aktives 'bestellung'-Push-Abo haben."""
+    import time as _t
+    now = _t.time()
+    if (now - _bestell_targets_cache["ts"]) < _BESTELL_TARGETS_TTL and _bestell_targets_cache["ts"] > 0:
+        return _bestell_targets_cache["emails"], _bestell_targets_cache["devices"]
+    emails, devices = set(), set()
+    try:
+        url = (
+            f"{base_url}/api/data/v9.2/dl_seiteninhalts"
+            f"?$filter=startswith(dl_schluessel,'push_sub_')"
+            f"&$select=dl_wert&$top=5000"
+        )
+        r = requests.get(url, headers=headers, timeout=20)
+        if r.status_code == 200:
+            for item in r.json().get("value", []):
+                try:
+                    raw = json.loads(item.get("dl_wert", "{}"))
+                except Exception:
+                    continue
+                cats = raw.get("categories", []) or []
+                # Legacy-Kategorien zaehlen als 'tagesinfo', nicht 'bestellung'.
+                if "bestellung" not in cats:
+                    continue
+                em = (raw.get("email", "") or "").lower().strip()
+                dv = (raw.get("device_id", "") or "").strip()
+                if em:
+                    emails.add(em)
+                if dv:
+                    devices.add(dv)
+    except Exception as e:
+        logging.warning(f"[lunch-order] load bestellung targets failed: {e}")
+    _bestell_targets_cache.update({"ts": now, "emails": emails, "devices": devices})
+    return emails, devices
+
+
+def _mark_push_available(orders, base_url, headers):
+    """Setzt pro Bestellung push_available (aktives 'bestellung'-Abo per E-Mail/Geraet)."""
+    try:
+        emails, devices = _load_bestellung_targets(base_url, headers)
+        for o in orders:
+            em = (o.get("email", "") or "").lower().strip()
+            dv = (o.get("device_id", "") or "").strip()
+            o["push_available"] = bool((em and em in emails) or (dv and dv in devices))
+    except Exception:
+        pass
 
 
 def _get_bestellschluss(base_url, headers):
@@ -443,6 +545,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "dl_stammkunde_id": stammkunde_id,
                 "dl_erfasst_von": erfasst_von,
                 "dl_device_id": device_id,
+                "dl_notify_email": notify_email,
             }
 
             post_headers = {**headers, "Prefer": "return=representation"}
@@ -612,7 +715,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             # Full message orders across all dates (for Nachrichten tab)
             if req.params.get("mode") == "messages":
-                select_fields = "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,createdon"
+                select_fields = "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,dl_device_id,dl_notify_email,createdon"
                 msg_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
                     f"?$filter=dl_kunde_kommentar ne null"
@@ -630,6 +733,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         o["bestellnummer"] = item.get("dl_bestellnummer", "")
                         o["mitnehmen"] = item.get("dl_mitnehmen", False)
                         msg_orders.append(o)
+                _mark_push_available(msg_orders, base_url, headers)
                 return func.HttpResponse(
                     json.dumps({"success": True, "orders": msg_orders, "count": len(msg_orders)}, ensure_ascii=False),
                     status_code=200, headers=get_cors_headers(),
@@ -769,7 +873,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
             params = {
-                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,createdon",
+                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,dl_device_id,dl_notify_email,createdon",
                 "$orderby": "createdon desc",
                 "$top": "200",
             }
@@ -785,6 +889,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     o["bestellnummer"] = item.get("dl_bestellnummer", "")
                     o["mitnehmen"] = item.get("dl_mitnehmen", False)
                     orders.append(o)
+                _mark_push_available(orders, base_url, headers)
                 return func.HttpResponse(
                     json.dumps({"success": True, "orders": orders, "count": len(orders)}, ensure_ascii=False),
                     status_code=200, headers=get_cors_headers(),
@@ -917,6 +1022,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 # Push to customer when staff sends a reply
                 if _can_push and personal_antwort:
                     _send_push(customer_email, "💬 Nachricht vom Dorfladen", personal_antwort, f"lunch-reply-{bestellnr}", bestellnr, _push_origin, customer_device)
+
+                # Zusaetzlich per E-Mail zustellen, wenn der Kunde E-Mail gewaehlt hat.
+                if personal_antwort and customer_email and bool(existing.get("dl_notify_email", False)):
+                    _send_reply_email(customer_email, existing.get("dl_name", ""), gericht_name, personal_antwort, bestellnr, _push_origin)
 
                 return func.HttpResponse(
                     json.dumps({"success": True, "message": "Status aktualisiert"}, ensure_ascii=False),
