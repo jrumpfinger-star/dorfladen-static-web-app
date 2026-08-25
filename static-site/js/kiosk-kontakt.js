@@ -138,8 +138,9 @@
       var inner='';
       if(m.datei){ inner += '<img src="/api/tagesbild?datei='+encodeURIComponent(m.datei)+'" alt="" style="max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:zoom-in;margin-bottom:'+(m.text?'4px':'0')+'" onclick="KKontakt.zoom(this.src)">'; }
       if(m.text){ inner += '<span style="white-space:pre-wrap;word-break:break-word">'+fmtText(m.text)+'</span>'; }
+      var delBtn = m.t ? ('<span onclick="event.stopPropagation();KKontakt.deleteMsg(\''+t.id+'\',\''+m.t+'\')" title="Nachricht löschen" style="cursor:pointer;color:#cbd5e1;font-size:12px;flex-shrink:0">✕</span>') : '';
       h += '<div style="align-self:'+side+';max-width:80%;background:'+bg+';border:1px solid '+bd+';border-radius:10px;padding:6px 9px;font-size:14px;line-height:1.4">'
-         + '<div style="font-size:9px;font-weight:800;text-transform:uppercase;color:'+col+';margin-bottom:1px">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</div>'+inner+'</div>';
+         + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:1px"><span style="flex:1;min-width:0;font-size:9px;font-weight:800;text-transform:uppercase;color:'+col+'">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</span>'+delBtn+'</div>'+inner+'</div>';
     });
     h+='</div>';
     return h;
@@ -148,15 +149,22 @@
   function shortCode(id){ id=(id||'').replace(/[^a-zA-Z0-9]/g,''); return id?('#'+id.slice(-4)):'#????'; }
   function devTag(t){ return (t.geraet?(t.geraet+' · '):'')+shortCode(t.device_id); }
   function devHue(id){ id=(id||''); var h=0; for(var i=0;i<id.length;i++){ h=(h*31+id.charCodeAt(i))>>>0; } return h%360; }
+  function unreadCount(t){
+    if(t.kommentar_gelesen) return 0;
+    var v=t.verlauf||[], n=0;
+    for(var i=v.length-1;i>=0;i--){ if(v[i] && v[i].who==='kunde') n++; else break; }
+    return n>0?n:1;
+  }
 
   function card(t){
-    var unread = !t.kommentar_gelesen;
+    var uc=unreadCount(t);
+    var unread = uc>0;
     var isOpen = _open[t.id];
     var last = (t.verlauf&&t.verlauf.length)?t.verlauf[t.verlauf.length-1]:null;
     var lastTxt = last ? ((last.who==='dorfladen'?'Du: ':'')+(last.text || (last.datei?'📷 Foto':''))) : '';
     var hue=devHue(t.device_id);
     var dcMain='hsl('+hue+',60%,40%)', dcBg='hsl('+hue+',72%,95%)';
-    var h='<div class="k-order" style="margin-bottom:10px;border-left:5px solid '+dcMain+'">';
+    var h='<div class="k-order" style="margin-bottom:10px;border-left:5px solid '+dcMain+(unread?';background:#f0fdf4':'')+'">';
     // header
     h+='<div class="k-order-hdr" style="cursor:pointer" onclick="KKontakt.toggle(\''+t.id+'\')">';
     h+='<input type="checkbox" class="kk-sel" title="Auswählen" style="margin-right:8px;width:16px;height:16px;flex-shrink:0;cursor:pointer" '+(_sel[t.id]?'checked':'')+' onclick="event.stopPropagation();KKontakt.toggleSel(\''+t.id+'\',this.checked)">';
@@ -165,8 +173,8 @@
     h+='<span class="k-oc-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
     h+='<span title="Gerät des Kunden – jede Farbe/Code ist ein eigenes Gerät" style="font-size:11px;font-weight:800;color:'+dcMain+';background:'+dcBg+';border:1px solid '+dcMain+';border-radius:6px;padding:1px 8px;margin-left:8px;white-space:nowrap;flex-shrink:0">📱 '+esc(devTag(t))+'</span>';
     h+='<span style="flex:1;min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px">'+esc(lastTxt)+'</span>';
-    h+='<span style="font-size:11px;color:#9ca3af;margin-right:8px">'+fmtTime(lastTs(t))+'</span>';
-    if(unread) h+='<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite"><i data-lucide="message-circle" style="width:10px;height:10px"></i> NEU</span>';
+    h+='<span style="font-size:11px;color:'+(unread?'#16a34a':'#9ca3af')+';font-weight:'+(unread?'700':'400')+';margin-right:8px;white-space:nowrap">'+fmtTime(lastTs(t))+'</span>';
+    if(unread) h+='<span title="'+uc+' neue Nachricht(en)" style="background:#25D366;color:#fff;font-size:12px;font-weight:800;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.2)">'+uc+'</span>';
     h+='</div>';
     if(isOpen){
       h+='<div style="padding:10px 12px;max-width:680px">';
@@ -301,6 +309,11 @@
   function toggleSel(id, checked){ if(checked) _sel[id]=true; else delete _sel[id]; updateActions(); }
   function clearSel(){ _sel={}; render(); }
   function deleteOne(id){ if(!confirm('Diese Konversation endgültig löschen?')) return; doDelete([id]); }
+  function deleteMsg(id, t){
+    if(!confirm('Diese Nachricht löschen?')) return;
+    fetch(API+'/contact-message/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({delete_msg_t:t})})
+      .then(function(r){return r.json();}).then(function(res){ if(res&&res.success){ var th=_threads.find(function(x){return x.id===id;}); if(th){ th.verlauf=res.verlauf||th.verlauf; } render(); pollBadge(); } }).catch(function(){});
+  }
   function deleteSelected(){ var ids=selIds(); if(!ids.length) return; if(!confirm(ids.length+' Konversation(en) endgültig löschen?')) return; doDelete(ids); }
   function doDelete(ids){
     Promise.all(ids.map(function(id){
@@ -323,6 +336,6 @@
   window.KKontakt = {
     onShow:onShow, reload:reload, toggle:toggle,
     send:send, stageImage:stageImage, removeImage:removeImage, pollBadge:pollBadge, zoom:zoom,
-    emoji:emoji, toggleSel:toggleSel, clearSel:clearSel, deleteOne:deleteOne, deleteSelected:deleteSelected
+    emoji:emoji, toggleSel:toggleSel, clearSel:clearSel, deleteOne:deleteOne, deleteSelected:deleteSelected, deleteMsg:deleteMsg
   };
 })();

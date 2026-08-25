@@ -462,6 +462,37 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             patch = {}
             thread = _parse_verlauf(existing.get("dl_chatverlauf"))
+
+            # Einzelne Nachricht loeschen (per Zeitstempel identifiziert).
+            del_t = (body.get("delete_msg_t") or "").strip()
+            if del_t:
+                new_thread = []
+                removed = False
+                for m in thread:
+                    if (not removed) and isinstance(m, dict) and m.get("t") == del_t:
+                        removed = True
+                        continue
+                    new_thread.append(m)
+                if not removed:
+                    return func.HttpResponse(
+                        json.dumps({"success": True, "verlauf": thread, "message": "nicht gefunden"}, ensure_ascii=False),
+                        status_code=200, headers=get_cors_headers(),
+                    )
+                pr = requests.patch(
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})",
+                    headers={**headers, "If-Match": "*"},
+                    json={"dl_chatverlauf": json.dumps(new_thread, ensure_ascii=False)}, timeout=30,
+                )
+                if pr.status_code in (200, 204):
+                    return func.HttpResponse(
+                        json.dumps({"success": True, "message": "Nachricht gelöscht", "verlauf": new_thread}, ensure_ascii=False),
+                        status_code=200, headers=get_cors_headers(),
+                    )
+                return func.HttpResponse(
+                    json.dumps({"success": False, "error": f"Löschen fehlgeschlagen ({pr.status_code})"}, ensure_ascii=False),
+                    status_code=500, headers=get_cors_headers(),
+                )
+
             reply = body.get("personal_antwort")
             bild_datei = (body.get("bild_datei") or "").strip()[:200]
             thread_changed = False
