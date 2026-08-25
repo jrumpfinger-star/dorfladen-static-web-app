@@ -55,7 +55,7 @@ Azure Functions (Python, `api/`) + Dataverse. Entwicklung zuerst auf der
 - Kein mehrsprachiger Support, keine Telefon-/SMS-Anbindung.
 - Ersetzt NICHT die bestellbezogene Kommunikation (bleibt am Bestellstatus).
 - Ersetzt NICHT die WhatsApp-**Gruppe** (Community-Broadcast) — das ist ein
-  anderer Zweck. [NEEDS CLARIFICATION: WhatsApp-Gruppe bleibt bestehen?]
+  anderer Zweck.
 - Keine Videos/Sprachnachrichten/Dokumente in v1 (nur Text + Bilder).
 
 ## Requirements
@@ -130,7 +130,7 @@ Eingang löst den bestehenden Kiosk-Ton/Hinweis aus.
   (`kommentar_gelesen=true`), Badge sinkt entsprechend.
 - Given die Verkäuferin sendet eine Antwort, Then wird sie an den Verlauf
   angehängt und dem Kunden per Push/E-Mail (je nach Opt-in) zugestellt.
-- Filter: „Neu", „Alle", „Erledigt". [NEEDS CLARIFICATION: genaue Filter/Status?]
+- Filter: „Neu", „Alle", „Erledigt". (v1: Neu / Alle / Erledigt).
 
 #### F2 Test Cases
 
@@ -152,8 +152,7 @@ Eingang löst den bestehenden Kiosk-Ton/Hinweis aus.
 Der Tab ist standardmäßig **aus**. In den CMS-Einstellungen (Feature-Flags) gibt es
 einen Schalter „Kiosk-Tab: Kontakt" (`feat-k-kontakt` → `feature_flags.kiosk_kontakt`).
 Der Kiosk blendet den Tab nur bei `kiosk_kontakt===true` ein (analog `applyKioskFeatures`).
-Der Homepage-Einstieg wird [NEEDS CLARIFICATION: nur bei aktivem Flag angezeigt,
-oder unabhängig immer sichtbar?].
+Der Homepage-Einstieg erscheint nur bei aktivem `kiosk_kontakt`-Flag.
 
 #### F3 Test Cases
 
@@ -168,8 +167,7 @@ oder unabhängig immer sichtbar?].
 
 - Store→Kunde: Push (Kategorie `kontakt`) + optional No-Reply-E-Mail (Link zum
   Chat), analog `_send_reply_email` bei Bestellungen.
-- Kunde→Store: Kiosk-Badge + bestehender Neu-Ton. [NEEDS CLARIFICATION: zusätzlich
-  Push an Personal-Geräte? Wenn ja, eigene Personal-Subscription/Kategorie `staff`.]
+- Kunde→Store: Kiosk-Badge + bestehender Neu-Ton (v1: kein Personal-Push).
 - Ungelesen serverseitig (`kommentar_gelesen`) für den Kiosk; kundenseitig via
   localStorage-Marker (letzte gesehene Antwort), wie bei Bestellungen.
 
@@ -186,8 +184,8 @@ oder unabhängig immer sichtbar?].
 #### F5 Description
 
 Da ohne Login: einfache Schutzmaßnahmen — Zeichenlimit, Rate-Limit pro
-`device_id`/IP, Honeypot-Feld, ggf. simple Wortfilter. [NEEDS CLARIFICATION:
-gewünschtes Maß? Captcha unerwünscht?]
+`device_id`/IP, Honeypot-Feld, ggf. simple Wortfilter (v1: Limit 1000 Zeichen,
+Honeypot, Rate-Limit 10/5min, kein Captcha).
 
 #### F5 Test Cases
 
@@ -256,7 +254,7 @@ Chat erscheinen Thumbnails; Klick öffnet die Vollansicht (bestehende
 
 Im Kiosk gibt es **Vorlagen/Schnellantworten** (z. B. „Ja, vorrätig ✅", „Wir melden
 uns gleich", „Leider ausverkauft") als Ein-Klick-Buttons über dem Antwortfeld.
-Vorlagen sind im CMS pflegbar. [NEEDS CLARIFICATION: feste Startvorlagen ok?]
+Vorlagen sind im CMS pflegbar. (v1.1 optional).
 
 #### F8 Test Cases
 
@@ -294,8 +292,7 @@ erste Antwort im Verlauf. Öffnungszeiten kommen aus der bestehenden CMS-Config.
 | `dl_notify_email` | Boolean | Kunde wünscht E-Mail-Antworten |
 | `createdon`/`modifiedon` | System | Sortierung/Anzeige |
 
-[NEEDS CLARIFICATION: Eine Konversation pro Gerät (fortlaufender Thread) ODER pro
-Anfrage/Betreff eine neue? → ENTSCHIEDEN: fortlaufender Thread pro Gerät.]
+ENTSCHIEDEN: fortlaufender Thread pro Gerät (ein Verlauf pro `device_id`).
 
 ### Bild-Speicherung & Upload
 
@@ -333,9 +330,7 @@ Anfrage/Betreff eine neue? → ENTSCHIEDEN: fortlaufender Thread pro Gerät.]
 - **Entwicklung auf Testumgebung:** Branch `dev` → Workflow
   `azure-static-web-apps-test.yml` (Secret `AZURE_STATIC_WEB_APPS_API_TOKEN_TEST`).
 - Dataverse-Felder/Tabelle werden per Metadata-API angelegt (wie zuvor
-  `dl_chatverlauf`, `dl_device_id`). [NEEDS CLARIFICATION: nutzt die TEST-SWA eine
-  **eigene** Dataverse-Umgebung/Tabellen oder dieselbe wie Prod? Falls dieselbe:
-  neue Tabelle ist unkritisch, da additiv.]
+  `dl_chatverlauf`, `dl_device_id`). (Annahme: gleiche Dataverse-Org; additive Tabelle.)
 - Nach Freigabe: Merge `dev` → `main` (Produktiv), Feature-Flag zunächst aus.
 
 ## WhatsApp-Feature-Parität & eigene Ideen
@@ -359,20 +354,27 @@ Anfrage/Betreff eine neue? → ENTSCHIEDEN: fortlaufender Thread pro Gerät.]
 - **Suche/Filter** über Konversationen im Kiosk.
 - **Blockieren/Spam** einer Konversation (gegen Missbrauch ohne Login).
 - **Clientseitige Bildkompression** vor Upload (schnell + datensparsam).
-- [NEEDS CLARIFICATION: welche dieser Ideen in v1, welche später?]
+- v1: Bildaustausch, Gelesen-Status, Kontext-Start. v1.1: Schnellantworten, interne Notiz.
 
 ## Open Questions
 
-- [NEEDS CLARIFICATION: Homepage-Einstieg immer sichtbar oder nur bei aktivem
-  `kiosk_kontakt`-Flag?]
-- [NEEDS CLARIFICATION: WhatsApp-**Gruppe** (Community) bleibt bestehen?]
-- [NEEDS CLARIFICATION: Sollen Personal-Geräte bei neuer Anfrage aktiv gepusht
-  werden (Kategorie `staff`), oder reicht Kiosk-Badge/Ton?]
-- [NEEDS CLARIFICATION: Spam-Schutz-Umfang (Rate-Limit-Grenzen, Honeypot, Captcha
-  ja/nein)?]
-- [NEEDS CLARIFICATION: Nutzt die Testumgebung eine separate Dataverse-Instanz?]
-- [NEEDS CLARIFICATION: Datenaufbewahrung/Archivierung erledigter Threads?]
-- [NEEDS CLARIFICATION: Welche „eigenen Ideen" in v1, welche später?]
+Alle für v1 entschieden (Stand 2026-08-25):
+
+- **Homepage-Einstieg:** erscheint NUR bei aktivem `kiosk_kontakt`-Flag — sonst
+  gäbe es unbeaufsichtigte Nachrichten. Kanal ist an Kiosk-Freischaltung gekoppelt.
+- **WhatsApp-Gruppe (Community):** bleibt bestehen (anderer Zweck, Broadcast).
+- **Personal-Push bei neuer Anfrage:** NEIN — Kiosk-Badge + vorhandener Neu-Ton
+  reichen für v1 (bestätigt).
+- **Spam-Schutz:** Zeichenlimit (1000), Honeypot-Feld, Rate-Limit pro `device_id`
+  (max. 10 Nachrichten / 5 Min, HTTP 429 + freundlicher Hinweis). Kein Captcha.
+- **Testumgebung-DB:** Annahme: dieselbe Dataverse-Org wie Prod (Tabelle ist
+  additiv, Feature bleibt in Prod per Flag aus). Falls TEST eine eigene Org nutzt,
+  Tabelle dort ebenfalls anlegen.
+- **Aufbewahrung:** v1 kein Auto-Löschen; erledigte Threads bleiben. Archiv später.
+- **Öffnungszeiten:** v1 statischer Hinweis im Chat-Header („antwortet meist
+  während der Öffnungszeiten"); keine Auto-Antwort.
+- **Eigene Ideen in v1:** Bildaustausch, Gelesen-Status, Kontext-Start aus
+  TagesInfo/Angebot. Schnellantworten (F8) und interne Notiz als v1.1 optional.
 
 ## Traceability
 
