@@ -128,6 +128,7 @@ def _serialize(item, include_email=False):
         "created": item.get("createdon", ""),
         "modified": item.get("modifiedon", ""),
     }
+    o["devices"] = _thread_devices(o["verlauf"])
     # E-Mail nur intern (Kiosk) preisgeben, nicht an fremde Kunden-Lookups.
     if include_email:
         o["email"] = item.get("dl_email", "")
@@ -216,6 +217,42 @@ def _find_thread_by_device(base_url, headers, device_id):
     return None
 
 
+def _find_thread_by_email(base_url, headers, email):
+    url = (
+        f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+        f"?$filter=dl_email eq '{_odata_str(email)}'"
+        f"&$orderby=createdon asc&$top=1"
+    )
+    r = requests.get(url, headers=headers, timeout=30)
+    if r.status_code == 200:
+        items = r.json().get("value", [])
+        return items[0] if items else None
+    return None
+
+
+def _find_thread(base_url, headers, device_id, email):
+    """Ein Thread pro Kunde: zuerst ueber die E-Mail zusammenfuehren (geraete-
+    uebergreifend), sonst ueber die Geraete-ID (fuer Kunden ohne E-Mail)."""
+    if email:
+        t = _find_thread_by_email(base_url, headers, email)
+        if t:
+            return t
+    if device_id:
+        return _find_thread_by_device(base_url, headers, device_id)
+    return None
+
+
+def _thread_devices(verlauf):
+    """Alle Geraete-IDs, von denen der Kunde in diesem Thread geschrieben hat."""
+    devs = []
+    for m in (verlauf or []):
+        if isinstance(m, dict) and m.get("who") == "kunde":
+            d = (m.get("dev") or "").strip()
+            if d and d not in devs:
+                devs.append(d)
+    return devs
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=get_cors_headers())
@@ -276,8 +313,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 msg["datei"] = bild_datei
                 if text:
                     msg["typ"] = "text"  # Text + Bild: als Text-Eintrag mit Bild
+            # Jede Kundennachricht mit ihrem Geraet markieren (fuer Anzeige + Multi-Geraete-Push).
+            if device_id:
+                msg["dev"] = device_id
+            if geraet:
+                msg["geraet"] = geraet
 
-            existing = _find_thread_by_device(base_url, headers, device_id)
+            existing = _find_thread(base_url, headers, device_id, email)
             if existing:
                 thread = _parse_verlauf(existing.get("dl_chatverlauf"))
                 thread.append(msg)
@@ -294,6 +336,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     patch["dl_betreff"] = betreff
                 if geraet:
                     patch["dl_geraet"] = geraet
+                if device_id:
+                    patch["dl_device_id"] = device_id  # zuletzt aktives Geraet
                 patch["dl_notify_email"] = notify_email
                 rid = existing.get("dl_kontaktnachrichtid")
                 pr = requests.patch(
@@ -335,15 +379,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if req.method == "GET":
             mode = req.params.get("mode", "")
 
-            # Kunde: eigenen Thread
+            # Kunde: eigenen Thread (geraeteuebergreifend ueber E-Mail zusammengefuehrt)
             if mode == "my":
                 device_id = (req.params.get("device_id") or "").strip()
-                if not device_id:
+                email = (req.params.get("email") or "").strip().lower()
+                if not device_id and not email:
                     return func.HttpResponse(
                         json.dumps({"success": True, "thread": None}, ensure_ascii=False),
                         status_code=200, headers=get_cors_headers(),
                     )
-                item = _find_thread_by_device(base_url, headers, device_id)
+                item = _find_thread(base_url, headers, device_id, email)
                 return func.HttpResponse(
                     json.dumps({"success": True, "thread": _serialize(item) if item else None}, ensure_ascii=False),
                     status_code=200, headers=get_cors_headers(),
@@ -455,8 +500,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     cust_device = existing.get("dl_device_id", "")
                     cust_name = existing.get("dl_name", "")
                     preview = (reply.strip() if (reply and reply.strip()) else "📷 Foto")
-                    if cust_email or cust_device:
-                        _send_push(cust_email, cust_device, "💬 Nachricht vom Dorfladen", preview, f"kontakt-{record_id}", _origin)
+                    # Push an ALLE Geraete, von denen der Kunde in diesem Thread
+                    # geschrieben hat (geraeteuebergreifend zusammengefuehrt).
+                    devices = _thread_devices(thread)
+                    if cust_device and cust_device not in devices:
+                        devices.append(cust_device)
+                    if devices:
+                        for d in devices:
+                            _send_push("", d, "💬 Nachricht vom Dorfladen", preview, f"kontakt-{record_id}", _origin)
+                    elif cust_email:
+                        _send_push(cust_email, "", "💬 Nachricht vom Dorfladen", preview, f"kontakt-{record_id}", _origin)
                     if cust_email and bool(existing.get("dl_notify_email", False)):
                         _send_reply_email(cust_email, cust_name, preview, _origin)
                 return func.HttpResponse(

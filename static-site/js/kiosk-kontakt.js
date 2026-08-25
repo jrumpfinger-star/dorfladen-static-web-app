@@ -117,8 +117,10 @@
     });
   }
 
-  function bubbles(verlauf){
-    if(!verlauf||!verlauf.length) return '<div style="color:#9ca3af;font-size:13px;padding:6px">Kein Verlauf.</div>';
+  function bubbles(t){
+    var verlauf=(t&&t.verlauf)||[];
+    if(!verlauf.length) return '<div style="color:#9ca3af;font-size:13px;padding:6px">Kein Verlauf.</div>';
+    var multi=!!(t.devices && t.devices.length>1);
     var h='<div class="kk-thread" style="font-family:'+CHATFONT+';display:flex;flex-direction:column;gap:6px;max-height:60vh;min-height:320px;overflow-y:auto;padding:8px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f7">';
     verlauf.forEach(function(m){
       if(!m) return;
@@ -128,11 +130,16 @@
       var bd = mine?'#bbf7d0':'#bfdbfe';
       var col = mine?'#16a34a':'#2563eb';
       var lbl = mine?'Dorfladen':'Kunde';
+      var devInfo='';
+      if(!mine && multi && m.dev){
+        var mh=devHue(m.dev);
+        devInfo=' · <span style="color:hsl('+mh+',60%,40%)">'+shortCode(m.dev)+(m.geraet?(' '+esc(m.geraet)):'')+'</span>';
+      }
       var inner='';
       if(m.datei){ inner += '<img src="/api/tagesbild?datei='+encodeURIComponent(m.datei)+'" alt="" style="max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:zoom-in;margin-bottom:'+(m.text?'4px':'0')+'" onclick="KKontakt.zoom(this.src)">'; }
       if(m.text){ inner += '<span style="white-space:pre-wrap;word-break:break-word">'+fmtText(m.text)+'</span>'; }
       h += '<div style="align-self:'+side+';max-width:80%;background:'+bg+';border:1px solid '+bd+';border-radius:10px;padding:6px 9px;font-size:14px;line-height:1.4">'
-         + '<div style="font-size:9px;font-weight:800;text-transform:uppercase;color:'+col+';margin-bottom:1px">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+'</div>'+inner+'</div>';
+         + '<div style="font-size:9px;font-weight:800;text-transform:uppercase;color:'+col+';margin-bottom:1px">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</div>'+inner+'</div>';
     });
     h+='</div>';
     return h;
@@ -167,7 +174,7 @@
       if(t.email) h+='<span><i data-lucide="mail" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(t.email)+(t.notify_email?' · E-Mail-Antwort gewünscht':'')+'</span>';
       h+='<span title="Antwort geht genau an dieses Gerät zurück" style="font-weight:700;color:'+dcMain+';background:'+dcBg+';border:1px solid '+dcMain+';border-radius:6px;padding:1px 8px">📱 '+esc(devTag(t))+'</span>';
       h+='</div>';
-      h+=bubbles(t.verlauf);
+      h+=bubbles(t);
       // Vorschau des vorgemerkten Bildes (Antwort mit Untertitel)
       if(_pendingImg[t.id]){
         h+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px">';
