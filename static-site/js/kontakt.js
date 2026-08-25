@@ -18,6 +18,35 @@
     return br?(os+' · '+br):os;
   }
   function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtText(s){
+    var h=esc(s);
+    h=h.replace(/\*([^*\n]+)\*/g,'<strong>$1</strong>')
+       .replace(/_([^_\n]+)_/g,'<em>$1</em>')
+       .replace(/~([^~\n]+)~/g,'<del>$1</del>')
+       .replace(/\n/g,'<br>');
+    return h;
+  }
+  var CHATFONT="-apple-system,system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji'";
+  var EMOJIS=['😊','😀','😄','😍','👍','🙏','🎉','❤️','😅','😉','🙂','😢','😮','😡','👏','🙌','🤝','✅','❗','❓','🔥','⭐','☕','🥨','🍞','🧀','🥩','🍰','🛒','📦','📮','🕒'];
+  function insertEmoji(em){
+    var el=document.getElementById('hp-chat-input'); if(!el) return;
+    var s=(el.selectionStart!=null)?el.selectionStart:el.value.length, e=(el.selectionEnd!=null)?el.selectionEnd:el.value.length;
+    el.value=el.value.slice(0,s)+em+el.value.slice(e);
+    var p=s+em.length; try{ el.selectionStart=el.selectionEnd=p; }catch(_){}
+    el.focus(); el.style.height='auto'; el.style.height=el.scrollHeight+'px';
+  }
+  function closeEmojiOutside(e){ var pop=document.getElementById('hp-emoji-pop'); if(pop && !pop.contains(e.target) && e.target.id!=='hp-chat-emoji'){ pop.remove(); document.removeEventListener('click',closeEmojiOutside,true); } }
+  function openEmoji(anchor){
+    var ex=document.getElementById('hp-emoji-pop'); if(ex){ ex.remove(); document.removeEventListener('click',closeEmojiOutside,true); return; }
+    var pop=document.createElement('div'); pop.id='hp-emoji-pop';
+    pop.style.cssText='position:fixed;z-index:100002;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;width:296px';
+    EMOJIS.forEach(function(em){ var b=document.createElement('button'); b.type='button'; b.textContent=em; b.style.cssText='border:none;background:none;font-size:20px;cursor:pointer;padding:3px;border-radius:6px'; b.onclick=function(){ insertEmoji(em); }; pop.appendChild(b); });
+    document.body.appendChild(pop);
+    var r=anchor.getBoundingClientRect();
+    pop.style.left=Math.max(8,Math.min(r.left, window.innerWidth-pop.offsetWidth-8))+'px';
+    pop.style.top=Math.max(8,(r.top-pop.offsetHeight-6))+'px';
+    setTimeout(function(){ document.addEventListener('click',closeEmojiOutside,true); },0);
+  }
   function lastReply(t){ if(!t||!t.verlauf) return null; for(var i=t.verlauf.length-1;i>=0;i--){ if(t.verlauf[i].who==='dorfladen') return t.verlauf[i]; } return null; }
   function seenKey(){ return 'dl_kontakt_seen'; }
 
@@ -70,7 +99,7 @@
     if(document.getElementById('hp-chat-ov')) return;
     var ov=document.createElement('div');
     ov.id='hp-chat-ov';
-    ov.style.cssText='display:none;position:fixed;z-index:10000;right:16px;bottom:16px;width:370px;max-width:calc(100vw - 24px);height:560px;max-height:calc(100vh - 24px);background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);flex-direction:column;overflow:hidden';
+    ov.style.cssText='display:none;font-family:'+CHATFONT+';position:fixed;z-index:10000;right:16px;bottom:16px;width:370px;max-width:calc(100vw - 24px);height:560px;max-height:calc(100vh - 24px);background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);flex-direction:column;overflow:hidden';
     ov.innerHTML=''
       +'<div style="background:#1e3a2f;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px">'
         +'<div style="width:38px;height:38px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><img src="/images/icon-192.png" alt="" style="width:30px;height:30px;border-radius:50%" onerror="this.style.display=\'none\'"></div>'
@@ -93,8 +122,9 @@
         +'<div id="hp-chat-preview" style="display:none;align-items:center;gap:8px;margin-bottom:6px;padding:6px;background:#f3f4f6;border-radius:10px"><img id="hp-chat-prev-img" alt="" style="height:52px;width:52px;object-fit:cover;border-radius:6px"><span style="flex:1;font-size:12px;color:#6b7280">Bild bereit – Unterschrift optional</span><button id="hp-chat-prev-x" type="button" aria-label="Bild entfernen" style="background:none;border:none;font-size:18px;color:#6b7280;cursor:pointer;line-height:1">✕</button></div>'
         +'<div style="display:flex;gap:6px;align-items:flex-end">'
           +'<input type="file" accept="image/*" id="hp-chat-file" style="display:none">'
+          +'<button id="hp-chat-emoji" type="button" title="Emoji" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;width:38px;height:38px;cursor:pointer;flex-shrink:0;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center">😊</button>'
           +'<button id="hp-chat-imgbtn" title="Foto senden" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;width:38px;height:38px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></button>'
-          +'<textarea id="hp-chat-input" rows="2" maxlength="1000" placeholder="Nachricht schreiben…" style="flex:1;min-width:0;min-height:60px;padding:12px 13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;line-height:1.4;resize:none;overflow:hidden;max-height:150px;box-sizing:border-box"></textarea>'
+          +'<textarea id="hp-chat-input" rows="2" maxlength="1000" placeholder="Nachricht schreiben…" style="flex:1;min-width:0;min-height:60px;padding:12px 13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;font-family:inherit;line-height:1.4;resize:none;overflow:hidden;max-height:150px;box-sizing:border-box"></textarea>'
           +'<button id="hp-chat-send" style="background:#2e7d4f;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>'
         +'</div>'
       +'</div>';
@@ -106,6 +136,7 @@
     inp.addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doSend(); } });
     document.getElementById('hp-chat-send').onclick=doSend;
     document.getElementById('hp-chat-imgbtn').onclick=function(){ document.getElementById('hp-chat-file').click(); };
+    document.getElementById('hp-chat-emoji').onclick=function(){ openEmoji(this); };
     document.getElementById('hp-chat-file').addEventListener('change',function(){ if(this.files&&this.files[0]) stagePendingImage(this.files[0]); this.value=''; });
     document.getElementById('hp-chat-prev-x').onclick=clearPending;
     // Push-Zeile ausblenden, wenn Berechtigung blockiert
@@ -200,7 +231,7 @@
       var bg=mine?'#dcf8c6':'#fff';
       var inner='';
       if(m.datei){ inner+='<img src="/api/tagesbild?datei='+encodeURIComponent(m.datei)+'" alt="" style="max-width:200px;max-height:220px;border-radius:8px;display:block;cursor:zoom-in'+(m.text?';margin-bottom:4px':'')+'" onclick="DLKontakt.zoom(this.src)">'; }
-      if(m.text){ inner+=esc(m.text); }
+      if(m.text){ inner+='<span style="white-space:pre-wrap;word-break:break-word">'+fmtText(m.text)+'</span>'; }
       h+='<div style="align-self:'+side+';max-width:82%;background:'+bg+';border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:7px 10px;font-size:14px;line-height:1.4;box-shadow:0 1px 1px rgba(0,0,0,.05)">'+inner+'</div>';
     });
     box.innerHTML=h;

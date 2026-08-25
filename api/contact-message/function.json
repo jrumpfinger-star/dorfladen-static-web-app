@@ -6,7 +6,7 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "post", "patch", "options"],
+      "methods": ["get", "post", "patch", "delete", "options"],
       "route": "contact-message/{id?}"
     },
     {

@@ -93,7 +93,7 @@ def _headers(token):
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
         "Content-Type": "application/json; charset=utf-8",
@@ -467,6 +467,27 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 )
             return func.HttpResponse(
                 json.dumps({"success": False, "error": f"Update fehlgeschlagen ({pr.status_code})"}, ensure_ascii=False),
+                status_code=500, headers=get_cors_headers(),
+            )
+
+        # ── DELETE: Kiosk löscht eine Konversation ──
+        if req.method == "DELETE":
+            if not record_id:
+                return func.HttpResponse(
+                    json.dumps({"success": False, "error": "id fehlt"}, ensure_ascii=False),
+                    status_code=400, headers=get_cors_headers(),
+                )
+            dr = requests.delete(
+                f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})",
+                headers=headers, timeout=30,
+            )
+            if dr.status_code in (200, 204):
+                return func.HttpResponse(
+                    json.dumps({"success": True, "message": "Gelöscht"}, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": f"Löschen fehlgeschlagen ({dr.status_code})"}, ensure_ascii=False),
                 status_code=500, headers=get_cors_headers(),
             )
 

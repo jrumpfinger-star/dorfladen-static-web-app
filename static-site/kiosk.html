@@ -844,7 +844,8 @@
   <div class="k-panel" id="panel-kontakt">
     <div class="k-filter-bar" id="kontakt-filter-bar" style="justify-content:space-between">
       <div style="font-weight:700;color:#374151;font-size:14px;display:flex;align-items:center;gap:6px"><i data-lucide="messages-square" style="width:16px;height:16px"></i> Kundennachrichten <span id="kk-hdr-count" style="font-weight:700"></span></div>
-      <button class="k-btn k-btn-outline" style="min-height:36px;padding:6px 12px;border-radius:8px;font-size:13px" onclick="KKontakt.reload()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Aktualisieren</button>
+      <div style="display:flex;align-items:center;gap:6px"><span id="kk-actions" style="display:flex;align-items:center;gap:6px"></span>
+      <button class="k-btn k-btn-outline" style="min-height:36px;padding:6px 12px;border-radius:8px;font-size:13px" onclick="KKontakt.reload()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Aktualisieren</button></div>
     </div>
     <div id="kontakt-list"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="message-square" style="width:24px;height:24px"></i></div>Noch keine Nachrichten</div></div>
   </div>
@@ -5092,7 +5093,7 @@ var K = (function(){
 <script src="/js/social-poster.js?v=20260824b"></script>
 <script src="/js/admin-auth.js"></script>
 <script src="/js/kiosk-kalender.js"></script>
-<script src="/js/kiosk-kontakt.js?v=5"></script>
+<script src="/js/kiosk-kontakt.js?v=6"></script>
 <script src="/js/env-banner.js"></script>
 <script>
 /* Kiosk-Vollbild: Service Worker registrieren (ermoeglicht echte PWA-Installation

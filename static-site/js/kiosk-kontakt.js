@@ -9,8 +9,49 @@
   var _loaded = false;
   var _pendingImg = {};  // id -> vorgemerktes Bild (dataUrl) fuer Antwort mit Untertitel
   var _draft = {};       // id -> Entwurfstext (ueber Re-Render bewahren)
+  var _sel = {};         // id -> ausgewaehlt (fuer Loeschen / Mehrfachauswahl)
+
+  var CHATFONT = "-apple-system,system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji'";
+  var EMOJIS = ['😊','😀','😄','😍','👍','🙏','🎉','❤️','😅','😉','🙂','😢','😮','😡','👏','🙌','🤝','✅','❗','❓','🔥','⭐','☕','🥨','🍞','🧀','🥩','🍰','🛒','📦','📮','🕒'];
 
   function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // WhatsApp-artige Formatierung: *fett* _kursiv_ ~durchgestrichen~ + Zeilenumbrueche.
+  function fmtText(s){
+    var h=esc(s);
+    h=h.replace(/\*([^*\n]+)\*/g,'<strong>$1</strong>')
+       .replace(/_([^_\n]+)_/g,'<em>$1</em>')
+       .replace(/~([^~\n]+)~/g,'<del>$1</del>')
+       .replace(/\n/g,'<br>');
+    return h;
+  }
+
+  function insertEmoji(inputId, em){
+    var el=document.getElementById(inputId); if(!el) return;
+    var s=(el.selectionStart!=null)?el.selectionStart:el.value.length;
+    var e=(el.selectionEnd!=null)?el.selectionEnd:el.value.length;
+    el.value=el.value.slice(0,s)+em+el.value.slice(e);
+    var p=s+em.length; try{ el.selectionStart=el.selectionEnd=p; }catch(_){}
+    el.focus();
+    el.style.height='auto'; el.style.height=el.scrollHeight+'px';
+    _draft[inputId.slice(7)]=el.value;
+  }
+  function closeEmojiOutside(e){
+    var pop=document.getElementById('kk-emoji-pop');
+    if(pop && !pop.contains(e.target) && !(e.target.classList&&e.target.classList.contains('kk-emoji-btn'))){ pop.remove(); document.removeEventListener('click',closeEmojiOutside,true); }
+  }
+  function emoji(inputId, anchor){
+    var ex=document.getElementById('kk-emoji-pop');
+    if(ex){ var was=ex.getAttribute('data-for'); ex.remove(); document.removeEventListener('click',closeEmojiOutside,true); if(was===inputId) return; }
+    var pop=document.createElement('div'); pop.id='kk-emoji-pop'; pop.setAttribute('data-for',inputId);
+    pop.style.cssText='position:fixed;z-index:100002;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;width:296px';
+    EMOJIS.forEach(function(em){ var b=document.createElement('button'); b.type='button'; b.textContent=em; b.style.cssText='border:none;background:none;font-size:20px;cursor:pointer;padding:3px;border-radius:6px'; b.onmouseenter=function(){b.style.background='#f3f4f6';}; b.onmouseleave=function(){b.style.background='none';}; b.onclick=function(){ insertEmoji(inputId,em); }; pop.appendChild(b); });
+    document.body.appendChild(pop);
+    var r=anchor.getBoundingClientRect();
+    pop.style.left=Math.max(8,Math.min(r.left, window.innerWidth-pop.offsetWidth-8))+'px';
+    pop.style.top=Math.max(8,(r.top-pop.offsetHeight-6))+'px';
+    setTimeout(function(){ document.addEventListener('click',closeEmojiOutside,true); },0);
+  }
 
   function fmtTime(iso){
     if(!iso) return '';
@@ -78,7 +119,7 @@
 
   function bubbles(verlauf){
     if(!verlauf||!verlauf.length) return '<div style="color:#9ca3af;font-size:13px;padding:6px">Kein Verlauf.</div>';
-    var h='<div class="kk-thread" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;min-height:320px;overflow-y:auto;padding:8px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f7">';
+    var h='<div class="kk-thread" style="font-family:'+CHATFONT+';display:flex;flex-direction:column;gap:6px;max-height:60vh;min-height:320px;overflow-y:auto;padding:8px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f7">';
     verlauf.forEach(function(m){
       if(!m) return;
       var mine = m.who==='dorfladen';
@@ -89,8 +130,8 @@
       var lbl = mine?'Dorfladen':'Kunde';
       var inner='';
       if(m.datei){ inner += '<img src="/api/tagesbild?datei='+encodeURIComponent(m.datei)+'" alt="" style="max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:zoom-in;margin-bottom:'+(m.text?'4px':'0')+'" onclick="KKontakt.zoom(this.src)">'; }
-      if(m.text){ inner += esc(m.text); }
-      h += '<div style="align-self:'+side+';max-width:80%;background:'+bg+';border:1px solid '+bd+';border-radius:10px;padding:6px 9px;font-size:13px;line-height:1.4">'
+      if(m.text){ inner += '<span style="white-space:pre-wrap;word-break:break-word">'+fmtText(m.text)+'</span>'; }
+      h += '<div style="align-self:'+side+';max-width:80%;background:'+bg+';border:1px solid '+bd+';border-radius:10px;padding:6px 9px;font-size:14px;line-height:1.4">'
          + '<div style="font-size:9px;font-weight:800;text-transform:uppercase;color:'+col+';margin-bottom:1px">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+'</div>'+inner+'</div>';
     });
     h+='</div>';
@@ -108,6 +149,7 @@
     var h='<div class="k-order" style="margin-bottom:10px;border-left:4px solid '+(unread?'#3b82f6':'#e5e7eb')+'">';
     // header
     h+='<div class="k-order-hdr" style="cursor:pointer" onclick="KKontakt.toggle(\''+t.id+'\')">';
+    h+='<input type="checkbox" class="kk-sel" title="Auswählen" style="margin-right:8px;width:16px;height:16px;flex-shrink:0;cursor:pointer" '+(_sel[t.id]?'checked':'')+' onclick="event.stopPropagation();KKontakt.toggleSel(\''+t.id+'\',this.checked)">';
     h+='<span class="k-oc-arrow"><i data-lucide="chevron-'+(isOpen?'down':'right')+'" style="width:14px;height:14px"></i></span>';
     h+='<span class="k-oc-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
     h+='<span title="Gerät des Kunden" style="font-size:10px;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap;flex-shrink:0"><i data-lucide="smartphone" style="width:10px;height:10px;vertical-align:-1px"></i> '+esc(devTag(t))+'</span>';
@@ -132,10 +174,15 @@
       }
       // reply row
       h+='<div style="display:flex;gap:6px;align-items:center;margin-top:8px">';
-      h+='<textarea id="kk-rpt-'+t.id+'" placeholder="'+(_pendingImg[t.id]?'Bildunterschrift (optional)…':'Antwort an Kunde…')+'" maxlength="1000" rows="1" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden;min-height:38px" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();KKontakt.send(\''+t.id+'\')}"></textarea>';
+      h+='<textarea id="kk-rpt-'+t.id+'" placeholder="'+(_pendingImg[t.id]?'Bildunterschrift (optional)…':'Antwort an Kunde…')+'" maxlength="1000" rows="1" style="flex:1;font-family:'+CHATFONT+';padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;resize:none;overflow:hidden;min-height:38px" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();KKontakt.send(\''+t.id+'\')}"></textarea>';
+      h+='<button type="button" class="k-btn k-btn-outline k-btn-sm kk-emoji-btn" title="Emoji" style="padding:6px 8px;font-size:18px;line-height:1" onclick="KKontakt.emoji(\'kk-rpt-'+t.id+'\',this)">😊</button>';
       h+='<input type="file" accept="image/*" id="kk-img-'+t.id+'" style="display:none" onchange="KKontakt.stageImage(\''+t.id+'\',this.files[0])">';
       h+='<button class="k-btn k-btn-outline k-btn-sm" title="Foto anhängen" style="padding:8px 10px" onclick="document.getElementById(\'kk-img-'+t.id+'\').click()"><i data-lucide="image" style="width:16px;height:16px"></i></button>';
       h+='<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff" onclick="KKontakt.send(\''+t.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
+      h+='</div>';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">';
+      h+='<span style="font-size:11px;color:#9ca3af">Tipp: *fett* · _kursiv_ · ~durchgestrichen~</span>';
+      h+='<button class="k-btn k-btn-outline k-btn-sm" style="padding:4px 10px;font-size:12px;color:#dc2626" onclick="KKontakt.deleteOne(\''+t.id+'\')"><i data-lucide="trash-2" style="width:13px;height:13px"></i> Konversation löschen</button>';
       h+='</div>';
       h+='</div>';
     }
@@ -159,6 +206,7 @@
     // Entwuerfe wiederherstellen
     Object.keys(_draft).forEach(function(id){ var ta=document.getElementById('kk-rpt-'+id); if(ta && _draft[id]){ ta.value=_draft[id]; ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; } });
     if(window.lucide) lucide.createIcons();
+    updateActions();
     // Auto-scroll offene Verlaeufe ans Ende – auch nachdem Bilder geladen sind
     // (Bilder vergroessern nachtraeglich die Hoehe und wuerden die letzte
     // Nachricht sonst nach unten aus dem Blickfeld schieben).
@@ -227,6 +275,31 @@
   }
   function removeImage(id){ delete _pendingImg[id]; render(); }
 
+  // ── Auswahl & Löschen (inkl. Mehrfachauswahl) ──
+  function selIds(){ return Object.keys(_sel).filter(function(k){ return _sel[k]; }); }
+  function updateActions(){
+    var el=document.getElementById('kk-actions'); if(!el) return;
+    var n=selIds().length;
+    if(n>0){
+      el.innerHTML='<span style="font-size:13px;color:#374151;margin-right:2px">'+n+' ausgewählt</span>'
+        +'<button class="k-btn k-btn-sm" style="background:#dc2626;color:#fff;min-height:36px;padding:6px 12px;border-radius:8px;font-size:13px" onclick="KKontakt.deleteSelected()"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Löschen</button>'
+        +'<button class="k-btn k-btn-outline k-btn-sm" style="min-height:36px;padding:6px 10px;border-radius:8px;font-size:13px" onclick="KKontakt.clearSel()">Abbrechen</button>';
+      if(window.lucide) lucide.createIcons();
+    } else { el.innerHTML=''; }
+  }
+  function toggleSel(id, checked){ if(checked) _sel[id]=true; else delete _sel[id]; updateActions(); }
+  function clearSel(){ _sel={}; render(); }
+  function deleteOne(id){ if(!confirm('Diese Konversation endgültig löschen?')) return; doDelete([id]); }
+  function deleteSelected(){ var ids=selIds(); if(!ids.length) return; if(!confirm(ids.length+' Konversation(en) endgültig löschen?')) return; doDelete(ids); }
+  function doDelete(ids){
+    Promise.all(ids.map(function(id){
+      return fetch(API+'/contact-message/'+id,{method:'DELETE'}).then(function(r){ return r.json().catch(function(){return {};}); }).catch(function(){ return {}; });
+    })).then(function(){
+      ids.forEach(function(id){ delete _sel[id]; delete _open[id]; delete _draft[id]; delete _pendingImg[id]; });
+      reload(); pollBadge();
+    });
+  }
+
   function zoom(src){
     if(window.dlImagePopup){ window.dlImagePopup(src,'',src); return; }
     var ov=document.createElement('div');
@@ -238,6 +311,7 @@
 
   window.KKontakt = {
     onShow:onShow, reload:reload, toggle:toggle,
-    send:send, stageImage:stageImage, removeImage:removeImage, pollBadge:pollBadge, zoom:zoom
+    send:send, stageImage:stageImage, removeImage:removeImage, pollBadge:pollBadge, zoom:zoom,
+    emoji:emoji, toggleSel:toggleSel, clearSel:clearSel, deleteOne:deleteOne, deleteSelected:deleteSelected
   };
 })();
