@@ -2171,8 +2171,12 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     if(k.indexOf('getr')>=0)return '<svg '+s+'><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/></svg>';
     return '<svg '+s+'><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
   }
+  function tpFullImg(it){
+    return it.bild_datei ? ('/api/tagesbild?datei='+encodeURIComponent(it.bild_datei)) : (it.bild_url||'');
+  }
   function itemCard(it,showOrder){
-    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div class="tp-item-img no-img">'+catIcon(it.kategorie)+'</div>';
+    var _full=tpFullImg(it);
+    var img=it.bild_url?'<img class="tp-item-img" src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(\''+esc(_full).replace(/'/g,"\\'")+'\',\''+esc(it.name||'').replace(/'/g,"\\'")+'\',this.src)" style="cursor:zoom-in">':'<div class="tp-item-img no-img">'+catIcon(it.kategorie)+'</div>';
     var preis=it.preis?fmtPreis(it.preis):'';
     var orderBtn='';
     if(showOrder&&isLunchDish(it)){
@@ -2202,7 +2206,8 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   }
 
   function gridCard(it){
-    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(this.src,\''+esc(it.name||'').replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>';
+    var _full=tpFullImg(it);
+    var img=it.bild_url?'<img src="'+esc(it.bild_url)+'" alt="" onclick="dlImagePopup(\''+esc(_full).replace(/'/g,"\\'")+'\',\''+esc(it.name||'').replace(/'/g,"\\'")+'\',this.src)" style="cursor:zoom-in">':'<div style="width:64px;height:64px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin:0 auto 4px">'+catIcon(it.kategorie)+'</div>';
     var preis=it.preis?fmtPreis(it.preis):'';
     var abBadge=it.ab_uhr?'<span class="tp-ab-badge" style="margin-top:2px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
     return '<div class="tp-grid-card">'+img+'<div class="card-name">'+esc(it.name||'')+'</div>'+(preis?'<div class="card-price">'+preis+'</div>':'')+(abBadge||'')+'</div>';

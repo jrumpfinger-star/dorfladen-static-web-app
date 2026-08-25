@@ -954,7 +954,7 @@ document.addEventListener('keydown',function(e){
 })();
 
 /* === Universal Image Popup (Lightbox) === */
-window.dlImagePopup=function(src,alt){
+window.dlImagePopup=function(src,alt,fallbackSrc){
   if(!src)return;
   var existing=document.getElementById('dl-img-popup');
   if(existing) existing.remove();
@@ -965,6 +965,10 @@ window.dlImagePopup=function(src,alt){
   img.src=src;
   img.alt=alt||'';
   img.style.cssText='max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)';
+  // Faellt das Full-Res-Bild (Proxy) aus, auf das Thumbnail zurueckfallen.
+  if(fallbackSrc && fallbackSrc!==src){
+    img.addEventListener('error',function onErr(){img.removeEventListener('error',onErr);img.src=fallbackSrc;});
+  }
   img.addEventListener('click',function(e){e.stopPropagation();});
   ov.appendChild(img);
   if(alt){var cap=document.createElement('div');cap.textContent=alt;cap.style.cssText='color:#fff;font-size:15px;font-weight:600;margin-top:12px;text-align:center;max-width:90vw;word-break:break-word';ov.appendChild(cap);}
