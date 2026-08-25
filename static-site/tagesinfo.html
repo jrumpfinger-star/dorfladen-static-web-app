@@ -170,7 +170,10 @@ window.dlUnlockScroll=function(){
     document.body.classList.remove('overlay-open');
     var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;
     document.documentElement.style.removeProperty('--scroll-y');
+    var de=document.documentElement, prev=de.style.scrollBehavior;
+    de.style.scrollBehavior='auto';
     window.scrollTo(0,y);
+    de.style.scrollBehavior=prev;
   }
 };
 

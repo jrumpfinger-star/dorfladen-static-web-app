@@ -1797,7 +1797,12 @@
       document.body.classList.remove('overlay-open');
       var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;
       document.documentElement.style.removeProperty('--scroll-y');
+      // Sofort (ohne Smooth-Animation) an die gemerkte Position – sonst springt
+      // die Seite sichtbar nach oben und scrollt animiert zurueck.
+      var de=document.documentElement, prev=de.style.scrollBehavior;
+      de.style.scrollBehavior='auto';
       window.scrollTo(0,y);
+      de.style.scrollBehavior=prev;
     }
   };
   window._shopOrders=[];
