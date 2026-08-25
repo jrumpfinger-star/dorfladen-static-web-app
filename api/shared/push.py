@@ -124,10 +124,15 @@ def _delete_subscription(base_url, hdrs, entity_set, record_id):
 
 
 def send_push_notification(title, message, url="/", origin="", tag="dorfladen",
-                           image="", category="", target_email=""):
+                           image="", category="", target_email="",
+                           target_device_id="", target_endpoint=""):
     """Versendet eine Web-Push an alle passenden Abonnenten. Gibt ein dict mit
     ``{success, sent, failed, removed, total, error?}`` zurueck. Best-effort:
     wirft keine Exception nach aussen.
+
+    Bei geraete-/endpoint-genauem Versand (``target_device_id``/``target_endpoint``)
+    wird NICHT nach Kategorie gefiltert – eine 1:1-Nachricht (z. B. Chat-Antwort)
+    erreicht genau dieses eine Geraet, unabhaengig von seinen Kategorien.
     """
     result = {"success": False, "sent": 0, "failed": 0, "removed": 0, "total": 0}
     try:
@@ -150,11 +155,29 @@ def send_push_notification(title, message, url="/", origin="", tag="dorfladen",
             return result
 
         all_subs = _fetch_all_subscriptions(base_url, hdrs, entity_set)
-        if category:
+        # Kategorie-Filter nur bei Broadcasts (nicht bei geraete-/endpoint-genau).
+        if category and not (target_device_id or target_endpoint):
             all_subs = [s for s in all_subs if category in s.get("categories", [])]
         if target_email:
             tl = target_email.lower().strip()
             all_subs = [s for s in all_subs if s.get("email", "").lower() == tl]
+        if target_device_id:
+            all_subs = [s for s in all_subs if s.get("device_id", "") == target_device_id]
+        if target_endpoint:
+            all_subs = [s for s in all_subs if (s.get("subscription") or {}).get("endpoint", "") == target_endpoint]
+
+        # Deduplizieren nach Endpoint: dasselbe Geraet kann mehrere Datensaetze
+        # haben -> sonst mehrfacher Push / doppelter Badge. Neuesten behalten.
+        if all_subs:
+            _by_ep = {}
+            for s in all_subs:
+                ep = (s.get("subscription") or {}).get("endpoint", "")
+                if not ep:
+                    continue
+                prev = _by_ep.get(ep)
+                if prev is None or (s.get("modified", "") or s.get("created", "")) >= (prev.get("modified", "") or prev.get("created", "")):
+                    _by_ep[ep] = s
+            all_subs = list(_by_ep.values())
 
         result["total"] = len(all_subs)
         if not all_subs:

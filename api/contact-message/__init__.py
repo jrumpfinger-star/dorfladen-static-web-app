@@ -142,27 +142,25 @@ def _send_push(email, device_id, title, body_text, tag="kontakt", origin=""):
     """Push an den Kunden (Kategorie 'kontakt').
     Adressierung bevorzugt ueber die Geraete-ID (eindeutig, gehoert genau zu
     diesem Chat-Thread) – so trifft der Push genau das eine Geraet. Die E-Mail
-    ist nur Fallback (und kann mehrere Geraete umfassen)."""
+    ist nur Fallback (und kann mehrere Geraete umfassen).
+
+    Nutzt die In-Process-Funktion aus shared.push (kein HTTP-Self-Call an
+    /api/push-send) – so gibt es keine Auth-Huerde (CMS_AUTH_ENFORCE) und der
+    Push funktioniert auch auf der Testumgebung."""
     try:
         from shared.urls import get_public_origin
         if not origin:
             origin = get_public_origin(None)
-        payload = {
-            "title": title,
-            "message": body_text,
-            "url": "/?chat=1",
-            "origin": origin,
-            "category": "kontakt",
-            "tag": tag,
-        }
-        if device_id:
-            payload["target_device_id"] = device_id
-        elif email:
-            payload["target_email"] = email
-        else:
+        if not device_id and not email:
             return False
-        r = requests.post(f"{origin}/api/push-send", json=payload, timeout=10)
-        return r.status_code in (200, 201)
+        from shared.push import send_push_notification
+        res = send_push_notification(
+            title=title, message=body_text, url="/?chat=1", origin=origin,
+            tag=tag, category="kontakt",
+            target_device_id=(device_id or ""),
+            target_email=("" if device_id else (email or "")),
+        )
+        return bool(res.get("sent", 0)) or bool(res.get("success", False))
     except Exception as e:
         logging.warning(f"[contact-message] push failed: {e}")
     return False
