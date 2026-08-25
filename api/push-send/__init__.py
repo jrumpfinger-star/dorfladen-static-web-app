@@ -368,6 +368,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if target_endpoint:
         all_subs = [s for s in all_subs if s["subscription"].get("endpoint", "") == target_endpoint]
 
+    # Deduplizieren nach Endpoint: dasselbe Geraet kann mehrere Subscription-
+    # Datensaetze haben (z.B. einer mit E-Mail, einer mit device_id, oder Altlasten).
+    # Ohne Dedup wuerde derselbe Endpoint mehrfach gepusht -> das Geraet bekommt
+    # mehrere Push-Events -> der App-Badge zaehlt doppelt hoch. Pro Endpoint nur
+    # den neuesten Datensatz behalten.
+    if all_subs:
+        _by_ep = {}
+        for s in all_subs:
+            ep = (s.get("subscription") or {}).get("endpoint", "")
+            if not ep:
+                continue
+            prev = _by_ep.get(ep)
+            if prev is None or (s.get("modified", "") or s.get("created", "")) >= (prev.get("modified", "") or prev.get("created", "")):
+                _by_ep[ep] = s
+        all_subs = list(_by_ep.values())
+
     if not all_subs:
         return func.HttpResponse(
             json.dumps({"success": True, "sent": 0, "failed": 0, "removed": 0, "total": 0,
