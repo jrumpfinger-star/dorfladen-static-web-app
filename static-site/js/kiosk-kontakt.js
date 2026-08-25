@@ -76,7 +76,7 @@
 
   function bubbles(verlauf){
     if(!verlauf||!verlauf.length) return '<div style="color:#9ca3af;font-size:13px;padding:6px">Kein Verlauf.</div>';
-    var h='<div class="kk-thread" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;padding:8px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f7">';
+    var h='<div class="kk-thread" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;min-height:320px;overflow-y:auto;padding:8px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f7">';
     verlauf.forEach(function(m){
       if(!m) return;
       var mine = m.who==='dorfladen';
@@ -138,8 +138,14 @@
     _threads.forEach(function(t){ html+=card(t); });
     host.innerHTML=html;
     if(window.lucide) lucide.createIcons();
-    // Auto-scroll offene Verlaeufe ans Ende
-    host.querySelectorAll('.kk-thread').forEach(function(el){ el.scrollTop=el.scrollHeight; });
+    // Auto-scroll offene Verlaeufe ans Ende – auch nachdem Bilder geladen sind
+    // (Bilder vergroessern nachtraeglich die Hoehe und wuerden die letzte
+    // Nachricht sonst nach unten aus dem Blickfeld schieben).
+    host.querySelectorAll('.kk-thread').forEach(function(el){
+      var toBottom=function(){ el.scrollTop=el.scrollHeight; };
+      toBottom();
+      el.querySelectorAll('img').forEach(function(img){ if(!img.complete){ img.addEventListener('load',toBottom,{once:true}); img.addEventListener('error',toBottom,{once:true}); } });
+    });
   }
 
   function toggle(id){
