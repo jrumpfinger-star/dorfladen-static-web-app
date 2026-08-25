@@ -783,7 +783,21 @@ if(window!==window.parent){
         .then(function(r){ return r.ok?r.json():null; })
         .then(function(res){
           if(res && res.success && res.categories && res.categories.indexOf('bestellung')>=0){
+            // Aktives Abo: Haken setzen UND sperren, damit niemand hier
+            // faelschlich abzubestellen versucht (Abbestellen nur im Menue).
             op.checked = true;
+            op.disabled = true;
+            var lbl = op.closest('.notify-opt');
+            if(lbl){
+              lbl.style.opacity = '.85';
+              if(!lbl.querySelector('.push-active-hint')){
+                var h=document.createElement('small');
+                h.className='push-active-hint';
+                h.style.cssText='display:block;color:#16a34a;font-weight:600;margin-top:2px';
+                h.textContent='✓ Bereits aktiv – Abbestellen im Benachrichtigungs-Menü';
+                var span=lbl.querySelector('span'); if(span) span.appendChild(h);
+              }
+            }
           }
         }).catch(function(){});
     }).catch(function(){});
