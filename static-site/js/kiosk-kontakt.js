@@ -7,6 +7,8 @@
   var _open = {};        // id -> expanded?
   var _lastUnread = -1;
   var _loaded = false;
+  var _pendingImg = {};  // id -> vorgemerktes Bild (dataUrl) fuer Antwort mit Untertitel
+  var _draft = {};       // id -> Entwurfstext (ueber Re-Render bewahren)
 
   function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -120,11 +122,19 @@
       h+='<span title="Antwort geht genau an dieses Gerät zurück"><i data-lucide="smartphone" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(devTag(t))+'</span>';
       h+='</div>';
       h+=bubbles(t.verlauf);
+      // Vorschau des vorgemerkten Bildes (Antwort mit Untertitel)
+      if(_pendingImg[t.id]){
+        h+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px">';
+        h+='<img src="'+_pendingImg[t.id]+'" alt="" style="height:48px;width:48px;object-fit:cover;border-radius:6px">';
+        h+='<span style="flex:1;font-size:12px;color:#2563eb">Bild bereit – Text wird als Bildunterschrift gesendet</span>';
+        h+='<button class="k-btn k-btn-outline k-btn-sm" style="padding:4px 8px" onclick="KKontakt.removeImage(\''+t.id+'\')"><i data-lucide="x" style="width:14px;height:14px"></i></button>';
+        h+='</div>';
+      }
       // reply row
       h+='<div style="display:flex;gap:6px;align-items:center;margin-top:8px">';
-      h+='<textarea id="kk-rpt-'+t.id+'" placeholder="Antwort an Kunde…" maxlength="1000" rows="1" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden;min-height:38px" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();KKontakt.send(\''+t.id+'\')}"></textarea>';
-      h+='<input type="file" accept="image/*" id="kk-img-'+t.id+'" style="display:none" onchange="KKontakt.sendImage(\''+t.id+'\',this.files[0])">';
-      h+='<button class="k-btn k-btn-outline k-btn-sm" title="Foto senden" style="padding:8px 10px" onclick="document.getElementById(\'kk-img-'+t.id+'\').click()"><i data-lucide="image" style="width:16px;height:16px"></i></button>';
+      h+='<textarea id="kk-rpt-'+t.id+'" placeholder="'+(_pendingImg[t.id]?'Bildunterschrift (optional)…':'Antwort an Kunde…')+'" maxlength="1000" rows="1" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden;min-height:38px" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();KKontakt.send(\''+t.id+'\')}"></textarea>';
+      h+='<input type="file" accept="image/*" id="kk-img-'+t.id+'" style="display:none" onchange="KKontakt.stageImage(\''+t.id+'\',this.files[0])">';
+      h+='<button class="k-btn k-btn-outline k-btn-sm" title="Foto anhängen" style="padding:8px 10px" onclick="document.getElementById(\'kk-img-'+t.id+'\').click()"><i data-lucide="image" style="width:16px;height:16px"></i></button>';
       h+='<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff" onclick="KKontakt.send(\''+t.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
       h+='</div>';
       h+='</div>';
@@ -136,6 +146,8 @@
   function render(){
     var host=document.getElementById('kontakt-list');
     if(!host) return;
+    // Entwurfstexte offener Antwortfelder bewahren (Polling re-rendert die Liste).
+    host.querySelectorAll('textarea[id^="kk-rpt-"]').forEach(function(ta){ _draft[ta.id.slice(7)]=ta.value; });
     if(!_threads.length){
       host.innerHTML='<div class="k-empty"><div class="k-empty-icon"><i data-lucide="message-square" style="width:24px;height:24px"></i></div>Noch keine Nachrichten</div>';
       if(window.lucide) lucide.createIcons();
@@ -144,6 +156,8 @@
     var html='';
     _threads.forEach(function(t){ html+=card(t); });
     host.innerHTML=html;
+    // Entwuerfe wiederherstellen
+    Object.keys(_draft).forEach(function(id){ var ta=document.getElementById('kk-rpt-'+id); if(ta && _draft[id]){ ta.value=_draft[id]; ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; } });
     if(window.lucide) lucide.createIcons();
     // Auto-scroll offene Verlaeufe ans Ende – auch nachdem Bilder geladen sind
     // (Bilder vergroessern nachtraeglich die Hoehe und wuerden die letzte
@@ -172,38 +186,46 @@
   function send(id){
     var ta=document.getElementById('kk-rpt-'+id);
     var text=(ta&&ta.value||'').trim();
-    if(!text) return;
-    if(ta) ta.value='';
+    var img=_pendingImg[id];
+    if(!text && !img) return;
+    if(ta) ta.value=''; _draft[id]='';
+    if(img){
+      delete _pendingImg[id];
+      fetch(API+'/contact-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:'kiosk',image:img})})
+        .then(function(r){return r.json();}).then(function(u){
+          if(u&&u.success&&u.datei){
+            return fetch(API+'/contact-message/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({bild_datei:u.datei,personal_antwort:text})})
+              .then(function(r){return r.json();}).then(function(res){ if(res&&res.success){ var t=_threads.find(function(x){return x.id===id;}); if(t){ t.verlauf=res.verlauf||t.verlauf; t.status=1; t.kommentar_gelesen=true; } render(); pollBadge(); } });
+          }
+        }).catch(function(){});
+      return;
+    }
     fetch(API+'/contact-message/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({personal_antwort:text})})
       .then(function(r){return r.json();}).then(function(res){
         if(res&&res.success){ var t=_threads.find(function(x){return x.id===id;}); if(t){ t.verlauf=res.verlauf||t.verlauf; t.status=1; t.kommentar_gelesen=true; } render(); pollBadge(); }
       }).catch(function(){});
   }
 
-  function sendImage(id, file){
+  // Bild vormerken (mit optionaler Bildunterschrift senden – wie WhatsApp).
+  function stageImage(id, file){
     if(!file) return;
     var reader=new FileReader();
     reader.onload=function(){
-      // clientseitig verkleinern
       var img=new Image();
       img.onload=function(){
         var max=1280, w=img.width, h=img.height;
         if(w>max){ h=Math.round(h*max/w); w=max; }
         var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
         cv.getContext('2d').drawImage(img,0,0,w,h);
-        var dataUrl=cv.toDataURL('image/jpeg',0.85);
-        fetch(API+'/contact-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:'kiosk',image:dataUrl})})
-          .then(function(r){return r.json();}).then(function(u){
-            if(u&&u.success&&u.datei){
-              return fetch(API+'/contact-message/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({bild_datei:u.datei})})
-                .then(function(r){return r.json();}).then(function(res){ if(res&&res.success){ var t=_threads.find(function(x){return x.id===id;}); if(t){ t.verlauf=res.verlauf||t.verlauf; t.status=1; } render(); } });
-            }
-          }).catch(function(){});
+        _pendingImg[id]=cv.toDataURL('image/jpeg',0.85);
+        render();
+        var ta=document.getElementById('kk-rpt-'+id); if(ta) ta.focus();
       };
       img.src=reader.result;
     };
     reader.readAsDataURL(file);
   }
+  function removeImage(id){ delete _pendingImg[id]; render(); }
 
   function zoom(src){
     if(window.dlImagePopup){ window.dlImagePopup(src,'',src); return; }
@@ -216,6 +238,6 @@
 
   window.KKontakt = {
     onShow:onShow, reload:reload, toggle:toggle,
-    send:send, sendImage:sendImage, pollBadge:pollBadge, zoom:zoom
+    send:send, stageImage:stageImage, removeImage:removeImage, pollBadge:pollBadge, zoom:zoom
   };
 })();

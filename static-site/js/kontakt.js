@@ -77,6 +77,7 @@
         +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:15px">Dorfladen Oberornau</div><div style="font-size:11px;opacity:.8">antwortet meist während der Öffnungszeiten</div></div>'
         +'<button id="hp-chat-close" aria-label="Schließen" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px">✕</button>'
       +'</div>'
+      +'<div id="hp-chat-devbar" style="font-size:11px;color:#6b7280;background:#f3f4f6;padding:4px 12px;border-bottom:1px solid #eef2f7;display:flex;align-items:center;gap:6px"></div>'
       +'<div id="hp-chat-msgs" style="flex:1;overflow-y:auto;padding:12px;background:#f7faf8;display:flex;flex-direction:column;gap:8px"></div>'
       +'<div style="border-top:1px solid #eef2f7;padding:8px 10px;background:#fff">'
         +'<details id="hp-chat-ident" style="margin-bottom:6px">'
@@ -111,6 +112,12 @@
     try{ if(typeof Notification!=='undefined' && Notification.permission==='denied'){ var pr=document.getElementById('hp-chat-push-row'); if(pr) pr.style.display='none'; } }catch(e){}
     // Gespeicherte Kundendaten vorbelegen
     try{ var d=JSON.parse(localStorage.getItem('dl_lunch_customer')||'{}'); if(d.name)document.getElementById('hp-chat-name').value=d.name; if(d.email)document.getElementById('hp-chat-email').value=d.email; }catch(e){}
+    // Geraete-Hinweis: dieser Chat ist mit diesem Geraet verknuepft.
+    try{
+      var dv=devId(); var code=dv?('#'+dv.replace(/[^a-zA-Z0-9]/g,'').slice(-4)):'';
+      var db=document.getElementById('hp-chat-devbar');
+      if(db) db.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg><span>Chat auf diesem Gerät · '+geraet()+(code?(' · '+code):'')+'</span>';
+    }catch(e){}
     // isMobile: Vollbild (Hoehe dynamisch via visualViewport, s. fitMobile)
     if(isMobile()){
       ov.style.cssText+=';right:0;left:0;top:0;bottom:auto;width:100vw;max-width:100vw;max-height:none;border-radius:0';
