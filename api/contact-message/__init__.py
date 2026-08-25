@@ -138,7 +138,10 @@ def _now_iso():
 
 
 def _send_push(email, device_id, title, body_text, tag="kontakt", origin=""):
-    """Push an den Kunden (Kategorie 'kontakt'), per E-Mail oder Geraete-ID."""
+    """Push an den Kunden (Kategorie 'kontakt').
+    Adressierung bevorzugt ueber die Geraete-ID (eindeutig, gehoert genau zu
+    diesem Chat-Thread) – so trifft der Push genau das eine Geraet. Die E-Mail
+    ist nur Fallback (und kann mehrere Geraete umfassen)."""
     try:
         from shared.urls import get_public_origin
         if not origin:
@@ -151,10 +154,10 @@ def _send_push(email, device_id, title, body_text, tag="kontakt", origin=""):
             "category": "kontakt",
             "tag": tag,
         }
-        if email:
-            payload["target_email"] = email
-        elif device_id:
+        if device_id:
             payload["target_device_id"] = device_id
+        elif email:
+            payload["target_email"] = email
         else:
             return False
         r = requests.post(f"{origin}/api/push-send", json=payload, timeout=10)
