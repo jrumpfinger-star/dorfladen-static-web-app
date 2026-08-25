@@ -255,7 +255,7 @@ if(window!==window.parent){
       <div class="notify-box">
         <div class="notify-title">🔔 Benachrichtigungen zu Ihrer Bestellung</div>
         <label class="notify-opt">
-          <input type="checkbox" id="opt-push">
+          <input type="checkbox" id="opt-push" checked>
           <span><b>📲 App-Benachrichtigung</b><small>Sofort aufs Handy – auch bei Nachrichten vom Dorfladen</small></span>
         </label>
         <label class="notify-opt">
@@ -766,13 +766,15 @@ if(window!==window.parent){
   // App-Benachrichtigung aktivieren -> direkt Push einrichten (Permission-Prompt)
   (function(){var op=document.getElementById('opt-push');if(op){op.addEventListener('change',function(){if(op.checked)registerPush();});}})();
 
-  // Haken spiegelt den echten Abo-Status: bei aktivem 'bestellung'-Abo automatisch
-  // anhaken. Entfernen des Hakens bestellt NICHT ab (das geht nur im
-  // Benachrichtigungs-Menue) – hier ist der Haken rein zum Aktivieren.
+  // Der Push-Haken ist per Default aktiv (siehe HTML `checked`). Bei bereits
+  // verweigerter Browser-Berechtigung wird er ehrlich abgewaehlt, da Push dann
+  // nicht moeglich ist. Ein aktives 'bestellung'-Abo haelt ihn ohnehin aktiv.
+  // Entfernen des Hakens bestellt NICHT ab (das geht nur im Benachrichtigungs-Menue).
   (function initPushCheckbox(){
     var op=document.getElementById('opt-push');
-    if(!op || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
-    if(typeof Notification!=='undefined' && Notification.permission==='denied') return;
+    if(!op) return;
+    if(typeof Notification!=='undefined' && Notification.permission==='denied'){ op.checked=false; return; }
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.getSubscription();
     }).then(function(sub){
