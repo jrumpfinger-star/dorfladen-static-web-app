@@ -9,6 +9,19 @@
   var _pendingImg=null;
 
   function devId(){ try{ return (window.dlPushDeviceId?dlPushDeviceId():localStorage.getItem('dl_push_device_id'))||''; }catch(e){ return ''; } }
+  function custEmail(){
+    try{
+      var f=(document.getElementById('hp-chat-email')||{}).value||'';
+      if(f && f.trim()) return f.trim().toLowerCase();
+      return (JSON.parse(localStorage.getItem('dl_lunch_customer')||'{}').email||'').trim().toLowerCase();
+    }catch(e){ return ''; }
+  }
+  function myUrl(){
+    var dv=devId(), em=custEmail(), q=API+'/contact-message?mode=my';
+    if(dv) q+='&device_id='+encodeURIComponent(dv);
+    if(em) q+='&email='+encodeURIComponent(em);
+    return q;
+  }
   function geraet(){
     var ua=navigator.userAgent||'';
     var os='Gerät';
@@ -208,8 +221,8 @@
   }
 
   function pollDot(){
-    var dv=devId(); if(!dv) return;
-    fetch(API+'/contact-message?mode=my&device_id='+encodeURIComponent(dv)).then(function(r){return r.json();}).then(function(res){
+    var dv=devId(), em=custEmail(); if(!dv && !em) return;
+    fetch(myUrl()).then(function(r){return r.json();}).then(function(res){
       if(!res||!res.success||!res.thread) return;
       _thread=res.thread;
       var lr=lastReply(_thread); if(!lr) return;
@@ -239,8 +252,8 @@
   }
 
   function loadThread(scroll){
-    var dv=devId(); if(!dv){ renderMsgs(); return; }
-    fetch(API+'/contact-message?mode=my&device_id='+encodeURIComponent(dv)).then(function(r){return r.json();}).then(function(res){
+    var dv=devId(), em=custEmail(); if(!dv && !em){ renderMsgs(); return; }
+    fetch(myUrl()).then(function(r){return r.json();}).then(function(res){
       if(res&&res.success){ _thread=res.thread; renderMsgs(); if(_open) markSeen(); }
     }).catch(function(){});
   }
