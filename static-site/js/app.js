@@ -804,6 +804,13 @@ window.angSetWeek=function(mode){renderAngebote(mode);};
 
 /* === Werbebilder nachladen (Base64 aus Azure Function API) === */
 var _bildCache={};
+function _angAttachZoom(img, el){
+  if(!img || !window.dlImagePopup) return;
+  var nm='';
+  try{ var n=el&&el.querySelector('.ang-name'); if(n) nm=n.textContent||''; }catch(e){}
+  img.style.cursor='zoom-in';
+  img.addEventListener('click',function(ev){ ev.stopPropagation(); window.dlImagePopup(img.src, nm, img.src); });
+}
 function loadAngBilder(container){
   var items=(container||document).querySelectorAll('.ang-item[data-artnr]');
   if(!items.length) return;
@@ -813,7 +820,7 @@ function loadAngBilder(container){
     if(!nr) return;
     if(_bildCache[nr]){
       var div=el.querySelector('.ang-img');
-      if(div&&!div.querySelector('img')){var img=document.createElement('img');img.alt=nr;img.src=_bildCache[nr];div.appendChild(img);div.classList.add('loaded');}
+      if(div&&!div.querySelector('img')){var img=document.createElement('img');img.alt=nr;img.src=_bildCache[nr];_angAttachZoom(img,el);div.appendChild(img);div.classList.add('loaded');}
       return;
     }
     toLoad.push(nr);
@@ -835,6 +842,7 @@ function loadAngBilder(container){
         img.onload=function(){div.classList.add('loaded');};
         img.onerror=function(){div.style.display='none';};
         img.src=src;
+        _angAttachZoom(img,el);
         div.appendChild(img);
       });
     })

@@ -466,7 +466,11 @@
     var img=document.createElement('img');
     img.src=src;
     img.alt='';
-    img.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:6px';
+    img.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:6px;cursor:zoom-in';
+    if(window.dlImagePopup){
+      var nm=''; try{ var n=el.querySelector('.mob-ang-name'); if(n) nm=n.textContent||''; }catch(e){}
+      img.addEventListener('click',function(ev){ ev.stopPropagation(); window.dlImagePopup(img.src, nm, img.src); });
+    }
     div.innerHTML='';
     div.appendChild(img);
   }
