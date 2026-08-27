@@ -322,6 +322,22 @@ if(window!==window.parent){
   var _bsCfg=window._dlBestellschluss||10.5;
   var BESTELLSCHLUSS_H = Math.floor(_bsCfg), BESTELLSCHLUSS_M = Math.round((_bsCfg-Math.floor(_bsCfg))*60);
 
+  // Lade CMS-Config um Bestellschluss zu ermitteln (app.js ist auf dieser Seite nicht geladen)
+  fetch('/api/cms-config').then(function(r){return r.json();}).then(function(p){
+    var cfg=(p&&p.data)?p.data:p;
+    var bsRaw=cfg&&cfg['bestellschluss_uhr'];
+    if(bsRaw){
+      var parts=String(bsRaw).split(':');
+      var h=parseInt(parts[0],10),m=parseInt(parts[1]||'0',10);
+      if(!isNaN(h)){
+        _bsCfg=h+m/60;
+        BESTELLSCHLUSS_H=h;
+        BESTELLSCHLUSS_M=m;
+        updateLunchCountdown();
+      }
+    }
+  }).catch(function(){});
+
   // ── Bestellschluss-Countdown ──
   function updateLunchCountdown(){
     var el=document.getElementById('lunch-cd');
