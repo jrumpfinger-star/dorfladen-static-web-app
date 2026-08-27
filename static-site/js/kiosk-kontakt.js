@@ -25,6 +25,15 @@
        .replace(/\n/g,'<br>');
     return h;
   }
+  // HTML-Formatierung fuer Dorfladen-Antworten: HTML-Tags erlaubt + Markdown-Shortcuts.
+  function fmtHtml(s){
+    var h=String(s==null?'':s);
+    h=h.replace(/\*([^*\n]+)\*/g,'<strong>$1</strong>')
+       .replace(/_([^_\n]+)_/g,'<em>$1</em>')
+       .replace(/~([^~\n]+)~/g,'<del>$1</del>');
+    if(!/<br\s*\/?>|<p\b|<div\b/i.test(h)) h=h.replace(/\n/g,'<br>');
+    return h;
+  }
 
   function insertEmoji(inputId, em){
     var el=document.getElementById(inputId); if(!el) return;
@@ -137,10 +146,10 @@
       }
       var inner='';
       if(m.datei){ inner += '<img src="/api/tagesbild?datei='+encodeURIComponent(m.datei)+'" alt="" style="max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:zoom-in;margin-bottom:'+(m.text?'4px':'0')+'" onclick="KKontakt.zoom(this.src)">'; }
-      if(m.text){ inner += '<span style="white-space:pre-wrap;word-break:break-word">'+fmtText(m.text)+'</span>'; }
+      if(m.text){ inner += '<span style="white-space:pre-wrap;word-break:break-word">'+(mine?fmtHtml(m.text):fmtText(m.text))+'</span>'; }
       var delBtn = m.t ? ('<span onclick="event.stopPropagation();KKontakt.deleteMsg(\''+t.id+'\',\''+m.t+'\')" title="Nachricht löschen" style="cursor:pointer;color:#cbd5e1;font-size:12px;flex-shrink:0">✕</span>') : '';
       h += '<div style="align-self:'+side+';max-width:80%;background:'+bg+';border:1px solid '+bd+';border-radius:10px;padding:6px 9px;font-size:14px;line-height:1.4">'
-         + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:1px"><span style="flex:1;min-width:0;font-size:9px;font-weight:800;text-transform:uppercase;color:'+col+'">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</span>'+delBtn+'</div>'+inner+'</div>';
+         + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="flex:1;min-width:0;font-size:10px;font-weight:500;color:'+col+'">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</span>'+delBtn+'</div>'+inner+'</div>';
     });
     h+='</div>';
     return h;
@@ -200,7 +209,7 @@
       h+='<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff" onclick="KKontakt.send(\''+t.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
       h+='</div>';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">';
-      h+='<span style="font-size:11px;color:#9ca3af">Tipp: *fett* · _kursiv_ · ~durchgestrichen~</span>';
+      h+='<span style="font-size:11px;color:#9ca3af">Tipp: *fett* · _kursiv_ · ~durchgestrichen~ · <b>HTML erlaubt</b> z.B. &lt;b&gt;, &lt;a href&gt;, &lt;br&gt;</span>';
       h+='<button class="k-btn k-btn-outline k-btn-sm" style="padding:4px 10px;font-size:12px;color:#dc2626" onclick="KKontakt.deleteOne(\''+t.id+'\')"><i data-lucide="trash-2" style="width:13px;height:13px"></i> Konversation löschen</button>';
       h+='</div>';
       h+='</div>';
@@ -327,9 +336,20 @@
   function zoom(src){
     if(window.dlImagePopup){ window.dlImagePopup(src,'',src); return; }
     var ov=document.createElement('div');
-    ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out';
-    ov.onclick=function(){ov.remove();};
-    ov.innerHTML='<img src="'+src+'" style="max-width:90vw;max-height:85vh;border-radius:12px">';
+    ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center';
+    var img=document.createElement('img');
+    img.src=src;
+    img.style.cssText='max-width:92vw;max-height:88vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.6);cursor:default';
+    img.onclick=function(e){ e.stopPropagation(); };
+    var close=document.createElement('button');
+    close.textContent='✕';
+    close.style.cssText='position:absolute;top:16px;right:20px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;line-height:1;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';
+    close.onclick=function(){ ov.remove(); document.removeEventListener('keydown',_zzEsc); };
+    ov.onclick=function(){ ov.remove(); document.removeEventListener('keydown',_zzEsc); };
+    function _zzEsc(e){ if(e.key==='Escape'){ ov.remove(); document.removeEventListener('keydown',_zzEsc); } }
+    document.addEventListener('keydown',_zzEsc);
+    ov.appendChild(img);
+    ov.appendChild(close);
     document.body.appendChild(ov);
   }
 
