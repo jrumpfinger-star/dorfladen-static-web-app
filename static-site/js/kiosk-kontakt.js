@@ -180,7 +180,7 @@
     h+='<span class="k-oc-arrow"><i data-lucide="chevron-'+(isOpen?'down':'right')+'" style="width:14px;height:14px"></i></span>';
     h+='<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+dcMain+';margin-right:7px;flex-shrink:0"></span>';
     h+='<span class="k-oc-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
-    h+='<span title="Gerät des Kunden – jede Farbe/Code ist ein eigenes Gerät" style="font-size:11px;font-weight:800;color:'+dcMain+';background:'+dcBg+';border:1px solid '+dcMain+';border-radius:6px;padding:1px 8px;margin-left:8px;white-space:nowrap;flex-shrink:0">📱 '+esc(devTag(t))+'</span>';
+    h+='<span title="Gerät des Kunden – jede Farbe/Code ist ein eigenes Gerät" style="font-size:10px;font-weight:500;color:'+dcMain+';background:'+dcBg+';border:1px solid hsl('+hue+',40%,75%);border-radius:4px;padding:0 5px;margin-left:6px;white-space:nowrap;flex-shrink:0">'+esc(devTag(t))+'</span>';
     h+='<span style="flex:1;min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px">'+esc(lastTxt)+'</span>';
     h+='<span style="font-size:11px;color:'+(unread?'#16a34a':'#9ca3af')+';font-weight:'+(unread?'700':'400')+';margin-right:8px;white-space:nowrap">'+fmtTime(lastTs(t))+'</span>';
     if(unread) h+='<span title="'+uc+' neue Nachricht(en)" style="background:#25D366;color:#fff;font-size:12px;font-weight:800;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.2)">'+uc+'</span>';
@@ -189,7 +189,7 @@
       h+='<div style="padding:10px 12px;max-width:680px">';
       h+='<div style="font-size:12px;color:#6b7280;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">';
       if(t.email) h+='<span><i data-lucide="mail" style="width:12px;height:12px;vertical-align:-2px"></i> '+esc(t.email)+(t.notify_email?' · E-Mail-Antwort gewünscht':'')+'</span>';
-      h+='<span title="Antwort geht genau an dieses Gerät zurück" style="font-weight:700;color:'+dcMain+';background:'+dcBg+';border:1px solid '+dcMain+';border-radius:6px;padding:1px 8px">📱 '+esc(devTag(t))+'</span>';
+      h+='<span title="Antwort geht genau an dieses Gerät zurück" style="font-size:11px;font-weight:500;color:'+dcMain+';background:'+dcBg+';border:1px solid hsl('+hue+',40%,75%);border-radius:4px;padding:0 6px">'+esc(devTag(t))+'</span>';
       h+='</div>';
       h+=bubbles(t);
       // Vorschau des vorgemerkten Bildes (Antwort mit Untertitel)
