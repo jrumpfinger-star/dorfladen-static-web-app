@@ -23,6 +23,10 @@ DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 PUSH_KEY_PREFIX = "push_sub_"
 LEGACY_CAT_MAP = {"mittagstisch": "tagesinfo", "angebote": "tagesinfo"}
 
+# Felder, die fuer ein vollstaendiges Abo-Dict benoetigt werden. createdon/
+# modifiedon sind Pflicht, sonst kann nicht das neueste Abo gewaehlt werden.
+SUB_SELECT_FIELDS = "dl_seiteninhaltid,dl_schluessel,dl_wert,createdon,modifiedon"
+
 
 def _migrate_cats(cats):
     migrated = []
@@ -75,12 +79,53 @@ def _resolve_entity_set(base_url, headers):
     return None
 
 
+def parse_subscription_record(item):
+    """Wandelt einen Dataverse-Datensatz in ein Abo-Dict um.
+
+    Gemeinsame Quelle fuer den In-Process-Versand (dieses Modul) und den
+    HTTP-Endpunkt ``push-send``. Beide hatten zuvor eigene Kopien dieser Logik,
+    die auseinandergelaufen waren: hier fehlte ``device_id``, wodurch der
+    geraete-genaue Versand (Kontakt-Chat) NIE einen Empfaenger fand.
+
+    Gibt ``None`` zurueck, wenn der Datensatz kein gueltiges Abo enthaelt.
+    """
+    try:
+        raw = json.loads(item.get("dl_wert", "{}"))
+    except (json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(raw, dict):
+        return None
+    # Neues Format: {"subscription": {...}, "categories": [...], ...}
+    # Altes Format:  {"endpoint": "...", "keys": {...}}
+    if "subscription" in raw:
+        sub = raw["subscription"]
+        cats = _migrate_cats(raw.get("categories", ["tagesinfo", "news"]))
+        email = raw.get("email", "")
+        device_id = raw.get("device_id", "")
+    elif raw.get("endpoint"):
+        sub = raw
+        cats = ["tagesinfo", "news"]
+        email = ""
+        device_id = ""
+    else:
+        return None
+    return {
+        "record_id": item.get("dl_seiteninhaltid"),
+        "subscription": sub,
+        "categories": cats,
+        "email": email,
+        "device_id": device_id,
+        "created": item.get("createdon", ""),
+        "modified": item.get("modifiedon", ""),
+    }
+
+
 def _fetch_all_subscriptions(base_url, hdrs, entity_set):
     subs = []
     url = (
         f"{base_url}/api/data/v9.2/{entity_set}"
         f"?$filter=startswith(dl_schluessel,'{PUSH_KEY_PREFIX}')"
-        f"&$select=dl_seiteninhaltid,dl_schluessel,dl_wert"
+        f"&$select={SUB_SELECT_FIELDS}"
         f"&$top=5000"
     )
     while url:
@@ -89,26 +134,9 @@ def _fetch_all_subscriptions(base_url, hdrs, entity_set):
             break
         data = r.json()
         for item in data.get("value", []):
-            try:
-                raw = json.loads(item.get("dl_wert", "{}"))
-                if "subscription" in raw:
-                    sub = raw["subscription"]
-                    cats = _migrate_cats(raw.get("categories", ["tagesinfo", "news"]))
-                    email = raw.get("email", "")
-                elif raw.get("endpoint"):
-                    sub = raw
-                    cats = ["tagesinfo", "news"]
-                    email = ""
-                else:
-                    continue
-                subs.append({
-                    "record_id": item.get("dl_seiteninhaltid"),
-                    "subscription": sub,
-                    "categories": cats,
-                    "email": email,
-                })
-            except (json.JSONDecodeError, TypeError):
-                pass
+            entry = parse_subscription_record(item)
+            if entry:
+                subs.append(entry)
         url = data.get("@odata.nextLink")
     return subs
 

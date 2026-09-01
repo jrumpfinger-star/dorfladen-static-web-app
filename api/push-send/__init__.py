@@ -5,23 +5,13 @@ import msal
 import requests
 from pywebpush import webpush, WebPushException
 from shared.urls import get_public_origin, absolutize
+from shared.push import parse_subscription_record, SUB_SELECT_FIELDS
 
 
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
 PUSH_KEY_PREFIX = "push_sub_"
-LEGACY_CAT_MAP = {"mittagstisch": "tagesinfo", "angebote": "tagesinfo"}
-
-
-def _migrate_cats(cats):
-    """Map old category names to new ones and deduplicate."""
-    migrated = []
-    for c in cats:
-        mapped = LEGACY_CAT_MAP.get(c, c)
-        if mapped not in migrated:
-            migrated.append(mapped)
-    return migrated
 
 
 def get_token(url_setting_name="DV_DEFAULT_URL"):
@@ -74,12 +64,16 @@ def _resolve_entity_set(base_url, headers):
 
 
 def _fetch_all_subscriptions(base_url, hdrs, entity_set):
-    """Fetch all push subscription records from Dataverse."""
+    """Fetch all push subscription records from Dataverse.
+
+    Das Parsen der Datensaetze liegt bewusst in ``shared.push``, damit dieser
+    Endpunkt und der In-Process-Versand nicht erneut auseinanderlaufen.
+    """
     subs = []
     url = (
         f"{base_url}/api/data/v9.2/{entity_set}"
         f"?$filter=startswith(dl_schluessel,'{PUSH_KEY_PREFIX}')"
-        f"&$select=dl_seiteninhaltid,dl_schluessel,dl_wert,createdon,modifiedon"
+        f"&$select={SUB_SELECT_FIELDS}"
         f"&$top=5000"
     )
     while url:
@@ -88,33 +82,9 @@ def _fetch_all_subscriptions(base_url, hdrs, entity_set):
             break
         data = r.json()
         for item in data.get("value", []):
-            try:
-                raw = json.loads(item.get("dl_wert", "{}"))
-                # New format: {"subscription": {...}, "categories": [...]}
-                # Old format: {"endpoint": "...", "keys": {...}}
-                if "subscription" in raw:
-                    sub = raw["subscription"]
-                    cats = _migrate_cats(raw.get("categories", ["tagesinfo", "news"]))
-                    email = raw.get("email", "")
-                    device_id = raw.get("device_id", "")
-                elif raw.get("endpoint"):
-                    sub = raw
-                    cats = ["tagesinfo", "news"]
-                    email = ""
-                    device_id = ""
-                else:
-                    continue
-                subs.append({
-                    "record_id": item.get("dl_seiteninhaltid"),
-                    "subscription": sub,
-                    "categories": cats,
-                    "email": email,
-                    "device_id": device_id,
-                    "created": item.get("createdon", ""),
-                    "modified": item.get("modifiedon", ""),
-                })
-            except (json.JSONDecodeError, TypeError):
-                pass
+            entry = parse_subscription_record(item)
+            if entry:
+                subs.append(entry)
         url = data.get("@odata.nextLink")
     return subs
 

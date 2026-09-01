@@ -1,4 +1,4 @@
-var CACHE_NAME='dorfladen-v30';
+var CACHE_NAME='dorfladen-v31';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',
@@ -168,16 +168,18 @@ self.addEventListener('pushsubscriptionchange',function(e){
       for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
       return self.registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr});
     }).then(function(newSub){
-      // Delete old subscription from server
-      var oldEp=e.oldSubscription&&e.oldSubscription.endpoint;
-      var p=oldEp?fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:oldEp})}):Promise.resolve();
-      return p.then(function(){
-        // Save new subscription
-        return fetch('/api/push-subscribe',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({subscription:newSub.toJSON(),categories:['tagesinfo','news']})
-        });
+      var oldEp=(e.oldSubscription&&e.oldSubscription.endpoint)||'';
+      // Reihenfolge ist wichtig: ERST das neue Abo speichern und dabei den alten
+      // Endpoint mitgeben – der Server uebernimmt daraus E-Mail, Geraete-ID und
+      // Kategorien. Wuerde das alte Abo zuerst geloescht, waere diese Vorlage weg
+      // und 1:1-Pushes (Bestell-/Kontakt-Chat) kaemen nie wieder an.
+      return fetch('/api/push-subscribe',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({subscription:newSub.toJSON(),old_endpoint:oldEp})
+      }).then(function(){
+        if(!oldEp)return;
+        return fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:oldEp})});
       });
     })
   );

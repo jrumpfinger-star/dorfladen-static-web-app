@@ -65,6 +65,27 @@ def _sub_hash(endpoint):
     return hashlib.sha256(endpoint.encode()).hexdigest()[:16]
 
 
+def _load_sub_value(base_url, hdrs, entity_set, sub_key):
+    """Liest den gespeicherten JSON-Wert eines Abos anhand seines Schluessels.
+    Gibt ``{}`` zurueck, wenn es keinen (gueltigen) Datensatz gibt."""
+    try:
+        url = (
+            f"{base_url}/api/data/v9.2/{entity_set}"
+            f"?$filter=dl_schluessel eq '{sub_key}'"
+            f"&$select=dl_seiteninhaltid,dl_wert"
+        )
+        r = requests.get(url, headers=hdrs, timeout=30)
+        if r.status_code != 200:
+            return {}
+        items = (r.json() or {}).get("value", [])
+        if not items:
+            return {}
+        val = json.loads(items[0].get("dl_wert", "{}") or "{}")
+        return val if isinstance(val, dict) else {}
+    except Exception:
+        return {}
+
+
 def _dedupe_by_device(base_url, hdrs, entity_set, device_id, keep_sub_key):
     """Entfernt veraltete Subscriptions DESSELBEN Geraets.
 
@@ -126,6 +147,32 @@ def _migrate_cats(cats):
         if mapped not in migrated:
             migrated.append(mapped)
     return migrated
+
+
+def _apply_previous(prev, categories, categories_explicit, merge, email, device_id, renewed):
+    """Verrechnet einen bestehenden bzw. bei einer Abo-Erneuerung uebernommenen
+    Datensatz (``prev``) mit den neu gemeldeten Angaben.
+
+    Gibt ``(categories, email, device_id)`` zurueck.
+    """
+    final_categories = list(categories)
+    if prev:
+        prev_cats = _migrate_cats(prev.get("categories", []))
+        if merge:
+            merged = list(prev_cats)
+            for c in categories:
+                if c not in merged:
+                    merged.append(c)
+            final_categories = merged
+        elif renewed and not categories_explicit and prev_cats:
+            # Erneuerung ohne Kategorie-Angabe: bisherige Auswahl beibehalten.
+            final_categories = prev_cats
+        # Bestehende E-Mail/Geraete-ID erhalten, wenn jetzt keine mitgeschickt wird.
+        if not email and prev.get("email"):
+            email = prev.get("email")
+        if not device_id and prev.get("device_id"):
+            device_id = prev.get("device_id")
+    return final_categories, email, device_id
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -227,9 +274,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     subscription = body.get("subscription", body)
     endpoint = subscription.get("endpoint", "")
-    categories = body.get("categories", ALL_CATEGORIES[:])
+    # Nur eine tatsaechlich mitgeschickte Liste gilt als Angabe – eine leere
+    # Liste bedeutet "alle Kategorien abgewaehlt" und darf nicht auf den
+    # Standard zurueckfallen.
+    categories_explicit = isinstance(body.get("categories"), list)
+    categories = body["categories"] if categories_explicit else ALL_CATEGORIES[:]
     email = body.get("email", "")
     device_id = (body.get("device_id", "") or "").strip()[:64]
+    # Bei einer Abo-Erneuerung (Service-Worker 'pushsubscriptionchange') aendert
+    # sich der Endpoint und damit der Schluessel. Der alte Endpoint erlaubt es,
+    # E-Mail, Geraete-ID und Kategorien zu uebernehmen.
+    old_endpoint = (body.get("old_endpoint", "") or "").strip()
     if not endpoint:
         return func.HttpResponse(
             json.dumps({"success": False, "error": "endpoint required"}),
@@ -271,24 +326,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     r = requests.get(filter_url, headers=hdrs, timeout=30)
     existing = (r.json() or {}).get("value", []) if r.status_code == 200 else []
 
-    final_categories = list(categories)
+    prev = {}
+    renewed = False
     if existing:
         try:
             prev = json.loads(existing[0].get("dl_wert", "{}") or "{}")
         except Exception:
             prev = {}
-        if merge:
-            prev_cats = _migrate_cats(prev.get("categories", []))
-            merged = list(prev_cats)
-            for c in categories:
-                if c not in merged:
-                    merged.append(c)
-            final_categories = merged
-        # Bestehende E-Mail/Geraete-ID erhalten, wenn jetzt keine mitgeschickt wird.
-        if not email and prev.get("email"):
-            email = prev.get("email")
-        if not device_id and prev.get("device_id"):
-            device_id = prev.get("device_id")
+        if not isinstance(prev, dict):
+            prev = {}
+    elif old_endpoint and old_endpoint != endpoint:
+        # Abo-Erneuerung: Datensatz zum alten Endpoint als Vorlage heranziehen,
+        # sonst verliert das Geraet seine Zuordnung und 1:1-Pushes
+        # (Bestell-/Kontakt-Chat) kaemen nie wieder an.
+        prev = _load_sub_value(base_url, hdrs, entity_set, PUSH_KEY_PREFIX + _sub_hash(old_endpoint))
+        renewed = bool(prev)
+
+    final_categories, email, device_id = _apply_previous(
+        prev, categories, categories_explicit, merge, email, device_id, renewed
+    )
 
     sub_data = {
         "subscription": subscription,

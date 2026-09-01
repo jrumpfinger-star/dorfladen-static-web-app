@@ -118,6 +118,9 @@ document.addEventListener('visibilitychange',function(){ if(document.visibilityS
     for(var dp=0;dp<dynPops.length;dp++){
       if(_dlOverlayVisible(dynPops[dp])){ dynPops[dp].style.display='none'; document.body.style.overflow=''; return true; }
     }
+    // iOS-Push-Hinweis
+    var iosHint=document.getElementById('push-ios-hint-overlay');
+    if(iosHint){ iosHint.remove(); return true; }
     // PWA install banner
     var pwaBanner=document.getElementById('pwa-install-banner');
     if(pwaBanner&&pwaBanner.style.display!=='none'&&pwaBanner.offsetParent){
@@ -338,30 +341,107 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localSt
     if(pushBtnDt)pushBtnDt.style.display='';
   }
 
-  if(!('PushManager' in window)||!('serviceWorker' in navigator)){return;}
-
-  // Check feature flags before showing push buttons (reuse cached config)
-  (function(){
+  // Feature-Flags (gecacht) auswerten – bei Fehler nicht blockieren.
+  function whenFlags(cb){
     try{
-      (window._dlFlagsReady||Promise.resolve()).then(function(){
-        var ff=window._dlFeatureFlags||{};
-        if(ff.push===false){
-          if(pushBtn)pushBtn.style.display='none';
-          if(pushBtnDt)pushBtnDt.style.display='none';
-          return;
-        }
-        // Scanner feature flag
-        if(ff.scanner===false){
-          window._dlFeatScanner=false;
-          var sb=document.getElementById('mob-pl-barcode-btn');if(sb)sb.style.display='none';
-          var sbd=document.querySelector('.so-barcode-btn');if(sbd)sbd.style.display='none';
-        }else{
-          window._dlFeatScanner=true;
-        }
-        showPushButtons();
-      });
-    }catch(e){showPushButtons();}
-  })();
+      (window._dlFlagsReady||Promise.resolve()).then(function(){cb(window._dlFeatureFlags||{});});
+    }catch(e){cb({});}
+  }
+
+  var IS_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||
+             (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var IS_STANDALONE=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone===true;
+  // Apple erlaubt Web-Push AUSSCHLIESSLICH in der zum Home-Bildschirm
+  // hinzugefuegten App (ab iOS 16.4) – im Safari-Tab gibt es sie nicht.
+  var IOS_NEEDS_INSTALL=IS_IOS&&!IS_STANDALONE;
+  var PUSH_SUPPORTED=('PushManager' in window)&&('serviceWorker' in navigator)&&('Notification' in window);
+
+  // Scanner-Flag unabhaengig vom Push-Support auswerten (greift sonst auf
+  // iPhones nie, weil die Push-Pruefung vorher abbricht).
+  whenFlags(function(ff){
+    if(ff.scanner===false){
+      window._dlFeatScanner=false;
+      var sb=document.getElementById('mob-pl-barcode-btn');if(sb)sb.style.display='none';
+      var sbd=document.querySelector('.so-barcode-btn');if(sbd)sbd.style.display='none';
+    }else{
+      window._dlFeatScanner=true;
+    }
+  });
+
+  function closeIosPushHint(){
+    var el=document.getElementById('push-ios-hint-overlay');
+    if(!el)return;
+    el.style.opacity='0';
+    setTimeout(function(){if(el.parentNode)el.remove();},300);
+  }
+
+  // Erklaert iPhone-Nutzern, warum Benachrichtigungen im Safari-Tab nicht
+  // gehen und wie sie sie bekommen. Ohne diesen Hinweis waere fuer sie nur
+  // unerklaerlich nichts passiert.
+  function showIosPushHint(){
+    var mn=document.getElementById('mob-nav');
+    var mo=document.getElementById('mob-nav-ov');
+    if(mn)mn.classList.remove('open');
+    if(mo)mo.classList.remove('open');
+    var old=document.getElementById('push-ios-hint-overlay');
+    if(old)old.remove();
+
+    var ov=document.createElement('div');
+    ov.id='push-ios-hint-overlay';
+    ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,0);display:flex;align-items:flex-end;justify-content:center;transition:background .3s ease;font-family:"Segoe UI",system-ui,sans-serif';
+
+    var dialog=document.createElement('div');
+    dialog.style.cssText='background:#fff;border-radius:20px 20px 0 0;max-width:400px;width:100%;padding:24px 20px env(safe-area-inset-bottom,16px);box-shadow:0 -8px 40px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1)';
+    dialog.onclick=function(e){e.stopPropagation();};
+    dialog.innerHTML=
+      '<div style="width:36px;height:4px;background:#d1d5db;border-radius:4px;margin:0 auto 16px"></div>'+
+      '<div style="text-align:center;margin-bottom:18px">'+
+        '<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:1.5rem">\uD83D\uDD14</div>'+
+        '<div style="font-weight:700;font-size:1.08rem;color:#1a1a1a;margin-bottom:5px">Auf dem iPhone zuerst die App installieren</div>'+
+        '<div style="font-size:.82rem;color:#6b7280;line-height:1.45">Apple erlaubt Benachrichtigungen nur, wenn der Dorfladen als App auf dem Home-Bildschirm liegt. Im Safari-Tab ist das leider nicht m\u00f6glich.</div>'+
+      '</div>'+
+      '<ol style="margin:0 0 14px;padding-left:20px;font-size:.87rem;color:#374151;line-height:1.6">'+
+        '<li style="margin-bottom:6px">In Safari unten auf das <b>Teilen-Symbol</b> tippen (Quadrat mit Pfeil nach oben).</li>'+
+        '<li style="margin-bottom:6px">\u201E<b>Zum Home-Bildschirm</b>\u201C ausw\u00e4hlen.</li>'+
+        '<li style="margin-bottom:6px">Den Dorfladen \u00fcber das <b>neue Symbol</b> auf dem Home-Bildschirm \u00f6ffnen.</li>'+
+        '<li>Dort erneut auf \u201E<b>Benachrichtigungen aktivieren</b>\u201C tippen.</li>'+
+      '</ol>'+
+      '<div style="font-size:.75rem;color:#9ca3af;text-align:center;margin-bottom:14px">Voraussetzung: iOS 16.4 oder neuer.</div>';
+
+    var btn=document.createElement('button');
+    btn.textContent='Verstanden';
+    btn.style.cssText='width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(135deg,#2d7a5e,#3a9b6e);color:#fff;font-size:.95rem;font-weight:600;cursor:pointer';
+    btn.onclick=function(e){e.stopPropagation();closeIosPushHint();};
+    dialog.appendChild(btn);
+
+    ov.appendChild(dialog);
+    ov.onclick=closeIosPushHint;
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      ov.style.background='rgba(0,0,0,.45)';
+      dialog.style.transform='translateY(0)';
+    });});
+  }
+
+  if(!PUSH_SUPPORTED||IOS_NEEDS_INSTALL){
+    // Auf dem iPhone im Safari-Tab den Button bewusst ANZEIGEN und beim Tippen
+    // den Weg erklaeren. Auf sonstigen Browsern ohne Push bleibt er verborgen.
+    if(IOS_NEEDS_INSTALL){
+      window.pushToggle=showIosPushHint;
+      whenFlags(function(ff){if(ff.push!==false)showPushButtons();});
+    }
+    return;
+  }
+
+  // Push-Button nur zeigen, wenn das Feature nicht deaktiviert ist.
+  whenFlags(function(ff){
+    if(ff.push===false){
+      if(pushBtn)pushBtn.style.display='none';
+      if(pushBtnDt)pushBtnDt.style.display='none';
+      return;
+    }
+    showPushButtons();
+  });
 
   navigator.serviceWorker.ready.then(function(reg){
     return reg.pushManager.getSubscription();
