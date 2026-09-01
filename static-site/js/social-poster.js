@@ -204,9 +204,10 @@
     var PAD=16, GAP=12, HEADER_H=92, TILE_R=20, INNER=13;
     var n=Math.max(1,items.length);
     var tw=W-PAD*2;
-    // Etwas schmaleres Foto -> mehr Breite fuer den Namen (weniger Umbrueche).
-    var photoW=Math.round(tw*0.42);
-    var bx=PAD+photoW+18, bw=tw-photoW-18-14;
+    // Foto behaelt seine volle Breite (46%). Platz fuer den Namen wird ueber
+    // engere Abstaende gewonnen, NICHT durch ein kleineres Foto.
+    var photoW=Math.round(tw*0.46);
+    var bx=PAD+photoW+16, bw=tw-photoW-16-12;
     var priceSize=(n>=3?28:31);
     // Zielformat 4:5 (Hochkant) - das groesste Format, das WhatsApp ohne
     // Beschnitt in voller Hoehe anzeigt. Daraus ergibt sich die Soll-Hoehe je
