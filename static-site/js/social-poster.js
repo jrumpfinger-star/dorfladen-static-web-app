@@ -20,7 +20,7 @@
     _socMealIcon.onload=function(){res();};_socMealIcon.onerror=function(){res();};
   });
 
-  function socialWrapText(ctx,text,maxW){var words=text.split(' '),lines=[],cur='';words.forEach(function(w){var test=cur?cur+' '+w:w;if(ctx.measureText(test).width>maxW){if(cur)lines.push(cur);cur=w;}else{cur=test;}});if(cur)lines.push(cur);return lines;}
+  function socialWrapText(ctx,text,maxW){return socialWrapHard(ctx,text||'',maxW);}
 
   // ── Helfer: abgerundetes Rechteck ──
   function socialRoundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
@@ -45,19 +45,53 @@
     return lines.length?lines:[''];
   }
   function socialFmtPrice(v){var d=parseFloat(v);return (d&&isFinite(d))?d.toFixed(2).replace('.',','):(''+v);}
-  // Umbruch inkl. hartem Trennen zu langer Einzelwoerter (die sonst ueberlaufen)
+  // ── Umbruch mit deutscher Bindestrich-Trennung ────────────────────────────
+  // Canvas kennt keine automatische Silbentrennung. Damit lange Komposita nicht
+  // mitten im Wort abgeschnitten werden ("Tiramisu-Kaesekuch|en"), gilt:
+  //   1. bevorzugt an vorhandenen Bindestrichen umbrechen - der Strich bleibt
+  //      am Zeilenende ("Tiramisu-" / "Kaesekuchen"),
+  //   2. nur als Notloesung hart trennen - dann aber MIT Trennstrich.
+  function socialSplitHyphen(word){
+    var out=[],cur='';
+    for(var i=0;i<word.length;i++){
+      var c=word.charAt(i);cur+=c;
+      if((c==='-'||c==='\u2013'||c==='/')&&i<word.length-1){out.push(cur);cur='';}
+    }
+    if(cur)out.push(cur);
+    return out;
+  }
+  // Zerlegt den Text in Umbruch-Einheiten. sp=true => davor darf ein Leerzeichen
+  // stehen; sp=false => das Stueck gehoert zum Wort davor (Bindestrich-Trennung).
+  function socialBreakTokens(text){
+    var out=[];
+    (text||'').trim().split(/\s+/).forEach(function(w){
+      if(!w)return;
+      socialSplitHyphen(w).forEach(function(p,i){out.push({t:p,sp:i===0});});
+    });
+    return out;
+  }
+  // Notumbruch eines Wortes, das selbst in keine Zeile passt - mit Trennstrich.
+  function socialBreakLong(ctx,word,maxW,lines){
+    var rest=word,guard=0;
+    while(rest&&ctx.measureText(rest).width>maxW&&guard++<200){
+      var cut=rest.length-1;
+      while(cut>1&&ctx.measureText(rest.substring(0,cut)+'-').width>maxW)cut--;
+      if(cut<2)break;
+      lines.push(rest.substring(0,cut)+'-');
+      rest=rest.substring(cut);
+    }
+    return rest;
+  }
+  // Umbruch inkl. Bindestrich-Trennung zu langer Einzelwoerter
   function socialWrapHard(ctx,text,maxW){
-    var words=(text||'').trim().split(/\s+/),lines=[],cur='';
-    words.forEach(function(w){
-      if(ctx.measureText(w).width>maxW){
-        if(cur){lines.push(cur);cur='';}
-        var piece='';
-        for(var k=0;k<w.length;k++){var t=piece+w[k];if(ctx.measureText(t).width>maxW&&piece){lines.push(piece);piece=w[k];}else{piece=t;}}
-        cur=piece;
-      }else{
-        var test=cur?cur+' '+w:w;
-        if(ctx.measureText(test).width>maxW){if(cur)lines.push(cur);cur=w;}else{cur=test;}
-      }
+    var toks=socialBreakTokens(text),lines=[],cur='';
+    function fits(s){return ctx.measureText(s).width<=maxW;}
+    toks.forEach(function(tk){
+      if(!cur){cur=fits(tk.t)?tk.t:socialBreakLong(ctx,tk.t,maxW,lines);return;}
+      var test=cur+(tk.sp?' ':'')+tk.t;
+      if(fits(test)){cur=test;return;}
+      lines.push(cur);
+      cur=fits(tk.t)?tk.t:socialBreakLong(ctx,tk.t,maxW,lines);
     });
     if(cur)lines.push(cur);
     return lines.length?lines:[''];
@@ -74,6 +108,31 @@
     var ls=socialWrapHard(ctx,text,maxW);
     if(ls.length>maxLines){ls=ls.slice(0,maxLines);var l=ls[maxLines-1];while(ctx.measureText(l+'\u2026').width>maxW&&l.length>1)l=l.slice(0,-1);ls[maxLines-1]=l+'\u2026';}
     return {lines:ls,size:last};
+  }
+  // Waehlt die groesste Schrift, bei der der VOLLSTAENDIGE Name in die
+  // verfuegbare Hoehe passt. Es wird bewusst NICHT mit "..." gekuerzt - lieber
+  // eine Zeile mehr bzw. eine Stufe kleinere Schrift als abgeschnittener Text.
+  // Passt der Name selbst bei kleinster Schrift nicht in maxH, waechst die
+  // Kachel mit (der Aufrufer leitet die Kachelhoehe aus blockH ab).
+  function socialFitNameBox(ctx,text,maxW,maxH,hardMax,sizes,weight){
+    weight=weight||'700';
+    var fallback=null;
+    for(var i=0;i<sizes.length;i++){
+      ctx.font=weight+' '+sizes[i]+'px "Segoe UI",system-ui,sans-serif';
+      var lines=socialWrapHard(ctx,text,maxW);
+      var lh=Math.round(sizes[i]*1.16);
+      var h=sizes[i]+(lines.length-1)*lh;
+      if(lines.length<=hardMax){
+        if(h<=maxH)return {lines:lines,size:sizes[i],lh:lh};
+        fallback={lines:lines,size:sizes[i],lh:lh}; // kleinste noch erlaubte Stufe
+      }
+    }
+    if(fallback)return fallback;
+    // Selbst die kleinste Schrift braucht mehr Zeilen als erlaubt -> kuerzen.
+    var last=sizes[sizes.length-1];ctx.font=weight+' '+last+'px "Segoe UI",system-ui,sans-serif';
+    var ls=socialWrapHard(ctx,text,maxW);
+    if(ls.length>hardMax){ls=ls.slice(0,hardMax);var l=ls[hardMax-1];while(ctx.measureText(l+'\u2026').width>maxW&&l.length>1)l=l.slice(0,-1);ls[hardMax-1]=l+'\u2026';}
+    return {lines:ls,size:last,lh:Math.round(last*1.16)};
   }
 
   // Ziel-Datum des Posters: heute, oder MORGEN wenn im Wizard "Morgen" gewaehlt ist.
@@ -94,8 +153,8 @@
     catKeys.forEach(function(cat,ci){
       contentH+=ci===0?4:20;layout.push({type:'cat',cat:cat,y:contentH});contentH+=34;
       cats[cat].forEach(function(p){
-        if(loadedImgs[p.id]){mx.font='bold 30px "Segoe UI",system-ui,sans-serif';var nl=socialWrapText(mx,p.name,IMG_W-CARD_PAD*2);if(nl.length>2)nl=nl.slice(0,2);var cardH=IMG_H+CARD_PAD+nl.length*38+(p.ab_uhr?28:0)+(p.preis?40:0)+CARD_PAD;layout.push({type:'card',p:p,y:contentH,hasImg:true,nl:nl,cardH:cardH});contentH+=cardH+GAP;}
-        else{var cardH2=(p.ab_uhr?80:66);layout.push({type:'card',p:p,y:contentH,hasImg:false,cardH:cardH2});contentH+=cardH2+GAP;}
+        if(loadedImgs[p.id]){var nf=socialFitName(mx,p.name,IMG_W-CARD_PAD*2,3,[30,28,26,24,22],'bold');var nl=nf.lines;var nlh=Math.round(nf.size*1.26);var cardH=IMG_H+CARD_PAD+nl.length*nlh+(p.ab_uhr?28:0)+(p.preis?40:0)+CARD_PAD;layout.push({type:'card',p:p,y:contentH,hasImg:true,nl:nl,nsize:nf.size,nlh:nlh,cardH:cardH});contentH+=cardH+GAP;}
+        else{mx.font='bold 25px "Segoe UI",system-ui,sans-serif';var nf2=socialFitName(mx,p.name||'',IMG_W-CARD_PAD*2-110,2,[25,23,21,19],'bold');var nlh2=Math.round(nf2.size*1.2);var cardH2=Math.max((p.ab_uhr?80:66),nf2.lines.length*nlh2+(p.ab_uhr?36:24)+18);layout.push({type:'card',p:p,y:contentH,hasImg:false,nl:nf2.lines,nsize:nf2.size,nlh:nlh2,cardH:cardH2});contentH+=cardH2+GAP;}
       });
     });
     contentH+=8;var H=Math.max(200,contentH);
@@ -118,15 +177,16 @@
       ctx.save();roundRect(cx,cy,cw,ch,CARD_R);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#eee';ctx.lineWidth=1;ctx.stroke();ctx.restore();
       if(it.hasImg){
         ctx.save();roundTop(cx,cy,cw,IMG_H,CARD_R);ctx.clip();drawCover(loadedImgs[p.id],cx,cy,cw,IMG_H);ctx.restore();
-        var tx=cx+CARD_PAD,tyy=cy+IMG_H+CARD_PAD;ctx.textAlign='left';ctx.fillStyle='#1f2937';ctx.font='bold 30px "Segoe UI",system-ui,sans-serif';
-        it.nl.forEach(function(line){ctx.fillText(line,tx,tyy+26);tyy+=38;});
+        var tx=cx+CARD_PAD,tyy=cy+IMG_H+CARD_PAD;ctx.textAlign='left';ctx.fillStyle='#1f2937';ctx.font='bold '+(it.nsize||30)+'px "Segoe UI",system-ui,sans-serif';
+        it.nl.forEach(function(line){ctx.fillText(line,tx,tyy+(it.nsize||30)-4);tyy+=(it.nlh||38);});
         if(p.ab_uhr){timeBadge(tx,tyy,p.ab_uhr);tyy+=28;}
         if(p.preis){ctx.fillStyle='#2e7d4f';ctx.font='900 32px "Segoe UI",system-ui,sans-serif';var dp=parseFloat(p.preis);ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):p.preis)+' \u20AC',tx,tyy+30);}
       } else {
-        var tx2=cx+CARD_PAD,midY=cy+ch/2;ctx.textAlign='left';ctx.fillStyle='#1f2937';ctx.font='bold 25px "Segoe UI",system-ui,sans-serif';
-        var nm=p.name,maxNameW=cw-CARD_PAD*2-110;while(ctx.measureText(nm).width>maxNameW&&nm.length>8)nm=nm.substring(0,nm.length-1);if(nm!==p.name)nm+='\u2026';
-        ctx.fillText(nm,tx2,p.ab_uhr?midY-2:midY+9);
-        if(p.ab_uhr){timeBadge(tx2,midY+5,p.ab_uhr);}
+        var tx2=cx+CARD_PAD,midY=cy+ch/2;ctx.textAlign='left';ctx.fillStyle='#1f2937';ctx.font='bold '+(it.nsize||25)+'px "Segoe UI",system-ui,sans-serif';
+        var nlines=it.nl||[p.name],nblockH=nlines.length*(it.nlh||30);
+        var nty=cy+Math.max(10,Math.round((ch-nblockH-(p.ab_uhr?30:0))/2));
+        nlines.forEach(function(line){ctx.fillText(line,tx2,nty+(it.nsize||25)-4);nty+=(it.nlh||30);});
+        if(p.ab_uhr){timeBadge(tx2,nty+2,p.ab_uhr);}
         if(p.preis){ctx.textAlign='right';ctx.fillStyle='#2e7d4f';ctx.font='900 28px "Segoe UI",system-ui,sans-serif';var dp2=parseFloat(p.preis);ctx.fillText((dp2&&isFinite(dp2)?dp2.toFixed(2):p.preis)+' \u20AC',cx+cw-CARD_PAD,midY+9);ctx.textAlign='left';}
       }
     });
@@ -144,30 +204,37 @@
     var PAD=16, GAP=12, HEADER_H=92, TILE_R=20, INNER=13;
     var n=Math.max(1,items.length);
     var tw=W-PAD*2;
-    var photoW=Math.round(tw*0.46);
-    var bx=PAD+photoW+22, bw=tw-photoW-22-18;
-    var maxLines=(n>=3?2:3);
+    // Etwas schmaleres Foto -> mehr Breite fuer den Namen (weniger Umbrueche).
+    var photoW=Math.round(tw*0.42);
+    var bx=PAD+photoW+18, bw=tw-photoW-18-14;
     var priceSize=(n>=3?28:31);
-    // 1) Mess-Durchlauf: nur den Textblock je Kachel bestimmen (fuer vertikale
-    //    Zentrierung). Die Kachelhoehe selbst wird danach GLEICH GROSS verteilt.
+    // Zielformat 4:5 (Hochkant) - das groesste Format, das WhatsApp ohne
+    // Beschnitt in voller Hoehe anzeigt. Daraus ergibt sich die Soll-Hoehe je
+    // Kachel; sie legt fest, wie viel Platz der Name bekommt.
+    var topAfterHeader=HEADER_H+GAP;
+    var targetH=Math.round(W*(n>=2?1.25:0.66));
+    var availH=targetH-topAfterHeader-(n-1)*GAP-GAP;
+    var nominalTileH=Math.floor(availH/n);
+    var NAME_SIZES=[26,24,22,21,20,19,18,17,16];
+    var HARD_MAX_LINES=(n>=3?5:7);
+    var GROW=1.12; // Kachel darf leicht wachsen, bevor die Schrift schrumpft
+    // 1) Mess-Durchlauf: Namen so setzen, dass sie VOLLSTAENDIG passen (kein
+    //    "..."), und daraus den Textblock je Kachel bestimmen.
     var meas=items.map(function(p){
-      var fit=socialFitName(ctx,p.name,bw,maxLines,[26,24,22,20],'700');
-      var lh=Math.round(fit.size*1.16);
-      var catH=25, nameH=fit.size+(fit.lines.length-1)*lh;
+      var catH=25;
       var badgeBlock=p.ab_uhr?(25+8):0;
       var priceBlock=p.preis?(priceSize+2):0;
+      var nameBoxH=Math.round(nominalTileH*GROW)-INNER*2-catH-badgeBlock-priceBlock;
+      var fit=socialFitNameBox(ctx,p.name,bw,Math.max(24,nameBoxH),HARD_MAX_LINES,NAME_SIZES,'700');
+      var lh=fit.lh;
+      var nameH=fit.size+(fit.lines.length-1)*lh;
       var blockH=catH+nameH+badgeBlock+priceBlock;
       return {p:p,fit:fit,lh:lh,catH:catH,nameH:nameH,blockH:blockH};
     });
-    // GLEICH GROSSE Kacheln + volle WhatsApp-Hoehe: Zielformat 4:5 (Hochkant,
-    // das groesste Format, das WhatsApp ohne Beschnitt in voller Hoehe anzeigt).
-    // Die verfuegbare Hoehe wird gleichmaessig auf alle Kacheln verteilt -> die
-    // Fotos werden groesser und dadurch vollstaendiger dargestellt.
-    var topAfterHeader=HEADER_H+GAP;
-    var targetH=Math.round(W*(n>=2?1.25:0.66));
+    // GLEICH GROSSE Kacheln: die verfuegbare Hoehe wird gleichmaessig verteilt.
+    // Braucht ein Name mehr Platz, wachsen ALLE Kacheln mit (statt zu kuerzen).
     var minContentH=0;meas.forEach(function(m){minContentH=Math.max(minContentH,m.blockH+INNER*2);});
-    var availH=targetH-topAfterHeader-(n-1)*GAP-GAP;
-    var tileH=Math.max(minContentH,Math.floor(availH/n));
+    var tileH=Math.max(minContentH,nominalTileH);
     meas.forEach(function(m){m.tileH=tileH;});
     var tilesH=tileH*n;
     var H=topAfterHeader+tilesH+(n-1)*GAP+GAP;
@@ -282,10 +349,10 @@
     mtItems.forEach(function(meal,idx){
       var hasImg=!!(loadedImgs&&loadedImgs[meal.id]);
       mx.font='bold 30px "Segoe UI",system-ui,sans-serif';
-      var nl=socialWrapText(mx,meal.name||'',IMG_W-CARD_PAD*2);if(nl.length>2)nl=nl.slice(0,2);
+      var nf=socialFitName(mx,meal.name||'',IMG_W-CARD_PAD*2,3,[30,28,26,24,22],'bold');var nl=nf.lines;var nlh=Math.round(nf.size*1.26);
       var imgAreaH=IMG_H; // Mittagessen-Kachel gleich gross wie Artikel-Karten
-      var cardH=imgAreaH+CARD_PAD+(multi?24:0)+nl.length*38+(meal.ab_uhr?28:0)+(meal.preis?40:0)+CARD_PAD;
-      layout.push({meal:meal,idx:idx,hasImg:hasImg,nl:nl,cardH:cardH,imgAreaH:imgAreaH});
+      var cardH=imgAreaH+CARD_PAD+(multi?24:0)+nl.length*nlh+(meal.ab_uhr?28:0)+(meal.preis?40:0)+CARD_PAD;
+      layout.push({meal:meal,idx:idx,hasImg:hasImg,nl:nl,nsize:nf.size,nlh:nlh,cardH:cardH,imgAreaH:imgAreaH});
       contentH+=cardH+GAP;
     });
     contentH+=8;var H=Math.max(200,contentH);
@@ -315,8 +382,8 @@
       else{ctx.save();roundTop(cx,cy,cw,it.imgAreaH,CARD_R);var g=ctx.createLinearGradient(cx,cy,cx,cy+it.imgAreaH);g.addColorStop(0,'#f2efe8');g.addColorStop(1,'#e6dfd2');ctx.fillStyle=g;ctx.fill();ctx.clip();if(_socMealIconReady()){var _iw=_socMealIcon.naturalWidth,_ih=_socMealIcon.naturalHeight,_box=Math.min(it.imgAreaH-56,240),_s=Math.min(_box/_iw,_box/_ih),_dw=_iw*_s,_dh=_ih*_s;ctx.drawImage(_socMealIcon,cx+cw/2-_dw/2,cy+(it.imgAreaH-_dh)/2,_dw,_dh);}else{ctx.fillStyle='#c8b79b';ctx.font='72px "Segoe UI Emoji","Segoe UI Symbol","Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('\uD83C\uDF7D',cx+cw/2,cy+it.imgAreaH/2+24);}ctx.restore();}
       var tx=cx+CARD_PAD,tyy=cy+it.imgAreaH+CARD_PAD;
       if(multi){ctx.textAlign='left';ctx.fillStyle='#2e7d4f';ctx.font='900 15px "Segoe UI",system-ui,sans-serif';ctx.fillText('MEN\u00dc '+(it.idx+1),tx,tyy+14);tyy+=24;}
-      ctx.textAlign='left';ctx.fillStyle='#1f2937';ctx.font='bold 30px "Segoe UI",system-ui,sans-serif';
-      it.nl.forEach(function(line){ctx.fillText(line,tx,tyy+26);tyy+=38;});
+      ctx.textAlign='left';ctx.fillStyle='#1f2937';ctx.font='bold '+(it.nsize||30)+'px "Segoe UI",system-ui,sans-serif';
+      it.nl.forEach(function(line){ctx.fillText(line,tx,tyy+(it.nsize||30)-4);tyy+=(it.nlh||38);});
       if(meal.ab_uhr){timeBadge(tx,tyy,meal.ab_uhr);tyy+=28;}
       if(meal.preis){ctx.fillStyle='#2e7d4f';ctx.font='900 34px "Segoe UI",system-ui,sans-serif';var dp=parseFloat(meal.preis);ctx.fillText((dp&&isFinite(dp)?dp.toFixed(2):meal.preis)+' \u20AC',tx,tyy+32);}
       y+=ch+GAP;
@@ -328,15 +395,70 @@
   M.socialDrawMealPosterAuto=socialDrawMealPosterAuto;
   M.socialWrapText=socialWrapText;
 
+  // --- Bild-Cache ueber Vorschau-Laeufe hinweg ---------------------------------
+  // Einmal geladene Bilder stehen danach SYNCHRON zur Verfuegung. Das ist fuers
+  // Teilen entscheidend: socialShareWhatsApp() darf vor navigator.share() nicht
+  // warten (sonst verfaellt auf Android die Nutzeraktivierung) und muss die
+  // Bilder deshalb sofort aus dem Cache holen koennen.
+  var SOC_IMG_CACHE={};   // url -> Image (fertig geladen)
+  var SOC_IMG_TAINTED={}; // url -> true (Canvas wird durch dieses Bild "tainted")
+  var SOC_IMG_FAILED={};  // url -> true (Laden fehlgeschlagen)
+  var SOC_IMG_TRIES={};   // url -> Anzahl Ladeversuche
+  var SOC_IMG_MAX_TRIES=3;
+
+  // Ermittelt je Produkt die Bild-URL - gleiche Logik fuer Vorschau UND Teilen.
+  function socialResolveImgMap(selected){
+    var imgMap={};
+    if(getFeatureFlags().post_images===false)return imgMap;
+    var _socMtBilder=M._socMtBilder()||{};var _socialKatalog=M._socialKatalog()||[];var _socFreeItems=M._socFreeItems()||[];
+    selected.forEach(function(p){
+      var url='';var pName=p.name||p.gericht||'';
+      if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url)url=_socMtBilder[pName].bild_url;
+      if(!url){var katItem=_socialKatalog.find(function(k){return k.id===p.id;});if(katItem&&katItem.bild_url)url=katItem.bild_url;}
+      if(!url&&p.bild_url)url=p.bild_url;
+      if(!url){var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});if(freeItem&&freeItem.bild_data)url=freeItem.bild_data;}
+      if(url)imgMap[p.id]=url;
+    });
+    return imgMap;
+  }
+  // Baut die Map id->Image SYNCHRON aus dem Cache und meldet, welche Bilder noch
+  // ausstehen (pending) bzw. dauerhaft fehlgeschlagen sind (failed).
+  function socialImgsFromCache(imgMap){
+    var loaded={},pending=[],failed=[];
+    Object.keys(imgMap).forEach(function(id){
+      var url=imgMap[id];
+      if(SOC_IMG_CACHE[url]){loaded[id]=SOC_IMG_CACHE[url];if(SOC_IMG_TAINTED[url])loaded['_tainted']=true;}
+      else if(SOC_IMG_FAILED[url])failed.push(id);
+      else pending.push(id);
+    });
+    return {loaded:loaded,pending:pending,failed:failed};
+  }
+
   // --- Preview generator ---
   window.socialGenPreview=function(){
     var canvas=document.getElementById('soc-post-canvas');if(!canvas)return;var ctx=canvas.getContext('2d');var W=600;var SCALE=2;
     canvas.style.display='none';var _mealC=document.getElementById('soc-post-canvas-meal');var _mealL=document.getElementById('soc-preview-label-meal');var _dailyL=document.getElementById('soc-preview-label-daily');if(_mealC)_mealC.style.display='none';if(_mealL)_mealL.style.display='none';if(_dailyL)_dailyL.style.display='none';
     var selected=socialGatherSelected();var titel=(document.getElementById('soc-post-titel').value||'').trim();var freitext=(document.getElementById('soc-post-text').value||'').trim();
-    var imgMap={};var ff=getFeatureFlags();var _socMtBilder=M._socMtBilder();var _socialKatalog=M._socialKatalog();var _socFreeItems=M._socFreeItems();
-    if(ff.post_images!==false){selected.forEach(function(p){var url='';var pName=p.name||p.gericht||'';if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url)url=_socMtBilder[pName].bild_url;if(!url){var katItem=_socialKatalog.find(function(k){return k.id===p.id;});if(katItem&&katItem.bild_url)url=katItem.bild_url;}if(!url&&p.bild_url)url=p.bild_url;if(!url){var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});if(freeItem&&freeItem.bild_data)url=freeItem.bild_data;}if(url)imgMap[p.id]=url;});}
-    var imgUrls=Object.keys(imgMap).map(function(id){return{id:id,url:imgMap[id]};});var loadedImgs={};
-    var promises=imgUrls.map(function(entry){return new Promise(function(resolve){if(entry.url.indexOf('data:')===0){var img=new Image();img.onload=function(){loadedImgs[entry.id]=img;resolve();};img.onerror=function(){resolve();};img.src=entry.url;return;}fetch(entry.url).then(function(r){return r.blob();}).then(function(blob){var objUrl=URL.createObjectURL(blob);var img=new Image();img.onload=function(){loadedImgs[entry.id]=img;resolve();};img.onerror=function(){URL.revokeObjectURL(objUrl);resolve();};img.src=objUrl;}).catch(function(){var img=new Image();img.crossOrigin='anonymous';img.onload=function(){loadedImgs[entry.id]=img;loadedImgs['_tainted']=true;resolve();};img.onerror=function(){var img2=new Image();img2.onload=function(){loadedImgs[entry.id]=img2;loadedImgs['_tainted']=true;resolve();};img2.onerror=function(){resolve();};img2.src=entry.url;};img.src=entry.url;});});});
+    var imgMap=socialResolveImgMap(selected);
+    var state=socialImgsFromCache(imgMap);
+    var loadedImgs=state.loaded;
+    // WICHTIG: sofort veroeffentlichen (nicht erst am Ende). Die Map waechst
+    // inkrementell weiter - dadurch hat ein zwischendurch ausgeloestes Teilen
+    // wenigstens alle bereits geladenen Bilder statt gar keiner.
+    window._socLoadedImgs=loadedImgs;
+    var imgUrls=state.pending.map(function(id){return{id:id,url:imgMap[id]};});
+    // Zuvor fehlgeschlagene Bilder erneut versuchen (typischerweise kurzzeitige
+    // Netzprobleme). Nach SOC_IMG_MAX_TRIES wird endgueltig aufgegeben, damit
+    // das Teilen nie dauerhaft blockiert.
+    state.failed.forEach(function(id){var u=imgMap[id];if((SOC_IMG_TRIES[u]||0)<SOC_IMG_MAX_TRIES){delete SOC_IMG_FAILED[u];imgUrls.push({id:id,url:u});}});
+    var promises=imgUrls.map(function(entry){return new Promise(function(resolve){
+      function ok(img,tainted){SOC_IMG_CACHE[entry.url]=img;if(tainted)SOC_IMG_TAINTED[entry.url]=true;delete SOC_IMG_FAILED[entry.url];loadedImgs[entry.id]=img;if(tainted)loadedImgs['_tainted']=true;resolve();}
+      function fail(){SOC_IMG_FAILED[entry.url]=true;console.warn('[Social] Bild konnte nicht geladen werden ('+(SOC_IMG_TRIES[entry.url]||0)+'. Versuch):',entry.url);resolve();}
+      SOC_IMG_TRIES[entry.url]=(SOC_IMG_TRIES[entry.url]||0)+1;
+      if(entry.url.indexOf('data:')===0){var img=new Image();img.onload=function(){ok(img);};img.onerror=fail;img.src=entry.url;return;}
+      fetch(entry.url).then(function(r){return r.blob();}).then(function(blob){var objUrl=URL.createObjectURL(blob);var img=new Image();img.onload=function(){ok(img);};img.onerror=function(){URL.revokeObjectURL(objUrl);fail();};img.src=objUrl;})
+      .catch(function(){var img=new Image();img.crossOrigin='anonymous';img.onload=function(){ok(img,true);};img.onerror=function(){var img2=new Image();img2.onload=function(){ok(img2,true);};img2.onerror=fail;img2.src=entry.url;};img.src=entry.url;});
+    });});
     return Promise.all(promises.concat([_socMealIconPromise])).then(function(){
       var mealCanvas=document.getElementById('soc-post-canvas-meal');var mealLabel=document.getElementById('soc-preview-label-meal');var dailyLabel=document.getElementById('soc-preview-label-daily');if(mealCanvas)mealCanvas.style.display='none';if(mealLabel)mealLabel.style.display='none';if(dailyLabel)dailyLabel.style.display='none';
       // Kompakt-Grafik (EIN Bild, ~4:5): identisch zu dem, was geteilt wird (WYSIWYG).
@@ -568,6 +690,18 @@
     // KEIN await auf socialGenPreview() vor navigator.share() - sonst verfaellt auf Android
     // die transiente Nutzeraktivierung und navigator.share() schlaegt mit NotAllowedError fehl.
     var loaded=window._socLoadedImgs||{};
+    // Sind fuer die aktuelle Auswahl noch Bilder unterwegs? Dann NICHT teilen -
+    // sonst landen Emoji-Platzhalter im Post, obwohl Fotos existieren. Die
+    // Pruefung ist rein synchron (Cache-Lookup), die Nutzeraktivierung bleibt
+    // also erhalten; der Nutzer tippt nach dem Nachladen einfach erneut.
+    var _imgState=socialImgsFromCache(socialResolveImgMap(selected));
+    if(_imgState.pending.length){
+      socialStatus('soc-post-status','\u23F3 Bilder werden noch geladen \u2013 bitte gleich nochmal auf \u201eTeilen\u201c tippen',true);
+      try{var _p=socialGenPreview();if(_p&&_p.then)_p.then(function(){socialStatus('soc-post-status','\u2705 Bilder geladen \u2013 jetzt auf \u201eTeilen\u201c tippen',true);});}catch(e){}
+      return;
+    }
+    loaded=_imgState.loaded;
+    if(_imgState.failed.length)console.warn('[Social] '+_imgState.failed.length+' Bild(er) nicht ladbar - Platzhalter wird verwendet');
     var cv=document.createElement('canvas');
     try{socialDrawCompact(cv,cv.getContext('2d'),540,selected,titel,loaded,2);}
     catch(e){try{socialDrawCompact(cv,cv.getContext('2d'),540,selected,titel,{},2);}catch(e2){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}}
