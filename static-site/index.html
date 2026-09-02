@@ -1323,7 +1323,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
 
-<script src="/js/mobile.js?v=3"></script>
+<script src="/js/mobile.js?v=4"></script>
 
 <script src="/js/roterpunkt-live.js"></script>
 
@@ -2205,7 +2205,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     var preis=it.preis?fmtPreis(it.preis):'';
     var orderBtn='';
     if(showOrder&&isLunchDish(it)){
-      var href,tip;
+      var href,tip,_showBtn=true;
       if(_isTomorrow){
         var _qp=[];
         if(it.id)_qp.push('gericht_id='+encodeURIComponent(it.id));
@@ -2215,12 +2215,17 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
         tip='F\u00fcr morgen vorbestellen';
       }else{
         var _now=new Date(), _bsCutoff=window._dlBestellschluss||10.5, _canOrderToday=(_now.getHours()+_now.getMinutes()/60)<_bsCutoff;
-        href=_canOrderToday
-          ?'/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'')
-          :'/mittagstisch-bestellen';
-        tip=_canOrderToday?'Jetzt f\u00fcr heute bestellen':'Mittagessen bestellen';
+        if(_canOrderToday){
+          href='/mittagstisch-bestellen?heute=1'+(it.id?'&gericht_id='+encodeURIComponent(it.id):'')+(it.name?'&gericht='+encodeURIComponent(it.name):'')+(it.preis?'&preis='+it.preis:'');
+          tip='Jetzt f\u00fcr heute bestellen';
+        }else{
+          // Bestellschluss fuer heute erreicht -> kein Bestell-Icon mehr anzeigen.
+          _showBtn=false;
+        }
       }
-      orderBtn='<a class="tp-item-order" href="javascript:void(0)" onclick="openMittagPopup(\''+esc(href).replace(/'/g,"\\'")+'\')" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
+      if(_showBtn){
+        orderBtn='<a class="tp-item-order" href="javascript:void(0)" onclick="openMittagPopup(\''+esc(href).replace(/'/g,"\\'")+'\')" title="'+tip+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a>';
+      }
     }
     var abBadge=it.ab_uhr?'<span class="tp-ab-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ab '+esc(it.ab_uhr)+'</span>':'';
     var showCat=!showOrder&&it.kategorie;
