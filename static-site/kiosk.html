@@ -288,7 +288,8 @@
     .k-sw-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 12px}
     .k-sw-head .k-sw-h1{font-size:15px;font-weight:800;color:#92400e;flex:1 1 200px;min-width:0}
     .k-sw-head .k-sw-h1 small{display:block;font-size:12px;font-weight:500;color:var(--c-muted);margin-top:2px}
-    .k-sw-hbtn{border:1px solid var(--c-border);background:#fff;border-radius:9px;padding:0 13px;min-height:44px;font-size:13px;font-weight:700;cursor:pointer;color:#374151;display:inline-flex;align-items:center;gap:6px}
+    .k-sw-seg{display:inline-flex;gap:6px;flex-shrink:0}
+    .k-sw-hbtn{border:1px solid var(--c-border);background:#fff;border-radius:9px;padding:0 13px;min-height:44px;font-size:13px;font-weight:700;cursor:pointer;color:#374151;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
     .k-sw-hbtn.on{background:#f59e0b;color:#fff;border-color:#f59e0b}
     .k-sw-card{background:#fff;border:1px solid var(--c-border);border-left:4px solid #f59e0b;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:8px;overflow:hidden}
     .k-sw-top{display:flex;align-items:center;gap:6px 8px;padding:10px 12px 4px;flex-wrap:wrap}
@@ -2230,8 +2231,10 @@ var K = (function(){
     if(d.mitChat>0 && !_swCompact){
       html+='<button class="k-sw-hbtn" onclick="K.toggleAllSwThreads()">'+luc(_swAllOpen?'chevron-up':'chevron-down',14)+' '+(_swAllOpen?'Verl\u00e4ufe zu':'Alle Verl\u00e4ufe')+'</button>';
     }
+    html+='<span class="k-sw-seg">';
     html+='<button class="k-sw-hbtn'+(_swCompact?'':' on')+'" onclick="K.setSwCompact(false)">'+luc('layout-list',14)+' Details</button>';
     html+='<button class="k-sw-hbtn'+(_swCompact?' on':'')+'" onclick="K.setSwCompact(true)">'+luc('list',14)+' Kompakt</button>';
+    html+='</span>';
     html+='</div>';
     d.gruppen.forEach(function(g){
       var n=g.eintraege.length;
