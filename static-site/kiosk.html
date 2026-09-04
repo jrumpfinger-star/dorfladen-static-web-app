@@ -277,6 +277,27 @@
     #mittag-cook .k-cook-chip.g{background:#dcfce7;color:#166534}
     #mittag-cook .k-cook-chip.o{background:#fff7ed;color:#9a3412}
     #mittag-cook .k-cook-foot{font-size:11px;color:#6b7280;margin-top:8px}
+    /* === Kontakt: ausgerichtete Listenzeile, Lesehaken, Abschnitte === */
+    .kk-hdr{gap:8px}
+    .kk-hdr .kk-name{flex:0 0 auto}
+    .kk-hdr .kk-prev{flex:1 1 auto}
+    .kk-hdr .kk-state{display:inline-flex;align-items:center;justify-content:flex-end;min-width:24px;flex-shrink:0}
+    .kk-ticks{color:#53bdeb;display:inline-flex;align-items:center;flex-shrink:0}
+    .kk-ticks.pending{color:#c7ced6}
+    .kk-sec{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--c-muted);margin:2px 0 8px;padding:0 2px}
+    .kk-sec.kk-sec-new{color:#15803d}
+    .kk-sec .kk-sec-n{font-size:11px;font-weight:700;text-transform:none;letter-spacing:0;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 9px}
+    .kk-sec .kk-sec-n.done{color:var(--c-muted);background:#f3f4f6}
+    .kk-card.kk-unread{box-shadow:0 1px 6px rgba(22,163,74,.18)}
+    @media(min-width:900px){
+      /* Spalten sauber untereinander: Name und Geraete-Chip mit fester Breite */
+      .kk-hdr{display:grid;grid-template-columns:auto auto auto 190px 168px 1fr auto 26px;align-items:center;column-gap:10px}
+      .kk-hdr .kk-name,.kk-hdr .kk-dev,.kk-hdr .kk-prev{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .kk-hdr .kk-dev{justify-self:start}
+      .kk-hdr .kk-time{justify-self:end}
+    }
+    html[data-theme="dark"] .kk-sec .kk-sec-n.done{background:var(--c-surf2)}
+    html[data-theme="dark"] .kk-ticks.pending{color:#4b5563}
     /* === Sonderwunsch-Leiste & -Liste === */
     #mittag-sonder .k-sw-bar{margin:0 0 12px;border:1px solid #fcd34d;background:linear-gradient(180deg,#fffbeb,#fff);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;width:100%;text-align:left}
     #mittag-sonder .k-sw-bar:hover{background:linear-gradient(180deg,#fef3c7,#fff)}

@@ -10,11 +10,15 @@
   var _pendingImg = {};  // id -> vorgemerktes Bild (dataUrl) fuer Antwort mit Untertitel
   var _draft = {};       // id -> Entwurfstext (ueber Re-Render bewahren)
   var _sel = {};         // id -> ausgewaehlt (fuer Loeschen / Mehrfachauswahl)
+  var _unreadAtLoad = {}; // id -> war beim letzten Laden ungelesen (stabile Gruppierung)
 
   var CHATFONT = "-apple-system,system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji'";
   var EMOJIS = ['😊','😀','😄','😍','👍','🙏','🎉','❤️','😅','😉','🙂','😢','😮','😡','👏','🙌','🤝','✅','❗','❓','🔥','⭐','☕','🥨','🍞','🧀','🥩','🍰','🛒','📦','📮','🕒'];
+  // Doppelhaken wie in WhatsApp – blau = gelesen, grau = zugestellt/noch ungelesen
+  var TICKS = '<svg viewBox="0 0 18 12" width="17" height="12" aria-hidden="true" style="display:block"><path d="M1 6.6 3.6 9.2 9.1 2.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.4 6.6 10 9.2 16.5 1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function luc(name){ return '<i data-lucide="'+name+'" style="width:14px;height:14px"></i>'; }
 
   // WhatsApp-artige Formatierung: *fett* _kursiv_ ~durchgestrichen~ + Zeilenumbrueche.
   function fmtText(s){
@@ -113,9 +117,15 @@
     }
     fetch(API+'/contact-message?mode=list').then(function(r){return r.json();}).then(function(res){
       _threads = (res&&res.success&&res.threads)?res.threads:[];
-      // WhatsApp-artig: unbeantwortete oben, danach nach letzter Aktivitaet.
+      // Gruppenzuordnung: beim automatischen Aktualisieren (silent) bleibt eine
+      // gerade gelesene Konversation an ihrem Platz – sie springt erst beim
+      // bewussten Neuladen (Tabwechsel/„Aktualisieren") nach unten. Neue
+      // ungelesene kommen jederzeit oben dazu.
+      if(!silent) _unreadAtLoad = {};
+      _threads.forEach(function(t){ if(!t.kommentar_gelesen) _unreadAtLoad[t.id]=true; });
+      // WhatsApp-artig: ungelesene oben, danach nach letzter Aktivitaet.
       _threads.sort(function(a,b){
-        var ua=!a.kommentar_gelesen?1:0, ub=!b.kommentar_gelesen?1:0;
+        var ua=_unreadAtLoad[a.id]?1:0, ub=_unreadAtLoad[b.id]?1:0;
         if(ua!==ub) return ub-ua;
         return (lastTs(b)||'').localeCompare(lastTs(a)||'');
       });
@@ -130,8 +140,15 @@
     var verlauf=(t&&t.verlauf)||[];
     if(!verlauf.length) return '<div style="color:#9ca3af;font-size:13px;padding:6px">Kein Verlauf.</div>';
     var multi=!!(t.devices && t.devices.length>1);
+    // Kundennachrichten am Ende des Verlaufs gelten als ungelesen, solange die
+    // Konversation nicht als gelesen markiert ist – nur diese bleiben ohne Haken.
+    var firstUnread = t.kommentar_gelesen ? verlauf.length : (function(){
+      var i=verlauf.length-1;
+      while(i>=0 && verlauf[i] && verlauf[i].who==='kunde') i--;
+      return i+1;
+    })();
     var h='<div class="kk-thread" style="font-family:'+CHATFONT+';display:flex;flex-direction:column;gap:6px;max-height:60vh;min-height:320px;overflow-y:auto;padding:8px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f7">';
-    verlauf.forEach(function(m){
+    verlauf.forEach(function(m, idx){
       if(!m) return;
       var mine = m.who==='dorfladen';
       var side = mine?'flex-end':'flex-start';
@@ -147,9 +164,15 @@
       var inner='';
       if(m.datei){ inner += '<img src="/api/tagesbild?datei='+encodeURIComponent(m.datei)+'" alt="" style="max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:zoom-in;margin-bottom:'+(m.text?'4px':'0')+'" onclick="KKontakt.zoom(this.src)">'; }
       if(m.text){ inner += '<span style="white-space:pre-wrap;word-break:break-word">'+(mine?fmtHtml(m.text):fmtText(m.text))+'</span>'; }
+      // Lesehaken an Kundennachrichten: gesetzt, sobald wir sie gelesen haben
+      var ticks='';
+      if(!mine){
+        var gelesen = idx < firstUnread;
+        ticks = '<span class="kk-ticks'+(gelesen?'':' pending')+'" title="'+(gelesen?'Von uns gelesen':'Noch nicht gelesen')+'">'+TICKS+'</span>';
+      }
       var delBtn = m.t ? ('<span onclick="event.stopPropagation();KKontakt.deleteMsg(\''+t.id+'\',\''+m.t+'\')" title="Nachricht löschen" style="cursor:pointer;color:#cbd5e1;font-size:12px;flex-shrink:0">✕</span>') : '';
       h += '<div style="align-self:'+side+';max-width:80%;background:'+bg+';border:1px solid '+bd+';border-radius:10px;padding:6px 9px;font-size:14px;line-height:1.4">'
-         + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="flex:1;min-width:0;font-size:10px;font-weight:500;color:'+col+'">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</span>'+delBtn+'</div>'+inner+'</div>';
+         + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="flex:1;min-width:0;font-size:10px;font-weight:500;color:'+col+'">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</span>'+ticks+delBtn+'</div>'+inner+'</div>';
     });
     h+='</div>';
     return h;
@@ -173,17 +196,24 @@
     var lastTxt = last ? ((last.who==='dorfladen'?'Du: ':'')+(last.text || (last.datei?'📷 Foto':''))) : '';
     var hue=devHue(t.device_id);
     var dcMain='hsl('+hue+',60%,40%)', dcBg='hsl('+hue+',72%,95%)';
-    var h='<div class="k-order" style="margin-bottom:10px;border-left:5px solid '+dcMain+(unread?';background:#f0fdf4':'')+'">';
-    // header
-    h+='<div class="k-order-hdr" style="cursor:pointer" onclick="KKontakt.toggle(\''+t.id+'\')">';
-    h+='<input type="checkbox" class="kk-sel" title="Auswählen" style="margin-right:8px;width:16px;height:16px;flex-shrink:0;cursor:pointer" '+(_sel[t.id]?'checked':'')+' onclick="event.stopPropagation();KKontakt.toggleSel(\''+t.id+'\',this.checked)">';
-    h+='<span class="k-oc-arrow"><i data-lucide="chevron-'+(isOpen?'down':'right')+'" style="width:14px;height:14px"></i></span>';
-    h+='<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+dcMain+';margin-right:7px;flex-shrink:0"></span>';
-    h+='<span class="k-oc-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
-    h+='<span title="Gerät des Kunden – jede Farbe/Code ist ein eigenes Gerät" style="font-size:10px;font-weight:500;color:'+dcMain+';background:'+dcBg+';border:1px solid hsl('+hue+',40%,75%);border-radius:4px;padding:0 5px;margin-left:6px;white-space:nowrap;flex-shrink:0">'+esc(devTag(t))+'</span>';
-    h+='<span style="flex:1;min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px">'+esc(lastTxt)+'</span>';
-    h+='<span style="font-size:11px;color:'+(unread?'#16a34a':'#9ca3af')+';font-weight:'+(unread?'700':'400')+';margin-right:8px;white-space:nowrap">'+fmtTime(lastTs(t))+'</span>';
-    if(unread) h+='<span title="'+uc+' neue Nachricht(en)" style="background:#25D366;color:#fff;font-size:12px;font-weight:800;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.2)">'+uc+'</span>';
+    var h='<div class="k-order kk-card'+(unread?' kk-unread':'')+'" style="margin-bottom:10px;border-left:5px solid '+dcMain+(unread?';background:#f0fdf4':'')+'">';
+    // header – auf breiten Schirmen als ausgerichtetes Raster (siehe CSS .kk-hdr)
+    h+='<div class="k-order-hdr kk-hdr" style="cursor:pointer" onclick="KKontakt.toggle(\''+t.id+'\')">';
+    h+='<input type="checkbox" class="kk-sel" title="Auswählen" style="width:16px;height:16px;flex-shrink:0;cursor:pointer" '+(_sel[t.id]?'checked':'')+' onclick="event.stopPropagation();KKontakt.toggleSel(\''+t.id+'\',this.checked)">';
+    h+='<span class="k-oc-arrow kk-arrow"><i data-lucide="chevron-'+(isOpen?'down':'right')+'" style="width:14px;height:14px"></i></span>';
+    h+='<span class="kk-dot" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+dcMain+';flex-shrink:0"></span>';
+    h+='<span class="k-oc-name kk-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
+    h+='<span class="kk-dev" title="Gerät des Kunden – jede Farbe/Code ist ein eigenes Gerät" style="font-size:10px;font-weight:500;color:'+dcMain+';background:'+dcBg+';border:1px solid hsl('+hue+',40%,75%);border-radius:4px;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(devTag(t))+'</span>';
+    h+='<span class="kk-prev" style="min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(lastTxt)+'</span>';
+    h+='<span class="kk-time" style="font-size:11px;color:'+(unread?'#16a34a':'#9ca3af')+';font-weight:'+(unread?'700':'400')+';white-space:nowrap">'+fmtTime(lastTs(t))+'</span>';
+    // Status: ungelesen -> gruene Zahl, gelesen -> blauer Doppelhaken (WhatsApp-Metapher)
+    h+='<span class="kk-state">';
+    if(unread){
+      h+='<span title="'+uc+' neue Nachricht(en)" style="background:#25D366;color:#fff;font-size:12px;font-weight:800;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)">'+uc+'</span>';
+    } else {
+      h+='<span class="kk-ticks" title="Gelesen">'+TICKS+'</span>';
+    }
+    h+='</span>';
     h+='</div>';
     if(isOpen){
       h+='<div style="padding:10px 12px;max-width:680px">';
@@ -229,7 +259,19 @@
       return;
     }
     var html='';
-    _threads.forEach(function(t){ html+=card(t); });
+    var neu = _threads.filter(function(t){ return _unreadAtLoad[t.id]; });
+    var alt = _threads.filter(function(t){ return !_unreadAtLoad[t.id]; });
+    if(neu.length && alt.length){
+      var offen = neu.filter(function(t){ return !t.kommentar_gelesen; }).length;
+      html += '<div class="kk-sec kk-sec-new">'+luc('mail')+'Neue Nachrichten'
+            + (offen>0 ? ' <span class="kk-sec-n">'+offen+' ungelesen</span>' : ' <span class="kk-sec-n done">alle gelesen</span>')
+            + '</div>';
+      neu.forEach(function(t){ html+=card(t); });
+      html += '<div class="kk-sec">'+luc('check-check')+'Bereits gelesen</div>';
+      alt.forEach(function(t){ html+=card(t); });
+    } else {
+      _threads.forEach(function(t){ html+=card(t); });
+    }
     host.innerHTML=html;
     // Entwuerfe wiederherstellen
     Object.keys(_draft).forEach(function(id){ var ta=document.getElementById('kk-rpt-'+id); if(ta && _draft[id]){ ta.value=_draft[id]; ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; } });
