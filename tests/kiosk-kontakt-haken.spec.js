@@ -278,4 +278,13 @@ test.describe('Kontakt – Spalten (K4)', () => {
     // Die Vorschau steht darunter
     expect(prev.top).toBeGreaterThan(name.top);
   });
+
+  test('K4-05: Namensspalte startet in allen Zeilen gleich', async ({ page }) => {
+    await openKontakt(page);
+    // Unterschiedlich breite Geraete-Chips duerfen die Namensspalte nicht verschieben
+    const lefts = await page.locator('#kontakt-list .kk-name').evaluateAll(
+      (els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+    expect(lefts.length).toBe(3);
+    expect(new Set(lefts).size).toBe(1);
+  });
 });
