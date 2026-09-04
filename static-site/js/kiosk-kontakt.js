@@ -203,9 +203,14 @@
     h+='<span class="k-oc-arrow kk-arrow"><i data-lucide="chevron-'+(isOpen?'down':'right')+'" style="width:14px;height:14px"></i></span>';
     h+='<span class="kk-dot" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+dcMain+';flex-shrink:0"></span>';
     h+='<span class="k-oc-name kk-name" style="font-weight:'+(unread?'800':'600')+'">'+esc(t.name||'Website-Besucher')+'</span>';
+    // Auf schmalen Schirmen bilden Geraet, Vorschau und Uhrzeit die zweite Zeile.
+    // Auf dem Desktop loest sich der Container per display:contents auf, damit
+    // die drei Angaben eigene Rasterspalten bleiben.
+    h+='<span class="kk-l2">';
     h+='<span class="kk-dev" title="Gerät des Kunden – jede Farbe/Code ist ein eigenes Gerät" style="font-size:10px;font-weight:500;color:'+dcMain+';background:'+dcBg+';border:1px solid hsl('+hue+',40%,75%);border-radius:4px;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(devTag(t))+'</span>';
     h+='<span class="kk-prev" style="min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(lastTxt)+'</span>';
     h+='<span class="kk-time" style="font-size:11px;color:'+(unread?'#16a34a':'#9ca3af')+';font-weight:'+(unread?'700':'400')+';white-space:nowrap">'+fmtTime(lastTs(t))+'</span>';
+    h+='</span>';
     // Status: ungelesen -> gruene Zahl, gelesen -> blauer Doppelhaken (WhatsApp-Metapher)
     h+='<span class="kk-state">';
     if(unread){

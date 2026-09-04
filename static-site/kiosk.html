@@ -294,20 +294,22 @@
       /* Zwei feste Zeilen statt freiem Umbruch: oben Name + Status,
          darunter Geraet, Vorschau und Uhrzeit. */
       .kk-hdr{display:grid;grid-template-columns:16px 14px 11px 1fr auto;
-        grid-template-areas:"chk arw dot name state" "dev dev prev prev time";
-        align-items:center;column-gap:7px;row-gap:3px}
+        grid-template-areas:"chk arw dot name state" "l2 l2 l2 l2 l2";
+        align-items:center;column-gap:7px;row-gap:4px}
       .kk-hdr>input.kk-sel{grid-area:chk}
       .kk-hdr .kk-arrow{grid-area:arw}
       .kk-hdr .kk-dot{grid-area:dot}
       .kk-hdr .kk-name{grid-area:name;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .kk-hdr .kk-state{grid-area:state}
-      .kk-hdr .kk-dev{grid-area:dev;justify-self:start;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-      .kk-hdr .kk-prev{grid-area:prev;min-width:0}
-      .kk-hdr .kk-time{grid-area:time;justify-self:end}
+      .kk-hdr .kk-l2{grid-area:l2;display:flex;align-items:center;gap:8px;min-width:0}
+      .kk-hdr .kk-l2 .kk-dev{flex:0 1 auto;max-width:50%}
+      .kk-hdr .kk-l2 .kk-prev{flex:1 1 auto;min-width:0}
+      .kk-hdr .kk-l2 .kk-time{flex:0 0 auto;margin-left:auto}
     }
     @media(min-width:900px){
       /* Spalten sauber untereinander: Name und Geraete-Chip mit fester Breite */
       .kk-hdr{display:grid;grid-template-columns:16px 14px 11px 190px 168px 1fr auto 26px;align-items:center;column-gap:10px}
+      .kk-hdr .kk-l2{display:contents}
       .kk-hdr .kk-name,.kk-hdr .kk-dev,.kk-hdr .kk-prev{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .kk-hdr .kk-dev{justify-self:start}
       .kk-hdr .kk-time{justify-self:end}
