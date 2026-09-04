@@ -6,7 +6,8 @@
 
 **Spec:** [spec.md](./spec.md)
 
-**Status:** Ready for Tasks
+**Status:** Implemented — live verifiziert am 04.09.2026 (69/69 Playwright-Tests
+über mobile / iPad mini / desktop gegen die Produktionsumgebung)
 
 ## Constitution Check
 
