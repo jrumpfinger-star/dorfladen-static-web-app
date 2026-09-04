@@ -277,6 +277,52 @@
     #mittag-cook .k-cook-chip.g{background:#dcfce7;color:#166534}
     #mittag-cook .k-cook-chip.o{background:#fff7ed;color:#9a3412}
     #mittag-cook .k-cook-foot{font-size:11px;color:#6b7280;margin-top:8px}
+    /* === Sonderwunsch-Leiste & -Liste === */
+    #mittag-sonder .k-sw-bar{margin:0 0 12px;border:1px solid #fcd34d;background:linear-gradient(180deg,#fffbeb,#fff);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;width:100%;text-align:left}
+    #mittag-sonder .k-sw-bar:hover{background:linear-gradient(180deg,#fef3c7,#fff)}
+    #mittag-sonder .k-sw-n{flex:0 0 auto;min-width:46px;height:46px;border-radius:12px;background:#fef3c7;border:1px solid #fcd34d;color:#92400e;font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center}
+    #mittag-sonder .k-sw-bar-txt{flex:1 1 180px;min-width:0}
+    #mittag-sonder .k-sw-bar-t1{font-size:15px;font-weight:800;color:#92400e;display:flex;align-items:center;gap:7px}
+    #mittag-sonder .k-sw-bar-t2{font-size:12px;color:#a16207;margin-top:2px}
+    #mittag-sonder .k-sw-go{background:#f59e0b;color:#fff;border:none;border-radius:9px;padding:0 15px;min-height:44px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .k-sw-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 12px}
+    .k-sw-head .k-sw-h1{font-size:15px;font-weight:800;color:#92400e;flex:1 1 200px;min-width:0}
+    .k-sw-head .k-sw-h1 small{display:block;font-size:12px;font-weight:500;color:var(--c-muted);margin-top:2px}
+    .k-sw-hbtn{border:1px solid var(--c-border);background:#fff;border-radius:9px;padding:0 13px;min-height:44px;font-size:13px;font-weight:700;cursor:pointer;color:#374151;display:inline-flex;align-items:center;gap:6px}
+    .k-sw-hbtn.on{background:#f59e0b;color:#fff;border-color:#f59e0b}
+    .k-sw-card{background:#fff;border:1px solid var(--c-border);border-left:4px solid #f59e0b;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:8px;overflow:hidden}
+    .k-sw-top{display:flex;align-items:center;gap:6px 8px;padding:10px 12px 4px;flex-wrap:wrap}
+    .k-sw-name{font-weight:800;font-size:15px;flex:1 1 110px;min-width:0;overflow-wrap:anywhere}
+    .k-sw-qty{font-weight:800;font-size:15px;color:var(--c-green);white-space:nowrap}
+    .k-sw-dish{padding:0 12px 8px;font-size:12.5px;color:var(--c-muted);overflow-wrap:anywhere}
+    .k-sw-note{margin:0 12px 10px;background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;color:#92400e;line-height:1.4;overflow-wrap:anywhere;display:flex;align-items:flex-start;gap:8px}
+    .k-sw-note-t{flex:1;min-width:0}
+    .k-sw-note-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#b45309;display:block;margin-bottom:2px}
+    .k-sw-more{margin:0 12px 10px}
+    .k-sw-more-btn{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 11px;min-height:44px;font-size:12.5px;font-weight:700;color:#2563eb;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%;text-align:left}
+    .k-sw-more-btn .arw{transition:transform .2s;flex-shrink:0}
+    .k-sw-more.open .k-sw-more-btn .arw{transform:rotate(90deg)}
+    .k-sw-none{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 11px;font-size:12.5px;color:var(--c-muted)}
+    .k-sw-thread{display:none;flex-direction:column;gap:5px;padding:8px;margin-top:6px;background:#f8fafc;border:1px solid #eef2f7;border-radius:8px}
+    .k-sw-more.open .k-sw-thread{display:flex}
+    .k-sw-bub{max-width:85%;border-radius:10px;padding:5px 9px;font-size:12.5px;line-height:1.35;overflow-wrap:anywhere}
+    .k-sw-bub .w{font-size:9px;font-weight:800;text-transform:uppercase;margin-bottom:1px}
+    .k-sw-bub.k{align-self:flex-start;background:#eff6ff;border:1px solid #bfdbfe;border-bottom-left-radius:3px}
+    .k-sw-bub.k .w{color:#2563eb}
+    .k-sw-bub.d{align-self:flex-end;background:#f0fdf4;border:1px solid #bbf7d0;border-bottom-right-radius:3px}
+    .k-sw-bub.d .w{color:#16a34a}
+    .k-sw-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid var(--c-border);border-left:4px solid #f59e0b;border-radius:8px;padding:9px 12px;margin-bottom:6px}
+    .k-sw-row .rq{font-weight:800;color:var(--c-green);white-space:nowrap}
+    .k-sw-row .rn{font-weight:700;font-size:14px}
+    .k-sw-row .rd{font-size:12px;color:var(--c-muted)}
+    .k-sw-row .rw{flex:1 1 240px;min-width:0;font-size:13.5px;font-weight:600;color:#92400e;overflow-wrap:anywhere}
+    html[data-theme="dark"] #mittag-sonder .k-sw-bar{background:linear-gradient(180deg,#2b2412,#1b2228);border-color:#7c5e12}
+    html[data-theme="dark"] #mittag-sonder .k-sw-n{background:#3a2f14;border-color:#7c5e12;color:#fbbf24}
+    html[data-theme="dark"] #mittag-sonder .k-sw-bar-t1,html[data-theme="dark"] .k-sw-head .k-sw-h1{color:#fbbf24}
+    html[data-theme="dark"] .k-sw-card,html[data-theme="dark"] .k-sw-row{background:var(--c-card)}
+    html[data-theme="dark"] .k-sw-note{background:#2b2412;border-color:#7c5e12;color:#fbbf24}
+    html[data-theme="dark"] .k-sw-more-btn,html[data-theme="dark"] .k-sw-none,html[data-theme="dark"] .k-sw-thread{background:var(--c-surf2);border-color:var(--c-border)}
+    html[data-theme="dark"] .k-sw-hbtn{background:var(--c-card);color:var(--c-text);border-color:var(--c-border)}
     @media(min-width:900px){
       #panel-metzger .k-slot-body{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       #mittag-orders .k-dish-body{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
@@ -764,9 +810,12 @@
     <div class="k-stats" id="mittag-stats" style="display:none"></div>
     <!-- Kochbedarf-Leiste (immer sichtbar, unabhängig vom Status-Filter) -->
     <div id="mittag-cook"></div>
+    <!-- Sonderwunsch-Leiste (Blickfang + Ein-Klick-Einstieg) -->
+    <div id="mittag-sonder"></div>
     <!-- Status-Filter -->
     <div class="k-filter-bar" id="mittag-status-bar">
       <button class="k-filter-btn" data-mt-filter="offen" onclick="K.setMittagFilter('offen')"><i data-lucide="inbox" style="width:14px;height:14px"></i> <span class="k-filter-label">Offen</span> <span class="k-filter-count" id="mt-fc-offen">0</span></button>
+      <button class="k-filter-btn" data-mt-filter="sonderwunsch" onclick="K.setMittagFilter('sonderwunsch')" style="color:#92400e"><i data-lucide="notebook-pen" style="width:14px;height:14px"></i> <span class="k-filter-label">Sonderwünsche</span> <span class="k-filter-count" id="mt-fc-sonderwunsch">0</span></button>
       <button class="k-filter-btn" data-mt-filter="nachrichten" onclick="K.setMittagFilter('nachrichten')" style="color:#3b82f6"><i data-lucide="message-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Nachrichten</span> <span class="k-filter-count" id="mt-fc-nachrichten">0</span></button>
       <button class="k-filter-btn" data-mt-filter="erledigt" onclick="K.setMittagFilter('erledigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Erledigt</span> <span class="k-filter-count" id="mt-fc-erledigt">0</span></button>
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')" style="color:#dc2626"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
@@ -1659,11 +1708,20 @@ var K = (function(){
     var elStorno = document.getElementById('mt-fc-storniert');
     var elAlle = document.getElementById('mt-fc-alle');
     var elNachr = document.getElementById('mt-fc-nachrichten');
+    var elSonder = document.getElementById('mt-fc-sonderwunsch');
+    var cSonder = _sonderwunschListe().anzahl;
     if(elOffen) elOffen.textContent = cOffen;
     if(elErledigt) elErledigt.textContent = cErledigt;
     if(elStorno) elStorno.textContent = cStorno;
     if(elAlle) elAlle.textContent = cAlle;
     if(elNachr) elNachr.textContent = _globalUnreadMessages;
+    if(elSonder) elSonder.textContent = cSonder;
+    // Highlight "Sonderwünsche" while there is something to look at
+    var swBtn = document.querySelector('[data-mt-filter="sonderwunsch"]');
+    if(swBtn){
+      swBtn.style.color = cSonder>0 ? '#92400e' : '';
+      swBtn.style.fontWeight = cSonder>0 ? '800' : '';
+    }
     // Highlight "Offen" in red when new orders exist
     var newCount = orders.filter(function(o){return o.status===0;}).length;
     var offenBtn = document.querySelector('[data-mt-filter="offen"]');
@@ -1719,7 +1777,7 @@ var K = (function(){
     // Nur beim Erstladen zeigen – wenn bereits Karten sichtbar sind (z.B. bei der
     // Auto-Aktualisierung), bleibt die Ansicht stehen, damit laufende Eingaben
     // nicht durch den "Laden…"-Platzhalter verworfen werden.
-    if(_mittagFilter!=='nachrichten' && !document.querySelector('#mittag-orders .k-order')){
+    if(_mittagFilter!=='nachrichten' && _mittagFilter!=='sonderwunsch' && !document.querySelector('#mittag-orders .k-order')){
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px;animation:kSpin 1s linear infinite"></i></div>Laden…</div>';
       reinitIcons();
     }
@@ -1943,7 +2001,7 @@ var K = (function(){
   function renderCookBar(){
     var host = document.getElementById('mittag-cook');
     if(!host) return;
-    if(_mittagFilter==='nachrichten' || !orders || orders.length===0){ host.innerHTML=''; return; }
+    if(_mittagFilter==='nachrichten' || _mittagFilter==='sonderwunsch' || !orders || orders.length===0){ host.innerHTML=''; return; }
     var relevant = orders.filter(function(o){return o.status!==2;});
     if(relevant.length===0){ host.innerHTML=''; return; }
     var map = {}, order = [];
@@ -1987,6 +2045,211 @@ var K = (function(){
     reinitIcons();
   }
 
+  // ══════════════════════════════════════════════════
+  //  SONDERWÜNSCHE  (specs/mittagstisch-sonderwuensche)
+  // ══════════════════════════════════════════════════
+
+  var _swThreadOpen = {};  // Aufklappzustand des Verlaufs je Bestellung
+  var _swCompact = false;  // Kompaktliste statt Kartenansicht
+  var _swAllOpen = false;  // Zustand des "Alle Verläufe"-Knopfes
+
+  // Einzige Wahrheitsquelle (Spec F1): liefert {text, weitere[]} oder null.
+  // Primaer zaehlt die Anmerkung aus dem Bestellformular; fehlt sie, gilt die
+  // erste Kundennachricht als Sonderwunsch. Stornierte bleiben aussen vor.
+  function _sonderwunsch(o){
+    if(!o || o.status===2) return null;
+    var verlauf = Array.isArray(o.verlauf) ? o.verlauf.filter(function(m){
+      return m && typeof m.text==='string' && m.text.trim();
+    }) : [];
+    var note = (o.anmerkung||'').trim();
+    if(note) return {text:note, weitere:verlauf};
+    for(var i=0;i<verlauf.length;i++){
+      if(verlauf[i].who==='kunde') return {text:verlauf[i].text.trim(), weitere:verlauf.slice(i+1)};
+    }
+    return null;
+  }
+
+  // Gruppiert alle Sonderwuensche des geladenen Tages nach Gericht.
+  // Gruppenreihenfolge wie in der Kochbedarf-Leiste (Portionen absteigend).
+  function _sonderwunschListe(){
+    var map={}, dishOrder=[], anzahl=0, portionen=0, ungelesen=0, mitChat=0;
+    (orders||[]).forEach(function(o){
+      var sw=_sonderwunsch(o);
+      if(!sw) return;
+      var dish=o.gericht||'Sonstiges';
+      if(!map[dish]){ map[dish]={eintraege:[],portionen:0}; dishOrder.push(dish); }
+      var q=o.menge||1;
+      map[dish].eintraege.push({o:o,sw:sw});
+      map[dish].portionen += q;
+      anzahl++; portionen += q;
+      if(_hasUnseenComment(o)) ungelesen++;
+      if(sw.weitere.length) mitChat++;
+    });
+    dishOrder.sort(function(a,b){ return map[b].portionen - map[a].portionen; });
+    var gruppen = dishOrder.map(function(d){
+      map[d].eintraege.sort(function(a,b){
+        var ua=_hasUnseenComment(a.o)?0:1, ub=_hasUnseenComment(b.o)?0:1;
+        if(ua!==ub) return ua-ub;
+        return (a.o.name||'').localeCompare(b.o.name||'','de');
+      });
+      return {gericht:d, eintraege:map[d].eintraege};
+    });
+    return {gruppen:gruppen, anzahl:anzahl, portionen:portionen, ungelesen:ungelesen, mitChat:mitChat};
+  }
+
+  function _swTagLabel(){
+    if(_mittagDatum===today()) return 'heute';
+    var d=new Date(_mittagDatum+'T12:00:00');
+    if(isNaN(d.getTime())) return '';
+    var DAY=['So','Mo','Di','Mi','Do','Fr','Sa'];
+    return 'am '+DAY[d.getDay()]+', '+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
+  }
+
+  function _swDatumLang(){
+    var d=new Date(_mittagDatum+'T12:00:00');
+    if(isNaN(d.getTime())) return _mittagDatum;
+    var DAY=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    var s=DAY[d.getDay()]+', '+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear();
+    return _mittagDatum===today() ? 'Heute, '+s : s;
+  }
+
+  // Blickfang-Leiste unter dem Kochbedarf (Spec F2)
+  function renderSonderwunschBar(){
+    var host=document.getElementById('mittag-sonder');
+    if(!host) return;
+    if(_mittagFilter==='nachrichten' || _mittagFilter==='sonderwunsch'){ host.innerHTML=''; return; }
+    var d=_sonderwunschListe();
+    if(d.anzahl===0){ host.innerHTML=''; return; }
+    var gesamt=(orders||[]).filter(function(o){return o.status!==2;}).length;
+    var sub=d.anzahl+' von '+gesamt+' '+(gesamt===1?'Bestellung':'Bestellungen');
+    if(d.ungelesen>0) sub += ' \u00b7 '+d.ungelesen+' noch nicht gelesen';
+    if(d.mitChat>0) sub += ' \u00b7 '+d.mitChat+' mit weiterer R\u00fcckfrage';
+    var h='<button type="button" class="k-sw-bar" onclick="K.setMittagFilter(\'sonderwunsch\')">';
+    h+='<span class="k-sw-n">'+d.anzahl+'</span>';
+    h+='<span class="k-sw-bar-txt">';
+    h+='<span class="k-sw-bar-t1">'+luc('notebook-pen',17)+' Sonderw\u00fcnsche '+esc(_swTagLabel())+'</span>';
+    h+='<span class="k-sw-bar-t2">'+esc(sub)+'</span>';
+    h+='</span>';
+    h+='<span class="k-sw-go">Alle anzeigen</span>';
+    h+='</button>';
+    host.innerHTML=h;
+    reinitIcons();
+  }
+
+  function toggleSwThread(id){
+    _swThreadOpen[id] = !_swThreadOpen[id];
+    var el=document.getElementById('swm-'+id);
+    if(el) el.classList.toggle('open', !!_swThreadOpen[id]);
+  }
+
+  function toggleAllSwThreads(){
+    _swAllOpen = !_swAllOpen;
+    _sonderwunschListe().gruppen.forEach(function(g){
+      g.eintraege.forEach(function(e){
+        if(e.sw.weitere.length) _swThreadOpen[e.o.id] = _swAllOpen;
+      });
+    });
+    renderSonderwuensche();
+  }
+
+  function setSwCompact(v){
+    _swCompact = !!v;
+    renderSonderwuensche();
+  }
+
+  // Ausfuehrliche Karte (Spec F4/F5)
+  function _renderSwCard(o, sw){
+    var SL={0:'Neu',1:'Best\u00e4tigt',2:'Storniert',3:'Abgeholt'};
+    var SC={0:'#f59e0b',1:'#16a34a',2:'#dc2626',3:'#6b7280'};
+    var unread=_hasUnseenComment(o);
+    var open=!!_swThreadOpen[o.id];
+    var h='<div class="k-sw-card" id="sw-'+o.id+'">';
+    h+='<div class="k-sw-top">';
+    h+='<span class="k-sw-name">'+esc(o.name)+'</span>';
+    h+='<span class="k-sw-qty">'+(o.menge||1)+'\u00D7</span>';
+    h+='<span class="k-order-src '+(SRC_CLASS[o.quelle]||'src-online')+'">'+(SRC_LABELS[o.quelle]||'Online')+'</span>';
+    if(o.mitnehmen) h+='<span class="k-order-mitnehmen">'+luc('package',11)+' MIT</span>';
+    if(unread) h+='<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px">'+luc('message-circle',10)+' NEU</span>';
+    h+='<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:'+(SC[o.status]||'#6b7280')+'1a;color:'+(SC[o.status]||'#6b7280')+'">'+esc(SL[o.status]||'')+'</span>';
+    h+='</div>';
+    h+='<div class="k-sw-dish">'+esc(o.gericht||'')+(o.preis?' \u00b7 '+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' \u20AC':'')+'</div>';
+    h+='<div class="k-sw-note"><div class="k-sw-note-t"><span class="k-sw-note-lbl">Sonderwunsch</span>'+esc(sw.text)+'</div>';
+    if(unread) h+='<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="K.markMsgRead(\''+o.id+'\')">'+luc('eye',11)+' Gelesen</button>';
+    h+='</div>';
+    h+='<div class="k-sw-more'+(open?' open':'')+'" id="swm-'+o.id+'">';
+    if(sw.weitere.length){
+      h+='<button type="button" class="k-sw-more-btn" onclick="K.toggleSwThread(\''+o.id+'\')">';
+      h+='<span class="arw">'+luc('chevron-right',14)+'</span>';
+      h+='<span>Weitere Nachrichten ('+sw.weitere.length+')'+(unread?' \u2013 ungelesen':'')+'</span>';
+      h+='</button>';
+      h+='<div class="k-sw-thread">';
+      sw.weitere.forEach(function(m){
+        var mine = m.who!=='kunde';
+        h+='<div class="k-sw-bub '+(mine?'d':'k')+'"><div class="w">'+(mine?'Dorfladen':'Kunde')+'</div>'+esc(m.text)+'</div>';
+      });
+      if(o.status<=1){
+        h+='<div style="display:flex;gap:6px;align-items:center;margin-top:2px">';
+        h+='<textarea id="rpt-'+o.id+'" placeholder="Antwort eingeben\u2026" maxlength="300" rows="1" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden;min-height:36px" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();K.sendReply(\''+o.id+'\')}"></textarea>';
+        h+='<button class="k-btn k-btn-sm" style="background:#2563eb;color:#fff;font-size:13px;white-space:nowrap" onclick="K.sendReply(\''+o.id+'\')">'+luc('send',14)+' Senden</button>';
+        h+='</div>';
+      }
+      h+='</div>';
+    } else {
+      h+='<div class="k-sw-none">Keine weiteren Nachrichten</div>';
+    }
+    h+='</div></div>';
+    return h;
+  }
+
+  // Kompakte Zeile (Spec F6) – ohne Verlauf und ohne Eingabefeld
+  function _renderSwRow(o, sw){
+    var h='<div class="k-sw-row">';
+    h+='<span class="rq">'+(o.menge||1)+'\u00D7</span>';
+    h+='<span class="rn">'+esc(o.name)+'</span>';
+    h+='<span class="rd">'+esc(o.gericht||'')+'</span>';
+    h+='<span class="rw">'+esc(sw.text)+'</span>';
+    h+='</div>';
+    return h;
+  }
+
+  // Sonderwunsch-Ansicht (Spec F4/F6/F7)
+  function renderSonderwuensche(){
+    var host=document.getElementById('mittag-orders');
+    if(!host) return;
+    var toggleWrap=document.getElementById('mt-toggle-wrap');
+    if(toggleWrap){ toggleWrap.innerHTML=''; toggleWrap.style.display='none'; }
+    var d=_sonderwunschListe();
+    if(d.anzahl===0){
+      host.innerHTML='<div class="k-empty"><div class="k-empty-icon">'+luc('notebook-pen',32)+'</div>Keine Sonderw\u00fcnsche f\u00fcr diesen Tag</div>';
+      reinitIcons();
+      return;
+    }
+    var html='<div class="k-sw-head">';
+    html+='<div class="k-sw-h1">Alle Sonderw\u00fcnsche \u2013 '+esc(_swDatumLang());
+    html+='<small>'+d.anzahl+' '+(d.anzahl===1?'Sonderwunsch':'Sonderw\u00fcnsche')+' \u00b7 '+d.portionen+' '+(d.portionen===1?'Portion':'Portionen')+' \u00b7 nach Gericht gruppiert</small></div>';
+    if(d.mitChat>0 && !_swCompact){
+      html+='<button class="k-sw-hbtn" onclick="K.toggleAllSwThreads()">'+luc(_swAllOpen?'chevron-up':'chevron-down',14)+' '+(_swAllOpen?'Verl\u00e4ufe zu':'Alle Verl\u00e4ufe')+'</button>';
+    }
+    html+='<button class="k-sw-hbtn'+(_swCompact?'':' on')+'" onclick="K.setSwCompact(false)">'+luc('layout-list',14)+' Details</button>';
+    html+='<button class="k-sw-hbtn'+(_swCompact?' on':'')+'" onclick="K.setSwCompact(true)">'+luc('list',14)+' Kompakt</button>';
+    html+='</div>';
+    d.gruppen.forEach(function(g){
+      var n=g.eintraege.length;
+      html+='<div class="k-dish-sep-row" style="cursor:default">';
+      html+='<span class="k-dish-sep-label">'+esc(g.gericht)+'</span>';
+      html+='<span class="k-dish-sep-actions"><span style="font-size:12px;font-weight:700;color:#166534;background:#fff;border:1px solid #c8e6c9;border-radius:12px;padding:2px 9px">'+n+' '+(n===1?'Sonderwunsch':'Sonderw\u00fcnsche')+'</span></span>';
+      html+='</div>';
+      g.eintraege.forEach(function(e){
+        html += _swCompact ? _renderSwRow(e.o,e.sw) : _renderSwCard(e.o,e.sw);
+      });
+    });
+    var snap=_preserveInputs(host);
+    host.innerHTML=html;
+    reinitIcons();
+    _restoreInputs(snap,host);
+    host.querySelectorAll('.k-sw-thread').forEach(function(el){ el.scrollTop=el.scrollHeight; });
+  }
+
   // Bewahrt Formulareingaben (Textareas/Inputs), offene Bestätigen-Dialoge und
   // Fokus/Cursor über ein Neu-Rendern (z.B. Auto-Aktualisierung) hinweg, damit
   // laufende Eingaben nicht verloren gehen.
@@ -2025,8 +2288,10 @@ var K = (function(){
   }
 
   function renderOrders(){
-    if(_mittagFilter==='nachrichten'){ renderCookBar(); return; }
+    if(_mittagFilter==='nachrichten'){ renderCookBar(); renderSonderwunschBar(); return; }
     renderCookBar();
+    renderSonderwunschBar();
+    if(_mittagFilter==='sonderwunsch'){ renderSonderwuensche(); return; }
     if(orders.length===0){
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('mail-open',24)+'</div>Keine Bestellungen für heute</div>';
       reinitIcons();
@@ -5057,6 +5322,9 @@ var K = (function(){
     openModal: openModal,
     closeModal: closeModal,
     setMittagFilter: setMittagFilter,
+    toggleSwThread: toggleSwThread,
+    toggleAllSwThreads: toggleAllSwThreads,
+    setSwCompact: setSwCompact,
     showMsgReply: showMsgReply,
     sendMsgReply: sendMsgReply,
     markMsgRead: markMsgRead,

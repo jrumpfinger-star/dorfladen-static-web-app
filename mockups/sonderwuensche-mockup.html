@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sonderwünsche im Mittagstisch – Mockup</title>
+<style>
+  :root{
+    --c-pri:#2d5016;--c-green:#2e7d4f;--c-green-light:#dcfce7;--c-red:#dc2626;
+    --c-yellow:#f59e0b;--c-bg:#f0f2f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;
+    --c-border:#e5e7eb;--amber-bg:#fffbeb;--amber-line:#f59e0b;--amber-ink:#92400e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,sans-serif}
+  body{background:var(--c-bg);color:var(--c-text);padding:18px;display:flex;flex-direction:column;gap:26px;align-items:center}
+  .wrap{width:1180px;max-width:100%}
+  .caption{font-size:13px;color:var(--c-muted);text-align:center;margin-bottom:10px;line-height:1.5}
+  .caption b{color:var(--c-text)}
+  h2.sec{font-size:15px;font-weight:800;color:var(--c-pri);margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  h2.sec .num{background:var(--c-pri);color:#fff;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+  .screen{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.08);overflow:hidden}
+  .pad{padding:12px 16px}
+
+  /* ── Haupt-Tabs ── */
+  .k-tabs{display:flex;background:#fff;border-bottom:1px solid var(--c-border)}
+  .k-tab{flex:1;text-align:center;padding:10px 6px;font-size:13px;font-weight:700;color:var(--c-muted);cursor:pointer;border-bottom:3px solid transparent}
+  .k-tab.active{color:var(--c-green);background:#f0fdf4;border-bottom-color:var(--c-green)}
+  .k-tab .ic{display:block;font-size:17px;line-height:1.3}
+
+  /* ── Tagesleiste ── */
+  .k-day-bar{display:flex;gap:4px;padding:8px 0 10px;border-bottom:1px solid var(--c-border);margin-bottom:6px;overflow-x:auto}
+  .k-day{min-width:62px;text-align:center;padding:6px 8px;border-radius:9px;color:var(--c-muted);font-size:13px;cursor:pointer;font-weight:600}
+  .k-day small{display:block;font-size:11px;font-weight:400}
+  .k-day.active{background:var(--c-green);color:#fff}
+
+  /* ── Kochbedarf (bestehend, hier eingeklappt) ── */
+  .k-cook{margin:10px 0;border:1px solid #cfe6d6;background:linear-gradient(180deg,#f0fdf4,#fff);border-radius:14px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .k-cook-title{font-size:15px;font-weight:800;color:#166534;display:flex;align-items:center;gap:8px}
+  .k-cook-title .sub{font-size:12px;font-weight:500;color:var(--c-muted)}
+  .k-cook-btn{border:1px solid var(--c-border);background:#fff;border-radius:9px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;color:#374151}
+
+  /* ── NEU: Sonderwunsch-Leiste ── */
+  .sw-bar{margin:0 0 10px;border:1px solid #fcd34d;background:linear-gradient(180deg,var(--amber-bg),#fff);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer}
+  .sw-bar:hover{background:linear-gradient(180deg,#fef3c7,#fff)}
+  .sw-bar .n{min-width:44px;height:44px;border-radius:12px;background:#fef3c7;border:1px solid #fcd34d;color:var(--amber-ink);font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .sw-bar .txt{flex:1;min-width:180px}
+  .sw-bar .t1{font-size:15px;font-weight:800;color:var(--amber-ink);display:flex;align-items:center;gap:7px}
+  .sw-bar .t2{font-size:12px;color:#a16207;margin-top:2px}
+  .sw-bar .go{background:var(--amber-line);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+
+  /* ── Status-Filterleiste ── */
+  .k-filter-bar{display:flex;gap:0;border-bottom:2px solid var(--c-border);overflow-x:auto;margin-bottom:10px}
+  .k-filter-btn{padding:10px 15px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;background:none;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px}
+  .k-filter-btn .k-filter-count{font-size:12px;font-weight:800;background:#f3f4f6;color:var(--c-muted);padding:2px 7px;border-radius:8px;min-width:20px;text-align:center}
+  .k-filter-btn.active{color:#fff!important;background:var(--c-green);border-radius:8px 8px 0 0;border-bottom-color:var(--c-green)}
+  .k-filter-btn.active .k-filter-count{background:rgba(255,255,255,.25);color:#fff}
+  .k-filter-btn.sw{color:var(--amber-ink)}
+  .k-filter-btn.sw.active{background:var(--amber-line);border-bottom-color:var(--amber-line)}
+  .k-filter-btn.msg{color:#3b82f6}
+
+  /* ── Kopfzeile der Sonderwunsch-Ansicht ── */
+  .sw-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 12px}
+  .sw-head .h1{font-size:15px;font-weight:800;color:var(--amber-ink);flex:1;min-width:200px}
+  .sw-head .h1 small{display:block;font-size:12px;font-weight:500;color:var(--c-muted);margin-top:2px}
+  .btn{border:1px solid var(--c-border);background:#fff;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer;color:#374151;display:inline-flex;align-items:center;gap:6px}
+  .btn.primary{background:var(--c-green);color:#fff;border-color:var(--c-green)}
+
+  /* ── Gruppen-Trenner pro Gericht ── */
+  .k-dish-sep-row{display:flex;align-items:center;gap:10px;padding:9px 14px;background:linear-gradient(90deg,#f0fdf4,#e8f5ec);border:1px solid #c8e6c9;border-radius:10px;margin:12px 0 6px;font-weight:700;font-size:14px;color:#1b5e20}
+  .k-dish-sep-row .cnt{margin-left:auto;font-size:12px;font-weight:700;color:#166534;background:#fff;border:1px solid #c8e6c9;border-radius:12px;padding:2px 9px}
+
+  /* ── Sonderwunsch-Karte ── */
+  .sw-card{background:#fff;border:1px solid var(--c-border);border-left:4px solid var(--amber-line);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:8px;overflow:hidden}
+  .sw-card.done{opacity:.55;border-left-color:#9ca3af}
+  .sw-card.done .sw-note{background:#f9fafb;border-left-color:#9ca3af;color:#6b7280}
+  .sw-top{display:flex;align-items:center;gap:8px;padding:10px 12px 6px;flex-wrap:wrap}
+  .sw-chk{width:22px;height:22px;flex-shrink:0;accent-color:var(--c-green);cursor:pointer}
+  .sw-name{font-weight:800;font-size:15px;flex:1;min-width:110px}
+  .sw-qty{font-weight:800;font-size:15px;color:var(--c-green);white-space:nowrap}
+  .badge{font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#f3f4f6;color:#374151;white-space:nowrap}
+  .badge.online{background:#eef2ff;color:#3730a3}
+  .badge.mit{background:#ecfeff;color:#0e7490}
+  .badge.neu{background:#3b82f6;color:#fff}
+  .badge.ok{background:#dcfce7;color:#166534}
+  .badge.warte{background:#fef3c7;color:#92400e}
+  .sw-dish{padding:0 12px 8px 42px;font-size:12.5px;color:var(--c-muted)}
+
+  /* Der Sonderwunsch selbst – maximal auffällig */
+  .sw-note{margin:0 12px 10px 42px;background:var(--amber-bg);border:1px solid #fde68a;border-left:4px solid var(--amber-line);border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;color:var(--amber-ink);line-height:1.4;display:flex;gap:8px}
+  .sw-note .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#b45309;display:block;margin-bottom:2px}
+
+  /* Aufklappbarer Verlauf */
+  .sw-more{margin:0 12px 10px 42px}
+  .sw-more-btn{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:700;color:#2563eb;cursor:pointer;display:inline-flex;align-items:center;gap:7px;width:100%}
+  .sw-more-btn .arw{transition:transform .2s;font-size:10px}
+  .sw-more.open .sw-more-btn .arw{transform:rotate(90deg)}
+  .sw-more-btn .dot{width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0}
+  .sw-thread{display:none;flex-direction:column;gap:5px;padding:8px;margin-top:6px;background:#f8fafc;border:1px solid #eef2f7;border-radius:8px}
+  .sw-more.open .sw-thread{display:flex}
+  .bub{max-width:85%;border-radius:10px;padding:5px 9px;font-size:12.5px;line-height:1.35}
+  .bub .w{font-size:9px;font-weight:800;text-transform:uppercase;margin-bottom:1px}
+  .bub.k{align-self:flex-start;background:#eff6ff;border:1px solid #bfdbfe;border-bottom-left-radius:3px}
+  .bub.k .w{color:#2563eb}
+  .bub.d{align-self:flex-end;background:#f0fdf4;border:1px solid #bbf7d0;border-bottom-right-radius:3px}
+  .bub.d .w{color:#16a34a}
+  .sw-reply{display:flex;gap:6px;margin-top:7px}
+  .sw-reply input{flex:1;padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px}
+  .sw-reply button{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 13px;font-weight:700;font-size:13px;cursor:pointer}
+
+  .foot-note{font-size:11px;color:var(--c-muted);margin-top:10px;padding-top:8px;border-top:1px dashed var(--c-border)}
+
+  /* ── Druckliste ── */
+  .print{background:#fff;border:1px solid #999;border-radius:8px;padding:18px 22px;font-size:14px}
+  .print h3{font-size:17px;font-weight:800;margin-bottom:2px}
+  .print .psub{font-size:12px;color:var(--c-muted);margin-bottom:12px}
+  .print table{width:100%;border-collapse:collapse}
+  .print th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;border-bottom:2px solid #333;padding:5px 6px}
+  .print td{padding:8px 6px;border-bottom:1px solid #ddd;vertical-align:top}
+  .print td.box{width:26px}
+  .print td.box span{display:inline-block;width:16px;height:16px;border:1.5px solid #333;border-radius:3px}
+  .print td.wish{font-weight:700}
+  .hint{font-size:12px;background:#eff6ff;border-left:4px solid #3b82f6;color:#1e40af;padding:10px 13px;border-radius:8px;margin-top:12px;line-height:1.5}
+  .hint b{display:block;margin-bottom:3px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="caption">
+    <b>MOCKUP – „Sonderwünsche auf einen Blick" im Mittagstisch-Tab</b><br>
+    Alle Sonderwünsche des Tages mit einem Klick · weiterer Chatverlauf pro Bestellung aufklappbar
+  </div>
+</div>
+
+<!-- ═══════════════ 1. Integration im Kiosk ═══════════════ -->
+<div class="wrap">
+  <h2 class="sec"><span class="num">1</span> Integration in den Mittagstisch-Tab</h2>
+  <div class="caption" style="text-align:left;margin:6px 0 8px">
+    Zwei Einstiege, gleiches Ziel: die gelbe <b>Sonderwunsch-Leiste</b> ganz oben (springt ins Auge, auch wenn niemand danach sucht)
+    und der neue Filter-Reiter <b>„Sonderwünsche"</b> in der Statusleiste. Beides ist <b>ein Klick</b>.
+  </div>
+
+  <div class="screen">
+    <div class="k-tabs">
+      <div class="k-tab active"><span class="ic">🍽</span>Mittagstisch</div>
+      <div class="k-tab"><span class="ic">💬</span>Kontakt</div>
+      <div class="k-tab"><span class="ic">🔗</span>Social</div>
+      <div class="k-tab"><span class="ic">📅</span>Kalender</div>
+    </div>
+
+    <div class="pad">
+      <div class="k-day-bar">
+        <div class="k-day">Gestern<small>03.09</small></div>
+        <div class="k-day active">Heute<small>04.09</small></div>
+        <div class="k-day">Morgen<small>05.09</small></div>
+        <div class="k-day">So<small>06.09</small></div>
+        <div class="k-day">Mo<small>07.09</small></div>
+        <div class="k-day">Di<small>08.09</small></div>
+        <div class="k-day">Mi<small>09.09</small></div>
+      </div>
+
+      <!-- bestehende Kochbedarf-Leiste, hier eingeklappt -->
+      <div class="k-cook">
+        <div class="k-cook-title">👨‍🍳 Kochbedarf <span class="sub">· 11 Portionen · 2 Gerichte</span></div>
+        <button class="k-cook-btn">⌄ Ausklappen</button>
+      </div>
+
+      <!-- NEU: Sonderwunsch-Leiste -->
+      <div class="sw-bar" onclick="showTab('sw')">
+        <div class="n">4</div>
+        <div class="txt">
+          <div class="t1">📝 Sonderwünsche heute</div>
+          <div class="t2">4 von 11 Bestellungen haben einen Sonderwunsch · 1 noch nicht gelesen · 2 mit weiterer Rückfrage</div>
+        </div>
+        <button class="go" onclick="event.stopPropagation();showTab('sw')">Alle anzeigen →</button>
+      </div>
+
+      <!-- Statusleiste mit neuem Reiter -->
+      <div class="k-filter-bar">
+        <button class="k-filter-btn" id="f-offen" onclick="showTab('offen')">📥 Offen <span class="k-filter-count">10</span></button>
+        <button class="k-filter-btn sw active" id="f-sw" onclick="showTab('sw')">📝 Sonderwünsche <span class="k-filter-count">4</span></button>
+        <button class="k-filter-btn msg" id="f-msg" onclick="showTab('msg')">💬 Nachrichten <span class="k-filter-count">0</span></button>
+        <button class="k-filter-btn" onclick="showTab('offen')">✓ Erledigt <span class="k-filter-count">0</span></button>
+        <button class="k-filter-btn" onclick="showTab('offen')">✕ Storniert <span class="k-filter-count">0</span></button>
+        <button class="k-filter-btn" onclick="showTab('offen')">Alle <span class="k-filter-count">10</span></button>
+      </div>
+
+      <!-- ── Ansicht: Sonderwünsche ── -->
+      <div id="view-sw">
+        <div class="sw-head">
+          <div class="h1">Alle Sonderwünsche – Heute, 04.09.
+            <small>Sortiert nach Gericht · abgehakte Wünsche rutschen nach unten · Stand 20:12 Uhr</small>
+          </div>
+          <button class="btn" onclick="document.querySelectorAll('.sw-more').forEach(e=>e.classList.add('open'))">⌄ Alle Verläufe</button>
+          <button class="btn primary" onclick="document.getElementById('printview').scrollIntoView({behavior:'smooth'})">🖨 Küchenzettel drucken</button>
+        </div>
+
+        <!-- Gruppe 1 -->
+        <div class="k-dish-sep-row">▾ Schnitzel mit Pommes oder Kartoffelsalat <span class="cnt">3 Sonderwünsche</span></div>
+
+        <div class="sw-card" id="c1">
+          <div class="sw-top">
+            <input type="checkbox" class="sw-chk" onchange="markDone('c1',this)">
+            <span class="sw-name">Bernert Simone</span>
+            <span class="sw-qty">1×</span>
+            <span class="badge neu">💬 Neu</span>
+            <span class="badge online">Online</span>
+            <span class="badge mit">📦 Mit</span>
+            <span class="badge warte">Offen</span>
+          </div>
+          <div class="sw-dish">Schnitzel mit Pommes oder Kartoffelsalat · 8,80 € · Abholung ab 11:45</div>
+          <div class="sw-note">
+            <div>
+              <span class="lbl">Sonderwunsch</span>
+              Bitte <u>ohne Pommes</u>, dafür extra Kartoffelsalat. Und die Soße separat, danke!
+            </div>
+          </div>
+          <div class="sw-more">
+            <button class="sw-more-btn" onclick="this.parentNode.classList.toggle('open')">
+              <span class="dot"></span><span class="arw">▶</span> Weitere Nachrichten (2) – 1 ungelesen
+            </button>
+            <div class="sw-thread">
+              <div class="bub k"><div class="w">Kunde · 09:42</div>Bitte ohne Pommes, dafür extra Kartoffelsalat. Und die Soße separat, danke!</div>
+              <div class="bub d"><div class="w">Dorfladen · 09:55</div>Alles klar Frau Bernert, wird notiert. 👍</div>
+              <div class="bub k"><div class="w">Kunde · 10:20</div>Super, danke! Kann ich erst gegen 12:30 abholen?</div>
+              <div class="sw-reply">
+                <input type="text" placeholder="Antwort eingeben…">
+                <button>Senden</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sw-card" id="c2">
+          <div class="sw-top">
+            <input type="checkbox" class="sw-chk" onchange="markDone('c2',this)">
+            <span class="sw-name">Huber Anna</span>
+            <span class="sw-qty">2×</span>
+            <span class="badge online">Online</span>
+            <span class="badge ok">Bestätigt</span>
+          </div>
+          <div class="sw-dish">Schnitzel mit Pommes oder Kartoffelsalat · 17,60 €</div>
+          <div class="sw-note">
+            <div>
+              <span class="lbl">Sonderwunsch</span>
+              Eine Portion bitte <u>glutenfrei</u> panieren – Allergie!
+            </div>
+          </div>
+          <div class="sw-more">
+            <button class="sw-more-btn" style="color:#6b7280;cursor:default" disabled>Keine weiteren Nachrichten</button>
+          </div>
+        </div>
+
+        <div class="sw-card" id="c3">
+          <div class="sw-top">
+            <input type="checkbox" class="sw-chk" onchange="markDone('c3',this)">
+            <span class="sw-name">Familie Schmid</span>
+            <span class="sw-qty">3×</span>
+            <span class="badge">Vor Ort</span>
+            <span class="badge ok">Bestätigt</span>
+          </div>
+          <div class="sw-dish">Schnitzel mit Pommes oder Kartoffelsalat · 26,40 €</div>
+          <div class="sw-note">
+            <div>
+              <span class="lbl">Sonderwunsch</span>
+              Wir holen erst <u>um 13:15 Uhr</u> ab – bitte warm halten.
+            </div>
+          </div>
+          <div class="sw-more">
+            <button class="sw-more-btn" onclick="this.parentNode.classList.toggle('open')">
+              <span class="arw">▶</span> Weitere Nachrichten (1)
+            </button>
+            <div class="sw-thread">
+              <div class="bub k"><div class="w">Kunde · 08:15</div>Wir holen erst um 13:15 Uhr ab – bitte warm halten.</div>
+              <div class="bub d"><div class="w">Dorfladen · 08:30</div>Kein Problem, wir stellen es in die Wärmebox.</div>
+              <div class="sw-reply">
+                <input type="text" placeholder="Antwort eingeben…">
+                <button>Senden</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gruppe 2 -->
+        <div class="k-dish-sep-row">▾ Käsegriller mit Pommes <span class="cnt">1 Sonderwunsch</span></div>
+
+        <div class="sw-card" id="c4">
+          <div class="sw-top">
+            <input type="checkbox" class="sw-chk" onchange="markDone('c4',this)">
+            <span class="sw-name">Maier Josef</span>
+            <span class="sw-qty">1×</span>
+            <span class="badge online">Online</span>
+            <span class="badge mit">📦 Mit</span>
+            <span class="badge warte">Offen</span>
+          </div>
+          <div class="sw-dish">Käsegriller mit Pommes · 7,50 €</div>
+          <div class="sw-note">
+            <div>
+              <span class="lbl">Sonderwunsch</span>
+              <u>Ohne Zwiebeln</u>, dafür bitte extra Senf dazulegen.
+            </div>
+          </div>
+          <div class="sw-more">
+            <button class="sw-more-btn" style="color:#6b7280;cursor:default" disabled>Keine weiteren Nachrichten</button>
+          </div>
+        </div>
+
+        <div class="foot-note">
+          4 Sonderwünsche · 7 Portionen betroffen · Abgehakte Wünsche bleiben bis Tagesende sichtbar und werden ausgegraut.
+        </div>
+      </div>
+
+      <!-- ── Ansicht: Offen (nur zum Vergleich) ── -->
+      <div id="view-offen" style="display:none">
+        <div class="k-dish-sep-row">▾ 7× Schnitzel mit Pommes oder Kartoffelsalat <span class="cnt">5 Mtn.</span></div>
+        <div class="sw-card" style="border-left-color:var(--c-green)">
+          <div class="sw-top" style="padding-bottom:10px">
+            <span style="color:#9ca3af">▸</span>
+            <span class="sw-name">Bernert Simone</span>
+            <span class="sw-qty">8,80 € &nbsp; 1×</span>
+            <span class="badge online">Online</span>
+            <span class="badge mit">📦 Mit</span>
+            <span class="badge neu">💬 Neu</span>
+            <button class="btn primary" style="margin-left:auto;padding:6px 12px">✓ Abgeholt</button>
+          </div>
+        </div>
+        <div class="sw-card" style="border-left-color:var(--c-green)">
+          <div class="sw-top" style="padding-bottom:10px">
+            <span style="color:#9ca3af">▸</span>
+            <span class="sw-name">Huber Anna</span>
+            <span class="sw-qty">17,60 € &nbsp; 2×</span>
+            <span class="badge online">Online</span>
+            <button class="btn primary" style="margin-left:auto;padding:6px 12px">✓ Abgeholt</button>
+          </div>
+        </div>
+        <div class="foot-note">Bisherige Ansicht – der Sonderwunsch steckt zugeklappt in jeder einzelnen Karte. Genau das löst der neue Reiter.</div>
+      </div>
+
+      <!-- ── Ansicht: Nachrichten ── -->
+      <div id="view-msg" style="display:none">
+        <div class="foot-note" style="border:0;padding:26px;text-align:center;color:#6b7280">
+          💬 Bestehende Nachrichten-Ansicht (unverändert)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 2. Druckansicht ═══════════════ -->
+<div class="wrap" id="printview">
+  <h2 class="sec"><span class="num">2</span> Küchenzettel zum Ausdrucken / Abhaken</h2>
+  <div class="caption" style="text-align:left;margin:6px 0 8px">
+    Ein Klick auf <b>„Küchenzettel drucken"</b> erzeugt diese kompakte Liste – für die Theke oder zum Aufhängen in der Küche.
+  </div>
+  <div class="print">
+    <h3>Sonderwünsche – Mittagstisch</h3>
+    <div class="psub">Donnerstag, 04.09.2026 · 4 Sonderwünsche · 7 Portionen · gedruckt 20:12 Uhr</div>
+    <table>
+      <tr><th class="box"></th><th>Kunde</th><th>Anz.</th><th>Gericht</th><th>Sonderwunsch</th></tr>
+      <tr><td class="box"><span></span></td><td>Bernert Simone</td><td>1×</td><td>Schnitzel</td><td class="wish">ohne Pommes, extra Kartoffelsalat, Soße separat</td></tr>
+      <tr><td class="box"><span></span></td><td>Huber Anna</td><td>2×</td><td>Schnitzel</td><td class="wish">1 Portion glutenfrei (Allergie!)</td></tr>
+      <tr><td class="box"><span></span></td><td>Familie Schmid</td><td>3×</td><td>Schnitzel</td><td class="wish">Abholung erst 13:15 – warm halten</td></tr>
+      <tr><td class="box"><span></span></td><td>Maier Josef</td><td>1×</td><td>Käsegriller</td><td class="wish">ohne Zwiebeln, extra Senf</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ 3. Erläuterung ═══════════════ -->
+<div class="wrap">
+  <h2 class="sec"><span class="num">3</span> Was dahinter steckt</h2>
+  <div class="hint">
+    <b>Woher kommt der Sonderwunsch?</b>
+    Aus den bereits vorhandenen Feldern der Bestellung: der Anmerkung aus dem Bestellformular bzw. der ersten
+    Kundennachricht. Es muss also nichts Neues erfasst werden – die Daten sind längst da, sie werden nur
+    erstmals gebündelt gezeigt.
+  </div>
+  <div class="hint" style="background:#fffbeb;border-left-color:#f59e0b;color:#92400e">
+    <b>Aufklappbarer Verlauf</b>
+    Gab es zu einer Bestellung noch ein Hin und Her, zeigt die Zeile „Weitere Nachrichten (n)".
+    Ein Klick öffnet den kompletten Chat – inklusive Antwortfeld, ohne die Ansicht zu verlassen.
+  </div>
+  <div class="hint" style="background:#f0fdf4;border-left-color:#16a34a;color:#166534">
+    <b>Abhaken statt Merken</b>
+    Jeder Wunsch hat eine Checkbox „berücksichtigt". Abgehakte Wünsche werden ausgegraut,
+    bleiben aber bis Tagesende sichtbar – so weiß auch die Kollegin in der Spätschicht Bescheid.
+  </div>
+</div>
+
+<script>
+  function showTab(which){
+    document.getElementById('view-sw').style.display    = which==='sw'    ? 'block' : 'none';
+    document.getElementById('view-offen').style.display = which==='offen' ? 'block' : 'none';
+    document.getElementById('view-msg').style.display   = which==='msg'   ? 'block' : 'none';
+    document.querySelectorAll('.k-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    var id = which==='sw' ? 'f-sw' : which==='msg' ? 'f-msg' : 'f-offen';
+    document.getElementById(id).classList.add('active');
+  }
+  function markDone(id, chk){
+    document.getElementById(id).classList.toggle('done', chk.checked);
+  }
+</script>
+</body>
+</html>
