@@ -2380,3 +2380,39 @@ Stammkunden-Tab auf das gleiche klappbare Header/Body-Pattern umstellen wie Mitt
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 02.07.2026 | T-UI-01 bis T-UI-08 | ✅ 8/8 | Alle visuell verifiziert auf witty-island (Live) |
+
+## T-SW – Mittagstisch: Sonderwünsche auf einen Blick
+
+Spec: `specs/mittagstisch-sonderwuensche/spec.md`
+Automatisiert in `tests/kiosk-sonderwuensche.spec.js` (mobile / ipad-mini / desktop).
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-F1-01/03/04 | Anmerkung zählt als Sonderwunsch; Bestellungen ohne Hinweis und stornierte erscheinen nicht |
+| TC-F1-02 | Fehlt die Anmerkung, gilt die erste Kundennachricht als Sonderwunsch |
+| TC-F1-05 | Anmerkung plus Chat: Wunsch getrennt, beide Folgenachrichten aufklappbar |
+| TC-F2-01 | Sonderwunsch-Leiste zeigt Anzahl, ungelesene und Rückfragen |
+| TC-F2-02 | Klick auf die Leiste öffnet die Sonderwunsch-Ansicht |
+| TC-F2-03 | Keine Leiste an einem Tag ohne Sonderwünsche |
+| TC-F3-01 | Zähler im Filter-Reiter stimmt mit der Leiste überein |
+| TC-F3-02 | Umschalten zwischen den Filter-Reitern |
+| TC-F3-03 | Ansicht überlebt das automatische Neuladen |
+| TC-F4-01 | Gruppierung nach Gericht, größte Gruppe zuerst |
+| TC-F4-02 | Karte zeigt Wunsch, Menge, Gericht und Badges |
+| TC-F4-03 | Kopfzeile zählt Wünsche und Portionen |
+| TC-F4-04 | HTML aus Kundentext wird escaped, nicht ausgeführt |
+| TC-F5-01 | Aufklappen zeigt Verlauf und Antwortfeld |
+| TC-F5-02 | Ohne Folgekonversation kein Aufklapper |
+| TC-F5-03 | Antworten aus der Sonderwunsch-Ansicht sendet PATCH |
+| TC-F5-04 | Leere Antwort wird ohne alert() abgewiesen |
+| TC-F5-05 | Alle Verläufe auf- und wieder zuklappen |
+| TC-F6-01 | Umschalten auf die Kompaktansicht |
+| TC-F6-02/03 | Zurück auf Details, gleiche Anzahl Einträge |
+| TC-F7-01 | Freundlicher Leerzustand ohne leere Gruppenköpfe |
+| TC-F7-02 | Kein horizontales Scrollen |
+| TC-F7-03 | Tap-Targets mindestens 44px hoch |
+
+### Testlauf-Tabelle (Sonderwünsche)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 04.09.2026 | TC-F1 bis TC-F7 | 69/69 | Live gegen kind-pebble, alle drei Viewports |

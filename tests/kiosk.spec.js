@@ -212,17 +212,19 @@ test.describe('Kiosk – Mittagstisch Filter', () => {
     expect(erlText).toContain('Erledigt');
   });
 
-  test('T-17-02 (AK-UI-17) Genau 4 Filter-Tabs vorhanden', async ({ page }) => {
+  test('T-17-02 (AK-UI-17) Filter-Tabs des Mittagstischs vollständig', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="mittag"]').click();
     await page.waitForTimeout(1000);
     const filterBtns = page.locator('#mittag-status-bar .k-filter-btn');
-    await expect(filterBtns).toHaveCount(4);
+    await expect(filterBtns).toHaveCount(6);
     const labels = await filterBtns.allTextContents();
     const joined = labels.join(' ');
     expect(joined).toContain('Offen');
+    expect(joined).toContain('Sonderwünsche');
     expect(joined).toContain('Nachrichten');
     expect(joined).toContain('Erledigt');
+    expect(joined).toContain('Storniert');
     expect(joined).toContain('Alle');
   });
 });

@@ -103,17 +103,21 @@ async function mockApi(page, opts = {}) {
   const patches = [];
   page.__patches = patches;
 
+  // Requests direkt mitschneiden – unabhaengig davon, welche Route sie bedient
+  page.on('request', (req) => {
+    if (req.method() !== 'PATCH') return;
+    if (!/lunch-order/.test(req.url())) return;
+    let body = {};
+    try { body = JSON.parse(req.postData() || '{}'); } catch (e) { /* ignore */ }
+    patches.push({ url: req.url(), body });
+  });
+
   await page.route('**/api/lunch-order**', (route) => {
     const url = route.request().url();
     const method = route.request().method();
     const json = (o) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
 
-    if (method === 'PATCH') {
-      let body = {};
-      try { body = JSON.parse(route.request().postData() || '{}'); } catch (e) { /* ignore */ }
-      patches.push({ url, body });
-      return json({ success: true });
-    }
+    if (method !== 'GET') return json({ success: true });
     if (/mode=messages/.test(url)) return json({ success: true, orders: [] });
 
     const m = /[?&]datum=([0-9-]+)/.exec(url);
@@ -122,9 +126,26 @@ async function mockApi(page, opts = {}) {
     return json({ success: true, orders: list.map((o) => Object.assign({ datum }, o)) });
   });
 
+  // Feature-Flags: der Kiosk blendet Tabs aus, die im CMS nicht freigeschaltet
+  // sind. Ohne diesen Mock waere der Mittagstisch-Tab im Test unsichtbar.
+  await page.route('**/api/cms-config**', (route) =>
+    route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          feature_flags: {
+            kiosk_shop: true, kiosk_mittag: true, kiosk_metzger: true,
+            kiosk_social: true, kiosk_kontakt: true,
+          },
+        },
+      }),
+    }));
+
   // Auffangroute: alle übrigen API-Aufrufe leer, aber erfolgreich beantworten
   await page.route('**/api/**', (route) => {
-    if (/lunch-order/.test(route.request().url())) return route.fallback();
+    const url = route.request().url();
+    if (/lunch-order|cms-config/.test(url)) return route.fallback();
     return route.fulfill({
       status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [], orders: [], customers: [], items: [], config: {} }),
