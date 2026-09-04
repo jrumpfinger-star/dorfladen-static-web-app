@@ -2416,3 +2416,30 @@ Automatisiert in `tests/kiosk-sonderwuensche.spec.js` (mobile / ipad-mini / desk
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 04.09.2026 | TC-F1 bis TC-F7 | 69/69 | Live gegen kind-pebble, alle drei Viewports |
+
+## T-KK – Kontakt: Lesehaken, Sortierung, Spalten
+
+Automatisiert in `tests/kiosk-kontakt-haken.spec.js` (mobile / ipad-mini / desktop).
+Hinweis: Die Spec setzt `serviceWorkers: 'block'` – sonst beantwortet der
+Service Worker der PWA die API-Aufrufe aus dem Cache und die Mocks greifen nicht.
+
+| Test-Case | Prüfung |
+|---|---|
+| K1-01 | Ungelesene Konversationen stehen oben, auch bei älterer Aktivität |
+| K1-02 | Abschnitte „Neue Nachrichten" und „Bereits gelesen" trennen die Liste |
+| K1-03 | Ohne ungelesene Nachrichten keine Abschnittsköpfe |
+| K2-01 | Gelesene Zeile zeigt den Doppelhaken, ungelesene die Anzahl |
+| K2-02 | Gelesene Kundennachrichten im Verlauf tragen einen Haken |
+| K2-03 | Eigene Nachrichten tragen keinen Lesehaken |
+| K3-01 | Öffnen sendet PATCH, setzt Haken in Zeile und Verlauf |
+| K3-02 | Gerade gelesene Konversation springt beim Aktualisieren nicht weg |
+| K4-01 | Name, Gerät und Vorschau starten bündig (ab 900px) |
+| K4-02 | Zeitspalte endet bündig (ab 900px) |
+| K4-03 | Kein horizontales Scrollen |
+| K4-04 | Unter 900px zwei feste Zeilen statt freiem Umbruch |
+| K4-05 | Breite Geräte-Chips verschieben die Namensspalte nicht |
+
+### Testlauf-Tabelle (Kontakt)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 04.09.2026 | K1 bis K4 | 34/34 | Live gegen kind-pebble, alle drei Viewports |
