@@ -261,4 +261,21 @@ test.describe('Kontakt – Spalten (K4)', () => {
       document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
   });
+
+  test('K4-04: auf schmalen Schirmen zwei feste Zeilen statt freiem Umbruch', async ({ page }, testInfo) => {
+    await openKontakt(page);
+    test.skip(testInfo.project.name === 'desktop', 'Zweizeiliges Raster nur unter 900px');
+
+    const box = async (sel) => page.locator('#kontakt-list .kk-card').first()
+      .locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { top: Math.round(r.top), left: Math.round(r.left) }; });
+
+    const name = await box('.kk-name');
+    const state = await box('.kk-state');
+    const prev = await box('.kk-prev');
+
+    // Name und Status teilen sich die erste Zeile
+    expect(Math.abs(name.top - state.top)).toBeLessThanOrEqual(6);
+    // Die Vorschau steht darunter
+    expect(prev.top).toBeGreaterThan(name.top);
+  });
 });
