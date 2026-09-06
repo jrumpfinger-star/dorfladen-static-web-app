@@ -298,15 +298,19 @@
     if (!liste.length) {
       h += '<div class="k-empty">Keine Artikel vorhanden.</div>';
     } else {
-      var letzte = null;
+      var gruppen = [];
       liste.forEach(function (p) {
         var g = gruppeVon(p.nummer);
-        if (g !== letzte) {
-          var n = liste.filter(function (x) { return gruppeVon(x.nummer) === g; }).length;
-          h += '<div class="bk-grp">' + esc(g) + '<span class="n">' + n + ' Positionen</span></div>';
-          letzte = g;
-        }
-        h += zeile(p, gesperrt);
+        var letzte = gruppen[gruppen.length - 1];
+        if (!letzte || letzte.titel !== g) gruppen.push({ titel: g, eintraege: [p] });
+        else letzte.eintraege.push(p);
+      });
+      gruppen.forEach(function (g) {
+        h += '<div class="bk-grp">' + esc(g.titel)
+          + '<span class="n">' + g.eintraege.length + ' Positionen</span></div>';
+        h += '<div class="bk-grid">';
+        g.eintraege.forEach(function (p) { h += zeile(p, gesperrt); });
+        h += '</div>';
       });
     }
 
@@ -314,7 +318,9 @@
     if (zusatz.length) {
       h += '<div class="bk-grp extra">' + luc('plus', 13) + ' Nur für diesen Tag'
         + '<span class="n">' + zusatz.length + ' Positionen</span></div>';
+      h += '<div class="bk-grid">';
       zusatz.forEach(function (p) { h += zeile(p, gesperrt); });
+      h += '</div>';
     }
     if (!gesperrt) {
       h += '<button class="bk-addrow" onclick="KBaecker.zusatzDialog()">'

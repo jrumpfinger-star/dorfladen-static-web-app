@@ -623,4 +623,25 @@ test.describe('Bäcker – Responsive (F12)', () => {
     await expect(page.locator('.k-tab[data-tab="baecker"]')).toHaveClass(/active/);
     await expect(page.locator('#panel-baecker')).toHaveClass(/active/);
   });
+
+  test('TC-F12-05: Spaltenzahl passt zur Fensterbreite', async ({ page }) => {
+    await openBaecker(page);
+    const gemessen = await page.locator('#panel-baecker .bk-grid').first()
+      .evaluate((el) => ({
+        spalten: getComputedStyle(el).gridTemplateColumns.split(' ').length,
+        breite: window.innerWidth,
+      }));
+    // Ab 1620px drei, ab 1080px zwei, darunter eine Spalte
+    const erwartet = gemessen.breite >= 1620 ? 3 : gemessen.breite >= 1080 ? 2 : 1;
+    expect(gemessen.spalten).toBe(erwartet);
+  });
+
+  test('TC-F12-06: Zeile bleibt kompakt', async ({ page }, testInfo) => {
+    await openBaecker(page);
+    const box = await row(page, 'Kaisersemmel').boundingBox();
+    expect(box.height).toBeGreaterThanOrEqual(44);   // Tap-Target bleibt gewahrt
+    // Breite Schirme: einzeilig. Schmale: bewusst gestapelt, daher höher.
+    const grenze = testInfo.project.name === 'desktop' ? 58 : 130;
+    expect(box.height).toBeLessThanOrEqual(grenze);
+  });
 });
