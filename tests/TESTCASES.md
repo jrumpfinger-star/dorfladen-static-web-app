@@ -2443,3 +2443,35 @@ Service Worker der PWA die API-Aufrufe aus dem Cache und die Mocks greifen nicht
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 04.09.2026 | K1 bis K4 | 34/34 | Live gegen kind-pebble, alle drei Viewports |
+
+## T-BK – Bäcker-Bestellung
+
+Spec: `specs/baecker-bestellung/spec.md`
+Automatisiert in `tests/kiosk-baecker.spec.js` (mobile / ipad-mini / desktop).
+Hinweis: `serviceWorkers: 'block'` ist nötig – sonst beantwortet der Service
+Worker der PWA die API-Aufrufe aus dem Cache.
+
+Zusätzlich prüfen ohne Playwright:
+- `python tools/baecker_docx_test.py` – erzeugtes Formular gegen die Originale
+- `python tools/baecker_logik_test.py` – Sortierung, Tour-Nr., Bestelltage, Katalog
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-F1-01..03 | Nächster Bestelltag vorausgewählt, Nicht-Bestelltage gesperrt, gesendete gekennzeichnet |
+| TC-F2-01/03..05 | Vorbelegung aus letztem gleichen Wochentag, Hinweis ohne Vorlage, Vergleichswerte, Zurücksetzen |
+| TC-F3-01..06 | Sortierung nach Artikelnummer, Plus/Minus, Stopp bei 0, Retouren, Umschalter, ungültige Eingabe |
+| TC-F4-01..04 | Artikel aus Liste ergänzen, frei eintragen, Bezeichnung Pflicht, entfernen |
+| TC-F5-01/02/05 | Katalog sortiert, Artikel anlegen, ausgeblendete einblenden |
+| TC-F7-01..04 | Vorschau, Testbetrieb-Kennzeichnung, Versand, freundliche Fehlermeldung |
+| TC-F8-01..04/06 | Sperre nach Versand, Korrekturmodus, Änderungsmarkierung, Korrekturbetreff, Protokoll |
+| TC-F9-01..03 | Zähler vor Bestellschluss, Blinken ab Bestellschluss, Ruhe nach Versand |
+| TC-F10-01 | Verlauf listet Bestellungen mit Status |
+| TC-F12-01..03 | Kein horizontales Scrollen, Tap-Targets ≥44px, keine nativen Dialoge |
+
+### Testlauf-Tabelle (Bäcker)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 06.09.2026 | TC-F1 bis TC-F12 | 105/105 | Live gegen kind-pebble, alle drei Viewports |
+| 06.09.2026 | docx-Füller | 6/6 | Gegen drei Original-Bestellmails; Word öffnet ohne Reparaturhinweis |
+| 06.09.2026 | Fachlogik | 27/27 | Sortierung, Tour-Nr., Bestelltage, Katalog-Bereinigung |
+| 06.09.2026 | Echter Versand | OK | Bestellung + Korrektur an jrumpfinger@t-online.de |

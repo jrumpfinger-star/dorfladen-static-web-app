@@ -3,7 +3,7 @@
 > Spec-driven development. Every requirement carries explicit test cases.
 > Ein Spec mit offenen `[NEEDS CLARIFICATION]`-Markern darf NICHT nach `/sdd-plan`.
 
-**Status:** Ready for Plan
+**Status:** Implemented — live verifiziert am 06.09.2026
 
 **Owner:** Dorfladen Oberornau — Verkäuferinnen
 
