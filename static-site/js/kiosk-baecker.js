@@ -28,13 +28,22 @@
     return '<i data-lucide="' + name + '" style="width:' + size + 'px;height:' + size + 'px"></i>';
   }
   function icons() { if (window.lucide) lucide.createIcons(); }
+  var _toastTimer = null;
   function toast(msg) {
-    if (window.K && K.toast) return K.toast(msg);
+    // Das vorhandene Kiosk-Toast nutzen, damit Meldungen ueberall gleich aussehen
+    var el = document.getElementById('k-toast');
+    if (el) {
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3500);
+      return;
+    }
     var t = document.createElement('div');
     t.className = 'k-toast show';
     t.textContent = msg;
     document.body.appendChild(t);
-    setTimeout(function () { t.remove(); }, 3200);
+    setTimeout(function () { t.remove(); }, 3500);
   }
   function posKey(p) {
     return String(p.nummer || '').trim() || String(p.name || '').trim().toLowerCase();
@@ -62,6 +71,12 @@
   // ══════════════════════════════════════════════════
 
   function onShow() {
+    // Katalog gleich mitladen – die Zusatzartikel-Suche braucht ihn sofort
+    if (!_artikel.length) {
+      fetch(API + '/baecker-artikel').then(function (r) { return r.json(); })
+        .then(function (res) { _artikel = (res && res.artikel) || []; })
+        .catch(function () { /* Suche faellt auf freies Eintragen zurueck */ });
+    }
     if (!_datum) return ladeUebersicht(true);
     render();
   }
@@ -537,10 +552,6 @@
 
   // ── Zusatzartikel nur fuer diesen Tag (Spec F4) ──
   function zusatzDialog() {
-    if (!_artikel.length) {
-      return fetch(API + '/baecker-artikel').then(function (r) { return r.json(); })
-        .then(function (res) { _artikel = (res && res.artikel) || []; zusatzDialog(); });
-    }
     var h = '<div class="bk-dlg-h">' + luc('plus', 17) + ' Weiteren Artikel hinzufügen</div>';
     h += '<div class="bk-dlg-b">';
     h += '<div class="bk-field"><label>Aus der Artikelliste</label>'
@@ -560,22 +571,38 @@
     h += '<div class="bk-dlg-f"><button class="bk-btn" onclick="KBaecker.dlgZu()">Abbrechen</button>'
       + '<button class="bk-send" onclick="KBaecker.zusatzFrei()">Hinzufügen</button></div>';
     dialog(h);
-    suche('');
+    if (!_artikel.length) {
+      // Katalog nachladen und eine bereits getippte Suche wiederholen
+      fetch(API + '/baecker-artikel').then(function (r) { return r.json(); })
+        .then(function (res) {
+          _artikel = (res && res.artikel) || [];
+          var feld = document.getElementById('bk-suche');
+          if (feld) suche(feld.value);
+        }).catch(function () { /* freies Eintragen bleibt moeglich */ });
+    }
   }
 
   function suche(text) {
     var el = document.getElementById('bk-pick');
     if (!el) return;
     var t = (text || '').trim().toLowerCase();
+    if (!t) { el.innerHTML = ''; return; }
+    if (!_artikel.length) {
+      el.innerHTML = '<div class="bk-pk muted">Artikelliste wird geladen…</div>';
+      return;
+    }
     var vorhanden = {};
-    (_b.positionen || []).forEach(function (p) { vorhanden[posKey(p)] = true; });
+    (_b.positionen || []).forEach(function (p) {
+      // "bereits dabei" nur, wenn der Artikel tatsaechlich bestellt wird –
+      // der Katalog steht ohnehin komplett in der Liste, nur eben mit Menge 0.
+      if ((p.menge || 0) > 0 || (p.retoure || 0) > 0 || p.zusatz) vorhanden[posKey(p)] = true;
+    });
     var treffer = _artikel.filter(function (a) {
-      if (!t) return false;
       return (a.name || '').toLowerCase().indexOf(t) >= 0
         || String(a.nummer || '').indexOf(t) === 0;
     }).slice(0, 6);
     if (!treffer.length) {
-      el.innerHTML = t ? '<div class="bk-pk muted">Kein Treffer – bitte unten frei eintragen.</div>' : '';
+      el.innerHTML = '<div class="bk-pk muted">Kein Treffer – bitte unten frei eintragen.</div>';
       return;
     }
     el.innerHTML = treffer.map(function (a) {

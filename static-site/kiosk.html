@@ -1689,11 +1689,16 @@ var K = (function(){
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
   // Support-Tabs (Stammkunden, Kalender) bleiben immer sichtbar.
+  // Der Bäcker-Tab ist sichtbar, solange er nicht ausdrücklich abgeschaltet
+  // wurde – sonst bliebe er nach dem Ausrollen unsichtbar, bis jemand das
+  // Flag im CMS anlegt.
   function applyKioskFeatures(){
     var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker'};
+    var defaultAn={baecker:true};
     function setTabs(flags,pickDefault){
       Object.keys(map).forEach(function(tab){
-        var on=flags[map[tab]]===true;
+        var flag=flags[map[tab]];
+        var on = defaultAn[tab] ? (flag!==false) : (flag===true);
         var t=document.querySelector('.k-tab[data-tab="'+tab+'"]');
         if(t) t.style.display=on?'':'none';
       });
