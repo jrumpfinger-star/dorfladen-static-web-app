@@ -285,12 +285,14 @@
     #panel-baecker .bk-sub{margin-bottom:12px}
     /* Tagesleiste */
     .bk-days{display:flex;gap:5px;padding:2px 0 11px;border-bottom:1px solid var(--c-border);margin-bottom:11px;overflow-x:auto}
-    .bk-day{min-width:78px;text-align:center;padding:7px 8px;border-radius:10px;border:1px solid transparent;background:none;color:var(--c-muted);font-size:13px;font-weight:600;cursor:pointer;min-height:56px}
-    .bk-day .d{display:block;font-size:11px;font-weight:400}
-    .bk-day .st{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+    .bk-day{min-width:84px;text-align:center;padding:7px 9px;border-radius:10px;border:1px solid transparent;background:none;color:#4b5563;font-size:14px;font-weight:700;cursor:pointer;min-height:58px}
+    .bk-day .d{display:block;font-size:12px;font-weight:500;margin-top:1px}
+    .bk-day .st{display:block;font-size:11px;font-weight:600;margin-top:3px;color:var(--c-muted)}
     .bk-day.active{background:var(--bk);color:#fff;border-color:var(--bk)}
+    .bk-day.active .st{color:rgba(255,255,255,.92)}
     .bk-day.sent{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
-    .bk-day.off{opacity:.34;cursor:not-allowed}
+    .bk-day.sent .st{color:#16a34a}
+    .bk-day.off{opacity:.55;cursor:not-allowed}
     /* Statuskarte */
     .bk-stat{border:1px solid var(--bk-line);background:linear-gradient(180deg,var(--bk-bg),#fff);border-radius:14px;padding:12px 15px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:12px}
     .bk-stat.done{border-color:#bbf7d0;background:linear-gradient(180deg,#f0fdf4,#fff)}
@@ -330,12 +332,12 @@
     .bk-row.locked{background:#fafafa}
     .bk-row .nr{font-size:11px;font-weight:700;color:var(--c-muted);background:#f3f4f6;border-radius:5px;padding:4px 0;text-align:center}
     .bk-row .nm{font-weight:600;font-size:14px;min-width:0;overflow-wrap:anywhere}
-    .bk-row .nm .tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#2563eb;background:#eff6ff;border-radius:4px;padding:1px 6px;margin-left:6px}
+    .bk-row .nm .tag{font-size:11px;font-weight:700;color:#2563eb;background:#eff6ff;border-radius:5px;padding:2px 7px;margin-left:6px;white-space:nowrap}
     .bk-row .nm .tag.ex{color:#3730a3;background:#e0e7ff}
     .bk-row .nm .tag.off{color:var(--c-muted);background:#f3f4f6}
-    .bk-row .hist{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--c-muted);min-width:0}
-    .bk-row .hist .lbl{font-weight:700;color:#9ca3af}
-    .bk-row .hist .v{background:#f3f4f6;border-radius:5px;padding:2px 6px;font-weight:700;color:#4b5563;font-variant-numeric:tabular-nums}
+    .bk-row .hist{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--c-muted);min-width:0}
+    .bk-row .hist .lbl{font-weight:600;color:#9ca3af}
+    .bk-row .hist .v{background:#f3f4f6;border-radius:5px;padding:2px 7px;font-weight:700;color:#4b5563;font-variant-numeric:tabular-nums}
     .bk-row .hist .v.last{background:#fef3c7;color:var(--bk-dark)}
     .bk-row .step{display:flex;align-items:center;gap:5px;justify-self:end}
     .bk-row .step button{width:40px;height:44px;border:1px solid var(--c-border);background:#fff;border-radius:9px;font-size:19px;font-weight:800;color:#374151;cursor:pointer;line-height:1}
@@ -345,7 +347,7 @@
     .bk-row.has .step input{border-color:var(--bk);color:var(--bk-dark);background:#fffbeb}
     .bk-row.changed .step input{border-color:#2563eb;color:#1d4ed8;background:#eff6ff}
     .bk-row .ret{display:flex;align-items:center;gap:5px;justify-self:end}
-    .bk-row .ret .rl{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase}
+    .bk-row .ret .rl{font-size:11.5px;font-weight:600;color:#9ca3af}
     .bk-row .ret input{width:52px;height:44px;text-align:center;border:1px dashed #d1d5db;border-radius:9px;font-size:14px;font-weight:700;color:#6b7280;-moz-appearance:textfield}
     .bk-row .ret input::-webkit-outer-spin-button,.bk-row .ret input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     .bk-del{width:40px;height:44px;border:1px solid #fecaca;background:#fff;color:#dc2626;border-radius:9px;cursor:pointer;font-size:14px}
