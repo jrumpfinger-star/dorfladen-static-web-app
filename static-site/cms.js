@@ -9180,6 +9180,7 @@
         var kFleisch=document.getElementById('feat-k-fleisch');
         var kTages=document.getElementById('feat-k-tagesinfo');
         var kKontakt=document.getElementById('feat-k-kontakt');
+        var kBaecker=document.getElementById('feat-k-baecker');
         if(fp)fp.checked=flags.push!==false;
         if(fs)fs.checked=flags.scanner!==false;
         if(fwi)fwi.checked=flags.wp_images===true;
@@ -9195,6 +9196,10 @@
         if(kFleisch)kFleisch.checked=flags.kiosk_metzger===true;
         if(kTages)kTages.checked=flags.kiosk_social===true;
         if(kKontakt)kKontakt.checked=flags.kiosk_kontakt===true;
+        // Bäcker ist an, solange er nicht ausdrücklich abgeschaltet wurde –
+        // sonst wäre der Tab nach dem Ausrollen unsichtbar, bis jemand
+        // hier einmal speichert.
+        if(kBaecker)kBaecker.checked=flags.kiosk_baecker!==false;
         _featureFlags=flags;
       }
     }).catch(function(e){
@@ -9218,6 +9223,7 @@
     var kFleisch=document.getElementById('feat-k-fleisch');
     var kTages=document.getElementById('feat-k-tagesinfo');
     var kKontakt=document.getElementById('feat-k-kontakt');
+    var kBaecker=document.getElementById('feat-k-baecker');
     var flags={};
     for(var _fk in _featureFlags){if(Object.prototype.hasOwnProperty.call(_featureFlags,_fk))flags[_fk]=_featureFlags[_fk];}
     flags.push=fp?fp.checked:true;
@@ -9235,6 +9241,7 @@
     flags.kiosk_metzger=kFleisch?kFleisch.checked:false;
     flags.kiosk_social=kTages?kTages.checked:false;
     flags.kiosk_kontakt=kKontakt?kKontakt.checked:false;
+    flags.kiosk_baecker=kBaecker?kBaecker.checked:true;
     var btn=document.getElementById('settings-save');
     var hint=document.getElementById('settings-saved-hint');
     var statusEl=document.getElementById('settings-status');

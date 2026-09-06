@@ -2467,6 +2467,7 @@ Zusätzlich prüfen ohne Playwright:
 | TC-F9-01..03 | Zähler vor Bestellschluss, Blinken ab Bestellschluss, Ruhe nach Versand |
 | TC-F10-01 | Verlauf listet Bestellungen mit Status |
 | TC-F12-01..03 | Kein horizontales Scrollen, Tap-Targets ≥44px, keine nativen Dialoge |
+| TC-F13-01..03 | CMS-Schalter aus blendet Tab aus, an zeigt ihn, nie gespeichert gilt als an |
 
 ### Testlauf-Tabelle (Bäcker)
 | Datum | Tests | Ergebnis | Anmerkung |
@@ -2475,3 +2476,9 @@ Zusätzlich prüfen ohne Playwright:
 | 06.09.2026 | docx-Füller | 6/6 | Gegen drei Original-Bestellmails; Word öffnet ohne Reparaturhinweis |
 | 06.09.2026 | Fachlogik | 27/27 | Sortierung, Tour-Nr., Bestelltage, Katalog-Bereinigung |
 | 06.09.2026 | Echter Versand | OK | Bestellung + Korrektur an jrumpfinger@t-online.de |
+| 06.09.2026 | TC-F1 bis TC-F13 | 132/132 | Nach CMS-Schalter, alle drei Viewports |
+
+> Die Umgebungsvariable heißt **`TEST_URL`**, nicht `BASE_URL`. Mit einem
+> falschen Namen laufen die Tests still gegen die Standard-URL in
+> `playwright.config.js` – Prüfungen auf „nicht sichtbar" bestehen dann
+> irreführenderweise, weil das Element dort gar nicht existiert.

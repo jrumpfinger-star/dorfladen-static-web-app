@@ -115,8 +115,12 @@ async function mockApi(page, opts = {}) {
     });
 
     if (/\/api\/cms-config/.test(url)) {
-      return json({ success: true, data: { feature_flags: {
-        kiosk_mittag: true, kiosk_kontakt: true, kiosk_baecker: true } } });
+      const flags = { kiosk_mittag: true, kiosk_kontakt: true, kiosk_baecker: true };
+      if (opts.flags) Object.assign(flags, opts.flags);
+      // Mit flags:{kiosk_baecker:undefined} lässt sich der Fall "Schalter
+      // wurde nie gespeichert" nachstellen.
+      Object.keys(flags).forEach((k) => { if (flags[k] === undefined) delete flags[k]; });
+      return json({ success: true, data: { feature_flags: flags } });
     }
 
     if (/\/api\/baecker-artikel/.test(url)) {
@@ -643,5 +647,39 @@ test.describe('Bäcker – Responsive (F12)', () => {
     // Breite Schirme: einzeilig. Schmale: bewusst gestapelt, daher höher.
     const grenze = testInfo.project.name === 'desktop' ? 58 : 130;
     expect(box.height).toBeLessThanOrEqual(grenze);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  F13 – Tab im CMS an-/abschaltbar
+// ════════════════════════════════════════════════════
+
+test.describe('Bäcker – CMS-Schalter (F13)', () => {
+
+  const tab = (page) => page.locator('.k-tab[data-tab="baecker"]');
+
+  test('TC-F13-01: Schalter aus blendet den Tab aus', async ({ page }) => {
+    await mockApi(page, { flags: { kiosk_baecker: false } });
+    await page.goto(KIOSK_URL);
+    await expect(page.locator('.k-tab[data-tab="mittag"]')).toBeVisible({ timeout: 20000 });
+    // Erst die Existenz prüfen: toBeHidden allein bestünde auch, wenn der Tab
+    // gar nicht im DOM wäre – etwa weil versehentlich eine alte Umgebung
+    // getestet wird.
+    await expect(tab(page)).toHaveCount(1);
+    await expect(tab(page)).toBeHidden();
+  });
+
+  test('TC-F13-02: Schalter an zeigt den Tab', async ({ page }) => {
+    await mockApi(page, { flags: { kiosk_baecker: true } });
+    await page.goto(KIOSK_URL);
+    await expect(tab(page)).toBeVisible({ timeout: 20000 });
+  });
+
+  test('TC-F13-03: nie gespeichert = an', async ({ page }) => {
+    // Solange im CMS nie gespeichert wurde, fehlt der Schlüssel ganz. Der Tab
+    // muss trotzdem da sein, sonst wäre er nach dem Ausrollen unsichtbar.
+    await mockApi(page, { flags: { kiosk_baecker: undefined } });
+    await page.goto(KIOSK_URL);
+    await expect(tab(page)).toBeVisible({ timeout: 20000 });
   });
 });

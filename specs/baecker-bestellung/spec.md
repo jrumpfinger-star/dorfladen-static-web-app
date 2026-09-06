@@ -763,6 +763,41 @@ Der Bäcker-Tab ist auf allen drei Zielauflösungen bedienbar.
 - **Action:** Senden.
 - **Expected:** Kein `alert()`; Meldung über die Kiosk-Komponente.
 
+### F13: Tab im CMS an- und abschaltbar
+
+#### F13 Description
+
+Der Bäcker-Tab lässt sich wie die übrigen Kiosk-Tabs im CMS unter
+„Feature-Einstellungen" ein- und ausschalten (Flag `kiosk_baecker`).
+
+#### F13 Behaviour / Acceptance
+
+- Im CMS steht ein Schalter „Bäckerbestellung" direkt unter „Fleischbestellung".
+- Ausgeschaltet verschwindet der Tab im Kiosk; das Panel bleibt im DOM.
+- **Solange nie gespeichert wurde, gilt der Tab als eingeschaltet.** Anders als
+  bei den übrigen Tabs ist die Vorbelegung „an" — sonst wäre der Tab nach dem
+  Ausrollen unsichtbar, bis jemand im CMS einmal speichert.
+
+#### F13 Test Cases
+
+**TC-F13-01: Schalter aus blendet den Tab aus**
+
+- **Setup:** `cms-config` liefert `kiosk_baecker: false`.
+- **Action:** Kiosk öffnen.
+- **Expected:** Der Tab ist im DOM vorhanden, aber nicht sichtbar.
+
+**TC-F13-02: Schalter an zeigt den Tab**
+
+- **Setup:** `cms-config` liefert `kiosk_baecker: true`.
+- **Action:** Kiosk öffnen.
+- **Expected:** Der Tab ist sichtbar.
+
+**TC-F13-03: Nie gespeichert gilt als an**
+
+- **Setup:** `cms-config` liefert die Feature-Flags ohne `kiosk_baecker`.
+- **Action:** Kiosk öffnen.
+- **Expected:** Der Tab ist sichtbar.
+
 ## Data / API
 
 ### Neue Endpunkte
