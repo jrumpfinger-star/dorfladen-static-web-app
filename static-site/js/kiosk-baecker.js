@@ -17,6 +17,7 @@
   var _dirty = {};        // key -> true, wenn gegenueber Vorbelegung geaendert
   var _sub = 'bestellung';
   var _blinkTimer = null;
+  var _bearbeitet = null;  // Artikel im Bearbeiten-Dialog
 
   function esc(s) {
     return (s == null ? '' : String(s))
@@ -153,12 +154,26 @@
   function render() {
     var h = host();
     if (!h) return;
-    var html = subTabs();
-    if (_sub === 'artikel') html += renderArtikel();
-    else if (_sub === 'verlauf') html += renderVerlauf();
-    else html += renderBestellung();
+    var html;
+    if (_sub === 'artikel') html = renderArtikel();
+    else if (_sub === 'verlauf') html = renderVerlauf();
+    else html = renderBestellung();
     h.innerHTML = html;
     icons();
+    kopfhoehe();
+  }
+
+  // Der Kopf steht fest, der Rest scrollt darunter durch. Damit ein
+  // angesprungenes Eingabefeld nicht hinter dem Kopf oder der Fußzeile landet,
+  // wird die gemessene Höhe als Scroll-Abstand hinterlegt.
+  function kopfhoehe() {
+    var panel = document.getElementById('panel-baecker');
+    if (!panel) return;
+    var kopf = panel.querySelector('.bk-sticky');
+    var fuss = panel.querySelector('.bk-foot');
+    panel.style.setProperty('--bk-kopf', (kopf ? kopf.offsetHeight : 0) + 10 + 'px');
+    panel.style.setProperty('--bk-fuss', (fuss && getComputedStyle(fuss).position === 'sticky'
+      ? fuss.offsetHeight : 0) + 10 + 'px');
   }
 
   function subTabs() {
@@ -233,7 +248,13 @@
     }
     h += '</div>';
     if (gesendet) {
-      h += '<button class="bk-cta ghost" onclick="KBaecker.korrektur()">' + luc('pencil', 15) + ' Korrektur senden</button>';
+      // Korrigieren lässt sich nur der nächste Liefertag – für bereits
+      // gelieferte Tage käme die Änderung zu spät.
+      if (_b.korrektur_moeglich) {
+        h += '<button class="bk-cta ghost" onclick="KBaecker.korrektur()">' + luc('pencil', 15) + ' Korrektur senden</button>';
+      } else {
+        h += '<div class="bk-cta-note">' + luc('lock', 14) + ' Abgeschlossen – eine Korrektur ist nur für den nächsten Liefertag möglich</div>';
+      }
     } else {
       h += '<button class="bk-cta" onclick="KBaecker.vorschau()">' + luc('mail', 15) + ' '
         + (_korrektur ? 'Korrektur senden' : 'An Bäckerei senden') + '</button>';
@@ -262,13 +283,14 @@
   }
 
   function renderBestellung() {
-    if (!_b) return '<div class="k-empty">Laden…</div>';
+    if (!_b) return '<div class="bk-sticky">' + subTabs() + '</div><div class="k-empty">Laden…</div>';
     var gesperrt = _b.gesperrt && !_korrektur;
     var alle = _b.positionen || [];
     var liste = alle.filter(sichtbar);
     var zusatz = alle.filter(function (p) { return p.zusatz; });
 
-    var h = tagesleiste();
+    var h = '<div class="bk-sticky">' + subTabs();
+    h += tagesleiste();
     if (_b.testbetrieb) {
       h += '<div class="bk-test">' + luc('flask-conical', 14)
         + ' <b>Testbetrieb</b> – die Bestellung geht an ' + esc(_b.empfaenger) + ', nicht an die Bäckerei.</div>';
@@ -293,6 +315,7 @@
 
     h += '<div class="bk-sortnote">' + luc('arrow-down-up', 12)
       + ' Sortiert nach Artikelnummer – genau wie im Formular der Bäckerei</div>';
+    h += '</div>';   // bk-sticky
 
     // Artikel, nach Warengruppe gegliedert
     if (!liste.length) {
@@ -533,6 +556,10 @@
   function tag(datum) { ladeBestellung(datum); }
 
   function korrektur() {
+    if (!_b.korrektur_moeglich) {
+      toast('Eine Korrektur ist nur für den nächsten Liefertag möglich.');
+      return;
+    }
     _korrektur = true;
     _dirty = {};
     (_b.positionen || []).forEach(function (p) { p.vorbelegt = p.menge || 0; });
@@ -770,9 +797,9 @@
   // ══════════════════════════════════════════════════
 
   function renderArtikel() {
-    if (!_artikel.length) return '<div class="k-empty">Laden…</div>';
+    if (!_artikel.length) return '<div class="bk-sticky">' + subTabs() + '</div><div class="k-empty">Laden…</div>';
     var aktive = _artikel.filter(function (a) { return a.aktiv; });
-    var h = '<div class="bk-tools">';
+    var h = '<div class="bk-sticky">' + subTabs() + '<div class="bk-tools">';
     h += '<button class="bk-btn' + (!_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(false)">'
       + 'Aktiv <span class="c">' + aktive.length + '</span></button>';
     h += '<button class="bk-btn' + (_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(true)">'
@@ -782,28 +809,36 @@
     h += '</div>';
     h += '<div class="bk-sortnote">' + luc('arrow-down-up', 12)
       + ' Die Artikelnummer bestimmt die Position – in der Erfassung wie im Formular</div>';
+    h += '</div>';
 
     var liste = _alleArtikel ? _artikel : aktive;
     var letzte = null;
+    var offen = false;
     liste.forEach(function (a) {
       var g = a.gruppe || gruppeVon(a.nummer);
       if (g !== letzte) {
-        h += '<div class="bk-grp">' + esc(g) + '</div>';
+        if (offen) { h += '</div>'; }
+        h += '<div class="bk-grp">' + esc(g) + '</div><div class="bk-artgrid">';
         letzte = g;
+        offen = true;
       }
       var key = String(a.nummer || '').trim() || (a.name || '').toLowerCase();
-      h += '<div class="bk-art' + (a.aktiv ? '' : ' off') + '">';
+      h += '<div class="bk-art' + (a.aktiv ? '' : ' off') + '" data-artkey="' + esc(key) + '">';
       h += '<div class="nr">' + esc(a.nummer || '—') + '</div>';
       h += '<div class="nm">' + esc(a.name);
       if (a.angelegt_am) h += '<div class="sub">am ' + esc(a.angelegt_am) + ' angelegt</div>';
       h += '</div>';
       h += '<div class="use">' + (a.bestellt_in
-        ? a.bestellt_in + '× bestellt' : 'noch nie bestellt') + '</div>';
+        ? a.bestellt_in + '×<span class="w"> bestellt</span>'
+        : '<span class="w">noch </span>nie<span class="w"> bestellt</span>') + '</div>';
+      h += '<button class="bk-edit" type="button" title="Nummer und Bezeichnung ändern" onclick="KBaecker.bearbeiten(\''
+        + esc(key) + '\')">' + luc('pencil', 15) + '</button>';
       h += '<button class="bk-sw' + (a.aktiv ? '' : ' off') + '" title="'
         + (a.aktiv ? 'Ausblenden' : 'Einblenden') + '" onclick="KBaecker.aktiv(\''
         + esc(key) + '\',' + (a.aktiv ? 'false' : 'true') + ')"></button>';
       h += '</div>';
     });
+    if (offen) { h += '</div>'; }
     h += '<div class="bk-note">Artikel werden nie gelöscht, sondern nur ausgeblendet – '
       + 'sonst wären alte Bestellungen im Verlauf unvollständig.</div>';
     return h;
@@ -834,6 +869,69 @@
     h += '<div class="bk-dlg-f"><button class="bk-btn" onclick="KBaecker.dlgZu()">Abbrechen</button>'
       + '<button class="bk-send" onclick="KBaecker.neuSpeichern(false)">Anlegen</button></div>';
     dialog(h);
+  }
+
+  function bearbeiten(key) {
+    var a = null;
+    _artikel.forEach(function (x) {
+      var k = String(x.nummer || '').trim() || (x.name || '').toLowerCase();
+      if (k === key) a = x;
+    });
+    if (!a) { toast('Der Artikel wurde nicht gefunden.'); return; }
+    _bearbeitet = { key: key, nummer: String(a.nummer || ''), name: a.name || '' };
+
+    var h = '<div class="bk-dlg-h">' + luc('pencil', 17) + ' Artikel bearbeiten</div><div class="bk-dlg-b">';
+    h += '<div class="bk-two">'
+      + '<div class="bk-field"><label>Artikelnummer</label><input id="bk-a-nr" value="' + esc(a.nummer || '') + '" placeholder="z. B. 852">'
+      + '<div class="help">Bestimmt die Position</div></div>'
+      + '<div class="bk-field"><label>Bezeichnung</label><input id="bk-a-name" value="' + esc(a.name || '') + '" placeholder="wie auf dem Lieferschein"></div>'
+      + '</div>';
+    h += '<div class="bk-note">' + (a.bestellt_in
+      ? 'Bisher ' + a.bestellt_in + '× bestellt. Wird die Nummer geändert, '
+        + 'werden die früheren Bestellungen mit angepasst – der Artikel behält seine Vorbelegung.'
+      : 'Dieser Artikel wurde noch nie bestellt.') + '</div>';
+    h += '<div id="bk-a-warn"></div></div>';
+    h += '<div class="bk-dlg-f"><button class="bk-btn" onclick="KBaecker.dlgZu()">Abbrechen</button>'
+      + '<button class="bk-send" onclick="KBaecker.aendernSpeichern(false)">Speichern</button></div>';
+    dialog(h);
+  }
+
+  function aendernSpeichern(bestaetigt) {
+    if (!_bearbeitet) return;
+    var nr = ((document.getElementById('bk-a-nr') || {}).value || '').trim();
+    var name = ((document.getElementById('bk-a-name') || {}).value || '').trim();
+    if (!name) { toast('Bitte eine Bezeichnung angeben.'); return; }
+    if (nr === _bearbeitet.nummer && name === _bearbeitet.name) { dlgZu(); return; }
+
+    fetch(API + '/baecker-artikel', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key: _bearbeitet.nummer, name_key: _bearbeitet.name,
+        nummer: nr, name: name, bestaetigt: !!bestaetigt
+      })
+    }).then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (o) {
+        if (o.j && o.j.success) {
+          dlgZu(); _bearbeitet = null; _artikel = []; ladeArtikel();
+          toast(o.j.meldung || 'Artikel gespeichert.');
+          return;
+        }
+        if (o.s === 409) {
+          var w = document.getElementById('bk-a-warn');
+          if (w) {
+            // Eine doppelte Nummer würde zwei Artikel verschmelzen – die lässt
+            // sich nicht bestätigen, ein ähnlicher Name dagegen schon.
+            var nurName = o.j.konflikt === 'name';
+            w.innerHTML = '<div class="bk-warn">' + luc('alert-triangle', 15) + ' ' + esc(o.j.error)
+              + '<div class="row"><button class="bk-btn" onclick="KBaecker.dlgZu()">Abbrechen</button>'
+              + (nurName ? '<button class="bk-btn on" onclick="KBaecker.aendernSpeichern(true)">Trotzdem speichern</button>' : '')
+              + '</div></div>';
+            icons();
+          }
+          return;
+        }
+        toast((o.j && o.j.error) || 'Die Änderung konnte nicht gespeichert werden.');
+      }).catch(function () { toast('Keine Verbindung – nichts geändert.'); });
   }
 
   function neuSpeichern(bestaetigt) {
@@ -878,9 +976,10 @@
   }
 
   function renderVerlauf() {
-    if (!_verlauf) return '<div class="k-empty">Laden…</div>';
-    if (!_verlauf.length) return '<div class="k-empty">Noch keine Bestellungen.</div>';
-    var h = '';
+    var kopf = '<div class="bk-sticky">' + subTabs() + '</div>';
+    if (!_verlauf) return kopf + '<div class="k-empty">Laden…</div>';
+    if (!_verlauf.length) return kopf + '<div class="k-empty">Noch keine Bestellungen.</div>';
+    var h = kopf;
     _verlauf.forEach(function (e) {
       var st = e.status === 2 ? 'korrigiert' : e.status === 1 ? 'gesendet' : 'nicht bestellt';
       var cls = e.status >= 1 ? 'ok' : 'off';
@@ -925,6 +1024,23 @@
     ladeUebersicht();
     if (_blinkTimer) clearInterval(_blinkTimer);
     _blinkTimer = setInterval(function () { ladeUebersicht(); }, 120000);
+    fokusSichtbar();
+    window.addEventListener('resize', kopfhoehe);
+  }
+
+  // Beim Weiterspringen mit Tab soll das Feld nie hinter dem festen Kopf oder
+  // der Fußzeile verschwinden. scroll-margin sorgt für den Abstand, scrollen
+  // muss der Browser nur, wenn das Feld tatsächlich außerhalb liegt.
+  function fokusSichtbar() {
+    var panel = document.getElementById('panel-baecker');
+    if (!panel || panel.__bkFokus) return;
+    panel.__bkFokus = true;
+    panel.addEventListener('focusin', function (ev) {
+      var feld = ev.target;
+      if (!feld || feld.tagName !== 'INPUT') return;
+      var zeile = feld.closest('.bk-row') || feld.closest('.bk-art') || feld;
+      if (zeile.scrollIntoView) zeile.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
   }
 
   window.KBaecker = {
@@ -937,6 +1053,7 @@
     zusatzDialog: zusatzDialog, zusatzAus: zusatzAus, zusatzFrei: zusatzFrei,
     zusatzWeg: zusatzWeg, suche: suche,
     neuDialog: neuDialog, neuSpeichern: neuSpeichern, aktiv: aktiv,
+    bearbeiten: bearbeiten, aendernSpeichern: aendernSpeichern,
     tagAusVerlauf: tagAusVerlauf, dlgZu: dlgZu
   };
 

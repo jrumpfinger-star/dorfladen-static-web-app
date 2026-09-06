@@ -240,6 +240,16 @@ def naechster_bestelltag(cfg, ab=None, max_tage=14):
     return start.isoformat()
 
 
+def korrektur_moeglich(cfg, datum_iso):
+    """True, wenn fuer diesen Liefertag noch eine Korrektur gesendet werden darf.
+
+    Nur der naechste anstehende Liefertag kommt infrage: Fuer bereits gelieferte
+    Tage waere eine Korrektur sinnlos, und weiter entfernte Tage hat die
+    Baeckerei noch gar nicht eingeplant.
+    """
+    return bool(datum_iso) and datum_iso == naechster_bestelltag(cfg)
+
+
 def vorlage_bestellungen(url, hdrs, datum_iso, limit=4):
     """Die letzten gesendeten Bestellungen desselben Wochentags, neueste zuerst.
 
@@ -283,6 +293,34 @@ def positionen_map(order):
 
 def artikel_key(a):
     return str(a.get("nummer") or "").strip() or (a.get("name") or "").strip().lower()
+
+
+def nummer_umziehen(url, hdrs, alt, neu, name=None):
+    """Traegt eine geaenderte Artikelnummer in alle Bestellungen nach.
+
+    Positionen werden ueber die Artikelnummer zugeordnet. Ohne dieses
+    Nachziehen verlieren gespeicherte Bestellungen den Bezug zum Artikel: Die
+    Vorbelegung faenge wieder bei 0 an und die alte Nummer taeuchte als
+    Zusatzposition auf. Gibt die Zahl der angepassten Bestellungen zurueck.
+    """
+    alt, neu = str(alt or "").strip(), str(neu or "").strip()
+    if not alt or alt == neu:
+        return 0
+    geaendert = 0
+    for key, data in read_many(url, hdrs, KEY_ORDER):
+        positionen = (data or {}).get("positionen") or []
+        treffer = [p for p in positionen
+                   if str(p.get("nummer") or "").strip() == alt]
+        if not treffer:
+            continue
+        for p in treffer:
+            p["nummer"] = neu
+            if name:
+                p["name"] = name
+        rec_id, _ = read_json(url, hdrs, key)
+        if write_json(url, hdrs, key, rec_id, data, f"Baecker-Bestellung {key}"):
+            geaendert += 1
+    return geaendert
 
 
 def datum_de(datum_iso):

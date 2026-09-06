@@ -82,6 +82,10 @@ function bestellung(opts = {}) {
     datum_de: t.datum.split('-').reverse().join('.'),
     status: opts.status || 0,
     gesperrt: !!opts.gesperrt,
+    // Server entscheidet, ob noch korrigiert werden darf – im Test standardmäßig
+    // ja, sobald die Bestellung gesendet ist.
+    korrektur_moeglich: opts.korrekturMoeglich !== undefined
+      ? opts.korrekturMoeglich : !!opts.gesperrt,
     vorlage_datum: opts.ohneVorlage ? '' : '2026-09-03',
     vorlage_datum_de: opts.ohneVorlage ? '' : '03.09.2026',
     protokoll: opts.protokoll || [],
@@ -97,10 +101,10 @@ async function mockApi(page, opts = {}) {
   const calls = [];
   page.__calls = calls;
   page.on('request', (req) => {
-    if (req.method() === 'POST' && /baecker-/.test(req.url())) {
+    if (/^(POST|PATCH)$/.test(req.method()) && /baecker-/.test(req.url())) {
       let body = {};
       try { body = JSON.parse(req.postData() || '{}'); } catch (e) { /* ignore */ }
-      calls.push({ url: req.url(), body });
+      calls.push({ url: req.url(), method: req.method(), body });
     }
   });
 
@@ -534,6 +538,17 @@ test.describe('Bäcker – Sperre und Korrektur (F8)', () => {
     await expect(page.locator('#panel-baecker .bk-stat')).toContainText('Lidia');
     await expect(page.locator('#panel-baecker .bk-stat')).toContainText('7 Positionen');
   });
+
+  test('TC-F8-07: gelieferter Tag lässt sich nicht mehr korrigieren', async ({ page }) => {
+    // Für vergangene Liefertage käme die Korrektur zu spät – statt des Knopfes
+    // steht dort eine Erklärung.
+    await openBaecker(page, Object.assign({}, gesendetOpts, { korrekturMoeglich: false }));
+    await expect(page.locator('#panel-baecker .bk-stat .bk-cta.ghost')).toHaveCount(0);
+    await expect(page.locator('#panel-baecker .bk-cta-note'))
+      .toContainText('nur für den nächsten Liefertag');
+    // Und die Mengen bleiben gesperrt.
+    await expect(row(page, 'Kaisersemmel').locator('.step input')).toHaveAttribute('readonly', '');
+  });
 });
 
 // ════════════════════════════════════════════════════
@@ -681,5 +696,117 @@ test.describe('Bäcker – CMS-Schalter (F13)', () => {
     await mockApi(page, { flags: { kiosk_baecker: undefined } });
     await page.goto(KIOSK_URL);
     await expect(tab(page)).toBeVisible({ timeout: 20000 });
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  F14 – Artikel bearbeiten
+// ════════════════════════════════════════════════════
+
+test.describe('Bäcker – Artikel bearbeiten (F14)', () => {
+
+  async function artikelTab(page, opts = {}) {
+    await mockApi(page, opts);
+    await page.goto(KIOSK_URL);
+    await page.locator('.k-tab[data-tab="baecker"]').click();
+    await page.locator('#panel-baecker .bk-sub .k-filter-btn', { hasText: 'Artikel' }).click();
+    await expect(page.locator('#panel-baecker .bk-art').first()).toBeVisible({ timeout: 20000 });
+  }
+
+  test('TC-F14-01: jede Zeile hat einen Bearbeiten-Knopf', async ({ page }) => {
+    await artikelTab(page);
+    const zeile = page.locator('#panel-baecker .bk-art').filter({ hasText: 'Kaisersemmel' });
+    await expect(zeile.locator('.bk-edit')).toBeVisible();
+  });
+
+  test('TC-F14-02: Dialog ist mit Nummer und Bezeichnung vorbelegt', async ({ page }) => {
+    await artikelTab(page);
+    await page.locator('#panel-baecker .bk-art').filter({ hasText: 'Kaisersemmel' })
+      .locator('.bk-edit').click();
+    await expect(page.locator('#bk-a-nr')).toHaveValue('1');
+    await expect(page.locator('#bk-a-name')).toHaveValue('Kaisersemmel');
+  });
+
+  test('TC-F14-03: Änderung wird als PATCH gesendet', async ({ page }) => {
+    await artikelTab(page);
+    await page.locator('#panel-baecker .bk-art').filter({ hasText: 'Kaisersemmel' })
+      .locator('.bk-edit').click();
+    await page.locator('#bk-a-name').fill('Kaisersemmerl');
+    await page.locator('.bk-overlay .bk-send').click();
+    await page.waitForTimeout(600);
+    const call = page.__calls.filter((c) => /baecker-artikel/.test(c.url)).pop();
+    expect(call.method).toBe('PATCH');
+    expect(call.body.name).toBe('Kaisersemmerl');
+    expect(call.body.key).toBe('1');
+  });
+
+  test('TC-F14-04: unveränderter Dialog löst keinen Aufruf aus', async ({ page }) => {
+    await artikelTab(page);
+    await page.locator('#panel-baecker .bk-art').filter({ hasText: 'Kaisersemmel' })
+      .locator('.bk-edit').click();
+    await page.locator('.bk-overlay .bk-send').click();
+    await page.waitForTimeout(400);
+    expect(page.__calls.filter((c) => /baecker-artikel/.test(c.url)).length).toBe(0);
+    await expect(page.locator('.bk-overlay')).toHaveCount(0);
+  });
+
+  test('TC-F14-05: Artikelliste nutzt die Bildschirmbreite', async ({ page }, testInfo) => {
+    await artikelTab(page);
+    const gemessen = await page.locator('#panel-baecker .bk-artgrid').first()
+      .evaluate((el) => ({
+        spalten: getComputedStyle(el).gridTemplateColumns.split(' ').length,
+        breite: window.innerWidth,
+      }));
+    const erwartet = gemessen.breite >= 1620 ? 3 : gemessen.breite >= 1080 ? 2 : 1;
+    expect(gemessen.spalten).toBe(erwartet);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  F15 – Kopf bleibt stehen, Fokusfeld bleibt sichtbar
+// ════════════════════════════════════════════════════
+
+test.describe('Bäcker – fester Kopf (F15)', () => {
+
+  test('TC-F15-01: Kopfbereich scrollt nicht mit', async ({ page }) => {
+    await openBaecker(page);
+    const kopf = page.locator('#panel-baecker .bk-sticky');
+    const klebt = await kopf.evaluate((el) => getComputedStyle(el).position);
+    // Auf flachen Schirmen bewusst abgeschaltet – dort bliebe zu wenig Liste.
+    const flach = await page.evaluate(() => window.innerWidth < 900 || window.innerHeight <= 620);
+    expect(klebt).toBe(flach ? 'static' : 'sticky');
+    if (flach) return;
+
+    const vorher = await kopf.boundingBox();
+    await page.locator('#panel-baecker').evaluate((el) => { el.scrollTop = 600; });
+    await page.waitForTimeout(300);
+    const nachher = await kopf.boundingBox();
+    expect(Math.abs(nachher.y - vorher.y)).toBeLessThan(4);
+  });
+
+  test('TC-F15-02: angesprungenes Feld bleibt sichtbar', async ({ page }) => {
+    await openBaecker(page);
+    const flach = await page.evaluate(() => window.innerWidth < 900 || window.innerHeight <= 620);
+    if (flach) return;
+    const felder = page.locator('#panel-baecker .bk-row .step input');
+    const anzahl = await felder.count();
+    expect(anzahl).toBeGreaterThan(1);
+
+    // Ein weit unten liegendes Feld fokussieren – es muss in den Blick rücken
+    // und darf nicht hinter dem festen Kopf liegen.
+    const ziel = felder.nth(anzahl - 1);
+    await page.locator('#panel-baecker').evaluate((el) => { el.scrollTop = 0; });
+    await ziel.focus();
+    await page.waitForTimeout(600);
+    const lage = await ziel.evaluate((el) => {
+      const panel = document.getElementById('panel-baecker');
+      const kopf = panel.querySelector('.bk-sticky');
+      const r = el.getBoundingClientRect();
+      const p = panel.getBoundingClientRect();
+      const k = kopf.getBoundingClientRect();
+      return { oben: r.top, unten: r.bottom, panelUnten: p.bottom, kopfUnten: k.bottom };
+    });
+    expect(lage.oben).toBeGreaterThanOrEqual(lage.kopfUnten - 2);
+    expect(lage.unten).toBeLessThanOrEqual(lage.panelUnten + 2);
   });
 });

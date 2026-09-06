@@ -157,10 +157,13 @@ def _info_row(icon_name, text, color="#2e7d4f"):
     )
 
 
-def build_email_html(body_text, subject="", extra_html=""):
+def build_email_html(body_text, subject="", extra_html="", mit_shop_link=True):
     """Build a branded HTML email with logo, header, styled body, and footer.
     All contact details are loaded from Dataverse (key: shop_kontakt).
-    extra_html is inserted after the body text (for tables etc.)."""
+    extra_html is inserted after the body text (for tables etc.).
+
+    ``mit_shop_link=False`` laesst den Shop-Knopf weg – bei Mails an Lieferanten
+    (z. B. der Baeckerei-Bestellung) waere er fehl am Platz."""
     ci = get_contact_info()
 
     # Convert plain text lines to HTML paragraphs
@@ -238,6 +241,16 @@ def build_email_html(body_text, subject="", extra_html=""):
     if "–" in subject:
         short_subject = subject.split("–", 1)[1].strip()
 
+    cta_html = f'''
+  <!-- CTA Button -->
+  <div class="email-cta" style="background:#fff;padding:0 26px 28px;text-align:center">
+    <a href="{ci['shop_url']}" style="display:inline-block;padding:14px 34px;background:{accent_color};background:linear-gradient(135deg,{accent_color},{accent_dark});color:#fff;
+       text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 6px 16px {accent_color}55">
+      {_icon('shopping-bag', '#fff', 16)} Zum Dorfladen-Shop
+    </a>
+  </div>
+''' if mit_shop_link else ''
+
     return f'''<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <style>
@@ -275,14 +288,7 @@ def build_email_html(body_text, subject="", extra_html=""):
     {extra_html}
   </div>
 
-  <!-- CTA Button -->
-  <div class="email-cta" style="background:#fff;padding:0 26px 28px;text-align:center">
-    <a href="{ci['shop_url']}" style="display:inline-block;padding:14px 34px;background:{accent_color};background:linear-gradient(135deg,{accent_color},{accent_dark});color:#fff;
-       text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 6px 16px {accent_color}55">
-      {_icon('shopping-bag', '#fff', 16)} Zum Dorfladen-Shop
-    </a>
-  </div>
-
+{cta_html}
   <!-- Footer -->
   <div class="email-footer" style="background:#111827;border-radius:0 0 20px 20px;padding:24px 26px;color:#d1d5db;font-size:12px;line-height:1.7">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -305,13 +311,14 @@ def build_email_html(body_text, subject="", extra_html=""):
 
 
 def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=None,
-               attachments=None, html_override=None):
+               attachments=None, html_override=None, mit_shop_link=True):
     """Send email via Microsoft Graph API. Contact info from Dataverse.
     reply_to: optionale Reply-To-Adresse (z.B. no-reply); Standard = Kontakt-Reply-To.
     attachments: optionale Liste von Dateianhaengen, je
         {"name": "datei.docx", "content": <bytes>, "type": "<MIME-Typ>"}.
     html_override: fertiges HTML statt des Standard-Layouts (z.B. schlichte
-        Geschaeftsmail an einen Lieferanten)."""
+        Geschaeftsmail an einen Lieferanten).
+    mit_shop_link: Shop-Knopf im Layout. Bei Mails an Lieferanten abschalten."""
     import base64
     import logging
     token = get_graph_token()
@@ -325,7 +332,8 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
     reply_to_addr = reply_to or ci["reply_to"]
 
     # Branded HTML email – oder vorgegebenes HTML unveraendert uebernehmen
-    email_html = html_override if html_override else build_email_html(body_text, subject, extra_html)
+    email_html = html_override if html_override else build_email_html(
+        body_text, subject, extra_html, mit_shop_link=mit_shop_link)
 
     mail_payload = {
         "message": {

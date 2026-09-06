@@ -156,25 +156,53 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # ── Aendern / aus- und einblenden ──
         if req.method == "PATCH":
-            key = str(body.get("key") or body.get("nummer") or "").strip()
+            key = str(body.get("key") or body.get("nummer_alt")
+                      or body.get("nummer") or "").strip()
             name_key = (body.get("name_key") or "").strip().lower()
+            # Erst ueber die Nummer suchen, dann ueber den Namen. Beides in
+            # einer Schleife zu pruefen kann den falschen Artikel treffen,
+            # wenn ein anderer Eintrag denselben Namen traegt.
             ziel = None
-            for a in artikel:
-                if key and str(a.get("nummer") or "").strip() == key:
-                    ziel = a
-                    break
-                if name_key and (a.get("name") or "").strip().lower() == name_key:
-                    ziel = a
-                    break
+            if key:
+                ziel = next((a for a in artikel
+                             if str(a.get("nummer") or "").strip() == key), None)
+            if ziel is None and name_key:
+                ziel = next((a for a in artikel
+                             if (a.get("name") or "").strip().lower() == name_key), None)
             if ziel is None:
                 return _err("Der Artikel wurde nicht gefunden.", 404)
 
+            alt_nummer = str(ziel.get("nummer") or "").strip()
+            neu_nummer = alt_nummer
+            if "nummer" in body:
+                neu_nummer = str(body["nummer"] or "").strip()
+            neu_name = (body.get("name") or "").strip() or ziel.get("name")
+
+            if neu_nummer != alt_nummer and neu_nummer:
+                belegt = next((a for a in artikel
+                               if a is not ziel
+                               and str(a.get("nummer") or "").strip() == neu_nummer), None)
+                if belegt:
+                    return _err(
+                        f"Die Nummer {neu_nummer} geh\u00f6rt bereits zu "
+                        f"\u201e{belegt.get('name')}\u201c.",
+                        409, {"konflikt": "nummer", "vorhanden": belegt})
+
+            if (neu_name or "").strip().lower() != (ziel.get("name") or "").strip().lower() \
+                    and not body.get("bestaetigt"):
+                aehnlich = next((a for a in artikel
+                                 if a is not ziel and _aehnlich(a.get("name"), neu_name)), None)
+                if aehnlich:
+                    return _err(
+                        f"\u201e{aehnlich.get('name')}\u201c gibt es bereits \u2013 "
+                        f"bitte pr\u00fcfen, ob es derselbe Artikel ist.",
+                        409, {"konflikt": "name", "vorhanden": aehnlich})
+
             if "aktiv" in body:
                 ziel["aktiv"] = bool(body["aktiv"])
-            if (body.get("name") or "").strip():
-                ziel["name"] = body["name"].strip()
+            ziel["name"] = neu_name
             if "nummer" in body:
-                ziel["nummer"] = str(body["nummer"] or "").strip()
+                ziel["nummer"] = neu_nummer
             if "nur_wochentag" in body:
                 if body["nur_wochentag"] in (None, ""):
                     ziel.pop("nur_wochentag", None)
@@ -185,7 +213,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if not store.write_json(url, hdrs, store.KEY_ARTIKEL, rec_id,
                                     {"artikel": artikel}, "Baecker-Artikel"):
                 return _err("Die \u00c4nderung konnte nicht gespeichert werden.", 500)
-            return _ok({"artikel": ziel, "meldung": "Artikel gespeichert."})
+
+            meldung = "Artikel gespeichert."
+            if neu_nummer != alt_nummer and alt_nummer and neu_nummer:
+                mit = store.nummer_umziehen(url, hdrs, alt_nummer, neu_nummer)
+                if mit:
+                    meldung = (f"Artikel gespeichert \u2013 {mit} fr\u00fchere "
+                               f"Bestellung{'en' if mit != 1 else ''} mit angepasst.")
+            return _ok({"artikel": ziel, "meldung": meldung})
 
         return _err("Nicht unterst\u00fctzte Anfrage.", 405)
 

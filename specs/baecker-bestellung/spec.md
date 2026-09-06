@@ -841,3 +841,61 @@ Zusatz-Kennzeichen), Protokoll als JSON, gesendetes Dokument.
 | 6 Freundliche Meldungen | Alle Hinweise in Klartext, kein `alert()` (F7, F12) |
 | 7 Responsive | F12 auf allen drei Viewports |
 | 8 Automatisierte Tests | `tests/kiosk-baecker.spec.js` mit gemockter API |
+
+### F14: Artikel bearbeiten
+
+#### F14 Description
+
+Nummer und Bezeichnung bestehender Artikel lassen sich ändern.
+
+#### F14 Behaviour / Acceptance
+
+- Jede Zeile der Artikelverwaltung hat einen Bearbeiten-Knopf.
+- Der Dialog ist mit Nummer und Bezeichnung vorbelegt.
+- Eine bereits vergebene Nummer wird abgelehnt – zwei Artikel mit derselben
+  Nummer würden in Vorbelegung und Verlauf verschmelzen.
+- Ein ähnlicher Name wird gemeldet, lässt sich aber bestätigen.
+- **Wird die Nummer geändert, werden die früheren Bestellungen mitgezogen.**
+  Positionen werden über die Nummer zugeordnet; ohne Nachziehen verlöre der
+  Artikel seine Vorbelegung und die alte Nummer erschiene als Zusatzposition.
+- Die Liste nutzt die Bildschirmbreite (zwei Spalten ab 1080px, drei ab 1620px).
+
+#### F14 Test Cases
+
+**TC-F14-01: Bearbeiten-Knopf je Zeile** – Artikelverwaltung öffnen; jede Zeile
+zeigt den Stift.
+
+**TC-F14-02: Dialog vorbelegt** – Stift bei „Kaisersemmel"; Nummer und
+Bezeichnung stehen im Formular.
+
+**TC-F14-03: Änderung wird gesendet** – Bezeichnung ändern und speichern; PATCH
+mit neuem Namen und altem Schlüssel geht raus.
+
+**TC-F14-04: Ohne Änderung kein Aufruf** – Dialog unverändert speichern; kein
+API-Aufruf, Dialog schließt.
+
+**TC-F14-05: Breite genutzt** – Spaltenzahl passt zur Fensterbreite.
+
+### F15: Fester Kopf, sichtbares Eingabefeld
+
+#### F15 Description
+
+Der Kopfbereich bleibt stehen, während die Artikelliste scrollt. Das fokussierte
+Feld ist immer sichtbar.
+
+#### F15 Behaviour / Acceptance
+
+- Tagesleiste, Statuskarte und Werkzeugleiste bleiben beim Scrollen stehen.
+- **Nur ab 900px Breite und 620px Höhe.** Auf Handys stapelt sich der Kopf so
+  hoch, dass er die halbe Liste verdecken würde.
+- Beim Weiterspringen mit Tab rückt das Feld in den Blick und landet weder
+  hinter dem Kopf noch hinter der Fußzeile.
+- Im Mittagstisch gilt dasselbe: Tagesleiste und Filterleiste bleiben stehen.
+
+#### F15 Test Cases
+
+**TC-F15-01: Kopf scrollt nicht mit** – Liste scrollen; der Kopf behält seine
+Position. Auf schmalen Schirmen ist er bewusst statisch.
+
+**TC-F15-02: Fokusfeld sichtbar** – Ein weit unten liegendes Feld fokussieren;
+es liegt vollständig zwischen Kopfunterkante und Panelunterkante.

@@ -1081,6 +1081,7 @@
     if(name==='gallery' && !_galLoaded) loadGalleryAdmin();
     if(name==='settings' && !_settingsLoaded) loadFeatureFlags();
     if(name==='settings' && !_kontaktLoaded) loadKontaktdaten();
+    if(name==='settings' && !_bkcfgLoaded) loadBaeckerConfig();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders'){ if(!_ordersLoaded) cmsLoadOrders(); if(!window._bsCfgLoaded) cmsLoadBestellConfig(); }
@@ -8209,6 +8210,8 @@
         break;
       case 'settingsSave':saveFeatureFlags();break;
       case 'kontaktSave':saveKontaktdaten();break;
+      case 'bkcfgSave':saveBaeckerConfig();break;
+      case 'bkcfgEchtAdresse':bkcfgEchtAdresse();break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
       case 'cfgRevertUnsaved':cfgRevertUnsaved();break;
@@ -9307,6 +9310,159 @@
         toast('Fehler: '+res.error,'error');
       }
     }).catch(function(e){toast(_cmsErr(e),'error');});
+  }
+
+  // --- Baeckerei-Bestellung (baecker_config) ---
+  var _bkcfgLoaded=false, _bkcfg={};
+  var BK_TAGE=['Mo','Di','Mi','Do','Fr','Sa','So'];
+  var BK_TAGE_LANG=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+
+  function bkcfgStatus(text,art){
+    var el=document.getElementById('bkcfg-status');
+    if(!el) return;
+    if(!text){el.style.display='none';return;}
+    el.style.display='block';
+    el.style.background=art==='fehler'?'#fef2f2':'#f0f9ff';
+    el.style.color=art==='fehler'?'#dc2626':'#075985';
+    el.textContent=text;
+  }
+
+  function bkcfgTageZeichnen(tage){
+    var wrap=document.getElementById('bkcfg-tage');
+    if(!wrap) return;
+    wrap.innerHTML='';
+    BK_TAGE.forEach(function(kurz,i){
+      var an=tage.indexOf(i)!==-1;
+      var l=document.createElement('label');
+      l.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;cursor:pointer;'
+        +'font-size:.85rem;font-weight:600;border:1px solid '+(an?'#b45309':'#e5e7eb')
+        +';background:'+(an?'#fffbeb':'#fff')+';color:'+(an?'#92400e':'#6b7280');
+      l.title=BK_TAGE_LANG[i];
+      var cb=document.createElement('input');
+      cb.type='checkbox';cb.className='bkcfg-tag';cb.value=String(i);cb.checked=an;
+      cb.style.cssText='width:16px;height:16px;accent-color:#b45309;cursor:pointer';
+      cb.addEventListener('change',function(){bkcfgTageZeichnen(bkcfgTageLesen());});
+      l.appendChild(cb);
+      l.appendChild(document.createTextNode(kurz));
+      wrap.appendChild(l);
+    });
+  }
+
+  function bkcfgTageLesen(){
+    var out=[];
+    Array.prototype.forEach.call(document.querySelectorAll('.bkcfg-tag'),function(cb){
+      if(cb.checked) out.push(parseInt(cb.value,10));
+    });
+    return out.sort(function(a,b){return a-b;});
+  }
+
+  function bkcfgHinweis(){
+    var el=document.getElementById('bkcfg-empfaenger');
+    var bk=document.getElementById('bkcfg-baeckerei');
+    var mail=el?el.value:'';
+    var echt=(bk?bk.value:(_bkcfg.baeckerei_mail||'')).trim().toLowerCase();
+    var test=document.getElementById('bkcfg-testhinweis');
+    var scharf=document.getElementById('bkcfg-echthinweis');
+    if(!test||!scharf) return;
+    var istEcht=!!echt && mail.trim().toLowerCase()===echt;
+    test.style.display=istEcht?'none':'block';
+    scharf.style.display=istEcht?'block':'none';
+  }
+
+  function bkcfgEchtAdresse(){
+    var el=document.getElementById('bkcfg-empfaenger');
+    var bk=document.getElementById('bkcfg-baeckerei');
+    var name=document.getElementById('bkcfg-empfaenger-name');
+    var ziel=(bk&&bk.value.trim())||_bkcfg.baeckerei_mail||'';
+    if(!ziel){toast('Bitte zuerst die Adresse der B\u00e4ckerei eintragen.','error');return;}
+    if(el) el.value=ziel;
+    if(name&&!(name.value||'').trim()) name.value='B\u00e4ckerei Freundl';
+    bkcfgHinweis();
+    toast('Adresse eingetragen \u2013 jetzt noch speichern.');
+  }
+
+  function loadBaeckerConfig(){
+    if(_bkcfgLoaded) return;
+    _bkcfgLoaded=true;
+    bkcfgStatus('Einstellungen werden geladen\u2026');
+    fetch(API+'/baecker-order?mode=config').then(function(r){return r.json();}).then(function(res){
+      if(!res||!res.success||!res.config) throw new Error('config');
+      _bkcfg=res.config;
+      bkcfgTageZeichnen(_bkcfg.bestelltage||[]);
+      var v=function(id,wert){var e=document.getElementById(id);if(e)e.value=wert||'';};
+      v('bkcfg-schluss',_bkcfg.bestellschluss);
+      v('bkcfg-kdnr',_bkcfg.kd_nr);
+      var tour=_bkcfg.tour_nr;
+      if(typeof tour==='string'){v('bkcfg-tour',tour);v('bkcfg-tour-sa',tour);}
+      else{v('bkcfg-tour',(tour||{})['default']);v('bkcfg-tour-sa',(tour||{})['5']);}
+      v('bkcfg-empfaenger',_bkcfg.empfaenger);
+      v('bkcfg-empfaenger-name',_bkcfg.empfaenger_name);
+      v('bkcfg-baeckerei',_bkcfg.baeckerei_mail);
+      bkcfgStatus('');
+      bkcfgHinweis();
+      ['bkcfg-empfaenger','bkcfg-baeckerei'].forEach(function(id){
+        var e=document.getElementById(id);
+        if(e) e.addEventListener('input',bkcfgHinweis);
+      });
+    }).catch(function(){
+      _bkcfgLoaded=false;   // beim naechsten Oeffnen erneut versuchen
+      bkcfgStatus('Die B\u00e4cker-Einstellungen konnten nicht geladen werden.','fehler');
+    });
+  }
+
+  function saveBaeckerConfig(){
+    var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+    var tage=bkcfgTageLesen();
+    if(!tage.length){bkcfgStatus('Bitte mindestens einen Bestelltag ausw\u00e4hlen.','fehler');return;}
+    var mail=g('bkcfg-empfaenger');
+    if(mail.indexOf('@')<0||mail.split('@').pop().indexOf('.')<0){
+      bkcfgStatus('Bitte eine g\u00fcltige E-Mail-Adresse angeben.','fehler');return;
+    }
+    var bkMail=g('bkcfg-baeckerei');
+    if(bkMail&&(bkMail.indexOf('@')<0||bkMail.split('@').pop().indexOf('.')<0)){
+      bkcfgStatus('Die Adresse der B\u00e4ckerei ist keine g\u00fcltige E-Mail-Adresse.','fehler');return;
+    }
+    if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(g('bkcfg-schluss'))){
+      bkcfgStatus('Bestellschluss bitte als Uhrzeit angeben, z.\u202fB. 12:00.','fehler');return;
+    }
+    if(!g('bkcfg-kdnr')||!g('bkcfg-tour')){
+      bkcfgStatus('Kunden-Nr. und Tour-Nr. werden im Formularkopf gebraucht.','fehler');return;
+    }
+    var tour={'default':g('bkcfg-tour')};
+    if(g('bkcfg-tour-sa')) tour['5']=g('bkcfg-tour-sa');
+    var cfg={
+      bestelltage:tage,
+      bestellschluss:g('bkcfg-schluss'),
+      kd_nr:g('bkcfg-kdnr'),
+      tour_nr:tour,
+      empfaenger:mail,
+      empfaenger_name:g('bkcfg-empfaenger-name')||'B\u00e4ckerei'
+    };
+    if(bkMail) cfg.baeckerei_mail=bkMail;
+    var btn=document.getElementById('bkcfg-save');
+    var hint=document.getElementById('bkcfg-saved-hint');
+    if(btn){btn.disabled=true;btn.textContent='\u23F3 Speichern\u2026';}
+    fetch(API+'/baecker-order',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({aktion:'config',config:cfg})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res&&res.success){
+        _bkcfg=res.config||cfg;
+        bkcfgStatus('');
+        bkcfgHinweis();
+        toast('B\u00e4cker-Einstellungen gespeichert!');
+        if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
+      }else{
+        bkcfgStatus((res&&res.error)||'Speichern fehlgeschlagen.','fehler');
+        toast('Fehler: '+((res&&res.error)||'Speichern fehlgeschlagen.'),'error');
+      }
+    }).catch(function(e){
+      bkcfgStatus('Netzwerkfehler \u2013 bitte erneut versuchen.','fehler');
+      toast(_cmsErr(e),'error');
+    }).then(function(){
+      if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE B\u00e4cker-Einstellungen speichern';}
+    });
   }
 
   // === ANALYTICS DASHBOARD ===

@@ -2468,6 +2468,9 @@ Zusätzlich prüfen ohne Playwright:
 | TC-F10-01 | Verlauf listet Bestellungen mit Status |
 | TC-F12-01..03 | Kein horizontales Scrollen, Tap-Targets ≥44px, keine nativen Dialoge |
 | TC-F13-01..03 | CMS-Schalter aus blendet Tab aus, an zeigt ihn, nie gespeichert gilt als an |
+| TC-F8-07 | Gelieferter Tag lässt sich nicht mehr korrigieren |
+| TC-F14-01..05 | Artikel bearbeiten: Knopf, Vorbelegung, PATCH, kein Leerlauf, Breite genutzt |
+| TC-F15-01/02 | Kopf bleibt stehen, fokussiertes Feld bleibt sichtbar |
 
 ### Testlauf-Tabelle (Bäcker)
 | Datum | Tests | Ergebnis | Anmerkung |
@@ -2477,6 +2480,8 @@ Zusätzlich prüfen ohne Playwright:
 | 06.09.2026 | Fachlogik | 27/27 | Sortierung, Tour-Nr., Bestelltage, Katalog-Bereinigung |
 | 06.09.2026 | Echter Versand | OK | Bestellung + Korrektur an jrumpfinger@t-online.de |
 | 06.09.2026 | TC-F1 bis TC-F13 | 132/132 | Nach CMS-Schalter, alle drei Viewports |
+| 06.09.2026 | TC-F1 bis TC-F15 | 156/156 | Artikel bearbeiten, fester Kopf, Korrekturregel |
+| 06.09.2026 | Mailvorlage | 4/4 | Shop-Knopf abschaltbar, Footer bleibt, genau ein Knopf |
 
 > Die Umgebungsvariable heißt **`TEST_URL`**, nicht `BASE_URL`. Mit einem
 > falschen Namen laufen die Tests still gegen die Standard-URL in

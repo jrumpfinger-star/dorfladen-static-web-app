@@ -3,7 +3,9 @@
 GET  /api/baecker-order?datum=JJJJ-MM-TT   Bestellung inkl. Vorbelegung
 GET  /api/baecker-order?mode=uebersicht    Tagesleiste + offene Erinnerung
 GET  /api/baecker-order?mode=verlauf       Verlauf der Bestellungen
+GET  /api/baecker-order?mode=config        Einstellungen (fuer das CMS)
 POST /api/baecker-order                    Entwurf speichern
+POST /api/baecker-order {aktion:"config"}  Einstellungen speichern
 POST /api/baecker-order/{datum}/senden     Formular erzeugen und Mail versenden
 POST /api/baecker-order/{datum}/korrektur  Korrektur versenden
 """
@@ -11,6 +13,7 @@ import importlib.util
 import json
 import logging
 import os
+import re
 import sys
 from datetime import date, datetime, timedelta
 
@@ -56,6 +59,8 @@ def _send_mail(to_email, to_name, subject, body_text, attachment_bytes):
     return mod.send_email(
         to_email, to_name, subject, body_text,
         attachments=[{"name": ANHANG_NAME, "content": attachment_bytes, "type": DOCX_MIME}],
+        # Kein Shop-Knopf: Die Baeckerei bestellt nicht in unserem Laden.
+        mit_shop_link=False,
     )
 
 
@@ -157,6 +162,7 @@ def _build_entwurf(url, hdrs, cfg, datum_iso):
         "datum_de": store.datum_de(datum_iso),
         "status": order.get("status", store.STATUS_ENTWURF),
         "gesperrt": gesendet,
+        "korrektur_moeglich": gesendet and store.korrektur_moeglich(cfg, datum_iso),
         "hat_entwurf": hat_entwurf,
         "vorlage_datum": quelle,
         "vorlage_datum_de": store.datum_de(quelle) if quelle else "",
@@ -242,6 +248,14 @@ def _verlauf(url, hdrs, cfg):
 def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     """Formular erzeugen und per Mail versenden (Spec F6, F7, F8)."""
     rec_id, order = store.load_order(url, hdrs, datum_iso)
+
+    if korrektur and not store.korrektur_moeglich(cfg, datum_iso):
+        naechster = store.naechster_bestelltag(cfg)
+        return _err(
+            "Eine Korrektur ist nur f\u00fcr den n\u00e4chsten Liefertag m\u00f6glich "
+            f"({store.wochentag(naechster)}, {store.datum_de(naechster)}). "
+            f"Die Bestellung f\u00fcr {store.datum_de(datum_iso)} ist bereits geliefert.")
+
     positionen = body.get("positionen")
     if positionen is None:
         positionen = order.get("positionen", [])
@@ -301,6 +315,43 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     })
 
 
+def _config_pruefen(cfg):
+    """Gibt eine verstaendliche Fehlermeldung zurueck oder None.
+
+    Die Werte kommen aus dem CMS und landen ungeprueft im Serienbrief-Kopf
+    bzw. steuern den Mailversand – deshalb hier streng pruefen.
+    """
+    tage = cfg.get("bestelltage") or []
+    if not isinstance(tage, list) or not tage:
+        return "Bitte mindestens einen Bestelltag ausw\u00e4hlen."
+    for t in tage:
+        if not isinstance(t, int) or t < 0 or t > 6:
+            return "Ung\u00fcltiger Bestelltag."
+
+    mail = (cfg.get("empfaenger") or "").strip()
+    if "@" not in mail or "." not in mail.split("@")[-1]:
+        return "Bitte eine g\u00fcltige E-Mail-Adresse angeben."
+
+    bk_mail = (cfg.get("baeckerei_mail") or "").strip()
+    if bk_mail and ("@" not in bk_mail or "." not in bk_mail.split("@")[-1]):
+        return "Die Adresse der B\u00e4ckerei ist keine g\u00fcltige E-Mail-Adresse."
+
+    schluss = (cfg.get("bestellschluss") or "").strip()
+    if not re.match(r"^([01]\d|2[0-3]):[0-5]\d$", schluss):
+        return "Bestellschluss bitte als Uhrzeit angeben, z.\u202fB. 12:00."
+
+    if not (cfg.get("kd_nr") or "").strip():
+        return "Bitte die Kunden-Nummer angeben."
+
+    tour = cfg.get("tour_nr")
+    if isinstance(tour, dict):
+        if not (tour.get("default") or "").strip():
+            return "Bitte die Tour-Nummer angeben."
+    elif not (tour or "").strip():
+        return "Bitte die Tour-Nummer angeben."
+    return None
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     guard = admin_auth_guard(req)
     if guard:
@@ -330,30 +381,31 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         if req.method == "POST":
             body = req.get_json()
-            datum = (req.route_params.get("datum")
-                     or body.get("datum") or "").strip()
-            if not datum:
-                return _err("Bitte einen Liefertag angeben.")
             aktion = (req.route_params.get("aktion")
                       or body.get("aktion") or "speichern").strip()
 
-            if aktion in ("senden", "korrektur"):
-                return _senden(url, hdrs, cfg, datum, body,
-                               korrektur=(aktion == "korrektur"))
-
+            # Einstellungen haengen an keinem Liefertag – deshalb vor der
+            # Datumspruefung.
             if aktion == "config":
                 rec_id, _ = store.read_json(url, hdrs, store.KEY_CONFIG)
                 neu = dict(cfg)
                 neu.update(body.get("config") or {})
-                if not (neu.get("bestelltage") or []):
-                    return _err("Bitte mindestens einen Bestelltag ausw\u00e4hlen.")
-                mail = (neu.get("empfaenger") or "").strip()
-                if "@" not in mail or "." not in mail.split("@")[-1]:
-                    return _err("Bitte eine g\u00fcltige E-Mail-Adresse angeben.")
+                fehler = _config_pruefen(neu)
+                if fehler:
+                    return _err(fehler)
                 if not store.write_json(url, hdrs, store.KEY_CONFIG, rec_id, neu,
                                         "Baecker-Einstellungen"):
                     return _err("Einstellungen konnten nicht gespeichert werden.", 500)
                 return _ok({"config": neu, "meldung": "Einstellungen gespeichert."})
+
+            datum = (req.route_params.get("datum")
+                     or body.get("datum") or "").strip()
+            if not datum:
+                return _err("Bitte einen Liefertag angeben.")
+
+            if aktion in ("senden", "korrektur"):
+                return _senden(url, hdrs, cfg, datum, body,
+                               korrektur=(aktion == "korrektur"))
 
             # Entwurf speichern
             rec_id, order = store.load_order(url, hdrs, datum)

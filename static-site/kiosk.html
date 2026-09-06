@@ -283,6 +283,18 @@
     .k-tab.bk-blink{animation:bkBlink 1.1s ease-in-out infinite;font-weight:800}
     .k-tab-badge.badge-bk{background:var(--bk);color:#fff}
     #panel-baecker .bk-sub{margin-bottom:12px}
+    /* Angesprungene Felder dürfen nicht unter Kopf oder Fußzeile geraten. */
+    #panel-baecker .bk-row,#panel-baecker .bk-art{
+      scroll-margin-top:var(--bk-kopf,150px);scroll-margin-bottom:var(--bk-fuss,80px)}
+    /* Kopfbereich bleibt stehen, nur die Artikelliste scrollt. Bewusst erst ab
+       900px Breite und 620px Höhe: Auf Handys stapelt sich der Kopf so hoch,
+       dass er die halbe Liste verdecken würde. Die negativen Ränder ziehen den
+       Hintergrund über das Panel-Padding, sonst scheinen Zeilen seitlich durch. */
+    @media(min-width:900px) and (min-height:620px){
+      .bk-sticky{position:sticky;top:-12px;z-index:6;background:var(--c-bg,#f3f4f6);
+        margin:-12px -16px 0;padding:12px 16px 0;box-shadow:0 6px 8px -8px rgba(0,0,0,.25)}
+      .bk-sticky .bk-sortnote{padding-bottom:8px}
+    }
     /* Tagesleiste */
     .bk-days{display:flex;gap:5px;padding:2px 0 11px;border-bottom:1px solid var(--c-border);margin-bottom:11px;overflow-x:auto}
     .bk-day{min-width:84px;text-align:center;padding:7px 9px;border-radius:10px;border:1px solid transparent;background:none;color:#4b5563;font-size:14px;font-weight:700;cursor:pointer;min-height:58px}
@@ -310,6 +322,7 @@
     .bk-cta{background:var(--bk);color:#fff;border:none;border-radius:10px;padding:0 17px;min-height:46px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
     .bk-stat.late .bk-cta{background:#dc2626}
     .bk-cta.ghost{background:#fff;color:#166534;border:1px solid #bbf7d0}
+    .bk-cta-note{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#4b5563;background:#fff;border:1px solid var(--c-border);border-radius:10px;padding:9px 13px;max-width:270px;line-height:1.3}
     /* Werkzeugleiste */
     .bk-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:9px}
     .bk-tools .sp{flex:1}
@@ -362,12 +375,15 @@
     .bk-send{background:var(--bk);color:#fff;border:none;border-radius:11px;padding:0 22px;min-height:52px;font-size:15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
     .bk-send:disabled{opacity:.6;cursor:wait}
     /* Artikelverwaltung */
-    .bk-art{display:grid;grid-template-columns:60px 1fr 140px 52px;align-items:center;gap:11px;background:#fff;border:1px solid var(--c-border);border-radius:9px;padding:8px 12px;margin-bottom:5px}
+    .bk-artgrid{display:grid;grid-template-columns:1fr;gap:0 14px}
+    .bk-art{display:grid;grid-template-columns:54px 1fr auto 34px 46px;align-items:center;gap:9px;background:#fff;border:1px solid var(--c-border);border-radius:9px;padding:6px 10px;margin-bottom:5px}
     .bk-art.off{opacity:.55;background:#fafafa}
-    .bk-art .nr{font-size:12px;font-weight:700;color:var(--c-muted);background:#f3f4f6;border-radius:5px;padding:4px 0;text-align:center}
-    .bk-art .nm{font-weight:600;font-size:14px;min-width:0;overflow-wrap:anywhere}
+    .bk-art .nr{font-size:12px;font-weight:700;color:var(--c-muted);background:#f3f4f6;border-radius:5px;padding:3px 0;text-align:center}
+    .bk-art .nm{font-weight:600;font-size:13.5px;min-width:0;overflow-wrap:anywhere;line-height:1.25}
     .bk-art .nm .sub{font-size:11px;color:var(--c-muted);font-weight:400;margin-top:1px}
-    .bk-art .use{font-size:11.5px;color:var(--c-muted)}
+    .bk-art .use{font-size:11px;color:var(--c-muted);white-space:nowrap}
+    .bk-edit{width:34px;height:34px;border-radius:8px;border:1px solid var(--c-border);background:#fff;color:var(--bk-dark);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+    .bk-edit:hover{background:#fffbeb;border-color:var(--bk-line)}
     .bk-sw{width:46px;height:26px;border-radius:13px;background:var(--bk);position:relative;cursor:pointer;border:none;justify-self:end}
     .bk-sw::after{content:'';position:absolute;top:3px;left:23px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
     .bk-sw.off{background:#d1d5db}
@@ -424,12 +440,16 @@
       /* Zwei Spalten: halbiert die Scrolllänge und rückt die Eingabefelder
          wieder dicht an den Artikelnamen. */
       .bk-grid{grid-template-columns:1fr 1fr}
+      .bk-artgrid{grid-template-columns:1fr 1fr}
     }
     @media(min-width:1620px){
       .bk-grid{grid-template-columns:1fr 1fr 1fr}
+      .bk-artgrid{grid-template-columns:1fr 1fr 1fr}
       /* Drei Spalten werden eng: die dritte Vergleichszahl weicht zugunsten
          des Artikelnamens, damit lange Namen nicht umbrechen. */
       .bk-row .hist .v:nth-of-type(3){display:none}
+      /* Aus "15× bestellt" wird "15×" – der Name bekommt den Platz. */
+      .bk-art .use .w{display:none}
     }
     @media(max-width:899px){
       /* Fußzeile nicht kleben lassen – der Senden-Knopf steht auf schmalen
@@ -445,9 +465,9 @@
       .bk-row .ret{grid-area:ret;justify-self:end}
       .bk-del{position:absolute;right:10px;top:8px}
       .bk-row.extra{position:relative}
-      .bk-art{grid-template-columns:56px 1fr 52px;grid-template-areas:"nr nm sw" "use use use";row-gap:6px}
+      .bk-art{grid-template-columns:52px 1fr 34px 46px;grid-template-areas:"nr nm ed sw" "use use use use";row-gap:5px}
       .bk-art .nr{grid-area:nr}.bk-art .nm{grid-area:nm}
-      .bk-art .use{grid-area:use}.bk-sw{grid-area:sw}
+      .bk-art .use{grid-area:use}.bk-sw{grid-area:sw}.bk-edit{grid-area:ed}
       .bk-hist{grid-template-columns:1fr auto;grid-template-areas:"d s" "m m";row-gap:5px}
       .bk-hist .d{grid-area:d}.bk-hist .m{grid-area:m}.bk-hist .s{grid-area:s}
       .bk-two{grid-template-columns:1fr}
@@ -776,6 +796,14 @@
 
     /* ═══ Filter tabs (underline style – NOT buttons) ═══ */
     .k-filter-bar{display:flex;gap:0;margin:-12px -16px 0;padding:0 16px;border-bottom:2px solid var(--c-border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:-12px;z-index:10;background:#fff}
+    /* Tagesleiste bleibt oben stehen, die Filterleiste klebt direkt darunter –
+       so bleibt der Kopf sichtbar, während die Bestellungen durchlaufen.
+       Nur auf breiten Schirmen: Auf Handys nimmt der Kopf sonst zu viel Platz. */
+    @media(min-width:900px) and (min-height:620px){
+      #panel-mittag #mittag-day-bar{position:sticky;top:-12px;z-index:11;background:var(--c-bg,#f3f4f6);margin:-12px -16px 0;padding:12px 16px 0}
+      #panel-mittag .k-filter-bar{top:var(--mt-daybar,58px);margin-top:0}
+    }
+    #panel-mittag .k-order{scroll-margin-top:calc(var(--mt-daybar,58px) + 60px);scroll-margin-bottom:20px}
     .k-filter-bar::-webkit-scrollbar{display:none}
     .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px;flex:0 0 auto}
     .k-filter-btn:hover{color:var(--c-text)}
@@ -2005,6 +2033,25 @@ var K = (function(){
       html += '<button class="k-day-pill'+active+'" data-datum="'+iso+'" onclick="K.setMittagDatum(\''+iso+'\')"><span>'+label+'</span><span class="day-date">'+dayNum+'</span></button>';
     }
     bar.innerHTML = html;
+    mittagKopfhoehe();
+  }
+
+  // Die Filterleiste klebt unter der Tagesleiste – dazu muss deren tatsaechliche
+  // Hoehe bekannt sein, sonst entsteht eine Luecke oder eine Ueberdeckung.
+  // Beobachtet statt einmalig gemessen: Beim Aufbau ist das Panel noch
+  // ausgeblendet und die Hoehe daher 0.
+  var _mtBarObserver = null;
+  function mittagKopfhoehe(){
+    var panel = document.getElementById('panel-mittag');
+    var bar = document.getElementById('mittag-day-bar');
+    if(!panel || !bar) return;
+    if(bar.offsetHeight) panel.style.setProperty('--mt-daybar', (bar.offsetHeight - 12) + 'px');
+    if(!_mtBarObserver && window.ResizeObserver){
+      _mtBarObserver = new ResizeObserver(function(){
+        if(bar.offsetHeight) panel.style.setProperty('--mt-daybar', (bar.offsetHeight - 12) + 'px');
+      });
+      _mtBarObserver.observe(bar);
+    }
   }
 
   function setMittagDatum(datum){
