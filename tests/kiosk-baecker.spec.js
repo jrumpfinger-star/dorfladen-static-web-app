@@ -104,55 +104,61 @@ async function mockApi(page, opts = {}) {
     }
   });
 
-  // Reihenfolge zählt: zuletzt registrierte Route wird zuerst geprüft.
-  await page.route(/\/api\//, (r) =>
-    r.fulfill({ status: 200, contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: [], orders: [], threads: [] }) }));
-
-  await page.route(/\/api\/cms-config/, (r) =>
-    r.fulfill({ status: 200, contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: { feature_flags: {
-        kiosk_mittag: true, kiosk_kontakt: true, kiosk_baecker: true } } }) }));
-
-  await page.route(/\/api\/baecker-artikel/, (r) => {
-    const json = (o) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
-    if (r.request().method() !== 'GET') return json({ success: true, meldung: 'Artikel angelegt.' });
-    const artikel = positionen().map((p) => ({
-      nummer: p.nummer, name: p.name, aktiv: p.aktiv,
-      bestellt_in: p.menge ? 12 : 0,
-      gruppe: parseInt(p.nummer, 10) <= 119 ? 'Semmeln & Kleingebäck'
-        : parseInt(p.nummer, 10) <= 301 ? 'Brote & Baguettes' : 'Süßes & Sonstiges',
-    }));
-    return json({ success: true, artikel,
-      anzahl_aktiv: artikel.filter((a) => a.aktiv).length, anzahl_gesamt: artikel.length });
-  });
-
-  await page.route(/\/api\/baecker-order/, (r) => {
+  // Eine einzige Route für alle API-Aufrufe. Bewusst nicht mehrere Routen mit
+  // unterschiedlicher Genauigkeit: So kann kein Aufruf – insbesondere kein
+  // POST – versehentlich an die echte API durchrutschen und eine Mail auslösen.
+  await page.route(/\/api\//, (r) => {
     const url = r.request().url();
-    const json = (o) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
-    if (r.request().method() === 'POST') {
-      if (opts.sendeFehler) {
-        return r.fulfill({ status: 502, contentType: 'application/json',
-          body: JSON.stringify({ success: false,
-            error: 'Die Bestellung konnte nicht versendet werden. Bitte erneut versuchen.' }) });
+    const method = r.request().method();
+    const json = (o, status = 200) => r.fulfill({
+      status, contentType: 'application/json', body: JSON.stringify(o),
+    });
+
+    if (/\/api\/cms-config/.test(url)) {
+      return json({ success: true, data: { feature_flags: {
+        kiosk_mittag: true, kiosk_kontakt: true, kiosk_baecker: true } } });
+    }
+
+    if (/\/api\/baecker-artikel/.test(url)) {
+      if (method !== 'GET') return json({ success: true, meldung: 'Artikel angelegt.' });
+      const artikel = positionen().map((p) => ({
+        nummer: p.nummer, name: p.name, aktiv: p.aktiv,
+        bestellt_in: p.menge ? 12 : 0,
+        gruppe: parseInt(p.nummer, 10) <= 119 ? 'Semmeln & Kleingebäck'
+          : parseInt(p.nummer, 10) <= 301 ? 'Brote & Baguettes' : 'Süßes & Sonstiges',
+      }));
+      return json({ success: true, artikel,
+        anzahl_aktiv: artikel.filter((a) => a.aktiv).length, anzahl_gesamt: artikel.length });
+    }
+
+    if (/\/api\/baecker-order/.test(url)) {
+      if (method === 'POST') {
+        if (opts.sendeFehler) {
+          return json({ success: false,
+            error: 'Die Bestellung konnte nicht versendet werden. Bitte erneut versuchen.' }, 502);
+        }
+        return json({ success: true, status: 1, protokoll: [],
+          meldung: 'Bestellung gesendet. 7 Positionen, 59 Stück.' });
       }
-      return json({ success: true, status: 1, protokoll: [],
-        meldung: 'Bestellung gesendet. 7 Positionen, 59 Stück.' });
+      if (/mode=uebersicht/.test(url)) {
+        return json({ success: true, tage: tagesleiste(opts.gesendetTage || []),
+          naechster: (opts.tag || ersterBestelltag()).datum,
+          erinnerung: opts.erinnerung
+            || { offen: false, blinkt: false, datum: '', wochentag: '', bestellschluss: '12:00' } });
+      }
+      if (/mode=verlauf/.test(url)) {
+        return json({ success: true, verlauf: [
+          { datum: '2026-09-04', datum_de: '04.09.2026', wochentag: 'Freitag', status: 1,
+            positionen: 28, stueck: 134, protokoll: [{ zeit: '2026-09-03T12:05:00', wer: 'Lidia' }] },
+          { datum: '2026-08-29', datum_de: '29.08.2026', wochentag: 'Samstag', status: 2,
+            positionen: 21, stueck: 48, protokoll: [{ zeit: '2026-08-28T11:02:00', wer: 'Lidia' }] },
+        ] });
+      }
+      return json({ success: true, bestellung: bestellung(opts) });
     }
-    if (/mode=uebersicht/.test(url)) {
-      return json({ success: true, tage: tagesleiste(opts.gesendetTage || []),
-        naechster: (opts.tag || ersterBestelltag()).datum,
-        erinnerung: opts.erinnerung || { offen: false, blinkt: false, datum: '', wochentag: '', bestellschluss: '12:00' } });
-    }
-    if (/mode=verlauf/.test(url)) {
-      return json({ success: true, verlauf: [
-        { datum: '2026-09-04', datum_de: '04.09.2026', wochentag: 'Freitag', status: 1,
-          positionen: 28, stueck: 134, protokoll: [{ zeit: '2026-09-03T12:05:00', wer: 'Lidia' }] },
-        { datum: '2026-08-29', datum_de: '29.08.2026', wochentag: 'Samstag', status: 2,
-          positionen: 21, stueck: 48, protokoll: [{ zeit: '2026-08-28T11:02:00', wer: 'Lidia' }] },
-      ] });
-    }
-    return json({ success: true, bestellung: bestellung(opts) });
+
+    // Alle übrigen Kiosk-Aufrufe leer, aber erfolgreich beantworten
+    return json({ success: true, data: [], orders: [], threads: [] });
   });
 }
 
