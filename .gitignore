@@ -51,3 +51,7 @@ playwright-report/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+
+# Baecker-Bestellmails (Geschaeftskorrespondenz mit Kundennummer)
+# Basis fuer den Historie-Import, gehoert nicht ins Repository.
+B*cker/

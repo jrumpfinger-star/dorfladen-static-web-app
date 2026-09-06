@@ -304,9 +304,15 @@ def build_email_html(body_text, subject="", extra_html=""):
 </body></html>'''
 
 
-def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=None):
+def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=None,
+               attachments=None, html_override=None):
     """Send email via Microsoft Graph API. Contact info from Dataverse.
-    reply_to: optionale Reply-To-Adresse (z.B. no-reply); Standard = Kontakt-Reply-To."""
+    reply_to: optionale Reply-To-Adresse (z.B. no-reply); Standard = Kontakt-Reply-To.
+    attachments: optionale Liste von Dateianhaengen, je
+        {"name": "datei.docx", "content": <bytes>, "type": "<MIME-Typ>"}.
+    html_override: fertiges HTML statt des Standard-Layouts (z.B. schlichte
+        Geschaeftsmail an einen Lieferanten)."""
+    import base64
     import logging
     token = get_graph_token()
     if not token:
@@ -318,8 +324,8 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
     sender_name = ci["name"]
     reply_to_addr = reply_to or ci["reply_to"]
 
-    # Build branded HTML email
-    email_html = build_email_html(body_text, subject, extra_html)
+    # Branded HTML email – oder vorgegebenes HTML unveraendert uebernehmen
+    email_html = html_override if html_override else build_email_html(body_text, subject, extra_html)
 
     mail_payload = {
         "message": {
@@ -346,6 +352,17 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
         },
         "saveToSentItems": "true"
     }
+
+    if attachments:
+        mail_payload["message"]["attachments"] = [
+            {
+                "@odata.type": "#microsoft.graph.fileAttachment",
+                "name": a["name"],
+                "contentType": a.get("type", "application/octet-stream"),
+                "contentBytes": base64.b64encode(a["content"]).decode("ascii"),
+            }
+            for a in attachments
+        ]
 
     url = f"https://graph.microsoft.com/v1.0/users/{sender_mailbox}/sendMail"
     r = requests.post(

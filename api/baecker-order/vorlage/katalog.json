@@ -1,0 +1,424 @@
+{
+  "artikel": [
+    {
+      "nummer": "1",
+      "name": "Kaisersemmel",
+      "aktiv": true,
+      "bestellt_in": 15,
+      "summe": 700
+    },
+    {
+      "nummer": "33",
+      "name": "Mohnsemmel",
+      "aktiv": true,
+      "bestellt_in": 15,
+      "summe": 30
+    },
+    {
+      "nummer": "34",
+      "name": "Sesamsemmel",
+      "aktiv": true,
+      "bestellt_in": 15,
+      "summe": 30
+    },
+    {
+      "nummer": "39",
+      "name": "Roggensemmel",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 42
+    },
+    {
+      "nummer": "43",
+      "name": "Urige",
+      "aktiv": true,
+      "bestellt_in": 4,
+      "summe": 16
+    },
+    {
+      "nummer": "53",
+      "name": "Doppelte",
+      "aktiv": true,
+      "bestellt_in": 15,
+      "summe": 45
+    },
+    {
+      "nummer": "54",
+      "name": "Rustikale",
+      "aktiv": true,
+      "bestellt_in": 15,
+      "summe": 45
+    },
+    {
+      "nummer": "56",
+      "name": "Rosensemmel",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 57
+    },
+    {
+      "nummer": "58",
+      "name": "Mehrkornsemmel",
+      "aktiv": true,
+      "bestellt_in": 15,
+      "summe": 36
+    },
+    {
+      "nummer": "64",
+      "name": "Dinkli",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 68
+    },
+    {
+      "nummer": "73",
+      "name": "Schrötlisemmel",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 75
+    },
+    {
+      "nummer": "75",
+      "name": "Kartoffelsemmel",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 38
+    },
+    {
+      "nummer": "76",
+      "name": "Kürbissemmel",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "86",
+      "name": "Vinschgauer",
+      "aktiv": true,
+      "bestellt_in": 4,
+      "summe": 12
+    },
+    {
+      "nummer": "107",
+      "name": "Chia-Weizensemmel",
+      "aktiv": true,
+      "bestellt_in": 10,
+      "summe": 24
+    },
+    {
+      "nummer": "113",
+      "name": "Parisienne",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "115",
+      "name": "Einstrangzopfteigling",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "119",
+      "name": "Roggensemmel mit Kümmel",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 42
+    },
+    {
+      "nummer": "120",
+      "name": "Kornstangel",
+      "aktiv": true,
+      "bestellt_in": 15,
+      "summe": 46
+    },
+    {
+      "nummer": "122",
+      "name": "Ur-Krusti",
+      "aktiv": true,
+      "bestellt_in": 4,
+      "summe": 12
+    },
+    {
+      "nummer": "126",
+      "name": "Baguette 400g",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 19
+    },
+    {
+      "nummer": "148",
+      "name": "Kartoffelbrot",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 20
+    },
+    {
+      "nummer": "150",
+      "name": "Mischbrot 1kg",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 28
+    },
+    {
+      "nummer": "151",
+      "name": "Mischbrot 500g",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 35
+    },
+    {
+      "nummer": "160",
+      "name": "Ebrachtaler 1 kg",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 39
+    },
+    {
+      "nummer": "161",
+      "name": "Ebrachtaler 500g",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 23
+    },
+    {
+      "nummer": "167",
+      "name": "Sonnenblumenkernbrot 750g",
+      "aktiv": true,
+      "bestellt_in": 16,
+      "summe": 16
+    },
+    {
+      "nummer": "169",
+      "name": "Schlossbräu Kruste",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "179",
+      "name": "Superlaib mit Körner 2kg",
+      "aktiv": true,
+      "bestellt_in": 7,
+      "summe": 7
+    },
+    {
+      "nummer": "180",
+      "name": "Superlaib 2kg (Do)",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "183",
+      "name": "6-Korn-Quarkbrot 500g",
+      "aktiv": true,
+      "bestellt_in": 18,
+      "summe": 18
+    },
+    {
+      "nummer": "191",
+      "name": "Toskana 500g",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "197",
+      "name": "Salvia Nuss Laib",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "211",
+      "name": "Tomaten-Oliven-Bag. 400g",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "217",
+      "name": "Finnerl 500g",
+      "aktiv": true,
+      "bestellt_in": 8,
+      "summe": 8
+    },
+    {
+      "nummer": "227",
+      "name": "Bauernbaguette",
+      "aktiv": true,
+      "bestellt_in": 18,
+      "summe": 18
+    },
+    {
+      "nummer": "234",
+      "name": "Walnussbaguette",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "236",
+      "name": "Vollkorn-Bag.400g",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "295",
+      "name": "Dinkelvollkorn Pur 500g",
+      "aktiv": true,
+      "bestellt_in": 16,
+      "summe": 16
+    },
+    {
+      "nummer": "301",
+      "name": "Butterzopf 400g",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "459",
+      "name": "Mandelbogen",
+      "aktiv": true,
+      "bestellt_in": 12,
+      "summe": 36
+    },
+    {
+      "nummer": "565",
+      "name": "Krustenlaib 2kg (Di-Sa)",
+      "aktiv": true,
+      "bestellt_in": 6,
+      "summe": 6
+    },
+    {
+      "nummer": "686",
+      "name": "Brezensalz 5kg",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "1126",
+      "name": "Dinkel Bag. 400g",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "1183",
+      "name": "König-Ludwig-Brot 1kg",
+      "aktiv": true,
+      "bestellt_in": 19,
+      "summe": 42
+    },
+    {
+      "nummer": "2019",
+      "name": "Bogen Backpapier",
+      "aktiv": true,
+      "bestellt_in": 1,
+      "summe": 10
+    },
+    {
+      "nummer": "",
+      "name": "Tüten für Semmelbrösel",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Pfefferpaste",
+      "aktiv": true,
+      "bestellt_in": 1,
+      "summe": 1
+    },
+    {
+      "nummer": "",
+      "name": "Dinkelflori",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Krapfen",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Marillenmarmelade",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Nougat",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Vanille",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Hagebutten",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Eierlikör",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Himbeermarmelade",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Magischer",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Kirschtasche",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Kaiserschmarrn",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    },
+    {
+      "nummer": "",
+      "name": "Lemon Curd",
+      "aktiv": false,
+      "bestellt_in": 0,
+      "summe": 0
+    }
+  ]
+}
