@@ -416,6 +416,12 @@
     .bk-warn{background:#fffbeb;border:1px solid var(--bk-line);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--bk-dark);margin-top:10px}
     .bk-warn .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
     @media(max-width:899px){
+      /* Fußzeile nicht kleben lassen – der Senden-Knopf steht auf schmalen
+         Schirmen ohnehin oben in der Statuskarte, und sticky würde hier den
+         Inhalt verdecken. */
+      .bk-foot{position:static;margin-top:16px;padding-bottom:4px}
+      .bk-foot .bk-send{flex:1 1 100%;justify-content:center}
+      .bk-sub .k-filter-label{display:inline}
       .bk-row{grid-template-columns:52px 1fr;grid-template-areas:"nr nm" "hist hist" "step ret";row-gap:8px}
       .bk-row .nr{grid-area:nr}.bk-row .nm{grid-area:nm}
       .bk-row .hist{grid-area:hist}
