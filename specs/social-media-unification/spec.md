@@ -219,6 +219,39 @@ Inline-Wizard-Skripts in `cms.html`, sofern durch den Standard abgedeckt.
 - **Expected:** Grep auf `window.socialShareWhatsApp =` findet nur eine aktive
   Quelle für die CMS-Seite (`social-poster.js`).
 
+### F16: Vorschau einpassen, zoomen und Post-Bild erneut anzeigen
+
+#### F16 Description
+
+Die Vorschau in Schritt 3 soll auf dem Desktop **immer vollständig sichtbar**
+sein – ohne zu scrollen. Dazu wird das Poster auf den in der rechten Spalte
+verfügbaren Platz skaliert. Wer Details lesen will, zoomt stufenweise oder
+öffnet die Vollbild-Ansicht.
+
+In „Posts & Entwürfe" soll das erstellte Bild eines gespeicherten Posts erneut
+angezeigt werden können. Bisher gab es dafür keinen Weg; stand kein Post an,
+blieb der Bereich zudem völlig leer.
+
+#### F16 Behaviour / Acceptance
+
+- Ab 900px Breite wird das Poster so skaliert, dass es komplett in die rechte
+  Spalte passt; die Spalte scrollt dabei nicht.
+- Im Kopf von Schritt 3 sitzt eine Leiste mit „−", Stufenanzeige, „+" und
+  Vollbild. Stufe 1 heißt „Einpassen", darüber wird die Prozentzahl gezeigt.
+- Vollbild zeigt eine Kopie des Posters groß, mit „Bild speichern" und
+  „Schließen"; Escape oder ein Klick daneben schließt ebenfalls.
+- Jede Karte in „Posts & Entwürfe" hat einen Knopf „Bild". Er zeichnet das
+  Poster aus den gespeicherten Positionen neu – mit **dem Datum des Posts**,
+  nicht dem heutigen – und zeigt es im Vollbild.
+- Gibt es keine Posts für heute oder morgen, erscheint ein Hinweistext statt
+  einer leeren Fläche.
+- Auf Mobilgeräten bleibt es beim bisherigen Verhalten (volle Breite, normales
+  Scrollen); die Zoomleiste ist ausgeblendet.
+
+#### F16 Test Cases
+
+Siehe `tests/TESTCASES.md`, Abschnitt T-F16 (TC-F16-01 bis TC-F16-06).
+
 ## Data & Contracts
 
 - API: `/api/social-katalog`, `/api/social-post`, `/api/tagespost`,
@@ -227,6 +260,7 @@ Inline-Wizard-Skripts in `cms.html`, sofern durch den Standard abgedeckt.
   `soc-post-text`, `soc-post-items`, `soc-post-canvas`, `soc-post-canvas-meal`,
   `soc-tagesinfo-frame`, `soc-subtabs-container`, `soc-step-1..4`,
   `soc-post-status`, `soc-today-posts-list`.
+- Von der Vorschau ergänzt: `soc-zoom-bar`, `soc-zoom-lvl`, `soc-lightbox`.
 
 ## Open Questions
 
@@ -243,3 +277,4 @@ Inline-Wizard-Skripts in `cms.html`, sofern durch den Standard abgedeckt.
 | F4 | TC-F4-01, TC-F4-02 | — | — |
 | F5 | TC-F5-01, TC-F5-02, TC-F5-03 | — | — |
 | F6 | TC-F6-01 | — | — |
+| F16 | TC-F16-01 … TC-F16-06 | — | — |

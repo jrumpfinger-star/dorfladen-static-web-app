@@ -2487,3 +2487,26 @@ Zusätzlich prüfen ohne Playwright:
 > falschen Namen laufen die Tests still gegen die Standard-URL in
 > `playwright.config.js` – Prüfungen auf „nicht sichtbar" bestehen dann
 > irreführenderweise, weil das Element dort gar nicht existiert.
+
+---
+
+## T-F16 – Social-Vorschau: einpassen, zoomen, Post-Bild
+
+Spec: `specs/social-media-unification/spec.md` (Abschnitt F16)
+Automatisiert in `tests/social-vorschau.spec.js` (mobile / ipad-mini / desktop).
+Die API wird komplett per `page.route` abgefangen – kein echter Versand.
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-F16-01 | Poster passt vollständig in die rechte Spalte, die Spalte scrollt nicht |
+| TC-F16-02 | Zoom-Knöpfe vergrößern/verkleinern, Anzeige wechselt zwischen „Einpassen" und Prozent |
+| TC-F16-03 | Vollbild zeigt das Poster groß, Escape schließt es |
+| TC-F16-04 | „Posts & Entwürfe": Knopf „Bild" öffnet das erzeugte Poster erneut |
+| TC-F16-05 | Ohne Posts erscheint ein Hinweis statt einer leeren Fläche |
+| TC-F16-06 | Mobil bleibt die Vorschau unskaliert, die Zoomleiste ist aus |
+
+### Testlauf-Tabelle (Social-Vorschau)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 06.09.2026 | TC-F16-01..06 | 6/6 | Lokal gegen 127.0.0.1:8887, alle drei Viewports |
+| 06.09.2026 | T-CS-01..13 (Regression) | 39/39 | Bestehende CMS-Social-Tests unverändert grün |

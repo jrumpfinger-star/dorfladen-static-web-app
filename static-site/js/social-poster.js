@@ -138,7 +138,11 @@
   // Ziel-Datum des Posters: heute, oder MORGEN wenn im Wizard "Morgen" gewaehlt ist.
   // Damit stimmen Wochentag/Datum im Poster mit dem tatsaechlichen Post-Tag ueberein
   // (z.B. "Morgen im Dorfladen - Mittwoch" -> Datumszeile/Kategorie zeigen Mittwoch).
-  function socialPosterDate(){var d=new Date();if(window._socSelectedDay==='morgen'){d=new Date(d.getTime()+86400000);}return d;}
+  // _socDateOverride: setzt das Datum voruebergehend fest. Wird gebraucht, wenn
+  // ein bereits gespeicherter Post nachtraeglich als Bild gezeichnet wird - dann
+  // muss das Poster SEIN Datum tragen, nicht das heutige.
+  var _socDateOverride=null;
+  function socialPosterDate(){if(_socDateOverride)return new Date(_socDateOverride.getTime());var d=new Date();if(window._socSelectedDay==='morgen'){d=new Date(d.getTime()+86400000);}return d;}
 
   function socialDrawPoster(canvas,ctx,W,selected,titel,freitext,loadedImgs,SCALE,hideFooter,hideHeader){
     SCALE=SCALE||1;
@@ -435,18 +439,12 @@
     return {loaded:loaded,pending:pending,failed:failed};
   }
 
-  // --- Preview generator ---
-  window.socialGenPreview=function(){
-    var canvas=document.getElementById('soc-post-canvas');if(!canvas)return;var ctx=canvas.getContext('2d');var W=600;var SCALE=2;
-    canvas.style.display='none';var _mealC=document.getElementById('soc-post-canvas-meal');var _mealL=document.getElementById('soc-preview-label-meal');var _dailyL=document.getElementById('soc-preview-label-daily');if(_mealC)_mealC.style.display='none';if(_mealL)_mealL.style.display='none';if(_dailyL)_dailyL.style.display='none';
-    var selected=socialGatherSelected();var titel=(document.getElementById('soc-post-titel').value||'').trim();var freitext=(document.getElementById('soc-post-text').value||'').trim();
-    var imgMap=socialResolveImgMap(selected);
+  // Laedt alle Bilder einer id->url-Map. Die zurueckgegebene Map `imgs` wird
+  // SOFORT geliefert und waechst waehrend des Ladens weiter - dadurch hat ein
+  // zwischendurch ausgeloestes Teilen wenigstens die bereits geladenen Bilder.
+  function socLoadImgs(imgMap){
     var state=socialImgsFromCache(imgMap);
     var loadedImgs=state.loaded;
-    // WICHTIG: sofort veroeffentlichen (nicht erst am Ende). Die Map waechst
-    // inkrementell weiter - dadurch hat ein zwischendurch ausgeloestes Teilen
-    // wenigstens alle bereits geladenen Bilder statt gar keiner.
-    window._socLoadedImgs=loadedImgs;
     var imgUrls=state.pending.map(function(id){return{id:id,url:imgMap[id]};});
     // Zuvor fehlgeschlagene Bilder erneut versuchen (typischerweise kurzzeitige
     // Netzprobleme). Nach SOC_IMG_MAX_TRIES wird endgueltig aufgegeben, damit
@@ -460,12 +458,25 @@
       fetch(entry.url).then(function(r){return r.blob();}).then(function(blob){var objUrl=URL.createObjectURL(blob);var img=new Image();img.onload=function(){ok(img);};img.onerror=function(){URL.revokeObjectURL(objUrl);fail();};img.src=objUrl;})
       .catch(function(){var img=new Image();img.crossOrigin='anonymous';img.onload=function(){ok(img,true);};img.onerror=function(){var img2=new Image();img2.onload=function(){ok(img2,true);};img2.onerror=fail;img2.src=entry.url;};img.src=entry.url;});
     });});
-    return Promise.all(promises.concat([_socMealIconPromise])).then(function(){
+    return {imgs:loadedImgs,ready:Promise.all(promises.concat([_socMealIconPromise]))};
+  }
+
+  // --- Preview generator ---
+  window.socialGenPreview=function(){
+    var canvas=document.getElementById('soc-post-canvas');if(!canvas)return;var ctx=canvas.getContext('2d');var W=600;var SCALE=2;
+    canvas.style.display='none';var _mealC=document.getElementById('soc-post-canvas-meal');var _mealL=document.getElementById('soc-preview-label-meal');var _dailyL=document.getElementById('soc-preview-label-daily');if(_mealC)_mealC.style.display='none';if(_mealL)_mealL.style.display='none';if(_dailyL)_dailyL.style.display='none';
+    var selected=socialGatherSelected();var titel=(document.getElementById('soc-post-titel').value||'').trim();var freitext=(document.getElementById('soc-post-text').value||'').trim();
+    var imgMap=socialResolveImgMap(selected);
+    var job=socLoadImgs(imgMap);
+    var loadedImgs=job.imgs;
+    window._socLoadedImgs=loadedImgs;
+    return job.ready.then(function(){
       var mealCanvas=document.getElementById('soc-post-canvas-meal');var mealLabel=document.getElementById('soc-preview-label-meal');var dailyLabel=document.getElementById('soc-preview-label-daily');if(mealCanvas)mealCanvas.style.display='none';if(mealLabel)mealLabel.style.display='none';if(dailyLabel)dailyLabel.style.display='none';
       // Kompakt-Grafik (EIN Bild, ~4:5): identisch zu dem, was geteilt wird (WYSIWYG).
       if(selected.length>0){canvas.style.display='block';socialDrawCompact(canvas,canvas.getContext('2d'),540,selected,titel||'Heute im Dorfladen',loadedImgs,SCALE);}
       else{canvas.style.display='none';}
       window._socLoadedImgs=loadedImgs;
+      if(typeof window.socPreviewFit==='function')window.socPreviewFit();
     });
   };
 
@@ -952,7 +963,16 @@
       var all=res.posts||res.items||[];
       var todayPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===td;});
       var tomorrowPosts=all.filter(function(p){return p.datum&&p.datum.substring(0,10)===tmr;});
-      if(!todayPosts.length&&!tomorrowPosts.length){list.innerHTML='';wrap.style.display='none';if(typeof window.socSyncDeskPosts==='function')window.socSyncDeskPosts();return;}
+      if(!todayPosts.length&&!tomorrowPosts.length){
+        // Sichtbarer Hinweis statt leerer Flaeche - das Desktop-Panel spiegelt
+        // diesen Inhalt und waere sonst komplett leer.
+        list.innerHTML='<div style="padding:22px 14px;text-align:center;color:#9ca3af;font-size:13px">Keine Posts f\u00fcr heute oder morgen.<br><span style="font-size:12px">Neue Posts erscheinen hier, sobald sie ver\u00f6ffentlicht oder geparkt wurden.</span></div>';
+        wrap.style.display='none';
+        if(typeof window._socCachePosts==='function')window._socCachePosts([]);
+        if(typeof window.socSyncDeskPosts==='function')window.socSyncDeskPosts();
+        return;
+      }
+      if(typeof window._socCachePosts==='function')window._socCachePosts(todayPosts.concat(tomorrowPosts));
       wrap.style.display='';
       var html='';
       function timeStr(d){if(!d)return '';var m=d.match(/T(\d{2}:\d{2})/);return m?m[1]:'';}
@@ -1003,6 +1023,7 @@
         }
         // Action row — icon buttons
         html+='<div style="display:flex;gap:3px;margin-top:6px;align-items:center">';
+        html+='<button onclick="socialPostBild(\''+pid+'\')" title="Erstelltes Bild anzeigen" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;color:#334155;font-weight:600">'+lucideIcon('image',12)+' Bild</button>';
         if(isDraft){
           html+='<button onclick="socialEditDraft(\''+pid+'\')" title="Bearbeiten" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;color:#2563eb;font-weight:600">'+lucideIcon('pencil',12)+' Bearbeiten</button>';
           html+='<button onclick="socialPublishDraft(\''+pid+'\')" title="Jetzt senden" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;color:#16a34a;font-weight:600">'+lucideIcon('send',12)+' Senden</button>';
@@ -1064,4 +1085,251 @@
 
   // Expose socialLoadMtBilder on window for CMS wochenplan usage
   window.socialLoadMtBilder = M.socialLoadMtBilder || function(){};
+
+  // ═══════════════════════════════════════════════════════════════════════
+  //  VORSCHAU: einpassen, zoomen, Vollbild
+  // ═══════════════════════════════════════════════════════════════════════
+  // Die Vorschau soll IMMER komplett sichtbar sein - ohne Scrollen. Dazu wird
+  // das Poster auf den Platz skaliert, der in der rechten Spalte uebrig ist.
+  // Wer Details sehen will, zoomt oder oeffnet die Vollbild-Ansicht.
+  var SOC_ZOOM_STEPS=[1,1.25,1.5,2,2.5,3];
+  var _socZoomIdx=0;
+
+  function socPreviewCanvas(){
+    var meal=document.getElementById('soc-post-canvas-meal');
+    if(meal&&meal.style.display!=='none')return meal;
+    return document.getElementById('soc-post-canvas');
+  }
+  function socPreviewDesktop(){
+    return window.matchMedia&&window.matchMedia('(min-width:900px)').matches;
+  }
+
+  window.socPreviewFit=function(){
+    var daily=document.getElementById('soc-post-canvas');
+    if(!daily||!daily.parentNode)return;
+    if(_socFitBusy)return;
+    _socFitBusy=true;
+    try{ _socPreviewFitInner(daily); } finally { _socFitBusy=false; }
+  };
+  var _socFitBusy=false;
+  function _socPreviewFitInner(daily){
+    var wrap=daily.parentNode;
+    var meal=document.getElementById('soc-post-canvas-meal');
+    var all=[daily,meal].filter(Boolean);
+    var bar=document.getElementById('soc-zoom-bar');
+    // Mobil: natuerliches Scrollen, keine Skalierung.
+    if(!socPreviewDesktop()){
+      all.forEach(function(c){c.style.width='';c.style.height='';c.style.maxWidth='100%';c.style.maxHeight='';c.style.marginLeft='';c.style.marginRight='';});
+      wrap.style.maxHeight='';wrap.style.overflow='';
+      if(bar)bar.style.display='none';
+      return;
+    }
+    if(bar)bar.style.display='inline-flex';
+    if(wrap.offsetParent===null)return; // Panel gerade nicht sichtbar
+    var col=document.getElementById('soc-col-right');
+    var refBottom=window.innerHeight;
+    if(col){
+      var cr=col.getBoundingClientRect();
+      // Das Innenabstands-Polster der Spalte zaehlt zur Hoehe - ohne Abzug
+      // bleibt genau dieser Rest scrollbar.
+      var ccs=window.getComputedStyle(col);
+      var colPad=parseFloat(ccs.paddingBottom)||0;
+      if(cr.bottom>0)refBottom=Math.min(refBottom,cr.bottom-colPad);
+    }
+    var wr=wrap.getBoundingClientRect();
+    var cs=window.getComputedStyle(wrap);
+    var padY=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
+    var padX=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
+    // Alles ausser den Canvas selbst (Beschriftungen, Knopfzeile) braucht Platz.
+    var extra=0;
+    Array.prototype.forEach.call(wrap.children,function(el){
+      if(el===daily||el===meal)return;
+      if(el.offsetParent===null)return;
+      var st=window.getComputedStyle(el);
+      extra+=el.offsetHeight+(parseFloat(st.marginTop)||0)+(parseFloat(st.marginBottom)||0);
+    });
+    var boxH=Math.floor(refBottom-wr.top-padY-extra-12);
+    var boxW=Math.floor(wrap.clientWidth-padX);
+    wrap.style.maxHeight=Math.max(120,Math.floor(refBottom-wr.top-8))+'px';
+    wrap.style.overflow='auto';
+    if(boxH<120||boxW<80)return;
+    var zoom=SOC_ZOOM_STEPS[_socZoomIdx]||1;
+    var visible=all.filter(function(c){return c.style.display!=='none';});
+    // Zwei sichtbare Poster teilen sich die Hoehe.
+    var share=visible.length>1?Math.floor((boxH-12)/visible.length):boxH;
+    all.forEach(function(c){
+      if(!c.width||!c.height)return;
+      var r=c.width/c.height;
+      var h=(c.style.display!=='none')?share:boxH;
+      var fitW=Math.min(boxW,h*r);
+      var fitH=fitW/r;
+      c.style.maxWidth='none';c.style.maxHeight='none';
+      c.style.width=Math.round(fitW*zoom)+'px';
+      c.style.height=Math.round(fitH*zoom)+'px';
+      // socialGenPreview setzt display:block - ohne auto-Raender stuende das
+      // Poster dann linksbuendig statt mittig in der Spalte.
+      c.style.marginLeft='auto';c.style.marginRight='auto';
+    });
+    var lvl=document.getElementById('soc-zoom-lvl');
+    if(lvl)lvl.textContent=(_socZoomIdx===0)?'Einpassen':Math.round(zoom*100)+'%';
+  }
+
+  window.socPreviewZoom=function(dir){
+    if(dir===0)_socZoomIdx=0;
+    else _socZoomIdx=Math.max(0,Math.min(SOC_ZOOM_STEPS.length-1,_socZoomIdx+dir));
+    window.socPreviewFit();
+  };
+
+  // ── Vollbild-Ansicht (auch fuer gespeicherte Posts) ────────────────────
+  // Zeigt eine KOPIE des Canvas. Kopieren statt Verschieben, damit die
+  // Vorschau in der Spalte stehen bleibt; funktioniert auch bei "tainted"
+  // Canvas (Fremdbilder) - nur das Herunterladen ist dann gesperrt.
+  window.socCloseLightbox=function(){
+    var ov=document.getElementById('soc-lightbox');
+    if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);
+    document.removeEventListener('keydown',_socLightboxKey);
+  };
+  function _socLightboxKey(e){if(e.key==='Escape')window.socCloseLightbox();}
+  function socLightbox(srcCanvas,titel,dateiname){
+    window.socCloseLightbox();
+    var ov=document.createElement('div');
+    ov.id='soc-lightbox';
+    ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(17,24,39,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;box-sizing:border-box';
+    ov.addEventListener('click',function(e){if(e.target===ov)window.socCloseLightbox();});
+    var head=document.createElement('div');
+    head.style.cssText='color:#fff;font-size:14px;font-weight:700;text-align:center;max-width:96vw';
+    head.textContent=titel||'Vorschau';
+    var canvas=document.createElement('canvas');
+    canvas.width=srcCanvas.width;canvas.height=srcCanvas.height;
+    try{canvas.getContext('2d').drawImage(srcCanvas,0,0);}catch(e){}
+    canvas.style.cssText='max-width:96vw;max-height:78vh;width:auto;height:auto;border-radius:12px;background:#faf9f6;box-shadow:0 12px 40px rgba(0,0,0,.55)';
+    var foot=document.createElement('div');
+    foot.style.cssText='display:flex;gap:10px;align-items:center';
+    var dl=document.createElement('button');
+    dl.type='button';
+    dl.style.cssText='padding:10px 18px;font-size:14px;font-weight:700;border:none;border-radius:10px;background:#2e7d4f;color:#fff;cursor:pointer;min-height:44px';
+    dl.textContent='Bild speichern';
+    dl.onclick=function(){
+      try{
+        canvas.toBlob(function(blob){
+          if(!blob){head.textContent='Bild konnte nicht gespeichert werden.';return;}
+          var url=URL.createObjectURL(blob);
+          var a=document.createElement('a');a.href=url;a.download=(dateiname||'dorfladen-post')+'.png';
+          document.body.appendChild(a);a.click();document.body.removeChild(a);
+          setTimeout(function(){URL.revokeObjectURL(url);},2000);
+        },'image/png');
+      }catch(err){head.textContent='Bild kann wegen der Bildquellen nicht gespeichert werden.';}
+    };
+    var close=document.createElement('button');
+    close.type='button';
+    close.style.cssText='padding:10px 18px;font-size:14px;font-weight:700;border:1px solid rgba(255,255,255,.5);border-radius:10px;background:transparent;color:#fff;cursor:pointer;min-height:44px';
+    close.textContent='Schlie\u00dfen';
+    close.onclick=window.socCloseLightbox;
+    foot.appendChild(dl);foot.appendChild(close);
+    ov.appendChild(head);ov.appendChild(canvas);ov.appendChild(foot);
+    document.body.appendChild(ov);
+    document.addEventListener('keydown',_socLightboxKey);
+  }
+
+  window.socPreviewVollbild=function(){
+    var c=socPreviewCanvas();
+    if(!c||c.style.display==='none'||!c.width){
+      socialStatus('soc-post-status','Bitte zuerst Produkte ausw\u00e4hlen \u2013 dann gibt es eine Vorschau.',false);
+      return;
+    }
+    var t=(document.getElementById('soc-post-titel')||{}).value||'Vorschau';
+    socLightbox(c,t,'dorfladen-vorschau');
+  };
+
+  // ── Zoom-Leiste in den Vorschau-Kopf einhaengen ────────────────────────
+  function socBuildZoomBar(){
+    if(document.getElementById('soc-zoom-bar'))return;
+    var step=document.getElementById('soc-step-3');
+    if(!step)return;
+    var host=step.querySelector('.k-oc-actions');
+    if(!host)return;
+    var bar=document.createElement('span');
+    bar.id='soc-zoom-bar';
+    bar.style.cssText='display:none;align-items:center;gap:4px;margin-right:8px';
+    var bs='min-height:34px;min-width:34px;padding:0 9px;font-size:14px;font-weight:700;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;cursor:pointer';
+    bar.innerHTML=''
+      +'<button type="button" title="Kleiner" style="'+bs+'">\u2212</button>'
+      +'<span id="soc-zoom-lvl" style="font-size:11px;font-weight:700;color:#6b7280;min-width:62px;text-align:center">Einpassen</span>'
+      +'<button type="button" title="Gr\u00f6\u00dfer" style="'+bs+'">+</button>'
+      +'<button type="button" title="Vollbild" style="'+bs+';margin-left:2px">\u26f6</button>';
+    var btns=bar.querySelectorAll('button');
+    btns[0].onclick=function(e){e.stopPropagation();window.socPreviewZoom(-1);};
+    btns[1].onclick=function(e){e.stopPropagation();window.socPreviewZoom(1);};
+    btns[2].onclick=function(e){e.stopPropagation();window.socPreviewVollbild();};
+    host.insertBefore(bar,host.firstChild);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  //  POSTS & ENTWUERFE: erstelltes Bild erneut anzeigen
+  // ═══════════════════════════════════════════════════════════════════════
+  var _socPostCache={};
+  function socParseDatum(s){
+    var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s||''));
+    if(!m)return null;
+    return new Date(parseInt(m[1],10),parseInt(m[2],10)-1,parseInt(m[3],10),12,0,0);
+  }
+  function socRenderPostCanvas(p){
+    var items=(p.items||[]).map(function(it){
+      return {id:it.id,name:it.name,kategorie:it.kategorie,preis:it.preis,ab_uhr:it.ab_uhr,bild_url:it.bild_url};
+    });
+    var job=socLoadImgs(socialResolveImgMap(items));
+    return job.ready.then(function(){
+      var canvas=document.createElement('canvas');
+      // Das Poster traegt das Datum SEINES Posts, nicht das heutige.
+      _socDateOverride=socParseDatum(p.ziel_datum||p.datum);
+      try{
+        socialDrawCompact(canvas,canvas.getContext('2d'),540,items,p.titel||'Heute im Dorfladen',job.imgs,2);
+      } finally { _socDateOverride=null; }
+      return canvas;
+    });
+  }
+  window.socialPostBild=function(postId){
+    var p=_socPostCache[postId];
+    var load=p?Promise.resolve(p):fetch(API+'/social-post').then(function(r){return r.json();}).then(function(res){
+      var all=res.posts||res.items||[];
+      return all.filter(function(x){return String(x.id)===String(postId);})[0];
+    });
+    socialStatus('soc-post-status','\u23f3 Bild wird erzeugt\u2026',true);
+    load.then(function(post){
+      if(!post)throw new Error('Post nicht gefunden');
+      return socRenderPostCanvas(post).then(function(canvas){
+        socialStatus('soc-post-status','',true);
+        socLightbox(canvas,post.titel||'Post',(post.ziel_datum||post.datum||'post').substring(0,10));
+      });
+    }).catch(function(e){
+      socialStatus('soc-post-status','\u274c Bild konnte nicht erzeugt werden ('+(e&&e.message?e.message:'Fehler')+')',false);
+    });
+  };
+  window._socCachePosts=function(posts){
+    _socPostCache={};
+    (posts||[]).forEach(function(p){if(p&&p.id!==undefined)_socPostCache[p.id]=p;});
+  };
+
+  // ── Start: Zoom-Leiste bauen, Groesse ueberwachen ──────────────────────
+  function socPreviewInit(){
+    socBuildZoomBar();
+    window.socPreviewFit();
+    var t=null;
+    window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(window.socPreviewFit,120);});
+    var col=document.getElementById('soc-col-right');
+    if(col&&window.ResizeObserver){
+      // Die Spalte wird erst beim Oeffnen des Tabs sichtbar - dann neu messen.
+      new ResizeObserver(function(){window.socPreviewFit();}).observe(col);
+    }
+    // Beim Wechsel auf 'Posts & Entwuerfe' die Liste frisch laden, damit dort
+    // nie ein leerer Bereich steht (der Klon uebernimmt sonst alten Inhalt).
+    var tabPosts=document.getElementById('soc-desk-tab-posts');
+    if(tabPosts)tabPosts.addEventListener('click',function(){
+      if(typeof window.socialLoadTodayPosts==='function')window.socialLoadTodayPosts();
+    });
+    var tabEdit=document.getElementById('soc-desk-tab-edit');
+    if(tabEdit)tabEdit.addEventListener('click',function(){setTimeout(window.socPreviewFit,50);});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',socPreviewInit);
+  else socPreviewInit();
 })();
