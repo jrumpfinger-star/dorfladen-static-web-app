@@ -2510,3 +2510,4 @@ Die API wird komplett per `page.route` abgefangen – kein echter Versand.
 |---|---|---|---|
 | 06.09.2026 | TC-F16-01..06 | 6/6 | Lokal gegen 127.0.0.1:8887, alle drei Viewports |
 | 06.09.2026 | T-CS-01..13 (Regression) | 39/39 | Bestehende CMS-Social-Tests unverändert grün |
+| 06.09.2026 | TC-F16-01..06 | 6/6 | Live gegen kind-pebble, alle drei Viewports |
