@@ -220,12 +220,16 @@
         : 'Bereits gesendet') + '</div>';
     } else {
       h += '<div class="t1">Bestellung für ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + '</div>';
+      var herkunft = _b.vorlage_datum_de
+        ? (_b.hat_entwurf
+            ? ' · gespeicherter Entwurf, vorbelegt vom letzten ' + esc(_b.wochentag) + ' (' + esc(_b.vorlage_datum_de) + ')'
+            : ' · vorbelegt mit den Werten vom letzten ' + esc(_b.wochentag) + ' (' + esc(_b.vorlage_datum_de) + ')')
+        : (_b.hat_entwurf
+            ? ' · gespeicherter Entwurf'
+            : ' · keine Vorlage vorhanden, alle Mengen starten bei 0');
       h += '<div class="t2">' + (ueberfaellig
         ? '<b>Bestellschluss war um ' + esc(e.bestellschluss) + ' Uhr</b> – bitte zeitnah senden'
-        : 'Noch nicht gesendet')
-        + (_b.vorlage_datum_de
-          ? ' · vorbelegt mit den Werten vom letzten ' + esc(_b.wochentag) + ' (' + esc(_b.vorlage_datum_de) + ')'
-          : ' · keine Vorlage vorhanden, alle Mengen starten bei 0') + '</div>';
+        : 'Noch nicht gesendet') + herkunft + '</div>';
     }
     h += '</div>';
     if (gesendet) {

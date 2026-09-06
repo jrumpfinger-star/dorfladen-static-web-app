@@ -104,14 +104,16 @@ def _build_entwurf(url, hdrs, cfg, datum_iso):
             verlauf.setdefault(key, []).append(menge)
 
     gesendet = order.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT)
-    if order.get("positionen") is not None:
+    hat_entwurf = bool(order.get("positionen"))
+    if hat_entwurf:
         mengen = {}
         retouren = {}
         for p in order["positionen"]:
             key = str(p.get("nummer") or "").strip() or (p.get("name") or "").lower()
             mengen[key] = int(p.get("menge") or 0)
             retouren[key] = int(p.get("retoure") or 0)
-        quelle = order.get("vorlage_datum", "")
+        # Herkunft der Vorbelegung: aus dem Entwurf, sonst der letzte gleiche Wochentag
+        quelle = order.get("vorlage_datum") or (vorlagen[0][0] if vorlagen else "")
     else:
         # Noch kein Entwurf: exakt den letzten gleichen Wochentag uebernehmen
         mengen = store.positionen_map(vorlagen[0][1]) if vorlagen else {}
@@ -155,6 +157,7 @@ def _build_entwurf(url, hdrs, cfg, datum_iso):
         "datum_de": store.datum_de(datum_iso),
         "status": order.get("status", store.STATUS_ENTWURF),
         "gesperrt": gesendet,
+        "hat_entwurf": hat_entwurf,
         "vorlage_datum": quelle,
         "vorlage_datum_de": store.datum_de(quelle) if quelle else "",
         "protokoll": order.get("protokoll", []),
