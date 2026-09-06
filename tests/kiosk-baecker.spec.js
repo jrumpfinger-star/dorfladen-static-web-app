@@ -297,6 +297,38 @@ test.describe('Bäcker – Erfassung (F3)', () => {
     await row(page, 'Mohnsemmel').locator('.step input').blur();
     await expect(row(page, 'Mohnsemmel').locator('.step input')).toHaveValue('0');
   });
+
+  test('TC-F3-07: Tab springt von Mengenfeld zu Mengenfeld', async ({ page }) => {
+    await openBaecker(page);
+    await row(page, 'Kaisersemmel').locator('.step input').focus();
+
+    // Erst das Retourenfeld derselben Zeile, dann die nächste Menge –
+    // die Plus/Minus-Knöpfe dürfen nicht dazwischen liegen.
+    await page.keyboard.press('Tab');
+    await expect(page.locator(':focus')).toHaveAttribute('data-feld', 'retoure');
+    await page.keyboard.press('Tab');
+    const fokus = page.locator(':focus');
+    await expect(fokus).toHaveAttribute('data-feld', 'menge');
+    await expect(fokus).toHaveAttribute('data-key', '33');
+  });
+
+  test('TC-F3-08: Fokus bleibt beim Tippen erhalten', async ({ page }) => {
+    await openBaecker(page);
+    const feld = row(page, 'Kaisersemmel').locator('.step input');
+    await feld.focus();
+    await feld.fill('52');
+    // Nach der Eingabe muss der Fokus noch im selben Feld stehen
+    await expect(page.locator(':focus')).toHaveAttribute('data-key', '1');
+    await expect(row(page, 'Kaisersemmel')).toHaveClass(/changed/);
+    await expect(row(page, 'Kaisersemmel')).toContainText('48 → 52');
+  });
+
+  test('TC-F3-09: Enter springt ins nächste Mengenfeld', async ({ page }) => {
+    await openBaecker(page);
+    await row(page, 'Kaisersemmel').locator('.step input').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator(':focus')).toHaveAttribute('data-key', '33');
+  });
 });
 
 // ════════════════════════════════════════════════════
@@ -553,7 +585,6 @@ test.describe('Bäcker – Verlauf (F10)', () => {
 // ════════════════════════════════════════════════════
 
 test.describe('Bäcker – Responsive (F12)', () => {
-
   test('TC-F12-01: kein horizontales Scrollen', async ({ page }) => {
     await openBaecker(page);
     const overflow = await page.evaluate(() =>
@@ -579,5 +610,17 @@ test.describe('Bäcker – Responsive (F12)', () => {
     await page.locator('#bk-send-btn').click();
     await page.waitForTimeout(800);
     expect(dialoge).toHaveLength(0);
+  });
+
+  test('TC-F12-04: nach einem Neuladen bleibt der Bäcker-Tab aktiv', async ({ page }) => {
+    // Der Kiosk lädt sich nach einem Update selbst neu – dabei darf die
+    // Verkäuferin nicht auf dem Standard-Tab landen.
+    await openBaecker(page);
+    await expect(page.locator('.k-tab[data-tab="baecker"]')).toHaveClass(/active/);
+
+    await page.reload();
+    await expect(page.locator('#panel-baecker .bk-row').first()).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.k-tab[data-tab="baecker"]')).toHaveClass(/active/);
+    await expect(page.locator('#panel-baecker')).toHaveClass(/active/);
   });
 });

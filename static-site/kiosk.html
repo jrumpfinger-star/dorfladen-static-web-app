@@ -1682,6 +1682,9 @@ var K = (function(){
   function switchTab(id){
     document.querySelectorAll('.k-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===id);});
     document.querySelectorAll('.k-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+id);});
+    // Aktiven Tab merken: Laedt sich der Kiosk nach einem Update selbst neu,
+    // landet die Verkaeuferin sonst wieder auf dem Standard-Tab.
+    try{ sessionStorage.setItem('k-active-tab', id); }catch(e){}
     var kbtn=document.getElementById('k-kunden-btn');
     if(kbtn) kbtn.classList.toggle('admin-active', id==='kunden');
     // Bottom bar only for Mittagstisch
@@ -1711,10 +1714,19 @@ var K = (function(){
         if(t) t.style.display=on?'':'none';
       });
       if(pickDefault){
-        var active=document.querySelector('.k-tab.active');
-        if(!active || active.style.display==='none'){
-          var vis=Array.prototype.slice.call(document.querySelectorAll('.k-tab')).filter(function(x){return x.style.display!=='none';});
-          if(vis.length) switchTab(vis[0].dataset.tab);
+        // Nach einem Neuladen zurueck zum zuletzt genutzten Tab, sofern er
+        // freigeschaltet ist – sonst der erste sichtbare.
+        var gemerkt='';
+        try{ gemerkt = sessionStorage.getItem('k-active-tab') || ''; }catch(e){}
+        var vis=Array.prototype.slice.call(document.querySelectorAll('.k-tab')).filter(function(x){return x.style.display!=='none';});
+        var wunsch=gemerkt ? vis.filter(function(x){return x.dataset.tab===gemerkt;})[0] : null;
+        if(wunsch){
+          if(!wunsch.classList.contains('active')) switchTab(gemerkt);
+        } else {
+          var active=document.querySelector('.k-tab.active');
+          if(!active || active.style.display==='none'){
+            if(vis.length) switchTab(vis[0].dataset.tab);
+          }
         }
       }
     }
@@ -5642,6 +5654,8 @@ var K = (function(){
 
   function isBusy(){
     if(document.querySelector('.k-modal-bg.open')) return true;
+    if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
+    if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen
     var a = document.activeElement;
     if(a){
       var tag = (a.tagName || '').toLowerCase();

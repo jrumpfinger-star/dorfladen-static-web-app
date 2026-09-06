@@ -347,7 +347,7 @@
     h += '<div class="nr">' + esc(p.nummer || '—') + '</div>';
     h += '<div class="nm">' + esc(p.name);
     if (geaendert && p.vorbelegt !== p.menge) {
-      h += ' <span class="tag">' + (p.vorbelegt || 0) + ' → ' + (p.menge || 0) + '</span>';
+      h += ' <span class="tag diff">' + (p.vorbelegt || 0) + ' → ' + (p.menge || 0) + '</span>';
     }
     if (p.zusatz) h += ' <span class="tag ex">nur heute</span>';
     if (p.aktiv === false && !p.zusatz) h += ' <span class="tag off">ausgeblendet</span>';
@@ -364,20 +364,31 @@
     }
     h += '</div>';
 
+    // +/− bewusst ohne Tab-Stopp: So springt Tab von Mengenfeld zu Mengenfeld,
+    // statt an jedem Knopf hängen zu bleiben.
     h += '<div class="step">';
-    h += '<button onclick="KBaecker.plus(\'' + esc(key) + '\',-1)"' + (gesperrt ? ' disabled' : '') + '>−</button>';
+    h += '<button type="button" tabindex="-1" onclick="KBaecker.plus(\'' + esc(key) + '\',-1)"' + (gesperrt ? ' disabled' : '') + '>−</button>';
     h += '<input type="number" inputmode="numeric" min="0" value="' + (p.menge || 0) + '"'
-      + (gesperrt ? ' readonly' : '') + ' onchange="KBaecker.setz(\'' + esc(key) + '\',this.value)">';
-    h += '<button onclick="KBaecker.plus(\'' + esc(key) + '\',1)"' + (gesperrt ? ' disabled' : '') + '>+</button>';
+      + ' data-feld="menge" data-key="' + esc(key) + '"'
+      + (gesperrt ? ' readonly' : '')
+      + ' onfocus="this.select()"'
+      + ' oninput="KBaecker.setz(\'' + esc(key) + '\',this.value)"'
+      + ' onchange="KBaecker.normiere(this,\'' + esc(key) + '\')"'
+      + ' onkeydown="KBaecker.taste(event,\'' + esc(key) + '\')">';
+    h += '<button type="button" tabindex="-1" onclick="KBaecker.plus(\'' + esc(key) + '\',1)"' + (gesperrt ? ' disabled' : '') + '>+</button>';
     h += '</div>';
 
     h += '<div class="ret"><span class="rl">Ret.</span>'
       + '<input type="number" inputmode="numeric" min="0" placeholder="–" value="'
-      + ((p.retoure || 0) ? p.retoure : '') + '"' + (gesperrt ? ' readonly' : '')
-      + ' onchange="KBaecker.setzRet(\'' + esc(key) + '\',this.value)"></div>';
+      + ((p.retoure || 0) ? p.retoure : '') + '"'
+      + ' data-feld="retoure" data-key="' + esc(key) + '"'
+      + (gesperrt ? ' readonly' : '')
+      + ' onfocus="this.select()"'
+      + ' oninput="KBaecker.setzRet(\'' + esc(key) + '\',this.value)"'
+      + ' onchange="KBaecker.normiereRet(this,\'' + esc(key) + '\')"></div>';
 
     if (p.zusatz && !gesperrt) {
-      h += '<button class="bk-del" title="Position entfernen" onclick="KBaecker.zusatzWeg(\'' + esc(key) + '\')">✕</button>';
+      h += '<button class="bk-del" type="button" tabindex="-1" title="Position entfernen" onclick="KBaecker.zusatzWeg(\'' + esc(key) + '\')">✕</button>';
     }
     return h + '</div>';
   }
@@ -396,12 +407,57 @@
     else delete _dirty[key];
   }
 
+  /* Zeile und Fusszeile gezielt auffrischen statt alles neu zu bauen –
+     ein vollstaendiges Render wuerde den Fokus aus dem Eingabefeld werfen
+     und damit das Durchtabben unmoeglich machen. */
+  function frischeZeile(key) {
+    var p = finde(key);
+    var el = document.querySelector('#panel-baecker .bk-row[data-key="' + key.replace(/"/g, '\\"') + '"]');
+    if (!p || !el) { render(); return; }
+    var hat = (p.menge || 0) > 0;
+    el.classList.toggle('has', hat);
+    el.classList.toggle('changed', !!_dirty[key]);
+    var feld = el.querySelector('.step input');
+    if (feld && document.activeElement !== feld) feld.value = p.menge || 0;
+    // Markierung "48 → 52" mitziehen
+    var nm = el.querySelector('.nm');
+    if (nm) {
+      var alt = nm.querySelector('.tag.diff');
+      if (_dirty[key] && (p.vorbelegt || 0) !== (p.menge || 0)) {
+        if (!alt) {
+          alt = document.createElement('span');
+          alt.className = 'tag diff';
+          nm.appendChild(alt);
+        }
+        alt.textContent = (p.vorbelegt || 0) + ' → ' + (p.menge || 0);
+      } else if (alt) {
+        alt.remove();
+      }
+    }
+    frischeFuss();
+  }
+
+  function frischeFuss() {
+    var el = document.querySelector('#panel-baecker .bk-foot .sum');
+    if (!el) return;
+    var pos = 0, stk = 0;
+    (_b.positionen || []).forEach(function (p) {
+      if ((p.menge || 0) > 0 || (p.retoure || 0) > 0) { pos++; stk += (p.menge || 0); }
+    });
+    var ge = Object.keys(_dirty).length;
+    el.innerHTML = ((_b.gesperrt && !_korrektur) ? 'Gesendet: ' : 'Bestellung: ')
+      + '<b>' + pos + ' Positionen</b> · <b>' + stk + ' Stück</b>'
+      + (ge ? ' · ' + ge + ' Änderung' + (ge === 1 ? '' : 'en') : '');
+  }
+
   function plus(key, delta) {
     var p = finde(key);
     if (!p || (_b.gesperrt && !_korrektur)) return;
     p.menge = Math.max(0, (parseInt(p.menge, 10) || 0) + delta);
     markiere(p);
-    render();
+    var feld = document.querySelector('#panel-baecker .bk-row[data-key="' + key.replace(/"/g, '\\"') + '"] .step input');
+    if (feld) feld.value = p.menge;
+    frischeZeile(key);
   }
 
   function setz(key, wert) {
@@ -410,7 +466,7 @@
     var n = parseInt(wert, 10);
     p.menge = (isNaN(n) || n < 0) ? 0 : n;
     markiere(p);
-    render();
+    frischeZeile(key);
   }
 
   function setzRet(key, wert) {
@@ -418,7 +474,34 @@
     if (!p || (_b.gesperrt && !_korrektur)) return;
     var n = parseInt(wert, 10);
     p.retoure = (isNaN(n) || n < 0) ? 0 : n;
-    render();
+    frischeFuss();
+  }
+
+  /* Beim Verlassen des Feldes den angezeigten Wert bereinigen. Waehrend des
+     Tippens wird bewusst nicht eingegriffen, damit der Cursor stehen bleibt. */
+  function normiere(el, key) {
+    setz(key, el.value);
+    var p = finde(key);
+    if (p) el.value = p.menge || 0;
+  }
+
+  function normiereRet(el, key) {
+    setzRet(key, el.value);
+    var p = finde(key);
+    if (p) el.value = (p.retoure || 0) ? p.retoure : '';
+  }
+
+  /* Enter springt ins naechste Mengenfeld – so lassen sich alle Mengen
+     nacheinander eingeben, ohne die Hand von der Tastatur zu nehmen. */
+  function taste(ev, key) {
+    if (ev.key !== 'Enter') return;
+    ev.preventDefault();
+    var felder = Array.prototype.slice.call(
+      document.querySelectorAll('#panel-baecker .bk-row .step input:not([readonly])'));
+    var i = felder.findIndex(function (f) { return f.dataset.key === key; });
+    var next = felder[i + 1];
+    if (next) { next.focus(); next.select(); }
+    else if (felder.length) { felder[0].focus(); felder[0].select(); }
   }
 
   function reset() {
@@ -836,7 +919,9 @@
 
   window.KBaecker = {
     onShow: onShow, start: start, sub: sub, tag: tag,
-    plus: plus, setz: setz, setzRet: setzRet, reset: reset, umfang: umfang,
+    plus: plus, setz: setz, setzRet: setzRet, taste: taste,
+    normiere: normiere, normiereRet: normiereRet,
+    reset: reset, umfang: umfang,
     speichern: speichern, vorschau: vorschau, senden: senden,
     korrektur: korrektur, verwerfen: verwerfen,
     zusatzDialog: zusatzDialog, zusatzAus: zusatzAus, zusatzFrei: zusatzFrei,
