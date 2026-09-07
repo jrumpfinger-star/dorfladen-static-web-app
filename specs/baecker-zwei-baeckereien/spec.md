@@ -144,8 +144,12 @@ jedes API-Aufrufs.
   Papierausdruck ja/nein.
 - Eine Bestellung ist eindeutig über **(Bäckerei, Liefertag)** bestimmt.
 - Die Vorbelegung (F2 der Basis-Spec) greift **nur innerhalb derselben Bäckerei**.
-- Fehlt in einem Aufruf die Bäckerei, antwortet der Server mit einer
-  verständlichen Fehlermeldung statt stillschweigend Freundl anzunehmen.
+- Aufrufe, die **eine bestimmte Bestellung** oder **einen Katalog** betreffen,
+  verlangen die Bäckerei zwingend. Fehlt sie, antwortet der Server mit einer
+  verständlichen Fehlermeldung, statt stillschweigend Freundl anzunehmen.
+- Aufrufe, die **bewusst über beide** Bäckereien gehen — Tagesleiste
+  (`mode=uebersicht`), Verlauf (`mode=verlauf`) und Einstellungen
+  (`mode=config`) — kommen ohne Bäckerei aus und liefern sie **je Eintrag** mit.
 
 #### F17 Test Cases
 
@@ -174,6 +178,12 @@ jedes API-Aufrufs.
 
 - **Action:** `GET /api/baecker-order?datum=2026-09-12` ohne `baeckerei`.
 - **Expected:** HTTP 400 mit Klartext-Meldung; keine Daten.
+
+**TC-B2-F17-05: Übergreifende Abrufe brauchen keine Bäckerei**
+
+- **Action:** `GET /api/baecker-order?mode=uebersicht` und `?mode=verlauf`
+  ohne `baeckerei`.
+- **Expected:** HTTP 200; jeder Eintrag nennt seine Bäckerei.
 
 ### F18: Liefertag bestimmt die Bäckerei
 
@@ -233,7 +243,8 @@ abgearbeitet.
 - Der Tag gilt erst als erledigt, wenn **beide** Bestellungen gesendet (und, wo
   gefordert, gedruckt) sind.
 - Die **Erinnerung ab Bestellschluss** (F9 der Basis-Spec) blinkt weiter, solange
-  auch nur eine der beiden offen ist.
+  auch nur eine der beiden offen ist. Die Berechnung im Server muss deshalb
+  **alle** am Zieltag liefernden Bäckereien prüfen, nicht nur eine.
 - Der Zähler am Tab zählt jede offene Bestellung **und** jeden offenen Ausdruck.
 
 #### F19 Test Cases
@@ -658,13 +669,13 @@ Bestellungen erhalten zusätzlich `gedruckt_am` (nur wo `papierausdruck` gilt).
 
 | Requirement | Test Cases | Plan | Tasks |
 | --- | --- | --- | --- |
-| F17 Bäckerei als Merkmal | TC-B2-F17-01…04 | Technical Approach, store.py | — |
-| F18 Tag bestimmt Bäckerei | TC-B2-F18-01…03 | Tagesleiste | — |
-| F19 Samstag | TC-B2-F19-01…05 | Kiosk-Reiterzeile | — |
-| F20 Formular je Bäckerei | TC-B2-F20-01…05 | pdf_fill.py | — |
-| F21 Artikelstamm Martin's | TC-B2-F21-01…04 | katalog-martins.json | — |
-| F22 Rechnungs-Import | TC-B2-F22-01…06 | rechnung_parser.py | — |
-| F23 Papierausdruck | TC-B2-F23-01…06 | Druckansicht im Browser | — |
-| F24 Bestandsübernahme | TC-B2-F24-01…04 | baecker-migration | — |
-| F25 CMS je Bäckerei | TC-B2-F25-01…04 | CMS-Karte | — |
-| F26 Responsive | TC-B2-F26-01…04 | Change Map kiosk.html | — |
+| F17 Bäckerei als Merkmal | TC-B2-F17-01…05 | Technical Approach, store.py | T020-T022, T025, T030, T033 |
+| F18 Tag bestimmt Bäckerei | TC-B2-F18-01…03 | Tagesleiste | T024, T032, T080, T083 |
+| F19 Samstag | TC-B2-F19-01…05 | Kiosk-Reiterzeile | T032, T081, T082 |
+| F20 Formular je Bäckerei | TC-B2-F20-01…05 | pdf_fill.py | T034, T040-T043 |
+| F21 Artikelstamm Martin's | TC-B2-F21-01…04 | katalog-martins.json | T010, T060 |
+| F22 Rechnungs-Import | TC-B2-F22-01…06 | rechnung_parser.py | T050-T052, T061, T062, T087 |
+| F23 Papierausdruck | TC-B2-F23-01…06 | Druckansicht im Browser | T035, T084-T086 |
+| F24 Bestandsübernahme | TC-B2-F24-01…04 | baecker-migration | T021, T070-T073, T120 |
+| F25 CMS je Bäckerei | TC-B2-F25-01…04 | CMS-Karte | T036, T090-T092 |
+| F26 Responsive | TC-B2-F26-01…04 | Change Map kiosk.html | T088, T103 |

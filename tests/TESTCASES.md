@@ -2593,10 +2593,12 @@ nur an Randfarbe und Knöpfen.
 ## T-B2 – Zweite Bäckerei (Martin's Backstube)
 
 Spec: `specs/baecker-zwei-baeckereien/spec.md` (F17–F26)
+Plan: `specs/baecker-zwei-baeckereien/plan.md` ·
+Tasks: `specs/baecker-zwei-baeckereien/tasks.md`
 Geplant für `tests/kiosk-baecker-zwei.spec.js` (mobile / ipad-mini / desktop)
-sowie Parser- und Umzugstests ohne Azure.
+sowie Parser-, PDF-, Store- und Umzugstests ohne Azure.
 
-**Status:** Spec geschrieben, noch nicht geplant/umgesetzt.
+**Status:** Spec, Plan und Aufgabenliste fertig; Umsetzung noch nicht begonnen.
 
 > **Namenskollision beachtet:** Die Testfälle tragen bewusst das Kürzel
 > `TC-B2-…`. Ein schlichtes `TC-F17-01` wäre mit T-F17 (Mittagstisch-
@@ -2604,7 +2606,7 @@ sowie Parser- und Umzugstests ohne Azure.
 
 | Test-Case | Prüfung |
 |---|---|
-| TC-B2-F17-01..04 | Getrennte Kataloge/Bestellungen je Bäckerei; gleiche Nummer, verschiedene Artikel; fehlende Bäckerei wird abgelehnt |
+| TC-B2-F17-01..05 | Getrennte Kataloge/Bestellungen je Bäckerei; gleiche Nummer, verschiedene Artikel; fehlende Bäckerei wird abgelehnt; übergreifende Abrufe kommen ohne sie aus |
 | TC-B2-F18-01..03 | Liefertag bestimmt die Bäckerei; Tageswechsel schaltet mit; Lieferanten-Punkte in der Tagesleiste |
 | TC-B2-F19-01..05 | Samstag: Reiter nur bei zwei Lieferanten, Stand je Reiter, „1 von 2", Erinnerung bis beide raus sind |
 | TC-B2-F20-01..05 | Martin's PDF nur für den gewählten Tag, Kopfdaten, Sortierung; Freundl bleibt Word |
