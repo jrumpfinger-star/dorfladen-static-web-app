@@ -2713,10 +2713,15 @@ Inline-Stilen aus – daraus entstanden drei Fehler:
 Spec: `specs/baecker-zwei-baeckereien/spec.md` (F17–F26)
 Plan: `specs/baecker-zwei-baeckereien/plan.md` ·
 Tasks: `specs/baecker-zwei-baeckereien/tasks.md`
-Geplant für `tests/kiosk-baecker-zwei.spec.js` (mobile / ipad-mini / desktop)
-sowie Parser-, PDF-, Store- und Umzugstests ohne Azure.
+Automatisiert in `tests/kiosk-baecker-zwei.spec.js` (mobile / ipad-mini / desktop)
+sowie in vier Werkzeugtests ohne Azure:
 
-**Status:** Spec, Plan und Aufgabenliste fertig; Umsetzung noch nicht begonnen.
+- `python tools/baecker_store_test.py` – Schlüssel, Lesebrücke, Trennung
+- `python tools/baecker_pdf_test.py` – PDF-Formular und Zeichenbereiniger
+- `python tools/baecker_rechnung_test.py` – Parser gegen die 11 Rechnungen
+- `python tools/baecker_migration_test.py` – Verhalten vor und nach dem Umzug
+
+**Status:** Umgesetzt bis auf die Auslieferung (T110–T115).
 
 > **Namenskollision beachtet:** Die Testfälle tragen bewusst das Kürzel
 > `TC-B2-…`. Ein schlichtes `TC-F17-01` wäre mit T-F17 (Mittagstisch-
@@ -2738,6 +2743,18 @@ sowie Parser-, PDF-, Store- und Umzugstests ohne Azure.
 ### Testlauf-Tabelle (Zweite Bäckerei)
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
-| — | — | — | Noch kein Lauf – Umsetzung steht aus |
+| 07.09.2026 | Werkzeugtests | 163/163 | Store 37, PDF 30, Rechnung 28, Umzug 35, Fachlogik 27, DOCX 6 |
+| 07.09.2026 | TC-B2 (Playwright) | 51/51 | 17 Tests × 3 Auflösungen, lokal gegen 127.0.0.1:8899 |
+| 07.09.2026 | T-BK (Regression) | 156/156 | Freundl-Bestandstests unverändert grün |
+
+> **Zwei Befunde aus dem Regressionslauf.** Der neue Zähler am Reiter zählte
+> zunächst *jeden* offenen Bestelltag der Woche – dort hätte dauerhaft eine Zahl
+> gestanden. Er nennt jetzt die morgen fällige Bestellung plus offene Ausdrucke.
+> Und ein Nicht-Liefertag heißt jetzt „keine Lieferung" statt „kein Tag"; mit
+> zwei Bäckereien war das alte Wort missverständlich.
+
+> **Fensterfrei drucken.** `TC-B2-F23-06` ersetzt `window.open` durch ein
+> Ersatzobjekt, das mitschreibt. Ein echtes Druckfenster öffnete den
+> Systemdialog und blockierte den Lauf.
 
 
