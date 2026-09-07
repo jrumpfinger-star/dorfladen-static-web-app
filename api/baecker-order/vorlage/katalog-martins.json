@@ -1,0 +1,246 @@
+{
+  "baeckerei": "martins",
+  "quelle": "Bestellschein 12.06.2026 + 11 Rechnungen (Mai–Aug 2026)",
+  "artikel": [
+    {
+      "nummer": "1",
+      "name": "Semmel",
+      "aktiv": true
+    },
+    {
+      "nummer": "3",
+      "name": "Doppelte",
+      "aktiv": true
+    },
+    {
+      "nummer": "4",
+      "name": "Spitzerl",
+      "aktiv": true
+    },
+    {
+      "nummer": "6",
+      "name": "BIO-Mini-Ciabatta",
+      "aktiv": true
+    },
+    {
+      "nummer": "8",
+      "name": "Knackies",
+      "aktiv": true
+    },
+    {
+      "nummer": "12",
+      "name": "Roggensemmel m. Kümmel",
+      "aktiv": true
+    },
+    {
+      "nummer": "13",
+      "name": "Roggensemmel oh. Kümmel",
+      "aktiv": true
+    },
+    {
+      "nummer": "14",
+      "name": "Mohnsemmel",
+      "aktiv": true
+    },
+    {
+      "nummer": "15",
+      "name": "Sesamsemmel",
+      "aktiv": true
+    },
+    {
+      "nummer": "20",
+      "name": "Buttermilchdinkelweckerl",
+      "aktiv": true
+    },
+    {
+      "nummer": "23",
+      "name": "Gewürzstangerl",
+      "aktiv": false
+    },
+    {
+      "nummer": "27",
+      "name": "Bio-Dinkel-Käse-Kürbiskern",
+      "aktiv": true
+    },
+    {
+      "nummer": "29",
+      "name": "Bio-Dinkelkrüstchen",
+      "aktiv": true
+    },
+    {
+      "nummer": "40",
+      "name": "Bio-Kornstangerl",
+      "aktiv": true
+    },
+    {
+      "nummer": "41",
+      "name": "Bio-Mehrkornsemmel",
+      "aktiv": true
+    },
+    {
+      "nummer": "47",
+      "name": "Bio-Kürbiskern-Semmel",
+      "aktiv": true
+    },
+    {
+      "nummer": "60",
+      "name": "Brezen",
+      "aktiv": false
+    },
+    {
+      "nummer": "61",
+      "name": "BIO-Brezensemmel",
+      "aktiv": false
+    },
+    {
+      "nummer": "62",
+      "name": "Brezenzöpferl",
+      "aktiv": false
+    },
+    {
+      "nummer": "63",
+      "name": "Bio-Vollkornbrezen",
+      "aktiv": false
+    },
+    {
+      "nummer": "64",
+      "name": "Laugenstangerl m. Käse",
+      "aktiv": false
+    },
+    {
+      "nummer": "71",
+      "name": "Bio-Kürbiskern-Ring",
+      "aktiv": true
+    },
+    {
+      "nummer": "74",
+      "name": "Süßkartoffelsemmel",
+      "aktiv": true
+    },
+    {
+      "nummer": "101",
+      "name": "Kastenweißbrot",
+      "aktiv": true
+    },
+    {
+      "nummer": "104",
+      "name": "BIO-Ciabatta",
+      "aktiv": true
+    },
+    {
+      "nummer": "127",
+      "name": "BIO-Tagwerk-Brot 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "130",
+      "name": "Helles Mischbrot 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "131",
+      "name": "Helles Mischbrot 1 kg",
+      "aktiv": true
+    },
+    {
+      "nummer": "134",
+      "name": "Franken Laib 1 kg",
+      "aktiv": true
+    },
+    {
+      "nummer": "135",
+      "name": "Steinmetzbrot 1 kg",
+      "aktiv": true
+    },
+    {
+      "nummer": "136",
+      "name": "Landbrot 1 kg",
+      "aktiv": true
+    },
+    {
+      "nummer": "137",
+      "name": "Landbrot gewürzt",
+      "aktiv": true
+    },
+    {
+      "nummer": "138",
+      "name": "Buttermilchbrot 1 kg",
+      "aktiv": true
+    },
+    {
+      "nummer": "140",
+      "name": "BIO-Sauerteigweckerl 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "141",
+      "name": "BIO-Weltmeister-Brot 750 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "146",
+      "name": "BIO-Vollkorn Sonne 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "151",
+      "name": "BIO-Mehrkornbrot 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "154",
+      "name": "BIO-Krustenbrot 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "162",
+      "name": "BIO-Roggenvollkorn 100 % 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "182",
+      "name": "BIO-Schrot & Saat",
+      "aktiv": false
+    },
+    {
+      "nummer": "186",
+      "name": "BIO-Vollkorn-Nuß-Brot 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "189",
+      "name": "BIO-Olivenbrot 500 g",
+      "aktiv": false
+    },
+    {
+      "nummer": "192",
+      "name": "Bio-Brot des Monats",
+      "aktiv": true
+    },
+    {
+      "nummer": "208",
+      "name": "Landbrot 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "238",
+      "name": "Bio-Dinkel-Ernte",
+      "aktiv": true
+    },
+    {
+      "nummer": "240",
+      "name": "Dorfener Naturlaib-BIO",
+      "aktiv": true
+    },
+    {
+      "nummer": "242",
+      "name": "Bio Bergbauern 500 g",
+      "aktiv": true
+    },
+    {
+      "nummer": "401",
+      "name": "Nußhörnchen",
+      "aktiv": false
+    }
+  ]
+}
