@@ -103,15 +103,12 @@
         _uebersicht = res;
         badge();
         if (danachLaden) {
-          // Bestellt wird immer für einen künftigen Liefertag – heute ist die
-          // Ware längst da. Deshalb den ersten BESTELLBAREN Tag wählen, der
-          // noch Arbeit macht.
-          var ziel = null;
-          (res.tage || []).forEach(function (t) {
-            if (ziel || !t.bestellbar) return;
-            if (t.status !== 'gesendet') ziel = t;
-          });
-          if (!ziel) ziel = (res.tage || []).filter(function (t) { return t.bestellbar; })[0];
+          // Beim Öffnen steht IMMER der nächste Liefertag da. Die Bestellung
+          // für heute ist längst gestern rausgegangen, und für heute lässt
+          // sich ohnehin nichts mehr bestellen. Bewusst nicht „der erste Tag
+          // mit offener Arbeit“: Das sprang je nach Stand mal auf Mittwoch,
+          // mal auf Donnerstag – unvorhersehbar.
+          var ziel = (res.tage || []).filter(function (t) { return t.bestellbar; })[0];
           if (!ziel) {
             // Kein einziger künftiger Liefertag – etwa wenn für beide
             // Bäckereien keine Bestelltage eingestellt sind. Ohne diesen Zweig
@@ -122,7 +119,10 @@
             return;
           }
           _datum = ziel.datum;
-          _bk = (ziel.lieferanten[0] || {}).baeckerei || '';
+          // Liefern an dem Tag zwei, zuerst die mit offener Bestellung zeigen.
+          var wer = ziel.lieferanten || [];
+          var offen = wer.filter(function (x) { return x.status === 'offen'; })[0];
+          _bk = (offen || wer[0] || {}).baeckerei || '';
           return ladeBestellung(_datum);
         }
       })
