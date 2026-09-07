@@ -404,6 +404,9 @@
       cursor:pointer;white-space:nowrap}
     .mb-einh button.on{border-color:#2d5016;background:#2d5016;color:#fff}
     .mb-quick{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+    /* Die Kacheln bilden eine eigene Reihe, damit sie auf schmalen Schirmen
+       wischbar werden koennen, ohne die Aktionsknoepfe mitzunehmen. */
+    .mb-kach{display:flex;gap:4px;flex-wrap:wrap;align-items:center;min-width:0}
     .mb-quick button{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;border-radius:9px;
       min-width:44px;min-height:38px;font-size:14px;font-weight:600;cursor:pointer}
     .mb-quick button.on{border-color:#1d4ed8;background:#eff6ff;color:#1d4ed8}
@@ -509,6 +512,16 @@
       .mb-sugg::-webkit-scrollbar{display:none}
       .mb-sugg button{flex:0 0 auto}
       .mb-quick button{min-width:40px}
+    }
+    /* Schmal UND niedrig: Einheiten und Kacheln brechen sonst auf je zwei
+       Zeilen um, wodurch der Hinzufügen-Knopf unter die Fußzeile rutscht.
+       Wischbare Zeilen halten alle Werte direkt antippbar (F17). */
+    @media(max-width:619px){
+      .mb-einh,.mb-kach{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+      .mb-einh::-webkit-scrollbar,.mb-kach::-webkit-scrollbar{display:none}
+      .mb-einh button,.mb-kach button,.mb-kach .mb-mg{flex:0 0 auto}
+      .mb-quick{flex-wrap:nowrap}
+      .mb-quick button.mb-ok,.mb-quick button.mb-del{flex:0 0 auto}
     }
     /* === Bäcker-Tab === */
     :root{--bk:#b45309;--bk-dark:#92400e;--bk-bg:#fffbeb;--bk-line:#fcd34d}

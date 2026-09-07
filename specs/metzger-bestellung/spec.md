@@ -1374,7 +1374,13 @@ nach einem festen Entwurf. Geprüft wird auf Mobile (375×667), iPad mini
 - Auf Mobile stapelt sich die Zeile: Nummernspalte und Bezeichnung oben,
   Badges darunter.
 - Der Editor bleibt zwischen Kopf und Fußzeile sichtbar; passt er nicht ganz,
-  wird seine Oberkante angelegt.
+  wird seine Oberkante angelegt. Maßgeblich ist der **tatsächlich freie
+  Bereich** — Reiterband und Fußzeile überlagern die Liste, `window.innerHeight`
+  ist als Untergrenze also zu groß.
+- **Der Aktionsknopf („+ Hinzufügen" / „Ändern") liegt nie hinter der Fußzeile.**
+  Auf schmalen Schirmen werden Einheiten und Gewichts-Kacheln dafür zu
+  waagrecht wischbaren Zeilen; sie bleiben direkt antippbar, brauchen aber nur
+  noch eine Zeile statt zwei.
 - Kopfbereich bleibt ab 620 px Breite beim Scrollen stehen; darunter scrollt er mit.
 - Keine `alert()`/`confirm()`; alle Meldungen laufen über die In-App-Komponenten
   in Klartext.
@@ -1406,7 +1412,9 @@ nach einem festen Entwurf. Geprüft wird auf Mobile (375×667), iPad mini
 **TC-F17-04: Editor passt zwischen Kopf und Fuß**
 
 - **Expected:** Auf allen drei Viewports liegt der geöffnete Editor vollständig
-  im freien Bereich.
+  im freien Bereich. Insbesondere liegt der Knopf „+ Hinzufügen" unterhalb des
+  Reiterbands und **oberhalb der Fußzeilen-Oberkante** — gemessen an deren
+  tatsächlicher Position, nicht an der Fensterhöhe.
 
 **TC-F17-05: Mobile stapelt die Zeile**
 

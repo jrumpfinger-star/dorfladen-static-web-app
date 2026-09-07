@@ -428,6 +428,29 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     expect(mass.klein).toEqual([]);
   });
 
+  test('TC-F17-04: „Hinzufügen" liegt nicht hinter der Fußzeile', async ({ page }) => {
+    await oeffneTab(page);
+    await zeile(page, 'Putenschnitzel').locator('.mb-add').first().click();
+    // Das Scrollen laeuft weich - erst danach messen.
+    await page.waitForTimeout(900);
+    const m = await page.evaluate(() => {
+      const box = document.getElementById('panel-metzgerbest');
+      const ok = box.querySelector('.mb-quick .mb-ok');
+      const fuss = document.getElementById('mb-foot');
+      const band = box.querySelector('.k-filter-bar');
+      const r = box.getBoundingClientRect();
+      return {
+        ok: ok ? ok.getBoundingClientRect().bottom : null,
+        okTop: ok ? ok.getBoundingClientRect().top : null,
+        unten: fuss ? fuss.getBoundingClientRect().top : r.bottom,
+        oben: band ? band.getBoundingClientRect().bottom : r.top,
+      };
+    });
+    expect(m.ok).not.toBeNull();
+    expect(m.ok).toBeLessThanOrEqual(m.unten);
+    expect(m.okTop).toBeGreaterThanOrEqual(m.oben);
+  });
+
   test('TC-F17-07: Keine nativen Dialoge', async ({ page }) => {
     await oeffneTab(page);
     let nativ = false;

@@ -577,7 +577,7 @@ window.KMetzgerBest = (function () {
     });
     h += '</div><button class="mb-vak' + (b.vakuum ? ' on' : '') + '" id="mb-vak"'
       + ' onclick="KMetzgerBest.vakAn()"><span class="box">✓</span>vakuumieren</button>';
-    h += '</div><div class="mb-quick">';
+    h += '</div><div class="mb-quick"><div class="mb-kach">';
     kacheln(b.einheit).forEach(function (k) {
       var aktiv = aendern && (b.menge === k[0] || (b.menge === null && b.einheit === k[0]));
       var arg = (typeof k[0] === 'number') ? k[0] : "'" + k[0] + "'";
@@ -588,6 +588,7 @@ window.KMetzgerBest = (function () {
       + (b.menge === null ? '' : zahl(b.menge)) + '"'
       + ' oninput="KMetzgerBest.feld(\'m\',this.value)"'
       + ' onkeydown="if(event.key===\'Enter\')KMetzgerBest.pad(\'' + esc(key) + '\')">';
+    h += '</div>';
     h += '<button class="mb-ok" onclick="KMetzgerBest.pad(\'' + esc(key) + '\')">'
       + (aendern ? 'Ändern' : '+ Hinzufügen') + '</button>';
     if (aendern) {
@@ -729,14 +730,31 @@ window.KMetzgerBest = (function () {
     inSicht();
   }
 
-  // Der Editor darf weder hinter dem Kopf noch hinter der Fusszeile liegen.
+  // Der Editor darf weder hinter dem klebenden Reiterband noch hinter der
+  // Fusszeile liegen - beide ueberlagern die Liste, weshalb window.innerHeight
+  // als Untergrenze zu gross ist. Passt er nicht ganz, wird die Oberkante
+  // angelegt, damit die Eingabe von oben nach unten lesbar bleibt (F17).
   function inSicht() {
     var ed = document.querySelector('.mb-ed');
-    if (!ed) return;
+    var box = document.getElementById('panel-metzgerbest');
+    if (!ed || !box) return;
+    var rahmen = box.getBoundingClientRect();
+    var oben = rahmen.top;
+    var unten = rahmen.bottom;
+    var band = box.querySelector('.k-filter-bar');
+    if (band) oben = Math.max(oben, band.getBoundingClientRect().bottom);
+    var fuss = document.getElementById('mb-foot');
+    if (fuss) unten = Math.min(unten, fuss.getBoundingClientRect().top);
+
     var b = ed.getBoundingClientRect();
-    if (b.top < 0 || b.bottom > window.innerHeight) {
-      ed.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    var luft = 8;
+    var weg = 0;
+    if (b.height > unten - oben - 2 * luft || b.top < oben + luft) {
+      weg = b.top - oben - luft;            // Oberkante anlegen
+    } else if (b.bottom > unten - luft) {
+      weg = b.bottom - unten + luft;        // gerade so weit wie noetig
     }
+    if (weg) box.scrollBy({ top: weg, behavior: 'smooth' });
   }
 
   function feld(k, v) {
