@@ -1,7 +1,7 @@
-"""Erzeugt den bereinigten Baecker-Artikelkatalog aus den vorhandenen Bestellmails.
+﻿"""Erzeugt den bereinigten Baecker-Artikelkatalog aus den vorhandenen Bestellmails.
 
 Fuehrt beide Formularvarianten zusammen, bereinigt Dubletten und Tippfehler und
-ermittelt je Artikel, wie oft er bestellt wurde. Ergebnis: katalog.json als
+ermittelt je Artikel, wie oft er bestellt wurde. Ergebnis: katalog-freundl.json als
 Startbestand fuer die Artikelverwaltung.
 """
 import email
@@ -14,7 +14,7 @@ from xml.etree import ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.join(ROOT, "B\u00e4cker")
-OUT = os.path.join(ROOT, "api", "baecker-order", "vorlage", "katalog.json")
+OUT = os.path.join(ROOT, "api", "baecker-order", "vorlage", "katalog-freundl.json")
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 # Tippfehler im Originalformular -> korrigierte Schreibweise

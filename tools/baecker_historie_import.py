@@ -168,7 +168,7 @@ def main():
     # Artikelkatalog mitschreiben, falls noch nicht gepflegt
     rec_id, vorhanden = store.read_json(url, hdrs, store.KEY_ARTIKEL)
     if not (vorhanden or {}).get("artikel"):
-        kat = os.path.join(ROOT, "api", "baecker-order", "vorlage", "katalog.json")
+        kat = os.path.join(ROOT, "api", "baecker-order", "vorlage", "katalog-freundl.json")
         with open(kat, encoding="utf-8") as fh:
             store.write_json(url, hdrs, store.KEY_ARTIKEL, rec_id,
                              json.load(fh), "Baecker-Artikel")

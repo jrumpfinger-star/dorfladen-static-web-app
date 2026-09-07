@@ -5,14 +5,29 @@ Artikelkatalog, Einstellungen und Bestellungen liegen als JSON in
 Kiosk bereits fuer Konfiguration und Push-Abos nutzt. Dadurch ist keine
 Schema-Aenderung in Dataverse noetig.
 
+Der Dorfladen wird von **zwei** Baeckereien beliefert. Die Baeckerei ist Teil
+des Schluessels, weil beide Haeuser **eigene Artikelnummern** vergeben: Nr. 1 ist
+bei Freundl die Kaisersemmel, bei Martin's die Semmel. Ein gemeinsamer Katalog
+waere damit unbrauchbar.
+
 Schluessel:
-    baecker_artikel              Artikelkatalog
-    baecker_config               Einstellungen (Empfaenger, Bestelltage, …)
-    baecker_order_JJJJ-MM-TT     eine Bestellung je Liefertag
+    baecker_artikel_<bk>              Artikelkatalog je Baeckerei
+    baecker_config                    Einstellungen ALLER Baeckereien
+    baecker_order_<bk>_JJJJ-MM-TT     eine Bestellung je Baeckerei und Liefertag
+
+Altschluessel (vor der Umstellung auf zwei Baeckereien, gehoeren Freundl):
+    baecker_artikel                   -> baecker_artikel_freundl
+    baecker_order_JJJJ-MM-TT          -> baecker_order_freundl_JJJJ-MM-TT
+
+Solange der Bestand noch nicht umgezogen ist, greift die **Lesebruecke**: Fehlt
+der neue Schluessel, wird der alte gelesen. Geschrieben wird **immer** auf den
+neuen. Ohne diese Bruecke staende der Baecker-Tab zwischen Live-Gang und Umzug
+mit leerem Verlauf und leerer Vorbelegung da.
 """
 import json
 import logging
 import os
+import re
 from datetime import date, datetime, timedelta
 
 import msal
@@ -21,31 +36,66 @@ import requests
 ENTITY = "dl_seiteninhalts"
 PK = "dl_seiteninhaltid"
 
-KEY_ARTIKEL = "baecker_artikel"
+KEY_ARTIKEL = "baecker_artikel"     # Altschluessel, nur noch fuer die Bruecke
 KEY_CONFIG = "baecker_config"
-KEY_ORDER = "baecker_order_"
+KEY_ORDER = "baecker_order_"        # gemeinsamer Praefix ALLER Bestellungen
+
+# Feste Kennungen – sie stehen in Speicherschluesseln und duerfen sich nie
+# aendern. Der Anzeigename ist davon getrennt und im CMS frei aenderbar.
+FREUNDL, MARTINS = "freundl", "martins"
+BAECKEREIEN = (FREUNDL, MARTINS)
+ALT_BAECKEREI = FREUNDL             # der Altbestand gehoert Freundl
 
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
 
 STATUS_ENTWURF, STATUS_GESENDET, STATUS_KORRIGIERT = 0, 1, 2
 
-# Startwerte – im Kiosk aenderbar. Empfaenger bleibt bis zur Freigabe die
-# Testadresse, damit keine unfertige Bestellung bei der Baeckerei landet.
-DEFAULT_CONFIG = {
-    "empfaenger": "jrumpfinger@t-online.de",
-    "empfaenger_name": "Test (Baecker-Bestellung)",
-    "baeckerei_mail": "info@baeckerei-freundl.de",
-    "bestelltage": [2, 3, 4, 5],          # Mi, Do, Fr, Sa (Montag = 0)
-    "bestellschluss": "12:00",
-    "kd_nr": "1190",
-    "tour_nr": {"default": "87", "5": "8"},   # Samstag faehrt Tour 8
-    "gruppen": [
-        {"bis": 119, "titel": "Semmeln & Kleingeb\u00e4ck"},
-        {"bis": 301, "titel": "Brote & Baguettes"},
-        {"bis": None, "titel": "S\u00fc\u00dfes & Sonstiges"},
-    ],
+# Startwerte je Baeckerei – im CMS aenderbar. Der Empfaenger bleibt bis zur
+# ausdruecklichen Freigabe die Testadresse, damit keine unfertige Bestellung
+# bei einer Baeckerei landet.
+TESTADRESSE = "jrumpfinger@t-online.de"
+
+DEFAULT_BAECKEREIEN = {
+    FREUNDL: {
+        "name": "B\u00e4ckerei Freundl",
+        "empfaenger": TESTADRESSE,
+        "empfaenger_name": "Test (B\u00e4cker-Bestellung)",
+        "baeckerei_mail": "info@baeckerei-freundl.de",
+        "bestelltage": [2, 3, 4, 5],          # Mi, Do, Fr, Sa (Montag = 0)
+        "bestellschluss": "12:00",
+        "kd_nr": "1190",
+        "tour_nr": {"default": "87", "5": "8"},   # Samstag faehrt Tour 8
+        "format": "docx",
+        "papierausdruck": True,               # Freundl braucht zusaetzlich Papier
+        "gruppen": [
+            {"bis": 119, "titel": "Semmeln & Kleingeb\u00e4ck"},
+            {"bis": 301, "titel": "Brote & Baguettes"},
+            {"bis": None, "titel": "S\u00fc\u00dfes & Sonstiges"},
+        ],
+    },
+    MARTINS: {
+        "name": "Martin's Backstube",
+        "empfaenger": TESTADRESSE,
+        "empfaenger_name": "Test (B\u00e4cker-Bestellung)",
+        "baeckerei_mail": "",                 # echte Bestelladresse noch offen
+        "bestelltage": [0, 1, 5],             # Mo, Di, Sa
+        "bestellschluss": "12:00",
+        "kd_nr": "1015",
+        "tour_nr": {"default": ""},
+        "format": "pdf",
+        "papierausdruck": False,
+        "gruppen": [
+            {"bis": 99, "titel": "Semmeln & Kleingeb\u00e4ck"},
+            {"bis": 299, "titel": "Brote"},
+            {"bis": None, "titel": "S\u00fc\u00dfes & Sonstiges"},
+        ],
+    },
 }
+
+# Rueckwaertskompatibilitaet: Aufrufer, die noch das flache Objekt erwarten,
+# bekommen die Freundl-Werte.
+DEFAULT_CONFIG = dict(DEFAULT_BAECKEREIEN[FREUNDL])
 
 TAGE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
 
@@ -163,30 +213,169 @@ def read_many(url, hdrs, prefix, top=400):
 
 
 # ──────────────────────────────────────────────────────────────────────
+#  Baeckerei-Kennung, Schluessel und Lesebruecke
+# ──────────────────────────────────────────────────────────────────────
+
+def baeckerei_gueltig(bk):
+    return bk in BAECKEREIEN
+
+
+def artikel_store_key(bk):
+    """Speicherschluessel des Artikelkatalogs einer Baeckerei.
+
+    Bewusst NICHT ``artikel_key`` – so heisst weiter unten der Positions-
+    schluessel eines einzelnen Artikels. Zwei Funktionen gleichen Namens in
+    einem Modul waeren still wirkungslos: Python behielte nur die letzte.
+    """
+    return f"{KEY_ARTIKEL}_{bk}"
+
+
+def order_key(bk, datum_iso):
+    return f"{KEY_ORDER}{bk}_{datum_iso}"
+
+
+def order_praefix(bk):
+    return f"{KEY_ORDER}{bk}_"
+
+
+def alt_order_key(datum_iso):
+    """Schluessel aus der Zeit vor der zweiten Baeckerei."""
+    return f"{KEY_ORDER}{datum_iso}"
+
+
+_ALT_DATUM = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def schluessel_deuten(key):
+    """Ordnet einen Bestellschluessel einer Baeckerei und einem Datum zu.
+
+    ``baecker_order_2026-09-10``          -> (freundl, '2026-09-10', alt=True)
+    ``baecker_order_freundl_2026-09-10``  -> (freundl, '2026-09-10', alt=False)
+
+    Gibt ``(None, None, False)``, wenn der Schluessel zu keiner Form passt.
+    Diese Unterscheidung ist noetig, weil ``baecker_order_`` ein **Praefix der
+    neuen Schluessel** ist: Wer stumpf nach dem gemeinsamen Praefix filtert,
+    bekommt beide Baeckereien und die Altschluessel in einem Topf.
+    """
+    if not key.startswith(KEY_ORDER):
+        return None, None, False
+    rest = key[len(KEY_ORDER):]
+    if _ALT_DATUM.match(rest):
+        return ALT_BAECKEREI, rest, True
+    for bk in BAECKEREIEN:
+        marke = f"{bk}_"
+        if rest.startswith(marke):
+            datum = rest[len(marke):]
+            if _ALT_DATUM.match(datum):
+                return bk, datum, False
+    return None, None, False
+
+
+def load_order(url, hdrs, bk, datum_iso):
+    """Bestellung einer Baeckerei an einem Liefertag. Gibt (record_id, daten).
+
+    Lesebruecke: Fehlt der neue Schluessel und geht es um Freundl, wird der
+    Altschluessel gelesen. ``record_id`` bleibt dann bewusst ``None`` – so
+    schreibt der Aufrufer einen **neuen** Datensatz unter dem neuen Schluessel,
+    statt den alten zu ueberschreiben.
+    """
+    rec_id, data = read_json(url, hdrs, order_key(bk, datum_iso))
+    if data or bk != ALT_BAECKEREI:
+        return rec_id, data
+    _, alt = read_json(url, hdrs, alt_order_key(datum_iso))
+    return None, alt
+
+
+def bestellungen(url, hdrs, bk=None):
+    """Alle Bestellungen – wahlweise nur einer Baeckerei.
+
+    **Einzige** Stelle, die den gemeinsamen Praefix liest. Neue Schluessel
+    gewinnen gegenueber alten, falls ein Tag doppelt vorliegt (waehrend der
+    Koexistenz kann genau das vorkommen).
+
+    Gibt eine Liste von ``(baeckerei, datum, daten)``, neueste zuerst.
+    """
+    treffer = {}
+    for key, data in read_many(url, hdrs, KEY_ORDER):
+        gefunden, datum, alt = schluessel_deuten(key)
+        if not gefunden or not datum:
+            continue
+        if bk and gefunden != bk:
+            continue
+        vorhanden = treffer.get((gefunden, datum))
+        # Neuer Schluessel schlaegt alten.
+        if vorhanden is not None and not vorhanden[1]:
+            continue
+        treffer[(gefunden, datum)] = (data, alt)
+    aus = [(b, d, daten) for (b, d), (daten, _alt) in treffer.items()]
+    aus.sort(key=lambda t: t[1], reverse=True)
+    return aus
+
+
+# ──────────────────────────────────────────────────────────────────────
 #  Fachlogik
 # ──────────────────────────────────────────────────────────────────────
 
 def load_config(url, hdrs):
-    """Einstellungen mit Startwerten aufgefuellt."""
+    """Einstellungen ALLER Baeckereien, mit Startwerten aufgefuellt.
+
+    Bruecke: Liegt noch das flache Altobjekt vor (eine Baeckerei), werden dessen
+    Werte Freundl zugeordnet und Martin's aus den Vorgaben ergaenzt.
+    """
     _, data = read_json(url, hdrs, KEY_CONFIG)
-    cfg = dict(DEFAULT_CONFIG)
-    cfg.update({k: v for k, v in (data or {}).items() if v not in (None, "")})
-    return cfg
+    data = data or {}
+    roh = data.get("baeckereien")
+    if not isinstance(roh, dict):
+        # Altform: alles, was nicht 'baeckereien' ist, gehoert Freundl.
+        flach = {k: v for k, v in data.items() if v not in (None, "")}
+        roh = {ALT_BAECKEREI: flach} if flach else {}
+
+    aus = {}
+    for bk in BAECKEREIEN:
+        eintrag = dict(DEFAULT_BAECKEREIEN[bk])
+        eintrag.update({k: v for k, v in (roh.get(bk) or {}).items()
+                        if v not in (None, "")})
+        aus[bk] = eintrag
+    return {"baeckereien": aus}
 
 
-def load_artikel(url, hdrs):
-    """Artikelkatalog, aufsteigend nach Nummer. Faellt auf die mitgelieferte
-    Startliste zurueck, solange in Dataverse noch nichts gepflegt ist."""
-    _, data = read_json(url, hdrs, KEY_ARTIKEL)
+def cfg_von(cfg, bk):
+    """Einstellungen einer einzelnen Baeckerei.
+
+    Nimmt sowohl die neue Struktur als auch ein bereits ausgepacktes flaches
+    Objekt entgegen – letzteres, damit vorhandene Helfer unveraendert bleiben.
+    """
+    if isinstance(cfg, dict) and "baeckereien" in cfg:
+        return (cfg.get("baeckereien") or {}).get(bk) or dict(DEFAULT_BAECKEREIEN[bk])
+    return cfg or dict(DEFAULT_BAECKEREIEN[bk])
+
+
+def liefert_am(cfg, datum_iso):
+    """Welche Baeckereien liefern an diesem Tag? Reihenfolge wie BAECKEREIEN."""
+    return [bk for bk in BAECKEREIEN if ist_bestelltag(cfg_von(cfg, bk), datum_iso)]
+
+
+def load_artikel(url, hdrs, bk):
+    """Artikelkatalog einer Baeckerei, aufsteigend nach Nummer.
+
+    Faellt auf die mitgelieferte Startliste zurueck, solange in Dataverse noch
+    nichts gepflegt ist. Fuer Freundl greift zuvor die Lesebruecke auf den
+    Altschluessel – sonst staende dort der Startkatalog statt der gepflegten
+    Artikel.
+    """
+    _, data = read_json(url, hdrs, artikel_store_key(bk))
     artikel = (data or {}).get("artikel")
+    if not artikel and bk == ALT_BAECKEREI:
+        _, alt = read_json(url, hdrs, KEY_ARTIKEL)
+        artikel = (alt or {}).get("artikel")
     if not artikel:
         pfad = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "vorlage", "katalog.json")
+                            "vorlage", f"katalog-{bk}.json")
         try:
             with open(pfad, encoding="utf-8") as fh:
                 artikel = json.load(fh).get("artikel", [])
         except Exception as e:
-            logging.warning(f"[baecker] Startkatalog fehlt: {e}")
+            logging.warning(f"[baecker] Startkatalog {bk} fehlt: {e}")
             artikel = []
     return sort_artikel(artikel)
 
@@ -201,25 +390,22 @@ def sort_artikel(artikel):
     return sorted(artikel, key=lambda a: (sort_nr(a.get("nummer")), a.get("name") or ""))
 
 
-def order_key(datum_iso):
-    return f"{KEY_ORDER}{datum_iso}"
-
-
-def load_order(url, hdrs, datum_iso):
-    """Bestellung eines Liefertags. Gibt (record_id, daten)."""
-    return read_json(url, hdrs, order_key(datum_iso))
-
-
 def tour_nr(cfg, datum_iso):
-    """Tour-Nummer des Wochentags – am Samstag faehrt eine andere Tour."""
-    tour = cfg.get("tour_nr") or DEFAULT_CONFIG["tour_nr"]
+    """Tour-Nummer des Wochentags – bei Freundl faehrt samstags eine andere.
+
+    ``cfg`` ist die Konfiguration **einer** Baeckerei (siehe ``cfg_von``).
+    """
+    tour = cfg.get("tour_nr")
+    if tour in (None, ""):
+        return ""
     if isinstance(tour, str):
         return tour
+    standard = tour.get("default", "")
     try:
         wd = datetime.strptime(datum_iso, "%Y-%m-%d").weekday()
     except ValueError:
-        return tour.get("default", "87")
-    return tour.get(str(wd), tour.get("default", "87"))
+        return standard
+    return tour.get(str(wd), standard)
 
 
 def ist_bestelltag(cfg, datum_iso):
@@ -227,7 +413,7 @@ def ist_bestelltag(cfg, datum_iso):
         wd = datetime.strptime(datum_iso, "%Y-%m-%d").weekday()
     except ValueError:
         return False
-    return wd in (cfg.get("bestelltage") or DEFAULT_CONFIG["bestelltage"])
+    return wd in (cfg.get("bestelltage") or [])
 
 
 def naechster_bestelltag(cfg, ab=None, max_tage=14):
@@ -250,22 +436,22 @@ def korrektur_moeglich(cfg, datum_iso):
     return bool(datum_iso) and datum_iso == naechster_bestelltag(cfg)
 
 
-def vorlage_bestellungen(url, hdrs, datum_iso, limit=4):
+def vorlage_bestellungen(url, hdrs, bk, datum_iso, limit=4):
     """Die letzten gesendeten Bestellungen desselben Wochentags, neueste zuerst.
 
     Grundlage der Vorbelegung (Spec F2): exakt der letzte gleiche Wochentag,
-    dazu drei weitere zum Vergleich.
+    dazu drei weitere zum Vergleich. **Nur innerhalb derselben Baeckerei** –
+    die Kataloge sind verschieden, ein Uebergreifen ergaebe Unsinn.
     """
     try:
         ziel = datetime.strptime(datum_iso, "%Y-%m-%d").date()
     except ValueError:
         return []
     treffer = []
-    for key, data in read_many(url, hdrs, KEY_ORDER):
-        d = key[len(KEY_ORDER):]
+    for _bk, d, data in bestellungen(url, hdrs, bk):
         if not d or d >= datum_iso:
             continue
-        if data.get("status") not in (STATUS_GESENDET, STATUS_KORRIGIERT):
+        if (data or {}).get("status") not in (STATUS_GESENDET, STATUS_KORRIGIERT):
             continue
         try:
             tag = datetime.strptime(d, "%Y-%m-%d").date()
@@ -295,19 +481,23 @@ def artikel_key(a):
     return str(a.get("nummer") or "").strip() or (a.get("name") or "").strip().lower()
 
 
-def nummer_umziehen(url, hdrs, alt, neu, name=None):
+def nummer_umziehen(url, hdrs, bk, alt, neu, name=None):
     """Traegt eine geaenderte Artikelnummer in alle Bestellungen nach.
 
     Positionen werden ueber die Artikelnummer zugeordnet. Ohne dieses
     Nachziehen verlieren gespeicherte Bestellungen den Bezug zum Artikel: Die
     Vorbelegung faenge wieder bei 0 an und die alte Nummer taeuchte als
     Zusatzposition auf. Gibt die Zahl der angepassten Bestellungen zurueck.
+
+    **Nur die eigene Baeckerei.** Beide Haeuser vergeben dieselben Nummern fuer
+    verschiedene Artikel – wuerde hier stumpf ueber den gemeinsamen Praefix
+    gelesen, schriebe eine Freundl-Aenderung quer in Martin's Bestellungen.
     """
     alt, neu = str(alt or "").strip(), str(neu or "").strip()
     if not alt or alt == neu:
         return 0
     geaendert = 0
-    for key, data in read_many(url, hdrs, KEY_ORDER):
+    for _bk, datum, data in bestellungen(url, hdrs, bk):
         positionen = (data or {}).get("positionen") or []
         treffer = [p for p in positionen
                    if str(p.get("nummer") or "").strip() == alt]
@@ -317,6 +507,9 @@ def nummer_umziehen(url, hdrs, alt, neu, name=None):
             p["nummer"] = neu
             if name:
                 p["name"] = name
+        # Immer auf den NEUEN Schluessel schreiben, auch wenn die Bestellung
+        # noch unter dem Altschluessel lag (Lesebruecke).
+        key = order_key(bk, datum)
         rec_id, _ = read_json(url, hdrs, key)
         if write_json(url, hdrs, key, rec_id, data, f"Baecker-Bestellung {key}"):
             geaendert += 1

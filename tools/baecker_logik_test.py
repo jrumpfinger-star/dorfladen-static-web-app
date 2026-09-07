@@ -68,7 +68,7 @@ pruefe("Wochentag", store.wochentag("2026-09-10"), "Donnerstag")
 pruefe("Samstag erkannt", store.wochentag("2026-09-12"), "Samstag")
 
 print("\n== Startkatalog ==")
-kat = os.path.join(ROOT, "api", "baecker-order", "vorlage", "katalog.json")
+kat = os.path.join(ROOT, "api", "baecker-order", "vorlage", "katalog-freundl.json")
 with open(kat, encoding="utf-8") as fh:
     daten = json.load(fh)["artikel"]
 aktiv = [a for a in daten if a["aktiv"]]

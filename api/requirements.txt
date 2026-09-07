@@ -7,3 +7,8 @@ PyJWT
 bcrypt
 Pillow
 cryptography
+# Baecker-Bestellung: PDF-Formular fuer Martin's Backstube erzeugen (fpdf2)
+# und Rechnungs-PDFs auslesen (pypdf). Beide reines Python, keine
+# Systembibliotheken - wichtig fuer den Linux-Consumption-Plan.
+fpdf2
+pypdf

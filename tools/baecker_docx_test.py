@@ -15,7 +15,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "api", "baecker-order"))
 from docx_fill import fill_form, tour_fuer  # noqa: E402
 
-BASE = os.path.join(ROOT, "B\u00e4cker")
+# Die Bestellmails liegen seit der Aufteilung auf zwei Baeckereien im
+# Unterordner "Freundl".
+BASE = os.path.join(ROOT, "B\u00e4cker", "Freundl")
 VORLAGE = os.path.join(ROOT, "api", "baecker-order", "vorlage", "freundl-werktag.docx")
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 

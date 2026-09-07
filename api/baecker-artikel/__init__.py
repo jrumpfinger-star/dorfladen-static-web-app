@@ -72,7 +72,7 @@ def _aehnlich(a, b):
 
 def _gruppe(nummer, cfg):
     """Warengruppe anhand der Artikelnummer – reine Anzeigehilfe im Kiosk."""
-    gruppen = cfg.get("gruppen") or store.DEFAULT_CONFIG["gruppen"]
+    gruppen = cfg.get("gruppen") or []
     s = str(nummer or "").strip()
     if not s.isdigit():
         return gruppen[-1].get("titel", "Sonstiges")
@@ -95,23 +95,44 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if not token:
         return _err("Verbindung zum Datenspeicher nicht m\u00f6glich.", 500)
     url, hdrs = store.base_url(), store.headers(token)
-    cfg = store.load_config(url, hdrs)
+    voll_cfg = store.load_config(url, hdrs)
 
     try:
-        artikel = store.load_artikel(url, hdrs)
+        # Die Baeckerei ist Pflicht: Beide Haeuser vergeben dieselben Nummern
+        # fuer verschiedene Artikel. Ohne Angabe stillschweigend Freundl
+        # anzunehmen wuerde frueher oder spaeter den falschen Katalog treffen.
+        body = {}
+        if req.method in ("POST", "PATCH", "PUT"):
+            try:
+                body = req.get_json() or {}
+            except ValueError:
+                return _err("Die Anfrage konnte nicht gelesen werden.")
+
+        bk = ((req.params.get("baeckerei") or "")
+              or ((req.route_params or {}).get("baeckerei") or "")
+              or (body.get("baeckerei") or "")).strip().lower()
+        if not bk:
+            return _err("Bitte angeben, um welche B\u00e4ckerei es geht "
+                        f"({' oder '.join(store.BAECKEREIEN)}).")
+        if not store.baeckerei_gueltig(bk):
+            return _err(f"Unbekannte B\u00e4ckerei \u201e{bk}\u201c.")
+
+        cfg = store.cfg_von(voll_cfg, bk)
+        artikel = store.load_artikel(url, hdrs, bk)
 
         if req.method == "GET":
             nur_aktive = (req.params.get("aktiv") or "").lower() in ("1", "true")
             liste = [a for a in artikel if a.get("aktiv")] if nur_aktive else artikel
             return _ok({
+                "baeckerei": bk,
+                "baeckerei_name": cfg.get("name") or bk,
                 "artikel": [dict(a, gruppe=_gruppe(a.get("nummer"), cfg)) for a in liste],
                 "gruppen": cfg.get("gruppen"),
                 "anzahl_aktiv": sum(1 for a in artikel if a.get("aktiv")),
                 "anzahl_gesamt": len(artikel),
             })
 
-        body = req.get_json()
-        rec_id, _ = store.read_json(url, hdrs, store.KEY_ARTIKEL)
+        rec_id, _ = store.read_json(url, hdrs, store.artikel_store_key(bk))
 
         # ── Anlegen ──
         if req.method == "POST":
@@ -149,7 +170,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 neu["nur_wochentag"] = body["nur_wochentag"]
 
             artikel = store.sort_artikel(artikel + [neu])
-            if not store.write_json(url, hdrs, store.KEY_ARTIKEL, rec_id,
+            if not store.write_json(url, hdrs, store.artikel_store_key(bk), rec_id,
                                     {"artikel": artikel}, "Baecker-Artikel"):
                 return _err("Der Artikel konnte nicht gespeichert werden.", 500)
             return _ok({"artikel": neu, "meldung": f"\u201e{name}\u201c angelegt."}, 201)
@@ -210,13 +231,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     ziel["nur_wochentag"] = body["nur_wochentag"]
 
             artikel = store.sort_artikel(artikel)
-            if not store.write_json(url, hdrs, store.KEY_ARTIKEL, rec_id,
+            if not store.write_json(url, hdrs, store.artikel_store_key(bk), rec_id,
                                     {"artikel": artikel}, "Baecker-Artikel"):
                 return _err("Die \u00c4nderung konnte nicht gespeichert werden.", 500)
 
             meldung = "Artikel gespeichert."
             if neu_nummer != alt_nummer and alt_nummer and neu_nummer:
-                mit = store.nummer_umziehen(url, hdrs, alt_nummer, neu_nummer)
+                mit = store.nummer_umziehen(url, hdrs, bk, alt_nummer, neu_nummer)
                 if mit:
                     meldung = (f"Artikel gespeichert \u2013 {mit} fr\u00fchere "
                                f"Bestellung{'en' if mit != 1 else ''} mit angepasst.")

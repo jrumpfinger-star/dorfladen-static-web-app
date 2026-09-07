@@ -1,13 +1,19 @@
 """Baecker-Bestellung – Entwurf, Vorbelegung, Versand und Korrektur.
 
-GET  /api/baecker-order?datum=JJJJ-MM-TT   Bestellung inkl. Vorbelegung
-GET  /api/baecker-order?mode=uebersicht    Tagesleiste + offene Erinnerung
-GET  /api/baecker-order?mode=verlauf       Verlauf der Bestellungen
-GET  /api/baecker-order?mode=config        Einstellungen (fuer das CMS)
-POST /api/baecker-order                    Entwurf speichern
-POST /api/baecker-order {aktion:"config"}  Einstellungen speichern
-POST /api/baecker-order/{datum}/senden     Formular erzeugen und Mail versenden
-POST /api/baecker-order/{datum}/korrektur  Korrektur versenden
+Der Dorfladen wird von **zwei** Baeckereien beliefert (siehe ``store.py``).
+Aufrufe, die eine bestimmte Bestellung betreffen, tragen deshalb ``baeckerei``;
+uebergreifende Abrufe (Tagesleiste, Verlauf, Einstellungen) kommen ohne aus und
+liefern die Baeckerei je Eintrag mit.
+
+GET  /api/baecker-order?baeckerei=..&datum=JJJJ-MM-TT   Bestellung inkl. Vorbelegung
+GET  /api/baecker-order?mode=uebersicht                 Tagesleiste + Erinnerung
+GET  /api/baecker-order?mode=verlauf                    Verlauf (optional je Baeckerei)
+GET  /api/baecker-order?mode=config                     Einstellungen (fuer das CMS)
+POST /api/baecker-order                                 Entwurf speichern
+POST /api/baecker-order {aktion:"config"}               Einstellungen speichern
+POST /api/baecker-order {aktion:"gedruckt"}             Papierausdruck vermerken
+POST /api/baecker-order/{datum}/senden                  Formular erzeugen und senden
+POST /api/baecker-order/{datum}/korrektur               Korrektur versenden
 """
 import importlib.util
 import json
@@ -25,12 +31,22 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from shared.auth import admin_auth_guard  # noqa: E402
 import store  # noqa: E402
 from docx_fill import fill_form  # noqa: E402
+from pdf_fill import build_pdf  # noqa: E402
 
-VORLAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                       "vorlage", "freundl-werktag.docx")
-ANHANG_NAME = "Freundl-Bestellformular.docx"
+VORLAGEN_ORDNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vorlage")
+VORLAGE = os.path.join(VORLAGEN_ORDNER, "freundl-werktag.docx")
+
 DOCX_MIME = ("application/vnd.openxmlformats-officedocument"
              ".wordprocessingml.document")
+PDF_MIME = "application/pdf"
+
+# Anhang je Ausgabeformat. Der Dateiname landet im Postfach der Baeckerei –
+# deshalb sprechend halten.
+ANHANG = {
+    "docx": ("Freundl-Bestellformular.docx", DOCX_MIME),
+    "pdf": ("Bestellung-Martins-Backstube.pdf", PDF_MIME),
+}
+ANHANG_NAME = ANHANG["docx"][0]   # Rueckwaertskompatibilitaet fuer Werkzeuge
 
 
 def _err(msg, status=400):
@@ -49,8 +65,9 @@ def _ok(payload, status=200):
     )
 
 
-def _send_mail(to_email, to_name, subject, body_text, attachment_bytes):
+def _send_mail(to_email, to_name, subject, body_text, attachment_bytes, format_="docx"):
     """Mail ueber den bestehenden Graph-Versand aus shop-notify."""
+    name, mime = ANHANG.get(format_, ANHANG["docx"])
     pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                         "shop-notify", "__init__.py")
     spec = importlib.util.spec_from_file_location("shop_notify_mail", pfad)
@@ -58,22 +75,27 @@ def _send_mail(to_email, to_name, subject, body_text, attachment_bytes):
     spec.loader.exec_module(mod)
     return mod.send_email(
         to_email, to_name, subject, body_text,
-        attachments=[{"name": ANHANG_NAME, "content": attachment_bytes, "type": DOCX_MIME}],
+        attachments=[{"name": name, "content": attachment_bytes, "type": mime}],
         # Kein Shop-Knopf: Die Baeckerei bestellt nicht in unserem Laden.
         mit_shop_link=False,
     )
 
 
 def _mail_text(datum_iso, cfg, korrektur=False):
+    """``cfg`` ist die Konfiguration EINER Baeckerei."""
     tag = store.wochentag(datum_iso)
     einleitung = (
         "anbei die Korrektur unserer Bestellung"
         if korrektur else "anbei unsere Bestellung"
     )
+    kennung = f"Kd.-Nr. {cfg.get('kd_nr')}"
+    tour = store.tour_nr(cfg, datum_iso)
+    if tour:
+        kennung += f" / Tour-Nr. {tour}"
     return (
         f"Guten Tag,\n\n"
         f"{einleitung} f\u00fcr {tag}, den {store.datum_de(datum_iso)}.\n"
-        f"Kd.-Nr. {cfg.get('kd_nr')} / Tour-Nr. {store.tour_nr(cfg, datum_iso)}\n\n"
+        f"{kennung}\n\n"
         f"Das ausgef\u00fcllte Bestellformular finden Sie im Anhang.\n\n"
         f"Mit freundlichen Gr\u00fc\u00dfen\n"
         f"Dorfladen Oberornau"
@@ -96,11 +118,14 @@ def _positionen_fuer_versand(order, artikel):
     return out
 
 
-def _build_entwurf(url, hdrs, cfg, datum_iso):
-    """Bestellung laden oder aus dem letzten gleichen Wochentag vorbelegen."""
-    rec_id, order = store.load_order(url, hdrs, datum_iso)
-    artikel = store.load_artikel(url, hdrs)
-    vorlagen = store.vorlage_bestellungen(url, hdrs, datum_iso)
+def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
+    """Bestellung laden oder aus dem letzten gleichen Wochentag vorbelegen.
+
+    ``cfg`` ist die Konfiguration EINER Baeckerei.
+    """
+    rec_id, order = store.load_order(url, hdrs, bk, datum_iso)
+    artikel = store.load_artikel(url, hdrs, bk)
+    vorlagen = store.vorlage_bestellungen(url, hdrs, bk, datum_iso)
 
     # Vergleichswerte je Artikel: letzter gleicher Wochentag + drei davor
     verlauf = {}
@@ -158,6 +183,8 @@ def _build_entwurf(url, hdrs, cfg, datum_iso):
 
     return {
         "datum": datum_iso,
+        "baeckerei": bk,
+        "baeckerei_name": cfg.get("name") or bk,
         "wochentag": store.wochentag(datum_iso),
         "datum_de": store.datum_de(datum_iso),
         "status": order.get("status", store.STATUS_ENTWURF),
@@ -171,6 +198,12 @@ def _build_entwurf(url, hdrs, cfg, datum_iso):
         "tour_nr": store.tour_nr(cfg, datum_iso),
         "kd_nr": cfg.get("kd_nr"),
         "empfaenger": cfg.get("empfaenger"),
+        "papierausdruck": bool(cfg.get("papierausdruck")),
+        "gedruckt_am": order.get("gedruckt_am", ""),
+        # Ausdruck steht aus: gesendet, gefordert, aber noch nicht gedruckt.
+        "druck_offen": bool(gesendet and cfg.get("papierausdruck")
+                            and not order.get("gedruckt_am")),
+        "gruppen": cfg.get("gruppen") or [],
         "testbetrieb": (cfg.get("empfaenger") or "").lower()
                        != (cfg.get("baeckerei_mail") or "").lower(),
         "record_id": rec_id,
@@ -178,76 +211,122 @@ def _build_entwurf(url, hdrs, cfg, datum_iso):
 
 
 def _uebersicht(url, hdrs, cfg):
-    """Tagesleiste und Erinnerungsstatus (Spec F1, F9)."""
+    """Tagesleiste und Erinnerungsstatus (Spec F1, F9, F18, F19).
+
+    Je Tag steht eine **Liste** der liefernden Baeckereien mit ihrem Stand –
+    am Samstag sind es zwei. Daraus ergeben sich die Farbpunkte, „1 von 2"
+    und der Zaehler am Tab.
+    """
     heute = date.today()
     tage = []
+    offen_gesamt = 0
     for i in range(7):
         d = heute + timedelta(days=i)
         iso = d.isoformat()
-        ist_tag = store.ist_bestelltag(cfg, iso)
-        status = "kein_tag"
-        if ist_tag:
-            _, order = store.load_order(url, hdrs, iso)
+        lieferanten = []
+        for bk in store.liefert_am(cfg, iso):
+            bcfg = store.cfg_von(cfg, bk)
+            _, order = store.load_order(url, hdrs, bk, iso)
             s = order.get("status")
-            status = ("gesendet" if s == store.STATUS_GESENDET
-                      else "korrigiert" if s == store.STATUS_KORRIGIERT
-                      else "offen")
+            gesendet = s in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT)
+            gedruckt = bool(order.get("gedruckt_am"))
+            druck_offen = bool(gesendet and bcfg.get("papierausdruck") and not gedruckt)
+            lieferanten.append({
+                "baeckerei": bk,
+                "name": bcfg.get("name") or bk,
+                "status": ("gesendet" if s == store.STATUS_GESENDET
+                           else "korrigiert" if s == store.STATUS_KORRIGIERT
+                           else "offen"),
+                "gedruckt": gedruckt,
+                "druck_offen": druck_offen,
+            })
+            # Der Zaehler am Tab zaehlt offene Bestellungen UND offene Ausdrucke.
+            if not gesendet:
+                offen_gesamt += 1
+            elif druck_offen:
+                offen_gesamt += 1
+        fertig = sum(1 for x in lieferanten
+                     if x["status"] != "offen" and not x["druck_offen"])
         tage.append({
             "datum": iso, "wochentag": store.wochentag(iso),
-            "bestelltag": ist_tag, "status": status,
+            "bestelltag": bool(lieferanten),
+            "lieferanten": lieferanten,
+            "fertig": fertig,
+            "gesamt": len(lieferanten),
+            # Sammelstatus fuer die Faerbung des Tagesplaettchens
+            "status": ("kein_tag" if not lieferanten
+                       else "gesendet" if fertig == len(lieferanten)
+                       else "druck_offen" if any(x["druck_offen"] for x in lieferanten)
+                       else "offen"),
         })
 
-    # Erinnerung: morgen ist Bestelltag und noch nichts gesendet
+    # Erinnerung: Morgen ist Bestelltag und mindestens eine Bestellung ist offen.
+    # ACHTUNG: An Samstagen liefern beide Baeckereien – wird nur eine geprueft,
+    # ist der Blinkstatus falsch, und der Kiosk kann das nicht ausbuegeln.
     morgen = (heute + timedelta(days=1)).isoformat()
     offen = False
     blinkt = False
-    if store.ist_bestelltag(cfg, morgen):
-        _, order = store.load_order(url, hdrs, morgen)
-        offen = order.get("status") not in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT)
-        if offen:
-            schluss = cfg.get("bestellschluss") or "12:00"
-            try:
-                h, m = (int(x) for x in schluss.split(":"))
-                jetzt = datetime.now()
-                blinkt = (jetzt.hour, jetzt.minute) >= (h, m)
-            except Exception:
-                blinkt = False
+    wer_offen = []
+    for bk in store.liefert_am(cfg, morgen):
+        bcfg = store.cfg_von(cfg, bk)
+        _, order = store.load_order(url, hdrs, bk, morgen)
+        if order.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT):
+            continue
+        offen = True
+        wer_offen.append(bcfg.get("name") or bk)
+        schluss = bcfg.get("bestellschluss") or "12:00"
+        try:
+            h, m = (int(x) for x in schluss.split(":"))
+            jetzt = datetime.now()
+            if (jetzt.hour, jetzt.minute) >= (h, m):
+                blinkt = True
+        except Exception:
+            pass
 
     return {
         "tage": tage,
-        "naechster": store.naechster_bestelltag(cfg),
+        "offen_gesamt": offen_gesamt,
         "erinnerung": {
             "offen": offen, "blinkt": blinkt, "datum": morgen if offen else "",
             "wochentag": store.wochentag(morgen) if offen else "",
-            "bestellschluss": cfg.get("bestellschluss"),
+            "baeckereien": wer_offen,
         },
     }
 
 
-def _verlauf(url, hdrs, cfg):
+def _verlauf(url, hdrs, cfg, bk=None):
+    """Verlauf – ohne Baeckerei ueber beide, mit Kennzeichnung je Eintrag."""
     eintraege = []
-    for key, data in store.read_many(url, hdrs, store.KEY_ORDER):
-        d = key[len(store.KEY_ORDER):]
-        if not d:
-            continue
-        pos = [p for p in data.get("positionen", [])
+    for gefunden, d, data in store.bestellungen(url, hdrs, bk):
+        bcfg = store.cfg_von(cfg, gefunden)
+        pos = [p for p in (data or {}).get("positionen", [])
                if (p.get("menge") or 0) or (p.get("retoure") or 0)]
+        gesendet = data.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT)
         eintraege.append({
             "datum": d,
             "datum_de": store.datum_de(d),
             "wochentag": store.wochentag(d),
+            "baeckerei": gefunden,
+            "baeckerei_name": bcfg.get("name") or gefunden,
             "status": data.get("status", store.STATUS_ENTWURF),
             "positionen": len(pos),
             "stueck": sum(int(p.get("menge") or 0) for p in pos),
             "protokoll": data.get("protokoll", []),
+            "gedruckt_am": data.get("gedruckt_am", ""),
+            "papierausdruck": bool(bcfg.get("papierausdruck")),
+            "druck_offen": bool(gesendet and bcfg.get("papierausdruck")
+                                and not data.get("gedruckt_am")),
         })
-    eintraege.sort(key=lambda e: e["datum"], reverse=True)
+    eintraege.sort(key=lambda e: (e["datum"], e["baeckerei"]), reverse=True)
     return {"verlauf": eintraege[:60]}
 
 
-def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
-    """Formular erzeugen und per Mail versenden (Spec F6, F7, F8)."""
-    rec_id, order = store.load_order(url, hdrs, datum_iso)
+def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
+    """Formular erzeugen und per Mail versenden (Spec F6, F7, F8, F20).
+
+    ``cfg`` ist die Konfiguration EINER Baeckerei.
+    """
+    rec_id, order = store.load_order(url, hdrs, bk, datum_iso)
 
     if korrektur and not store.korrektur_moeglich(cfg, datum_iso):
         naechster = store.naechster_bestelltag(cfg)
@@ -260,28 +339,42 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     if positionen is None:
         positionen = order.get("positionen", [])
 
-    artikel = store.load_artikel(url, hdrs)
+    artikel = store.load_artikel(url, hdrs, bk)
     versand = _positionen_fuer_versand({"positionen": positionen}, artikel)
+    # Diese Pruefung steht bewusst VOR der Formatweiche und gilt damit fuer
+    # beide Baeckereien.
     if not versand:
         return _err("Die Bestellung enth\u00e4lt keine Mengen. "
                     "Bitte zuerst Mengen eintragen.")
 
+    testbetrieb = ((cfg.get("empfaenger") or "").lower()
+                   != (cfg.get("baeckerei_mail") or "").lower())
+    format_ = (cfg.get("format") or "docx").lower()
     try:
-        with open(VORLAGE, "rb") as fh:
-            vorlage = fh.read()
-        dokument = fill_form(
-            vorlage, store.datum_de(datum_iso), versand,
-            kd_nr=cfg.get("kd_nr", "1190"), tour_nr=store.tour_nr(cfg, datum_iso),
-        )
+        if format_ == "pdf":
+            dokument = build_pdf(
+                versand, store.datum_de(datum_iso), store.wochentag(datum_iso),
+                kd_nr=cfg.get("kd_nr", ""), baeckerei_name=cfg.get("name", ""),
+                tour_nr=store.tour_nr(cfg, datum_iso),
+                testbetrieb=testbetrieb, korrektur=korrektur,
+            )
+        else:
+            with open(VORLAGE, "rb") as fh:
+                vorlage = fh.read()
+            dokument = fill_form(
+                vorlage, store.datum_de(datum_iso), versand,
+                kd_nr=cfg.get("kd_nr", "1190"),
+                tour_nr=store.tour_nr(cfg, datum_iso),
+            )
     except Exception as e:
-        logging.error(f"[baecker-order] Formular fehlgeschlagen: {e}")
+        logging.error(f"[baecker-order] Formular fehlgeschlagen ({format_}): {e}")
         return _err("Das Bestellformular konnte nicht erstellt werden. "
                     "Bitte erneut versuchen.", 500)
 
     betreff = ("Korrektur Bestellung " if korrektur else "Bestellung ") + store.datum_de(datum_iso)
     ok, info = _send_mail(
         cfg.get("empfaenger"), cfg.get("empfaenger_name") or "B\u00e4ckerei",
-        betreff, _mail_text(datum_iso, cfg, korrektur), dokument,
+        betreff, _mail_text(datum_iso, cfg, korrektur), dokument, format_,
     )
     if not ok:
         logging.error(f"[baecker-order] Mailversand fehlgeschlagen: {info}")
@@ -300,56 +393,143 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     }
     order.update({
         "datum": datum_iso,
+        "baeckerei": bk,
         "status": store.STATUS_KORRIGIERT if korrektur else store.STATUS_GESENDET,
         "positionen": positionen,
         "protokoll": [eintrag] + (order.get("protokoll") or []),
     })
-    store.write_json(url, hdrs, store.order_key(datum_iso), rec_id, order,
-                     f"Baecker-Bestellung {datum_iso}")
+    # Eine Korrektur macht den vorherigen Ausdruck ungueltig.
+    if korrektur:
+        order["gedruckt_am"] = ""
+    store.write_json(url, hdrs, store.order_key(bk, datum_iso), rec_id, order,
+                     f"Baecker-Bestellung {bk} {datum_iso}")
 
+    druck_offen = bool(cfg.get("papierausdruck"))
     return _ok({
         "status": order["status"],
         "protokoll": order["protokoll"],
+        "papierausdruck": druck_offen,
+        "druck_offen": druck_offen,
+        "positionen_druck": versand if druck_offen else [],
         "meldung": ("Korrektur gesendet." if korrektur else "Bestellung gesendet.")
-                   + f" {eintrag['positionen']} Positionen, {eintrag['stueck']} St\u00fcck.",
+                   + f" {eintrag['positionen']} Positionen, {eintrag['stueck']} St\u00fcck."
+                   + (" Bitte noch ausdrucken." if druck_offen else ""),
     })
 
 
-def _config_pruefen(cfg):
-    """Gibt eine verstaendliche Fehlermeldung zurueck oder None.
+def _gedruckt(url, hdrs, cfg, bk, datum_iso, body):
+    """Vermerkt, dass der Papierausdruck erfolgt ist (Spec F23).
 
-    Die Werte kommen aus dem CMS und landen ungeprueft im Serienbrief-Kopf
-    bzw. steuern den Mailversand – deshalb hier streng pruefen.
+    Erst danach gilt der Tag als vollstaendig erledigt.
     """
-    tage = cfg.get("bestelltage") or []
+    rec_id, order = store.load_order(url, hdrs, bk, datum_iso)
+    if not order:
+        return _err("Zu diesem Tag gibt es noch keine Bestellung.")
+    if order.get("status") not in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT):
+        return _err("Die Bestellung wurde noch nicht gesendet \u2013 "
+                    "ein Ausdruck ergibt erst danach Sinn.")
+
+    order["gedruckt_am"] = datetime.now().isoformat(timespec="seconds")
+    order["protokoll"] = [{
+        "zeit": order["gedruckt_am"],
+        "art": "gedruckt",
+        "wer": (body.get("wer") or "").strip() or "Kiosk",
+    }] + (order.get("protokoll") or [])
+    store.write_json(url, hdrs, store.order_key(bk, datum_iso), rec_id, order,
+                     f"Baecker-Bestellung {bk} {datum_iso}")
+    return _ok({"gedruckt_am": order["gedruckt_am"],
+                "meldung": "Ausdruck vermerkt."})
+
+
+def _config_pruefen(cfg_bk, name=""):
+    """Prueft die Einstellungen EINER Baeckerei.
+
+    Gibt eine verstaendliche Fehlermeldung zurueck oder None. Die Werte kommen
+    aus dem CMS und landen ungeprueft im Formularkopf bzw. steuern den
+    Mailversand – deshalb hier streng pruefen.
+    """
+    wo = f" ({name})" if name else ""
+    tage = cfg_bk.get("bestelltage") or []
     if not isinstance(tage, list) or not tage:
-        return "Bitte mindestens einen Bestelltag ausw\u00e4hlen."
+        return f"Bitte mindestens einen Bestelltag ausw\u00e4hlen{wo}."
     for t in tage:
         if not isinstance(t, int) or t < 0 or t > 6:
-            return "Ung\u00fcltiger Bestelltag."
+            return f"Ung\u00fcltiger Bestelltag{wo}."
 
-    mail = (cfg.get("empfaenger") or "").strip()
+    mail = (cfg_bk.get("empfaenger") or "").strip()
     if "@" not in mail or "." not in mail.split("@")[-1]:
-        return "Bitte eine g\u00fcltige E-Mail-Adresse angeben."
+        return f"Bitte eine g\u00fcltige E-Mail-Adresse angeben{wo}."
 
-    bk_mail = (cfg.get("baeckerei_mail") or "").strip()
+    bk_mail = (cfg_bk.get("baeckerei_mail") or "").strip()
     if bk_mail and ("@" not in bk_mail or "." not in bk_mail.split("@")[-1]):
-        return "Die Adresse der B\u00e4ckerei ist keine g\u00fcltige E-Mail-Adresse."
+        return f"Die Adresse der B\u00e4ckerei ist keine g\u00fcltige E-Mail-Adresse{wo}."
 
-    schluss = (cfg.get("bestellschluss") or "").strip()
+    schluss = (cfg_bk.get("bestellschluss") or "").strip()
     if not re.match(r"^([01]\d|2[0-3]):[0-5]\d$", schluss):
-        return "Bestellschluss bitte als Uhrzeit angeben, z.\u202fB. 12:00."
+        return f"Bestellschluss bitte als Uhrzeit angeben, z.\u202fB. 12:00{wo}."
 
-    if not (cfg.get("kd_nr") or "").strip():
-        return "Bitte die Kunden-Nummer angeben."
+    if not str(cfg_bk.get("kd_nr") or "").strip():
+        return f"Bitte die Kunden-Nummer angeben{wo}."
 
-    tour = cfg.get("tour_nr")
-    if isinstance(tour, dict):
-        if not (tour.get("default") or "").strip():
-            return "Bitte die Tour-Nummer angeben."
-    elif not (tour or "").strip():
-        return "Bitte die Tour-Nummer angeben."
+    if (cfg_bk.get("format") or "docx") not in ("docx", "pdf"):
+        return f"Unbekanntes Formularformat{wo}."
+    # Tour-Nr. ist nicht bei jeder Baeckerei gebraeuchlich (Martin's hat keine)
+    # und deshalb bewusst nicht mehr Pflicht.
     return None
+
+
+def _config_speichern(url, hdrs, cfg, body):
+    """Einstellungen einer oder aller Baeckereien speichern (Spec F25)."""
+    eingang = body.get("config") or {}
+    # Sowohl {baeckereien:{…}} als auch {baeckerei:'martins', config:{…}}
+    if "baeckereien" in eingang:
+        neu_roh = eingang.get("baeckereien") or {}
+    else:
+        ziel = (body.get("baeckerei") or eingang.get("baeckerei") or "").strip()
+        if not store.baeckerei_gueltig(ziel):
+            return _err("Bitte angeben, welche B\u00e4ckerei gespeichert werden soll.")
+        neu_roh = {ziel: {k: v for k, v in eingang.items() if k != "baeckerei"}}
+
+    zusammen = {bk: dict(store.cfg_von(cfg, bk)) for bk in store.BAECKEREIEN}
+    for bk, werte in neu_roh.items():
+        if not store.baeckerei_gueltig(bk):
+            continue
+        zusammen[bk].update(werte or {})
+
+    for bk in store.BAECKEREIEN:
+        fehler = _config_pruefen(zusammen[bk], zusammen[bk].get("name") or bk)
+        if fehler:
+            return _err(fehler)
+
+    rec_id, _ = store.read_json(url, hdrs, store.KEY_CONFIG)
+    if not store.write_json(url, hdrs, store.KEY_CONFIG, rec_id,
+                            {"baeckereien": zusammen}, "Baecker-Einstellungen"):
+        return _err("Einstellungen konnten nicht gespeichert werden.", 500)
+
+    # Ueberschneidende Bestelltage sind erlaubt (Samstag) – aber ein Hinweis
+    # ist hilfreich, damit niemand sie fuer einen Fehler haelt.
+    hinweise = []
+    for wd in range(7):
+        wer = [zusammen[bk].get("name") or bk for bk in store.BAECKEREIEN
+               if wd in (zusammen[bk].get("bestelltage") or [])]
+        if len(wer) > 1:
+            hinweise.append(f"{store.TAGE[wd]}: {' und '.join(wer)}")
+    meldung = "Einstellungen gespeichert."
+    if hinweise:
+        meldung += " An diesen Tagen liefern beide: " + "; ".join(hinweise) + "."
+    return _ok({"config": {"baeckereien": zusammen}, "meldung": meldung,
+                "hinweise": hinweise})
+
+
+def _baeckerei_aus(req, body=None):
+    """Baeckerei aus Query, Route oder Rumpf. Leer, wenn nicht angegeben."""
+    for quelle in (req.params.get("baeckerei"),
+                   (req.route_params or {}).get("baeckerei"),
+                   (body or {}).get("baeckerei")):
+        wert = (quelle or "").strip().lower()
+        if wert:
+            return wert
+    return ""
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -365,19 +545,39 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     url, hdrs = store.base_url(), store.headers(token)
     cfg = store.load_config(url, hdrs)
 
+    def bk_pflicht(body=None):
+        """Baeckerei ermitteln – fuer Aufrufe, die genau eine betreffen."""
+        bk = _baeckerei_aus(req, body)
+        if not bk:
+            return None, _err(
+                "Bitte angeben, um welche B\u00e4ckerei es geht "
+                f"({' oder '.join(store.BAECKEREIEN)}).")
+        if not store.baeckerei_gueltig(bk):
+            return None, _err(f"Unbekannte B\u00e4ckerei \u201e{bk}\u201c.")
+        return bk, None
+
     try:
         if req.method == "GET":
             mode = (req.params.get("mode") or "").strip()
+            # Diese drei spannen bewusst ueber BEIDE Baeckereien und kommen
+            # ohne den Parameter aus – der Kiosk ruft sie so auf.
             if mode == "uebersicht":
                 return _ok(_uebersicht(url, hdrs, cfg))
             if mode == "verlauf":
-                return _ok(_verlauf(url, hdrs, cfg))
+                gewuenscht = _baeckerei_aus(req)
+                return _ok(_verlauf(url, hdrs, cfg,
+                                    gewuenscht if store.baeckerei_gueltig(gewuenscht) else None))
             if mode == "config":
-                return _ok({"config": cfg})
+                return _ok({"config": cfg, "baeckereien": list(store.BAECKEREIEN)})
+
+            bk, fehler = bk_pflicht()
+            if fehler:
+                return fehler
+            bcfg = store.cfg_von(cfg, bk)
             datum = (req.params.get("datum") or "").strip()
             if not datum:
-                datum = store.naechster_bestelltag(cfg)
-            return _ok({"bestellung": _build_entwurf(url, hdrs, cfg, datum)})
+                datum = store.naechster_bestelltag(bcfg)
+            return _ok({"bestellung": _build_entwurf(url, hdrs, bcfg, bk, datum)})
 
         if req.method == "POST":
             body = req.get_json()
@@ -387,16 +587,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Einstellungen haengen an keinem Liefertag – deshalb vor der
             # Datumspruefung.
             if aktion == "config":
-                rec_id, _ = store.read_json(url, hdrs, store.KEY_CONFIG)
-                neu = dict(cfg)
-                neu.update(body.get("config") or {})
-                fehler = _config_pruefen(neu)
-                if fehler:
-                    return _err(fehler)
-                if not store.write_json(url, hdrs, store.KEY_CONFIG, rec_id, neu,
-                                        "Baecker-Einstellungen"):
-                    return _err("Einstellungen konnten nicht gespeichert werden.", 500)
-                return _ok({"config": neu, "meldung": "Einstellungen gespeichert."})
+                return _config_speichern(url, hdrs, cfg, body)
+
+            bk, fehler = bk_pflicht(body)
+            if fehler:
+                return fehler
+            bcfg = store.cfg_von(cfg, bk)
 
             datum = (req.route_params.get("datum")
                      or body.get("datum") or "").strip()
@@ -404,24 +600,28 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 return _err("Bitte einen Liefertag angeben.")
 
             if aktion in ("senden", "korrektur"):
-                return _senden(url, hdrs, cfg, datum, body,
+                return _senden(url, hdrs, bcfg, bk, datum, body,
                                korrektur=(aktion == "korrektur"))
 
+            if aktion == "gedruckt":
+                return _gedruckt(url, hdrs, bcfg, bk, datum, body)
+
             # Entwurf speichern
-            rec_id, order = store.load_order(url, hdrs, datum)
+            rec_id, order = store.load_order(url, hdrs, bk, datum)
             if order.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT) \
                     and not body.get("korrekturmodus"):
                 return _err("Diese Bestellung wurde bereits gesendet. "
                             "\u00c4nderungen sind nur \u00fcber eine Korrektur m\u00f6glich.")
             order.update({
                 "datum": datum,
+                "baeckerei": bk,
                 "status": order.get("status", store.STATUS_ENTWURF),
                 "positionen": body.get("positionen") or [],
                 "vorlage_datum": body.get("vorlage_datum", order.get("vorlage_datum", "")),
                 "protokoll": order.get("protokoll", []),
             })
-            if not store.write_json(url, hdrs, store.order_key(datum), rec_id, order,
-                                    f"Baecker-Bestellung {datum}"):
+            if not store.write_json(url, hdrs, store.order_key(bk, datum), rec_id, order,
+                                    f"Baecker-Bestellung {bk} {datum}"):
                 return _err("Der Entwurf konnte nicht gespeichert werden.", 500)
             return _ok({"meldung": "Entwurf gespeichert."})
 
