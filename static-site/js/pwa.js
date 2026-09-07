@@ -236,7 +236,49 @@ function pwaHideAll(){
   ['pwa-install-banner','mob-pwa-install','dt-pwa-install'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.style.display='none';
   });
+  pwaBannerPlatz();
 }
+
+// Der Hinweis liegt fest am unteren Rand. Ohne Ausgleich verdeckt er die
+// letzten Zeilen der Seite: der Kunde scrollt bis ans Ende und kommt trotzdem
+// nicht an den Inhalt - es wirkt, als liesse sich nicht weiterscrollen.
+function pwaBannerPlatz(){
+  var b=document.getElementById('pwa-install-banner');
+  // ACHTUNG: offsetParent ist bei position:fixed immer null - damit laesst sich
+  // die Sichtbarkeit hier NICHT pruefen. Ueber die Hoehe geht es zuverlaessig.
+  var an=!!(b&&getComputedStyle(b).display!=='none'&&b.offsetHeight>0);
+  // mobile.css setzt "padding-bottom:0!important" auf den body. Ein normaler
+  // Inline-Wert wuerde davon geschluckt - deshalb selbst mit important setzen.
+  if(an) document.body.style.setProperty('padding-bottom', b.offsetHeight+'px', 'important');
+  else document.body.style.removeProperty('padding-bottom');
+}
+
+// Zeigt den Hinweis und blendet ihn nach kurzer Zeit von selbst wieder aus.
+// Wer ihn nicht braucht, muss nichts tun; wer ihn wegtippt, sieht ihn nie
+// wieder (pwa-dismissed).
+var _pwaAutoAus=null;
+function pwaBannerZeigen(){
+  var b=document.getElementById('pwa-install-banner');
+  if(!b||localStorage.getItem('pwa-dismissed'))return;
+  b.style.display='';
+  pwaBannerPlatz();
+  if(_pwaAutoAus)clearTimeout(_pwaAutoAus);
+  _pwaAutoAus=setTimeout(function(){
+    if(b.style.display!=='none'){ b.style.display='none'; pwaBannerPlatz(); }
+  },15000);
+}
+
+// Erst ab dem zweiten Besuch fragen. Beim ersten Mal will der Kunde die Seite
+// ansehen, nicht etwas installieren.
+function pwaDarfFragen(){
+  if(localStorage.getItem('pwa-dismissed'))return false;
+  var n=parseInt(localStorage.getItem('pwa-besuche')||'0',10)||0;
+  return n>=2;
+}
+try{
+  var _n=parseInt(localStorage.getItem('pwa-besuche')||'0',10)||0;
+  localStorage.setItem('pwa-besuche',String(_n+1));
+}catch(e){}
 
 // Always show menu links unless already running as installed PWA
 if(!_pwaIsStandalone){
@@ -247,11 +289,8 @@ window.addEventListener('beforeinstallprompt',function(e){
   e.preventDefault();
   _pwaPrompt=e;
   pwaShowLinks();
-  if(!localStorage.getItem('pwa-dismissed')){
-    setTimeout(function(){
-      var b=document.getElementById('pwa-install-banner');
-      if(b)b.style.display='';
-    },3000);
+  if(pwaDarfFragen()){
+    setTimeout(pwaBannerZeigen,3000);
   }
 });
 window.addEventListener('appinstalled',function(){pwaHideAll();});
@@ -275,20 +314,26 @@ function pwaInstall(){
 function pwaCloseBanner(){
   var b=document.getElementById('pwa-install-banner');
   if(b)b.style.display='none';
+  if(_pwaAutoAus)clearTimeout(_pwaAutoAus);
+  pwaBannerPlatz();
   localStorage.setItem('pwa-dismissed','1');
 }
 
-// iOS: adapt banner text
-if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!localStorage.getItem('pwa-dismissed')){
+// iOS: Text anpassen. WICHTIG nur den Textblock ersetzen (eigene ID) - ein
+// Selektor wie 'div > div:last-of-type' trifft die ganze Flex-Zeile und loescht
+// dabei Bild UND beide Knoepfe. Genau daran liess sich der Hinweis auf dem
+// iPhone nicht mehr wegtippen.
+if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&pwaDarfFragen()){
   setTimeout(function(){
-    var b=document.getElementById('pwa-install-banner');
-    if(!b)return;
-    var txt=b.querySelector('div > div:last-of-type');
-    if(txt)txt.innerHTML='<div style="font-weight:700;font-size:.95rem">Dorfladen als App</div><div style="font-size:.78rem;opacity:.85;margin-top:2px">Tippe <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg> und dann <b>\u201eZum Home-Bildschirm\u201c</b></div>';
-    var btn=b.querySelector('button');if(btn)btn.style.display='none';
-    b.style.display='';
+    var txt=document.getElementById('pwa-banner-txt');
+    if(!txt)return;
+    txt.innerHTML='<div style="font-weight:700;font-size:.95rem">Dorfladen als App</div><div style="font-size:.78rem;opacity:.85;margin-top:2px">Tippe <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg> und dann <b>\u201eZum Home-Bildschirm\u201c</b></div>';
+    var btn=document.getElementById('pwa-btn-install');if(btn)btn.style.display='none';
+    pwaBannerZeigen();
   },3000);
 }
+
+window.addEventListener('resize',pwaBannerPlatz);
 
 // === PUSH NOTIFICATIONS ===
 (function(){
