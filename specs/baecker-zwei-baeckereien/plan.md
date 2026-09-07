@@ -373,6 +373,68 @@ die strenge Ablehnung eines fehlenden `baeckerei` (F17) ist damit unproblematisc
 Keine neuen App-Einstellungen, keine neuen Secrets. Neu in
 `api/requirements.txt`: `fpdf2`, `pypdf`.
 
+## Stand bei der Übergabe (2026-09-07)
+
+Umgesetzt und **live**: F17–F28 vollständig, 231/231 Playwright grün gegen
+Produktion. Zuletzt ausgeliefert: F27 (Vorauswahl ist immer der nächste
+Liefertag) und F29 (Startwerte aus den Rechnungen für Martin's).
+
+Offen sind vier Punkte:
+
+### 1. Papierausdruck zeigt das falsche Format (F23) — wichtigster Punkt
+
+Der Ausdruck bei Freundl zeigt derzeit **nur die bestellten Positionen**.
+Gebraucht wird das **Formular selbst**, also genau das versendete Dokument:
+Die DOCX-Vorlage hat **57 Zeilen** mit *allen* Katalogartikeln, Kopf
+`Artikel Nr | Artikelbezeichnung | Menge | Retouren Menge`; `docx_fill.fill_form`
+trägt nur die Mengen ein. Der Ausdruck muss dasselbe Blatt zeigen.
+
+Vorgeschlagener Weg:
+
+1. `pdf_fill.build_pdf` (Zeile 59) rendert bereits eine Tabelle — sie bekommt
+   künftig **alle** Katalogartikel übergeben, nicht nur die bestellten. Leere
+   Mengenfelder bleiben leer statt `-`, damit das Blatt wie ein Formular wirkt.
+   Die Fußzeile darf dann **nicht** `len(positionen)` zählen, sonst stünde dort
+   57 statt der tatsächlich bestellten Positionen.
+2. Neuer Abruf `GET /api/baecker-order?baeckerei=…&datum=…&mode=dokument`
+   liefert `application/pdf`, frisch aus den gespeicherten Positionen erzeugt —
+   nichts muss zusätzlich abgelegt werden.
+3. Im Kiosk ersetzt dieser Abruf die HTML-Druckansicht:
+   `druckseite()` (Z. 745) und `druckDaten()` (Z. 802) entfallen,
+   `druckFenster()` (Z. 791) öffnet stattdessen eine Hülle mit `<iframe>` auf
+   die PDF und stößt den Druck an. Beide Aufrufstellen (Z. 818 und Z. 849,
+   Erstdruck und Nachdruck aus dem Verlauf) laufen darüber.
+4. `TC-B2-F23-01/-04/-06` prüfen heute den HTML-Inhalt und müssen mitgezogen
+   werden.
+
+**Falle:** `pdf_fill.latin1()` muss auf allen Artikelnamen laufen. Die
+Kernschrift Helvetica kann nur Latin-1; ein „–" (U+2013) wirft
+`FPDFUnicodeEncodingException` **mitten im Versand**.
+
+### 2. F29 ist Code ohne Spec
+
+Die Startwerte aus den Rechnungen sind umgesetzt und live (`store.startwerte`,
+`tools/baecker_startwerte_martins.py`), und drei Tests `TC-F29-01…03` liegen in
+[kiosk-baecker-zwei.spec.js](../../tests/kiosk-baecker-zwei.spec.js). In dieser
+Spec fehlt der Abschnitt F29 dazu — bitte nachtragen, sonst beschreibt die Spec
+den Stand nicht mehr.
+
+Fachlich festzuhalten: Die Startwerte greifen **nur**, solange es für den
+Wochentag keine echte Bestellung gibt; eine gesendete Bestellung hat immer
+Vorrang. Brote brauchen den **Wochenschnitt**, weil ihr Tagesdurchschnitt auf 0
+rundet, obwohl sie regelmäßig bestellt werden.
+
+### 3. Bestandsübernahme ausführen (T113/T114)
+
+`/api/baecker-migration` erst im Testmodus, Zahlen prüfen, dann `modus=echt`.
+Nicht dringend — die Lesebrücke trägt.
+
+### 4. Erst danach: Lesebrücke zurückbauen (T119/T120) und echte Adressen (T901)
+
+Die Reihenfolge ist zwingend: ohne gelaufene Übernahme stünde der Tab nach dem
+Rückbau mit leerem Verlauf und Startkatalog da. Martin's Bestelladresse ist noch
+unbekannt; bis dahin läuft beides auf die Testadresse.
+
 ## Offene Punkte für `/sdd-tasks`
 
 - Die **Bestelladresse von Martin's** ist unbekannt. Für die Umsetzung
