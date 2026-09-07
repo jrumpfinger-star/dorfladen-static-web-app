@@ -1,12 +1,17 @@
 """Baecker-Artikelstamm – Katalog lesen und pflegen.
 
-GET   /api/baecker-artikel            Katalog, aufsteigend nach Artikelnummer
-POST  /api/baecker-artikel            Artikel anlegen (mit Dublettenpruefung)
-PATCH /api/baecker-artikel            Artikel aendern oder aus-/einblenden
+GET   /api/baecker-artikel?baeckerei=..            Katalog, aufsteigend nach Nummer
+POST  /api/baecker-artikel                         Artikel anlegen (mit Dublettenpruefung)
+POST  /api/baecker-artikel {aktion:"rechnung"}     Stamm aus einer Rechnung aktualisieren
+PATCH /api/baecker-artikel                         Artikel aendern oder aus-/einblenden
+
+Die Baeckerei ist Pflicht: Beide Haeuser vergeben eigene Artikelnummern, ein
+gemeinsamer Katalog waere unbrauchbar.
 
 Artikel werden nie geloescht, sondern nur ausgeblendet – sonst wuerden alte
 Bestellungen im Verlauf unvollstaendig (Spec F5).
 """
+import base64
 import json
 import logging
 import os
@@ -20,9 +25,11 @@ import azure.functions as func
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                 "baecker-order"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared.auth import admin_auth_guard  # noqa: E402
 import store  # noqa: E402
+import rechnung_parser  # noqa: E402
 
 
 def _err(msg, status=400, extra=None):
@@ -75,13 +82,117 @@ def _gruppe(nummer, cfg):
     gruppen = cfg.get("gruppen") or []
     s = str(nummer or "").strip()
     if not s.isdigit():
-        return gruppen[-1].get("titel", "Sonstiges")
+        return gruppen[-1].get("titel", "Sonstiges") if gruppen else "Sonstiges"
     n = int(s)
     for g in gruppen:
         bis = g.get("bis")
         if bis is None or n <= bis:
             return g.get("titel", "")
     return ""
+
+
+def _rechnung(url, hdrs, bk, rec_id, artikel, body):
+    """Artikelstamm aus einem Rechnungs-PDF aktualisieren (Spec F22).
+
+    Uebernommen werden **nur Nummer und Bezeichnung**. Mengen taugen nicht,
+    weil eine Rechnung mehrere Liefertage zusammenfasst; Preise werden bewusst
+    nicht gefuehrt.
+
+    Ohne ``uebernehmen: true`` wird nur eine Vorschau geliefert – der Katalog
+    bleibt dann unberuehrt.
+    """
+    roh = body.get("datei") or ""
+    if not roh:
+        return _err("Bitte eine Rechnung als PDF ausw\u00e4hlen.")
+    try:
+        # Der Kiosk schickt die Datei als Base64, ggf. mit data:-Vorspann.
+        if "," in roh[:64] and roh[:5].lower() == "data:":
+            roh = roh.split(",", 1)[1]
+        daten = base64.b64decode(roh)
+    except Exception:
+        return _err("Die Datei konnte nicht gelesen werden. "
+                    "Bitte die Rechnung noch einmal ausw\u00e4hlen.")
+
+    gelesen = rechnung_parser.artikel_aus_pdf(daten)
+    if not gelesen:
+        return _err(
+            "Aus dieser Datei lie\u00dfen sich keine Artikel lesen. "
+            "Handelt es sich wirklich um eine Rechnung von "
+            f"{store.cfg_von(store.load_config(url, hdrs), bk).get('name') or bk}? "
+            "Eingescannte Belege ohne Text k\u00f6nnen nicht ausgewertet werden.")
+
+    vorhanden = {str(a.get("nummer") or "").strip(): a for a in artikel
+                 if str(a.get("nummer") or "").strip()}
+    neu, geaendert, unveraendert, retouren = [], [], [], []
+
+    for nummer, eintrag in sorted(gelesen.items(), key=lambda kv: store.sort_nr(kv[0])):
+        name = eintrag["name"]
+        alt = vorhanden.get(nummer)
+        if alt is None:
+            neu.append({"nummer": nummer, "name": name})
+        elif (alt.get("name") or "").strip() != name:
+            geaendert.append({"nummer": nummer, "name": name,
+                              "bisher": alt.get("name", "")})
+        else:
+            unveraendert.append({"nummer": nummer, "name": name})
+
+        liefer, retour = eintrag["liefer"], eintrag["retour"]
+        if liefer:
+            quote = round(retour / liefer * 100)
+            retouren.append({
+                "nummer": nummer, "name": name,
+                "liefer": liefer, "retour": retour, "quote": quote,
+                # Ab einem Viertel Ruecklauf lohnt ein Blick auf die Menge.
+                "auffaellig": quote >= 25,
+            })
+    retouren.sort(key=lambda r: r["quote"], reverse=True)
+
+    zusammenfassung = {
+        "neu": neu, "geaendert": geaendert,
+        "unveraendert_anzahl": len(unveraendert),
+        "gelesen": len(gelesen),
+        "retouren": retouren,
+    }
+
+    if not body.get("uebernehmen"):
+        zusammenfassung["meldung"] = (
+            f"{len(gelesen)} Positionen gelesen \u2013 "
+            f"{len(neu)} neu, {len(geaendert)} mit ge\u00e4nderter Bezeichnung.")
+        return _ok(zusammenfassung)
+
+    if not neu and not geaendert:
+        zusammenfassung["meldung"] = "Alle Artikel sind bereits aktuell."
+        return _ok(zusammenfassung)
+
+    heute = datetime.now().date().isoformat()
+    wer = (body.get("wer") or "Rechnung").strip()
+    liste = list(artikel)
+    for eintrag in geaendert:
+        ziel = vorhanden.get(eintrag["nummer"])
+        if ziel is not None:
+            ziel["name"] = eintrag["name"]
+    for eintrag in neu:
+        liste.append({
+            "nummer": eintrag["nummer"],
+            "name": eintrag["name"],
+            # Der Artikel wurde nachweislich geliefert -> sofort verwendbar.
+            "aktiv": True,
+            "bestellt_in": 0,
+            "summe": 0,
+            "angelegt_am": heute,
+            "angelegt_von": wer,
+        })
+
+    liste = store.sort_artikel(liste)
+    if not store.write_json(url, hdrs, store.artikel_store_key(bk), rec_id,
+                            {"artikel": liste}, "Baecker-Artikel"):
+        return _err("Die \u00c4nderungen konnten nicht gespeichert werden.", 500)
+
+    zusammenfassung["artikel"] = liste
+    zusammenfassung["meldung"] = (
+        f"{len(neu)} Artikel neu aufgenommen, "
+        f"{len(geaendert)} Bezeichnungen aktualisiert.")
+    return _ok(zusammenfassung)
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -133,6 +244,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             })
 
         rec_id, _ = store.read_json(url, hdrs, store.artikel_store_key(bk))
+
+        # ── Artikelstamm aus einer Rechnung aktualisieren (Spec F22) ──
+        if req.method == "POST" and (body.get("aktion") or "") == "rechnung":
+            return _rechnung(url, hdrs, bk, rec_id, artikel, body)
 
         # ── Anlegen ──
         if req.method == "POST":
