@@ -2739,6 +2739,8 @@ sowie in vier Werkzeugtests ohne Azure:
 | TC-B2-F24-01..04 | Bestandsübernahme nach Freundl verlustfrei, wiederholbar, Testlauf meldet Abweichungen |
 | TC-B2-F25-01..04 | CMS je Bäckerei; Speichern trifft nur die gewählte; Überschneidung am Samstag erlaubt |
 | TC-B2-F26-01..04 | Kein horizontales Scrollen, Tap-Targets, Reiterzeile klebt mit, keine nativen Dialoge |
+| TC-B2-F27-01..03 | Heute nicht bestellbar, Vorauswahl überspringt heute, Zähler nennt den Grund |
+| TC-B2-F28-01/02 | Verlauf klappt die Artikel auf (Nachladen nur einmal), Sortierung nach Nummer |
 
 ### Testlauf-Tabelle (Zweite Bäckerei)
 | Datum | Tests | Ergebnis | Anmerkung |
@@ -2748,6 +2750,7 @@ sowie in vier Werkzeugtests ohne Azure:
 | 07.09.2026 | T-BK (Regression) | 156/156 | Freundl-Bestandstests unverändert grün |
 | 07.09.2026 | Beide Suiten live | 207/207 | Gegen kind-pebble, alle drei Auflösungen |
 | 07.09.2026 | Live-Stichprobe API | OK | Siehe Tabelle unten |
+| 07.09.2026 | Nach den Betriebs-Rückmeldungen | 216/216 | F27 (heute nicht bestellbar) und F28 (Verlauf mit Artikeln) ergänzt |
 
 **Stichprobe gegen die echte API (07.09.2026, nach dem Ausrollen):**
 

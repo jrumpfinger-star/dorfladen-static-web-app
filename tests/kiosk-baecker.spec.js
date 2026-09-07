@@ -50,7 +50,12 @@ function tagesleiste(gesendet = []) {
       datum,
       wochentag: TAGE[d.getDay()],
       bestelltag: ist,
-      status: !ist ? 'kein_tag' : (gesendet.includes(datum) ? 'gesendet' : 'offen'),
+      // Bestellt wird immer für einen künftigen Liefertag – heute ist die Ware
+      // längst da. i === 0 ist heute.
+      bestellbar: ist && i > 0,
+      heute: i === 0,
+      status: !ist ? 'kein_tag'
+        : (gesendet.includes(datum) ? 'gesendet' : (i === 0 ? 'vorbei' : 'offen')),
       // Seit der zweiten Bäckerei liefert die Übersicht je Tag eine Liste der
       // Lieferanten. Hier nur Freundl – die Freundl-Tests bleiben damit
       // unverändert gültig, und die Reiterzeile erscheint bewusst nicht.
@@ -69,7 +74,8 @@ function tagesleiste(gesendet = []) {
 }
 
 function ersterBestelltag(gesendet = []) {
-  return tagesleiste(gesendet).find((t) => t.bestelltag && !gesendet.includes(t.datum));
+  // Nur künftige Liefertage kommen infrage – für heute ist die Ware längst da.
+  return tagesleiste(gesendet).find((t) => t.bestellbar && !gesendet.includes(t.datum));
 }
 
 /** Positionen mit aufsteigenden Artikelnummern und Vergleichswerten. */
@@ -94,6 +100,8 @@ function bestellung(opts = {}) {
     datum_de: t.datum.split('-').reverse().join('.'),
     status: opts.status || 0,
     gesperrt: !!opts.gesperrt,
+    // Nur künftige Liefertage sind bestellbar (Standard im Test: ja).
+    bestellbar: opts.bestellbar !== false,
     // Server entscheidet, ob noch korrigiert werden darf – im Test standardmäßig
     // ja, sobald die Bestellung gesendet ist.
     korrektur_moeglich: opts.korrekturMoeglich !== undefined

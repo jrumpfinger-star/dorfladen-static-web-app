@@ -612,6 +612,62 @@ Tagesleiste **und** Reiterzeile stehen.
 **TC-B2-F26-04: Keine nativen Dialoge** — `window.alert`/`confirm` werden während
 Senden, Drucken und Rechnungs-Import nicht aufgerufen.
 
+### F27: Bestellt wird nur für künftige Liefertage
+
+#### F27 Description
+
+Für den laufenden Tag ist die Ware längst geliefert – eine Bestellung ginge ins
+Leere. **Diese Lücke ist im Betrieb aufgefallen:** Am Montag wurde versehentlich
+eine Bestellung *für Montag* abgeschickt.
+
+#### F27 Behaviour / Acceptance
+
+- Nur Tage **nach heute** sind bestellbar. Heute und Vergangenes lassen sich
+  ansehen, aber nicht senden und nicht bearbeiten.
+- Die Vorauswahl beim Öffnen überspringt heute.
+- Das Tagesplättchen zeigt „heute geliefert" bzw. „nicht bestellt" und ist
+  gedämpft dargestellt.
+- Der **Server lehnt ab**, nicht nur die Oberfläche: Ein veralteter Kiosk oder
+  ein Doppelklick darf keine sinnlose Bestellung auslösen.
+- Nach dem Senden wird die Tagesleiste **vor** der Bestellung neu geladen –
+  sonst zeigte das Plättchen weiter „offen", obwohl gerade gesendet wurde.
+
+#### F27 Test Cases
+
+**TC-B2-F27-01: Heute lässt sich nicht bestellen** — Statuskarte nennt
+„geliefert", kein Sende-Knopf in Karte und Fußzeile.
+
+**TC-B2-F27-02: Vorauswahl überspringt heute** — der aktive Tag ist nie heute.
+
+**TC-B2-F27-03: Der Zähler nennt im Klartext, was offen ist** — eine Zeile im
+Kopf benennt die offene Bestellung und den überschrittenen Bestellschluss.
+Vorher blinkte der Reiter, ohne dass jemand sagen konnte, warum.
+
+### F28: Verlauf zeigt die bestellten Artikel
+
+#### F28 Description
+
+„27 Positionen · 96 Stück" sagt nicht, **was** bestellt wurde. Jede Zeile im
+Verlauf lässt sich deshalb aufklappen.
+
+#### F28 Behaviour / Acceptance
+
+- Klick auf eine Verlaufszeile klappt die Positionen als Liste auf:
+  Nummer · Artikel · Retouren · Menge, aufsteigend nach Artikelnummer.
+- Zusatzartikel sind als „nur heute" gekennzeichnet.
+- Die Positionen werden **erst beim Aufklappen** nachgeladen – der Verlauf
+  umfasst bis zu 60 Einträge mit je rund 30 Positionen und bliebe sonst
+  unnötig schwer.
+- Ein zweites Öffnen derselben Zeile löst **keinen** weiteren Abruf aus.
+- Am Fuß der Liste stehen die Summen und ein Weg in den Bestell-Tab.
+
+#### F28 Test Cases
+
+**TC-B2-F28-01: Verlauf zeigt die Artikel als Liste** — vor dem Aufklappen kein
+Abruf, danach die Positionen; erneutes Öffnen lädt nicht nach.
+
+**TC-B2-F28-02: Positionen sind nach Nummer sortiert.**
+
 ## Data / API
 
 ### Geänderte Endpunkte
@@ -681,3 +737,5 @@ Bestellungen erhalten zusätzlich `gedruckt_am` (nur wo `papierausdruck` gilt).
 | F24 Bestandsübernahme | TC-B2-F24-01…04 | baecker-migration | T021, T070-T073, T120 |
 | F25 CMS je Bäckerei | TC-B2-F25-01…04 | CMS-Karte | T036, T090-T092 |
 | F26 Responsive | TC-B2-F26-01…04 | Change Map kiosk.html | T088, T103 |
+| F27 Nur künftige Tage | TC-B2-F27-01…03 | Nachtrag aus dem Betrieb | T130 |
+| F28 Verlauf mit Artikeln | TC-B2-F28-01/02 | Nachtrag aus dem Betrieb | T131 |

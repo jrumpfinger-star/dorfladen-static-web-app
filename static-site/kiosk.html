@@ -306,6 +306,13 @@
     .bk-day.sent .st{color:#16a34a}
     .bk-day.druck{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
     .bk-day.druck .st{color:#2563eb}
+    /* Bereits gelieferter Tag – nur noch zum Ansehen */
+    .bk-day.vorbei{opacity:.62}
+    .bk-day.vorbei .st{color:var(--c-muted)}
+    /* Sagt im Klartext, warum der Reiter blinkt */
+    .bk-offen{display:flex;align-items:center;gap:7px;font-size:12.5px;padding:8px 12px;
+      border-radius:9px;margin-bottom:10px;background:#f9fafb;border:1px solid var(--c-border);color:#374151}
+    .bk-offen.dringend{background:#fef2f2;border-color:#fecaca;color:#b91c1c;font-weight:600}
     .bk-day.off{opacity:.55;cursor:not-allowed}
     /* Lieferanten-Punkte je Tag – zeigen, wer liefert und was erledigt ist */
     .bk-who{display:flex;gap:3px;justify-content:center;margin-top:4px}
@@ -315,14 +322,37 @@
     .bk-dot.done{box-shadow:0 0 0 1.5px #fff,0 0 0 3px currentColor}
     .bk-day.active .bk-dot.done{box-shadow:0 0 0 1.5px var(--c-surf,#fff),0 0 0 3px #fff}
     /* Bäckerei-Reiter – nur an Tagen mit zwei Lieferanten (Spec F19).
-       Farbig unterlegt, damit sie sich von der Ansichtszeile darüber
-       (Bestellung | Verlauf | Artikel) klar unterscheiden. */
-    .bk-btabs{display:flex;gap:0;border-bottom:2px solid var(--c-border);margin-bottom:11px;overflow-x:auto}
-    .bk-btab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;
-      padding:9px 15px;min-height:46px;font-size:13.5px;font-weight:800;color:var(--c-muted);
-      cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
-    .bk-btab.on.bk-btab-freundl{color:var(--bk-dark,#78350f);border-bottom-color:var(--bk,#b45309);background:var(--bk-bg,#fffbeb)}
-    .bk-btab.on.bk-btab-martins{color:#134e4a;border-bottom-color:#0f766e;background:#f0fdfa}
+       Der aktive Reiter ist GEFÜLLT, die anderen tragen einen sichtbaren
+       Rahmen: Nur getönter Text las sich nicht als „hier kann man wechseln“.
+       Die Beschriftung davor nennt den Zweck, damit die Zeile sich von der
+       Ansichtszeile darüber (Bestellung | Verlauf | Artikel) unterscheidet. */
+    .bk-btabs{display:flex;gap:6px;align-items:flex-end;border-bottom:2px solid var(--c-border);
+      margin-bottom:11px;overflow-x:auto}
+    .bk-btabs .lbl{font-size:11px;font-weight:800;color:var(--c-muted);text-transform:uppercase;
+      letter-spacing:.5px;white-space:nowrap;padding:0 4px 12px 2px}
+    .bk-btab{background:#fff;border:1px solid var(--c-border);border-bottom:3px solid transparent;
+      border-radius:9px 9px 0 0;margin-bottom:-2px;padding:9px 15px;min-height:46px;
+      font-size:13.5px;font-weight:700;color:#4b5563;cursor:pointer;
+      display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+    .bk-btab:hover{background:#f3f4f6;color:#1f2937}
+    .bk-btab.on{color:#fff;font-weight:800}
+    .bk-btab.on .bk-dot{background:#fff!important}
+    .bk-btab.on.bk-btab-freundl{background:var(--bk,#b45309);border-color:var(--bk,#b45309);border-bottom-color:var(--bk,#b45309)}
+    .bk-btab.on.bk-btab-martins{background:#0f766e;border-color:#0f766e;border-bottom-color:#0f766e}
+    .bk-btab.on .bk-flag{background:rgba(255,255,255,.22);color:#fff;border-color:rgba(255,255,255,.45)}
+    .bk-btab .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+    /* Schmale Schirme: Beide Reiter müssen nebeneinander passen – sonst läuft
+       der zweite aus dem Bild und wirkt, als gäbe es ihn nicht. Gekürzt wird
+       der NAME, nicht der Status: Ob schon gesendet wurde, ist das Wichtige. */
+    @media(max-width:720px){
+      .bk-btabs .lbl{display:none}
+      .bk-btab{flex:1 1 0;min-width:0;justify-content:center;padding:8px 9px;font-size:12.5px;gap:5px}
+      .bk-btab .bk-flag{font-size:10px;padding:1px 6px}
+    }
+    @media(max-width:430px){
+      .bk-btab{font-size:11.5px;padding:8px 6px;gap:4px}
+      .bk-btab .bk-dot{display:none}
+    }
     .bk-flag{font-size:11px;font-weight:800;border-radius:20px;padding:2px 9px;white-space:nowrap}
     .bk-flag.open{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
     .bk-flag.done{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
@@ -438,7 +468,23 @@
     /* Steht der Ausdruck noch aus, gilt der Tag nicht als fertig – muss
        deshalb NACH .ok stehen, sonst gewinnt Gruen. */
     .bk-hist.druck{border-left-color:#2563eb}
-    .bk-hist .d{cursor:pointer}
+    /* Aufgeklappte Positionsliste (die Zahl allein sagt nicht, WAS bestellt wurde) */
+    .bk-hist .d{cursor:pointer;display:flex;align-items:center;gap:8px}
+    .bk-hist .d .pf{font-size:11px;color:var(--c-muted);width:11px;flex-shrink:0}
+    .bk-hist.auf{background:#fcfcfd}
+    .bk-hist.auf .d .pf{color:var(--c-text)}
+    .bk-hist-liste{grid-column:1/-1;border-top:1px solid var(--c-border);margin-top:9px;padding-top:9px}
+    .bk-hist-tab{width:100%;border-collapse:collapse;font-size:13px}
+    .bk-hist-tab th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;
+      color:var(--c-muted);font-weight:800;padding:3px 7px;border-bottom:1px solid var(--c-border)}
+    .bk-hist-tab td{padding:4px 7px;border-bottom:1px solid #f3f4f6}
+    .bk-hist-tab td.nr{color:var(--c-muted);font-size:11.5px;font-weight:700;width:44px;font-variant-numeric:tabular-nums}
+    .bk-hist-tab th.r,.bk-hist-tab td.r{text-align:right;width:64px}
+    .bk-hist-tab td.ret{color:#b91c1c}
+    .bk-hist-tab .zx{font-size:10px;font-weight:700;background:#eef2ff;color:#3730a3;border-radius:6px;padding:1px 6px}
+    .bk-hist-fuss{display:flex;align-items:center;justify-content:space-between;gap:10px;
+      flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--c-muted)}
+    .bk-hist-leer{padding:10px 7px;font-size:13px;color:var(--c-muted)}
     .bk-hist .d b{font-size:14px}
     .bk-hist .d span{display:block;font-size:12px;color:var(--c-muted)}
     .bk-hist .m{font-size:13px;color:#374151;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -516,8 +562,9 @@
       .bk-art{grid-template-columns:52px 1fr 34px 46px;grid-template-areas:"nr nm ed sw" "use use use use";row-gap:5px}
       .bk-art .nr{grid-area:nr}.bk-art .nm{grid-area:nm}
       .bk-art .use{grid-area:use}.bk-sw{grid-area:sw}.bk-edit{grid-area:ed}
-      .bk-hist{grid-template-columns:1fr auto;grid-template-areas:"d s" "m m" "b b";row-gap:5px}
+      .bk-hist{grid-template-columns:1fr auto;grid-template-areas:"d s" "m m" "b b" "l l";row-gap:5px}
       .bk-hist .d{grid-area:d}.bk-hist .m{grid-area:m}.bk-hist .s{grid-area:s}
+      .bk-hist-liste{grid-area:l}
       .bk-hist-druck{grid-area:b;justify-self:start}
       .bk-two{grid-template-columns:1fr}
     }

@@ -78,12 +78,16 @@ function tagesleiste(opts) {
       };
     });
     const fertig = lieferanten.filter((x) => x.status !== 'offen' && !x.druck_offen).length;
+    // Bestellt wird immer für einen künftigen Liefertag – i === 0 ist heute.
+    const bestellbar = i > 0 && lieferanten.length > 0;
     out.push({
       datum, wochentag: TAGE[d.getDay()], bestelltag: lieferanten.length > 0,
+      bestellbar, heute: i === 0,
       lieferanten, fertig, gesamt: lieferanten.length,
       status: !lieferanten.length ? 'kein_tag'
         : fertig === lieferanten.length ? 'gesendet'
-        : lieferanten.some((x) => x.druck_offen) ? 'druck_offen' : 'offen',
+        : lieferanten.some((x) => x.druck_offen) ? 'druck_offen'
+        : !bestellbar ? 'vorbei' : 'offen',
     });
   }
   return out;
@@ -99,6 +103,7 @@ function bestellung(bk, datum, opts) {
     datum_de: datum.split('-').reverse().join('.'),
     status: gesendet || druckOffen ? 1 : 0,
     gesperrt: gesendet || druckOffen,
+    bestellbar: new Date(datum + 'T12:00:00') > new Date(new Date().setHours(23, 59, 59, 0)),
     korrektur_moeglich: gesendet && !druckOffen,
     hat_entwurf: false,
     vorlage_datum: bk === 'freundl' ? '2026-09-01' : '',
@@ -438,5 +443,107 @@ test.describe('Zweite Bäckerei', () => {
     await page.click('.bk-btab-freundl');
     await page.waitForTimeout(500);
     expect(await page.evaluate(() => window.__nativ)).toBe(0);
+  });
+
+  // ── F27: Bestellt wird nur für künftige Liefertage ────────────────────
+
+  test('TC-B2-F27-01: heute lässt sich nicht bestellen', async ({ page }) => {
+    // Reale Panne: Am Montag wurde versehentlich eine Bestellung FÜR Montag
+    // abgeschickt. Die Ware war da längst geliefert.
+    await openBaecker(page);
+    const heute = iso(plusTage(0));
+    const chip = page.locator(`#panel-baecker .bk-day[onclick*="${heute}"]`);
+    if (await chip.count()) {
+      await chip.click();
+      await page.waitForTimeout(700);
+      await expect(page.locator('#panel-baecker .bk-stat')).toContainText('geliefert');
+      // Weder in der Statuskarte noch in der Fußzeile darf gesendet werden
+      await expect(page.locator('#panel-baecker .bk-stat .bk-cta')).toHaveCount(0);
+      await expect(page.locator('#panel-baecker .bk-send')).toHaveCount(0);
+    }
+  });
+
+  test('TC-B2-F27-02: Vorauswahl überspringt heute', async ({ page }) => {
+    await openBaecker(page);
+    const aktiv = page.locator('#panel-baecker .bk-day.active');
+    await expect(aktiv).toHaveCount(1);
+    const auf = await aktiv.getAttribute('onclick');
+    expect(auf).not.toContain(iso(plusTage(0)));
+  });
+
+  test('TC-B2-F27-03: Zähler nennt im Klartext, was offen ist', async ({ page }) => {
+    const morgen = plusTage(1);
+    await openBaecker(page, {
+      erinnerung: {
+        offen: true, blinkt: true, datum: iso(morgen), wochentag: TAGE[morgen.getDay()],
+        bestellschluss: '12:00', baeckereien: [NAME.martins],
+      },
+    });
+    const hinweis = page.locator('#panel-baecker .bk-offen');
+    await expect(hinweis).toHaveCount(1);
+    await expect(hinweis).toContainText('noch offen');
+    await expect(hinweis).toContainText('Bestellschluss war um 12:00');
+  });
+
+  // ── F28: Verlauf zeigt die bestellten Artikel ─────────────────────────
+
+  test('TC-B2-F28-01: Verlauf zeigt die Artikel als Liste', async ({ page }) => {
+    const fr = tagNurFuer('freundl').datum;
+    const eintrag = {
+      datum: fr, datum_de: fr.split('-').reverse().join('.'), wochentag: 'Freitag',
+      baeckerei: 'freundl', baeckerei_name: NAME.freundl, status: 1,
+      positionen: 3, stueck: 60, protokoll: [{ zeit: fr + 'T11:38:00', wer: 'Anna' }],
+      gedruckt_am: '', papierausdruck: true, druck_offen: false,
+    };
+    const abrufe = [];
+    await mockApi(page, { verlauf: [eintrag] });
+    page.on('request', (r) => { if (/baecker-order\?.*datum=/.test(r.url())) abrufe.push(r.url()); });
+    await page.goto(KIOSK_URL);
+    await page.click('.k-tab[data-tab="baecker"]');
+    await page.waitForSelector('#panel-baecker .bk-days', { timeout: 15000 });
+    await page.click('#panel-baecker .k-filter-btn:has-text("Verlauf")');
+    await page.waitForTimeout(700);
+
+    // Vor dem Aufklappen wird nichts nachgeladen – der Verlauf bleibt schlank
+    const vorher = abrufe.length;
+    await expect(page.locator('.bk-hist-tab')).toHaveCount(0);
+
+    await page.click('.bk-hist .m');
+    await page.waitForTimeout(800);
+    await expect(page.locator('.bk-hist-tab')).toHaveCount(1);
+    await expect(page.locator('.bk-hist-tab tbody tr')).toHaveCount(3);
+    await expect(page.locator('.bk-hist-tab')).toContainText('Kaisersemmel');
+    expect(abrufe.length).toBeGreaterThan(vorher);
+
+    // Zuklappen und erneut öffnen darf NICHT erneut laden
+    await page.click('.bk-hist .m');
+    await page.waitForTimeout(400);
+    await expect(page.locator('.bk-hist-tab')).toHaveCount(0);
+    const zwischen = abrufe.length;
+    await page.click('.bk-hist .m');
+    await page.waitForTimeout(600);
+    await expect(page.locator('.bk-hist-tab')).toHaveCount(1);
+    expect(abrufe.length).toBe(zwischen);
+  });
+
+  test('TC-B2-F28-02: Positionen sind nach Nummer sortiert', async ({ page }) => {
+    const fr = tagNurFuer('freundl').datum;
+    await mockApi(page, { verlauf: [{
+      datum: fr, datum_de: fr.split('-').reverse().join('.'), wochentag: 'Freitag',
+      baeckerei: 'freundl', baeckerei_name: NAME.freundl, status: 1,
+      positionen: 3, stueck: 60, protokoll: [], gedruckt_am: '',
+      papierausdruck: false, druck_offen: false,
+    }] });
+    await page.goto(KIOSK_URL);
+    await page.click('.k-tab[data-tab="baecker"]');
+    await page.waitForSelector('#panel-baecker .bk-days', { timeout: 15000 });
+    await page.click('#panel-baecker .k-filter-btn:has-text("Verlauf")');
+    await page.waitForTimeout(700);
+    await page.click('.bk-hist .m');
+    await page.waitForTimeout(800);
+    const nummern = await page.$$eval('.bk-hist-tab td.nr',
+      (n) => n.map((x) => parseInt(x.textContent, 10)).filter((x) => !isNaN(x)));
+    expect(nummern.length).toBeGreaterThan(1);
+    expect(nummern).toEqual([...nummern].sort((a, b) => a - b));
   });
 });

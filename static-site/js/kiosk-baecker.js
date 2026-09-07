@@ -60,7 +60,10 @@
 
   // ── Warengruppe anhand der Artikelnummer (reine Lesehilfe) ──
   function gruppeVon(nummer) {
-    var gr = (_b && _b.gruppen) || [
+    // Achtung: Eine LEERE Liste ist in JavaScript „wahr“ – ohne die
+    // Längenprüfung bliebe jede Warengruppen-Überschrift leer, sobald der
+    // Server keine Gruppen liefert.
+    var gr = (_b && _b.gruppen && _b.gruppen.length) ? _b.gruppen : [
       { bis: 119, titel: 'Semmeln & Kleingebäck' },
       { bis: 301, titel: 'Brote & Baguettes' },
       { bis: null, titel: 'Süßes & Sonstiges' }
@@ -100,14 +103,24 @@
         _uebersicht = res;
         badge();
         if (danachLaden) {
-          // Ersten Tag mit offener Aufgabe wählen, sonst den ersten Bestelltag.
+          // Bestellt wird immer für einen künftigen Liefertag – heute ist die
+          // Ware längst da. Deshalb den ersten BESTELLBAREN Tag wählen, der
+          // noch Arbeit macht.
           var ziel = null;
           (res.tage || []).forEach(function (t) {
-            if (ziel || !t.bestelltag) return;
+            if (ziel || !t.bestellbar) return;
             if (t.status !== 'gesendet') ziel = t;
           });
-          if (!ziel) ziel = (res.tage || []).filter(function (t) { return t.bestelltag; })[0];
-          if (!ziel) return;
+          if (!ziel) ziel = (res.tage || []).filter(function (t) { return t.bestellbar; })[0];
+          if (!ziel) {
+            // Kein einziger künftiger Liefertag – etwa wenn für beide
+            // Bäckereien keine Bestelltage eingestellt sind. Ohne diesen Zweig
+            // bliebe der Tab schlicht leer.
+            _datum = '';
+            _b = null;
+            render();
+            return;
+          }
           _datum = ziel.datum;
           _bk = (ziel.lieferanten[0] || {}).baeckerei || '';
           return ladeBestellung(_datum);
@@ -183,11 +196,46 @@
     if (wrap) {
       wrap.innerHTML = offen
         ? '<span class="k-tab-badge show ' + (e.blinkt ? 'badge-msg blink' : 'badge-bk')
-          + '" title="' + esc(offen === 1 ? 'Eine Aufgabe offen' : offen + ' Aufgaben offen')
-          + '">' + offen + '</span>'
+          + '" title="' + esc(offenText()) + '">' + offen + '</span>'
         : '';
     }
     if (tab) tab.classList.toggle('bk-blink', !!e.blinkt);
+  }
+
+  // Klartext, was der Zähler zählt – sonst blinkt der Reiter, ohne dass jemand
+  // sagen kann, warum.
+  function offenText() {
+    var e = (_uebersicht && _uebersicht.erinnerung) || {};
+    var teile = [];
+    if (e.offen) {
+      teile.push('Bestellung für ' + (e.wochentag || 'morgen')
+        + (e.baeckereien && e.baeckereien.length ? ' (' + e.baeckereien.join(', ') + ')' : '')
+        + ' noch offen');
+    }
+    var druck = [];
+    ((_uebersicht && _uebersicht.tage) || []).forEach(function (t) {
+      (t.lieferanten || []).forEach(function (x) {
+        if (x.druck_offen) druck.push(t.wochentag + ' (' + x.name + ')');
+      });
+    });
+    if (druck.length) {
+      teile.push('Ausdruck fehlt: ' + druck.join(', '));
+    }
+    return teile.join(' · ') || 'Nichts offen';
+  }
+
+  // Zeile im Kopf, die den Grund fürs Blinken benennt.
+  function offenHinweis() {
+    var e = (_uebersicht && _uebersicht.erinnerung) || {};
+    var offen = (_uebersicht && _uebersicht.offen_gesamt) || 0;
+    if (!offen) return '';
+    var text = offenText();
+    if (text === 'Nichts offen') return '';
+    return '<div class="bk-offen' + (e.blinkt ? ' dringend' : '') + '">'
+      + luc(e.blinkt ? 'alarm-clock' : 'info', 14) + ' ' + esc(text)
+      + (e.blinkt && e.bestellschluss
+         ? ' – Bestellschluss war um ' + esc(e.bestellschluss) + ' Uhr' : '')
+      + '</div>';
   }
 
   // ══════════════════════════════════════════════════
@@ -244,13 +292,15 @@
       else if (t.datum === _datum) cls += ' active';
       else if (t.status === 'gesendet') cls += ' sent';
       else if (druckOffen) cls += ' druck';
+      else if (!t.bestellbar) cls += ' vorbei';
       var d = t.datum.split('-');
       var label = t.wochentag.slice(0, 2);
 
       var st;
       if (!t.bestelltag) st = 'keine Lieferung';
-      else if (t.gesamt > 1) st = t.fertig + ' von ' + t.gesamt;
       else if (druckOffen) st = 'Ausdruck fehlt';
+      else if (!t.bestellbar) st = (t.status === 'gesendet' ? 'heute geliefert' : 'nicht bestellt');
+      else if (t.gesamt > 1) st = t.fertig + ' von ' + t.gesamt;
       else if (t.status === 'gesendet') st = '✓ gesendet';
       else st = 'offen';
 
@@ -278,16 +328,19 @@
   function baeckerReiter() {
     var wer = lieferantenVon(_datum);
     if (wer.length < 2) return '';
-    var h = '<div class="bk-btabs">';
+    // Beschriftung davor: Ohne sie sah die Zeile wie zwei Textzeilen aus,
+    // nicht wie etwas, das man umschalten kann.
+    var h = '<div class="bk-btabs"><span class="lbl">Bäckerei</span>';
     wer.forEach(function (x) {
       var abz = x.druck_offen ? '<span class="bk-flag druck">🖨 Ausdruck fehlt</span>'
         : x.status !== 'offen' ? '<span class="bk-flag done">✓ gesendet</span>'
         : '<span class="bk-flag open">offen</span>';
       h += '<button class="bk-btab bk-btab-' + esc(x.baeckerei)
         + (x.baeckerei === _bk ? ' on' : '') + '"'
+        + ' title="' + esc(x.name) + '"'
         + ' onclick="KBaecker.baeckerei(\'' + esc(x.baeckerei) + '\')">'
-        + '<i class="bk-dot bk-dot-' + esc(x.baeckerei) + '"></i> '
-        + esc(x.name) + ' ' + abz + '</button>';
+        + '<i class="bk-dot bk-dot-' + esc(x.baeckerei) + '"></i>'
+        + '<span class="nm">' + esc(x.name) + '</span>' + abz + '</button>';
     });
     return h + '</div>';
   }
@@ -336,6 +389,12 @@
     if (druckOffen) {
       // Der Ausdruck geht vor: erst danach gilt der Tag als erledigt.
       h += '<button class="bk-cta" onclick="KBaecker.drucken()">' + luc('printer', 15) + ' Jetzt drucken</button>';
+    } else if (_b.bestellbar === false) {
+      // Bestellt wird immer für einen künftigen Liefertag – für heute ist die
+      // Ware längst da. Ohne diesen Riegel wurde versehentlich eine Bestellung
+      // für den laufenden Tag abgeschickt.
+      h += '<div class="bk-cta-note">' + luc('lock', 14)
+        + ' Dieser Tag ist geliefert – bestellt wird immer für einen künftigen Liefertag</div>';
     } else if (gesendet) {
       // Korrigieren lässt sich nur der nächste Liefertag – für bereits
       // gelieferte Tage käme die Änderung zu spät.
@@ -372,14 +431,25 @@
   }
 
   function renderBestellung() {
-    if (!_b) return '<div class="bk-sticky">' + subTabs() + '</div><div class="k-empty">Laden…</div>';
+    if (!_b) {
+      return '<div class="bk-sticky">' + subTabs() + tagesleiste() + '</div>'
+        + '<div class="k-empty">'
+        + (_uebersicht
+            ? 'Kein anstehender Liefertag. Die Bestelltage lassen sich im CMS einstellen.'
+            : 'Laden…')
+        + '</div>';
+    }
     var gesperrt = _b.gesperrt && !_korrektur;
+    // Ein gelieferter Tag lässt sich nur noch ansehen – die Eingabefelder
+    // bleiben deshalb gesperrt.
+    if (_b.bestellbar === false) gesperrt = true;
     var alle = _b.positionen || [];
     var liste = alle.filter(sichtbar);
     var zusatz = alle.filter(function (p) { return p.zusatz; });
 
     var h = '<div class="bk-sticky">' + subTabs();
     h += tagesleiste();
+    h += offenHinweis();
     h += baeckerReiter();
     if (_b.testbetrieb) {
       h += '<div class="bk-test">' + luc('flask-conical', 14)
@@ -446,12 +516,14 @@
       if ((p.menge || 0) > 0 || (p.retoure || 0) > 0) { pos++; stk += (p.menge || 0); }
     });
     var geaendert = Object.keys(_dirty).length;
+    // Ein bereits gelieferter Tag verhält sich wie ein gesendeter: nur ansehen.
+    var nurAnsehen = gesperrt || _b.bestellbar === false;
     h += '<div class="bk-foot"><div class="sum">'
-      + (gesperrt ? 'Gesendet: ' : 'Bestellung: ')
+      + (gesperrt ? 'Gesendet: ' : _b.bestellbar === false ? 'Geliefert: ' : 'Bestellung: ')
       + '<b>' + pos + ' Positionen</b> · <b>' + stk + ' Stück</b>'
       + (geaendert ? ' · ' + geaendert + ' Änderung' + (geaendert === 1 ? '' : 'en') : '')
       + '</div><span class="sp"></span>';
-    if (!gesperrt) {
+    if (!nurAnsehen) {
       h += '<button class="bk-btn" onclick="KBaecker.speichern()">Entwurf speichern</button>';
       h += '<button class="bk-send" onclick="KBaecker.vorschau()">' + luc('mail', 16) + ' '
         + (_korrektur ? 'Korrektur senden' : 'An Bäckerei senden') + '</button>';
@@ -874,8 +946,12 @@
           var brauchtDruck = !!res.druck_offen;
           var gedruckte = res.positionen_druck || [];
           _korrektur = false;
-          ladeUebersicht();
-          ladeBestellung(_datum).then(function () {
+          // Erst die Tagesleiste neu laden, DANN die Bestellung: Sonst zeichnet
+          // der Kiosk mit dem alten Stand und das Tagesplättchen zeigt weiter
+          // „offen“, obwohl gerade gesendet wurde.
+          ladeUebersicht().then(function () {
+            return ladeBestellung(_datum);
+          }).then(function () {
             // Der Ausdruck ist ein eigener Arbeitsschritt – er soll nicht
             // untergehen, deshalb erscheint die Aufforderung sofort.
             if (brauchtDruck) druckAufforderung(gedruckte);
@@ -1213,6 +1289,8 @@
   // ══════════════════════════════════════════════════
 
   var _verlauf = null;
+  var _verlaufOffen = {};    // Schluessel -> aufgeklappt
+  var _verlaufDetail = {};   // Schluessel -> Positionen | 'laedt' | 'fehler'
 
   function ladeVerlauf() {
     fetch(API + '/baecker-order?mode=verlauf')
@@ -1231,10 +1309,18 @@
       var cls = e.status >= 1 ? 'ok' : 'off';
       if (e.druck_offen) cls += ' druck';
       var p = (e.protokoll && e.protokoll[0]) || null;
-      h += '<div class="bk-hist ' + cls + '">';
-      h += '<div class="d" onclick="KBaecker.tagAusVerlauf(\'' + e.datum + '\',\'' + esc(e.baeckerei) + '\')">'
-        + '<b>' + esc(e.wochentag) + '</b><span>' + esc(e.datum_de) + '</span></div>';
-      h += '<div class="m"><i class="bk-dot bk-dot-' + esc(e.baeckerei) + '"></i> '
+      var schluessel = e.baeckerei + '|' + e.datum;
+      var offen = _verlaufOffen[schluessel];
+
+      h += '<div class="bk-hist ' + cls + (offen ? ' auf' : '') + '">';
+      // Die ganze Zeile klappt auf – die Zahl allein sagt nicht, WAS bestellt
+      // wurde. Geladen wird erst beim Aufklappen, damit der Verlauf schlank
+      // bleibt (bis zu 60 Einträge × rund 30 Positionen).
+      h += '<div class="d" onclick="KBaecker.verlaufAuf(\'' + esc(e.baeckerei) + '\',\'' + e.datum + '\')">'
+        + '<span class="pf">' + (offen ? '▾' : '▸') + '</span>'
+        + '<span><b>' + esc(e.wochentag) + '</b><span>' + esc(e.datum_de) + '</span></span></div>';
+      h += '<div class="m" onclick="KBaecker.verlaufAuf(\'' + esc(e.baeckerei) + '\',\'' + e.datum + '\')">'
+        + '<i class="bk-dot bk-dot-' + esc(e.baeckerei) + '"></i> '
         + esc(e.baeckerei_name || '') + '<span>' + e.positionen + ' Positionen · '
         + e.stueck + ' Stück</span></div>';
       h += '<div class="s">' + st
@@ -1246,9 +1332,82 @@
           + '\',\'' + e.datum + '\')">' + luc('printer', 14) + ' '
           + (e.druck_offen ? 'Drucken' : 'Erneut') + '</button>';
       }
+      if (offen) h += verlaufListe(schluessel, e);
       h += '</div>';
     });
     return h;
+  }
+
+  // Aufgeklappte Positionsliste einer Bestellung.
+  function verlaufListe(schluessel, e) {
+    var daten = _verlaufDetail[schluessel];
+    if (daten === 'laedt') {
+      return '<div class="bk-hist-liste"><div class="k-empty" style="padding:14px">Laden…</div></div>';
+    }
+    if (daten === 'fehler') {
+      return '<div class="bk-hist-liste"><div class="bk-hist-leer">'
+        + 'Die Positionen konnten nicht geladen werden.</div></div>';
+    }
+    var pos = (daten || []).filter(function (x) {
+      return (x.menge || 0) > 0 || (x.retoure || 0) > 0;
+    }).sort(function (a, b) {
+      var na = parseInt(a.nummer, 10), nb = parseInt(b.nummer, 10);
+      if (isNaN(na) && isNaN(nb)) return 0;
+      if (isNaN(na)) return 1;
+      if (isNaN(nb)) return -1;
+      return na - nb;
+    });
+    if (!pos.length) {
+      return '<div class="bk-hist-liste"><div class="bk-hist-leer">'
+        + 'Für diesen Tag wurde nichts bestellt.</div></div>';
+    }
+    var stk = pos.reduce(function (s, x) { return s + (x.menge || 0); }, 0);
+    var hatRet = pos.some(function (x) { return (x.retoure || 0) > 0; });
+    var h = '<div class="bk-hist-liste"><table class="bk-hist-tab">';
+    h += '<thead><tr><th>Nr.</th><th>Artikel</th>'
+      + (hatRet ? '<th class="r">Retour</th>' : '') + '<th class="r">Menge</th></tr></thead><tbody>';
+    pos.forEach(function (x) {
+      h += '<tr><td class="nr">' + esc(x.nummer || '') + '</td>'
+        + '<td>' + esc(x.name || '') + (x.zusatz ? ' <span class="zx">nur heute</span>' : '') + '</td>'
+        + (hatRet ? '<td class="r ret">' + (x.retoure ? esc(String(x.retoure)) : '–') + '</td>' : '')
+        + '<td class="r"><b>' + esc(String(x.menge || 0)) + '</b></td></tr>';
+    });
+    h += '</tbody></table>';
+    h += '<div class="bk-hist-fuss"><span>' + pos.length + ' Positionen · ' + stk + ' Stück</span>'
+      + '<button class="bk-btn" onclick="event.stopPropagation();KBaecker.tagAusVerlauf(\''
+      + e.datum + '\',\'' + esc(e.baeckerei) + '\')">' + luc('external-link', 14)
+      + ' Im Bestell-Tab öffnen</button></div>';
+    return h + '</div>';
+  }
+
+  // Auf-/Zuklappen. Beim ersten Öffnen werden die Positionen nachgeladen –
+  // der Verlauf selbst liefert nur die Anzahl.
+  function verlaufAuf(bk, datum) {
+    var schluessel = bk + '|' + datum;
+    if (_verlaufOffen[schluessel]) {
+      delete _verlaufOffen[schluessel];
+      render();
+      return;
+    }
+    _verlaufOffen[schluessel] = true;
+    if (_verlaufDetail[schluessel] && _verlaufDetail[schluessel] !== 'fehler') {
+      render();
+      return;
+    }
+    _verlaufDetail[schluessel] = 'laedt';
+    render();
+    fetch(API + '/baecker-order?baeckerei=' + encodeURIComponent(bk)
+          + '&datum=' + encodeURIComponent(datum))
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || !res.success) throw new Error('x');
+        _verlaufDetail[schluessel] = res.bestellung.positionen || [];
+        if (_sub === 'verlauf') render();
+      })
+      .catch(function () {
+        _verlaufDetail[schluessel] = 'fehler';
+        if (_sub === 'verlauf') render();
+      });
   }
 
   function tagAusVerlauf(datum, bk) {
@@ -1311,6 +1470,7 @@
     speichern: speichern, vorschau: vorschau, senden: senden,
     korrektur: korrektur, verwerfen: verwerfen,
     drucken: drucken, nachdruck: nachdruck,
+    verlaufAuf: verlaufAuf,
     zusatzDialog: zusatzDialog, zusatzAus: zusatzAus, zusatzFrei: zusatzFrei,
     zusatzWeg: zusatzWeg, suche: suche,
     neuDialog: neuDialog, neuSpeichern: neuSpeichern, aktiv: aktiv,

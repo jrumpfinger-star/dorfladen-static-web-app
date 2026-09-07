@@ -189,6 +189,8 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         "datum_de": store.datum_de(datum_iso),
         "status": order.get("status", store.STATUS_ENTWURF),
         "gesperrt": gesendet,
+        # Bestellt wird immer fuer einen kuenftigen Liefertag.
+        "bestellbar": _bestellbar(datum_iso),
         "korrektur_moeglich": gesendet and store.korrektur_moeglich(cfg, datum_iso),
         "hat_entwurf": hat_entwurf,
         "vorlage_datum": quelle,
@@ -245,9 +247,15 @@ def _uebersicht(url, hdrs, cfg):
                 druck_offen_gesamt += 1
         fertig = sum(1 for x in lieferanten
                      if x["status"] != "offen" and not x["druck_offen"])
+        # Bestellt wird IMMER fuer einen kuenftigen Liefertag. Fuer heute ist
+        # die Ware laengst da – eine Bestellung waere sinnlos und richtete im
+        # Zweifel Schaden an (versehentlich abgeschickt).
+        bestellbar = i > 0 and bool(lieferanten)
         tage.append({
             "datum": iso, "wochentag": store.wochentag(iso),
             "bestelltag": bool(lieferanten),
+            "bestellbar": bestellbar,
+            "heute": i == 0,
             "lieferanten": lieferanten,
             "fertig": fertig,
             "gesamt": len(lieferanten),
@@ -255,6 +263,7 @@ def _uebersicht(url, hdrs, cfg):
             "status": ("kein_tag" if not lieferanten
                        else "gesendet" if fertig == len(lieferanten)
                        else "druck_offen" if any(x["druck_offen"] for x in lieferanten)
+                       else "vorbei" if not bestellbar
                        else "offen"),
         })
 
@@ -325,11 +334,33 @@ def _verlauf(url, hdrs, cfg, bk=None):
     return {"verlauf": eintraege[:60]}
 
 
+def _bestellbar(datum_iso):
+    """Nur kuenftige Liefertage lassen sich bestellen.
+
+    Fuer heute ist die Ware laengst geliefert – eine Bestellung ginge ins
+    Leere. Der Riegel sitzt bewusst im Server: Ein veralteter Kiosk oder ein
+    Doppelklick darf keine sinnlose Bestellung ausloesen.
+    """
+    try:
+        return datetime.strptime(datum_iso, "%Y-%m-%d").date() > date.today()
+    except ValueError:
+        return False
+
+
 def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
     """Formular erzeugen und per Mail versenden (Spec F6, F7, F8, F20).
 
     ``cfg`` ist die Konfiguration EINER Baeckerei.
     """
+    if not _bestellbar(datum_iso):
+        naechster = store.naechster_bestelltag(cfg)
+        return _err(
+            f"F\u00fcr {store.wochentag(datum_iso)}, den {store.datum_de(datum_iso)}, "
+            "l\u00e4sst sich nichts mehr bestellen \u2013 dieser Tag ist bereits "
+            "geliefert. Bestellt wird immer f\u00fcr einen k\u00fcnftigen Liefertag, "
+            f"als N\u00e4chstes {store.wochentag(naechster)}, "
+            f"der {store.datum_de(naechster)}.")
+
     rec_id, order = store.load_order(url, hdrs, bk, datum_iso)
 
     if korrektur and not store.korrektur_moeglich(cfg, datum_iso):
