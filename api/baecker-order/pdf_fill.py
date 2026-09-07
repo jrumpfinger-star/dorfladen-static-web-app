@@ -57,11 +57,15 @@ def _menge(wert):
 
 
 def build_pdf(positionen, datum_de, wochentag, kd_nr="", baeckerei_name="",
-              tour_nr="", testbetrieb=False, korrektur=False):
+              tour_nr="", testbetrieb=False, korrektur=False, formular=False):
     """Baut das Formular und gibt die PDF-Bytes.
 
-    ``positionen`` sind bereits gefiltert und sortiert (siehe
-    ``_positionen_fuer_versand``): dicts mit nummer, name, menge, retoure.
+    ``positionen`` sind dicts mit nummer, name, menge, retoure.
+
+    ``formular=True`` erzeugt das **Blatt**, wie es die Baeckerei bekommt: alle
+    Katalogzeilen, leere Mengenfelder bleiben leer. So sieht der Papierausdruck
+    aus wie das versendete Dokument (F23). Ohne das Kennzeichen entsteht die
+    kompakte Fassung fuer den Mailanhang, in der nur Bestelltes steht.
     """
     p = FPDF(format="A4")
     p.set_auto_page_break(True, margin=16)
@@ -109,26 +113,35 @@ def build_pdf(positionen, datum_de, wochentag, kd_nr="", baeckerei_name="",
     p.ln()
 
     # ── Zeilen ──
+    # Im Formular bleiben leere Felder leer statt "-": Das Blatt soll wie ein
+    # Bestellschein wirken, auf dem man notfalls mit dem Stift nachtraegt.
+    leer = "" if formular else "-"
     p.set_font("Helvetica", "", 10)
     stueck = 0
+    bestellt = 0
     for pos in positionen:
         menge = pos.get("menge") or 0
+        retoure = pos.get("retoure") or 0
         stueck += int(menge or 0)
+        if menge or retoure:
+            bestellt += 1
         zusatz = " *" if pos.get("zusatz") else ""
         p.cell(18, 6.5, latin1(pos.get("nummer") or ""), border=1, align="C")
         p.cell(114, 6.5, latin1((pos.get("name") or "") + zusatz), border=1)
-        p.cell(24, 6.5, latin1(_menge(menge) or "-"), border=1, align="R")
-        p.cell(24, 6.5, latin1(_menge(pos.get("retoure")) or "-"), border=1, align="R")
+        p.cell(24, 6.5, latin1(_menge(menge) or leer), border=1, align="R")
+        p.cell(24, 6.5, latin1(_menge(retoure) or leer), border=1, align="R")
         p.ln()
 
     # ── Fuss ──
+    # Gezaehlt wird, was tatsaechlich bestellt ist - im Formular stehen alle
+    # 57 Katalogzeilen, davon meist nur ein Bruchteil gefuellt.
     p.ln(4)
     p.set_font("Helvetica", "I", 8)
     if any(x.get("zusatz") for x in positionen):
         p.cell(0, 4, latin1("* nur für diesen Tag zusätzlich bestellt"),
                new_x="LMARGIN", new_y="NEXT")
     p.cell(0, 4, latin1(f"Erstellt im Dorfladen-Kiosk - "
-                        f"{len(positionen)} Positionen, {stueck} Stück"),
+                        f"{bestellt} Positionen, {stueck} Stück"),
            new_x="LMARGIN", new_y="NEXT")
 
     aus = p.output()

@@ -764,7 +764,7 @@
       + 'td.r,th.r{text-align:right;width:56px}'
       + '.fuss{margin-top:10px;font-size:11px;color:#555}'
       + '.test{background:#fff3cd;border:1px solid #e6b43c;padding:6px 10px;'
-      + 'font-size:12px;font-weight:700;text-align:center;margin-bottom:8px}'
+      + 'font-size:12px;font-weight:600;text-align:center;margin-bottom:8px}'
       + '@media print{body{padding:10px 14px}@page{margin:12mm 10mm}.noprint{display:none!important}}'
       + '</style></head><body>'
       + '<h1>Bestellung / Lieferschein</h1>'
@@ -783,7 +783,7 @@
          ? ' · * nur für diesen Tag zusätzlich bestellt' : '') + '</div>'
       + '<div class="noprint" style="margin-top:18px;text-align:center">'
       + '<button onclick="window.print()" style="padding:10px 20px;font-size:14px;'
-      + 'font-weight:700;cursor:pointer">Drucken</button></div>'
+      + 'font-weight:600;cursor:pointer">Drucken</button></div>'
       + '<script>window.onload=function(){window.print();}<\/script>'
       + '</body></html>';
   }

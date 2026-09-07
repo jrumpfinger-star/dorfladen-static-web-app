@@ -87,7 +87,7 @@
     var wrap=document.getElementById('badges-kontakt');
     if(wrap){ wrap.innerHTML = (n>0) ? ('<span class="k-tab-badge show badge-msg blink" title="'+n+' ungelesene Nachricht(en)">'+n+'</span>') : ''; }
     var hdr=document.getElementById('kk-hdr-count');
-    if(hdr){ hdr.innerHTML = (n>0) ? ('<span style="background:#dc2626;color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px">'+n+' neu</span>') : ''; }
+    if(hdr){ hdr.innerHTML = (n>0) ? ('<span style="background:#dc2626;color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px">'+n+' neu</span>') : ''; }
   }
 
   function pollBadge(){
@@ -214,7 +214,7 @@
     // Status: ungelesen -> gruene Zahl, gelesen -> blauer Doppelhaken (WhatsApp-Metapher)
     h+='<span class="kk-state">';
     if(unread){
-      h+='<span title="'+uc+' neue Nachricht(en)" style="background:#25D366;color:#fff;font-size:12px;font-weight:800;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)">'+uc+'</span>';
+      h+='<span title="'+uc+' neue Nachricht(en)" style="background:#25D366;color:#fff;font-size:12px;font-weight:600;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)">'+uc+'</span>';
     } else {
       h+='<span class="kk-ticks" title="Gelesen">'+TICKS+'</span>';
     }

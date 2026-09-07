@@ -7,6 +7,7 @@
       "preis": 11.05,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 22,
       "aktiv": true,
       "auf_formular": true
     },
@@ -17,7 +18,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -27,6 +29,7 @@
       "preis": 7.89,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 9,
       "aktiv": true,
       "auf_formular": true
     },
@@ -37,6 +40,7 @@
       "preis": 9.54,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 22,
       "aktiv": true,
       "auf_formular": true
     },
@@ -47,6 +51,7 @@
       "preis": 11.1,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -57,6 +62,7 @@
       "preis": 17.5,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 21,
       "aktiv": true,
       "auf_formular": true
     },
@@ -67,6 +73,7 @@
       "preis": 12.5,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 17,
       "aktiv": true,
       "auf_formular": true
     },
@@ -77,7 +84,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -87,6 +95,7 @@
       "preis": 18.5,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 13,
       "aktiv": true,
       "auf_formular": true
     },
@@ -97,6 +106,7 @@
       "preis": 18.8,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 13,
       "aktiv": true,
       "auf_formular": true
     },
@@ -107,7 +117,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -117,7 +128,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -127,6 +139,7 @@
       "preis": 10.3,
       "einheit": "kg",
       "gruppe": "Fleisch frisch",
+      "lieferungen": 22,
       "aktiv": true,
       "auf_formular": true
     },
@@ -137,6 +150,7 @@
       "preis": 7.65,
       "einheit": "kg",
       "gruppe": "Brät & Leberkäse",
+      "lieferungen": 23,
       "aktiv": true,
       "auf_formular": true
     },
@@ -147,6 +161,7 @@
       "preis": 8.0,
       "einheit": "kg",
       "gruppe": "Brät & Leberkäse",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -157,7 +172,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Brät & Leberkäse",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -167,7 +183,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Brät & Leberkäse",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -177,7 +194,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Brät & Leberkäse",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -187,6 +205,7 @@
       "preis": 17.5,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
+      "lieferungen": 10,
       "aktiv": true,
       "auf_formular": true
     },
@@ -197,6 +216,7 @@
       "preis": 11.99,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
+      "lieferungen": 17,
       "aktiv": true,
       "auf_formular": true
     },
@@ -207,6 +227,7 @@
       "preis": 12.6,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
+      "lieferungen": 9,
       "aktiv": true,
       "auf_formular": true
     },
@@ -217,6 +238,7 @@
       "preis": 14.8,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
+      "lieferungen": 12,
       "aktiv": true,
       "auf_formular": true
     },
@@ -227,6 +249,7 @@
       "preis": 11.5,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
+      "lieferungen": 12,
       "aktiv": true,
       "auf_formular": true
     },
@@ -237,6 +260,7 @@
       "preis": 9.7,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
+      "lieferungen": 10,
       "aktiv": true,
       "auf_formular": true
     },
@@ -247,6 +271,7 @@
       "preis": 15.35,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
+      "lieferungen": 11,
       "aktiv": true,
       "auf_formular": true
     },
@@ -257,7 +282,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -267,7 +293,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Schinken & Speck",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -277,7 +304,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Salami",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -287,6 +315,7 @@
       "preis": 16.9,
       "einheit": "kg",
       "gruppe": "Salami",
+      "lieferungen": 14,
       "aktiv": true,
       "auf_formular": true
     },
@@ -297,6 +326,7 @@
       "preis": 17.2,
       "einheit": "kg",
       "gruppe": "Salami",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -307,6 +337,7 @@
       "preis": 17.6,
       "einheit": "kg",
       "gruppe": "Salami",
+      "lieferungen": 4,
       "aktiv": true,
       "auf_formular": true
     },
@@ -317,7 +348,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Salami",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -327,6 +359,7 @@
       "preis": 16.0,
       "einheit": "kg",
       "gruppe": "Salami",
+      "lieferungen": 11,
       "aktiv": true,
       "auf_formular": true
     },
@@ -337,7 +370,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Salami",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -347,6 +381,7 @@
       "preis": 10.7,
       "einheit": "kg",
       "gruppe": "Würste frisch",
+      "lieferungen": 16,
       "aktiv": true,
       "auf_formular": true
     },
@@ -357,6 +392,7 @@
       "preis": 12.75,
       "einheit": "kg",
       "gruppe": "Würste frisch",
+      "lieferungen": 8,
       "aktiv": true,
       "auf_formular": true
     },
@@ -367,6 +403,7 @@
       "preis": 18.5,
       "einheit": "kg",
       "gruppe": "Würste frisch",
+      "lieferungen": 7,
       "aktiv": true,
       "auf_formular": true
     },
@@ -377,6 +414,7 @@
       "preis": 8.7,
       "einheit": "kg",
       "gruppe": "Würste frisch",
+      "lieferungen": 14,
       "aktiv": true,
       "auf_formular": true
     },
@@ -387,6 +425,7 @@
       "preis": 7.6,
       "einheit": "kg",
       "gruppe": "Würste frisch",
+      "lieferungen": 11,
       "aktiv": true,
       "auf_formular": true
     },
@@ -397,6 +436,7 @@
       "preis": 9.55,
       "einheit": "kg",
       "gruppe": "Würste frisch",
+      "lieferungen": 12,
       "aktiv": true,
       "auf_formular": true
     },
@@ -407,7 +447,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Würste frisch",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -417,7 +458,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Würste frisch",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -427,6 +469,7 @@
       "preis": 8.9,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 15,
       "aktiv": true,
       "auf_formular": true
     },
@@ -437,6 +480,7 @@
       "preis": 8.7,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 13,
       "aktiv": true,
       "auf_formular": true
     },
@@ -447,6 +491,7 @@
       "preis": 8.7,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 18,
       "aktiv": true,
       "auf_formular": true
     },
@@ -457,6 +502,7 @@
       "preis": 9.25,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 17,
       "aktiv": true,
       "auf_formular": true
     },
@@ -467,6 +513,7 @@
       "preis": 10.5,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 24,
       "aktiv": true,
       "auf_formular": true
     },
@@ -477,7 +524,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -487,6 +535,7 @@
       "preis": 8.2,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 23,
       "aktiv": true,
       "auf_formular": true
     },
@@ -497,6 +546,7 @@
       "preis": 7.79,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 18,
       "aktiv": true,
       "auf_formular": true
     },
@@ -507,6 +557,7 @@
       "preis": 8.3,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 13,
       "aktiv": true,
       "auf_formular": true
     },
@@ -517,6 +568,7 @@
       "preis": 8.35,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 18,
       "aktiv": true,
       "auf_formular": true
     },
@@ -527,6 +579,7 @@
       "preis": 8.9,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 5,
       "aktiv": true,
       "auf_formular": true
     },
@@ -537,7 +590,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -547,6 +601,7 @@
       "preis": 11.4,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 21,
       "aktiv": true,
       "auf_formular": true
     },
@@ -557,7 +612,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -567,6 +623,7 @@
       "preis": 10.1,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 10,
       "aktiv": true,
       "auf_formular": true
     },
@@ -577,6 +634,7 @@
       "preis": 8.45,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -587,7 +645,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -597,6 +656,7 @@
       "preis": 7.75,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 15,
       "aktiv": true,
       "auf_formular": true
     },
@@ -607,6 +667,7 @@
       "preis": 7.6,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -617,7 +678,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -627,6 +689,7 @@
       "preis": 8.5,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -637,6 +700,7 @@
       "preis": 7.99,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 7,
       "aktiv": true,
       "auf_formular": true
     },
@@ -647,6 +711,7 @@
       "preis": 7.9,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 13,
       "aktiv": true,
       "auf_formular": true
     },
@@ -657,7 +722,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -667,7 +733,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -677,6 +744,7 @@
       "preis": 9.89,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 25,
       "aktiv": true,
       "auf_formular": true
     },
@@ -687,6 +755,7 @@
       "preis": 8.2,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 14,
       "aktiv": true,
       "auf_formular": true
     },
@@ -697,7 +766,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -707,6 +777,7 @@
       "preis": 10.4,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -717,7 +788,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Aufschnitt & Wurstwaren",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -727,6 +799,7 @@
       "preis": 5.2,
       "einheit": "kg",
       "gruppe": "Beilagen",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -737,6 +810,7 @@
       "preis": 5.9,
       "einheit": "kg",
       "gruppe": "Beilagen",
+      "lieferungen": 7,
       "aktiv": true,
       "auf_formular": true
     },
@@ -747,6 +821,7 @@
       "preis": 8.6,
       "einheit": "kg",
       "gruppe": "Beilagen",
+      "lieferungen": 5,
       "aktiv": true,
       "auf_formular": true
     },
@@ -757,7 +832,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Beilagen",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -767,6 +843,7 @@
       "preis": 10.99,
       "einheit": "kg",
       "gruppe": "Beilagen",
+      "lieferungen": 20,
       "aktiv": true,
       "auf_formular": true
     },
@@ -777,6 +854,7 @@
       "preis": 21.98,
       "einheit": "kg",
       "gruppe": "Beilagen",
+      "lieferungen": 3,
       "aktiv": true,
       "auf_formular": true
     },
@@ -787,6 +865,7 @@
       "preis": 19.88,
       "einheit": "kg",
       "gruppe": "Beilagen",
+      "lieferungen": 5,
       "aktiv": true,
       "auf_formular": true
     },
@@ -797,6 +876,7 @@
       "preis": 13.1,
       "einheit": "kg",
       "gruppe": "Beilagen",
+      "lieferungen": 6,
       "aktiv": true,
       "auf_formular": true
     },
@@ -807,6 +887,7 @@
       "preis": 0.1,
       "einheit": "kg",
       "gruppe": "Beilagen",
+      "lieferungen": 1,
       "aktiv": true,
       "auf_formular": true
     },
@@ -817,7 +898,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Verpackung & Sonstiges",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -827,7 +909,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Verpackung & Sonstiges",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -837,7 +920,8 @@
       "preis": null,
       "einheit": "kg",
       "gruppe": "Verpackung & Sonstiges",
-      "aktiv": true,
+      "lieferungen": 0,
+      "aktiv": false,
       "auf_formular": true
     },
     {
@@ -847,6 +931,7 @@
       "preis": 10.7,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 14,
       "aktiv": false,
       "auf_formular": false
     },
@@ -857,6 +942,7 @@
       "preis": 9.8,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 8,
       "aktiv": false,
       "auf_formular": false
     },
@@ -867,6 +953,7 @@
       "preis": 17.5,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 1,
       "aktiv": false,
       "auf_formular": false
     },
@@ -877,6 +964,7 @@
       "preis": 10.4,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 2,
       "aktiv": false,
       "auf_formular": false
     },
@@ -887,6 +975,7 @@
       "preis": 11.75,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 1,
       "aktiv": false,
       "auf_formular": false
     },
@@ -897,6 +986,7 @@
       "preis": 19.2,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 6,
       "aktiv": false,
       "auf_formular": false
     },
@@ -907,6 +997,7 @@
       "preis": 18.7,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 2,
       "aktiv": false,
       "auf_formular": false
     },
@@ -917,6 +1008,7 @@
       "preis": 22.8,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 2,
       "aktiv": false,
       "auf_formular": false
     },
@@ -927,6 +1019,7 @@
       "preis": 22.8,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 3,
       "aktiv": false,
       "auf_formular": false
     },
@@ -937,6 +1030,7 @@
       "preis": 23.4,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 6,
       "aktiv": false,
       "auf_formular": false
     },
@@ -947,6 +1041,7 @@
       "preis": 9.15,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 12,
       "aktiv": false,
       "auf_formular": false
     },
@@ -957,6 +1052,7 @@
       "preis": 11.69,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 3,
       "aktiv": false,
       "auf_formular": false
     },
@@ -967,6 +1063,7 @@
       "preis": 8.45,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 6,
       "aktiv": false,
       "auf_formular": false
     },
@@ -977,6 +1074,7 @@
       "preis": 7.8,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 1,
       "aktiv": false,
       "auf_formular": false
     },
@@ -987,6 +1085,7 @@
       "preis": 11.55,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 5,
       "aktiv": false,
       "auf_formular": false
     },
@@ -997,6 +1096,7 @@
       "preis": 12.8,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 3,
       "aktiv": false,
       "auf_formular": false
     },
@@ -1007,6 +1107,7 @@
       "preis": 7.9,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 4,
       "aktiv": false,
       "auf_formular": false
     },
@@ -1017,6 +1118,7 @@
       "preis": 14.8,
       "einheit": "kg",
       "gruppe": "Nicht auf dem Formular",
+      "lieferungen": 3,
       "aktiv": false,
       "auf_formular": false
     }

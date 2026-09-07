@@ -25,13 +25,16 @@ window.KMetzgerBest = (function () {
   var _datum = '';
   var _sub = 'bestellung';
   var _suche = '';
-  var _nurBestellte = false;
+  // Vorgabe ist die kurze Liste: nur was der Metzger uns schon geliefert hat.
+  // Von 84 Formularzeilen sind das 57 - der Rest steht nur auf dem Papier.
+  var _alleArtikel = false;
   var _offen = null;      // Schluessel der Zeile mit offenem Editor
   var _entwurf = null;    // Block im Portionspad
   var _dirty = false;
   var _verlauf = [];
   var _testbetrieb = true;
   var _vorbelegtAus = null;
+  var _letzte = null;      // Werte der zuletzt gesendeten Bestellung (F7)
 
   var MAX_VORSCHLAEGE = 5;
 
@@ -255,6 +258,7 @@ window.KMetzgerBest = (function () {
         _cfg = d.config || _cfg;
         _testbetrieb = !!d.testbetrieb;
         _vorbelegtAus = d.vorbelegt_aus || null;
+        _letzte = d.letzte || null;
         _dirty = false;
         _offen = null;
         _entwurf = null;
@@ -274,21 +278,26 @@ window.KMetzgerBest = (function () {
   }
 
   // Erinnerung ab Bestellschluss (F13): Der Reiter blinkt, bis die Mail raus ist.
+  // Im Testbetrieb bleibt er ruhig - eine Testbestellung soll niemanden aus dem
+  // Laden holen. Der Testbetrieb endet, sobald der Empfänger die echte
+  // Metzger-Adresse ist.
   function badge() {
     var el = document.getElementById('badges-metzgerbest');
     var tab = document.querySelector('.k-tab[data-tab="metzgerbest"]');
     if (!el) return;
     var faellig = false;
-    var heute = new Date().toISOString().slice(0, 10);
-    (_tage || []).forEach(function (t) {
-      if (t.datum === heute && t.bestelltag && !t.status) faellig = true;
-    });
-    if (faellig) {
-      var schluss = (_cfg.bestellschluss || '12:00').split(':');
-      var jetzt = new Date();
-      var nachSchluss = jetzt.getHours() > (+schluss[0] || 12)
-        || (jetzt.getHours() === (+schluss[0] || 12) && jetzt.getMinutes() >= (+schluss[1] || 0));
-      faellig = nachSchluss;
+    if (!_testbetrieb) {
+      var heute = new Date().toISOString().slice(0, 10);
+      (_tage || []).forEach(function (t) {
+        if (t.datum === heute && t.bestelltag && !t.status) faellig = true;
+      });
+      if (faellig) {
+        var schluss = (_cfg.bestellschluss || '12:00').split(':');
+        var jetzt = new Date();
+        var nachSchluss = jetzt.getHours() > (+schluss[0] || 12)
+          || (jetzt.getHours() === (+schluss[0] || 12) && jetzt.getMinutes() >= (+schluss[1] || 0));
+        faellig = nachSchluss;
+      }
     }
     el.innerHTML = faellig ? '<span class="k-badge st-new">!</span>' : '';
     if (tab) tab.classList.toggle('mb-blink', faellig);
@@ -325,13 +334,18 @@ window.KMetzgerBest = (function () {
   function tagesleiste() {
     var h = '<div class="mb-days">';
     (_tage || []).forEach(function (t) {
+      // Heute ist die Ware schon da - bestellt wird spätestens am Vortag.
+      var waehlbar = t.bestellbar !== undefined ? t.bestellbar : t.bestelltag;
       var cls = 'mb-day';
-      if (!t.bestelltag) cls += ' off';
+      if (!waehlbar) cls += ' off';
       if (t.datum === _datum) cls += ' on';
       if (t.status === 1) cls += ' sent';
       if (t.status === 2) cls += ' korr';
       var d = t.datum.slice(8) + '.' + t.datum.slice(5, 7) + '.';
-      h += '<button class="' + cls + '"' + (t.bestelltag ? '' : ' disabled')
+      var titel = waehlbar ? '' : (t.bestelltag
+        ? ' title="Liefertag, aber zu spät — bestellt wird spätestens am Vortag"'
+        : ' title="An diesem Tag liefert der Metzger nicht"');
+      h += '<button class="' + cls + '"' + (waehlbar ? '' : ' disabled') + titel
         + ' onclick="KMetzgerBest.tag(\'' + t.datum + '\')">'
         + esc((t.wochentag || '').slice(0, 2))
         + '<span class="d2">' + d + '</span></button>';
@@ -372,10 +386,11 @@ window.KMetzgerBest = (function () {
       + '<input type="search" id="mb-q" placeholder="Artikel oder Nummer suchen …"'
       + ' value="' + esc(_suche) + '" oninput="KMetzgerBest.such(this.value)">'
       + '<div class="mb-tgl">'
-      + '<button class="' + (_nurBestellte ? '' : 'on') + '"'
-      + ' onclick="KMetzgerBest.filter(false)">Alle Artikel</button>'
-      + '<button class="' + (_nurBestellte ? 'on' : '') + '"'
-      + ' onclick="KMetzgerBest.filter(true)">Nur bestellte</button>'
+      + '<button class="' + (_alleArtikel ? '' : 'on') + '"'
+      + ' title="Was der Metzger uns schon geliefert hat"'
+      + ' onclick="KMetzgerBest.filter(false)">Übliche Artikel</button>'
+      + '<button class="' + (_alleArtikel ? 'on' : '') + '"'
+      + ' onclick="KMetzgerBest.filter(true)">Alle Artikel</button>'
       + '</div>'
       + '<button class="mb-btn" onclick="KMetzgerBest.zusatz()">Weiteren Artikel</button>'
       + '</div>' + sprungleiste();
@@ -407,8 +422,14 @@ window.KMetzgerBest = (function () {
   }
 
   function sichtbar(a, p) {
-    if (_nurBestellte && !bestellt(p)) return false;
-    if (a.aktiv === false && !bestellt(p) && !_suche) return false;
+    // Bereits Erfasstes bleibt immer sichtbar, auch wenn der Artikel sonst
+    // nicht zu den ueblichen zaehlt - sonst verschwaende die eigene Eingabe.
+    if (bestellt(p)) return _suche ? passtZurSuche(a) : true;
+    if (!_alleArtikel && a.aktiv === false) return false;
+    return passtZurSuche(a);
+  }
+
+  function passtZurSuche(a) {
     if (!_suche) return true;
     var s = _suche.toLowerCase();
     return (a.name || '').toLowerCase().indexOf(s) >= 0
@@ -486,6 +507,14 @@ window.KMetzgerBest = (function () {
     if (!lock) {
       h += '<button class="mb-add" title="Portion hinzufügen"'
         + ' onclick="KMetzgerBest.edit(\'' + esc(key) + '\',-1)">+</button>';
+    }
+    // Anhalt beim Neuerfassen: Was zuletzt bestellt wurde, steht blass daneben,
+    // solange die Zeile leer ist. Ein Tipp übernimmt es.
+    var frueher = !lock && !bestellt(p) ? letzteWerte(a) : null;
+    if (frueher) {
+      h += '<button class="mb-frueher" title="' + esc(letzteQuelle())
+        + ' — tippen übernimmt" onclick="KMetzgerBest.frueher(\'' + esc(key) + '\')">'
+        + esc(frueher.map(blockText).join(' + ')) + '</button>';
     }
     if (istExtra && !lock) {
       h += '<button class="mb-add del" title="Position entfernen"'
@@ -626,6 +655,36 @@ window.KMetzgerBest = (function () {
       if (!bewertbar) s.offen++;
     });
     return s;
+  }
+
+  // ── Werte der letzten Bestellung (F7) ──
+
+  function letzteWerte(a) {
+    if (!_letzte || !_letzte.positionen) return null;
+    var k = a.nummer ? String(a.nummer) : (a.name || '').trim().toLowerCase();
+    var bl = _letzte.positionen[k];
+    return (bl && bl.length) ? bl : null;
+  }
+
+  function letzteQuelle() {
+    if (!_letzte) return '';
+    return 'zuletzt am ' + (_letzte.wochentag ? _letzte.wochentag + ', ' : '')
+      + datumDe(_letzte.datum) + ' bestellt';
+  }
+
+  function frueher(key) {
+    var p = finde(key);
+    if (!p || gesperrt()) return;
+    var a = { nummer: p.nummer, name: p.name };
+    var bl = letzteWerte(a);
+    if (!bl) return;
+    bl.forEach(function (b) {
+      p.portionen.push({ anzahl: b.anzahl, menge: b.menge,
+                         einheit: b.einheit, vakuum: !!b.vakuum });
+    });
+    p.pruef = false;
+    _dirty = true;
+    render();
   }
 
   // ── Vorschlaege (F4) ──
@@ -844,7 +903,7 @@ window.KMetzgerBest = (function () {
 
   function zu() { _offen = null; _entwurf = null; render(); }
   function such(v) { _suche = v; render(); }
-  function filter(nur) { _nurBestellte = !!nur; render(); }
+  function filter(alle) { _alleArtikel = !!alle; render(); }
 
   function spring(i) {
     var el = document.getElementById('mb-g' + i);
@@ -1133,7 +1192,7 @@ window.KMetzgerBest = (function () {
     vakAn: vakAn, pad: pad, nimm: nimm, vorschau: vorschau, kurz: kurz,
     weg: weg, allesWeg: allesWeg, loeschen: loeschen,
     hinweis: hinweis, hinweisWeg: hinweisWeg, editHinweis: editHinweis, zu: zu,
-    zusatz: zusatz, zusatzWeg: zusatzWeg,
+    zusatz: zusatz, zusatzWeg: zusatzWeg, frueher: frueher,
     speichern: speichern, senden: senden, korrektur: korrektur,
     aktiv: aktiv, cfgSpeichern: cfgSpeichern,
     badge: badge

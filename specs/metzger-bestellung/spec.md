@@ -1,4 +1,4 @@
-﻿# Metzger-Bestellung (Metzger Mair) — Specification
+# Metzger-Bestellung (Metzger Mair) — Specification
 
 > Spec-driven development. Every requirement carries explicit test cases.
 > Ein Spec mit offenen `[NEEDS CLARIFICATION]`-Markern darf NICHT nach `/sdd-plan`.
@@ -204,13 +204,23 @@ Werkzeug: [tools/metzger_formular_katalog.py](../../tools/metzger_formular_katal
 Der Tab zeigt eine Tagesleiste über 14 Tage ab heute. Nur konfigurierte
 Bestelltage sind wählbar; beim Öffnen ist der **nächste offene Bestelltag** aktiv.
 
+Bestellt wird **mit Vorlauf**: Die Bestellung für einen Liefertag muss
+spätestens am Vortag draußen sein. Der heutige Tag ist deshalb nie mehr
+bestellbar, auch wenn er ein Bestelltag ist — die Ware ist längst gepackt. Eine
+Bestellung darf beliebig früher aufgegeben werden (zwei oder drei Tage vorher);
+sie gilt dann für genau den gewählten Tag.
+
 #### F1 Behaviour / Acceptance
 
 - Nur Montag und Donnerstag (Einstellung) sind wählbar; andere Tage sind sichtbar,
   aber nicht anwählbar.
-- Beim Öffnen ist der nächste Bestelltag ohne gesendete Bestellung aktiv.
+- Ein Bestelltag ist nur bestellbar, wenn er **nach dem heutigen Tag** liegt.
+  Heute und alles davor ist gesperrt.
+- Beim Öffnen ist der nächste bestellbare Bestelltag ohne gesendete Bestellung aktiv.
 - Jeder Tag zeigt seinen Zustand: offen · Entwurf · gesendet · korrigiert.
 - Ein Tageswechsel mit ungespeicherten Änderungen fragt vorher nach.
+- Speichern und Senden für einen nicht mehr bestellbaren Tag weist die API mit
+  409 ab — die Sperre gilt also auch dann, wenn die Oberfläche umgangen wird.
 
 #### F1 Test Cases
 
@@ -237,6 +247,25 @@ Bestelltage sind wählbar; beim Öffnen ist der **nächste offene Bestelltag** a
 - **Setup:** Menge geändert, nicht gespeichert.
 - **Action:** Anderen Tag wählen.
 - **Expected:** Rückfrage im Dialog, kein stiller Verlust.
+
+**TC-F1-05: Heute ist nicht mehr bestellbar**
+
+- **Setup:** Heute ist ein Bestelltag (Montag).
+- **Action:** Tab öffnen.
+- **Expected:** Der heutige Montag ist nicht anwählbar; die Vorauswahl liegt auf
+  einem Tag in der Zukunft.
+
+**TC-F1-06: Bestellung mehrere Tage im Voraus**
+
+- **Setup:** Heute Freitag, Bestelltage Mo und Do.
+- **Action:** Den übernächsten Donnerstag wählen und speichern.
+- **Expected:** Wird angenommen und gilt für genau diesen Donnerstag.
+
+**TC-F1-07: API weist den Vortag ab**
+
+- **Setup:** Heutiges Datum als Bestelltag.
+- **Action:** `PUT` auf diesen Tag.
+- **Expected:** HTTP 409 mit erklärender Meldung, nichts wird gespeichert.
 
 ### F2: Portionsblöcke — das Erfassungsmodell
 
@@ -760,6 +789,16 @@ mit gesendeter Bestellung bereits eingetragen.
   erklärt das.
 - „Vorbelegung zurücksetzen" stellt den Ausgangszustand wieder her.
 
+Unabhängig von der Vorbelegung zeigt jede Zeile die **Werte der zuletzt
+gesendeten Bestellung** als grauen Anhalt an (`früher: 2 × 4 St 🅥`), zusammen
+mit deren Datum. Das hilft besonders beim Neuerfassen eines Tages ohne
+Vorbelegung: Die Verkäuferin sieht, was üblich ist, ohne den Verlauf zu öffnen.
+
+- Der Anhalt ist reine Anzeige — ein Tipp darauf ändert nichts.
+- Er erscheint nur, wenn die Zeile noch keine eigene Portion hat; sonst wäre die
+  Zeile doppelt belegt.
+- Die Quelle wird mit Datum und Wochentag benannt.
+
 #### F7 Test Cases
 
 **TC-F7-01: Vorbelegung greift**
@@ -788,6 +827,20 @@ mit gesendeter Bestellung bereits eingetragen.
 
 - **Action:** Werte ändern, dann „Vorbelegung zurücksetzen".
 - **Expected:** Ausgangszustand, Änderungsmarkierungen verschwinden.
+
+**TC-F7-06: Werte der letzten Bestellung stehen als Anhalt daneben**
+
+- **Setup:** Leerer Entwurf, letzte gesendete Bestellung mit `2 × 4 St` vakuumiert
+  bei Putenschnitzel.
+- **Action:** Tab öffnen.
+- **Expected:** Die Zeile zeigt „früher: 2 × 4 St 🅥" in grauer Schrift, die
+  Bestellung selbst bleibt leer.
+
+**TC-F7-07: Anhalt weicht der eigenen Eingabe**
+
+- **Setup:** Wie TC-F7-06.
+- **Action:** Für Putenschnitzel eine Portion anlegen.
+- **Expected:** Der graue Anhalt verschwindet in dieser Zeile.
 
 ### F8: Zusatzartikel nur für diesen Tag
 
@@ -916,6 +969,21 @@ eine Sprungleiste.
 - Findet die Suche nichts, erscheint ein freundlicher Hinweis statt einer leeren
   Fläche.
 
+**Übliche Artikel sind die Vorgabe.** Das Papierformular führt 84 Zeilen, aber
+nur 57 davon wurden je geliefert — der Rest steht seit Jahren tot auf dem Blatt.
+Beim Öffnen zeigt die Liste deshalb nur die **üblichen Artikel**, also die, die
+laut Rechnungen mindestens einmal geliefert wurden. Ein Umschalter „Übliche
+Artikel / Alle Artikel" holt die restlichen bei Bedarf dazu.
+
+- Vorgabe beim Öffnen ist **„Übliche Artikel"**; die Auswahl wird nicht gemerkt.
+- „Alle Artikel" zeigt den vollständigen Formularbestand in Papierreihenfolge.
+- Der Umschalter besteht aus zwei direkt tippbaren Knöpfen, nicht aus einer
+  Auswahlliste (F17).
+- Die Suche greift immer auf **alle** Artikel zu: Was in „Übliche" nicht sichtbar
+  ist, findet man trotzdem über die Suche.
+- Eine bestellte Position bleibt immer sichtbar, auch wenn sie unüblich ist —
+  sonst verschwände eine bereits erfasste Zeile.
+
 #### F10 Test Cases
 
 **TC-F10-01: Suche filtert sofort**
@@ -943,6 +1011,30 @@ eine Sprungleiste.
 
 - **Action:** „xyz" tippen.
 - **Expected:** Freundlicher Hinweis, keine leere Fläche.
+
+**TC-F10-06: „Übliche Artikel" ist die Vorgabe**
+
+- **Setup:** Katalog mit üblichen und nie gelieferten Artikeln.
+- **Action:** Tab öffnen.
+- **Expected:** Der Knopf „Übliche Artikel" ist aktiv; nie gelieferte Zeilen
+  fehlen in der Liste.
+
+**TC-F10-07: „Alle Artikel" holt den Rest dazu**
+
+- **Action:** Auf „Alle Artikel" tippen.
+- **Expected:** Die Liste wird länger und enthält auch die nie gelieferten
+  Zeilen, Reihenfolge unverändert.
+
+**TC-F10-08: Suche findet auch Unübliches**
+
+- **Setup:** Ansicht steht auf „Übliche Artikel".
+- **Action:** Nach einem nie gelieferten Artikel suchen.
+- **Expected:** Er erscheint trotzdem.
+
+**TC-F10-09: Bestellte Zeile bleibt sichtbar**
+
+- **Setup:** Ein unüblicher Artikel ist bestellt, Ansicht „Übliche Artikel".
+- **Expected:** Diese Zeile bleibt sichtbar.
 
 ### F11: Mail erzeugen und senden
 
@@ -1069,6 +1161,10 @@ darauf aufmerksam.
 - An Nicht-Bestelltagen und vor Bestellschluss erinnert nichts.
 - Die Erinnerung **blockiert den Versand nicht** und lässt sich nicht wegklicken —
   sie endet nur durch Senden.
+- **Im Testbetrieb blinkt nichts.** Solange die Empfängeradresse noch die
+  Testadresse ist, wäre ein blinkender Reiter eine Aufforderung zu einer
+  Bestellung, die niemanden erreicht. Das Abzeichen bleibt, das Blinken entfällt.
+  Dieselbe Regel gilt für den Bäcker-Tab.
 
 #### F13 Test Cases
 
@@ -1091,6 +1187,16 @@ darauf aufmerksam.
 
 - **Setup:** Dienstag, 15:00 Uhr.
 - **Expected:** Kein Blinken.
+
+**TC-F13-05: Im Testbetrieb blinkt der Reiter nicht**
+
+- **Setup:** Montag nach Bestellschluss, Empfänger ist die Testadresse.
+- **Expected:** Kein Blinken; das Abzeichen ist trotzdem sichtbar.
+
+**TC-F13-06: Nach der Freigabe blinkt es wieder**
+
+- **Setup:** Wie TC-F13-05, aber mit echter Empfängeradresse.
+- **Expected:** Der Reiter blinkt.
 
 ### F14: Verlauf
 
@@ -1255,6 +1361,14 @@ nach einem festen Entwurf. Geprüft wird auf Mobile (375×667), iPad mini
 - Kopfbereich bleibt ab 620 px Breite beim Scrollen stehen; darunter scrollt er mit.
 - Keine `alert()`/`confirm()`; alle Meldungen laufen über die In-App-Komponenten
   in Klartext.
+- **Auswahl geschieht über Knöpfe, nicht über Auswahllisten.** Ein `<select>`
+  verlangt auf dem Tablet zwei Tipper und verdeckt dabei den Rest — Werte müssen
+  direkt selektierbar sein. Das gilt für Einheiten, Portionsgrößen und den
+  Umschalter „Übliche / Alle Artikel".
+- **Halbfett statt fett.** Hervorhebungen laufen über `font-weight: 600`;
+  `bold`/`700` ist auf den Kioskschirmen schwer zu lesen und wird nicht
+  verwendet — auch nicht über `<b>` oder `<strong>`. Die Regel gilt für den
+  gesamten Kiosk, nicht nur für diesen Tab.
 
 #### F17 Test Cases
 
@@ -1289,6 +1403,16 @@ nach einem festen Entwurf. Geprüft wird auf Mobile (375×667), iPad mini
 
 - **Expected:** Kein `alert()`/`confirm()`; Meldungen in Klartext ohne
   technische Details.
+
+**TC-F17-08: Keine Auswahllisten im Erfassungsweg**
+
+- **Expected:** Der geöffnete Editor enthält kein `<select>`; Einheiten und
+  Portionsgrößen sind Knöpfe.
+
+**TC-F17-09: Nichts ist fett gesetzt**
+
+- **Expected:** Im Metzger-Panel hat kein sichtbares Element eine
+  `font-weight` über 600.
 
 ### F18: Tab im CMS an- und abschaltbar
 
@@ -1414,23 +1538,23 @@ Zwei Punkte sind bewusst als Startwert festgelegt und im Betrieb nachzuschärfen
 
 | Requirement | Test Cases | Plan section | Tasks |
 | --- | --- | --- | --- |
-| F1 Bestelltag wählen | TC-F1-01 … 04 | — | — |
+| F1 Bestelltag wählen | TC-F1-01 … 07 | — | — |
 | F2 Portionsblöcke | TC-F2-01 … 05 | — | — |
 | F3 Portionen erfassen | TC-F3-01 … 16 | — | — |
 | F4 Vorschläge je Artikel | TC-F4-01 … 13 | — | — |
 | F5 Kurzeingabe | TC-F5-01 … 12 | — | — |
 | F6 Vakuum | TC-F6-01 … 06 | — | — |
-| F7 Vorbelegung | TC-F7-01 … 05 | — | — |
+| F7 Vorbelegung und letzte Werte | TC-F7-01 … 07 | — | — |
 | F8 Zusatzartikel | TC-F8-01 … 06 | — | — |
 | F9 Artikel verwalten | TC-F9-01 … 07 | — | — |
-| F10 Suchen und Gruppen | TC-F10-01 … 05 | — | — |
+| F10 Suchen, Gruppen, übliche Artikel | TC-F10-01 … 09 | — | — |
 | F11 Mail senden | TC-F11-01 … 08 | — | — |
 | F12 Sperre und Korrektur | TC-F12-01 … 06 | — | — |
-| F13 Erinnerung | TC-F13-01 … 04 | — | — |
+| F13 Erinnerung | TC-F13-01 … 06 | — | — |
 | F14 Verlauf | TC-F14-01 … 04 | — | — |
 | F15 Einstellungen | TC-F15-01 … 05 | — | — |
 | F16 Bestellwert | TC-F16-01 … 05 | — | — |
-| F17 Responsive | TC-F17-01 … 07 | — | — |
+| F17 Responsive | TC-F17-01 … 09 | — | — |
 | F18 CMS-Schalter | TC-F18-01 … 04 | — | — |
 
 ## Constitution Compliance

@@ -124,7 +124,31 @@ def _entwurf(url, hdrs, cfg, datum_iso):
     order.setdefault("positionen", [])
     order.setdefault("protokoll", [])
     order.pop("dokument", None)             # das PDF geht nicht in die Liste
-    return rec_id, order, quelle
+    return rec_id, order, quelle, store.letzte_bestellung(alle)
+
+
+def _letzte_werte(letzte):
+    """Die letzte Bestellung als Nachschlagewerk fuer die Zeilenanzeige (F7).
+
+    Der Kiosk zeigt damit in leeren Zeilen blass, was zuletzt bestellt wurde -
+    ein Anhalt beim Neuerfassen, keine Vorbelegung.
+    """
+    if not letzte:
+        return None
+    werte = {}
+    for p in letzte.get("positionen", []):
+        p = P.normalisiere_position(p)
+        if not p["portionen"]:
+            continue
+        schluessel = str(p["nummer"]) if p["nummer"] else p["name"].strip().lower()
+        werte[schluessel] = p["portionen"]
+    if not werte:
+        return None
+    return {
+        "datum": letzte.get("datum", ""),
+        "wochentag": store.wochentag(letzte.get("datum", "")),
+        "positionen": werte,
+    }
 
 
 def _uebersicht(url, hdrs, cfg):
@@ -136,14 +160,18 @@ def _uebersicht(url, hdrs, cfg):
     tage = []
     for i in range(14):
         d = (heute + timedelta(days=i)).isoformat()
+        ist_tag = store.ist_bestelltag(cfg, d)
         tage.append({
             "datum": d,
             "wochentag": store.wochentag(d),
-            "bestelltag": store.ist_bestelltag(cfg, d),
+            "bestelltag": ist_tag,
+            # Heute ist die Ware laengst geliefert - bestellt wird spaetestens
+            # am Vortag. Deshalb ist heute nie waehlbar.
+            "bestellbar": ist_tag and store.bestellbar(d),
             "status": bekannt.get(d),
         })
     offen = next((t["datum"] for t in tage
-                  if t["bestelltag"] and not t["status"]), None)
+                  if t["bestellbar"] and not t["status"]), None)
     return {"tage": tage, "aktiv": offen or store.naechster_bestelltag(cfg)}
 
 
@@ -307,7 +335,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     # ── Entwurf lesen ────────────────────────────────────────────────
     if req.method == "GET":
-        _, order, quelle = _entwurf(url, hdrs, cfg, datum)
+        _, order, quelle, letzte = _entwurf(url, hdrs, cfg, datum)
         _, artikel = store.load_artikel(url, hdrs)
         _, vorschlaege = store.load_vorschlaege(url, hdrs)
         for liste in vorschlaege.values():
@@ -317,7 +345,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "artikel": artikel,
             "vorschlaege": vorschlaege,
             "vorbelegt_aus": quelle,
+            "letzte": _letzte_werte(letzte),
             "bestelltag": store.ist_bestelltag(cfg, datum),
+            "bestellbar": store.ist_bestelltag(cfg, datum) and store.bestellbar(datum),
             "config": {k: v for k, v in cfg.items() if not k.startswith("_")},
             "testbetrieb": store.testbetrieb(cfg),
             "summen": P.summen([P.normalisiere_position(p)
@@ -327,6 +357,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     # ── Schreibende Aktionen ─────────────────────────────────────────
     if aktion == "speichern":
+        if not store.bestellbar(datum):
+            return _err("F\u00fcr diesen Tag l\u00e4sst sich nichts mehr bestellen. "
+                        "Bestellt wird sp\u00e4testens am Vortag.", 409)
         rec_id, order = store.load_order(url, hdrs, datum)
         order = order or {"datum": datum, "protokoll": []}
         if order.get("status") == store.STATUS_GESENDET:
@@ -339,6 +372,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return _ok({"status": order["status"]})
 
     if aktion == "senden":
+        if not store.bestellbar(datum):
+            return _err("F\u00fcr diesen Tag l\u00e4sst sich nichts mehr bestellen. "
+                        "Bestellt wird sp\u00e4testens am Vortag.", 409)
         _, vorhanden = store.load_order(url, hdrs, datum)
         if (vorhanden or {}).get("status") == store.STATUS_GESENDET:
             return _err("Diese Bestellung wurde bereits gesendet. Bitte "

@@ -232,6 +232,43 @@ code, d = ruf(order, "POST", {"datum": "config"},
 pruefe("ohne Bestelltag abgelehnt", code == 400, f"-> {code}")
 
 print()
+print("F1  Vorlauf: heute ist kein Liefertag mehr")
+from datetime import date as _date, timedelta as _td  # noqa: E402
+heute = _date.today().isoformat()
+code, d = ruf(order)
+tage = {t["datum"]: t for t in d.get("tage", [])}
+pruefe("heute nicht bestellbar", tage.get(heute, {}).get("bestellbar") is False)
+pruefe("Vorauswahl liegt in der Zukunft", d.get("aktiv", "") > heute,
+       f"-> {d.get('aktiv')} vs heute {heute}")
+kuenftig = [t for t in d["tage"] if t["bestellbar"]]
+pruefe("es gibt kuenftige Liefertage", len(kuenftig) >= 2)
+pruefe("alle bestellbaren sind Liefertage", all(t["bestelltag"] for t in kuenftig))
+code, _ = ruf(order, "POST", {"datum": heute, "aktion": "senden"},
+              body={"positionen": POS})
+pruefe("Senden fuer heute abgelehnt", code == 409, f"-> {code}")
+code, _ = ruf(order, "POST", {"datum": heute, "aktion": "speichern"},
+              body={"positionen": POS})
+pruefe("Speichern fuer heute abgelehnt", code == 409, f"-> {code}")
+
+print()
+print("F9  Katalog: ueblich sind die je gelieferten Formularzeilen")
+code, d = ruf(artikel)
+alle = d.get("artikel", [])
+ueblich = [a for a in alle if a.get("aktiv")]
+formular = [a for a in alle if a.get("auf_formular")]
+pruefe("57 ueblich von 102", (len(ueblich), len(alle)) == (57, 102),
+       f"-> {len(ueblich)} von {len(alle)}")
+pruefe("jeder ubliche wurde schon geliefert",
+       all((a.get("lieferungen") or 0) > 0 for a in ueblich))
+pruefe("jeder ubliche steht auf dem Formular",
+       all(a.get("auf_formular") for a in ueblich))
+# Ausgeblendet ist zweierlei: nie geliefert, oder gar nicht auf dem Formular.
+pruefe("nie gelieferte Formularzeilen sind ausgeblendet",
+       all(a.get("aktiv") == ((a.get("lieferungen") or 0) > 0) for a in formular))
+pruefe("Rechnungsartikel ohne Formularzeile sind ausgeblendet",
+       all(not a.get("aktiv") for a in alle if not a.get("auf_formular")))
+
+print()
 if FEHLER:
     print(f"FEHLGESCHLAGEN: {len(FEHLER)} -> {', '.join(FEHLER)}")
     sys.exit(1)

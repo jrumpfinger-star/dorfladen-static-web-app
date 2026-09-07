@@ -51,17 +51,32 @@ function naechsterTag() {
 
 function tagesleiste() {
   const out = [];
+  const heute = iso(new Date());
   for (let i = 0; i < 14; i++) {
     const d = plusTage(i);
+    const datum = iso(d);
+    const ist = BESTELLTAGE.includes(d.getDay());
     out.push({
-      datum: iso(d),
+      datum,
       wochentag: TAGE[d.getDay()],
-      bestelltag: BESTELLTAGE.includes(d.getDay()),
+      bestelltag: ist,
+      // Bestellt wird spätestens am Vortag – heute ist die Ware längst da.
+      bestellbar: ist && datum > heute,
       status: null,
     });
   }
   return out;
 }
+
+/** Werte der zuletzt gesendeten Bestellung – Anhalt beim Neuerfassen (F7). */
+const LETZTE = {
+  datum: '2026-08-27',
+  wochentag: 'Donnerstag',
+  positionen: {
+    600: [{ anzahl: 1, menge: 30, einheit: 'St', vakuum: false }],
+    360: [{ anzahl: 2, menge: 4, einheit: 'St', vakuum: true }],
+  },
+};
 
 const CONFIG = {
   name: 'Metzgerei Mair',
@@ -144,9 +159,15 @@ async function mockApi(page, opts = {}) {
         status: 200, contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          bestellung: { datum, status, positionen: positionen(), protokoll: [] },
+          bestellung: {
+            datum, status,
+            positionen: opts.leer ? [] : positionen(),
+            protokoll: [],
+          },
           artikel: ARTIKEL, vorschlaege: VORSCHLAEGE,
-          vorbelegt_aus: '2026-08-24', bestelltag: true,
+          vorbelegt_aus: opts.leer ? null : '2026-08-24',
+          letzte: LETZTE,
+          bestelltag: true, bestellbar: true,
           config: CONFIG, testbetrieb: true, summen: {},
         }),
       });
@@ -305,16 +326,56 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     await expect(r).toHaveClass(/pruef/);
   });
 
-  test('TC-F10-01/02/04: Suche und Filter', async ({ page }) => {
+  test('TC-F10-01/02: Suche filtert sofort', async ({ page }) => {
     await oeffneTab(page);
     await page.locator('#mb-q').fill('puten');
     await expect(page.locator('.mb-row')).toHaveCount(1);
     await page.locator('#mb-q').fill('360');
     await expect(page.locator('.mb-row')).toHaveCount(1);
     await page.locator('#mb-q').fill('');
-    await page.locator('.mb-tgl button', { hasText: 'Nur bestellte' }).click();
-    await expect(page.locator('.mb-row')).toHaveCount(2);
   });
+
+  test('TC-F10-06: „Übliche Artikel" ist die Vorgabe', async ({ page }) => {
+    await oeffneTab(page);
+    // Vorgabe ist die kurze Liste – nur was der Metzger schon geliefert hat.
+    await expect(page.locator('.mb-tgl button.on')).toContainText('Übliche Artikel');
+    const ueblich = await page.locator('.mb-row').count();
+    const aktive = ARTIKEL.filter((a) => a.aktiv !== false).length;
+    expect(ueblich).toBe(aktive);
+    // „Alle Artikel" zeigt zusätzlich die ausgeblendeten.
+    await page.locator('.mb-tgl button', { hasText: 'Alle Artikel' }).click();
+    await expect(page.locator('.mb-row')).toHaveCount(ARTIKEL.length);
+  });
+
+  test('TC-F1-05: Heute ist nicht bestellbar, Vorauswahl liegt in der Zukunft',
+    async ({ page }) => {
+      await oeffneTab(page);
+      const heute = iso(new Date());
+      // Bestellt wird spätestens am Vortag – heute ist die Ware längst da.
+      const heutePille = page.locator('.mb-day').first();
+      await expect(heutePille).toBeDisabled();
+      const aktiv = await page.locator('.mb-day.on').getAttribute('onclick');
+      expect(aktiv).not.toContain(heute);
+    });
+
+  test('TC-F13-05: Im Testbetrieb blinkt der Reiter nicht', async ({ page }) => {
+    await oeffneTab(page);
+    await expect(page.locator('.k-tab[data-tab="metzgerbest"]')).not.toHaveClass(/mb-blink/);
+    await expect(page.locator('#badges-metzgerbest .k-badge')).toHaveCount(0);
+  });
+
+  test('TC-F7-06: Werte der letzten Bestellung stehen als Anhalt daneben',
+    async ({ page }) => {
+      await oeffneTab(page, { leer: true });
+      const r = zeile(page, 'Weißwurst');
+      const anhalt = r.locator('.mb-frueher');
+      await expect(anhalt).toHaveCount(1);
+      await expect(anhalt).toContainText('1 × 30 St');
+      // Ein Tipp übernimmt ihn.
+      await anhalt.click();
+      await expect(zeile(page, 'Weißwurst').locator('.mb-chip')).toHaveCount(1);
+      await expect(zeile(page, 'Weißwurst').locator('.mb-frueher')).toHaveCount(0);
+    });
 
   test('TC-F11-05/06: Versanddialog zeigt Empfänger und Testbetrieb', async ({ page }) => {
     await oeffneTab(page);

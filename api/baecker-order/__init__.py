@@ -118,6 +118,74 @@ def _positionen_fuer_versand(order, artikel):
     return out
 
 
+def _positionen_formular(order, artikel):
+    """**Alle** Katalogzeilen mit den Mengen dieser Bestellung (F23).
+
+    Der Papierausdruck soll dasselbe Blatt zeigen wie das versendete Dokument:
+    Die Word-Vorlage ist ein Formular ueber den ganzen Katalog, in das nur die
+    Mengen eingetragen werden. Eine Liste nur der bestellten Positionen waere
+    ein anderes Papier - und genau das war der Fehler.
+
+    Zusatzartikel, die nicht im Katalog stehen, haengen hinten an; ohne sie
+    fehlte auf dem Blatt, was zusaetzlich bestellt wurde.
+    """
+    mengen = {}
+    for p in order.get("positionen", []):
+        nr = str(p.get("nummer") or "").strip()
+        schluessel = nr or (p.get("name") or "").strip().lower()
+        mengen[schluessel] = p
+
+    out, benutzt = [], set()
+    for a in artikel:
+        nr = str(a.get("nummer") or "").strip()
+        schluessel = nr or (a.get("name") or "").strip().lower()
+        p = mengen.get(schluessel, {})
+        if p:
+            benutzt.add(schluessel)
+        out.append({
+            "nummer": nr,
+            "name": a.get("name", ""),
+            "menge": int(p.get("menge") or 0),
+            "retoure": int(p.get("retoure") or 0),
+        })
+    out.sort(key=lambda p: (store.sort_nr(p["nummer"]), p["name"]))
+
+    for schluessel, p in mengen.items():
+        if schluessel in benutzt:
+            continue
+        if not (int(p.get("menge") or 0) or int(p.get("retoure") or 0)):
+            continue
+        out.append({
+            "nummer": str(p.get("nummer") or "").strip(),
+            "name": (p.get("name") or "").strip(),
+            "menge": int(p.get("menge") or 0),
+            "retoure": int(p.get("retoure") or 0),
+            "zusatz": True,
+        })
+    return out
+
+
+def _dokument(url, hdrs, bcfg, bk, datum_iso):
+    """Das Bestellformular als PDF - frisch aus den gespeicherten Positionen.
+
+    Nichts wird zusaetzlich abgelegt: Das Blatt entsteht bei jedem Abruf neu
+    aus derselben Quelle wie der Mailanhang.
+    """
+    _, order = store.load_order(url, hdrs, bk, datum_iso)
+    if not order:
+        return None
+    artikel = store.sort_artikel(store.load_artikel(url, hdrs, bk))
+    return build_pdf(
+        _positionen_formular(order, artikel),
+        store.datum_de(datum_iso), store.wochentag(datum_iso),
+        kd_nr=bcfg.get("kd_nr", ""), baeckerei_name=bcfg.get("name", ""),
+        tour_nr=store.tour_nr(bcfg, datum_iso),
+        testbetrieb=store.testbetrieb(bcfg),
+        korrektur=order.get("status") == store.STATUS_KORRIGIERT,
+        formular=True,
+    )
+
+
 def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
     """Bestellung laden oder aus dem letzten gleichen Wochentag vorbelegen.
 
@@ -225,8 +293,7 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         "druck_offen": bool(gesendet and cfg.get("papierausdruck")
                             and not order.get("gedruckt_am")),
         "gruppen": cfg.get("gruppen") or [],
-        "testbetrieb": (cfg.get("empfaenger") or "").lower()
-                       != (cfg.get("baeckerei_mail") or "").lower(),
+        "testbetrieb": store.testbetrieb(cfg),
         "record_id": rec_id,
     }
 
@@ -286,30 +353,51 @@ def _uebersicht(url, hdrs, cfg):
                        else "offen"),
         })
 
-    # Erinnerung: Morgen ist Bestelltag und mindestens eine Bestellung ist offen.
+    # Erinnerung: Welche Lieferung muss HEUTE bestellt werden?
+    #
+    # Frueher wurde nur auf "morgen" geschaut. Das laesst die Montags-Lieferung
+    # durchfallen: Ihr Vortag ist der Sonntag, da ist der Laden zu – am Samstag
+    # sah die Erinnerung nur den leeren Sonntag und schwieg. Dasselbe gilt vor
+    # Feiertagen. Massgeblich ist deshalb der Bestellschluss-Tag je Lieferung:
+    # der letzte Arbeitstag davor.
+    #
     # ACHTUNG: An Samstagen liefern beide Baeckereien – wird nur eine geprueft,
     # ist der Blinkstatus falsch, und der Kiosk kann das nicht ausbuegeln.
-    morgen = (heute + timedelta(days=1)).isoformat()
     offen = False
     blinkt = False
     wer_offen = []
-    for bk in store.liefert_am(cfg, morgen):
-        bcfg = store.cfg_von(cfg, bk)
-        _, order = store.load_order(url, hdrs, bk, morgen)
-        if order.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT):
+    faellig_datum = ""
+    schluss_zeit = ""
+    for i in range(1, 9):
+        tag = (heute + timedelta(days=i)).isoformat()
+        if store.bestellschluss_tag(tag) != heute:
             continue
-        offen = True
-        wer_offen.append(bcfg.get("name") or bk)
-        schluss = bcfg.get("bestellschluss") or "12:00"
-        try:
-            h, m = (int(x) for x in schluss.split(":"))
-            jetzt = datetime.now()
-            if (jetzt.hour, jetzt.minute) >= (h, m):
-                blinkt = True
-        except Exception:
-            pass
+        for bk in store.liefert_am(cfg, tag):
+            bcfg = store.cfg_von(cfg, bk)
+            _, order = store.load_order(url, hdrs, bk, tag)
+            if order.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT):
+                continue
+            offen = True
+            if not faellig_datum:
+                faellig_datum = tag
+            wer_offen.append(bcfg.get("name") or bk)
+            schluss = bcfg.get("bestellschluss") or "12:00"
+            if not schluss_zeit:
+                schluss_zeit = schluss
+            # Im Testbetrieb bleibt der Reiter ruhig: Eine Bestellung, die an
+            # die Testadresse geht, soll niemanden aus dem Laden holen. Das
+            # endet, sobald der Empfaenger die echte Baeckerei ist.
+            if store.testbetrieb(bcfg):
+                continue
+            try:
+                h, m = (int(x) for x in schluss.split(":"))
+                jetzt = datetime.now()
+                if (jetzt.hour, jetzt.minute) >= (h, m):
+                    blinkt = True
+            except Exception:
+                pass
 
-    # Der Zaehler am Tab nennt die ANSTEHENDE Arbeit: die morgen faelligen
+    # Der Zaehler am Tab nennt die ANSTEHENDE Arbeit: die heute faelligen
     # Bestellungen plus alle offenen Ausdrucke. Bewusst NICHT jeder offene Tag
     # der Woche – sonst stuende dort dauerhaft eine Zahl und niemand schaute
     # noch hin.
@@ -317,10 +405,10 @@ def _uebersicht(url, hdrs, cfg):
         "tage": tage,
         "offen_gesamt": len(wer_offen) + druck_offen_gesamt,
         "erinnerung": {
-            "offen": offen, "blinkt": blinkt, "datum": morgen if offen else "",
-            "wochentag": store.wochentag(morgen) if offen else "",
-            "bestellschluss": (store.cfg_von(cfg, store.liefert_am(cfg, morgen)[0])
-                               .get("bestellschluss") if store.liefert_am(cfg, morgen) else ""),
+            "offen": offen, "blinkt": blinkt,
+            "datum": faellig_datum,
+            "wochentag": store.wochentag(faellig_datum) if faellig_datum else "",
+            "bestellschluss": schluss_zeit,
             "baeckereien": wer_offen,
         },
     }
@@ -401,8 +489,7 @@ def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
         return _err("Die Bestellung enth\u00e4lt keine Mengen. "
                     "Bitte zuerst Mengen eintragen.")
 
-    testbetrieb = ((cfg.get("empfaenger") or "").lower()
-                   != (cfg.get("baeckerei_mail") or "").lower())
+    testbetrieb = store.testbetrieb(cfg)
     format_ = (cfg.get("format") or "docx").lower()
     try:
         if format_ == "pdf":

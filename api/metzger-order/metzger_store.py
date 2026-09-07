@@ -238,12 +238,30 @@ def ist_bestelltag(cfg, datum_iso):
 
 
 def naechster_bestelltag(cfg, ab=None, max_tage=14):
-    tag = ab or date.today()
+    """Naechster Liefertag ab **morgen** (bzw. ab dem angegebenen Datum).
+
+    Bestellt werden muss spaetestens am Vortag; fuer heute ist die Ware
+    laengst da. Die Bestellung darf auch zwei oder drei Tage vorher raus -
+    sie gilt dann fuer den naechsten so erreichbaren Liefertag.
+    """
+    start = ab or (date.today() + timedelta(days=1))
     for i in range(max_tage):
-        d = (tag + timedelta(days=i)).isoformat()
-        if ist_bestelltag(cfg, d):
-            return d
-    return tag.isoformat()
+        d = start + timedelta(days=i)
+        if ist_bestelltag(cfg, d.isoformat()):
+            return d.isoformat()
+    return start.isoformat()
+
+
+def bestellbar(datum_iso):
+    """Nur kuenftige Liefertage lassen sich bestellen.
+
+    Der Riegel sitzt bewusst auch im Server: Ein veralteter Kiosk oder ein
+    Doppelklick darf keine sinnlose Bestellung ausloesen.
+    """
+    try:
+        return datetime.strptime(datum_iso, "%Y-%m-%d").date() > date.today()
+    except (ValueError, TypeError):
+        return False
 
 
 def datum_de(datum_iso):
@@ -339,6 +357,20 @@ def vorlage_bestellung(alle, datum_iso):
                     return o
             except Exception:
                 continue
+    return None
+
+
+def letzte_bestellung(alle):
+    """Die zuletzt gesendete Bestellung - **unabhaengig vom Wochentag**.
+
+    Anders als ``vorlage_bestellung`` (die den letzten gleichen Wochentag
+    sucht und die Vorbelegung liefert) dient das hier nur als Anhalt beim
+    Neuerfassen: Gibt es fuer den Wochentag noch nichts, startet die Liste
+    leer - dann hilft der Blick darauf, was zuletzt ueberhaupt bestellt wurde.
+    """
+    for o in alle:                       # bereits absteigend sortiert
+        if o.get("status") in (STATUS_GESENDET, STATUS_KORRIGIERT):
+            return o
     return None
 
 

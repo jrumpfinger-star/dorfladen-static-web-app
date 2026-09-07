@@ -154,6 +154,11 @@ def main():
         quelle = rechnung.get(nr) if nr else None
         if quelle:
             benutzt.add(nr)
+        # „Ueblich" ist, was der Metzger tatsaechlich schon geliefert hat.
+        # 27 der 84 Formularzeilen tauchen in keiner Rechnung auf - sie stehen
+        # nur auf dem Papier. Sie bleiben ueber „Alle Artikel" erreichbar,
+        # verstopfen aber nicht die tägliche Liste.
+        lieferungen = quelle["lieferungen"] if quelle else 0
         artikel.append({
             "name": name,
             "nummer": nr,
@@ -161,7 +166,8 @@ def main():
             "preis": quelle["preis"] if quelle else None,
             "einheit": quelle["einheit"] if quelle else "kg",
             "gruppe": gruppe_fuer(i),
-            "aktiv": True,
+            "lieferungen": lieferungen,
+            "aktiv": lieferungen > 0,
             "auf_formular": True,
         })
 
@@ -177,6 +183,7 @@ def main():
             "preis": a["preis"],
             "einheit": a["einheit"],
             "gruppe": "Nicht auf dem Formular",
+            "lieferungen": a["lieferungen"],
             "aktiv": False,
             "auf_formular": False,
         })
@@ -193,14 +200,16 @@ def main():
 
     formular = [a for a in artikel if a["auf_formular"]]
     zugeordnet = [a for a in formular if a["nummer"]]
+    aktiv = [a for a in artikel if a["aktiv"]]
     print(f"Formularzeilen: {len(formular)}   davon zugeordnet: {len(zugeordnet)}"
           f"   offen: {len(formular) - len(zugeordnet)}")
     print(f"Zusaetzlich aus Rechnungen: {len(artikel) - len(formular)} (inaktiv)")
+    print(f"Ueblich (schon einmal geliefert): {len(aktiv)} von {len(artikel)}")
     print("->", ZIEL)
     print()
-    print("Offene Zuordnungen (im Kiosk ohne Nummer und Preis):")
+    print("Nie geliefert - nur ueber \u201eAlle Artikel\u201c erreichbar:")
     for a in formular:
-        if not a["nummer"]:
+        if not a["aktiv"]:
             print("  -", a["name"])
 
 

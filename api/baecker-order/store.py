@@ -28,10 +28,18 @@ import json
 import logging
 import os
 import re
+import sys
 from datetime import date, datetime, timedelta
 
 import msal
 import requests
+
+# ``shared`` liegt eine Ebene hoeher. Der Pfad wird hier selbst gesetzt, damit
+# store.py auch dann laedt, wenn es direkt importiert wird (Pruefwerkzeuge in
+# tools/) und nicht ueber die Azure-Function, die den Pfad ohnehin setzt.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared import feiertage  # noqa: E402
 
 ENTITY = "dl_seiteninhalts"
 PK = "dl_seiteninhaltid"
@@ -339,6 +347,20 @@ def load_config(url, hdrs):
     return {"baeckereien": aus}
 
 
+def testbetrieb(cfg):
+    """True, solange die Bestellung nicht an die Baeckerei selbst geht.
+
+    Eine Wahrheit fuer alle Aufrufer: Versand, Formular und Kiosk. Solange der
+    Empfaenger nicht die hinterlegte Baeckerei-Adresse ist, laeuft alles im
+    Testbetrieb - und der Kiosk erinnert dann bewusst nicht (F9), weil eine
+    Testbestellung niemanden aus dem Laden holen soll.
+
+    ``cfg`` ist die Konfiguration EINER Baeckerei.
+    """
+    ziel = (cfg.get("baeckerei_mail") or "").strip().lower()
+    return not ziel or (cfg.get("empfaenger") or "").strip().lower() != ziel
+
+
 def cfg_von(cfg, bk):
     """Einstellungen einer einzelnen Baeckerei.
 
@@ -446,11 +468,32 @@ def tour_nr(cfg, datum_iso):
 
 
 def ist_bestelltag(cfg, datum_iso):
+    """Liefert die Baeckerei an diesem Tag?
+
+    An gesetzlichen Feiertagen wird nicht geliefert – der Laden ist zu, es
+    koennte niemand die Ware annehmen.
+    """
     try:
         wd = datetime.strptime(datum_iso, "%Y-%m-%d").weekday()
     except ValueError:
         return False
+    if feiertage.ist_feiertag(datum_iso):
+        return False
     return wd in (cfg.get("bestelltage") or [])
+
+
+def bestellschluss_tag(datum_iso):
+    """Der Tag, an dem eine Lieferung spaetestens bestellt werden muss.
+
+    In der Regel der Vortag. Faellt der auf einen Sonntag oder Feiertag, ist
+    es der letzte Arbeitstag davor: Die Montags-Lieferung muss am Samstag
+    bestellt werden, weil sonntags niemand im Laden ist.
+    """
+    try:
+        d = datetime.strptime(datum_iso, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+    return feiertage.letzter_werktag_vor(d)
 
 
 def naechster_bestelltag(cfg, ab=None, max_tage=14):

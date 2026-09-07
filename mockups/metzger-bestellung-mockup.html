@@ -14,6 +14,7 @@
   --spalte:460px;--namensp:230px;
 }
 *{box-sizing:border-box}
+body b,body strong{font-weight:600}
 body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
   background:var(--bg);color:var(--text);font-size:14px}
 .wrap{max-width:1180px;margin:0 auto;padding:12px;padding-bottom:120px}
@@ -25,7 +26,7 @@ h1{font-size:18px;margin:0 0 2px}
   box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px;position:sticky;top:0;z-index:20}
 .days{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
 .day{min-width:64px;min-height:var(--touch);padding:6px 10px;border:1.5px solid var(--border);
-  border-radius:10px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;
+  border-radius:10px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;
   text-align:center;white-space:nowrap}
 .day .d2{display:block;font-size:10px;font-weight:600;color:var(--muted)}
 .day.on{border-color:var(--green);background:var(--green);color:#fff}
@@ -37,11 +38,11 @@ h1{font-size:18px;margin:0 0 2px}
   padding:6px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px}
 .tgl{display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
 .tgl button{border:0;background:#fff;padding:0 12px;min-height:var(--touch);
-  font-size:12px;font-weight:700;cursor:pointer;color:var(--muted)}
+  font-size:12px;font-weight:600;cursor:pointer;color:var(--muted)}
 .tgl button.on{background:var(--green);color:#fff}
 .jump{display:flex;gap:5px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
 .jump button{border:1.5px solid var(--border);background:#fff;border-radius:16px;
-  padding:0 12px;min-height:var(--touch);font-size:11px;font-weight:700;
+  padding:0 12px;min-height:var(--touch);font-size:11px;font-weight:600;
   cursor:pointer;white-space:nowrap;color:var(--muted)}
 
 /* ---- Liste ----
@@ -51,7 +52,7 @@ h1{font-size:18px;margin:0 0 2px}
    spannen immer über alle Spalten. */
 #liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--spalte),1fr));
   gap:4px 10px;align-items:start}
-.grp{grid-column:1/-1;font-size:11px;font-weight:800;text-transform:uppercase;
+.grp{grid-column:1/-1;font-size:11px;font-weight:600;text-transform:uppercase;
   letter-spacing:.4px;color:var(--muted);margin:12px 0 2px;padding-left:2px;
   border-bottom:1px solid var(--border);padding-bottom:4px}
 /* Die Artikelnummer steht in einer eigenen, rechtsbündigen Spalte: Beim Metzger
@@ -68,14 +69,14 @@ h1{font-size:18px;margin:0 0 2px}
 .row.pruef{border-left-color:var(--red);background:#fef2f2}
 .zeile{display:grid;grid-template-columns:minmax(120px,var(--namensp)) minmax(0,1fr);
   gap:8px;align-items:center}
-.nrcol{font-size:13px;font-weight:800;color:var(--muted);text-align:right;
+.nrcol{font-size:13px;font-weight:600;color:var(--muted);text-align:right;
   font-variant-numeric:tabular-nums;font-family:ui-monospace,Consolas,monospace;
   border-right:1px solid var(--border);padding-right:8px;align-self:stretch;
   display:flex;align-items:center;justify-content:flex-end;min-height:40px}
 .row.has .nrcol{color:var(--text)}
 .nrcol.leer{color:#dbe0e6;font-weight:600}
 .nm{font-size:14px;font-weight:600;line-height:1.2;min-width:0}
-.tag{display:inline-block;font-size:9px;font-weight:800;padding:1px 5px;
+.tag{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;
   border-radius:7px;margin-left:5px;vertical-align:middle}
 .tag.vor{background:var(--blue-light);color:var(--blue)}
 .tag.chg{background:#fef3c7;color:#92400e}
@@ -87,14 +88,14 @@ h1{font-size:18px;margin:0 0 2px}
    ohne den Editor zu öffnen. */
 .chip{display:inline-flex;align-items:center;overflow:hidden;min-height:34px;
   border:1.5px solid var(--green);background:var(--green-light);border-radius:18px}
-.chip .lab{border:0;background:transparent;color:#166534;font-size:13px;font-weight:800;
+.chip .lab{border:0;background:transparent;color:#166534;font-size:13px;font-weight:600;
   padding:0 4px 0 11px;min-height:34px;cursor:pointer;
   display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.chip .x{border:0;background:transparent;color:#166534;font-size:14px;font-weight:800;
+.chip .x{border:0;background:transparent;color:#166534;font-size:14px;font-weight:600;
   width:30px;flex:0 0 30px;min-height:34px;cursor:pointer;opacity:.45;line-height:1}
 .chip .x:hover{opacity:1;background:rgba(22,101,52,.14)}
 .chip .vak{background:#166534;color:#fff;border-radius:5px;font-size:9px;
-  padding:1px 4px;font-weight:800}
+  padding:1px 4px;font-weight:600}
 /* Der Hinweis ist ebenfalls ein Badge - andersfarbig, damit er auffällt.
    Eigener Klassenname, weil `.note` bereits der Erklärkasten am Seitenende ist. */
 .chip.hw{border-color:var(--orange);background:#fff7ed;max-width:100%}
@@ -106,7 +107,7 @@ h1{font-size:18px;margin:0 0 2px}
   display:inline-block;line-height:31px;max-width:100%}
 .add{border:1.5px dashed #dfe3e8;background:#fff;color:#b6bcc4;
   border-radius:18px;min-width:34px;min-height:34px;font-size:17px;
-  font-weight:800;cursor:pointer;line-height:1}
+  font-weight:600;cursor:pointer;line-height:1}
 .add:hover{border-color:var(--green);color:var(--green)}
 .row.has .add{border-style:solid;border-color:#e5e7eb}
 
@@ -118,7 +119,7 @@ h1{font-size:18px;margin:0 0 2px}
 .edgrid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;align-items:stretch}
 .g{border:1px solid var(--border);border-radius:10px;background:#fff;
   padding:5px 8px 7px;display:flex;flex-direction:column;gap:5px;min-width:0}
-.g > .lbl{font-size:9px;font-weight:800;text-transform:uppercase;
+.g > .lbl{font-size:9px;font-weight:600;text-transform:uppercase;
   letter-spacing:.5px;color:#9aa2ad;margin:0}
 .g .inner{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0}
 .g-vor{flex:1 1 100%;background:#fafbff;border-color:#e3e8f5}
@@ -130,24 +131,24 @@ h1{font-size:18px;margin:0 0 2px}
    einem Tipp gesetzt sein, ohne dass sich erst ein Menü öffnet. */
 .einh{display:flex;flex-wrap:wrap;gap:3px}
 .einh button{border:1.5px solid var(--border);background:#fff;color:var(--muted);
-  border-radius:8px;padding:0 9px;min-height:36px;font-size:12px;font-weight:800;
+  border-radius:8px;padding:0 9px;min-height:36px;font-size:12px;font-weight:600;
   cursor:pointer;white-space:nowrap}
 .einh button.on{border-color:var(--pri);background:var(--pri);color:#fff}
 .hint2{font-size:11px;color:var(--muted);font-weight:600}
 
 .sugg{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
 .sugg button{border:1.5px solid var(--blue);background:var(--blue-light);color:var(--blue);
-  border-radius:16px;padding:0 12px;min-height:36px;font-size:13px;font-weight:800;cursor:pointer}
+  border-radius:16px;padding:0 12px;min-height:36px;font-size:13px;font-weight:600;cursor:pointer}
 /* Aus Lieferungen abgeleitet (Rechnungen) - blasser als echte Bestellungen. */
-.sugg button.lieferung{border-color:#dbe2f5;background:#fbfcff;color:#7d879e;font-weight:700}
+.sugg button.lieferung{border-color:#dbe2f5;background:#fbfcff;color:#7d879e;font-weight:600}
 /* Ausgewählt: Der Vorschlag steckt bereits in der Zeile. */
 .sugg button.on{border-color:var(--green);background:var(--green-light);color:#166534;
-  font-weight:800}
+  font-weight:600}
 .sugg button.on .vak{background:#166534}
 .sugg .hak{font-size:12px;margin-right:5px}
 .quick{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
 .quick button{border:1.5px solid var(--border);background:#fff;border-radius:9px;
-  min-width:44px;min-height:38px;font-size:14px;font-weight:800;cursor:pointer}
+  min-width:44px;min-height:38px;font-size:14px;font-weight:600;cursor:pointer}
 .quick button:hover{border-color:var(--green);color:var(--green)}
 .quick button.on{border-color:var(--blue);background:var(--blue-light);color:var(--blue)}
 .quick button.ok.pad{background:var(--green);color:#fff;border-color:var(--green);
@@ -155,18 +156,18 @@ h1{font-size:18px;margin:0 0 2px}
 .quick button.del{color:var(--red);border-color:#fca5a5;min-width:0;padding:0 12px;font-size:13px}
 .step{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:9px;overflow:hidden}
 .step button{border:0;background:#f9fafb;min-width:38px;min-height:36px;
-  font-size:17px;font-weight:800;cursor:pointer}
+  font-size:17px;font-weight:600;cursor:pointer}
 .step input{border:0;width:44px;min-height:36px;text-align:center;
-  font-size:15px;font-weight:800}
-.g .mal{font-size:14px;font-weight:800;color:#b6bcc4}
+  font-size:15px;font-weight:600}
+.g .mal{font-size:14px;font-weight:600;color:#b6bcc4}
 .g select,.g input.mg{min-height:38px;border:1.5px solid var(--border);border-radius:9px;
-  padding:0 8px;font-size:14px;font-weight:700;background:#fff}
+  padding:0 8px;font-size:14px;font-weight:600;background:#fff}
 .g input.mg{width:74px;text-align:center}
 /* Vakuum ist ein eigener Schalter. Erst wenn er an ist, erscheint die
    Beutelgröße - „kein Vakuum" als scheinbar gewählte Stufe hat verwirrt. */
 .vakbtn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);
   background:#fff;color:var(--muted);border-radius:9px;padding:0 11px;
-  min-height:36px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+  min-height:36px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .vakbtn .box{width:16px;height:16px;border:2px solid #cbd5e1;border-radius:4px;
   display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
 .vakbtn.on{border-color:var(--green);background:var(--green-light);color:#166534}
@@ -175,15 +176,15 @@ h1{font-size:18px;margin:0 0 2px}
   border-radius:9px;padding:0 9px;font-size:14px}
 .g input.kurz{font-family:ui-monospace,Consolas,monospace}
 .take{border:1.5px solid var(--border);background:#fff;border-radius:9px;
-  min-height:36px;padding:0 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
-.prev{font-size:12px;font-weight:700;color:var(--green);flex:1 1 100%;min-width:0;
+  min-height:36px;padding:0 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.prev{font-size:12px;font-weight:600;color:var(--green);flex:1 1 100%;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prev.bad{color:var(--red)}
 .sugg .vak{background:var(--blue);color:#fff;border-radius:5px;font-size:9px;
-  padding:1px 4px;font-weight:800;margin-left:5px}
+  padding:1px 4px;font-weight:600;margin-left:5px}
 .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .acts button{min-height:38px;border-radius:9px;padding:0 14px;
-  font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);background:#fff}
+  font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff}
 .acts .ok{background:var(--green);color:#fff;border-color:var(--green)}
 .acts .del{color:var(--red);border-color:#fca5a5}
 .acts .zu{margin-left:auto;color:var(--muted)}
@@ -192,11 +193,11 @@ h1{font-size:18px;margin:0 0 2px}
 .foot{position:sticky;bottom:0;background:var(--card);border-radius:var(--r);
   padding:9px 12px;margin-top:12px;box-shadow:0 -2px 10px rgba(0,0,0,.09);
   display:flex;gap:8px;flex-wrap:wrap;align-items:center;z-index:20}
-.st{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.st{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
 .st b{color:var(--text);font-size:14px}
 .foot .send{margin-left:auto;background:var(--green);color:#fff;border:0;
   border-radius:10px;min-height:var(--touch);padding:0 20px;font-size:14px;
-  font-weight:800;cursor:pointer}
+  font-weight:600;cursor:pointer}
 .note{background:#fff;border-radius:var(--r);padding:10px 12px;margin-top:12px;
   font-size:12px;color:var(--muted);line-height:1.55;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .note b{color:var(--text)}
@@ -1006,7 +1007,7 @@ const M = (function () {
     d.textContent = text;
     d.style.cssText = 'position:fixed;left:50%;top:24px;transform:translateX(-50%);'
       + 'background:#1f2937;color:#fff;padding:10px 18px;border-radius:10px;'
-      + 'font-size:13px;font-weight:700;z-index:99;box-shadow:0 4px 16px rgba(0,0,0,.25)';
+      + 'font-size:13px;font-weight:600;z-index:99;box-shadow:0 4px 16px rgba(0,0,0,.25)';
     document.body.appendChild(d);
     setTimeout(() => d.remove(), 2600);
   }
