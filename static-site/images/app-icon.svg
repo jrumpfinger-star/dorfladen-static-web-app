@@ -1,0 +1,28 @@
+<!--
+  App-Icon Dorfladen Oberornau – Ladenfront mit gestreifter Markise.
+
+  Bewusst flaechig und ohne feine Striche: auf dem Startbildschirm wird das
+  Icon nur etwa 48px gross dargestellt, dort verschwinden duenne Linien und
+  Schrift. Diese Fassung ist fuer "purpose: any" (iOS-Homescreen, Favicon,
+  Push, Social-Vorschau) – der Inhalt darf hier naeher an den Rand.
+  Fuer Android gibt es app-icon-maskable.svg mit groesserem Rand.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#1e463a"/>
+  <g transform="translate(256,256) scale(1.16) translate(-256,-256)">
+    <!-- Markise: Trapez, abwechselnd creme und bronze, mit Wellenkante -->
+    <path d="M 176 152 L 336 152 L 378 240 L 134 240 Z" fill="#f2efe6"/>
+    <path d="M 202.7 152 L 229.3 152 L 215.3 240 L 174.7 240 Z" fill="#c9975c"/>
+    <path d="M 256 152 L 282.7 152 L 296.7 240 L 256 240 Z" fill="#c9975c"/>
+    <path d="M 309.3 152 L 336 152 L 378 240 L 337.3 240 Z" fill="#c9975c"/>
+    <path d="M 134 240 a 20.3 20.3 0 0 0 40.7 0 Z" fill="#f2efe6"/>
+    <path d="M 174.7 240 a 20.3 20.3 0 0 0 40.7 0 Z" fill="#c9975c"/>
+    <path d="M 215.3 240 a 20.3 20.3 0 0 0 40.7 0 Z" fill="#f2efe6"/>
+    <path d="M 256 240 a 20.3 20.3 0 0 0 40.7 0 Z" fill="#c9975c"/>
+    <path d="M 296.7 240 a 20.3 20.3 0 0 0 40.7 0 Z" fill="#f2efe6"/>
+    <path d="M 337.3 240 a 20.3 20.3 0 0 0 40.7 0 Z" fill="#c9975c"/>
+    <!-- Eingang mit Rundbogen -->
+    <path d="M 186 386 L 186 316 a 70 70 0 0 1 140 0 L 326 386 Z" fill="#f2efe6"/>
+    <path d="M 232 386 L 232 330 a 24 24 0 0 1 48 0 L 280 386 Z" fill="#1e463a"/>
+  </g>
+</svg>
