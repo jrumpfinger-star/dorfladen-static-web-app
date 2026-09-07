@@ -1082,6 +1082,7 @@
     if(name==='settings' && !_settingsLoaded) loadFeatureFlags();
     if(name==='settings' && !_kontaktLoaded) loadKontaktdaten();
     if(name==='settings' && !_bkcfgLoaded) loadBaeckerConfig();
+    if(name==='settings' && !_mbcfgLoaded) loadMetzgerBestConfig();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders'){ if(!_ordersLoaded) cmsLoadOrders(); if(!window._bsCfgLoaded) cmsLoadBestellConfig(); }
@@ -8212,6 +8213,8 @@
       case 'kontaktSave':saveKontaktdaten();break;
       case 'bkcfgSave':saveBaeckerConfig();break;
       case 'bkcfgEchtAdresse':bkcfgEchtAdresse();break;
+      case 'mbcfgSave':saveMetzgerBestConfig();break;
+      case 'mbcfgEchtAdresse':mbcfgEchtAdresse();break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
       case 'cfgRevertUnsaved':cfgRevertUnsaved();break;
@@ -9557,6 +9560,185 @@
       toast(_cmsErr(e),'error');
     }).then(function(){
       if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE B\u00e4cker-Einstellungen speichern';}
+    });
+  }
+
+  // === METZGER-BESTELLUNG (Metzgerei Mair) =========================
+  // Die Einstellungen lagen frueher als eigener Unterreiter IM KIOSK. Dort
+  // gehoeren sie nicht hin: Der Kiosk ist die Arbeitsflaeche der
+  // Verkaeuferinnen, Stammdaten werden im CMS gepflegt - so wie beim Baecker.
+  var _mbcfgLoaded=false, _mbcfg={};
+  var MB_TAGE=['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+  /* Berechtigung wie im Kiosk: das gemeinsame CMS-Token als Header. Ohne
+     ihn weist die Metzger-API jeden schreibenden Aufruf ab. */
+  function _cmsAuthHeaders(){
+    var h={'Content-Type':'application/json'};
+    try{
+      var t=sessionStorage.getItem('cmsAuthToken')||localStorage.getItem('cmsAuthToken');
+      if(t) h['X-CMS-Auth']=t;
+    }catch(e){ /* Speicher gesperrt - dann ohne Token */ }
+    return h;
+  }
+
+  function mbcfgStatus(text,art){
+    var el=document.getElementById('mbcfg-status');
+    if(!el) return;
+    if(!text){el.style.display='none';return;}
+    el.style.display='block';
+    el.textContent=text;
+    var fehler=art==='fehler';
+    el.style.background=fehler?'#fef2f2':'#eff6ff';
+    el.style.color=fehler?'#b91c1c':'#1d4ed8';
+    el.style.border='1px solid '+(fehler?'#fecaca':'#bfdbfe');
+  }
+
+  function mbcfgTageZeichnen(tage){
+    var wrap=document.getElementById('mbcfg-tage');
+    if(!wrap) return;
+    wrap.innerHTML='';
+    MB_TAGE.forEach(function(n,i){
+      var an=(tage||[]).indexOf(i)>=0;
+      var lab=document.createElement('label');
+      lab.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:7px 11px;'
+        +'border:1px solid '+(an?'#fca5a5':'#e5e7eb')+';border-radius:8px;cursor:pointer;'
+        +'font-size:.85rem;background:'+(an?'#fef2f2':'#fff');
+      var cb=document.createElement('input');
+      cb.type='checkbox';cb.className='mbcfg-tag';cb.value=String(i);cb.checked=an;
+      cb.style.cssText='width:15px;height:15px;accent-color:#b91c1c;cursor:pointer';
+      cb.addEventListener('change',function(){ mbcfgTageZeichnen(mbcfgTageLesen()); });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(n));
+      wrap.appendChild(lab);
+    });
+  }
+
+  function mbcfgTageLesen(){
+    var aus=[];
+    Array.prototype.forEach.call(document.querySelectorAll('.mbcfg-tag'),function(cb){
+      if(cb.checked) aus.push(parseInt(cb.value,10));
+    });
+    return aus.sort(function(a,b){return a-b;});
+  }
+
+  /* Testbetrieb: Solange der Empfaenger nicht die Metzgerei selbst ist,
+     gehen Bestellungen an die Testadresse. Genau wie beim Baecker. */
+  function mbcfgHinweis(){
+    var el=document.getElementById('mbcfg-empfaenger');
+    var mz=document.getElementById('mbcfg-metzger');
+    if(!el||!mz) return;
+    var test=document.getElementById('mbcfg-testhinweis');
+    var scharf=document.getElementById('mbcfg-echthinweis');
+    var ziel=(mz.value||'').trim().toLowerCase();
+    var ist=(el.value||'').trim().toLowerCase();
+    var gleich=!!ziel&&ist===ziel;
+    if(test) test.style.display=gleich?'none':'block';
+    if(scharf) scharf.style.display=gleich?'block':'none';
+  }
+
+  function mbcfgEchtAdresse(){
+    var el=document.getElementById('mbcfg-empfaenger');
+    var mz=document.getElementById('mbcfg-metzger');
+    var name=document.getElementById('mbcfg-empfaenger-name');
+    if(!el||!mz) return;
+    var ziel=(mz.value||'').trim();
+    if(!ziel){ mbcfgStatus('Bitte zuerst die Adresse der Metzgerei eintragen.','fehler'); return; }
+    el.value=ziel;
+    if(name&&!(name.value||'').trim()){
+      var n=document.getElementById('mbcfg-name');
+      name.value=(n&&n.value)||'Metzgerei Mair';
+    }
+    mbcfgHinweis();
+  }
+
+  function mbcfgFelderFuellen(){
+    var c=_mbcfg||{};
+    function v(id,wert){var e=document.getElementById(id);if(e)e.value=wert||'';}
+    mbcfgTageZeichnen(c.bestelltage||[]);
+    v('mbcfg-name',c.name);
+    v('mbcfg-schluss',c.bestellschluss);
+    v('mbcfg-kdnr',c.kd_nr);
+    v('mbcfg-empfaenger',c.empfaenger);
+    v('mbcfg-empfaenger-name',c.empfaenger_name);
+    v('mbcfg-metzger',c.metzger_mail);
+    mbcfgHinweis();
+  }
+
+  function mbcfgFelderLesen(){
+    function v(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';}
+    return {
+      name:v('mbcfg-name'),
+      bestelltage:mbcfgTageLesen(),
+      bestellschluss:v('mbcfg-schluss'),
+      kd_nr:v('mbcfg-kdnr'),
+      empfaenger:v('mbcfg-empfaenger'),
+      empfaenger_name:v('mbcfg-empfaenger-name'),
+      metzger_mail:v('mbcfg-metzger')
+    };
+  }
+
+  function loadMetzgerBestConfig(){
+    if(_mbcfgLoaded) return;
+    _mbcfgLoaded=true;
+    mbcfgStatus('Einstellungen werden geladen\u2026');
+    fetch(API+'/metzger-order/config',{headers:_cmsAuthHeaders()})
+      .then(function(r){return r.json();}).then(function(res){
+        if(!res||!res.success||!res.config) throw new Error('config');
+        _mbcfg=res.config;
+        mbcfgFelderFuellen();
+        mbcfgStatus('');
+        ['mbcfg-empfaenger','mbcfg-metzger'].forEach(function(id){
+          var e=document.getElementById(id);
+          if(e) e.addEventListener('input',mbcfgHinweis);
+        });
+      }).catch(function(){
+        _mbcfgLoaded=false;   // beim naechsten Oeffnen erneut versuchen
+        mbcfgStatus('Die Metzger-Einstellungen konnten nicht geladen werden.','fehler');
+      });
+  }
+
+  function saveMetzgerBestConfig(){
+    var c=mbcfgFelderLesen();
+    if(!c.bestelltage.length){
+      mbcfgStatus('Bitte mindestens einen Liefertag ausw\u00e4hlen.','fehler');return;
+    }
+    var mail=c.empfaenger;
+    if(mail.indexOf('@')<0||mail.split('@').pop().indexOf('.')<0){
+      mbcfgStatus('Bitte eine g\u00fcltige E-Mail-Adresse angeben.','fehler');return;
+    }
+    if(c.metzger_mail&&(c.metzger_mail.indexOf('@')<0
+        ||c.metzger_mail.split('@').pop().indexOf('.')<0)){
+      mbcfgStatus('Die Adresse der Metzgerei ist keine g\u00fcltige E-Mail-Adresse.','fehler');return;
+    }
+    if(!/^([01]?\d|2[0-3]):[0-5]\d$/.test(c.bestellschluss)){
+      mbcfgStatus('Bestellschluss bitte als Uhrzeit angeben, z.\u202fB. 12:00.','fehler');return;
+    }
+    if(!c.kd_nr){
+      mbcfgStatus('Die Kunden-Nr. wird im Formularkopf gebraucht.','fehler');return;
+    }
+    var btn=document.getElementById('mbcfg-save');
+    var hint=document.getElementById('mbcfg-saved-hint');
+    if(btn){btn.disabled=true;btn.textContent='\u23F3 Speichern\u2026';}
+    fetch(API+'/metzger-order/config',{
+      method:'POST',
+      headers:_cmsAuthHeaders(),
+      body:JSON.stringify({config:c})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res&&res.success){
+        if(res.config) _mbcfg=res.config;
+        mbcfgStatus('');
+        mbcfgHinweis();
+        toast('Metzger-Einstellungen gespeichert!');
+        if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
+      }else{
+        mbcfgStatus((res&&res.error)||'Speichern fehlgeschlagen.','fehler');
+        toast('Fehler: '+((res&&res.error)||'Speichern fehlgeschlagen.'),'error');
+      }
+    }).catch(function(e){
+      mbcfgStatus('Netzwerkfehler \u2013 bitte erneut versuchen.','fehler');
+      toast(_cmsErr(e),'error');
+    }).then(function(){
+      if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Metzger-Einstellungen speichern';}
     });
   }
 

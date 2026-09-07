@@ -21,6 +21,7 @@ import logging
 import os
 import re
 import sys
+import base64
 from datetime import date, datetime, timedelta
 
 import azure.functions as func
@@ -32,6 +33,7 @@ from shared.auth import admin_auth_guard  # noqa: E402
 import store  # noqa: E402
 from docx_fill import fill_form  # noqa: E402
 from pdf_fill import build_pdf  # noqa: E402
+from formular_pdf import build_formular  # noqa: E402
 
 VORLAGEN_ORDNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vorlage")
 VORLAGE = os.path.join(VORLAGEN_ORDNER, "freundl-werktag.docx")
@@ -170,18 +172,34 @@ def _dokument(url, hdrs, bcfg, bk, datum_iso):
 
     Nichts wird zusaetzlich abgelegt: Das Blatt entsteht bei jedem Abruf neu
     aus derselben Quelle wie der Mailanhang.
+
+    Baeckereien mit Word-Anhang (Freundl) bekommen die **Nachbildung** ihrer
+    Vorlage: gleiche Kopfzeilen, gleiche vier Spalten, alle Katalogzeilen. Ein
+    Browser kann ``.docx`` nicht drucken, und auf dem Server steht weder Word
+    noch LibreOffice bereit. Baeckereien mit PDF-Anhang (Martin's) bekommen
+    genau das Blatt, das auch per Mail hinausging.
     """
     _, order = store.load_order(url, hdrs, bk, datum_iso)
     if not order:
         return None
     artikel = store.sort_artikel(store.load_artikel(url, hdrs, bk))
+    zeilen = _positionen_formular(order, artikel)
+    korrektur = order.get("status") == store.STATUS_KORRIGIERT
+    if (bcfg.get("format") or "docx").lower() == "docx":
+        return build_formular(
+            zeilen, store.datum_de(datum_iso),
+            kd_nr=bcfg.get("kd_nr", ""),
+            tour_nr=store.tour_nr(bcfg, datum_iso),
+            testbetrieb=store.testbetrieb(bcfg),
+            korrektur=korrektur,
+        )
     return build_pdf(
-        _positionen_formular(order, artikel),
+        zeilen,
         store.datum_de(datum_iso), store.wochentag(datum_iso),
         kd_nr=bcfg.get("kd_nr", ""), baeckerei_name=bcfg.get("name", ""),
         tour_nr=store.tour_nr(bcfg, datum_iso),
         testbetrieb=store.testbetrieb(bcfg),
-        korrektur=order.get("status") == store.STATUS_KORRIGIERT,
+        korrektur=korrektur,
         formular=True,
     )
 
@@ -727,6 +745,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                                     gewuenscht if store.baeckerei_gueltig(gewuenscht) else None))
             if mode == "config":
                 return _ok({"config": cfg, "baeckereien": list(store.BAECKEREIEN)})
+
+            if mode == "dokument":
+                # Das Blatt zum Ausdrucken. Frueher baute der Kiosk sich eine
+                # eigene HTML-Seite - die sah dem versendeten Formular nicht
+                # aehnlich, was aus dem Laden gemeldet wurde. Jetzt kommt es
+                # aus derselben Quelle wie der Mailanhang.
+                bk, fehler = bk_pflicht()
+                if fehler:
+                    return fehler
+                bcfg = store.cfg_von(cfg, bk)
+                datum = (req.params.get("datum") or "").strip()
+                if not datum:
+                    return _err("Bitte angeben, um welchen Liefertag es geht.")
+                blatt = _dokument(url, hdrs, bcfg, bk, datum)
+                if not blatt:
+                    return _err("F\u00fcr diesen Tag gibt es keine Bestellung.", 404)
+                return _ok({
+                    "dateiname": f"Bestellung-{bk}-{datum}.pdf",
+                    "pdf_base64": base64.b64encode(blatt).decode("ascii"),
+                })
 
             bk, fehler = bk_pflicht()
             if fehler:

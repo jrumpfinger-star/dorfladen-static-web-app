@@ -623,3 +623,25 @@ test.describe('Metzger-Bestellung – Korrektur ist zweistufig (F32)', () => {
     await expect(page.locator('.mb-btn', { hasText: 'Korrigieren' })).toBeVisible();
   });
 });
+
+// ── F36: Stammdaten gehören ins CMS ─────────────────────────────────────
+//
+// Gemeldet: „Die Einstellungen bitte auf die CMS Seiten und nicht im Kiosk."
+// Der Kiosk ist die Arbeitsfläche der Verkäuferinnen; Empfänger, Liefertage
+// und Kunden-Nr. werden dort nicht gepflegt. Beim Bäcker war das schon so.
+
+test.describe('Metzger-Bestellung – Einstellungen im CMS (F36)', () => {
+
+  test('TC-F36-01: Kein Einstellungen-Reiter mehr im Kiosk', async ({ page }) => {
+    await oeffneTab(page);
+    const reiter = await page.locator('#panel-metzgerbest .mb-sub')
+      .allInnerTexts();
+    expect(reiter.map((t) => t.trim())).toEqual(['Bestellung', 'Verlauf', 'Artikel']);
+  });
+
+  test('TC-F36-02: Die Eingabefelder sind verschwunden', async ({ page }) => {
+    await oeffneTab(page);
+    await expect(page.locator('#mb-c-mail')).toHaveCount(0);
+    await expect(page.locator('#mb-c-kd')).toHaveCount(0);
+  });
+});

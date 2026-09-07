@@ -853,6 +853,9 @@
       + '</body></html>';
   }
 
+  /* Das Blatt kommt jetzt vom Server - dieselbe Quelle wie der Mailanhang.
+     Vorher baute der Kiosk sich eine eigene HTML-Seite zusammen; die sah dem
+     versendeten Formular ueberhaupt nicht aehnlich. */
   function druckFenster(daten) {
     var w = window.open('', '_blank', 'width=760,height=900');
     if (!w) {
@@ -862,6 +865,41 @@
     w.document.write(druckseite(daten));
     w.document.close();
     return true;
+  }
+
+  /* Holt das Bestellformular als PDF und legt es zum Drucken vor. Faellt das
+     aus, greift die alte HTML-Fassung - besser ein einfaches Blatt als gar
+     keines, wenn die Verkaeuferin gerade drucken muss. */
+  function blattDrucken(bk, datum) {
+    // Das Fenster MUSS vor dem Netzaufruf aufgehen, sonst hält der Browser es
+    // für einen ungefragten Pop-up und blockiert es.
+    var w = window.open('', '_blank', 'width=860,height=1000');
+    if (!w) {
+      toast('Der Ausdruck konnte nicht geöffnet werden – bitte Pop-ups erlauben.');
+      return Promise.resolve(false);
+    }
+    w.document.write('<!doctype html><meta charset="utf-8"><title>Bestellformular</title>'
+      + '<body style="font:15px system-ui;padding:26px;color:#374151">Das Bestellformular wird erstellt…</body>');
+    w.document.close();
+    return fetch(API + '/baecker-order?mode=dokument&baeckerei='
+        + encodeURIComponent(bk) + '&datum=' + encodeURIComponent(datum))
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || !res.success || !res.pdf_base64) throw new Error('kein Blatt');
+        var roh = atob(res.pdf_base64);
+        var bytes = new Uint8Array(roh.length);
+        for (var i = 0; i < roh.length; i++) bytes[i] = roh.charCodeAt(i);
+        var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+        w.location.href = url;
+        // Erst freigeben, wenn das Fenster es gelesen hat.
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+        return true;
+      })
+      .catch(function () {
+        try { w.close(); } catch (e) { /* schon zu */ }
+        toast('Das Formular kam nicht – es wird die einfache Fassung gedruckt.');
+        return druckFenster(druckDaten(_b));
+      });
   }
 
   function druckDaten(quelle) {
@@ -880,8 +918,9 @@
   function drucken() {
     if (!_b) return;
     dlgZu();
-    if (!druckFenster(druckDaten(_b))) return;
-    gedrucktMelden(_bk, _datum);
+    blattDrucken(_bk, _datum).then(function (ok) {
+      if (ok) gedrucktMelden(_bk, _datum);
+    });
   }
 
   function gedrucktMelden(bk, datum) {

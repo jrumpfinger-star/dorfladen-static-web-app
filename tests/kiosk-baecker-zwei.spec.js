@@ -244,6 +244,10 @@ async function mockApi(page, opts = {}) {
       if (/mode=config/.test(url)) {
         return json({ success: true, config: { baeckereien: {} } });
       }
+      if (/mode=dokument/.test(url)) {
+        // Ein winziges, gültiges PDF – der Test prüft den Abruf, nicht den Inhalt.
+        return json({ success: true, dateiname: 'Bestellung.pdf', pdf_base64: 'JVBERi0xLjQK' });
+      }
       if (!bk) return json({ success: false, error: 'Bitte angeben, um welche Bäckerei es geht.' }, 400);
       const datum = new URL(url).searchParams.get('datum') || tagNurFuer(bk).datum;
       return json({ success: true, bestellung: bestellung(bk, datum, opts) });
@@ -925,5 +929,44 @@ test.describe('Bäcker – Korrektur wie beim Metzger (F34)', () => {
     await tagWaehlen(page, iso(d));
     const txt = await page.locator('#panel-baecker .bk-stat').innerText();
     expect(txt).not.toContain('undefined');
+  });
+});
+
+// ── F35: Gedruckt wird das echte Blatt ──────────────────────────────────
+//
+// Gemeldet: „Es wird nicht das Originalfile gedruckt!! Wir brauchen aber dies."
+//
+// Der Kiosk baute sich zum Drucken eine eigene HTML-Seite zusammen – eine
+// kompakte Liste, die dem versendeten Bestellformular nicht ähnlich sah.
+// Jetzt holt er das Blatt vom Server (mode=dokument), aus derselben Quelle
+// wie der Mailanhang. Für Freundl ist es die Nachbildung der Word-Vorlage:
+// Ein Browser kann .docx nicht drucken.
+
+test.describe('Bäcker – Ausdruck holt das echte Blatt (F35)', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  test('TC-F35-01: Drucken fragt das Dokument beim Server an', async ({ page }) => {
+    const abrufe = [];
+    page.on('request', (r) => {
+      if (/mode=dokument/.test(r.url())) abrufe.push(r.url());
+    });
+    const fr = tagNurFuer('freundl');
+    await openBaecker(page, { druckOffen: [{ datum: fr.datum, bk: 'freundl' }] });
+    await tagWaehlen(page, fr.datum);
+    await page.locator('#panel-baecker button', { hasText: 'drucken' }).first().click();
+    await page.waitForTimeout(1500);
+    expect(abrufe.length).toBeGreaterThan(0);
+    // Der Abruf muss Bäckerei UND Liefertag nennen – sonst käme das falsche Blatt.
+    expect(abrufe[0]).toContain('baeckerei=freundl');
+    expect(abrufe[0]).toContain('datum=' + fr.datum);
+  });
+
+  test('TC-F35-02: Nach dem Senden steht der Nachdruck bereit', async ({ page }) => {
+    // Nur Freundl braucht Papier – deshalb ein Freundl-Tag.
+    const t = tagNurFuer('freundl');
+    await openBaecker(page, { gesendet: [{ datum: t.datum, bk: 'freundl' }] });
+    await tagWaehlen(page, t.datum);
+    await expect(page.locator('#panel-baecker button', { hasText: 'Noch einmal drucken' }))
+      .toBeVisible();
   });
 });

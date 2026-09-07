@@ -330,7 +330,7 @@ window.KMetzgerBest = (function () {
     if (_sub === 'bestellung') h += tagesleiste() + statusKarte() + werkzeuge() + liste();
     else if (_sub === 'verlauf') h += verlaufAnsicht();
     else if (_sub === 'artikel') h += artikelAnsicht();
-    else h += einstellungen();
+    else h += hinweisEinstellungen();
     h += '</div>';
     el.innerHTML = h;
     if (_sub === 'bestellung') fuss();
@@ -341,9 +341,11 @@ window.KMetzgerBest = (function () {
       return '<button class="mb-sub' + (_sub === id ? ' on' : '') + '"'
         + ' onclick="KMetzgerBest.sub(\'' + id + '\')">' + label + '</button>';
     }
+    // Kein „Einstellungen"-Reiter mehr: Stammdaten (Empfänger, Bestelltage,
+    // Kunden-Nr.) werden im CMS gepflegt – so wie beim Bäcker. Der Kiosk ist
+    // die Arbeitsfläche der Verkäuferinnen, nicht die Verwaltung.
     return '<div class="mb-subs">' + b('bestellung', 'Bestellung')
-      + b('verlauf', 'Verlauf') + b('artikel', 'Artikel')
-      + b('einstellungen', 'Einstellungen') + '</div>';
+      + b('verlauf', 'Verlauf') + b('artikel', 'Artikel') + '</div>';
   }
 
   function tagesleiste() {
@@ -1183,6 +1185,16 @@ window.KMetzgerBest = (function () {
       .catch(function (e) {
         toast(e.message || 'Die \u00c4nderung konnte nicht gespeichert werden.');
       });
+  }
+
+  /* Die Stammdaten sind ins CMS gezogen. Wer den alten Reiter noch als
+     Lesezeichen hat, landet hier und wird weitergeschickt statt vor einer
+     leeren Seite zu stehen. */
+  function hinweisEinstellungen() {
+    return '<div class="k-empty">Die Einstellungen zur Metzger-Bestellung '
+      + 'werden jetzt im CMS gepflegt: <b>CMS \u2192 Einstellungen \u2192 '
+      + 'Metzger-Bestellung</b>.<br>Dort stehen Empf\u00e4nger, Liefertage, '
+      + 'Bestellschluss und Kunden-Nr.</div>';
   }
 
   function einstellungen() {
