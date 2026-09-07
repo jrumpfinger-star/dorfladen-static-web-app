@@ -2624,6 +2624,7 @@ Zwei Ursachen, beide belegt:
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 07.09.2026 | TC-PWA-01..07 | 7/7 | Lokal gegen 127.0.0.1:8895 |
+| 07.09.2026 | TC-PWA-01..07 | 7/7 | Live gegen kind-pebble |
 
 ---
 
@@ -2654,6 +2655,12 @@ Kiosk-Seite in `tests/kiosk-kontakt-haken.spec.js` (K5).
 | 07.09.2026 | TC-KC-01..08 | 8/8 | Lokal, Desktop |
 | 07.09.2026 | TC-KC-01..08 | 8/8 | Lokal, mobil |
 | 07.09.2026 | K1–K5 (Kiosk) | 15/16 | 1 vorbelastet übersprungen |
+| 07.09.2026 | TC-KC + TC-PWA | 30/30 | Live gegen kind-pebble |
+
+> **Gegen die Live-Umgebung mit einem Arbeiter laufen lassen.** Mit vier
+> parallelen Arbeitern fielen `TC-KC-06` und `TC-PWA-07` sporadisch mit
+> „element not visible" aus – einzeln nachgeprüft sind beide grün. Es ist
+> Ladeflackern der Live-Seite, kein fachlicher Fehler.
 
 
 
