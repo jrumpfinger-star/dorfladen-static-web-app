@@ -18,6 +18,7 @@
   var _artikel = [];      // Katalog der aktuellen Bäckerei
   var _datum = '';        // gewählter Liefertag
   var _bk = '';           // gewählte Bäckerei (ergibt sich aus dem Tag)
+  var _ladeId = 0;        // laufende Nummer, damit überholte Antworten zählen
   var _alleArtikel = false;
   var _korrektur = false;
   var _dirty = {};        // key -> true, wenn gegenueber Vorbelegung geaendert
@@ -131,30 +132,42 @@
     var wer = lieferantenVon(datum).map(function (x) { return x.baeckerei; });
     if (wer.length && wer.indexOf(_bk) < 0) _bk = wer[0];
 
-    return fetch(API + '/baecker-order?' + bkParam() + '&datum=' + encodeURIComponent(datum))
+    // Beim schnellen Durchklicken laufen mehrere Abrufe gleichzeitig. Ohne
+    // diese Nummer könnte eine ältere Antwort die neuere überschreiben – dann
+    // stünde ein anderer Tag im Bild als der zuletzt angetippte.
+    var lauf = ++_ladeId;
+    var zielBk = _bk;
+
+    return fetch(API + '/baecker-order?baeckerei=' + encodeURIComponent(zielBk)
+                 + '&datum=' + encodeURIComponent(datum))
       .then(function (r) { return r.json(); })
       .then(function (res) {
+        if (lauf !== _ladeId) return;          // überholt – Antwort verwerfen
         if (!res || !res.success) throw new Error('load');
         _b = res.bestellung;
         _datum = _b.datum;
-        _bk = _b.baeckerei || _bk;
+        _bk = _b.baeckerei || zielBk;
         _korrektur = false;
         _dirty = {};
-        return ladeArtikel(true);
+        return ladeArtikel(true, lauf);
       })
       .catch(function () {
+        if (lauf !== _ladeId) return;
         if (h) h.innerHTML = '<div class="k-empty">Die Bestellung konnte nicht geladen werden.</div>';
       });
   }
 
-  function ladeArtikel(stillDanachZeichnen) {
-    return fetch(API + '/baecker-artikel?' + bkParam())
+  function ladeArtikel(stillDanachZeichnen, lauf) {
+    var zielBk = _bk;
+    return fetch(API + '/baecker-artikel?baeckerei=' + encodeURIComponent(zielBk))
       .then(function (r) { return r.json(); })
       .then(function (res) {
+        if (lauf != null && lauf !== _ladeId) return;
         _artikel = (res && res.artikel) || [];
         render();
       })
       .catch(function () {
+        if (lauf != null && lauf !== _ladeId) return;
         if (!stillDanachZeichnen) toast('Die Artikelliste konnte nicht geladen werden.');
         else render();
       });
