@@ -304,7 +304,42 @@
     .bk-day.active .st{color:rgba(255,255,255,.92)}
     .bk-day.sent{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
     .bk-day.sent .st{color:#16a34a}
+    .bk-day.druck{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+    .bk-day.druck .st{color:#2563eb}
     .bk-day.off{opacity:.55;cursor:not-allowed}
+    /* Lieferanten-Punkte je Tag – zeigen, wer liefert und was erledigt ist */
+    .bk-who{display:flex;gap:3px;justify-content:center;margin-top:4px}
+    .bk-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+    .bk-dot-freundl{background:var(--bk,#b45309)}
+    .bk-dot-martins{background:#0f766e}
+    .bk-dot.done{box-shadow:0 0 0 1.5px #fff,0 0 0 3px currentColor}
+    .bk-day.active .bk-dot.done{box-shadow:0 0 0 1.5px var(--c-surf,#fff),0 0 0 3px #fff}
+    /* Bäckerei-Reiter – nur an Tagen mit zwei Lieferanten (Spec F19).
+       Farbig unterlegt, damit sie sich von der Ansichtszeile darüber
+       (Bestellung | Verlauf | Artikel) klar unterscheiden. */
+    .bk-btabs{display:flex;gap:0;border-bottom:2px solid var(--c-border);margin-bottom:11px;overflow-x:auto}
+    .bk-btab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;
+      padding:9px 15px;min-height:46px;font-size:13.5px;font-weight:800;color:var(--c-muted);
+      cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+    .bk-btab.on.bk-btab-freundl{color:var(--bk-dark,#78350f);border-bottom-color:var(--bk,#b45309);background:var(--bk-bg,#fffbeb)}
+    .bk-btab.on.bk-btab-martins{color:#134e4a;border-bottom-color:#0f766e;background:#f0fdfa}
+    .bk-flag{font-size:11px;font-weight:800;border-radius:20px;padding:2px 9px;white-space:nowrap}
+    .bk-flag.open{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+    .bk-flag.done{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+    .bk-flag.druck{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+    /* Bestätigung nach dem Senden mit dem Druckschritt (Spec F23) */
+    .bk-druck-schritte{margin:4px 0 10px}
+    .bk-druck-schritte .s{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--c-border)}
+    .bk-druck-schritte .n{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;color:#fff;background:#d1d5db}
+    .bk-druck-schritte .s.done .n{background:#16a34a}
+    .bk-druck-schritte .s.now .n{background:var(--bk,#b45309)}
+    .bk-druck-schritte b{font-size:13.5px;color:#1f2937;display:block}
+    .bk-druck-schritte small{font-size:12px;color:var(--c-muted);line-height:1.45;display:block;margin-top:2px}
+    .bk-druck-hinweis{font-size:12.5px;background:var(--bk-bg,#fffbeb);border:1px solid var(--bk-line,#fde68a);
+      color:var(--bk-dark,#78350f);border-radius:9px;padding:9px 12px;margin-bottom:12px}
+    .bk-dlg-btns{display:flex;gap:9px;flex-wrap:wrap}
+    .bk-hist-druck{min-height:38px;padding:0 11px;font-size:12px}
     /* Statuskarte */
     .bk-stat{border:1px solid var(--bk-line);background:linear-gradient(180deg,var(--bk-bg),#fff);border-radius:14px;padding:12px 15px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:12px}
     .bk-stat.done{border-color:#bbf7d0;background:linear-gradient(180deg,#f0fdf4,#fff)}
@@ -321,6 +356,14 @@
     .bk-stat.late .t2{color:#dc2626}
     .bk-cta{background:var(--bk);color:#fff;border:none;border-radius:10px;padding:0 17px;min-height:46px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
     .bk-stat.late .bk-cta{background:#dc2626}
+    /* Martin's wird durchgehend teal geführt, Freundl bleibt bernstein.
+       Die Knöpfe bleiben bewusst einheitlich im Bäcker-Bernstein: Sonst
+       stünde eine teal Statuskarte über einem bernsteinfarbenen Knopf in
+       der Fußzeile, was wie ein Fehler aussieht. */
+    .bk-stat-martins:not(.done):not(.late){border-color:#99f6e4;background:linear-gradient(180deg,#f0fdfa,#fff)}
+    .bk-stat-martins:not(.done):not(.late) .ico{background:#ccfbf1;border-color:#99f6e4;color:#134e4a}
+    .bk-stat-martins:not(.done):not(.late) .t1{color:#134e4a}
+    .bk-stat-martins:not(.done):not(.late) .t2{color:#0f766e}
     .bk-cta.ghost{background:#fff;color:#166534;border:1px solid #bbf7d0}
     .bk-cta-note{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#4b5563;background:#fff;border:1px solid var(--c-border);border-radius:10px;padding:9px 13px;max-width:270px;line-height:1.3}
     /* Werkzeugleiste */
@@ -390,11 +433,16 @@
     .bk-sw.off::after{left:3px}
     .bk-note{font-size:12px;color:var(--c-muted);background:#f9fafb;border-left:3px solid #d1d5db;border-radius:8px;padding:10px 13px;margin:12px 0;line-height:1.55}
     /* Verlauf */
-    .bk-hist{display:grid;grid-template-columns:150px 1fr auto;align-items:center;gap:12px;background:#fff;border:1px solid var(--c-border);border-left:4px solid #d1d5db;border-radius:9px;padding:11px 13px;margin-bottom:6px;cursor:pointer;min-height:56px}
+    .bk-hist{display:grid;grid-template-columns:150px 1fr auto auto;align-items:center;gap:12px;background:#fff;border:1px solid var(--c-border);border-left:4px solid #d1d5db;border-radius:9px;padding:11px 13px;margin-bottom:6px;min-height:56px}
     .bk-hist.ok{border-left-color:#16a34a}
+    /* Steht der Ausdruck noch aus, gilt der Tag nicht als fertig – muss
+       deshalb NACH .ok stehen, sonst gewinnt Gruen. */
+    .bk-hist.druck{border-left-color:#2563eb}
+    .bk-hist .d{cursor:pointer}
     .bk-hist .d b{font-size:14px}
     .bk-hist .d span{display:block;font-size:12px;color:var(--c-muted)}
-    .bk-hist .m{font-size:13px;color:#374151}
+    .bk-hist .m{font-size:13px;color:#374151;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .bk-hist .m span{color:var(--c-muted);font-size:12px}
     .bk-hist .s{font-size:12px;font-weight:700;color:#166534;text-align:right}
     .bk-hist.off .s{color:var(--c-muted)}
     .bk-hist .s span{display:block;font-size:11px;font-weight:400;color:var(--c-muted)}
@@ -468,8 +516,9 @@
       .bk-art{grid-template-columns:52px 1fr 34px 46px;grid-template-areas:"nr nm ed sw" "use use use use";row-gap:5px}
       .bk-art .nr{grid-area:nr}.bk-art .nm{grid-area:nm}
       .bk-art .use{grid-area:use}.bk-sw{grid-area:sw}.bk-edit{grid-area:ed}
-      .bk-hist{grid-template-columns:1fr auto;grid-template-areas:"d s" "m m";row-gap:5px}
+      .bk-hist{grid-template-columns:1fr auto;grid-template-areas:"d s" "m m" "b b";row-gap:5px}
       .bk-hist .d{grid-area:d}.bk-hist .m{grid-area:m}.bk-hist .s{grid-area:s}
+      .bk-hist-druck{grid-area:b;justify-self:start}
       .bk-two{grid-template-columns:1fr}
     }
     html[data-theme="dark"] .bk-row,html[data-theme="dark"] .bk-art,html[data-theme="dark"] .bk-hist,

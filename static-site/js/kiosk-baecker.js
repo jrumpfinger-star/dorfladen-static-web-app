@@ -1,17 +1,23 @@
-/* Kiosk – Tab "Bäcker": Bestellung bei der Bäckerei Freundl.
+/* Kiosk – Tab "Bäcker": Bestellung bei beiden Bäckereien.
    Selbststaendiges Modul (window.KBaecker), unabhaengig vom grossen K-Modul.
    Nutzt /api/baecker-order und /api/baecker-artikel.
 
    Kernidee: Beim Oeffnen ist alles mit den Mengen des letzten gleichen
    Wochentags vorbelegt – in der Regel muss nur die Semmelzahl angepasst werden.
    Sortiert wird durchgehend nach Artikelnummer, weil die Nummer beim Baecker
-   die Warengruppe bestimmt. */
+   die Warengruppe bestimmt.
+
+   Der LIEFERTAG bestimmt die Baeckerei – an Ein-Baeckerei-Tagen wird nichts
+   ausgewaehlt. Nur samstags, wenn beide liefern, erscheint eine Reiterzeile.
+   Bei Freundl gehoert ein Papierausdruck dazu; er entsteht im Browser aus
+   denselben Positionsdaten, weil der Word-Anhang nicht druckbar ist. */
 (function () {
   var API = '/api';
   var _b = null;          // aktuelle Bestellung
   var _uebersicht = null; // Tagesleiste + Erinnerung
-  var _artikel = [];      // Katalog
-  var _datum = '';        // gewaehlter Liefertag
+  var _artikel = [];      // Katalog der aktuellen Bäckerei
+  var _datum = '';        // gewählter Liefertag
+  var _bk = '';           // gewählte Bäckerei (ergibt sich aus dem Tag)
   var _alleArtikel = false;
   var _korrektur = false;
   var _dirty = {};        // key -> true, wenn gegenueber Vorbelegung geaendert
@@ -72,15 +78,18 @@
   // ══════════════════════════════════════════════════
 
   function onShow() {
-    // Katalog gleich mitladen – die Zusatzartikel-Suche braucht ihn sofort
-    if (!_artikel.length) {
-      fetch(API + '/baecker-artikel').then(function (r) { return r.json(); })
-        .then(function (res) { _artikel = (res && res.artikel) || []; })
-        .catch(function () { /* Suche faellt auf freies Eintragen zurueck */ });
-    }
     if (!_datum) return ladeUebersicht(true);
     render();
   }
+
+  // Welche Bäckereien liefern an diesem Tag? Kommt aus der Übersicht.
+  function lieferantenVon(datum) {
+    if (!_uebersicht || !_uebersicht.tage) return [];
+    var t = _uebersicht.tage.filter(function (x) { return x.datum === datum; })[0];
+    return (t && t.lieferanten) || [];
+  }
+
+  function bkParam() { return 'baeckerei=' + encodeURIComponent(_bk); }
 
   function ladeUebersicht(danachLaden) {
     return fetch(API + '/baecker-order?mode=uebersicht')
@@ -90,7 +99,16 @@
         _uebersicht = res;
         badge();
         if (danachLaden) {
-          _datum = res.naechster;
+          // Ersten Tag mit offener Aufgabe wählen, sonst den ersten Bestelltag.
+          var ziel = null;
+          (res.tage || []).forEach(function (t) {
+            if (ziel || !t.bestelltag) return;
+            if (t.status !== 'gesendet') ziel = t;
+          });
+          if (!ziel) ziel = (res.tage || []).filter(function (t) { return t.bestelltag; })[0];
+          if (!ziel) return;
+          _datum = ziel.datum;
+          _bk = (ziel.lieferanten[0] || {}).baeckerei || '';
           return ladeBestellung(_datum);
         }
       })
@@ -108,40 +126,52 @@
         + '</div>Laden…</div>';
       icons();
     }
-    return fetch(API + '/baecker-order?datum=' + encodeURIComponent(datum))
+    // Liefert die gewählte Bäckerei an diesem Tag nicht, auf die dort
+    // liefernde umschalten – sonst stünde man vor einem leeren Katalog.
+    var wer = lieferantenVon(datum).map(function (x) { return x.baeckerei; });
+    if (wer.length && wer.indexOf(_bk) < 0) _bk = wer[0];
+
+    return fetch(API + '/baecker-order?' + bkParam() + '&datum=' + encodeURIComponent(datum))
       .then(function (r) { return r.json(); })
       .then(function (res) {
         if (!res || !res.success) throw new Error('load');
         _b = res.bestellung;
         _datum = _b.datum;
+        _bk = _b.baeckerei || _bk;
         _korrektur = false;
         _dirty = {};
-        render();
+        return ladeArtikel(true);
       })
       .catch(function () {
         if (h) h.innerHTML = '<div class="k-empty">Die Bestellung konnte nicht geladen werden.</div>';
       });
   }
 
-  function ladeArtikel() {
-    return fetch(API + '/baecker-artikel')
+  function ladeArtikel(stillDanachZeichnen) {
+    return fetch(API + '/baecker-artikel?' + bkParam())
       .then(function (r) { return r.json(); })
       .then(function (res) {
         _artikel = (res && res.artikel) || [];
         render();
       })
-      .catch(function () { toast('Die Artikelliste konnte nicht geladen werden.'); });
+      .catch(function () {
+        if (!stillDanachZeichnen) toast('Die Artikelliste konnte nicht geladen werden.');
+        else render();
+      });
   }
 
-  // ── Zaehler und Blinken am Reiter (Spec F9) ──
+  // ── Zaehler und Blinken am Reiter (Spec F9, F19) ──
   function badge() {
     var wrap = document.getElementById('badges-baecker');
     var tab = document.querySelector('.k-tab[data-tab="baecker"]');
     var e = (_uebersicht && _uebersicht.erinnerung) || {};
+    // Der Zähler nennt offene Bestellungen UND offene Ausdrucke.
+    var offen = (_uebersicht && _uebersicht.offen_gesamt) || 0;
     if (wrap) {
-      wrap.innerHTML = e.offen
+      wrap.innerHTML = offen
         ? '<span class="k-tab-badge show ' + (e.blinkt ? 'badge-msg blink' : 'badge-bk')
-          + '" title="Bestellung für ' + esc(e.wochentag) + ' noch offen">1</span>'
+          + '" title="' + esc(offen === 1 ? 'Eine Aufgabe offen' : offen + ' Aufgaben offen')
+          + '">' + offen + '</span>'
         : '';
     }
     if (tab) tab.classList.toggle('bk-blink', !!e.blinkt);
@@ -196,45 +226,88 @@
     var h = '<div class="bk-days">';
     _uebersicht.tage.forEach(function (t) {
       var cls = 'bk-day';
+      var druckOffen = (t.lieferanten || []).some(function (x) { return x.druck_offen; });
       if (!t.bestelltag) cls += ' off';
       else if (t.datum === _datum) cls += ' active';
-      else if (t.status === 'gesendet' || t.status === 'korrigiert') cls += ' sent';
+      else if (t.status === 'gesendet') cls += ' sent';
+      else if (druckOffen) cls += ' druck';
       var d = t.datum.split('-');
       var label = t.wochentag.slice(0, 2);
-      var st = !t.bestelltag ? 'kein Tag'
-        : t.status === 'gesendet' ? '✓ gesendet'
-        : t.status === 'korrigiert' ? '✓ korrigiert' : 'offen';
+
+      var st;
+      if (!t.bestelltag) st = 'keine Lieferung';
+      else if (t.gesamt > 1) st = t.fertig + ' von ' + t.gesamt;
+      else if (druckOffen) st = 'Ausdruck fehlt';
+      else if (t.status === 'gesendet') st = '✓ gesendet';
+      else st = 'offen';
+
+      // Farbpunkte zeigen, wer an diesem Tag liefert und was schon erledigt ist.
+      var punkte = (t.lieferanten || []).map(function (x) {
+        var fertig = x.status !== 'offen' && !x.druck_offen;
+        return '<i class="bk-dot bk-dot-' + esc(x.baeckerei)
+          + (fertig ? ' done' : '') + '" title="' + esc(x.name)
+          + (fertig ? ' – erledigt' : x.druck_offen ? ' – Ausdruck fehlt' : ' – offen')
+          + '"></i>';
+      }).join('');
+
       h += '<button class="' + cls + '"'
         + (t.bestelltag ? ' onclick="KBaecker.tag(\'' + t.datum + '\')"' : ' disabled')
         + '><span>' + esc(label) + '</span>'
         + '<span class="d">' + d[2] + '.' + d[1] + '.</span>'
-        + '<span class="st">' + st + '</span></button>';
+        + '<span class="st">' + esc(st) + '</span>'
+        + (punkte ? '<span class="bk-who">' + punkte + '</span>' : '')
+        + '</button>';
+    });
+    return h + '</div>';
+  }
+
+  // Bäckerei-Reiter – nur an Tagen, an denen zwei liefern (Spec F19).
+  function baeckerReiter() {
+    var wer = lieferantenVon(_datum);
+    if (wer.length < 2) return '';
+    var h = '<div class="bk-btabs">';
+    wer.forEach(function (x) {
+      var abz = x.druck_offen ? '<span class="bk-flag druck">🖨 Ausdruck fehlt</span>'
+        : x.status !== 'offen' ? '<span class="bk-flag done">✓ gesendet</span>'
+        : '<span class="bk-flag open">offen</span>';
+      h += '<button class="bk-btab bk-btab-' + esc(x.baeckerei)
+        + (x.baeckerei === _bk ? ' on' : '') + '"'
+        + ' onclick="KBaecker.baeckerei(\'' + esc(x.baeckerei) + '\')">'
+        + '<i class="bk-dot bk-dot-' + esc(x.baeckerei) + '"></i> '
+        + esc(x.name) + ' ' + abz + '</button>';
     });
     return h + '</div>';
   }
 
   function statusKarte() {
     var gesendet = _b.gesperrt && !_korrektur;
+    var druckOffen = gesendet && _b.druck_offen;
     var e = (_uebersicht && _uebersicht.erinnerung) || {};
     var ueberfaellig = e.blinkt && e.datum === _datum;
-    var cls = 'bk-stat' + (gesendet ? ' done' : (ueberfaellig ? ' late' : ''));
+    var cls = 'bk-stat bk-stat-' + esc(_bk)
+      + (gesendet ? ' done' : (ueberfaellig ? ' late' : ''));
     var letzte = (_b.protokoll && _b.protokoll[0]) || null;
+    var wer = esc(_b.baeckerei_name || '');
 
     var h = '<div class="' + cls + '">';
-    h += '<div class="ico">' + luc(gesendet ? 'check-circle' : (ueberfaellig ? 'alarm-clock' : 'croissant'), 22) + '</div>';
+    h += '<div class="ico">' + luc(druckOffen ? 'printer'
+      : gesendet ? 'check-circle' : (ueberfaellig ? 'alarm-clock' : 'croissant'), 22) + '</div>';
     h += '<div class="txt">';
     if (_korrektur) {
-      h += '<div class="t1">Korrektur zur Bestellung vom ' + esc(_b.datum_de) + '</div>';
+      h += '<div class="t1">Korrektur zur Bestellung vom ' + esc(_b.datum_de) + ' · ' + wer + '</div>';
       h += '<div class="t2">Original gesendet' + (letzte ? ' · ' + esc(zeitKurz(letzte.zeit)) : '')
         + ' · Änderungen werden markiert</div>';
     } else if (gesendet) {
-      h += '<div class="t1">Gesendet – ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + '</div>';
-      h += '<div class="t2">' + (letzte
+      h += '<div class="t1">Gesendet – ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + ' · ' + wer + '</div>';
+      var basis = letzte
         ? esc(zeitKurz(letzte.zeit)) + ' von ' + esc(letzte.wer) + ' · '
           + letzte.positionen + ' Positionen · ' + letzte.stueck + ' Stück'
-        : 'Bereits gesendet') + '</div>';
+        : 'Bereits gesendet';
+      h += '<div class="t2">' + basis
+        + (druckOffen ? ' · <b>Papierausdruck steht noch aus</b>'
+           : _b.gedruckt_am ? ' · gedruckt' : '') + '</div>';
     } else {
-      h += '<div class="t1">Bestellung für ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + '</div>';
+      h += '<div class="t1">Bestellung für ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + ' · ' + wer + '</div>';
       var herkunft = _b.vorlage_datum_de
         ? (_b.hat_entwurf
             ? ' · gespeicherter Entwurf, vorbelegt vom letzten ' + esc(_b.wochentag) + ' (' + esc(_b.vorlage_datum_de) + ')'
@@ -243,11 +316,14 @@
             ? ' · gespeicherter Entwurf'
             : ' · keine Vorlage vorhanden, alle Mengen starten bei 0');
       h += '<div class="t2">' + (ueberfaellig
-        ? '<b>Bestellschluss war um ' + esc(e.bestellschluss) + ' Uhr</b> – bitte zeitnah senden'
+        ? '<b>Bestellschluss war um ' + esc(e.bestellschluss || '') + ' Uhr</b> – bitte zeitnah senden'
         : 'Noch nicht gesendet') + herkunft + '</div>';
     }
     h += '</div>';
-    if (gesendet) {
+    if (druckOffen) {
+      // Der Ausdruck geht vor: erst danach gilt der Tag als erledigt.
+      h += '<button class="bk-cta" onclick="KBaecker.drucken()">' + luc('printer', 15) + ' Jetzt drucken</button>';
+    } else if (gesendet) {
       // Korrigieren lässt sich nur der nächste Liefertag – für bereits
       // gelieferte Tage käme die Änderung zu spät.
       if (_b.korrektur_moeglich) {
@@ -291,6 +367,7 @@
 
     var h = '<div class="bk-sticky">' + subTabs();
     h += tagesleiste();
+    h += baeckerReiter();
     if (_b.testbetrieb) {
       h += '<div class="bk-test">' + luc('flask-conical', 14)
         + ' <b>Testbetrieb</b> – die Bestellung geht an ' + esc(_b.empfaenger) + ', nicht an die Bäckerei.</div>';
@@ -555,6 +632,130 @@
   }
   function tag(datum) { ladeBestellung(datum); }
 
+  // Bäckerei wechseln – nur an Tagen, an denen zwei liefern (Spec F19).
+  function baeckerei(bk) {
+    if (!bk || bk === _bk) return;
+    _bk = bk;
+    ladeBestellung(_datum);
+  }
+
+  // ══════════════════════════════════════════════════
+  //  Papierausdruck (Spec F23)
+  // ══════════════════════════════════════════════════
+
+  // Das versendete Dokument ist bei Freundl ein Word-Anhang – den kann der
+  // Browser nicht drucken. Der Ausdruck entsteht deshalb hier aus denselben
+  // Positionsdaten, im selben Aufbau wie das Formular.
+  function druckseite(daten) {
+    function z(p) {
+      return '<tr><td>' + esc(p.nummer || '') + '</td>'
+        + '<td>' + esc(p.name || '') + (p.zusatz ? ' *' : '') + '</td>'
+        + '<td class="r">' + (p.retoure ? esc(String(p.retoure)) : '–') + '</td>'
+        + '<td class="r"><b>' + (p.menge ? esc(String(p.menge)) : '–') + '</b></td></tr>';
+    }
+    var stueck = daten.positionen.reduce(function (s, p) { return s + (p.menge || 0); }, 0);
+    return '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">'
+      + '<title>Bestellung ' + esc(daten.datum_de) + '</title><style>'
+      + 'body{font-family:"Segoe UI",system-ui,sans-serif;padding:16px 20px;color:#111}'
+      + 'h1{font-size:17px;margin:0 0 2px;text-align:center}'
+      + '.sub{font-size:12px;text-align:center;color:#444;margin-bottom:10px}'
+      + '.meta{display:flex;justify-content:space-between;font-size:12px;'
+      + 'border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:8px}'
+      + 'table{width:100%;border-collapse:collapse;font-size:12px}'
+      + 'th{text-align:left;border-bottom:1px solid #111;padding:3px 5px;'
+      + 'font-size:10px;text-transform:uppercase;letter-spacing:.3px}'
+      + 'td{padding:3px 5px;border-bottom:1px solid #e5e7eb}'
+      + 'td.r,th.r{text-align:right;width:56px}'
+      + '.fuss{margin-top:10px;font-size:11px;color:#555}'
+      + '.test{background:#fff3cd;border:1px solid #e6b43c;padding:6px 10px;'
+      + 'font-size:12px;font-weight:700;text-align:center;margin-bottom:8px}'
+      + '@media print{body{padding:10px 14px}@page{margin:12mm 10mm}.noprint{display:none!important}}'
+      + '</style></head><body>'
+      + '<h1>Bestellung / Lieferschein</h1>'
+      + '<div class="sub">' + esc(daten.baeckerei_name) + '</div>'
+      + (daten.testbetrieb ? '<div class="test">TESTBETRIEB – diese Bestellung ist keine echte Bestellung</div>' : '')
+      + '<div class="meta"><span><b>Datum:</b> ' + esc(daten.datum_de)
+      + ' (' + esc(daten.wochentag) + ')</span><span>'
+      + (daten.kd_nr ? '<b>Kd.-Nr.</b> ' + esc(daten.kd_nr) : '')
+      + (daten.tour_nr ? ' / <b>Tour</b> ' + esc(daten.tour_nr) : '') + '</span></div>'
+      + '<table><thead><tr><th>Nr</th><th>Artikelbezeichnung</th>'
+      + '<th class="r">Ret.</th><th class="r">Menge</th></tr></thead><tbody>'
+      + daten.positionen.map(z).join('')
+      + '</tbody></table>'
+      + '<div class="fuss">' + daten.positionen.length + ' Positionen · ' + stueck + ' Stück'
+      + (daten.positionen.some(function (p) { return p.zusatz; })
+         ? ' · * nur für diesen Tag zusätzlich bestellt' : '') + '</div>'
+      + '<div class="noprint" style="margin-top:18px;text-align:center">'
+      + '<button onclick="window.print()" style="padding:10px 20px;font-size:14px;'
+      + 'font-weight:700;cursor:pointer">Drucken</button></div>'
+      + '<script>window.onload=function(){window.print();}<\/script>'
+      + '</body></html>';
+  }
+
+  function druckFenster(daten) {
+    var w = window.open('', '_blank', 'width=760,height=900');
+    if (!w) {
+      toast('Der Ausdruck konnte nicht geöffnet werden – bitte Pop-ups erlauben.');
+      return false;
+    }
+    w.document.write(druckseite(daten));
+    w.document.close();
+    return true;
+  }
+
+  function druckDaten(quelle) {
+    return {
+      datum_de: quelle.datum_de, wochentag: quelle.wochentag,
+      baeckerei_name: quelle.baeckerei_name || '',
+      kd_nr: quelle.kd_nr || '', tour_nr: quelle.tour_nr || '',
+      testbetrieb: !!quelle.testbetrieb,
+      positionen: (quelle.positionen || []).filter(function (p) {
+        return (p.menge || 0) > 0 || (p.retoure || 0) > 0;
+      }),
+    };
+  }
+
+  // Drucken und den Ausdruck vermerken – erst danach gilt der Tag als erledigt.
+  function drucken() {
+    if (!_b) return;
+    dlgZu();
+    if (!druckFenster(druckDaten(_b))) return;
+    gedrucktMelden(_bk, _datum);
+  }
+
+  function gedrucktMelden(bk, datum) {
+    return fetch(API + '/baecker-order', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ baeckerei: bk, datum: datum, aktion: 'gedruckt' })
+    }).then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || !res.success) throw new Error('x');
+        toast('Ausdruck vermerkt.');
+        return ladeUebersicht().then(function () {
+          if (datum === _datum && bk === _bk) return ladeBestellung(datum);
+          if (_sub === 'verlauf') return ladeVerlauf();
+        });
+      })
+      .catch(function () {
+        toast('Der Ausdruck konnte nicht vermerkt werden – bitte erneut versuchen.');
+      });
+  }
+
+  // Nachdruck aus dem Verlauf: Der Verlauf kennt nur die Anzahl der
+  // Positionen, nicht die Zeilen – die Bestellung wird deshalb nachgeladen.
+  function nachdruck(bk, datum) {
+    toast('Ausdruck wird vorbereitet…');
+    fetch(API + '/baecker-order?baeckerei=' + encodeURIComponent(bk)
+          + '&datum=' + encodeURIComponent(datum))
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || !res.success) throw new Error('x');
+        if (!druckFenster(druckDaten(res.bestellung))) return;
+        if (!res.bestellung.gedruckt_am) gedrucktMelden(bk, datum);
+      })
+      .catch(function () { toast('Die Bestellung konnte nicht geladen werden.'); });
+  }
+
   function korrektur() {
     if (!_b.korrektur_moeglich) {
       toast('Eine Korrektur ist nur für den nächsten Liefertag möglich.');
@@ -587,7 +788,7 @@
     return fetch(API + '/baecker-order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        datum: _datum, aktion: 'speichern',
+        baeckerei: _bk, datum: _datum, aktion: 'speichern',
         positionen: nutzbarePositionen(),
         vorlage_datum: _b.vorlage_datum || '',
         korrekturmodus: _korrektur
@@ -648,7 +849,7 @@
     fetch(API + '/baecker-order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        datum: _datum, aktion: _korrektur ? 'korrektur' : 'senden',
+        baeckerei: _bk, datum: _datum, aktion: _korrektur ? 'korrektur' : 'senden',
         positionen: nutzbarePositionen(),
         wer: (window.K && K.currentUser) || 'Kiosk'
       })
@@ -657,9 +858,15 @@
         dlgZu();
         if (res && res.success) {
           toast(res.meldung || 'Bestellung gesendet.');
+          var brauchtDruck = !!res.druck_offen;
+          var gedruckte = res.positionen_druck || [];
           _korrektur = false;
           ladeUebersicht();
-          ladeBestellung(_datum);
+          ladeBestellung(_datum).then(function () {
+            // Der Ausdruck ist ein eigener Arbeitsschritt – er soll nicht
+            // untergehen, deshalb erscheint die Aufforderung sofort.
+            if (brauchtDruck) druckAufforderung(gedruckte);
+          });
         } else {
           toast((res && res.error) || 'Die Bestellung konnte nicht versendet werden.');
         }
@@ -668,6 +875,32 @@
         dlgZu();
         toast('Keine Verbindung – die Bestellung wurde nicht versendet.');
       });
+  }
+
+  // Bestätigung nach dem Senden mit dem Druckschritt (Spec F23).
+  function druckAufforderung(positionen) {
+    var n = (positionen || []).length;
+    var h = '<div class="bk-dlg-head">' + luc('check-circle', 20)
+      + ' Bestellung gesendet</div>';
+    h += '<div class="bk-druck-schritte">';
+    h += '<div class="s done"><span class="n">✓</span><div><b>Formular erstellt</b>'
+      + '<small>' + esc(_b.baeckerei_name || '') + (_b.kd_nr ? ' · Kd.-Nr. ' + esc(_b.kd_nr) : '')
+      + '</small></div></div>';
+    h += '<div class="s done"><span class="n">✓</span><div><b>Per E-Mail verschickt</b>'
+      + '<small>An ' + esc(_b.empfaenger || '') + '</small></div></div>';
+    h += '<div class="s now"><span class="n">3</span><div><b>Ausdruck für den Ordner</b>'
+      + '<small>' + esc(_b.baeckerei_name || 'Diese Bäckerei')
+      + ' braucht zusätzlich einen Papierausdruck. '
+      + 'Der Druck lässt sich jederzeit im Verlauf wiederholen.</small></div></div>';
+    h += '</div>';
+    h += '<div class="bk-druck-hinweis">Solange nicht gedruckt wurde, zeigt der Tag '
+      + '„Ausdruck fehlt“ – so geht der Schritt nicht unter.</div>';
+    h += '<div class="bk-dlg-btns">'
+      + '<button class="bk-cta" onclick="KBaecker.drucken()">' + luc('printer', 15)
+      + ' Jetzt drucken (' + n + ' Positionen)</button>'
+      + '<button class="bk-btn" onclick="KBaecker.dlgZu()">Später drucken</button>'
+      + '</div>';
+    dialog(h);
   }
 
   // ── Zusatzartikel nur fuer diesen Tag (Spec F4) ──
@@ -693,7 +926,7 @@
     dialog(h);
     if (!_artikel.length) {
       // Katalog nachladen und eine bereits getippte Suche wiederholen
-      fetch(API + '/baecker-artikel').then(function (r) { return r.json(); })
+      fetch(API + '/baecker-artikel?' + bkParam()).then(function (r) { return r.json(); })
         .then(function (res) {
           _artikel = (res && res.artikel) || [];
           var feld = document.getElementById('bk-suche');
@@ -774,7 +1007,7 @@
     if (dauerhaft) {
       fetch(API + '/baecker-artikel', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nummer: nr.trim(), name: name, aktiv: true })
+        body: JSON.stringify({ baeckerei: _bk, nummer: nr.trim(), name: name, aktiv: true })
       }).then(function (r) { return r.json(); })
         .then(function (res) {
           if (res && res.success) { _artikel = []; toast('„' + name + '" in die Artikelliste übernommen.'); }
@@ -847,7 +1080,7 @@
   function aktiv(key, wert) {
     fetch(API + '/baecker-artikel', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: key, name_key: key, aktiv: wert })
+      body: JSON.stringify({ baeckerei: _bk, key: key, name_key: key, aktiv: wert })
     }).then(function (r) { return r.json(); })
       .then(function (res) {
         if (res && res.success) { _artikel = []; ladeArtikel(); }
@@ -906,7 +1139,7 @@
     fetch(API + '/baecker-artikel', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        key: _bearbeitet.nummer, name_key: _bearbeitet.name,
+        baeckerei: _bk, key: _bearbeitet.nummer, name_key: _bearbeitet.name,
         nummer: nr, name: name, bestaetigt: !!bestaetigt
       })
     }).then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
@@ -940,7 +1173,7 @@
     if (!name) { toast('Bitte eine Bezeichnung angeben.'); return; }
     fetch(API + '/baecker-artikel', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nummer: nr, name: name, aktiv: true, bestaetigt: !!bestaetigt })
+      body: JSON.stringify({ baeckerei: _bk, nummer: nr, name: name, aktiv: true, bestaetigt: !!bestaetigt })
     }).then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
       .then(function (o) {
         if (o.j && o.j.success) {
@@ -983,18 +1216,31 @@
     _verlauf.forEach(function (e) {
       var st = e.status === 2 ? 'korrigiert' : e.status === 1 ? 'gesendet' : 'nicht bestellt';
       var cls = e.status >= 1 ? 'ok' : 'off';
+      if (e.druck_offen) cls += ' druck';
       var p = (e.protokoll && e.protokoll[0]) || null;
-      h += '<div class="bk-hist ' + cls + '" onclick="KBaecker.tagAusVerlauf(\'' + e.datum + '\')">';
-      h += '<div class="d"><b>' + esc(e.wochentag) + '</b><span>' + esc(e.datum_de) + '</span></div>';
-      h += '<div class="m">' + e.positionen + ' Positionen · ' + e.stueck + ' Stück</div>';
-      h += '<div class="s">' + st + (p ? '<span>' + esc(zeitKurz(p.zeit)) + ' · ' + esc(p.wer) + '</span>' : '') + '</div>';
+      h += '<div class="bk-hist ' + cls + '">';
+      h += '<div class="d" onclick="KBaecker.tagAusVerlauf(\'' + e.datum + '\',\'' + esc(e.baeckerei) + '\')">'
+        + '<b>' + esc(e.wochentag) + '</b><span>' + esc(e.datum_de) + '</span></div>';
+      h += '<div class="m"><i class="bk-dot bk-dot-' + esc(e.baeckerei) + '"></i> '
+        + esc(e.baeckerei_name || '') + '<span>' + e.positionen + ' Positionen · '
+        + e.stueck + ' Stück</span></div>';
+      h += '<div class="s">' + st
+        + (p ? '<span>' + esc(zeitKurz(p.zeit)) + ' · ' + esc(p.wer) + '</span>' : '') + '</div>';
+      // Nachdrucken, wo ein Ausdruck gefordert ist – Papier geht verloren.
+      if (e.status >= 1 && e.papierausdruck) {
+        h += '<button class="bk-btn bk-hist-druck' + (e.druck_offen ? ' primary' : '') + '"'
+          + ' onclick="event.stopPropagation();KBaecker.nachdruck(\'' + esc(e.baeckerei)
+          + '\',\'' + e.datum + '\')">' + luc('printer', 14) + ' '
+          + (e.druck_offen ? 'Drucken' : 'Erneut') + '</button>';
+      }
       h += '</div>';
     });
     return h;
   }
 
-  function tagAusVerlauf(datum) {
+  function tagAusVerlauf(datum, bk) {
     _sub = 'bestellung';
+    if (bk) _bk = bk;
     ladeBestellung(datum);
   }
 
@@ -1045,11 +1291,13 @@
 
   window.KBaecker = {
     onShow: onShow, start: start, sub: sub, tag: tag,
+    baeckerei: baeckerei,
     plus: plus, setz: setz, setzRet: setzRet, taste: taste,
     normiere: normiere, normiereRet: normiereRet,
     reset: reset, umfang: umfang,
     speichern: speichern, vorschau: vorschau, senden: senden,
     korrektur: korrektur, verwerfen: verwerfen,
+    drucken: drucken, nachdruck: nachdruck,
     zusatzDialog: zusatzDialog, zusatzAus: zusatzAus, zusatzFrei: zusatzFrei,
     zusatzWeg: zusatzWeg, suche: suche,
     neuDialog: neuDialog, neuSpeichern: neuSpeichern, aktiv: aktiv,
