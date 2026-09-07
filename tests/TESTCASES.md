@@ -2746,6 +2746,24 @@ sowie in vier Werkzeugtests ohne Azure:
 | 07.09.2026 | Werkzeugtests | 163/163 | Store 37, PDF 30, Rechnung 28, Umzug 35, Fachlogik 27, DOCX 6 |
 | 07.09.2026 | TC-B2 (Playwright) | 51/51 | 17 Tests × 3 Auflösungen, lokal gegen 127.0.0.1:8899 |
 | 07.09.2026 | T-BK (Regression) | 156/156 | Freundl-Bestandstests unverändert grün |
+| 07.09.2026 | Beide Suiten live | 207/207 | Gegen kind-pebble, alle drei Auflösungen |
+| 07.09.2026 | Live-Stichprobe API | OK | Siehe Tabelle unten |
+
+**Stichprobe gegen die echte API (07.09.2026, nach dem Ausrollen):**
+
+| Prüfung | Ergebnis |
+|---|---|
+| Beide Bäckereien konfiguriert | `freundl` (Kd. 1190, Mi–Sa, docx, Druck an) · `martins` (Kd. 1015, Mo/Di/Sa, pdf, Druck aus) |
+| Empfänger | beide auf `jrumpfinger@t-online.de` (Testphase) |
+| Samstag | Tagesleiste nennt `freundl+martins` |
+| **Lesebrücke** | Freundl liefert **60 Artikel** – der gepflegte Altkatalog, nicht der Startkatalog. Martin's 48. |
+| Nummernkollision | Nr. 1 = „Kaisersemmel" (Freundl) vs. „Semmel" (Martin's) |
+| Fehlende Bäckerei | `GET /api/baecker-artikel` ohne Parameter → HTTP 400 |
+
+> **Nebenwirkung des Papierausdrucks:** Bereits gesendete Freundl-Bestellungen
+> aus der Zeit *vor* dieser Änderung tragen kein `gedruckt_am` und erscheinen
+> deshalb als „Ausdruck fehlt". Betrifft nur die sieben Tage der Tagesleiste und
+> verschwindet von selbst.
 
 > **Zwei Befunde aus dem Regressionslauf.** Der neue Zähler am Reiter zählte
 > zunächst *jeden* offenen Bestelltag der Woche – dort hätte dauerhaft eine Zahl
