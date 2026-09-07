@@ -463,12 +463,22 @@ test.describe('Zweite Bäckerei', () => {
     }
   });
 
-  test('TC-B2-F27-02: Vorauswahl überspringt heute', async ({ page }) => {
-    await openBaecker(page);
+  test('TC-B2-F27-02: Vorauswahl ist immer der nächste Liefertag', async ({ page }) => {
+    // Auch wenn dort schon gesendet wurde: Der Kiosk startet vorhersehbar
+    // beim nächsten Liefertag, nicht beim ersten Tag mit offener Arbeit.
+    const morgenIso = iso(plusTage(1));
+    const naechster = [1, 2, 3, 4, 5, 6, 7]
+      .map((n) => plusTage(n))
+      .find((d) => liefertAm(d).length > 0);
+    await openBaecker(page, { gesendet: [{ datum: iso(naechster), bk: liefertAm(naechster)[0] }] });
     const aktiv = page.locator('#panel-baecker .bk-day.active');
     await expect(aktiv).toHaveCount(1);
     const auf = await aktiv.getAttribute('onclick');
-    expect(auf).not.toContain(iso(plusTage(0)));
+    expect(auf).not.toContain(iso(plusTage(0)));      // niemals heute
+    expect(auf).toContain(iso(naechster));            // sondern der nächste
+    if (iso(naechster) === morgenIso) {
+      await expect(aktiv).toContainText(TAGE[naechster.getDay()].slice(0, 2));
+    }
   });
 
   test('TC-B2-F27-03: Zähler nennt im Klartext, was offen ist', async ({ page }) => {

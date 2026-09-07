@@ -624,7 +624,12 @@ eine Bestellung *für Montag* abgeschickt.
 
 - Nur Tage **nach heute** sind bestellbar. Heute und Vergangenes lassen sich
   ansehen, aber nicht senden und nicht bearbeiten.
-- Die Vorauswahl beim Öffnen überspringt heute.
+- Die Vorauswahl beim Öffnen ist **immer der nächste Liefertag** – auch dann,
+  wenn dort schon gesendet wurde. Zuvor wurde der erste Tag *mit offener
+  Arbeit* gewählt; das sprang je nach Stand mal auf Mittwoch, mal auf
+  Donnerstag und war für die Verkäuferinnen nicht vorhersehbar.
+- Liefern an diesem Tag beide Bäckereien, steht die mit der noch offenen
+  Bestellung vorn.
 - Das Tagesplättchen zeigt „heute geliefert" bzw. „nicht bestellt" und ist
   gedämpft dargestellt.
 - Der **Server lehnt ab**, nicht nur die Oberfläche: Ein veralteter Kiosk oder
@@ -637,7 +642,8 @@ eine Bestellung *für Montag* abgeschickt.
 **TC-B2-F27-01: Heute lässt sich nicht bestellen** — Statuskarte nennt
 „geliefert", kein Sende-Knopf in Karte und Fußzeile.
 
-**TC-B2-F27-02: Vorauswahl überspringt heute** — der aktive Tag ist nie heute.
+**TC-B2-F27-02: Vorauswahl ist immer der nächste Liefertag** — der aktive Tag ist
+nie heute, sondern der nächste Liefertag – selbst wenn dort bereits gesendet wurde.
 
 **TC-B2-F27-03: Der Zähler nennt im Klartext, was offen ist** — eine Zeile im
 Kopf benennt die offene Bestellung und den überschrittenen Bestellschluss.
