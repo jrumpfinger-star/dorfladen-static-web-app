@@ -14,15 +14,17 @@
 <script src="/js/theme.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
+    /* Halbfett statt fett - bold ist schwer zu lesen. */
+    b,strong,th{font-weight:600}
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--dl-bg,#f3f4f6);color:#1f2937}
   html[data-theme="dark"] body{background:#0e1114;color:#e6eae8}
   /* Kopfleiste */
   #posten-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#2e7d4f;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);padding-top:calc(10px + env(safe-area-inset-top))}
   #posten-bar img{height:34px;width:auto;border-radius:6px;flex-shrink:0}
-  #posten-bar .pb-title{font-size:17px;font-weight:800;letter-spacing:.2px}
+  #posten-bar .pb-title{font-size:17px;font-weight:600;letter-spacing:.2px}
   #posten-bar .pb-spacer{flex:1}
-  #posten-bar button{min-height:40px;padding:8px 14px;border:1px solid rgba(255,255,255,.35);border-radius:9px;background:rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  #posten-bar button{min-height:40px;padding:8px 14px;border:1px solid rgba(255,255,255,.35);border-radius:9px;background:rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
   #posten-bar button:active{transform:scale(.96)}
   #posten-main{max-width:1120px;margin:0 auto;padding:16px 16px 64px}
   /* Login-Gate */
@@ -31,13 +33,13 @@
   #posten-gate .pg-box{width:100%;max-width:360px;margin-top:12vh;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.14);padding:30px 26px;text-align:center}
   html[data-theme="dark"] #posten-gate .pg-box{background:#161c20;color:#e6eae8}
   #posten-gate img{height:56px;width:auto;border-radius:8px;margin-bottom:14px}
-  #posten-gate h1{font-size:20px;font-weight:800;margin:0 0 4px}
+  #posten-gate h1{font-size:20px;font-weight:600;margin:0 0 4px}
   #posten-gate p{font-size:13px;color:#6b7280;margin:0 0 20px}
   #posten-gate input{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:16px;outline:none;font-family:inherit;background:#fff;color:#1f2937}
   html[data-theme="dark"] #posten-gate input{background:#12171a;color:#e6eae8;border-color:#2a333a}
   #posten-gate input:focus{border-color:#2e7d4f}
   #posten-gate .pg-err{color:#dc2626;font-size:12px;font-weight:600;min-height:16px;margin:8px 0 0;display:none}
-  #posten-gate button{width:100%;margin-top:16px;padding:13px;background:#2e7d4f;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer}
+  #posten-gate button{width:100%;margin-top:16px;padding:13px;background:#2e7d4f;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
   #posten-gate button:active{transform:scale(.98)}
   /* Social-Panel (aus cms.html uebernommen) */
   #cms-panel-social input[type="checkbox"]{min-width:18px;min-height:18px}
@@ -52,14 +54,14 @@
   #cms-panel-social .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0;width:18px;text-align:center}
   #cms-panel-social .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
   #cms-panel-social .k-order.oc-collapsed .k-order-body{display:none}
-  #cms-panel-social .k-order-hdr .k-oc-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:60px;flex:1 1 auto;max-width:none}
+  #cms-panel-social .k-order-hdr .k-oc-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:60px;flex:1 1 auto;max-width:none}
   #cms-panel-social .k-order-hdr .k-oc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
   #cms-panel-social .k-order-hdr .k-oc-actions .k-btn{min-height:40px;min-width:40px;padding:6px 14px;font-size:13px;border-radius:8px;gap:5px}
   #cms-panel-social .k-order-body{display:block;border-top:1px solid var(--c-border)}
   /* Inhaltsblock der Schrittkarten immer auf volle Kartenbreite strecken (kein Leerraum) */
   #cms-panel-social .k-order-body>div{width:100%}
   /* Buttons */
-  #cms-panel-social .k-btn{min-height:var(--touch-min);min-width:var(--touch-min);padding:8px 18px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;white-space:nowrap}
+  #cms-panel-social .k-btn{min-height:var(--touch-min);min-width:var(--touch-min);padding:8px 18px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .1s;white-space:nowrap}
   #cms-panel-social .k-btn:active{transform:scale(.96)}
   #cms-panel-social .k-btn-confirm{background:var(--c-green);color:#fff}
   #cms-panel-social .k-btn-sm{min-height:38px;padding:6px 14px;font-size:13px;border-radius:8px}
@@ -68,13 +70,13 @@
   /* Filter tabs (sub-tabs) */
   #cms-panel-social .k-filter-bar{display:flex;gap:0;border-bottom:2px solid var(--c-border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:#fff}
   #cms-panel-social .k-filter-bar::-webkit-scrollbar{display:none}
-  #cms-panel-social .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px;flex:0 0 auto}
+  #cms-panel-social .k-filter-btn{padding:10px 16px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:0;background:none;font-size:14px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;white-space:nowrap;color:var(--c-muted);display:flex;align-items:center;gap:6px;flex:0 0 auto}
   #cms-panel-social .k-filter-btn:hover{color:var(--c-text)}
   #cms-panel-social .k-filter-btn:active{transform:none}
   #cms-panel-social .k-filter-btn.active{border-bottom-color:var(--c-green);color:#fff !important;background:var(--c-green);border-radius:8px 8px 0 0}
   /* Fields */
   #cms-panel-social .k-field{margin-bottom:16px}
-  #cms-panel-social .k-field label{font-size:13px;font-weight:700;color:var(--c-muted);margin-bottom:6px;display:block}
+  #cms-panel-social .k-field label{font-size:13px;font-weight:600;color:var(--c-muted);margin-bottom:6px;display:block}
   #cms-panel-social .k-field input,#cms-panel-social .k-field textarea,#cms-panel-social .k-field select{width:100%;padding:14px 16px;border:2px solid var(--c-border);border-radius:12px;font-size:16px;font-family:inherit;outline:none}
   #cms-panel-social .k-field input:focus,#cms-panel-social .k-field textarea:focus,#cms-panel-social .k-field select:focus{border-color:var(--c-green)}
   #cms-panel-social .k-field textarea{resize:vertical;min-height:60px}
@@ -148,7 +150,7 @@
   <div id="posten-main">
   <div id="cms-panel-social">
     <div style="margin-bottom:12px" id="soc-main-header">
-      <h3 style="font-size:17px;font-weight:800;color:#1f2937;margin:0;display:flex;align-items:center;gap:8px"><i data-lucide="share-2" style="width:20px;height:20px;color:var(--c-green)"></i> Social Media</h3>
+      <h3 style="font-size:17px;font-weight:600;color:#1f2937;margin:0;display:flex;align-items:center;gap:8px"><i data-lucide="share-2" style="width:20px;height:20px;color:var(--c-green)"></i> Social Media</h3>
       <p style="font-size:12px;color:#6b7280;margin:4px 0 0">Tagespost erstellen und teilen &#8211; in 4 einfachen Schritten.</p>
     </div>
 
@@ -156,7 +158,7 @@
     <div class="k-filter-bar" style="margin-bottom:16px" id="soc-subtabs-container">
       <button class="k-filter-btn active" id="social-subtab-post" onclick="socialSubTab('post')"><i data-lucide="plus-circle" style="width:14px;height:14px"></i> Neuer Post</button>
       <button class="k-filter-btn" id="social-subtab-katalog" onclick="socialSubTab('katalog')"><i data-lucide="book-open" style="width:14px;height:14px"></i> Katalog</button>
-      <button class="k-filter-btn" id="social-subtab-bestellungen" onclick="socialSubTab('bestellungen')"><i data-lucide="utensils" style="width:14px;height:14px"></i> Bestellungen<span id="best-badge-total" title="" style="display:none;margin-left:5px;background:#e5e7eb;color:#374151;font-size:11px;font-weight:800;line-height:1;padding:3px 7px;border-radius:9px"></span><span id="best-badge-open" title="" style="display:none;margin-left:3px;background:#f97316;color:#fff;font-size:11px;font-weight:800;line-height:1;padding:3px 7px;border-radius:9px"></span></button>
+      <button class="k-filter-btn" id="social-subtab-bestellungen" onclick="socialSubTab('bestellungen')"><i data-lucide="utensils" style="width:14px;height:14px"></i> Bestellungen<span id="best-badge-total" title="" style="display:none;margin-left:5px;background:#e5e7eb;color:#374151;font-size:11px;font-weight:600;line-height:1;padding:3px 7px;border-radius:9px"></span><span id="best-badge-open" title="" style="display:none;margin-left:3px;background:#f97316;color:#fff;font-size:11px;font-weight:600;line-height:1;padding:3px 7px;border-radius:9px"></span></button>
     </div>
 
     <!-- ========== SUB: KATALOG ========== -->
@@ -172,17 +174,17 @@
               <span style="margin-left:auto;font-size:11px;color:var(--c-muted)">CMS</span>
             </button>
             <div id="soc-kat-manager" style="display:none;margin-top:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px">
-              <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Aktuelle Kategorien</div>
+              <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:8px">Aktuelle Kategorien</div>
               <div id="soc-kat-manager-list" style="margin-bottom:10px"></div>
               <div style="border-top:1px solid #e5e7eb;padding-top:10px">
-                <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Neue Kategorie hinzuf&#252;gen</div>
+                <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Neue Kategorie hinzuf&#252;gen</div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
                   <div style="flex:1;min-width:140px">
-                    <label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Name *</label>
+                    <label style="font-size:10px;font-weight:600;color:#6b7280;display:block">Name *</label>
                     <input id="soc-kat-new-name" placeholder="z.B. Salate" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;box-sizing:border-box;min-height:40px">
                   </div>
                   <div style="width:50px">
-                    <label style="font-size:10px;font-weight:700;color:#6b7280;display:block">Icon</label>
+                    <label style="font-size:10px;font-weight:600;color:#6b7280;display:block">Icon</label>
                     <div style="display:flex;align-items:center;gap:4px">
                       <span id="soc-kat-icon-preview" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#6b7280"><i data-lucide="tag" style="width:18px;height:18px"></i></span>
                       <input id="soc-kat-new-icon" type="hidden" value="">
@@ -191,7 +193,7 @@
                   <button class="k-btn k-btn-confirm" onclick="socialKatMgrAdd()" style="padding:5px 14px;font-size:12px;white-space:nowrap"><i data-lucide="plus" style="width:14px;height:14px"></i> Hinzuf&#252;gen</button>
                 </div>
                 <div style="margin-top:8px">
-                  <label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px">Icon suchen</label>
+                  <label style="font-size:10px;font-weight:600;color:#6b7280;display:block;margin-bottom:3px">Icon suchen</label>
                   <input id="soc-kat-icon-search" type="text" placeholder="z.B. salad, cake, apple..." oninput="socialKatMgrFilterIcons()" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;box-sizing:border-box;margin-bottom:6px;min-height:40px">
                   <div id="soc-kat-icon-grid" style="display:flex;flex-wrap:wrap;gap:4px;max-height:160px;overflow-y:auto"></div>
                 </div>
@@ -199,7 +201,7 @@
             </div>
           </div>
           <div class="k-order" style="margin-bottom:14px;border-left-color:var(--c-green)">
-            <div style="background:var(--c-green);color:#fff;padding:10px 14px;font-weight:700;font-size:13px;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:16px;height:16px"></i> Neues Produkt zum Katalog hinzuf&#252;gen</div>
+            <div style="background:var(--c-green);color:#fff;padding:10px 14px;font-weight:600;font-size:13px;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:6px"><i data-lucide="plus" style="width:16px;height:16px"></i> Neues Produkt zum Katalog hinzuf&#252;gen</div>
             <div style="padding:14px">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div class="k-field" style="grid-column:1/-1;margin-bottom:0">
@@ -260,16 +262,16 @@
       <div id="soc-desk-bar" style="display:none;width:100%;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <div id="soc-desk-day" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
-            <button type="button" onclick="socialToggleDay('heute')" data-day="heute" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff">Heute</button>
-            <button type="button" onclick="socialToggleDay('morgen')" data-day="morgen" style="padding:6px 16px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151">Morgen</button>
+            <button type="button" onclick="socialToggleDay('heute')" data-day="heute" style="padding:6px 16px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#16a34a;color:#fff">Heute</button>
+            <button type="button" onclick="socialToggleDay('morgen')" data-day="morgen" style="padding:6px 16px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:#fff;color:#374151">Morgen</button>
           </div>
           <span id="soc-desk-date" style="font-size:12px;color:#6b7280"></span>
           <span style="flex:1"></span>
-          <button onclick="socialSaveDraft()" title="Entwurf speichern, sp\u00e4ter senden" style="padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;color:#92400e;display:inline-flex;align-items:center;gap:4px"><i data-lucide="bookmark" style="width:14px;height:14px"></i> Parken</button>
-          <button onclick="socialPublishTagesinfo()" title="Sofort auf der Homepage ver\u00f6ffentlichen" style="padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;color:#16a34a;display:inline-flex;align-items:center;gap:4px"><i data-lucide="file-text" style="width:14px;height:14px"></i> Ver&#246;ffentlichen</button>
+          <button onclick="socialSaveDraft()" title="Entwurf speichern, sp\u00e4ter senden" style="padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;color:#92400e;display:inline-flex;align-items:center;gap:4px"><i data-lucide="bookmark" style="width:14px;height:14px"></i> Parken</button>
+          <button onclick="socialPublishTagesinfo()" title="Sofort auf der Homepage ver\u00f6ffentlichen" style="padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;color:#16a34a;display:inline-flex;align-items:center;gap:4px"><i data-lucide="file-text" style="width:14px;height:14px"></i> Ver&#246;ffentlichen</button>
           <span style="width:1px;height:20px;background:#d1d5db"></span>
-          <button onclick="socialShareWhatsApp()" title="Post-Bild per WhatsApp teilen" style="padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#25D366;border:none;border-radius:10px;color:#fff;display:inline-flex;align-items:center;gap:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</button>
-          <button onclick="socialDownloadPoster()" title="Post-Bild herunterladen" style="padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;color:#374151;display:inline-flex;align-items:center;gap:4px"><i data-lucide="download" style="width:14px;height:14px"></i> Bild</button>
+          <button onclick="socialShareWhatsApp()" title="Post-Bild per WhatsApp teilen" style="padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;background:#25D366;border:none;border-radius:10px;color:#fff;display:inline-flex;align-items:center;gap:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</button>
+          <button onclick="socialDownloadPoster()" title="Post-Bild herunterladen" style="padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;color:#374151;display:inline-flex;align-items:center;gap:4px"><i data-lucide="download" style="width:14px;height:14px"></i> Bild</button>
         </div>
         <div id="soc-desk-status" style="display:none;padding:6px 10px;border-radius:8px;font-size:12px;margin-top:6px;width:100%"></div>
       </div>
@@ -277,8 +279,8 @@
       <!-- Desktop Tab Bar (hidden on mobile) -->
       <div id="soc-desk-tabs" style="display:none;width:100%;margin-bottom:8px">
         <div style="display:flex;gap:0;border-bottom:2px solid #e5e7eb">
-          <button id="soc-desk-tab-edit" onclick="socDeskTab('edit')" style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid #16a34a;margin-bottom:-2px;cursor:pointer;background:none;color:#16a34a"><i data-lucide="edit-3" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Erfassen</button>
-          <button id="soc-desk-tab-posts" onclick="socDeskTab('posts')" style="padding:8px 20px;font-size:13px;font-weight:700;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;background:none;color:#6b7280"><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Posts &amp; Entw&#252;rfe</button>
+          <button id="soc-desk-tab-edit" onclick="socDeskTab('edit')" style="padding:8px 20px;font-size:13px;font-weight:600;border:none;border-bottom:2px solid #16a34a;margin-bottom:-2px;cursor:pointer;background:none;color:#16a34a"><i data-lucide="edit-3" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Erfassen</button>
+          <button id="soc-desk-tab-posts" onclick="socDeskTab('posts')" style="padding:8px 20px;font-size:13px;font-weight:600;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;background:none;color:#6b7280"><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>Posts &amp; Entw&#252;rfe</button>
         </div>
       </div>
 
@@ -288,22 +290,22 @@
       <div class="k-order" style="border-left-color:#2e7d4f;margin-bottom:8px" id="soc-step-1">
               <div class="k-order-hdr" onclick="socToggleStep(1)" style="background:#f6f7f5">
           <span class="k-oc-arrow">&#9660;</span>
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">1</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:600;flex-shrink:0">1</span>
           <span class="k-oc-name" style="color:#1f2937"><i data-lucide="type" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Titel &amp; Text</span>
         </div>
         <div class="k-order-body">
           <div style="padding:14px 16px">
             <!-- Heute / Morgen Toggle -->
             <div id="soc-day-section" style="margin-bottom:14px">
-              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px"><i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"></i> Post f&#252;r</label>
+              <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px"><i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"></i> Post f&#252;r</label>
               <div id="soc-date-toggle" style="display:inline-flex;border:2px solid #d1d5db;border-radius:10px;overflow:hidden">
-                <button type="button" data-day="heute" onclick="socialToggleDay('heute')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#16a34a;color:#fff;transition:all .15s">Heute</button>
-                <button type="button" data-day="morgen" onclick="socialToggleDay('morgen')" style="padding:8px 20px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#374151;transition:all .15s">Morgen</button>
+                <button type="button" data-day="heute" onclick="socialToggleDay('heute')" style="padding:8px 20px;font-size:14px;font-weight:600;border:none;cursor:pointer;background:#16a34a;color:#fff;transition:all .15s">Heute</button>
+                <button type="button" data-day="morgen" onclick="socialToggleDay('morgen')" style="padding:8px 20px;font-size:14px;font-weight:600;border:none;cursor:pointer;background:#fff;color:#374151;transition:all .15s">Morgen</button>
               </div>
               <span id="soc-date-label" style="margin-left:10px;font-size:13px;color:#6b7280"></span>
             </div>
             <div style="margin-bottom:14px">
-              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Titel w&#228;hlen</label>
+              <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Titel w&#228;hlen</label>
               <select id="soc-post-titel-sel" onchange="socialTitelChange()" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px;background:#fff"></select>
               <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:6px;display:none;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px">
             </div>
@@ -350,7 +352,7 @@
             })();
             </script>
             <div>
-              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
+              <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
               <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="if(window.innerWidth>=720&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
             </div>
                           <label id="soc-tagesinfo-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-tagesinfo" checked style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128260; Tagesinfo aktualisieren <span style="color:#9ca3af">(aus = Test, erscheint nicht auf der Homepage)</span></span></label>
@@ -363,7 +365,7 @@
       <div class="k-order" style="border-left-color:#2e7d4f;margin-bottom:8px" id="soc-step-2">
               <div class="k-order-hdr" onclick="socToggleStep(2)" style="background:#f6f7f5">
           <span class="k-oc-arrow">&#9660;</span>
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">2</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:600;flex-shrink:0">2</span>
           <span class="k-oc-name" style="color:#1f2937"><i data-lucide="shopping-basket" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Produkte ausw&#228;hlen</span>
           <span id="soc-step2-count" style="font-size:12px;color:#9ca3af;white-space:nowrap"></span>
         </div>
@@ -387,7 +389,7 @@
       <div class="k-order oc-collapsed" style="border-left-color:#2e7d4f;margin-bottom:8px" id="soc-step-3">
               <div class="k-order-hdr" onclick="socToggleStep(3)" style="background:#f6f7f5">
           <span class="k-oc-arrow">&#9660;</span>
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">3</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:600;flex-shrink:0">3</span>
           <span class="k-oc-name"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Vorschau</span>
           <span class="k-oc-actions" onclick="event.stopPropagation()">
             <button onclick="socialGenPreview()" class="k-btn k-btn-sm" style="background:#2e7d4f;color:#fff;min-height:40px;border-radius:8px;font-size:13px"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> <span class="oc-btn-label">Aktualisieren</span></button>
@@ -395,12 +397,12 @@
         </div>
         <div class="k-order-body">
           <div style="text-align:center;padding:16px">
-            <div id="soc-preview-label-meal" style="display:none;font-size:11px;font-weight:700;color:#f57f17;margin-bottom:4px">&#127869; MITTAGESSEN-POSTER</div>
+            <div id="soc-preview-label-meal" style="display:none;font-size:11px;font-weight:600;color:#f57f17;margin-bottom:4px">&#127869; MITTAGESSEN-POSTER</div>
             <canvas id="soc-post-canvas-meal" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6;margin-bottom:12px"></canvas>
-            <div id="soc-preview-label-daily" style="display:none;font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px">&#128230; TAGES&#220;BERSICHT</div>
+            <div id="soc-preview-label-daily" style="display:none;font-size:11px;font-weight:600;color:#2e7d32;margin-bottom:4px">&#128230; TAGES&#220;BERSICHT</div>
             <canvas id="soc-post-canvas" width="540" height="540" style="display:none;max-width:100%;border-radius:10px;border:1px solid #e5e7eb;background:#faf9f6"></canvas>
             <div style="margin-top:10px">
-              <button onclick="socialGenPreview()" style="background:#2e7d4f;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px"><i data-lucide="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i> Vorschau aktualisieren</button>
+              <button onclick="socialGenPreview()" style="background:#2e7d4f;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;font-size:14px;cursor:pointer;min-height:44px"><i data-lucide="refresh-cw" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i> Vorschau aktualisieren</button>
             </div>
           </div>
         </div>
@@ -410,24 +412,24 @@
       <div class="k-order oc-collapsed" style="border-left-color:#2e7d4f;margin-bottom:8px" id="soc-step-4">
               <div class="k-order-hdr" onclick="socToggleStep(4)" style="background:#f6f7f5">
           <span class="k-oc-arrow">&#9660;</span>
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:800;flex-shrink:0">4</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:600;flex-shrink:0">4</span>
           <span class="k-oc-name" style="color:#1f2937"><i data-lucide="send" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Teilen &amp; Ver&#246;ffentlichen</span>
         </div>
         <div class="k-order-body">
           <div style="padding:14px 16px">
             <!-- Share buttons – large, touch-friendly -->
             <div style="display:flex;flex-direction:column;gap:10px">
-              <button onclick="socialPublishTagesinfo()" style="background:#2e7d4f;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:800;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(46,125,79,.28)"><i data-lucide="file-text" style="width:20px;height:20px"></i> Auf Homepage ver&#246;ffentlichen</button>
+              <button onclick="socialPublishTagesinfo()" style="background:#2e7d4f;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(46,125,79,.28)"><i data-lucide="file-text" style="width:20px;height:20px"></i> Auf Homepage ver&#246;ffentlichen</button>
               <div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:-4px">Erscheint sofort als TagesInfo auf der Website.</div>
-              <button onclick="socialShareWhatsApp()" style="background:#25D366;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(37,211,102,.3)">
+              <button onclick="socialShareWhatsApp()" style="background:#25D366;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(37,211,102,.3)">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                 Auf WhatsApp teilen
               </button>
               <div style="display:flex;gap:10px">
-                <button onclick="socialDownloadPoster()" style="flex:1;padding:14px;font-size:14px;font-weight:700;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:12px;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px"><i data-lucide="download" style="width:18px;height:18px"></i> Bild speichern</button>
+                <button onclick="socialDownloadPoster()" style="flex:1;padding:14px;font-size:14px;font-weight:600;cursor:pointer;background:#f3f4f6;border:1px solid #d1d5db;border-radius:12px;min-height:50px;display:flex;align-items:center;justify-content:center;gap:8px"><i data-lucide="download" style="width:18px;height:18px"></i> Bild speichern</button>
               </div>
               <div id="soc-publish-section" style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:4px">
-                <button onclick="socialSaveDraft()" style="width:100%;padding:13px;font-size:14px;font-weight:700;cursor:pointer;background:#fff;border:1px solid #e2c98a;border-radius:12px;color:#92620e;min-height:50px;display:flex;align-items:center;justify-content:center;gap:6px">
+                <button onclick="socialSaveDraft()" style="width:100%;padding:13px;font-size:14px;font-weight:600;cursor:pointer;background:#fff;border:1px solid #e2c98a;border-radius:12px;color:#92620e;min-height:50px;display:flex;align-items:center;justify-content:center;gap:6px">
                   <i data-lucide="bookmark" style="width:16px;height:16px"></i>
                   Parken (Entwurf f&#252;r sp&#228;ter)
                 </button>
@@ -440,13 +442,13 @@
 
       <div id="soc-post-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:10px"></div>
       <div id="soc-today-posts" style="display:none;margin-top:12px;background:#f9fafb;border:1px solid var(--c-border);border-radius:10px;padding:10px 14px">
-        <div style="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:6px"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle"></i> Posts &amp; Entw&#252;rfe</div>
+        <div style="font-size:11px;font-weight:600;color:var(--c-muted);margin-bottom:6px"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle"></i> Posts &amp; Entw&#252;rfe</div>
         <div id="soc-today-posts-list"></div>
       </div>
       </div><!-- /soc-col-right -->
       <div id="soc-post-footer" style="width:100%">
       <div id="soc-meal-posters" style="display:none;margin-top:12px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px">
-        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">&#127860; Einzel-Poster pro Gericht</div>
+        <div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:8px">&#127860; Einzel-Poster pro Gericht</div>
         <div id="soc-meal-poster-list" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       </div>
       </div><!-- /soc-post-footer -->

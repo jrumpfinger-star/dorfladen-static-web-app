@@ -50,13 +50,13 @@
       var card = document.createElement('div');
       card.style.cssText = 'background:var(--dl-surface,#fff);color:var(--dl-text,#1f2937);width:100%;max-width:360px;border:1px solid var(--dl-border,#e5e7eb);border-radius:var(--dl-radius,14px);box-shadow:0 20px 48px rgba(0,0,0,.28);padding:20px 22px;font-family:inherit';
       card.innerHTML =
-        '<div style="font-size:16px;font-weight:800;margin-bottom:4px">Admin-Anmeldung</div>' +
+        '<div style="font-size:16px;font-weight:600;margin-bottom:4px">Admin-Anmeldung</div>' +
         '<div style="font-size:13px;color:var(--dl-muted,#6b7280);margin-bottom:12px">CMS-Passwort für diese Aktion</div>' +
         '<input type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:11px 12px;font-size:15px;border:2px solid var(--dl-border,#e5e7eb);border-radius:10px;background:var(--dl-surface2,#f9fafb);color:var(--dl-text,#1f2937);outline:none">' +
         '<div class="dl-pw-err" style="display:none;color:var(--dl-red,#dc2626);font-size:12px;font-weight:600;margin-top:8px"></div>' +
         '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">' +
-        '<button type="button" class="dl-pw-cancel" style="padding:9px 16px;font-size:14px;font-weight:700;border:1px solid var(--dl-border,#e5e7eb);border-radius:10px;background:transparent;color:var(--dl-text,#1f2937);cursor:pointer">Abbrechen</button>' +
-        '<button type="button" class="dl-pw-ok" style="padding:9px 18px;font-size:14px;font-weight:700;border:none;border-radius:10px;background:var(--dl-green,#2d5016);color:#fff;cursor:pointer">Anmelden</button>' +
+        '<button type="button" class="dl-pw-cancel" style="padding:9px 16px;font-size:14px;font-weight:600;border:1px solid var(--dl-border,#e5e7eb);border-radius:10px;background:transparent;color:var(--dl-text,#1f2937);cursor:pointer">Abbrechen</button>' +
+        '<button type="button" class="dl-pw-ok" style="padding:9px 18px;font-size:14px;font-weight:600;border:none;border-radius:10px;background:var(--dl-green,#2d5016);color:#fff;cursor:pointer">Anmelden</button>' +
         '</div>';
       ov.appendChild(card);
       document.body.appendChild(ov);

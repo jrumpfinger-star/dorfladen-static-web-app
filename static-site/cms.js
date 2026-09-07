@@ -187,7 +187,7 @@
       card.className='cms-card';
       var h='';
       h+='<div class="cms-flex cms-between cms-ang-toggle" style="padding:12px 12px 10px 12px" data-action="toggleAngItems">';
-      h+='<div style="display:flex;align-items:center"><div><div style="font-weight:700;color:#1f2937">'+esc(g.titel||'Angebot')+'</div>';
+      h+='<div style="display:flex;align-items:center"><div><div style="font-weight:600;color:#1f2937">'+esc(g.titel||'Angebot')+'</div>';
       h+='<div class="cms-ang-meta">'+toIsoDateOnly(g.von)+' bis '+toIsoDateOnly(g.bis)+' · '+g.items.length+' Artikel</div></div>';
       h+='<span class="cms-ang-chevron collapsed">&#9660;</span></div>';
       h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
@@ -1017,7 +1017,7 @@
     el.className='cms-toast';
     el.style.background=type==='error'?'#dc2626':type==='warn'?'#d97706':'#16a34a';
     if(undoFn){
-      el.innerHTML=esc(msg)+' <button style="margin-left:12px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700" class="cms-undo-btn">↩ Rückgängig</button>';
+      el.innerHTML=esc(msg)+' <button style="margin-left:12px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600" class="cms-undo-btn">↩ Rückgängig</button>';
       el.querySelector('.cms-undo-btn').addEventListener('click',function(e){e.stopPropagation();undoFn();el.remove();});
       document.body.appendChild(el);
       setTimeout(function(){el.remove();},8000);
@@ -2021,7 +2021,7 @@
     container.style.maxWidth=isMobile?'380px':'100%';
 
     // Build header
-    var html='<div style="background:linear-gradient(135deg,'+c.headerBg+' 0%,'+c.headerBg+' 50%,'+adjustColor(c.headerBg,20)+' 100%);color:'+c.headerText+';padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;border-radius:12px 12px 0 0">';
+    var html='<div style="background:linear-gradient(135deg,'+c.headerBg+' 0%,'+c.headerBg+' 50%,'+adjustColor(c.headerBg,20)+' 100%);color:'+c.headerText+';padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;border-radius:12px 12px 0 0">';
     html+='<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:'+c.headerText+'"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>';
     html+='<span>Sonderangebote</span>';
     html+='<span style="font-size:11px;font-weight:400;opacity:.85;margin-left:auto">'+HPANG_SAMPLES.length+' Artikel</span>';
@@ -2041,18 +2041,18 @@
       // Leaf
       if(c.showLeaf) html+='<span style="position:absolute;top:6px;right:6px;opacity:.15;font-size:1.4rem;pointer-events:none">\uD83C\uDF3F</span>';
       // Badge
-      if(pct>0) html+='<div style="position:absolute;top:-4px;left:6px;background:'+c.badgeBg+';color:#fff;font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:0 0 8px 8px;letter-spacing:.3px;z-index:3">-'+pct+'%</div>';
+      if(pct>0) html+='<div style="position:absolute;top:-4px;left:6px;background:'+c.badgeBg+';color:#fff;font-size:.68rem;font-weight:600;padding:3px 9px;border-radius:0 0 8px 8px;letter-spacing:.3px;z-index:3">-'+pct+'%</div>';
       // Image placeholder
       html+='<div style="width:'+imgSz+'px;height:'+imgSz+'px;overflow:hidden;border-radius:10px;background:#faf9f6;display:flex;align-items:center;justify-content:center;grid-row:1/3">';
       html+='<span style="font-size:2rem;opacity:.4">\uD83D\uDED2</span></div>';
       // Info
       html+='<div style="min-width:0;display:flex;flex-direction:column;justify-content:flex-start;grid-column:2;grid-row:1/3;padding-top:2px">';
-      html+='<div style="font-weight:800;font-size:'+(isMobile?'1rem':'1.02rem')+';color:'+c.nameColor+';margin-bottom:3px;line-height:1.22">'+a.produkt+'</div>';
+      html+='<div style="font-weight:600;font-size:'+(isMobile?'1rem':'1.02rem')+';color:'+c.nameColor+';margin-bottom:3px;line-height:1.22">'+a.produkt+'</div>';
       if(a.details) html+='<div style="font-size:.88rem;color:'+c.detColor+';font-weight:500">'+a.details+'</div>';
       html+='</div>';
       // Price tag
       html+='<div style="grid-column:3;grid-row:1/3;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:'+(isMobile?'75':'82')+'px;gap:6px">';
-      html+='<div style="background:'+c.tagBg+';color:'+c.tagText+';font-weight:900;font-size:'+(isMobile?'1.2rem':'1.6rem')+';padding:'+(isMobile?'10px 12px':'14px 18px')+';border-radius:'+c.tagRadius+'px;transform:rotate('+c.tagSkew+'deg) skewY('+(c.tagSkew*0.75)+'deg);box-shadow:5px 5px 0 rgba(80,0,0,.35);text-align:center;line-height:1;white-space:nowrap;position:relative">';
+      html+='<div style="background:'+c.tagBg+';color:'+c.tagText+';font-weight:600;font-size:'+(isMobile?'1.2rem':'1.6rem')+';padding:'+(isMobile?'10px 12px':'14px 18px')+';border-radius:'+c.tagRadius+'px;transform:rotate('+c.tagSkew+'deg) skewY('+(c.tagSkew*0.75)+'deg);box-shadow:5px 5px 0 rgba(80,0,0,.35);text-align:center;line-height:1;white-space:nowrap;position:relative">';
       html+=pi+','+cs+'<span style="font-size:.5em;vertical-align:super;margin-left:1px">\u20AC</span>';
       html+='<div style="position:absolute;top:0;left:0;right:0;bottom:50%;background:linear-gradient(to bottom,rgba(255,255,255,.15),transparent);border-radius:'+c.tagRadius+'px '+c.tagRadius+'px 0 0"></div>';
       html+='</div>';
@@ -3505,7 +3505,7 @@
     overlay.className='cms-modal-bg';
     overlay.innerHTML='<div class="cms-modal" style="max-width:720px;position:relative;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif">'
       +'<button class="cms-modal-close" data-action="closeNewsModal" title="Schlie\u00dfen">\u2715</button>'
-      +'<h3 style="margin:0 0 14px;font-size:15px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:10px">'+title+'</h3>'
+      +'<h3 style="margin:0 0 14px;font-size:15px;font-weight:600;border-bottom:1px solid #e5e7eb;padding-bottom:10px">'+title+'</h3>'
       +'<label class="cms-news-lbl">Titel</label>'
       +'<input class="cms-input" id="news-edit-titel" value="'+esc(titel)+'" placeholder="Überschrift des Beitrags">'
       +'<label class="cms-news-lbl">Inhalt</label>'
@@ -3528,7 +3528,7 @@
       +'<button type="button" class="cms-btn cms-btn-sm cms-btn-gray" id="news-edit-img-clear" style="display:none">✕ Entfernen</button>'
       +'<input type="hidden" id="news-edit-img-data">'
       +'</div>'
-      +'<div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:#2e7d4f"> <span style="font-size:13px;font-weight:600;color:#374151">Im Laufband anzeigen</span></label><div id="news-laufband-bis-row" style="display:none;align-items:center;gap:6px"><span style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">bis</span><input type="date" class="cms-input" id="news-edit-laufband-bis" style="max-width:170px;padding:5px 8px;font-size:13px"></div></div>'
+      +'<div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:#2e7d4f"> <span style="font-size:13px;font-weight:600;color:#374151">Im Laufband anzeigen</span></label><div id="news-laufband-bis-row" style="display:none;align-items:center;gap:6px"><span style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">bis</span><input type="date" class="cms-input" id="news-edit-laufband-bis" style="max-width:170px;padding:5px 8px;font-size:13px"></div></div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span style="font-size:13px;font-weight:600;color:#374151">Aktiv bis</span><input type="date" class="cms-input" id="news-edit-aktiv-bis" style="max-width:170px;padding:5px 8px;font-size:13px"><span style="font-size:11px;color:#9ca3af">(leer = unbegrenzt)</span></div>'
       +'<div class="cms-modal-footer" style="padding:14px 0 0;margin-top:16px">'
       +'<button class="cms-btn cms-btn-primary" data-action="saveNews">\ud83d\udcbe Speichern</button>'
@@ -4276,17 +4276,17 @@
     var html='<div class="cms-modal-bg" style="align-items:flex-start;overflow-y:auto;padding:12px 6px">';
     html+='<div class="cms-modal" style="max-width:440px;max-height:none;text-align:center;position:relative;margin:10px auto">';
     html+='<button class="cms-modal-close" id="pce-close" title="Schlie\u00dfen ohne Speichern">\u2715</button>';
-    html+='<h3 style="margin:0 0 4px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+' <span onclick="document.getElementById(\'pce-close\')?.click(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700">?</span></h3>';
+    html+='<h3 style="margin:0 0 4px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+' <span onclick="document.getElementById(\'pce-close\')?.click(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></h3>';
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element horizontal ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc')+'</p>';
-    html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:700;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
+    html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:600;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
     html+='<div id="pce-wrap" style="position:relative;display:inline-block;max-width:100%;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none">';
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'" style="display:block;width:100%;height:auto"></canvas>';
     html+='<div id="pce-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5"></div>';
     html+='</div>';
     // ── D-Pad: arrow cross to nudge selected element ──
     html+='<div id="pce-dpad" style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin-top:8px">';
-    html+='<span id="pce-dpad-label" style="font-size:10px;font-weight:700;color:#e65100">Verschieben: \ud83d\uddbc Bild</span>';
+    html+='<span id="pce-dpad-label" style="font-size:10px;font-weight:600;color:#e65100">Verschieben: \ud83d\uddbc Bild</span>';
     html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="up" style="font-size:14px;padding:4px 14px;line-height:1">\u25B2</button>';
     html+='<div style="display:flex;gap:2px">';
     html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="left" style="font-size:14px;padding:4px 14px;line-height:1">\u25C0</button>';
@@ -4676,7 +4676,7 @@
             +'border:2px solid '+borderColor+';'
             +'background:rgba('+(_hexToRgb(borderColor)||'230,81,0')+',0.06);'
             +'border-radius:4px;pointer-events:auto;cursor:grab;box-sizing:border-box;z-index:10">'
-            +'<span style="position:absolute;top:0;left:0;background:'+borderColor+';color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:0 0 4px 0;line-height:1.2;white-space:nowrap;pointer-events:none">'+el.label+'</span>'
+            +'<span style="position:absolute;top:0;left:0;background:'+borderColor+';color:#fff;font-size:9px;font-weight:600;padding:1px 4px;border-radius:0 0 4px 0;line-height:1.2;white-space:nowrap;pointer-events:none">'+el.label+'</span>'
             +'<div class="pce-el-menu" data-el="'+el.id+'" style="position:absolute;top:2px;right:2px;width:22px;height:22px;background:'+borderColor+';color:#fff;border:1.5px solid #fff;border-radius:50%;font-size:13px;line-height:19px;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 1px 3px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent">\u22EF</div>'
             +'<div class="pce-rz-handle" data-el="'+el.id+'" style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:'+borderColor+';color:#fff;border-radius:4px 0 4px 0;font-size:14px;line-height:22px;text-align:center;cursor:nwse-resize;pointer-events:auto;box-shadow:0 1px 3px rgba(0,0,0,0.3)">\u21F2</div>'
             +'</div>';
@@ -5136,7 +5136,7 @@
         var sel=_activeEl==='copy-'+ci;
         h+='<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid '+(sel?'#f59e0b':'#d1d5db')+';background:'+(sel?'#fef3c7':'#f9fafb')+'" data-copy-sel="'+ci+'">'
           +icon+' '+(ci+1)
-          +' <span data-copy-del="'+ci+'" style="color:#ef4444;font-weight:bold;cursor:pointer;margin-left:2px" title="L\u00f6schen">\u00d7</span>'
+          +' <span data-copy-del="'+ci+'" style="color:#ef4444;font-weight:600;cursor:pointer;margin-left:2px" title="L\u00f6schen">\u00d7</span>'
           +'</span> ';
       });
       cList.innerHTML=h;
@@ -6306,7 +6306,7 @@
               if(dirty&&!wm){
                 wm=doc.createElement('div');wm.className='unsaved-wm no-print';
                 wm.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:24px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3;background:rgba(239,68,68,0.75)';
-                wm.innerHTML='<span style="font-size:12px;font-weight:700;color:#fff;letter-spacing:1px">\u26a0 UNGESPEICHERT</span>';
+                wm.innerHTML='<span style="font-size:12px;font-weight:600;color:#fff;letter-spacing:1px">\u26a0 UNGESPEICHERT</span>';
                 fw.appendChild(wm);
               }else if(!dirty&&wm){wm.remove();}
             }
@@ -6339,7 +6339,7 @@
         // Arrow cross HTML builder
         function arrowCross(prefix,idx,label){
           return '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:1px">'
-            +'<span style="font-size:10px;font-weight:700;color:#555">'+label+'</span>'
+            +'<span style="font-size:10px;font-weight:600;color:#555">'+label+'</span>'
             +'<button data-ov="'+prefix+'" data-dir="up" data-idx="'+idx+'" class="abtn" title="hoch">\u25B2</button>'
             +'<div style="display:flex;gap:1px">'
             +'<button data-ov="'+prefix+'" data-dir="left" data-idx="'+idx+'" class="abtn" title="links">\u25C0</button>'
@@ -6372,7 +6372,7 @@
           +'.el-zone.el-custom.selected{border-color:#ea580c;background:rgba(234,88,12,0.08)}'
           +'.el-zone.el-custom .el-label{background:#ea580c}'
           +'.el-zone.el-custom .rz-handle{background:#ea580c}'
-          +'.el-zone .el-label{position:absolute;top:-22px;left:0;font-size:10px;font-weight:700;color:#fff;background:#2563eb;padding:1px 6px;border-radius:3px 3px 0 0;white-space:nowrap;display:none}'
+          +'.el-zone .el-label{position:absolute;top:-22px;left:0;font-size:10px;font-weight:600;color:#fff;background:#2563eb;padding:1px 6px;border-radius:3px 3px 0 0;white-space:nowrap;display:none}'
           +'.el-zone.selected .el-label{display:block}'
           +'.el-zone .el-touch-menu{display:none;position:absolute;top:-2px;right:-2px;width:28px;height:28px;background:#2563eb;color:#fff;border:2px solid #fff;border-radius:50%;font-size:16px;line-height:24px;text-align:center;cursor:pointer;z-index:6;box-shadow:0 1px 4px rgba(0,0,0,0.3);-webkit-tap-highlight-color:transparent}'
           +'.el-zone .rz-handle{position:absolute;width:20px;height:20px;background:#2563eb;border:2px solid #fff;border-radius:4px;pointer-events:all;cursor:nwse-resize;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);z-index:5;font-size:10px;line-height:16px;text-align:center;color:#fff}'
@@ -6417,28 +6417,28 @@
             +'<button data-act="art-revert" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:1px solid #e65100;background:#fff7ed;color:#e65100;font-size:13px;cursor:pointer;font-weight:600">\u21a9 Verwerfen</button>'
             +'<button data-act="art-reset" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:12px;cursor:pointer">\u21ba Reset</button>'
             +'<button data-act="add-custom-img" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild</button>'
-            +'<span style="color:#888;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px">'+safeName+' <span onclick="if(typeof window.cmsCloseModal===\'function\') window.cmsCloseModal(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700">?</span></span>'
+            +'<span style="color:#888;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px">'+safeName+' <span onclick="if(typeof window.cmsCloseModal===\'function\') window.cmsCloseModal(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></span>'
             +'</div>'
             +'<div class="ctl-bar no-print">'
             +'<div class="abtn-grp">'+arrowCross('sel',i,'\u2b05\u27a1 Selektiertes Element')+'</div>'
             +'<div class="abtn-grp">'
-            +'<span style="font-size:10px;font-weight:700;color:#555">\u21bb Drehung</span>'
+            +'<span style="font-size:10px;font-weight:600;color:#555">\u21bb Drehung</span>'
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" id="sld-rot-'+i+'" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+i+'"><span id="sr-'+i+'">0\u00b0</span></label>'
             +'<button class="tog" data-act="sel-rot-reset" data-idx="'+i+'" style="font-size:9px;padding:1px 6px">\u2b6f 0\u00b0</button>'
             +'</div>'
             +'<div class="abtn-grp">'
-            +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udc7b Ghost</span>'
+            +'<span style="font-size:10px;font-weight:600;color:#555">\ud83d\udc7b Ghost</span>'
             +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+i+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+i+'"><span id="ga-'+i+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+i+'"><span id="gs-'+i+'">'+(ov.ghostScale||100)+'%</span></label>'
             +'</div>'
             +'<div class="abtn-grp">'
-            +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udcdd Duplikat</span>'
+            +'<span style="font-size:10px;font-weight:600;color:#555">\ud83d\udcdd Duplikat</span>'
             +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+i+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
             +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+i+'"><span id="ds-'+i+'">'+(ov.dupScale||100)+'%</span></label>':'')
             +'</div>'
             +'<div class="abtn-grp">'
-            +'<span style="font-size:10px;font-weight:700;color:#555">Weitere Kopien</span>'
+            +'<span style="font-size:10px;font-weight:600;color:#555">Weitere Kopien</span>'
             +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
             +'<button class="tog" data-act="add-ghost-copy" data-idx="'+i+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udc7b Ghost</button>'
             +'<button class="tog" data-act="add-dup-copy" data-idx="'+i+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udcdd Duplikat</button>'
@@ -6449,7 +6449,7 @@
               var icon=cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd';
               _bodyHtml+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:#f3f4f6;border:1px solid #d1d5db">'
                 +icon+(ci+1)
-                +' <span data-act="del-copy" data-idx="'+i+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:bold;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
+                +' <span data-act="del-copy" data-idx="'+i+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:600;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
                 +'</span>';
             });
             _bodyHtml+='</div>';
@@ -6590,23 +6590,23 @@
             var bar=fp.querySelector('.ctl-bar');if(!bar)return;
             var nh='<div class="abtn-grp">'+arrowCross('sel',idx,'\u2b05\u27a1 Selektiertes Element')+'</div>'
               +'<div class="abtn-grp">'
-              +'<span style="font-size:10px;font-weight:700;color:#555">\u21bb Drehung</span>'
+              +'<span style="font-size:10px;font-weight:600;color:#555">\u21bb Drehung</span>'
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" id="sld-rot-'+idx+'" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+idx+'"><span id="sr-'+idx+'">0\u00b0</span></label>'
               +'<button class="tog" data-act="sel-rot-reset" data-idx="'+idx+'" style="font-size:9px;padding:1px 6px">\u2b6f 0\u00b0</button>'
               +'</div>'
               +'<div class="abtn-grp">'
-              +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udc7b Ghost</span>'
+              +'<span style="font-size:10px;font-weight:600;color:#555">\ud83d\udc7b Ghost</span>'
               +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+idx+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+idx+'"><span id="ga-'+idx+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+idx+'"><span id="gs-'+idx+'">'+(ov.ghostScale||100)+'%</span></label>'
               +'</div>'
               +'<div class="abtn-grp">'
-              +'<span style="font-size:10px;font-weight:700;color:#555">\ud83d\udcdd Duplikat</span>'
+              +'<span style="font-size:10px;font-weight:600;color:#555">\ud83d\udcdd Duplikat</span>'
               +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+idx+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
               +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+idx+'"><span id="ds-'+idx+'">'+(ov.dupScale||100)+'%</span></label>':'')
               +'</div>'
               +'<div class="abtn-grp">'
-              +'<span style="font-size:10px;font-weight:700;color:#555">Weitere Kopien</span>'
+              +'<span style="font-size:10px;font-weight:600;color:#555">Weitere Kopien</span>'
               +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
               +'<button class="tog" data-act="add-ghost-copy" data-idx="'+idx+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udc7b Ghost</button>'
               +'<button class="tog" data-act="add-dup-copy" data-idx="'+idx+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udcdd Duplikat</button>'
@@ -6617,7 +6617,7 @@
                 var icon=cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd';
                 nh+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:#f3f4f6;border:1px solid #d1d5db">'
                   +icon+(ci+1)
-                  +' <span data-act="del-copy" data-idx="'+idx+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:bold;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
+                  +' <span data-act="del-copy" data-idx="'+idx+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:600;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
                   +'</span>';
               });
               nh+='</div>';
@@ -8666,7 +8666,7 @@
       })(input.files[i]);
     }
     var count=document.createElement('div');
-    count.style.cssText='display:flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:8px;border:1px dashed #d1d5db;color:var(--c-m-muted);font-size:12px;font-weight:700;flex-shrink:0';
+    count.style.cssText='display:flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:8px;border:1px dashed #d1d5db;color:var(--c-m-muted);font-size:12px;font-weight:600;flex-shrink:0';
     count.textContent=input.files.length+' Bild'+(input.files.length>1?'er':'');
     thumbs.appendChild(count);
   };
@@ -9011,14 +9011,14 @@
     });
     var dupTotal=rows.filter(function(r){return r.isDup;}).length;
     var html='<div style="font-size:11px;color:#6b7280;margin-bottom:6px">'+rows.length+' von '+subs.length+' angezeigt'
-      +(dupTotal?' \u00b7 <span style="color:#b45309;font-weight:700">'+dupTotal+' m\u00f6glich doppelt</span>':'')+'</div>';
+      +(dupTotal?' \u00b7 <span style="color:#b45309;font-weight:600">'+dupTotal+' m\u00f6glich doppelt</span>':'')+'</div>';
     html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;border-bottom:2px solid #e5e7eb">'
       +'<th style="padding:4px 6px">#</th><th style="padding:4px 6px">Plattform / Ger\u00e4t</th><th style="padding:4px 6px">Kategorien</th><th style="padding:4px 6px">E-Mail</th><th style="padding:4px 6px">Registriert</th><th style="padding:4px 6px">Keys</th><th style="padding:4px 6px"></th></tr></thead><tbody>';
     rows.forEach(function(r,i){
       var s=r.s;
       var keyOk=s.has_p256dh&&s.has_auth;
-      var ownBadge=r.isOwn?' <span style="background:#ede9fe;color:#7c3aed;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700">\uD83D\uDCF1 Dieses Ger\u00e4t</span>':'';
-      var dupBadge=(r.isDup&&!r.isOwn)?' <span title="Mehrere Abos mit gleicher Ger\u00e4te-ID bzw. E-Mail+Plattform" style="background:#fef3c7;color:#b45309;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700">\u26A0 m\u00f6glich doppelt</span>':'';
+      var ownBadge=r.isOwn?' <span style="background:#ede9fe;color:#7c3aed;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:600">\uD83D\uDCF1 Dieses Ger\u00e4t</span>':'';
+      var dupBadge=(r.isDup&&!r.isOwn)?' <span title="Mehrere Abos mit gleicher Ger\u00e4te-ID bzw. E-Mail+Plattform" style="background:#fef3c7;color:#b45309;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:600">\u26A0 m\u00f6glich doppelt</span>':'';
       var devLine=s.device_id?('Ger\u00e4t-ID: '+esc(String(s.device_id).slice(0,8))):'';
       var epLine=s.endpoint_tail?('\u2026'+esc(s.endpoint_tail)):'';
       var detail=[esc(s.endpoint_domain),devLine,epLine].filter(function(x){return x;}).join(' \u00b7 ');
@@ -9349,7 +9349,7 @@
       b.type='button';
       b.textContent=(bkAlle()[bk]||{}).name||bk;
       b.style.cssText='padding:9px 16px;border-radius:9px;cursor:pointer;font-size:.88rem;'
-        +'font-weight:700;border:2px solid '+(an?f.rand:'#e5e7eb')
+        +'font-weight:600;border:2px solid '+(an?f.rand:'#e5e7eb')
         +';background:'+(an?f.bg:'#fff')+';color:'+(an?f.text:'#6b7280');
       b.addEventListener('click',function(){
         if(bk===_bkAktiv) return;
@@ -9610,7 +9610,7 @@
         rows.forEach(function(r){
           html+='<tr style="border-bottom:1px solid #f3f4f6">'+
             '<td style="padding:6px 8px;white-space:nowrap">'+_statsFmtDateYmd(r.datum)+'</td>'+
-            '<td style="padding:6px 8px;text-align:right;font-weight:700">'+_statsNum(r.total).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;font-weight:600">'+_statsNum(r.total).toLocaleString('de-DE')+'</td>'+
             '<td style="padding:6px 8px;text-align:right">'+_statsNum(r.menge).toLocaleString('de-DE')+'</td>'+
             '<td style="padding:6px 8px;text-align:right;color:#f59e0b">'+_statsNum(r['0']).toLocaleString('de-DE')+'</td>'+
             '<td style="padding:6px 8px;text-align:right;color:#3b82f6">'+_statsNum(r['1']).toLocaleString('de-DE')+'</td>'+
@@ -9742,7 +9742,7 @@
         if(mx<m.pad-6){_statsHideTip();return;}
         var idx=Math.round((mx-m.pad-m.barW/2)/(m.barW+m.gap));
         if(idx<0)idx=0;if(idx>m.n-1)idx=m.n-1;
-        _statsShowTip('<div style="font-weight:700;margin-bottom:2px">'+d.labels[idx]+'</div><div>'+(d.values[idx]||0).toLocaleString('de-DE')+' Aufrufe</div>',e.clientX,e.clientY);
+        _statsShowTip('<div style="font-weight:600;margin-bottom:2px">'+d.labels[idx]+'</div><div>'+(d.values[idx]||0).toLocaleString('de-DE')+' Aufrufe</div>',e.clientX,e.clientY);
       });
       canvas.addEventListener('mouseleave',_statsHideTip);
     }
@@ -9830,7 +9830,7 @@
         c.strokeStyle='#94a3b8';c.lineWidth=1;c.setLineDash([4,3]);
         c.beginPath();c.moveTo(cx,m.padTop);c.lineTo(cx,m.padTop+m.chartH);c.stroke();
         c.setLineDash([]);
-        var rows='<div style="font-weight:700;margin-bottom:4px">'+d.labels[idx]+'</div>';
+        var rows='<div style="font-weight:600;margin-bottom:4px">'+d.labels[idx]+'</div>';
         d.datasets.forEach(function(ds){
           var vy=m.padTop+m.chartH-(ds.values[idx]||0)/m.allMax*m.chartH;
           c.beginPath();c.arc(cx,vy,4,0,Math.PI*2);c.fillStyle=ds.color;c.fill();
@@ -9931,11 +9931,11 @@
     if(!el)return;
     if(!pages||!pages.length){el.innerHTML='<div class="cms-empty">Noch keine Daten</div>';return;}
     var html='<table style="width:100%;font-size:12px;border-collapse:collapse">';
-    html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px;font-weight:700;color:#6b7280;font-size:11px">SEITE</th><th style="text-align:right;padding:8px 12px;font-weight:700;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+    html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px;font-weight:600;color:#6b7280;font-size:11px">SEITE</th><th style="text-align:right;padding:8px 12px;font-weight:600;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
     pages.forEach(function(p,i){
       var name=p.page==='/'?'Startseite':p.page.replace(/^\//,'').replace(/\.html$/,'');
       var bg=i%2===0?'#fff':'#fafbfc';
-      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+name+'</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0ea5e9">'+p.views.toLocaleString('de-DE')+'</td></tr>';
+      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+name+'</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:#0ea5e9">'+p.views.toLocaleString('de-DE')+'</td></tr>';
     });
     html+='</table>';
     el.innerHTML=html;
@@ -9946,10 +9946,10 @@
     if(!el)return;
     if(!refs||!refs.length){el.innerHTML='<div class="cms-empty">Keine externen Quellen</div>';return;}
     var html='<table style="width:100%;font-size:12px;border-collapse:collapse">';
-    html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px;font-weight:700;color:#6b7280;font-size:11px">QUELLE</th><th style="text-align:right;padding:8px 12px;font-weight:700;color:#6b7280;font-size:11px">BESUCHE</th></tr>';
+    html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px;font-weight:600;color:#6b7280;font-size:11px">QUELLE</th><th style="text-align:right;padding:8px 12px;font-weight:600;color:#6b7280;font-size:11px">BESUCHE</th></tr>';
     refs.forEach(function(r,i){
       var bg=i%2===0?'#fff':'#fafbfc';
-      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+r.domain+'</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#8b5cf6">'+r.views.toLocaleString('de-DE')+'</td></tr>';
+      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+r.domain+'</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:#8b5cf6">'+r.views.toLocaleString('de-DE')+'</td></tr>';
     });
     html+='</table>';
     el.innerHTML=html;
@@ -9961,22 +9961,22 @@
     if((!cities||!cities.length)&&(!regions||!regions.length)){el.innerHTML='<div class="cms-empty">Noch keine Standort-Daten</div>';return;}
     var html='';
     if(cities&&cities.length){
-      html+='<h4 style="margin:0 0 8px;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">\uD83D\uDCCD Städte</h4>';
+      html+='<h4 style="margin:0 0 8px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">\uD83D\uDCCD Städte</h4>';
       html+='<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:16px">';
-      html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:6px 12px;font-weight:700;color:#6b7280;font-size:11px">STANDORT</th><th style="text-align:right;padding:6px 12px;font-weight:700;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+      html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:6px 12px;font-weight:600;color:#6b7280;font-size:11px">STANDORT</th><th style="text-align:right;padding:6px 12px;font-weight:600;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
       cities.forEach(function(c,i){
         var bg=i%2===0?'#fff':'#fafbfc';
-        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:#374151">'+esc(c.city)+'</td><td style="padding:6px 12px;text-align:right;font-weight:700;color:#e53e3e">'+c.views.toLocaleString('de-DE')+'</td></tr>';
+        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:#374151">'+esc(c.city)+'</td><td style="padding:6px 12px;text-align:right;font-weight:600;color:#e53e3e">'+c.views.toLocaleString('de-DE')+'</td></tr>';
       });
       html+='</table>';
     }
     if(regions&&regions.length){
-      html+='<h4 style="margin:0 0 8px;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">\uD83C\uDFD7 Regionen</h4>';
+      html+='<h4 style="margin:0 0 8px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">\uD83C\uDFD7 Regionen</h4>';
       html+='<table style="width:100%;font-size:12px;border-collapse:collapse">';
-      html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:6px 12px;font-weight:700;color:#6b7280;font-size:11px">REGION</th><th style="text-align:right;padding:6px 12px;font-weight:700;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+      html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:6px 12px;font-weight:600;color:#6b7280;font-size:11px">REGION</th><th style="text-align:right;padding:6px 12px;font-weight:600;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
       regions.forEach(function(r,i){
         var bg=i%2===0?'#fff':'#fafbfc';
-        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:#374151">'+esc(r.region)+'</td><td style="padding:6px 12px;text-align:right;font-weight:700;color:#e53e3e">'+r.views.toLocaleString('de-DE')+'</td></tr>';
+        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:#374151">'+esc(r.region)+'</td><td style="padding:6px 12px;text-align:right;font-weight:600;color:#e53e3e">'+r.views.toLocaleString('de-DE')+'</td></tr>';
       });
       html+='</table>';
     }
@@ -10015,25 +10015,25 @@
 
     var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
     html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
-    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">NR.</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">KUNDE</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">BESTELLT</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">ABHOLUNG</th>';
-    html+='<th style="text-align:right;padding:8px;font-weight:700;color:#6b7280">SUMME</th>';
-    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">STATUS</th>';
-    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">AKTION</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">NR.</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">KUNDE</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">BESTELLT</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">ABHOLUNG</th>';
+    html+='<th style="text-align:right;padding:8px;font-weight:600;color:#6b7280">SUMME</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:600;color:#6b7280">STATUS</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:600;color:#6b7280">AKTION</th>';
     html+='</tr></thead><tbody>';
     orders.forEach(function(o,i){
       var bg=i%2===0?'#fff':'#fafbfc';
       var col=STATUS_COLORS[o.status]||'#6b7280';
       var posCount=o.positionen?o.positionen.length:0;
       html+='<tr style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
-      html+='<td style="padding:8px;font-weight:700">'+esc(o.bestellnummer)+'</td>';
+      html+='<td style="padding:8px;font-weight:600">'+esc(o.bestellnummer)+'</td>';
       html+='<td style="padding:8px">'+esc(o.kunde_name)+'<br><span style="font-size:10px;color:#9ca3af">'+esc(o.kunde_email)+'</span></td>';
       html+='<td style="padding:8px">'+fmtDe(o.bestelldatum)+'</td>';
       html+='<td style="padding:8px;font-weight:600">'+fmtDe(o.abholdatum)+'</td>';
-      html+='<td style="padding:8px;text-align:right;font-weight:700">'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td>';
-      html+='<td style="padding:8px;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+col+'">'+esc(o.status_text)+'</span></td>';
+      html+='<td style="padding:8px;text-align:right;font-weight:600">'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td>';
+      html+='<td style="padding:8px;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:'+col+'">'+esc(o.status_text)+'</span></td>';
       html+='<td style="padding:8px;text-align:center">';
       if(o.status<=1) html+='<a class="cms-btn cms-btn-sm" style="background:#fef3c7;color:#92400e;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'&tab=pack" target="_blank"><i data-lucide="package" style="width:12px;height:12px;vertical-align:-2px"></i> Packen</a> ';
       if(o.status===0) html+='<a class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'" target="_blank"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</a>';
@@ -10107,13 +10107,13 @@
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
     var modal=document.createElement('div');
     modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
-    modal.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
+    modal.innerHTML='<div style="font-size:16px;font-weight:600;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
       +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr||'?')+'</div>'
-      +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
+      +'<div style="font-size:13px;font-weight:600;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
       +'<div id="cms-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
       +'<textarea id="cms-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
-      +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>'
-      +'<button id="cms-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
+      +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:600;cursor:pointer">Abbrechen</button>'
+      +'<button id="cms-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:600;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
     overlay.appendChild(modal);document.body.appendChild(overlay);
     var optsDiv=modal.querySelector('#cms-storno-opts');var selectedReason='';
     CMS_SHOP_STORNO_REASONS.forEach(function(r){
@@ -10171,13 +10171,13 @@
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
     var modal=document.createElement('div');
     modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
-    var h='<div style="font-size:16px;font-weight:800;margin-bottom:4px">\ud83d\udcac Nachricht an Kunden</div>';
+    var h='<div style="font-size:16px;font-weight:600;margin-bottom:4px">\ud83d\udcac Nachricht an Kunden</div>';
     h+='<div style="font-size:12px;color:#6b7f72;margin-bottom:12px">'+esc(bestellnr||'')+'</div>';
     if(o&&o.kunde_kommentar) h+='<div style="padding:6px 10px;background:#dbeafe;border-radius:8px;font-size:12px;color:#1e40af;margin-bottom:10px"><strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
     if(o&&o.personal_antwort) h+='<div style="padding:6px 10px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;margin-bottom:10px"><strong>Letzte Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
     h+='<textarea id="cms-shop-reply-text" placeholder="Ihre Antwort\u2026" rows="3" style="width:100%;border:1px solid #dfe7e2;border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>';
-    h+='<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-shop-reply-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>';
-    h+='<button id="cms-shop-reply-send" style="flex:1;padding:10px;border:none;border-radius:10px;background:#1e40af;color:#fff;font-weight:700;cursor:pointer">Senden</button></div>';
+    h+='<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-shop-reply-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:600;cursor:pointer">Abbrechen</button>';
+    h+='<button id="cms-shop-reply-send" style="flex:1;padding:10px;border:none;border-radius:10px;background:#1e40af;color:#fff;font-weight:600;cursor:pointer">Senden</button></div>';
     modal.innerHTML=h;
     overlay.appendChild(modal);document.body.appendChild(overlay);
     modal.querySelector('#cms-shop-reply-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
@@ -10223,9 +10223,9 @@
     html+='<style>body{font-family:Arial,sans-serif;font-size:12px;margin:20px}h1{font-size:18px;margin-bottom:4px}';
     html+='.meta{color:#666;margin-bottom:16px;font-size:11px}';
     html+='table{width:100%;border-collapse:collapse;margin-bottom:20px}';
-    html+='th{background:#f3f4f6;padding:6px 8px;text-align:left;font-size:11px;font-weight:700;border-bottom:2px solid #ddd}';
+    html+='th{background:#f3f4f6;padding:6px 8px;text-align:left;font-size:11px;font-weight:600;border-bottom:2px solid #ddd}';
     html+='td{padding:6px 8px;border-bottom:1px solid #eee}';
-    html+='.order-header{background:#e5e7eb;padding:8px;font-weight:700;font-size:13px;margin-top:16px;border-radius:4px}';
+    html+='.order-header{background:#e5e7eb;padding:8px;font-weight:600;font-size:13px;margin-top:16px;border-radius:4px}';
     html+='.check{width:20px;height:20px;border:2px solid #999;display:inline-block;border-radius:3px;vertical-align:middle}';
     html+='@media print{.no-print{display:none}}</style></head><body>';
     html+='<h1>🏪 Dorfladen Oberornau – Kommissionierliste</h1>';
@@ -10242,7 +10242,7 @@
         html+='<td>'+esc(p.einheit)+'</td>';
         html+='<td>'+((+p.positionspreis).toFixed(2).replace('.',','))+' €</td></tr>';
       });
-      html+='<tr style="font-weight:700"><td colspan="4" style="text-align:right">Gesamt (ca.):</td><td>'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td></tr>';
+      html+='<tr style="font-weight:600"><td colspan="4" style="text-align:right">Gesamt (ca.):</td><td>'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td></tr>';
       html+='</tbody></table>';
     });
 
@@ -10273,16 +10273,16 @@
     if(!kunden.length){list.innerHTML='<p style="text-align:center;color:#6b7280">Keine Kunden gefunden</p>';return;}
     var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
     html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
-    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">NAME</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">E-MAIL</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">TELEFON</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:700;color:#6b7280">ADRESSE</th>';
-    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">STATUS</th>';
-    html+='<th style="text-align:center;padding:8px;font-weight:700;color:#6b7280">AKTION</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">NAME</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">E-MAIL</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">TELEFON</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">ADRESSE</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:600;color:#6b7280">STATUS</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:600;color:#6b7280">AKTION</th>';
     html+='</tr></thead><tbody>';
     kunden.forEach(function(k,i){
       var bg=i%2===0?'#fff':'#fafbfc';
-      var statusBadge=k.aktiv?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">Aktiv</span>':'<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">Inaktiv</span>';
+      var statusBadge=k.aktiv?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">Aktiv</span>':'<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">Inaktiv</span>';
       var adresse=[k.strasse,k.plz,k.ort].filter(Boolean).join(', ');
       html+='<tr style="background:'+bg+'">';
       html+='<td style="padding:8px;font-weight:600">'+esc(k.vorname)+' '+esc(k.nachname)+'</td>';
@@ -10307,16 +10307,16 @@
     html+='<button class="cms-btn cms-btn-primary" id="kd-save"><i data-lucide="save" style="width:14px;height:14px;vertical-align:-2px"></i> Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" id="kd-close">Abbrechen</button></div></div>';
     html+='<div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">';
-    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Vorname<input id="kd-vorname" class="cms-input" value="'+esc(k.vorname)+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Nachname<input id="kd-nachname" class="cms-input" value="'+esc(k.nachname)+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:700;color:#6b7280;grid-column:1/3">E-Mail<input class="cms-input" value="'+esc(k.email)+'" disabled style="width:100%;margin-top:2px;background:#f3f4f6"></label>';
-    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Telefon<input id="kd-telefon" class="cms-input" value="'+esc(k.telefon||'')+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Straße<input id="kd-strasse" class="cms-input" value="'+esc(k.strasse||'')+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">PLZ<input id="kd-plz" class="cms-input" value="'+esc(k.plz||'')+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:700;color:#6b7280">Ort<input id="kd-ort" class="cms-input" value="'+esc(k.ort||'')+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:700;color:#6b7280;grid-column:1/3;display:flex;align-items:center;gap:8px"><input type="checkbox" id="kd-aktiv" '+(k.aktiv?'checked':'')+' style="width:18px;height:18px;accent-color:#2e7d4f"> Konto aktiv</label>';
+    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Vorname<input id="kd-vorname" class="cms-input" value="'+esc(k.vorname)+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Nachname<input id="kd-nachname" class="cms-input" value="'+esc(k.nachname)+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:600;color:#6b7280;grid-column:1/3">E-Mail<input class="cms-input" value="'+esc(k.email)+'" disabled style="width:100%;margin-top:2px;background:#f3f4f6"></label>';
+    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Telefon<input id="kd-telefon" class="cms-input" value="'+esc(k.telefon||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Straße<input id="kd-strasse" class="cms-input" value="'+esc(k.strasse||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">PLZ<input id="kd-plz" class="cms-input" value="'+esc(k.plz||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Ort<input id="kd-ort" class="cms-input" value="'+esc(k.ort||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:11px;font-weight:600;color:#6b7280;grid-column:1/3;display:flex;align-items:center;gap:8px"><input type="checkbox" id="kd-aktiv" '+(k.aktiv?'checked':'')+' style="width:18px;height:18px;accent-color:#2e7d4f"> Konto aktiv</label>';
     html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
-    html+='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px"><i data-lucide="landmark" style="width:12px;height:12px;vertical-align:-2px"></i> SEPA-Lastschriftmandat</div>';
+    html+='<div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px"><i data-lucide="landmark" style="width:12px;height:12px;vertical-align:-2px"></i> SEPA-Lastschriftmandat</div>';
     var hasMd=k.mandatsreferenz||k.iban_masked;
     if(hasMd){
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:10px">';
@@ -10325,14 +10325,14 @@
       html+='<div><span style="color:#6b7280">Mandatsreferenz:</span> <b>'+esc(k.mandatsreferenz||'–')+'</b></div>';
       html+='<div><span style="color:#6b7280">Mandatsdatum:</span> <b>'+fmtDe(k.mandatsdatum)+'</b></div>';
       var msBadge=k.mandatsstatus==='aktiv'?'background:#dcfce7;color:#166534':'background:#fee2e2;color:#991b1b';
-      html+='<div style="grid-column:1/3"><span style="color:#6b7280">Status:</span> <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;'+msBadge+'">'+esc(k.mandatsstatus||'–')+'</span></div>';
+      html+='<div style="grid-column:1/3"><span style="color:#6b7280">Status:</span> <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;'+msBadge+'">'+esc(k.mandatsstatus||'–')+'</span></div>';
       html+='</div>';
     } else {
       html+='<div style="font-size:12px;color:#9ca3af;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px">Kein SEPA-Mandat hinterlegt</div>';
     }
     html+='</div>';
     html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
-    html+='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">Passwort zurücksetzen</div>';
+    html+='<div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px">Passwort zurücksetzen</div>';
     html+='<div style="display:flex;gap:8px;align-items:center">';
     html+='<input type="password" id="kd-new-pw" class="cms-input" placeholder="Neues Passwort (min. 8 Zeichen)" style="flex:1">';
     html+='<button class="cms-btn cms-btn-sm" id="kd-reset-pw" style="background:#fef3c7;color:#92400e;white-space:nowrap"><i data-lucide="key-round" style="width:12px;height:12px;vertical-align:-2px"></i> Setzen</button>';
@@ -10566,12 +10566,12 @@
         html+='<div class="fm-cms-order" style="border:1px solid '+(hasMsg?'#fbbf24':'#e5e7eb')+';border-radius:10px;margin-bottom:8px;overflow:hidden'+(hasMsg?';box-shadow:0 0 0 2px rgba(251,191,36,.3)':'')+'">';
         // Header row (clickable)
         html+='<div data-fm-toggle="'+idx+'" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:#faf5f3">';
-        html+='<span style="background:'+sc+';color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap">'+esc(sl)+'</span>';
-        html+='<span style="font-weight:700;font-size:13px;flex-shrink:0">'+esc(o.bestellnummer)+'</span>';
+        html+='<span style="background:'+sc+';color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap">'+esc(sl)+'</span>';
+        html+='<span style="font-weight:600;font-size:13px;flex-shrink:0">'+esc(o.bestellnummer)+'</span>';
         html+='<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.name)+'</span>';
         html+='<span style="font-size:12px;color:#6b7280;flex-shrink:0">'+esc(ld)+'</span>';
-        html+='<span style="font-size:13px;font-weight:700;flex-shrink:0">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</span>';
-        if(hasMsg) html+='<span style="background:#fbbf24;color:#7c2d12;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800" title="Neue Nachricht">\u2709</span>';
+        html+='<span style="font-size:13px;font-weight:600;flex-shrink:0">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</span>';
+        if(hasMsg) html+='<span style="background:#fbbf24;color:#7c2d12;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600" title="Neue Nachricht">\u2709</span>';
         html+='<span data-fm-arrow="'+idx+'" style="transition:transform .2s;font-size:14px;color:#9ca3af">\u25B6</span>';
         html+='</div>';
 
@@ -10657,7 +10657,7 @@
       try{var dd=new Date(day+'T12:00:00');var wt=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];dayLabel=wt[dd.getDay()]+', '+dd.getDate()+'.'+(dd.getMonth()+1)+'.'+dd.getFullYear();}catch(e){}
 
       html+='<div style="border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;overflow:hidden">';
-      html+='<div style="background:#7f1d1d;color:#fff;padding:10px 14px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center">';
+      html+='<div style="background:#7f1d1d;color:#fff;padding:10px 14px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center">';
       html+='<span>'+esc(dayLabel)+'</span>';
       html+='<span style="font-size:12px;font-weight:400;opacity:.8">'+g.orders.length+' Bestellung'+(g.orders.length>1?'en':'')+'</span>';
       html+='</div>';
@@ -10670,7 +10670,7 @@
         html+='<tr data-fm-cms-srow="'+rk+'" style="border-top:1px solid #fecaca;cursor:pointer;'+(chk?'background:#f0fdf4':'')+'">';
         html+='<td style="padding:6px;text-align:center"><input type="checkbox" data-fm-cms-scb="'+rk+'" '+(chk?'checked':'')+' style="width:16px;height:16px;cursor:pointer"></td>';
         html+='<td style="padding:6px 10px;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+esc(a.bezeichnung)+'</td>';
-        html+='<td style="text-align:right;padding:6px 10px;font-weight:700;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+a.menge.toFixed(1)+' '+esc(a.einheit)+'</td>';
+        html+='<td style="text-align:right;padding:6px 10px;font-weight:600;'+(chk?'text-decoration:line-through;color:#9ca3af':'')+'">'+a.menge.toFixed(1)+' '+esc(a.einheit)+'</td>';
         html+='</tr>';
       });
       html+='</tbody></table>';
@@ -10695,7 +10695,7 @@
           row.style.background=cb.checked?'#f0fdf4':'';
           var cells=row.querySelectorAll('td');
           if(cells[1]) cells[1].style.cssText='padding:6px 10px;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
-          if(cells[2]) cells[2].style.cssText='text-align:right;padding:6px 10px;font-weight:700;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
+          if(cells[2]) cells[2].style.cssText='text-align:right;padding:6px 10px;font-weight:600;'+(cb.checked?'text-decoration:line-through;color:#9ca3af':'');
         }
         _fmUpdateCmsSammelAll(cb.getAttribute('data-fm-cms-scb').split('-')[0]);
       });
@@ -10768,13 +10768,13 @@
         overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
         var modal=document.createElement('div');
         modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
-        modal.innerHTML='<div style="font-size:16px;font-weight:800;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
+        modal.innerHTML='<div style="font-size:16px;font-weight:600;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
           +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr)+' – '+esc(name)+'</div>'
-          +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
+          +'<div style="font-size:13px;font-weight:600;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
           +'<div id="cms-fm-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
           +'<textarea id="cms-fm-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
-          +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-fm-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:700;cursor:pointer">Abbrechen</button>'
-          +'<button id="cms-fm-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
+          +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-fm-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:600;cursor:pointer">Abbrechen</button>'
+          +'<button id="cms-fm-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:600;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
         overlay.appendChild(modal);document.body.appendChild(overlay);
         var optsDiv=modal.querySelector('#cms-fm-storno-opts');var selectedReason='';
         CMS_FM_STORNO_REASONS.forEach(function(r){
@@ -10839,7 +10839,7 @@
 
     var box=document.createElement('div');
     box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)';
-    box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#7f1d1d">Nachricht an Kunden</div>'
+    box.innerHTML='<div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#7f1d1d">Nachricht an Kunden</div>'
       +'<textarea id="fm-cms-reply-text" rows="4" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:14px;resize:none;font-family:inherit;overflow:hidden" placeholder="Ihre Nachricht..." oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
       +'<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
       +'<button id="fm-cms-reply-cancel" class="cms-btn" style="font-size:13px;padding:8px 16px">Abbrechen</button>'

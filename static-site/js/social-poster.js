@@ -876,7 +876,7 @@
           if(step4hdr){
             badge=document.createElement('span');
             badge.id='soc-editing-badge';
-            badge.style.cssText='font-size:10px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;font-weight:700;margin-left:8px;cursor:pointer';
+            badge.style.cssText='font-size:10px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;font-weight:600;margin-left:8px;cursor:pointer';
             badge.title='Klicken um Bearbeitung abzubrechen';
             badge.onclick=function(e){e.stopPropagation();window.socialClearEditingDraft();socialStatus('soc-post-status','Bearbeitung abgebrochen',true);};
             step4hdr.appendChild(badge);
@@ -1037,7 +1037,7 @@
       }
       function renderGroup(posts,label,color){
         if(!posts.length)return;
-        html+='<div style="font-size:10px;font-weight:700;color:'+color+';margin:6px 0 4px;text-transform:uppercase;letter-spacing:.5px">'+M.esc(label)+'</div>';
+        html+='<div style="font-size:10px;font-weight:600;color:'+color+';margin:6px 0 4px;text-transform:uppercase;letter-spacing:.5px">'+M.esc(label)+'</div>';
         posts.forEach(renderCard);
       }
       renderGroup(todayPosts,'Heute','#16a34a');
@@ -1197,7 +1197,7 @@
     ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(17,24,39,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;box-sizing:border-box';
     ov.addEventListener('click',function(e){if(e.target===ov)window.socCloseLightbox();});
     var head=document.createElement('div');
-    head.style.cssText='color:#fff;font-size:14px;font-weight:700;text-align:center;max-width:96vw';
+    head.style.cssText='color:#fff;font-size:14px;font-weight:600;text-align:center;max-width:96vw';
     head.textContent=titel||'Vorschau';
     var canvas=document.createElement('canvas');
     canvas.width=srcCanvas.width;canvas.height=srcCanvas.height;
@@ -1207,7 +1207,7 @@
     foot.style.cssText='display:flex;gap:10px;align-items:center';
     var dl=document.createElement('button');
     dl.type='button';
-    dl.style.cssText='padding:10px 18px;font-size:14px;font-weight:700;border:none;border-radius:10px;background:#2e7d4f;color:#fff;cursor:pointer;min-height:44px';
+    dl.style.cssText='padding:10px 18px;font-size:14px;font-weight:600;border:none;border-radius:10px;background:#2e7d4f;color:#fff;cursor:pointer;min-height:44px';
     dl.textContent='Bild speichern';
     dl.onclick=function(){
       try{
@@ -1222,7 +1222,7 @@
     };
     var close=document.createElement('button');
     close.type='button';
-    close.style.cssText='padding:10px 18px;font-size:14px;font-weight:700;border:1px solid rgba(255,255,255,.5);border-radius:10px;background:transparent;color:#fff;cursor:pointer;min-height:44px';
+    close.style.cssText='padding:10px 18px;font-size:14px;font-weight:600;border:1px solid rgba(255,255,255,.5);border-radius:10px;background:transparent;color:#fff;cursor:pointer;min-height:44px';
     close.textContent='Schlie\u00dfen';
     close.onclick=window.socCloseLightbox;
     foot.appendChild(dl);foot.appendChild(close);
@@ -1251,10 +1251,10 @@
     var bar=document.createElement('span');
     bar.id='soc-zoom-bar';
     bar.style.cssText='display:none;align-items:center;gap:4px;margin-right:8px';
-    var bs='min-height:34px;min-width:34px;padding:0 9px;font-size:14px;font-weight:700;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;cursor:pointer';
+    var bs='min-height:34px;min-width:34px;padding:0 9px;font-size:14px;font-weight:600;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;cursor:pointer';
     bar.innerHTML=''
       +'<button type="button" title="Kleiner" style="'+bs+'">\u2212</button>'
-      +'<span id="soc-zoom-lvl" style="font-size:11px;font-weight:700;color:#6b7280;min-width:62px;text-align:center">Einpassen</span>'
+      +'<span id="soc-zoom-lvl" style="font-size:11px;font-weight:600;color:#6b7280;min-width:62px;text-align:center">Einpassen</span>'
       +'<button type="button" title="Gr\u00f6\u00dfer" style="'+bs+'">+</button>'
       +'<button type="button" title="Vollbild" style="'+bs+';margin-left:2px">\u26f6</button>';
     var btns=bar.querySelectorAll('button');
