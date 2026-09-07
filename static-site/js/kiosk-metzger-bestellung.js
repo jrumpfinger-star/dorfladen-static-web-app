@@ -1197,50 +1197,9 @@ window.KMetzgerBest = (function () {
       + 'Bestellschluss und Kunden-Nr.</div>';
   }
 
-  function einstellungen() {
-    var tage = _cfg.bestelltage || [];
-    var namen = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-    return '<div class="mb-cfg">'
-      + '<label>Empfänger<input id="mb-c-mail" type="email" value="'
-      + esc(_cfg.empfaenger || '') + '"></label>'
-      + '<label>Kunden-Nr.<input id="mb-c-kd" value="' + esc(_cfg.kd_nr || '') + '"></label>'
-      + '<label>Bestellschluss<input id="mb-c-schluss" value="'
-      + esc(_cfg.bestellschluss || '12:00') + '"></label>'
-      + '<div class="mb-cfg-tage">Bestelltage' + namen.map(function (n, i) {
-        return '<label class="mb-cbx"><input type="checkbox" data-tag="' + i + '"'
-          + (tage.indexOf(i) >= 0 ? ' checked' : '') + '> ' + n + '</label>';
-      }).join('') + '</div>'
-      + '<button class="mb-send" onclick="KMetzgerBest.cfgSpeichern()">Speichern</button>'
-      + (_testbetrieb ? '<p class="mb-quelle">Solange der Empfänger nicht die '
-        + 'Metzgerei selbst ist, läuft alles im Testbetrieb.</p>' : '')
-      + '</div>';
-  }
-
-  function cfgSpeichern() {
-    var tage = [];
-    document.querySelectorAll('.mb-cfg [data-tag]').forEach(function (cb) {
-      if (cb.checked) tage.push(parseInt(cb.getAttribute('data-tag'), 10));
-    });
-    var neu = {
-      empfaenger: (document.getElementById('mb-c-mail') || {}).value || '',
-      kd_nr: (document.getElementById('mb-c-kd') || {}).value || '',
-      bestellschluss: (document.getElementById('mb-c-schluss') || {}).value || '',
-      bestelltage: tage
-    };
-    fetch(API + '/metzger-order/config', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ config: neu })
-    }).then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d || !d.success) throw new Error(fehlerText(d, ''));
-        _cfg = d.config || _cfg;
-        toast('Die Einstellungen sind gespeichert.');
-        ladeUebersicht(_datum);
-      })
-      .catch(function (e) {
-        toast(e.message || 'Die Einstellungen konnten nicht gespeichert werden.');
-      });
-  }
+  // Das frühere Einstellungsformular samt `cfgSpeichern()` ist entfallen. Es
+  // wäre ein zweiter Weg gewesen, dieselben Stammdaten am CMS vorbei zu
+  // ändern – und zwar einer ohne die dortigen Prüfungen.
 
   // ══════════════════════════════════════════════════
   //  Dialoge (keine nativen alert/confirm, Konstitution 6)
@@ -1318,7 +1277,7 @@ window.KMetzgerBest = (function () {
     zusatz: zusatz, zusatzWeg: zusatzWeg, frueher: frueher,
     speichern: speichern, senden: senden, korrektur: korrektur,
     verwerfen: verwerfen, korrekturSenden: korrekturSenden,
-    aktiv: aktiv, cfgSpeichern: cfgSpeichern,
+    aktiv: aktiv,
     istGeaendert: istGeaendert,
     badge: badge
   };
