@@ -35,6 +35,8 @@ window.KMetzgerBest = (function () {
   var _testbetrieb = true;
   var _vorbelegtAus = null;
   var _letzte = null;      // Werte der zuletzt gesendeten Bestellung (F7)
+  var _korrektur = false;  // Gesendetes wird gerade nachtraeglich geaendert
+  var _korrekturBasis = null;  // Stand bei Beginn der Korrektur
 
   var MAX_VORSCHLAEGE = 5;
 
@@ -133,7 +135,18 @@ window.KMetzgerBest = (function () {
     }).join('|');
   }
 
-  function gesperrt() { return _b && _b.status === 1; }
+  function gesperrt() {
+    // Eine gesendete Bestellung ist schreibgeschuetzt - AUSSER im
+    // Korrekturmodus. Ohne diese Ausnahme bot der Kopf zwar „Korrektur
+    // senden" an, aber saemtliche Felder blieben starr: Man konnte nichts
+    // aendern und verschickte die unveraenderte Bestellung noch einmal.
+    return istGesendet() && !_korrektur;
+  }
+
+  /** Roher Versandstand - unabhaengig vom Korrekturmodus. */
+  function istGesendet() {
+    return !!(_b && (_b.status === 1 || _b.status === 2));
+  }
 
   // ══════════════════════════════════════════════════
   //  Parser der Papier-Schreibweise (F5)
@@ -262,6 +275,8 @@ window.KMetzgerBest = (function () {
         _dirty = false;
         _offen = null;
         _entwurf = null;
+        _korrektur = false;
+        _korrekturBasis = null;
         render();
         badge();
       })
@@ -377,8 +392,19 @@ window.KMetzgerBest = (function () {
         h += ' am ' + esc(zeitKurz(letzte.zeit)) + ' an ' + esc(letzte.an || '')
           + ' durch ' + esc(letzte.wer || '');
       }
-      h += ' <button class="mb-btn" onclick="KMetzgerBest.korrektur()">'
-        + 'Korrektur senden</button>';
+      if (_korrektur) {
+        // Im Korrekturmodus sind die Felder frei. Erst danach geht die
+        // geaenderte Bestellung raus.
+        h += ' <span class="mb-quelle">Korrektur: Mengen jetzt ändern, '
+          + 'dann senden</span>';
+        h += ' <button class="mb-send" onclick="KMetzgerBest.korrekturSenden()">'
+          + 'Korrektur senden</button>';
+        h += ' <button class="mb-btn" onclick="KMetzgerBest.verwerfen()">'
+          + 'Verwerfen</button>';
+      } else {
+        h += ' <button class="mb-btn" onclick="KMetzgerBest.korrektur()">'
+          + 'Korrigieren</button>';
+      }
     }
     if (_testbetrieb) h += ' <span class="mb-test">Testbetrieb</span>';
     return h + '</div>';
@@ -629,7 +655,12 @@ window.KMetzgerBest = (function () {
         + (s.offen ? ' <span class="mb-warn">(' + s.offen + ' Position'
           + (s.offen > 1 ? 'en' : '') + ' nicht bewertbar)</span>' : '') + '</span>';
     }
-    if (!gesperrt()) {
+    if (_korrektur) {
+      // Korrektur: kein Entwurfs-Speichern, sonst wuerde die gesendete
+      // Bestellung ueberschrieben.
+      h += '<button class="mb-btn" onclick="KMetzgerBest.verwerfen()">Verwerfen</button>'
+        + '<button class="mb-send" onclick="KMetzgerBest.korrekturSenden()">Korrektur senden</button>';
+    } else if (!gesperrt()) {
       h += '<span class="mb-autosave"></span>';
       h += '<button class="mb-btn" onclick="KMetzgerBest.speichern()">Speichern</button>'
         + '<button class="mb-send" onclick="KMetzgerBest.senden()">Bestellung senden</button>';
@@ -992,7 +1023,11 @@ window.KMetzgerBest = (function () {
   var _autoLaeuft = false;
   function markiereGeaendert() {
     _dirty = true;
-    if (!_b || !_datum || gesperrt()) return;
+    // Bewusst `istGesendet()` statt `gesperrt()`: Im Korrekturmodus sind die
+    // Felder zwar frei, aber ein stiller Entwurfs-Speicher wuerde die bereits
+    // gesendete Bestellung ueberschreiben. Korrekturen gehen nur ueber den
+    // ausdruecklichen Versand.
+    if (!_b || !_datum || istGesendet()) return;
     if (_autoTimer) clearTimeout(_autoTimer);
     _autoTimer = setTimeout(function () {
       _autoTimer = null;
@@ -1031,7 +1066,31 @@ window.KMetzgerBest = (function () {
   }
 
   function senden() { versandDialog(false); }
-  function korrektur() { versandDialog(true); }
+
+  /* Korrektur ist zweistufig: erst die Felder freigeben, dann senden. Vorher
+     sprang der Knopf sofort in den Versanddialog - man verschickte die
+     unveraenderte Bestellung ein zweites Mal. */
+  function korrektur() {
+    if (!istGesendet()) return;
+    _korrektur = true;
+    _korrekturBasis = JSON.stringify(nutzbare());
+    render();
+    toast('Mengen ändern und dann „Korrektur senden".');
+  }
+
+  function verwerfen() {
+    _korrektur = false;
+    _korrekturBasis = null;
+    ladeBestellung(_datum);
+  }
+
+  function korrekturSenden() {
+    if (JSON.stringify(nutzbare()) === _korrekturBasis) {
+      toast('Nichts geändert – es gibt nichts zu korrigieren.');
+      return;
+    }
+    versandDialog(true);
+  }
 
   function versandDialog(korr) {
     var s = summen();
@@ -1246,6 +1305,7 @@ window.KMetzgerBest = (function () {
     hinweis: hinweis, hinweisWeg: hinweisWeg, editHinweis: editHinweis, zu: zu,
     zusatz: zusatz, zusatzWeg: zusatzWeg, frueher: frueher,
     speichern: speichern, senden: senden, korrektur: korrektur,
+    verwerfen: verwerfen, korrekturSenden: korrekturSenden,
     aktiv: aktiv, cfgSpeichern: cfgSpeichern,
     istGeaendert: istGeaendert,
     badge: badge

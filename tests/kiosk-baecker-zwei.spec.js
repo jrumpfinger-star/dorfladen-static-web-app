@@ -93,9 +93,19 @@ function tagesleiste(opts) {
     const fertig = lieferanten.filter((x) => x.status !== 'offen' && !x.druck_offen).length;
     // Bestellt wird immer für einen künftigen Liefertag – i === 0 ist heute.
     const bestellbar = i > 0 && lieferanten.length > 0;
+    // Bestellschluss: hier vereinfacht der Vortag. Der Kiosk springt auf den
+    // Tag, dessen Bestellung HEUTE fällig ist (F31).
+    const bs = plusTage(i - 1);
+    const bsIso = lieferanten.length ? iso(bs) : '';
+    const offenHier = lieferanten.some((x) => x.status === 'offen');
     out.push({
       datum, wochentag: TAGE[d.getDay()], bestelltag: lieferanten.length > 0,
       bestellbar, heute: i === 0,
+      bestellschluss_datum: bsIso,
+      bestellschluss_datum_de: bsIso ? bsIso.split('-').reverse().join('.') : '',
+      bestellschluss_wochentag: bsIso ? TAGE[bs.getDay()] : '',
+      heute_bestellen: bestellbar && offenHier && bsIso === iso(plusTage(0)),
+      hat_offene: bestellbar && offenHier,
       lieferanten, fertig, gesamt: lieferanten.length,
       status: !lieferanten.length ? 'kein_tag'
         : fertig === lieferanten.length ? 'gesendet'
@@ -495,10 +505,11 @@ test.describe('Zweite Bäckerei', () => {
     }
   });
 
-  test('TC-B2-F27-02: Vorauswahl ist immer der nächste Liefertag', async ({ page }) => {
-    // Auch wenn dort schon gesendet wurde: Der Kiosk startet vorhersehbar
-    // beim nächsten Liefertag, nicht beim ersten Tag mit offener Arbeit.
-    const morgenIso = iso(plusTage(1));
+  test('TC-B2-F27-02: Vorauswahl ist nie heute, sondern ein künftiger Liefertag', async ({ page }) => {
+    // Früher startete der Kiosk stur beim nächsten Liefertag – auch wenn dort
+    // längst gesendet war. Man landete auf „gesendet" und hatte nichts zu tun.
+    // Seit F31 folgt die Vorauswahl der Arbeit. Unverändert gilt: niemals
+    // heute, denn für heute ist die Ware längst da.
     const naechster = [1, 2, 3, 4, 5, 6, 7]
       .map((n) => plusTage(n))
       .find((d) => liefertAm(d).length > 0);
@@ -507,10 +518,8 @@ test.describe('Zweite Bäckerei', () => {
     await expect(aktiv).toHaveCount(1);
     const auf = await aktiv.getAttribute('onclick');
     expect(auf).not.toContain(iso(plusTage(0)));      // niemals heute
-    expect(auf).toContain(iso(naechster));            // sondern der nächste
-    if (iso(naechster) === morgenIso) {
-      await expect(aktiv).toContainText(TAGE[naechster.getDay()].slice(0, 2));
-    }
+    // Der gesendete Tag wird übersprungen – dort gibt es nichts mehr zu tun.
+    expect(auf).not.toContain(iso(naechster));
   });
 
   test('TC-B2-F27-03: Zähler nennt im Klartext, was offen ist', async ({ page }) => {
@@ -705,3 +714,136 @@ test.describe('Bäcker – Liefertag und stille Sicherung (F30)', () => {
   });
 });
 
+
+
+// ── F31: Der Tab landet dort, wo heute Arbeit liegt ─────────────────────
+//
+// Gemeldet: „Ich muss auf Dienstag gehen, um die Lieferung für Dienstag
+// anzusehen, und es steht gesendet Dienstag. Dienstags möchte ich die
+// Bestellung für Mittwoch anlegen."
+//
+// Die Vorauswahl nahm stur den nächsten Liefertag – am Montag also den
+// Dienstag, dessen Bestellung längst raus war. Man landete auf „gesendet"
+// und hatte nichts zu tun. Massgeblich ist jetzt der Bestellschluss:
+// Der Tag, der HEUTE bestellt werden muss, steht vorne.
+
+test.describe('Bäcker – Vorauswahl folgt der Arbeit (F31)', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  /** Der morgige Liefertag – seine Bestellung ist heute fällig. */
+  function morgen() {
+    const d = plusTage(1);
+    return { datum: iso(d), bk: liefertAm(d)[0] };
+  }
+
+  test('TC-F31-01: Ohne Bestellung steht der heute fällige Tag vorne', async ({ page }) => {
+    await openBaecker(page);
+    const m = morgen();
+    await expect(page.locator('#panel-baecker .bk-day.active')).toHaveAttribute(
+      'onclick', new RegExp(m.datum));
+    await expect(page.locator('#panel-baecker .bk-stat .t1')).toContainText('Lieferung am');
+  });
+
+  test('TC-F31-02: Der fällige Tag ist als „heute bestellen" markiert', async ({ page }) => {
+    await openBaecker(page);
+    const faellig = page.locator('#panel-baecker .bk-day.faellig');
+    await expect(faellig).toHaveCount(1);
+    await expect(faellig).toContainText('heute bestellen');
+    await expect(faellig).toHaveAttribute('onclick', new RegExp(morgen().datum));
+  });
+
+  test('TC-F31-03: Ist morgen gesendet, springt er auf den nächsten offenen Tag', async ({ page }) => {
+    // Genau der gemeldete Fall: Montag, Dienstag ist raus – nicht dort landen.
+    const m = morgen();
+    await openBaecker(page, { gesendet: [{ datum: m.datum, bk: m.bk }] });
+    const aktiv = page.locator('#panel-baecker .bk-day.active');
+    await expect(aktiv).not.toHaveAttribute('onclick', new RegExp(m.datum));
+    // Und der Tag, auf dem er landet, hat wirklich noch offene Arbeit.
+    await expect(aktiv).not.toContainText('gesendet');
+  });
+
+  test('TC-F31-04: Ein gesendeter Tag nennt den Liefertag, nicht den Sendetag', async ({ page }) => {
+    // „Gesendet – Dienstag" las sich wie „am Dienstag gesendet".
+    const m = morgen();
+    await openBaecker(page, { gesendet: [{ datum: m.datum, bk: m.bk }] });
+    await tagWaehlen(page, m.datum);
+    const t1 = page.locator('#panel-baecker .bk-stat .t1');
+    await expect(t1).toContainText('Gesendet – Lieferung am');
+    await expect(page.locator('#panel-baecker .bk-stat .t2')).toContainText('abgeschickt');
+  });
+
+  test('TC-F31-05: Das Plättchen verrät im Tooltip den Bestelltag', async ({ page }) => {
+    await openBaecker(page);
+    const titel = await page.locator('#panel-baecker .bk-day.faellig').getAttribute('title');
+    expect(titel).toContain('zu bestellen bis');
+    expect(titel).toContain('Lieferung');
+  });
+});
+
+// ── F33: Ein Farbschema statt buntem Mischmasch ─────────────────────────
+//
+// Gemeldet: „Dieses Farbschema bitte komplett bei Bäcker anwenden und nicht
+// diesen bunten Mischmasch."
+//
+// Vorher trug jeder Zustand seine eigene Farbe: bernstein als Grundton, grün
+// für gesendet, blau für den Ausdruck, orange für fällig, rot für spät – und
+// Freundl/Martin's waren gegenüber dem Entwurf sogar vertauscht. Jetzt führt
+// jede Bäckerei EINE Leitfarbe (Freundl petrol, Martin's bernstein), gesetzt
+// als Klasse am Panel; alle Bausteine ziehen ihre Werte per CSS-Variable.
+
+test.describe('Bäcker – einheitliches Farbschema (F33)', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  const LEIT = { freundl: 'rgb(15, 118, 110)', martins: 'rgb(180, 83, 9)' };
+
+  async function leitfarbe(page) {
+    return page.evaluate(() => getComputedStyle(
+      document.getElementById('panel-baecker')).getPropertyValue('--bk').trim());
+  }
+
+  test('TC-F33-01: Freundl führt petrol', async ({ page }) => {
+    await openBaecker(page);
+    await tagWaehlen(page, tagNurFuer('freundl').datum);
+    await expect(page.locator('#panel-baecker')).toHaveClass(/bk-freundl/);
+    expect(await leitfarbe(page)).toBe('#0f766e');
+  });
+
+  test('TC-F33-02: Martin\u2019s führt bernstein', async ({ page }) => {
+    await openBaecker(page);
+    await tagWaehlen(page, tagNurFuer('martins').datum);
+    await expect(page.locator('#panel-baecker')).toHaveClass(/bk-martins/);
+    expect(await leitfarbe(page)).toBe('#b45309');
+  });
+
+  test('TC-F33-03: Der Wechsel der Bäckerei färbt den Tab um', async ({ page }) => {
+    await openBaecker(page);
+    await tagWaehlen(page, tagNurFuer('freundl').datum);
+    const a = await leitfarbe(page);
+    await tagWaehlen(page, tagNurFuer('martins').datum);
+    const b = await leitfarbe(page);
+    expect(a).not.toBe(b);
+  });
+
+  test('TC-F33-04: Statuskarte und Tagesleiste folgen der Leitfarbe', async ({ page }) => {
+    await openBaecker(page);
+    await tagWaehlen(page, tagNurFuer('martins').datum);
+    // Die Statuskarte darf keine Fremdfarbe mehr mitbringen.
+    const rand = await page.locator('#panel-baecker .bk-stat').evaluate(
+      (el) => getComputedStyle(el).borderTopColor);
+    expect(rand).not.toBe(LEIT.freundl);
+    // Der gewählte Tag ist neutral dunkel, nicht in einer dritten Farbe.
+    const aktiv = await page.locator('#panel-baecker .bk-day.active').evaluate(
+      (el) => getComputedStyle(el).backgroundColor);
+    expect(aktiv).toBe('rgb(31, 41, 55)');
+  });
+
+  test('TC-F33-05: Die Punkte je Bäckerei bleiben unterscheidbar', async ({ page }) => {
+    await openBaecker(page);
+    const f = await page.locator('#panel-baecker .bk-dot-freundl').first()
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    const m = await page.locator('#panel-baecker .bk-dot-martins').first()
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(f).toBe(LEIT.freundl);
+    expect(m).toBe(LEIT.martins);
+  });
+});

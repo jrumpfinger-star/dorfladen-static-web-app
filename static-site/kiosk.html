@@ -533,7 +533,22 @@
       .mb-quick button.mb-ok,.mb-quick button.mb-del{flex:1 1 auto}
     }
     /* === Bäcker-Tab === */
-    :root{--bk:#b45309;--bk-dark:#92400e;--bk-bg:#fffbeb;--bk-line:#fcd34d}
+    /* Farbschema des Bäcker-Tabs: EINE Leitfarbe je Bäckerei statt eines
+       Flickenteppichs aus Bernstein, Grün, Blau und Orange. Freundl führt
+       petrol, Martin's bernstein – so wie im Entwurf. Der gewählte Reiter
+       setzt die Klasse am Panel, alle Bausteine ziehen ihre Werte daraus. */
+    :root{
+      --bk-fr:#0f766e;--bk-fr-dark:#134e4a;--bk-fr-bg:#f0fdfa;--bk-fr-line:#99f6e4;
+      --bk-fr-ico:#ccfbf1;--bk-fr-t2:#0f766e;--bk-fr-tint:#ccfbf1;
+      --bk-ma:#b45309;--bk-ma-dark:#78350f;--bk-ma-bg:#fffbeb;--bk-ma-line:#fde68a;
+      --bk-ma-ico:#fef3c7;--bk-ma-t2:#a16207;--bk-ma-tint:#fef3c7;
+      --bk:var(--bk-fr);--bk-dark:var(--bk-fr-dark);--bk-bg:var(--bk-fr-bg);
+      --bk-line:var(--bk-fr-line);--bk-ico:var(--bk-fr-ico);--bk-t2:var(--bk-fr-t2);
+      --bk-tint:var(--bk-fr-tint)}
+    #panel-baecker.bk-freundl{--bk:var(--bk-fr);--bk-dark:var(--bk-fr-dark);--bk-bg:var(--bk-fr-bg);
+      --bk-line:var(--bk-fr-line);--bk-ico:var(--bk-fr-ico);--bk-t2:var(--bk-fr-t2);--bk-tint:var(--bk-fr-tint)}
+    #panel-baecker.bk-martins{--bk:var(--bk-ma);--bk-dark:var(--bk-ma-dark);--bk-bg:var(--bk-ma-bg);
+      --bk-line:var(--bk-ma-line);--bk-ico:var(--bk-ma-ico);--bk-t2:var(--bk-ma-t2);--bk-tint:var(--bk-ma-tint)}
     @keyframes bkBlink{0%,100%{background:#fef2f2;color:#b91c1c}50%{background:#dc2626;color:#fff}}
     .k-tab.bk-blink{animation:bkBlink 1.1s ease-in-out infinite;font-weight:600}
     .k-tab-badge.badge-bk{background:var(--bk);color:#fff}
@@ -555,12 +570,18 @@
     .bk-day{min-width:84px;text-align:center;padding:7px 9px;border-radius:10px;border:1px solid transparent;background:none;color:#4b5563;font-size:14px;font-weight:600;cursor:pointer;min-height:58px}
     .bk-day .d{display:block;font-size:12px;font-weight:500;margin-top:1px}
     .bk-day .st{display:block;font-size:11px;font-weight:600;margin-top:3px;color:var(--c-muted)}
-    .bk-day.active{background:var(--bk);color:#fff;border-color:var(--bk)}
+    .bk-day.active{background:#1f2937;color:#fff;border-color:#1f2937}
     .bk-day.active .st{color:rgba(255,255,255,.92)}
     .bk-day.sent{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
     .bk-day.sent .st{color:#16a34a}
     .bk-day.druck{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
     .bk-day.druck .st{color:#2563eb}
+    /* Der Tag, dessen Bestellung HEUTE rausmuss – in der Leitfarbe der
+       Bäckerei, nicht in einem eigenen Orange. */
+    .bk-day.faellig{background:var(--bk-bg);border-color:var(--bk-line);color:var(--bk-dark)}
+    .bk-day.faellig .st{color:var(--bk);font-weight:800}
+    .bk-day.faellig.active{background:#1f2937;color:#fff;border-color:#1f2937;box-shadow:0 0 0 2px var(--bk-line)}
+    .bk-day.faellig.active .st{color:#fff}
     /* Bereits gelieferter Tag – nur noch zum Ansehen */
     .bk-day.vorbei{opacity:.62}
     .bk-day.vorbei .st{color:var(--c-muted)}
@@ -572,8 +593,8 @@
     /* Lieferanten-Punkte je Tag – zeigen, wer liefert und was erledigt ist */
     .bk-who{display:flex;gap:3px;justify-content:center;margin-top:4px}
     .bk-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
-    .bk-dot-freundl{background:var(--bk,#b45309)}
-    .bk-dot-martins{background:#0f766e}
+    .bk-dot-freundl{background:var(--bk-fr)}
+    .bk-dot-martins{background:var(--bk-ma)}
     .bk-dot.done{box-shadow:0 0 0 1.5px #fff,0 0 0 3px currentColor}
     .bk-day.active .bk-dot.done{box-shadow:0 0 0 1.5px var(--c-surf,#fff),0 0 0 3px #fff}
     /* Bäckerei-Reiter – nur an Tagen mit zwei Lieferanten (Spec F19).
@@ -592,8 +613,8 @@
     .bk-btab:hover{background:#f3f4f6;color:#1f2937}
     .bk-btab.on{color:#fff;font-weight:600}
     .bk-btab.on .bk-dot{background:#fff!important}
-    .bk-btab.on.bk-btab-freundl{background:var(--bk,#b45309);border-color:var(--bk,#b45309);border-bottom-color:var(--bk,#b45309)}
-    .bk-btab.on.bk-btab-martins{background:#0f766e;border-color:#0f766e;border-bottom-color:#0f766e}
+    .bk-btab.on.bk-btab-freundl{background:var(--bk-fr);border-color:var(--bk-fr);border-bottom-color:var(--bk-fr)}
+    .bk-btab.on.bk-btab-martins{background:var(--bk-ma);border-color:var(--bk-ma);border-bottom-color:var(--bk-ma)}
     .bk-btab.on .bk-flag{background:rgba(255,255,255,.22);color:#fff;border-color:rgba(255,255,255,.45)}
     .bk-btab .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
     /* Schmale Schirme: Beide Reiter müssen nebeneinander passen – sonst läuft
@@ -609,7 +630,7 @@
       .bk-btab .bk-dot{display:none}
     }
     .bk-flag{font-size:11px;font-weight:600;border-radius:20px;padding:2px 9px;white-space:nowrap}
-    .bk-flag.open{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+    .bk-flag.open{background:var(--bk-bg);color:var(--bk-dark);border:1px solid #fde68a}
     .bk-flag.done{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
     .bk-flag.druck{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
     /* Bestätigung nach dem Senden mit dem Druckschritt (Spec F23) */
@@ -618,7 +639,7 @@
     .bk-druck-schritte .n{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;
       justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;color:#fff;background:#d1d5db}
     .bk-druck-schritte .s.done .n{background:#16a34a}
-    .bk-druck-schritte .s.now .n{background:var(--bk,#b45309)}
+    .bk-druck-schritte .s.now .n{background:var(--bk)}
     .bk-druck-schritte b{font-size:13.5px;color:#1f2937;display:block}
     .bk-druck-schritte small{font-size:12px;color:var(--c-muted);line-height:1.45;display:block;margin-top:2px}
     .bk-druck-hinweis{font-size:12.5px;background:var(--bk-bg,#fffbeb);border:1px solid var(--bk-line,#fde68a);
@@ -629,26 +650,18 @@
     .bk-stat{border:1px solid var(--bk-line);background:linear-gradient(180deg,var(--bk-bg),#fff);border-radius:14px;padding:12px 15px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:12px}
     .bk-stat.done{border-color:#bbf7d0;background:linear-gradient(180deg,#f0fdf4,#fff)}
     .bk-stat.late{border-color:#fecaca;background:linear-gradient(180deg,#fef2f2,#fff)}
-    .bk-stat .ico{width:44px;height:44px;border-radius:12px;background:#fef3c7;border:1px solid var(--bk-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--bk-dark)}
+    .bk-stat .ico{width:44px;height:44px;border-radius:12px;background:var(--bk-ico);border:1px solid var(--bk-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--bk-dark)}
     .bk-stat.done .ico{background:#dcfce7;border-color:#bbf7d0;color:#166534}
     .bk-stat.late .ico{background:#fee2e2;border-color:#fecaca;color:#b91c1c}
     .bk-stat .txt{flex:1 1 240px;min-width:0}
     .bk-stat .t1{font-size:15px;font-weight:600;color:var(--bk-dark)}
     .bk-stat.done .t1{color:#166534}
     .bk-stat.late .t1{color:#b91c1c}
-    .bk-stat .t2{font-size:12px;color:#a16207;margin-top:2px}
+    .bk-stat .t2{font-size:12px;color:var(--bk-t2);margin-top:2px}
     .bk-stat.done .t2{color:#15803d}
     .bk-stat.late .t2{color:#dc2626}
     .bk-cta{background:var(--bk);color:#fff;border:none;border-radius:10px;padding:0 17px;min-height:46px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
     .bk-stat.late .bk-cta{background:#dc2626}
-    /* Martin's wird durchgehend teal geführt, Freundl bleibt bernstein.
-       Die Knöpfe bleiben bewusst einheitlich im Bäcker-Bernstein: Sonst
-       stünde eine teal Statuskarte über einem bernsteinfarbenen Knopf in
-       der Fußzeile, was wie ein Fehler aussieht. */
-    .bk-stat-martins:not(.done):not(.late){border-color:#99f6e4;background:linear-gradient(180deg,#f0fdfa,#fff)}
-    .bk-stat-martins:not(.done):not(.late) .ico{background:#ccfbf1;border-color:#99f6e4;color:#134e4a}
-    .bk-stat-martins:not(.done):not(.late) .t1{color:#134e4a}
-    .bk-stat-martins:not(.done):not(.late) .t2{color:#0f766e}
     .bk-cta.ghost{background:#fff;color:#166534;border:1px solid #bbf7d0}
     .bk-cta-note{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#4b5563;background:#fff;border:1px solid var(--c-border);border-radius:10px;padding:9px 13px;max-width:270px;line-height:1.3}
     /* Werkzeugleiste */
@@ -660,9 +673,9 @@
     .bk-btn .c{font-size:11px;font-weight:600;background:#f3f4f6;color:var(--c-muted);padding:2px 7px;border-radius:8px}
     .bk-btn.on .c{background:rgba(255,255,255,.25);color:#fff}
     .bk-sortnote{font-size:11.5px;color:var(--c-muted);display:flex;align-items:center;gap:6px;padding:0 2px 4px}
-    .bk-test{background:#fef3c7;border:1px solid var(--bk-line);border-radius:9px;padding:9px 12px;font-size:12.5px;color:var(--bk-dark);margin-bottom:11px;display:flex;align-items:center;gap:7px}
+    .bk-test{background:var(--bk-bg);border:1px solid var(--bk-line);border-radius:9px;padding:9px 12px;font-size:12.5px;color:var(--bk-dark);margin-bottom:11px;display:flex;align-items:center;gap:7px}
     /* Gruppen und Zeilen */
-    .bk-grp{display:flex;align-items:center;gap:10px;padding:6px 12px;background:linear-gradient(90deg,#fffbeb,#fef3c7);border:1px solid var(--bk-line);border-radius:10px;margin:10px 0 5px;font-weight:600;font-size:13.5px;color:var(--bk-dark)}
+    .bk-grp{display:flex;align-items:center;gap:10px;padding:6px 12px;background:linear-gradient(90deg,var(--bk-bg),var(--bk-tint));border:1px solid var(--bk-line);border-radius:10px;margin:10px 0 5px;font-weight:600;font-size:13.5px;color:var(--bk-dark)}
     .bk-grp .n{margin-left:auto;font-size:11px;font-weight:600;background:#fff;border:1px solid var(--bk-line);border-radius:11px;padding:2px 9px}
     .bk-grp.extra{background:linear-gradient(90deg,#eef2ff,#e0e7ff);border-color:#c7d2fe;color:#3730a3}
     .bk-grp.extra .n{border-color:#c7d2fe;color:#3730a3}
@@ -682,13 +695,13 @@
     .bk-row .hist{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--c-muted);min-width:0}
     .bk-row .hist .lbl{font-weight:600;color:#9ca3af}
     .bk-row .hist .v{background:#f3f4f6;border-radius:5px;padding:2px 7px;font-weight:600;color:#4b5563;font-variant-numeric:tabular-nums}
-    .bk-row .hist .v.last{background:#fef3c7;color:var(--bk-dark)}
+    .bk-row .hist .v.last{background:var(--bk-tint);color:var(--bk-dark)}
     .bk-row .step{display:flex;align-items:center;gap:4px;justify-self:end}
     .bk-row .step button{width:38px;height:44px;border:1px solid var(--c-border);background:#fff;border-radius:9px;font-size:19px;font-weight:600;color:#374151;cursor:pointer;line-height:1}
     .bk-row .step button:disabled{opacity:.3;cursor:not-allowed}
     .bk-row .step input{width:52px;height:44px;text-align:center;border:1.5px solid var(--c-border);border-radius:9px;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
     .bk-row .step input::-webkit-outer-spin-button,.bk-row .step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-    .bk-row.has .step input{border-color:var(--bk);color:var(--bk-dark);background:#fffbeb}
+    .bk-row.has .step input{border-color:var(--bk);color:var(--bk-dark);background:var(--bk-bg)}
     .bk-row.changed .step input{border-color:#2563eb;color:#1d4ed8;background:#eff6ff}
     .bk-row .ret{display:flex;align-items:center;gap:4px;justify-self:end}
     .bk-row .ret .rl{font-size:11px;font-weight:600;color:#9ca3af}
@@ -718,7 +731,7 @@
     .bk-art .nm .sub{font-size:11px;color:var(--c-muted);font-weight:400;margin-top:1px}
     .bk-art .use{font-size:11px;color:var(--c-muted);white-space:nowrap}
     .bk-edit{width:34px;height:34px;border-radius:8px;border:1px solid var(--c-border);background:#fff;color:var(--bk-dark);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
-    .bk-edit:hover{background:#fffbeb;border-color:var(--bk-line)}
+    .bk-edit:hover{background:var(--bk-bg);border-color:var(--bk-line)}
     .bk-sw{width:46px;height:26px;border-radius:13px;background:var(--bk);position:relative;cursor:pointer;border:none;justify-self:end}
     .bk-sw::after{content:'';position:absolute;top:3px;left:23px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
     .bk-sw.off{background:#d1d5db}
@@ -790,7 +803,7 @@
     .bk-chk input{width:20px;height:20px;margin-top:1px;flex-shrink:0;accent-color:var(--bk)}
     .bk-chk b{font-size:13.5px}
     .bk-chk .help{font-size:11.5px;color:var(--c-muted);margin-top:2px}
-    .bk-warn{background:#fffbeb;border:1px solid var(--bk-line);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--bk-dark);margin-top:10px}
+    .bk-warn{background:var(--bk-bg);border:1px solid var(--bk-line);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--bk-dark);margin-top:10px}
     .bk-warn .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
     @media(min-width:1080px){
       /* Zwei Spalten: halbiert die Scrolllänge und rückt die Eingabefelder

@@ -103,12 +103,17 @@
         _uebersicht = res;
         badge();
         if (danachLaden) {
-          // Beim Öffnen steht IMMER der nächste Liefertag da. Die Bestellung
-          // für heute ist längst gestern rausgegangen, und für heute lässt
-          // sich ohnehin nichts mehr bestellen. Bewusst nicht „der erste Tag
-          // mit offener Arbeit“: Das sprang je nach Stand mal auf Mittwoch,
-          // mal auf Donnerstag – unvorhersehbar.
-          var ziel = (res.tage || []).filter(function (t) { return t.bestellbar; })[0];
+          // Beim Öffnen steht der Tag da, an dem HEUTE Arbeit liegt: die
+          // Lieferung, deren Bestellschluss heute ist und die noch offen ist.
+          // Vorher war es stur der nächste Liefertag – am Montag also der
+          // Dienstag, der längst gesendet war. Man landete auf „gesendet"
+          // und hatte nichts zu tun.
+          var tage = res.tage || [];
+          var ziel = tage.filter(function (t) { return t.heute_bestellen; })[0]
+            // Sonst der nächste Tag, für den überhaupt noch etwas offen ist.
+            || tage.filter(function (t) { return t.hat_offene; })[0]
+            // Ist alles gesendet, der nächste Liefertag – zum Nachsehen.
+            || tage.filter(function (t) { return t.bestellbar; })[0];
           if (!ziel) {
             // Kein einziger künftiger Liefertag – etwa wenn für beide
             // Bäckereien keine Bestelltage eingestellt sind. Ohne diesen Zweig
@@ -250,8 +255,20 @@
     else if (_sub === 'verlauf') html = renderVerlauf();
     else html = renderBestellung();
     h.innerHTML = html;
+    leitfarbe();
     icons();
     kopfhoehe();
+  }
+
+  /* Die Leitfarbe folgt der gewählten Bäckerei: Freundl petrol, Martin's
+     bernstein. Gesetzt wird sie EINMAL am Panel – alle Bausteine ziehen ihre
+     Werte per CSS-Variable daraus. Vorher trug jeder Zustand seine eigene
+     Farbe, was als bunter Flickenteppich wirkte. */
+  function leitfarbe() {
+    var panel = document.getElementById('panel-baecker');
+    if (!panel) return;
+    panel.classList.remove('bk-freundl', 'bk-martins');
+    if (_bk === 'freundl' || _bk === 'martins') panel.classList.add('bk-' + _bk);
   }
 
   // Der Kopf steht fest, der Rest scrollt darunter durch. Damit ein
@@ -296,6 +313,9 @@
       else if (t.status === 'gesendet') cls += ' sent';
       else if (druckOffen) cls += ' druck';
       else if (!t.bestellbar) cls += ' vorbei';
+      // Der Tag, dessen Bestellung HEUTE rausmuss, hebt sich ab – auch wenn er
+      // gerade nicht gewählt ist.
+      if (t.heute_bestellen) cls += ' faellig';
       var d = t.datum.split('-');
       var label = t.wochentag.slice(0, 2);
 
@@ -303,9 +323,17 @@
       if (!t.bestelltag) st = 'keine Lieferung';
       else if (druckOffen) st = 'Ausdruck fehlt';
       else if (!t.bestellbar) st = (t.status === 'gesendet' ? 'heute geliefert' : 'nicht bestellt');
+      else if (t.heute_bestellen) st = 'heute bestellen';
       else if (t.gesamt > 1) st = t.fertig + ' von ' + t.gesamt;
       else if (t.status === 'gesendet') st = '✓ gesendet';
       else st = 'offen';
+
+      // Im Tooltip steht, bis wann diese Lieferung bestellt sein muss.
+      var titel = t.bestelltag && t.bestellschluss_datum_de
+        ? ' title="Lieferung ' + esc(t.wochentag) + ', ' + esc(t.datum.split('-').reverse().join('.'))
+          + ' – zu bestellen bis ' + esc(t.bestellschluss_wochentag) + ', '
+          + esc(t.bestellschluss_datum_de) + '"'
+        : '';
 
       // Farbpunkte zeigen, wer an diesem Tag liefert und was schon erledigt ist.
       var punkte = (t.lieferanten || []).map(function (x) {
@@ -316,7 +344,7 @@
           + '"></i>';
       }).join('');
 
-      h += '<button class="' + cls + '"'
+      h += '<button class="' + cls + '"' + titel
         + (t.bestelltag ? ' onclick="KBaecker.tag(\'' + t.datum + '\')"' : ' disabled')
         + '><span>' + esc(label) + '</span>'
         + '<span class="d">' + d[2] + '.' + d[1] + '.</span>'
@@ -367,9 +395,12 @@
       h += '<div class="t2">Original gesendet' + (letzte ? ' · ' + esc(zeitKurz(letzte.zeit)) : '')
         + ' · Änderungen werden markiert</div>';
     } else if (gesendet) {
-      h += '<div class="t1">Gesendet – ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + ' · ' + wer + '</div>';
+      // „Gesendet – Dienstag" las sich wie „am Dienstag gesendet". Gemeint ist
+      // der LIEFERtag; abgeschickt wurde am Tag davor. Beides steht jetzt da.
+      h += '<div class="t1">Gesendet – Lieferung am ' + esc(_b.wochentag) + ', '
+        + esc(_b.datum_de) + ' · ' + wer + '</div>';
       var basis = letzte
-        ? esc(zeitKurz(letzte.zeit)) + ' von ' + esc(letzte.wer) + ' · '
+        ? 'abgeschickt ' + esc(zeitKurz(letzte.zeit)) + ' von ' + esc(letzte.wer) + ' · '
           + letzte.positionen + ' Positionen · ' + letzte.stueck + ' Stück'
         : 'Bereits gesendet';
       h += '<div class="t2">' + basis

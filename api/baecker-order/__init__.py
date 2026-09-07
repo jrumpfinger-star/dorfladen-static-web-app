@@ -342,11 +342,23 @@ def _uebersicht(url, hdrs, cfg):
         # die Ware laengst da – eine Bestellung waere sinnlos und richtete im
         # Zweifel Schaden an (versehentlich abgeschickt).
         bestellbar = i > 0 and bool(lieferanten)
+        # Wann muss diese Lieferung bestellt sein? Der Kiosk springt beim
+        # Oeffnen auf den Tag, der HEUTE faellig ist - dort liegt die Arbeit.
+        # Frueher landete er stur auf morgen, auch wenn das laengst gesendet
+        # war: Man sah "gesendet" und hatte nichts zu tun.
+        bs = store.bestellschluss_tag(iso) if lieferanten else None
+        bs_iso = bs.isoformat() if bs else ""
+        offen_hier = any(x["status"] == "offen" for x in lieferanten)
         tage.append({
             "datum": iso, "wochentag": store.wochentag(iso),
             "bestelltag": bool(lieferanten),
             "bestellbar": bestellbar,
             "heute": i == 0,
+            "bestellschluss_datum": bs_iso,
+            "bestellschluss_datum_de": store.datum_de(bs_iso) if bs_iso else "",
+            "bestellschluss_wochentag": store.wochentag(bs_iso) if bs_iso else "",
+            "heute_bestellen": bool(bestellbar and offen_hier and bs == heute),
+            "hat_offene": bool(bestellbar and offen_hier),
             "lieferanten": lieferanten,
             "fertig": fertig,
             "gesamt": len(lieferanten),

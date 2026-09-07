@@ -392,7 +392,8 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     await oeffneTab(page, { status: 1 });
     await expect(page.locator('.mb-status')).toContainText('Gesendet');
     await expect(page.locator('.mb-add')).toHaveCount(0);
-    await expect(page.locator('.mb-btn', { hasText: 'Korrektur senden' })).toBeVisible();
+    // Der Knopf eröffnet die Korrektur, er sendet noch nichts.
+    await expect(page.locator('.mb-btn', { hasText: 'Korrigieren' })).toBeVisible();
   });
 
   test('TC-F17-01/06: Kein Überlauf, Bedienelemente groß genug', async ({ page }) => {
@@ -537,5 +538,88 @@ test.describe('Metzger-Bestellung – Liefertag und stille Sicherung (F30)', () 
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
     await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
     expect(await page.evaluate(() => window.KMetzgerBest.istGeaendert())).toBe(true);
+  });
+});
+
+// ── F32: Korrektur ist zweistufig ───────────────────────────────────────
+//
+// Gemeldet: „Wie kann eine Korrektur gesendet werden, wenn es gar keine
+// Möglichkeit gibt die Werte zu ändern?"
+//
+// Der Knopf hiess „Korrektur senden" und sprang sofort in den Versanddialog.
+// Alle Felder blieben gesperrt (`gesperrt()` = status 1), also verschickte
+// man die unveraenderte Bestellung ein zweites Mal. Jetzt gibt der Knopf
+// erst die Felder frei; gesendet wird ausdruecklich danach.
+
+test.describe('Metzger-Bestellung – Korrektur ist zweistufig (F32)', () => {
+
+  test('TC-F32-01: Gesendet ist gesperrt und bietet „Korrigieren"', async ({ page }) => {
+    await oeffneTab(page, { status: 1 });
+    await expect(page.locator('.mb-add')).toHaveCount(0);
+    await expect(page.locator('.mb-btn', { hasText: 'Korrigieren' })).toBeVisible();
+    // Der Versanddialog darf noch nicht aufgehen.
+    await expect(page.locator('.mb-dlg')).toHaveCount(0);
+  });
+
+  test('TC-F32-02: „Korrigieren" gibt die Felder frei, ohne zu senden', async ({ page }) => {
+    await oeffneTab(page, { status: 1 });
+    await page.locator('.mb-btn', { hasText: 'Korrigieren' }).click();
+    // Jetzt lassen sich Portionen anlegen – vorher ging das nicht.
+    expect(await page.locator('.mb-add').count()).toBeGreaterThan(0);
+    await expect(page.locator('.mb-dlg')).toHaveCount(0);
+    await expect(page.locator('.mb-send', { hasText: 'Korrektur senden' }).first()).toBeVisible();
+  });
+
+  test('TC-F32-03: Ohne Änderung wird nichts verschickt', async ({ page }) => {
+    const posts = [];
+    await oeffneTab(page, { status: 1 });
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && /\/korrektur$/.test(r.url())) posts.push(r.url());
+    });
+    await page.locator('.mb-btn', { hasText: 'Korrigieren' }).click();
+    await page.locator('.mb-send', { hasText: 'Korrektur senden' }).first().click();
+    await page.waitForTimeout(600);
+    await expect(page.locator('.mb-dlg')).toHaveCount(0);
+    expect(posts.length).toBe(0);
+  });
+
+  test('TC-F32-04: Geänderte Menge lässt sich als Korrektur senden', async ({ page }) => {
+    const posts = [];
+    await oeffneTab(page, { status: 1 });
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && /\/korrektur$/.test(r.url())) posts.push(r.url());
+    });
+    await page.locator('.mb-btn', { hasText: 'Korrigieren' }).click();
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.locator('.mb-send', { hasText: 'Korrektur senden' }).first().click();
+    await expect(page.locator('.mb-dlg')).toBeVisible();
+    await page.locator('.mb-dlg-acts button', { hasText: 'Korrektur absenden' }).click();
+    await page.waitForTimeout(900);
+    expect(posts.length).toBe(1);
+  });
+
+  test('TC-F32-05: Im Korrekturmodus wird nicht still gespeichert', async ({ page }) => {
+    // Ein Entwurfs-Speicher würde die bereits gesendete Bestellung überschreiben.
+    const posts = [];
+    await oeffneTab(page, { status: 1 });
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && /\/speichern$/.test(r.url())) posts.push(r.url());
+    });
+    await page.locator('.mb-btn', { hasText: 'Korrigieren' }).click();
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.waitForTimeout(2600);
+    expect(posts.length).toBe(0);
+  });
+
+  test('TC-F32-06: „Verwerfen" schliesst die Korrektur wieder', async ({ page }) => {
+    await oeffneTab(page, { status: 1 });
+    await page.locator('.mb-btn', { hasText: 'Korrigieren' }).click();
+    expect(await page.locator('.mb-add').count()).toBeGreaterThan(0);
+    await page.locator('.mb-btn', { hasText: 'Verwerfen' }).first().click();
+    await page.waitForTimeout(800);
+    await expect(page.locator('.mb-add')).toHaveCount(0);
+    await expect(page.locator('.mb-btn', { hasText: 'Korrigieren' })).toBeVisible();
   });
 });
