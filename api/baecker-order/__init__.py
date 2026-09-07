@@ -135,6 +135,11 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
 
     gesendet = order.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT)
     hat_entwurf = bool(order.get("positionen"))
+    # Startwerte aus den Rechnungen: greifen NUR, wenn es fuer diesen Wochentag
+    # noch keine echte Bestellung gibt. Sobald eine gesendet wurde, hat sie
+    # Vorrang - der Durchschnitt ist nur die Starthilfe am ersten Tag.
+    sw_mengen, sw_woche, sw_meta = store.startwerte(bk)
+    aus_startwerten = False
     if hat_entwurf:
         mengen = {}
         retouren = {}
@@ -144,11 +149,17 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
             retouren[key] = int(p.get("retoure") or 0)
         # Herkunft der Vorbelegung: aus dem Entwurf, sonst der letzte gleiche Wochentag
         quelle = order.get("vorlage_datum") or (vorlagen[0][0] if vorlagen else "")
-    else:
+    elif vorlagen:
         # Noch kein Entwurf: exakt den letzten gleichen Wochentag uebernehmen
-        mengen = store.positionen_map(vorlagen[0][1]) if vorlagen else {}
+        mengen = store.positionen_map(vorlagen[0][1])
         retouren = {}
-        quelle = vorlagen[0][0] if vorlagen else ""
+        quelle = vorlagen[0][0]
+    else:
+        # Weder Entwurf noch Vorgaenger: Durchschnitt aus den Rechnungen
+        mengen = dict(sw_mengen)
+        retouren = {}
+        quelle = ""
+        aus_startwerten = bool(sw_mengen)
 
     zeilen = []
     for a in artikel:
@@ -161,6 +172,10 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
             "retoure": retouren.get(key, 0),
             "vorbelegt": mengen.get(key, 0),
             "verlauf": verlauf.get(key, [])[:4],
+            # Wochenschnitt aus den Rechnungen. Wichtig fuer Brote: sie werden
+            # nur zwei- bis dreimal die Woche bestellt, ihr Tagesdurchschnitt
+            # rundet auf 0. Der Wochenwert ist dort die brauchbare Angabe.
+            "je_woche": sw_woche.get(key, 0),
             "nur_wochentag": a.get("nur_wochentag"),
         })
 
@@ -195,6 +210,10 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         "hat_entwurf": hat_entwurf,
         "vorlage_datum": quelle,
         "vorlage_datum_de": store.datum_de(quelle) if quelle else "",
+        # Vorbelegung stammt aus dem Rechnungs-Durchschnitt, nicht aus einer
+        # echten Bestellung – die Oberflaeche muss das anders benennen.
+        "aus_startwerten": aus_startwerten,
+        "startwerte_meta": sw_meta if aus_startwerten else {},
         "protokoll": order.get("protokoll", []),
         "positionen": zeilen,
         "tour_nr": store.tour_nr(cfg, datum_iso),

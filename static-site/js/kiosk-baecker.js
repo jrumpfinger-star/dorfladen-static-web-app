@@ -380,7 +380,12 @@
             : ' · vorbelegt mit den Werten vom letzten ' + esc(_b.wochentag) + ' (' + esc(_b.vorlage_datum_de) + ')')
         : (_b.hat_entwurf
             ? ' · gespeicherter Entwurf'
-            : ' · keine Vorlage vorhanden, alle Mengen starten bei 0');
+            : (_b.aus_startwerten
+                // Noch keine eigene Bestellung für diesen Wochentag: der
+                // Durchschnitt aus den Rechnungen dient als Starthilfe.
+                ? ' · Startwerte aus ' + esc(String((_b.startwerte_meta || {}).rechnungen || '')) +
+                  ' Rechnungen (Durchschnitt je Liefertag) – bitte prüfen'
+                : ' · keine Vorlage vorhanden, alle Mengen starten bei 0'));
       h += '<div class="t2">' + (ueberfaellig
         ? '<b>Bestellschluss war um ' + esc(e.bestellschluss || '') + ' Uhr</b> – bitte zeitnah senden'
         : 'Noch nicht gesendet') + herkunft + '</div>';
@@ -556,6 +561,12 @@
       for (var i = 0; i < 3; i++) {
         h += '<span class="v' + (i === 0 ? ' last' : '') + '">' + (v[i] != null ? v[i] : '–') + '</span>';
       }
+    } else if (p.je_woche > 0) {
+      // Ohne eigene Bestellhistorie: der Wochenschnitt aus den Rechnungen.
+      // Für Brote ist er die einzig brauchbare Angabe – ihr Tagesdurchschnitt
+      // rundet auf 0, obwohl sie regelmäßig bestellt werden.
+      h += '<span class="lbl" title="Durchschnitt aus den Rechnungen">Ø Wo:</span>';
+      h += '<span class="v last">' + esc(String(p.je_woche).replace('.', ',')) + '</span>';
     }
     h += '</div>';
 

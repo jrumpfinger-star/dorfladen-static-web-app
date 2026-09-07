@@ -386,6 +386,43 @@ def sort_nr(nummer):
     return (0, int(s)) if s.isdigit() else (1, 0)
 
 
+def startwerte(bk):
+    """Startwerte aus den Rechnungen, falls fuer diese Baeckerei hinterlegt.
+
+    Fuer Martin's Backstube liegen keine alten Bestellzettel vor, nur
+    Rechnungen. Daraus laesst sich keine wochentaggenaue Vorlage gewinnen -
+    jede Rechnung fasst eine ganze Woche zusammen. Was bleibt, ist ein
+    Durchschnitt je Liefertag (erzeugt von tools/baecker_startwerte_martins.py).
+
+    Er dient nur als **erste Vorbelegung**, solange es fuer den Wochentag noch
+    keine echte Bestellung gibt. Sobald eine gesendet wurde, hat sie Vorrang.
+
+    Gibt zurueck: ({schluessel: menge}, {schluessel: stueck_je_woche}, meta)
+    """
+    pfad = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "vorlage", f"startwerte-{bk}.json")
+    try:
+        with open(pfad, encoding="utf-8") as fh:
+            daten = json.load(fh)
+    except FileNotFoundError:
+        return {}, {}, {}
+    except Exception as e:
+        logging.warning(f"[baecker] Startwerte {bk} unlesbar: {e}")
+        return {}, {}, {}
+    mengen, wochen = {}, {}
+    for e in daten.get("artikel", []) or []:
+        key = str(e.get("nummer") or "").strip() or (e.get("name") or "").strip().lower()
+        if not key:
+            continue
+        mengen[key] = int(e.get("menge") or 0)
+        try:
+            wochen[key] = float(e.get("je_woche") or 0)
+        except (TypeError, ValueError):
+            wochen[key] = 0.0
+    meta = {"rechnungen": daten.get("rechnungen", 0), "liefertage": daten.get("liefertage", 0)}
+    return mengen, wochen, meta
+
+
 def sort_artikel(artikel):
     return sorted(artikel, key=lambda a: (sort_nr(a.get("nummer")), a.get("name") or ""))
 

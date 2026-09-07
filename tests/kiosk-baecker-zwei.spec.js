@@ -97,6 +97,8 @@ function bestellung(bk, datum, opts) {
   const gesendet = (opts.gesendet || []).some((x) => x.datum === datum && x.bk === bk);
   const druckOffen = (opts.druckOffen || []).some((x) => x.datum === datum && x.bk === bk);
   const d = new Date(datum + 'T12:00:00');
+  // Startwerte aus den Rechnungen: greifen nur ohne echte Vorlage (F29).
+  const startwerte = !!opts.startwerte && bk === 'martins';
   return {
     datum, baeckerei: bk, baeckerei_name: NAME[bk],
     wochentag: TAGE[d.getDay()],
@@ -108,12 +110,21 @@ function bestellung(bk, datum, opts) {
     hat_entwurf: false,
     vorlage_datum: bk === 'freundl' ? '2026-09-01' : '',
     vorlage_datum_de: bk === 'freundl' ? '01.09.2026' : '',
+    aus_startwerten: startwerte,
+    startwerte_meta: startwerte ? { rechnungen: 11, liefertage: 66 } : {},
     protokoll: (gesendet || druckOffen)
       ? [{ zeit: datum + 'T10:42:00', art: 'gesendet', wer: 'Anna', positionen: 3, stueck: 90 }] : [],
-    positionen: KATALOG[bk].map(([nummer, name], i) => ({
-      nummer, name, aktiv: true, menge: (i + 1) * 10, retoure: 0,
-      vorbelegt: (i + 1) * 10, verlauf: [(i + 1) * 10],
-    })),
+    positionen: KATALOG[bk].map(([nummer, name], i) => (startwerte
+      // Erste Position bekommt einen Tageswert, die zweite nur einen
+      // Wochenschnitt – so wie Semmeln und Brote in den echten Daten.
+      ? {
+        nummer, name, aktiv: true, menge: i === 0 ? 28 : 0, retoure: 0,
+        vorbelegt: i === 0 ? 28 : 0, verlauf: [], je_woche: i === 0 ? 165 : 2.2,
+      }
+      : {
+        nummer, name, aktiv: true, menge: (i + 1) * 10, retoure: 0,
+        vorbelegt: (i + 1) * 10, verlauf: [(i + 1) * 10], je_woche: 0,
+      })),
     tour_nr: bk === 'freundl' ? '87' : '',
     kd_nr: bk === 'freundl' ? '1190' : '1015',
     empfaenger: 'jrumpfinger@t-online.de',
@@ -555,5 +566,45 @@ test.describe('Zweite Bäckerei', () => {
       (n) => n.map((x) => parseInt(x.textContent, 10)).filter((x) => !isNaN(x)));
     expect(nummern.length).toBeGreaterThan(1);
     expect(nummern).toEqual([...nummern].sort((a, b) => a - b));
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+//  F29 – Startwerte aus den Rechnungen (Martin's Backstube)
+// ════════════════════════════════════════════════════════════
+// Für Martins liegen keine alten Bestellzettel vor, nur Rechnungen. Die
+// fassen je eine ganze Woche zusammen – eine wochentaggenaue Vorlage lässt
+// sich daraus nicht gewinnen, wohl aber ein Durchschnitt je Liefertag.
+// Er dient als Starthilfe, bis die erste eigene Bestellung gesendet ist.
+
+test.describe('Bäcker – Startwerte aus Rechnungen (F29)', () => {
+  // Ohne diese Zeile beantwortet der Service Worker der PWA die API-Aufrufe
+  // und die Mock-Routen greifen nicht – der Tab bliebe leer.
+  test.use({ serviceWorkers: 'block' });
+
+  test('TC-F29-01: Statuszeile nennt die Rechnungen statt "keine Vorlage"', async ({ page }) => {
+    await openBaecker(page, { startwerte: true });
+    await tagWaehlen(page, tagNurFuer('martins').datum);
+    const zeile = page.locator('#panel-baecker .bk-stat .t2');
+    await expect(zeile).toContainText('Startwerte aus 11 Rechnungen');
+    await expect(zeile).not.toContainText('keine Vorlage vorhanden');
+  });
+
+  test('TC-F29-02: Artikel ohne Tageswert zeigt den Wochenschnitt', async ({ page }) => {
+    await openBaecker(page, { startwerte: true });
+    await tagWaehlen(page, tagNurFuer('martins').datum);
+    await expect(page.locator('#panel-baecker .bk-row').first()).toBeVisible();
+    // Zweite Zeile steht für ein Brot: Tageswert 0, aber Ø 2,2 je Woche
+    const hist = await page.locator('#panel-baecker .bk-row .hist').nth(1).innerText();
+    expect(hist).toContain('Ø Wo');
+    expect(hist).toContain('2,2');
+  });
+
+  test('TC-F29-03: Freundl bleibt bei der echten Vorlage', async ({ page }) => {
+    await openBaecker(page, { startwerte: true });
+    await tagWaehlen(page, tagNurFuer('freundl').datum);
+    const zeile = page.locator('#panel-baecker .bk-stat .t2');
+    await expect(zeile).toContainText('01.09.2026');
+    await expect(zeile).not.toContainText('Startwerte aus');
   });
 });

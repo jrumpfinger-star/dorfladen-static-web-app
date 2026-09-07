@@ -1,0 +1,241 @@
+{
+  "hinweis": "Durchschnitt je Liefertag aus den Rechnungen, Grundlage ist die verkaufte Menge (geliefert minus Retoure). Keine wochentaggenaue Vorlage - die Rechnungen fassen je eine ganze Woche zusammen.",
+  "rechnungen": 11,
+  "liefertage": 66,
+  "artikel": [
+    {
+      "nummer": "1",
+      "name": "Semmel",
+      "menge": 28,
+      "je_woche": 165.0
+    },
+    {
+      "nummer": "3",
+      "name": "Doppelte",
+      "menge": 5,
+      "je_woche": 31.9
+    },
+    {
+      "nummer": "4",
+      "name": "Spitzerl",
+      "menge": 2,
+      "je_woche": 11.4
+    },
+    {
+      "nummer": "6",
+      "name": "BIO-Mini-Ciabatta",
+      "menge": 2,
+      "je_woche": 11.3
+    },
+    {
+      "nummer": "8",
+      "name": "Knackies",
+      "menge": 0,
+      "je_woche": 0.5
+    },
+    {
+      "nummer": "12",
+      "name": "Roggensemmel m.Kümmel",
+      "menge": 1,
+      "je_woche": 5.0
+    },
+    {
+      "nummer": "13",
+      "name": "Roggens. oh.Kümmel",
+      "menge": 1,
+      "je_woche": 5.4
+    },
+    {
+      "nummer": "14",
+      "name": "Mohnsemmel",
+      "menge": 1,
+      "je_woche": 3.5
+    },
+    {
+      "nummer": "15",
+      "name": "Sesamsemmel",
+      "menge": 1,
+      "je_woche": 3.5
+    },
+    {
+      "nummer": "20",
+      "name": "Buttermilchdinkelweckerl",
+      "menge": 1,
+      "je_woche": 4.7
+    },
+    {
+      "nummer": "27",
+      "name": "Bio-Dinkel-Käse-Kürbiskr",
+      "menge": 1,
+      "je_woche": 4.5
+    },
+    {
+      "nummer": "29",
+      "name": "Bio-Dinkelkrüstchen",
+      "menge": 2,
+      "je_woche": 10.9
+    },
+    {
+      "nummer": "40",
+      "name": "Bio-Kornstanger´l",
+      "menge": 1,
+      "je_woche": 8.3
+    },
+    {
+      "nummer": "41",
+      "name": "Bio-Mehrkornsemmel",
+      "menge": 2,
+      "je_woche": 9.2
+    },
+    {
+      "nummer": "47",
+      "name": "Bio-Kürbiskern-Semmel",
+      "menge": 1,
+      "je_woche": 3.2
+    },
+    {
+      "nummer": "71",
+      "name": "Bio-Kürbiskern-Ring",
+      "menge": 1,
+      "je_woche": 3.6
+    },
+    {
+      "nummer": "74",
+      "name": "Süßkartoffelsemmel",
+      "menge": 1,
+      "je_woche": 5.4
+    },
+    {
+      "nummer": "101",
+      "name": "Kastenweißbrot",
+      "menge": 0,
+      "je_woche": 0.1
+    },
+    {
+      "nummer": "104",
+      "name": "BIO-Ciabatta",
+      "menge": 0,
+      "je_woche": 2.1
+    },
+    {
+      "nummer": "127",
+      "name": "BIOTagwerk-Brot 500g",
+      "menge": 0,
+      "je_woche": 0.1
+    },
+    {
+      "nummer": "130",
+      "name": "Helles Mischbrot 500g",
+      "menge": 0,
+      "je_woche": 2.1
+    },
+    {
+      "nummer": "131",
+      "name": "Helles Mischbrot 1kg",
+      "menge": 0,
+      "je_woche": 1.5
+    },
+    {
+      "nummer": "134",
+      "name": "Franken Laib 1kg",
+      "menge": 0,
+      "je_woche": 1.4
+    },
+    {
+      "nummer": "135",
+      "name": "Steinmetzbrot 1kg",
+      "menge": 0,
+      "je_woche": 1.3
+    },
+    {
+      "nummer": "136",
+      "name": "Landbrot 1kg",
+      "menge": 0,
+      "je_woche": 2.2
+    },
+    {
+      "nummer": "137",
+      "name": "Landbrot gewürzt",
+      "menge": 0,
+      "je_woche": 0.1
+    },
+    {
+      "nummer": "138",
+      "name": "Buttermilchbrot 1kg",
+      "menge": 0,
+      "je_woche": 0.8
+    },
+    {
+      "nummer": "140",
+      "name": "BIO-Sauerteigweckerl500g",
+      "menge": 1,
+      "je_woche": 3.9
+    },
+    {
+      "nummer": "141",
+      "name": "BIO-Weltmeister-Brot750g",
+      "menge": 0,
+      "je_woche": 1.7
+    },
+    {
+      "nummer": "146",
+      "name": "BIO-Vollkorn Sonne 500g",
+      "menge": 0,
+      "je_woche": 2.5
+    },
+    {
+      "nummer": "151",
+      "name": "BIO-Mehrkornbrot 500g",
+      "menge": 0,
+      "je_woche": 2.2
+    },
+    {
+      "nummer": "154",
+      "name": "BIO-Krustenbrot 500g",
+      "menge": 1,
+      "je_woche": 4.5
+    },
+    {
+      "nummer": "162",
+      "name": "BIO-Roggenvollk.100%500g",
+      "menge": 0,
+      "je_woche": 0.1
+    },
+    {
+      "nummer": "186",
+      "name": "BIOVollkorn-Nuß-Brot500g",
+      "menge": 0,
+      "je_woche": 0.2
+    },
+    {
+      "nummer": "192",
+      "name": "Bio-Brot des Monats",
+      "menge": 0,
+      "je_woche": 1.5
+    },
+    {
+      "nummer": "208",
+      "name": "Landbrot 500g",
+      "menge": 0,
+      "je_woche": 1.6
+    },
+    {
+      "nummer": "238",
+      "name": "Bio-Dinkel-Ernte",
+      "menge": 0,
+      "je_woche": 2.6
+    },
+    {
+      "nummer": "240",
+      "name": "Dorfener Naturlaib-BIO",
+      "menge": 0,
+      "je_woche": 2.1
+    },
+    {
+      "nummer": "242",
+      "name": "Bio Bergbauern 5oo g",
+      "menge": 0,
+      "je_woche": 0.5
+    }
+  ]
+}
