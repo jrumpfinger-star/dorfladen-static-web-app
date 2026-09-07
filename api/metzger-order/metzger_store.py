@@ -1,4 +1,4 @@
-"""Datenschicht der Metzger-Bestellung (Spec F1, F4, F7, F9, F12, F15).
+﻿"""Datenschicht der Metzger-Bestellung (Spec F1, F4, F7, F9, F12, F15).
 
 Wie bei der Baecker-Bestellung liegt alles als JSON im generischen
 Schluessel-/Wert-Speicher ``dl_seiteninhalts``. Dadurch ist **keine
@@ -22,7 +22,7 @@ from datetime import date, datetime, timedelta
 import msal
 import requests
 
-import portionen as P
+import metzger_portionen as P
 
 ENTITY = "dl_seiteninhalts"
 PK = "dl_seiteninhaltid"

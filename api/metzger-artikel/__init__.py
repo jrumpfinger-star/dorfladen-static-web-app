@@ -1,4 +1,4 @@
-"""Artikelpflege der Metzger-Bestellung (Spec F9).
+﻿"""Artikelpflege der Metzger-Bestellung (Spec F9).
 
     GET   /api/metzger-artikel     Katalog in Formularreihenfolge
     POST  /api/metzger-artikel     Artikel anlegen
@@ -19,7 +19,7 @@ sys.path.insert(0, _API)
 sys.path.insert(0, os.path.join(_API, "metzger-order"))
 
 from shared.auth import admin_auth_guard  # noqa: E402
-import store                               # noqa: E402
+import metzger_store as store              # noqa: E402
 
 
 def _err(msg, status=400):

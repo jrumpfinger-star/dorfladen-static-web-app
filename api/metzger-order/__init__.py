@@ -1,4 +1,4 @@
-"""Endpunkt der Metzger-Bestellung (Spec F1, F7, F11, F12, F14, F15).
+﻿"""Endpunkt der Metzger-Bestellung (Spec F1, F7, F11, F12, F14, F15).
 
 Routen (``metzger-order/{datum?}/{aktion?}``)::
 
@@ -28,9 +28,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared.auth import admin_auth_guard  # noqa: E402
-import portionen as P                      # noqa: E402
-import store                               # noqa: E402
-from pdf_form import build_pdf             # noqa: E402
+import metzger_portionen as P              # noqa: E402
+import metzger_store as store              # noqa: E402
+from metzger_pdf import build_pdf          # noqa: E402
 
 PDF_MIME = "application/pdf"
 ANHANG_NAME = "Bestellung-Metzger-Mair.pdf"

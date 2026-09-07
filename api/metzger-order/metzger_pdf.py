@@ -1,4 +1,4 @@
-"""Erzeugt das Metzger-Bestellformular als PDF (Spec F11).
+﻿"""Erzeugt das Metzger-Bestellformular als PDF (Spec F11).
 
 Vom Papierformular gibt es nur einen Scan, keine ausfuellbare Vorlage. Das
 Formular wird deshalb neu gesetzt - im selben Aufbau wie das Papier: Nummer,
@@ -15,7 +15,7 @@ darf an einem Zeichen niemals scheitern.
 """
 from fpdf import FPDF
 
-import portionen as P
+import metzger_portionen as P
 
 _ERSATZ = {
     "\u00d7": "x",                                        # Multiplikationszeichen

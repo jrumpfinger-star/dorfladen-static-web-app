@@ -1,4 +1,4 @@
-"""Selbsttest des Portionsmodells (Spec F2, F6, F16) - ohne Azure und Netz.
+﻿"""Selbsttest des Portionsmodells (Spec F2, F6, F16) - ohne Azure und Netz.
 
 Aufruf::
 
@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "api", "metzger-order"))
 
-import portionen as P  # noqa: E402
+import metzger_portionen as P  # noqa: E402
 
 FEHLER = []
 
