@@ -551,7 +551,8 @@ test.describe('Bäcker – Sperre und Korrektur (F8)', () => {
 
   test('TC-F8-02/03: Korrekturmodus entsperrt und markiert Änderungen', async ({ page }) => {
     await openBaecker(page, gesendetOpts);
-    await page.locator('button:has-text("Korrektur senden")').first().click();
+    // Der Knopf heisst seit F34 „Korrigieren" – er schaltet nur frei.
+    await page.locator('button:has-text("Korrigieren")').first().click();
 
     const feld = row(page, 'Kaisersemmel').locator('.step input');
     await expect(feld).not.toHaveAttribute('readonly', '');
@@ -562,7 +563,9 @@ test.describe('Bäcker – Sperre und Korrektur (F8)', () => {
 
   test('TC-F8-04: Korrektur wird als Korrektur gesendet', async ({ page }) => {
     await openBaecker(page, gesendetOpts);
-    await page.locator('button:has-text("Korrektur senden")').first().click();
+    await page.locator('button:has-text("Korrigieren")').first().click();
+    // Ohne echte Änderung geht seit F34 nichts raus – also erst ändern.
+    await row(page, 'Kaisersemmel').locator('.step button').last().click();
     await page.locator('.bk-send').first().click();
     await page.locator('#bk-send-btn').click();
 

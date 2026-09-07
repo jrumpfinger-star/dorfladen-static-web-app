@@ -143,8 +143,14 @@ function bestellung(bk, datum, opts) {
     vorlage_datum_de: bk === 'freundl' ? '01.09.2026' : '',
     aus_startwerten: startwerte,
     startwerte_meta: startwerte ? { rechnungen: 11, liefertage: 66 } : {},
+    // Ein Druckvermerk steht VORNE im Protokoll und trägt weder Positionen
+    // noch Stückzahl – genau daran ist die Statuszeile zerbrochen (F34-05).
     protokoll: (gesendet || druckOffen)
-      ? [{ zeit: datum + 'T10:42:00', art: 'gesendet', wer: 'Anna', positionen: 3, stueck: 90 }] : [],
+      ? (opts.druckVermerk
+          ? [{ zeit: datum + 'T11:05:00', art: 'gedruckt', wer: 'Anna' },
+             { zeit: datum + 'T10:42:00', art: 'gesendet', wer: 'Anna', positionen: 3, stueck: 90 }]
+          : [{ zeit: datum + 'T10:42:00', art: 'gesendet', wer: 'Anna', positionen: 3, stueck: 90 }])
+      : [],
     positionen: KATALOG[bk].map(([nummer, name], i) => (startwerte
       // Erste Position bekommt einen Tageswert, die zweite keinen – so wie
       // Semmeln und Brote in den echten Daten.
@@ -845,5 +851,79 @@ test.describe('Bäcker – einheitliches Farbschema (F33)', () => {
       .evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(f).toBe(LEIT.freundl);
     expect(m).toBe(LEIT.martins);
+  });
+});
+
+// ── F34: Korrektur beim Bäcker wie beim Metzger ─────────────────────────
+//
+// Gemeldet: „Korrigieren bei Metzger Mair ist besser und verständlicher
+// gelöst als bei Bäcker. Kannst du dies harmonisieren?"
+//
+// Beim Bäcker hiess der Knopf „Korrektur senden", schaltete aber nur die
+// Felder frei – gesendet wurde nichts. Jetzt heisst er „Korrigieren", genau
+// wie beim Metzger; gesendet wird erst im zweiten Schritt.
+
+test.describe('Bäcker – Korrektur wie beim Metzger (F34)', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  /** Ein gesendeter Tag, der sich noch korrigieren lässt. */
+  async function gesendeterTag(page) {
+    const d = plusTage(1);
+    const bk = liefertAm(d)[0];
+    await openBaecker(page, { gesendet: [{ datum: iso(d), bk: bk }] });
+    await tagWaehlen(page, iso(d));
+    return { datum: iso(d), bk: bk };
+  }
+
+  test('TC-F34-01: Der Knopf heisst „Korrigieren", nicht „Korrektur senden"', async ({ page }) => {
+    await gesendeterTag(page);
+    const karte = page.locator('#panel-baecker .bk-stat');
+    await expect(karte.locator('button', { hasText: 'Korrigieren' })).toBeVisible();
+    await expect(karte.locator('button', { hasText: /^.*Korrektur senden.*$/ })).toHaveCount(0);
+  });
+
+  test('TC-F34-02: „Korrigieren" gibt die Felder frei, ohne zu senden', async ({ page }) => {
+    await gesendeterTag(page);
+    const gesperrt = await page.locator('#panel-baecker .bk-row .step input')
+      .first().getAttribute('readonly');
+    expect(gesperrt).not.toBeNull();
+    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' }).click();
+    await page.waitForTimeout(400);
+    expect(await page.locator('#panel-baecker .bk-row .step input')
+      .first().getAttribute('readonly')).toBeNull();
+    // Erst jetzt darf gesendet werden – und der Ausstieg steht daneben.
+    await expect(page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrektur senden' })).toBeVisible();
+    await expect(page.locator('#panel-baecker .bk-stat button', { hasText: 'Verwerfen' })).toBeVisible();
+  });
+
+  test('TC-F34-03: Ohne Änderung wird nichts verschickt', async ({ page }) => {
+    await gesendeterTag(page);
+    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' }).click();
+    await page.waitForTimeout(400);
+    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrektur senden' }).click();
+    await page.waitForTimeout(700);
+    // Kein Vorschaudialog – stattdessen ein Hinweis.
+    await expect(page.locator('.bk-dlg-h')).toHaveCount(0);
+  });
+
+  test('TC-F34-04: „Verwerfen" schliesst die Korrektur wieder', async ({ page }) => {
+    await gesendeterTag(page);
+    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' }).click();
+    await page.waitForTimeout(400);
+    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Verwerfen' }).click();
+    await page.waitForTimeout(900);
+    await expect(page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' })).toBeVisible();
+  });
+
+  test('TC-F34-05: Nach dem Drucken steht keine "undefined"-Angabe da', async ({ page }) => {
+    // Der Druckvermerk wird VORNE ins Protokoll gestellt und traegt weder
+    // Positionen noch Stueckzahl. Wer stumpf den ersten Eintrag nimmt,
+    // schreibt „undefined Positionen" an.
+    const d = plusTage(1);
+    const bk = liefertAm(d)[0];
+    await openBaecker(page, { gesendet: [{ datum: iso(d), bk: bk }], druckVermerk: true });
+    await tagWaehlen(page, iso(d));
+    const txt = await page.locator('#panel-baecker .bk-stat').innerText();
+    expect(txt).not.toContain('undefined');
   });
 });

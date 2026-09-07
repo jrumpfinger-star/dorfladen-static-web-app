@@ -21,6 +21,7 @@
   var _ladeId = 0;        // laufende Nummer, damit überholte Antworten zählen
   var _alleArtikel = false;
   var _korrektur = false;
+  var _korrekturBasis = null;  // Stand bei Beginn der Korrektur
   var _dirty = {};        // key -> true, wenn gegenueber Vorbelegung geaendert
   var _sub = 'bestellung';
   var _blinkTimer = null;
@@ -383,7 +384,12 @@
     var ueberfaellig = e.blinkt && e.datum === _datum;
     var cls = 'bk-stat bk-stat-' + esc(_bk)
       + (gesendet ? ' done' : (ueberfaellig ? ' late' : ''));
-    var letzte = (_b.protokoll && _b.protokoll[0]) || null;
+    // Der Versandeintrag, nicht irgendeiner: Ein Druckvermerk wird VORNE in
+    // das Protokoll gestellt und trägt weder Positionen noch Stückzahl. Wer
+    // stumpf [0] nimmt, schreibt nach dem Drucken „undefined Positionen“ an.
+    var letzte = ((_b.protokoll || []).filter(function (e) {
+      return e && (e.art === 'gesendet' || e.art === 'korrektur');
+    })[0]) || null;
     var wer = esc(_b.baeckerei_name || '');
 
     var h = '<div class="' + cls + '">';
@@ -391,8 +397,10 @@
       : gesendet ? 'check-circle' : (ueberfaellig ? 'alarm-clock' : 'croissant'), 22) + '</div>';
     h += '<div class="txt">';
     if (_korrektur) {
-      h += '<div class="t1">Korrektur zur Bestellung vom ' + esc(_b.datum_de) + ' · ' + wer + '</div>';
-      h += '<div class="t2">Original gesendet' + (letzte ? ' · ' + esc(zeitKurz(letzte.zeit)) : '')
+      h += '<div class="t1">Korrektur – Lieferung am ' + esc(_b.wochentag) + ', '
+        + esc(_b.datum_de) + ' · ' + wer + '</div>';
+      h += '<div class="t2">Mengen jetzt ändern, dann senden'
+        + (letzte ? ' · Original gesendet ' + esc(zeitKurz(letzte.zeit)) : '')
         + ' · Änderungen werden markiert</div>';
     } else if (gesendet) {
       // „Gesendet – Dienstag" las sich wie „am Dienstag gesendet". Gemeint ist
@@ -438,13 +446,26 @@
       // Korrigieren lässt sich nur der nächste Liefertag – für bereits
       // gelieferte Tage käme die Änderung zu spät.
       if (_b.korrektur_moeglich) {
-        h += '<button class="bk-cta ghost" onclick="KBaecker.korrektur()">' + luc('pencil', 15) + ' Korrektur senden</button>';
+        h += '<button class="bk-cta ghost" onclick="KBaecker.korrektur()">' + luc('pencil', 15) + ' Korrigieren</button>';
       } else {
         h += '<div class="bk-cta-note">' + luc('lock', 14) + ' Abgeschlossen – eine Korrektur ist nur für den nächsten Liefertag möglich</div>';
+      }
+      // Nachdruck: Der Ausdruck kann schieflaufen oder das Blatt verloren
+      // gehen. Solange die Bestellung existiert, muss sie erneut aufs Papier
+      // gebracht werden können – auch Tage später.
+      if (_b.papierausdruck) {
+        h += '<button class="bk-cta ghost" onclick="KBaecker.drucken()">'
+          + luc('printer', 15) + ' Noch einmal drucken</button>';
       }
     } else {
       h += '<button class="bk-cta" onclick="KBaecker.vorschau()">' + luc('mail', 15) + ' '
         + (_korrektur ? 'Korrektur senden' : 'An Bäckerei senden') + '</button>';
+      // Ausstieg direkt neben dem Senden – so wie beim Metzger. Sonst steht
+      // „Verwerfen" nur unten in der Fußzeile und wird übersehen.
+      if (_korrektur) {
+        h += '<button class="bk-cta-note" onclick="KBaecker.verwerfen()" '
+          + 'style="cursor:pointer">Verwerfen</button>';
+      }
     }
     return h + '</div>';
   }
@@ -904,11 +925,14 @@
     _korrektur = true;
     _dirty = {};
     (_b.positionen || []).forEach(function (p) { p.vorbelegt = p.menge || 0; });
+    _korrekturBasis = JSON.stringify(nutzbarePositionen());
     render();
+    toast('Mengen ändern und dann „Korrektur senden".');
   }
 
   function verwerfen() {
     _korrektur = false;
+    _korrekturBasis = null;
     ladeBestellung(_datum);
   }
 
@@ -978,6 +1002,12 @@
     var pos = nutzbarePositionen();
     if (!pos.length) {
       toast('Die Bestellung enthält noch keine Mengen.');
+      return;
+    }
+    // Wie beim Metzger: Eine Korrektur ohne Änderung wäre nur dieselbe
+    // Bestellung ein zweites Mal – das verwirrt die Bäckerei.
+    if (_korrektur && JSON.stringify(pos) === _korrekturBasis) {
+      toast('Nichts geändert – es gibt nichts zu korrigieren.');
       return;
     }
     var stk = pos.reduce(function (s, p) { return s + p.menge; }, 0);
